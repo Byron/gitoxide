@@ -5,6 +5,211 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-b1edb9e3537df86669714f03666f4a88e0ac3709/> diff algorithm is controlled by git configuration `diff.algorithm`
+ - <csr-id-072f5bc9c91c4c09bd6a73f9d7ac672805cae533/> Query of `core.logAllRefUpdates` is now fallible.
+   This is the same behaviour as shown by `git`, which requires valid
+   values or aborts.
+ - <csr-id-2eaf69e5f8f8da10e5af85cb9f0c39577ad1707f/> automatically handle `.keep` files after writing a pack bundle to disk.
+   The logic implemented here tries to do the right thing, that is when
+   we have reason to believe that the objects in the pack are linked up
+   with a ref, we delete the keep file automatically.
+   
+   However, if there was no local ref edit as the ref specs didn't contain
+   local destinations, or if the pack was empty, then keep the .keep file
+   and leave it to the caller to handle.
+ - <csr-id-8b9fbd4e9ed7be37976c7203cd9a89c6116a6d3d/> Use `core.askpass` when building the credential helper.
+   Previously it would only consider the environment variable, which can
+   still override the provided git-configuration at core.askpass .
+ - <csr-id-a9d14492322785a14f4ecb5b0d3dbdc87e56f8c5/> `remote::fetch::Prepare::handshake_outcome()` to obtain server information right after listing refs.
+ - <csr-id-0b5c53ec43bdb58b2b7cf46e453ddf858770a95a/> `open::Options::config_overrides()` for early configuration; support for `init.defaultBranch`.
+
+### Bug Fixes
+
+ - <csr-id-f869b224170b0c49a0e4d89e88bfbf5caedaa725/> don't allow non-bare repositories to be initialized into non-empty directories.
+ - <csr-id-91baefad02a0d52c745106359da3693d06aace46/> `init_bare()` now creates the destination directory if it doesn't exist.
+ - <csr-id-5c11b84f4e74e3eefdd0f5804976ebfc505e0f2f/> build correct path for `$HOME/.config/…` files.
+   The special per-user `ignore` and `attributes` files can also be
+   defaulted if some environment variables are set and may be accessed.
+   
+   Previously the default for `$HOME` was incorrect, as it was missing the
+   intermediate `.config/` directory. This is now present to build paths
+   exactly like git.
+ - <csr-id-275e80f3d602b63ef91efe31a92b4aafb2eeca44/> ref-map filtering now uses correct prefixes.
+   Previously specs could get filtered out server-side as a matching prefix
+   was entirely missing.
+
+### Changed (BREAKING)
+
+ - <csr-id-449ff066d2b5dd423c639618193dd9e54d03c1f8/> `Repository::branch_remote_name()` returns `reference::remote::Name`.
+   That way it's made clear the remote can also be a URL, while rejecting
+   illformed UTF8. The latter isn't valid for remote names anyway as these
+   only support a very limited character set.
+   
+   Note that this error currently is degenerated, making it appear if the
+   remote name doesn't exists if illformed UTF-8 is found in what appears
+   to be a symbolic ref.
+ - <csr-id-71f15fc46fbaea455cf84a2b4cfe3e680047d790/> be specific about the kind of `diff::Error`, moving it to `diff::for_each::Error`.
+
+### New Features (BREAKING)
+
+ - <csr-id-7413a284eb7754e63ba45d0f526347b9f79b557d/> `Tree::lookup_entry*()` returns attached `Entry` type.
+   That way chaining gets even easier.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-2bece79285e244a7029f9393dafc990e39420e2d/> `create::into(…)` takes `create::Kind` to determine if it's bare or not.
+   First of all, `bare` is not an option anymore, but a parameter as
+   it can't be defaulted.
+   Other public signatures change as well to accomodate for it.
+
+### Other (BREAKING)
+
+ - <csr-id-c6f92c15529ddff7539667b74bafa2348f3040e3/> `DiffPlatform::text()` to `*::lines()`.
+   This is more specific as one could also do character changes in a single
+   line, and it adapts the signature to the new `imra-diff` powered
+   mechanism, for a 2x speed boost.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 112 commits contributed to the release over the course of 27 calendar days.
+ - 27 days passed between releases.
+ - 15 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 12 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - make last test work to allow us to clone properly ([`3890f1a`](https://github.com/Byron/gitoxide/commit/3890f1a804a3f8b3f952a38fffc6e6bd6034164d))
+    - initail implementation of writing branch tracking information ([`e2a5714`](https://github.com/Byron/gitoxide/commit/e2a57146b4399c1447cf219e362deb5c3016a5bc))
+    - adapt to changes in `git-protocol` ([`d61eb2c`](https://github.com/Byron/gitoxide/commit/d61eb2c9f6f2f49ffb903179f793b126471347a5))
+    - Don't deviate by creating strange reflogs (with null-source & null-destination) ([`f1b5570`](https://github.com/Byron/gitoxide/commit/f1b5570629d8963aff961d252a9578277484adee))
+    - Support unborn remotes and pick up their default branch name. ([`619fd61`](https://github.com/Byron/gitoxide/commit/619fd6105b41d31ea5125151f98fae1299b179f5))
+    - adapt to changes in `git-protocol` ([`179ccd7`](https://github.com/Byron/gitoxide/commit/179ccd7d3e7777b7c72bd5e7ab7d045c9c4c1b98))
+    - prepare test for handling the 'unborn' lsrefs extension ([`547e450`](https://github.com/Byron/gitoxide/commit/547e450e6afc4528fc4ab1e422dbe33fdd14b885))
+    - fix: support for proper identification of '.' remote paths in `reference::remote::Name` ([`b219033`](https://github.com/Byron/gitoxide/commit/b219033960026615054f19eb0f643e4701fcc3d0))
+    - `Repository::branch_remote_name()` returns `reference::remote::Name`. ([`449ff06`](https://github.com/Byron/gitoxide/commit/449ff066d2b5dd423c639618193dd9e54d03c1f8))
+    - failing test for us setting up remote information after cloning ([`07efbce`](https://github.com/Byron/gitoxide/commit/07efbce5f2fff21d43c709ec91d445d60a17918c))
+    - update docs ([`c788b51`](https://github.com/Byron/gitoxide/commit/c788b51e73f41c95058c56add378e9b65f342322))
+    - refactor ([`7bd5263`](https://github.com/Byron/gitoxide/commit/7bd5263e3302c7989d599792c45ef2768366582b))
+    - definitely write all non-symbolic refs into packed-refs ([`b62d5b4`](https://github.com/Byron/gitoxide/commit/b62d5b4e6cf1ae6051203ba243e24c03edafcd6b))
+    - auto-pack references when creating them during clone ([`a9a621e`](https://github.com/Byron/gitoxide/commit/a9a621e117e5bbe38368bd6f0cc21db1365b7e18))
+    - refactor ([`728f688`](https://github.com/Byron/gitoxide/commit/728f688f95778f4d3d182f5e9db90ebe93b4f65b))
+    - use `tempfile` via `git-testools` ([`2c9edff`](https://github.com/Byron/gitoxide/commit/2c9edffad34245e6a0d2972cb66c849435caec92))
+    - failing test to show we don't pack refs yet ([`58cc01a`](https://github.com/Byron/gitoxide/commit/58cc01a9075f8f8038f0bc1c6876a85f25ff4712))
+    - sort out last test-case to assure setting symbolic refs is safe ([`d06900d`](https://github.com/Byron/gitoxide/commit/d06900dd2e5782ab1a72dee8f20df5c660ba0d6d))
+    - adjust to changes in `git-ref` ([`669249a`](https://github.com/Byron/gitoxide/commit/669249a88bf1e0074a0e9479688473b79e60db9c))
+    - assure that inital refs are placed into the correct spot ([`3e4c0cb`](https://github.com/Byron/gitoxide/commit/3e4c0cb1b88b7c3a26e24a1b6f68fa9ac5076bcb))
+    - and show that we don't manage to write the reflog for some reason ([`a70a6aa`](https://github.com/Byron/gitoxide/commit/a70a6aa698adedc86a63c28ccebb89c8c67cdfe0))
+    - the first successful test showing that we can write symbolic refs ([`2330305`](https://github.com/Byron/gitoxide/commit/2330305153b467b37956b2d9f1ca211506b96489))
+    - figure out more details on how to handle symbolic refs just enough ([`86a18bd`](https://github.com/Byron/gitoxide/commit/86a18bd3923d6f6e9a84c9b5f54e2456113c7b18))
+    - finally figure out how symbolic ref updates should work ([`376829a`](https://github.com/Byron/gitoxide/commit/376829a4c86ea2c84a35c20b62c78868feb18993))
+    - first step towards supporting writing of symbolic refs locally ([`61cd430`](https://github.com/Byron/gitoxide/commit/61cd4303a2a5818da969266b1490000db31d51e6))
+    - failing test to check for presence of remote HEAD ([`2f649e9`](https://github.com/Byron/gitoxide/commit/2f649e95c988947dca21c4cf0ccacc5d7d9a5406))
+    - thanks clippy ([`767fb7b`](https://github.com/Byron/gitoxide/commit/767fb7b20c922fd8e5477f28adf9de0419d3ac96))
+    - Use correct diff algorithm when diffing text ([`6fe93c2`](https://github.com/Byron/gitoxide/commit/6fe93c2473c6ecb673922344f55d13637092be22))
+    - refactor ([`71c6a20`](https://github.com/Byron/gitoxide/commit/71c6a203eeaf8ec58ab8385d1df73ca2daaea013))
+    - be specific about the kind of `diff::Error`, moving it to `diff::for_each::Error`. ([`71f15fc`](https://github.com/Byron/gitoxide/commit/71f15fc46fbaea455cf84a2b4cfe3e680047d790))
+    - initial support for obtaining the `diff.algorithm` lazily ([`f362ab2`](https://github.com/Byron/gitoxide/commit/f362ab221765c6fab20e9c88bbfda20d6da64216))
+    - refactor ([`af0c28d`](https://github.com/Byron/gitoxide/commit/af0c28d95b51acebd31cf707ee69ed727552d571))
+    - proper reflog entries for all other updated refs during cloning ([`ff4412e`](https://github.com/Byron/gitoxide/commit/ff4412e8580e2e47150dd2ba41a347964128486d))
+    - show that HEAD's referent also has the correct reflog ([`c25cb00`](https://github.com/Byron/gitoxide/commit/c25cb007ea5d8757a08e6579e17ae49f296f16b8))
+    - the first test to prove that HEAD reflogs are correct ([`1e7fd4e`](https://github.com/Byron/gitoxide/commit/1e7fd4e35a3f28bee6ca091f5a9d47fd081670cb))
+    - canonicalize URL right away for it to manifest in the changelog ([`3cfe13d`](https://github.com/Byron/gitoxide/commit/3cfe13d1edb01604772825ee8de6937b97165243))
+    - Query of `core.logAllRefUpdates` is now fallible. ([`072f5bc`](https://github.com/Byron/gitoxide/commit/072f5bc9c91c4c09bd6a73f9d7ac672805cae533))
+    - Fully reload in-memory configuration after configuration changes… ([`bc5b4e7`](https://github.com/Byron/gitoxide/commit/bc5b4e77bc66317b2f5fc49a60f4f9dcd3d46037))
+    - allow to re-read the logallrefupdates config after overrides ([`ff06de4`](https://github.com/Byron/gitoxide/commit/ff06de420661d30ff0a97b4be53dea92e746052e))
+    - re-apply overrides more correctly after clone, however… ([`372e9d4`](https://github.com/Byron/gitoxide/commit/372e9d41bb6a521690c66f8cb989172034500c70))
+    - validate that the remote HEAD branch overrides local init.defaultBranch settings ([`1c3dd3a`](https://github.com/Byron/gitoxide/commit/1c3dd3ae3d2ec599418e96362146064724808db9))
+    - assure stored file urls are absolute ([`5d7a055`](https://github.com/Byron/gitoxide/commit/5d7a05510922148bb7c9fe2fd172fd577684b2a4))
+    - make it possible to clone empty remote repositories ([`e97eeda`](https://github.com/Byron/gitoxide/commit/e97eeda45c9cc0736273c735a9959ac1ff29fc9d))
+    - refactor ([`d29bb62`](https://github.com/Byron/gitoxide/commit/d29bb6215b1a824a1811be8da84816954234f4e4))
+    - test for cloning empty repositories ([`0aa97fe`](https://github.com/Byron/gitoxide/commit/0aa97fea17c9cd08b21e65ff6447527357d10c0c))
+    - checkout returns index checkout result ([`2ef8d53`](https://github.com/Byron/gitoxide/commit/2ef8d53e57dfe0590899c4d3bf9bf777fccd8491))
+    - avoid showing thread progress during clone-pack-resolution ([`056f4dd`](https://github.com/Byron/gitoxide/commit/056f4ddb21f92a098499cadc8711438e9ecae031))
+    - `create::into(…)` takes `create::Kind` to determine if it's bare or not. ([`2bece79`](https://github.com/Byron/gitoxide/commit/2bece79285e244a7029f9393dafc990e39420e2d))
+    - less noisy way of writing trait bounds ([`b593806`](https://github.com/Byron/gitoxide/commit/b593806ca3571d680801130ad528f266d3eab83e))
+    - upgrade to `prodash` v21 ([`a0655dc`](https://github.com/Byron/gitoxide/commit/a0655dc7bc5dff388bc69a648e7f16b44fd1abd9))
+    - don't allow non-bare repositories to be initialized into non-empty directories. ([`f869b22`](https://github.com/Byron/gitoxide/commit/f869b224170b0c49a0e4d89e88bfbf5caedaa725))
+    - assure the reflog settings aren't permanently overidden during init/fetch ([`bc5e3e4`](https://github.com/Byron/gitoxide/commit/bc5e3e4c00daf37491d48ad2e575f58065b00966))
+    - Make it possible to ignore specs that don't match when iterating mappings. ([`bc991ff`](https://github.com/Byron/gitoxide/commit/bc991ff5b7a1c6c1b107da3b61b955e583923658))
+    - `init_bare()` now creates the destination directory if it doesn't exist. ([`91baefa`](https://github.com/Byron/gitoxide/commit/91baefad02a0d52c745106359da3693d06aace46))
+    - first rough sketch of `gix clone` ([`23a5e8b`](https://github.com/Byron/gitoxide/commit/23a5e8b658c5642c3f3060e013fd0eab06cbf027))
+    - the first working checkout as per simple simple test ([`9ce28ac`](https://github.com/Byron/gitoxide/commit/9ce28ac3342a65afb96c006d7d2fa70fae80c2dc))
+    - finally perform actual checkout, but test fails without clear reason ([`3821b4f`](https://github.com/Byron/gitoxide/commit/3821b4fb2d22e7b447ca3c11ae1ba9c6897916cd))
+    - prepare attribute-group setup as far as possible. ([`f5e2eeb`](https://github.com/Byron/gitoxide/commit/f5e2eebe9560f664f044b82ffa0cd19fd0df311f))
+    - build correct path for `$HOME/.config/…` files. ([`5c11b84`](https://github.com/Byron/gitoxide/commit/5c11b84f4e74e3eefdd0f5804976ebfc505e0f2f))
+    - sketch access to the attributes file, realize that there is an issue to be fixed first ([`0081e2f`](https://github.com/Byron/gitoxide/commit/0081e2f62185ee874b4e6927afbf33fe5ca37c46))
+    - refactor ([`28de9df`](https://github.com/Byron/gitoxide/commit/28de9dfd859376fd72bf3a0446bfa3457acf88f2))
+    - read core.checkstat to configure the checkout as well ([`05a666c`](https://github.com/Byron/gitoxide/commit/05a666c50e270c30d47fe5bfc3195a4fd1f1aea8))
+    - refactor ([`2f1c9dc`](https://github.com/Byron/gitoxide/commit/2f1c9dc3ea707e726d1820ec720b70e0d652b797))
+    - don't be lenient towards paths that can't be interpolated in case of excludes file ([`3df7788`](https://github.com/Byron/gitoxide/commit/3df7788632871072c4eaa944e93a83040c00f74f))
+    - collect all filesystem attributes affecting checkout ([`91b360f`](https://github.com/Byron/gitoxide/commit/91b360f08ee53497441b53491e8629f102c9a80c))
+    - prepare to move checkout_options into `config` ([`e731757`](https://github.com/Byron/gitoxide/commit/e731757f85f87f5468ccc6870f5f9af3b7771753))
+    - Use `core.askpass` when building the credential helper. ([`8b9fbd4`](https://github.com/Byron/gitoxide/commit/8b9fbd4e9ed7be37976c7203cd9a89c6116a6d3d))
+    - obtain worker count from configuration; prep for more options ([`d947d8b`](https://github.com/Byron/gitoxide/commit/d947d8be1f00f2b16d6648389a9ead85f4885d3e))
+    - write index from root tree and get ready for checkout ([`485a252`](https://github.com/Byron/gitoxide/commit/485a252b7398b2c77450ff05c91a5d4f8d3c538a))
+    - prepare checkout, but needs to be able to create an index from a tree ([`e462bd5`](https://github.com/Byron/gitoxide/commit/e462bd51c0af77cd06b56f189755cc4fa5154139))
+    - also update the HEAD reference after a fetch ([`e561021`](https://github.com/Byron/gitoxide/commit/e561021e3332edb12cabbc2b556adf32522e6808))
+    - ref-map filtering now uses correct prefixes. ([`275e80f`](https://github.com/Byron/gitoxide/commit/275e80f3d602b63ef91efe31a92b4aafb2eeca44))
+    - prepare for handling the server object-format correctly. ([`54c91eb`](https://github.com/Byron/gitoxide/commit/54c91eb66467c0925004ab87a815cbe504542c93))
+    - a sketch to check and update the object format upon cloning. ([`ebfd7d6`](https://github.com/Byron/gitoxide/commit/ebfd7d6941c864e880a73bf2dd6298365825d3e1))
+    - refactor ([`36c5ca9`](https://github.com/Byron/gitoxide/commit/36c5ca9e921571f47476a5c26986dcc297b589d0))
+    - `remote::fetch::Prepare::handshake_outcome()` to obtain server information right after listing refs. ([`a9d1449`](https://github.com/Byron/gitoxide/commit/a9d14492322785a14f4ecb5b0d3dbdc87e56f8c5))
+    - refactor ([`992522a`](https://github.com/Byron/gitoxide/commit/992522ad698781eae69b7442c39fa8190159d95a))
+    - `open::Options::config_overrides()` for early configuration; support for `init.defaultBranch`. ([`0b5c53e`](https://github.com/Byron/gitoxide/commit/0b5c53ec43bdb58b2b7cf46e453ddf858770a95a))
+ * **Uncategorized**
+    - Merge branch 'main' into write-sparse-index (upgrade to Rust 1.65) ([`5406630`](https://github.com/Byron/gitoxide/commit/5406630466145990b5adbdadb59151036993060d))
+    - fix tests on windows ([`f2a8a45`](https://github.com/Byron/gitoxide/commit/f2a8a45be80c4d12b1e0e8d8401bce7ff0be5959))
+    - thanks clippy ([`04cfa63`](https://github.com/Byron/gitoxide/commit/04cfa635a65ae34ad6d22391f2febd2ca7eabca9))
+    - Merge branch 'main' into write-sparse-index ([`c4e6849`](https://github.com/Byron/gitoxide/commit/c4e68496c368611ebe17c6693d06c8147c28c717))
+    - make fmt ([`ea2136b`](https://github.com/Byron/gitoxide/commit/ea2136b065979cecb3a1fdbf7b20ed7514128d9a))
+    - Merge branch 'gix-clone' ([`def53b3`](https://github.com/Byron/gitoxide/commit/def53b36c3dec26fa78939ab0584fe4ff930909c))
+    - thanks clippy ([`3495c56`](https://github.com/Byron/gitoxide/commit/3495c561841a76686e7a2b363feeab9f6e4bc301))
+    - fix build and docs ([`971fe0c`](https://github.com/Byron/gitoxide/commit/971fe0cb437cb1dcd470574d7b7338f0dabd09ac))
+    - diff algorithm is controlled by git configuration `diff.algorithm` ([`b1edb9e`](https://github.com/Byron/gitoxide/commit/b1edb9e3537df86669714f03666f4a88e0ac3709))
+    - Merge branch 'main' into gix-clone ([`fa27570`](https://github.com/Byron/gitoxide/commit/fa27570f491388cce6137af44330d76870d07202))
+    - Merge branch 'imra-diff' ([`f53f942`](https://github.com/Byron/gitoxide/commit/f53f9426f206686b30abd73a201a92b1405e782d))
+    - fix docs ([`7d5fb3c`](https://github.com/Byron/gitoxide/commit/7d5fb3c6a0aa6fd696f95912b28b4b007ad1b825))
+    - thanks clippy ([`24254a4`](https://github.com/Byron/gitoxide/commit/24254a46961c002a3e9792211541a08c41415ac2))
+    - `DiffPlatform::text()` to `*::lines()`. ([`c6f92c1`](https://github.com/Byron/gitoxide/commit/c6f92c15529ddff7539667b74bafa2348f3040e3))
+    - thanks clippy ([`d2f56df`](https://github.com/Byron/gitoxide/commit/d2f56df5405f6c27ebf7d51f33381f2c548433fb))
+    - Merge branch 'main' into gix-clone ([`3b48317`](https://github.com/Byron/gitoxide/commit/3b48317d6a9f41765d4f2a9f0a49c31afcdb68b6))
+    - thanks clippy ([`93e7691`](https://github.com/Byron/gitoxide/commit/93e7691be421e40cc72e3e2e0506584a2fbd4857))
+    - automatically handle `.keep` files after writing a pack bundle to disk. ([`2eaf69e`](https://github.com/Byron/gitoxide/commit/2eaf69e5f8f8da10e5af85cb9f0c39577ad1707f))
+    - thanks clippy ([`6f8356c`](https://github.com/Byron/gitoxide/commit/6f8356ca12676a9d7045ed28fb4a558f81281caa))
+    - thanks clippy ([`700cc2d`](https://github.com/Byron/gitoxide/commit/700cc2decb4388d165ac799c88c3a18b062ff58a))
+    - thanks clippy ([`73b6ec0`](https://github.com/Byron/gitoxide/commit/73b6ec0882b3ae9934f49c4c2bb645b54fa26607))
+    - thanks clippy ([`f22bdc0`](https://github.com/Byron/gitoxide/commit/f22bdc0360f61460f21eeb212f475ed8724018a8))
+    - Merge branch 'main' into gix-clone ([`de4fe06`](https://github.com/Byron/gitoxide/commit/de4fe06202906ea5c62e667826b42cf7b57b1ff0))
+    - thanks clippy ([`6ac6580`](https://github.com/Byron/gitoxide/commit/6ac65806202d8cf23c43da706482647fba0a1ce9))
+    - thanks clippy ([`c6e7663`](https://github.com/Byron/gitoxide/commit/c6e7663c1b53e0794a19d6e431e9db2ce5fa4cbc))
+    - Mark the upcoming usage of init.defaultBranch. ([`6225f35`](https://github.com/Byron/gitoxide/commit/6225f35398bc494ad74da342c4ebbe0487b106f8))
+    - realize that we don't know hot to set HEAD correctly just yet ([`11d636c`](https://github.com/Byron/gitoxide/commit/11d636cd3c5478b37a10619644e0cff8923949c4))
+    - Merge branch 'fix-gix-index-from-tree' ([`da5f63c`](https://github.com/Byron/gitoxide/commit/da5f63cbc7506990f46d310f8064678decb86928))
+    - adjust to changes in `git-index` ([`fa6bcde`](https://github.com/Byron/gitoxide/commit/fa6bcde735792fa10b66dfc7f81588bb68dcf46f))
+    - fix docs ([`34b3e03`](https://github.com/Byron/gitoxide/commit/34b3e03a197fd27c2d7b8e5d88c3b5dc627cbca4))
+    - sketch of method to checkout the main worktree ([`a88d5a3`](https://github.com/Byron/gitoxide/commit/a88d5a35d683e1da0bacaef54350d5e8047cb8f7))
+    - finish sketch of `fetch_and_checkout()` ([`e39a9d5`](https://github.com/Byron/gitoxide/commit/e39a9d59654633736d9933064da9d9e2833892eb))
+    - sketch checkout API and refactor ([`9145a32`](https://github.com/Byron/gitoxide/commit/9145a32c1f59d3cb1644b7028f1f7504761d7419))
+    - `Tree::lookup_entry*()` returns attached `Entry` type. ([`7413a28`](https://github.com/Byron/gitoxide/commit/7413a284eb7754e63ba45d0f526347b9f79b557d))
+</details>
+
 ## 0.25.0 (2022-10-10)
 
 <csr-id-5bef0a00e8d01110c054a517f6d9696f981a7efc/>
@@ -46,7 +251,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 128 commits contributed to the release over the course of 20 calendar days.
+ - 129 commits contributed to the release over the course of 20 calendar days.
  - 20 days passed between releases.
  - 11 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -145,6 +350,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Allow to turn remote-filtering off. ([`38373bc`](https://github.com/Byron/gitoxide/commit/38373bc61c938d58a9d6ed1feae86ccf36fde67d))
     - `Remote::rem_map()` now specifies ref-prefixes to the remote. ([`25f0640`](https://github.com/Byron/gitoxide/commit/25f06400c49ddd1688fd76f9285542b121b223b4))
  * **Uncategorized**
+    - Release git-hash v0.9.11, git-features v0.23.0, git-actor v0.13.0, git-attributes v0.5.0, git-object v0.22.0, git-ref v0.17.0, git-sec v0.4.1, git-config v0.9.0, git-url v0.10.0, git-credentials v0.6.0, git-diff v0.20.0, git-discover v0.6.0, git-traverse v0.18.0, git-index v0.6.0, git-mailmap v0.5.0, git-pack v0.24.0, git-odb v0.34.0, git-packetline v0.13.1, git-transport v0.21.0, git-protocol v0.21.0, git-revision v0.6.0, git-refspec v0.3.0, git-worktree v0.6.0, git-repository v0.25.0, safety bump 24 crates ([`104d922`](https://github.com/Byron/gitoxide/commit/104d922add61ab21c534c24ce8ed37cddf3e275a))
     - prepare changelogs for release ([`d232567`](https://github.com/Byron/gitoxide/commit/d23256701a95284857dc8d1cb37c7c94cada973c))
     - Merge branch 'fix-smart-release' ([`aa80b60`](https://github.com/Byron/gitoxide/commit/aa80b606e5570f327660cca42ea81581a6e9d5e3))
     - make fmt ([`7b9c065`](https://github.com/Byron/gitoxide/commit/7b9c06547b75929e3e5bf4240f43c7e9bc7d54e0))
@@ -506,7 +712,7 @@ A maintenance release without user facing changes.
 
  - 3 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -640,7 +846,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
  - 4 commits contributed to the release.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1152,7 +1358,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
  - 12 commits contributed to the release over the course of 18 calendar days.
  - 20 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1188,7 +1394,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
  - 2 commits contributed to the release.
  - 1 day passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1216,7 +1422,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
  - 8 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -2320,7 +2526,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 6 commits contributed to the release.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -2366,7 +2572,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 7 commits contributed to the release.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -2393,7 +2599,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 67 commits contributed to the release over the course of 8 calendar days.
  - 9 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -2482,7 +2688,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 2 commits contributed to the release.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -2507,7 +2713,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 116 commits contributed to the release over the course of 10 calendar days.
  - 10 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -2649,7 +2855,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 20 commits contributed to the release over the course of 1 calendar day.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -2695,7 +2901,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 19 commits contributed to the release over the course of 2 calendar days.
  - 2 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -2734,7 +2940,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 40 commits contributed to the release over the course of 63 calendar days.
  - 74 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -2800,7 +3006,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 31 commits contributed to the release.
  - 49 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -2851,7 +3057,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 10 commits contributed to the release over the course of 204 calendar days.
  - 208 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -2881,7 +3087,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 2 commits contributed to the release over the course of 28 calendar days.
  - 30 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -2903,7 +3109,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 5 commits contributed to the release over the course of 31 calendar days.
  - 31 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -2927,7 +3133,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
  - 5 commits contributed to the release over the course of 17 calendar days.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 

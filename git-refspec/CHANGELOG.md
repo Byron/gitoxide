@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-21b21b6c25e1d8d1da9464b7bef06a795f679210/> add `RefSpecRef::expand_prefix()` method to avoid missing prefixes.
+   The current implementation might cause refspecs to end up ignored as
+   they don't have a prefix, and in protocol V2 it would then fail
+   to add a ref-spec filter which causes them to be missed.
+   
+   With `expand_prefix()`, we assure that there are all possible prefixes
+   that can contain partial names, similar to what git does.
+
+### Bug Fixes
+
+ - <csr-id-d53ddcde948cfbd7773eb830cbb636626b32debb/> `HEAD` may now return itself as prefix in `RefSpecRef::prefix()` and `expanded_prefix()`.
+   Previously, the expanded prefix would be a list of possibilities, even
+   though it's such a common case that we really want to avoid spamming the
+   remote about it when asking for HEAD during clone for instance.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release over the course of 24 calendar days.
+ - 27 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#571](https://github.com/Byron/gitoxide/issues/571)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - improve docs for `Instruction` ([`911f68f`](https://github.com/Byron/gitoxide/commit/911f68fe099e3eac7dd4a0f15fcd682657564389))
+    - `HEAD` may now return itself as prefix in `RefSpecRef::prefix()` and `expanded_prefix()`. ([`d53ddcd`](https://github.com/Byron/gitoxide/commit/d53ddcde948cfbd7773eb830cbb636626b32debb))
+    - fix docs ([`9d0f31e`](https://github.com/Byron/gitoxide/commit/9d0f31e4bea4b47f1a91fa4dc38f592bdbf976a8))
+    - add `RefSpecRef::expand_prefix()` method to avoid missing prefixes. ([`21b21b6`](https://github.com/Byron/gitoxide/commit/21b21b6c25e1d8d1da9464b7bef06a795f679210))
+ * **[#571](https://github.com/Byron/gitoxide/issues/571)**
+    - refactor ([`ef7467c`](https://github.com/Byron/gitoxide/commit/ef7467cd61762dc4206fa82e66adc287ba2f7f52))
+    - assure sub-branches can be matched correctly ([`c9383c6`](https://github.com/Byron/gitoxide/commit/c9383c693e0b3c506c9b1c42f339f40c1145f998))
+ * **Uncategorized**
+    - Merge branch 'main' into write-sparse-index ([`c4e6849`](https://github.com/Byron/gitoxide/commit/c4e68496c368611ebe17c6693d06c8147c28c717))
+    - Merge branch 'gix-clone' ([`def53b3`](https://github.com/Byron/gitoxide/commit/def53b36c3dec26fa78939ab0584fe4ff930909c))
+    - Merge branch 'main' into gix-clone ([`91bf67a`](https://github.com/Byron/gitoxide/commit/91bf67af9751d1e6beb78fb77b40f05352b98215))
+    - Merge branch 'fix-571' ([`2514334`](https://github.com/Byron/gitoxide/commit/2514334c17f543e3e18ac43261990ad412b7c7ae))
+</details>
+
 ## 0.3.0 (2022-10-10)
 
 ### New Features
@@ -26,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release over the course of 20 calendar days.
+ - 12 commits contributed to the release over the course of 20 calendar days.
  - 20 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -41,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `RefSpec::allow_non_fast_forward()` to get information about 'force' quickly. ([`d7f63a6`](https://github.com/Byron/gitoxide/commit/d7f63a6c60a826dc862bd13adbef041e4ac6d8ab))
     - `RefSpecRef` instruction uses the correct lifetime. ([`278ff7a`](https://github.com/Byron/gitoxide/commit/278ff7a6ee084ea864193a5ca25b6cd0f18e19a0))
  * **Uncategorized**
+    - Release git-hash v0.9.11, git-features v0.23.0, git-actor v0.13.0, git-attributes v0.5.0, git-object v0.22.0, git-ref v0.17.0, git-sec v0.4.1, git-config v0.9.0, git-url v0.10.0, git-credentials v0.6.0, git-diff v0.20.0, git-discover v0.6.0, git-traverse v0.18.0, git-index v0.6.0, git-mailmap v0.5.0, git-pack v0.24.0, git-odb v0.34.0, git-packetline v0.13.1, git-transport v0.21.0, git-protocol v0.21.0, git-revision v0.6.0, git-refspec v0.3.0, git-worktree v0.6.0, git-repository v0.25.0, safety bump 24 crates ([`104d922`](https://github.com/Byron/gitoxide/commit/104d922add61ab21c534c24ce8ed37cddf3e275a))
     - prepare changelogs for release ([`d232567`](https://github.com/Byron/gitoxide/commit/d23256701a95284857dc8d1cb37c7c94cada973c))
     - Merge branch 'clone' ([`507dc7e`](https://github.com/Byron/gitoxide/commit/507dc7e706cb3c9d89d048b3aff5df239a9b6788))
     - remove lifetime of `match_group::Fix`, keeping `RefSpec` instances instead ([`2a0a87a`](https://github.com/Byron/gitoxide/commit/2a0a87a04e7b4d6ed3be3d8adc89917576727686))

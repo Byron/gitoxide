@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-375051fa97d79f95fa7179b536e616c4aefd88e2/> Allow `client::connect()` to function with `http-client-reqwest` enabled.
+ - <csr-id-4b5d6dfb58f325bba692e1e32636c24ba058022f/> `client::Capabilities` lifetimes now point to `'a` instead of `'self`.
+   This generally makes returned values longer, and as long as one would
+   expect.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 24 commits contributed to the release over the course of 24 calendar days.
+ - 27 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - `client::Capabilities` lifetimes now point to `'a` instead of `'self`. ([`4b5d6df`](https://github.com/Byron/gitoxide/commit/4b5d6dfb58f325bba692e1e32636c24ba058022f))
+ * **Uncategorized**
+    - Merge branch 'git_protocol_host' ([`d13c590`](https://github.com/Byron/gitoxide/commit/d13c59070ae6f1661dd6fee056cef1ff75c89222))
+    - Avoid invalid invocations of `git` by removing `GIT_CONFIG_COUNT` ([`aa315b4`](https://github.com/Byron/gitoxide/commit/aa315b4a136bec57a1cce4b245c606904adc5c12))
+    - fix connections over the git:// protocol not specifying the host ([`8f985d4`](https://github.com/Byron/gitoxide/commit/8f985d44c71a4434c4cf4ae0e360480bc3694a47))
+    - Merge branch 'main' into write-sparse-index ([`c4e6849`](https://github.com/Byron/gitoxide/commit/c4e68496c368611ebe17c6693d06c8147c28c717))
+    - make fmt ([`ea2136b`](https://github.com/Byron/gitoxide/commit/ea2136b065979cecb3a1fdbf7b20ed7514128d9a))
+    - Merge branch 'gix-clone' ([`def53b3`](https://github.com/Byron/gitoxide/commit/def53b36c3dec26fa78939ab0584fe4ff930909c))
+    - Merge branch 'main' into gix-clone ([`fa27570`](https://github.com/Byron/gitoxide/commit/fa27570f491388cce6137af44330d76870d07202))
+    - Merge branch 'main' into write-sparse-index ([`70963f5`](https://github.com/Byron/gitoxide/commit/70963f5d8e3b59ce6fe8bcc1844218ac717f3390))
+    - Merge branch 'paulyoung/reqwest-body' ([`c9c1658`](https://github.com/Byron/gitoxide/commit/c9c1658d6afa6edca60d8072a23c7f4899891af1))
+    - Merge branch 'main' into gix-clone ([`64f81d7`](https://github.com/Byron/gitoxide/commit/64f81d78ae75a0e5914f431bbdc385a6d40f8835))
+    - Ensure body can be read before configure_request ([`9065a88`](https://github.com/Byron/gitoxide/commit/9065a8824ea80891c4c06ea28e0780e5517a353d))
+    - Merge branch 'paulyoung/reqwest-configuration' ([`93f2dd8`](https://github.com/Byron/gitoxide/commit/93f2dd8f7db87afc04a523458faaa46f9b33f21a))
+    - turn unwrap into an explicit expectation ([`57d9078`](https://github.com/Byron/gitoxide/commit/57d90783edbb20f9c7fac782e9cb90943d4941d7))
+    - Allow `configure_request` to return an error as well. ([`f5e14c3`](https://github.com/Byron/gitoxide/commit/f5e14c3aead5776962c380852e93352364d637e8))
+    - remove unused field ([`8a0a5d6`](https://github.com/Byron/gitoxide/commit/8a0a5d6262cc51874fa1d35e40b901333945117c))
+    - Configure Request instead of ClientBuilder ([`0885e6e`](https://github.com/Byron/gitoxide/commit/0885e6e5882a133a55d43fc453056564752028ad))
+    - Resolve issues with configure function ([`9124583`](https://github.com/Byron/gitoxide/commit/9124583ebaa650e0344598b277a5b529827776c7))
+    - Sketch out configuring a reqwest client builder ([`74573df`](https://github.com/Byron/gitoxide/commit/74573dfa0c40e4ad3515e680e5699aa760cac38d))
+    - Merge branch 'main' into gix-clone ([`de4fe06`](https://github.com/Byron/gitoxide/commit/de4fe06202906ea5c62e667826b42cf7b57b1ff0))
+    - Allow `client::connect()` to function with `http-client-reqwest` enabled. ([`375051f`](https://github.com/Byron/gitoxide/commit/375051fa97d79f95fa7179b536e616c4aefd88e2))
+    - refactor ([`d3c6ae1`](https://github.com/Byron/gitoxide/commit/d3c6ae1fa9e1d6a57f32b5831411707fc4cf962e))
+    - fix formatting ([`a962eb5`](https://github.com/Byron/gitoxide/commit/a962eb5c263de3730b464a0e89615a04caac11e4))
+    - Fix "http not compiled in" w/ http-client-reqwest ([`dff418d`](https://github.com/Byron/gitoxide/commit/dff418dcf2a970929a61c5eea9b4712437582fbc))
+</details>
+
 ## 0.21.0 (2022-10-10)
 
 <csr-id-5bef0a00e8d01110c054a517f6d9696f981a7efc/>
@@ -61,7 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 42 commits contributed to the release over the course of 20 calendar days.
+ - 43 commits contributed to the release over the course of 20 calendar days.
  - 20 days passed between releases.
  - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -82,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Revert "FAIL: try to make the transport configurable after being boxed, but…" ([`fbb96e4`](https://github.com/Byron/gitoxide/commit/fbb96e4d55e322243bf5500605f72e93b103e308))
     - try to make the transport configurable after being boxed, but… ([`5bef0a0`](https://github.com/Byron/gitoxide/commit/5bef0a00e8d01110c054a517f6d9696f981a7efc))
  * **Uncategorized**
+    - Release git-hash v0.9.11, git-features v0.23.0, git-actor v0.13.0, git-attributes v0.5.0, git-object v0.22.0, git-ref v0.17.0, git-sec v0.4.1, git-config v0.9.0, git-url v0.10.0, git-credentials v0.6.0, git-diff v0.20.0, git-discover v0.6.0, git-traverse v0.18.0, git-index v0.6.0, git-mailmap v0.5.0, git-pack v0.24.0, git-odb v0.34.0, git-packetline v0.13.1, git-transport v0.21.0, git-protocol v0.21.0, git-revision v0.6.0, git-refspec v0.3.0, git-worktree v0.6.0, git-repository v0.25.0, safety bump 24 crates ([`104d922`](https://github.com/Byron/gitoxide/commit/104d922add61ab21c534c24ce8ed37cddf3e275a))
     - prepare changelogs for release ([`d232567`](https://github.com/Byron/gitoxide/commit/d23256701a95284857dc8d1cb37c7c94cada973c))
     - Merge branch 'fix-smart-release' ([`aa80b60`](https://github.com/Byron/gitoxide/commit/aa80b606e5570f327660cca42ea81581a6e9d5e3))
     - make fmt ([`7b9c065`](https://github.com/Byron/gitoxide/commit/7b9c06547b75929e3e5bf4240f43c7e9bc7d54e0))
@@ -307,7 +360,7 @@ This is a maintenance release with no functional changes.
  - 9 commits contributed to the release over the course of 33 calendar days.
  - 39 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -344,7 +397,7 @@ A maintenance release without user-facing changes.
  - 4 commits contributed to the release over the course of 25 calendar days.
  - 25 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -476,7 +529,7 @@ A maintenance release, triggered by putting too many adjustments into a single c
  - 3 commits contributed to the release.
  - 12 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -610,7 +663,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 2 commits contributed to the release.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -632,7 +685,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 5 commits contributed to the release.
  - 10 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -657,7 +710,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 2 commits contributed to the release over the course of 1 calendar day.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -679,7 +732,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 11 commits contributed to the release over the course of 1 calendar day.
  - 2 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -716,7 +769,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 115 commits contributed to the release over the course of 90 calendar days.
  - 93 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -857,7 +910,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 6 commits contributed to the release over the course of 21 calendar days.
  - 30 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -883,7 +936,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 2 commits contributed to the release.
  - 13 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -905,7 +958,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 8 commits contributed to the release over the course of 70 calendar days.
  - 79 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -939,7 +992,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 7 commits contributed to the release over the course of 7 calendar days.
  - 20 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -971,7 +1024,7 @@ A maintenance release due to properly dealing with previously breaking changes i
 
  - 2 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -992,7 +1045,7 @@ A maintenance release due to properly dealing with previously breaking changes i
 
  - 3 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1015,7 +1068,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 12 commits contributed to the release over the course of 90 calendar days.
  - 92 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1053,7 +1106,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 2 commits contributed to the release.
  - 2 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1075,7 +1128,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  - 189 commits contributed to the release over the course of 28 calendar days.
  - 62 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1289,7 +1342,7 @@ A maintenance release due to properly dealing with previously breaking changes i
 
  - 5 commits contributed to the release over the course of 17 calendar days.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 

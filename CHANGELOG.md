@@ -5,6 +5,130 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-e973dfeaf17ca63385496202e9fdcdd912e20f42/> `gix remote ref-map --show-unmapped-remote-refs`.
+   That way it's more obvious to see what was filtered out by ref-specs.
+   
+   It's also great to validate that server-side filtering via ref-prefix
+   will not send refs that are referred to by symbolic refs that are
+   not filtered out. That should be fine as it's all about objects,
+   it's just something to deal with as we may have to deal with symbolic
+   refs that aren't in the set of refs the server sent to us.
+ - <csr-id-b1edb9e3537df86669714f03666f4a88e0ac3709/> diff algorithm is controlled by git configuration `diff.algorithm`
+ - <csr-id-20259da4ddf9fabfb2d2bd4e2274c0ed42bdb0e5/> `ein t hours` allows to specify the amount of worker threads.
+
+### Bug Fixes
+
+ - <csr-id-3a053284cfefe27873dcc5b4f74d63a560bb5d41/> collect `stderr` and print it afterwards to avoid intersection with line progress.
+   Previously it would happen that stderr would be printed directly and mix
+   with the line progress (as in `-v`) which also prints to stderr.
+   
+   Now errors are collected and output at the end once the line renderer
+   was already shutdown.
+
+### Changed (BREAKING)
+
+ - <csr-id-3a0fb1b45c757add49677450836c0aaf6179a2b5/> remote `lock_mode` from all methods dealing with reference edits.
+   It is now read from `core.filesRefLockTimeout` accordingly.
+
+### New Features (BREAKING)
+
+ - <csr-id-92bbe335688e4c8e96061663e71a599022f7b96f/> remove `gix remote --url` in favor of determining the intention similar to `git fetch`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 65 commits contributed to the release over the course of 47 calendar days.
+ - 47 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#536](https://github.com/Byron/gitoxide/issues/536)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - keep track of several branch related keys ([`443a75a`](https://github.com/Byron/gitoxide/commit/443a75a6098968995bed644c84ed8ce9d8ed0c34))
+    - `gix remote ref-map --show-unmapped-remote-refs`. ([`e973dfe`](https://github.com/Byron/gitoxide/commit/e973dfeaf17ca63385496202e9fdcdd912e20f42))
+    - update progress as we now respect `diff.algorithm` ([`30d32e7`](https://github.com/Byron/gitoxide/commit/30d32e7255986e6e7ec92d55c86b747d7486e183))
+    - apply configuration overrides to newborn repo during clone ([`c8ef759`](https://github.com/Byron/gitoxide/commit/c8ef759923a3c980b5a23c868f38804eccbc0fbc))
+    - collect `stderr` and print it afterwards to avoid intersection with line progress. ([`3a05328`](https://github.com/Byron/gitoxide/commit/3a053284cfefe27873dcc5b4f74d63a560bb5d41))
+    - reduce verbosity of `clone` and print once entire clone is done ([`9a476df`](https://github.com/Byron/gitoxide/commit/9a476df519bccfc6bcda8bd02aa4c1573a2691e7))
+    - first rough sketch of `gix clone` ([`23a5e8b`](https://github.com/Byron/gitoxide/commit/23a5e8b658c5642c3f3060e013fd0eab06cbf027))
+    - progress totals (planned, devitaion) ([`63947ae`](https://github.com/Byron/gitoxide/commit/63947ae77ecb5952d7b5da5c6695f002bb7a7c4c))
+    - prepare attribute-group setup as far as possible. ([`f5e2eeb`](https://github.com/Byron/gitoxide/commit/f5e2eebe9560f664f044b82ffa0cd19fd0df311f))
+    - update usage of `core.checkState` ([`8b2aba1`](https://github.com/Byron/gitoxide/commit/8b2aba1d2baf42a3578ee8c9ce89dbe29d4d3f4c))
+    - update progress based on filesystem config usage ([`de13c66`](https://github.com/Byron/gitoxide/commit/de13c66ade29635ff585241fec2783cf972dd5c3))
+    - inform about even more keys in `gix progress` ([`0e9bd41`](https://github.com/Byron/gitoxide/commit/0e9bd4133fe33382d6d8c42ca1280601582a1a17))
+    - plan more core filesystem attributes ([`d10a82e`](https://github.com/Byron/gitoxide/commit/d10a82e86a461e72b9e5339a180f8adb34721e3e))
+    - update `init.defaultBranch` - now used by custom initialization. ([`4d6d7bb`](https://github.com/Byron/gitoxide/commit/4d6d7bbf5c3d8159535e5756da082ca493e9a66a))
+    - support for handshake information in `gix fetch` ([`c47dcc6`](https://github.com/Byron/gitoxide/commit/c47dcc69e54c635650b540c590131dbe7d32d05b))
+    - fix build ([`d034882`](https://github.com/Byron/gitoxide/commit/d03488211ec5bd186f6d274c55cd96cfd9d119d5))
+    - remove `gix remote --url` in favor of determining the intention similar to `git fetch` ([`92bbe33`](https://github.com/Byron/gitoxide/commit/92bbe335688e4c8e96061663e71a599022f7b96f))
+    - support for `--url` for arbitrary urls when fetching ([`8c7351c`](https://github.com/Byron/gitoxide/commit/8c7351c4c50517b3ccc3479f2a7a020bc607bf24))
+    - Frame for `gix fetch` ([`5b72d27`](https://github.com/Byron/gitoxide/commit/5b72d2708889dc388facd9cbc61e5bfa5403e003))
+    - update progress information to include packedRefsTimeout ([`fd18320`](https://github.com/Byron/gitoxide/commit/fd18320561e05431796aa4044c0a2b0605c9ca9d))
+    - remote `lock_mode` from all methods dealing with reference edits. ([`3a0fb1b`](https://github.com/Byron/gitoxide/commit/3a0fb1b45c757add49677450836c0aaf6179a2b5))
+    - add information about planned lock timeout support (from configuration) ([`7076891`](https://github.com/Byron/gitoxide/commit/7076891fb1b44cd442928f7e56f53f4b085e7a11))
+    - Add remotes.<group> as planned feature for remotes ([`3c188b2`](https://github.com/Byron/gitoxide/commit/3c188b2253bfb6d47394718425eef2d1a0547949))
+    - slightly nicer styling of config keys ([`eade88f`](https://github.com/Byron/gitoxide/commit/eade88f8ebc638f504881e8bbbd60d42a5a3d9be))
+    - complete listing of records based on current usage, probably ([`6abd5a4`](https://github.com/Byron/gitoxide/commit/6abd5a4e1daaf91fd109acb714057a82f67fa076))
+    - add more records ([`5c0d0ab`](https://github.com/Byron/gitoxide/commit/5c0d0ab66d46a8d093ca0b5451996099a27ef1dd))
+    - Add tabled for nicer printing ([`65e6496`](https://github.com/Byron/gitoxide/commit/65e64964c7cd151e53e5a7d4b9ba8fabda1c0e16))
+    - refactor ([`b42b08a`](https://github.com/Byron/gitoxide/commit/b42b08afafd904ff2adb1f00688437357532193a))
+    - add support for more types of configurations ([`317e02a`](https://github.com/Byron/gitoxide/commit/317e02a5900189ec7f9f3c2bb27d5696178d7869))
+    - A very first version of `gix progress show` ([`92e082a`](https://github.com/Byron/gitoxide/commit/92e082a288cf5e48caa205a4c7bd1ced025fea46))
+ * **[#536](https://github.com/Byron/gitoxide/issues/536)**
+    - `ein t hours` allows to specify the amount of worker threads. ([`20259da`](https://github.com/Byron/gitoxide/commit/20259da4ddf9fabfb2d2bd4e2274c0ed42bdb0e5))
+ * **Uncategorized**
+    - Merge branch 'write-sparse-index' ([`ba17db0`](https://github.com/Byron/gitoxide/commit/ba17db03e4e832db724ab3e08e3df05eb61dd401))
+    - plan `index.version` for when we can write V4 indices. ([`da96d34`](https://github.com/Byron/gitoxide/commit/da96d34bd609776f3c8590171ddbf894f2205ae5))
+    - notes about the split-index extension. ([`ad44982`](https://github.com/Byron/gitoxide/commit/ad449822c952a7ed5e6124216e7d7668f0f5873f))
+    - take note of additional options for promisor packs and partial clone filters ([`1ec27f8`](https://github.com/Byron/gitoxide/commit/1ec27f86113aa45a1540441a21152988b3911015))
+    - make note of `extension.worktreeConfig` ([`fe1e646`](https://github.com/Byron/gitoxide/commit/fe1e6467296ff93c23fe191ed5a265348ce930dc))
+    - Merge branch 'main' into write-sparse-index ([`c4e6849`](https://github.com/Byron/gitoxide/commit/c4e68496c368611ebe17c6693d06c8147c28c717))
+    - add `init.templateDir` to `gix progress` ([`9fab050`](https://github.com/Byron/gitoxide/commit/9fab0501f5017e43132138579238a46726a7348f))
+    - make fmt ([`ea2136b`](https://github.com/Byron/gitoxide/commit/ea2136b065979cecb3a1fdbf7b20ed7514128d9a))
+    - Merge branch 'gix-clone' ([`def53b3`](https://github.com/Byron/gitoxide/commit/def53b36c3dec26fa78939ab0584fe4ff930909c))
+    - diff algorithm is controlled by git configuration `diff.algorithm` ([`b1edb9e`](https://github.com/Byron/gitoxide/commit/b1edb9e3537df86669714f03666f4a88e0ac3709))
+    - Merge branch 'main' into gix-clone ([`fa27570`](https://github.com/Byron/gitoxide/commit/fa27570f491388cce6137af44330d76870d07202))
+    - Merge branch 'imra-diff' ([`f53f942`](https://github.com/Byron/gitoxide/commit/f53f9426f206686b30abd73a201a92b1405e782d))
+    - adapt to changes in `git-diff` for a 2x speedup when calculating line changes ([`296f3b6`](https://github.com/Byron/gitoxide/commit/296f3b6ee29d5e628a19d56db80ba8736223e226))
+    - update `gix progress` records ([`b05a2e7`](https://github.com/Byron/gitoxide/commit/b05a2e7939df0c25da8186395e7eceda9e1baa9b))
+    - Merge branch 'main' into gix-clone ([`de4fe06`](https://github.com/Byron/gitoxide/commit/de4fe06202906ea5c62e667826b42cf7b57b1ff0))
+    - Mark the upcoming usage of init.defaultBranch. ([`6225f35`](https://github.com/Byron/gitoxide/commit/6225f35398bc494ad74da342c4ebbe0487b106f8))
+    - Merge branch 'fix-gix-index-from-tree' ([`da5f63c`](https://github.com/Byron/gitoxide/commit/da5f63cbc7506990f46d310f8064678decb86928))
+    - write index without output path to memory only. ([`c8d0345`](https://github.com/Byron/gitoxide/commit/c8d03454f1b2c18876cc8935e0afcea611cb8647))
+    - Merge branch 'gix-index-from-tree' ([`8c24386`](https://github.com/Byron/gitoxide/commit/8c24386f1874cd94f78fefbe434963f772878b1f))
+    - refactor ([`67f2247`](https://github.com/Byron/gitoxide/commit/67f224785193a5269cf65963fd21b21b723d485e))
+    - refactor ([`01ab5ca`](https://github.com/Byron/gitoxide/commit/01ab5cac23427a9c3b7f153201627eb8c8898e96))
+    - update with various configuration variables relevant to checking out worktrees ([`09d767a`](https://github.com/Byron/gitoxide/commit/09d767abd371a268a9fa475956be09ddda6b42ea))
+    - Merge branch 'clone' ([`507dc7e`](https://github.com/Byron/gitoxide/commit/507dc7e706cb3c9d89d048b3aff5df239a9b6788))
+    - update usage of clone related configuration ([`1a1e862`](https://github.com/Byron/gitoxide/commit/1a1e862b2e8cd88f5f6fbb9d86f618761bb71ef1))
+    - update progress with intended uses of `clone.` variables ([`8b804a3`](https://github.com/Byron/gitoxide/commit/8b804a31cb20a5264311f0b6ba02f857bea933ad))
+    - Merge branch 'main' into new-http-impl ([`702a161`](https://github.com/Byron/gitoxide/commit/702a161ef11fc959611bf44b70e9ffe04561c7ad))
+    - make fmt ([`53acf25`](https://github.com/Byron/gitoxide/commit/53acf2565743eff7cead7a42011107b2fc8d7e0e))
+    - Merge branch 'fetch-pack' ([`f47c891`](https://github.com/Byron/gitoxide/commit/f47c89129732bcb06fe76a4696fe38ab1151fb0c))
+    - Merge branch 'fetch-pack' ([`3c49400`](https://github.com/Byron/gitoxide/commit/3c49400809c7c2120f4ce704c19a0421545b5acd))
+    - update docs ([`c5c0ac5`](https://github.com/Byron/gitoxide/commit/c5c0ac50616957b5b0dcaf530d294abe63e3b4c7))
+    - input id can now be a commit or tree as prefix or full object id ([`8ef3fcb`](https://github.com/Byron/gitoxide/commit/8ef3fcbc416b2a53ead7d6ba36991a3d035f5f22))
+    - thanks clippy ([`8dadd70`](https://github.com/Byron/gitoxide/commit/8dadd70f8b7db1794652805c6238763886a8570d))
+    - Merge branch 'fix-odb-race' ([`b862fc5`](https://github.com/Byron/gitoxide/commit/b862fc52dd2409e912c892c7f428a571f565b64a))
+    - Merge branch 'diff' ([`25a7726`](https://github.com/Byron/gitoxide/commit/25a7726377fbe400ea3c4927d04e9dec99802b7b))
+</details>
+
 ## 0.16.0 (2022-09-20)
 
 ### Changed
@@ -24,7 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 26 commits contributed to the release over the course of 27 calendar days.
+ - 21 commits contributed to the release over the course of 20 calendar days.
  - 27 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
@@ -49,21 +173,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - upgrade to prodash 20.1 for `Progress::counter()` feature ([`0ac4a2c`](https://github.com/Byron/gitoxide/commit/0ac4a2c514aeb94d8e90ce28ae7a0e0350c21ab2))
     - `ein tool hours --stat` to collect additional statistics per author. ([`28c4cae`](https://github.com/Byron/gitoxide/commit/28c4cae70aab2bd5b479961fcc6ee91ff80f651b))
  * **Uncategorized**
+    - Merge branch 'hours-upgrade' ([`26489d1`](https://github.com/Byron/gitoxide/commit/26489d14472b840b36696435c22d9077f7ab323d))
     - use rev-specs instead of ref-names ([`cf7182e`](https://github.com/Byron/gitoxide/commit/cf7182e3390c03df97c10cd101440f7aa8874904))
     - `ein tool hours -b` ignores bots. ([`5d0332f`](https://github.com/Byron/gitoxide/commit/5d0332f51c63c5456a28c8f3f466ad805b2e0626))
-    - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
+    - Merge branch 'filter-refs' ([`3773b92`](https://github.com/Byron/gitoxide/commit/3773b92b8372c9a40a74d281149ca65b057a7da9))
+    - implement `gix index from-tree` ([`2fbd3df`](https://github.com/Byron/gitoxide/commit/2fbd3df89373eea5d6268fa47e046c8ebad8bba9))
     - make fmt ([`535e967`](https://github.com/Byron/gitoxide/commit/535e967666c6da657ff1b7eff7c64ab27cafb182))
-    - Merge branch 'main' into filter-refs-by-spec ([`9aa1d3d`](https://github.com/Byron/gitoxide/commit/9aa1d3dc46d4b1c76af257f573aff3aeef2d3fa8))
-    - Merge branch 'main' into filter-refs-by-spec ([`1f6e5ab`](https://github.com/Byron/gitoxide/commit/1f6e5ab15f5fd8d23719b13e6aea59cd231ac0fe))
-    - Merge branch 'git_date_parse' ([`75591fb`](https://github.com/Byron/gitoxide/commit/75591fb108ce440ba2f920bebf99158b407e3046))
-    - Merge branch 'main' into filter-refs-by-spec ([`51dc828`](https://github.com/Byron/gitoxide/commit/51dc8282fb77b519ff7d2c94c6bd73af306cfe8b))
-    - Merge branch 'macos-exfat' ([`f256f8f`](https://github.com/Byron/gitoxide/commit/f256f8fb7603f83d44acda07386f277c65ac652c))
+    - Merge branch 'filter-refs-by-spec' ([`5c05198`](https://github.com/Byron/gitoxide/commit/5c051986bd89590a9287d85d84c713d83dfab83a))
+    - Merge branch 'main' into index-from-tree ([`bc64b96`](https://github.com/Byron/gitoxide/commit/bc64b96a2ec781c72d1d4daad38aa7fb8b74f99b))
     - Merge branch 'main' into filter-refs-by-spec ([`56ba481`](https://github.com/Byron/gitoxide/commit/56ba481f4c48f74f10397feb1b6dc3d7dd3704fb))
     - A basic implementation of rev-list without anything fancy ([`791dd66`](https://github.com/Byron/gitoxide/commit/791dd666430fe0586c7db75b352487a72d3789e7))
-    - Merge branch 'main' into filter-refs-by-spec ([`a36c05d`](https://github.com/Byron/gitoxide/commit/a36c05d281269f3f8b297e7adc463bfb3c306663))
-    - Merge branch 'main' into filter-refs-by-spec ([`cef0b51`](https://github.com/Byron/gitoxide/commit/cef0b51ade2a3301fa09ede7a425aa1fe3527e78))
-    - Merge branch 'main' into filter-refs-by-spec ([`dbfa328`](https://github.com/Byron/gitoxide/commit/dbfa3282cf876596b250b2040c1ec0b761741796))
-    - Merge branch 'main' into filter-refs-by-spec ([`cfa1440`](https://github.com/Byron/gitoxide/commit/cfa144031dbcac2707ab0cec012bc35e78f9c475))
 </details>
 
 ## 0.15.0 (2022-08-24)
@@ -94,7 +213,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 15 commits contributed to the release over the course of 3 calendar days.
+ - 15 commits contributed to the release over the course of 5 calendar days.
  - 6 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -121,13 +240,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Try to use maybe async for the simplest of possibly blocking remote interactions ([`db4df25`](https://github.com/Byron/gitoxide/commit/db4df250d7e58518015bed0b9a1e3391b209cb29))
     - basic parsing of `gix remote refs` without any implementation. ([`f8f1249`](https://github.com/Byron/gitoxide/commit/f8f124943f73bacf816c6d0055f0b66659fd3906))
  * **Uncategorized**
-    - Merge branch 'example-write-blob' ([`afedd7f`](https://github.com/Byron/gitoxide/commit/afedd7f86ec8ea18a8165f71698ecc886f5cf643))
-    - Merge pull request #494 from ultrasaurus/patch-1 ([`86fe22c`](https://github.com/Byron/gitoxide/commit/86fe22cb1aad5944a229bc2a5252b36ef1fd59ef))
-    - Merge branch 'main' into remote-ls-refs ([`95f2f4f`](https://github.com/Byron/gitoxide/commit/95f2f4f17f7eae174a64c7d9f6a1513d73b21bbb))
-    - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
+    - Merge branch 'remote-ls-refs' ([`39d585d`](https://github.com/Byron/gitoxide/commit/39d585d9f9ac6f3ecf51359c8e37f0a50e21ed45))
     - thanks clippy ([`bb6813a`](https://github.com/Byron/gitoxide/commit/bb6813abf365728d9851ee205b2c25b925a0f06a))
+    - Merge branch 'main' into remote-ls-refs ([`e2ee3de`](https://github.com/Byron/gitoxide/commit/e2ee3ded97e5c449933712883535b30d151c7c78))
+    - Merge branch 'docsrs-show-features' ([`31c2351`](https://github.com/Byron/gitoxide/commit/31c235140cad212d16a56195763fbddd971d87ce))
     - use docsrs feature in code to show what is feature-gated automatically on docs.rs ([`b1c40b0`](https://github.com/Byron/gitoxide/commit/b1c40b0364ef092cd52d03b34f491b254816b18d))
     - uniformize deny attributes ([`f7f136d`](https://github.com/Byron/gitoxide/commit/f7f136dbe4f86e7dee1d54835c420ec07c96cd78))
+    - Merge branch 'main' into remote-ls-refs ([`bd5f3e8`](https://github.com/Byron/gitoxide/commit/bd5f3e8db7e0bb4abfb7b0f79f585ab82c3a14ab))
 </details>
 
 ## 0.14.0 (2022-08-17)
@@ -155,7 +274,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 15 commits contributed to the release over the course of 26 calendar days.
+ - 21 commits contributed to the release over the course of 26 calendar days.
  - 26 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
@@ -173,15 +292,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - support for parsing multiple specs in one invocation ([`84b5448`](https://github.com/Byron/gitoxide/commit/84b5448deb7b87f67a1b7461f00793e7ae33ef31))
     - support overriding cache settings with environment variables in `gix` ([`b838202`](https://github.com/Byron/gitoxide/commit/b8382026cb5b979a5c563ea40d1d8e483c1ca23a))
  * **Uncategorized**
+    - Merge branch 'core-abbrev-handling' ([`dbaff13`](https://github.com/Byron/gitoxide/commit/dbaff13eaf7ba5f9c0ee2c90ac9f17e6078cad9e))
     - Control which command is lenient or not. That way `gix-config` can be lenient. ([`6a9c58f`](https://github.com/Byron/gitoxide/commit/6a9c58fde7ca4a52fa1c3225974a2019e7d93168))
     - Invert behaviour to `open::Options::strict_config()`, with lenient being the default. ([`0235111`](https://github.com/Byron/gitoxide/commit/0235111a4fcc40c7b57d973bfce27a66eddea901))
+    - Merge branch 'main' into remote-ls-refs ([`c4bf958`](https://github.com/Byron/gitoxide/commit/c4bf9585d815bc342e5fb383336cc654280dd34f))
+    - Merge branch 'index-write-refactor' ([`805f432`](https://github.com/Byron/gitoxide/commit/805f432bf8e9d2dd9ede56caf959de386d5d80c7))
     - `ein tools` to `ein tool` for as it's more intuitive ([`edf73dd`](https://github.com/Byron/gitoxide/commit/edf73dd4db5b0f5d9309c95bf366e11ea6723885))
+    - Merge branch 'main' into write-index-v2 ([`a938986`](https://github.com/Byron/gitoxide/commit/a938986877302c197d1aed087594c5605416fe5f))
     - add aliases to make revision sub-commands more accessible ([`a6d79e3`](https://github.com/Byron/gitoxide/commit/a6d79e38cb0dd7e87d00a098030bbcaa614f259d))
-    - Merge branch 'write-index-files' into write-index-v2 ([`cddc2ca`](https://github.com/Byron/gitoxide/commit/cddc2ca06f63f66e887ff821452d1f56fb08fe6a))
-    - Merge branch 'write-index-files' into rev-parse-delegate ([`370110d`](https://github.com/Byron/gitoxide/commit/370110d3356528af38150c2280ed505354ceca5b))
-    - Merge branch 'main' into rev-parse-delegate ([`4ae2bed`](https://github.com/Byron/gitoxide/commit/4ae2bedfc25d1881d58ebdc54aca0936c68d4859))
+    - Merge branch 'rev-parse-delegate' ([`2f506c7`](https://github.com/Byron/gitoxide/commit/2f506c7c2988477b0f97d272a9ac9ed47b236457))
+    - Merge pull request #2 from SidneyDouw/main ([`ce885ad`](https://github.com/Byron/gitoxide/commit/ce885ad4c3324c09c83751c32e014f246c748766))
+    - Merge branch 'Byron:main' into main ([`9b9ea02`](https://github.com/Byron/gitoxide/commit/9b9ea0275f8ff5862f24cf5a4ca53bb1cd610709))
     - Merge branch 'main' into rev-parse-delegate ([`6da8250`](https://github.com/Byron/gitoxide/commit/6da82507588d3bc849217c11d9a1d398b67f2ed6))
+    - Merge branch 'main' into pathspec ([`7b61506`](https://github.com/Byron/gitoxide/commit/7b615060712565f515515e35a3e8346278ad770c))
     - make fmt ([`47724c0`](https://github.com/Byron/gitoxide/commit/47724c0edb382c036a3fc99884becfd2b0740d4b))
+    - Merge branch 'kianmeng-fix-typos' ([`4e7b343`](https://github.com/Byron/gitoxide/commit/4e7b34349c0a01ad8686bbb4eb987e9338259d9c))
     - Fix typos ([`e9fcb70`](https://github.com/Byron/gitoxide/commit/e9fcb70e429edb2974afa3f58d181f3ef14c3da3))
 </details>
 
@@ -197,7 +322,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 38 commits contributed to the release over the course of 101 calendar days.
+ - 47 commits contributed to the release over the course of 101 calendar days.
  - 108 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#427](https://github.com/Byron/gitoxide/issues/427)
@@ -249,13 +374,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Hookup explain command ([`1049b00`](https://github.com/Byron/gitoxide/commit/1049b00eaa261a67f060eaca4eb50dcda831eafd))
     - frame for `gix repo rev explain` ([`12e6277`](https://github.com/Byron/gitoxide/commit/12e6277a65a6572a0e43e8324d2d1dfb23d0bb40))
  * **Uncategorized**
+    - Merge branch 'gix-repo-config' ([`afecb63`](https://github.com/Byron/gitoxide/commit/afecb6337dcf0fc51d5c74747c3c60fa06ae6346))
     - thanks clippy ([`48b3f4a`](https://github.com/Byron/gitoxide/commit/48b3f4a5077ba66d47482a80e505feb69e9ac9fc))
+    - Merge pull request #1 from Byron/main ([`085e76b`](https://github.com/Byron/gitoxide/commit/085e76b121291ed9bd324139105d2bd4117bedf8))
     - make fmt ([`0700b09`](https://github.com/Byron/gitoxide/commit/0700b09d6828849fa2470df89af1f75a67bfb27d))
+    - Merge branch 'main' into pathspec ([`89ea12b`](https://github.com/Byron/gitoxide/commit/89ea12b558bcc056b892193ee8fb44b8664b5da4))
+    - Merge branch 'main' into cont_include_if ([`0e9df36`](https://github.com/Byron/gitoxide/commit/0e9df364c4cddf006b1de18b8d167319b7cc1186))
     - Use git_path::realpath in all places that allow it right now ([`229dc91`](https://github.com/Byron/gitoxide/commit/229dc917fc7d9241b85e5818260a6fbdd3a5daaa))
+    - Merge branch 'main' into cont_include_if ([`41ea8ba`](https://github.com/Byron/gitoxide/commit/41ea8ba78e74f5c988148367386a1f4f304cb951))
+    - Merge branch 'main' into git_includeif ([`05eb340`](https://github.com/Byron/gitoxide/commit/05eb34023933918c51c03cf2afd774db89cc5a33))
+    - Merge branch 'main' into msrv-for-windows ([`7cb1972`](https://github.com/Byron/gitoxide/commit/7cb19729133325bdfacedf44cdc0500cbcf36684))
     - make fmt ([`251b6df`](https://github.com/Byron/gitoxide/commit/251b6df5dbdda24b7bdc452085f808f3acef69d8))
-    - Merge branch 'git_includeif' of https://github.com/svetli-n/gitoxide into svetli-n-git_includeif ([`0e01da7`](https://github.com/Byron/gitoxide/commit/0e01da74dffedaa46190db6a7b60a2aaff190d81))
+    - Merge branch 'worktree-stack' ([`98da8ba`](https://github.com/Byron/gitoxide/commit/98da8ba52cef8ec27f705fcbc84773e5bacc4e10))
     - thanks clippy ([`056e8d2`](https://github.com/Byron/gitoxide/commit/056e8d26dc511fe7939ec87c62ef16aafd34fa9c))
     - thanks clippy ([`fdec111`](https://github.com/Byron/gitoxide/commit/fdec11135692b3503087b0a3245c12cc87554d67))
+    - Merge branch 'main' into repo-status ([`4086335`](https://github.com/Byron/gitoxide/commit/40863353a739ec971b49410fbc2ba048b2762732))
+    - Merge branch 'worktree-stack' ([`e90d3fd`](https://github.com/Byron/gitoxide/commit/e90d3fd0a9764511e6280596f21d3a0494ed7021))
 </details>
 
 ## 0.12.0 (2022-04-05)
@@ -329,7 +463,7 @@ which usually are `Clone` too as they are passed by immutable reference (which i
 
 <csr-read-only-do-not-edit/>
 
- - 61 commits contributed to the release over the course of 126 calendar days.
+ - 63 commits contributed to the release over the course of 126 calendar days.
  - 165 days passed between releases.
  - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 12 unique issues were worked on: [#215](https://github.com/Byron/gitoxide/issues/215), [#263](https://github.com/Byron/gitoxide/issues/263), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#289](https://github.com/Byron/gitoxide/issues/289), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#366](https://github.com/Byron/gitoxide/issues/366), [#67](https://github.com/Byron/gitoxide/issues/67)
@@ -408,11 +542,13 @@ which usually are `Clone` too as they are passed by immutable reference (which i
     - small build now uses the line renderer as well ([`652a0ac`](https://github.com/Byron/gitoxide/commit/652a0acdf9f06e35e65c1b66d264d5e8734ccc65))
     - Upgrade to prodash 19 ([`90c6c5a`](https://github.com/Byron/gitoxide/commit/90c6c5aec4015ff969d6e2514fa4d49873ee80f5))
     - `ein find --debug` to learn why it is slow ([`70109be`](https://github.com/Byron/gitoxide/commit/70109bee679d33a5c5fb3a78a708b479684b03b1))
-    - Merge branch 'short-id' ([`5849d5b`](https://github.com/Byron/gitoxide/commit/5849d5b326b83f98a16cf1d956c720c7f0fd4445))
     - fix clap warnings ([`aa51e05`](https://github.com/Byron/gitoxide/commit/aa51e05923695e20aecc16317331c7e26d49a2e7))
-    - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
+    - Merge branch 'index-verification' ([`ad3c803`](https://github.com/Byron/gitoxide/commit/ad3c8032cee02052ef3940d1d7c950270a0a299a))
+    - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
     - improve CLI docs ([`866530a`](https://github.com/Byron/gitoxide/commit/866530a154c3ef9383fae30c694991e31e97528c))
     - rename 'gix commitgraph' back to 'gix commit-graph' ([`d6a72e7`](https://github.com/Byron/gitoxide/commit/d6a72e70c9b4ee9b10a1172cce64ade5664599eb))
+    - Merge branch 'use-midx-in-store' ([`338521b`](https://github.com/Byron/gitoxide/commit/338521b0443b9dc1007581de42ef6a950f6e0bbf))
+    - Merge branch 'sync-db-draft' ([`7d2e20c`](https://github.com/Byron/gitoxide/commit/7d2e20c6fedc2c7e71a307d8d072412fa847a4aa))
     - thanks clippy ([`b0f7328`](https://github.com/Byron/gitoxide/commit/b0f73280c0233e05b68a22b0b01f40d574786a03))
 </details>
 
@@ -471,7 +607,7 @@ A first usable version of `git-repository` to make using `gitoxide` from your ap
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 26 calendar days.
+ - 5 commits contributed to the release over the course of 26 calendar days.
  - 35 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#200](https://github.com/Byron/gitoxide/issues/200), [#67](https://github.com/Byron/gitoxide/issues/67)
@@ -489,7 +625,7 @@ This is a maintenance release.
  - 1 commit contributed to the release over the course of 8 calendar days.
  - 20 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ## v0.8.2 (2021-08-17)
 
@@ -500,7 +636,7 @@ This is a maintenance release.
  - 1 commit contributed to the release over the course of 1 calendar day.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ## v0.8.1 (2021-08-15)
 
@@ -508,7 +644,7 @@ This is a maintenance release.
 
 <csr-read-only-do-not-edit/>
 
- - 43 commits contributed to the release over the course of 95 calendar days.
+ - 42 commits contributed to the release over the course of 95 calendar days.
  - 98 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#83](https://github.com/Byron/gitoxide/issues/83)
@@ -525,10 +661,10 @@ This is a maintenance release.
 
 <csr-read-only-do-not-edit/>
 
- - 33 commits contributed to the release over the course of 128 calendar days.
+ - 32 commits contributed to the release over the course of 128 calendar days.
  - 143 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -557,10 +693,10 @@ Maintenance release without any new features.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 65 calendar days.
+ - 5 commits contributed to the release over the course of 78 calendar days.
  - 84 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -569,9 +705,11 @@ Maintenance release without any new features.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Merge branch 'commit-graph' into main ([`9cb09b2`](https://github.com/Byron/gitoxide/commit/9cb09b248796f0ff5c9d3f3e857de4731324cfd5))
     - Add lean-plumbing docs for path of commit-graph-verify ([`5c7b52d`](https://github.com/Byron/gitoxide/commit/5c7b52d658d5b86bf4cf05c724202e824016c0e2))
     - [commitgraph] Implement basic commit-graph file verification. ([`2571113`](https://github.com/Byron/gitoxide/commit/2571113fea516737acedac08d66632ead499b474))
     - [commitgraph] Stub out commit-graph-verify plumbing command. ([`aacf0f0`](https://github.com/Byron/gitoxide/commit/aacf0f05a909e5b7d9ffd5623ef9833e0465be93))
+    - Merge branch 'main' into commit-graph ([`ca5b801`](https://github.com/Byron/gitoxide/commit/ca5b80174b73cc9ac162b3f33b5d3721ef936cb1))
 </details>
 
 ## v0.4.3 (2020-09-21)
@@ -583,7 +721,7 @@ Maintenance release without any new features.
  - 1 commit contributed to the release over the course of 1 calendar day.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ## v0.4.1 (2020-09-18)
 
@@ -593,10 +731,10 @@ Maintenance release without any new features.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 6 calendar days.
+ - 3 commits contributed to the release over the course of 6 calendar days.
  - 6 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -605,6 +743,7 @@ Maintenance release without any new features.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Merge from main. ([`b59bd5e`](https://github.com/Byron/gitoxide/commit/b59bd5e0b0895c7d1d585816cec8be4dea78c278))
     - Finish removal of rust 2018 idioms ([`0d1699e`](https://github.com/Byron/gitoxide/commit/0d1699e0e0bc9052be0a74b1b3f3d3eeeec39e3e))
     - Provide terminal dimensions to better use horizontal space ([`11f6b84`](https://github.com/Byron/gitoxide/commit/11f6b8497a5089377e605f4cbe1cd317ef677d59))
 </details>
@@ -624,7 +763,7 @@ Maintenance release without any new features.
  - 14 commits contributed to the release over the course of 29 calendar days.
  - 30 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -663,7 +802,7 @@ Many small and possibly breaking changes are not mentioned here.
  - 46 commits contributed to the release over the course of 30 calendar days.
  - 31 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -728,9 +867,9 @@ Many small and possibly breaking changes are not mentioned here.
 
 <csr-read-only-do-not-edit/>
 
- - 53 commits contributed to the release over the course of 765 calendar days.
+ - 54 commits contributed to the release over the course of 765 calendar days.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -753,6 +892,7 @@ Many small and possibly breaking changes are not mentioned here.
     - prepare for optional addition of line renderer for lean version ([`aac0d34`](https://github.com/Byron/gitoxide/commit/aac0d341eb02f0dccdf740f7ef15e8f585907544))
     - upgrade to prodash version 7 ([`af02b46`](https://github.com/Byron/gitoxide/commit/af02b46cc1eff5ba1da7da20d3f524a79fad686f))
     - Make --version flags work as expected. ([`a4d978c`](https://github.com/Byron/gitoxide/commit/a4d978ccc11e73fd752055c9a28b3b23dea145ea))
+    - Merge branch 'release' ([`a1a0b13`](https://github.com/Byron/gitoxide/commit/a1a0b135c991edfe5cddb71c5fbfbed25b47e3b3))
     - rename 'pretty' target into 'max', a better fit for what it is ([`5acecc5`](https://github.com/Byron/gitoxide/commit/5acecc59d2d39141f2e98b6f8556c6d457ab0965))
     - Make gio commands less cumbersome, self-document their build type (pretty, lean) ([`1f9bc03`](https://github.com/Byron/gitoxide/commit/1f9bc03dd773d90960a6f6d4ee59af3f938ad80b))
     - Allow to limit the logging depth for less cluttered output ([`fce7035`](https://github.com/Byron/gitoxide/commit/fce703531d7006f7d961d6ffa66f51f6c9bc0efc))

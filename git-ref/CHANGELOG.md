@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-6e5c0ae63deed181419232c61896e22404e4c84a/> allow symref updates to receive reflogs if these are new…
+   …and well-known on top of that, that means having an exact expectation
+   on what should be present.
+   
+   This allows symrefs to be created with reflog.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-328900add089f40d3bf9f1019c9f31663da387e2/> support for non-'static PackedRefs transactions.
+   When configuring for packed-refs updates, previously one needed to
+   provide a function to find objects that could not borrow data due
+   to implicit 'static requirement. This has been lifted to allow
+   it to access references to data on the stack.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 5 calendar days.
+ - 27 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - support for non-'static PackedRefs transactions. ([`328900a`](https://github.com/Byron/gitoxide/commit/328900add089f40d3bf9f1019c9f31663da387e2))
+    - add test to validate new symref reflog behaviour ([`8b5cf38`](https://github.com/Byron/gitoxide/commit/8b5cf385cb6cf31ad438398ddcc5668a01b6fb3d))
+    - allow symref updates to receive reflogs if these are new… ([`6e5c0ae`](https://github.com/Byron/gitoxide/commit/6e5c0ae63deed181419232c61896e22404e4c84a))
+ * **Uncategorized**
+    - Merge branch 'main' into write-sparse-index (upgrade to Rust 1.65) ([`5406630`](https://github.com/Byron/gitoxide/commit/5406630466145990b5adbdadb59151036993060d))
+    - thanks clippy ([`04cfa63`](https://github.com/Byron/gitoxide/commit/04cfa635a65ae34ad6d22391f2febd2ca7eabca9))
+    - Merge branch 'main' into write-sparse-index ([`c4e6849`](https://github.com/Byron/gitoxide/commit/c4e68496c368611ebe17c6693d06c8147c28c717))
+    - Merge branch 'gix-clone' ([`def53b3`](https://github.com/Byron/gitoxide/commit/def53b36c3dec26fa78939ab0584fe4ff930909c))
+    - thanks clippy ([`3eaedda`](https://github.com/Byron/gitoxide/commit/3eaedda0af1c1a495e1b98474ade02edfa75b66a))
+</details>
+
 ## 0.17.0 (2022-10-10)
 
 ### New Features
@@ -27,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 20 calendar days.
+ - 11 commits contributed to the release over the course of 20 calendar days.
  - 20 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -44,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `FullName::try_from(&BString)` for convenience. ([`658c125`](https://github.com/Byron/gitoxide/commit/658c1257c073507327d9a50c1c89b49d17e9ccbc))
     - Improve docs slightly ([`4850202`](https://github.com/Byron/gitoxide/commit/485020252da95b1369326156ebd8ff6052f591ec))
  * **Uncategorized**
+    - Release git-hash v0.9.11, git-features v0.23.0, git-actor v0.13.0, git-attributes v0.5.0, git-object v0.22.0, git-ref v0.17.0, git-sec v0.4.1, git-config v0.9.0, git-url v0.10.0, git-credentials v0.6.0, git-diff v0.20.0, git-discover v0.6.0, git-traverse v0.18.0, git-index v0.6.0, git-mailmap v0.5.0, git-pack v0.24.0, git-odb v0.34.0, git-packetline v0.13.1, git-transport v0.21.0, git-protocol v0.21.0, git-revision v0.6.0, git-refspec v0.3.0, git-worktree v0.6.0, git-repository v0.25.0, safety bump 24 crates ([`104d922`](https://github.com/Byron/gitoxide/commit/104d922add61ab21c534c24ce8ed37cddf3e275a))
     - prepare changelogs for release ([`d232567`](https://github.com/Byron/gitoxide/commit/d23256701a95284857dc8d1cb37c7c94cada973c))
     - Merge branch 'main' into new-http-impl ([`702a161`](https://github.com/Byron/gitoxide/commit/702a161ef11fc959611bf44b70e9ffe04561c7ad))
     - make fmt ([`53acf25`](https://github.com/Byron/gitoxide/commit/53acf2565743eff7cead7a42011107b2fc8d7e0e))
@@ -138,7 +190,7 @@ Maintenance release without user-facing changes.
  - 4 commits contributed to the release over the course of 3 calendar days.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -175,7 +227,7 @@ Maintenance release without user-facing changes.
  - 9 commits contributed to the release over the course of 5 calendar days.
  - 6 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -319,7 +371,7 @@ A maintenance release without user-facing changes.
  - 5 commits contributed to the release over the course of 25 calendar days.
  - 25 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1043,7 +1095,7 @@ as `git-traverse` is signalling a breaking change.
 
  - 3 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1072,7 +1124,7 @@ as `git-traverse` is signalling a breaking change.
  - 3 commits contributed to the release.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1101,7 +1153,7 @@ as `git-traverse` is signalling a breaking change.
  - 2 commits contributed to the release.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1132,7 +1184,7 @@ as `git-traverse` is signalling a breaking change.
  - 50 commits contributed to the release over the course of 5 calendar days.
  - 10 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1213,7 +1265,7 @@ as `git-traverse` is signalling a breaking change.
  - 27 commits contributed to the release over the course of 8 calendar days.
  - 10 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1260,7 +1312,7 @@ as `git-traverse` is signalling a breaking change.
  - 4 commits contributed to the release over the course of 1 calendar day.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1284,7 +1336,7 @@ as `git-traverse` is signalling a breaking change.
  - 2 commits contributed to the release.
  - 2 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1306,7 +1358,7 @@ as `git-traverse` is signalling a breaking change.
  - 16 commits contributed to the release over the course of 2 calendar days.
  - 2 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1341,7 +1393,7 @@ as `git-traverse` is signalling a breaking change.
 
  - 2 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1363,7 +1415,7 @@ as `git-traverse` is signalling a breaking change.
  - 390 commits contributed to the release over the course of 78 calendar days.
  - 233 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1779,7 +1831,7 @@ as `git-traverse` is signalling a breaking change.
  - 5 commits contributed to the release over the course of 94 calendar days.
  - 98 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1804,7 +1856,7 @@ as `git-traverse` is signalling a breaking change.
  - 3 commits contributed to the release over the course of 29 calendar days.
  - 30 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1827,7 +1879,7 @@ as `git-traverse` is signalling a breaking change.
  - 2 commits contributed to the release.
  - 20 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1849,7 +1901,7 @@ as `git-traverse` is signalling a breaking change.
  - 3 commits contributed to the release over the course of 6 calendar days.
  - 7 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1871,7 +1923,7 @@ as `git-traverse` is signalling a breaking change.
 
  - 5 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 

@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed (BREAKING)
+
+ - <csr-id-cd867ade55eaec138029c0cf17fa83e0679ef7fc/> `fetch::Ref::unpack()` returns `Option<oid>`.
+   That way the caller has to be aware of the possibility of an unborn
+   branch (probably the only unborn branch) on the remote.
+
+### New Features (BREAKING)
+
+ - <csr-id-02e37f04d7dfeab7067c8273bcd76408cb1f4852/> Support for `unborn` ls-refs capability if server supports it.
+   We can also parse it, adding yet another variant to `fetch::Refs`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 23 calendar days.
+ - 27 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - don't degenerate information about the unborn fetch ref's path. ([`42c977f`](https://github.com/Byron/gitoxide/commit/42c977f66e93a0768acd24f268a91a2c8067d558))
+    - `fetch::Ref::unpack()` returns `Option<oid>`. ([`cd867ad`](https://github.com/Byron/gitoxide/commit/cd867ade55eaec138029c0cf17fa83e0679ef7fc))
+    - Support for `unborn` ls-refs capability if server supports it. ([`02e37f0`](https://github.com/Byron/gitoxide/commit/02e37f04d7dfeab7067c8273bcd76408cb1f4852))
+    - less noisy way of writing trait bounds ([`b593806`](https://github.com/Byron/gitoxide/commit/b593806ca3571d680801130ad528f266d3eab83e))
+    - upgrade to `prodash` v21 ([`a0655dc`](https://github.com/Byron/gitoxide/commit/a0655dc7bc5dff388bc69a648e7f16b44fd1abd9))
+    - improve docs slightly ([`306ebef`](https://github.com/Byron/gitoxide/commit/306ebefdc0fea1e1926e6df11c617cc12087c3b5))
+ * **Uncategorized**
+    - Merge branch 'main' into write-sparse-index (upgrade to Rust 1.65) ([`5406630`](https://github.com/Byron/gitoxide/commit/5406630466145990b5adbdadb59151036993060d))
+    - thanks clippy ([`04cfa63`](https://github.com/Byron/gitoxide/commit/04cfa635a65ae34ad6d22391f2febd2ca7eabca9))
+    - Merge branch 'main' into write-sparse-index ([`c4e6849`](https://github.com/Byron/gitoxide/commit/c4e68496c368611ebe17c6693d06c8147c28c717))
+    - Merge branch 'gix-clone' ([`def53b3`](https://github.com/Byron/gitoxide/commit/def53b36c3dec26fa78939ab0584fe4ff930909c))
+    - thanks clippy ([`bc9c780`](https://github.com/Byron/gitoxide/commit/bc9c780793140efd5fced9fe57cfe151f6a67eba))
+</details>
+
 ## 0.21.0 (2022-10-10)
 
 ### Changed
@@ -45,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 20 commits contributed to the release over the course of 20 calendar days.
+ - 21 commits contributed to the release over the course of 20 calendar days.
  - 20 days passed between releases.
  - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -72,6 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - turn `prepare_ls_refs` in `fetch::refs()` into `FnOnce`. ([`3a38d1b`](https://github.com/Byron/gitoxide/commit/3a38d1bc4910aab98c9c0b4a309be4a449db92fc))
     - improve docs a little ([`45394d5`](https://github.com/Byron/gitoxide/commit/45394d580506722136906426078b333c7ace92eb))
  * **Uncategorized**
+    - Release git-hash v0.9.11, git-features v0.23.0, git-actor v0.13.0, git-attributes v0.5.0, git-object v0.22.0, git-ref v0.17.0, git-sec v0.4.1, git-config v0.9.0, git-url v0.10.0, git-credentials v0.6.0, git-diff v0.20.0, git-discover v0.6.0, git-traverse v0.18.0, git-index v0.6.0, git-mailmap v0.5.0, git-pack v0.24.0, git-odb v0.34.0, git-packetline v0.13.1, git-transport v0.21.0, git-protocol v0.21.0, git-revision v0.6.0, git-refspec v0.3.0, git-worktree v0.6.0, git-repository v0.25.0, safety bump 24 crates ([`104d922`](https://github.com/Byron/gitoxide/commit/104d922add61ab21c534c24ce8ed37cddf3e275a))
     - prepare changelogs for release ([`d232567`](https://github.com/Byron/gitoxide/commit/d23256701a95284857dc8d1cb37c7c94cada973c))
     - Merge branch 'main' into new-http-impl ([`702a161`](https://github.com/Byron/gitoxide/commit/702a161ef11fc959611bf44b70e9ffe04561c7ad))
     - Merge branch 'fetch-pack' ([`f47c891`](https://github.com/Byron/gitoxide/commit/f47c89129732bcb06fe76a4696fe38ab1151fb0c))
@@ -286,7 +336,7 @@ This is a maintenance release with no functional changes.
  - 7 commits contributed to the release over the course of 33 calendar days.
  - 39 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -315,7 +365,7 @@ A maintenance release without user-facing changes.
  - 4 commits contributed to the release over the course of 25 calendar days.
  - 25 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -456,7 +506,7 @@ A maintenance release, triggered by putting too many adjustments into a single c
  - 3 commits contributed to the release.
  - 12 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -603,7 +653,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 2 commits contributed to the release.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -631,7 +681,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 3 commits contributed to the release over the course of 1 calendar day.
  - 8 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -654,7 +704,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 2 commits contributed to the release.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -677,7 +727,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
  - 2 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -701,7 +751,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 7 commits contributed to the release over the course of 3 calendar days.
  - 10 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -732,7 +782,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 3 commits contributed to the release over the course of 1 calendar day.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -755,7 +805,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 9 commits contributed to the release over the course of 2 calendar days.
  - 2 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -784,7 +834,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 103 commits contributed to the release over the course of 90 calendar days.
  - 93 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -913,7 +963,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 7 commits contributed to the release over the course of 21 calendar days.
  - 30 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -977,7 +1027,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 5 commits contributed to the release over the course of 60 calendar days.
  - 79 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1008,7 +1058,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 9 commits contributed to the release over the course of 5 calendar days.
  - 20 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -1042,7 +1092,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
  - 3 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1064,7 +1114,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
  - 5 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1089,7 +1139,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 10 commits contributed to the release over the course of 90 calendar days.
  - 92 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1125,7 +1175,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 13 commits contributed to the release over the course of 1 calendar day.
  - 2 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1158,7 +1208,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
  - 182 commits contributed to the release over the course of 29 calendar days.
  - 29 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1359,7 +1409,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
  - 1 commit contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 

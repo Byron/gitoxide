@@ -5,6 +5,116 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-458e1bcbd7043f0759f7445bfa46189910baff54/> Clnoe for `File`
+ - <csr-id-9e03110578bd93da3f1a91c5bcd9fde942c81ac4/> `decode::Options::default_from_object_hash()`
+   An easier way to initialize decode options, providing only the mandatory
+   information.
+ - <csr-id-eedcffa728c7e895da51d5298db28f3fef05f7da/> `File::write()` for secure and complete writing of index files.
+
+### Other
+
+ - <csr-id-4a6d46f3ab3d15eb851c92f7e49eb6772bc4023b/> sketch out how a write implementation could work
+
+### Changed (BREAKING)
+
+ - <csr-id-59f679126aba6f8a432aeb53f0bbd5d136ec1deb/> `write::Options::object_hash` is now implied by the `State` itself.
+   The `State`, once initialized, knows the kind of object hash it uses and
+   there is no need to specify it again.
+   
+   This affects some method signatures which now work without
+   `object_hash`.
+ - <csr-id-908163ab2f86a1b603e69f04cd857fbf52e5abfb/> `decode::Options::object_hash` is now a parameter to methods.
+   It's not actually an option that could be defaulted, but an integral
+   piece of knowledge that must always be defined by the caller.
+   
+   This also makes `decode::Options::default()` available once again.
+ - <csr-id-92dda50e2d9c584b0e110026f59fb715ec41600a/> seal `File` members to preserve consistency better.
+   This also makes sure that it's obvious if the `checksum` is actually
+   already computed.
+
+### Reverted (BREAKING)
+
+ - <csr-id-bd312acf5ceba28edf2508aef6011c037eb0a377/> `decode::Options::default()` - remove `Default` impl.
+   The contained `git_hash::Kind` can't actually be defaulted as we
+   have to know the actual kind used in the repository.
+ - <csr-id-2da5a62432350ede6b816254c894863d14aa4ba1/> remove `write::Options::default()`.
+   In practice it's required to inform about the hash kind to use and it's
+   possibly incorrect to assume Sha1.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 45 commits contributed to the release over the course of 26 calendar days.
+ - 27 days passed between releases.
+ - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - Clnoe for `File` ([`458e1bc`](https://github.com/Byron/gitoxide/commit/458e1bcbd7043f0759f7445bfa46189910baff54))
+ * **Uncategorized**
+    - Merge branch 'write-sparse-index' ([`ba17db0`](https://github.com/Byron/gitoxide/commit/ba17db03e4e832db724ab3e08e3df05eb61dd401))
+    - thanks clippy ([`49b539b`](https://github.com/Byron/gitoxide/commit/49b539baf1be88961a9e2934ee714090f94ac57f))
+    - Remove tests and scaffolding code that probably won't be implemented soon. ([`177d1c8`](https://github.com/Byron/gitoxide/commit/177d1c8be2b73ab0e7534d8ba9a47c451e02cfbb))
+    - refactor ([`0a74625`](https://github.com/Byron/gitoxide/commit/0a7462568c65057fb92b3824d0a73218c5184b2a))
+    - Act like git and write a sparse index even if it contains no dir entries anymore. ([`53af48c`](https://github.com/Byron/gitoxide/commit/53af48cff26542b4acf1510862f7ac0e94b24b2b))
+    - bake knowledge about sparse related config parameters into types. ([`e61957e`](https://github.com/Byron/gitoxide/commit/e61957e16eefe61d222997c69c1ae4c8ea0a8b5f))
+    - Merge branch 'main' into write-sparse-index (upgrade to Rust 1.65) ([`5406630`](https://github.com/Byron/gitoxide/commit/5406630466145990b5adbdadb59151036993060d))
+    - thanks clippy ([`04cfa63`](https://github.com/Byron/gitoxide/commit/04cfa635a65ae34ad6d22391f2febd2ca7eabca9))
+    - Merge branch 'main' into write-sparse-index ([`c4e6849`](https://github.com/Byron/gitoxide/commit/c4e68496c368611ebe17c6693d06c8147c28c717))
+    - make fmt ([`ea2136b`](https://github.com/Byron/gitoxide/commit/ea2136b065979cecb3a1fdbf7b20ed7514128d9a))
+    - Merge branch 'gix-clone' ([`def53b3`](https://github.com/Byron/gitoxide/commit/def53b36c3dec26fa78939ab0584fe4ff930909c))
+    - add and use `checked_is_sparse()` instead of cached `is_sparse` flag ([`e41ad0f`](https://github.com/Byron/gitoxide/commit/e41ad0fe585699b3d6cf3b3106567073e0a5ed5d))
+    - refactor ([`3683963`](https://github.com/Byron/gitoxide/commit/36839630f1471bd73a13276652f3a6ddd1286faa))
+    - thanks clippy ([`646b868`](https://github.com/Byron/gitoxide/commit/646b86802a669469b8cdfc228594a373a41e0f37))
+    - added fixture, adjusted tests, refactor ([`3173c0b`](https://github.com/Byron/gitoxide/commit/3173c0b2f79fbba7d73e391cc5667ca35a56a3a1))
+    - Make clear in code that mandatory extensions will always be written… ([`3e37443`](https://github.com/Byron/gitoxide/commit/3e3744301c3a80f98751551f779c3105262b3fec))
+    - respect the current 'is_sparse()` state when writing. ([`2012b27`](https://github.com/Byron/gitoxide/commit/2012b27246e8835b19725862409d2df23a2638c6))
+    - refactor ([`a929bcf`](https://github.com/Byron/gitoxide/commit/a929bcf4ff5a2e383218cce6b12776e40c553b83))
+    - thanks clippy ([`5bfd947`](https://github.com/Byron/gitoxide/commit/5bfd94711568174afe3a344514745dcd6a4992a4))
+    - sketch out how a write implementation could work ([`4a6d46f`](https://github.com/Byron/gitoxide/commit/4a6d46f3ab3d15eb851c92f7e49eb6772bc4023b))
+    - regenerated archive ([`cd1c752`](https://github.com/Byron/gitoxide/commit/cd1c752fde943804689039684b60ae4ddffee3f1))
+    - updated docs ([`77a9d42`](https://github.com/Byron/gitoxide/commit/77a9d42ec4f5b5f0b4fcbb31fdf2e5eb57bb578b))
+    - added first tests and implementation for writing the `sdir` extension ([`66a675f`](https://github.com/Byron/gitoxide/commit/66a675f68e46e6eaf7464912d2fb8af976c18565))
+    - capability to write `sdir`extension ([`762e4cb`](https://github.com/Byron/gitoxide/commit/762e4cb2a55728f6b82a97164c4ac4b59035d2e8))
+    - added tests for reading sparse indexes ([`ddaa003`](https://github.com/Byron/gitoxide/commit/ddaa003246fce16578b455077d98519ac05c6dae))
+    - add temporary sparse index playground testfile ([`5589a7f`](https://github.com/Byron/gitoxide/commit/5589a7fb4df6650214b7210bd89257ecaf9cabd0))
+    - add sparse index text fixtures ([`8a8a53e`](https://github.com/Byron/gitoxide/commit/8a8a53e8432af7a96fd7eff9af0bd241c7b3facd))
+    - add `is_sparse` access method for `State` ([`7f012cf`](https://github.com/Byron/gitoxide/commit/7f012cf5f85634bd520065ecb39bb1bd19a987fa))
+    - Merge branch 'main' into gix-clone ([`de4fe06`](https://github.com/Byron/gitoxide/commit/de4fe06202906ea5c62e667826b42cf7b57b1ff0))
+    - Merge branch 'fix-gix-index-from-tree' ([`da5f63c`](https://github.com/Byron/gitoxide/commit/da5f63cbc7506990f46d310f8064678decb86928))
+    - `write::Options::object_hash` is now implied by the `State` itself. ([`59f6791`](https://github.com/Byron/gitoxide/commit/59f679126aba6f8a432aeb53f0bbd5d136ec1deb))
+    - `decode::Options::object_hash` is now a parameter to methods. ([`908163a`](https://github.com/Byron/gitoxide/commit/908163ab2f86a1b603e69f04cd857fbf52e5abfb))
+    - `decode::Options::default_from_object_hash()` ([`9e03110`](https://github.com/Byron/gitoxide/commit/9e03110578bd93da3f1a91c5bcd9fde942c81ac4))
+    - refactor ([`6fb3255`](https://github.com/Byron/gitoxide/commit/6fb3255fb94758c025ed9edd971bdde54f409e77))
+    - seal `File` members to preserve consistency better. ([`92dda50`](https://github.com/Byron/gitoxide/commit/92dda50e2d9c584b0e110026f59fb715ec41600a))
+    - `decode::Options::default()` - remove `Default` impl. ([`bd312ac`](https://github.com/Byron/gitoxide/commit/bd312acf5ceba28edf2508aef6011c037eb0a377))
+    - fix tests ([`fc5cee1`](https://github.com/Byron/gitoxide/commit/fc5cee1d4f757b634856b9d91df1b4455a63f860))
+    - assure we also write V3 files, validate auto-version discovery ([`abc3cf8`](https://github.com/Byron/gitoxide/commit/abc3cf894f18f1a3c04de7967748add15b2e040e))
+    - loose fixtures are usable more easily now ([`b86012b`](https://github.com/Byron/gitoxide/commit/b86012bd5407e67159c2cc86ce97525d92189284))
+    - remove `write::Options::default()`. ([`2da5a62`](https://github.com/Byron/gitoxide/commit/2da5a62432350ede6b816254c894863d14aa4ba1))
+    - `File::write()` for secure and complete writing of index files. ([`eedcffa`](https://github.com/Byron/gitoxide/commit/eedcffa728c7e895da51d5298db28f3fef05f7da))
+    - prepare test for writing a complete index file from arbitrary state ([`281f5b8`](https://github.com/Byron/gitoxide/commit/281f5b828a2dbabd751e214b420e37d1d1e3a028))
+    - Merge branch 'gix-index-from-tree' ([`8c24386`](https://github.com/Byron/gitoxide/commit/8c24386f1874cd94f78fefbe434963f772878b1f))
+    - refactor ([`08d5c0b`](https://github.com/Byron/gitoxide/commit/08d5c0b051572b7e7b51eb7bd7dd804b1fa6a1ab))
+</details>
+
 ## 0.6.0 (2022-10-10)
 
 Maintenance release without user-facing changes.
@@ -13,10 +123,10 @@ Maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 20 calendar days.
+ - 7 commits contributed to the release over the course of 20 calendar days.
  - 20 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -31,7 +141,9 @@ Maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-hash v0.9.11, git-features v0.23.0, git-actor v0.13.0, git-attributes v0.5.0, git-object v0.22.0, git-ref v0.17.0, git-sec v0.4.1, git-config v0.9.0, git-url v0.10.0, git-credentials v0.6.0, git-diff v0.20.0, git-discover v0.6.0, git-traverse v0.18.0, git-index v0.6.0, git-mailmap v0.5.0, git-pack v0.24.0, git-odb v0.34.0, git-packetline v0.13.1, git-transport v0.21.0, git-protocol v0.21.0, git-revision v0.6.0, git-refspec v0.3.0, git-worktree v0.6.0, git-repository v0.25.0, safety bump 24 crates ([`104d922`](https://github.com/Byron/gitoxide/commit/104d922add61ab21c534c24ce8ed37cddf3e275a))
     - prepare changelogs for release ([`d232567`](https://github.com/Byron/gitoxide/commit/d23256701a95284857dc8d1cb37c7c94cada973c))
+    - remove the .insert() call… ([`4bb3e8b`](https://github.com/Byron/gitoxide/commit/4bb3e8bd50958ddbfdee72247025a80a2ca850a8))
     - Merge branch 'main' into fetch-pack ([`d686020`](https://github.com/Byron/gitoxide/commit/d6860205db847b8a474756e92578195e1022481c))
     - thanks clippy ([`b9937ad`](https://github.com/Byron/gitoxide/commit/b9937adc2c31095dde63397be7d56f1ea559b0f7))
     - Merge branch 'fix-git-features' ([`82fd251`](https://github.com/Byron/gitoxide/commit/82fd251ac80d07bc9da8a4d36e517aa35580d188))
@@ -119,7 +231,7 @@ Maintenance release without user-facing changes.
  - 4 commits contributed to the release over the course of 3 calendar days.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -154,7 +266,7 @@ Maintenance release without user-facing changes.
  - 7 commits contributed to the release over the course of 5 calendar days.
  - 6 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -282,7 +394,7 @@ This is a maintenance release with no functional changes.
  - 8 commits contributed to the release over the course of 64 calendar days.
  - 64 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -546,7 +658,7 @@ certain extensions are present.
 
  - 1 commit contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 

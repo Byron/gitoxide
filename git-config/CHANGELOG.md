@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-839f776454d7a8522c0f2887c90fc41b20576bd9/> `File::boolean()` now correctly handles implicit bools across sections.
+   This means it will return the last implicit value as true, instead of
+   ignoring it to fall back onto an explicit boolean value that might be
+   false.
+ - <csr-id-7d92c61abc2c54f4a64c35b37bcd1843a8d1da9c/> `file::SectionMut::push()` now properly creates empty values.
+   Previously, when calling `.push("key", None)`, the resulting internal
+   state would be slighly wrong causing certain invariants and expectations
+   to be unfulfilled even though it might have looked OK to most users.
+   
+   Now it will uphold the invariant for empty values, those without an
+    `=` character.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 20 calendar days.
+ - 27 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - `File::boolean()` now correctly handles implicit bools across sections. ([`839f776`](https://github.com/Byron/gitoxide/commit/839f776454d7a8522c0f2887c90fc41b20576bd9))
+    - be sure to globally order section ids when traversed by name. ([`21a5229`](https://github.com/Byron/gitoxide/commit/21a522902257efb82eeea277d31e0b5ca67d6ef4))
+    - `file::SectionMut::push()` now properly creates empty values. ([`7d92c61`](https://github.com/Byron/gitoxide/commit/7d92c61abc2c54f4a64c35b37bcd1843a8d1da9c))
+    - refactor ([`041ede9`](https://github.com/Byron/gitoxide/commit/041ede9fe1581a733ea47033ba58265c2ef88bcd))
+ * **Uncategorized**
+    - Merge branch 'main' into write-sparse-index (upgrade to Rust 1.65) ([`5406630`](https://github.com/Byron/gitoxide/commit/5406630466145990b5adbdadb59151036993060d))
+    - thanks clippy ([`04cfa63`](https://github.com/Byron/gitoxide/commit/04cfa635a65ae34ad6d22391f2febd2ca7eabca9))
+    - adjust memory-size expectations to deal with Rust 1.65 and below ([`a93c470`](https://github.com/Byron/gitoxide/commit/a93c4703699ea61a646c82b861c9345715a6c057))
+    - Merge branch 'main' into write-sparse-index ([`c4e6849`](https://github.com/Byron/gitoxide/commit/c4e68496c368611ebe17c6693d06c8147c28c717))
+    - make fmt ([`ea2136b`](https://github.com/Byron/gitoxide/commit/ea2136b065979cecb3a1fdbf7b20ed7514128d9a))
+    - Merge branch 'gix-clone' ([`def53b3`](https://github.com/Byron/gitoxide/commit/def53b36c3dec26fa78939ab0584fe4ff930909c))
+    - thanks clippy ([`d2f56df`](https://github.com/Byron/gitoxide/commit/d2f56df5405f6c27ebf7d51f33381f2c548433fb))
+</details>
+
 ## 0.9.0 (2022-10-10)
 
 ### New Features
@@ -36,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 20 calendar days.
+ - 15 commits contributed to the release over the course of 20 calendar days.
  - 20 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -50,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#450](https://github.com/Byron/gitoxide/issues/450)**
     - adapt to changes in `git-ref` ([`d40beb3`](https://github.com/Byron/gitoxide/commit/d40beb3b5744139b56ed68de4caa62a242df2d3a))
  * **Uncategorized**
+    - Release git-hash v0.9.11, git-features v0.23.0, git-actor v0.13.0, git-attributes v0.5.0, git-object v0.22.0, git-ref v0.17.0, git-sec v0.4.1, git-config v0.9.0, git-url v0.10.0, git-credentials v0.6.0, git-diff v0.20.0, git-discover v0.6.0, git-traverse v0.18.0, git-index v0.6.0, git-mailmap v0.5.0, git-pack v0.24.0, git-odb v0.34.0, git-packetline v0.13.1, git-transport v0.21.0, git-protocol v0.21.0, git-revision v0.6.0, git-refspec v0.3.0, git-worktree v0.6.0, git-repository v0.25.0, safety bump 24 crates ([`104d922`](https://github.com/Byron/gitoxide/commit/104d922add61ab21c534c24ce8ed37cddf3e275a))
     - prepare changelogs for release ([`d232567`](https://github.com/Byron/gitoxide/commit/d23256701a95284857dc8d1cb37c7c94cada973c))
     - Merge branch 'fix-smart-release' ([`aa80b60`](https://github.com/Byron/gitoxide/commit/aa80b606e5570f327660cca42ea81581a6e9d5e3))
     - make fmt ([`7b9c065`](https://github.com/Byron/gitoxide/commit/7b9c06547b75929e3e5bf4240f43c7e9bc7d54e0))
@@ -929,7 +982,7 @@ A maintenance release without user facing changes.
  - 24 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -1360,7 +1413,7 @@ A maintenance release.
  - 6 commits contributed to the release over the course of 9 calendar days.
  - 12 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -1472,7 +1525,7 @@ This is a maintenance release without functional changes.
  - 6 commits contributed to the release over the course of 7 calendar days.
  - 8 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1500,7 +1553,7 @@ This is a maintenance release without functional changes.
  - 7 commits contributed to the release over the course of 10 calendar days.
  - 12 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1527,7 +1580,7 @@ This is a maintenance release without functional changes.
  - 12 commits contributed to the release.
  - 2 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1559,7 +1612,7 @@ This is a maintenance release without functional changes.
  - 3 commits contributed to the release over the course of 6 calendar days.
  - 8 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1603,7 +1656,7 @@ This is a maintenance release without functional changes.
  - 17 commits contributed to the release over the course of 86 calendar days.
  - 89 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -1649,7 +1702,7 @@ lenfrom_envopen<csr-unknown/>
  - 12 commits contributed to the release over the course of 56 calendar days.
  - 58 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
@@ -1703,7 +1756,7 @@ lenfrom_envopen<csr-unknown/>
  - 125 commits contributed to the release over the course of 157 calendar days.
  - 158 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1847,7 +1900,7 @@ lenfrom_envopen<csr-unknown/>
 
  - 1 commit contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
