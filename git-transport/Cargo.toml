@@ -1,6 +1,6 @@
 [package]
 name = "git-transport"
-version = "0.21.0"
+version = "0.21.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated to implementing the git transport layer"
@@ -52,9 +52,9 @@ path = "tests/async-transport.rs"
 required-features = ["async-client"]
 
 [dependencies]
-git-features = { version = "^0.23.0", path = "../git-features" }
-git-url = { version = "^0.10.0", path = "../git-url" }
-git-sec = { version = "^0.4.1", path = "../git-sec" }
+git-features = { version = "^0.23.1", path = "../git-features" }
+git-url = { version = "^0.10.1", path = "../git-url" }
+git-sec = { version = "^0.4.2", path = "../git-sec" }
 git-packetline = { version = "^0.13.1", path = "../git-packetline" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}

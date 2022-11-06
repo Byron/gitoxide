@@ -36,9 +36,9 @@ serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serd
 
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
-git-repository = { version = "^0.25.0", path = "../git-repository", default-features = false }
-git-pack-for-configuration-only = { package = "git-pack", version = "^0.24.0", path = "../git-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
-git-transport-configuration-only = { package = "git-transport", version = "^0.21.0", path = "../git-transport", default-features = false }
+git-repository = { version = "^0.26.0", path = "../git-repository", default-features = false }
+git-pack-for-configuration-only = { package = "git-pack", version = "^0.25.0", path = "../git-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
+git-transport-configuration-only = { package = "git-transport", version = "^0.21.1", path = "../git-transport", default-features = false }
 git-commitgraph = { version = "^0.10.0", path = "../git-commitgraph" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.42"
@@ -56,7 +56,7 @@ futures-io = { version = "0.3.16", optional = true }
 blocking = { version = "1.0.2", optional = true }
 
 # for 'organize' functionality
-git-url = { version = "^0.10.0", path = "../git-url", optional = true }
+git-url = { version = "^0.10.1", path = "../git-url", optional = true }
 jwalk = { version = "0.6.0", optional = true }
 
 # for 'hours'

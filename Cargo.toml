@@ -80,10 +80,10 @@ cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 anyhow = "1.0.42"
 
 gitoxide-core = { version = "^0.19.0", path = "gitoxide-core" }
-git-features = { version = "^0.23.0", path = "git-features" }
-git-repository = { version = "^0.25.0", path = "git-repository", default-features = false }
+git-features = { version = "^0.23.1", path = "git-features" }
+git-repository = { version = "^0.26.0", path = "git-repository", default-features = false }
 
-git-transport-for-configuration-only = { package = "git-transport", optional = true, version = "^0.21.0", path = "git-transport" }
+git-transport-for-configuration-only = { package = "git-transport", optional = true, version = "^0.21.1", path = "git-transport" }
 
 clap = { version = "3.2.5", features = ["derive", "cargo"] }
 prodash = { version = "21", optional = true, default-features = false }

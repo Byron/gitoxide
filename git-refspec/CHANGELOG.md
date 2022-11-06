@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.3.1 (2022-11-06)
 
 ### New Features
 
@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 24 calendar days.
+ - 11 commits contributed to the release over the course of 24 calendar days.
  - 27 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#571](https://github.com/Byron/gitoxide/issues/571)
@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor ([`ef7467c`](https://github.com/Byron/gitoxide/commit/ef7467cd61762dc4206fa82e66adc287ba2f7f52))
     - assure sub-branches can be matched correctly ([`c9383c6`](https://github.com/Byron/gitoxide/commit/c9383c693e0b3c506c9b1c42f339f40c1145f998))
  * **Uncategorized**
+    - prepare changelogs prior to release ([`423af90`](https://github.com/Byron/gitoxide/commit/423af90c8202d62dc1ea4a76a0df6421d1f0aa06))
     - Merge branch 'main' into write-sparse-index ([`c4e6849`](https://github.com/Byron/gitoxide/commit/c4e68496c368611ebe17c6693d06c8147c28c717))
     - Merge branch 'gix-clone' ([`def53b3`](https://github.com/Byron/gitoxide/commit/def53b36c3dec26fa78939ab0584fe4ff930909c))
     - Merge branch 'main' into gix-clone ([`91bf67a`](https://github.com/Byron/gitoxide/commit/91bf67af9751d1e6beb78fb77b40f05352b98215))

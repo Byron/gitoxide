@@ -16,9 +16,9 @@ doctest = false
 [dependencies]
 git-hash = { version = "^0.9.11", path = "../../git-hash" }
 git-lock = { version = "^2.0.0", path = "../../git-lock" }
-git-discover = { version = "^0.6.0", path = "../../git-discover" }
+git-discover = { version = "^0.7.0", path = "../../git-discover" }
 git-attributes = { version = "^0.5.0", path = "../../git-attributes" }
-git-worktree = { version = "^0.6.0", path = "../../git-worktree" }
+git-worktree = { version = "^0.7.0", path = "../../git-worktree" }
 
 nom = { version = "7", default-features = false, features = ["std"]}
 bstr = "1.0.1"

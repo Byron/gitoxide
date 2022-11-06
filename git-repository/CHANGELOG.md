@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.26.0 (2022-11-06)
+
+<csr-id-c6f92c15529ddff7539667b74bafa2348f3040e3/>
 
 ### New Features
 
@@ -77,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 112 commits contributed to the release over the course of 27 calendar days.
+ - 113 commits contributed to the release over the course of 27 calendar days.
  - 27 days passed between releases.
  - 15 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -174,6 +176,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor ([`992522a`](https://github.com/Byron/gitoxide/commit/992522ad698781eae69b7442c39fa8190159d95a))
     - `open::Options::config_overrides()` for early configuration; support for `init.defaultBranch`. ([`0b5c53e`](https://github.com/Byron/gitoxide/commit/0b5c53ec43bdb58b2b7cf46e453ddf858770a95a))
  * **Uncategorized**
+    - prepare changelogs prior to release ([`423af90`](https://github.com/Byron/gitoxide/commit/423af90c8202d62dc1ea4a76a0df6421d1f0aa06))
     - Merge branch 'main' into write-sparse-index (upgrade to Rust 1.65) ([`5406630`](https://github.com/Byron/gitoxide/commit/5406630466145990b5adbdadb59151036993060d))
     - fix tests on windows ([`f2a8a45`](https://github.com/Byron/gitoxide/commit/f2a8a45be80c4d12b1e0e8d8401bce7ff0be5959))
     - thanks clippy ([`04cfa63`](https://github.com/Byron/gitoxide/commit/04cfa635a65ae34ad6d22391f2febd2ca7eabca9))

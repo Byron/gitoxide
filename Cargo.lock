@@ -346,7 +346,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1233,7 +1233,7 @@ dependencies = [
 
 [[package]]
 name = "git-config"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "bstr",
  "criterion",
@@ -1260,7 +1260,7 @@ dependencies = [
 
 [[package]]
 name = "git-config-value"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "bitflags",
  "bstr",
@@ -1284,7 +1284,7 @@ dependencies = [
 
 [[package]]
 name = "git-credentials"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "bstr",
  "document-features",
@@ -1315,7 +1315,7 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1329,7 +1329,7 @@ dependencies = [
 
 [[package]]
 name = "git-discover"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bstr",
  "defer",
@@ -1345,7 +1345,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.23.0"
+version = "0.23.1"
 dependencies = [
  "bstr",
  "bytes",
@@ -1377,7 +1377,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-glob"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "bitflags",
  "bstr",
@@ -1399,7 +1399,7 @@ dependencies = [
 
 [[package]]
 name = "git-index"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "atoi",
  "bitflags",
@@ -1453,7 +1453,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-object"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "bstr",
  "btoi",
@@ -1474,7 +1474,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.34.0"
+version = "0.35.0"
 dependencies = [
  "arc-swap",
  "crossbeam-channel",
@@ -1499,7 +1499,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.24.0"
+version = "0.25.0"
 dependencies = [
  "bstr",
  "bytesize",
@@ -1569,7 +1569,7 @@ dependencies = [
 
 [[package]]
 name = "git-prompt"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "expectrl",
  "git-command",
@@ -1583,7 +1583,7 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1619,7 +1619,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-ref"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "document-features",
  "git-actor",
@@ -1642,7 +1642,7 @@ dependencies = [
 
 [[package]]
 name = "git-refspec"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "bstr",
  "git-hash",
@@ -1655,7 +1655,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1723,7 +1723,7 @@ dependencies = [
 
 [[package]]
 name = "git-sec"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "bitflags",
  "dirs",
@@ -1745,7 +1745,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-tempfile"
-version = "2.0.5"
+version = "2.0.6"
 dependencies = [
  "dashmap",
  "libc",
@@ -1783,7 +1783,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-transport"
-version = "0.21.0"
+version = "0.21.1"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1825,7 +1825,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-url"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "bstr",
  "document-features",
@@ -1848,7 +1848,7 @@ dependencies = [
 
 [[package]]
 name = "git-worktree"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bstr",
  "document-features",
