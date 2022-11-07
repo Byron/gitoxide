@@ -1,5 +1,4 @@
 use bstr::{BStr, BString, ByteSlice};
-use git_packetline::TextRef;
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 use crate::client;
@@ -134,7 +133,7 @@ impl Capabilities {
 /// internal use
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 impl Capabilities {
-    fn extract_protocol<'a>(capabilities_or_version: TextRef<'a>) -> Result<Protocol, client::Error> {
+    fn extract_protocol(capabilities_or_version: git_packetline::TextRef<'_>) -> Result<Protocol, client::Error> {
         let line = capabilities_or_version.as_bstr();
         let version = if line.starts_with_str("version ") {
             if line.len() != "version X".len() {
