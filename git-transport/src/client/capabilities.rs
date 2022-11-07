@@ -194,9 +194,9 @@ pub mod recv {
             // format looks like, thus there is no binary blob that could ever look like an ERR line by accident.
             rd.fail_on_err_lines(true);
 
-            // the service announcement is only sent sometimes dependening on the exact server/proctol version/used protocol (http?)
-            // eat the anncoument when its there to avoid errors later (and check that the correct service was announced).
-            // Ignore the announcement otherwise
+            // the service announcement is only sent sometimes depending on the exact server/proctol version/used protocol (http?)
+            // eat the announcement when its there to avoid errors later (and check that the correct service was announced).
+            // Ignore the announcement otherwise.
             // TODO figure out if the protocol specification ever treats this as mandatory (its not for V2, is it for V1?)
             let mut line_ = rd
                 .peek_line()
@@ -253,7 +253,7 @@ pub mod recv {
     use futures_io::{AsyncBufRead, AsyncRead};
     use futures_lite::{AsyncBufReadExt, StreamExt};
 
-        use bstr::ByteSlice;
+    use bstr::ByteSlice;
 
     use crate::{
         client,
