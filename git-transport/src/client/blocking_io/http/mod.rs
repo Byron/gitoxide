@@ -1,4 +1,3 @@
-use bstr::ByteSlice;
 use std::{
     any::Any,
     borrow::Cow,
@@ -235,7 +234,7 @@ impl<H: Http> client::Transport for Transport<H> {
             .ok_or(client::Error::ExpectedLine("capabilities, version or service"))???;
         let line = line_.as_text().ok_or(client::Error::ExpectedLine("text"))?;
 
-        if let Some(announced_service) = line.as_bstr().trim().strip_prefix(b"# service=") {
+        if let Some(announced_service) = line.as_bstr().strip_prefix(b"# service=") {
             if announced_service != service.as_str().as_bytes() {
                 return Err(client::Error::Http(Error::Detail {
                     description: format!(
