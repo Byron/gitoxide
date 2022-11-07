@@ -84,7 +84,7 @@ where
             capabilities,
             refs,
             protocol: actual_protocol,
-        } = Capabilities::from_lines_with_version_detection(&mut self.line_provider, service)?;
+        } = Capabilities::from_lines_with_version_detection(&mut self.line_provider)?;
         Ok(SetServiceResponse {
             actual_protocol,
             capabilities,

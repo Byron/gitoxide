@@ -1,3 +1,4 @@
+use bstr::ByteSlice;
 use std::{
     any::Any,
     borrow::Cow,
@@ -226,12 +227,33 @@ impl<H: Http> client::Transport for Transport<H> {
             .line_provider
             .get_or_insert_with(|| git_packetline::StreamingPeekableIter::new(body, &[PacketLineRef::Flush]));
 
-      
+        // the service announcement is only sent sometimes depending on the exact server/proctol version/used protocol (http?)
+        // eat the announcement when its there to avoid errors later (and check that the correct service was announced).
+        // Ignore the announcement otherwise.
+        let line_ = line_reader
+            .peek_line()
+            .ok_or(client::Error::ExpectedLine("capabilities, version or service"))???;
+        let line = line_.as_text().ok_or(client::Error::ExpectedLine("text"))?;
+
+        if let Some(announced_service) = line.as_bstr().trim().strip_prefix(b"# service=") {
+            if announced_service != service.as_str().as_bytes() {
+                return Err(client::Error::Http(Error::Detail {
+                    description: format!(
+                        "Expected to see service {:?}, but got {:?}",
+                        service.as_str(),
+                        announced_service
+                    ),
+                }));
+            }
+
+            line_reader.as_read().read_to_end(&mut Vec::new())?;
+        }
+
         let capabilities::recv::Outcome {
             capabilities,
             refs,
             protocol: actual_protocol,
-        } = Capabilities::from_lines_with_version_detection(line_reader, service)?;
+        } = Capabilities::from_lines_with_version_detection(line_reader)?;
         self.actual_version = actual_protocol;
         self.service = Some(service);
         Ok(client::SetServiceResponse {
