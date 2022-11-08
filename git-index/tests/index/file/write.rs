@@ -1,6 +1,5 @@
 use filetime::FileTime;
 use git_index::{entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
-use git_repository as git;
 
 use crate::{fixture_index_path, index::Fixture::*, loose_file_path};
 

@@ -18,7 +18,7 @@ pub mod diff {
 
     ///
     pub mod init {
-        /// The error returned by [`Platform::new()`][super::Platform::new()].
+        /// The error returned by [`Platform::from_ids()`][super::Platform::from_ids()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
