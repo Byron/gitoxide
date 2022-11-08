@@ -58,23 +58,23 @@ pub mod diff {
         use crate::bstr::BStr;
 
         /// A change to a hunk of lines.
-        pub enum Change<'a, 'old, 'new> {
+        pub enum Change<'a, 'data> {
             /// Lines were added.
             Addition {
                 /// The lines themselves without terminator.
-                lines: &'a [&'new BStr],
+                lines: &'a [&'data BStr],
             },
             /// Lines were removed.
             Deletion {
                 /// The lines themselves without terminator.
-                lines: &'a [&'old BStr],
+                lines: &'a [&'data BStr],
             },
             /// Lines have been replaced.
             Modification {
                 /// The replaced lines without terminator.
-                lines_before: &'a [&'old BStr],
+                lines_before: &'a [&'data BStr],
                 /// The new lines without terminator.
-                lines_after: &'a [&'new BStr],
+                lines_after: &'a [&'data BStr],
             },
         }
     }
@@ -86,7 +86,7 @@ pub mod diff {
         /// Note that you can invoke the diff more flexibly as well.
         pub fn lines<FnH, E>(&self, mut process_hunk: FnH) -> Result<(), E>
         where
-            FnH: FnMut(line::Change<'_, 'old, 'new>) -> Result<(), E>,
+            FnH: FnMut(line::Change<'_, '_>) -> Result<(), E>,
             E: std::error::Error,
         {
             let input = git_diff::blob::intern::InternedInput::new(self.old.data.as_bytes(), self.new.data.as_bytes());
