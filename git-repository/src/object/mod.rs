@@ -12,6 +12,8 @@ pub(crate) mod cache {
 }
 pub use errors::{conversion, find, write};
 ///
+pub mod blob;
+///
 pub mod commit;
 mod impls;
 pub mod peel;
