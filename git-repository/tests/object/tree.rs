@@ -3,6 +3,7 @@ mod diff {
 
     use git_object::{bstr::ByteSlice, tree::EntryMode};
     use git_repository as git;
+    use git_repository::object::blob::diff::line::Change;
     use git_repository::object::tree::diff::change::Event;
 
     use crate::named_repo;
@@ -30,14 +31,19 @@ mod diff {
                     Event::Deletion { .. } | Event::Addition { .. } => unreachable!("only modification is expected"),
                 };
 
-                let count = change
-                    .event
-                    .diff()
-                    .expect("changed file")
-                    .expect("objects available")
-                    .line_counts();
+                let diff = change.event.diff().expect("changed file").expect("objects available");
+                let count = diff.line_counts();
                 assert_eq!(count.insertions, 1);
                 assert_eq!(count.removals, 0);
+                diff.lines(|hunk| {
+                    match hunk {
+                        Change::Deletion { .. } => unreachable!("there was no deletion"),
+                        Change::Addition { lines } => assert_eq!(lines, vec!["a1".as_bytes().as_bstr()]),
+                        Change::Modification { .. } => unreachable!("there was no modification"),
+                    };
+                    Ok::<_, Infallible>(())
+                })
+                .expect("infallible");
                 Ok(Default::default())
             })
             .unwrap();

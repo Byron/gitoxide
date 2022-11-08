@@ -84,6 +84,7 @@ pub mod diff {
         /// The diffing algorithm is determined by the `diff.algorithm` configuration.
         ///
         /// Note that you can invoke the diff more flexibly as well.
+        // TODO: more tests (only tested insertion right now)
         pub fn lines<FnH, E>(&self, mut process_hunk: FnH) -> Result<(), E>
         where
             FnH: FnMut(line::Change<'_, '_>) -> Result<(), E>,
