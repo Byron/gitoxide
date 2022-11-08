@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.21.2 (2022-11-08)
 
 ### Fixes
 
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 1 calendar day.
+ - 6 commits contributed to the release over the course of 1 calendar day.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs prior to release ([`f5f3a9e`](https://github.com/Byron/gitoxide/commit/f5f3a9edd038a89c8c6c4da02054e5439bcc0071))
     - fix build ([`910d665`](https://github.com/Byron/gitoxide/commit/910d665e66d6e737a7bab3598c0c0ebfdda1a9cc))
     - thanks clippy ([`0dc4c6f`](https://github.com/Byron/gitoxide/commit/0dc4c6fb2199514437acd7629ea2a4c6bc0555c5))
     - Move HTTP service checks up to the HTTP layer (blocking & async) ([`3046646`](https://github.com/Byron/gitoxide/commit/3046646a2a0b06a0ca5c2f28b99b9a2b10c73368))
