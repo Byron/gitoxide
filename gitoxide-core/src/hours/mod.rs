@@ -229,9 +229,7 @@ where
                                                                 is_text_file.then(|| change.event.diff()).flatten()
                                                             {
                                                                 let mut nl = 0;
-                                                                let counts = diff.lines(|_| {
-                                                                    git::diff::text::imara::sink::Counter::default()
-                                                                });
+                                                                let counts = diff.line_counts();
                                                                 nl += counts.insertions as usize
                                                                     + counts.removals as usize;
                                                                 lines.added += counts.insertions as usize;

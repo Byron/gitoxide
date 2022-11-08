@@ -1,3 +1,4 @@
+mod blob;
 mod commit;
 mod tree;
 
