@@ -58,6 +58,10 @@ impl ThreadSafeRepository {
     ///
     /// Finally, use the `trust_map` to determine which of our own repository options to use
     /// based on the trust level of the effective repository directory.
+    // TODO: GIT_HTTP_PROXY_AUTHMETHOD, GIT_PROXY_SSL_CERT, GIT_PROXY_SSL_KEY, GIT_PROXY_SSL_CERT_PASSWORD_PROTECTED.
+    //       GIT_PROXY_SSL_CAINFO, GIT_SSL_VERSION, GIT_SSL_CIPHER_LIST, GIT_HTTP_MAX_REQUESTS, GIT_CURL_FTP_NO_EPSV,
+    //       GIT_HTTP_LOW_SPEED_LIMIT, GIT_HTTP_LOW_SPEED_TIME, GIT_HTTP_USER_AGENT
+    //       The vars above should end up as overrides of the respective configuration values (see git-config).
     pub fn discover_with_environment_overrides_opts(
         directory: impl AsRef<Path>,
         mut options: upwards::Options,
