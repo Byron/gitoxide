@@ -10,7 +10,7 @@ use crate::{
 
 /// Access
 impl Cache {
-    pub(crate) fn diff_algorithm(&self) -> Result<git_diff::text::Algorithm, crate::config::diff::algorithm::Error> {
+    pub(crate) fn diff_algorithm(&self) -> Result<git_diff::blob::Algorithm, crate::config::diff::algorithm::Error> {
         use crate::config::diff::algorithm::Error;
         self.diff_algorithm
             .get_or_try_init(|| {
@@ -20,14 +20,14 @@ impl Cache {
                         .string("diff", None, "algorithm")
                         .unwrap_or_else(|| Cow::Borrowed("myers".into()));
                     if name.eq_ignore_ascii_case(b"myers") || name.eq_ignore_ascii_case(b"default") {
-                        Ok(git_diff::text::Algorithm::Myers)
+                        Ok(git_diff::blob::Algorithm::Myers)
                     } else if name.eq_ignore_ascii_case(b"minimal") {
-                        Ok(git_diff::text::Algorithm::MyersMinimal)
+                        Ok(git_diff::blob::Algorithm::MyersMinimal)
                     } else if name.eq_ignore_ascii_case(b"histogram") {
-                        Ok(git_diff::text::Algorithm::Histogram)
+                        Ok(git_diff::blob::Algorithm::Histogram)
                     } else if name.eq_ignore_ascii_case(b"patience") {
                         if self.lenient_config {
-                            Ok(git_diff::text::Algorithm::Histogram)
+                            Ok(git_diff::blob::Algorithm::Histogram)
                         } else {
                             Err(Error::Unimplemented {
                                 name: name.into_owned(),
@@ -39,7 +39,7 @@ impl Cache {
                         })
                     }
                 };
-                check_lenient_default(res, self.lenient_config, || git_diff::text::Algorithm::Myers)
+                check_lenient_default(res, self.lenient_config, || git_diff::blob::Algorithm::Myers)
             })
             .copied()
     }

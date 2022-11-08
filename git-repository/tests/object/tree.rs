@@ -35,7 +35,7 @@ mod diff {
                     .diff()
                     .expect("changed file")
                     .expect("objects available")
-                    .lines(|_| git_diff::text::imara::sink::Counter::default());
+                    .line_counts();
                 assert_eq!(count.insertions, 1);
                 assert_eq!(count.removals, 0);
                 Ok(Default::default())
