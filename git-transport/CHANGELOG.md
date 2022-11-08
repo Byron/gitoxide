@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixes
+
+- enable clones from `kernel.org` via `https`. This failed as it wouldn't send the service announcement in protocol V2, 
+  which was thought to be mandatory at least when judging from `github.com`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 1 calendar day.
+ - 1 day passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - fix build ([`910d665`](https://github.com/Byron/gitoxide/commit/910d665e66d6e737a7bab3598c0c0ebfdda1a9cc))
+    - thanks clippy ([`0dc4c6f`](https://github.com/Byron/gitoxide/commit/0dc4c6fb2199514437acd7629ea2a4c6bc0555c5))
+    - Move HTTP service checks up to the HTTP layer (blocking & async) ([`3046646`](https://github.com/Byron/gitoxide/commit/3046646a2a0b06a0ca5c2f28b99b9a2b10c73368))
+    - Fix fixture to work with test setup. ([`cf9a53b`](https://github.com/Byron/gitoxide/commit/cf9a53b8bc7265386d3336cff791462011b42d61))
+    - fix error when no service annoucment is sent by the server ([`a1d876f`](https://github.com/Byron/gitoxide/commit/a1d876f8474a05aeca2d852ee126f0d0e110c0f9))
+</details>
+
 ## 0.21.1 (2022-11-06)
 
 ### Bug Fixes
@@ -18,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 25 commits contributed to the release over the course of 24 calendar days.
+ - 26 commits contributed to the release over the course of 24 calendar days.
  - 27 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -32,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#450](https://github.com/Byron/gitoxide/issues/450)**
     - `client::Capabilities` lifetimes now point to `'a` instead of `'self`. ([`4b5d6df`](https://github.com/Byron/gitoxide/commit/4b5d6dfb58f325bba692e1e32636c24ba058022f))
  * **Uncategorized**
+    - Release git-features v0.23.1, git-glob v0.4.1, git-config-value v0.8.1, git-tempfile v2.0.6, git-object v0.22.1, git-ref v0.18.0, git-sec v0.4.2, git-config v0.10.0, git-prompt v0.1.1, git-url v0.10.1, git-credentials v0.6.1, git-diff v0.21.0, git-discover v0.7.0, git-index v0.7.0, git-pack v0.25.0, git-odb v0.35.0, git-transport v0.21.1, git-protocol v0.22.0, git-refspec v0.3.1, git-worktree v0.7.0, git-repository v0.26.0, git-commitgraph v0.10.0, gitoxide-core v0.19.0, gitoxide v0.17.0, safety bump 9 crates ([`d071583`](https://github.com/Byron/gitoxide/commit/d071583c5576fdf5f7717765ffed5681792aa81f))
     - prepare changelogs prior to release ([`423af90`](https://github.com/Byron/gitoxide/commit/423af90c8202d62dc1ea4a76a0df6421d1f0aa06))
     - Merge branch 'git_protocol_host' ([`d13c590`](https://github.com/Byron/gitoxide/commit/d13c59070ae6f1661dd6fee056cef1ff75c89222))
     - Avoid invalid invocations of `git` by removing `GIT_CONFIG_COUNT` ([`aa315b4`](https://github.com/Byron/gitoxide/commit/aa315b4a136bec57a1cce4b245c606904adc5c12))
