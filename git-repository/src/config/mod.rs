@@ -132,7 +132,7 @@ pub(crate) struct Cache {
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     pub(crate) url_scheme: OnceCell<remote::url::SchemePermission>,
     /// The algorithm to use when diffing blobs
-    pub(crate) diff_algorithm: OnceCell<git_diff::text::Algorithm>,
+    pub(crate) diff_algorithm: OnceCell<git_diff::blob::Algorithm>,
     /// The config section filter from the options used to initialize this instance. Keep these in sync!
     filter_config_section: fn(&git_config::file::Metadata) -> bool,
     /// The object kind to pick if a prefix is ambiguous.

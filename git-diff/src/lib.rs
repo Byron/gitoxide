@@ -6,4 +6,4 @@
 pub mod tree;
 
 ///
-pub mod text;
+pub mod blob;

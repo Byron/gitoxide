@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.27.0 (2022-11-08)
+
+### Changed (BREAKING)
+
+ - <csr-id-c50868c7ed7309515b4f0a188213d332d57dd146/> Move `object::tree::diff::change::DiffPlatform` to `object::blob::diff::Platform`.
+ - <csr-id-4ee32713093c2e41a12d148c6030add1df6aa966/> new `DiffPlatform::counts()`, open `DiffPlatform` for use of `git-diff::blob::*`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release.
+ - 1 day passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - prepare changelogs prior to release ([`f5f3a9e`](https://github.com/Byron/gitoxide/commit/f5f3a9edd038a89c8c6c4da02054e5439bcc0071))
+    - Merge branch 'fixes-for-crates-index-diff' ([`255be4d`](https://github.com/Byron/gitoxide/commit/255be4ddcd6cbca0a89f286eeecdd19ff70e000f))
+    - remove unused import; fix docs ([`efe0a51`](https://github.com/Byron/gitoxide/commit/efe0a51931fc7e42c82563575e3068dd6e401409))
+    - plan for more tests for line diffs ([`58934a4`](https://github.com/Byron/gitoxide/commit/58934a468040df45b9ca4062df2c7f245b0c791e))
+    - Fix borrowcheck issues by being less specific ([`aff6820`](https://github.com/Byron/gitoxide/commit/aff6820e3a4dbb1f189cb33adb577b7a2b90d109))
+    - a hunk based mechanism for line diffs is nearly there, just has lifetime issues ([`b1fc68f`](https://github.com/Byron/gitoxide/commit/b1fc68f27331f0648d117490ac404eeb47b5f15a))
+    - Move `object::tree::diff::change::DiffPlatform` to `object::blob::diff::Platform`. ([`c50868c`](https://github.com/Byron/gitoxide/commit/c50868c7ed7309515b4f0a188213d332d57dd146))
+    - new `DiffPlatform::counts()`, open `DiffPlatform` for use of `git-diff::blob::*`. ([`4ee3271`](https://github.com/Byron/gitoxide/commit/4ee32713093c2e41a12d148c6030add1df6aa966))
+</details>
+
 ## 0.26.0 (2022-11-06)
 
 <csr-id-c6f92c15529ddff7539667b74bafa2348f3040e3/>
@@ -79,7 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 113 commits contributed to the release over the course of 27 calendar days.
+ - 114 commits contributed to the release over the course of 27 calendar days.
  - 27 days passed between releases.
  - 15 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -176,6 +209,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor ([`992522a`](https://github.com/Byron/gitoxide/commit/992522ad698781eae69b7442c39fa8190159d95a))
     - `open::Options::config_overrides()` for early configuration; support for `init.defaultBranch`. ([`0b5c53e`](https://github.com/Byron/gitoxide/commit/0b5c53ec43bdb58b2b7cf46e453ddf858770a95a))
  * **Uncategorized**
+    - Release git-features v0.23.1, git-glob v0.4.1, git-config-value v0.8.1, git-tempfile v2.0.6, git-object v0.22.1, git-ref v0.18.0, git-sec v0.4.2, git-config v0.10.0, git-prompt v0.1.1, git-url v0.10.1, git-credentials v0.6.1, git-diff v0.21.0, git-discover v0.7.0, git-index v0.7.0, git-pack v0.25.0, git-odb v0.35.0, git-transport v0.21.1, git-protocol v0.22.0, git-refspec v0.3.1, git-worktree v0.7.0, git-repository v0.26.0, git-commitgraph v0.10.0, gitoxide-core v0.19.0, gitoxide v0.17.0, safety bump 9 crates ([`d071583`](https://github.com/Byron/gitoxide/commit/d071583c5576fdf5f7717765ffed5681792aa81f))
     - prepare changelogs prior to release ([`423af90`](https://github.com/Byron/gitoxide/commit/423af90c8202d62dc1ea4a76a0df6421d1f0aa06))
     - Merge branch 'main' into write-sparse-index (upgrade to Rust 1.65) ([`5406630`](https://github.com/Byron/gitoxide/commit/5406630466145990b5adbdadb59151036993060d))
     - fix tests on windows ([`f2a8a45`](https://github.com/Byron/gitoxide/commit/f2a8a45be80c4d12b1e0e8d8401bce7ff0be5959))

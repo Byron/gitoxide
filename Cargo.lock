@@ -346,7 +346,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1315,7 +1315,7 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1399,7 +1399,7 @@ dependencies = [
 
 [[package]]
 name = "git-index"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "atoi",
  "bitflags",
@@ -1474,7 +1474,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.35.0"
+version = "0.36.0"
 dependencies = [
  "arc-swap",
  "crossbeam-channel",
@@ -1499,7 +1499,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "bstr",
  "bytesize",
@@ -1655,7 +1655,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.26.0"
+version = "0.27.0"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1783,7 +1783,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-transport"
-version = "0.21.1"
+version = "0.21.2"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1886,7 +1886,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "anyhow",
  "atty",
@@ -1906,7 +1906,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide-core"
-version = "0.19.0"
+version = "0.20.0"
 dependencies = [
  "anyhow",
  "async-io",
