@@ -6,7 +6,6 @@ use git_transport::Protocol;
 use crate::fetch::{helper_unused, oid, transport, CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
-#[ignore]
 async fn clone_abort_prep() -> crate::Result {
     let out = Vec::new();
     let mut dlg = CloneDelegate {
@@ -26,6 +25,7 @@ async fn clone_abort_prep() -> crate::Result {
         helper_unused,
         progress::Discard,
         FetchConnection::TerminateOnSuccessfulCompletion,
+        "agent",
     )
     .await
     .expect_err("fetch aborted");
@@ -35,7 +35,7 @@ async fn clone_abort_prep() -> crate::Result {
         transport.into_inner().1.as_bstr(),
         format!(
             "002fgit-upload-pack does/not/matter\0\0version=2\00014command=ls-refs
-001bagent={}
+0014agent={}
 0001000csymrefs
 0009peel
 00000000",
@@ -55,7 +55,6 @@ async fn clone_abort_prep() -> crate::Result {
 }
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
-#[ignore]
 async fn ls_remote() -> crate::Result {
     let out = Vec::new();
     let mut delegate = LsRemoteDelegate::default();
@@ -72,6 +71,7 @@ async fn ls_remote() -> crate::Result {
         helper_unused,
         progress::Discard,
         FetchConnection::AllowReuse,
+        "agent",
     )
     .await?;
 
@@ -93,7 +93,7 @@ async fn ls_remote() -> crate::Result {
         transport.into_inner().1.as_bstr(),
         format!(
             "0044git-upload-pack does/not/matter\0\0version=2\0value-only\0key=value\00014command=ls-refs
-001bagent={}
+0014agent={}
 0001000csymrefs
 0009peel
 0000",
@@ -125,6 +125,7 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
         helper_unused,
         progress::Discard,
         FetchConnection::AllowReuse,
+        "agent",
     )
     .await
     .expect_err("ls-refs preparation is aborted");
@@ -145,7 +146,6 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
 }
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
-#[ignore]
 async fn ref_in_want() -> crate::Result {
     let out = Vec::new();
     let mut delegate = CloneRefInWantDelegate {
@@ -166,6 +166,7 @@ async fn ref_in_want() -> crate::Result {
         helper_unused,
         progress::Discard,
         FetchConnection::TerminateOnSuccessfulCompletion,
+        "agent",
     )
     .await?;
 
@@ -182,7 +183,7 @@ async fn ref_in_want() -> crate::Result {
         transport.into_inner().1.as_bstr(),
         format!(
             "002fgit-upload-pack does/not/matter\0\0version=2\00012command=fetch
-001bagent={}
+0014agent={}
 0001000ethin-pack
 0010include-tag
 000eofs-delta

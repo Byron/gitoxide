@@ -12,6 +12,7 @@ use crate::fetch::{indicate_end_of_interaction, refs::from_v2_refs, Command, LsR
 
 /// Invoke an ls-refs command on `transport`  (assuming `protocol_version` 2 or panic), which requires a prior handshake that yielded
 /// server `capabilities`. `prepare_ls_refs(capabilities, arguments, features)` can be used to alter the _ls-refs_. `progress` is used to provide feedback.
+/// Note that `prepare_ls_refs()` is expected to add the `(agent, Some(name))` to the list of `features`.
 #[maybe_async]
 pub async fn refs(
     mut transport: impl Transport,

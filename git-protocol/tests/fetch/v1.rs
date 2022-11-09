@@ -25,6 +25,7 @@ async fn clone() -> crate::Result {
             helper_unused,
             progress::Discard,
             FetchConnection::TerminateOnSuccessfulCompletion,
+            "agent",
         )
         .await?;
         assert_eq!(dlg.pack_bytes, 876, "{}: It be able to read pack bytes", fixture);
@@ -48,6 +49,7 @@ async fn ls_remote() -> crate::Result {
         helper_unused,
         progress::Discard,
         FetchConnection::AllowReuse,
+        "agent",
     )
     .await?;
 
@@ -89,6 +91,7 @@ async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
         helper_unused,
         progress::Discard,
         FetchConnection::AllowReuse,
+        "agent",
     )
     .await
     {

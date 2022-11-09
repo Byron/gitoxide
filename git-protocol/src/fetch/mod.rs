@@ -5,16 +5,12 @@ pub use arguments::Arguments;
 pub mod command;
 pub use command::Command;
 
-/// Produce the name of the `git` client name as key-value pair, suitable for `git` commands on the protocol layer
-/// , so that it's valid for `git` servers, using `name` as user-defined portion of the value.
-pub fn agent_tuple(name: impl Into<String>) -> (&'static str, Option<String>) {
-    ("agent", Some(agent(name)))
-}
-
 /// The name of the `git` client in a format suitable for presentation to a `git` server, using `name` as user-defined portion of the value.
 pub fn agent(name: impl Into<String>) -> String {
     let mut name = name.into();
-    name.insert_str(0, "git/");
+    if !name.starts_with("git/") {
+        name.insert_str(0, "git/");
+    }
     name
 }
 
