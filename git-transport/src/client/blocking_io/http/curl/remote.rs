@@ -92,6 +92,7 @@ pub struct Request {
     pub url: String,
     pub headers: curl::easy::List,
     pub upload: bool,
+    pub config: http::curl::Options,
 }
 
 pub struct Response {
@@ -110,11 +111,20 @@ pub fn new() -> (
     let handle = std::thread::spawn(move || -> Result<(), curl::Error> {
         let mut handle = Easy2::new(Handler::default());
 
-        for Request { url, headers, upload } in req_recv {
+        for Request {
+            url,
+            mut headers,
+            upload,
+            config,
+        } in req_recv
+        {
             handle.url(&url)?;
 
             // GitHub sends 'chunked' to avoid unknown clients to choke on the data, I suppose
             handle.post(upload)?;
+            for header in config.extra_headers {
+                headers.append(&header)?;
+            }
             handle.http_headers(headers)?;
             handle.transfer_encoding(false)?;
             handle.connect_timeout(Duration::from_secs(20))?;

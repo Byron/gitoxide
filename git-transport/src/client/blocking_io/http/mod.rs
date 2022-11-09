@@ -21,6 +21,30 @@ mod reqwest;
 ///
 mod traits;
 
+///
+pub mod options {
+    /// possible settings for the `http.followRedirects` configuration option.
+    #[derive(Copy, Clone, PartialEq, Eq)]
+    pub enum FollowRedirects {
+        /// Follow only the first redirect request, most suitable for typical git requests.
+        Initial,
+        /// Follow all redirect requests from the server unconditionally
+        All,
+        /// Follow no redirect request.
+        None,
+    }
+
+    impl Default for FollowRedirects {
+        fn default() -> Self {
+            FollowRedirects::Initial
+        }
+    }
+}
+
+/// The http client configuration when using reqwest
+#[cfg(feature = "http-client-curl")]
+pub type Options = curl::Options;
+
 /// The http client configuration when using reqwest
 #[cfg(feature = "http-client-reqwest")]
 pub type Options = reqwest::Options;
