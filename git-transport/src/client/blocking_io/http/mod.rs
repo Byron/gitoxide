@@ -28,7 +28,7 @@ mod traits;
 
 ///
 pub mod options {
-    /// possible settings for the `http.followRedirects` configuration option.
+    /// Possible settings for the `http.followRedirects` configuration option.
     #[derive(Copy, Clone, PartialEq, Eq)]
     pub enum FollowRedirects {
         /// Follow only the first redirect request, most suitable for typical git requests.
@@ -44,16 +44,64 @@ pub mod options {
             FollowRedirects::Initial
         }
     }
+
+    /// The way to configure a proxy for authentication if a username is present in the configured proxy.
+    #[derive(Copy, Clone, PartialEq, Eq)]
+    pub enum ProxyAuthMethod {
+        /// Automatically pick a suitable authentication method.
+        AnyAuth,
+        ///HTTP basic authentication.
+        Basic,
+        /// Http digest authentication to prevent a password to be passed in clear text.
+        Digest,
+        /// GSS negotiate authentication.
+        Negotiate,
+        /// NTLM authentication
+        Ntlm,
+    }
+
+    impl Default for ProxyAuthMethod {
+        fn default() -> Self {
+            ProxyAuthMethod::AnyAuth
+        }
+    }
 }
 
 /// Options to configure curl requests.
+// TODO: testing most of these fields requires a lot of effort, unless special flags to introspect ongoing requests are added.
 #[derive(Default, Clone)]
 pub struct Options {
     /// Corresponds to the `http.extraHeader` configuration, a multi-var.
     /// They are applied unconditionally and are expected to be valid.
     pub extra_headers: Vec<String>,
     /// How to handle redirects.
+    ///
+    /// Refers to `http.followRedirects`.
     pub follow_redirects: options::FollowRedirects,
+    /// Used in conjunction with `low_speed_time_seconds`, any non-0 value signals the amount of bytes per second at least to avoid
+    /// aborting the connection.
+    ///
+    /// Refers to `http.lowSpeedLimit`.
+    pub low_speed_limit_bytes_per_second: usize,
+    /// Used in conjunction with `low_speed_bytes_per_second`, any non-0 value signals the amount seconds the minimal amount
+    /// of bytes per second isn't reached.
+    ///
+    /// Refers to `http.lowSpeedTime`.
+    pub low_speed_time_seconds: usize,
+    /// A curl-style proxy declaration of the form `[protocol://][user[:password]@]proxyhost[:port]`.
+    ///
+    /// Refers to `http.proxy`.
+    pub proxy: Option<String>,
+    /// The way to authenticate against the proxy if the `proxy` field contains a username.
+    ///
+    /// Refers to `http.proxyAuthMethod`.
+    pub proxy_auth_method: Option<options::ProxyAuthMethod>,
+    /// The `HTTP` `USER_AGENT` string presented to an `HTTP` server, notably not the user agent present to the `git` server.
+    ///
+    /// If not overridden, it defaults to the standard `git` server user agent.
+    ///
+    /// Refers to `http.userAgent`.
+    pub user_agent: Option<String>,
     /// Backend specific options, if available.
     pub backend: Option<Arc<Mutex<dyn Any + Send + Sync + 'static>>>,
 }
