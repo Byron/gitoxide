@@ -70,7 +70,7 @@ pub trait TransportV2Ext {
     fn invoke<'a>(
         &mut self,
         command: &str,
-        capabilities: impl Iterator<Item = (&'a str, Option<impl AsRef<str>>)>,
+        capabilities: impl Iterator<Item = (&'a str, Option<impl AsRef<str>>)> + 'a,
         arguments: Option<impl Iterator<Item = bstr::BString>>,
     ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error>;
 }
@@ -79,7 +79,7 @@ impl<T: Transport> TransportV2Ext for T {
     fn invoke<'a>(
         &mut self,
         command: &str,
-        capabilities: impl Iterator<Item = (&'a str, Option<impl AsRef<str>>)>,
+        capabilities: impl Iterator<Item = (&'a str, Option<impl AsRef<str>>)> + 'a,
         arguments: Option<impl Iterator<Item = BString>>,
     ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error> {
         let mut writer = self.request(WriteMode::OneLfTerminatedLinePerWriteCall, MessageKind::Flush)?;
