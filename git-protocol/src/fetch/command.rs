@@ -25,7 +25,7 @@ mod with_io {
     use bstr::{BString, ByteSlice};
     use git_transport::client::Capabilities;
 
-    use crate::fetch::{agent, command::Feature, Command};
+    use crate::fetch::{agent_tuple, command::Feature, Command};
 
     impl Command {
         /// Only V2
@@ -134,7 +134,7 @@ mod with_io {
                                 feature => server_capabilities.contains(feature),
                             })
                             .map(|s| (s, None))
-                            .chain(Some(agent()))
+                            .chain(Some(agent_tuple()))
                             .collect()
                     }
                     git_transport::Protocol::V2 => {
@@ -153,11 +153,11 @@ mod with_io {
                             .copied()
                             .filter(|feature| supported_features.iter().any(|supported| supported == feature))
                             .map(|s| (s, None))
-                            .chain(Some(agent()))
+                            .chain(Some(agent_tuple()))
                             .collect()
                     }
                 },
-                Command::LsRefs => vec![agent()],
+                Command::LsRefs => vec![agent_tuple()],
             }
         }
         /// Panics if the given arguments and features don't match what's statically known. It's considered a bug in the delegate.

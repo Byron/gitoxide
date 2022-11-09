@@ -5,9 +5,15 @@ pub use arguments::Arguments;
 pub mod command;
 pub use command::Command;
 
-/// Returns the name of the agent as key-value pair, commonly used in HTTP headers.
-pub fn agent() -> (&'static str, Option<&'static str>) {
-    ("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))))
+/// Produce the name of the `git` client name as key-value pair, suitable for `git` commands on the protocol layer
+/// , so that it's valid for `git` servers, using `name` as user-defined portion of the value.
+pub fn agent_tuple() -> (&'static str, Option<&'static str>) {
+    ("agent", Some(agent()))
+}
+
+/// The name of the `git` client in a format suitable for presentation to a `git` server.
+pub fn agent() -> &'static str {
+    concat!("git/oxide-", env!("CARGO_PKG_VERSION"))
 }
 
 ///

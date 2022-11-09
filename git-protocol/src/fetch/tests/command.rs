@@ -21,7 +21,11 @@ mod v1 {
                         git_transport::Protocol::V1,
                         &capabilities("multi_ack side-band side-band-64k multi_ack_detailed")
                     ),
-                    &[("side-band-64k", None), ("multi_ack_detailed", None), fetch::agent()]
+                    &[
+                        ("side-band-64k", None),
+                        ("multi_ack_detailed", None),
+                        fetch::agent_tuple()
+                    ]
                 );
             }
 
@@ -42,7 +46,7 @@ mod v1 {
                         ("allow-reachable-sha1-in-want", None),
                         ("no-done", None),
                         ("filter", None),
-                        fetch::agent()
+                        fetch::agent_tuple()
                     ],
                     "we don't enforce include-tag or no-progress"
                 );
@@ -73,7 +77,7 @@ mod v2 {
                     ["shallow", "filter", "ref-in-want", "sideband-all", "packfile-uris"]
                         .iter()
                         .map(|s| (*s, None))
-                        .chain(Some(fetch::agent()))
+                        .chain(Some(fetch::agent_tuple()))
                         .collect::<Vec<_>>()
                 )
             }
@@ -111,7 +115,7 @@ mod v2 {
                         git_transport::Protocol::V2,
                         &capabilities("something-else", "does not matter as there are none")
                     ),
-                    &[fetch::agent()]
+                    &[fetch::agent_tuple()]
                 );
             }
         }
