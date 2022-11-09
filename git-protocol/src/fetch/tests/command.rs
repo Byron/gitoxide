@@ -9,7 +9,6 @@ mod v1 {
     mod fetch {
         mod default_features {
             use crate::fetch::{
-                self,
                 tests::command::v1::{capabilities, GITHUB_CAPABILITIES},
                 Command,
             };
@@ -21,11 +20,7 @@ mod v1 {
                         git_transport::Protocol::V1,
                         &capabilities("multi_ack side-band side-band-64k multi_ack_detailed")
                     ),
-                    &[
-                        ("side-band-64k", None),
-                        ("multi_ack_detailed", None),
-                        fetch::agent_tuple()
-                    ]
+                    &[("side-band-64k", None), ("multi_ack_detailed", None),]
                 );
             }
 
@@ -46,7 +41,6 @@ mod v1 {
                         ("allow-reachable-sha1-in-want", None),
                         ("no-done", None),
                         ("filter", None),
-                        fetch::agent_tuple()
                     ],
                     "we don't enforce include-tag or no-progress"
                 );
@@ -65,7 +59,7 @@ mod v2 {
 
     mod fetch {
         mod default_features {
-            use crate::fetch::{self, tests::command::v2::capabilities, Command};
+            use crate::fetch::{tests::command::v2::capabilities, Command};
 
             #[test]
             fn all_features() {
@@ -77,7 +71,6 @@ mod v2 {
                     ["shallow", "filter", "ref-in-want", "sideband-all", "packfile-uris"]
                         .iter()
                         .map(|s| (*s, None))
-                        .chain(Some(fetch::agent_tuple()))
                         .collect::<Vec<_>>()
                 )
             }
@@ -106,7 +99,7 @@ mod v2 {
 
     mod ls_refs {
         mod default_features {
-            use crate::fetch::{self, tests::command::v2::capabilities, Command};
+            use crate::fetch::{tests::command::v2::capabilities, Command};
 
             #[test]
             fn default_as_there_are_no_features() {
@@ -115,7 +108,7 @@ mod v2 {
                         git_transport::Protocol::V2,
                         &capabilities("something-else", "does not matter as there are none")
                     ),
-                    &[fetch::agent_tuple()]
+                    &[]
                 );
             }
         }

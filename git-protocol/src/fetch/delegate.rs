@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{
     io,
     ops::{Deref, DerefMut},
@@ -55,7 +56,7 @@ pub trait DelegateBlocking {
         &mut self,
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'static, str>>)>,
     ) -> std::io::Result<LsRefsAction> {
         Ok(LsRefsAction::Continue)
     }
@@ -75,7 +76,7 @@ pub trait DelegateBlocking {
         &mut self,
         _version: git_transport::Protocol,
         _server: &Capabilities,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'static, str>>)>,
         _refs: &[Ref],
     ) -> std::io::Result<Action> {
         Ok(Action::Continue)
@@ -125,7 +126,7 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
         &mut self,
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'static, str>>)>,
     ) -> io::Result<LsRefsAction> {
         self.deref_mut().prepare_ls_refs(_server, _arguments, _features)
     }
@@ -134,7 +135,7 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
         &mut self,
         _version: git_transport::Protocol,
         _server: &Capabilities,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'static, str>>)>,
         _refs: &[Ref],
     ) -> io::Result<Action> {
         self.deref_mut().prepare_fetch(_version, _server, _features, _refs)
@@ -159,7 +160,7 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
         &mut self,
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'static, str>>)>,
     ) -> io::Result<LsRefsAction> {
         self.deref_mut().prepare_ls_refs(_server, _arguments, _features)
     }
@@ -168,7 +169,7 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
         &mut self,
         _version: git_transport::Protocol,
         _server: &Capabilities,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'static, str>>)>,
         _refs: &[Ref],
     ) -> io::Result<Action> {
         self.deref_mut().prepare_fetch(_version, _server, _features, _refs)

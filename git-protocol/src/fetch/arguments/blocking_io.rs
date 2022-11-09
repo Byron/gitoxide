@@ -45,7 +45,9 @@ impl Arguments {
                 }
                 transport.invoke(
                     Command::Fetch.as_str(),
-                    self.features.iter().filter(|(_, v)| v.is_some()).cloned(),
+                    self.features
+                        .iter()
+                        .filter_map(|(k, v)| v.as_ref().map(|v| (*k, Some(v.as_ref())))),
                     Some(std::mem::replace(&mut self.args, retained_state).into_iter()),
                 )
             }

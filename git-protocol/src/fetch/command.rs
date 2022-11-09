@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 /// The kind of command to invoke on the server side.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum Command {
@@ -8,7 +10,7 @@ pub enum Command {
 }
 
 /// A key value pair of values known at compile time.
-pub type Feature = (&'static str, Option<&'static str>);
+pub type Feature = (&'static str, Option<Cow<'static, str>>);
 
 impl Command {
     /// Produce the name of the command as known by the server side.
@@ -25,7 +27,7 @@ mod with_io {
     use bstr::{BString, ByteSlice};
     use git_transport::client::Capabilities;
 
-    use crate::fetch::{agent_tuple, command::Feature, Command};
+    use crate::fetch::{command::Feature, Command};
 
     impl Command {
         /// Only V2
@@ -134,14 +136,13 @@ mod with_io {
                                 feature => server_capabilities.contains(feature),
                             })
                             .map(|s| (s, None))
-                            .chain(Some(agent_tuple()))
                             .collect()
                     }
                     git_transport::Protocol::V2 => {
                         let supported_features: Vec<_> = server_capabilities
                             .iter()
                             .find_map(|c| {
-                                if c.name() == Command::Fetch.as_str().as_bytes().as_bstr() {
+                                if c.name() == Command::Fetch.as_str() {
                                     c.values().map(|v| v.map(|f| f.to_owned()).collect())
                                 } else {
                                     None
@@ -153,11 +154,10 @@ mod with_io {
                             .copied()
                             .filter(|feature| supported_features.iter().any(|supported| supported == feature))
                             .map(|s| (s, None))
-                            .chain(Some(agent_tuple()))
                             .collect()
                     }
                 },
-                Command::LsRefs => vec![agent_tuple()],
+                Command::LsRefs => vec![],
             }
         }
         /// Panics if the given arguments and features don't match what's statically known. It's considered a bug in the delegate.

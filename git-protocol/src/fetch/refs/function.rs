@@ -5,6 +5,7 @@ use git_transport::{
     Protocol,
 };
 use maybe_async::maybe_async;
+use std::borrow::Cow;
 
 use super::Error;
 use crate::fetch::{indicate_end_of_interaction, refs::from_v2_refs, Command, LsRefsAction, Ref};
@@ -19,7 +20,7 @@ pub async fn refs(
     prepare_ls_refs: impl FnOnce(
         &Capabilities,
         &mut Vec<BString>,
-        &mut Vec<(&str, Option<&str>)>,
+        &mut Vec<(&str, Option<Cow<'static, str>>)>,
     ) -> std::io::Result<LsRefsAction>,
     progress: &mut impl Progress,
 ) -> Result<Vec<Ref>, Error> {

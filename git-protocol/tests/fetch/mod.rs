@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::io;
 
 use bstr::{BString, ByteSlice};
@@ -27,7 +28,7 @@ impl fetch::DelegateBlocking for CloneDelegate {
         &mut self,
         _version: git_transport::Protocol,
         _server: &Capabilities,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'static, str>>)>,
         _refs: &[fetch::Ref],
     ) -> io::Result<Action> {
         match self.abort_with.take() {
@@ -71,7 +72,7 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
         &mut self,
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'static, str>>)>,
     ) -> io::Result<LsRefsAction> {
         Ok(LsRefsAction::Skip)
     }
@@ -80,7 +81,7 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
         &mut self,
         _version: git_transport::Protocol,
         _server: &Capabilities,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'static, str>>)>,
         refs: &[fetch::Ref],
     ) -> io::Result<Action> {
         self.refs = refs.to_owned();
@@ -110,7 +111,7 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
         &mut self,
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'static, str>>)>,
     ) -> std::io::Result<LsRefsAction> {
         match self.abort_with.take() {
             Some(err) => Err(err),
@@ -121,7 +122,7 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
         &mut self,
         _version: git_transport::Protocol,
         _server: &Capabilities,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'static, str>>)>,
         refs: &[fetch::Ref],
     ) -> io::Result<fetch::Action> {
         self.refs = refs.to_owned();
