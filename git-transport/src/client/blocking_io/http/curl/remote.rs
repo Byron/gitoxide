@@ -124,7 +124,7 @@ pub fn new() -> (
                     connect_timeout,
                     proxy,
                     proxy_auth_method: _,
-                    user_agent: _,
+                    user_agent,
                     backend: _,
                 },
         } in req_recv
@@ -136,8 +136,11 @@ pub fn new() -> (
             for header in extra_headers {
                 headers.append(&header)?;
             }
-            if let Some(proxy) = proxy.as_deref() {
-                handle.proxy(proxy)?;
+            if let Some(proxy) = proxy {
+                handle.proxy(&proxy)?;
+            }
+            if let Some(user_agent) = user_agent {
+                handle.useragent(&user_agent)?;
             }
             handle.http_headers(headers)?;
             handle.transfer_encoding(false)?;

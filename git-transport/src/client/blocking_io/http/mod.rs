@@ -116,7 +116,11 @@ pub struct Options {
     pub proxy_auth_method: Option<options::ProxyAuthMethod>,
     /// The `HTTP` `USER_AGENT` string presented to an `HTTP` server, notably not the user agent present to the `git` server.
     ///
-    /// If not overridden, it defaults to the standard `git` server user agent.
+    /// If not overridden, it defaults to the user agent provided by `curl`, which is a deviation from how `git` handles this.
+    /// Thus it's expected from the callers to set it to their application, or use higher-level crates which make it easy to do this
+    /// more correctly.
+    ///
+    /// Using the correct user-agent might affect how the server treats the request.
     ///
     /// Refers to `http.userAgent`.
     pub user_agent: Option<String>,
