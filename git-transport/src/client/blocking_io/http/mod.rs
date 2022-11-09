@@ -65,14 +65,32 @@ pub mod options {
             ProxyAuthMethod::AnyAuth
         }
     }
+
+    impl Default for super::Options {
+        fn default() -> Self {
+            super::Options {
+                extra_headers: vec![],
+                follow_redirects: Default::default(),
+                low_speed_limit_bytes_per_second: 0,
+                low_speed_time_seconds: 0,
+                proxy: None,
+                proxy_auth_method: None,
+                user_agent: None,
+                connect_timeout: std::time::Duration::from_secs(20),
+                backend: None,
+            }
+        }
+    }
 }
 
 /// Options to configure curl requests.
 // TODO: testing most of these fields requires a lot of effort, unless special flags to introspect ongoing requests are added.
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Options {
-    /// Corresponds to the `http.extraHeader` configuration, a multi-var.
-    /// They are applied unconditionally and are expected to be valid.
+    /// Headers to be added to every request.
+    /// They are applied unconditionally and are expected to be valid as they occour in an HTTP request, like `header: value`, without newlines.
+    ///
+    /// Refers to `http.extraHeader` multi-var.
     pub extra_headers: Vec<String>,
     /// How to handle redirects.
     ///
@@ -82,12 +100,12 @@ pub struct Options {
     /// aborting the connection.
     ///
     /// Refers to `http.lowSpeedLimit`.
-    pub low_speed_limit_bytes_per_second: usize,
+    pub low_speed_limit_bytes_per_second: u32,
     /// Used in conjunction with `low_speed_bytes_per_second`, any non-0 value signals the amount seconds the minimal amount
     /// of bytes per second isn't reached.
     ///
     /// Refers to `http.lowSpeedTime`.
-    pub low_speed_time_seconds: usize,
+    pub low_speed_time_seconds: u64,
     /// A curl-style proxy declaration of the form `[protocol://][user[:password]@]proxyhost[:port]`.
     ///
     /// Refers to `http.proxy`.
@@ -102,6 +120,10 @@ pub struct Options {
     ///
     /// Refers to `http.userAgent`.
     pub user_agent: Option<String>,
+    /// The amount of time we wait until aborting a connection attempt.
+    ///
+    /// Defaults to 20s.
+    pub connect_timeout: std::time::Duration,
     /// Backend specific options, if available.
     pub backend: Option<Arc<Mutex<dyn Any + Send + Sync + 'static>>>,
 }
