@@ -49,10 +49,9 @@ impl Default for Remote {
                     // Shut down as something is off.
                     break;
                 }
-                if let Some(request_options) = config.backend.as_ref().and_then(|backend| backend.lock().ok()) {
-                    if let Some(options) = request_options.downcast_ref::<super::Options>() {
-                        if let Some(mutex) = &options.configure_request {
-                            let mut configure_request = mutex.lock().expect("our thread cannot ordinarily panic");
+                if let Some(ref mut request_options) = config.backend.as_ref().and_then(|backend| backend.lock().ok()) {
+                    if let Some(options) = request_options.downcast_mut::<super::Options>() {
+                        if let Some(configure_request) = &mut options.configure_request {
                             configure_request(&mut req)?;
                         }
                     }

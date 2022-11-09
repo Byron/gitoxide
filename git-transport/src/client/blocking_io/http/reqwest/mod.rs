@@ -11,19 +11,15 @@ pub struct Remote {
 }
 
 /// Options to configure the reqwest HTTP handler.
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct Options {
     /// A function to configure the request that is about to be made.
     pub configure_request: Option<
-        std::sync::Arc<
-            std::sync::Mutex<
-                dyn FnMut(
-                        &mut reqwest::blocking::Request,
-                    ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>
-                    + Send
-                    + Sync
-                    + 'static,
-            >,
+        Box<
+            dyn FnMut(&mut reqwest::blocking::Request) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>
+                + Send
+                + Sync
+                + 'static,
         >,
     >,
 }
