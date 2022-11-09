@@ -10,21 +10,11 @@ use crate::client::blocking_io::http;
 
 mod remote;
 
-/// Options to configure curl requests.
-#[derive(Default, Clone)]
-pub struct Options {
-    /// Corresponds to the `http.extraHeader` configuration, a multi-var.
-    /// They are applied unconditionally and are expected to be valid.
-    pub extra_headers: Vec<String>,
-    /// How to handle redirects.
-    pub follow_redirects: http::options::FollowRedirects,
-}
-
 pub struct Curl {
     req: SyncSender<remote::Request>,
     res: Receiver<remote::Response>,
     handle: Option<thread::JoinHandle<Result<(), curl::Error>>>,
-    options: Options,
+    config: http::Options,
 }
 
 impl Curl {
@@ -59,7 +49,7 @@ impl Curl {
                 url: url.to_owned(),
                 headers: list,
                 upload,
-                config: self.options.clone(),
+                config: self.config.clone(),
             })
             .is_err()
         {
@@ -88,7 +78,7 @@ impl Default for Curl {
             handle: Some(handle),
             req,
             res,
-            options: Options::default(),
+            config: http::Options::default(),
         }
     }
 }
@@ -115,7 +105,10 @@ impl http::Http for Curl {
         self.make_request(url, headers, true)
     }
 
-    fn configure(&mut self, _config: &dyn std::any::Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    fn configure(&mut self, config: &dyn std::any::Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        if let Some(config) = config.downcast_ref::<http::Options>() {
+            self.config = config.clone();
+        }
         Ok(())
     }
 }

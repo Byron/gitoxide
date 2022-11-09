@@ -1,3 +1,4 @@
+use std::sync::{Arc, Mutex};
 use std::{
     any::Any,
     borrow::Cow,
@@ -15,8 +16,9 @@ use crate::{
 #[cfg(feature = "http-client-curl")]
 mod curl;
 
+///
 #[cfg(feature = "http-client-reqwest")]
-mod reqwest;
+pub mod reqwest;
 
 ///
 mod traits;
@@ -41,13 +43,17 @@ pub mod options {
     }
 }
 
-/// The http client configuration when using reqwest
-#[cfg(feature = "http-client-curl")]
-pub type Options = curl::Options;
-
-/// The http client configuration when using reqwest
-#[cfg(feature = "http-client-reqwest")]
-pub type Options = reqwest::Options;
+/// Options to configure curl requests.
+#[derive(Default, Clone)]
+pub struct Options {
+    /// Corresponds to the `http.extraHeader` configuration, a multi-var.
+    /// They are applied unconditionally and are expected to be valid.
+    pub extra_headers: Vec<String>,
+    /// How to handle redirects.
+    pub follow_redirects: options::FollowRedirects,
+    /// Backend specific options, if available.
+    pub backend: Option<Arc<Mutex<dyn Any + Send + Sync + 'static>>>,
+}
 
 /// The actual http client implementation, using curl
 #[cfg(feature = "http-client-curl")]

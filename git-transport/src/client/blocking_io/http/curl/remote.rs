@@ -92,7 +92,7 @@ pub struct Request {
     pub url: String,
     pub headers: curl::easy::List,
     pub upload: bool,
-    pub config: http::curl::Options,
+    pub config: http::Options,
 }
 
 pub struct Response {
