@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{
     io,
     path::PathBuf,
@@ -51,7 +52,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         &mut self,
         server: &Capabilities,
         arguments: &mut Vec<BString>,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
     ) -> io::Result<LsRefsAction> {
         if server.contains("ls-refs") {
             arguments.extend(FILTER.iter().map(|r| format!("ref-prefix {}", r).into()));
@@ -67,7 +68,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         &mut self,
         version: transport::Protocol,
         server: &Capabilities,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         _refs: &[Ref],
     ) -> io::Result<Action> {
         if !self.wanted_refs.is_empty() && !remote_supports_ref_in_want(server) {
@@ -172,6 +173,7 @@ mod blocking_io {
             protocol::credentials::builtin,
             progress,
             protocol::FetchConnection::TerminateOnSuccessfulCompletion,
+            crate::net::agent(),
         )?;
         Ok(())
     }
@@ -245,6 +247,7 @@ mod async_io {
                 protocol::credentials::builtin,
                 progress,
                 protocol::FetchConnection::TerminateOnSuccessfulCompletion,
+                crate::net::agent(),
             ))
         })
         .await?;
