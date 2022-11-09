@@ -16,7 +16,10 @@ use crate::{
 #[cfg(feature = "http-client-curl")]
 mod curl;
 
+/// The experimental `reqwest` backend.
 ///
+/// It doesn't support any of the shared http options yet, but can be seen as example on how to integrate blocking `http` backends.
+/// There is also nothing that would prevent it from becoming a fully-featured HTTP backend except for demand and time.
 #[cfg(feature = "http-client-reqwest")]
 pub mod reqwest;
 
