@@ -71,7 +71,15 @@ impl Tabled for Record {
 
     fn fields(&self) -> Vec<String> {
         let mut tokens = self.config.split('.');
-        let mut buf = vec![tokens.next().expect("present").bold().to_string()];
+        let mut buf = vec![{
+            let name = tokens.next().expect("present");
+            if name == "gitoxide" {
+                name.bold().green()
+            } else {
+                name.bold()
+            }
+            .to_string()
+        }];
         buf.extend(tokens.map(ToOwned::to_owned));
 
         vec![self.usage.icon().into(), buf.join("."), self.usage.to_string()]
@@ -720,8 +728,9 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "gitoxide.userAgent",
-        usage: Planned {
-            note: Some("the first variable solely for gitoxide.")
+        usage: InModule {
+            name: "remote::connection",
+            deviation: None
         }
     },
 ];
