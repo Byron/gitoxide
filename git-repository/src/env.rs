@@ -1,6 +1,16 @@
+//! Utilities to handle program arguments and other values of interest.
 use std::ffi::{OsStr, OsString};
 
 use crate::bstr::{BString, ByteVec};
+
+/// Returns the name of the agent for identification towards a remote server as statically known when compiling the crate.
+/// Suitable for both `git` servers and HTTP servers, and used unless configured otherwise.
+///
+/// Note that it's meant to be used in conjunction with [`protocol::fetch::agent()`][crate::protocol::fetch::agent()] which
+/// prepends `git/`.
+pub fn agent() -> &'static str {
+    concat!("oxide-", env!("CARGO_PKG_VERSION"))
+}
 
 /// Equivalent to `std::env::args_os()`, but with precomposed unicode on MacOS and other apple platforms.
 #[cfg(not(target_vendor = "apple"))]
