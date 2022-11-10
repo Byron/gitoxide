@@ -41,7 +41,13 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
         self.remote
     }
 
-    /// Provide a mutable transport to allow configuring it with [`configure()`][git_protocol::transport::client::TransportWithoutIO::configure()]
+    /// Provide a mutable transport to allow configuring it with [`configure()`][git_protocol::transport::client::TransportWithoutIO::configure()].
+    ///
+    /// Please note that it is pre-configured, but can be configured again right after the [`Connection`] was instantiated without
+    /// the previous configuration having ever been used.
+    ///
+    /// Also note that all of the default configuration is created from `git` configuration, which can also be manipulated through overrides
+    /// to affect the default configuration.
     pub fn transport_mut(&mut self) -> &mut T {
         &mut self.transport
     }

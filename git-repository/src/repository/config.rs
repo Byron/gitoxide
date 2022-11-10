@@ -33,6 +33,34 @@ impl crate::Repository {
     }
 }
 
+#[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
+mod transport {
+    use crate::bstr::BStr;
+    use std::any::Any;
+
+    impl crate::Repository {
+        /// Produce configuration suitable for `url`, as differentiated by its protocol/scheme, to be passed to a transport instance via
+        /// [configure()][git_transport::client::Transport::configure()].
+        /// `None` is returned if there is no known configuration.
+        ///
+        /// Note that the caller may cast the instance themselves to modify it before passing it on.
+        pub fn transport_config<'a>(
+            &self,
+            url: impl Into<&'a BStr>,
+        ) -> Result<Option<Box<dyn Any>>, crate::config::transport::Error> {
+            let url = git_url::parse(url.into())?;
+            use git_url::Scheme::*;
+
+            match &url.scheme {
+                Http | Https => {
+                    todo!()
+                }
+                File | Git | Ssh | Ext(_) => Ok(None),
+            }
+        }
+    }
+}
+
 mod remote {
     use std::{borrow::Cow, collections::BTreeSet};
 

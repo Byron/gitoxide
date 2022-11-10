@@ -19,8 +19,7 @@ git clone --shared base two-origins
 )
 
 git clone --shared base worktree-root
-(
-  cd worktree-root
+(cd worktree-root
 
   git worktree add ../wt-a
   git worktree add ../prev/wt-a-nested
@@ -28,4 +27,17 @@ git clone --shared base worktree-root
   git worktree add ../wt-a/nested-wt-b
   git worktree add --lock ../wt-c-locked
   git worktree add ../wt-deleted && rm -Rf ../wt-deleted
+)
+
+git init http-config
+(cd http-config
+  git config http.extraHeader "ExtraHeader: value1"
+  git config --add http.extraHeader "ExtraHeader: value2"
+  git config http.followRedirects initial
+  git config http.lowSpeedLimit 5k
+  git config http.lowSpeedTime 10
+  git config http.postBuffer 8k
+  git config http.proxy localhost:9090
+  git config http.proxyAuthMethod anyauth
+  git config http.userAgent agentJustForHttp
 )

@@ -8,7 +8,6 @@ mod blocking_io {
     use git_testtools::hex_to_id;
 
     use crate::remote;
-
     fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
         let dir = git_testtools::scripted_fixture_repo_writable_with_args(
             "make_fetch_repos.sh",

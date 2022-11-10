@@ -107,6 +107,31 @@ pub mod checkout_options {
     }
 }
 
+///
+pub mod transport {
+
+    /// The error produced when configuring a transport for a particular protocol.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Invalid URL passed for configuration")]
+        ParseUrl(#[from] git_url::parse::Error),
+        #[error("Could obtain configuration for an HTTP url")]
+        Http(#[from] http::Error),
+    }
+
+    ///
+    pub mod http {
+        /// The error produced when configuring a HTTP transport.
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("TBD")]
+            TBD,
+        }
+    }
+}
+
 /// Utility type to keep pre-obtained configuration values, only for those required during initial setup
 /// and other basic operations that are common enough to warrant a permanent cache.
 ///
