@@ -1,9 +1,5 @@
 use std::str::FromStr;
 
-pub fn agent() -> &'static str {
-    concat!("oxide-", env!("CARGO_PKG_VERSION"))
-}
-
 #[derive(Eq, PartialEq, Debug)]
 pub enum Protocol {
     V1,

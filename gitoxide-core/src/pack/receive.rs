@@ -116,6 +116,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
 mod blocking_io {
     use std::{io, io::BufRead, path::PathBuf};
 
+    use git_repository as git;
     use git_repository::{
         bstr::BString,
         protocol,
@@ -173,7 +174,7 @@ mod blocking_io {
             protocol::credentials::builtin,
             progress,
             protocol::FetchConnection::TerminateOnSuccessfulCompletion,
-            crate::net::agent(),
+            git::env::agent(),
         )?;
         Ok(())
     }
@@ -198,6 +199,7 @@ mod async_io {
 
     use super::{print, receive_pack_blocking, write_raw_refs, CloneDelegate, Context};
     use crate::{net, OutputFormat};
+    use git_repository as git;
 
     #[async_trait(?Send)]
     impl<W: io::Write + Send + 'static> protocol::fetch::Delegate for CloneDelegate<W> {
@@ -247,7 +249,7 @@ mod async_io {
                 protocol::credentials::builtin,
                 progress,
                 protocol::FetchConnection::TerminateOnSuccessfulCompletion,
-                crate::net::agent(),
+                git::env::agent(),
             ))
         })
         .await?;
