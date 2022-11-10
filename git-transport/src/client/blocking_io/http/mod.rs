@@ -29,7 +29,7 @@ mod traits;
 ///
 pub mod options {
     /// Possible settings for the `http.followRedirects` configuration option.
-    #[derive(Copy, Clone, PartialEq, Eq)]
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     pub enum FollowRedirects {
         /// Follow only the first redirect request, most suitable for typical git requests.
         Initial,
@@ -46,7 +46,7 @@ pub mod options {
     }
 
     /// The way to configure a proxy for authentication if a username is present in the configured proxy.
-    #[derive(Copy, Clone, PartialEq, Eq)]
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     pub enum ProxyAuthMethod {
         /// Automatically pick a suitable authentication method.
         AnyAuth,
