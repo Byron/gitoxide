@@ -40,7 +40,7 @@ mod transport {
 
     impl crate::Repository {
         /// Produce configuration suitable for `url`, as differentiated by its protocol/scheme, to be passed to a transport instance via
-        /// [configure()][git_transport::client::Transport::configure()].
+        /// [configure()][git_transport::client::TransportWithoutIO::configure()].
         /// `None` is returned if there is no known configuration.
         ///
         /// Note that the caller may cast the instance themselves to modify it before passing it on.
