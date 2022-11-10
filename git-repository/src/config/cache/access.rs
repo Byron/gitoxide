@@ -45,6 +45,7 @@ impl Cache {
     }
 
     /// Returns a user agent for use with servers.
+    #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
     pub(crate) fn user_agent_tuple(&self) -> (&'static str, Option<Cow<'static, str>>) {
         let agent = self
             .user_agent
