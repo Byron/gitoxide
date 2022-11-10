@@ -718,6 +718,12 @@ static GIT_CONFIG: &[Record] = &[
             note: None
         }
     },
+    Record {
+        config: "gitoxide.userAgent",
+        usage: Planned {
+            note: Some("the first variable solely for gitoxide.")
+        }
+    },
 ];
 
 /// A programmatic way to record and display progress.
