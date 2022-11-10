@@ -65,6 +65,10 @@ where
     ///
     /// Due to management of the transport, it's cleanest to only use it for a single interaction. Thus it's consumed along with
     /// the connection.
+    ///
+    /// ### Configuration
+    ///
+    /// - `gitoxide.userAgent` is read to obtain the application user agent for git servers and for HTTP servers as well.
     #[allow(clippy::result_large_err)]
     #[git_protocol::maybe_async::maybe_async]
     pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap, Error> {
@@ -157,11 +161,13 @@ where
             Some(refs) => refs,
             None => {
                 let specs = &self.remote.fetch_specs;
+                let agent_feature = self.remote.repo.config.user_agent_tuple();
                 git_protocol::fetch::refs(
                     &mut self.transport,
                     outcome.server_protocol_version,
                     &outcome.capabilities,
-                    |_capabilities, arguments, _features| {
+                    move |_capabilities, arguments, features| {
+                        features.push(agent_feature);
                         if filter_by_prefix {
                             let mut seen = HashSet::new();
                             for spec in specs {

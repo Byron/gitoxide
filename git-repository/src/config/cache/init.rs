@@ -136,6 +136,7 @@ impl Cache {
             xdg_config_home_env,
             home_env,
             lenient_config,
+            user_agent: Default::default(),
             personas: Default::default(),
             url_rewrite: Default::default(),
             #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
@@ -177,6 +178,7 @@ impl Cache {
         self.object_kind_hint = object_kind_hint;
         self.reflog = reflog;
 
+        self.user_agent = Default::default();
         self.personas = Default::default();
         self.url_rewrite = Default::default();
         self.diff_algorithm = Default::default();

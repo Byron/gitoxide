@@ -44,6 +44,20 @@ impl Cache {
             .copied()
     }
 
+    /// Returns a user agent for use with servers.
+    pub(crate) fn user_agent_tuple(&self) -> (&'static str, Option<Cow<'static, str>>) {
+        let agent = self
+            .user_agent
+            .get_or_init(|| {
+                self.resolved
+                    .string("gitoxide", None, "userAgent")
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| crate::env::agent().into())
+            })
+            .to_owned();
+        ("agent", Some(git_protocol::fetch::agent(agent).into()))
+    }
+
     pub(crate) fn personas(&self) -> &identity::Personas {
         self.personas
             .get_or_init(|| identity::Personas::from_config_and_env(&self.resolved, self.git_prefix))

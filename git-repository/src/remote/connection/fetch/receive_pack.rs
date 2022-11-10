@@ -51,6 +51,10 @@ where
     /// We explicitly don't special case those refs and expect the user to take control. Note that by its nature,
     /// force only applies to refs pointing to commits and if they don't, they will be updated either way in our
     /// implementation as well.
+    ///
+    /// ### Configuration
+    ///
+    /// - `gitoxide.userAgent` is read to obtain the application user agent for git servers and for HTTP servers as well.
     pub fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome, Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
 
@@ -58,15 +62,19 @@ where
         let protocol_version = handshake.server_protocol_version;
 
         let fetch = git_protocol::fetch::Command::Fetch;
-        let fetch_features = fetch.default_features(protocol_version, &handshake.capabilities);
+        let progress = &mut con.progress;
+        let repo = con.remote.repo;
+        let fetch_features = {
+            let mut f = fetch.default_features(protocol_version, &handshake.capabilities);
+            f.push(repo.config.user_agent_tuple());
+            f
+        };
 
         git_protocol::fetch::Response::check_required_features(protocol_version, &fetch_features)?;
         let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
         let mut arguments = git_protocol::fetch::Arguments::new(protocol_version, fetch_features);
         let mut previous_response = None::<git_protocol::fetch::Response>;
         let mut round = 1;
-        let progress = &mut con.progress;
-        let repo = con.remote.repo;
 
         if self.ref_map.object_hash != repo.object_hash() {
             return Err(Error::IncompatibleObjectHash {

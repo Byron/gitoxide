@@ -124,6 +124,8 @@ pub(crate) struct Cache {
     pub use_multi_pack_index: bool,
     /// The representation of `core.logallrefupdates`, or `None` if the variable wasn't set.
     pub reflog: Option<git_ref::store::WriteReflog>,
+    /// The configured user agent for presentation to servers.
+    pub(crate) user_agent: OnceCell<String>,
     /// identities for later use, lazy initialization.
     pub(crate) personas: OnceCell<identity::Personas>,
     /// A lazily loaded rewrite list for remote urls
