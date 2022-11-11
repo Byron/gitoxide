@@ -82,7 +82,7 @@ pub(crate) mod function {
                     let url = transport.to_url();
                     progress.set_name("authentication");
                     let credentials::protocol::Outcome { identity, next } =
-                        authenticate(credentials::helper::Action::get_for_url(url))?
+                        authenticate(credentials::helper::Action::get_for_url(url.into_owned()))?
                             .expect("FILL provides an identity or errors");
                     transport.set_identity(identity)?;
                     progress.step();
