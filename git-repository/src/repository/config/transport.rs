@@ -1,6 +1,7 @@
 use crate::bstr::{BStr, ByteVec};
 use git_transport::client::http;
 use std::any::Any;
+use std::borrow::Cow;
 use std::convert::{TryFrom, TryInto};
 
 impl crate::Repository {
@@ -25,7 +26,7 @@ impl crate::Repository {
                     .strings_filter("http", None, "extraHeader", &mut trusted_only)
                     .unwrap_or_default()
                     .into_iter()
-                    .filter_map(|v| Vec::from(v.into_owned()).into_string().ok())
+                    .filter_map(try_cow_to_string)
                     .collect();
 
                 if let Some(follow_redirects) = config.string_filter("http", None, "followRedirects", &mut trusted_only)
@@ -47,11 +48,23 @@ impl crate::Repository {
 
                 opts.low_speed_time_seconds = integer(config, "http.lowSpeedTime", "u64", trusted_only)?;
                 opts.low_speed_limit_bytes_per_second = integer(config, "http.lowSpeedLimit", "u32", trusted_only)?;
-                todo!();
+                opts.proxy = config
+                    .string_filter("http", None, "proxy", &mut trusted_only)
+                    .and_then(try_cow_to_string);
+                opts.user_agent = config
+                    .string_filter("http", None, "userAgent", &mut trusted_only)
+                    .and_then(try_cow_to_string)
+                    .or_else(|| Some(crate::env::agent().into()));
+
+                Ok(Some(Box::new(opts)))
             }
             File | Git | Ssh | Ext(_) => Ok(None),
         }
     }
+}
+
+fn try_cow_to_string(v: Cow<'_, BStr>) -> Option<String> {
+    Vec::from(v.into_owned()).into_string().ok()
 }
 
 fn integer<T>(
