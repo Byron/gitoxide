@@ -39,7 +39,11 @@ mod http {
         } = http_config
             .downcast_ref::<git_transport::client::http::Options>()
             .expect("http options have been created");
-        assert_eq!(extra_headers, &["ExtraHeader: value1", "ExtraHeader: value2"]);
+        assert_eq!(
+            extra_headers,
+            &["ExtraHeader: value2", "ExtraHeader: value3"],
+            "it respects empty values to clear prior values"
+        );
         assert_eq!(
             *follow_redirects,
             git_transport::client::http::options::FollowRedirects::Initial

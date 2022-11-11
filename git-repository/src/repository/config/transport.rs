@@ -22,12 +22,18 @@ impl crate::Repository {
                 let mut opts = http::Options::default();
                 let config = &self.config.resolved;
                 let mut trusted_only = self.filter_config_section();
-                opts.extra_headers = config
-                    .strings_filter("http", None, "extraHeader", &mut trusted_only)
-                    .unwrap_or_default()
-                    .into_iter()
-                    .filter_map(try_cow_to_string)
-                    .collect();
+                opts.extra_headers = {
+                    let mut headers: Vec<_> = config
+                        .strings_filter("http", None, "extraHeader", &mut trusted_only)
+                        .unwrap_or_default()
+                        .into_iter()
+                        .filter_map(try_cow_to_string)
+                        .collect();
+                    if let Some(empty_pos) = headers.iter().rev().position(|h| h.is_empty()) {
+                        headers.drain(..headers.len() - empty_pos);
+                    }
+                    headers
+                };
 
                 if let Some(follow_redirects) = config.string_filter("http", None, "followRedirects", &mut trusted_only)
                 {

@@ -32,7 +32,9 @@ git clone --shared base worktree-root
 git init http-config
 (cd http-config
   git config http.extraHeader "ExtraHeader: value1"
+  git config --add http.extraHeader ""
   git config --add http.extraHeader "ExtraHeader: value2"
+  git config --add http.extraHeader "ExtraHeader: value3"
   git config http.followRedirects initial
   git config http.lowSpeedLimit 5k
   git config http.lowSpeedTime 10
