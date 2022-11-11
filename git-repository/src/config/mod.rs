@@ -114,6 +114,19 @@ pub mod transport {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error(
+            "Could not interpret configuration key {key:?} as {kind} integer of desired range with value: {actual}"
+        )]
+        InvalidInteger {
+            key: &'static str,
+            kind: &'static str,
+            actual: i64,
+        },
+        #[error("Could not interpret configuration key {key:?}")]
+        ConfigValue {
+            source: git_config::value::Error,
+            key: &'static str,
+        },
         #[error("Invalid URL passed for configuration")]
         ParseUrl(#[from] git_url::parse::Error),
         #[error("Could obtain configuration for an HTTP url")]
