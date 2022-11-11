@@ -552,11 +552,11 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "http.proxy",
-        usage: Planned { note: None },
+        usage: InModule { name: "repository::config::transport", deviation: Some("ignores strings with illformed UTF-8") }
     },
     Record {
         config: "http.extraHeader",
-        usage: InModule { name: "repository::config::transport", deviation: None }
+        usage: InModule { name: "repository::config::transport", deviation: Some("ignores strings with illformed UTF-8") }
     },
     Record {
         config: "http.proxyAuthMethod",
@@ -684,7 +684,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "http.userAgent",
-        usage: Planned { note: None }
+        usage: InModule { name: "repository::config::transport", deviation: Some("ignores strings with illformed UTF-8") }
     },
     Record {
         config: "http.noEPSV",
