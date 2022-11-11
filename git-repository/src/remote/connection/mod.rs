@@ -15,7 +15,7 @@ pub type AuthenticateFn<'a> = Box<dyn FnMut(git_credentials::helper::Action) -> 
 pub struct Connection<'a, 'repo, T, P> {
     pub(crate) remote: &'a Remote<'repo>,
     pub(crate) authenticate: Option<AuthenticateFn<'a>>,
-    pub(crate) transport_config: Option<Box<dyn std::any::Any>>,
+    pub(crate) transport_options: Option<Box<dyn std::any::Any>>,
     pub(crate) transport: T,
     pub(crate) progress: P,
 }

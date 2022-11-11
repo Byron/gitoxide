@@ -160,8 +160,8 @@ where
             }
         };
 
-        if self.transport_config.is_none() {
-            self.transport_config =
+        if self.transport_options.is_none() {
+            self.transport_options =
                 self.remote
                     .repo
                     .transport_options(url.as_ref())
@@ -170,7 +170,7 @@ where
                         url: url.into_owned(),
                     })?;
         }
-        if let Some(config) = self.transport_config.as_ref() {
+        if let Some(config) = self.transport_options.as_ref() {
             self.transport.configure(&**config)?;
         }
         let mut outcome =

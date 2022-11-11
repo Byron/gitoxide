@@ -28,7 +28,7 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
     /// Use this method to provide transport configuration with custom backend configuration that is not configurable by other means and
     /// custom to the application at hand.
     pub fn with_transport_options(mut self, config: Box<dyn std::any::Any>) -> Self {
-        self.transport_config = Some(config);
+        self.transport_options = Some(config);
         self
     }
 }
