@@ -1897,7 +1897,6 @@ dependencies = [
  "futures-lite",
  "git-features",
  "git-repository",
- "git-transport",
  "gitoxide-core",
  "owo-colors",
  "prodash",

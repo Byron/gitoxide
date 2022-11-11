@@ -67,7 +67,7 @@ gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
 ## Use blocking client networking.
 gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
 ## Support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) at the expense of compile times and binary size.
-http-client-curl = ["git-transport-for-configuration-only/http-client-curl"]
+http-client-curl = ["git-repository/blocking-http-transport"]
 ## Use async client networking.
 gitoxide-core-async-client = ["gitoxide-core/async-client", "futures-lite"]
 
@@ -82,8 +82,6 @@ anyhow = "1.0.42"
 gitoxide-core = { version = "^0.20.0", path = "gitoxide-core" }
 git-features = { version = "^0.23.1", path = "git-features" }
 git-repository = { version = "^0.27.0", path = "git-repository", default-features = false }
-
-git-transport-for-configuration-only = { package = "git-transport", optional = true, version = "^0.21.2", path = "git-transport" }
 
 clap = { version = "3.2.5", features = ["derive", "cargo"] }
 prodash = { version = "21", optional = true, default-features = false }
