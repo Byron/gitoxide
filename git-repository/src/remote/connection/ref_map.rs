@@ -147,8 +147,7 @@ where
                     .url(Direction::Fetch)
                     .map(ToOwned::to_owned)
                     .unwrap_or_else(|| {
-                        git_url::parse(self.transport.to_url().as_bytes().into())
-                            .expect("valid URL to be provided by transport")
+                        git_url::parse(self.transport.to_url().as_ref()).expect("valid URL to be provided by transport")
                     });
                 credentials_storage = self.configured_credentials(url)?;
                 &mut credentials_storage
