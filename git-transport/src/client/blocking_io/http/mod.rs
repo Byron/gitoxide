@@ -86,7 +86,7 @@ pub mod options {
 
 /// Options to configure curl requests.
 // TODO: testing most of these fields requires a lot of effort, unless special flags to introspect ongoing requests are added.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Options {
     /// Headers to be added to every request.
     /// They are applied unconditionally and are expected to be valid as they occour in an HTTP request, like `header: value`, without newlines.
