@@ -556,7 +556,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "http.extraHeader",
-        usage: Planned { note: Some("multi-value, and resettable with empty value") },
+        usage: InModule { name: "repository::config::transport", deviation: None }
     },
     Record {
         config: "http.proxyAuthMethod",
@@ -676,11 +676,11 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "http.lowSpeedLimit",
-        usage: Planned { note: Some("important for client-safety when facing bad networks or bad players") }
+        usage: InModule { name: "repository::config::transport", deviation: Some("fails on negative values") }
     },
     Record {
         config: "http.lowSpeedTime",
-        usage: Planned { note: Some("important for client-safety when facing bad networks or bad players") }
+        usage: InModule { name: "repository::config::transport", deviation: Some("fails on negative values") }
     },
     Record {
         config: "http.userAgent",
@@ -692,7 +692,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "http.followRedirects",
-        usage: Planned { note: None }
+        usage: InModule { name: "repository::config::transport", deviation: None }
     },
     Record {
         config: "http.<url>.*",
