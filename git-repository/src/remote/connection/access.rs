@@ -19,6 +19,18 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
         self.authenticate = Some(Box::new(helper));
         self
     }
+
+    /// Provide configuration to be used before the first handshake is conducted.
+    /// It's typically created by initializing it with [`Repository::transport_options()`][crate::Repository::transport_options()], which
+    /// is also the default if this isn't set explicitly. Note that all of the default configuration is created from `git`
+    /// configuration, which can also be manipulated through overrides to affect the default configuration.
+    ///
+    /// Use this method to provide transport configuration with custom backend configuration that is not configurable by other means and
+    /// custom to the application at hand.
+    pub fn with_transport_options(mut self, config: Box<dyn std::any::Any>) -> Self {
+        self.transport_config = Some(config);
+        self
+    }
 }
 
 /// Access
@@ -41,13 +53,10 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
         self.remote
     }
 
-    /// Provide a mutable transport to allow configuring it with [`configure()`][git_protocol::transport::client::TransportWithoutIO::configure()].
-    ///
-    /// Please note that it is pre-configured, but can be configured again right after the [`Connection`] was instantiated without
-    /// the previous configuration having ever been used.
-    ///
-    /// Also note that all of the default configuration is created from `git` configuration, which can also be manipulated through overrides
-    /// to affect the default configuration.
+    /// Provide a mutable transport to allow interacting with it according to its actual type.
+    /// Note that the caller _should not_ call [`configure()`][git_protocol::transport::client::TransportWithoutIO::configure()]
+    /// as we will call it automatically before performing the handshake. Instead, to bring in custom configuration,
+    /// call [`with_transport_options()`][Connection::with_transport_options()].
     pub fn transport_mut(&mut self) -> &mut T {
         &mut self.transport
     }

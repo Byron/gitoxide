@@ -13,6 +13,13 @@ use crate::{
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Failed to configure the transport before connecting to {url:?}")]
+    GatherTransportConfig {
+        url: BString,
+        source: crate::config::transport::Error,
+    },
+    #[error("Failed to configure the transport layer")]
+    ConfigureTransport(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error(transparent)]
     Handshake(#[from] git_protocol::fetch::handshake::Error),
     #[error("The object format {format:?} as used by the remote is unsupported")]
@@ -139,6 +146,7 @@ where
         extra_parameters: Vec<(String, Option<String>)>,
     ) -> Result<HandshakeWithRefs, Error> {
         let mut credentials_storage;
+        let url = self.transport.to_url();
         let authenticate = match self.authenticate.as_mut() {
             Some(f) => f,
             None => {
@@ -146,13 +154,25 @@ where
                     .remote
                     .url(Direction::Fetch)
                     .map(ToOwned::to_owned)
-                    .unwrap_or_else(|| {
-                        git_url::parse(self.transport.to_url().as_ref()).expect("valid URL to be provided by transport")
-                    });
+                    .unwrap_or_else(|| git_url::parse(url.as_ref()).expect("valid URL to be provided by transport"));
                 credentials_storage = self.configured_credentials(url)?;
                 &mut credentials_storage
             }
         };
+
+        if self.transport_config.is_none() {
+            self.transport_config =
+                self.remote
+                    .repo
+                    .transport_options(url.as_ref())
+                    .map_err(|err| Error::GatherTransportConfig {
+                        source: err,
+                        url: url.into_owned(),
+                    })?;
+        }
+        if let Some(config) = self.transport_config.as_ref() {
+            self.transport.configure(&**config)?;
+        }
         let mut outcome =
             git_protocol::fetch::handshake(&mut self.transport, authenticate, extra_parameters, &mut self.progress)
                 .await?;

@@ -6,11 +6,11 @@ use std::convert::{TryFrom, TryInto};
 
 impl crate::Repository {
     /// Produce configuration suitable for `url`, as differentiated by its protocol/scheme, to be passed to a transport instance via
-    /// [configure()][git_transport::client::TransportWithoutIO::configure()].
+    /// [configure()][git_transport::client::TransportWithoutIO::configure()] (via `&**config` to pass the contained `Any` and not the `Box`).
     /// `None` is returned if there is no known configuration.
     ///
     /// Note that the caller may cast the instance themselves to modify it before passing it on.
-    pub fn transport_config<'a>(
+    pub fn transport_options<'a>(
         &self,
         url: impl Into<&'a BStr>,
     ) -> Result<Option<Box<dyn Any>>, crate::config::transport::Error> {

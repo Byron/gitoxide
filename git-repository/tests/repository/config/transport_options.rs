@@ -23,7 +23,7 @@ mod http {
     fn simple_configuration() {
         let repo = repo("http-config");
         let http_config = repo
-            .transport_config("https://example.com/does/not/matter")
+            .transport_options("https://example.com/does/not/matter")
             .expect("valid configuration")
             .expect("configuration available for http");
         let git_transport::client::http::Options {
