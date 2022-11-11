@@ -95,11 +95,11 @@ where
             key: "http.lowSpeedTime",
         })?
         .unwrap_or_default();
-    Ok(integer
+    integer
         .try_into()
         .map_err(|_| crate::config::transport::Error::InvalidInteger {
             actual: integer,
             key,
             kind,
-        })?)
+        })
 }
