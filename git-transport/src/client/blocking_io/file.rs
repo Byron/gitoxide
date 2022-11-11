@@ -93,8 +93,8 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
             .request(write_mode, on_into_read)
     }
 
-    fn to_url(&self) -> String {
-        self.url.to_bstring().to_string()
+    fn to_url(&self) -> BString {
+        self.url.to_bstring()
     }
 
     fn connection_persists_across_multiple_requests(&self) -> bool {

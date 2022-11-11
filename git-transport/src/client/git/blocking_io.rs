@@ -1,6 +1,6 @@
 use std::{any::Any, error::Error, io::Write};
 
-use bstr::BString;
+use bstr::{BString, ByteVec};
 use git_packetline::PacketLineRef;
 
 use crate::{
@@ -26,10 +26,10 @@ where
         ))
     }
 
-    fn to_url(&self) -> String {
+    fn to_url(&self) -> BString {
         self.custom_url.as_ref().map_or_else(
             || {
-                let mut possibly_lossy_url = self.path.to_string();
+                let mut possibly_lossy_url = self.path.clone();
                 possibly_lossy_url.insert_str(0, "file://");
                 possibly_lossy_url
             },
