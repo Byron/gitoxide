@@ -1,8 +1,5 @@
-use crate::bstr::{BStr, ByteVec};
-use git_transport::client::http;
+use crate::bstr::BStr;
 use std::any::Any;
-use std::borrow::Cow;
-use std::convert::{TryFrom, TryInto};
 
 impl crate::Repository {
     /// Produce configuration suitable for `url`, as differentiated by its protocol/scheme, to be passed to a transport instance via
@@ -19,87 +16,99 @@ impl crate::Repository {
 
         match &url.scheme {
             Http | Https => {
-                let mut opts = http::Options::default();
-                let config = &self.config.resolved;
-                let mut trusted_only = self.filter_config_section();
-                opts.extra_headers = {
-                    let mut headers: Vec<_> = config
-                        .strings_filter("http", None, "extraHeader", &mut trusted_only)
-                        .unwrap_or_default()
-                        .into_iter()
-                        .filter_map(try_cow_to_string)
-                        .collect();
-                    if let Some(empty_pos) = headers.iter().rev().position(|h| h.is_empty()) {
-                        headers.drain(..headers.len() - empty_pos);
-                    }
-                    headers
-                };
-
-                if let Some(follow_redirects) = config.string_filter("http", None, "followRedirects", &mut trusted_only)
+                #[cfg(not(feature = "blocking-http-transport"))]
                 {
-                    opts.follow_redirects = if follow_redirects.as_ref() == "initial" {
-                        http::options::FollowRedirects::Initial
-                    } else if git_config::Boolean::try_from(follow_redirects)
-                        .map_err(|err| crate::config::transport::Error::ConfigValue {
-                            source: err,
-                            key: "http.followRedirects",
-                        })?
-                        .0
-                    {
-                        http::options::FollowRedirects::All
-                    } else {
-                        http::options::FollowRedirects::None
-                    };
+                    Ok(None)
                 }
+                #[cfg(feature = "blocking-http-transport")]
+                {
+                    use crate::bstr::ByteVec;
+                    use git_transport::client::http;
+                    use std::borrow::Cow;
+                    use std::convert::{TryFrom, TryInto};
 
-                opts.low_speed_time_seconds = integer(config, "http.lowSpeedTime", "u64", trusted_only)?;
-                opts.low_speed_limit_bytes_per_second = integer(config, "http.lowSpeedLimit", "u32", trusted_only)?;
-                opts.proxy = config
-                    .string_filter("http", None, "proxy", &mut trusted_only)
-                    .and_then(try_cow_to_string);
-                opts.user_agent = config
-                    .string_filter("http", None, "userAgent", &mut trusted_only)
-                    .and_then(try_cow_to_string)
-                    .or_else(|| Some(crate::env::agent().into()));
+                    fn try_cow_to_string(v: Cow<'_, BStr>) -> Option<String> {
+                        Vec::from(v.into_owned()).into_string().ok()
+                    }
 
-                Ok(Some(Box::new(opts)))
+                    fn integer<T>(
+                        config: &git_config::File<'static>,
+                        key: &'static str,
+                        kind: &'static str,
+                        mut filter: fn(&git_config::file::Metadata) -> bool,
+                    ) -> Result<T, crate::config::transport::Error>
+                    where
+                        T: TryFrom<i64>,
+                    {
+                        let git_config::parse::Key {
+                            section_name,
+                            value_name,
+                            ..
+                        } = git_config::parse::key(key).expect("valid key statically known");
+                        let integer = config
+                            .integer_filter(section_name, None, value_name, &mut filter)
+                            .transpose()
+                            .map_err(|err| crate::config::transport::Error::ConfigValue {
+                                source: err,
+                                key: "http.lowSpeedTime",
+                            })?
+                            .unwrap_or_default();
+                        integer
+                            .try_into()
+                            .map_err(|_| crate::config::transport::Error::InvalidInteger {
+                                actual: integer,
+                                key,
+                                kind,
+                            })
+                    }
+                    let mut opts = http::Options::default();
+                    let config = &self.config.resolved;
+                    let mut trusted_only = self.filter_config_section();
+                    opts.extra_headers = {
+                        let mut headers: Vec<_> = config
+                            .strings_filter("http", None, "extraHeader", &mut trusted_only)
+                            .unwrap_or_default()
+                            .into_iter()
+                            .filter_map(try_cow_to_string)
+                            .collect();
+                        if let Some(empty_pos) = headers.iter().rev().position(|h| h.is_empty()) {
+                            headers.drain(..headers.len() - empty_pos);
+                        }
+                        headers
+                    };
+
+                    if let Some(follow_redirects) =
+                        config.string_filter("http", None, "followRedirects", &mut trusted_only)
+                    {
+                        opts.follow_redirects = if follow_redirects.as_ref() == "initial" {
+                            http::options::FollowRedirects::Initial
+                        } else if git_config::Boolean::try_from(follow_redirects)
+                            .map_err(|err| crate::config::transport::Error::ConfigValue {
+                                source: err,
+                                key: "http.followRedirects",
+                            })?
+                            .0
+                        {
+                            http::options::FollowRedirects::All
+                        } else {
+                            http::options::FollowRedirects::None
+                        };
+                    }
+
+                    opts.low_speed_time_seconds = integer(config, "http.lowSpeedTime", "u64", trusted_only)?;
+                    opts.low_speed_limit_bytes_per_second = integer(config, "http.lowSpeedLimit", "u32", trusted_only)?;
+                    opts.proxy = config
+                        .string_filter("http", None, "proxy", &mut trusted_only)
+                        .and_then(try_cow_to_string);
+                    opts.user_agent = config
+                        .string_filter("http", None, "userAgent", &mut trusted_only)
+                        .and_then(try_cow_to_string)
+                        .or_else(|| Some(crate::env::agent().into()));
+
+                    Ok(Some(Box::new(opts)))
+                }
             }
             File | Git | Ssh | Ext(_) => Ok(None),
         }
     }
-}
-
-fn try_cow_to_string(v: Cow<'_, BStr>) -> Option<String> {
-    Vec::from(v.into_owned()).into_string().ok()
-}
-
-fn integer<T>(
-    config: &git_config::File<'static>,
-    key: &'static str,
-    kind: &'static str,
-    mut filter: fn(&git_config::file::Metadata) -> bool,
-) -> Result<T, crate::config::transport::Error>
-where
-    T: TryFrom<i64>,
-{
-    let git_config::parse::Key {
-        section_name,
-        value_name,
-        ..
-    } = git_config::parse::key(key).expect("valid key statically known");
-    let integer = config
-        .integer_filter(section_name, None, value_name, &mut filter)
-        .transpose()
-        .map_err(|err| crate::config::transport::Error::ConfigValue {
-            source: err,
-            key: "http.lowSpeedTime",
-        })?
-        .unwrap_or_default();
-    integer
-        .try_into()
-        .map_err(|_| crate::config::transport::Error::InvalidInteger {
-            actual: integer,
-            key,
-            kind,
-        })
 }
