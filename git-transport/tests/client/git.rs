@@ -33,9 +33,9 @@ async fn handshake_v1_and_request() -> crate::Result {
         "tcp connections are stateful"
     );
     let c = c.custom_url(Some("anything".into()));
-    assert_eq!(c.to_url(), "anything");
+    assert_eq!(c.to_url().as_ref(), "anything");
     let mut c = c.custom_url(None);
-    assert_eq!(c.to_url(), "file:///foo.git");
+    assert_eq!(c.to_url().as_ref(), "file:///foo.git");
     let mut res = c.handshake(Service::UploadPack, &[]).await?;
     assert_eq!(res.actual_protocol, Protocol::V1);
     assert_eq!(

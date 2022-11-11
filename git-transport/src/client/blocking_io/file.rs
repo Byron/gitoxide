@@ -1,10 +1,11 @@
+use std::borrow::Cow;
 use std::{
     any::Any,
     error::Error,
     process::{self, Command, Stdio},
 };
 
-use bstr::{BString, ByteSlice};
+use bstr::{BStr, BString, ByteSlice};
 
 use crate::{
     client::{self, git, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
@@ -93,8 +94,8 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
             .request(write_mode, on_into_read)
     }
 
-    fn to_url(&self) -> BString {
-        self.url.to_bstring()
+    fn to_url(&self) -> Cow<'_, BStr> {
+        Cow::Owned(self.url.to_bstring())
     }
 
     fn connection_persists_across_multiple_requests(&self) -> bool {

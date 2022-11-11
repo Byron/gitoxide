@@ -1,4 +1,4 @@
-use bstr::BString;
+use bstr::BStr;
 use std::sync::{Arc, Mutex};
 use std::{
     any::Any,
@@ -276,8 +276,8 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
         ))
     }
 
-    fn to_url(&self) -> BString {
-        self.url.clone().into()
+    fn to_url(&self) -> Cow<'_, BStr> {
+        Cow::Borrowed(self.url.as_str().into())
     }
 
     fn supported_protocol_versions(&self) -> &[Protocol] {
