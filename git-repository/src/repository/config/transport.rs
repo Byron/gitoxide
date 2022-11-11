@@ -45,26 +45,42 @@ impl crate::Repository {
                     };
                 }
 
-                opts.low_speed_time_seconds = {
-                    let integer = config
-                        .integer_filter("http", None, "lowSpeedTime", &mut trusted_only)
-                        .transpose()
-                        .map_err(|err| crate::config::transport::Error::ConfigValue {
-                            source: err,
-                            key: "http.lowSpeedTime",
-                        })?
-                        .unwrap_or_default();
-                    integer
-                        .try_into()
-                        .map_err(|_| crate::config::transport::Error::InvalidInteger {
-                            actual: integer,
-                            key: "http.lowSpeedLimit",
-                            kind: "u64",
-                        })?
-                };
+                opts.low_speed_time_seconds = integer(config, "http.lowSpeedTime", "u64", trusted_only)?;
+                opts.low_speed_limit_bytes_per_second = integer(config, "http.lowSpeedLimit", "u32", trusted_only)?;
                 todo!();
             }
             File | Git | Ssh | Ext(_) => Ok(None),
         }
     }
+}
+
+fn integer<T>(
+    config: &git_config::File<'static>,
+    key: &'static str,
+    kind: &'static str,
+    mut filter: fn(&git_config::file::Metadata) -> bool,
+) -> Result<T, crate::config::transport::Error>
+where
+    T: TryFrom<i64>,
+{
+    let git_config::parse::Key {
+        section_name,
+        value_name,
+        ..
+    } = git_config::parse::key(key).expect("valid key statically known");
+    let integer = config
+        .integer_filter(section_name, None, value_name, &mut filter)
+        .transpose()
+        .map_err(|err| crate::config::transport::Error::ConfigValue {
+            source: err,
+            key: "http.lowSpeedTime",
+        })?
+        .unwrap_or_default();
+    Ok(integer
+        .try_into()
+        .map_err(|_| crate::config::transport::Error::InvalidInteger {
+            actual: integer,
+            key,
+            kind,
+        })?)
 }
