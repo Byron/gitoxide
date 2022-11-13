@@ -1694,6 +1694,7 @@ dependencies = [
  "git-worktree",
  "is_ci",
  "log",
+ "maybe-async",
  "once_cell",
  "regex",
  "serde",
@@ -1761,6 +1762,7 @@ version = "0.10.0"
 dependencies = [
  "bstr",
  "crc",
+ "fastrand",
  "fs_extra",
  "git-attributes",
  "git-discover",

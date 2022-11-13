@@ -137,6 +137,8 @@ is_ci = "1.1.1"
 anyhow = "1"
 walkdir = "2.3.2"
 serial_test = "0.9.0"
+maybe-async = "0.2.6"
+async-std = { version = "1.12.0", features = ["attributes"] }
 
 [package.metadata.docs.rs]
 features = ["document-features", "max-performance", "blocking-network-client", "serde1"]
