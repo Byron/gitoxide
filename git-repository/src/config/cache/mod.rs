@@ -13,5 +13,6 @@ impl std::fmt::Debug for Cache {
 
 mod access;
 
-mod util;
-pub(crate) use util::{check_lenient, check_lenient_default, interpolate_context};
+pub(crate) mod util;
+
+pub(crate) use util::interpolate_context;

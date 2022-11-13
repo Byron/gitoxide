@@ -1,5 +1,4 @@
 use crate::bstr::BStr;
-use crate::config::cache::{check_lenient, check_lenient_default};
 use std::any::Any;
 
 impl crate::Repository {
@@ -24,6 +23,7 @@ impl crate::Repository {
                 #[cfg(feature = "blocking-http-transport")]
                 {
                     use crate::bstr::ByteVec;
+                    use crate::config::cache::util::{check_lenient, check_lenient_default};
                     use git_transport::client::http;
                     use std::borrow::Cow;
                     use std::convert::{TryFrom, TryInto};
