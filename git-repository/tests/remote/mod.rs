@@ -12,13 +12,14 @@ pub(crate) fn repo(name: &str) -> git::Repository {
     git::open_opts(repo_path(name), git::open::Options::isolated()).unwrap()
 }
 
-/// Spawn a git-daemon hosting all directories in or below `base_dir` if we are in async mode - currently only TCP is available in async mode,
-/// and it's probably going to stay that way as we don't want to chose a particular runtime in lower-level crates which
-/// provide the blocking implementation for everything. Maybe this changes one day once we implement other protocols
-/// like spawning a process via `tokio` or `async-std`.
+/// Spawn a git-daemon hosting all directories in or below `base_dir` if we are in async mode - currently only TCP is
+/// available in async mode, and it's probably going to stay that way as we don't want to chose a particular runtime
+/// in lower-level crates just yet.
+/// Maybe this changes one day once we implement other protocols like spawning a process via `tokio` or `async-std`, or
+/// provide async HTTP implementations as well.
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 #[cfg_attr(not(feature = "async-network-client-async-std"), allow(unused_variables))]
-pub(crate) fn spawn_git_daemon_if_async<'repo, 'a>(
+pub(crate) fn spawn_git_daemon_if_async(
     base_dir: impl AsRef<std::path::Path>,
 ) -> std::io::Result<Option<git_testtools::GitDaemon>> {
     #[cfg(feature = "blocking-network-client")]
@@ -31,11 +32,10 @@ pub(crate) fn spawn_git_daemon_if_async<'repo, 'a>(
     }
 }
 
-/// Turn `remote` into a remote that interacts with the git daemon at `daemon_url`, and `repo_path`
-/// can be a specific repo, or it can be empty if the repo is hosted at the root.
+/// Turn `remote` into a remote that interacts with the git `daemon`, all else being the same, by creating a new stand-in remote.
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 #[cfg_attr(not(feature = "async-network-client-async-std"), allow(unused_variables))]
-pub(crate) fn into_daemon_remote_if_async<'repo, 'a>(
+pub(crate) fn into_daemon_remote_if_async<'repo>(
     remote: git::Remote<'repo>,
     daemon: Option<&git_testtools::GitDaemon>,
 ) -> git::Remote<'repo> {
