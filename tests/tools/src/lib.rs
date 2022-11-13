@@ -37,6 +37,19 @@ pub use tempfile;
 /// ```
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+/// A wrapper for a running git-daemon process which is killed automatically on drop.
+///
+/// Note that we will swallow any errors, assuming that the test would have failed if the daemon crashed.
+pub struct GitDaemon {
+    child: std::process::Child,
+}
+
+impl Drop for GitDaemon {
+    fn drop(&mut self) {
+        self.child.kill().ok();
+    }
+}
+
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
 static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache<'static>>>> = Lazy::new(|| {
     let cache = (|| {
@@ -130,6 +143,33 @@ pub fn run_git(working_dir: &Path, args: &[&str]) -> std::io::Result<std::proces
         .current_dir(working_dir)
         .args(args)
         .status()
+}
+
+/// Spawn a git daemon process to host all repository at or below `working_dir`.
+pub fn spawn_git_daemon(working_dir: impl AsRef<Path>) -> std::io::Result<GitDaemon> {
+    let mut ports: Vec<_> = (9419u16..9419 + 100).collect();
+    fastrand::shuffle(&mut ports);
+    let free_port = {
+        let listener = std::net::TcpListener::bind(
+            ports
+                .into_iter()
+                .map(|port| std::net::SocketAddr::from(([127, 0, 0, 1], port)))
+                .collect::<Vec<_>>()
+                .as_slice(),
+        )?;
+        listener.local_addr().expect("listener address is available").port()
+    };
+
+    let child = std::process::Command::new("git")
+        .current_dir(working_dir)
+        .args(["-c", "uploadPack.allowRefInWant"])
+        .arg("daemon")
+        .args(["--verbose", "--base-path=.", "--export-all", "--user-path"])
+        .arg("--port")
+        .arg(free_port.to_string())
+        .spawn()?;
+    dbg!(&child);
+    Ok(GitDaemon { child })
 }
 
 /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
