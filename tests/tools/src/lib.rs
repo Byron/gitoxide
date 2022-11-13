@@ -42,6 +42,8 @@ pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 /// Note that we will swallow any errors, assuming that the test would have failed if the daemon crashed.
 pub struct GitDaemon {
     child: std::process::Child,
+    /// The base url under which all repositories are hosted, typically `git://127.0.0.1:port`.
+    pub url: String,
 }
 
 impl Drop for GitDaemon {
@@ -147,29 +149,42 @@ pub fn run_git(working_dir: &Path, args: &[&str]) -> std::io::Result<std::proces
 
 /// Spawn a git daemon process to host all repository at or below `working_dir`.
 pub fn spawn_git_daemon(working_dir: impl AsRef<Path>) -> std::io::Result<GitDaemon> {
+    static EXEC_PATH: Lazy<PathBuf> = Lazy::new(|| {
+        let path = std::process::Command::new("git")
+            .arg("--exec-path")
+            .stderr(std::process::Stdio::null())
+            .output()
+            .expect("can execute `git --exec-path`")
+            .stdout;
+        String::from_utf8(path.trim().into())
+            .expect("no invalid UTF8 in exec-path")
+            .into()
+    });
     let mut ports: Vec<_> = (9419u16..9419 + 100).collect();
     fastrand::shuffle(&mut ports);
+    let addr_at = |port| std::net::SocketAddr::from(([127, 0, 0, 1], port));
     let free_port = {
-        let listener = std::net::TcpListener::bind(
-            ports
-                .into_iter()
-                .map(|port| std::net::SocketAddr::from(([127, 0, 0, 1], port)))
-                .collect::<Vec<_>>()
-                .as_slice(),
-        )?;
+        let listener = std::net::TcpListener::bind(ports.into_iter().map(addr_at).collect::<Vec<_>>().as_slice())?;
         listener.local_addr().expect("listener address is available").port()
     };
 
-    let child = std::process::Command::new("git")
+    let child = std::process::Command::new(EXEC_PATH.join("git-daemon"))
         .current_dir(working_dir)
-        .args(["-c", "uploadPack.allowRefInWant"])
-        .arg("daemon")
         .args(["--verbose", "--base-path=.", "--export-all", "--user-path"])
-        .arg("--port")
-        .arg(free_port.to_string())
+        .arg(format!("--port={free_port}"))
         .spawn()?;
-    dbg!(&child);
-    Ok(GitDaemon { child })
+
+    let server_addr = addr_at(free_port);
+    for time in git_lock::backoff::Exponential::default_with_random() {
+        std::thread::sleep(time);
+        if std::net::TcpStream::connect(server_addr).is_ok() {
+            break;
+        }
+    }
+    Ok(GitDaemon {
+        child,
+        url: format!("git://{}", server_addr),
+    })
 }
 
 /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
