@@ -1694,7 +1694,6 @@ dependencies = [
  "git-worktree",
  "is_ci",
  "log",
- "maybe-async",
  "once_cell",
  "regex",
  "serde",
