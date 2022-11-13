@@ -50,24 +50,3 @@ mod blocking_io {
         }
     }
 }
-
-#[cfg(feature = "async-network-client-async-std")]
-mod async_io_via_async_std {
-    use git_features::progress;
-    use git_repository::remote::Direction::Fetch;
-
-    use crate::remote;
-    use crate::remote::into_daemon_remote;
-
-    #[async_std::test]
-    async fn connect_only() -> crate::Result {
-        let repo = remote::repo("protocol_file_user");
-        let daemon = git_testtools::spawn_git_daemon(repo.git_dir())?;
-        let remote = into_daemon_remote(repo.find_remote("origin")?, &daemon.url, None);
-        remote
-            .connect(Fetch, progress::Discard)
-            .await
-            .expect("connection succeeds");
-        Ok(())
-    }
-}
