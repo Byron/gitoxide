@@ -1,5 +1,5 @@
 use crate::bstr::BStr;
-use crate::config::cache::check_lenient_default;
+use crate::config::cache::{check_lenient, check_lenient_default};
 use std::any::Any;
 
 impl crate::Repository {
@@ -30,11 +30,16 @@ impl crate::Repository {
 
                     fn try_cow_to_string(
                         v: Cow<'_, BStr>,
+                        lenient: bool,
                         key: &'static str,
-                    ) -> Result<String, crate::config::transport::Error> {
-                        Vec::from(v.into_owned())
-                            .into_string()
-                            .map_err(|err| crate::config::transport::Error::IllformedUtf8 { source: err, key })
+                    ) -> Result<Option<String>, crate::config::transport::Error> {
+                        check_lenient(
+                            Vec::from(v.into_owned())
+                                .into_string()
+                                .map(Some)
+                                .map_err(|err| crate::config::transport::Error::IllformedUtf8 { source: err, key }),
+                            lenient,
+                        )
                     }
 
                     fn integer<T>(
@@ -78,12 +83,18 @@ impl crate::Repository {
                     let mut trusted_only = self.filter_config_section();
                     let lenient = self.config.lenient_config;
                     opts.extra_headers = {
-                        let mut headers: Vec<_> = config
+                        let mut headers = Vec::new();
+                        for header in config
                             .strings_filter("http", None, "extraHeader", &mut trusted_only)
                             .unwrap_or_default()
                             .into_iter()
-                            .map(|v| try_cow_to_string(v, "http.extraHeader"))
-                            .collect::<Result<_, _>>()?;
+                            .map(|v| try_cow_to_string(v, lenient, "http.extraHeader"))
+                        {
+                            let header = header?;
+                            if let Some(header) = header {
+                                headers.push(header);
+                            }
+                        }
                         if let Some(empty_pos) = headers.iter().rev().position(|h| h.is_empty()) {
                             headers.drain(..headers.len() - empty_pos);
                         }
@@ -119,11 +130,11 @@ impl crate::Repository {
                         integer(config, lenient, "http.lowSpeedLimit", "u32", trusted_only, 0)?;
                     opts.proxy = config
                         .string_filter("http", None, "proxy", &mut trusted_only)
-                        .map(|v| try_cow_to_string(v, "http.proxy"))
+                        .and_then(|v| try_cow_to_string(v, lenient, "http.proxy").transpose())
                         .transpose()?;
                     opts.user_agent = config
                         .string_filter("http", None, "userAgent", &mut trusted_only)
-                        .map(|v| try_cow_to_string(v, "http.userAgent"))
+                        .and_then(|v| try_cow_to_string(v, lenient, "http.userAgent").transpose())
                         .transpose()?
                         .or_else(|| Some(crate::env::agent().into()));
 
