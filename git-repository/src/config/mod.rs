@@ -109,6 +109,7 @@ pub mod checkout_options {
 
 ///
 pub mod transport {
+    use crate::bstr;
 
     /// The error produced when configuring a transport for a particular protocol.
     #[derive(Debug, thiserror::Error)]
@@ -126,6 +127,11 @@ pub mod transport {
         ConfigValue {
             source: git_config::value::Error,
             key: &'static str,
+        },
+        #[error("Could not decode value at key {key:?} as UTF-8 string")]
+        IllformedUtf8 {
+            key: &'static str,
+            source: bstr::FromUtf8Error,
         },
         #[error("Invalid URL passed for configuration")]
         ParseUrl(#[from] git_url::parse::Error),

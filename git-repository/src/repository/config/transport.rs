@@ -28,8 +28,13 @@ impl crate::Repository {
                     use std::borrow::Cow;
                     use std::convert::{TryFrom, TryInto};
 
-                    fn try_cow_to_string(v: Cow<'_, BStr>) -> Option<String> {
-                        Vec::from(v.into_owned()).into_string().ok()
+                    fn try_cow_to_string(
+                        v: Cow<'_, BStr>,
+                        key: &'static str,
+                    ) -> Result<String, crate::config::transport::Error> {
+                        Vec::from(v.into_owned())
+                            .into_string()
+                            .map_err(|err| crate::config::transport::Error::IllformedUtf8 { source: err, key })
                     }
 
                     fn integer<T>(
@@ -77,8 +82,8 @@ impl crate::Repository {
                             .strings_filter("http", None, "extraHeader", &mut trusted_only)
                             .unwrap_or_default()
                             .into_iter()
-                            .filter_map(try_cow_to_string)
-                            .collect();
+                            .map(|v| try_cow_to_string(v, "http.extraHeader"))
+                            .collect::<Result<_, _>>()?;
                         if let Some(empty_pos) = headers.iter().rev().position(|h| h.is_empty()) {
                             headers.drain(..headers.len() - empty_pos);
                         }
@@ -114,10 +119,12 @@ impl crate::Repository {
                         integer(config, lenient, "http.lowSpeedLimit", "u32", trusted_only, 0)?;
                     opts.proxy = config
                         .string_filter("http", None, "proxy", &mut trusted_only)
-                        .and_then(try_cow_to_string);
+                        .map(|v| try_cow_to_string(v, "http.proxy"))
+                        .transpose()?;
                     opts.user_agent = config
                         .string_filter("http", None, "userAgent", &mut trusted_only)
-                        .and_then(try_cow_to_string)
+                        .map(|v| try_cow_to_string(v, "http.userAgent"))
+                        .transpose()?
                         .or_else(|| Some(crate::env::agent().into()));
 
                     Ok(Some(Box::new(opts)))
