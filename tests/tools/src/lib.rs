@@ -168,7 +168,7 @@ pub fn spawn_git_daemon(working_dir: impl AsRef<Path>) -> std::io::Result<GitDae
         listener.local_addr().expect("listener address is available").port()
     };
 
-    let child = std::process::Command::new(EXEC_PATH.join("git-daemon"))
+    let child = std::process::Command::new(EXEC_PATH.join(if cfg!(windows) { "git-daemon.exe" } else { "git-daemon" }))
         .current_dir(working_dir)
         .args(["--verbose", "--base-path=.", "--export-all", "--user-path"])
         .arg(format!("--port={free_port}"))
