@@ -182,6 +182,9 @@ Our [stability guide] helps to judge how much churn can be expected when dependi
 
 ## Installation
 
+Note that on Fedora, perl needs to be installed for OpenSSL to build properly. This can be done with the following command:
+`dnf install perl`
+
 ### Download a Binary Release
 
 Using `cargo quickinstall`, one is able to fetch [binary releases][releases]. You can install it via `cargo install cargo-quickinstall`, assuming 
