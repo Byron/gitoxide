@@ -12,6 +12,21 @@ pub(crate) fn repo(name: &str) -> git::Repository {
     git::open_opts(repo_path(name), git::open::Options::isolated()).unwrap()
 }
 
+pub(crate) fn into_daemon_remote<'repo>(
+    remote: git::Remote<'repo>,
+    daemon_url: &str,
+    repo_path: &str,
+) -> crate::Result<git::Remote<'repo>> {
+    let mut new_remote = remote.repo().remote_at(format!("{}/{}", daemon_url, repo_path))?;
+    for direction in [git::remote::Direction::Fetch, git::remote::Direction::Push] {
+        new_remote.replace_refspecs(
+            remote.refspecs(direction).iter().map(|s| s.to_ref().to_bstring()),
+            direction,
+        )?;
+    }
+    Ok(new_remote)
+}
+
 pub(crate) fn cow_str(s: &str) -> Cow<str> {
     Cow::Borrowed(s)
 }

@@ -3,10 +3,15 @@ use git_refspec::RefSpec;
 use crate::{bstr::BStr, remote, Remote};
 
 /// Access
-impl Remote<'_> {
+impl<'repo> Remote<'repo> {
     /// Return the name of this remote or `None` if it wasn't persisted to disk yet.
     pub fn name(&self) -> Option<&str> {
         self.name.as_deref()
+    }
+
+    /// Return our repository reference.
+    pub fn repo(&self) -> &'repo crate::Repository {
+        self.repo
     }
 
     /// Return the set of ref-specs used for `direction`, which may be empty, in order of occurrence in the configuration.
