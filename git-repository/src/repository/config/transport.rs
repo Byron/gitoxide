@@ -1,4 +1,5 @@
 use crate::bstr::BStr;
+use crate::config::cache::check_lenient_default;
 use std::any::Any;
 
 impl crate::Repository {
@@ -33,9 +34,11 @@ impl crate::Repository {
 
                     fn integer<T>(
                         config: &git_config::File<'static>,
+                        lenient: bool,
                         key: &'static str,
                         kind: &'static str,
                         mut filter: fn(&git_config::file::Metadata) -> bool,
+                        default: T,
                     ) -> Result<T, crate::config::transport::Error>
                     where
                         T: TryFrom<i64>,
@@ -53,17 +56,22 @@ impl crate::Repository {
                                 key: "http.lowSpeedTime",
                             })?
                             .unwrap_or_default();
-                        integer
-                            .try_into()
-                            .map_err(|_| crate::config::transport::Error::InvalidInteger {
-                                actual: integer,
-                                key,
-                                kind,
-                            })
+                        check_lenient_default(
+                            integer
+                                .try_into()
+                                .map_err(|_| crate::config::transport::Error::InvalidInteger {
+                                    actual: integer,
+                                    key,
+                                    kind,
+                                }),
+                            lenient,
+                            || default,
+                        )
                     }
                     let mut opts = http::Options::default();
                     let config = &self.config.resolved;
                     let mut trusted_only = self.filter_config_section();
+                    let lenient = self.config.lenient_config;
                     opts.extra_headers = {
                         let mut headers: Vec<_> = config
                             .strings_filter("http", None, "extraHeader", &mut trusted_only)
@@ -82,12 +90,17 @@ impl crate::Repository {
                     {
                         opts.follow_redirects = if follow_redirects.as_ref() == "initial" {
                             http::options::FollowRedirects::Initial
-                        } else if git_config::Boolean::try_from(follow_redirects)
-                            .map_err(|err| crate::config::transport::Error::ConfigValue {
-                                source: err,
-                                key: "http.followRedirects",
-                            })?
-                            .0
+                        } else if check_lenient_default(
+                            git_config::Boolean::try_from(follow_redirects).map_err(|err| {
+                                crate::config::transport::Error::ConfigValue {
+                                    source: err,
+                                    key: "http.followRedirects",
+                                }
+                            }),
+                            lenient,
+                            || git_config::Boolean(false),
+                        )?
+                        .0
                         {
                             http::options::FollowRedirects::All
                         } else {
@@ -95,8 +108,10 @@ impl crate::Repository {
                         };
                     }
 
-                    opts.low_speed_time_seconds = integer(config, "http.lowSpeedTime", "u64", trusted_only)?;
-                    opts.low_speed_limit_bytes_per_second = integer(config, "http.lowSpeedLimit", "u32", trusted_only)?;
+                    opts.low_speed_time_seconds =
+                        integer(config, lenient, "http.lowSpeedTime", "u64", trusted_only, 0)?;
+                    opts.low_speed_limit_bytes_per_second =
+                        integer(config, lenient, "http.lowSpeedLimit", "u32", trusted_only, 0)?;
                     opts.proxy = config
                         .string_filter("http", None, "proxy", &mut trusted_only)
                         .and_then(try_cow_to_string);
