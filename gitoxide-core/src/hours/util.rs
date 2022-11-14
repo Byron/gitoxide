@@ -18,11 +18,11 @@ pub struct WorkByPerson {
 
 impl<'a> WorkByPerson {
     pub fn merge(&mut self, other: &'a WorkByEmail) {
-        if !self.name.contains(&&other.name) {
-            self.name.push(&other.name);
+        if !self.name.contains(&other.name) {
+            self.name.push(other.name);
         }
-        if !self.email.contains(&&other.email) {
-            self.email.push(&other.email);
+        if !self.email.contains(&other.email) {
+            self.email.push(other.email);
         }
         self.num_commits += other.num_commits;
         self.hours += other.hours;

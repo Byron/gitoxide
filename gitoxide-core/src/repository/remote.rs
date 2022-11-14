@@ -162,7 +162,7 @@ mod refs_impl {
                 (
                     Fix::MappingWithPartialDestinationRemoved { spec: l, .. },
                     Fix::MappingWithPartialDestinationRemoved { spec: r, .. },
-                ) => l.cmp(&r),
+                ) => l.cmp(r),
             });
             let mut prev_spec = None;
             for fix in &map.fixes {
@@ -308,7 +308,7 @@ pub(crate) fn by_name_or_url<'repo>(
             if name.contains('/') || name.contains('.') {
                 repo.remote_at(git_repository::url::parse(name.into())?)?
             } else {
-                repo.find_remote(&name)?
+                repo.find_remote(name)?
             }
         }
         None => repo

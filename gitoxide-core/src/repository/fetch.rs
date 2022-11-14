@@ -138,7 +138,7 @@ pub(crate) mod function {
                 (
                     Fix::MappingWithPartialDestinationRemoved { spec: l, .. },
                     Fix::MappingWithPartialDestinationRemoved { spec: r, .. },
-                ) => l.cmp(&r),
+                ) => l.cmp(r),
             });
             let mut prev_spec = None;
             for fix in &map.fixes {

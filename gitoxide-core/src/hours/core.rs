@@ -70,9 +70,9 @@ pub fn deduplicate_identities(persons: &[WorkByEmail]) -> Vec<WorkByPerson> {
         match email_to_index.entry(person_by_email.email) {
             Entry::Occupied(email_entry) => {
                 out[*email_entry.get()].merge(person_by_email);
-                name_to_index.insert(&person_by_email.name, *email_entry.get());
+                name_to_index.insert(person_by_email.name, *email_entry.get());
             }
-            Entry::Vacant(email_entry) => match name_to_index.entry(&person_by_email.name) {
+            Entry::Vacant(email_entry) => match name_to_index.entry(person_by_email.name) {
                 Entry::Occupied(name_entry) => {
                     out[*name_entry.get()].merge(person_by_email);
                     email_entry.insert(*name_entry.get());
