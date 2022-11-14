@@ -44,9 +44,10 @@ pub(crate) fn spawn_git_daemon_if_async(
 
 /// Turn `remote` into a remote that interacts with the git `daemon`, all else being the same, by creating a new stand-in remote.
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
-pub(crate) fn into_daemon_remote_if_async<'repo>(
+pub(crate) fn into_daemon_remote_if_async<'repo, 'a>(
     remote: git::Remote<'repo>,
     _daemon: Option<&git_testtools::GitDaemon>,
+    _repo_name: impl Into<Option<&'a str>>,
 ) -> git::Remote<'repo> {
     #[cfg(feature = "blocking-network-client")]
     {
@@ -56,7 +57,11 @@ pub(crate) fn into_daemon_remote_if_async<'repo>(
     {
         let mut new_remote = remote
             .repo()
-            .remote_at(format!("{}/", _daemon.expect("daemon is available in async mode").url))
+            .remote_at(format!(
+                "{}/{}",
+                _daemon.expect("daemon is available in async mode").url,
+                _repo_name.into().unwrap_or_default()
+            ))
             .expect("valid url to create remote at");
         for direction in [git::remote::Direction::Fetch, git::remote::Direction::Push] {
             new_remote

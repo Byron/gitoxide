@@ -29,7 +29,7 @@ mod blocking_and_async_io {
                 )?;
             }
 
-            let remote = into_daemon_remote_if_async(repo.find_remote("origin")?, daemon.as_ref());
+            let remote = into_daemon_remote_if_async(repo.find_remote("origin")?, daemon.as_ref(), None);
             let map = remote
                 .connect(Fetch, progress::Discard)
                 .await?
