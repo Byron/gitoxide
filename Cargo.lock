@@ -1663,7 +1663,6 @@ dependencies = [
  "byte-unit",
  "clru",
  "document-features",
- "futures-executor",
  "git-actor",
  "git-attributes",
  "git-config",
