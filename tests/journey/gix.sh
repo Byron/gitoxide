@@ -58,7 +58,7 @@ title "gix (with repository)"
           expect_run $SUCCESSFULLY "$exe_plumbing" --format human verify -s
         }
       )
-      if test "$kind" = "max"; then
+      if test "$kind" = "max" || test "$kind" = "max-pure"; then
       (with "--format json"
         it "generates the correct output in JSON format" && {
           WITH_SNAPSHOT="$snapshot/success-format-json" \
@@ -92,7 +92,7 @@ title "gix (with repository)"
               expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=2  remote -n "$PWD" refs
             }
           )
-          if test "$kind" = "max"; then
+          if test "$kind" = "max" || test "$kind" = "max-pure"; then
           (with "--format json"
             it "generates the correct output in JSON format" && {
               WITH_SNAPSHOT="$snapshot/file-v-any-json" \
@@ -127,7 +127,7 @@ title "gix (with repository)"
         )
         fi
         (on_ci
-          if [[ "$kind" = "max" ]]; then
+          if test "$kind" = "max" || test "$kind" = "max-pure"; then
           (with "https:// protocol"
             (with "version 1"
               it "generates the correct output" && {
@@ -195,7 +195,7 @@ title "gix (with repository)"
               )
               rm -Rf out
             )
-            if test "$kind" = "max"; then
+            if test "$kind" = "max" || test "$kind" = "max-pure"; then
             (with "--format json"
               it "generates the correct output in JSON format" && {
                 WITH_SNAPSHOT="$snapshot/file-v-any-no-output-json" \
@@ -223,7 +223,7 @@ title "gix (with repository)"
               }
               rm -Rf out
             )
-            if test "$kind" = "max"; then
+            if test "$kind" = "max" || test "$kind" = "max-pure"; then
             (with "--format json"
               it "generates the correct output in JSON format" && {
                 WITH_SNAPSHOT="$snapshot/file-v-any-no-output-json" \
@@ -289,7 +289,7 @@ title "gix (with repository)"
           )
         )
         (on_ci
-          if test "$kind" = "max"; then
+          if test "$kind" = "max" || test "$kind" = "max-pure"; then
           (with "https:// protocol"
             (with "version 1"
               it "works" && {
@@ -331,7 +331,7 @@ title "gix (with repository)"
                 WITH_SNAPSHOT="$snapshot/no-output-dir-success" \
                 expect_run $SUCCESSFULLY "$exe_plumbing" free pack index create < "$PACK_FILE"
               }
-              if test "$kind" = "max"; then
+              if test "$kind" = "max" || test "$kind" = "max-pure"; then
               (with "--format json"
                 it "generates the index into a sink and outputs information as JSON" && {
                   WITH_SNAPSHOT="$snapshot/no-output-dir-as-json-success" \
@@ -365,7 +365,7 @@ title "gix (with repository)"
               expect_run $SUCCESSFULLY "$exe_plumbing" free pack index create -i restore -p "$PACK_FILE" "$PWD"
             }
 
-            if test "$kind" = "max"; then
+            if test "$kind" = "max" || test "$kind" = "max-pure"; then
             (with "--format json and the very same output directory"
               it "generates the index, overwriting existing files, and outputs information as JSON" && {
                 WITH_SNAPSHOT="$snapshot/output-dir-restore-as-json-success" \
@@ -450,8 +450,10 @@ title "gix (with repository)"
 
                 (with_program tree
 
-                  if test "$kind" = "small"; then
+                  if test "$kind" = "small" ; then
                     suffix=miniz-oxide
+                  elif test "$kind" = "max-pure"; then
+                    suffix=miniz-oxide-max
                   else
                     suffix=zlib-ng
                   fi
@@ -532,7 +534,7 @@ title "gix (with repository)"
             expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify --algorithm less-time --re-encode "$MULTI_PACK_INDEX"
           }
         )
-        if test "$kind" = "max"; then
+        if test "$kind" = "max" || test "$kind" = "max-pure"; then
         (with "statistics (JSON)"
           it "verifies the pack index successfully and with desired output" && {
             WITH_SNAPSHOT="$snapshot/index-with-statistics-json-success" \
@@ -586,7 +588,7 @@ title "gix (with repository)"
               expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify --algorithm less-time --re-encode "$MULTI_PACK_INDEX"
             }
           )
-          if test "$kind" = "max"; then
+          if test "$kind" = "max" || test "$kind" = "max-pure"; then
           (with "statistics (JSON)"
             it "verifies the pack index successfully and with desired output" && {
               WITH_SNAPSHOT="$snapshot/index-with-statistics-json-success" \
@@ -626,7 +628,7 @@ title "gix (with repository)"
               expect_run $SUCCESSFULLY "$exe_plumbing" free commit-graph verify -s .git/objects/info
             }
           )
-          if test "$kind" = "max"; then
+          if test "$kind" = "max" || test "$kind" = "max-pure"; then
           (with "statistics --format json"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/statistics-json-success" \
