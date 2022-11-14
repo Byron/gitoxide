@@ -24,7 +24,8 @@ const DOT_LOCK_SUFFIX: &str = ".lock";
 
 ///
 pub mod acquire;
-mod backoff;
+///
+pub mod backoff;
 ///
 pub mod commit;
 

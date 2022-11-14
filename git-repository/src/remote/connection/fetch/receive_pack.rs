@@ -51,7 +51,13 @@ where
     /// We explicitly don't special case those refs and expect the user to take control. Note that by its nature,
     /// force only applies to refs pointing to commits and if they don't, they will be updated either way in our
     /// implementation as well.
-    pub fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome, Error> {
+    ///
+    /// ### Async Mode Shortcoming
+    ///
+    /// Currently the entire process of resolving a pack is blocking the executor. This can be fixed using the `blocking` crate, but it
+    /// didn't seem worth the tradeoff of having more complex code.
+    #[git_protocol::maybe_async::maybe_async]
+    pub async fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome, Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
 
         let handshake = &self.ref_map.handshake;
@@ -88,7 +94,9 @@ where
                 previous_response.as_ref(),
             ) {
                 Ok(_) if arguments.is_empty() => {
-                    git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+                    git_protocol::fetch::indicate_end_of_interaction(&mut con.transport)
+                        .await
+                        .ok();
                     return Ok(Outcome {
                         ref_map: std::mem::take(&mut self.ref_map),
                         status: Status::NoChange,
@@ -96,16 +104,18 @@ where
                 }
                 Ok(is_done) => is_done,
                 Err(err) => {
-                    git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+                    git_protocol::fetch::indicate_end_of_interaction(&mut con.transport)
+                        .await
+                        .ok();
                     return Err(err.into());
                 }
             };
             round += 1;
-            let mut reader = arguments.send(&mut con.transport, is_done)?;
+            let mut reader = arguments.send(&mut con.transport, is_done).await?;
             if sideband_all {
                 setup_remote_progress(progress, &mut reader);
             }
-            let response = git_protocol::fetch::Response::from_line_reader(protocol_version, &mut reader)?;
+            let response = git_protocol::fetch::Response::from_line_reader(protocol_version, &mut reader).await?;
             if response.has_pack() {
                 progress.step();
                 progress.set_name("receiving pack");
@@ -127,7 +137,14 @@ where
 
         let mut write_pack_bundle = if matches!(self.dry_run, fetch::DryRun::No) {
             Some(git_pack::Bundle::write_to_directory(
-                reader,
+                #[cfg(feature = "async-network-client")]
+                {
+                    git_protocol::futures_lite::io::BlockOn::new(reader)
+                },
+                #[cfg(not(feature = "async-network-client"))]
+                {
+                    reader
+                },
                 Some(repo.objects.store_ref().path().join("pack")),
                 con.progress,
                 should_interrupt,
@@ -143,7 +160,9 @@ where
         };
 
         if matches!(protocol_version, git_protocol::transport::Protocol::V2) {
-            git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+            git_protocol::fetch::indicate_end_of_interaction(&mut con.transport)
+                .await
+                .ok();
         }
 
         let update_refs = refs::update(

@@ -1,37 +1,57 @@
-#[cfg(feature = "blocking-network-client")]
-mod blocking_io {
+use crate::remote::base_repo_path;
+use git_repository as git;
+
+pub(crate) fn repo_path(name: &str) -> std::path::PathBuf {
+    let dir =
+        git_testtools::scripted_fixture_repo_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
+    dir.join(name)
+}
+
+pub(crate) fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
+    let dir = git_testtools::scripted_fixture_repo_writable_with_args(
+        "make_fetch_repos.sh",
+        [base_repo_path()],
+        git_testtools::Creation::ExecuteScript,
+    )
+    .unwrap();
+    let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
+    (repo, dir)
+}
+
+#[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
+mod blocking_and_async_io {
+    use git_repository as git;
+    use git_repository::remote::Direction::Fetch;
     use std::sync::atomic::AtomicBool;
 
+    use super::{repo_path, repo_rw};
+    use crate::remote::{into_daemon_remote_if_async, spawn_git_daemon_if_async};
     use git_features::progress;
-    use git_repository as git;
-    use git_repository::remote::{fetch, Direction::Fetch};
+    use git_protocol::maybe_async;
+    use git_repository::remote::fetch;
     use git_testtools::hex_to_id;
 
-    use crate::remote;
-
-    fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
-        let dir = git_testtools::scripted_fixture_repo_writable_with_args(
-            "make_fetch_repos.sh",
-            [git::path::realpath(remote::repo_path("base"))
-                .unwrap()
-                .to_string_lossy()],
-            git_testtools::Creation::ExecuteScript,
-        )
-        .unwrap();
-        let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
-        (repo, dir)
-    }
-
-    #[test]
-    fn fetch_empty_pack() -> crate::Result {
+    #[maybe_async::test(
+        feature = "blocking-network-client",
+        async(feature = "async-network-client-async-std", async_std::test)
+    )]
+    async fn fetch_empty_pack() -> crate::Result {
         let (repo, _tmp) = repo_rw("two-origins");
-        let mut remote = repo.head()?.into_remote(Fetch).expect("present")?;
+        let daemon = spawn_git_daemon_if_async(repo_path("base"))?;
+        let mut remote = into_daemon_remote_if_async(
+            repo.head()?.into_remote(Fetch).expect("present")?,
+            daemon.as_ref(),
+            None,
+        );
         remote.replace_refspecs(Some("HEAD:refs/remotes/origin/does-not-yet-exist"), Fetch)?;
 
-        let res: git::remote::fetch::Outcome = remote
-            .connect(Fetch, git::progress::Discard)?
-            .prepare_fetch(Default::default())?
-            .receive(&AtomicBool::default())?;
+        let res = remote
+            .connect(Fetch, git::progress::Discard)
+            .await?
+            .prepare_fetch(Default::default())
+            .await?
+            .receive(&AtomicBool::default())
+            .await?;
 
         match res.status {
             git::remote::fetch::Status::Change {write_pack_bundle, update_refs} => {
@@ -47,16 +67,24 @@ mod blocking_io {
         Ok(())
     }
 
-    #[test]
-    fn fetch_pack_without_local_destination() -> crate::Result {
+    #[maybe_async::test(
+        feature = "blocking-network-client",
+        async(feature = "async-network-client-async-std", async_std::test)
+    )]
+    async fn fetch_pack_without_local_destination() -> crate::Result {
         let (repo, _tmp) = repo_rw("two-origins");
-        let mut remote = repo.find_remote("changes-on-top-of-origin")?;
+        let daemon = spawn_git_daemon_if_async(repo_path("clone-as-base-with-changes"))?;
+        let mut remote =
+            into_daemon_remote_if_async(repo.find_remote("changes-on-top-of-origin")?, daemon.as_ref(), None);
         remote.replace_refspecs(Some("HEAD"), Fetch)?;
 
         let res: git::remote::fetch::Outcome = remote
-            .connect(Fetch, git::progress::Discard)?
-            .prepare_fetch(Default::default())?
-            .receive(&AtomicBool::default())?;
+            .connect(Fetch, git::progress::Discard)
+            .await?
+            .prepare_fetch(Default::default())
+            .await?
+            .receive(&AtomicBool::default())
+            .await?;
 
         match res.status {
             git::remote::fetch::Status::Change {write_pack_bundle, update_refs} => {
@@ -72,8 +100,16 @@ mod blocking_io {
         Ok(())
     }
 
-    #[test]
-    fn fetch_pack() -> crate::Result {
+    #[maybe_async::test(
+        feature = "blocking-network-client",
+        async(feature = "async-network-client-async-std", async_std::test)
+    )]
+    async fn fetch_pack() -> crate::Result {
+        let daemon = spawn_git_daemon_if_async({
+            let mut p = repo_path("base");
+            p.pop();
+            p
+        })?;
         for (version, expected_objects, expected_hash) in [
             (None, 4, "d07c527cf14e524a8494ce6d5d08e28079f5c6ea"),
             (
@@ -99,28 +135,40 @@ mod blocking_io {
 
             // No updates
             {
-                let remote = repo.find_remote("origin")?;
+                let remote = into_daemon_remote_if_async(repo.find_remote("origin")?, daemon.as_ref(), "base");
                 {
                     remote
-                        .connect(Fetch, progress::Discard)?
-                        .prepare_fetch(Default::default())?;
+                        .connect(Fetch, progress::Discard)
+                        .await?
+                        .prepare_fetch(Default::default())
+                        .await?;
                     // early drops are fine and won't block.
                 }
                 let outcome = remote
-                    .connect(Fetch, progress::Discard)?
-                    .prepare_fetch(Default::default())?
-                    .receive(&AtomicBool::default())?;
+                    .connect(Fetch, progress::Discard)
+                    .await?
+                    .prepare_fetch(Default::default())
+                    .await?
+                    .receive(&AtomicBool::default())
+                    .await?;
                 assert!(matches!(outcome.status, git::remote::fetch::Status::NoChange));
             }
 
             // Some updates to be fetched
             for dry_run in [true, false] {
-                let remote = repo.find_remote("changes-on-top-of-origin")?;
+                let remote = into_daemon_remote_if_async(
+                    repo.find_remote("changes-on-top-of-origin")?,
+                    daemon.as_ref(),
+                    "clone-as-base-with-changes",
+                );
                 let outcome: git::remote::fetch::Outcome = remote
-                    .connect(Fetch, progress::Discard)?
-                    .prepare_fetch(Default::default())?
+                    .connect(Fetch, progress::Discard)
+                    .await?
+                    .prepare_fetch(Default::default())
+                    .await?
                     .with_dry_run(dry_run)
-                    .receive(&AtomicBool::default())?;
+                    .receive(&AtomicBool::default())
+                    .await?;
                 let refs = match outcome.status {
                     fetch::Status::Change {
                         write_pack_bundle,
