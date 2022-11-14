@@ -1659,7 +1659,6 @@ version = "0.27.0"
 dependencies = [
  "anyhow",
  "async-std",
- "blocking",
  "byte-unit",
  "clru",
  "document-features",
