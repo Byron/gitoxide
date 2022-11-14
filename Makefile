@@ -38,7 +38,7 @@ nix-shell-macos: ## Enter a nix-shell able to build on macos
 
 ##@ Testing
 
-tests: clippy check doc unit-tests journey-tests-small journey-tests-async journey-tests journey-tests-smart-release ## run all tests, including journey tests, try building docs
+tests: clippy check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests journey-tests-smart-release ## run all tests, including journey tests, try building docs
 
 audit: ## run various auditing tools to assure we are legal and safe
 	cargo deny check advisories bans licenses sources
@@ -172,12 +172,15 @@ continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests
 
 jtt = target/debug/jtt
-journey-tests: always  ## run journey tests (max + pure)
+journey-tests: always  ## run journey tests (max)
 	cargo build
 	cargo build --package git-testtools --bin jtt
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max
-	cargo build --no-default-features --features max-pure
-	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max
+
+journey-tests-pure: always  ## run journey tests (max-pure)
+	cargo build
+	cargo build --package git-testtools --bin jtt
+	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max-pure
 
 journey-tests-small: always ## run journey tests (small)
 	cargo build --no-default-features --features small
