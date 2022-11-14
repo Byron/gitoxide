@@ -3,6 +3,17 @@ use std::{borrow::Cow, path::PathBuf};
 use git_repository as git;
 use git_testtools::scripted_fixture_repo_read_only;
 
+pub(crate) fn base_repo_path() -> String {
+    git::path::realpath(
+        git_testtools::scripted_fixture_repo_read_only("make_remote_repos.sh")
+            .unwrap()
+            .join("base"),
+    )
+    .unwrap()
+    .to_string_lossy()
+    .into_owned()
+}
+
 pub(crate) fn repo_path(name: &str) -> PathBuf {
     let dir = scripted_fixture_repo_read_only("make_remote_repos.sh").unwrap();
     dir.join(name)
@@ -18,9 +29,8 @@ pub(crate) fn repo(name: &str) -> git::Repository {
 /// Maybe this changes one day once we implement other protocols like spawning a process via `tokio` or `async-std`, or
 /// provide async HTTP implementations as well.
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
-#[cfg_attr(not(feature = "async-network-client-async-std"), allow(unused_variables))]
 pub(crate) fn spawn_git_daemon_if_async(
-    base_dir: impl AsRef<std::path::Path>,
+    _base_dir: impl AsRef<std::path::Path>,
 ) -> std::io::Result<Option<git_testtools::GitDaemon>> {
     #[cfg(feature = "blocking-network-client")]
     {
@@ -28,16 +38,15 @@ pub(crate) fn spawn_git_daemon_if_async(
     }
     #[cfg(feature = "async-network-client-async-std")]
     {
-        git_testtools::spawn_git_daemon(base_dir).map(Some)
+        git_testtools::spawn_git_daemon(_base_dir).map(Some)
     }
 }
 
 /// Turn `remote` into a remote that interacts with the git `daemon`, all else being the same, by creating a new stand-in remote.
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
-#[cfg_attr(not(feature = "async-network-client-async-std"), allow(unused_variables))]
 pub(crate) fn into_daemon_remote_if_async<'repo>(
     remote: git::Remote<'repo>,
-    daemon: Option<&git_testtools::GitDaemon>,
+    _daemon: Option<&git_testtools::GitDaemon>,
 ) -> git::Remote<'repo> {
     #[cfg(feature = "blocking-network-client")]
     {
@@ -47,7 +56,7 @@ pub(crate) fn into_daemon_remote_if_async<'repo>(
     {
         let mut new_remote = remote
             .repo()
-            .remote_at(format!("{}/", daemon.expect("daemon is available in async mode").url))
+            .remote_at(format!("{}/", _daemon.expect("daemon is available in async mode").url))
             .expect("valid url to create remote at");
         for direction in [git::remote::Direction::Fetch, git::remote::Direction::Push] {
             new_remote
