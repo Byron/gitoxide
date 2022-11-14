@@ -51,6 +51,10 @@ where
     /// We explicitly don't special case those refs and expect the user to take control. Note that by its nature,
     /// force only applies to refs pointing to commits and if they don't, they will be updated either way in our
     /// implementation as well.
+    ///
+    /// ### Async Mode Shortcoming
+    ///
+    /// Currently the entire process of resolving a pack is blocking the executor.
     #[git_protocol::maybe_async::maybe_async]
     pub async fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome, Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
@@ -132,7 +136,14 @@ where
 
         let mut write_pack_bundle = if matches!(self.dry_run, fetch::DryRun::No) {
             Some(git_pack::Bundle::write_to_directory(
-                reader,
+                #[cfg(feature = "async-network-client")]
+                {
+                    git_protocol::futures_lite::io::BlockOn::new(reader)
+                },
+                #[cfg(not(feature = "async-network-client"))]
+                {
+                    reader
+                },
                 Some(repo.objects.store_ref().path().join("pack")),
                 con.progress,
                 should_interrupt,
