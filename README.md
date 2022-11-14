@@ -182,9 +182,6 @@ Our [stability guide] helps to judge how much churn can be expected when dependi
 
 ## Installation
 
-Note that on Fedora, perl needs to be installed for OpenSSL to build properly. This can be done with the following command:
-`dnf install perl`
-
 ### Download a Binary Release
 
 Using `cargo quickinstall`, one is able to fetch [binary releases][releases]. You can install it via `cargo install cargo-quickinstall`, assuming 
@@ -219,6 +216,16 @@ The following installs the latest unpublished release directly from git:
 ```sh
 cargo install --git https://github.com/Byron/gitoxide  gitoxide
 ```
+
+#### How to deal with build failures
+
+On some platforms, installation may fail due to lack of tools required by `C` toolchains. This can generally be avoided by installation
+with `cargo install gitoxide --no-default-features --features small`.
+
+What follows is a list of known failures.
+
+- On Fedora, `perl` needs to be installed for `OpenSSL` to build properly. This can be done with the following command:
+  `dnf install perl` (see [this issue](https://github.com/Byron/gitoxide/issues/592)).
 
 [releases]: https://github.com/Byron/gitoxide/releases 
 [rustup]: https://rustup.rs
