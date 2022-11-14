@@ -51,6 +51,7 @@ doc: ## Run cargo doc on all crates
 clippy: ## Run cargo clippy on all crates
 	cargo clippy --all --tests --examples
 	cargo clippy --all --no-default-features --features small
+	cargo clippy --all --no-default-features --features max-pure
 	cargo clippy --all --no-default-features --features lean-async --tests
 
 check-msrv: ## run cargo msrv to validate the current msrv requirements, similar to what CI does
@@ -171,12 +172,14 @@ continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests
 
 jtt = target/debug/jtt
-journey-tests: always  ## run journey tests (max)
+journey-tests: always  ## run journey tests (max + pure)
 	cargo build
 	cargo build --package git-testtools --bin jtt
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max
+	cargo build --no-default-features --features max-pure
+	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max
 
-journey-tests-small: always ## run journey tests (lean-cli)
+journey-tests-small: always ## run journey tests (small)
 	cargo build --no-default-features --features small
 	cd tests/tools && cargo build
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) small

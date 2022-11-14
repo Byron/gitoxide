@@ -77,7 +77,7 @@ jobs:
       matrix:
 #         build: [ linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc ]
         build: [ linux, macos, win-msvc, win-gnu, win32-msvc ]
-        feature: [ "small", "lean", "max" ]
+        feature: [ "small", "lean", "max", "max-pure" ]
         include:
           - build: linux
             os: ubuntu-18.04

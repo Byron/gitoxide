@@ -220,7 +220,7 @@ cargo install --git https://github.com/Byron/gitoxide  gitoxide
 #### How to deal with build failures
 
 On some platforms, installation may fail due to lack of tools required by `C` toolchains. This can generally be avoided by installation
-with `cargo install gitoxide --no-default-features --features small`.
+with `cargo install gitoxide --no-default-features --features max-pure`.
 
 What follows is a list of known failures.
 
