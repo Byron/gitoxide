@@ -1659,9 +1659,11 @@ version = "0.27.0"
 dependencies = [
  "anyhow",
  "async-std",
+ "blocking",
  "byte-unit",
  "clru",
  "document-features",
+ "futures-executor",
  "git-actor",
  "git-attributes",
  "git-config",

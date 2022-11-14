@@ -31,7 +31,7 @@ default = ["max-performance"]
 #! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
 
 ## Make `git-protocol` available along with an async client.
-async-network-client = ["git-protocol/async-client"]
+async-network-client = ["git-protocol/async-client", "dep:futures-executor", "dep:blocking"]
 ## Use this if your crate uses `async-std` as runtime, and enable basic runtime integration when connecting to remote servers.
 async-network-client-async-std = ["async-std", "async-network-client", "git-transport/async-std"]
 ## Make `git-protocol` available along with a blocking client.
@@ -46,8 +46,8 @@ blocking-http-transport = ["git-transport/http-client-curl"]
 serde1 = [  "serde",
             "git-pack/serde1",
             "git-object/serde1",
-            "git-protocol/serde1",
-            "git-transport/serde1",
+            "git-protocol?/serde1",
+            "git-transport?/serde1",
             "git-ref/serde1",
             "git-odb/serde1",
             "git-index/serde1",
@@ -119,6 +119,10 @@ log = "0.4.14"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 smallvec = "1.9.0"
 async-std = { version = "1.12.0", optional = true }
+## Currently needed only to allow blocking on a future in a Drop iplementation.
+futures-executor = { version = "0.3.25", optional = true }
+## Used to unblock a pack receive operation, on the highest possible level as it really is inherently blocking and doesn't gain anything in async.
+blocking = { version = "1.2.0", optional = true }
 
 ## For use in rev-parse, which provides searching commits by running a regex on their message.
 ##

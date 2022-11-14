@@ -98,11 +98,15 @@ where
     /// should the fetch not be performed. Furthermore, there the code doing the fetch is inherently blocking so there is no benefit.
     /// It's best to unblock it by placing it into its own thread or offload it should usage in an async context be required.
     #[allow(clippy::result_large_err)]
-    pub fn prepare_fetch(mut self, options: ref_map::Options) -> Result<Prepare<'remote, 'repo, T, P>, prepare::Error> {
+    #[git_protocol::maybe_async::maybe_async]
+    pub async fn prepare_fetch(
+        mut self,
+        options: ref_map::Options,
+    ) -> Result<Prepare<'remote, 'repo, T, P>, prepare::Error> {
         if self.remote.refspecs(remote::Direction::Fetch).is_empty() {
             return Err(prepare::Error::MissingRefSpecs);
         }
-        let ref_map = self.ref_map_inner(options)?;
+        let ref_map = self.ref_map_inner(options).await?;
         Ok(Prepare {
             con: Some(self),
             ref_map,
@@ -165,7 +169,18 @@ where
 {
     fn drop(&mut self) {
         if let Some(mut con) = self.con.take() {
-            git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+            #[cfg(feature = "async-network-client")]
+            {
+                // TODO: this should be an async drop once the feature is available.
+                //       Right now we block the executor by forcing this communication, but that only
+                //       happens if the user didn't actually try to receive a pack, which consumes the
+                //       connection in an async context.
+                futures_executor::block_on(git_protocol::fetch::indicate_end_of_interaction(&mut con.transport)).ok();
+            }
+            #[cfg(not(feature = "async-network-client"))]
+            {
+                git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+            }
         }
     }
 }

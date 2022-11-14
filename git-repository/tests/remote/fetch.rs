@@ -1,5 +1,64 @@
+use git_repository as git;
+pub(crate) fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
+    let dir = git_testtools::scripted_fixture_repo_writable_with_args(
+        "make_fetch_repos.sh",
+        [git::path::realpath(crate::remote::repo_path("base"))
+            .unwrap()
+            .to_string_lossy()],
+        git_testtools::Creation::ExecuteScript,
+    )
+    .unwrap();
+    let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
+    (repo, dir)
+}
+
+#[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
+mod blocking_and_async_io {
+    use git_repository as git;
+    use git_repository::remote::Direction::Fetch;
+
+    use super::repo_rw;
+    use crate::remote;
+    use crate::remote::{into_daemon_remote_if_async, spawn_git_daemon_if_async};
+    use git_protocol::maybe_async;
+
+    #[maybe_async::test(
+        feature = "blocking-network-client",
+        async(feature = "async-network-client-async-std", async_std::test)
+    )]
+    async fn fetch_empty_pack() -> crate::Result {
+        let (repo, _tmp) = repo_rw("two-origins");
+        let daemon = spawn_git_daemon_if_async(remote::repo_path("base"))?;
+        let mut remote =
+            into_daemon_remote_if_async(repo.head()?.into_remote(Fetch).expect("present")?, daemon.as_ref());
+        remote.replace_refspecs(Some("HEAD:refs/remotes/origin/does-not-yet-exist"), Fetch)?;
+
+        let res = remote
+            .connect(Fetch, git::progress::Discard)
+            .await?
+            .prepare_fetch(Default::default())
+            .await?;
+        //     .receive(&AtomicBool::default())
+        //     .await?;
+        //
+        // match res.status {
+        //     git::remote::fetch::Status::Change {write_pack_bundle, update_refs} => {
+        //         assert_eq!(write_pack_bundle.index.data_hash, hex_to_id("029d08823bd8a8eab510ad6ac75c823cfd3ed31e"));
+        //         assert_eq!(write_pack_bundle.index.num_objects, 0, "empty pack");
+        //         assert!(write_pack_bundle.data_path.as_deref().map_or(false, |p| p.is_file()));
+        //         assert!(write_pack_bundle.index_path.as_deref().map_or(false, |p| p.is_file()));
+        //         assert_eq!(update_refs.edits.len(), 1);
+        //         assert!(!write_pack_bundle.keep_path.as_deref().map_or(false, |p| p.is_file()), ".keep files are deleted if at least one ref-edit was made or the pack is empty");
+        //     },
+        //     _ => unreachable!("Naive negotiation sends the same have and wants, resulting in an empty pack (technically no change, but we don't detect it) - empty packs are fine")
+        // }
+        Ok(())
+    }
+}
+
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
+    use super::repo_rw;
     use std::sync::atomic::AtomicBool;
 
     use git_features::progress;
@@ -8,19 +67,6 @@ mod blocking_io {
     use git_testtools::hex_to_id;
 
     use crate::remote;
-
-    fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
-        let dir = git_testtools::scripted_fixture_repo_writable_with_args(
-            "make_fetch_repos.sh",
-            [git::path::realpath(remote::repo_path("base"))
-                .unwrap()
-                .to_string_lossy()],
-            git_testtools::Creation::ExecuteScript,
-        )
-        .unwrap();
-        let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
-        (repo, dir)
-    }
 
     #[test]
     fn fetch_empty_pack() -> crate::Result {
