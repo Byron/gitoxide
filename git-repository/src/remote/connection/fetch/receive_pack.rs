@@ -54,7 +54,8 @@ where
     ///
     /// ### Async Mode Shortcoming
     ///
-    /// Currently the entire process of resolving a pack is blocking the executor.
+    /// Currently the entire process of resolving a pack is blocking the executor. This can be fixed using the `blocking` crate, but it
+    /// didn't seem worth the tradeoff of having more complex code.
     #[git_protocol::maybe_async::maybe_async]
     pub async fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome, Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
