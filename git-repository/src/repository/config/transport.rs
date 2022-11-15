@@ -131,7 +131,15 @@ impl crate::Repository {
                     opts.proxy = config
                         .string_filter("http", None, "proxy", &mut trusted_only)
                         .and_then(|v| try_cow_to_string(v, lenient, "http.proxy").transpose())
-                        .transpose()?;
+                        .transpose()?
+                        .map(|mut proxy| {
+                            if !proxy.trim().is_empty() && !proxy.contains("://") {
+                                proxy.insert_str(0, "http://");
+                                proxy
+                            } else {
+                                proxy
+                            }
+                        });
                     opts.user_agent = config
                         .string_filter("http", None, "userAgent", &mut trusted_only)
                         .and_then(|v| try_cow_to_string(v, lenient, "http.userAgent").transpose())
