@@ -2,20 +2,8 @@
 mod http {
     use git_repository as git;
 
-    fn base_repo_path() -> String {
-        git::path::realpath(
-            git_testtools::scripted_fixture_repo_read_only("make_remote_repos.sh")
-                .unwrap()
-                .join("base"),
-        )
-        .unwrap()
-        .to_string_lossy()
-        .into_owned()
-    }
-
     pub(crate) fn repo(name: &str) -> git::Repository {
-        let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_fetch_repos.sh", [base_repo_path()])
-            .unwrap();
+        let dir = git_testtools::scripted_fixture_repo_read_only("make_config_repos.sh").unwrap();
         git::open_opts(dir.join(name), git::open::Options::isolated()).unwrap()
     }
 
@@ -71,5 +59,23 @@ mod http {
             backend.is_none(),
             "backed is never set as it's backend specific, rather custom options typically"
         )
+    }
+
+    #[test]
+    fn empty_proxy_string_turns_it_off() {
+        let repo = repo("http-config-empty-proxy");
+
+        let http_config = repo
+            .transport_options("https://example.com/does/not/matter")
+            .expect("valid configuration")
+            .expect("configuration available for http");
+        let http_config = http_config
+            .downcast_ref::<git_transport::client::http::Options>()
+            .expect("http options have been created");
+        assert_eq!(
+            http_config.proxy.as_deref(),
+            Some(""),
+            "empty strings indicate that the proxy is to be unset by the transport"
+        );
     }
 }

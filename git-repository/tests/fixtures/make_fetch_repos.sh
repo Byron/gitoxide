@@ -1,5 +1,6 @@
 set -eu -o pipefail
 
+# IMPORTANT: keep this repo small as it's used for writes, hence will be executed for each writer!
 git clone --bare "${1:?First argument is the complex base repo from make_remote_repos.sh/base}" base
 
 git clone --shared base clone-as-base-with-changes
@@ -27,19 +28,4 @@ git clone --shared base worktree-root
   git worktree add ../wt-a/nested-wt-b
   git worktree add --lock ../wt-c-locked
   git worktree add ../wt-deleted && rm -Rf ../wt-deleted
-)
-
-git init http-config
-(cd http-config
-  git config http.extraHeader "ExtraHeader: value1"
-  git config --add http.extraHeader ""
-  git config --add http.extraHeader "ExtraHeader: value2"
-  git config --add http.extraHeader "ExtraHeader: value3"
-  git config http.followRedirects initial
-  git config http.lowSpeedLimit 5k
-  git config http.lowSpeedTime 10
-  git config http.postBuffer 8k
-  git config http.proxy localhost:9090
-  git config http.proxyAuthMethod anyauth
-  git config http.userAgent agentJustForHttp
 )
