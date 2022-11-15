@@ -1,5 +1,5 @@
 use crate::bstr::BStr;
-use crate::config::cache::util::ApplyLeniencyOpt;
+use crate::config::cache::util::{ApplyLeniency, ApplyLeniencyDefault};
 use std::any::Any;
 
 impl crate::Repository {
@@ -24,7 +24,6 @@ impl crate::Repository {
                 #[cfg(feature = "blocking-http-transport")]
                 {
                     use crate::bstr::ByteVec;
-                    use crate::config::cache::util::check_lenient_default;
                     use git_transport::client::http;
                     use std::borrow::Cow;
                     use std::convert::{TryFrom, TryInto};
@@ -114,17 +113,13 @@ impl crate::Repository {
                     {
                         opts.follow_redirects = if follow_redirects.as_ref() == "initial" {
                             http::options::FollowRedirects::Initial
-                        } else if check_lenient_default(
-                            git_config::Boolean::try_from(follow_redirects).map_err(|err| {
-                                crate::config::transport::Error::ConfigValue {
-                                    source: err,
-                                    key: "http.followRedirects",
-                                }
-                            }),
-                            lenient,
-                            || git_config::Boolean(false),
-                        )?
-                        .0
+                        } else if git_config::Boolean::try_from(follow_redirects)
+                            .map_err(|err| crate::config::transport::Error::ConfigValue {
+                                source: err,
+                                key: "http.followRedirects",
+                            })
+                            .with_lenient_default(lenient)?
+                            .0
                         {
                             http::options::FollowRedirects::All
                         } else {

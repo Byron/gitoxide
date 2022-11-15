@@ -35,7 +35,7 @@ pub(crate) fn config_bool(
             value: err.input,
             key: key.into(),
         })
-        .with_leniency(lenient)
+        .with_lenient_default(lenient)
 }
 
 pub(crate) fn query_refupdates(
@@ -61,15 +61,16 @@ pub(crate) fn query_refupdates(
     }
 }
 
-pub trait ApplyLeniencyOpt {
-    fn with_leniency(self, is_lenient: bool) -> Self;
-}
-
+// TODO: Use a specialization here once trait specialization is stabilized. Would be perfect here for `T: Default`.
 pub trait ApplyLeniency {
     fn with_leniency(self, is_lenient: bool) -> Self;
 }
 
-impl<T, E> ApplyLeniencyOpt for Result<Option<T>, E> {
+pub trait ApplyLeniencyDefault {
+    fn with_lenient_default(self, is_lenient: bool) -> Self;
+}
+
+impl<T, E> ApplyLeniency for Result<Option<T>, E> {
     fn with_leniency(self, is_lenient: bool) -> Self {
         match self {
             Ok(v) => Ok(v),
@@ -79,24 +80,16 @@ impl<T, E> ApplyLeniencyOpt for Result<Option<T>, E> {
     }
 }
 
-impl<T, E> ApplyLeniency for Result<T, E>
+impl<T, E> ApplyLeniencyDefault for Result<T, E>
 where
     T: Default,
 {
-    fn with_leniency(self, is_lenient: bool) -> Self {
+    fn with_lenient_default(self, is_lenient: bool) -> Self {
         match self {
             Ok(v) => Ok(v),
             Err(_) if is_lenient => Ok(T::default()),
             Err(err) => Err(err),
         }
-    }
-}
-
-pub(crate) fn check_lenient_default<T, E>(v: Result<T, E>, lenient: bool, default: impl FnOnce() -> T) -> Result<T, E> {
-    match v {
-        Ok(v) => Ok(v),
-        Err(_) if lenient => Ok(default()),
-        Err(err) => Err(err),
     }
 }
 

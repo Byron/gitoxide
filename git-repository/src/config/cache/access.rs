@@ -2,8 +2,9 @@ use std::{borrow::Cow, convert::TryInto, path::PathBuf, time::Duration};
 
 use git_lock::acquire::Fail;
 
+use crate::config::cache::util::ApplyLeniencyDefault;
 use crate::{
-    config::{cache::util::check_lenient_default, checkout_options, Cache},
+    config::{checkout_options, Cache},
     remote,
     repository::identity,
 };
@@ -14,32 +15,30 @@ impl Cache {
         use crate::config::diff::algorithm::Error;
         self.diff_algorithm
             .get_or_try_init(|| {
-                let res = {
-                    let name = self
-                        .resolved
-                        .string("diff", None, "algorithm")
-                        .unwrap_or_else(|| Cow::Borrowed("myers".into()));
-                    if name.eq_ignore_ascii_case(b"myers") || name.eq_ignore_ascii_case(b"default") {
-                        Ok(git_diff::blob::Algorithm::Myers)
-                    } else if name.eq_ignore_ascii_case(b"minimal") {
-                        Ok(git_diff::blob::Algorithm::MyersMinimal)
-                    } else if name.eq_ignore_ascii_case(b"histogram") {
+                let name = self
+                    .resolved
+                    .string("diff", None, "algorithm")
+                    .unwrap_or_else(|| Cow::Borrowed("myers".into()));
+                if name.eq_ignore_ascii_case(b"myers") || name.eq_ignore_ascii_case(b"default") {
+                    Ok(git_diff::blob::Algorithm::Myers)
+                } else if name.eq_ignore_ascii_case(b"minimal") {
+                    Ok(git_diff::blob::Algorithm::MyersMinimal)
+                } else if name.eq_ignore_ascii_case(b"histogram") {
+                    Ok(git_diff::blob::Algorithm::Histogram)
+                } else if name.eq_ignore_ascii_case(b"patience") {
+                    if self.lenient_config {
                         Ok(git_diff::blob::Algorithm::Histogram)
-                    } else if name.eq_ignore_ascii_case(b"patience") {
-                        if self.lenient_config {
-                            Ok(git_diff::blob::Algorithm::Histogram)
-                        } else {
-                            Err(Error::Unimplemented {
-                                name: name.into_owned(),
-                            })
-                        }
                     } else {
-                        Err(Error::Unknown {
+                        Err(Error::Unimplemented {
                             name: name.into_owned(),
                         })
                     }
-                };
-                check_lenient_default(res, self.lenient_config, || git_diff::blob::Algorithm::Myers)
+                } else {
+                    Err(Error::Unknown {
+                        name: name.into_owned(),
+                    })
+                }
+                .with_lenient_default(self.lenient_config)
             })
             .copied()
     }

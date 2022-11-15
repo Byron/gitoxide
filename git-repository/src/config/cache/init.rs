@@ -1,5 +1,5 @@
 use super::{interpolate_context, util, Error, StageOne};
-use crate::config::cache::util::ApplyLeniencyOpt;
+use crate::config::cache::util::ApplyLeniency;
 use crate::{bstr::BString, config::Cache, repository};
 
 /// Initialization
