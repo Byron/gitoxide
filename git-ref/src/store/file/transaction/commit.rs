@@ -84,7 +84,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                         change.lock = Some(lock);
                         continue;
                     }
-                    if update_ref {
+                    if update_ref && change.is_effective() {
                         if let Err(err) = lock.commit() {
                             // TODO: when Kind::IsADirectory becomes stable, use that.
                             let err = if err.instance.resource_path().is_dir() {

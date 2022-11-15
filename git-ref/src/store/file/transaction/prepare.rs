@@ -150,14 +150,20 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     }
                 };
 
-                if let Some(existing) = existing_ref {
+                let is_effective = if let Some(existing) = existing_ref {
+                    let effective = new_would_change_existing(&new, &existing.target);
                     *expected = PreviousValue::MustExistAndMatch(existing.target);
+                    effective
+                } else {
+                    true
                 };
 
-                lock.with_mut(|file| match new {
-                    Target::Peeled(oid) => write!(file, "{}", oid),
-                    Target::Symbolic(name) => write!(file, "ref: {}", name.0),
-                })?;
+                if is_effective {
+                    lock.with_mut(|file| match new {
+                        Target::Peeled(oid) => write!(file, "{}", oid),
+                        Target::Symbolic(name) => write!(file, "ref: {}", name.0),
+                    })?;
+                }
 
                 lock.close()?
             }
@@ -424,4 +430,5 @@ mod error {
 
 pub use error::Error;
 
+use crate::file::transaction::new_would_change_existing;
 use crate::{packed::transaction::buffer_into_transaction, transaction::PreviousValue};

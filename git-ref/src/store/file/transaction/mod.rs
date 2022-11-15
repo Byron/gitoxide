@@ -1,9 +1,11 @@
 use git_hash::ObjectId;
 use git_object::bstr::BString;
 
+use crate::transaction::{Change, PreviousValue};
 use crate::{
     store_impl::{file, file::Transaction},
     transaction::RefEdit,
+    Target,
 };
 
 /// A function receiving an object id to resolve, returning its decompressed bytes,
@@ -48,6 +50,27 @@ pub(in crate::store_impl::file) struct Edit {
 impl Edit {
     fn name(&self) -> BString {
         self.update.name.0.clone()
+    }
+
+    fn is_effective(&self) -> bool {
+        match &self.update.change {
+            Change::Update { new, expected, .. } => match expected {
+                PreviousValue::Any
+                | PreviousValue::MustExist
+                | PreviousValue::MustNotExist
+                | PreviousValue::ExistingMustMatch(_) => true,
+                PreviousValue::MustExistAndMatch(existing) => new_would_change_existing(new, existing),
+            },
+            Change::Delete { .. } => unreachable!("must not be called on deletions"),
+        }
+    }
+}
+
+fn new_would_change_existing(new: &Target, existing: &Target) -> bool {
+    match (new, existing) {
+        (Target::Peeled(new), Target::Peeled(old)) => old != new,
+        (Target::Symbolic(new), Target::Symbolic(old)) => old != new,
+        (_, _) => true,
     }
 }
 
