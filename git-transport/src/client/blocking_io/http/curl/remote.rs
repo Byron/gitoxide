@@ -157,6 +157,8 @@ pub fn new() -> (
             handle.http_headers(headers)?;
             handle.transfer_encoding(false)?;
             handle.connect_timeout(connect_timeout)?;
+            handle.tcp_keepalive(true)?;
+
             if low_speed_time_seconds > 0 && low_speed_limit_bytes_per_second > 0 {
                 handle.low_speed_limit(low_speed_limit_bytes_per_second)?;
                 handle.low_speed_time(Duration::from_secs(low_speed_time_seconds))?;
