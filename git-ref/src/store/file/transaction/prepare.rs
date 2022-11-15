@@ -151,7 +151,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                 };
 
                 let is_effective = if let Some(existing) = existing_ref {
-                    let effective = new_would_change_existing(&new, &existing.target);
+                    let effective = new_would_change_existing(new, &existing.target);
                     *expected = PreviousValue::MustExistAndMatch(existing.target);
                     effective
                 } else {
