@@ -1,4 +1,5 @@
 use crate::bstr::BStr;
+use crate::config::cache::util::ApplyLeniencyOpt;
 use std::any::Any;
 
 impl crate::Repository {
@@ -70,14 +71,11 @@ impl crate::Repository {
                             subsection_name,
                             value_name,
                         } = git_config::parse::key(key).expect("valid key statically known");
-                        check_lenient(
-                            check_lenient(
-                                config
-                                    .integer_filter(section_name, subsection_name, value_name, &mut filter)
-                                    .transpose()
-                                    .map_err(|err| crate::config::transport::Error::ConfigValue { source: err, key }),
-                                lenient,
-                            )?
+                        config
+                            .integer_filter(section_name, subsection_name, value_name, &mut filter)
+                            .transpose()
+                            .map_err(|err| crate::config::transport::Error::ConfigValue { source: err, key })
+                            .with_leniency(lenient)?
                             .map(|integer| {
                                 integer
                                     .try_into()
@@ -87,9 +85,8 @@ impl crate::Repository {
                                         kind,
                                     })
                             })
-                            .transpose(),
-                            lenient,
-                        )
+                            .transpose()
+                            .with_leniency(lenient)
                     }
                     let mut opts = http::Options::default();
                     let config = &self.config.resolved;

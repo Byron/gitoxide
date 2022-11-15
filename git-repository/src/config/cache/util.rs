@@ -64,6 +64,37 @@ pub(crate) fn query_refupdates(
     }
 }
 
+pub trait ApplyLeniencyOpt {
+    fn with_leniency(self, is_lenient: bool) -> Self;
+}
+
+pub trait ApplyLeniency {
+    fn with_leniency(self, is_lenient: bool) -> Self;
+}
+
+impl<T, E> ApplyLeniencyOpt for Result<Option<T>, E> {
+    fn with_leniency(self, is_lenient: bool) -> Self {
+        match self {
+            Ok(v) => Ok(v),
+            Err(_) if is_lenient => Ok(None),
+            Err(err) => Err(err),
+        }
+    }
+}
+
+impl<T, E> ApplyLeniency for Result<T, E>
+where
+    T: Default,
+{
+    fn with_leniency(self, is_lenient: bool) -> Self {
+        match self {
+            Ok(v) => Ok(v),
+            Err(_) if is_lenient => Ok(T::default()),
+            Err(err) => Err(err),
+        }
+    }
+}
+
 pub(crate) fn check_lenient<T, E>(v: Result<Option<T>, E>, lenient: bool) -> Result<Option<T>, E> {
     match v {
         Ok(v) => Ok(v),
