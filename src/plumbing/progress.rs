@@ -733,6 +733,12 @@ static GIT_CONFIG: &[Record] = &[
             deviation: None
         }
     },
+    Record {
+        config: "gitoxide.http.noProxy",
+        usage: NotPlanned {
+            reason: "on demand, without it it's not possible to implement environment overrides via `no_proxy` or `NO_PROXY` for a list of hostnames or `*`"
+        }
+    },
 ];
 
 /// A programmatic way to record and display progress.

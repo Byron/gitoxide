@@ -309,6 +309,11 @@ impl ThreadSafeRepository {
     /// Note that this will read various `GIT_*` environment variables to check for overrides, and is probably most useful when implementing
     /// custom hooks.
     // TODO: tests, with hooks, GIT_QUARANTINE for ref-log and transaction control (needs git-sec support to remove write access in git-ref)
+    // TODO: The following vars should end up as overrides of the respective configuration values (see git-config).
+    //       GIT_HTTP_PROXY_AUTHMETHOD, GIT_PROXY_SSL_CERT, GIT_PROXY_SSL_KEY, GIT_PROXY_SSL_CERT_PASSWORD_PROTECTED.
+    //       GIT_PROXY_SSL_CAINFO, GIT_SSL_VERSION, GIT_SSL_CIPHER_LIST, GIT_HTTP_MAX_REQUESTS, GIT_CURL_FTP_NO_EPSV,
+    //       GIT_HTTP_LOW_SPEED_LIMIT, GIT_HTTP_LOW_SPEED_TIME, GIT_HTTP_USER_AGENT,
+    //       no_proxy, NO_PROXY, http_proxy, HTTPS_PROXY, https_proxy, ALL_PROXY, all_proxy
     pub fn open_with_environment_overrides(
         fallback_directory: impl Into<PathBuf>,
         trust_map: git_sec::trust::Mapping<Options>,
