@@ -58,14 +58,14 @@ impl crate::Repository {
                             value_name,
                             ..
                         } = git_config::parse::key(key).expect("valid key statically known");
-                        let integer = config
-                            .integer_filter(section_name, None, value_name, &mut filter)
-                            .transpose()
-                            .map_err(|err| crate::config::transport::Error::ConfigValue {
-                                source: err,
-                                key: "http.lowSpeedTime",
-                            })?
-                            .unwrap_or_default();
+                        let integer = check_lenient(
+                            config
+                                .integer_filter(section_name, None, value_name, &mut filter)
+                                .transpose()
+                                .map_err(|err| crate::config::transport::Error::ConfigValue { source: err, key }),
+                            lenient,
+                        )?
+                        .unwrap_or_default();
                         check_lenient_default(
                             integer
                                 .try_into()
@@ -76,6 +76,42 @@ impl crate::Repository {
                                 }),
                             lenient,
                             || default,
+                        )
+                    }
+                    fn integer_opt<T>(
+                        config: &git_config::File<'static>,
+                        lenient: bool,
+                        key: &'static str,
+                        kind: &'static str,
+                        mut filter: fn(&git_config::file::Metadata) -> bool,
+                    ) -> Result<Option<T>, crate::config::transport::Error>
+                    where
+                        T: TryFrom<i64>,
+                    {
+                        let git_config::parse::Key {
+                            section_name,
+                            subsection_name,
+                            value_name,
+                        } = git_config::parse::key(key).expect("valid key statically known");
+                        check_lenient(
+                            check_lenient(
+                                config
+                                    .integer_filter(section_name, subsection_name, value_name, &mut filter)
+                                    .transpose()
+                                    .map_err(|err| crate::config::transport::Error::ConfigValue { source: err, key }),
+                                lenient,
+                            )?
+                            .map(|integer| {
+                                integer
+                                    .try_into()
+                                    .map_err(|_| crate::config::transport::Error::InvalidInteger {
+                                        actual: integer,
+                                        key,
+                                        kind,
+                                    })
+                            })
+                            .transpose(),
+                            lenient,
                         )
                     }
                     let mut opts = http::Options::default();
@@ -140,6 +176,9 @@ impl crate::Repository {
                                 proxy
                             }
                         });
+                    opts.connect_timeout =
+                        integer_opt(config, lenient, "gitoxide.http.connectTimeout", "u64", trusted_only)?
+                            .map(std::time::Duration::from_millis);
                     opts.user_agent = config
                         .string_filter("http", None, "userAgent", &mut trusted_only)
                         .and_then(|v| try_cow_to_string(v, lenient, "http.userAgent").transpose())

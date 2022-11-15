@@ -13,6 +13,7 @@ git init http-config
   git config http.proxy http://localhost:9090
   git config http.proxyAuthMethod anyauth
   git config http.userAgent agentJustForHttp
+  git config gitoxide.http.connectTimeout 60k
 )
 
 git init http-proxy-empty

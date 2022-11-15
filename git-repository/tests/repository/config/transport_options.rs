@@ -50,11 +50,7 @@ mod http {
             "TODO: implement auth"
         );
         assert_eq!(user_agent.as_deref(), Some("agentJustForHttp"));
-        assert_eq!(
-            connect_timeout,
-            std::time::Duration::from_secs(20),
-            "this is an arbitrary default, and it's her to allow adjustments of the default"
-        );
+        assert_eq!(connect_timeout, Some(std::time::Duration::from_millis(60 * 1024)));
         assert!(
             backend.is_none(),
             "backed is never set as it's backend specific, rather custom options typically"
