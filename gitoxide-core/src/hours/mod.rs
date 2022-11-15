@@ -92,23 +92,22 @@ where
             let commit_thread = scope.spawn(move || -> anyhow::Result<Vec<_>> {
                 let mut out = Vec::new();
                 for (commit_idx, commit_data) in rx {
-                    if let Some(author) = git::objs::CommitRefIter::from_bytes(&commit_data)
+                    if let Ok(author) = git::objs::CommitRefIter::from_bytes(&commit_data)
                         .author()
                         .map(|author| mailmap.resolve_cow(author.trim()))
-                        .ok()
                     {
                         let mut string_ref = |s: &[u8]| -> &'static BStr {
                             match string_heap.get(s) {
                                 Some(n) => n.as_bstr(),
                                 None => {
-                                    let sv: Vec<u8> = s.to_owned().into();
+                                    let sv: Vec<u8> = s.to_owned();
                                     string_heap.insert(Box::leak(sv.into_boxed_slice()));
                                     (*string_heap.get(s).expect("present")).as_ref()
                                 }
                             }
                         };
                         let name = string_ref(author.name.as_ref());
-                        let email = string_ref(&author.email.as_ref());
+                        let email = string_ref(author.email.as_ref());
 
                         out.push((
                             commit_idx,
@@ -122,7 +121,7 @@ where
                 }
                 out.shrink_to_fit();
                 out.sort_by(|a, b| {
-                    a.1.email.cmp(&b.1.email).then(
+                    a.1.email.cmp(b.1.email).then(
                         a.1.time
                             .seconds_since_unix_epoch
                             .cmp(&b.1.time.seconds_since_unix_epoch)
@@ -253,7 +252,7 @@ where
                         .collect::<Vec<_>>();
                     (Some(tx), stat_workers)
                 })
-                .unwrap_or_else(Default::default);
+                .unwrap_or_default();
 
             let mut commit_idx = 0_u32;
             let mut skipped_merge_commits = 0;

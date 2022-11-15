@@ -52,9 +52,12 @@ lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxi
 ## It uses, however, a fully asynchronous networking implementation which can serve a real-world example on how to implement custom async transports.
 lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-async-client", "prodash-render-line"]
 
-## As small as it can possibly be, no threading, no fast sha1, log based progress only, rust based zlib implementation.
+## As small as it can possibly be, no threading, no fast sha1, line progress only, rust based zlib implementation.
 ## no networking, local operations only.
 small = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash-render-line", "atty"  ]
+
+## Makes the crate execute as fast as possible without pulling in C libraries, while keeping everything else minimal akin to the `small` build.
+max-pure = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash-render-line", "prodash-render-tui", "git-repository/max-performance-safe", "http-client-curl", "gitoxide-core-blocking-client", "gitoxide-core-tools", "prodash/render-line-autoconfigure" ]
 
 #! ### `gitoxide-core` Configuration
 

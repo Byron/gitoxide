@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-pub fn randomize(backoff_ms: usize) -> usize {
+fn randomize(backoff_ms: usize) -> usize {
     let new_value = (fastrand::usize(750..=1250) * backoff_ms) / 1000;
     if new_value == 0 {
         backoff_ms
@@ -9,6 +9,7 @@ pub fn randomize(backoff_ms: usize) -> usize {
     }
 }
 
+/// A utility to calculate steps for exponential backoff similar to how it's done in `git`.
 pub struct Exponential<Fn> {
     multiplier: usize,
     max_multiplier: usize,
@@ -28,6 +29,7 @@ impl Default for Exponential<fn(usize) -> usize> {
 }
 
 impl Exponential<fn(usize) -> usize> {
+    /// Create a new exponential backoff iterator that backs off in randomized, ever increasing steps.
     pub fn default_with_random() -> Self {
         Exponential {
             multiplier: 1,
@@ -42,6 +44,7 @@ impl<Transform> Exponential<Transform>
 where
     Transform: Fn(usize) -> usize,
 {
+    /// Return an iterator that yields `Duration` instances to sleep on until `time` is depleted.
     pub fn until_no_remaining(&mut self, time: Duration) -> impl Iterator<Item = Duration> + '_ {
         let mut elapsed = Duration::default();
         let mut stop_next_iteration = false;

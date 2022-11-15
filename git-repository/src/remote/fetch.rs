@@ -2,7 +2,7 @@ use crate::bstr::{BStr, BString};
 
 /// If `Yes`, don't really make changes but do as much as possible to get an idea of what would be done.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[cfg(feature = "blocking-network-client")]
+#[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
 pub(crate) enum DryRun {
     /// Enable dry-run mode and don't actually change the underlying repository in any way.
     Yes,
@@ -74,5 +74,5 @@ pub struct Mapping {
     pub spec_index: usize,
 }
 
-#[cfg(feature = "blocking-network-client")]
+#[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
 pub use super::connection::fetch::{negotiate, prepare, refs, Error, Outcome, Prepare, RefLogMessage, Status};

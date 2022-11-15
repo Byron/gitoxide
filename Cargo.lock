@@ -1761,6 +1761,7 @@ version = "0.10.0"
 dependencies = [
  "bstr",
  "crc",
+ "fastrand",
  "fs_extra",
  "git-attributes",
  "git-discover",

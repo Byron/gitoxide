@@ -46,8 +46,8 @@ blocking-http-transport = ["git-transport/http-client-curl"]
 serde1 = [  "serde",
             "git-pack/serde1",
             "git-object/serde1",
-            "git-protocol/serde1",
-            "git-transport/serde1",
+            "git-protocol?/serde1",
+            "git-transport?/serde1",
             "git-ref/serde1",
             "git-odb/serde1",
             "git-index/serde1",
@@ -137,6 +137,7 @@ is_ci = "1.1.1"
 anyhow = "1"
 walkdir = "2.3.2"
 serial_test = "0.9.0"
+async-std = { version = "1.12.0", features = ["attributes"] }
 
 [package.metadata.docs.rs]
 features = ["document-features", "max-performance", "blocking-network-client", "serde1"]

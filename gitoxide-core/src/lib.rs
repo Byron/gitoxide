@@ -1,3 +1,25 @@
+//! The purpose of of this crate is to abstract the user interface of `gix` (the command-line interface) from the actual implementation.
+//! That way, one day it's possible to provide alternative frontends, including user interfaces.
+//!
+//! ### What is `gix`?
+//!
+//! `gix` is a tool to aid developers of `gitoxide` run their code in real-world situations and to validate the `git-repository` API.
+//! This makes it more of a test-bed than a tool that could ever rival `git` in terms of feature-set.
+//!
+//! That said, `gix` may actively carve out a niche for itself where it sees the greatest benefits for users of `git`.
+//!
+//! ### This crate is internal - use `git-repository` instead.
+//!
+//! It's important to understand that this crate consider itself an implementation detail of the `gix` CLI and is not meant to be
+//! used for external consumption by means of `cargo` dependency. This is emphasized by there being no other documentation.
+//! There is also no intention of ever stabilizing this crate.
+//!
+//! If you want to get started with what powers `gix`, please take a look at the `git-repository` crate which provides all the building
+//! blocks to create any application, including a carbon-copy of `git` itself (at least aspirationally as not all capabilities are
+//! available in `git-repository` yet).
+//!
+//! For users of `git-repository`, this codebase might serve as elaborate example as most of not all of its APIs are used here.
+//!
 //! ## Feature Flags
 #![cfg_attr(
     feature = "document-features",
