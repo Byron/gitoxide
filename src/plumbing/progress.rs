@@ -739,6 +739,13 @@ static GIT_CONFIG: &[Record] = &[
             reason: "on demand, without it it's not possible to implement environment overrides via `no_proxy` or `NO_PROXY` for a list of hostnames or `*`"
         }
     },
+    Record {
+        config: "gitoxide.http.connectTimeout",
+        usage: InModule {
+            name: "repository::config::transport",
+            deviation: Some("entirely new, and in milliseconds like all other timeout suffixed variables in the git config")
+        }
+    }
 ];
 
 /// A programmatic way to record and display progress.
