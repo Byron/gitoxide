@@ -327,7 +327,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "diff.algorithm",
-        usage: InModule {name: "config::cache::access", deviation: Some("'patience' diff is not implemented and can default to 'histogram' if lenient config is used")},
+        usage: InModule {name: "config::cache::access", deviation: Some("'patience' diff is not implemented and can default to 'histogram' if lenient config is used, and defaults to histogram if unset for fastest and best results")},
     },
     Record {
         config: "extensions.objectFormat",
