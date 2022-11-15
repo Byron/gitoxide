@@ -1,4 +1,5 @@
 use super::{interpolate_context, util, Error, StageOne};
+use crate::config::cache::util::ApplyLeniencyOpt;
 use crate::{bstr::BString, config::Cache, repository};
 
 /// Initialization
@@ -115,7 +116,7 @@ impl Cache {
             globals
         };
 
-        let hex_len = util::check_lenient(util::parse_core_abbrev(&config, object_hash), lenient_config)?;
+        let hex_len = util::parse_core_abbrev(&config, object_hash).with_leniency(lenient_config)?;
 
         use util::config_bool;
         let reflog = util::query_refupdates(&config, lenient_config)?;
@@ -166,7 +167,7 @@ impl Cache {
     /// in one that it them makes the default.
     pub fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
         let config = &self.resolved;
-        let hex_len = util::check_lenient(util::parse_core_abbrev(config, self.object_hash), self.lenient_config)?;
+        let hex_len = util::parse_core_abbrev(config, self.object_hash).with_leniency(self.lenient_config)?;
 
         use util::config_bool;
         let ignore_case = config_bool(config, "core.ignoreCase", false, self.lenient_config)?;

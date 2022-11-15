@@ -24,7 +24,7 @@ impl crate::Repository {
                 #[cfg(feature = "blocking-http-transport")]
                 {
                     use crate::bstr::ByteVec;
-                    use crate::config::cache::util::{check_lenient, check_lenient_default};
+                    use crate::config::cache::util::check_lenient_default;
                     use git_transport::client::http;
                     use std::borrow::Cow;
                     use std::convert::{TryFrom, TryInto};
@@ -34,13 +34,11 @@ impl crate::Repository {
                         lenient: bool,
                         key: &'static str,
                     ) -> Result<Option<String>, crate::config::transport::Error> {
-                        check_lenient(
-                            Vec::from(v.into_owned())
-                                .into_string()
-                                .map(Some)
-                                .map_err(|err| crate::config::transport::Error::IllformedUtf8 { source: err, key }),
-                            lenient,
-                        )
+                        Vec::from(v.into_owned())
+                            .into_string()
+                            .map(Some)
+                            .map_err(|err| crate::config::transport::Error::IllformedUtf8 { source: err, key })
+                            .with_leniency(lenient)
                     }
 
                     fn integer<T>(

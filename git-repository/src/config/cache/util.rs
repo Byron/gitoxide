@@ -28,17 +28,14 @@ pub(crate) fn config_bool(
     lenient: bool,
 ) -> Result<bool, Error> {
     let (section, key) = key.split_once('.').expect("valid section.key format");
-    match config
+    config
         .boolean(section, None, key)
         .unwrap_or(Ok(default))
         .map_err(|err| Error::DecodeBoolean {
             value: err.input,
             key: key.into(),
-        }) {
-        Ok(v) => Ok(v),
-        Err(_err) if lenient => Ok(default),
-        Err(err) => Err(err),
-    }
+        })
+        .with_leniency(lenient)
 }
 
 pub(crate) fn query_refupdates(
@@ -92,14 +89,6 @@ where
             Err(_) if is_lenient => Ok(T::default()),
             Err(err) => Err(err),
         }
-    }
-}
-
-pub(crate) fn check_lenient<T, E>(v: Result<Option<T>, E>, lenient: bool) -> Result<Option<T>, E> {
-    match v {
-        Ok(v) => Ok(v),
-        Err(_) if lenient => Ok(None),
-        Err(err) => Err(err),
     }
 }
 
