@@ -47,36 +47,13 @@ impl crate::Repository {
                         lenient: bool,
                         key: &'static str,
                         kind: &'static str,
-                        mut filter: fn(&git_config::file::Metadata) -> bool,
+                        filter: fn(&git_config::file::Metadata) -> bool,
                         default: T,
                     ) -> Result<T, crate::config::transport::Error>
                     where
                         T: TryFrom<i64>,
                     {
-                        let git_config::parse::Key {
-                            section_name,
-                            value_name,
-                            ..
-                        } = git_config::parse::key(key).expect("valid key statically known");
-                        let integer = check_lenient(
-                            config
-                                .integer_filter(section_name, None, value_name, &mut filter)
-                                .transpose()
-                                .map_err(|err| crate::config::transport::Error::ConfigValue { source: err, key }),
-                            lenient,
-                        )?
-                        .unwrap_or_default();
-                        check_lenient_default(
-                            integer
-                                .try_into()
-                                .map_err(|_| crate::config::transport::Error::InvalidInteger {
-                                    actual: integer,
-                                    key,
-                                    kind,
-                                }),
-                            lenient,
-                            || default,
-                        )
+                        Ok(integer_opt(config, lenient, key, kind, filter)?.unwrap_or(default))
                     }
                     fn integer_opt<T>(
                         config: &git_config::File<'static>,
