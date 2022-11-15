@@ -156,7 +156,9 @@ pub fn new() -> (
             }
             handle.http_headers(headers)?;
             handle.transfer_encoding(false)?;
-            handle.connect_timeout(connect_timeout)?;
+            if let Some(timeout) = connect_timeout {
+                handle.connect_timeout(timeout)?;
+            }
             handle.tcp_keepalive(true)?;
 
             if low_speed_time_seconds > 0 && low_speed_limit_bytes_per_second > 0 {

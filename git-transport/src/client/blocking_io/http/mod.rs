@@ -66,27 +66,11 @@ pub mod options {
             ProxyAuthMethod::AnyAuth
         }
     }
-
-    impl Default for super::Options {
-        fn default() -> Self {
-            super::Options {
-                extra_headers: vec![],
-                follow_redirects: Default::default(),
-                low_speed_limit_bytes_per_second: 0,
-                low_speed_time_seconds: 0,
-                proxy: None,
-                proxy_auth_method: None,
-                user_agent: None,
-                connect_timeout: std::time::Duration::from_secs(20),
-                backend: None,
-            }
-        }
-    }
 }
 
 /// Options to configure curl requests.
 // TODO: testing most of these fields requires a lot of effort, unless special flags to introspect ongoing requests are added.
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct Options {
     /// Headers to be added to every request.
     /// They are applied unconditionally and are expected to be valid as they occour in an HTTP request, like `header: value`, without newlines.
@@ -127,8 +111,9 @@ pub struct Options {
     pub user_agent: Option<String>,
     /// The amount of time we wait until aborting a connection attempt.
     ///
-    /// Defaults to 20s.
-    pub connect_timeout: std::time::Duration,
+    /// If `None`, this typically defaults to 2 minutes to 5 minutes.
+    /// Refers to `gitoxide.http.connectTimeout`.
+    pub connect_timeout: Option<std::time::Duration>,
     /// Backend specific options, if available.
     pub backend: Option<Arc<Mutex<dyn Any + Send + Sync + 'static>>>,
 }
