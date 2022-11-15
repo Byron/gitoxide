@@ -138,6 +138,18 @@ pub fn new() -> (
             }
             if let Some(proxy) = proxy {
                 handle.proxy(&proxy)?;
+                let proxy_type = if proxy.starts_with("socks5h") {
+                    curl::easy::ProxyType::Socks5Hostname
+                } else if proxy.starts_with("socks5") {
+                    curl::easy::ProxyType::Socks5
+                } else if proxy.starts_with("socks4a") {
+                    curl::easy::ProxyType::Socks4a
+                } else if proxy.starts_with("socks") {
+                    curl::easy::ProxyType::Socks4
+                } else {
+                    curl::easy::ProxyType::Http
+                };
+                handle.proxy_type(proxy_type)?;
             }
             if let Some(user_agent) = user_agent {
                 handle.useragent(&user_agent)?;
