@@ -5,7 +5,6 @@ use std::fmt::Formatter;
 use crate::{
     store_impl::{file, file::Transaction},
     transaction::RefEdit,
-    Target,
 };
 
 /// A function receiving an object id to resolve, returning its decompressed bytes,
@@ -26,6 +25,7 @@ pub enum PackedRefs<'a> {
     DeletionsAndNonSymbolicUpdates(Box<FindObjectFn<'a>>),
     /// Propagate deletions as well as updates to references which are peeled, that is contain an object id. Furthermore delete the
     /// reference which is originally updated if it exists. If it doesn't, the new value will be written into the packed ref right away.
+    /// Note that this doesn't affect symbolic references at all, which can't be placed into packed refs.
     DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box<FindObjectFn<'a>>),
 }
 
@@ -50,14 +50,6 @@ pub(in crate::store_impl::file) struct Edit {
 impl Edit {
     fn name(&self) -> BString {
         self.update.name.0.clone()
-    }
-}
-
-fn new_would_change_existing(new: &Target, existing: &Target) -> bool {
-    match (new, existing) {
-        (Target::Peeled(new), Target::Peeled(old)) => old != new,
-        (Target::Symbolic(new), Target::Symbolic(old)) => old != new,
-        (_, _) => true,
     }
 }
 

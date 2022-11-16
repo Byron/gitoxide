@@ -17,7 +17,7 @@ pub(crate) mod prepare_and_commit {
         Ok(res)
     }
 
-    fn empty_store() -> crate::Result<(tempfile::TempDir, file::Store)> {
+    pub(crate) fn empty_store() -> crate::Result<(tempfile::TempDir, file::Store)> {
         let dir = tempfile::TempDir::new().unwrap();
         let store = file::Store::at(dir.path(), git_ref::store::WriteReflog::Normal, git_hash::Kind::Sha1);
         Ok((dir, store))

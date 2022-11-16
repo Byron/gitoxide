@@ -79,7 +79,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     // Don't do anything else while keeping the lock after potentially updating the reflog.
                     // We delay deletion of the reference and dropping the lock to after the packed-refs were
                     // safely written.
-                    if delete_loose_refs {
+                    if delete_loose_refs && matches!(new, Target::Peeled(_)) {
                         change.lock = lock;
                         continue;
                     }
@@ -145,8 +145,9 @@ impl<'s, 'p> Transaction<'s, 'p> {
             let take_lock_and_delete = match &change.update.change {
                 Change::Update {
                     log: LogChange { mode, .. },
+                    new,
                     ..
-                } => delete_loose_refs && *mode == RefLog::AndReference,
+                } => delete_loose_refs && *mode == RefLog::AndReference && matches!(new, Target::Peeled(_)),
                 Change::Delete { log: mode, .. } => *mode == RefLog::AndReference,
             };
             if take_lock_and_delete {

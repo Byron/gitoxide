@@ -12,6 +12,8 @@ use crate::{
     FullName, FullNameRef, Reference, Target,
 };
 
+use crate::{packed::transaction::buffer_into_transaction, transaction::PreviousValue};
+
 impl<'s, 'p> Transaction<'s, 'p> {
     fn lock_ref_and_apply_change(
         store: &file::Store,
@@ -161,15 +163,24 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     }
                 };
 
-                let is_effective = if let Some(existing) = existing_ref {
-                    let effective = new_would_change_existing(new, &existing.target);
+                fn new_would_change_existing(new: &Target, existing: &Target) -> (bool, bool) {
+                    match (new, existing) {
+                        (Target::Peeled(new), Target::Peeled(old)) => (old != new, false),
+                        (Target::Symbolic(new), Target::Symbolic(old)) => (old != new, true),
+                        (Target::Peeled(_), _) => (true, false),
+                        (Target::Symbolic(_), _) => (true, true),
+                    }
+                }
+
+                let (is_effective, is_symbolic) = if let Some(existing) = existing_ref {
+                    let (effective, is_symbolic) = new_would_change_existing(new, &existing.target);
                     *expected = PreviousValue::MustExistAndMatch(existing.target);
-                    effective
+                    (effective, is_symbolic)
                 } else {
-                    true
+                    (true, matches!(new, Target::Symbolic(_)))
                 };
 
-                if is_effective && !direct_to_packed_refs {
+                if (is_effective && !direct_to_packed_refs) || is_symbolic {
                     let mut lock = lock.take().map(Ok).unwrap_or_else(obtain_lock)?;
 
                     lock.with_mut(|file| match new {
@@ -466,6 +477,3 @@ mod error {
 }
 
 pub use error::Error;
-
-use crate::file::transaction::new_would_change_existing;
-use crate::{packed::transaction::buffer_into_transaction, transaction::PreviousValue};

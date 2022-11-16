@@ -1,4 +1,4 @@
-use crate::file::transaction::prepare_and_commit::{committer, create_at, delete_at, empty_store};
+use crate::file::transaction::prepare_and_commit::{committer, create_at, create_symbolic_at, delete_at, empty_store};
 use git_lock::acquire::Fail;
 use git_ref::file::transaction::PackedRefs;
 use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit};
@@ -89,7 +89,11 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
             Box::new(|_, _| Ok(Some(git_object::Kind::Commit))),
         ))
         .prepare(
-            [create_at("refs/a"), create_at("refs/A")],
+            [
+                create_at("refs/a"),
+                create_at("refs/A"),
+                create_symbolic_at("refs/symbolic", "refs/heads/target"),
+            ],
             Fail::Immediately,
             Fail::Immediately,
         )?
@@ -102,11 +106,12 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
     );
     assert_eq!(
         store.loose_iter()?.count(),
-        0,
-        "refs/ directory isn't present as there is no loose ref - it removed every up to the base dir"
+        1,
+        "symbolic refs can't be packed and stay loose"
     );
     assert!(store.reflog_exists("refs/a")?);
     assert!(store.reflog_exists("refs/A")?);
+    assert!(!store.reflog_exists("refs/symbolic")?, "and they can't have reflogs");
 
     // The following works because locks aren't actually obtained if there would be no change.
     // Otherwise there would be a conflict on case-insensitive filesystems
@@ -142,7 +147,7 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
             Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
-    assert_eq!(store.iter()?.all()?.count(), 2);
+    assert_eq!(store.iter()?.all()?.count(), 3);
 
     {
         let _ongoing = store
@@ -179,7 +184,7 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
     }
 
     // Create a loose ref at a path
-    assert_eq!(store.loose_iter()?.count(), 0);
+    assert_eq!(store.loose_iter()?.count(), 1, "a symref");
     store
         .transaction()
         .prepare(
@@ -198,14 +203,14 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
         .commit(committer().to_ref())?;
     assert_eq!(
         store.loose_iter()?.count(),
-        1,
-        "we created a loose ref, overlaying the packed one"
+        2,
+        "we created a loose ref, overlaying the packed one, and have a symbolic one"
     );
 
     store
         .transaction()
         .prepare(
-            [delete_at("refs/a"), delete_at("refs/A")],
+            [delete_at("refs/a"), delete_at("refs/A"), delete_at("refs/symbolic")],
             Fail::Immediately,
             Fail::Immediately,
         )?
