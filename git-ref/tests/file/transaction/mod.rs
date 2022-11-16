@@ -4,6 +4,7 @@ pub(crate) mod prepare_and_commit {
     use git_object::bstr::BString;
     use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog};
     use git_ref::{file, Target};
+    use git_testtools::hex_to_id;
     use std::convert::TryInto;
 
     fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<git_ref::log::Line>> {
@@ -46,9 +47,13 @@ pub(crate) mod prepare_and_commit {
     fn create_at(name: &str) -> RefEdit {
         RefEdit {
             change: Change::Update {
-                log: LogChange::default(),
+                log: LogChange {
+                    mode: RefLog::AndReference,
+                    force_create_reflog: true,
+                    message: "log peeled".into(),
+                },
                 expected: PreviousValue::MustNotExist,
-                new: Target::Peeled(git_hash::Kind::Sha1.null()),
+                new: Target::Peeled(hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")),
             },
             name: name.try_into().expect("valid"),
             deref: false,

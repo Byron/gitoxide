@@ -3,6 +3,7 @@ use git_lock::acquire::Fail;
 use git_ref::file::transaction::PackedRefs;
 use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit};
 use git_ref::Target;
+use git_testtools::hex_to_id;
 use std::convert::TryInto;
 
 fn case_sensitive(tmp_dir: &std::path::Path) -> bool {
@@ -21,7 +22,10 @@ fn conflicting_creation_without_packed_refs() -> crate::Result {
 
     let case_sensitive = case_sensitive(dir.path());
     match res {
-        Ok(_) if case_sensitive => {}
+        Ok(_) if case_sensitive => {
+            assert!(store.reflog_exists("refs/a")?);
+            assert!(store.reflog_exists("refs/A")?);
+        }
         Ok(_) if !case_sensitive => panic!("should fail as 'a' and 'A' clash"),
         Err(err) if case_sensitive => panic!(
             "should work as case sensitivity allows 'a' and 'A' to coexist: {:?}",
@@ -51,6 +55,9 @@ fn non_conflicting_creation_without_packed_refs_work() -> crate::Result {
 
     t2.commit(committer().to_ref())?;
     ongoing.commit(committer().to_ref())?;
+
+    assert!(store.reflog_exists("refs/new")?);
+    assert!(store.reflog_exists("refs/non-conflicting")?);
 
     Ok(())
 }
@@ -98,8 +105,11 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
         0,
         "refs/ directory isn't present as there is no loose ref - it removed every up to the base dir"
     );
+    assert!(store.reflog_exists("refs/a")?);
+    assert!(store.reflog_exists("refs/A")?);
 
     // The following works because locks aren't actually obtained if there would be no change.
+    // Otherwise there would be a conflict on case-insensitive filesystems
     store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
@@ -119,7 +129,9 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
                 RefEdit {
                     change: Change::Update {
                         log: LogChange::default(),
-                        expected: PreviousValue::MustExistAndMatch(Target::Peeled(git_hash::Kind::Sha1.null())),
+                        expected: PreviousValue::MustExistAndMatch(Target::Peeled(hex_to_id(
+                            "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+                        ))),
                         new: Target::Peeled(git_hash::Kind::Sha1.null()),
                     },
                     name: "refs/A".try_into().expect("valid"),
@@ -204,5 +216,7 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
         0,
         "we deleted our only two packed refs and one loose ref with the same name"
     );
+    assert!(!store.reflog_exists("refs/a")?);
+    assert!(!store.reflog_exists("refs/A")?);
     Ok(())
 }

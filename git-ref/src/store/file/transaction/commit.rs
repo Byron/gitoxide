@@ -36,11 +36,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
             match &change.update.change {
                 // reflog first, then reference
                 Change::Update { log, new, expected } => {
-                    let lock = match change.lock.take() {
-                        Some(l) => l,
-                        // Some updates are never locked as they are no-ops
-                        None => continue,
-                    };
+                    let lock = change.lock.take();
                     let (update_ref, update_reflog) = match log.mode {
                         RefLog::Only => (false, true),
                         RefLog::AndReference => (true, true),
@@ -71,7 +67,6 @@ impl<'s, 'p> Transaction<'s, 'p> {
                             if do_update {
                                 self.store.reflog_create_or_append(
                                     change.update.name.as_ref(),
-                                    &lock,
                                     previous,
                                     new_oid,
                                     committer,
@@ -85,11 +80,11 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     // We delay deletion of the reference and dropping the lock to after the packed-refs were
                     // safely written.
                     if delete_loose_refs {
-                        change.lock = Some(lock);
+                        change.lock = lock;
                         continue;
                     }
-                    if update_ref && change.is_effective() {
-                        if let Err(err) = lock.commit() {
+                    if update_ref {
+                        if let Some(Err(err)) = lock.map(|l| l.commit()) {
                             // TODO: when Kind::IsADirectory becomes stable, use that.
                             let err = if err.instance.resource_path().is_dir() {
                                 git_tempfile::remove_dir::empty_depth_first(err.instance.resource_path())

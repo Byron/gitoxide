@@ -2,7 +2,6 @@ use git_hash::ObjectId;
 use git_object::bstr::BString;
 use std::fmt::Formatter;
 
-use crate::transaction::{Change, PreviousValue};
 use crate::{
     store_impl::{file, file::Transaction},
     transaction::RefEdit,
@@ -51,19 +50,6 @@ pub(in crate::store_impl::file) struct Edit {
 impl Edit {
     fn name(&self) -> BString {
         self.update.name.0.clone()
-    }
-
-    fn is_effective(&self) -> bool {
-        match &self.update.change {
-            Change::Update { new, expected, .. } => match expected {
-                PreviousValue::Any
-                | PreviousValue::MustExist
-                | PreviousValue::MustNotExist
-                | PreviousValue::ExistingMustMatch(_) => true,
-                PreviousValue::MustExistAndMatch(existing) => new_would_change_existing(new, existing),
-            },
-            Change::Delete { .. } => unreachable!("must not be called on deletions"),
-        }
     }
 }
 
