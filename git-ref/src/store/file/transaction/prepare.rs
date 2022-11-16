@@ -119,7 +119,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                         full_name: "borrowchk won't allow change.name() and this will be corrected by caller".into(),
                     })
                 };
-                let mut lock = (!has_global_lock).then(|| obtain_lock()).transpose()?;
+                let mut lock = (!has_global_lock).then(obtain_lock).transpose()?;
 
                 let existing_ref = existing_ref?;
                 match (&expected, &existing_ref) {
