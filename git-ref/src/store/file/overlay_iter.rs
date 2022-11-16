@@ -253,23 +253,23 @@ impl<'a> IterInfo<'a> {
         }
     }
 
-    fn into_iter(self) -> std::io::Result<Peekable<SortedLoosePaths>> {
-        Ok(match self {
-            IterInfo::Base { base } => SortedLoosePaths::at(base.join("refs"), base, None)?,
+    fn into_iter(self) -> Peekable<SortedLoosePaths> {
+        match self {
+            IterInfo::Base { base } => SortedLoosePaths::at(base.join("refs"), base, None),
             IterInfo::BaseAndIterRoot {
                 base,
                 iter_root,
                 prefix: _,
-            } => SortedLoosePaths::at(iter_root, base, None)?,
-            IterInfo::PrefixAndBase { base, prefix } => SortedLoosePaths::at(base.join(prefix), base, None)?,
+            } => SortedLoosePaths::at(iter_root, base, None),
+            IterInfo::PrefixAndBase { base, prefix } => SortedLoosePaths::at(base.join(prefix), base, None),
             IterInfo::ComputedIterationRoot {
                 iter_root,
                 base,
                 prefix: _,
                 remainder,
-            } => SortedLoosePaths::at(iter_root, base, remainder)?,
+            } => SortedLoosePaths::at(iter_root, base, remainder),
         }
-        .peekable())
+        .peekable()
     }
 
     fn from_prefix(base: &'a Path, prefix: Cow<'a, Path>) -> std::io::Result<Self> {
@@ -397,8 +397,8 @@ impl file::Store {
                 ),
                 None => None,
             },
-            iter_git_dir: git_dir_info.into_iter()?,
-            iter_common_dir: common_dir_info.map(IterInfo::into_iter).transpose()?,
+            iter_git_dir: git_dir_info.into_iter(),
+            iter_common_dir: common_dir_info.map(IterInfo::into_iter),
             buf: Vec::new(),
             namespace: self.namespace.as_ref(),
         })

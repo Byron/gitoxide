@@ -9,28 +9,19 @@ use crate::{file::iter::LooseThenPacked, store_impl::file, BString, FullName};
 pub(in crate::store_impl::file) struct SortedLoosePaths {
     pub(crate) base: PathBuf,
     filename_prefix: Option<BString>,
-    file_walk: DirEntryIter,
+    file_walk: Option<DirEntryIter>,
 }
 
 impl SortedLoosePaths {
-    pub fn at(
-        path: impl AsRef<Path>,
-        base: impl Into<PathBuf>,
-        filename_prefix: Option<BString>,
-    ) -> std::io::Result<Self> {
+    pub fn at(path: impl AsRef<Path>, base: impl Into<PathBuf>, filename_prefix: Option<BString>) -> Self {
         let path = path.as_ref();
-        if !path.is_dir() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("loose reference iteration path does not exist: \"{}\"", path.display()),
-            ));
-        }
-        let file_walk = git_features::fs::walkdir_sorted_new(path).into_iter();
-        Ok(SortedLoosePaths {
+        SortedLoosePaths {
             base: base.into(),
             filename_prefix,
-            file_walk,
-        })
+            file_walk: path
+                .is_dir()
+                .then(|| git_features::fs::walkdir_sorted_new(path).into_iter()),
+        }
     }
 }
 
@@ -38,7 +29,7 @@ impl Iterator for SortedLoosePaths {
     type Item = std::io::Result<(PathBuf, FullName)>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        for entry in self.file_walk.by_ref() {
+        for entry in self.file_walk.as_mut()?.by_ref() {
             match entry {
                 Ok(entry) => {
                     if !entry.file_type().is_file() {

@@ -77,8 +77,9 @@ mod collisions {
             "packed-refs can store everything in case-insensitive manner"
         );
 
-        assert!(
-            store.loose_iter().is_err(),
+        assert_eq!(
+            store.loose_iter()?.count(),
+            0,
             "refs/ directory isn't present as there is no loose ref - it removed every up to the base dir"
         );
 
