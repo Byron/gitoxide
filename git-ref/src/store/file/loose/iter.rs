@@ -13,13 +13,24 @@ pub(in crate::store_impl::file) struct SortedLoosePaths {
 }
 
 impl SortedLoosePaths {
-    pub fn at(path: impl AsRef<Path>, base: impl Into<PathBuf>, filename_prefix: Option<BString>) -> Self {
+    pub fn at(
+        path: impl AsRef<Path>,
+        base: impl Into<PathBuf>,
+        filename_prefix: Option<BString>,
+    ) -> std::io::Result<Self> {
+        let path = path.as_ref();
+        if !path.is_dir() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("loose reference iteration path does not exist: \"{}\"", path.display()),
+            ));
+        }
         let file_walk = git_features::fs::walkdir_sorted_new(path).into_iter();
-        SortedLoosePaths {
+        Ok(SortedLoosePaths {
             base: base.into(),
             filename_prefix,
             file_walk,
-        }
+        })
     }
 }
 

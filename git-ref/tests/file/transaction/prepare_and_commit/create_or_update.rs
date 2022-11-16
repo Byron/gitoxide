@@ -22,8 +22,9 @@ use crate::file::{
 };
 
 mod collisions {
-    use crate::file::transaction::prepare_and_commit::{create_at, empty_store};
+    use crate::file::transaction::prepare_and_commit::{committer, create_at, empty_store};
     use git_lock::acquire::Fail;
+    use git_ref::file::transaction::PackedRefs;
 
     fn case_sensitive(tmp_dir: &std::path::Path) -> bool {
         std::fs::write(tmp_dir.join("config"), "").expect("can create file once");
@@ -52,6 +53,35 @@ mod collisions {
             }
             _ => unreachable!("actually everything is covered"),
         }
+        Ok(())
+    }
+
+    #[test]
+    fn conflicting_creation_into_packed_refs() -> crate::Result {
+        let (_dir, store) = empty_store()?;
+        store
+            .transaction()
+            .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
+                Box::new(|_, _| Ok(Some(git_object::Kind::Commit))),
+            ))
+            .prepare(
+                [create_at("refs/a"), create_at("refs/Ab")],
+                Fail::Immediately,
+                Fail::Immediately,
+            )?
+            .commit(committer().to_ref())?;
+
+        assert_eq!(
+            store.cached_packed_buffer()?.expect("created").iter()?.count(),
+            2,
+            "packed-refs can store everything in case-insensitive manner"
+        );
+
+        assert!(
+            store.loose_iter().is_err(),
+            "refs/ directory isn't present as there is no loose ref - it removed every up to the base dir"
+        );
+
         Ok(())
     }
 }
