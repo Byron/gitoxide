@@ -69,6 +69,45 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
 }
 
 #[test]
+fn intermediate_directories_are_removed_on_rollback() -> crate::Result {
+    for explicit_rollback in [false, true] {
+        let (dir, store) = empty_store()?;
+
+        let create_at = |name: &str| RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                expected: PreviousValue::MustNotExist,
+                new: Target::Peeled(git_hash::Kind::Sha1.null()),
+            },
+            name: name.try_into().expect("valid"),
+            deref: false,
+        };
+
+        let transaction = store.transaction().prepare(
+            [create_at("refs/heads/a/b/ref"), create_at("refs/heads/a/c/ref")],
+            Fail::Immediately,
+            Fail::Immediately,
+        )?;
+
+        assert!(
+            dir.path().join("refs/heads/a/b").exists(),
+            "lock files have been created in their place to avoid concurrent modification"
+        );
+        assert!(dir.path().join("refs/heads/a/c").exists());
+
+        if explicit_rollback {
+            transaction.rollback();
+        } else {
+            drop(transaction);
+        }
+
+        assert!(!dir.path().join("refs/heads").exists());
+        assert!(!dir.path().join("refs").exists(), "we go all in right now and also remove the refs directory. 'git' might not do that, but it's not a problem either");
+    }
+    Ok(())
+}
+
+#[test]
 fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
     let (_keep, store) = empty_store()?;
 

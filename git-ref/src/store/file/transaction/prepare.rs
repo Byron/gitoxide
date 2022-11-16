@@ -357,6 +357,20 @@ impl<'s, 'p> Transaction<'s, 'p> {
         self.updates = Some(updates);
         Ok(self)
     }
+
+    /// Rollback all intermediate state and return the `RefEdits` as we know them thus far.
+    ///
+    /// Note that they have been altered compared to what was initially provided as they have
+    /// been split and know about their current state on disk.
+    ///
+    /// # Note
+    ///
+    /// A rollback happens automatically as this instance is dropped as well.
+    pub fn rollback(self) -> Vec<RefEdit> {
+        self.updates
+            .map(|updates| updates.into_iter().map(|u| u.update).collect())
+            .unwrap_or_default()
+    }
 }
 
 fn possibly_adjust_name_for_prefixes(name: &FullNameRef) -> Option<FullName> {
