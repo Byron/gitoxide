@@ -1633,6 +1633,7 @@ dependencies = [
  "git-tempfile",
  "git-testtools",
  "git-validate",
+ "git-worktree",
  "memmap2",
  "nom",
  "serde",

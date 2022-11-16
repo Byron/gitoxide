@@ -21,6 +21,69 @@ use crate::file::{
     transaction::prepare_and_commit::{committer, empty_store, log_line, reflog_lines},
 };
 
+mod collisions {
+    use crate::file::transaction::prepare_and_commit::{create_at, empty_store};
+    use git_lock::acquire::Fail;
+    use git_testtools::once_cell::sync::Lazy;
+
+    static CASE_SENSITIVE: Lazy<bool> =
+        Lazy::new(|| !git_worktree::fs::Capabilities::probe(std::env::temp_dir()).ignore_case);
+
+    #[test]
+    #[ignore]
+    fn conflicting_creation() -> crate::Result {
+        let (_dir, store) = empty_store()?;
+        let res = store.transaction().prepare(
+            [create_at("refs/a"), create_at("refs/A")],
+            Fail::Immediately,
+            Fail::Immediately,
+        );
+
+        match res {
+            Ok(_) if *CASE_SENSITIVE => {}
+            Ok(_) if !*CASE_SENSITIVE => panic!("should fail as 'a' and 'A' clash"),
+            Err(err) if *CASE_SENSITIVE => panic!(
+                "should work as case sensitivity allows 'a' and 'A' to coexist: {:?}",
+                err
+            ),
+            Err(err) if !*CASE_SENSITIVE => {
+                assert_eq!(err.to_string(), "foo")
+            }
+            _ => unreachable!("actually everything is covered"),
+        }
+        Ok(())
+    }
+}
+
+#[test]
+fn intermediate_directories_are_removed_on_rollback() -> crate::Result {
+    for explicit_rollback in [false, true] {
+        let (dir, store) = empty_store()?;
+
+        let transaction = store.transaction().prepare(
+            [create_at("refs/heads/a/b/ref"), create_at("refs/heads/a/c/ref")],
+            Fail::Immediately,
+            Fail::Immediately,
+        )?;
+
+        assert!(
+            dir.path().join("refs/heads/a/b").exists(),
+            "lock files have been created in their place to avoid concurrent modification"
+        );
+        assert!(dir.path().join("refs/heads/a/c").exists());
+
+        if explicit_rollback {
+            transaction.rollback();
+        } else {
+            drop(transaction);
+        }
+
+        assert!(!dir.path().join("refs/heads").exists());
+        assert!(!dir.path().join("refs").exists(), "we go all in right now and also remove the refs directory. 'git' might not do that, but it's not a problem either");
+    }
+    Ok(())
+}
+
 #[test]
 fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_can_potentially_recover() -> crate::Result
 {
@@ -65,35 +128,6 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
                 _ => unreachable!("other errors shouldn't happen here"),
             };
         }
-    }
-    Ok(())
-}
-
-#[test]
-fn intermediate_directories_are_removed_on_rollback() -> crate::Result {
-    for explicit_rollback in [false, true] {
-        let (dir, store) = empty_store()?;
-
-        let transaction = store.transaction().prepare(
-            [create_at("refs/heads/a/b/ref"), create_at("refs/heads/a/c/ref")],
-            Fail::Immediately,
-            Fail::Immediately,
-        )?;
-
-        assert!(
-            dir.path().join("refs/heads/a/b").exists(),
-            "lock files have been created in their place to avoid concurrent modification"
-        );
-        assert!(dir.path().join("refs/heads/a/c").exists());
-
-        if explicit_rollback {
-            transaction.rollback();
-        } else {
-            drop(transaction);
-        }
-
-        assert!(!dir.path().join("refs/heads").exists());
-        assert!(!dir.path().join("refs").exists(), "we go all in right now and also remove the refs directory. 'git' might not do that, but it's not a problem either");
     }
     Ok(())
 }
