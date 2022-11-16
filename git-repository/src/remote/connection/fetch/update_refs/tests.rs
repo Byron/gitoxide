@@ -129,6 +129,7 @@ mod update {
                 &mapping,
                 &specs,
                 reflog_message.map(|_| fetch::DryRun::Yes).unwrap_or(fetch::DryRun::No),
+                fetch::WritePackedRefs::Never,
             )
             .unwrap();
 
@@ -167,7 +168,7 @@ mod update {
     }
 
     #[test]
-    fn checked_out_branches_in_worktrees_are_rejected_with_additional_infromation() -> Result {
+    fn checked_out_branches_in_worktrees_are_rejected_with_additional_information() -> Result {
         let root = git_path::realpath(git_testtools::scripted_fixture_repo_read_only_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
@@ -184,7 +185,14 @@ mod update {
         ] {
             let spec = format!("refs/heads/main:refs/heads/{}", branch);
             let (mappings, specs) = mapping_from_spec(&spec, &repo);
-            let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes)?;
+            let out = fetch::refs::update(
+                &repo,
+                prefixed("action"),
+                &mappings,
+                &specs,
+                fetch::DryRun::Yes,
+                fetch::WritePackedRefs::Never,
+            )?;
 
             assert_eq!(
                 out.updates,
@@ -206,7 +214,15 @@ mod update {
         let repo = repo("two-origins");
         for source in ["refs/heads/main", "refs/heads/symbolic", "HEAD"] {
             let (mappings, specs) = mapping_from_spec(&format!("{source}:refs/heads/symbolic"), &repo);
-            let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+            let out = fetch::refs::update(
+                &repo,
+                prefixed("action"),
+                &mappings,
+                &specs,
+                fetch::DryRun::Yes,
+                fetch::WritePackedRefs::Never,
+            )
+            .unwrap();
 
             assert_eq!(out.edits.len(), 0);
             assert_eq!(
@@ -232,7 +248,15 @@ mod update {
             local: Some("refs/heads/symbolic".into()),
             spec_index: 0,
         });
-        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+        let out = fetch::refs::update(
+            &repo,
+            prefixed("action"),
+            &mappings,
+            &specs,
+            fetch::DryRun::Yes,
+            fetch::WritePackedRefs::Never,
+        )
+        .unwrap();
 
         assert_eq!(out.edits.len(), 1);
         assert_eq!(
@@ -265,7 +289,15 @@ mod update {
     fn local_direct_refs_are_never_written_with_symbolic_ones_but_see_only_the_destination() {
         let repo = repo("two-origins");
         let (mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/heads/not-currently-checked-out", &repo);
-        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+        let out = fetch::refs::update(
+            &repo,
+            prefixed("action"),
+            &mappings,
+            &specs,
+            fetch::DryRun::Yes,
+            fetch::WritePackedRefs::Never,
+        )
+        .unwrap();
 
         assert_eq!(out.edits.len(), 1);
         assert_eq!(
@@ -281,7 +313,15 @@ mod update {
     fn remote_refs_cannot_map_to_local_head() {
         let repo = repo("two-origins");
         let (mappings, specs) = mapping_from_spec("refs/heads/main:HEAD", &repo);
-        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+        let out = fetch::refs::update(
+            &repo,
+            prefixed("action"),
+            &mappings,
+            &specs,
+            fetch::DryRun::Yes,
+            fetch::WritePackedRefs::Never,
+        )
+        .unwrap();
 
         assert_eq!(out.edits.len(), 1);
         assert_eq!(
@@ -321,7 +361,15 @@ mod update {
             local: Some("refs/remotes/origin/main".into()),
             spec_index: 0,
         });
-        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+        let out = fetch::refs::update(
+            &repo,
+            prefixed("action"),
+            &mappings,
+            &specs,
+            fetch::DryRun::Yes,
+            fetch::WritePackedRefs::Never,
+        )
+        .unwrap();
 
         assert_eq!(
             out.updates,
@@ -365,6 +413,7 @@ mod update {
             &mappings,
             &specs,
             fetch::DryRun::Yes,
+            fetch::WritePackedRefs::Never,
         )
         .unwrap();
 
@@ -390,7 +439,15 @@ mod update {
     fn non_fast_forward_is_rejected_if_dry_run_is_disabled() {
         let (repo, _tmp) = repo_rw("two-origins");
         let (mappings, specs) = mapping_from_spec("refs/remotes/origin/g:refs/heads/not-currently-checked-out", &repo);
-        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::No).unwrap();
+        let out = fetch::refs::update(
+            &repo,
+            prefixed("action"),
+            &mappings,
+            &specs,
+            fetch::DryRun::No,
+            fetch::WritePackedRefs::Never,
+        )
+        .unwrap();
 
         assert_eq!(
             out.updates,
@@ -402,7 +459,15 @@ mod update {
         assert_eq!(out.edits.len(), 0);
 
         let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/remotes/origin/g", &repo);
-        let out = fetch::refs::update(&repo, prefixed("prefix"), &mappings, &specs, fetch::DryRun::No).unwrap();
+        let out = fetch::refs::update(
+            &repo,
+            prefixed("prefix"),
+            &mappings,
+            &specs,
+            fetch::DryRun::No,
+            fetch::WritePackedRefs::Never,
+        )
+        .unwrap();
 
         assert_eq!(
             out.updates,
@@ -425,7 +490,15 @@ mod update {
     fn fast_forwards_are_called_out_even_if_force_is_given() {
         let (repo, _tmp) = repo_rw("two-origins");
         let (mappings, specs) = mapping_from_spec("+refs/heads/main:refs/remotes/origin/g", &repo);
-        let out = fetch::refs::update(&repo, prefixed("prefix"), &mappings, &specs, fetch::DryRun::No).unwrap();
+        let out = fetch::refs::update(
+            &repo,
+            prefixed("prefix"),
+            &mappings,
+            &specs,
+            fetch::DryRun::No,
+            fetch::WritePackedRefs::Never,
+        )
+        .unwrap();
 
         assert_eq!(
             out.updates,

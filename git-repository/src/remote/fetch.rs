@@ -10,6 +10,16 @@ pub(crate) enum DryRun {
     No,
 }
 
+/// How to deal with refs when cloning or fetching.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
+pub(crate) enum WritePackedRefs {
+    /// Normal operation, i.e. don't use packed-refs at all for writing.
+    Never,
+    /// Put ref updates straight into the `packed-refs` file, without creating loose refs first or dealing with them in any way.
+    Only,
+}
+
 /// Information about the relationship between our refspecs, and remote references with their local counterparts.
 #[derive(Default, Debug, Clone)]
 pub struct RefMap {

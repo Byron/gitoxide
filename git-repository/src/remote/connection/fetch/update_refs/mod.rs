@@ -47,6 +47,7 @@ pub(crate) fn update(
     mappings: &[fetch::Mapping],
     refspecs: &[git_refspec::RefSpec],
     dry_run: fetch::DryRun,
+    write_packed_refs: fetch::WritePackedRefs,
 ) -> Result<update::Outcome, update::Error> {
     let mut edits = Vec::new();
     let mut updates = Vec::new();
@@ -211,14 +212,18 @@ pub(crate) fn update(
                 .map_err(crate::reference::edit::Error::from)?;
             repo.refs
                 .transaction()
-                .packed_refs(git_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdates(
-                    Box::new(|oid, buf| {
-                        repo.objects
-                            .try_find(oid, buf)
-                            .map(|obj| obj.map(|obj| obj.kind))
-                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
-                    }),
-                ))
+                .packed_refs(
+                    match write_packed_refs {
+                        fetch::WritePackedRefs::Only => {
+                            git_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box::new(|oid, buf| {
+                                repo.objects
+                                    .try_find(oid, buf)
+                                    .map(|obj| obj.map(|obj| obj.kind))
+                                    .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
+                            }))},
+                        fetch::WritePackedRefs::Never => git_ref::file::transaction::PackedRefs::DeletionsOnly
+                    }
+                )
                 .prepare(edits, file_lock_fail, packed_refs_lock_fail)
                 .map_err(crate::reference::edit::Error::from)?
                 .commit(repo.committer_or_default())

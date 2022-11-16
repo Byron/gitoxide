@@ -182,6 +182,7 @@ where
             &self.ref_map.mappings,
             con.remote.refspecs(remote::Direction::Fetch),
             self.dry_run,
+            self.write_packed_refs,
         )?;
 
         if let Some(bundle) = write_pack_bundle.as_mut() {

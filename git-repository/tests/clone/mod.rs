@@ -63,6 +63,21 @@ mod blocking_io {
         );
 
         assert_eq!(out.ref_map.mappings.len(), 14);
+        let packed_refs = repo
+            .refs
+            .cached_packed_buffer()?
+            .expect("packed refs should be present");
+        assert_eq!(
+            packed_refs.iter()?.count(),
+            14,
+            "all non-symbolic refs should be stored"
+        );
+        assert_eq!(
+            repo.refs.loose_iter()?.count(),
+            2,
+            "HEAD and an actual symbolic ref we received"
+        );
+
         match out.status {
             git_repository::remote::fetch::Status::Change { update_refs, .. } => {
                 for edit in &update_refs.edits {
@@ -78,7 +93,9 @@ mod blocking_io {
                             assert!(repo.objects.contains(id), "part of the fetched pack");
                         }
                     }
-                    let r = repo.find_reference(edit.name.as_ref()).expect("created");
+                    let r = repo
+                        .find_reference(edit.name.as_ref())
+                        .unwrap_or_else(|_| panic!("didn't find created reference: {:?}", edit));
                     if r.name().category().expect("known") != git_ref::Category::Tag {
                         assert!(r
                             .name()
@@ -105,16 +122,6 @@ mod blocking_io {
                 .as_bstr(),
             format!("refs/remotes/{remote_name}/main"),
             "it points to the local tracking branch of what the remote actually points to"
-        );
-
-        let packed_refs = repo
-            .refs
-            .cached_packed_buffer()?
-            .expect("packed refs should be present");
-        assert_eq!(
-            packed_refs.iter()?.count(),
-            14,
-            "all non-symbolic refs should be stored"
         );
 
         let head = repo.head()?;
