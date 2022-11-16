@@ -24,30 +24,31 @@ use crate::file::{
 mod collisions {
     use crate::file::transaction::prepare_and_commit::{create_at, empty_store};
     use git_lock::acquire::Fail;
-    use git_testtools::once_cell::sync::Lazy;
 
-    static CASE_SENSITIVE: Lazy<bool> =
-        Lazy::new(|| !git_worktree::fs::Capabilities::probe(std::env::temp_dir()).ignore_case);
+    fn case_sensitive(tmp_dir: &std::path::Path) -> bool {
+        std::fs::write(tmp_dir.join("config"), "").expect("can create file once");
+        !git_worktree::fs::Capabilities::probe(tmp_dir).ignore_case
+    }
 
     #[test]
-    #[ignore]
-    fn conflicting_creation() -> crate::Result {
-        let (_dir, store) = empty_store()?;
+    fn conflicting_creation_without_packedrefs() -> crate::Result {
+        let (dir, store) = empty_store()?;
         let res = store.transaction().prepare(
             [create_at("refs/a"), create_at("refs/A")],
             Fail::Immediately,
             Fail::Immediately,
         );
 
+        let case_sensitive = case_sensitive(dir.path());
         match res {
-            Ok(_) if *CASE_SENSITIVE => {}
-            Ok(_) if !*CASE_SENSITIVE => panic!("should fail as 'a' and 'A' clash"),
-            Err(err) if *CASE_SENSITIVE => panic!(
+            Ok(_) if case_sensitive => {}
+            Ok(_) if !case_sensitive => panic!("should fail as 'a' and 'A' clash"),
+            Err(err) if case_sensitive => panic!(
                 "should work as case sensitivity allows 'a' and 'A' to coexist: {:?}",
                 err
             ),
-            Err(err) if !*CASE_SENSITIVE => {
-                assert_eq!(err.to_string(), "foo")
+            Err(err) if !case_sensitive => {
+                assert_eq!(err.to_string(), "A lock could not be obtained for reference \"refs/A\"")
             }
             _ => unreachable!("actually everything is covered"),
         }
