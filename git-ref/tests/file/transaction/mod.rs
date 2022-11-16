@@ -2,7 +2,9 @@ pub(crate) mod prepare_and_commit {
     use git_actor::{Sign, Time};
     use git_hash::ObjectId;
     use git_object::bstr::BString;
-    use git_ref::file;
+    use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog};
+    use git_ref::{file, Target};
+    use std::convert::TryInto;
 
     fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<git_ref::log::Line>> {
         let mut buf = Vec::new();
@@ -38,6 +40,41 @@ pub(crate) mod prepare_and_commit {
             new_oid: new,
             signature: committer(),
             message: message.into(),
+        }
+    }
+
+    fn create_at(name: &str) -> RefEdit {
+        RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                expected: PreviousValue::MustNotExist,
+                new: Target::Peeled(git_hash::Kind::Sha1.null()),
+            },
+            name: name.try_into().expect("valid"),
+            deref: false,
+        }
+    }
+
+    fn create_symbolic_at(name: &str, symbolic_target: &str) -> RefEdit {
+        RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                expected: PreviousValue::MustNotExist,
+                new: Target::Symbolic(symbolic_target.try_into().expect("valid target name")),
+            },
+            name: name.try_into().expect("valid"),
+            deref: false,
+        }
+    }
+
+    fn delete_at(name: &str) -> RefEdit {
+        RefEdit {
+            change: Change::Delete {
+                expected: PreviousValue::Any,
+                log: RefLog::AndReference,
+            },
+            name: name.try_into().expect("valid name"),
+            deref: false,
         }
     }
 
