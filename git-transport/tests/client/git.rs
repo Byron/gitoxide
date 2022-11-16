@@ -163,8 +163,42 @@ async fn push_v1_simulated() -> crate::Result {
     writer.write_all(b"7c09ba0c4c3680af369bda4fc8e3c58d3fccdc76 32690d87d3943c7c0dda81246d0cde344ca7e633 refs/heads/main\0 report-status-v2 side-band-64k object-format=sha1 agent=git/2.37.1.(Apple.Git-137.1)").await?;
     writer.write_message(client::MessageKind::Flush).await?;
     {
-        let (mut write, _read) = writer.into_parts();
+        let (mut write, mut read) = writer.into_parts();
         write.write_all(&expected[191..]).await?;
+
+        let messages = Arc::new(Mutex::new(Vec::<String>::new()));
+        read.set_progress_handler(Some(Box::new({
+            let sb = messages.clone();
+            move |is_err, data| {
+                assert!(!is_err);
+                sb.deref()
+                    .lock()
+                    .expect("no panic in other threads")
+                    .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
+            }
+        })));
+        let mut lines = read.lines();
+        let mut info = Vec::new();
+        #[allow(clippy::while_let_on_iterator)] // needed in async version of test
+        while let Some(line) = lines.next().await {
+            info.push(line?)
+        }
+        assert_eq!(
+            info,
+            &["000eunpack ok", "0017ok refs/heads/main", "0000"],
+            "this seems to be a packetline encoding within a packetline encoding! Including a flush package. Strange, but it's the real deal."
+        );
+        let expected_progress = &["Resolving deltas:   0% (0/2)\r", 
+            "Resolving deltas:  50% (1/2)\r",
+            "Resolving deltas: 100% (2/2)\r", 
+            "Resolving deltas: 100% (2/2), completed with 2 local objects.", 
+            "\nGitHub found 1 vulnerability on the-lean-crate/criner's default branch (1 high). To find out more, visit:\n     https://github.com/the-lean-crate/criner/security/dependabot/1\n"
+        ];
+        assert_eq!(
+            messages.lock().expect("no poison").as_slice(),
+            expected_progress,
+            "these look like they are created once the whole pack has been received"
+        );
     }
 
     assert_eq!(
