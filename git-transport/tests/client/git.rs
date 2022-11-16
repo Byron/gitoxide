@@ -146,6 +146,36 @@ async fn handshake_v1_and_request() -> crate::Result {
 }
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+async fn push_v1_simulated() -> crate::Result {
+    let mut out = Vec::new();
+    let server_response = fixture_bytes("v1/push.response");
+    let mut c = git::Connection::new(
+        server_response.as_slice(),
+        &mut out,
+        Protocol::V1,
+        "/foo.git",
+        Some(("example.org", None)),
+        git::ConnectMode::Process,
+    );
+
+    let mut writer = c.request(client::WriteMode::Binary, client::MessageKind::Flush)?;
+    let expected = fixture_bytes("v1/push.request");
+    writer.write_all(b"7c09ba0c4c3680af369bda4fc8e3c58d3fccdc76 32690d87d3943c7c0dda81246d0cde344ca7e633 refs/heads/main\0 report-status-v2 side-band-64k object-format=sha1 agent=git/2.37.1.(Apple.Git-137.1)").await?;
+    writer.write_message(client::MessageKind::Flush).await?;
+    {
+        let (mut write, _read) = writer.into_parts();
+        write.write_all(&expected[191..]).await?;
+    }
+
+    assert_eq!(
+        out.as_slice().as_bstr(),
+        expected.as_bstr(),
+        "we are able to reproduce a typical push request by hand with a little bit of juggling"
+    );
+    Ok(())
+}
+
+#[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn handshake_v1_process_mode() -> crate::Result {
     let mut out = Vec::new();
     let server_response = fixture_bytes("v1/clone.response");
