@@ -84,4 +84,12 @@ impl<'a> RequestWriter<'a> {
         self.write_message(self.on_into_read).await?;
         Ok(self.reader)
     }
+
+    /// Dissolve this instance into its write and read handles without any side-effect.
+    ///
+    /// This is useful to take more over when to write with packetline or not, which is why the writer doesn't write
+    /// packetlines but verbatim.
+    pub fn into_parts(self) -> (Box<dyn AsyncWrite + Unpin + 'a>, Box<dyn ExtendedBufRead + Unpin + 'a>) {
+        (self.writer.into_inner(), self.reader)
+    }
 }

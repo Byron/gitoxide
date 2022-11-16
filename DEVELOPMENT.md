@@ -213,6 +213,8 @@ This also means that CI may fail despite everything being alright locally, and t
 
 ## How to update fixtures
 
+### For object data
+
 Fixtures are created by using a line like this which produces a line we ignore via `tail +1` followed by the un-prettified object payload
 trailed by a newline.
 ```sh
