@@ -44,6 +44,12 @@ impl file::Store {
     pub fn packed_refs_path(&self) -> PathBuf {
         self.common_dir_resolved().join("packed-refs")
     }
+
+    pub(crate) fn packed_refs_lock_path(&self) -> PathBuf {
+        let mut p = self.packed_refs_path();
+        p.set_extension("lock");
+        p
+    }
 }
 
 ///

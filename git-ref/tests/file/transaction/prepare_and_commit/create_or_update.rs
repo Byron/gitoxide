@@ -22,9 +22,12 @@ use crate::file::{
 };
 
 mod collisions {
-    use crate::file::transaction::prepare_and_commit::{committer, create_at, empty_store};
+    use crate::file::transaction::prepare_and_commit::{committer, create_at, delete_at, empty_store};
     use git_lock::acquire::Fail;
     use git_ref::file::transaction::PackedRefs;
+    use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit};
+    use git_ref::Target;
+    use std::convert::TryInto;
 
     fn case_sensitive(tmp_dir: &std::path::Path) -> bool {
         std::fs::write(tmp_dir.join("config"), "").expect("can create file once");
@@ -32,7 +35,7 @@ mod collisions {
     }
 
     #[test]
-    fn conflicting_creation_without_packedrefs() -> crate::Result {
+    fn conflicting_creation_without_packed_refs() -> crate::Result {
         let (dir, store) = empty_store()?;
         let res = store.transaction().prepare(
             [create_at("refs/a"), create_at("refs/A")],
@@ -57,33 +60,131 @@ mod collisions {
     }
 
     #[test]
-    fn conflicting_creation_into_packed_refs() -> crate::Result {
+    fn non_conflicting_creation_without_packed_refs_work() -> crate::Result {
         let (_dir, store) = empty_store()?;
+        let ongoing = store
+            .transaction()
+            .prepare([create_at("refs/new")], Fail::Immediately, Fail::Immediately)
+            .unwrap();
+
+        let t2 = store.transaction().prepare(
+            [create_at("refs/non-conflicting")],
+            Fail::Immediately,
+            Fail::Immediately,
+        )?;
+
+        t2.commit(committer().to_ref())?;
+        ongoing.commit(committer().to_ref())?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn packed_refs_lock_is_mandatory_for_multiple_ongoing_transactions_even_if_one_does_not_need_it() -> crate::Result {
+        let (_dir, store) = empty_store()?;
+        let ref_name = "refs/a";
+        let _t1 = store
+            .transaction()
+            .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
+                Box::new(|_, _| Ok(Some(git_object::Kind::Commit))),
+            ))
+            .prepare([create_at(ref_name)], Fail::Immediately, Fail::Immediately)?;
+
+        let t2res = store
+            .transaction()
+            .prepare([delete_at(ref_name)], Fail::Immediately, Fail::Immediately);
+        assert_eq!(&t2res.unwrap_err().to_string()[..51], "The lock for the packed-ref file could not be obtai", "if packed-refs are about to be created, other transactions always acquire a packed-refs lock as to not miss anything");
+        Ok(())
+    }
+
+    #[test]
+    fn conflicting_creation_into_packed_refs() {
+        let (_dir, store) = empty_store().unwrap();
         store
             .transaction()
             .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
                 Box::new(|_, _| Ok(Some(git_object::Kind::Commit))),
             ))
             .prepare(
-                [create_at("refs/a"), create_at("refs/Ab")],
+                [create_at("refs/a"), create_at("refs/A")],
                 Fail::Immediately,
                 Fail::Immediately,
-            )?
-            .commit(committer().to_ref())?;
+            )
+            .unwrap()
+            .commit(committer().to_ref())
+            .unwrap();
 
         assert_eq!(
-            store.cached_packed_buffer()?.expect("created").iter()?.count(),
+            store
+                .cached_packed_buffer()
+                .unwrap()
+                .expect("created")
+                .iter()
+                .unwrap()
+                .count(),
             2,
             "packed-refs can store everything in case-insensitive manner"
         );
-
         assert_eq!(
-            store.loose_iter()?.count(),
+            store.loose_iter().unwrap().count(),
             0,
             "refs/ directory isn't present as there is no loose ref - it removed every up to the base dir"
         );
 
-        Ok(())
+        // The following works because locks aren't actually obtained if there would be no change.
+        store
+            .transaction()
+            .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
+                Box::new(|_, _| Ok(Some(git_object::Kind::Commit))),
+            ))
+            .prepare(
+                [
+                    RefEdit {
+                        change: Change::Update {
+                            log: LogChange::default(),
+                            expected: PreviousValue::Any,
+                            new: Target::Peeled(git_hash::Kind::Sha1.null()),
+                        },
+                        name: "refs/a".try_into().expect("valid"),
+                        deref: false,
+                    },
+                    RefEdit {
+                        change: Change::Update {
+                            log: LogChange::default(),
+                            expected: PreviousValue::MustExistAndMatch(Target::Peeled(git_hash::Kind::Sha1.null())),
+                            new: Target::Peeled(git_hash::Kind::Sha1.null()),
+                        },
+                        name: "refs/A".try_into().expect("valid"),
+                        deref: false,
+                    },
+                ],
+                Fail::Immediately,
+                Fail::Immediately,
+            )
+            .unwrap()
+            .commit(committer().to_ref())
+            .unwrap();
+
+        {
+            let _ongoing = store
+                .transaction()
+                .prepare([create_at("refs/new")], Fail::Immediately, Fail::Immediately)
+                .unwrap();
+
+            let t2res = store.transaction().prepare(
+                [create_at("refs/non-conflicting")],
+                Fail::Immediately,
+                Fail::Immediately,
+            );
+
+            assert_eq!(
+                &t2res.unwrap_err().to_string()[..40],
+                "The lock for the packed-ref file could n",
+                "packed-refs files will always be locked if they are present as we have to look up their content"
+            );
+        }
+
+        // TODO: parallel deletion
     }
 }
 

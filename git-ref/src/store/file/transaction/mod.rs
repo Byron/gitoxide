@@ -1,5 +1,6 @@
 use git_hash::ObjectId;
 use git_object::bstr::BString;
+use std::fmt::Formatter;
 
 use crate::transaction::{Change, PreviousValue};
 use crate::{
@@ -109,6 +110,15 @@ impl<'s, 'p> Transaction<'s, 'p> {
     pub fn packed_refs(mut self, packed_refs: PackedRefs<'p>) -> Self {
         self.packed_refs = packed_refs;
         self
+    }
+}
+
+impl std::fmt::Debug for Transaction<'_, '_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Transaction")
+            .field("store", self.store)
+            .field("edits", &self.updates.as_ref().map(|u| u.len()))
+            .finish_non_exhaustive()
     }
 }
 

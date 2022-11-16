@@ -18,6 +18,8 @@ impl<'s, 'p> Transaction<'s, 'p> {
         lock_fail_mode: git_lock::acquire::Fail,
         packed: Option<&packed::Buffer>,
         change: &mut Edit,
+        has_global_lock: bool,
+        direct_to_packed_refs: bool,
     ) -> Result<(), Error> {
         use std::io::Write;
         assert!(
@@ -94,19 +96,22 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     *expected = PreviousValue::MustExistAndMatch(existing.target);
                 }
 
-                lock
+                Some(lock)
             }
             Change::Update { expected, new, .. } => {
                 let (base, relative_path) = store.reference_path_with_base(change.update.name.as_ref());
-                let mut lock = git_lock::File::acquire_to_update_resource(
-                    base.join(relative_path),
-                    lock_fail_mode,
-                    Some(base.into_owned()),
-                )
-                .map_err(|err| Error::LockAcquire {
-                    source: err,
-                    full_name: "borrowchk won't allow change.name() and this will be corrected by caller".into(),
-                })?;
+                let obtain_lock = || {
+                    git_lock::File::acquire_to_update_resource(
+                        base.join(relative_path.as_ref()),
+                        lock_fail_mode,
+                        Some(base.clone().into_owned()),
+                    )
+                    .map_err(|err| Error::LockAcquire {
+                        source: err,
+                        full_name: "borrowchk won't allow change.name() and this will be corrected by caller".into(),
+                    })
+                };
+                let mut lock = (!has_global_lock).then(|| obtain_lock()).transpose()?;
 
                 let existing_ref = existing_ref?;
                 match (&expected, &existing_ref) {
@@ -158,17 +163,20 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     true
                 };
 
-                if is_effective {
+                if is_effective && !direct_to_packed_refs {
+                    let mut lock = lock.take().map(Ok).unwrap_or_else(obtain_lock)?;
+
                     lock.with_mut(|file| match new {
                         Target::Peeled(oid) => write!(file, "{}", oid),
                         Target::Symbolic(name) => write!(file, "ref: {}", name.0),
                     })?;
+                    Some(lock.close()?)
+                } else {
+                    None
                 }
-
-                lock.close()?
             }
         };
-        change.lock = Some(lock);
+        change.lock = lock;
         Ok(())
     }
 }
@@ -219,7 +227,10 @@ impl<'s, 'p> Transaction<'s, 'p> {
             | PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(_) => Some(0_usize),
             PackedRefs::DeletionsOnly => None,
         };
-        if maybe_updates_for_packed_refs.is_some() || self.store.packed_refs_path().is_file() {
+        if maybe_updates_for_packed_refs.is_some()
+            || self.store.packed_refs_path().is_file()
+            || self.store.packed_refs_lock_path().is_file()
+        {
             let mut edits_for_packed_transaction = Vec::<RefEdit>::new();
             let mut needs_packed_refs_lookups = false;
             for edit in updates.iter() {
@@ -271,28 +282,29 @@ impl<'s, 'p> Transaction<'s, 'p> {
                 // What follows means that we will only create a transaction if we have to access packed refs for looking
                 // up current ref values, or that we definitely have a transaction if we need to make updates. Otherwise
                 // we may have no transaction at all which isn't required if we had none and would only try making deletions.
-                let packed_transaction: Option<_> = if maybe_updates_for_packed_refs.unwrap_or(0) > 0 {
-                    // We have to create a packed-ref even if it doesn't exist
-                    self.store
-                        .packed_transaction(packed_refs_lock_fail_mode)
-                        .map_err(|err| match err {
-                            file::packed::transaction::Error::BufferOpen(err) => Error::from(err),
-                            file::packed::transaction::Error::TransactionLock(err) => {
-                                Error::PackedTransactionAcquire(err)
-                            }
-                        })?
-                        .into()
-                } else {
-                    // A packed transaction is optional - we only have deletions that can't be made if
-                    // no packed-ref file exists anyway
-                    self.store
-                        .assure_packed_refs_uptodate()?
-                        .map(|p| {
-                            buffer_into_transaction(p, packed_refs_lock_fail_mode)
-                                .map_err(Error::PackedTransactionAcquire)
-                        })
-                        .transpose()?
-                };
+                let packed_transaction: Option<_> =
+                    if maybe_updates_for_packed_refs.unwrap_or(0) > 0 || self.store.packed_refs_lock_path().is_file() {
+                        // We have to create a packed-ref even if it doesn't exist
+                        self.store
+                            .packed_transaction(packed_refs_lock_fail_mode)
+                            .map_err(|err| match err {
+                                file::packed::transaction::Error::BufferOpen(err) => Error::from(err),
+                                file::packed::transaction::Error::TransactionLock(err) => {
+                                    Error::PackedTransactionAcquire(err)
+                                }
+                            })?
+                            .into()
+                    } else {
+                        // A packed transaction is optional - we only have deletions that can't be made if
+                        // no packed-ref file exists anyway
+                        self.store
+                            .assure_packed_refs_uptodate()?
+                            .map(|p| {
+                                buffer_into_transaction(p, packed_refs_lock_fail_mode)
+                                    .map_err(Error::PackedTransactionAcquire)
+                            })
+                            .transpose()?
+                    };
                 if let Some(transaction) = packed_transaction {
                     self.packed_transaction = Some(match &mut self.packed_refs {
                         PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(f)
@@ -315,6 +327,11 @@ impl<'s, 'p> Transaction<'s, 'p> {
                 ref_files_lock_fail_mode,
                 self.packed_transaction.as_ref().and_then(|t| t.buffer()),
                 change,
+                self.packed_transaction.is_some(),
+                matches!(
+                    self.packed_refs,
+                    PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(_)
+                ),
             ) {
                 let err = match err {
                     Error::LockAcquire {

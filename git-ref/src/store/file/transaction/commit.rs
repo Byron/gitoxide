@@ -36,7 +36,11 @@ impl<'s, 'p> Transaction<'s, 'p> {
             match &change.update.change {
                 // reflog first, then reference
                 Change::Update { log, new, expected } => {
-                    let lock = change.lock.take().expect("each ref is locked");
+                    let lock = match change.lock.take() {
+                        Some(l) => l,
+                        // Some updates are never locked as they are no-ops
+                        None => continue,
+                    };
                     let (update_ref, update_reflog) = match log.mode {
                         RefLog::Only => (false, true),
                         RefLog::AndReference => (true, true),
@@ -151,7 +155,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                 Change::Delete { log: mode, .. } => *mode == RefLog::AndReference,
             };
             if take_lock_and_delete {
-                let lock = change.lock.take().expect("lock must still be present in delete mode");
+                let lock = change.lock.take();
                 let reference_path = self.store.reference_path(change.update.name.as_ref());
                 if let Err(err) = std::fs::remove_file(reference_path) {
                     if err.kind() != std::io::ErrorKind::NotFound {
