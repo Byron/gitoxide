@@ -54,15 +54,19 @@ impl<'s, 'p> Transaction<'s, 'p> {
         let lock = match &mut change.update.change {
             Change::Delete { expected, .. } => {
                 let (base, relative_path) = store.reference_path_with_base(change.update.name.as_ref());
-                let lock = git_lock::Marker::acquire_to_hold_resource(
-                    base.join(relative_path),
-                    lock_fail_mode,
-                    Some(base.into_owned()),
-                )
-                .map_err(|err| Error::LockAcquire {
-                    source: err,
-                    full_name: "borrowchk won't allow change.name()".into(),
-                })?;
+                let obtain_lock = || {
+                    git_lock::Marker::acquire_to_hold_resource(
+                        base.join(relative_path.as_ref()),
+                        lock_fail_mode,
+                        Some(base.clone().into_owned()),
+                    )
+                    .map_err(|err| Error::LockAcquire {
+                        source: err,
+                        full_name: "borrowchk won't allow change.name()".into(),
+                    })
+                };
+                let lock = (!has_global_lock).then(|| obtain_lock()).transpose()?;
+
                 let existing_ref = existing_ref?;
                 match (&expected, &existing_ref) {
                     (PreviousValue::MustNotExist, _) => {
@@ -96,7 +100,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     *expected = PreviousValue::MustExistAndMatch(existing.target);
                 }
 
-                Some(lock)
+                lock
             }
             Change::Update { expected, new, .. } => {
                 let (base, relative_path) = store.reference_path_with_base(change.update.name.as_ref());

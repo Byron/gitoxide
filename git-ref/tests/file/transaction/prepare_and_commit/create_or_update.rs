@@ -98,8 +98,8 @@ mod collisions {
     }
 
     #[test]
-    fn conflicting_creation_into_packed_refs() {
-        let (_dir, store) = empty_store().unwrap();
+    fn conflicting_creation_into_packed_refs() -> crate::Result {
+        let (_dir, store) = empty_store()?;
         store
             .transaction()
             .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
@@ -109,24 +109,16 @@ mod collisions {
                 [create_at("refs/a"), create_at("refs/A")],
                 Fail::Immediately,
                 Fail::Immediately,
-            )
-            .unwrap()
-            .commit(committer().to_ref())
-            .unwrap();
+            )?
+            .commit(committer().to_ref())?;
 
         assert_eq!(
-            store
-                .cached_packed_buffer()
-                .unwrap()
-                .expect("created")
-                .iter()
-                .unwrap()
-                .count(),
+            store.cached_packed_buffer()?.expect("created").iter()?.count(),
             2,
             "packed-refs can store everything in case-insensitive manner"
         );
         assert_eq!(
-            store.loose_iter().unwrap().count(),
+            store.loose_iter()?.count(),
             0,
             "refs/ directory isn't present as there is no loose ref - it removed every up to the base dir"
         );
@@ -160,16 +152,15 @@ mod collisions {
                 ],
                 Fail::Immediately,
                 Fail::Immediately,
-            )
-            .unwrap()
-            .commit(committer().to_ref())
-            .unwrap();
+            )?
+            .commit(committer().to_ref())?;
+        assert_eq!(store.iter()?.all()?.count(), 2);
 
         {
-            let _ongoing = store
-                .transaction()
-                .prepare([create_at("refs/new")], Fail::Immediately, Fail::Immediately)
-                .unwrap();
+            let _ongoing =
+                store
+                    .transaction()
+                    .prepare([create_at("refs/new")], Fail::Immediately, Fail::Immediately)?;
 
             let t2res = store.transaction().prepare(
                 [create_at("refs/non-conflicting")],
@@ -184,7 +175,61 @@ mod collisions {
             );
         }
 
-        // TODO: parallel deletion
+        {
+            let _ongoing = store
+                .transaction()
+                .prepare([delete_at("refs/a")], Fail::Immediately, Fail::Immediately)?;
+
+            let t2res = store
+                .transaction()
+                .prepare([delete_at("refs/A")], Fail::Immediately, Fail::Immediately);
+
+            assert_eq!(
+                &t2res.unwrap_err().to_string()[..40],
+                "The lock for the packed-ref file could n",
+                "once again, packed-refs save the day"
+            );
+        }
+
+        // Create a loose ref at a path
+        assert_eq!(store.loose_iter()?.count(), 0);
+        store
+            .transaction()
+            .prepare(
+                [RefEdit {
+                    change: Change::Update {
+                        log: LogChange::default(),
+                        expected: PreviousValue::Any,
+                        new: Target::Symbolic("refs/heads/does-not-matter".try_into().expect("valid")),
+                    },
+                    name: "refs/a".try_into().expect("valid"),
+                    deref: false,
+                }],
+                Fail::Immediately,
+                Fail::Immediately,
+            )?
+            .commit(committer().to_ref())?;
+        assert_eq!(
+            store.loose_iter()?.count(),
+            1,
+            "we created a loose ref, overlaying the packed one"
+        );
+
+        store
+            .transaction()
+            .prepare(
+                [delete_at("refs/a"), delete_at("refs/A")],
+                Fail::Immediately,
+                Fail::Immediately,
+            )?
+            .commit(committer().to_ref())?;
+
+        assert_eq!(
+            store.iter()?.all()?.count(),
+            0,
+            "we deleted our only two packed refs and one loose ref with the same name"
+        );
+        Ok(())
     }
 }
 
