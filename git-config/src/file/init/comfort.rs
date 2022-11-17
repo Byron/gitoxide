@@ -75,6 +75,7 @@ impl File<'static> {
     ///
     /// - globals
     /// - repository-local by loading `dir`/config
+    /// - worktree by loading `dir`/config.worktree
     /// - environment
     ///
     /// Note that `dir` is the `.git` dir to load the configuration from, not the configuration file.
