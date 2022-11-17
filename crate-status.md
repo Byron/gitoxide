@@ -131,8 +131,6 @@ Check out the [performance discussion][git-traverse-performance] as well.
     
 [git-traverse-performance]: https://github.com/Byron/gitoxide/discussions/76
 
-* **tree**
-
 ### git-url
 * As documented here: https://www.git-scm.com/docs/git-clone#_git_urls
 * **parse**
@@ -141,27 +139,6 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [x] paths (OS paths, without need for UTF-8)
 * [x] username expansion for ssh and git urls
 * [x] convert URL to string
-* [x] API documentation
-    * [ ] Some examples
-    
-### git-protocol
-* _abstract over protocol versions to allow delegates to deal only with a single way of doing things_
-* [x] **credentials**
-    * [x] via git-credentials
-    * [ ] via pure Rust implementation if no git is installed
-* [x] fetch & clone
-    * [x] detailed progress
-    * [x] control credentials provider to fill, approve and reject
-    * [x] command: ls-ref
-        * [x] parse V1 refs as provided during handshake
-        * [x] parse V2 refs
-        * [ ] handle empty refs, AKA PKT-LINE(zero-id SP "capabilities^{}" NUL capability-list)
-    * [x] initialize and validate command arguments and features sanely
-    * [x] abort early for ls-remote capabilities
-    * [x] packfile negotiation
-        * [x] delegate can support for all fetch features, including shallow, deepen, etc.
-        * [x] receive parsed shallow refs
-* [ ] push
 * [x] API documentation
     * [ ] Some examples
 
@@ -186,8 +163,8 @@ Check out the [performance discussion][git-traverse-performance] as well.
         * [x] _ssh://_ launches service application in a remote shell using _ssh_
         * [x] _git://_ establishes a tcp connection to a git daemon
         * [x] _http(s)://_ establishes connections to web server
-           * [x] via `curl` (blocking only)
-           * [x] via `reqwest` (blocking only)
+            * [x] via `curl` (blocking only)
+            * [x] via `reqwest` (blocking only)
         * [ ] pass context for scheme specific configuration, like timeouts
     * [x] git://<service>
         * [x] V1 handshake
@@ -209,7 +186,30 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [ ] general purpose `accept(…)` for servers
 * [x] API documentation
     * [ ] Some examples
-     
+    
+### git-protocol
+* _abstract over protocol versions to allow delegates to deal only with a single way of doing things_
+* [x] **credentials**
+    * [x] via git-credentials
+    * [ ] via pure Rust implementation if no git is installed
+* [x] handshake
+    * parse initial response of V1 and V2 servers
+* [x] ls-refs
+    * [x] parse V1 refs as provided during handshake
+    * [x] parse V2 refs
+    * [ ] handle empty refs, AKA PKT-LINE(zero-id SP "capabilities^{}" NUL capability-list)
+* [x] fetch
+    * [x] detailed progress
+    * [x] control credentials provider to fill, approve and reject
+    * [x] initialize and validate command arguments and features sanely
+    * [x] abort early for ls-remote capabilities
+    * [x] packfile negotiation
+        * [x] delegate can support for all fetch features, including shallow, deepen, etc.
+        * [x] receive parsed shallow refs
+* [ ] push
+* [x] API documentation
+    * [ ] Some examples
+
 ### git-attributes
 * [x] parse git-ignore files (aka git-attributes without the attributes or negation)
 * [x] parse git-attributes files
@@ -240,8 +240,8 @@ Check out the [performance discussion][git-traverse-performance] as well.
 
 ### git-refspec
 * [x] parse
-* [ ] matching of references and object names
-    * [ ] for fetch
+* [x] matching of references and object names
+    * [x] for fetch
     * [ ] for push
 
 ### git-command
