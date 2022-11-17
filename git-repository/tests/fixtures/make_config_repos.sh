@@ -26,3 +26,8 @@ git init http-proxy-auto-prefix
 (cd http-proxy-auto-prefix
   git config http.proxy localhost:9090 # http:// is prefixed automatically
 )
+
+git init http-proxy-authenticated
+(cd http-proxy-authenticated
+  git config http.proxy user@localhost:9090
+)

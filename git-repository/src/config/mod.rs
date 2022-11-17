@@ -147,6 +147,8 @@ pub mod transport {
         pub enum Error {
             #[error("The proxy authentication method name {value:?} is invalid")]
             InvalidProxyAuthMethod { value: String },
+            #[error("Could not configure the credential helpers for the authenticated proxy url")]
+            ConfigureProxyAuthenticate(#[from] crate::config::snapshot::credential_helpers::Error),
         }
     }
 }

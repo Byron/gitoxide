@@ -1,6 +1,7 @@
 use crate::bstr::BStr;
 use git_transport::client::http::options::ProxyAuthMethod;
 use std::any::Any;
+use std::sync::Arc;
 
 impl crate::Repository {
     /// Produce configuration suitable for `url`, as differentiated by its protocol/scheme, to be passed to a transport instance via
@@ -8,6 +9,13 @@ impl crate::Repository {
     /// `None` is returned if there is no known configuration.
     ///
     /// Note that the caller may cast the instance themselves to modify it before passing it on.
+    ///
+    ///
+    // let (mut cascade, _action_with_normalized_url, prompt_opts) =
+    // self.remote.repo.config_snapshot().credential_helpers(url)?;
+    // Ok(Box::new(move |action| cascade.invoke(action, prompt_opts.clone())) as AuthenticateFn<'_>)
+    /// For transports that support proxy authentication, the authentication
+    /// [default authentication method](crate::config::Snapshot::credential_helpers()) will be used with the url of the proxy.
     pub fn transport_options<'a>(
         &self,
         url: impl Into<&'a BStr>,
@@ -164,6 +172,19 @@ impl crate::Repository {
                         })
                         .transpose()?
                         .unwrap_or_default();
+                    opts.proxy_authenticate = opts
+                        .proxy
+                        .as_deref()
+                        .map(|url| git_url::parse(url.into()))
+                        .transpose()?
+                        .filter(|url| url.user().is_some())
+                        .map(|url| -> Result<_, crate::config::transport::http::Error> {
+                            let (mut cascade, _action_with_normalized_url, prompt_opts) =
+                                self.config_snapshot().credential_helpers(url)?;
+                            Ok(Arc::new(move |action| cascade.invoke(action, prompt_opts.clone()))
+                                as Arc<git_transport::client::http::AuthenticateFn>)
+                        })
+                        .transpose()?;
                     opts.connect_timeout =
                         integer_opt(config, lenient, "gitoxide.http.connectTimeout", "u64", trusted_only)?
                             .map(std::time::Duration::from_millis);
