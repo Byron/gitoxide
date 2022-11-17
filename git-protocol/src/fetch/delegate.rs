@@ -19,18 +19,6 @@ pub enum Action {
     Cancel,
 }
 
-/// What to do after [`DelegateBlocking::prepare_ls_refs`].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub enum LsRefsAction {
-    /// Continue by sending a 'ls-refs' command.
-    Continue,
-    /// Skip 'ls-refs' entirely.
-    ///
-    /// This is valid if the 'ref-in-want' capability is taken advantage of. The delegate must then send 'want-ref's in
-    /// [`DelegateBlocking::negotiate`].
-    Skip,
-}
-
 /// The non-IO protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation, sparing
 /// the IO parts.
 /// Async implementations must treat it as blocking and unblock it by evaluating it elsewhere.
@@ -58,8 +46,8 @@ pub trait DelegateBlocking {
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
-    ) -> std::io::Result<LsRefsAction> {
-        Ok(LsRefsAction::Continue)
+    ) -> std::io::Result<ls_refs::Action> {
+        Ok(ls_refs::Action::Continue)
     }
 
     /// Called before invoking the 'fetch' interaction with `features` pre-filled for typical use
@@ -128,7 +116,7 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
-    ) -> io::Result<LsRefsAction> {
+    ) -> io::Result<ls_refs::Action> {
         self.deref_mut().prepare_ls_refs(_server, _arguments, _features)
     }
 
@@ -162,7 +150,7 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
-    ) -> io::Result<LsRefsAction> {
+    ) -> io::Result<ls_refs::Action> {
         self.deref_mut().prepare_ls_refs(_server, _arguments, _features)
     }
 
@@ -313,5 +301,6 @@ mod async_io {
         }
     }
 }
+use crate::ls_refs;
 #[cfg(feature = "async-client")]
 pub use async_io::Delegate;

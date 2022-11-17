@@ -30,10 +30,7 @@ pub enum Action {
 pub(crate) mod function {
     use bstr::BString;
     use git_features::progress::Progress;
-    use git_transport::{
-        client::{Capabilities, Transport, TransportV2Ext},
-        Protocol,
-    };
+    use git_transport::client::{Capabilities, Transport, TransportV2Ext};
     use maybe_async::maybe_async;
     use std::borrow::Cow;
 
@@ -42,13 +39,12 @@ pub(crate) mod function {
     use crate::indicate_end_of_interaction;
     use crate::Command;
 
-    /// Invoke an ls-refs command on `transport`  (assuming `protocol_version` 2 or panic), which requires a prior handshake that yielded
+    /// Invoke an ls-refs V2 command on `transport`, which requires a prior handshake that yielded
     /// server `capabilities`. `prepare_ls_refs(capabilities, arguments, features)` can be used to alter the _ls-refs_. `progress` is used to provide feedback.
     /// Note that `prepare_ls_refs()` is expected to add the `(agent, Some(name))` to the list of `features`.
     #[maybe_async]
     pub async fn ls_refs(
         mut transport: impl Transport,
-        protocol_version: Protocol,
         capabilities: &Capabilities,
         prepare_ls_refs: impl FnOnce(
             &Capabilities,
@@ -57,14 +53,8 @@ pub(crate) mod function {
         ) -> std::io::Result<Action>,
         progress: &mut impl Progress,
     ) -> Result<Vec<Ref>, Error> {
-        assert_eq!(
-            protocol_version,
-            Protocol::V2,
-            "Only V2 needs a separate request to get specific refs"
-        );
-
         let ls_refs = Command::LsRefs;
-        let mut ls_features = ls_refs.default_features(protocol_version, capabilities);
+        let mut ls_features = ls_refs.default_features(git_transport::Protocol::V2, capabilities);
         let mut ls_args = ls_refs.initial_arguments(&ls_features);
         if capabilities
             .capability("ls-refs")
@@ -76,7 +66,12 @@ pub(crate) mod function {
         let refs = match prepare_ls_refs(capabilities, &mut ls_args, &mut ls_features) {
             Ok(Action::Skip) => Vec::new(),
             Ok(Action::Continue) => {
-                ls_refs.validate_argument_prefixes_or_panic(protocol_version, capabilities, &ls_args, &ls_features);
+                ls_refs.validate_argument_prefixes_or_panic(
+                    git_transport::Protocol::V2,
+                    capabilities,
+                    &ls_args,
+                    &ls_features,
+                );
 
                 progress.step();
                 progress.set_name("list refs");

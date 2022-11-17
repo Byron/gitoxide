@@ -79,9 +79,8 @@ where
     let refs = match refs {
         Some(refs) => refs,
         None => {
-            crate::fetch::refs(
+            crate::ls_refs(
                 &mut transport,
-                protocol_version,
                 &capabilities,
                 |a, b, c| {
                     let res = delegate.prepare_ls_refs(a, b, c);

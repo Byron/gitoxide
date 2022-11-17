@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
 use git_features::progress;
-use git_protocol::{fetch, handshake, FetchConnection};
+use git_protocol::{fetch, handshake, ls_refs, FetchConnection};
 use git_transport::Protocol;
 
 use crate::fetch::{helper_unused, oid, transport, CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
@@ -136,7 +136,7 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
         b"0044git-upload-pack does/not/matter\x00\x00version=2\x00value-only\x00key=value\x000000".as_bstr()
     );
     match err {
-        fetch::Error::Refs(fetch::refs::Error::Io(err)) => {
+        fetch::Error::LsRefs(ls_refs::Error::Io(err)) => {
             assert_eq!(err.kind(), std::io::ErrorKind::Other);
             assert_eq!(err.get_ref().expect("other error").to_string(), "hello world");
         }

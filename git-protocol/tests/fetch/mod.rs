@@ -2,8 +2,8 @@ use std::borrow::Cow;
 use std::io;
 
 use bstr::{BString, ByteSlice};
-use git_protocol::fetch::{self, Action, Arguments, LsRefsAction, Response};
-use git_protocol::handshake;
+use git_protocol::fetch::{self, Action, Arguments, Response};
+use git_protocol::{handshake, ls_refs};
 use git_transport::client::Capabilities;
 
 use crate::fixture_bytes;
@@ -74,8 +74,8 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
-    ) -> io::Result<LsRefsAction> {
-        Ok(LsRefsAction::Skip)
+    ) -> io::Result<ls_refs::Action> {
+        Ok(ls_refs::Action::Skip)
     }
 
     fn prepare_fetch(
@@ -118,10 +118,10 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
-    ) -> std::io::Result<LsRefsAction> {
+    ) -> std::io::Result<ls_refs::Action> {
         match self.abort_with.take() {
             Some(err) => Err(err),
-            None => Ok(LsRefsAction::Continue),
+            None => Ok(ls_refs::Action::Continue),
         }
     }
     fn prepare_fetch(
