@@ -126,6 +126,7 @@ pub fn new() -> (
                     proxy,
                     proxy_auth_method,
                     user_agent,
+                    proxy_authenticate: _,
                     backend: _,
                 },
         } in req_recv
