@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.28.0 (2022-11-17)
+
+<csr-id-6beb6f263fd40884b440092f39034dd43d3a95de/>
 
 ### New Features
 
@@ -40,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 51 commits contributed to the release over the course of 8 calendar days.
+ - 52 commits contributed to the release over the course of 8 calendar days.
  - 8 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -58,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs prior to release ([`fe5721f`](https://github.com/Byron/gitoxide/commit/fe5721f888c64c79fe9a734a9e33b94a282f8d97))
     - Merge branch 'http-config' ([`665b53e`](https://github.com/Byron/gitoxide/commit/665b53e1c2e1de65fafa28b669f58977868bbc81))
     - fix docs ([`b5c316e`](https://github.com/Byron/gitoxide/commit/b5c316e285369a84e57ec6f7425b92fec2978a49))
     - adapt to changes in `git-protocol` ([`bd70847`](https://github.com/Byron/gitoxide/commit/bd70847651577feb9b0bdf4e91afaffbcd212ff5))

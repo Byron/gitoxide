@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.22.0 (2022-11-17)
 
 ### Changed
 
@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 26 commits contributed to the release over the course of 8 calendar days.
+ - 27 commits contributed to the release over the course of 8 calendar days.
  - 8 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs prior to release ([`fe5721f`](https://github.com/Byron/gitoxide/commit/fe5721f888c64c79fe9a734a9e33b94a282f8d97))
     - Merge branch 'http-config' ([`665b53e`](https://github.com/Byron/gitoxide/commit/665b53e1c2e1de65fafa28b669f58977868bbc81))
     - Merge branch 'push-support' ([`42356ab`](https://github.com/Byron/gitoxide/commit/42356abf9d08dd86ce464fa48e25bbcc98ceefd4))
     - Add test to see if we can correctly read the server response. ([`4d84a20`](https://github.com/Byron/gitoxide/commit/4d84a208e4d0a8bf3dbcfa6912b92ec1bdf4ec05))

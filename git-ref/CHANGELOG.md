@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.19.0 (2022-11-17)
 
 ### New Features
 
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release over the course of 1 calendar day.
+ - 18 commits contributed to the release over the course of 1 calendar day.
  - 10 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#595](https://github.com/Byron/gitoxide/issues/595)
@@ -77,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `file::Transaction::rollback()` allows to explicitly roll back a pending change. ([`e86e159`](https://github.com/Byron/gitoxide/commit/e86e159e00c9b54803abbfa09809707be7ac8aee))
     - higher performance for edits which would write the same value. ([`bbdb480`](https://github.com/Byron/gitoxide/commit/bbdb4804d8c3bd6a1fb8bea97adce509c90c5ca8))
  * **Uncategorized**
+    - prepare changelogs prior to release ([`fe5721f`](https://github.com/Byron/gitoxide/commit/fe5721f888c64c79fe9a734a9e33b94a282f8d97))
     - Merge branch 'http-config' ([`665b53e`](https://github.com/Byron/gitoxide/commit/665b53e1c2e1de65fafa28b669f58977868bbc81))
     - Don't assert on state that is based on a transaction that isn't committed ([`00f6f7a`](https://github.com/Byron/gitoxide/commit/00f6f7a2d056d150306817b3563470173a091b4c))
     - thanks clippy ([`fe7d6f9`](https://github.com/Byron/gitoxide/commit/fe7d6f91ad6c8a0b0beca9faa8230537d2fd6a3c))

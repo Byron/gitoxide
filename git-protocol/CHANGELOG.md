@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.23.0 (2022-11-17)
 
 ### New Features
 
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 18 commits contributed to the release over the course of 8 calendar days.
+ - 19 commits contributed to the release over the course of 8 calendar days.
  - 10 days passed between releases.
  - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs prior to release ([`fe5721f`](https://github.com/Byron/gitoxide/commit/fe5721f888c64c79fe9a734a9e33b94a282f8d97))
     - Merge branch 'http-config' ([`665b53e`](https://github.com/Byron/gitoxide/commit/665b53e1c2e1de65fafa28b669f58977868bbc81))
     - fix docs ([`b5c316e`](https://github.com/Byron/gitoxide/commit/b5c316e285369a84e57ec6f7425b92fec2978a49))
     - move `fetch::refs(…, protocol, …)` to the crate root as `ls_refs(…)`. ([`09070a7`](https://github.com/Byron/gitoxide/commit/09070a7c17f39383730c3a2b809eec677f79f386))
