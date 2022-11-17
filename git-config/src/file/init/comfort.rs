@@ -129,12 +129,12 @@ impl File<'static> {
         globals.resolve_includes(options)?;
         local.resolve_includes(options)?;
 
-        // TODO: Does the order matter here?
-        globals.append(local).append(Self::from_environment_overrides()?);
+        globals.append(local);
         if let Some(mut worktree) = worktree {
             worktree.resolve_includes(options)?;
             globals.append(worktree);
         }
+        globals.append(Self::from_environment_overrides()?);
 
         Ok(globals)
     }
