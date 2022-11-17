@@ -104,7 +104,7 @@ pub struct Options {
     pub proxy_auth_method: options::ProxyAuthMethod,
     /// If authentication is needed for the proxy as its URL contains a username, this method must be set to provide a password
     /// for it before making the request, and to store it if the connection succeeds.
-    pub proxy_authenticate: Option<Arc<AuthenticateFn>>,
+    pub proxy_authenticate: Option<(git_credentials::helper::Action, Arc<std::sync::Mutex<AuthenticateFn>>)>,
     /// The `HTTP` `USER_AGENT` string presented to an `HTTP` server, notably not the user agent present to the `git` server.
     ///
     /// If not overridden, it defaults to the user agent provided by `curl`, which is a deviation from how `git` handles this.

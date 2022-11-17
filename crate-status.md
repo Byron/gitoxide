@@ -194,7 +194,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 |      01     |          |             |
 |      02     |     X    |             |
 |      03     |          |      X      |
-|      04     |          |             |
+|      04     |     X    |             |
 |      05     |          |             |
 
 * **01** -> async

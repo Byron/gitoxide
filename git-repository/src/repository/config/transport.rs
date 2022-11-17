@@ -1,7 +1,5 @@
 use crate::bstr::BStr;
-use git_transport::client::http::options::ProxyAuthMethod;
 use std::any::Any;
-use std::sync::{Arc, Mutex};
 
 impl crate::Repository {
     /// Produce configuration suitable for `url`, as differentiated by its protocol/scheme, to be passed to a transport instance via
@@ -34,8 +32,10 @@ impl crate::Repository {
                     use crate::bstr::ByteVec;
                     use crate::config::cache::util::{ApplyLeniency, ApplyLeniencyDefault};
                     use git_transport::client::http;
+                    use git_transport::client::http::options::ProxyAuthMethod;
                     use std::borrow::Cow;
                     use std::convert::{TryFrom, TryInto};
+                    use std::sync::{Arc, Mutex};
 
                     fn try_cow_to_string(
                         v: Cow<'_, BStr>,
