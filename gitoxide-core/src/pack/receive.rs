@@ -12,7 +12,7 @@ use git_repository::{
     odb::pack,
     protocol,
     protocol::{
-        fetch::{Action, Arguments, LsRefsAction, Response},
+        fetch::{Action, Arguments, Response},
         handshake::Ref,
         transport,
         transport::client::Capabilities,
@@ -54,14 +54,14 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         server: &Capabilities,
         arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
-    ) -> io::Result<LsRefsAction> {
+    ) -> io::Result<ls_refs::Action> {
         if server.contains("ls-refs") {
             arguments.extend(FILTER.iter().map(|r| format!("ref-prefix {}", r).into()));
         }
         Ok(if self.wanted_refs.is_empty() {
-            LsRefsAction::Continue
+            ls_refs::Action::Continue
         } else {
-            LsRefsAction::Skip
+            ls_refs::Action::Skip
         })
     }
 
@@ -178,6 +178,7 @@ mod blocking_io {
 
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::receive;
+use git_repository::protocol::ls_refs;
 
 #[cfg(feature = "async-client")]
 mod async_io {
