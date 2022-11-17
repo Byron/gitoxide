@@ -39,7 +39,7 @@ async fn clone_abort_prep() -> crate::Result {
 0001000csymrefs
 0009peel
 00000000",
-            fetch::agent(agent)
+            git_protocol::agent(agent)
         )
         .as_bytes()
         .as_bstr()
@@ -97,7 +97,7 @@ async fn ls_remote() -> crate::Result {
 0001000csymrefs
 0009peel
 0000",
-            fetch::agent(agent)
+            git_protocol::agent(agent)
         )
         .as_bytes()
         .as_bstr(),
@@ -190,7 +190,7 @@ async fn ref_in_want() -> crate::Result {
 001dwant-ref refs/heads/main
 0009done
 00000000",
-            fetch::agent(agent)
+            git_protocol::agent(agent)
         )
         .as_bytes()
         .as_bstr()

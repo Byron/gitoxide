@@ -5,7 +5,8 @@ use std::borrow::Cow;
 
 use crate::{
     credentials,
-    fetch::{indicate_end_of_interaction, Action, Arguments, Command, Delegate, Error, Response},
+    fetch::{Action, Arguments, Command, Delegate, Error, Response},
+    indicate_end_of_interaction,
 };
 
 /// A way to indicate how to treat the connection underlying the transport, potentially allowing to reuse it.
@@ -74,7 +75,7 @@ where
     )
     .await?;
 
-    let agent = crate::fetch::agent(agent);
+    let agent = crate::agent(agent);
     let refs = match refs {
         Some(refs) => refs,
         None => {

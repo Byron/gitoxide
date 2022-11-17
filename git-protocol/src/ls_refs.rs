@@ -15,6 +15,18 @@ mod error {
 }
 pub use error::Error;
 
+/// What to do after [`DelegateBlocking::prepare_ls_refs`].
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub enum Action {
+    /// Continue by sending a 'ls-refs' command.
+    Continue,
+    /// Skip 'ls-refs' entirely.
+    ///
+    /// This is valid if the 'ref-in-want' capability is taken advantage of. The delegate must then send 'want-ref's in
+    /// [`DelegateBlocking::negotiate`].
+    Skip,
+}
+
 pub(crate) mod function {
     use bstr::BString;
     use git_features::progress::Progress;
@@ -25,8 +37,8 @@ pub(crate) mod function {
     use maybe_async::maybe_async;
     use std::borrow::Cow;
 
-    use super::Error;
-    use crate::fetch::{Command, LsRefsAction};
+    use super::{Action, Error};
+    use crate::fetch::Command;
     use crate::handshake::{refs::from_v2_refs, Ref};
     use crate::indicate_end_of_interaction;
 
@@ -34,7 +46,7 @@ pub(crate) mod function {
     /// server `capabilities`. `prepare_ls_refs(capabilities, arguments, features)` can be used to alter the _ls-refs_. `progress` is used to provide feedback.
     /// Note that `prepare_ls_refs()` is expected to add the `(agent, Some(name))` to the list of `features`.
     #[maybe_async]
-    pub async fn refs(
+    pub async fn ls_refs(
         mut transport: impl Transport,
         protocol_version: Protocol,
         capabilities: &Capabilities,
@@ -42,7 +54,7 @@ pub(crate) mod function {
             &Capabilities,
             &mut Vec<BString>,
             &mut Vec<(&str, Option<Cow<'static, str>>)>,
-        ) -> std::io::Result<LsRefsAction>,
+        ) -> std::io::Result<Action>,
         progress: &mut impl Progress,
     ) -> Result<Vec<Ref>, Error> {
         assert_eq!(
@@ -62,8 +74,8 @@ pub(crate) mod function {
             ls_args.push("unborn".into());
         }
         let refs = match prepare_ls_refs(capabilities, &mut ls_args, &mut ls_features) {
-            Ok(LsRefsAction::Skip) => Vec::new(),
-            Ok(LsRefsAction::Continue) => {
+            Ok(Action::Skip) => Vec::new(),
+            Ok(Action::Continue) => {
                 ls_refs.validate_argument_prefixes_or_panic(protocol_version, capabilities, &ls_args, &ls_features);
 
                 progress.step();

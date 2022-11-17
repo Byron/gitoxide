@@ -41,3 +41,14 @@ compile_error!("Cannot set both 'blocking-client' and 'async-client' features as
 pub mod handshake;
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub use handshake::function::handshake;
+
+///
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
+pub mod ls_refs;
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
+pub use ls_refs::function::ls_refs;
+
+mod util;
+pub use util::agent;
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
+pub use util::indicate_end_of_interaction;
