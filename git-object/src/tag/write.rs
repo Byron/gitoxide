@@ -29,8 +29,8 @@ impl crate::WriteTo for Tag {
             encode::trusted_header_signature(b"tagger", &tagger.to_ref(), &mut out)?;
         }
 
+        out.write_all(NL)?;
         if !self.message.is_empty() {
-            out.write_all(NL)?;
             out.write_all(&self.message)?;
         }
         if let Some(ref message) = self.pgp_signature {
@@ -49,11 +49,7 @@ impl crate::WriteTo for Tag {
                 .as_ref()
                 .map(|t| b"tagger".len() + 1 /* space */ + t.size() + 1 /* nl */)
                 .unwrap_or(0)
-            + if self.message.is_empty() {
-                0
-            } else {
-                1 /* nl */ + self.message.len()
-            }
+            + 1 /* nl */ + self.message.len()
             + self.pgp_signature.as_ref().map(|m| 1 /* nl */ + m.len() ).unwrap_or(0)
     }
 
@@ -71,8 +67,8 @@ impl<'a> crate::WriteTo for TagRef<'a> {
             encode::trusted_header_signature(b"tagger", tagger, &mut out)?;
         }
 
+        out.write_all(NL)?;
         if !self.message.is_empty() {
-            out.write_all(NL)?;
             out.write_all(self.message)?;
         }
         if let Some(message) = self.pgp_signature {
@@ -91,11 +87,7 @@ impl<'a> crate::WriteTo for TagRef<'a> {
                 .as_ref()
                 .map(|t| b"tagger".len() + 1 /* space */ + t.size() + 1 /* nl */)
                 .unwrap_or(0)
-            + if self.message.is_empty() {
-                0
-            } else {
-                1 /* nl */ + self.message.len()
-            }
+            + 1 /* nl */ + self.message.len()
             + self.pgp_signature.as_ref().map(|m| 1 /* nl */ + m.len()).unwrap_or(0)
     }
 
