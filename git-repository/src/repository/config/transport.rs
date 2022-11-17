@@ -1,7 +1,7 @@
 use crate::bstr::BStr;
 use git_transport::client::http::options::ProxyAuthMethod;
 use std::any::Any;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 impl crate::Repository {
     /// Produce configuration suitable for `url`, as differentiated by its protocol/scheme, to be passed to a transport instance via
@@ -179,10 +179,13 @@ impl crate::Repository {
                         .transpose()?
                         .filter(|url| url.user().is_some())
                         .map(|url| -> Result<_, crate::config::transport::http::Error> {
-                            let (mut cascade, _action_with_normalized_url, prompt_opts) =
+                            let (mut cascade, action_with_normalized_url, prompt_opts) =
                                 self.config_snapshot().credential_helpers(url)?;
-                            Ok(Arc::new(move |action| cascade.invoke(action, prompt_opts.clone()))
-                                as Arc<git_transport::client::http::AuthenticateFn>)
+                            Ok((
+                                action_with_normalized_url,
+                                Arc::new(Mutex::new(move |action| cascade.invoke(action, prompt_opts.clone())))
+                                    as Arc<Mutex<git_transport::client::http::AuthenticateFn>>,
+                            ))
                         })
                         .transpose()?;
                     opts.connect_timeout =
