@@ -22,10 +22,7 @@ fn conflicting_creation_without_packed_refs() -> crate::Result {
 
     let case_sensitive = case_sensitive(dir.path());
     match res {
-        Ok(_) if case_sensitive => {
-            assert!(store.reflog_exists("refs/a")?);
-            assert!(store.reflog_exists("refs/A")?);
-        }
+        Ok(_) if case_sensitive => {}
         Ok(_) if !case_sensitive => panic!("should fail as 'a' and 'A' clash"),
         Err(err) if case_sensitive => panic!(
             "should work as case sensitivity allows 'a' and 'A' to coexist: {:?}",
