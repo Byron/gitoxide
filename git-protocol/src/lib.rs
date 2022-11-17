@@ -10,6 +10,16 @@
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
+/// A selector for V2 commands to invoke on the server for purpose of pre-invocation validation.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum Command {
+    /// List references.
+    LsRefs,
+    /// Fetch a pack.
+    Fetch,
+}
+pub mod command;
+
 #[cfg(feature = "async-trait")]
 pub use async_trait;
 #[cfg(feature = "futures-io")]

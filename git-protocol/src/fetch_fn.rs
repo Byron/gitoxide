@@ -5,8 +5,8 @@ use std::borrow::Cow;
 
 use crate::{
     credentials,
-    fetch::{Action, Arguments, Command, Delegate, Error, Response},
-    indicate_end_of_interaction,
+    fetch::{Action, Arguments, Delegate, Error, Response},
+    indicate_end_of_interaction, Command,
 };
 
 /// A way to indicate how to treat the connection underlying the transport, potentially allowing to reuse it.

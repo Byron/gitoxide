@@ -1,7 +1,7 @@
 use bstr::BString;
 use git_transport::{client, Protocol};
 
-use crate::fetch::command::Feature;
+use crate::command::Feature;
 
 /// The error returned in the [response module][crate::fetch::response].
 #[derive(Debug, thiserror::Error)]

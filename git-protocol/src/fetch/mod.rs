@@ -2,10 +2,6 @@ mod arguments;
 pub use arguments::Arguments;
 
 ///
-pub mod command;
-pub use command::Command;
-
-///
 pub mod delegate;
 #[cfg(any(feature = "async-client", feature = "blocking-client"))]
 pub use delegate::Delegate;

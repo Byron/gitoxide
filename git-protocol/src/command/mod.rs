@@ -1,13 +1,6 @@
+//! V2 command abstraction to validate invocations and arguments, like a database of what we know about them.
+use super::Command;
 use std::borrow::Cow;
-
-/// The kind of command to invoke on the server side.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum Command {
-    /// List references.
-    LsRefs,
-    /// Fetch a pack.
-    Fetch,
-}
 
 /// A key value pair of values known at compile time.
 pub type Feature = (&'static str, Option<Cow<'static, str>>);
@@ -27,7 +20,7 @@ mod with_io {
     use bstr::{BString, ByteSlice};
     use git_transport::client::Capabilities;
 
-    use crate::fetch::{command::Feature, Command};
+    use crate::{command::Feature, Command};
 
     impl Command {
         /// Only V2
@@ -212,3 +205,6 @@ mod with_io {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

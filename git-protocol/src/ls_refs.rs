@@ -1,7 +1,7 @@
 mod error {
     use crate::handshake::refs::parse;
 
-    /// The error returned by [refs()][crate::fetch::refs()].
+    /// The error returned by [ls_refs()][crate::ls_refs()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -38,9 +38,9 @@ pub(crate) mod function {
     use std::borrow::Cow;
 
     use super::{Action, Error};
-    use crate::fetch::Command;
     use crate::handshake::{refs::from_v2_refs, Ref};
     use crate::indicate_end_of_interaction;
+    use crate::Command;
 
     /// Invoke an ls-refs command on `transport`  (assuming `protocol_version` 2 or panic), which requires a prior handshake that yielded
     /// server `capabilities`. `prepare_ls_refs(capabilities, arguments, features)` can be used to alter the _ls-refs_. `progress` is used to provide feedback.
