@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
 use git_features::progress;
-use git_protocol::{fetch, FetchConnection};
+use git_protocol::{handshake, FetchConnection};
 use git_transport::Protocol;
 
 use crate::fetch::{helper_unused, oid, transport, CloneDelegate, LsRemoteDelegate};
@@ -56,12 +56,12 @@ async fn ls_remote() -> crate::Result {
     assert_eq!(
         delegate.refs,
         vec![
-            fetch::Ref::Symbolic {
+            handshake::Ref::Symbolic {
                 full_ref_name: "HEAD".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb"),
                 target: "refs/heads/master".into()
             },
-            fetch::Ref::Direct {
+            handshake::Ref::Direct {
                 full_ref_name: "refs/heads/master".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             }

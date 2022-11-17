@@ -24,14 +24,13 @@ mod error;
 pub use error::Error;
 ///
 pub mod refs;
-pub use refs::{function::refs, Ref};
+pub use refs::function::refs;
 ///
 pub mod response;
 pub use response::Response;
 
-///
-pub mod handshake;
-pub use handshake::function::handshake;
+mod handshake;
+pub use handshake::upload_pack as handshake;
 
 /// Send a message to indicate the remote side that there is nothing more to expect from us, indicating a graceful shutdown.
 #[maybe_async::maybe_async]

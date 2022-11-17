@@ -5,7 +5,7 @@ use std::borrow::Cow;
 
 use crate::{
     credentials,
-    fetch::{handshake, indicate_end_of_interaction, Action, Arguments, Command, Delegate, Error, Response},
+    fetch::{indicate_end_of_interaction, Action, Arguments, Command, Delegate, Error, Response},
 };
 
 /// A way to indicate how to treat the connection underlying the transport, potentially allowing to reuse it.
@@ -62,7 +62,7 @@ where
     P: Progress,
     P::SubProgress: 'static,
 {
-    let handshake::Outcome {
+    let crate::handshake::Outcome {
         server_protocol_version: protocol_version,
         refs,
         capabilities,

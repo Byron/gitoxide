@@ -1,23 +1,6 @@
 use super::Ref;
 use bstr::BStr;
 
-mod error {
-    use crate::fetch::refs::parse;
-
-    /// The error returned by [refs()][crate::fetch::refs()].
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        Io(#[from] std::io::Error),
-        #[error(transparent)]
-        Transport(#[from] git_transport::client::Error),
-        #[error(transparent)]
-        Parse(#[from] parse::Error),
-    }
-}
-pub use error::Error;
-
 ///
 pub mod parse {
     use bstr::BString;

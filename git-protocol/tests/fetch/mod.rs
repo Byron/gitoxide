@@ -2,7 +2,8 @@ use std::borrow::Cow;
 use std::io;
 
 use bstr::{BString, ByteSlice};
-use git_protocol::fetch::{self, Action, Arguments, LsRefsAction, Ref, Response};
+use git_protocol::fetch::{self, Action, Arguments, LsRefsAction, Response};
+use git_protocol::handshake;
 use git_transport::client::Capabilities;
 
 use crate::fixture_bytes;
@@ -29,7 +30,7 @@ impl fetch::DelegateBlocking for CloneDelegate {
         _version: git_transport::Protocol,
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
-        _refs: &[fetch::Ref],
+        _refs: &[handshake::Ref],
     ) -> io::Result<Action> {
         match self.abort_with.take() {
             Some(err) => Err(err),
@@ -38,7 +39,7 @@ impl fetch::DelegateBlocking for CloneDelegate {
     }
     fn negotiate(
         &mut self,
-        refs: &[Ref],
+        refs: &[handshake::Ref],
         arguments: &mut Arguments,
         _previous_response: Option<&Response>,
     ) -> io::Result<Action> {
@@ -61,10 +62,10 @@ pub struct CloneRefInWantDelegate {
     pack_bytes: usize,
 
     /// Refs advertised by `ls-refs` -- should always be empty, as we skip `ls-refs`.
-    refs: Vec<fetch::Ref>,
+    refs: Vec<handshake::Ref>,
 
     /// Refs advertised as `wanted-ref` -- should always match `want_refs`
-    wanted_refs: Vec<fetch::Ref>,
+    wanted_refs: Vec<handshake::Ref>,
 }
 
 impl fetch::DelegateBlocking for CloneRefInWantDelegate {
@@ -82,13 +83,18 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
         _version: git_transport::Protocol,
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
-        refs: &[fetch::Ref],
+        refs: &[handshake::Ref],
     ) -> io::Result<Action> {
         self.refs = refs.to_owned();
         Ok(Action::Continue)
     }
 
-    fn negotiate(&mut self, _refs: &[Ref], arguments: &mut Arguments, _prev: Option<&Response>) -> io::Result<Action> {
+    fn negotiate(
+        &mut self,
+        _refs: &[handshake::Ref],
+        arguments: &mut Arguments,
+        _prev: Option<&Response>,
+    ) -> io::Result<Action> {
         for wanted_ref in &self.want_refs {
             arguments.want_ref(wanted_ref.as_ref())
         }
@@ -99,7 +105,7 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
 
 #[derive(Default)]
 pub struct LsRemoteDelegate {
-    refs: Vec<fetch::Ref>,
+    refs: Vec<handshake::Ref>,
     abort_with: Option<std::io::Error>,
 }
 
@@ -123,14 +129,14 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
         _version: git_transport::Protocol,
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
-        refs: &[fetch::Ref],
+        refs: &[handshake::Ref],
     ) -> io::Result<fetch::Action> {
         self.refs = refs.to_owned();
         Ok(fetch::Action::Cancel)
     }
     fn negotiate(
         &mut self,
-        _refs: &[Ref],
+        _refs: &[handshake::Ref],
         _arguments: &mut Arguments,
         _previous_response: Option<&Response>,
     ) -> io::Result<Action> {
@@ -143,10 +149,8 @@ mod blocking_io {
     use std::io;
 
     use git_features::progress::Progress;
-    use git_protocol::{
-        fetch,
-        fetch::{Ref, Response},
-    };
+    use git_protocol::handshake::Ref;
+    use git_protocol::{fetch, fetch::Response, handshake};
 
     use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 
@@ -172,7 +176,7 @@ mod blocking_io {
             response: &Response,
         ) -> io::Result<()> {
             for wanted in response.wanted_refs() {
-                self.wanted_refs.push(fetch::Ref::Direct {
+                self.wanted_refs.push(handshake::Ref::Direct {
                     full_ref_name: wanted.path.clone(),
                     object: wanted.id,
                 });
@@ -202,10 +206,8 @@ mod async_io {
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
     use git_features::progress::Progress;
-    use git_protocol::{
-        fetch,
-        fetch::{Ref, Response},
-    };
+    use git_protocol::handshake::Ref;
+    use git_protocol::{fetch, fetch::Response, handshake};
 
     use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 
@@ -233,7 +235,7 @@ mod async_io {
             response: &Response,
         ) -> io::Result<()> {
             for wanted in response.wanted_refs() {
-                self.wanted_refs.push(fetch::Ref::Direct {
+                self.wanted_refs.push(handshake::Ref::Direct {
                     full_ref_name: wanted.path.clone(),
                     object: wanted.id,
                 });

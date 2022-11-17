@@ -1,7 +1,7 @@
 use git_testtools::hex_to_id as oid;
 use git_transport::{client, client::Capabilities};
 
-use crate::fetch::{refs, refs::shared::InternalRef, Ref};
+use crate::handshake::{refs, refs::shared::InternalRef, Ref};
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn extract_references_from_v2_refs() {

@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
 use git_features::progress;
-use git_protocol::{fetch, FetchConnection};
+use git_protocol::{fetch, handshake, FetchConnection};
 use git_transport::Protocol;
 
 use crate::fetch::{helper_unused, oid, transport, CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
@@ -78,12 +78,12 @@ async fn ls_remote() -> crate::Result {
     assert_eq!(
         delegate.refs,
         vec![
-            fetch::Ref::Symbolic {
+            handshake::Ref::Symbolic {
                 full_ref_name: "HEAD".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb"),
                 target: "refs/heads/master".into()
             },
-            fetch::Ref::Direct {
+            handshake::Ref::Direct {
                 full_ref_name: "refs/heads/master".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             }
@@ -173,7 +173,7 @@ async fn ref_in_want() -> crate::Result {
     assert!(delegate.refs.is_empty(), "Should not receive any ref advertisement");
     assert_eq!(
         delegate.wanted_refs,
-        vec![fetch::Ref::Direct {
+        vec![handshake::Ref::Direct {
             full_ref_name: "refs/heads/main".into(),
             object: oid("9e320b9180e0b5580af68fa3255b7f3d9ecd5af0"),
         }]
