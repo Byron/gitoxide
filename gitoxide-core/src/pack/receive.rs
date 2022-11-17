@@ -12,7 +12,8 @@ use git_repository::{
     odb::pack,
     protocol,
     protocol::{
-        fetch::{Action, Arguments, LsRefsAction, Ref, Response},
+        fetch::{Action, Arguments, LsRefsAction, Response},
+        handshake::Ref,
         transport,
         transport::client::Capabilities,
     },
@@ -117,12 +118,7 @@ mod blocking_io {
     use std::{io, io::BufRead, path::PathBuf};
 
     use git_repository as git;
-    use git_repository::{
-        bstr::BString,
-        protocol,
-        protocol::fetch::{Ref, Response},
-        Progress,
-    };
+    use git_repository::{bstr::BString, protocol, protocol::fetch::Response, protocol::handshake::Ref, Progress};
 
     use super::{receive_pack_blocking, CloneDelegate, Context};
     use crate::net;
@@ -193,7 +189,8 @@ mod async_io {
         bstr::{BString, ByteSlice},
         odb::pack,
         protocol,
-        protocol::fetch::{Ref, Response},
+        protocol::fetch::Response,
+        protocol::handshake::Ref,
         Progress,
     };
 

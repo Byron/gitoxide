@@ -21,7 +21,7 @@ pub enum Error {
     #[error("Failed to configure the transport layer")]
     ConfigureTransport(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error(transparent)]
-    Handshake(#[from] git_protocol::fetch::handshake::Error),
+    Handshake(#[from] git_protocol::handshake::Error),
     #[error("The object format {format:?} as used by the remote is unsupported")]
     UnknownObjectFormat { format: BString },
     #[error(transparent)]
@@ -216,7 +216,7 @@ where
 #[allow(clippy::result_large_err)]
 fn extract_object_format(
     _repo: &crate::Repository,
-    outcome: &git_protocol::fetch::handshake::Outcome,
+    outcome: &git_protocol::handshake::Outcome,
 ) -> Result<git_hash::Kind, Error> {
     use bstr::ByteSlice;
     let object_hash =

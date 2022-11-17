@@ -3,7 +3,7 @@ mod refs_impl {
     use anyhow::bail;
     use git_repository as git;
     use git_repository::{
-        protocol::fetch,
+        protocol::handshake,
         refspec::{match_group::validate::Fix, RefSpec},
         remote::fetch::Source,
     };
@@ -227,21 +227,21 @@ mod refs_impl {
         },
     }
 
-    impl From<fetch::Ref> for JsonRef {
-        fn from(value: fetch::Ref) -> Self {
+    impl From<handshake::Ref> for JsonRef {
+        fn from(value: handshake::Ref) -> Self {
             match value {
-                fetch::Ref::Unborn { full_ref_name, target } => JsonRef::Unborn {
+                handshake::Ref::Unborn { full_ref_name, target } => JsonRef::Unborn {
                     path: full_ref_name.to_string(),
                     target: target.to_string(),
                 },
-                fetch::Ref::Direct {
+                handshake::Ref::Direct {
                     full_ref_name: path,
                     object,
                 } => JsonRef::Direct {
                     path: path.to_string(),
                     object: object.to_string(),
                 },
-                fetch::Ref::Symbolic {
+                handshake::Ref::Symbolic {
                     full_ref_name: path,
                     target,
                     object,
@@ -250,7 +250,7 @@ mod refs_impl {
                     target: target.to_string(),
                     object: object.to_string(),
                 },
-                fetch::Ref::Peeled {
+                handshake::Ref::Peeled {
                     full_ref_name: path,
                     tag,
                     object,
@@ -263,30 +263,30 @@ mod refs_impl {
         }
     }
 
-    pub(crate) fn print_ref(mut out: impl std::io::Write, r: &fetch::Ref) -> std::io::Result<&git::hash::oid> {
+    pub(crate) fn print_ref(mut out: impl std::io::Write, r: &handshake::Ref) -> std::io::Result<&git::hash::oid> {
         match r {
-            fetch::Ref::Direct {
+            handshake::Ref::Direct {
                 full_ref_name: path,
                 object,
             } => write!(&mut out, "{} {}", object, path).map(|_| object.as_ref()),
-            fetch::Ref::Peeled {
+            handshake::Ref::Peeled {
                 full_ref_name: path,
                 tag,
                 object,
             } => write!(&mut out, "{} {} object:{}", tag, path, object).map(|_| tag.as_ref()),
-            fetch::Ref::Symbolic {
+            handshake::Ref::Symbolic {
                 full_ref_name: path,
                 target,
                 object,
             } => write!(&mut out, "{} {} symref-target:{}", object, path, target).map(|_| object.as_ref()),
-            fetch::Ref::Unborn { full_ref_name, target } => {
+            handshake::Ref::Unborn { full_ref_name, target } => {
                 static NULL: git::hash::ObjectId = git::hash::ObjectId::null(git::hash::Kind::Sha1);
                 write!(&mut out, "unborn {} symref-target:{}", full_ref_name, target).map(|_| NULL.as_ref())
             }
         }
     }
 
-    pub(crate) fn print(mut out: impl std::io::Write, refs: &[fetch::Ref]) -> std::io::Result<()> {
+    pub(crate) fn print(mut out: impl std::io::Write, refs: &[handshake::Ref]) -> std::io::Result<()> {
         for r in refs {
             print_ref(&mut out, r)?;
             writeln!(out)?;

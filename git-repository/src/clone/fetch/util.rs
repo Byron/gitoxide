@@ -48,7 +48,7 @@ pub fn replace_changed_local_config_file(repo: &mut Repository, mut config: git_
 /// if we have to, as it might not have been naturally included in the ref-specs.
 pub fn update_head(
     repo: &mut Repository,
-    remote_refs: &[git_protocol::fetch::Ref],
+    remote_refs: &[git_protocol::handshake::Ref],
     reflog_message: &BStr,
     remote_name: &str,
 ) -> Result<(), Error> {
@@ -58,15 +58,15 @@ pub fn update_head(
     };
     let (head_peeled_id, head_ref) = match remote_refs.iter().find_map(|r| {
         Some(match r {
-            git_protocol::fetch::Ref::Symbolic {
+            git_protocol::handshake::Ref::Symbolic {
                 full_ref_name,
                 target,
                 object,
             } if full_ref_name == "HEAD" => (Some(object.as_ref()), Some(target)),
-            git_protocol::fetch::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
+            git_protocol::handshake::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
                 (Some(object.as_ref()), None)
             }
-            git_protocol::fetch::Ref::Unborn { full_ref_name, target } if full_ref_name == "HEAD" => {
+            git_protocol::handshake::Ref::Unborn { full_ref_name, target } if full_ref_name == "HEAD" => {
                 (None, Some(target))
             }
             _ => return None,
