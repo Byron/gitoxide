@@ -38,7 +38,7 @@ pub trait DelegateBlocking {
     /// Note that some arguments are preset based on typical use, and `features` are preset to maximize options.
     /// The `server` capabilities can be used to see which additional capabilities the server supports as per the handshake which happened prior.
     ///
-    /// If the delegate returns [`LsRefsAction::Skip`], no 'ls-refs` command is sent to the server.
+    /// If the delegate returns [`ls_refs::Action::Skip`], no 'ls-refs` command is sent to the server.
     ///
     /// Note that this is called only if we are using protocol version 2.
     fn prepare_ls_refs(

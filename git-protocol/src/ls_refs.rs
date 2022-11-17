@@ -15,15 +15,15 @@ mod error {
 }
 pub use error::Error;
 
-/// What to do after [`DelegateBlocking::prepare_ls_refs`].
+/// What to do after preparing ls-refs in [ls_refs()][crate::ls_refs()].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Action {
     /// Continue by sending a 'ls-refs' command.
     Continue,
     /// Skip 'ls-refs' entirely.
     ///
-    /// This is valid if the 'ref-in-want' capability is taken advantage of. The delegate must then send 'want-ref's in
-    /// [`DelegateBlocking::negotiate`].
+    /// This is useful if the `ref-in-want` capability is taken advantage of. When fetching, one must must then send
+    /// `want-ref`s during the negotiation phase.
     Skip,
 }
 
