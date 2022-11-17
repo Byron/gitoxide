@@ -55,7 +55,7 @@ impl Cache {
                     .unwrap_or_else(|| crate::env::agent().into())
             })
             .to_owned();
-        ("agent", Some(git_protocol::fetch::agent(agent).into()))
+        ("agent", Some(git_protocol::agent(agent).into()))
     }
 
     pub(crate) fn personas(&self) -> &identity::Personas {

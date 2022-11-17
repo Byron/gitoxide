@@ -68,7 +68,7 @@ where
         let handshake = &self.ref_map.handshake;
         let protocol_version = handshake.server_protocol_version;
 
-        let fetch = git_protocol::fetch::Command::Fetch;
+        let fetch = git_protocol::Command::Fetch;
         let progress = &mut con.progress;
         let repo = con.remote.repo;
         let fetch_features = {
@@ -103,9 +103,7 @@ where
                 previous_response.as_ref(),
             ) {
                 Ok(_) if arguments.is_empty() => {
-                    git_protocol::fetch::indicate_end_of_interaction(&mut con.transport)
-                        .await
-                        .ok();
+                    git_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
                     return Ok(Outcome {
                         ref_map: std::mem::take(&mut self.ref_map),
                         status: Status::NoChange,
@@ -113,9 +111,7 @@ where
                 }
                 Ok(is_done) => is_done,
                 Err(err) => {
-                    git_protocol::fetch::indicate_end_of_interaction(&mut con.transport)
-                        .await
-                        .ok();
+                    git_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
                     return Err(err.into());
                 }
             };
@@ -169,9 +165,7 @@ where
         };
 
         if matches!(protocol_version, git_protocol::transport::Protocol::V2) {
-            git_protocol::fetch::indicate_end_of_interaction(&mut con.transport)
-                .await
-                .ok();
+            git_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
         }
 
         let update_refs = refs::update(

@@ -25,7 +25,7 @@ pub enum Error {
     #[error("The object format {format:?} as used by the remote is unsupported")]
     UnknownObjectFormat { format: BString },
     #[error(transparent)]
-    ListRefs(#[from] git_protocol::fetch::refs::Error),
+    ListRefs(#[from] git_protocol::ls_refs::Error),
     #[error(transparent)]
     Transport(#[from] git_protocol::transport::client::Error),
     #[error(transparent)]
@@ -80,7 +80,7 @@ where
     #[git_protocol::maybe_async::maybe_async]
     pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap, Error> {
         let res = self.ref_map_inner(options).await;
-        git_protocol::fetch::indicate_end_of_interaction(&mut self.transport)
+        git_protocol::indicate_end_of_interaction(&mut self.transport)
             .await
             .ok();
         res
@@ -181,9 +181,8 @@ where
             None => {
                 let specs = &self.remote.fetch_specs;
                 let agent_feature = self.remote.repo.config.user_agent_tuple();
-                git_protocol::fetch::refs(
+                git_protocol::ls_refs(
                     &mut self.transport,
-                    outcome.server_protocol_version,
                     &outcome.capabilities,
                     move |_capabilities, arguments, features| {
                         features.push(agent_feature);
@@ -201,7 +200,7 @@ where
                                 }
                             }
                         }
-                        Ok(git_protocol::fetch::delegate::LsRefsAction::Continue)
+                        Ok(git_protocol::ls_refs::Action::Continue)
                     },
                     &mut self.progress,
                 )

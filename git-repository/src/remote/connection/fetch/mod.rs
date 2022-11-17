@@ -187,14 +187,14 @@ where
                 //       Right now we block the executor by forcing this communication, but that only
                 //       happens if the user didn't actually try to receive a pack, which consumes the
                 //       connection in an async context.
-                git_protocol::futures_lite::future::block_on(git_protocol::fetch::indicate_end_of_interaction(
+                git_protocol::futures_lite::future::block_on(git_protocol::indicate_end_of_interaction(
                     &mut con.transport,
                 ))
                 .ok();
             }
             #[cfg(not(feature = "async-network-client"))]
             {
-                git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+                git_protocol::indicate_end_of_interaction(&mut con.transport).ok();
             }
         }
     }
