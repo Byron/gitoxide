@@ -136,6 +136,7 @@ How do we avoid staying in the initial development phase (IDP) forever?
 
 There is a couple of questions to ask and answer positively:
 
+- _Is everything in it's tracking issue named "`<crate-name>` towards 1.0" resolved?_
 - _Does the crate fulfill its intended purpose well enough?_
 - _Do the dependent workspace crates fulfill their intended purposes well enough?_
 - _Do they hide types and functionality of lower-tier workspace crates and external IDP crates?_
