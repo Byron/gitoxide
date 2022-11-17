@@ -5,6 +5,82 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-68c65a9f8b3927d454164a6f72167b47c0facee5/> expose `futures_lite` for convenience in downstream crates.
+
+### Changed (BREAKING)
+
+ - <csr-id-09070a7c17f39383730c3a2b809eec677f79f386/> move `fetch::refs(…, protocol, …)` to the crate root as `ls_refs(…)`.
+   This move also removes the `protocol` parameter as ls-refs is only available
+   in V2 and the caller is forced to know that after running a
+   `handshake(…)` anyway which yields the actual protocol used by the
+   server.
+   
+   Note that the client can suggest the version to use when connecting,
+   which is specific to the transport at hand.
+ - <csr-id-35f7b4df164c130fb50fcffcf5de99816c2ca872/> move `fetch::Command` into the crate root.
+   This represents much better on how it is actually used, which is for
+   validation of any Command invoked through the protocol independenty.
+ - <csr-id-a03f8f6cce34618883e8448dd1c31b41c54d9448/> move `fetch::agent|indicate_end_of_interaction` to crate root
+   These are generally useful in all interactions, including push.
+ - <csr-id-a3bcf82ae50defa4439862943008647d03d09792/> `handshake(…)` is now generalized to support `git-receive-pack` as well.
+   Note that `fetch::handshake()` is still present, selecting the correct
+   service like before, but most of the `fetch::Ref` parsing is now handled
+   by `handshake::Ref` in it's more general location.
+   
+   There is still `fetch::refs(…)` which just invokes a V2 ls-refs command
+   (without that being generalized) as `git-receive-pack` just supports
+   V1 at the moment, and making the `fetch::LsRefs` Command more general
+   would mean that every command has to be general, at is doesn't matter
+   anymore if it's used for Fetch or Push.
+   
+   As long as git won't support V2 for pushes, which it never might,
+   there is no need to introduce this breakage even though it
+   should probably be done before going 1.0.
+ - <csr-id-d05b0b800a553e1e380801fb141e9aa054a6cbd0/> `fetch::agent()` returns agent string only; `fetch()` takes agent name as parameter.
+ - <csr-id-aab278f2a3e07edb6d8109e7ffba003b5d5d7857/> don't auto-insert user agent, instead prepare to insert it later.
+ - <csr-id-f957d9a1833af079b01ba6bd6941eb4af6c9e436/> `fetch::agent()` now returns the agent name, `fetch::agent_tuple()` returns specific key-value pair.
+   This is in preparation for allowing user-defined agent strings.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 18 commits contributed to the release over the course of 8 calendar days.
+ - 10 days passed between releases.
+ - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'http-config' ([`665b53e`](https://github.com/Byron/gitoxide/commit/665b53e1c2e1de65fafa28b669f58977868bbc81))
+    - fix docs ([`b5c316e`](https://github.com/Byron/gitoxide/commit/b5c316e285369a84e57ec6f7425b92fec2978a49))
+    - move `fetch::refs(…, protocol, …)` to the crate root as `ls_refs(…)`. ([`09070a7`](https://github.com/Byron/gitoxide/commit/09070a7c17f39383730c3a2b809eec677f79f386))
+    - move `fetch::Command` into the crate root. ([`35f7b4d`](https://github.com/Byron/gitoxide/commit/35f7b4df164c130fb50fcffcf5de99816c2ca872))
+    - move `fetch::agent|indicate_end_of_interaction` to crate root ([`a03f8f6`](https://github.com/Byron/gitoxide/commit/a03f8f6cce34618883e8448dd1c31b41c54d9448))
+    - `handshake(…)` is now generalized to support `git-receive-pack` as well. ([`a3bcf82`](https://github.com/Byron/gitoxide/commit/a3bcf82ae50defa4439862943008647d03d09792))
+    - migrate independent parts of ref parsing to generalized handshake. ([`611a139`](https://github.com/Byron/gitoxide/commit/611a1394b1a7470b9247474ea0c43ef59560f6fe))
+    - prepare for handshake generalization by copying it into position; parameterize service ([`7691353`](https://github.com/Byron/gitoxide/commit/7691353111f3c61cf9c3ddc26c518016c0b45c4c))
+    - Merge branch 'main' into http-config ([`f4ff821`](https://github.com/Byron/gitoxide/commit/f4ff821fd4233dd1dc1a449af4d4600becf3b4ac))
+    - Merge branch 'async-fetch' ([`0c9c48b`](https://github.com/Byron/gitoxide/commit/0c9c48b3b91a1396eb1796f288a2cb10380d1f14))
+    - expose `futures_lite` for convenience in downstream crates. ([`68c65a9`](https://github.com/Byron/gitoxide/commit/68c65a9f8b3927d454164a6f72167b47c0facee5))
+    - Set exact patch level for `git-transport` ([`b46e3bb`](https://github.com/Byron/gitoxide/commit/b46e3bb062cdfb9ed4c4ea2b4d764e36f255e2a5))
+    - adjust for changes in `git-transport` ([`f88569b`](https://github.com/Byron/gitoxide/commit/f88569b686c65bde3c330ee591e032bf3b1abc61))
+    - adapt to changes in `git-transport` ([`226f33a`](https://github.com/Byron/gitoxide/commit/226f33ac38cf5197c41f0787f1bee91a584914f0))
+    - make trait parameter more open, no need for `'static` ([`68dc86f`](https://github.com/Byron/gitoxide/commit/68dc86fdf1a386d4e535c6bc8cb594237395a861))
+    - `fetch::agent()` returns agent string only; `fetch()` takes agent name as parameter. ([`d05b0b8`](https://github.com/Byron/gitoxide/commit/d05b0b800a553e1e380801fb141e9aa054a6cbd0))
+    - don't auto-insert user agent, instead prepare to insert it later. ([`aab278f`](https://github.com/Byron/gitoxide/commit/aab278f2a3e07edb6d8109e7ffba003b5d5d7857))
+    - `fetch::agent()` now returns the agent name, `fetch::agent_tuple()` returns specific key-value pair. ([`f957d9a`](https://github.com/Byron/gitoxide/commit/f957d9a1833af079b01ba6bd6941eb4af6c9e436))
+</details>
+
 ## 0.22.0 (2022-11-06)
 
 ### Changed (BREAKING)
@@ -22,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 23 calendar days.
+ - 13 commits contributed to the release over the course of 23 calendar days.
  - 27 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -47,6 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - upgrade to `prodash` v21 ([`a0655dc`](https://github.com/Byron/gitoxide/commit/a0655dc7bc5dff388bc69a648e7f16b44fd1abd9))
     - improve docs slightly ([`306ebef`](https://github.com/Byron/gitoxide/commit/306ebefdc0fea1e1926e6df11c617cc12087c3b5))
  * **Uncategorized**
+    - Release git-features v0.23.1, git-glob v0.4.1, git-config-value v0.8.1, git-tempfile v2.0.6, git-object v0.22.1, git-ref v0.18.0, git-sec v0.4.2, git-config v0.10.0, git-prompt v0.1.1, git-url v0.10.1, git-credentials v0.6.1, git-diff v0.21.0, git-discover v0.7.0, git-index v0.7.0, git-pack v0.25.0, git-odb v0.35.0, git-transport v0.21.1, git-protocol v0.22.0, git-refspec v0.3.1, git-worktree v0.7.0, git-repository v0.26.0, git-commitgraph v0.10.0, gitoxide-core v0.19.0, gitoxide v0.17.0, safety bump 9 crates ([`d071583`](https://github.com/Byron/gitoxide/commit/d071583c5576fdf5f7717765ffed5681792aa81f))
     - prepare changelogs prior to release ([`423af90`](https://github.com/Byron/gitoxide/commit/423af90c8202d62dc1ea4a76a0df6421d1f0aa06))
     - Merge branch 'main' into write-sparse-index (upgrade to Rust 1.65) ([`5406630`](https://github.com/Byron/gitoxide/commit/5406630466145990b5adbdadb59151036993060d))
     - thanks clippy ([`04cfa63`](https://github.com/Byron/gitoxide/commit/04cfa635a65ae34ad6d22391f2febd2ca7eabca9))

@@ -5,6 +5,88 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-e86e159e00c9b54803abbfa09809707be7ac8aee/> `file::Transaction::rollback()` allows to explicitly roll back a pending change.
+   As opposed to dropping the Transaction, this method allows to obtain all
+   edits that would have been applied.
+ - <csr-id-bbdb4804d8c3bd6a1fb8bea97adce509c90c5ca8/> higher performance for edits which would write the same value.
+   Instead of moving them into place, we just drop them, without ever
+   writing into them.
+
+### Bug Fixes
+
+ - <csr-id-584b705cee8be3fb68c67dcb8535b981d1efc5f4/> assure symrefs don't get deleted when moving refs to packed-refs.
+   Previously it was possible for symbolic refs to be deleted right after
+   they have been created or updated as they were included in the set of
+   refs that was assumed to be part of packed-refs, which isn't the case
+   for symbolic refs.
+ - <csr-id-9f848506f5a42abc954612ea375f845e3b23ae5a/> case-insentively conflicting references can be created even on case-insensitie filesystems*.
+   The asterisk indicates that this only works if packed-refs are present
+   and these references are written straight to packed references without
+   ever trying to handle the otherwise conflicting loose reference files.
+   
+   This is done by leveraging the fact that in presence of packed-refs
+   or a pending creation of packed-refs, there is no need to create
+   per-file locks as concurrent transactions also have to obtain the
+   packed-refs lock and fail (or wait) until it's done.
+ - <csr-id-e9853dd640cf4545134aa6e0d093e560af090a2b/> instead of erroring if loose iteration is performed on missing base, correctly yield zero references.
+   Previously it reported an error, now it does not and instead performs no
+   iteration, which is more helpful to the user of the API I believe as
+   they won't randomly fail just because somebody deleted the `refs`
+   folder.
+ - <csr-id-27386a96ddc022ba75730901f8bb098b9d5ff9d4/> loose ref iteration on a repo with missing 'ref/' fails when creating the iterator.
+   Previously, it would fail on first iteration, making it seem like there
+   is one reference even though it's just an error stating that the base
+   cannot be read.
+   
+   This is clearly worse than making a metadata check on the filesystem,
+   no matter how unlikely the case.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 17 commits contributed to the release over the course of 1 calendar day.
+ - 10 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#595](https://github.com/Byron/gitoxide/issues/595)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#595](https://github.com/Byron/gitoxide/issues/595)**
+    - assure symrefs don't get deleted when moving refs to packed-refs. ([`584b705`](https://github.com/Byron/gitoxide/commit/584b705cee8be3fb68c67dcb8535b981d1efc5f4))
+    - Avoid lock-acquisition for refs which are to be deleted if a global lock is helt. ([`66b053d`](https://github.com/Byron/gitoxide/commit/66b053dd070cc05dbcec9b251bfab32a00f75b68))
+    - case-insentively conflicting references can be created even on case-insensitie filesystems*. ([`9f84850`](https://github.com/Byron/gitoxide/commit/9f848506f5a42abc954612ea375f845e3b23ae5a))
+    - instead of erroring if loose iteration is performed on missing base, correctly yield zero references. ([`e9853dd`](https://github.com/Byron/gitoxide/commit/e9853dd640cf4545134aa6e0d093e560af090a2b))
+    - loose ref iteration on a repo with missing 'ref/' fails when creating the iterator. ([`27386a9`](https://github.com/Byron/gitoxide/commit/27386a96ddc022ba75730901f8bb098b9d5ff9d4))
+    - First test to validate how collisions are expressed. ([`3f54ade`](https://github.com/Byron/gitoxide/commit/3f54ade216cfdfbba8d4a74f544ccf0436225d46))
+    - Attempt to add the first case-sensitive test… ([`063ab73`](https://github.com/Byron/gitoxide/commit/063ab73d77a480191d10338964f4a6209aec3cb6))
+    - `file::Transaction::rollback()` allows to explicitly roll back a pending change. ([`e86e159`](https://github.com/Byron/gitoxide/commit/e86e159e00c9b54803abbfa09809707be7ac8aee))
+    - higher performance for edits which would write the same value. ([`bbdb480`](https://github.com/Byron/gitoxide/commit/bbdb4804d8c3bd6a1fb8bea97adce509c90c5ca8))
+ * **Uncategorized**
+    - Merge branch 'http-config' ([`665b53e`](https://github.com/Byron/gitoxide/commit/665b53e1c2e1de65fafa28b669f58977868bbc81))
+    - Don't assert on state that is based on a transaction that isn't committed ([`00f6f7a`](https://github.com/Byron/gitoxide/commit/00f6f7a2d056d150306817b3563470173a091b4c))
+    - thanks clippy ([`fe7d6f9`](https://github.com/Byron/gitoxide/commit/fe7d6f91ad6c8a0b0beca9faa8230537d2fd6a3c))
+    - Assure reflogs aren't skipped just because there is no per-loose lock file. ([`130d13b`](https://github.com/Byron/gitoxide/commit/130d13bbf1b4b2da8f688a440f3e2f3b1a51519f))
+    - refactor ([`f17c6b6`](https://github.com/Byron/gitoxide/commit/f17c6b649d9e0bed59c4e6d8380c3dcdfd73a2f9))
+    - refactor ([`c1d2aea`](https://github.com/Byron/gitoxide/commit/c1d2aea68a2c57f5d498987c51fe2806f669eaaa))
+    - refactor ([`b0a231a`](https://github.com/Byron/gitoxide/commit/b0a231aaca5cf371e2a204bf3b3100a4a7cc913e))
+    - thanks clippy ([`5f7fe69`](https://github.com/Byron/gitoxide/commit/5f7fe698e0ea322a731f8e86e724be327e9d3420))
+</details>
+
 ## 0.18.0 (2022-11-06)
 
 ### Bug Fixes
@@ -27,7 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 6 calendar days.
+ - 10 commits contributed to the release over the course of 6 calendar days.
  - 27 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -49,6 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - add test to validate new symref reflog behaviour ([`8b5cf38`](https://github.com/Byron/gitoxide/commit/8b5cf385cb6cf31ad438398ddcc5668a01b6fb3d))
     - allow symref updates to receive reflogs if these are new… ([`6e5c0ae`](https://github.com/Byron/gitoxide/commit/6e5c0ae63deed181419232c61896e22404e4c84a))
  * **Uncategorized**
+    - Release git-features v0.23.1, git-glob v0.4.1, git-config-value v0.8.1, git-tempfile v2.0.6, git-object v0.22.1, git-ref v0.18.0, git-sec v0.4.2, git-config v0.10.0, git-prompt v0.1.1, git-url v0.10.1, git-credentials v0.6.1, git-diff v0.21.0, git-discover v0.7.0, git-index v0.7.0, git-pack v0.25.0, git-odb v0.35.0, git-transport v0.21.1, git-protocol v0.22.0, git-refspec v0.3.1, git-worktree v0.7.0, git-repository v0.26.0, git-commitgraph v0.10.0, gitoxide-core v0.19.0, gitoxide v0.17.0, safety bump 9 crates ([`d071583`](https://github.com/Byron/gitoxide/commit/d071583c5576fdf5f7717765ffed5681792aa81f))
     - prepare changelogs prior to release ([`423af90`](https://github.com/Byron/gitoxide/commit/423af90c8202d62dc1ea4a76a0df6421d1f0aa06))
     - Merge branch 'main' into write-sparse-index (upgrade to Rust 1.65) ([`5406630`](https://github.com/Byron/gitoxide/commit/5406630466145990b5adbdadb59151036993060d))
     - thanks clippy ([`04cfa63`](https://github.com/Byron/gitoxide/commit/04cfa635a65ae34ad6d22391f2febd2ca7eabca9))

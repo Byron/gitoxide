@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+This releases fixes `gix fetch` so that it is able to clone or fetch `pytorch` or other repositories on case-insensitive file systems. 
+
+It's also an attempt to trigger CI to build binary releases.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 9 commits contributed to the release over the course of 9 calendar days.
+ - 10 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'http-config' ([`665b53e`](https://github.com/Byron/gitoxide/commit/665b53e1c2e1de65fafa28b669f58977868bbc81))
+    - Document that histogram is now the default diff algorithm ([`c76572b`](https://github.com/Byron/gitoxide/commit/c76572b3662776b524a7e4a1fd96d2eaa22a560f))
+    - Introduce new `gitoxide.http.connectTimeout` for more control for git clients ([`2ab80e4`](https://github.com/Byron/gitoxide/commit/2ab80e4c95a7bf3c7e56bb5a95ac78ac930fc9ee))
+    - keep track of `no_proxy` environment variable support ([`f0625de`](https://github.com/Byron/gitoxide/commit/f0625de13073de4767881ed0398d0cd2791b0ad2))
+    - update progress ([`3d9fb6c`](https://github.com/Byron/gitoxide/commit/3d9fb6c095a272d5ddf6c5b6ce96820bc9d59cbb))
+    - don't forget to update 'progress' ([`0ec5220`](https://github.com/Byron/gitoxide/commit/0ec5220fea50f06eb61bafff525111ce2435c994))
+    - update progress with gitoxide.userAgent ([`1c012f4`](https://github.com/Byron/gitoxide/commit/1c012f4c2e05e1f565fc51fffee2f7d278e5a7de))
+    - plan for user agent string configuration ([`f5499a5`](https://github.com/Byron/gitoxide/commit/f5499a55ed0230e2852b41b54648003e3d6cb859))
+    - keep track of http related configuration keys. ([`1afaebd`](https://github.com/Byron/gitoxide/commit/1afaebdcae977af8a9a0f0788ec754746d6d05bb))
+</details>
+
 ## 0.17.0 (2022-11-06)
 
 ### New Features
