@@ -6,10 +6,11 @@ use std::{
     time::Duration,
 };
 
-use curl::easy::Easy2;
+use curl::easy::{Auth, Easy2};
 use git_features::io::pipe;
 
 use crate::client::blocking_io::http;
+use crate::client::http::options::ProxyAuthMethod;
 
 #[derive(Default)]
 struct Handler {
@@ -123,7 +124,7 @@ pub fn new() -> (
                     low_speed_time_seconds,
                     connect_timeout,
                     proxy,
-                    proxy_auth_method: _,
+                    proxy_auth_method,
                     user_agent,
                     backend: _,
                 },
@@ -158,6 +159,23 @@ pub fn new() -> (
             handle.transfer_encoding(false)?;
             if let Some(timeout) = connect_timeout {
                 handle.connect_timeout(timeout)?;
+            }
+            {
+                let mut auth = Auth::new();
+                match proxy_auth_method {
+                    ProxyAuthMethod::AnyAuth => auth
+                        .basic(true)
+                        .digest(true)
+                        .digest_ie(true)
+                        .gssnegotiate(true)
+                        .ntlm(true)
+                        .aws_sigv4(true),
+                    ProxyAuthMethod::Basic => auth.basic(true),
+                    ProxyAuthMethod::Digest => auth.digest(true),
+                    ProxyAuthMethod::Negotiate => auth.digest_ie(true),
+                    ProxyAuthMethod::Ntlm => auth.ntlm(true),
+                };
+                handle.proxy_auth(&auth)?;
             }
             handle.tcp_keepalive(true)?;
 
