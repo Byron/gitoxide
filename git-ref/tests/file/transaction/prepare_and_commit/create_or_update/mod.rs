@@ -15,10 +15,42 @@ use git_ref::{
 };
 use git_testtools::hex_to_id;
 
+use crate::file::transaction::prepare_and_commit::{create_at, create_symbolic_at, delete_at};
 use crate::file::{
     store_with_packed_refs, store_writable,
     transaction::prepare_and_commit::{committer, empty_store, log_line, reflog_lines},
 };
+
+mod collisions;
+
+#[test]
+fn intermediate_directories_are_removed_on_rollback() -> crate::Result {
+    for explicit_rollback in [false, true] {
+        let (dir, store) = empty_store()?;
+
+        let transaction = store.transaction().prepare(
+            [create_at("refs/heads/a/b/ref"), create_at("refs/heads/a/c/ref")],
+            Fail::Immediately,
+            Fail::Immediately,
+        )?;
+
+        assert!(
+            dir.path().join("refs/heads/a/b").exists(),
+            "lock files have been created in their place to avoid concurrent modification"
+        );
+        assert!(dir.path().join("refs/heads/a/c").exists());
+
+        if explicit_rollback {
+            transaction.rollback();
+        } else {
+            drop(transaction);
+        }
+
+        assert!(!dir.path().join("refs/heads").exists());
+        assert!(!dir.path().join("refs").exists(), "we go all in right now and also remove the refs directory. 'git' might not do that, but it's not a problem either");
+    }
+    Ok(())
+}
 
 #[test]
 fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_can_potentially_recover() -> crate::Result
@@ -202,19 +234,9 @@ fn reference_with_must_not_exist_constraint_cannot_be_created_if_it_exists_alrea
     let head = store.try_find_loose("HEAD")?.expect("head exists already");
     let target = head.target;
 
-    let res = store.transaction().prepare(
-        Some(RefEdit {
-            change: Change::Update {
-                log: LogChange::default(),
-                new: Target::Peeled(git_hash::Kind::Sha1.null()),
-                expected: PreviousValue::MustNotExist,
-            },
-            name: "HEAD".try_into()?,
-            deref: false,
-        }),
-        Fail::Immediately,
-        Fail::Immediately,
-    );
+    let res = store
+        .transaction()
+        .prepare(Some(create_at("HEAD")), Fail::Immediately, Fail::Immediately);
     match res {
         Err(transaction::prepare::Error::MustNotExist { full_name, actual, .. }) => {
             assert_eq!(full_name, "HEAD");
@@ -229,55 +251,16 @@ fn reference_with_must_not_exist_constraint_cannot_be_created_if_it_exists_alrea
 fn namespaced_updates_or_deletions_are_transparent_and_not_observable() -> crate::Result {
     let (_keep, mut store) = empty_store()?;
     store.namespace = git_ref::namespace::expand("foo")?.into();
+    let actual = vec![
+        delete_at("refs/for/deletion"),
+        create_symbolic_at("HEAD", "refs/heads/hello"),
+    ];
     let edits = store
         .transaction()
-        .prepare(
-            vec![
-                RefEdit {
-                    change: Change::Delete {
-                        expected: PreviousValue::Any,
-                        log: RefLog::AndReference,
-                    },
-                    name: "refs/for/deletion".try_into()?,
-                    deref: false,
-                },
-                RefEdit {
-                    change: Change::Update {
-                        log: LogChange::default(),
-                        new: Target::Symbolic("refs/heads/hello".try_into()?),
-                        expected: PreviousValue::MustNotExist,
-                    },
-                    name: "HEAD".try_into()?,
-                    deref: false,
-                },
-            ],
-            Fail::Immediately,
-            Fail::Immediately,
-        )?
+        .prepare(actual.clone(), Fail::Immediately, Fail::Immediately)?
         .commit(committer().to_ref())?;
 
-    assert_eq!(
-        edits,
-        vec![
-            RefEdit {
-                change: Change::Delete {
-                    expected: PreviousValue::Any,
-                    log: RefLog::AndReference,
-                },
-                name: "refs/for/deletion".try_into()?,
-                deref: false,
-            },
-            RefEdit {
-                change: Change::Update {
-                    log: LogChange::default(),
-                    new: Target::Symbolic("refs/heads/hello".try_into()?),
-                    expected: PreviousValue::MustNotExist,
-                },
-                name: "HEAD".try_into()?,
-                deref: false,
-            }
-        ]
-    );
+    assert_eq!(edits, actual);
     Ok(())
 }
 
@@ -386,15 +369,7 @@ fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
     );
 
     let tx = tx.prepare(
-        Some(RefEdit {
-            change: Change::Update {
-                log: LogChange::default(),
-                new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
-                expected: PreviousValue::MustNotExist,
-            },
-            name: "HEAD".try_into()?,
-            deref: false,
-        }),
+        Some(create_symbolic_at("HEAD", "refs/heads/main")),
         Fail::Immediately,
         Fail::Immediately,
     )?;

@@ -7,7 +7,7 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 pub struct Arguments {
     /// The active features/capabilities of the fetch invocation
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
-    features: Vec<crate::fetch::command::Feature>,
+    features: Vec<crate::command::Feature>,
 
     args: Vec<BString>,
     haves: Vec<BString>,
@@ -136,8 +136,8 @@ impl Arguments {
     /// Create a new instance to help setting up arguments to send to the server as part of a `fetch` operation
     /// for which `features` are the available and configured features to use.
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
-    pub fn new(version: git_transport::Protocol, features: Vec<crate::fetch::command::Feature>) -> Self {
-        use crate::fetch::Command;
+    pub fn new(version: git_transport::Protocol, features: Vec<crate::command::Feature>) -> Self {
+        use crate::Command;
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         let filter = has("filter");
         let shallow = has("shallow");

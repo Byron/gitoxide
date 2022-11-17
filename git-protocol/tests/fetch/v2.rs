@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
 use git_features::progress;
-use git_protocol::{fetch, FetchConnection};
+use git_protocol::{fetch, handshake, ls_refs, FetchConnection};
 use git_transport::Protocol;
 
 use crate::fetch::{helper_unused, oid, transport, CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
@@ -18,12 +18,14 @@ async fn clone_abort_prep() -> crate::Result {
         Protocol::V2,
         git_transport::client::git::ConnectMode::Daemon,
     );
+    let agent = "agent";
     let err = git_protocol::fetch(
         &mut transport,
         &mut dlg,
         helper_unused,
         progress::Discard,
         FetchConnection::TerminateOnSuccessfulCompletion,
+        "agent",
     )
     .await
     .expect_err("fetch aborted");
@@ -33,11 +35,11 @@ async fn clone_abort_prep() -> crate::Result {
         transport.into_inner().1.as_bstr(),
         format!(
             "002fgit-upload-pack does/not/matter\0\0version=2\00014command=ls-refs
-001bagent={}
+0014agent={}
 0001000csymrefs
 0009peel
 00000000",
-            fetch::agent().1.expect("value set")
+            git_protocol::agent(agent)
         )
         .as_bytes()
         .as_bstr()
@@ -62,24 +64,26 @@ async fn ls_remote() -> crate::Result {
         Protocol::V2,
         git_transport::client::git::ConnectMode::Daemon,
     );
+    let agent = "agent";
     git_protocol::fetch(
         &mut transport,
         &mut delegate,
         helper_unused,
         progress::Discard,
         FetchConnection::AllowReuse,
+        "agent",
     )
     .await?;
 
     assert_eq!(
         delegate.refs,
         vec![
-            fetch::Ref::Symbolic {
+            handshake::Ref::Symbolic {
                 full_ref_name: "HEAD".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb"),
                 target: "refs/heads/master".into()
             },
-            fetch::Ref::Direct {
+            handshake::Ref::Direct {
                 full_ref_name: "refs/heads/master".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             }
@@ -89,11 +93,11 @@ async fn ls_remote() -> crate::Result {
         transport.into_inner().1.as_bstr(),
         format!(
             "0044git-upload-pack does/not/matter\0\0version=2\0value-only\0key=value\00014command=ls-refs
-001bagent={}
+0014agent={}
 0001000csymrefs
 0009peel
 0000",
-            fetch::agent().1.expect("value set")
+            git_protocol::agent(agent)
         )
         .as_bytes()
         .as_bstr(),
@@ -121,6 +125,7 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
         helper_unused,
         progress::Discard,
         FetchConnection::AllowReuse,
+        "agent",
     )
     .await
     .expect_err("ls-refs preparation is aborted");
@@ -131,7 +136,7 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
         b"0044git-upload-pack does/not/matter\x00\x00version=2\x00value-only\x00key=value\x000000".as_bstr()
     );
     match err {
-        fetch::Error::Refs(fetch::refs::Error::Io(err)) => {
+        fetch::Error::LsRefs(ls_refs::Error::Io(err)) => {
             assert_eq!(err.kind(), std::io::ErrorKind::Other);
             assert_eq!(err.get_ref().expect("other error").to_string(), "hello world");
         }
@@ -154,19 +159,21 @@ async fn ref_in_want() -> crate::Result {
         git_transport::client::git::ConnectMode::Daemon,
     );
 
+    let agent = "agent";
     git_protocol::fetch(
         &mut transport,
         &mut delegate,
         helper_unused,
         progress::Discard,
         FetchConnection::TerminateOnSuccessfulCompletion,
+        "agent",
     )
     .await?;
 
     assert!(delegate.refs.is_empty(), "Should not receive any ref advertisement");
     assert_eq!(
         delegate.wanted_refs,
-        vec![fetch::Ref::Direct {
+        vec![handshake::Ref::Direct {
             full_ref_name: "refs/heads/main".into(),
             object: oid("9e320b9180e0b5580af68fa3255b7f3d9ecd5af0"),
         }]
@@ -176,14 +183,14 @@ async fn ref_in_want() -> crate::Result {
         transport.into_inner().1.as_bstr(),
         format!(
             "002fgit-upload-pack does/not/matter\0\0version=2\00012command=fetch
-001bagent={}
+0014agent={}
 0001000ethin-pack
 0010include-tag
 000eofs-delta
 001dwant-ref refs/heads/main
 0009done
 00000000",
-            fetch::agent().1.expect("value set")
+            git_protocol::agent(agent)
         )
         .as_bytes()
         .as_bstr()

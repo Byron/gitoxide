@@ -36,7 +36,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
             match &change.update.change {
                 // reflog first, then reference
                 Change::Update { log, new, expected } => {
-                    let lock = change.lock.take().expect("each ref is locked");
+                    let lock = change.lock.take();
                     let (update_ref, update_reflog) = match log.mode {
                         RefLog::Only => (false, true),
                         RefLog::AndReference => (true, true),
@@ -67,7 +67,6 @@ impl<'s, 'p> Transaction<'s, 'p> {
                             if do_update {
                                 self.store.reflog_create_or_append(
                                     change.update.name.as_ref(),
-                                    &lock,
                                     previous,
                                     new_oid,
                                     committer,
@@ -80,12 +79,12 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     // Don't do anything else while keeping the lock after potentially updating the reflog.
                     // We delay deletion of the reference and dropping the lock to after the packed-refs were
                     // safely written.
-                    if delete_loose_refs {
-                        change.lock = Some(lock);
+                    if delete_loose_refs && matches!(new, Target::Peeled(_)) {
+                        change.lock = lock;
                         continue;
                     }
                     if update_ref {
-                        if let Err(err) = lock.commit() {
+                        if let Some(Err(err)) = lock.map(|l| l.commit()) {
                             // TODO: when Kind::IsADirectory becomes stable, use that.
                             let err = if err.instance.resource_path().is_dir() {
                                 git_tempfile::remove_dir::empty_depth_first(err.instance.resource_path())
@@ -146,12 +145,13 @@ impl<'s, 'p> Transaction<'s, 'p> {
             let take_lock_and_delete = match &change.update.change {
                 Change::Update {
                     log: LogChange { mode, .. },
+                    new,
                     ..
-                } => delete_loose_refs && *mode == RefLog::AndReference,
+                } => delete_loose_refs && *mode == RefLog::AndReference && matches!(new, Target::Peeled(_)),
                 Change::Delete { log: mode, .. } => *mode == RefLog::AndReference,
             };
             if take_lock_and_delete {
-                let lock = change.lock.take().expect("lock must still be present in delete mode");
+                let lock = change.lock.take();
                 let reference_path = self.store.reference_path(change.update.name.as_ref());
                 if let Err(err) = std::fs::remove_file(reference_path) {
                     if err.kind() != std::io::ErrorKind::NotFound {

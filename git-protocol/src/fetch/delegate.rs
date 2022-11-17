@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{
     io,
     ops::{Deref, DerefMut},
@@ -6,7 +7,8 @@ use std::{
 use bstr::BString;
 use git_transport::client::Capabilities;
 
-use crate::fetch::{Arguments, Ref, Response};
+use crate::fetch::{Arguments, Response};
+use crate::handshake::Ref;
 
 /// Defines what to do next after certain [`Delegate`] operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -15,18 +17,6 @@ pub enum Action {
     Continue,
     /// Return at the next possible opportunity without making further requests, possibly after closing the connection.
     Cancel,
-}
-
-/// What to do after [`DelegateBlocking::prepare_ls_refs`].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub enum LsRefsAction {
-    /// Continue by sending a 'ls-refs' command.
-    Continue,
-    /// Skip 'ls-refs' entirely.
-    ///
-    /// This is valid if the 'ref-in-want' capability is taken advantage of. The delegate must then send 'want-ref's in
-    /// [`DelegateBlocking::negotiate`].
-    Skip,
 }
 
 /// The non-IO protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation, sparing
@@ -48,16 +38,16 @@ pub trait DelegateBlocking {
     /// Note that some arguments are preset based on typical use, and `features` are preset to maximize options.
     /// The `server` capabilities can be used to see which additional capabilities the server supports as per the handshake which happened prior.
     ///
-    /// If the delegate returns [`LsRefsAction::Skip`], no 'ls-refs` command is sent to the server.
+    /// If the delegate returns [`ls_refs::Action::Skip`], no 'ls-refs` command is sent to the server.
     ///
     /// Note that this is called only if we are using protocol version 2.
     fn prepare_ls_refs(
         &mut self,
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
-        _features: &mut Vec<(&str, Option<&str>)>,
-    ) -> std::io::Result<LsRefsAction> {
-        Ok(LsRefsAction::Continue)
+        _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
+    ) -> std::io::Result<ls_refs::Action> {
+        Ok(ls_refs::Action::Continue)
     }
 
     /// Called before invoking the 'fetch' interaction with `features` pre-filled for typical use
@@ -75,7 +65,7 @@ pub trait DelegateBlocking {
         &mut self,
         _version: git_transport::Protocol,
         _server: &Capabilities,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         _refs: &[Ref],
     ) -> std::io::Result<Action> {
         Ok(Action::Continue)
@@ -125,8 +115,8 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
         &mut self,
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
-        _features: &mut Vec<(&str, Option<&str>)>,
-    ) -> io::Result<LsRefsAction> {
+        _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
+    ) -> io::Result<ls_refs::Action> {
         self.deref_mut().prepare_ls_refs(_server, _arguments, _features)
     }
 
@@ -134,7 +124,7 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
         &mut self,
         _version: git_transport::Protocol,
         _server: &Capabilities,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         _refs: &[Ref],
     ) -> io::Result<Action> {
         self.deref_mut().prepare_fetch(_version, _server, _features, _refs)
@@ -159,8 +149,8 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
         &mut self,
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
-        _features: &mut Vec<(&str, Option<&str>)>,
-    ) -> io::Result<LsRefsAction> {
+        _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
+    ) -> io::Result<ls_refs::Action> {
         self.deref_mut().prepare_ls_refs(_server, _arguments, _features)
     }
 
@@ -168,7 +158,7 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
         &mut self,
         _version: git_transport::Protocol,
         _server: &Capabilities,
-        _features: &mut Vec<(&str, Option<&str>)>,
+        _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         _refs: &[Ref],
     ) -> io::Result<Action> {
         self.deref_mut().prepare_fetch(_version, _server, _features, _refs)
@@ -193,7 +183,8 @@ mod blocking_io {
 
     use git_features::progress::Progress;
 
-    use crate::fetch::{DelegateBlocking, Ref, Response};
+    use crate::fetch::{DelegateBlocking, Response};
+    use crate::handshake::Ref;
 
     /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
     ///
@@ -253,7 +244,8 @@ mod async_io {
     use futures_io::AsyncBufRead;
     use git_features::progress::Progress;
 
-    use crate::fetch::{DelegateBlocking, Ref, Response};
+    use crate::fetch::{DelegateBlocking, Response};
+    use crate::handshake::Ref;
 
     /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
     ///
@@ -309,5 +301,6 @@ mod async_io {
         }
     }
 }
+use crate::ls_refs;
 #[cfg(feature = "async-client")]
 pub use async_io::Delegate;

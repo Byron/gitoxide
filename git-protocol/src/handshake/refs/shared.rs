@@ -1,6 +1,6 @@
 use bstr::{BString, ByteSlice};
 
-use crate::fetch::{refs::parse::Error, Ref};
+use crate::handshake::{refs::parse::Error, Ref};
 
 impl From<InternalRef> for Ref {
     fn from(v: InternalRef) -> Self {
@@ -106,7 +106,7 @@ pub(crate) fn from_capabilities<'a>(
     Ok(out_refs)
 }
 
-pub(in crate::fetch::refs) fn parse_v1(
+pub(in crate::handshake::refs) fn parse_v1(
     num_initial_out_refs: usize,
     out_refs: &mut Vec<InternalRef>,
     line: &str,
@@ -166,7 +166,7 @@ pub(in crate::fetch::refs) fn parse_v1(
     Ok(())
 }
 
-pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
+pub(in crate::handshake::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
     let trimmed = line.trim_end();
     let mut tokens = trimmed.splitn(3, ' ');
     match (tokens.next(), tokens.next()) {

@@ -22,7 +22,7 @@ pub struct Connection<R, W> {
     pub(in crate::client) virtual_host: Option<(String, Option<u16>)>,
     pub(in crate::client) desired_version: Protocol,
     supported_versions: [Protocol; 1],
-    custom_url: Option<String>,
+    custom_url: Option<BString>,
     pub(in crate::client) mode: ConnectMode,
 }
 
@@ -37,7 +37,7 @@ impl<R, W> Connection<R, W> {
     /// The URL is required as parameter for authentication helpers which are called in transports
     /// that support authentication. Even though plain git transports don't support that, this
     /// may well be the case in custom transports.
-    pub fn custom_url(mut self, url: Option<String>) -> Self {
+    pub fn custom_url(mut self, url: Option<BString>) -> Self {
         self.custom_url = url;
         self
     }

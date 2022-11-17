@@ -1,35 +1,42 @@
-use crate::remote::base_repo_path;
-use git_repository as git;
-
-pub(crate) fn repo_path(name: &str) -> std::path::PathBuf {
-    let dir =
-        git_testtools::scripted_fixture_repo_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
-    dir.join(name)
-}
-
-pub(crate) fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
-    let dir = git_testtools::scripted_fixture_repo_writable_with_args(
-        "make_fetch_repos.sh",
-        [base_repo_path()],
-        git_testtools::Creation::ExecuteScript,
-    )
-    .unwrap();
-    let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
-    (repo, dir)
-}
-
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod blocking_and_async_io {
     use git_repository as git;
     use git_repository::remote::Direction::Fetch;
     use std::sync::atomic::AtomicBool;
 
-    use super::{repo_path, repo_rw};
     use crate::remote::{into_daemon_remote_if_async, spawn_git_daemon_if_async};
     use git_features::progress;
     use git_protocol::maybe_async;
     use git_repository::remote::fetch;
     use git_testtools::hex_to_id;
+
+    pub(crate) fn base_repo_path() -> String {
+        git::path::realpath(
+            git_testtools::scripted_fixture_repo_read_only("make_remote_repos.sh")
+                .unwrap()
+                .join("base"),
+        )
+        .unwrap()
+        .to_string_lossy()
+        .into_owned()
+    }
+
+    pub(crate) fn repo_path(name: &str) -> std::path::PathBuf {
+        let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_fetch_repos.sh", [base_repo_path()])
+            .unwrap();
+        dir.join(name)
+    }
+
+    pub(crate) fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
+        let dir = git_testtools::scripted_fixture_repo_writable_with_args(
+            "make_fetch_repos.sh",
+            [base_repo_path()],
+            git_testtools::Creation::ExecuteScript,
+        )
+        .unwrap();
+        let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
+        (repo, dir)
+    }
 
     #[maybe_async::test(
         feature = "blocking-network-client",

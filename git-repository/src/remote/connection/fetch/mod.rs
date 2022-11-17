@@ -11,6 +11,7 @@ use crate::{
 };
 
 mod error;
+use crate::remote::fetch::WritePackedRefs;
 pub use error::Error;
 
 /// The way reflog messages should be composed whenever a ref is written with recent objects from a remote.
@@ -112,6 +113,7 @@ where
             ref_map,
             dry_run: DryRun::No,
             reflog_message: None,
+            write_packed_refs: WritePackedRefs::Never,
         })
     }
 }
@@ -141,6 +143,7 @@ where
     ref_map: RefMap,
     dry_run: DryRun,
     reflog_message: Option<RefLogMessage>,
+    write_packed_refs: WritePackedRefs,
 }
 
 /// Builder
@@ -153,6 +156,15 @@ where
     /// This works by not actually fetching the pack after negotiating it, nor will refs be updated.
     pub fn with_dry_run(mut self, enabled: bool) -> Self {
         self.dry_run = enabled.then(|| DryRun::Yes).unwrap_or(DryRun::No);
+        self
+    }
+
+    /// If enabled, don't write ref updates to loose refs, but put them exclusively to packed-refs.
+    ///
+    /// This improves performances and allows case-sensitive filesystems to deal with ref names that would otherwise
+    /// collide.
+    pub fn with_write_packed_refs_only(mut self, enabled: bool) -> Self {
+        self.write_packed_refs = enabled.then(|| WritePackedRefs::Only).unwrap_or(WritePackedRefs::Never);
         self
     }
 
@@ -175,14 +187,14 @@ where
                 //       Right now we block the executor by forcing this communication, but that only
                 //       happens if the user didn't actually try to receive a pack, which consumes the
                 //       connection in an async context.
-                git_protocol::futures_lite::future::block_on(git_protocol::fetch::indicate_end_of_interaction(
+                git_protocol::futures_lite::future::block_on(git_protocol::indicate_end_of_interaction(
                     &mut con.transport,
                 ))
                 .ok();
             }
             #[cfg(not(feature = "async-network-client"))]
             {
-                git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+                git_protocol::indicate_end_of_interaction(&mut con.transport).ok();
             }
         }
     }

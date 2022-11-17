@@ -2,7 +2,8 @@ use std::io::Write;
 
 use git_transport::{client, client::TransportV2Ext};
 
-use crate::fetch::{Arguments, Command};
+use crate::fetch::Arguments;
+use crate::Command;
 
 impl Arguments {
     /// Send fetch arguments to the server, and indicate this is the end of negotiations only if `add_done_argument` is present.
@@ -45,7 +46,9 @@ impl Arguments {
                 }
                 transport.invoke(
                     Command::Fetch.as_str(),
-                    self.features.iter().filter(|(_, v)| v.is_some()).cloned(),
+                    self.features
+                        .iter()
+                        .filter_map(|(k, v)| v.as_ref().map(|v| (*k, Some(v.as_ref())))),
                     Some(std::mem::replace(&mut self.args, retained_state).into_iter()),
                 )
             }

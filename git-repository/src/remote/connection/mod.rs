@@ -1,8 +1,8 @@
 use crate::Remote;
 
 pub(crate) struct HandshakeWithRefs {
-    outcome: git_protocol::fetch::handshake::Outcome,
-    refs: Vec<git_protocol::fetch::Ref>,
+    outcome: git_protocol::handshake::Outcome,
+    refs: Vec<git_protocol::handshake::Ref>,
 }
 
 /// A function that performs a given credential action, trying to obtain credentials for an operation that needs it.
@@ -15,6 +15,7 @@ pub type AuthenticateFn<'a> = Box<dyn FnMut(git_credentials::helper::Action) -> 
 pub struct Connection<'a, 'repo, T, P> {
     pub(crate) remote: &'a Remote<'repo>,
     pub(crate) authenticate: Option<AuthenticateFn<'a>>,
+    pub(crate) transport_options: Option<Box<dyn std::any::Any>>,
     pub(crate) transport: T,
     pub(crate) progress: P,
 }

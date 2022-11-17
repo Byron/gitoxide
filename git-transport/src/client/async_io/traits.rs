@@ -77,7 +77,7 @@ pub trait TransportV2Ext {
     async fn invoke<'a>(
         &mut self,
         command: &str,
-        capabilities: impl Iterator<Item = (&'a str, Option<&'a str>)> + 'a,
+        capabilities: impl Iterator<Item = (&'a str, Option<impl AsRef<str>>)> + 'a,
         arguments: Option<impl Iterator<Item = bstr::BString> + 'a>,
     ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error>;
 }
@@ -87,14 +87,18 @@ impl<T: Transport> TransportV2Ext for T {
     async fn invoke<'a>(
         &mut self,
         command: &str,
-        capabilities: impl Iterator<Item = (&'a str, Option<&'a str>)> + 'a,
+        capabilities: impl Iterator<Item = (&'a str, Option<impl AsRef<str>>)> + 'a,
         arguments: Option<impl Iterator<Item = BString> + 'a>,
     ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error> {
         let mut writer = self.request(WriteMode::OneLfTerminatedLinePerWriteCall, MessageKind::Flush)?;
         writer.write_all(format!("command={}", command).as_bytes()).await?;
         for (name, value) in capabilities {
             match value {
-                Some(value) => writer.write_all(format!("{}={}", name, value).as_bytes()).await,
+                Some(value) => {
+                    writer
+                        .write_all(format!("{}={}", name, value.as_ref()).as_bytes())
+                        .await
+                }
                 None => writer.write_all(name.as_bytes()).await,
             }?;
         }

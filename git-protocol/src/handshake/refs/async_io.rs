@@ -1,7 +1,7 @@
 use futures_io::AsyncBufRead;
 use futures_lite::AsyncBufReadExt;
 
-use crate::fetch::{refs, refs::parse::Error, Ref};
+use crate::handshake::{refs, refs::parse::Error, Ref};
 
 /// Parse refs from the given input line by line. Protocol V2 is required for this to succeed.
 pub async fn from_v2_refs(in_refs: &mut (dyn AsyncBufRead + Unpin)) -> Result<Vec<Ref>, Error> {

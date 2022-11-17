@@ -1,3 +1,5 @@
+use bstr::BStr;
+use std::sync::{Arc, Mutex};
 use std::{
     any::Any,
     borrow::Cow,
@@ -15,15 +17,106 @@ use crate::{
 #[cfg(feature = "http-client-curl")]
 mod curl;
 
+/// The experimental `reqwest` backend.
+///
+/// It doesn't support any of the shared http options yet, but can be seen as example on how to integrate blocking `http` backends.
+/// There is also nothing that would prevent it from becoming a fully-featured HTTP backend except for demand and time.
 #[cfg(feature = "http-client-reqwest")]
-mod reqwest;
+pub mod reqwest;
 
 ///
 mod traits;
 
-/// The http client configuration when using reqwest
-#[cfg(feature = "http-client-reqwest")]
-pub type Options = reqwest::Options;
+///
+pub mod options {
+    /// Possible settings for the `http.followRedirects` configuration option.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    pub enum FollowRedirects {
+        /// Follow only the first redirect request, most suitable for typical git requests.
+        Initial,
+        /// Follow all redirect requests from the server unconditionally
+        All,
+        /// Follow no redirect request.
+        None,
+    }
+
+    impl Default for FollowRedirects {
+        fn default() -> Self {
+            FollowRedirects::Initial
+        }
+    }
+
+    /// The way to configure a proxy for authentication if a username is present in the configured proxy.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    pub enum ProxyAuthMethod {
+        /// Automatically pick a suitable authentication method.
+        AnyAuth,
+        ///HTTP basic authentication.
+        Basic,
+        /// Http digest authentication to prevent a password to be passed in clear text.
+        Digest,
+        /// GSS negotiate authentication.
+        Negotiate,
+        /// NTLM authentication
+        Ntlm,
+    }
+
+    impl Default for ProxyAuthMethod {
+        fn default() -> Self {
+            ProxyAuthMethod::AnyAuth
+        }
+    }
+}
+
+/// Options to configure curl requests.
+// TODO: testing most of these fields requires a lot of effort, unless special flags to introspect ongoing requests are added.
+#[derive(Default, Debug, Clone)]
+pub struct Options {
+    /// Headers to be added to every request.
+    /// They are applied unconditionally and are expected to be valid as they occour in an HTTP request, like `header: value`, without newlines.
+    ///
+    /// Refers to `http.extraHeader` multi-var.
+    pub extra_headers: Vec<String>,
+    /// How to handle redirects.
+    ///
+    /// Refers to `http.followRedirects`.
+    pub follow_redirects: options::FollowRedirects,
+    /// Used in conjunction with `low_speed_time_seconds`, any non-0 value signals the amount of bytes per second at least to avoid
+    /// aborting the connection.
+    ///
+    /// Refers to `http.lowSpeedLimit`.
+    pub low_speed_limit_bytes_per_second: u32,
+    /// Used in conjunction with `low_speed_bytes_per_second`, any non-0 value signals the amount seconds the minimal amount
+    /// of bytes per second isn't reached.
+    ///
+    /// Refers to `http.lowSpeedTime`.
+    pub low_speed_time_seconds: u64,
+    /// A curl-style proxy declaration of the form `[protocol://][user[:password]@]proxyhost[:port]`.
+    ///
+    /// Refers to `http.proxy`.
+    pub proxy: Option<String>,
+    /// The way to authenticate against the proxy if the `proxy` field contains a username.
+    ///
+    /// Refers to `http.proxyAuthMethod`.
+    pub proxy_auth_method: Option<options::ProxyAuthMethod>,
+    /// The `HTTP` `USER_AGENT` string presented to an `HTTP` server, notably not the user agent present to the `git` server.
+    ///
+    /// If not overridden, it defaults to the user agent provided by `curl`, which is a deviation from how `git` handles this.
+    /// Thus it's expected from the callers to set it to their application, or use higher-level crates which make it easy to do this
+    /// more correctly.
+    ///
+    /// Using the correct user-agent might affect how the server treats the request.
+    ///
+    /// Refers to `http.userAgent`.
+    pub user_agent: Option<String>,
+    /// The amount of time we wait until aborting a connection attempt.
+    ///
+    /// If `None`, this typically defaults to 2 minutes to 5 minutes.
+    /// Refers to `gitoxide.http.connectTimeout`.
+    pub connect_timeout: Option<std::time::Duration>,
+    /// Backend specific options, if available.
+    pub backend: Option<Arc<Mutex<dyn Any + Send + Sync + 'static>>>,
+}
 
 /// The actual http client implementation, using curl
 #[cfg(feature = "http-client-curl")]
@@ -168,8 +261,8 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
         ))
     }
 
-    fn to_url(&self) -> String {
-        self.url.clone()
+    fn to_url(&self) -> Cow<'_, BStr> {
+        Cow::Borrowed(self.url.as_str().into())
     }
 
     fn supported_protocol_versions(&self) -> &[Protocol] {

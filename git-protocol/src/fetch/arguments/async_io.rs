@@ -1,7 +1,8 @@
 use futures_lite::io::AsyncWriteExt;
 use git_transport::{client, client::TransportV2Ext};
 
-use crate::fetch::{Arguments, Command};
+use crate::fetch::Arguments;
+use crate::Command;
 
 impl Arguments {
     /// Send fetch arguments to the server, and indicate this is the end of negotiations only if `add_done_argument` is present.

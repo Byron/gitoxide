@@ -9,6 +9,15 @@ mod with_namespace {
     use git_object::bstr::{BString, ByteSlice};
 
     use crate::file::store_at;
+    use crate::file::transaction::prepare_and_commit::empty_store;
+
+    #[test]
+    fn missing_refs_dir_yields_empty_iteration() -> crate::Result {
+        let (_dir, store) = empty_store()?;
+        assert_eq!(store.iter()?.all()?.count(), 0);
+        assert_eq!(store.loose_iter()?.count(), 0);
+        Ok(())
+    }
 
     #[test]
     fn iteration_can_trivially_use_namespaces_as_prefixes() -> crate::Result {

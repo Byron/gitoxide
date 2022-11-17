@@ -1,10 +1,12 @@
 use git_features::progress::Progress;
 use git_transport::client;
 use maybe_async::maybe_async;
+use std::borrow::Cow;
 
 use crate::{
     credentials,
-    fetch::{handshake, indicate_end_of_interaction, Action, Arguments, Command, Delegate, Error, Response},
+    fetch::{Action, Arguments, Delegate, Error, Response},
+    indicate_end_of_interaction, Command,
 };
 
 /// A way to indicate how to treat the connection underlying the transport, potentially allowing to reuse it.
@@ -41,6 +43,7 @@ impl Default for FetchConnection {
 /// * `authenticate(operation_to_perform)` is used to receive credentials for the connection and potentially store it
 ///   if the server indicates 'permission denied'. Note that not all transport support authentication or authorization.
 /// * `progress` is used to emit progress messages.
+/// * `name` is the name of the git client to present as `agent`, like `"my-app (v2.0)"`".
 ///
 /// _Note_ that depending on the `delegate`, the actual action performed can be `ls-refs`, `clone` or `fetch`.
 #[allow(clippy::result_large_err)]
@@ -51,6 +54,7 @@ pub async fn fetch<F, D, T, P>(
     authenticate: F,
     mut progress: P,
     fetch_mode: FetchConnection,
+    agent: impl Into<String>,
 ) -> Result<(), Error>
 where
     F: FnMut(credentials::helper::Action) -> credentials::protocol::Result,
@@ -59,7 +63,7 @@ where
     P: Progress,
     P::SubProgress: 'static,
 {
-    let handshake::Outcome {
+    let crate::handshake::Outcome {
         server_protocol_version: protocol_version,
         refs,
         capabilities,
@@ -71,14 +75,18 @@ where
     )
     .await?;
 
+    let agent = crate::agent(agent);
     let refs = match refs {
         Some(refs) => refs,
         None => {
-            crate::fetch::refs(
+            crate::ls_refs(
                 &mut transport,
-                protocol_version,
                 &capabilities,
-                |a, b, c| delegate.prepare_ls_refs(a, b, c),
+                |a, b, c| {
+                    let res = delegate.prepare_ls_refs(a, b, c);
+                    c.push(("agent", Some(Cow::Owned(agent.clone()))));
+                    res
+                },
                 &mut progress,
             )
             .await?
@@ -108,6 +116,7 @@ where
 
     Response::check_required_features(protocol_version, &fetch_features)?;
     let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
+    fetch_features.push(("agent", Some(Cow::Owned(agent))));
     let mut arguments = Arguments::new(protocol_version, fetch_features);
     let mut previous_response = None::<Response>;
     let mut round = 1;

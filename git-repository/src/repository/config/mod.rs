@@ -33,6 +33,9 @@ impl crate::Repository {
     }
 }
 
+#[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
+mod transport;
+
 mod remote {
     use std::{borrow::Cow, collections::BTreeSet};
 

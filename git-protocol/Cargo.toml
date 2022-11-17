@@ -40,7 +40,7 @@ required-features = ["async-client"]
 
 [dependencies]
 git-features = { version = "^0.23.1", path = "../git-features", features = ["progress"] }
-git-transport = { version = "^0.21.1", path = "../git-transport" }
+git-transport = { version = "^0.21.2", path = "../git-transport" }
 git-hash = { version = "^0.9.11", path = "../git-hash" }
 git-credentials = { version = "^0.6.1", path = "../git-credentials" }
 

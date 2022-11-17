@@ -107,6 +107,50 @@ pub mod checkout_options {
     }
 }
 
+///
+pub mod transport {
+    use crate::bstr;
+
+    /// The error produced when configuring a transport for a particular protocol.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(
+            "Could not interpret configuration key {key:?} as {kind} integer of desired range with value: {actual}"
+        )]
+        InvalidInteger {
+            key: &'static str,
+            kind: &'static str,
+            actual: i64,
+        },
+        #[error("Could not interpret configuration key {key:?}")]
+        ConfigValue {
+            source: git_config::value::Error,
+            key: &'static str,
+        },
+        #[error("Could not decode value at key {key:?} as UTF-8 string")]
+        IllformedUtf8 {
+            key: &'static str,
+            source: bstr::FromUtf8Error,
+        },
+        #[error("Invalid URL passed for configuration")]
+        ParseUrl(#[from] git_url::parse::Error),
+        #[error("Could obtain configuration for an HTTP url")]
+        Http(#[from] http::Error),
+    }
+
+    ///
+    pub mod http {
+        /// The error produced when configuring a HTTP transport.
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("TBD")]
+            TBD,
+        }
+    }
+}
+
 /// Utility type to keep pre-obtained configuration values, only for those required during initial setup
 /// and other basic operations that are common enough to warrant a permanent cache.
 ///
@@ -124,6 +168,8 @@ pub(crate) struct Cache {
     pub use_multi_pack_index: bool,
     /// The representation of `core.logallrefupdates`, or `None` if the variable wasn't set.
     pub reflog: Option<git_ref::store::WriteReflog>,
+    /// The configured user agent for presentation to servers.
+    pub(crate) user_agent: OnceCell<String>,
     /// identities for later use, lazy initialization.
     pub(crate) personas: OnceCell<identity::Personas>,
     /// A lazily loaded rewrite list for remote urls

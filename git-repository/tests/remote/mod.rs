@@ -3,17 +3,6 @@ use std::{borrow::Cow, path::PathBuf};
 use git_repository as git;
 use git_testtools::scripted_fixture_repo_read_only;
 
-pub(crate) fn base_repo_path() -> String {
-    git::path::realpath(
-        git_testtools::scripted_fixture_repo_read_only("make_remote_repos.sh")
-            .unwrap()
-            .join("base"),
-    )
-    .unwrap()
-    .to_string_lossy()
-    .into_owned()
-}
-
 pub(crate) fn repo_path(name: &str) -> PathBuf {
     let dir = scripted_fixture_repo_read_only("make_remote_repos.sh").unwrap();
     dir.join(name)
@@ -80,7 +69,7 @@ pub(crate) fn cow_str(s: &str) -> Cow<str> {
 }
 
 mod connect;
-mod fetch;
+pub(crate) mod fetch;
 mod ref_map;
 mod save;
 mod name {

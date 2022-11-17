@@ -451,7 +451,11 @@ Git-Protocol: version=2
     );
 
     server.next_read_and_respond_with(fixture_bytes("v2/http-fetch.response"));
-    let mut res = c.invoke("fetch", Vec::new().into_iter(), None::<IntoIter<bstr::BString>>)?;
+    let mut res = c.invoke(
+        "fetch",
+        Vec::<(_, Option<&str>)>::new().into_iter(),
+        None::<IntoIter<bstr::BString>>,
+    )?;
     let mut line = String::new();
     res.read_line(&mut line)?;
     assert_eq!(line, "packfile\n");

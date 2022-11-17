@@ -1,5 +1,6 @@
 set -eu -o pipefail
 
+# IMPORTANT: keep this repo small as it's used for writes, hence will be executed for each writer!
 git clone --bare "${1:?First argument is the complex base repo from make_remote_repos.sh/base}" base
 
 git clone --shared base clone-as-base-with-changes
@@ -19,8 +20,7 @@ git clone --shared base two-origins
 )
 
 git clone --shared base worktree-root
-(
-  cd worktree-root
+(cd worktree-root
 
   git worktree add ../wt-a
   git worktree add ../prev/wt-a-nested

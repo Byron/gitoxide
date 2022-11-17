@@ -28,17 +28,14 @@ pub(crate) fn config_bool(
     lenient: bool,
 ) -> Result<bool, Error> {
     let (section, key) = key.split_once('.').expect("valid section.key format");
-    match config
+    config
         .boolean(section, None, key)
         .unwrap_or(Ok(default))
         .map_err(|err| Error::DecodeBoolean {
             value: err.input,
             key: key.into(),
-        }) {
-        Ok(v) => Ok(v),
-        Err(_err) if lenient => Ok(default),
-        Err(err) => Err(err),
-    }
+        })
+        .with_lenient_default(lenient)
 }
 
 pub(crate) fn query_refupdates(
@@ -64,19 +61,35 @@ pub(crate) fn query_refupdates(
     }
 }
 
-pub(crate) fn check_lenient<T, E>(v: Result<Option<T>, E>, lenient: bool) -> Result<Option<T>, E> {
-    match v {
-        Ok(v) => Ok(v),
-        Err(_) if lenient => Ok(None),
-        Err(err) => Err(err),
+// TODO: Use a specialization here once trait specialization is stabilized. Would be perfect here for `T: Default`.
+pub trait ApplyLeniency {
+    fn with_leniency(self, is_lenient: bool) -> Self;
+}
+
+pub trait ApplyLeniencyDefault {
+    fn with_lenient_default(self, is_lenient: bool) -> Self;
+}
+
+impl<T, E> ApplyLeniency for Result<Option<T>, E> {
+    fn with_leniency(self, is_lenient: bool) -> Self {
+        match self {
+            Ok(v) => Ok(v),
+            Err(_) if is_lenient => Ok(None),
+            Err(err) => Err(err),
+        }
     }
 }
 
-pub(crate) fn check_lenient_default<T, E>(v: Result<T, E>, lenient: bool, default: impl FnOnce() -> T) -> Result<T, E> {
-    match v {
-        Ok(v) => Ok(v),
-        Err(_) if lenient => Ok(default()),
-        Err(err) => Err(err),
+impl<T, E> ApplyLeniencyDefault for Result<T, E>
+where
+    T: Default,
+{
+    fn with_lenient_default(self, is_lenient: bool) -> Self {
+        match self {
+            Ok(v) => Ok(v),
+            Err(_) if is_lenient => Ok(T::default()),
+            Err(err) => Err(err),
+        }
     }
 }
 

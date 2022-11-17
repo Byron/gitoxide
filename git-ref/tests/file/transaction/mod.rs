@@ -2,7 +2,10 @@ pub(crate) mod prepare_and_commit {
     use git_actor::{Sign, Time};
     use git_hash::ObjectId;
     use git_object::bstr::BString;
-    use git_ref::file;
+    use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog};
+    use git_ref::{file, Target};
+    use git_testtools::hex_to_id;
+    use std::convert::TryInto;
 
     fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<git_ref::log::Line>> {
         let mut buf = Vec::new();
@@ -14,7 +17,7 @@ pub(crate) mod prepare_and_commit {
         Ok(res)
     }
 
-    fn empty_store() -> crate::Result<(tempfile::TempDir, file::Store)> {
+    pub(crate) fn empty_store() -> crate::Result<(tempfile::TempDir, file::Store)> {
         let dir = tempfile::TempDir::new().unwrap();
         let store = file::Store::at(dir.path(), git_ref::store::WriteReflog::Normal, git_hash::Kind::Sha1);
         Ok((dir, store))
@@ -38,6 +41,45 @@ pub(crate) mod prepare_and_commit {
             new_oid: new,
             signature: committer(),
             message: message.into(),
+        }
+    }
+
+    fn create_at(name: &str) -> RefEdit {
+        RefEdit {
+            change: Change::Update {
+                log: LogChange {
+                    mode: RefLog::AndReference,
+                    force_create_reflog: true,
+                    message: "log peeled".into(),
+                },
+                expected: PreviousValue::MustNotExist,
+                new: Target::Peeled(hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")),
+            },
+            name: name.try_into().expect("valid"),
+            deref: false,
+        }
+    }
+
+    fn create_symbolic_at(name: &str, symbolic_target: &str) -> RefEdit {
+        RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                expected: PreviousValue::MustNotExist,
+                new: Target::Symbolic(symbolic_target.try_into().expect("valid target name")),
+            },
+            name: name.try_into().expect("valid"),
+            deref: false,
+        }
+    }
+
+    fn delete_at(name: &str) -> RefEdit {
+        RefEdit {
+            change: Change::Delete {
+                expected: PreviousValue::Any,
+                log: RefLog::AndReference,
+            },
+            name: name.try_into().expect("valid name"),
+            deref: false,
         }
     }
 

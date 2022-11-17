@@ -13,12 +13,19 @@ use crate::{
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Failed to configure the transport before connecting to {url:?}")]
+    GatherTransportConfig {
+        url: BString,
+        source: crate::config::transport::Error,
+    },
+    #[error("Failed to configure the transport layer")]
+    ConfigureTransport(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error(transparent)]
-    Handshake(#[from] git_protocol::fetch::handshake::Error),
+    Handshake(#[from] git_protocol::handshake::Error),
     #[error("The object format {format:?} as used by the remote is unsupported")]
     UnknownObjectFormat { format: BString },
     #[error(transparent)]
-    ListRefs(#[from] git_protocol::fetch::refs::Error),
+    ListRefs(#[from] git_protocol::ls_refs::Error),
     #[error(transparent)]
     Transport(#[from] git_protocol::transport::client::Error),
     #[error(transparent)]
@@ -65,11 +72,15 @@ where
     ///
     /// Due to management of the transport, it's cleanest to only use it for a single interaction. Thus it's consumed along with
     /// the connection.
+    ///
+    /// ### Configuration
+    ///
+    /// - `gitoxide.userAgent` is read to obtain the application user agent for git servers and for HTTP servers as well.
     #[allow(clippy::result_large_err)]
     #[git_protocol::maybe_async::maybe_async]
     pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap, Error> {
         let res = self.ref_map_inner(options).await;
-        git_protocol::fetch::indicate_end_of_interaction(&mut self.transport)
+        git_protocol::indicate_end_of_interaction(&mut self.transport)
             .await
             .ok();
         res
@@ -135,6 +146,7 @@ where
         extra_parameters: Vec<(String, Option<String>)>,
     ) -> Result<HandshakeWithRefs, Error> {
         let mut credentials_storage;
+        let url = self.transport.to_url();
         let authenticate = match self.authenticate.as_mut() {
             Some(f) => f,
             None => {
@@ -142,14 +154,25 @@ where
                     .remote
                     .url(Direction::Fetch)
                     .map(ToOwned::to_owned)
-                    .unwrap_or_else(|| {
-                        git_url::parse(self.transport.to_url().as_bytes().into())
-                            .expect("valid URL to be provided by transport")
-                    });
+                    .unwrap_or_else(|| git_url::parse(url.as_ref()).expect("valid URL to be provided by transport"));
                 credentials_storage = self.configured_credentials(url)?;
                 &mut credentials_storage
             }
         };
+
+        if self.transport_options.is_none() {
+            self.transport_options =
+                self.remote
+                    .repo
+                    .transport_options(url.as_ref())
+                    .map_err(|err| Error::GatherTransportConfig {
+                        source: err,
+                        url: url.into_owned(),
+                    })?;
+        }
+        if let Some(config) = self.transport_options.as_ref() {
+            self.transport.configure(&**config)?;
+        }
         let mut outcome =
             git_protocol::fetch::handshake(&mut self.transport, authenticate, extra_parameters, &mut self.progress)
                 .await?;
@@ -157,11 +180,12 @@ where
             Some(refs) => refs,
             None => {
                 let specs = &self.remote.fetch_specs;
-                git_protocol::fetch::refs(
+                let agent_feature = self.remote.repo.config.user_agent_tuple();
+                git_protocol::ls_refs(
                     &mut self.transport,
-                    outcome.server_protocol_version,
                     &outcome.capabilities,
-                    |_capabilities, arguments, _features| {
+                    move |_capabilities, arguments, features| {
+                        features.push(agent_feature);
                         if filter_by_prefix {
                             let mut seen = HashSet::new();
                             for spec in specs {
@@ -176,7 +200,7 @@ where
                                 }
                             }
                         }
-                        Ok(git_protocol::fetch::delegate::LsRefsAction::Continue)
+                        Ok(git_protocol::ls_refs::Action::Continue)
                     },
                     &mut self.progress,
                 )
@@ -191,7 +215,7 @@ where
 #[allow(clippy::result_large_err)]
 fn extract_object_format(
     _repo: &crate::Repository,
-    outcome: &git_protocol::fetch::handshake::Outcome,
+    outcome: &git_protocol::handshake::Outcome,
 ) -> Result<git_hash::Kind, Error> {
     use bstr::ByteSlice;
     let object_hash =

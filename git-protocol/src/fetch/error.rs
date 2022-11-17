@@ -2,7 +2,8 @@ use std::io;
 
 use git_transport::client;
 
-use crate::fetch::{handshake, refs, response};
+use crate::fetch::response;
+use crate::{handshake, ls_refs};
 
 /// The error used in [`fetch()`][crate::fetch()].
 #[derive(Debug, thiserror::Error)]
@@ -15,7 +16,7 @@ pub enum Error {
     #[error(transparent)]
     Transport(#[from] client::Error),
     #[error(transparent)]
-    Refs(#[from] refs::Error),
+    LsRefs(#[from] ls_refs::Error),
     #[error(transparent)]
     Response(#[from] response::Error),
 }

@@ -13,5 +13,6 @@ impl std::fmt::Debug for Cache {
 
 mod access;
 
-mod util;
+pub(crate) mod util;
+
 pub(crate) use util::interpolate_context;

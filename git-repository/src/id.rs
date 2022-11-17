@@ -158,6 +158,12 @@ mod impls {
         }
     }
 
+    impl<'repo> std::fmt::Display for Id<'repo> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            self.inner.fmt(f)
+        }
+    }
+
     impl<'repo> AsRef<oid> for Id<'repo> {
         fn as_ref(&self) -> &oid {
             &self.inner

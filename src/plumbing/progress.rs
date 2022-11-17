@@ -6,20 +6,18 @@ use tabled::{Style, TableIteratorExt, Tabled};
 
 #[derive(Clone)]
 enum Usage {
-    NotApplicable {
-        reason: &'static str,
-    },
-    NotPlanned {
-        reason: &'static str,
-    },
-    Planned {
-        note: Option<&'static str>,
-    },
+    /// It's not reasonable to implement it as the prerequisites don't apply.
+    NotApplicable { reason: &'static str },
+    /// We have no intention to implement it, but that can change if there is demand.
+    NotPlanned { reason: &'static str },
+    /// We definitely want to implement this configuration value.
+    Planned { note: Option<&'static str> },
+    /// The configuration is already effective and used (at least) in the given module `name`.
     InModule {
         name: &'static str,
         deviation: Option<&'static str>,
     },
-    /// Needs analysis
+    /// Needs analysis, unclear how it works or what it does.
     Puzzled,
 }
 use Usage::*;
@@ -73,7 +71,15 @@ impl Tabled for Record {
 
     fn fields(&self) -> Vec<String> {
         let mut tokens = self.config.split('.');
-        let mut buf = vec![tokens.next().expect("present").bold().to_string()];
+        let mut buf = vec![{
+            let name = tokens.next().expect("present");
+            if name == "gitoxide" {
+                name.bold().green()
+            } else {
+                name.bold()
+            }
+            .to_string()
+        }];
         buf.extend(tokens.map(ToOwned::to_owned));
 
         vec![self.usage.icon().into(), buf.join("."), self.usage.to_string()]
@@ -321,7 +327,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "diff.algorithm",
-        usage: InModule {name: "config::cache::access", deviation: Some("'patience' diff is not implemented and can default to 'histogram' if lenient config is used")},
+        usage: InModule {name: "config::cache::access", deviation: Some("'patience' diff is not implemented and can default to 'histogram' if lenient config is used, and defaults to histogram if unset for fastest and best results")},
     },
     Record {
         config: "extensions.objectFormat",
@@ -545,6 +551,154 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned { note: Some("once V4 indices can be written, we need to be able to set a desired version. For now we write the smallest possible index version only.") },
     },
     Record {
+        config: "http.proxy",
+        usage: InModule { name: "repository::config::transport", deviation: Some("ignores strings with illformed UTF-8") }
+    },
+    Record {
+        config: "http.extraHeader",
+        usage: InModule { name: "repository::config::transport", deviation: Some("ignores strings with illformed UTF-8") }
+    },
+    Record {
+        config: "http.proxyAuthMethod",
+        usage: Planned { note: None },
+    },
+    Record {
+        config: "http.proxySSLCert",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.proxySSLKey",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.proxySSLCertPasswordProtected",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.proxySSLCAInfo",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.emptyAuth",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.delegation",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.cookieFile",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.saveCookies",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.version",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.curloptResolve",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslVersion",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslCipherList",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslCipherList",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslVerify",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslCert",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslKey",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslCertPasswordProtected",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslCertPasswordProtected",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslCAInfo",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslCAPath",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslBackend",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.schannelCheckRevoke",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.schannelUseSSLCAInfo",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.pinnedPubkey",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.sslTry",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.maxRequests",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.minSessions",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.postBuffer",
+        usage: Planned { note: Some("relevant when implementing push, we should understand how memory allocation works when streaming") }
+    },
+    Record {
+        config: "http.lowSpeedLimit",
+        usage: InModule { name: "repository::config::transport", deviation: Some("fails on negative values") }
+    },
+    Record {
+        config: "http.lowSpeedTime",
+        usage: InModule { name: "repository::config::transport", deviation: Some("fails on negative values") }
+    },
+    Record {
+        config: "http.userAgent",
+        usage: InModule { name: "repository::config::transport", deviation: Some("ignores strings with illformed UTF-8") }
+    },
+    Record {
+        config: "http.noEPSV",
+        usage: NotPlanned { reason: "on demand" }
+    },
+    Record {
+        config: "http.followRedirects",
+        usage: InModule { name: "repository::config::transport", deviation: None }
+    },
+    Record {
+        config: "http.<url>.*",
+        usage: Planned { note: Some("it's a vital part of git configuration. It's unclear how to get a baseline from git for this one.") }
+    },
+    Record {
         config: "sparse.expectFilesOutsideOfPatterns",
         usage: NotPlanned { reason: "todo" },
     },
@@ -559,6 +713,38 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned {
             note: Some("required for big monorepos, and typically used in conjunction with sparse indices")
         }
+    },
+    Record {
+        config: "remote.<name>.proxy",
+        usage: Planned {
+            note: None
+        }
+    },
+    Record {
+        config: "remote.<name>.proxyAuthMethod",
+        usage: Planned {
+            note: None
+        }
+    },
+    Record {
+        config: "gitoxide.userAgent",
+        usage: InModule {
+            name: "remote::connection",
+            deviation: None
+        }
+    },
+    Record {
+        config: "gitoxide.http.noProxy",
+        usage: NotPlanned {
+            reason: "on demand, without it it's not possible to implement environment overrides via `no_proxy` or `NO_PROXY` for a list of hostnames or `*`"
+        }
+    },
+    Record {
+        config: "gitoxide.http.connectTimeout",
+        usage: InModule {
+            name: "repository::config::transport",
+            deviation: Some("entirely new, and in milliseconds like all other timeout suffixed variables in the git config")
+        }
     }
 ];
 
@@ -572,7 +758,7 @@ pub fn show_progress() -> anyhow::Result<()> {
 
     println!("{}", sorted.table().with(Style::blank()));
     println!(
-        "\nTotal records: {} ({perfect_icon} = {perfect}, {deviation_icon} = {deviation}, {planned_icon} = {planned})",
+        "\nTotal records: {} ({perfect_icon} = {perfect}, {deviation_icon} = {deviation}, {planned_icon} = {planned}, {ondemand_icon} = {ondemand}, {not_applicable_icon} = {not_applicable})",
         GIT_CONFIG.len(),
         perfect_icon = InModule {
             name: "",
@@ -586,6 +772,8 @@ pub fn show_progress() -> anyhow::Result<()> {
         .icon(),
         planned_icon = Planned { note: None }.icon(),
         planned = GIT_CONFIG.iter().filter(|e| matches!(e.usage, Planned { .. })).count(),
+        ondemand_icon = NotPlanned { reason: "" }.icon(),
+        not_applicable_icon = NotApplicable { reason: "" }.icon(),
         perfect = GIT_CONFIG
             .iter()
             .filter(|e| matches!(e.usage, InModule { deviation, .. } if deviation.is_none()))
@@ -593,6 +781,14 @@ pub fn show_progress() -> anyhow::Result<()> {
         deviation = GIT_CONFIG
             .iter()
             .filter(|e| matches!(e.usage, InModule { deviation, .. } if deviation.is_some()))
+            .count(),
+        ondemand = GIT_CONFIG
+            .iter()
+            .filter(|e| matches!(e.usage, NotPlanned { .. }))
+            .count(),
+        not_applicable = GIT_CONFIG
+            .iter()
+            .filter(|e| matches!(e.usage, NotApplicable { .. }))
             .count()
     );
     Ok(())

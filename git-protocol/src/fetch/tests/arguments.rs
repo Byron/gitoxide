@@ -18,11 +18,13 @@ struct Transport<T> {
 
 #[cfg(feature = "blocking-client")]
 mod impls {
+    use bstr::BStr;
     use git_transport::{
         client,
         client::{Error, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
+    use std::borrow::Cow;
 
     use crate::fetch::tests::arguments::Transport;
 
@@ -35,7 +37,7 @@ mod impls {
             self.inner.request(write_mode, on_into_read)
         }
 
-        fn to_url(&self) -> String {
+        fn to_url(&self) -> Cow<'_, BStr> {
             self.inner.to_url()
         }
 
@@ -69,11 +71,13 @@ mod impls {
 #[cfg(feature = "async-client")]
 mod impls {
     use async_trait::async_trait;
+    use bstr::BStr;
     use git_transport::{
         client,
         client::{Error, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
+    use std::borrow::Cow;
 
     use crate::fetch::tests::arguments::Transport;
     impl<T: client::TransportWithoutIO + Send> client::TransportWithoutIO for Transport<T> {
@@ -85,7 +89,7 @@ mod impls {
             self.inner.request(write_mode, on_into_read)
         }
 
-        fn to_url(&self) -> String {
+        fn to_url(&self) -> Cow<'_, BStr> {
             self.inner.to_url()
         }
 

@@ -39,6 +39,7 @@ impl<'repo> Remote<'repo> {
         Connection {
             remote: self,
             authenticate: None,
+            transport_options: None,
             transport,
             progress,
         }

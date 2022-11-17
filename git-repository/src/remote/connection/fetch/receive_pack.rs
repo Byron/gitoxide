@@ -56,6 +56,11 @@ where
     ///
     /// Currently the entire process of resolving a pack is blocking the executor. This can be fixed using the `blocking` crate, but it
     /// didn't seem worth the tradeoff of having more complex code.
+    ///
+    /// ### Configuration
+    ///
+    /// - `gitoxide.userAgent` is read to obtain the application user agent for git servers and for HTTP servers as well.
+    ///
     #[git_protocol::maybe_async::maybe_async]
     pub async fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome, Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
@@ -63,16 +68,20 @@ where
         let handshake = &self.ref_map.handshake;
         let protocol_version = handshake.server_protocol_version;
 
-        let fetch = git_protocol::fetch::Command::Fetch;
-        let fetch_features = fetch.default_features(protocol_version, &handshake.capabilities);
+        let fetch = git_protocol::Command::Fetch;
+        let progress = &mut con.progress;
+        let repo = con.remote.repo;
+        let fetch_features = {
+            let mut f = fetch.default_features(protocol_version, &handshake.capabilities);
+            f.push(repo.config.user_agent_tuple());
+            f
+        };
 
         git_protocol::fetch::Response::check_required_features(protocol_version, &fetch_features)?;
         let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
         let mut arguments = git_protocol::fetch::Arguments::new(protocol_version, fetch_features);
         let mut previous_response = None::<git_protocol::fetch::Response>;
         let mut round = 1;
-        let progress = &mut con.progress;
-        let repo = con.remote.repo;
 
         if self.ref_map.object_hash != repo.object_hash() {
             return Err(Error::IncompatibleObjectHash {
@@ -94,9 +103,7 @@ where
                 previous_response.as_ref(),
             ) {
                 Ok(_) if arguments.is_empty() => {
-                    git_protocol::fetch::indicate_end_of_interaction(&mut con.transport)
-                        .await
-                        .ok();
+                    git_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
                     return Ok(Outcome {
                         ref_map: std::mem::take(&mut self.ref_map),
                         status: Status::NoChange,
@@ -104,9 +111,7 @@ where
                 }
                 Ok(is_done) => is_done,
                 Err(err) => {
-                    git_protocol::fetch::indicate_end_of_interaction(&mut con.transport)
-                        .await
-                        .ok();
+                    git_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
                     return Err(err.into());
                 }
             };
@@ -160,9 +165,7 @@ where
         };
 
         if matches!(protocol_version, git_protocol::transport::Protocol::V2) {
-            git_protocol::fetch::indicate_end_of_interaction(&mut con.transport)
-                .await
-                .ok();
+            git_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
         }
 
         let update_refs = refs::update(
@@ -173,6 +176,7 @@ where
             &self.ref_map.mappings,
             con.remote.refspecs(remote::Direction::Fetch),
             self.dry_run,
+            self.write_packed_refs,
         )?;
 
         if let Some(bundle) = write_pack_bundle.as_mut() {

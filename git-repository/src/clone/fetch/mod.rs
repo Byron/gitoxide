@@ -103,6 +103,7 @@ impl PrepareFetch {
             b
         };
         let outcome = pending_pack
+            .with_write_packed_refs_only(true)
             .with_reflog_message(RefLogMessage::Override {
                 message: reflog_message.clone(),
             })

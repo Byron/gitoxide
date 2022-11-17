@@ -92,6 +92,7 @@ pub struct Request {
     pub url: String,
     pub headers: curl::easy::List,
     pub upload: bool,
+    pub config: http::Options,
 }
 
 pub struct Response {
@@ -110,19 +111,60 @@ pub fn new() -> (
     let handle = std::thread::spawn(move || -> Result<(), curl::Error> {
         let mut handle = Easy2::new(Handler::default());
 
-        for Request { url, headers, upload } in req_recv {
+        for Request {
+            url,
+            mut headers,
+            upload,
+            config:
+                http::Options {
+                    extra_headers,
+                    follow_redirects: _,
+                    low_speed_limit_bytes_per_second,
+                    low_speed_time_seconds,
+                    connect_timeout,
+                    proxy,
+                    proxy_auth_method: _,
+                    user_agent,
+                    backend: _,
+                },
+        } in req_recv
+        {
             handle.url(&url)?;
 
             // GitHub sends 'chunked' to avoid unknown clients to choke on the data, I suppose
             handle.post(upload)?;
+            for header in extra_headers {
+                headers.append(&header)?;
+            }
+            if let Some(proxy) = proxy {
+                handle.proxy(&proxy)?;
+                let proxy_type = if proxy.starts_with("socks5h") {
+                    curl::easy::ProxyType::Socks5Hostname
+                } else if proxy.starts_with("socks5") {
+                    curl::easy::ProxyType::Socks5
+                } else if proxy.starts_with("socks4a") {
+                    curl::easy::ProxyType::Socks4a
+                } else if proxy.starts_with("socks") {
+                    curl::easy::ProxyType::Socks4
+                } else {
+                    curl::easy::ProxyType::Http
+                };
+                handle.proxy_type(proxy_type)?;
+            }
+            if let Some(user_agent) = user_agent {
+                handle.useragent(&user_agent)?;
+            }
             handle.http_headers(headers)?;
             handle.transfer_encoding(false)?;
-            handle.connect_timeout(Duration::from_secs(20))?;
-            // handle.proxy("http://localhost:9090")?; // DEBUG
-            let low_bytes_per_second = 1024;
-            handle.low_speed_limit(low_bytes_per_second)?;
-            handle.low_speed_time(Duration::from_secs(20))?;
+            if let Some(timeout) = connect_timeout {
+                handle.connect_timeout(timeout)?;
+            }
+            handle.tcp_keepalive(true)?;
 
+            if low_speed_time_seconds > 0 && low_speed_limit_bytes_per_second > 0 {
+                handle.low_speed_limit(low_speed_limit_bytes_per_second)?;
+                handle.low_speed_time(Duration::from_secs(low_speed_time_seconds))?;
+            }
             let (receive_data, receive_headers, send_body) = {
                 let handler = handle.get_mut();
                 let (send, receive_data) = pipe::unidirectional(1);

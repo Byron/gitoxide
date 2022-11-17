@@ -101,7 +101,6 @@ pub mod create_or_update {
         pub(crate) fn reflog_create_or_append(
             &self,
             name: &FullNameRef,
-            _lock: &git_lock::Marker,
             previous_oid: Option<ObjectId>,
             new: &oid,
             committer: git_actor::SignatureRef<'_>,

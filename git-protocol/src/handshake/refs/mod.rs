@@ -1,21 +1,5 @@
-use bstr::{BStr, BString};
-
-mod error {
-    use crate::fetch::refs::parse;
-
-    /// The error returned by [refs()][crate::fetch::refs()].
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        Io(#[from] std::io::Error),
-        #[error(transparent)]
-        Transport(#[from] git_transport::client::Error),
-        #[error(transparent)]
-        Parse(#[from] parse::Error),
-    }
-}
-pub use error::Error;
+use super::Ref;
+use bstr::BStr;
 
 ///
 pub mod parse {
@@ -44,49 +28,6 @@ pub mod parse {
     }
 }
 
-/// A git reference, commonly referred to as 'ref', as returned by a git server before sending a pack.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum Ref {
-    /// A ref pointing to a `tag` object, which in turns points to an `object`, usually a commit
-    Peeled {
-        /// The name at which the ref is located, like `refs/tags/1.0`.
-        full_ref_name: BString,
-        /// The hash of the tag the ref points to.
-        tag: git_hash::ObjectId,
-        /// The hash of the object the `tag` points to.
-        object: git_hash::ObjectId,
-    },
-    /// A ref pointing to a commit object
-    Direct {
-        /// The name at which the ref is located, like `refs/heads/main`.
-        full_ref_name: BString,
-        /// The hash of the object the ref points to.
-        object: git_hash::ObjectId,
-    },
-    /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
-    Symbolic {
-        /// The name at which the symbolic ref is located, like `HEAD`.
-        full_ref_name: BString,
-        /// The path of the ref the symbolic ref points to, like `refs/heads/main`.
-        ///
-        /// See issue [#205] for details
-        ///
-        /// [#205]: https://github.com/Byron/gitoxide/issues/205
-        target: BString,
-        /// The hash of the object the `target` ref points to.
-        object: git_hash::ObjectId,
-    },
-    /// A ref is unborn on the remote and just points to the initial, unborn branch, as is the case in a newly initialized repository
-    /// or dangling symbolic refs.
-    Unborn {
-        /// The name at which the ref is located, typically `HEAD`.
-        full_ref_name: BString,
-        /// The path of the ref the symbolic ref points to, like `refs/heads/main`, even though the `target` does not yet exist.
-        target: BString,
-    },
-}
-
 impl Ref {
     /// Provide shared fields referring to the ref itself, namely `(name, target, [peeled])`.
     /// In case of peeled refs, the tag object itself is returned as it is what the ref directly refers to, and target of the tag is returned
@@ -110,8 +51,6 @@ impl Ref {
         }
     }
 }
-
-pub(crate) mod function;
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub(crate) mod shared;

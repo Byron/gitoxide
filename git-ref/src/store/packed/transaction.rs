@@ -1,3 +1,4 @@
+use std::fmt::Formatter;
 use std::io::Write;
 
 use crate::{
@@ -21,6 +22,15 @@ impl packed::Transaction {
             lock: Some(lock),
             closed_lock: None,
         }
+    }
+}
+
+impl std::fmt::Debug for packed::Transaction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("packed::Transaction")
+            .field("edits", &self.edits.as_ref().map(|e| e.len()))
+            .field("lock", &self.lock)
+            .finish_non_exhaustive()
     }
 }
 

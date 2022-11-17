@@ -1,5 +1,6 @@
 use git_hash::ObjectId;
 use git_object::bstr::BString;
+use std::fmt::Formatter;
 
 use crate::{
     store_impl::{file, file::Transaction},
@@ -24,6 +25,7 @@ pub enum PackedRefs<'a> {
     DeletionsAndNonSymbolicUpdates(Box<FindObjectFn<'a>>),
     /// Propagate deletions as well as updates to references which are peeled, that is contain an object id. Furthermore delete the
     /// reference which is originally updated if it exists. If it doesn't, the new value will be written into the packed ref right away.
+    /// Note that this doesn't affect symbolic references at all, which can't be placed into packed refs.
     DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box<FindObjectFn<'a>>),
 }
 
@@ -86,6 +88,15 @@ impl<'s, 'p> Transaction<'s, 'p> {
     pub fn packed_refs(mut self, packed_refs: PackedRefs<'p>) -> Self {
         self.packed_refs = packed_refs;
         self
+    }
+}
+
+impl std::fmt::Debug for Transaction<'_, '_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Transaction")
+            .field("store", self.store)
+            .field("edits", &self.updates.as_ref().map(|u| u.len()))
+            .finish_non_exhaustive()
     }
 }
 

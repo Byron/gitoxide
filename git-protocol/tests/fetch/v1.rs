@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
 use git_features::progress;
-use git_protocol::{fetch, FetchConnection};
+use git_protocol::{handshake, FetchConnection};
 use git_transport::Protocol;
 
 use crate::fetch::{helper_unused, oid, transport, CloneDelegate, LsRemoteDelegate};
@@ -25,6 +25,7 @@ async fn clone() -> crate::Result {
             helper_unused,
             progress::Discard,
             FetchConnection::TerminateOnSuccessfulCompletion,
+            "agent",
         )
         .await?;
         assert_eq!(dlg.pack_bytes, 876, "{}: It be able to read pack bytes", fixture);
@@ -48,18 +49,19 @@ async fn ls_remote() -> crate::Result {
         helper_unused,
         progress::Discard,
         FetchConnection::AllowReuse,
+        "agent",
     )
     .await?;
 
     assert_eq!(
         delegate.refs,
         vec![
-            fetch::Ref::Symbolic {
+            handshake::Ref::Symbolic {
                 full_ref_name: "HEAD".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb"),
                 target: "refs/heads/master".into()
             },
-            fetch::Ref::Direct {
+            handshake::Ref::Direct {
                 full_ref_name: "refs/heads/master".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             }
@@ -89,6 +91,7 @@ async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
         helper_unused,
         progress::Discard,
         FetchConnection::AllowReuse,
+        "agent",
     )
     .await
     {
