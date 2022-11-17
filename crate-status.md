@@ -175,7 +175,6 @@ Check out the [performance discussion][git-traverse-performance] as well.
             * [x] send command request, receive response with sideband support
     * [x] http(s)://<service>
         * [x] set identity for basic authentication
-            * [ ] redo authentication for [redirected urls](https://github.com/git/git/blob/eea7033409a0ed713c78437fc76486983d211e25/http.c#L1931) by passing effective url back to HTTP base layer.
         * [x] V1 handshake
             * [x] send values + receive data with sidebands
         * [x] V2 handshake
@@ -187,6 +186,22 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [ ] general purpose `accept(…)` for servers
 * [x] API documentation
     * [ ] Some examples
+    
+#### Advanced HTTP transport features
+
+| **feature** | **curl** | **reqwest** |
+|-------------|----------|-------------|
+|      01     |          |             |
+|      02     |     X    |             |
+|      03     |          |      X      |
+|      04     |          |             |
+|      05     |          |             |
+
+* **01** -> async
+* **02** -> proxy support
+* **03** -> custom request configuration via fn(request)
+* **04** -> proxy authentication
+* **05** -> [reauthentication after redirect](https://github.com/git/git/blob/eea7033409a0ed713c78437fc76486983d211e25/http.c#L1931)
     
 ### git-protocol
 * _abstract over protocol versions to allow delegates to deal only with a single way of doing things_
