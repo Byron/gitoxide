@@ -98,7 +98,7 @@ pub struct Options {
     /// The way to authenticate against the proxy if the `proxy` field contains a username.
     ///
     /// Refers to `http.proxyAuthMethod`.
-    pub proxy_auth_method: Option<options::ProxyAuthMethod>,
+    pub proxy_auth_method: options::ProxyAuthMethod,
     /// The `HTTP` `USER_AGENT` string presented to an `HTTP` server, notably not the user agent present to the `git` server.
     ///
     /// If not overridden, it defaults to the user agent provided by `curl`, which is a deviation from how `git` handles this.

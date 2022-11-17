@@ -1,4 +1,5 @@
 use crate::bstr::BStr;
+use git_transport::client::http::options::ProxyAuthMethod;
 use std::any::Any;
 
 impl crate::Repository {
@@ -143,6 +144,26 @@ impl crate::Repository {
                                 proxy
                             }
                         });
+                    opts.proxy_auth_method = config
+                        .string_filter("http", None, "proxyAuthMethod", &mut trusted_only)
+                        .and_then(|v| try_cow_to_string(v, lenient, "http.proxyAuthMethod").transpose())
+                        .transpose()?
+                        .map(|method| {
+                            Ok(match method.as_str() {
+                                "anyauth" => ProxyAuthMethod::AnyAuth,
+                                "basic" => ProxyAuthMethod::Basic,
+                                "digest" => ProxyAuthMethod::Digest,
+                                "negotiate" => ProxyAuthMethod::Negotiate,
+                                "ntlm" => ProxyAuthMethod::Ntlm,
+                                _ => {
+                                    return Err(crate::config::transport::http::Error::InvalidProxyAuthMethod {
+                                        value: method,
+                                    })
+                                }
+                            })
+                        })
+                        .transpose()?
+                        .unwrap_or_default();
                     opts.connect_timeout =
                         integer_opt(config, lenient, "gitoxide.http.connectTimeout", "u64", trusted_only)?
                             .map(std::time::Duration::from_millis);

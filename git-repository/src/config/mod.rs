@@ -145,8 +145,8 @@ pub mod transport {
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
-            #[error("TBD")]
-            TBD,
+            #[error("The proxy authentication method name {value:?} is invalid")]
+            InvalidProxyAuthMethod { value: String },
         }
     }
 }

@@ -11,7 +11,7 @@ git init http-config
   git config http.lowSpeedTime 10
   git config http.postBuffer 8k
   git config http.proxy http://localhost:9090
-  git config http.proxyAuthMethod anyauth
+  git config http.proxyAuthMethod basic
   git config http.userAgent agentJustForHttp
   git config gitoxide.http.connectTimeout 60k
 )

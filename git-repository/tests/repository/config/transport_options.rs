@@ -44,9 +44,8 @@ mod http {
         assert_eq!(low_speed_time_seconds, 10);
         assert_eq!(proxy.as_deref(), Some("http://localhost:9090"),);
         assert_eq!(
-            proxy_auth_method.as_ref(),
-            // Some(&git_transport::client::http::options::ProxyAuthMethod::AnyAuth)
-            None,
+            proxy_auth_method,
+            git_transport::client::http::options::ProxyAuthMethod::Basic,
             "TODO: implement auth"
         );
         assert_eq!(user_agent.as_deref(), Some("agentJustForHttp"));

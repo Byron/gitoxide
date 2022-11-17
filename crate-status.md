@@ -175,6 +175,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
             * [x] send command request, receive response with sideband support
     * [x] http(s)://<service>
         * [x] set identity for basic authentication
+            * [ ] redo authentication for [redirected urls](https://github.com/git/git/blob/eea7033409a0ed713c78437fc76486983d211e25/http.c#L1931) by passing effective url back to HTTP base layer.
         * [x] V1 handshake
             * [x] send values + receive data with sidebands
         * [x] V2 handshake
