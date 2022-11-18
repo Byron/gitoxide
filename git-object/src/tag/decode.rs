@@ -53,7 +53,8 @@ pub fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&
     let (i, _) = tag(NL)(i)?;
     fn all_to_end<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], &'a [u8]), E> {
         if i.is_empty() {
-            return Err(nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::Eof)));
+            // Empty message. That's OK.
+            return Ok((&[], (&[], &[])));
         }
         // an empty signature message signals that there is none - the function signature is needed
         // to work with 'alt(…)'. PGP signatures are never empty
