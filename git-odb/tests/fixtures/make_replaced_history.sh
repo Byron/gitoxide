@@ -3,6 +3,7 @@ set -eu -o pipefail
 
 git init -q
 git config commit.gpgsign false
+git config tag.gpgsign false
 
 echo "#include <stdio.h>" > file.c && git add file.c
 git commit -m "Initial commit"

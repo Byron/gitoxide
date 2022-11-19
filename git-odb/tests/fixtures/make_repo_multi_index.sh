@@ -5,6 +5,7 @@ omit_multi_index=${1:-no}
 
 git init -q
 git config commit.gpgsign false
+git config tag.gpgsign false
 
 function write_files() {
   local base_dir=${1:?directory to write them into}

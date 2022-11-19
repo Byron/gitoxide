@@ -382,13 +382,15 @@ fn scripted_fixture_repo_read_only_with_args_inner(
                     .env("GIT_COMMITTER_DATE", "2000-01-02 00:00:00 +0000")
                     .env("GIT_COMMITTER_EMAIL", "committer@example.com")
                     .env("GIT_COMMITTER_NAME", "committer")
-                    .env("GIT_CONFIG_COUNT", "3")
+                    .env("GIT_CONFIG_COUNT", "4")
                     .env("GIT_CONFIG_KEY_0", "commit.gpgsign")
                     .env("GIT_CONFIG_VALUE_0", "false")
-                    .env("GIT_CONFIG_KEY_1", "init.defaultBranch")
-                    .env("GIT_CONFIG_VALUE_1", "main")
-                    .env("GIT_CONFIG_KEY_2", "protocol.file.allow")
-                    .env("GIT_CONFIG_VALUE_2", "always")
+                    .env("GIT_CONFIG_KEY_1", "tag.gpgsign")
+                    .env("GIT_CONFIG_VALUE_1", "false")
+                    .env("GIT_CONFIG_KEY_2", "init.defaultBranch")
+                    .env("GIT_CONFIG_VALUE_2", "main")
+                    .env("GIT_CONFIG_KEY_3", "protocol.file.allow")
+                    .env("GIT_CONFIG_VALUE_3", "always")
                     .output()?;
                 if !output.status.success() {
                     write_failure_marker(&failure_marker);

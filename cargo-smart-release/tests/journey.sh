@@ -28,6 +28,7 @@ function set-static-git-environment() {
 function init-git-repo() {
   git init . &&
   git config commit.gpgsign false &&
+  git config tag.gpgsign false &&
   git add . && git commit -q -m "initial"
 }
 

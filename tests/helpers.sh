@@ -30,6 +30,7 @@ function repo-with-remotes() {
         shift 2
     done
     git config commit.gpgsign false
+    git config tag.gpgsign false
     touch a
     git add a
     git commit -m "non-bare"
@@ -42,6 +43,7 @@ function small-repo-in-sandbox() {
     git init
     git checkout -b main
     git config commit.gpgsign false
+    git config tag.gpgsign false
     touch a
     git add a
     git commit -m "first"
