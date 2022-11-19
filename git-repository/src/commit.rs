@@ -99,14 +99,16 @@ pub mod describe {
                             .into()
                     })
                     .collect();
-                    // By priority, then by time ascending, then lexigraphically.
-                    // Older entries overwrite older ones.
-                    refs.sort_by(|(_, a_time, a_prio, a_name), (_, b_time, b_prio, b_name)| {
-                        a_prio
-                            .cmp(b_prio)
-                            .then_with(|| a_time.cmp(b_time))
-                            .then_with(|| b_name.cmp(a_name))
-                    });
+                    // By priority, then by time ascending, then lexicographically.
+                    // More recent entries overwrite older ones.
+                    refs.sort_by(
+                        |(_a_peeled_id, a_time, a_prio, a_name), (_b_peeled_id, b_time, b_prio, b_name)| {
+                            a_prio
+                                .cmp(b_prio)
+                                .then_with(|| a_time.cmp(b_time))
+                                .then_with(|| b_name.cmp(a_name))
+                        },
+                    );
                     refs.into_iter().map(|(a, _, _, b)| (a, b)).collect()
                 }
                 SelectRef::AnnotatedTags => {
@@ -126,8 +128,8 @@ pub mod describe {
                             Some((commit_id, tag_time, Cow::<BStr>::from(r.name().shorten().to_owned())))
                         })
                         .collect();
-                    // Sort by priority, then by time ascending, then lexigraphically.
-                    // Older entries overwrite older ones.
+                    // Sort by priority, then by time ascending, then lexicographically.
+                    // More recent entries overwrite older ones.
                     peeled_commits_and_tag_date.sort_by(|(a_time, a_prio, a_name), (b_time, b_prio, b_name)| {
                         a_prio
                             .cmp(b_prio)

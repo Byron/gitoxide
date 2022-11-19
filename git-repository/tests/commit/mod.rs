@@ -4,7 +4,7 @@ mod describe {
     use crate::named_repo;
 
     #[test]
-    fn tags_are_sorted_by_date_prio_and_lexigraphically() {
+    fn tags_are_sorted_by_date_prio_and_lexicographically() {
         let repo = named_repo("make_commit_describe_multiple_tags.sh").unwrap();
         let mut describe = repo.head_commit().unwrap().describe();
         for filter in &[AnnotatedTags, AllTags, AllRefs] {
