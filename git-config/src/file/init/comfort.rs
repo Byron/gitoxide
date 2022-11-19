@@ -75,6 +75,7 @@ impl File<'static> {
     ///
     /// - globals
     /// - repository-local by loading `dir`/config
+    /// - worktree by loading `dir`/config.worktree
     /// - environment
     ///
     /// Note that `dir` is the `.git` dir to load the configuration from, not the configuration file.
@@ -95,6 +96,20 @@ impl File<'static> {
             (local, path)
         };
 
+        let worktree = match local.boolean("extensions", None, "worktreeConfig") {
+            Some(Ok(worktree_config)) => worktree_config.then(|| {
+                let source = Source::Worktree;
+                let path = git_dir.join(
+                    source
+                        .storage_location(&mut |n| std::env::var_os(n))
+                        .expect("location available for worktree"),
+                );
+                Self::from_path_no_includes(path, source)
+            }),
+            _ => None,
+        }
+        .transpose()?;
+
         let home = std::env::var("HOME").ok().map(PathBuf::from);
         let options = init::Options {
             includes: init::includes::Options::follow(
@@ -114,7 +129,13 @@ impl File<'static> {
         globals.resolve_includes(options)?;
         local.resolve_includes(options)?;
 
-        globals.append(local).append(Self::from_environment_overrides()?);
+        globals.append(local);
+        if let Some(mut worktree) = worktree {
+            worktree.resolve_includes(options)?;
+            globals.append(worktree);
+        }
+        globals.append(Self::from_environment_overrides()?);
+
         Ok(globals)
     }
 }
