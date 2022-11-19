@@ -306,7 +306,7 @@ For additional details, also take a look at the [collaboration guide].
 ### Getting started with Video Tutorials
 
 - [Learning Rust with Gitoxide](https://youtube.com/playlist?list=PLMHbQxe1e9Mk5kOHrm9v20-umkE2ck_gE)
-   - In 17 episodes you can learn all you need to meaningfully contirbute to `gitoxide`.
+   - In 17 episodes you can learn all you need to meaningfully contribute to `gitoxide`.
 - [Getting into Gitoxide](https://youtube.com/playlist?list=PLMHbQxe1e9MkEmuj9csczEK1O06l0Npy5)
    - Get an introduction to `gitoxide` itself which should be a good foundation for any contribution, but isn't a requirement for contributions either.
 - [Gifting Gitoxide](https://www.youtube.com/playlist?list=PLMHbQxe1e9MlhyyZQXPi_dc-bKudE-WUw)
