@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::{tree, Blob, BlobRef, Commit, CommitRef, Object, ObjectRef, Tag, TagRef, Tree, TreeRef};
+use crate::{bstr::BStr, tree, Blob, BlobRef, Commit, CommitRef, Object, ObjectRef, Tag, TagRef, Tree, TreeRef};
 
 impl From<TagRef<'_>> for Tag {
     fn from(other: TagRef<'_>) -> Tag {
@@ -13,12 +13,33 @@ impl From<TagRef<'_>> for Tag {
             pgp_signature,
         } = other;
         Tag {
-            target: git_hash::ObjectId::from_hex(target).expect("40 bytes hex sha1"),
+            target: target.to_owned(),
             name: name.to_owned(),
             target_kind,
             message: message.to_owned(),
             tagger: signature.map(Into::into),
             pgp_signature: pgp_signature.map(ToOwned::to_owned),
+        }
+    }
+}
+
+impl<'a> From<&'a Tag> for TagRef<'a> {
+    fn from(other: &'a Tag) -> TagRef<'a> {
+        let Tag {
+            target,
+            target_kind,
+            name,
+            tagger,
+            message,
+            pgp_signature,
+        } = other;
+        TagRef {
+            target: target.as_ref(),
+            target_kind: *target_kind,
+            name: name.as_ref(),
+            tagger: tagger.as_ref().map(|s| s.to_ref()),
+            message: message.as_ref(),
+            pgp_signature: pgp_signature.as_deref().map(BStr::new),
         }
     }
 }

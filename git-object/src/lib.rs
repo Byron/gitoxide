@@ -159,8 +159,9 @@ pub struct TagRefIter<'a> {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tag {
-    /// The hash this tag is pointing to.
-    pub target: git_hash::ObjectId,
+    /// The hash this tag is pointing to stored as a 40 bytes hexadecimal representation from which an `ObjectId`
+    /// can be constructed. Use `.target()` to access that `ObjectId`
+    pub target: BString,
     /// The kind of object this tag is pointing to.
     pub target_kind: crate::Kind,
     /// The name of the tag, e.g. "v1.0".
@@ -171,6 +172,13 @@ pub struct Tag {
     pub message: BString,
     /// A pgp signature over all bytes of the encoded tag, excluding the pgp signature itself.
     pub pgp_signature: Option<BString>,
+}
+
+impl Tag {
+    /// The hash this tag is pointing to.
+    pub fn target(&self) -> git_hash::ObjectId {
+        git_hash::ObjectId::from_hex(&self.target).expect("40 bytes hex sha1")
+    }
 }
 
 /// Immutable objects are read-only structures referencing most data from [a byte slice][crate::ObjectRef::from_bytes()].
