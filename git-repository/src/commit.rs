@@ -102,10 +102,10 @@ pub mod describe {
                     // By priority, then by time ascending, then lexicographically.
                     // More recent entries overwrite older ones.
                     refs.sort_by(
-                        |(_a_peeled_id, a_time, a_prio, a_name), (_b_peeled_id, b_time, b_prio, b_name)| {
-                            a_prio
-                                .cmp(b_prio)
-                                .then_with(|| a_time.cmp(b_time))
+                        |(_a_peeled_id, a_prio, a_time, a_name), (_b_peeled_id, b_prio, b_time, b_name)| {
+                            a_time
+                                .cmp(b_time)
+                                .then_with(|| a_prio.cmp(b_prio))
                                 .then_with(|| b_name.cmp(a_name))
                         },
                     );
@@ -130,10 +130,10 @@ pub mod describe {
                         .collect();
                     // Sort by priority, then by time ascending, then lexicographically.
                     // More recent entries overwrite older ones.
-                    peeled_commits_and_tag_date.sort_by(|(a_time, a_prio, a_name), (b_time, b_prio, b_name)| {
-                        a_prio
-                            .cmp(b_prio)
-                            .then_with(|| a_time.cmp(b_time))
+                    peeled_commits_and_tag_date.sort_by(|(_a_id, a_time, a_name), (_b_id, b_time, b_name)| {
+                        a_time
+                            .cmp(b_time)
+                            .then_with(|| _a_id.cmp(_b_id))
                             .then_with(|| b_name.cmp(a_name))
                     });
                     peeled_commits_and_tag_date
