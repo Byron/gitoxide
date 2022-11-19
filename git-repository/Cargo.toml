@@ -5,7 +5,7 @@ description = "Abstractions for git repositories"
 license = "MIT/Apache-2.0"
 version = "0.28.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
-edition = "2018"
+edition = "2021"
 include = ["src/**/*", "CHANGELOG.md"]
 rust-version = "1.60"
 

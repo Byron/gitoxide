@@ -240,7 +240,6 @@ b
 }
 
 fn init_config() -> git_config::File<'static> {
-    use std::convert::TryFrom;
     git_config::File::try_from(
         r#"[core]
             a=b"100"
