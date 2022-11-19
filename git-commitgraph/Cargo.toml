@@ -6,7 +6,7 @@ documentation = "https://git-scm.com/docs/commit-graph#:~:text=The%20commit-grap
 license = "MIT/Apache-2.0"
 description = "Read-only access to the git commitgraph file format"
 authors = ["Conor Davis <gitoxide@conor.fastmail.fm>", "Sebastian Thiel <sebastian.thiel@icloud.com>"]
-edition = "2018"
+edition = "2021"
 include = ["src/**/*", "CHANGELOG.md"]
 
 [lib]

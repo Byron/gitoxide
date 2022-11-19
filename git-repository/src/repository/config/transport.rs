@@ -26,7 +26,6 @@ impl crate::Repository {
                     use crate::config::cache::util::{ApplyLeniency, ApplyLeniencyDefault};
                     use git_transport::client::http;
                     use std::borrow::Cow;
-                    use std::convert::{TryFrom, TryInto};
 
                     fn try_cow_to_string(
                         v: Cow<'_, BStr>,
