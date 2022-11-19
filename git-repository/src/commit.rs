@@ -100,12 +100,12 @@ pub mod describe {
                     })
                     .collect();
                     // By priority, then by time ascending, then lexicographically.
-                    // More recent entries overwrite older ones.
+                    // More recent entries overwrite older ones due to collection into hashmap.
                     refs.sort_by(
                         |(_a_peeled_id, a_prio, a_time, a_name), (_b_peeled_id, b_prio, b_time, b_name)| {
-                            a_time
-                                .cmp(b_time)
-                                .then_with(|| a_prio.cmp(b_prio))
+                            a_prio
+                                .cmp(b_prio)
+                                .then_with(|| a_time.cmp(b_time))
                                 .then_with(|| b_name.cmp(a_name))
                         },
                     );
@@ -128,13 +128,10 @@ pub mod describe {
                             Some((commit_id, tag_time, Cow::<BStr>::from(r.name().shorten().to_owned())))
                         })
                         .collect();
-                    // Sort by priority, then by time ascending, then lexicographically.
-                    // More recent entries overwrite older ones.
+                    // Sort by time ascending, then lexicographically.
+                    // More recent entries overwrite older ones due to collection into hashmap.
                     peeled_commits_and_tag_date.sort_by(|(_a_id, a_time, a_name), (_b_id, b_time, b_name)| {
-                        a_time
-                            .cmp(b_time)
-                            .then_with(|| _a_id.cmp(_b_id))
-                            .then_with(|| b_name.cmp(a_name))
+                        a_time.cmp(b_time).then_with(|| b_name.cmp(a_name))
                     });
                     peeled_commits_and_tag_date
                         .into_iter()
