@@ -8,7 +8,7 @@ use crate::{
 };
 
 /// Options for use in [`Store::at_opts()`].
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Options {
     /// How to obtain a size for the slot map.
     pub slots: Slots,
@@ -16,6 +16,9 @@ pub struct Options {
     pub object_hash: git_hash::Kind,
     /// If false, no multi-pack indices will be used. If true, they will be used if their hash matches `object_hash`.
     pub use_multi_pack_index: bool,
+    /// The current directory of the process at the time of instantiation.
+    /// If unset, it will be retrieved using `std::env::current_dir()`.
+    pub current_dir: Option<std::path::PathBuf>,
 }
 
 impl Default for Options {
@@ -24,6 +27,7 @@ impl Default for Options {
             slots: Default::default(),
             object_hash: Default::default(),
             use_multi_pack_index: true,
+            current_dir: None,
         }
     }
 }
@@ -72,9 +76,11 @@ impl Store {
             slots,
             object_hash,
             use_multi_pack_index,
+            current_dir,
         }: Options,
     ) -> std::io::Result<Self> {
         let objects_dir = objects_dir.into();
+        let current_dir = current_dir.map(Ok).unwrap_or_else(std::env::current_dir)?;
         if !objects_dir.is_dir() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other, // TODO: use NotADirectory when stabilized
@@ -84,7 +90,7 @@ impl Store {
         let slot_count = match slots {
             Slots::Given(n) => n as usize,
             Slots::AsNeededByDiskState { multiplier, minimum } => {
-                let mut db_paths = crate::alternate::resolve(&objects_dir)
+                let mut db_paths = crate::alternate::resolve(&objects_dir, &current_dir)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                 db_paths.insert(0, objects_dir.clone());
                 let num_slots = super::Store::collect_indices_and_mtime_sorted_by_size(db_paths, None, None)
@@ -104,6 +110,7 @@ impl Store {
         replacements.sort_by(|a, b| a.0.cmp(&b.0));
 
         Ok(Store {
+            current_dir,
             write: Default::default(),
             replacements,
             path: objects_dir,
