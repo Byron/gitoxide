@@ -1,6 +1,5 @@
 use std::convert::TryInto;
 
-use crate::bstr::BString;
 use git_hash::{oid, ObjectId};
 use git_odb::{Find, FindExt, Write};
 use git_ref::{
@@ -113,12 +112,12 @@ impl crate::Repository {
         message: impl AsRef<str>,
         constraint: PreviousValue,
     ) -> Result<Reference<'_>, tag::Error> {
-        let mut buf = Vec::with_capacity(40);
-        oid::write_hex_to(target.as_ref(), &mut buf).expect("Failed to write target hash to buffer");
-        let target = BString::new(buf);
+        let target = target.as_ref();
+        let mut target_hex = Vec::with_capacity(target.kind().len_in_hex());
+        oid::write_hex_to(target, &mut target_hex).expect("Failed to write target hash to buffer");
         // NOTE: This could be more efficient if we use a TagRef instead.
         let tag = git_object::Tag {
-            target,
+            target: target_hex.into(),
             target_kind,
             name: name.as_ref().into(),
             tagger: tagger.map(|t| t.to_owned()),

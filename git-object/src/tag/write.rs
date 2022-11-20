@@ -54,6 +54,10 @@ impl<'a> crate::WriteTo for TagRef<'a> {
         Ok(())
     }
 
+    fn kind(&self) -> Kind {
+        Kind::Tag
+    }
+
     fn size(&self) -> usize {
         b"object".len() + 1 /* space */ + self.target().kind().len_in_hex() + 1 /* nl */
             + b"type".len() + 1 /* space */ + self.target_kind.as_bytes().len() + 1 /* nl */
@@ -65,10 +69,6 @@ impl<'a> crate::WriteTo for TagRef<'a> {
                 .unwrap_or(0)
             + 1 /* nl */ + self.message.len()
             + self.pgp_signature.as_ref().map(|m| 1 /* nl */ + m.len()).unwrap_or(0)
-    }
-
-    fn kind(&self) -> Kind {
-        Kind::Tag
     }
 }
 
