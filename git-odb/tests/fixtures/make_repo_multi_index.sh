@@ -4,7 +4,6 @@ set -eu -o pipefail
 omit_multi_index=${1:-no}
 
 git init -q
-git config commit.gpgsign false
 
 function write_files() {
   local base_dir=${1:?directory to write them into}
