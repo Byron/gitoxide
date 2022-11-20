@@ -52,10 +52,7 @@ mod diff {
     #[test]
     fn changes_against_tree_with_filename_tracking() {
         let repo = named_repo("make_diff_repo.sh").unwrap();
-        let from = tree_named(
-            &repo,
-            &git::hash::ObjectId::empty_tree(git::hash::Kind::Sha1).to_string(),
-        );
+        let from = repo.empty_tree();
         let to = tree_named(&repo, ":/c1");
 
         let mut expected = vec!["a", "b", "c", "d"];

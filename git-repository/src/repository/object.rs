@@ -7,7 +7,7 @@ use git_ref::{
     FullName,
 };
 
-use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference};
+use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference, Tree};
 
 /// Methods related to object creation.
 impl crate::Repository {
@@ -192,5 +192,15 @@ impl crate::Repository {
             deref: true,
         })?;
         Ok(commit_id)
+    }
+
+    /// Return an empty tree object, suitable for [getting changes](crate::Tree::changes()).
+    ///
+    /// Note that it is special and doesn't physically exist in the object database even though it can be returned.
+    /// This means that this object can be used in an uninitialized, empty repository which would report to have no objects at all.
+    pub fn empty_tree(&self) -> Tree<'_> {
+        self.find_object(git_hash::ObjectId::empty_tree(self.object_hash()))
+            .expect("always present")
+            .into_tree()
     }
 }
