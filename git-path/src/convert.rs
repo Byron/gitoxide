@@ -244,10 +244,8 @@ pub fn absolutize<'a>(path: impl Into<Cow<'a, Path>>, current_dir: impl AsRef<Pa
             if path.as_os_str().is_empty() {
                 path.clear();
                 path.push(current_dir_opt.take()?);
-                if path_was_dot {
-                    if !path.pop() {
-                        return None;
-                    }
+                if path_was_dot && !path.pop() {
+                    return None;
                 }
             }
         } else {

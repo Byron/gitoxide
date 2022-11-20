@@ -9,6 +9,10 @@ mod error {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error("Could not obtain the current directory")]
+        CurrentDir(#[from] std::io::Error),
+        #[error("Could not access remote repository at \"{}\"", directory.display())]
+        InvalidRemoteRepositoryPath { directory: std::path::PathBuf },
         #[error(transparent)]
         SchemePermission(#[from] remote::url::scheme_permission::init::Error),
         #[error("Protocol {scheme:?} of url {url:?} is denied per configuration")]
@@ -82,8 +86,15 @@ impl<'repo> Remote<'repo> {
                     dir.to_mut().push(git_discover::DOT_GIT_DIR);
                     git_discover::is_git(dir.as_ref())
                 })?;
-                let (git_dir, _work_dir) = git_discover::repository::Path::from_dot_git_dir(dir.into_owned(), kind)
-                    .into_repository_and_work_tree_directories();
+                let (git_dir, _work_dir) = git_discover::repository::Path::from_dot_git_dir(
+                    dir.clone().into_owned(),
+                    kind,
+                    std::env::current_dir()?,
+                )
+                .ok_or_else(|| Error::InvalidRemoteRepositoryPath {
+                    directory: dir.into_owned(),
+                })?
+                .into_repository_and_work_tree_directories();
                 url.path = git_path::into_bstr(git_dir).into_owned();
             }
             Ok(url)
