@@ -76,7 +76,7 @@ pub struct CommitRef<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub tree: &'a BStr,
     /// HEX hash of each parent commit. Empty for first commit in repository.
-    pub parents: SmallVec<[&'a BStr; 2]>,
+    pub parents: SmallVec<[&'a BStr; 1]>,
     /// Who wrote this commit. Name and email might contain whitespace and are not trimmed to ensure round-tripping.
     ///
     /// Use the [`author()`][CommitRef::author()] method to received a trimmed version of it.
