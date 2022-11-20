@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::{bstr::BStr, tree, Blob, BlobRef, Commit, CommitRef, Object, ObjectRef, Tag, TagRef, Tree, TreeRef};
+use crate::{tree, Blob, BlobRef, Commit, CommitRef, Object, ObjectRef, Tag, TagRef, Tree, TreeRef};
 
 impl From<TagRef<'_>> for Tag {
     fn from(other: TagRef<'_>) -> Tag {
@@ -13,33 +13,12 @@ impl From<TagRef<'_>> for Tag {
             pgp_signature,
         } = other;
         Tag {
-            target: target.to_owned(),
+            target: git_hash::ObjectId::from_hex(target).expect("prior parser validation"),
             name: name.to_owned(),
             target_kind,
             message: message.to_owned(),
             tagger: signature.map(Into::into),
             pgp_signature: pgp_signature.map(ToOwned::to_owned),
-        }
-    }
-}
-
-impl<'a> From<&'a Tag> for TagRef<'a> {
-    fn from(other: &'a Tag) -> TagRef<'a> {
-        let Tag {
-            target,
-            target_kind,
-            name,
-            tagger,
-            message,
-            pgp_signature,
-        } = other;
-        TagRef {
-            target: target.as_ref(),
-            target_kind: *target_kind,
-            name: name.as_ref(),
-            tagger: tagger.as_ref().map(|s| s.to_ref()),
-            message: message.as_ref(),
-            pgp_signature: pgp_signature.as_deref().map(BStr::new),
         }
     }
 }
@@ -56,10 +35,10 @@ impl From<CommitRef<'_>> for Commit {
             extra_headers,
         } = other;
         Commit {
-            tree: git_hash::ObjectId::from_hex(tree).expect("40 bytes hex sha1"),
+            tree: git_hash::ObjectId::from_hex(tree).expect("prior parser validation"),
             parents: parents
                 .iter()
-                .map(|parent| git_hash::ObjectId::from_hex(parent).expect("40 bytes hex sha1"))
+                .map(|parent| git_hash::ObjectId::from_hex(parent).expect("prior parser validation"))
                 .collect(),
             author: author.into(),
             committer: committer.into(),

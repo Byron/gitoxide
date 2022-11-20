@@ -21,22 +21,46 @@ impl From<Error> for io::Error {
 }
 
 impl crate::WriteTo for Tag {
-    fn write_to(&self, out: impl io::Write) -> io::Result<()> {
-        TagRef::from(self).write_to(out)
-    }
+    fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+        encode::trusted_header_id(b"object", &self.target, &mut out)?;
+        encode::trusted_header_field(b"type", self.target_kind.as_bytes(), &mut out)?;
+        encode::header_field(b"tag", validated_name(self.name.as_ref())?, &mut out)?;
+        if let Some(tagger) = &self.tagger {
+            encode::trusted_header_signature(b"tagger", &tagger.to_ref(), &mut out)?;
+        }
 
-    fn size(&self) -> usize {
-        TagRef::from(self).size()
+        out.write_all(NL)?;
+        if !self.message.is_empty() {
+            out.write_all(self.message.as_ref())?;
+        }
+        if let Some(message) = &self.pgp_signature {
+            out.write_all(NL)?;
+            out.write_all(message.as_ref())?;
+        }
+        Ok(())
     }
 
     fn kind(&self) -> Kind {
         Kind::Tag
     }
+
+    fn size(&self) -> usize {
+        b"object".len() + 1 /* space */ + self.target.kind().len_in_hex() + 1 /* nl */
+            + b"type".len() + 1 /* space */ + self.target_kind.as_bytes().len() + 1 /* nl */
+            + b"tag".len() + 1 /* space */ + self.name.len() + 1 /* nl */
+            + self
+            .tagger
+            .as_ref()
+            .map(|t| b"tagger".len() + 1 /* space */ + t.size() + 1 /* nl */)
+            .unwrap_or(0)
+            + 1 /* nl */ + self.message.len()
+            + self.pgp_signature.as_ref().map(|m| 1 /* nl */ + m.len()).unwrap_or(0)
+    }
 }
 
 impl<'a> crate::WriteTo for TagRef<'a> {
     fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        encode::trusted_header_id(b"object", &self.target(), &mut out)?;
+        encode::trusted_header_field(b"object", &self.target, &mut out)?;
         encode::trusted_header_field(b"type", self.target_kind.as_bytes(), &mut out)?;
         encode::header_field(b"tag", validated_name(self.name)?, &mut out)?;
         if let Some(tagger) = &self.tagger {

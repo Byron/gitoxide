@@ -1,4 +1,4 @@
-use crate::{Tag, TagRef};
+use crate::TagRef;
 
 mod decode;
 
@@ -18,13 +18,5 @@ impl<'a> TagRef<'a> {
     /// The object this tag points to as `Id`.
     pub fn target(&self) -> git_hash::ObjectId {
         git_hash::ObjectId::from_hex(self.target).expect("prior validation")
-    }
-}
-
-/// Access
-impl Tag {
-    /// The hash this tag is pointing to.
-    pub fn target(&self) -> git_hash::ObjectId {
-        git_hash::ObjectId::from_hex(&self.target).expect("parser assured this is a valid hash")
     }
 }

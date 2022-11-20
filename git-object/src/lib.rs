@@ -136,7 +136,7 @@ pub struct TagRef<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub target: &'a BStr,
     /// The kind of object that `target` points to.
-    pub target_kind: crate::Kind,
+    pub target_kind: Kind,
     /// The name of the tag, e.g. "v1.0".
     pub name: &'a BStr,
     /// The author of the tag.
@@ -159,9 +159,8 @@ pub struct TagRefIter<'a> {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tag {
-    /// The hash this tag is pointing to stored as hexadecimal representation from which an `ObjectId`
-    /// can be constructed. Use [`.target()`][Tag::target()] to access that `ObjectId`.
-    pub target: BString,
+    /// The hash this tag is pointing to.
+    pub target: git_hash::ObjectId,
     /// The kind of object this tag is pointing to.
     pub target_kind: Kind,
     /// The name of the tag, e.g. "v1.0".
