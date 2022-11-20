@@ -220,32 +220,41 @@ pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr
 
 /// Resolve relative components virtually without accessing the file system, e.g. turn `a/./b/c/.././..` into `a`,
 /// without keeping intermediate `..` and `/a/../b/..` becomes `/`.
-/// Note that we might access the `current_dir` if we run out of path components to pop off. If unset, we continue
-/// which might lead to an invalid/uninteded path.
-pub fn absolutize<'a>(path: impl Into<Cow<'a, Path>>, mut current_dir: Option<impl Into<PathBuf>>) -> Cow<'a, Path> {
+/// Note that we might access the `current_dir` if we run out of path components to pop off, which is expected to be absolute
+/// as typical return value of `std::env::current_dir()`.
+/// As a `current_dir` like `/c` can be exhausted by paths like `../../r`, `None` will be returned to indicate the inability
+/// to produce a logically consistent path.
+pub fn absolutize<'a>(path: impl Into<Cow<'a, Path>>, current_dir: impl AsRef<Path>) -> Option<Cow<'a, Path>> {
     use std::path::Component::ParentDir;
 
     let path = path.into();
     if !path.components().any(|c| matches!(c, ParentDir)) {
-        return path;
+        return Some(path);
     }
+    let current_dir = current_dir.as_ref();
+    let mut current_dir_opt = Some(current_dir);
     let mut components = path.components();
     let mut path = PathBuf::from_iter(components.next());
     for component in components {
         if let ParentDir = component {
-            if path.as_os_str() == "." || (!path.pop() && path.as_os_str().is_empty()) {
-                if let Some(cwd) = current_dir.take() {
-                    path = cwd.into();
-                    path.pop();
+            let path_was_dot = path == Path::new(".");
+            if !path.pop() {
+                return None;
+            }
+            if path.as_os_str().is_empty() {
+                path.clear();
+                path.push(current_dir_opt.take()?);
+                if path_was_dot && !path.pop() {
+                    return None;
                 }
             }
         } else {
             path.push(component)
         }
     }
-    if path.as_os_str().is_empty() {
+    Some(if path.as_os_str().is_empty() || path == current_dir {
         PathBuf::from(".").into()
     } else {
         path.into()
-    }
+    })
 }

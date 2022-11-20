@@ -6,6 +6,10 @@ use bstr::{ByteSlice, ByteVec};
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Could not obtain the current working directory")]
+    CurrentDir(#[from] std::io::Error),
+    #[error("Relative path \"{}\"tries to reach beyond root filesystem", directory.display())]
+    InvalidInput { directory: PathBuf },
     #[error("Failed to access a directory, or path is not a directory: '{}'", .path.display())]
     InaccessibleDirectory { path: PathBuf },
     #[error("Could find a git repository in '{}' or in any of its parents", .path.display())]
@@ -32,7 +36,7 @@ pub enum Error {
 
 /// Options to help guide the [discovery][crate::upwards()] of repositories, along with their options
 /// when instantiated.
-pub struct Options {
+pub struct Options<'a> {
     /// When discovering a repository, assure it has at least this trust level or ignore it otherwise.
     ///
     /// This defaults to [`Reduced`][git_sec::Trust::Reduced] as our default settings are geared towards avoiding abuse.
@@ -47,20 +51,26 @@ pub struct Options {
     // TODO: test on Linux
     // TODO: Handle WASI once https://github.com/rust-lang/rust/issues/71213 is resolved
     pub cross_fs: bool,
+    /// If set, the _current working directory_ (absolute path) to use when resolving relative paths. Note that
+    /// that this is merely an optimization for those who discover a lot of repositories in the same process.
+    ///
+    /// If unset, the current working directory will be obtained automatically.
+    pub current_dir: Option<&'a std::path::Path>,
 }
 
-impl Default for Options {
+impl Default for Options<'_> {
     fn default() -> Self {
         Options {
             required_trust: git_sec::Trust::Reduced,
             ceiling_dirs: vec![],
             match_ceiling_dir_or_error: true,
             cross_fs: false,
+            current_dir: None,
         }
     }
 }
 
-impl Options {
+impl Options<'_> {
     /// Loads discovery options overrides from the environment.
     ///
     /// The environment variables are:

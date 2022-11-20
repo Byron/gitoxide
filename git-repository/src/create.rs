@@ -12,6 +12,8 @@ use git_discover::DOT_GIT_DIR;
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Could not obtain the current directory")]
+    CurrentDir(#[from] std::io::Error),
     #[error("Could not open data at '{}'", .path.display())]
     IoOpen { source: std::io::Error, path: PathBuf },
     #[error("Could not write data at '{}'", .path.display())]
@@ -229,7 +231,9 @@ pub fn into(
         dot_git,
         bare.then(|| git_discover::repository::Kind::Bare)
             .unwrap_or(git_discover::repository::Kind::WorkTree { linked_git_dir: None }),
-    ))
+        std::env::current_dir()?,
+    )
+    .expect("by now the `dot_git` dir is valid as we have accessed it"))
 }
 
 fn key(name: &'static str) -> section::Key<'static> {
