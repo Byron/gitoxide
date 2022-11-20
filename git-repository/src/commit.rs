@@ -99,7 +99,16 @@ pub mod describe {
                             .into()
                     })
                     .collect();
-                    refs.sort_by(|a, b| a.2.cmp(&b.2).then_with(|| a.1.cmp(&b.1))); // by time ascending, then by priority. Older entries overwrite newer ones.
+                    // By priority, then by time ascending, then lexicographically.
+                    // More recent entries overwrite older ones due to collection into hashmap.
+                    refs.sort_by(
+                        |(_a_peeled_id, a_prio, a_time, a_name), (_b_peeled_id, b_prio, b_time, b_name)| {
+                            a_prio
+                                .cmp(b_prio)
+                                .then_with(|| a_time.cmp(b_time))
+                                .then_with(|| b_name.cmp(a_name))
+                        },
+                    );
                     refs.into_iter().map(|(a, _, _, b)| (a, b)).collect()
                 }
                 SelectRef::AnnotatedTags => {
@@ -116,10 +125,14 @@ pub mod describe {
                                 .and_then(|s| s.map(|s| s.time.seconds_since_unix_epoch))
                                 .unwrap_or(0);
                             let commit_id = tag.target_id().ok()?.object().ok()?.try_into_commit().ok()?.id;
-                            Some((commit_id, tag_time, r.name().shorten().to_owned().into()))
+                            Some((commit_id, tag_time, Cow::<BStr>::from(r.name().shorten().to_owned())))
                         })
                         .collect();
-                    peeled_commits_and_tag_date.sort_by(|a, b| a.1.cmp(&b.1)); // by time, ascending, causing older names to overwrite newer ones.
+                    // Sort by time ascending, then lexicographically.
+                    // More recent entries overwrite older ones due to collection into hashmap.
+                    peeled_commits_and_tag_date.sort_by(|(_a_id, a_time, a_name), (_b_id, b_time, b_name)| {
+                        a_time.cmp(b_time).then_with(|| b_name.cmp(a_name))
+                    });
                     peeled_commits_and_tag_date
                         .into_iter()
                         .map(|(a, _, c)| (a, c))
