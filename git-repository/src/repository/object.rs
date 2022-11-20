@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use git_hash::{oid, ObjectId};
+use git_hash::ObjectId;
 use git_odb::{Find, FindExt, Write};
 use git_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
@@ -106,13 +106,12 @@ impl crate::Repository {
     pub fn tag(
         &self,
         name: impl AsRef<str>,
-        target: impl AsRef<oid>,
+        target: impl AsRef<git_hash::oid>,
         target_kind: git_object::Kind,
         tagger: Option<git_actor::SignatureRef<'_>>,
         message: impl AsRef<str>,
         constraint: PreviousValue,
     ) -> Result<Reference<'_>, tag::Error> {
-        // NOTE: This could be more efficient if we use a TagRef instead.
         let tag = git_object::Tag {
             target: target.as_ref().into(),
             target_kind,

@@ -76,7 +76,7 @@ pub struct CommitRef<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub tree: &'a BStr,
     /// HEX hash of each parent commit. Empty for first commit in repository.
-    pub parents: SmallVec<[&'a BStr; 2]>,
+    pub parents: SmallVec<[&'a BStr; 1]>,
     /// Who wrote this commit. Name and email might contain whitespace and are not trimmed to ensure round-tripping.
     ///
     /// Use the [`author()`][CommitRef::author()] method to received a trimmed version of it.
@@ -136,7 +136,7 @@ pub struct TagRef<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub target: &'a BStr,
     /// The kind of object that `target` points to.
-    pub target_kind: crate::Kind,
+    pub target_kind: Kind,
     /// The name of the tag, e.g. "v1.0".
     pub name: &'a BStr,
     /// The author of the tag.
@@ -162,7 +162,7 @@ pub struct Tag {
     /// The hash this tag is pointing to.
     pub target: git_hash::ObjectId,
     /// The kind of object this tag is pointing to.
-    pub target_kind: crate::Kind,
+    pub target_kind: Kind,
     /// The name of the tag, e.g. "v1.0".
     pub name: BString,
     /// The tags author.
