@@ -60,7 +60,7 @@ impl crate::WriteTo for Tag {
 
 impl<'a> crate::WriteTo for TagRef<'a> {
     fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        encode::trusted_header_field(b"object", &self.target, &mut out)?;
+        encode::trusted_header_field(b"object", self.target, &mut out)?;
         encode::trusted_header_field(b"type", self.target_kind.as_bytes(), &mut out)?;
         encode::header_field(b"tag", validated_name(self.name)?, &mut out)?;
         if let Some(tagger) = &self.tagger {
