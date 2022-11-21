@@ -72,7 +72,7 @@ gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
 ## Support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) using **curl**.
 http-client-curl = ["git-repository/blocking-http-transport-curl"]
 ## Support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) using **reqwest**.
-http-client-reqwest = ["git-repository/blocking-http-transport-reqwest", "reqwest-for-configuration-only", "reqwest-for-configuration-only/rustls-tls", "reqwest-for-configuration-only/trust-dns"]
+http-client-reqwest = ["git-repository/blocking-http-transport-reqwest-rust-tls"]
 ## Use async client networking.
 gitoxide-core-async-client = ["gitoxide-core/async-client", "futures-lite"]
 
@@ -87,7 +87,6 @@ anyhow = "1.0.42"
 gitoxide-core = { version = "^0.20.0", path = "gitoxide-core" }
 git-features = { version = "^0.23.1", path = "git-features" }
 git-repository = { version = "^0.28.0", path = "git-repository", default-features = false }
-reqwest-for-configuration-only = { package = "reqwest", version = "0.11.13", default-features = false, optional = true }
 
 clap = { version = "3.2.5", features = ["derive", "cargo"] }
 prodash = { version = "21", optional = true, default-features = false }

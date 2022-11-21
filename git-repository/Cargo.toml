@@ -40,6 +40,10 @@ blocking-network-client = ["git-protocol/blocking-client"]
 blocking-http-transport-curl = ["blocking-network-client", "git-transport/http-client-curl"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole.
 blocking-http-transport-reqwest = ["blocking-network-client", "git-transport/http-client-reqwest"]
+## Stacks with `blocking-http-transport-reqwest` and enables HTTPS via the `rustls` crate. Note that https isn't available without a selection.
+blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls", "reqwest-for-configuration-only/trust-dns"]
+## Stacks with `blocking-http-transport-reqwest` and enables HTTPS via the `native-tls` crate. Note that https isn't available without a selection.
+blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/default-tls" ]
 
 
 #! ### Other
@@ -127,6 +131,9 @@ async-std = { version = "1.12.0", optional = true }
 ## If disabled, the text will be search verbatim in any portion of the commit message, similar to
 ## how a simple unanchored regex of only 'normal' characters would work.
 regex = { version = "1.6.0", optional = true, default-features = false, features = ["std"] }
+
+# For internal use to allow pure-Rust builds without opensssl.
+reqwest-for-configuration-only = { package = "reqwest", version = "0.11.13", default-features = false, optional = true }
 
 document-features = { version = "0.2.0", optional = true }
 
