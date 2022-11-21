@@ -45,7 +45,7 @@ impl<'repo, 'a> std::fmt::Display for EntryRef<'repo, 'a> {
 }
 
 impl<'repo> Tree<'repo> {
-    /// Return an iterator over tree entries.
+    /// Return an iterator over tree entries to obtain information about files and directories this tree contains.
     pub fn iter(&self) -> impl Iterator<Item = Result<EntryRef<'repo, '_>, git_object::decode::Error>> {
         let repo = self.repo;
         git_object::TreeRefIter::from_bytes(&self.data).map(move |e| e.map(|entry| EntryRef { inner: entry, repo }))
