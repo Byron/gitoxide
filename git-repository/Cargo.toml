@@ -36,8 +36,10 @@ async-network-client = ["git-protocol/async-client"]
 async-network-client-async-std = ["async-std", "async-network-client", "git-transport/async-std"]
 ## Make `git-protocol` available along with a blocking client.
 blocking-network-client = ["git-protocol/blocking-client"]
-## Stacks with `blocking-network-client` to provide support for HTTP/S, and implies blocking networking as a whole.
-blocking-http-transport = ["git-transport/http-client-curl"]
+## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole.
+blocking-http-transport-curl = ["blocking-network-client", "git-transport/http-client-curl"]
+## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole.
+blocking-http-transport-reqwest = ["blocking-network-client", "git-transport/http-client-reqwest"]
 
 
 #! ### Other
