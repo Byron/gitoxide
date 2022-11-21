@@ -141,6 +141,10 @@ pub(crate) mod function {
                     cursor.pop();
                 }
             }
+            if cursor.parent().map(|p| p.as_os_str().is_empty()).unwrap_or(false) {
+                cursor = cwd.to_path_buf();
+                dir_made_absolute = true;
+            }
             if !cursor.pop() {
                 if dir_made_absolute
                     || matches!(
@@ -151,16 +155,13 @@ pub(crate) mod function {
                     break Err(Error::NoGitRepository { path: dir.into_owned() });
                 } else {
                     dir_made_absolute = true;
-                    cursor = if cursor.as_os_str().is_empty() {
-                        cwd.clone().into_owned()
-                    } else {
-                        // TODO: realpath or absolutize? No test runs into this.
-                        git_path::absolutize(&cursor, cwd.as_ref())
-                            .ok_or_else(|| Error::InvalidInput {
-                                directory: cursor.clone(),
-                            })?
-                            .into_owned()
-                    }
+                    debug_assert!(!cursor.as_os_str().is_empty());
+                    // TODO: realpath or absolutize? No test runs into this.
+                    cursor = git_path::absolutize(&cursor, cwd.as_ref())
+                        .ok_or_else(|| Error::InvalidInput {
+                            directory: cursor.clone(),
+                        })?
+                        .into_owned();
                 }
             }
         }

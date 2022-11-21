@@ -165,3 +165,25 @@ fn ceilings_are_adjusted_to_match_search_dir() -> crate::Result {
     assert_repo_is_current_workdir(repo_path, &relative_work_dir);
     Ok(())
 }
+
+#[test]
+fn discover_from_relative_path_with_ceiling() -> crate::Result {
+    let cwd = std::env::current_dir().unwrap();
+    for (search_dir, ceiling_dir) in [
+        (".", ".."),
+        (".", "./.."),
+        ("./.", "./.."),
+        (".", "./does-not-exist/../.."),
+    ] {
+        let (repo_path, _trust) = git_discover::upwards_opts(
+            search_dir,
+            Options {
+                ceiling_dirs: vec![cwd.join(ceiling_dir)],
+                ..Default::default()
+            },
+        )
+        .expect("ceiling dir should allow us to discover the repo");
+        assert_repo_is_current_workdir(repo_path, Path::new(".."));
+    }
+    Ok(())
+}
