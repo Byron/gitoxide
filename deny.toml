@@ -41,6 +41,7 @@ allow = [
     "MIT",
     "ISC",
     "Unicode-DFS-2016",
+    "LicenseRef-ring"
 ]
 # Lint level for licenses considered copyleft
 copyleft = "allow"
@@ -61,3 +62,12 @@ confidence-threshold = 0.8
 [bans]
 # Lint level for when multiple versions of the same crate are detected
 multiple-versions = "allow"
+
+
+[[licenses.clarify]]
+name = "ring"
+expression = "LicenseRef-ring"
+license-files = [
+    { path = "LICENSE", hash = 0xbd0eed23 },
+]
+

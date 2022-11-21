@@ -10,18 +10,18 @@ pub struct Remote {
     config: crate::client::http::Options,
 }
 
+/// A function to configure a single request prior to sending it, support most complex configuration beyond what's possible with
+/// basic `git` http configuration.
+pub type ConfigureRequestFn = dyn FnMut(&mut reqwest::blocking::Request) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>
+    + Send
+    + Sync
+    + 'static;
+
 /// Options to configure the reqwest HTTP handler.
 #[derive(Default)]
 pub struct Options {
     /// A function to configure the request that is about to be made.
-    pub configure_request: Option<
-        Box<
-            dyn FnMut(&mut reqwest::blocking::Request) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>
-                + Send
-                + Sync
-                + 'static,
-        >,
-    >,
+    pub configure_request: Option<Box<ConfigureRequestFn>>,
 }
 
 mod remote;

@@ -16,11 +16,17 @@ impl crate::Repository {
 
         match &url.scheme {
             Http | Https => {
-                #[cfg(not(feature = "blocking-http-transport"))]
+                #[cfg(not(any(
+                    feature = "blocking-http-transport-reqwest",
+                    feature = "blocking-http-transport-curl"
+                )))]
                 {
                     Ok(None)
                 }
-                #[cfg(feature = "blocking-http-transport")]
+                #[cfg(any(
+                    feature = "blocking-http-transport-reqwest",
+                    feature = "blocking-http-transport-curl"
+                ))]
                 {
                     use crate::bstr::ByteVec;
                     use crate::config::cache::util::{ApplyLeniency, ApplyLeniencyDefault};

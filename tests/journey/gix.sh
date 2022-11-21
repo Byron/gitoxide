@@ -38,7 +38,7 @@ title "git-tempfile crate"
 
   (when "running the example program to check order of signal handlers"
     it "fails as the process aborts" && {
-      expect_run $ABORTED cargo run --example interrupt-handler-allows-graceful-shutdown
+      expect_run $ABORTED cargo run --no-default-features --example interrupt-handler-allows-graceful-shutdown
     }
     it "cleans up the tempfile it created" && {
       expect_run $WITH_FAILURE test -e "example-file.tmp"
