@@ -18,4 +18,4 @@ fn assure_windows_separators() {
     assert_eq!(to_windows_separators(b"/a/b//".as_bstr()).as_bstr(), "\\a\\b\\\\");
 }
 
-mod absolutize;
+mod normalize;
