@@ -13,4 +13,4 @@ git commit -m 3 3
 
 # NOTE: Starting around git 2.35.0 --preserve-merges was renamed to --rebase-merges
 # however --preserve-merges first appeared in git 2.18.  That should cover most use cases.
-EDITOR="sed -i.bak 's/pick/edit/g'" git rebase --rebase-merges --interactive HEAD~2
+GIT_EDITOR="sed -i.bak 's/pick/edit/g'" git rebase --rebase-merges --interactive HEAD~2

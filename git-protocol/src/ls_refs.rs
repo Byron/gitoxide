@@ -28,16 +28,18 @@ pub enum Action {
 }
 
 pub(crate) mod function {
+    use std::borrow::Cow;
+
     use bstr::BString;
     use git_features::progress::Progress;
     use git_transport::client::{Capabilities, Transport, TransportV2Ext};
     use maybe_async::maybe_async;
-    use std::borrow::Cow;
 
     use super::{Action, Error};
-    use crate::handshake::{refs::from_v2_refs, Ref};
-    use crate::indicate_end_of_interaction;
-    use crate::Command;
+    use crate::{
+        handshake::{refs::from_v2_refs, Ref},
+        indicate_end_of_interaction, Command,
+    };
 
     /// Invoke an ls-refs V2 command on `transport`, which requires a prior handshake that yielded
     /// server `capabilities`. `prepare_ls_refs(capabilities, arguments, features)` can be used to alter the _ls-refs_. `progress` is used to provide feedback.

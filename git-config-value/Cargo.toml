@@ -1,11 +1,11 @@
 [package]
 name = "git-config-value"
-version = "0.8.2"
+version = "0.9.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate of the gitoxide project providing git-config value parsing"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 doctest = false
@@ -15,7 +15,7 @@ doctest = false
 serde1 = ["serde", "bstr/serde"]
 
 [dependencies]
-git-path = { version = "^0.5.0", path = "../git-path" }
+git-path = { version = "^0.6.0", path = "../git-path" }
 
 thiserror = "1.0.32"
 bstr = "1.0.1"

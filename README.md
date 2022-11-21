@@ -291,6 +291,9 @@ Project non-goals can change over time as we learn more, and they can be challen
 
 If what you have seen so far sparked your interest to contribute, then let us say: We are happy to have you and help you to get started.
 
+> ❗️Note❗️: For cloning, `git-lfs` needs to be locally installed or the checkout will fail. `git lfs install` must have been called once, followed
+  by `git lfs pull` to replace the `lfs`-pointer files.
+
 We recommend running `make tests check-size` during the development process to assure CI is green before pushing.
 
 A backlog for work ready to be picked up is [available in the Project's Kanban board][project-board], which contains instructions on how 
@@ -306,7 +309,7 @@ For additional details, also take a look at the [collaboration guide].
 ### Getting started with Video Tutorials
 
 - [Learning Rust with Gitoxide](https://youtube.com/playlist?list=PLMHbQxe1e9Mk5kOHrm9v20-umkE2ck_gE)
-   - In 17 episodes you can learn all you need to meaningfully contirbute to `gitoxide`.
+   - In 17 episodes you can learn all you need to meaningfully contribute to `gitoxide`.
 - [Getting into Gitoxide](https://youtube.com/playlist?list=PLMHbQxe1e9MkEmuj9csczEK1O06l0Npy5)
    - Get an introduction to `gitoxide` itself which should be a good foundation for any contribution, but isn't a requirement for contributions either.
 - [Gifting Gitoxide](https://www.youtube.com/playlist?list=PLMHbQxe1e9MlhyyZQXPi_dc-bKudE-WUw)

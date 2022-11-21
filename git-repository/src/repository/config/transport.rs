@@ -1,5 +1,6 @@
-use crate::bstr::BStr;
 use std::any::Any;
+
+use crate::bstr::BStr;
 
 impl crate::Repository {
     /// Produce configuration suitable for `url`, as differentiated by its protocol/scheme, to be passed to a transport instance via
@@ -23,20 +24,28 @@ impl crate::Repository {
 
         match &url.scheme {
             Http | Https => {
-                #[cfg(not(feature = "blocking-http-transport"))]
+                #[cfg(not(any(
+                    feature = "blocking-http-transport-reqwest",
+                    feature = "blocking-http-transport-curl"
+                )))]
                 {
                     Ok(None)
                 }
-                #[cfg(feature = "blocking-http-transport")]
+                #[cfg(any(
+                    feature = "blocking-http-transport-reqwest",
+                    feature = "blocking-http-transport-curl"
+                ))]
                 {
-                    use crate::bstr::ByteVec;
-                    use crate::config::cache::util::{ApplyLeniency, ApplyLeniencyDefault};
-                    use git_transport::client::http;
-                    use git_transport::client::http::options::ProxyAuthMethod;
                     use std::borrow::Cow;
-                    use std::convert::{TryFrom, TryInto};
                     use std::sync::{Arc, Mutex};
 
+                    use git_transport::client::http;
+                    use git_transport::client::http::options::ProxyAuthMethod;
+
+                    use crate::{
+                        bstr::ByteVec,
+                        config::cache::util::{ApplyLeniency, ApplyLeniencyDefault},
+                    };
                     fn try_cow_to_string(
                         v: Cow<'_, BStr>,
                         lenient: bool,

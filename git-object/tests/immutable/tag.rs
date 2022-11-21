@@ -37,6 +37,10 @@ mod iter {
                 Token::TargetKind(Kind::Commit),
                 Token::Name(b"empty".as_bstr()),
                 Token::Tagger(tagger),
+                Token::Body {
+                    message: b"".as_bstr(),
+                    pgp_signature: None,
+                }
             ]
         );
         assert_eq!(tag_iter.target_id()?, target_id);
@@ -103,7 +107,7 @@ KLMHist5yj0sw1E4hDTyQa0=
     #[test]
     fn error_handling() -> crate::Result {
         let data = fixture_bytes("tag", "empty.txt");
-        let iter = TagRefIter::from_bytes(&data[..data.len() / 2]);
+        let iter = TagRefIter::from_bytes(&data[..data.len() / 3]);
         let tokens = iter.collect::<Vec<_>>();
         assert!(
             tokens.last().expect("at least the errored token").is_err(),

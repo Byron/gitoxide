@@ -32,13 +32,14 @@ impl ThreadSafeRepository {
     /// seems acceptable).
     pub fn discover_opts(
         directory: impl AsRef<Path>,
-        options: upwards::Options,
+        options: upwards::Options<'_>,
         trust_map: git_sec::trust::Mapping<crate::open::Options>,
     ) -> Result<Self, Error> {
         let (path, trust) = upwards_opts(directory, options)?;
         let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
         let mut options = trust_map.into_value_by_level(trust);
         options.git_dir_trust = trust.into();
+        options.current_dir = Some(std::env::current_dir().map_err(upwards::Error::CurrentDir)?);
         Self::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
     }
 
@@ -60,12 +61,10 @@ impl ThreadSafeRepository {
     /// based on the trust level of the effective repository directory.
     pub fn discover_with_environment_overrides_opts(
         directory: impl AsRef<Path>,
-        mut options: upwards::Options,
+        mut options: upwards::Options<'_>,
         trust_map: git_sec::trust::Mapping<crate::open::Options>,
     ) -> Result<Self, Error> {
-        fn apply_additional_environment(mut opts: upwards::Options) -> upwards::Options {
-            use std::convert::TryFrom;
-
+        fn apply_additional_environment(mut opts: upwards::Options<'_>) -> upwards::Options<'_> {
             use crate::bstr::ByteVec;
 
             if let Some(cross_fs) = std::env::var_os("GIT_DISCOVERY_ACROSS_FILESYSTEM")

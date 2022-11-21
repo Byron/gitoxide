@@ -15,10 +15,11 @@ use git_ref::{
 };
 use git_testtools::hex_to_id;
 
-use crate::file::transaction::prepare_and_commit::{create_at, create_symbolic_at, delete_at};
 use crate::file::{
     store_with_packed_refs, store_writable,
-    transaction::prepare_and_commit::{committer, empty_store, log_line, reflog_lines},
+    transaction::prepare_and_commit::{
+        committer, create_at, create_symbolic_at, delete_at, empty_store, log_line, reflog_lines,
+    },
 };
 
 mod collisions;

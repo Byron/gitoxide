@@ -1,10 +1,11 @@
+use std::path::{Path, PathBuf};
+
 use bstr::ByteSlice;
 use git_index::{
     entry::{self, Flags, Mode},
     Version,
 };
 use git_testtools::hex_to_id;
-use std::path::{Path, PathBuf};
 
 use crate::loose_file_path;
 

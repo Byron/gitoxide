@@ -59,7 +59,6 @@ impl crate::Repository {
     /// Note that it may fail if there is no index.
     // TODO: test
     pub fn open_index(&self) -> Result<git_index::File, worktree::open_index::Error> {
-        use std::convert::{TryFrom, TryInto};
         let thread_limit = self
             .config
             .resolved

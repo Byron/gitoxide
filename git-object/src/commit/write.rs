@@ -23,6 +23,10 @@ impl crate::WriteTo for Commit {
         out.write_all(&self.message)
     }
 
+    fn kind(&self) -> Kind {
+        Kind::Commit
+    }
+
     fn size(&self) -> usize {
         let hash_in_hex = self.tree.kind().len_in_hex();
         b"tree".len() + 1 /*space*/ + hash_in_hex + 1 /* nl */
@@ -45,10 +49,6 @@ impl crate::WriteTo for Commit {
             + 1 /* nl */
             + self.message.len()
     }
-
-    fn kind(&self) -> Kind {
-        Kind::Commit
-    }
 }
 
 impl<'a> crate::WriteTo for CommitRef<'a> {
@@ -68,6 +68,10 @@ impl<'a> crate::WriteTo for CommitRef<'a> {
         }
         out.write_all(NL)?;
         out.write_all(self.message)
+    }
+
+    fn kind(&self) -> Kind {
+        Kind::Commit
     }
 
     fn size(&self) -> usize {
@@ -91,9 +95,5 @@ impl<'a> crate::WriteTo for CommitRef<'a> {
                 .sum::<usize>()
             + 1 /* nl */
             + self.message.len()
-    }
-
-    fn kind(&self) -> Kind {
-        Kind::Commit
     }
 }

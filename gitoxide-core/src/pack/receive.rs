@@ -1,5 +1,5 @@
-use std::borrow::Cow;
 use std::{
+    borrow::Cow,
     io,
     path::PathBuf,
     sync::{atomic::AtomicBool, Arc},
@@ -118,7 +118,12 @@ mod blocking_io {
     use std::{io, io::BufRead, path::PathBuf};
 
     use git_repository as git;
-    use git_repository::{bstr::BString, protocol, protocol::fetch::Response, protocol::handshake::Ref, Progress};
+    use git_repository::{
+        bstr::BString,
+        protocol,
+        protocol::{fetch::Response, handshake::Ref},
+        Progress,
+    };
 
     use super::{receive_pack_blocking, CloneDelegate, Context};
     use crate::net;
@@ -186,18 +191,17 @@ mod async_io {
 
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
+    use git_repository as git;
     use git_repository::{
         bstr::{BString, ByteSlice},
         odb::pack,
         protocol,
-        protocol::fetch::Response,
-        protocol::handshake::Ref,
+        protocol::{fetch::Response, handshake::Ref},
         Progress,
     };
 
     use super::{print, receive_pack_blocking, write_raw_refs, CloneDelegate, Context};
     use crate::{net, OutputFormat};
-    use git_repository as git;
 
     #[async_trait(?Send)]
     impl<W: io::Write + Send + 'static> protocol::fetch::Delegate for CloneDelegate<W> {

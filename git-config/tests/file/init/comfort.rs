@@ -79,3 +79,29 @@ fn from_git_dir() -> crate::Result {
     }
     Ok(())
 }
+
+#[test]
+#[serial]
+fn from_git_dir_with_worktree_extension() -> crate::Result {
+    let git_dir = git_testtools::scripted_fixture_repo_read_only("config_with_worktree_extension.sh")?
+        .join("main-worktree")
+        .join(".git");
+    let config = git_config::File::from_git_dir(git_dir)?;
+
+    assert_eq!(
+        config
+            .string("extensions", None, "worktreeConfig")
+            .expect("extension present")
+            .as_ref(),
+        "true"
+    );
+    assert_eq!(
+        config
+            .string("worktree", None, "override")
+            .expect("section present")
+            .as_ref(),
+        "set in the main worktree"
+    );
+
+    Ok(())
+}

@@ -1,27 +1,28 @@
 [package]
 name = "git-discover"
-version = "0.8.0"
+version = "0.9.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Discover git repositories and check if a directory is a git repository"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
-edition = "2018"
+edition = "2021"
 include = ["src/**/*", "CHANGELOG.md"]
 
 [lib]
 doctest = false
 
 [dependencies]
-git-sec = { version = "^0.4.2", path = "../git-sec" }
-git-path = { version = "^0.5.0", path = "../git-path" }
-git-ref = { version = "^0.19.0", path = "../git-ref" }
-git-hash = { version = "^0.9.11", path = "../git-hash" }
+git-sec = { version = "^0.5.0", path = "../git-sec" }
+git-path = { version = "^0.6.0", path = "../git-path" }
+git-ref = { version = "^0.20.0", path = "../git-ref" }
+git-hash = { version = "^0.10.0", path = "../git-hash" }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"] }
 thiserror = "1.0.26"
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
+serial_test = "0.9.0"
 is_ci = "1.1.1"
 
 [target.'cfg(target_os = "macos")'.dev-dependencies]

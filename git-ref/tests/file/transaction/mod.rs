@@ -1,11 +1,15 @@
 pub(crate) mod prepare_and_commit {
+    use std::convert::TryInto;
+
     use git_actor::{Sign, Time};
     use git_hash::ObjectId;
     use git_object::bstr::BString;
-    use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog};
-    use git_ref::{file, Target};
+    use git_ref::{
+        file,
+        transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
+        Target,
+    };
     use git_testtools::hex_to_id;
-    use std::convert::TryInto;
 
     fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<git_ref::log::Line>> {
         let mut buf = Vec::new();

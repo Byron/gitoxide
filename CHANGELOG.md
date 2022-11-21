@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.19.0 (2022-11-21)
+
+### New Features
+
+ - <csr-id-3ddbd2de369b521fa3f21935f10fe9c248840893/> Make `reqwest` TLS backend configuration easy.
+   We provide the choice of `native-tls` or `rust-tls`. If none is
+   provided, the user can configure on their on similar to how it's done
+   in `git-repository`.
+   
+   Please note that a choice now has to be made or HTTPS will not be
+   available, so use one of…
+   
+   * blocking-http-transport-reqwest-rust-tls
+* blocking-http-transport-reqwest-native-tls
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 4 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Make `reqwest` TLS backend configuration easy. ([`3ddbd2d`](https://github.com/Byron/gitoxide/commit/3ddbd2de369b521fa3f21935f10fe9c248840893))
+</details>
+
 ## 0.18.0 (2022-11-17)
 
 This releases fixes `gix fetch` so that it is able to clone or fetch `pytorch` or other repositories on case-insensitive file systems. 

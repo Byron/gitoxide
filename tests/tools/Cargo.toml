@@ -3,7 +3,7 @@ name = "git-testtools"
 description = "Shared code for gitoxide crates to facilitate testing"
 version = "0.10.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
-edition = "2018"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [[bin]]
@@ -14,11 +14,11 @@ path = "src/main.rs"
 doctest = false
 
 [dependencies]
-git-hash = { version = "^0.9.11", path = "../../git-hash" }
-git-lock = { version = "^2.0.0", path = "../../git-lock" }
-git-discover = { version = "^0.8.0", path = "../../git-discover" }
-git-attributes = { version = "^0.5.0", path = "../../git-attributes" }
-git-worktree = { version = "^0.8.0", path = "../../git-worktree" }
+git-hash = { version = "^0.10.0", path = "../../git-hash" }
+git-lock = { version = "^3.0.0", path = "../../git-lock" }
+git-discover = { version = "^0.9.0", path = "../../git-discover" }
+git-attributes = { version = "^0.6.0", path = "../../git-attributes" }
+git-worktree = { version = "^0.9.0", path = "../../git-worktree" }
 
 nom = { version = "7", default-features = false, features = ["std"]}
 fastrand = "1.8.0"

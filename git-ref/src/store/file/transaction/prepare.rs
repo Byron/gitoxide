@@ -1,5 +1,6 @@
 use crate::{
     packed,
+    packed::transaction::buffer_into_transaction,
     store_impl::{
         file,
         file::{
@@ -8,11 +9,9 @@ use crate::{
             Transaction,
         },
     },
-    transaction::{Change, LogChange, RefEdit, RefEditsExt, RefLog},
+    transaction::{Change, LogChange, PreviousValue, RefEdit, RefEditsExt, RefLog},
     FullName, FullNameRef, Reference, Target,
 };
-
-use crate::{packed::transaction::buffer_into_transaction, transaction::PreviousValue};
 
 impl<'s, 'p> Transaction<'s, 'p> {
     fn lock_ref_and_apply_change(

@@ -1,5 +1,5 @@
-use std::borrow::Cow;
 use std::{
+    borrow::Cow,
     io,
     ops::{Deref, DerefMut},
 };
@@ -7,8 +7,10 @@ use std::{
 use bstr::BString;
 use git_transport::client::Capabilities;
 
-use crate::fetch::{Arguments, Response};
-use crate::handshake::Ref;
+use crate::{
+    fetch::{Arguments, Response},
+    handshake::Ref,
+};
 
 /// Defines what to do next after certain [`Delegate`] operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -183,8 +185,10 @@ mod blocking_io {
 
     use git_features::progress::Progress;
 
-    use crate::fetch::{DelegateBlocking, Response};
-    use crate::handshake::Ref;
+    use crate::{
+        fetch::{DelegateBlocking, Response},
+        handshake::Ref,
+    };
 
     /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
     ///
@@ -244,8 +248,10 @@ mod async_io {
     use futures_io::AsyncBufRead;
     use git_features::progress::Progress;
 
-    use crate::fetch::{DelegateBlocking, Response};
-    use crate::handshake::Ref;
+    use crate::{
+        fetch::{DelegateBlocking, Response},
+        handshake::Ref,
+    };
 
     /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
     ///
@@ -301,6 +307,7 @@ mod async_io {
         }
     }
 }
-use crate::ls_refs;
 #[cfg(feature = "async-client")]
 pub use async_io::Delegate;
+
+use crate::ls_refs;

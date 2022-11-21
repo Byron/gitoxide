@@ -1,9 +1,11 @@
-use crate::credentials;
 use git_features::progress::Progress;
 use git_transport::{client, Service};
-
-use crate::handshake::{Error, Outcome};
 use maybe_async::maybe_async;
+
+use crate::{
+    credentials,
+    handshake::{Error, Outcome},
+};
 
 /// Perform a handshake with the server on the other side of `transport`, with `authenticate` being used if authentication
 /// turns out to be required. `extra_parameters` are the parameters `(name, optional value)` to add to the handshake,

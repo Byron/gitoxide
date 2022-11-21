@@ -103,6 +103,11 @@ pub struct Store {
     /// The source directory from which all content is loaded, and the central write lock for use when a directory refresh is needed.
     pub(crate) path: PathBuf,
 
+    /// The current working directory at the time this store was instantiated. It becomes relevant when resolving alternate paths
+    /// when re-reading the store configuration on updates when an object was missed.
+    /// Keeping it here helps to assure consistency even while a process changes its CWD.
+    pub(crate) current_dir: PathBuf,
+
     /// A set of replacements that given a source OID return a destination OID. The vector is sorted.
     pub(crate) replacements: Vec<(git_hash::ObjectId, git_hash::ObjectId)>,
 

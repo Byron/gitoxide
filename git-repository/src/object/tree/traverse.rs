@@ -40,11 +40,12 @@ impl<'a, 'repo> BreadthFirstPresets<'a, 'repo> {
 }
 
 impl<'a, 'repo> Platform<'a, 'repo> {
-    /// Start a breadth-first traversal using `delegate`, for which a [`Recorder`][git_traverse::tree::Recorder] can be used to get started.
+    /// Start a breadth-first, recursive traversal using `delegate`, for which a [`Recorder`][git_traverse::tree::Recorder] can be used to get started.
     ///
     /// # Note
     ///
-    /// Results are not sorted.
+    /// - Results are returned in sort order according to tree-entry sorting rules, one level at a time.
+    /// - for obtaining the direct children of the tree, use [.iter()][crate::Tree::iter()] instead.
     pub fn breadthfirst<V>(&self, delegate: &mut V) -> Result<(), git_traverse::tree::breadthfirst::Error>
     where
         V: git_traverse::tree::Visit,

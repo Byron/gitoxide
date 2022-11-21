@@ -1,4 +1,7 @@
-#[cfg(feature = "blocking-http-transport")]
+#[cfg(any(
+    feature = "blocking-http-transport-reqwest",
+    feature = "blocking-http-transport-curl"
+))]
 mod http {
     use git_repository as git;
 

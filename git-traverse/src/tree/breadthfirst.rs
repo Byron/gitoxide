@@ -17,7 +17,7 @@ pub enum Error {
 /// The state used and potentially shared by multiple tree traversals.
 #[derive(Default, Clone)]
 pub struct State {
-    next: VecDeque<(bool, ObjectId)>,
+    next: VecDeque<ObjectId>,
     buf: Vec<u8>,
 }
 
@@ -76,7 +76,7 @@ pub(crate) mod impl_ {
                             Continue => {
                                 delegate.pop_path_component();
                                 delegate.push_back_tracked_path_component(entry.filename);
-                                state.next.push_back((true, entry.oid.to_owned()))
+                                state.next.push_back(entry.oid.to_owned())
                             }
                             Cancel => {
                                 return Err(Error::Cancelled);
@@ -93,10 +93,8 @@ pub(crate) mod impl_ {
                 delegate.pop_path_component();
             }
             match state.next.pop_front() {
-                Some((should_pop_path, oid)) => {
-                    if should_pop_path {
-                        delegate.pop_front_tracked_path_and_set_current();
-                    }
+                Some(oid) => {
+                    delegate.pop_front_tracked_path_and_set_current();
                     match find(&oid, &mut state.buf) {
                         Some(tree_iter) => tree = tree_iter,
                         None => return Err(Error::NotFound { oid: oid.to_owned() }),

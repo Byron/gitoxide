@@ -1,3 +1,4 @@
+//! The `gitoxide` plumbing.
 //! ## Feature Flags
 #![cfg_attr(
     feature = "document-features",

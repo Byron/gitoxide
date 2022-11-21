@@ -4,7 +4,7 @@ pub use types::{Error, Options};
 mod util;
 
 pub(crate) mod function {
-    use std::path::Path;
+    use std::{borrow::Cow, path::Path};
 
     use git_sec::Trust;
 
@@ -30,14 +30,20 @@ pub(crate) mod function {
             ceiling_dirs,
             match_ceiling_dir_or_error,
             cross_fs,
-        }: Options,
+            current_dir,
+        }: Options<'_>,
     ) -> Result<(crate::repository::Path, Trust), Error> {
         // Absolutize the path so that `Path::parent()` _actually_ gives
         // us the parent directory. (`Path::parent` just strips off the last
         // path component, which means it will not do what you expect when
         // working with paths paths that contain '..'.)
-        let cwd = std::env::current_dir().ok();
-        let dir = git_path::absolutize(directory.as_ref(), cwd.as_deref());
+        let cwd = current_dir
+            .map(|cwd| Ok(Cow::Borrowed(cwd)))
+            .unwrap_or_else(|| std::env::current_dir().map(Cow::Owned))?;
+        let directory = directory.as_ref();
+        let dir = git_path::absolutize(directory, cwd.as_ref()).ok_or_else(|| Error::InvalidInput {
+            directory: directory.into(),
+        })?;
         let dir_metadata = dir.metadata().map_err(|_| Error::InaccessibleDirectory {
             path: dir.to_path_buf(),
         })?;
@@ -45,12 +51,12 @@ pub(crate) mod function {
         if !dir_metadata.is_dir() {
             return Err(Error::InaccessibleDirectory { path: dir.into_owned() });
         }
-        let mut dir_made_absolute = !directory.as_ref().is_absolute()
-            && cwd.as_deref().map_or(false, |cwd| {
-                cwd.strip_prefix(dir.as_ref())
-                    .or_else(|_| dir.as_ref().strip_prefix(cwd))
-                    .is_ok()
-            });
+        let mut dir_made_absolute = !directory.is_absolute()
+            && cwd
+                .as_ref()
+                .strip_prefix(dir.as_ref())
+                .or_else(|_| dir.as_ref().strip_prefix(cwd.as_ref()))
+                .is_ok();
 
         let filter_by_trust = |x: &Path| -> Result<Option<Trust>, Error> {
             let trust = Trust::from_path_ownership(x).map_err(|err| Error::CheckTrust { path: x.into(), err })?;
@@ -58,7 +64,7 @@ pub(crate) mod function {
         };
 
         let max_height = if !ceiling_dirs.is_empty() {
-            let max_height = find_ceiling_height(&dir, &ceiling_dirs, cwd.as_deref());
+            let max_height = find_ceiling_height(&dir, &ceiling_dirs, cwd.as_ref());
             if max_height.is_none() && match_ceiling_dir_or_error {
                 return Err(Error::NoMatchingCeilingDir);
             }
@@ -108,11 +114,18 @@ pub(crate) mod function {
                         Some(trust) => {
                             // TODO: test this more, it definitely doesn't always find the shortest path to a directory
                             let path = if dir_made_absolute {
-                                shorten_path_with_cwd(cursor, cwd.as_deref())
+                                shorten_path_with_cwd(cursor, cwd.as_ref())
                             } else {
                                 cursor
                             };
-                            break 'outer Ok((crate::repository::Path::from_dot_git_dir_inner(path, kind, cwd), trust));
+                            break 'outer Ok((
+                                crate::repository::Path::from_dot_git_dir(path, kind, cwd).ok_or_else(|| {
+                                    Error::InvalidInput {
+                                        directory: directory.into(),
+                                    }
+                                })?,
+                                trust,
+                            ));
                         }
                         None => {
                             break 'outer Err(Error::NoTrustedGitRepository {
@@ -127,6 +140,10 @@ pub(crate) mod function {
                     cursor.pop();
                 }
             }
+            if cursor.parent().map_or(false, |p| p.as_os_str().is_empty()) {
+                cursor = cwd.to_path_buf();
+                dir_made_absolute = true;
+            }
             if !cursor.pop() {
                 if dir_made_absolute
                     || matches!(
@@ -137,13 +154,13 @@ pub(crate) mod function {
                     break Err(Error::NoGitRepository { path: dir.into_owned() });
                 } else {
                     dir_made_absolute = true;
-                    cursor = if cursor.as_os_str().is_empty() {
-                        cwd.clone()
-                    } else {
-                        // TODO: realpath or absolutize? No test runs into this.
-                        Some(git_path::absolutize(&cursor, cwd.as_deref()).into_owned())
-                    }
-                    .ok_or(Error::InaccessibleDirectory { path: cursor })?;
+                    debug_assert!(!cursor.as_os_str().is_empty());
+                    // TODO: realpath or absolutize? No test runs into this.
+                    cursor = git_path::absolutize(&cursor, cwd.as_ref())
+                        .ok_or_else(|| Error::InvalidInput {
+                            directory: cursor.clone(),
+                        })?
+                        .into_owned();
                 }
             }
         }

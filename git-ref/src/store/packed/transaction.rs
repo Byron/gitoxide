@@ -1,5 +1,4 @@
-use std::fmt::Formatter;
-use std::io::Write;
+use std::{fmt::Formatter, io::Write};
 
 use crate::{
     file,

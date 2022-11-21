@@ -76,6 +76,8 @@ pub struct Options {
     pub(crate) lenient_config: bool,
     pub(crate) bail_if_untrusted: bool,
     pub(crate) config_overrides: Vec<BString>,
+    /// Internal to pass an already obtained CWD on to where it may also be used. This avoids the CWD being queried more than once per repo.
+    pub(crate) current_dir: Option<PathBuf>,
 }
 
 impl Default for Options {
@@ -90,6 +92,7 @@ impl Default for Options {
             lenient_config: true,
             bail_if_untrusted: false,
             config_overrides: Vec::new(),
+            current_dir: None,
         }
     }
 }
@@ -239,6 +242,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 bail_if_untrusted: false,
                 lenient_config: true,
                 config_overrides: Vec::new(),
+                current_dir: None,
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
@@ -250,6 +254,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 lenient_config: true,
                 lossy_config: None,
                 config_overrides: Vec::new(),
+                current_dir: None,
             },
         }
     }
@@ -292,11 +297,14 @@ impl ThreadSafeRepository {
                 }
             }
         };
-        let (git_dir, worktree_dir) =
-            git_discover::repository::Path::from_dot_git_dir(path, kind).into_repository_and_work_tree_directories();
+        let cwd = std::env::current_dir()?;
+        let (git_dir, worktree_dir) = git_discover::repository::Path::from_dot_git_dir(path, kind, &cwd)
+            .expect("we have sanitized path with is_git()")
+            .into_repository_and_work_tree_directories();
         if options.git_dir_trust.is_none() {
             options.git_dir_trust = git_sec::Trust::from_path_ownership(&git_dir)?.into();
         }
+        options.current_dir = Some(cwd);
         ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
     }
 
@@ -327,12 +335,15 @@ impl ThreadSafeRepository {
             }
         };
 
-        let (git_dir, worktree_dir) = git_discover::repository::Path::from_dot_git_dir(path, path_kind)
+        let cwd = std::env::current_dir()?;
+        let (git_dir, worktree_dir) = git_discover::repository::Path::from_dot_git_dir(path, path_kind, &cwd)
+            .expect("we have sanitized path with is_git()")
             .into_repository_and_work_tree_directories();
         let worktree_dir = worktree_dir.or(overrides.worktree_dir);
 
         let git_dir_trust = git_sec::Trust::from_path_ownership(&git_dir)?;
-        let options = trust_map.into_value_by_level(git_dir_trust);
+        let mut options = trust_map.into_value_by_level(git_dir_trust);
+        options.current_dir = Some(cwd);
         ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
     }
 
@@ -351,7 +362,9 @@ impl ThreadSafeRepository {
             bail_if_untrusted,
             permissions: Permissions { ref env, config },
             ref config_overrides,
+            ref current_dir,
         } = options;
+        let current_dir = current_dir.as_deref().expect("BUG: current_dir must be set by caller");
         let git_dir_trust = git_dir_trust.expect("trust must be been determined by now");
 
         // TODO: assure we handle the worktree-dir properly as we can have config per worktree with an extension.
@@ -406,8 +419,8 @@ impl ThreadSafeRepository {
                     .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
                     .map_err(config::Error::PathInterpolation)?;
                 worktree_dir = {
-                    let wt = git_path::absolutize(git_dir.join(wt_path), None::<std::path::PathBuf>).into_owned();
-                    wt.is_dir().then(|| wt)
+                    git_path::absolutize(git_dir.join(wt_path), current_dir)
+                        .and_then(|wt| wt.as_ref().is_dir().then(|| wt.into_owned()))
                 }
             }
         }
@@ -452,6 +465,7 @@ impl ThreadSafeRepository {
                     slots: object_store_slots,
                     object_hash: config.object_hash,
                     use_multi_pack_index: config.use_multi_pack_index,
+                    current_dir: current_dir.to_owned().into(),
                 },
             )?),
             common_dir,
@@ -557,10 +571,12 @@ mod tests {
     #[test]
     fn size_of_options() {
         let actual = std::mem::size_of::<Options>();
+        let limit = 140;
         assert!(
-            actual <= 104,
-            "{} <= 104: size shouldn't change without us knowing (on windows, it's bigger)",
-            actual
+            actual <= limit,
+            "{} <= {}: size shouldn't change without us knowing (on windows, it's bigger)",
+            actual,
+            limit
         );
     }
 }

@@ -3,8 +3,7 @@ mod diff {
 
     use git_object::{bstr::ByteSlice, tree::EntryMode};
     use git_repository as git;
-    use git_repository::object::blob::diff::line::Change;
-    use git_repository::object::tree::diff::change::Event;
+    use git_repository::object::{blob::diff::line::Change, tree::diff::change::Event};
 
     use crate::named_repo;
 
@@ -52,10 +51,7 @@ mod diff {
     #[test]
     fn changes_against_tree_with_filename_tracking() {
         let repo = named_repo("make_diff_repo.sh").unwrap();
-        let from = tree_named(
-            &repo,
-            &git::hash::ObjectId::empty_tree(git::hash::Kind::Sha1).to_string(),
-        );
+        let from = repo.empty_tree();
         let to = tree_named(&repo, ":/c1");
 
         let mut expected = vec!["a", "b", "c", "d"];

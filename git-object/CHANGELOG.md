@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.23.0 (2022-11-21)
+
+### New Features (BREAKING)
+
+ - <csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> upgrade edition to 2021 in most crates.
+   MSRV for this is 1.56, and we are now at 1.60 so should be compatible.
+   This isn't more than a patch release as it should break nobody
+   who is adhering to the MSRV, but let's be careful and mark it
+   breaking.
+   
+   Note that `git-features` and `git-pack` are still on edition 2018
+   as they make use of a workaround to support (safe) mutable access
+   to non-overlapping entries in a slice which doesn't work anymore
+   in edition 2021.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 3 calendar days.
+ - 14 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
+    - Merge branch 'pierrechevalier83/main' ([`a5b1d73`](https://github.com/Byron/gitoxide/commit/a5b1d738d23d0a343bee1b72bcb72250b5fdae11))
+    - thanks clippy ([`0a6d888`](https://github.com/Byron/gitoxide/commit/0a6d8882265eda833f4bf0252dc2c656aa05ca6f))
+    - restore original representation of `Tag` at the cost of some duplication ([`dd0a23d`](https://github.com/Byron/gitoxide/commit/dd0a23d710be0eb6c7ea7f883aeb1400bcbc0709))
+    - unify pre-allocation of `parents` in `Commit` to match typical single-ancestor chains ([`7242d1f`](https://github.com/Byron/gitoxide/commit/7242d1f4acb4ac0d2585295c11f36436a1215a7a))
+    - refactor ([`c02a6bd`](https://github.com/Byron/gitoxide/commit/c02a6bdcc3669a48cd4b5b640280701fd089575d))
+    - [refactor] Deduplicate Tag and TagRef ([`6003fa2`](https://github.com/Byron/gitoxide/commit/6003fa22085b5031565c51b2b5a0a9feb1579fb0))
+    - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))
+    - upgrade edition to 2021 in most crates. ([`3d8fa8f`](https://github.com/Byron/gitoxide/commit/3d8fa8fef9800b1576beab8a5bc39b821157a5ed))
+    - Merge branch 'pierrechevalier83/main' ([`f0dfa4c`](https://github.com/Byron/gitoxide/commit/f0dfa4c17be4d4a15fb2117bfc47b2fea1bc48fb))
+    - [git-object] Encode empty tags like git does ([`3bd3380`](https://github.com/Byron/gitoxide/commit/3bd33802e072b06d278b93eeae8cfaed19795d6b))
+</details>
+
 ## 0.22.1 (2022-11-06)
 
 ### New Features
@@ -15,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 2 calendar days.
+ - 5 commits contributed to the release over the course of 2 calendar days.
  - 27 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-features v0.23.1, git-glob v0.4.1, git-config-value v0.8.1, git-tempfile v2.0.6, git-object v0.22.1, git-ref v0.18.0, git-sec v0.4.2, git-config v0.10.0, git-prompt v0.1.1, git-url v0.10.1, git-credentials v0.6.1, git-diff v0.21.0, git-discover v0.7.0, git-index v0.7.0, git-pack v0.25.0, git-odb v0.35.0, git-transport v0.21.1, git-protocol v0.22.0, git-refspec v0.3.1, git-worktree v0.7.0, git-repository v0.26.0, git-commitgraph v0.10.0, gitoxide-core v0.19.0, gitoxide v0.17.0, safety bump 9 crates ([`d071583`](https://github.com/Byron/gitoxide/commit/d071583c5576fdf5f7717765ffed5681792aa81f))
     - prepare changelogs prior to release ([`423af90`](https://github.com/Byron/gitoxide/commit/423af90c8202d62dc1ea4a76a0df6421d1f0aa06))
     - Merge branch 'main' into write-sparse-index (upgrade to Rust 1.65) ([`5406630`](https://github.com/Byron/gitoxide/commit/5406630466145990b5adbdadb59151036993060d))
     - Adapt in-memory size check to Rust 1.65 and below ([`1919e8e`](https://github.com/Byron/gitoxide/commit/1919e8ec2f6bca8237a0356972b86f28c18da908))

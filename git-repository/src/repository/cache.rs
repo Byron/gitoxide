@@ -79,7 +79,6 @@ fn parse_bytes_from_var(name: &str) -> Option<usize> {
                 .ok()
         })
         .and_then(|unit| {
-            use std::convert::TryInto;
             unit.get_bytes()
                 .try_into()
                 .map_err(|err| {

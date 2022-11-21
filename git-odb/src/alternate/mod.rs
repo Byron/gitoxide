@@ -37,23 +37,26 @@ pub enum Error {
     Cycle(Vec<PathBuf>),
 }
 
-/// Given an objects directory, try to resolve alternate object directories possibly located in the
-/// `./info/alternates` file into canonical paths.
+/// Given an `objects_directory`, try to resolve alternate object directories possibly located in the
+/// `./info/alternates` file into canonical paths and resolve relative paths with the help of the `current_dir`.
 /// If no alternate object database was resolved, the resulting `Vec` is empty (it is not an error
 /// if there are no alternates).
 /// It is an error once a repository is seen again as it would lead to a cycle.
-pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<PathBuf>, Error> {
+pub fn resolve(
+    objects_directory: impl Into<PathBuf>,
+    current_dir: impl AsRef<std::path::Path>,
+) -> Result<Vec<PathBuf>, Error> {
     let relative_base = objects_directory.into();
     let mut dirs = vec![(0, relative_base.clone())];
     let mut out = Vec::new();
-    let cwd = std::env::current_dir()?;
-    let mut seen = vec![git_path::realpath_opts(&relative_base, &cwd, MAX_SYMLINKS)?];
+    let cwd = current_dir.as_ref();
+    let mut seen = vec![git_path::realpath_opts(&relative_base, cwd, MAX_SYMLINKS)?];
     while let Some((depth, dir)) = dirs.pop() {
         match fs::read(dir.join("info").join("alternates")) {
             Ok(input) => {
                 for path in parse::content(&input)?.into_iter() {
                     let path = relative_base.join(path);
-                    let path_canonicalized = git_path::realpath_opts(&path, &cwd, MAX_SYMLINKS)?;
+                    let path_canonicalized = git_path::realpath_opts(&path, cwd, MAX_SYMLINKS)?;
                     if seen.contains(&path_canonicalized) {
                         return Err(Error::Cycle(seen));
                     }

@@ -2,8 +2,7 @@ use std::io;
 
 use git_transport::client;
 
-use crate::fetch::response;
-use crate::{handshake, ls_refs};
+use crate::{fetch::response, handshake, ls_refs};
 
 /// The error used in [`fetch()`][crate::fetch()].
 #[derive(Debug, thiserror::Error)]

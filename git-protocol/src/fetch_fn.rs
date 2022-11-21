@@ -1,7 +1,8 @@
+use std::borrow::Cow;
+
 use git_features::progress::Progress;
 use git_transport::client;
 use maybe_async::maybe_async;
-use std::borrow::Cow;
 
 use crate::{
     credentials,

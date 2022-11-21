@@ -1,14 +1,14 @@
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod blocking_and_async_io {
-    use git_repository as git;
-    use git_repository::remote::Direction::Fetch;
     use std::sync::atomic::AtomicBool;
 
-    use crate::remote::{into_daemon_remote_if_async, spawn_git_daemon_if_async};
     use git_features::progress;
     use git_protocol::maybe_async;
-    use git_repository::remote::fetch;
+    use git_repository as git;
+    use git_repository::remote::{fetch, Direction::Fetch};
     use git_testtools::hex_to_id;
+
+    use crate::remote::{into_daemon_remote_if_async, spawn_git_daemon_if_async};
 
     pub(crate) fn base_repo_path() -> String {
         git::path::realpath(

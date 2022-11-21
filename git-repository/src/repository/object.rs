@@ -1,13 +1,13 @@
 use std::convert::TryInto;
 
-use git_hash::{oid, ObjectId};
+use git_hash::ObjectId;
 use git_odb::{Find, FindExt, Write};
 use git_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
 };
 
-use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference};
+use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference, Tree};
 
 /// Methods related to object creation.
 impl crate::Repository {
@@ -106,13 +106,12 @@ impl crate::Repository {
     pub fn tag(
         &self,
         name: impl AsRef<str>,
-        target: impl AsRef<oid>,
+        target: impl AsRef<git_hash::oid>,
         target_kind: git_object::Kind,
         tagger: Option<git_actor::SignatureRef<'_>>,
         message: impl AsRef<str>,
         constraint: PreviousValue,
     ) -> Result<Reference<'_>, tag::Error> {
-        // NOTE: This could be more efficient if we use a TagRef instead.
         let tag = git_object::Tag {
             target: target.as_ref().into(),
             target_kind,
@@ -193,5 +192,15 @@ impl crate::Repository {
             deref: true,
         })?;
         Ok(commit_id)
+    }
+
+    /// Return an empty tree object, suitable for [getting changes](crate::Tree::changes()).
+    ///
+    /// Note that it is special and doesn't physically exist in the object database even though it can be returned.
+    /// This means that this object can be used in an uninitialized, empty repository which would report to have no objects at all.
+    pub fn empty_tree(&self) -> Tree<'_> {
+        self.find_object(git_hash::ObjectId::empty_tree(self.object_hash()))
+            .expect("always present")
+            .into_tree()
     }
 }

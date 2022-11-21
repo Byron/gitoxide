@@ -19,6 +19,8 @@ pub const DEFAULT_BRANCH_NAME: &str = "main";
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Could not obtain the current directory")]
+    CurrentDir(#[from] std::io::Error),
     #[error(transparent)]
     Init(#[from] crate::create::Error),
     #[error(transparent)]
@@ -62,6 +64,7 @@ impl ThreadSafeRepository {
         let path = crate::create::into(directory.as_ref(), kind, create_options)?;
         let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
         open_options.git_dir_trust = Some(git_sec::Trust::Full);
+        open_options.current_dir = std::env::current_dir()?.into();
         let repo = ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, open_options)?;
 
         let branch_name = repo

@@ -3,9 +3,9 @@ name = "git-repository"
 repository = "https://github.com/Byron/gitoxide"
 description = "Abstractions for git repositories"
 license = "MIT/Apache-2.0"
-version = "0.28.0"
+version = "0.29.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
-edition = "2018"
+edition = "2021"
 include = ["src/**/*", "CHANGELOG.md"]
 rust-version = "1.60"
 
@@ -36,8 +36,14 @@ async-network-client = ["git-protocol/async-client"]
 async-network-client-async-std = ["async-std", "async-network-client", "git-transport/async-std"]
 ## Make `git-protocol` available along with a blocking client.
 blocking-network-client = ["git-protocol/blocking-client"]
-## Stacks with `blocking-network-client` to provide support for HTTP/S, and implies blocking networking as a whole.
-blocking-http-transport = ["git-transport/http-client-curl"]
+## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole.
+blocking-http-transport-curl = ["blocking-network-client", "git-transport/http-client-curl"]
+## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole.
+blocking-http-transport-reqwest = ["blocking-network-client", "git-transport/http-client-reqwest"]
+## Stacks with `blocking-http-transport-reqwest` and enables HTTPS via the `rustls` crate. Note that https isn't available without a selection.
+blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls", "reqwest-for-configuration-only/trust-dns"]
+## Stacks with `blocking-http-transport-reqwest` and enables HTTPS via the `native-tls` crate. Note that https isn't available without a selection.
+blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/default-tls" ]
 
 
 #! ### Other
@@ -77,38 +83,38 @@ cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 
 
 [dependencies]
-git-ref = { version = "^0.19.0", path = "../git-ref" }
-git-discover = { version = "^0.8.0", path = "../git-discover" }
-git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
-git-lock = { version = "^2.0.0", path = "../git-lock" }
-git-validate = { version = "^0.6.0", path = "../git-validate" }
-git-sec = { version = "^0.4.2", path = "../git-sec" }
-git-date = { version = "^0.2.0", path = "../git-date" }
-git-refspec = { version = "^0.3.1", path = "../git-refspec" }
+git-ref = { version = "^0.20.0", path = "../git-ref" }
+git-discover = { version = "^0.9.0", path = "../git-discover" }
+git-tempfile = { version = "^3.0.0", path = "../git-tempfile" }
+git-lock = { version = "^3.0.0", path = "../git-lock" }
+git-validate = { version = "^0.7.0", path = "../git-validate" }
+git-sec = { version = "^0.5.0", path = "../git-sec" }
+git-date = { version = "^0.3.0", path = "../git-date" }
+git-refspec = { version = "^0.4.0", path = "../git-refspec" }
 
-git-config = { version = "^0.11.0", path = "../git-config" }
-git-odb = { version = "^0.36.0", path = "../git-odb" }
-git-hash = { version = "^0.9.11", path = "../git-hash" }
-git-object = { version = "^0.22.1", path = "../git-object" }
-git-actor = { version = "^0.13.0", path = "../git-actor" }
-git-pack = { version = "^0.26.0", path = "../git-pack", features = ["object-cache-dynamic"] }
-git-revision = { version = "^0.6.0", path = "../git-revision" }
+git-config = { version = "^0.12.0", path = "../git-config" }
+git-odb = { version = "^0.37.0", path = "../git-odb" }
+git-hash = { version = "^0.10.0", path = "../git-hash" }
+git-object = { version = "^0.23.0", path = "../git-object" }
+git-actor = { version = "^0.14.0", path = "../git-actor" }
+git-pack = { version = "^0.27.0", path = "../git-pack", features = ["object-cache-dynamic"] }
+git-revision = { version = "^0.7.0", path = "../git-revision" }
 
-git-path = { version = "^0.5.0", path = "../git-path" }
-git-url = { version = "^0.10.1", path = "../git-url" }
-git-traverse = { version = "^0.18.0", path = "../git-traverse" }
-git-protocol = { version = "^0.23.0", path = "../git-protocol", optional = true }
-git-transport = { version = "^0.22.0", path = "../git-transport", optional = true }
-git-diff = { version = "^0.22.0", path = "../git-diff" }
-git-mailmap = { version = "^0.5.0", path = "../git-mailmap" }
-git-features = { version = "^0.23.1", path = "../git-features", features = ["progress", "once_cell"] }
+git-path = { version = "^0.6.0", path = "../git-path" }
+git-url = { version = "^0.11.0", path = "../git-url" }
+git-traverse = { version = "^0.19.0", path = "../git-traverse" }
+git-protocol = { version = "^0.24.0", path = "../git-protocol", optional = true }
+git-transport = { version = "^0.23.0", path = "../git-transport", optional = true }
+git-diff = { version = "^0.23.0", path = "../git-diff" }
+git-mailmap = { version = "^0.6.0", path = "../git-mailmap" }
+git-features = { version = "^0.24.0", path = "../git-features", features = ["progress", "once_cell"] }
 
-git-attributes = { version = "^0.5.0", path = "../git-attributes" }
-git-glob = { version = "^0.4.2", path = "../git-glob" }
-git-credentials = { version = "^0.6.1", path = "../git-credentials" }
-git-prompt = { version = "^0.1.1", path = "../git-prompt" }
-git-index = { version = "^0.8.0", path = "../git-index" }
-git-worktree = { version = "^0.8.0", path = "../git-worktree" }
+git-attributes = { version = "^0.6.0", path = "../git-attributes" }
+git-glob = { version = "^0.5.0", path = "../git-glob" }
+git-credentials = { version = "^0.7.0", path = "../git-credentials" }
+git-prompt = { version = "^0.2.0", path = "../git-prompt" }
+git-index = { version = "^0.9.0", path = "../git-index" }
+git-worktree = { version = "^0.9.0", path = "../git-worktree" }
 
 once_cell = "1.14.0"
 signal-hook = { version = "0.3.9", default-features = false }
@@ -125,6 +131,9 @@ async-std = { version = "1.12.0", optional = true }
 ## If disabled, the text will be search verbatim in any portion of the commit message, similar to
 ## how a simple unanchored regex of only 'normal' characters would work.
 regex = { version = "1.6.0", optional = true, default-features = false, features = ["std"] }
+
+# For internal use to allow pure-Rust builds without opensssl.
+reqwest-for-configuration-only = { package = "reqwest", version = "0.11.13", default-features = false, optional = true }
 
 document-features = { version = "0.2.0", optional = true }
 

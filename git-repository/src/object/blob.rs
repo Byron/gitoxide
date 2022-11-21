@@ -1,8 +1,8 @@
 ///
 pub mod diff {
-    use crate::bstr::ByteSlice;
-    use crate::object::blob::diff::line::Change;
     use std::ops::Range;
+
+    use crate::{bstr::ByteSlice, object::blob::diff::line::Change};
 
     /// A platform to keep temporary information to perform line diffs on modified blobs.
     ///

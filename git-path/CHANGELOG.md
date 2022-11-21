@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.6.0 (2022-11-21)
+
+### New Features (BREAKING)
+
+ - <csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> upgrade edition to 2021 in most crates.
+   MSRV for this is 1.56, and we are now at 1.60 so should be compatible.
+   This isn't more than a patch release as it should break nobody
+   who is adhering to the MSRV, but let's be careful and mark it
+   breaking.
+   
+   Note that `git-features` and `git-pack` are still on edition 2018
+   as they make use of a workaround to support (safe) mutable access
+   to non-overlapping entries in a slice which doesn't work anymore
+   in edition 2021.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-7dbab1c62c49822983c59be0443478f7b4fecbca/> `absolutize()` now takes a mandatory `current_dir()` parameter and returns `Option<path>`
+   Previously the function was willing to return an empty path despite it
+   being invalid. With the `current_dir` being required, this won't be the
+   case anymore and will yield logically consistent results in all cases.
+   
+   This forces the caller to deal with the relative path being invalid
+   or crafted to produce some other path, maybe to bypass sanity checks.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 9 commits contributed to the release over the course of 62 calendar days.
+ - 62 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
+    - Merge branch 'discover-rel-path' ([`5f908fb`](https://github.com/Byron/gitoxide/commit/5f908fb86857d565715b9b0b8b453b29273fb022))
+    - improve documentation to clarify intent ([`b8f73aa`](https://github.com/Byron/gitoxide/commit/b8f73aa5afe3f7aefa5627d7708e4c7e7da950a2))
+    - Merge branch 'cwd-consistency' ([`ea7c6a3`](https://github.com/Byron/gitoxide/commit/ea7c6a3b069c9e13905b51b87538c57ba9182dca))
+    - Adapt to changes in `git-discover` and `git-path` and `git-odb` ([`98c2501`](https://github.com/Byron/gitoxide/commit/98c250175a39598b9d37613c43dda2299da8eff3))
+    - `absolutize()` now takes a mandatory `current_dir()` parameter and returns `Option<path>` ([`7dbab1c`](https://github.com/Byron/gitoxide/commit/7dbab1c62c49822983c59be0443478f7b4fecbca))
+    - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))
+    - upgrade edition to 2021 in most crates. ([`3d8fa8f`](https://github.com/Byron/gitoxide/commit/3d8fa8fef9800b1576beab8a5bc39b821157a5ed))
+    - Merge branch 'diff' ([`25a7726`](https://github.com/Byron/gitoxide/commit/25a7726377fbe400ea3c4927d04e9dec99802b7b))
+</details>
+
 ## 0.5.0 (2022-09-20)
 
 ### New Features
@@ -23,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 21 calendar days.
+ - 7 commits contributed to the release over the course of 18 calendar days.
  - 21 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
@@ -40,12 +92,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
     - add support for `wasi` ([`523418f`](https://github.com/Byron/gitoxide/commit/523418f69030faa0add6472b14333e9aafc69f56))
  * **Uncategorized**
-    - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
-    - Merge branch 'main' into filter-refs-by-spec ([`9aa1d3d`](https://github.com/Byron/gitoxide/commit/9aa1d3dc46d4b1c76af257f573aff3aeef2d3fa8))
-    - Merge branch 'main' into filter-refs-by-spec ([`1f6e5ab`](https://github.com/Byron/gitoxide/commit/1f6e5ab15f5fd8d23719b13e6aea59cd231ac0fe))
-    - Merge branch 'main' into filter-refs-by-spec ([`51dc828`](https://github.com/Byron/gitoxide/commit/51dc8282fb77b519ff7d2c94c6bd73af306cfe8b))
-    - Merge branch 'main' into filter-refs-by-spec ([`56ba481`](https://github.com/Byron/gitoxide/commit/56ba481f4c48f74f10397feb1b6dc3d7dd3704fb))
-    - Merge branch 'main' into filter-refs-by-spec ([`a36c05d`](https://github.com/Byron/gitoxide/commit/a36c05d281269f3f8b297e7adc463bfb3c306663))
+    - Release git-hash v0.9.10, git-features v0.22.5, git-date v0.2.0, git-actor v0.12.0, git-glob v0.4.0, git-path v0.5.0, git-quote v0.3.0, git-attributes v0.4.0, git-config-value v0.8.0, git-tempfile v2.0.5, git-validate v0.6.0, git-object v0.21.0, git-ref v0.16.0, git-sec v0.4.0, git-config v0.8.0, git-discover v0.5.0, git-traverse v0.17.0, git-index v0.5.0, git-worktree v0.5.0, git-testtools v0.9.0, git-command v0.1.0, git-prompt v0.1.0, git-url v0.9.0, git-credentials v0.5.0, git-diff v0.19.0, git-mailmap v0.4.0, git-chunk v0.3.2, git-pack v0.23.0, git-odb v0.33.0, git-packetline v0.13.0, git-transport v0.20.0, git-protocol v0.20.0, git-revision v0.5.0, git-refspec v0.2.0, git-repository v0.24.0, git-commitgraph v0.9.0, gitoxide-core v0.18.0, gitoxide v0.16.0, safety bump 28 crates ([`29a043b`](https://github.com/Byron/gitoxide/commit/29a043be6808a3e9199a9b26bd076fe843afe4f4))
+    - Merge branch 'filter-refs' ([`fd14489`](https://github.com/Byron/gitoxide/commit/fd14489f729172d615d0fa1e8dbd605e9eacf69d))
+    - Merge branch 'filter-refs-by-spec' ([`5c05198`](https://github.com/Byron/gitoxide/commit/5c051986bd89590a9287d85d84c713d83dfab83a))
+    - Merge branch 'main' into index-from-tree ([`bc64b96`](https://github.com/Byron/gitoxide/commit/bc64b96a2ec781c72d1d4daad38aa7fb8b74f99b))
 </details>
 
 ## 0.4.2 (2022-08-29)
@@ -60,7 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 4 calendar days.
+ - 3 commits contributed to the release over the course of 5 calendar days.
  - 6 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -75,7 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - add `is_absolute()` for git-style absolute checks ([`f58a043`](https://github.com/Byron/gitoxide/commit/f58a043273b8e15afd01aac71f33652783baf462))
  * **Uncategorized**
     - Release git-path v0.4.2, git-config-value v0.7.0 ([`c48fb31`](https://github.com/Byron/gitoxide/commit/c48fb3107d29f9a06868b0c6de40567063a656d1))
-    - Merge branch 'main' into filter-refs-by-spec ([`cef0b51`](https://github.com/Byron/gitoxide/commit/cef0b51ade2a3301fa09ede7a425aa1fe3527e78))
+    - Merge branch 'main' into filter-refs-by-spec ([`cfa1440`](https://github.com/Byron/gitoxide/commit/cfa144031dbcac2707ab0cec012bc35e78f9c475))
 </details>
 
 ## 0.4.1 (2022-08-23)
@@ -101,10 +151,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 3 calendar days.
+ - 10 commits contributed to the release over the course of 30 calendar days.
  - 31 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -115,9 +165,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **Uncategorized**
     - Release git-path v0.4.1 ([`5e82346`](https://github.com/Byron/gitoxide/commit/5e823462b3deb904f5d6154a7bf114cef1988224))
     - Handle `.` specifically in `absolutize()`. ([`9171adb`](https://github.com/Byron/gitoxide/commit/9171adb796b38b08cae9bdd375b16a59a8166a1c))
-    - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
+    - Merge branch 'main' into remote-ls-refs ([`e2ee3de`](https://github.com/Byron/gitoxide/commit/e2ee3ded97e5c449933712883535b30d151c7c78))
+    - Merge branch 'docsrs-show-features' ([`31c2351`](https://github.com/Byron/gitoxide/commit/31c235140cad212d16a56195763fbddd971d87ce))
     - uniformize deny attributes ([`f7f136d`](https://github.com/Byron/gitoxide/commit/f7f136dbe4f86e7dee1d54835c420ec07c96cd78))
     - remove default link to cargo doc everywhere ([`533e887`](https://github.com/Byron/gitoxide/commit/533e887e80c5f7ede8392884562e1c5ba56fb9a8))
+    - Merge pull request #2 from SidneyDouw/main ([`ce885ad`](https://github.com/Byron/gitoxide/commit/ce885ad4c3324c09c83751c32e014f246c748766))
+    - Merge branch 'Byron:main' into main ([`9b9ea02`](https://github.com/Byron/gitoxide/commit/9b9ea0275f8ff5862f24cf5a4ca53bb1cd610709))
+    - Merge branch 'main' into rev-parse-delegate ([`6da8250`](https://github.com/Byron/gitoxide/commit/6da82507588d3bc849217c11d9a1d398b67f2ed6))
+    - Merge branch 'main' into pathspec ([`7b61506`](https://github.com/Byron/gitoxide/commit/7b615060712565f515515e35a3e8346278ad770c))
 </details>
 
 ## 0.4.0 (2022-07-22)
@@ -131,7 +186,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 32 calendar days.
+ - 14 commits contributed to the release over the course of 32 calendar days.
  - 33 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
@@ -153,15 +208,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **Uncategorized**
     - Release git-hash v0.9.6, git-features v0.22.0, git-date v0.0.2, git-actor v0.11.0, git-glob v0.3.1, git-path v0.4.0, git-attributes v0.3.0, git-tempfile v2.0.2, git-object v0.20.0, git-ref v0.15.0, git-sec v0.3.0, git-config v0.6.0, git-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, git-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, git-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, git-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0, safety bump 22 crates ([`4737b1e`](https://github.com/Byron/gitoxide/commit/4737b1eea1d4c9a8d5a69fb63ecac5aa5d378ae5))
     - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
+    - Merge pull request #1 from Byron/main ([`085e76b`](https://github.com/Byron/gitoxide/commit/085e76b121291ed9bd324139105d2bd4117bedf8))
     - make fmt ([`0700b09`](https://github.com/Byron/gitoxide/commit/0700b09d6828849fa2470df89af1f75a67bfb27d))
     - fix docs ([`4f8e3b1`](https://github.com/Byron/gitoxide/commit/4f8e3b169e57d599439c7abc861c82c08bcd92e3))
     - thanks clippy ([`7a2a31e`](https://github.com/Byron/gitoxide/commit/7a2a31e5758a2be8434f22cd9401ac00539f2bd9))
-    - Merge branch 'main' into cont_include_if ([`daa71c3`](https://github.com/Byron/gitoxide/commit/daa71c3b753c6d76a3d652c29237906b3e28728f))
+    - Merge branch 'main' into pathspec ([`89ea12b`](https://github.com/Byron/gitoxide/commit/89ea12b558bcc056b892193ee8fb44b8664b5da4))
     - Merge branch 'main' into cont_include_if ([`0e9df36`](https://github.com/Byron/gitoxide/commit/0e9df364c4cddf006b1de18b8d167319b7cc1186))
     - generally avoid using `target_os = "windows"` in favor of `cfg(windows)` and negations ([`91d5402`](https://github.com/Byron/gitoxide/commit/91d54026a61c2aae5e3e1341d271acf16478cd83))
     - Use git_path::realpath in all places that allow it right now ([`229dc91`](https://github.com/Byron/gitoxide/commit/229dc917fc7d9241b85e5818260a6fbdd3a5daaa))
     - avoid unwraps in tests as they are now stable ([`efa1423`](https://github.com/Byron/gitoxide/commit/efa14234c352b6b8417f0a42fc946e88f2eb52d3))
     - remove canonicalized-path abstraction ([`9496e55`](https://github.com/Byron/gitoxide/commit/9496e5512975825efebe0db86335d0d2dc8c9095))
+    - Merge branch 'main' into cont_include_if ([`41ea8ba`](https://github.com/Byron/gitoxide/commit/41ea8ba78e74f5c988148367386a1f4f304cb951))
 </details>
 
 ## 0.3.0 (2022-06-19)
@@ -177,7 +234,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 4 commits contributed to the release.
  - 6 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -203,10 +260,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 20 calendar days.
+ - 6 commits contributed to the release over the course of 18 calendar days.
  - 20 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -218,9 +275,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Release git-date v0.0.1, git-hash v0.9.5, git-features v0.21.1, git-actor v0.10.1, git-path v0.2.0, git-attributes v0.2.0, git-ref v0.14.0, git-sec v0.2.0, git-config v0.5.0, git-credentials v0.2.0, git-discover v0.2.0, git-pack v0.20.0, git-odb v0.30.0, git-url v0.6.0, git-transport v0.18.0, git-protocol v0.17.0, git-revision v0.2.1, git-worktree v0.3.0, git-repository v0.19.0, safety bump 13 crates ([`a417177`](https://github.com/Byron/gitoxide/commit/a41717712578f590f04a33d27adaa63171f25267))
     - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
     - make fmt ([`c665aef`](https://github.com/Byron/gitoxide/commit/c665aef4270c5ee54da89ee015cc0affd6337608))
-    - Merge branch 'main' into davidkna-envopen ([`bc0abc6`](https://github.com/Byron/gitoxide/commit/bc0abc643d3329f885f250b6880560dec861150f))
+    - Merge branch 'main' into svetli-n-cont_include_if ([`315c87e`](https://github.com/Byron/gitoxide/commit/315c87e18c6cac0fafa7b4e59fdd3c076a58a45a))
     - Make `realpath()` easier to use by introducing `realpath_opt()`. ([`266d437`](https://github.com/Byron/gitoxide/commit/266d4379e9132fd7dd21e6c8fccb36e125069d6e))
-    - Merge branch 'davidkna-admin-sec' ([`3d0e2c2`](https://github.com/Byron/gitoxide/commit/3d0e2c2d4ebdbe3dff01846aac3375128353a2e1))
+    - Merge branch 'main' into SidneyDouw-pathspec ([`a22b1d8`](https://github.com/Byron/gitoxide/commit/a22b1d88a21311d44509018729c3ef1936cf052a))
 </details>
 
 ## 0.1.3 (2022-05-23)
@@ -231,10 +288,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 1 calendar day.
+ - 3 commits contributed to the release over the course of 1 calendar day.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -246,7 +303,6 @@ A maintenance release without user-facing changes.
     - Release git-path v0.1.3, git-discover v0.1.2, git-repository v0.18.1, cargo-smart-release v0.10.1 ([`b7399cc`](https://github.com/Byron/gitoxide/commit/b7399cc44ee419355a649a7b0ba7b352cd48b400))
     - prepare for smart-release release ([`2f74cb0`](https://github.com/Byron/gitoxide/commit/2f74cb05e9b2399355af07517fe3c14e4e8724c5))
     - adjust git-path size limits ([`5ac8a3b`](https://github.com/Byron/gitoxide/commit/5ac8a3b58e0f61d4801a6f4dbd011f757208dbac))
-    - Merge branch 'davidkna-discover-x-fs' ([`9abaeda`](https://github.com/Byron/gitoxide/commit/9abaeda2d22e2dbb1db1632c6eb637f1458d06e1))
 </details>
 
 ## 0.1.2 (2022-05-21)
@@ -257,7 +313,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 2 calendar days.
+ - 7 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#422](https://github.com/Byron/gitoxide/issues/422)
@@ -272,6 +328,7 @@ A maintenance release without user-facing changes.
     - prepare changelog ([`de2d587`](https://github.com/Byron/gitoxide/commit/de2d5874b8d75c53165a9fc3ed35e2b37142bf52))
  * **Uncategorized**
     - Release git-path v0.1.2, git-sec v0.1.1, git-config v0.4.0, git-discover v0.1.1, git-pack v0.19.1, git-repository v0.18.0, cargo-smart-release v0.10.0, safety bump 2 crates ([`ceb6dff`](https://github.com/Byron/gitoxide/commit/ceb6dff13362a2b4318a551893217c1d11643b9f))
+    - Merge branch 'svetli-n-git_includeif' ([`cf24fbe`](https://github.com/Byron/gitoxide/commit/cf24fbe4b62d67b06138243d470dcc1805ebd55b))
     - Remove forbid missing_docs ([`23acebb`](https://github.com/Byron/gitoxide/commit/23acebb8e9e53d89e7f629ab690253610358b0bb))
     - Merge branch 'main' into git_includeif ([`229d938`](https://github.com/Byron/gitoxide/commit/229d9383bef8844111d2bf3c406a2ea570109c8b))
     - declare `git-path` usable ([`496594d`](https://github.com/Byron/gitoxide/commit/496594d2d8b4216b51cfbd97805834c71c030c75))
@@ -304,7 +361,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 49 commits contributed to the release over the course of 19 calendar days.
+ - 51 commits contributed to the release over the course of 19 calendar days.
  - 20 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#301](https://github.com/Byron/gitoxide/issues/301)
@@ -359,6 +416,7 @@ A maintenance release without user-facing changes.
     - Fix merge. ([`f2b46df`](https://github.com/Byron/gitoxide/commit/f2b46dfbf73387d4501a7bf5039cb80ac4cb8d9c))
     - Merge branch 'main' into git_includeif ([`b1bfc8f`](https://github.com/Byron/gitoxide/commit/b1bfc8fe8efb6d8941f54dddd0fcad99aa13ed6c))
     - Add custom tempdir in. ([`8bfd52a`](https://github.com/Byron/gitoxide/commit/8bfd52a65fcecb33ae69917a67c48027f8fb3dff))
+    - Merge branch 'basic-worktree-support' ([`e058bda`](https://github.com/Byron/gitoxide/commit/e058bdabf8449b6a6fdff851e3929137d9b71568))
     - thanks clippy ([`a084951`](https://github.com/Byron/gitoxide/commit/a084951c72818d7cb2061053078793213890c899))
     - Temp ignore real_path_tests. ([`27f4bfc`](https://github.com/Byron/gitoxide/commit/27f4bfcb2fba45bd02d1977094acb31b7b989cac))
     - Windows fix. ([`ce0b408`](https://github.com/Byron/gitoxide/commit/ce0b408fcdeae80d6c9263955f70a00ead3841e1))
@@ -370,8 +428,9 @@ A maintenance release without user-facing changes.
     - Use thiserror in `real_path()` ([`2bd7a44`](https://github.com/Byron/gitoxide/commit/2bd7a441beb7e0a86169ec89ca56a8ba448fbf2b))
     - input_path is Iterator. ([`c993d78`](https://github.com/Byron/gitoxide/commit/c993d7826fcf76ddaddffca619b4d35555b6636c))
     - real_path wip ([`3890a61`](https://github.com/Byron/gitoxide/commit/3890a6149683663b16dccdc3b50e2aab7eb4e048))
+    - Merge branch 'main' into msrv-for-windows ([`7cb1972`](https://github.com/Byron/gitoxide/commit/7cb19729133325bdfacedf44cdc0500cbcf36684))
     - make fmt ([`251b6df`](https://github.com/Byron/gitoxide/commit/251b6df5dbdda24b7bdc452085f808f3acef69d8))
-    - Merge branch 'git_includeif' of https://github.com/svetli-n/gitoxide into svetli-n-git_includeif ([`0e01da7`](https://github.com/Byron/gitoxide/commit/0e01da74dffedaa46190db6a7b60a2aaff190d81))
+    - Merge branch 'worktree-stack' ([`98da8ba`](https://github.com/Byron/gitoxide/commit/98da8ba52cef8ec27f705fcbc84773e5bacc4e10))
 </details>
 
 ## 0.1.0 (2022-04-28)

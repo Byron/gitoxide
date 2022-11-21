@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.37.0 (2022-11-21)
+
+### Bug Fixes
+
+ - <csr-id-1ce3190000f6211ce31468c7603d491bb5b90293/> Disable tag.gpgSign in test scripts
+   This is done for the same reason that commit.gpgsign is disabled for test
+   scripts. It prevents test failures if the user has tag.gpgsign enabled in
+   their global git config when invoking tests.
+
+### New Features (BREAKING)
+
+ - <csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> upgrade edition to 2021 in most crates.
+   MSRV for this is 1.56, and we are now at 1.60 so should be compatible.
+   This isn't more than a patch release as it should break nobody
+   who is adhering to the MSRV, but let's be careful and mark it
+   breaking.
+   
+   Note that `git-features` and `git-pack` are still on edition 2018
+   as they make use of a workaround to support (safe) mutable access
+   to non-overlapping entries in a slice which doesn't work anymore
+   in edition 2021.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-1fabdc51b9468ba2c6b8cf74509ad5aa2a0b86f4/> `alternate::resolve(…)` now takes the current_dir as argument.
+   That way it's more consistent with similar low-level functions and it's
+   possible to avoid multiple calls to `std::env::current_dir()`.
+   
+   Furthermore, the usage of `current_dir()` is made explicit when
+   instantiating a store to allow it to be resued.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 9 commits contributed to the release over the course of 13 calendar days.
+ - 13 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
+    - Merge branch 'cwd-consistency' ([`ea7c6a3`](https://github.com/Byron/gitoxide/commit/ea7c6a3b069c9e13905b51b87538c57ba9182dca))
+    - `alternate::resolve(…)` now takes the current_dir as argument. ([`1fabdc5`](https://github.com/Byron/gitoxide/commit/1fabdc51b9468ba2c6b8cf74509ad5aa2a0b86f4))
+    - Merge branch 'jpgrayson/main' ([`b242853`](https://github.com/Byron/gitoxide/commit/b242853abd790e5234b2f18b4aaeddb8f6f4d36f))
+    - remove `git config` statements from fixtures that didn't need them (anymore). ([`578ea79`](https://github.com/Byron/gitoxide/commit/578ea799e9ec10f7142a7fc207d43ef301308c6d))
+    - Disable tag.gpgSign in test scripts ([`1ce3190`](https://github.com/Byron/gitoxide/commit/1ce3190000f6211ce31468c7603d491bb5b90293))
+    - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))
+    - upgrade edition to 2021 in most crates. ([`3d8fa8f`](https://github.com/Byron/gitoxide/commit/3d8fa8fef9800b1576beab8a5bc39b821157a5ed))
+    - Merge branch 'main' into http-config ([`7c5b37d`](https://github.com/Byron/gitoxide/commit/7c5b37d28e98f59a6847368a0d0166d2dbb4acc1))
+</details>
+
 ## 0.36.0 (2022-11-08)
 
 A maintenance release without user-facing changes.
@@ -13,7 +71,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +83,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-diff v0.22.0, git-index v0.7.1, git-pack v0.26.0, git-odb v0.36.0, git-transport v0.21.2, git-repository v0.27.0, safety bump 6 crates ([`f0cab31`](https://github.com/Byron/gitoxide/commit/f0cab317bb0c2799fa80d16f3ae1b89d6aee4284))
     - prepare changelogs prior to release ([`f5f3a9e`](https://github.com/Byron/gitoxide/commit/f5f3a9edd038a89c8c6c4da02054e5439bcc0071))
 </details>
 
