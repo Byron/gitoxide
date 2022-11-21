@@ -217,7 +217,7 @@ pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
 /// If a script result doesn't exist, these will be checked first and extracted if present, which they are by default.
 /// This behaviour can be prohibited by setting the `GITOXIDE_TEST_IGNORE_ARCHIVES` to any value.
 ///
-/// To speed CI up, one can add these archives to the repository. It's absoutely recommended to use `git-lfs` for that to
+/// To speed CI up, one can add these archives to the repository. It's absolutely recommended to use `git-lfs` for that to
 /// not bloat the repository size.
 ///
 /// #### Disable Archive Creation
