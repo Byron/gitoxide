@@ -127,7 +127,8 @@ check: ## Build all code in suitable configurations
 	cd git-repository && cargo check --no-default-features --features async-network-client \
 					  && cargo check --no-default-features --features async-network-client-async-std \
 					  && cargo check --no-default-features --features blocking-network-client \
-					  && cargo check --no-default-features --features blocking-network-client,blocking-http-transport \
+					  && cargo check --no-default-features --features blocking-http-transport-curl \
+					  && cargo check --no-default-features --features blocking-http-transport-reqwest \
 					  && cargo check --no-default-features --features max-performance \
 					  && cargo check --no-default-features --features max-performance-safe \
 					  && cargo check --no-default-features
@@ -178,7 +179,7 @@ journey-tests: always  ## run journey tests (max)
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max
 
 journey-tests-pure: always  ## run journey tests (max-pure)
-	cargo build
+	cargo build --no-default-features --features max-pure
 	cargo build --package git-testtools --bin jtt
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max-pure
 
