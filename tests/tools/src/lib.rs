@@ -426,6 +426,13 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
     if is_excluded(archive) {
         return Ok(());
     }
+    if std::fs::read(archive).map_or(false, |content| content.starts_with(b"version https://git-lfs")) {
+        eprintln!(
+            "Refusing to overwrite `git-lfs` pointer file at \"{}\" - git lfs might not be properly installed.",
+            archive.display()
+        );
+        return Ok(());
+    }
     std::fs::create_dir_all(archive.parent().expect("archive is a file"))?;
 
     let meta_dir = populate_meta_dir(source_dir, script_identity)?;
