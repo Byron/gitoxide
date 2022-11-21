@@ -417,6 +417,16 @@ fn write_failure_marker(failure_marker: &Path) {
     std::fs::write(failure_marker, []).ok();
 }
 
+fn is_lfs_pointer_file(path: &Path) -> bool {
+    const PREFIX: &[u8] = b"version https://git-lfs";
+    let mut buf = [0_u8; PREFIX.len()];
+    std::fs::OpenOptions::new()
+        .read(true)
+        .open(path)
+        .and_then(|mut f| f.read_exact(&mut buf))
+        .map_or(false, |_| buf.starts_with(PREFIX))
+}
+
 /// The `script_identity` will be baked into the soon to be created `archive` as it identitifies the script
 /// that created the contents of `source_dir`.
 fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identity: u32) -> std::io::Result<()> {
@@ -424,6 +434,13 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
         return Ok(());
     }
     if is_excluded(archive) {
+        return Ok(());
+    }
+    if is_lfs_pointer_file(archive) {
+        eprintln!(
+            "Refusing to overwrite `git-lfs` pointer file at \"{}\" - git lfs might not be properly installed.",
+            archive.display()
+        );
         return Ok(());
     }
     std::fs::create_dir_all(archive.parent().expect("archive is a file"))?;
