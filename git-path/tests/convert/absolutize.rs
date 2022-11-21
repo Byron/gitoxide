@@ -74,6 +74,7 @@ fn trailing_relative_components_are_resolved() {
     let cwd = std::env::current_dir().unwrap();
     for (input, expected) in [
         ("./a/b/./c/../d/..", "./a/b"),
+        ("a/./b/c/.././..", "a"),
         ("/a/b/c/.././../.", "/a"),
         ("./a/..", "."),
         ("a/..", "."),
