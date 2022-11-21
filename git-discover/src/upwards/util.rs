@@ -50,7 +50,7 @@ pub(crate) fn find_ceiling_height(search_dir: &Path, ceiling_dirs: &[PathBuf], c
         .filter_map(|ceiling_dir| {
             let mut ceiling_dir = git_path::absolutize(ceiling_dir, cwd)?;
             if !ceiling_dir.is_absolute() {
-                ceiling_dir = cwd.join(ceiling_dir.as_ref()).into();
+                ceiling_dir = git_path::absolutize(cwd.join(ceiling_dir.as_ref()), cwd)?;
             }
             search_dir
                 .strip_prefix(ceiling_dir.as_ref())

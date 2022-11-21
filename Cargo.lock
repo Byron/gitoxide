@@ -1339,6 +1339,7 @@ dependencies = [
  "git-sec",
  "git-testtools",
  "is_ci",
+ "serial_test",
  "tempfile",
  "thiserror",
 ]
