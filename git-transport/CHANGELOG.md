@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.23.0 (2022-11-21)
 
 ### New Features (BREAKING)
 
@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 2 calendar days.
+ - 6 commits contributed to the release over the course of 2 calendar days.
  - 4 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#602](https://github.com/Byron/gitoxide/issues/602)
@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#602](https://github.com/Byron/gitoxide/issues/602)**
     - `max-pure` now builds without any C build tooling due to lack of `openssl-sys`. ([`4308a20`](https://github.com/Byron/gitoxide/commit/4308a209dddcbb461c34d45fb9af8b4621d4600a))
  * **Uncategorized**
+    - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
     - Merge branch 'max-pure' ([`03ff188`](https://github.com/Byron/gitoxide/commit/03ff1882f2982fba38fbbf245eea13ef9df50f33))
     - thanks clippy ([`c7cba33`](https://github.com/Byron/gitoxide/commit/c7cba333dd8654995b367498609b4280fe394402))
     - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))

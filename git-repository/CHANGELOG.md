@@ -5,9 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.29.0 (2022-11-21)
+
+<csr-id-f302fc1bcd06fadccd126f4f5f9c0165afabedda/>
 
 ### New Features
+
+<csr-id-ff9e1571b558475e727dc6ba11dab24ef15fb6f4/>
 
  - <csr-id-3ddbd2de369b521fa3f21935f10fe9c248840893/> Make `reqwest` TLS backend configuration easy.
    We provide the choice of `native-tls` or `rust-tls`. If none is
@@ -18,9 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    available, so use one of…
    
    * blocking-http-transport-reqwest-rust-tls
-   * blocking-http-transport-reqwest-native-tls
- - <csr-id-ff9e1571b558475e727dc6ba11dab24ef15fb6f4/> add `Repository::empty_tree()` to obtain the empty tree object.
-   Useful for diffing mostly.
+* blocking-http-transport-reqwest-native-tls
 
 ### Bug Fixes
 
@@ -65,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 23 commits contributed to the release over the course of 3 calendar days.
+ - 24 commits contributed to the release over the course of 3 calendar days.
  - 4 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#606](https://github.com/Byron/gitoxide/issues/606)
@@ -79,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#606](https://github.com/Byron/gitoxide/issues/606)**
     - `git_repository::Commit::describe()` chooses tag names (more) correctly. ([`c6a6902`](https://github.com/Byron/gitoxide/commit/c6a690219915b2b401d2d11f61db35b2931e5b3a))
  * **Uncategorized**
+    - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
     - Make `reqwest` TLS backend configuration easy. ([`3ddbd2d`](https://github.com/Byron/gitoxide/commit/3ddbd2de369b521fa3f21935f10fe9c248840893))
     - Merge branch 'max-pure' ([`03ff188`](https://github.com/Byron/gitoxide/commit/03ff1882f2982fba38fbbf245eea13ef9df50f33))
     - rename `blocking-http-transport` feature to `blocking-http-transport-curl`; add `blocking-http-transport-reqwest`. ([`bc2a399`](https://github.com/Byron/gitoxide/commit/bc2a399f2fbb69d23b0b05e8dfb95f3c64ff93b9))
@@ -102,6 +105,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - upgrade edition to 2021 in most crates. ([`3d8fa8f`](https://github.com/Byron/gitoxide/commit/3d8fa8fef9800b1576beab8a5bc39b821157a5ed))
     - also sort entries lexicographically ([`84ed89c`](https://github.com/Byron/gitoxide/commit/84ed89c3bf6692f18c4bb97173527de1bcba7ac6))
 </details>
+
+<csr-unknown>
+ add Repository::empty_tree() to obtain the empty tree object.Useful for diffing mostly.<csr-unknown/>
 
 ## 0.28.0 (2022-11-17)
 

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.23.0 (2022-11-21)
 
 ### New Features (BREAKING)
 
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 3 calendar days.
+ - 11 commits contributed to the release over the course of 3 calendar days.
  - 14 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
     - Merge branch 'pierrechevalier83/main' ([`a5b1d73`](https://github.com/Byron/gitoxide/commit/a5b1d738d23d0a343bee1b72bcb72250b5fdae11))
     - thanks clippy ([`0a6d888`](https://github.com/Byron/gitoxide/commit/0a6d8882265eda833f4bf0252dc2c656aa05ca6f))
     - restore original representation of `Tag` at the cost of some duplication ([`dd0a23d`](https://github.com/Byron/gitoxide/commit/dd0a23d710be0eb6c7ea7f883aeb1400bcbc0709))

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.0 (2022-11-21)
 
 ### Bug Fixes
 
@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 2 calendar days.
+ - 9 commits contributed to the release over the course of 2 calendar days.
  - 4 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
     - Merge branch 'discover-rel-path' ([`5f908fb`](https://github.com/Byron/gitoxide/commit/5f908fb86857d565715b9b0b8b453b29273fb022))
     - add test that actually uses chdir like in the real world. ([`048c8b2`](https://github.com/Byron/gitoxide/commit/048c8b260f78ee1eac74bf8f4ee2374d6b0eb308))
     - refactor ([`cdb9556`](https://github.com/Byron/gitoxide/commit/cdb95567c83d52cf93a621bf616883f09f5544bb))
