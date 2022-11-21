@@ -141,7 +141,7 @@ pub(crate) mod function {
                     cursor.pop();
                 }
             }
-            if cursor.parent().map(|p| p.as_os_str().is_empty()).unwrap_or(false) {
+            if cursor.parent().map_or(false, |p| p.as_os_str().is_empty()) {
                 cursor = cwd.to_path_buf();
                 dir_made_absolute = true;
             }

@@ -35,29 +35,29 @@ pub(crate) fn shorten_path_with_cwd(cursor: PathBuf, cwd: &Path) -> PathBuf {
 /// `search_dir` needs to be absolutized, and we absolutize every ceiling as well.
 pub(crate) fn find_ceiling_height(search_dir: &Path, ceiling_dirs: &[PathBuf], cwd: &Path) -> Option<usize> {
     if ceiling_dirs.is_empty() {
-        None
-    } else {
-        let search_realpath;
-        let search_dir = if search_dir.is_absolute() {
-            search_dir
-        } else {
-            search_realpath = git_path::realpath_opts(search_dir, cwd, git_path::realpath::MAX_SYMLINKS).ok()?;
-            search_realpath.as_path()
-        };
-        ceiling_dirs
-            .iter()
-            .filter_map(|ceiling_dir| {
-                let mut ceiling_dir = git_path::absolutize(ceiling_dir, cwd)?;
-                if !ceiling_dir.is_absolute() {
-                    ceiling_dir = cwd.join(ceiling_dir.as_ref()).into();
-                }
-                search_dir
-                    .strip_prefix(ceiling_dir.as_ref())
-                    .ok()
-                    .map(|path_relative_to_ceiling| path_relative_to_ceiling.components().count())
-            })
-            .min()
+        return None;
     }
+
+    let search_realpath;
+    let search_dir = if search_dir.is_absolute() {
+        search_dir
+    } else {
+        search_realpath = git_path::realpath_opts(search_dir, cwd, git_path::realpath::MAX_SYMLINKS).ok()?;
+        search_realpath.as_path()
+    };
+    ceiling_dirs
+        .iter()
+        .filter_map(|ceiling_dir| {
+            let mut ceiling_dir = git_path::absolutize(ceiling_dir, cwd)?;
+            if !ceiling_dir.is_absolute() {
+                ceiling_dir = cwd.join(ceiling_dir.as_ref()).into();
+            }
+            search_dir
+                .strip_prefix(ceiling_dir.as_ref())
+                .ok()
+                .map(|path_relative_to_ceiling| path_relative_to_ceiling.components().count())
+        })
+        .min()
 }
 
 /// Returns the device ID of the directory.

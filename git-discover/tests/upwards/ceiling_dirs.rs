@@ -168,7 +168,7 @@ fn ceilings_are_adjusted_to_match_search_dir() -> crate::Result {
 
 #[test]
 fn discover_from_relative_path_with_ceiling() -> crate::Result {
-    let cwd = std::env::current_dir().unwrap();
+    let cwd = std::env::current_dir()?;
     for (search_dir, ceiling_dir) in [
         (".", ".."),
         (".", "./.."),
