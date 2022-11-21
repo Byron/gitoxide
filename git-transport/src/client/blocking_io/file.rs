@@ -1,6 +1,6 @@
-use std::borrow::Cow;
 use std::{
     any::Any,
+    borrow::Cow,
     error::Error,
     process::{self, Command, Stdio},
 };

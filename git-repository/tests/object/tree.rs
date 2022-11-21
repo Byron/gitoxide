@@ -3,8 +3,7 @@ mod diff {
 
     use git_object::{bstr::ByteSlice, tree::EntryMode};
     use git_repository as git;
-    use git_repository::object::blob::diff::line::Change;
-    use git_repository::object::tree::diff::change::Event;
+    use git_repository::object::{blob::diff::line::Change, tree::diff::change::Event};
 
     use crate::named_repo;
 

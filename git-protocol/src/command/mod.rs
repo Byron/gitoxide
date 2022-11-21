@@ -1,6 +1,7 @@
 //! V2 command abstraction to validate invocations and arguments, like a database of what we know about them.
-use super::Command;
 use std::borrow::Cow;
+
+use super::Command;
 
 /// A key value pair of values known at compile time.
 pub type Feature = (&'static str, Option<Cow<'static, str>>);

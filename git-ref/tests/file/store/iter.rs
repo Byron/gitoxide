@@ -8,8 +8,7 @@ use crate::file::{store, store_at, store_with_packed_refs};
 mod with_namespace {
     use git_object::bstr::{BString, ByteSlice};
 
-    use crate::file::store_at;
-    use crate::file::transaction::prepare_and_commit::empty_store;
+    use crate::file::{store_at, transaction::prepare_and_commit::empty_store};
 
     #[test]
     fn missing_refs_dir_yields_empty_iteration() -> crate::Result {

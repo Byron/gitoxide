@@ -18,13 +18,14 @@ struct Transport<T> {
 
 #[cfg(feature = "blocking-client")]
 mod impls {
+    use std::borrow::Cow;
+
     use bstr::BStr;
     use git_transport::{
         client,
         client::{Error, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
-    use std::borrow::Cow;
 
     use crate::fetch::tests::arguments::Transport;
 
@@ -70,6 +71,8 @@ mod impls {
 
 #[cfg(feature = "async-client")]
 mod impls {
+    use std::borrow::Cow;
+
     use async_trait::async_trait;
     use bstr::BStr;
     use git_transport::{
@@ -77,7 +80,6 @@ mod impls {
         client::{Error, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
-    use std::borrow::Cow;
 
     use crate::fetch::tests::arguments::Transport;
     impl<T: client::TransportWithoutIO + Send> client::TransportWithoutIO for Transport<T> {

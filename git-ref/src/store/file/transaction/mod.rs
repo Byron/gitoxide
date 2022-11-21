@@ -1,6 +1,7 @@
+use std::fmt::Formatter;
+
 use git_hash::ObjectId;
 use git_object::bstr::BString;
-use std::fmt::Formatter;
 
 use crate::{
     store_impl::{file, file::Transaction},

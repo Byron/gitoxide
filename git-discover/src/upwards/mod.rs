@@ -4,8 +4,7 @@ pub use types::{Error, Options};
 mod util;
 
 pub(crate) mod function {
-    use std::borrow::Cow;
-    use std::path::Path;
+    use std::{borrow::Cow, path::Path};
 
     use git_sec::Trust;
 

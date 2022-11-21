@@ -1,5 +1,6 @@
-use crate::{entry, extension, Entry, PathStorage, State, Version};
 use bstr::{BStr, ByteSlice};
+
+use crate::{entry, extension, Entry, PathStorage, State, Version};
 
 // TODO: integrate this somehow, somewhere, depending on later usage.
 #[allow(dead_code)]

@@ -1,9 +1,10 @@
-use bstr::BStr;
-use std::borrow::Cow;
 use std::{
     any::Any,
+    borrow::Cow,
     ops::{Deref, DerefMut},
 };
+
+use bstr::BStr;
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 use crate::client::{MessageKind, RequestWriter, WriteMode};

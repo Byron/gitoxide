@@ -11,8 +11,9 @@ use crate::{
 };
 
 mod error;
-use crate::remote::fetch::WritePackedRefs;
 pub use error::Error;
+
+use crate::remote::fetch::WritePackedRefs;
 
 /// The way reflog messages should be composed whenever a ref is written with recent objects from a remote.
 pub enum RefLogMessage {

@@ -1,5 +1,4 @@
-use std::borrow::Cow;
-use std::{any::Any, error::Error, io::Write};
+use std::{any::Any, borrow::Cow, error::Error, io::Write};
 
 use bstr::{BStr, BString, ByteVec};
 use git_packetline::PacketLineRef;

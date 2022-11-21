@@ -1,6 +1,9 @@
 use super::{interpolate_context, util, Error, StageOne};
-use crate::config::cache::util::ApplyLeniency;
-use crate::{bstr::BString, config::Cache, repository};
+use crate::{
+    bstr::BString,
+    config::{cache::util::ApplyLeniency, Cache},
+    repository,
+};
 
 /// Initialization
 impl Cache {

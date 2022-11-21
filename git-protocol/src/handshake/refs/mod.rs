@@ -1,5 +1,6 @@
-use super::Ref;
 use bstr::BStr;
+
+use super::Ref;
 
 ///
 pub mod parse {

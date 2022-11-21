@@ -1,12 +1,14 @@
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod blocking_and_async_io {
     use git_features::progress;
+    use git_protocol::maybe_async;
     use git_repository as git;
     use git_repository::remote::Direction::Fetch;
 
-    use crate::remote;
-    use crate::remote::{into_daemon_remote_if_async, spawn_git_daemon_if_async};
-    use git_protocol::maybe_async;
+    use crate::{
+        remote,
+        remote::{into_daemon_remote_if_async, spawn_git_daemon_if_async},
+    };
 
     #[maybe_async::test(
         feature = "blocking-network-client",

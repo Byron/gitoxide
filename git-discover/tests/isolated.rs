@@ -1,6 +1,7 @@
+use std::path::{Path, PathBuf};
+
 use git_discover::upwards::Options;
 use serial_test::serial;
-use std::path::{Path, PathBuf};
 
 #[test]
 #[serial]

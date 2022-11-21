@@ -1,5 +1,6 @@
-use crate::bstr::BStr;
 use std::any::Any;
+
+use crate::bstr::BStr;
 
 impl crate::Repository {
     /// Produce configuration suitable for `url`, as differentiated by its protocol/scheme, to be passed to a transport instance via
@@ -28,10 +29,14 @@ impl crate::Repository {
                     feature = "blocking-http-transport-curl"
                 ))]
                 {
-                    use crate::bstr::ByteVec;
-                    use crate::config::cache::util::{ApplyLeniency, ApplyLeniencyDefault};
-                    use git_transport::client::http;
                     use std::borrow::Cow;
+
+                    use git_transport::client::http;
+
+                    use crate::{
+                        bstr::ByteVec,
+                        config::cache::util::{ApplyLeniency, ApplyLeniencyDefault},
+                    };
 
                     fn try_cow_to_string(
                         v: Cow<'_, BStr>,

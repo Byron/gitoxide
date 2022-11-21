@@ -2,9 +2,8 @@ use std::{borrow::Cow, convert::TryInto, path::PathBuf, time::Duration};
 
 use git_lock::acquire::Fail;
 
-use crate::config::cache::util::ApplyLeniencyDefault;
 use crate::{
-    config::{checkout_options, Cache},
+    config::{cache::util::ApplyLeniencyDefault, checkout_options, Cache},
     remote,
     repository::identity,
 };

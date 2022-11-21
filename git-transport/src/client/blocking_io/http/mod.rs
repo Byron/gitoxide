@@ -1,11 +1,11 @@
-use bstr::BStr;
-use std::sync::{Arc, Mutex};
 use std::{
     any::Any,
     borrow::Cow,
     io::{BufRead, Read},
+    sync::{Arc, Mutex},
 };
 
+use bstr::BStr;
 use git_packetline::PacketLineRef;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
