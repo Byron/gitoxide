@@ -5,6 +5,76 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-6fc5c06482636540804f7a8fb74794f52c72eda6/> Discover repo with relative path and ceiling
+   A couple of problems are repaired to allow discovering a repository from
+   "." with a ceiling directory.
+   
+   One problem was that find_ceiling_height() did the wrong thing when
+   confronted with any relative search_dir. This is resolved by converting
+   search_dir to be absolute if it is relative.
+   
+   The other problem was that discover_opts() also mishandled relative paths.
+   When the cursor started out as ".", cursor.pop() would be blindly called
+   such that cursor would be "" for the second iteration. When a ceiling
+   directory was in use such that there was a max_height, the current height
+   would be burned going from ".", to "", and then to "<cwd>", before finally
+   actually getting to a real parent directory. This problem is ameliorated by
+   testing whether the cursor has a non-empty parent before popping.
+   
+   N.B. the new test case relies on the test running from the git-discover
+   directory such that the gitoxide repository will be found. This is a bit
+   fragile and will fail if, for example, the test is run from an unpacked
+   gitoxide source tarball.
+
+### New Features (BREAKING)
+
+ - <csr-id-b4dcfc716a80ffccbab6f7ccc586d8063cc10fff/> `Path::from_dot_git_dir()` now takes the `current_dir` as argument and returns `Option<path>`
+   That way it's possible to avoid at least one call of
+   `std::env::current_dir()` per invocation, which also is more consnstent
+   with similar plumbing methods.
+   
+   Furthermore it can signal with `None` if the input directory was invalid.
+ - <csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> upgrade edition to 2021 in most crates.
+   MSRV for this is 1.56, and we are now at 1.60 so should be compatible.
+   This isn't more than a patch release as it should break nobody
+   who is adhering to the MSRV, but let's be careful and mark it
+   breaking.
+   
+   Note that `git-features` and `git-pack` are still on edition 2018
+   as they make use of a workaround to support (safe) mutable access
+   to non-overlapping entries in a slice which doesn't work anymore
+   in edition 2021.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 2 calendar days.
+ - 4 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'discover-rel-path' ([`5f908fb`](https://github.com/Byron/gitoxide/commit/5f908fb86857d565715b9b0b8b453b29273fb022))
+    - add test that actually uses chdir like in the real world. ([`048c8b2`](https://github.com/Byron/gitoxide/commit/048c8b260f78ee1eac74bf8f4ee2374d6b0eb308))
+    - refactor ([`cdb9556`](https://github.com/Byron/gitoxide/commit/cdb95567c83d52cf93a621bf616883f09f5544bb))
+    - Discover repo with relative path and ceiling ([`6fc5c06`](https://github.com/Byron/gitoxide/commit/6fc5c06482636540804f7a8fb74794f52c72eda6))
+    - Merge branch 'cwd-consistency' ([`ea7c6a3`](https://github.com/Byron/gitoxide/commit/ea7c6a3b069c9e13905b51b87538c57ba9182dca))
+    - `Path::from_dot_git_dir()` now takes the `current_dir` as argument and returns `Option<path>` ([`b4dcfc7`](https://github.com/Byron/gitoxide/commit/b4dcfc716a80ffccbab6f7ccc586d8063cc10fff))
+    - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))
+    - upgrade edition to 2021 in most crates. ([`3d8fa8f`](https://github.com/Byron/gitoxide/commit/3d8fa8fef9800b1576beab8a5bc39b821157a5ed))
+</details>
+
 ## 0.8.0 (2022-11-17)
 
 A maintenance release without user-facing changes.
@@ -13,7 +83,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 10 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +95,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-glob v0.4.2, git-config-value v0.8.2, git-lock v2.2.0, git-ref v0.19.0, git-config v0.11.0, git-discover v0.8.0, git-index v0.8.0, git-transport v0.22.0, git-protocol v0.23.0, git-worktree v0.8.0, git-repository v0.28.0, gitoxide-core v0.20.0, gitoxide v0.18.0, safety bump 9 crates ([`0c253b1`](https://github.com/Byron/gitoxide/commit/0c253b15143dcedfe4c66d64ab1ea6e097030651))
     - prepare changelogs prior to release ([`fe5721f`](https://github.com/Byron/gitoxide/commit/fe5721f888c64c79fe9a734a9e33b94a282f8d97))
 </details>
 

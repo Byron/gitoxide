@@ -5,6 +5,104 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-3ddbd2de369b521fa3f21935f10fe9c248840893/> Make `reqwest` TLS backend configuration easy.
+   We provide the choice of `native-tls` or `rust-tls`. If none is
+   provided, the user can configure on their on similar to how it's done
+   in `git-repository`.
+   
+   Please note that a choice now has to be made or HTTPS will not be
+   available, so use one of…
+   
+   * blocking-http-transport-reqwest-rust-tls
+   * blocking-http-transport-reqwest-native-tls
+ - <csr-id-ff9e1571b558475e727dc6ba11dab24ef15fb6f4/> add `Repository::empty_tree()` to obtain the empty tree object.
+   Useful for diffing mostly.
+
+### Bug Fixes
+
+ - <csr-id-c6a690219915b2b401d2d11f61db35b2931e5b3a/> `git_repository::Commit::describe()` chooses tag names (more) correctly.
+   Previously, if there were multiple choices for tags on the same commit,
+   `git describe` would disagree with `gitoxide` due to different
+   prioritization of names.
+   
+   This has now been fixed.
+ - <csr-id-84ed89c3bf6692f18c4bb97173527de1bcba7ac6/> also sort entries lexicographically
+
+### Other
+
+ - <csr-id-f302fc1bcd06fadccd126f4f5f9c0165afabedda/> Set GIT_EDITOR in make_rebase_i_repo.sh
+   If the user has core.editor set in their global git config, then that value
+   takes precidence over the EDITOR environment variable. The GIT_EDITOR
+   environment variable, however, has higher precidence than core.editor. For
+   this test, using GIT_EDITOR ensures that the desired sed command line is
+   used.
+
+### New Features (BREAKING)
+
+ - <csr-id-bc2a399f2fbb69d23b0b05e8dfb95f3c64ff93b9/> rename `blocking-http-transport` feature to `blocking-http-transport-curl`; add `blocking-http-transport-reqwest`.
+   With the new and relatively immature second tier http backend we pave
+   the way to support builds without the use of open-ssl and probably many
+   other C libraries.
+   
+   Note that it's early and not `http` configuration option is implemented
+   yet.
+ - <csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> upgrade edition to 2021 in most crates.
+   MSRV for this is 1.56, and we are now at 1.60 so should be compatible.
+   This isn't more than a patch release as it should break nobody
+   who is adhering to the MSRV, but let's be careful and mark it
+   breaking.
+   
+   Note that `git-features` and `git-pack` are still on edition 2018
+   as they make use of a workaround to support (safe) mutable access
+   to non-overlapping entries in a slice which doesn't work anymore
+   in edition 2021.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 23 commits contributed to the release over the course of 3 calendar days.
+ - 4 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#606](https://github.com/Byron/gitoxide/issues/606)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#606](https://github.com/Byron/gitoxide/issues/606)**
+    - `git_repository::Commit::describe()` chooses tag names (more) correctly. ([`c6a6902`](https://github.com/Byron/gitoxide/commit/c6a690219915b2b401d2d11f61db35b2931e5b3a))
+ * **Uncategorized**
+    - Make `reqwest` TLS backend configuration easy. ([`3ddbd2d`](https://github.com/Byron/gitoxide/commit/3ddbd2de369b521fa3f21935f10fe9c248840893))
+    - Merge branch 'max-pure' ([`03ff188`](https://github.com/Byron/gitoxide/commit/03ff1882f2982fba38fbbf245eea13ef9df50f33))
+    - rename `blocking-http-transport` feature to `blocking-http-transport-curl`; add `blocking-http-transport-reqwest`. ([`bc2a399`](https://github.com/Byron/gitoxide/commit/bc2a399f2fbb69d23b0b05e8dfb95f3c64ff93b9))
+    - Merge branch 'jpgrayson/main' ([`72abac6`](https://github.com/Byron/gitoxide/commit/72abac68055947d3ff3fb4443f29da14a389e45d))
+    - Merge branch 'breadthfirst-improvements' ([`b755b5b`](https://github.com/Byron/gitoxide/commit/b755b5bd4cbf8839ba43a143183ae785584f1d59))
+    - improve docs for breadthfirst traversal - talking about sorting seems odd ([`6dc3ec1`](https://github.com/Byron/gitoxide/commit/6dc3ec1936b8c74e162e95a5aa1ff0a0d13e6fc8))
+    - Set GIT_EDITOR in make_rebase_i_repo.sh ([`f302fc1`](https://github.com/Byron/gitoxide/commit/f302fc1bcd06fadccd126f4f5f9c0165afabedda))
+    - add `Repository::empty_tree()` to obtain the empty tree object. ([`ff9e157`](https://github.com/Byron/gitoxide/commit/ff9e1571b558475e727dc6ba11dab24ef15fb6f4))
+    - Merge branch 'cwd-consistency' ([`ea7c6a3`](https://github.com/Byron/gitoxide/commit/ea7c6a3b069c9e13905b51b87538c57ba9182dca))
+    - Adapt to changes in `git-discover` and `git-path` and `git-odb` ([`98c2501`](https://github.com/Byron/gitoxide/commit/98c250175a39598b9d37613c43dda2299da8eff3))
+    - Merge branch 'pierrechevalier83/main' ([`a5b1d73`](https://github.com/Byron/gitoxide/commit/a5b1d738d23d0a343bee1b72bcb72250b5fdae11))
+    - restore original representation of `Tag` at the cost of some duplication ([`dd0a23d`](https://github.com/Byron/gitoxide/commit/dd0a23d710be0eb6c7ea7f883aeb1400bcbc0709))
+    - refactor ([`c02a6bd`](https://github.com/Byron/gitoxide/commit/c02a6bdcc3669a48cd4b5b640280701fd089575d))
+    - stabilize tests (unwrap() -> ?) and improve fixture ([`d4f58a9`](https://github.com/Byron/gitoxide/commit/d4f58a941e3936fb2f11ec66b75156e1b9120fa2))
+    - [refactor] Deduplicate Tag and TagRef ([`6003fa2`](https://github.com/Byron/gitoxide/commit/6003fa22085b5031565c51b2b5a0a9feb1579fb0))
+    - add additional tests ([`5b97d1b`](https://github.com/Byron/gitoxide/commit/5b97d1b8c787927fba246647427915fa2ca9dd4e))
+    - Sort like described in the comment ([`dfe125e`](https://github.com/Byron/gitoxide/commit/dfe125edb9ba15ec4b44155ac0028c44ba0bdb1f))
+    - rename tuple fields to what they actually are (without changing logic) ([`3177b2b`](https://github.com/Byron/gitoxide/commit/3177b2bf3f7ee9185d3afab05e50cd25e9561127))
+    - refactor ([`cf523cd`](https://github.com/Byron/gitoxide/commit/cf523cdaee36ea084826660ba0605dd5107cfe1f))
+    - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))
+    - upgrade edition to 2021 in most crates. ([`3d8fa8f`](https://github.com/Byron/gitoxide/commit/3d8fa8fef9800b1576beab8a5bc39b821157a5ed))
+    - also sort entries lexicographically ([`84ed89c`](https://github.com/Byron/gitoxide/commit/84ed89c3bf6692f18c4bb97173527de1bcba7ac6))
+</details>
+
 ## 0.28.0 (2022-11-17)
 
 <csr-id-6beb6f263fd40884b440092f39034dd43d3a95de/>
@@ -42,7 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 52 commits contributed to the release over the course of 8 calendar days.
+ - 53 commits contributed to the release over the course of 8 calendar days.
  - 8 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -60,6 +158,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-glob v0.4.2, git-config-value v0.8.2, git-lock v2.2.0, git-ref v0.19.0, git-config v0.11.0, git-discover v0.8.0, git-index v0.8.0, git-transport v0.22.0, git-protocol v0.23.0, git-worktree v0.8.0, git-repository v0.28.0, gitoxide-core v0.20.0, gitoxide v0.18.0, safety bump 9 crates ([`0c253b1`](https://github.com/Byron/gitoxide/commit/0c253b15143dcedfe4c66d64ab1ea6e097030651))
     - prepare changelogs prior to release ([`fe5721f`](https://github.com/Byron/gitoxide/commit/fe5721f888c64c79fe9a734a9e33b94a282f8d97))
     - Merge branch 'http-config' ([`665b53e`](https://github.com/Byron/gitoxide/commit/665b53e1c2e1de65fafa28b669f58977868bbc81))
     - fix docs ([`b5c316e`](https://github.com/Byron/gitoxide/commit/b5c316e285369a84e57ec6f7425b92fec2978a49))
