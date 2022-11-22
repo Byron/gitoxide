@@ -14,6 +14,9 @@ use crate::{
     Protocol, Service,
 };
 
+#[cfg(all(feature = "http-client-reqwest", feature = "http-client-curl"))]
+compile_error!("Cannot set both 'http-client-reqwest' and 'http-client-curl' features as they are mutually exclusive");
+
 #[cfg(feature = "http-client-curl")]
 mod curl;
 
