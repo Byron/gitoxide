@@ -30,6 +30,18 @@ on:
       - Makefile
 
 jobs:
+  pure-rust-build:
+    runs-on: ubuntu-latest
+    container: debian:buster
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+      - name: Prerequisites
+        run: apt-get update && apt-get install --no-install-recommends -y ca-certificates curl gcc libc-dev # gcc is required as OS abstraction
+      - name: install Rust via Rustup
+        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal;
+      - run: /github/home/.cargo/bin/cargo build --no-default-features --features max-pure
+
   test:
     runs-on: ubuntu-latest
     steps:
