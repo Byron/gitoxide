@@ -76,8 +76,8 @@ pub mod main_worktree {
             let mut opts = repo.config.checkout_options(repo.git_dir())?;
             opts.destination_is_initially_empty = true;
 
-            let mut files = progress.add_child("checkout");
-            let mut bytes = progress.add_child("writing");
+            let mut files = progress.add_child_with_id("checkout", *b"CLCF"); /* CLone Checkout Files */
+            let mut bytes = progress.add_child_with_id("writing", *b"CLCB") /* CLone Checkout Bytes */;
 
             files.init(Some(index.entries().len()), crate::progress::count("files"));
             bytes.init(None, crate::progress::bytes());

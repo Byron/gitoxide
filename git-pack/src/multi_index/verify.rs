@@ -130,7 +130,7 @@ impl File {
 
         let actual_index_checksum = self
             .verify_checksum(
-                progress.add_child(format!("{}: checksum", self.path.display())),
+                progress.add_child_with_id(format!("{}: checksum", self.path.display()), *b"MVCK"), /* Multiindex Verify ChecKsum */
                 should_interrupt,
             )
             .map_err(integrity::Error::from)
@@ -153,7 +153,7 @@ impl File {
         let mut pack_ids_and_offsets = Vec::with_capacity(self.num_objects as usize);
         {
             let order_start = Instant::now();
-            let mut progress = progress.add_child("checking oid order");
+            let mut progress = progress.add_child_with_id("checking oid order", *b"MVOR"); /* Multiindex Verify Oid oRder */
             progress.init(
                 Some(self.num_objects as usize),
                 git_features::progress::count("objects"),
@@ -215,7 +215,7 @@ impl File {
             let multi_index_entries_to_check = &pack_ids_slice[..slice_end];
             {
                 let offset_start = Instant::now();
-                let mut offsets_progress = progress.add_child("verify object offsets");
+                let mut offsets_progress = progress.add_child_with_id("verify object offsets", *b"MVOF"); /* Multiindex Verify Object Offsets */
                 offsets_progress.init(
                     Some(pack_ids_and_offsets.len()),
                     git_features::progress::count("objects"),

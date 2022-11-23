@@ -50,7 +50,7 @@ impl crate::Bundle {
     where
         P: Progress,
     {
-        let mut read_progress = progress.add_child("read pack");
+        let mut read_progress = progress.add_child_with_id("read pack", *b"BWRB"); /* Bundle Write Read pack Bytes*/
         read_progress.init(None, progress::bytes());
         let pack = progress::Read {
             inner: pack,
@@ -163,7 +163,7 @@ impl crate::Bundle {
         P: Progress,
         P::SubProgress: 'static,
     {
-        let mut read_progress = progress.add_child("read pack");
+        let mut read_progress = progress.add_child_with_id("read pack", *b"BWRB"); /* Bundle Write Read pack Bytes*/
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
         let pack = progress::Read {
             inner: pack,
@@ -260,7 +260,7 @@ impl crate::Bundle {
         should_interrupt: &AtomicBool,
         pack_version: data::Version,
     ) -> Result<WriteOutcome, Error> {
-        let indexing_progress = progress.add_child("create index file");
+        let indexing_progress = progress.add_child_with_id("create index file", *b"BWCI"); /* Bundle Write Create Index */
         Ok(match directory {
             Some(directory) => {
                 let directory = directory.as_ref();

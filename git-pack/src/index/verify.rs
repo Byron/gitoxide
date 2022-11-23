@@ -200,7 +200,13 @@ impl index::File {
                     progress: o.progress,
                 }),
             None => self
-                .verify_checksum(progress.add_child("Sha1 of index"), should_interrupt)
+                .verify_checksum(
+                    progress.add_child_with_id(
+                        "Sha1 of index",
+                        *b"PTHI", /* Pack Traverse Hash Index bytes (semantically the same as in branch above) */
+                    ),
+                    should_interrupt,
+                )
                 .map_err(Into::into)
                 .map(|id| integrity::Outcome {
                     actual_index_checksum: id,

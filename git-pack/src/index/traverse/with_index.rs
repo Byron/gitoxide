@@ -44,14 +44,20 @@ impl index::File {
     {
         let (verify_result, traversal_result) = parallel::join(
             {
-                let pack_progress = progress.add_child(format!(
-                    "Hash of pack '{}'",
-                    pack.path().file_name().expect("pack has filename").to_string_lossy()
-                ));
-                let index_progress = progress.add_child(format!(
-                    "Hash of index '{}'",
-                    self.path.file_name().expect("index has filename").to_string_lossy()
-                ));
+                let pack_progress = progress.add_child_with_id(
+                    format!(
+                        "Hash of pack '{}'",
+                        pack.path().file_name().expect("pack has filename").to_string_lossy()
+                    ),
+                    *b"PTHP", /* Pack Traverse Hash Pack bytes */
+                );
+                let index_progress = progress.add_child_with_id(
+                    format!(
+                        "Hash of index '{}'",
+                        self.path.file_name().expect("index has filename").to_string_lossy()
+                    ),
+                    *b"PTHI", /* Pack Traverse Hash Index bytes */
+                );
                 move || {
                     let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
                     if res.is_err() {
@@ -61,14 +67,16 @@ impl index::File {
                 }
             },
             || -> Result<_, Error<_>> {
-                let sorted_entries =
-                    index_entries_sorted_by_offset_ascending(self, progress.add_child("collecting sorted index"));
+                let sorted_entries = index_entries_sorted_by_offset_ascending(
+                    self,
+                    progress.add_child_with_id("collecting sorted index", *b"PTCE"),
+                ); /* Pack Traverse Collect sorted Entries */
                 let tree = crate::cache::delta::Tree::from_offsets_in_pack(
                     pack.path(),
                     sorted_entries.into_iter().map(Entry::from),
                     |e| e.index_entry.pack_offset,
                     |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
-                    progress.add_child("indexing"),
+                    progress.add_child_with_id("indexing", *b"PTDI"), /* Pack Traverse Delta Index creation */
                     should_interrupt,
                     self.object_hash,
                 )?;
@@ -117,8 +125,8 @@ impl index::File {
                         }
                     },
                     crate::cache::delta::traverse::Options {
-                        object_progress: progress.add_child("Resolving"),
-                        size_progress: progress.add_child("Decoding"),
+                        object_progress: progress.add_child_with_id("Resolving", *b"PTRO"), /* Pack Traverse Resolve Objects */
+                        size_progress: progress.add_child_with_id("Decoding", *b"PTDB"), /* Pack Traverse Decode Bytes */
                         thread_limit,
                         should_interrupt,
                         object_hash: self.object_hash,

@@ -142,7 +142,8 @@ where
                 move |thread_index| {
                     (
                         Vec::<u8>::with_capacity(4096),
-                        lock(&object_progress).add_child(format!("thread {}", thread_index)),
+                        lock(&object_progress)
+                            .add_child_with_id(format!("thread {}", thread_index), git_features::progress::UNKNOWN),
                         new_thread_state(),
                         resolve.clone(),
                         inspect_object.clone(),

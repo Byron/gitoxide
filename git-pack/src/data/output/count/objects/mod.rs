@@ -78,7 +78,9 @@ where
                     Vec::new(), // object data buffer
                     Vec::new(), // object data buffer 2 to hold two objects at a time
                     {
-                        let mut p = progress.lock().add_child(format!("thread {}", n));
+                        let mut p = progress
+                            .lock()
+                            .add_child_with_id(format!("thread {}", n), git_features::progress::UNKNOWN);
                         p.init(None, git_features::progress::count("objects"));
                         p
                     },

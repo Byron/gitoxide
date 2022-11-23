@@ -57,7 +57,9 @@ where
     let (chunk_size, thread_limit, _) =
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
     {
-        let progress = Arc::new(parking_lot::Mutex::new(progress.add_child("resolving")));
+        let progress = Arc::new(parking_lot::Mutex::new(
+            progress.add_child_with_id("resolving", *b"ECRC"),
+        )); /* Entries from Counts Resolving Counts  */
         progress.lock().init(None, git_features::progress::count("counts"));
         let enough_counts_present = counts.len() > 4_000;
         let start = std::time::Instant::now();
@@ -89,7 +91,7 @@ where
     }
     let counts_range_by_pack_id = match mode {
         Mode::PackCopyAndBaseObjects => {
-            let mut progress = progress.add_child("sorting");
+            let mut progress = progress.add_child_with_id("sorting", *b"ECSE"); /* Entries from Counts Sorting Entries */
             progress.init(Some(counts.len()), git_features::progress::count("counts"));
             let start = std::time::Instant::now();
 
@@ -137,7 +139,9 @@ where
             move |n| {
                 (
                     Vec::new(), // object data buffer
-                    progress.lock().add_child(format!("thread {}", n)),
+                    progress
+                        .lock()
+                        .add_child_with_id(format!("thread {}", n), git_features::progress::UNKNOWN),
                 )
             }
         },

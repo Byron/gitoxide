@@ -89,7 +89,7 @@ git-features = { version = "^0.24.0", path = "git-features" }
 git-repository = { version = "^0.29.0", path = "git-repository", default-features = false }
 
 clap = { version = "3.2.5", features = ["derive", "cargo"] }
-prodash = { version = "21", optional = true, default-features = false }
+prodash = { version = "21.1", optional = true, default-features = false }
 atty = { version = "0.2.14", optional = true, default-features = false }
 env_logger = { version = "0.9.0", default-features = false }
 crosstermion = { version = "0.10.1", optional = true, default-features = false }

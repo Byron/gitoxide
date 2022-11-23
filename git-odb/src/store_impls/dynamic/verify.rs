@@ -154,7 +154,7 @@ impl super::Store {
                             data,
                             options: options.clone(),
                         }),
-                        progress.add_child("never shown"),
+                        progress.add_child_with_id("never shown", git_features::progress::UNKNOWN),
                         should_interrupt,
                     )?;
                     statistics.push(IndexStatistics {
@@ -176,8 +176,11 @@ impl super::Store {
                             &index
                         }
                     };
-                    let outcome =
-                        index.verify_integrity(progress.add_child("never shown"), should_interrupt, options.clone())?;
+                    let outcome = index.verify_integrity(
+                        progress.add_child_with_id("never shown", git_features::progress::UNKNOWN),
+                        should_interrupt,
+                        options.clone(),
+                    )?;
 
                     let index_dir = bundle.multi_index.path().parent().expect("file in a directory");
                     statistics.push(IndexStatistics {
@@ -213,7 +216,7 @@ impl super::Store {
         for loose_db in &*index.loose_dbs {
             let out = loose_db
                 .verify_integrity(
-                    progress.add_child(loose_db.path().display().to_string()),
+                    progress.add_child_with_id(loose_db.path().display().to_string(), *b"VISP"), /* Verify Integrity Store Path */
                     should_interrupt,
                 )
                 .map(|statistics| integrity::LooseObjectStatistics {

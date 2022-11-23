@@ -65,14 +65,20 @@ impl index::File {
     {
         let (verify_result, traversal_result) = parallel::join(
             {
-                let pack_progress = progress.add_child(format!(
-                    "Hash of pack '{}'",
-                    pack.path().file_name().expect("pack has filename").to_string_lossy()
-                ));
-                let index_progress = progress.add_child(format!(
-                    "Hash of index '{}'",
-                    self.path.file_name().expect("index has filename").to_string_lossy()
-                ));
+                let pack_progress = progress.add_child_with_id(
+                    format!(
+                        "Hash of pack '{}'",
+                        pack.path().file_name().expect("pack has filename").to_string_lossy()
+                    ),
+                    *b"PTHP", /* Pack Traverse Hash Pack bytes */
+                );
+                let index_progress = progress.add_child_with_id(
+                    format!(
+                        "Hash of index '{}'",
+                        self.path.file_name().expect("index has filename").to_string_lossy()
+                    ),
+                    *b"PTHI", /* Pack Traverse Hash Index bytes */
+                );
                 move || {
                     let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
                     if res.is_err() {
@@ -82,15 +88,17 @@ impl index::File {
                 }
             },
             || {
-                let index_entries =
-                    util::index_entries_sorted_by_offset_ascending(self, progress.add_child("collecting sorted index"));
+                let index_entries = util::index_entries_sorted_by_offset_ascending(
+                    self,
+                    progress.add_child_with_id("collecting sorted index", *b"PTCE"),
+                ); /* Pack Traverse Collect sorted Entries */
 
                 let (chunk_size, thread_limit, available_cores) =
                     parallel::optimize_chunk_size_and_thread_limit(1000, Some(index_entries.len()), thread_limit, None);
                 let there_are_enough_entries_to_process = || index_entries.len() > chunk_size * available_cores;
                 let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
                 let reduce_progress = OwnShared::new(Mutable::new({
-                    let mut p = progress.add_child("Traversing");
+                    let mut p = progress.add_child_with_id("Traversing", *b"PTRO"); /* Pack Traverse Resolve Objects */
                     p.init(Some(self.num_objects() as usize), progress::count("objects"));
                     p
                 }));
@@ -101,7 +109,8 @@ impl index::File {
                             make_pack_lookup_cache(),
                             new_processor(),
                             Vec::with_capacity(2048), // decode buffer
-                            lock(&reduce_progress).add_child(format!("thread {}", index)), // per thread progress
+                            lock(&reduce_progress)
+                                .add_child_with_id(format!("thread {}", index), git_features::progress::UNKNOWN), // per thread progress
                         )
                     }
                 };

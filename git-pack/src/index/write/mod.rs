@@ -75,9 +75,9 @@ impl crate::index::File {
         let indexing_start = std::time::Instant::now();
 
         root_progress.init(Some(4), progress::steps());
-        let mut objects_progress = root_progress.add_child("indexing");
+        let mut objects_progress = root_progress.add_child_with_id("indexing", *b"IWIO"); /* Index Write Index Objects */
         objects_progress.init(entries.size_hint().1, progress::count("objects"));
-        let mut decompressed_progress = root_progress.add_child("decompressing");
+        let mut decompressed_progress = root_progress.add_child_with_id("decompressing", *b"IWDB"); /* Index Write Decompressed Bytes */
         decompressed_progress.init(None, progress::bytes());
         let mut pack_entries_end: u64 = 0;
 
@@ -168,8 +168,8 @@ impl crate::index::File {
                     Ok::<_, Error>(())
                 },
                 traverse::Options {
-                    object_progress: root_progress.add_child("Resolving"),
-                    size_progress: root_progress.add_child("Decoding"),
+                    object_progress: root_progress.add_child_with_id("Resolving", *b"IWRO"), /* Index Write Resolve Objects */
+                    size_progress: root_progress.add_child_with_id("Decoding", *b"IWDB"), /* Index Write Decode Bytes */
                     thread_limit,
                     should_interrupt,
                     object_hash,
@@ -180,7 +180,7 @@ impl crate::index::File {
             let mut items = roots;
             items.extend(children);
             {
-                let _progress = root_progress.add_child("sorting by id");
+                let _progress = root_progress.add_child_with_id("sorting by id", *b"info");
                 items.sort_by_key(|e| e.data.id);
             }
 
@@ -203,7 +203,7 @@ impl crate::index::File {
             sorted_pack_offsets_by_oid,
             &pack_hash,
             version,
-            root_progress.add_child("writing index file"),
+            root_progress.add_child_with_id("writing index file", *b"IWBW"), /* Index Write Bytes Written */
         )?;
         root_progress.show_throughput_with(
             indexing_start,

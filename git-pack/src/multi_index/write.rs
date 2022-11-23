@@ -82,7 +82,7 @@ impl multi_index::File {
         let entries = {
             let mut entries = Vec::new();
             let start = Instant::now();
-            let mut progress = progress.add_child("Collecting entries");
+            let mut progress = progress.add_child_with_id("Collecting entries", *b"MPCE"); /* Multiindex from Paths Collecting Entries */
             progress.init(Some(index_paths_sorted.len()), git_features::progress::count("indices"));
 
             // This could be parallelized… but it's probably not worth it unless you have 500mio objects.
@@ -147,7 +147,7 @@ impl multi_index::File {
             );
         }
 
-        let mut write_progress = progress.add_child("Writing multi-index");
+        let mut write_progress = progress.add_child_with_id("Writing multi-index", *b"MPBW"); /* Multiindex Bytes Written  */
         let write_start = Instant::now();
         write_progress.init(
             Some(cf.planned_storage_size() as usize + Self::HEADER_LEN),

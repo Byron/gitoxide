@@ -34,7 +34,7 @@ pub(crate) fn write_to(
 
     progress.init(Some(4), progress::steps());
     let start = std::time::Instant::now();
-    let _info = progress.add_child("writing fan-out table");
+    let _info = progress.add_child_with_id("writing fan-out table", *b"info");
     let fan_out = fanout(entries_sorted_by_oid.iter().map(|e| e.data.id.first_byte()));
 
     for value in fan_out.iter() {
@@ -42,19 +42,19 @@ pub(crate) fn write_to(
     }
 
     progress.inc();
-    let _info = progress.add_child("writing ids");
+    let _info = progress.add_child_with_id("writing ids", *b"info");
     for entry in &entries_sorted_by_oid {
         out.write_all(entry.data.id.as_slice())?;
     }
 
     progress.inc();
-    let _info = progress.add_child("writing crc32");
+    let _info = progress.add_child_with_id("writing crc32", *b"info");
     for entry in &entries_sorted_by_oid {
         out.write_all(&entry.data.crc32.to_be_bytes())?;
     }
 
     progress.inc();
-    let _info = progress.add_child("writing offsets");
+    let _info = progress.add_child_with_id("writing offsets", *b"info");
     {
         let mut offsets64 = Vec::<u64>::new();
         for entry in &entries_sorted_by_oid {
