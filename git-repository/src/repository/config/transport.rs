@@ -8,6 +8,13 @@ impl crate::Repository {
     /// `None` is returned if there is no known configuration.
     ///
     /// Note that the caller may cast the instance themselves to modify it before passing it on.
+    ///
+    ///
+    // let (mut cascade, _action_with_normalized_url, prompt_opts) =
+    // self.remote.repo.config_snapshot().credential_helpers(url)?;
+    // Ok(Box::new(move |action| cascade.invoke(action, prompt_opts.clone())) as AuthenticateFn<'_>)
+    /// For transports that support proxy authentication, the authentication
+    /// [default authentication method](crate::config::Snapshot::credential_helpers()) will be used with the url of the proxy.
     pub fn transport_options<'a>(
         &self,
         url: impl Into<&'a BStr>,
@@ -30,14 +37,15 @@ impl crate::Repository {
                 ))]
                 {
                     use std::borrow::Cow;
+                    use std::sync::{Arc, Mutex};
 
                     use git_transport::client::http;
+                    use git_transport::client::http::options::ProxyAuthMethod;
 
                     use crate::{
                         bstr::ByteVec,
                         config::cache::util::{ApplyLeniency, ApplyLeniencyDefault},
                     };
-
                     fn try_cow_to_string(
                         v: Cow<'_, BStr>,
                         lenient: bool,
@@ -153,6 +161,42 @@ impl crate::Repository {
                                 proxy
                             }
                         });
+                    opts.proxy_auth_method = config
+                        .string_filter("http", None, "proxyAuthMethod", &mut trusted_only)
+                        .and_then(|v| try_cow_to_string(v, lenient, "http.proxyAuthMethod").transpose())
+                        .transpose()?
+                        .map(|method| {
+                            Ok(match method.as_str() {
+                                "anyauth" => ProxyAuthMethod::AnyAuth,
+                                "basic" => ProxyAuthMethod::Basic,
+                                "digest" => ProxyAuthMethod::Digest,
+                                "negotiate" => ProxyAuthMethod::Negotiate,
+                                "ntlm" => ProxyAuthMethod::Ntlm,
+                                _ => {
+                                    return Err(crate::config::transport::http::Error::InvalidProxyAuthMethod {
+                                        value: method,
+                                    })
+                                }
+                            })
+                        })
+                        .transpose()?
+                        .unwrap_or_default();
+                    opts.proxy_authenticate = opts
+                        .proxy
+                        .as_deref()
+                        .map(|url| git_url::parse(url.into()))
+                        .transpose()?
+                        .filter(|url| url.user().is_some())
+                        .map(|url| -> Result<_, crate::config::transport::http::Error> {
+                            let (mut cascade, action_with_normalized_url, prompt_opts) =
+                                self.config_snapshot().credential_helpers(url)?;
+                            Ok((
+                                action_with_normalized_url,
+                                Arc::new(Mutex::new(move |action| cascade.invoke(action, prompt_opts.clone())))
+                                    as Arc<Mutex<git_transport::client::http::AuthenticateFn>>,
+                            ))
+                        })
+                        .transpose()?;
                     opts.connect_timeout =
                         integer_opt(config, lenient, "gitoxide.http.connectTimeout", "u64", trusted_only)?
                             .map(std::time::Duration::from_millis);

@@ -72,7 +72,8 @@ pub enum Action {
 
 /// Initialization
 impl Action {
-    /// Create a `Get` action with context containing the given URL
+    /// Create a `Get` action with context containing the given URL.
+    /// Note that this creates an `Action` suitable for the credential helper cascade only.
     pub fn get_for_url(url: impl Into<BString>) -> Action {
         Action::Get(Context {
             url: Some(url.into()),

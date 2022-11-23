@@ -71,9 +71,12 @@ pub mod options {
     }
 }
 
+/// A function to authenticate a URL.
+pub type AuthenticateFn = dyn FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result + Send + Sync;
+
 /// Options to configure curl requests.
 // TODO: testing most of these fields requires a lot of effort, unless special flags to introspect ongoing requests are added.
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Clone)]
 pub struct Options {
     /// Headers to be added to every request.
     /// They are applied unconditionally and are expected to be valid as they occour in an HTTP request, like `header: value`, without newlines.
@@ -101,7 +104,10 @@ pub struct Options {
     /// The way to authenticate against the proxy if the `proxy` field contains a username.
     ///
     /// Refers to `http.proxyAuthMethod`.
-    pub proxy_auth_method: Option<options::ProxyAuthMethod>,
+    pub proxy_auth_method: options::ProxyAuthMethod,
+    /// If authentication is needed for the proxy as its URL contains a username, this method must be set to provide a password
+    /// for it before making the request, and to store it if the connection succeeds.
+    pub proxy_authenticate: Option<(git_credentials::helper::Action, Arc<std::sync::Mutex<AuthenticateFn>>)>,
     /// The `HTTP` `USER_AGENT` string presented to an `HTTP` server, notably not the user agent present to the `git` server.
     ///
     /// If not overridden, it defaults to the user agent provided by `curl`, which is a deviation from how `git` handles this.
@@ -322,7 +328,7 @@ impl<H: Http> client::Transport for Transport<H> {
             .line_provider
             .get_or_insert_with(|| git_packetline::StreamingPeekableIter::new(body, &[PacketLineRef::Flush]));
 
-        // the service announcement is only sent sometimes depending on the exact server/proctol version/used protocol (http?)
+        // the service announcement is only sent sometimes depending on the exact server/protocol version/used protocol (http?)
         // eat the announcement when its there to avoid errors later (and check that the correct service was announced).
         // Ignore the announcement otherwise.
         let line_ = line_reader

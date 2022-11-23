@@ -30,6 +30,7 @@ mod http {
             low_speed_time_seconds,
             proxy,
             proxy_auth_method,
+            proxy_authenticate,
             user_agent,
             connect_timeout,
             backend,
@@ -46,10 +47,13 @@ mod http {
         assert_eq!(low_speed_limit_bytes_per_second, 5120);
         assert_eq!(low_speed_time_seconds, 10);
         assert_eq!(proxy.as_deref(), Some("http://localhost:9090"),);
+        assert!(
+            proxy_authenticate.is_none(),
+            "no username means no authentication required"
+        );
         assert_eq!(
-            proxy_auth_method.as_ref(),
-            // Some(&git_transport::client::http::options::ProxyAuthMethod::AnyAuth)
-            None,
+            proxy_auth_method,
+            git_transport::client::http::options::ProxyAuthMethod::Basic,
             "TODO: implement auth"
         );
         assert_eq!(user_agent.as_deref(), Some("agentJustForHttp"));
@@ -57,6 +61,22 @@ mod http {
         assert!(
             backend.is_none(),
             "backed is never set as it's backend specific, rather custom options typically"
+        )
+    }
+
+    #[test]
+    fn http_proxy_with_username() {
+        let repo = repo("http-proxy-authenticated");
+
+        let opts = http_options(&repo);
+        assert_eq!(
+            opts.proxy.as_deref(),
+            Some("http://user@localhost:9090"),
+            "usernames in proxy urls trigger authentication before making a connection…"
+        );
+        assert!(
+            opts.proxy_authenticate.is_some(),
+            "…and credential-helpers are used to do that. This could be overridden in remotes one day"
         )
     }
 

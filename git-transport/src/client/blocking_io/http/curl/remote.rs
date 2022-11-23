@@ -6,10 +6,11 @@ use std::{
     time::Duration,
 };
 
-use curl::easy::Easy2;
+use curl::easy::{Auth, Easy2};
 use git_features::io::pipe;
 
 use crate::client::blocking_io::http;
+use crate::client::http::options::ProxyAuthMethod;
 
 #[derive(Default)]
 struct Handler {
@@ -17,11 +18,13 @@ struct Handler {
     send_data: Option<pipe::Writer>,
     receive_body: Option<pipe::Reader>,
     checked_status: bool,
+    last_status: usize,
 }
 
 impl Handler {
     fn reset(&mut self) {
         self.checked_status = false;
+        self.last_status = 0;
     }
     fn parse_status_inner(data: &[u8]) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
         let code = data
@@ -64,9 +67,11 @@ impl curl::easy::Handler for Handler {
                     writer.write_all(data).is_ok()
                 } else {
                     self.checked_status = true;
+                    self.last_status = 200;
                     match Handler::parse_status(data) {
                         None => true,
                         Some((status, err)) => {
+                            self.last_status = status;
                             writer
                                 .channel
                                 .send(Err(io::Error::new(
@@ -123,8 +128,9 @@ pub fn new() -> (
                     low_speed_time_seconds,
                     connect_timeout,
                     proxy,
-                    proxy_auth_method: _,
+                    proxy_auth_method,
                     user_agent,
+                    proxy_authenticate,
                     backend: _,
                 },
         } in req_recv
@@ -136,6 +142,8 @@ pub fn new() -> (
             for header in extra_headers {
                 headers.append(&header)?;
             }
+
+            let mut proxy_auth_action = None;
             if let Some(proxy) = proxy {
                 handle.proxy(&proxy)?;
                 let proxy_type = if proxy.starts_with("socks5h") {
@@ -150,6 +158,19 @@ pub fn new() -> (
                     curl::easy::ProxyType::Http
                 };
                 handle.proxy_type(proxy_type)?;
+
+                if let Some((obtain_creds_action, authenticate)) = proxy_authenticate {
+                    let creds = authenticate.lock().expect("no panics in other threads")(obtain_creds_action)
+                        .map_err(|err| {
+                            let mut e = curl::Error::new(0);
+                            e.set_extra(err.to_string());
+                            e
+                        })?
+                        .expect("action to fetch credentials");
+                    handle.proxy_username(&creds.identity.username)?;
+                    handle.proxy_password(&creds.identity.password)?;
+                    proxy_auth_action = Some((creds.next, authenticate));
+                }
             }
             if let Some(user_agent) = user_agent {
                 handle.useragent(&user_agent)?;
@@ -158,6 +179,23 @@ pub fn new() -> (
             handle.transfer_encoding(false)?;
             if let Some(timeout) = connect_timeout {
                 handle.connect_timeout(timeout)?;
+            }
+            {
+                let mut auth = Auth::new();
+                match proxy_auth_method {
+                    ProxyAuthMethod::AnyAuth => auth
+                        .basic(true)
+                        .digest(true)
+                        .digest_ie(true)
+                        .gssnegotiate(true)
+                        .ntlm(true)
+                        .aws_sigv4(true),
+                    ProxyAuthMethod::Basic => auth.basic(true),
+                    ProxyAuthMethod::Digest => auth.digest(true),
+                    ProxyAuthMethod::Negotiate => auth.digest_ie(true),
+                    ProxyAuthMethod::Ntlm => auth.ntlm(true),
+                };
+                handle.proxy_auth(&auth)?;
             }
             handle.tcp_keepalive(true)?;
 
@@ -190,6 +228,10 @@ pub fn new() -> (
             if let Err(err) = handle.perform() {
                 let handler = handle.get_mut();
                 handler.reset();
+
+                if let Some((action, authenticate)) = proxy_auth_action {
+                    authenticate.lock().expect("no panics in other threads")(action.erase()).ok();
+                }
                 let err = Err(io::Error::new(io::ErrorKind::Other, err));
                 handler.receive_body.take();
                 match (handler.send_header.take(), handler.send_data.take()) {
@@ -209,6 +251,18 @@ pub fn new() -> (
                 };
             } else {
                 let handler = handle.get_mut();
+                if let Some((action, authenticate)) = proxy_auth_action {
+                    authenticate.lock().expect("no panics in other threads")(if handler.last_status == 200 {
+                        action.store()
+                    } else {
+                        action.erase()
+                    })
+                    .map_err(|err| {
+                        let mut e = curl::Error::new(0);
+                        e.set_extra(err.to_string());
+                        e
+                    })?;
+                }
                 handler.reset();
                 handler.receive_body.take();
                 handler.send_header.take();

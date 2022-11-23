@@ -43,7 +43,7 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
     pub fn configured_credentials(
         &self,
         url: git_url::Url,
-    ) -> Result<AuthenticateFn<'a>, crate::config::credential_helpers::Error> {
+    ) -> Result<AuthenticateFn<'static>, crate::config::credential_helpers::Error> {
         let (mut cascade, _action_with_normalized_url, prompt_opts) =
             self.remote.repo.config_snapshot().credential_helpers(url)?;
         Ok(Box::new(move |action| cascade.invoke(action, prompt_opts.clone())) as AuthenticateFn<'_>)

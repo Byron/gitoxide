@@ -1816,6 +1816,7 @@ dependencies = [
  "document-features",
  "futures-io",
  "futures-lite",
+ "git-credentials",
  "git-features",
  "git-hash",
  "git-pack",
