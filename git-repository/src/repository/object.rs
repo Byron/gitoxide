@@ -124,21 +124,13 @@ impl crate::Repository {
         self.tag_reference(name, tag_id, constraint).map_err(Into::into)
     }
 
-    /// Create a new commit object with `message` referring to `tree` with `parents`, and point `reference`
-    /// to it. The commit is written without message encoding field, which can be assumed to be UTF-8.
-    /// `author` and `committer` fields are pre-set from the configuration, which can be altered
-    /// [temporarily][crate::Repository::config_snapshot_mut()] before the call if required.
+    /// Similar to [`commit(…)`][crate::Repository::commit()], but allows to create the commit with `committer` and `author` specified.
     ///
-    /// `reference` will be created if it doesn't exist, and can be `"HEAD"` to automatically write-through to the symbolic reference
-    /// that `HEAD` points to if it is not detached. For this reason, detached head states cannot be created unless the `HEAD` is detached
-    /// already. The reflog will be written as canonical git would do, like `<operation> (<detail>): <summary>`.
-    ///
-    /// The first parent id in `parents` is expected to be the current target of `reference` and the operation will fail if it is not.
-    /// If there is no parent, the `reference` is expected to not exist yet.
-    ///
-    /// The method fails immediately if a `reference` lock can't be acquired.
-    pub fn commit<Name, E>(
+    /// This forces setting the commit time and author time by hand. Note that typically, committer and author are the same.
+    pub fn commit_as<'a, 'c, Name, E>(
         &self,
+        committer: impl Into<git_actor::SignatureRef<'c>>,
+        author: impl Into<git_actor::SignatureRef<'a>>,
         reference: Name,
         message: impl AsRef<str>,
         tree: impl Into<ObjectId>,
@@ -156,13 +148,11 @@ impl crate::Repository {
         // TODO: possibly use CommitRef to save a few allocations (but will have to allocate for object ids anyway.
         //       This can be made vastly more efficient though if we wanted to, so we lie in the API
         let reference = reference.try_into()?;
-        let author = self.author_or_default();
-        let committer = self.committer_or_default();
         let commit = git_object::Commit {
             message: message.as_ref().into(),
             tree: tree.into(),
-            author: author.to_owned(),
-            committer: committer.to_owned(),
+            author: author.into().to_owned(),
+            committer: committer.into().to_owned(),
             encoding: None,
             parents: parents.into_iter().map(|id| id.into()).collect(),
             extra_headers: Default::default(),
@@ -192,6 +182,35 @@ impl crate::Repository {
             deref: true,
         })?;
         Ok(commit_id)
+    }
+
+    /// Create a new commit object with `message` referring to `tree` with `parents`, and point `reference`
+    /// to it. The commit is written without message encoding field, which can be assumed to be UTF-8.
+    /// `author` and `committer` fields are pre-set from the configuration, which can be altered
+    /// [temporarily][crate::Repository::config_snapshot_mut()] before the call if required.
+    ///
+    /// `reference` will be created if it doesn't exist, and can be `"HEAD"` to automatically write-through to the symbolic reference
+    /// that `HEAD` points to if it is not detached. For this reason, detached head states cannot be created unless the `HEAD` is detached
+    /// already. The reflog will be written as canonical git would do, like `<operation> (<detail>): <summary>`.
+    ///
+    /// The first parent id in `parents` is expected to be the current target of `reference` and the operation will fail if it is not.
+    /// If there is no parent, the `reference` is expected to not exist yet.
+    ///
+    /// The method fails immediately if a `reference` lock can't be acquired.
+    pub fn commit<Name, E>(
+        &self,
+        reference: Name,
+        message: impl AsRef<str>,
+        tree: impl Into<ObjectId>,
+        parents: impl IntoIterator<Item = impl Into<ObjectId>>,
+    ) -> Result<Id<'_>, commit::Error>
+    where
+        Name: TryInto<FullName, Error = E>,
+        commit::Error: From<E>,
+    {
+        let author = self.author_or_default();
+        let committer = self.committer_or_default();
+        self.commit_as(committer, author, reference, message, tree, parents)
     }
 
     /// Return an empty tree object, suitable for [getting changes](crate::Tree::changes()).

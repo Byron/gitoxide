@@ -147,6 +147,42 @@ mod tag {
     }
 }
 
+mod commit_as {
+    use git_repository as git;
+    use git_testtools::tempfile;
+
+    #[test]
+    fn specify_committer_and_author() -> crate::Result {
+        let tmp = tempfile::tempdir().unwrap();
+        let repo = git::init(&tmp).unwrap();
+        let empty_tree = repo.empty_tree();
+        let committer = git::actor::Signature {
+            name: "c".into(),
+            email: "c@example.com".into(),
+            time: git::actor::Time::new(1, 1800),
+        };
+        let author = git::actor::Signature {
+            name: "a".into(),
+            email: "a@example.com".into(),
+            time: git::actor::Time::new(3, 3600),
+        };
+
+        let commit_id = repo.commit_as(
+            &committer,
+            &author,
+            "HEAD",
+            "initial",
+            empty_tree.id,
+            git::commit::NO_PARENT_IDS,
+        )?;
+        let commit = commit_id.object()?.into_commit();
+
+        assert_eq!(commit.committer()?, committer.to_ref());
+        assert_eq!(commit.author()?, author.to_ref());
+        Ok(())
+    }
+}
+
 mod commit {
     use git_repository as git;
     use git_testtools::{hex_to_id, tempfile};
