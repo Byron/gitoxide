@@ -66,6 +66,12 @@ mod convert {
             }
         }
     }
+
+    impl<'a> From<&'a Signature> for SignatureRef<'a> {
+        fn from(other: &'a Signature) -> SignatureRef<'a> {
+            other.to_ref()
+        }
+    }
 }
 
 mod write {
