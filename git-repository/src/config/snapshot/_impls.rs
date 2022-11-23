@@ -55,6 +55,12 @@ impl Deref for CommitAutoRollback<'_> {
     }
 }
 
+impl DerefMut for CommitAutoRollback<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.repo.as_mut().expect("always present")
+    }
+}
+
 impl DerefMut for SnapshotMut<'_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.config

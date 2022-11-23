@@ -17,8 +17,10 @@ fn commit_auto_rollback() -> crate::Result {
     let repo = {
         let mut config = repo.config_snapshot_mut();
         config.set_raw_value("core", None, "abbrev", "4")?;
-        let repo = config.commit_auto_rollback()?;
+        let mut repo = config.commit_auto_rollback()?;
         assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189");
+        // access to the mutable repo underneath
+        repo.object_cache_size_if_unset(16 * 1024);
         repo.rollback()?
     };
     assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189cd3");
