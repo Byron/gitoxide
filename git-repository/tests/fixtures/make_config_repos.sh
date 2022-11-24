@@ -16,6 +16,16 @@ git init http-config
   git config gitoxide.http.connectTimeout 60k
 )
 
+git clone --shared http-config http-remote-override
+(cd http-remote-override
+
+  git config http.proxy http://localhost:9090
+  git config http.proxyAuthMethod basic
+
+  git config remote.origin.proxy overridden
+  git config remote.origin.proxyAuthMethod negotiate
+)
+
 git init http-proxy-empty
 (cd http-proxy-empty
   git config http.proxy localhost:9090

@@ -110,6 +110,8 @@ pub mod checkout_options {
 ///
 pub mod transport {
     use crate::bstr;
+    use crate::bstr::BStr;
+    use std::borrow::Cow;
 
     /// The error produced when configuring a transport for a particular protocol.
     #[derive(Debug, thiserror::Error)]
@@ -130,7 +132,7 @@ pub mod transport {
         },
         #[error("Could not decode value at key {key:?} as UTF-8 string")]
         IllformedUtf8 {
-            key: &'static str,
+            key: Cow<'static, BStr>,
             source: bstr::FromUtf8Error,
         },
         #[error("Invalid URL passed for configuration")]
@@ -141,12 +143,15 @@ pub mod transport {
 
     ///
     pub mod http {
+        use crate::bstr::BStr;
+        use std::borrow::Cow;
+
         /// The error produced when configuring a HTTP transport.
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
-            #[error("The proxy authentication method name {value:?} is invalid")]
-            InvalidProxyAuthMethod { value: String },
+            #[error("The proxy authentication method name {value:?} found at key `{key}` is invalid")]
+            InvalidProxyAuthMethod { value: String, key: Cow<'static, BStr> },
             #[error("Could not configure the credential helpers for the authenticated proxy url")]
             ConfigureProxyAuthenticate(#[from] crate::config::snapshot::credential_helpers::Error),
         }

@@ -161,14 +161,14 @@ where
         };
 
         if self.transport_options.is_none() {
-            self.transport_options =
-                self.remote
-                    .repo
-                    .transport_options(url.as_ref())
-                    .map_err(|err| Error::GatherTransportConfig {
-                        source: err,
-                        url: url.into_owned(),
-                    })?;
+            self.transport_options = self
+                .remote
+                .repo
+                .transport_options(url.as_ref(), self.remote.name().map(|n| n.as_bstr()))
+                .map_err(|err| Error::GatherTransportConfig {
+                    source: err,
+                    url: url.into_owned(),
+                })?;
         }
         if let Some(config) = self.transport_options.as_ref() {
             self.transport.configure(&**config)?;
