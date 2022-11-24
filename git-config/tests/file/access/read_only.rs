@@ -244,7 +244,7 @@ fn sections_by_name() {
     "#;
 
     let config = File::try_from(config).unwrap();
-    let value = config.string("remote", Some("origin"), "url").unwrap();
+    let value = config.string("remote", Some("origin".into()), "url").unwrap();
     assert_eq!(value, cow_str("git@github.com:Byron/gitoxide.git"));
 }
 

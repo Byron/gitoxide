@@ -7,7 +7,7 @@ fn section_mut_must_exist_as_section_is_not_created_automatically() {
 #[test]
 fn section_mut_or_create_new_is_infallible() -> crate::Result {
     let mut config = multi_value_section();
-    let section = config.section_mut_or_create_new("name", Some("subsection"))?;
+    let section = config.section_mut_or_create_new("name", Some("subsection".into()))?;
     assert_eq!(section.header().name(), "name");
     assert_eq!(section.header().subsection_name().expect("set"), "subsection");
     Ok(())
@@ -130,7 +130,7 @@ mod push {
     #[test]
     fn none_as_value_omits_the_key_value_separator() -> crate::Result {
         let mut file = git_config::File::default();
-        let mut section = file.section_mut_or_create_new("a", Some("sub"))?;
+        let mut section = file.section_mut_or_create_new("a", Some("sub".into()))?;
         section.push("key".try_into()?, None);
         let expected = format!("[a \"sub\"]{nl}\tkey{nl}", nl = section.newline());
         assert_eq!(section.value("key"), None, "single value counts as None");

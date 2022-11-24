@@ -3,23 +3,28 @@ use std::borrow::Cow;
 use git_config::parse::{section, Event};
 
 pub fn header_event(name: &'static str, subsection: impl Into<Option<&'static str>>) -> Event<'static> {
-    Event::SectionHeader(section::Header::new(name, subsection.into().map(Cow::Borrowed)).unwrap())
+    Event::SectionHeader(section::Header::new(name, subsection.into().map(|s| Cow::Borrowed(s.into()))).unwrap())
 }
 
 mod header {
-    mod write_to {
-        use std::borrow::Cow;
+    use bstr::BStr;
+    use std::borrow::Cow;
 
+    fn cow_section(name: &str) -> Option<Cow<BStr>> {
+        Some(Cow::Borrowed(name.into()))
+    }
+    mod write_to {
+        use crate::parse::section::header::cow_section;
         use git_config::parse::section;
 
         #[test]
         fn subsection_backslashes_and_quotes_are_escaped() -> crate::Result {
             assert_eq!(
-                section::Header::new("core", Cow::from(r#"a\b"#))?.to_bstring(),
+                section::Header::new("core", cow_section(r#"a\b"#))?.to_bstring(),
                 r#"[core "a\\b"]"#
             );
             assert_eq!(
-                section::Header::new("core", Cow::from(r#"a:"b""#))?.to_bstring(),
+                section::Header::new("core", cow_section(r#"a:"b""#))?.to_bstring(),
                 r#"[core "a:\"b\""]"#
             );
             Ok(())
@@ -28,15 +33,14 @@ mod header {
         #[test]
         fn everything_is_allowed() -> crate::Result {
             assert_eq!(
-                section::Header::new("core", Cow::from("a/b \t\t a\\b"))?.to_bstring(),
+                section::Header::new("core", cow_section("a/b \t\t a\\b"))?.to_bstring(),
                 "[core \"a/b \t\t a\\\\b\"]"
             );
             Ok(())
         }
     }
     mod new {
-        use std::borrow::Cow;
-
+        use crate::parse::section::header::cow_section;
         use git_config::parse::section;
 
         #[test]
@@ -52,11 +56,11 @@ mod header {
         #[test]
         fn subsections_with_newlines_and_null_bytes_are_rejected() {
             assert_eq!(
-                section::Header::new("a", Cow::from("a\nb")),
+                section::Header::new("a", cow_section("a\nb")),
                 Err(section::header::Error::InvalidSubSection)
             );
             assert_eq!(
-                section::Header::new("a", Cow::from("a\0b")),
+                section::Header::new("a", cow_section("a\0b")),
                 Err(section::header::Error::InvalidSubSection)
             );
         }

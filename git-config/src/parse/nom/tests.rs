@@ -848,6 +848,24 @@ mod key_value_pair {
     }
 
     #[test]
+    fn nonascii_is_allowed_for_values_but_not_for_keys() {
+        let mut node = ParseNode::SectionHeader;
+        let mut vec = Default::default();
+        assert!(key_value("你好".as_bytes(), &mut node, &mut vec).is_err());
+        assert!(key_value("a = 你好 ".as_bytes(), &mut node, &mut vec).is_ok());
+        assert_eq!(
+            vec,
+            into_events(vec![
+                name_event("a"),
+                whitespace_event(" "),
+                Event::KeyValueSeparator,
+                whitespace_event(" "),
+                value_event("你好")
+            ])
+        );
+    }
+
+    #[test]
     fn whitespace_is_not_ambigious() {
         let mut node = ParseNode::SectionHeader;
         let mut vec = Default::default();

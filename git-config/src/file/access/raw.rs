@@ -22,7 +22,7 @@ impl<'event> File<'event> {
     pub fn raw_value(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
         self.raw_value_filter(section_name, subsection_name, key, &mut |_| true)
@@ -36,7 +36,7 @@ impl<'event> File<'event> {
     pub fn raw_value_filter(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
@@ -63,7 +63,7 @@ impl<'event> File<'event> {
     pub fn raw_value_mut<'lookup>(
         &mut self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&'lookup str>,
+        subsection_name: Option<&'lookup BStr>,
         key: &'lookup str,
     ) -> Result<ValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
         self.raw_value_mut_filter(section_name, subsection_name, key, &mut |_| true)
@@ -77,7 +77,7 @@ impl<'event> File<'event> {
     pub fn raw_value_mut_filter<'lookup>(
         &mut self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&'lookup str>,
+        subsection_name: Option<&'lookup BStr>,
         key: &'lookup str,
         filter: &mut MetadataFilter,
     ) -> Result<ValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
@@ -173,7 +173,7 @@ impl<'event> File<'event> {
     pub fn raw_values(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
         self.raw_values_filter(section_name, subsection_name, key, &mut |_| true)
@@ -187,7 +187,7 @@ impl<'event> File<'event> {
     pub fn raw_values_filter(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
@@ -262,7 +262,7 @@ impl<'event> File<'event> {
     pub fn raw_values_mut<'lookup>(
         &mut self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&'lookup str>,
+        subsection_name: Option<&'lookup BStr>,
         key: &'lookup str,
     ) -> Result<MultiValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
         self.raw_values_mut_filter(section_name, subsection_name, key, &mut |_| true)
@@ -273,7 +273,7 @@ impl<'event> File<'event> {
     pub fn raw_values_mut_filter<'lookup>(
         &mut self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&'lookup str>,
+        subsection_name: Option<&'lookup BStr>,
         key: &'lookup str,
         filter: &mut MetadataFilter,
     ) -> Result<MultiValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
@@ -368,7 +368,7 @@ impl<'event> File<'event> {
     pub fn set_existing_raw_value<'b>(
         &mut self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
         new_value: impl Into<&'b BStr>,
     ) -> Result<(), lookup::existing::Error> {
@@ -406,7 +406,7 @@ impl<'event> File<'event> {
     pub fn set_raw_value<'b, Key, E>(
         &mut self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: Key,
         new_value: impl Into<&'b BStr>,
     ) -> Result<Option<Cow<'event, BStr>>, crate::file::set_raw_value::Error>
@@ -422,7 +422,7 @@ impl<'event> File<'event> {
     pub fn set_raw_value_filter<'b, Key, E>(
         &mut self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: Key,
         new_value: impl Into<&'b BStr>,
         filter: &mut MetadataFilter,
@@ -522,7 +522,7 @@ impl<'event> File<'event> {
     pub fn set_existing_raw_multi_value<'a, Iter, Item>(
         &mut self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
         new_values: Iter,
     ) -> Result<(), lookup::existing::Error>

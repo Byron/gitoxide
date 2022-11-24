@@ -38,7 +38,7 @@ fn section_not_found() -> crate::Result {
 fn subsection_not_found() -> crate::Result {
     let config = File::try_from("[core]\na=b\nc=d")?;
     assert!(matches!(
-        config.raw_value("core", Some("a"), "a"),
+        config.raw_value("core", Some("a".into()), "a"),
         Err(lookup::existing::Error::SubSectionMissing)
     ));
     Ok(())
@@ -58,6 +58,6 @@ fn key_not_found() -> crate::Result {
 fn subsection_must_be_respected() -> crate::Result {
     let config = File::try_from("[core]a=b\n[core.a]a=c")?;
     assert_eq!(config.raw_value("core", None, "a")?.as_ref(), "b");
-    assert_eq!(config.raw_value("core", Some("a"), "a")?.as_ref(), "c");
+    assert_eq!(config.raw_value("core", Some("a".into()), "a")?.as_ref(), "c");
     Ok(())
 }

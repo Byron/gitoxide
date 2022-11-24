@@ -12,7 +12,7 @@ impl<'event> File<'event> {
     pub fn string(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<Cow<'_, BStr>> {
         self.string_filter(section_name, subsection_name, key, &mut |_| true)
@@ -22,7 +22,7 @@ impl<'event> File<'event> {
     pub fn string_filter(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Cow<'_, BStr>> {
@@ -38,7 +38,7 @@ impl<'event> File<'event> {
     pub fn path(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<crate::Path<'_>> {
         self.path_filter(section_name, subsection_name, key, &mut |_| true)
@@ -53,7 +53,7 @@ impl<'event> File<'event> {
     pub fn path_filter(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<crate::Path<'_>> {
@@ -66,7 +66,7 @@ impl<'event> File<'event> {
     pub fn boolean(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<Result<bool, value::Error>> {
         self.boolean_filter(section_name, subsection_name, key, &mut |_| true)
@@ -76,7 +76,7 @@ impl<'event> File<'event> {
     pub fn boolean_filter(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Result<bool, value::Error>> {
@@ -103,7 +103,7 @@ impl<'event> File<'event> {
     pub fn integer(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<Result<i64, value::Error>> {
         self.integer_filter(section_name, subsection_name, key, &mut |_| true)
@@ -113,7 +113,7 @@ impl<'event> File<'event> {
     pub fn integer_filter(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Result<i64, value::Error>> {
@@ -128,7 +128,7 @@ impl<'event> File<'event> {
     pub fn strings(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<Vec<Cow<'_, BStr>>> {
         self.raw_values(section_name, subsection_name, key).ok()
@@ -138,7 +138,7 @@ impl<'event> File<'event> {
     pub fn strings_filter(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Vec<Cow<'_, BStr>>> {
@@ -150,7 +150,7 @@ impl<'event> File<'event> {
     pub fn integers(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<Result<Vec<i64>, value::Error>> {
         self.integers_filter(section_name, subsection_name, key, &mut |_| true)
@@ -161,7 +161,7 @@ impl<'event> File<'event> {
     pub fn integers_filter(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Result<Vec<i64>, value::Error>> {

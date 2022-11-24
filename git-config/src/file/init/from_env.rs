@@ -1,3 +1,4 @@
+use bstr::BStr;
 use std::convert::TryFrom;
 
 use crate::{file, file::init, parse, parse::section, path::interpolate, File};
@@ -6,6 +7,8 @@ use crate::{file, file::init, parse, parse::section, path::interpolate, File};
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Configuration {kind} at index {index} contained illformed UTF-8")]
+    IllformedUtf8 { index: usize, kind: &'static str },
     #[error("GIT_CONFIG_COUNT was not a positive integer: {}", .input)]
     InvalidConfigCount { input: String },
     #[error("GIT_CONFIG_KEY_{} was not set", .key_id)]
@@ -51,9 +54,12 @@ impl File<'static> {
         };
         let mut config = File::new(meta);
         for i in 0..count {
-            let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| Error::InvalidKeyId { key_id: i })?;
+            let key = git_path::os_string_into_bstring(
+                env::var_os(format!("GIT_CONFIG_KEY_{}", i)).ok_or(Error::InvalidKeyId { key_id: i })?,
+            )
+            .map_err(|_| Error::IllformedUtf8 { index: i, kind: "key" })?;
             let value = env::var_os(format!("GIT_CONFIG_VALUE_{}", i)).ok_or(Error::InvalidValueId { value_id: i })?;
-            let key = parse::key(&key).ok_or_else(|| Error::InvalidKeyValue {
+            let key = parse::key(<_ as AsRef<BStr>>::as_ref(&key)).ok_or_else(|| Error::InvalidKeyValue {
                 key_id: i,
                 key_val: key.to_string(),
             })?;
@@ -64,7 +70,10 @@ impl File<'static> {
                     section::Key::try_from(key.value_name.to_owned())?,
                     Some(
                         git_path::os_str_into_bstr(&value)
-                            .expect("no illformed UTF-8")
+                            .map_err(|_| Error::IllformedUtf8 {
+                                index: i,
+                                kind: "value",
+                            })?
                             .as_ref()
                             .into(),
                     ),

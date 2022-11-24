@@ -36,13 +36,13 @@ mod remove_section {
         assert_eq!(removed.header().subsection_name(), None);
         assert_eq!(file.sections().count(), 1);
 
-        let removed = file.remove_section("core", Some("name")).expect("found");
+        let removed = file.remove_section("core", Some("name".into())).expect("found");
         assert_eq!(removed.header().name(), "core");
         assert_eq!(removed.header().subsection_name().expect("present"), "name");
         assert_eq!(file.sections().count(), 0);
 
         file.section_mut_or_create_new("core", None).expect("creation succeeds");
-        file.section_mut_or_create_new("core", Some("name"))
+        file.section_mut_or_create_new("core", Some("name".into()))
             .expect("creation succeeds");
     }
 }
@@ -60,7 +60,7 @@ mod rename_section {
         ));
 
         assert!(matches!(
-            file.rename_section("core", None, "new-core", Cow::from("a\nb")),
+            file.rename_section("core", None, "new-core", Some(Cow::Borrowed("a\nb".into()))),
             Err(rename_section::Error::Section(
                 section::header::Error::InvalidSubSection
             ))

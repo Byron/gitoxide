@@ -22,14 +22,14 @@ impl<'a> Header<'a> {
     /// or `[remote "origin"]` for `subsection` being "origin" and `name` being "remote".
     pub fn new(
         name: impl Into<Cow<'a, str>>,
-        subsection: impl Into<Option<Cow<'a, str>>>,
+        subsection: impl Into<Option<Cow<'a, BStr>>>,
     ) -> Result<Header<'a>, Error> {
         let name = Name(validated_name(into_cow_bstr(name.into()))?);
         if let Some(subsection_name) = subsection.into() {
             Ok(Header {
                 name,
                 separator: Some(Cow::Borrowed(" ".into())),
-                subsection_name: Some(validated_subsection(into_cow_bstr(subsection_name))?),
+                subsection_name: Some(validated_subsection(subsection_name)?),
             })
         } else {
             Ok(Header {
@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn empty_header_sub_names_are_legal() {
         assert!(
-            Header::new("remote", Some("".into())).is_ok(),
+            Header::new("remote", Some(Cow::Borrowed("".into()))).is_ok(),
             "yes, git allows this, so do we"
         );
     }

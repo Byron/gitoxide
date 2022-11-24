@@ -23,7 +23,7 @@ fn section_name_subsection_and_key() {
         parse::key("remote.origin.url"),
         Some(parse::Key {
             section_name: "remote",
-            subsection_name: Some("origin"),
+            subsection_name: Some("origin".into()),
             value_name: "url"
         })
     );
@@ -32,7 +32,7 @@ fn section_name_subsection_and_key() {
         parse::key("includeIf.gitdir/i:C:\\bare.git.path"),
         Some(parse::Key {
             section_name: "includeIf",
-            subsection_name: Some("gitdir/i:C:\\bare.git"),
+            subsection_name: Some("gitdir/i:C:\\bare.git".into()),
             value_name: "path"
         })
     );

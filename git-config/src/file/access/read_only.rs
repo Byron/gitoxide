@@ -52,7 +52,7 @@ impl<'event> File<'event> {
     pub fn value<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: &str,
     ) -> Result<T, lookup::Error<T::Error>> {
         T::try_from(self.raw_value(section_name, subsection_name, key)?).map_err(lookup::Error::FailedConversion)
@@ -62,7 +62,7 @@ impl<'event> File<'event> {
     pub fn try_value<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: &str,
     ) -> Option<Result<T, T::Error>> {
         self.raw_value(section_name, subsection_name, key).ok().map(T::try_from)
@@ -118,7 +118,7 @@ impl<'event> File<'event> {
     pub fn values<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: &str,
     ) -> Result<Vec<T>, lookup::Error<T::Error>> {
         self.raw_values(section_name, subsection_name, key)?
@@ -132,7 +132,7 @@ impl<'event> File<'event> {
     pub fn section(
         &self,
         name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
     ) -> Result<&file::Section<'event>, lookup::existing::Error> {
         Ok(self
             .section_filter(name, subsection_name, &mut |_| true)?
@@ -146,7 +146,7 @@ impl<'event> File<'event> {
     pub fn section_filter<'a>(
         &'a self,
         name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         filter: &mut MetadataFilter,
     ) -> Result<Option<&'a file::Section<'event>>, lookup::existing::Error> {
         Ok(self

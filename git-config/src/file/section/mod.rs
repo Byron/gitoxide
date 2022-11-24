@@ -1,6 +1,6 @@
 use std::{borrow::Cow, ops::Deref};
 
-use bstr::{BString, ByteSlice};
+use bstr::{BStr, BString, ByteSlice};
 use smallvec::SmallVec;
 
 use crate::{
@@ -29,7 +29,7 @@ impl<'a> Section<'a> {
     /// Create a new section with the given `name` and optional, `subsection`, `meta`-data and an empty body.
     pub fn new(
         name: impl Into<Cow<'a, str>>,
-        subsection: impl Into<Option<Cow<'a, str>>>,
+        subsection: impl Into<Option<Cow<'a, BStr>>>,
         meta: impl Into<OwnShared<file::Metadata>>,
     ) -> Result<Self, parse::section::header::Error> {
         Ok(Section {

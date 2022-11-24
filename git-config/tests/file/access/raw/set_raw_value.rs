@@ -54,11 +54,13 @@ fn comment_included() {
 fn non_existing_values_cannot_be_set() -> crate::Result {
     let mut file = git_config::File::default();
     file.set_raw_value("new", None, "key", "value")?;
-    file.set_raw_value("new", "subsection".into(), "key", "subsection-value")?;
+    file.set_raw_value("new", Some("subsection".into()), "key", "subsection-value")?;
 
     assert_eq!(file.string("new", None, "key").expect("present").as_ref(), "value");
     assert_eq!(
-        file.string("new", Some("subsection"), "key").expect("present").as_ref(),
+        file.string("new", Some("subsection".into()), "key")
+            .expect("present")
+            .as_ref(),
         "subsection-value"
     );
     Ok(())
