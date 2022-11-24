@@ -106,6 +106,9 @@ pub enum Subcommands {
 }
 
 pub mod config {
+    use git::bstr::BString;
+    use git_repository as git;
+
     /// Print all entries in a configuration file or access other sub-commands
     #[derive(Debug, clap::Parser)]
     #[clap(subcommand_required(false))]
@@ -114,7 +117,8 @@ pub mod config {
         ///
         /// Typical filters are `branch` or `remote.origin` or `remote.or*` - git-style globs are supported
         /// and comparisons are case-insensitive.
-        pub filter: Vec<String>,
+        #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
+        pub filter: Vec<BString>,
     }
 }
 

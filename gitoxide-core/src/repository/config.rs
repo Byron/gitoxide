@@ -1,12 +1,12 @@
 use anyhow::{bail, Result};
+use git::bstr::{BStr, BString};
 use git_repository as git;
-use git_repository::bstr::BString;
 
 use crate::OutputFormat;
 
 pub fn list(
     repo: git::Repository,
-    filters: Vec<String>,
+    filters: Vec<BString>,
     overrides: Vec<BString>,
     format: OutputFormat,
     mut out: impl std::io::Write,
@@ -52,18 +52,18 @@ pub fn list(
 
 struct Filter {
     name: String,
-    subsection: Option<String>,
+    subsection: Option<BString>,
 }
 
 impl Filter {
-    fn new(input: String) -> Self {
-        match git::config::parse::key(&input) {
+    fn new(input: BString) -> Self {
+        match git::config::parse::key(<_ as AsRef<BStr>>::as_ref(&input)) {
             Some(key) => Filter {
                 name: key.section_name.into(),
                 subsection: key.subsection_name.map(ToOwned::to_owned),
             },
             None => Filter {
-                name: input,
+                name: input.to_string(),
                 subsection: None,
             },
         }
@@ -77,7 +77,7 @@ impl Filter {
         }
         match (self.subsection.as_deref(), section.header().subsection_name()) {
             (Some(filter), Some(name)) => {
-                if !git::glob::wildmatch(filter.as_bytes().into(), name, ignore_case) {
+                if !git::glob::wildmatch(filter.as_slice().into(), name, ignore_case) {
                     return false;
                 }
             }

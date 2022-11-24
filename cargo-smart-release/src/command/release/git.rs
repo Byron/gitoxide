@@ -100,7 +100,9 @@ pub fn push_tags_and_head(
                 .into_remote(git::remote::Direction::Push)
                 .ok_or_else(|| anyhow!("Cannot push in uninitialized repo"))??
                 .name()
-                .expect("configured remotes have a name"),
+                .expect("configured remotes have a name")
+                .as_bstr()
+                .to_string(),
         )
         .arg("HEAD");
     for tag_name in tag_names {

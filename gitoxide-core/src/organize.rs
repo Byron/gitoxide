@@ -104,7 +104,7 @@ fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
     let config = git::config::File::from_path_no_includes(non_bare.as_path(), local)
         .or_else(|_| git::config::File::from_path_no_includes(repo.join("config").as_path(), local))?;
     Ok(config
-        .string("remote", Some("origin"), "url")
+        .string_by_key("remote.origin.url")
         .map(|url| git_url::Url::from_bytes(url.as_ref()))
         .transpose()?)
 }
