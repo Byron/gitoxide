@@ -204,10 +204,7 @@ fn setup_branch_config(
         let mut section = config
             .new_section("branch", Some(Cow::Owned(short_name.into())))
             .expect("section header name is always valid per naming rules, our input branch name is valid");
-        section.push(
-            "remote".try_into().expect("valid at compile time"),
-            Some(remote_name.into()),
-        );
+        section.push("remote".try_into().expect("valid at compile time"), Some(remote_name));
         section.push(
             "merge".try_into().expect("valid at compile time"),
             Some(branch.as_bstr()),

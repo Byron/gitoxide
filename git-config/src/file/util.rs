@@ -125,7 +125,6 @@ impl<'event> File<'event> {
             .ok_or(lookup::existing::Error::SectionMissing)?;
         let mut maybe_ids = None;
         if let Some(subsection_name) = subsection_name {
-            let subsection_name: &BStr = subsection_name.into();
             for node in section_ids {
                 if let SectionBodyIdsLut::NonTerminal(subsection_lookup) = node {
                     maybe_ids = subsection_lookup.get(subsection_name).map(|v| v.iter().copied());
