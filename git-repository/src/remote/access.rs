@@ -5,12 +5,8 @@ use crate::{bstr::BStr, remote, Remote};
 /// Access
 impl<'repo> Remote<'repo> {
     /// Return the name of this remote or `None` if it wasn't persisted to disk yet.
-    // TODO: name can also be a URL but we don't see it like this. There is a problem with accessing such names
-    //       too as they would require a BStr, but valid subsection names are strings, so some degeneration must happen
-    //       for access at least. Argh. Probably use `reference::remote::Name` and turn it into `remote::Name` as it's
-    //       actually correct.
-    pub fn name(&self) -> Option<&str> {
-        self.name.as_deref()
+    pub fn name(&self) -> Option<&remote::Name<'static>> {
+        self.name.as_ref()
     }
 
     /// Return our repository reference.

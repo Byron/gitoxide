@@ -44,6 +44,7 @@ mod remote {
     impl crate::Repository {
         /// Returns a sorted list unique of symbolic names of remotes that
         /// we deem [trustworthy][crate::open::Options::filter_config_section()].
+        // TODO: Use `remote::Name` here
         pub fn remote_names(&self) -> BTreeSet<&str> {
             self.subsection_names_of("remote")
         }
@@ -56,6 +57,7 @@ mod remote {
         /// # Notes
         ///
         /// It's up to the caller to determine what to do if the current `head` is unborn or detached.
+        // TODO: use remote::Name here
         pub fn remote_default_name(&self, direction: remote::Direction) -> Option<Cow<'_, str>> {
             let name = (direction == remote::Direction::Push)
                 .then(|| {
@@ -83,6 +85,7 @@ mod remote {
 mod branch {
     use std::{borrow::Cow, collections::BTreeSet, convert::TryInto};
 
+    use crate::bstr::BStr;
     use git_ref::FullNameRef;
     use git_validate::reference::name::Error as ValidateNameError;
 
@@ -99,13 +102,13 @@ mod branch {
         /// The returned reference is the one we track on the remote side for merging and pushing.
         /// Returns `None` if the remote reference was not found.
         /// May return an error if the reference is invalid.
-        pub fn branch_remote_ref(
+        pub fn branch_remote_ref<'a>(
             &self,
-            short_branch_name: &str,
+            short_branch_name: impl Into<&'a BStr>,
         ) -> Option<Result<Cow<'_, FullNameRef>, ValidateNameError>> {
             self.config
                 .resolved
-                .string("branch", Some(short_branch_name), "merge")
+                .string("branch", Some(short_branch_name.into()), "merge")
                 .map(|v| match v {
                     Cow::Borrowed(v) => v.try_into().map(Cow::Borrowed),
                     Cow::Owned(v) => v.try_into().map(Cow::Owned),
@@ -119,10 +122,13 @@ mod branch {
         ///
         /// See also [Reference::remote_name()][crate::Reference::remote_name()] for a more typesafe version
         /// to be used when a `Reference` is available.
-        pub fn branch_remote_name(&self, short_branch_name: &str) -> Option<crate::reference::remote::Name<'_>> {
+        pub fn branch_remote_name<'a>(
+            &self,
+            short_branch_name: impl Into<&'a BStr>,
+        ) -> Option<crate::remote::Name<'_>> {
             self.config
                 .resolved
-                .string("branch", Some(short_branch_name), "remote")
+                .string("branch", Some(short_branch_name.into()), "remote")
                 .and_then(|name| name.try_into().ok())
         }
     }

@@ -121,7 +121,7 @@ mod find_remote {
         for (name, (url, refspec)) in repo.remote_names().into_iter().zip(expected) {
             count += 1;
             let remote = repo.find_remote(name).expect("no error");
-            assert_eq!(remote.name(), Some(name));
+            assert_eq!(remote.name().expect("set").as_bstr(), name);
 
             let url = git::url::parse(url.into()).expect("valid");
             assert_eq!(remote.url(Direction::Fetch).unwrap(), &url);
@@ -285,7 +285,8 @@ mod find_default_remote {
                 .transpose()?
                 .expect("present")
                 .name()
-                .expect("always named"),
+                .expect("always named")
+                .as_bstr(),
             "origin"
         );
         Ok(())

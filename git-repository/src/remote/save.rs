@@ -1,3 +1,4 @@
+use crate::bstr::BString;
 use std::convert::TryInto;
 
 use crate::Remote;
@@ -39,7 +40,7 @@ impl Remote<'_> {
                 .to_owned(),
         })?;
         if let Some(section_ids) = config.sections_and_ids_by_name("remote").map(|it| {
-            it.filter_map(|(s, id)| (s.header().subsection_name() == Some(name.into())).then(|| id))
+            it.filter_map(|(s, id)| (s.header().subsection_name() == Some(name.as_bstr())).then(|| id))
                 .collect::<Vec<_>>()
         }) {
             let mut sections_to_remove = Vec::new();
@@ -62,7 +63,7 @@ impl Remote<'_> {
             }
         }
         let mut section = config
-            .section_mut_or_create_new("remote", Some(name))
+            .section_mut_or_create_new("remote", Some(name.as_ref()))
             .expect("section name is validated and 'remote' is acceptable");
         if let Some(url) = self.url.as_ref() {
             section.push("url".try_into().expect("valid"), Some(url.to_bstring().as_ref()))
@@ -91,12 +92,12 @@ impl Remote<'_> {
     /// and the caller should account for that.
     pub fn save_as_to(
         &mut self,
-        name: impl Into<String>,
+        name: impl Into<BString>,
         config: &mut git_config::File<'static>,
     ) -> Result<(), AsError> {
         let name = crate::remote::name::validated(name)?;
         let prev_name = self.name.take();
-        self.name = name.into();
+        self.name = Some(name.into());
         self.save_to(config).map_err(|err| {
             self.name = prev_name;
             err.into()

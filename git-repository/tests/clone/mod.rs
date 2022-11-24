@@ -141,16 +141,14 @@ mod blocking_io {
             "local clone always adopts the name of the remote"
         );
 
-        let short_name = referent.name().shorten().to_str_lossy();
+        let short_name = referent.name().shorten();
         assert_eq!(
-            repo.branch_remote_name(short_name.as_ref())
-                .expect("remote is set")
-                .as_ref(),
+            repo.branch_remote_name(short_name).expect("remote is set").as_ref(),
             remote_name,
             "the remote branch information is fully configured"
         );
         assert_eq!(
-            repo.branch_remote_ref(short_name.as_ref()).expect("present")?.as_bstr(),
+            repo.branch_remote_ref(short_name).expect("present")?.as_bstr(),
             "refs/heads/main"
         );
 

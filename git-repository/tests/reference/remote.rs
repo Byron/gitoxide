@@ -19,14 +19,16 @@ fn push_defaults_to_fetch() -> crate::Result {
             .remote(git::remote::Direction::Push)
             .expect("configured")?
             .name()
-            .expect("set"),
+            .expect("set")
+            .as_bstr(),
         "origin"
     );
     assert_eq!(
         head.into_remote(git::remote::Direction::Push)
             .expect("same with branch")?
             .name()
-            .expect("set"),
+            .expect("set")
+            .as_bstr(),
         "origin"
     );
     Ok(())

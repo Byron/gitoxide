@@ -26,6 +26,8 @@ pub mod find {
 
     ///
     pub mod existing {
+        use crate::bstr::BString;
+
         /// The error returned by [`Repository::find_remote(…)`][crate::Repository::find_remote()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
@@ -35,7 +37,7 @@ pub mod find {
             #[error("remote name could not be parsed as URL")]
             UrlParse(#[from] git_url::parse::Error),
             #[error("The remote named {name:?} did not exist")]
-            NotFound { name: String },
+            NotFound { name: BString },
         }
     }
 }

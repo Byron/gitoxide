@@ -23,7 +23,7 @@ mod save_to {
         let previous_remote_state = repo
             .config_snapshot()
             .plumbing()
-            .section("remote", Some("origin"))
+            .section_by_key("remote.origin")
             .expect("present")
             .to_bstring();
         let mut config = repo.config_snapshot().plumbing().clone();
@@ -34,7 +34,7 @@ mod save_to {
             "amount of remotes are unaltered"
         );
         assert_eq!(
-            config.section("remote", Some("origin")).expect("present").to_bstring(),
+            config.section_by_key("remote.origin").expect("present").to_bstring(),
             previous_remote_state,
             "the serialization doesn't modify anything"
         );
@@ -96,11 +96,11 @@ mod save_as_to {
             new_section.push("a".try_into().unwrap(), Some("value".into()));
 
             config
-                .section_mut_or_create_new("initially-empty-not-removed", Some("name"))
+                .section_mut_or_create_new("initially-empty-not-removed", Some("name".into()))
                 .expect("works");
 
             let mut existing_section = config
-                .section_mut_or_create_new("remote", Some("origin"))
+                .section_mut_or_create_new("remote", Some("origin".into()))
                 .expect("works");
             existing_section.push("free".try_into().unwrap(), Some("should not be removed".into()))
         }

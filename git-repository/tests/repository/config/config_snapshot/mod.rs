@@ -58,7 +58,9 @@ fn values_are_set_in_memory_only() {
     {
         let mut config = repo.config_snapshot_mut();
         config.set_raw_value("hallo", None, "welt", "true").unwrap();
-        config.set_raw_value("hallo", Some("unter"), "welt", "value").unwrap();
+        config
+            .set_raw_value("hallo", Some("unter".into()), "welt", "value")
+            .unwrap();
     }
 
     assert_eq!(

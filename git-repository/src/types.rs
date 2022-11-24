@@ -2,7 +2,7 @@ use std::{cell::RefCell, path::PathBuf};
 
 use git_hash::ObjectId;
 
-use crate::head;
+use crate::{head, remote};
 
 /// The kind of repository.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -181,7 +181,7 @@ pub struct ThreadSafeRepository {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Remote<'repo> {
     /// The remotes symbolic name, only present if persisted in git configuration files.
-    pub(crate) name: Option<String>,
+    pub(crate) name: Option<remote::Name<'static>>,
     /// The url of the host to talk to, after application of replacements. If it is unset, the `push_url` must be set.
     /// and fetches aren't possible.
     pub(crate) url: Option<git_url::Url>,

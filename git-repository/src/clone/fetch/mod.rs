@@ -1,3 +1,4 @@
+use crate::bstr::BString;
 use crate::{clone::PrepareFetch, Repository};
 
 /// The error returned by [`PrepareFetch::fetch_only()`].
@@ -58,13 +59,13 @@ impl PrepareFetch {
             .as_mut()
             .expect("user error: multiple calls are allowed only until it succeeds");
 
-        let remote_name = match self.remote_name.as_deref() {
+        let remote_name = match self.remote_name.as_ref() {
             Some(name) => name.to_owned(),
             None => repo
                 .config
                 .resolved
-                .string("clone", None, "defaultRemoteName")
-                .map(|n| crate::remote::name::validated(n.to_string()))
+                .string_by_key("clone.defaultRemoteName")
+                .map(|n| crate::remote::name::validated(n.into_owned()))
                 .unwrap_or_else(|| Ok("origin".into()))?,
         };
 
@@ -114,7 +115,7 @@ impl PrepareFetch {
             repo,
             &outcome.ref_map.remote_refs,
             reflog_message.as_ref(),
-            &remote_name,
+            remote_name.as_ref(),
         )?;
 
         Ok((self.repo.take().expect("still present"), outcome))
@@ -161,7 +162,7 @@ impl PrepareFetch {
     /// [`configure_remote()`][Self::configure_remote()].
     ///
     /// If not set here, it defaults to `origin` or the value of `clone.defaultRemoteName`.
-    pub fn with_remote_name(mut self, name: impl Into<String>) -> Result<Self, crate::remote::name::Error> {
+    pub fn with_remote_name(mut self, name: impl Into<BString>) -> Result<Self, crate::remote::name::Error> {
         self.remote_name = Some(crate::remote::name::validated(name)?);
         Ok(self)
     }

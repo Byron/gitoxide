@@ -1,3 +1,6 @@
+use crate::bstr::BStr;
+use std::borrow::Cow;
+
 /// The direction of an operation carried out (or to be carried out) through a remote.
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 pub enum Direction {
@@ -17,34 +20,23 @@ impl Direction {
     }
 }
 
+/// The name of a remote, either interpreted as symbol like `origin` or as url as returned by [`Remote::name()`][crate::Remote::name()].
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Name<'repo> {
+    /// A symbolic name, like `origin`.
+    /// Note that it has not necessarily been validated yet.
+    Symbol(Cow<'repo, str>),
+    /// A url pointing to the remote host directly.
+    Url(Cow<'repo, BStr>),
+}
+
+///
+pub mod name;
+
 mod build;
 
 mod errors;
 pub use errors::find;
-
-///
-pub mod name {
-    /// The error returned by [validated()].
-    #[derive(Debug, thiserror::Error)]
-    #[error("remote names must be valid within refspecs for fetching: {name:?}")]
-    #[allow(missing_docs)]
-    pub struct Error {
-        source: git_refspec::parse::Error,
-        name: String,
-    }
-
-    /// Return `name` if it is valid or convert it into an `Error`.
-    pub fn validated(name: impl Into<String>) -> Result<String, Error> {
-        let name = name.into();
-        match git_refspec::parse(
-            format!("refs/heads/test:refs/remotes/{name}/test").as_str().into(),
-            git_refspec::parse::Operation::Fetch,
-        ) {
-            Ok(_) => Ok(name),
-            Err(err) => Err(Error { source: err, name }),
-        }
-    }
-}
 
 ///
 pub mod init;

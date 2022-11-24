@@ -1,7 +1,28 @@
 use std::{borrow::Cow, convert::TryFrom};
 
 use super::Name;
-use crate::bstr::{BStr, ByteSlice, ByteVec};
+use crate::bstr::{BStr, BString, ByteSlice, ByteVec};
+
+/// The error returned by [validated()].
+#[derive(Debug, thiserror::Error)]
+#[error("remote names must be valid within refspecs for fetching: {name:?}")]
+#[allow(missing_docs)]
+pub struct Error {
+    source: git_refspec::parse::Error,
+    name: BString,
+}
+
+/// Return `name` if it is valid or convert it into an `Error`.
+pub fn validated(name: impl Into<BString>) -> Result<BString, Error> {
+    let name = name.into();
+    match git_refspec::parse(
+        format!("refs/heads/test:refs/remotes/{name}/test").as_str().into(),
+        git_refspec::parse::Operation::Fetch,
+    ) {
+        Ok(_) => Ok(name),
+        Err(err) => Err(Error { source: err, name }),
+    }
+}
 
 impl Name<'_> {
     /// Obtain the name as string representation.
@@ -45,6 +66,12 @@ impl<'a> TryFrom<Cow<'a, BStr>> for Name<'a> {
             }
             .map(Name::Symbol)
         }
+    }
+}
+
+impl From<BString> for Name<'static> {
+    fn from(name: BString) -> Self {
+        Self::try_from(Cow::Owned(name)).expect("String is never illformed")
     }
 }
 

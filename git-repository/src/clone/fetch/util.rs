@@ -7,6 +7,7 @@ use git_ref::{
 };
 
 use super::Error;
+use crate::bstr::BString;
 use crate::{
     bstr::{BStr, ByteSlice},
     Repository,
@@ -14,7 +15,7 @@ use crate::{
 
 pub fn write_remote_to_local_config_file(
     remote: &mut crate::Remote<'_>,
-    remote_name: String,
+    remote_name: BString,
 ) -> Result<git_config::File<'static>, Error> {
     let mut metadata = git_config::file::Metadata::from(git_config::Source::Local);
     let config_path = remote.repo.git_dir().join("config");
@@ -50,7 +51,7 @@ pub fn update_head(
     repo: &mut Repository,
     remote_refs: &[git_protocol::handshake::Ref],
     reflog_message: &BStr,
-    remote_name: &str,
+    remote_name: &BStr,
 ) -> Result<(), Error> {
     use git_ref::{
         transaction::{PreviousValue, RefEdit},
@@ -171,7 +172,7 @@ fn setup_branch_config(
     repo: &mut Repository,
     branch: &FullNameRef,
     branch_id: Option<&git_hash::oid>,
-    remote_name: &str,
+    remote_name: &BStr,
 ) -> Result<(), Error> {
     let short_name = match branch.category_and_short_name() {
         Some((cat, shortened)) if cat == git_ref::Category::LocalBranch => match shortened.to_str() {

@@ -2,6 +2,7 @@ use std::{borrow::Cow, convert::TryInto, path::PathBuf, time::Duration};
 
 use git_lock::acquire::Fail;
 
+use crate::bstr::BStr;
 use crate::{
     config::{cache::util::ApplyLeniencyDefault, checkout_options, Cache},
     remote,
@@ -121,7 +122,7 @@ impl Cache {
     pub(crate) fn trusted_file_path(
         &self,
         section_name: impl AsRef<str>,
-        subsection_name: Option<&str>,
+        subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<Result<Cow<'_, std::path::Path>, git_config::path::interpolate::Error>> {
         let path = self.resolved.path_filter(
