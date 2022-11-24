@@ -69,7 +69,7 @@ mod pop {
     #[test]
     fn all() -> crate::Result {
         let mut config = multi_value_section();
-        let mut section = config.section_mut("a", None)?;
+        let mut section = config.section_mut_by_key("a")?;
 
         assert_eq!(section.num_values(), 5);
         assert_eq!(section.keys().count(), 5);

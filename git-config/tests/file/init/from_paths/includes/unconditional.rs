@@ -122,6 +122,7 @@ fn respect_max_depth() -> crate::Result {
     let config =
         File::from_paths_metadata(into_meta(vec![dir.path().join("0")]), follow_options())?.expect("non-empty");
     assert_eq!(config.integers("core", None, "i"), Some(Ok(vec![0, 1, 2, 3, 4])));
+    assert_eq!(config.integers_by_key("core.i"), Some(Ok(vec![0, 1, 2, 3, 4])));
 
     fn make_options(max_depth: u8, error_on_max_depth_exceeded: bool) -> init::Options<'static> {
         init::Options {
@@ -139,6 +140,7 @@ fn respect_max_depth() -> crate::Result {
     let options = make_options(1, false);
     let config = File::from_paths_metadata(into_meta(vec![dir.path().join("0")]), options)?.expect("non-empty");
     assert_eq!(config.integer("core", None, "i"), Some(Ok(1)));
+    assert_eq!(config.integer_by_key("core.i"), Some(Ok(1)));
 
     // with default max_allowed_depth of 10 and 4 levels of includes, last level is read
     let options = init::Options {

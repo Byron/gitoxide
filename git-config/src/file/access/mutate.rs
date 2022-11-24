@@ -31,6 +31,15 @@ impl<'event> File<'event> {
             .to_mut(nl))
     }
 
+    /// Returns the last found mutable section with a given `key`, identifying the name and subsection name like `core` or `remote.origin`.
+    pub fn section_mut_by_key<'a, 'b>(
+        &'a mut self,
+        key: impl Into<&'b BStr>,
+    ) -> Result<SectionMut<'a, 'event>, lookup::existing::Error> {
+        let key = section::unvalidated::Key::parse(key).ok_or(lookup::existing::Error::KeyMissing)?;
+        self.section_mut(key.section_name, key.subsection_name)
+    }
+
     /// Return the mutable section identified by `id`, or `None` if it didn't exist.
     ///
     /// Note that `id` is stable across deletions and insertions.
@@ -97,6 +106,17 @@ impl<'event> File<'event> {
             });
         let nl = self.detect_newline_style_smallvec();
         Ok(id.and_then(move |id| self.sections.get_mut(&id).map(move |s| s.to_mut(nl))))
+    }
+
+    /// Like [`section_mut_filter()`][File::section_mut_filter()], but identifies the with a given `key`,
+    /// like `core` or `remote.origin`.
+    pub fn section_mut_filter_by_key<'a, 'b>(
+        &'a mut self,
+        key: impl Into<&'b BStr>,
+        filter: &mut MetadataFilter,
+    ) -> Result<Option<file::SectionMut<'a, 'event>>, lookup::existing::Error> {
+        let key = section::unvalidated::Key::parse(key).ok_or(lookup::existing::Error::KeyMissing)?;
+        self.section_mut_filter(key.section_name, key.subsection_name, filter)
     }
 
     /// Adds a new section. If a subsection name was provided, then

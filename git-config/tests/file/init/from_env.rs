@@ -44,7 +44,7 @@ fn single_key_value_pair() -> crate::Result {
     let config = File::from_env(Default::default())?.unwrap();
     assert_eq!(config.raw_value("core", None, "key")?, Cow::<[u8]>::Borrowed(b"value"));
     assert_eq!(
-        config.section("core", None)?.meta(),
+        config.section_by_key("core")?.meta(),
         &git_config::file::Metadata::from(git_config::Source::Env),
         "source if configured correctly"
     );

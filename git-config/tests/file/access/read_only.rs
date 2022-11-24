@@ -39,6 +39,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
 
         assert!(!config.value::<Boolean>("core", None, "bool-explicit")?.0);
         assert!(!config.boolean("core", None, "bool-explicit").expect("exists")?);
+        assert!(!config.boolean_by_key("core.bool-explicit").expect("exists")?);
 
         assert!(
             config.value::<Boolean>("core", None, "bool-implicit").is_err(),
@@ -57,6 +58,10 @@ fn get_value_for_all_provided_values() -> crate::Result {
             config.strings("core", None, "bool-implicit").expect("present"),
             &[cow_str("")],
             "unset values show up as empty within a string array"
+        );
+        assert_eq!(
+            config.strings_by_key("core.bool-implicit").expect("present"),
+            &[cow_str("")],
         );
 
         assert_eq!(config.string("doesnt", None, "exist"), None);
@@ -144,6 +149,8 @@ fn get_value_for_all_provided_values() -> crate::Result {
         }
 
         let actual = config.path("core", None, "location").expect("present");
+        assert_eq!(&*actual, "~/tmp");
+        let actual = config.path_by_key("core.location").expect("present");
         assert_eq!(&*actual, "~/tmp");
 
         let actual = config.path("core", None, "location-quoted").expect("present");

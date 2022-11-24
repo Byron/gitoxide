@@ -8,6 +8,8 @@ use crate::parse::{Event, Section};
 ///
 pub mod header;
 
+pub(crate) mod unvalidated;
+
 /// A container for events, avoiding heap allocations in typical files.
 pub type Events<'a> = SmallVec<[Event<'a>; 64]>;
 

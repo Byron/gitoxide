@@ -1,6 +1,43 @@
 mod section {
 
     mod header {
+        mod unvalidated {
+            use crate::parse::section::unvalidated::Key;
+
+            #[test]
+            fn section_name_only() {
+                assert_eq!(
+                    Key::parse("core").unwrap(),
+                    Key {
+                        section_name: "core",
+                        subsection_name: None
+                    }
+                );
+            }
+
+            #[test]
+            fn section_name_and_subsection() {
+                assert_eq!(
+                    Key::parse("core.bare").unwrap(),
+                    Key {
+                        section_name: "core",
+                        subsection_name: Some("bare".into())
+                    }
+                );
+            }
+
+            #[test]
+            fn section_name_and_subsection_with_separators() {
+                assert_eq!(
+                    Key::parse("remote.https:///home/user.git").unwrap(),
+                    Key {
+                        section_name: "remote",
+                        subsection_name: Some("https:///home/user.git".into())
+                    }
+                );
+            }
+        }
+
         mod write_to {
             use std::borrow::Cow;
 

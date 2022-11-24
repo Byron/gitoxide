@@ -139,6 +139,16 @@ impl<'event> File<'event> {
             .expect("section present as we take all"))
     }
 
+    /// Returns the last found immutable section with a given `key`, identifying the name and subsection name like `core`
+    /// or `remote.origin`.
+    pub fn section_by_key<'a>(
+        &self,
+        key: impl Into<&'a BStr>,
+    ) -> Result<&file::Section<'event>, lookup::existing::Error> {
+        let key = crate::parse::section::unvalidated::Key::parse(key).ok_or(lookup::existing::Error::KeyMissing)?;
+        self.section(key.section_name, key.subsection_name)
+    }
+
     /// Returns the last found immutable section with a given `name` and optional `subsection_name`, that matches `filter`.
     ///
     /// If there are sections matching `section_name` and `subsection_name` but the `filter` rejects all of them, `Ok(None)`
@@ -159,6 +169,16 @@ impl<'event> File<'event> {
                     filter(s.meta()).then(|| s)
                 }
             }))
+    }
+
+    /// Like [`section_filter()`][File::section_filter()], but identifies the section with `key` like `core` or `remote.origin`.
+    pub fn section_filter_by_key<'a, 'b>(
+        &'a self,
+        key: impl Into<&'b BStr>,
+        filter: &mut MetadataFilter,
+    ) -> Result<Option<&'a file::Section<'event>>, lookup::existing::Error> {
+        let key = crate::parse::section::unvalidated::Key::parse(key).ok_or(lookup::existing::Error::KeyMissing)?;
+        self.section_filter(key.section_name, key.subsection_name, filter)
     }
 
     /// Gets all sections that match the provided `name`, ignoring any subsections.
