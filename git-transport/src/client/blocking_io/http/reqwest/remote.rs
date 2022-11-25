@@ -118,6 +118,7 @@ impl Remote {
     fn make_request(
         &mut self,
         url: &str,
+        _base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
         upload: bool,
     ) -> Result<http::PostResponse<pipe::Reader, pipe::Reader, pipe::Writer>, http::Error> {
@@ -182,17 +183,19 @@ impl http::Http for Remote {
     fn get(
         &mut self,
         url: &str,
+        base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<http::GetResponse<Self::Headers, Self::ResponseBody>, http::Error> {
-        self.make_request(url, headers, false).map(Into::into)
+        self.make_request(url, base_url, headers, false).map(Into::into)
     }
 
     fn post(
         &mut self,
         url: &str,
+        base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<http::PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, http::Error> {
-        self.make_request(url, headers, true)
+        self.make_request(url, base_url, headers, true)
     }
 
     fn configure(&mut self, config: &dyn Any) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {

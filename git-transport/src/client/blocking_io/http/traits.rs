@@ -53,16 +53,21 @@ pub trait Http {
     /// A type allowing to write the content to post.
     type PostBody: std::io::Write;
 
-    /// Initiate a `GET` request to `url` provided the given `headers`.
+    /// Initiate a `GET` request to `url` provided the given `headers`, where `base_url` is so that `base_url + tail == url`.
+    ///
+    /// The `base_url` helps to validate redirects and to swap it with the effective base after a redirect.
     ///
     /// The `headers` are provided verbatim and include both the key as well as the value.
     fn get(
         &mut self,
         url: &str,
+        base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<GetResponse<Self::Headers, Self::ResponseBody>, Error>;
 
-    /// Initiate a `POST` request to `url` providing with the given `headers`.
+    /// Initiate a `POST` request to `url` providing with the given `headers`, where `base_url` is so that `base_url + tail == url`.
+    ///
+    /// The `base_url` helps to validate redirects and to swap it with the effective base after a redirect.
     ///
     /// The `headers` are provided verbatim and include both the key as well as the value.
     /// Note that the [`PostResponse`] contains the [`post_body`][PostResponse::post_body] field which implements [`std::io::Write`]
@@ -71,6 +76,7 @@ pub trait Http {
     fn post(
         &mut self,
         url: &str,
+        base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, Error>;
 

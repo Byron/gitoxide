@@ -1,5 +1,4 @@
 use std::{
-    error::Error,
     sync::mpsc::{Receiver, SyncSender},
     thread,
 };
@@ -10,10 +9,20 @@ use crate::client::blocking_io::http;
 
 mod remote;
 
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error(transparent)]
+    Curl(#[from] curl::Error),
+    #[error(transparent)]
+    Redirect(#[from] http::redirect::Error),
+    #[error(transparent)]
+    Authenticate(#[from] git_credentials::protocol::Error),
+}
+
 pub struct Curl {
     req: SyncSender<remote::Request>,
     res: Receiver<remote::Response>,
-    handle: Option<thread::JoinHandle<Result<(), curl::Error>>>,
+    handle: Option<thread::JoinHandle<Result<(), Error>>>,
     config: http::Options,
 }
 
@@ -36,6 +45,7 @@ impl Curl {
     fn make_request(
         &mut self,
         url: &str,
+        base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
         upload: bool,
     ) -> Result<http::PostResponse<io::pipe::Reader, io::pipe::Reader, io::pipe::Writer>, http::Error> {
@@ -47,6 +57,7 @@ impl Curl {
             .req
             .send(remote::Request {
                 url: url.to_owned(),
+                base_url: base_url.to_owned(),
                 headers: list,
                 upload,
                 config: self.config.clone(),
@@ -92,20 +103,25 @@ impl http::Http for Curl {
     fn get(
         &mut self,
         url: &str,
+        base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<http::GetResponse<Self::Headers, Self::ResponseBody>, http::Error> {
-        self.make_request(url, headers, false).map(Into::into)
+        self.make_request(url, base_url, headers, false).map(Into::into)
     }
 
     fn post(
         &mut self,
         url: &str,
+        base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<http::PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, http::Error> {
-        self.make_request(url, headers, true)
+        self.make_request(url, base_url, headers, true)
     }
 
-    fn configure(&mut self, config: &dyn std::any::Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    fn configure(
+        &mut self,
+        config: &dyn std::any::Any,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
         if let Some(config) = config.downcast_ref::<http::Options>() {
             self.config = config.clone();
         }
