@@ -21,6 +21,15 @@ impl TryFrom<OsString> for Boolean {
     }
 }
 
+/// # Warning
+///
+/// The direct usage of `try_from("string")` is discouraged as it will produce the wrong result for values
+/// obtained from `core.bool-implicit-true`, which have no separator and are implicitly true.
+/// This method chooses to work correctly for `core.bool-empty=`, which is an empty string and resolves
+/// to being `false`.
+///
+/// Instead of this, obtain booleans with `config.boolean(…)`, which handles the case were no separator is
+/// present correctly.
 impl TryFrom<&BStr> for Boolean {
     type Error = Error;
 
