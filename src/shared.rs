@@ -113,13 +113,7 @@ pub mod pretty {
         crate::shared::init_env_logger();
 
         match (verbose, progress) {
-            (false, false) => {
-                let stdout = stdout();
-                let mut stdout_lock = stdout.lock();
-                let stderr = stderr();
-                let mut stderr_lock = stderr.lock();
-                run(progress::DoOrDiscard::from(None), &mut stdout_lock, &mut stderr_lock)
-            }
+            (false, false) => run(progress::DoOrDiscard::from(None), &mut stdout(), &mut stderr()),
             (true, false) => {
                 use crate::shared::{self, STANDARD_RANGE};
                 let progress = shared::progress_tree();
