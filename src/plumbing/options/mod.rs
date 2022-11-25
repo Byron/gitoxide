@@ -35,6 +35,14 @@ pub struct Args {
     #[clap(long, conflicts_with("verbose"))]
     pub progress: bool,
 
+    /// Don't default malformed configuration flags, but show an error instead.
+    ///
+    /// Note that some subcommands use strict mode by default.
+    // TODO: needs a 'lenient' mutually exclusive counterpart. Opens the gate to auto-verbose some commands, and add --no-verbose
+    //       for these.
+    #[clap(long, short = 's')]
+    pub strict: bool,
+
     /// The progress TUI will stay up even though the work is already completed.
     ///
     /// Use this to be able to read progress messages or additional information visible in the TUI log pane.

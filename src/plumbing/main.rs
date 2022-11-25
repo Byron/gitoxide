@@ -71,7 +71,7 @@ pub fn main() -> Result<()> {
         let config = config.clone();
         move |mode: Mode| -> Result<git::Repository> {
             let mut mapping: git::sec::trust::Mapping<git::open::Options> = Default::default();
-            let strict_toggle = matches!(mode, Mode::Strict | Mode::StrictWithGitInstallConfig);
+            let strict_toggle = matches!(mode, Mode::Strict | Mode::StrictWithGitInstallConfig) || args.strict;
             mapping.full = mapping.full.strict_config(strict_toggle);
             mapping.reduced = mapping.reduced.strict_config(strict_toggle);
             let git_installation = matches!(
