@@ -256,6 +256,7 @@ Project goals can change over time as we learn more, and they can be challenged.
  * **be the best performing implementation**
    * use Rust's type system to optimize for work not done without being hard to use
    * make use of parallelism from the get go
+   * _sparse checkout_ support from day one
  * **assure on-disk consistency**
    * assure reads never interfere with concurrent writes
    * assure multiple concurrent writes don't cause trouble
