@@ -27,11 +27,13 @@ mod http {
         let git_transport::client::http::Options {
             proxy,
             proxy_auth_method,
+            follow_redirects,
             ..
         } = http_options(&repo, Some("origin"));
 
         assert_eq!(proxy_auth_method, ProxyAuthMethod::Negotiate);
         assert_eq!(proxy.as_deref(), Some("http://overridden"));
+        assert_eq!(follow_redirects, FollowRedirects::Initial);
     }
 
     #[test]
@@ -54,7 +56,7 @@ mod http {
             &["ExtraHeader: value2", "ExtraHeader: value3"],
             "it respects empty values to clear prior values"
         );
-        assert_eq!(follow_redirects, FollowRedirects::Initial);
+        assert_eq!(follow_redirects, FollowRedirects::All);
         assert_eq!(low_speed_limit_bytes_per_second, 5120);
         assert_eq!(low_speed_time_seconds, 10);
         assert_eq!(proxy.as_deref(), Some("http://localhost:9090"),);
@@ -84,7 +86,12 @@ mod http {
         assert!(
             opts.proxy_authenticate.is_some(),
             "…and credential-helpers are used to do that. This could be overridden in remotes one day"
-        )
+        );
+        assert_eq!(
+            opts.follow_redirects,
+            FollowRedirects::All,
+            "an empty value is true, so we can't take shortcuts for these"
+        );
     }
 
     #[test]
@@ -97,6 +104,7 @@ mod http {
             Some(""),
             "empty strings indicate that the proxy is to be unset by the transport"
         );
+        assert_eq!(opts.follow_redirects, FollowRedirects::None);
     }
 
     #[test]
@@ -105,5 +113,6 @@ mod http {
 
         let opts = http_options(&repo, None);
         assert_eq!(opts.proxy.as_deref(), Some("http://localhost:9090"));
+        assert_eq!(opts.follow_redirects, FollowRedirects::Initial);
     }
 }

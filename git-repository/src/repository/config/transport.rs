@@ -48,10 +48,7 @@ impl crate::Repository {
                     use git_transport::client::http;
                     use git_transport::client::http::options::ProxyAuthMethod;
 
-                    use crate::{
-                        bstr::ByteVec,
-                        config::cache::util::{ApplyLeniency, ApplyLeniencyDefault},
-                    };
+                    use crate::{bstr::ByteVec, config::cache::util::ApplyLeniency};
                     fn try_cow_to_string(
                         v: Cow<'_, BStr>,
                         lenient: bool,
@@ -185,24 +182,28 @@ impl crate::Repository {
                         headers
                     };
 
-                    if let Some(follow_redirects) =
-                        config.string_filter("http", None, "followRedirects", &mut trusted_only)
+                    let redirects_key = "http.followRedirects";
+                    opts.follow_redirects = if config
+                        .string_filter_by_key(redirects_key, &mut trusted_only)
+                        .map_or(false, |v| v.as_ref() == "initial")
                     {
-                        opts.follow_redirects = if follow_redirects.as_ref() == "initial" {
-                            http::options::FollowRedirects::Initial
-                        } else if git_config::Boolean::try_from(follow_redirects)
-                            .map_err(|err| crate::config::transport::Error::ConfigValue {
+                        http::options::FollowRedirects::Initial
+                    } else if let Some(val) = config
+                        .boolean_filter_by_key(redirects_key, &mut trusted_only)
+                        .map(|res| {
+                            res.map_err(|err| crate::config::transport::Error::ConfigValue {
                                 source: err,
-                                key: "http.followRedirects",
+                                key: redirects_key,
                             })
-                            .with_lenient_default(lenient)?
-                            .0
-                        {
-                            http::options::FollowRedirects::All
-                        } else {
-                            http::options::FollowRedirects::None
-                        };
-                    }
+                        })
+                        .transpose()
+                        .with_leniency(lenient)?
+                    {
+                        val.then(|| http::options::FollowRedirects::All)
+                            .unwrap_or(http::options::FollowRedirects::None)
+                    } else {
+                        http::options::FollowRedirects::Initial
+                    };
 
                     opts.low_speed_time_seconds =
                         integer(config, lenient, "http.lowSpeedTime", "u64", trusted_only, 0)?;
