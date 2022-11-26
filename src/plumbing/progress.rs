@@ -560,7 +560,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "http.proxyAuthMethod",
-        usage: Planned { note: None },
+        usage: InModule { name: "repository::config::transport", deviation: Some("implemented like git, but I never tried it so who knows") },
     },
     Record {
         config: "http.proxySSLCert",
