@@ -44,3 +44,130 @@ mod submodules {
         .to_thread_local())
     }
 }
+
+mod with_overrides {
+    use crate::util::named_subrepo_opts;
+    use git_object::bstr::BStr;
+    use git_repository as git;
+    use git_sec::Permission;
+    use git_testtools::Env;
+    use serial_test::serial;
+    use std::borrow::Cow;
+
+    #[test]
+    #[serial]
+    fn order_from_api_and_cli_and_environment() -> crate::Result {
+        let _env = Env::new()
+            .set("GIT_HTTP_USER_AGENT", "agent-from-env")
+            .set("GIT_HTTP_LOW_SPEED_LIMIT", "1")
+            .set("GIT_HTTP_LOW_SPEED_TIME", "1")
+            .set("GIT_HTTP_PROXY_AUTHMETHOD", "negotiate")
+            .set("GIT_CURL_VERBOSE", "true")
+            .set("https_proxy", "https-lower-override")
+            .set("HTTPS_PROXY", "https-upper")
+            .set("http_proxy", "http-lower")
+            .set("all_proxy", "all-proxy-lower")
+            .set("ALL_PROXY", "all-proxy")
+            .set("no_proxy", "no-proxy-lower")
+            .set("NO_PROXY", "no-proxy")
+            .set("GIT_PROTOCOL_FROM_USER", "file-allowed");
+        let mut opts = git::open::Options::isolated()
+            .config_overrides([
+                "http.userAgent=agent-from-api",
+                "http.lowSpeedLimit=2",
+                "http.lowSpeedTime=2",
+            ])
+            .cli_overrides([
+                "http.userAgent=agent-from-cli",
+                "http.lowSpeedLimit=3",
+                "http.lowSpeedTime=3",
+            ]);
+        opts.permissions.env.git_prefix = Permission::Allow;
+        opts.permissions.env.http_transport = Permission::Allow;
+        let repo = named_subrepo_opts("make_config_repos.sh", "http-config", opts)?;
+        let config = repo.config_snapshot();
+        assert_eq!(
+            config.strings_by_key("http.userAgent").expect("at least one value"),
+            [
+                cow_bstr("agentJustForHttp"),
+                cow_bstr("agent-from-cli"),
+                cow_bstr("agent-from-api"),
+                cow_bstr("agent-from-env")
+            ]
+        );
+        assert_eq!(
+            config
+                .integers_by_key("http.lowSpeedLimit")
+                .transpose()?
+                .expect("many values"),
+            [5120, 3, 2, 1]
+        );
+        assert_eq!(
+            config
+                .integers_by_key("http.lowSpeedTime")
+                .transpose()?
+                .expect("many values"),
+            [10, 3, 2, 1]
+        );
+        assert_eq!(
+            config
+                .strings_by_key("http.proxyAuthMethod")
+                .expect("at least one value"),
+            [cow_bstr("basic"), cow_bstr("negotiate"),]
+        );
+        assert_eq!(
+            config
+                .strings_by_key("gitoxide.https.proxy")
+                .expect("at least one value"),
+            [
+                cow_bstr("https-upper"),
+                cow_bstr(if cfg!(windows) {
+                    "https-upper" // on windows, environment variables are case-insensitive
+                } else {
+                    "https-lower-override"
+                })
+            ]
+        );
+        assert_eq!(
+            config
+                .strings_by_key("gitoxide.http.proxy")
+                .expect("at least one value"),
+            [cow_bstr("http-lower")]
+        );
+        assert_eq!(
+            config
+                .strings_by_key("gitoxide.http.allProxy")
+                .expect("at least one value"),
+            [
+                cow_bstr("all-proxy"), // on windows, environment variables are case-insensitive
+                cow_bstr(if cfg!(windows) { "all-proxy" } else { "all-proxy-lower" })
+            ]
+        );
+        assert_eq!(
+            config
+                .strings_by_key("gitoxide.http.noProxy")
+                .expect("at least one value"),
+            [
+                cow_bstr("no-proxy"), // on windows, environment variables are case-insensitive
+                cow_bstr(if cfg!(windows) { "no-proxy" } else { "no-proxy-lower" })
+            ]
+        );
+        assert_eq!(
+            config
+                .strings_by_key("gitoxide.http.verbose")
+                .expect("at least one value"),
+            [cow_bstr("true")]
+        );
+        assert_eq!(
+            config
+                .strings_by_key("gitoxide.allow.protocolFromUser")
+                .expect("at least one value"),
+            [cow_bstr("file-allowed")]
+        );
+        Ok(())
+    }
+
+    fn cow_bstr(s: &str) -> Cow<BStr> {
+        Cow::Borrowed(s.into())
+    }
+}

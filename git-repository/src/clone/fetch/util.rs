@@ -38,8 +38,13 @@ pub fn replace_changed_local_config_file(repo: &mut Repository, mut config: git_
     for id in ids_to_remove {
         repo_config.remove_section_by_id(id);
     }
-    crate::config::overrides::append(&mut config, &repo.options.api_config_overrides, git_config::Source::Api)
-        .expect("applied once and can be applied again");
+    crate::config::overrides::append(
+        &mut config,
+        &repo.options.api_config_overrides,
+        git_config::Source::Api,
+        |_| None,
+    )
+    .expect("applied once and can be applied again");
     repo_config.append(config);
     repo.reread_values_and_clear_caches()
         .expect("values could be read once and can be read again");

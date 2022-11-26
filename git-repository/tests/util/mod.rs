@@ -23,6 +23,11 @@ pub fn named_repo(name: &str) -> Result<Repository> {
     Ok(ThreadSafeRepository::open_opts(repo_path, restricted())?.to_thread_local())
 }
 
+pub fn named_subrepo_opts(fixture: &str, name: &str, opts: open::Options) -> Result<Repository> {
+    let repo_path = git_testtools::scripted_fixture_repo_read_only(fixture)?.join(name);
+    Ok(ThreadSafeRepository::open_opts(repo_path, opts)?.to_thread_local())
+}
+
 pub fn restricted() -> open::Options {
     open::Options::isolated()
 }

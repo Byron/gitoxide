@@ -11,9 +11,13 @@ mod http {
         git::open_opts(dir.join(name), git::open::Options::isolated()).unwrap()
     }
 
-    fn http_options(repo: &git::Repository, remote_name: Option<&str>) -> git_transport::client::http::Options {
+    fn http_options(
+        repo: &git::Repository,
+        remote_name: Option<&str>,
+        url: &str,
+    ) -> git_transport::client::http::Options {
         let opts = repo
-            .transport_options("https://example.com/does/not/matter", remote_name.map(Into::into))
+            .transport_options(url, remote_name.map(Into::into))
             .expect("valid configuration")
             .expect("configuration available for http");
         opts.downcast_ref::<git_transport::client::http::Options>()
@@ -29,7 +33,7 @@ mod http {
             proxy_auth_method,
             follow_redirects,
             ..
-        } = http_options(&repo, Some("origin"));
+        } = http_options(&repo, Some("origin"), "https://example.com/does/not/matter");
 
         assert_eq!(proxy_auth_method, ProxyAuthMethod::Negotiate);
         assert_eq!(proxy.as_deref(), Some("http://overridden"));
@@ -45,14 +49,14 @@ mod http {
             low_speed_limit_bytes_per_second,
             low_speed_time_seconds,
             proxy,
-            no_proxy: _,
+            no_proxy,
             proxy_auth_method,
             proxy_authenticate,
             user_agent,
             connect_timeout,
-            verbose: _,
+            verbose,
             backend,
-        } = http_options(&repo, None);
+        } = http_options(&repo, None, "https://example.com/does/not/matter");
         assert_eq!(
             extra_headers,
             &["ExtraHeader: value2", "ExtraHeader: value3"],
@@ -66,9 +70,11 @@ mod http {
             proxy_authenticate.is_none(),
             "no username means no authentication required"
         );
-        assert_eq!(proxy_auth_method, ProxyAuthMethod::Basic, "TODO: implement auth");
+        assert_eq!(proxy_auth_method, ProxyAuthMethod::Basic);
         assert_eq!(user_agent.as_deref(), Some("agentJustForHttp"));
         assert_eq!(connect_timeout, Some(std::time::Duration::from_millis(60 * 1024)));
+        assert_eq!(no_proxy, None);
+        assert!(!verbose, "verbose is disabled by default");
         assert!(
             backend.is_none(),
             "backed is never set as it's backend specific, rather custom options typically"
@@ -76,10 +82,24 @@ mod http {
     }
 
     #[test]
+    fn http_verbose() {
+        let repo = repo("http-verbose");
+        let opts = http_options(&repo, None, "https://example.com/does/not/matter");
+        assert!(opts.verbose);
+    }
+
+    #[test]
+    fn http_no_proxy() {
+        let repo = repo("http-no-proxy");
+        let opts = http_options(&repo, None, "https://example.com/does/not/matter");
+        assert_eq!(opts.no_proxy.as_deref(), Some("no validation done here"));
+    }
+
+    #[test]
     fn http_proxy_with_username() {
         let repo = repo("http-proxy-authenticated");
 
-        let opts = http_options(&repo, None);
+        let opts = http_options(&repo, None, "https://example.com/does/not/matter");
         assert_eq!(
             opts.proxy.as_deref(),
             Some("http://user@localhost:9090"),
@@ -100,7 +120,7 @@ mod http {
     fn empty_proxy_string_turns_it_off() {
         let repo = repo("http-proxy-empty");
 
-        let opts = http_options(&repo, None);
+        let opts = http_options(&repo, None, "https://example.com/does/not/matter");
         assert_eq!(
             opts.proxy.as_deref(),
             Some(""),
@@ -110,10 +130,116 @@ mod http {
     }
 
     #[test]
+    fn https_specific_proxy_only() {
+        let repo = repo("https-proxy-only");
+
+        let opts = http_options(&repo, None, "https://host.local/repo");
+        assert_eq!(
+            opts.proxy.as_deref(),
+            Some("http://https"),
+            "if there is no other proxy setting, it will be used for https"
+        );
+
+        let opts = http_options(&repo, None, "http://host.local/repo");
+        assert_eq!(opts.proxy, None, "non-https urls don't use this proxy at all");
+    }
+
+    #[test]
+    fn env_http_proxy_only() {
+        let repo = repo("gitoxide-http-proxy-only");
+
+        let opts = http_options(&repo, None, "https://host.local/repo");
+        assert_eq!(
+            opts.proxy.as_deref(),
+            Some("http://http-fallback"),
+            "the `http_proxy` env var derived value serves as fallback…"
+        );
+
+        let opts = http_options(&repo, None, "http://host.local/repo");
+        assert_eq!(
+            opts.proxy.as_deref(),
+            Some("http://http-fallback"),
+            "…for http-urls as well, as there is nothing else set."
+        );
+    }
+
+    #[test]
+    fn all_proxy_only() {
+        let repo = repo("gitoxide-all-proxy-only");
+
+        let opts = http_options(&repo, None, "https://host.local/repo");
+        assert_eq!(
+            opts.proxy.as_deref(),
+            Some("http://all-proxy-fallback"),
+            "the `all_proxy` env var derived value serves as fallback…"
+        );
+
+        let opts = http_options(&repo, None, "http://host.local/repo");
+        assert_eq!(
+            opts.proxy.as_deref(),
+            Some("http://all-proxy-fallback"),
+            "…for http-urls as well, as there is nothing else set."
+        );
+    }
+
+    #[test]
+    fn all_proxy_is_fallback() {
+        let repo = repo("gitoxide-all-proxy");
+
+        let opts = http_options(&repo, None, "https://host.local/repo");
+        assert_eq!(opts.proxy.as_deref(), Some("http://http"));
+
+        let opts = http_options(&repo, None, "http://host.local/repo");
+        assert_eq!(opts.proxy.as_deref(), Some("http://http"));
+    }
+
+    #[test]
+    fn env_http_proxy_is_fallback() {
+        let repo = repo("gitoxide-http-proxy");
+
+        let opts = http_options(&repo, None, "https://host.local/repo");
+        assert_eq!(opts.proxy.as_deref(), Some("http://http"));
+
+        let opts = http_options(&repo, None, "http://host.local/repo");
+        assert_eq!(opts.proxy.as_deref(), Some("http://http"));
+    }
+
+    #[test]
+    fn https_specific_proxy_is_only_a_fallback() {
+        let repo = repo("https-proxy");
+
+        let opts = http_options(&repo, None, "https://host.local/repo");
+        assert_eq!(
+            opts.proxy.as_deref(),
+            Some("http://http"),
+            "if the http proxy is set, it will be used even for https as the latter is only a fallback (by env vars)"
+        );
+
+        let opts = http_options(&repo, None, "http://host.local/repo");
+        assert_eq!(
+            opts.proxy.as_deref(),
+            Some("http://http"),
+            "http urls use the http proxy configuration like normal"
+        );
+    }
+
+    #[test]
+    fn https_specific_proxy_empty() {
+        let repo = repo("https-proxy-empty");
+
+        let opts = http_options(&repo, None, "https://host.local/repo");
+        assert_eq!(
+            opts.proxy.as_deref(),
+            Some(""),
+            "empty strings work just like they do for http.proxy (and empty strings indicate to unset it)"
+        );
+    }
+
+    #[test]
     fn proxy_without_protocol_is_defaulted_to_http() {
         let repo = repo("http-proxy-auto-prefix");
 
-        let opts = http_options(&repo, None);
+        let opts = http_options(&repo, None, "https://example.com/does/not/matter");
         assert_eq!(opts.proxy.as_deref(), Some("http://localhost:9090"));
         assert_eq!(opts.follow_redirects, FollowRedirects::Initial);
     }

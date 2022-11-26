@@ -50,7 +50,7 @@ impl Cache {
             .user_agent
             .get_or_init(|| {
                 self.resolved
-                    .string("gitoxide", None, "userAgent")
+                    .string_by_key("gitoxide.userAgent")
                     .map(|s| s.to_string())
                     .unwrap_or_else(|| crate::env::agent().into())
             })
@@ -72,9 +72,8 @@ impl Cache {
     pub(crate) fn url_scheme(
         &self,
     ) -> Result<&remote::url::SchemePermission, remote::url::scheme_permission::init::Error> {
-        self.url_scheme.get_or_try_init(|| {
-            remote::url::SchemePermission::from_config(&self.resolved, self.git_prefix, self.filter_config_section)
-        })
+        self.url_scheme
+            .get_or_try_init(|| remote::url::SchemePermission::from_config(&self.resolved, self.filter_config_section))
     }
 
     /// Returns (file-timeout, pack-refs timeout)

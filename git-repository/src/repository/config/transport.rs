@@ -64,6 +64,10 @@ impl crate::Repository {
                             .with_leniency(lenient)
                     }
 
+                    fn cow_bstr(v: &str) -> Cow<'_, BStr> {
+                        Cow::Borrowed(v.into())
+                    }
+
                     fn integer<T>(
                         config: &git_config::File<'static>,
                         lenient: bool,
@@ -88,13 +92,8 @@ impl crate::Repository {
                     where
                         T: TryFrom<i64>,
                     {
-                        let git_config::parse::Key {
-                            section_name,
-                            subsection_name,
-                            value_name,
-                        } = git_config::parse::key(key).expect("valid key statically known");
                         config
-                            .integer_filter(section_name, subsection_name, value_name, &mut filter)
+                            .integer_filter_by_key(key, &mut filter)
                             .transpose()
                             .map_err(|err| crate::config::transport::Error::ConfigValue { source: err, key })
                             .with_leniency(lenient)?
@@ -166,10 +165,10 @@ impl crate::Repository {
                     opts.extra_headers = {
                         let mut headers = Vec::new();
                         for header in config
-                            .strings_filter("http", None, "extraHeader", &mut trusted_only)
+                            .strings_filter_by_key("http.extraHeader", &mut trusted_only)
                             .unwrap_or_default()
                             .into_iter()
-                            .map(|v| try_cow_to_string(v, lenient, Cow::Borrowed("http.extraHeader".into())))
+                            .map(|v| try_cow_to_string(v, lenient, cow_bstr("http.extraHeader")))
                         {
                             let header = header?;
                             if let Some(header) = header {
@@ -217,12 +216,41 @@ impl crate::Repository {
                                     .map(|v| (v, Cow::Owned(format!("remote.{name}.proxy").into())))
                             })
                             .or_else(|| {
+                                let key = "http.proxy";
+                                let http_proxy = config
+                                    .string_filter_by_key(key, &mut trusted_only)
+                                    .map(|v| (v, cow_bstr(key)))
+                                    .or_else(|| {
+                                        let key = "gitoxide.http.proxy";
+                                        config
+                                            .string_filter_by_key(key, &mut trusted_only)
+                                            .map(|v| (v, cow_bstr(key)))
+                                    });
+                                if url.scheme == Https {
+                                    http_proxy.or_else(|| {
+                                        let key = "gitoxide.https.proxy";
+                                        config
+                                            .string_filter_by_key(key, &mut trusted_only)
+                                            .map(|v| (v, cow_bstr(key)))
+                                    })
+                                } else {
+                                    http_proxy
+                                }
+                            })
+                            .or_else(|| {
+                                let key = "gitoxide.http.allProxy";
                                 config
-                                    .string_filter("http", None, "proxy", &mut trusted_only)
-                                    .map(|v| (v, Cow::Borrowed("http.proxy".into())))
+                                    .string_filter_by_key(key, &mut trusted_only)
+                                    .map(|v| (v, cow_bstr(key)))
                             }),
                         lenient,
                     )?;
+                    opts.no_proxy = config
+                        .string_filter_by_key("gitoxide.http.noProxy", &mut trusted_only)
+                        .and_then(|v| {
+                            try_cow_to_string(v, lenient, Cow::Borrowed("gitoxide.http.noProxy".into())).transpose()
+                        })
+                        .transpose()?;
                     opts.proxy_auth_method = proxy_auth_method(
                         remote_name
                             .and_then(|name| {
@@ -232,7 +260,7 @@ impl crate::Repository {
                             })
                             .or_else(|| {
                                 config
-                                    .string_filter("http", None, "proxyAuthMethod", &mut trusted_only)
+                                    .string_filter_by_key("http.proxyAuthMethod", &mut trusted_only)
                                     .map(|v| (v, Cow::Borrowed("http.proxyAuthMethod".into())))
                             }),
                         lenient,
@@ -257,10 +285,17 @@ impl crate::Repository {
                         integer_opt(config, lenient, "gitoxide.http.connectTimeout", "u64", trusted_only)?
                             .map(std::time::Duration::from_millis);
                     opts.user_agent = config
-                        .string_filter("http", None, "userAgent", &mut trusted_only)
+                        .string_filter_by_key("http.userAgent", &mut trusted_only)
                         .and_then(|v| try_cow_to_string(v, lenient, Cow::Borrowed("http.userAgent".into())).transpose())
                         .transpose()?
                         .or_else(|| Some(crate::env::agent().into()));
+                    let key = "gitoxide.http.verbose";
+                    opts.verbose = config
+                        .boolean_filter_by_key(key, &mut trusted_only)
+                        .transpose()
+                        .with_leniency(lenient)
+                        .map_err(|err| crate::config::transport::Error::ConfigValue { source: err, key })?
+                        .unwrap_or_default();
 
                     Ok(Some(Box::new(opts)))
                 }

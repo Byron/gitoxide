@@ -86,7 +86,7 @@ impl<'repo> SnapshotMut<'repo> {
         values: impl IntoIterator<Item = impl AsRef<BStr>>,
         source: git_config::Source,
     ) -> Result<&mut Self, crate::config::overrides::Error> {
-        crate::config::overrides::append(&mut self.config, values, source)?;
+        crate::config::overrides::append(&mut self.config, values, source, |v| Some(format!("-c {v}").into()))?;
         Ok(self)
     }
     /// Apply all changes made to this instance.

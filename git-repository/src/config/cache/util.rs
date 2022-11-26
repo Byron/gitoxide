@@ -93,6 +93,17 @@ where
     }
 }
 
+pub(crate) fn reflog_or_default(
+    config_reflog: Option<git_ref::store::WriteReflog>,
+    has_worktree: bool,
+) -> git_ref::store::WriteReflog {
+    config_reflog.unwrap_or_else(|| {
+        has_worktree
+            .then(|| git_ref::store::WriteReflog::Normal)
+            .unwrap_or(git_ref::store::WriteReflog::Disable)
+    })
+}
+
 pub(crate) fn parse_core_abbrev(
     config: &git_config::File<'static>,
     object_hash: git_hash::Kind,

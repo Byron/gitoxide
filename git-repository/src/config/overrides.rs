@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use crate::bstr::{BStr, BString, ByteSlice};
 
-/// The error returned by [SnapshotMut::apply_cli_overrides()][crate::config::SnapshotMut::apply_cli_overrides()].
+/// The error returned by [SnapshotMut::apply_cli_overrides()][crate::config::SnapshotMut::append_config()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -21,6 +21,7 @@ pub(crate) fn append(
     config: &mut git_config::File<'static>,
     values: impl IntoIterator<Item = impl AsRef<BStr>>,
     source: git_config::Source,
+    mut make_comment: impl FnMut(&BStr) -> Option<BString>,
 ) -> Result<(), Error> {
     let mut file = git_config::File::new(git_config::file::Metadata::from(source));
     for key_value in values {
@@ -31,13 +32,17 @@ pub(crate) fn append(
         let key = git_config::parse::key(key.to_str().map_err(|_| Error::InvalidKey { input: key.into() })?)
             .ok_or_else(|| Error::InvalidKey { input: key.into() })?;
         let mut section = file.section_mut_or_create_new(key.section_name, key.subsection_name)?;
-        section.push(
+        let key =
             git_config::parse::section::Key::try_from(key.value_name.to_owned()).map_err(|err| Error::SectionKey {
                 source: err,
                 key: key.value_name.into(),
-            })?,
-            value.map(|v| v.as_bstr()),
-        );
+            })?;
+        let comment = make_comment(key_value);
+        let value = value.map(|v| v.as_bstr());
+        match comment {
+            Some(comment) => section.push_with_comment(key, value, &**comment),
+            None => section.push(key, value),
+        }
     }
     config.append(file);
     Ok(())

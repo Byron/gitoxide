@@ -55,13 +55,13 @@ pub(crate) struct SchemePermission {
 
 /// Init
 impl SchemePermission {
+    /// NOTE: _intentionally without leniency_
     pub fn from_config(
         config: &git_config::File<'static>,
-        git_prefix: git_sec::Permission,
         mut filter: fn(&git_config::file::Metadata) -> bool,
     ) -> Result<Self, init::Error> {
         let allow: Option<Allow> = config
-            .string_filter("protocol", None, "allow", &mut filter)
+            .string_filter_by_key("protocol.allow", &mut filter)
             .map(Allow::try_from)
             .transpose()
             .map_err(|invalid| init::Error::InvalidConfiguration {
@@ -100,9 +100,9 @@ impl SchemePermission {
         };
 
         let user_allowed = saw_user.then(|| {
-            std::env::var_os("GIT_PROTOCOL_FROM_USER")
-                .and_then(|val| git_prefix.check_opt(val))
-                .map_or(true, |val| val == "1")
+            config
+                .string_filter_by_key("gitoxide.allow.protocolFromUser", &mut filter)
+                .map_or(true, |val| val.as_ref() == "1")
         });
         Ok(SchemePermission {
             allow,

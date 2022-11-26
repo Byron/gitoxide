@@ -28,6 +28,12 @@ git clone --shared http-config http-remote-override
   git config remote.origin.proxyAuthMethod negotiate
 )
 
+git init http-no-proxy
+(cd http-no-proxy
+  git config gitoxide.http.noProxy "no validation done here"
+)
+
+
 git init http-proxy-empty
 (cd http-proxy-empty
   git config http.followRedirects false
@@ -36,9 +42,53 @@ git init http-proxy-empty
   git config --add http.proxy "" # a value override disabling it later
 )
 
+git init https-proxy-only
+(cd https-proxy-only
+  git config gitoxide.https.proxy https
+)
+
+git init gitoxide-http-proxy-only
+(cd gitoxide-http-proxy-only
+  git config gitoxide.http.proxy http-fallback
+)
+
+git init gitoxide-all-proxy-only
+(cd gitoxide-all-proxy-only
+  git config gitoxide.http.allProxy all-proxy-fallback
+)
+
+git init gitoxide-all-proxy
+(cd gitoxide-all-proxy
+  git config http.proxy http
+  git config gitoxide.http.allProxy all-proxy-fallback
+)
+
+git init gitoxide-http-proxy
+(cd gitoxide-http-proxy
+  git config gitoxide.http.proxy http-fallback
+  git config http.proxy http
+)
+
+git init https-proxy
+(cd https-proxy
+  git config gitoxide.https.proxy https
+  git config --add http.proxy "http"  # only for HTTP urls
+)
+
+git init https-proxy-empty
+(cd https-proxy-empty
+  git config gitoxide.https.proxy https
+  git config --add gitoxide.https.proxy "" # empty strings disable it
+)
+
 git init http-proxy-auto-prefix
 (cd http-proxy-auto-prefix
   git config http.proxy localhost:9090 # http:// is prefixed automatically
+)
+
+git init http-verbose
+(cd http-verbose
+  git config gitoxide.http.verbose true
 )
 
 git init http-proxy-authenticated

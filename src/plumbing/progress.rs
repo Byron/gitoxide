@@ -729,14 +729,43 @@ static GIT_CONFIG: &[Record] = &[
     Record {
         config: "gitoxide.userAgent",
         usage: InModule {
-            name: "remote::connection",
-            deviation: None
+            name: "config::cache",
+            deviation: Some("The user agent presented on the git protocol layer, serving as fallback for when no http.userAgent is set.")
+        }
+    },
+    Record {
+        config: "gitoxide.https.proxy",
+        usage: InModule {
+            name: "repository::config::transport",
+            deviation: Some("Used only if the url to access is https, created from 'HTTPS_PROXY' and 'https_proxy' env-vars")
+        }
+    },
+    Record {
+        config: "gitoxide.http.proxy",
+        usage: InModule {
+            name: "repository::config::transport",
+            deviation: Some("created from 'http_proxy' env-var.")
+        }
+    },
+    Record {
+        config: "gitoxide.http.allProxy",
+        usage: InModule {
+            name: "repository::config::transport",
+            deviation: Some("created from 'all_proxy' or 'ALL_PROXY' env-var.")
+        }
+    },
+    Record {
+        config: "gitoxide.http.verbose",
+        usage: InModule {
+            name: "repository::config::transport",
+            deviation: Some("created from 'GIT_CURL_VERBOSE' to print debug output to stderr.")
         }
     },
     Record {
         config: "gitoxide.http.noProxy",
-        usage: NotPlanned {
-            reason: "on demand, without it it's not possible to implement environment overrides via `no_proxy` or `NO_PROXY` for a list of hostnames or `*`"
+        usage: InModule {
+            name: "repository::config::transport",
+            deviation: Some("created from 'no_proxy' or 'NO_PROXY' env-var.")
         }
     },
     Record {
@@ -745,7 +774,14 @@ static GIT_CONFIG: &[Record] = &[
             name: "repository::config::transport",
             deviation: Some("entirely new, and in milliseconds like all other timeout suffixed variables in the git config")
         }
-    }
+    },
+    Record {
+        config: "gitoxide.allow.protocolFromUser",
+        usage: InModule {
+            name: "remote::url::scheme_permission",
+            deviation: Some("corresponds to GIT_PROTOCOL_FROM_USER environment variable")
+        }
+    },
 ];
 
 /// A programmatic way to record and display progress.

@@ -4,6 +4,9 @@ use crate::{
     config::{cache::util::ApplyLeniency, Cache},
     repository,
 };
+use git_config::File;
+use git_sec::Permission;
+use std::borrow::Cow;
 
 /// Initialization
 impl Cache {
@@ -27,7 +30,7 @@ impl Cache {
             home: home_env,
             xdg_config_home: xdg_config_home_env,
             ssh_prefix: _,
-            http_transport: _,
+            http_transport,
         }: repository::permissions::Environment,
         repository::permissions::Config {
             git_binary: use_installation,
@@ -56,82 +59,82 @@ impl Cache {
             ..util::base_options(lossy)
         };
 
-        let config =
-            {
-                let home_env = &home_env;
-                let xdg_config_home_env = &xdg_config_home_env;
-                let git_prefix = &git_prefix;
-                let metas = [
-                    git_config::source::Kind::GitInstallation,
-                    git_config::source::Kind::System,
-                    git_config::source::Kind::Global,
-                ]
-                .iter()
-                .flat_map(|kind| kind.sources())
-                .filter_map(|source| {
-                    match source {
-                        git_config::Source::GitInstallation if !use_installation => return None,
-                        git_config::Source::System if !use_system => return None,
-                        git_config::Source::Git if !use_git => return None,
-                        git_config::Source::User if !use_user => return None,
-                        _ => {}
-                    }
-                    source
-                        .storage_location(&mut |name| {
-                            match name {
-                                git_ if git_.starts_with("GIT_") => Some(git_prefix),
-                                "XDG_CONFIG_HOME" => Some(xdg_config_home_env),
-                                "HOME" => Some(home_env),
-                                _ => None,
-                            }
-                            .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check_opt(val)))
-                        })
-                        .map(|p| (source, p.into_owned()))
-                })
-                .map(|(source, path)| git_config::file::Metadata {
-                    path: Some(path),
-                    source: *source,
-                    level: 0,
-                    trust: git_sec::Trust::Full,
-                });
+        let config = {
+            let home_env = &home_env;
+            let xdg_config_home_env = &xdg_config_home_env;
+            let git_prefix = &git_prefix;
+            let metas = [
+                git_config::source::Kind::GitInstallation,
+                git_config::source::Kind::System,
+                git_config::source::Kind::Global,
+            ]
+            .iter()
+            .flat_map(|kind| kind.sources())
+            .filter_map(|source| {
+                match source {
+                    git_config::Source::GitInstallation if !use_installation => return None,
+                    git_config::Source::System if !use_system => return None,
+                    git_config::Source::Git if !use_git => return None,
+                    git_config::Source::User if !use_user => return None,
+                    _ => {}
+                }
+                source
+                    .storage_location(&mut |name| {
+                        match name {
+                            git_ if git_.starts_with("GIT_") => Some(git_prefix),
+                            "XDG_CONFIG_HOME" => Some(xdg_config_home_env),
+                            "HOME" => Some(home_env),
+                            _ => None,
+                        }
+                        .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check_opt(val)))
+                    })
+                    .map(|p| (source, p.into_owned()))
+            })
+            .map(|(source, path)| git_config::file::Metadata {
+                path: Some(path),
+                source: *source,
+                level: 0,
+                trust: git_sec::Trust::Full,
+            });
 
-                let err_on_nonexisting_paths = false;
-                let mut globals = git_config::File::from_paths_metadata_buf(
-                    metas,
-                    &mut buf,
-                    err_on_nonexisting_paths,
-                    git_config::file::init::Options {
-                        includes: git_config::file::includes::Options::no_follow(),
-                        ..options
-                    },
-                )
-                .map_err(|err| match err {
-                    git_config::file::init::from_paths::Error::Init(err) => Error::from(err),
-                    git_config::file::init::from_paths::Error::Io(err) => err.into(),
-                })?
-                .unwrap_or_default();
+            let err_on_nonexisting_paths = false;
+            let mut globals = git_config::File::from_paths_metadata_buf(
+                metas,
+                &mut buf,
+                err_on_nonexisting_paths,
+                git_config::file::init::Options {
+                    includes: git_config::file::includes::Options::no_follow(),
+                    ..options
+                },
+            )
+            .map_err(|err| match err {
+                git_config::file::init::from_paths::Error::Init(err) => Error::from(err),
+                git_config::file::init::from_paths::Error::Io(err) => err.into(),
+            })?
+            .unwrap_or_default();
 
-                globals.append(git_dir_config);
-                globals.resolve_includes(options)?;
-                if use_env {
-                    globals.append(git_config::File::from_env(options)?.unwrap_or_default());
-                }
-                if !cli_config_overrides.is_empty() {
-                    crate::config::overrides::append(&mut globals, cli_config_overrides, git_config::Source::Cli)
-                        .map_err(|err| Error::ConfigOverrides {
-                            err,
-                            source: git_config::Source::Cli,
-                        })?;
-                }
-                if !api_config_overrides.is_empty() {
-                    crate::config::overrides::append(&mut globals, api_config_overrides, git_config::Source::Api)
-                        .map_err(|err| Error::ConfigOverrides {
-                            err,
-                            source: git_config::Source::Api,
-                        })?;
-                }
-                globals
-            };
+            globals.append(git_dir_config);
+            globals.resolve_includes(options)?;
+            if use_env {
+                globals.append(git_config::File::from_env(options)?.unwrap_or_default());
+            }
+            if !cli_config_overrides.is_empty() {
+                crate::config::overrides::append(&mut globals, cli_config_overrides, git_config::Source::Cli, |_| None)
+                    .map_err(|err| Error::ConfigOverrides {
+                        err,
+                        source: git_config::Source::Cli,
+                    })?;
+            }
+            if !api_config_overrides.is_empty() {
+                crate::config::overrides::append(&mut globals, api_config_overrides, git_config::Source::Api, |_| None)
+                    .map_err(|err| Error::ConfigOverrides {
+                        err,
+                        source: git_config::Source::Api,
+                    })?;
+            }
+            apply_environment_overrides(&mut globals, *git_prefix, http_transport)?;
+            globals
+        };
 
         let hex_len = util::parse_core_abbrev(&config, object_hash).with_leniency(lenient_config)?;
 
@@ -207,4 +210,145 @@ impl Cache {
 
         Ok(())
     }
+}
+
+impl crate::Repository {
+    /// Causes our configuration to re-read cached values which will also be applied to the repository in-memory state if applicable.
+    ///
+    /// Similar to `reread_values_and_clear_caches_replacing_config()`, but works on the existing instance instead of a passed
+    /// in one that it them makes the default.
+    #[cfg(feature = "blocking-network-client")]
+    pub(crate) fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
+        self.config.reread_values_and_clear_caches()?;
+        self.apply_changed_values();
+        Ok(())
+    }
+
+    /// Replace our own configuration with `config` and re-read all cached values, and apply them to select in-memory instances.
+    pub(crate) fn reread_values_and_clear_caches_replacing_config(
+        &mut self,
+        config: crate::Config,
+    ) -> Result<(), Error> {
+        self.config.reread_values_and_clear_caches_replacing_config(config)?;
+        self.apply_changed_values();
+        Ok(())
+    }
+
+    fn apply_changed_values(&mut self) {
+        self.refs.write_reflog = util::reflog_or_default(self.config.reflog, self.work_dir().is_some());
+    }
+}
+
+fn apply_environment_overrides(
+    config: &mut File<'static>,
+    git_prefix: Permission,
+    http_transport: Permission,
+) -> Result<(), Error> {
+    fn var_as_bstring(var: &str, perm: Permission) -> Option<BString> {
+        perm.check_opt(var)
+            .and_then(std::env::var_os)
+            .and_then(|val| git_path::os_string_into_bstring(val).ok())
+    }
+
+    let mut env_override = git_config::File::new(git_config::file::Metadata::from(git_config::Source::EnvOverride));
+    {
+        let mut section = env_override
+            .new_section("http", None)
+            .expect("statically known valid section name");
+        for (var, key, permission) in [
+            ("GIT_HTTP_LOW_SPEED_LIMIT", "lowSpeedLimit", git_prefix),
+            ("GIT_HTTP_LOW_SPEED_TIME", "lowSpeedTime", git_prefix),
+            ("GIT_HTTP_USER_AGENT", "userAgent", git_prefix),
+            ("GIT_HTTP_PROXY_AUTHMETHOD", "proxyAuthMethod", git_prefix),
+            ("all_proxy", "all-proxy-lower", http_transport),
+            ("ALL_PROXY", "all-proxy", http_transport),
+        ] {
+            if let Some(value) = var_as_bstring(var, permission) {
+                section.push_with_comment(
+                    key.try_into().expect("statically known to be valid"),
+                    Some(value.as_ref()),
+                    format!("from {var}").as_str(),
+                );
+            }
+        }
+        if section.num_values() == 0 {
+            let id = section.id();
+            env_override.remove_section_by_id(id);
+        }
+    }
+
+    {
+        let mut section = env_override
+            .new_section("gitoxide", Some(Cow::Borrowed("https".into())))
+            .expect("statically known valid section name");
+
+        for (var, key) in [("HTTPS_PROXY", "proxy"), ("https_proxy", "proxy")] {
+            if let Some(value) = var_as_bstring(var, http_transport) {
+                section.push_with_comment(
+                    key.try_into().expect("statically known to be valid"),
+                    Some(value.as_ref()),
+                    format!("from {var}").as_str(),
+                );
+            }
+        }
+
+        if section.num_values() == 0 {
+            let id = section.id();
+            env_override.remove_section_by_id(id);
+        }
+    }
+
+    {
+        let mut section = env_override
+            .new_section("gitoxide", Some(Cow::Borrowed("allow".into())))
+            .expect("statically known valid section name");
+
+        for (var, key) in [("GIT_PROTOCOL_FROM_USER", "protocolFromUser")] {
+            if let Some(value) = var_as_bstring(var, http_transport) {
+                section.push_with_comment(
+                    key.try_into().expect("statically known to be valid"),
+                    Some(value.as_ref()),
+                    format!("from {var}").as_str(),
+                );
+            }
+        }
+
+        if section.num_values() == 0 {
+            let id = section.id();
+            env_override.remove_section_by_id(id);
+        }
+    }
+
+    {
+        let mut section = env_override
+            .new_section("gitoxide", Some(Cow::Borrowed("http".into())))
+            .expect("statically known valid section name");
+
+        for (var, key, permission) in [
+            ("ALL_PROXY", "allProxy", http_transport),
+            ("all_proxy", "allProxy", http_transport),
+            ("NO_PROXY", "noProxy", http_transport),
+            ("no_proxy", "noProxy", http_transport),
+            ("http_proxy", "proxy", http_transport),
+            ("GIT_CURL_VERBOSE", "verbose", git_prefix),
+        ] {
+            if let Some(value) = var_as_bstring(var, permission) {
+                section.push_with_comment(
+                    key.try_into().expect("statically known to be valid"),
+                    Some(value.as_ref()),
+                    format!("from {var}").as_str(),
+                );
+            }
+        }
+
+        if section.num_values() == 0 {
+            let id = section.id();
+            env_override.remove_section_by_id(id);
+        }
+    }
+
+    if !env_override.is_void() {
+        config.append(env_override);
+    }
+    Ok(())
 }
