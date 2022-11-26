@@ -202,6 +202,37 @@ mod push {
     }
 }
 
+mod push_with_comment {
+    use git_config::parse::section::Key;
+
+    #[test]
+    fn various_comments_and_escaping() {
+        for (comment, expected) in [
+            ("", "$head\tk = v #$nl"),
+            ("this is v!", "$head\tk = v # this is v!$nl"),
+            (" no double space", "$head\tk = v # no double space$nl"),
+            ("\tno double whitespace", "$head\tk = v #\tno double whitespace$nl"),
+            (
+                "one\ntwo\nnewlines are replaced with space",
+                "$head\tk = v # one two newlines are replaced with space$nl",
+            ),
+            (
+                "a\rb\r\nlinefeeds aren't special",
+                "$head\tk = v # a\rb\r linefeeds aren't special$nl",
+            ),
+        ] {
+            let mut config = git_config::File::default();
+            let mut section = config.new_section("a", None).unwrap();
+            section.set_implicit_newline(false);
+            section.push_with_comment(Key::try_from("k").unwrap(), Some("v".into()), comment);
+            let expected = expected
+                .replace("$head", &format!("[a]{nl}", nl = section.newline()))
+                .replace("$nl", &section.newline().to_string());
+            assert_eq!(config.to_bstring(), expected);
+        }
+    }
+}
+
 mod set_leading_whitespace {
     use std::{borrow::Cow, convert::TryFrom};
 

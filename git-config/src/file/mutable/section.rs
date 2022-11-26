@@ -28,9 +28,26 @@ pub struct SectionMut<'a, 'event> {
 
 /// Mutating methods.
 impl<'a, 'event> SectionMut<'a, 'event> {
-    /// Adds an entry to the end of this section name `key` and `value`. If `value` is None`, no equal sign will be written leaving
+    /// Adds an entry to the end of this section name `key` and `value`. If `value` is `None`, no equal sign will be written leaving
     /// just the key. This is useful for boolean values which are true if merely the key exists.
     pub fn push<'b>(&mut self, key: Key<'event>, value: Option<&'b BStr>) {
+        self.push_with_comment_inner(key, value, None)
+    }
+
+    /// Adds an entry to the end of this section name `key` and `value`. If `value` is `None`, no equal sign will be written leaving
+    /// just the key. This is useful for boolean values which are true if merely the key exists.
+    /// `comment` has to be the text to put right after the value and behind a `#` character. Note that newlines are silently transformed
+    /// into spaces.
+    pub fn push_with_comment<'b, 'c>(
+        &mut self,
+        key: Key<'event>,
+        value: Option<&'b BStr>,
+        comment: impl Into<&'c BStr>,
+    ) {
+        self.push_with_comment_inner(key, value, comment.into().into())
+    }
+
+    fn push_with_comment_inner(&mut self, key: Key<'event>, value: Option<&BStr>, comment: Option<&BStr>) {
         let body = &mut self.section.body.0;
         if let Some(ws) = &self.whitespace.pre_key {
             body.push(Event::Whitespace(ws.clone()));
@@ -43,6 +60,21 @@ impl<'a, 'event> SectionMut<'a, 'event> {
                 body.push(Event::Value(escape_value(value).into()));
             }
             None => body.push(Event::Value(Cow::Borrowed("".into()))),
+        }
+        if let Some(comment) = comment {
+            body.push(Event::Whitespace(Cow::Borrowed(" ".into())));
+            body.push(Event::Comment(parse::Comment {
+                tag: b'#',
+                text: Cow::Owned({
+                    let mut c = Vec::with_capacity(comment.len());
+                    let mut bytes = comment.iter().peekable();
+                    if !bytes.peek().map_or(true, |b| b.is_ascii_whitespace()) {
+                        c.insert(0, b' ');
+                    }
+                    c.extend(bytes.map(|b| (*b == b'\n').then(|| b' ').unwrap_or(*b)));
+                    c.into()
+                }),
+            }));
         }
         if self.implicit_newline {
             body.push(Event::Newline(BString::from(self.newline.to_vec()).into()));
