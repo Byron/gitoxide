@@ -419,7 +419,7 @@ impl ThreadSafeRepository {
                     .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
                     .map_err(config::Error::PathInterpolation)?;
                 worktree_dir = {
-                    git_path::absolutize(git_dir.join(wt_path), current_dir)
+                    git_path::normalize(git_dir.join(wt_path), current_dir)
                         .and_then(|wt| wt.as_ref().is_dir().then(|| wt.into_owned()))
                 }
             }

@@ -44,7 +44,7 @@ mod path {
 
     impl Path {
         /// Instantiate a new path from `dir` which is expected to be the `.git` directory, with `kind` indicating
-        /// whether it's a bare repository or not, with `current_dir` being used to absolutize relative paths
+        /// whether it's a bare repository or not, with `current_dir` being used to normalize relative paths
         /// as needed.
         ///
         /// `None` is returned if `dir` could not be resolved due to being relative and trying to reach outside of the filesystem root.
@@ -54,11 +54,11 @@ mod path {
             current_dir: impl AsRef<std::path::Path>,
         ) -> Option<Self> {
             let cwd = current_dir.as_ref();
-            let absolutize_on_trailing_dot_dot = |dir: PathBuf| -> Option<PathBuf> {
+            let normalize_on_trailing_dot_dot = |dir: PathBuf| -> Option<PathBuf> {
                 if !matches!(dir.components().rev().next(), Some(std::path::Component::ParentDir)) {
                     dir
                 } else {
-                    git_path::absolutize(&dir, cwd)?.into_owned()
+                    git_path::normalize(&dir, cwd)?.into_owned()
                 }
                 .into()
             };
@@ -66,18 +66,18 @@ mod path {
             let dir = dir.into();
             match kind {
                 Kind::Submodule { git_dir } => Path::LinkedWorkTree {
-                    git_dir: git_path::absolutize(git_dir, cwd)?.into_owned(),
-                    work_dir: without_dot_git_dir(absolutize_on_trailing_dot_dot(dir)?),
+                    git_dir: git_path::normalize(git_dir, cwd)?.into_owned(),
+                    work_dir: without_dot_git_dir(normalize_on_trailing_dot_dot(dir)?),
                 },
                 Kind::SubmoduleGitDir => Path::Repository(dir),
                 Kind::WorkTreeGitDir { work_dir } => Path::LinkedWorkTree { git_dir: dir, work_dir },
                 Kind::WorkTree { linked_git_dir } => match linked_git_dir {
                     Some(git_dir) => Path::LinkedWorkTree {
                         git_dir,
-                        work_dir: without_dot_git_dir(absolutize_on_trailing_dot_dot(dir)?),
+                        work_dir: without_dot_git_dir(normalize_on_trailing_dot_dot(dir)?),
                     },
                     None => {
-                        let mut dir = absolutize_on_trailing_dot_dot(dir)?;
+                        let mut dir = normalize_on_trailing_dot_dot(dir)?;
                         dir.pop(); // ".git" suffix
                         let work_dir = dir.as_os_str().is_empty().then(|| PathBuf::from(".")).unwrap_or(dir);
                         Path::WorkTree(work_dir)
