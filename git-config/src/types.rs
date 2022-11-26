@@ -32,12 +32,19 @@ pub enum Source {
     /// typically located in `$GIT_DIR/config.worktree` if `extensions.worktreeConfig`
     /// is enabled.
     Worktree,
-    /// values parsed from the environment.
+    /// Values parsed from the environment using `GIT_CONFIG_COUNT`,
+    /// `GIT_CONFIG_KEY_N` and `GIT_CONFIG_VALUE_N` where `N` is incremented from 0 up to the
+    /// value of `GIT_CONFIG_COUNT`.
     Env,
-    /// Values set from the command-line.
+    /// Values set from the command-line, typically controlled by the user running a program.
     Cli,
-    /// Entirely internal from a programmatic source
+    /// Entirely internal from a programmatic source, and can be used to have (near final) say in configuration values.
     Api,
+    /// Values obtained from specific environment variables that override values in the git configuration.
+    ///
+    /// For example, `HTTP_PROXY` overrides `http.proxy`, no matter where it is specified, and thus
+    /// controls the value similar to how it's done in `git`.
+    EnvOverride,
 }
 
 /// High level `git-config` reader and writer.

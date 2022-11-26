@@ -48,7 +48,7 @@ impl Source {
             System => Kind::System,
             Git | User => Kind::Global,
             Local | Worktree => Kind::Repository,
-            Env | Cli | Api => Kind::Override,
+            Env | Cli | Api | EnvOverride => Kind::Override,
         }
     }
 
@@ -100,7 +100,7 @@ impl Source {
                 }),
             Local => Some(Path::new("config").into()),
             Worktree => Some(Path::new("config.worktree").into()),
-            Env | Cli | Api => None,
+            Env | Cli | Api | EnvOverride => None,
         }
     }
 }
