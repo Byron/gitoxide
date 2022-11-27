@@ -1179,7 +1179,7 @@ dependencies = [
 
 [[package]]
 name = "git-actor"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "bstr",
  "btoi",
@@ -1364,7 +1364,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "bstr",
  "bytes",
@@ -1418,7 +1418,7 @@ dependencies = [
 
 [[package]]
 name = "git-index"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "atoi",
  "bitflags",
