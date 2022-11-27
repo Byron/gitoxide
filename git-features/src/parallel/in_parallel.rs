@@ -5,8 +5,16 @@ use crate::parallel::{num_threads, Reduce};
 /// Runs `left` and `right` in parallel, returning their output when both are done.
 pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
     crossbeam_utils::thread::scope(|s| {
-        let left = s.spawn(|_| left());
-        let right = s.spawn(|_| right());
+        let left = s
+            .builder()
+            .name("gitoxide.join.left".into())
+            .spawn(|_| left())
+            .expect("valid name");
+        let right = s
+            .builder()
+            .name("gitoxide.join.right".into())
+            .spawn(|_| right())
+            .expect("valid name");
         (left.join().unwrap(), right.join().unwrap())
     })
     .unwrap()
@@ -51,28 +59,34 @@ where
             let (send_input, receive_input) = crossbeam_channel::bounded::<I>(num_threads);
             let (send_result, receive_result) = crossbeam_channel::bounded::<O>(num_threads);
             for thread_id in 0..num_threads {
-                s.spawn({
-                    let send_result = send_result.clone();
-                    let receive_input = receive_input.clone();
-                    let new_thread_state = new_thread_state.clone();
-                    let consume = consume.clone();
-                    move |_| {
-                        let mut state = new_thread_state(thread_id);
-                        for item in receive_input {
-                            if send_result.send(consume(item, &mut state)).is_err() {
-                                break;
+                s.builder()
+                    .name(format!("gitoxide.in_parallel.produce.{thread_id}"))
+                    .spawn({
+                        let send_result = send_result.clone();
+                        let receive_input = receive_input.clone();
+                        let new_thread_state = new_thread_state.clone();
+                        let consume = consume.clone();
+                        move |_| {
+                            let mut state = new_thread_state(thread_id);
+                            for item in receive_input {
+                                if send_result.send(consume(item, &mut state)).is_err() {
+                                    break;
+                                }
                             }
                         }
-                    }
-                });
+                    })
+                    .expect("valid name");
             }
-            s.spawn(move |_| {
-                for item in input {
-                    if send_input.send(item).is_err() {
-                        break;
+            s.builder()
+                .name("gitoxide.in_parallel.feed".into())
+                .spawn(move |_| {
+                    for item in input {
+                        if send_input.send(item).is_err() {
+                            break;
+                        }
                     }
-                }
-            });
+                })
+                .expect("valid name");
             receive_result
         };
 
@@ -110,21 +124,24 @@ where
     // TODO: use std::thread::scope() once Rust 1.63 is available.
     crossbeam_utils::thread::scope({
         move |s| {
-            s.spawn({
-                move |_| loop {
-                    if stop_everything.load(Ordering::Relaxed) {
-                        break;
-                    }
-
-                    match periodic() {
-                        Some(duration) => std::thread::sleep(duration),
-                        None => {
-                            stop_everything.store(true, Ordering::Relaxed);
+            s.builder()
+                .name("gitoxide.in_parallel_with_slice.watch-interrupts".into())
+                .spawn({
+                    move |_| loop {
+                        if stop_everything.load(Ordering::Relaxed) {
                             break;
                         }
+
+                        match periodic() {
+                            Some(duration) => std::thread::sleep(duration),
+                            None => {
+                                stop_everything.store(true, Ordering::Relaxed);
+                                break;
+                            }
+                        }
                     }
-                }
-            });
+                })
+                .expect("valid name");
 
             let input_len = input.len();
             struct Input<I>(*mut [I])
@@ -137,35 +154,40 @@ where
 
             let threads: Vec<_> = (0..num_threads)
                 .map(|thread_id| {
-                    s.spawn({
-                        let mut new_thread_state = new_thread_state.clone();
-                        let state_to_rval = state_to_rval.clone();
-                        let mut consume = consume.clone();
-                        let input = Input(input as *mut [I]);
-                        move |_| {
-                            let mut state = new_thread_state(thread_id);
-                            while let Ok(input_index) = index
-                                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| (x < input_len).then(|| x + 1))
-                            {
-                                if stop_everything.load(Ordering::Relaxed) {
-                                    break;
-                                }
-                                // SAFETY: our atomic counter for `input_index` is only ever incremented, yielding
-                                //         each item exactly once.
-                                let item = {
-                                    #[allow(unsafe_code)]
-                                    unsafe {
-                                        &mut (&mut *input.0)[input_index]
+                    s.builder()
+                        .name(format!("gitoxide.in_parallel_with_slice.produce.{thread_id}"))
+                        .spawn({
+                            let mut new_thread_state = new_thread_state.clone();
+                            let state_to_rval = state_to_rval.clone();
+                            let mut consume = consume.clone();
+                            let input = Input(input as *mut [I]);
+                            move |_| {
+                                let mut state = new_thread_state(thread_id);
+                                while let Ok(input_index) =
+                                    index.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| {
+                                        (x < input_len).then(|| x + 1)
+                                    })
+                                {
+                                    if stop_everything.load(Ordering::Relaxed) {
+                                        break;
                                     }
-                                };
-                                if let Err(err) = consume(item, &mut state) {
-                                    stop_everything.store(true, Ordering::Relaxed);
-                                    return Err(err);
+                                    // SAFETY: our atomic counter for `input_index` is only ever incremented, yielding
+                                    //         each item exactly once.
+                                    let item = {
+                                        #[allow(unsafe_code)]
+                                        unsafe {
+                                            &mut (&mut *input.0)[input_index]
+                                        }
+                                    };
+                                    if let Err(err) = consume(item, &mut state) {
+                                        stop_everything.store(true, Ordering::Relaxed);
+                                        return Err(err);
+                                    }
                                 }
+                                Ok(state_to_rval(state))
                             }
-                            Ok(state_to_rval(state))
-                        }
-                    })
+                        })
+                        .expect("valid name")
                 })
                 .collect();
             for thread in threads {

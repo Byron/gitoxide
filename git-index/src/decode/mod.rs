@@ -75,7 +75,13 @@ impl State {
                     let extension_loading =
                         (extensions_data.len() > min_extension_block_in_bytes_for_threading).then({
                             num_threads -= 1;
-                            || scope.spawn(|_| extension::decode::all(extensions_data, object_hash))
+                            || {
+                                scope
+                                    .builder()
+                                    .name("git-index.from_bytes.load-extensions".into())
+                                    .spawn(|_| extension::decode::all(extensions_data, object_hash))
+                                    .expect("valid name")
+                            }
                         });
                     let entries_res = match index_offsets_table {
                         Some(entry_offsets) => {
@@ -84,45 +90,52 @@ impl State {
                             let mut threads = Vec::with_capacity(num_chunks);
                             for (id, chunks) in entry_offsets.chunks(chunk_size).enumerate() {
                                 let chunks = chunks.to_vec();
-                                threads.push(scope.spawn(move |_| {
-                                    let num_entries_for_chunks =
-                                        chunks.iter().map(|c| c.num_entries).sum::<u32>() as usize;
-                                    let mut entries = Vec::with_capacity(num_entries_for_chunks);
-                                    let path_backing_buffer_size_for_chunks =
-                                        entries::estimate_path_storage_requirements_in_bytes(
-                                            num_entries_for_chunks as u32,
-                                            data.len() / num_chunks,
-                                            start_of_extensions.map(|ofs| ofs / num_chunks),
-                                            object_hash,
-                                            version,
-                                        );
-                                    let mut path_backing = Vec::with_capacity(path_backing_buffer_size_for_chunks);
-                                    let mut is_sparse = false;
-                                    for offset in chunks {
-                                        let (
-                                            entries::Outcome {
-                                                is_sparse: chunk_is_sparse,
-                                            },
-                                            _data,
-                                        ) = entries::chunk(
-                                            &data[offset.from_beginning_of_file as usize..],
-                                            &mut entries,
-                                            &mut path_backing,
-                                            offset.num_entries,
-                                            object_hash,
-                                            version,
-                                        )?;
-                                        is_sparse |= chunk_is_sparse;
-                                    }
-                                    Ok::<_, Error>((
-                                        id,
-                                        EntriesOutcome {
-                                            entries,
-                                            path_backing,
-                                            is_sparse,
-                                        },
-                                    ))
-                                }));
+                                threads.push(
+                                    scope
+                                        .builder()
+                                        .name(format!("git-index.from_bytes.read-entries.{id}"))
+                                        .spawn(move |_| {
+                                            let num_entries_for_chunks =
+                                                chunks.iter().map(|c| c.num_entries).sum::<u32>() as usize;
+                                            let mut entries = Vec::with_capacity(num_entries_for_chunks);
+                                            let path_backing_buffer_size_for_chunks =
+                                                entries::estimate_path_storage_requirements_in_bytes(
+                                                    num_entries_for_chunks as u32,
+                                                    data.len() / num_chunks,
+                                                    start_of_extensions.map(|ofs| ofs / num_chunks),
+                                                    object_hash,
+                                                    version,
+                                                );
+                                            let mut path_backing =
+                                                Vec::with_capacity(path_backing_buffer_size_for_chunks);
+                                            let mut is_sparse = false;
+                                            for offset in chunks {
+                                                let (
+                                                    entries::Outcome {
+                                                        is_sparse: chunk_is_sparse,
+                                                    },
+                                                    _data,
+                                                ) = entries::chunk(
+                                                    &data[offset.from_beginning_of_file as usize..],
+                                                    &mut entries,
+                                                    &mut path_backing,
+                                                    offset.num_entries,
+                                                    object_hash,
+                                                    version,
+                                                )?;
+                                                is_sparse |= chunk_is_sparse;
+                                            }
+                                            Ok::<_, Error>((
+                                                id,
+                                                EntriesOutcome {
+                                                    entries,
+                                                    path_backing,
+                                                    is_sparse,
+                                                },
+                                            ))
+                                        })
+                                        .expect("valid name"),
+                                );
                             }
                             let mut results =
                                 InOrderIter::from(threads.into_iter().map(|thread| thread.join().unwrap()));

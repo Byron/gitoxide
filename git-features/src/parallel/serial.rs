@@ -12,10 +12,32 @@ mod not_parallel {
         _marker: std::marker::PhantomData<&'env mut &'env ()>,
     }
 
+    pub struct ThreadBuilder<'a, 'env> {
+        scope: &'a Scope<'env>,
+    }
+
     #[allow(unsafe_code)]
     unsafe impl Sync for Scope<'_> {}
 
+    impl<'a, 'env> ThreadBuilder<'a, 'env> {
+        pub fn name(self, _new: String) -> Self {
+            self
+        }
+        pub fn spawn<F, T>(&self, f: F) -> std::io::Result<ScopedJoinHandle<'a, T>>
+        where
+            F: FnOnce(&Scope<'env>) -> T,
+            F: Send + 'env,
+            T: Send + 'env,
+        {
+            Ok(self.scope.spawn(f))
+        }
+    }
+
     impl<'env> Scope<'env> {
+        /// Obtain a builder to change settings on the spawned thread.
+        pub fn builder(&self) -> ThreadBuilder<'_, 'env> {
+            ThreadBuilder { scope: self }
+        }
         pub fn spawn<'scope, F, T>(&'scope self, f: F) -> ScopedJoinHandle<'scope, T>
         where
             F: FnOnce(&Scope<'env>) -> T,
