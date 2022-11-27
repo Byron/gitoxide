@@ -9,6 +9,7 @@ mod memory {
     use std::num::NonZeroUsize;
 
     use clru::WeightScale;
+    use git_shamap::ShaHashBuilder;
 
     use crate::cache;
 
@@ -29,7 +30,7 @@ mod memory {
 
     /// An LRU cache with hash map backing and an eviction rule based on the memory usage for object data in bytes.
     pub struct MemoryCappedHashmap {
-        inner: clru::CLruCache<Key, Entry, hash_hasher::HashBuildHasher, CustomScale>,
+        inner: clru::CLruCache<Key, Entry, ShaHashBuilder, CustomScale>,
         free_list: Vec<Vec<u8>>,
         debug: git_features::cache::Debug,
     }
@@ -45,7 +46,7 @@ mod memory {
             MemoryCappedHashmap {
                 inner: clru::CLruCache::with_config(
                     clru::CLruCacheConfig::new(NonZeroUsize::new(memory_cap_in_bytes).expect("non zero"))
-                        .with_hasher(hash_hasher::HashBuildHasher::default())
+                        .with_hasher(ShaHashBuilder::default())
                         .with_scale(CustomScale),
                 ),
                 free_list: Vec::new(),
