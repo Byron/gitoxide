@@ -42,6 +42,28 @@ fn special_cases_around_cwd() -> crate::Result {
         "absolute CWDs are always shortened…"
     );
     assert_eq!(normalize(p("./a/.."), &cwd).unwrap(), p("."), "…like this as well…");
+    assert_eq!(
+        normalize(&cwd, &cwd).unwrap(),
+        cwd,
+        "…but only if there were relative to begin with."
+    );
+    assert_eq!(
+        normalize(p("."), &cwd).unwrap(),
+        p("."),
+        "and this means that `.`. stays `.`"
+    );
+    {
+        let mut path = cwd.clone();
+        let last_component = path.file_name().expect("directory").to_owned();
+        path.push("..");
+        path.push(last_component);
+
+        assert_eq!(
+            normalize(path, &cwd).unwrap(),
+            cwd,
+            "absolute input paths stay absolute"
+        );
+    }
     Ok(())
 }
 
@@ -50,6 +72,18 @@ fn parent_dirs_cause_the_cwd_to_be_used() {
     assert_eq!(
         normalize(p("./a/b/../../.."), "/users/name").unwrap().as_ref(),
         p("/users")
+    );
+}
+
+#[test]
+fn multiple_parent_dir_movements_eat_into_the_current_dir() {
+    assert_eq!(
+        normalize(p("../../../d/e"), "/users/name/a/b/c").unwrap().as_ref(),
+        p("/users/name/d/e")
+    );
+    assert_eq!(
+        normalize(p("c/../../../d/e"), "/users/name/a/b").unwrap().as_ref(),
+        p("/users/name/d/e")
     );
 }
 
@@ -71,7 +105,7 @@ fn trailing_directories_after_too_numereous_parent_dirs_yield_none() {
 
 #[test]
 fn trailing_relative_components_are_resolved() {
-    let cwd = std::env::current_dir().unwrap();
+    let cwd = Path::new("/a/b/c");
     for (input, expected) in [
         ("./a/b/./c/../d/..", "./a/b"),
         ("a/./b/c/.././..", "a"),
@@ -79,6 +113,7 @@ fn trailing_relative_components_are_resolved() {
         ("./a/..", "."),
         ("a/..", "."),
         ("./a", "./a"),
+        ("./a/./b", "./a/./b"),
         ("./a/./b/..", "./a/."),
         ("/a/./b/c/.././../.", "/a"),
         ("/a/./b", "/a/./b"),
@@ -90,7 +125,7 @@ fn trailing_relative_components_are_resolved() {
     ] {
         let path = p(input);
         assert_eq!(
-            normalize(path, &cwd).unwrap_or_else(|| panic!("{path:?}")),
+            normalize(path, cwd).unwrap_or_else(|| panic!("{path:?}")),
             Cow::Borrowed(p(expected)),
             "'{}' got an unexpected result",
             input
