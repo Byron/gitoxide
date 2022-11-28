@@ -134,6 +134,14 @@ impl Options {
     }
 }
 
+/// Generic modification
+impl Options {
+    /// An adapter to allow calling any builder method on this instance despite only having a mutable reference.
+    pub fn modify(&mut self, f: impl FnOnce(Self) -> Self) {
+        *self = f(std::mem::take(self));
+    }
+}
+
 /// Builder methods
 impl Options {
     /// Apply the given configuration `values` like `init.defaultBranch=special` or `core.bool-implicit-true` in memory to as early

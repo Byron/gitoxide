@@ -55,73 +55,82 @@ impl Cache {
             ..util::base_options(lossy)
         };
 
-        let config = {
-            let home_env = &home_env;
-            let xdg_config_home_env = &xdg_config_home_env;
-            let git_prefix = &git_prefix;
-            let metas = [
-                git_config::source::Kind::GitInstallation,
-                git_config::source::Kind::System,
-                git_config::source::Kind::Global,
-            ]
-            .iter()
-            .flat_map(|kind| kind.sources())
-            .filter_map(|source| {
-                match source {
-                    git_config::Source::GitInstallation if !use_installation => return None,
-                    git_config::Source::System if !use_system => return None,
-                    git_config::Source::Git if !use_git => return None,
-                    git_config::Source::User if !use_user => return None,
-                    _ => {}
+        let config =
+            {
+                let home_env = &home_env;
+                let xdg_config_home_env = &xdg_config_home_env;
+                let git_prefix = &git_prefix;
+                let metas = [
+                    git_config::source::Kind::GitInstallation,
+                    git_config::source::Kind::System,
+                    git_config::source::Kind::Global,
+                ]
+                .iter()
+                .flat_map(|kind| kind.sources())
+                .filter_map(|source| {
+                    match source {
+                        git_config::Source::GitInstallation if !use_installation => return None,
+                        git_config::Source::System if !use_system => return None,
+                        git_config::Source::Git if !use_git => return None,
+                        git_config::Source::User if !use_user => return None,
+                        _ => {}
+                    }
+                    source
+                        .storage_location(&mut |name| {
+                            match name {
+                                git_ if git_.starts_with("GIT_") => Some(git_prefix),
+                                "XDG_CONFIG_HOME" => Some(xdg_config_home_env),
+                                "HOME" => Some(home_env),
+                                _ => None,
+                            }
+                            .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check_opt(val)))
+                        })
+                        .map(|p| (source, p.into_owned()))
+                })
+                .map(|(source, path)| git_config::file::Metadata {
+                    path: Some(path),
+                    source: *source,
+                    level: 0,
+                    trust: git_sec::Trust::Full,
+                });
+
+                let err_on_nonexisting_paths = false;
+                let mut globals = git_config::File::from_paths_metadata_buf(
+                    metas,
+                    &mut buf,
+                    err_on_nonexisting_paths,
+                    git_config::file::init::Options {
+                        includes: git_config::file::includes::Options::no_follow(),
+                        ..options
+                    },
+                )
+                .map_err(|err| match err {
+                    git_config::file::init::from_paths::Error::Init(err) => Error::from(err),
+                    git_config::file::init::from_paths::Error::Io(err) => err.into(),
+                })?
+                .unwrap_or_default();
+
+                globals.append(git_dir_config);
+                globals.resolve_includes(options)?;
+                if use_env {
+                    globals.append(git_config::File::from_env(options)?.unwrap_or_default());
                 }
-                source
-                    .storage_location(&mut |name| {
-                        match name {
-                            git_ if git_.starts_with("GIT_") => Some(git_prefix),
-                            "XDG_CONFIG_HOME" => Some(xdg_config_home_env),
-                            "HOME" => Some(home_env),
-                            _ => None,
-                        }
-                        .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check_opt(val)))
-                    })
-                    .map(|p| (source, p.into_owned()))
-            })
-            .map(|(source, path)| git_config::file::Metadata {
-                path: Some(path),
-                source: *source,
-                level: 0,
-                trust: git_sec::Trust::Full,
-            });
-
-            let err_on_nonexisting_paths = false;
-            let mut globals = git_config::File::from_paths_metadata_buf(
-                metas,
-                &mut buf,
-                err_on_nonexisting_paths,
-                git_config::file::init::Options {
-                    includes: git_config::file::includes::Options::no_follow(),
-                    ..options
-                },
-            )
-            .map_err(|err| match err {
-                git_config::file::init::from_paths::Error::Init(err) => Error::from(err),
-                git_config::file::init::from_paths::Error::Io(err) => err.into(),
-            })?
-            .unwrap_or_default();
-
-            globals.append(git_dir_config);
-            globals.resolve_includes(options)?;
-            if use_env {
-                globals.append(git_config::File::from_env(options)?.unwrap_or_default());
-            }
-            if !cli_config_overrides.is_empty() {
-                crate::config::overrides::append(&mut globals, cli_config_overrides, git_config::Source::Cli)?;
-            }
-            if !api_config_overrides.is_empty() {
-                crate::config::overrides::append(&mut globals, api_config_overrides, git_config::Source::Api)?;
-            }
-            globals
-        };
+                if !cli_config_overrides.is_empty() {
+                    crate::config::overrides::append(&mut globals, cli_config_overrides, git_config::Source::Cli)
+                        .map_err(|err| Error::ConfigOverrides {
+                            err,
+                            source: git_config::Source::Cli,
+                        })?;
+                }
+                if !api_config_overrides.is_empty() {
+                    crate::config::overrides::append(&mut globals, api_config_overrides, git_config::Source::Api)
+                        .map_err(|err| Error::ConfigOverrides {
+                            err,
+                            source: git_config::Source::Api,
+                        })?;
+                }
+                globals
+            };
 
         let hex_len = util::parse_core_abbrev(&config, object_hash).with_leniency(lenient_config)?;
 

@@ -67,8 +67,12 @@ pub enum Error {
     DecodeBoolean { key: String, value: BString },
     #[error(transparent)]
     PathInterpolation(#[from] git_config::path::interpolate::Error),
-    #[error("Configuration overrides at open or init time could not be applied.")]
-    ConfigOverrides(#[from] overrides::Error),
+    #[error("{source:?} configuration overrides at open or init time could not be applied.")]
+    ConfigOverrides {
+        #[source]
+        err: overrides::Error,
+        source: git_config::Source,
+    },
     #[error("Invalid value for 'core.logAllRefUpdates': \"{value}\"")]
     LogAllRefUpdates { value: BString },
 }
