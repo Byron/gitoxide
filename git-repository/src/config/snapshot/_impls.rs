@@ -47,6 +47,14 @@ impl Deref for SnapshotMut<'_> {
     }
 }
 
+impl Deref for Snapshot<'_> {
+    type Target = git_config::File<'static>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.plumbing()
+    }
+}
+
 impl Deref for CommitAutoRollback<'_> {
     type Target = crate::Repository;
 

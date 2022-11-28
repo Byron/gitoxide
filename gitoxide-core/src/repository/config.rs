@@ -19,7 +19,6 @@ pub fn list(
         repo.open_options().clone().lossy_config(false).cli_overrides(overrides),
     )?;
     let config = repo.config_snapshot();
-    let config = config.plumbing();
     if let Some(frontmatter) = config.frontmatter() {
         for event in frontmatter {
             event.write_to(&mut out)?;

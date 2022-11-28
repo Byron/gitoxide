@@ -25,11 +25,7 @@ impl<'repo> Snapshot<'repo> {
 
     /// Like [`boolean()`][Self::boolean()], but it will report an error if the value couldn't be interpreted as boolean.
     pub fn try_boolean<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<bool, git_config::value::Error>> {
-        let key = git_config::parse::key(key)?;
-        self.repo
-            .config
-            .resolved
-            .boolean(key.section_name, key.subsection_name, key.value_name)
+        self.repo.config.resolved.boolean_by_key(key)
     }
 
     /// Return the resolved integer at `key`, or `None` if there is no such value or if the value can't be interpreted as
@@ -44,22 +40,14 @@ impl<'repo> Snapshot<'repo> {
 
     /// Like [`integer()`][Self::integer()], but it will report an error if the value couldn't be interpreted as boolean.
     pub fn try_integer<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<i64, git_config::value::Error>> {
-        let key = git_config::parse::key(key)?;
-        self.repo
-            .config
-            .resolved
-            .integer(key.section_name, key.subsection_name, key.value_name)
+        self.repo.config.resolved.integer_by_key(key)
     }
 
     /// Return the string at `key`, or `None` if there is no such value.
     ///
     /// Note that this method takes the most recent value at `key` even if it is from a file with reduced trust.
     pub fn string<'a>(&self, key: impl Into<&'a BStr>) -> Option<Cow<'_, BStr>> {
-        let key = git_config::parse::key(key)?;
-        self.repo
-            .config
-            .resolved
-            .string(key.section_name, key.subsection_name, key.value_name)
+        self.repo.config.resolved.string_by_key(key)
     }
 
     /// Return the trusted and fully interpolated path at `key`, or `None` if there is no such value
