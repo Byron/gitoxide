@@ -48,6 +48,24 @@ Examples could be:
 - `make fmt`
 - thanks clippy
 
+Please refrain from using `chore:` or `refactor:` prefixes as for the most part, users of the API don't care about those. When a `refactor` 
+changes the API in some way, prefer to use `feat`, `change`, `rename` or `remove` instead, and most of the time the ones that are not `feat`
+are breaking so would be seen with their _exclamation mark_ suffix, like `change!`.
+
+### Reasoning
+
+Commit messages are used for guiding `cargo smart-release` to do most of the release work for us. This includes changelog generation
+as well as picking the right version bump for each crate.
+
+## Commit splitting on breaking changes.
+
+Knowing that `cargo smart-release` is driven by commit messages and affects their versions with per-crate granularity, it becomes important
+to split edits into multiple commits to clearly indicate which crate is actually broken.
+
+Typical patterns include making a breaking change in one crate and then fix all others to work with it. For changelogs to look proper
+and version bumps to be correct, the first commit would contain only the breaking changes themselves, 
+like "rename: `foo()` to `bar()`", and the second commit would contain all changes to adapt to that and look like "adapt to changes in `<crate name>`".
+
 ## Commit History
 
 We generally follow a 'track everything' approach and there is a lot of freedom leading to more commits rather than less. There 
