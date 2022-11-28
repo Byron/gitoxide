@@ -12,9 +12,6 @@
 pub mod describe;
 pub use describe::function::describe;
 
-// /// Access to collections optimized for keys that are already a hash.
-// pub use hash_hasher;
-
 ///
 pub mod spec;
 
