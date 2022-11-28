@@ -78,14 +78,22 @@ pub fn main() -> Result<()> {
                 mode,
                 Mode::StrictWithGitInstallConfig | Mode::LenientWithGitInstallConfig
             );
-            mapping.full.permissions.config.git_binary = git_installation;
-            mapping.reduced.permissions.config.git_binary = git_installation;
+            let to_match_settings = |mut opts: git::open::Options| {
+                opts.permissions.config.git_binary = git_installation;
+                if config.is_empty() {
+                    opts
+                } else {
+                    opts.cli_overrides(config.clone())
+                }
+            };
+            mapping.full.modify(to_match_settings);
+            mapping.reduced.modify(to_match_settings);
             let mut repo = git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
                 .map(git::Repository::from)
                 .map(|r| r.apply_environment())?;
             if !config.is_empty() {
                 repo.config_snapshot_mut()
-                    .apply_cli_overrides(config.iter())
+                    .append_config(config.iter(), git::config::Source::Cli)
                     .context("Unable to parse command-line configuration")?;
             }
             Ok(repo)
