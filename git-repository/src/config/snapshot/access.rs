@@ -88,13 +88,17 @@ impl<'repo> Snapshot<'repo> {
 
 /// Utilities
 impl<'repo> SnapshotMut<'repo> {
-    /// Apply configuration values of the form `core.abbrev=5` or `remote.origin.url = foo` or `core.bool-implicit-true`
-    /// to the repository configuration, marked with [source CLI][git_config::Source::Cli].
-    pub fn apply_cli_overrides(
+    /// Append configuration values of the form `core.abbrev=5` or `remote.origin.url = foo` or `core.bool-implicit-true`
+    /// to the end of the repository configuration, with each section marked with the given `source`.
+    ///
+    /// Note that doing so applies the configuration at the very end, so it will always override what came before it
+    /// even though the `source` is of lower priority as what's there.
+    pub fn append_config(
         &mut self,
         values: impl IntoIterator<Item = impl AsRef<BStr>>,
+        source: git_config::Source,
     ) -> Result<&mut Self, crate::config::overrides::Error> {
-        crate::config::overrides::apply(&mut self.config, values, git_config::Source::Cli)?;
+        crate::config::overrides::append(&mut self.config, values, source)?;
         Ok(self)
     }
     /// Apply all changes made to this instance.

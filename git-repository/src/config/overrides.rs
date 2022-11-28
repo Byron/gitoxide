@@ -17,7 +17,7 @@ pub enum Error {
     SectionHeader(#[from] git_config::parse::section::header::Error),
 }
 
-pub(crate) fn apply(
+pub(crate) fn append(
     config: &mut git_config::File<'static>,
     values: impl IntoIterator<Item = impl AsRef<BStr>>,
     source: git_config::Source,

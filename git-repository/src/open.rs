@@ -75,7 +75,8 @@ pub struct Options {
     pub(crate) lossy_config: Option<bool>,
     pub(crate) lenient_config: bool,
     pub(crate) bail_if_untrusted: bool,
-    pub(crate) config_overrides: Vec<BString>,
+    pub(crate) api_config_overrides: Vec<BString>,
+    pub(crate) cli_config_overrides: Vec<BString>,
     /// Internal to pass an already obtained CWD on to where it may also be used. This avoids the CWD being queried more than once per repo.
     pub(crate) current_dir: Option<PathBuf>,
 }
@@ -91,7 +92,8 @@ impl Default for Options {
             lossy_config: None,
             lenient_config: true,
             bail_if_untrusted: false,
-            config_overrides: Vec::new(),
+            api_config_overrides: Vec::new(),
+            cli_config_overrides: Vec::new(),
             current_dir: None,
         }
     }
@@ -138,7 +140,15 @@ impl Options {
     /// as the configuration is initialized to allow affecting the repository instantiation phase, both on disk or when opening.
     /// The configuration is marked with [source API][git_config::Source::Api].
     pub fn config_overrides(mut self, values: impl IntoIterator<Item = impl Into<BString>>) -> Self {
-        self.config_overrides = values.into_iter().map(Into::into).collect();
+        self.api_config_overrides = values.into_iter().map(Into::into).collect();
+        self
+    }
+
+    /// Set configuration values of the form `core.abbrev=5` or `remote.origin.url = foo` or `core.bool-implicit-true` for application
+    /// as CLI overrides to the repository configuration, marked with [source CLI][git_config::Source::Cli].
+    /// These are equivalent to CLI overrides passed with `-c` in `git`, for example.
+    pub fn cli_overrides(mut self, values: impl IntoIterator<Item = impl Into<BString>>) -> Self {
+        self.cli_config_overrides = values.into_iter().map(Into::into).collect();
         self
     }
 
@@ -241,7 +251,8 @@ impl git_sec::trust::DefaultForLevel for Options {
                 lossy_config: None,
                 bail_if_untrusted: false,
                 lenient_config: true,
-                config_overrides: Vec::new(),
+                api_config_overrides: Vec::new(),
+                cli_config_overrides: Vec::new(),
                 current_dir: None,
             },
             git_sec::Trust::Reduced => Options {
@@ -253,7 +264,8 @@ impl git_sec::trust::DefaultForLevel for Options {
                 bail_if_untrusted: false,
                 lenient_config: true,
                 lossy_config: None,
-                config_overrides: Vec::new(),
+                api_config_overrides: Vec::new(),
+                cli_config_overrides: Vec::new(),
                 current_dir: None,
             },
         }
@@ -361,7 +373,8 @@ impl ThreadSafeRepository {
             lenient_config,
             bail_if_untrusted,
             permissions: Permissions { ref env, config },
-            ref config_overrides,
+            ref api_config_overrides,
+            ref cli_config_overrides,
             ref current_dir,
         } = options;
         let current_dir = current_dir.as_deref().expect("BUG: current_dir must be set by caller");
@@ -402,7 +415,8 @@ impl ThreadSafeRepository {
             env.clone(),
             config,
             lenient_config,
-            config_overrides,
+            api_config_overrides,
+            cli_config_overrides,
         )?;
 
         if bail_if_untrusted && git_dir_trust != git_sec::Trust::Full {
@@ -571,7 +585,7 @@ mod tests {
     #[test]
     fn size_of_options() {
         let actual = std::mem::size_of::<Options>();
-        let limit = 140;
+        let limit = 160;
         assert!(
             actual <= limit,
             "{} <= {}: size shouldn't change without us knowing (on windows, it's bigger)",

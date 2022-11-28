@@ -84,12 +84,15 @@ fn values_are_set_in_memory_only() {
 #[test]
 fn apply_cli_overrides() -> crate::Result {
     let mut repo = named_repo("make_config_repo.sh").unwrap();
-    repo.config_snapshot_mut().apply_cli_overrides([
-        "a.b=c",
-        "remote.origin.url = url",
-        "implicit.bool-true",
-        "implicit.bool-false = ",
-    ])?;
+    repo.config_snapshot_mut().append_config(
+        [
+            "a.b=c",
+            "remote.origin.url = url",
+            "implicit.bool-true",
+            "implicit.bool-false = ",
+        ],
+        git_config::Source::Cli,
+    )?;
 
     let config = repo.config_snapshot();
     assert_eq!(config.string("a.b").expect("present").as_ref(), "c");

@@ -37,7 +37,8 @@ impl Cache {
             includes: use_includes,
         }: repository::permissions::Config,
         lenient_config: bool,
-        config_overrides: &[BString],
+        api_config_overrides: &[BString],
+        cli_config_overrides: &[BString],
     ) -> Result<Self, Error> {
         let options = git_config::file::init::Options {
             includes: if use_includes {
@@ -113,8 +114,11 @@ impl Cache {
             if use_env {
                 globals.append(git_config::File::from_env(options)?.unwrap_or_default());
             }
-            if !config_overrides.is_empty() {
-                crate::config::overrides::apply(&mut globals, config_overrides, git_config::Source::Api)?;
+            if !cli_config_overrides.is_empty() {
+                crate::config::overrides::append(&mut globals, cli_config_overrides, git_config::Source::Cli)?;
+            }
+            if !api_config_overrides.is_empty() {
+                crate::config::overrides::append(&mut globals, api_config_overrides, git_config::Source::Api)?;
             }
             globals
         };
