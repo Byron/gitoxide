@@ -14,7 +14,7 @@ doctest = false
 [dependencies]
 git-hash = { version = "^0.10.0", path = "../git-hash" }
 git-object = { version = "^0.23.0", path = "../git-object" }
-git-shamap = { version = "^0.1.0", path = "../git-shamap" }
+git-hashtable = { version = "^0.1.0", path = "../git-hashtable" }
 thiserror = "1.0.32"
 
 [dev-dependencies]
