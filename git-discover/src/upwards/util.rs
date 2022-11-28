@@ -32,7 +32,7 @@ pub(crate) fn shorten_path_with_cwd(cursor: PathBuf, cwd: &Path) -> PathBuf {
 }
 
 /// Find the number of components parenting the `search_dir` before the first directory in `ceiling_dirs`.
-/// `search_dir` needs to be absolutized, and we absolutize every ceiling as well.
+/// `search_dir` needs to be normalized, and we normalize every ceiling as well.
 pub(crate) fn find_ceiling_height(search_dir: &Path, ceiling_dirs: &[PathBuf], cwd: &Path) -> Option<usize> {
     if ceiling_dirs.is_empty() {
         return None;
@@ -48,9 +48,9 @@ pub(crate) fn find_ceiling_height(search_dir: &Path, ceiling_dirs: &[PathBuf], c
     ceiling_dirs
         .iter()
         .filter_map(|ceiling_dir| {
-            let mut ceiling_dir = git_path::absolutize(ceiling_dir, cwd)?;
+            let mut ceiling_dir = git_path::normalize(ceiling_dir, cwd)?;
             if !ceiling_dir.is_absolute() {
-                ceiling_dir = git_path::absolutize(cwd.join(ceiling_dir.as_ref()), cwd)?;
+                ceiling_dir = git_path::normalize(cwd.join(ceiling_dir.as_ref()), cwd)?;
             }
             search_dir
                 .strip_prefix(ceiling_dir.as_ref())
