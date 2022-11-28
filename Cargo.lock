@@ -1417,6 +1417,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-hash-collections"
+version = "0.1.0"
+dependencies = [
+ "git-hash",
+ "hashbrown 0.13.1",
+]
+
+[[package]]
 name = "git-index"
 version = "0.9.0"
 dependencies = [
@@ -1529,10 +1537,10 @@ dependencies = [
  "git-diff",
  "git-features",
  "git-hash",
+ "git-hash-collections",
  "git-object",
  "git-odb",
  "git-path",
- "git-shamap",
  "git-tempfile",
  "git-testtools",
  "git-traverse",
@@ -1692,6 +1700,7 @@ dependencies = [
  "git-features",
  "git-glob",
  "git-hash",
+ "git-hash-collections",
  "git-index",
  "git-lock",
  "git-mailmap",
@@ -1705,7 +1714,6 @@ dependencies = [
  "git-refspec",
  "git-revision",
  "git-sec",
- "git-shamap",
  "git-tempfile",
  "git-testtools",
  "git-transport",
@@ -1735,9 +1743,9 @@ dependencies = [
  "document-features",
  "git-date",
  "git-hash",
+ "git-hash-collections",
  "git-object",
  "git-repository",
- "git-shamap",
  "git-testtools",
  "serde",
  "thiserror",
@@ -1760,14 +1768,6 @@ dependencies = [
 [[package]]
 name = "git-sequencer"
 version = "0.0.0"
-
-[[package]]
-name = "git-shamap"
-version = "0.1.0"
-dependencies = [
- "git-hash",
- "hashbrown 0.13.1",
-]
 
 [[package]]
 name = "git-submodule"
@@ -1844,9 +1844,9 @@ name = "git-traverse"
 version = "0.19.0"
 dependencies = [
  "git-hash",
+ "git-hash-collections",
  "git-object",
  "git-odb",
- "git-shamap",
  "git-testtools",
  "thiserror",
 ]

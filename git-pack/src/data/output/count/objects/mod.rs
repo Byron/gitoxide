@@ -5,7 +5,6 @@ use std::{
 
 use git_features::{parallel, progress::Progress};
 use git_hash::ObjectId;
-use git_shamap::ShaHashBuilder;
 
 use crate::{data::output, find};
 
@@ -65,7 +64,7 @@ where
         inner: objects_ids,
         size: chunk_size,
     };
-    let seen_objs = dashmap::DashSet::<ObjectId, ShaHashBuilder>::default();
+    let seen_objs = dashmap::DashSet::<ObjectId, git_hash_collections::hash::Builder>::default();
     let progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::in_parallel(
@@ -120,7 +119,7 @@ where
     Oid: Into<ObjectId>,
     IterErr: std::error::Error,
 {
-    let seen_objs = RefCell::new(git_shamap::ShaHashSet::default());
+    let seen_objs = RefCell::new(git_hash_collections::HashSet::default());
 
     let (mut buf1, mut buf2) = (Vec::new(), Vec::new());
     expand::this(

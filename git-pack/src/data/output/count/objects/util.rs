@@ -6,17 +6,17 @@ mod trait_impls {
     use std::{cell::RefCell, hash::Hash};
 
     use dashmap::DashSet;
-    use git_shamap::{ShaHashBuilder, ShaHashSet};
+    use git_hash_collections::HashSet;
 
     use super::InsertImmutable;
 
-    impl<T: Eq + Hash> InsertImmutable<T> for DashSet<T, ShaHashBuilder> {
+    impl<T: Eq + Hash> InsertImmutable<T> for DashSet<T, git_hash_collections::hash::Builder> {
         fn insert(&self, item: T) -> bool {
             self.insert(item)
         }
     }
 
-    impl<T: Eq + Hash> InsertImmutable<T> for RefCell<ShaHashSet<T>> {
+    impl<T: Eq + Hash> InsertImmutable<T> for RefCell<HashSet<T>> {
         fn insert(&self, item: T) -> bool {
             self.borrow_mut().insert(item)
         }
