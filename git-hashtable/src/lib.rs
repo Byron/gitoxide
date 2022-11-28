@@ -1,7 +1,8 @@
 //! Customized HashMap and Hasher implementation optimized for using `ObjectId`s as keys.
 //!
 //! The crate mirrors `std::collections` in layout for familiarity.
-#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
+#![deny(missing_docs, rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
 use git_hash::ObjectId;
 
