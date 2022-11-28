@@ -61,6 +61,7 @@ pub mod ancestors {
     };
 
     use git_hash::{oid, ObjectId};
+    use git_hashtable::HashSet;
     use git_object::CommitRefIter;
 
     use crate::commit::{Ancestors, Parents, Sorting};
@@ -85,7 +86,7 @@ pub mod ancestors {
     pub struct State {
         next: VecDeque<(ObjectId, TimeInSeconds)>,
         buf: Vec<u8>,
-        seen: hash_hasher::HashedSet<ObjectId>,
+        seen: HashSet<ObjectId>,
         parents_buf: Vec<u8>,
     }
 

@@ -1,13 +1,27 @@
+use std::hash::{Hash, Hasher};
 use std::{borrow::Borrow, convert::TryInto, fmt, ops::Deref};
 
 use crate::{borrowed::oid, Kind, SIZE_OF_SHA1_DIGEST};
 
 /// An owned hash identifying objects, most commonly Sha1
-#[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ObjectId {
     /// A SHA 1 hash digest
     Sha1([u8; SIZE_OF_SHA1_DIGEST]),
+}
+
+// False positive: https://github.com/rust-lang/rust-clippy/issues/2627
+// ingoring some fields while hashing is perfectly valid and just leads to
+// increased HashCollisions. One Sha1 being a prefix of another Sha256 is
+// extremly unlikely to begin with so it doesn't matter.
+// This implementation matches the `Hash` implementation for `oid`
+// and allows the usage of custom Hashers that only copy a truncated ShaHash
+#[allow(clippy::derive_hash_xor_eq)]
+impl Hash for ObjectId {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write(self.as_slice())
+    }
 }
 
 #[allow(missing_docs)]
