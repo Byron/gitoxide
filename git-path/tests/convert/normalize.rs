@@ -42,6 +42,28 @@ fn special_cases_around_cwd() -> crate::Result {
         "absolute CWDs are always shortened…"
     );
     assert_eq!(normalize(p("./a/.."), &cwd).unwrap(), p("."), "…like this as well…");
+    assert_eq!(
+        normalize(&cwd, &cwd).unwrap(),
+        cwd,
+        "…but only if there were relative to begin with."
+    );
+    assert_eq!(
+        normalize(p("."), &cwd).unwrap(),
+        p("."),
+        "and this means that `.`. stays `.`"
+    );
+    {
+        let mut path = cwd.clone();
+        let last_component = path.file_name().expect("directory").to_owned();
+        path.push("..");
+        path.push(last_component);
+
+        assert_eq!(
+            normalize(path, &cwd).unwrap(),
+            cwd,
+            "absolute input paths stay absolute"
+        );
+    }
     Ok(())
 }
 
@@ -103,7 +125,7 @@ fn trailing_relative_components_are_resolved() {
     ] {
         let path = p(input);
         assert_eq!(
-            normalize(path, &cwd).unwrap_or_else(|| panic!("{path:?}")),
+            normalize(path, cwd).unwrap_or_else(|| panic!("{path:?}")),
             Cow::Borrowed(p(expected)),
             "'{}' got an unexpected result",
             input
