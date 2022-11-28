@@ -11,6 +11,12 @@
 * [x] decode the chunk file table of contents and provide convenient API
 * [x] write the table of contents
 
+### git-hashtable
+
+* [x] hashmap
+* [x] hashset
+
+
 ### git-object
 * *decode (zero-copy)* borrowed objects
     * [x] commit

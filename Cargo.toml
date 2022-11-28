@@ -174,7 +174,7 @@ members = [
     "git-path",
     "git-repository",
     "gitoxide-core",
-    "git-shamap",
+    "git-hashtable",
     "git-tui",
     "git-tix",
 
