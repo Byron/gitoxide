@@ -2,7 +2,6 @@
 //! Customized HashMap and Hasher implementation optimized for using `ObjectId`s as keys
 
 use git_hash::ObjectId;
-use hashbrown::raw::RawTable;
 use std::hash::{BuildHasher, Hasher};
 
 pub use hashbrown::{hash_map, hash_set, raw, Equivalent};
