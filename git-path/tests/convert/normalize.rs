@@ -54,6 +54,18 @@ fn parent_dirs_cause_the_cwd_to_be_used() {
 }
 
 #[test]
+fn multiple_parent_dir_movements_eat_into_the_current_dir() {
+    assert_eq!(
+        normalize(p("../../../d/e"), "/users/name/a/b/c").unwrap().as_ref(),
+        p("/users/name/d/e")
+    );
+    assert_eq!(
+        normalize(p("c/../../../d/e"), "/users/name/a/b").unwrap().as_ref(),
+        p("/users/name/d/e")
+    );
+}
+
+#[test]
 fn walking_up_too_much_yield_none() {
     let cwd = "/users/name";
     assert_eq!(normalize(p("./a/b/../../../../../."), cwd), None);
@@ -71,7 +83,7 @@ fn trailing_directories_after_too_numereous_parent_dirs_yield_none() {
 
 #[test]
 fn trailing_relative_components_are_resolved() {
-    let cwd = std::env::current_dir().unwrap();
+    let cwd = Path::new("/a/b/c");
     for (input, expected) in [
         ("./a/b/./c/../d/..", "./a/b"),
         ("a/./b/c/.././..", "a"),
@@ -79,6 +91,7 @@ fn trailing_relative_components_are_resolved() {
         ("./a/..", "."),
         ("a/..", "."),
         ("./a", "./a"),
+        ("./a/./b", "./a/./b"),
         ("./a/./b/..", "./a/."),
         ("/a/./b/c/.././../.", "/a"),
         ("/a/./b", "/a/./b"),

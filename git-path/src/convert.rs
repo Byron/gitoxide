@@ -1,7 +1,6 @@
 use std::{
     borrow::Cow,
     ffi::OsStr,
-    iter::FromIterator,
     path::{Path, PathBuf},
 };
 
@@ -238,20 +237,16 @@ pub fn normalize<'a>(path: impl Into<Cow<'a, Path>>, current_dir: impl AsRef<Pat
     }
     let current_dir = current_dir.as_ref();
     let mut current_dir_opt = Some(current_dir);
-    let mut components = path.components();
-    let mut path = PathBuf::from_iter(components.next());
+    let components = path.components();
+    let mut path = PathBuf::new();
     for component in components {
         if let ParentDir = component {
             let path_was_dot = path == Path::new(".");
+            if path.as_os_str().is_empty() || path_was_dot {
+                path.push(current_dir_opt.take()?);
+            }
             if !path.pop() {
                 return None;
-            }
-            if path.as_os_str().is_empty() {
-                path.clear();
-                path.push(current_dir_opt.take()?);
-                if path_was_dot && !path.pop() {
-                    return None;
-                }
             }
         } else {
             path.push(component)
