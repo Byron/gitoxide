@@ -1417,7 +1417,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-hash-collections"
+name = "git-hashtable"
 version = "0.1.0"
 dependencies = [
  "git-hash",
@@ -1537,7 +1537,7 @@ dependencies = [
  "git-diff",
  "git-features",
  "git-hash",
- "git-hash-collections",
+ "git-hashtable",
  "git-object",
  "git-odb",
  "git-path",
@@ -1700,7 +1700,7 @@ dependencies = [
  "git-features",
  "git-glob",
  "git-hash",
- "git-hash-collections",
+ "git-hashtable",
  "git-index",
  "git-lock",
  "git-mailmap",
@@ -1743,7 +1743,7 @@ dependencies = [
  "document-features",
  "git-date",
  "git-hash",
- "git-hash-collections",
+ "git-hashtable",
  "git-object",
  "git-repository",
  "git-testtools",
@@ -1844,7 +1844,7 @@ name = "git-traverse"
 version = "0.19.0"
 dependencies = [
  "git-hash",
- "git-hash-collections",
+ "git-hashtable",
  "git-object",
  "git-odb",
  "git-testtools",

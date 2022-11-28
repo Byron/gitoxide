@@ -4,7 +4,7 @@ use std::{
 };
 
 use bstr::BStr;
-use git_hash_collections::HashMap;
+use git_hashtable::HashMap;
 
 /// The positive result produced by [describe()][function::describe()].
 #[derive(Debug, Clone)]
@@ -148,7 +148,7 @@ pub(crate) mod function {
 
     use bstr::BStr;
     use git_hash::oid;
-    use git_hash_collections::{hash_map, HashMap};
+    use git_hashtable::{hash_map, HashMap};
     use git_object::CommitRefIter;
 
     use super::{Error, Outcome};

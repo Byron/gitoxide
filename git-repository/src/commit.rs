@@ -20,7 +20,7 @@ pub mod describe {
     use std::borrow::Cow;
 
     use git_hash::ObjectId;
-    use git_hash_collections::HashMap;
+    use git_hashtable::HashMap;
     use git_odb::Find;
 
     use crate::{bstr::BStr, ext::ObjectIdExt, Repository};

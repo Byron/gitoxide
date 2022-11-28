@@ -11,7 +11,7 @@
 * [x] decode the chunk file table of contents and provide convenient API
 * [x] write the table of contents
 
-### git-hash-collections
+### git-hashtable
 
 * [x] hashmap
 * [x] hashset

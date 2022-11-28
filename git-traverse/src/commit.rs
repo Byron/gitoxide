@@ -61,7 +61,7 @@ pub mod ancestors {
     };
 
     use git_hash::{oid, ObjectId};
-    use git_hash_collections::HashSet;
+    use git_hashtable::HashSet;
     use git_object::CommitRefIter;
 
     use crate::commit::{Ancestors, Parents, Sorting};
