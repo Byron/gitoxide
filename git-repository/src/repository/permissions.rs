@@ -72,6 +72,11 @@ pub struct Environment {
     pub git_prefix: git_sec::Permission,
     /// Control if resources pointed to by `SSH_*` prefixed environment variables can be used (like `SSH_ASKPASS`)
     pub ssh_prefix: git_sec::Permission,
+    /// Control if environment variables to configure the HTTP transport, like `http_proxy` may be used.
+    ///
+    /// Note that those http-transport related environment variables prefixed with `GIT_` are falling under the
+    /// `git_prefix` permission, like `GIT_HTTP_USER_AGENT`.
+    pub http_transport: git_sec::Permission,
 }
 
 impl Environment {
@@ -82,6 +87,7 @@ impl Environment {
             home: git_sec::Permission::Allow,
             git_prefix: git_sec::Permission::Allow,
             ssh_prefix: git_sec::Permission::Allow,
+            http_transport: git_sec::Permission::Allow,
         }
     }
 }
@@ -126,6 +132,7 @@ impl Permissions {
                     home: deny,
                     ssh_prefix: deny,
                     git_prefix: deny,
+                    http_transport: deny,
                 }
             },
         }

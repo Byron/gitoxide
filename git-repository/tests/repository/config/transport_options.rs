@@ -45,10 +45,12 @@ mod http {
             low_speed_limit_bytes_per_second,
             low_speed_time_seconds,
             proxy,
+            no_proxy: _,
             proxy_auth_method,
             proxy_authenticate,
             user_agent,
             connect_timeout,
+            verbose: _,
             backend,
         } = http_options(&repo, None);
         assert_eq!(

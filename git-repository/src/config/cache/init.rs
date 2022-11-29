@@ -27,6 +27,7 @@ impl Cache {
             home: home_env,
             xdg_config_home: xdg_config_home_env,
             ssh_prefix: _,
+            http_transport: _,
         }: repository::permissions::Environment,
         repository::permissions::Config {
             git_binary: use_installation,
