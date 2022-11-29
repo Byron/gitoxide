@@ -58,6 +58,7 @@ impl<'a> File<'a> {
                 header: section.header,
                 body: section::Body(section.events),
                 meta: OwnShared::clone(&meta),
+                id: Default::default(),
             });
         }
 

@@ -72,6 +72,7 @@ pub struct Section<'a> {
     header: crate::parse::section::Header<'a>,
     body: section::Body<'a>,
     meta: OwnShared<Metadata>,
+    id: SectionId,
 }
 
 /// A function to filter metadata, returning `true` if the corresponding but omitted value can be used.
@@ -111,6 +112,12 @@ impl AddAssign<usize> for Size {
 /// has an ID of 5 as 4 was deleted.
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
 pub struct SectionId(pub(crate) usize);
+
+impl Default for SectionId {
+    fn default() -> Self {
+        SectionId(usize::MAX)
+    }
+}
 
 /// All section body ids referred to by a section name.
 ///

@@ -11,6 +11,7 @@ use crate::{
 };
 
 pub(crate) mod body;
+use crate::file::SectionId;
 pub use body::{Body, BodyIter};
 use git_features::threading::OwnShared;
 
@@ -36,6 +37,7 @@ impl<'a> Section<'a> {
             header: parse::section::Header::new(name, subsection)?,
             body: Default::default(),
             meta: meta.into(),
+            id: SectionId::default(),
         })
     }
 }
@@ -45,6 +47,12 @@ impl<'a> Section<'a> {
     /// Return our header.
     pub fn header(&self) -> &section::Header<'a> {
         &self.header
+    }
+
+    /// Return the unique `id` of the section, for use with the `*_by_id()` family of methods
+    /// in [git_config::File][crate::File].
+    pub fn id(&self) -> SectionId {
+        self.id
     }
 
     /// Return our body, containing all keys and values.

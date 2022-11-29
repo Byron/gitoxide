@@ -12,8 +12,9 @@ use crate::{
 /// Private helper functions
 impl<'event> File<'event> {
     /// Adds a new section to the config file, returning the section id of the newly added section.
-    pub(crate) fn push_section_internal(&mut self, section: file::Section<'event>) -> SectionId {
+    pub(crate) fn push_section_internal(&mut self, mut section: file::Section<'event>) -> SectionId {
         let new_section_id = SectionId(self.section_id_counter);
+        section.id = new_section_id;
         self.sections.insert(new_section_id, section);
         let header = &self.sections[&new_section_id].header;
         let lookup = self.section_lookup_tree.entry(header.name.clone()).or_default();
@@ -53,7 +54,7 @@ impl<'event> File<'event> {
     }
 
     /// Inserts `section` after the section that comes `before` it, and maintains correct ordering in all of our lookup structures.
-    pub(crate) fn insert_section_after(&mut self, section: file::Section<'event>, before: SectionId) -> SectionId {
+    pub(crate) fn insert_section_after(&mut self, mut section: file::Section<'event>, before: SectionId) -> SectionId {
         let lookup_section_order = {
             let section_order = &self.section_order;
             move |section_id| {
@@ -67,6 +68,7 @@ impl<'event> File<'event> {
 
         let before_order = lookup_section_order(before);
         let new_section_id = SectionId(self.section_id_counter);
+        section.id = new_section_id;
         self.sections.insert(new_section_id, section);
         let header = &self.sections[&new_section_id].header;
         let lookup = self.section_lookup_tree.entry(header.name.clone()).or_default();
