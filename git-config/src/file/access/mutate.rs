@@ -1,6 +1,6 @@
-use bstr::BStr;
 use std::borrow::Cow;
 
+use bstr::BStr;
 use git_features::threading::OwnShared;
 
 use crate::{

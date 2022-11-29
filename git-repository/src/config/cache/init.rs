@@ -1,12 +1,14 @@
+use std::borrow::Cow;
+
+use git_config::File;
+use git_sec::Permission;
+
 use super::{interpolate_context, util, Error, StageOne};
 use crate::{
     bstr::BString,
     config::{cache::util::ApplyLeniency, Cache},
     repository,
 };
-use git_config::File;
-use git_sec::Permission;
-use std::borrow::Cow;
 
 /// Initialization
 impl Cache {

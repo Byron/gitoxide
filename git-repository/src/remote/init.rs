@@ -21,8 +21,9 @@ mod error {
         },
     }
 }
-use crate::bstr::BString;
 pub use error::Error;
+
+use crate::bstr::BString;
 
 /// Initialization
 impl<'repo> Remote<'repo> {

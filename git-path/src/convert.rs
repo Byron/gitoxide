@@ -1,7 +1,6 @@
-use std::ffi::OsString;
 use std::{
     borrow::Cow,
-    ffi::OsStr,
+    ffi::{OsStr, OsString},
     path::{Path, PathBuf},
 };
 

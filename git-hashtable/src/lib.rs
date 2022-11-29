@@ -5,7 +5,6 @@
 #![forbid(unsafe_code)]
 
 use git_hash::ObjectId;
-
 pub use hashbrown::{hash_map, hash_set, raw, Equivalent};
 
 ///

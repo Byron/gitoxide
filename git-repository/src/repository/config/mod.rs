@@ -85,9 +85,10 @@ mod remote {
 mod branch {
     use std::{borrow::Cow, collections::BTreeSet, convert::TryInto};
 
-    use crate::bstr::BStr;
     use git_ref::FullNameRef;
     use git_validate::reference::name::Error as ValidateNameError;
+
+    use crate::bstr::BStr;
 
     impl crate::Repository {
         /// Return a set of unique short branch names for which custom configuration exists in the configuration,

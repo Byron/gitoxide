@@ -1,5 +1,10 @@
-use std::hash::{Hash, Hasher};
-use std::{borrow::Borrow, convert::TryInto, fmt, ops::Deref};
+use std::{
+    borrow::Borrow,
+    convert::TryInto,
+    fmt,
+    hash::{Hash, Hasher},
+    ops::Deref,
+};
 
 use crate::{borrowed::oid, Kind, SIZE_OF_SHA1_DIGEST};
 

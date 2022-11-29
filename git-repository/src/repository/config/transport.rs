@@ -42,11 +42,12 @@ impl crate::Repository {
                     feature = "blocking-http-transport-curl"
                 ))]
                 {
-                    use std::borrow::Cow;
-                    use std::sync::{Arc, Mutex};
+                    use std::{
+                        borrow::Cow,
+                        sync::{Arc, Mutex},
+                    };
 
-                    use git_transport::client::http;
-                    use git_transport::client::http::options::ProxyAuthMethod;
+                    use git_transport::client::{http, http::options::ProxyAuthMethod};
 
                     use crate::{bstr::ByteVec, config::cache::util::ApplyLeniency};
                     fn try_cow_to_string(

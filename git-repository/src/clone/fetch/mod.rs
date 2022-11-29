@@ -1,5 +1,4 @@
-use crate::bstr::BString;
-use crate::{clone::PrepareFetch, Repository};
+use crate::{bstr::BString, clone::PrepareFetch, Repository};
 
 /// The error returned by [`PrepareFetch::fetch_only()`].
 #[derive(Debug, thiserror::Error)]

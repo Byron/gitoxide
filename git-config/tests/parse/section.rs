@@ -7,15 +7,17 @@ pub fn header_event(name: &'static str, subsection: impl Into<Option<&'static st
 }
 
 mod header {
-    use bstr::BStr;
     use std::borrow::Cow;
+
+    use bstr::BStr;
 
     fn cow_section(name: &str) -> Option<Cow<BStr>> {
         Some(Cow::Borrowed(name.into()))
     }
     mod write_to {
-        use crate::parse::section::header::cow_section;
         use git_config::parse::section;
+
+        use crate::parse::section::header::cow_section;
 
         #[test]
         fn subsection_backslashes_and_quotes_are_escaped() -> crate::Result {
@@ -40,8 +42,9 @@ mod header {
         }
     }
     mod new {
-        use crate::parse::section::header::cow_section;
         use git_config::parse::section;
+
+        use crate::parse::section::header::cow_section;
 
         #[test]
         fn names_must_be_mostly_ascii() {

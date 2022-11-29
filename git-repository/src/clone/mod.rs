@@ -1,5 +1,6 @@
-use crate::bstr::BString;
 use std::convert::TryInto;
+
+use crate::bstr::BString;
 
 type ConfigureRemoteFn = Box<dyn FnMut(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error>>;
 

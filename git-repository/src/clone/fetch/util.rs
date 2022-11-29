@@ -7,9 +7,8 @@ use git_ref::{
 };
 
 use super::Error;
-use crate::bstr::BString;
 use crate::{
-    bstr::{BStr, ByteSlice},
+    bstr::{BStr, BString, ByteSlice},
     Repository,
 };
 

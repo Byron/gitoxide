@@ -2,8 +2,8 @@ use std::{borrow::Cow, convert::TryInto, path::PathBuf, time::Duration};
 
 use git_lock::acquire::Fail;
 
-use crate::bstr::BStr;
 use crate::{
+    bstr::BStr,
     config::{cache::util::ApplyLeniencyDefault, checkout_options, Cache},
     remote,
     repository::identity,

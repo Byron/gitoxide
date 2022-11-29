@@ -1,5 +1,6 @@
-use bstr::BStr;
 use std::convert::TryFrom;
+
+use bstr::BStr;
 
 use crate::{file, file::init, parse, parse::section, path::interpolate, File};
 

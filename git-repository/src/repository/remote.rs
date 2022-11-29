@@ -1,7 +1,6 @@
 use std::convert::TryInto;
 
-use crate::bstr::BStr;
-use crate::{remote, remote::find, Remote};
+use crate::{bstr::BStr, remote, remote::find, Remote};
 
 impl crate::Repository {
     /// Create a new remote available at the given `url`.

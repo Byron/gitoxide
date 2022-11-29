@@ -118,9 +118,9 @@ pub mod checkout_options {
 
 ///
 pub mod transport {
-    use crate::bstr;
-    use crate::bstr::BStr;
     use std::borrow::Cow;
+
+    use crate::{bstr, bstr::BStr};
 
     /// The error produced when configuring a transport for a particular protocol.
     #[derive(Debug, thiserror::Error)]
@@ -152,8 +152,9 @@ pub mod transport {
 
     ///
     pub mod http {
-        use crate::bstr::BStr;
         use std::borrow::Cow;
+
+        use crate::bstr::BStr;
 
         /// The error produced when configuring a HTTP transport.
         #[derive(Debug, thiserror::Error)]

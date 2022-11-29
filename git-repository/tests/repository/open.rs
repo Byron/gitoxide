@@ -46,8 +46,9 @@ mod submodules {
 }
 
 mod object_caches {
-    use crate::util::named_subrepo_opts;
     use git_repository as git;
+
+    use crate::util::named_subrepo_opts;
 
     #[test]
     fn default_git_and_custom_caches() -> crate::Result {
@@ -69,13 +70,15 @@ mod object_caches {
 }
 
 mod with_overrides {
-    use crate::util::named_subrepo_opts;
+    use std::borrow::Cow;
+
     use git_object::bstr::BStr;
     use git_repository as git;
     use git_sec::Permission;
     use git_testtools::Env;
     use serial_test::serial;
-    use std::borrow::Cow;
+
+    use crate::util::named_subrepo_opts;
 
     #[test]
     #[serial]

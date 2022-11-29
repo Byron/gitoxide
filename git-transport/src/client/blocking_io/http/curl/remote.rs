@@ -9,8 +9,10 @@ use std::{
 use curl::easy::{Auth, Easy2};
 use git_features::io::pipe;
 
-use crate::client::blocking_io::http::{self, curl::Error, redirect};
-use crate::client::http::options::{FollowRedirects, ProxyAuthMethod};
+use crate::client::{
+    blocking_io::http::{self, curl::Error, redirect},
+    http::options::{FollowRedirects, ProxyAuthMethod},
+};
 
 #[derive(Default)]
 struct Handler {

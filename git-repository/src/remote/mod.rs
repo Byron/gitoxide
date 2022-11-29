@@ -1,5 +1,6 @@
-use crate::bstr::BStr;
 use std::borrow::Cow;
+
+use crate::bstr::BStr;
 
 /// The direction of an operation carried out (or to be carried out) through a remote.
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]

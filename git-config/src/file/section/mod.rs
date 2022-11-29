@@ -11,11 +11,13 @@ use crate::{
 };
 
 pub(crate) mod body;
-use crate::file::SectionId;
 pub use body::{Body, BodyIter};
 use git_features::threading::OwnShared;
 
-use crate::file::write::{extract_newline, platform_newline};
+use crate::file::{
+    write::{extract_newline, platform_newline},
+    SectionId,
+};
 
 impl<'a> Deref for Section<'a> {
     type Target = Body<'a>;

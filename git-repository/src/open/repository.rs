@@ -1,10 +1,13 @@
-use super::{Error, Options};
-use crate::config::cache::interpolate_context;
-use crate::config::cache::util::ApplyLeniency;
-use crate::{config, permission, Permissions, ThreadSafeRepository};
+use std::{borrow::Cow, path::PathBuf};
+
 use git_features::threading::OwnShared;
-use std::borrow::Cow;
-use std::path::PathBuf;
+
+use super::{Error, Options};
+use crate::{
+    config,
+    config::cache::{interpolate_context, util::ApplyLeniency},
+    permission, Permissions, ThreadSafeRepository,
+};
 
 #[derive(Default, Clone)]
 pub(crate) struct EnvironmentOverrides {
