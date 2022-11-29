@@ -588,10 +588,11 @@ pub fn main() -> Result<()> {
                             let input = if let Some(path) = pack_path {
                                 PathOrRead::Path(path)
                             } else {
-                                if atty::is(atty::Stream::Stdin) {
+                                use is_terminal::IsTerminal;
+                                if std::io::stdin().is_terminal() {
                                     anyhow::bail!(
-                                    "Refusing to read from standard input as no path is given, but it's a terminal."
-                                )
+                                        "Refusing to read from standard input as no path is given, but it's a terminal."
+                                    )
                                 }
                                 PathOrRead::Read(Box::new(stdin()))
                             };
@@ -856,7 +857,8 @@ pub fn main() -> Result<()> {
 }
 
 fn stdin_or_bail() -> Result<std::io::BufReader<std::io::Stdin>> {
-    if atty::is(atty::Stream::Stdin) {
+    use is_terminal::IsTerminal;
+    if std::io::stdin().is_terminal() {
         anyhow::bail!("Refusing to read from standard input while a terminal is connected")
     }
     Ok(BufReader::new(stdin()))
