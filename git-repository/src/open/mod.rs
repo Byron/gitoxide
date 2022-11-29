@@ -2,66 +2,17 @@ use std::path::PathBuf;
 
 use crate::{bstr::BString, config, permission, Permissions};
 
-/// A way to configure the usage of replacement objects, see `git replace`.
-#[derive(Debug, Clone)]
-pub enum ReplacementObjects {
-    /// Allow replacement objects and configure the ref prefix the standard environment variable `GIT_REPLACE_REF_BASE`,
-    /// or default to the standard `refs/replace/` prefix.
-    UseWithEnvironmentRefPrefixOrDefault {
-        /// If true, default true, a standard environment variable `GIT_NO_REPLACE_OBJECTS` to disable replacement objects entirely.
-        allow_disable_via_environment: bool,
-    },
-    /// Use replacement objects and configure the prefix yourself.
-    UseWithRefPrefix {
-        /// The ref prefix to use, like `refs/alternative/` - note the trailing slash.
-        prefix: PathBuf,
-        /// If true, default true, a standard environment variable `GIT_NO_REPLACE_OBJECTS`
-        allow_disable_via_environment: bool,
-    },
-    /// Do not use replacement objects at all.
-    Disable,
-}
-
-impl Default for ReplacementObjects {
-    fn default() -> Self {
-        ReplacementObjects::UseWithEnvironmentRefPrefixOrDefault {
-            allow_disable_via_environment: true,
-        }
-    }
-}
-
-impl ReplacementObjects {
-    fn refs_prefix(self) -> Option<PathBuf> {
-        use ReplacementObjects::*;
-        let is_disabled = |allow_env: bool| allow_env && std::env::var_os("GIT_NO_REPLACE_OBJECTS").is_some();
-        match self {
-            UseWithEnvironmentRefPrefixOrDefault {
-                allow_disable_via_environment,
-            } => {
-                if is_disabled(allow_disable_via_environment) {
-                    return None;
-                };
-                PathBuf::from(std::env::var("GIT_REPLACE_REF_BASE").unwrap_or_else(|_| "refs/replace/".into())).into()
-            }
-            UseWithRefPrefix {
-                prefix,
-                allow_disable_via_environment,
-            } => {
-                if is_disabled(allow_disable_via_environment) {
-                    return None;
-                };
-                prefix.into()
-            }
-            Disable => None,
-        }
-    }
-}
-
-/// The options used in [`ThreadSafeRepository::open_opts`]
+/// The options used in [`ThreadSafeRepository::open_opts()`][crate::ThreadSafeRepository::open_opts()].
+///
+/// ### Replacement Objects for the object database
+///
+/// The environment variables `GIT_REPLACE_REF_BASE` and `GIT_NO_REPLACE_OBJECTS` are mapped to `gitoxide.objects.replaceRefBase`
+/// and `gitoxide.objects.noReplace` respectively and then interpreted exactly as their environment variable counterparts.
+///
+/// Use [Permissions] to control which environment variables can be read, and config-overrides to control these values programmatically.
 #[derive(Clone)]
 pub struct Options {
     pub(crate) object_store_slots: git_odb::store::init::Slots,
-    pub(crate) replacement_objects: ReplacementObjects,
     /// Define what is allowed while opening a repository.
     pub permissions: Permissions,
     pub(crate) git_dir_trust: Option<git_sec::Trust>,

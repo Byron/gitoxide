@@ -1,7 +1,9 @@
 use super::{Error, Options};
 use crate::config::cache::interpolate_context;
+use crate::config::cache::util::ApplyLeniency;
 use crate::{config, permission, Permissions, ThreadSafeRepository};
 use git_features::threading::OwnShared;
+use std::borrow::Cow;
 use std::path::PathBuf;
 
 #[derive(Default, Clone)]
@@ -108,7 +110,6 @@ impl ThreadSafeRepository {
             git_dir_trust,
             object_store_slots,
             filter_config_section,
-            ref replacement_objects,
             lossy_config,
             lenient_config,
             bail_if_untrusted,
@@ -191,9 +192,7 @@ impl ThreadSafeRepository {
         }
 
         refs.write_reflog = config::cache::util::reflog_or_default(config.reflog, worktree_dir.is_some());
-        let replacements = replacement_objects
-            .clone()
-            .refs_prefix()
+        let replacements = replacement_objects_refs_prefix(&config.resolved, lenient_config, filter_config_section)?
             .and_then(|prefix| {
                 let platform = refs.iter().ok()?;
                 let iter = platform.prefixed(&prefix).ok()?;
@@ -231,6 +230,33 @@ impl ThreadSafeRepository {
             index: git_features::fs::MutableSnapshot::new().into(),
         })
     }
+}
+
+// TODO: tests
+fn replacement_objects_refs_prefix(
+    config: &git_config::File<'static>,
+    lenient: bool,
+    mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
+) -> Result<Option<PathBuf>, Error> {
+    let key = "gitoxide.objects.noReplace";
+    let is_disabled = config
+        .boolean_filter_by_key(key, &mut filter_config_section)
+        .transpose()
+        .with_leniency(lenient)
+        .map_err(|err| config::Error::Value { source: err, key })?
+        .unwrap_or_default();
+
+    if is_disabled {
+        return Ok(None);
+    }
+
+    let ref_base = git_path::from_bstr(
+        config
+            .string_filter_by_key("gitoxide.objects.replaceRefBase", &mut filter_config_section)
+            .unwrap_or_else(|| Cow::Borrowed("refs/replace/".into())),
+    )
+    .into_owned();
+    Ok(ref_base.into())
 }
 
 fn check_safe_directories(

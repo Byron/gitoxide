@@ -321,6 +321,30 @@ fn apply_environment_overrides(
 
     {
         let mut section = env_override
+            .new_section("gitoxide", Some(Cow::Borrowed("objects".into())))
+            .expect("statically known valid section name");
+
+        for (var, key) in [
+            ("GIT_NO_REPLACE_OBJECTS", "noReplace"),
+            ("GIT_REPLACE_REF_BASE", "replaceRefBase"),
+        ] {
+            if let Some(value) = var_as_bstring(var, http_transport) {
+                section.push_with_comment(
+                    key.try_into().expect("statically known to be valid"),
+                    Some(value.as_ref()),
+                    format!("from {var}").as_str(),
+                );
+            }
+        }
+
+        if section.num_values() == 0 {
+            let id = section.id();
+            env_override.remove_section_by_id(id);
+        }
+    }
+
+    {
+        let mut section = env_override
             .new_section("gitoxide", Some(Cow::Borrowed("http".into())))
             .expect("statically known valid section name");
 

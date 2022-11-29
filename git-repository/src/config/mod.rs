@@ -51,6 +51,11 @@ pub(crate) mod section {
 pub enum Error {
     #[error("Could not read configuration file")]
     Io(#[from] std::io::Error),
+    #[error("Could not decode configuration value at {key:?}")]
+    Value {
+        source: git_config::value::Error,
+        key: &'static str,
+    },
     #[error(transparent)]
     Init(#[from] git_config::file::init::Error),
     #[error(transparent)]

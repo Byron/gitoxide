@@ -782,6 +782,20 @@ static GIT_CONFIG: &[Record] = &[
             deviation: Some("corresponds to GIT_PROTOCOL_FROM_USER environment variable")
         }
     },
+    Record {
+        config: "gitoxide.objects.replaceRefBase",
+        usage: InModule {
+            name: "open",
+            deviation: Some("corresponds to the GIT_REPLACE_REF_BASE environment variable")
+        }
+    },
+    Record {
+        config: "gitoxide.objects.noReplace",
+        usage: InModule {
+            name: "open",
+            deviation: Some("corresponds to the GIT_NO_REPLACE_OBJECTS environment variable")
+        }
+    },
 ];
 
 /// A programmatic way to record and display progress.

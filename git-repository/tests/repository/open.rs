@@ -70,7 +70,9 @@ mod with_overrides {
             .set("ALL_PROXY", "all-proxy")
             .set("no_proxy", "no-proxy-lower")
             .set("NO_PROXY", "no-proxy")
-            .set("GIT_PROTOCOL_FROM_USER", "file-allowed");
+            .set("GIT_PROTOCOL_FROM_USER", "file-allowed")
+            .set("GIT_REPLACE_REF_BASE", "refs/replace-mine")
+            .set("GIT_NO_REPLACE_OBJECTS", "no-replace");
         let mut opts = git::open::Options::isolated()
             .config_overrides([
                 "http.userAgent=agent-from-api",
@@ -163,6 +165,20 @@ mod with_overrides {
                 .strings_by_key("gitoxide.allow.protocolFromUser")
                 .expect("at least one value"),
             [cow_bstr("file-allowed")]
+        );
+        assert_eq!(
+            config
+                .string_by_key("gitoxide.objects.noReplace")
+                .expect("at least one value")
+                .as_ref(),
+            "no-replace"
+        );
+        assert_eq!(
+            config
+                .string_by_key("gitoxide.objects.replaceRefBase")
+                .expect("at least one value")
+                .as_ref(),
+            "refs/replace-mine"
         );
         Ok(())
     }

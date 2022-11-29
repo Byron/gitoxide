@@ -1,4 +1,4 @@
-use super::{Error, Options, ReplacementObjects};
+use super::{Error, Options};
 use crate::bstr::BString;
 use crate::{config, Permissions, ThreadSafeRepository};
 use std::path::PathBuf;
@@ -7,7 +7,6 @@ impl Default for Options {
     fn default() -> Self {
         Options {
             object_store_slots: Default::default(),
-            replacement_objects: Default::default(),
             permissions: Default::default(),
             git_dir_trust: None,
             filter_config_section: None,
@@ -60,13 +59,6 @@ impl Options {
     /// but should be controlled on the server.
     pub fn object_store_slots(mut self, slots: git_odb::store::init::Slots) -> Self {
         self.object_store_slots = slots;
-        self
-    }
-
-    // TODO: tests
-    /// Configure replacement objects, see the [`ReplacementObjects`] type for details.
-    pub fn replacement_objects(mut self, config: ReplacementObjects) -> Self {
-        self.replacement_objects = config;
         self
     }
 
@@ -148,7 +140,6 @@ impl git_sec::trust::DefaultForLevel for Options {
         match level {
             git_sec::Trust::Full => Options {
                 object_store_slots: Default::default(),
-                replacement_objects: Default::default(),
                 permissions: Permissions::default_for_level(level),
                 git_dir_trust: git_sec::Trust::Full.into(),
                 filter_config_section: Some(config::section::is_trusted),
@@ -161,7 +152,6 @@ impl git_sec::trust::DefaultForLevel for Options {
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
-                replacement_objects: ReplacementObjects::Disable, // don't be tricked into seeing manufactured objects
                 permissions: Permissions::default_for_level(level),
                 git_dir_trust: git_sec::Trust::Reduced.into(),
                 filter_config_section: Some(config::section::is_trusted),
