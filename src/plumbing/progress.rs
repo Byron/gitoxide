@@ -348,28 +348,28 @@ static GIT_CONFIG: &[Record] = &[
         config: "committer.name",
         usage: InModule {
             name: "repository::identity",
-            deviation: None,
+            deviation: Some("overridden by 'GIT_COMMITTER_NAME'"),
         },
     },
     Record {
         config: "committer.email",
         usage: InModule {
             name: "repository::identity",
-            deviation: None,
+            deviation: Some("overridden by 'GIT_COMMITTER_EMAIL'"),
         },
     },
     Record {
         config: "author.name",
         usage: InModule {
             name: "repository::identity",
-            deviation: None,
+            deviation: Some("overridden by 'GIT_AUTHOR_NAME'"),
         },
     },
     Record {
         config: "author.email",
         usage: InModule {
             name: "repository::identity",
-            deviation: None,
+            deviation: Some("overridden by 'GIT_AUTHOR_EMAIL'"),
         },
     },
     Record {
@@ -794,6 +794,55 @@ static GIT_CONFIG: &[Record] = &[
         usage: InModule {
             name: "open",
             deviation: Some("corresponds to the GIT_NO_REPLACE_OBJECTS environment variable")
+        }
+    },
+    Record {
+        config: "gitoxide.commit.authorDate",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: Some("corresponds to the GIT_AUTHOR_DATE environment variable")
+        }
+    },
+    Record {
+        config: "gitoxide.commit.committerDate",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: Some("corresponds to the GIT_COMMITTER_DATE environment variable")
+        }
+    },
+    Record {
+        config: "gitoxide.author.nameFallback",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: Some("corresponds to the GIT_AUTHOR_NAME environment variable and is a fallback for `author.name`")
+        }
+    },
+    Record {
+        config: "gitoxide.author.emailFallback",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: Some("corresponds to the GIT_AUTHOR_EMAIL environment variable and is a fallback for `author.email`")
+        }
+    },
+    Record {
+        config: "gitoxide.committer.nameFallback",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: Some("corresponds to the GIT_COMMITTER_NAME environment variable and is a fallback for `committer.name`")
+        }
+    },
+    Record {
+        config: "gitoxide.committer.emailFallback",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: Some("corresponds to the GIT_COMMITTER_EMAIL environment variable and is a fallback for `committer.email`")
+        }
+    },
+    Record {
+        config: "gitoxide.user.emailFallback",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: Some("corresponds to the EMAIL environment variable and is a fallback for `user.email`")
         }
     },
 ];

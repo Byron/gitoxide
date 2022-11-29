@@ -60,7 +60,7 @@ impl Cache {
 
     pub(crate) fn personas(&self) -> &identity::Personas {
         self.personas
-            .get_or_init(|| identity::Personas::from_config_and_env(&self.resolved, self.git_prefix))
+            .get_or_init(|| identity::Personas::from_config_and_env(&self.resolved))
     }
 
     pub(crate) fn url_rewrite(&self) -> &remote::url::Rewrite {

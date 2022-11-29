@@ -208,7 +208,5 @@ pub(crate) struct Cache {
     xdg_config_home_env: git_sec::Permission,
     /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.
     home_env: git_sec::Permission,
-    /// How to use git-prefixed environment variables
-    git_prefix: git_sec::Permission,
     // TODO: make core.precomposeUnicode available as well.
 }

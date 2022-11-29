@@ -1,6 +1,6 @@
-use std::{borrow::Cow, time::SystemTime};
+use std::time::SystemTime;
 
-use crate::bstr::BString;
+use crate::bstr::{BString, ByteSlice};
 
 /// Identity handling.
 impl crate::Repository {
@@ -105,43 +105,44 @@ pub(crate) struct Personas {
 }
 
 impl Personas {
-    pub fn from_config_and_env(config: &git_config::File<'_>, git_env: git_sec::Permission) -> Self {
-        fn env_var(name: &str) -> Option<BString> {
-            std::env::var_os(name).map(|value| git_path::into_bstr(Cow::Owned(value.into())).into_owned())
-        }
-        fn entity_in_section(name: &str, config: &git_config::File<'_>) -> (Option<BString>, Option<BString>) {
-            config
+    pub fn from_config_and_env(config: &git_config::File<'_>) -> Self {
+        fn entity_in_section(
+            name: &str,
+            config: &git_config::File<'_>,
+            fallback: bool,
+        ) -> (Option<BString>, Option<BString>) {
+            let fallback = fallback
+                .then(|| config.section("gitoxide", Some(name.into())).ok())
+                .flatten();
+            let (name, email) = config
                 .section(name, None)
-                .map(|section| {
-                    (
-                        section.value("name").map(|v| v.into_owned()),
-                        section.value("email").map(|v| v.into_owned()),
-                    )
-                })
-                .unwrap_or_default()
+                .map(|section| (section.value("name"), section.value("email")))
+                .unwrap_or_default();
+            (
+                name.or_else(|| fallback.as_ref().and_then(|s| s.value("nameFallback")))
+                    .map(|v| v.into_owned()),
+                email
+                    .or_else(|| fallback.as_ref().and_then(|s| s.value("emailFallback")))
+                    .map(|v| v.into_owned()),
+            )
         }
+        let now = SystemTime::now();
+        let parse_date = |key: &str| -> Option<git_date::Time> {
+            config.string_by_key(key).and_then(|date| {
+                date.to_str()
+                    .ok()
+                    .and_then(|date| git_date::parse(date, Some(now)).ok())
+            })
+        };
 
-        let (mut committer_name, mut committer_email) = entity_in_section("committer", config);
-        let mut committer_date = None;
-        let (mut author_name, mut author_email) = entity_in_section("author", config);
-        let mut author_date = None;
-        let (user_name, mut user_email) = entity_in_section("user", config);
+        let (committer_name, committer_email) = entity_in_section("committer", config, true);
+        let (author_name, author_email) = entity_in_section("author", config, true);
+        let (user_name, mut user_email) = entity_in_section("user", config, false);
 
-        if git_env.eq(&git_sec::Permission::Allow) {
-            committer_name = committer_name.or_else(|| env_var("GIT_COMMITTER_NAME"));
-            committer_email = committer_email.or_else(|| env_var("GIT_COMMITTER_EMAIL"));
-            committer_date = std::env::var("GIT_COMMITTER_DATE")
-                .ok()
-                .and_then(|date| git_date::parse(&date, Some(SystemTime::now())).ok());
+        let committer_date = parse_date("gitoxide.commit.committerDate");
+        let author_date = parse_date("gitoxide.commit.authorDate");
 
-            author_name = author_name.or_else(|| env_var("GIT_AUTHOR_NAME"));
-            author_email = author_email.or_else(|| env_var("GIT_AUTHOR_EMAIL"));
-            author_date = std::env::var("GIT_AUTHOR_DATE")
-                .ok()
-                .and_then(|date| git_date::parse(&date, Some(SystemTime::now())).ok());
-
-            user_email = user_email.or_else(|| env_var("EMAIL")); // NOTE: we don't have permission for this specific one…
-        }
+        user_email = user_email.or_else(|| config.string_by_key("gitoxide.user.email").map(|v| v.into_owned()));
         Personas {
             user: Entity {
                 name: user_name,

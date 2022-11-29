@@ -74,9 +74,14 @@ pub struct Environment {
     pub ssh_prefix: git_sec::Permission,
     /// Control if environment variables to configure the HTTP transport, like `http_proxy` may be used.
     ///
-    /// Note that those http-transport related environment variables prefixed with `GIT_` are falling under the
+    /// Note that http-transport related environment variables prefixed with `GIT_` are falling under the
     /// `git_prefix` permission, like `GIT_HTTP_USER_AGENT`.
     pub http_transport: git_sec::Permission,
+    /// Control if the `EMAIL` environment variables may be read.
+    ///
+    /// Note that identity related environment variables prefixed with `GIT_` are falling under the
+    /// `git_prefix` permission, like `GIT_AUTHOR_NAME`.
+    pub identity: git_sec::Permission,
 }
 
 impl Environment {
@@ -88,6 +93,7 @@ impl Environment {
             git_prefix: git_sec::Permission::Allow,
             ssh_prefix: git_sec::Permission::Allow,
             http_transport: git_sec::Permission::Allow,
+            identity: git_sec::Permission::Allow,
         }
     }
 }
@@ -133,6 +139,7 @@ impl Permissions {
                     ssh_prefix: deny,
                     git_prefix: deny,
                     http_transport: deny,
+                    identity: deny,
                 }
             },
         }

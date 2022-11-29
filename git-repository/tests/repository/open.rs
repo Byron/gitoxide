@@ -57,6 +57,7 @@ mod with_overrides {
     #[test]
     #[serial]
     fn order_from_api_and_cli_and_environment() -> crate::Result {
+        let default_date = "1979-02-26 18:30:00";
         let _env = Env::new()
             .set("GIT_HTTP_USER_AGENT", "agent-from-env")
             .set("GIT_HTTP_LOW_SPEED_LIMIT", "1")
@@ -72,7 +73,14 @@ mod with_overrides {
             .set("NO_PROXY", "no-proxy")
             .set("GIT_PROTOCOL_FROM_USER", "file-allowed")
             .set("GIT_REPLACE_REF_BASE", "refs/replace-mine")
-            .set("GIT_NO_REPLACE_OBJECTS", "no-replace");
+            .set("GIT_NO_REPLACE_OBJECTS", "no-replace")
+            .set("GIT_COMMITTER_NAME", "committer name")
+            .set("GIT_COMMITTER_EMAIL", "committer email")
+            .set("GIT_COMMITTER_DATE", default_date)
+            .set("GIT_AUTHOR_NAME", "author name")
+            .set("GIT_AUTHOR_EMAIL", "author email")
+            .set("GIT_AUTHOR_DATE", default_date)
+            .set("EMAIL", "user email");
         let mut opts = git::open::Options::isolated()
             .config_overrides([
                 "http.userAgent=agent-from-api",
@@ -86,6 +94,7 @@ mod with_overrides {
             ]);
         opts.permissions.env.git_prefix = Permission::Allow;
         opts.permissions.env.http_transport = Permission::Allow;
+        opts.permissions.env.identity = Permission::Allow;
         let repo = named_subrepo_opts("make_config_repos.sh", "http-config", opts)?;
         let config = repo.config_snapshot();
         assert_eq!(
@@ -154,32 +163,30 @@ mod with_overrides {
                 cow_bstr(if cfg!(windows) { "no-proxy" } else { "no-proxy-lower" })
             ]
         );
-        assert_eq!(
-            config
-                .strings_by_key("gitoxide.http.verbose")
-                .expect("at least one value"),
-            [cow_bstr("true")]
-        );
-        assert_eq!(
-            config
-                .strings_by_key("gitoxide.allow.protocolFromUser")
-                .expect("at least one value"),
-            [cow_bstr("file-allowed")]
-        );
-        assert_eq!(
-            config
-                .string_by_key("gitoxide.objects.noReplace")
-                .expect("at least one value")
-                .as_ref(),
-            "no-replace"
-        );
-        assert_eq!(
-            config
-                .string_by_key("gitoxide.objects.replaceRefBase")
-                .expect("at least one value")
-                .as_ref(),
-            "refs/replace-mine"
-        );
+        for (key, expected) in [
+            ("gitoxide.http.verbose", "true"),
+            ("gitoxide.allow.protocolFromUser", "file-allowed"),
+            ("gitoxide.objects.noReplace", "no-replace"),
+            ("gitoxide.objects.replaceRefBase", "refs/replace-mine"),
+            ("gitoxide.committer.nameFallback", "committer name"),
+            ("gitoxide.committer.emailFallback", "committer email"),
+            ("gitoxide.author.nameFallback", "author name"),
+            ("gitoxide.author.emailFallback", "author email"),
+            ("gitoxide.commit.authorDate", default_date),
+            ("gitoxide.commit.committerDate", default_date),
+            ("gitoxide.user.emailFallback", "user email"),
+        ] {
+            assert_eq!(
+                config
+                    .string_by_key(key)
+                    .unwrap_or_else(|| panic!("no value for {key}"))
+                    .as_ref(),
+                expected,
+                "{} == {}",
+                key,
+                expected
+            );
+        }
         Ok(())
     }
 

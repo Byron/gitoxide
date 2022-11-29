@@ -21,6 +21,10 @@ fn author_and_committer_and_fallback() {
             .set("GIT_AUTHOR_NAME", "author")
             .set("GIT_AUTHOR_EMAIL", "author@email")
             .set("GIT_AUTHOR_DATE", "1979-02-26 18:30:00")
+            .set("GIT_COMMITTER_NAME", "commiter-overrider-unused")
+            .set("GIT_COMMITTER_EMAIL", "committer-override-unused@email")
+            .set("GIT_COMMITTER_DATE", "1980-02-26 18:30:00")
+            .set("EMAIL", "general@email-unused")
             .set("GIT_CONFIG_COUNT", "1")
             .set("GIT_CONFIG_KEY_0", "include.path")
             .set("GIT_CONFIG_VALUE_0", work_dir.join("c.config").display().to_string());
