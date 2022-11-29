@@ -123,6 +123,8 @@ pub struct Options {
     /// If `None`, this typically defaults to 2 minutes to 5 minutes.
     /// Refers to `gitoxide.http.connectTimeout`.
     pub connect_timeout: Option<std::time::Duration>,
+    /// If enabled, emit additional information about connections and possibly the data received or written.
+    pub verbose: bool,
     /// Backend specific options, if available.
     pub backend: Option<Arc<Mutex<dyn Any + Send + Sync + 'static>>>,
 }

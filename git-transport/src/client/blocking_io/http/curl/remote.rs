@@ -140,6 +140,7 @@ pub fn new() -> (
                     proxy_auth_method,
                     user_agent,
                     proxy_authenticate,
+                    verbose,
                     backend: _,
                 },
         } in req_recv
@@ -152,6 +153,7 @@ pub fn new() -> (
             for header in extra_headers {
                 headers.append(&header)?;
             }
+            handle.verbose(verbose)?;
 
             let mut proxy_auth_action = None;
             if let Some(proxy) = proxy {
