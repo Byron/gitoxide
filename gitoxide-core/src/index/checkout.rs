@@ -26,9 +26,7 @@ pub fn checkout_exclusive(
         thread_limit,
     }: index::checkout_exclusive::Options,
 ) -> anyhow::Result<()> {
-    let repo = repo
-        .map(|dir| git_repository::discover(dir).map(|r| r.apply_environment()))
-        .transpose()?;
+    let repo = repo.map(git_repository::discover).transpose()?;
 
     let dest_directory = dest_directory.as_ref();
     if dest_directory.exists() {

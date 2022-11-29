@@ -53,7 +53,7 @@ where
     W: io::Write,
     P: Progress,
 {
-    let repo = git::discover(working_dir)?.apply_environment();
+    let repo = git::discover(working_dir)?;
     let commit_id = repo.rev_parse_single(rev_spec)?.detach();
     let mut string_heap = BTreeSet::<&'static [u8]>::new();
     let needs_stats = file_stats || line_stats;

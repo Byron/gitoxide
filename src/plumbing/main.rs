@@ -89,8 +89,7 @@ pub fn main() -> Result<()> {
             mapping.full.modify(to_match_settings);
             mapping.reduced.modify(to_match_settings);
             let mut repo = git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
-                .map(git::Repository::from)
-                .map(|r| r.apply_environment())?;
+                .map(git::Repository::from)?;
             if !config.is_empty() {
                 repo.config_snapshot_mut()
                     .append_config(config.iter(), git::config::Source::Cli)
