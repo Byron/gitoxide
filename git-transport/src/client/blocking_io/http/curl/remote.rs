@@ -137,6 +137,7 @@ pub fn new() -> (
                     low_speed_time_seconds,
                     connect_timeout,
                     proxy,
+                    no_proxy,
                     proxy_auth_method,
                     user_agent,
                     proxy_authenticate,
@@ -178,6 +179,9 @@ pub fn new() -> (
                     handle.proxy_password(&creds.identity.password)?;
                     proxy_auth_action = Some((creds.next, authenticate));
                 }
+            }
+            if let Some(no_proxy) = no_proxy {
+                handle.noproxy(&no_proxy)?;
             }
             if let Some(user_agent) = user_agent {
                 handle.useragent(&user_agent)?;

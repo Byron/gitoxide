@@ -101,6 +101,8 @@ pub struct Options {
     ///
     /// Refers to `http.proxy`.
     pub proxy: Option<String>,
+    /// The comma-separated list of hosts to not send through the `proxy`, or `*` to entirely disable all proxying.
+    pub no_proxy: Option<String>,
     /// The way to authenticate against the proxy if the `proxy` field contains a username.
     ///
     /// Refers to `http.proxyAuthMethod`.
