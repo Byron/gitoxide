@@ -15,7 +15,7 @@ doctest = false
 serde1 = ["serde", "bstr/serde", "git-actor/serde1"]
 
 [dependencies]
-git-actor = { version = "^0.14.0", path = "../git-actor" }
+git-actor = { version = "^0.14.1", path = "../git-actor" }
 bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"]}
 quick-error = "2.0.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

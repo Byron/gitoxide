@@ -20,6 +20,7 @@ pub mod describe {
     use std::borrow::Cow;
 
     use git_hash::ObjectId;
+    use git_hashtable::HashMap;
     use git_odb::Find;
 
     use crate::{bstr::BStr, ext::ObjectIdExt, Repository};
@@ -66,10 +67,7 @@ pub mod describe {
     }
 
     impl SelectRef {
-        fn names(
-            &self,
-            repo: &Repository,
-        ) -> Result<git_revision::hash_hasher::HashedMap<ObjectId, Cow<'static, BStr>>, Error> {
+        fn names(&self, repo: &Repository) -> Result<HashMap<ObjectId, Cow<'static, BStr>>, Error> {
             let platform = repo.references()?;
 
             Ok(match self {

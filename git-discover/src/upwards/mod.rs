@@ -33,7 +33,7 @@ pub(crate) mod function {
             current_dir,
         }: Options<'_>,
     ) -> Result<(crate::repository::Path, Trust), Error> {
-        // Absolutize the path so that `Path::parent()` _actually_ gives
+        // Normalize the path so that `Path::parent()` _actually_ gives
         // us the parent directory. (`Path::parent` just strips off the last
         // path component, which means it will not do what you expect when
         // working with paths paths that contain '..'.)
@@ -41,7 +41,7 @@ pub(crate) mod function {
             .map(|cwd| Ok(Cow::Borrowed(cwd)))
             .unwrap_or_else(|| std::env::current_dir().map(Cow::Owned))?;
         let directory = directory.as_ref();
-        let dir = git_path::absolutize(directory, cwd.as_ref()).ok_or_else(|| Error::InvalidInput {
+        let dir = git_path::normalize(directory, cwd.as_ref()).ok_or_else(|| Error::InvalidInput {
             directory: directory.into(),
         })?;
         let dir_metadata = dir.metadata().map_err(|_| Error::InaccessibleDirectory {
@@ -155,8 +155,8 @@ pub(crate) mod function {
                 } else {
                     dir_made_absolute = true;
                     debug_assert!(!cursor.as_os_str().is_empty());
-                    // TODO: realpath or absolutize? No test runs into this.
-                    cursor = git_path::absolutize(&cursor, cwd.as_ref())
+                    // TODO: realpath or normalize? No test runs into this.
+                    cursor = git_path::normalize(&cursor, cwd.as_ref())
                         .ok_or_else(|| Error::InvalidInput {
                             directory: cursor.clone(),
                         })?

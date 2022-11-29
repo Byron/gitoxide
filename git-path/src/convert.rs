@@ -2,7 +2,6 @@ use std::ffi::OsString;
 use std::{
     borrow::Cow,
     ffi::OsStr,
-    iter::FromIterator,
     path::{Path, PathBuf},
 };
 
@@ -230,6 +229,7 @@ pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr
 
 /// Resolve relative components virtually without accessing the file system, e.g. turn `a/./b/c/.././..` into `a`,
 /// without keeping intermediate `..` and `/a/../b/..` becomes `/`.
+/// If the input path was relative and ends up being the `current_dir`, `.` is returned instead of the full path to `current_dir`.
 ///
 /// This is particularly useful when manipulating paths that are based on user input, and not resolving intermediate
 /// symlinks keeps the path similar to what the user provided. If that's not desirable, use `[realpath()][crate::realpath()`
@@ -239,7 +239,7 @@ pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr
 /// as typical return value of `std::env::current_dir()`.
 /// As a `current_dir` like `/c` can be exhausted by paths like `../../r`, `None` will be returned to indicate the inability
 /// to produce a logically consistent path.
-pub fn absolutize<'a>(path: impl Into<Cow<'a, Path>>, current_dir: impl AsRef<Path>) -> Option<Cow<'a, Path>> {
+pub fn normalize<'a>(path: impl Into<Cow<'a, Path>>, current_dir: impl AsRef<Path>) -> Option<Cow<'a, Path>> {
     use std::path::Component::ParentDir;
 
     let path = path.into();
@@ -248,28 +248,27 @@ pub fn absolutize<'a>(path: impl Into<Cow<'a, Path>>, current_dir: impl AsRef<Pa
     }
     let current_dir = current_dir.as_ref();
     let mut current_dir_opt = Some(current_dir);
-    let mut components = path.components();
-    let mut path = PathBuf::from_iter(components.next());
+    let was_relative = path.is_relative();
+    let components = path.components();
+    let mut path = PathBuf::new();
     for component in components {
         if let ParentDir = component {
             let path_was_dot = path == Path::new(".");
+            if path.as_os_str().is_empty() || path_was_dot {
+                path.push(current_dir_opt.take()?);
+            }
             if !path.pop() {
                 return None;
-            }
-            if path.as_os_str().is_empty() {
-                path.clear();
-                path.push(current_dir_opt.take()?);
-                if path_was_dot && !path.pop() {
-                    return None;
-                }
             }
         } else {
             path.push(component)
         }
     }
-    Some(if path.as_os_str().is_empty() || path == current_dir {
-        PathBuf::from(".").into()
+
+    if (path.as_os_str().is_empty() || path == current_dir) && was_relative {
+        Cow::Borrowed(Path::new("."))
     } else {
         path.into()
-    })
+    }
+    .into()
 }

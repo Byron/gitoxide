@@ -17,6 +17,65 @@
    * provide an error chain and make it easy to understand what went wrong. 
    * We `thiserror` generally.
  * Adhere to the [stability guide](https://github.com/Byron/gitoxide/blob/main/STABILITY.md)
+
+## Commit Messages
+
+We use a style I'd call 'purposeful [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)', and instead of classifying
+every commit using _conventional commit_ messaging, we do so only if the message should show up in the changelog.
+
+The _subject_ usually informs about the *what* and the body provides details and explains the *why*.
+
+Commit messages _must_ show up in the changelog in case of breaking changes. Examples for that are:
+
+- change!: rename `Foo` to `Bar`. (#123)
+  
+  And this is why we do it in the body.
+- remove!: `Repository::obsolete()`.
+ 
+  Nobody used this method.
+
+Features or other changes that are visible and people should know about look like this:
+
+- feat: add `Repository::foo()` to do great things. (#234)
+
+  And here is how it's used and some more details.
+- fix: don't panic when calling `foo()` in a bare repository. (#456)
+
+Everything else, particularly refactors or chores, don't use _conventional commits_ as these don't affect users of the API.
+Examples could be:
+
+- make test module structure similar to the modules they are testing for consistency
+- `make fmt`
+- thanks clippy
+
+Please refrain from using `chore:` or `refactor:` prefixes as for the most part, users of the API don't care about those. When a `refactor` 
+changes the API in some way, prefer to use `feat`, `change`, `rename` or `remove` instead, and most of the time the ones that are not `feat`
+are breaking so would be seen with their _exclamation mark_ suffix, like `change!`.
+
+### Reasoning
+
+Commit messages are used for guiding `cargo smart-release` to do most of the release work for us. This includes changelog generation
+as well as picking the right version bump for each crate.
+
+## Commit splitting on breaking changes.
+
+Knowing that `cargo smart-release` is driven by commit messages and affects their versions with per-crate granularity, it becomes important
+to split edits into multiple commits to clearly indicate which crate is actually broken.
+
+Typical patterns include making a breaking change in one crate and then fix all others to work with it. For changelogs to look proper
+and version bumps to be correct, the first commit would contain only the breaking changes themselves, 
+like "rename: `foo()` to `bar()`", and the second commit would contain all changes to adapt to that and look like "adapt to changes in `<crate name>`".
+
+## Commit History
+
+We generally follow a 'track everything' approach and there is a lot of freedom leading to more commits rather than less. There 
+is no obligation to squash commits or to otherwise tune the history.
+
+We use feature branches and PRs most of the time to be able to take advantage of CI and GitHub review tools, and merge with merge commits
+to make individual efforts stand out. There is no need for linearizing history or tuning it in any other way. However, each commit 
+_must_ follow the guidelines laid out in the `Commit Messages` paragraph.
+
+There is value in organizing commits by topic and [_Stacked Git_](https://stacked-git.github.io) is hereby endorsed to do that.
   
 ## Configuration and overrides
 
