@@ -125,7 +125,10 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.deltaBaseCacheLimit",
-        usage: NotApplicable { reason: "we use a small 64 slot pack delta cache by default, which can be replaced with larger caches as determined by the algorithm. This keeps memory usage low and is fast enough" }
+        usage: InModule {
+            name: "repository::cache",
+            deviation: Some("if unset, we default to a small 64 slot fixed-size cache that holds at most 64 full delta base objects of any size. Overridable by 'GITOXIDE_PACK_CACHE_MEMORY'. Set to 0 to deactivate it entirely.")
+        }
     },
     Record {
         config: "core.bigFileThreshold",
@@ -843,6 +846,13 @@ static GIT_CONFIG: &[Record] = &[
         usage: InModule {
             name: "repository::identity",
             deviation: Some("corresponds to the EMAIL environment variable and is a fallback for `user.email`")
+        }
+    },
+    Record {
+        config: "gitoxide.objects.cacheLimit",
+        usage: InModule {
+            name: "repository::cache",
+            deviation: Some("corresponds to the GITOXIDE_OBJECT_CACHE_MEMORY environment variable. If unset or 0, there is no object cache")
         }
     },
 ];

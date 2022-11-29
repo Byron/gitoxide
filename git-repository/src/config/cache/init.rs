@@ -32,6 +32,7 @@ impl Cache {
             ssh_prefix: _,
             http_transport,
             identity,
+            gitoxide_prefix,
         }: repository::permissions::Environment,
         repository::permissions::Config {
             git_binary: use_installation,
@@ -133,7 +134,7 @@ impl Cache {
                         source: git_config::Source::Api,
                     })?;
             }
-            apply_environment_overrides(&mut globals, *git_prefix, http_transport, identity)?;
+            apply_environment_overrides(&mut globals, *git_prefix, http_transport, identity, gitoxide_prefix)?;
             globals
         };
 
@@ -144,12 +145,16 @@ impl Cache {
         let ignore_case = config_bool(&config, "core.ignoreCase", false, lenient_config)?;
         let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true, lenient_config)?;
         let object_kind_hint = util::disambiguate_hint(&config);
+        let (pack_cache_bytes, object_cache_bytes) =
+            util::parse_object_caches(&config, lenient_config, filter_config_section)?;
         // NOTE: When adding a new initial cache, consider adjusting `reread_values_and_clear_caches()` as well.
         Ok(Cache {
             resolved: config.into(),
             use_multi_pack_index,
             object_hash,
             object_kind_hint,
+            pack_cache_bytes,
+            object_cache_bytes,
             reflog,
             is_bare,
             ignore_case,
@@ -203,6 +208,8 @@ impl Cache {
         self.personas = Default::default();
         self.url_rewrite = Default::default();
         self.diff_algorithm = Default::default();
+        (self.pack_cache_bytes, self.object_cache_bytes) =
+            util::parse_object_caches(config, self.lenient_config, self.filter_config_section)?;
         #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
         {
             self.url_scheme = Default::default();
@@ -244,6 +251,7 @@ fn apply_environment_overrides(
     git_prefix: Permission,
     http_transport: Permission,
     identity: Permission,
+    gitoxide_prefix: Permission,
 ) -> Result<(), Error> {
     fn var_as_bstring(var: &str, perm: Permission) -> Option<BString> {
         perm.check_opt(var)
@@ -418,11 +426,33 @@ fn apply_environment_overrides(
             .new_section("gitoxide", Some(Cow::Borrowed("objects".into())))
             .expect("statically known valid section name");
 
-        for (var, key) in [
-            ("GIT_NO_REPLACE_OBJECTS", "noReplace"),
-            ("GIT_REPLACE_REF_BASE", "replaceRefBase"),
+        for (var, key, permission) in [
+            ("GIT_NO_REPLACE_OBJECTS", "noReplace", git_prefix),
+            ("GIT_REPLACE_REF_BASE", "replaceRefBase", git_prefix),
+            ("GITOXIDE_OBJECT_CACHE_MEMORY", "cacheLimit", gitoxide_prefix),
         ] {
-            if let Some(value) = var_as_bstring(var, git_prefix) {
+            if let Some(value) = var_as_bstring(var, permission) {
+                section.push_with_comment(
+                    key.try_into().expect("statically known to be valid"),
+                    Some(value.as_ref()),
+                    format!("from {var}").as_str(),
+                );
+            }
+        }
+
+        if section.num_values() == 0 {
+            let id = section.id();
+            env_override.remove_section_by_id(id);
+        }
+    }
+
+    {
+        let mut section = env_override
+            .new_section("core", None)
+            .expect("statically known valid section name");
+
+        for (var, key) in [("GITOXIDE_PACK_CACHE_MEMORY", "deltaBaseCacheLimit")] {
+            if let Some(value) = var_as_bstring(var, gitoxide_prefix) {
                 section.push_with_comment(
                     key.try_into().expect("statically known to be valid"),
                     Some(value.as_ref()),

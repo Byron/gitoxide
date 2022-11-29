@@ -82,6 +82,8 @@ pub struct Environment {
     /// Note that identity related environment variables prefixed with `GIT_` are falling under the
     /// `git_prefix` permission, like `GIT_AUTHOR_NAME`.
     pub identity: git_sec::Permission,
+    /// Decide if `gitoxide` specific variables may be read, prefixed with `GITOXIDE_`.
+    pub gitoxide_prefix: git_sec::Permission,
 }
 
 impl Environment {
@@ -94,6 +96,7 @@ impl Environment {
             ssh_prefix: git_sec::Permission::Allow,
             http_transport: git_sec::Permission::Allow,
             identity: git_sec::Permission::Allow,
+            gitoxide_prefix: git_sec::Permission::Allow,
         }
     }
 }
@@ -140,6 +143,7 @@ impl Permissions {
                     git_prefix: deny,
                     http_transport: deny,
                     identity: deny,
+                    gitoxide_prefix: deny,
                 }
             },
         }

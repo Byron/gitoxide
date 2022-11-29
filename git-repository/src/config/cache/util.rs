@@ -104,6 +104,31 @@ pub(crate) fn reflog_or_default(
     })
 }
 
+/// Return `(pack_cache_bytes, object_cache_bytes)` as parsed from git-config
+pub(crate) fn parse_object_caches(
+    config: &git_config::File<'static>,
+    lenient: bool,
+    mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
+) -> Result<(Option<usize>, usize), Error> {
+    let key = "core.deltaBaseCacheLimit";
+    let pack_cache_bytes = config
+        .integer_filter_by_key(key, &mut filter_config_section)
+        .transpose()
+        .with_leniency(lenient)
+        .map_err(|err| Error::Value { source: err, key })?;
+    let key = "gitoxide.objects.cacheLimit";
+    let object_cache_bytes = config
+        .integer_filter_by_key(key, &mut filter_config_section)
+        .transpose()
+        .with_leniency(lenient)
+        .map_err(|err| Error::Value { source: err, key })?
+        .unwrap_or_default();
+    Ok((
+        pack_cache_bytes.and_then(|v| v.try_into().ok()),
+        object_cache_bytes.try_into().unwrap_or_default(),
+    ))
+}
+
 pub(crate) fn parse_core_abbrev(
     config: &git_config::File<'static>,
     object_hash: git_hash::Kind,

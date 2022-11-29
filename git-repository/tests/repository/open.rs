@@ -45,6 +45,29 @@ mod submodules {
     }
 }
 
+mod object_caches {
+    use crate::util::named_subrepo_opts;
+    use git_repository as git;
+
+    #[test]
+    fn default_git_and_custom_caches() -> crate::Result {
+        let opts = git::open::Options::isolated();
+        let repo = named_subrepo_opts("make_config_repos.sh", "object-caches", opts)?;
+        assert!(repo.objects.has_object_cache());
+        assert!(repo.objects.has_pack_cache());
+        Ok(())
+    }
+
+    #[test]
+    fn disabled() -> crate::Result {
+        let opts = git::open::Options::isolated();
+        let repo = named_subrepo_opts("make_config_repos.sh", "disabled-object-caches", opts)?;
+        assert!(!repo.objects.has_object_cache());
+        assert!(!repo.objects.has_pack_cache());
+        Ok(())
+    }
+}
+
 mod with_overrides {
     use crate::util::named_subrepo_opts;
     use git_object::bstr::BStr;
@@ -80,7 +103,9 @@ mod with_overrides {
             .set("GIT_AUTHOR_NAME", "author name")
             .set("GIT_AUTHOR_EMAIL", "author email")
             .set("GIT_AUTHOR_DATE", default_date)
-            .set("EMAIL", "user email");
+            .set("EMAIL", "user email")
+            .set("GITOXIDE_PACK_CACHE_MEMORY", "0")
+            .set("GITOXIDE_OBJECT_CACHE_MEMORY", "5m");
         let mut opts = git::open::Options::isolated()
             .config_overrides([
                 "http.userAgent=agent-from-api",
@@ -95,6 +120,7 @@ mod with_overrides {
         opts.permissions.env.git_prefix = Permission::Allow;
         opts.permissions.env.http_transport = Permission::Allow;
         opts.permissions.env.identity = Permission::Allow;
+        opts.permissions.env.gitoxide_prefix = Permission::Allow;
         let repo = named_subrepo_opts("make_config_repos.sh", "http-config", opts)?;
         let config = repo.config_snapshot();
         assert_eq!(
@@ -175,6 +201,8 @@ mod with_overrides {
             ("gitoxide.commit.authorDate", default_date),
             ("gitoxide.commit.committerDate", default_date),
             ("gitoxide.user.emailFallback", "user email"),
+            ("core.deltaBaseCacheLimit", "0"),
+            ("gitoxide.objects.cacheLimit", "5m"),
         ] {
             assert_eq!(
                 config

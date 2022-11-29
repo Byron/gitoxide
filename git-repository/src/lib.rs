@@ -34,9 +34,6 @@
 //! Use the `cache-efficiency-debug` cargo feature to learn how efficient the cache actually is - it's easy to end up with lowered
 //! performance if the cache is not hit in 50% of the time.
 //!
-//! Environment variables can also be used for configuration if the application is calling
-//! [`apply_environment()`][crate::Repository::apply_environment()].
-//!
 //! ### Shortcomings & Limitations
 //!
 //! - Only a single `crate::object` or derivatives can be held in memory at a time, _per `Easy*`_.

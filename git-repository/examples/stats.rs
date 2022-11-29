@@ -2,7 +2,7 @@ use git_repository as git;
 use git_repository::Reference;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut repo = git::discover(".")?.apply_environment();
+    let mut repo = git::discover(".")?;
     println!("Repo: {}", repo.work_dir().unwrap_or_else(|| repo.git_dir()).display());
     let mut max_commit_size = 0;
     let mut avg_commit_size = 0;

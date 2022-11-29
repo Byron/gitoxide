@@ -195,6 +195,11 @@ pub(crate) struct Cache {
     pub(crate) url_scheme: OnceCell<remote::url::SchemePermission>,
     /// The algorithm to use when diffing blobs
     pub(crate) diff_algorithm: OnceCell<git_diff::blob::Algorithm>,
+    /// The amount of bytes to use for a memory backed delta pack cache. If `Some(0)`, no cache is used, if `None`
+    /// a standard cache is used which costs near to nothing and always pays for itself.
+    pub(crate) pack_cache_bytes: Option<usize>,
+    /// The amount of bytes to use for caching whole objects, or 0 to turn it off entirely.
+    pub(crate) object_cache_bytes: usize,
     /// The config section filter from the options used to initialize this instance. Keep these in sync!
     filter_config_section: fn(&git_config::file::Metadata) -> bool,
     /// The object kind to pick if a prefix is ambiguous.

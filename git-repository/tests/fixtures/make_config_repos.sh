@@ -99,3 +99,15 @@ git init http-proxy-authenticated
   followRedirects
 EOF
 )
+
+git init object-caches
+(cd object-caches
+  git config core.deltaBaseCacheLimit 128m
+  git config gitoxide.objects.cacheLimit 16m
+)
+
+git init disabled-object-caches
+(cd disabled-object-caches
+  git config core.deltaBaseCacheLimit 0
+  git config gitoxide.objects.cacheLimit 0
+)
