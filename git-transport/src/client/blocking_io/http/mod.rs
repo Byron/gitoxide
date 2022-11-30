@@ -9,6 +9,7 @@ use bstr::BStr;
 use git_packetline::PacketLineRef;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
+use crate::client::blocking_io::bufread_ext::ReadlineBufRead;
 use crate::{
     client::{self, capabilities, Capabilities, ExtendedBufRead, HandleProgress, MessageKind, RequestWriter},
     Protocol, Service,
@@ -387,14 +388,14 @@ impl<H: Http, B: Unpin> HeadersThenBody<H, B> {
     }
 }
 
-impl<H: Http, B: ExtendedBufRead + Unpin> Read for HeadersThenBody<H, B> {
+impl<H: Http, B: Read + Unpin> Read for HeadersThenBody<H, B> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         self.handle_headers()?;
         self.body.read(buf)
     }
 }
 
-impl<H: Http, B: ExtendedBufRead + Unpin> BufRead for HeadersThenBody<H, B> {
+impl<H: Http, B: BufRead + Unpin> BufRead for HeadersThenBody<H, B> {
     fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
         self.handle_headers()?;
         self.body.fill_buf()
@@ -402,6 +403,12 @@ impl<H: Http, B: ExtendedBufRead + Unpin> BufRead for HeadersThenBody<H, B> {
 
     fn consume(&mut self, amt: usize) {
         self.body.consume(amt)
+    }
+}
+
+impl<H: Http, B: ReadlineBufRead + Unpin> ReadlineBufRead for HeadersThenBody<H, B> {
+    fn readline(&mut self) -> Option<std::io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+        self.body.readline()
     }
 }
 

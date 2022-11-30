@@ -8,7 +8,7 @@ pub mod file;
 pub mod http;
 
 mod bufread_ext;
-pub use bufread_ext::{ExtendedBufRead, HandleProgress};
+pub use bufread_ext::{ExtendedBufRead, HandleProgress, ReadlineBufRead};
 
 mod request;
 pub use request::RequestWriter;

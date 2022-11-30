@@ -2,7 +2,8 @@
 mod async_io;
 #[cfg(feature = "async-client")]
 pub use async_io::{
-    connect, ExtendedBufRead, HandleProgress, RequestWriter, SetServiceResponse, Transport, TransportV2Ext,
+    connect, ExtendedBufRead, HandleProgress, ReadlineBufRead, RequestWriter, SetServiceResponse, Transport,
+    TransportV2Ext,
 };
 
 mod traits;
@@ -14,7 +15,8 @@ mod blocking_io;
 pub use blocking_io::http;
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::{
-    connect, file, ssh, ExtendedBufRead, HandleProgress, RequestWriter, SetServiceResponse, Transport, TransportV2Ext,
+    connect, file, ssh, ExtendedBufRead, HandleProgress, ReadlineBufRead, RequestWriter, SetServiceResponse, Transport,
+    TransportV2Ext,
 };
 #[cfg(feature = "blocking-client")]
 #[doc(inline)]

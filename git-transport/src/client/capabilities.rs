@@ -165,7 +165,7 @@ pub mod recv {
         ///
         /// This is `Some` only when protocol v1 is used. The [`io::BufRead`] must be exhausted by
         /// the caller.
-        pub refs: Option<Box<dyn std::io::BufRead + 'a>>,
+        pub refs: Option<Box<dyn crate::client::ReadlineBufRead + 'a>>,
         /// The [`Protocol`] the remote advertised.
         pub protocol: Protocol,
     }
@@ -219,7 +219,7 @@ pub mod recv {
 #[allow(missing_docs)]
 ///
 pub mod recv {
-    use futures_io::{AsyncBufRead, AsyncRead};
+    use futures_io::AsyncRead;
     use futures_lite::AsyncReadExt;
 
     use crate::{client, client::Capabilities, Protocol};
@@ -232,7 +232,7 @@ pub mod recv {
         ///
         /// This is `Some` only when protocol v1 is used. The [`AsyncBufRead`] must be exhausted by
         /// the caller.
-        pub refs: Option<Box<dyn AsyncBufRead + Unpin + 'a>>,
+        pub refs: Option<Box<dyn crate::client::ReadlineBufRead + Unpin + 'a>>,
         /// The [`Protocol`] the remote advertised.
         pub protocol: Protocol,
     }
