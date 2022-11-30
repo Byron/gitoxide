@@ -1,4 +1,4 @@
-use bstr::{BString, ByteSlice};
+use bstr::{BStr, BString, ByteSlice};
 
 use crate::handshake::{refs::parse::Error, Ref};
 
@@ -70,7 +70,7 @@ impl InternalRef {
             _ => None,
         }
     }
-    fn lookup_symbol_has_path(&self, predicate_path: &str) -> bool {
+    fn lookup_symbol_has_path(&self, predicate_path: &BStr) -> bool {
         matches!(self, InternalRef::SymbolicForLookup { path, .. } if path == predicate_path)
     }
 }
@@ -109,19 +109,19 @@ pub(crate) fn from_capabilities<'a>(
 pub(in crate::handshake::refs) fn parse_v1(
     num_initial_out_refs: usize,
     out_refs: &mut Vec<InternalRef>,
-    line: &str,
+    line: &BStr,
 ) -> Result<(), Error> {
     let trimmed = line.trim_end();
     let (hex_hash, path) = trimmed.split_at(
         trimmed
-            .find(' ')
-            .ok_or_else(|| Error::MalformedV1RefLine(trimmed.to_owned()))?,
+            .find(b" ")
+            .ok_or_else(|| Error::MalformedV1RefLine(trimmed.to_owned().into()))?,
     );
     let path = &path[1..];
     if path.is_empty() {
-        return Err(Error::MalformedV1RefLine(trimmed.to_owned()));
+        return Err(Error::MalformedV1RefLine(trimmed.to_owned().into()));
     }
-    match path.strip_suffix("^{}") {
+    match path.strip_suffix(b"^{}") {
         Some(stripped) => {
             let (previous_path, tag) =
                 out_refs
@@ -146,7 +146,7 @@ pub(in crate::handshake::refs) fn parse_v1(
             match out_refs
                 .iter()
                 .take(num_initial_out_refs)
-                .position(|r| r.lookup_symbol_has_path(path))
+                .position(|r| r.lookup_symbol_has_path(path.into()))
             {
                 Some(position) => match out_refs.swap_remove(position) {
                     InternalRef::SymbolicForLookup { path: _, target } => out_refs.push(InternalRef::Symbolic {
@@ -166,36 +166,36 @@ pub(in crate::handshake::refs) fn parse_v1(
     Ok(())
 }
 
-pub(in crate::handshake::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
+pub(in crate::handshake::refs) fn parse_v2(line: &BStr) -> Result<Ref, Error> {
     let trimmed = line.trim_end();
-    let mut tokens = trimmed.splitn(3, ' ');
+    let mut tokens = trimmed.splitn(3, |b| *b == b' ');
     match (tokens.next(), tokens.next()) {
         (Some(hex_hash), Some(path)) => {
-            let id = if hex_hash == "unborn" {
+            let id = if hex_hash == b"unborn" {
                 None
             } else {
                 Some(git_hash::ObjectId::from_hex(hex_hash.as_bytes())?)
             };
             if path.is_empty() {
-                return Err(Error::MalformedV2RefLine(trimmed.to_owned()));
+                return Err(Error::MalformedV2RefLine(trimmed.to_owned().into()));
             }
             Ok(if let Some(attribute) = tokens.next() {
-                let mut tokens = attribute.splitn(2, ':');
+                let mut tokens = attribute.splitn(2, |b| *b == b':');
                 match (tokens.next(), tokens.next()) {
                     (Some(attribute), Some(value)) => {
                         if value.is_empty() {
-                            return Err(Error::MalformedV2RefLine(trimmed.to_owned()));
+                            return Err(Error::MalformedV2RefLine(trimmed.to_owned().into()));
                         }
                         match attribute {
-                            "peeled" => Ref::Peeled {
+                            b"peeled" => Ref::Peeled {
                                 full_ref_name: path.into(),
                                 object: git_hash::ObjectId::from_hex(value.as_bytes())?,
                                 tag: id.ok_or(Error::InvariantViolation {
                                     message: "got 'unborn' as tag target",
                                 })?,
                             },
-                            "symref-target" => match value {
-                                "(null)" => Ref::Direct {
+                            b"symref-target" => match value {
+                                b"(null)" => Ref::Direct {
                                     full_ref_name: path.into(),
                                     object: id.ok_or(Error::InvariantViolation {
                                         message: "got 'unborn' while (null) was a symref target",
@@ -215,13 +215,13 @@ pub(in crate::handshake::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
                             },
                             _ => {
                                 return Err(Error::UnkownAttribute {
-                                    attribute: attribute.to_owned(),
-                                    line: trimmed.to_owned(),
+                                    attribute: attribute.to_owned().into(),
+                                    line: trimmed.to_owned().into(),
                                 })
                             }
                         }
                     }
-                    _ => return Err(Error::MalformedV2RefLine(trimmed.to_owned())),
+                    _ => return Err(Error::MalformedV2RefLine(trimmed.to_owned().into())),
                 }
             } else {
                 Ref::Direct {
@@ -232,6 +232,6 @@ pub(in crate::handshake::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
                 }
             })
         }
-        _ => Err(Error::MalformedV2RefLine(trimmed.to_owned())),
+        _ => Err(Error::MalformedV2RefLine(trimmed.to_owned().into())),
     }
 }

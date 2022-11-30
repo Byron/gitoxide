@@ -13,17 +13,19 @@ pub mod parse {
         #[error(transparent)]
         Io(#[from] std::io::Error),
         #[error(transparent)]
+        DecodePacketline(#[from] git_transport::packetline::decode::Error),
+        #[error(transparent)]
         Id(#[from] git_hash::decode::Error),
         #[error("{symref:?} could not be parsed. A symref is expected to look like <NAME>:<target>.")]
         MalformedSymref { symref: BString },
         #[error("{0:?} could not be parsed. A V1 ref line should be '<hex-hash> <path>'.")]
-        MalformedV1RefLine(String),
+        MalformedV1RefLine(BString),
         #[error(
             "{0:?} could not be parsed. A V2 ref line should be '<hex-hash> <path>[ (peeled|symref-target):<value>'."
         )]
-        MalformedV2RefLine(String),
+        MalformedV2RefLine(BString),
         #[error("The ref attribute {attribute:?} is unknown. Found in line {line:?}")]
-        UnkownAttribute { attribute: String, line: String },
+        UnkownAttribute { attribute: BString, line: BString },
         #[error("{message}")]
         InvariantViolation { message: &'static str },
     }
@@ -65,3 +67,6 @@ pub use async_io::{from_v1_refs_received_as_part_of_handshake_and_capabilities, 
 mod blocking_io;
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::{from_v1_refs_received_as_part_of_handshake_and_capabilities, from_v2_refs};
+
+#[cfg(test)]
+mod tests;
