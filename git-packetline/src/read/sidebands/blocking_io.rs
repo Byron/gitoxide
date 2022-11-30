@@ -157,9 +157,7 @@ where
             self.cap, 0,
             "we don't support partial buffers right now - read-line must be used consistently"
         );
-        let line = std::str::from_utf8(self.fill_buf()?)
-            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
-            .unwrap();
+        let line = std::str::from_utf8(self.fill_buf()?).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
         buf.push_str(line);
         let bytes = line.len();
         self.cap = 0;

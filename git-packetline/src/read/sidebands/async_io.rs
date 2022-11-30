@@ -29,7 +29,10 @@ where
 {
     fn drop(&mut self) {
         if let State::Idle { ref mut parent } = self.state {
-            parent.as_mut().unwrap().reset();
+            parent
+                .as_mut()
+                .expect("parent is always available if we are idle")
+                .reset();
         }
     }
 }
@@ -118,14 +121,22 @@ where
     /// Forwards to the parent [StreamingPeekableIter::reset_with()]
     pub fn reset_with(&mut self, delimiters: &'static [PacketLineRef<'static>]) {
         if let State::Idle { ref mut parent } = self.state {
-            parent.as_mut().unwrap().reset_with(delimiters)
+            parent
+                .as_mut()
+                .expect("parent is always available if we are idle")
+                .reset_with(delimiters)
         }
     }
 
     /// Forwards to the parent [StreamingPeekableIter::stopped_at()]
     pub fn stopped_at(&self) -> Option<PacketLineRef<'static>> {
         match self.state {
-            State::Idle { ref parent } => parent.as_ref().unwrap().stopped_at,
+            State::Idle { ref parent } => {
+                parent
+                    .as_ref()
+                    .expect("parent is always available if we are idle")
+                    .stopped_at
+            }
             _ => None,
         }
     }
@@ -139,7 +150,12 @@ where
     /// next on a call to [`read_line()`][io::BufRead::read_line()].
     pub async fn peek_data_line(&mut self) -> Option<std::io::Result<Result<&[u8], crate::decode::Error>>> {
         match self.state {
-            State::Idle { ref mut parent } => match parent.as_mut().unwrap().peek_line().await {
+            State::Idle { ref mut parent } => match parent
+                .as_mut()
+                .expect("parent is always available if we are idle")
+                .peek_line()
+                .await
+            {
                 Some(Ok(Ok(crate::PacketLineRef::Data(line)))) => Some(Ok(Ok(line))),
                 Some(Ok(Err(err))) => Some(Ok(Err(err))),
                 Some(Err(err)) => Some(Err(err)),
@@ -174,8 +190,7 @@ where
         );
         let Self { buf, parent } = &mut *self;
         let line = std::str::from_utf8(ready!(Pin::new(parent).poll_fill_buf(cx))?)
-            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
-            .unwrap();
+            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
         buf.clear();
         buf.push_str(line);
         let bytes = line.len();
