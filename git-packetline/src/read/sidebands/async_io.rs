@@ -29,7 +29,10 @@ where
 {
     fn drop(&mut self) {
         if let State::Idle { ref mut parent } = self.state {
-            parent.as_mut().unwrap().reset();
+            parent
+                .as_mut()
+                .expect("parent is always available if we are idle")
+                .reset();
         }
     }
 }
@@ -118,14 +121,22 @@ where
     /// Forwards to the parent [StreamingPeekableIter::reset_with()]
     pub fn reset_with(&mut self, delimiters: &'static [PacketLineRef<'static>]) {
         if let State::Idle { ref mut parent } = self.state {
-            parent.as_mut().unwrap().reset_with(delimiters)
+            parent
+                .as_mut()
+                .expect("parent is always available if we are idle")
+                .reset_with(delimiters)
         }
     }
 
     /// Forwards to the parent [StreamingPeekableIter::stopped_at()]
     pub fn stopped_at(&self) -> Option<PacketLineRef<'static>> {
         match self.state {
-            State::Idle { ref parent } => parent.as_ref().unwrap().stopped_at,
+            State::Idle { ref parent } => {
+                parent
+                    .as_ref()
+                    .expect("parent is always available if we are idle")
+                    .stopped_at
+            }
             _ => None,
         }
     }
@@ -137,10 +148,19 @@ where
 
     /// Effectively forwards to the parent [StreamingPeekableIter::peek_line()], allowing to see what would be returned
     /// next on a call to [`read_line()`][io::BufRead::read_line()].
-    pub async fn peek_data_line(&mut self) -> Option<std::io::Result<Result<&[u8], crate::decode::Error>>> {
+    ///
+    /// # Warning
+    ///
+    /// This skips all sideband handling and may return an unprocessed line with sidebands still contained in it.
+    pub async fn peek_data_line(&mut self) -> Option<std::io::Result<Result<&[u8], decode::Error>>> {
         match self.state {
-            State::Idle { ref mut parent } => match parent.as_mut().unwrap().peek_line().await {
-                Some(Ok(Ok(crate::PacketLineRef::Data(line)))) => Some(Ok(Ok(line))),
+            State::Idle { ref mut parent } => match parent
+                .as_mut()
+                .expect("parent is always available if we are idle")
+                .peek_line()
+                .await
+            {
+                Some(Ok(Ok(PacketLineRef::Data(line)))) => Some(Ok(Ok(line))),
                 Some(Ok(Err(err))) => Some(Ok(Err(err))),
                 Some(Err(err)) => Some(Err(err)),
                 _ => None,
@@ -149,9 +169,54 @@ where
         }
     }
 
-    /// Read a packet line as line.
+    /// Read a packet line as string line.
     pub fn read_line<'b>(&'b mut self, buf: &'b mut String) -> ReadLineFuture<'a, 'b, T, F> {
         ReadLineFuture { parent: self, buf }
+    }
+
+    /// Read a packet line from the underlying packet reader, returning empty lines if a stop-packetline was reached.
+    ///
+    /// # Warning
+    ///
+    /// This skips all sideband handling and may return an unprocessed line with sidebands still contained in it.
+    pub async fn read_data_line(&mut self) -> Option<std::io::Result<Result<PacketLineRef<'_>, decode::Error>>> {
+        match &mut self.state {
+            State::Idle { parent: Some(parent) } => {
+                assert_eq!(
+                    self.cap, 0,
+                    "we don't support partial buffers right now - read-line must be used consistently"
+                );
+                parent.read_line().await
+            }
+            _ => None,
+        }
+    }
+}
+
+pub struct ReadDataLineFuture<'a, 'b, T: AsyncRead, F> {
+    parent: &'b mut WithSidebands<'a, T, F>,
+    buf: &'b mut Vec<u8>,
+}
+
+impl<'a, 'b, T, F> Future for ReadDataLineFuture<'a, 'b, T, F>
+where
+    T: AsyncRead + Unpin,
+    F: FnMut(bool, &[u8]) + Unpin,
+{
+    type Output = std::io::Result<usize>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        assert_eq!(
+            self.parent.cap, 0,
+            "we don't support partial buffers right now - read-line must be used consistently"
+        );
+        let Self { buf, parent } = &mut *self;
+        let line = ready!(Pin::new(parent).poll_fill_buf(cx))?;
+        buf.clear();
+        buf.extend_from_slice(line);
+        let bytes = line.len();
+        self.parent.cap = 0;
+        Poll::Ready(Ok(bytes))
     }
 }
 
@@ -174,8 +239,7 @@ where
         );
         let Self { buf, parent } = &mut *self;
         let line = std::str::from_utf8(ready!(Pin::new(parent).poll_fill_buf(cx))?)
-            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
-            .unwrap();
+            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
         buf.clear();
         buf.push_str(line);
         let bytes = line.len();

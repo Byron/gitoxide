@@ -59,7 +59,7 @@ git-packetline = { version = "^0.14.0", path = "../git-packetline" }
 git-credentials = { version = "^0.7.0", path = "../git-credentials", optional = true }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
-bstr = { version = "1.0.1", default-features = false, features = ["std"] }
+bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"] }
 thiserror = "1.0.26"
 
 # for async-client

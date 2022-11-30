@@ -16,7 +16,7 @@ pub struct SetServiceResponse<'a> {
     /// The capabilities parsed from the server response.
     pub capabilities: Capabilities,
     /// In protocol version one, this is set to a list of refs and their peeled counterparts.
-    pub refs: Option<Box<dyn futures_io::AsyncBufRead + Unpin + 'a>>,
+    pub refs: Option<Box<dyn crate::client::ReadlineBufRead + Unpin + 'a>>,
 }
 
 /// All methods provided here must be called in the correct order according to the [communication protocol][Protocol]

@@ -84,13 +84,30 @@ where
 
     /// Effectively forwards to the parent [StreamingPeekableIter::peek_line()], allowing to see what would be returned
     /// next on a call to [`read_line()`][io::BufRead::read_line()].
+    ///
+    /// # Warning
+    ///
+    /// This skips all sideband handling and may return an unprocessed line with sidebands still contained in it.
     pub fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], crate::decode::Error>>> {
         match self.parent.peek_line() {
-            Some(Ok(Ok(crate::PacketLineRef::Data(line)))) => Some(Ok(Ok(line))),
+            Some(Ok(Ok(PacketLineRef::Data(line)))) => Some(Ok(Ok(line))),
             Some(Ok(Err(err))) => Some(Ok(Err(err))),
             Some(Err(err)) => Some(Err(err)),
             _ => None,
         }
+    }
+
+    /// Read a whole packetline from the underlying reader, with empty lines indicating a stop packetline.
+    ///
+    /// # Warning
+    ///
+    /// This skips all sideband handling and may return an unprocessed line with sidebands still contained in it.
+    pub fn read_data_line(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, crate::decode::Error>>> {
+        assert_eq!(
+            self.cap, 0,
+            "we don't support partial buffers right now - read-line must be used consistently"
+        );
+        self.parent.read_line()
     }
 }
 
@@ -157,9 +174,7 @@ where
             self.cap, 0,
             "we don't support partial buffers right now - read-line must be used consistently"
         );
-        let line = std::str::from_utf8(self.fill_buf()?)
-            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
-            .unwrap();
+        let line = std::str::from_utf8(self.fill_buf()?).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
         buf.push_str(line);
         let bytes = line.len();
         self.cap = 0;

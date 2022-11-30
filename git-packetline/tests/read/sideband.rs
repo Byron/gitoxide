@@ -145,6 +145,52 @@ async fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Resu
 }
 
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
+async fn readline_reads_one_packet_line_at_a_time() -> crate::Result {
+    let buf = fixture_bytes("v1/01-clone.combined-output-no-binary");
+
+    let mut rd = git_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLineRef::Flush]);
+
+    let mut r = rd.as_read();
+    let line = r.read_data_line().await.unwrap()??.as_bstr().unwrap();
+    assert_eq!(line, "808e50d724f604f69ab93c6da2919c014667bedb HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n");
+    let line = r.read_data_line().await.unwrap()??.as_bstr().unwrap();
+    assert_eq!(line, "808e50d724f604f69ab93c6da2919c014667bedb refs/heads/master\n");
+    let line = r.read_data_line().await;
+    assert!(line.is_none(), "flush means `None`");
+    let line = r.read_data_line().await;
+    assert!(line.is_none(), "…which can't be overcome unless the reader is reset");
+    assert_eq!(
+        r.stopped_at(),
+        Some(PacketLineRef::Flush),
+        "it knows what stopped the reader"
+    );
+
+    drop(r);
+    rd.reset();
+
+    let mut r = rd.as_read();
+    let line = r.read_data_line().await.unwrap()??.as_bstr().unwrap();
+    assert_eq!(line.as_bstr(), "NAK\n");
+
+    drop(r);
+
+    let mut r = rd.as_read_with_sidebands(|_, _| ());
+    let line = r.read_data_line().await.unwrap()??.as_bstr().unwrap();
+    assert_eq!(
+        line.as_bstr(),
+        "\x02Enumerating objects: 3, done.\n",
+        "sidebands are ignored entirely here"
+    );
+    for _ in 0..6 {
+        let _discard_more_progress = r.read_data_line().await.unwrap()??.as_bstr().unwrap();
+    }
+    let line = r.read_data_line().await;
+    assert!(line.is_none(), "and we have reached the end");
+
+    Ok(())
+}
+
+#[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn peek_past_an_actual_eof_is_an_error() -> crate::Result {
     let input = b"0009ERR e";
     let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[]);

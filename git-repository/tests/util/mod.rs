@@ -35,6 +35,7 @@ pub fn restricted() -> open::Options {
 pub fn restricted_and_git() -> open::Options {
     let mut opts = open::Options::isolated();
     opts.permissions.env.git_prefix = git_sec::Permission::Allow;
+    opts.permissions.env.identity = git_sec::Permission::Allow;
     opts
 }
 

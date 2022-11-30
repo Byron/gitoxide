@@ -15,9 +15,9 @@ pub enum Error {
     #[error("a version line was expected, but none was retrieved")]
     MissingVersionLine,
     #[error("expected 'version X', got {0:?}")]
-    MalformattedVersionLine(String),
+    MalformattedVersionLine(BString),
     #[error("Got unsupported version '{}', expected {actual:?}", *desired as u8)]
-    UnsupportedVersion { desired: Protocol, actual: String },
+    UnsupportedVersion { desired: Protocol, actual: BString },
     #[error("An IO error occurred while reading V2 lines")]
     Io(#[from] std::io::Error),
 }
@@ -81,34 +81,32 @@ impl Capabilities {
         ))
     }
 
-    /// Parse capabilities from the given a `first_line` and the rest of the lines as single newline
-    /// separated string via `remaining_lines`.
+    /// Parse capabilities from the given a `lines_buf` which is expected to be all newline separated lines
+    /// from the server.
     ///
     /// Useful for parsing capabilities from a data sent from a server, and to avoid having to deal with
     /// blocking and async traits for as long as possible. There is no value in parsing a few bytes
     /// in a non-blocking fashion.
-    pub fn from_lines(
-        first_line: Option<impl Into<std::io::Result<String>>>,
-        remaining_lines: impl Into<String>,
-    ) -> Result<Capabilities, Error> {
-        let version_line = first_line.map(Into::into).ok_or(Error::MissingVersionLine)??;
+    pub fn from_lines(lines_buf: BString) -> Result<Capabilities, Error> {
+        let mut lines = <_ as bstr::ByteSlice>::lines(lines_buf.as_slice().trim());
+        let version_line = lines.next().ok_or(Error::MissingVersionLine)?;
         let (name, value) = version_line.split_at(
             version_line
-                .find(' ')
-                .ok_or_else(|| Error::MalformattedVersionLine(version_line.clone()))?,
+                .find(b" ")
+                .ok_or_else(|| Error::MalformattedVersionLine(version_line.to_owned().into()))?,
         );
-        if name != "version" {
-            return Err(Error::MalformattedVersionLine(version_line));
+        if name != b"version" {
+            return Err(Error::MalformattedVersionLine(version_line.to_owned().into()));
         }
-        if value != " 2" {
+        if value != b" 2" {
             return Err(Error::UnsupportedVersion {
                 desired: Protocol::V2,
-                actual: value.to_owned(),
+                actual: value.to_owned().into(),
             });
         }
         Ok(Capabilities {
             value_sep: b'\n',
-            data: remaining_lines.into().into(),
+            data: lines.as_bytes().into(),
         })
     }
 
@@ -154,7 +152,8 @@ impl Capabilities {
 #[cfg(feature = "blocking-client")]
 ///
 pub mod recv {
-    use std::{io, io::BufRead};
+    use std::io;
+    use std::io::Read;
 
     use crate::{client, client::Capabilities, Protocol};
 
@@ -166,7 +165,7 @@ pub mod recv {
         ///
         /// This is `Some` only when protocol v1 is used. The [`io::BufRead`] must be exhausted by
         /// the caller.
-        pub refs: Option<Box<dyn std::io::BufRead + 'a>>,
+        pub refs: Option<Box<dyn crate::client::ReadlineBufRead + 'a>>,
         /// The [`Protocol`] the remote advertised.
         pub protocol: Protocol,
     }
@@ -203,9 +202,10 @@ pub mod recv {
                 }
                 Protocol::V2 => Ok(Outcome {
                     capabilities: {
-                        let rd = rd.as_read();
-                        let mut lines = rd.lines();
-                        Capabilities::from_lines(lines.next(), lines.collect::<Result<Vec<_>, _>>()?.join("\n"))?
+                        let mut rd = rd.as_read();
+                        let mut buf = Vec::new();
+                        rd.read_to_end(&mut buf)?;
+                        Capabilities::from_lines(buf.into())?
                     },
                     refs: None,
                     protocol: Protocol::V2,
@@ -219,8 +219,8 @@ pub mod recv {
 #[allow(missing_docs)]
 ///
 pub mod recv {
-    use futures_io::{AsyncBufRead, AsyncRead};
-    use futures_lite::{AsyncBufReadExt, StreamExt};
+    use futures_io::AsyncRead;
+    use futures_lite::AsyncReadExt;
 
     use crate::{client, client::Capabilities, Protocol};
 
@@ -232,7 +232,7 @@ pub mod recv {
         ///
         /// This is `Some` only when protocol v1 is used. The [`AsyncBufRead`] must be exhausted by
         /// the caller.
-        pub refs: Option<Box<dyn AsyncBufRead + Unpin + 'a>>,
+        pub refs: Option<Box<dyn crate::client::ReadlineBufRead + Unpin + 'a>>,
         /// The [`Protocol`] the remote advertised.
         pub protocol: Protocol,
     }
@@ -270,14 +270,10 @@ pub mod recv {
                 }
                 Protocol::V2 => Ok(Outcome {
                     capabilities: {
-                        let rd = rd.as_read();
-                        let mut lines_with_err = rd.lines();
-                        let mut lines = Vec::new();
-                        while let Some(line) = lines_with_err.next().await {
-                            lines.push(line?);
-                        }
-                        let mut lines = lines.into_iter();
-                        Capabilities::from_lines(lines.next().map(Ok), lines.collect::<Vec<_>>().join("\n"))?
+                        let mut rd = rd.as_read();
+                        let mut buf = Vec::new();
+                        rd.read_to_end(&mut buf).await?;
+                        Capabilities::from_lines(buf.into())?
                     },
                     refs: None,
                     protocol: Protocol::V2,

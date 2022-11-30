@@ -123,7 +123,7 @@ mod with_overrides {
         opts.permissions.env.git_prefix = Permission::Allow;
         opts.permissions.env.http_transport = Permission::Allow;
         opts.permissions.env.identity = Permission::Allow;
-        opts.permissions.env.gitoxide_prefix = Permission::Allow;
+        opts.permissions.env.objects = Permission::Allow;
         let repo = named_subrepo_opts("make_config_repos.sh", "http-config", opts)?;
         let config = repo.config_snapshot();
         assert_eq!(

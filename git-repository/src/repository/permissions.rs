@@ -68,35 +68,38 @@ pub struct Environment {
     pub xdg_config_home: git_sec::Permission,
     /// Control the way resources pointed to by the home directory (similar to `xdg_config_home`) may be used.
     pub home: git_sec::Permission,
-    /// Control if resources pointed to by `GIT_*` prefixed environment variables can be used.
-    pub git_prefix: git_sec::Permission,
-    /// Control if resources pointed to by `SSH_*` prefixed environment variables can be used (like `SSH_ASKPASS`)
-    pub ssh_prefix: git_sec::Permission,
     /// Control if environment variables to configure the HTTP transport, like `http_proxy` may be used.
     ///
-    /// Note that http-transport related environment variables prefixed with `GIT_` are falling under the
-    /// `git_prefix` permission, like `GIT_HTTP_USER_AGENT`.
+    /// Note that http-transport related environment variables prefixed with `GIT_` may also be included here
+    /// if they match this category like `GIT_HTTP_USER_AGENT`.
     pub http_transport: git_sec::Permission,
     /// Control if the `EMAIL` environment variables may be read.
     ///
-    /// Note that identity related environment variables prefixed with `GIT_` are falling under the
-    /// `git_prefix` permission, like `GIT_AUTHOR_NAME`.
+    /// Note that identity related environment variables prefixed with `GIT_` may also be included here
+    /// if they match this category.
     pub identity: git_sec::Permission,
-    /// Decide if `gitoxide` specific variables may be read, prefixed with `GITOXIDE_`.
-    pub gitoxide_prefix: git_sec::Permission,
+    /// Control if environment variables related to the object database are handled. This includes features and performance
+    /// options alike.
+    pub objects: git_sec::Permission,
+    /// Control if resources pointed to by `GIT_*` prefixed environment variables can be used, **but only** if they
+    /// are not contained in any other category. This is a catch-all section.
+    pub git_prefix: git_sec::Permission,
+    /// Control if resources pointed to by `SSH_*` prefixed environment variables can be used (like `SSH_ASKPASS`)
+    pub ssh_prefix: git_sec::Permission,
 }
 
 impl Environment {
     /// Allow access to the entire environment.
     pub fn all() -> Self {
+        let allow = git_sec::Permission::Allow;
         Environment {
-            xdg_config_home: git_sec::Permission::Allow,
-            home: git_sec::Permission::Allow,
-            git_prefix: git_sec::Permission::Allow,
-            ssh_prefix: git_sec::Permission::Allow,
-            http_transport: git_sec::Permission::Allow,
-            identity: git_sec::Permission::Allow,
-            gitoxide_prefix: git_sec::Permission::Allow,
+            xdg_config_home: allow,
+            home: allow,
+            git_prefix: allow,
+            ssh_prefix: allow,
+            http_transport: allow,
+            identity: allow,
+            objects: allow,
         }
     }
 }
@@ -143,7 +146,7 @@ impl Permissions {
                     git_prefix: deny,
                     http_transport: deny,
                     identity: deny,
-                    gitoxide_prefix: deny,
+                    objects: deny,
                 }
             },
         }

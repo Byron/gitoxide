@@ -53,7 +53,7 @@ mod v2 {
     use git_transport::client::Capabilities;
 
     fn capabilities(command: &str, input: &str) -> Capabilities {
-        Capabilities::from_lines(Some(Ok("version 2".into())), format!("{}={}", command, input))
+        Capabilities::from_lines(format!("version 2\n{}={}", command, input).into())
             .expect("valid input for V2 capabilities")
     }
 

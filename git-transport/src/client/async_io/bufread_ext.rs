@@ -5,6 +5,7 @@ use std::{
 
 use async_trait::async_trait;
 use futures_io::{AsyncBufRead, AsyncRead};
+use git_packetline::PacketLineRef;
 
 use crate::{
     client::{Error, MessageKind},
@@ -16,11 +17,28 @@ use crate::{
 /// it onto an executor.
 pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
 
-/// This trait exists to get a version of a `git_packetline::Provider` without type parameters.
-/// For the sake of usability, it also implements [`std::io::BufRead`] making it trivial to (eventually)
-/// read pack files while keeping the possibility to read individual lines with low overhead.
+/// This trait exists to get a version of a `git_packetline::Provider` without type parameters,
+/// but leave support for reading lines directly without forcing them through `String`.
+///
+/// For the sake of usability, it also implements [`std::io::BufRead`] making it trivial to
+/// read pack files while keeping open the option to read individual lines with low overhead.
 #[async_trait(?Send)]
-pub trait ExtendedBufRead: AsyncBufRead {
+pub trait ReadlineBufRead: AsyncBufRead {
+    /// Read a packet line into the internal buffer and return it.
+    ///
+    /// Returns `None` if the end of iteration is reached because of one of the following:
+    ///
+    ///  * natural EOF
+    ///  * ERR packet line encountered
+    ///  * A `delimiter` packet line encountered
+    async fn readline(
+        &mut self,
+    ) -> Option<io::Result<Result<git_packetline::PacketLineRef<'_>, git_packetline::decode::Error>>>;
+}
+
+/// Provide even more access to the underlying packet reader.
+#[async_trait(?Send)]
+pub trait ExtendedBufRead: ReadlineBufRead {
     /// Set the handler to which progress will be delivered.
     ///
     /// Note that this is only possible if packet lines are sent in side band mode.
@@ -33,6 +51,13 @@ pub trait ExtendedBufRead: AsyncBufRead {
     fn reset(&mut self, version: Protocol);
     /// Return the kind of message at which the reader stopped.
     fn stopped_at(&self) -> Option<MessageKind>;
+}
+
+#[async_trait(?Send)]
+impl<'a, T: ReadlineBufRead + ?Sized + 'a + Unpin> ReadlineBufRead for Box<T> {
+    async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+        self.deref_mut().readline().await
+    }
 }
 
 #[async_trait(?Send)]
@@ -51,6 +76,20 @@ impl<'a, T: ExtendedBufRead + ?Sized + 'a + Unpin> ExtendedBufRead for Box<T> {
 
     fn stopped_at(&self) -> Option<MessageKind> {
         self.deref().stopped_at()
+    }
+}
+
+#[async_trait(?Send)]
+impl<T: AsyncRead + Unpin> ReadlineBufRead for git_packetline::read::WithSidebands<'_, T, for<'b> fn(bool, &'b [u8])> {
+    async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+        self.readline().await
+    }
+}
+
+#[async_trait(?Send)]
+impl<'a, T: AsyncRead + Unpin> ReadlineBufRead for git_packetline::read::WithSidebands<'a, T, HandleProgress> {
+    async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+        self.readline().await
     }
 }
 
