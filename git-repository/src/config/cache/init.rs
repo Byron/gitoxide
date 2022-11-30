@@ -34,7 +34,7 @@ impl Cache {
             ssh_prefix: _,
             http_transport,
             identity,
-            gitoxide_prefix,
+            objects,
         }: repository::permissions::Environment,
         repository::permissions::Config {
             git_binary: use_installation,
@@ -136,7 +136,7 @@ impl Cache {
                         source: git_config::Source::Api,
                     })?;
             }
-            apply_environment_overrides(&mut globals, *git_prefix, http_transport, identity, gitoxide_prefix)?;
+            apply_environment_overrides(&mut globals, *git_prefix, http_transport, identity, objects)?;
             globals
         };
 
@@ -253,7 +253,7 @@ fn apply_environment_overrides(
     git_prefix: Permission,
     http_transport: Permission,
     identity: Permission,
-    gitoxide_prefix: Permission,
+    objects: Permission,
 ) -> Result<(), Error> {
     fn var_as_bstring(var: &str, perm: Permission) -> Option<BString> {
         perm.check_opt(var)
@@ -266,15 +266,15 @@ fn apply_environment_overrides(
         let mut section = env_override
             .new_section("http", None)
             .expect("statically known valid section name");
-        for (var, key, permission) in [
-            ("GIT_HTTP_LOW_SPEED_LIMIT", "lowSpeedLimit", git_prefix),
-            ("GIT_HTTP_LOW_SPEED_TIME", "lowSpeedTime", git_prefix),
-            ("GIT_HTTP_USER_AGENT", "userAgent", git_prefix),
-            ("GIT_HTTP_PROXY_AUTHMETHOD", "proxyAuthMethod", git_prefix),
-            ("all_proxy", "all-proxy-lower", http_transport),
-            ("ALL_PROXY", "all-proxy", http_transport),
+        for (var, key) in [
+            ("GIT_HTTP_LOW_SPEED_LIMIT", "lowSpeedLimit"),
+            ("GIT_HTTP_LOW_SPEED_TIME", "lowSpeedTime"),
+            ("GIT_HTTP_USER_AGENT", "userAgent"),
+            ("GIT_HTTP_PROXY_AUTHMETHOD", "proxyAuthMethod"),
+            ("all_proxy", "all-proxy-lower"),
+            ("ALL_PROXY", "all-proxy"),
         ] {
-            if let Some(value) = var_as_bstring(var, permission) {
+            if let Some(value) = var_as_bstring(var, http_transport) {
                 section.push_with_comment(
                     key.try_into().expect("statically known to be valid"),
                     Some(value.as_ref()),
@@ -318,7 +318,7 @@ fn apply_environment_overrides(
             ("GIT_COMMITTER_NAME", "nameFallback"),
             ("GIT_COMMITTER_EMAIL", "emailFallback"),
         ] {
-            if let Some(value) = var_as_bstring(var, git_prefix) {
+            if let Some(value) = var_as_bstring(var, identity) {
                 section.push_with_comment(
                     key.try_into().expect("statically known to be valid"),
                     Some(value.as_ref()),
@@ -342,7 +342,7 @@ fn apply_environment_overrides(
             ("GIT_AUTHOR_NAME", "nameFallback"),
             ("GIT_AUTHOR_EMAIL", "emailFallback"),
         ] {
-            if let Some(value) = var_as_bstring(var, git_prefix) {
+            if let Some(value) = var_as_bstring(var, identity) {
                 section.push_with_comment(
                     key.try_into().expect("statically known to be valid"),
                     Some(value.as_ref()),
@@ -387,7 +387,7 @@ fn apply_environment_overrides(
             .expect("statically known valid section name");
 
         for (var, key) in [("GIT_PROTOCOL_FROM_USER", "protocolFromUser")] {
-            if let Some(value) = var_as_bstring(var, git_prefix) {
+            if let Some(value) = var_as_bstring(var, http_transport) {
                 section.push_with_comment(
                     key.try_into().expect("statically known to be valid"),
                     Some(value.as_ref()),
@@ -429,9 +429,9 @@ fn apply_environment_overrides(
             .expect("statically known valid section name");
 
         for (var, key, permission) in [
-            ("GIT_NO_REPLACE_OBJECTS", "noReplace", git_prefix),
-            ("GIT_REPLACE_REF_BASE", "replaceRefBase", git_prefix),
-            ("GITOXIDE_OBJECT_CACHE_MEMORY", "cacheLimit", gitoxide_prefix),
+            ("GIT_NO_REPLACE_OBJECTS", "noReplace", objects),
+            ("GIT_REPLACE_REF_BASE", "replaceRefBase", objects),
+            ("GITOXIDE_OBJECT_CACHE_MEMORY", "cacheLimit", objects),
         ] {
             if let Some(value) = var_as_bstring(var, permission) {
                 section.push_with_comment(
@@ -454,7 +454,7 @@ fn apply_environment_overrides(
             .expect("statically known valid section name");
 
         for (var, key) in [("GITOXIDE_PACK_CACHE_MEMORY", "deltaBaseCacheLimit")] {
-            if let Some(value) = var_as_bstring(var, gitoxide_prefix) {
+            if let Some(value) = var_as_bstring(var, objects) {
                 section.push_with_comment(
                     key.try_into().expect("statically known to be valid"),
                     Some(value.as_ref()),
@@ -474,15 +474,15 @@ fn apply_environment_overrides(
             .new_section("gitoxide", Some(Cow::Borrowed("http".into())))
             .expect("statically known valid section name");
 
-        for (var, key, permission) in [
-            ("ALL_PROXY", "allProxy", http_transport),
-            ("all_proxy", "allProxy", http_transport),
-            ("NO_PROXY", "noProxy", http_transport),
-            ("no_proxy", "noProxy", http_transport),
-            ("http_proxy", "proxy", http_transport),
-            ("GIT_CURL_VERBOSE", "verbose", git_prefix),
+        for (var, key) in [
+            ("ALL_PROXY", "allProxy"),
+            ("all_proxy", "allProxy"),
+            ("NO_PROXY", "noProxy"),
+            ("no_proxy", "noProxy"),
+            ("http_proxy", "proxy"),
+            ("GIT_CURL_VERBOSE", "verbose"),
         ] {
-            if let Some(value) = var_as_bstring(var, permission) {
+            if let Some(value) = var_as_bstring(var, http_transport) {
                 section.push_with_comment(
                     key.try_into().expect("statically known to be valid"),
                     Some(value.as_ref()),
