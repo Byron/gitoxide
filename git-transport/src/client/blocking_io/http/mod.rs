@@ -408,6 +408,9 @@ impl<H: Http, B: BufRead + Unpin> BufRead for HeadersThenBody<H, B> {
 
 impl<H: Http, B: ReadlineBufRead + Unpin> ReadlineBufRead for HeadersThenBody<H, B> {
     fn readline(&mut self) -> Option<std::io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+        if let Err(err) = self.handle_headers() {
+            return Some(Err(err));
+        }
         self.body.readline()
     }
 }
