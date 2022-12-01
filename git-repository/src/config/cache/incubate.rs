@@ -15,27 +15,14 @@ pub(crate) struct StageOne {
 /// Initialization
 impl StageOne {
     pub fn new(
+        common_dir: &std::path::Path,
         git_dir: &std::path::Path,
         git_dir_trust: git_sec::Trust,
         lossy: Option<bool>,
         lenient: bool,
     ) -> Result<Self, Error> {
         let mut buf = Vec::with_capacity(512);
-        let config = {
-            let config_path = git_dir.join("config");
-            std::io::copy(&mut std::fs::File::open(&config_path)?, &mut buf)?;
-
-            git_config::File::from_bytes_owned(
-                &mut buf,
-                git_config::file::Metadata::from(git_config::Source::Local)
-                    .at(config_path)
-                    .with(git_dir_trust),
-                git_config::file::init::Options {
-                    includes: git_config::file::includes::Options::no_follow(),
-                    ..util::base_options(lossy)
-                },
-            )?
-        };
+        let mut config = load_config(&mut buf, common_dir.join("config"), git_dir_trust, lossy)?;
 
         let is_bare = util::config_bool(&config, "core.bare", false, lenient)?;
         let repo_format_version = config
@@ -57,6 +44,11 @@ impl StageOne {
             .transpose()?
             .unwrap_or(git_hash::Kind::Sha1);
 
+        if util::config_bool(&config, "extensions.worktreeConfig", false, lenient)? {
+            let wt_config = load_config(&mut buf, git_dir.join("config.worktree"), git_dir_trust, lossy)?;
+            config.append(wt_config);
+        }
+
         let reflog = util::query_refupdates(&config, lenient)?;
         Ok(StageOne {
             git_dir_config: config,
@@ -67,4 +59,26 @@ impl StageOne {
             reflog,
         })
     }
+}
+
+fn load_config(
+    buf: &mut Vec<u8>,
+    config_path: std::path::PathBuf,
+    git_dir_trust: git_sec::Trust,
+    lossy: Option<bool>,
+) -> Result<git_config::File<'static>, Error> {
+    std::io::copy(&mut std::fs::File::open(&config_path)?, buf)?;
+
+    let config = git_config::File::from_bytes_owned(
+        buf,
+        git_config::file::Metadata::from(git_config::Source::Worktree)
+            .at(config_path)
+            .with(git_dir_trust),
+        git_config::file::init::Options {
+            includes: git_config::file::includes::Options::no_follow(),
+            ..util::base_options(lossy)
+        },
+    )?;
+
+    Ok(config)
 }
