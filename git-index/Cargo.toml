@@ -31,7 +31,7 @@ internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
 git-features = { version = "^0.24.1", path = "../git-features", features = ["rustsha1", "progress"] }
-git-hash = { version = "^0.10.0", path = "../git-hash" }
+git-hash = { version = "^0.10.1", path = "../git-hash" }
 git-bitmap = { version = "^0.2.0", path = "../git-bitmap" }
 git-object = { version = "^0.23.0", path = "../git-object" }
 git-traverse = { version = "^0.19.0", path = "../git-traverse" }

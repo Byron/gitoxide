@@ -15,7 +15,7 @@ serde1 = ["serde", "git-hash/serde1", "git-object/serde1"]
 doctest = false
 
 [dependencies]
-git-hash = { version = "^0.10.0", path = "../git-hash" }
+git-hash = { version = "^0.10.1", path = "../git-hash" }
 git-object = { version = "^0.23.0", path = "../git-object" }
 thiserror = "1.0.32"
 imara-diff = "0.1.3"

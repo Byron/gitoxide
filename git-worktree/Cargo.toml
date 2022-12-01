@@ -30,7 +30,7 @@ internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
 git-index = { version = "^0.9.1", path = "../git-index" }
-git-hash = { version = "^0.10.0", path = "../git-hash" }
+git-hash = { version = "^0.10.1", path = "../git-hash" }
 git-object = { version = "^0.23.0", path = "../git-object" }
 git-glob = { version = "^0.5.0", path = "../git-glob" }
 git-path = { version = "^0.6.0", path = "../git-path" }

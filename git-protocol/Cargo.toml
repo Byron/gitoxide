@@ -41,7 +41,7 @@ required-features = ["async-client"]
 [dependencies]
 git-features = { version = "^0.24.1", path = "../git-features", features = ["progress"] }
 git-transport = { version = "^0.23.0", path = "../git-transport" }
-git-hash = { version = "^0.10.0", path = "../git-hash" }
+git-hash = { version = "^0.10.1", path = "../git-hash" }
 git-credentials = { version = "^0.7.0", path = "../git-credentials" }
 
 thiserror = "1.0.32"

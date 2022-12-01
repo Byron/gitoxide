@@ -12,7 +12,7 @@ include = ["src/**/*"]
 doctest = false
 
 [dependencies]
-git-hash = { version = "^0.10.0", path = "../git-hash" }
+git-hash = { version = "^0.10.1", path = "../git-hash" }
 git-object = { version = "^0.23.0", path = "../git-object" }
 git-hashtable = { version = "^0.1.0", path = "../git-hashtable" }
 thiserror = "1.0.32"
