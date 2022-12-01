@@ -22,7 +22,7 @@ impl StageOne {
         lenient: bool,
     ) -> Result<Self, Error> {
         let mut buf = Vec::with_capacity(512);
-        let mut config = load_config(&mut buf, common_dir.join("config"), git_dir_trust, lossy)?;
+        let config = load_config(&mut buf, common_dir.join("config"), git_dir_trust, lossy)?;
 
         let is_bare = util::config_bool(&config, "core.bare", false, lenient)?;
         let repo_format_version = config
@@ -44,10 +44,12 @@ impl StageOne {
             .transpose()?
             .unwrap_or(git_hash::Kind::Sha1);
 
-        if util::config_bool(&config, "extensions.worktreeConfig", false, lenient)? {
-            let wt_config = load_config(&mut buf, git_dir.join("config.worktree"), git_dir_trust, lossy)?;
-            config.append(wt_config);
-        }
+        let extension_worktree = util::config_bool(&config, "extensions.worktreeConfig", false, lenient)?;
+        let config = if extension_worktree {
+            load_config(&mut buf, git_dir.join("config.worktree"), git_dir_trust, lossy)?
+        } else {
+            config
+        };
 
         let reflog = util::query_refupdates(&config, lenient)?;
         Ok(StageOne {
