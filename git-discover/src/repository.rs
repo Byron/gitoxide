@@ -116,7 +116,7 @@ pub enum Kind {
     ///
     /// Note that this is merely a guess at this point as we didn't read the configuration yet.
     Bare,
-    /// A `git` repository along with a checked out files in a work tree.
+    /// A `git` repository along with checked out files in a work tree.
     WorkTree {
         /// If set, this is the git dir associated with this _linked_ worktree.
         /// If `None`, the git_dir is the `.git` directory inside the _main_ worktree we represent.
