@@ -15,6 +15,10 @@ fn with_worktree_configs() -> git_testtools::Result {
         base_config.string("worktree.setting").expect("exists").to_string(),
         "set in the main worktree"
     );
+    assert_eq!(
+        base_config.string("shared.setting").expect("exists").to_string(),
+        "set in the shared config"
+    );
 
     let wt1 = open(dir.join("wt-1")).unwrap();
     let wt1_config = wt1.config_snapshot();
@@ -29,6 +33,10 @@ fn with_worktree_configs() -> git_testtools::Result {
         wt1_config.string("worktree.setting").expect("exists").to_string(),
         "set in wt-1"
     );
+    assert_eq!(
+        wt1_config.string("shared.setting").expect("exists").to_string(),
+        "set in the shared config"
+    );
 
     let wt2 = open(dir.join("wt-2")).unwrap();
     let wt2_config = wt2.config_snapshot();
@@ -42,6 +50,10 @@ fn with_worktree_configs() -> git_testtools::Result {
     assert_eq!(
         wt2_config.string("worktree.setting").expect("exists").to_string(),
         "set in wt-2"
+    );
+    assert_eq!(
+        wt2_config.string("shared.setting").expect("exists").to_string(),
+        "set in the shared config"
     );
 
     Ok(())

@@ -14,6 +14,8 @@ git init repo
 
   git config extensions.worktreeConfig true
   git config --worktree worktree.setting "set in the main worktree"
+
+  git config shared.setting "set in the shared config"
 )
 
 (cd wt-1
