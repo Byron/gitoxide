@@ -2,95 +2,26 @@
 [![Crates.io](https://img.shields.io/crates/v/gitoxide.svg)](https://crates.io/crates/gitoxide)
 <img src="etc/msrv-badge.svg">
 
-**gix** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
-_user-experience_, and perform as _good or better than the canonical implementation_.
+`gitoxide` is an implementation of `git` written in Rust for developing future-proof applications which strive for correctness and
+performance while providing a pleasant and unsurprising developer experience. 
 
-Furthermore it provides **an easy and safe to use API** in the form of various small crates for implementing your own tools in a breeze.
-Please see _'Development Status'_ for a listing of all crates and their capabilities.
+`gitoxde` provides the `gix` and `ein` binaries for use on the command-line to allow experimentation with key features
+like `fetch` and `clone`, and to validate the usability and control of the API offered by the [`git-repository`] crate. 
 
-[![asciicast](https://asciinema.org/a/352942.svg)](https://asciinema.org/a/352942)
+`gitoxide` aspires to be a production-grade server implementation and the `ein` binary aspires to become the default way to interact with git repositories.
+
+[![asciicast](https://asciinema.org/a/542159.svg)](https://asciinema.org/a/542159)
+
+[`git-repository`]: https://docs.rs/git-repository
 
 ## Development Status
 
-### gitoxide _(CLI)_
-  * please note that all functionality comes from the `gitoxide-core` library, which mirrors these capabilities
-    and itself relies on all `git-*` crates.
-  * limit amount of threads used in operations that support it.
-  * choose between 'human' and 'json' output formats
-  * **the `ein` program** - convenient and for humans
-    * [x] **init** - initialize a new non-bare repository with a `main` branch
-    * [ ] **clone** - initialize a local copy of a remote repository
-    * **tools**  
-      * [x] **organize** - find all git repositories and place them in directories according to their remote paths
-      * [x] **find** - find all git repositories in a given directory - useful for tools like [skim][skim]
-      * [x] **estimate-hours** - estimate the time invested into a repository by evaluating commit dates.
-          * Based on the [git-hours] algorithm.
-          * See the [discussion][git-hours-discussion] for some performance data.
-  * **the `gix` program** _(plumbing)_ - lower level commands for use in automation
-    * **progress** - provide an overview of what works and what doesn't from the perspective of the git configuration.
-                     This is likely to change a lot over time depending on actual needs, but maybe useful for you to see
-                     if particular git-configuration is picked up and where it deviates.
-    * **config** - list the complete git configuration in human-readable form and optionally filter sections by name.
-    * **exclude**
-        * [x] **query** - check if path specs are excluded via gits exclusion rules like `.gitignore`.
-    * **verify** - validate a whole repository, for now only the object database.
-    * **commit**
-        * [x] **describe** - identify a commit by its closest tag in its past
-    * **tree**
-        * [x] **entries** - list tree entries for a single tree or recursively
-        * [x] **info** - display tree statistics
-    * **odb**
-        * [x] **info** - display odb statistics
-        * [x] **entries** - display all object ids in the object database
-    * **mailmap**
-        * [x] **entries** - display all entries of the aggregated mailmap git would use for substitution
-    * **revision**
-        * [x] **list** - list plain revision hashes from a starting point, similar to a very simple version of `git rev-list`.
-        * [x] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
-        * [x] **resolve** - show which objects a revspec resolves to, similar to `git rev-parse` but faster and with much better error handling
-        * [x] **previous-branches** - list all previously checked out branches, powered by the ref-log.
-    * **remote**    
-        * [x] **refs** - list all references available on the remote based on the current remote configuration.
-        * [x] **ref-map** - show how remote references relate to their local tracking branches as mapped by refspecs.
-    * [x] **fetch** - fetch the current remote or the given one, optionally just as dry-run.
-    * **clone**
-        * [x] initialize a new **bare** repository and fetch all objects.
-        * [x] initialize a new repository, fetch all objects and checkout the main worktree.
-    * **credential**
-        * [x] **fill/approve/reject** - The same as `git credential`, but implemented in Rust, calling helpers only when from trusted configuration.
-    * **free** - no git repository necessary
-        * **pack**
-          * [x] [verify](https://asciinema.org/a/352942)
-          * [x] [index verify](https://asciinema.org/a/352945) including each object sha1 and statistics
-          * [x] [explode](https://asciinema.org/a/352951), useful for transforming packs into loose objects for inspection or restoration
-            * [x] verify written objects (by reading them back from disk)
-          * [x] [receive](https://asciinema.org/a/359321) - receive a whole pack produced by **pack-send** or _git-upload-pack_, useful for `clone` like operations.
-          * [x] **create** - create a pack from given objects or tips of the commit graph.
-          * [ ] **send** - create a pack and send it using the pack protocol to stdout, similar to 'git-upload-pack', 
-                for consumption by **pack-receive** or _git-receive-pack_
-          - **multi-index**
-              * [x] **info** - print information about the file
-              * [x] **create** - create a multi-index from pack indices
-              * [x] **verify** - check the file for consistency
-              * [x] **entries** - list all entries of the file
-          - **index**
-              * [x] [create](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
-                 * [x] support for thin packs (as needed for fetch/pull)
-        * **commit-graph**
-          * [x] **verify** - assure that a commit-graph is consistent
-        * **mailmap**
-          * [x] **verify** - check entries of a mailmap file for parse errors and display them
-        * **index**
-            * [x] **entries** - show detailed entry information for human or machine consumption (via JSON)
-            * [x] **verify** - check the index for consistency
-            * [x] **info** - display general information about the index itself, with detailed extension information by default
-                * [x] detailed information about the TREE extension
-                * [ ] …other extensions details aren't implemented yet
-            * [x] **checkout-exclusive** - a predecessor of `git worktree`, providing flexible options to evaluate checkout performance from an index and/or an object database.
+The command-line tools as well as the status of each crate is described in 
+[the crate status document](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap).
 
-[skim]: https://github.com/lotabout/skim
-[git-hours]: https://github.com/kimmobrunfeldt/git-hours/blob/8aaeee237cb9d9028e7a2592a25ad8468b1f45e4/index.js#L114-L143
-[git-hours-discussion]: https://github.com/Byron/gitoxide/discussions/78
+For use in applications, look for the [`git-repository`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-repository) crate, 
+which serves as entrypoint to the functionality provided by various lower-level plumbing crates like
+[`git-config`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config).
 
 ### Crates
 
@@ -238,7 +169,7 @@ Once installed, there are two binaries:
 * **ein**
   * high level commands, _porcelain_, for every-day use, optimized for a pleasant user experience
 * **gix**
-  * low level commands, _plumbing_, for use in more specialized cases
+  * low level commands, _plumbing_, for use in more specialized cases and to validate newly written code in real-world scenarios
 
 ## Project Goals
 
@@ -249,8 +180,8 @@ Project goals can change over time as we learn more, and they can be challenged.
    * a simple command-line interface is provided for the most common git operations, optimized for
      user experience. A *simple-git* if you so will.
    * be the go-to implementation for anyone who wants to solve problems around git, and become
-     *the* alternative to `GitPython` in the process.
-   * become the foundation for a free distributed alternative to GitHub, and maybe even GitHub itself
+     *the* alternative to `GitPython` and *libgit2* in the process.
+   * become the foundation for a distributed alternative to GitHub, and maybe even for use within GitHub itself
  * **learn from the best to write the best possible idiomatic Rust**
    * *libgit2* is a fantastic resource to see what abstractions work, we will use them
    * use Rust's type system to make misuse impossible

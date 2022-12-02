@@ -1,3 +1,90 @@
+### gitoxide
+
+**gix** is a command-line interface (*CLI*) to access git repositories in various ways best decribed as low-level
+for use by experts or those validating functionality in real-world scenarios. Performance and efficiency are staples
+of the implementation.
+
+**ein** is reserved for one-off tools that are useful to many, and will one day implement a truly unique workflow
+with the potential to become the preferred way to interact with git repositories.
+
+Please note that all functionality comes from the `gitoxide-core` library, which mirrors these capabilities
+and itself relies on all `git-*` crates. It's not meant for consumption, for application development, please use `git-repository`.
+
+* **the `ein` program** - convenient and for humans
+    * [x] **init** - initialize a new non-bare repository with a `main` branch
+    * [ ] **clone** - initialize a local copy of a remote repository
+    * **tools**
+        * [x] **organize** - find all git repositories and place them in directories according to their remote paths
+        * [x] **find** - find all git repositories in a given directory - useful for tools like [skim][skim]
+        * [x] **estimate-hours** - estimate the time invested into a repository by evaluating commit dates.
+            * Based on the [git-hours] algorithm.
+            * See the [discussion][git-hours-discussion] for some performance data.
+* **the `gix` program** _(plumbing)_ - lower level commands for use in automation
+    * **progress** - provide an overview of what works and what doesn't from the perspective of the git configuration.
+      This is likely to change a lot over time depending on actual needs, but maybe useful for you to see
+      if particular git-configuration is picked up and where it deviates.
+    * **config** - list the complete git configuration in human-readable form and optionally filter sections by name.
+    * **exclude**
+        * [x] **query** - check if path specs are excluded via gits exclusion rules like `.gitignore`.
+    * **verify** - validate a whole repository, for now only the object database.
+    * **commit**
+        * [x] **describe** - identify a commit by its closest tag in its past
+    * **tree**
+        * [x] **entries** - list tree entries for a single tree or recursively
+        * [x] **info** - display tree statistics
+    * **odb**
+        * [x] **info** - display odb statistics
+        * [x] **entries** - display all object ids in the object database
+    * **mailmap**
+        * [x] **entries** - display all entries of the aggregated mailmap git would use for substitution
+    * **revision**
+        * [x] **list** - list plain revision hashes from a starting point, similar to a very simple version of `git rev-list`.
+        * [x] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
+        * [x] **resolve** - show which objects a revspec resolves to, similar to `git rev-parse` but faster and with much better error handling
+        * [x] **previous-branches** - list all previously checked out branches, powered by the ref-log.
+    * **remote**
+        * [x] **refs** - list all references available on the remote based on the current remote configuration.
+        * [x] **ref-map** - show how remote references relate to their local tracking branches as mapped by refspecs.
+    * [x] **fetch** - fetch the current remote or the given one, optionally just as dry-run.
+    * **clone**
+        * [x] initialize a new **bare** repository and fetch all objects.
+        * [x] initialize a new repository, fetch all objects and checkout the main worktree.
+    * **credential**
+        * [x] **fill/approve/reject** - The same as `git credential`, but implemented in Rust, calling helpers only when from trusted configuration.
+    * **free** - no git repository necessary
+        * **pack**
+            * [x] [verify](https://asciinema.org/a/352942)
+            * [x] [index verify](https://asciinema.org/a/352945) including each object sha1 and statistics
+            * [x] [explode](https://asciinema.org/a/352951), useful for transforming packs into loose objects for inspection or restoration
+                * [x] verify written objects (by reading them back from disk)
+            * [x] [receive](https://asciinema.org/a/359321) - receive a whole pack produced by **pack-send** or _git-upload-pack_, useful for `clone` like operations.
+            * [x] **create** - create a pack from given objects or tips of the commit graph.
+            * [ ] **send** - create a pack and send it using the pack protocol to stdout, similar to 'git-upload-pack',
+              for consumption by **pack-receive** or _git-receive-pack_
+            - **multi-index**
+                * [x] **info** - print information about the file
+                * [x] **create** - create a multi-index from pack indices
+                * [x] **verify** - check the file for consistency
+                * [x] **entries** - list all entries of the file
+            - **index**
+                * [x] [create](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
+                    * [x] support for thin packs (as needed for fetch/pull)
+        * **commit-graph**
+            * [x] **verify** - assure that a commit-graph is consistent
+        * **mailmap**
+            * [x] **verify** - check entries of a mailmap file for parse errors and display them
+        * **index**
+            * [x] **entries** - show detailed entry information for human or machine consumption (via JSON)
+            * [x] **verify** - check the index for consistency
+            * [x] **info** - display general information about the index itself, with detailed extension information by default
+                * [x] detailed information about the TREE extension
+                * [ ] …other extensions details aren't implemented yet
+            * [x] **checkout-exclusive** - a predecessor of `git worktree`, providing flexible options to evaluate checkout performance from an index and/or an object database.
+
+[skim]: https://github.com/lotabout/skim
+[git-hours]: https://github.com/kimmobrunfeldt/git-hours/blob/8aaeee237cb9d9028e7a2592a25ad8468b1f45e4/index.js#L114-L143
+[git-hours-discussion]: https://github.com/Byron/gitoxide/discussions/78
+
 ### git-actor
 * [x] read and write a signature that uniquely identifies an actor within a git repository
 
