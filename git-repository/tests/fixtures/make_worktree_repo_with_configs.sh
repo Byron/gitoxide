@@ -16,6 +16,7 @@ git init repo
   git config --worktree worktree.setting "set in the main worktree"
 
   git config shared.setting "set in the shared config"
+  git config override.setting "set in the shared config"
 )
 
 (cd wt-1
@@ -24,4 +25,5 @@ git init repo
 
 (cd wt-2
   git config --worktree worktree.setting "set in wt-2"
+  git config --worktree override.setting "override in wt-2"
 )
