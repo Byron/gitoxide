@@ -55,14 +55,14 @@ title "gix (with repository)"
       (with 'human output format'
         it "generates correct output" && {
           WITH_SNAPSHOT="$snapshot/success-format-human" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" --format human verify -s
+          expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --format human verify -s
         }
       )
       if test "$kind" = "max" || test "$kind" = "max-pure"; then
       (with "--format json"
         it "generates the correct output in JSON format" && {
           WITH_SNAPSHOT="$snapshot/success-format-json" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" --format json verify --statistics
+          expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --format json verify --statistics
         }
       )
       fi
@@ -83,20 +83,20 @@ title "gix (with repository)"
           (with "version 1"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/file-v-any" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=1 remote -n .git refs
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose -c protocol.version=1 remote -n .git refs
             }
           )
           (with "version 2"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/file-v-any" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=2  remote -n "$PWD" refs
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose -c protocol.version=2  remote -n "$PWD" refs
             }
           )
           if test "$kind" = "max" || test "$kind" = "max-pure"; then
           (with "--format json"
             it "generates the correct output in JSON format" && {
               WITH_SNAPSHOT="$snapshot/file-v-any-json" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" --format json remote -n . refs
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --format json remote -n . refs
             }
           )
           fi
@@ -108,13 +108,13 @@ title "gix (with repository)"
           (with "version 1"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/file-v-any" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" --config protocol.version=1 remote --name git://localhost/ refs
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --config protocol.version=1 remote --name git://localhost/ refs
             }
           )
           (with "version 2"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/file-v-any" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=2 remote -n git://localhost/ refs
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose -c protocol.version=2 remote -n git://localhost/ refs
             }
           )
         )
@@ -122,7 +122,7 @@ title "gix (with repository)"
         (with "https:// protocol (in small builds)"
           it "fails as http is not compiled in" && {
             WITH_SNAPSHOT="$snapshot/fail-http-in-small" \
-            expect_run $WITH_FAILURE "$exe_plumbing" -c protocol.version=1 remote -n https://github.com/byron/gitoxide refs
+            expect_run $WITH_FAILURE "$exe_plumbing" --no-verbose -c protocol.version=1 remote -n https://github.com/byron/gitoxide refs
           }
         )
         fi
@@ -131,12 +131,12 @@ title "gix (with repository)"
           (with "https:// protocol"
             (with "version 1"
               it "generates the correct output" && {
-                expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=1 remote -n https://github.com/byron/gitoxide refs
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose -c protocol.version=1 remote -n https://github.com/byron/gitoxide refs
               }
             )
             (with "version 2"
               it "generates the correct output" && {
-                expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=2 remote -n https://github.com/byron/gitoxide refs
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose -c protocol.version=2 remote -n https://github.com/byron/gitoxide refs
               }
             )
           )
@@ -145,7 +145,7 @@ title "gix (with repository)"
         else
           it "fails as the CLI doesn't include networking in 'small' mode" && {
             WITH_SNAPSHOT="$snapshot/remote ref-list-no-networking-in-small-failure" \
-            expect_run 2 "$exe_plumbing" -c protocol.version=1 remote -n .git refs
+            expect_run 2 "$exe_plumbing" --no-verbose -c protocol.version=1 remote -n .git refs
           }
         fi
       )
@@ -171,14 +171,14 @@ title "gix (with repository)"
             (with "NO output directory"
               it "generates the correct output" && {
                 WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
-                expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive -p 1 .git
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive -p 1 .git
               }
             )
             (with "output directory"
               mkdir out
               it "generates the correct output" && {
                 WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
-                expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive -p 1 .git out/
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive -p 1 .git out/
               }
               it "creates an index and a pack in the output directory" && {
                 WITH_SNAPSHOT="$snapshot/ls-in-output-dir" \
@@ -187,7 +187,7 @@ title "gix (with repository)"
               (with "--write-refs set"
                 it "generates the correct output" && {
                   WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
-                  expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive -p 1 --refs-directory out/all-refs .git out/
+                  expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive -p 1 --refs-directory out/all-refs .git out/
                 }
                 it "writes references into the refs folder of the output directory" && {
                   expect_snapshot "$snapshot/repo-refs" out/all-refs
@@ -199,7 +199,7 @@ title "gix (with repository)"
             (with "--format json"
               it "generates the correct output in JSON format" && {
                 WITH_SNAPSHOT="$snapshot/file-v-any-no-output-json" \
-                expect_run $SUCCESSFULLY "$exe_plumbing" --format json free pack receive --protocol 1 .git
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --format json free pack receive --protocol 1 .git
               }
             )
             fi
@@ -208,14 +208,14 @@ title "gix (with repository)"
             (with "NO output directory"
               it "generates the correct output" && {
                 WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
-                expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive -p 2 .git
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive -p 2 .git
               }
             )
             (with "output directory"
               mkdir out/
               it "generates the correct output" && {
                 WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
-                expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive .git out/
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive .git out/
               }
               it "creates an index and a pack in the output directory" && {
                 WITH_SNAPSHOT="$snapshot/ls-in-output-dir" \
@@ -227,7 +227,7 @@ title "gix (with repository)"
             (with "--format json"
               it "generates the correct output in JSON format" && {
                 WITH_SNAPSHOT="$snapshot/file-v-any-no-output-json" \
-                expect_run $SUCCESSFULLY "$exe_plumbing" --format json free pack receive --protocol 2 .git
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --format json free pack receive --protocol 2 .git
               }
             )
             fi
@@ -241,13 +241,13 @@ title "gix (with repository)"
               (with "no wanted refs"
                 it "generates the correct output" && {
                   WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
-                  expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive -p 1 git://localhost/
+                  expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive -p 1 git://localhost/
                 }
               )
               (with "wanted refs"
                 it "generates the correct output" && {
                   WITH_SNAPSHOT="$snapshot/file-v-any-no-output-wanted-ref-p1" \
-                  expect_run $WITH_FAILURE "$exe_plumbing" free pack receive -p 1 git://localhost/ -r =refs/heads/main
+                  expect_run $WITH_FAILURE "$exe_plumbing" --no-verbose free pack receive -p 1 git://localhost/ -r =refs/heads/main
                 }
               )
             )
@@ -255,7 +255,7 @@ title "gix (with repository)"
               mkdir out
               it "generates the correct output" && {
                 WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
-                expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive -p 1 git://localhost/ out/
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive -p 1 git://localhost/ out/
               }
             )
           )
@@ -264,18 +264,18 @@ title "gix (with repository)"
               (with "NO wanted refs"
                 it "generates the correct output" && {
                   WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
-                  expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive -p 2 git://localhost/
+                  expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive -p 2 git://localhost/
                 }
               )
               (with "wanted refs"
                 it "generates the correct output" && {
                   WITH_SNAPSHOT="$snapshot/file-v-any-no-output-single-ref" \
-                  expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive -p 2 git://localhost/ -r refs/heads/main
+                  expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive -p 2 git://localhost/ -r refs/heads/main
                 }
                 (when "ref does not exist"
                   it "fails with a detailed error message including what the server said" && {
                     WITH_SNAPSHOT="$snapshot/file-v-any-no-output-non-existing-single-ref" \
-                    expect_run $WITH_FAILURE "$exe_plumbing" free pack receive -p 2 git://localhost/ -r refs/heads/does-not-exist
+                    expect_run $WITH_FAILURE "$exe_plumbing" --no-verbose free pack receive -p 2 git://localhost/ -r refs/heads/does-not-exist
                   }
                 )
               )
@@ -283,7 +283,7 @@ title "gix (with repository)"
             (with "output directory"
               it "generates the correct output" && {
                 WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
-                expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive git://localhost/ out/
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive git://localhost/ out/
               }
             )
           )
@@ -293,12 +293,12 @@ title "gix (with repository)"
           (with "https:// protocol"
             (with "version 1"
               it "works" && {
-                expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive -p 1 https://github.com/byron/gitoxide
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive -p 1 https://github.com/byron/gitoxide
               }
             )
             (with "version 2"
               it "works" && {
-                expect_run $SUCCESSFULLY "$exe_plumbing" free pack receive -p 2 https://github.com/byron/gitoxide
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack receive -p 2 https://github.com/byron/gitoxide
               }
             )
           )
@@ -307,7 +307,7 @@ title "gix (with repository)"
         elif [[ "$kind" = "small" ]]; then
           it "fails as the CLI doesn't have networking in 'small' mode" && {
             WITH_SNAPSHOT="$snapshot/pack receive-no-networking-in-small-failure" \
-            expect_run 2 "$exe_plumbing" free pack receive -p 1 .git
+            expect_run 2 "$exe_plumbing" --no-verbose free pack receive -p 1 .git
           }
         fi
       )
@@ -402,7 +402,7 @@ title "gix (with repository)"
       (with "no objects directory specified"
         it "explodes the pack successfully and with desired output" && {
           WITH_SNAPSHOT="$snapshot/to-sink-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" no-repo pack explode "${PACK_FILE}.idx"
+          expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose no-repo pack explode "${PACK_FILE}.idx"
         }
 
         (when "using the --delete-pack flag"
@@ -412,7 +412,7 @@ title "gix (with repository)"
               PACK_FILE="${PACK_FILE##*/}"
               it "explodes the pack successfully and deletes the original pack and index" && {
                 WITH_SNAPSHOT="$snapshot/to-sink-delete-pack-success" \
-                expect_run $SUCCESSFULLY "$exe_plumbing" free pack explode --check skip-file-checksum --delete-pack "${PACK_FILE}.pack"
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack explode --check skip-file-checksum --delete-pack "${PACK_FILE}.pack"
               }
               it "removes the original files" && {
                 expect_run $WITH_FAILURE test -e "${PACK_FILE}".pack
@@ -427,7 +427,7 @@ title "gix (with repository)"
               (with "and all safety checks"
                 it "does not explode the file at all" && {
                   WITH_SNAPSHOT="$snapshot/broken-delete-pack-to-sink-failure" \
-                  expect_run $WITH_FAILURE "$exe_plumbing" free pack explode --sink-compress --check all --delete-pack "${PACK_FILE}.pack"
+                  expect_run $WITH_FAILURE "$exe_plumbing" --no-verbose free pack explode --sink-compress --check all --delete-pack "${PACK_FILE}.pack"
                 }
 
                 it "did not touch index or pack file" && {
@@ -439,7 +439,7 @@ title "gix (with repository)"
               (with "and no safety checks at all (and an output directory)"
                 it "does explode the file" && {
                   WITH_SNAPSHOT="$snapshot/broken-delete-pack-to-sink-skip-checks-success" \
-                  expect_run $SUCCESSFULLY "$exe_plumbing" free pack explode --verify --check skip-file-and-object-checksum-and-no-abort-on-decode \
+                  expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack explode --verify --check skip-file-and-object-checksum-and-no-abort-on-decode \
                                             --delete-pack "${PACK_FILE}.pack" .
                 }
 
@@ -470,14 +470,14 @@ title "gix (with repository)"
       (with "a non-existing directory specified"
         it "fails with a helpful error message" && {
           WITH_SNAPSHOT="$snapshot/missing-objects-dir-fail" \
-          expect_run $WITH_FAILURE "$exe_plumbing" free pack explode -c skip-file-and-object-checksum "${PACK_FILE}.idx" does-not-exist
+          expect_run $WITH_FAILURE "$exe_plumbing" --no-verbose free pack explode -c skip-file-and-object-checksum "${PACK_FILE}.idx" does-not-exist
         }
       )
       (with "an existing directory specified"
         (sandbox
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/with-objects-dir-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" free pack explode -c skip-file-and-object-checksum-and-no-abort-on-decode \
+            expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack explode -c skip-file-and-object-checksum-and-no-abort-on-decode \
                                                      "${PACK_FILE}.pack" .
           }
 
@@ -498,7 +498,7 @@ title "gix (with repository)"
         PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
         it "verifies the pack successfully and with desired output" && {
           WITH_SNAPSHOT="$snapshot/success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify "$PACK_FILE"
+          expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack verify "$PACK_FILE"
         }
       )
       (with "a valid pack INDEX file"
@@ -506,39 +506,39 @@ title "gix (with repository)"
         (with "no statistics"
           it "verifies the pack index successfully and with desired output" && {
             WITH_SNAPSHOT="$snapshot/index-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify "$MULTI_PACK_INDEX"
+            expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack verify "$MULTI_PACK_INDEX"
           }
         )
         (with "statistics"
           it "verifies the pack index successfully and with desired output" && {
             WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify --statistics "$MULTI_PACK_INDEX"
+            expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack verify --statistics "$MULTI_PACK_INDEX"
           }
 
           (with "and the less-memory algorithm"
             it "verifies the pack index successfully and with desired output" && {
               WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify --algorithm less-memory --statistics "$MULTI_PACK_INDEX"
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack verify --algorithm less-memory --statistics "$MULTI_PACK_INDEX"
             }
           )
         )
         (with "decode"
           it "verifies the pack index successfully and with desired output, and decodes all objects" && {
             WITH_SNAPSHOT="$snapshot/index-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify --algorithm less-memory --decode "$MULTI_PACK_INDEX"
+            expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose  free pack verify --algorithm less-memory --decode "$MULTI_PACK_INDEX"
           }
         )
         (with "re-encode"
           it "verifies the pack index successfully and with desired output, and re-encodes all objects" && {
             WITH_SNAPSHOT="$snapshot/index-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify --algorithm less-time --re-encode "$MULTI_PACK_INDEX"
+            expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack verify --algorithm less-time --re-encode "$MULTI_PACK_INDEX"
           }
         )
         if test "$kind" = "max" || test "$kind" = "max-pure"; then
         (with "statistics (JSON)"
           it "verifies the pack index successfully and with desired output" && {
             WITH_SNAPSHOT="$snapshot/index-with-statistics-json-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" --format json --threads 1 free pack verify --statistics "$MULTI_PACK_INDEX"
+            expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --format json --threads 1 free pack verify --statistics "$MULTI_PACK_INDEX"
           }
         )
         fi
@@ -553,46 +553,46 @@ title "gix (with repository)"
           (when "using fast validation via 'pack multi-index verify'"
             it "verifies the pack index successfully and with desired output" && {
               WITH_SNAPSHOT="$snapshot/fast-index-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" free pack multi-index -i "$MULTI_PACK_INDEX" verify
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack multi-index -i "$MULTI_PACK_INDEX" verify
             }
           )
 
           (with "no statistics"
             it "verifies the pack index successfully and with desired output" && {
               WITH_SNAPSHOT="$snapshot/index-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify "$MULTI_PACK_INDEX"
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack verify "$MULTI_PACK_INDEX"
             }
           )
           (with "statistics"
             it "verifies the pack index successfully and with desired output" && {
               WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify --statistics "$MULTI_PACK_INDEX"
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack verify --statistics "$MULTI_PACK_INDEX"
             }
 
             (with "and the less-memory algorithm"
               it "verifies the pack index successfully and with desired output" && {
                 WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
-                expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify --algorithm less-memory --statistics "$MULTI_PACK_INDEX"
+                expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack verify --algorithm less-memory --statistics "$MULTI_PACK_INDEX"
               }
             )
           )
           (with "decode"
             it "verifies the pack index successfully and with desired output, and decodes all objects" && {
               WITH_SNAPSHOT="$snapshot/index-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify --algorithm less-memory --decode "$MULTI_PACK_INDEX"
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack verify --algorithm less-memory --decode "$MULTI_PACK_INDEX"
             }
           )
           (with "re-encode"
             it "verifies the pack index successfully and with desired output, and re-encodes all objects" && {
               WITH_SNAPSHOT="$snapshot/index-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" free pack verify --algorithm less-time --re-encode "$MULTI_PACK_INDEX"
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free pack verify --algorithm less-time --re-encode "$MULTI_PACK_INDEX"
             }
           )
           if test "$kind" = "max" || test "$kind" = "max-pure"; then
           (with "statistics (JSON)"
             it "verifies the pack index successfully and with desired output" && {
               WITH_SNAPSHOT="$snapshot/index-with-statistics-json-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" --format json --threads 1 free pack verify --statistics "$MULTI_PACK_INDEX"
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --format json --threads 1 free pack verify --statistics "$MULTI_PACK_INDEX"
             }
           )
           fi
@@ -605,7 +605,7 @@ title "gix (with repository)"
           echo $'\0' >> index.idx
           it "fails to verify the pack index and with desired output" && {
             WITH_SNAPSHOT="$snapshot/index-failure" \
-            expect_run $WITH_FAILURE "$exe_plumbing" free pack verify index.idx
+            expect_run $WITH_FAILURE "$exe_plumbing" --no-verbose free pack verify index.idx
           }
         )
       )
@@ -625,14 +625,14 @@ title "gix (with repository)"
           (with "statistics"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/statistics-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" free commit-graph verify -s .git/objects/info
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free commit-graph verify -s .git/objects/info
             }
           )
           if test "$kind" = "max" || test "$kind" = "max-pure"; then
           (with "statistics --format json"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/statistics-json-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" --format json free commit-graph verify -s .git/objects/info
+              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --format json free commit-graph verify -s .git/objects/info
             }
           )
           fi

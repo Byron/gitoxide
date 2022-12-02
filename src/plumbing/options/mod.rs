@@ -30,6 +30,10 @@ pub struct Args {
     #[clap(long, short = 'v')]
     pub verbose: bool,
 
+    /// Turn off verbose message display for commands where these are shown by default.
+    #[clap(long, conflicts_with("verbose"))]
+    pub no_verbose: bool,
+
     /// Bring up a terminal user interface displaying progress visually
     #[cfg(feature = "prodash-render-tui")]
     #[clap(long, conflicts_with("verbose"))]

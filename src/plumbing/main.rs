@@ -111,6 +111,7 @@ pub fn main() -> Result<()> {
         progress = false;
         progress_keep_open = false;
     }
+    let auto_verbose = !progress && !args.no_verbose;
 
     let should_interrupt = Arc::new(AtomicBool::new(false));
     git_repository::interrupt::init_handler({
@@ -133,7 +134,7 @@ pub fn main() -> Result<()> {
             };
             prepare_and_run(
                 "clone",
-                verbose,
+                auto_verbose,
                 progress,
                 progress_keep_open,
                 core::repository::clone::PROGRESS_RANGE,
@@ -156,7 +157,7 @@ pub fn main() -> Result<()> {
             };
             prepare_and_run(
                 "fetch",
-                verbose,
+                auto_verbose,
                 progress,
                 progress_keep_open,
                 core::repository::fetch::PROGRESS_RANGE,
@@ -202,7 +203,7 @@ pub fn main() -> Result<()> {
                     {
                         prepare_and_run(
                             "remote-refs",
-                            verbose,
+                            auto_verbose,
                             progress,
                             progress_keep_open,
                             core::repository::remote::refs::PROGRESS_RANGE,
@@ -221,7 +222,7 @@ pub fn main() -> Result<()> {
                     #[cfg(feature = "gitoxide-core-async-client")]
                     {
                         let (_handle, progress) = async_util::prepare(
-                            verbose,
+                            auto_verbose,
                             "remote-refs",
                             Some(core::repository::remote::refs::PROGRESS_RANGE),
                         );
@@ -258,7 +259,7 @@ pub fn main() -> Result<()> {
             free::Subcommands::CommitGraph(subcommands) => match subcommands {
                 free::commitgraph::Subcommands::Verify { path, statistics } => prepare_and_run(
                     "commitgraph-verify",
-                    verbose,
+                    auto_verbose,
                     progress,
                     progress_keep_open,
                     None,
@@ -339,7 +340,7 @@ pub fn main() -> Result<()> {
                 ),
                 free::index::Subcommands::Verify => prepare_and_run(
                     "index-verify",
-                    verbose,
+                    auto_verbose,
                     progress,
                     progress_keep_open,
                     None,
@@ -353,7 +354,7 @@ pub fn main() -> Result<()> {
             } => match cmd {
                 free::mailmap::Subcommands::Verify => prepare_and_run(
                     "mailmap-verify",
-                    verbose,
+                    auto_verbose,
                     progress,
                     progress_keep_open,
                     core::mailmap::PROGRESS_RANGE,
@@ -468,7 +469,7 @@ pub fn main() -> Result<()> {
                     verify,
                 } => prepare_and_run(
                     "pack-explode",
-                    verbose,
+                    auto_verbose,
                     progress,
                     progress_keep_open,
                     None,
@@ -500,7 +501,7 @@ pub fn main() -> Result<()> {
                     path,
                 } => prepare_and_run(
                     "pack-verify",
-                    verbose,
+                    auto_verbose,
                     progress,
                     progress_keep_open,
                     verify::PROGRESS_RANGE,
@@ -546,7 +547,7 @@ pub fn main() -> Result<()> {
                         ),
                         free::pack::multi_index::Subcommands::Verify => prepare_and_run(
                             "pack-multi-index-verify",
-                            verbose,
+                            auto_verbose,
                             progress,
                             progress_keep_open,
                             core::pack::multi_index::PROGRESS_RANGE,
@@ -624,7 +625,7 @@ pub fn main() -> Result<()> {
                 },
         } => prepare_and_run(
             "verify",
-            verbose,
+            auto_verbose,
             progress,
             progress_keep_open,
             core::repository::verify::PROGRESS_RANGE,
