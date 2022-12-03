@@ -9,7 +9,9 @@ pub struct Permissions {
     pub config: Config,
 }
 
-/// Configure security relevant options when loading a git configuration.
+/// Configure from which sources git configuration may be loaded.
+///
+/// Note that configuration from inside of the repository is always loaded as it's definitely required for correctness.
 #[derive(Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Debug, Hash)]
 pub struct Config {
     /// The git binary may come with configuration as part of its configuration, and if this is true (default false)
