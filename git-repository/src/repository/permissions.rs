@@ -9,7 +9,9 @@ pub struct Permissions {
     pub config: Config,
 }
 
-/// Configure security relevant options when loading a git configuration.
+/// Configure from which sources git configuration may be loaded.
+///
+/// Note that configuration from inside of the repository is always loaded as it's definitely required for correctness.
 #[derive(Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Debug, Hash)]
 pub struct Config {
     /// The git binary may come with configuration as part of its configuration, and if this is true (default false)
@@ -29,9 +31,6 @@ pub struct Config {
     /// Whether to use the user configuration.
     /// This is usually `~/.gitconfig` on unix.
     pub user: bool,
-    // TODO: figure out how this really applies and provide more information here.
-    // Whether to use worktree configuration from `config.worktree`.
-    // pub worktree: bool,
     /// Whether to use the configuration from environment variables.
     pub env: bool,
     /// Whether to follow include files are encountered in loaded configuration,

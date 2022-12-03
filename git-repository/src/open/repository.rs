@@ -133,7 +133,13 @@ impl ThreadSafeRepository {
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
 
-        let repo_config = config::cache::StageOne::new(common_dir_ref, git_dir_trust, lossy_config, lenient_config)?;
+        let repo_config = config::cache::StageOne::new(
+            common_dir_ref,
+            git_dir.as_ref(),
+            git_dir_trust,
+            lossy_config,
+            lenient_config,
+        )?;
         let mut refs = {
             let reflog = repo_config.reflog.unwrap_or(git_ref::store::WriteReflog::Disable);
             let object_hash = repo_config.object_hash;

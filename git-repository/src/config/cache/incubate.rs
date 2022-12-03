@@ -15,27 +15,20 @@ pub(crate) struct StageOne {
 /// Initialization
 impl StageOne {
     pub fn new(
+        common_dir: &std::path::Path,
         git_dir: &std::path::Path,
         git_dir_trust: git_sec::Trust,
         lossy: Option<bool>,
         lenient: bool,
     ) -> Result<Self, Error> {
         let mut buf = Vec::with_capacity(512);
-        let config = {
-            let config_path = git_dir.join("config");
-            std::io::copy(&mut std::fs::File::open(&config_path)?, &mut buf)?;
-
-            git_config::File::from_bytes_owned(
-                &mut buf,
-                git_config::file::Metadata::from(git_config::Source::Local)
-                    .at(config_path)
-                    .with(git_dir_trust),
-                git_config::file::init::Options {
-                    includes: git_config::file::includes::Options::no_follow(),
-                    ..util::base_options(lossy)
-                },
-            )?
-        };
+        let mut config = load_config(
+            common_dir.join("config"),
+            &mut buf,
+            git_config::Source::Local,
+            git_dir_trust,
+            lossy,
+        )?;
 
         let is_bare = util::config_bool(&config, "core.bare", false, lenient)?;
         let repo_format_version = config
@@ -57,6 +50,18 @@ impl StageOne {
             .transpose()?
             .unwrap_or(git_hash::Kind::Sha1);
 
+        let extension_worktree = util::config_bool(&config, "extensions.worktreeConfig", false, lenient)?;
+        if extension_worktree {
+            let worktree_config = load_config(
+                git_dir.join("config.worktree"),
+                &mut buf,
+                git_config::Source::Worktree,
+                git_dir_trust,
+                lossy,
+            )?;
+            config.append(worktree_config);
+        };
+
         let reflog = util::query_refupdates(&config, lenient)?;
         Ok(StageOne {
             git_dir_config: config,
@@ -67,4 +72,28 @@ impl StageOne {
             reflog,
         })
     }
+}
+
+fn load_config(
+    config_path: std::path::PathBuf,
+    buf: &mut Vec<u8>,
+    source: git_config::Source,
+    git_dir_trust: git_sec::Trust,
+    lossy: Option<bool>,
+) -> Result<git_config::File<'static>, Error> {
+    buf.clear();
+    std::io::copy(&mut std::fs::File::open(&config_path)?, buf)?;
+
+    let config = git_config::File::from_bytes_owned(
+        buf,
+        git_config::file::Metadata::from(source)
+            .at(config_path)
+            .with(git_dir_trust),
+        git_config::file::init::Options {
+            includes: git_config::file::includes::Options::no_follow(),
+            ..util::base_options(lossy)
+        },
+    )?;
+
+    Ok(config)
 }
