@@ -5,7 +5,8 @@ use crate::handshake::{refs, refs::shared::InternalRef, Ref};
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn extract_references_from_v2_refs() {
-    let input = &mut "808e50d724f604f69ab93c6da2919c014667bedb HEAD symref-target:refs/heads/main
+    let input = &mut Fixture(
+        "808e50d724f604f69ab93c6da2919c014667bedb HEAD symref-target:refs/heads/main
 808e50d724f604f69ab93c6da2919c014667bedb MISSING_NAMESPACE_TARGET symref-target:(null)
 unborn HEAD symref-target:refs/heads/main
 unborn refs/heads/symbolic symref-target:refs/heads/target
@@ -13,10 +14,9 @@ unborn refs/heads/symbolic symref-target:refs/heads/target
 7fe1b98b39423b71e14217aa299a03b7c937d656 refs/tags/foo peeled:808e50d724f604f69ab93c6da2919c014667bedb
 7fe1b98b39423b71e14217aa299a03b7c937d6ff refs/tags/blaz
 "
-    .as_bytes();
+        .as_bytes(),
+    );
 
-    #[cfg(feature = "blocking-client")]
-    let input = &mut Fixture(input);
     let out = refs::from_v2_refs(input).await.expect("no failure on valid input");
 
     assert_eq!(
@@ -58,16 +58,15 @@ unborn refs/heads/symbolic symref-target:refs/heads/target
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn extract_references_from_v1_refs() {
-    #[cfg_attr(feature = "blocking-client", allow(unused_mut))]
-    let input = &mut "73a6868963993a3328e7d8fe94e5a6ac5078a944 HEAD
+    let input = &mut Fixture(
+        "73a6868963993a3328e7d8fe94e5a6ac5078a944 HEAD
 21c9b7500cb144b3169a6537961ec2b9e865be81 MISSING_NAMESPACE_TARGET
 73a6868963993a3328e7d8fe94e5a6ac5078a944 refs/heads/main
 8e472f9ccc7d745927426cbb2d9d077de545aa4e refs/pull/13/head
 dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/git-commitgraph-v0.0.0
 21c9b7500cb144b3169a6537961ec2b9e865be81 refs/tags/git-commitgraph-v0.0.0^{}"
-        .as_bytes();
-    #[cfg(feature = "blocking-client")]
-    let input = &mut Fixture(input);
+            .as_bytes(),
+    );
     let out = refs::from_v1_refs_received_as_part_of_handshake_and_capabilities(
         input,
         Capabilities::from_bytes(b"\0symref=HEAD:refs/heads/main symref=MISSING_NAMESPACE_TARGET:(null)")
@@ -134,7 +133,7 @@ fn extract_symbolic_references_from_capabilities() -> Result<(), client::Error> 
     Ok(())
 }
 
-#[cfg(feature = "blocking-client")]
+#[cfg(any(feature = "async-client", feature = "blocking-client"))]
 struct Fixture<'a>(&'a [u8]);
 
 #[cfg(feature = "blocking-client")]
@@ -158,6 +157,56 @@ impl<'a> std::io::BufRead for Fixture<'a> {
 #[cfg(feature = "blocking-client")]
 impl<'a> git_transport::client::ReadlineBufRead for Fixture<'a> {
     fn readline(
+        &mut self,
+    ) -> Option<std::io::Result<Result<git_packetline::PacketLineRef<'_>, git_packetline::decode::Error>>> {
+        use bstr::{BStr, ByteSlice};
+        let bytes: &BStr = self.0.into();
+        let mut lines = bytes.lines();
+        let res = lines.next()?;
+        self.0 = lines.as_bytes();
+        Some(Ok(Ok(git_packetline::PacketLineRef::Data(res))))
+    }
+}
+
+#[cfg(feature = "async-client")]
+impl<'a> Fixture<'a> {
+    fn project_inner(self: std::pin::Pin<&mut Self>) -> std::pin::Pin<&mut &'a [u8]> {
+        #[allow(unsafe_code)]
+        unsafe {
+            std::pin::Pin::new(&mut self.get_unchecked_mut().0)
+        }
+    }
+}
+
+#[cfg(feature = "async-client")]
+impl<'a> futures_io::AsyncRead for Fixture<'a> {
+    fn poll_read(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+        buf: &mut [u8],
+    ) -> std::task::Poll<std::io::Result<usize>> {
+        self.project_inner().poll_read(cx, buf)
+    }
+}
+
+#[cfg(feature = "async-client")]
+impl<'a> futures_io::AsyncBufRead for Fixture<'a> {
+    fn poll_fill_buf(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<std::io::Result<&[u8]>> {
+        self.project_inner().poll_fill_buf(cx)
+    }
+
+    fn consume(self: std::pin::Pin<&mut Self>, amt: usize) {
+        self.project_inner().consume(amt)
+    }
+}
+
+#[cfg(feature = "async-client")]
+#[async_trait::async_trait(?Send)]
+impl<'a> git_transport::client::ReadlineBufRead for Fixture<'a> {
+    async fn readline(
         &mut self,
     ) -> Option<std::io::Result<Result<git_packetline::PacketLineRef<'_>, git_packetline::decode::Error>>> {
         use bstr::{BStr, ByteSlice};
