@@ -27,17 +27,17 @@ pub mod name {
     }
 }
 
-/// Assure the given `bytes` resemble a valid git ref name, which are returned unchanged on success.
-pub fn name(bytes: &BStr) -> Result<&BStr, name::Error> {
-    if bytes.is_empty() {
+/// Assure the given `input` resemble a valid git tag name, which is returned unchanged on success.
+pub fn name(input: &BStr) -> Result<&BStr, name::Error> {
+    if input.is_empty() {
         return Err(name::Error::Empty);
     }
-    if *bytes.last().expect("non-empty") == b'/' {
+    if *input.last().expect("non-empty") == b'/' {
         return Err(name::Error::EndsWithSlash);
     }
 
     let mut previous = 0;
-    for byte in bytes.iter() {
+    for byte in input.iter() {
         match byte {
             b'\\' | b'^' | b':' | b'[' | b'?' | b' ' | b'~' | b'\0'..=b'\x1F' | b'\x7F' => {
                 return Err(name::Error::InvalidByte {
@@ -51,11 +51,11 @@ pub fn name(bytes: &BStr) -> Result<&BStr, name::Error> {
         }
         previous = *byte;
     }
-    if bytes[0] == b'.' {
+    if input[0] == b'.' {
         return Err(name::Error::StartsWithDot);
     }
-    if bytes.ends_with(b".lock") {
+    if input.ends_with(b".lock") {
         return Err(name::Error::LockFileSuffix);
     }
-    Ok(bytes)
+    Ok(input)
 }
