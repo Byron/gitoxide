@@ -22,7 +22,13 @@ impl StageOne {
         lenient: bool,
     ) -> Result<Self, Error> {
         let mut buf = Vec::with_capacity(512);
-        let config = load_config(&mut buf, common_dir.join("config"), git_dir_trust, lossy)?;
+        let mut config = load_config(
+            common_dir.join("config"),
+            &mut buf,
+            git_config::Source::Local,
+            git_dir_trust,
+            lossy,
+        )?;
 
         let is_bare = util::config_bool(&config, "core.bare", false, lenient)?;
         let repo_format_version = config
@@ -45,10 +51,15 @@ impl StageOne {
             .unwrap_or(git_hash::Kind::Sha1);
 
         let extension_worktree = util::config_bool(&config, "extensions.worktreeConfig", false, lenient)?;
-        let config = if extension_worktree {
-            load_config(&mut buf, git_dir.join("config.worktree"), git_dir_trust, lossy)?
-        } else {
-            config
+        if extension_worktree {
+            let worktree_config = load_config(
+                git_dir.join("config.worktree"),
+                &mut buf,
+                git_config::Source::Worktree,
+                git_dir_trust,
+                lossy,
+            )?;
+            config.append(worktree_config);
         };
 
         let reflog = util::query_refupdates(&config, lenient)?;
@@ -64,16 +75,18 @@ impl StageOne {
 }
 
 fn load_config(
-    buf: &mut Vec<u8>,
     config_path: std::path::PathBuf,
+    buf: &mut Vec<u8>,
+    source: git_config::Source,
     git_dir_trust: git_sec::Trust,
     lossy: Option<bool>,
 ) -> Result<git_config::File<'static>, Error> {
+    buf.clear();
     std::io::copy(&mut std::fs::File::open(&config_path)?, buf)?;
 
     let config = git_config::File::from_bytes_owned(
         buf,
-        git_config::file::Metadata::from(git_config::Source::Worktree)
+        git_config::file::Metadata::from(source)
             .at(config_path)
             .with(git_dir_trust),
         git_config::file::init::Options {
