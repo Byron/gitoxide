@@ -82,14 +82,14 @@ impl<'a, T: ExtendedBufRead + ?Sized + 'a + Unpin> ExtendedBufRead for Box<T> {
 #[async_trait(?Send)]
 impl<T: AsyncRead + Unpin> ReadlineBufRead for git_packetline::read::WithSidebands<'_, T, for<'b> fn(bool, &'b [u8])> {
     async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
-        self.readline().await
+        self.read_data_line().await
     }
 }
 
 #[async_trait(?Send)]
 impl<'a, T: AsyncRead + Unpin> ReadlineBufRead for git_packetline::read::WithSidebands<'a, T, HandleProgress> {
     async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
-        self.readline().await
+        self.read_data_line().await
     }
 }
 
