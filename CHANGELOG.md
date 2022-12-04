@@ -5,6 +5,76 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+This release also fixes compatibility issues that formerly prevented to fetch or clone form `https://googlesource.com`.
+
+### Changed
+
+ - <csr-id-a4ac9cf3e667a3059e33aac8188150529578622d/> represent `GIT_(COMMITTER|AUTHOR)_(NAME|EMAIL|DATE)` with git configuration.
+   That way it becomes more obvious where values are coming from.
+
+### New Features
+
+ - <csr-id-98143699bb9481b010e21647f64dcb8a74bd80ad/> auto-enabled verbosity for `gix fetch/clone` and add `--no-verbose`.
+   I found myself always adding (and having to remember to add) the `-v` flag
+   for long-running operations so these should be able to default to a
+   higher verbosity level.
+   
+   To counter that, there is a new `--no-verbose` flag to turn that off.
+ - <csr-id-aeb4a1d5cb76316058c7d687e26f5c7db351c09c/> add `--strict` option to enforce strict checking of configuration.
+
+### Changed (BREAKING)
+
+ - <csr-id-49f39d6bb487c0254176a5082f2c7851b83952a1/> `open::ReplacementObjects` is removed in favor of two custom git-configuration flags.
+   Now it's possible to map the environment variables `GIT_REPLACE_REF_BASE` and `GIT_NO_REPLACE_OBJECTS`
+   to custom git configuration keys which can also be set, namely `gitoxide.odb.replaceObjectsRefBase`
+   and `gitoxide.odb.noReplaceObjects`.
+   
+   Along with the possibility of disabling the usage of `GIT_` prefixed environment variables one
+   reaches the previous level of control without making object replacement a special case.
+
+### New Features (BREAKING)
+
+ - <csr-id-becbd8d896a1663f1607be4e86e632773e926f1f/> represent object cache configuration like `GITOXIDE_PACK_CACHE_MEMORY` in git-configuration.
+   That way there is a unified system for how to set values, which may be overridable by configuration
+   variables or not.
+   
+   With this changes, the explicit application of environment variables for setting the cache
+   isn't required anymore as everything happens using git-configuration, and automatically,
+   while providing full control like before.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 12 calendar days.
+ - 12 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - auto-enabled verbosity for `gix fetch/clone` and add `--no-verbose`. ([`9814369`](https://github.com/Byron/gitoxide/commit/98143699bb9481b010e21647f64dcb8a74bd80ad))
+    - switch from `atty` to `is-terminal` ([`7304bc1`](https://github.com/Byron/gitoxide/commit/7304bc1c0efaad64a39520962072343ef02f6c25))
+    - adapt to changes in `git-repository` ([`c4f68bf`](https://github.com/Byron/gitoxide/commit/c4f68bf775b854625d901fe0bfcbdd38f656d408))
+    - represent object cache configuration like `GITOXIDE_PACK_CACHE_MEMORY` in git-configuration. ([`becbd8d`](https://github.com/Byron/gitoxide/commit/becbd8d896a1663f1607be4e86e632773e926f1f))
+    - represent `GIT_(COMMITTER|AUTHOR)_(NAME|EMAIL|DATE)` with git configuration. ([`a4ac9cf`](https://github.com/Byron/gitoxide/commit/a4ac9cf3e667a3059e33aac8188150529578622d))
+    - `open::ReplacementObjects` is removed in favor of two custom git-configuration flags. ([`49f39d6`](https://github.com/Byron/gitoxide/commit/49f39d6bb487c0254176a5082f2c7851b83952a1))
+    - apply related environment variables as config overrides ([`9441c26`](https://github.com/Byron/gitoxide/commit/9441c261bcae61d1d1e674b5e783f38b0471be29))
+    - adapt to changes in `git-repository` ([`f1a4c8b`](https://github.com/Byron/gitoxide/commit/f1a4c8b42ed8c94e7fe3a61eb222cf6b0886f4ee))
+    - update progress of http.proxyAuthMethod ([`872dc1a`](https://github.com/Byron/gitoxide/commit/872dc1ab43ce626b4166dae3dc8bddf8e85c9409))
+    - add `--strict` option to enforce strict checking of configuration. ([`aeb4a1d`](https://github.com/Byron/gitoxide/commit/aeb4a1d5cb76316058c7d687e26f5c7db351c09c))
+    - don't lock stdout/stderr as it will deadlock on dbg-printing ([`62cae0e`](https://github.com/Byron/gitoxide/commit/62cae0e6bfe8113c0225152a896338017c8de474))
+    - adapt to changes in `git-config` ([`1c2e755`](https://github.com/Byron/gitoxide/commit/1c2e755e517b0f9fe8671187f5c30076ce43a3c9))
+    - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
+</details>
+
 ## 0.19.0 (2022-11-21)
 
 ### New Features
