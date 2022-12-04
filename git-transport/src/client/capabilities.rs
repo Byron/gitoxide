@@ -152,8 +152,8 @@ impl Capabilities {
 #[cfg(feature = "blocking-client")]
 ///
 pub mod recv {
+    use bstr::ByteVec;
     use std::io;
-    use std::io::Read;
 
     use crate::{client, client::Capabilities, Protocol};
 
@@ -204,7 +204,18 @@ pub mod recv {
                     capabilities: {
                         let mut rd = rd.as_read();
                         let mut buf = Vec::new();
-                        rd.read_to_end(&mut buf)?;
+                        while let Some(line) = rd.read_data_line() {
+                            let line = line??;
+                            match line.as_bstr() {
+                                Some(line) => {
+                                    buf.push_str(line);
+                                    if buf.last() != Some(&b'\n') {
+                                        buf.push(b'\n');
+                                    }
+                                }
+                                None => break,
+                            }
+                        }
                         Capabilities::from_lines(buf.into())?
                     },
                     refs: None,
@@ -220,9 +231,9 @@ pub mod recv {
 ///
 pub mod recv {
     use futures_io::AsyncRead;
-    use futures_lite::AsyncReadExt;
 
     use crate::{client, client::Capabilities, Protocol};
+    use bstr::ByteVec;
 
     /// Success outcome of [`Capabilities::from_lines_with_version_detection`].
     pub struct Outcome<'a> {
@@ -272,7 +283,18 @@ pub mod recv {
                     capabilities: {
                         let mut rd = rd.as_read();
                         let mut buf = Vec::new();
-                        rd.read_to_end(&mut buf).await?;
+                        while let Some(line) = rd.read_data_line().await {
+                            let line = line??;
+                            match line.as_bstr() {
+                                Some(line) => {
+                                    buf.push_str(line);
+                                    if buf.last() != Some(&b'\n') {
+                                        buf.push(b'\n');
+                                    }
+                                }
+                                None => break,
+                            }
+                        }
                         Capabilities::from_lines(buf.into())?
                     },
                     refs: None,
