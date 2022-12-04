@@ -98,10 +98,13 @@ mod with_io {
                     .iter()
                     .map(|s| s.as_bytes().as_bstr().to_owned())
                     .chain(
-                        ["sideband-all", "packfile-uris"]
-                            .iter()
-                            .filter(|f| features.iter().any(|(sf, _)| sf == *f))
-                            .map(|f| f.as_bytes().as_bstr().to_owned()),
+                        [
+                            "sideband-all",
+                            /* "packfile-uris" */ // packfile-uris must be configurable and can't just be used. Some servers advertise it and reject it later.
+                        ]
+                        .iter()
+                        .filter(|f| features.iter().any(|(sf, _)| sf == *f))
+                        .map(|f| f.as_bytes().as_bstr().to_owned()),
                     )
                     .collect(),
                 Command::LsRefs => vec![b"symrefs".as_bstr().to_owned(), b"peel".as_bstr().to_owned()],

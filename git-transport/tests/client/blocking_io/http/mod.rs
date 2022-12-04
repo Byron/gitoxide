@@ -336,6 +336,65 @@ fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
 }
 
 #[test]
+fn handshake_and_lsrefs_and_fetch_v2_googlesource() -> crate::Result {
+    let (_server, mut c) = mock::serve_and_connect(
+        "v2/http-no-newlines-handshake.response",
+        "path/not/important/due/to/mock",
+        Protocol::V2,
+    )?;
+    assert!(
+        !c.connection_persists_across_multiple_requests(),
+        "http connections are never stateful"
+    );
+    let SetServiceResponse {
+        actual_protocol,
+        capabilities,
+        refs,
+    } = c.handshake(Service::UploadPack, &[("value-only", None), ("key", Some("value"))])?;
+    assert_eq!(actual_protocol, Protocol::V2);
+    assert!(
+        refs.is_none(),
+        "refs are only returned in V1, as V2 favors a separate command (with more options)"
+    );
+    assert_eq!(
+        capabilities
+            .iter()
+            .map(|v| {
+                (
+                    v.name().to_owned(),
+                    v.values().map(|v| v.map(ToOwned::to_owned).collect::<Vec<_>>()),
+                )
+            })
+            .collect::<Vec<_>>(),
+        [
+            ("ls-refs", None),
+            (
+                "fetch",
+                Some(
+                    &[
+                        "filter",
+                        "ref-in-want",
+                        "sideband-all",
+                        "packfile-uris",
+                        "wait-for-done",
+                        "shallow"
+                    ][..]
+                )
+            ),
+            ("server-option", None),
+            ("session-id", None),
+        ]
+        .iter()
+        .map(|(k, v)| (
+            k.as_bytes().into(),
+            v.map(|v| v.iter().map(|v| v.as_bytes().into()).collect::<Vec<_>>())
+        ))
+        .collect::<Vec<_>>()
+    );
+    Ok(())
+}
+
+#[test]
 fn handshake_and_lsrefs_and_fetch_v2_service_announced() -> crate::Result {
     handshake_and_lsrefs_and_fetch_v2_impl("v2/http-handshake-service-announced.response")
 }
