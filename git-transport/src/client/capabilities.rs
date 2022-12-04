@@ -16,7 +16,7 @@ pub enum Error {
     MissingVersionLine,
     #[error("expected 'version X', got {0:?}")]
     MalformattedVersionLine(BString),
-    #[error("Got unsupported version '{}', expected {actual:?}", *desired as u8)]
+    #[error("Got unsupported version {actual:?}, expected {}", *desired as u8)]
     UnsupportedVersion { desired: Protocol, actual: BString },
     #[error("An IO error occurred while reading V2 lines")]
     Io(#[from] std::io::Error),
