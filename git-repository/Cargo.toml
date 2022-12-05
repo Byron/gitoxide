@@ -25,7 +25,7 @@ required-features = ["regex"]
 
 [features]
 
-default = ["max-performance"]
+default = ["max-performance-safe"]
 
 #! ### Mutually Exclusive Network Client
 #! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
