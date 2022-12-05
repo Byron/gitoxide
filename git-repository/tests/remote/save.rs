@@ -66,13 +66,20 @@ mod save_as_to {
         let mut remote = repo
             .remote_at("https://example.com/path")?
             .push_url("https://ein.hub/path")?
-            .with_refspec("+refs/heads/*:refs/remotes/any/*", git::remote::Direction::Fetch)?
-            .with_refspec(
-                "refs/heads/special:refs/heads/special-upstream",
+            .with_refspecs(
+                [
+                    "+refs/heads/*:refs/remotes/any/*",
+                    "refs/heads/special:refs/heads/special-upstream",
+                ],
                 git::remote::Direction::Fetch,
             )?
-            .with_refspec("refs/heads/main:refs/heads/main", git::remote::Direction::Push)? // similar to 'simple' for `push.default`
-            .with_refspec(":", git::remote::Direction::Push)?; // similar to 'matching'
+            .with_refspecs(
+                [
+                    "refs/heads/main:refs/heads/main", // similar to 'simple' for `push.default`
+                    ":",                               // similar to 'matching'
+                ],
+                git::remote::Direction::Push,
+            )?;
         let remote_name = "origin";
         assert!(
             repo.find_remote(remote_name).is_err(),

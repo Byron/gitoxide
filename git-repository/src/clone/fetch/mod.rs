@@ -70,8 +70,8 @@ impl PrepareFetch {
 
         let mut remote = repo
             .remote_at(self.url.clone())?
-            .with_refspec(
-                format!("+refs/heads/*:refs/remotes/{remote_name}/*").as_str(),
+            .with_refspecs(
+                Some(format!("+refs/heads/*:refs/remotes/{remote_name}/*").as_str()),
                 crate::remote::Direction::Fetch,
             )
             .expect("valid static spec");

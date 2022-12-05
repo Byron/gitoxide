@@ -26,5 +26,4 @@ mod access;
 pub mod ref_map;
 
 ///
-#[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
 pub mod fetch;
