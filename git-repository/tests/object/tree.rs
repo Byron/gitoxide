@@ -73,6 +73,19 @@ mod diff {
             })
             .unwrap();
         assert_eq!(expected, Vec::<&str>::new(), "all paths should have been seen");
+
+        let err = from
+            .changes()
+            .track_path()
+            .for_each_to_obtain_tree(&to, |_change| {
+                Err(std::io::Error::new(std::io::ErrorKind::Other, "custom error"))
+            })
+            .unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "The user-provided callback failed",
+            "custom errors made visible and not squelched"
+        );
     }
 
     fn tree_named<'repo>(repo: &'repo git::Repository, rev_spec: &str) -> git::Tree<'repo> {
