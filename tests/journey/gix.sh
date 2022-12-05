@@ -44,6 +44,11 @@ title "git-tempfile crate"
       expect_run $WITH_FAILURE test -e "example-file.tmp"
     }
   )
+  (when "running the example program to check reversibility of signal handlers"
+    it "fails as the process aborts" && {
+      expect_run $ABORTED cargo run --no-default-features --example reversible-interrupt-handlers
+    }
+  )
 )
 
 title "gix (with repository)"

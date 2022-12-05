@@ -11,6 +11,55 @@ mod init {
         sync::atomic::{AtomicBool, AtomicUsize, Ordering},
     };
 
+    static IS_INITIALIZED: AtomicBool = AtomicBool::new(false);
+
+    #[derive(Default)]
+    pub struct Deregister(Vec<(i32, signal_hook::SigId)>);
+    pub struct AutoDeregister(Deregister);
+
+    impl Deregister {
+        /// Remove all previously registered handlers, and assure the default behaviour is reinstated.
+        ///
+        /// Note that only the instantiation of the default behaviour can fail.
+        pub fn deregister(self) -> std::io::Result<()> {
+            if self.0.is_empty() {
+                return Ok(());
+            }
+            static REINSTATE_DEFAULT_BEHAVIOUR: AtomicBool = AtomicBool::new(true);
+            for (_, hook_id) in &self.0 {
+                signal_hook::low_level::unregister(*hook_id);
+            }
+            IS_INITIALIZED.store(false, Ordering::SeqCst);
+            if REINSTATE_DEFAULT_BEHAVIOUR
+                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |_| Some(false))
+                .expect("always returns value")
+            {
+                for (sig, _) in self.0 {
+                    // # SAFETY
+                    // * we only call a handler that is specifically designed to run in this environment.
+                    #[allow(unsafe_code)]
+                    unsafe {
+                        signal_hook::low_level::register(sig, move || {
+                            signal_hook::low_level::emulate_default_handler(sig).ok();
+                        })?;
+                    }
+                }
+            }
+            Ok(())
+        }
+
+        /// Return a type that deregisters all installed signal handlers on drop.
+        pub fn auto_deregister(self) -> AutoDeregister {
+            AutoDeregister(self)
+        }
+    }
+
+    impl Drop for AutoDeregister {
+        fn drop(&mut self) {
+            std::mem::take(&mut self.0).deregister().ok();
+        }
+    }
+
     /// Initialize a signal handler to listen to SIGINT and SIGTERM and trigger our [`trigger()`][super::trigger()] that way.
     /// Also trigger `interrupt()` which promises to never use a Mutex, allocate or deallocate.
     ///
@@ -18,11 +67,14 @@ mod init {
     ///
     /// It will abort the process on second press and won't inform the user about this behaviour either as we are unable to do so without
     /// deadlocking even when trying to write to stderr directly.
-    pub fn init_handler(interrupt: impl Fn() + Send + Sync + Clone + 'static) -> io::Result<()> {
-        static IS_INITIALIZED: AtomicBool = AtomicBool::new(false);
-        if IS_INITIALIZED.load(Ordering::SeqCst) {
+    pub fn init_handler(interrupt: impl Fn() + Send + Sync + Clone + 'static) -> io::Result<Deregister> {
+        if IS_INITIALIZED
+            .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |_| Some(true))
+            .expect("always returns value")
+        {
             return Err(io::Error::new(io::ErrorKind::Other, "Already initialized"));
         }
+        let mut hooks = Vec::with_capacity(signal_hook::consts::TERM_SIGNALS.len());
         for sig in signal_hook::consts::TERM_SIGNALS {
             // # SAFETY
             // * we only set atomics or call functions that do
@@ -30,7 +82,7 @@ mod init {
             let interrupt = interrupt.clone();
             #[allow(unsafe_code)]
             unsafe {
-                signal_hook::low_level::register(*sig, move || {
+                let hook_id = signal_hook::low_level::register(*sig, move || {
                     static INTERRUPT_COUNT: AtomicUsize = AtomicUsize::new(0);
                     if !super::is_triggered() {
                         INTERRUPT_COUNT.store(0, Ordering::SeqCst);
@@ -38,18 +90,19 @@ mod init {
                     let msg_idx = INTERRUPT_COUNT.fetch_add(1, Ordering::SeqCst);
                     if msg_idx == 1 {
                         git_tempfile::handler::cleanup_tempfiles();
-                        signal_hook::low_level::emulate_default_handler(signal_hook::consts::SIGTERM).ok();
+                        signal_hook::low_level::emulate_default_handler(*sig).ok();
                     }
                     interrupt();
                     super::trigger();
                 })?;
+                hooks.push((*sig, hook_id));
             }
         }
 
         // This means that they won't setup a handler allowing us to call them right before we actually abort.
         git_tempfile::setup(git_tempfile::SignalHandlerMode::None);
 
-        Ok(())
+        Ok(Deregister(hooks))
     }
 }
 use std::{
