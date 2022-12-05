@@ -1746,6 +1746,7 @@ dependencies = [
  "is_ci",
  "log",
  "once_cell",
+ "prodash",
  "regex",
  "reqwest",
  "serde",
