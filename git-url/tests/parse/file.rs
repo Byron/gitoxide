@@ -85,8 +85,47 @@ fn interior_relative_file_path_without_protocol() -> crate::Result {
     Ok(())
 }
 
+#[test]
+#[cfg(unix)]
+fn url_from_absolute_path() -> crate::Result {
+    assert_url_and(
+        url::Url::from_directory_path("/users/foo")
+            .expect("valid")
+            .to_file_path()
+            .expect("valid path")
+            .to_string_lossy()
+            .as_ref(),
+        url_alternate(Scheme::File, None, None, None, b"/users/foo/"),
+    )?;
+    Ok(())
+}
+
 mod windows {
     use git_url::Scheme;
+
+    #[test]
+    #[cfg(windows)]
+    fn url_from_absolute_path() -> crate::Result {
+        assert_url_and(
+            url::Url::from_directory_path("c:\\users\\1")
+                .expect("valid")
+                .to_file_path()
+                .expect("valid path")
+                .to_string_lossy()
+                .as_ref(),
+            url_alternate(Scheme::File, None, None, None, b"C:\\users\\1\\"),
+        )?;
+        // A special hack to support URLs on windows that are prefixed with `/` even though absolute.
+        assert_url_and(
+            "file:///c:/users/2",
+            url(Scheme::File, None, None, None, b"c:\\users\\2"),
+        )?;
+        assert_url_and(
+            "file:///c:/users/3/",
+            url(Scheme::File, None, None, None, b"c:\\users\\3\\"),
+        )?;
+        Ok(())
+    }
 
     use crate::parse::{assert_url_and, assert_url_roundtrip, url, url_alternate};
 

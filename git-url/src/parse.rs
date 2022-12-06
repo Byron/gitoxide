@@ -60,10 +60,6 @@ fn has_no_explicit_protocol(url: &[u8]) -> bool {
     url.find(b"://").is_none()
 }
 
-fn try_strip_file_protocol(url: &[u8]) -> Option<&[u8]> {
-    url.strip_prefix(b"file://")
-}
-
 fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
     Ok(crate::Url {
         serialize_alternative_form: false,
@@ -87,11 +83,33 @@ fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
 /// For file-paths, we don't expect UTF8 encoding either.
 pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     let guessed_protocol = guess_protocol(input);
-    let path_without_protocol = try_strip_file_protocol(input);
-    if path_without_protocol.is_some() || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
+    let path_without_file_protocol = input.strip_prefix(b"file://");
+    if path_without_file_protocol.is_some() || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
         return Ok(crate::Url {
             scheme: Scheme::File,
-            path: path_without_protocol.unwrap_or(input).into(),
+            path: path_without_file_protocol
+                .map(|stripped_path| {
+                    #[cfg(windows)]
+                    {
+                        if stripped_path.starts_with(b"/") {
+                            input
+                                .to_str()
+                                .ok()
+                                .and_then(|url| {
+                                    let path = url::Url::parse(url).ok()?.to_file_path().ok()?;
+                                    path.is_absolute().then(|| git_path::into_bstr(path).into_owned())
+                                })
+                                .unwrap_or_else(|| stripped_path.into())
+                        } else {
+                            stripped_path.into()
+                        }
+                    }
+                    #[cfg(not(windows))]
+                    {
+                        stripped_path.into()
+                    }
+                })
+                .unwrap_or_else(|| input.into()),
             serialize_alternative_form: !input.starts_with(b"file://"),
             ..Default::default()
         });

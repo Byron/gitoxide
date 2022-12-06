@@ -26,12 +26,12 @@ fn assert_failure(url: &str, expected_err: &str) {
     assert_eq!(git_url::parse(url.into()).unwrap_err().to_string(), expected_err);
 }
 
-fn url(
+fn url<'a, 'b>(
     protocol: Scheme,
-    user: impl Into<Option<&'static str>>,
-    host: impl Into<Option<&'static str>>,
+    user: impl Into<Option<&'a str>>,
+    host: impl Into<Option<&'b str>>,
     port: impl Into<Option<u16>>,
-    path: &'static [u8],
+    path: &[u8],
 ) -> git_url::Url {
     git_url::Url::from_parts(
         protocol,
@@ -43,12 +43,12 @@ fn url(
     .expect("valid")
 }
 
-fn url_alternate(
+fn url_alternate<'a, 'b>(
     protocol: Scheme,
-    user: impl Into<Option<&'static str>>,
-    host: impl Into<Option<&'static str>>,
+    user: impl Into<Option<&'a str>>,
+    host: impl Into<Option<&'b str>>,
     port: impl Into<Option<u16>>,
-    path: &'static [u8],
+    path: &[u8],
 ) -> git_url::Url {
     url(protocol, user, host, port, path).serialize_alternate_form(true)
 }
