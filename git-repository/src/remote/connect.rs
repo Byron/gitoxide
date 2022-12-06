@@ -26,6 +26,16 @@ mod error {
         #[error("Could not verify that file:// url is a valid git directory before attempting to use it")]
         FileUrl(#[from] git_discover::is_git::Error),
     }
+
+    impl git_protocol::transport::IsSpuriousError for Error {
+        /// Return `true` if retrying might result in a different outcome due to IO working out differently.
+        fn is_spurious(&self) -> bool {
+            match self {
+                Error::Connect(err) => err.is_spurious(),
+                _ => false,
+            }
+        }
+    }
 }
 pub use error::Error;
 

@@ -81,6 +81,15 @@ pub mod prepare {
         #[error(transparent)]
         RefMap(#[from] crate::remote::ref_map::Error),
     }
+
+    impl git_protocol::transport::IsSpuriousError for Error {
+        fn is_spurious(&self) -> bool {
+            match self {
+                Error::RefMap(err) => err.is_spurious(),
+                _ => false,
+            }
+        }
+    }
 }
 
 impl<'remote, 'repo, T, P> Connection<'remote, 'repo, T, P>
