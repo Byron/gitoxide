@@ -74,6 +74,15 @@ mod error {
         #[error(transparent)]
         ParseRefs(#[from] refs::parse::Error),
     }
+
+    impl git_transport::IsSpuriousError for Error {
+        fn is_spurious(&self) -> bool {
+            match self {
+                Error::Transport(err) => err.is_spurious(),
+                _ => false,
+            }
+        }
+    }
 }
 pub use error::Error;
 
