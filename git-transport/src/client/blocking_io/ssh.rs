@@ -12,6 +12,8 @@ pub enum Error {
     UnsupportedSshCommand(String),
 }
 
+impl crate::IsSpuriousError for Error {}
+
 /// Connect to `host` using the ssh program to obtain data from the repository at `path` on the remote.
 ///
 /// The optional `user` identifies the user's account to which to connect, while `port` allows to specify non-standard

@@ -24,4 +24,5 @@ pub struct Options {
     pub configure_request: Option<Box<ConfigureRequestFn>>,
 }
 
-mod remote;
+///
+pub mod remote;

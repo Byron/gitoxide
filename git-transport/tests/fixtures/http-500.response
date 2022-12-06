@@ -1,0 +1,21 @@
+HTTP/1.1 500 Internal Server Error
+date: Sun, 23 Aug 2020 05:53:42 GMT
+content-type: text/plain; charset=utf-8
+server: GitHub.com
+status: 500 Internal Server Error
+vary: X-PJAX, Accept-Encoding, Accept, X-Requested-With
+cache-control: no-cache
+strict-transport-security: max-age=31536000; includeSubdomains; preload
+x-frame-options: deny
+x-content-type-options: nosniff
+x-xss-protection: 1; mode=block
+referrer-policy: origin-when-cross-origin, strict-origin-when-cross-origin
+expect-ct: max-age=2592000, report-uri="https://api.github.com/_private/browser/errors"
+content-security-policy: default-src 'none'; base-uri 'self'; connect-src 'self'; form-action 'self'; img-src 'self' data:; script-src 'self'; style-src 'unsafe-inline'
+Set-Cookie: _gh_sess=Ypxm391SxK2hgaOZncY8eXhJb4FrOrkVBJBWSHCwA%2FJ70jZjWc5IW9ZKieEZyBAGWIEJExI83Rld8K9FOuW%2BBhbUZJtmHyehMwagnLA%2B2DQ6ooWFUFKtGi9826FisfRp5E%2Fv6FPsjjfCt29bvJ7bi7o2aJrq76pMXnazIsiL6Paek12SL0BFimarpLdWPrp7LjxzxrcsQ7Nq2PC%2FC2JOaG8f57VC4gcBxdLxh3i%2BuO4opaifk3xOOwwk9v9NVXoTOgG2fXuGtAbnvm20PY%2F6VQ%3D%3D--TlZhoqJfM0r9U%2BlM--HWe5EmDuH7GkF9ajb46%2BGw%3D%3D; Path=/; HttpOnly; Secure; SameSite=Lax
+Set-Cookie: _octo=GH1.1.1657388544.1598162022; Path=/; Domain=github.com; Expires=Mon, 23 Aug 2021 05:53:42 GMT; Secure; SameSite=Lax
+Set-Cookie: logged_in=no; Path=/; Domain=github.com; Expires=Mon, 23 Aug 2021 05:53:42 GMT; HttpOnly; Secure; SameSite=Lax
+Content-Length: 9
+X-GitHub-Request-Id: 8233:2439:9F7834:DFA1EE:5F420452
+
+error

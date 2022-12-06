@@ -54,6 +54,25 @@ pub(crate) mod connect {
         )]
         CompiledWithoutHttp(git_url::Scheme),
     }
+
+    // TODO: maybe fix this workaround: want `IsSpuriousError`  in `Connection(…)`
+    impl crate::IsSpuriousError for Error {
+        fn is_spurious(&self) -> bool {
+            match self {
+                Error::Connection(err) => {
+                    #[cfg(feature = "blocking-client")]
+                    if let Some(err) = err.downcast_ref::<crate::client::git::connect::Error>() {
+                        return err.is_spurious();
+                    };
+                    if let Some(err) = err.downcast_ref::<crate::client::Error>() {
+                        return err.is_spurious();
+                    }
+                    false
+                }
+                _ => false,
+            }
+        }
+    }
 }
 
 mod error {
@@ -73,10 +92,7 @@ mod error {
     #[allow(missing_docs)]
     pub enum Error {
         #[error("An IO error occurred when talking to the server")]
-        Io {
-            #[from]
-            err: std::io::Error,
-        },
+        Io(#[from] std::io::Error),
         #[error("Capabilities could not be parsed")]
         Capabilities {
             #[from]
@@ -99,6 +115,16 @@ mod error {
         UnsupportedProtocolVersion(BString),
         #[error(transparent)]
         Http(#[from] HttpError),
+    }
+
+    impl crate::IsSpuriousError for Error {
+        fn is_spurious(&self) -> bool {
+            match self {
+                Error::Io(err) => err.is_spurious(),
+                Error::Http(err) => err.is_spurious(),
+                _ => false,
+            }
+        }
     }
 }
 
