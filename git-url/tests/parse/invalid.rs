@@ -14,3 +14,8 @@ fn missing_path() {
 fn missing_port_despite_indication() {
     assert_failure("ssh://host.xz:", "Paths cannot be empty")
 }
+
+#[test]
+fn strange() {
+    assert_failure("file:..", "\"file:..\" is not a valid local path")
+}

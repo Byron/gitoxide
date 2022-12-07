@@ -1,7 +1,7 @@
 use bstr::ByteSlice;
 use git_url::Scheme;
 
-fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::Error> {
+fn assert_url(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::Error> {
     let actual = git_url::parse(url.into())?;
     assert_eq!(actual, expected);
     if actual.scheme.as_str().starts_with("http") {
@@ -18,7 +18,7 @@ fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, cra
 }
 
 fn assert_url_roundtrip(url: &str, expected: git_url::Url) -> crate::Result {
-    assert_eq!(assert_url_and(url, expected)?.to_bstring(), url);
+    assert_eq!(assert_url(url, expected)?.to_bstring(), url);
     Ok(())
 }
 

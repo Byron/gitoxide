@@ -4,7 +4,7 @@ use std::{
 };
 
 pub use bstr;
-use bstr::{BStr, ByteSlice};
+use bstr::{BStr, BString, ByteSlice};
 
 use crate::Scheme;
 
@@ -20,6 +20,8 @@ pub enum Error {
     UnsupportedProtocol { protocol: String },
     #[error("Paths cannot be empty")]
     EmptyPath,
+    #[error("\"{url}\" is not a valid local path")]
+    NotALocalFile { url: BString },
     #[error("Relative URLs are not permitted: {url:?}")]
     RelativeUrl { url: String },
 }
@@ -36,17 +38,20 @@ fn str_to_protocol(s: &str) -> Result<Scheme, Error> {
     })
 }
 
-fn guess_protocol(url: &[u8]) -> &str {
+fn guess_protocol(url: &[u8]) -> Option<&str> {
     match url.find_byte(b':') {
         Some(colon_pos) => {
             if url[..colon_pos].find_byte(b'.').is_some() {
                 "ssh"
             } else {
-                "file"
+                url.get(colon_pos + 1..).and_then(|from_colon| {
+                    (from_colon.contains(&b'/') || from_colon.contains(&b'\\')).then(|| "file")
+                })?
             }
         }
         None => "file",
     }
+    .into()
 }
 
 fn sanitize_for_protocol<'a>(protocol: &str, url: &'a str) -> Cow<'a, str> {
@@ -82,7 +87,7 @@ fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
 /// We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
 /// For file-paths, we don't expect UTF8 encoding either.
 pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
-    let guessed_protocol = guess_protocol(input);
+    let guessed_protocol = guess_protocol(input).ok_or_else(|| Error::NotALocalFile { url: input.into() })?;
     let path_without_file_protocol = input.strip_prefix(b"file://");
     if path_without_file_protocol.is_some() || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
         return Ok(crate::Url {
