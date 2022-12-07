@@ -41,7 +41,7 @@ pub fn connect(
             if desired_version != Protocol::V1 {
                 let mut args = vec![Cow::from("-o"), "SendEnv=GIT_PROTOCOL".into()];
                 if let Some(port) = port {
-                    args.push(format!("-p={}", port).into());
+                    args.push(format!("-p{}", port).into());
                 }
                 Some((
                     args,

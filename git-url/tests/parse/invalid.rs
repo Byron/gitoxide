@@ -1,8 +1,11 @@
 use crate::parse::assert_failure;
 
 #[test]
-fn unknown_protocol() {
-    assert_failure("foo://host.xz/path/to/repo.git/", "Protocol \"foo\" is not supported")
+fn relative_path_due_to_double_colon() {
+    assert_failure(
+        "invalid:://host.xz/path/to/repo.git/",
+        "Relative URLs are not permitted: \"invalid:://host.xz/path/to/repo.git/\"",
+    )
 }
 
 #[test]

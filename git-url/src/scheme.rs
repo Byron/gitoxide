@@ -1,31 +1,36 @@
-use std::convert::TryFrom;
-
-/// A scheme for use in a [`Url`][crate::Url].
+/// A scheme or protocol for use in a [`Url`][crate::Url].
+///
+/// It defines how to talk to a given repository.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
 pub enum Scheme {
+    /// A local resource that is accessible on the current host.
     File,
+    /// A git daemon, like `File` over TCP/IP.
     Git,
+    /// Launch `git-upload-pack` through an `ssh` tunnel.
     Ssh,
+    /// Use the HTTP protocol to talk to git servers.
     Http,
+    /// Use the HTTPS protocol to talk to git servers.
     Https,
+    /// Any other protocol or transport that isn't known at compile time.
+    ///
+    /// It's used to support plug-in transports.
     Ext(String),
 }
 
-impl<'a> TryFrom<&'a str> for Scheme {
-    type Error = &'a str;
-
-    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        Ok(match value {
+impl<'a> From<&'a str> for Scheme {
+    fn from(value: &'a str) -> Self {
+        match value {
             "ssh" => Scheme::Ssh,
             "file" => Scheme::File,
             "git" => Scheme::Git,
             "http" => Scheme::Http,
             "https" => Scheme::Https,
-            "rad" => Scheme::Ext("rad".into()),
-            unknown => return Err(unknown),
-        })
+            unknown => Scheme::Ext(unknown.into()),
+        }
     }
 }
 
