@@ -120,13 +120,7 @@ mod unknown {
     fn basic() -> crate::Result {
         assert_url_roundtrip(
             "abc://example.com/~byron/hello",
-            url(
-                Scheme::Ext("abc".into()),
-                None,
-                "example.com",
-                None,
-                b"/~byron/hello",
-            ),
+            url(Scheme::Ext("abc".into()), None, "example.com", None, b"/~byron/hello"),
         )
     }
 }
