@@ -117,7 +117,7 @@ mod unknown {
     use crate::parse::{assert_url_roundtrip, url};
 
     #[test]
-    fn basic() -> crate::Result {
+    fn any_protocol_is_supported_via_the_ext_scheme() -> crate::Result {
         assert_url_roundtrip(
             "abc://example.com/~byron/hello",
             url(Scheme::Ext("abc".into()), None, "example.com", None, b"/~byron/hello"),
