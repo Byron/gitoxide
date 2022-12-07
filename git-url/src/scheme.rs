@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 /// A scheme for use in a [`Url`][crate::Url].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -13,19 +11,16 @@ pub enum Scheme {
     Ext(String),
 }
 
-impl<'a> TryFrom<&'a str> for Scheme {
-    type Error = &'a str;
-
-    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        Ok(match value {
+impl<'a> From<&'a str> for Scheme {
+    fn from(value: &'a str) -> Self {
+        match value {
             "ssh" => Scheme::Ssh,
             "file" => Scheme::File,
             "git" => Scheme::Git,
             "http" => Scheme::Http,
             "https" => Scheme::Https,
-            "rad" => Scheme::Ext("rad".into()),
-            unknown => return Err(unknown),
-        })
+            unknown => Scheme::Ext(unknown.into()),
+        }
     }
 }
 
