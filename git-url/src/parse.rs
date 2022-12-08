@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    convert::{Infallible, TryFrom},
-};
+use std::{borrow::Cow, convert::Infallible};
 
 pub use bstr;
 use bstr::{BStr, BString, ByteSlice};
@@ -16,8 +13,6 @@ pub enum Error {
     Utf8(#[from] std::str::Utf8Error),
     #[error(transparent)]
     Url(#[from] url::ParseError),
-    #[error("Protocol {protocol:?} is not supported")]
-    UnsupportedProtocol { protocol: String },
     #[error("urls require the path to the repository")]
     MissingResourceLocation,
     #[error("file urls require an absolute or relative path to the repository repository")]
@@ -34,10 +29,8 @@ impl From<Infallible> for Error {
     }
 }
 
-fn str_to_protocol(s: &str) -> Result<Scheme, Error> {
-    Scheme::try_from(s).map_err(|invalid| Error::UnsupportedProtocol {
-        protocol: invalid.into(),
-    })
+fn str_to_protocol(s: &str) -> Scheme {
+    Scheme::from(s)
 }
 
 fn guess_protocol(url: &[u8]) -> Option<&str> {
@@ -70,7 +63,7 @@ fn has_no_explicit_protocol(url: &[u8]) -> bool {
 fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
     Ok(crate::Url {
         serialize_alternative_form: false,
-        scheme: str_to_protocol(url.scheme())?,
+        scheme: str_to_protocol(url.scheme()),
         user: if url.username().is_empty() {
             None
         } else {

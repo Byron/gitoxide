@@ -165,7 +165,7 @@ git init --bare bad-url-rewriting
 [remote "origin"]
   pushUrl = "file://dev/null"
 
-[url "foo://"]
+[url "invalid:://"]
   pushInsteadOf = "file://"
 
 [url "https://github.com/byron/"]
