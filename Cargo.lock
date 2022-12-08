@@ -487,9 +487,9 @@ dependencies = [
 
 [[package]]
 name = "clru"
-version = "0.5.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "218d6bd3dde8e442a975fa1cd233c0e5fded7596bccfe39f58eca98d22421e0a"
+checksum = "b8191fa7302e03607ff0e237d4246cc043ff5b3cb9409d995172ba3bea16b807"
 
 [[package]]
 name = "cmake"
@@ -1710,7 +1710,6 @@ version = "0.29.0"
 dependencies = [
  "anyhow",
  "async-std",
- "clru",
  "document-features",
  "git-actor",
  "git-attributes",
