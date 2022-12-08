@@ -18,8 +18,10 @@ pub enum Error {
     Url(#[from] url::ParseError),
     #[error("Protocol {protocol:?} is not supported")]
     UnsupportedProtocol { protocol: String },
-    #[error("Paths cannot be empty")]
-    EmptyPath,
+    #[error("urls require the path to the repository")]
+    MissingResourceLocation,
+    #[error("file urls require an absolute or relative path to the repository repository")]
+    MissingRepositoryPath,
     #[error("\"{url}\" is not a valid local path")]
     NotALocalFile { url: BString },
     #[error("Relative URLs are not permitted: {url:?}")]
@@ -90,32 +92,43 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     let guessed_protocol = guess_protocol(input).ok_or_else(|| Error::NotALocalFile { url: input.into() })?;
     let path_without_file_protocol = input.strip_prefix(b"file://");
     if path_without_file_protocol.is_some() || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
-        return Ok(crate::Url {
-            scheme: Scheme::File,
-            path: path_without_file_protocol
-                .map(|stripped_path| {
-                    #[cfg(windows)]
-                    {
-                        if stripped_path.starts_with(b"/") {
-                            input
-                                .to_str()
-                                .ok()
-                                .and_then(|url| {
-                                    let path = url::Url::parse(url).ok()?.to_file_path().ok()?;
-                                    path.is_absolute().then(|| git_path::into_bstr(path).into_owned())
-                                })
-                                .unwrap_or_else(|| stripped_path.into())
-                        } else {
-                            stripped_path.into()
-                        }
-                    }
-                    #[cfg(not(windows))]
-                    {
+        let path: BString = path_without_file_protocol
+            .map(|stripped_path| {
+                #[cfg(windows)]
+                {
+                    if stripped_path.starts_with(b"/") {
+                        input
+                            .to_str()
+                            .ok()
+                            .and_then(|url| {
+                                let path = url::Url::parse(url).ok()?.to_file_path().ok()?;
+                                path.is_absolute().then(|| git_path::into_bstr(path).into_owned())
+                            })
+                            .unwrap_or_else(|| stripped_path.into())
+                    } else {
                         stripped_path.into()
                     }
-                })
-                .unwrap_or_else(|| input.into()),
-            serialize_alternative_form: !input.starts_with(b"file://"),
+                }
+                #[cfg(not(windows))]
+                {
+                    stripped_path.into()
+                }
+            })
+            .unwrap_or_else(|| input.into());
+        if path.is_empty() {
+            return Err(Error::MissingRepositoryPath);
+        }
+        let input_starts_with_file_protocol = input.starts_with(b"file://");
+        if input_starts_with_file_protocol {
+            let wanted = cfg!(windows).then(|| &[b'\\', b'/'] as &[_]).unwrap_or(&[b'/']);
+            if !wanted.iter().any(|w| path.contains(w)) {
+                return Err(Error::MissingRepositoryPath);
+            }
+        }
+        return Ok(crate::Url {
+            scheme: Scheme::File,
+            path,
+            serialize_alternative_form: !input_starts_with_file_protocol,
             ..Default::default()
         });
     }
@@ -143,8 +156,8 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
         url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
         sanitized_scp = true;
     }
-    if url.scheme() != "rad" && url.path().is_empty() {
-        return Err(Error::EmptyPath);
+    if url.path().is_empty() && ["ssh", "git"].contains(&url.scheme()) {
+        return Err(Error::MissingResourceLocation);
     }
     if url.cannot_be_a_base() {
         return Err(Error::RelativeUrl { url: url.into() });

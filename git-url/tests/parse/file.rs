@@ -80,6 +80,43 @@ fn relative_file_path_without_protocol() -> crate::Result {
 }
 
 #[test]
+fn shortest_possible_absolute_path() -> crate::Result {
+    let parsed = assert_url("/", url_alternate(Scheme::File, None, None, None, b"/"))?.to_bstring();
+    assert_eq!(parsed, "/");
+    let parsed = assert_url("file:///", url(Scheme::File, None, None, None, b"/"))?.to_bstring();
+    assert_eq!(parsed, "file:///");
+    Ok(())
+}
+
+#[test]
+fn shortest_possible_relative_path() -> crate::Result {
+    let parsed = assert_url("a", url_alternate(Scheme::File, None, None, None, b"a"))?.to_bstring();
+    assert_eq!(parsed, "a");
+    let parsed = assert_url("../", url_alternate(Scheme::File, None, None, None, b"../"))?.to_bstring();
+    assert_eq!(parsed, "../");
+    let parsed = assert_url("..\\", url_alternate(Scheme::File, None, None, None, b"..\\"))?.to_bstring();
+    assert_eq!(parsed, "..\\");
+    let parsed = assert_url("./", url_alternate(Scheme::File, None, None, None, b"./"))?.to_bstring();
+    assert_eq!(parsed, "./");
+    let parsed = assert_url(".", url_alternate(Scheme::File, None, None, None, b"."))?.to_bstring();
+    assert_eq!(parsed, ".");
+    let parsed = assert_url("..", url_alternate(Scheme::File, None, None, None, b".."))?.to_bstring();
+    assert_eq!(parsed, "..");
+    let parsed = assert_url("file://../", url(Scheme::File, None, None, None, b"../"))?.to_bstring();
+    assert_eq!(parsed, "file://../");
+    let parsed = assert_url("file://./", url(Scheme::File, None, None, None, b"./"))?.to_bstring();
+    assert_eq!(parsed, "file://./");
+    #[cfg(windows)]
+    {
+        let parsed = assert_url("file://.\\", url(Scheme::File, None, None, None, b".\\"))?.to_bstring();
+        assert_eq!(parsed, "file://.\\");
+    }
+    let parsed = assert_url("file://a/", url(Scheme::File, None, None, None, b"a/"))?.to_bstring();
+    assert_eq!(parsed, "file://a/");
+    Ok(())
+}
+
+#[test]
 fn interior_relative_file_path_without_protocol() -> crate::Result {
     let url = assert_url(
         "/abs/path/../../path/to/git",

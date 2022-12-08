@@ -22,8 +22,11 @@ fn assert_url_roundtrip(url: &str, expected: git_url::Url) -> crate::Result {
     Ok(())
 }
 
-fn assert_failure(url: &str, expected_err: &str) {
-    assert_eq!(git_url::parse(url.into()).unwrap_err().to_string(), expected_err);
+fn assert_failure(url: &str, expected_err: impl ToString) {
+    assert_eq!(
+        git_url::parse(url.into()).unwrap_err().to_string(),
+        expected_err.to_string()
+    );
 }
 
 fn url<'a, 'b>(
@@ -40,7 +43,7 @@ fn url<'a, 'b>(
         port.into(),
         path.into(),
     )
-    .expect("valid")
+    .unwrap_or_else(|err| panic!("'{}' failed: {err:?}", path.as_bstr()))
 }
 
 fn url_alternate<'a, 'b>(
@@ -50,7 +53,14 @@ fn url_alternate<'a, 'b>(
     port: impl Into<Option<u16>>,
     path: &[u8],
 ) -> git_url::Url {
-    url(protocol, user, host, port, path).serialize_alternate_form(true)
+    git_url::Url::from_parts_as_alternative_form(
+        protocol,
+        user.into().map(Into::into),
+        host.into().map(Into::into),
+        port.into(),
+        path.into(),
+    )
+    .expect("valid")
 }
 
 mod file;
@@ -80,7 +90,7 @@ mod radicle {
 mod http {
     use git_url::Scheme;
 
-    use crate::parse::{assert_url_roundtrip, url};
+    use crate::parse::{assert_url, assert_url_roundtrip, url};
 
     #[test]
     fn username_expansion_is_unsupported() -> crate::Result {
@@ -95,6 +105,13 @@ mod http {
             "https://github.com/byron/gitoxide",
             url(Scheme::Https, None, "github.com", None, b"/byron/gitoxide"),
         )
+    }
+
+    #[test]
+    fn http_missing_path() -> crate::Result {
+        assert_url_roundtrip("http://host.xz/", url(Scheme::Http, None, "host.xz", None, b"/"))?;
+        assert_url("http://host.xz", url(Scheme::Http, None, "host.xz", None, b"/"))?;
+        Ok(())
     }
 }
 mod git {
