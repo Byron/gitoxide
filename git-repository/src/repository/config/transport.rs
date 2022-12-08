@@ -269,6 +269,7 @@ impl crate::Repository {
                     opts.proxy_authenticate = opts
                         .proxy
                         .as_deref()
+                        .filter(|url| !url.is_empty())
                         .map(|url| git_url::parse(url.into()))
                         .transpose()?
                         .filter(|url| url.user().is_some())
