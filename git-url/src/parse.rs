@@ -1,7 +1,7 @@
 use std::{borrow::Cow, convert::Infallible};
 
 pub use bstr;
-use bstr::{BStr, ByteSlice};
+use bstr::{BStr, BString, ByteSlice};
 
 use crate::Scheme;
 
@@ -13,8 +13,12 @@ pub enum Error {
     Utf8(#[from] std::str::Utf8Error),
     #[error(transparent)]
     Url(#[from] url::ParseError),
-    #[error("Paths cannot be empty")]
-    EmptyPath,
+    #[error("urls require the path to the repository")]
+    MissingResourceLocation,
+    #[error("file urls require an absolute or relative path to the repository repository")]
+    MissingRepositoryPath,
+    #[error("\"{url}\" is not a valid local path")]
+    NotALocalFile { url: BString },
     #[error("Relative URLs are not permitted: {url:?}")]
     RelativeUrl { url: String },
 }
@@ -29,17 +33,20 @@ fn str_to_protocol(s: &str) -> Scheme {
     Scheme::from(s)
 }
 
-fn guess_protocol(url: &[u8]) -> &str {
+fn guess_protocol(url: &[u8]) -> Option<&str> {
     match url.find_byte(b':') {
         Some(colon_pos) => {
             if url[..colon_pos].find_byte(b'.').is_some() {
                 "ssh"
             } else {
-                "file"
+                url.get(colon_pos + 1..).and_then(|from_colon| {
+                    (from_colon.contains(&b'/') || from_colon.contains(&b'\\')).then(|| "file")
+                })?
             }
         }
         None => "file",
     }
+    .into()
 }
 
 fn sanitize_for_protocol<'a>(protocol: &str, url: &'a str) -> Cow<'a, str> {
@@ -51,10 +58,6 @@ fn sanitize_for_protocol<'a>(protocol: &str, url: &'a str) -> Cow<'a, str> {
 
 fn has_no_explicit_protocol(url: &[u8]) -> bool {
     url.find(b"://").is_none()
-}
-
-fn try_strip_file_protocol(url: &[u8]) -> Option<&[u8]> {
-    url.strip_prefix(b"file://")
 }
 
 fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
@@ -79,13 +82,46 @@ fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
 /// We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
 /// For file-paths, we don't expect UTF8 encoding either.
 pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
-    let guessed_protocol = guess_protocol(input);
-    let path_without_protocol = try_strip_file_protocol(input);
-    if path_without_protocol.is_some() || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
+    let guessed_protocol = guess_protocol(input).ok_or_else(|| Error::NotALocalFile { url: input.into() })?;
+    let path_without_file_protocol = input.strip_prefix(b"file://");
+    if path_without_file_protocol.is_some() || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
+        let path: BString = path_without_file_protocol
+            .map(|stripped_path| {
+                #[cfg(windows)]
+                {
+                    if stripped_path.starts_with(b"/") {
+                        input
+                            .to_str()
+                            .ok()
+                            .and_then(|url| {
+                                let path = url::Url::parse(url).ok()?.to_file_path().ok()?;
+                                path.is_absolute().then(|| git_path::into_bstr(path).into_owned())
+                            })
+                            .unwrap_or_else(|| stripped_path.into())
+                    } else {
+                        stripped_path.into()
+                    }
+                }
+                #[cfg(not(windows))]
+                {
+                    stripped_path.into()
+                }
+            })
+            .unwrap_or_else(|| input.into());
+        if path.is_empty() {
+            return Err(Error::MissingRepositoryPath);
+        }
+        let input_starts_with_file_protocol = input.starts_with(b"file://");
+        if input_starts_with_file_protocol {
+            let wanted = cfg!(windows).then(|| &[b'\\', b'/'] as &[_]).unwrap_or(&[b'/']);
+            if !wanted.iter().any(|w| path.contains(w)) {
+                return Err(Error::MissingRepositoryPath);
+            }
+        }
         return Ok(crate::Url {
             scheme: Scheme::File,
-            path: path_without_protocol.unwrap_or(input).into(),
-            serialize_alternative_form: !input.starts_with(b"file://"),
+            path,
+            serialize_alternative_form: !input_starts_with_file_protocol,
             ..Default::default()
         });
     }
@@ -113,8 +149,8 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
         url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
         sanitized_scp = true;
     }
-    if url.scheme() != "rad" && url.path().is_empty() {
-        return Err(Error::EmptyPath);
+    if url.path().is_empty() && ["ssh", "git"].contains(&url.scheme()) {
+        return Err(Error::MissingResourceLocation);
     }
     if url.cannot_be_a_base() {
         return Err(Error::RelativeUrl { url: url.into() });

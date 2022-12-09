@@ -84,6 +84,8 @@ impl curl::easy::Handler for Handler {
                                 .send(Err(io::Error::new(
                                     if status == 401 {
                                         io::ErrorKind::PermissionDenied
+                                    } else if (500..600).contains(&status) {
+                                        io::ErrorKind::ConnectionAborted
                                     } else {
                                         io::ErrorKind::Other
                                     },

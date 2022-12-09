@@ -41,6 +41,12 @@ fn assert_error_status(
 }
 
 #[test]
+fn http_status_500_is_communicated_via_special_io_error() -> crate::Result {
+    assert_error_status(500, std::io::ErrorKind::ConnectionAborted)?;
+    Ok(())
+}
+
+#[test]
 fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted() -> crate::Result {
     let (server, mut client) = assert_error_status(401, std::io::ErrorKind::PermissionDenied)?;
     server.next_read_and_respond_with(fixture_bytes("v1/http-handshake.response"));

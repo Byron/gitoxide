@@ -130,7 +130,7 @@ pub use git_credentials as credentials;
 pub use git_date as date;
 pub use git_diff as diff;
 use git_features::threading::OwnShared;
-pub use git_features::{parallel, progress, progress::Progress, threading};
+pub use git_features::{parallel, progress::Progress, threading};
 pub use git_glob as glob;
 pub use git_hash as hash;
 #[doc(inline)]
@@ -190,6 +190,12 @@ pub mod reference;
 mod repository;
 pub mod tag;
 
+///
+pub mod progress {
+    pub use git_features::progress::*;
+    pub use prodash::tree;
+}
+
 /// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
 pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, discover::Error> {
     ThreadSafeRepository::discover(directory).map(Into::into)
@@ -240,7 +246,7 @@ where
     clone::PrepareFetch::new(
         url,
         path,
-        crate::create::Kind::WithWorktree,
+        create::Kind::WithWorktree,
         create::Options::default(),
         open_opts_with_git_binary_config(),
     )

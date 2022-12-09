@@ -188,7 +188,7 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 - Use `Context` when potential optional data is required to perform an operation at all. See `git_config::path::Context` as reference. It can't be defaulted and the
   fields could also be parameters.
 
-## Examples, Experiments, Porcelain CLI and Plumbing CLI - which does what?
+## Examples, Porcelain CLI and Plumbing CLI - which does what?
 
 ### Plumbing vs Porcelain
 
@@ -222,7 +222,7 @@ _Experiments_ are the quickest ways to obtain some insights. _Examples_ are mate
 the polish (or the potential) to move up to _plumbing_ or _porcelain_. _Plumbing_ is programs for use in scripts, whereas _porcelain_ is for use
 by humans.
 
-* **Experiments**
+* **Experiments** (out of tree due to `git2` builds sometimes failing CI)
   * quick, potentially one-off programs to learn about an aspect of gitoxide potentially in comparison to other implementations like `libgit2`.
   * No need for tests of any kind, but it must compile and be idiomatic Rust and `gitoxide`.
   * Manual command-line parsing is OK

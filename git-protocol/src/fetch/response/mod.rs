@@ -37,6 +37,16 @@ impl From<std::io::Error> for Error {
     }
 }
 
+impl git_transport::IsSpuriousError for Error {
+    fn is_spurious(&self) -> bool {
+        match self {
+            Error::Io(err) => err.is_spurious(),
+            Error::Transport(err) => err.is_spurious(),
+            _ => false,
+        }
+    }
+}
+
 /// An 'ACK' line received from the server.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

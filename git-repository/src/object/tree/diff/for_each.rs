@@ -41,15 +41,21 @@ impl<'a, 'old> Platform<'a, 'old> {
             visit: for_each,
             err: None,
         };
-        git_diff::tree::Changes::from(TreeRefIter::from_bytes(&self.lhs.data)).needed_to_obtain(
+        match git_diff::tree::Changes::from(TreeRefIter::from_bytes(&self.lhs.data)).needed_to_obtain(
             TreeRefIter::from_bytes(&other.data),
             &mut self.state,
             |oid, buf| repo.objects.find_tree_iter(oid, buf),
             &mut delegate,
-        )?;
-        match delegate.err {
-            Some(err) => Err(Error::ForEach(Box::new(err))),
-            None => Ok(()),
+        ) {
+            Ok(()) => match delegate.err {
+                Some(err) => Err(Error::ForEach(Box::new(err))),
+                None => Ok(()),
+            },
+            Err(git_diff::tree::changes::Error::Cancelled) => delegate
+                .err
+                .map(|err| Err(Error::ForEach(Box::new(err))))
+                .unwrap_or(Err(Error::Diff(git_diff::tree::changes::Error::Cancelled))),
+            Err(err) => Err(err.into()),
         }
     }
 }

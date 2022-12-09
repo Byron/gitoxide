@@ -71,6 +71,28 @@ impl Url {
             .as_ref(),
         )
     }
+
+    /// Create a new instance from the given parts, which will be validated by parsing them back from its alternative form.
+    pub fn from_parts_as_alternative_form(
+        scheme: Scheme,
+        user: Option<String>,
+        host: Option<String>,
+        port: Option<u16>,
+        path: BString,
+    ) -> Result<Self, parse::Error> {
+        parse(
+            Url {
+                scheme,
+                user,
+                host,
+                port,
+                path,
+                serialize_alternative_form: true,
+            }
+            .to_bstring()
+            .as_ref(),
+        )
+    }
 }
 
 /// Modification

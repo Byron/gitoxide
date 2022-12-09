@@ -81,6 +81,15 @@ pub mod prepare {
         #[error(transparent)]
         RefMap(#[from] crate::remote::ref_map::Error),
     }
+
+    impl git_protocol::transport::IsSpuriousError for Error {
+        fn is_spurious(&self) -> bool {
+            match self {
+                Error::RefMap(err) => err.is_spurious(),
+                _ => false,
+            }
+        }
+    }
 }
 
 impl<'remote, 'repo, T, P> Connection<'remote, 'repo, T, P>
@@ -94,11 +103,12 @@ where
     ///
     /// From there additional properties of the fetch can be adjusted to override the defaults that are configured via git-config.
     ///
-    /// # Blocking Only
+    /// # Async Experimental
     ///
-    /// Note that this implementation is currently limited to blocking mode as it relies on Drop semantics to close the connection
-    /// should the fetch not be performed. Furthermore, there the code doing the fetch is inherently blocking so there is no benefit.
-    /// It's best to unblock it by placing it into its own thread or offload it should usage in an async context be required.
+    /// Note that this implementation is currently limited correctly in blocking mode only as it relies on Drop semantics to close the connection
+    /// should the fetch not be performed. Furthermore, there the code doing the fetch is inherently blocking and it's not offloaded to a thread,
+    /// making this call block the executor.
+    /// It's best to unblock it by placing it into its own thread or offload it should usage in an async context be truly required.
     #[allow(clippy::result_large_err)]
     #[git_protocol::maybe_async::maybe_async]
     pub async fn prepare_fetch(
@@ -162,7 +172,7 @@ where
 
     /// If enabled, don't write ref updates to loose refs, but put them exclusively to packed-refs.
     ///
-    /// This improves performances and allows case-sensitive filesystems to deal with ref names that would otherwise
+    /// This improves performance and allows case-sensitive filesystems to deal with ref names that would otherwise
     /// collide.
     pub fn with_write_packed_refs_only(mut self, enabled: bool) -> Self {
         self.write_packed_refs = enabled.then(|| WritePackedRefs::Only).unwrap_or(WritePackedRefs::Never);

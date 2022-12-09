@@ -20,8 +20,8 @@ pub fn init_env_logger() {
 }
 
 #[cfg(feature = "prodash-render-line")]
-pub fn progress_tree() -> std::sync::Arc<prodash::Tree> {
-    prodash::TreeOptions {
+pub fn progress_tree() -> std::sync::Arc<prodash::tree::Root> {
+    prodash::tree::root::Options {
         message_buffer_capacity: 200,
         ..Default::default()
     }
@@ -143,7 +143,7 @@ pub mod pretty {
                     UiDone,
                     ComputationDone(Result<T>, Vec<u8>),
                 }
-                let progress = prodash::Tree::new();
+                let progress = prodash::tree::Root::new();
                 let sub_progress = progress.add_child(name);
                 let render_tui = prodash::render::tui(
                     stdout(),
@@ -195,7 +195,7 @@ pub mod pretty {
 #[allow(unused)]
 #[cfg(feature = "prodash-render-line")]
 pub fn setup_line_renderer_range(
-    progress: &std::sync::Arc<prodash::Tree>,
+    progress: &std::sync::Arc<prodash::tree::Root>,
     levels: std::ops::RangeInclusive<prodash::progress::key::Level>,
 ) -> prodash::render::line::JoinHandle {
     prodash::render::line(

@@ -23,8 +23,21 @@ mod error {
         MissingUrl { direction: remote::Direction },
         #[error("Protocol named {given:?} is not a valid protocol. Choose between 1 and 2")]
         UnknownProtocol { given: BString },
-        #[error("Could not verify that file:// url is a valid git directory before attempting to use it")]
-        FileUrl(#[from] git_discover::is_git::Error),
+        #[error("Could not verify that \"{}\" url is a valid git directory before attempting to use it", url.to_bstring())]
+        FileUrl {
+            source: Box<git_discover::is_git::Error>,
+            url: git_url::Url,
+        },
+    }
+
+    impl git_protocol::transport::IsSpuriousError for Error {
+        /// Return `true` if retrying might result in a different outcome due to IO working out differently.
+        fn is_spurious(&self) -> bool {
+            match self {
+                Error::Connect(err) => err.is_spurious(),
+                _ => false,
+            }
+        }
     }
 }
 pub use error::Error;
@@ -81,11 +94,16 @@ impl<'repo> Remote<'repo> {
     ) -> Result<(git_url::Url, git_protocol::transport::Protocol), Error> {
         fn sanitize(mut url: git_url::Url) -> Result<git_url::Url, Error> {
             if url.scheme == git_url::Scheme::File {
-                let mut dir = git_path::from_bstr(url.path.as_ref());
-                let kind = git_discover::is_git(dir.as_ref()).or_else(|_| {
-                    dir.to_mut().push(git_discover::DOT_GIT_DIR);
-                    git_discover::is_git(dir.as_ref())
-                })?;
+                let mut dir = git_path::to_native_path_on_windows(url.path.as_ref());
+                let kind = git_discover::is_git(dir.as_ref())
+                    .or_else(|_| {
+                        dir.to_mut().push(git_discover::DOT_GIT_DIR);
+                        git_discover::is_git(dir.as_ref())
+                    })
+                    .map_err(|err| Error::FileUrl {
+                        source: err.into(),
+                        url: url.clone(),
+                    })?;
                 let (git_dir, _work_dir) = git_discover::repository::Path::from_dot_git_dir(
                     dir.clone().into_owned(),
                     kind,

@@ -68,7 +68,8 @@ impl SpawnProcessOnDemand {
     }
     fn new_local(path: BString, version: Protocol) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
-            url: git_url::Url::from_parts(git_url::Scheme::File, None, None, None, path.clone()).expect("valid url"),
+            url: git_url::Url::from_parts_as_alternative_form(git_url::Scheme::File, None, None, None, path.clone())
+                .expect("valid url"),
             path,
             ssh_program: None,
             ssh_args: Vec::new(),

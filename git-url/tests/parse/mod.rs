@@ -1,7 +1,7 @@
 use bstr::ByteSlice;
 use git_url::Scheme;
 
-fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::Error> {
+fn assert_url(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::Error> {
     let actual = git_url::parse(url.into())?;
     assert_eq!(actual, expected);
     if actual.scheme.as_str().starts_with("http") {
@@ -18,20 +18,23 @@ fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, cra
 }
 
 fn assert_url_roundtrip(url: &str, expected: git_url::Url) -> crate::Result {
-    assert_eq!(assert_url_and(url, expected)?.to_bstring(), url);
+    assert_eq!(assert_url(url, expected)?.to_bstring(), url);
     Ok(())
 }
 
-fn assert_failure(url: &str, expected_err: &str) {
-    assert_eq!(git_url::parse(url.into()).unwrap_err().to_string(), expected_err);
+fn assert_failure(url: &str, expected_err: impl ToString) {
+    assert_eq!(
+        git_url::parse(url.into()).unwrap_err().to_string(),
+        expected_err.to_string()
+    );
 }
 
-fn url(
+fn url<'a, 'b>(
     protocol: Scheme,
-    user: impl Into<Option<&'static str>>,
-    host: impl Into<Option<&'static str>>,
+    user: impl Into<Option<&'a str>>,
+    host: impl Into<Option<&'b str>>,
     port: impl Into<Option<u16>>,
-    path: &'static [u8],
+    path: &[u8],
 ) -> git_url::Url {
     git_url::Url::from_parts(
         protocol,
@@ -40,17 +43,24 @@ fn url(
         port.into(),
         path.into(),
     )
-    .expect("valid")
+    .unwrap_or_else(|err| panic!("'{}' failed: {err:?}", path.as_bstr()))
 }
 
-fn url_alternate(
+fn url_alternate<'a, 'b>(
     protocol: Scheme,
-    user: impl Into<Option<&'static str>>,
-    host: impl Into<Option<&'static str>>,
+    user: impl Into<Option<&'a str>>,
+    host: impl Into<Option<&'b str>>,
     port: impl Into<Option<u16>>,
-    path: &'static [u8],
+    path: &[u8],
 ) -> git_url::Url {
-    url(protocol, user, host, port, path).serialize_alternate_form(true)
+    git_url::Url::from_parts_as_alternative_form(
+        protocol,
+        user.into().map(Into::into),
+        host.into().map(Into::into),
+        port.into(),
+        path.into(),
+    )
+    .expect("valid")
 }
 
 mod file;
@@ -80,7 +90,7 @@ mod radicle {
 mod http {
     use git_url::Scheme;
 
-    use crate::parse::{assert_url_roundtrip, url};
+    use crate::parse::{assert_url, assert_url_roundtrip, url};
 
     #[test]
     fn username_expansion_is_unsupported() -> crate::Result {
@@ -95,6 +105,13 @@ mod http {
             "https://github.com/byron/gitoxide",
             url(Scheme::Https, None, "github.com", None, b"/byron/gitoxide"),
         )
+    }
+
+    #[test]
+    fn http_missing_path() -> crate::Result {
+        assert_url_roundtrip("http://host.xz/", url(Scheme::Http, None, "host.xz", None, b"/"))?;
+        assert_url("http://host.xz", url(Scheme::Http, None, "host.xz", None, b"/"))?;
+        Ok(())
     }
 }
 mod git {

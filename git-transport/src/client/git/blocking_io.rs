@@ -155,6 +155,15 @@ pub mod connect {
         VirtualHostInvalid { host: String },
     }
 
+    impl crate::IsSpuriousError for Error {
+        fn is_spurious(&self) -> bool {
+            match self {
+                Error::Io(err) => err.is_spurious(),
+                _ => false,
+            }
+        }
+    }
+
     fn parse_host(input: String) -> Result<(String, Option<u16>), Error> {
         let mut tokens = input.splitn(2, ':');
         Ok(match (tokens.next(), tokens.next()) {

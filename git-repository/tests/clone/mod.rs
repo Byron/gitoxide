@@ -31,7 +31,7 @@ mod blocking_io {
             move |r| {
                 called_configure_remote.store(true, std::sync::atomic::Ordering::Relaxed);
                 Ok(
-                    r.with_refspec("+refs/tags/*:refs/tags/*", git::remote::Direction::Fetch)
+                    r.with_refspecs(Some("+refs/tags/*:refs/tags/*"), git::remote::Direction::Fetch)
                         .expect("valid static spec"),
                 )
             }

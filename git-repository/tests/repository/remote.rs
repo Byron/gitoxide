@@ -29,10 +29,10 @@ mod remote_at {
                 &[],
                 "no specs are preset for newly created remotes"
             );
-            remote = remote.with_refspec(spec, direction)?;
+            remote = remote.with_refspecs(Some(spec), direction)?;
             assert_eq!(remote.refspecs(direction).len(), 1, "the new refspec was added");
 
-            remote = remote.with_refspec(spec, direction)?;
+            remote = remote.with_refspecs(Some(spec), direction)?;
             assert_eq!(remote.refspecs(direction).len(), 1, "duplicates are disallowed");
         }
 

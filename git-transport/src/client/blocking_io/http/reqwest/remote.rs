@@ -4,12 +4,25 @@ use git_features::io::pipe;
 
 use crate::client::{http, http::reqwest::Remote};
 
+/// The error returned by the 'remote' helper, a purely internal construct to perform http requests.
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
     Reqwest(#[from] reqwest::Error),
     #[error("Request configuration failed")]
     ConfigureRequest(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
+}
+
+impl crate::IsSpuriousError for Error {
+    fn is_spurious(&self) -> bool {
+        match self {
+            Error::Reqwest(err) => {
+                err.is_timeout() || err.is_connect() || err.status().map_or(false, |status| status.is_server_error())
+            }
+            _ => false,
+        }
+    }
 }
 
 impl Default for Remote {
@@ -63,6 +76,8 @@ impl Default for Remote {
                             Some(status) => {
                                 let kind = if status == reqwest::StatusCode::UNAUTHORIZED {
                                     std::io::ErrorKind::PermissionDenied
+                                } else if status.is_server_error() {
+                                    std::io::ErrorKind::ConnectionAborted
                                 } else {
                                     std::io::ErrorKind::Other
                                 };

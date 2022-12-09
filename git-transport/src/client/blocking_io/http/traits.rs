@@ -12,6 +12,27 @@ pub enum Error {
     PostBody(#[from] std::io::Error),
 }
 
+impl crate::IsSpuriousError for Error {
+    fn is_spurious(&self) -> bool {
+        match self {
+            Error::PostBody(err) => err.is_spurious(),
+            #[cfg(any(feature = "http-client-reqwest", feature = "http-client-curl"))]
+            Error::InitHttpClient { source } => {
+                #[cfg(feature = "http-client-curl")]
+                if let Some(err) = source.downcast_ref::<crate::client::http::curl::Error>() {
+                    return err.is_spurious();
+                };
+                #[cfg(feature = "http-client-reqwest")]
+                if let Some(err) = source.downcast_ref::<crate::client::http::reqwest::remote::Error>() {
+                    return err.is_spurious();
+                };
+                false
+            }
+            _ => false,
+        }
+    }
+}
+
 /// The return value of [Http::get()].
 pub struct GetResponse<H, B> {
     /// The response headers.

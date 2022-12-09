@@ -41,27 +41,37 @@ impl Remote<'_> {
         Ok(self)
     }
 
-    /// Add `spec` as refspec for `direction` to our list if it's unique.
-    pub fn with_refspec<'a>(
+    /// Add `specs` as refspecs for `direction` to our list if they are unique, or ignore them otherwise.
+    pub fn with_refspecs<Spec>(
         mut self,
-        spec: impl Into<&'a BStr>,
+        specs: impl IntoIterator<Item = Spec>,
         direction: remote::Direction,
-    ) -> Result<Self, git_refspec::parse::Error> {
+    ) -> Result<Self, git_refspec::parse::Error>
+    where
+        Spec: AsRef<BStr>,
+    {
         use remote::Direction::*;
-        let spec = git_refspec::parse(
-            spec.into(),
-            match direction {
-                Push => git_refspec::parse::Operation::Push,
-                Fetch => git_refspec::parse::Operation::Fetch,
-            },
-        )?
-        .to_owned();
+        let new_specs = specs
+            .into_iter()
+            .map(|spec| {
+                git_refspec::parse(
+                    spec.as_ref(),
+                    match direction {
+                        Push => git_refspec::parse::Operation::Push,
+                        Fetch => git_refspec::parse::Operation::Fetch,
+                    },
+                )
+                .map(|s| s.to_owned())
+            })
+            .collect::<Result<Vec<_>, _>>()?;
         let specs = match direction {
             Push => &mut self.push_specs,
             Fetch => &mut self.fetch_specs,
         };
-        if !specs.contains(&spec) {
-            specs.push(spec);
+        for spec in new_specs {
+            if !specs.contains(&spec) {
+                specs.push(spec);
+            }
         }
         Ok(self)
     }
