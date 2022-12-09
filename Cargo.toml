@@ -180,10 +180,6 @@ members = [
 
     "cargo-smart-release",
 
-    "experiments/object-access",
-    "experiments/diffing",
-    "experiments/traversal",
-
     "tests/tools",
 ]
 exclude = ["cargo-smart-release/tests/fixtures/tri-depth-workspace/a",

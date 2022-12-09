@@ -134,9 +134,6 @@ check: ## Build all code in suitable configurations
 					  && cargo check --no-default-features
 	cd git-odb && cargo check --features serde1
 	cd cargo-smart-release && cargo check --all
-	cd experiments/object-access && cargo check
-	cd experiments/diffing && cargo check
-	cd experiments/traversal && cargo check
 
 unit-tests: ## run all unit tests
 	cargo test --all
