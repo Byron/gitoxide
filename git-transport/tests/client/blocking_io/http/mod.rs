@@ -46,6 +46,88 @@ fn http_status_500_is_communicated_via_special_io_error() -> crate::Result {
     Ok(())
 }
 
+// based on a test in cargo
+#[test]
+fn http_will_use_pipelining() {
+    let server = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = server.local_addr().unwrap();
+
+    fn headers(rdr: &mut dyn BufRead) -> HashSet<String> {
+        let valid = ["GET", "Authorization", "Accept"];
+        rdr.lines()
+            .map(|s| s.unwrap())
+            .take_while(|s| s.len() > 2)
+            .map(|s| s.trim().to_string())
+            .filter(|s| valid.iter().any(|prefix| s.starts_with(*prefix)))
+            .collect()
+    }
+
+    let thread = std::thread::spawn({
+        move || {
+            let mut conn = std::io::BufReader::new(server.accept().unwrap().0);
+            let req = headers(&mut conn);
+            conn.get_mut()
+                .write_all(
+                    b"HTTP/1.1 401 Unauthorized\r\n\
+              WWW-Authenticate: Basic realm=\"wheee\"\r\n\
+              Content-Length: 0\r\n\
+              \r\n",
+                )
+                .unwrap();
+            assert_eq!(
+                req,
+                vec![
+                    "GET /reponame/info/refs?service=git-upload-pack HTTP/1.1",
+                    "Accept: */*"
+                ]
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect()
+            );
+
+            let req = headers(&mut conn);
+            conn.get_mut()
+                .write_all(
+                    b"HTTP/1.1 401 Unauthorized\r\n\
+              WWW-Authenticate: Basic realm=\"testenv\"\r\n\
+              \r\n",
+                )
+                .unwrap();
+            assert_eq!(
+                req,
+                vec![
+                    "GET /reponame/info/refs?service=git-upload-pack HTTP/1.1",
+                    "Authorization: Basic Zm9vOmJhcg==",
+                    "Accept: */*",
+                ]
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect()
+            );
+        }
+    });
+
+    let url = format!("http://{}:{}/reponame", &addr.ip().to_string(), &addr.port(),);
+    let mut client = git_transport::client::http::connect(&url, git_transport::Protocol::V2);
+    match client.handshake(git_transport::Service::UploadPack, &[]) {
+        Ok(_) => unreachable!("expecting permission denied to be detected"),
+        Err(git_transport::client::Error::Io(err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {}
+        Err(err) => unreachable!("{err:?}"),
+    };
+    client
+        .set_identity(git_sec::identity::Account {
+            username: "foo".into(),
+            password: "bar".into(),
+        })
+        .unwrap();
+    match client.handshake(git_transport::Service::UploadPack, &[]) {
+        Ok(_) => unreachable!("expecting permission denied to be detected"),
+        Err(git_transport::client::Error::Io(err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {}
+        Err(err) => unreachable!("{err:?}"),
+    };
+    thread.join().unwrap();
+}
+
 #[test]
 fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted() -> crate::Result {
     let (server, mut client) = assert_error_status(401, std::io::ErrorKind::PermissionDenied)?;
@@ -544,15 +626,9 @@ Git-Protocol: version=2
     let messages = Rc::try_unwrap(messages).expect("no other handle").into_inner();
     assert_eq!(messages.len(), 5);
 
-    assert_eq!(
-        server
-            .received_as_string()
-            .lines()
-            .filter(|l| !l.starts_with("expect: "))
-            .map(|l| l.to_lowercase())
-            .collect::<HashSet<_>>(),
-        format!(
-            "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
+    let actual = server.received_as_string();
+    let expected = format!(
+        "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
 Transfer-Encoding: chunked
 User-Agent: git/oxide-{}
@@ -566,12 +642,16 @@ Git-Protocol: version=2
 0
 
 ",
-            server.addr.port(),
-            env!("CARGO_PKG_VERSION")
-        )
-        .lines()
-        .map(|l| l.to_lowercase())
-        .collect::<HashSet<_>>()
+        server.addr.port(),
+        env!("CARGO_PKG_VERSION")
+    );
+    assert_eq!(
+        actual
+            .lines()
+            .filter(|l| !l.starts_with("expect: "))
+            .map(|l| l.to_lowercase())
+            .collect::<HashSet<_>>(),
+        expected.lines().map(|l| l.to_lowercase()).collect::<HashSet<_>>()
     );
     Ok(())
 }

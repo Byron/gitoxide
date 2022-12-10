@@ -90,7 +90,7 @@ impl Cache {
                             "HOME" => Some(home_env),
                             _ => None,
                         }
-                        .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check_opt(val)))
+                        .and_then(|perm| perm.check_opt(name).and_then(std::env::var_os))
                     })
                     .map(|p| (source, p.into_owned()))
             })
