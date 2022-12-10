@@ -23,6 +23,18 @@ fn from_bare_git_dir() -> crate::Result {
 }
 
 #[test]
+fn from_bare_git_dir_without_config_file() -> crate::Result {
+    for name in ["bare-no-config.git", "bare-no-config-after-init.git"] {
+        let dir = repo_path()?.join(name);
+        let (path, trust) = git_discover::upwards(&dir)?;
+        assert_eq!(path.as_ref(), dir, "the bare .git dir is directly returned");
+        assert_eq!(path.kind(), Kind::Bare);
+        assert_eq!(trust, expected_trust());
+    }
+    Ok(())
+}
+
+#[test]
 fn from_inside_bare_git_dir() -> crate::Result {
     let git_dir = repo_path()?.join("bare.git");
     let dir = git_dir.join("objects");
@@ -58,6 +70,18 @@ fn from_working_dir() -> crate::Result {
     assert_eq!(path.as_ref(), dir, "a working tree dir yields the git dir");
     assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     assert_eq!(trust, expected_trust());
+    Ok(())
+}
+
+#[test]
+fn from_working_dir_no_config() -> crate::Result {
+    for name in ["worktree-no-config-after-init", "worktree-no-config"] {
+        let dir = repo_path()?.join(name);
+        let (path, trust) = git_discover::upwards(&dir)?;
+        assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None },);
+        assert_eq!(path.as_ref(), dir, "a working tree dir yields the git dir");
+        assert_eq!(trust, expected_trust());
+    }
     Ok(())
 }
 
@@ -328,6 +352,6 @@ mod submodules {
     }
 }
 
-fn repo_path() -> crate::Result<PathBuf> {
+pub(crate) fn repo_path() -> crate::Result<PathBuf> {
     git_testtools::scripted_fixture_repo_read_only("make_basic_repo.sh")
 }

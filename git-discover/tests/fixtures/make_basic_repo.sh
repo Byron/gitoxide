@@ -26,3 +26,24 @@ rm -R worktrees/c-worktree-deleted
   git worktree add ../worktrees/from-bare/d-private-dir-deleted
   rm -R -v ./worktrees/d-private-dir-deleted
 )
+
+git clone --bare --shared . bare-no-config.git
+(cd bare-no-config.git
+  rm config
+)
+
+git init --bare bare-no-config-after-init.git
+(cd bare-no-config-after-init.git
+  rm config
+)
+
+git clone --shared . worktree-no-config
+(cd worktree-no-config
+  rm .git/config
+)
+
+git init worktree-no-config-after-init
+(cd worktree-no-config-after-init
+  rm .git/config
+)
+
