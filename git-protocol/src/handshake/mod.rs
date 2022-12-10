@@ -57,6 +57,7 @@ pub struct Outcome {
 }
 
 mod error {
+    use bstr::BString;
     use git_transport::client;
 
     use crate::{credentials, handshake::refs};
@@ -65,8 +66,10 @@ mod error {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
-        #[error(transparent)]
+        #[error("Failed to obtain credentials")]
         Credentials(#[from] credentials::protocol::Error),
+        #[error("Credentials provided for \"{url}\" were not accepted by the remote")]
+        InvalidCredentials { url: BString },
         #[error(transparent)]
         Transport(#[from] client::Error),
         #[error("The transport didn't accept the advertised server version {actual_version:?} and closed the connection client side")]
