@@ -41,6 +41,29 @@ fn rfc2822() {
 }
 
 #[test]
+fn raw() {
+    assert_eq!(
+        git_date::parse("1660874655 +0800", None).expect("parsed raw string"),
+        Time {
+            seconds_since_unix_epoch: 1660874655,
+            offset_in_seconds: 28800,
+            sign: Sign::Plus,
+        },
+        "could not parse with raw format"
+    );
+
+    assert_eq!(
+        git_date::parse("1660874655 -0800", None).expect("parsed raw string"),
+        Time {
+            seconds_since_unix_epoch: 1660874655,
+            offset_in_seconds: -28800,
+            sign: Sign::Minus,
+        },
+        "could not parse with raw format"
+    );
+}
+
+#[test]
 fn invalid_dates_can_be_produced_without_current_time() {
     assert!(matches!(
         git_date::parse("foobar", None).unwrap_err(),

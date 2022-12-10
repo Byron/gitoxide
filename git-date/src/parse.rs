@@ -72,10 +72,13 @@ pub(crate) mod function {
         if offset.len() != 5 {
             return None;
         }
-        let sign = if &offset[..1] == "-" { Sign::Plus } else { Sign::Minus };
+        let sign = if &offset[..1] == "-" { Sign::Minus } else { Sign::Plus };
         let hours: i32 = offset[1..3].parse().ok()?;
         let minutes: i32 = offset[3..5].parse().ok()?;
-        let offset_in_seconds = hours * 3600 + minutes * 60;
+        let mut offset_in_seconds = hours * 3600 + minutes * 60;
+        if sign == Sign::Minus {
+            offset_in_seconds *= -1;
+        };
         let time = Time {
             seconds_since_unix_epoch,
             offset_in_seconds,
