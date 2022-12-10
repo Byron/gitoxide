@@ -1,3 +1,36 @@
+mod missing_config_file {
+    use crate::util::named_subrepo_opts;
+    use git_repository as git;
+
+    #[test]
+    fn bare() -> crate::Result {
+        let repo = named_subrepo_opts("make_config_repos.sh", "bare-no-config", git::open::Options::isolated())?;
+        assert!(
+            repo.is_bare(),
+            "without config, we can't really know what the repo is actually but can guess by not having a worktree"
+        );
+        assert_eq!(repo.work_dir(), None);
+        assert!(repo.worktree().is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn non_bare() -> crate::Result {
+        let repo = named_subrepo_opts(
+            "make_config_repos.sh",
+            "worktree-no-config",
+            git::open::Options::isolated(),
+        )?;
+        assert!(repo.work_dir().is_some());
+        assert!(repo.worktree().is_some());
+        assert!(
+            !repo.is_bare(),
+            "without config, we can't really know what the repo is actually but can guess as there is a worktree"
+        );
+        Ok(())
+    }
+}
+
 mod submodules {
     use std::path::Path;
 
