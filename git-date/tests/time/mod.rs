@@ -1,6 +1,7 @@
 use bstr::ByteSlice;
 use git_date::{time::Sign, Time};
 
+mod baseline;
 mod format;
 mod parse;
 
