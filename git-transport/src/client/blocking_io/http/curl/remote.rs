@@ -9,6 +9,7 @@ use std::{
 use curl::easy::{Auth, Easy2};
 use git_features::io::pipe;
 
+use crate::client::http::curl::curl_is_spurious;
 use crate::client::{
     blocking_io::http::{self, curl::Error, redirect},
     http::options::{FollowRedirects, ProxyAuthMethod},
@@ -256,7 +257,12 @@ pub fn new() -> (
                 if let Some((action, authenticate)) = proxy_auth_action {
                     authenticate.lock().expect("no panics in other threads")(action.erase()).ok();
                 }
-                let err = Err(io::Error::new(io::ErrorKind::Other, err));
+                let err = Err(io::Error::new(
+                    curl_is_spurious(&err)
+                        .then(|| std::io::ErrorKind::ConnectionReset)
+                        .unwrap_or(std::io::ErrorKind::Other),
+                    err,
+                ));
                 handler.receive_body.take();
                 match (handler.send_header.take(), handler.send_data.take()) {
                     (Some(header), mut data) => {
