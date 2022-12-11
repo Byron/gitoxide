@@ -5,7 +5,13 @@ use once_cell::sync::Lazy;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-static BASELINE: Lazy<HashMap<String, (Option<String>, usize, u32)>> = Lazy::new(|| {
+struct Sample {
+    format_name: Option<String>,
+    exit_code: usize,
+    time_in_seconds_since_unix_epoch: u32,
+}
+
+static BASELINE: Lazy<HashMap<String, Sample>> = Lazy::new(|| {
     (|| -> Result<_> {
         let base = git_testtools::scripted_fixture_repo_read_only("generate_git_date_baseline.sh")?;
         let mut map = HashMap::new();
@@ -15,14 +21,18 @@ static BASELINE: Lazy<HashMap<String, (Option<String>, usize, u32)>> = Lazy::new
         while let Some(date_str) = lines.next() {
             let format_name = lines.next().expect("four lines per baseline").to_string();
             let exit_code = lines.next().expect("four lines per baseline").parse()?;
-            let output: u32 = lines
+            let time_in_seconds_since_unix_epoch: u32 = lines
                 .next()
                 .expect("four lines per baseline")
                 .parse()
                 .expect("valid epoch value");
             map.insert(
                 date_str.into(),
-                ((!format_name.is_empty()).then(|| format_name), exit_code, output),
+                Sample {
+                    format_name: (!format_name.is_empty()).then(|| format_name),
+                    exit_code,
+                    time_in_seconds_since_unix_epoch,
+                },
             );
         }
         Ok(map)
@@ -32,7 +42,15 @@ static BASELINE: Lazy<HashMap<String, (Option<String>, usize, u32)>> = Lazy::new
 
 #[test]
 fn parse_compare_format() {
-    for (pattern, (format_name, exit_code, output)) in BASELINE.iter() {
+    for (
+        pattern,
+        Sample {
+            format_name,
+            exit_code,
+            time_in_seconds_since_unix_epoch,
+        },
+    ) in BASELINE.iter()
+    {
         let res = git_date::parse(pattern.as_str(), Some(SystemTime::now()));
         assert_eq!(
             res.is_ok(),
@@ -42,7 +60,7 @@ fn parse_compare_format() {
         if let Ok(t) = res {
             let actual = t.seconds_since_unix_epoch;
             assert_eq!(
-                actual, *output,
+                actual, *time_in_seconds_since_unix_epoch,
                 "{pattern:?} disagrees with baseline seconds since epoch: {actual:?}"
             );
             if let Some(format_name) = format_name {
