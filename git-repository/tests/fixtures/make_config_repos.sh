@@ -123,3 +123,9 @@ git init worktree-no-config
   rm .git/config
   git config -l >/dev/null
 )
+
+mkdir not-a-repo-empty-dir;
+mkdir not-a-repo-with-files;
+(cd not-a-repo-with-files
+  touch this that
+)

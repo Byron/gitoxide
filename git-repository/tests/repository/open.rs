@@ -31,6 +31,21 @@ mod missing_config_file {
     }
 }
 
+mod not_a_repository {
+    use git_repository as git;
+
+    #[test]
+    fn shows_proper_error() -> crate::Result {
+        for name in ["empty-dir", "with-files"] {
+            let name = format!("not-a-repo-{name}");
+            let repo_path = git_testtools::scripted_fixture_repo_read_only("make_config_repos.sh")?.join(name);
+            let err = git::open_opts(&repo_path, git::open::Options::isolated()).unwrap_err();
+            assert!(matches!(err, git::open::Error::NotARepository { path, .. } if path == repo_path));
+        }
+        Ok(())
+    }
+}
+
 mod submodules {
     use std::path::Path;
 
