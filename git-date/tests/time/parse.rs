@@ -1,49 +1,6 @@
-use std::{collections::HashMap, time::SystemTime};
+use std::time::SystemTime;
 
-use bstr::{BString, ByteSlice};
 use git_date::{time::Sign, Time};
-use once_cell::sync::Lazy;
-
-type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-static BASELINE: Lazy<HashMap<BString, (usize, u32)>> = Lazy::new(|| {
-    let base = git_testtools::scripted_fixture_repo_read_only("generate_git_date_baseline.sh").unwrap();
-
-    (|| -> Result<_> {
-        let mut map = HashMap::new();
-        let baseline = std::fs::read(base.join("baseline.git"))?;
-        let mut lines = baseline.lines();
-        while let Some(date_str) = lines.next() {
-            let exit_code = lines.next().expect("three lines per baseline").to_str()?.parse()?;
-            let output: u32 = lines
-                .next()
-                .expect("three lines per baseline")
-                .to_str()
-                .expect("valid utf")
-                .parse()
-                .expect("valid epoch value");
-            map.insert(date_str.into(), (exit_code, output));
-        }
-        Ok(map)
-    })()
-    .unwrap()
-});
-
-#[test]
-fn baseline() {
-    for (pattern, (exit_code, output)) in BASELINE.iter() {
-        let res = git_date::parse(pattern.to_str().expect("valid pattern"), Some(SystemTime::now()));
-        assert_eq!(
-            res.is_ok(),
-            *exit_code == 0,
-            "{pattern:?} disagrees with baseline: {res:?}"
-        );
-        if *exit_code == 0 {
-            let actual = res.unwrap().seconds_since_unix_epoch;
-            assert_eq!(actual, *output, "{pattern:?} disagrees with baseline: {actual:?}")
-        }
-    }
-}
 
 #[test]
 fn special_time_is_ok_for_now() {
@@ -80,6 +37,29 @@ fn rfc2822() {
             sign: Sign::Plus,
         },
         "could not parse with RFC2822 format"
+    );
+}
+
+#[test]
+fn raw() {
+    assert_eq!(
+        git_date::parse("1660874655 +0800", None).expect("parsed raw string"),
+        Time {
+            seconds_since_unix_epoch: 1660874655,
+            offset_in_seconds: 28800,
+            sign: Sign::Plus,
+        },
+        "could not parse with raw format"
+    );
+
+    assert_eq!(
+        git_date::parse("1660874655 -0800", None).expect("parsed raw string"),
+        Time {
+            seconds_since_unix_epoch: 1660874655,
+            offset_in_seconds: -28800,
+            sign: Sign::Minus,
+        },
+        "could not parse with raw format"
     );
 }
 
