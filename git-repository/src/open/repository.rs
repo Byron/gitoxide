@@ -52,7 +52,9 @@ impl ThreadSafeRepository {
                 Ok(kind) => (path, kind),
                 Err(_err) => {
                     let git_dir = path.join(git_discover::DOT_GIT_DIR);
-                    git_discover::is_git(&git_dir).map(|kind| (git_dir, kind))?
+                    git_discover::is_git(&git_dir)
+                        .map(|kind| (git_dir, kind))
+                        .map_err(|err| Error::NotARepository { source: err, path })?
                 }
             }
         };
@@ -85,10 +87,20 @@ impl ThreadSafeRepository {
     ) -> Result<Self, Error> {
         let overrides = EnvironmentOverrides::from_env()?;
         let (path, path_kind): (PathBuf, _) = match overrides.git_dir {
-            Some(git_dir) => git_discover::is_git(&git_dir).map(|kind| (git_dir, kind))?,
+            Some(git_dir) => git_discover::is_git(&git_dir)
+                .map_err(|err| Error::NotARepository {
+                    source: err,
+                    path: git_dir.clone(),
+                })
+                .map(|kind| (git_dir, kind))?,
             None => {
                 let fallback_directory = fallback_directory.into();
-                git_discover::is_git(&fallback_directory).map(|kind| (fallback_directory, kind))?
+                git_discover::is_git(&fallback_directory)
+                    .map_err(|err| Error::NotARepository {
+                        source: err,
+                        path: fallback_directory.clone(),
+                    })
+                    .map(|kind| (fallback_directory, kind))?
             }
         };
 

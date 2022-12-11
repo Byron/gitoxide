@@ -111,3 +111,21 @@ git init disabled-object-caches
   git config core.deltaBaseCacheLimit 0
   git config gitoxide.objects.cacheLimit 0
 )
+
+git init --bare bare-no-config
+(cd bare-no-config
+  rm config
+  git config -l >/dev/null
+)
+
+git init worktree-no-config
+(cd worktree-no-config
+  rm .git/config
+  git config -l >/dev/null
+)
+
+mkdir not-a-repo-empty-dir;
+mkdir not-a-repo-with-files;
+(cd not-a-repo-with-files
+  touch this that
+)

@@ -242,7 +242,6 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
             Cow::Borrowed(self.user_agent_header),
             Cow::Owned(format!("Content-Type: application/x-{}-request", service.as_str())),
             format!("Accept: application/x-{}-result", service.as_str()).into(),
-            "Expect:".into(), // needed to avoid sending Expect: 100-continue, which adds another response and only CURL wants that
         ];
         let mut dynamic_headers = Vec::new();
         self.add_basic_auth_if_present(&mut dynamic_headers)?;

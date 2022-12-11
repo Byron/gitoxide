@@ -42,10 +42,10 @@ where
             Ok(v) => Ok(v),
             Err(client::Error::Io(ref err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {
                 drop(result); // needed to workaround this: https://github.com/rust-lang/rust/issues/76149
-                let url = transport.to_url();
+                let url = transport.to_url().into_owned();
                 progress.set_name("authentication");
                 let credentials::protocol::Outcome { identity, next } =
-                    authenticate(credentials::helper::Action::get_for_url(url.into_owned()))?
+                    authenticate(credentials::helper::Action::get_for_url(url.clone()))?
                         .expect("FILL provides an identity or errors");
                 transport.set_identity(identity)?;
                 progress.step();
@@ -58,7 +58,7 @@ where
                     // Still no permission? Reject the credentials.
                     Err(client::Error::Io(err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {
                         authenticate(next.erase())?;
-                        Err(client::Error::Io(err))
+                        return Err(Error::InvalidCredentials { url });
                     }
                     // Otherwise, do nothing, as we don't know if it actually got to try the credentials.
                     // If they were previously stored, they remain. In the worst case, the user has to enter them again

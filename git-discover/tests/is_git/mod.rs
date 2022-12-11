@@ -1,3 +1,5 @@
+use crate::upwards::repo_path;
+
 #[cfg(target_os = "macos")]
 #[test]
 fn verify_on_exfat() -> crate::Result<()> {
@@ -35,5 +37,25 @@ fn verify_on_exfat() -> crate::Result<()> {
         matches!(is_git, Ok(Kind::WorkTree { linked_git_dir: None })),
         "repo on exFAT is recognized as a valid worktree repo"
     );
+    Ok(())
+}
+
+#[test]
+fn missing_configuration_file_is_not_a_dealbreaker_in_bare_repo() -> crate::Result {
+    for name in ["bare-no-config-after-init.git", "bare-no-config.git"] {
+        let repo = repo_path()?.join(name);
+        let kind = git_discover::is_git(repo)?;
+        assert_eq!(kind, git_discover::repository::Kind::Bare);
+    }
+    Ok(())
+}
+
+#[test]
+fn missing_configuration_file_is_not_a_dealbreaker_in_nonbare_repo() -> crate::Result {
+    for name in ["worktree-no-config-after-init/.git", "worktree-no-config/.git"] {
+        let repo = repo_path()?.join(name);
+        let kind = git_discover::is_git(&repo)?;
+        assert_eq!(kind, git_discover::repository::Kind::WorkTree { linked_git_dir: None });
+    }
     Ok(())
 }

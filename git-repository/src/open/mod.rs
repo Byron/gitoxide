@@ -33,8 +33,11 @@ pub struct Options {
 pub enum Error {
     #[error("Failed to load the git configuration")]
     Config(#[from] config::Error),
-    #[error(transparent)]
-    NotARepository(#[from] git_discover::is_git::Error),
+    #[error("\"{path}\" does not appear to be a git repository")]
+    NotARepository {
+        source: git_discover::is_git::Error,
+        path: PathBuf,
+    },
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error("The git directory at '{}' is considered unsafe as it's not owned by the current user.", .path.display())]

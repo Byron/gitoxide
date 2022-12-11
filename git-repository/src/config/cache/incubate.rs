@@ -30,7 +30,9 @@ impl StageOne {
             lossy,
         )?;
 
-        let is_bare = util::config_bool(&config, "core.bare", false, lenient)?;
+        // Note that we assume the repo is bare by default unless we are told otherwise. This is relevant if
+        // the repo doesn't have a configuration file.
+        let is_bare = util::config_bool(&config, "core.bare", true, lenient)?;
         let repo_format_version = config
             .value::<git_config::Integer>("core", None, "repositoryFormatVersion")
             .map_or(0, |v| v.to_decimal().unwrap_or_default());
@@ -82,7 +84,12 @@ fn load_config(
     lossy: Option<bool>,
 ) -> Result<git_config::File<'static>, Error> {
     buf.clear();
-    std::io::copy(&mut std::fs::File::open(&config_path)?, buf)?;
+    let mut file = match std::fs::File::open(&config_path) {
+        Ok(f) => f,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(git_config::File::default()),
+        Err(err) => return Err(err.into()),
+    };
+    std::io::copy(&mut file, buf)?;
 
     let config = git_config::File::from_bytes_owned(
         buf,

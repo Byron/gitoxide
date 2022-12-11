@@ -9,6 +9,7 @@ use std::{
 use curl::easy::{Auth, Easy2};
 use git_features::io::pipe;
 
+use crate::client::http::curl::curl_is_spurious;
 use crate::client::{
     blocking_io::http::{self, curl::Error, redirect},
     http::options::{FollowRedirects, ProxyAuthMethod},
@@ -28,6 +29,7 @@ impl Handler {
     fn reset(&mut self) {
         self.checked_status = false;
         self.last_status = 0;
+        self.follow = FollowRedirects::default();
     }
     fn parse_status_inner(data: &[u8]) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
         let code = data
@@ -68,37 +70,31 @@ impl curl::easy::Handler for Handler {
     }
 
     fn header(&mut self, data: &[u8]) -> bool {
-        match self.send_header.as_mut() {
-            Some(writer) => {
-                if self.checked_status {
-                    writer.write_all(data).is_ok()
-                } else {
-                    self.checked_status = true;
-                    self.last_status = 200;
-                    match Handler::parse_status(data, self.follow) {
-                        None => true,
-                        Some((status, err)) => {
-                            self.last_status = status;
-                            writer
-                                .channel
-                                .send(Err(io::Error::new(
-                                    if status == 401 {
-                                        io::ErrorKind::PermissionDenied
-                                    } else if (500..600).contains(&status) {
-                                        io::ErrorKind::ConnectionAborted
-                                    } else {
-                                        io::ErrorKind::Other
-                                    },
-                                    err,
-                                )))
-                                .ok();
-                            false
-                        }
-                    }
+        if let Some(writer) = self.send_header.as_mut() {
+            if self.checked_status {
+                writer.write_all(data).ok();
+            } else {
+                self.checked_status = true;
+                self.last_status = 200;
+                if let Some((status, err)) = Handler::parse_status(data, self.follow) {
+                    self.last_status = status;
+                    writer
+                        .channel
+                        .send(Err(io::Error::new(
+                            if status == 401 {
+                                io::ErrorKind::PermissionDenied
+                            } else if (500..600).contains(&status) {
+                                io::ErrorKind::ConnectionAborted
+                            } else {
+                                io::ErrorKind::Other
+                            },
+                            err,
+                        )))
+                        .ok();
                 }
             }
-            None => false,
-        }
+        };
+        true
     }
 }
 
@@ -125,6 +121,10 @@ pub fn new() -> (
     let (res_send, res_recv) = sync_channel(0);
     let handle = std::thread::spawn(move || -> Result<(), Error> {
         let mut handle = Easy2::new(Handler::default());
+        // We don't wait for the possibility for pipelining to become clear, and curl tries to reuse connections by default anyway.
+        handle.pipewait(false)?;
+        handle.tcp_keepalive(true)?;
+
         let mut follow = None;
         let mut redirected_base_url = None::<String>;
 
@@ -158,6 +158,8 @@ pub fn new() -> (
             for header in extra_headers {
                 headers.append(&header)?;
             }
+            // needed to avoid sending Expect: 100-continue, which adds another response and only CURL wants that
+            headers.append("Expect:")?;
             handle.verbose(verbose)?;
 
             let mut proxy_auth_action = None;
@@ -255,7 +257,12 @@ pub fn new() -> (
                 if let Some((action, authenticate)) = proxy_auth_action {
                     authenticate.lock().expect("no panics in other threads")(action.erase()).ok();
                 }
-                let err = Err(io::Error::new(io::ErrorKind::Other, err));
+                let err = Err(io::Error::new(
+                    curl_is_spurious(&err)
+                        .then(|| std::io::ErrorKind::ConnectionReset)
+                        .unwrap_or(std::io::ErrorKind::Other),
+                    err,
+                ));
                 handler.receive_body.take();
                 match (handler.send_header.take(), handler.send_data.take()) {
                     (Some(header), mut data) => {
