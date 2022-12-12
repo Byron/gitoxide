@@ -2,11 +2,11 @@ use std::panic::catch_unwind;
 
 use bstr::ByteSlice;
 use git_refspec::parse::Operation;
-use git_testtools::scripted_fixture_repo_read_only;
+use git_testtools::scripted_fixture_read_only;
 
 #[test]
 fn baseline() {
-    let dir = scripted_fixture_repo_read_only("parse_baseline.sh").unwrap();
+    let dir = scripted_fixture_read_only("parse_baseline.sh").unwrap();
     let baseline = std::fs::read(dir.join("baseline.git")).unwrap();
     let mut lines = baseline.lines();
     let mut panics = 0;

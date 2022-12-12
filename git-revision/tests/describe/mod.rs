@@ -194,6 +194,6 @@ fn typical_usecases() {
 }
 
 fn repo() -> Repository {
-    let dir = git_testtools::scripted_fixture_repo_read_only("make_repo_with_branches.sh").unwrap();
+    let dir = git_testtools::scripted_fixture_read_only("make_repo_with_branches.sh").unwrap();
     git_repository::open(dir).unwrap()
 }

@@ -204,7 +204,7 @@ pub mod baseline {
     }
 
     fn parse_input() -> crate::Result<Vec<Ref>> {
-        let dir = git_testtools::scripted_fixture_repo_read_only("match_baseline.sh")?;
+        let dir = git_testtools::scripted_fixture_read_only("match_baseline.sh")?;
         let refs_buf = std::fs::read(dir.join("clone").join("remote-refs.list"))?;
         let mut out = Vec::new();
         for line in refs_buf.lines() {
@@ -228,7 +228,7 @@ pub mod baseline {
     }
 
     pub(crate) fn parse() -> crate::Result<Baseline> {
-        let dir = git_testtools::scripted_fixture_repo_read_only("match_baseline.sh")?;
+        let dir = git_testtools::scripted_fixture_read_only("match_baseline.sh")?;
         let buf = std::fs::read(dir.join("clone").join("baseline.git"))?;
 
         let mut map = HashMap::new();

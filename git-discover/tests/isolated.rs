@@ -6,7 +6,7 @@ use serial_test::serial;
 #[test]
 #[serial]
 fn upwards_with_relative_directories_and_optional_ceiling() -> git_testtools::Result {
-    let repo = git_testtools::scripted_fixture_repo_read_only("make_basic_repo.sh")?;
+    let repo = git_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
 
     std::env::set_current_dir(repo.join("subdir"))?;
     let cwd = std::env::current_dir()?;

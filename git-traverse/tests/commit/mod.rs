@@ -37,7 +37,7 @@ mod ancestor {
 
     impl TraversalAssertion<'_> {
         fn setup(&self) -> crate::Result<(git_odb::Handle, Vec<ObjectId>, Vec<ObjectId>)> {
-            let dir = git_testtools::scripted_fixture_repo_read_only(self.init_script)?;
+            let dir = git_testtools::scripted_fixture_read_only(self.init_script)?;
             let store = git_odb::at(dir.join(".git").join("objects"))?;
             let tips: Vec<_> = self.tips.iter().copied().map(hex_to_id).collect();
             let expected: Vec<ObjectId> = tips
@@ -237,7 +237,7 @@ mod ancestor {
 
     #[test]
     fn committer_date_sorted_commits_with_cutoff_is_applied_to_starting_position() -> crate::Result {
-        let dir = git_testtools::scripted_fixture_repo_read_only("make_traversal_repo_for_commits_with_dates.sh")?;
+        let dir = git_testtools::scripted_fixture_read_only("make_traversal_repo_for_commits_with_dates.sh")?;
         let store = git_odb::at(dir.join(".git").join("objects"))?;
         let iter = commit::Ancestors::new(
             Some(hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7")),

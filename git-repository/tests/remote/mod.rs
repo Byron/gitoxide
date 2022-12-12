@@ -1,10 +1,10 @@
 use std::{borrow::Cow, path::PathBuf};
 
 use git_repository as git;
-use git_testtools::scripted_fixture_repo_read_only;
+use git_testtools::scripted_fixture_read_only;
 
 pub(crate) fn repo_path(name: &str) -> PathBuf {
-    let dir = scripted_fixture_repo_read_only("make_remote_repos.sh").unwrap();
+    let dir = scripted_fixture_read_only("make_remote_repos.sh").unwrap();
     dir.join(name)
 }
 

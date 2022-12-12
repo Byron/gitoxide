@@ -13,7 +13,7 @@ struct Sample {
 
 static BASELINE: Lazy<HashMap<String, Sample>> = Lazy::new(|| {
     (|| -> Result<_> {
-        let base = git_testtools::scripted_fixture_repo_read_only("generate_git_date_baseline.sh")?;
+        let base = git_testtools::scripted_fixture_read_only("generate_git_date_baseline.sh")?;
         let mut map = HashMap::new();
         let file = std::fs::read(base.join("baseline.git"))?;
         let baseline = std::str::from_utf8(&file).expect("valid utf");

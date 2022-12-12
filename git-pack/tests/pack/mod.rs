@@ -13,7 +13,7 @@ const PACKS_AND_INDICES: &[(&'static str, &'static str)] =
 const V2_PACKS_AND_INDICES: &[(&'static str, &'static str)] =
     &[(SMALL_PACK_INDEX, SMALL_PACK), (INDEX_V2, PACK_FOR_INDEX_V2)];
 
-pub use git_testtools::{fixture_path, hex_to_id, scripted_fixture_repo_read_only};
+pub use git_testtools::{fixture_path, hex_to_id, scripted_fixture_read_only};
 
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 

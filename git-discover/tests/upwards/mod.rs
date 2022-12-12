@@ -226,7 +226,7 @@ fn cross_fs() -> crate::Result {
         return Ok(());
     }
 
-    let top_level_repo = git_testtools::scripted_fixture_repo_writable("make_basic_repo.sh")?;
+    let top_level_repo = git_testtools::scripted_fixture_writable("make_basic_repo.sh")?;
 
     let _cleanup = {
         // Create an empty dmg file
@@ -307,7 +307,7 @@ fn do_not_shorten_absolute_paths() -> crate::Result {
 mod submodules {
     #[test]
     fn by_their_worktree_checkout() -> crate::Result {
-        let dir = git_testtools::scripted_fixture_repo_read_only("make_submodules.sh")?;
+        let dir = git_testtools::scripted_fixture_read_only("make_submodules.sh")?;
         let parent = dir.join("with-submodules");
         let modules = parent.join(".git").join("modules");
         for module in ["m1", "dir/m1"] {
@@ -336,7 +336,7 @@ mod submodules {
 
     #[test]
     fn by_their_module_git_dir() -> crate::Result {
-        let dir = git_testtools::scripted_fixture_repo_read_only("make_submodules.sh")?;
+        let dir = git_testtools::scripted_fixture_read_only("make_submodules.sh")?;
         let modules = dir.join("with-submodules").join(".git").join("modules");
         for module in ["m1", "dir/m1"] {
             let submodule_m1_gitdir = modules.join(module);
@@ -353,5 +353,5 @@ mod submodules {
 }
 
 pub(crate) fn repo_path() -> crate::Result<PathBuf> {
-    git_testtools::scripted_fixture_repo_read_only("make_basic_repo.sh")
+    git_testtools::scripted_fixture_read_only("make_basic_repo.sh")
 }

@@ -12,7 +12,7 @@ mod blocking_and_async_io {
 
     pub(crate) fn base_repo_path() -> String {
         git::path::realpath(
-            git_testtools::scripted_fixture_repo_read_only("make_remote_repos.sh")
+            git_testtools::scripted_fixture_read_only("make_remote_repos.sh")
                 .unwrap()
                 .join("base"),
         )
@@ -22,13 +22,13 @@ mod blocking_and_async_io {
     }
 
     pub(crate) fn repo_path(name: &str) -> std::path::PathBuf {
-        let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_fetch_repos.sh", [base_repo_path()])
-            .unwrap();
+        let dir =
+            git_testtools::scripted_fixture_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
         dir.join(name)
     }
 
     pub(crate) fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
-        let dir = git_testtools::scripted_fixture_repo_writable_with_args(
+        let dir = git_testtools::scripted_fixture_writable_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
             git_testtools::Creation::ExecuteScript,

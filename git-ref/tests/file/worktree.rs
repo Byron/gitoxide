@@ -11,10 +11,10 @@ fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile:
         args.push("packed");
     }
     if writable {
-        git_testtools::scripted_fixture_repo_writable_with_args(name, args, Creation::ExecuteScript)
+        git_testtools::scripted_fixture_writable_with_args(name, args, Creation::ExecuteScript)
             .map(|tmp| (tmp.path().to_owned(), tmp.into()))
     } else {
-        git_testtools::scripted_fixture_repo_read_only_with_args(name, args).map(|p| (p, None))
+        git_testtools::scripted_fixture_read_only_with_args(name, args).map(|p| (p, None))
     }
 }
 

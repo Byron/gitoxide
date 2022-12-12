@@ -199,7 +199,7 @@ mod blocking_io {
     fn fetch_and_checkout_empty_remote_repo() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let mut prepare = git::prepare_clone(
-            git_testtools::scripted_fixture_repo_read_only("make_empty_repo.sh")?,
+            git_testtools::scripted_fixture_read_only("make_empty_repo.sh")?,
             tmp.path(),
         )?;
         let (mut checkout, out) = prepare
