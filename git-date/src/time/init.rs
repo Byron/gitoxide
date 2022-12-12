@@ -37,11 +37,11 @@ impl Time {
             .expect("this is not year 2038");
         // TODO: make this work without cfg(unsound_local_offset), see
         //       https://github.com/time-rs/time/issues/293#issuecomment-909158529
-        let offset = time::UtcOffset::local_offset_at(now).ok()?;
+        let offset_in_seconds = time::UtcOffset::local_offset_at(now).ok()?.whole_seconds();
         Self {
             seconds_since_unix_epoch,
-            offset_in_seconds: offset.whole_seconds(),
-            sign: Sign::Plus,
+            offset_in_seconds,
+            sign: offset_in_seconds.into(),
         }
         .into()
     }
@@ -62,7 +62,7 @@ impl Time {
         Self {
             seconds_since_unix_epoch,
             offset_in_seconds,
-            sign: Sign::Plus,
+            sign: offset_in_seconds.into(),
         }
     }
 }
