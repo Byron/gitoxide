@@ -51,7 +51,8 @@ pub(crate) fn into_daemon_remote_if_async<'repo, 'a>(
                 _daemon.expect("daemon is available in async mode").url,
                 _repo_name.into().unwrap_or_default()
             ))
-            .expect("valid url to create remote at");
+            .expect("valid url to create remote at")
+            .with_fetch_tags(remote.fetch_tags());
         for direction in [git::remote::Direction::Fetch, git::remote::Direction::Push] {
             new_remote
                 .replace_refspecs(

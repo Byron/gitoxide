@@ -1,6 +1,7 @@
 use std::convert::TryInto;
 
-use crate::{bstr::BString, Remote};
+use crate::bstr::BStr;
+use crate::{bstr::BString, remote, Remote};
 
 /// The error returned by [`Remote::save_to()`].
 #[derive(Debug, thiserror::Error)]
@@ -30,6 +31,9 @@ impl Remote<'_> {
     /// and the last `remote "<name>"` section will be containing all relevant values so that reloading the remote
     /// from `config` would yield the same in-memory state.
     pub fn save_to(&self, config: &mut git_config::File<'static>) -> Result<(), Error> {
+        fn as_key(name: &str) -> git_config::parse::section::Key<'_> {
+            name.try_into().expect("valid")
+        }
         let name = self.name().ok_or_else(|| Error::NameMissing {
             url: self
                 .url
@@ -43,7 +47,7 @@ impl Remote<'_> {
                 .collect::<Vec<_>>()
         }) {
             let mut sections_to_remove = Vec::new();
-            const KEYS_TO_REMOVE: &[&str] = &["url", "pushurl", "fetch", "push"];
+            const KEYS_TO_REMOVE: &[&str] = &["url", "pushurl", "fetch", "push", "tagOpt"];
             for id in section_ids {
                 let mut section = config.section_mut_by_id(id).expect("just queried");
                 let was_empty = section.num_values() == 0;
@@ -65,10 +69,21 @@ impl Remote<'_> {
             .section_mut_or_create_new("remote", Some(name.as_ref()))
             .expect("section name is validated and 'remote' is acceptable");
         if let Some(url) = self.url.as_ref() {
-            section.push("url".try_into().expect("valid"), Some(url.to_bstring().as_ref()))
+            section.push(as_key("url"), Some(url.to_bstring().as_ref()))
         }
         if let Some(url) = self.push_url.as_ref() {
-            section.push("pushurl".try_into().expect("valid"), Some(url.to_bstring().as_ref()))
+            section.push(as_key("pushurl"), Some(url.to_bstring().as_ref()))
+        }
+        if self.fetch_tags != Default::default() {
+            section.push(
+                as_key("tagOpt"),
+                BStr::new(match self.fetch_tags {
+                    remote::fetch::Tags::All => "--tags",
+                    remote::fetch::Tags::None => "--no-tags",
+                    remote::fetch::Tags::Included => unreachable!("BUG: the default shouldn't be written and we try"),
+                })
+                .into(),
+            )
         }
         for (key, spec) in self
             .fetch_specs
@@ -76,10 +91,7 @@ impl Remote<'_> {
             .map(|spec| ("fetch", spec))
             .chain(self.push_specs.iter().map(|spec| ("push", spec)))
         {
-            section.push(
-                key.try_into().expect("valid"),
-                Some(spec.to_ref().to_bstring().as_ref()),
-            )
+            section.push(as_key(key), Some(spec.to_ref().to_bstring().as_ref()))
         }
         Ok(())
     }

@@ -16,10 +16,44 @@ mod blocking_and_async_io {
     )]
     async fn all() -> crate::Result {
         let daemon = spawn_git_daemon_if_async(remote::repo_path("base"))?;
-        for (version, expected_remote_refs) in [
-            (None, 11),
-            (Some(git::protocol::transport::Protocol::V2), 11),
-            (Some(git::protocol::transport::Protocol::V1), 14), // V1 doesn't support prefiltering.
+        for (fetch_tags, version, expected_remote_refs, expected_mappings) in [
+            (git::remote::fetch::Tags::None, None, 11, 11),
+            (
+                git::remote::fetch::Tags::None,
+                Some(git::protocol::transport::Protocol::V2),
+                11,
+                11,
+            ),
+            (
+                git::remote::fetch::Tags::Included,
+                Some(git::protocol::transport::Protocol::V2),
+                17,
+                17,
+            ),
+            (
+                git::remote::fetch::Tags::All,
+                Some(git::protocol::transport::Protocol::V2),
+                17,
+                17,
+            ),
+            (
+                git::remote::fetch::Tags::None,
+                Some(git::protocol::transport::Protocol::V1),
+                18,
+                11,
+            ),
+            (
+                git::remote::fetch::Tags::Included,
+                Some(git::protocol::transport::Protocol::V1),
+                18,
+                17,
+            ),
+            (
+                git::remote::fetch::Tags::All,
+                Some(git::protocol::transport::Protocol::V1),
+                18,
+                17,
+            ),
         ] {
             let mut repo = remote::repo("clone");
             if let Some(version) = version {
@@ -31,23 +65,27 @@ mod blocking_and_async_io {
                 )?;
             }
 
-            let remote = into_daemon_remote_if_async(repo.find_remote("origin")?, daemon.as_ref(), None);
+            let remote = into_daemon_remote_if_async(
+                repo.find_remote("origin")?.with_fetch_tags(fetch_tags),
+                daemon.as_ref(),
+                None,
+            );
             let map = remote
                 .connect(Fetch, progress::Discard)
                 .await?
                 .ref_map(Default::default())
                 .await?;
             assert_eq!(
-                map.remote_refs.len(),
-                expected_remote_refs,
-                "{:?}: it gets all remote refs, independently of the refspec. But we use a prefix so pre-filter them.",
-                version
-            );
+                    map.remote_refs.len(),
+                    expected_remote_refs ,
+                    "{:?} fetch-tags={fetch_tags:?}: it gets all remote refs, independently of the refspec. But we use a prefix so pre-filter them.",
+                    version
+                );
 
             assert_eq!(map.fixes.len(), 0);
             assert_eq!(
                 map.mappings.len(),
-                11,
+                expected_mappings,
                 "mappings are only a sub-set of all remotes due to refspec matching, tags are filtered out."
             );
         }

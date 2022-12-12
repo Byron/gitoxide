@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use git_features::progress::Progress;
 use git_protocol::transport::client::Transport;
 
+use crate::remote::fetch::SpecIndex;
 use crate::{
     bstr,
     bstr::{BString, ByteVec},
@@ -55,13 +56,18 @@ pub struct Options {
     ///
     /// This is useful in case of custom servers.
     pub handshake_parameters: Vec<(String, Option<String>)>,
+    /// A list of refspecs to use as implicit refspecs which won't be saved or otherwise be part of the remote in question.
+    ///
+    /// This is useful for handling `remote.<name>.tagOpt` for example.
+    pub extra_refspecs: Vec<git_refspec::RefSpec>,
 }
 
 impl Default for Options {
     fn default() -> Self {
         Options {
             prefix_from_spec_as_filter_on_remote: true,
-            handshake_parameters: Default::default(),
+            handshake_parameters: Vec::new(),
+            extra_refspecs: Vec::new(),
         }
     }
 }
@@ -104,13 +110,26 @@ where
         Options {
             prefix_from_spec_as_filter_on_remote,
             handshake_parameters,
+            mut extra_refspecs,
         }: Options,
     ) -> Result<fetch::RefMap, Error> {
         let null = git_hash::ObjectId::null(git_hash::Kind::Sha1); // OK to hardcode Sha1, it's not supposed to match, ever.
+
+        if let Some(tag_spec) = self.remote.fetch_tags.to_refspec().map(|spec| spec.to_owned()) {
+            if !extra_refspecs.contains(&tag_spec) {
+                extra_refspecs.push(tag_spec);
+            }
+        };
+        let specs = {
+            let mut s = self.remote.fetch_specs.clone();
+            s.extend(extra_refspecs.clone());
+            s
+        };
         let remote = self
-            .fetch_refs(prefix_from_spec_as_filter_on_remote, handshake_parameters)
+            .fetch_refs(prefix_from_spec_as_filter_on_remote, handshake_parameters, &specs)
             .await?;
-        let group = git_refspec::MatchGroup::from_fetch_specs(self.remote.fetch_specs.iter().map(|s| s.to_ref()));
+        let num_explicit_specs = self.remote.fetch_specs.len();
+        let group = git_refspec::MatchGroup::from_fetch_specs(specs.iter().map(|s| s.to_ref()));
         let (res, fixes) = group
             .match_remotes(remote.refs.iter().map(|r| {
                 let (full_ref_name, target, object) = r.unpack();
@@ -135,13 +154,18 @@ where
                         })
                     }),
                 local: m.rhs.map(|c| c.into_owned()),
-                spec_index: m.spec_index,
+                spec_index: if m.spec_index < num_explicit_specs {
+                    SpecIndex::ExplicitInRemote(m.spec_index)
+                } else {
+                    SpecIndex::Implicit(m.spec_index - num_explicit_specs)
+                },
             })
             .collect();
 
         let object_hash = extract_object_format(self.remote.repo, &remote.outcome)?;
         Ok(fetch::RefMap {
             mappings,
+            extra_refspecs,
             fixes,
             remote_refs: remote.refs,
             handshake: remote.outcome,
@@ -155,6 +179,7 @@ where
         &mut self,
         filter_by_prefix: bool,
         extra_parameters: Vec<(String, Option<String>)>,
+        refspecs: &[git_refspec::RefSpec],
     ) -> Result<HandshakeWithRefs, Error> {
         let mut credentials_storage;
         let url = self.transport.to_url();
@@ -190,7 +215,6 @@ where
         let refs = match outcome.refs.take() {
             Some(refs) => refs,
             None => {
-                let specs = &self.remote.fetch_specs;
                 let agent_feature = self.remote.repo.config.user_agent_tuple();
                 git_protocol::ls_refs(
                     &mut self.transport,
@@ -199,7 +223,7 @@ where
                         features.push(agent_feature);
                         if filter_by_prefix {
                             let mut seen = HashSet::new();
-                            for spec in specs {
+                            for spec in refspecs {
                                 let spec = spec.to_ref();
                                 if seen.insert(spec.instruction()) {
                                     let mut prefixes = Vec::with_capacity(1);

@@ -90,11 +90,32 @@ git init base
   { echo g && echo h && echo i && echo j && echo d && echo e && echo f && echo b && echo c && echo a; } > file
   git add file && git commit -m A
   git branch a
+
+  git checkout --orphan detached
+  git rm -rf .
+  git commit --allow-empty -am "detached"
+  git tag detached-tag
+  git tag -m on-detached-graph annotated-detached-tag
+
+  git checkout -b tmp main
+  git branch -D detached
+  git commit --allow-empty -m "something new"
+  git tag future-tag
+  git tag -m on-future-graph annotated-future-tag
+
+  git checkout main
+  git branch -D tmp
 )
 
 git clone --shared base clone
 (cd clone
   git remote add myself .
+)
+
+git clone --no-tags --shared base clone-no-tags
+(cd clone-no-tags
+  git remote add --no-tags myself-no-tags .
+  git remote add --tags myself-with-tags .
 )
 
 git clone --shared base push-default

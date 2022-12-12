@@ -12,7 +12,9 @@ pub enum Error {
     #[error(transparent)]
     Fetch(#[from] crate::remote::fetch::Error),
     #[error(transparent)]
-    RemoteConfiguration(#[from] crate::remote::init::Error),
+    RemoteInit(#[from] crate::remote::init::Error),
+    #[error("Custom configuration of remote to clone from failed")]
+    RemoteConfiguration(#[source] Box<dyn std::error::Error + Send + Sync>),
     #[error("Default remote configured at `clone.defaultRemoteName` is invalid")]
     RemoteName(#[from] crate::remote::name::Error),
     #[error("Failed to load repo-local git configuration before writing")]
@@ -24,7 +26,7 @@ pub enum Error {
     #[error("The remote HEAD points to a reference named {head_ref_name:?} which is invalid.")]
     InvalidHeadRef {
         source: git_validate::refname::Error,
-        head_ref_name: crate::bstr::BString,
+        head_ref_name: BString,
     },
     #[error("Failed to update HEAD with values from remote")]
     HeadUpdate(#[from] crate::reference::edit::Error),
@@ -51,6 +53,7 @@ impl PrepareFetch {
         P: crate::Progress,
         P::SubProgress: 'static,
     {
+        use crate::remote;
         use crate::{bstr::ByteVec, remote::fetch::RefLogMessage};
 
         let repo = self
@@ -64,7 +67,7 @@ impl PrepareFetch {
                 .config
                 .resolved
                 .string_by_key("clone.defaultRemoteName")
-                .map(|n| crate::remote::name::validated(n.into_owned()))
+                .map(|n| remote::name::validated(n.into_owned()))
                 .unwrap_or_else(|| Ok("origin".into()))?,
         };
 
@@ -72,28 +75,39 @@ impl PrepareFetch {
             .remote_at(self.url.clone())?
             .with_refspecs(
                 Some(format!("+refs/heads/*:refs/remotes/{remote_name}/*").as_str()),
-                crate::remote::Direction::Fetch,
+                remote::Direction::Fetch,
             )
             .expect("valid static spec");
+        let mut clone_fetch_tags = None;
         if let Some(f) = self.configure_remote.as_mut() {
-            remote = f(remote)?;
+            remote = f(remote).map_err(|err| Error::RemoteConfiguration(err))?;
+        } else {
+            clone_fetch_tags = remote::fetch::Tags::All.into();
         }
 
         let config = util::write_remote_to_local_config_file(&mut remote, remote_name.clone())?;
 
+        // Now we are free to apply remote configuration we don't want to be written to disk.
+        if let Some(fetch_tags) = clone_fetch_tags {
+            remote = remote.with_fetch_tags(fetch_tags);
+        }
+
         // Add HEAD after the remote was written to config, we need it to know what to checkout later, and assure
         // the ref that HEAD points to is present no matter what.
-        remote.fetch_specs.push(
-            git_refspec::parse(
-                format!("HEAD:refs/remotes/{remote_name}/HEAD").as_str().into(),
-                git_refspec::parse::Operation::Fetch,
-            )
-            .expect("valid")
-            .to_owned(),
-        );
-        let pending_pack: crate::remote::fetch::Prepare<'_, '_, _, _> = remote
-            .connect(crate::remote::Direction::Fetch, progress)?
-            .prepare_fetch(self.fetch_options.clone())?;
+        let head_refspec = git_refspec::parse(
+            format!("HEAD:refs/remotes/{remote_name}/HEAD").as_str().into(),
+            git_refspec::parse::Operation::Fetch,
+        )
+        .expect("valid")
+        .to_owned();
+        let pending_pack: remote::fetch::Prepare<'_, '_, _, _> =
+            remote.connect(remote::Direction::Fetch, progress)?.prepare_fetch({
+                let mut opts = self.fetch_options.clone();
+                if !opts.extra_refspecs.contains(&head_refspec) {
+                    opts.extra_refspecs.push(head_refspec)
+                }
+                opts
+            })?;
         if pending_pack.ref_map().object_hash != repo.object_hash() {
             unimplemented!("configure repository to expect a different object hash as advertised by the server")
         }
@@ -148,10 +162,15 @@ impl PrepareFetch {
     ///
     /// The passed in `remote` will be un-named and pre-configured to be a default remote as we know it from git-clone.
     /// It is not yet present in the configuration of the repository,
-    /// but each change it will eventually be written to the configuration prior to performing a the fetch operation.
+    /// but each change it will eventually be written to the configuration prior to performing a the fetch operation,
+    /// _all changes done in `f()` will be persisted_.
+    ///
+    /// It can also be used to configure additional options, like those for fetching tags. Note that
+    /// [with_fetch_tags()][crate::Remote::with_fetch_tags()] should be called here to configure the clone as desired.
+    /// Otherwise a clone is configured to be complete and fetches all tags, not only those reachable from all branches.
     pub fn configure_remote(
         mut self,
-        f: impl FnMut(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error> + 'static,
+        f: impl FnMut(crate::Remote<'_>) -> Result<crate::Remote<'_>, Box<dyn std::error::Error + Send + Sync>> + 'static,
     ) -> Self {
         self.configure_remote = Some(Box::new(f));
         self

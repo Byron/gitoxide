@@ -33,7 +33,7 @@ impl From<update::Mode> for Update {
     }
 }
 
-/// Update all refs as derived from `mappings` and produce an `Outcome` informing about all applied changes in detail, with each
+/// Update all refs as derived from `refmap.mappings` and produce an `Outcome` informing about all applied changes in detail, with each
 /// [`update`][Update] corresponding to the [`fetch::Mapping`] of at the same index.
 /// If `dry_run` is true, ref transactions won't actually be applied, but are assumed to work without error so the underlying
 /// `repo` is not actually changed. Also it won't perform an 'object exists' check as these are likely not to exist as the pack
@@ -41,30 +41,50 @@ impl From<update::Mode> for Update {
 /// `action` is the prefix used for reflog entries, and is typically "fetch".
 ///
 /// It can be used to produce typical information that one is used to from `git fetch`.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn update(
     repo: &Repository,
     message: RefLogMessage,
     mappings: &[fetch::Mapping],
     refspecs: &[git_refspec::RefSpec],
+    extra_refspecs: &[git_refspec::RefSpec],
+    fetch_tags: fetch::Tags,
     dry_run: fetch::DryRun,
     write_packed_refs: fetch::WritePackedRefs,
 ) -> Result<update::Outcome, update::Error> {
     let mut edits = Vec::new();
     let mut updates = Vec::new();
 
-    for (remote, local, spec) in mappings.iter().filter_map(
+    let implicit_tag_refspec = fetch_tags
+        .to_refspec()
+        .filter(|_| matches!(fetch_tags, crate::remote::fetch::Tags::Included));
+    for (remote, local, spec, is_implicit_tag) in mappings.iter().filter_map(
         |fetch::Mapping {
              remote,
              local,
              spec_index,
-         }| refspecs.get(*spec_index).map(|spec| (remote, local, spec)),
+         }| {
+            spec_index.get(refspecs, extra_refspecs).map(|spec| {
+                (
+                    remote,
+                    local,
+                    spec,
+                    implicit_tag_refspec.map_or(false, |tag_spec| spec.to_ref() == tag_spec),
+                )
+            })
+        },
     ) {
         let remote_id = match remote.as_id() {
             Some(id) => id,
             None => continue,
         };
         if dry_run == fetch::DryRun::No && !repo.objects.contains(remote_id) {
-            updates.push(update::Mode::RejectedSourceObjectNotFound { id: remote_id.into() }.into());
+            let update = if is_implicit_tag {
+                update::Mode::ImplicitTagNotSentByRemote.into()
+            } else {
+                update::Mode::RejectedSourceObjectNotFound { id: remote_id.into() }.into()
+            };
+            updates.push(update);
             continue;
         }
         let checked_out_branches = worktree_branches(repo)?;

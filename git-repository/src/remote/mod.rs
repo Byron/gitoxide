@@ -43,7 +43,6 @@ pub use errors::find;
 pub mod init;
 
 ///
-#[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
 pub mod fetch;
 
 ///
