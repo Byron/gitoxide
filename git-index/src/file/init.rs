@@ -35,11 +35,14 @@ impl File {
         };
 
         let (state, checksum) = State::from_bytes(&data, mtime, object_hash, options)?;
-        Ok(File {
+        let mut file = File {
             state,
             path,
             checksum: Some(checksum),
-        })
+        };
+        file.resolve_link_extension(object_hash, options);
+
+        Ok(file)
     }
 
     /// Consume `state` and pretend it was read from `path`, setting our checksum to `null`.
@@ -50,6 +53,53 @@ impl File {
             state,
             path: path.into(),
             checksum: None,
+        }
+    }
+
+    fn resolve_link_extension(&mut self, object_hash: git_hash::Kind, options: decode::Options) -> Result<(), Error> {
+        if let Some(link) = self.link() {
+            let shared_index_path = self
+                .path
+                .parent()
+                .expect("parent")
+                .join(format!("sharedindex.{}", link.shared_index_checksum));
+            let mut shared_index = File::at(&shared_index_path, object_hash, options)?;
+
+            let shared_entries = shared_index.entries();
+            let split_entries = self.entries();
+
+            if let Some(bitmaps) = &link.bitmaps {
+                let mut counter = 0;
+                bitmaps.replace.for_each_set_bit(|index| {
+                    println!("replace shared[{index}] with split[{counter}], but keep path");
+                    counter += 1;
+                    Some(())
+                });
+
+                if split_entries.len() > counter {
+                    println!("add entries split[{}..{}] to shared", counter, split_entries.len());
+                    split_entries[counter..].iter().for_each(|e| {
+                        println!(
+                            "  add entry, extend path backing with {:?}",
+                            e.path_in(self.path_backing())
+                        )
+                    });
+                }
+
+                bitmaps.delete.for_each_set_bit(|index| {
+                    println!("remove shared[{index}]");
+                    Some(())
+                });
+
+                // TODO:
+                //  - move merged entries into index.state.entries
+                //  - probably sort entries
+                //  - disable link extension
+            }
+
+            Ok(())
+        } else {
+            Ok(())
         }
     }
 }
