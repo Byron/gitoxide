@@ -160,7 +160,7 @@ jobs:
           echo "release version: $RELEASE_VERSION"
 
       - name: Build release binary
-        run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }} --no-default-features --features ${{ matrix.feature }}
+        run: RUSTFLAGS="--cfg unsound_local_offset" ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }} --no-default-features --features ${{ matrix.feature }}
 
       - name: Strip release binary (linux and macos)
         if: matrix.build == 'linux' || matrix.build == 'macos'
