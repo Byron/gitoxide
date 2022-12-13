@@ -205,7 +205,7 @@ pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
     }
 }
 
-/// Run the script file `script_name` using `bash`, like `make_repo.sh` to produce a read-only directory to which
+/// Run the executable at `script_name`, like `make_repo.sh` or `my_setup.py` to produce a read-only directory to which
 /// the path is returned.
 ///
 /// Note that it persists and the script at `script_name` will only be executed once if it ran without error.
@@ -366,32 +366,17 @@ fn scripted_fixture_read_only_with_args_inner(
                     );
                 }
                 let script_absolute_path = std::env::current_dir()?.join(script_path);
-                let output = std::process::Command::new("bash")
-                    .arg(script_absolute_path)
-                    .args(args)
-                    .stdout(std::process::Stdio::piped())
-                    .stderr(std::process::Stdio::piped())
-                    .current_dir(&script_result_directory)
-                    .env_remove("GIT_DIR")
-                    .env_remove("GIT_ASKPASS")
-                    .env_remove("SSH_ASKPASS")
-                    .env("GIT_TERMINAL_PROMPT", "false")
-                    .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
-                    .env("GIT_AUTHOR_EMAIL", "author@example.com")
-                    .env("GIT_AUTHOR_NAME", "author")
-                    .env("GIT_COMMITTER_DATE", "2000-01-02 00:00:00 +0000")
-                    .env("GIT_COMMITTER_EMAIL", "committer@example.com")
-                    .env("GIT_COMMITTER_NAME", "committer")
-                    .env("GIT_CONFIG_COUNT", "4")
-                    .env("GIT_CONFIG_KEY_0", "commit.gpgsign")
-                    .env("GIT_CONFIG_VALUE_0", "false")
-                    .env("GIT_CONFIG_KEY_1", "tag.gpgsign")
-                    .env("GIT_CONFIG_VALUE_1", "false")
-                    .env("GIT_CONFIG_KEY_2", "init.defaultBranch")
-                    .env("GIT_CONFIG_VALUE_2", "main")
-                    .env("GIT_CONFIG_KEY_3", "protocol.file.allow")
-                    .env("GIT_CONFIG_VALUE_3", "always")
-                    .output()?;
+                let mut cmd = std::process::Command::new(&script_absolute_path);
+                let output = match configure_command(&mut cmd, &args, &script_result_directory).output() {
+                    Ok(out) => out,
+                    Err(err)
+                        if err.kind() == std::io::ErrorKind::PermissionDenied || err.raw_os_error() == Some(193) /* windows */ =>
+                    {
+                        cmd = std::process::Command::new("bash");
+                        configure_command(cmd.arg(script_absolute_path), &args, &script_result_directory).output()?
+                    }
+                    Err(err) => return Err(err.into()),
+                };
                 if !output.status.success() {
                     write_failure_marker(&failure_marker);
                 }
@@ -411,6 +396,36 @@ fn scripted_fixture_read_only_with_args_inner(
         }
     }
     Ok(script_result_directory)
+}
+
+fn configure_command<'a>(
+    cmd: &'a mut std::process::Command,
+    args: &[String],
+    script_result_directory: &Path,
+) -> &'a mut std::process::Command {
+    cmd.args(args)
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .current_dir(script_result_directory)
+        .env_remove("GIT_DIR")
+        .env_remove("GIT_ASKPASS")
+        .env_remove("SSH_ASKPASS")
+        .env("GIT_TERMINAL_PROMPT", "false")
+        .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
+        .env("GIT_AUTHOR_EMAIL", "author@example.com")
+        .env("GIT_AUTHOR_NAME", "author")
+        .env("GIT_COMMITTER_DATE", "2000-01-02 00:00:00 +0000")
+        .env("GIT_COMMITTER_EMAIL", "committer@example.com")
+        .env("GIT_COMMITTER_NAME", "committer")
+        .env("GIT_CONFIG_COUNT", "4")
+        .env("GIT_CONFIG_KEY_0", "commit.gpgsign")
+        .env("GIT_CONFIG_VALUE_0", "false")
+        .env("GIT_CONFIG_KEY_1", "tag.gpgsign")
+        .env("GIT_CONFIG_VALUE_1", "false")
+        .env("GIT_CONFIG_KEY_2", "init.defaultBranch")
+        .env("GIT_CONFIG_VALUE_2", "main")
+        .env("GIT_CONFIG_KEY_3", "protocol.file.allow")
+        .env("GIT_CONFIG_VALUE_3", "always")
 }
 
 fn write_failure_marker(failure_marker: &Path) {
