@@ -171,6 +171,7 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
         * [x] verify checksum
     * [x] streaming write for blobs
     * [x] buffer write for small in-memory objects/non-blobs to bring IO down to open-read-close == 3 syscalls
+    * [ ] read object header (size + kind) without full decompression
 * **dynamic store**
     * [x] auto-refresh of on-disk state
     * [x] handles alternates
@@ -179,6 +180,9 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
     * [x] support for pack caches, object caches and MRU for best per-thread performance.
     * [x] prefix/short-id lookup, with optional listing of ambiguous objects.
     * [x] object replacements (`git replace`)
+    * [x] high-speed packed object traversal without wasted CPU time
+      - [ ] user defined filters
+    * [ ] read object header (size + kind) without full decompression
 * **sink**
     * [x] write objects and obtain id
 * **alternates**
