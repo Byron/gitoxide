@@ -67,7 +67,7 @@ pub(crate) mod function {
         }
 
         match fetch_outcome.status {
-            Status::NoChange => {
+            Status::NoPackReceived { .. } => {
                 unreachable!("clone always has changes")
             }
             Status::DryRun { .. } => unreachable!("dry-run unsupported"),

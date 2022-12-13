@@ -60,16 +60,8 @@ pub(crate) mod function {
 
         let ref_specs = remote.refspecs(git::remote::Direction::Fetch);
         match res.status {
-            Status::NoChange => {
-                let show_unmapped = false;
-                crate::repository::remote::refs::print_refmap(
-                    &repo,
-                    ref_specs,
-                    res.ref_map,
-                    show_unmapped,
-                    &mut out,
-                    err,
-                )
+            Status::NoPackReceived { update_refs } => {
+                print_updates(&repo, update_refs, ref_specs, res.ref_map, &mut out, err)
             }
             Status::DryRun { update_refs } => print_updates(&repo, update_refs, ref_specs, res.ref_map, &mut out, err),
             Status::Change {
@@ -100,9 +92,9 @@ pub(crate) mod function {
         mut out: impl std::io::Write,
         mut err: impl std::io::Write,
     ) -> anyhow::Result<()> {
-        let mut last_spec_index = usize::MAX;
+        let mut last_spec_index = git::remote::fetch::SpecIndex::ExplicitInRemote(usize::MAX);
         let mut updates = update_refs
-            .iter_mapping_updates(&map.mappings, refspecs)
+            .iter_mapping_updates(&map.mappings, refspecs, &map.extra_refspecs)
             .filter_map(|(update, mapping, spec, edit)| spec.map(|spec| (update, mapping, spec, edit)))
             .collect::<Vec<_>>();
         updates.sort_by_key(|t| t.2);

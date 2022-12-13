@@ -32,7 +32,7 @@ mod refs_impl {
             pub handshake_info: bool,
         }
 
-        pub(crate) use super::{print, print_ref, print_refmap};
+        pub(crate) use super::{print, print_ref};
     }
 
     #[git::protocol::maybe_async::maybe_async]
@@ -116,12 +116,15 @@ mod refs_impl {
         mut out: impl std::io::Write,
         mut err: impl std::io::Write,
     ) -> anyhow::Result<()> {
-        let mut last_spec_index = usize::MAX;
+        let mut last_spec_index = git::remote::fetch::SpecIndex::ExplicitInRemote(usize::MAX);
         map.mappings.sort_by_key(|m| m.spec_index);
         for mapping in &map.mappings {
             if mapping.spec_index != last_spec_index {
                 last_spec_index = mapping.spec_index;
-                let spec = &refspecs[mapping.spec_index];
+                let spec = mapping
+                    .spec_index
+                    .get(refspecs, &map.extra_refspecs)
+                    .expect("refspecs here are the ones used for mapping");
                 spec.to_ref().write_to(&mut out)?;
                 writeln!(out)?;
             }
