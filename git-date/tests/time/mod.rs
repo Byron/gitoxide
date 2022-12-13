@@ -4,6 +4,23 @@ use git_date::{time::Sign, Time};
 mod baseline;
 mod format;
 mod parse;
+mod init {
+    use git_date::Time;
+
+    #[test]
+    fn utc_local_handles_signs_correctly() {
+        for time in [
+            Time::now_local_or_utc(),
+            Time::now_local().unwrap_or_else(Time::now_utc),
+        ] {
+            assert_eq!(
+                time.sign,
+                time.offset_in_seconds.into(),
+                "the sign matches the sign of the date offset"
+            );
+        }
+    }
+}
 
 #[test]
 fn is_set() {
