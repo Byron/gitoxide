@@ -260,7 +260,6 @@ mod arguments {
                 out.as_bstr(),
                 b"0012command=fetch
 0001000ethin-pack
-0010include-tag
 000eofs-delta
 000ddeepen 1
 0014deepen-relative
@@ -294,7 +293,6 @@ mod arguments {
                     out.as_bstr(),
                     b"0012command=fetch
 0001000ethin-pack
-0010include-tag
 000eofs-delta
 000ddeepen 1
 0017deepen-since 12345
@@ -304,7 +302,6 @@ mod arguments {
 0032have 0000000000000000000000000000000000000000
 00000012command=fetch
 0001000ethin-pack
-0010include-tag
 000eofs-delta
 000ddeepen 1
 0017deepen-since 12345
@@ -332,7 +329,6 @@ mod arguments {
                 out.as_bstr(),
                 b"0012command=fetch
 0001000ethin-pack
-0010include-tag
 000eofs-delta
 001dwant-ref refs/heads/main
 0009done

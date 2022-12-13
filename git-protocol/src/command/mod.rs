@@ -94,7 +94,7 @@ mod with_io {
         /// Only useful for V2
         pub(crate) fn initial_arguments(&self, features: &[Feature]) -> Vec<BString> {
             match self {
-                Command::Fetch => ["thin-pack", "include-tag", "ofs-delta"]
+                Command::Fetch => ["thin-pack", "ofs-delta"]
                     .iter()
                     .map(|s| s.as_bytes().as_bstr().to_owned())
                     .chain(

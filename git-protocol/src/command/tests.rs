@@ -88,7 +88,7 @@ mod v2 {
                         git_transport::Protocol::V2,
                         &capabilities("fetch", "shallow filter sideband-all packfile-uris")
                     )),
-                    ["thin-pack", "include-tag", "ofs-delta", "sideband-all"]
+                    ["thin-pack", "ofs-delta", "sideband-all"]
                         .iter()
                         .map(|s| s.as_bytes().as_bstr().to_owned())
                         .collect::<Vec<_>>(),
