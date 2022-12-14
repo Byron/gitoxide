@@ -46,6 +46,7 @@ pub(crate) mod function {
         let mut remote = crate::repository::remote::by_name_or_url(&repo, remote.as_deref())?;
         if !ref_specs.is_empty() {
             remote.replace_refspecs(ref_specs.iter(), git::remote::Direction::Fetch)?;
+            remote = remote.with_fetch_tags(git::remote::fetch::Tags::None);
         }
         let res: git::remote::fetch::Outcome = remote
             .connect(git::remote::Direction::Fetch, progress)?
@@ -98,11 +99,44 @@ pub(crate) mod function {
             .filter_map(|(update, mapping, spec, edit)| spec.map(|spec| (update, mapping, spec, edit)))
             .collect::<Vec<_>>();
         updates.sort_by_key(|t| t.2);
+        let mut skipped_due_to_implicit_tag = None;
+        fn consume_skipped_tags(skipped: &mut Option<usize>, out: &mut impl std::io::Write) -> std::io::Result<()> {
+            if let Some(skipped) = skipped.take() {
+                if skipped != 0 {
+                    writeln!(
+                        out,
+                        "\tskipped {skipped} tags known to the remote without bearing on this commit-graph. Use `gix remote ref-map` to list them."
+                    )?;
+                }
+            }
+            Ok(())
+        }
         for (update, mapping, spec, edit) in updates {
             if mapping.spec_index != last_spec_index {
                 last_spec_index = mapping.spec_index;
+                consume_skipped_tags(&mut skipped_due_to_implicit_tag, &mut out)?;
                 spec.to_ref().write_to(&mut out)?;
+                let is_implicit = mapping.spec_index.implicit_index().is_some();
+                if is_implicit {
+                    write!(&mut out, " (implicit")?;
+                    if spec.to_ref()
+                        == git::remote::fetch::Tags::Included
+                            .to_refspec()
+                            .expect("always yields refspec")
+                    {
+                        skipped_due_to_implicit_tag = Some(0);
+                        write!(&mut out, ", due to auto-tag")?;
+                    }
+                    write!(&mut out, ")")?;
+                }
                 writeln!(out)?;
+            }
+
+            if let Some(num_skipped) = skipped_due_to_implicit_tag.as_mut() {
+                if matches!(update.mode, git::remote::fetch::refs::update::Mode::NoChangeNeeded) {
+                    *num_skipped += 1;
+                    continue;
+                }
             }
 
             write!(out, "\t")?;
@@ -118,9 +152,10 @@ pub(crate) mod function {
                 Some(edit) => {
                     writeln!(out, " -> {} [{}]", edit.name, update.mode)
                 }
-                None => writeln!(out, " (fetch only)"),
+                None => writeln!(out, " [{}]", update.mode),
             }?;
         }
+        consume_skipped_tags(&mut skipped_due_to_implicit_tag, &mut out)?;
         if !map.fixes.is_empty() {
             writeln!(
                 err,

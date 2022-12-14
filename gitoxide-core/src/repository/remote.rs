@@ -60,6 +60,7 @@ mod refs_impl {
             }
             if !ref_specs.is_empty() {
                 remote.replace_refspecs(ref_specs.iter(), git::remote::Direction::Fetch)?;
+                remote = remote.with_fetch_tags(git::remote::fetch::Tags::None);
             }
             *show_unmapped_remote_refs
         } else {
@@ -126,6 +127,18 @@ mod refs_impl {
                     .get(refspecs, &map.extra_refspecs)
                     .expect("refspecs here are the ones used for mapping");
                 spec.to_ref().write_to(&mut out)?;
+                let is_implicit = mapping.spec_index.implicit_index().is_some();
+                if is_implicit {
+                    write!(&mut out, " (implicit")?;
+                    if spec.to_ref()
+                        == git::remote::fetch::Tags::Included
+                            .to_refspec()
+                            .expect("always yields refspec")
+                    {
+                        write!(&mut out, ", due to auto-tag")?;
+                    }
+                    write!(&mut out, ")")?;
+                }
                 writeln!(out)?;
             }
 
@@ -203,7 +216,7 @@ mod refs_impl {
             }
         }
         if refspecs.is_empty() {
-            bail!("Without ref-specs there is nothing to show here. Add ref-specs as arguments or configure them in git-config.")
+            bail!("Without refspecs there is nothing to show here. Add refspecs as arguments or configure them in git-config.")
         }
         Ok(())
     }
