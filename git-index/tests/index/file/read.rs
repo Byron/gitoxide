@@ -293,19 +293,22 @@ fn sparse_checkout_non_cone_mode() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn compare_split_to_regular_index() {
     let path =
         git_testtools::scripted_fixture_repo_read_only(Path::new("make_index").join("v2_split_vs_regular_index.sh"))
             .unwrap();
 
-    let split = git_index::File::at(path.join("split/.git/index"), git_hash::Kind::Sha1, Default::default()).unwrap();
-    let regular = git_index::File::at(
-        path.join("regular/.git/index"),
-        git_hash::Kind::Sha1,
-        Default::default(),
-    )
-    .unwrap();
+    let split =
+        verify(git_index::File::at(path.join("split/.git/index"), git_hash::Kind::Sha1, Default::default()).unwrap());
+    let regular = verify(
+        git_index::File::at(
+            path.join("regular/.git/index"),
+            git_hash::Kind::Sha1,
+            Default::default(),
+        )
+        .unwrap(),
+    );
 
     assert_eq!(split.entries().len(), regular.entries().len(), "length mismatch");
     split.entries().iter().zip(regular.entries()).for_each(|(s, r)| {

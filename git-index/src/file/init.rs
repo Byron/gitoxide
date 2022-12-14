@@ -58,43 +58,64 @@ impl File {
 
     fn resolve_link_extension(&mut self, object_hash: git_hash::Kind, options: decode::Options) -> Result<(), Error> {
         if let Some(link) = self.link() {
-            let shared_index_path = self
-                .path
-                .parent()
-                .expect("parent")
-                .join(format!("sharedindex.{}", link.shared_index_checksum));
-            let mut shared_index = File::at(&shared_index_path, object_hash, options)?;
+            let mut shared_index = File::at(
+                &self
+                    .path
+                    .parent()
+                    .expect("parent")
+                    .join(format!("sharedindex.{}", link.shared_index_checksum)),
+                object_hash,
+                options,
+            )?;
 
-            let shared_entries = shared_index.entries();
+            let mut shared_entries = shared_index.entries_mut();
             let split_entries = self.entries();
 
             if let Some(bitmaps) = &link.bitmaps {
                 let mut counter = 0;
                 bitmaps.replace.for_each_set_bit(|index| {
-                    println!("replace shared[{index}] with split[{counter}], but keep path");
+                    match (shared_entries.get_mut(index), split_entries.get(counter)) {
+                        (Some(shared_entry), Some(split_entry)) => {
+                            shared_entry.stat = split_entry.stat;
+                            shared_entry.id = split_entry.id;
+                            shared_entry.flags = split_entry.flags;
+                            shared_entry.mode = split_entry.mode;
+                        }
+                        _ => unreachable!(),
+                    }
+
                     counter += 1;
                     Some(())
                 });
 
                 if split_entries.len() > counter {
-                    println!("add entries split[{}..{}] to shared", counter, split_entries.len());
-                    split_entries[counter..].iter().for_each(|e| {
-                        println!(
-                            "  add entry, extend path backing with {:?}",
-                            e.path_in(self.path_backing())
-                        )
+                    split_entries[counter..].iter().for_each(|split_entry| {
+                        let mut e = split_entry.clone();
+                        e.path =
+                            shared_index.path_backing.len()..shared_index.path_backing.len() + split_entry.path.len();
+                        shared_index.entries.push(e);
+
+                        shared_index
+                            .path_backing
+                            .extend_from_slice(&self.path_backing[split_entry.path.clone()]);
                     });
                 }
 
+                let mut removed_count = 0;
                 bitmaps.delete.for_each_set_bit(|index| {
-                    println!("remove shared[{index}]");
+                    shared_index.entries.remove(index - removed_count);
+                    removed_count += 1;
+
                     Some(())
                 });
 
-                // TODO:
-                //  - move merged entries into index.state.entries
-                //  - probably sort entries
-                //  - disable link extension
+                let mut entries = std::mem::take(&mut shared_index.entries);
+                entries.sort_by(|a, b| a.cmp(b, &shared_index.state));
+
+                std::mem::swap(&mut self.entries, &mut entries);
+                std::mem::swap(&mut self.path_backing, &mut shared_index.path_backing);
+
+                self.link = None
             }
 
             Ok(())
