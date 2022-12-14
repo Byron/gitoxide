@@ -129,7 +129,7 @@ mod with_io {
                             .filter(|feature| match *feature {
                                 "side-band" if has_sideband_64k => false,
                                 "multi_ack" if has_multi_ack_detailed => false,
-                                "include-tag" | "no-progress" => false,
+                                "no-progress" => false,
                                 feature => server_capabilities.contains(feature),
                             })
                             .map(|s| (s, None))

@@ -18,6 +18,7 @@ pub struct Arguments {
     deepen_not: bool,
     deepen_relative: bool,
     ref_in_want: bool,
+    supports_include_tag: bool,
 
     features_for_first_want: Option<Vec<String>>,
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
@@ -73,6 +74,10 @@ impl Arguments {
     pub fn can_use_ref_in_want(&self) -> bool {
         self.ref_in_want
     }
+    /// Return true if the 'include-tag' capability is supported.
+    pub fn can_use_include_tag(&self) -> bool {
+        self.supports_include_tag
+    }
 
     /// Add the given `id` pointing to a commit to the 'want' list.
     ///
@@ -100,35 +105,56 @@ impl Arguments {
     }
     /// Add the given `id` pointing to a commit to the 'shallow' list.
     pub fn shallow(&mut self, id: impl AsRef<git_hash::oid>) {
-        assert!(self.shallow, "'shallow' feature required for 'shallow <id>'");
-        self.prefixed("shallow ", id.as_ref());
+        debug_assert!(self.shallow, "'shallow' feature required for 'shallow <id>'");
+        if self.shallow {
+            self.prefixed("shallow ", id.as_ref());
+        }
     }
     /// Deepen the commit history by `depth` amount of commits.
     pub fn deepen(&mut self, depth: usize) {
-        assert!(self.shallow, "'shallow' feature required for deepen");
-        self.prefixed("deepen ", depth);
+        debug_assert!(self.shallow, "'shallow' feature required for deepen");
+        if self.shallow {
+            self.prefixed("deepen ", depth);
+        }
     }
     /// Deepen the commit history to include all commits from now to `seconds_since_unix_epoch`.
     pub fn deepen_since(&mut self, seconds_since_unix_epoch: usize) {
-        assert!(self.deepen_since, "'deepen-since' feature required");
-        self.prefixed("deepen-since ", seconds_since_unix_epoch);
+        debug_assert!(self.deepen_since, "'deepen-since' feature required");
+        if self.deepen_since {
+            self.prefixed("deepen-since ", seconds_since_unix_epoch);
+        }
     }
     /// Deepen the commit history in a relative instead of absolute fashion.
     pub fn deepen_relative(&mut self) {
-        assert!(self.deepen_relative, "'deepen-relative' feature required");
-        self.args.push("deepen-relative".into());
+        debug_assert!(self.deepen_relative, "'deepen-relative' feature required");
+        if self.deepen_relative {
+            self.args.push("deepen-relative".into());
+        }
     }
     /// Do not include commits reachable by the given `ref_path` when deepening the history.
     pub fn deepen_not(&mut self, ref_path: &BStr) {
-        assert!(self.deepen_not, "'deepen-not' feature required");
-        let mut line = BString::from("deepen-not ");
-        line.extend_from_slice(ref_path);
-        self.args.push(line);
+        debug_assert!(self.deepen_not, "'deepen-not' feature required");
+        if self.deepen_not {
+            let mut line = BString::from("deepen-not ");
+            line.extend_from_slice(ref_path);
+            self.args.push(line);
+        }
     }
     /// Set the given filter `spec` when listing references.
     pub fn filter(&mut self, spec: &str) {
-        assert!(self.filter, "'filter' feature required");
-        self.prefixed("filter ", spec);
+        debug_assert!(self.filter, "'filter' feature required");
+        if self.filter {
+            self.prefixed("filter ", spec);
+        }
+    }
+    /// Permanently allow the server to include tags that point to commits or objects it would return.
+    ///
+    /// Needs to only be called once.
+    pub fn use_include_tag(&mut self) {
+        debug_assert!(self.supports_include_tag, "'include-tag' feature required");
+        if self.supports_include_tag {
+            self.args.push("include-tag".into());
+        }
     }
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
         self.args.push(format!("{}{}", prefix, value).into());
@@ -145,11 +171,13 @@ impl Arguments {
         let mut deepen_since = shallow;
         let mut deepen_not = shallow;
         let mut deepen_relative = shallow;
+        let supports_include_tag;
         let (initial_arguments, features_for_first_want) = match version {
             git_transport::Protocol::V1 => {
                 deepen_since = has("deepen-since");
                 deepen_not = has("deepen-not");
                 deepen_relative = has("deepen-relative");
+                supports_include_tag = has("include-tag");
                 let baked_features = features
                     .iter()
                     .map(|(n, v)| match v {
@@ -159,7 +187,10 @@ impl Arguments {
                     .collect::<Vec<_>>();
                 (Vec::new(), Some(baked_features))
             }
-            git_transport::Protocol::V2 => (Command::Fetch.initial_arguments(&features), None),
+            git_transport::Protocol::V2 => {
+                supports_include_tag = true;
+                (Command::Fetch.initial_arguments(&features), None)
+            }
         };
 
         Arguments {
@@ -169,6 +200,7 @@ impl Arguments {
             haves: Vec::new(),
             filter,
             shallow,
+            supports_include_tag,
             deepen_not,
             deepen_relative,
             ref_in_want,

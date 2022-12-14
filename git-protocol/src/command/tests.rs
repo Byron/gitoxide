@@ -37,12 +37,13 @@ mod v1 {
                         ("deepen-since", None),
                         ("deepen-not", None),
                         ("deepen-relative", None),
+                        ("include-tag", None),
                         ("allow-tip-sha1-in-want", None),
                         ("allow-reachable-sha1-in-want", None),
                         ("no-done", None),
                         ("filter", None),
                     ],
-                    "we don't enforce include-tag or no-progress"
+                    "we don't enforce no-progress"
                 );
             }
         }
