@@ -301,6 +301,9 @@ fn compare_split_to_regular_index() {
 
     let split =
         verify(git_index::File::at(path.join("split/.git/index"), git_hash::Kind::Sha1, Default::default()).unwrap());
+
+    assert!(split.link().is_none(), "link extension not resolved correctly");
+
     let regular = verify(
         git_index::File::at(
             path.join("regular/.git/index"),

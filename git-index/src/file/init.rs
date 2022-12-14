@@ -57,22 +57,19 @@ impl File {
     }
 
     fn resolve_link_extension(&mut self, object_hash: git_hash::Kind, options: decode::Options) -> Result<(), Error> {
-        if let Some(link) = self.link() {
-            let mut shared_index = File::at(
-                &self
-                    .path
-                    .parent()
-                    .expect("parent")
-                    .join(format!("sharedindex.{}", link.shared_index_checksum)),
-                object_hash,
-                options,
-            )?;
-
-            let mut shared_entries = shared_index.entries_mut();
-            let split_entries = self.entries();
+        if let Some(link) = self.link.take() {
+            let shared_index_path = self
+                .path
+                .parent()
+                .expect("split index file in .git folder")
+                .join(format!("sharedindex.{}", link.shared_index_checksum));
+            let mut shared_index = File::at(&shared_index_path, object_hash, options)?;
 
             if let Some(bitmaps) = &link.bitmaps {
                 let mut counter = 0;
+                let mut shared_entries = shared_index.entries_mut();
+                let split_entries = self.entries();
+
                 bitmaps.replace.for_each_set_bit(|index| {
                     match (shared_entries.get_mut(index), split_entries.get(counter)) {
                         (Some(shared_entry), Some(split_entry)) => {
@@ -91,8 +88,8 @@ impl File {
                 if split_entries.len() > counter {
                     split_entries[counter..].iter().for_each(|split_entry| {
                         let mut e = split_entry.clone();
-                        e.path =
-                            shared_index.path_backing.len()..shared_index.path_backing.len() + split_entry.path.len();
+                        let start = shared_index.path_backing.len();
+                        e.path = start..start + split_entry.path.len();
                         shared_index.entries.push(e);
 
                         shared_index
@@ -105,22 +102,17 @@ impl File {
                 bitmaps.delete.for_each_set_bit(|index| {
                     shared_index.entries.remove(index - removed_count);
                     removed_count += 1;
-
                     Some(())
                 });
 
-                let mut entries = std::mem::take(&mut shared_index.entries);
-                entries.sort_by(|a, b| a.cmp(b, &shared_index.state));
+                let mut shared_entries = std::mem::take(&mut shared_index.entries);
+                shared_entries.sort_by(|a, b| a.cmp(b, &shared_index.state));
 
-                std::mem::swap(&mut self.entries, &mut entries);
+                std::mem::swap(&mut self.entries, &mut shared_entries);
                 std::mem::swap(&mut self.path_backing, &mut shared_index.path_backing);
-
-                self.link = None
             }
+        };
 
-            Ok(())
-        } else {
-            Ok(())
-        }
+        Ok(())
     }
 }
