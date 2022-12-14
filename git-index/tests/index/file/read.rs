@@ -124,14 +124,6 @@ fn split_index_without_any_extension() {
 }
 
 #[test]
-fn v2_split_index() {
-    let file = file("v2_split_index");
-    assert_eq!(file.version(), Version::V2);
-
-    assert!(file.link().is_some());
-}
-
-#[test]
 fn v3_extended_flags() {
     let file = loose_file("extended-flags");
     assert_eq!(file.version(), Version::V3);
@@ -293,7 +285,12 @@ fn sparse_checkout_non_cone_mode() {
 }
 
 #[test]
-// #[ignore]
+fn v2_split_index() {
+    let file = file("v2_split_index");
+    assert_eq!(file.version(), Version::V2);
+}
+
+#[test]
 fn compare_split_to_regular_index() {
     let path =
         git_testtools::scripted_fixture_repo_read_only(Path::new("make_index").join("v2_split_vs_regular_index.sh"))
