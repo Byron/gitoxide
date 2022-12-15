@@ -170,9 +170,13 @@ pub mod clone {
         #[clap(long, short = 'H')]
         pub handshake_info: bool,
 
-        /// If set, the clone will be bare and a working tree checkout won't be available.
+        /// The clone will be bare and a working tree checkout won't be available.
         #[clap(long)]
         pub bare: bool,
+
+        /// Do not clone any tags. Useful to reduce the size of the clone if only branches are needed.
+        #[clap(long)]
+        pub no_tags: bool,
 
         /// The url of the remote to connect to, like `https://github.com/byron/gitoxide`.
         pub remote: OsString,
