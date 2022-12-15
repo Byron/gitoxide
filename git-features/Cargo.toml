@@ -19,8 +19,7 @@ default = []
 progress = ["prodash"]
 
 ## If set, walkdir iterators will be multi-threaded.
-## This feature has [certain side-effects](https://github.com/starship/starship/issues/4251) of rayon threadpool configuration with `jwalk`.
-fs-walkdir-parallel = ["parallel", "jwalk" ]
+fs-walkdir-parallel = [ "num_cpus", "jwalk" ]
 
 ## Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
 ## where it makes sense.
@@ -107,7 +106,7 @@ crossbeam-channel = { version = "0.5.0", optional = true }
 num_cpus = { version = "1.13.0", optional = true }
 parking_lot = { version = "0.12.0", default-features = false, optional = true }
 
-jwalk = { version = "0.6.0", optional = true }
+jwalk = { version = "0.8.1", optional = true }
 ## Makes facilities of the `walkdir` crate partially available.
 ## In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
 walkdir = { version = "2.3.2", optional = true } # used when parallel is off
