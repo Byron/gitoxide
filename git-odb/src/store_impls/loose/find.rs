@@ -49,11 +49,14 @@ impl Store {
         mut candidates: Option<&mut HashSet<git_hash::ObjectId>>,
     ) -> Result<Option<crate::find::PrefixLookupResult>, crate::loose::iter::Error> {
         let single_directory_iter = crate::loose::Iter {
-            inner: git_features::fs::walkdir_new(&self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()))
-                .min_depth(1)
-                .max_depth(1)
-                .follow_links(false)
-                .into_iter(),
+            inner: git_features::fs::walkdir_new(
+                &self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()),
+                git_features::fs::walkdir::Parallelism::Serial,
+            )
+            .min_depth(1)
+            .max_depth(1)
+            .follow_links(false)
+            .into_iter(),
             hash_hex_len: prefix.as_oid().kind().len_in_hex(),
         };
         let mut candidate = None;

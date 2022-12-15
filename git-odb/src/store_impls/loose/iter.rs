@@ -65,11 +65,16 @@ impl loose::Store {
     /// needed if iterators need to be implemented by hand in the absence of generators.
     pub fn iter(&self) -> loose::Iter {
         loose::Iter {
-            inner: fs::walkdir_new(&self.path)
-                .min_depth(2)
-                .max_depth(3)
-                .follow_links(false)
-                .into_iter(),
+            inner: fs::walkdir_new(
+                &self.path,
+                fs::walkdir::Parallelism::ThreadPoolPerTraversal {
+                    thread_name: "git_odb::loose::Store::iter: fs-walk",
+                },
+            )
+            .min_depth(2)
+            .max_depth(3)
+            .follow_links(false)
+            .into_iter(),
             hash_hex_len: self.object_hash.len_in_hex(),
         }
     }
