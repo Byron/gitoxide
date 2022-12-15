@@ -1386,7 +1386,7 @@ dependencies = [
  "document-features",
  "flate2",
  "git-hash",
- "jwalk",
+ "jwalk 0.6.0",
  "libc",
  "num_cpus",
  "once_cell",
@@ -1967,7 +1967,7 @@ dependencies = [
  "git-transport",
  "git-url",
  "itertools",
- "jwalk",
+ "jwalk 0.8.0",
  "mime_guess",
  "num_cpus",
  "serde",
@@ -2331,6 +2331,16 @@ name = "jwalk"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "172752e853a067cbce46427de8470ddf308af7fd8ceaf9b682ef31a5021b6bb9"
+dependencies = [
+ "crossbeam",
+ "rayon",
+]
+
+[[package]]
+name = "jwalk"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37cb840f933b9fa56c78fde73acc9f2c883a2594fc6c791992a133468106965d"
 dependencies = [
  "crossbeam",
  "rayon",
