@@ -120,7 +120,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: stable
+          toolchain: 1.65 # clippy is broken for us in 1.66
           components: clippy,rustfmt
       - name: Run cargo clippy
         run: cargo clippy --all --tests
