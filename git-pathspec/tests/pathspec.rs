@@ -32,7 +32,7 @@ mod parse {
     }
 
     static BASELINE: Lazy<HashMap<BString, usize>> = Lazy::new(|| {
-        let base = git_testtools::scripted_fixture_repo_read_only("generate_pathspec_baseline.sh").unwrap();
+        let base = git_testtools::scripted_fixture_read_only("generate_pathspec_baseline.sh").unwrap();
 
         (|| -> crate::Result<_> {
             let mut map = HashMap::new();

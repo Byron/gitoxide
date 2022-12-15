@@ -20,7 +20,7 @@ mod repo_with_small_packs {
     #[cfg(feature = "internal-testing-git-features-parallel")]
     fn multi_threaded_access_will_not_panic() {
         for arg in ["no", "without-multi-index"] {
-            let base = git_testtools::scripted_fixture_repo_read_only_with_args("make_repo_multi_index.sh", Some(arg))
+            let base = git_testtools::scripted_fixture_read_only_with_args("make_repo_multi_index.sh", Some(arg))
                 .unwrap()
                 .join(".git")
                 .join("objects");

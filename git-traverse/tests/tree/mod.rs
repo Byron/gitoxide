@@ -4,7 +4,7 @@ use git_traverse::tree;
 use crate::hex_to_id;
 
 fn db() -> crate::Result<git_odb::Handle> {
-    let dir = git_testtools::scripted_fixture_repo_read_only("make_traversal_repo_for_trees.sh")?;
+    let dir = git_testtools::scripted_fixture_read_only("make_traversal_repo_for_trees.sh")?;
     let db = git_odb::at(dir.join(".git").join("objects"))?;
     Ok(db)
 }

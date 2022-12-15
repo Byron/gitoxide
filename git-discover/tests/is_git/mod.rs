@@ -7,7 +7,7 @@ fn verify_on_exfat() -> crate::Result<()> {
 
     use git_discover::repository::Kind;
 
-    let fixtures = git_testtools::scripted_fixture_repo_read_only("make_exfat_repo_darwin.sh")?;
+    let fixtures = git_testtools::scripted_fixture_read_only("make_exfat_repo_darwin.sh")?;
     let mount_point = tempfile::tempdir()?;
 
     let _cleanup = {
@@ -54,7 +54,7 @@ fn missing_configuration_file_is_not_a_dealbreaker_in_bare_repo() -> crate::Resu
 fn missing_configuration_file_is_not_a_dealbreaker_in_nonbare_repo() -> crate::Result {
     for name in ["worktree-no-config-after-init/.git", "worktree-no-config/.git"] {
         let repo = repo_path()?.join(name);
-        let kind = git_discover::is_git(&repo)?;
+        let kind = git_discover::is_git(repo)?;
         assert_eq!(kind, git_discover::repository::Kind::WorkTree { linked_git_dir: None });
     }
     Ok(())

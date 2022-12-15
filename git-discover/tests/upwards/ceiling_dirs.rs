@@ -19,7 +19,7 @@ fn git_dir_candidate_within_ceiling_allows_discovery() -> crate::Result {
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");
     let (repo_path, _trust) = git_discover::upwards_opts(
-        &dir,
+        dir,
         Options {
             ceiling_dirs: vec![work_dir.clone()],
             ..Default::default()
@@ -37,7 +37,7 @@ fn ceiling_dir_limits_are_respected_and_prevent_discovery() -> crate::Result {
     let dir = work_dir.join("some/very/deeply/nested/subdir");
 
     let err = git_discover::upwards_opts(
-        &dir,
+        dir,
         Options {
             ceiling_dirs: vec![work_dir.join("some/../some")],
             ..Default::default()
@@ -57,7 +57,7 @@ fn no_matching_ceiling_dir_error_can_be_suppressed() -> crate::Result {
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");
     let (repo_path, _trust) = git_discover::upwards_opts(
-        &dir,
+        dir,
         Options {
             match_ceiling_dir_or_error: false,
             ceiling_dirs: vec![
@@ -80,7 +80,7 @@ fn more_restrictive_ceiling_dirs_overrule_less_restrictive_ones() -> crate::Resu
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");
     let err = git_discover::upwards_opts(
-        &dir,
+        dir,
         Options {
             ceiling_dirs: vec![work_dir.clone(), work_dir.join("some")],
             ..Default::default()
@@ -100,7 +100,7 @@ fn ceiling_dirs_are_not_processed_differently_than_the_git_dir_candidate() -> cr
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir/../../../../../..");
     let (repo_path, _trust) = git_discover::upwards_opts(
-        &dir,
+        dir,
         Options {
             match_ceiling_dir_or_error: false,
             ceiling_dirs: vec![Path::new("./some").into()],
@@ -123,7 +123,7 @@ fn no_matching_ceiling_dirs_errors_by_default() -> crate::Result {
     let relative_work_dir = repo_path()?;
     let dir = relative_work_dir.join("some");
     let res = git_discover::upwards_opts(
-        &dir,
+        dir,
         Options {
             ceiling_dirs: vec!["/something/somewhere".into()],
             ..Default::default()

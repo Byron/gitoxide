@@ -72,9 +72,7 @@ where
             self.output.write_all(&header_bytes[..])?;
         }
         self.num_entries += 1;
-        entry
-            .header
-            .write_to(entry.decompressed_size as u64, &mut self.output)?;
+        entry.header.write_to(entry.decompressed_size, &mut self.output)?;
         std::io::copy(
             &mut entry
                 .compressed

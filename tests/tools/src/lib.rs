@@ -83,7 +83,7 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache<'static>>>> = Lazy
 /// The major, minor and patch level of the git version on the system.
 pub static GIT_VERSION: Lazy<(u8, u8, u8)> = Lazy::new(|| parse_git_version().expect("git version to be parsable"));
 
-/// Define how [scripted_fixture_repo_writable_with_args()] uses produces the writable copy.
+/// Define how [scripted_fixture_writable_with_args()] uses produces the writable copy.
 pub enum Creation {
     /// Run the script once and copy the data from its output to the writable location.
     /// This is fast but won't work if absolute paths are produced by the script.
@@ -205,7 +205,7 @@ pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
     }
 }
 
-/// Run the executable at `script_name`, like `make_repo.sh` to produce a read-only directory to which
+/// Run the executable at `script_name`, like `make_repo.sh` or `my_setup.py` to produce a read-only directory to which
 /// the path is returned.
 ///
 /// Note that it persists and the script at `script_name` will only be executed once if it ran without error.
@@ -227,21 +227,21 @@ pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
 /// or more specific `.gitignore` configurations in lower levels of the work tree.
 ///
 /// The latter is useful if the the script's output is platform specific.
-pub fn scripted_fixture_repo_read_only(script_name: impl AsRef<Path>) -> Result<PathBuf> {
-    scripted_fixture_repo_read_only_with_args(script_name, None::<String>)
+pub fn scripted_fixture_read_only(script_name: impl AsRef<Path>) -> Result<PathBuf> {
+    scripted_fixture_read_only_with_args(script_name, None::<String>)
 }
 
 /// Run the executable at `script_name`, like `make_repo.sh` to produce a writable directory to which
 /// the tempdir is returned. It will be removed automatically, courtesy of [`tempfile::TempDir`].
 ///
 /// Note that `script_name` is only executed once, so the data can be copied from its read-only location.
-pub fn scripted_fixture_repo_writable(script_name: &str) -> Result<tempfile::TempDir> {
-    scripted_fixture_repo_writable_with_args(script_name, None::<String>, Creation::CopyFromReadOnly)
+pub fn scripted_fixture_writable(script_name: &str) -> Result<tempfile::TempDir> {
+    scripted_fixture_writable_with_args(script_name, None::<String>, Creation::CopyFromReadOnly)
 }
 
-/// Like [`scripted_fixture_repo_writable()`], but passes `args` to `script_name` while providing control over
+/// Like [`scripted_fixture_writable()`], but passes `args` to `script_name` while providing control over
 /// the way files are created with `mode`.
-pub fn scripted_fixture_repo_writable_with_args(
+pub fn scripted_fixture_writable_with_args(
     script_name: &str,
     args: impl IntoIterator<Item = impl Into<String>>,
     mode: Creation,
@@ -249,12 +249,12 @@ pub fn scripted_fixture_repo_writable_with_args(
     let dst = tempfile::TempDir::new()?;
     Ok(match mode {
         Creation::CopyFromReadOnly => {
-            let ro_dir = scripted_fixture_repo_read_only_with_args_inner(script_name, args, None)?;
-            copy_recursively_into_existing_dir(&ro_dir, dst.path())?;
+            let ro_dir = scripted_fixture_read_only_with_args_inner(script_name, args, None)?;
+            copy_recursively_into_existing_dir(ro_dir, dst.path())?;
             dst
         }
         Creation::ExecuteScript => {
-            scripted_fixture_repo_read_only_with_args_inner(script_name, args, dst.path().into())?;
+            scripted_fixture_read_only_with_args_inner(script_name, args, dst.path().into())?;
             dst
         }
     })
@@ -279,15 +279,15 @@ pub fn copy_recursively_into_existing_dir(src_dir: impl AsRef<Path>, dst_dir: im
     Ok(())
 }
 
-/// Like `scripted_fixture_repo_read_only()`], but passes `args` to `script_name`.
-pub fn scripted_fixture_repo_read_only_with_args(
+/// Like `scripted_fixture_read_only()`], but passes `args` to `script_name`.
+pub fn scripted_fixture_read_only_with_args(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = impl Into<String>>,
 ) -> Result<PathBuf> {
-    scripted_fixture_repo_read_only_with_args_inner(script_name, args, None)
+    scripted_fixture_read_only_with_args_inner(script_name, args, None)
 }
 
-fn scripted_fixture_repo_read_only_with_args_inner(
+fn scripted_fixture_read_only_with_args_inner(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = impl Into<String>>,
     destination_dir: Option<&Path>,
@@ -366,38 +366,23 @@ fn scripted_fixture_repo_read_only_with_args_inner(
                     );
                 }
                 let script_absolute_path = std::env::current_dir()?.join(script_path);
-                let output = std::process::Command::new("bash")
-                    .arg(script_absolute_path)
-                    .args(args)
-                    .stdout(std::process::Stdio::piped())
-                    .stderr(std::process::Stdio::piped())
-                    .current_dir(&script_result_directory)
-                    .env_remove("GIT_DIR")
-                    .env_remove("GIT_ASKPASS")
-                    .env_remove("SSH_ASKPASS")
-                    .env("GIT_TERMINAL_PROMPT", "false")
-                    .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
-                    .env("GIT_AUTHOR_EMAIL", "author@example.com")
-                    .env("GIT_AUTHOR_NAME", "author")
-                    .env("GIT_COMMITTER_DATE", "2000-01-02 00:00:00 +0000")
-                    .env("GIT_COMMITTER_EMAIL", "committer@example.com")
-                    .env("GIT_COMMITTER_NAME", "committer")
-                    .env("GIT_CONFIG_COUNT", "4")
-                    .env("GIT_CONFIG_KEY_0", "commit.gpgsign")
-                    .env("GIT_CONFIG_VALUE_0", "false")
-                    .env("GIT_CONFIG_KEY_1", "tag.gpgsign")
-                    .env("GIT_CONFIG_VALUE_1", "false")
-                    .env("GIT_CONFIG_KEY_2", "init.defaultBranch")
-                    .env("GIT_CONFIG_VALUE_2", "main")
-                    .env("GIT_CONFIG_KEY_3", "protocol.file.allow")
-                    .env("GIT_CONFIG_VALUE_3", "always")
-                    .output()?;
+                let mut cmd = std::process::Command::new(&script_absolute_path);
+                let output = match configure_command(&mut cmd, &args, &script_result_directory).output() {
+                    Ok(out) => out,
+                    Err(err)
+                        if err.kind() == std::io::ErrorKind::PermissionDenied || err.raw_os_error() == Some(193) /* windows */ =>
+                    {
+                        cmd = std::process::Command::new("bash");
+                        configure_command(cmd.arg(script_absolute_path), &args, &script_result_directory).output()?
+                    }
+                    Err(err) => return Err(err.into()),
+                };
                 if !output.status.success() {
                     write_failure_marker(&failure_marker);
                 }
                 assert!(
                     output.status.success(),
-                    "repo script failed: stdout: {}\nstderr: {}",
+                    "fixture script failed: stdout: {}\nstderr: {}",
                     output.stdout.as_bstr(),
                     output.stderr.as_bstr()
                 );
@@ -411,6 +396,36 @@ fn scripted_fixture_repo_read_only_with_args_inner(
         }
     }
     Ok(script_result_directory)
+}
+
+fn configure_command<'a>(
+    cmd: &'a mut std::process::Command,
+    args: &[String],
+    script_result_directory: &Path,
+) -> &'a mut std::process::Command {
+    cmd.args(args)
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .current_dir(script_result_directory)
+        .env_remove("GIT_DIR")
+        .env_remove("GIT_ASKPASS")
+        .env_remove("SSH_ASKPASS")
+        .env("GIT_TERMINAL_PROMPT", "false")
+        .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
+        .env("GIT_AUTHOR_EMAIL", "author@example.com")
+        .env("GIT_AUTHOR_NAME", "author")
+        .env("GIT_COMMITTER_DATE", "2000-01-02 00:00:00 +0000")
+        .env("GIT_COMMITTER_EMAIL", "committer@example.com")
+        .env("GIT_COMMITTER_NAME", "committer")
+        .env("GIT_CONFIG_COUNT", "4")
+        .env("GIT_CONFIG_KEY_0", "commit.gpgsign")
+        .env("GIT_CONFIG_VALUE_0", "false")
+        .env("GIT_CONFIG_KEY_1", "tag.gpgsign")
+        .env("GIT_CONFIG_VALUE_1", "false")
+        .env("GIT_CONFIG_KEY_2", "init.defaultBranch")
+        .env("GIT_CONFIG_VALUE_2", "main")
+        .env("GIT_CONFIG_KEY_3", "protocol.file.allow")
+        .env("GIT_CONFIG_VALUE_3", "always")
 }
 
 fn write_failure_marker(failure_marker: &Path) {
@@ -503,7 +518,7 @@ fn populate_meta_dir(destination_dir: &Path, script_identity: u32) -> std::io::R
     )?;
     std::fs::write(
         meta_dir.join(META_GIT_VERSION),
-        &std::process::Command::new("git").arg("--version").output()?.stdout,
+        std::process::Command::new("git").arg("--version").output()?.stdout,
     )?;
     Ok(meta_dir)
 }

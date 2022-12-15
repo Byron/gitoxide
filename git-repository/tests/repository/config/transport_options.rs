@@ -7,7 +7,7 @@ mod http {
     use git_transport::client::http::options::{FollowRedirects, ProxyAuthMethod};
 
     pub(crate) fn repo(name: &str) -> git::Repository {
-        let dir = git_testtools::scripted_fixture_repo_read_only("make_config_repos.sh").unwrap();
+        let dir = git_testtools::scripted_fixture_read_only("make_config_repos.sh").unwrap();
         git::open_opts(dir.join(name), git::open::Options::isolated()).unwrap()
     }
 

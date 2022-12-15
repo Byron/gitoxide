@@ -16,7 +16,7 @@ pub enum Ref {
     },
     /// A ref pointing to a commit object
     Direct {
-        /// The name at which the ref is located, like `refs/heads/main`.
+        /// The name at which the ref is located, like `refs/heads/main` or `refs/tags/v1.0` for lightweight tags.
         full_ref_name: BString,
         /// The hash of the object the ref points to.
         object: git_hash::ObjectId,

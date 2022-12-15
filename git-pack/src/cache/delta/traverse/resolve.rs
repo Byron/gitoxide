@@ -46,7 +46,7 @@ where
             pack_offset: slice.start,
         })?;
         let entry = crate::data::Entry::from_bytes(&bytes_buf, slice.start, hash_len);
-        let compressed = &bytes_buf[entry.header_size() as usize..];
+        let compressed = &bytes_buf[entry.header_size()..];
         let decompressed_len = entry.decompressed_size as usize;
         Ok((entry, slice.end, decompress_all_at_once(compressed, decompressed_len)?))
     };

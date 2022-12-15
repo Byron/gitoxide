@@ -111,7 +111,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
         let full_name: &FullNameRef = full_name_str.try_into()?;
         let reflog_path = store.reflog_path(full_name_str.try_into().expect("valid"));
         let directory_in_place_of_reflog = reflog_path.join("empty-a").join("empty-b");
-        std::fs::create_dir_all(&directory_in_place_of_reflog)?;
+        std::fs::create_dir_all(directory_in_place_of_reflog)?;
 
         store.reflog_create_or_append(
             full_name,

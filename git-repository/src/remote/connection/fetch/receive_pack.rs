@@ -80,6 +80,12 @@ where
         git_protocol::fetch::Response::check_required_features(protocol_version, &fetch_features)?;
         let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
         let mut arguments = git_protocol::fetch::Arguments::new(protocol_version, fetch_features);
+        if matches!(con.remote.fetch_tags, crate::remote::fetch::Tags::Included) {
+            if !arguments.can_use_include_tag() {
+                unimplemented!("we expect servers to support 'include-tag', otherwise we have to implement another pass to fetch attached tags separately");
+            }
+            arguments.use_include_tag();
+        }
         let mut previous_response = None::<git_protocol::fetch::Response>;
         let mut round = 1;
 
@@ -99,14 +105,27 @@ where
                 round,
                 repo,
                 &self.ref_map,
+                con.remote.fetch_tags,
                 &mut arguments,
                 previous_response.as_ref(),
             ) {
                 Ok(_) if arguments.is_empty() => {
                     git_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
+                    let update_refs = refs::update(
+                        repo,
+                        self.reflog_message
+                            .take()
+                            .unwrap_or_else(|| RefLogMessage::Prefixed { action: "fetch".into() }),
+                        &self.ref_map.mappings,
+                        con.remote.refspecs(remote::Direction::Fetch),
+                        &self.ref_map.extra_refspecs,
+                        con.remote.fetch_tags,
+                        self.dry_run,
+                        self.write_packed_refs,
+                    )?;
                     return Ok(Outcome {
                         ref_map: std::mem::take(&mut self.ref_map),
-                        status: Status::NoChange,
+                        status: Status::NoPackReceived { update_refs },
                     });
                 }
                 Ok(is_done) => is_done,
@@ -175,6 +194,8 @@ where
                 .unwrap_or_else(|| RefLogMessage::Prefixed { action: "fetch".into() }),
             &self.ref_map.mappings,
             con.remote.refspecs(remote::Direction::Fetch),
+            &self.ref_map.extra_refspecs,
+            con.remote.fetch_tags,
             self.dry_run,
             self.write_packed_refs,
         )?;

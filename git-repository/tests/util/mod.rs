@@ -14,17 +14,17 @@ pub fn freeze_time() -> git_testtools::Env<'static> {
         .set("GIT_COMMITTER_DATE", frozen_time)
 }
 pub fn repo(name: &str) -> Result<ThreadSafeRepository> {
-    let repo_path = git_testtools::scripted_fixture_repo_read_only(name)?;
+    let repo_path = git_testtools::scripted_fixture_read_only(name)?;
     Ok(ThreadSafeRepository::open_opts(repo_path, restricted())?)
 }
 
 pub fn named_repo(name: &str) -> Result<Repository> {
-    let repo_path = git_testtools::scripted_fixture_repo_read_only(name)?;
+    let repo_path = git_testtools::scripted_fixture_read_only(name)?;
     Ok(ThreadSafeRepository::open_opts(repo_path, restricted())?.to_thread_local())
 }
 
 pub fn named_subrepo_opts(fixture: &str, name: &str, opts: open::Options) -> Result<Repository> {
-    let repo_path = git_testtools::scripted_fixture_repo_read_only(fixture)?.join(name);
+    let repo_path = git_testtools::scripted_fixture_read_only(fixture)?.join(name);
     Ok(ThreadSafeRepository::open_opts(repo_path, opts)?.to_thread_local())
 }
 
@@ -44,7 +44,7 @@ pub fn repo_rw(name: &str) -> Result<(Repository, tempfile::TempDir)> {
 }
 
 pub fn repo_rw_opts(name: &str, opts: git_repository::open::Options) -> Result<(Repository, tempfile::TempDir)> {
-    let repo_path = git_testtools::scripted_fixture_repo_writable(name)?;
+    let repo_path = git_testtools::scripted_fixture_writable(name)?;
     Ok((
         ThreadSafeRepository::discover_opts(
             repo_path.path(),

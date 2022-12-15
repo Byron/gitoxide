@@ -195,6 +195,8 @@ pub struct Remote<'repo> {
     pub(crate) fetch_specs: Vec<git_refspec::RefSpec>,
     /// Refspecs for use when pushing.
     pub(crate) push_specs: Vec<git_refspec::RefSpec>,
+    /// Tell us what to do with tags when fetched.
+    pub(crate) fetch_tags: remote::fetch::Tags,
     // /// Delete local tracking branches that don't exist on the remote anymore.
     // pub(crate) prune: bool,
     // /// Delete tags that don't exist on the remote anymore, equivalent to pruning the refspec `refs/tags/*:refs/tags/*`.

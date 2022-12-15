@@ -14,7 +14,7 @@ pub fn store_with_packed_refs() -> crate::Result<Store> {
 }
 
 pub fn store_at(name: &str) -> crate::Result<Store> {
-    let path = git_testtools::scripted_fixture_repo_read_only(name)?;
+    let path = git_testtools::scripted_fixture_read_only(name)?;
     Ok(Store::at(
         path.join(".git"),
         git_ref::store::WriteReflog::Normal,
@@ -23,7 +23,7 @@ pub fn store_at(name: &str) -> crate::Result<Store> {
 }
 
 fn store_writable(name: &str) -> crate::Result<(git_testtools::tempfile::TempDir, Store)> {
-    let dir = git_testtools::scripted_fixture_repo_writable(name)?;
+    let dir = git_testtools::scripted_fixture_writable(name)?;
     let git_dir = dir.path().join(".git");
     Ok((
         dir,

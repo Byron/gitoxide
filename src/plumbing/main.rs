@@ -124,6 +124,7 @@ pub fn main() -> Result<()> {
         Subcommands::Clone(crate::plumbing::options::clone::Platform {
             handshake_info,
             bare,
+            no_tags,
             remote,
             directory,
         }) => {
@@ -131,6 +132,7 @@ pub fn main() -> Result<()> {
                 format,
                 bare,
                 handshake_info,
+                no_tags,
             };
             prepare_and_run(
                 "clone",

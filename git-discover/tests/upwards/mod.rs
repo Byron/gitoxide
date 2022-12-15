@@ -38,7 +38,7 @@ fn from_bare_git_dir_without_config_file() -> crate::Result {
 fn from_inside_bare_git_dir() -> crate::Result {
     let git_dir = repo_path()?.join("bare.git");
     let dir = git_dir.join("objects");
-    let (path, trust) = git_discover::upwards(&dir)?;
+    let (path, trust) = git_discover::upwards(dir)?;
     assert_eq!(
         path.as_ref(),
         git_dir,
@@ -89,7 +89,7 @@ fn from_working_dir_no_config() -> crate::Result {
 fn from_nested_dir() -> crate::Result {
     let working_dir = repo_path()?;
     let dir = working_dir.join("some/very/deeply/nested/subdir");
-    let (path, trust) = git_discover::upwards(&dir)?;
+    let (path, trust) = git_discover::upwards(dir)?;
     assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     assert_eq!(path.as_ref(), working_dir, "a working tree dir yields the git dir");
     assert_eq!(trust, expected_trust());
@@ -105,7 +105,7 @@ fn from_dir_with_dot_dot() -> crate::Result {
     // exploring ancestors.)
     let working_dir = repo_path()?;
     let dir = working_dir.join("some/very/deeply/nested/subdir/../../../../../..");
-    let (path, trust) = git_discover::upwards(&dir)?;
+    let (path, trust) = git_discover::upwards(dir)?;
     assert_ne!(
         path.as_ref().canonicalize()?,
         working_dir.canonicalize()?,
@@ -140,7 +140,7 @@ fn from_dir_with_dot_dot() -> crate::Result {
 fn from_nested_dir_inside_a_git_dir() -> crate::Result {
     let working_dir = repo_path()?;
     let dir = working_dir.join(".git").join("objects");
-    let (path, trust) = git_discover::upwards(&dir)?;
+    let (path, trust) = git_discover::upwards(dir)?;
     assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     assert_eq!(path.as_ref(), working_dir, "we find .git directories on the way");
     assert_eq!(trust, expected_trust());
@@ -226,7 +226,7 @@ fn cross_fs() -> crate::Result {
         return Ok(());
     }
 
-    let top_level_repo = git_testtools::scripted_fixture_repo_writable("make_basic_repo.sh")?;
+    let top_level_repo = git_testtools::scripted_fixture_writable("make_basic_repo.sh")?;
 
     let _cleanup = {
         // Create an empty dmg file
@@ -269,7 +269,7 @@ fn cross_fs() -> crate::Result {
     ));
 
     let (repo_path, _trust) = git_discover::upwards_opts(
-        &top_level_repo.path().join("remote"),
+        top_level_repo.path().join("remote"),
         Options {
             cross_fs: true,
             ..Default::default()
@@ -307,7 +307,7 @@ fn do_not_shorten_absolute_paths() -> crate::Result {
 mod submodules {
     #[test]
     fn by_their_worktree_checkout() -> crate::Result {
-        let dir = git_testtools::scripted_fixture_repo_read_only("make_submodules.sh")?;
+        let dir = git_testtools::scripted_fixture_read_only("make_submodules.sh")?;
         let parent = dir.join("with-submodules");
         let modules = parent.join(".git").join("modules");
         for module in ["m1", "dir/m1"] {
@@ -322,7 +322,7 @@ mod submodules {
                 submodule_m1_gitdir
             );
 
-            let (path, _trust) = git_discover::upwards(&submodule_m1_workdir.join("subdir"))?;
+            let (path, _trust) = git_discover::upwards(submodule_m1_workdir.join("subdir"))?;
             assert!(
                 matches!(path, git_discover::repository::Path::LinkedWorkTree{ref work_dir, ref git_dir} if work_dir == &submodule_m1_workdir && git_dir == &submodule_m1_gitdir),
                 "{:?} should match {:?} {:?}",
@@ -336,7 +336,7 @@ mod submodules {
 
     #[test]
     fn by_their_module_git_dir() -> crate::Result {
-        let dir = git_testtools::scripted_fixture_repo_read_only("make_submodules.sh")?;
+        let dir = git_testtools::scripted_fixture_read_only("make_submodules.sh")?;
         let modules = dir.join("with-submodules").join(".git").join("modules");
         for module in ["m1", "dir/m1"] {
             let submodule_m1_gitdir = modules.join(module);
@@ -353,5 +353,5 @@ mod submodules {
 }
 
 pub(crate) fn repo_path() -> crate::Result<PathBuf> {
-    git_testtools::scripted_fixture_repo_read_only("make_basic_repo.sh")
+    git_testtools::scripted_fixture_read_only("make_basic_repo.sh")
 }

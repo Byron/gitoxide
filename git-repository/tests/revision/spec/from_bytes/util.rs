@@ -40,7 +40,7 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spe
         git_hash::ObjectId::from_str(hex_hash.to_str().expect("hex is ascii")).ok()
     }
     let mut baseline_map = HashMap::new();
-    let base = git_testtools::scripted_fixture_repo_read_only(FIXTURE_NAME).unwrap();
+    let base = git_testtools::scripted_fixture_read_only(FIXTURE_NAME).unwrap();
     for baseline_entry in walkdir::WalkDir::new(base)
         .max_depth(2)
         .follow_links(false)
@@ -198,6 +198,6 @@ pub fn parse_spec<'a>(
 }
 
 pub fn repo(name: &str) -> crate::Result<git::Repository> {
-    let base = git_testtools::scripted_fixture_repo_read_only(FIXTURE_NAME)?;
+    let base = git_testtools::scripted_fixture_read_only(FIXTURE_NAME)?;
     Ok(git::open(base.join(name))?)
 }

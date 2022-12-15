@@ -22,6 +22,11 @@ impl<'repo> Remote<'repo> {
         }
     }
 
+    /// Return how we handle tags when fetching the remote.
+    pub fn fetch_tags(&self) -> remote::fetch::Tags {
+        self.fetch_tags
+    }
+
     /// Return the url used for the given `direction` with rewrites from `url.<base>.insteadOf|pushInsteadOf`, unless the instance
     /// was created with one of the `_without_url_rewrite()` methods.
     /// For pushing, this is the `remote.<name>.pushUrl` or the `remote.<name>.url` used for fetching, and for fetching it's

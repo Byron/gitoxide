@@ -185,7 +185,6 @@ async fn ref_in_want() -> crate::Result {
             "002fgit-upload-pack does/not/matter\0\0version=2\00012command=fetch
 0014agent={}
 0001000ethin-pack
-0010include-tag
 000eofs-delta
 001dwant-ref refs/heads/main
 0009done
