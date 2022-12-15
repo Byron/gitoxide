@@ -50,7 +50,7 @@ impl Store {
     ) -> Result<Option<crate::find::PrefixLookupResult>, crate::loose::iter::Error> {
         let single_directory_iter = crate::loose::Iter {
             inner: git_features::fs::walkdir_new(
-                &self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()),
+                self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()),
                 git_features::fs::walkdir::Parallelism::Serial,
             )
             .min_depth(1)

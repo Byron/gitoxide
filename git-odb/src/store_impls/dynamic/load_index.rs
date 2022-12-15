@@ -279,7 +279,7 @@ impl super::Store {
             .unwrap_or(0);
         let mut num_indices_checked = 0;
         let mut needs_generation_change = false;
-        let mut slot_indices_to_remove: Vec<_> = idx_by_index_path.into_iter().map(|(_, v)| v).collect();
+        let mut slot_indices_to_remove: Vec<_> = idx_by_index_path.into_values().collect();
         while let Some((mut index_info, mtime, move_from_slot_idx)) = index_paths_to_add.pop_front() {
             'increment_slot_index: loop {
                 if num_indices_checked == self.files.len() {
@@ -419,7 +419,7 @@ impl super::Store {
         let mut indices_by_modification_time = Vec::with_capacity(initial_capacity.unwrap_or_default());
         for db_path in db_paths {
             let packs = db_path.join("pack");
-            let entries = match std::fs::read_dir(&packs) {
+            let entries = match std::fs::read_dir(packs) {
                 Ok(e) => e,
                 Err(err) if err.kind() == std::io::ErrorKind::NotFound => continue,
                 Err(err) => return Err(err.into()),

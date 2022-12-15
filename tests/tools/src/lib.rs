@@ -250,7 +250,7 @@ pub fn scripted_fixture_writable_with_args(
     Ok(match mode {
         Creation::CopyFromReadOnly => {
             let ro_dir = scripted_fixture_read_only_with_args_inner(script_name, args, None)?;
-            copy_recursively_into_existing_dir(&ro_dir, dst.path())?;
+            copy_recursively_into_existing_dir(ro_dir, dst.path())?;
             dst
         }
         Creation::ExecuteScript => {
@@ -518,7 +518,7 @@ fn populate_meta_dir(destination_dir: &Path, script_identity: u32) -> std::io::R
     )?;
     std::fs::write(
         meta_dir.join(META_GIT_VERSION),
-        &std::process::Command::new("git").arg("--version").output()?.stdout,
+        std::process::Command::new("git").arg("--version").output()?.stdout,
     )?;
     Ok(meta_dir)
 }

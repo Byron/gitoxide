@@ -381,7 +381,7 @@ impl File {
             // have been cut short by a cache hit. The caller must deactivate the cache to get
             // actual results
             num_deltas: chain_len as u32,
-            decompressed_size: first_entry.decompressed_size as u64,
+            decompressed_size: first_entry.decompressed_size,
             compressed_size: consumed_input,
             object_size: last_result_size as u64,
         })

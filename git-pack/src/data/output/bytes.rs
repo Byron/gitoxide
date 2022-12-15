@@ -116,7 +116,7 @@ where
                         self.written - base_offset
                     });
                     self.written += header.write_to(entry.decompressed_size as u64, &mut self.output)? as u64;
-                    self.written += std::io::copy(&mut &*entry.compressed_data, &mut self.output)? as u64;
+                    self.written += std::io::copy(&mut &*entry.compressed_data, &mut self.output)?;
                 }
             }
             None => {

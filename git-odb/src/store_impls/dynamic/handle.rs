@@ -94,7 +94,7 @@ pub(crate) mod index_lookup {
                         "BUG: multi-pack index must be set if this is a multi-pack, pack-indices seem unstable",
                     );
                     Box::new(index.iter().filter_map(move |e| {
-                        (e.pack_index == pack_index as u32).then(|| git_pack::index::Entry {
+                        (e.pack_index == pack_index).then(|| git_pack::index::Entry {
                             oid: e.oid,
                             pack_offset: e.pack_offset,
                             crc32: None,

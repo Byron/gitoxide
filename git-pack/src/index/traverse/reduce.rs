@@ -89,7 +89,7 @@ where
                 *self.stats.objects_per_chain_length.entry(stats.num_deltas).or_insert(0) += 1;
                 self.stats.total_decompressed_entries_size += stats.decompressed_size;
                 self.stats.total_compressed_entries_size += stats.compressed_size as u64;
-                self.stats.total_object_size += stats.object_size as u64;
+                self.stats.total_object_size += stats.object_size;
                 use git_object::Kind::*;
                 match stats.kind {
                     Commit => self.stats.num_commits += 1,
@@ -112,7 +112,7 @@ where
     }
 
     fn finalize(mut self) -> Result<Self::Output, Self::Error> {
-        div_decode_result(&mut self.stats.average, self.entries_seen as usize);
+        div_decode_result(&mut self.stats.average, self.entries_seen);
 
         let elapsed_s = self.then.elapsed().as_secs_f32();
         let objects_per_second = (self.entries_seen as f32 / elapsed_s) as u32;
