@@ -34,7 +34,7 @@ fn db_with_all_object_sources() -> crate::Result<(git_odb::Handle, tempfile::Tem
 
 #[test]
 fn multi_index_access() -> crate::Result {
-    let dir = git_testtools::scripted_fixture_repo_writable("make_repo_multi_index.sh")?;
+    let dir = git_testtools::scripted_fixture_writable("make_repo_multi_index.sh")?;
     let handle = git_odb::at(dir.path().join(".git/objects"))?;
 
     assert_eq!(
@@ -130,7 +130,7 @@ fn multi_index_access() -> crate::Result {
 
 #[test]
 fn multi_index_keep_open() -> crate::Result {
-    let dir = git_testtools::scripted_fixture_repo_writable("make_repo_multi_index.sh")?;
+    let dir = git_testtools::scripted_fixture_writable("make_repo_multi_index.sh")?;
     let (stable_handle, handle) = {
         let mut stable_handle = git_odb::at(dir.path().join(".git/objects"))?;
         let handle = stable_handle.clone();
@@ -207,7 +207,7 @@ fn write() -> crate::Result {
 
 #[test]
 fn object_replacement() {
-    let dir = git_testtools::scripted_fixture_repo_read_only("make_replaced_history.sh").unwrap();
+    let dir = git_testtools::scripted_fixture_read_only("make_replaced_history.sh").unwrap();
     let handle = git_odb::at(dir.join(".git/objects")).unwrap();
     let mut buf = Vec::new();
     let short_history_link = hex_to_id("434e5a872d6738d1fffd1e11e52a1840b73668c6");

@@ -6,6 +6,10 @@ pub mod find {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error(
+            "The value for 'remote.<name>.tagOpt` is invalid and must either be '--tags' or '--no-tags': \"{value}\""
+        )]
+        TagOpt { value: BString },
         #[error("{spec:?} {kind} ref-spec failed to parse")]
         RefSpec {
             spec: BString,

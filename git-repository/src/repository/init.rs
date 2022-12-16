@@ -34,7 +34,7 @@ fn setup_objects(mut objects: crate::OdbHandle, config: &crate::config::Cache) -
     #[cfg(feature = "max-performance-safe")]
     {
         match config.pack_cache_bytes {
-            None => objects.set_pack_cache(|| Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default())),
+            None => objects.set_pack_cache(|| Box::<git_pack::cache::lru::StaticLinkedList<64>>::default()),
             Some(0) => objects.unset_pack_cache(),
             Some(bytes) => objects.set_pack_cache(move || -> Box<git_odb::cache::PackCache> {
                 Box::new(git_pack::cache::lru::MemoryCappedHashmap::new(bytes))

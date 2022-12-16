@@ -31,7 +31,7 @@ fn db(kind: DbKind) -> crate::Result<git_odb::HandleArc> {
         DeterministicGeneratedContent => "make_pack_gen_repo.sh",
         DeterministicGeneratedContentMultiIndex => "make_pack_gen_repo_multi_index.sh",
     };
-    let path: PathBuf = git_testtools::scripted_fixture_repo_read_only(name)?
+    let path: PathBuf = git_testtools::scripted_fixture_read_only(name)?
         .join(".git")
         .join("objects");
     git_odb::Store::at_opts(path, Vec::new(), git_odb::store::init::Options::default())

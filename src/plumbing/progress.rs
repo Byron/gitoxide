@@ -730,6 +730,13 @@ static GIT_CONFIG: &[Record] = &[
         }
     },
     Record {
+        config: "remote.<name>.tagOpt",
+        usage: InModule {
+            name: "repository::remote",
+            deviation: None
+        }
+    },
+    Record {
         config: "gitoxide.userAgent",
         usage: InModule {
             name: "config::cache",

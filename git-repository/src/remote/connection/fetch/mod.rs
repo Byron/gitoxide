@@ -41,8 +41,13 @@ impl RefLogMessage {
 /// The status of the repository after the fetch operation
 #[derive(Debug, Clone)]
 pub enum Status {
-    /// Nothing changed as the remote didn't have anything new compared to our tracking branches.
-    NoChange,
+    /// Nothing changed as the remote didn't have anything new compared to our tracking branches, thus no pack was received
+    /// and no new object was added.
+    NoPackReceived {
+        /// However, depending on the refspecs, references might have been updated nonetheless to point to objects as
+        /// reported by the remote.
+        update_refs: refs::update::Outcome,
+    },
     /// There was at least one tip with a new object which we received.
     Change {
         /// Information collected while writing the pack and its index.

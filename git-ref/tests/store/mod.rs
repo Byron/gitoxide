@@ -2,7 +2,7 @@
 #[cfg(feature = "internal-testing-git-features-parallel")]
 fn is_send_and_sync() {
     pub fn store_at(name: &str) -> crate::Result<git_ref::file::Store> {
-        let path = git_testtools::scripted_fixture_repo_read_only(name)?;
+        let path = git_testtools::scripted_fixture_read_only(name)?;
         Ok(git_ref::file::Store::at(
             path.join(".git"),
             git_ref::store::WriteReflog::Normal,

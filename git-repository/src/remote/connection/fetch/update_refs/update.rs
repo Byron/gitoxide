@@ -47,6 +47,11 @@ pub enum Mode {
     Forced,
     /// A new ref has been created as there was none before.
     New,
+    /// The reference belongs to a tag that was listed by the server but whose target didn't get sent as it doesn't point
+    /// to the commit-graph we were fetching explicitly.
+    ///
+    /// This is kind of update is only happening if `remote.<name>.tagOpt` is not set explicitly to either `--tags` or `--no-tags`.
+    ImplicitTagNotSentByRemote,
     /// The object id to set the target reference to could not be found.
     RejectedSourceObjectNotFound {
         /// The id of the object that didn't exist in the object database, even though it should since it should be part of the pack.
@@ -75,6 +80,7 @@ impl std::fmt::Display for Mode {
             Mode::FastForward => "fast-forward",
             Mode::Forced => "forced-update",
             Mode::New => "new",
+            Mode::ImplicitTagNotSentByRemote => "unrelated tag on remote",
             Mode::RejectedSourceObjectNotFound { id } => return write!(f, "rejected ({} not found)", id),
             Mode::RejectedTagUpdate => "rejected (would overwrite existing tag)",
             Mode::RejectedNonFastForward => "rejected (non-fast-forward)",
@@ -101,6 +107,7 @@ impl Outcome {
         &self,
         mappings: &'a [fetch::Mapping],
         refspecs: &'b [git_refspec::RefSpec],
+        extra_refspecs: &'b [git_refspec::RefSpec],
     ) -> impl Iterator<
         Item = (
             &super::Update,
@@ -113,7 +120,7 @@ impl Outcome {
             (
                 update,
                 mapping,
-                refspecs.get(mapping.spec_index),
+                mapping.spec_index.get(refspecs, extra_refspecs),
                 update.edit_index.and_then(|idx| self.edits.get(idx)),
             )
         })

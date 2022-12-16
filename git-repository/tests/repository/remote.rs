@@ -110,7 +110,21 @@ mod find_remote {
     use crate::remote;
 
     #[test]
-    fn typical() {
+    fn tags_option() -> crate::Result {
+        let repo = remote::repo("clone-no-tags");
+        for (remote_name, expected) in [
+            ("origin", git::remote::fetch::Tags::None),
+            ("myself-no-tags", git::remote::fetch::Tags::None),
+            ("myself-with-tags", git::remote::fetch::Tags::All),
+        ] {
+            let remote = repo.find_remote(remote_name)?;
+            assert_eq!(remote.fetch_tags(), expected, "specifically set in this repo");
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn typical() -> crate::Result {
         let repo = remote::repo("clone");
         let mut count = 0;
         let base_dir = base_dir(&repo);
@@ -120,11 +134,17 @@ mod find_remote {
         ];
         for (name, (url, refspec)) in repo.remote_names().into_iter().zip(expected) {
             count += 1;
-            let remote = repo.find_remote(name).expect("no error");
+            let remote = repo.find_remote(name)?;
             assert_eq!(remote.name().expect("set").as_bstr(), name);
 
-            let url = git::url::parse(url.into()).expect("valid");
-            assert_eq!(remote.url(Direction::Fetch).unwrap(), &url);
+            assert_eq!(
+                remote.fetch_tags(),
+                git::remote::fetch::Tags::Included,
+                "the default value as it's not specified"
+            );
+
+            let url = git::url::parse(url.into())?;
+            assert_eq!(remote.url(Direction::Fetch).expect("present"), &url);
 
             assert_eq!(
                 remote.refspecs(Direction::Fetch),
@@ -142,6 +162,7 @@ mod find_remote {
             repo.find_remote("unknown").unwrap_err(),
             git::remote::find::existing::Error::NotFound { .. }
         ));
+        Ok(())
     }
 
     #[test]

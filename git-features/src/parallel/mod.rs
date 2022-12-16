@@ -88,9 +88,7 @@ pub fn optimize_chunk_size_and_thread_limit(
         .map(|num_items| {
             let desired_chunks_per_thread_at_least = 2;
             let items = num_items;
-            let chunk_size = (items / (available_threads * desired_chunks_per_thread_at_least))
-                .max(1)
-                .min(upper);
+            let chunk_size = (items / (available_threads * desired_chunks_per_thread_at_least)).clamp(1, upper);
             let num_chunks = items / chunk_size;
             let thread_limit = if num_chunks <= available_threads {
                 (num_chunks / desired_chunks_per_thread_at_least).max(1)

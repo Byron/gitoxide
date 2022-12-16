@@ -67,7 +67,7 @@ fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
         None,
     )?;
 
-    match alternate::resolve(&from, std::env::current_dir()?) {
+    match alternate::resolve(from, std::env::current_dir()?) {
         Err(alternate::Error::Cycle(chain)) => {
             assert_eq!(
                 chain

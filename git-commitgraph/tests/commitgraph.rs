@@ -60,9 +60,9 @@ pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHa
     );
 }
 
-use git_testtools::scripted_fixture_repo_read_only;
+use git_testtools::scripted_fixture_read_only;
 pub fn make_readonly_repo(script_path: &str) -> std::path::PathBuf {
-    scripted_fixture_repo_read_only(script_path).expect("script succeeds all the time")
+    scripted_fixture_read_only(script_path).expect("script succeeds all the time")
 }
 
 pub fn hex_to_id(hex: &[u8]) -> git_hash::ObjectId {

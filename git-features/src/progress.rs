@@ -50,7 +50,7 @@ where
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let bytes_read = self.inner.read(buf)?;
-        self.progress.inc_by(bytes_read as usize);
+        self.progress.inc_by(bytes_read);
         Ok(bytes_read)
     }
 }

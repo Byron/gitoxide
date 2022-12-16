@@ -32,7 +32,7 @@ mod ignore {
 
     #[test]
     fn from_git_dir() -> crate::Result {
-        let dir = git_testtools::scripted_fixture_repo_read_only("make_global_and_external_and_dir_ignores.sh")?;
+        let dir = git_testtools::scripted_fixture_read_only("make_global_and_external_and_dir_ignores.sh")?;
         let repo_dir = dir.join("repo");
         let git_dir = repo_dir.join(".git");
         let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline"))?;

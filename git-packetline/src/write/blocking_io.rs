@@ -59,7 +59,7 @@ impl<T: io::Write> io::Write for Writer<T> {
                 crate::encode::text_to_write(data, &mut self.inner)
             }?;
             // subtract header (and trailng NL) because write-all can't handle writing more than it passes in
-            written -= U16_HEX_BYTES + if self.binary { 0 } else { 1 };
+            written -= U16_HEX_BYTES + usize::from(!self.binary);
             buf = rest;
         }
         Ok(written)

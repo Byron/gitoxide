@@ -18,9 +18,10 @@ impl SortedLoosePaths {
         SortedLoosePaths {
             base: base.into(),
             filename_prefix,
-            file_walk: path
-                .is_dir()
-                .then(|| git_features::fs::walkdir_sorted_new(path).into_iter()),
+            file_walk: path.is_dir().then(|| {
+                // serial iteration as we expect most refs in packed-refs anyway.
+                git_features::fs::walkdir_sorted_new(path, git_features::fs::walkdir::Parallelism::Serial).into_iter()
+            }),
         }
     }
 }

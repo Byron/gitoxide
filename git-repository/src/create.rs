@@ -221,7 +221,7 @@ pub fn into(
         }
         let mut cursor = PathCursor(&mut dot_git);
         let config_path = cursor.at("config");
-        std::fs::write(config_path, &config.to_bstring()).map_err(|err| Error::IoWrite {
+        std::fs::write(config_path, config.to_bstring()).map_err(|err| Error::IoWrite {
             source: err,
             path: config_path.to_owned(),
         })?;

@@ -66,7 +66,7 @@ fn link_cycle_is_detected() -> crate::Result {
     let link_name = "link";
     let link_destination = dir.join(link_name);
     let link_path = dir.join(link_name);
-    create_symlink(&link_path, &link_destination)?;
+    create_symlink(&link_path, link_destination)?;
     let max_symlinks = 8;
 
     assert!(
@@ -100,7 +100,7 @@ fn symlink_to_relative_path_gets_expanded_into_absolute_path() -> crate::Result 
     let cwd = canonicalized_tempdir()?;
     let dir = cwd.path();
     let link_name = "pq_link";
-    create_symlink(&dir.join("r").join(link_name), &Path::new("p").join("q"))?;
+    create_symlink(dir.join("r").join(link_name), Path::new("p").join("q"))?;
     assert_eq!(
         realpath_opts(Path::new(link_name).join(".git"), dir.join("r"), 8)?,
         dir.join("r").join("p").join("q").join(".git"),
@@ -113,13 +113,10 @@ fn symlink_to_relative_path_gets_expanded_into_absolute_path() -> crate::Result 
 fn symlink_processing_is_disabled_if_the_value_is_zero() -> crate::Result {
     let cwd = canonicalized_tempdir()?;
     let link_name = "x_link";
-    create_symlink(
-        &cwd.path().join(link_name),
-        Path::new("link destination does not exist"),
-    )?;
+    create_symlink(cwd.path().join(link_name), Path::new("link destination does not exist"))?;
     assert!(
         matches!(
-            realpath_opts(&Path::new(link_name).join(".git"), &cwd, 0),
+            realpath_opts(Path::new(link_name).join(".git"), &cwd, 0),
             Err(Error::MaxSymlinksExceeded { max_symlinks: 0 })
         ),
         "symlink processing is disabled if the value is zero"

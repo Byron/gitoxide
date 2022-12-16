@@ -4,6 +4,7 @@ pub struct Options {
     pub format: OutputFormat,
     pub bare: bool,
     pub handshake_info: bool,
+    pub no_tags: bool,
 }
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
@@ -29,6 +30,7 @@ pub(crate) mod function {
             format,
             handshake_info,
             bare,
+            no_tags,
         }: Options,
     ) -> anyhow::Result<()>
     where
@@ -51,6 +53,9 @@ pub(crate) mod function {
                 opts
             },
         )?;
+        if no_tags {
+            prepare = prepare.configure_remote(|r| Ok(r.with_fetch_tags(git::remote::fetch::Tags::None)));
+        }
         let (mut checkout, fetch_outcome) =
             prepare.fetch_then_checkout(&mut progress, &git::interrupt::IS_INTERRUPTED)?;
 
@@ -67,7 +72,7 @@ pub(crate) mod function {
         }
 
         match fetch_outcome.status {
-            Status::NoChange => {
+            Status::NoPackReceived { .. } => {
                 unreachable!("clone always has changes")
             }
             Status::DryRun { .. } => unreachable!("dry-run unsupported"),

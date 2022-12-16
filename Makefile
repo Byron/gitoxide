@@ -95,7 +95,7 @@ check: ## Build all code in suitable configurations
 			   && cargo check
 	cd git-features && cargo check --all-features \
 			   && cargo check --features parallel \
-			   && cargo check --features parallel,fs-walkdir-parallel \
+			   && cargo check --features fs-walkdir-parallel \
 			   && cargo check --features rustsha1 \
 			   && cargo check --features fast-sha1 \
 			   && cargo check --features progress \

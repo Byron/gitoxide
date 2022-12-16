@@ -71,7 +71,7 @@ mod commit {
     fn fails_for_ordinary_marker_that_was_never_writable() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let resource = dir.path().join("the-resource");
-        let mark = git_lock::Marker::acquire_to_hold_resource(&resource, Fail::Immediately, None)?;
+        let mark = git_lock::Marker::acquire_to_hold_resource(resource, Fail::Immediately, None)?;
         let err = mark.commit().expect_err("should always fail");
         assert_eq!(err.error.kind(), std::io::ErrorKind::Other);
         assert_eq!(

@@ -64,7 +64,7 @@ serde1 = [  "serde",
 
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
 ## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
-max-performance = [ "git-features/zlib-ng-compat", "fast-sha1", "max-performance-safe", "git-features/fs-walkdir-parallel" ]
+max-performance = [ "git-features/zlib-ng-compat", "fast-sha1", "max-performance-safe" ]
 
 ## If enabled, use assembly versions of sha1 on supported platforms.
 ## This might cause compile failures as well which is why it can be turned off separately.
@@ -75,7 +75,8 @@ fast-sha1 = [ "git-features/fast-sha1" ]
 max-performance-safe = [
     "git-features/parallel",
     "git-pack/pack-cache-lru-static",
-    "git-pack/pack-cache-lru-dynamic"
+    "git-pack/pack-cache-lru-dynamic",
+    "git-features/fs-walkdir-parallel"
 ]
 ## Print debugging information about usage of object database caches, useful for tuning cache sizes.
 cache-efficiency-debug = ["git-features/cache-efficiency-debug"]

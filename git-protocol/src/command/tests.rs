@@ -37,12 +37,13 @@ mod v1 {
                         ("deepen-since", None),
                         ("deepen-not", None),
                         ("deepen-relative", None),
+                        ("include-tag", None),
                         ("allow-tip-sha1-in-want", None),
                         ("allow-reachable-sha1-in-want", None),
                         ("no-done", None),
                         ("filter", None),
                     ],
-                    "we don't enforce include-tag or no-progress"
+                    "we don't enforce no-progress"
                 );
             }
         }
@@ -88,7 +89,7 @@ mod v2 {
                         git_transport::Protocol::V2,
                         &capabilities("fetch", "shallow filter sideband-all packfile-uris")
                     )),
-                    ["thin-pack", "include-tag", "ofs-delta", "sideband-all"]
+                    ["thin-pack", "ofs-delta", "sideband-all"]
                         .iter()
                         .map(|s| s.as_bytes().as_bstr().to_owned())
                         .collect::<Vec<_>>(),

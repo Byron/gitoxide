@@ -12,7 +12,7 @@ mod blocking_and_async_io {
 
     pub(crate) fn base_repo_path() -> String {
         git::path::realpath(
-            git_testtools::scripted_fixture_repo_read_only("make_remote_repos.sh")
+            git_testtools::scripted_fixture_read_only("make_remote_repos.sh")
                 .unwrap()
                 .join("base"),
         )
@@ -22,13 +22,13 @@ mod blocking_and_async_io {
     }
 
     pub(crate) fn repo_path(name: &str) -> std::path::PathBuf {
-        let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_fetch_repos.sh", [base_repo_path()])
-            .unwrap();
+        let dir =
+            git_testtools::scripted_fixture_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
         dir.join(name)
     }
 
     pub(crate) fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
-        let dir = git_testtools::scripted_fixture_repo_writable_with_args(
+        let dir = git_testtools::scripted_fixture_writable_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
             git_testtools::Creation::ExecuteScript,
@@ -43,33 +43,42 @@ mod blocking_and_async_io {
         async(feature = "async-network-client-async-std", async_std::test)
     )]
     async fn fetch_empty_pack() -> crate::Result {
-        let (repo, _tmp) = repo_rw("two-origins");
         let daemon = spawn_git_daemon_if_async(repo_path("base"))?;
-        let mut remote = into_daemon_remote_if_async(
-            repo.head()?.into_remote(Fetch).expect("present")?,
-            daemon.as_ref(),
-            None,
-        );
-        remote.replace_refspecs(Some("HEAD:refs/remotes/origin/does-not-yet-exist"), Fetch)?;
+        for (fetch_tags, expected_ref_count) in [
+            (git::remote::fetch::Tags::None, 1),
+            (git::remote::fetch::Tags::Included, 7),
+            (git::remote::fetch::Tags::All, 7),
+        ] {
+            let (repo, _tmp) = repo_rw("two-origins");
+            let mut remote = into_daemon_remote_if_async(
+                repo.head()?
+                    .into_remote(Fetch)
+                    .expect("present")?
+                    .with_fetch_tags(fetch_tags),
+                daemon.as_ref(),
+                None,
+            );
+            remote.replace_refspecs(Some("HEAD:refs/remotes/origin/does-not-yet-exist"), Fetch)?;
 
-        let res = remote
-            .connect(Fetch, git::progress::Discard)
-            .await?
-            .prepare_fetch(Default::default())
-            .await?
-            .receive(&AtomicBool::default())
-            .await?;
+            let res = remote
+                .connect(Fetch, git::progress::Discard)
+                .await?
+                .prepare_fetch(Default::default())
+                .await?
+                .receive(&AtomicBool::default())
+                .await?;
 
-        match res.status {
-            git::remote::fetch::Status::Change {write_pack_bundle, update_refs} => {
-                assert_eq!(write_pack_bundle.index.data_hash, hex_to_id("029d08823bd8a8eab510ad6ac75c823cfd3ed31e"));
-                assert_eq!(write_pack_bundle.index.num_objects, 0, "empty pack");
-                assert!(write_pack_bundle.data_path.as_deref().map_or(false, |p| p.is_file()));
-                assert!(write_pack_bundle.index_path.as_deref().map_or(false, |p| p.is_file()));
-                assert_eq!(update_refs.edits.len(), 1);
-                assert!(!write_pack_bundle.keep_path.as_deref().map_or(false, |p| p.is_file()), ".keep files are deleted if at least one ref-edit was made or the pack is empty");
-            },
-            _ => unreachable!("Naive negotiation sends the same have and wants, resulting in an empty pack (technically no change, but we don't detect it) - empty packs are fine")
+            match res.status {
+                git::remote::fetch::Status::Change { write_pack_bundle, update_refs } => {
+                    assert_eq!(write_pack_bundle.index.data_hash, hex_to_id("029d08823bd8a8eab510ad6ac75c823cfd3ed31e"));
+                    assert_eq!(write_pack_bundle.index.num_objects, 0, "empty pack");
+                    assert!(write_pack_bundle.data_path.as_deref().map_or(false, |p| p.is_file()));
+                    assert!(write_pack_bundle.index_path.as_deref().map_or(false, |p| p.is_file()));
+                    assert_eq!(update_refs.edits.len(), expected_ref_count);
+                    assert!(!write_pack_bundle.keep_path.as_deref().map_or(false, |p| p.is_file()), ".keep files are deleted if at least one ref-edit was made or the pack is empty");
+                },
+                _ => unreachable!("Naive negotiation sends the same have and wants, resulting in an empty pack (technically no change, but we don't detect it) - empty packs are fine")
+            }
         }
         Ok(())
     }
@@ -79,30 +88,55 @@ mod blocking_and_async_io {
         async(feature = "async-network-client-async-std", async_std::test)
     )]
     async fn fetch_pack_without_local_destination() -> crate::Result {
-        let (repo, _tmp) = repo_rw("two-origins");
         let daemon = spawn_git_daemon_if_async(repo_path("clone-as-base-with-changes"))?;
-        let mut remote =
-            into_daemon_remote_if_async(repo.find_remote("changes-on-top-of-origin")?, daemon.as_ref(), None);
-        remote.replace_refspecs(Some("HEAD"), Fetch)?;
+        for (fetch_tags, expected_data_hash, num_objects_offset, expected_ref_edits) in [
+            (
+                git::remote::fetch::Tags::None,
+                "de303ef102bd5705a40a0c42ae2972eb1a668455",
+                0,
+                0,
+            ),
+            (
+                git::remote::fetch::Tags::Included,
+                "edc8cc8a25e64e73aacea469fc765564dd2c3f65",
+                1,
+                7,
+            ),
+            (
+                git::remote::fetch::Tags::All,
+                "edc8cc8a25e64e73aacea469fc765564dd2c3f65",
+                1,
+                7,
+            ),
+        ] {
+            let (repo, _tmp) = repo_rw("two-origins");
+            let mut remote = into_daemon_remote_if_async(
+                repo.find_remote("changes-on-top-of-origin")?
+                    .with_fetch_tags(fetch_tags),
+                daemon.as_ref(),
+                None,
+            );
+            remote.replace_refspecs(Some("HEAD"), Fetch)?;
 
-        let res: git::remote::fetch::Outcome = remote
-            .connect(Fetch, git::progress::Discard)
-            .await?
-            .prepare_fetch(Default::default())
-            .await?
-            .receive(&AtomicBool::default())
-            .await?;
+            let res: git::remote::fetch::Outcome = remote
+                .connect(Fetch, git::progress::Discard)
+                .await?
+                .prepare_fetch(Default::default())
+                .await?
+                .receive(&AtomicBool::default())
+                .await?;
 
-        match res.status {
-            git::remote::fetch::Status::Change {write_pack_bundle, update_refs} => {
-                assert_eq!(write_pack_bundle.index.data_hash, hex_to_id("edc8cc8a25e64e73aacea469fc765564dd2c3f65"));
-                assert_eq!(write_pack_bundle.index.num_objects, 4);
-                assert!(write_pack_bundle.data_path.as_deref().map_or(false, |p| p.is_file()));
-                assert!(write_pack_bundle.index_path.as_deref().map_or(false, |p| p.is_file()));
-                assert_eq!(update_refs.edits.len(), 0);
-                assert!(write_pack_bundle.keep_path.as_deref().map_or(false, |p| p.is_file()), ".keep are kept if there was no edit to bind the packs objects to our commit graph");
-            },
-            _ => unreachable!("Naive negotiation sends the same have and wants, resulting in an empty pack (technically no change, but we don't detect it) - empty packs are fine")
+            match res.status {
+                git::remote::fetch::Status::Change { write_pack_bundle, update_refs } => {
+                    assert_eq!(write_pack_bundle.index.data_hash, hex_to_id(expected_data_hash), );
+                    assert_eq!(write_pack_bundle.index.num_objects, 3 + num_objects_offset, "{fetch_tags:?}");
+                    assert!(write_pack_bundle.data_path.as_deref().map_or(false, |p| p.is_file()));
+                    assert!(write_pack_bundle.index_path.as_deref().map_or(false, |p| p.is_file()));
+                    assert_eq!(update_refs.edits.len(), expected_ref_edits, "{fetch_tags:?}");
+                    assert_eq!(write_pack_bundle.keep_path.as_deref().map_or(false, |p| p.is_file()), update_refs.edits.is_empty(),".keep are kept if there was no edit to prevent `git gc` from clearing out the pack as it's not referred to necessarily");
+                },
+                _ => unreachable!("Naive negotiation sends the same have and wants, resulting in an empty pack (technically no change, but we don't detect it) - empty packs are fine")
+            }
         }
         Ok(())
     }
@@ -117,18 +151,10 @@ mod blocking_and_async_io {
             p.pop();
             p
         })?;
-        for (version, expected_objects, expected_hash) in [
-            (None, 4, "d07c527cf14e524a8494ce6d5d08e28079f5c6ea"),
-            (
-                Some(git::protocol::transport::Protocol::V2),
-                4,
-                "d07c527cf14e524a8494ce6d5d08e28079f5c6ea",
-            ),
-            (
-                Some(git::protocol::transport::Protocol::V1),
-                4,
-                "d07c527cf14e524a8494ce6d5d08e28079f5c6ea", // TODO: if these are the same, remove them
-            ),
+        for version in [
+            None,
+            Some(git::protocol::transport::Protocol::V2),
+            Some(git::protocol::transport::Protocol::V1),
         ] {
             let (mut repo, _tmp) = repo_rw("two-origins");
             if let Some(version) = version {
@@ -158,13 +184,17 @@ mod blocking_and_async_io {
                     .await?
                     .receive(&AtomicBool::default())
                     .await?;
-                assert!(matches!(outcome.status, git::remote::fetch::Status::NoChange));
+                assert!(matches!(
+                    outcome.status,
+                    git::remote::fetch::Status::NoPackReceived { .. }
+                ));
             }
 
             // Some updates to be fetched
             for dry_run in [true, false] {
                 let remote = into_daemon_remote_if_async(
-                    repo.find_remote("changes-on-top-of-origin")?,
+                    repo.find_remote("changes-on-top-of-origin")?
+                        .with_fetch_tags(git::remote::fetch::Tags::None),
                     daemon.as_ref(),
                     "clone-as-base-with-changes",
                 );
@@ -183,12 +213,15 @@ mod blocking_and_async_io {
                     } => {
                         assert_eq!(write_pack_bundle.pack_version, git::odb::pack::data::Version::V2);
                         assert_eq!(write_pack_bundle.object_hash, repo.object_hash());
-                        assert_eq!(write_pack_bundle.index.num_objects, expected_objects, "{dry_run}: this value is 4 when git does it with 'consecutive' negotiation style, but could be 33 if completely naive.");
+                        assert_eq!(write_pack_bundle.index.num_objects, 4, "{dry_run}: this value is 4 when git does it with 'consecutive' negotiation style, but could be 33 if completely naive.");
                         assert_eq!(
                             write_pack_bundle.index.index_version,
                             git::odb::pack::index::Version::V2
                         );
-                        assert_eq!(write_pack_bundle.index.index_hash, hex_to_id(expected_hash));
+                        assert_eq!(
+                            write_pack_bundle.index.index_hash,
+                            hex_to_id("d07c527cf14e524a8494ce6d5d08e28079f5c6ea")
+                        );
                         assert!(write_pack_bundle.data_path.map_or(false, |f| f.is_file()));
                         assert!(write_pack_bundle.index_path.map_or(false, |f| f.is_file()));
                         assert_eq!(update_refs.edits.len(), 2);
@@ -214,7 +247,7 @@ mod blocking_and_async_io {
                         update_refs
                     }
                     fetch::Status::DryRun { update_refs } => update_refs,
-                    fetch::Status::NoChange => unreachable!("we firmly expect changes here"),
+                    fetch::Status::NoPackReceived { .. } => unreachable!("we firmly expect changes here"),
                 };
 
                 assert_eq!(
@@ -230,9 +263,11 @@ mod blocking_and_async_io {
                         }
                     ]
                 );
-                for (_update, mapping, _spec, edit) in
-                    refs.iter_mapping_updates(&outcome.ref_map.mappings, remote.refspecs(Fetch))
-                {
+                for (_update, mapping, _spec, edit) in refs.iter_mapping_updates(
+                    &outcome.ref_map.mappings,
+                    remote.refspecs(Fetch),
+                    &outcome.ref_map.extra_refspecs,
+                ) {
                     let edit = edit.expect("refedit present even if it's a no-op");
                     if dry_run {
                         assert_eq!(

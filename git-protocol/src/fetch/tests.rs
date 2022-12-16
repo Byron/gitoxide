@@ -160,10 +160,34 @@ mod arguments {
         use crate::fetch::tests::arguments::{arguments_v1, id, transport};
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn include_tag() {
+            let mut out = Vec::new();
+            let mut t = transport(&mut out, true);
+            let mut arguments = arguments_v1(["include-tag", "feature-b"].iter().cloned());
+            assert!(arguments.can_use_include_tag());
+
+            arguments.use_include_tag();
+            arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff"));
+            arguments.send(&mut t, true).await.expect("sending to buffer to work");
+            assert_eq!(
+                out.as_bstr(),
+                b"0048want ff333369de1221f9bfbbe03a3a13e9a09bc1ffff include-tag feature-b
+0010include-tag
+00000009done
+"
+                .as_bstr()
+            );
+        }
+
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn haves_and_wants_for_clone() {
             let mut out = Vec::new();
             let mut t = transport(&mut out, true);
             let mut arguments = arguments_v1(["feature-a", "feature-b"].iter().cloned());
+            assert!(
+                !arguments.can_use_include_tag(),
+                "needs to be enabled by features in V1"
+            );
 
             arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907"));
             arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff"));
@@ -246,6 +270,30 @@ mod arguments {
         use crate::fetch::tests::arguments::{arguments_v2, id, transport};
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn include_tag() {
+            let mut out = Vec::new();
+            let mut t = transport(&mut out, true);
+            let mut arguments = arguments_v2(["does not matter for us here"].iter().copied());
+            assert!(arguments.can_use_include_tag(), "always on in V2");
+            arguments.use_include_tag();
+
+            arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff"));
+            arguments.send(&mut t, true).await.expect("sending to buffer to work");
+            assert_eq!(
+                out.as_bstr(),
+                b"0012command=fetch
+0001000ethin-pack
+000eofs-delta
+0010include-tag
+0032want ff333369de1221f9bfbbe03a3a13e9a09bc1ffff
+0009done
+0000"
+                    .as_bstr(),
+                "we filter features/capabilities without value as these apparently shouldn't be listed (remote dies otherwise)"
+            );
+        }
+
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn haves_and_wants_for_clone_stateful() {
             let mut out = Vec::new();
             let mut t = transport(&mut out, true);
@@ -260,7 +308,6 @@ mod arguments {
                 out.as_bstr(),
                 b"0012command=fetch
 0001000ethin-pack
-0010include-tag
 000eofs-delta
 000ddeepen 1
 0014deepen-relative
@@ -294,7 +341,6 @@ mod arguments {
                     out.as_bstr(),
                     b"0012command=fetch
 0001000ethin-pack
-0010include-tag
 000eofs-delta
 000ddeepen 1
 0017deepen-since 12345
@@ -304,7 +350,6 @@ mod arguments {
 0032have 0000000000000000000000000000000000000000
 00000012command=fetch
 0001000ethin-pack
-0010include-tag
 000eofs-delta
 000ddeepen 1
 0017deepen-since 12345
@@ -332,7 +377,6 @@ mod arguments {
                 out.as_bstr(),
                 b"0012command=fetch
 0001000ethin-pack
-0010include-tag
 000eofs-delta
 001dwant-ref refs/heads/main
 0009done

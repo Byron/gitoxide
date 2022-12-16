@@ -7,6 +7,7 @@ mod blocking_io {
     use git_object::bstr::ByteSlice;
     use git_ref::TargetRef;
     use git_repository as git;
+    use git_repository::remote::fetch::SpecIndex;
 
     use crate::remote;
 
@@ -15,6 +16,7 @@ mod blocking_io {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let called_configure_remote = std::sync::Arc::new(std::sync::atomic::AtomicBool::default());
         let remote_name = "special";
+        let desired_fetch_tags = git::remote::fetch::Tags::Included;
         let mut prepare = git::clone::PrepareFetch::new(
             remote::repo("base").path(),
             tmp.path(),
@@ -30,10 +32,10 @@ mod blocking_io {
             let called_configure_remote = called_configure_remote.clone();
             move |r| {
                 called_configure_remote.store(true, std::sync::atomic::Ordering::Relaxed);
-                Ok(
-                    r.with_refspecs(Some("+refs/tags/*:refs/tags/*"), git::remote::Direction::Fetch)
-                        .expect("valid static spec"),
-                )
+                let r = r
+                    .with_refspecs(Some("+refs/tags/b-tag:refs/tags/b-tag"), git::remote::Direction::Fetch)?
+                    .with_fetch_tags(desired_fetch_tags);
+                Ok(r)
             }
         });
         let (repo, out) = prepare.fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
@@ -45,10 +47,15 @@ mod blocking_io {
         );
         assert_eq!(repo.remote_names().len(), 1, "only ever one remote");
         let remote = repo.find_remote(remote_name)?;
+        let num_refspecs = remote.refspecs(git::remote::Direction::Fetch).len();
         assert_eq!(
-            remote.refspecs(git::remote::Direction::Fetch).len(),
-            2,
-            "our added spec was stored as well"
+            num_refspecs, 2,
+            "our added spec was stored as well, but no implied specs due to the `Tags::All` setting"
+        );
+        assert_eq!(
+            remote.fetch_tags(),
+            desired_fetch_tags,
+            "fetch-tags are persisted via the 'tagOpt` key"
         );
         assert!(
             git::path::from_bstr(
@@ -62,20 +69,38 @@ mod blocking_io {
             "file urls can't be relative paths"
         );
 
-        assert_eq!(out.ref_map.mappings.len(), 14);
+        let (explicit_max_idx, implicit_max_index) =
+            out.ref_map
+                .mappings
+                .iter()
+                .map(|m| m.spec_index)
+                .fold((0, 0), |(a, b), i| match i {
+                    SpecIndex::ExplicitInRemote(idx) => (idx.max(a), b),
+                    SpecIndex::Implicit(idx) => (a, idx.max(b)),
+                });
+        assert_eq!(
+            explicit_max_idx,
+            num_refspecs - 1,
+            "mappings don't refer to non-existing explicit refspecs"
+        );
+        assert_eq!(
+            implicit_max_index,
+            &out.ref_map.extra_refspecs.len() - 1,
+            "mappings don't refer to non-existing implicit refspecs"
+        );
         let packed_refs = repo
             .refs
             .cached_packed_buffer()?
             .expect("packed refs should be present");
         assert_eq!(
-            packed_refs.iter()?.count(),
-            14,
-            "all non-symbolic refs should be stored"
-        );
-        assert_eq!(
             repo.refs.loose_iter()?.count(),
             2,
             "HEAD and an actual symbolic ref we received"
+        );
+        assert_eq!(
+            packed_refs.iter()?.count(),
+            14,
+            "all non-symbolic refs should be stored, if reachable from our refs"
         );
 
         match out.status {
@@ -107,6 +132,38 @@ mod blocking_io {
                         assert_reflog(logs.all());
                     }
                 }
+                let mut out_of_graph_tags = Vec::new();
+                for mapping in update_refs
+                    .updates
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(idx, update)| {
+                        matches!(
+                            update.mode,
+                            git::remote::fetch::refs::update::Mode::ImplicitTagNotSentByRemote
+                        )
+                        .then(|| idx)
+                    })
+                    .map(|idx| &out.ref_map.mappings[idx])
+                {
+                    out_of_graph_tags.push(
+                        mapping
+                            .remote
+                            .as_name()
+                            .expect("tag always has a path")
+                            .to_str()
+                            .expect("valid UTF8"),
+                    );
+                }
+                assert_eq!(
+                    out_of_graph_tags,
+                    &[
+                        "refs/tags/annotated-detached-tag",
+                        "refs/tags/annotated-future-tag",
+                        "refs/tags/detached-tag",
+                        "refs/tags/future-tag"
+                    ]
+                );
             }
             _ => unreachable!("clones are always causing changes and dry-runs aren't possible"),
         }
@@ -199,7 +256,7 @@ mod blocking_io {
     fn fetch_and_checkout_empty_remote_repo() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let mut prepare = git::prepare_clone(
-            git_testtools::scripted_fixture_repo_read_only("make_empty_repo.sh")?,
+            git_testtools::scripted_fixture_read_only("make_empty_repo.sh")?,
             tmp.path(),
         )?;
         let (mut checkout, out) = prepare

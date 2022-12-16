@@ -27,6 +27,7 @@ use crate::bstr::BString;
 
 /// Initialization
 impl<'repo> Remote<'repo> {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn from_preparsed_config(
         name_or_url: Option<BString>,
         url: Option<git_url::Url>,
@@ -34,6 +35,7 @@ impl<'repo> Remote<'repo> {
         fetch_specs: Vec<RefSpec>,
         push_specs: Vec<RefSpec>,
         should_rewrite_urls: bool,
+        fetch_tags: remote::fetch::Tags,
         repo: &'repo Repository,
     ) -> Result<Self, Error> {
         debug_assert!(
@@ -51,6 +53,7 @@ impl<'repo> Remote<'repo> {
             push_url_alias,
             fetch_specs,
             push_specs,
+            fetch_tags,
             repo,
         })
     }
@@ -76,6 +79,7 @@ impl<'repo> Remote<'repo> {
             push_url_alias: None,
             fetch_specs: Vec::new(),
             push_specs: Vec::new(),
+            fetch_tags: Default::default(),
             repo,
         })
     }

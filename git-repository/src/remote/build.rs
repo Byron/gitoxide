@@ -23,6 +23,12 @@ impl Remote<'_> {
         self.push_url_inner(url, false)
     }
 
+    /// Configure how tags should be handled when fetching from the remote.
+    pub fn with_fetch_tags(mut self, tags: remote::fetch::Tags) -> Self {
+        self.fetch_tags = tags;
+        self
+    }
+
     fn push_url_inner<Url, E>(mut self, push_url: Url, should_rewrite_urls: bool) -> Result<Self, remote::init::Error>
     where
         Url: TryInto<git_url::Url, Error = E>,

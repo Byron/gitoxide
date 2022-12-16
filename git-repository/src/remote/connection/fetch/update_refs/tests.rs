@@ -7,7 +7,7 @@ mod update {
 
     fn base_repo_path() -> String {
         git::path::realpath(
-            git_testtools::scripted_fixture_repo_read_only("make_remote_repos.sh")
+            git_testtools::scripted_fixture_read_only("make_remote_repos.sh")
                 .unwrap()
                 .join("base"),
         )
@@ -17,12 +17,12 @@ mod update {
     }
 
     fn repo(name: &str) -> git::Repository {
-        let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_fetch_repos.sh", [base_repo_path()])
-            .unwrap();
+        let dir =
+            git_testtools::scripted_fixture_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
         git::open_opts(dir.join(name), git::open::Options::isolated()).unwrap()
     }
     fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
-        let dir = git_testtools::scripted_fixture_repo_writable_with_args(
+        let dir = git_testtools::scripted_fixture_writable_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
             git_testtools::Creation::ExecuteScript,
@@ -33,6 +33,7 @@ mod update {
     }
     use git_ref::{transaction::Change, TargetRef};
 
+    use crate::remote::fetch::SpecIndex;
     use crate::{
         bstr::BString,
         remote::{
@@ -128,6 +129,8 @@ mod update {
                 prefixed("action"),
                 &mapping,
                 &specs,
+                &[],
+                fetch::Tags::None,
                 reflog_message.map(|_| fetch::DryRun::Yes).unwrap_or(fetch::DryRun::No),
                 fetch::WritePackedRefs::Never,
             )
@@ -169,7 +172,7 @@ mod update {
 
     #[test]
     fn checked_out_branches_in_worktrees_are_rejected_with_additional_information() -> Result {
-        let root = git_path::realpath(git_testtools::scripted_fixture_repo_read_only_with_args(
+        let root = git_path::realpath(git_testtools::scripted_fixture_read_only_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
         )?)?;
@@ -190,6 +193,8 @@ mod update {
                 prefixed("action"),
                 &mappings,
                 &specs,
+                &[],
+                fetch::Tags::None,
                 fetch::DryRun::Yes,
                 fetch::WritePackedRefs::Never,
             )?;
@@ -219,6 +224,8 @@ mod update {
                 prefixed("action"),
                 &mappings,
                 &specs,
+                &[],
+                fetch::Tags::None,
                 fetch::DryRun::Yes,
                 fetch::WritePackedRefs::Never,
             )
@@ -246,13 +253,15 @@ mod update {
                 object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
             }),
             local: Some("refs/heads/symbolic".into()),
-            spec_index: 0,
+            spec_index: SpecIndex::ExplicitInRemote(0),
         });
         let out = fetch::refs::update(
             &repo,
             prefixed("action"),
             &mappings,
             &specs,
+            &[],
+            fetch::Tags::None,
             fetch::DryRun::Yes,
             fetch::WritePackedRefs::Never,
         )
@@ -294,6 +303,8 @@ mod update {
             prefixed("action"),
             &mappings,
             &specs,
+            &[],
+            fetch::Tags::None,
             fetch::DryRun::Yes,
             fetch::WritePackedRefs::Never,
         )
@@ -318,6 +329,8 @@ mod update {
             prefixed("action"),
             &mappings,
             &specs,
+            &[],
+            fetch::Tags::None,
             fetch::DryRun::Yes,
             fetch::WritePackedRefs::Never,
         )
@@ -359,13 +372,15 @@ mod update {
                 object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
             }),
             local: Some("refs/remotes/origin/main".into()),
-            spec_index: 0,
+            spec_index: SpecIndex::ExplicitInRemote(0),
         });
         let out = fetch::refs::update(
             &repo,
             prefixed("action"),
             &mappings,
             &specs,
+            &[],
+            fetch::Tags::None,
             fetch::DryRun::Yes,
             fetch::WritePackedRefs::Never,
         )
@@ -412,6 +427,8 @@ mod update {
             },
             &mappings,
             &specs,
+            &[],
+            fetch::Tags::None,
             fetch::DryRun::Yes,
             fetch::WritePackedRefs::Never,
         )
@@ -444,6 +461,8 @@ mod update {
             prefixed("action"),
             &mappings,
             &specs,
+            &[],
+            fetch::Tags::None,
             fetch::DryRun::No,
             fetch::WritePackedRefs::Never,
         )
@@ -464,6 +483,8 @@ mod update {
             prefixed("prefix"),
             &mappings,
             &specs,
+            &[],
+            fetch::Tags::None,
             fetch::DryRun::No,
             fetch::WritePackedRefs::Never,
         )
@@ -495,6 +516,8 @@ mod update {
             prefixed("prefix"),
             &mappings,
             &specs,
+            &[],
+            fetch::Tags::None,
             fetch::DryRun::No,
             fetch::WritePackedRefs::Never,
         )
@@ -536,7 +559,7 @@ mod update {
                         _ => unreachable!("not a ref, must be id: {:?}", m),
                     }),
                 local: m.rhs.map(|r| r.into_owned()),
-                spec_index: m.spec_index,
+                spec_index: SpecIndex::ExplicitInRemote(m.spec_index),
             })
             .collect();
         (mappings, vec![spec.to_owned()])
