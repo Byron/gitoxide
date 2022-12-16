@@ -38,7 +38,6 @@ pub struct Link {
     /// The checksum of the shared index as last seen.
     pub shared_index_checksum: git_hash::ObjectId,
     /// Bitmaps to tell us which entries to delete or replace.
-    // TODO: clarify what this actually is.
     pub bitmaps: Option<link::Bitmaps>,
 }
 
