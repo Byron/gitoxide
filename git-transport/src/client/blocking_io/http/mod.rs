@@ -144,7 +144,6 @@ pub struct Transport<H: Http> {
     url: String,
     user_agent_header: &'static str,
     desired_version: Protocol,
-    supported_versions: [Protocol; 1],
     actual_version: Protocol,
     http: H,
     service: Option<Service>,
@@ -153,14 +152,14 @@ pub struct Transport<H: Http> {
 }
 
 impl<H: Http> Transport<H> {
-    /// Create a new instance with `http` as implementation to communicate to `url` using the given `desired_version` of the `git` protocol.
+    /// Create a new instance with `http` as implementation to communicate to `url` using the given `desired_version`.
+    /// Note that we will always fallback to other versions as supported by the server.
     pub fn new_http(http: H, url: &str, desired_version: Protocol) -> Self {
         Transport {
             url: url.to_owned(),
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
             desired_version,
-            actual_version: desired_version,
-            supported_versions: [desired_version],
+            actual_version: Default::default(),
             service: None,
             http,
             line_provider: None,
@@ -278,10 +277,6 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
 
     fn to_url(&self) -> Cow<'_, BStr> {
         Cow::Borrowed(self.url.as_str().into())
-    }
-
-    fn supported_protocol_versions(&self) -> &[Protocol] {
-        &self.supported_versions
     }
 
     fn connection_persists_across_multiple_requests(&self) -> bool {
