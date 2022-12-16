@@ -80,6 +80,7 @@ impl crate::Repository {
             git_index::decode::Options {
                 thread_limit,
                 min_extension_block_in_bytes_for_threading: 0,
+                expected_checksum: None,
             },
         )
         .map_err(Into::into)
