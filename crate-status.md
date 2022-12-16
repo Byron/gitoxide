@@ -508,6 +508,7 @@ The git staging area.
       * [x] EOIE 
       * [x] 'sdir'
       * [ ] 'link'
+          - **note** that we currently **dissolve** any shared index we read so when writing this extension is removed.
 * `stat` update
     * [ ] optional threaded `stat` based on thread_cost (aka preload)
 * [x] handling of `.gitignore` and system file exclude configuration

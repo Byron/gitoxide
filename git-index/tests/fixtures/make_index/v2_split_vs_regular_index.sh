@@ -9,7 +9,7 @@ export GIT_INDEX_VERSION=2
 git init split -q
 git init regular -q
 
-(cd split
+function initialize() {
     echo "a" > a
     echo "b" > b
     echo "c" > c
@@ -19,6 +19,19 @@ git init regular -q
 
     git add .
     git commit -m initial
+}
+
+function finish() {
+    rm a x
+    echo "b changed" > b
+    echo "d" > d
+
+    git add .
+    git commit -m second
+}
+
+(cd split
+    initialize
 
     # create shared index from current index
     git update-index --split-index
@@ -26,29 +39,9 @@ git init regular -q
     # never write changes to shared index
     git config splitIndex.maxPercentChange 100
 
-    rm a x
-    echo "b changed" > b
-    echo "d" > d
-
-    git add .
-    git commit -m second
+    finish
 )
 
 (cd regular
-    echo "a" > a
-    echo "b" > b
-    echo "c" > c
-    echo "x" > x
-    echo "y" > y
-    echo "z" > z
-
-    git add .
-    git commit -m initial
-
-    rm a x
-    echo "b changed" > b
-    echo "d" > d
-
-    git add .
-    git commit -m second
+    initialize && finish
 )

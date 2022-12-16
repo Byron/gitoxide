@@ -291,26 +291,33 @@ fn v2_split_index() {
 }
 
 #[test]
-fn compare_split_to_regular_index() {
-    let path =
+fn split_index_and_regular_index_of_same_content_are_indeed_the_same() {
+    let base =
         git_testtools::scripted_fixture_repo_read_only(Path::new("make_index").join("v2_split_vs_regular_index.sh"))
             .unwrap();
 
     let split =
-        verify(git_index::File::at(path.join("split/.git/index"), git_hash::Kind::Sha1, Default::default()).unwrap());
+        verify(git_index::File::at(base.join("split/.git/index"), git_hash::Kind::Sha1, Default::default()).unwrap());
 
-    assert!(split.link().is_none(), "link extension not resolved correctly");
+    assert!(
+        split.link().is_none(),
+        "link extension is dissolved, merging the shared index permanently into the split one (for now)"
+    );
 
     let regular = verify(
         git_index::File::at(
-            path.join("regular/.git/index"),
+            base.join("regular/.git/index"),
             git_hash::Kind::Sha1,
             Default::default(),
         )
         .unwrap(),
     );
 
-    assert_eq!(split.entries().len(), regular.entries().len(), "length mismatch");
+    assert_eq!(
+        split.entries().len(),
+        regular.entries().len(),
+        "split and regular index entries must match in length (and be the exact same)"
+    );
     split.entries().iter().zip(regular.entries()).for_each(|(s, r)| {
         assert_eq!(s.id, r.id);
         assert_eq!(s.flags, r.flags);
