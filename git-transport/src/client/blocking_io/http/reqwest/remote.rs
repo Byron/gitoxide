@@ -1,7 +1,9 @@
+use std::io::Read;
 use std::{any::Any, convert::TryFrom, io::Write, str::FromStr};
 
 use git_features::io::pipe;
 
+use crate::client::http::traits::PostBodyDataKind;
 use crate::client::{http, http::reqwest::Remote};
 
 /// The error returned by the 'remote' helper, a purely internal construct to perform http requests.
@@ -10,6 +12,8 @@ use crate::client::{http, http::reqwest::Remote};
 pub enum Error {
     #[error(transparent)]
     Reqwest(#[from] reqwest::Error),
+    #[error("Could not finish reading all data to post to the remote")]
+    ReadPostBody(#[from] std::io::Error),
     #[error("Request configuration failed")]
     ConfigureRequest(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
 }
@@ -39,16 +43,17 @@ impl Default for Remote {
             for Request {
                 url,
                 headers,
-                upload,
+                upload_body_kind,
                 config,
             } in req_recv
             {
-                let mut req_builder = if upload { client.post(url) } else { client.get(url) }.headers(headers);
-                let (post_body_tx, post_body_rx) = pipe::unidirectional(0);
-                if upload {
-                    req_builder = req_builder.body(reqwest::blocking::Body::new(post_body_rx));
+                let mut req_builder = if upload_body_kind.is_some() {
+                    client.post(url)
+                } else {
+                    client.get(url)
                 }
-                let mut req = req_builder.build()?;
+                .headers(headers);
+                let (post_body_tx, mut post_body_rx) = pipe::unidirectional(0);
                 let (mut response_body_tx, response_body_rx) = pipe::unidirectional(0);
                 let (mut headers_tx, headers_rx) = pipe::unidirectional(0);
                 if res_send
@@ -63,6 +68,16 @@ impl Default for Remote {
                     // Shut down as something is off.
                     break;
                 }
+                req_builder = match upload_body_kind {
+                    Some(PostBodyDataKind::BoundedAndFitsIntoMemory) => {
+                        let mut buf = Vec::<u8>::with_capacity(512);
+                        post_body_rx.read_to_end(&mut buf)?;
+                        req_builder.body(buf)
+                    }
+                    Some(PostBodyDataKind::Unbounded) => req_builder.body(reqwest::blocking::Body::new(post_body_rx)),
+                    None => req_builder,
+                };
+                let mut req = req_builder.build()?;
                 if let Some(ref mut request_options) = config.backend.as_ref().and_then(|backend| backend.lock().ok()) {
                     if let Some(options) = request_options.downcast_mut::<super::Options>() {
                         if let Some(configure_request) = &mut options.configure_request {
@@ -136,7 +151,7 @@ impl Remote {
         url: &str,
         _base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
-        upload: bool,
+        upload_body_kind: Option<PostBodyDataKind>,
     ) -> Result<http::PostResponse<pipe::Reader, pipe::Reader, pipe::Writer>, http::Error> {
         let mut header_map = reqwest::header::HeaderMap::new();
         for header_line in headers {
@@ -159,7 +174,7 @@ impl Remote {
             .send(Request {
                 url: url.to_owned(),
                 headers: header_map,
-                upload,
+                upload_body_kind,
                 config: self.config.clone(),
             })
             .expect("the remote cannot be down at this point");
@@ -202,7 +217,7 @@ impl http::Http for Remote {
         base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<http::GetResponse<Self::Headers, Self::ResponseBody>, http::Error> {
-        self.make_request(url, base_url, headers, false).map(Into::into)
+        self.make_request(url, base_url, headers, None).map(Into::into)
     }
 
     fn post(
@@ -210,8 +225,9 @@ impl http::Http for Remote {
         url: &str,
         base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
+        post_body_kind: PostBodyDataKind,
     ) -> Result<http::PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, http::Error> {
-        self.make_request(url, base_url, headers, true)
+        self.make_request(url, base_url, headers, Some(post_body_kind))
     }
 
     fn configure(&mut self, config: &dyn Any) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
@@ -225,7 +241,7 @@ impl http::Http for Remote {
 pub(crate) struct Request {
     pub url: String,
     pub headers: reqwest::header::HeaderMap,
-    pub upload: bool,
+    pub upload_body_kind: Option<PostBodyDataKind>,
     pub config: http::Options,
 }
 
