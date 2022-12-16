@@ -23,14 +23,16 @@ pub(crate) fn loose_file(name: &str) -> git_index::File {
     let file = git_index::File::at(path, git_hash::Kind::Sha1, Default::default()).unwrap();
     verify(file)
 }
-pub(crate) fn file(name: &str) -> git_index::File {
+pub(crate) fn try_file(name: &str) -> Result<git_index::File, git_index::file::init::Error> {
     let file = git_index::File::at(
         crate::fixture_index_path(name),
         git_hash::Kind::Sha1,
         Default::default(),
-    )
-    .unwrap();
-    verify(file)
+    )?;
+    Ok(verify(file))
+}
+pub(crate) fn file(name: &str) -> git_index::File {
+    try_file(name).unwrap()
 }
 fn file_opt(name: &str, opts: git_index::decode::Options) -> git_index::File {
     let file = git_index::File::at(crate::fixture_index_path(name), git_hash::Kind::Sha1, opts).unwrap();
@@ -288,6 +290,15 @@ fn sparse_checkout_non_cone_mode() {
 fn v2_split_index() {
     let file = file("v2_split_index");
     assert_eq!(file.version(), Version::V2);
+}
+
+#[test]
+fn v2_split_index_recursion_is_handled_gracefully() {
+    let err = try_file("v2_split_index_recursive").expect_err("recursion fails gracefully");
+    assert!(matches!(
+        err,
+        git_index::file::init::Error::Decode(git_index::decode::Error::ChecksumMismatch { .. })
+    ));
 }
 
 #[test]

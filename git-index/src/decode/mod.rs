@@ -22,6 +22,11 @@ mod error {
         Extension(#[from] extension::decode::Error),
         #[error("Index trailer should have been {expected} bytes long, but was {actual}")]
         UnexpectedTrailerLength { expected: usize, actual: usize },
+        #[error("Shared index checksum was {actual_checksum} but should have been {expected_checksum}")]
+        ChecksumMismatch {
+            actual_checksum: git_hash::ObjectId,
+            expected_checksum: git_hash::ObjectId,
+        },
     }
 }
 pub use error::Error;
@@ -41,6 +46,10 @@ pub struct Options {
     /// The minimum size in bytes to load extensions in their own thread, assuming there is enough `num_threads` available.
     /// If set to 0, for example, extensions will always be read in their own thread if enough threads are available.
     pub min_extension_block_in_bytes_for_threading: usize,
+    /// Set the expected hash of this index if we are read as part of a `link` extension.
+    ///
+    /// We will abort reading this file if it doesn't match.
+    pub expected_checksum: Option<git_hash::ObjectId>,
 }
 
 impl State {
@@ -53,6 +62,7 @@ impl State {
         Options {
             thread_limit,
             min_extension_block_in_bytes_for_threading,
+            expected_checksum,
         }: Options,
     ) -> Result<(Self, git_hash::ObjectId), Error> {
         let (version, num_entries, post_header_data) = header::decode(data, object_hash)?;
@@ -205,6 +215,14 @@ impl State {
         }
 
         let checksum = git_hash::ObjectId::from(data);
+        if let Some(expected_checksum) = expected_checksum {
+            if checksum != expected_checksum {
+                return Err(Error::ChecksumMismatch {
+                    actual_checksum: checksum,
+                    expected_checksum,
+                });
+            }
+        }
         let EntriesOutcome {
             entries,
             path_backing,

@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use crate::{extension, extension::Signature, util::from_be_u32};
 
-pub fn header(data: &[u8]) -> (Signature, u32, &[u8]) {
+pub(crate) fn header(data: &[u8]) -> (Signature, u32, &[u8]) {
     let (signature, data) = data.split_at(4);
     let (size, data) = data.split_at(4);
     (signature.try_into().unwrap(), from_be_u32(size), data)
@@ -11,8 +11,9 @@ pub fn header(data: &[u8]) -> (Signature, u32, &[u8]) {
 mod error {
     use crate::extension;
 
-    /// The error returned by [extension::decode::all()][extension::decode::all()].
+    /// The error returned when decoding extensions.
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(
             "Encountered mandatory extension '{}' which isn't implemented yet",
@@ -25,7 +26,10 @@ mod error {
 }
 pub use error::Error;
 
-pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) -> Result<(Outcome, &[u8]), Error> {
+pub(crate) fn all(
+    maybe_beginning_of_extensions: &[u8],
+    object_hash: git_hash::Kind,
+) -> Result<(Outcome, &[u8]), Error> {
     let mut ext_iter = match extension::Iter::new_without_checksum(maybe_beginning_of_extensions, object_hash) {
         Some(iter) => iter,
         None => return Ok((Outcome::default(), maybe_beginning_of_extensions)),
@@ -66,7 +70,7 @@ pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) ->
 }
 
 #[derive(Default)]
-pub struct Outcome {
+pub(crate) struct Outcome {
     pub tree: Option<extension::Tree>,
     pub link: Option<extension::Link>,
     pub resolve_undo: Option<extension::resolve_undo::Paths>,

@@ -73,7 +73,8 @@ mod iter;
 
 pub(crate) mod fs_monitor;
 
-pub(crate) mod decode;
+///
+pub mod decode;
 
 ///
 pub mod tree;
