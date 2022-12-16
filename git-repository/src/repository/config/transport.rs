@@ -279,7 +279,7 @@ impl crate::Repository {
                             Ok((
                                 action_with_normalized_url,
                                 Arc::new(Mutex::new(move |action| cascade.invoke(action, prompt_opts.clone())))
-                                    as Arc<Mutex<git_transport::client::http::AuthenticateFn>>,
+                                    as Arc<Mutex<git_transport::client::http::options::AuthenticateFn>>,
                             ))
                         })
                         .transpose()?;
