@@ -49,9 +49,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // let num_branches = repo.branches()?;
     // let num_branches = repo.branches.remote("origin")?;
-    let num_branches = repo.references()?.prefixed("refs/heads/")?.count();
-    let num_remote_branches = repo.references()?.prefixed("refs/remotes/")?.count();
-    let num_tags = repo.references()?.prefixed("refs/tags/")?.count();
+    let num_branches = repo.references()?.local_branches()?.count();
+    let num_remote_branches = repo.references()?.remote_branches()?.count();
+    let num_tags = repo.references()?.tags()?.count();
     let broken_refs = repo
         .references()?
         .all()?
