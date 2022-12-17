@@ -2,6 +2,8 @@
 pub mod decode_entry;
 mod init;
 ///
+pub mod resolve_header;
+///
 pub mod verify;
 
 /// The bytes used as header in a pack data file.

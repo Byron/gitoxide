@@ -35,7 +35,7 @@ struct Delta {
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
-    /// The kind of resolved object
+    /// The kind of resolved object.
     pub kind: git_object::Kind,
     /// The amount of deltas in the chain of objects that had to be resolved beforehand.
     ///
@@ -46,7 +46,7 @@ pub struct Outcome {
     pub decompressed_size: u64,
     /// The total compressed size of all pack entries in the delta chain
     pub compressed_size: usize,
-    /// The total size of all objects decoded as part of the delta chain
+    /// The total size of the decoded object.
     pub object_size: u64,
 }
 
@@ -60,7 +60,7 @@ impl Outcome {
             object_size: 0,
         }
     }
-    fn from_object_entry(kind: git_object::Kind, entry: &crate::data::Entry, compressed_size: usize) -> Self {
+    fn from_object_entry(kind: git_object::Kind, entry: &data::Entry, compressed_size: usize) -> Self {
         Self {
             kind,
             num_deltas: 0,
@@ -81,7 +81,7 @@ impl File {
     /// # Panics
     ///
     /// If `out` isn't large enough to hold the decompressed `entry`
-    pub fn decompress_entry(&self, entry: &crate::data::Entry, out: &mut [u8]) -> Result<usize, Error> {
+    pub fn decompress_entry(&self, entry: &data::Entry, out: &mut [u8]) -> Result<usize, Error> {
         assert!(
             out.len() as u64 >= entry.decompressed_size,
             "output buffer isn't large enough to hold decompressed result, want {}, have {}",
@@ -90,6 +90,7 @@ impl File {
         );
 
         self.decompress_entry_from_data_offset(entry.data_offset, out)
+            .map_err(Into::into)
     }
 
     fn assure_v2(&self) {
@@ -102,13 +103,13 @@ impl File {
     /// Obtain the [`Entry`][crate::data::Entry] at the given `offset` into the pack.
     ///
     /// The `offset` is typically obtained from the pack index file.
-    pub fn entry(&self, offset: data::Offset) -> crate::data::Entry {
+    pub fn entry(&self, offset: data::Offset) -> data::Entry {
         self.assure_v2();
         let pack_offset: usize = offset.try_into().expect("offset representable by machine");
         assert!(pack_offset <= self.data.len(), "offset out of bounds");
 
         let object_data = &self.data[pack_offset..];
-        crate::data::Entry::from_bytes(object_data, offset, self.hash_len)
+        data::Entry::from_bytes(object_data, offset, self.hash_len)
     }
 
     /// Decompress the object expected at the given data offset, sans pack header. This information is only
@@ -116,13 +117,16 @@ impl File {
     /// Note that this method does not resolve deltified objects, but merely decompresses their content
     /// `out` is expected to be large enough to hold `entry.size` bytes.
     /// Returns the amount of packed bytes there read from the pack data file.
-    fn decompress_entry_from_data_offset(&self, data_offset: data::Offset, out: &mut [u8]) -> Result<usize, Error> {
+    pub(crate) fn decompress_entry_from_data_offset(
+        &self,
+        data_offset: data::Offset,
+        out: &mut [u8],
+    ) -> Result<usize, zlib::inflate::Error> {
         let offset: usize = data_offset.try_into().expect("offset representable by machine");
         assert!(offset < self.data.len(), "entry offset out of bounds");
 
         zlib::Inflate::default()
             .once(&self.data[offset..], out)
-            .map_err(Into::into)
             .map(|(_status, consumed_in, _consumed_out)| consumed_in)
     }
 
@@ -138,7 +142,7 @@ impl File {
     /// Use a [Noop-Cache][cache::Never] to disable caching all together at the cost of repeating work.
     pub fn decode_entry(
         &self,
-        entry: crate::data::Entry,
+        entry: data::Entry,
         out: &mut Vec<u8>,
         resolve: impl Fn(&git_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
         delta_cache: &mut impl cache::DecodeEntry,
@@ -170,7 +174,7 @@ impl File {
     /// it's very, very large as 20bytes are smaller than the corresponding MSB encoded number
     fn resolve_deltas(
         &self,
-        last: crate::data::Entry,
+        last: data::Entry,
         resolve: impl Fn(&git_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,
@@ -325,8 +329,8 @@ impl File {
 
         // From oldest to most recent, apply all deltas, swapping the buffer back and forth
         // TODO: once we have more tests, we could optimize this memory-intensive work to
-        // analyse the delta-chains to only copy data once - after all, with 'copy-from-base' deltas,
-        // all data originates from one base at some point.
+        //       analyse the delta-chains to only copy data once - after all, with 'copy-from-base' deltas,
+        //       all data originates from one base at some point.
         // `out` is: [source-buffer][target-buffer][max-delta-instructions-buffer]
         let (buffers, instructions) = out.split_at_mut(second_buffer_end);
         let (mut source_buf, mut target_buf) = buffers.split_at_mut(first_buffer_end);
