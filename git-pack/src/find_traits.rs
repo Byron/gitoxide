@@ -7,6 +7,9 @@ use crate::{data, find};
 /// Find effectively needs [generic associated types][issue] to allow a trait for the returned object type.
 /// Until then, we will have to make due with explicit types and give them the potentially added features we want.
 ///
+/// Furthermore, despite this trait being in `git-pack`, it leaks knowledge about objects potentially not being packed.
+/// This is a necessary trade-off to allow this trait to live in `git-pack` where it is used in functions to create a pack.
+///
 /// [issue]: https://github.com/rust-lang/rust/issues/44265
 pub trait Find {
     /// The error returned by [`try_find()`][Find::try_find()]
@@ -15,12 +18,12 @@ pub trait Find {
     /// Returns true if the object exists in the database.
     fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool;
 
-    /// Find an object matching `id` in the database while placing its raw, undecoded data into `buffer`.
+    /// Find an object matching `id` in the database while placing its raw, decoded data into `buffer`.
     /// A `pack_cache` can be used to speed up subsequent lookups, set it to [`crate::cache::Never`] if the
     /// workload isn't suitable for caching.
     ///
-    /// Returns `Some` object if it was present in the database, or the error that occurred during lookup or object
-    /// retrieval.
+    /// Returns `Some((<object data>, <pack location if packed>))` if it was present in the database,
+    /// or the error that occurred during lookup or object retrieval.
     fn try_find<'a>(
         &self,
         id: impl AsRef<git_hash::oid>,
@@ -33,8 +36,8 @@ pub trait Find {
     /// A `pack_cache` can be used to speed up subsequent lookups, set it to [`crate::cache::Never`] if the
     /// workload isn't suitable for caching.
     ///
-    /// Returns `Some` object if it was present in the database, or the error that occurred during lookup or object
-    /// retrieval.
+    /// Returns `Some((<object data>, <pack location if packed>))` if it was present in the database,
+    /// or the error that occurred during lookup or object retrieval.
     fn try_find_cached<'a>(
         &self,
         id: impl AsRef<git_hash::oid>,
@@ -45,7 +48,7 @@ pub trait Find {
     /// Find the packs location where an object with `id` can be found in the database, or `None` if there is no pack
     /// holding the object.
     ///
-    /// _Note_ that this is always None if the object isn't packed.
+    /// _Note_ that this is always None if the object isn't packed even though it exists as loose object.
     fn location_by_oid(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>) -> Option<data::entry::Location>;
 
     /// Obtain a vector of all offsets, in index order, along with their object id.

@@ -25,7 +25,7 @@ fn integrity() {
     assert_eq!(
         outcome.pack_traverse_statistics,
         vec![git_pack::index::traverse::Statistics {
-            average: git_pack::data::decode_entry::Outcome {
+            average: git_pack::data::decode::entry::Outcome {
                 kind: git_object::Kind::Tree,
                 num_deltas: 1,
                 decompressed_size: 47,

@@ -1,7 +1,5 @@
-use git_features::zlib;
-
 use crate::data::delta;
-use crate::{data, data::File};
+use crate::{data, data::file::decode::Error, data::File};
 
 /// A return value of a resolve function, which given an [`ObjectId`][git_hash::ObjectId] determines where an object can be found.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
@@ -14,17 +12,7 @@ pub enum ResolvedBase {
     OutOfPack { kind: git_object::Kind },
 }
 
-/// Returned by [`File::resolve_header()`].
-#[derive(thiserror::Error, Debug)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error("Failed to decompress pack entry")]
-    ZlibInflate(#[from] zlib::inflate::Error),
-    #[error("A delta chain could not be followed as the ref base with id {0} could not be found")]
-    DeltaBaseUnresolved(git_hash::ObjectId),
-}
-
-/// Additional information and statistics about a successfully decoded object produced by [`File::resolve_header()`].
+/// Additional information and statistics about a successfully decoded object produced by [`File::decode_header()`].
 ///
 /// Useful to understand the effectiveness of the pack compression or the cost of decompression.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
@@ -46,7 +34,7 @@ impl File {
     ///
     /// `resolve` is a function to lookup objects with the given [`ObjectId`][git_hash::ObjectId], in case the full object id
     /// is used to refer to a base object, instead of an in-pack offset.
-    pub fn resolve_header(
+    pub fn decode_header(
         &self,
         mut entry: data::Entry,
         resolve: impl Fn(&git_hash::oid) -> Option<ResolvedBase>,
@@ -92,8 +80,10 @@ impl File {
 
     #[inline]
     fn decode_delta_object_size(&self, entry: &data::Entry) -> Result<u64, Error> {
+        // TODO: figure out the best size for this.
         let mut buf = [0_u8; 64];
-        self.decompress_entry_from_data_offset(entry.data_offset, &mut buf)?;
+        let used = self.decompress_entry_from_data_offset(entry.data_offset, &mut buf)?;
+        let buf = &buf[..used];
         let (_base_size, offset) = delta::decode_header_size(&buf);
         let (result_size, _offset) = delta::decode_header_size(&buf[offset..]);
         Ok(result_size)

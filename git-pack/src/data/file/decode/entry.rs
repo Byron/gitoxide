@@ -3,20 +3,21 @@ use std::{convert::TryInto, ops::Range};
 use git_features::zlib;
 use smallvec::SmallVec;
 
-use super::ResolvedBase;
 use crate::{
     cache, data,
-    data::{delta, File},
+    data::{delta, file::decode::Error, File},
 };
 
-/// Returned by [`File::decompress_entry()`] and [`File::decode_entry()`]
-#[derive(thiserror::Error, Debug)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error("Failed to decompress pack entry")]
-    ZlibInflate(#[from] zlib::inflate::Error),
-    #[error("A delta chain could not be applied as the ref base with id {0} could not be found")]
-    DeltaBaseUnresolved(git_hash::ObjectId),
+/// A return value of a resolve function, which given an [`ObjectId`][git_hash::ObjectId] determines where an object can be found.
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum ResolvedBase {
+    /// Indicate an object is within this pack, at the given entry, and thus can be looked up locally.
+    InPack(data::Entry),
+    /// Indicates the object of `kind` was found outside of the pack, and its data was written into an output
+    /// vector which now has a length of `end`.
+    #[allow(missing_docs)]
+    OutOfPack { kind: git_object::Kind, end: usize },
 }
 
 #[derive(Debug)]

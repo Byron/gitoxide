@@ -24,7 +24,7 @@ pub struct Entry {
 }
 
 mod file;
-pub use file::{decode_entry, resolve_header, verify, Header, ResolvedBase};
+pub use file::{decode, verify, Header};
 ///
 pub mod header;
 
