@@ -212,7 +212,7 @@ fn print_statistics(out: &mut impl io::Write, stats: &index::traverse::Statistic
     }
     writeln!(out, "\t->: {}", total_object_count)?;
 
-    let pack::data::decode_entry::Outcome {
+    let pack::data::decode::entry::Outcome {
         kind: _,
         num_deltas,
         decompressed_size,

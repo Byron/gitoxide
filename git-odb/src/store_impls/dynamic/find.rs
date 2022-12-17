@@ -17,7 +17,7 @@ mod error {
         #[error("An error occurred looking up a prefix which requires iteration")]
         LooseWalkDir(#[from] loose::iter::Error),
         #[error("An error occurred while obtaining an object from the packed object store")]
-        Pack(#[from] pack::data::decode_entry::Error),
+        Pack(#[from] pack::data::decode::Error),
         #[error(transparent)]
         LoadIndex(#[from] crate::store::load_index::Error),
         #[error(transparent)]
@@ -274,9 +274,9 @@ where
                             entry,
                             buffer,
                             |id, _out| {
-                                index_file
-                                    .pack_offset_by_id(id)
-                                    .map(|pack_offset| git_pack::data::ResolvedBase::InPack(pack.entry(pack_offset)))
+                                index_file.pack_offset_by_id(id).map(|pack_offset| {
+                                    git_pack::data::decode::entry::ResolvedBase::InPack(pack.entry(pack_offset))
+                                })
                             },
                             pack_cache,
                         ) {
@@ -291,7 +291,7 @@ where
                                     entry_size: r.compressed_size + header_size,
                                 }),
                             )),
-                            Err(git_pack::data::decode_entry::Error::DeltaBaseUnresolved(base_id)) => {
+                            Err(git_pack::data::decode::Error::DeltaBaseUnresolved(base_id)) => {
                                 // Only with multi-pack indices it's allowed to jump to refer to other packs within this
                                 // multi-pack. Otherwise this would constitute a thin pack which is only allowed in transit.
                                 // However, if we somehow end up with that, we will resolve it safely, even though we could
@@ -361,13 +361,15 @@ where
                                         index_file
                                             .pack_offset_by_id(id)
                                             .map(|pack_offset| {
-                                                git_pack::data::ResolvedBase::InPack(pack.entry(pack_offset))
+                                                git_pack::data::decode::entry::ResolvedBase::InPack(
+                                                    pack.entry(pack_offset),
+                                                )
                                             })
                                             .or_else(|| {
                                                 (id == base_id).then(|| {
                                                     out.resize(buf.len(), 0);
                                                     out.copy_from_slice(buf.as_slice());
-                                                    git_pack::data::ResolvedBase::OutOfPack {
+                                                    git_pack::data::decode::entry::ResolvedBase::OutOfPack {
                                                         kind: obj_kind,
                                                         end: out.len(),
                                                     }
