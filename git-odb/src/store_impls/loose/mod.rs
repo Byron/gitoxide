@@ -1,5 +1,6 @@
 //! An object database storing each object in a zlib compressed file with its hash in the path
-const HEADER_READ_UNCOMPRESSED_BYTES: usize = 512;
+/// The maximum size that an object header can have. `git2` says 64, and `git` says 32 but also mentions it can be larger.
+const HEADER_MAX_SIZE: usize = 64;
 use std::path::{Path, PathBuf};
 
 use git_features::fs;
