@@ -12,7 +12,7 @@ impl<S> super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
-    fn try_header_inner<'a, 'b>(
+    fn try_header_inner<'b>(
         &'b self,
         mut id: &'b git_hash::oid,
         snapshot: &mut load_index::Snapshot,
