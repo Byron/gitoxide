@@ -1,7 +1,7 @@
 use std::process::Command;
 
 use git_hash::ObjectId;
-use git_odb::{store, Find, FindExt, Write};
+use git_odb::{store, Find, FindExt, Header, Write};
 use git_testtools::{fixture_path, hex_to_id};
 
 fn db() -> git_odb::Handle {
@@ -59,7 +59,10 @@ fn multi_index_access() -> crate::Result {
     for oid in handle.iter()? {
         let oid = oid?;
         assert!(handle.contains(oid));
-        assert!(handle.find(oid, &mut buf).is_ok());
+        let obj = handle.find(oid, &mut buf)?;
+        let hdr = handle.try_header(oid)?.expect("exists");
+        assert_eq!(hdr.kind(), obj.kind);
+        assert_eq!(hdr.size(), obj.data.len() as u64);
         count += 1;
     }
     assert_eq!(count, 1732);
@@ -206,12 +209,12 @@ fn write() -> crate::Result {
 }
 
 #[test]
-fn object_replacement() {
-    let dir = git_testtools::scripted_fixture_read_only("make_replaced_history.sh").unwrap();
-    let handle = git_odb::at(dir.join(".git/objects")).unwrap();
+fn object_replacement() -> crate::Result {
+    let dir = git_testtools::scripted_fixture_read_only("make_replaced_history.sh")?;
+    let handle = git_odb::at(dir.join(".git/objects"))?;
     let mut buf = Vec::new();
     let short_history_link = hex_to_id("434e5a872d6738d1fffd1e11e52a1840b73668c6");
-    let third_commit = handle.find_commit(short_history_link, &mut buf).unwrap();
+    let third_commit = handle.find_commit(short_history_link, &mut buf)?;
 
     let orphan_of_new_history = hex_to_id("0703c317e28068f39834ae61e7ab941b7d672322");
     assert_eq!(
@@ -219,10 +222,15 @@ fn object_replacement() {
         vec![orphan_of_new_history],
         "no replacements are known by default, hence this is the replaced commit, not the replacement"
     );
-
     drop(third_commit);
-    let orphan = handle.find_commit(orphan_of_new_history, &mut buf).unwrap();
+    let hdr = handle.try_header(short_history_link)?.expect("present");
+    assert_eq!(hdr.kind(), git_object::Kind::Commit);
+    assert_eq!(handle.find(short_history_link, &mut buf)?.data.len() as u64, hdr.size());
+
+    let orphan = handle.find_commit(orphan_of_new_history, &mut buf)?;
     assert_eq!(orphan.parents.len(), 0);
+    let hdr = handle.try_header(orphan_of_new_history)?.expect("present");
+    assert_eq!(hdr.kind(), git_object::Kind::Commit);
 
     let long_history_tip = hex_to_id("71f537d9d78bf6ae89a29a17e54b95a914d3d2ef");
     let unrelated_mapping = (
@@ -234,26 +242,32 @@ fn object_replacement() {
         dir.join(".git/objects"),
         vec![(short_history_link, long_history_tip), unrelated_mapping],
         git_odb::store::init::Options { ..Default::default() },
-    )
-    .unwrap();
+    )?;
     drop(orphan);
 
-    let replaced = handle.find_commit(short_history_link, &mut buf).unwrap();
+    let replaced = handle.find_commit(short_history_link, &mut buf)?;
     let long_history_second_id = hex_to_id("753ccf815e7b69c9147db5bbf633fe5f7da24ad7");
     assert_eq!(
         replaced.parents().collect::<Vec<_>>(),
         vec![long_history_second_id],
         "replacements are applied by default when present"
     );
+    let hdr = handle.try_header(short_history_link)?.expect("present");
+    assert_eq!(hdr.kind(), git_object::Kind::Commit);
+    drop(replaced);
+    assert_eq!(handle.find(short_history_link, &mut buf)?.data.len() as u64, hdr.size());
 
     handle.ignore_replacements = true;
-    drop(replaced);
-    let not_replaced = handle.find_commit(short_history_link, &mut buf).unwrap();
+    let not_replaced = handle.find_commit(short_history_link, &mut buf)?;
     assert_eq!(
         not_replaced.parents().collect::<Vec<_>>(),
         vec![orphan_of_new_history],
         "no replacements are made if explicitly disabled"
     );
+    let hdr = handle.try_header(short_history_link)?.expect("present");
+    assert_eq!(hdr.kind(), git_object::Kind::Commit);
+    drop(not_replaced);
+    assert_eq!(handle.find(short_history_link, &mut buf)?.data.len() as u64, hdr.size());
 
     assert_eq!(
         handle.store_ref().replacements().collect::<Vec<_>>(),
@@ -262,6 +276,7 @@ fn object_replacement() {
     );
 
     // TODO: mapping to non-existing object (can happen if replace-refs are pushed but related history isn't fetched)
+    Ok(())
 }
 
 #[test]
@@ -374,9 +389,14 @@ fn lookup() {
 
     fn can_locate(db: &git_odb::Handle, hex_id: &str) {
         let id = hex_to_id(hex_id);
-        let mut buf = Vec::new();
-        assert!(db.find(id, &mut buf).is_ok());
         assert!(db.contains(id));
+
+        let mut buf = Vec::new();
+        let obj = db.find(id, &mut buf).expect("exists");
+
+        let hdr = db.try_header(id).unwrap().expect("exists");
+        assert_eq!(obj.kind, hdr.kind());
+        assert_eq!(obj.data.len() as u64, hdr.size());
     }
     assert_eq!(
         handle.store_ref().metrics(),
@@ -474,7 +494,7 @@ fn packed_object_count_causes_all_indices_to_be_loaded() {
 mod disambiguate_prefix {
     use std::cmp::Ordering;
 
-    use git_odb::find::PotentialPrefix;
+    use git_odb::store::prefix::disambiguate::Candidate;
     use git_testtools::hex_to_id;
 
     use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
@@ -488,7 +508,7 @@ mod disambiguate_prefix {
         for (index, oid) in handle.iter().unwrap().map(Result::unwrap).enumerate() {
             let hex_len = hex_lengths[index % hex_lengths.len()];
             let prefix = handle
-                .disambiguate_prefix(PotentialPrefix::new(oid, hex_len).unwrap())
+                .disambiguate_prefix(Candidate::new(oid, hex_len).unwrap())
                 .unwrap()
                 .expect("object exists");
             assert_eq!(prefix.hex_len(), hex_len);
@@ -502,7 +522,7 @@ mod disambiguate_prefix {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
         let id = hex_to_id("a7065b5e971a6d8b55875d8cf634a3a37202ab23");
         let prefix = handle
-            .disambiguate_prefix(PotentialPrefix::new(id, 4).unwrap())
+            .disambiguate_prefix(Candidate::new(id, 4).unwrap())
             .unwrap()
             .expect("object exists");
 
@@ -515,7 +535,7 @@ mod disambiguate_prefix {
     fn no_work_is_done_for_unambiguous_potential_prefixes() {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
         let id = hex_to_id("a7065b5e971a6d8b55875d8cf634a3a37202ab23");
-        let potential_prefix = PotentialPrefix::new(id, 40).unwrap();
+        let potential_prefix = Candidate::new(id, 40).unwrap();
         assert!(
             handle
                 .disambiguate_prefix(potential_prefix)
@@ -545,7 +565,7 @@ mod disambiguate_prefix {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
         let null = git_hash::ObjectId::null(git_hash::Kind::Sha1);
         assert!(handle
-            .disambiguate_prefix(PotentialPrefix::new(null, 7).unwrap())
+            .disambiguate_prefix(Candidate::new(null, 7).unwrap())
             .unwrap()
             .is_none());
         assert_all_indices_loaded(&handle, 2, 2);

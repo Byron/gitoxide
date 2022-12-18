@@ -4,6 +4,7 @@ pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub mod alternate;
 pub mod find;
+pub mod header;
 pub mod regression;
 pub mod sink;
 pub mod store;

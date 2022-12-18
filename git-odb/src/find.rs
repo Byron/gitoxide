@@ -1,45 +1,3 @@
-/// A way to indicate if a lookup, despite successful, was ambiguous or yielded exactly
-/// one result in the particular index.
-// TODO: find better name, ambiguous with git_pack::index::PrefixLookupResult (entry_index inside)
-pub type PrefixLookupResult = Result<git_hash::ObjectId, ()>;
-
-/// A potentially ambiguous prefix for use with `Handle::disambiguate_prefix()`.
-#[derive(Debug, Copy, Clone)]
-pub struct PotentialPrefix {
-    id: git_hash::ObjectId,
-    hex_len: usize,
-}
-
-impl PotentialPrefix {
-    /// Create a new potentially ambiguous prefix from an `id` and the desired minimal `hex_len`.
-    ///
-    /// It is considered ambiguous until it's disambiguated by validating that there is only a single object
-    /// matching this prefix.
-    pub fn new(id: impl Into<git_hash::ObjectId>, hex_len: usize) -> Result<Self, git_hash::prefix::Error> {
-        let id = id.into();
-        git_hash::Prefix::new(id, hex_len)?;
-        Ok(PotentialPrefix { id, hex_len })
-    }
-
-    /// Transform ourselves into a `Prefix` with our current hex lengths.
-    pub fn to_prefix(&self) -> git_hash::Prefix {
-        git_hash::Prefix::new(self.id, self.hex_len).expect("our hex-len to always be in bounds")
-    }
-
-    pub(crate) fn inc_hex_len(&mut self) {
-        self.hex_len += 1;
-        assert!(self.hex_len <= self.id.kind().len_in_hex());
-    }
-
-    pub(crate) fn id(&self) -> &git_hash::oid {
-        &self.id
-    }
-
-    pub(crate) fn hex_len(&self) -> usize {
-        self.hex_len
-    }
-}
-
 ///
 pub mod existing {
     use git_hash::ObjectId;
@@ -88,5 +46,61 @@ pub mod existing_iter {
         NotFound { oid: ObjectId },
         #[error("Expected object of kind {expected}")]
         ObjectKind { expected: git_object::Kind },
+    }
+}
+
+/// An object header informing about object properties, without it being fully decoded in the process.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum Header {
+    /// The object was not packed, but is currently located in the loose object portion of the database.
+    ///
+    /// As packs are searched first, this means that in this very moment, the object whose header we retrieved is unique
+    /// in the object database.
+    Loose {
+        /// The kind of the object.
+        kind: git_object::Kind,
+        /// The size of the object's data in bytes.
+        size: u64,
+    },
+    /// The object was present in a pack.
+    ///
+    /// Note that this does not imply it is unique in the database, as it might be present in more than one pack and even
+    /// as loose object.
+    Packed(git_pack::data::decode::header::Outcome),
+}
+
+mod header {
+    use super::Header;
+
+    impl Header {
+        /// Return the object kind of the object we represent.
+        pub fn kind(&self) -> git_object::Kind {
+            match self {
+                Header::Packed(out) => out.kind,
+                Header::Loose { kind, .. } => *kind,
+            }
+        }
+        /// Return the size of the object in bytes.
+        pub fn size(&self) -> u64 {
+            match self {
+                Header::Packed(out) => out.object_size,
+                Header::Loose { size, .. } => *size,
+            }
+        }
+    }
+
+    impl From<git_pack::data::decode::header::Outcome> for Header {
+        fn from(packed_header: git_pack::data::decode::header::Outcome) -> Self {
+            Header::Packed(packed_header)
+        }
+    }
+
+    impl From<(usize, git_object::Kind)> for Header {
+        fn from((object_size, kind): (usize, git_object::Kind)) -> Self {
+            Header::Loose {
+                kind,
+                size: object_size as u64,
+            }
+        }
     }
 }

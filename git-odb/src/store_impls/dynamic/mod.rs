@@ -56,6 +56,11 @@ impl RefreshMode {
 pub mod find;
 
 ///
+pub mod prefix;
+
+mod header;
+
+///
 pub mod iter;
 
 ///

@@ -47,7 +47,7 @@ impl Store {
         &self,
         prefix: git_hash::Prefix,
         mut candidates: Option<&mut HashSet<git_hash::ObjectId>>,
-    ) -> Result<Option<crate::find::PrefixLookupResult>, crate::loose::iter::Error> {
+    ) -> Result<Option<crate::store::prefix::lookup::Outcome>, crate::loose::iter::Error> {
         let single_directory_iter = crate::loose::Iter {
             inner: git_features::fs::walkdir_new(
                 self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()),
