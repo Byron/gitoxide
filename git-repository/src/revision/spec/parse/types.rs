@@ -143,6 +143,8 @@ pub enum Error {
     #[error(transparent)]
     FindObject(#[from] object::find::existing::Error),
     #[error(transparent)]
+    LookupPrefix(#[from] git_odb::store::prefix::lookup::Error),
+    #[error(transparent)]
     PeelToKind(#[from] object::peel::to_kind::Error),
     #[error("Object {oid} was a {actual}, but needed it to be a {expected}")]
     ObjectKind {

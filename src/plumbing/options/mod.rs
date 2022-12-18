@@ -239,6 +239,9 @@ pub mod odb {
         Entries,
         /// Provide general information about the object database.
         Info,
+        /// Count and obtain information on all, possibly duplicate, objects in the database.
+        #[clap(visible_alias = "statistics")]
+        Stats,
     }
 }
 

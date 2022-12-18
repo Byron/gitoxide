@@ -139,6 +139,7 @@ mod impls {
     use git_object::{Data, Kind};
     use git_pack::cache::Object;
 
+    use crate::find::Header;
     use crate::{pack::data::entry::Location, Cache};
 
     impl<S> crate::Write for Cache<S>
@@ -164,6 +165,17 @@ mod impls {
 
         fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
             git_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
+        }
+    }
+
+    impl<S> crate::Header for Cache<S>
+    where
+        S: crate::Header,
+    {
+        type Error = S::Error;
+
+        fn try_header(&self, id: impl AsRef<oid>) -> Result<Option<Header>, Self::Error> {
+            self.inner.try_header(id)
         }
     }
 

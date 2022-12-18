@@ -15,14 +15,16 @@ use memmap2::Mmap;
 pub struct Entry {
     /// The entry's header
     pub header: entry::Header,
-    /// The decompressed size of the object in bytes
+    /// The decompressed size of the entry in bytes.
+    ///
+    /// Note that for non-delta entries this will be the size of the object itself.
     pub decompressed_size: u64,
     /// absolute offset to compressed object data in the pack, just behind the entry's header
     pub data_offset: Offset,
 }
 
 mod file;
-pub use file::{decode_entry, verify, Header, ResolvedBase};
+pub use file::{decode, verify, Header};
 ///
 pub mod header;
 

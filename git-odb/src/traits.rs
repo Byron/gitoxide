@@ -56,9 +56,18 @@ pub trait Find {
     ) -> Result<Option<git_object::Data<'a>>, Self::Error>;
 }
 
+/// A way to obtain object properties without fully decoding it.
+pub trait Header {
+    /// The error returned by [`try_header()`][Header::try_header()].
+    type Error: std::error::Error + 'static;
+    /// Try to read the header of the object associated with `id` or return `None` if it could not be found.
+    fn try_header(&self, id: impl AsRef<git_hash::oid>) -> Result<Option<find::Header>, Self::Error>;
+}
+
 mod _impls {
     use std::{io::Read, ops::Deref, rc::Rc, sync::Arc};
 
+    use crate::find::Header;
     use git_hash::{oid, ObjectId};
     use git_object::{Data, Kind, WriteTo};
 
@@ -134,6 +143,17 @@ mod _impls {
         }
     }
 
+    impl<T> crate::Header for &T
+    where
+        T: crate::Header,
+    {
+        type Error = T::Error;
+
+        fn try_header(&self, id: impl AsRef<oid>) -> Result<Option<Header>, Self::Error> {
+            (*self).try_header(id)
+        }
+    }
+
     impl<T> crate::Find for Rc<T>
     where
         T: crate::Find,
@@ -149,6 +169,17 @@ mod _impls {
         }
     }
 
+    impl<T> crate::Header for Rc<T>
+    where
+        T: crate::Header,
+    {
+        type Error = T::Error;
+
+        fn try_header(&self, id: impl AsRef<oid>) -> Result<Option<Header>, Self::Error> {
+            self.deref().try_header(id)
+        }
+    }
+
     impl<T> crate::Find for Arc<T>
     where
         T: crate::Find,
@@ -161,6 +192,17 @@ mod _impls {
 
         fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
             self.deref().try_find(id, buffer)
+        }
+    }
+
+    impl<T> crate::Header for Arc<T>
+    where
+        T: crate::Header,
+    {
+        type Error = T::Error;
+
+        fn try_header(&self, id: impl AsRef<oid>) -> Result<Option<Header>, Self::Error> {
+            self.deref().try_header(id)
         }
     }
 }
@@ -222,6 +264,22 @@ mod ext {
     }
 
     /// An extension trait with convenience functions.
+    pub trait HeaderExt: super::Header {
+        /// Like [`try_header(…)`][super::Header::try_header()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
+        fn header(
+            &self,
+            id: impl AsRef<git_hash::oid>,
+        ) -> Result<crate::find::Header, find::existing::Error<Self::Error>> {
+            let id = id.as_ref();
+            self.try_header(id)
+                .map_err(find::existing::Error::Find)?
+                .ok_or_else(|| find::existing::Error::NotFound { oid: id.to_owned() })
+        }
+    }
+
+    impl<T: super::Header> HeaderExt for T {}
+
+    /// An extension trait with convenience functions.
     pub trait FindExt: super::Find {
         /// Like [`try_find(…)`][super::Find::try_find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
         fn find<'a>(
@@ -232,9 +290,7 @@ mod ext {
             let id = id.as_ref();
             self.try_find(id, buffer)
                 .map_err(find::existing::Error::Find)?
-                .ok_or_else(|| find::existing::Error::NotFound {
-                    oid: id.as_ref().to_owned(),
-                })
+                .ok_or_else(|| find::existing::Error::NotFound { oid: id.to_owned() })
         }
 
         make_obj_lookup!(find_commit, ObjectRef::Commit, Kind::Commit, CommitRef<'a>);
@@ -248,4 +304,5 @@ mod ext {
 
     impl<T: super::Find> FindExt for T {}
 }
-pub use ext::FindExt;
+use crate::find;
+pub use ext::{FindExt, HeaderExt};

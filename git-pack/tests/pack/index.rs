@@ -274,7 +274,7 @@ fn traverse_with_index_and_forward_ref_deltas() {
 }
 
 use git_features::progress;
-use git_pack::{cache, data::decode_entry::Outcome, index};
+use git_pack::{cache, data::decode::entry::Outcome, index};
 use maplit::btreemap;
 
 use crate::pack::{INDEX_V2, PACK_FOR_INDEX_V2};

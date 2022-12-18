@@ -160,7 +160,7 @@ impl index::File {
         progress: &mut P,
         index_entry: &crate::index::Entry,
         processor: &mut impl FnMut(git_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
-    ) -> Result<crate::data::decode_entry::Outcome, Error<E>>
+    ) -> Result<crate::data::decode::entry::Outcome, Error<E>>
     where
         C: crate::cache::DecodeEntry,
         P: Progress,
@@ -173,8 +173,9 @@ impl index::File {
                 pack_entry,
                 buf,
                 |id, _| {
-                    self.lookup(id)
-                        .map(|index| crate::data::ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index))))
+                    self.lookup(id).map(|index| {
+                        crate::data::decode::entry::ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
+                    })
                 },
                 cache,
             )

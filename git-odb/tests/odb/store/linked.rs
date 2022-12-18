@@ -8,6 +8,7 @@ fn db() -> git_odb::Handle {
 }
 
 mod iter {
+    use git_odb::Header;
     use git_pack::Find;
 
     use crate::odb::store::linked::db;
@@ -23,7 +24,9 @@ mod iter {
         );
         assert_eq!(iter.count(), 146, "it sees the correct amount of objects");
         for id in db.iter()? {
-            assert!(db.contains(id?), "each object exists");
+            let id = id?;
+            assert!(db.contains(id), "each object exists");
+            assert!(db.try_header(id)?.is_some(), "header is readable");
         }
         Ok(())
     }

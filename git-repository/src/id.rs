@@ -27,23 +27,17 @@ impl<'repo> Id<'repo> {
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`.
     pub fn shorten(&self) -> Result<git_hash::Prefix, shorten::Error> {
-        let hex_len = self
-            .repo
-            .config
-            .hex_len
-            .map_or_else(
-                || self.repo.objects.packed_object_count().map(calculate_auto_hex_len),
-                Ok,
-            )
-            .map_err(shorten::Error::Find)?;
+        let hex_len = self.repo.config.hex_len.map_or_else(
+            || self.repo.objects.packed_object_count().map(calculate_auto_hex_len),
+            Ok,
+        )?;
 
-        let prefix = git_odb::find::PotentialPrefix::new(self.inner, hex_len)
+        let prefix = git_odb::store::prefix::disambiguate::Candidate::new(self.inner, hex_len)
             .expect("BUG: internal hex-len must always be valid");
         self.repo
             .objects
-            .disambiguate_prefix(prefix)
-            .map_err(find::existing::Error::Find)?
-            .ok_or(find::existing::Error::NotFound { oid: self.inner })
+            .disambiguate_prefix(prefix)?
+            .ok_or(shorten::Error::NotFound { oid: self.inner })
     }
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`, or default
@@ -62,7 +56,16 @@ fn calculate_auto_hex_len(num_packed_objects: u64) -> usize {
 ///
 pub mod shorten {
     /// Returned by [`Id::prefix()`][super::Id::shorten()].
-    pub type Error = crate::object::find::existing::Error;
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        PackedObjectsCount(#[from] git_odb::store::load_index::Error),
+        #[error(transparent)]
+        DisambiguatePrefix(#[from] git_odb::store::prefix::disambiguate::Error),
+        #[error("Id could not be shortened as the object with id {} could not be found", .oid)]
+        NotFound { oid: git_hash::ObjectId },
+    }
 }
 
 impl<'repo> Deref for Id<'repo> {

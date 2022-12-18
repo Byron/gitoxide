@@ -122,7 +122,7 @@ impl index::File {
                     state_per_thread,
                     |entries: &[index::Entry],
                      (cache, ref mut processor, buf, progress)|
-                     -> Result<Vec<data::decode_entry::Outcome>, Error<_>> {
+                     -> Result<Vec<data::decode::entry::Outcome>, Error<_>> {
                         progress.init(
                             Some(entries.len()),
                             Some(unit::dynamic(unit::Human::new(

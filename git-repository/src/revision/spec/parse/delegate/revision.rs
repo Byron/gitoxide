@@ -9,7 +9,6 @@ use git_revision::spec::parse::{
 use crate::{
     bstr::{BStr, BString, ByteSlice},
     ext::ReferenceExt,
-    object,
     revision::spec::parse::{Delegate, Error, RefsHint},
 };
 
@@ -51,7 +50,7 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
 
         match res {
             Err(err) => {
-                self.err.push(object::find::existing::Error::Find(err).into());
+                self.err.push(err.into());
                 None
             }
             Ok(None) => {

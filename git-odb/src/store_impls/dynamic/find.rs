@@ -1,11 +1,10 @@
-use std::{collections::HashSet, convert::TryInto, ops::Deref};
+use std::{convert::TryInto, ops::Deref};
 
-use git_hash::{oid, ObjectId};
-use git_pack::{cache::DecodeEntry, data::entry::Location};
+use git_pack::cache::DecodeEntry;
 
 use crate::store::{handle, load_index};
 
-mod error {
+pub(crate) mod error {
     use crate::{loose, pack};
 
     /// Returned by [`Handle::try_find()`][git_pack::Find::try_find()]
@@ -14,21 +13,12 @@ mod error {
     pub enum Error {
         #[error("An error occurred while obtaining an object from the loose object store")]
         Loose(#[from] loose::find::Error),
-        #[error("An error occurred looking up a prefix which requires iteration")]
-        LooseWalkDir(#[from] loose::iter::Error),
         #[error("An error occurred while obtaining an object from the packed object store")]
-        Pack(#[from] pack::data::decode_entry::Error),
+        Pack(#[from] pack::data::decode::Error),
         #[error(transparent)]
         LoadIndex(#[from] crate::store::load_index::Error),
         #[error(transparent)]
         LoadPack(#[from] std::io::Error),
-        #[error("Object {} referred to its base object {} by its id but it's not within a multi-index", .id, .base_id)]
-        ThinPackAtRest {
-            /// the id of the base object which lived outside of the multi-index
-            base_id: git_hash::ObjectId,
-            /// The original object to lookup
-            id: git_hash::ObjectId,
-        },
         #[error("Reached recursion limit of {} while resolving ref delta bases for {}", .max_depth, .id)]
         DeltaBaseRecursionLimit {
             /// the maximum recursion depth we encountered.
@@ -86,136 +76,20 @@ mod error {
 }
 pub use error::Error;
 
-use crate::{
-    find::{PotentialPrefix, PrefixLookupResult},
-    store::types::PackId,
-    Find,
-};
+use crate::{store::types::PackId, Find};
 
 impl<S> super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
-    /// Return the exact number of packed objects after loading all currently available indices
-    /// as last seen on disk.
-    pub fn packed_object_count(&self) -> Result<u64, Error> {
-        let mut count = self.packed_object_count.borrow_mut();
-        match *count {
-            Some(count) => Ok(count),
-            None => {
-                let mut snapshot = self.snapshot.borrow_mut();
-                *snapshot = self.store.load_all_indices()?;
-                let mut obj_count = 0;
-                for index in &snapshot.indices {
-                    obj_count += index.num_objects() as u64;
-                }
-                *count = Some(obj_count);
-                Ok(obj_count)
-            }
-        }
-    }
-
-    /// Given a prefix `candidate` with an object id and an initial `hex_len`, check if it only matches a single
-    /// object within the entire object database and increment its `hex_len` by one until it is unambiguous.
-    /// Return `Ok(None)` if no object with that prefix exists.
-    pub fn disambiguate_prefix(&self, mut candidate: PotentialPrefix) -> Result<Option<git_hash::Prefix>, Error> {
-        let max_hex_len = candidate.id().kind().len_in_hex();
-        if candidate.hex_len() == max_hex_len {
-            return Ok(self.contains(candidate.id()).then(|| candidate.to_prefix()));
-        }
-
-        while candidate.hex_len() != max_hex_len {
-            let res = self.lookup_prefix(candidate.to_prefix(), None)?;
-            match res {
-                Some(Ok(_id)) => return Ok(Some(candidate.to_prefix())),
-                Some(Err(())) => {
-                    candidate.inc_hex_len();
-                    continue;
-                }
-                None => return Ok(None),
-            }
-        }
-        Ok(Some(candidate.to_prefix()))
-    }
-    /// Find the only object matching `prefix` and return it as `Ok(Some(Ok(<ObjectId>)))`, or return `Ok(Some(Err(()))`
-    /// if multiple different objects with the same prefix were found.
-    ///
-    /// Return `Ok(None)` if no object matched the `prefix`.
-    ///
-    /// Pass `candidates` to obtain the set of all object ids matching `prefix`, with the same return value as
-    /// one would have received if it remained `None`.
-    ///
-    /// ### Performance Note
-    ///
-    /// - Unless the handles refresh mode is set to `Never`, each lookup will trigger a refresh of the object databases files
-    ///   on disk if the prefix doesn't lead to ambiguous results.
-    /// - Since all objects need to be examined to assure non-amiguous return values, after calling this method all indices will
-    ///   be loaded.
-    /// - If `candidates` is `Some(…)`, the traversal will continue to obtain all candidates, which takes more time
-    ///   as there is no early abort.
-    pub fn lookup_prefix(
-        &self,
-        prefix: git_hash::Prefix,
-        mut candidates: Option<&mut HashSet<git_hash::ObjectId>>,
-    ) -> Result<Option<PrefixLookupResult>, Error> {
-        let mut candidate: Option<ObjectId> = None;
-        loop {
-            let snapshot = self.snapshot.borrow();
-            for index in snapshot.indices.iter() {
-                #[allow(clippy::needless_option_as_deref)] // needed as it's the equivalent of a reborrow.
-                let lookup_result = index.lookup_prefix(prefix, candidates.as_deref_mut());
-                if candidates.is_none() && !check_candidate(lookup_result, &mut candidate) {
-                    return Ok(Some(Err(())));
-                }
-            }
-
-            for lodb in snapshot.loose_dbs.iter() {
-                #[allow(clippy::needless_option_as_deref)] // needed as it's the equivalent of a reborrow.
-                let lookup_result = lodb.lookup_prefix(prefix, candidates.as_deref_mut())?;
-                if candidates.is_none() && !check_candidate(lookup_result, &mut candidate) {
-                    return Ok(Some(Err(())));
-                }
-            }
-
-            match self.store.load_one_index(self.refresh, snapshot.marker)? {
-                Some(new_snapshot) => {
-                    drop(snapshot);
-                    *self.snapshot.borrow_mut() = new_snapshot;
-                }
-                None => {
-                    return match &candidates {
-                        Some(candidates) => match candidates.len() {
-                            0 => Ok(None),
-                            1 => Ok(candidates.iter().cloned().next().map(Ok)),
-                            _ => Ok(Some(Err(()))),
-                        },
-                        None => Ok(candidate.map(Ok)),
-                    };
-                }
-            }
-        }
-
-        fn check_candidate(lookup_result: Option<PrefixLookupResult>, candidate: &mut Option<ObjectId>) -> bool {
-            match (lookup_result, &*candidate) {
-                (Some(Ok(oid)), Some(candidate)) if *candidate != oid => false,
-                (Some(Ok(_)), Some(_)) | (None, None) | (None, Some(_)) => true,
-                (Some(Err(())), _) => false,
-                (Some(Ok(oid)), None) => {
-                    *candidate = Some(oid);
-                    true
-                }
-            }
-        }
-    }
-
     fn try_find_cached_inner<'a, 'b>(
         &'b self,
-        mut id: &'b oid,
+        mut id: &'b git_hash::oid,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
         snapshot: &mut load_index::Snapshot,
         recursion: Option<error::DeltaBaseRecursion<'_>>,
-    ) -> Result<Option<(git_object::Data<'a>, Option<Location>)>, Error> {
+    ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::data::entry::Location>)>, Error> {
         if let Some(r) = recursion {
             if r.depth >= self.max_recursion_depth {
                 return Err(Error::DeltaBaseRecursionLimit {
@@ -274,9 +148,9 @@ where
                             entry,
                             buffer,
                             |id, _out| {
-                                index_file
-                                    .pack_offset_by_id(id)
-                                    .map(|pack_offset| git_pack::data::ResolvedBase::InPack(pack.entry(pack_offset)))
+                                index_file.pack_offset_by_id(id).map(|pack_offset| {
+                                    git_pack::data::decode::entry::ResolvedBase::InPack(pack.entry(pack_offset))
+                                })
                             },
                             pack_cache,
                         ) {
@@ -291,7 +165,7 @@ where
                                     entry_size: r.compressed_size + header_size,
                                 }),
                             )),
-                            Err(git_pack::data::decode_entry::Error::DeltaBaseUnresolved(base_id)) => {
+                            Err(git_pack::data::decode::Error::DeltaBaseUnresolved(base_id)) => {
                                 // Only with multi-pack indices it's allowed to jump to refer to other packs within this
                                 // multi-pack. Otherwise this would constitute a thin pack which is only allowed in transit.
                                 // However, if we somehow end up with that, we will resolve it safely, even though we could
@@ -361,13 +235,15 @@ where
                                         index_file
                                             .pack_offset_by_id(id)
                                             .map(|pack_offset| {
-                                                git_pack::data::ResolvedBase::InPack(pack.entry(pack_offset))
+                                                git_pack::data::decode::entry::ResolvedBase::InPack(
+                                                    pack.entry(pack_offset),
+                                                )
                                             })
                                             .or_else(|| {
                                                 (id == base_id).then(|| {
                                                     out.resize(buf.len(), 0);
                                                     out.copy_from_slice(buf.as_slice());
-                                                    git_pack::data::ResolvedBase::OutOfPack {
+                                                    git_pack::data::decode::entry::ResolvedBase::OutOfPack {
                                                         kind: obj_kind,
                                                         end: out.len(),
                                                     }
@@ -421,7 +297,7 @@ where
         }
     }
 
-    fn clear_cache(&self) {
+    pub(crate) fn clear_cache(&self) {
         self.packed_object_count.borrow_mut().take();
     }
 }
@@ -433,7 +309,7 @@ where
     type Error = Error;
 
     // TODO: probably make this method fallible, but that would mean its own error type.
-    fn contains(&self, id: impl AsRef<oid>) -> bool {
+    fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool {
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
         loop {
@@ -465,16 +341,20 @@ where
 
     fn try_find_cached<'a>(
         &self,
-        id: impl AsRef<oid>,
+        id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
-    ) -> Result<Option<(git_object::Data<'a>, Option<Location>)>, Self::Error> {
+    ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::data::entry::Location>)>, Self::Error> {
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
         self.try_find_cached_inner(id, buffer, pack_cache, &mut snapshot, None)
     }
 
-    fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
+    fn location_by_oid(
+        &self,
+        id: impl AsRef<git_hash::oid>,
+        buf: &mut Vec<u8>,
+    ) -> Option<git_pack::data::entry::Location> {
         assert!(
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
@@ -576,7 +456,7 @@ where
         }
     }
 
-    fn entry_by_location(&self, location: &Location) -> Option<git_pack::find::Entry> {
+    fn entry_by_location(&self, location: &git_pack::data::entry::Location) -> Option<git_pack::find::Entry> {
         assert!(
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
@@ -618,20 +498,20 @@ where
     }
 }
 
-impl<S> crate::Find for super::Handle<S>
+impl<S> Find for super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
     Self: git_pack::Find,
 {
     type Error = <Self as git_pack::Find>::Error;
 
-    fn contains(&self, id: impl AsRef<oid>) -> bool {
+    fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool {
         git_pack::Find::contains(self, id)
     }
 
     fn try_find<'a>(
         &self,
-        id: impl AsRef<oid>,
+        id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
     ) -> Result<Option<git_object::Data<'a>>, Self::Error> {
         git_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))

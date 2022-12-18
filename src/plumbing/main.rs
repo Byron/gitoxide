@@ -775,6 +775,22 @@ pub fn main() -> Result<()> {
             ),
         },
         Subcommands::Odb(cmd) => match cmd {
+            odb::Subcommands::Stats => prepare_and_run(
+                "odb-stats",
+                auto_verbose,
+                progress,
+                progress_keep_open,
+                core::repository::odb::statistics::PROGRESS_RANGE,
+                move |progress, out, err| {
+                    core::repository::odb::statistics(
+                        repository(Mode::Strict)?,
+                        progress,
+                        out,
+                        err,
+                        core::repository::odb::statistics::Options { format, thread_limit },
+                    )
+                },
+            ),
             odb::Subcommands::Entries => prepare_and_run(
                 "odb-entries",
                 verbose,

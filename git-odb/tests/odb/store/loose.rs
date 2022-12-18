@@ -310,6 +310,47 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         assert_eq!(o.decode()?.as_tree().expect("tree"), &expected);
         Ok(())
     }
+
+    mod header {
+        use crate::odb::store::loose::ldb;
+        use git_testtools::hex_to_id;
+
+        #[test]
+        fn existing() -> crate::Result {
+            let db = ldb();
+            assert_eq!(
+                db.try_header(hex_to_id("a706d7cd20fc8ce71489f34b50cf01011c104193"))?
+                    .expect("present"),
+                (56915, git_object::Kind::Blob)
+            );
+            Ok(())
+        }
+
+        #[test]
+        fn non_existing() -> crate::Result {
+            let db = ldb();
+            assert_eq!(
+                db.try_header(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))?,
+                None,
+                "it does not exist"
+            );
+            Ok(())
+        }
+
+        #[test]
+        fn all() -> crate::Result {
+            let db = ldb();
+            let mut buf = Vec::new();
+            for id in db.iter() {
+                let id = id?;
+                let expected = db.try_find(id, &mut buf)?.expect("exists");
+                let (size, kind) = db.try_header(id)?.expect("header exists");
+                assert_eq!(size, expected.data.len());
+                assert_eq!(kind, expected.kind);
+            }
+            Ok(())
+        }
+    }
 }
 
 fn signature(time: u32) -> git_actor::SignatureRef<'static> {

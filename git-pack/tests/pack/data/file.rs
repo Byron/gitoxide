@@ -42,7 +42,7 @@ mod method {
 /// All hardcoded offsets are obtained via `git pack-verify --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`
 mod decode_entry {
     use bstr::ByteSlice;
-    use git_pack::{cache, data::ResolvedBase};
+    use git_pack::{cache, data::decode::entry::ResolvedBase};
 
     use crate::{
         fixture_path, fixup,
@@ -105,6 +105,54 @@ mod decode_entry {
         p.decode_entry(entry, &mut buf, resolve_with_panic, &mut cache::Never)
             .expect("valid offset provides valid entry");
         buf
+    }
+}
+
+/// All hardcoded offsets are obtained via `git pack-verify --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`
+mod resolve_header {
+    use crate::pack::{data::file::pack_at, SMALL_PACK};
+
+    #[test]
+    fn commit() {
+        let out = resolve_header_at_offset(1968);
+        assert_eq!(out.kind, git_object::Kind::Commit);
+        assert_eq!(out.object_size, 187);
+        assert_eq!(out.num_deltas, 0);
+    }
+
+    #[test]
+    fn blob_ofs_delta_two_links() {
+        let out = resolve_header_at_offset(3033);
+        assert_eq!(out.kind, git_object::Kind::Blob);
+        assert_eq!(out.object_size, 173);
+        assert_eq!(out.num_deltas, 2);
+    }
+
+    #[test]
+    fn blob_ofs_delta_single_link() {
+        let out = resolve_header_at_offset(3569);
+        assert_eq!(out.kind, git_object::Kind::Blob);
+        assert_eq!(out.object_size, 1163);
+        assert_eq!(out.num_deltas, 1);
+    }
+
+    #[test]
+    fn tree() {
+        let out = resolve_header_at_offset(2097);
+        assert_eq!(out.kind, git_object::Kind::Tree);
+        assert_eq!(out.object_size, 34);
+        assert_eq!(out.num_deltas, 0);
+    }
+
+    fn resolve_header_at_offset(offset: u64) -> git_pack::data::decode::header::Outcome {
+        fn resolve_with_panic(_oid: &git_hash::oid) -> Option<git_pack::data::decode::header::ResolvedBase> {
+            panic!("should not want to resolve an id here")
+        }
+
+        let p = pack_at(SMALL_PACK);
+        let entry = p.entry(offset);
+        p.decode_header(entry, resolve_with_panic)
+            .expect("valid offset provides valid entry")
     }
 }
 

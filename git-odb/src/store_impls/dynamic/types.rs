@@ -233,7 +233,7 @@ pub(crate) struct IndexFileBundle {
 
 #[derive(Clone)]
 pub(crate) struct MultiIndexFileBundle {
-    pub multi_index: OnDiskFile<Arc<super::handle::multi_index::File>>,
+    pub multi_index: OnDiskFile<Arc<git_pack::multi_index::File>>,
     pub data: Vec<OnDiskFile<Arc<git_pack::data::File>>>,
 }
 

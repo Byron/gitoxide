@@ -2,7 +2,7 @@ use std::{cmp::Ordering, collections::HashSet, fs, io::Read, path::PathBuf};
 
 use git_features::zlib;
 
-use crate::store_impls::loose::{hash_path, Store, HEADER_READ_UNCOMPRESSED_BYTES};
+use crate::store_impls::loose::{hash_path, Store, HEADER_MAX_SIZE};
 
 /// Returned by [`Store::try_find()`]
 #[derive(thiserror::Error, Debug)]
@@ -47,7 +47,7 @@ impl Store {
         &self,
         prefix: git_hash::Prefix,
         mut candidates: Option<&mut HashSet<git_hash::ObjectId>>,
-    ) -> Result<Option<crate::find::PrefixLookupResult>, crate::loose::iter::Error> {
+    ) -> Result<Option<crate::store::prefix::lookup::Outcome>, crate::loose::iter::Error> {
         let single_directory_iter = crate::loose::Iter {
             inner: git_features::fs::walkdir_new(
                 self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()),
@@ -127,6 +127,50 @@ impl Store {
         }
     }
 
+    /// Return only the decompressed size of the object and its kind without fully reading it into memory as tuple of `(size, kind)`.
+    /// Returns `None` if `id` does not exist in the database.
+    pub fn try_header(&self, id: impl AsRef<git_hash::oid>) -> Result<Option<(usize, git_object::Kind)>, Error> {
+        const BUF_SIZE: usize = 256;
+        let mut buf = [0_u8; BUF_SIZE];
+        let path = hash_path(id.as_ref(), self.path.clone());
+
+        let mut inflate = zlib::Inflate::default();
+        let mut istream = match fs::File::open(&path) {
+            Ok(f) => f,
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(err) => {
+                return Err(Error::Io {
+                    source: err,
+                    action: Self::OPEN_ACTION,
+                    path,
+                })
+            }
+        };
+
+        let (compressed_buf, _) = buf.split_at_mut(BUF_SIZE - HEADER_MAX_SIZE);
+        let bytes_read = istream.read(compressed_buf).map_err(|e| Error::Io {
+            source: e,
+            action: "read",
+            path: path.to_owned(),
+        })?;
+        let (compressed_buf, header_buf) = buf.split_at_mut(bytes_read);
+        let (status, _consumed_in, consumed_out) =
+            inflate
+                .once(compressed_buf, header_buf)
+                .map_err(|e| Error::DecompressFile {
+                    source: e,
+                    path: path.to_owned(),
+                })?;
+
+        assert_ne!(
+            status,
+            zlib::Status::BufError,
+            "Buffer errors might mean we encountered huge headers"
+        );
+        let (kind, size, _header_size) = git_object::decode::loose_header(&header_buf[..consumed_out])?;
+        Ok(Some((size, kind)))
+    }
+
     fn find_inner<'a>(&self, id: &git_hash::oid, buf: &'a mut Vec<u8>) -> Result<git_object::Data<'a>, Error> {
         let path = hash_path(id, self.path.clone());
 
@@ -144,7 +188,7 @@ impl Store {
                 action: "read",
                 path: path.to_owned(),
             })?;
-            buf.resize(bytes_read + HEADER_READ_UNCOMPRESSED_BYTES, 0);
+            buf.resize(bytes_read + HEADER_MAX_SIZE, 0);
             let (input, output) = buf.split_at_mut(bytes_read);
             (
                 inflate
