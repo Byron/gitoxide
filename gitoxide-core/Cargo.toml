@@ -31,7 +31,7 @@ async-client = ["git-repository/async-network-client-async-std", "git-transport-
 
 #! ### Other
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serde"]
+serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serde", "bytesize/serde"]
 
 
 [dependencies]
