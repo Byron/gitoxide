@@ -15,7 +15,7 @@ pub enum ResolvedBase {
 /// Additional information and statistics about a successfully decoded object produced by [`File::decode_header()`].
 ///
 /// Useful to understand the effectiveness of the pack compression or the cost of decompression.
-#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The kind of resolved object.
@@ -80,11 +80,10 @@ impl File {
 
     #[inline]
     fn decode_delta_object_size(&self, entry: &data::Entry) -> Result<u64, Error> {
-        // TODO: figure out the best size for this.
-        let mut buf = [0_u8; 64];
-        let used = self.decompress_entry_from_data_offset(entry.data_offset, &mut buf)?;
+        let mut buf = [0_u8; 32];
+        let used = self.decompress_entry_from_data_offset_2(entry.data_offset, &mut buf)?.1;
         let buf = &buf[..used];
-        let (_base_size, offset) = delta::decode_header_size(&buf);
+        let (_base_size, offset) = delta::decode_header_size(buf);
         let (result_size, _offset) = delta::decode_header_size(&buf[offset..]);
         Ok(result_size)
     }

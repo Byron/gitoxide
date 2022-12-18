@@ -131,6 +131,20 @@ impl File {
             .map(|(_status, consumed_in, _consumed_out)| consumed_in)
     }
 
+    /// Like `decompress_entry_from_data_offset`, but returns consumed input and output.
+    pub(crate) fn decompress_entry_from_data_offset_2(
+        &self,
+        data_offset: data::Offset,
+        out: &mut [u8],
+    ) -> Result<(usize, usize), zlib::inflate::Error> {
+        let offset: usize = data_offset.try_into().expect("offset representable by machine");
+        assert!(offset < self.data.len(), "entry offset out of bounds");
+
+        zlib::Inflate::default()
+            .once(&self.data[offset..], out)
+            .map(|(_status, consumed_in, consumed_out)| (consumed_in, consumed_out))
+    }
+
     /// Decode an entry, resolving delta's as needed, while growing the `out` vector if there is not enough
     /// space to hold the result object.
     ///
