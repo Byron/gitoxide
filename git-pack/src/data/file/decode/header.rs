@@ -8,8 +8,12 @@ pub enum ResolvedBase {
     /// Indicate an object is within this pack, at the given entry, and thus can be looked up locally.
     InPack(data::Entry),
     /// Indicates the object of `kind` was found outside of the pack.
-    #[allow(missing_docs)]
-    OutOfPack { kind: git_object::Kind },
+    OutOfPack {
+        /// The kind of object we found when reading the header of the out-of-pack base.
+        kind: git_object::Kind,
+        /// The amount of deltas encountered if the object was packed as well.
+        num_deltas: Option<u32>,
+    },
 }
 
 /// Additional information and statistics about a successfully decoded object produced by [`File::decode_header()`].
@@ -52,29 +56,33 @@ impl File {
                     });
                 }
                 OfsDelta { base_distance } => {
+                    num_deltas += 1;
                     if first_delta_decompressed_size.is_none() {
                         first_delta_decompressed_size = Some(self.decode_delta_object_size(&entry)?);
                     }
                     entry = self.entry(entry.base_pack_offset(base_distance))
                 }
                 RefDelta { base_id } => {
+                    num_deltas += 1;
                     if first_delta_decompressed_size.is_none() {
                         first_delta_decompressed_size = Some(self.decode_delta_object_size(&entry)?);
                     }
-                    entry = match resolve(base_id.as_ref()) {
-                        Some(ResolvedBase::InPack(entry)) => entry,
-                        Some(ResolvedBase::OutOfPack { kind }) => {
+                    match resolve(base_id.as_ref()) {
+                        Some(ResolvedBase::InPack(base_entry)) => entry = base_entry,
+                        Some(ResolvedBase::OutOfPack {
+                            kind,
+                            num_deltas: origin_num_deltas,
+                        }) => {
                             return Ok(Outcome {
                                 kind,
                                 object_size: first_delta_decompressed_size.unwrap_or(entry.decompressed_size),
-                                num_deltas,
+                                num_deltas: origin_num_deltas.unwrap_or_default() + num_deltas,
                             })
                         }
                         None => return Err(Error::DeltaBaseUnresolved(base_id)),
                     }
                 }
             };
-            num_deltas += 1;
         }
     }
 
