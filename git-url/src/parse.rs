@@ -49,6 +49,16 @@ fn guess_protocol(url: &[u8]) -> Option<&str> {
     .into()
 }
 
+/// Extract the path part from an SCP-like URL `[user@]host.xz:path/to/repo.git/`
+///
+/// The path being relative, the `./` prefix is redundant and so removed if present.
+fn extract_scp_path(url: &str) -> &str {
+    url.split(':')
+        .last()
+        .expect("SCP-like URLs always have a colon")
+        .trim_start_matches("./")
+}
+
 fn sanitize_for_protocol<'a>(protocol: &str, url: &'a str) -> Cow<'a, str> {
     match protocol {
         "ssh" => url.replacen(':', "/", 1).into(),
@@ -127,8 +137,8 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     }
 
     let url_str = std::str::from_utf8(input)?;
-    let (mut url, mut sanitized_scp) = match url::Url::parse(url_str) {
-        Ok(url) => (url, false),
+    let (mut url, mut scp_path) = match url::Url::parse(url_str) {
+        Ok(url) => (url, None),
         Err(url::ParseError::RelativeUrlWithoutBase) => {
             // happens with bare paths as well as scp like paths. The latter contain a ':' past the host portion,
             // which we are trying to detect.
@@ -138,7 +148,7 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
                     guessed_protocol,
                     sanitize_for_protocol(guessed_protocol, url_str)
                 ))?,
-                true,
+                Some(extract_scp_path(url_str)),
             )
         }
         Err(err) => return Err(err.into()),
@@ -147,7 +157,7 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     if url.scheme().find('.').is_some() {
         // try again with prefixed protocol
         url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
-        sanitized_scp = true;
+        scp_path = Some(extract_scp_path(url_str));
     }
     if url.path().is_empty() && ["ssh", "git"].contains(&url.scheme()) {
         return Err(Error::MissingResourceLocation);
@@ -156,5 +166,5 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
         return Err(Error::RelativeUrl { url: url.into() });
     }
 
-    to_owned_url(url).map(|url| url.serialize_alternate_form(sanitized_scp))
+    to_owned_url(url).map(|url| url.serialize_alternate_form(scp_path.is_some()).with_path(scp_path))
 }
