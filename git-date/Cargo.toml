@@ -1,6 +1,6 @@
 [package]
 name = "git-date"
-version = "0.3.0"
+version = "0.3.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project parsing dates the way git does"

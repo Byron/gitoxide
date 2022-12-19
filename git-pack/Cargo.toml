@@ -1,6 +1,6 @@
 [package]
 name = "git-pack"
-version = "0.27.0"
+version = "0.28.0"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
@@ -37,13 +37,13 @@ path = "tests/pack-single-threaded.rs"
 required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
 [dependencies]
-git-features = { version = "^0.24.1", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
-git-path = { version = "^0.6.0", path = "../git-path" }
+git-features = { version = "^0.25.0", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
+git-path = { version = "^0.7.0", path = "../git-path" }
 git-hash = { version = "^0.10.1", path = "../git-hash" }
 git-chunk = { version = "^0.4.0", path = "../git-chunk" }
-git-object = { version = "^0.23.0", path = "../git-object" }
-git-traverse = { version = "^0.19.0", path = "../git-traverse" }
-git-diff = { version = "^0.23.0", path = "../git-diff" }
+git-object = { version = "^0.24.0", path = "../git-object" }
+git-traverse = { version = "^0.20.0", path = "../git-traverse" }
+git-diff = { version = "^0.24.0", path = "../git-diff" }
 git-tempfile = { version = "^3.0.0", path = "../git-tempfile" }
 git-hashtable = { version = "^0.1.0", path = "../git-hashtable" }
 

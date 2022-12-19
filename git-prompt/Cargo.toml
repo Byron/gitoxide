@@ -1,6 +1,6 @@
 [package]
 name = "git-prompt"
-version = "0.2.0"
+version = "0.3.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate of the gitoxide project for handling prompts in the terminal"
@@ -13,7 +13,7 @@ doctest = false
 
 [dependencies]
 git-command = { version = "^0.2.0", path = "../git-command" }
-git-config-value = { version = "^0.9.0", path = "../git-config-value" }
+git-config-value = { version = "^0.10.0", path = "../git-config-value" }
 
 thiserror = "1.0.32"
 parking_lot = "0.12.1"

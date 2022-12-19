@@ -1,6 +1,6 @@
 [package]
 name = "git-sec"
-version = "0.5.0"
+version = "0.6.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project providing a shared trust model"
@@ -25,7 +25,7 @@ document-features = { version = "0.2.1", optional = true }
 libc = "0.2.123"
 
 [target.'cfg(windows)'.dependencies]
-git-path = { version = "^0.6.0", path = "../git-path" }
+git-path = { version = "^0.7.0", path = "../git-path" }
 dirs = "4"
 windows = { version = "0.40.0", features = [
     "Win32_Foundation",

@@ -1,6 +1,6 @@
 [package]
 name = "git-mailmap"
-version = "0.6.0"
+version = "0.7.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project for parsing mailmap files"
@@ -15,7 +15,7 @@ doctest = false
 serde1 = ["serde", "bstr/serde", "git-actor/serde1"]
 
 [dependencies]
-git-actor = { version = "^0.14.1", path = "../git-actor" }
+git-actor = { version = "^0.15.0", path = "../git-actor" }
 bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"]}
 quick-error = "2.0.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

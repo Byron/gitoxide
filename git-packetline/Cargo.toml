@@ -1,6 +1,6 @@
 [package]
 name = "git-packetline"
-version = "0.14.0"
+version = "0.14.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project implementing the pkt-line serialization format"

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.24.0 (2022-12-19)
 
 ### New Features
 
@@ -63,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 29 commits contributed to the release over the course of 27 calendar days.
+ - 30 commits contributed to the release over the course of 27 calendar days.
  - 27 days passed between releases.
  - 13 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#602](https://github.com/Byron/gitoxide/issues/602), [#639](https://github.com/Byron/gitoxide/issues/639)
@@ -79,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#639](https://github.com/Byron/gitoxide/issues/639)**
     - correctly display what's actual and expected when failing to parse capabilities. ([`7ab7c24`](https://github.com/Byron/gitoxide/commit/7ab7c2409a47fae587531c0c3b203cd646e32984))
  * **Uncategorized**
+    - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - Merge branch 'adjustments-for-cargo' ([`94750e1`](https://github.com/Byron/gitoxide/commit/94750e15831969059551af35d31c21009462084d))
     - improve granularity of IO errors for `curl` backends. ([`0a2b135`](https://github.com/Byron/gitoxide/commit/0a2b135d19ce1f1b4b0394befaa3949906322c97))
     - http transports can now reuse a connection. ([`ff0332e`](https://github.com/Byron/gitoxide/commit/ff0332e815c228cc5cdfe58c3598ad261bb2879e))

@@ -1,6 +1,6 @@
 [package]
 name = "git-validate"
-version = "0.7.0"
+version = "0.7.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Validation functions for various kinds of names in git"

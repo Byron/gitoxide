@@ -1,6 +1,6 @@
 [package]
 name = "git-config"
-version = "0.12.0"
+version = "0.13.0"
 repository = "https://github.com/Byron/gitoxide"
 description = "A git-config file parser and editor from the gitoxide project"
 license = "MIT OR Apache-2.0"
@@ -15,12 +15,12 @@ include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 serde1 = ["serde", "bstr/serde", "git-sec/serde1", "git-ref/serde1", "git-glob/serde1", "git-config-value/serde1"]
 
 [dependencies]
-git-features = { version = "^0.24.1", path = "../git-features"}
-git-config-value = { version = "^0.9.0", path = "../git-config-value" }
-git-path = { version = "^0.6.0", path = "../git-path" }
-git-sec = { version = "^0.5.0", path = "../git-sec" }
-git-ref = { version = "^0.20.0", path = "../git-ref" }
-git-glob = { version = "^0.5.0", path = "../git-glob" }
+git-features = { version = "^0.25.0", path = "../git-features"}
+git-config-value = { version = "^0.10.0", path = "../git-config-value" }
+git-path = { version = "^0.7.0", path = "../git-path" }
+git-sec = { version = "^0.6.0", path = "../git-sec" }
+git-ref = { version = "^0.21.0", path = "../git-ref" }
+git-glob = { version = "^0.5.1", path = "../git-glob" }
 
 nom = { version = "7", default_features = false, features = [ "std" ] }
 memchr = "2"
