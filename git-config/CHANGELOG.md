@@ -5,6 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-5b9bffe8a5eec738e892224a7e18f98c8430d8a4/> `SectionMut::push_with_comment(key, comment)` to add a new variable with a comment.
+   This is useful for providing more information about a value at hand, especially if it was
+   added programmatically and then shows up in the configuration.
+ - <csr-id-e4bf8f0072e60a7a2df94690c8d0b13b1f3038bb/> Add the `Source::EnvOverride` to have a place for 'terminal' overrides.
+   That way environment variables represented via git-configuration
+   can be integrated into git configuration, making clearer what's
+   going to happen even when looking at the configuration via
+   `gix config`.
+   
+   The implementation has to be careful though about assureing there
+   is no more specific configuration key, like `http.<URL>.proxy` that
+   would override the one from the environment, which always has
+   the final word.
+ - <csr-id-5fa95460db843f7dcfe68002b303b8b7649846dd/> comfort API like `string_by_key(key)` takes a key like `"remote.origin.url"`, add `section_by_key("remote.origin")` as well.
+   That way it's the most comfortable way to query values and very
+   similar to how git does it, too.
+   
+   Additionally, sections can be obtained by section key, both mutably and immutably for completeness.
+
+### New Features (BREAKING)
+
+ - <csr-id-2b36d99eaf3ed24ce4cb736a3dd48440dc0c73b7/> `File::new_section()` and related now returns their `id` as well.
+   That way it's possible to more easily interact with it later, for instance
+   when one wants to delete it.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-0c98ec8fc7d8cc3195472a04fde4a681f620725f/> subsections are identified as `&BStr` in entire API.
+   Technically they can be any value (except for newlines and unescaped double quotes),
+   and these values might be paths and everything that comes with it, like
+   illformed UTF8. In order to be able to represent everything that
+   git can represent, we don't enforce UTF8 anymore for subsection names.
+   
+   Note that section names and key names are required to be valid UTF8
+   (and even alphanumeric ascii), which makes illformed UTF8 very unlikely
+   there.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 27 calendar days.
+ - 27 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
+    - adjust to changes in `git-testtools` ([`4eb842c`](https://github.com/Byron/gitoxide/commit/4eb842c7150b980e1c2637217e1f9657a671cea7))
+    - make fmt ([`747008d`](https://github.com/Byron/gitoxide/commit/747008d9d370844574dda94e5bec1648c4deb57e))
+    - Merge branch 'main' into http-config ([`6b9632e`](https://github.com/Byron/gitoxide/commit/6b9632e16c416841ffff1b767ee7a6c89b421220))
+    - `File::new_section()` and related now returns their `id` as well. ([`2b36d99`](https://github.com/Byron/gitoxide/commit/2b36d99eaf3ed24ce4cb736a3dd48440dc0c73b7))
+    - `SectionMut::push_with_comment(key, comment)` to add a new variable with a comment. ([`5b9bffe`](https://github.com/Byron/gitoxide/commit/5b9bffe8a5eec738e892224a7e18f98c8430d8a4))
+    - Release git-features v0.24.1, git-actor v0.14.1, git-index v0.9.1 ([`7893502`](https://github.com/Byron/gitoxide/commit/789350208efc9d5fc6f9bc4f113f77f9cb445156))
+    - Add the `Source::EnvOverride` to have a place for 'terminal' overrides. ([`e4bf8f0`](https://github.com/Byron/gitoxide/commit/e4bf8f0072e60a7a2df94690c8d0b13b1f3038bb))
+    - thanks clippy ([`10f4f21`](https://github.com/Byron/gitoxide/commit/10f4f2149830734cc551ea96a3d087f07d43fe29))
+    - comfort API like `string_by_key(key)` takes a key like `"remote.origin.url"`, add `section_by_key("remote.origin")` as well. ([`5fa9546`](https://github.com/Byron/gitoxide/commit/5fa95460db843f7dcfe68002b303b8b7649846dd))
+    - subsections are identified as `&BStr` in entire API. ([`0c98ec8`](https://github.com/Byron/gitoxide/commit/0c98ec8fc7d8cc3195472a04fde4a681f620725f))
+    - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
+</details>
+
 ## 0.12.0 (2022-11-21)
 
 ### New Features
@@ -34,7 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 2 calendar days.
+ - 6 commits contributed to the release over the course of 2 calendar days.
  - 4 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -46,6 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-hash v0.10.0, git-features v0.24.0, git-date v0.3.0, git-actor v0.14.0, git-glob v0.5.0, git-path v0.6.0, git-quote v0.4.0, git-attributes v0.6.0, git-config-value v0.9.0, git-tempfile v3.0.0, git-lock v3.0.0, git-validate v0.7.0, git-object v0.23.0, git-ref v0.20.0, git-sec v0.5.0, git-config v0.12.0, git-command v0.2.0, git-prompt v0.2.0, git-url v0.11.0, git-credentials v0.7.0, git-diff v0.23.0, git-discover v0.9.0, git-bitmap v0.2.0, git-traverse v0.19.0, git-index v0.9.0, git-mailmap v0.6.0, git-chunk v0.4.0, git-pack v0.27.0, git-odb v0.37.0, git-packetline v0.14.0, git-transport v0.23.0, git-protocol v0.24.0, git-revision v0.7.0, git-refspec v0.4.0, git-worktree v0.9.0, git-repository v0.29.0, git-commitgraph v0.11.0, gitoxide-core v0.21.0, gitoxide v0.19.0, safety bump 28 crates ([`b2c301e`](https://github.com/Byron/gitoxide/commit/b2c301ef131ffe1871314e19f387cf10a8d2ac16))
     - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
     - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))
     - read worktree specific configuration of main worktrees. ([`7d7bd02`](https://github.com/Byron/gitoxide/commit/7d7bd02d4e0678565f58c5da83fd1ad88c60e911))

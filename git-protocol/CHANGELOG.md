@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-5a50d9599f820237866928df6d24a196a9b86fe3/> `fetch::Arguments::use_include_tag()` allows to signal `include-tag`.
+   One can also check for its availability using `fetch::Arguments::can_use_include_tag()`.
+   
+   Further there was a bugfix that assues V1 capabilities are correctly interpreted to support
+   include-tag.
+ - <csr-id-1c0a6c0edaca4063129c3b06638629b7af17a64c/> due to more specific errors one can differentiate if remote authentication failed repeatedly.
+ - <csr-id-2363bcbd3207d1d16f2f95fbd20a7d7715b92240/> some errors support `is_spurious()` to tell if retrying is possible.
+
+### Bug Fixes
+
+ - <csr-id-a8727824a4c38b27d6ad7c73ccaf7a45839c0aa9/> don't pass 'include-tag' as argument by default.
+   This flag always has to be added by the caller based on configuration.
+ - <csr-id-24000fa7ad4607c23f6a4fb4d84d2c85d96ee01f/> don't post `packfile-uris` capability unless we are able to make use of it.
+   Turns out that this option can be rejected by a server that advertises
+   it, so definitely needs more work to make it work.
+ - <csr-id-806b8c2ef392137f3a6ebd0f28da2a3a07a9f3eb/> Parse refs from bytes, not from String.
+   The latter can cause issues around illformed UTF-8 which wouldn't
+   bother git either.
+   
+   This comes at the expense of not parsing line by line anymore, but
+   instead reading as fast as possible and parsing afterwards.
+   
+   Performance wise I think it doesn't matter, but it will cause
+   more memory to be used. If this ever becomes a problem,
+   for example during pushes where we are stuck with V1, we can consider
+   implementing our own streaming appreach that works with packet lines
+   instead - they are just not exposed here even though they could.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 21 commits contributed to the release over the course of 27 calendar days.
+ - 27 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#639](https://github.com/Byron/gitoxide/issues/639)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#639](https://github.com/Byron/gitoxide/issues/639)**
+    - don't post `packfile-uris` capability unless we are able to make use of it. ([`24000fa`](https://github.com/Byron/gitoxide/commit/24000fa7ad4607c23f6a4fb4d84d2c85d96ee01f))
+ * **Uncategorized**
+    - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
+    - `fetch::Arguments::use_include_tag()` allows to signal `include-tag`. ([`5a50d95`](https://github.com/Byron/gitoxide/commit/5a50d9599f820237866928df6d24a196a9b86fe3))
+    - don't pass 'include-tag' as argument by default. ([`a872782`](https://github.com/Byron/gitoxide/commit/a8727824a4c38b27d6ad7c73ccaf7a45839c0aa9))
+    - Merge branch 'adjustments-for-cargo' ([`94750e1`](https://github.com/Byron/gitoxide/commit/94750e15831969059551af35d31c21009462084d))
+    - due to more specific errors one can differentiate if remote authentication failed repeatedly. ([`1c0a6c0`](https://github.com/Byron/gitoxide/commit/1c0a6c0edaca4063129c3b06638629b7af17a64c))
+    - Merge branch 'adjustments-for-cargo' ([`70ccbb2`](https://github.com/Byron/gitoxide/commit/70ccbb21b1113bdeb20b52d274141a9fdb75f579))
+    - some errors support `is_spurious()` to tell if retrying is possible. ([`2363bcb`](https://github.com/Byron/gitoxide/commit/2363bcbd3207d1d16f2f95fbd20a7d7715b92240))
+    - adapt to changes in `git-transport` ([`527c62e`](https://github.com/Byron/gitoxide/commit/527c62ef034a961a7e2b1dd1868cf8f81cc2eedc))
+    - Merge branch 'fix-638' ([`eb4c5f0`](https://github.com/Byron/gitoxide/commit/eb4c5f051ae2a4eb7178289cfc1437417f265608))
+    - Merge branch 'fixture-async' ([`eca6705`](https://github.com/Byron/gitoxide/commit/eca670585db212985d653cb2c6ec3636ec560905))
+    - async version of ref-line parsing now reads line by line. ([`dadd896`](https://github.com/Byron/gitoxide/commit/dadd8964ec551702908055476df10624b266a79f))
+    - Add `Fixture` implementation for `async`. ([`b583c2a`](https://github.com/Byron/gitoxide/commit/b583c2a631a68429aa84f33212586c7c2d1165e5))
+    - Release git-hash v0.10.1, git-hashtable v0.1.0 ([`7717170`](https://github.com/Byron/gitoxide/commit/771717095d9a67b0625021eb0928828ab686e772))
+    - Merge branch 'remove-lines-parsing' ([`9d8e32d`](https://github.com/Byron/gitoxide/commit/9d8e32d3c276fec34e3fce0feb29de0d24a8d1d2))
+    - Parse refs from bytes, not from String. ([`806b8c2`](https://github.com/Byron/gitoxide/commit/806b8c2ef392137f3a6ebd0f28da2a3a07a9f3eb))
+    - adapt to changes in `git-transport` ([`49461b1`](https://github.com/Byron/gitoxide/commit/49461b1ca92e301734c090220936941fca57db0e))
+    - Merge branch 'main' into http-config ([`6b9632e`](https://github.com/Byron/gitoxide/commit/6b9632e16c416841ffff1b767ee7a6c89b421220))
+    - Release git-features v0.24.1, git-actor v0.14.1, git-index v0.9.1 ([`7893502`](https://github.com/Byron/gitoxide/commit/789350208efc9d5fc6f9bc4f113f77f9cb445156))
+    - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
+    - make fmt ([`0abab7d`](https://github.com/Byron/gitoxide/commit/0abab7da2ec1b8560e6c1eb009f534c9fc7814fe))
+</details>
+
 ## 0.24.0 (2022-11-21)
 
 ### New Features (BREAKING)
@@ -24,7 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 2 calendar days.
+ - 4 commits contributed to the release over the course of 2 calendar days.
  - 4 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -36,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-hash v0.10.0, git-features v0.24.0, git-date v0.3.0, git-actor v0.14.0, git-glob v0.5.0, git-path v0.6.0, git-quote v0.4.0, git-attributes v0.6.0, git-config-value v0.9.0, git-tempfile v3.0.0, git-lock v3.0.0, git-validate v0.7.0, git-object v0.23.0, git-ref v0.20.0, git-sec v0.5.0, git-config v0.12.0, git-command v0.2.0, git-prompt v0.2.0, git-url v0.11.0, git-credentials v0.7.0, git-diff v0.23.0, git-discover v0.9.0, git-bitmap v0.2.0, git-traverse v0.19.0, git-index v0.9.0, git-mailmap v0.6.0, git-chunk v0.4.0, git-pack v0.27.0, git-odb v0.37.0, git-packetline v0.14.0, git-transport v0.23.0, git-protocol v0.24.0, git-revision v0.7.0, git-refspec v0.4.0, git-worktree v0.9.0, git-repository v0.29.0, git-commitgraph v0.11.0, gitoxide-core v0.21.0, gitoxide v0.19.0, safety bump 28 crates ([`b2c301e`](https://github.com/Byron/gitoxide/commit/b2c301ef131ffe1871314e19f387cf10a8d2ac16))
     - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
     - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))
     - upgrade edition to 2021 in most crates. ([`3d8fa8f`](https://github.com/Byron/gitoxide/commit/3d8fa8fef9800b1576beab8a5bc39b821157a5ed))

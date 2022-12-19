@@ -5,7 +5,114 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-0a2b135d19ce1f1b4b0394befaa3949906322c97/> improve granularity of IO errors for `curl` backends.
+   That way it should be possible to tell if `curl` caused
+   an IO error due to someting that can be considered spurious.
+ - <csr-id-9a2f7cd55c05f2fdb0ae62f0efca9dfa451694c7/> `IsSpuriousError` trait and its implementation.
+   That way all transports can tell if the operation failed due to
+   an issue that's probably passing, so retrying may be a way to resolve
+   the issue.
+ - <csr-id-5034544b36994177009ccc8d6c07cb000b429174/> `client::http::Options::no_proxy` to disable a proxy for given hosts.
+   This is a curl-first option which can reasonably be implemented for other backends
+   as well and thus retains its curl-ish roots in full.
+ - <csr-id-e701e7e9cc571108ca210fc0ca23494d6a1c7208/> `client::http::Options::verbose` to see more debug output.
+   This means different things depending on the backend, and for
+   `curl` it means a lot of debug-output on stderr.
+
+### Bug Fixes
+
+ - <csr-id-ff0332e815c228cc5cdfe58c3598ad261bb2879e/> http transports can now reuse a connection.
+   This makes connections more efficient generally and `cargo` relies
+   on that behaviour in their tests as well.
+ - <csr-id-85dcda81d3fec03ad5687b0e0329cefedd925722/> don't pre-configure curl.
+   These settings can interact strangly with other users of the curl package
+   within the same dependency tree, so it's paramount to only activate features
+   we truly need.
+ - <csr-id-0d0eb4aa46b265f97ada7b54d8bcc29decc42e50/> ssh connection remove '=' in port argument
+ - <csr-id-4927adf1a57166b581fc293a33f84ef628af70db/> make it possible to parse handshakes without newlines in packetlines #(639)
+ - <csr-id-7ab7c2409a47fae587531c0c3b203cd646e32984/> correctly display what's actual and expected when failing to parse capabilities.
+ - <csr-id-b0083e38c82829b4d8b81542fc8d1025089e2869/> improve compile-time errors if mutually exclusive http-client features are set.
+
+### New Features (BREAKING)
+
+ - <csr-id-1204bfcaadd31ed198b923df05f19115da3754a4/> Provide support for reading packetlines directly.
+   The handshake response itself now provides a `ref` read implementation
+   with direct readline support. That way one can avoid having to go
+   through `String`.
+ - <csr-id-8e158c3f4056f59724fe91587157ef0daa517964/> interpret the FollowRedirects option for the curl HTTP backend.
+   This comes with changes to the `HTTP` trait which now requires a base-url
+   to be provided as well.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-08dcda254bc942dcc36d432cf7130c2ce4c6d54e/> `Capabiltiies::from_lines()` takes a single buffer.
+   That way it doesn't have to convert to `String` as intermediary
+   which may fail as illformed UTF8 might be present.
+   
+   Performance wise, reading all lines ahead of time, it is the same
+   as it was before as it would collect all lines beforehand anyway.
+   
+   We are also seeing only a few lines in V2, and in V1 it was
+   fully streaming already.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 29 commits contributed to the release over the course of 27 calendar days.
+ - 27 days passed between releases.
+ - 13 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#602](https://github.com/Byron/gitoxide/issues/602), [#639](https://github.com/Byron/gitoxide/issues/639)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#602](https://github.com/Byron/gitoxide/issues/602)**
+    - improve compile-time errors if mutually exclusive http-client features are set. ([`b0083e3`](https://github.com/Byron/gitoxide/commit/b0083e38c82829b4d8b81542fc8d1025089e2869))
+ * **[#639](https://github.com/Byron/gitoxide/issues/639)**
+    - correctly display what's actual and expected when failing to parse capabilities. ([`7ab7c24`](https://github.com/Byron/gitoxide/commit/7ab7c2409a47fae587531c0c3b203cd646e32984))
+ * **Uncategorized**
+    - Merge branch 'adjustments-for-cargo' ([`94750e1`](https://github.com/Byron/gitoxide/commit/94750e15831969059551af35d31c21009462084d))
+    - improve granularity of IO errors for `curl` backends. ([`0a2b135`](https://github.com/Byron/gitoxide/commit/0a2b135d19ce1f1b4b0394befaa3949906322c97))
+    - http transports can now reuse a connection. ([`ff0332e`](https://github.com/Byron/gitoxide/commit/ff0332e815c228cc5cdfe58c3598ad261bb2879e))
+    - Merge branch 'adjustments-for-cargo' ([`70ccbb2`](https://github.com/Byron/gitoxide/commit/70ccbb21b1113bdeb20b52d274141a9fdb75f579))
+    - Merge branch 'main' into adjustments-for-cargo ([`bb60d3d`](https://github.com/Byron/gitoxide/commit/bb60d3d5cb9dbd7abe61accded6d21e320c624db))
+    - adapt to changes in git-repository ([`89230f4`](https://github.com/Byron/gitoxide/commit/89230f4e151056abaa2bce39d9d18f6dd1512d59))
+    - Merge branch 'paulyoung/scheme-ext' ([`3e27550`](https://github.com/Byron/gitoxide/commit/3e27550577ea942427a57c902570f0416f540753))
+    - `IsSpuriousError` trait and its implementation. ([`9a2f7cd`](https://github.com/Byron/gitoxide/commit/9a2f7cd55c05f2fdb0ae62f0efca9dfa451694c7))
+    - don't pre-configure curl. ([`85dcda8`](https://github.com/Byron/gitoxide/commit/85dcda81d3fec03ad5687b0e0329cefedd925722))
+    - ssh connection remove '=' in port argument ([`0d0eb4a`](https://github.com/Byron/gitoxide/commit/0d0eb4aa46b265f97ada7b54d8bcc29decc42e50))
+    - Merge branch 'fix-638' ([`eb4c5f0`](https://github.com/Byron/gitoxide/commit/eb4c5f051ae2a4eb7178289cfc1437417f265608))
+    - make it possible to parse handshakes without newlines in packetlines #(639) ([`4927adf`](https://github.com/Byron/gitoxide/commit/4927adf1a57166b581fc293a33f84ef628af70db))
+    - Merge branch 'fixture-async' ([`eca6705`](https://github.com/Byron/gitoxide/commit/eca670585db212985d653cb2c6ec3636ec560905))
+    - async version of ref-line parsing now reads line by line. ([`dadd896`](https://github.com/Byron/gitoxide/commit/dadd8964ec551702908055476df10624b266a79f))
+    - fix hang when reading packetlines lines directly via HTTP ([`2d033ab`](https://github.com/Byron/gitoxide/commit/2d033ab7c7915d27c86a1e7dfbe9cf70d7ae3320))
+    - Merge branch 'remove-lines-parsing' ([`9d8e32d`](https://github.com/Byron/gitoxide/commit/9d8e32d3c276fec34e3fce0feb29de0d24a8d1d2))
+    - Provide support for reading packetlines directly. ([`1204bfc`](https://github.com/Byron/gitoxide/commit/1204bfcaadd31ed198b923df05f19115da3754a4))
+    - `Capabiltiies::from_lines()` takes a single buffer. ([`08dcda2`](https://github.com/Byron/gitoxide/commit/08dcda254bc942dcc36d432cf7130c2ce4c6d54e))
+    - make fmt ([`747008d`](https://github.com/Byron/gitoxide/commit/747008d9d370844574dda94e5bec1648c4deb57e))
+    - Merge branch 'main' into http-config ([`6b9632e`](https://github.com/Byron/gitoxide/commit/6b9632e16c416841ffff1b767ee7a6c89b421220))
+    - `client::http::Options::no_proxy` to disable a proxy for given hosts. ([`5034544`](https://github.com/Byron/gitoxide/commit/5034544b36994177009ccc8d6c07cb000b429174))
+    - `client::http::Options::verbose` to see more debug output. ([`e701e7e`](https://github.com/Byron/gitoxide/commit/e701e7e9cc571108ca210fc0ca23494d6a1c7208))
+    - Release git-features v0.24.1, git-actor v0.14.1, git-index v0.9.1 ([`7893502`](https://github.com/Byron/gitoxide/commit/789350208efc9d5fc6f9bc4f113f77f9cb445156))
+    - interpret the FollowRedirects option for the curl HTTP backend. ([`8e158c3`](https://github.com/Byron/gitoxide/commit/8e158c3f4056f59724fe91587157ef0daa517964))
+    - Merge branch 'http-config' ([`a4ff140`](https://github.com/Byron/gitoxide/commit/a4ff140a0d3607cf282c49228c1248bd36d464fd))
+    - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
+    - make fmt ([`0abab7d`](https://github.com/Byron/gitoxide/commit/0abab7da2ec1b8560e6c1eb009f534c9fc7814fe))
+</details>
+
 ## 0.23.0 (2022-11-21)
+
+### New Features
+
+ - <csr-id-68ed6d7e2cabc3d3bc78a29003863cd4194549fa/> Support for proxy authentication in http configuration.
 
 ### New Features (BREAKING)
 
@@ -34,9 +141,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 2 calendar days.
+ - 11 commits contributed to the release over the course of 4 calendar days.
  - 4 days passed between releases.
- - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#602](https://github.com/Byron/gitoxide/issues/602)
 
 ### Thanks Clippy
@@ -54,11 +161,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#602](https://github.com/Byron/gitoxide/issues/602)**
     - `max-pure` now builds without any C build tooling due to lack of `openssl-sys`. ([`4308a20`](https://github.com/Byron/gitoxide/commit/4308a209dddcbb461c34d45fb9af8b4621d4600a))
  * **Uncategorized**
+    - Release git-hash v0.10.0, git-features v0.24.0, git-date v0.3.0, git-actor v0.14.0, git-glob v0.5.0, git-path v0.6.0, git-quote v0.4.0, git-attributes v0.6.0, git-config-value v0.9.0, git-tempfile v3.0.0, git-lock v3.0.0, git-validate v0.7.0, git-object v0.23.0, git-ref v0.20.0, git-sec v0.5.0, git-config v0.12.0, git-command v0.2.0, git-prompt v0.2.0, git-url v0.11.0, git-credentials v0.7.0, git-diff v0.23.0, git-discover v0.9.0, git-bitmap v0.2.0, git-traverse v0.19.0, git-index v0.9.0, git-mailmap v0.6.0, git-chunk v0.4.0, git-pack v0.27.0, git-odb v0.37.0, git-packetline v0.14.0, git-transport v0.23.0, git-protocol v0.24.0, git-revision v0.7.0, git-refspec v0.4.0, git-worktree v0.9.0, git-repository v0.29.0, git-commitgraph v0.11.0, gitoxide-core v0.21.0, gitoxide v0.19.0, safety bump 28 crates ([`b2c301e`](https://github.com/Byron/gitoxide/commit/b2c301ef131ffe1871314e19f387cf10a8d2ac16))
     - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
     - Merge branch 'max-pure' ([`03ff188`](https://github.com/Byron/gitoxide/commit/03ff1882f2982fba38fbbf245eea13ef9df50f33))
     - thanks clippy ([`c7cba33`](https://github.com/Byron/gitoxide/commit/c7cba333dd8654995b367498609b4280fe394402))
     - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))
     - upgrade edition to 2021 in most crates. ([`3d8fa8f`](https://github.com/Byron/gitoxide/commit/3d8fa8fef9800b1576beab8a5bc39b821157a5ed))
+    - curl can authenticate the proxy now and store or reject credentials. ([`63b9050`](https://github.com/Byron/gitoxide/commit/63b9050240b80c5493dab3e8d0b1c675f83d78d6))
+    - Support for proxy authentication in http configuration. ([`68ed6d7`](https://github.com/Byron/gitoxide/commit/68ed6d7e2cabc3d3bc78a29003863cd4194549fa))
+    - setup curl proxy authentication method ([`c048990`](https://github.com/Byron/gitoxide/commit/c0489900f4ec385c9033c585c16934ff54941d65))
+    - Support for reading `http.proxyAuthMethod` ([`92f88c9`](https://github.com/Byron/gitoxide/commit/92f88c94ff288b5675ca3296c27ffb66e1716c22))
 </details>
 
 ## 0.22.0 (2022-11-17)

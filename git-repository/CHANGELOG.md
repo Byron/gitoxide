@@ -5,6 +5,222 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+ - <csr-id-a4ac9cf3e667a3059e33aac8188150529578622d/> represent `GIT_(COMMITTER|AUTHOR)_(NAME|EMAIL|DATE)` with git configuration.
+   That way it becomes more obvious where values are coming from.
+
+### New Features
+
+ - <csr-id-1683a848459cae2b9182b365e3e22b0e8ba73534/> expose `git-features` crate at root under `features`.
+   That way application developers can use more of the utilities
+   that power most of the `gitoxide` plumbing crates.
+ - <csr-id-90ef6fc36b440cc4baf3fde4a30060f1b4a0c8cf/> `Remote` knows about its `tagOpt` configuration.
+   That way it's clear if it should or shouldn't fetch included/reachable
+   tags automatically.
+   
+   The default setting for this is to include tags, similar to `git`.
+   
+   The `fetch_tags()` accessor allows to query this information, and the
+   `with_fetch_tags()` builder method allows to set the value comfortably
+   right after creating the `Remote` instance.
+   
+   The `tagOpt` key will also be written as part of the remote's git
+   configuration.
+   
+   Clone operations can set the `Tags` setting when configuring the
+   remote in a callback.
+   
+   This also comes with a fix to assure that ref-updates aren't skipped
+   just because there was no pack to receive. That way, locally missing
+   refs or tags will automatically be put back.
+ - <csr-id-28e48083052216ddf1fd1f187cc22d506d3d9f86/> network related Error type support `is_spurious()` method.
+   That way the caller can determine more easily if it makes sense
+   to try again.
+ - <csr-id-457c2e081b1aa5dfaab3f663b9aba66c16369939/> Make `prodash::tree` avaialble as `progress::tree`.
+ - <csr-id-d1b7ec605f8016c52c088477b6b0c5adf7ea0ab2/> read worktree specific configuration to override the one from the shared repository.
+   This is intensively used when space checkouts are created, along with
+   Cone mode. Thus it's the basis for properly interpreting sparse checkout
+   options which are set on a per-worktree basis.
+ - <csr-id-fc64693d5af0fda402c560d10d15652c24d14219/> add `permissions::Environment::http_transport`.
+   That way it's possible to deny using environment variables that affect
+   the HTTP transport, like setting the proxy.
+ - <csr-id-0ce29a965cf16273cf74bd22e40f464e322e2f62/> `open::Options::modify()` as general pattern to allow builder methods usage in `&mut self`.
+   That way it's easier to configure both the `full` and the `partial` trust instances
+   of discovery options.
+ - <csr-id-8482f90d0a2b61259cd51ca4f40ce322e388cb34/> Add `Repository::commit_as(committer, author, …)` convenience method.
+   That way it's, very much beyond convenience, possible to set the time
+   of a commit.
+   
+   Many thanks to @epage for the suggestion.
+ - <csr-id-c8835c6edae784c9ffcb69a674c0a6545dbb2af3/> upgrade to `prodash 21.1` and add `Ids` to all progress instances.
+   That way callers can identify progress they are interested in, say, for
+   selective visualizations.
+
+### Bug Fixes
+
+ - <csr-id-d659bda2e1b0fcab529df7af6467f063ae5d0dd7/> provide a clearer error message when trying to open a git repository that isn't one.
+ - <csr-id-ff0332e815c228cc5cdfe58c3598ad261bb2879e/> http transports can now reuse a connection.
+   This makes connections more efficient generally and `cargo` relies
+   on that behaviour in their tests as well.
+ - <csr-id-9079b9d2e5f7cc133c6f2b2c2e64245b150c7d74/> allow to open a `Repository` from if 'config' file is missing.
+   In this case, treat it similar to having an empty repository configuration
+   file and assume defaults everywhere.
+ - <csr-id-40f7379b7a89f7fe6f916801384e9e65e5b85c57/> improve error verbosity when fetching and cloning
+ - <csr-id-b77fc86ab580dd81b08022996f07cc7925104e77/> `tree::diff::Platform::for_each_to_obtain_tree()` now properly surfaces user provided errors.
+   Previously it would squelch them unintentionally.
+   
+   First discovered via https://github.com/Byron/crates-index-diff-rs/issues/35.
+ - <csr-id-5386eed6a13a32a850c59706b15d8988c67733ce/> when fetching from file://, don't upset windows by trying `d:/foo`, use `d:\\foo` instead.
+ - <csr-id-363ac7a74ec841505b5fc7cc1b8fae11c0a63ea9/> `config::CommitAutoRollback` now implements `DerefMut`.
+
+### Changed (BREAKING)
+
+ - <csr-id-3c84cebc5997356ff5f531c6cc9567bdd9b83eb5/> default features are set to `max-performance-safe` to assure compatibility.
+   Previously the `max-performance` setting might have caused issues during compilation
+   or issues at runtime if libraries like `git2` are used in the same binary, and the
+   new default feature settings maximizes compatbility so this won't happen.
+   
+   For best performance, however, one will have to activate the `max-performance`
+   feature on top of that.
+ - <csr-id-5fe6aa3f3f2f81d84f0d96e874e68a8bf4de1db1/> environment variable permissions are per topic.
+   Now `Permissions` for environment variables are so that they
+   are by topic instead of by prefix, by default. That way
+   it's easier to allow or deny particular sets of related
+   environment variables.
+   
+   The catch-all permissions by prefix are still present for all
+   other variables that aren't contained in one particular topic.
+ - <csr-id-49f39d6bb487c0254176a5082f2c7851b83952a1/> `open::ReplacementObjects` is removed in favor of two custom git-configuration flags.
+   Now it's possible to map the environment variables `GIT_REPLACE_REF_BASE` and `GIT_NO_REPLACE_OBJECTS`
+   to custom git configuration keys which can also be set, namely `gitoxide.odb.replaceObjectsRefBase`
+   and `gitoxide.odb.noReplaceObjects`.
+   
+   Along with the possibility of disabling the usage of `GIT_` prefixed environment variables one
+   reaches the previous level of control without making object replacement a special case.
+
+### New Features (BREAKING)
+
+ - <csr-id-f8a2bfb93dadbc64393135e0a447f3d76628509c/> `interrupts::init_handler()` can now be undone.
+   This can be done by calling `deregister()` or `auto_deregister()` on the return value
+   of `interrupts::init_handler(…)`.
+   
+   That way it's possible to temporarily do interrupt handling only while some methods
+   that rquire it are running.
+ - <csr-id-becbd8d896a1663f1607be4e86e632773e926f1f/> represent object cache configuration like `GITOXIDE_PACK_CACHE_MEMORY` in git-configuration.
+   That way there is a unified system for how to set values, which may be overridable by configuration
+   variables or not.
+   
+   With this changes, the explicit application of environment variables for setting the cache
+   isn't required anymore as everything happens using git-configuration, and automatically,
+   while providing full control like before.
+ - <csr-id-f16e36168cc93768ba5d53c9848ff2e8432d06b1/> remove `SnapshotMut::apply_cli_overrides()` in favor of `open::Options::cli_overrides()`.
+ - <csr-id-84d594caf3f04f1ce337e455343278a6f4674957/> more type-safety for remote names by making clear they can be named after URLs.
+
+
+### Other (BREAKING)
+
+ - <csr-id-fceee748c114b2d0760074e911e533cd020f6996/> `Remote::with_refspec()` to `Remote::with_refspecs()` to allow adding more than one refspec as part of the builder.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 73 commits contributed to the release over the course of 27 calendar days.
+ - 27 days passed between releases.
+ - 25 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'read-header' ([`3d01252`](https://github.com/Byron/gitoxide/commit/3d0125271ec7bd606734bd74757a7e31a18c7ce5))
+    - expose `git-features` crate at root under `features`. ([`1683a84`](https://github.com/Byron/gitoxide/commit/1683a848459cae2b9182b365e3e22b0e8ba73534))
+    - adjust to changes in `git-odb` ([`50ea7fb`](https://github.com/Byron/gitoxide/commit/50ea7fba30c752f86609fabf579a8a038b505c17))
+    - Merge branch 'patch-1' ([`fbce7bb`](https://github.com/Byron/gitoxide/commit/fbce7bb55c8c2474c0dfc5413649ecf744d00d92))
+    - Use specific Iter constructors in stats example ([`0a72c18`](https://github.com/Byron/gitoxide/commit/0a72c1876b8530f44d464b1597abd6428263d36e))
+    - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
+    - thanks clippy ([`f1160fb`](https://github.com/Byron/gitoxide/commit/f1160fb42acf59b37cbeda546a7079af3c9bc050))
+    - adapt to changes in `git-features::fs`. ([`35f7d59`](https://github.com/Byron/gitoxide/commit/35f7d5960210738d88d35aef9c1ed3480681c481))
+    - `Remote` knows about its `tagOpt` configuration. ([`90ef6fc`](https://github.com/Byron/gitoxide/commit/90ef6fc36b440cc4baf3fde4a30060f1b4a0c8cf))
+    - adjust to changes in `git-testtools` ([`4eb842c`](https://github.com/Byron/gitoxide/commit/4eb842c7150b980e1c2637217e1f9657a671cea7))
+    - Merge branch 'adjustments-for-cargo' ([`94750e1`](https://github.com/Byron/gitoxide/commit/94750e15831969059551af35d31c21009462084d))
+    - improve docs related to authentication when fetching ([`5979503`](https://github.com/Byron/gitoxide/commit/5979503bd884f53ae02200c76e55b3709f85c1d6))
+    - provide a clearer error message when trying to open a git repository that isn't one. ([`d659bda`](https://github.com/Byron/gitoxide/commit/d659bda2e1b0fcab529df7af6467f063ae5d0dd7))
+    - http transports can now reuse a connection. ([`ff0332e`](https://github.com/Byron/gitoxide/commit/ff0332e815c228cc5cdfe58c3598ad261bb2879e))
+    - allow to open a `Repository` from if 'config' file is missing. ([`9079b9d`](https://github.com/Byron/gitoxide/commit/9079b9d2e5f7cc133c6f2b2c2e64245b150c7d74))
+    - Merge branch 'adjustments-for-cargo' ([`70ccbb2`](https://github.com/Byron/gitoxide/commit/70ccbb21b1113bdeb20b52d274141a9fdb75f579))
+    - upgrade clru, remove it from git-repository dependencies (unused) ([`7e7547d`](https://github.com/Byron/gitoxide/commit/7e7547d995afc16192a1ee08add5a87560197fc9))
+    - Merge branch 'main' into adjustments-for-cargo ([`bb60d3d`](https://github.com/Byron/gitoxide/commit/bb60d3d5cb9dbd7abe61accded6d21e320c624db))
+    - adapt to changes in git-repository ([`89230f4`](https://github.com/Byron/gitoxide/commit/89230f4e151056abaa2bce39d9d18f6dd1512d59))
+    - improve error verbosity when fetching and cloning ([`40f7379`](https://github.com/Byron/gitoxide/commit/40f7379b7a89f7fe6f916801384e9e65e5b85c57))
+    - network related Error type support `is_spurious()` method. ([`28e4808`](https://github.com/Byron/gitoxide/commit/28e48083052216ddf1fd1f187cc22d506d3d9f86))
+    - Merge branch 'paulyoung/scheme-ext' ([`3e27550`](https://github.com/Byron/gitoxide/commit/3e27550577ea942427a57c902570f0416f540753))
+    - realign test expectations ([`93e6d71`](https://github.com/Byron/gitoxide/commit/93e6d7199408e492574c43fcfb81faccea2b6fd4))
+    - `tree::diff::Platform::for_each_to_obtain_tree()` now properly surfaces user provided errors. ([`b77fc86`](https://github.com/Byron/gitoxide/commit/b77fc86ab580dd81b08022996f07cc7925104e77))
+    - when fetching from file://, don't upset windows by trying `d:/foo`, use `d:\\foo` instead. ([`5386eed`](https://github.com/Byron/gitoxide/commit/5386eed6a13a32a850c59706b15d8988c67733ce))
+    - `Remote::with_refspec()` to `Remote::with_refspecs()` to allow adding more than one refspec as part of the builder. ([`fceee74`](https://github.com/Byron/gitoxide/commit/fceee748c114b2d0760074e911e533cd020f6996))
+    - default features are set to `max-performance-safe` to assure compatibility. ([`3c84ceb`](https://github.com/Byron/gitoxide/commit/3c84cebc5997356ff5f531c6cc9567bdd9b83eb5))
+    - `interrupts::init_handler()` can now be undone. ([`f8a2bfb`](https://github.com/Byron/gitoxide/commit/f8a2bfb93dadbc64393135e0a447f3d76628509c))
+    - Make `prodash::tree` avaialble as `progress::tree`. ([`457c2e0`](https://github.com/Byron/gitoxide/commit/457c2e081b1aa5dfaab3f663b9aba66c16369939))
+    - read worktree specific configuration to override the one from the shared repository. ([`d1b7ec6`](https://github.com/Byron/gitoxide/commit/d1b7ec605f8016c52c088477b6b0c5adf7ea0ab2))
+    - refactor ([`2d83222`](https://github.com/Byron/gitoxide/commit/2d83222dbf607f78acad4874580d1f007d838c13))
+    - move tests::repository::config::worktree to `tests::repository::open::worktree` ([`62afb7b`](https://github.com/Byron/gitoxide/commit/62afb7ba87311c5b04c8cd8002308d1b44959131))
+    - improve documentation about the configuration we always load ([`75488a7`](https://github.com/Byron/gitoxide/commit/75488a7d91abb90337d42f04e86e3d1373b8c19e))
+    - Assure that worktree configuration is marked as such with `Source::Worktree`. ([`a191948`](https://github.com/Byron/gitoxide/commit/a191948b758ab4e06a19eef748f16a5f458fe477))
+    - test to check if worktree overrides shared configs ([`b69f219`](https://github.com/Byron/gitoxide/commit/b69f21997bac7751e879608fe5b0ba08814aab4d))
+    - remove `canonicalize` calls from test… ([`bea689a`](https://github.com/Byron/gitoxide/commit/bea689a97a8e42a92af7f77f7d8706cd96c6dc10))
+    - fix type - prevent creating a fixture archive ([`33992ab`](https://github.com/Byron/gitoxide/commit/33992ab6510c65dc97e5eb9565141b977f5b021f))
+    - exclude fixture archive from being uploaded… ([`5c2b44c`](https://github.com/Byron/gitoxide/commit/5c2b44c53feae9f23c715dbad962baaf64135963))
+    - refactor… ([`ae812bd`](https://github.com/Byron/gitoxide/commit/ae812bde55d55ce06f95ca73513d9749e876ea0e))
+    - refactor… ([`394aab9`](https://github.com/Byron/gitoxide/commit/394aab90bdcaa1683b0318e70c455d09b1a7d4cc))
+    - remove worktree permission configuration option… ([`7ebf229`](https://github.com/Byron/gitoxide/commit/7ebf229bec6075a149702273c86137f54ef721ed))
+    - load worktree config if necessary ([`760e736`](https://github.com/Byron/gitoxide/commit/760e736931c13d155dbbe46459fe11b602084549))
+    - add test for worktree configs ([`23d8474`](https://github.com/Byron/gitoxide/commit/23d847480eff1a0d26fd801dfa8ad6ed205c71d4))
+    - Release git-hash v0.10.1, git-hashtable v0.1.0 ([`7717170`](https://github.com/Byron/gitoxide/commit/771717095d9a67b0625021eb0928828ab686e772))
+    - Merge branch 'remove-lines-parsing' ([`9d8e32d`](https://github.com/Byron/gitoxide/commit/9d8e32d3c276fec34e3fce0feb29de0d24a8d1d2))
+    - environment variable permissions are per topic. ([`5fe6aa3`](https://github.com/Byron/gitoxide/commit/5fe6aa3f3f2f81d84f0d96e874e68a8bf4de1db1))
+    - make fmt ([`747008d`](https://github.com/Byron/gitoxide/commit/747008d9d370844574dda94e5bec1648c4deb57e))
+    - switch from `atty` to `is-terminal` ([`7304bc1`](https://github.com/Byron/gitoxide/commit/7304bc1c0efaad64a39520962072343ef02f6c25))
+    - Merge branch 'main' into http-config ([`6b9632e`](https://github.com/Byron/gitoxide/commit/6b9632e16c416841ffff1b767ee7a6c89b421220))
+    - represent object cache configuration like `GITOXIDE_PACK_CACHE_MEMORY` in git-configuration. ([`becbd8d`](https://github.com/Byron/gitoxide/commit/becbd8d896a1663f1607be4e86e632773e926f1f))
+    - represent `GIT_(COMMITTER|AUTHOR)_(NAME|EMAIL|DATE)` with git configuration. ([`a4ac9cf`](https://github.com/Byron/gitoxide/commit/a4ac9cf3e667a3059e33aac8188150529578622d))
+    - `open::ReplacementObjects` is removed in favor of two custom git-configuration flags. ([`49f39d6`](https://github.com/Byron/gitoxide/commit/49f39d6bb487c0254176a5082f2c7851b83952a1))
+    - apply related environment variables as config overrides ([`9441c26`](https://github.com/Byron/gitoxide/commit/9441c261bcae61d1d1e674b5e783f38b0471be29))
+    - add `permissions::Environment::http_transport`. ([`fc64693`](https://github.com/Byron/gitoxide/commit/fc64693d5af0fda402c560d10d15652c24d14219))
+    - refactor ([`603f341`](https://github.com/Byron/gitoxide/commit/603f341e71c021bcc0f154c2ce6c39f4e6546c12))
+    - `open::Options::modify()` as general pattern to allow builder methods usage in `&mut self`. ([`0ce29a9`](https://github.com/Byron/gitoxide/commit/0ce29a965cf16273cf74bd22e40f464e322e2f62))
+    - remove `SnapshotMut::apply_cli_overrides()` in favor of `open::Options::cli_overrides()`. ([`f16e361`](https://github.com/Byron/gitoxide/commit/f16e36168cc93768ba5d53c9848ff2e8432d06b1))
+    - Merge branch 'optimize_hashtables' ([`95ad56c`](https://github.com/Byron/gitoxide/commit/95ad56c11489bc46d6eb2b2f48cf0bf01e954c58))
+    - use newly added git-hashtable ([`50cb436`](https://github.com/Byron/gitoxide/commit/50cb4362010e1a5799fe782df36ac5fcdb48dd8a))
+    - Merge branch 'path-normalize' ([`805329a`](https://github.com/Byron/gitoxide/commit/805329a0a5f6543bbc1d5885977b47bf7baa7f08))
+    - switch to custom Hasher implementation ([`269d59e`](https://github.com/Byron/gitoxide/commit/269d59e0bee1f072096667b143800a0d85b18403))
+    - Release git-features v0.24.1, git-actor v0.14.1, git-index v0.9.1 ([`7893502`](https://github.com/Byron/gitoxide/commit/789350208efc9d5fc6f9bc4f113f77f9cb445156))
+    - more faithfully parse http.followRedirect ([`b84ae6a`](https://github.com/Byron/gitoxide/commit/b84ae6a94082876bfc23cda167aabea88fda67be))
+    - adjust for changes in `git-path` ([`cf25e35`](https://github.com/Byron/gitoxide/commit/cf25e3594b99909defb431f34fb3a4d8a25bd37c))
+    - thanks clippy ([`10f4f21`](https://github.com/Byron/gitoxide/commit/10f4f2149830734cc551ea96a3d087f07d43fe29))
+    - Allow remote overrides for http options ([`340dcad`](https://github.com/Byron/gitoxide/commit/340dcad91832668bc1b570f35714178aa2c53ece))
+    - more type-safety for remote names by making clear they can be named after URLs. ([`84d594c`](https://github.com/Byron/gitoxide/commit/84d594caf3f04f1ce337e455343278a6f4674957))
+    - Add `Repository::commit_as(committer, author, …)` convenience method. ([`8482f90`](https://github.com/Byron/gitoxide/commit/8482f90d0a2b61259cd51ca4f40ce322e388cb34))
+    - upgrade to `prodash 21.1` and add `Ids` to all progress instances. ([`c8835c6`](https://github.com/Byron/gitoxide/commit/c8835c6edae784c9ffcb69a674c0a6545dbb2af3))
+    - Merge branch 'http-config' ([`a4ff140`](https://github.com/Byron/gitoxide/commit/a4ff140a0d3607cf282c49228c1248bd36d464fd))
+    - `config::CommitAutoRollback` now implements `DerefMut`. ([`363ac7a`](https://github.com/Byron/gitoxide/commit/363ac7a74ec841505b5fc7cc1b8fae11c0a63ea9))
+    - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
+    - make fmt ([`0abab7d`](https://github.com/Byron/gitoxide/commit/0abab7da2ec1b8560e6c1eb009f534c9fc7814fe))
+</details>
+
 ## 0.29.0 (2022-11-21)
 
 <csr-id-f302fc1bcd06fadccd126f4f5f9c0165afabedda/>
@@ -67,7 +283,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 24 commits contributed to the release over the course of 3 calendar days.
+ - 29 commits contributed to the release over the course of 4 calendar days.
  - 4 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#606](https://github.com/Byron/gitoxide/issues/606)
@@ -81,6 +297,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#606](https://github.com/Byron/gitoxide/issues/606)**
     - `git_repository::Commit::describe()` chooses tag names (more) correctly. ([`c6a6902`](https://github.com/Byron/gitoxide/commit/c6a690219915b2b401d2d11f61db35b2931e5b3a))
  * **Uncategorized**
+    - Release git-hash v0.10.0, git-features v0.24.0, git-date v0.3.0, git-actor v0.14.0, git-glob v0.5.0, git-path v0.6.0, git-quote v0.4.0, git-attributes v0.6.0, git-config-value v0.9.0, git-tempfile v3.0.0, git-lock v3.0.0, git-validate v0.7.0, git-object v0.23.0, git-ref v0.20.0, git-sec v0.5.0, git-config v0.12.0, git-command v0.2.0, git-prompt v0.2.0, git-url v0.11.0, git-credentials v0.7.0, git-diff v0.23.0, git-discover v0.9.0, git-bitmap v0.2.0, git-traverse v0.19.0, git-index v0.9.0, git-mailmap v0.6.0, git-chunk v0.4.0, git-pack v0.27.0, git-odb v0.37.0, git-packetline v0.14.0, git-transport v0.23.0, git-protocol v0.24.0, git-revision v0.7.0, git-refspec v0.4.0, git-worktree v0.9.0, git-repository v0.29.0, git-commitgraph v0.11.0, gitoxide-core v0.21.0, gitoxide v0.19.0, safety bump 28 crates ([`b2c301e`](https://github.com/Byron/gitoxide/commit/b2c301ef131ffe1871314e19f387cf10a8d2ac16))
     - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
     - Make `reqwest` TLS backend configuration easy. ([`3ddbd2d`](https://github.com/Byron/gitoxide/commit/3ddbd2de369b521fa3f21935f10fe9c248840893))
     - Merge branch 'max-pure' ([`03ff188`](https://github.com/Byron/gitoxide/commit/03ff1882f2982fba38fbbf245eea13ef9df50f33))
@@ -104,10 +321,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))
     - upgrade edition to 2021 in most crates. ([`3d8fa8f`](https://github.com/Byron/gitoxide/commit/3d8fa8fef9800b1576beab8a5bc39b821157a5ed))
     - also sort entries lexicographically ([`84ed89c`](https://github.com/Byron/gitoxide/commit/84ed89c3bf6692f18c4bb97173527de1bcba7ac6))
+    - curl can authenticate the proxy now and store or reject credentials. ([`63b9050`](https://github.com/Byron/gitoxide/commit/63b9050240b80c5493dab3e8d0b1c675f83d78d6))
+    - Pass along the action to kick off the proxy-authentication as well ([`ae74985`](https://github.com/Byron/gitoxide/commit/ae74985b84134795cad0fa88e3fbe9ca776ffa9a))
+    - configure the http proxy configuration method if needed ([`6b2d18e`](https://github.com/Byron/gitoxide/commit/6b2d18eb8da09ee6d209c9dbccd02dc0df62a967))
+    - Support for reading `http.proxyAuthMethod` ([`92f88c9`](https://github.com/Byron/gitoxide/commit/92f88c94ff288b5675ca3296c27ffb66e1716c22))
 </details>
-
-<csr-unknown>
- add Repository::empty_tree() to obtain the empty tree object.Useful for diffing mostly.<csr-unknown/>
 
 ## 0.28.0 (2022-11-17)
 
