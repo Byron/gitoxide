@@ -55,7 +55,12 @@ impl RepositoryUrl {
 
     fn cleaned_path(&self) -> String {
         let path = self.inner.path.to_str_lossy().into_owned();
-        path.strip_suffix(".git").map(ToOwned::to_owned).unwrap_or(path)
+        let path = path.strip_suffix(".git").map(ToOwned::to_owned).unwrap_or(path);
+        if !path.starts_with('/') {
+            format!("/{}", path)
+        } else {
+            path
+        }
     }
 
     pub fn github_https(&self) -> Option<String> {
