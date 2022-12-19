@@ -49,6 +49,9 @@ impl PackId {
     }
     /// Packs have a built-in identifier to make data structures simpler, and this method represents ourselves as such id
     /// to be convertible back and forth. We essentially compress ourselves into a u32.
+    ///
+    /// Bit 16 is a marker to tell us if it's a mult-pack or not, the ones before are the index file itself, the ones after
+    /// are used to encode the pack index within the multi-pack.
     pub(crate) fn to_intrinsic_pack_id(self) -> git_pack::data::Id {
         assert!(self.index < (1 << 15), "There shouldn't be more than 2^15 indices");
         match self.multipack_index {

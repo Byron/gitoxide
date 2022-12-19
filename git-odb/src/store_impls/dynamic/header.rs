@@ -82,7 +82,7 @@ where
                                 // multi-pack. Otherwise this would constitute a thin pack which is only allowed in transit.
                                 // However, if we somehow end up with that, we will resolve it safely, even though we could
                                 // avoid handling this case and error instead.
-                                let obj_kind = self
+                                let hdr = self
                                     .try_header_inner(
                                         &base_id,
                                         snapshot,
@@ -98,8 +98,7 @@ where
                                     .ok_or_else(|| Error::DeltaBaseMissing {
                                         base_id,
                                         id: id.to_owned(),
-                                    })?
-                                    .kind();
+                                    })?;
                                 let handle::index_lookup::Outcome {
                                     object_index:
                                         handle::IndexForObjectInPack {
@@ -139,7 +138,8 @@ where
                                         .or_else(|| {
                                             (id == base_id).then(|| {
                                                 git_pack::data::decode::header::ResolvedBase::OutOfPack {
-                                                    kind: obj_kind,
+                                                    kind: hdr.kind(),
+                                                    num_deltas: hdr.num_deltas(),
                                                 }
                                             })
                                         })

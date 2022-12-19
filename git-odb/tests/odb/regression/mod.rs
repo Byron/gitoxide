@@ -1,11 +1,11 @@
 mod repo_with_small_packs {
     use git_odb::Find;
 
-    use crate::odb::{fixture_path, hex_to_id};
+    use crate::odb::{db_small_packs, hex_to_id};
 
     #[test]
     fn all_packed_objects_can_be_found() -> crate::Result {
-        let store = git_odb::at(fixture_path("repos/small-packs.git/objects"))?;
+        let store = db_small_packs();
         let mut buf = Vec::new();
         assert!(
             store
@@ -18,24 +18,23 @@ mod repo_with_small_packs {
 
     #[test]
     #[cfg(feature = "internal-testing-git-features-parallel")]
-    fn multi_threaded_access_will_not_panic() {
+    fn multi_threaded_access_will_not_panic() -> crate::Result {
         for arg in ["no", "without-multi-index"] {
-            let base = git_testtools::scripted_fixture_read_only_with_args("make_repo_multi_index.sh", Some(arg))
-                .unwrap()
+            let base = git_testtools::scripted_fixture_read_only_with_args("make_repo_multi_index.sh", Some(arg))?
                 .join(".git")
                 .join("objects");
-            let store = git_odb::at(base).unwrap();
+            let store = git_odb::at(base)?;
             let (tx, barrier) = crossbeam_channel::unbounded::<()>();
             let handles = (0..num_cpus::get()).map(|tid| {
                 std::thread::spawn({
                     let store = store.clone();
                     let barrier = barrier.clone();
-                    move || {
+                    move || -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
                         barrier.recv().ok();
                         let mut buf = Vec::new();
                         let mut count = 0;
-                        for id in store.iter().unwrap() {
-                            let id = id.unwrap();
+                        for id in store.iter()? {
+                            let id = id?;
                             assert!(
                                 store.try_find(id, &mut buf).is_ok(),
                                 "Thread {} could not find {}",
@@ -44,18 +43,27 @@ mod repo_with_small_packs {
                             );
                             count += 1;
                         }
-                        count
+                        Ok(count)
                     }
                 })
             });
 
             std::thread::sleep(std::time::Duration::from_millis(50));
             drop(tx);
-            let expected = store.iter().unwrap().count();
+            let expected = store.iter()?.count();
+            assert_eq!(
+                store
+                    .iter()?
+                    .with_ordering(git_odb::store::iter::Ordering::PackAscendingOffsetThenLooseLexicographical)
+                    .count(),
+                expected,
+                "different ordering doesn't change the count"
+            );
             for handle in handles {
-                let actual = handle.join().expect("no panic");
+                let actual = handle.join().expect("no panic").expect("no error in thread");
                 assert_eq!(actual, expected);
             }
         }
+        Ok(())
     }
 }

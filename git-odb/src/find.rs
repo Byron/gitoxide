@@ -87,6 +87,13 @@ mod header {
                 Header::Loose { size, .. } => *size,
             }
         }
+        /// Return the amount of deltas decoded to obtain this header, if the object was packed.
+        pub fn num_deltas(&self) -> Option<u32> {
+            match self {
+                Header::Packed(out) => out.num_deltas.into(),
+                Header::Loose { .. } => None,
+            }
+        }
     }
 
     impl From<git_pack::data::decode::header::Outcome> for Header {

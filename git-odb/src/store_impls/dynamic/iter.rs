@@ -2,12 +2,21 @@ use std::{ops::Deref, option::Option::None, sync::Arc, vec::IntoIter};
 
 use git_hash::ObjectId;
 
+use crate::store::handle::SingleOrMultiIndex;
+use crate::store::types::PackId;
 use crate::{loose, store::handle, store_impls::dynamic};
+
+struct EntryForOrdering {
+    pack_offset: u64,
+    entry_index: u32,
+    pack_index: u16,
+}
 
 enum State {
     Pack {
         index_iter: IntoIter<handle::IndexLookup>,
         index: handle::IndexLookup,
+        ordered_entries: Option<Vec<EntryForOrdering>>,
         entry_index: u32,
         num_objects: u32,
     },
@@ -18,11 +27,49 @@ enum State {
     Depleted,
 }
 
-/// An iterator over all objects of an object store.
+/// Define the order in which objects are returned.
+#[derive(Debug, Copy, Clone)]
+pub enum Ordering {
+    /// Traverse packs first as sorted by their index files in lexicographical order (sorted by object id), then traverse loose objects
+    /// as sorted by their names as well.
+    ///
+    /// This mode uses no memory as it's the natural ordering of objects, and is best to obtain all object ids as quickly as possible,
+    /// while noting that these may contain duplicates. However, it's very costly to obtain object information or decode them with this
+    /// scheme as cache-hits are unlikely with it and memory maps are less efficient when loading them in random order.
+    PackLexicographicalThenLooseLexicographical,
+    /// Traverse packs first yielding object ids sorted by their position in the pack, with those at the beginning of the pack file coming first.
+    /// Then follow loose objects sorted by their names.
+    ///
+    /// This mode allocates and as to pre-sort objects by their offsets, delaying the start of the iteration once per pack while keeping
+    /// memory allocated once per pack. This price is usually worth paying once querying object information is planned as pack caches
+    /// are more efficiently used that way.
+    PackAscendingOffsetThenLooseLexicographical,
+}
+
+impl Default for Ordering {
+    fn default() -> Self {
+        Ordering::PackLexicographicalThenLooseLexicographical
+    }
+}
+
+/// An iterator over all, _possibly duplicate_, objects of an object store, which by default uses no extra memory but yields an
+/// order that is costly to traverse when querying object information or decoding them.
+///
+/// Use [`with_ordering()`][AllObjects::with_ordering()] to choose a performance trade-off.
 pub struct AllObjects {
     state: State,
     num_objects: usize,
     loose_dbs: Arc<Vec<loose::Store>>,
+    order: Ordering,
+}
+
+/// Builder
+impl AllObjects {
+    /// Set the ordering of the objects returned, trading off memory and latency for object query performance.
+    pub fn with_ordering(mut self, order: Ordering) -> Self {
+        self.order = order;
+        self
+    }
 }
 
 impl AllObjects {
@@ -36,11 +83,13 @@ impl AllObjects {
             .fold(0usize, |dbc, index| dbc.saturating_add(index.num_objects() as usize));
         let mut index_iter = snapshot.indices.into_iter();
         let loose_dbs = snapshot.loose_dbs;
+        let order = Default::default();
         let state = match index_iter.next() {
             Some(index) => {
                 let num_objects = index.num_objects();
                 State::Pack {
                     index_iter,
+                    ordered_entries: maybe_sort_entries(&index, order),
                     index,
                     entry_index: 0,
                     num_objects,
@@ -58,8 +107,48 @@ impl AllObjects {
             state,
             loose_dbs,
             num_objects: packed_objects,
+            order,
         })
     }
+}
+
+fn maybe_sort_entries(index: &handle::IndexLookup, order: Ordering) -> Option<Vec<EntryForOrdering>> {
+    let mut order: Vec<_> = match order {
+        Ordering::PackLexicographicalThenLooseLexicographical => return None,
+        Ordering::PackAscendingOffsetThenLooseLexicographical => match &index.file {
+            // We know that we cannot have more than u32 entry indices per pack.
+            SingleOrMultiIndex::Single { index, .. } => index
+                .iter()
+                .enumerate()
+                .map(|(idx, e)| EntryForOrdering {
+                    pack_offset: e.pack_offset,
+                    entry_index: idx as u32,
+                    pack_index: 0,
+                })
+                .collect(),
+            SingleOrMultiIndex::Multi { index, .. } => index
+                .iter()
+                .enumerate()
+                .map(|(idx, e)| EntryForOrdering {
+                    pack_offset: e.pack_offset,
+                    entry_index: idx as u32,
+                    pack_index: {
+                        debug_assert!(
+                            e.pack_index < PackId::max_packs_in_multi_index(),
+                            "this shows the relation between u16 and pack_index (u32) and why this is OK"
+                        );
+                        e.pack_index as u16
+                    },
+                })
+                .collect(),
+        },
+    };
+    order.sort_by(|a, b| {
+        a.pack_index
+            .cmp(&b.pack_index)
+            .then_with(|| a.pack_offset.cmp(&b.pack_offset))
+    });
+    Some(order)
 }
 
 impl Iterator for AllObjects {
@@ -70,17 +159,23 @@ impl Iterator for AllObjects {
             State::Depleted => None,
             State::Pack {
                 index_iter,
+                ordered_entries,
                 index,
                 entry_index,
                 num_objects,
             } => {
                 if *entry_index < *num_objects {
-                    let oid = index.oid_at_index(*entry_index).to_owned();
+                    let oid = match ordered_entries {
+                        Some(entries) => index.oid_at_index(entries[*entry_index as usize].entry_index),
+                        None => index.oid_at_index(*entry_index),
+                    }
+                    .to_owned();
                     *entry_index += 1;
                     Some(Ok(oid))
                 } else {
                     match index_iter.next() {
                         Some(new_index) => {
+                            *ordered_entries = maybe_sort_entries(&new_index, self.order);
                             *index = new_index;
                             *entry_index = 0;
                             *num_objects = index.num_objects();

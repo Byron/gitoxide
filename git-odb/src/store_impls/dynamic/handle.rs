@@ -77,7 +77,8 @@ pub(crate) mod index_lookup {
     }
 
     impl handle::IndexLookup {
-        /// Return an iterator over the entries of the given pack. The `pack_id` is only required to
+        /// Return an iterator over the entries of the given pack. The `pack_id` is required to identify a pack uniquely within
+        /// a potential multi-pack index.
         pub(crate) fn iter(
             &self,
             pack_id: types::PackId,
