@@ -2,16 +2,11 @@
 //! to be sure we don't loose coverage. This might, however, be overlapping with much more thorough
 //! tests o the general store itself, so they can possibly be removed at some point.
 
-use crate::fixture_path;
-
-fn db() -> git_odb::Handle {
-    git_odb::at(fixture_path("objects")).expect("valid object path")
-}
-
 mod locate {
     use git_odb::Find;
 
-    use crate::{hex_to_id, odb::store::compound::db};
+    use crate::hex_to_id;
+    use crate::odb::db;
 
     fn can_locate(db: &git_odb::Handle, hex_id: &str) {
         let mut buf = vec![];

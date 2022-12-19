@@ -1,11 +1,16 @@
 use std::process::Command;
 
+use crate::odb::db;
 use git_hash::ObjectId;
+use git_odb::store::iter::Ordering;
 use git_odb::{store, Find, FindExt, Header, Write};
 use git_testtools::{fixture_path, hex_to_id};
 
-fn db() -> git_odb::Handle {
-    git_odb::at(fixture_path("objects")).expect("valid object path")
+fn all_orderings() -> [Ordering; 2] {
+    [
+        Ordering::PackLexicographicalThenLooseLexicographical,
+        Ordering::PackAscendingOffsetThenLooseLexicographical,
+    ]
 }
 
 /// indices, multi-pack-index, loose odb
@@ -54,18 +59,20 @@ fn multi_index_access() -> crate::Result {
         "it starts out knowing nothing, it's completely lazy"
     );
 
-    let mut count = 0;
-    let mut buf = Vec::new();
-    for oid in handle.iter()? {
-        let oid = oid?;
-        assert!(handle.contains(oid));
-        let obj = handle.find(oid, &mut buf)?;
-        let hdr = handle.try_header(oid)?.expect("exists");
-        assert_eq!(hdr.kind(), obj.kind);
-        assert_eq!(hdr.size(), obj.data.len() as u64);
-        count += 1;
+    for order in all_orderings() {
+        let mut count = 0;
+        let mut buf = Vec::new();
+        for oid in handle.iter()?.with_ordering(order) {
+            let oid = oid?;
+            assert!(handle.contains(oid));
+            let obj = handle.find(oid, &mut buf)?;
+            let hdr = handle.try_header(oid)?.expect("exists");
+            assert_eq!(hdr.kind(), obj.kind);
+            assert_eq!(hdr.size(), obj.data.len() as u64);
+            count += 1;
+        }
+        assert_eq!(count, 1732);
     }
-    assert_eq!(count, 1732);
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -494,27 +501,30 @@ fn packed_object_count_causes_all_indices_to_be_loaded() {
 mod disambiguate_prefix {
     use std::cmp::Ordering;
 
+    use crate::odb::store::dynamic::all_orderings;
     use git_odb::store::prefix::disambiguate::Candidate;
     use git_testtools::hex_to_id;
 
     use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
 
     #[test]
-    fn unambiguous_hex_lengths_yield_prefixes_of_exactly_the_given_length() {
-        let (mut handle, _tmp) = db_with_all_object_sources().unwrap();
+    fn unambiguous_hex_lengths_yield_prefixes_of_exactly_the_given_length() -> crate::Result {
+        let (mut handle, _tmp) = db_with_all_object_sources()?;
         handle.refresh.never();
 
         let hex_lengths = &[5, 7, 40];
-        for (index, oid) in handle.iter().unwrap().map(Result::unwrap).enumerate() {
-            let hex_len = hex_lengths[index % hex_lengths.len()];
-            let prefix = handle
-                .disambiguate_prefix(Candidate::new(oid, hex_len).unwrap())
-                .unwrap()
-                .expect("object exists");
-            assert_eq!(prefix.hex_len(), hex_len);
-            assert_eq!(prefix.cmp_oid(&oid), Ordering::Equal);
+        for order in all_orderings() {
+            for (index, oid) in handle.iter()?.with_ordering(order).map(Result::unwrap).enumerate() {
+                let hex_len = hex_lengths[index % hex_lengths.len()];
+                let prefix = handle
+                    .disambiguate_prefix(Candidate::new(oid, hex_len)?)?
+                    .expect("object exists");
+                assert_eq!(prefix.hex_len(), hex_len);
+                assert_eq!(prefix.cmp_oid(&oid), Ordering::Equal);
+            }
         }
         assert_all_indices_loaded(&handle, 1, 2);
+        Ok(())
     }
 
     #[test]
@@ -572,9 +582,42 @@ mod disambiguate_prefix {
     }
 }
 
+mod iter {
+    use crate::odb::db;
+    use crate::odb::store::dynamic::{all_orderings, db_with_all_object_sources};
+    use git_odb::store::iter::Ordering;
+
+    #[test]
+    fn iteration_ordering_is_effective() -> crate::Result {
+        assert_eq!(all_orderings().len(), 2, "new orderings cause this test to be reviewed");
+        for (handle, _tmp) in [db_with_all_object_sources().map(|(a, b)| (a, Some(b)))?, (db(), None)] {
+            let (mut a, mut b): (Vec<_>, Vec<_>) = (
+                handle
+                    .iter()?
+                    .with_ordering(Ordering::PackLexicographicalThenLooseLexicographical)
+                    .map(Result::unwrap)
+                    .collect(),
+                handle
+                    .iter()?
+                    .with_ordering(Ordering::PackAscendingOffsetThenLooseLexicographical)
+                    .map(Result::unwrap)
+                    .collect(),
+            );
+            assert_eq!(a.len(), b.len(), "count isn't affected by ordering");
+            assert_ne!(a, b, "ordering is different");
+
+            a.sort();
+            b.sort();
+            assert_eq!(a, b, "both sets contain the same object ids");
+        }
+        Ok(())
+    }
+}
+
 mod lookup_prefix {
     use std::collections::HashSet;
 
+    use crate::odb::store::dynamic::all_orderings;
     use git_testtools::hex_to_id;
     use maplit::hashset;
 
@@ -620,29 +663,31 @@ mod lookup_prefix {
     }
 
     #[test]
-    fn iterable_objects_can_be_looked_up_with_varying_prefix_lengths() {
-        let (mut handle, _tmp) = db_with_all_object_sources().unwrap();
+    fn iterable_objects_can_be_looked_up_with_varying_prefix_lengths() -> crate::Result {
+        let (mut handle, _tmp) = db_with_all_object_sources()?;
         handle.refresh.never();
 
         let hex_lengths = &[5, 7, 40];
-        for (index, oid) in handle.iter().unwrap().map(Result::unwrap).enumerate() {
-            for mut candidates in [None, Some(HashSet::default())] {
-                let hex_len = hex_lengths[index % hex_lengths.len()];
-                let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
-                assert_eq!(
-                    handle
-                        .lookup_prefix(prefix, candidates.as_mut())
-                        .unwrap()
-                        .expect("object exists")
-                        .expect("unambiguous"),
-                    oid
-                );
-                if let Some(candidates) = candidates {
-                    assert_eq!(candidates, hashset! {oid});
+        for order in all_orderings() {
+            for (index, oid) in handle.iter()?.with_ordering(order).map(Result::unwrap).enumerate() {
+                for mut candidates in [None, Some(HashSet::default())] {
+                    let hex_len = hex_lengths[index % hex_lengths.len()];
+                    let prefix = git_hash::Prefix::new(oid, hex_len)?;
+                    assert_eq!(
+                        handle
+                            .lookup_prefix(prefix, candidates.as_mut())?
+                            .expect("object exists")
+                            .expect("unambiguous"),
+                        oid
+                    );
+                    if let Some(candidates) = candidates {
+                        assert_eq!(candidates, hashset! {oid});
+                    }
                 }
             }
         }
         assert_all_indices_loaded(&handle, 1, 2);
+        Ok(())
     }
 }
 
@@ -694,15 +739,17 @@ fn missing_objects_triggers_everything_is_loaded() {
 #[test]
 fn iterate_over_a_bunch_of_loose_and_packed_objects() -> crate::Result {
     let (db, _tmp) = db_with_all_object_sources()?;
-    let iter = db.iter()?;
-    assert_eq!(
-        iter.size_hint(),
-        (139, None),
-        "we only count packs and have no upper bound"
-    );
-    assert_eq!(iter.count(), 146, "it sees the correct amount of objects");
-    for id in db.iter()? {
-        assert!(db.contains(id?), "each object exists");
+    for order in all_orderings() {
+        let iter = db.iter()?.with_ordering(order);
+        assert_eq!(
+            iter.size_hint(),
+            (139, None),
+            "we only count packs and have no upper bound"
+        );
+        assert_eq!(iter.count(), 146, "it sees the correct amount of objects");
+        for id in db.iter()? {
+            assert!(db.contains(id?), "each object exists");
+        }
     }
     Ok(())
 }

@@ -1,10 +1,5 @@
-use crate::fixture_path;
-
-fn new_store() -> git_odb::Handle {
-    git_odb::at(fixture_path("objects")).expect("valid object path")
-}
-
 use crate::hex_to_id;
+use crate::odb::db;
 
 fn find_header(db: impl git_odb::Header, hex_id: &str) -> git_odb::find::Header {
     db.try_header(hex_to_id(hex_id))
@@ -14,12 +9,12 @@ fn find_header(db: impl git_odb::Header, hex_id: &str) -> git_odb::find::Header 
 
 #[test]
 fn loose_object() {
-    find_header(&new_store(), "37d4e6c5c48ba0d245164c4e10d5f41140cab980");
+    find_header(&db(), "37d4e6c5c48ba0d245164c4e10d5f41140cab980");
 }
 
 #[test]
 fn pack_object() {
-    let db = new_store();
+    let db = db();
     assert_eq!(
         find_header(&db, "501b297447a8255d3533c6858bb692575cdefaa0"), // pack 11fd
         git_odb::find::Header::Packed(git_pack::data::decode::header::Outcome {
