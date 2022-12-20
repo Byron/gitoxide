@@ -52,11 +52,8 @@ fn guess_protocol(url: &[u8]) -> Option<&str> {
 /// Extract the path part from an SCP-like URL `[user@]host.xz:path/to/repo.git/`
 ///
 /// The path being relative, the `./` prefix is redundant and so removed if present.
-fn extract_scp_path(url: &str) -> &str {
-    url.split(':')
-        .last()
-        .expect("SCP-like URLs always have a colon")
-        .trim_start_matches("./")
+fn extract_scp_path(url: &str) -> Option<&str> {
+    url.split(':').last()?.trim_start_matches("./").into()
 }
 
 fn sanitize_for_protocol<'a>(protocol: &str, url: &'a str) -> Cow<'a, str> {
@@ -148,7 +145,7 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
                     guessed_protocol,
                     sanitize_for_protocol(guessed_protocol, url_str)
                 ))?,
-                Some(extract_scp_path(url_str)),
+                extract_scp_path(url_str),
             )
         }
         Err(err) => return Err(err.into()),
@@ -157,7 +154,7 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     if url.scheme().find('.').is_some() {
         // try again with prefixed protocol
         url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
-        scp_path = Some(extract_scp_path(url_str));
+        scp_path = extract_scp_path(url_str);
     }
     if url.path().is_empty() && ["ssh", "git"].contains(&url.scheme()) {
         return Err(Error::MissingResourceLocation);
@@ -166,5 +163,10 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
         return Err(Error::RelativeUrl { url: url.into() });
     }
 
-    to_owned_url(url).map(|url| url.serialize_alternate_form(scp_path.is_some()).with_path(scp_path))
+    let mut url = to_owned_url(url)?;
+    if let Some(path) = scp_path {
+        url.path = path.into();
+        url.serialize_alternative_form = true;
+    }
+    Ok(url)
 }

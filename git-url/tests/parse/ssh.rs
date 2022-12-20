@@ -48,7 +48,7 @@ fn with_user_and_without_port() -> crate::Result {
 }
 
 #[test]
-fn with_user_and_with_port() -> crate::Result {
+fn with_user_and_port_and_absolute_path() -> crate::Result {
     assert_url_roundtrip(
         "ssh://user@host.xz:42/.git",
         url(Scheme::Ssh, "user", "host.xz", 42, b"/.git"),

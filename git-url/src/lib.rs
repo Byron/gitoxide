@@ -116,14 +116,6 @@ impl Url {
         self
     }
 
-    /// Set the path (for scp-like). Relative path is kept as it is.
-    fn with_path(mut self, path: Option<&str>) -> Self {
-        if let Some(p) = path {
-            self.path = p.into();
-        }
-        self
-    }
-
     /// Turn a file url like `file://relative` into `file:///root/relative`, hence it assures the url's path component is absolute.
     pub fn canonicalize(&mut self) -> Result<(), git_path::realpath::Error> {
         if self.scheme == Scheme::File {
