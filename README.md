@@ -5,7 +5,7 @@
 `gitoxide` is an implementation of `git` written in Rust for developing future-proof applications which strive for correctness and
 performance while providing a pleasant and unsurprising developer experience. 
 
-`gitoxde` provides the `gix` and `ein` binaries for use on the command-line to allow experimentation with key features
+`gitoxide` provides the `gix` and `ein` binaries for use on the command-line to allow experimentation with key features
 like `fetch` and `clone`, and to validate the usability and control of the API offered by the [`git-repository`] crate. 
 
 `gitoxide` aspires to be a production-grade server implementation and the `ein` binary aspires to become the default way to interact with git repositories.
