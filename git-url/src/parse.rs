@@ -50,10 +50,8 @@ fn guess_protocol(url: &[u8]) -> Option<&str> {
 }
 
 /// Extract the path part from an SCP-like URL `[user@]host.xz:path/to/repo.git/`
-///
-/// The path being relative, the `./` prefix is redundant and so removed if present.
 fn extract_scp_path(url: &str) -> Option<&str> {
-    url.split(':').last()?.trim_start_matches("./").into()
+    url.splitn(2, ':').last()
 }
 
 fn sanitize_for_protocol<'a>(protocol: &str, url: &'a str) -> Cow<'a, str> {

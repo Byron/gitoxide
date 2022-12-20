@@ -113,7 +113,14 @@ fn scp_like_with_user_and_relative_path_keep_relative_path() -> crate::Result {
         url_alternate(Scheme::Ssh, "user", "host.xz", None, b"./relative"),
     )?
     .to_bstring();
-    assert_eq!(url, "user@host.xz:relative");
+    assert_eq!(url, "user@host.xz:./relative", "./ is maintained");
+
+    let url = assert_url(
+        "user@host.xz:././relative",
+        url_alternate(Scheme::Ssh, "user", "host.xz", None, b"././relative"),
+    )?
+    .to_bstring();
+    assert_eq!(url, "user@host.xz:././relative", "./ is maintained, even if repeated");
 
     let url = assert_url(
         "user@host.xz:../relative",
@@ -121,5 +128,16 @@ fn scp_like_with_user_and_relative_path_keep_relative_path() -> crate::Result {
     )?
     .to_bstring();
     assert_eq!(url, "user@host.xz:../relative");
+    Ok(())
+}
+
+#[test]
+fn strange_windows_paths_yield_meaningful_results() -> crate::Result {
+    let url = assert_url(
+        "user@host.xz:42:C:/strange/absolute/path",
+        url_alternate(Scheme::Ssh, "user", "host.xz", Some(42), b"C:/strange/absolute/path"),
+    )?
+    .to_bstring();
+    assert_eq!(url, "user@host.xz:42:C:/strange/absolute/path");
     Ok(())
 }
