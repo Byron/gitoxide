@@ -192,10 +192,8 @@ impl Url {
         }
         if self.serialize_alternative_form && self.scheme == Scheme::Ssh {
             out.write_all(b":")?;
-            out.write_all(&self.path[1..])?;
-        } else {
-            out.write_all(&self.path)?;
         }
+        out.write_all(&self.path)?;
         Ok(())
     }
 
