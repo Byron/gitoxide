@@ -48,7 +48,7 @@ pub fn main() -> Result<()> {
             }) => {
                 use gitoxide_core::hours;
                 prepare_and_run(
-                    "find",
+                    "estimate-hours",
                     verbose,
                     progress,
                     progress_keep_open,
