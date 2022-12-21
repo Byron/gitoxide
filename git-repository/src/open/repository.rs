@@ -48,13 +48,26 @@ impl ThreadSafeRepository {
     pub fn open_opts(path: impl Into<PathBuf>, mut options: Options) -> Result<Self, Error> {
         let (path, kind) = {
             let path = path.into();
-            match git_discover::is_git(&path) {
-                Ok(kind) => (path, kind),
-                Err(_err) => {
-                    let git_dir = path.join(git_discover::DOT_GIT_DIR);
-                    git_discover::is_git(&git_dir)
-                        .map(|kind| (git_dir, kind))
-                        .map_err(|err| Error::NotARepository { source: err, path })?
+            let looks_like_git_dir =
+                path.ends_with(git_discover::DOT_GIT_DIR) || path.extension() == Some(std::ffi::OsStr::new("git"));
+            let candidate = if !options.open_path_as_is && !looks_like_git_dir {
+                Cow::Owned(path.join(git_discover::DOT_GIT_DIR))
+            } else {
+                Cow::Borrowed(&path)
+            };
+            match git_discover::is_git(candidate.as_ref()) {
+                Ok(kind) => (candidate.into_owned(), kind),
+                Err(err) => {
+                    if options.open_path_as_is || matches!(candidate, Cow::Borrowed(_)) {
+                        return Err(Error::NotARepository {
+                            source: err,
+                            path: candidate.into_owned(),
+                        });
+                    }
+                    match git_discover::is_git(&path) {
+                        Ok(kind) => (path, kind),
+                        Err(err) => return Err(Error::NotARepository { source: err, path }),
+                    }
                 }
             }
         };
@@ -128,6 +141,7 @@ impl ThreadSafeRepository {
             lossy_config,
             lenient_config,
             bail_if_untrusted,
+            open_path_as_is: _,
             permissions: Permissions { ref env, config },
             ref api_config_overrides,
             ref cli_config_overrides,

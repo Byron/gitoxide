@@ -23,6 +23,7 @@ pub struct Options {
     pub(crate) bail_if_untrusted: bool,
     pub(crate) api_config_overrides: Vec<BString>,
     pub(crate) cli_config_overrides: Vec<BString>,
+    pub(crate) open_path_as_is: bool,
     /// Internal to pass an already obtained CWD on to where it may also be used. This avoids the CWD being queried more than once per repo.
     pub(crate) current_dir: Option<PathBuf>,
 }

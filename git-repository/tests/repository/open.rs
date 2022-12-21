@@ -46,6 +46,34 @@ mod not_a_repository {
     }
 }
 
+mod open_path_as_is {
+    use crate::util::{named_subrepo_opts, repo_opts};
+    use git_repository as git;
+
+    fn open_path_as_is() -> git::open::Options {
+        git::open::Options::isolated().open_path_as_is(true)
+    }
+
+    #[test]
+    fn bare_repos_open_normally() -> crate::Result {
+        assert!(named_subrepo_opts("make_basic_repo.sh", "bare.git", open_path_as_is())?.is_bare());
+        Ok(())
+    }
+
+    #[test]
+    fn worktrees_cannot_be_opened() -> crate::Result {
+        let err = repo_opts("make_basic_repo.sh", open_path_as_is()).unwrap_err();
+        assert!(matches!(err, git::open::Error::NotARepository { .. }));
+        Ok(())
+    }
+
+    #[test]
+    fn git_dir_within_worktrees_open_normally() -> crate::Result {
+        assert!(!named_subrepo_opts("make_basic_repo.sh", ".git", open_path_as_is())?.is_bare());
+        Ok(())
+    }
+}
+
 mod submodules {
     use std::path::Path;
 
