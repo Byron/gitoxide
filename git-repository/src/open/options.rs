@@ -13,6 +13,7 @@ impl Default for Options {
             lossy_config: None,
             lenient_config: true,
             bail_if_untrusted: false,
+            open_path_as_is: false,
             api_config_overrides: Vec::new(),
             cli_config_overrides: Vec::new(),
             current_dir: None,
@@ -66,6 +67,15 @@ impl Options {
     /// Set the given permissions, which are typically derived by a `Trust` level.
     pub fn permissions(mut self, permissions: Permissions) -> Self {
         self.permissions = permissions;
+        self
+    }
+
+    /// If `true`, default `false`, we will not modify the incoming path to open to assure it is a `.git` directory.
+    ///
+    /// If `false`, we will try to open the input directory as is, even though it doesn't appear to be a `git` repository
+    /// due to the lack of `.git` suffix or because its basename is not `.git` as in `worktree/.git`.
+    pub fn open_path_as_is(mut self, enable: bool) -> Self {
+        self.open_path_as_is = enable;
         self
     }
 
@@ -146,6 +156,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 lossy_config: None,
                 bail_if_untrusted: false,
                 lenient_config: true,
+                open_path_as_is: false,
                 api_config_overrides: Vec::new(),
                 cli_config_overrides: Vec::new(),
                 current_dir: None,
@@ -157,6 +168,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 filter_config_section: Some(config::section::is_trusted),
                 bail_if_untrusted: false,
                 lenient_config: true,
+                open_path_as_is: false,
                 lossy_config: None,
                 api_config_overrides: Vec::new(),
                 cli_config_overrides: Vec::new(),
