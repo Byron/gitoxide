@@ -18,7 +18,7 @@
 //!
 //! By default, the [`Repository`] isn't `Sync` and thus can't be used in certain contexts which require the `Sync` trait.
 //!
-//! To help with this, convert it with `.to_sync()` into a [`ThreadSafeRepository`].
+//! To help with this, convert it with [`.into_sync()`][Repository::into_sync()] into a [`ThreadSafeRepository`].
 //!
 //! ## Object-Access Performance
 //!
@@ -26,44 +26,14 @@
 //! to understand which cache levels exist and how to leverage them.
 //!
 //! When accessing an object, the first cache that's queried is a  memory-capped LRU object cache, mapping their id to data and kind.
+//! It has to be specifically enabled a [`Repository`].
 //! On miss, the object is looked up and if a pack is hit, there is a small fixed-size cache for delta-base objects.
 //!
-//! In scenarios where the same objects are accessed multiple times, an object cache can be useful and is to be configured specifically
+//! In scenarios where the same objects are accessed multiple times, the object cache can be useful and is to be configured specifically
 //! using the [`object_cache_size(…)`][crate::Repository::object_cache_size()] method.
 //!
 //! Use the `cache-efficiency-debug` cargo feature to learn how efficient the cache actually is - it's easy to end up with lowered
 //! performance if the cache is not hit in 50% of the time.
-//!
-//! ### Shortcomings & Limitations
-//!
-//! - Only a single `crate::object` or derivatives can be held in memory at a time, _per `Easy*`_.
-//! - Changes made to the configuration, packs, and alternates aren't picked up automatically, but the current object store
-//!   needs a manual refresh.
-//!
-//! ### Design Sketch
-//!
-//! Goal is to make the lower-level plumbing available without having to deal with any caches or buffers, and avoid any allocation
-//! beyond sizing the buffer to fit the biggest object seen so far.
-//!
-//! * no implicit object lookups, thus `Oid` needs to get an `Object` first to start out with data via `object()`
-//! * Objects with `Ref` suffix can only exist one at a time unless they are transformed into an owned version of it OR
-//!   multiple `Easy` handles are present, each providing another 'slot' for an object as long as its retrieved through
-//!   the respective `Easy` object.
-//! * `ObjectRef` blocks the current buffer, hence many of its operations that use the buffer are consuming
-//! * All methods that access a any field from `Easy`'s mutable `State` are fallible, and return `easy::Result<_>` at least, to avoid
-//!   panics if the field can't be referenced due to borrow rules of `RefCell`.
-//! * Anything attached to `Access` can be detached to lift the object limit or make them `Send`-able. They can be `attached` to another
-//!   `Access` if needed.
-//! * `git-repository` functions related to `Access` extensions will always return attached versions of return values, like `Oid` instead
-//!   of `git_hash::ObjectId`, `ObjectRef` instead of `git_odb::data::Object`, or `Reference` instead of `git_ref::Reference`.
-//! * Obtaining mutable is currently a weak spot as these only work with Arc<RwLock> right now and can't work with `Rc<RefCell>` due
-//!   to missing GATs, presumably. All `Easy*!Exclusive` types are unable to provide a mutable reference to the underlying repository.
-//!   However, other ways to adjust the `Repository` of long-running applications are possible. For instance, there could be a flag that
-//!   indicates a new `Repository` should be created (for instance, after it was changed) which causes the next server connection to
-//!   create a new one. This instance is the one to use when spawning new `EasyArc` instances.
-//! * `Platform` types are used to hold mutable or shared versions of required state for use in dependent objects they create, like iterators.
-//!   These come with the benefit of allowing for nicely readable call chains. Sometimes these are called `Platform` for a lack of a more specific
-//!   term, some are called more specifically like `Ancestors`.
 //!
 //! ### Terminology
 //!

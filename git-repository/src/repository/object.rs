@@ -16,12 +16,6 @@ impl crate::Repository {
     /// There are various legitimate reasons for an object to not be present, which is why
     /// [`try_find_object(…)`][crate::Repository::try_find_object()] might be preferable instead.
     ///
-    /// # Important
-    ///
-    /// As a shared buffer is written to back the object data, the returned `ObjectRef` will prevent other
-    /// `find_object()` operations from succeeding while alive.
-    /// To bypass this limit, clone this `sync::Handle` instance.
-    ///
     /// # Performance Note
     ///
     /// In order to get the kind of the object, is must be fully decoded from storage if it is packed with deltas.
@@ -42,12 +36,6 @@ impl crate::Repository {
     }
 
     /// Try to find the object with `id` or return `None` it it wasn't found.
-    ///
-    /// # Important
-    ///
-    /// As a shared buffer is written to back the object data, the returned `ObjectRef` will prevent other
-    /// `try_find_object()` operations from succeeding while alive.
-    /// To bypass this limit, clone this `sync::Handle` instance.
     pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::Error> {
         let id = id.into();
         if id == git_hash::ObjectId::empty_tree(self.object_hash()) {
