@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.30.1 (2022-12-22)
 
 ### New Features
 
@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 1 calendar day.
+ - 6 commits contributed to the release over the course of 1 calendar day.
  - 2 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#668](https://github.com/Byron/gitoxide/issues/668)
@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#668](https://github.com/Byron/gitoxide/issues/668)**
     - update docs ([`f620f87`](https://github.com/Byron/gitoxide/commit/f620f87f3722f75396b1ff990fd7fe754f4a1558))
  * **Uncategorized**
+    - prepare changelogs prior to release ([`68ce15d`](https://github.com/Byron/gitoxide/commit/68ce15d07b50cfacdac0d1e42fe7f5e6330ba523))
     - Merge branch 'adjustments-for-cargo' ([`5afa7f5`](https://github.com/Byron/gitoxide/commit/5afa7f51342deaf0938e7fb2ebe6a578e83ab645))
     - `open::Options::open_path_as_is()` allows to avoid 'smart opening' to try the path verbatim. ([`ca84c87`](https://github.com/Byron/gitoxide/commit/ca84c87734804cbfc65e311b89ff6ccfc236149c))
     - Merge branch 'fix/relative-scplike-urls' ([`2c2d373`](https://github.com/Byron/gitoxide/commit/2c2d373cfda26a2bb57dbc2b317ee2d8e1f96e84))

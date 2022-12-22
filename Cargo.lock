@@ -1617,7 +1617,7 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.25.0"
+version = "0.25.1"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1690,7 +1690,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.30.0"
+version = "0.30.1"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1820,7 +1820,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-transport"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1863,7 +1863,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-url"
-version = "0.12.0"
+version = "0.12.1"
 dependencies = [
  "bstr",
  "document-features",
