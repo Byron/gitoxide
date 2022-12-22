@@ -23,6 +23,11 @@ This release also fixes compatibility issues that formerly prevented to fetch or
    
    To counter that, there is a new `--no-verbose` flag to turn that off.
  - <csr-id-aeb4a1d5cb76316058c7d687e26f5c7db351c09c/> add `--strict` option to enforce strict checking of configuration.
+ - <csr-id-8c9c243fc574dc17b92a8e2025fbd8efdf2833da/> `gix odb stats` to calculate statistics on the object database.
+   This includes the amount of objects along with a listing of where they are
+   located.
+ - <csr-id-e2b8c5dce7185b5fa194b90f32e642e5c9d1227f/> `gix clone --no-tags` support.
+   This is the same as `git clone --no-tags`.
 
 ### Changed (BREAKING)
 
@@ -48,9 +53,9 @@ This release also fixes compatibility issues that formerly prevented to fetch or
 
 <csr-read-only-do-not-edit/>
 
- - 13 commits contributed to the release over the course of 12 calendar days.
- - 12 days passed between releases.
- - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 21 commits contributed to the release over the course of 30 calendar days.
+ - 30 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -60,6 +65,14 @@ This release also fixes compatibility issues that formerly prevented to fetch or
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - fix label for `ein t estimate-hours` command ([`4c93de1`](https://github.com/Byron/gitoxide/commit/4c93de113898c6ff6ae1da3ea38d646626c86205))
+    - Merge branch 'read-header' ([`3d01252`](https://github.com/Byron/gitoxide/commit/3d0125271ec7bd606734bd74757a7e31a18c7ce5))
+    - `gix odb stats` to calculate statistics on the object database. ([`8c9c243`](https://github.com/Byron/gitoxide/commit/8c9c243fc574dc17b92a8e2025fbd8efdf2833da))
+    - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
+    - `gix clone --no-tags` support. ([`e2b8c5d`](https://github.com/Byron/gitoxide/commit/e2b8c5dce7185b5fa194b90f32e642e5c9d1227f))
+    - update `gix progress` to inform about `remote.<name>.tagOpt` ([`3ebb340`](https://github.com/Byron/gitoxide/commit/3ebb3405f265fbd78a89c01bd30c3ad34036ef84))
+    - Merge branch 'adjustments-for-cargo' ([`70ccbb2`](https://github.com/Byron/gitoxide/commit/70ccbb21b1113bdeb20b52d274141a9fdb75f579))
+    - upgrade to prodash v22 for API improvements ([`77ab98d`](https://github.com/Byron/gitoxide/commit/77ab98dd41c3849b674d8b3794ef29219ca1447d))
     - auto-enabled verbosity for `gix fetch/clone` and add `--no-verbose`. ([`9814369`](https://github.com/Byron/gitoxide/commit/98143699bb9481b010e21647f64dcb8a74bd80ad))
     - switch from `atty` to `is-terminal` ([`7304bc1`](https://github.com/Byron/gitoxide/commit/7304bc1c0efaad64a39520962072343ef02f6c25))
     - adapt to changes in `git-repository` ([`c4f68bf`](https://github.com/Byron/gitoxide/commit/c4f68bf775b854625d901fe0bfcbdd38f656d408))

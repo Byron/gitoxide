@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-ca84c87734804cbfc65e311b89ff6ccfc236149c/> `open::Options::open_path_as_is()` allows to avoid 'smart opening' to try the path verbatim.
+   The path to git repositories is well-known as they either end in `.git` or `.../.git`.
+   If this is not the case, by default we append `/.git` to the path.
+   
+   With this new option enabled, no path transformations apply to open the given path as is,
+   which is preferable if you know it's a non-standard git repository folder name.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 1 calendar day.
+ - 2 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#668](https://github.com/Byron/gitoxide/issues/668)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#668](https://github.com/Byron/gitoxide/issues/668)**
+    - update docs ([`f620f87`](https://github.com/Byron/gitoxide/commit/f620f87f3722f75396b1ff990fd7fe754f4a1558))
+ * **Uncategorized**
+    - Merge branch 'adjustments-for-cargo' ([`5afa7f5`](https://github.com/Byron/gitoxide/commit/5afa7f51342deaf0938e7fb2ebe6a578e83ab645))
+    - `open::Options::open_path_as_is()` allows to avoid 'smart opening' to try the path verbatim. ([`ca84c87`](https://github.com/Byron/gitoxide/commit/ca84c87734804cbfc65e311b89ff6ccfc236149c))
+    - Merge branch 'fix/relative-scplike-urls' ([`2c2d373`](https://github.com/Byron/gitoxide/commit/2c2d373cfda26a2bb57dbc2b317ee2d8e1f96e84))
+    - adapt to changes in `git-url` ([`6caee9b`](https://github.com/Byron/gitoxide/commit/6caee9be6d335ee20342d4fc5fde1dfe608fe245))
+</details>
+
 ## 0.30.0 (2022-12-19)
 
 <csr-id-fceee748c114b2d0760074e911e533cd020f6996/>
@@ -129,7 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 74 commits contributed to the release over the course of 27 calendar days.
+ - 76 commits contributed to the release over the course of 27 calendar days.
  - 27 days passed between releases.
  - 25 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -147,12 +182,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-date v0.3.1, git-features v0.25.0, git-actor v0.15.0, git-glob v0.5.1, git-path v0.7.0, git-attributes v0.7.0, git-config-value v0.10.0, git-lock v3.0.1, git-validate v0.7.1, git-object v0.24.0, git-ref v0.21.0, git-sec v0.6.0, git-config v0.13.0, git-prompt v0.3.0, git-url v0.12.0, git-credentials v0.8.0, git-diff v0.24.0, git-discover v0.10.0, git-traverse v0.20.0, git-index v0.10.0, git-mailmap v0.7.0, git-pack v0.28.0, git-odb v0.38.0, git-packetline v0.14.1, git-transport v0.24.0, git-protocol v0.25.0, git-revision v0.8.0, git-refspec v0.5.0, git-worktree v0.10.0, git-repository v0.30.0, safety bump 26 crates ([`e6b9906`](https://github.com/Byron/gitoxide/commit/e6b9906c486b11057936da16ed6e0ec450a0fb83))
     - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - Merge branch 'read-header' ([`3d01252`](https://github.com/Byron/gitoxide/commit/3d0125271ec7bd606734bd74757a7e31a18c7ce5))
     - expose `git-features` crate at root under `features`. ([`1683a84`](https://github.com/Byron/gitoxide/commit/1683a848459cae2b9182b365e3e22b0e8ba73534))
     - adjust to changes in `git-odb` ([`50ea7fb`](https://github.com/Byron/gitoxide/commit/50ea7fba30c752f86609fabf579a8a038b505c17))
     - Merge branch 'patch-1' ([`fbce7bb`](https://github.com/Byron/gitoxide/commit/fbce7bb55c8c2474c0dfc5413649ecf744d00d92))
     - Use specific Iter constructors in stats example ([`0a72c18`](https://github.com/Byron/gitoxide/commit/0a72c1876b8530f44d464b1597abd6428263d36e))
+    - adapt to changes in `git-transport` ([`3446a15`](https://github.com/Byron/gitoxide/commit/3446a15eb4380d110e70d7ac8e5339c949f9771d))
     - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
     - thanks clippy ([`f1160fb`](https://github.com/Byron/gitoxide/commit/f1160fb42acf59b37cbeda546a7079af3c9bc050))
     - adapt to changes in `git-features::fs`. ([`35f7d59`](https://github.com/Byron/gitoxide/commit/35f7d5960210738d88d35aef9c1ed3480681c481))

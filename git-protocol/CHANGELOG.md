@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 2 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'adjustments-for-cargo' ([`5afa7f5`](https://github.com/Byron/gitoxide/commit/5afa7f51342deaf0938e7fb2ebe6a578e83ab645))
+</details>
+
 ## 0.25.0 (2022-12-19)
 
 ### New Features
@@ -36,14 +59,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    for example during pushes where we are stuck with V1, we can consider
    implementing our own streaming appreach that works with packet lines
    instead - they are just not exposed here even though they could.
+ - <csr-id-5f2276b63129163096be3cb229864fc589348da8/> don't enforce V2 as protocol, but smoothly downgrade like git does.
+   For backward compatibility the shared handshake implementation allows the
+   transport to control which protocol versions it wants to support
+   to allow optiomizing for one special case, namely to prevent it to
+   read all V1 refs on old servers but abort instead, closing the connection
+   without delay.
+   
+   Now we leave this feature for custom transports (who usually come with custom
+   servers) and instead support fallbacks to other protocols if the server
+   demands it.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 22 commits contributed to the release over the course of 27 calendar days.
+ - 24 commits contributed to the release over the course of 27 calendar days.
  - 27 days passed between releases.
- - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#639](https://github.com/Byron/gitoxide/issues/639)
 
 ### Commit Details
@@ -55,7 +88,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#639](https://github.com/Byron/gitoxide/issues/639)**
     - don't post `packfile-uris` capability unless we are able to make use of it. ([`24000fa`](https://github.com/Byron/gitoxide/commit/24000fa7ad4607c23f6a4fb4d84d2c85d96ee01f))
  * **Uncategorized**
+    - Release git-date v0.3.1, git-features v0.25.0, git-actor v0.15.0, git-glob v0.5.1, git-path v0.7.0, git-attributes v0.7.0, git-config-value v0.10.0, git-lock v3.0.1, git-validate v0.7.1, git-object v0.24.0, git-ref v0.21.0, git-sec v0.6.0, git-config v0.13.0, git-prompt v0.3.0, git-url v0.12.0, git-credentials v0.8.0, git-diff v0.24.0, git-discover v0.10.0, git-traverse v0.20.0, git-index v0.10.0, git-mailmap v0.7.0, git-pack v0.28.0, git-odb v0.38.0, git-packetline v0.14.1, git-transport v0.24.0, git-protocol v0.25.0, git-revision v0.8.0, git-refspec v0.5.0, git-worktree v0.10.0, git-repository v0.30.0, safety bump 26 crates ([`e6b9906`](https://github.com/Byron/gitoxide/commit/e6b9906c486b11057936da16ed6e0ec450a0fb83))
     - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
+    - don't enforce V2 as protocol, but smoothly downgrade like git does. ([`5f2276b`](https://github.com/Byron/gitoxide/commit/5f2276b63129163096be3cb229864fc589348da8))
     - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
     - `fetch::Arguments::use_include_tag()` allows to signal `include-tag`. ([`5a50d95`](https://github.com/Byron/gitoxide/commit/5a50d9599f820237866928df6d24a196a9b86fe3))
     - don't pass 'include-tag' as argument by default. ([`a872782`](https://github.com/Byron/gitoxide/commit/a8727824a4c38b27d6ad7c73ccaf7a45839c0aa9))
