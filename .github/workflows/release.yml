@@ -19,7 +19,7 @@ on:
     # branches:
       # - fix-releases
     tags:
-      - v*
+      - "v.*"
 jobs:
   create-release:
     name: create-release
