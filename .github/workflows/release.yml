@@ -116,12 +116,7 @@ jobs:
       - name: Install packages (Ubuntu)
         if: matrix.os == 'ubuntu-18.04'
         run: |
-          ci/ubuntu-install-packages
-
-      - name: Install packages (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          ci/macos-install-packages
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool musl-tools libssl-dev
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
