@@ -396,18 +396,13 @@ fn clone_v1() -> crate::Result {
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
 User-Agent: git/oxide-{}
-Transfer-Encoding: Chunked
 Content-Type: application/x-git-upload-pack-request
+Content-Length: 29
 Accept: application/x-git-upload-pack-result
 
-1d
 000ahello
 000aworld
-0009done
-
-0
-
-",
+0009done",
             server.addr.port(),
             env!("CARGO_PKG_VERSION")
         )
@@ -574,21 +569,17 @@ Git-Protocol: version=2:value-only:key=value
         format!(
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
-Transfer-Encoding: chunked
 User-Agent: git/oxide-{}
 Content-Type: application/x-git-upload-pack-request
+Content-Length: 76
 Accept: application/x-git-upload-pack-result
 Git-Protocol: version=2
 
-4c
 0014command=ls-refs
 0012without-value
 0015with-value=value
 00010009arg1
-0000
-0
-
-",
+0000",
             server.addr.port(),
             env!("CARGO_PKG_VERSION")
         )
@@ -630,18 +621,14 @@ Git-Protocol: version=2
     let expected = format!(
         "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
-Transfer-Encoding: chunked
 User-Agent: git/oxide-{}
 Content-Type: application/x-git-upload-pack-request
 Accept: application/x-git-upload-pack-result
 Git-Protocol: version=2
+Content-Length: 22
 
-16
 0012command=fetch
-0000
-0
-
-",
+0000",
         server.addr.port(),
         env!("CARGO_PKG_VERSION")
     );

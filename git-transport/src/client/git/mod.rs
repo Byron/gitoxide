@@ -21,7 +21,6 @@ pub struct Connection<R, W> {
     pub(in crate::client) path: BString,
     pub(in crate::client) virtual_host: Option<(String, Option<u16>)>,
     pub(in crate::client) desired_version: Protocol,
-    supported_versions: [Protocol; 1],
     custom_url: Option<BString>,
     pub(in crate::client) mode: ConnectMode,
 }
@@ -50,7 +49,7 @@ mod message {
 
     pub fn connect(
         service: Service,
-        version: Protocol,
+        desired_version: Protocol,
         path: &[u8],
         virtual_host: Option<&(String, Option<u16>)>,
         extra_parameters: &[(&str, Option<&str>)],
@@ -73,9 +72,9 @@ mod message {
         // as extra lines in the reply, which we don't want to handle. Especially since an old server will not respond with that
         // line (is what I assume, at least), so it's an optional part in the response to understand and handle. There is no value
         // in that, so let's help V2 servers to respond in a way that assumes V1.
-        let extra_params_need_null_prefix = if version != Protocol::V1 {
+        let extra_params_need_null_prefix = if desired_version != Protocol::V1 {
             out.push(0);
-            out.push_str(format!("version={}", version as usize));
+            out.push_str(format!("version={}", desired_version as usize));
             out.push(0);
             false
         } else {

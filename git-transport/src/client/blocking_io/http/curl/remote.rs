@@ -10,16 +10,22 @@ use curl::easy::{Auth, Easy2};
 use git_features::io::pipe;
 
 use crate::client::http::curl::curl_is_spurious;
+use crate::client::http::traits::PostBodyDataKind;
 use crate::client::{
     blocking_io::http::{self, curl::Error, redirect},
     http::options::{FollowRedirects, ProxyAuthMethod},
 };
 
+enum StreamOrBuffer {
+    Stream(pipe::Reader),
+    Buffer(std::io::Cursor<Vec<u8>>),
+}
+
 #[derive(Default)]
 struct Handler {
     send_header: Option<pipe::Writer>,
     send_data: Option<pipe::Writer>,
-    receive_body: Option<pipe::Reader>,
+    receive_body: Option<StreamOrBuffer>,
     checked_status: bool,
     last_status: usize,
     follow: FollowRedirects,
@@ -64,7 +70,8 @@ impl curl::easy::Handler for Handler {
     }
     fn read(&mut self, data: &mut [u8]) -> Result<usize, curl::easy::ReadError> {
         match self.receive_body.as_mut() {
-            Some(reader) => reader.read(data).map_err(|_err| curl::easy::ReadError::Abort),
+            Some(StreamOrBuffer::Stream(reader)) => reader.read(data).map_err(|_err| curl::easy::ReadError::Abort),
+            Some(StreamOrBuffer::Buffer(cursor)) => cursor.read(data).map_err(|_err| curl::easy::ReadError::Abort),
             None => Ok(0), // nothing more to read/writer depleted
         }
     }
@@ -102,7 +109,7 @@ pub struct Request {
     pub url: String,
     pub base_url: String,
     pub headers: curl::easy::List,
-    pub upload: bool,
+    pub upload_body_kind: Option<PostBodyDataKind>,
     pub config: http::Options,
 }
 
@@ -132,7 +139,7 @@ pub fn new() -> (
             url,
             base_url,
             mut headers,
-            upload,
+            upload_body_kind,
             config:
                 http::Options {
                     extra_headers,
@@ -153,8 +160,7 @@ pub fn new() -> (
             let effective_url = redirect::swap_tails(redirected_base_url.as_deref(), &base_url, url.clone());
             handle.url(&effective_url)?;
 
-            // GitHub sends 'chunked' to avoid unknown clients to choke on the data, I suppose
-            handle.post(upload)?;
+            handle.post(upload_body_kind.is_some())?;
             for header in extra_headers {
                 headers.append(&header)?;
             }
@@ -192,7 +198,6 @@ pub fn new() -> (
             if let Some(user_agent) = user_agent {
                 handle.useragent(&user_agent)?;
             }
-            handle.http_headers(headers)?;
             handle.transfer_encoding(false)?;
             if let Some(timeout) = connect_timeout {
                 handle.connect_timeout(timeout)?;
@@ -220,15 +225,14 @@ pub fn new() -> (
                 handle.low_speed_limit(low_speed_limit_bytes_per_second)?;
                 handle.low_speed_time(Duration::from_secs(low_speed_time_seconds))?;
             }
-            let (receive_data, receive_headers, send_body) = {
+            let (receive_data, receive_headers, send_body, mut receive_body) = {
                 let handler = handle.get_mut();
                 let (send, receive_data) = pipe::unidirectional(1);
                 handler.send_data = Some(send);
                 let (send, receive_headers) = pipe::unidirectional(1);
                 handler.send_header = Some(send);
                 let (send_body, receive_body) = pipe::unidirectional(None);
-                handler.receive_body = Some(receive_body);
-                (receive_data, receive_headers, send_body)
+                (receive_data, receive_headers, send_body, receive_body)
             };
 
             let follow = follow.get_or_insert(follow_redirects);
@@ -249,6 +253,18 @@ pub fn new() -> (
             {
                 break;
             }
+
+            handle.get_mut().receive_body = Some(match upload_body_kind {
+                Some(PostBodyDataKind::Unbounded) | None => StreamOrBuffer::Stream(receive_body),
+                Some(PostBodyDataKind::BoundedAndFitsIntoMemory) => {
+                    let mut buf = Vec::<u8>::with_capacity(512);
+                    receive_body.read_to_end(&mut buf)?;
+                    handle.post_field_size(buf.len() as u64)?;
+                    drop(receive_body);
+                    StreamOrBuffer::Buffer(std::io::Cursor::new(buf))
+                }
+            });
+            handle.http_headers(headers)?;
 
             if let Err(err) = handle.perform() {
                 let handler = handle.get_mut();

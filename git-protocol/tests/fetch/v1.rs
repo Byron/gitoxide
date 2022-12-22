@@ -80,7 +80,7 @@ async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
     let out = Vec::new();
     let delegate = LsRemoteDelegate::default();
 
-    let err = match git_protocol::fetch(
+    git_protocol::fetch(
         transport(
             out,
             "v1/clone.response",
@@ -94,13 +94,6 @@ async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
         "agent",
     )
     .await
-    {
-        Ok(_) => panic!("the V1 is not allowed in this transport"),
-        Err(err) => err,
-    };
-    assert_eq!(
-        err.to_string(),
-        "The transport didn't accept the advertised server version V1 and closed the connection client side"
-    );
+    .expect("V1 is OK for this transport");
     Ok(())
 }

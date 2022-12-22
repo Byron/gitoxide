@@ -251,7 +251,11 @@ async fn handshake_v2_downgrade_to_v1() -> crate::Result {
     );
     drop(res);
 
-    assert_eq!(c.supported_protocol_versions(), [Protocol::V2]);
+    assert_eq!(
+        c.supported_protocol_versions(),
+        [],
+        "it doesn't care and can handle all of them"
+    );
     Ok(())
 }
 

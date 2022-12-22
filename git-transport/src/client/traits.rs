@@ -32,7 +32,7 @@ pub trait TransportWithoutIO {
     /// Returns the canonical URL pointing to the destination of this transport.
     fn to_url(&self) -> Cow<'_, BStr>;
 
-    /// If the actually advertised server version is contained in the returned slice or empty, continue as normal,
+    /// If the actually advertised server version is contained in the returned slice or it is empty, continue as normal,
     /// assume the server's protocol version is desired or acceptable.
     ///
     /// Otherwise, abort the fetch operation with an error to avoid continuing any interaction with the transport.
@@ -41,6 +41,8 @@ pub trait TransportWithoutIO {
     /// leaving the server with a client who potentially unexpectedly terminated the connection.
     ///
     /// Note that `transport.close()` is not called explicitly.
+    ///
+    /// Custom transports can override this to prevent any use of older protocol versions.
     fn supported_protocol_versions(&self) -> &[Protocol] {
         &[]
     }

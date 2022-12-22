@@ -1,3 +1,5 @@
+use crate::client::WriteMode;
+
 /// The error used by the [Http] trait.
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -53,6 +55,25 @@ pub struct PostResponse<H, B, PB> {
     pub body: B,
 }
 
+/// Whether or not the post body is expected to fit into memory or not.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum PostBodyDataKind {
+    /// We know how much data we are sending and think it will fit into memory. This allows to collect it into a buffer
+    /// and send it with `Content-Length: <body-len>`.
+    BoundedAndFitsIntoMemory,
+    /// We don't know how much data we will send and assume it won't fit into memory. This enables streaming mode.
+    Unbounded,
+}
+
+impl From<WriteMode> for PostBodyDataKind {
+    fn from(m: WriteMode) -> Self {
+        match m {
+            WriteMode::Binary => PostBodyDataKind::Unbounded,
+            WriteMode::OneLfTerminatedLinePerWriteCall => PostBodyDataKind::BoundedAndFitsIntoMemory,
+        }
+    }
+}
+
 impl<A, B, C> From<PostResponse<A, B, C>> for GetResponse<A, B> {
     fn from(v: PostResponse<A, B, C>) -> Self {
         GetResponse {
@@ -99,6 +120,7 @@ pub trait Http {
         url: &str,
         base_url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
+        body: PostBodyDataKind,
     ) -> Result<PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, Error>;
 
     /// Pass `config` which can deserialize in the implementation's configuration, as documented separately.
