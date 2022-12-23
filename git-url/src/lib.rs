@@ -149,7 +149,7 @@ impl Url {
             Some(match self.scheme {
                 Http => 80,
                 Https => 443,
-                Ssh => 21,
+                Ssh => 22,
                 Git => 9418,
                 File | Ext(_) => return None,
             })
