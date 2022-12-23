@@ -110,9 +110,9 @@ jobs:
       - name: "Install prerequisites"
         run: vcpkg install  zlib:x64-windows-static-md
       - name: "Installation from crates.io: gitoxide"
-        run: cargo install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force gitoxide
+        run: cargo +${{ matrix.rust }} install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force gitoxide
       - name: "Installation from crates.io: cargo-smart-release"
-        run: cargo install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force cargo-smart-release
+        run: cargo +${{ matrix.rust }} install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force cargo-smart-release
 
   lint:
     runs-on: ubuntu-latest
