@@ -131,7 +131,7 @@ impl client::Transport for SpawnProcessOnDemand {
         if self.ssh_program.is_some() {
             cmd.arg(service.as_str());
         }
-        cmd.arg("--strict").arg("--timeout=0").arg(self.path.to_os_str_lossy());
+        cmd.arg(self.path.to_os_str_lossy());
 
         let mut child = cmd.spawn()?;
         self.connection = Some(git::Connection::new_for_spawned_process(
