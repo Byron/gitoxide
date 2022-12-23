@@ -4,11 +4,20 @@
 ))]
 mod http {
     use git_repository as git;
-    use git_transport::client::http::options::{FollowRedirects, ProxyAuthMethod};
+    use git_transport::client::http::options::{
+        FollowRedirects, HttpVersion, ProxyAuthMethod, SslVersion, SslVersionRangeInclusive,
+    };
 
     pub(crate) fn repo(name: &str) -> git::Repository {
+        repo_opts(name, |opts| opts.strict_config(true))
+    }
+
+    pub(crate) fn repo_opts(
+        name: &str,
+        modify: impl FnOnce(git::open::Options) -> git::open::Options,
+    ) -> git::Repository {
         let dir = git_testtools::scripted_fixture_read_only("make_config_repos.sh").unwrap();
-        git::open_opts(dir.join(name), git::open::Options::isolated()).unwrap()
+        git::open_opts(dir.join(name), modify(git::open::Options::isolated())).unwrap()
     }
 
     fn http_options(
@@ -55,6 +64,9 @@ mod http {
             user_agent,
             connect_timeout,
             verbose,
+            ssl_ca_info,
+            ssl_version,
+            http_version,
             backend,
         } = http_options(&repo, None, "https://example.com/does/not/matter");
         assert_eq!(
@@ -75,10 +87,80 @@ mod http {
         assert_eq!(connect_timeout, Some(std::time::Duration::from_millis(60 * 1024)));
         assert_eq!(no_proxy, None);
         assert!(!verbose, "verbose is disabled by default");
+        assert_eq!(ssl_ca_info.as_deref(), Some(std::path::Path::new("./CA.pem")));
+        #[cfg(feature = "blocking-http-transport-reqwest")]
+        {
+            assert!(
+                backend.is_none(),
+                "backed is never set as it's backend specific, rather custom options typically"
+            )
+        }
+        #[cfg(feature = "blocking-http-transport-curl")]
+        {
+            let backend = backend
+                .as_ref()
+                .map(|b| b.lock().expect("not poisoned"))
+                .expect("backend is set for curl due to specific options");
+            match backend.downcast_ref::<git_protocol::transport::client::http::curl::Options>() {
+                Some(opts) => {
+                    assert_eq!(opts.schannel_check_revoke, Some(true));
+                }
+                None => panic!("Correct backend option type is used"),
+            }
+        }
+
+        let version = SslVersion::SslV2;
+        assert_eq!(
+            ssl_version,
+            Some(SslVersionRangeInclusive {
+                min: version,
+                max: version
+            })
+        );
+        assert_eq!(http_version, Some(HttpVersion::V1_1));
+    }
+
+    #[test]
+    fn http_ssl_cainfo_suppressed_by_() {
+        let repo = repo("http-disabled-cainfo");
+        let opts = http_options(&repo, None, "https://example.com/does/not/matter");
         assert!(
-            backend.is_none(),
-            "backed is never set as it's backend specific, rather custom options typically"
-        )
+            opts.ssl_ca_info.is_none(),
+            "http.schannelUseSSLCAInfo is explicitly set and prevents the ssl_ca_info to be set"
+        );
+    }
+
+    #[test]
+    fn http_ssl_version_min_max_overrides_ssl_version() {
+        let repo = repo("http-ssl-version-min-max");
+        let opts = http_options(&repo, None, "https://example.com/does/not/matter");
+        assert_eq!(
+            opts.ssl_version,
+            Some(SslVersionRangeInclusive {
+                min: SslVersion::TlsV1_1,
+                max: SslVersion::TlsV1_2
+            })
+        );
+    }
+
+    #[test]
+    fn http_ssl_version_default() {
+        let repo = repo("http-ssl-version-default");
+        let opts = http_options(&repo, None, "https://example.com/does/not/matter");
+        assert_eq!(
+            opts.ssl_version,
+            Some(SslVersionRangeInclusive {
+                min: SslVersion::Default,
+                max: SslVersion::Default
+            })
+        );
+    }
+
+    #[test]
+    fn http_ssl_version_empty_resets_prior_values() {
+        let repo = repo_opts("http-config", |opts| opts.config_overrides(["http.sslVersion="]));
+        let opts = http_options(&repo, None, "https://example.com/does/not/matter");
+        assert!(opts.ssl_version.is_none(), "empty strings reset what was there");
     }
 
     #[test]

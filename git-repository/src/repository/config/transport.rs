@@ -47,6 +47,7 @@ impl crate::Repository {
                         sync::{Arc, Mutex},
                     };
 
+                    use git_transport::client::http::options::{HttpVersion, SslVersion, SslVersionRangeInclusive};
                     use git_transport::client::{http, http::options::ProxyAuthMethod};
 
                     use crate::{bstr::ByteVec, config::cache::util::ApplyLeniency};
@@ -140,6 +141,39 @@ impl crate::Repository {
                             .transpose()?
                             .unwrap_or_default();
                         Ok(value)
+                    }
+
+                    fn ssl_version(
+                        config: &git_config::File<'static>,
+                        key: &'static str,
+                        mut filter: fn(&git_config::file::Metadata) -> bool,
+                        lenient: bool,
+                    ) -> Result<Option<SslVersion>, crate::config::transport::Error> {
+                        config
+                            .string_filter_by_key(key, &mut filter)
+                            .filter(|v| !v.is_empty())
+                            .map(|v| {
+                                use git_protocol::transport::client::http::options::SslVersion::*;
+                                Ok(match v.as_ref().as_ref() {
+                                    b"default" => Default,
+                                    b"tlsv1" => TlsV1,
+                                    b"sslv2" => SslV2,
+                                    b"sslv3" => SslV3,
+                                    b"tlsv1.0" => TlsV1_0,
+                                    b"tlsv1.1" => TlsV1_1,
+                                    b"tlsv1.2" => TlsV1_2,
+                                    b"tlsv1.3" => TlsV1_3,
+                                    _ => {
+                                        return Err(crate::config::transport::http::Error::InvalidSslVersion {
+                                            key,
+                                            name: v.into_owned(),
+                                        })
+                                    }
+                                })
+                            })
+                            .transpose()
+                            .with_leniency(lenient)
+                            .map_err(Into::into)
                     }
 
                     fn proxy(
@@ -286,18 +320,101 @@ impl crate::Repository {
                     opts.connect_timeout =
                         integer_opt(config, lenient, "gitoxide.http.connectTimeout", "u64", trusted_only)?
                             .map(std::time::Duration::from_millis);
-                    opts.user_agent = config
-                        .string_filter_by_key("http.userAgent", &mut trusted_only)
-                        .and_then(|v| try_cow_to_string(v, lenient, Cow::Borrowed("http.userAgent".into())).transpose())
-                        .transpose()?
-                        .or_else(|| Some(crate::env::agent().into()));
-                    let key = "gitoxide.http.verbose";
-                    opts.verbose = config
-                        .boolean_filter_by_key(key, &mut trusted_only)
-                        .transpose()
-                        .with_leniency(lenient)
-                        .map_err(|err| crate::config::transport::Error::ConfigValue { source: err, key })?
-                        .unwrap_or_default();
+                    {
+                        let key = "http.userAgent";
+                        opts.user_agent = config
+                            .string_filter_by_key(key, &mut trusted_only)
+                            .and_then(|v| try_cow_to_string(v, lenient, Cow::Borrowed(key.into())).transpose())
+                            .transpose()?
+                            .or_else(|| Some(crate::env::agent().into()));
+                    }
+
+                    {
+                        let key = "http.version";
+                        opts.http_version = config
+                            .string_filter_by_key(key, &mut trusted_only)
+                            .map(|v| {
+                                Ok(match v.as_ref().as_ref() {
+                                    b"HTTP/1.1" => HttpVersion::V1_1,
+                                    b"HTTP/2" => HttpVersion::V2,
+                                    _ => {
+                                        return Err(crate::config::transport::http::Error::InvalidHttpVersion {
+                                            name: v.into_owned(),
+                                            key,
+                                        })
+                                    }
+                                })
+                            })
+                            .transpose()?;
+                    }
+
+                    {
+                        let key = "gitoxide.http.verbose";
+                        opts.verbose = config
+                            .boolean_filter_by_key(key, &mut trusted_only)
+                            .transpose()
+                            .with_leniency(lenient)
+                            .map_err(|err| crate::config::transport::Error::ConfigValue { source: err, key })?
+                            .unwrap_or_default();
+                    }
+
+                    let may_use_cainfo = {
+                        let key = "http.schannelUseSSLCAInfo";
+                        config
+                            .boolean_filter_by_key(key, &mut trusted_only)
+                            .transpose()
+                            .with_leniency(lenient)
+                            .map_err(|err| crate::config::transport::Error::ConfigValue { source: err, key })?
+                            .unwrap_or(true)
+                    };
+
+                    if may_use_cainfo {
+                        let key = "http.sslCAInfo";
+                        opts.ssl_ca_info = config
+                            .path_filter_by_key(key, &mut trusted_only)
+                            .map(|p| {
+                                use crate::config::cache::interpolate_context;
+                                p.interpolate(interpolate_context(
+                                    self.install_dir().ok().as_deref(),
+                                    self.config.home_dir().as_deref(),
+                                ))
+                                .map(|cow| cow.into_owned())
+                            })
+                            .transpose()
+                            .with_leniency(lenient)
+                            .map_err(|err| crate::config::transport::Error::InterpolatePath { source: err, key })?;
+                    }
+
+                    {
+                        opts.ssl_version = ssl_version(config, "http.sslVersion", trusted_only, lenient)?
+                            .map(|v| SslVersionRangeInclusive { min: v, max: v });
+                        let min_max = ssl_version(config, "gitoxide.http.sslVersionMin", trusted_only, lenient)
+                            .and_then(|min| {
+                                ssl_version(config, "gitoxide.http.sslVersionMax", trusted_only, lenient)
+                                    .map(|max| min.and_then(|min| max.map(|max| (min, max))))
+                            })?;
+                        if let Some((min, max)) = min_max {
+                            let v = opts.ssl_version.get_or_insert_with(|| SslVersionRangeInclusive {
+                                min: SslVersion::TlsV1_3,
+                                max: SslVersion::TlsV1_3,
+                            });
+                            v.min = min;
+                            v.max = max;
+                        }
+                    }
+
+                    #[cfg(feature = "blocking-http-transport-curl")]
+                    {
+                        let key = "http.schannelCheckRevoke";
+                        let schannel_check_revoke = config
+                            .boolean_filter_by_key(key, &mut trusted_only)
+                            .transpose()
+                            .with_leniency(lenient)
+                            .map_err(|err| crate::config::transport::Error::ConfigValue { source: err, key })?;
+                        let backend = git_protocol::transport::client::http::curl::Options { schannel_check_revoke };
+                        opts.backend =
+                            Some(Arc::new(Mutex::new(backend)) as Arc<Mutex<dyn Any + Send + Sync + 'static>>);
+                    }
 
                     Ok(Some(Box::new(opts)))
                 }

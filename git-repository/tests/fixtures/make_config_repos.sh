@@ -14,6 +14,10 @@ git init http-config
   git config http.proxyAuthMethod basic
   git config http.userAgent agentJustForHttp
   git config gitoxide.http.connectTimeout 60k
+  git config http.schannelCheckRevoke true
+  git config http.sslCAInfo ./CA.pem
+  git config http.sslVersion sslv2
+  git config http.version HTTP/1.1
 )
 
 git clone --shared http-config http-remote-override
@@ -33,6 +37,23 @@ git init http-no-proxy
   git config gitoxide.http.noProxy "no validation done here"
 )
 
+git init http-ssl-version-min-max
+(cd http-ssl-version-min-max
+  git config http.sslVersion sslv3
+  git config gitoxide.http.sslVersionMin tlsv1.1
+  git config gitoxide.http.sslVersionMax tlsv1.2
+)
+
+git init http-ssl-version-default
+(cd http-ssl-version-default
+  git config http.sslVersion default
+)
+
+git init http-disabled-cainfo
+(cd http-disabled-cainfo
+  git config http.sslCAInfo ./CA.pem
+  git config http.schannelUseSSLCAInfo false
+)
 
 git init http-proxy-empty
 (cd http-proxy-empty

@@ -599,7 +599,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "http.version",
-        usage: NotPlanned { reason: "on demand" }
+        usage: InModule { name: "repository::config::transport", deviation: None }
     },
     Record {
         config: "http.curloptResolve",
@@ -607,7 +607,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "http.sslVersion",
-        usage: NotPlanned { reason: "on demand" }
+        usage: InModule { name: "repository::config::transport", deviation: Some("Adds a new 'default' value to keep the implementation default explicitly.") }
     },
     Record {
         config: "http.sslCipherList",
@@ -639,7 +639,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "http.sslCAInfo",
-        usage: NotPlanned { reason: "on demand" }
+        usage: InModule { name: "repository::config::transport", deviation: None }
     },
     Record {
         config: "http.sslCAPath",
@@ -655,7 +655,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "http.schannelUseSSLCAInfo",
-        usage: NotPlanned { reason: "on demand" }
+        usage: InModule { name: "repository::config::transport", deviation: Some("only used as switch internally to turn off using the sslCAInfo, unconditionally. If unset, it has no effect, whereas in `git` it defaults to false.") }
     },
     Record {
         config: "http.pinnedPubkey",
@@ -779,10 +779,31 @@ static GIT_CONFIG: &[Record] = &[
         }
     },
     Record {
+        config: "gitoxide.http.multiplexing",
+        usage: InModule {
+            name: "repository::config::transport",
+            deviation: Some("Takes boolean true or false values, default true, and can take effect only if `http.version` is set to 'HTTP/2'")
+        }
+    },
+    Record {
         config: "gitoxide.http.connectTimeout",
         usage: InModule {
             name: "repository::config::transport",
             deviation: Some("entirely new, and in milliseconds like all other timeout suffixed variables in the git config")
+        }
+    },
+    Record {
+        config: "gitoxide.http.sslVersionMin",
+        usage: InModule {
+            name: "repository::config::transport",
+            deviation: Some("entirely new to set the lower bound for the allowed ssl version range. Overwrites the min bound of `http.sslVersion` if set. Min and Max must be set to become effective.")
+        }
+    },
+    Record {
+        config: "gitoxide.http.sslVersionMax",
+        usage: InModule {
+            name: "repository::config::transport",
+            deviation: Some("entirely new to set the upper bound for the allowed ssl version range. Overwrites the max bound of `http.sslVersion` if set. Min and Max must be set to become effective.")
         }
     },
     Record {
