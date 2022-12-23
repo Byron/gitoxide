@@ -10,7 +10,20 @@ use crate::client::http::traits::PostBodyDataKind;
 
 mod remote;
 
+/// Options to configure the `curl` HTTP handler.
+#[derive(Default)]
+pub struct Options {
+    /// If `true` and runtime configuration is possible for `curl` backends, certificates revocation will be checked.
+    ///
+    /// This only works on windows apparently. Ignored if `None`.
+    pub schannel_check_revoke: Option<bool>,
+}
+
+/// The error returned by the 'remote' helper, a purely internal construct to perform http requests.
+///
+/// It can be used for downcasting errors, which are boxed to hide the actual implementation.
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
     Curl(#[from] curl::Error),
@@ -31,7 +44,7 @@ impl crate::IsSpuriousError for Error {
     }
 }
 
-pub fn curl_is_spurious(err: &curl::Error) -> bool {
+pub(crate) fn curl_is_spurious(err: &curl::Error) -> bool {
     err.is_couldnt_connect()
         || err.is_couldnt_resolve_proxy()
         || err.is_couldnt_resolve_host()
@@ -44,6 +57,7 @@ pub fn curl_is_spurious(err: &curl::Error) -> bool {
         || err.is_partial_file()
 }
 
+/// A utility to abstract interactions with curl handles.
 pub struct Curl {
     req: SyncSender<remote::Request>,
     res: Receiver<remote::Response>,

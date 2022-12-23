@@ -10,6 +10,7 @@ use curl::easy::{Auth, Easy2};
 use git_features::io::pipe;
 
 use crate::client::http::curl::curl_is_spurious;
+use crate::client::http::options::{HttpVersion, SslVersion};
 use crate::client::http::traits::PostBodyDataKind;
 use crate::client::{
     blocking_io::http::{self, curl::Error, redirect},
@@ -153,7 +154,10 @@ pub fn new() -> (
                     user_agent,
                     proxy_authenticate,
                     verbose,
-                    backend: _,
+                    ssl_ca_info,
+                    ssl_version,
+                    http_version,
+                    backend,
                 },
         } in req_recv
         {
@@ -167,6 +171,35 @@ pub fn new() -> (
             // needed to avoid sending Expect: 100-continue, which adds another response and only CURL wants that
             headers.append("Expect:")?;
             handle.verbose(verbose)?;
+
+            if let Some(ca_info) = ssl_ca_info {
+                handle.cainfo(ca_info)?;
+            }
+
+            if let Some(ref mut curl_options) = backend.as_ref().and_then(|backend| backend.lock().ok()) {
+                if let Some(opts) = curl_options.downcast_mut::<super::Options>() {
+                    if let Some(enabled) = opts.schannel_check_revoke {
+                        handle.ssl_options(curl::easy::SslOpt::new().no_revoke(!enabled))?;
+                    }
+                }
+            }
+
+            if let Some(ssl_version) = ssl_version {
+                let (min, max) = ssl_version.min_max();
+                if min == max {
+                    handle.ssl_version(to_curl_ssl_version(min))?;
+                } else {
+                    handle.ssl_min_max_version(to_curl_ssl_version(min), to_curl_ssl_version(max))?;
+                }
+            }
+
+            if let Some(http_version) = http_version {
+                let version = match http_version {
+                    HttpVersion::V1_1 => curl::easy::HttpVersion::V11,
+                    HttpVersion::V2 => curl::easy::HttpVersion::V2,
+                };
+                handle.http_version(version)?;
+            }
 
             let mut proxy_auth_action = None;
             if let Some(proxy) = proxy {
@@ -319,6 +352,20 @@ pub fn new() -> (
         Ok(())
     });
     (handle, req_send, res_recv)
+}
+
+fn to_curl_ssl_version(vers: SslVersion) -> curl::easy::SslVersion {
+    use curl::easy::SslVersion::*;
+    match vers {
+        SslVersion::Default => Default,
+        SslVersion::TlsV1 => Tlsv1,
+        SslVersion::SslV2 => Sslv2,
+        SslVersion::SslV3 => Sslv3,
+        SslVersion::TlsV1_0 => Tlsv10,
+        SslVersion::TlsV1_1 => Tlsv11,
+        SslVersion::TlsV1_2 => Tlsv12,
+        SslVersion::TlsV1_3 => Tlsv13,
+    }
 }
 
 impl From<Error> for http::Error {

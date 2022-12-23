@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::{
     any::Any,
     borrow::Cow,
@@ -10,6 +11,7 @@ use git_packetline::PacketLineRef;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
 use crate::client::blocking_io::bufread_ext::ReadlineBufRead;
+use crate::client::http::options::{HttpVersion, SslVersionRangeInclusive};
 use crate::{
     client::{self, capabilities, Capabilities, ExtendedBufRead, HandleProgress, MessageKind, RequestWriter},
     Protocol, Service,
@@ -19,7 +21,8 @@ use crate::{
 compile_error!("Cannot set both 'http-client-reqwest' and 'http-client-curl' features as they are mutually exclusive");
 
 #[cfg(feature = "http-client-curl")]
-mod curl;
+///
+pub mod curl;
 
 /// The experimental `reqwest` backend.
 ///
@@ -71,6 +74,51 @@ pub mod options {
     impl Default for ProxyAuthMethod {
         fn default() -> Self {
             ProxyAuthMethod::AnyAuth
+        }
+    }
+
+    /// Available SSL version numbers.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, Ord, PartialOrd)]
+    #[allow(missing_docs)]
+    pub enum SslVersion {
+        /// The implementation default, which is unknown to this layer of abstraction.
+        Default,
+        TlsV1,
+        SslV2,
+        SslV3,
+        TlsV1_0,
+        TlsV1_1,
+        TlsV1_2,
+        TlsV1_3,
+    }
+
+    /// Available HTTP version numbers.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, Ord, PartialOrd)]
+    #[allow(missing_docs)]
+    pub enum HttpVersion {
+        /// Equivalent to HTTP/1.1
+        V1_1,
+        /// Equivalent to HTTP/2
+        V2,
+    }
+
+    /// The desired range of acceptable SSL versions, or the single version to allow if both are set to the same value.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    pub struct SslVersionRangeInclusive {
+        /// The smallest allowed ssl version to use.
+        pub min: SslVersion,
+        /// The highest allowed ssl version to use.
+        pub max: SslVersion,
+    }
+
+    impl SslVersionRangeInclusive {
+        /// Return `min` and `max` fields in the right order so `min` is smaller or equal to `max`.
+        pub fn min_max(&self) -> (SslVersion, SslVersion) {
+            if self.min > self.max {
+                (self.max, self.min)
+            } else {
+                (self.min, self.max)
+            }
         }
     }
 }
@@ -131,6 +179,12 @@ pub struct Options {
     pub connect_timeout: Option<std::time::Duration>,
     /// If enabled, emit additional information about connections and possibly the data received or written.
     pub verbose: bool,
+    /// If set, use this path to point to a file with CA certificates to verify peers.
+    pub ssl_ca_info: Option<PathBuf>,
+    /// The SSL version or version range to use, or `None` to let the TLS backend determine which versions are acceptable.
+    pub ssl_version: Option<SslVersionRangeInclusive>,
+    /// The HTTP version to enforce. If unset, it is implementation defined.
+    pub http_version: Option<HttpVersion>,
     /// Backend specific options, if available.
     pub backend: Option<Arc<Mutex<dyn Any + Send + Sync + 'static>>>,
 }
