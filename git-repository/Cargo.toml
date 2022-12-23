@@ -152,3 +152,8 @@ async-std = { version = "1.12.0", features = ["attributes"] }
 [package.metadata.docs.rs]
 features = ["document-features", "max-performance", "blocking-network-client", "serde1"]
 rustdoc-args = ["--cfg", "docsrs"]
+
+
+[[example]]
+name = "clone"
+required-features = ["blocking-network-client"]
