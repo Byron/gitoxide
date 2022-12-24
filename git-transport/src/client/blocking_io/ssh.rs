@@ -56,16 +56,16 @@ pub fn connect(
         _ => return Err(Error::UnsupportedSshCommand(ssh_cmd.into())),
     };
 
-    let host = match user.as_ref() {
-        Some(user) => format!("{}@{}", user, host),
-        None => host.into(),
-    };
-
     let path = git_url::expand_path::for_shell(path);
-    let url = git_url::Url::from_parts(
+    let new_url = if path.starts_with(b"/") {
+        git_url::Url::from_parts
+    } else {
+        git_url::Url::from_parts_as_alternative_form
+    };
+    let url = new_url(
         git_url::Scheme::Ssh,
         user.map(Into::into),
-        Some(host.clone()),
+        Some(host.to_owned()),
         port,
         path.clone(),
     )
@@ -82,7 +82,7 @@ pub fn connect(
         None => blocking_io::file::SpawnProcessOnDemand::new_ssh(
             url,
             ssh_cmd.into(),
-            ssh_cmd_line.chain(Some(host.as_str())),
+            ssh_cmd_line.chain(Some(host)),
             None::<(&str, String)>,
             path,
             desired_version,
@@ -92,23 +92,28 @@ pub fn connect(
 
 #[cfg(test)]
 mod tests {
-    use bstr::ByteSlice;
-
     use crate::{client::blocking_io::ssh::connect, Protocol};
 
     #[test]
-    fn connect_with_tilde_in_path() {
-        for (url, expected) in &[
+    fn connect_path() {
+        for (url, expected) in [
             ("ssh://host.xy/~/repo", "~/repo"),
             ("ssh://host.xy/~username/repo", "~username/repo"),
+            ("user@host.xy:/username/repo", "/username/repo"),
+            ("user@host.xy:username/repo", "username/repo"),
+            ("user@host.xy:../username/repo", "../username/repo"),
+            ("user@host.xy:~/repo", "~/repo"),
         ] {
             let url = git_url::parse((*url).into()).expect("valid url");
-            let cmd = connect("host", url.path, Protocol::V1, None, None).expect("parse success");
-            assert_eq!(
-                cmd.path,
-                expected.as_bytes().as_bstr(),
-                "the path is prepared to be substituted by the remote shell"
-            );
+            let cmd = connect(
+                url.host().expect("all cases have a host"),
+                url.path.to_owned(),
+                Protocol::V1,
+                url.user(),
+                url.port,
+            )
+            .expect("parse success");
+            assert_eq!(cmd.path, expected, "the path will be substituted by the remote shell");
         }
     }
 }

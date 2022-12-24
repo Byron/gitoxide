@@ -56,6 +56,15 @@ fn with_user_and_port_and_absolute_path() -> crate::Result {
 }
 
 #[test]
+fn default_port_is_22() -> crate::Result {
+    let url = url_alternate(Scheme::Ssh, None, "host.xz", None, b"path/to/git");
+
+    assert_eq!(url.port_or_default(), Some(22));
+
+    Ok(())
+}
+
+#[test]
 fn scp_like_without_user() -> crate::Result {
     let url = assert_url(
         "host.xz:path/to/git",
