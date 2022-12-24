@@ -273,6 +273,8 @@ fn apply_environment_overrides(
             ("GIT_HTTP_PROXY_AUTHMETHOD", "proxyAuthMethod"),
             ("all_proxy", "all-proxy-lower"),
             ("ALL_PROXY", "all-proxy"),
+            ("GIT_SSL_CAINFO", "sslCAInfo"),
+            ("GIT_SSL_VERSION", "sslVersion"),
         ] {
             if let Some(value) = var_as_bstring(var, http_transport) {
                 section.push_with_comment(

@@ -139,6 +139,11 @@ pub mod transport {
             source: git_config::value::Error,
             key: &'static str,
         },
+        #[error("Could not interpolate path at key {key:?}")]
+        InterpolatePath {
+            source: git_config::path::interpolate::Error,
+            key: &'static str,
+        },
         #[error("Could not decode value at key {key:?} as UTF-8 string")]
         IllformedUtf8 {
             key: Cow<'static, BStr>,
@@ -154,7 +159,7 @@ pub mod transport {
     pub mod http {
         use std::borrow::Cow;
 
-        use crate::bstr::BStr;
+        use crate::bstr::{BStr, BString};
 
         /// The error produced when configuring a HTTP transport.
         #[derive(Debug, thiserror::Error)]
@@ -164,6 +169,10 @@ pub mod transport {
             InvalidProxyAuthMethod { value: String, key: Cow<'static, BStr> },
             #[error("Could not configure the credential helpers for the authenticated proxy url")]
             ConfigureProxyAuthenticate(#[from] crate::config::snapshot::credential_helpers::Error),
+            #[error("The SSL version at key `{key} named {name:?} is unknown")]
+            InvalidSslVersion { key: &'static str, name: BString },
+            #[error("The HTTP version at key `{key} named {name:?} is unknown")]
+            InvalidHttpVersion { key: &'static str, name: BString },
         }
     }
 }
