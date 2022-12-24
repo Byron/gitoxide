@@ -105,7 +105,7 @@ fn bad_objects_are_valid_until_they_are_actually_read_from_the_odb() {
         );
         assert_eq!(
             &format!("{:?}", parse_spec("cafea^{object}", &repo).unwrap_err())[..80],
-            r#"FindObject(Find(Loose(DecompressFile { source: Inflate(DecompressError(General {"#
+            r#"FindObject(Find(Loose(DecompressFile { source: Zlib(Inflate(DecompressError(Gene"#
         );
     }
 }
