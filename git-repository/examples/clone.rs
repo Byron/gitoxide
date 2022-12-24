@@ -6,41 +6,38 @@ use git_repository as git;
 fn main() -> anyhow::Result<()> {
     let repo_url = std::env::args_os()
         .nth(1)
-        .context("First argument needs to be the repository URL")?;
+        .context("The first argument is the repository URL")?;
 
     let dst = std::env::args_os()
         .nth(2)
-        .context("Second argument needs to be the directory to clone the repository in")?;
+        .context("The second argument is the directory to clone the repository into")?;
 
+    git::interrupt::init_handler(|| {})?;
     std::fs::create_dir_all(&dst)?;
-
-    let url = git_url::parse(repo_url.to_str().unwrap().into())?;
+    let url = git::url::parse(repo_url.to_str().unwrap().into())?;
 
     println!("Url: {:?}", url.to_bstring());
-
-    let mut prepare = git::prepare_clone(url, &dst)?;
+    let mut prepare_clone = git::prepare_clone(url, &dst)?;
 
     println!("Cloning {repo_url:?} into {dst:?}...");
-
-    let (mut checkout, _) =
-        prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+    let (mut prepare_checkout, _) =
+        prepare_clone.fetch_then_checkout(git::progress::Discard, &git::interrupt::IS_INTERRUPTED)?;
 
     println!(
         "Checking out into {:?} ...",
-        checkout.repo().work_dir().expect("should be there")
+        prepare_checkout.repo().work_dir().expect("should be there")
     );
 
-    let (repo, _) = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
-
-    println!("Repo cloned into {:?}", repo.work_dir().expect("Should be there"));
+    let (repo, _) = prepare_checkout.main_worktree(git::progress::Discard, &git::interrupt::IS_INTERRUPTED)?;
+    println!("Repo cloned into {:?}", repo.work_dir().expect("directory pre-created"));
 
     let remote = repo
         .find_default_remote(git::remote::Direction::Fetch)
-        .expect("Should be there")?;
+        .expect("always present after clone")?;
 
     println!(
         "Default remote: {} -> {}",
-        remote.name().expect("should be origin").as_bstr(),
+        remote.name().expect("default remote is always named").as_bstr(),
         remote
             .url(git::remote::Direction::Fetch)
             .expect("should be the remote URL")
