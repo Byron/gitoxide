@@ -2,6 +2,10 @@ This file is for tracking features that are less well implemented or less powerf
 
 #### `git-repository`
 
+### git-index
+
+* The `link` extension can be read, but won't be written. This effectively disables the use of a split index once a mutating operation is run on it with `gitixode`.
+
 ### git-protocol
 * **fetches using protocol V1 and stateful connections, i.e. ssh, git, file, may hang**
     * This can be fixed by making response parsing.
