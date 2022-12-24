@@ -57,15 +57,15 @@ pub fn connect(
     };
 
     let path = git_url::expand_path::for_shell(path);
-    let url_parser = if path.to_string().starts_with('/') {
+    let new_url = if path.starts_with(b"/") {
         git_url::Url::from_parts
     } else {
         git_url::Url::from_parts_as_alternative_form
     };
-    let url = url_parser(
+    let url = new_url(
         git_url::Scheme::Ssh,
         user.map(Into::into),
-        Some(host.to_string()),
+        Some(host.to_owned()),
         port,
         path.clone(),
     )
@@ -92,14 +92,11 @@ pub fn connect(
 
 #[cfg(test)]
 mod tests {
-
-    use bstr::ByteSlice;
-
     use crate::{client::blocking_io::ssh::connect, Protocol};
 
     #[test]
     fn connect_path() {
-        for (url, expected) in &[
+        for (url, expected) in [
             ("ssh://host.xy/~/repo", "~/repo"),
             ("ssh://host.xy/~username/repo", "~username/repo"),
             ("user@host.xy:/username/repo", "/username/repo"),
@@ -116,11 +113,7 @@ mod tests {
                 url.port,
             )
             .expect("parse success");
-            assert_eq!(
-                cmd.path,
-                expected.as_bytes().as_bstr(),
-                "the path is prepared to be substituted by the remote shell"
-            );
+            assert_eq!(cmd.path, expected, "the path will be substituted by the remote shell");
         }
     }
 }
