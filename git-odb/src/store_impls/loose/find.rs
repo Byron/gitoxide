@@ -4,15 +4,23 @@ use git_features::zlib;
 
 use crate::store_impls::loose::{hash_path, Store, HEADER_MAX_SIZE};
 
+#[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
+pub enum InflateError {
+    #[error(transparent)]
+    Zlib(#[from] zlib::inflate::Error),
+    #[error("huge header or corrupt data found")]
+    BufError,
+    #[error("invalid size of inflated data: {actual} != {expected}")]
+    InvalidSize { actual: usize, expected: usize },
+}
+
 /// Returned by [`Store::try_find()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
     #[error("decompression of loose object at '{path}' failed")]
-    DecompressFile {
-        source: zlib::inflate::Error,
-        path: PathBuf,
-    },
+    DecompressFile { source: InflateError, path: PathBuf },
     #[error(transparent)]
     Decode(#[from] git_object::decode::LooseHeaderDecodeError),
     #[error("Could not {action} data at '{path}'")]
@@ -158,7 +166,7 @@ impl Store {
             inflate
                 .once(compressed_buf, header_buf)
                 .map_err(|e| Error::DecompressFile {
-                    source: e,
+                    source: InflateError::Zlib(e),
                     path: path.to_owned(),
                 })?;
 
@@ -194,17 +202,18 @@ impl Store {
                 inflate
                     .once(&input[..bytes_read], output)
                     .map_err(|e| Error::DecompressFile {
-                        source: e,
+                        source: InflateError::Zlib(e),
                         path: path.to_owned(),
                     })?,
                 bytes_read,
             )
         };
-        assert_ne!(
-            status,
-            zlib::Status::BufError,
-            "Buffer errors might mean we encountered huge headers"
-        );
+        if status == zlib::Status::BufError {
+            return Err(Error::DecompressFile {
+                source: InflateError::BufError,
+                path,
+            });
+        }
 
         let decompressed_start = bytes_read;
         let (kind, size, header_size) =
@@ -213,11 +222,16 @@ impl Store {
         if status == zlib::Status::StreamEnd {
             let decompressed_body_bytes_sans_header =
                 decompressed_start + header_size..decompressed_start + consumed_out;
-            assert_eq!(
-                consumed_out,
-                size + header_size,
-                "At this point we have decompressed everything and given 'size' should match"
-            );
+
+            if consumed_out != size + header_size {
+                return Err(Error::DecompressFile {
+                    source: InflateError::InvalidSize {
+                        expected: size + header_size,
+                        actual: consumed_out,
+                    },
+                    path,
+                });
+            }
             buf.copy_within(decompressed_body_bytes_sans_header, 0);
         } else {
             buf.resize(bytes_read + size + header_size, 0);
@@ -233,11 +247,15 @@ impl Store {
                     action: "deflate",
                     path: path.to_owned(),
                 })?;
-                assert_eq!(
-                    num_decompressed_bytes + consumed_out,
-                    size + header_size,
-                    "Object should have been decompressed entirely and match given 'size'"
-                );
+                if num_decompressed_bytes + consumed_out != size + header_size {
+                    return Err(Error::DecompressFile {
+                        source: InflateError::InvalidSize {
+                            expected: size + header_size,
+                            actual: num_decompressed_bytes + consumed_out,
+                        },
+                        path,
+                    });
+                }
             };
             buf.copy_within(decompressed_start + header_size.., 0);
         }
