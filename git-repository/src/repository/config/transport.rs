@@ -394,7 +394,7 @@ impl crate::Repository {
                                     .map(|max| min.and_then(|min| max.map(|max| (min, max))))
                             })?;
                         if let Some((min, max)) = min_max {
-                            let v = opts.ssl_version.get_or_insert_with(|| SslVersionRangeInclusive {
+                            let v = opts.ssl_version.get_or_insert(SslVersionRangeInclusive {
                                 min: SslVersion::TlsV1_3,
                                 max: SslVersion::TlsV1_3,
                             });
