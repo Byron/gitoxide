@@ -4,6 +4,7 @@ use git_features::zlib;
 
 use crate::store_impls::loose::{hash_path, Store, HEADER_MAX_SIZE};
 
+/// An error specific to failed ZLIB operations due to corrupt streams.
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum InflateError {
@@ -71,10 +72,12 @@ impl Store {
         for oid in single_directory_iter {
             let oid = match oid {
                 Ok(oid) => oid,
-                Err(err) => match err.io_error() {
-                    Some(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-                    None | Some(_) => return Err(err),
-                },
+                Err(err) => {
+                    return match err.io_error() {
+                        Some(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
+                        None | Some(_) => Err(err),
+                    }
+                }
             };
             if prefix.cmp_oid(&oid) == Ordering::Equal {
                 match &mut candidates {
@@ -170,11 +173,12 @@ impl Store {
                     path: path.to_owned(),
                 })?;
 
-        assert_ne!(
-            status,
-            zlib::Status::BufError,
-            "Buffer errors might mean we encountered huge headers"
-        );
+        if status == zlib::Status::BufError {
+            return Err(Error::DecompressFile {
+                source: InflateError::BufError,
+                path,
+            });
+        }
         let (kind, size, _header_size) = git_object::decode::loose_header(&header_buf[..consumed_out])?;
         Ok(Some((size, kind)))
     }
