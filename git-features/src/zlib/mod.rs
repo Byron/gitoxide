@@ -16,6 +16,9 @@ pub mod inflate {
                 display("Could not decode zip stream, status was '{:?}'", err)
                 from()
             }
+            Status(status: flate2::Status) {
+                display("The zlib status indicated an error, status was '{:?}'", status)
+            }
         }
     }
 }

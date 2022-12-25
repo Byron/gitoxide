@@ -13,6 +13,12 @@ pub enum Error {
         source: zlib::inflate::Error,
         path: PathBuf,
     },
+    #[error("file at '{path}' showed invalid size of inflated data, expected {expected}, got {actual}")]
+    SizeMismatch {
+        actual: usize,
+        expected: usize,
+        path: PathBuf,
+    },
     #[error(transparent)]
     Decode(#[from] git_object::decode::LooseHeaderDecodeError),
     #[error("Could not {action} data at '{path}'")]
@@ -63,10 +69,12 @@ impl Store {
         for oid in single_directory_iter {
             let oid = match oid {
                 Ok(oid) => oid,
-                Err(err) => match err.io_error() {
-                    Some(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-                    None | Some(_) => return Err(err),
-                },
+                Err(err) => {
+                    return match err.io_error() {
+                        Some(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
+                        None | Some(_) => Err(err),
+                    }
+                }
             };
             if prefix.cmp_oid(&oid) == Ordering::Equal {
                 match &mut candidates {
@@ -162,11 +170,12 @@ impl Store {
                     path: path.to_owned(),
                 })?;
 
-        assert_ne!(
-            status,
-            zlib::Status::BufError,
-            "Buffer errors might mean we encountered huge headers"
-        );
+        if status == zlib::Status::BufError {
+            return Err(Error::DecompressFile {
+                source: zlib::inflate::Error::Status(status),
+                path,
+            });
+        }
         let (kind, size, _header_size) = git_object::decode::loose_header(&header_buf[..consumed_out])?;
         Ok(Some((size, kind)))
     }
@@ -200,11 +209,12 @@ impl Store {
                 bytes_read,
             )
         };
-        assert_ne!(
-            status,
-            zlib::Status::BufError,
-            "Buffer errors might mean we encountered huge headers"
-        );
+        if status == zlib::Status::BufError {
+            return Err(Error::DecompressFile {
+                source: zlib::inflate::Error::Status(status),
+                path,
+            });
+        }
 
         let decompressed_start = bytes_read;
         let (kind, size, header_size) =
@@ -213,11 +223,14 @@ impl Store {
         if status == zlib::Status::StreamEnd {
             let decompressed_body_bytes_sans_header =
                 decompressed_start + header_size..decompressed_start + consumed_out;
-            assert_eq!(
-                consumed_out,
-                size + header_size,
-                "At this point we have decompressed everything and given 'size' should match"
-            );
+
+            if consumed_out != size + header_size {
+                return Err(Error::SizeMismatch {
+                    expected: size + header_size,
+                    actual: consumed_out,
+                    path,
+                });
+            }
             buf.copy_within(decompressed_body_bytes_sans_header, 0);
         } else {
             buf.resize(bytes_read + size + header_size, 0);
@@ -233,11 +246,13 @@ impl Store {
                     action: "deflate",
                     path: path.to_owned(),
                 })?;
-                assert_eq!(
-                    num_decompressed_bytes + consumed_out,
-                    size + header_size,
-                    "Object should have been decompressed entirely and match given 'size'"
-                );
+                if num_decompressed_bytes + consumed_out != size + header_size {
+                    return Err(Error::SizeMismatch {
+                        expected: size + header_size,
+                        actual: num_decompressed_bytes + consumed_out,
+                        path,
+                    });
+                }
             };
             buf.copy_within(decompressed_start + header_size.., 0);
         }
