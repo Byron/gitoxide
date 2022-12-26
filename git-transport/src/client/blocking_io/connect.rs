@@ -1,4 +1,4 @@
-pub use crate::client::non_io_types::connect::Error;
+pub use crate::client::non_io_types::connect::{Error, Options};
 
 pub(crate) mod function {
     use std::convert::TryInto;
@@ -13,8 +13,8 @@ pub(crate) mod function {
     /// [git daemons][crate::client::git::connect()],
     /// and if compiled in connections to [git repositories over https][crate::client::http::connect()].
     ///
-    /// Use `desired_version` to set the desired protocol version to use when connecting, but note that the server may downgrade it.
-    pub fn connect<Url, E>(url: Url, desired_version: crate::Protocol) -> Result<Box<dyn Transport + Send>, Error>
+    /// Use `options` to further control specifics of the transport resulting from the connection.
+    pub fn connect<Url, E>(url: Url, options: super::Options) -> Result<Box<dyn Transport + Send>, Error>
     where
         Url: TryInto<git_url::Url, Error = E>,
         git_url::parse::Error: From<E>,
@@ -30,20 +30,13 @@ pub(crate) mod function {
                     });
                 }
                 Box::new(
-                    crate::client::blocking_io::file::connect(url.path, desired_version)
+                    crate::client::blocking_io::file::connect(url.path, options.version)
                         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
                 )
             }
             git_url::Scheme::Ssh => Box::new({
-                let path = std::mem::take(&mut url.path);
-                crate::client::blocking_io::ssh::connect(
-                    url.host().expect("host is present in url"),
-                    path,
-                    desired_version,
-                    url.user(),
-                    url.port,
-                )
-                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?
+                crate::client::blocking_io::ssh::connect(url, options.version, options.ssh)
+                    .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?
             }),
             git_url::Scheme::Git => {
                 if url.user().is_some() {
@@ -57,7 +50,7 @@ pub(crate) mod function {
                     crate::client::git::connect(
                         url.host().expect("host is present in url"),
                         path,
-                        desired_version,
+                        options.version,
                         url.port,
                     )
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?
@@ -68,7 +61,7 @@ pub(crate) mod function {
             #[cfg(any(feature = "http-client-curl", feature = "http-client-reqwest"))]
             git_url::Scheme::Https | git_url::Scheme::Http => Box::new(crate::client::http::connect(
                 &url.to_bstring().to_string(),
-                desired_version,
+                options.version,
             )),
         })
     }

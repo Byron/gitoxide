@@ -1,4 +1,4 @@
-pub use crate::client::non_io_types::connect::Error;
+pub use crate::client::non_io_types::connect::{Error, Options};
 
 #[cfg(any(feature = "async-std"))]
 pub(crate) mod function {
@@ -11,10 +11,10 @@ pub(crate) mod function {
     /// This includes connections to
     /// [git daemons][crate::client::git::connect()] only at the moment.
     ///
-    /// Use `desired_version` to set the desired protocol version to use when connecting, but note that the server may downgrade it.
+    /// Use `options` to further control specifics of the transport resulting from the connection.
     pub async fn connect<Url, E>(
         url: Url,
-        desired_version: crate::Protocol,
+        options: super::Options,
     ) -> Result<Box<dyn crate::client::Transport + Send>, Error>
     where
         Url: TryInto<git_url::Url, Error = E>,
@@ -35,7 +35,7 @@ pub(crate) mod function {
                         url.host().expect("host is present in url"),
                         url.port,
                         path,
-                        desired_version,
+                        options.version,
                     )
                     .await
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,

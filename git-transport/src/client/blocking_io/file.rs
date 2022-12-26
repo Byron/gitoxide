@@ -1,12 +1,16 @@
+use std::ffi::OsString;
+use std::io::Write;
 use std::{
     any::Any,
     borrow::Cow,
     error::Error,
-    process::{self, Command, Stdio},
+    process::{self, Stdio},
 };
 
+use bstr::io::BufReadExt;
 use bstr::{BStr, BString, ByteSlice};
 
+use crate::client::ssh;
 use crate::{
     client::{self, git, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
     Protocol, Service,
@@ -38,29 +42,30 @@ const ENV_VARS_TO_REMOVE: &[&str] = &[
 pub struct SpawnProcessOnDemand {
     desired_version: Protocol,
     url: git_url::Url,
-    pub(crate) path: BString,
-    ssh_program: Option<String>,
-    ssh_args: Vec<String>,
-    ssh_env: Vec<(&'static str, String)>,
-    connection: Option<git::Connection<process::ChildStdout, process::ChildStdin>>,
+    path: BString,
+    ssh_cmd: Option<(OsString, ssh::ProgramKind)>,
+    /// The environment variables to set in the invoked command.
+    envs: Vec<(&'static str, String)>,
+    ssh_disallow_shell: bool,
+    connection: Option<git::Connection<Box<dyn std::io::Read + Send>, process::ChildStdin>>,
     child: Option<process::Child>,
 }
 
 impl SpawnProcessOnDemand {
     pub(crate) fn new_ssh(
         url: git_url::Url,
-        program: String,
-        args: impl IntoIterator<Item = impl Into<String>>,
-        env: impl IntoIterator<Item = (&'static str, impl Into<String>)>,
+        program: impl Into<OsString>,
         path: BString,
+        ssh_kind: ssh::ProgramKind,
+        ssh_disallow_shell: bool,
         version: Protocol,
     ) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
             url,
             path,
-            ssh_program: Some(program),
-            ssh_args: args.into_iter().map(|s| s.into()).collect(),
-            ssh_env: env.into_iter().map(|(k, v)| (k, v.into())).collect(),
+            ssh_cmd: Some((program.into(), ssh_kind)),
+            envs: Default::default(),
+            ssh_disallow_shell,
             child: None,
             connection: None,
             desired_version: version,
@@ -71,11 +76,11 @@ impl SpawnProcessOnDemand {
             url: git_url::Url::from_parts_as_alternative_form(git_url::Scheme::File, None, None, None, path.clone())
                 .expect("valid url"),
             path,
-            ssh_program: None,
-            ssh_args: Vec::new(),
-            ssh_env: (version != Protocol::V1)
+            ssh_cmd: None,
+            envs: (version != Protocol::V1)
                 .then(|| vec![("GIT_PROTOCOL", format!("version={}", version as usize))])
                 .unwrap_or_default(),
+            ssh_disallow_shell: false,
             child: None,
             connection: None,
             desired_version: version,
@@ -84,6 +89,16 @@ impl SpawnProcessOnDemand {
 }
 
 impl client::TransportWithoutIO for SpawnProcessOnDemand {
+    fn set_identity(&mut self, identity: git_sec::identity::Account) -> Result<(), client::Error> {
+        if self.url.scheme == git_url::Scheme::Ssh {
+            self.url
+                .set_user((!identity.username.is_empty()).then(|| identity.username));
+            Ok(())
+        } else {
+            Err(client::Error::AuthenticationUnsupported)
+        }
+    }
+
     fn request(
         &mut self,
         write_mode: WriteMode,
@@ -108,44 +123,99 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
     }
 }
 
+struct ReadStdoutFailOnError {
+    recv: std::sync::mpsc::Receiver<std::io::Error>,
+    read: std::process::ChildStdout,
+}
+
+fn supervise_stderr(
+    ssh_kind: ssh::ProgramKind,
+    stderr: std::process::ChildStderr,
+    stdout: std::process::ChildStdout,
+) -> ReadStdoutFailOnError {
+    impl ReadStdoutFailOnError {
+        fn swap_err_if_present_in_stderr(&self, res: std::io::Result<usize>) -> std::io::Result<usize> {
+            match self.recv.try_recv().ok() {
+                Some(err) => Err(err),
+                None => res,
+            }
+        }
+    }
+    impl std::io::Read for ReadStdoutFailOnError {
+        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+            let res = self.read.read(buf);
+            self.swap_err_if_present_in_stderr(res)
+        }
+    }
+
+    let (send, recv) = std::sync::mpsc::sync_channel(1);
+    std::thread::spawn(move || -> std::io::Result<()> {
+        let mut process_stderr = std::io::stderr();
+        for line in std::io::BufReader::new(stderr).byte_lines() {
+            let line = line?;
+            match ssh_kind.line_to_permission_err(line.into()) {
+                Ok(err) => {
+                    send.send(err).ok();
+                }
+                Err(line) => {
+                    process_stderr.write_all(&line).ok();
+                    writeln!(&process_stderr).ok();
+                }
+            }
+        }
+        Ok(())
+    });
+    ReadStdoutFailOnError { read: stdout, recv }
+}
+
 impl client::Transport for SpawnProcessOnDemand {
     fn handshake<'a>(
         &mut self,
         service: Service,
         extra_parameters: &'a [(&'a str, Option<&'a str>)],
     ) -> Result<SetServiceResponse<'_>, client::Error> {
-        assert!(
-            self.connection.is_none(),
-            "cannot handshake twice with the same connection"
-        );
-        let mut cmd = match &self.ssh_program {
-            Some(program) => Command::new(program),
-            None => Command::new(service.as_str()),
+        let (mut cmd, ssh_kind) = match &self.ssh_cmd {
+            Some((command, kind)) => (
+                kind.prepare_invocation(command, &self.url, self.desired_version, self.ssh_disallow_shell)
+                    .map_err(client::Error::SshInvocation)?
+                    .stderr(Stdio::piped()),
+                Some(*kind),
+            ),
+            None => (git_command::prepare(service.as_str()), None),
         };
+        cmd.stdin = Stdio::piped();
+        cmd.stdout = Stdio::piped();
+        if self.ssh_cmd.is_some() {
+            cmd.args.push(service.as_str().into());
+        }
+        cmd.args.push(self.path.to_os_str_lossy().into_owned());
+
+        let mut cmd = std::process::Command::from(cmd);
         for env_to_remove in ENV_VARS_TO_REMOVE {
             cmd.env_remove(env_to_remove);
         }
-        cmd.envs(std::mem::take(&mut self.ssh_env));
-        cmd.args(&mut self.ssh_args);
-        cmd.stdin(Stdio::piped()).stdout(Stdio::piped());
-        if self.ssh_program.is_some() {
-            cmd.arg(service.as_str());
-        }
-        cmd.arg(self.path.to_os_str_lossy());
+        cmd.envs(std::mem::take(&mut self.envs));
 
         let mut child = cmd.spawn()?;
+        let stdout: Box<dyn std::io::Read + Send> = match ssh_kind {
+            Some(ssh_kind) => Box::new(supervise_stderr(
+                ssh_kind,
+                child.stderr.take().expect("configured beforehand"),
+                child.stdout.take().expect("configured"),
+            )),
+            None => Box::new(child.stdout.take().expect("stdout configured")),
+        };
         self.connection = Some(git::Connection::new_for_spawned_process(
-            child.stdout.take().expect("stdout configured"),
+            stdout,
             child.stdin.take().expect("stdin configured"),
             self.desired_version,
             self.path.clone(),
         ));
         self.child = Some(child);
-        let c = self
-            .connection
+        self.connection
             .as_mut()
-            .expect("connection to be there right after setting it");
-        c.handshake(service, extra_parameters)
+            .expect("connection to be there right after setting it")
+            .handshake(service, extra_parameters)
     }
 }
 
@@ -157,4 +227,29 @@ pub fn connect(
     desired_version: Protocol,
 ) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {
     Ok(SpawnProcessOnDemand::new_local(path.into(), desired_version))
+}
+
+#[cfg(test)]
+mod tests {
+    mod ssh {
+        mod connect {
+            use crate::{client::blocking_io::ssh::connect, Protocol};
+
+            #[test]
+            fn path() {
+                for (url, expected) in [
+                    ("ssh://host.xy/~/repo", "~/repo"),
+                    ("ssh://host.xy/~username/repo", "~username/repo"),
+                    ("user@host.xy:/username/repo", "/username/repo"),
+                    ("user@host.xy:username/repo", "username/repo"),
+                    ("user@host.xy:../username/repo", "../username/repo"),
+                    ("user@host.xy:~/repo", "~/repo"),
+                ] {
+                    let url = git_url::parse((*url).into()).expect("valid url");
+                    let cmd = connect(url, Protocol::V1, Default::default()).expect("parse success");
+                    assert_eq!(cmd.path, expected, "the path will be substituted by the remote shell");
+                }
+            }
+        }
+    }
 }
