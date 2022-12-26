@@ -96,6 +96,14 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned { note: Some("safety is not optional") },
     },
     Record {
+        config: "core.sshCommand",
+        usage: Planned { note: Some("unclear right now how to configure it, needs adjustment on Command based transport, must be lazy then making `connect()` a no-op essentially.") },
+    },
+    Record {
+        config: "ssh.variant",
+        usage: Planned { note: Some("another way to select which ssh program to use, but formalizing it to choose correct arguments. Based on the basename otherwise. Detection is attempted otherwise with `-G`") },
+    },
+    Record {
         config: "core.fileMode",
         usage: InModule {name: "config", deviation: None},
     },
