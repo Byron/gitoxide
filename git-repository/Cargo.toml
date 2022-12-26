@@ -3,7 +3,7 @@ name = "git-repository"
 repository = "https://github.com/Byron/gitoxide"
 description = "Abstractions for git repositories"
 license = "MIT/Apache-2.0"
-version = "0.30.1"
+version = "0.30.2"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "CHANGELOG.md"]
@@ -94,7 +94,7 @@ git-date = { version = "^0.3.1", path = "../git-date" }
 git-refspec = { version = "^0.5.0", path = "../git-refspec" }
 
 git-config = { version = "^0.13.0", path = "../git-config" }
-git-odb = { version = "^0.38.0", path = "../git-odb" }
+git-odb = { version = "^0.38.1", path = "../git-odb" }
 git-hash = { version = "^0.10.1", path = "../git-hash" }
 git-object = { version = "^0.24.0", path = "../git-object" }
 git-actor = { version = "^0.15.0", path = "../git-actor" }
@@ -102,13 +102,13 @@ git-pack = { version = "^0.28.0", path = "../git-pack", features = ["object-cach
 git-revision = { version = "^0.8.0", path = "../git-revision" }
 
 git-path = { version = "^0.7.0", path = "../git-path" }
-git-url = { version = "^0.12.1", path = "../git-url" }
+git-url = { version = "^0.12.2", path = "../git-url" }
 git-traverse = { version = "^0.20.0", path = "../git-traverse" }
 git-protocol = { version = "^0.25.1", path = "../git-protocol", optional = true }
-git-transport = { version = "^0.24.1", path = "../git-transport", optional = true }
+git-transport = { version = "^0.24.2", path = "../git-transport", optional = true }
 git-diff = { version = "^0.24.0", path = "../git-diff" }
 git-mailmap = { version = "^0.7.0", path = "../git-mailmap" }
-git-features = { version = "^0.25.0", path = "../git-features", features = ["progress", "once_cell"] }
+git-features = { version = "^0.25.1", path = "../git-features", features = ["progress", "once_cell"] }
 
 git-attributes = { version = "^0.7.0", path = "../git-attributes" }
 git-glob = { version = "^0.5.1", path = "../git-glob" }

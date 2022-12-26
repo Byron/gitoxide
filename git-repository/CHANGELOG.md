@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.30.2 (2022-12-26)
+
+### New Features
+
+ - <csr-id-38ae61a805bd8cca5df8d1c1dcf3a8a0f9c85f5a/> make more HTTP options available
+   - `http.schannelCheckRevoke`
+
+### Other
+
+ - <csr-id-114f184855b6177aa1f0dbf6e6589f23deb5ffe6/> provide a repository clone example
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 2 calendar days.
+ - 3 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - thanks clippy ([`1c891d1`](https://github.com/Byron/gitoxide/commit/1c891d1f638a046a16e7f91ba8f792d3a26869a0))
+    - Merge branch 'adjustments-for-cargo' ([`d821fc5`](https://github.com/Byron/gitoxide/commit/d821fc5b4ef4ba606f2b6bb68b66f7260a0205dc))
+    - make more HTTP options available ([`38ae61a`](https://github.com/Byron/gitoxide/commit/38ae61a805bd8cca5df8d1c1dcf3a8a0f9c85f5a))
+    - Merge branch 'fix/ssh-clone' ([`3678a6a`](https://github.com/Byron/gitoxide/commit/3678a6abab6f59ff7008ccfe02bb8d61da47e166))
+    - refactor ([`668118c`](https://github.com/Byron/gitoxide/commit/668118c1a5fd47cb1d55eac77306cce3482ee71e))
+    - provide a repository clone example ([`114f184`](https://github.com/Byron/gitoxide/commit/114f184855b6177aa1f0dbf6e6589f23deb5ffe6))
+</details>
+
 ## 0.30.1 (2022-12-22)
 
 ### New Features
@@ -20,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 1 calendar day.
+ - 7 commits contributed to the release over the course of 1 calendar day.
  - 2 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#668](https://github.com/Byron/gitoxide/issues/668)
@@ -34,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#668](https://github.com/Byron/gitoxide/issues/668)**
     - update docs ([`f620f87`](https://github.com/Byron/gitoxide/commit/f620f87f3722f75396b1ff990fd7fe754f4a1558))
  * **Uncategorized**
+    - Release git-url v0.12.1, git-transport v0.24.1, git-protocol v0.25.1, git-repository v0.30.1, git-commitgraph v0.12.0, gitoxide-core v0.22.0, gitoxide v0.20.0 ([`08ec3a9`](https://github.com/Byron/gitoxide/commit/08ec3a93d77a1018439a5c41c23729ffed27c5a5))
     - prepare changelogs prior to release ([`68ce15d`](https://github.com/Byron/gitoxide/commit/68ce15d07b50cfacdac0d1e42fe7f5e6330ba523))
     - Merge branch 'adjustments-for-cargo' ([`5afa7f5`](https://github.com/Byron/gitoxide/commit/5afa7f51342deaf0938e7fb2ebe6a578e83ab645))
     - `open::Options::open_path_as_is()` allows to avoid 'smart opening' to try the path verbatim. ([`ca84c87`](https://github.com/Byron/gitoxide/commit/ca84c87734804cbfc65e311b89ff6ccfc236149c))

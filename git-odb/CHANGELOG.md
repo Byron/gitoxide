@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.38.1 (2022-12-26)
+
+### Bug Fixes
+
+ - <csr-id-4fffa9a9198cf3012fa8215796aab3d456519ff3/> remove panic-assertions in `loose` `lookup_prefix`
+
+### Refactor
+
+ - <csr-id-46636e64c9a48ec0e85e014ac0cc8b48846d8462/> flatten errors into one
+   By adding one variant, one can remove the previous 'sub-error', for which
+   there is no precedent in the codebase yet.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release.
+ - 6 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - add test to verify we don't panic on a corrupt loose object ([`391adeb`](https://github.com/Byron/gitoxide/commit/391adeb69a73310baa3f08afa2c0a9aea7cfaf7c))
+    - Merge branch 'loose-find-panic' ([`95cccdd`](https://github.com/Byron/gitoxide/commit/95cccddd3c181eb2a85b12823c27beb054adf5d8))
+    - flatten errors into one ([`46636e6`](https://github.com/Byron/gitoxide/commit/46636e64c9a48ec0e85e014ac0cc8b48846d8462))
+    - refactor ([`d305a3a`](https://github.com/Byron/gitoxide/commit/d305a3a8af77e7857c3f9b9866d103960ec024e1))
+    - remove panic-assertions in `loose` `lookup_prefix` ([`4fffa9a`](https://github.com/Byron/gitoxide/commit/4fffa9a9198cf3012fa8215796aab3d456519ff3))
+</details>
+
 ## 0.38.0 (2022-12-19)
 
 ### New Features
@@ -26,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 20 commits contributed to the release over the course of 27 calendar days.
+ - 21 commits contributed to the release over the course of 27 calendar days.
  - 27 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -44,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-date v0.3.1, git-features v0.25.0, git-actor v0.15.0, git-glob v0.5.1, git-path v0.7.0, git-attributes v0.7.0, git-config-value v0.10.0, git-lock v3.0.1, git-validate v0.7.1, git-object v0.24.0, git-ref v0.21.0, git-sec v0.6.0, git-config v0.13.0, git-prompt v0.3.0, git-url v0.12.0, git-credentials v0.8.0, git-diff v0.24.0, git-discover v0.10.0, git-traverse v0.20.0, git-index v0.10.0, git-mailmap v0.7.0, git-pack v0.28.0, git-odb v0.38.0, git-packetline v0.14.1, git-transport v0.24.0, git-protocol v0.25.0, git-revision v0.8.0, git-refspec v0.5.0, git-worktree v0.10.0, git-repository v0.30.0, safety bump 26 crates ([`e6b9906`](https://github.com/Byron/gitoxide/commit/e6b9906c486b11057936da16ed6e0ec450a0fb83))
     - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - Merge branch 'odb-iteration' ([`693a469`](https://github.com/Byron/gitoxide/commit/693a46977e2b57b93ee921320e008c8ad1beb81b))
     - Assure deltas are counted correctly, even if the base is out of pack. ([`ddaf47f`](https://github.com/Byron/gitoxide/commit/ddaf47f023970e8acfb98e8874da22f2604a92d9))

@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.24.2 (2022-12-26)
+
+### New Features
+
+ - <csr-id-d59d362f12bf617656bae80596120c8bf823b090/> add and implement various new http options for the `curl` backend.
+   - `schannel_check_revoke` as `curl`-backend specific configuration.
+   - `ssl_version`
+   - `ssl_ca_info`
+   - `http_version`
+
+### Bug Fixes
+
+ - <csr-id-c62e5c7d415351aefafeb75f0ab926c7c45c6ede/> fixes SSH clone from scp-like/relatives URLs
+       - Removes git-upload-pack extra parameters (rejected by both github and gitlab)
+       - Removes the double user inclusion in URL
+       - Properly handles relative paths in URL reconstruction on `connect()`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 2 calendar days.
+ - 3 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'adjustments-for-cargo' ([`d821fc5`](https://github.com/Byron/gitoxide/commit/d821fc5b4ef4ba606f2b6bb68b66f7260a0205dc))
+    - add and implement various new http options for the `curl` backend. ([`d59d362`](https://github.com/Byron/gitoxide/commit/d59d362f12bf617656bae80596120c8bf823b090))
+    - Merge branch 'fix/ssh-clone' ([`3678a6a`](https://github.com/Byron/gitoxide/commit/3678a6abab6f59ff7008ccfe02bb8d61da47e166))
+    - refactor ([`24070a3`](https://github.com/Byron/gitoxide/commit/24070a3b970554d5d4815e87bcbfb6fb5524a006))
+    - fixes SSH clone from scp-like/relatives URLs ([`c62e5c7`](https://github.com/Byron/gitoxide/commit/c62e5c7d415351aefafeb75f0ab926c7c45c6ede))
+</details>
+
 ## 0.24.1 (2022-12-22)
 
 A maintenance release without user-facing changes.
@@ -13,7 +53,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 2 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +65,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-url v0.12.1, git-transport v0.24.1, git-protocol v0.25.1, git-repository v0.30.1, git-commitgraph v0.12.0, gitoxide-core v0.22.0, gitoxide v0.20.0 ([`08ec3a9`](https://github.com/Byron/gitoxide/commit/08ec3a93d77a1018439a5c41c23729ffed27c5a5))
     - prepare changelogs prior to release ([`68ce15d`](https://github.com/Byron/gitoxide/commit/68ce15d07b50cfacdac0d1e42fe7f5e6330ba523))
     - Merge branch 'adjustments-for-cargo' ([`5afa7f5`](https://github.com/Byron/gitoxide/commit/5afa7f51342deaf0938e7fb2ebe6a578e83ab645))
 </details>
