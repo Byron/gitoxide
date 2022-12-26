@@ -166,6 +166,7 @@ mod lookup_prefix {
 
 mod find {
     use git_object::{bstr::ByteSlice, tree::EntryMode, BlobRef, CommitRef, Kind, TagRef, TreeRef};
+    use git_odb::loose;
 
     use crate::{
         hex_to_id,
@@ -174,6 +175,22 @@ mod find {
 
     fn find<'a>(hex: &str, buf: &'a mut Vec<u8>) -> git_object::Data<'a> {
         locate_oid(hex_to_id(hex), buf)
+    }
+
+    #[test]
+    fn invalid_object_does_not_trigger_panics() -> crate::Result {
+        let tmp = git_testtools::tempfile::tempdir()?;
+        let base = tmp.path().join("aa");
+        std::fs::create_dir(&base)?;
+        std::fs::write(base.join("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), [])?;
+        let db = loose::Store::at(tmp.path(), git_hash::Kind::Sha1);
+
+        let mut buf = Vec::new();
+        let id = hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        assert!(db.try_find(id, &mut buf).is_err(), "it must not panic");
+        assert!(db.try_header(id).is_err(), "it must not panic");
+
+        Ok(())
     }
 
     #[test]
