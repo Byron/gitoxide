@@ -23,6 +23,11 @@ name = "git-with-regex"
 path = "tests/git-with-regex.rs"
 required-features = ["regex"]
 
+[[example]]
+name = "clone"
+path = "examples/clone.rs"
+required-features = ["blocking-network-client"]
+
 [features]
 
 default = ["max-performance-safe"]
@@ -152,8 +157,3 @@ async-std = { version = "1.12.0", features = ["attributes"] }
 [package.metadata.docs.rs]
 features = ["document-features", "max-performance", "blocking-network-client", "serde1"]
 rustdoc-args = ["--cfg", "docsrs"]
-
-
-[[example]]
-name = "clone"
-required-features = ["blocking-network-client"]
