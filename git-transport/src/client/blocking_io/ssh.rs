@@ -37,18 +37,15 @@ pub fn connect(
     let mut ssh_cmd_line = ssh_cmd_line.split(' ');
     let ssh_cmd = ssh_cmd_line.next().expect("there is always a single item");
 
-    type EnvVar = (&'static str, String);
-    let args_and_env: Option<(Vec<Cow<'_, str>>, Vec<EnvVar>)> = match ssh_cmd {
+    let mut args = Vec::new();
+    if let Some(port) = port {
+        args.push(format!("-p{}", port).into());
+    }
+    let env: Option<Vec<(&'static str, String)>> = match ssh_cmd {
         "ssh" | "ssh.exe" => {
             if desired_version != Protocol::V1 {
-                let mut args = vec![Cow::from("-o"), "SendEnv=GIT_PROTOCOL".into()];
-                if let Some(port) = port {
-                    args.push(format!("-p{}", port).into());
-                }
-                Some((
-                    args,
-                    vec![("GIT_PROTOCOL", format!("version={}", desired_version as usize))],
-                ))
+                args.extend([Cow::from("-o"), "SendEnv=GIT_PROTOCOL".into()]);
+                vec![("GIT_PROTOCOL", format!("version={}", desired_version as usize))].into()
             } else {
                 None
             }
@@ -75,27 +72,17 @@ pub fn connect(
         Some(user) => format!("{user}@{host}"),
         None => host.into(),
     };
-    Ok(match args_and_env {
-        Some((args, envs)) => blocking_io::file::SpawnProcessOnDemand::new_ssh(
-            url,
-            ssh_cmd.into(),
-            ssh_cmd_line
-                .map(Cow::from)
-                .chain(args)
-                .chain(Some(host_as_ssh_arg.into())),
-            envs,
-            path,
-            desired_version,
-        ),
-        None => blocking_io::file::SpawnProcessOnDemand::new_ssh(
-            url,
-            ssh_cmd.into(),
-            ssh_cmd_line.chain(Some(host_as_ssh_arg.as_str())),
-            None::<(&str, String)>,
-            path,
-            desired_version,
-        ),
-    })
+    Ok(blocking_io::file::SpawnProcessOnDemand::new_ssh(
+        url,
+        ssh_cmd.into(),
+        ssh_cmd_line
+            .map(Cow::from)
+            .chain(args)
+            .chain(Some(host_as_ssh_arg.into())),
+        env.unwrap_or_default(),
+        path,
+        desired_version,
+    ))
 }
 
 #[cfg(test)]
