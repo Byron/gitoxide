@@ -70,11 +70,19 @@ pub fn connect(
         path.clone(),
     )
     .expect("valid url");
+
+    let host_as_ssh_arg = match user {
+        Some(user) => format!("{user}@{host}"),
+        None => host.into(),
+    };
     Ok(match args_and_env {
         Some((args, envs)) => blocking_io::file::SpawnProcessOnDemand::new_ssh(
             url,
             ssh_cmd.into(),
-            ssh_cmd_line.map(Cow::from).chain(args).chain(Some(host.into())),
+            ssh_cmd_line
+                .map(Cow::from)
+                .chain(args)
+                .chain(Some(host_as_ssh_arg.into())),
             envs,
             path,
             desired_version,
@@ -82,7 +90,7 @@ pub fn connect(
         None => blocking_io::file::SpawnProcessOnDemand::new_ssh(
             url,
             ssh_cmd.into(),
-            ssh_cmd_line.chain(Some(host)),
+            ssh_cmd_line.chain(Some(host_as_ssh_arg.as_str())),
             None::<(&str, String)>,
             path,
             desired_version,
