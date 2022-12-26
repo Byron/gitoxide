@@ -117,6 +117,19 @@ pub mod checkout_options {
 }
 
 ///
+pub mod ssh_connect_options {
+    use crate::bstr::BString;
+
+    /// The error produced when obtaining ssh connection configuration.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The ssh variant named {name:?} at key `ssh.variant` is unknown.")]
+        SshVariant { name: BString },
+    }
+}
+
+///
 pub mod transport {
     use std::borrow::Cow;
 

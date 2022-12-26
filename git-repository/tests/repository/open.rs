@@ -186,7 +186,10 @@ mod with_overrides {
             .set("GITOXIDE_PACK_CACHE_MEMORY", "0")
             .set("GITOXIDE_OBJECT_CACHE_MEMORY", "5m")
             .set("GIT_SSL_CAINFO", "./env.pem")
-            .set("GIT_SSL_VERSION", "tlsv1.3");
+            .set("GIT_SSL_VERSION", "tlsv1.3")
+            .set("GIT_SSH_VARIANT", "ssh-variant-env")
+            .set("GIT_SSH_COMMAND", "ssh-command-env")
+            .set("GIT_SSH", "ssh-command-fallback-env");
         let mut opts = git::open::Options::isolated()
             .cli_overrides([
                 "http.userAgent=agent-from-cli",
@@ -194,6 +197,9 @@ mod with_overrides {
                 "http.lowSpeedTime=3",
                 "http.sslCAInfo=./cli.pem",
                 "http.sslVersion=sslv3",
+                "ssh.variant=ssh-variant-cli",
+                "core.sshCommand=ssh-command-cli",
+                "gitoxide.ssh.commandWithoutShellFallback=ssh-command-fallback-cli",
             ])
             .config_overrides([
                 "http.userAgent=agent-from-api",
@@ -201,6 +207,9 @@ mod with_overrides {
                 "http.lowSpeedTime=2",
                 "http.sslCAInfo=./api.pem",
                 "http.sslVersion=tlsv1",
+                "ssh.variant=ssh-variant-api",
+                "core.sshCommand=ssh-command-api",
+                "gitoxide.ssh.commandWithoutShellFallback=ssh-command-fallback-api",
             ]);
         opts.permissions.env.git_prefix = Permission::Allow;
         opts.permissions.env.http_transport = Permission::Allow;
@@ -290,6 +299,32 @@ mod with_overrides {
                 cow_bstr("sslv3"),
                 cow_bstr("tlsv1"),
                 cow_bstr("tlsv1.3")
+            ]
+        );
+        assert_eq!(
+            config.strings_by_key("ssh.variant").expect("at least one value"),
+            [
+                cow_bstr("ssh-variant-cli"),
+                cow_bstr("ssh-variant-api"),
+                cow_bstr("ssh-variant-env"),
+            ]
+        );
+        assert_eq!(
+            config.strings_by_key("core.sshCommand").expect("at least one value"),
+            [
+                cow_bstr("ssh-command-cli"),
+                cow_bstr("ssh-command-api"),
+                cow_bstr("ssh-command-env"),
+            ]
+        );
+        assert_eq!(
+            config
+                .strings_by_key("gitoxide.ssh.commandWithoutShellFallback")
+                .expect("at least one value"),
+            [
+                cow_bstr("ssh-command-fallback-cli"),
+                cow_bstr("ssh-command-fallback-api"),
+                cow_bstr("ssh-command-fallback-env"),
             ]
         );
         for (key, expected) in [

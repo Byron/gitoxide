@@ -27,6 +27,50 @@ impl crate::Repository {
         &self.options
     }
 
+    /// Obtain options for use when connecting via `ssh`.
+    #[cfg(feature = "blocking-network-client")]
+    pub fn ssh_connect_options(
+        &self,
+    ) -> Result<git_protocol::transport::client::ssh::connect::Options, config::ssh_connect_options::Error> {
+        use crate::config::cache::util::ApplyLeniency;
+
+        let config = &self.config.resolved;
+        let mut trusted = self.filter_config_section();
+        let mut fallback_active = false;
+        let ssh_command = config
+            .string_filter_by_key("core.sshCommand", &mut trusted)
+            .or_else(|| {
+                fallback_active = true;
+                config.string_filter_by_key("gitoxide.ssh.commandWithoutShellFallback", &mut trusted)
+            })
+            .map(|cmd| git_path::from_bstr(cmd).into_owned().into());
+        let opts = git_protocol::transport::client::ssh::connect::Options {
+            disallow_shell: fallback_active,
+            command: ssh_command,
+            kind: config
+                .string_filter_by_key("ssh.variant", &mut trusted)
+                .and_then(|s| {
+                    use git_protocol::transport::client::ssh::ProgramKind;
+                    Some(Ok(match s.as_ref().as_ref() {
+                        b"auto" => return None,
+                        b"ssh" => ProgramKind::Ssh,
+                        b"plink" => ProgramKind::Plink,
+                        b"putty" => ProgramKind::Putty,
+                        b"tortoiseplink" => ProgramKind::TortoisePlink,
+                        b"simple" => ProgramKind::Simple,
+                        _ => {
+                            return Some(Err(config::ssh_connect_options::Error::SshVariant {
+                                name: s.into_owned(),
+                            }))
+                        }
+                    }))
+                })
+                .transpose()
+                .with_leniency(self.options.lenient_config)?,
+        };
+        Ok(opts)
+    }
+
     /// The kind of object hash the repository is configured to use.
     pub fn object_hash(&self) -> git_hash::Kind {
         self.config.object_hash

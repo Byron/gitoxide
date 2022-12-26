@@ -15,7 +15,7 @@ pub enum Error {
     Url(#[from] url::ParseError),
     #[error("urls require the path to the repository")]
     MissingResourceLocation,
-    #[error("file urls require an absolute or relative path to the repository repository")]
+    #[error("file urls require an absolute or relative path to the repository")]
     MissingRepositoryPath,
     #[error("\"{url}\" is not a valid local path")]
     NotALocalFile { url: BString },
