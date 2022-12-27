@@ -83,6 +83,7 @@ impl<'repo> Remote<'repo> {
         P: Progress,
     {
         let (url, version) = self.sanitized_url_and_version(direction)?;
+        #[cfg(feature = "blocking-network-client")]
         let scheme_is_ssh = url.scheme == git_url::Scheme::Ssh;
         let transport = git_protocol::transport::connect(
             url,

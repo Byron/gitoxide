@@ -38,11 +38,14 @@ mod ssh_options {
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
 mod transport_options;
 
+#[cfg(feature = "blocking-network-client")]
 use git_repository as git;
+#[cfg(feature = "blocking-network-client")]
 pub fn repo(name: &str) -> git::Repository {
     repo_opts(name, |opts| opts.strict_config(true))
 }
 
+#[cfg(feature = "blocking-network-client")]
 pub fn repo_opts(name: &str, modify: impl FnOnce(git::open::Options) -> git::open::Options) -> git::Repository {
     let dir = git_testtools::scripted_fixture_read_only("make_config_repos.sh").unwrap();
     git::open_opts(dir.join(name), modify(git::open::Options::isolated())).unwrap()

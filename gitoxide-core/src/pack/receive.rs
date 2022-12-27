@@ -161,7 +161,13 @@ mod blocking_io {
         P: Progress,
         P::SubProgress: 'static,
     {
-        let transport = net::connect(url, protocol.unwrap_or_default().into())?;
+        let transport = net::connect(
+            url,
+            git::protocol::transport::client::connect::Options {
+                version: protocol.unwrap_or_default().into(),
+                ..Default::default()
+            },
+        )?;
         let delegate = CloneDelegate {
             ctx,
             directory,
@@ -236,7 +242,14 @@ mod async_io {
         P: Progress + 'static,
         W: io::Write + Send + 'static,
     {
-        let transport = net::connect(url.to_string(), protocol.unwrap_or_default().into()).await?;
+        let transport = net::connect(
+            url,
+            git::protocol::transport::client::connect::Options {
+                version: protocol.unwrap_or_default().into(),
+                ..Default::default()
+            },
+        )
+        .await?;
         let mut delegate = CloneDelegate {
             ctx,
             directory,

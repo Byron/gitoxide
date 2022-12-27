@@ -97,11 +97,11 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.sshCommand",
-        usage: Planned { note: Some("unclear right now how to configure it, needs adjustment on Command based transport, must be lazy then making `connect()` a no-op essentially.") },
+        usage: InModule { name: "repository::config", deviation: None }
     },
     Record {
         config: "ssh.variant",
-        usage: Planned { note: Some("another way to select which ssh program to use, but formalizing it to choose correct arguments. Based on the basename otherwise. Detection is attempted otherwise with `-G`") },
+        usage: InModule { name: "repository::config", deviation: Some("We error if a variant is chosen that we don't know, as opposed to defaulting to 'ssh'") }
     },
     Record {
         config: "core.fileMode",
@@ -882,6 +882,13 @@ static GIT_CONFIG: &[Record] = &[
         usage: InModule {
             name: "repository::identity",
             deviation: Some("corresponds to the EMAIL environment variable and is a fallback for `user.email`")
+        }
+    },
+    Record {
+        config: "gitoxide.ssh.commandWithoutShellFallback",
+        usage: InModule {
+            name: "repository::config",
+            deviation: Some("Corresponds to the value of `GIT_SSH` and is always executed without shell and treated as fallback.")
         }
     },
     Record {
