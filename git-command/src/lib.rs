@@ -6,15 +6,24 @@ use std::ffi::OsString;
 
 /// A structure to keep settings to use when invoking a command via [`spawn()`][Prepare::spawn()], after creating it with [`prepare()`].
 pub struct Prepare {
-    command: OsString,
-    stdin: std::process::Stdio,
-    stdout: std::process::Stdio,
-    stderr: std::process::Stdio,
-    args: Vec<OsString>,
-    use_shell: bool,
+    /// The command to invoke (either with or without shell depending on `use_shell`.
+    pub command: OsString,
+    /// The way standard input is configured.
+    pub stdin: std::process::Stdio,
+    /// The way standard output is configured.
+    pub stdout: std::process::Stdio,
+    /// The way standard error is configured.
+    pub stderr: std::process::Stdio,
+    /// The arguments to pass to the spawned process.
+    pub args: Vec<OsString>,
+    /// environment variables to set in the spawned process.
+    pub env: Vec<(OsString, OsString)>,
+    /// If `true`, we will use `sh` to execute the `command`.
+    pub use_shell: bool,
 }
 
 mod prepare {
+    use std::ffi::OsString;
     use std::process::{Command, Stdio};
 
     use bstr::ByteSlice;
@@ -31,6 +40,14 @@ mod prepare {
             self.use_shell = self.command.to_str().map_or(true, |cmd| {
                 cmd.as_bytes().find_byteset(b"|&;<>()$`\\\"' \t\n*?[#~=%").is_some()
             });
+            self
+        }
+
+        /// Unconditionally turn off using the shell when spawning the command.
+        /// Note that not using the shell is the default so an effective use of this method
+        /// is some time after [`with_shell()`][Prepare::with_shell()] was called.
+        pub fn without_shell(mut self) -> Self {
+            self.use_shell = false;
             self
         }
 
@@ -51,8 +68,21 @@ mod prepare {
         }
 
         /// Add `arg` to the list of arguments to call the command with.
-        pub fn arg(mut self, arg: impl Into<std::ffi::OsString>) -> Self {
+        pub fn arg(mut self, arg: impl Into<OsString>) -> Self {
             self.args.push(arg.into());
+            self
+        }
+
+        /// Add `args` to the list of arguments to call the command with.
+        pub fn args(mut self, args: impl IntoIterator<Item = impl Into<OsString>>) -> Self {
+            self.args
+                .append(&mut args.into_iter().map(Into::into).collect::<Vec<_>>());
+            self
+        }
+
+        /// Add `key` with `value` to the environment of the spawned command.
+        pub fn env(mut self, key: impl Into<OsString>, value: impl Into<OsString>) -> Self {
+            self.env.push((key.into(), value.into()));
             self
         }
     }
@@ -61,8 +91,7 @@ mod prepare {
     impl Prepare {
         /// Spawn the command as configured.
         pub fn spawn(self) -> std::io::Result<std::process::Child> {
-            let mut cmd: Command = self.into();
-            cmd.spawn()
+            Command::from(self).spawn()
         }
     }
 
@@ -83,6 +112,7 @@ mod prepare {
             cmd.stdin(prep.stdin)
                 .stdout(prep.stdout)
                 .stderr(prep.stderr)
+                .envs(prep.env)
                 .args(prep.args);
             cmd
         }
@@ -103,6 +133,7 @@ pub fn prepare(cmd: impl Into<OsString>) -> Prepare {
         stdout: std::process::Stdio::piped(),
         stderr: std::process::Stdio::inherit(),
         args: Vec::new(),
+        env: Vec::new(),
         use_shell: false,
     }
 }
