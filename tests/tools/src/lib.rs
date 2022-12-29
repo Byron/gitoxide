@@ -53,7 +53,7 @@ impl Drop for GitDaemon {
 }
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
-static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache<'static>>>> = Lazy::new(|| {
+static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache>>> = Lazy::new(|| {
     let cache = (|| {
         let (repo_path, _) = git_discover::upwards(Path::new(".")).ok()?;
         let (git_dir, work_tree) = repo_path.into_repository_and_work_tree_directories();

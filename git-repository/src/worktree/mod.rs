@@ -120,12 +120,12 @@ pub mod excludes {
         /// Configure a file-system cache checking if files below the repository are excluded.
         ///
         /// This takes into consideration all the usual repository configuration.
-        // TODO: test
-        pub fn excludes<'a>(
+        // TODO: test, provide higher-level interface that is much easier to use and doesn't panic.
+        pub fn excludes(
             &self,
-            index: &'a git_index::State,
+            index: &git_index::State,
             overrides: Option<git_attributes::MatchGroup<git_attributes::Ignore>>,
-        ) -> Result<git_worktree::fs::Cache<'a>, Error> {
+        ) -> Result<git_worktree::fs::Cache, Error> {
             let repo = self.parent;
             let case = repo
                 .config
