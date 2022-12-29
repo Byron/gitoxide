@@ -58,7 +58,7 @@ where
                     // Still no permission? Reject the credentials.
                     Err(client::Error::Io(err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {
                         authenticate(next.erase())?;
-                        return Err(Error::InvalidCredentials { url });
+                        return Err(Error::InvalidCredentials { url, source: err });
                     }
                     // Otherwise, do nothing, as we don't know if it actually got to try the credentials.
                     // If they were previously stored, they remain. In the worst case, the user has to enter them again

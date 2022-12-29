@@ -69,7 +69,7 @@ mod error {
         #[error("Failed to obtain credentials")]
         Credentials(#[from] credentials::protocol::Error),
         #[error("Credentials provided for \"{url}\" were not accepted by the remote")]
-        InvalidCredentials { url: BString },
+        InvalidCredentials { url: BString, source: std::io::Error },
         #[error(transparent)]
         Transport(#[from] client::Error),
         #[error("The transport didn't accept the advertised server version {actual_version:?} and closed the connection client side")]
