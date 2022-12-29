@@ -13,7 +13,11 @@ pub struct Cascade {
     /// If true, stderr is enabled when `programs` are run, which is the default.
     pub stderr: bool,
     /// If true, http(s) urls will take their path portion into account when obtaining credentials. Default is false.
+    /// Other protocols like ssh will always use the path portion.
     pub use_http_path: bool,
+    /// If true, default false, when getting credentials, we will set a bogus password to only obtain the user name.
+    /// Storage and cancellation work the same, but without a password set.
+    pub query_user_only: bool,
 }
 
 /// The outcome of the credentials helper [invocation][crate::helper::invoke()].
@@ -21,7 +25,7 @@ pub struct Cascade {
 pub struct Outcome {
     /// The username to use in the identity, if set.
     pub username: Option<String>,
-    /// The username to use in the identity, if set.
+    /// The password to use in the identity, if set.
     pub password: Option<String>,
     /// If set, the helper asked to stop the entire process, whether the identity is complete or not.
     pub quit: bool,

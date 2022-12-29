@@ -13,18 +13,26 @@ mod invoke {
 
     #[test]
     fn credentials_are_filled_in_one_by_one_and_stop_when_complete() {
-        let actual = invoke_cascade(
-            ["username", "password", "custom-helper"],
-            Action::get_for_url("does/not/matter"),
-        )
-        .unwrap()
-        .expect("credentials");
+        let actual = invoke_cascade(["username", "password", "custom-helper"], action_get())
+            .unwrap()
+            .expect("credentials");
         assert_eq!(actual.identity, identity("user", "pass"));
     }
 
     #[test]
+    fn usernames_in_urls_are_kept_if_the_helper_does_not_overwrite_it() {
+        let actual = invoke_cascade(
+            ["password", "custom-helper"],
+            Action::get_for_url("ssh://git@host.org/path"),
+        )
+        .unwrap()
+        .expect("credentials");
+        assert_eq!(actual.identity, identity("git", "pass"));
+    }
+
+    #[test]
     fn partial_credentials_can_be_overwritten_by_complete_ones() {
-        let actual = invoke_cascade(["username", "custom-helper"], Action::get_for_url("does/not/matter"))
+        let actual = invoke_cascade(["username", "custom-helper"], action_get())
             .unwrap()
             .expect("credentials");
         assert_eq!(actual.identity, identity("user-script", "pass-script"));
@@ -111,6 +119,23 @@ mod invoke {
             .expect("credentials");
 
         assert_eq!(actual.identity, identity("user", "pass"));
+    }
+
+    #[test]
+    fn bogus_password_overrides_any_helper_and_helper_overrides_username_in_url() {
+        let actual = Cascade::default()
+            .query_user_only(true)
+            .extend(fixtures(["username", "password"]))
+            .invoke(
+                Action::get_for_url("ssh://git@host/repo"),
+                git_prompt::Options {
+                    mode: git_prompt::Mode::Disable,
+                    askpass: None,
+                },
+            )
+            .unwrap()
+            .expect("credentials");
+        assert_eq!(actual.identity, identity("user", ""));
     }
 
     fn action_get() -> Action {
