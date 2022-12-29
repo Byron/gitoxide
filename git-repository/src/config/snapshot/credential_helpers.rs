@@ -136,6 +136,8 @@ impl Snapshot<'_> {
             git_credentials::helper::Cascade {
                 programs,
                 use_http_path,
+                // The default ssh implementation uses binaries that do their own auth, so our passwords aren't used.
+                query_user_only: url.scheme == git_url::Scheme::Ssh,
                 ..Default::default()
             },
             git_credentials::helper::Action::get_for_url(url.to_bstring()),
