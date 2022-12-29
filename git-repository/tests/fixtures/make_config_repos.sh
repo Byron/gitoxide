@@ -63,6 +63,19 @@ git init http-proxy-empty
   git config --add http.proxy "" # a value override disabling it later
 )
 
+git init ssh-all-options
+(cd ssh-all-options
+  git config ssh.variant ssh
+  git config core.sshCommand "ssh -VVV"
+  git config gitoxide.ssh.commandWithoutShellFallback "does not matter as it is a fallback"
+)
+
+git init ssh-command-fallback
+(cd ssh-command-fallback
+  git config ssh.variant putty
+  git config gitoxide.ssh.commandWithoutShellFallback "ssh --fallback"
+)
+
 git init https-proxy-only
 (cd https-proxy-only
   git config gitoxide.https.proxy https

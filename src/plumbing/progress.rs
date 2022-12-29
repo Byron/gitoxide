@@ -96,6 +96,14 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned { note: Some("safety is not optional") },
     },
     Record {
+        config: "core.sshCommand",
+        usage: InModule { name: "repository::config", deviation: None }
+    },
+    Record {
+        config: "ssh.variant",
+        usage: InModule { name: "repository::config", deviation: Some("We error if a variant is chosen that we don't know, as opposed to defaulting to 'ssh'") }
+    },
+    Record {
         config: "core.fileMode",
         usage: InModule {name: "config", deviation: None},
     },
@@ -874,6 +882,13 @@ static GIT_CONFIG: &[Record] = &[
         usage: InModule {
             name: "repository::identity",
             deviation: Some("corresponds to the EMAIL environment variable and is a fallback for `user.email`")
+        }
+    },
+    Record {
+        config: "gitoxide.ssh.commandWithoutShellFallback",
+        usage: InModule {
+            name: "repository::config",
+            deviation: Some("Corresponds to the value of `GIT_SSH` and is always executed without shell and treated as fallback.")
         }
     },
     Record {

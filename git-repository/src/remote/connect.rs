@@ -9,6 +9,8 @@ mod error {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error("Could not obtain options for connecting via ssh")]
+        SshOptions(#[from] crate::config::ssh_connect_options::Error),
         #[error("Could not obtain the current directory")]
         CurrentDir(#[from] std::io::Error),
         #[error("Could not access remote repository at \"{}\"", directory.display())]
@@ -81,7 +83,20 @@ impl<'repo> Remote<'repo> {
         P: Progress,
     {
         let (url, version) = self.sanitized_url_and_version(direction)?;
-        let transport = git_protocol::transport::connect(url, version).await?;
+        #[cfg(feature = "blocking-network-client")]
+        let scheme_is_ssh = url.scheme == git_url::Scheme::Ssh;
+        let transport = git_protocol::transport::connect(
+            url,
+            git_protocol::transport::client::connect::Options {
+                version,
+                #[cfg(feature = "blocking-network-client")]
+                ssh: scheme_is_ssh
+                    .then(|| self.repo.ssh_connect_options())
+                    .transpose()?
+                    .unwrap_or_default(),
+            },
+        )
+        .await?;
         Ok(self.to_connection_with_transport(transport, progress))
     }
 

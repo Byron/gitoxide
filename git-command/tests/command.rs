@@ -1,6 +1,51 @@
 use git_testtools::Result;
 
+mod prepare {
+    fn quoted(input: &[&str]) -> String {
+        input.iter().map(|s| format!("\"{s}\"")).collect::<Vec<_>>().join(" ")
+    }
+    #[test]
+    fn single_and_multiple_arguments() {
+        let cmd = std::process::Command::from(git_command::prepare("ls").arg("first").args(["second", "third"]));
+        assert_eq!(format!("{cmd:?}"), quoted(&["ls", "first", "second", "third"]));
+    }
+}
+
 mod spawn {
+    use bstr::ByteSlice;
+
+    #[test]
+    #[cfg(unix)]
+    fn environment_variables_are_passed_one_by_one() -> crate::Result {
+        let out = git_command::prepare("echo $FIRST $SECOND")
+            .env("FIRST", "first")
+            .env("SECOND", "second")
+            .with_shell()
+            .spawn()?
+            .wait_with_output()?;
+        assert_eq!(out.stdout.as_bstr(), "first second\n");
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn disallow_shell() -> crate::Result {
+        let out = git_command::prepare("echo hi")
+            .with_shell()
+            .spawn()?
+            .wait_with_output()?;
+        assert_eq!(out.stdout.as_bstr(), "hi\n");
+        assert!(
+            git_command::prepare("echo hi")
+                .with_shell()
+                .without_shell()
+                .spawn()
+                .is_err(),
+            "no command named 'echo hi' exists"
+        );
+        Ok(())
+    }
+
     #[test]
     fn direct_command_execution_searches_in_path() -> crate::Result {
         assert!(git_command::prepare(if cfg!(unix) { "ls" } else { "dir.exe" })

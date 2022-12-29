@@ -6,6 +6,7 @@ impl Default for Cascade {
             programs: Vec::new(),
             stderr: true,
             use_http_path: false,
+            query_user_only: false,
         }
     }
 }
@@ -50,6 +51,14 @@ impl Cascade {
         self.use_http_path = toggle;
         self
     }
+
+    /// If `toggle` is true, a bogus password will be provided to prevent any helper program from prompting for it, nor will
+    /// we prompt for the password. The resulting identity will have a bogus password and it's expected to not be used by the
+    /// consuming transport.
+    pub fn query_user_only(mut self, toggle: bool) -> Self {
+        self.query_user_only = toggle;
+        self
+    }
 }
 
 /// Finalize
@@ -63,7 +72,14 @@ impl Cascade {
     pub fn invoke(&mut self, mut action: helper::Action, mut prompt: git_prompt::Options<'_>) -> protocol::Result {
         let mut url = action
             .context_mut()
-            .map(|ctx| ctx.destructure_url_in_place(self.use_http_path))
+            .map(|ctx| {
+                ctx.destructure_url_in_place(self.use_http_path).map(|ctx| {
+                    if self.query_user_only && ctx.password.is_none() {
+                        ctx.password = Some("".into());
+                    }
+                    ctx
+                })
+            })
             .transpose()?
             .and_then(|ctx| ctx.url.take());
 

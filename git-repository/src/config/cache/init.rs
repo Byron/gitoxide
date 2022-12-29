@@ -262,188 +262,110 @@ fn apply_environment_overrides(
     }
 
     let mut env_override = git_config::File::new(git_config::file::Metadata::from(git_config::Source::EnvOverride));
-    {
+    for (section_name, subsection_name, permission, data) in [
+        (
+            "http",
+            None,
+            http_transport,
+            &[
+                ("GIT_HTTP_LOW_SPEED_LIMIT", "lowSpeedLimit"),
+                ("GIT_HTTP_LOW_SPEED_TIME", "lowSpeedTime"),
+                ("GIT_HTTP_USER_AGENT", "userAgent"),
+                ("GIT_HTTP_PROXY_AUTHMETHOD", "proxyAuthMethod"),
+                ("all_proxy", "all-proxy-lower"),
+                ("ALL_PROXY", "all-proxy"),
+                ("GIT_SSL_CAINFO", "sslCAInfo"),
+                ("GIT_SSL_VERSION", "sslVersion"),
+            ][..],
+        ),
+        (
+            "gitoxide",
+            Some(Cow::Borrowed("https".into())),
+            http_transport,
+            &[("HTTPS_PROXY", "proxy"), ("https_proxy", "proxy")],
+        ),
+        (
+            "gitoxide",
+            Some(Cow::Borrowed("http".into())),
+            http_transport,
+            &[
+                ("ALL_PROXY", "allProxy"),
+                ("all_proxy", "allProxy"),
+                ("NO_PROXY", "noProxy"),
+                ("no_proxy", "noProxy"),
+                ("http_proxy", "proxy"),
+                ("GIT_CURL_VERBOSE", "verbose"),
+            ],
+        ),
+        (
+            "gitoxide",
+            Some(Cow::Borrowed("committer".into())),
+            identity,
+            &[
+                ("GIT_COMMITTER_NAME", "nameFallback"),
+                ("GIT_COMMITTER_EMAIL", "emailFallback"),
+            ],
+        ),
+        (
+            "gitoxide",
+            Some(Cow::Borrowed("author".into())),
+            identity,
+            &[
+                ("GIT_AUTHOR_NAME", "nameFallback"),
+                ("GIT_AUTHOR_EMAIL", "emailFallback"),
+            ],
+        ),
+        (
+            "gitoxide",
+            Some(Cow::Borrowed("commit".into())),
+            git_prefix,
+            &[
+                ("GIT_COMMITTER_DATE", "committerDate"),
+                ("GIT_AUTHOR_DATE", "authorDate"),
+            ],
+        ),
+        (
+            "gitoxide",
+            Some(Cow::Borrowed("allow".into())),
+            http_transport,
+            &[("GIT_PROTOCOL_FROM_USER", "protocolFromUser")],
+        ),
+        (
+            "gitoxide",
+            Some(Cow::Borrowed("user".into())),
+            identity,
+            &[("EMAIL", "emailFallback")],
+        ),
+        (
+            "gitoxide",
+            Some(Cow::Borrowed("objects".into())),
+            objects,
+            &[
+                ("GIT_NO_REPLACE_OBJECTS", "noReplace"),
+                ("GIT_REPLACE_REF_BASE", "replaceRefBase"),
+                ("GITOXIDE_OBJECT_CACHE_MEMORY", "cacheLimit"),
+            ],
+        ),
+        (
+            "gitoxide",
+            Some(Cow::Borrowed("ssh".into())),
+            git_prefix,
+            &[("GIT_SSH", "commandWithoutShellFallback")],
+        ),
+        ("ssh", None, git_prefix, &[("GIT_SSH_VARIANT", "variant")]),
+    ] {
         let mut section = env_override
-            .new_section("http", None)
+            .new_section(section_name, subsection_name)
             .expect("statically known valid section name");
-        for (var, key) in [
-            ("GIT_HTTP_LOW_SPEED_LIMIT", "lowSpeedLimit"),
-            ("GIT_HTTP_LOW_SPEED_TIME", "lowSpeedTime"),
-            ("GIT_HTTP_USER_AGENT", "userAgent"),
-            ("GIT_HTTP_PROXY_AUTHMETHOD", "proxyAuthMethod"),
-            ("all_proxy", "all-proxy-lower"),
-            ("ALL_PROXY", "all-proxy"),
-            ("GIT_SSL_CAINFO", "sslCAInfo"),
-            ("GIT_SSL_VERSION", "sslVersion"),
-        ] {
-            if let Some(value) = var_as_bstring(var, http_transport) {
-                section.push_with_comment(
-                    key.try_into().expect("statically known to be valid"),
-                    Some(value.as_ref()),
-                    format!("from {var}").as_str(),
-                );
-            }
-        }
-        if section.num_values() == 0 {
-            let id = section.id();
-            env_override.remove_section_by_id(id);
-        }
-    }
-
-    {
-        let mut section = env_override
-            .new_section("gitoxide", Some(Cow::Borrowed("https".into())))
-            .expect("statically known valid section name");
-
-        for (var, key) in [("HTTPS_PROXY", "proxy"), ("https_proxy", "proxy")] {
-            if let Some(value) = var_as_bstring(var, http_transport) {
-                section.push_with_comment(
-                    key.try_into().expect("statically known to be valid"),
-                    Some(value.as_ref()),
-                    format!("from {var}").as_str(),
-                );
-            }
-        }
-
-        if section.num_values() == 0 {
-            let id = section.id();
-            env_override.remove_section_by_id(id);
-        }
-    }
-
-    {
-        let mut section = env_override
-            .new_section("gitoxide", Some(Cow::Borrowed("committer".into())))
-            .expect("statically known valid section name");
-
-        for (var, key) in [
-            ("GIT_COMMITTER_NAME", "nameFallback"),
-            ("GIT_COMMITTER_EMAIL", "emailFallback"),
-        ] {
-            if let Some(value) = var_as_bstring(var, identity) {
-                section.push_with_comment(
-                    key.try_into().expect("statically known to be valid"),
-                    Some(value.as_ref()),
-                    format!("from {var}").as_str(),
-                );
-            }
-        }
-
-        if section.num_values() == 0 {
-            let id = section.id();
-            env_override.remove_section_by_id(id);
-        }
-    }
-
-    {
-        let mut section = env_override
-            .new_section("gitoxide", Some(Cow::Borrowed("author".into())))
-            .expect("statically known valid section name");
-
-        for (var, key) in [
-            ("GIT_AUTHOR_NAME", "nameFallback"),
-            ("GIT_AUTHOR_EMAIL", "emailFallback"),
-        ] {
-            if let Some(value) = var_as_bstring(var, identity) {
-                section.push_with_comment(
-                    key.try_into().expect("statically known to be valid"),
-                    Some(value.as_ref()),
-                    format!("from {var}").as_str(),
-                );
-            }
-        }
-
-        if section.num_values() == 0 {
-            let id = section.id();
-            env_override.remove_section_by_id(id);
-        }
-    }
-
-    {
-        let mut section = env_override
-            .new_section("gitoxide", Some(Cow::Borrowed("commit".into())))
-            .expect("statically known valid section name");
-
-        for (var, key) in [
-            ("GIT_COMMITTER_DATE", "committerDate"),
-            ("GIT_AUTHOR_DATE", "authorDate"),
-        ] {
-            if let Some(value) = var_as_bstring(var, git_prefix) {
-                section.push_with_comment(
-                    key.try_into().expect("statically known to be valid"),
-                    Some(value.as_ref()),
-                    format!("from {var}").as_str(),
-                );
-            }
-        }
-
-        if section.num_values() == 0 {
-            let id = section.id();
-            env_override.remove_section_by_id(id);
-        }
-    }
-
-    {
-        let mut section = env_override
-            .new_section("gitoxide", Some(Cow::Borrowed("allow".into())))
-            .expect("statically known valid section name");
-
-        for (var, key) in [("GIT_PROTOCOL_FROM_USER", "protocolFromUser")] {
-            if let Some(value) = var_as_bstring(var, http_transport) {
-                section.push_with_comment(
-                    key.try_into().expect("statically known to be valid"),
-                    Some(value.as_ref()),
-                    format!("from {var}").as_str(),
-                );
-            }
-        }
-
-        if section.num_values() == 0 {
-            let id = section.id();
-            env_override.remove_section_by_id(id);
-        }
-    }
-
-    {
-        let mut section = env_override
-            .new_section("gitoxide", Some(Cow::Borrowed("user".into())))
-            .expect("statically known valid section name");
-
-        for (var, key) in [("EMAIL", "emailFallback")] {
-            if let Some(value) = var_as_bstring(var, identity) {
-                section.push_with_comment(
-                    key.try_into().expect("statically known to be valid"),
-                    Some(value.as_ref()),
-                    format!("from {var}").as_str(),
-                );
-            }
-        }
-
-        if section.num_values() == 0 {
-            let id = section.id();
-            env_override.remove_section_by_id(id);
-        }
-    }
-
-    {
-        let mut section = env_override
-            .new_section("gitoxide", Some(Cow::Borrowed("objects".into())))
-            .expect("statically known valid section name");
-
-        for (var, key, permission) in [
-            ("GIT_NO_REPLACE_OBJECTS", "noReplace", objects),
-            ("GIT_REPLACE_REF_BASE", "replaceRefBase", objects),
-            ("GITOXIDE_OBJECT_CACHE_MEMORY", "cacheLimit", objects),
-        ] {
+        for (var, key) in data {
             if let Some(value) = var_as_bstring(var, permission) {
                 section.push_with_comment(
-                    key.try_into().expect("statically known to be valid"),
+                    (*key).try_into().expect("statically known to be valid"),
                     Some(value.as_ref()),
                     format!("from {var}").as_str(),
                 );
             }
         }
-
         if section.num_values() == 0 {
             let id = section.id();
             env_override.remove_section_by_id(id);
@@ -455,36 +377,11 @@ fn apply_environment_overrides(
             .new_section("core", None)
             .expect("statically known valid section name");
 
-        for (var, key) in [("GITOXIDE_PACK_CACHE_MEMORY", "deltaBaseCacheLimit")] {
-            if let Some(value) = var_as_bstring(var, objects) {
-                section.push_with_comment(
-                    key.try_into().expect("statically known to be valid"),
-                    Some(value.as_ref()),
-                    format!("from {var}").as_str(),
-                );
-            }
-        }
-
-        if section.num_values() == 0 {
-            let id = section.id();
-            env_override.remove_section_by_id(id);
-        }
-    }
-
-    {
-        let mut section = env_override
-            .new_section("gitoxide", Some(Cow::Borrowed("http".into())))
-            .expect("statically known valid section name");
-
-        for (var, key) in [
-            ("ALL_PROXY", "allProxy"),
-            ("all_proxy", "allProxy"),
-            ("NO_PROXY", "noProxy"),
-            ("no_proxy", "noProxy"),
-            ("http_proxy", "proxy"),
-            ("GIT_CURL_VERBOSE", "verbose"),
+        for (var, key, permission) in [
+            ("GITOXIDE_PACK_CACHE_MEMORY", "deltaBaseCacheLimit", objects),
+            ("GIT_SSH_COMMAND", "sshCommand", git_prefix),
         ] {
-            if let Some(value) = var_as_bstring(var, http_transport) {
+            if let Some(value) = var_as_bstring(var, permission) {
                 section.push_with_comment(
                     key.try_into().expect("statically known to be valid"),
                     Some(value.as_ref()),

@@ -3,22 +3,11 @@
     feature = "blocking-http-transport-curl"
 ))]
 mod http {
+    use crate::repository::config::{repo, repo_opts};
     use git_repository as git;
     use git_transport::client::http::options::{
         FollowRedirects, HttpVersion, ProxyAuthMethod, SslVersion, SslVersionRangeInclusive,
     };
-
-    pub(crate) fn repo(name: &str) -> git::Repository {
-        repo_opts(name, |opts| opts.strict_config(true))
-    }
-
-    pub(crate) fn repo_opts(
-        name: &str,
-        modify: impl FnOnce(git::open::Options) -> git::open::Options,
-    ) -> git::Repository {
-        let dir = git_testtools::scripted_fixture_read_only("make_config_repos.sh").unwrap();
-        git::open_opts(dir.join(name), modify(git::open::Options::isolated())).unwrap()
-    }
 
     fn http_options(
         repo: &git::Repository,

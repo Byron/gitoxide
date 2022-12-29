@@ -162,10 +162,7 @@ where
                                                     None => continue,
                                                 }
                                             }
-                                            None => repo
-                                                .find_object(git::hash::ObjectId::empty_tree(repo.object_hash()))
-                                                .expect("always present")
-                                                .into_tree(),
+                                            None => repo.empty_tree(),
                                         };
                                         let to = match repo.find_object(commit).ok().and_then(|c| c.peel_to_tree().ok())
                                         {
