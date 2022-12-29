@@ -23,6 +23,9 @@ pub enum Error {
 /// Add the item to compare to.
 impl<'a, 'old> Platform<'a, 'old> {
     /// Call `for_each` repeatedly with all changes that are needed to convert the source of the diff to the tree to `other`.
+    ///
+    /// `other` could also be created with the [`empty_tree()`][crate::Repository::empty_tree()] method to handle the first commit
+    /// in a repository - it doesn't have a parent, equivalent to compare 'nothing' to something.
     pub fn for_each_to_obtain_tree<'new, E>(
         &mut self,
         other: &Tree<'new>,
