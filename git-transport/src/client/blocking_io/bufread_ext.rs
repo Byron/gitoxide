@@ -1,8 +1,9 @@
-use git_packetline::PacketLineRef;
 use std::{
     io,
     ops::{Deref, DerefMut},
 };
+
+use git_packetline::PacketLineRef;
 
 use crate::{
     client::{Error, MessageKind},

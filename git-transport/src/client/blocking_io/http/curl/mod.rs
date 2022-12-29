@@ -5,8 +5,7 @@ use std::{
 
 use git_features::io;
 
-use crate::client::blocking_io::http;
-use crate::client::http::traits::PostBodyDataKind;
+use crate::client::{blocking_io::http, http::traits::PostBodyDataKind};
 
 mod remote;
 

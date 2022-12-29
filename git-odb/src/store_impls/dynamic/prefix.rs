@@ -1,7 +1,9 @@
-use crate::store::{load_index, Handle};
-use crate::Find;
-use std::collections::HashSet;
-use std::ops::Deref;
+use std::{collections::HashSet, ops::Deref};
+
+use crate::{
+    store::{load_index, Handle},
+    Find,
+};
 
 ///
 pub mod lookup {

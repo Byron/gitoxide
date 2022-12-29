@@ -1,18 +1,16 @@
-use std::ffi::OsString;
-use std::io::Write;
 use std::{
     any::Any,
     borrow::Cow,
     error::Error,
+    ffi::OsString,
+    io::Write,
     process::{self, Stdio},
 };
 
-use bstr::io::BufReadExt;
-use bstr::{BStr, BString, ByteSlice};
+use bstr::{io::BufReadExt, BStr, BString, ByteSlice};
 
-use crate::client::ssh;
 use crate::{
-    client::{self, git, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
+    client::{self, git, ssh, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
     Protocol, Service,
 };
 

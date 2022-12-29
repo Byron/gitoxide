@@ -67,9 +67,10 @@ pub trait Header {
 mod _impls {
     use std::{io::Read, ops::Deref, rc::Rc, sync::Arc};
 
-    use crate::find::Header;
     use git_hash::{oid, ObjectId};
     use git_object::{Data, Kind, WriteTo};
+
+    use crate::find::Header;
 
     impl<T> crate::Write for &T
     where
@@ -304,5 +305,6 @@ mod ext {
 
     impl<T: super::Find> FindExt for T {}
 }
-use crate::find;
 pub use ext::{FindExt, HeaderExt};
+
+use crate::find;

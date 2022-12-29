@@ -1,5 +1,6 @@
-use crate::parse::assert_failure;
 use git_url::parse::Error;
+
+use crate::parse::assert_failure;
 
 #[test]
 fn relative_path_due_to_double_colon() {

@@ -1,5 +1,7 @@
-use crate::data::delta;
-use crate::{data, data::file::decode::Error, data::File};
+use crate::{
+    data,
+    data::{delta, file::decode::Error, File},
+};
 
 /// A return value of a resolve function, which given an [`ObjectId`][git_hash::ObjectId] determines where an object can be found.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]

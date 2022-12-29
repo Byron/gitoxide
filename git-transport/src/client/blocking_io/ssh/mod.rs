@@ -48,8 +48,9 @@ pub mod invocation {
 
 ///
 pub mod connect {
-    use crate::client::ssh::ProgramKind;
     use std::ffi::{OsStr, OsString};
+
+    use crate::client::ssh::ProgramKind;
 
     /// The options for use when [connecting][super::connect()] via the `ssh` protocol.
     #[derive(Debug, Clone, Default)]

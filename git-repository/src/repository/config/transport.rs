@@ -47,8 +47,10 @@ impl crate::Repository {
                         sync::{Arc, Mutex},
                     };
 
-                    use git_transport::client::http::options::{HttpVersion, SslVersion, SslVersionRangeInclusive};
-                    use git_transport::client::{http, http::options::ProxyAuthMethod};
+                    use git_transport::client::{
+                        http,
+                        http::options::{HttpVersion, ProxyAuthMethod, SslVersion, SslVersionRangeInclusive},
+                    };
 
                     use crate::{bstr::ByteVec, config::cache::util::ApplyLeniency};
                     fn try_cow_to_string(

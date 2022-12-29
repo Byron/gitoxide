@@ -139,8 +139,7 @@ mod impls {
     use git_object::{Data, Kind};
     use git_pack::cache::Object;
 
-    use crate::find::Header;
-    use crate::{pack::data::entry::Location, Cache};
+    use crate::{find::Header, pack::data::entry::Location, Cache};
 
     impl<S> crate::Write for Cache<S>
     where

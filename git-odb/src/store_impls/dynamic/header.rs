@@ -1,12 +1,12 @@
 use std::ops::Deref;
 
-use crate::store::{handle, load_index};
-
-use super::find::Error;
 use git_hash::oid;
 
-use crate::find::Header;
-use crate::store::find::error::DeltaBaseRecursion;
+use super::find::Error;
+use crate::{
+    find::Header,
+    store::{find::error::DeltaBaseRecursion, handle, load_index},
+};
 
 impl<S> super::Handle<S>
 where

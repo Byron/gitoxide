@@ -1,10 +1,10 @@
 use std::process::Command;
 
-use crate::odb::db;
 use git_hash::ObjectId;
-use git_odb::store::iter::Ordering;
-use git_odb::{store, Find, FindExt, Header, Write};
+use git_odb::{store, store::iter::Ordering, Find, FindExt, Header, Write};
 use git_testtools::{fixture_path, hex_to_id};
+
+use crate::odb::db;
 
 fn all_orderings() -> [Ordering; 2] {
     [
@@ -501,11 +501,13 @@ fn packed_object_count_causes_all_indices_to_be_loaded() {
 mod disambiguate_prefix {
     use std::cmp::Ordering;
 
-    use crate::odb::store::dynamic::all_orderings;
     use git_odb::store::prefix::disambiguate::Candidate;
     use git_testtools::hex_to_id;
 
-    use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
+    use crate::{
+        odb::store::dynamic::all_orderings,
+        store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources},
+    };
 
     #[test]
     fn unambiguous_hex_lengths_yield_prefixes_of_exactly_the_given_length() -> crate::Result {
@@ -583,9 +585,12 @@ mod disambiguate_prefix {
 }
 
 mod iter {
-    use crate::odb::db;
-    use crate::odb::store::dynamic::{all_orderings, db_with_all_object_sources};
     use git_odb::store::iter::Ordering;
+
+    use crate::odb::{
+        db,
+        store::dynamic::{all_orderings, db_with_all_object_sources},
+    };
 
     #[test]
     fn iteration_ordering_is_effective() -> crate::Result {
@@ -617,11 +622,13 @@ mod iter {
 mod lookup_prefix {
     use std::collections::HashSet;
 
-    use crate::odb::store::dynamic::all_orderings;
     use git_testtools::hex_to_id;
     use maplit::hashset;
 
-    use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
+    use crate::{
+        odb::store::dynamic::all_orderings,
+        store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources},
+    };
 
     #[test]
     fn returns_none_for_prefixes_without_any_match() {

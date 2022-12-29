@@ -63,8 +63,7 @@ pub fn statistics(
     statistics::Options { format, thread_limit }: statistics::Options,
 ) -> anyhow::Result<()> {
     use bytesize::ByteSize;
-    use git::odb::find;
-    use git::odb::HeaderExt;
+    use git::odb::{find, HeaderExt};
 
     if format == OutputFormat::Human {
         writeln!(err, "Only JSON is implemented - using that instead")?;

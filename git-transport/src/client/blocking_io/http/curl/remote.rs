@@ -9,12 +9,13 @@ use std::{
 use curl::easy::{Auth, Easy2};
 use git_features::io::pipe;
 
-use crate::client::http::curl::curl_is_spurious;
-use crate::client::http::options::{HttpVersion, SslVersion};
-use crate::client::http::traits::PostBodyDataKind;
 use crate::client::{
     blocking_io::http::{self, curl::Error, redirect},
-    http::options::{FollowRedirects, ProxyAuthMethod},
+    http::{
+        curl::curl_is_spurious,
+        options::{FollowRedirects, HttpVersion, ProxyAuthMethod, SslVersion},
+        traits::PostBodyDataKind,
+    },
 };
 
 enum StreamOrBuffer {

@@ -24,9 +24,11 @@ mod shared {
 ///
 #[cfg(feature = "fs-walkdir-parallel")]
 pub mod walkdir {
-    pub use super::shared::Parallelism;
-    pub use jwalk::{DirEntry as DirEntryGeneric, DirEntryIter as DirEntryIterGeneric, Error, WalkDir};
     use std::path::Path;
+
+    pub use jwalk::{DirEntry as DirEntryGeneric, DirEntryIter as DirEntryIterGeneric, Error, WalkDir};
+
+    pub use super::shared::Parallelism;
 
     /// An alias for an uncustomized directory entry to match the one of the non-parallel version offered by `walkdir`.
     pub type DirEntry = DirEntryGeneric<((), ())>;
@@ -71,10 +73,11 @@ pub mod walkdir {
 #[cfg(all(feature = "walkdir", not(feature = "fs-walkdir-parallel")))]
 ///
 pub mod walkdir {
-    pub use super::shared::Parallelism;
     use std::path::Path;
 
     pub use walkdir::{DirEntry, Error, WalkDir};
+
+    pub use super::shared::Parallelism;
 
     /// Instantiate a new directory iterator which will not skip hidden files, with the given level of `parallelism`.
     pub fn walkdir_new(root: impl AsRef<Path>, _: Parallelism) -> WalkDir {

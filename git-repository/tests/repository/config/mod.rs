@@ -4,9 +4,11 @@ mod remote;
 
 #[cfg(feature = "blocking-network-client")]
 mod ssh_options {
-    use crate::repository::config::repo;
-    use git_repository as git;
     use std::ffi::OsStr;
+
+    use git_repository as git;
+
+    use crate::repository::config::repo;
 
     #[test]
     fn with_command_and_variant() -> crate::Result {

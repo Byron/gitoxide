@@ -33,12 +33,11 @@ mod update {
     }
     use git_ref::{transaction::Change, TargetRef};
 
-    use crate::remote::fetch::SpecIndex;
     use crate::{
         bstr::BString,
         remote::{
             fetch,
-            fetch::{Mapping, RefLogMessage, Source},
+            fetch::{Mapping, RefLogMessage, Source, SpecIndex},
         },
     };
 

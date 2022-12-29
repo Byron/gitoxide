@@ -152,8 +152,9 @@ impl Capabilities {
 #[cfg(feature = "blocking-client")]
 ///
 pub mod recv {
-    use bstr::ByteVec;
     use std::io;
+
+    use bstr::ByteVec;
 
     use crate::{client, client::Capabilities, Protocol};
 
@@ -230,10 +231,10 @@ pub mod recv {
 #[allow(missing_docs)]
 ///
 pub mod recv {
+    use bstr::ByteVec;
     use futures_io::AsyncRead;
 
     use crate::{client, client::Capabilities, Protocol};
-    use bstr::ByteVec;
 
     /// Success outcome of [`Capabilities::from_lines_with_version_detection`].
     pub struct Outcome<'a> {

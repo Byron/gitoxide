@@ -2,9 +2,10 @@
 //! to be sure we don't loose coverage. This might, however, be overlapping with much more thorough
 //! tests o the general store itself, so they can possibly be removed at some point.
 mod iter {
-    use crate::odb::db;
     use git_odb::Header;
     use git_pack::Find;
+
+    use crate::odb::db;
 
     #[test]
     fn a_bunch_of_loose_and_packed_objects() -> crate::Result {
@@ -29,8 +30,7 @@ mod locate {
     use git_odb::Handle;
     use git_pack::Find;
 
-    use crate::hex_to_id;
-    use crate::odb::db;
+    use crate::{hex_to_id, odb::db};
 
     fn can_locate(db: &Handle, hex_id: &str) {
         let mut buf = vec![];
@@ -54,11 +54,10 @@ mod locate {
 }
 
 mod init {
-    use crate::odb::alternate::alternate;
     use git_hash::ObjectId;
     use git_odb::Find;
 
-    use crate::odb::db;
+    use crate::odb::{alternate::alternate, db};
 
     #[test]
     fn multiple_linked_repositories_via_alternates() -> crate::Result {

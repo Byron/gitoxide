@@ -1,5 +1,4 @@
-use crate::hex_to_id;
-use crate::odb::db;
+use crate::{hex_to_id, odb::db};
 
 fn find_header(db: impl git_odb::Header, hex_id: &str) -> git_odb::find::Header {
     db.try_header(hex_to_id(hex_id))

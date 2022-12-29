@@ -3,11 +3,10 @@ use std::collections::HashSet;
 use git_features::progress::Progress;
 use git_protocol::transport::client::Transport;
 
-use crate::remote::fetch::SpecIndex;
 use crate::{
     bstr,
     bstr::{BString, ByteVec},
-    remote::{connection::HandshakeWithRefs, fetch, Connection, Direction},
+    remote::{connection::HandshakeWithRefs, fetch, fetch::SpecIndex, Connection, Direction},
 };
 
 /// The error returned by [`Connection::ref_map()`].

@@ -1,10 +1,16 @@
-use std::io::Read;
-use std::{any::Any, convert::TryFrom, io::Write, str::FromStr};
+use std::{
+    any::Any,
+    convert::TryFrom,
+    io::{Read, Write},
+    str::FromStr,
+};
 
 use git_features::io::pipe;
 
-use crate::client::http::traits::PostBodyDataKind;
-use crate::client::{http, http::reqwest::Remote};
+use crate::client::{
+    http,
+    http::{reqwest::Remote, traits::PostBodyDataKind},
+};
 
 /// The error returned by the 'remote' helper, a purely internal construct to perform http requests.
 #[derive(Debug, thiserror::Error)]

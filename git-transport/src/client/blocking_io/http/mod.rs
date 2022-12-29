@@ -1,8 +1,8 @@
-use std::path::PathBuf;
 use std::{
     any::Any,
     borrow::Cow,
     io::{BufRead, Read},
+    path::PathBuf,
     sync::{Arc, Mutex},
 };
 
@@ -10,10 +10,14 @@ use bstr::BStr;
 use git_packetline::PacketLineRef;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
-use crate::client::blocking_io::bufread_ext::ReadlineBufRead;
-use crate::client::http::options::{HttpVersion, SslVersionRangeInclusive};
 use crate::{
-    client::{self, capabilities, Capabilities, ExtendedBufRead, HandleProgress, MessageKind, RequestWriter},
+    client::{
+        self,
+        blocking_io::bufread_ext::ReadlineBufRead,
+        capabilities,
+        http::options::{HttpVersion, SslVersionRangeInclusive},
+        Capabilities, ExtendedBufRead, HandleProgress, MessageKind, RequestWriter,
+    },
     Protocol, Service,
 };
 

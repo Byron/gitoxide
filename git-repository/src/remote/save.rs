@@ -1,7 +1,9 @@
 use std::convert::TryInto;
 
-use crate::bstr::BStr;
-use crate::{bstr::BString, remote, Remote};
+use crate::{
+    bstr::{BStr, BString},
+    remote, Remote,
+};
 
 /// The error returned by [`Remote::save_to()`].
 #[derive(Debug, thiserror::Error)]

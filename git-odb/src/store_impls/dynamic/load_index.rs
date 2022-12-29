@@ -22,8 +22,9 @@ pub(crate) struct Snapshot {
 }
 
 mod error {
-    use git_pack::multi_index::PackIndex;
     use std::path::PathBuf;
+
+    use git_pack::multi_index::PackIndex;
 
     /// Returned by [`crate::at_opts()`]
     #[derive(thiserror::Error, Debug)]

@@ -329,8 +329,9 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     }
 
     mod header {
-        use crate::odb::store::loose::ldb;
         use git_testtools::hex_to_id;
+
+        use crate::odb::store::loose::ldb;
 
         #[test]
         fn existing() -> crate::Result {

@@ -3,11 +3,12 @@
     feature = "blocking-http-transport-curl"
 ))]
 mod http {
-    use crate::repository::config::{repo, repo_opts};
     use git_repository as git;
     use git_transport::client::http::options::{
         FollowRedirects, HttpVersion, ProxyAuthMethod, SslVersion, SslVersionRangeInclusive,
     };
+
+    use crate::repository::config::{repo, repo_opts};
 
     fn http_options(
         repo: &git::Repository,

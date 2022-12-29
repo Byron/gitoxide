@@ -2,9 +2,11 @@ use std::{ops::Deref, option::Option::None, sync::Arc, vec::IntoIter};
 
 use git_hash::ObjectId;
 
-use crate::store::handle::SingleOrMultiIndex;
-use crate::store::types::PackId;
-use crate::{loose, store::handle, store_impls::dynamic};
+use crate::{
+    loose,
+    store::{handle, handle::SingleOrMultiIndex, types::PackId},
+    store_impls::dynamic,
+};
 
 struct EntryForOrdering {
     pack_offset: u64,

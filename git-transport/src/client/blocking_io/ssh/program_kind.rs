@@ -1,8 +1,11 @@
-use crate::client::ssh;
-use crate::client::ssh::ProgramKind;
-use crate::Protocol;
-use bstr::{BString, ByteSlice, ByteVec};
 use std::ffi::OsStr;
+
+use bstr::{BString, ByteSlice, ByteVec};
+
+use crate::{
+    client::{ssh, ssh::ProgramKind},
+    Protocol,
+};
 
 impl ProgramKind {
     /// Provide the name of the executable that belongs to this kind, or `None` if the kind is `Simple`.

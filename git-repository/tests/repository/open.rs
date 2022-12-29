@@ -1,6 +1,7 @@
 mod missing_config_file {
-    use crate::util::named_subrepo_opts;
     use git_repository as git;
+
+    use crate::util::named_subrepo_opts;
 
     #[test]
     fn bare() -> crate::Result {
@@ -47,8 +48,9 @@ mod not_a_repository {
 }
 
 mod open_path_as_is {
-    use crate::util::{named_subrepo_opts, repo_opts};
     use git_repository as git;
+
+    use crate::util::{named_subrepo_opts, repo_opts};
 
     fn open_path_as_is() -> git::open::Options {
         git::open::Options::isolated().open_path_as_is(true)

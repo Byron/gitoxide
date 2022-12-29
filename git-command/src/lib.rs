@@ -23,8 +23,10 @@ pub struct Prepare {
 }
 
 mod prepare {
-    use std::ffi::OsString;
-    use std::process::{Command, Stdio};
+    use std::{
+        ffi::OsString,
+        process::{Command, Stdio},
+    };
 
     use bstr::ByteSlice;
 
