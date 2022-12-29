@@ -32,7 +32,7 @@ pub enum State {
 }
 
 #[cfg(debug_assertions)]
-impl<'paths> Cache<'paths> {
+impl Cache {
     pub fn set_case(&mut self, case: git_glob::pattern::Case) {
         self.case = case;
     }
@@ -60,12 +60,12 @@ impl<'paths> Cache<'paths> {
 }
 
 #[must_use]
-pub struct Platform<'a, 'paths> {
-    parent: &'a Cache<'paths>,
+pub struct Platform<'a> {
+    parent: &'a Cache,
     is_dir: Option<bool>,
 }
 
-impl<'paths> Cache<'paths> {
+impl Cache {
     /// Create a new instance with `worktree_root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
     /// The `case` configures attribute and exclusion query case sensitivity.
@@ -74,7 +74,7 @@ impl<'paths> Cache<'paths> {
         state: State,
         case: git_glob::pattern::Case,
         buf: Vec<u8>,
-        attribute_files_in_index: Vec<PathOidMapping<'paths>>,
+        attribute_files_in_index: Vec<PathOidMapping>,
     ) -> Self {
         let root = worktree_root.into();
         Cache {
@@ -96,7 +96,7 @@ impl<'paths> Cache<'paths> {
         relative: impl AsRef<Path>,
         is_dir: Option<bool>,
         find: Find,
-    ) -> std::io::Result<Platform<'_, 'paths>>
+    ) -> std::io::Result<Platform<'_>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
@@ -119,7 +119,7 @@ impl<'paths> Cache<'paths> {
         relative: impl Into<&'r BStr>,
         is_dir: Option<bool>,
         find: Find,
-    ) -> std::io::Result<Platform<'_, 'paths>>
+    ) -> std::io::Result<Platform<'_>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,

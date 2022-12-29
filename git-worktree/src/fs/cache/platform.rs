@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-impl<'a, 'paths> Platform<'a, 'paths> {
+impl<'a> Platform<'a> {
     /// The full path to `relative` will be returned for use on the file system.
     pub fn path(&self) -> &'a Path {
         self.parent.stack.current()
@@ -42,21 +42,21 @@ impl<'a, 'paths> Platform<'a, 'paths> {
     }
 }
 
-impl<'a, 'paths> std::fmt::Debug for Platform<'a, 'paths> {
+impl<'a> std::fmt::Debug for Platform<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Debug::fmt(&self.path(), f)
     }
 }
 
-pub struct StackDelegate<'a, 'paths, Find> {
+pub struct StackDelegate<'a, Find> {
     pub state: &'a mut State,
     pub buf: &'a mut Vec<u8>,
     pub is_dir: bool,
-    pub attribute_files_in_index: &'a Vec<PathOidMapping<'paths>>,
+    pub attribute_files_in_index: &'a Vec<PathOidMapping>,
     pub find: Find,
 }
 
-impl<'a, 'paths, Find, E> fs::stack::Delegate for StackDelegate<'a, 'paths, Find>
+impl<'a, Find, E> fs::stack::Delegate for StackDelegate<'a, Find>
 where
     Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::BlobRef<'b>, E>,
     E: std::error::Error + Send + Sync + 'static,

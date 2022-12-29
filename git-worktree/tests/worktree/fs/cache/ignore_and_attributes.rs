@@ -109,7 +109,7 @@ fn check_against_baseline() -> crate::Result {
     assert_eq!(
         attribute_files_in_index,
         vec![(
-            "other-dir-with-ignore/.gitignore".as_bytes().as_bstr(),
+            "other-dir-with-ignore/.gitignore".into(),
             hex_to_id("5c7e0ed672d3d31d83a3df61f13cc8f7b22d5bfd")
         )]
     );

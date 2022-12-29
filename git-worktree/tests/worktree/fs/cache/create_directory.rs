@@ -98,7 +98,7 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
     Ok(())
 }
 
-fn new_cache() -> (fs::Cache<'static>, TempDir) {
+fn new_cache() -> (fs::Cache, TempDir) {
     let dir = tempdir().unwrap();
     let cache = fs::Cache::new(
         dir.path(),

@@ -147,7 +147,7 @@ impl Ignore {
         root: &Path,
         dir: &Path,
         buf: &mut Vec<u8>,
-        attribute_files_in_index: &[PathOidMapping<'_>],
+        attribute_files_in_index: &[PathOidMapping],
         mut find: Find,
     ) -> std::io::Result<()>
     where
@@ -161,7 +161,7 @@ impl Ignore {
         let ignore_path_relative = rela_dir.join(".gitignore");
         let ignore_path_relative = git_path::to_unix_separators_on_windows(git_path::into_bstr(ignore_path_relative));
         let ignore_file_in_index =
-            attribute_files_in_index.binary_search_by(|t| t.0.cmp(ignore_path_relative.as_ref()));
+            attribute_files_in_index.binary_search_by(|t| t.0.as_bstr().cmp(ignore_path_relative.as_ref()));
         let follow_symlinks = ignore_file_in_index.is_err();
         if !self
             .stack
@@ -236,7 +236,7 @@ impl State {
         index: &git_index::State,
         paths: &'paths git_index::PathStorageRef,
         case: Case,
-    ) -> Vec<PathOidMapping<'paths>> {
+    ) -> Vec<PathOidMapping> {
         let a1_backing;
         let a2_backing;
         let names = match self {
@@ -281,7 +281,7 @@ impl State {
                     if is_ignore && !entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
                         return None;
                     }
-                    Some((path, entry.id))
+                    Some((path.to_owned(), entry.id))
                 } else {
                     None
                 }

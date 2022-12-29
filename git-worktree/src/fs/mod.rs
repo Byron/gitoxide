@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use bstr::BStr;
+use bstr::BString;
 
 /// Common knowledge about the worktree that is needed across most interactions with the work tree
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -59,7 +59,7 @@ pub struct Stack {
 ///
 /// The caching is only useful if consecutive calls to create a directory are using a sorted list of entries.
 #[derive(Clone)]
-pub struct Cache<'paths> {
+pub struct Cache {
     stack: Stack,
     /// tells us what to do as we change paths.
     state: cache::State,
@@ -68,10 +68,10 @@ pub struct Cache<'paths> {
     /// If case folding should happen when looking up attributes or exclusions.
     case: git_glob::pattern::Case,
     /// A lookup table for object ids to read from in some situations when looking up attributes or exclusions.
-    attribute_files_in_index: Vec<PathOidMapping<'paths>>,
+    attribute_files_in_index: Vec<PathOidMapping>,
 }
 
-pub(crate) type PathOidMapping<'paths> = (&'paths BStr, git_hash::ObjectId);
+pub(crate) type PathOidMapping = (BString, git_hash::ObjectId);
 
 ///
 pub mod cache;
