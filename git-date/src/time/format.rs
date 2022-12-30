@@ -39,6 +39,16 @@ pub const DEFAULT: &[FormatItem<'_>] = format_description!(
     "[weekday repr:short] [month repr:short] [day] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"
 );
 
+/// E.g. `Thu Sep 4 10:45:06 2022 -0400`. This is output by `git log --pretty=%ad`.
+pub const GIT_DEFAULT: &[FormatItem<'_>] = format_description!(
+    "[weekday repr:short] \
+     [month repr:short] \
+     [day padding:none] \
+     [hour]:[minute]:[second] \
+     [year] \
+     [offset_hour sign:mandatory][offset_minute]"
+);
+
 mod format_impls {
     use time::format_description::FormatItem;
 

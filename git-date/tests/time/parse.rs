@@ -83,6 +83,19 @@ fn raw() {
 }
 
 #[test]
+fn git_default() {
+    assert_eq!(
+        git_date::parse("Thu Aug 8 12:45:06 2022 +0800", None).expect("parsed git default string"),
+        Time {
+            seconds_since_unix_epoch: 1659933906,
+            offset_in_seconds: 28800,
+            sign: Sign::Plus,
+        },
+        "could not parse with git default format"
+    );
+}
+
+#[test]
 fn invalid_dates_can_be_produced_without_current_time() {
     assert!(matches!(
         git_date::parse("foobar", None).unwrap_err(),
