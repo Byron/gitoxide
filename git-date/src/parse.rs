@@ -14,12 +14,12 @@ pub enum Error {
 pub(crate) mod function {
     use std::{convert::TryInto, str::FromStr, time::SystemTime};
 
-    use time::{Date, OffsetDateTime};
+    use time::{format_description::well_known, Date, OffsetDateTime};
 
     use crate::{
         parse::{relative, Error},
         time::{
-            format::{DEFAULT, ISO8601, ISO8601_STRICT, RFC2822, SHORT},
+            format::{DEFAULT, ISO8601, ISO8601_STRICT, SHORT},
             Sign,
         },
         Time,
@@ -35,7 +35,7 @@ pub(crate) mod function {
         Ok(if let Ok(val) = Date::parse(input, SHORT) {
             let val = val.with_hms(0, 0, 0).expect("date is in range").assume_utc();
             Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
-        } else if let Ok(val) = OffsetDateTime::parse(input, RFC2822) {
+        } else if let Ok(val) = OffsetDateTime::parse(input, &well_known::Rfc2822) {
             Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
         } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601) {
             Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())

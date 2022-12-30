@@ -36,6 +36,7 @@ fn iso8601_strict() {
 #[test]
 fn rfc2822() {
     assert_eq!(time().format(format::RFC2822), "Fri, 30 Nov 1973 00:03:09 +0230");
+    assert_eq!(time_dec1().format(format::RFC2822), "Sat, 01 Dec 1973 00:03:09 +0230");
 }
 
 #[test]
@@ -57,6 +58,14 @@ fn custom_compile_time() {
 fn time() -> Time {
     Time {
         seconds_since_unix_epoch: 123456789,
+        offset_in_seconds: 9000,
+        sign: Sign::Plus,
+    }
+}
+
+fn time_dec1() -> Time {
+    Time {
+        seconds_since_unix_epoch: 123543189,
         offset_in_seconds: 9000,
         sign: Sign::Plus,
     }

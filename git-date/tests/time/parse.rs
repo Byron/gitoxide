@@ -41,6 +41,25 @@ fn rfc2822() {
 }
 
 #[test]
+fn git_rfc2822() {
+    let expected = Time {
+        seconds_since_unix_epoch: 1659329106,
+        offset_in_seconds: 28800,
+        sign: Sign::Plus,
+    };
+    assert_eq!(
+        git_date::parse("Thu, 1 Aug 2022 12:45:06 +0800", None).expect("parsed git rfc2822 string"),
+        expected,
+        "could not parse with git RFC2822 format"
+    );
+    assert_eq!(
+        git_date::parse("Thu,  1 Aug 2022 12:45:06 +0800", None).expect("parsed git rfc2822 string"),
+        expected,
+        "could not parse with space-padded RFC2822 format"
+    );
+}
+
+#[test]
 fn raw() {
     assert_eq!(
         git_date::parse("1660874655 +0800", None).expect("parsed raw string"),
