@@ -213,28 +213,47 @@ mod program_kind {
         type Result = std::result::Result<(), ssh::invocation::Error>;
     }
 
-    mod line_to_permission_err {
+    mod line_to_err {
         use crate::client::ssh::ProgramKind;
+        use std::io::ErrorKind;
 
         #[test]
-        fn ssh() {
-            assert_eq!(
-                ProgramKind::Ssh
-                    .line_to_permission_err("byron@github.com: Permission denied (publickey).".into())
-                    .map(|err| err.kind()),
-                Ok(std::io::ErrorKind::PermissionDenied)
-            );
-        }
-
-        #[test]
-        fn simple() {
-            assert_eq!(
-                ProgramKind::Simple
-                    .line_to_permission_err("something something permission denied something".into())
-                    .map(|err| err.kind()),
-                Ok(std::io::ErrorKind::PermissionDenied),
-                "this kind is basically unknown but we try our best"
-            );
+        fn all() {
+            for (kind, line, expected) in [
+                (
+                    ProgramKind::Ssh,
+                    "byron@github.com: Permission denied (publickey).",
+                    ErrorKind::PermissionDenied,
+                ),
+                (
+                    ProgramKind::Ssh,
+                    "ssh: Could not resolve hostname hostfoobar: nodename nor servname provided, or not known",
+                    ErrorKind::ConnectionRefused,
+                ),
+                (
+                    ProgramKind::Ssh,
+                    "ssh: connect to host example.org port 22: No route to host",
+                    ErrorKind::ConnectionRefused,
+                ),
+                // this kind is basically unknown but we try our best
+                (
+                    ProgramKind::Simple,
+                    "something permission denied something",
+                    ErrorKind::PermissionDenied,
+                ),
+                (
+                    ProgramKind::Simple,
+                    "something resolve hostname hostfoobar: nodename nor servname something",
+                    ErrorKind::ConnectionRefused,
+                ),
+                (
+                    ProgramKind::Simple,
+                    "something connect to host something",
+                    ErrorKind::ConnectionRefused,
+                ),
+            ] {
+                assert_eq!(kind.line_to_err(line.into()).map(|err| err.kind()), Ok(expected));
+            }
         }
 
         #[test]
@@ -242,7 +261,7 @@ mod program_kind {
             for kind in [ProgramKind::TortoisePlink, ProgramKind::Plink, ProgramKind::Putty] {
                 assert_eq!(
                     kind
-                        .line_to_permission_err("publickey".into())
+                        .line_to_err("publickey".into())
                         .map(|err| err.kind()),
                     Ok(std::io::ErrorKind::PermissionDenied),
                     "this program pops up error messages in a window, no way to extract information from it. Maybe there is other ways to use it, 'publickey' they mention all"

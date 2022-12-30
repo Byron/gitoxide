@@ -151,7 +151,7 @@ fn supervise_stderr(
         let mut process_stderr = std::io::stderr();
         for line in std::io::BufReader::new(stderr).byte_lines() {
             let line = line?;
-            match ssh_kind.line_to_permission_err(line.into()) {
+            match ssh_kind.line_to_err(line.into()) {
                 Ok(err) => {
                     send.send(err).ok();
                 }

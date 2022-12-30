@@ -1,4 +1,5 @@
 use std::ffi::OsStr;
+use std::io::ErrorKind;
 
 use bstr::{BString, ByteSlice, ByteVec};
 
@@ -70,20 +71,28 @@ impl ProgramKind {
     }
 
     /// Note that the caller has to assure that the ssh program is launched in English by setting the locale.
-    pub(crate) fn line_to_permission_err(&self, line: BString) -> Result<std::io::Error, BString> {
-        let is_perm_err = match self {
+    pub(crate) fn line_to_err(&self, line: BString) -> Result<std::io::Error, BString> {
+        let kind = match self {
             ProgramKind::Ssh | ProgramKind::Simple => {
-                line.contains_str(b"Permission denied") || line.contains_str(b"permission denied")
+                if line.contains_str(b"Permission denied") || line.contains_str(b"permission denied") {
+                    Some(ErrorKind::PermissionDenied)
+                } else if line.contains_str(b"resolve hostname") || line.contains_str(b"connect to host") {
+                    Some(ErrorKind::ConnectionRefused) // TODO: turn this into HostUnreachable when stable, or NetworkUnreachable in 'no route' example
+                } else {
+                    None
+                }
             }
-            ProgramKind::Plink | ProgramKind::Putty | ProgramKind::TortoisePlink => line.contains_str(b"publickey"),
+            ProgramKind::Plink | ProgramKind::Putty | ProgramKind::TortoisePlink => {
+                if line.contains_str(b"publickey") {
+                    Some(ErrorKind::PermissionDenied)
+                } else {
+                    None
+                }
+            }
         };
-        if is_perm_err {
-            Ok(std::io::Error::new(
-                std::io::ErrorKind::PermissionDenied,
-                Vec::from(line).into_string_lossy(),
-            ))
-        } else {
-            Err(line)
+        match kind {
+            Some(kind) => Ok(std::io::Error::new(kind, Vec::from(line).into_string_lossy())),
+            None => Err(line),
         }
     }
 }
