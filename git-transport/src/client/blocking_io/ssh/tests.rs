@@ -233,9 +233,21 @@ mod program_kind {
                 (
                     ProgramKind::Ssh,
                     "ssh: connect to host example.org port 22: No route to host",
-                    ErrorKind::ConnectionRefused,
+                    ErrorKind::NotFound,
                 ),
-                // this kind is basically unknown but we try our best
+                // connection closed by remote on windows
+                (
+                    ProgramKind::Ssh,
+                    "banner exchange: Connection to 127.0.0.1 port 61024: Software caused connection abort",
+                    ErrorKind::NotFound,
+                ),
+                // connection closed by remote on unix
+                (
+                    ProgramKind::Ssh,
+                    "Connection closed by 127.0.0.1 port 8888", //
+                    ErrorKind::NotFound,
+                ),
+                // this kind is basically unknown but we try our best, and simple equals ssh
                 (
                     ProgramKind::Simple,
                     "something permission denied something",
@@ -249,7 +261,7 @@ mod program_kind {
                 (
                     ProgramKind::Simple,
                     "something connect to host something",
-                    ErrorKind::ConnectionRefused,
+                    ErrorKind::NotFound,
                 ),
             ] {
                 assert_eq!(kind.line_to_err(line.into()).map(|err| err.kind()), Ok(expected));

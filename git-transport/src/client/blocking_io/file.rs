@@ -1,3 +1,4 @@
+use std::ffi::OsStr;
 use std::{
     any::Any,
     borrow::Cow,
@@ -180,14 +181,19 @@ impl client::Transport for SpawnProcessOnDemand {
         service: Service,
         extra_parameters: &'a [(&'a str, Option<&'a str>)],
     ) -> Result<SetServiceResponse<'_>, client::Error> {
-        let (mut cmd, ssh_kind) = match &self.ssh_cmd {
+        let (mut cmd, ssh_kind, cmd_name) = match &self.ssh_cmd {
             Some((command, kind)) => (
                 kind.prepare_invocation(command, &self.url, self.desired_version, self.ssh_disallow_shell)
                     .map_err(client::Error::SshInvocation)?
                     .stderr(Stdio::piped()),
                 Some(*kind),
+                Cow::Owned(command.to_owned()),
             ),
-            None => (git_command::prepare(service.as_str()), None),
+            None => (
+                git_command::prepare(service.as_str()),
+                None,
+                Cow::Borrowed(OsStr::new(service.as_str())),
+            ),
         };
         cmd.stdin = Stdio::piped();
         cmd.stdout = Stdio::piped();
@@ -202,7 +208,10 @@ impl client::Transport for SpawnProcessOnDemand {
         }
         cmd.envs(std::mem::take(&mut self.envs));
 
-        let mut child = cmd.spawn()?;
+        let mut child = cmd.spawn().map_err(|err| client::Error::InvokeProgram {
+            source: err,
+            command: cmd_name.into_owned(),
+        })?;
         let stdout: Box<dyn std::io::Read + Send> = match ssh_kind {
             Some(ssh_kind) => Box::new(supervise_stderr(
                 ssh_kind,

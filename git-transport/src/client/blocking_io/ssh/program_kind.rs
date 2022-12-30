@@ -76,8 +76,15 @@ impl ProgramKind {
             ProgramKind::Ssh | ProgramKind::Simple => {
                 if line.contains_str(b"Permission denied") || line.contains_str(b"permission denied") {
                     Some(ErrorKind::PermissionDenied)
-                } else if line.contains_str(b"resolve hostname") || line.contains_str(b"connect to host") {
-                    Some(ErrorKind::ConnectionRefused) // TODO: turn this into HostUnreachable when stable, or NetworkUnreachable in 'no route' example
+                } else if line.contains_str(b"resolve hostname") {
+                    Some(ErrorKind::ConnectionRefused)
+                } else if line.contains_str(b"connect to host")
+                    || line.contains_str("Connection to ")
+                    || line.contains_str("Connection closed by ")
+                {
+                    // TODO: turn this into HostUnreachable when stable, or NetworkUnreachable in 'no route' example.
+                    //       It's important that it WON'T be considered spurious, but is considered a permanent failure.
+                    Some(ErrorKind::NotFound)
                 } else {
                     None
                 }

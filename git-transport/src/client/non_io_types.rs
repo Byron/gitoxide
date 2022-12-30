@@ -93,6 +93,7 @@ pub(crate) mod connect {
 
 mod error {
     use bstr::BString;
+    use std::ffi::OsString;
 
     use crate::client::capabilities;
     #[cfg(feature = "http-client")]
@@ -135,6 +136,8 @@ mod error {
         AuthenticationRefused(&'static str),
         #[error("The protocol version indicated by {:?} is unsupported", {0})]
         UnsupportedProtocolVersion(BString),
+        #[error("Failed to invoke program {command:?}")]
+        InvokeProgram { source: std::io::Error, command: OsString },
         #[error(transparent)]
         Http(#[from] HttpError),
         #[error(transparent)]
