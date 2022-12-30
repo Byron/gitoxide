@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.31.0 (2022-12-30)
+
+<csr-id-9fabfc50007603f9c1f7e70b5bb79a39726b12af/>
+<csr-id-91720798889ee7eb26da03a9e732caedda83b3e3/>
 
 ### New Features
 
@@ -32,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 1 calendar day.
+ - 9 commits contributed to the release over the course of 1 calendar day.
  - 4 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#676](https://github.com/Byron/gitoxide/issues/676)
@@ -46,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#676](https://github.com/Byron/gitoxide/issues/676)**
     - explain how it's possible to deal with the first commit when comparing trees ([`9fabfc5`](https://github.com/Byron/gitoxide/commit/9fabfc50007603f9c1f7e70b5bb79a39726b12af))
  * **Uncategorized**
+    - prepare changelogs prior to release ([`30d8ca1`](https://github.com/Byron/gitoxide/commit/30d8ca19284049dcfbb0de2698cafae1d1a16b0c))
     - adapt to changes in `git-worktree` ([`5a97bb5`](https://github.com/Byron/gitoxide/commit/5a97bb5365573895500f0adeb73c482b797051c4))
     - make fmt ([`511ed00`](https://github.com/Byron/gitoxide/commit/511ed0000397a5b268530c8f5362e7d25b7c1594))
     - Merge branch 'adjustments-for-cargo' ([`f8c562a`](https://github.com/Byron/gitoxide/commit/f8c562a559e6dc3377583cc7200585dad7c3d481))

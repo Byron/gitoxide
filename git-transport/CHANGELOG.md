@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.25.0 (2022-12-30)
 
 ### Bug Fixes
 
@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 4 calendar days.
+ - 9 commits contributed to the release over the course of 4 calendar days.
  - 4 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs prior to release ([`30d8ca1`](https://github.com/Byron/gitoxide/commit/30d8ca19284049dcfbb0de2698cafae1d1a16b0c))
     - improve error message for when an invoked transport program can't be found. ([`fed38c9`](https://github.com/Byron/gitoxide/commit/fed38c90df546c4bfc57ef66c92b4c9312c90586))
     - assure processing thread is up before continuing. ([`f0997bf`](https://github.com/Byron/gitoxide/commit/f0997bfab2ba66fb12b0c9d4d673faeabda9687c))
     - parse additional ssh messaegs into io-errors. ([`c60c89d`](https://github.com/Byron/gitoxide/commit/c60c89dcede9590f55246495a159a614426402d7))
@@ -61,16 +62,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - <csr-id-d59d362f12bf617656bae80596120c8bf823b090/> add and implement various new http options for the `curl` backend.
    - `schannel_check_revoke` as `curl`-backend specific configuration.
-- `ssl_version`
-- `ssl_ca_info`
-- `http_version`
 
 ### Bug Fixes
 
  - <csr-id-c62e5c7d415351aefafeb75f0ab926c7c45c6ede/> fixes SSH clone from scp-like/relatives URLs
    - Removes git-upload-pack extra parameters (rejected by both github and gitlab)
-   - Removes the double user inclusion in URL
-   - Properly handles relative paths in URL reconstruction on `connect()`
+- Removes the double user inclusion in URL
+- Properly handles relative paths in URL reconstruction on `connect()`
 
 ### Commit Statistics
 
@@ -95,6 +93,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor ([`24070a3`](https://github.com/Byron/gitoxide/commit/24070a3b970554d5d4815e87bcbfb6fb5524a006))
     - fixes SSH clone from scp-like/relatives URLs ([`c62e5c7`](https://github.com/Byron/gitoxide/commit/c62e5c7d415351aefafeb75f0ab926c7c45c6ede))
 </details>
+
+<csr-unknown>
+ssl_versionssl_ca_infohttp_version<csr-unknown/>
 
 ## 0.24.1 (2022-12-22)
 

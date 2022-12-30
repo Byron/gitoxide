@@ -1,6 +1,6 @@
 [package]
 name = "git-credentials"
-version = "0.8.0"
+version = "0.9.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project to interact with git credentials helpers"
@@ -16,9 +16,9 @@ serde1 = ["serde", "bstr/serde", "git-sec/serde1"]
 
 [dependencies]
 git-sec = { version = "^0.6.0", path = "../git-sec" }
-git-url = { version = "^0.12.0", path = "../git-url" }
+git-url = { version = "^0.13.0", path = "../git-url" }
 git-path = { version = "^0.7.0", path = "../git-path" }
-git-command = { version = "^0.2.0", path = "../git-command" }
+git-command = { version = "^0.2.1", path = "../git-command" }
 git-config-value = { version = "^0.10.0", path = "../git-config-value" }
 git-prompt = { version = "^0.3.0", path = "../git-prompt" }
 
