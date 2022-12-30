@@ -184,9 +184,19 @@ A bunch of notes collected to keep track of what's needed to eventually support 
   
 ## `Options` vs `Context`
 
-- Use `Options` whenever there is something to configure in terms of branching behaviour. It can be defaulted, and if it can't these fields should be parameters.
-- Use `Context` when potential optional data is required to perform an operation at all. See `git_config::path::Context` as reference. It can't be defaulted and the
-  fields could also be parameters.
+- Use `Options` whenever there is something to configure in terms of branching behaviour. It can be defaulted, and if it can't these fields should be parameters of the method
+  that takes these `Options`.
+- Use `Context` when data is required to perform an operation at all. See `git_config::path::Context` as reference. It can't be defaulted and the fields could also be parameters.
+
+## Lifetimes
+
+In _plumbing_ crates, prefer to default to keeping references if this is feasible to avoid typically expensive clones.
+
+In _porcelain_ crates, like `git-repository`, we have `Platforms` which are typically cheap enough to create on demand as they configure one or more method calls. These
+should keep a reference to the `Repository` instance that created them as the user is expected to clone the `Repository` if there is the need.
+However, if these structures are more expensive, call them `Cache` or `<NotPlatform>` and prefer to clone the `Repository` into them or otherwise keep them free of lifetimes
+to allow the user to keep this structure around for repeated calls. References for this paragraph are [this PR](https://github.com/Canop/bacon/pull/98) and 
+[this discussion](https://github.com/Byron/gitoxide/discussions/675).
 
 ## Examples, Porcelain CLI and Plumbing CLI - which does what?
 
