@@ -40,6 +40,15 @@ fn rfc2822() {
 }
 
 #[test]
+fn git_rfc2822() {
+    assert_eq!(time().format(format::GIT_RFC2822), "Fri, 30 Nov 1973 00:03:09 +0230");
+    assert_eq!(
+        time_dec1().format(format::GIT_RFC2822),
+        "Sat, 1 Dec 1973 00:03:09 +0230"
+    );
+}
+
+#[test]
 fn default() {
     assert_eq!(
         time().format(git_date::time::format::DEFAULT),
