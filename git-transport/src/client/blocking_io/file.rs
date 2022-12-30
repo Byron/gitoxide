@@ -132,37 +132,45 @@ fn supervise_stderr(
     stdout: std::process::ChildStdout,
 ) -> ReadStdoutFailOnError {
     impl ReadStdoutFailOnError {
-        fn swap_err_if_present_in_stderr(&self, res: std::io::Result<usize>) -> std::io::Result<usize> {
+        fn swap_err_if_present_in_stderr(&self, wanted: usize, res: std::io::Result<usize>) -> std::io::Result<usize> {
             match self.recv.try_recv().ok() {
                 Some(err) => Err(err),
-                None => res,
+                None => match res {
+                    Ok(n) if n == wanted => Ok(n),
+                    Ok(n) => self.recv.recv().ok().map(Err).unwrap_or(Ok(n)),
+                    Err(err) => Err(self.recv.recv().ok().unwrap_or(err)),
+                },
             }
         }
     }
     impl std::io::Read for ReadStdoutFailOnError {
         fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
             let res = self.read.read(buf);
-            self.swap_err_if_present_in_stderr(res)
+            self.swap_err_if_present_in_stderr(buf.len(), res)
         }
     }
 
     let (send, recv) = std::sync::mpsc::sync_channel(1);
-    std::thread::spawn(move || -> std::io::Result<()> {
-        let mut process_stderr = std::io::stderr();
-        for line in std::io::BufReader::new(stderr).byte_lines() {
-            let line = line?;
-            match ssh_kind.line_to_err(line.into()) {
-                Ok(err) => {
-                    send.send(err).ok();
-                }
-                Err(line) => {
-                    process_stderr.write_all(&line).ok();
-                    writeln!(&process_stderr).ok();
+    std::thread::Builder::new()
+        .name("supervise ssh".into())
+        .stack_size(128 * 1024)
+        .spawn(move || -> std::io::Result<()> {
+            let mut process_stderr = std::io::stderr();
+            for line in std::io::BufReader::new(stderr).byte_lines() {
+                let line = line?;
+                match ssh_kind.line_to_err(line.into()) {
+                    Ok(err) => {
+                        send.send(err).ok();
+                    }
+                    Err(line) => {
+                        process_stderr.write_all(&line).ok();
+                        writeln!(&process_stderr).ok();
+                    }
                 }
             }
-        }
-        Ok(())
-    });
+            Ok(())
+        })
+        .expect("named threads with small stack work on all platforms");
     ReadStdoutFailOnError { read: stdout, recv }
 }
 
