@@ -71,10 +71,14 @@ pub(crate) mod function {
         let mut split = input.split_whitespace();
         let seconds_since_unix_epoch: u32 = split.next()?.parse().ok()?;
         let offset = split.next()?;
-        if offset.len() != 5 {
+        if offset.len() != 5 || split.next().is_some() {
             return None;
         }
-        let sign = if &offset[..1] == "-" { Sign::Minus } else { Sign::Plus };
+        let sign = match &offset[..1] {
+            "-" => Some(Sign::Minus),
+            "+" => Some(Sign::Plus),
+            _ => None,
+        }?;
         let hours: i32 = offset[1..3].parse().ok()?;
         let minutes: i32 = offset[3..5].parse().ok()?;
         let mut offset_in_seconds = hours * 3600 + minutes * 60;

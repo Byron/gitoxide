@@ -65,17 +65,41 @@ fn raw() {
             offset_in_seconds: 28800,
             sign: Sign::Plus,
         },
-        "could not parse with raw format"
     );
 
-    assert_eq!(
-        git_date::parse("1660874655 -0800", None).unwrap(),
-        Time {
-            seconds_since_unix_epoch: 1660874655,
-            offset_in_seconds: -28800,
-            sign: Sign::Minus,
-        },
-    );
+    let expected = Time {
+        seconds_since_unix_epoch: 1660874655,
+        offset_in_seconds: -28800,
+        sign: Sign::Minus,
+    };
+    for date_str in [
+        "1660874655 -0800",
+        "1660874655 -0800  ",
+        "  1660874655 -0800",
+        "  1660874655 -0800  ",
+        "  1660874655  -0800  ",
+        "1660874655\t-0800",
+    ] {
+        assert_eq!(git_date::parse(date_str, None).unwrap(), expected);
+    }
+}
+
+#[test]
+fn bad_raw() {
+    for bad_date_str in [
+        "123456 !0600",
+        "123456 +060",
+        "123456 -060",
+        "123456 +06000",
+        "123456 06000",
+        "123456  0600",
+        "123456 +0600 extra",
+        "-123456 +0600",
+        "123456+0600",
+        "123456 + 600",
+    ] {
+        assert!(git_date::parse(bad_date_str, None).is_err());
+    }
 }
 
 #[test]
