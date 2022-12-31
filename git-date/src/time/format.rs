@@ -10,6 +10,16 @@ pub const RFC2822: &[FormatItem<'_>] = format_description!(
     "[weekday repr:short], [day] [month repr:short] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"
 );
 
+/// E.g. `Thu, 8 Aug 2022 12:45:06 +0800`. This is output by `git log --pretty=%aD`.
+pub const GIT_RFC2822: &[FormatItem<'_>] = format_description!(
+    "[weekday repr:short], \
+     [day padding:none] \
+     [month repr:short] \
+     [year] \
+     [hour]:[minute]:[second] \
+     [offset_hour sign:mandatory][offset_minute]"
+);
+
 /// E.g. `2022-08-17 22:04:58 +0200`
 pub const ISO8601: &[FormatItem<'_>] =
     format_description!("[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]");
@@ -27,6 +37,16 @@ pub const RAW: Format<'static> = Format::Raw;
 /// E.g. `Thu Sep 04 2022 10:45:06 -0400`
 pub const DEFAULT: &[FormatItem<'_>] = format_description!(
     "[weekday repr:short] [month repr:short] [day] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"
+);
+
+/// E.g. `Thu Sep 4 10:45:06 2022 -0400`. This is output by `git log --pretty=%ad`.
+pub const GIT_DEFAULT: &[FormatItem<'_>] = format_description!(
+    "[weekday repr:short] \
+     [month repr:short] \
+     [day padding:none] \
+     [hour]:[minute]:[second] \
+     [year] \
+     [offset_hour sign:mandatory][offset_minute]"
 );
 
 mod format_impls {

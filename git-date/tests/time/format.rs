@@ -36,6 +36,16 @@ fn iso8601_strict() {
 #[test]
 fn rfc2822() {
     assert_eq!(time().format(format::RFC2822), "Fri, 30 Nov 1973 00:03:09 +0230");
+    assert_eq!(time_dec1().format(format::RFC2822), "Sat, 01 Dec 1973 00:03:09 +0230");
+}
+
+#[test]
+fn git_rfc2822() {
+    assert_eq!(time().format(format::GIT_RFC2822), "Fri, 30 Nov 1973 00:03:09 +0230");
+    assert_eq!(
+        time_dec1().format(format::GIT_RFC2822),
+        "Sat, 1 Dec 1973 00:03:09 +0230"
+    );
 }
 
 #[test]
@@ -44,6 +54,22 @@ fn default() {
         time().format(git_date::time::format::DEFAULT),
         "Fri Nov 30 1973 00:03:09 +0230"
     );
+    assert_eq!(
+        time_dec1().format(git_date::time::format::DEFAULT),
+        "Sat Dec 01 1973 00:03:09 +0230"
+    )
+}
+
+#[test]
+fn git_default() {
+    assert_eq!(
+        time().format(git_date::time::format::GIT_DEFAULT),
+        "Fri Nov 30 00:03:09 1973 +0230"
+    );
+    assert_eq!(
+        time_dec1().format(git_date::time::format::GIT_DEFAULT),
+        "Sat Dec 1 00:03:09 1973 +0230"
+    )
 }
 
 #[test]
@@ -57,6 +83,14 @@ fn custom_compile_time() {
 fn time() -> Time {
     Time {
         seconds_since_unix_epoch: 123456789,
+        offset_in_seconds: 9000,
+        sign: Sign::Plus,
+    }
+}
+
+fn time_dec1() -> Time {
+    Time {
+        seconds_since_unix_epoch: 123543189,
         offset_in_seconds: 9000,
         sign: Sign::Plus,
     }
