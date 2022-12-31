@@ -110,7 +110,7 @@ git-path = { version = "^0.7.0", path = "../git-path" }
 git-url = { version = "^0.13.0", path = "../git-url" }
 git-traverse = { version = "^0.21.0", path = "../git-traverse" }
 git-protocol = { version = "^0.26.0", path = "../git-protocol", optional = true }
-git-transport = { version = "^0.25.0", path = "../git-transport", optional = true }
+git-transport = { version = "^0.25.1", path = "../git-transport", optional = true }
 git-diff = { version = "^0.25.0", path = "../git-diff" }
 git-mailmap = { version = "^0.8.0", path = "../git-mailmap" }
 git-features = { version = "^0.26.0", path = "../git-features", features = ["progress", "once_cell"] }

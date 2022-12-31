@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.25.1 (2022-12-31)
+
+### Bug Fixes
+
+ - <csr-id-ec2f2e31a714334bc0942eab08d306d4e0952933/> file:// command invocation won't spill stderr output.
+   This usually doesn't add any benefit to the user as we might see
+   events like the git process' failure to flush to a closed channel
+   even though this is entirely handled by the Rust side of things.
+   
+   I can imagine that one day this might become a configurable to help
+   with debugging to help making better-behaved clients, but maybe it
+   won't ever matter once the default file:// transport is built-in and
+   native.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - file:// command invocation won't spill stderr output. ([`ec2f2e3`](https://github.com/Byron/gitoxide/commit/ec2f2e31a714334bc0942eab08d306d4e0952933))
+</details>
+
 ## 0.25.0 (2022-12-30)
 
 ### Bug Fixes
@@ -33,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 4 calendar days.
+ - 10 commits contributed to the release over the course of 4 calendar days.
  - 4 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -45,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-features v0.26.0, git-actor v0.16.0, git-attributes v0.8.0, git-object v0.25.0, git-ref v0.22.0, git-config v0.14.0, git-command v0.2.1, git-url v0.13.0, git-credentials v0.9.0, git-diff v0.25.0, git-discover v0.11.0, git-traverse v0.21.0, git-index v0.11.0, git-mailmap v0.8.0, git-pack v0.29.0, git-odb v0.39.0, git-transport v0.25.0, git-protocol v0.26.0, git-revision v0.9.0, git-refspec v0.6.0, git-worktree v0.11.0, git-repository v0.31.0, safety bump 24 crates ([`5ac9fbe`](https://github.com/Byron/gitoxide/commit/5ac9fbe265a5b61c533a2a6b3abfed2bdf7f89ad))
     - prepare changelogs prior to release ([`30d8ca1`](https://github.com/Byron/gitoxide/commit/30d8ca19284049dcfbb0de2698cafae1d1a16b0c))
     - improve error message for when an invoked transport program can't be found. ([`fed38c9`](https://github.com/Byron/gitoxide/commit/fed38c90df546c4bfc57ef66c92b4c9312c90586))
     - assure processing thread is up before continuing. ([`f0997bf`](https://github.com/Byron/gitoxide/commit/f0997bfab2ba66fb12b0c9d4d673faeabda9687c))
@@ -67,8 +100,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - <csr-id-c62e5c7d415351aefafeb75f0ab926c7c45c6ede/> fixes SSH clone from scp-like/relatives URLs
    - Removes git-upload-pack extra parameters (rejected by both github and gitlab)
-- Removes the double user inclusion in URL
-- Properly handles relative paths in URL reconstruction on `connect()`
 
 ### Commit Statistics
 
@@ -95,7 +126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 <csr-unknown>
-ssl_versionssl_ca_infohttp_version<csr-unknown/>
+Removes the double user inclusion in URLProperly handles relative paths in URL reconstruction on connect()<csr-unknown/>
 
 ## 0.24.1 (2022-12-22)
 
