@@ -12,6 +12,7 @@ mod prepare {
 }
 
 mod spawn {
+    #[cfg(unix)]
     use bstr::ByteSlice;
 
     #[test]
