@@ -190,7 +190,7 @@ impl client::Transport for SpawnProcessOnDemand {
                 Cow::Owned(command.to_owned()),
             ),
             None => (
-                git_command::prepare(service.as_str()),
+                git_command::prepare(service.as_str()).stderr(Stdio::null()),
                 None,
                 Cow::Borrowed(OsStr::new(service.as_str())),
             ),
