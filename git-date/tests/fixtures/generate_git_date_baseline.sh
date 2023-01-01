@@ -36,7 +36,7 @@ baseline '2022-08-17 22:04:58 +0200' 'ISO8601'
 baseline '2022-08-17T21:43:13+08:00' 'ISO8601_STRICT'
 # default
 baseline 'Thu Sep 04 2022 10:45:06 -0400' '' # cannot round-trip, incorrect day-of-week
-baseline 'Sun Sep 04 2022 10:45:06 -0400' 'DEFAULT'
+baseline 'Sun Sep 04 2022 10:45:06 -0400' 'GITOXIDE'
 # unix
 baseline '123456789' 'UNIX'
 # raw

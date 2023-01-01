@@ -19,7 +19,7 @@ pub(crate) mod function {
     use crate::{
         parse::{relative, Error},
         time::{
-            format::{DEFAULT, GIT_DEFAULT, ISO8601, ISO8601_STRICT, SHORT},
+            format::{DEFAULT, GITOXIDE, ISO8601, ISO8601_STRICT, SHORT},
             Sign,
         },
         Time,
@@ -41,9 +41,9 @@ pub(crate) mod function {
             Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
         } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601_STRICT) {
             Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
-        } else if let Ok(val) = OffsetDateTime::parse(input, DEFAULT) {
+        } else if let Ok(val) = OffsetDateTime::parse(input, GITOXIDE) {
             Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
-        } else if let Ok(val) = OffsetDateTime::parse(input, GIT_DEFAULT) {
+        } else if let Ok(val) = OffsetDateTime::parse(input, DEFAULT) {
             Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
         } else if let Ok(val) = u32::from_str(input) {
             // Format::Unix

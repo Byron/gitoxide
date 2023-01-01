@@ -68,7 +68,7 @@ fn parse_compare_format() {
                     "RFC2822" => Format::Custom(format::RFC2822),
                     "ISO8601" => Format::Custom(format::ISO8601),
                     "ISO8601_STRICT" => Format::Custom(format::ISO8601_STRICT),
-                    "DEFAULT" => Format::Custom(format::DEFAULT),
+                    "GITOXIDE" => Format::Custom(format::GITOXIDE),
                     "UNIX" => Format::Unix,
                     "RAW" => Format::Raw,
                     unknown => unreachable!("All formats should be well-known and implemented: {unknown:?}"),
