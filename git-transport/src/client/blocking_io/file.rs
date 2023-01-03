@@ -138,7 +138,23 @@ fn supervise_stderr(
                 Some(err) => Err(err),
                 None => match res {
                     Ok(n) if n == wanted => Ok(n),
-                    Ok(n) => self.recv.recv().ok().map(Err).unwrap_or(Ok(n)),
+                    Ok(n) => {
+                        // TODO: fix this
+                        // When parsing refs this seems to happen legitimately
+                        // (even though we read packet lines only and should always know exactly how much to read)
+                        // Maybe this still happens in `read_exact()` as sometimes we just don't get enough bytes
+                        // despite knowing how many.
+                        // To prevent deadlock, we have to set a timeout which slows down legitimate parts of the protocol.
+                        // This code was specifically written to make the `cargo` test-suite pass, and we can reduce
+                        // the timeouts even more once there is a native ssh transport that is used by `cargo`, it will
+                        // be able to handle these properly.
+                        // Alternatively, one could implement something like `read2` to avoid blocking on stderr entirely.
+                        self.recv
+                            .recv_timeout(std::time::Duration::from_millis(5))
+                            .ok()
+                            .map(Err)
+                            .unwrap_or(Ok(n))
+                    }
                     Err(err) => Err(self.recv.recv().ok().unwrap_or(err)),
                 },
             }
@@ -153,7 +169,7 @@ fn supervise_stderr(
 
     let (send, recv) = std::sync::mpsc::sync_channel(1);
     std::thread::Builder::new()
-        .name("supervise ssh".into())
+        .name("supervise ssh stderr".into())
         .stack_size(128 * 1024)
         .spawn(move || -> std::io::Result<()> {
             let mut process_stderr = std::io::stderr();
