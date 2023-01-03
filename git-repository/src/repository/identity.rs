@@ -107,21 +107,20 @@ pub(crate) struct Personas {
 impl Personas {
     pub fn from_config_and_env(config: &git_config::File<'_>) -> Self {
         fn entity_in_section(
-            name: &str,
+            section_name: &str,
             config: &git_config::File<'_>,
             fallback: bool,
         ) -> (Option<BString>, Option<BString>) {
             let fallback = fallback
-                .then(|| config.section("gitoxide", Some(name.into())).ok())
+                .then(|| config.section("gitoxide", Some(section_name.into())).ok())
                 .flatten();
-            let (name, email) = config
-                .section(name, None)
-                .map(|section| (section.value("name"), section.value("email")))
-                .unwrap_or_default();
             (
-                name.or_else(|| fallback.as_ref().and_then(|s| s.value("nameFallback")))
+                config
+                    .string(section_name, None, "name")
+                    .or_else(|| fallback.as_ref().and_then(|s| s.value("nameFallback")))
                     .map(|v| v.into_owned()),
-                email
+                config
+                    .string(section_name, None, "email")
                     .or_else(|| fallback.as_ref().and_then(|s| s.value("emailFallback")))
                     .map(|v| v.into_owned()),
             )
