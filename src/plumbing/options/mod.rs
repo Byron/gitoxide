@@ -182,7 +182,7 @@ pub mod clone {
         pub remote: OsString,
 
         /// The directory to initialize with the new repository and to which all data should be written.
-        pub directory: PathBuf,
+        pub directory: Option<PathBuf>,
     }
 }
 

@@ -12,7 +12,7 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 pub(crate) mod function {
     use std::ffi::OsStr;
 
-    use anyhow::bail;
+    use anyhow::{bail, Context};
     use git_repository as git;
     use git_repository::{bstr::BString, remote::fetch::Status, Progress};
 
@@ -20,8 +20,8 @@ pub(crate) mod function {
     use crate::{repository::fetch::function::print_updates, OutputFormat};
 
     pub fn clone<P>(
-        remote: impl AsRef<OsStr>,
-        directory: impl AsRef<std::path::Path>,
+        url: impl AsRef<OsStr>,
+        directory: Option<impl Into<std::path::PathBuf>>,
         overrides: Vec<BString>,
         mut progress: P,
         mut out: impl std::io::Write,
@@ -41,8 +41,16 @@ pub(crate) mod function {
             bail!("JSON output isn't yet supported for fetching.");
         }
 
+        let url: git::Url = url.as_ref().try_into()?;
+        let directory = directory.map(|dir| Ok(dir.into())).unwrap_or_else(|| {
+            git::path::from_bstr(url.path.as_ref())
+                .as_ref()
+                .file_stem()
+                .map(Into::into)
+                .context("Filename extraction failed - path too short")
+        })?;
         let mut prepare = git::clone::PrepareFetch::new(
-            remote.as_ref(),
+            url,
             directory,
             bare.then(|| git::create::Kind::Bare)
                 .unwrap_or(git::create::Kind::WithWorktree),
