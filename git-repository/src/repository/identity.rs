@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-use crate::bstr::{BString, ByteSlice};
+use crate::bstr::{BStr, BString, ByteSlice};
 
 /// Identity handling.
 impl crate::Repository {
@@ -14,17 +14,16 @@ impl crate::Repository {
     ///
     /// The values are cached when the repository is instantiated.
     pub fn user_default(&self) -> git_actor::SignatureRef<'_> {
+        let (name, email) = self.default_actor();
         git_actor::SignatureRef {
-            name: "gitoxide".into(),
-            email: "gitoxide@localhost".into(),
-            time: {
-                let p = self.config.personas();
-                p.committer
-                    .time
-                    .or(p.author.time)
-                    .unwrap_or_else(git_date::Time::now_local_or_utc)
-            },
+            name,
+            email,
+            time: git_date::Time::now_local_or_utc(),
         }
+    }
+
+    fn default_actor(&self) -> (&BStr, &BStr) {
+        ("gitoxide".into(), "gitoxide@localhost".into())
     }
 
     /// Return the committer as configured by this repository, which is determined by…
@@ -57,7 +56,16 @@ impl crate::Repository {
 
     /// Like [`committer()`][Self::committer()], but may use a default value in case nothing is configured.
     pub fn committer_or_default(&self) -> git_actor::SignatureRef<'_> {
-        self.committer().unwrap_or_else(|| self.user_default())
+        self.committer().unwrap_or_else(|| {
+            let (name, email) = self.default_actor();
+            let time = self
+                .config
+                .personas()
+                .committer
+                .time
+                .unwrap_or_else(git_date::Time::now_local_or_utc);
+            git_actor::SignatureRef { name, email, time }
+        })
     }
 
     /// Return the author as configured by this repository, which is determined by…
@@ -85,7 +93,16 @@ impl crate::Repository {
 
     /// Like [`author()`][Self::author()], but may use a default value in case nothing is configured.
     pub fn author_or_default(&self) -> git_actor::SignatureRef<'_> {
-        self.author().unwrap_or_else(|| self.user_default())
+        self.author().unwrap_or_else(|| {
+            let (name, email) = self.default_actor();
+            let time = self
+                .config
+                .personas()
+                .author
+                .time
+                .unwrap_or_else(git_date::Time::now_local_or_utc);
+            git_actor::SignatureRef { name, email, time }
+        })
     }
 }
 
