@@ -146,7 +146,7 @@ fn remove_flag_is_respected() -> crate::Result {
     assert_eq!(index.entries().len(), total_entries);
     let entries_to_remove = 4;
     for entry in &mut index.entries_mut()[..entries_to_remove] {
-        entry.flags.toggle(git_index::entry::Flags::REMOVE);
+        entry.flags.toggle(entry::Flags::REMOVE);
     }
     let mut buf = Vec::<u8>::new();
     index.write_to(&mut buf, Default::default())?;

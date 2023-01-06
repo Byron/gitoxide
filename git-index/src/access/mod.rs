@@ -98,6 +98,13 @@ impl State {
             .map(|idx| &self.entries[idx])
     }
 
+    /// Like [`entry_index_by_path_and_stage()`][State::entry_index_by_path_and_stage()],
+    /// but returns the mutable entry instead of the index.
+    pub fn entry_mut_by_path_and_stage(&mut self, path: &BStr, stage: entry::Stage) -> Option<&mut Entry> {
+        self.entry_index_by_path_and_stage(path, stage)
+            .map(|idx| &mut self.entries[idx])
+    }
+
     /// Return the entry at `idx` or _panic_ if the index is out of bounds.
     ///
     /// The `idx` is typically returned by [entry_by_path_and_stage()][State::entry_by_path_and_stage()].
