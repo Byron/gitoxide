@@ -65,10 +65,31 @@ mod access {
 
 mod _impls {
     use std::cmp::Ordering;
+    use std::ops::Add;
+    use std::time::SystemTime;
 
     use bstr::BStr;
 
+    use crate::entry::Time;
     use crate::{Entry, State};
+
+    impl From<SystemTime> for Time {
+        fn from(s: SystemTime) -> Self {
+            let d = s
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("system time is not before unix epoch!");
+            Time {
+                secs: d.as_secs() as u32,
+                nsecs: d.subsec_nanos(),
+            }
+        }
+    }
+
+    impl From<Time> for SystemTime {
+        fn from(s: Time) -> Self {
+            std::time::UNIX_EPOCH.add(std::time::Duration::new(s.secs.into(), s.nsecs))
+        }
+    }
 
     impl Entry {
         /// Compare one entry to another by their path, by comparing only their common path portion byte by byte, then resorting to
