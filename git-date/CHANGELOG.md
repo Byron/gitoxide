@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.4.0 (2023-01-06)
+
+<csr-id-41fc2bb20e6a926ffc3638c0fac21d733fdc2e3c/>
 
 ### New Features
 
@@ -26,37 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
+<csr-id-dff0aa0be600b9cd9518184fefa9b3c8fdb510f2/>
+
  - <csr-id-046af94f005a6e095f0d3616c0b57ef1f556f734/> Stricter raw date parsing
    The raw date parser (git_date::parse::function::parse_raw()) accepted some
    inputs that it should not have. Specifically, it would accept:
    
    - Any character for the timezone offset's sign
-   - Trailing, non-whitespace characters after the timezone offset
-   
-   Now either '+' or '-' is required for the timezone offset sign and only
-   trailing whitespace is allowed.
-   
-   Additional tests are added to cover both acceptable and unacceptable
-   inputs.
-   
-   N.B. the raw date parser is still accepting of whitespace leading, in the
-   middle of, and trailing the date string. A yet stricter parser would only
-   allow a single space character between the seconds-since-epoch and the
-   timezone offset.
- - <csr-id-dff0aa0be600b9cd9518184fefa9b3c8fdb510f2/> Parse git-styled RFC 2822 date strings
-   Git outputs RFC 2822 date strings, for example with `git log -n1
-   --pretty=%aD`, such that the day-of-month field is not zero-padded.
-   
-   The git_date::time::format::RFC2822 format description specifies
-   zero-padded day-of-month, which is perhaps truer to the RFC, but different
-   from git. Thus the RFC2822 format description is good for *formatting*, but
-   too strict for parsing.
-   
-   The time::format_description::well_known::Rfc2822 format description
-   accepts zero-padded, space-padded, and non-padded day-of-month. By
-   replacing the use of git_date::time::format::RFC2822 with
-   time::format_description::well_known::Rfc2822 in git_date::parse(), both
-   git-styled RFC 2822 and strict RFC 2822 date strings can be parsed.
+- Trailing, non-whitespace characters after the timezone offset
 
 ### Other (BREAKING)
 
@@ -69,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 6 calendar days.
+ - 9 commits contributed to the release over the course of 6 calendar days.
  - 18 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -81,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs prior to release ([`d679f5b`](https://github.com/Byron/gitoxide/commit/d679f5b6f018633e858d3ebbdaf1cd5098bbc5e7))
     - `time::format::GIT_DEFAULT` -> `*::DEFAULT` and `*::DEFAULT` -> `*::GITOXIDE`. ([`41fc2bb`](https://github.com/Byron/gitoxide/commit/41fc2bb20e6a926ffc3638c0fac21d733fdc2e3c))
     - Merge branch 'strict-raw-dates' ([`c65ce7e`](https://github.com/Byron/gitoxide/commit/c65ce7e3031b036d3a76b6e8a6c9ead39390261c))
     - Stricter raw date parsing ([`046af94`](https://github.com/Byron/gitoxide/commit/046af94f005a6e095f0d3616c0b57ef1f556f734))
@@ -90,6 +70,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Format git-style RFC 2822 date strings ([`8094351`](https://github.com/Byron/gitoxide/commit/8094351fe547a0f6756b0ed29dc87a0e6b9ceec1))
     - Parse git-styled RFC 2822 date strings ([`dff0aa0`](https://github.com/Byron/gitoxide/commit/dff0aa0be600b9cd9518184fefa9b3c8fdb510f2))
 </details>
+
+<csr-unknown>
+Now either ‘+’ or ‘-’ is required for the timezone offset sign and onlytrailing whitespace is allowed.Additional tests are added to cover both acceptable and unacceptableinputs.N.B. the raw date parser is still accepting of whitespace leading, in themiddle of, and trailing the date string. A yet stricter parser would onlyallow a single space character between the seconds-since-epoch and thetimezone offset. Parse git-styled RFC 2822 date stringsGit outputs RFC 2822 date strings, for example with git log -n1 --pretty=%aD, such that the day-of-month field is not zero-padded.The git_date::time::format::RFC2822 format description specifieszero-padded day-of-month, which is perhaps truer to the RFC, but differentfrom git. Thus the RFC2822 format description is good for formatting, buttoo strict for parsing.The time::format_description::well_known::Rfc2822 format descriptionaccepts zero-padded, space-padded, and non-padded day-of-month. Byreplacing the use of git_date::time::format::RFC2822 withtime::format_description::well_known::Rfc2822 in git_date::parse(), bothgit-styled RFC 2822 and strict RFC 2822 date strings can be parsed.<csr-unknown/>
 
 ## 0.3.1 (2022-12-19)
 

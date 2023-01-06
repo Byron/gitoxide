@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.12.0 (2023-01-06)
 
 ### New Features
 
@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release.
+ - 11 commits contributed to the release.
  - 7 days passed between releases.
  - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs prior to release ([`d679f5b`](https://github.com/Byron/gitoxide/commit/d679f5b6f018633e858d3ebbdaf1cd5098bbc5e7))
     - Merge branch 'various-improvements' ([`9eee8fe`](https://github.com/Byron/gitoxide/commit/9eee8fe1bed116b7a5a4f552982fa49da83ee92c))
     - `entry::Time` can convert from and to system time. ([`1e3341a`](https://github.com/Byron/gitoxide/commit/1e3341a77c089e6d80c271fca46b774b01b01386))
     - add `State::sort_entries()` and `State::dangerously_push_entry()`. ([`654bd8f`](https://github.com/Byron/gitoxide/commit/654bd8f62d5546b0f57e82d1be8211431685c7ce))
