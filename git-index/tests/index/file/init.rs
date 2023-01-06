@@ -1,3 +1,30 @@
+mod at_or_new {
+    use crate::index::Fixture::Generated;
+
+    #[test]
+    fn opens_existing() {
+        git_index::File::at_or_default(
+            Generated("v4_more_files_IEOT").to_path(),
+            git_hash::Kind::Sha1,
+            Default::default(),
+        )
+        .expect("file exists and can be opened");
+    }
+
+    #[test]
+    fn create_empty_in_memory_state_if_file_does_not_exist() {
+        let index = git_index::File::at_or_default(
+            "__definitely no file that exists ever__",
+            git_hash::Kind::Sha1,
+            Default::default(),
+        )
+        .expect("file is defaulting to a new one");
+        assert!(!index.path().is_file(), "the file wasn't created yet");
+        assert_eq!(index.object_hash(), git_hash::Kind::Sha1, "object hash is respected");
+        assert_eq!(index.entries().len(), 0, "index is empty");
+    }
+}
+
 mod from_state {
     use git_index::Version::{V2, V3};
 

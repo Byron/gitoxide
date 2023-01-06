@@ -23,6 +23,25 @@ pub use error::Error;
 
 /// Initialization
 impl File {
+    /// Try to open the index file at `path` with `options`, assuming `object_hash` is used throughout the file, or create a new
+    /// index that merely exists in memory and is empty.
+    ///
+    /// Note that the `path` will not be written if it doesn't exist.
+    pub fn at_or_default(
+        path: impl Into<PathBuf>,
+        object_hash: git_hash::Kind,
+        options: decode::Options,
+    ) -> Result<Self, Error> {
+        let path = path.into();
+        Ok(match Self::at(&path, object_hash, options) {
+            Ok(f) => f,
+            Err(Error::Io(err)) if err.kind() == std::io::ErrorKind::NotFound => {
+                File::from_state(State::new(object_hash), path)
+            }
+            Err(err) => return Err(err),
+        })
+    }
+
     /// Open an index file at `path` with `options`, assuming `object_hash` is used throughout the file.
     pub fn at(path: impl Into<PathBuf>, object_hash: git_hash::Kind, options: decode::Options) -> Result<Self, Error> {
         let path = path.into();
