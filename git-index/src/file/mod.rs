@@ -19,14 +19,21 @@ mod impls {
 }
 
 mod impl_ {
+    use crate::{File, State};
     use std::fmt::Formatter;
 
-    impl std::fmt::Debug for crate::File {
+    impl std::fmt::Debug for File {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             f.debug_struct("File")
                 .field("path", &self.path.display())
                 .field("checksum", &self.checksum)
                 .finish_non_exhaustive()
+        }
+    }
+
+    impl From<File> for State {
+        fn from(f: File) -> Self {
+            f.state
         }
     }
 }
@@ -36,11 +43,6 @@ mod access {
 
     /// Consumption
     impl File {
-        /// Take the state and discard the rest.
-        pub fn into_state(self) -> crate::State {
-            self.state
-        }
-
         /// Take all non-copy parts of the index.
         pub fn into_parts(self) -> (crate::State, std::path::PathBuf) {
             (self.state, self.path)
@@ -59,6 +61,21 @@ mod access {
         /// Note that even if `Some`, it will only represent the state in memory right after reading or [writing][File::write()].
         pub fn checksum(&self) -> Option<git_hash::ObjectId> {
             self.checksum
+        }
+    }
+}
+
+mod mutation {
+    use crate::File;
+    use std::path::PathBuf;
+
+    /// Mutating access
+    impl File {
+        /// Set the path at which we think we are located to the given `path`.
+        ///
+        /// This is useful to change the location of the index *once* it is written via [`write()`][File::write()].
+        pub fn set_path(&mut self, path: impl Into<PathBuf>) {
+            self.path = path.into();
         }
     }
 }

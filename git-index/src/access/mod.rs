@@ -1,4 +1,4 @@
-use bstr::{BStr, ByteSlice};
+use bstr::{BStr, ByteSlice, ByteVec};
 
 use crate::{entry, extension, Entry, PathStorage, State, Version};
 
@@ -26,26 +26,6 @@ impl State {
     pub fn path_backing(&self) -> &PathStorage {
         &self.path_backing
     }
-    /// Sometimes it's needed to remove the path backing to allow certain mutation to happen in the state while supporting reading the entry's
-    /// path.
-    pub fn take_path_backing(&mut self) -> PathStorage {
-        assert_eq!(
-            self.entries.is_empty(),
-            self.path_backing.is_empty(),
-            "BUG: cannot take out backing multiple times"
-        );
-        std::mem::take(&mut self.path_backing)
-    }
-
-    /// After usage of the storage obtained by [`take_path_backing()`][Self::take_path_backing()], return it here.
-    /// Note that it must not be empty.
-    pub fn return_path_backing(&mut self, backing: PathStorage) {
-        debug_assert!(
-            self.path_backing.is_empty(),
-            "BUG: return path backing only after taking it, once"
-        );
-        self.path_backing = backing;
-    }
 
     /// Runs `filter_map` on all entries, returning an iterator over all paths along with the result of `filter_map`.
     pub fn entries_with_paths_by_filter_map<'a, T>(
@@ -57,19 +37,6 @@ impl State {
             filter_map(p, e).map(|t| (p, t))
         })
     }
-    /// Return mutable entries in a slice.
-    pub fn entries_mut(&mut self) -> &mut [Entry] {
-        &mut self.entries
-    }
-    /// Return mutable entries along with their paths in an iterator.
-    pub fn entries_mut_with_paths(&mut self) -> impl Iterator<Item = (&mut Entry, &BStr)> {
-        let paths = &self.path_backing;
-        self.entries.iter_mut().map(move |e| {
-            let path = paths[e.path.clone()].as_bstr();
-            (e, path)
-        })
-    }
-
     /// Return mutable entries along with their path, as obtained from `backing`.
     pub fn entries_mut_with_paths_in<'state, 'backing>(
         &'state mut self,
@@ -87,6 +54,25 @@ impl State {
     /// Use the index for accessing multiple stages if they exists, but at least the single matching entry.
     pub fn entry_index_by_path_and_stage(&self, path: &BStr, stage: entry::Stage) -> Option<usize> {
         self.entries
+            .binary_search_by(|e| e.path(self).cmp(path).then_with(|| e.stage().cmp(&stage)))
+            .ok()
+    }
+
+    /// Find the entry index in [`entries()[..upper_bound]`][State::entries()] matching the given repository-relative
+    /// `path` and `stage`, or `None`.
+    ///
+    /// Use the index for accessing multiple stages if they exists, but at least the single matching entry.
+    ///
+    /// # Panics
+    ///
+    /// If `upper_bound` is out of bounds of our entries array.
+    pub fn entry_index_by_path_and_stage_bounded(
+        &self,
+        path: &BStr,
+        stage: entry::Stage,
+        upper_bound: usize,
+    ) -> Option<usize> {
+        self.entries[..upper_bound]
             .binary_search_by(|e| e.path(self).cmp(path).then_with(|| e.stage().cmp(&stage)))
             .ok()
     }
@@ -110,6 +96,90 @@ impl State {
     /// An index is sparse if it contains at least one [Mode::DIR][entry::Mode::DIR] entry.
     pub fn is_sparse(&self) -> bool {
         self.is_sparse
+    }
+}
+
+/// Mutation
+impl State {
+    /// After usage of the storage obtained by [`take_path_backing()`][Self::take_path_backing()], return it here.
+    /// Note that it must not be empty.
+    pub fn return_path_backing(&mut self, backing: PathStorage) {
+        debug_assert!(
+            self.path_backing.is_empty(),
+            "BUG: return path backing only after taking it, once"
+        );
+        self.path_backing = backing;
+    }
+
+    /// Return mutable entries in a slice.
+    pub fn entries_mut(&mut self) -> &mut [Entry] {
+        &mut self.entries
+    }
+    /// Return mutable entries along with their paths in an iterator.
+    pub fn entries_mut_with_paths(&mut self) -> impl Iterator<Item = (&mut Entry, &BStr)> {
+        let paths = &self.path_backing;
+        self.entries.iter_mut().map(move |e| {
+            let path = paths[e.path.clone()].as_bstr();
+            (e, path)
+        })
+    }
+
+    /// Sometimes it's needed to remove the path backing to allow certain mutation to happen in the state while supporting reading the entry's
+    /// path.
+    pub fn take_path_backing(&mut self) -> PathStorage {
+        assert_eq!(
+            self.entries.is_empty(),
+            self.path_backing.is_empty(),
+            "BUG: cannot take out backing multiple times"
+        );
+        std::mem::take(&mut self.path_backing)
+    }
+
+    /// Like [`entry_index_by_path_and_stage()`][State::entry_index_by_path_and_stage()],
+    /// but returns the mutable entry instead of the index.
+    pub fn entry_mut_by_path_and_stage(&mut self, path: &BStr, stage: entry::Stage) -> Option<&mut Entry> {
+        self.entry_index_by_path_and_stage(path, stage)
+            .map(|idx| &mut self.entries[idx])
+    }
+
+    /// Push a new entry containing `stat`, `id`, `flags` and `mode` and `path` to the end of our storage.
+    ///
+    /// Note that this *is likely* to break invariants that will prevent further lookups by path unless
+    /// [`entry_index_by_path_and_stage_bounded()`][State::entry_index_by_path_and_stage_bounded()] is used with
+    /// the `upper_bound` being the amount of entries before the first call to this method.
+    ///
+    /// Alternatively, make sure to call [sort_entries()][State::sort_entries()] before entry lookup by path to restore
+    /// the invariant.
+    pub fn dangerously_push_entry(
+        &mut self,
+        stat: entry::Stat,
+        id: git_hash::ObjectId,
+        flags: entry::Flags,
+        mode: entry::Mode,
+        path: &BStr,
+    ) {
+        let path = {
+            let path_start = self.path_backing.len();
+            self.path_backing.push_str(path);
+            path_start..self.path_backing.len()
+        };
+
+        self.entries.push(Entry {
+            stat,
+            id,
+            flags,
+            mode,
+            path,
+        });
+    }
+
+    /// Unconditionally sort entries as needed to perform lookups quickly.
+    pub fn sort_entries(&mut self) {
+        let path_backing = &self.path_backing;
+        self.entries.sort_by(|a, b| {
+            Entry::cmp_filepaths(a.path_in(path_backing), b.path_in(path_backing))
+                .then_with(|| a.stage().cmp(&b.stage()))
+        });
     }
 }
 

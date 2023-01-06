@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+mod access;
+mod entry;
 mod file;
 mod init;
 
@@ -38,5 +40,10 @@ impl Fixture {
         match self {
             Fixture::Generated(name) | Fixture::Loose(name) => name,
         }
+    }
+
+    pub fn open(&self) -> git_index::File {
+        git_index::File::at(self.to_path(), git_hash::Kind::Sha1, Default::default())
+            .expect("fixtures are always readable")
     }
 }

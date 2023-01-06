@@ -1,7 +1,7 @@
 use filetime::FileTime;
 use git_index::{entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
 
-use crate::{fixture_index_path, index::Fixture::*, loose_file_path};
+use crate::index::Fixture::*;
 
 /// Round-trips should eventually be possible for all files we have, as we write them back exactly as they were read.
 #[test]
@@ -23,19 +23,16 @@ fn roundtrips() -> crate::Result {
     ];
 
     for (fixture, options) in input {
-        let (path, fixture) = match fixture {
-            Generated(name) => (fixture_index_path(name), name),
-            Loose(name) => (loose_file_path(name), name),
-        };
-        let expected = git_index::File::at(&path, git_hash::Kind::Sha1, Default::default())?;
-        let expected_bytes = std::fs::read(&path)?;
+        let expected = fixture.open();
+        let expected_bytes = std::fs::read(fixture.to_path())?;
         let mut out_bytes = Vec::new();
 
         let (actual_version, _digest) = expected.write_to(&mut out_bytes, options)?;
         let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), git_hash::Kind::Sha1, Default::default())?;
 
-        compare_states_against_baseline(&actual, actual_version, &expected, options, fixture);
-        compare_raw_bytes(&out_bytes, &expected_bytes, fixture);
+        let name = fixture.to_name();
+        compare_states_against_baseline(&actual, actual_version, &expected, options, name);
+        compare_raw_bytes(&out_bytes, &expected_bytes, name);
     }
     Ok(())
 }
@@ -65,15 +62,15 @@ fn roundtrips_sparse_index() -> crate::Result {
     ];
 
     for (fixture, options) in input {
-        let path = fixture_index_path(fixture);
-        let expected = git_index::File::at(&path, git_hash::Kind::Sha1, Default::default())?;
-        let _expected_bytes = std::fs::read(&path)?;
+        let fixture = Generated(fixture);
+        let expected = fixture.open();
+        let _expected_bytes = std::fs::read(fixture.to_path())?;
         let mut out_bytes = Vec::new();
 
         let (actual_version, _) = expected.write_to(&mut out_bytes, options)?;
         let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), git_hash::Kind::Sha1, Default::default())?;
 
-        compare_states_against_baseline(&actual, actual_version, &expected, options, fixture);
+        compare_states_against_baseline(&actual, actual_version, &expected, options, fixture.to_name());
         // TODO: make this work and re-enable it, once this is done the fixtures can be merged into the main "roundtrip" test
         // compare_raw_bytes(&out_bytes, &_expected_bytes, fixture);
     }
@@ -95,8 +92,8 @@ fn state_comparisons_with_various_extension_configurations() {
         Generated("v2_more_files"),
         Generated("v2_all_file_kinds"),
         Generated("v2_split_index"),
-        // TODO: this failes because git allows to configure the index version while gitoxide doesn't
-        //       the fixture artificially sets the version to V4 and gitoxide writes it back out as the lowest required verison, V2
+        // TODO: this fails because git allows to configure the index version while gitoxide doesn't
+        //       the fixture artificially sets the version to V4 and gitoxide writes it back out as the lowest required version, V2
         // Generated("v4_more_files_IEOT"),
         Generated("v3_skip_worktree"),
         Generated("v3_sparse_index_non_cone"),
@@ -116,9 +113,8 @@ fn state_comparisons_with_various_extension_configurations() {
                 end_of_index_entry: true,
             }),
         ] {
-            let path = fixture.to_path();
+            let expected = fixture.open();
             let fixture = fixture.to_name();
-            let expected = git_index::File::at(&path, git_hash::Kind::Sha1, Default::default()).unwrap();
 
             let mut out = Vec::<u8>::new();
             let (actual_version, _digest) = expected.write_to(&mut out, options).unwrap();
@@ -132,7 +128,7 @@ fn state_comparisons_with_various_extension_configurations() {
 
 #[test]
 fn extended_flags_automatically_upgrade_the_version_to_avoid_data_loss() -> crate::Result {
-    let mut expected = git_index::File::at(fixture_index_path("v2"), git_hash::Kind::Sha1, Default::default())?;
+    let mut expected = Generated("v2").open();
     assert_eq!(expected.version(), Version::V2);
     expected.entries_mut()[0].flags.insert(entry::Flags::EXTENDED);
 
@@ -140,6 +136,35 @@ fn extended_flags_automatically_upgrade_the_version_to_avoid_data_loss() -> crat
     let (actual_version, _digest) = expected.write_to(&mut buf, Default::default())?;
     assert_eq!(actual_version, Version::V3, "extended flags need V3");
 
+    Ok(())
+}
+
+#[test]
+fn remove_flag_is_respected() -> crate::Result {
+    let mut index = Generated("v4_more_files_IEOT").open();
+    let total_entries = 10;
+    assert_eq!(index.entries().len(), total_entries);
+    let entries_to_remove = 4;
+    for entry in &mut index.entries_mut()[..entries_to_remove] {
+        entry.flags.toggle(entry::Flags::REMOVE);
+    }
+    let mut buf = Vec::<u8>::new();
+    index.write_to(&mut buf, Default::default())?;
+
+    let (state, _checksum) = State::from_bytes(&buf, FileTime::now(), git_hash::Kind::Sha1, Default::default())?;
+    assert_eq!(
+        state.entries().len(),
+        total_entries - entries_to_remove,
+        "entries are removed when writing"
+    );
+    assert_eq!(
+        state.entries().iter().map(|e| e.path(&state)).collect::<Vec<_>>(),
+        index.entries()[entries_to_remove..]
+            .iter()
+            .map(|e| e.path(&index))
+            .collect::<Vec<_>>(),
+        "the correct entries are removed"
+    );
     Ok(())
 }
 

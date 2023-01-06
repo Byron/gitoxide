@@ -63,13 +63,20 @@ impl State {
         let version = self.detect_required_version();
 
         let mut write = CountBytes::new(out);
-        let num_entries = self
+        let num_entries: u32 = self
             .entries()
             .len()
             .try_into()
             .expect("definitely not 4billion entries");
+        let removed_entries: u32 = self
+            .entries()
+            .iter()
+            .filter(|e| e.flags.contains(entry::Flags::REMOVE))
+            .count()
+            .try_into()
+            .expect("definitely not too many entries");
 
-        let offset_to_entries = header(&mut write, version, num_entries)?;
+        let offset_to_entries = header(&mut write, version, num_entries - removed_entries)?;
         let offset_to_extensions = entries(&mut write, self, offset_to_entries)?;
         let (extension_toc, out) = self.write_extensions(write, offset_to_extensions, extensions)?;
 
@@ -150,6 +157,9 @@ fn header<T: std::io::Write>(
 
 fn entries<T: std::io::Write>(out: &mut CountBytes<T>, state: &State, header_size: u32) -> Result<u32, std::io::Error> {
     for entry in state.entries() {
+        if entry.flags.contains(entry::Flags::REMOVE) {
+            continue;
+        }
         entry.write_to(&mut *out, state)?;
         match (out.count - header_size) % 8 {
             0 => {}
