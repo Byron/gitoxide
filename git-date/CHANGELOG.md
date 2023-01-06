@@ -5,6 +5,92 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-4066ac7367d8e870522746429513fb7a357a2cc6/> Support git default date format
+   This is the format output by default by `git log` or when using
+   `--pretty=%ad`.
+   
+   The new git_date::time::format::GIT_DEFAULT format description may be used
+   to output date strings in this format. It is also now used by
+   git_date::parse() to accept date strings that may be in this format.
+ - <csr-id-8094351fe547a0f6756b0ed29dc87a0e6b9ceec1/> Format git-style RFC 2822 date strings
+   Git outputs the day-of-month field as a non-padded number whereas strict
+   RFC 2822 date strings are supposed to use a zero-padded two-digit number.
+   
+   The new git_date::time::format::GIT_RFC2822 format description allows Time
+   to be formatted in git's RFC 2822 style. (Whereas the existing RFC2822
+   format description produces a strict RFC 2822 date string).
+
+### Bug Fixes
+
+ - <csr-id-046af94f005a6e095f0d3616c0b57ef1f556f734/> Stricter raw date parsing
+   The raw date parser (git_date::parse::function::parse_raw()) accepted some
+   inputs that it should not have. Specifically, it would accept:
+   
+   - Any character for the timezone offset's sign
+   - Trailing, non-whitespace characters after the timezone offset
+   
+   Now either '+' or '-' is required for the timezone offset sign and only
+   trailing whitespace is allowed.
+   
+   Additional tests are added to cover both acceptable and unacceptable
+   inputs.
+   
+   N.B. the raw date parser is still accepting of whitespace leading, in the
+   middle of, and trailing the date string. A yet stricter parser would only
+   allow a single space character between the seconds-since-epoch and the
+   timezone offset.
+ - <csr-id-dff0aa0be600b9cd9518184fefa9b3c8fdb510f2/> Parse git-styled RFC 2822 date strings
+   Git outputs RFC 2822 date strings, for example with `git log -n1
+   --pretty=%aD`, such that the day-of-month field is not zero-padded.
+   
+   The git_date::time::format::RFC2822 format description specifies
+   zero-padded day-of-month, which is perhaps truer to the RFC, but different
+   from git. Thus the RFC2822 format description is good for *formatting*, but
+   too strict for parsing.
+   
+   The time::format_description::well_known::Rfc2822 format description
+   accepts zero-padded, space-padded, and non-padded day-of-month. By
+   replacing the use of git_date::time::format::RFC2822 with
+   time::format_description::well_known::Rfc2822 in git_date::parse(), both
+   git-styled RFC 2822 and strict RFC 2822 date strings can be parsed.
+
+### Other (BREAKING)
+
+ - <csr-id-41fc2bb20e6a926ffc3638c0fac21d733fdc2e3c/> `time::format::GIT_DEFAULT` -> `*::DEFAULT` and `*::DEFAULT` -> `*::GITOXIDE`.
+   That way we properly indicate what we are doing and don't try to somewhat
+   sneakily suggest that the default for git dates is something else
+   due to personal preference.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 6 calendar days.
+ - 18 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - `time::format::GIT_DEFAULT` -> `*::DEFAULT` and `*::DEFAULT` -> `*::GITOXIDE`. ([`41fc2bb`](https://github.com/Byron/gitoxide/commit/41fc2bb20e6a926ffc3638c0fac21d733fdc2e3c))
+    - Merge branch 'strict-raw-dates' ([`c65ce7e`](https://github.com/Byron/gitoxide/commit/c65ce7e3031b036d3a76b6e8a6c9ead39390261c))
+    - Stricter raw date parsing ([`046af94`](https://github.com/Byron/gitoxide/commit/046af94f005a6e095f0d3616c0b57ef1f556f734))
+    - Merge branch 'issue-679' ([`a910d9e`](https://github.com/Byron/gitoxide/commit/a910d9e7dcb2ba1979660165fa5b8cb0a2dce594))
+    - refactor ([`26597b9`](https://github.com/Byron/gitoxide/commit/26597b983d401a1efcd13b3e69aad6a39581ec0b))
+    - Support git default date format ([`4066ac7`](https://github.com/Byron/gitoxide/commit/4066ac7367d8e870522746429513fb7a357a2cc6))
+    - Format git-style RFC 2822 date strings ([`8094351`](https://github.com/Byron/gitoxide/commit/8094351fe547a0f6756b0ed29dc87a0e6b9ceec1))
+    - Parse git-styled RFC 2822 date strings ([`dff0aa0`](https://github.com/Byron/gitoxide/commit/dff0aa0be600b9cd9518184fefa9b3c8fdb510f2))
+</details>
+
 ## 0.3.1 (2022-12-19)
 
 ### Bug Fixes
@@ -17,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 27 calendar days.
+ - 15 commits contributed to the release over the course of 27 calendar days.
  - 27 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -35,6 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-date v0.3.1, git-features v0.25.0, git-actor v0.15.0, git-glob v0.5.1, git-path v0.7.0, git-attributes v0.7.0, git-config-value v0.10.0, git-lock v3.0.1, git-validate v0.7.1, git-object v0.24.0, git-ref v0.21.0, git-sec v0.6.0, git-config v0.13.0, git-prompt v0.3.0, git-url v0.12.0, git-credentials v0.8.0, git-diff v0.24.0, git-discover v0.10.0, git-traverse v0.20.0, git-index v0.10.0, git-mailmap v0.7.0, git-pack v0.28.0, git-odb v0.38.0, git-packetline v0.14.1, git-transport v0.24.0, git-protocol v0.25.0, git-revision v0.8.0, git-refspec v0.5.0, git-worktree v0.10.0, git-repository v0.30.0, safety bump 26 crates ([`e6b9906`](https://github.com/Byron/gitoxide/commit/e6b9906c486b11057936da16ed6e0ec450a0fb83))
     - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
     - Merge branch 'bugfix/system-time-correct-offset-sign' ([`6e40433`](https://github.com/Byron/gitoxide/commit/6e40433f6f607888e8f8a6c36e53a68b91fcf671))
