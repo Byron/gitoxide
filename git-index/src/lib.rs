@@ -10,6 +10,8 @@ use std::{ops::Range, path::PathBuf};
 
 use filetime::FileTime;
 
+pub use git_hash as hash;
+
 ///
 pub mod file;
 
