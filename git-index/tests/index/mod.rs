@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+mod access;
 mod file;
 mod init;
 
