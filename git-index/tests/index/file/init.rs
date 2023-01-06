@@ -16,13 +16,13 @@ mod from_state {
 
         for (fixture, expected_version) in fixtures {
             let tmp = git_testtools::tempfile::TempDir::new()?;
-            let index_path = tmp.path().join(fixture.to_name());
-            assert!(!index_path.exists());
+            let new_index_path = tmp.path().join(fixture.to_name());
+            assert!(!new_index_path.exists());
 
             let index = git_index::File::at(fixture.to_path(), git_hash::Kind::Sha1, Default::default())?;
-            let mut index = git_index::File::from_state(index.into_state(), index_path.clone());
+            let mut index = git_index::File::from_state(index.into(), new_index_path.clone());
             assert!(index.checksum().is_none());
-            assert_eq!(index.path(), index_path);
+            assert_eq!(index.path(), new_index_path);
 
             index.write(git_index::write::Options::default())?;
             assert!(index.checksum().is_some(), "checksum is adjusted after writing");

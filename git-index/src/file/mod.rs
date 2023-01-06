@@ -19,14 +19,21 @@ mod impls {
 }
 
 mod impl_ {
+    use crate::{File, State};
     use std::fmt::Formatter;
 
-    impl std::fmt::Debug for crate::File {
+    impl std::fmt::Debug for File {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             f.debug_struct("File")
                 .field("path", &self.path.display())
                 .field("checksum", &self.checksum)
                 .finish_non_exhaustive()
+        }
+    }
+
+    impl From<File> for State {
+        fn from(f: File) -> Self {
+            f.state
         }
     }
 }
@@ -36,11 +43,6 @@ mod access {
 
     /// Consumption
     impl File {
-        /// Take the state and discard the rest.
-        pub fn into_state(self) -> crate::State {
-            self.state
-        }
-
         /// Take all non-copy parts of the index.
         pub fn into_parts(self) -> (crate::State, std::path::PathBuf) {
             (self.state, self.path)
