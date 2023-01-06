@@ -83,27 +83,36 @@ impl Link {
         )?;
 
         if let Some(bitmaps) = &self.bitmaps {
-            let mut counter = 0;
+            let mut split_entry_count = 0;
             let shared_entries = shared_index.entries_mut();
             let split_entries = split_index.entries();
 
             bitmaps.replace.for_each_set_bit(|index| {
-                match (shared_entries.get_mut(index), split_entries.get(counter)) {
-                    (Some(shared_entry), Some(split_entry)) => {
-                        shared_entry.stat = split_entry.stat;
-                        shared_entry.id = split_entry.id;
-                        shared_entry.flags = split_entry.flags;
-                        shared_entry.mode = split_entry.mode;
-                    }
-                    _ => unreachable!(),
+                let shared_entry = shared_entries
+                    .get_mut(index)
+                    .expect("index to shared entry exceeds shared index length");
+                let split_entry = split_entries
+                    .get(split_entry_count)
+                    .expect("index to split entry exceeds split index length");
+
+                // TODO: maybe we can move this check to a seperate `verify_link_extension` function,
+                // together with the check for entries both marked as replace and remove,
+                // called at some point after decoding
+                if !split_entry.path.is_empty() {
+                    panic!("corrupt link extension, path should be empty")
                 }
 
-                counter += 1;
+                shared_entry.stat = split_entry.stat;
+                shared_entry.id = split_entry.id;
+                shared_entry.flags = split_entry.flags;
+                shared_entry.mode = split_entry.mode;
+
+                split_entry_count += 1;
                 Some(())
             });
 
-            if split_entries.len() > counter {
-                split_entries[counter..].iter().for_each(|split_entry| {
+            if split_entries.len() > split_entry_count {
+                split_entries[split_entry_count..].iter().for_each(|split_entry| {
                     let mut e = split_entry.clone();
                     let start = shared_index.path_backing.len();
                     e.path = start..start + split_entry.path.len();
@@ -117,6 +126,9 @@ impl Link {
 
             let mut removed_count = 0;
             bitmaps.delete.for_each_set_bit(|index| {
+                if index - removed_count >= shared_index.entries.len() {
+                    panic!("index to shared entry exceeds shared index length")
+                }
                 shared_index.entries.remove(index - removed_count);
                 removed_count += 1;
                 Some(())
