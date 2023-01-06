@@ -63,6 +63,21 @@ mod access {
     }
 }
 
+mod mutation {
+    use crate::File;
+    use std::path::PathBuf;
+
+    /// Mutating access
+    impl File {
+        /// Set the path at which we think we are located to the given `path`.
+        ///
+        /// This is useful to change the location of the index *once* it is written via [`write()`][File::write()].
+        pub fn set_path(&mut self, path: impl Into<PathBuf>) {
+            self.path = path.into();
+        }
+    }
+}
+
 ///
 pub mod init;
 ///
