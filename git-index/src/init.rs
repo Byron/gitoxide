@@ -15,6 +15,22 @@ mod from_tree {
 
     /// Initialization
     impl State {
+        /// Return a new and empty in-memory index assuming the given `object_hash`.
+        pub fn new(object_hash: git_hash::Kind) -> Self {
+            State {
+                object_hash,
+                timestamp: filetime::FileTime::now(),
+                version: Version::V2,
+                entries: vec![],
+                path_backing: vec![],
+                is_sparse: false,
+                tree: None,
+                link: None,
+                resolve_undo: None,
+                untracked: None,
+                fs_monitor: None,
+            }
+        }
         /// Create an index [`State`][crate::State] by traversing `tree` recursively, accessing sub-trees
         /// with `find`.
         ///
