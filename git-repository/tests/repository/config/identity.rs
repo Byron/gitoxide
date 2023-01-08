@@ -128,3 +128,62 @@ fn author_and_committer_and_fallback() {
         }
     }
 }
+
+#[test]
+#[serial]
+fn author_from_different_config_sections() {
+    let repo = named_repo("make_signatures_repo.sh").unwrap();
+    let work_dir = repo.work_dir().unwrap().canonicalize().unwrap();
+
+    let _env = Env::new()
+        .set("GIT_CONFIG_GLOBAL", work_dir.join("global.config").to_string_lossy())
+        .set("GIT_CONFIG_SYSTEM", work_dir.join("system.config").to_string_lossy())
+        .set("GIT_AUTHOR_DATE", "1979-02-26 18:30:00")
+        .set("GIT_COMMITTER_DATE", "1980-02-26 18:30:00 +0000")
+        .set("EMAIL", "general@email-unused");
+
+    let repo = git::open_opts(
+        repo.git_dir(),
+        repo.open_options()
+            .clone()
+            .with(git_sec::Trust::Full)
+            .permissions(git::Permissions {
+                env: git::permissions::Environment {
+                    xdg_config_home: Permission::Deny,
+                    home: Permission::Deny,
+                    ..git::permissions::Environment::all()
+                },
+                ..Default::default()
+            }),
+    )
+    .unwrap();
+
+    assert_eq!(
+        repo.author(),
+        Some(git_actor::SignatureRef {
+            name: "global name".into(),
+            email: "local@example.com".into(),
+            time: git_date::Time {
+                seconds_since_unix_epoch: 42,
+                offset_in_seconds: 1800,
+                sign: git_date::time::Sign::Plus
+            }
+        }),
+    );
+    assert_eq!(
+        repo.committer(),
+        Some(git_actor::SignatureRef {
+            name: "local committer".into(),
+            email: "global-committer@example.com".into(),
+            time: git_date::Time {
+                seconds_since_unix_epoch: 320437800,
+                offset_in_seconds: 0,
+                sign: git_date::time::Sign::Plus,
+            }
+        })
+    );
+    assert_eq!(
+        repo.user_default().actor(),
+        ("gitoxide".into(), "gitoxide@localhost".into())
+    );
+}
