@@ -136,14 +136,8 @@ fn author_from_different_config_sections() {
     let work_dir = repo.work_dir().unwrap().canonicalize().unwrap();
 
     let _env = Env::new()
-        .set(
-            "GIT_CONFIG_GLOBAL",
-            work_dir.join("global.config").display().to_string(),
-        )
-        .set(
-            "GIT_CONFIG_SYSTEM",
-            work_dir.join("system.config").display().to_string(),
-        )
+        .set("GIT_CONFIG_GLOBAL", work_dir.join("global.config").to_string_lossy())
+        .set("GIT_CONFIG_SYSTEM", work_dir.join("system.config").to_string_lossy())
         .set("GIT_AUTHOR_DATE", "1979-02-26 18:30:00")
         .set("GIT_COMMITTER_DATE", "1980-02-26 18:30:00 +0000")
         .set("EMAIL", "general@email-unused");
