@@ -1,4 +1,5 @@
 use bstr::{BStr, ByteSlice, ByteVec};
+use std::cmp::Ordering;
 
 use crate::{entry, extension, Entry, PathStorage, State, Version};
 
@@ -181,6 +182,17 @@ impl State {
         self.entries.sort_by(|a, b| {
             Entry::cmp_filepaths(a.path_in(path_backing), b.path_in(path_backing))
                 .then_with(|| a.stage().cmp(&b.stage()))
+        });
+    }
+
+    /// Similar to [`sort_entries()][State::sort_entries()], but applies `compare` after comparing
+    /// by path and stage as a third criteria.
+    pub fn sort_entries_by(&mut self, mut compare: impl FnMut(&Entry, &Entry) -> Ordering) {
+        let path_backing = &self.path_backing;
+        self.entries.sort_by(|a, b| {
+            Entry::cmp_filepaths(a.path_in(path_backing), b.path_in(path_backing))
+                .then_with(|| a.stage().cmp(&b.stage()))
+                .then_with(|| compare(a, b))
         });
     }
 }
