@@ -142,7 +142,9 @@ impl State {
             .map(|idx| &mut self.entries[idx])
     }
 
-    /// Push a new entry containing `stat`, `id`, `flags` and `mode` and `path` to the end of our storage.
+    /// Push a new entry containing `stat`, `id`, `flags` and `mode` and `path` to the end of our storage, without performing
+    /// any sanity checks. This means it's possible to push a new entry to the same path on the same stage and even after sorting
+    /// the entries lookups may still return the wrong one of them unless the correct binary search criteria is chosen.
     ///
     /// Note that this *is likely* to break invariants that will prevent further lookups by path unless
     /// [`entry_index_by_path_and_stage_bounded()`][State::entry_index_by_path_and_stage_bounded()] is used with
