@@ -29,7 +29,7 @@ internal-testing-git-features-parallel = ["git-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
-git-index = { version = "^0.12.0", path = "../git-index" }
+git-index = { version = "^0.12.1", path = "../git-index" }
 git-hash = { version = "^0.10.1", path = "../git-hash" }
 git-object = { version = "^0.26.0", path = "../git-object" }
 git-glob = { version = "^0.5.1", path = "../git-glob" }

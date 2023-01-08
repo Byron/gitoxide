@@ -119,7 +119,7 @@ git-attributes = { version = "^0.8.0", path = "../git-attributes" }
 git-glob = { version = "^0.5.1", path = "../git-glob" }
 git-credentials = { version = "^0.9.0", path = "../git-credentials" }
 git-prompt = { version = "^0.3.0", path = "../git-prompt" }
-git-index = { version = "^0.12.0", path = "../git-index" }
+git-index = { version = "^0.12.1", path = "../git-index" }
 git-worktree = { version = "^0.12.0", path = "../git-worktree" }
 git-hashtable = { version = "^0.1.0", path = "../git-hashtable" }
 

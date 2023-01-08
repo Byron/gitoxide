@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.12.1 (2023-01-08)
+
+### New Features
+
+ - <csr-id-6d8eb9f267ac7ef8db0f3a277c8c991df5ce8164/> add `impl Debug for State` to print all entries in a digestible form.
+ - <csr-id-7c8ba2c945d6313d27569f04b83ebf9a2387e6a2/> add `State::sort_entries_by(...)` to allow comparing by additional criteria.
+   This allows to orgranize entries based on flags, for example, which may help
+   in special occasions.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release.
+ - 1 day passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'various-improvements' ([`f191c1a`](https://github.com/Byron/gitoxide/commit/f191c1af14e512967ccb788fe997dafc5bb0e111))
+    - add `impl Debug for State` to print all entries in a digestible form. ([`6d8eb9f`](https://github.com/Byron/gitoxide/commit/6d8eb9f267ac7ef8db0f3a277c8c991df5ce8164))
+    - add `State::sort_entries_by(...)` to allow comparing by additional criteria. ([`7c8ba2c`](https://github.com/Byron/gitoxide/commit/7c8ba2c945d6313d27569f04b83ebf9a2387e6a2))
+    - update documentation to make users of `State::dangerously_push_entry()` more aware. ([`b56de39`](https://github.com/Byron/gitoxide/commit/b56de392c632e9137091b7720208c38b162db7e7))
+</details>
+
 ## 0.12.0 (2023-01-06)
 
 ### New Features
@@ -39,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release.
+ - 12 commits contributed to the release.
  - 7 days passed between releases.
  - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -51,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-date v0.4.0, git-actor v0.17.0, git-object v0.26.0, git-traverse v0.22.0, git-index v0.12.0, safety bump 15 crates ([`0e3d0a5`](https://github.com/Byron/gitoxide/commit/0e3d0a56d7e6a60c6578138f2690b4fa54a2072d))
     - prepare changelogs prior to release ([`d679f5b`](https://github.com/Byron/gitoxide/commit/d679f5b6f018633e858d3ebbdaf1cd5098bbc5e7))
     - Merge branch 'various-improvements' ([`9eee8fe`](https://github.com/Byron/gitoxide/commit/9eee8fe1bed116b7a5a4f552982fa49da83ee92c))
     - `entry::Time` can convert from and to system time. ([`1e3341a`](https://github.com/Byron/gitoxide/commit/1e3341a77c089e6d80c271fca46b774b01b01386))
