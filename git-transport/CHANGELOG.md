@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-6ba799c9d6b17ed665d3c352c3c4bb35c9f771bb/> `gix clone ssh://...` won't deadlock anymore.
+   For `cargo` specifically we now parse stderr to see if permission errors
+   occour. This links stderr and stdout and we have to pass information from
+   a supervisor thread that parses stderr to stdout and use the information to
+   return a custom io error in time.
+   Now the algorithm is adjusted to never be able to deadlock, as the problem
+   is inherently racy and somewhat hard to implement it properly especially without
+   a good test suite built-into `gitoxde` - there are no ssh servers one can easily
+   spin up cross-platform.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release over the course of 5 calendar days.
+ - 9 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'gix-clone-improvements' ([`76c99f3`](https://github.com/Byron/gitoxide/commit/76c99f3005f1b0031921b536f5d268715e41f3c8))
+    - `gix clone ssh://...` won't deadlock anymore. ([`6ba799c`](https://github.com/Byron/gitoxide/commit/6ba799c9d6b17ed665d3c352c3c4bb35c9f771bb))
+</details>
+
 ## 0.25.1 (2022-12-31)
 
 ### Bug Fixes
@@ -23,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -34,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-transport v0.25.1 ([`e0b12fe`](https://github.com/Byron/gitoxide/commit/e0b12fe64b50a1b614111924b55ce02f1c39ac00))
     - file:// command invocation won't spill stderr output. ([`ec2f2e3`](https://github.com/Byron/gitoxide/commit/ec2f2e31a714334bc0942eab08d306d4e0952933))
 </details>
 
@@ -124,9 +159,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor ([`24070a3`](https://github.com/Byron/gitoxide/commit/24070a3b970554d5d4815e87bcbfb6fb5524a006))
     - fixes SSH clone from scp-like/relatives URLs ([`c62e5c7`](https://github.com/Byron/gitoxide/commit/c62e5c7d415351aefafeb75f0ab926c7c45c6ede))
 </details>
-
-<csr-unknown>
-Removes the double user inclusion in URLProperly handles relative paths in URL reconstruction on connect()<csr-unknown/>
 
 ## 0.24.1 (2022-12-22)
 
