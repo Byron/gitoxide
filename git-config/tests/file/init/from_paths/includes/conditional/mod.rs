@@ -145,7 +145,7 @@ fn git_init(path: impl AsRef<std::path::Path>, bare: bool) -> crate::Result<git:
         bare.then(|| git::create::Kind::Bare)
             .unwrap_or(git::create::Kind::WithWorktree),
         git::create::Options::default(),
-        git::open::Options::isolated(),
+        git::open::Options::isolated().config_overrides(["user.name=gitoxide", "user.email=gitoxide@localhost"]),
     )?
     .to_thread_local())
 }

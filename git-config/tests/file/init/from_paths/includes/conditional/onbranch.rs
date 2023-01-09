@@ -287,7 +287,7 @@ value = branch-override-by-include
             git::lock::acquire::Fail::Immediately,
             git::lock::acquire::Fail::Immediately,
         )?
-        .commit(repo.committer_or_default())?;
+        .commit(repo.committer().expect("pre-configured"))?;
 
     let dir = assure_git_agrees(expect, dir)?;
     Ok(GitEnv { repo, dir })
