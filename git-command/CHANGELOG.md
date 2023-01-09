@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.2.2 (2023-01-09)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 9 calendar days.
+ - 2 commits contributed to the release over the course of 9 calendar days.
  - 9 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs prior to release ([`4381a03`](https://github.com/Byron/gitoxide/commit/4381a03a34c305f31713cce234c2afbf8ac60f01))
     - fix warning on windows ([`3569b9f`](https://github.com/Byron/gitoxide/commit/3569b9f4412c98b21c1f7045cc2cf8e84ccd33f0))
 </details>
 
@@ -60,9 +61,6 @@ A maintenance release without user-facing changes.
     - allow setting more information when preparing commands. ([`8a67c13`](https://github.com/Byron/gitoxide/commit/8a67c13bf0b9b8646430876768155f62e243ef52))
     - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
 </details>
-
-<csr-unknown>
-adding mutiple args at onceadding environment variablesmake all fields public to allow non-build manipualation of the Prepare type<csr-unknown/>
 
 ## 0.2.0 (2022-11-21)
 

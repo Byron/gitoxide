@@ -1234,7 +1234,7 @@ dependencies = [
 
 [[package]]
 name = "git-command"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "bstr",
  "git-testtools",
@@ -1616,7 +1616,7 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.26.0"
+version = "0.26.1"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1819,7 +1819,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-transport"
-version = "0.25.1"
+version = "0.25.2"
 dependencies = [
  "async-std",
  "async-trait",

@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.32.0 (2023-01-09)
+
+<csr-id-80dcb406c5f588122531da115398094de3c3af79/>
 
 ### Bug Fixes
 
@@ -51,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release over the course of 9 calendar days.
+ - 14 commits contributed to the release over the course of 9 calendar days.
  - 9 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -63,6 +65,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Merge branch 'signature-resolution' ([`3036497`](https://github.com/Byron/gitoxide/commit/303649735f3f2094048527fff9b47e9012d75e02))
+    - fix tests ([`d6c62bd`](https://github.com/Byron/gitoxide/commit/d6c62bdef92b3f2918d330a30d2c0cc966021b9f))
+    - prepare changelogs prior to release ([`4381a03`](https://github.com/Byron/gitoxide/commit/4381a03a34c305f31713cce234c2afbf8ac60f01))
     - Merge branch 'signature-resolution' ([`0f7edc1`](https://github.com/Byron/gitoxide/commit/0f7edc1ec87774917c8683dfea2c4989d0762648))
     - `commiter_or_default()`, `author_or_default()` and `user_default()`. ([`87abb51`](https://github.com/Byron/gitoxide/commit/87abb51596bd0a5a6b552a5de98a920d6c797e3c))
     - default author and committer time ([`a05b1c4`](https://github.com/Byron/gitoxide/commit/a05b1c4d82bc6c7758989a3bbe326ea610903820))
