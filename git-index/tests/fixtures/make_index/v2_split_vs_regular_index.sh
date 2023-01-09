@@ -24,7 +24,8 @@ function initialize() {
 function finish() {
     rm a x
     echo "b changed" > b
-    echo "d" > d
+    echo "d new" > d
+    mv c e
 
     git add .
     git commit -m second

@@ -16,6 +16,8 @@ mod error {
         Io(#[from] std::io::Error),
         #[error(transparent)]
         Decode(#[from] crate::decode::Error),
+        #[error(transparent)]
+        LinkExtension(#[from] crate::extension::link::decode::Error),
     }
 }
 
