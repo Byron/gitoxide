@@ -59,12 +59,6 @@ fn author_and_committer_and_fallback() {
             assert_eq!(actual.name, "committer");
             assert_eq!(actual.email, "committer@email");
         }
-        {
-            let actual = repo.user_default();
-            assert_eq!(actual.name, "gitoxide");
-            assert_eq!(actual.email, "gitoxide@localhost");
-        }
-
         let config = repo.config_snapshot();
 
         assert_eq!(config.boolean("core.bare"), Some(false));
@@ -146,6 +140,7 @@ fn author_from_different_config_sections() {
         repo.git_dir(),
         repo.open_options()
             .clone()
+            .config_overrides(None::<&str>)
             .with(git_sec::Trust::Full)
             .permissions(git::Permissions {
                 env: git::permissions::Environment {
@@ -185,9 +180,5 @@ fn author_from_different_config_sections() {
         }),
         "committer name comes from repository-local config, \
          but committer email comes from global config"
-    );
-    assert_eq!(
-        repo.user_default().actor(),
-        ("gitoxide".into(), "gitoxide@localhost".into())
     );
 }

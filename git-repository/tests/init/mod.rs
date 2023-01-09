@@ -62,7 +62,11 @@ mod non_bare {
             tmp.path(),
             git::create::Kind::Bare,
             git::create::Options::default(),
-            git::open::Options::isolated().config_overrides(Some("init.defaultBranch=special")),
+            git::open::Options::isolated().config_overrides([
+                "user.name=a",
+                "user.email=b",
+                "init.defaultBranch=special",
+            ]),
         )?
         .into();
         assert_eq!(

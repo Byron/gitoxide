@@ -131,7 +131,7 @@ pub fn update_head(
                     git_lock::acquire::Fail::Immediately,
                 )
                 .map_err(crate::reference::edit::Error::from)?
-                .commit(repo.committer_or_default())
+                .commit(repo.committer().ok_or(Error::ReflogCommitterMissing)?)
                 .map_err(crate::reference::edit::Error::from)?;
 
             if let Some(head_peeled_id) = head_peeled_id {
