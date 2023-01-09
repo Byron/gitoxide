@@ -59,12 +59,6 @@ fn author_and_committer_and_fallback() {
             assert_eq!(actual.name, "committer");
             assert_eq!(actual.email, "committer@email");
         }
-        {
-            let actual = repo.user_default();
-            assert_eq!(actual.name, "gitoxide");
-            assert_eq!(actual.email, "gitoxide@localhost");
-        }
-
         let config = repo.config_snapshot();
 
         assert_eq!(config.boolean("core.bare"), Some(false));
@@ -136,8 +130,8 @@ fn author_from_different_config_sections() {
     let work_dir = repo.work_dir().unwrap().canonicalize().unwrap();
 
     let _env = Env::new()
-        .set("GIT_CONFIG_GLOBAL", work_dir.join("global.config").to_string_lossy())
-        .set("GIT_CONFIG_SYSTEM", work_dir.join("system.config").to_string_lossy())
+        .set("GIT_CONFIG_GLOBAL", work_dir.join("global.config").to_str().unwrap())
+        .set("GIT_CONFIG_SYSTEM", work_dir.join("system.config").to_str().unwrap())
         .set("GIT_AUTHOR_DATE", "1979-02-26 18:30:00")
         .set("GIT_COMMITTER_DATE", "1980-02-26 18:30:00 +0000")
         .set("EMAIL", "general@email-unused");
@@ -146,6 +140,7 @@ fn author_from_different_config_sections() {
         repo.git_dir(),
         repo.open_options()
             .clone()
+            .config_overrides(None::<&str>)
             .with(git_sec::Trust::Full)
             .permissions(git::Permissions {
                 env: git::permissions::Environment {
@@ -169,6 +164,8 @@ fn author_from_different_config_sections() {
                 sign: git_date::time::Sign::Plus
             }
         }),
+        "author name comes from global config, \
+         but email comes from repository-local config",
     );
     assert_eq!(
         repo.committer(),
@@ -180,10 +177,8 @@ fn author_from_different_config_sections() {
                 offset_in_seconds: 0,
                 sign: git_date::time::Sign::Plus,
             }
-        })
-    );
-    assert_eq!(
-        repo.user_default().actor(),
-        ("gitoxide".into(), "gitoxide@localhost".into())
+        }),
+        "committer name comes from repository-local config, \
+         but committer email comes from global config"
     );
 }

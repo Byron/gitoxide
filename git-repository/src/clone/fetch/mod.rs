@@ -28,6 +28,8 @@ pub enum Error {
         source: git_validate::refname::Error,
         head_ref_name: BString,
     },
+    #[error("The committer identity is required to produce a ref-log is not configured.")]
+    ReflogCommitterMissing,
     #[error("Failed to update HEAD with values from remote")]
     HeadUpdate(#[from] crate::reference::edit::Error),
 }

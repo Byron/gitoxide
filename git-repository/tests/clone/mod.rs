@@ -25,6 +25,8 @@ mod blocking_io {
             git::open::Options::isolated().config_overrides([
                 "init.defaultBranch=unused-as-overridden-by-remote",
                 "core.logAllRefUpdates",
+                "user.name=a",
+                "user.email=b",
             ]),
         )?
         .with_remote_name(remote_name)?

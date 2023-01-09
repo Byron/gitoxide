@@ -3,38 +3,21 @@ use std::time::SystemTime;
 use crate::bstr::{BString, ByteSlice};
 
 /// Identity handling.
+///
+/// # Deviation
+///
+/// There is no notion of a default user like in git, and instead failing to provide a user
+/// is fatal. That way, we enforce correctness and force application developers to take care
+/// of this issue which can be done in various ways, for instance by setting
+/// `gitoxide.committer.nameFallback` and similar.
 impl crate::Repository {
-    /// Return a crate-specific constant signature with [`Time`][git_actor::Time] set to now, or whatever
-    /// was overridden via `GIT_COMMITTER_TIME` or `GIT_AUTHOR_TIME` if these variables are allowed to be read,
-    /// in a similar vein as the default that git chooses if there is nothing configured.
-    ///
-    /// This can be useful as fallback for an unset `committer` or `author`.
-    ///
-    /// # Note
-    ///
-    /// The values are cached when the repository is instantiated.
-    pub fn user_default(&self) -> git_actor::SignatureRef<'_> {
-        git_actor::SignatureRef {
-            name: "gitoxide".into(),
-            email: "gitoxide@localhost".into(),
-            time: {
-                let p = self.config.personas();
-                p.committer
-                    .time
-                    .or(p.author.time)
-                    .unwrap_or_else(git_date::Time::now_local_or_utc)
-            },
-        }
-    }
-
     /// Return the committer as configured by this repository, which is determined by…
     ///
     /// * …the git configuration `committer.name|email`…
     /// * …the `GIT_COMMITTER_(NAME|EMAIL|DATE)` environment variables…
     /// * …the configuration for `user.name|email` as fallback…
     ///
-    /// …and in that order, or `None` if there was nothing configured. In that case, one may use the
-    /// [`committer_or_default()`][Self::committer_or_default()] method.
+    /// …and in that order, or `None` if there was nothing configured.
     ///
     /// # Note
     ///
@@ -55,19 +38,13 @@ impl crate::Repository {
         .into()
     }
 
-    /// Like [`committer()`][Self::committer()], but may use a default value in case nothing is configured.
-    pub fn committer_or_default(&self) -> git_actor::SignatureRef<'_> {
-        self.committer().unwrap_or_else(|| self.user_default())
-    }
-
     /// Return the author as configured by this repository, which is determined by…
     ///
     /// * …the git configuration `author.name|email`…
     /// * …the `GIT_AUTHOR_(NAME|EMAIL|DATE)` environment variables…
     /// * …the configuration for `user.name|email` as fallback…
     ///
-    /// …and in that order, or `None` if there was nothing configured. In that case, one may use the
-    /// [`author_or_default()`][Self::author_or_default()] method.
+    /// …and in that order, or `None` if there was nothing configured.
     ///
     /// # Note
     ///
@@ -81,11 +58,6 @@ impl crate::Repository {
             time: p.author.time.unwrap_or_else(git_date::Time::now_local_or_utc),
         }
         .into()
-    }
-
-    /// Like [`author()`][Self::author()], but may use a default value in case nothing is configured.
-    pub fn author_or_default(&self) -> git_actor::SignatureRef<'_> {
-        self.author().unwrap_or_else(|| self.user_default())
     }
 }
 
