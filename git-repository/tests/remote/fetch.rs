@@ -34,7 +34,7 @@ mod blocking_and_async_io {
             git_testtools::Creation::ExecuteScript,
         )
         .unwrap();
-        let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
+        let repo = git::open_opts(dir.path().join(name), crate::restricted()).unwrap();
         (repo, dir)
     }
 
