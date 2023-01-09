@@ -26,9 +26,7 @@ impl Options {
     /// Options configured to prevent accessing anything else than the repository configuration file, prohibiting
     /// accessing the environment or spreading beyond the git repository location.
     pub fn isolated() -> Self {
-        Options::default()
-            .permissions(Permissions::isolated())
-            .config_overrides(["user.name=gitoxide", "user.email=gitoxide@localhost"])
+        Options::default().permissions(Permissions::isolated())
     }
 }
 

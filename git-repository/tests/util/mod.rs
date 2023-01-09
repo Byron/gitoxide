@@ -34,11 +34,11 @@ pub fn named_subrepo_opts(fixture: &str, name: &str, opts: open::Options) -> Res
 }
 
 pub fn restricted() -> open::Options {
-    open::Options::isolated()
+    open::Options::isolated().config_overrides(["user.name=gitoxide", "user.email=gitoxide@localhost"])
 }
 
 pub fn restricted_and_git() -> open::Options {
-    let mut opts = open::Options::isolated();
+    let mut opts = restricted();
     opts.permissions.env.git_prefix = git_sec::Permission::Allow;
     opts.permissions.env.identity = git_sec::Permission::Allow;
     opts

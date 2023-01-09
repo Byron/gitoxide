@@ -1,3 +1,7 @@
+pub fn restricted() -> crate::open::Options {
+    crate::open::Options::isolated().config_overrides(["user.name=gitoxide", "user.email=gitoxide@localhost"])
+}
+
 mod update {
     use std::convert::TryInto;
 
@@ -19,7 +23,7 @@ mod update {
     fn repo(name: &str) -> git::Repository {
         let dir =
             git_testtools::scripted_fixture_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
-        git::open_opts(dir.join(name), git::open::Options::isolated()).unwrap()
+        git::open_opts(dir.join(name), restricted()).unwrap()
     }
     fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
         let dir = git_testtools::scripted_fixture_writable_with_args(
@@ -28,11 +32,12 @@ mod update {
             git_testtools::Creation::ExecuteScript,
         )
         .unwrap();
-        let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
+        let repo = git::open_opts(dir.path().join(name), restricted()).unwrap();
         (repo, dir)
     }
     use git_ref::{transaction::Change, TargetRef};
 
+    use crate::remote::fetch::refs::tests::restricted;
     use crate::{
         bstr::BString,
         remote::{
@@ -176,7 +181,7 @@ mod update {
             [base_repo_path()],
         )?)?;
         let repo = root.join("worktree-root");
-        let repo = git::open_opts(repo, git::open::Options::isolated())?;
+        let repo = git::open_opts(repo, restricted())?;
         for (branch, path_from_root) in [
             ("main", "worktree-root"),
             ("wt-a-nested", "prev/wt-a-nested"),

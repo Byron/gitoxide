@@ -153,8 +153,8 @@ mod commit_as {
 
     #[test]
     fn specify_committer_and_author() -> crate::Result {
-        let tmp = tempfile::tempdir().unwrap();
-        let repo = git::init(&tmp).unwrap();
+        let tmp = tempfile::tempdir()?;
+        let repo = git::open_opts(git::init(&tmp)?.path(), crate::restricted())?;
         let empty_tree = repo.empty_tree();
         let committer = git::actor::Signature {
             name: "c".into(),
@@ -190,10 +190,16 @@ mod commit {
     use crate::{freeze_time, restricted_and_git};
 
     #[test]
-    fn parent_in_initial_commit_causes_failure() {
-        let tmp = tempfile::tempdir().unwrap();
-        let repo = git::init(&tmp).unwrap();
-        let empty_tree_id = repo.write_object(&git::objs::Tree::empty()).unwrap().detach();
+    fn parent_in_initial_commit_causes_failure() -> crate::Result {
+        let tmp = tempfile::tempdir()?;
+        let repo = git::ThreadSafeRepository::init_opts(
+            &tmp,
+            git::create::Kind::WithWorktree,
+            Default::default(),
+            crate::restricted(),
+        )?
+        .to_thread_local();
+        let empty_tree_id = repo.write_object(&git::objs::Tree::empty())?.detach();
         let err = repo
             .commit("HEAD", "initial", empty_tree_id, [empty_tree_id])
             .unwrap_err();
@@ -202,6 +208,7 @@ mod commit {
             "Reference \"refs/heads/main\" was supposed to exist with value 4b825dc642cb6eb9a060e54bf8d69288fbee4904, but didn't.",
             "cannot provide parent id in initial commit"
         );
+        Ok(())
     }
 
     #[test]

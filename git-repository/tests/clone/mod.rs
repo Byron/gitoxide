@@ -1,6 +1,7 @@
 use git_repository as git;
 
 use crate::remote;
+use crate::util::restricted;
 
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
@@ -10,6 +11,7 @@ mod blocking_io {
     use git_repository::remote::fetch::SpecIndex;
 
     use crate::remote;
+    use crate::util::restricted;
 
     #[test]
     fn fetch_only_with_configuration() -> crate::Result {
@@ -238,7 +240,13 @@ mod blocking_io {
     #[test]
     fn fetch_and_checkout() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
-        let mut prepare = git::prepare_clone(remote::repo("base").path(), tmp.path())?;
+        let mut prepare = git::clone::PrepareFetch::new(
+            remote::repo("base").path(),
+            tmp.path(),
+            git::create::Kind::WithWorktree,
+            Default::default(),
+            restricted(),
+        )?;
         let (mut checkout, _out) =
             prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
         let (repo, _) = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
@@ -257,9 +265,12 @@ mod blocking_io {
     #[test]
     fn fetch_and_checkout_empty_remote_repo() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
-        let mut prepare = git::prepare_clone(
+        let mut prepare = git::clone::PrepareFetch::new(
             git_testtools::scripted_fixture_read_only("make_empty_repo.sh")?,
             tmp.path(),
+            git::create::Kind::WithWorktree,
+            Default::default(),
+            restricted(),
         )?;
         let (mut checkout, out) = prepare
             .fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())
@@ -303,8 +314,14 @@ mod blocking_io {
     #[test]
     fn fetch_only_without_configuration() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
-        let (repo, out) = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
-            .fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+        let (repo, out) = git::clone::PrepareFetch::new(
+            remote::repo("base").path(),
+            tmp.path(),
+            git::create::Kind::Bare,
+            Default::default(),
+            restricted(),
+        )?
+        .fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
         assert!(repo.find_remote("origin").is_ok(), "default remote name is 'origin'");
         match out.status {
             git_repository::remote::fetch::Status::Change { write_pack_bundle, .. } => {
@@ -322,7 +339,14 @@ mod blocking_io {
 #[test]
 fn clone_and_early_persist_without_receive() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
-    let repo = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?.persist();
+    let repo = git::clone::PrepareFetch::new(
+        remote::repo("base").path(),
+        tmp.path(),
+        git::create::Kind::Bare,
+        Default::default(),
+        restricted(),
+    )?
+    .persist();
     assert!(repo.is_bare(), "repo is now ours and remains");
     Ok(())
 }
@@ -331,7 +355,13 @@ fn clone_and_early_persist_without_receive() -> crate::Result {
 fn clone_and_destination_must_be_empty() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
     std::fs::write(tmp.path().join("file"), b"hello")?;
-    match git::prepare_clone_bare(remote::repo("base").path(), tmp.path()) {
+    match git::clone::PrepareFetch::new(
+        remote::repo("base").path(),
+        tmp.path(),
+        git::create::Kind::Bare,
+        Default::default(),
+        restricted(),
+    ) {
         Ok(_) => unreachable!("this should fail as the directory isn't empty"),
         Err(err) => assert!(err
             .to_string()
@@ -344,7 +374,13 @@ fn clone_and_destination_must_be_empty() -> crate::Result {
 fn clone_bare_into_empty_directory_and_early_drop() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
     // this breaks isolation, but shouldn't be affecting the test. If so, use isolation options for opening the repo.
-    let prep = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?;
+    let prep = git::clone::PrepareFetch::new(
+        remote::repo("base").path(),
+        tmp.path(),
+        git::create::Kind::Bare,
+        Default::default(),
+        restricted(),
+    )?;
     let head = tmp.path().join("HEAD");
     assert!(head.is_file(), "now a bare basic repo is present");
     drop(prep);
@@ -356,7 +392,13 @@ fn clone_bare_into_empty_directory_and_early_drop() -> crate::Result {
 #[test]
 fn clone_into_empty_directory_and_early_drop() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
-    let prep = git::prepare_clone(remote::repo("base").path(), tmp.path())?;
+    let prep = git::clone::PrepareFetch::new(
+        remote::repo("base").path(),
+        tmp.path(),
+        git::create::Kind::WithWorktree,
+        Default::default(),
+        restricted(),
+    )?;
     let head = tmp.path().join(".git").join("HEAD");
     assert!(head.is_file(), "now a basic repo is present");
     drop(prep);
