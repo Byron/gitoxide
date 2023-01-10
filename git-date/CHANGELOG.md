@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 3 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'patch-1' ([`b93f0c4`](https://github.com/Byron/gitoxide/commit/b93f0c49fc677b6c19aea332cbfc1445ce475375))
+    - thanks clippy ([`b34c9fe`](https://github.com/Byron/gitoxide/commit/b34c9fe58223862712eacc1cb7353e497a4b9778))
+</details>
+
 ## 0.4.0 (2023-01-06)
 
 <csr-id-41fc2bb20e6a926ffc3638c0fac21d733fdc2e3c/>
@@ -35,7 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    inputs that it should not have. Specifically, it would accept:
    
    - Any character for the timezone offset's sign
-- Trailing, non-whitespace characters after the timezone offset
 
 ### Other (BREAKING)
 
@@ -48,7 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 6 calendar days.
+ - 10 commits contributed to the release over the course of 6 calendar days.
  - 18 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -60,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-date v0.4.0, git-actor v0.17.0, git-object v0.26.0, git-traverse v0.22.0, git-index v0.12.0, safety bump 15 crates ([`0e3d0a5`](https://github.com/Byron/gitoxide/commit/0e3d0a56d7e6a60c6578138f2690b4fa54a2072d))
     - prepare changelogs prior to release ([`d679f5b`](https://github.com/Byron/gitoxide/commit/d679f5b6f018633e858d3ebbdaf1cd5098bbc5e7))
     - `time::format::GIT_DEFAULT` -> `*::DEFAULT` and `*::DEFAULT` -> `*::GITOXIDE`. ([`41fc2bb`](https://github.com/Byron/gitoxide/commit/41fc2bb20e6a926ffc3638c0fac21d733fdc2e3c))
     - Merge branch 'strict-raw-dates' ([`c65ce7e`](https://github.com/Byron/gitoxide/commit/c65ce7e3031b036d3a76b6e8a6c9ead39390261c))
@@ -72,7 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 <csr-unknown>
-Now either ‘+’ or ‘-’ is required for the timezone offset sign and onlytrailing whitespace is allowed.Additional tests are added to cover both acceptable and unacceptableinputs.N.B. the raw date parser is still accepting of whitespace leading, in themiddle of, and trailing the date string. A yet stricter parser would onlyallow a single space character between the seconds-since-epoch and thetimezone offset. Parse git-styled RFC 2822 date stringsGit outputs RFC 2822 date strings, for example with git log -n1 --pretty=%aD, such that the day-of-month field is not zero-padded.The git_date::time::format::RFC2822 format description specifieszero-padded day-of-month, which is perhaps truer to the RFC, but differentfrom git. Thus the RFC2822 format description is good for formatting, buttoo strict for parsing.The time::format_description::well_known::Rfc2822 format descriptionaccepts zero-padded, space-padded, and non-padded day-of-month. Byreplacing the use of git_date::time::format::RFC2822 withtime::format_description::well_known::Rfc2822 in git_date::parse(), bothgit-styled RFC 2822 and strict RFC 2822 date strings can be parsed.<csr-unknown/>
+Trailing, non-whitespace characters after the timezone offset<csr-unknown/>
 
 ## 0.3.1 (2022-12-19)
 

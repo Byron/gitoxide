@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 1 day passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'patch-1' ([`b93f0c4`](https://github.com/Byron/gitoxide/commit/b93f0c49fc677b6c19aea332cbfc1445ce475375))
+    - thanks clippy ([`9e04685`](https://github.com/Byron/gitoxide/commit/9e04685dd3f109bfb27663f9dc7c04102e660bf2))
+</details>
+
 ## 0.12.1 (2023-01-08)
 
 ### New Features
@@ -18,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 5 commits contributed to the release.
  - 1 day passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -30,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-index v0.12.1 ([`8aa5c1d`](https://github.com/Byron/gitoxide/commit/8aa5c1db9e342cc49dfa588d5b4b9f893067dbf7))
     - Merge branch 'various-improvements' ([`f191c1a`](https://github.com/Byron/gitoxide/commit/f191c1af14e512967ccb788fe997dafc5bb0e111))
     - add `impl Debug for State` to print all entries in a digestible form. ([`6d8eb9f`](https://github.com/Byron/gitoxide/commit/6d8eb9f267ac7ef8db0f3a277c8c991df5ce8164))
     - add `State::sort_entries_by(...)` to allow comparing by additional criteria. ([`7c8ba2c`](https://github.com/Byron/gitoxide/commit/7c8ba2c945d6313d27569f04b83ebf9a2387e6a2))
