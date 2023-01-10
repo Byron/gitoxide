@@ -119,10 +119,18 @@ mod impl_ {
 
                 let mut buffer_size = 0;
                 let mut buffer = Vec::<u8>::new();
-                GetTokenInformation(token, TokenOwner, None, &mut buffer_size);
+                GetTokenInformation(token, TokenOwner, None, 0, &mut buffer_size);
                 if buffer_size != 0 {
                     buffer.resize(buffer_size as usize, 0);
-                    if GetTokenInformation(token, TokenOwner, Some(buffer.as_mut_slice()), &mut buffer_size).as_bool() {
+                    if GetTokenInformation(
+                        token,
+                        TokenOwner,
+                        Some(buffer.as_mut_ptr() as *mut std::ffi::c_void),
+                        buffer_size,
+                        &mut buffer_size,
+                    )
+                    .as_bool()
+                    {
                         let token_owner = buffer.as_ptr() as *const TOKEN_OWNER;
                         let token_owner = (*token_owner).Owner;
 
