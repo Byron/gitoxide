@@ -8,7 +8,7 @@ use std::{
 
 use bstr::BStr;
 use git_packetline::PacketLineRef;
-pub use traits::{Error, GetResponse, Http, PostResponse};
+pub use traits::{Error, GetResponse, Http, PostBodyDataKind, PostResponse};
 
 use crate::{
     client::{
