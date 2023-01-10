@@ -24,4 +24,4 @@ nix = { version = "0.26.1", default-features = false, features = ["term"] }
 [dev-dependencies]
 git-testtools = { path = "../tests/tools"}
 serial_test = "0.10.0"
-expectrl = "0.5.2"
+expectrl = "0.6.0"
