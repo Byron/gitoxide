@@ -107,7 +107,7 @@ pub(crate) mod function {
                 }
             }
             None => {
-                let src = (!spec.is_empty()).then(|| spec);
+                let src = (!spec.is_empty()).then_some(spec);
                 if Operation::Fetch == operation && mode != Mode::Negative && src.is_none() {
                     return Ok(fetch_head_only(mode));
                 } else {

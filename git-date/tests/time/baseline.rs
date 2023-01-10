@@ -29,7 +29,7 @@ static BASELINE: Lazy<HashMap<String, Sample>> = Lazy::new(|| {
             map.insert(
                 date_str.into(),
                 Sample {
-                    format_name: (!format_name.is_empty()).then(|| format_name),
+                    format_name: (!format_name.is_empty()).then_some(format_name),
                     exit_code,
                     time_in_seconds_since_unix_epoch,
                 },

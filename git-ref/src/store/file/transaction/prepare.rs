@@ -417,7 +417,7 @@ fn possibly_adjust_name_for_prefixes(name: &FullNameRef) -> Option<FullName> {
                 MainRef | LinkedRef { .. } => sn
                     .category()
                     .map_or(false, |cat| !cat.is_worktree_private())
-                    .then(|| sn),
+                    .then_some(sn),
             }
             .map(|n| n.to_owned())
         }

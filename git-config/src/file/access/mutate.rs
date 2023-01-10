@@ -348,6 +348,7 @@ impl<'event> File<'event> {
             }
             lhs.extend(rhs);
         }
+        #[allow(clippy::unnecessary_lazy_evaluations)]
         let our_last_section_before_append =
             insert_after.or_else(|| (self.section_id_counter != 0).then(|| SectionId(self.section_id_counter - 1)));
 

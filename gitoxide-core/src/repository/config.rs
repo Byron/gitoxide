@@ -102,7 +102,7 @@ fn write_meta(meta: &git::config::file::Metadata, out: &mut impl std::io::Write)
             .then(|| format!(", include level {}", meta.level))
             .unwrap_or_default(),
         (meta.trust != git::sec::Trust::Full)
-            .then(|| ", untrusted")
+            .then_some(", untrusted")
             .unwrap_or_default()
     )
 }

@@ -229,8 +229,11 @@ pub fn into(
 
     Ok(git_discover::repository::Path::from_dot_git_dir(
         dot_git,
-        bare.then(|| git_discover::repository::Kind::Bare)
-            .unwrap_or(git_discover::repository::Kind::WorkTree { linked_git_dir: None }),
+        if bare {
+            git_discover::repository::Kind::Bare
+        } else {
+            git_discover::repository::Kind::WorkTree { linked_git_dir: None }
+        },
         std::env::current_dir()?,
     )
     .expect("by now the `dot_git` dir is valid as we have accessed it"))

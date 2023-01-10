@@ -78,7 +78,7 @@ impl<'a> MatchGroup<'a> {
             for matcher in matchers
                 .into_iter()
                 .zip(self.specs.iter())
-                .filter_map(|(m, spec)| m.and_then(|m| (spec.mode == Mode::Negative).then(|| m)))
+                .filter_map(|(m, spec)| m.and_then(|m| (spec.mode == Mode::Negative).then_some(m)))
             {
                 out.retain(|m| match m.lhs {
                     SourceRef::ObjectId(_) => true,

@@ -124,7 +124,7 @@ pub fn checkout_exclusive(
     progress.done(format!(
         "Created {} {} files{} ({})",
         files_updated,
-        no_repo.then(|| "empty").unwrap_or_default(),
+        no_repo.then_some("empty").unwrap_or_default(),
         should_interrupt
             .load(Ordering::Relaxed)
             .then(|| {

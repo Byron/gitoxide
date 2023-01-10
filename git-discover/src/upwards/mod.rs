@@ -60,7 +60,7 @@ pub(crate) mod function {
 
         let filter_by_trust = |x: &Path| -> Result<Option<Trust>, Error> {
             let trust = Trust::from_path_ownership(x).map_err(|err| Error::CheckTrust { path: x.into(), err })?;
-            Ok((trust >= required_trust).then(|| (trust)))
+            Ok((trust >= required_trust).then_some(trust))
         };
 
         let max_height = if !ceiling_dirs.is_empty() {

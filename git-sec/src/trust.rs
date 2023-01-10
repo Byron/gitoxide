@@ -3,9 +3,11 @@ use crate::Trust;
 impl Trust {
     /// Derive `Full` trust if `path` is owned by the user executing the current process, or `Reduced` trust otherwise.
     pub fn from_path_ownership(path: impl AsRef<std::path::Path>) -> std::io::Result<Self> {
-        Ok(crate::identity::is_path_owned_by_current_user(path.as_ref())?
-            .then(|| Trust::Full)
-            .unwrap_or(Trust::Reduced))
+        Ok(if crate::identity::is_path_owned_by_current_user(path.as_ref())? {
+            Trust::Full
+        } else {
+            Trust::Reduced
+        })
     }
 }
 

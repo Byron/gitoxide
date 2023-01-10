@@ -130,12 +130,12 @@ pub fn info(
 
     let tree = treeish_to_tree(treeish, &repo)?;
 
-    let mut delegate = entries::Traverse::new(extended.then(|| &repo), None);
+    let mut delegate = entries::Traverse::new(extended.then_some(&repo), None);
     tree.traverse().breadthfirst(&mut delegate)?;
 
     #[cfg(feature = "serde1")]
     {
-        delegate.stats.bytes = extended.then(|| delegate.stats.num_bytes);
+        delegate.stats.bytes = extended.then_some(delegate.stats.num_bytes);
         serde_json::to_writer_pretty(out, &delegate.stats)?;
     }
 
@@ -157,7 +157,7 @@ pub fn entries(
     let tree = treeish_to_tree(treeish, &repo)?;
 
     if recursive {
-        let mut delegate = entries::Traverse::new(extended.then(|| &repo), Some(&mut out));
+        let mut delegate = entries::Traverse::new(extended.then_some(&repo), Some(&mut out));
         tree.traverse().breadthfirst(&mut delegate)?;
     } else {
         for entry in tree.iter() {

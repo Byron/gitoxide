@@ -12,7 +12,7 @@ async fn clone() -> crate::Result {
         let mut dlg = CloneDelegate::default();
         let fixture = format!(
             "v1/clone{}.response",
-            with_keepalive.then(|| "-with-keepalive").unwrap_or_default()
+            with_keepalive.then_some("-with-keepalive").unwrap_or_default()
         );
         git_protocol::fetch(
             transport(

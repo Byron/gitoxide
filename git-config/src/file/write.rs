@@ -63,7 +63,7 @@ pub(crate) fn ends_with_newline(e: &[crate::parse::Event<'_>], nl: impl AsRef<[u
     e.iter()
         .rev()
         .take_while(|e| e.to_bstr_lossy().iter().all(|b| b.is_ascii_whitespace()))
-        .find_map(|e| e.to_bstr_lossy().contains_str(nl.as_ref()).then(|| true))
+        .find_map(|e| e.to_bstr_lossy().contains_str(nl.as_ref()).then_some(true))
         .unwrap_or(false)
 }
 

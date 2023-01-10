@@ -40,7 +40,7 @@ pub fn change_since_last_release(package: &Package, ctx: &crate::Context) -> any
                 // KEEP THIS IN SYNC with git::create_ref_history()!
                 .or_else(|| (ctx.meta.workspace_members.len() != 1).then(|| Utf8Path::new("src")))
             {
-                None => (current_commit != released_target).then(|| PackageChangeKind::ChangedOrNew),
+                None => (current_commit != released_target).then_some(PackageChangeKind::ChangedOrNew),
                 Some(dir) => {
                     let components = dir.components().map(component_to_bytes);
                     let current_dir_id = current_commit
@@ -58,7 +58,7 @@ pub fn change_since_last_release(package: &Package, ctx: &crate::Context) -> any
                         .expect("path must exist as it was supposedly released there")
                         .object_id();
 
-                    (released_dir_id != current_dir_id).then(|| PackageChangeKind::ChangedOrNew)
+                    (released_dir_id != current_dir_id).then_some(PackageChangeKind::ChangedOrNew)
                 }
             }
         }

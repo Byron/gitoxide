@@ -73,7 +73,7 @@ impl Snapshot<'_> {
                         let ports = is_http
                             .then(|| (pattern.port_or_default(), url.port_or_default()))
                             .unwrap_or((pattern.port, url.port));
-                        let path = (!(is_http && pattern.path_is_root())).then(|| &pattern.path);
+                        let path = (!(is_http && pattern.path_is_root())).then_some(&pattern.path);
 
                         if !path.map_or(true, |path| path == &url.path) {
                             return None;
@@ -81,7 +81,8 @@ impl Snapshot<'_> {
                         if pattern.user().is_some() && pattern.user() != url.user() {
                             return None;
                         }
-                        (scheme == &url.scheme && host_matches(host, url.host()) && ports.0 == ports.1).then(|| section)
+                        (scheme == &url.scheme && host_matches(host, url.host()) && ports.0 == ports.1)
+                            .then_some(section)
                     }),
                     None => Some(section),
                 };

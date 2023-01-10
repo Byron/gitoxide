@@ -27,13 +27,13 @@ cache-efficiency-debug = ["git-repository/cache-efficiency-debug"]
 git-repository = { version = "^0.32.0", path = "../git-repository", default-features = false, features = ["max-performance-safe"] }
 anyhow = "1.0.42"
 clap = { version = "3.2.5", features = ["derive", "cargo"] }
-env_logger = { version = "0.9.0", default-features = false, features = ["humantime", "termcolor", "atty"] }
+env_logger = { version = "0.10.0", default-features = false, features = ["humantime", "auto-color"] }
 cargo_metadata = "0.15.0"
 log = "0.4.14"
-toml_edit = "0.14.0"
+toml_edit = "0.17.1"
 semver = "1.0.4"
 crates-index = "0.18.9"
-cargo_toml = "0.11.4"
+cargo_toml = "0.14.0"
 nom = { version = "7", default-features = false, features = ["std"]}
 git-conventional = "0.12.0"
 time = "0.3.2"

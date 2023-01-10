@@ -22,7 +22,7 @@ pub mod checksum {
 pub fn fan(data: &[u32]) -> Option<usize> {
     data.windows(2)
         .enumerate()
-        .find_map(|(win_index, v)| (v[0] > v[1]).then(|| win_index))
+        .find_map(|(win_index, v)| (v[0] > v[1]).then_some(win_index))
 }
 
 /// Calculate the hash of the given kind by trying to read the file from disk at `data_path` or falling back on the mapped content in `data`.

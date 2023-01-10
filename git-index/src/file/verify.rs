@@ -33,7 +33,7 @@ impl File {
             &mut git_features::progress::Discard,
             &should_interrupt,
         )?;
-        (actual == checksum).then(|| ()).ok_or(Error::ChecksumMismatch {
+        (actual == checksum).then_some(()).ok_or(Error::ChecksumMismatch {
             actual,
             expected: checksum,
         })

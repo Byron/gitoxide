@@ -119,7 +119,7 @@ impl Tree {
         }
 
         let mut buf = Vec::new();
-        let declared_entries = verify_recursive(self.id, &self.children, use_find.then(|| &mut buf), &mut find)?;
+        let declared_entries = verify_recursive(self.id, &self.children, use_find.then_some(&mut buf), &mut find)?;
         if let Some((actual, num_entries)) = declared_entries.zip(self.num_entries) {
             if actual > num_entries {
                 return Err(Error::EntriesCount {

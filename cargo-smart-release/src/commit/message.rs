@@ -22,7 +22,7 @@ mod additions {
             .and_then(|p| {
                 part_to_left
                     .is_char_boundary(p + 1)
-                    .then(|| p + 1)
+                    .then_some(p + 1)
                     .or_else(|| part_to_left[p..].chars().next().map(|c| p + c.len_utf8()))
             })
             .unwrap_or(start);

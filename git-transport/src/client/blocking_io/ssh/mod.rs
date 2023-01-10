@@ -97,7 +97,7 @@ pub fn connect(
     let ssh_cmd = options.ssh_command();
     let mut kind = options.kind.unwrap_or_else(|| ProgramKind::from(ssh_cmd));
     if options.kind.is_none() && kind == ProgramKind::Simple {
-        kind = std::process::Command::from(
+        kind = if std::process::Command::from(
             git_command::prepare(ssh_cmd)
                 .stderr(Stdio::null())
                 .stdout(Stdio::null())
@@ -109,8 +109,11 @@ pub fn connect(
         .status()
         .ok()
         .map_or(false, |status| status.success())
-        .then(|| ProgramKind::Ssh)
-        .unwrap_or(ProgramKind::Simple);
+        {
+            ProgramKind::Ssh
+        } else {
+            ProgramKind::Simple
+        };
     }
 
     let path = git_url::expand_path::for_shell(url.path.clone());

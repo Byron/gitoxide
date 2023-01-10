@@ -153,7 +153,7 @@ impl<'event> Body<'event> {
             // is included in the range
             let value_range = value_range.start..value_range.end + 1;
             let key_range = key_start..value_range.end;
-            (key_range, (value_range.start != key_start + 1).then(|| value_range))
+            (key_range, (value_range.start != key_start + 1).then_some(value_range))
         })
     }
 }

@@ -91,7 +91,7 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
     fn set_identity(&mut self, identity: git_sec::identity::Account) -> Result<(), client::Error> {
         if self.url.scheme == git_url::Scheme::Ssh {
             self.url
-                .set_user((!identity.username.is_empty()).then(|| identity.username));
+                .set_user((!identity.username.is_empty()).then_some(identity.username));
             Ok(())
         } else {
             Err(client::Error::AuthenticationUnsupported)

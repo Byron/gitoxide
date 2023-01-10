@@ -1,3 +1,4 @@
+use base64::Engine;
 use std::{
     any::Any,
     borrow::Cow,
@@ -8,7 +9,7 @@ use std::{
 
 use bstr::BStr;
 use git_packetline::PacketLineRef;
-pub use traits::{Error, GetResponse, Http, PostResponse};
+pub use traits::{Error, GetResponse, Http, PostBodyDataKind, PostResponse};
 
 use crate::{
     client::{
@@ -269,7 +270,7 @@ impl<H: Http> Transport<H> {
             }
             headers.push(Cow::Owned(format!(
                 "Authorization: Basic {}",
-                base64::encode(format!("{}:{}", username, password))
+                base64::engine::general_purpose::STANDARD.encode(format!("{}:{}", username, password))
             )))
         }
         Ok(())

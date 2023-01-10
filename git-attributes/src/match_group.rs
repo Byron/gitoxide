@@ -78,7 +78,7 @@ impl Pattern for Attributes {
                         Value::MacroAttributes(into_owned_assignments(assignments).ok()?),
                     ),
                     crate::parse::Kind::Pattern(p) => (
-                        (!p.is_negative()).then(|| p)?,
+                        (!p.is_negative()).then_some(p)?,
                         Value::Assignments(into_owned_assignments(assignments).ok()?),
                     ),
                 };
@@ -278,7 +278,7 @@ where
                  }| {
                     pattern
                         .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
-                        .then(|| Match {
+                        .then_some(Match {
                             pattern,
                             value,
                             source: self.source.as_deref(),
@@ -307,7 +307,7 @@ where
             .find_map(|(idx, pm)| {
                 pm.pattern
                     .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
-                    .then(|| idx)
+                    .then_some(idx)
             })
     }
 
@@ -321,7 +321,7 @@ where
                 relative_path.strip_prefix(base.as_slice())?.as_bstr(),
                 basename_pos.and_then(|pos| {
                     let pos = pos - base.len();
-                    (pos != 0).then(|| pos)
+                    (pos != 0).then_some(pos)
                 }),
             ),
             None => (relative_path, basename_pos),

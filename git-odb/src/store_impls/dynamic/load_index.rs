@@ -111,7 +111,7 @@ impl super::Store {
                 match index
                     .next_index_to_load
                     .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |current| {
-                        (current != index.slot_indices.len()).then(|| current + 1)
+                        (current != index.slot_indices.len()).then_some(current + 1)
                     }) {
                     Ok(slot_map_index) => {
                         // This slot-map index is in bounds and was only given to us.
@@ -230,7 +230,7 @@ impl super::Store {
         let indices_by_modification_time = Self::collect_indices_and_mtime_sorted_by_size(
             db_paths,
             index.slot_indices.len().into(),
-            self.use_multi_pack_index.then(|| self.object_hash),
+            self.use_multi_pack_index.then_some(self.object_hash),
         )?;
         let mut idx_by_index_path: BTreeMap<_, _> = index
             .slot_indices
@@ -479,7 +479,7 @@ impl super::Store {
                         (path != multi_index.path()
                             && !index_names_in_multi_index
                                 .contains(&Path::new(path.file_name().expect("file name present"))))
-                        .then(|| (Either::IndexPath(path), a, b))
+                        .then_some((Either::IndexPath(path), a, b))
                     })
                     .collect();
                 indices_not_in_multi_index.insert(0, (Either::MultiIndexFile(Arc::new(multi_index)), mtime, flen));
@@ -488,7 +488,7 @@ impl super::Store {
                 indices_by_modification_time.extend(
                     indices
                         .into_iter()
-                        .filter_map(|(p, a, b)| (!is_multipack_index(&p)).then(|| (Either::IndexPath(p), a, b))),
+                        .filter_map(|(p, a, b)| (!is_multipack_index(&p)).then_some((Either::IndexPath(p), a, b))),
                 )
             }
         }

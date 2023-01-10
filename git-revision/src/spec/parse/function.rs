@@ -206,7 +206,7 @@ fn long_describe_prefix(name: &BStr) -> Option<(&BStr, delegate::PrefixHint<'_>)
         rest.iter().all(|b| b.is_ascii_hexdigit()).then(|| rest.as_bstr())
     })?;
 
-    let candidate = iter.clone().any(|token| !token.is_empty()).then(|| candidate);
+    let candidate = iter.clone().any(|token| !token.is_empty()).then_some(candidate);
     let hint = iter
         .next()
         .and_then(|gen| gen.to_str().ok().and_then(|gen| usize::from_str(gen).ok()))
@@ -235,7 +235,7 @@ fn short_describe_prefix(name: &BStr) -> Option<&BStr> {
     let candidate = iter
         .next()
         .and_then(|prefix| prefix.iter().all(|b| b.is_ascii_hexdigit()).then(|| prefix.as_bstr()));
-    (iter.count() == 1).then(|| candidate).flatten()
+    (iter.count() == 1).then_some(candidate).flatten()
 }
 
 type InsideParensRestConsumed<'a> = (std::borrow::Cow<'a, BStr>, &'a BStr, usize);
@@ -388,7 +388,7 @@ where
                 try_set_prefix(delegate, prefix, hint)
             })
             .or_else(|| {
-                name.is_empty().then(|| ()).or_else(|| {
+                name.is_empty().then_some(()).or_else(|| {
                     #[allow(clippy::let_unit_value)]
                     {
                         let res = delegate.find_ref(name)?;

@@ -62,7 +62,7 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache>>> = Lazy::new(|| 
         let mut buf = Vec::with_capacity(512);
         let case = git_worktree::fs::Capabilities::probe(&work_tree)
             .ignore_case
-            .then(|| git_attributes::glob::pattern::Case::Fold)
+            .then_some(git_attributes::glob::pattern::Case::Fold)
             .unwrap_or_default();
         let state = git_worktree::fs::cache::State::IgnoreStack(git_worktree::fs::cache::state::Ignore::new(
             Default::default(),

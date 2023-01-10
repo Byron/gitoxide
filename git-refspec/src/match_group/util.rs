@@ -70,7 +70,7 @@ impl<'a> Needle<'a> {
                 }
             }
             Needle::PartialName(name) => crate::spec::expand_partial_name(name, |expanded| {
-                (expanded == item.full_ref_name).then(|| Match::Normal)
+                (expanded == item.full_ref_name).then_some(Match::Normal)
             })
             .unwrap_or(Match::None),
             Needle::Glob { name, asterisk_pos } => {

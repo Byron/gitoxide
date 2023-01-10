@@ -40,7 +40,7 @@ fn guess_protocol(url: &[u8]) -> Option<&str> {
                 "ssh"
             } else {
                 url.get(colon_pos + 1..).and_then(|from_colon| {
-                    (from_colon.contains(&b'/') || from_colon.contains(&b'\\')).then(|| "file")
+                    (from_colon.contains(&b'/') || from_colon.contains(&b'\\')).then_some("file")
                 })?
             }
         }

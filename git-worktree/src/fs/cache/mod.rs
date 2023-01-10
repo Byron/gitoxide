@@ -129,7 +129,7 @@ impl Cache {
 
         self.at_path(
             relative_path,
-            is_dir.or_else(|| relative.ends_with_str("/").then(|| true)),
+            is_dir.or_else(|| relative.ends_with_str("/").then_some(true)),
             // is_dir,
             find,
         )

@@ -58,7 +58,7 @@ pub mod iter {
                     break;
                 }
             }
-            (!res.is_empty()).then(|| res)
+            (!res.is_empty()).then_some(res)
         }
     }
 }

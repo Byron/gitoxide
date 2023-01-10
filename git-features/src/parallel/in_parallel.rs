@@ -165,7 +165,7 @@ where
                                 let mut state = new_thread_state(thread_id);
                                 while let Ok(input_index) =
                                     index.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| {
-                                        (x < input_len).then(|| x + 1)
+                                        (x < input_len).then_some(x + 1)
                                     })
                                 {
                                     if stop_everything.load(Ordering::Relaxed) {

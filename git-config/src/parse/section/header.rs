@@ -48,14 +48,14 @@ pub fn is_valid_subsection(name: &BStr) -> bool {
 
 fn validated_subsection(name: Cow<'_, BStr>) -> Result<Cow<'_, BStr>, Error> {
     is_valid_subsection(name.as_ref())
-        .then(|| name)
+        .then_some(name)
         .ok_or(Error::InvalidSubSection)
 }
 
 fn validated_name(name: Cow<'_, BStr>) -> Result<Cow<'_, BStr>, Error> {
     name.iter()
         .all(|b| b.is_ascii_alphanumeric() || *b == b'-')
-        .then(|| name)
+        .then_some(name)
         .ok_or(Error::InvalidName)
 }
 

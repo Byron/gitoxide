@@ -155,7 +155,8 @@ where
                                         self.inserted_entry_length_at_offset
                                             .get(maybe_index_of_actual_entry)
                                             .and_then(|c| {
-                                                (c.pack_offset == base_pack_offset).then(|| maybe_index_of_actual_entry)
+                                                (c.pack_offset == base_pack_offset)
+                                                    .then_some(maybe_index_of_actual_entry)
                                             })
                                             .unwrap_or(index)
                                     };

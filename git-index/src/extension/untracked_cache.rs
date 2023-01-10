@@ -58,14 +58,14 @@ pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<UntrackedCache
 
     let mut res = UntrackedCache {
         identifier: identifier.into(),
-        info_exclude: (!info_exclude.id.is_null()).then(|| info_exclude),
-        excludes_file: (!excludes_file.id.is_null()).then(|| excludes_file),
+        info_exclude: (!info_exclude.id.is_null()).then_some(info_exclude),
+        excludes_file: (!excludes_file.id.is_null()).then_some(excludes_file),
         exclude_filename_per_dir: exclude_filename_per_dir.into(),
         dir_flags,
         directories: Vec::new(),
     };
     if num_directory_blocks == 0 {
-        return data.is_empty().then(|| res);
+        return data.is_empty().then_some(res);
     }
 
     let num_directory_blocks = num_directory_blocks.try_into().ok()?;

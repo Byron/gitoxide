@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
 
 use crosstermion::crossterm::style::Stylize;
@@ -55,7 +56,13 @@ impl Usage {
             NotApplicable { .. } => "❌",
             Planned { .. } => "🕒",
             NotPlanned { .. } => "🤔",
-            InModule { deviation, .. } => deviation.is_some().then(|| "👌️").unwrap_or("✅"),
+            InModule { deviation, .. } => {
+                if deviation.is_some() {
+                    "👌️"
+                } else {
+                    "✅"
+                }
+            }
         }
     }
 }
@@ -69,7 +76,7 @@ struct Record {
 impl Tabled for Record {
     const LENGTH: usize = 3;
 
-    fn fields(&self) -> Vec<String> {
+    fn fields(&self) -> Vec<Cow<'_, str>> {
         let mut tokens = self.config.split('.');
         let mut buf = vec![{
             let name = tokens.next().expect("present");
@@ -82,10 +89,14 @@ impl Tabled for Record {
         }];
         buf.extend(tokens.map(ToOwned::to_owned));
 
-        vec![self.usage.icon().into(), buf.join("."), self.usage.to_string()]
+        vec![
+            Cow::Borrowed(self.usage.icon()),
+            buf.join(".").into(),
+            self.usage.to_string().into(),
+        ]
     }
 
-    fn headers() -> Vec<String> {
+    fn headers() -> Vec<Cow<'static, str>> {
         vec![]
     }
 }

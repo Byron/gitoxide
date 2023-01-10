@@ -382,8 +382,8 @@ where
         for entry in results_by_hours.iter() {
             entry.write_to(
                 total_hours,
-                file_stats.then(|| total_files),
-                line_stats.then(|| total_lines),
+                file_stats.then_some(total_files),
+                line_stats.then_some(total_lines),
                 &mut out,
             )?;
             writeln!(out)?;
@@ -395,7 +395,7 @@ where
         total_hours,
         total_hours / HOURS_PER_WORKDAY,
         total_commits,
-        is_shallow.then(|| " (shallow)").unwrap_or_default(),
+        is_shallow.then_some(" (shallow)").unwrap_or_default(),
         num_authors
     )?;
     if file_stats {

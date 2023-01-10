@@ -133,7 +133,8 @@ impl Section {
 
         let version = crate::git::try_strip_tag_path(segment.head.name.as_ref())
             .map(|tag_name| {
-                let package_name = (!is_top_level_package(&package.manifest_path, repo)).then(|| package.name.as_str());
+                let package_name =
+                    (!is_top_level_package(&package.manifest_path, repo)).then_some(package.name.as_str());
                 changelog::Version::Semantic(
                     utils::parse_possibly_prefixed_tag_version(package_name, tag_name)
                         .expect("here we always have a valid version as it passed a filter when creating it"),

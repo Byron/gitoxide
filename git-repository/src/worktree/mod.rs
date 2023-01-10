@@ -63,7 +63,7 @@ pub(crate) fn id(git_dir: &std::path::Path, has_common_dir: bool) -> Option<&BSt
     let candidate = git_path::os_str_into_bstr(git_dir.file_name().expect("at least one directory level"))
         .expect("no illformed UTF-8");
     let maybe_worktrees = git_dir.parent()?;
-    (maybe_worktrees.file_name()?.to_str()? == "worktrees").then(|| candidate)
+    (maybe_worktrees.file_name()?.to_str()? == "worktrees").then_some(candidate)
 }
 
 ///
@@ -130,7 +130,7 @@ pub mod excludes {
             let case = repo
                 .config
                 .ignore_case
-                .then(|| git_glob::pattern::Case::Fold)
+                .then_some(git_glob::pattern::Case::Fold)
                 .unwrap_or_default();
             let mut buf = Vec::with_capacity(512);
             let excludes_file = match repo.config.excludes_file().transpose()? {
