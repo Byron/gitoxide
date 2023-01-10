@@ -263,7 +263,7 @@ fn preview_changelogs(
             "use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand.";
         let changelogs_with_changes = pending_changelogs
             .iter()
-            .filter_map(|(_, has_changes, lock)| (*has_changes).then(|| lock))
+            .filter_map(|(_, has_changes, lock)| (*has_changes).then_some(lock))
             .collect::<Vec<_>>();
         log::info!(
             "About to preview {} pending changelog(s), {}",

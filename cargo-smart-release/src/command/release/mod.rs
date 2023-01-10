@@ -117,7 +117,7 @@ fn assure_crates_index_is_uptodate<'meta>(
         .find_map(|(d, b)| {
             b.latest_release
                 .as_ref()
-                .and_then(|lr| (lr >= &b.next_release).then(|| d))
+                .and_then(|lr| (lr >= &b.next_release).then_some(d))
         })
     {
         let mut index = crate::crates_index::Index::new_cargo_default()?;
@@ -172,7 +172,7 @@ fn present_and_validate_dependencies(
 
     let skipped = all_skipped
         .iter()
-        .filter_map(|(name, has_adjustment, reason)| (!has_adjustment).then(|| (*name, reason)))
+        .filter_map(|(name, has_adjustment, reason)| (!has_adjustment).then_some((*name, reason)))
         .collect::<Vec<_>>();
     if !skipped.is_empty() {
         let skipped_len = skipped.len();
@@ -189,7 +189,7 @@ fn present_and_validate_dependencies(
         log::info!(
             "Will not publish or alter {} dependent crate{}: {}",
             skipped_len,
-            (skipped_len != 1).then(|| "s").unwrap_or(""),
+            if skipped_len != 1 { "s" } else { "" },
             crates_by_reason
                 .into_iter()
                 .map(|(key, names)| format!(
@@ -225,7 +225,7 @@ fn present_and_validate_dependencies(
                 if let Some(latest_release) = bump
                     .latest_release
                     .as_ref()
-                    .and_then(|lr| (*lr >= bump.next_release).then(|| lr))
+                    .and_then(|lr| (*lr >= bump.next_release).then_some(lr))
                 {
                     let bump_flag = match dep.kind {
                         dependency::Kind::UserSelection => "--bump <level>",
@@ -329,7 +329,7 @@ fn present_and_validate_dependencies(
                 },
             );
         for (cause, deps_and_bumps) in affected_crates_by_cause {
-            let plural_s = (deps_and_bumps.len() != 1).then(|| "s").unwrap_or("");
+            let plural_s = if deps_and_bumps.len() != 1 { "s" } else { "" };
             log::info!(
                 "{} adjust {} manifest version{} due to breaking change in '{}': {}",
                 will(dry_run),
@@ -361,7 +361,7 @@ fn present_and_validate_dependencies(
             .collect::<Vec<_>>();
         if !crate_names_for_manifest_updates.is_empty() {
             let plural_s = (crate_names_for_manifest_updates.len() > 1)
-                .then(|| "s")
+                .then_some("s")
                 .unwrap_or_default();
             log::info!(
                 "{} adjust version constraints in manifest{} of {} package{} as direct dependencies are changing: {}",

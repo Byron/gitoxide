@@ -20,7 +20,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         no_links,
         ..
     } = opts;
-    let bump_spec = dependencies.then(|| BumpSpec::Auto).unwrap_or(BumpSpec::Keep);
+    let bump_spec = if dependencies { BumpSpec::Auto } else { BumpSpec::Keep };
     let force_history_segmentation = false;
     let ctx = crate::Context::new(crates.clone(), force_history_segmentation, bump_spec, bump_spec)?;
     let crates: Vec<_> = {
@@ -41,9 +41,11 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
                     log::info!(
                         "Skipping '{}' as it won't be published.{}",
                         d.package.name,
-                        (!dependencies)
-                            .then(|| " Try not to specify --no-dependencies/--only.")
-                            .unwrap_or("")
+                        if !dependencies {
+                            " Try not to specify --no-dependencies/--only."
+                        } else {
+                            ""
+                        }
                     );
                 }
                 None
@@ -114,7 +116,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     if num_crates == 0 {
         anyhow::bail!(
             "The given crate{} {} didn't change and no changelog could be generated.",
-            (ctx.crate_names.len() != 1).then(|| "s").unwrap_or(""),
+            if ctx.crate_names.len() != 1 { "s" } else { "" },
             ctx.crate_names
                 .iter()
                 .map(|c| format!("'{}'", c))

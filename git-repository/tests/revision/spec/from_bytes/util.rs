@@ -45,7 +45,7 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spe
         .max_depth(2)
         .follow_links(false)
         .into_iter()
-        .filter_map(|e| e.ok().and_then(|e| (e.file_name() == "baseline.git").then(|| e)))
+        .filter_map(|e| e.ok().and_then(|e| (e.file_name() == "baseline.git").then_some(e)))
     {
         let map = baseline_map
             .entry(baseline_entry.path().parent().expect("file in directory").into())

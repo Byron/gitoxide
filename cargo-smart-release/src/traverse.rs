@@ -297,11 +297,11 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                             );
                         }
                     } else if is_pre_release_version(&dependant.version) || allow_auto_publish_of_stable_crates {
-                        let kind = ctx
-                            .crate_names
-                            .contains(&dependant.name)
-                            .then(|| dependency::Kind::UserSelection)
-                            .unwrap_or(dependency::Kind::DependencyOrDependentOfUserSelection);
+                        let kind = if ctx.crate_names.contains(&dependant.name) {
+                            dependency::Kind::UserSelection
+                        } else {
+                            dependency::Kind::DependencyOrDependentOfUserSelection
+                        };
                         let adjustment = dependency::VersionAdjustment::Breakage {
                             bump,
                             change: None,
@@ -448,9 +448,11 @@ impl EditForPublish {
 }
 
 fn breaking_version_bump(ctx: &Context, package: &Package, bump_when_needed: bool) -> anyhow::Result<Bump> {
-    let breaking_spec = is_pre_release_version(&package.version)
-        .then(|| BumpSpec::Minor)
-        .unwrap_or(BumpSpec::Major);
+    let breaking_spec = if is_pre_release_version(&package.version) {
+        BumpSpec::Minor
+    } else {
+        BumpSpec::Major
+    };
     version::bump_package_with_spec(package, breaking_spec, ctx, bump_when_needed)
 }
 

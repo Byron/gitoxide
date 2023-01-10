@@ -142,8 +142,11 @@ fn options_with_git_dir(git_dir: &Path) -> init::Options<'_> {
 fn git_init(path: impl AsRef<std::path::Path>, bare: bool) -> crate::Result<git::Repository> {
     Ok(git::ThreadSafeRepository::init_opts(
         path,
-        bare.then(|| git::create::Kind::Bare)
-            .unwrap_or(git::create::Kind::WithWorktree),
+        if bare {
+            git::create::Kind::Bare
+        } else {
+            git::create::Kind::WithWorktree
+        },
         git::create::Options::default(),
         git::open::Options::isolated().config_overrides(["user.name=gitoxide", "user.email=gitoxide@localhost"]),
     )?
