@@ -166,7 +166,7 @@ impl<'event> File<'event> {
                 let sections = &self.sections;
                 move |id| {
                     let s = &sections[&id];
-                    filter(s.meta()).then(|| s)
+                    filter(s.meta()).then_some(s)
                 }
             }))
     }
@@ -258,7 +258,7 @@ impl<'event> File<'event> {
                     .sections
                     .get(&id)
                     .expect("section doesn't have id from from lookup");
-                filter(s.meta()).then(|| s)
+                filter(s.meta()).then_some(s)
             })
         })
     }

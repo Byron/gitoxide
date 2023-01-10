@@ -52,8 +52,11 @@ pub(crate) mod function {
         let mut prepare = git::clone::PrepareFetch::new(
             url,
             directory,
-            bare.then(|| git::create::Kind::Bare)
-                .unwrap_or(git::create::Kind::WithWorktree),
+            if bare {
+                git::create::Kind::Bare
+            } else {
+                git::create::Kind::WithWorktree
+            },
             git::create::Options::default(),
             {
                 let mut opts = git::open::Options::default().config_overrides(overrides);

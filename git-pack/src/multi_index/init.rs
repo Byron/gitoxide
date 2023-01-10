@@ -104,7 +104,7 @@ impl TryFrom<&Path> for File {
 
         let lookup = chunks.validated_usize_offset_by_id(chunk::lookup::ID, |offset| {
             chunk::lookup::is_valid(&offset, object_hash, num_objects)
-                .then(|| offset)
+                .then_some(offset)
                 .ok_or(Error::InvalidChunkSize {
                     id: chunk::lookup::ID,
                     message: "The chunk with alphabetically ordered object ids doesn't have the correct size",
@@ -112,7 +112,7 @@ impl TryFrom<&Path> for File {
         })??;
         let offsets = chunks.validated_usize_offset_by_id(chunk::offsets::ID, |offset| {
             chunk::offsets::is_valid(&offset, num_objects)
-                .then(|| offset)
+                .then_some(offset)
                 .ok_or(Error::InvalidChunkSize {
                     id: chunk::offsets::ID,
                     message: "The chunk with offsets into the pack doesn't have the correct size",
@@ -121,7 +121,7 @@ impl TryFrom<&Path> for File {
         let large_offsets = chunks
             .validated_usize_offset_by_id(chunk::large_offsets::ID, |offset| {
                 chunk::large_offsets::is_valid(&offset)
-                    .then(|| offset)
+                    .then_some(offset)
                     .ok_or(Error::InvalidChunkSize {
                         id: chunk::large_offsets::ID,
                         message: "The chunk with large offsets into the pack doesn't have the correct size",

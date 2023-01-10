@@ -75,7 +75,7 @@ impl Options<'_> {
             .then(|| {
                 std::env::var_os("GIT_TERMINAL_PROMPT")
                     .and_then(|val| git_config_value::Boolean::try_from(val).ok())
-                    .and_then(|allow| (!allow.0).then(|| Mode::Disable))
+                    .and_then(|allow| (!allow.0).then_some(Mode::Disable))
             })
             .flatten()
             .unwrap_or(self.mode);

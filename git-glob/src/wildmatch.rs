@@ -72,10 +72,7 @@ pub(crate) mod function {
                     }
                 }
                 STAR => {
-                    let mut match_slash = mode
-                        .contains(Mode::NO_MATCH_SLASH_LITERAL)
-                        .then(|| false)
-                        .unwrap_or(true);
+                    let mut match_slash = !mode.contains(Mode::NO_MATCH_SLASH_LITERAL);
                     match p.next() {
                         Some((next_p_idx, next_p_ch)) => {
                             let next;

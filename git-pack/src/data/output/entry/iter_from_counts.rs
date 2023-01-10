@@ -178,7 +178,7 @@ where
                                 count,
                                 counts_in_pack,
                                 base_index_offset,
-                                allow_thin_pack.then(|| {
+                                allow_thin_pack.then_some({
                                     |pack_id, base_offset| {
                                         let (cached_pack_id, cache) = pack_offsets_to_id.get_or_insert_with(|| {
                                             db.pack_offsets_and_oid(pack_id)

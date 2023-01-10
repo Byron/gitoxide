@@ -110,7 +110,7 @@ fn parse_name_and_email(
             }
             let name = line[..start_bracket].trim().as_bstr();
             let rest = line[start_bracket + closing_bracket + 2..].as_bstr();
-            Ok(((!name.is_empty()).then(|| name), Some(email), rest))
+            Ok(((!name.is_empty()).then_some(name), Some(email), rest))
         }
         None => Ok((None, None, line)),
     }

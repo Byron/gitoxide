@@ -45,7 +45,7 @@ impl Remote<'_> {
                 .to_owned(),
         })?;
         if let Some(section_ids) = config.sections_and_ids_by_name("remote").map(|it| {
-            it.filter_map(|(s, id)| (s.header().subsection_name() == Some(name.as_bstr())).then(|| id))
+            it.filter_map(|(s, id)| (s.header().subsection_name() == Some(name.as_bstr())).then_some(id))
                 .collect::<Vec<_>>()
         }) {
             let mut sections_to_remove = Vec::new();

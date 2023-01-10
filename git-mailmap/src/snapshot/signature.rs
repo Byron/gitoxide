@@ -51,7 +51,7 @@ impl<'a> ResolvedSignature<'a> {
     ) -> Option<Self> {
         let new_email = new_email
             .map(|n| n.as_bstr())
-            .or_else(|| (matched_email != current_email).then(|| matched_email));
+            .or_else(|| (matched_email != current_email).then_some(matched_email));
         match (new_email, new_name) {
             (None, None) => None,
             (new_email, new_name) => Some(ResolvedSignature {

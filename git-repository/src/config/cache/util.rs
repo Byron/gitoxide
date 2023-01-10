@@ -46,8 +46,11 @@ pub(crate) fn query_refupdates(
         .boolean("core", None, "logAllRefUpdates")
         .and_then(|b| b.ok())
         .map(|b| {
-            b.then(|| git_ref::store::WriteReflog::Normal)
-                .unwrap_or(git_ref::store::WriteReflog::Disable)
+            if b {
+                git_ref::store::WriteReflog::Normal
+            } else {
+                git_ref::store::WriteReflog::Disable
+            }
         }) {
         Some(val) => Ok(Some(val)),
         None => match config.string("core", None, "logAllRefUpdates") {
@@ -97,10 +100,10 @@ pub(crate) fn reflog_or_default(
     config_reflog: Option<git_ref::store::WriteReflog>,
     has_worktree: bool,
 ) -> git_ref::store::WriteReflog {
-    config_reflog.unwrap_or_else(|| {
-        has_worktree
-            .then(|| git_ref::store::WriteReflog::Normal)
-            .unwrap_or(git_ref::store::WriteReflog::Disable)
+    config_reflog.unwrap_or(if has_worktree {
+        git_ref::store::WriteReflog::Normal
+    } else {
+        git_ref::store::WriteReflog::Disable
     })
 }
 

@@ -61,7 +61,7 @@ impl<'event> File<'event> {
                 section_order
                     .iter()
                     .enumerate()
-                    .find_map(|(idx, id)| (*id == section_id).then(|| idx))
+                    .find_map(|(idx, id)| (*id == section_id).then_some(idx))
                     .expect("before-section exists")
             }
         };

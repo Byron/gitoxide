@@ -400,7 +400,7 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
             .iter()
             .enumerate()
             .rev()
-            .find_map(|(idx, b)| (!b.is_ascii_whitespace()).then(|| idx + 1))
+            .find_map(|(idx, b)| (!b.is_ascii_whitespace()).then_some(idx + 1))
             .unwrap_or(0);
         (
             &i[value_end_no_trailing_whitespace..],

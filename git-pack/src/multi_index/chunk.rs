@@ -244,7 +244,7 @@ pub mod large_offsets {
             }
         }
 
-        needs_large_offsets.then(|| num_large_offsets)
+        needs_large_offsets.then_some(num_large_offsets)
     }
     /// Returns true if the `offsets` range seems to be properly aligned for the data we expect.
     pub fn is_valid(offset: &Range<usize>) -> bool {
@@ -258,7 +258,7 @@ pub mod large_offsets {
     ) -> std::io::Result<()> {
         for offset in sorted_entries
             .iter()
-            .filter_map(|e| (e.pack_offset > LARGE_OFFSET_THRESHOLD).then(|| e.pack_offset))
+            .filter_map(|e| (e.pack_offset > LARGE_OFFSET_THRESHOLD).then_some(e.pack_offset))
         {
             out.write_all(&offset.to_be_bytes())?;
             num_large_offsets = num_large_offsets

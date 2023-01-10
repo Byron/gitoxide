@@ -156,9 +156,13 @@ mod refs_impl {
                     match repo.try_find_reference(local)? {
                         Some(tracking) => {
                             let msg = match tracking.try_id() {
-                                Some(id) => (id.as_ref() == target_id)
-                                    .then(|| "[up-to-date]")
-                                    .unwrap_or("[changed]"),
+                                Some(id) => {
+                                    if id.as_ref() == target_id {
+                                        "[up-to-date]"
+                                    } else {
+                                        "[changed]"
+                                    }
+                                }
                                 None => "[skipped]",
                             };
                             writeln!(out, "{msg}")

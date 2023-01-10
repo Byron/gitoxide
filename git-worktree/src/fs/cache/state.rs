@@ -275,7 +275,7 @@ impl State {
                             Case::Sensitive => basename == t.0,
                             Case::Fold => basename.eq_ignore_ascii_case(t.0),
                         }
-                        .then(|| t.1)
+                        .then_some(t.1)
                     })?;
                     // See https://github.com/git/git/blob/master/dir.c#L912:L912
                     if is_ignore && !entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {

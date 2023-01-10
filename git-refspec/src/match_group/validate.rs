@@ -72,9 +72,11 @@ impl std::fmt::Display for Error {
             f,
             "Found {} {} the refspec mapping to be used: \n\t{}",
             self.issues.len(),
-            (self.issues.len() == 1)
-                .then(|| "issue that prevents")
-                .unwrap_or("issues that prevent"),
+            if self.issues.len() == 1 {
+                "issue that prevents"
+            } else {
+                "issues that prevent"
+            },
             self.issues
                 .iter()
                 .map(|issue| issue.to_string())

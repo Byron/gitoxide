@@ -70,7 +70,7 @@ impl Rewrite {
             None
         } else {
             let mut url = url.to_bstring();
-            self.rewrite_url_in_place(&mut url, direction).then(|| url)
+            self.rewrite_url_in_place(&mut url, direction).then_some(url)
         }
     }
 

@@ -71,7 +71,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
                     if !bytes.peek().map_or(true, |b| b.is_ascii_whitespace()) {
                         c.insert(0, b' ');
                     }
-                    c.extend(bytes.map(|b| (*b == b'\n').then(|| b' ').unwrap_or(*b)));
+                    c.extend(bytes.map(|b| if *b == b'\n' { b' ' } else { *b }));
                     c.into()
                 }),
             }));

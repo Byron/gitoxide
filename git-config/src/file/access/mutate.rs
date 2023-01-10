@@ -349,7 +349,7 @@ impl<'event> File<'event> {
             lhs.extend(rhs);
         }
         let our_last_section_before_append =
-            insert_after.or_else(|| (self.section_id_counter != 0).then(|| SectionId(self.section_id_counter - 1)));
+            insert_after.or_else(|| (self.section_id_counter != 0).then_some(SectionId(self.section_id_counter - 1)));
 
         for id in std::mem::take(&mut other.section_order) {
             let section = other.sections.remove(&id).expect("present");

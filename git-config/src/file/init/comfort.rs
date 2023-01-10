@@ -31,7 +31,7 @@ impl File<'static> {
             .filter_map(|source| {
                 let path = source
                     .storage_location(&mut |name| std::env::var_os(name))
-                    .and_then(|p| p.is_file().then(|| p))
+                    .and_then(|p| p.is_file().then_some(p))
                     .map(|p| p.into_owned());
 
                 Metadata {

@@ -189,7 +189,7 @@ fn onbranch_matches(
         branch_name,
         git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
     )
-    .then(|| ())
+    .then_some(())
 }
 
 fn gitdir_matches(

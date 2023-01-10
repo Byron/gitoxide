@@ -308,9 +308,11 @@ pub fn new() -> (
                     authenticate.lock().expect("no panics in other threads")(action.erase()).ok();
                 }
                 let err = Err(io::Error::new(
-                    curl_is_spurious(&err)
-                        .then(|| std::io::ErrorKind::ConnectionReset)
-                        .unwrap_or(std::io::ErrorKind::Other),
+                    if curl_is_spurious(&err) {
+                        std::io::ErrorKind::ConnectionReset
+                    } else {
+                        std::io::ErrorKind::Other
+                    },
                     err,
                 ));
                 handler.receive_body.take();

@@ -389,7 +389,7 @@ pub fn main() -> Result<()> {
                             let context = core::pack::create::Context {
                                 thread_limit,
                                 thin,
-                                nondeterministic_thread_count: nondeterministic_count.then(|| counting_threads),
+                                nondeterministic_thread_count: nondeterministic_count.then_some(counting_threads),
                                 pack_cache_size_in_bytes: pack_cache_size_mb.unwrap_or(0) * 1_000_000,
                                 object_cache_size_in_bytes: object_cache_size_mb.unwrap_or(0) * 1_000_000,
                                 statistics: if statistics { Some(format) } else { None },
@@ -638,7 +638,7 @@ pub fn main() -> Result<()> {
                     progress,
                     &should_interrupt,
                     core::repository::verify::Context {
-                        output_statistics: statistics.then(|| format),
+                        output_statistics: statistics.then_some(format),
                         algorithm,
                         verify_mode: verify_mode(decode, re_encode),
                         thread_limit,

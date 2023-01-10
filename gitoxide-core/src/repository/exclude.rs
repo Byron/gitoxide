@@ -51,7 +51,7 @@ pub fn query(
             let entry = cache.at_entry(path, is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
             let match_ = entry
                 .matching_exclude_pattern()
-                .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then(|| m));
+                .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then_some(m));
             match match_ {
                 Some(m) => writeln!(
                     out,

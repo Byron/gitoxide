@@ -171,7 +171,7 @@ where
     ///
     /// This works by not actually fetching the pack after negotiating it, nor will refs be updated.
     pub fn with_dry_run(mut self, enabled: bool) -> Self {
-        self.dry_run = enabled.then(|| DryRun::Yes).unwrap_or(DryRun::No);
+        self.dry_run = if enabled { DryRun::Yes } else { DryRun::No };
         self
     }
 
@@ -180,7 +180,11 @@ where
     /// This improves performance and allows case-sensitive filesystems to deal with ref names that would otherwise
     /// collide.
     pub fn with_write_packed_refs_only(mut self, enabled: bool) -> Self {
-        self.write_packed_refs = enabled.then(|| WritePackedRefs::Only).unwrap_or(WritePackedRefs::Never);
+        self.write_packed_refs = if enabled {
+            WritePackedRefs::Only
+        } else {
+            WritePackedRefs::Never
+        };
         self
     }
 

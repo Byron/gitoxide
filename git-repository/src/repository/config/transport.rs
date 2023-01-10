@@ -235,8 +235,11 @@ impl crate::Repository {
                         .transpose()
                         .with_leniency(lenient)?
                     {
-                        val.then(|| http::options::FollowRedirects::All)
-                            .unwrap_or(http::options::FollowRedirects::None)
+                        if val {
+                            http::options::FollowRedirects::All
+                        } else {
+                            http::options::FollowRedirects::None
+                        }
                     } else {
                         http::options::FollowRedirects::Initial
                     };

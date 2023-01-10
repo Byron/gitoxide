@@ -140,7 +140,7 @@ impl<'a> RefSpecRef<'a> {
         let suffix = source.strip_prefix(b"refs/")?;
         let slash_pos = suffix.find_byte(b'/')?;
         let prefix = source[..="refs/".len() + slash_pos].as_bstr();
-        (!prefix.contains(&b'*')).then(|| prefix)
+        (!prefix.contains(&b'*')).then_some(prefix)
     }
 
     /// As opposed to [`prefix()`][Self::prefix], if the latter is `None` it will expand to all possible prefixes and place them in `out`.

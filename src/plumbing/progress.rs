@@ -56,7 +56,13 @@ impl Usage {
             NotApplicable { .. } => "❌",
             Planned { .. } => "🕒",
             NotPlanned { .. } => "🤔",
-            InModule { deviation, .. } => deviation.is_some().then(|| "👌️").unwrap_or("✅"),
+            InModule { deviation, .. } => {
+                if deviation.is_some() {
+                    "👌️"
+                } else {
+                    "✅"
+                }
+            }
         }
     }
 }

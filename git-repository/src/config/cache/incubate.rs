@@ -37,7 +37,7 @@ impl StageOne {
             .value::<git_config::Integer>("core", None, "repositoryFormatVersion")
             .map_or(0, |v| v.to_decimal().unwrap_or_default());
         let object_hash = (repo_format_version != 1)
-            .then(|| Ok(git_hash::Kind::Sha1))
+            .then_some(Ok(git_hash::Kind::Sha1))
             .or_else(|| {
                 config.string("extensions", None, "objectFormat").map(|format| {
                     if format.as_ref().eq_ignore_ascii_case(b"sha1") {
