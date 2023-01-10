@@ -347,7 +347,7 @@ dependencies = [
  "cargo_toml",
  "clap",
  "crates-index",
- "env_logger 0.9.3",
+ "env_logger",
  "git-conventional",
  "git-repository",
  "git-testtools",
@@ -916,18 +916,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "env_logger"
-version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
-dependencies = [
- "atty",
- "humantime",
- "log",
- "termcolor",
 ]
 
 [[package]]
@@ -1925,7 +1913,7 @@ dependencies = [
  "clap",
  "crosstermion",
  "document-features",
- "env_logger 0.10.0",
+ "env_logger",
  "futures-lite",
  "git-features",
  "git-repository",
