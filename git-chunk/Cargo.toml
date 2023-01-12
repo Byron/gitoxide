@@ -8,6 +8,7 @@ documentation = "https://github.com/git/git/blob/seen/Documentation/technical/ch
 license = "MIT/Apache-2.0"
 edition = "2021"
 include = ["src/**/*", "CHANGELOG.md"]
+rust-version = "1.64"
 
 [lib]
 doctest = false

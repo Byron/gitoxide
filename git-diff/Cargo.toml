@@ -7,6 +7,7 @@ description = "Calculate differences between various git objects"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*"]
+rust-version = "1.64"
 
 [features]
 serde1 = ["serde", "git-hash/serde1", "git-object/serde1"]

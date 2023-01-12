@@ -7,6 +7,7 @@ description = "A WIP crate of the gitoxide project"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*"]
+rust-version = "1.64"
 
 [lib]
 doctest = false
