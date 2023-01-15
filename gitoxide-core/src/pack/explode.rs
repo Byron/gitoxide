@@ -13,7 +13,7 @@ use git_repository::{
     Progress,
 };
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub enum SafetyCheck {
     SkipFileChecksumVerification,
     SkipFileAndObjectChecksumVerification,
