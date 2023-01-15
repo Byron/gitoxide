@@ -92,12 +92,11 @@ pub enum ToolCommands {
 ]
 pub struct EstimateHours {
     /// The directory containing a '.git/' folder.
-    #[clap(parse(from_os_str))]
-    #[clap(validator_os = validator::is_repo)]
+    #[clap(value_parser = validator::IsRepo)]
     #[clap(default_value = ".")]
     pub working_dir: PathBuf,
     /// The name of the revision as spec, like 'HEAD' or 'main' at which to start iterating the commit graph.
-    #[clap(default_value("HEAD"), parse(try_from_os_str = git::env::os_str_to_bstring))]
+    #[clap(default_value("HEAD"), value_parser = crate::shared::AsBString)]
     pub rev_spec: BString,
     /// Ignore github bots which match the `[bot]` search string.
     #[clap(short = 'b', long)]
@@ -128,7 +127,31 @@ mod validator {
     use anyhow::Context;
     use git_repository as git;
 
-    fn is_repo_inner(dir: &OsStr) -> anyhow::Result<()> {
+    #[derive(Clone)]
+    pub struct IsRepo;
+
+    impl clap::builder::TypedValueParser for IsRepo {
+        type Value = PathBuf;
+
+        fn parse_ref(
+            &self,
+            cmd: &clap::Command,
+            _arg: Option<&clap::Arg>,
+            value: &OsStr,
+        ) -> Result<Self::Value, clap::Error> {
+            assure_is_repo(value).map_err(|e| {
+                let mut err = clap::Error::new(clap::error::ErrorKind::InvalidValue).with_cmd(cmd);
+                err.insert(
+                    clap::error::ContextKind::InvalidValue,
+                    clap::error::ContextValue::String(e.to_string()),
+                );
+                err
+            })?;
+            Ok(value.into())
+        }
+    }
+
+    fn assure_is_repo(dir: &OsStr) -> anyhow::Result<()> {
         let git_dir = PathBuf::from(dir).join(".git");
         let p = git::path::realpath(&git_dir)
             .with_context(|| format!("Could not canonicalize git repository at '{}'", git_dir.display()))?;
@@ -143,9 +166,5 @@ mod validator {
                 p.display()
             ))
         }
-    }
-
-    pub fn is_repo(dir: &OsStr) -> Result<(), String> {
-        is_repo_inner(dir).map_err(|err| format!("{:#}", err))
     }
 }

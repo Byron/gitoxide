@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use git_repository as git;
 use git_repository::bstr::BString;
 use gitoxide_core as core;
 
@@ -17,7 +16,7 @@ pub struct Args {
     ///
     /// For example, if `key` is `core.abbrev`, set configuration like `[core] abbrev = key`,
     /// or `remote.origin.url = foo` to set `[remote "origin"] url = foo`.
-    #[clap(long, short = 'c', parse(try_from_os_str = git::env::os_str_to_bstring))]
+    #[clap(long, short = 'c', value_parser = crate::shared::AsBString)]
     pub config: Vec<BString>,
 
     #[clap(long, short = 't')]
@@ -59,12 +58,12 @@ pub struct Args {
         long,
         short = 'f',
         default_value = "human",
-        possible_values(core::OutputFormat::variants())
+        value_parser = crate::shared::AsOutputFormat
     )]
     pub format: core::OutputFormat,
 
     /// The object format to assume when reading files that don't inherently know about it, or when writing files.
-    #[clap(long, default_value_t = git_repository::hash::Kind::default(), possible_values(&["SHA1"]))]
+    #[clap(long, default_value_t = git_repository::hash::Kind::default(), value_parser = crate::shared::AsHashKind)]
     pub object_hash: git_repository::hash::Kind,
 
     #[clap(subcommand)]
@@ -129,15 +128,13 @@ pub mod config {
         ///
         /// Typical filters are `branch` or `remote.origin` or `remote.or*` - git-style globs are supported
         /// and comparisons are case-insensitive.
-        #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
+        #[clap(value_parser = crate::shared::AsBString)]
         pub filter: Vec<BString>,
     }
 }
 
 #[cfg(feature = "gitoxide-core-blocking-client")]
 pub mod fetch {
-    use git_repository as git;
-
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
         /// Don't change the local repository, but otherwise try to be as accurate as possible.
@@ -155,7 +152,7 @@ pub mod fetch {
         pub remote: Option<String>,
 
         /// Override the built-in and configured ref-specs with one or more of the given ones.
-        #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
+        #[clap(value_parser = crate::shared::AsBString)]
         pub ref_spec: Vec<git_repository::bstr::BString>,
     }
 }
@@ -188,8 +185,6 @@ pub mod clone {
 
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 pub mod remote {
-    use git_repository as git;
-
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
         /// The name of the remote to connect to, or the URL of the remote to connect to directly.
@@ -218,7 +213,7 @@ pub mod remote {
             #[clap(long, short = 'u')]
             show_unmapped_remote_refs: bool,
             /// Override the built-in and configured ref-specs with one or more of the given ones.
-            #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
+            #[clap(value_parser = crate::shared::AsBString)]
             ref_spec: Vec<git_repository::bstr::BString>,
         },
     }
@@ -360,6 +355,7 @@ pub mod revision {
 pub mod exclude {
     use std::ffi::OsString;
 
+    use super::AsPathSpec;
     use git_repository as git;
 
     #[derive(Debug, clap::Subcommand)]
@@ -377,7 +373,7 @@ pub mod exclude {
             #[clap(long, short = 'p')]
             patterns: Vec<OsString>,
             /// The git path specifications to check for exclusion, or unset to read from stdin one per line.
-            #[clap(parse(try_from_os_str = std::convert::TryFrom::try_from))]
+            #[clap(value_parser = AsPathSpec)]
             pathspecs: Vec<git::path::Spec>,
         },
     }
@@ -407,3 +403,24 @@ pub mod index {
 
 ///
 pub mod free;
+
+mod clap_util {
+    use clap::builder::{OsStringValueParser, TypedValueParser};
+    use clap::{Arg, Command, Error};
+    use git_repository as git;
+    use std::ffi::OsStr;
+
+    #[derive(Clone)]
+    pub struct AsPathSpec;
+
+    impl TypedValueParser for AsPathSpec {
+        type Value = git::path::Spec;
+
+        fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
+            OsStringValueParser::new()
+                .try_map(|arg| git::path::Spec::try_from(arg.as_os_str()))
+                .parse_ref(cmd, arg, value)
+        }
+    }
+}
+use clap_util::AsPathSpec;

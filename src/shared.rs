@@ -235,3 +235,60 @@ pub fn from_env<T: argh::TopLevelCommand>() -> T {
         })
     })
 }
+
+mod clap {
+    use clap::builder::PossibleValue;
+    use clap::error::ErrorKind;
+    use clap::{builder, Arg, Command, Error};
+    use git_repository as git;
+    use git_repository::bstr::BString;
+    use gitoxide_core as core;
+    use std::ffi::OsStr;
+    use std::str::FromStr;
+
+    #[derive(Clone)]
+    pub struct AsBString;
+
+    impl builder::TypedValueParser for AsBString {
+        type Value = BString;
+
+        fn parse_ref(&self, _cmd: &Command, _arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
+            git::env::os_str_to_bstring(value).ok_or(Error::new(ErrorKind::InvalidUtf8))
+        }
+    }
+
+    #[derive(Clone)]
+    pub struct AsOutputFormat;
+
+    impl builder::TypedValueParser for AsOutputFormat {
+        type Value = core::OutputFormat;
+
+        fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
+            builder::StringValueParser::new()
+                .try_map(|arg| core::OutputFormat::from_str(&arg))
+                .parse_ref(cmd, arg, value)
+        }
+
+        fn possible_values(&self) -> Option<Box<dyn Iterator<Item = PossibleValue> + '_>> {
+            Some(Box::new(core::OutputFormat::variants().iter().map(PossibleValue::new)))
+        }
+    }
+
+    #[derive(Clone)]
+    pub struct AsHashKind;
+
+    impl builder::TypedValueParser for AsHashKind {
+        type Value = git::hash::Kind;
+
+        fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
+            builder::StringValueParser::new()
+                .try_map(|arg| git::hash::Kind::from_str(&arg))
+                .parse_ref(cmd, arg, value)
+        }
+
+        fn possible_values(&self) -> Option<Box<dyn Iterator<Item = PossibleValue> + '_>> {
+            Some(Box::new([PossibleValue::new("SHA1")].into_iter()))
+        }
+    }
+}
+pub use self::clap::{AsBString, AsHashKind, AsOutputFormat};
