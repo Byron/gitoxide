@@ -1,6 +1,5 @@
-error: Found argument 'remote' which wasn't expected, or isn't valid in this context
+error: unrecognized subcommand 'remote'
 
-USAGE:
-    gix [OPTIONS] <SUBCOMMAND>
+Usage: gix [OPTIONS] <COMMAND>
 
-For more information try --help
+For more information, try '--help'.

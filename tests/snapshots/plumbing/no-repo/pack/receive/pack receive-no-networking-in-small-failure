@@ -1,6 +1,5 @@
-error: Found argument 'receive' which wasn't expected, or isn't valid in this context
+error: unrecognized subcommand 'receive'
 
-USAGE:
-    gix free pack <SUBCOMMAND>
+Usage: gix free pack <COMMAND>
 
-For more information try --help
+For more information, try '--help'.
