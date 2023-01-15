@@ -30,9 +30,7 @@ pub fn args_os() -> impl Iterator<Item = OsString> {
     })
 }
 
-/// Convert the given `input` into a `BString`, useful as `#[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]` function.
-pub fn os_str_to_bstring(input: &OsStr) -> Result<BString, String> {
-    Vec::from_os_string(input.into())
-        .map(Into::into)
-        .map_err(|_| input.to_string_lossy().into_owned())
+/// Convert the given `input` into a `BString`, useful for usage in `clap`.
+pub fn os_str_to_bstring(input: &OsStr) -> Option<BString> {
+    Vec::from_os_string(input.into()).map(Into::into).ok()
 }
