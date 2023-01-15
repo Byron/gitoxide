@@ -253,7 +253,7 @@ mod clap {
         type Value = BString;
 
         fn parse_ref(&self, _cmd: &Command, _arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
-            git::env::os_str_to_bstring(value).ok_or(Error::new(ErrorKind::InvalidUtf8))
+            git::env::os_str_to_bstring(value).ok_or_else(|| Error::new(ErrorKind::InvalidUtf8))
         }
     }
 
