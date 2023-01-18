@@ -15,12 +15,6 @@ pub struct Bitmaps {
     pub replace: git_bitmap::ewah::Vec,
 }
 
-#[derive(Clone)]
-struct VerifiedBitmaps {
-    pub delete: Vec<usize>,
-    pub replace: Vec<usize>,
-}
-
 ///
 pub mod decode {
 
@@ -35,6 +29,12 @@ pub mod decode {
             err: git_bitmap::ewah::decode::Error,
             kind: &'static str,
         },
+    }
+
+    impl From<std::num::TryFromIntError> for Error {
+        fn from(_: std::num::TryFromIntError) -> Self {
+            Self::Corrupt("error in bitmap iteration trying to convert from u64 to usize")
+        }
     }
 }
 
@@ -88,40 +88,57 @@ impl Link {
             },
         )?;
 
-        if let Some(bitmaps) = self.verify_bitmaps(split_index, &shared_index)? {
-            let shared_entries = shared_index.entries_mut();
-            let split_entries = split_index.entries();
+        self.verify_bitmaps(split_index, &shared_index)?;
 
-            bitmaps
-                .replace
-                .iter()
-                .enumerate()
-                .for_each(|(split_entry_index, &replace_index)| {
-                    let shared_entry = &mut shared_entries[replace_index];
-                    let split_entry = &split_entries[split_entry_index];
+        if let Some(bitmaps) = self.bitmaps {
+            let mut split_entry_index = 0;
 
-                    shared_entry.stat = split_entry.stat;
-                    shared_entry.id = split_entry.id;
-                    shared_entry.flags = split_entry.flags;
-                    shared_entry.mode = split_entry.mode;
-                });
+            bitmaps.replace.for_each_set_bit(|replace_index| {
+                let shared_entry = shared_index
+                    .entries_mut()
+                    .get_mut(replace_index)
+                    .expect("bitmap already verified");
+                let split_entry = split_index
+                    .entries()
+                    .get(split_entry_index)
+                    .expect("bitmap already verified");
 
-            if split_entries.len() > bitmaps.replace.len() {
-                split_entries[bitmaps.replace.len()..].iter().for_each(|split_entry| {
-                    let mut e = split_entry.clone();
-                    let start = shared_index.path_backing.len();
-                    e.path = start..start + split_entry.path.len();
-                    shared_index.entries.push(e);
+                shared_entry.stat = split_entry.stat;
+                shared_entry.id = split_entry.id;
+                shared_entry.flags = split_entry.flags;
+                shared_entry.mode = split_entry.mode;
 
-                    shared_index
-                        .path_backing
-                        .extend_from_slice(&split_index.path_backing[split_entry.path.clone()]);
-                });
+                split_entry_index += 1;
+                Some(())
+            });
+
+            if split_index.entries().len() > split_entry_index {
+                split_index.entries()[split_entry_index..]
+                    .iter()
+                    .for_each(|split_entry| {
+                        let mut e = split_entry.clone();
+                        let start = shared_index.path_backing.len();
+                        e.path = start..start + split_entry.path.len();
+                        shared_index.entries.push(e);
+
+                        shared_index
+                            .path_backing
+                            .extend_from_slice(&split_index.path_backing[split_entry.path.clone()]);
+                    });
             }
 
-            bitmaps.delete.iter().rev().for_each(|&i| {
-                shared_index.entries.remove(i);
+            bitmaps.delete.for_each_set_bit(|delete_index| {
+                let shared_entry = shared_index
+                    .entries_mut()
+                    .get_mut(delete_index)
+                    .expect("bitmap already verified");
+                shared_entry.flags.insert(crate::entry::Flags::REMOVE);
+                Some(())
             });
+
+            shared_index
+                .entries
+                .retain(|e| !e.flags.contains(crate::entry::Flags::REMOVE));
 
             let mut shared_entries = std::mem::take(&mut shared_index.entries);
             shared_entries.sort_by(|a, b| a.cmp(b, &shared_index.state));
@@ -133,72 +150,52 @@ impl Link {
         Ok(())
     }
 
-    fn verify_bitmaps(
-        &self,
-        split_index: &crate::File,
-        shared_index: &crate::File,
-    ) -> Result<Option<VerifiedBitmaps>, decode::Error> {
-        if let Some(bitmaps) = &self.bitmaps {
-            let mut replace_bitmap: Vec<usize> = Vec::new();
-            let mut delete_bitmap: Vec<usize> = Vec::new();
-
-            bitmaps.replace.for_each_set_bit(|index| {
-                replace_bitmap.push(index);
-                Some(())
-            });
-            bitmaps.delete.for_each_set_bit(|index| {
-                delete_bitmap.push(index);
-                Some(())
-            });
-
+    fn verify_bitmaps(&self, split_index: &crate::File, shared_index: &crate::File) -> Result<(), decode::Error> {
+        self.bitmaps.as_ref().map_or(Ok(()), |bitmaps| {
             let split_entries = split_index.entries();
             let shared_entries = shared_index.entries();
 
-            if replace_bitmap.len() > split_entries.len() {
-                return Err(decode::Error::Corrupt(
-                    "replace bitmap length exceeds split index length - more entries in bitmap than found in split index",
-                ));
-            }
+            let mut split_entry_index = 0;
 
-            if let Some(&index) = replace_bitmap.last() {
+            bitmaps.replace.for_each_set_bit_with_err(|index| {
                 if index >= shared_entries.len() {
                     return Err(decode::Error::Corrupt(
-                        "replace bitmap length exceeds shared index length - more entries in bitmap than found in shared index",
+                        "replace bitmap length exceeds shared index length - more entries in bitmap than found in shared index"
                     ));
                 }
-            }
 
-            if let Some(&index) = delete_bitmap.last() {
+                if split_entry_index >= split_entries.len() {
+                    return Err(decode::Error::Corrupt(
+                        "replace bitmap length exceeds split index length - more entries in bitmap than found in split index",
+                    ));
+                }
+
+                if shared_entries[index].flags.contains(crate::entry::Flags::REMOVE) {
+                    return Err(decode::Error::Corrupt(
+                        "entry is marked as both replace and delete",
+                    ));
+                }
+
+                if !split_entries[split_entry_index].path.is_empty() {
+                    return Err(decode::Error::Corrupt("paths in split index entries should be empty"));
+                }
+
+                split_entry_index += 1;
+                Ok(())
+            })?;
+
+            bitmaps.delete.for_each_set_bit_with_err(|index| {
                 if index >= shared_entries.len() {
                     return Err(decode::Error::Corrupt(
                         "delete bitmap length exceeds shared index length - more entries in bitmap than found in shared index",
                     ));
                 }
-            }
 
-            for (split_entry_index, replace_index) in replace_bitmap.iter().enumerate() {
-                if delete_bitmap.iter().any(|delete_index| delete_index == replace_index) {
-                    return Err(decode::Error::Corrupt(
-                        "replace and delete bitmap point at the same index",
-                    ));
-                }
+                Ok(())
+            })?;
 
-                if !split_entries
-                    .get(split_entry_index)
-                    .expect("already checked")
-                    .path
-                    .is_empty()
-                {
-                    return Err(decode::Error::Corrupt("paths in split index entries should be empty"));
-                }
-            }
+            Ok(())
 
-            Ok(Some(VerifiedBitmaps {
-                replace: replace_bitmap,
-                delete: delete_bitmap,
-            }))
-        } else {
-            Ok(None)
-        }
+        })
     }
 }
