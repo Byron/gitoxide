@@ -114,7 +114,11 @@ impl Link {
                     }
                 };
                 if !split_entry.path.is_empty() {
-                    err = decode::Error::Corrupt("paths in split index entries should be empty").into();
+                    err = decode::Error::Corrupt("paths in split index entries that are for replacement should be empty").into();
+                    return None
+                }
+                if shared_entry.path.is_empty() {
+                    err = decode::Error::Corrupt("paths in shared index entries that are replaced should not be empty").into();
                     return None
                 }
                 shared_entry.stat = split_entry.stat;
@@ -129,16 +133,18 @@ impl Link {
                 return Err(err.into());
             }
 
-            split_index.entries[split_entry_index..].iter().for_each(|split_entry| {
-                let mut e = split_entry.clone();
+            let split_index_path_backing = std::mem::take(&mut split_index.path_backing);
+            for mut split_entry in split_index.entries.drain(split_entry_index..) {
                 let start = shared_index.path_backing.len();
-                e.path = start..start + split_entry.path.len();
-                shared_index.entries.push(e);
+                let split_index_path = split_entry.path.clone();
+
+                split_entry.path = start..start + split_entry.path.len();
+                shared_index.entries.push(split_entry);
 
                 shared_index
                     .path_backing
-                    .extend_from_slice(&split_index.path_backing[split_entry.path.clone()]);
-            });
+                    .extend_from_slice(&split_index_path_backing[split_index_path]);
+            }
 
             bitmaps.delete.for_each_set_bit(|delete_index| {
                 let shared_entry = match shared_index.entries.get_mut(delete_index) {
@@ -162,8 +168,8 @@ impl Link {
             let mut shared_entries = std::mem::take(&mut shared_index.entries);
             shared_entries.sort_by(|a, b| a.cmp(b, &shared_index.state));
 
-            std::mem::swap(&mut split_index.entries, &mut shared_entries);
-            std::mem::swap(&mut split_index.path_backing, &mut shared_index.path_backing);
+            split_index.entries = shared_entries;
+            split_index.path_backing = std::mem::take(&mut shared_index.path_backing);
         }
 
         Ok(())
