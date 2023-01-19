@@ -88,21 +88,35 @@ impl Link {
             },
         )?;
 
-        self.verify_bitmaps(split_index, &shared_index)?;
-
         if let Some(bitmaps) = self.bitmaps {
             let mut split_entry_index = 0;
 
+            let mut err = None;
             bitmaps.replace.for_each_set_bit(|replace_index| {
-                let shared_entry = shared_index
-                    .entries_mut()
-                    .get_mut(replace_index)
-                    .expect("bitmap already verified");
-                let split_entry = split_index
-                    .entries()
-                    .get(split_entry_index)
-                    .expect("bitmap already verified");
+                let shared_entry = match shared_index.entries.get_mut(replace_index) {
+                    Some(e) => e,
+                    None => {
+                        err = decode::Error::Corrupt("replace bitmap length exceeds shared index length - more entries in bitmap than found in shared index").into();
+                        return None
+                    }
+                };
 
+                if shared_entry.flags.contains(crate::entry::Flags::REMOVE) {
+                    err = decode::Error::Corrupt("entry is marked as both replace and delete").into();
+                    return None
+                }
+
+                let split_entry = match split_index.entries.get(split_entry_index) {
+                    Some(e) => e,
+                    None => {
+                        err = decode::Error::Corrupt("replace bitmap length exceeds split index length - more entries in bitmap than found in split index").into();
+                        return None
+                    }
+                };
+                if !split_entry.path.is_empty() {
+                    err = decode::Error::Corrupt("paths in split index entries should be empty").into();
+                    return None
+                }
                 shared_entry.stat = split_entry.stat;
                 shared_entry.id = split_entry.id;
                 shared_entry.flags = split_entry.flags;
@@ -111,30 +125,35 @@ impl Link {
                 split_entry_index += 1;
                 Some(())
             });
-
-            if split_index.entries().len() > split_entry_index {
-                split_index.entries()[split_entry_index..]
-                    .iter()
-                    .for_each(|split_entry| {
-                        let mut e = split_entry.clone();
-                        let start = shared_index.path_backing.len();
-                        e.path = start..start + split_entry.path.len();
-                        shared_index.entries.push(e);
-
-                        shared_index
-                            .path_backing
-                            .extend_from_slice(&split_index.path_backing[split_entry.path.clone()]);
-                    });
+            if let Some(err) = err {
+                return Err(err.into());
             }
 
+            split_index.entries[split_entry_index..].iter().for_each(|split_entry| {
+                let mut e = split_entry.clone();
+                let start = shared_index.path_backing.len();
+                e.path = start..start + split_entry.path.len();
+                shared_index.entries.push(e);
+
+                shared_index
+                    .path_backing
+                    .extend_from_slice(&split_index.path_backing[split_entry.path.clone()]);
+            });
+
             bitmaps.delete.for_each_set_bit(|delete_index| {
-                let shared_entry = shared_index
-                    .entries_mut()
-                    .get_mut(delete_index)
-                    .expect("bitmap already verified");
+                let shared_entry = match shared_index.entries.get_mut(delete_index) {
+                    Some(e) => e,
+                    None => {
+                        err = decode::Error::Corrupt("delete bitmap length exceeds shared index length - more entries in bitmap than found in shared index").into();
+                        return None
+                    }
+                };
                 shared_entry.flags.insert(crate::entry::Flags::REMOVE);
                 Some(())
             });
+            if let Some(err) = err {
+                return Err(err.into());
+            }
 
             shared_index
                 .entries
@@ -148,54 +167,5 @@ impl Link {
         }
 
         Ok(())
-    }
-
-    fn verify_bitmaps(&self, split_index: &crate::File, shared_index: &crate::File) -> Result<(), decode::Error> {
-        self.bitmaps.as_ref().map_or(Ok(()), |bitmaps| {
-            let split_entries = split_index.entries();
-            let shared_entries = shared_index.entries();
-
-            let mut split_entry_index = 0;
-
-            bitmaps.replace.for_each_set_bit_with_err(|index| {
-                if index >= shared_entries.len() {
-                    return Err(decode::Error::Corrupt(
-                        "replace bitmap length exceeds shared index length - more entries in bitmap than found in shared index"
-                    ));
-                }
-
-                if split_entry_index >= split_entries.len() {
-                    return Err(decode::Error::Corrupt(
-                        "replace bitmap length exceeds split index length - more entries in bitmap than found in split index",
-                    ));
-                }
-
-                if shared_entries[index].flags.contains(crate::entry::Flags::REMOVE) {
-                    return Err(decode::Error::Corrupt(
-                        "entry is marked as both replace and delete",
-                    ));
-                }
-
-                if !split_entries[split_entry_index].path.is_empty() {
-                    return Err(decode::Error::Corrupt("paths in split index entries should be empty"));
-                }
-
-                split_entry_index += 1;
-                Ok(())
-            })?;
-
-            bitmaps.delete.for_each_set_bit_with_err(|index| {
-                if index >= shared_entries.len() {
-                    return Err(decode::Error::Corrupt(
-                        "delete bitmap length exceeds shared index length - more entries in bitmap than found in shared index",
-                    ));
-                }
-
-                Ok(())
-            })?;
-
-            Ok(())
-
-        })
     }
 }
