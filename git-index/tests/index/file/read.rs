@@ -23,14 +23,16 @@ pub(crate) fn loose_file(name: &str) -> git_index::File {
     let file = git_index::File::at(path, git_hash::Kind::Sha1, Default::default()).unwrap();
     verify(file)
 }
-pub(crate) fn file(name: &str) -> git_index::File {
+pub(crate) fn try_file(name: &str) -> Result<git_index::File, git_index::file::init::Error> {
     let file = git_index::File::at(
         crate::fixture_index_path(name),
         git_hash::Kind::Sha1,
         Default::default(),
-    )
-    .unwrap();
-    verify(file)
+    )?;
+    Ok(verify(file))
+}
+pub(crate) fn file(name: &str) -> git_index::File {
+    try_file(name).unwrap()
 }
 fn file_opt(name: &str, opts: git_index::decode::Options) -> git_index::File {
     let file = git_index::File::at(crate::fixture_index_path(name), git_hash::Kind::Sha1, opts).unwrap();
@@ -121,14 +123,6 @@ fn split_index_without_any_extension() {
     )
     .unwrap();
     assert_eq!(file.version(), Version::V2);
-}
-
-#[test]
-fn v2_split_index() {
-    let file = file("v2_split_index");
-    assert_eq!(file.version(), Version::V2);
-
-    assert!(file.link().is_some());
 }
 
 #[test]
@@ -290,4 +284,53 @@ fn sparse_checkout_non_cone_mode() {
             assert_eq!(e.flags, Flags::EXTENDED | Flags::SKIP_WORKTREE);
         }
     });
+}
+
+#[test]
+fn v2_split_index() {
+    let file = file("v2_split_index");
+    assert_eq!(file.version(), Version::V2);
+}
+
+#[test]
+fn v2_split_index_recursion_is_handled_gracefully() {
+    let err = try_file("v2_split_index_recursive").expect_err("recursion fails gracefully");
+    assert!(matches!(
+        err,
+        git_index::file::init::Error::Decode(git_index::decode::Error::ChecksumMismatch { .. })
+    ));
+}
+
+#[test]
+fn split_index_and_regular_index_of_same_content_are_indeed_the_same() {
+    let base = git_testtools::scripted_fixture_read_only(Path::new("make_index").join("v2_split_vs_regular_index.sh"))
+        .unwrap();
+
+    let split =
+        verify(git_index::File::at(base.join("split/.git/index"), git_hash::Kind::Sha1, Default::default()).unwrap());
+
+    assert!(
+        split.link().is_none(),
+        "link extension is dissolved, merging the shared index permanently into the split one (for now)"
+    );
+
+    let regular = verify(
+        git_index::File::at(
+            base.join("regular/.git/index"),
+            git_hash::Kind::Sha1,
+            Default::default(),
+        )
+        .unwrap(),
+    );
+
+    assert_eq!(
+        split.entries().len(),
+        regular.entries().len(),
+        "split and regular index entries must match in length (and be the exact same)"
+    );
+    split.entries().iter().zip(regular.entries()).for_each(|(s, r)| {
+        assert_eq!(s.id, r.id);
+        assert_eq!(s.flags, r.flags);
+        assert_eq!(s.path_in(split.path_backing()), r.path_in(regular.path_backing()));
+    })
 }

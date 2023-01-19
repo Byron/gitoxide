@@ -16,6 +16,8 @@ mod error {
         Io(#[from] std::io::Error),
         #[error(transparent)]
         Decode(#[from] crate::decode::Error),
+        #[error(transparent)]
+        LinkExtension(#[from] crate::extension::link::decode::Error),
     }
 }
 
@@ -54,11 +56,16 @@ impl File {
         };
 
         let (state, checksum) = State::from_bytes(&data, mtime, object_hash, options)?;
-        Ok(File {
+        let mut file = File {
             state,
             path,
             checksum: Some(checksum),
-        })
+        };
+        if let Some(mut link) = file.link.take() {
+            link.dissolve_into(&mut file, object_hash, options)?;
+        }
+
+        Ok(file)
     }
 
     /// Consume `state` and pretend it was read from `path`, setting our checksum to `null`.
