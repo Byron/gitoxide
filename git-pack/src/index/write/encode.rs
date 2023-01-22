@@ -34,7 +34,7 @@ pub(crate) fn write_to(
 
     progress.init(Some(4), progress::steps());
     let start = std::time::Instant::now();
-    let _info = progress.add_child_with_id("writing fan-out table", *b"info");
+    let _info = progress.add_child_with_id("writing fan-out table", git_features::progress::UNKNOWN);
     let fan_out = fanout(entries_sorted_by_oid.iter().map(|e| e.data.id.first_byte()));
 
     for value in fan_out.iter() {
@@ -42,19 +42,19 @@ pub(crate) fn write_to(
     }
 
     progress.inc();
-    let _info = progress.add_child_with_id("writing ids", *b"info");
+    let _info = progress.add_child_with_id("writing ids", git_features::progress::UNKNOWN);
     for entry in &entries_sorted_by_oid {
         out.write_all(entry.data.id.as_slice())?;
     }
 
     progress.inc();
-    let _info = progress.add_child_with_id("writing crc32", *b"info");
+    let _info = progress.add_child_with_id("writing crc32", git_features::progress::UNKNOWN);
     for entry in &entries_sorted_by_oid {
         out.write_all(&entry.data.crc32.to_be_bytes())?;
     }
 
     progress.inc();
-    let _info = progress.add_child_with_id("writing offsets", *b"info");
+    let _info = progress.add_child_with_id("writing offsets", git_features::progress::UNKNOWN);
     {
         let mut offsets64 = Vec::<u64>::new();
         for entry in &entries_sorted_by_oid {

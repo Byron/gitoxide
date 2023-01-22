@@ -6,7 +6,7 @@ use crate::{data, data::output, find};
 
 ///
 pub mod iter_from_counts;
-pub use iter_from_counts::iter_from_counts;
+pub use iter_from_counts::function::iter_from_counts;
 
 /// The kind of pack entry to be written
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]

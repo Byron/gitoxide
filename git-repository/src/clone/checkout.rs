@@ -38,6 +38,26 @@ pub mod main_worktree {
         PeelHeadToId(#[from] crate::head::peel::Error),
     }
 
+    /// The progress ids used in [`PrepareCheckout::main_worktree()`].
+    ///
+    /// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
+    #[derive(Debug, Copy, Clone)]
+    pub enum ProgressId {
+        /// The amount of files checked out thus far.
+        CheckoutFiles,
+        /// The amount of bytes written in total, the aggregate of the size of the content of all files thus far.
+        BytesWritten,
+    }
+
+    impl From<ProgressId> for git_features::progress::Id {
+        fn from(v: ProgressId) -> Self {
+            match v {
+                ProgressId::CheckoutFiles => *b"CLCF",
+                ProgressId::BytesWritten => *b"CLCB",
+            }
+        }
+    }
+
     /// Modification
     impl PrepareCheckout {
         /// Checkout the main worktree, determining how many threads to use by looking at `checkout.workers`, defaulting to using
@@ -76,8 +96,8 @@ pub mod main_worktree {
             let mut opts = repo.config.checkout_options(repo.git_dir())?;
             opts.destination_is_initially_empty = true;
 
-            let mut files = progress.add_child_with_id("checkout", *b"CLCF"); /* CLone Checkout Files */
-            let mut bytes = progress.add_child_with_id("writing", *b"CLCB") /* CLone Checkout Bytes */;
+            let mut files = progress.add_child_with_id("checkout", ProgressId::CheckoutFiles.into());
+            let mut bytes = progress.add_child_with_id("writing", ProgressId::BytesWritten.into());
 
             files.init(Some(index.entries().len()), crate::progress::count("files"));
             bytes.init(None, crate::progress::bytes());

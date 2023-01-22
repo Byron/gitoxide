@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use std::{
     io,
     io::Write,
@@ -22,6 +23,28 @@ use crate::bundle::write::types::SharedTempFile;
 type ThinPackLookupFn = Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>>>;
 type ThinPackLookupFnSend =
     Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>> + Send + 'static>;
+
+/// The progress ids used in [`write_to_directory()`][crate::Bundle::write_to_directory()].
+///
+/// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
+#[derive(Debug, Copy, Clone)]
+pub enum ProgressId {
+    /// The amount of bytes read from the input pack data file.
+    ReadPackBytes,
+    /// A root progress counting logical steps towards an index file on disk.
+    ///
+    /// Underneath will be more progress information related to actually producing the index.
+    IndexingSteps(PhantomData<crate::index::write::ProgressId>),
+}
+
+impl From<ProgressId> for git_features::progress::Id {
+    fn from(v: ProgressId) -> Self {
+        match v {
+            ProgressId::ReadPackBytes => *b"BWRB",
+            ProgressId::IndexingSteps(_) => *b"BWCI",
+        }
+    }
+}
 
 impl crate::Bundle {
     /// Given a `pack` data stream, write it along with a generated index into the `directory` if `Some` or discard all output if `None`.
@@ -50,7 +73,7 @@ impl crate::Bundle {
     where
         P: Progress,
     {
-        let mut read_progress = progress.add_child_with_id("read pack", *b"BWRB"); /* Bundle Write Read pack Bytes*/
+        let mut read_progress = progress.add_child_with_id("read pack", ProgressId::ReadPackBytes.into());
         read_progress.init(None, progress::bytes());
         let pack = progress::Read {
             inner: pack,
@@ -163,7 +186,7 @@ impl crate::Bundle {
         P: Progress,
         P::SubProgress: 'static,
     {
-        let mut read_progress = progress.add_child_with_id("read pack", *b"BWRB"); /* Bundle Write Read pack Bytes*/
+        let mut read_progress = progress.add_child_with_id("read pack", ProgressId::ReadPackBytes.into()); /* Bundle Write Read pack Bytes*/
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
         let pack = progress::Read {
             inner: pack,
@@ -260,7 +283,10 @@ impl crate::Bundle {
         should_interrupt: &AtomicBool,
         pack_version: data::Version,
     ) -> Result<WriteOutcome, Error> {
-        let indexing_progress = progress.add_child_with_id("create index file", *b"BWCI"); /* Bundle Write Create Index */
+        let indexing_progress = progress.add_child_with_id(
+            "create index file",
+            ProgressId::IndexingSteps(Default::default()).into(),
+        );
         Ok(match directory {
             Some(directory) => {
                 let directory = directory.as_ref();

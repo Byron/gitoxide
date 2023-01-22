@@ -14,6 +14,7 @@ use crate::{
 
 ///
 pub mod integrity {
+    use std::marker::PhantomData;
     use std::path::PathBuf;
 
     use crate::pack;
@@ -80,6 +81,29 @@ pub mod integrity {
         pub index_statistics: Vec<IndexStatistics>,
         /// The provided progress instance.
         pub progress: P,
+    }
+
+    /// The progress ids used in [`Store::verify_integrity()`][crate::Store::verify_integrity()].
+    ///
+    /// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
+    #[derive(Debug, Copy, Clone)]
+    pub enum ProgressId {
+        /// Contains the path of the currently validated loose object database.
+        VerifyLooseObjectDbPath,
+        /// The root progress for all verification of an index. It doesn't contain any useful information itself.
+        VerifyIndex(PhantomData<git_pack::index::verify::integrity::ProgressId>),
+        /// The root progress for all verification of a multi-index. It doesn't contain any useful information itself.
+        VerifyMultiIndex(PhantomData<git_pack::multi_index::verify::integrity::ProgressId>),
+    }
+
+    impl From<ProgressId> for git_features::progress::Id {
+        fn from(v: ProgressId) -> Self {
+            match v {
+                ProgressId::VerifyLooseObjectDbPath => *b"VISP",
+                ProgressId::VerifyMultiIndex(_) => *b"VIMI",
+                ProgressId::VerifyIndex(_) => *b"VISI",
+            }
+        }
     }
 }
 
@@ -154,7 +178,10 @@ impl super::Store {
                             data,
                             options: options.clone(),
                         }),
-                        progress.add_child_with_id("never shown", git_features::progress::UNKNOWN),
+                        progress.add_child_with_id(
+                            "verify index",
+                            integrity::ProgressId::VerifyIndex(Default::default()).into(),
+                        ),
                         should_interrupt,
                     )?;
                     statistics.push(IndexStatistics {
@@ -177,7 +204,10 @@ impl super::Store {
                         }
                     };
                     let outcome = index.verify_integrity(
-                        progress.add_child_with_id("never shown", git_features::progress::UNKNOWN),
+                        progress.add_child_with_id(
+                            "verify multi-index",
+                            integrity::ProgressId::VerifyMultiIndex(Default::default()).into(),
+                        ),
                         should_interrupt,
                         options.clone(),
                     )?;
@@ -216,7 +246,10 @@ impl super::Store {
         for loose_db in &*index.loose_dbs {
             let out = loose_db
                 .verify_integrity(
-                    progress.add_child_with_id(loose_db.path().display().to_string(), *b"VISP"), /* Verify Integrity Store Path */
+                    progress.add_child_with_id(
+                        loose_db.path().display().to_string(),
+                        integrity::ProgressId::VerifyLooseObjectDbPath.into(),
+                    ),
                     should_interrupt,
                 )
                 .map(|statistics| integrity::LooseObjectStatistics {

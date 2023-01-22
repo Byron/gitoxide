@@ -28,6 +28,39 @@ pub struct Outcome {
     pub num_objects: u32,
 }
 
+/// The progress ids used in [`write_data_iter_from_stream()`][crate::index::File::write_data_iter_to_stream()].
+///
+/// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
+#[derive(Debug, Copy, Clone)]
+pub enum ProgressId {
+    /// Counts the amount of objects that were index thus far.
+    IndexObjects,
+    /// The amount of bytes that were decompressed while decoding pack entries.
+    ///
+    /// This is done to determine entry boundaries.
+    DecompressedBytes,
+    /// The amount of objects whose hashes were computed.
+    ///
+    /// This is done by decoding them, which typically involves decoding delta objects.
+    ResolveObjects,
+    /// The amount of bytes that were decoded in total, as the sum of all bytes to represent all resolved objects.
+    DecodedBytes,
+    /// The amount of bytes written to the index file.
+    IndexBytesWritten,
+}
+
+impl From<ProgressId> for git_features::progress::Id {
+    fn from(v: ProgressId) -> Self {
+        match v {
+            ProgressId::IndexObjects => *b"IWIO",
+            ProgressId::DecompressedBytes => *b"IWDB",
+            ProgressId::ResolveObjects => *b"IWRO",
+            ProgressId::DecodedBytes => *b"IWDB",
+            ProgressId::IndexBytesWritten => *b"IWBW",
+        }
+    }
+}
+
 /// Various ways of writing an index file from pack entries
 impl crate::index::File {
     /// Write information about `entries` as obtained from a pack data file into a pack index file via the `out` stream.
@@ -75,9 +108,10 @@ impl crate::index::File {
         let indexing_start = std::time::Instant::now();
 
         root_progress.init(Some(4), progress::steps());
-        let mut objects_progress = root_progress.add_child_with_id("indexing", *b"IWIO"); /* Index Write Index Objects */
+        let mut objects_progress = root_progress.add_child_with_id("indexing", ProgressId::IndexObjects.into());
         objects_progress.init(entries.size_hint().1, progress::count("objects"));
-        let mut decompressed_progress = root_progress.add_child_with_id("decompressing", *b"IWDB"); /* Index Write Decompressed Bytes */
+        let mut decompressed_progress =
+            root_progress.add_child_with_id("decompressing", ProgressId::DecompressedBytes.into());
         decompressed_progress.init(None, progress::bytes());
         let mut pack_entries_end: u64 = 0;
 
@@ -168,8 +202,8 @@ impl crate::index::File {
                     Ok::<_, Error>(())
                 },
                 traverse::Options {
-                    object_progress: root_progress.add_child_with_id("Resolving", *b"IWRO"), /* Index Write Resolve Objects */
-                    size_progress: root_progress.add_child_with_id("Decoding", *b"IWDB"), /* Index Write Decode Bytes */
+                    object_progress: root_progress.add_child_with_id("Resolving", ProgressId::ResolveObjects.into()),
+                    size_progress: root_progress.add_child_with_id("Decoding", ProgressId::DecodedBytes.into()),
                     thread_limit,
                     should_interrupt,
                     object_hash,
@@ -180,7 +214,7 @@ impl crate::index::File {
             let mut items = roots;
             items.extend(children);
             {
-                let _progress = root_progress.add_child_with_id("sorting by id", *b"info");
+                let _progress = root_progress.add_child_with_id("sorting by id", git_features::progress::UNKNOWN);
                 items.sort_by_key(|e| e.data.id);
             }
 
@@ -203,7 +237,7 @@ impl crate::index::File {
             sorted_pack_offsets_by_oid,
             &pack_hash,
             version,
-            root_progress.add_child_with_id("writing index file", *b"IWBW"), /* Index Write Bytes Written */
+            root_progress.add_child_with_id("writing index file", ProgressId::IndexBytesWritten.into()),
         )?;
         root_progress.show_throughput_with(
             indexing_start,

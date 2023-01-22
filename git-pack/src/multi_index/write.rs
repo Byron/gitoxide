@@ -47,6 +47,26 @@ pub struct Outcome<P> {
     pub progress: P,
 }
 
+/// The progress ids used in [`write_from_index_paths()`][multi_index::File::write_from_index_paths()].
+///
+/// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
+#[derive(Debug, Copy, Clone)]
+pub enum ProgressId {
+    /// Counts each path in the input set whose entries we enumerate and write into the multi-index
+    FromPathsCollectingEntries,
+    /// The amount of bytes written as part of the multi-index.
+    BytesWritten,
+}
+
+impl From<ProgressId> for git_features::progress::Id {
+    fn from(v: ProgressId) -> Self {
+        match v {
+            ProgressId::FromPathsCollectingEntries => *b"MPCE",
+            ProgressId::BytesWritten => *b"MPBW",
+        }
+    }
+}
+
 impl multi_index::File {
     pub(crate) const SIGNATURE: &'static [u8] = b"MIDX";
     pub(crate) const HEADER_LEN: usize = 4 /*signature*/ +
@@ -82,7 +102,8 @@ impl multi_index::File {
         let entries = {
             let mut entries = Vec::new();
             let start = Instant::now();
-            let mut progress = progress.add_child_with_id("Collecting entries", *b"MPCE"); /* Multiindex from Paths Collecting Entries */
+            let mut progress =
+                progress.add_child_with_id("Collecting entries", ProgressId::FromPathsCollectingEntries.into());
             progress.init(Some(index_paths_sorted.len()), git_features::progress::count("indices"));
 
             // This could be parallelized… but it's probably not worth it unless you have 500mio objects.
@@ -147,7 +168,7 @@ impl multi_index::File {
             );
         }
 
-        let mut write_progress = progress.add_child_with_id("Writing multi-index", *b"MPBW"); /* Multiindex Bytes Written  */
+        let mut write_progress = progress.add_child_with_id("Writing multi-index", ProgressId::BytesWritten.into());
         let write_start = Instant::now();
         write_progress.init(
             Some(cf.planned_storage_size() as usize + Self::HEADER_LEN),

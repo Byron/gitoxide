@@ -72,6 +72,25 @@ pub struct Outcome {
     pub status: Status,
 }
 
+/// The progress ids used in during various steps of the fetch operation.
+///
+/// Note that tagged progress isn't very widely available yet, but support can be improved as needed.
+///
+/// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
+#[derive(Debug, Copy, Clone)]
+pub enum ProgressId {
+    /// The progress name is defined by the remote and the progress messages it sets, along with their progress values and limits.
+    RemoteProgress,
+}
+
+impl From<ProgressId> for git_features::progress::Id {
+    fn from(v: ProgressId) -> Self {
+        match v {
+            ProgressId::RemoteProgress => *b"FERP",
+        }
+    }
+}
+
 ///
 pub mod negotiate;
 
