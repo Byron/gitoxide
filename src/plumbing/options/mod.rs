@@ -108,8 +108,8 @@ pub enum Subcommands {
     Exclude(exclude::Subcommands),
     #[clap(subcommand)]
     Index(index::Subcommands),
-    /// Display overall progress of the gitoxide project as seen from the perspective of git-config.
-    Progress,
+    /// Show which git configuration values are used or planned.
+    ConfigTree,
     Config(config::Platform),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
