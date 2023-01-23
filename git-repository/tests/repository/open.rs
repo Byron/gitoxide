@@ -166,7 +166,7 @@ mod with_overrides {
             .set("GIT_HTTP_USER_AGENT", "agent-from-env")
             .set("GIT_HTTP_LOW_SPEED_LIMIT", "1")
             .set("GIT_HTTP_LOW_SPEED_TIME", "1")
-            .set("GIT_HTTP_PROXY_AUTHMETHOD", "negotiate")
+            .set("GIT_HTTP_PROXY_AUTHMETHOD", "proxy-auth-method-env")
             .set("GIT_CURL_VERBOSE", "true")
             .set("https_proxy", "https-lower-override")
             .set("HTTPS_PROXY", "https-upper")
@@ -202,6 +202,7 @@ mod with_overrides {
                 "ssh.variant=ssh-variant-cli",
                 "core.sshCommand=ssh-command-cli",
                 "gitoxide.ssh.commandWithoutShellFallback=ssh-command-fallback-cli",
+                "gitoxide.http.proxyAuthMethod=proxy-auth-method-cli",
             ])
             .config_overrides([
                 "http.userAgent=agent-from-api",
@@ -212,6 +213,7 @@ mod with_overrides {
                 "ssh.variant=ssh-variant-api",
                 "core.sshCommand=ssh-command-api",
                 "gitoxide.ssh.commandWithoutShellFallback=ssh-command-fallback-api",
+                "gitoxide.http.proxyAuthMethod=proxy-auth-method-api",
             ]);
         opts.permissions.env.git_prefix = Permission::Allow;
         opts.permissions.env.http_transport = Permission::Allow;
@@ -246,7 +248,8 @@ mod with_overrides {
             config
                 .strings_by_key("http.proxyAuthMethod")
                 .expect("at least one value"),
-            [cow_bstr("basic"), cow_bstr("negotiate"),]
+            [cow_bstr("basic")],
+            "this value isn't overridden directly"
         );
         assert_eq!(
             config
@@ -327,6 +330,16 @@ mod with_overrides {
                 cow_bstr("ssh-command-fallback-cli"),
                 cow_bstr("ssh-command-fallback-api"),
                 cow_bstr("ssh-command-fallback-env"),
+            ]
+        );
+        assert_eq!(
+            config
+                .strings_by_key("gitoxide.http.proxyAuthMethod")
+                .expect("at least one value"),
+            [
+                cow_bstr("proxy-auth-method-cli"),
+                cow_bstr("proxy-auth-method-api"),
+                cow_bstr("proxy-auth-method-env"),
             ]
         );
         for (key, expected) in [

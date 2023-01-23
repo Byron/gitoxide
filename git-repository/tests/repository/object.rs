@@ -127,7 +127,7 @@ mod tag {
             "v1.0.0",
             current_head_id,
             git_object::Kind::Commit,
-            Some(repo.committer().expect("present")),
+            Some(repo.committer().expect("present")?),
             message,
             git_ref::transaction::PreviousValue::MustNotExist,
         )?;
@@ -140,7 +140,7 @@ mod tag {
         assert_eq!(tag.target_kind, git_object::Kind::Commit);
         assert_eq!(
             tag.tagger.as_ref().expect("tagger").actor(),
-            repo.committer().expect("present").actor()
+            repo.committer().expect("present")?.actor()
         );
         assert_eq!(tag.message, message);
         Ok(())

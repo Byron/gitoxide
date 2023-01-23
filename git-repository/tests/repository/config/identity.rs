@@ -9,10 +9,10 @@ use crate::named_repo;
 
 #[test]
 #[serial]
-fn author_and_committer_and_fallback() {
+fn author_and_committer_and_fallback() -> crate::Result {
     for trust in [git_sec::Trust::Full, git_sec::Trust::Reduced] {
-        let repo = named_repo("make_config_repo.sh").unwrap();
-        let work_dir = repo.work_dir().expect("present").canonicalize().unwrap();
+        let repo = named_repo("make_config_repo.sh")?;
+        let work_dir = repo.work_dir().expect("present").canonicalize()?;
         let _env = Env::new()
             .set(
                 "GIT_CONFIG_SYSTEM",
@@ -20,10 +20,10 @@ fn author_and_committer_and_fallback() {
             )
             .set("GIT_AUTHOR_NAME", "author")
             .set("GIT_AUTHOR_EMAIL", "author@email")
-            .set("GIT_AUTHOR_DATE", "1979-02-26 18:30:00")
+            .set("GIT_AUTHOR_DATE", "Thu, 1 Aug 2022 12:45:06 +0800")
             .set("GIT_COMMITTER_NAME", "commiter-overrider-unused")
             .set("GIT_COMMITTER_EMAIL", "committer-override-unused@email")
-            .set("GIT_COMMITTER_DATE", "1980-02-26 18:30:00")
+            .set("GIT_COMMITTER_DATE", "Thu, 1 Aug 2022 12:45:06 -0200")
             .set("EMAIL", "general@email-unused")
             .set("GIT_CONFIG_COUNT", "1")
             .set("GIT_CONFIG_KEY_0", "include.path")
@@ -38,27 +38,33 @@ fn author_and_committer_and_fallback() {
                 },
                 ..Default::default()
             }),
-        )
-        .unwrap();
+        )?;
 
         assert_eq!(
-            repo.author(),
-            Some(git_actor::SignatureRef {
+            repo.author().expect("present")?,
+            git_actor::SignatureRef {
                 name: "author".into(),
                 email: "author@email".into(),
                 time: git_date::Time {
-                    seconds_since_unix_epoch: 42,
-                    offset_in_seconds: 1800,
+                    seconds_since_unix_epoch: 1659329106,
+                    offset_in_seconds: 28800,
                     sign: git_date::time::Sign::Plus
                 }
-            }),
-            "the only parsesable marker time we know right now, indicating time parse success"
+            }
         );
-        {
-            let actual = repo.committer().expect("set");
-            assert_eq!(actual.name, "committer");
-            assert_eq!(actual.email, "committer@email");
-        }
+
+        assert_eq!(
+            repo.committer().expect("present")?,
+            git_actor::SignatureRef {
+                name: "committer".into(),
+                email: "committer@email".into(),
+                time: git_date::Time {
+                    seconds_since_unix_epoch: 1659365106,
+                    offset_in_seconds: -7200,
+                    sign: git_date::time::Sign::Minus
+                }
+            }
+        );
         let config = repo.config_snapshot();
 
         assert_eq!(config.boolean("core.bare"), Some(false));
@@ -121,13 +127,14 @@ fn author_and_committer_and_fallback() {
             );
         }
     }
+    Ok(())
 }
 
 #[test]
 #[serial]
-fn author_from_different_config_sections() {
-    let repo = named_repo("make_signatures_repo.sh").unwrap();
-    let work_dir = repo.work_dir().unwrap().canonicalize().unwrap();
+fn author_from_different_config_sections() -> crate::Result {
+    let repo = named_repo("make_signatures_repo.sh")?;
+    let work_dir = repo.work_dir().unwrap().canonicalize()?;
 
     let _env = Env::new()
         .set("GIT_CONFIG_GLOBAL", work_dir.join("global.config").to_str().unwrap())
@@ -150,11 +157,10 @@ fn author_from_different_config_sections() {
                 },
                 ..Default::default()
             }),
-    )
-    .unwrap();
+    )?;
 
     assert_eq!(
-        repo.author(),
+        repo.author().transpose()?,
         Some(git_actor::SignatureRef {
             name: "global name".into(),
             email: "local@example.com".into(),
@@ -168,7 +174,7 @@ fn author_from_different_config_sections() {
          but email comes from repository-local config",
     );
     assert_eq!(
-        repo.committer(),
+        repo.committer().transpose()?,
         Some(git_actor::SignatureRef {
             name: "local committer".into(),
             email: "global-committer@example.com".into(),
@@ -181,4 +187,5 @@ fn author_from_different_config_sections() {
         "committer name comes from repository-local config, \
          but committer email comes from global config"
     );
+    Ok(())
 }

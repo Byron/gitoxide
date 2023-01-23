@@ -131,7 +131,11 @@ pub fn update_head(
                     git_lock::acquire::Fail::Immediately,
                 )
                 .map_err(crate::reference::edit::Error::from)?
-                .commit(repo.committer().ok_or(Error::ReflogCommitterMissing)?)
+                .commit(
+                    repo.committer()
+                        .transpose()
+                        .map_err(|err| Error::HeadUpdate(crate::reference::edit::Error::ParseCommitterTime(err)))?,
+                )
                 .map_err(crate::reference::edit::Error::from)?;
 
             if let Some(head_peeled_id) = head_peeled_id {

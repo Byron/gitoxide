@@ -1,11 +1,12 @@
 use std::borrow::Cow;
 
-use git_config::File;
 use git_sec::Permission;
 
 use super::{interpolate_context, util, Error, StageOne};
+use crate::config::tree::{gitoxide, Core, Http};
 use crate::{
     bstr::BString,
+    config,
     config::{cache::util::ApplyLeniency, Cache},
     repository,
 };
@@ -123,14 +124,14 @@ impl Cache {
                 globals.append(git_config::File::from_env(options)?.unwrap_or_default());
             }
             if !cli_config_overrides.is_empty() {
-                crate::config::overrides::append(&mut globals, cli_config_overrides, git_config::Source::Cli, |_| None)
+                config::overrides::append(&mut globals, cli_config_overrides, git_config::Source::Cli, |_| None)
                     .map_err(|err| Error::ConfigOverrides {
                         err,
                         source: git_config::Source::Cli,
                     })?;
             }
             if !api_config_overrides.is_empty() {
-                crate::config::overrides::append(&mut globals, api_config_overrides, git_config::Source::Api, |_| None)
+                config::overrides::append(&mut globals, api_config_overrides, git_config::Source::Api, |_| None)
                     .map_err(|err| Error::ConfigOverrides {
                         err,
                         source: git_config::Source::Api,
@@ -144,9 +145,15 @@ impl Cache {
 
         use util::config_bool;
         let reflog = util::query_refupdates(&config, lenient_config)?;
-        let ignore_case = config_bool(&config, "core.ignoreCase", false, lenient_config)?;
-        let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true, lenient_config)?;
-        let object_kind_hint = util::disambiguate_hint(&config);
+        let ignore_case = config_bool(&config, &Core::IGNORE_CASE, "core.ignoreCase", false, lenient_config)?;
+        let use_multi_pack_index = config_bool(
+            &config,
+            &Core::MULTIPACK_INDEX,
+            "core.multiPackIndex",
+            true,
+            lenient_config,
+        )?;
+        let object_kind_hint = util::disambiguate_hint(&config, lenient_config)?;
         let (pack_cache_bytes, object_cache_bytes) =
             util::parse_object_caches(&config, lenient_config, filter_config_section)?;
         // NOTE: When adding a new initial cache, consider adjusting `reread_values_and_clear_caches()` as well.
@@ -197,8 +204,14 @@ impl Cache {
         let hex_len = util::parse_core_abbrev(config, self.object_hash).with_leniency(self.lenient_config)?;
 
         use util::config_bool;
-        let ignore_case = config_bool(config, "core.ignoreCase", false, self.lenient_config)?;
-        let object_kind_hint = util::disambiguate_hint(config);
+        let ignore_case = config_bool(
+            config,
+            &Core::IGNORE_CASE,
+            "core.ignoreCase",
+            false,
+            self.lenient_config,
+        )?;
+        let object_kind_hint = util::disambiguate_hint(config, self.lenient_config)?;
         let reflog = util::query_refupdates(config, self.lenient_config)?;
 
         self.hex_len = hex_len;
@@ -249,12 +262,15 @@ impl crate::Repository {
 }
 
 fn apply_environment_overrides(
-    config: &mut File<'static>,
+    config: &mut git_config::File<'static>,
     git_prefix: Permission,
     http_transport: Permission,
     identity: Permission,
     objects: Permission,
 ) -> Result<(), Error> {
+    fn env(key: &'static dyn config::tree::Key) -> &'static str {
+        key.the_environment_override()
+    }
     fn var_as_bstring(var: &str, perm: Permission) -> Option<BString> {
         perm.check_opt(var)
             .and_then(std::env::var_os)
@@ -271,18 +287,24 @@ fn apply_environment_overrides(
                 ("GIT_HTTP_LOW_SPEED_LIMIT", "lowSpeedLimit"),
                 ("GIT_HTTP_LOW_SPEED_TIME", "lowSpeedTime"),
                 ("GIT_HTTP_USER_AGENT", "userAgent"),
-                ("GIT_HTTP_PROXY_AUTHMETHOD", "proxyAuthMethod"),
-                ("all_proxy", "all-proxy-lower"),
-                ("ALL_PROXY", "all-proxy"),
-                ("GIT_SSL_CAINFO", "sslCAInfo"),
-                ("GIT_SSL_VERSION", "sslVersion"),
+                {
+                    let key = &Http::SSL_CA_INFO;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &Http::SSL_VERSION;
+                    (env(key), key.name)
+                },
             ][..],
         ),
         (
             "gitoxide",
             Some(Cow::Borrowed("https".into())),
             http_transport,
-            &[("HTTPS_PROXY", "proxy"), ("https_proxy", "proxy")],
+            &[
+                ("HTTPS_PROXY", gitoxide::Https::PROXY.name),
+                ("https_proxy", gitoxide::Https::PROXY.name),
+            ],
         ),
         (
             "gitoxide",
@@ -290,11 +312,27 @@ fn apply_environment_overrides(
             http_transport,
             &[
                 ("ALL_PROXY", "allProxy"),
-                ("all_proxy", "allProxy"),
+                {
+                    let key = &gitoxide::Http::ALL_PROXY;
+                    (env(key), key.name)
+                },
                 ("NO_PROXY", "noProxy"),
-                ("no_proxy", "noProxy"),
-                ("http_proxy", "proxy"),
-                ("GIT_CURL_VERBOSE", "verbose"),
+                {
+                    let key = &gitoxide::Http::NO_PROXY;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Http::PROXY;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Http::VERBOSE;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Http::PROXY_AUTH_METHOD;
+                    (env(key), key.name)
+                },
             ],
         ),
         (
@@ -302,8 +340,14 @@ fn apply_environment_overrides(
             Some(Cow::Borrowed("committer".into())),
             identity,
             &[
-                ("GIT_COMMITTER_NAME", "nameFallback"),
-                ("GIT_COMMITTER_EMAIL", "emailFallback"),
+                {
+                    let key = &gitoxide::Committer::NAME_FALLBACK;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Committer::EMAIL_FALLBACK;
+                    (env(key), key.name)
+                },
             ],
         ),
         (
@@ -311,8 +355,14 @@ fn apply_environment_overrides(
             Some(Cow::Borrowed("author".into())),
             identity,
             &[
-                ("GIT_AUTHOR_NAME", "nameFallback"),
-                ("GIT_AUTHOR_EMAIL", "emailFallback"),
+                {
+                    let key = &gitoxide::Author::NAME_FALLBACK;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Author::EMAIL_FALLBACK;
+                    (env(key), key.name)
+                },
             ],
         ),
         (
@@ -320,8 +370,14 @@ fn apply_environment_overrides(
             Some(Cow::Borrowed("commit".into())),
             git_prefix,
             &[
-                ("GIT_COMMITTER_DATE", "committerDate"),
-                ("GIT_AUTHOR_DATE", "authorDate"),
+                {
+                    let key = &gitoxide::Commit::COMMITTER_DATE;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Commit::AUTHOR_DATE;
+                    (env(key), key.name)
+                },
             ],
         ),
         (
@@ -334,25 +390,48 @@ fn apply_environment_overrides(
             "gitoxide",
             Some(Cow::Borrowed("user".into())),
             identity,
-            &[("EMAIL", "emailFallback")],
+            &[{
+                let key = &gitoxide::User::EMAIL_FALLBACK;
+                (env(key), key.name)
+            }],
         ),
         (
             "gitoxide",
             Some(Cow::Borrowed("objects".into())),
             objects,
             &[
-                ("GIT_NO_REPLACE_OBJECTS", "noReplace"),
-                ("GIT_REPLACE_REF_BASE", "replaceRefBase"),
-                ("GITOXIDE_OBJECT_CACHE_MEMORY", "cacheLimit"),
+                {
+                    let key = &gitoxide::Objects::NO_REPLACE;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Objects::REPLACE_REF_BASE;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Objects::CACHE_LIMIT;
+                    (env(key), key.name)
+                },
             ],
         ),
         (
             "gitoxide",
             Some(Cow::Borrowed("ssh".into())),
             git_prefix,
-            &[("GIT_SSH", "commandWithoutShellFallback")],
+            &[{
+                let key = &gitoxide::Ssh::COMMAND_WITHOUT_SHELL_FALLBACK;
+                (env(key), key.name)
+            }],
         ),
-        ("ssh", None, git_prefix, &[("GIT_SSH_VARIANT", "variant")]),
+        (
+            "ssh",
+            None,
+            git_prefix,
+            &[{
+                let key = &config::tree::Ssh::VARIANT;
+                (env(key), key.name)
+            }],
+        ),
     ] {
         let mut section = env_override
             .new_section(section_name, subsection_name)
@@ -378,8 +457,14 @@ fn apply_environment_overrides(
             .expect("statically known valid section name");
 
         for (var, key, permission) in [
-            ("GITOXIDE_PACK_CACHE_MEMORY", "deltaBaseCacheLimit", objects),
-            ("GIT_SSH_COMMAND", "sshCommand", git_prefix),
+            {
+                let key = &Core::DELTA_BASE_CACHE_LIMIT;
+                (env(key), key.name, objects)
+            },
+            {
+                let key = &Core::SSH_COMMAND;
+                (env(key), key.name, git_prefix)
+            },
         ] {
             if let Some(value) = var_as_bstring(var, permission) {
                 section.push_with_comment(

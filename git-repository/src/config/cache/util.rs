@@ -1,7 +1,7 @@
-use std::convert::TryFrom;
-
 use super::Error;
-use crate::{bstr::ByteSlice, revision::spec::parse::ObjectKindHint};
+use crate::config;
+use crate::config::tree::{gitoxide, Core};
+use crate::revision::spec::parse::ObjectKindHint;
 
 pub(crate) fn interpolate_context<'a>(
     git_install_dir: Option<&'a std::path::Path>,
@@ -23,18 +23,22 @@ pub(crate) fn base_options(lossy: Option<bool>) -> git_config::file::init::Optio
 
 pub(crate) fn config_bool(
     config: &git_config::File<'_>,
-    key: &str,
+    key: &'static config::tree::keys::Boolean,
+    key_str: &str,
     default: bool,
     lenient: bool,
 ) -> Result<bool, Error> {
-    let (section, key) = key.split_once('.').expect("valid section.key format");
+    use config::tree::Key;
+    debug_assert_eq!(
+        key_str,
+        key.logical_name(),
+        "BUG: key name and hardcoded name must match"
+    );
     config
-        .boolean(section, None, key)
+        .boolean_by_key(key_str)
+        .map(|res| key.enrich_error(res))
         .unwrap_or(Ok(default))
-        .map_err(|err| Error::DecodeBoolean {
-            value: err.input,
-            key: key.into(),
-        })
+        .map_err(Error::from)
         .with_lenient_default(lenient)
 }
 
@@ -42,25 +46,64 @@ pub(crate) fn query_refupdates(
     config: &git_config::File<'static>,
     lenient_config: bool,
 ) -> Result<Option<git_ref::store::WriteReflog>, Error> {
-    match config
-        .boolean("core", None, "logAllRefUpdates")
-        .and_then(|b| b.ok())
-        .map(|b| {
-            if b {
-                git_ref::store::WriteReflog::Normal
-            } else {
-                git_ref::store::WriteReflog::Disable
-            }
-        }) {
-        Some(val) => Ok(Some(val)),
-        None => match config.string("core", None, "logAllRefUpdates") {
-            Some(val) if val.eq_ignore_ascii_case(b"always") => Ok(Some(git_ref::store::WriteReflog::Always)),
-            Some(_val) if lenient_config => Ok(None),
-            Some(val) => Err(Error::LogAllRefUpdates {
-                value: val.into_owned(),
-            }),
-            None => Ok(None),
-        },
+    let key = "core.logAllRefUpdates";
+    Core::LOG_ALL_REF_UPDATES
+        .try_into_ref_updates(config.boolean_by_key(key), || config.string_by_key(key))
+        .with_leniency(lenient_config)
+        .map_err(Into::into)
+}
+
+pub(crate) fn reflog_or_default(
+    config_reflog: Option<git_ref::store::WriteReflog>,
+    has_worktree: bool,
+) -> git_ref::store::WriteReflog {
+    config_reflog.unwrap_or(if has_worktree {
+        git_ref::store::WriteReflog::Normal
+    } else {
+        git_ref::store::WriteReflog::Disable
+    })
+}
+
+/// Return `(pack_cache_bytes, object_cache_bytes)` as parsed from git-config
+pub(crate) fn parse_object_caches(
+    config: &git_config::File<'static>,
+    lenient: bool,
+    mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
+) -> Result<(Option<usize>, usize), Error> {
+    let pack_cache_bytes = config
+        .integer_filter_by_key("core.deltaBaseCacheLimit", &mut filter_config_section)
+        .map(|res| Core::DELTA_BASE_CACHE_LIMIT.try_into_usize(res))
+        .transpose()
+        .with_leniency(lenient)?;
+    let object_cache_bytes = config
+        .integer_filter_by_key("gitoxide.objects.cacheLimit", &mut filter_config_section)
+        .map(|res| gitoxide::Objects::CACHE_LIMIT.try_into_usize(res))
+        .transpose()
+        .with_leniency(lenient)?
+        .unwrap_or_default();
+    Ok((pack_cache_bytes, object_cache_bytes))
+}
+
+pub(crate) fn parse_core_abbrev(
+    config: &git_config::File<'static>,
+    object_hash: git_hash::Kind,
+) -> Result<Option<usize>, Error> {
+    Ok(config
+        .string_by_key("core.abbrev")
+        .map(|abbrev| Core::ABBREV.try_into_abbreviation(abbrev, object_hash))
+        .transpose()?
+        .flatten())
+}
+
+pub(crate) fn disambiguate_hint(
+    config: &git_config::File<'static>,
+    lenient_config: bool,
+) -> Result<Option<ObjectKindHint>, config::key::GenericErrorWithValue> {
+    match config.string_by_key("core.disambiguate") {
+        None => return Ok(None),
+        Some(value) => Core::DISAMBIGUATE
+            .try_into_object_kind_hint(value)
+            .with_leniency(lenient_config),
     }
 }
 
@@ -94,93 +137,4 @@ where
             Err(err) => Err(err),
         }
     }
-}
-
-pub(crate) fn reflog_or_default(
-    config_reflog: Option<git_ref::store::WriteReflog>,
-    has_worktree: bool,
-) -> git_ref::store::WriteReflog {
-    config_reflog.unwrap_or(if has_worktree {
-        git_ref::store::WriteReflog::Normal
-    } else {
-        git_ref::store::WriteReflog::Disable
-    })
-}
-
-/// Return `(pack_cache_bytes, object_cache_bytes)` as parsed from git-config
-pub(crate) fn parse_object_caches(
-    config: &git_config::File<'static>,
-    lenient: bool,
-    mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
-) -> Result<(Option<usize>, usize), Error> {
-    let key = "core.deltaBaseCacheLimit";
-    let pack_cache_bytes = config
-        .integer_filter_by_key(key, &mut filter_config_section)
-        .transpose()
-        .with_leniency(lenient)
-        .map_err(|err| Error::Value { source: err, key })?;
-    let key = "gitoxide.objects.cacheLimit";
-    let object_cache_bytes = config
-        .integer_filter_by_key(key, &mut filter_config_section)
-        .transpose()
-        .with_leniency(lenient)
-        .map_err(|err| Error::Value { source: err, key })?
-        .unwrap_or_default();
-    Ok((
-        pack_cache_bytes.and_then(|v| v.try_into().ok()),
-        object_cache_bytes.try_into().unwrap_or_default(),
-    ))
-}
-
-pub(crate) fn parse_core_abbrev(
-    config: &git_config::File<'static>,
-    object_hash: git_hash::Kind,
-) -> Result<Option<usize>, Error> {
-    match config.string("core", None, "abbrev") {
-        Some(hex_len_str) => {
-            if hex_len_str.trim().is_empty() {
-                return Err(Error::EmptyValue { key: "core.abbrev" });
-            }
-            if hex_len_str.trim().eq_ignore_ascii_case(b"auto") {
-                Ok(None)
-            } else {
-                let value_bytes = hex_len_str.as_ref();
-                if let Ok(false) = git_config::Boolean::try_from(value_bytes).map(Into::into) {
-                    Ok(object_hash.len_in_hex().into())
-                } else {
-                    let value = git_config::Integer::try_from(value_bytes)
-                        .map_err(|_| Error::CoreAbbrev {
-                            value: hex_len_str.clone().into_owned(),
-                            max: object_hash.len_in_hex() as u8,
-                        })?
-                        .to_decimal()
-                        .ok_or_else(|| Error::CoreAbbrev {
-                            value: hex_len_str.clone().into_owned(),
-                            max: object_hash.len_in_hex() as u8,
-                        })?;
-                    if value < 4 || value as usize > object_hash.len_in_hex() {
-                        return Err(Error::CoreAbbrev {
-                            value: hex_len_str.clone().into_owned(),
-                            max: object_hash.len_in_hex() as u8,
-                        });
-                    }
-                    Ok(Some(value as usize))
-                }
-            }
-        }
-        None => Ok(None),
-    }
-}
-
-pub(crate) fn disambiguate_hint(config: &git_config::File<'static>) -> Option<ObjectKindHint> {
-    config.string("core", None, "disambiguate").and_then(|value| {
-        Some(match value.as_ref().as_ref() {
-            b"commit" => ObjectKindHint::Commit,
-            b"committish" => ObjectKindHint::Committish,
-            b"tree" => ObjectKindHint::Tree,
-            b"treeish" => ObjectKindHint::Treeish,
-            b"blob" => ObjectKindHint::Blob,
-            _ => return None,
-        })
-    })
 }

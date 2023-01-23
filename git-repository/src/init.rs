@@ -6,6 +6,7 @@ use git_ref::{
     FullName, Target,
 };
 
+use crate::config::tree::Init;
 use crate::{bstr::BString, ThreadSafeRepository};
 
 /// The name of the branch to use if non is configured via git configuration.
@@ -70,7 +71,7 @@ impl ThreadSafeRepository {
         let branch_name = repo
             .config
             .resolved
-            .string("init", None, "defaultBranch")
+            .string("init", None, Init::DEFAULT_BRANCH.name)
             .unwrap_or_else(|| Cow::Borrowed(DEFAULT_BRANCH_NAME.into()));
         if branch_name.as_ref() != DEFAULT_BRANCH_NAME {
             let sym_ref: FullName =

@@ -3,6 +3,7 @@ use util::*;
 
 mod clone;
 mod commit;
+mod config;
 mod head;
 mod id;
 mod init;

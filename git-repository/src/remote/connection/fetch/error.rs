@@ -1,13 +1,13 @@
+use crate::config;
+
 /// The error returned by [`receive()`](super::Prepare::receive()).
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error("{message}{}", desired.map(|n| format!(" (got {})", n)).unwrap_or_default())]
-    Configuration {
-        message: &'static str,
-        desired: Option<i64>,
-        source: Option<git_config::value::Error>,
-    },
+    #[error("The value to configure pack threads should be 0 to auto-configure or the amount of threads to use")]
+    PackThreads(#[from] config::unsigned_integer::Error),
+    #[error("The value to configure the pack index version should be 1 or 2")]
+    PackIndexVersion(#[from] config::key::GenericError),
     #[error("Could not decode server reply")]
     FetchResponse(#[from] git_protocol::fetch::response::Error),
     #[error("Cannot fetch from a remote that uses {remote} while local repository uses {local} for object hashes")]

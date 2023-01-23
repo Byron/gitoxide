@@ -58,4 +58,5 @@ pub use connection::{ref_map, AuthenticateFn, Connection};
 pub mod save;
 
 mod access;
-pub(crate) mod url;
+///
+pub mod url;

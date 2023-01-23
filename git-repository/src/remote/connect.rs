@@ -3,20 +3,20 @@ use git_protocol::transport::client::Transport;
 use crate::{remote::Connection, Progress, Remote};
 
 mod error {
-    use crate::{bstr::BString, remote};
+    use crate::{bstr::BString, config, remote};
 
     /// The error returned by [connect()][crate::Remote::connect()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
         #[error("Could not obtain options for connecting via ssh")]
-        SshOptions(#[from] crate::config::ssh_connect_options::Error),
+        SshOptions(#[from] config::ssh_connect_options::Error),
         #[error("Could not obtain the current directory")]
         CurrentDir(#[from] std::io::Error),
         #[error("Could not access remote repository at \"{}\"", directory.display())]
         InvalidRemoteRepositoryPath { directory: std::path::PathBuf },
         #[error(transparent)]
-        SchemePermission(#[from] remote::url::scheme_permission::init::Error),
+        SchemePermission(#[from] config::protocol::allow::Error),
         #[error("Protocol {scheme:?} of url {url:?} is denied per configuration")]
         ProtocolDenied { url: BString, scheme: git_url::Scheme },
         #[error(transparent)]

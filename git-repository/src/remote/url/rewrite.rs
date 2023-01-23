@@ -2,6 +2,7 @@ use git_features::threading::OwnShared;
 
 use crate::{
     bstr::{BStr, BString, ByteVec},
+    config,
     remote::Direction,
 };
 
@@ -34,13 +35,13 @@ impl Rewrite {
                         None => continue,
                     };
 
-                    for instead_of in section.values("insteadOf") {
+                    for instead_of in section.values(config::tree::Url::INSTEAD_OF.name) {
                         url_rewrite.push(Replace {
                             with: OwnShared::clone(&replace),
                             find: instead_of.into_owned(),
                         });
                     }
-                    for instead_of in section.values("pushInsteadOf") {
+                    for instead_of in section.values(config::tree::Url::PUSH_INSTEAD_OF.name) {
                         push_url_rewrite.push(Replace {
                             with: OwnShared::clone(&replace),
                             find: instead_of.into_owned(),

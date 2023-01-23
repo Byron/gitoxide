@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use crate::{
     bstr::{BStr, BString},
-    remote, Remote,
+    config, remote, Remote,
 };
 
 /// The error returned by [`Remote::save_to()`].
@@ -49,7 +49,13 @@ impl Remote<'_> {
                 .collect::<Vec<_>>()
         }) {
             let mut sections_to_remove = Vec::new();
-            const KEYS_TO_REMOVE: &[&str] = &["url", "pushurl", "fetch", "push", "tagOpt"];
+            const KEYS_TO_REMOVE: &[&str] = &[
+                config::tree::Remote::URL.name,
+                config::tree::Remote::PUSH_URL.name,
+                config::tree::Remote::FETCH.name,
+                config::tree::Remote::PUSH.name,
+                config::tree::Remote::TAG_OPT.name,
+            ];
             for id in section_ids {
                 let mut section = config.section_mut_by_id(id).expect("just queried");
                 let was_empty = section.num_values() == 0;
@@ -78,7 +84,7 @@ impl Remote<'_> {
         }
         if self.fetch_tags != Default::default() {
             section.push(
-                as_key("tagOpt"),
+                as_key(config::tree::Remote::TAG_OPT.name),
                 BStr::new(match self.fetch_tags {
                     remote::fetch::Tags::All => "--tags",
                     remote::fetch::Tags::None => "--no-tags",
