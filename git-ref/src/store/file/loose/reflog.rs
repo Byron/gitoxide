@@ -103,7 +103,7 @@ pub mod create_or_update {
             name: &FullNameRef,
             previous_oid: Option<ObjectId>,
             new: &oid,
-            committer: git_actor::SignatureRef<'_>,
+            committer: Option<git_actor::SignatureRef<'_>>,
             message: &BStr,
             mut force_create_reflog: bool,
         ) -> Result<(), Error> {
@@ -151,6 +151,7 @@ pub mod create_or_update {
                     };
 
                     if let Some(mut file) = file_for_appending {
+                        let committer = committer.ok_or(Error::MissingCommitter)?;
                         write!(file, "{} {} ", previous_oid.unwrap_or_else(|| new.kind().null()), new)
                             .and_then(|_| committer.write_to(&mut file))
                             .and_then(|_| {
@@ -220,6 +221,8 @@ pub mod create_or_update {
             },
             #[error("reflog message must not contain newlines")]
             MessageWithNewlines,
+            #[error("reflog messages need a committer which isn't set")]
+            MissingCommitter,
         }
     }
     pub use error::Error;
