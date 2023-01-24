@@ -1,13 +1,13 @@
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, Clone)]
 #[allow(missing_docs)]
 pub enum Error {
     #[error("Cannot represent times before UNIX epoch at timestamp {timestamp}")]
     TooEarly { timestamp: i64 },
     #[error("Date string can not be parsed")]
-    InvalidDateString,
+    InvalidDateString { input: String },
     #[error("Dates past 2038 can not be represented.")]
     InvalidDate(#[from] std::num::TryFromIntError),
-    #[error("Current time is missing.")]
+    #[error("Current time is missing but required to handle relative dates.")]
     MissingCurrentTime,
 }
 
@@ -54,7 +54,7 @@ pub(crate) mod function {
         } else if let Some(time) = relative::parse(input, now).transpose()? {
             Time::new(timestamp(time)?, time.offset().whole_seconds())
         } else {
-            return Err(Error::InvalidDateString);
+            return Err(Error::InvalidDateString { input: input.into() });
         })
     }
 
