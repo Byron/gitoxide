@@ -5,7 +5,8 @@ pub fn restricted() -> crate::open::Options {
 mod update {
     use std::convert::TryInto;
 
-    use git_testtools::{hex_to_id, Result};
+    use git_hash::hex_to_id;
+    use git_testtools::Result;
 
     use crate as git;
 

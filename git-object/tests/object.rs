@@ -18,8 +18,7 @@ fn fixup(v: Vec<u8>) -> Vec<u8> {
     v.replace(b"\r\n", "\n")
 }
 
-pub use git_testtools::hex_to_id;
-
+pub use git_hash::hex_to_id;
 pub fn fixture(path: &str) -> PathBuf {
     PathBuf::from("tests/fixtures").join(path)
 }

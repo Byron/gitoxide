@@ -1,3 +1,3 @@
-pub use git_testtools::hex_to_id;
+pub use git_hash::hex_to_id;
 
 mod time;

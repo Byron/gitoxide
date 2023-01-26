@@ -1,8 +1,8 @@
 use std::{convert::TryInto, path::Path};
 
 use git_actor::{Sign, Signature, Time};
+use git_hash::hex_to_id;
 use git_object::bstr::ByteSlice;
-use git_testtools::hex_to_id;
 use tempfile::TempDir;
 
 use super::*;

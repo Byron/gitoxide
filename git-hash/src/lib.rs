@@ -9,6 +9,11 @@
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
+/// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
+pub fn hex_to_id(hex: &str) -> ObjectId {
+    ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+}
+
 #[path = "oid.rs"]
 mod borrowed;
 pub use borrowed::oid;

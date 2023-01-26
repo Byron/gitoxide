@@ -87,7 +87,8 @@ mod contains {
 mod lookup_prefix {
     use std::collections::HashSet;
 
-    use git_testtools::{fixture_path, hex_to_id};
+    use git_hash::hex_to_id;
+    use git_testtools::fixture_path;
     use maplit::hashset;
 
     use crate::store::loose::ldb;
@@ -329,7 +330,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     }
 
     mod header {
-        use git_testtools::hex_to_id;
+        use git_hash::hex_to_id;
 
         use crate::odb::store::loose::ldb;
 

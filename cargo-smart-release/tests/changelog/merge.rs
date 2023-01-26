@@ -3,7 +3,7 @@ use cargo_smart_release::{
     changelog::{section, Section},
     ChangeLog,
 };
-use git_testtools::hex_to_id;
+use git_repository::hash::hex_to_id;
 use time::OffsetDateTime;
 
 #[test]

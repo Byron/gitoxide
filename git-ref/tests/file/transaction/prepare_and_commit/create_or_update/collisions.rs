@@ -1,12 +1,12 @@
 use std::convert::TryInto;
 
+use git_hash::hex_to_id;
 use git_lock::acquire::Fail;
 use git_ref::{
     file::transaction::PackedRefs,
     transaction::{Change, LogChange, PreviousValue, RefEdit},
     Target,
 };
-use git_testtools::hex_to_id;
 
 use crate::file::transaction::prepare_and_commit::{committer, create_at, create_symbolic_at, delete_at, empty_store};
 

@@ -1,7 +1,7 @@
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
 mod reference {
-    use git_testtools::hex_to_id;
+    use git_hash::hex_to_id;
     use nom::error::VerboseError;
 
     use super::Result;

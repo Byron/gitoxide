@@ -1,5 +1,6 @@
 use std::convert::TryInto;
 
+use git_hash::hex_to_id;
 use git_hash::ObjectId;
 use git_lock::acquire::Fail;
 use git_object::bstr::{BString, ByteSlice};
@@ -13,7 +14,6 @@ use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target,
 };
-use git_testtools::hex_to_id;
 
 use crate::file::{
     store_with_packed_refs, store_writable,

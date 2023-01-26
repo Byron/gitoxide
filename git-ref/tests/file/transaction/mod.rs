@@ -2,6 +2,7 @@ pub(crate) mod prepare_and_commit {
     use std::convert::TryInto;
 
     use git_actor::{Sign, Time};
+    use git_hash::hex_to_id;
     use git_hash::ObjectId;
     use git_object::bstr::BString;
     use git_ref::{
@@ -9,7 +10,6 @@ pub(crate) mod prepare_and_commit {
         transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
         Target,
     };
-    use git_testtools::hex_to_id;
 
     fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<git_ref::log::Line>> {
         let mut buf = Vec::new();

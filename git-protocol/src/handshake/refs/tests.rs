@@ -1,4 +1,4 @@
-use git_testtools::hex_to_id as oid;
+use git_hash::hex_to_id as oid;
 use git_transport::{client, client::Capabilities};
 
 use crate::handshake::{refs, refs::shared::InternalRef, Ref};

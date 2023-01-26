@@ -1,5 +1,5 @@
+use git_hash::hex_to_id;
 use git_repository::{prelude::ObjectIdExt, revision::Spec};
-use git_testtools::hex_to_id;
 
 use crate::revision::spec::from_bytes::{parse_spec, repo};
 

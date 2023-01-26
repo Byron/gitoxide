@@ -1,8 +1,8 @@
 use std::process::Command;
 
-use git_hash::ObjectId;
+use git_hash::{hex_to_id, ObjectId};
 use git_odb::{store, store::iter::Ordering, Find, FindExt, Header, Write};
-use git_testtools::{fixture_path, hex_to_id};
+use git_testtools::fixture_path;
 
 use crate::odb::db;
 
@@ -501,8 +501,8 @@ fn packed_object_count_causes_all_indices_to_be_loaded() {
 mod disambiguate_prefix {
     use std::cmp::Ordering;
 
+    use git_hash::hex_to_id;
     use git_odb::store::prefix::disambiguate::Candidate;
-    use git_testtools::hex_to_id;
 
     use crate::{
         odb::store::dynamic::all_orderings,
@@ -622,7 +622,7 @@ mod iter {
 mod lookup_prefix {
     use std::collections::HashSet;
 
-    use git_testtools::hex_to_id;
+    use git_hash::hex_to_id;
     use maplit::hashset;
 
     use crate::{

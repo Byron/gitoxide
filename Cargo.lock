@@ -1194,6 +1194,7 @@ dependencies = [
  "document-features",
  "git-date",
  "git-features",
+ "git-hash",
  "git-testtools",
  "itoa",
  "nom",
@@ -1331,6 +1332,7 @@ version = "0.4.1"
 dependencies = [
  "bstr",
  "document-features",
+ "git-hash",
  "git-testtools",
  "itoa",
  "once_cell",

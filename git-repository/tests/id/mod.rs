@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
 
+use git_hash::hex_to_id;
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
-use git_testtools::hex_to_id;
 
 #[test]
 fn prefix() -> crate::Result {

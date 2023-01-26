@@ -1,8 +1,8 @@
 mod existing {
     use std::convert::{TryFrom, TryInto};
 
+    use git_hash::hex_to_id;
     use git_ref::{PartialName, PartialNameRef};
-    use git_testtools::hex_to_id;
 
     use crate::file::store_at;
 

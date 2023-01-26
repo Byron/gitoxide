@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
+use git_hash::hex_to_id;
 use git_object::bstr::ByteSlice;
-use git_testtools::hex_to_id;
 
 use crate::file::{store, store_at, store_with_packed_refs};
 
