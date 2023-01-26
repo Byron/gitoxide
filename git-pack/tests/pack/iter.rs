@@ -1,4 +1,4 @@
-use git_odb::pack;
+use git_pack as pack;
 
 #[test]
 fn size_of_entry() {
@@ -12,10 +12,8 @@ fn size_of_entry() {
 mod new_from_header {
     use std::fs;
 
-    use git_odb::{
-        pack,
-        pack::data::input::{EntryDataMode, Mode},
-    };
+    use git_pack as pack;
+    use git_pack::data::input::{EntryDataMode, Mode};
 
     use crate::{
         fixture_path,

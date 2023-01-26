@@ -44,8 +44,8 @@ document-features = { version = "0.2.1", optional = true }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
-git-discover = { path = "../git-discover" }
-git-worktree = { path = "../git-worktree" }
+git-discover = { version = "^0.12.1"}
+git-worktree = { version = "^0.12.1"}
 git-odb = { path = "../git-odb" }
 tempfile = "3.2.0"
 

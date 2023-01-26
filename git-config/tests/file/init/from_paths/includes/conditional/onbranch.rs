@@ -4,16 +4,12 @@ use std::{
 };
 
 use bstr::{BString, ByteSlice};
-use git_config::file::{
-    includes,
-    includes::conditional,
-    init::{self},
-};
-use git_ref::{
+use git_config::file::{includes, includes::conditional, init};
+use git_repository as git;
+use git_repository::refs::{
     transaction::{Change, PreviousValue, RefEdit},
     FullName, Target,
 };
-use git_repository as git;
 use tempfile::tempdir;
 
 use crate::file::{cow_str, init::from_paths::includes::conditional::git_init};
@@ -236,7 +232,7 @@ value = branch-override-by-include
 "#,
     )?;
 
-    let branch_name = FullName::try_from(BString::from(branch_name))?;
+    let branch_name = git_ref::FullName::try_from(BString::from(branch_name))?;
     let options = init::Options {
         includes: includes::Options::follow(
             Default::default(),
@@ -272,6 +268,7 @@ value = branch-override-by-include
         dir.into_path()
     );
 
+    let branch_name = FullName::try_from(BString::from(branch_name))?;
     repo.refs
         .transaction()
         .prepare(

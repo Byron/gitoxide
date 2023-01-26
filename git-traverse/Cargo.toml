@@ -17,7 +17,3 @@ git-hash = { version = "^0.10.1", path = "../git-hash" }
 git-object = { version = "^0.26.0", path = "../git-object" }
 git-hashtable = { version = "^0.1.0", path = "../git-hashtable" }
 thiserror = "1.0.32"
-
-[dev-dependencies]
-git-testtools = { path = "../tests/tools" }
-git-odb = { path = "../git-odb" }

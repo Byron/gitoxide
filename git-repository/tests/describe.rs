@@ -1,3 +1,4 @@
+//! These tests belong to git-revision but where moved here to avoid cirular dependencies
 use std::borrow::Cow;
 
 use git_hash::hex_to_id;
@@ -7,11 +8,10 @@ use git_repository::{
     Repository,
 };
 use git_revision::describe;
-
-mod format;
+pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error + 'static>>;
 
 #[test]
-fn option_none_if_no_tag_found() -> crate::Result {
+fn option_none_if_no_tag_found() -> Result {
     let repo = repo();
     let commit = repo.head_commit()?;
     let res = git_revision::describe(
@@ -24,7 +24,7 @@ fn option_none_if_no_tag_found() -> crate::Result {
 }
 
 #[test]
-fn fallback_if_configured_in_options_but_no_candidate_or_names() -> crate::Result {
+fn fallback_if_configured_in_options_but_no_candidate_or_names() -> Result {
     let repo = repo();
     let commit = repo.head_commit()?;
     let res = git_revision::describe(
@@ -47,7 +47,7 @@ fn fallback_if_configured_in_options_but_no_candidate_or_names() -> crate::Resul
 }
 
 #[test]
-fn fallback_if_configured_in_options_and_max_candidates_zero() -> crate::Result {
+fn fallback_if_configured_in_options_and_max_candidates_zero() -> Result {
     let repo = repo();
     let commit = repo.head_commit()?;
     let res = git_revision::describe(
@@ -68,7 +68,7 @@ fn fallback_if_configured_in_options_and_max_candidates_zero() -> crate::Result 
 }
 
 #[test]
-fn not_enough_candidates() -> crate::Result {
+fn not_enough_candidates() -> Result {
     let repo = repo();
     let commit = repo.head_commit()?;
 

@@ -4,17 +4,16 @@ use git_features::{
     parallel::{reduce::Finalize, InOrderIter},
     progress,
 };
-use git_odb::{pack, pack::FindExt};
+use git_pack as pack;
 use git_pack::data::{
     output,
     output::{count, entry},
 };
+use git_pack::FindExt;
 use git_traverse::commit;
 
-use crate::pack::{
-    data::output::{db, DbKind},
-    hex_to_id,
-};
+use crate::odb::pack_output::{db, DbKind};
+use git_hash::hex_to_id;
 
 #[test]
 fn traversals() -> crate::Result {

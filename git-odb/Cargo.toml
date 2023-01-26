@@ -51,6 +51,8 @@ filetime = "0.2.15"
 maplit = "1.0.2"
 num_cpus = "1.13.1"
 crossbeam-channel = "0.5.6"
+git-traverse = { path = "../git-traverse" }
+git-diff = { path = "../git-diff" }
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde1"]

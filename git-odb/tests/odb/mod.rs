@@ -14,6 +14,9 @@ fn db_small_packs() -> git_odb::Handle {
 pub mod alternate;
 pub mod find;
 pub mod header;
+pub mod pack_output;
 pub mod regression;
 pub mod sink;
 pub mod store;
+pub mod traverse;
+pub mod tree_diff;

@@ -3,7 +3,7 @@ const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use git_object::{self as object};
-use git_odb::pack;
+use git_pack as pack;
 
 use crate::{
     fixture_path, hex_to_id,
@@ -114,7 +114,7 @@ mod version {
         use std::{fs, io, sync::atomic::AtomicBool};
 
         use git_features::progress;
-        use git_odb::pack;
+        use git_pack as pack;
         use git_pack::{
             data::{input, EntryRange},
             index,
