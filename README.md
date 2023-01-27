@@ -52,7 +52,7 @@ Documentation is complete and was reviewed at least once.
 ### Initial Development
 
 These crates may be missing some features and thus are somewhat incomplete, but what's there
-is usable to some extend.
+is usable to some extent.
 
 * **usable** _(with rough but complete docs, possibly incomplete functionality)_
   * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
@@ -213,7 +213,7 @@ Project non-goals can change over time as we learn more, and they can be challen
  * **be incompatible to git**
    * the on-disk format must remain compatible, and we will never contend with it.
  * **use async IO everywhere**
-   * for the most part, git operations are heavily relying on memory mapped IO as well as CPU to decompress data,
+   * for the most part, git operations are heavily reliant on memory mapped IO as well as CPU to decompress data,
      which doesn't lend itself well to async IO out of the box.
    * Use `blocking` as well as `git-features::interrupt` to bring operations into the async world and to control 
      long running operations.
