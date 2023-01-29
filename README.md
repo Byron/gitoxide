@@ -114,13 +114,6 @@ Our [stability guide] helps to judge how much churn can be expected when dependi
 
 ## Installation
 
-### Download from Repository
-
-For Arch Linux you can download `gitoxide` from `community` repository:
-```
-pacman -S gitoxide
-```
-
 ### Download a Binary Release
 
 Using `cargo quickinstall`, one is able to fetch [binary releases][releases]. You can install it via `cargo install cargo-quickinstall`, assuming 
@@ -132,6 +125,13 @@ See the [releases section][releases] for manual installation and various alterna
 on your needs, for _Linux_, _MacOS_ and _Windows_.
 
 [releases]: https://github.com/Byron/gitoxide/releases
+
+### Download from Arch-Repository
+
+For Arch Linux you can download `gitoxide` from `community` repository:
+```
+pacman -S gitoxide
+```
 
 ### From Source via Cargo
 
