@@ -205,7 +205,7 @@ where
                                                     }
                                                     (true, false) => {
                                                         files.removed += 1;
-                                                        add_lines(
+                                                        remove_lines(
                                                             line_stats,
                                                             lines_counter.as_deref(),
                                                             &mut lines,
