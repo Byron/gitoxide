@@ -114,6 +114,13 @@ Our [stability guide] helps to judge how much churn can be expected when dependi
 
 ## Installation
 
+### Download from Repository
+
+For Arch Linux you can download `gitoxide` from `community` repository:
+```
+pacman -S gitoxide
+```
+
 ### Download a Binary Release
 
 Using `cargo quickinstall`, one is able to fetch [binary releases][releases]. You can install it via `cargo install cargo-quickinstall`, assuming 
