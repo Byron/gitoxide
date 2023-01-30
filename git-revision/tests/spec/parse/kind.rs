@@ -67,6 +67,16 @@ mod exclude_parents {
     use crate::spec::parse::{kind::prefix, parse, try_parse, Call};
 
     #[test]
+    fn freestanding() {
+        let rec = parse("^!");
+        assert_eq!(
+            rec.kind,
+            Some(git_revision::spec::Kind::ExcludeReachable),
+            "the delegate has to be able to deal with this"
+        );
+    }
+
+    #[test]
     fn trailing_caret_exclamation_mark() {
         let rec = parse("HEAD^!");
         assert_eq!(rec.kind.unwrap(), spec::Kind::ExcludeReachableFromParents);
@@ -100,6 +110,16 @@ mod exclusive {
     use git_revision::spec;
 
     use crate::spec::parse::{kind::prefix, parse};
+
+    #[test]
+    fn freestanding() {
+        let rec = parse("^");
+        assert_eq!(
+            rec.kind,
+            Some(git_revision::spec::Kind::ExcludeReachable),
+            "the delegate has to be able to deal with this"
+        );
+    }
 
     #[test]
     fn leading_caret() {
@@ -233,6 +253,16 @@ mod range {
     }
 
     #[test]
+    fn freestanding_dot_dot() {
+        let rec = parse("..");
+        assert_eq!(
+            rec.kind,
+            Some(git_revision::spec::Kind::RangeBetween),
+            "the delegate has to be able to deal with this"
+        );
+    }
+
+    #[test]
     fn trailing_dot_dot() {
         let rec = parse("r1..");
         assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
@@ -316,6 +346,16 @@ mod mergebase {
     use git_revision::{spec, spec::parse::delegate::Traversal};
 
     use crate::spec::parse::{kind::prefix, parse};
+
+    #[test]
+    fn freestanding_dot_dot_dot() {
+        let rec = parse("...");
+        assert_eq!(
+            rec.kind,
+            Some(git_revision::spec::Kind::ReachableToMergeBase),
+            "the delegate has to be able to deal with this"
+        );
+    }
 
     #[test]
     fn trailing_dot_dot_dot() {
