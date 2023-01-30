@@ -83,29 +83,29 @@ impl<'repo> Delegate<'repo> {
         fn kind_to_spec(
             kind: Option<git_revision::spec::Kind>,
             [first, second]: [Option<ObjectId>; 2],
-        ) -> git_revision::Spec {
+        ) -> Result<git_revision::Spec, Error> {
             use git_revision::spec::Kind::*;
-            match kind.unwrap_or_default() {
-                IncludeReachable => git_revision::Spec::Include(first.expect("set by parser")),
-                ExcludeReachable => git_revision::Spec::Exclude(first.expect("set by parser")),
+            Ok(match kind.unwrap_or_default() {
+                IncludeReachable => git_revision::Spec::Include(first.ok_or(Error::Malformed)?),
+                ExcludeReachable => git_revision::Spec::Exclude(first.ok_or(Error::Malformed)?),
                 RangeBetween => git_revision::Spec::Range {
-                    from: first.expect("set by parser"),
-                    to: second.expect("set by parser"),
+                    from: first.ok_or(Error::Malformed)?,
+                    to: second.ok_or(Error::Malformed)?,
                 },
                 ReachableToMergeBase => git_revision::Spec::Merge {
-                    theirs: first.expect("set by parser"),
-                    ours: second.expect("set by parser"),
+                    theirs: first.ok_or(Error::Malformed)?,
+                    ours: second.ok_or(Error::Malformed)?,
                 },
-                IncludeReachableFromParents => git_revision::Spec::IncludeOnlyParents(first.expect("set by parser")),
-                ExcludeReachableFromParents => git_revision::Spec::ExcludeParents(first.expect("set by parser")),
-            }
+                IncludeReachableFromParents => git_revision::Spec::IncludeOnlyParents(first.ok_or(Error::Malformed)?),
+                ExcludeReachableFromParents => git_revision::Spec::ExcludeParents(first.ok_or(Error::Malformed)?),
+            })
         }
 
         let range = zero_or_one_objects_or_ambguity_err(self.objs, self.prefix, self.err, self.repo)?;
         Ok(crate::revision::Spec {
             first_ref: self.refs[0].take(),
             second_ref: self.refs[1].take(),
-            inner: kind_to_spec(self.kind, range),
+            inner: kind_to_spec(self.kind, range)?,
             repo: self.repo,
         })
     }
