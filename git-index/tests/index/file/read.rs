@@ -1,11 +1,11 @@
 use std::path::{Path, PathBuf};
 
+use crate::hex_to_id;
 use bstr::ByteSlice;
 use git_index::{
     entry::{self, Flags, Mode},
     Version,
 };
-use git_testtools::hex_to_id;
 
 use crate::loose_file_path;
 
@@ -303,8 +303,10 @@ fn v2_split_index_recursion_is_handled_gracefully() {
 
 #[test]
 fn split_index_and_regular_index_of_same_content_are_indeed_the_same() {
-    let base = git_testtools::scripted_fixture_read_only(Path::new("make_index").join("v2_split_vs_regular_index.sh"))
-        .unwrap();
+    let base = git_testtools::scripted_fixture_read_only_standalone(
+        Path::new("make_index").join("v2_split_vs_regular_index.sh"),
+    )
+    .unwrap();
 
     let split =
         verify(git_index::File::at(base.join("split/.git/index"), git_hash::Kind::Sha1, Default::default()).unwrap());

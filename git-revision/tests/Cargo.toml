@@ -1,0 +1,29 @@
+[package]
+name = "git-revision-tests"
+version = "0.0.0"
+publish = false
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project dealing with finding names for revisions and parsing specifications"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*", "CHANGELOG.md", "README.md"]
+rust-version = "1.64"
+
+[[test]]
+name = "revision"
+doctest = false
+path = "revision.rs"
+
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = [ "git-revision/serde", "git-hash/serde1", "git-object/serde1" ]
+
+[dev-dependencies]
+git-revision = { path = "..", default-features = false }
+git-hash = { path = "../../git-hash" }
+git-object = { path = "../../git-object" }
+git-testtools = { path = "../../tests/tools" }
+git-repository = { path = "../../git-repository", default-features = false }
+
+bstr = { version = "1.0.1", default-features = false, features = ["std"]}

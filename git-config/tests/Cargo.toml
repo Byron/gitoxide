@@ -1,0 +1,39 @@
+[package]
+name = "git-config-tests"
+version = "0.0.0"
+repository = "https://github.com/Byron/gitoxide"
+description = "A git-config file parser and editor from the gitoxide project"
+license = "MIT OR Apache-2.0"
+authors = ["Edward Shen <code@eddie.sh>"]
+edition = "2021"
+keywords = ["git-config", "git", "config", "gitoxide"]
+categories = ["config", "parser-implementations"]
+include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
+rust-version = "1.64"
+publish = false
+
+
+[[test]]
+name = "config"
+path = "config.rs"
+
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["git-config/serde1"]
+
+[dev-dependencies]
+git-config = { path = ".."}
+git-testtools = { path = "../../tests/tools"}
+git-repository = { path = "../../git-repository" }
+git-ref = { path = "../../git-ref" }
+git-path = { path = "../../git-path" }
+serial_test = "0.10.0"
+serde_derive = "1.0"
+criterion = "0.4.0"
+tempfile = "3.2.0"
+bstr = { version = "1.0.1", default-features = false, features = ["std"] }
+
+[package.metadata.docs.rs]
+all-features = true
+features = ["document-features"]
+rustdoc-args = ["--cfg", "docsrs"]

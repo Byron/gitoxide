@@ -13,13 +13,15 @@ use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target,
 };
-use git_testtools::hex_to_id;
 
-use crate::file::{
-    store_with_packed_refs, store_writable,
-    transaction::prepare_and_commit::{
-        committer, create_at, create_symbolic_at, delete_at, empty_store, log_line, reflog_lines,
+use crate::{
+    file::{
+        store_with_packed_refs, store_writable,
+        transaction::prepare_and_commit::{
+            committer, create_at, create_symbolic_at, delete_at, empty_store, log_line, reflog_lines,
+        },
     },
+    util::hex_to_id,
 };
 
 mod collisions;

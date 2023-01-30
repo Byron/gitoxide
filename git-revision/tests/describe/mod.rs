@@ -1,12 +1,12 @@
 use std::borrow::Cow;
 
+use crate::hex_to_id;
 use git_object::bstr::ByteSlice;
 use git_repository::{
     odb::{Find, FindExt},
     Repository,
 };
 use git_revision::describe;
-use git_testtools::hex_to_id;
 
 mod format;
 
@@ -194,6 +194,6 @@ fn typical_usecases() {
 }
 
 fn repo() -> Repository {
-    let dir = git_testtools::scripted_fixture_read_only("make_repo_with_branches.sh").unwrap();
+    let dir = git_testtools::scripted_fixture_read_only_standalone("make_repo_with_branches.sh").unwrap();
     git_repository::open(dir).unwrap()
 }

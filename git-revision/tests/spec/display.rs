@@ -1,4 +1,4 @@
-use git_testtools::hex_to_id;
+use crate::hex_to_id;
 
 fn oid() -> git_hash::ObjectId {
     hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")

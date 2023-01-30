@@ -2,9 +2,9 @@ mod existing {
     use std::convert::{TryFrom, TryInto};
 
     use git_ref::{PartialName, PartialNameRef};
-    use git_testtools::hex_to_id;
 
     use crate::file::store_at;
+    use crate::util::hex_to_id;
 
     #[test]
     fn with_packed_refs() -> crate::Result {

@@ -1,5 +1,9 @@
-use git_testtools::hex_to_id as oid;
 use git_transport::{client, client::Capabilities};
+
+/// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
+fn oid(hex: &str) -> git_hash::ObjectId {
+    git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+}
 
 use crate::handshake::{refs, refs::shared::InternalRef, Ref};
 

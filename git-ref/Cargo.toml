@@ -8,6 +8,7 @@ authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*"]
 rust-version = "1.64"
+autotests = false
 
 [lib]
 doctest = false
@@ -16,12 +17,6 @@ test = true
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "git-hash/serde1", "git-actor/serde1", "git-object/serde1"]
-internal-testing-git-features-parallel = ["git-features/parallel"] # test sorted parallel loose file traversal
-
-[[test]]
-name = "refs-parallel-fs-traversal"
-path = "tests/refs-parallel.rs"
-required-features = ["internal-testing-git-features-parallel"]
 
 [dependencies]
 git-features = { version = "^0.26.1", path = "../git-features", features = ["walkdir"]}
@@ -44,9 +39,6 @@ document-features = { version = "0.2.1", optional = true }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
-git-discover = { path = "../git-discover" }
-git-worktree = { path = "../git-worktree" }
-git-odb = { path = "../git-odb" }
 tempfile = "3.2.0"
 
 

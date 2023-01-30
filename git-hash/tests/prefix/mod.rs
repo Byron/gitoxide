@@ -1,7 +1,7 @@
 mod cmp_oid {
     use std::cmp::Ordering;
 
-    use git_testtools::hex_to_id;
+    use crate::hex_to_id;
 
     #[test]
     fn it_detects_inequality() {
@@ -34,7 +34,8 @@ mod new {
     use std::cmp::Ordering;
 
     use git_hash::{Kind, ObjectId};
-    use git_testtools::hex_to_id;
+
+    use crate::hex_to_id;
 
     #[test]
     fn various_valid_inputs() {
@@ -75,7 +76,8 @@ mod try_from {
     use std::{cmp::Ordering, convert::TryFrom};
 
     use git_hash::{prefix::from_hex::Error, Prefix};
-    use git_testtools::hex_to_id;
+
+    use crate::hex_to_id;
 
     #[test]
     fn id_8_chars() {

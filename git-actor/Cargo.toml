@@ -32,6 +32,7 @@ document-features = { version = "0.2.0", optional = true }
 [dev-dependencies]
 pretty_assertions = "1.0.0"
 git-testtools = { path = "../tests/tools"}
+git-hash = { path = "../git-hash" }
 
 [package.metadata.docs.rs]
 all-features = true

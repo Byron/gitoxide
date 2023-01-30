@@ -1,8 +1,8 @@
+use crate::util::hex_to_id;
 use git_repository::{
     prelude::ObjectIdExt,
     revision::{spec::parse::Error, Spec},
 };
-use git_testtools::hex_to_id;
 
 use crate::revision::spec::from_bytes::{parse_spec, parse_spec_no_baseline, repo};
 

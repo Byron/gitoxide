@@ -15,3 +15,5 @@ mod reference;
 mod store;
 #[cfg(not(feature = "internal-testing-git-features-parallel"))]
 mod transaction;
+#[cfg(not(feature = "internal-testing-git-features-parallel"))]
+mod util;

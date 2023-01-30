@@ -1,0 +1,26 @@
+[package]
+name = "git-diff-test"
+version = "0.0.0"
+publish = false
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "Calculate differences between various git objects"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*"]
+rust-version = "1.64"
+
+[features]
+serde1 = ["git-diff/serde", "git-hash/serde1", "git-object/serde1"]
+
+[[test]]
+name = "diff"
+path = "diff.rs"
+
+[dev-dependencies]
+git-diff = { path = ".." }
+git-hash = { path = "../../git-hash" }
+git-object = { path = "../../git-object" }
+git-odb = { path = "../../git-odb" }
+git-traverse = { path = "../../git-traverse" }
+git-testtools = { path = "../../tests/tools" }

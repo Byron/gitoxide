@@ -9,8 +9,8 @@ fn pack_at(at: &str) -> pack::data::File {
 mod method {
     use std::sync::atomic::AtomicBool;
 
+    use crate::hex_to_id;
     use git_features::progress;
-    use git_testtools::hex_to_id;
 
     use crate::pack::{data::file::pack_at, SMALL_PACK};
 

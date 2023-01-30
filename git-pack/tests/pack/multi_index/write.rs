@@ -1,12 +1,13 @@
 use std::{path::PathBuf, sync::atomic::AtomicBool};
 
+use crate::hex_to_id;
 use git_features::progress;
-use git_testtools::{fixture_path, hex_to_id};
+use git_testtools::fixture_path_standalone;
 
 #[test]
 fn from_paths() -> crate::Result {
     let dir = tempfile::TempDir::new()?;
-    let input_indices = std::fs::read_dir(fixture_path("objects/pack"))?
+    let input_indices = std::fs::read_dir(fixture_path_standalone("objects/pack"))?
         .filter_map(|r| {
             r.ok()
                 .map(|e| e.path())

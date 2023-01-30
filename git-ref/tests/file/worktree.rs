@@ -11,10 +11,10 @@ fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile:
         args.push("packed");
     }
     if writable {
-        git_testtools::scripted_fixture_writable_with_args(name, args, Creation::ExecuteScript)
+        git_testtools::scripted_fixture_writable_with_args_standalone(name, args, Creation::ExecuteScript)
             .map(|tmp| (tmp.path().to_owned(), tmp.into()))
     } else {
-        git_testtools::scripted_fixture_read_only_with_args(name, args).map(|p| (p, None))
+        git_testtools::scripted_fixture_read_only_with_args_standalone(name, args).map(|p| (p, None))
     }
 }
 
@@ -193,13 +193,13 @@ mod read_only {
 mod writable {
     use std::convert::TryInto;
 
+    use crate::util::hex_to_id;
     use git_lock::acquire::Fail;
     use git_ref::{
         file::{transaction::PackedRefs, Store},
         transaction::{Change, LogChange, PreviousValue, RefEdit},
         FullName, FullNameRef, Target,
     };
-    use git_testtools::hex_to_id;
 
     use crate::file::{
         transaction::prepare_and_commit::committer,

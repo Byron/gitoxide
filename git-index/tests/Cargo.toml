@@ -1,0 +1,43 @@
+[package]
+name = "git-index-tests"
+version = "0.0.0"
+publish = false
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A work-in-progress crate of the gitoxide project dedicated implementing the git index file"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*", "README.md", "CHANGELOG.md"]
+rust-version = "1.64"
+
+[[test]]
+name = "multi-threaded"
+path = "index-multi-threaded.rs"
+required-features = ["internal-testing-git-features-parallel"]
+
+[[test]]
+name = "single-threaded"
+path = "index-single-threaded.rs"
+required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
+
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["git-index/serde"]
+
+internal-testing-git-features-parallel = ["git-features/parallel"]
+internal-testing-to-avoid-being-run-by-cargo-test-all = []
+
+[dependencies]
+
+[dev-dependencies]
+git-index = { version = "^0.12.1", path = ".." }
+git-features = { version = "^0.26.1", path = "../../git-features", features = ["rustsha1", "progress"] }
+git-testtools = { path = "../../tests/tools"}
+git-repository = { path = "../../git-repository"}
+git-hash = { path = "../../git-hash"}
+filetime = "0.2.15"
+bstr = { version = "1.0.1", default-features = false }
+
+[package.metadata.docs.rs]
+features = ["document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

@@ -13,7 +13,14 @@ const PACKS_AND_INDICES: &[(&'static str, &'static str)] =
 const V2_PACKS_AND_INDICES: &[(&'static str, &'static str)] =
     &[(SMALL_PACK_INDEX, SMALL_PACK), (INDEX_V2, PACK_FOR_INDEX_V2)];
 
-pub use git_testtools::{fixture_path, hex_to_id, scripted_fixture_read_only};
+use git_hash::ObjectId;
+pub use git_testtools::{
+    fixture_path_standalone as fixture_path, scripted_fixture_read_only_standalone as scripted_fixture_read_only,
+};
+
+pub fn hex_to_id(hex: &str) -> ObjectId {
+    ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+}
 
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 

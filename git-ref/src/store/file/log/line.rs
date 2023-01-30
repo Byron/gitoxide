@@ -169,13 +169,13 @@ pub mod decode {
     #[cfg(test)]
     mod test {
         use git_actor::{Sign, Time};
-        use git_hash::ObjectId;
         use git_object::bstr::ByteSlice;
 
         use super::*;
 
-        fn hex_to_oid(hex: &str) -> ObjectId {
-            ObjectId::from_hex(hex.as_bytes()).unwrap()
+        /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
+        fn hex_to_oid(hex: &str) -> git_hash::ObjectId {
+            git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
         }
 
         fn with_newline(mut v: Vec<u8>) -> Vec<u8> {

@@ -138,12 +138,12 @@ check: ## Build all code in suitable configurations
 unit-tests: ## run all unit tests
 	cargo test --all
 	cd git-features && cargo test && cargo test --all-features
-	cd git-ref && cargo test --all-features
+	cd git-ref/tests && cargo test --all-features
 	cd git-odb && cargo test && cargo test --all-features
 	cd git-object && cargo test && cargo test --features verbose-object-parsing-errors
-	cd git-pack && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
+	cd git-pack/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-git-features-parallel"
-	cd git-index && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
+	cd git-index/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-git-features-parallel"
 	cd git-worktree && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-git-features-parallel"

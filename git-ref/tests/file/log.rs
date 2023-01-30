@@ -35,9 +35,11 @@ mod iter {
     use std::path::PathBuf;
 
     fn reflog_dir() -> crate::Result<PathBuf> {
-        Ok(git_testtools::scripted_fixture_read_only("make_repo_for_reflog.sh")?
-            .join(".git")
-            .join("logs"))
+        Ok(
+            git_testtools::scripted_fixture_read_only_standalone("make_repo_for_reflog.sh")?
+                .join(".git")
+                .join("logs"),
+        )
     }
     fn reflog(name: &str) -> crate::Result<Vec<u8>> {
         Ok(std::fs::read(reflog_dir()?.join(name))?)
@@ -89,7 +91,8 @@ mod iter {
 
         mod with_buffer_big_enough_for_largest_line {
             use git_ref::log::Line;
-            use git_testtools::hex_to_id;
+
+            use crate::util::hex_to_id;
 
             #[test]
             fn single_line() -> crate::Result {

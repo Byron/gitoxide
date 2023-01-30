@@ -1,7 +1,6 @@
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
 mod reference {
-    use git_testtools::hex_to_id;
     use nom::error::VerboseError;
 
     use super::Result;
@@ -9,6 +8,11 @@ mod reference {
         store_impl::{packed, packed::decode},
         FullNameRef,
     };
+
+    /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
+    fn hex_to_id(hex: &str) -> git_hash::ObjectId {
+        git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+    }
 
     #[test]
     fn invalid() {

@@ -2,10 +2,16 @@ pub fn restricted() -> crate::open::Options {
     crate::open::Options::isolated().config_overrides(["user.name=gitoxide", "user.email=gitoxide@localhost"])
 }
 
+/// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
+fn hex_to_id(hex: &str) -> git_hash::ObjectId {
+    git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+}
+
 mod update {
     use std::convert::TryInto;
 
-    use git_testtools::{hex_to_id, Result};
+    use super::hex_to_id;
+    use git_testtools::Result;
 
     use crate as git;
 

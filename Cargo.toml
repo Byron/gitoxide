@@ -179,8 +179,15 @@ members = [
     "git-tix",
 
     "cargo-smart-release",
-
     "tests/tools",
+
+    "git-revision/tests",
+    "git-diff/tests",
+    "git-pack/tests",
+    "git-index/tests",
+    "git-ref/tests",
+    "git-config/tests",
+    "git-traverse/tests",
 ]
 exclude = ["cargo-smart-release/tests/fixtures/tri-depth-workspace/a",
            "cargo-smart-release/tests/fixtures/tri-depth-workspace/b",

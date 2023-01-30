@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use git_hash::ObjectId;
+
 mod encode;
 mod immutable;
 
@@ -18,8 +20,6 @@ fn fixup(v: Vec<u8>) -> Vec<u8> {
     v.replace(b"\r\n", "\n")
 }
 
-pub use git_testtools::hex_to_id;
-
 pub fn fixture(path: &str) -> PathBuf {
     PathBuf::from("tests/fixtures").join(path)
 }
@@ -36,4 +36,8 @@ fn size_in_memory() {
         "{} <= 264: Prevent unexpected growth of what should be lightweight objects",
         actual
     )
+}
+
+pub fn hex_to_id(hex: &str) -> ObjectId {
+    ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
 }

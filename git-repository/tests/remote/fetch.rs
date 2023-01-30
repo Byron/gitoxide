@@ -2,11 +2,11 @@
 mod blocking_and_async_io {
     use std::sync::atomic::AtomicBool;
 
+    use crate::util::hex_to_id;
     use git_features::progress;
     use git_protocol::maybe_async;
     use git_repository as git;
     use git_repository::remote::{fetch, Direction::Fetch};
-    use git_testtools::hex_to_id;
 
     use crate::remote::{into_daemon_remote_if_async, spawn_git_daemon_if_async};
 

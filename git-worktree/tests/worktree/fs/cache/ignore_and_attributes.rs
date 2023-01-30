@@ -1,10 +1,10 @@
 use std::path::Path;
 
+use crate::hex_to_id;
 use bstr::{BStr, ByteSlice};
 use git_glob::pattern::Case;
 use git_index::entry::Mode;
 use git_odb::{pack::bundle::write::Options, FindExt};
-use git_testtools::hex_to_id;
 use git_worktree::fs;
 use tempfile::{tempdir, TempDir};
 

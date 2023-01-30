@@ -156,7 +156,7 @@ mod tests {
         mod from_offsets_in_pack {
             use std::sync::atomic::AtomicBool;
 
-            use git_odb::pack;
+            use crate as pack;
 
             const SMALL_PACK_INDEX: &str = "objects/pack/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx";
             const SMALL_PACK: &str = "objects/pack/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.pack";
@@ -200,11 +200,9 @@ mod tests {
 
     #[test]
     fn size_of_pack_verify_data_structure() {
-        use git_odb::pack;
-
         use super::Item;
         pub struct EntryWithDefault {
-            _index_entry: pack::index::Entry,
+            _index_entry: crate::index::Entry,
             _kind: git_object::Kind,
             _object_size: u64,
             _decompressed_size: u64,

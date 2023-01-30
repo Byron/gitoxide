@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use git_testtools::hex_to_id;
+use crate::hex_to_id;
 
 use super::multi_index;
 

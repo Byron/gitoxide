@@ -25,7 +25,8 @@ mod find {
 
     use git_ref as refs;
     use git_ref::FullNameRef;
-    use git_testtools::hex_to_id;
+
+    use crate::util::hex_to_id;
 
     fn repo() -> crate::Result<git_repository::Repository> {
         crate::repo("make_references_repo.sh").map(Into::into)

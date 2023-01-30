@@ -2,13 +2,17 @@ use std::{convert::TryInto, path::Path};
 
 use git_actor::{Sign, Signature, Time};
 use git_object::bstr::ByteSlice;
-use git_testtools::hex_to_id;
 use tempfile::TempDir;
 
 use super::*;
 use crate::{file::WriteReflog, FullNameRef};
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+/// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
+fn hex_to_id(hex: &str) -> git_hash::ObjectId {
+    git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+}
 
 fn empty_store(writemode: WriteReflog) -> Result<(TempDir, file::Store)> {
     let dir = TempDir::new()?;

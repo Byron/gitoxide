@@ -20,7 +20,7 @@ mod write_object {
 mod write_blob {
     use std::io::{Seek, SeekFrom};
 
-    use git_testtools::hex_to_id;
+    use crate::util::hex_to_id;
 
     use crate::repository::object::empty_bare_repo;
 
@@ -184,8 +184,9 @@ mod commit_as {
 }
 
 mod commit {
+    use crate::util::hex_to_id;
     use git_repository as git;
-    use git_testtools::{hex_to_id, tempfile};
+    use git_testtools::tempfile;
 
     use crate::{freeze_time, restricted_and_git};
 

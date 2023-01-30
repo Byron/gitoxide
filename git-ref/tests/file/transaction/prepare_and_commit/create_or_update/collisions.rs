@@ -6,9 +6,11 @@ use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit},
     Target,
 };
-use git_testtools::hex_to_id;
 
-use crate::file::transaction::prepare_and_commit::{committer, create_at, create_symbolic_at, delete_at, empty_store};
+use crate::{
+    file::transaction::prepare_and_commit::{committer, create_at, create_symbolic_at, delete_at, empty_store},
+    util::hex_to_id,
+};
 
 fn case_sensitive(tmp_dir: &std::path::Path) -> bool {
     std::fs::write(tmp_dir.join("config"), "").expect("can create file once");

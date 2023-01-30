@@ -18,11 +18,11 @@ fn size_in_memory() {
 
 mod open {
     use git_config::File;
-    use git_testtools::fixture_path;
+    use git_testtools::fixture_path_standalone;
 
     #[test]
     fn parse_config_with_windows_line_endings_successfully() {
-        File::from_path_no_includes(&fixture_path("repo-config.crlf"), git_config::Source::Local).unwrap();
+        File::from_path_no_includes(&fixture_path_standalone("repo-config.crlf"), git_config::Source::Local).unwrap();
     }
 }
 

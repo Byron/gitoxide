@@ -2,8 +2,9 @@ use std::process::Command;
 
 use git_hash::ObjectId;
 use git_odb::{store, store::iter::Ordering, Find, FindExt, Header, Write};
-use git_testtools::{fixture_path, hex_to_id};
+use git_testtools::fixture_path;
 
+use crate::hex_to_id;
 use crate::odb::db;
 
 fn all_orderings() -> [Ordering; 2] {
@@ -502,10 +503,9 @@ mod disambiguate_prefix {
     use std::cmp::Ordering;
 
     use git_odb::store::prefix::disambiguate::Candidate;
-    use git_testtools::hex_to_id;
 
     use crate::{
-        odb::store::dynamic::all_orderings,
+        odb::{hex_to_id, store::dynamic::all_orderings},
         store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources},
     };
 
@@ -622,11 +622,10 @@ mod iter {
 mod lookup_prefix {
     use std::collections::HashSet;
 
-    use git_testtools::hex_to_id;
     use maplit::hashset;
 
     use crate::{
-        odb::store::dynamic::all_orderings,
+        odb::{hex_to_id, store::dynamic::all_orderings},
         store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources},
     };
 
