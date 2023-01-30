@@ -46,6 +46,8 @@ pub trait Kind {
     /// Note that ranges don't necessarily assure that a second specification will be parsed.
     /// If `^rev` is given, this method is called with [`spec::Kind::RangeBetween`][crate::spec::Kind::RangeBetween]
     /// and no second specification is provided.
+    ///
+    /// Note that the method can be called even if other invariants are not fulfilled, treat these as errors.
     fn kind(&mut self, kind: crate::spec::Kind) -> Option<()>;
 }
 

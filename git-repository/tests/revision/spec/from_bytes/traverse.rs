@@ -1,7 +1,7 @@
 use git_repository::{prelude::ObjectIdExt, revision::Spec};
 use git_testtools::hex_to_id;
 
-use crate::revision::spec::from_bytes::{parse_spec, repo};
+use crate::revision::spec::from_bytes::{parse_spec, parse_spec_no_baseline, repo};
 
 #[test]
 fn complex() -> crate::Result {
@@ -16,6 +16,28 @@ fn complex() -> crate::Result {
     assert_eq!(parse_spec("e", repo)?, parse_spec("a^^2", repo)?);
     assert_eq!(parse_spec("j", repo)?, parse_spec("b^3^2", repo)?);
     assert_eq!(parse_spec("j", repo)?, parse_spec("a^^3^2", repo)?);
+    Ok(())
+}
+
+#[test]
+fn freestanding_negation_yields_descriptive_error() -> crate::Result {
+    let repo = repo("complex_graph")?;
+    let expected = "The rev-spec is malformed and misses a ref name";
+    assert_eq!(parse_spec("^", &repo).unwrap_err().to_string(), expected);
+    assert_eq!(
+        parse_spec("^!", &repo).unwrap_err().to_string(),
+        "The ref partially named \"!\" could not be found"
+    );
+    Ok(())
+}
+#[test]
+fn freestanding_double_or_triple_dot_defaults_to_head_refs() -> crate::Result {
+    let repo = repo("complex_graph")?;
+    assert_eq!(
+        parse_spec_no_baseline("..", &repo)?, // git can't communicate what it does here
+        parse_spec("@..@", &repo)?,
+    );
+    assert_eq!(parse_spec("...", &repo)?, parse_spec("@...@", &repo)?,);
     Ok(())
 }
 

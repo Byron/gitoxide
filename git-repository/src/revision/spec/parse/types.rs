@@ -60,6 +60,8 @@ pub struct Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("The rev-spec is malformed and misses a ref name")]
+    Malformed,
     #[error("Unborn heads do not have a reflog yet")]
     UnbornHeadsHaveNoRefLog,
     #[error("This feature will be implemented once {dependency}")]
