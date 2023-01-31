@@ -16,6 +16,11 @@ serde1 = ["git-ref/serde"]
 internal-testing-git-features-parallel = ["git-features/parallel"] # test sorted parallel loose file traversal
 
 [[test]]
+name = "refs-single-threaded"
+path = "refs.rs"
+required-features = []
+
+[[test]]
 name = "refs-parallel-fs-traversal"
 path = "refs-parallel.rs"
 required-features = ["internal-testing-git-features-parallel"]
