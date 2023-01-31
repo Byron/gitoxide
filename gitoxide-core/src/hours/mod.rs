@@ -134,7 +134,7 @@ where
             let (tx_tree_id, stat_threads) = needs_stats
                 .then(|| {
                     let (tx, rx) =
-                        crossbeam_channel::unbounded::<(u32, Option<git::hash::ObjectId>, git::hash::ObjectId)>();
+                        crossbeam_channel::unbounded::<Vec<(u32, Option<git::hash::ObjectId>, git::hash::ObjectId)>>();
                     let stat_workers = (0..threads)
                         .map(|_| {
                             scope.spawn({
@@ -142,105 +142,119 @@ where
                                 let change_counter = change_counter.clone();
                                 let lines_counter = lines_counter.clone();
                                 let mut repo = repo.clone();
-                                repo.object_cache_size_if_unset(4 * 1024 * 1024);
+                                repo.object_cache_size_if_unset((850 * 1024 * 1024) / threads);
                                 let rx = rx.clone();
                                 move || -> Result<_, git::object::tree::diff::for_each::Error> {
                                     let mut out = Vec::new();
-                                    for (commit_idx, parent_commit, commit) in rx {
-                                        if let Some(c) = commit_counter.as_ref() {
-                                            c.fetch_add(1, Ordering::SeqCst);
-                                        }
-                                        if git::interrupt::is_triggered() {
-                                            return Ok(out);
-                                        }
-                                        let mut files = FileStats::default();
-                                        let mut lines = LineStats::default();
-                                        let from = match parent_commit {
-                                            Some(id) => {
-                                                match repo.find_object(id).ok().and_then(|c| c.peel_to_tree().ok()) {
-                                                    Some(tree) => tree,
-                                                    None => continue,
-                                                }
-                                            }
-                                            None => repo.empty_tree(),
-                                        };
-                                        let to = match repo.find_object(commit).ok().and_then(|c| c.peel_to_tree().ok())
-                                        {
-                                            Some(c) => c,
-                                            None => continue,
-                                        };
-                                        from.changes().track_filename().for_each_to_obtain_tree(&to, |change| {
-                                            use git::object::tree::diff::change::Event::*;
-                                            if let Some(c) = change_counter.as_ref() {
+                                    for chunk in rx {
+                                        for (commit_idx, parent_commit, commit) in chunk {
+                                            if let Some(c) = commit_counter.as_ref() {
                                                 c.fetch_add(1, Ordering::SeqCst);
                                             }
-                                            match change.event {
-                                                Addition { entry_mode, id } => {
-                                                    if entry_mode.is_no_tree() {
-                                                        files.added += 1;
-                                                        add_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
+                                            if git::interrupt::is_triggered() {
+                                                return Ok(out);
+                                            }
+                                            let mut files = FileStats::default();
+                                            let mut lines = LineStats::default();
+                                            let from = match parent_commit {
+                                                Some(id) => {
+                                                    match repo.find_object(id).ok().and_then(|c| c.peel_to_tree().ok())
+                                                    {
+                                                        Some(tree) => tree,
+                                                        None => continue,
                                                     }
                                                 }
-                                                Deletion { entry_mode, id } => {
-                                                    if entry_mode.is_no_tree() {
-                                                        files.removed += 1;
-                                                        remove_lines(
-                                                            line_stats,
-                                                            lines_counter.as_deref(),
-                                                            &mut lines,
-                                                            id,
-                                                        );
-                                                    }
+                                                None => repo.empty_tree(),
+                                            };
+                                            let to =
+                                                match repo.find_object(commit).ok().and_then(|c| c.peel_to_tree().ok())
+                                                {
+                                                    Some(c) => c,
+                                                    None => continue,
+                                                };
+                                            from.changes().track_filename().for_each_to_obtain_tree(&to, |change| {
+                                                use git::object::tree::diff::change::Event::*;
+                                                if let Some(c) = change_counter.as_ref() {
+                                                    c.fetch_add(1, Ordering::SeqCst);
                                                 }
-                                                Modification {
-                                                    entry_mode,
-                                                    previous_entry_mode,
-                                                    id,
-                                                    previous_id,
-                                                } => match (previous_entry_mode.is_blob(), entry_mode.is_blob()) {
-                                                    (false, false) => {}
-                                                    (false, true) => {
-                                                        files.added += 1;
-                                                        add_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
+                                                match change.event {
+                                                    Addition { entry_mode, id } => {
+                                                        if entry_mode.is_no_tree() {
+                                                            files.added += 1;
+                                                            add_lines(
+                                                                line_stats,
+                                                                lines_counter.as_deref(),
+                                                                &mut lines,
+                                                                id,
+                                                            );
+                                                        }
                                                     }
-                                                    (true, false) => {
-                                                        files.removed += 1;
-                                                        add_lines(
-                                                            line_stats,
-                                                            lines_counter.as_deref(),
-                                                            &mut lines,
-                                                            previous_id,
-                                                        );
+                                                    Deletion { entry_mode, id } => {
+                                                        if entry_mode.is_no_tree() {
+                                                            files.removed += 1;
+                                                            remove_lines(
+                                                                line_stats,
+                                                                lines_counter.as_deref(),
+                                                                &mut lines,
+                                                                id,
+                                                            );
+                                                        }
                                                     }
-                                                    (true, true) => {
-                                                        files.modified += 1;
-                                                        if line_stats {
-                                                            let is_text_file = mime_guess::from_path(
-                                                                git::path::from_bstr(change.location).as_ref(),
-                                                            )
-                                                            .first_or_text_plain()
-                                                            .type_()
-                                                                == mime_guess::mime::TEXT;
-                                                            if let Some(Ok(diff)) =
-                                                                is_text_file.then(|| change.event.diff()).flatten()
-                                                            {
-                                                                let mut nl = 0;
-                                                                let counts = diff.line_counts();
-                                                                nl += counts.insertions as usize
-                                                                    + counts.removals as usize;
-                                                                lines.added += counts.insertions as usize;
-                                                                lines.removed += counts.removals as usize;
-                                                                if let Some(c) = lines_counter.as_ref() {
-                                                                    c.fetch_add(nl, Ordering::SeqCst);
+                                                    Modification {
+                                                        entry_mode,
+                                                        previous_entry_mode,
+                                                        id,
+                                                        previous_id,
+                                                    } => match (previous_entry_mode.is_blob(), entry_mode.is_blob()) {
+                                                        (false, false) => {}
+                                                        (false, true) => {
+                                                            files.added += 1;
+                                                            add_lines(
+                                                                line_stats,
+                                                                lines_counter.as_deref(),
+                                                                &mut lines,
+                                                                id,
+                                                            );
+                                                        }
+                                                        (true, false) => {
+                                                            files.removed += 1;
+                                                            remove_lines(
+                                                                line_stats,
+                                                                lines_counter.as_deref(),
+                                                                &mut lines,
+                                                                previous_id,
+                                                            );
+                                                        }
+                                                        (true, true) => {
+                                                            files.modified += 1;
+                                                            if line_stats {
+                                                                let is_text_file = mime_guess::from_path(
+                                                                    git::path::from_bstr(change.location).as_ref(),
+                                                                )
+                                                                .first_or_text_plain()
+                                                                .type_()
+                                                                    == mime_guess::mime::TEXT;
+                                                                if let Some(Ok(diff)) =
+                                                                    is_text_file.then(|| change.event.diff()).flatten()
+                                                                {
+                                                                    let mut nl = 0;
+                                                                    let counts = diff.line_counts();
+                                                                    nl += counts.insertions as usize
+                                                                        + counts.removals as usize;
+                                                                    lines.added += counts.insertions as usize;
+                                                                    lines.removed += counts.removals as usize;
+                                                                    if let Some(c) = lines_counter.as_ref() {
+                                                                        c.fetch_add(nl, Ordering::SeqCst);
+                                                                    }
                                                                 }
                                                             }
                                                         }
-                                                    }
-                                                },
-                                            }
-                                            Ok::<_, Infallible>(Default::default())
-                                        })?;
-                                        out.push((commit_idx, files, lines));
+                                                    },
+                                                }
+                                                Ok::<_, Infallible>(Default::default())
+                                            })?;
+                                            out.push((commit_idx, files, lines));
+                                        }
                                     }
                                     Ok(out)
                                 }
@@ -253,6 +267,8 @@ where
 
             let mut commit_idx = 0_u32;
             let mut skipped_merge_commits = 0;
+            const CHUNK_SIZE: usize = 50;
+            let mut chunk = Vec::with_capacity(CHUNK_SIZE);
             let commit_iter = interrupt::Iter::new(
                 commit_id.ancestors(|oid, buf| {
                     progress.inc();
@@ -271,7 +287,13 @@ where
                                 None => res,
                             }
                         }) {
-                            tx_tree.send((commit_idx, first_parent, commit)).ok();
+                            if chunk.len() == CHUNK_SIZE {
+                                tx_tree
+                                    .send(std::mem::replace(&mut chunk, Vec::with_capacity(CHUNK_SIZE)))
+                                    .ok();
+                            } else {
+                                chunk.push((commit_idx, first_parent, commit))
+                            }
                         }
                         commit_idx = commit_idx.checked_add(1).expect("less then 4 billion commits");
                         git::objs::CommitRefIter::from_bytes(obj.data)
@@ -290,8 +312,10 @@ where
                     Err(err) => return Err(err.into()),
                 };
             }
+            if let Some(tx) = tx_tree_id {
+                tx.send(chunk).ok();
+            }
             drop(tx);
-            drop(tx_tree_id);
             progress.show_throughput(start);
             drop(progress);
 
