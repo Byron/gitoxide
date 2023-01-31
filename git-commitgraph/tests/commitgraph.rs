@@ -65,10 +65,6 @@ pub fn make_readonly_repo(script_path: &str) -> std::path::PathBuf {
     scripted_fixture_read_only(script_path).expect("script succeeds all the time")
 }
 
-pub fn hex_to_id(hex: &[u8]) -> git_hash::ObjectId {
-    git_hash::ObjectId::from_hex(hex).expect("40 bytes hex")
-}
-
 pub struct RefInfo {
     id: git_hash::ObjectId,
     parent_ids: Vec<git_hash::ObjectId>,
