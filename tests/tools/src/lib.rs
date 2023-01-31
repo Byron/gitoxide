@@ -187,36 +187,41 @@ pub fn spawn_git_daemon(working_dir: impl AsRef<Path>) -> std::io::Result<GitDae
     })
 }
 
+#[derive(Copy, Clone)]
+enum DirectoryRoot {
+    IntegrationTest,
+    StandaloneTest,
+}
+
 /// Return the path to the `<crate-root>/tests/fixtures/<path>` directory.
 pub fn fixture_path(path: impl AsRef<Path>) -> PathBuf {
-    fixture_path_inner(path, false)
+    fixture_path_inner(path, DirectoryRoot::IntegrationTest)
 }
 
 /// Return the path to the `<crate-root>/fixtures/<path>` directory.
 pub fn fixture_path_standalone(path: impl AsRef<Path>) -> PathBuf {
-    fixture_path_inner(path, true)
+    fixture_path_inner(path, DirectoryRoot::StandaloneTest)
 }
 /// Return the path to the `<crate-root>/tests/fixtures/<path>` directory.
-fn fixture_path_inner(path: impl AsRef<Path>, standalone_test: bool) -> PathBuf {
-    if standalone_test {
-        PathBuf::from("fixtures").join(path.as_ref())
-    } else {
-        PathBuf::from("tests").join("fixtures").join(path.as_ref())
+fn fixture_path_inner(path: impl AsRef<Path>, root: DirectoryRoot) -> PathBuf {
+    match root {
+        DirectoryRoot::StandaloneTest => PathBuf::from("fixtures").join(path.as_ref()),
+        DirectoryRoot::IntegrationTest => PathBuf::from("tests").join("fixtures").join(path.as_ref()),
     }
 }
 
 /// Load the fixture from `<crate-root>/tests/fixtures/<path>` and return its data, or _panic_.
 pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
-    fixture_bytes_inner(path, false)
+    fixture_bytes_inner(path, DirectoryRoot::IntegrationTest)
 }
 
 /// Like [`scripted_fixture_writable`], but does not prefix the fixture directory with `tests`
 pub fn fixture_bytes_standalone(path: impl AsRef<Path>) -> Vec<u8> {
-    fixture_bytes_inner(path, true)
+    fixture_bytes_inner(path, DirectoryRoot::StandaloneTest)
 }
 
-fn fixture_bytes_inner(path: impl AsRef<Path>, standalone_test: bool) -> Vec<u8> {
-    match std::fs::read(fixture_path_inner(path.as_ref(), standalone_test)) {
+fn fixture_bytes_inner(path: impl AsRef<Path>, root: DirectoryRoot) -> Vec<u8> {
+    match std::fs::read(fixture_path_inner(path.as_ref(), root)) {
         Ok(res) => res,
         Err(_) => panic!("File at '{}' not found", path.as_ref().display()),
     }
@@ -273,7 +278,7 @@ pub fn scripted_fixture_writable_with_args(
     args: impl IntoIterator<Item = impl Into<String>>,
     mode: Creation,
 ) -> Result<tempfile::TempDir> {
-    scripted_fixture_writable_with_args_inner(script_name, args, mode, false)
+    scripted_fixture_writable_with_args_inner(script_name, args, mode, DirectoryRoot::IntegrationTest)
 }
 
 /// Like [`scripted_fixture_writable_with_args`], but does not prefix the fixture directory with `tests`
@@ -282,24 +287,24 @@ pub fn scripted_fixture_writable_with_args_standalone(
     args: impl IntoIterator<Item = impl Into<String>>,
     mode: Creation,
 ) -> Result<tempfile::TempDir> {
-    scripted_fixture_writable_with_args_inner(script_name, args, mode, true)
+    scripted_fixture_writable_with_args_inner(script_name, args, mode, DirectoryRoot::StandaloneTest)
 }
 
 fn scripted_fixture_writable_with_args_inner(
     script_name: &str,
     args: impl IntoIterator<Item = impl Into<String>>,
     mode: Creation,
-    standalone_test: bool,
+    root: DirectoryRoot,
 ) -> Result<tempfile::TempDir> {
     let dst = tempfile::TempDir::new()?;
     Ok(match mode {
         Creation::CopyFromReadOnly => {
-            let ro_dir = scripted_fixture_read_only_with_args_inner(script_name, args, None, standalone_test)?;
+            let ro_dir = scripted_fixture_read_only_with_args_inner(script_name, args, None, root)?;
             copy_recursively_into_existing_dir(ro_dir, dst.path())?;
             dst
         }
         Creation::ExecuteScript => {
-            scripted_fixture_read_only_with_args_inner(script_name, args, dst.path().into(), standalone_test)?;
+            scripted_fixture_read_only_with_args_inner(script_name, args, dst.path().into(), root)?;
             dst
         }
     })
@@ -329,7 +334,7 @@ pub fn scripted_fixture_read_only_with_args(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = impl Into<String>>,
 ) -> Result<PathBuf> {
-    scripted_fixture_read_only_with_args_inner(script_name, args, None, false)
+    scripted_fixture_read_only_with_args_inner(script_name, args, None, DirectoryRoot::IntegrationTest)
 }
 
 /// Like [`scripted_fixture_read_only_with_args()`], but does not prefix the fixture directory with `tests`
@@ -337,14 +342,14 @@ pub fn scripted_fixture_read_only_with_args_standalone(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = impl Into<String>>,
 ) -> Result<PathBuf> {
-    scripted_fixture_read_only_with_args_inner(script_name, args, None, true)
+    scripted_fixture_read_only_with_args_inner(script_name, args, None, DirectoryRoot::StandaloneTest)
 }
 
 fn scripted_fixture_read_only_with_args_inner(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = impl Into<String>>,
     destination_dir: Option<&Path>,
-    standalone_test: bool,
+    root: DirectoryRoot,
 ) -> Result<PathBuf> {
     // Assure tempfiles get removed when aborting the test.
     git_lock::tempfile::setup(
@@ -352,7 +357,7 @@ fn scripted_fixture_read_only_with_args_inner(
     );
 
     let script_location = script_name.as_ref();
-    let script_path = fixture_path_inner(script_location, standalone_test);
+    let script_path = fixture_path_inner(script_location, root);
 
     // keep this lock to assure we don't return unfinished directories for threaded callers
     let args: Vec<String> = args.into_iter().map(Into::into).collect();
@@ -379,7 +384,7 @@ fn scripted_fixture_read_only_with_args_inner(
     let script_basename = script_location.file_stem().unwrap_or(script_location.as_os_str());
     let archive_file_path = fixture_path_inner(
         Path::new("generated-archives").join(format!("{}.tar.xz", script_basename.to_str().expect("valid UTF-8"))),
-        standalone_test,
+        root,
     );
     let (force_run, script_result_directory) = destination_dir.map(|d| (true, d.to_owned())).unwrap_or_else(|| {
         let dir = fixture_path_inner(
@@ -388,7 +393,7 @@ fn scripted_fixture_read_only_with_args_inner(
                 script_identity,
                 family_name()
             )),
-            standalone_test,
+            root,
         );
         (false, dir)
     });
