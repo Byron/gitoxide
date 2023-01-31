@@ -49,7 +49,8 @@ impl ProgramKind {
                     prepare = prepare.arg("-batch");
                 }
                 if let Some(port) = url.port {
-                    prepare = prepare.arg(format!("-P{}", port));
+                    prepare = prepare.arg("-P");
+                    prepare = prepare.arg(port.to_string());
                 }
             }
             ProgramKind::Simple => {
