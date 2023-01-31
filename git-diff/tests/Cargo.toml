@@ -1,5 +1,5 @@
 [package]
-name = "git-diff-test"
+name = "git-diff-tests"
 version = "0.0.0"
 publish = false
 repository = "https://github.com/Byron/gitoxide"
@@ -15,6 +15,7 @@ serde1 = ["git-diff/serde", "git-hash/serde1", "git-object/serde1"]
 
 [[test]]
 name = "diff"
+doctest = false
 path = "diff.rs"
 
 [dev-dependencies]
