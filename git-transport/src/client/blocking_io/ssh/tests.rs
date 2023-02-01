@@ -134,14 +134,14 @@ mod program_kind {
         fn tortoise_plink_has_batch_command() {
             assert_eq!(
                 call_args(ProgramKind::TortoisePlink, "ssh://user@host:42/p", Protocol::V2),
-                quoted(&["tortoiseplink.exe", "-batch", "-P42", "user@host"])
+                quoted(&["tortoiseplink.exe", "-batch", "-P", "42", "user@host"])
             );
         }
 
         #[test]
         fn port_for_all() {
             for kind in [ProgramKind::TortoisePlink, ProgramKind::Plink, ProgramKind::Putty] {
-                assert!(call_args(kind, "ssh://user@host:43/p", Protocol::V2).ends_with(r#""-P43" "user@host""#));
+                assert!(call_args(kind, "ssh://user@host:43/p", Protocol::V2).ends_with(r#""-P" "43" "user@host""#));
             }
         }
 
