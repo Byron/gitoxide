@@ -10,6 +10,8 @@ use std::{
 
 use bstr::{io::BufReadExt, BStr, BString, ByteSlice};
 
+use git_quote::to_single_quoted;
+
 use crate::{
     client::{self, git, ssh, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
     Protocol, Service,
@@ -215,8 +217,11 @@ impl client::Transport for SpawnProcessOnDemand {
         cmd.stdout = Stdio::piped();
         if self.ssh_cmd.is_some() {
             cmd.args.push(service.as_str().into());
+            cmd.args
+                .push(to_single_quoted(self.path.as_ref()).to_os_str_lossy().into_owned());
+        } else {
+            cmd.args.push(self.path.to_os_str_lossy().into_owned());
         }
-        cmd.args.push(self.path.to_os_str_lossy().into_owned());
 
         let mut cmd = std::process::Command::from(cmd);
         for env_to_remove in ENV_VARS_TO_REMOVE {
