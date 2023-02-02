@@ -89,12 +89,14 @@ impl Options<'_> {
 }
 
 /// Parse a byte-string of `:`-separated paths into `Vec<PathBuf>`.
+/// On Windows, paths are separated by `;`.
 /// Non-absolute paths are discarded.
 /// To match git, all paths are normalized, until an empty path is encountered.
 pub(crate) fn parse_ceiling_dirs(ceiling_dirs: &[u8]) -> Vec<PathBuf> {
     let mut should_normalize = true;
     let mut result = Vec::new();
-    for ceiling_dir in ceiling_dirs.split_str(":") {
+    let path_separator = if cfg!(windows) { ";" } else { ":" };
+    for ceiling_dir in ceiling_dirs.split_str(path_separator) {
         if ceiling_dir.is_empty() {
             should_normalize = false;
             continue;
@@ -149,6 +151,35 @@ mod tests {
             symlink_path.canonicalize().expect("symlink path exists"),
             "Symlinks are resolved"
         );
+        assert_eq!(
+            ceiling_dirs[1], symlink_path,
+            "Symlink are not resolved after empty item"
+        );
+
+        dir.close()
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn parse_ceiling_dirs_from_environment_format() -> std::io::Result<()> {
+        use std::{fs, os::windows::fs::symlink_dir};
+
+        use super::*;
+
+        // Setup filesystem
+        let dir = tempfile::tempdir().expect("success creating temp dir");
+        let direct_path = dir.path().join("direct");
+        let symlink_path = dir.path().join("symlink");
+        fs::create_dir(&direct_path)?;
+        symlink_dir(&direct_path, &symlink_path)?;
+
+        // Parse & build ceiling dirs string
+        let symlink_str = symlink_path.to_str().expect("symlink path is valid utf8");
+        let ceiling_dir_string = format!("{};relative;;{}", symlink_str, symlink_str);
+        let ceiling_dirs = parse_ceiling_dirs(ceiling_dir_string.as_bytes());
+
+        assert_eq!(ceiling_dirs.len(), 2, "Relative path is discarded");
+        assert_eq!(ceiling_dirs[0], direct_path, "Symlinks are resolved");
         assert_eq!(
             ceiling_dirs[1], symlink_path,
             "Symlink are not resolved after empty item"
