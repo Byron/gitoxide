@@ -213,10 +213,13 @@ impl client::Transport for SpawnProcessOnDemand {
         };
         cmd.stdin = Stdio::piped();
         cmd.stdout = Stdio::piped();
-        if self.ssh_cmd.is_some() {
+        let repo_path = if self.ssh_cmd.is_some() {
             cmd.args.push(service.as_str().into());
-        }
-        cmd.args.push(self.path.to_os_str_lossy().into_owned());
+            git_quote::single(self.path.as_ref()).to_os_str_lossy().into_owned()
+        } else {
+            self.path.to_os_str_lossy().into_owned()
+        };
+        cmd.args.push(repo_path);
 
         let mut cmd = std::process::Command::from(cmd);
         for env_to_remove in ENV_VARS_TO_REMOVE {

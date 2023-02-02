@@ -2135,6 +2135,7 @@ dependencies = [
  "git-hash 0.10.1",
  "git-pack",
  "git-packetline",
+ "git-quote 0.4.0",
  "git-sec 0.6.1",
  "git-url",
  "maybe-async",
