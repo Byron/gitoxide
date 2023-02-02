@@ -1,9 +1,12 @@
+///
 pub mod undo {
     use bstr::{BStr, BString};
     use quick_error::quick_error;
 
     quick_error! {
+        /// The error returned by [ansi_c][crate::ansi_c::undo()].
         #[derive(Debug)]
+        #[allow(missing_docs)]
         pub enum Error {
             InvalidInput { message: String, input: BString } {
                 display("{}: {:?}", message, input)

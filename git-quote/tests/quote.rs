@@ -1,3 +1,39 @@
+mod single {
+    use git_quote::single;
+
+    #[test]
+    fn empty() {
+        assert_eq!(single("".into()), "''");
+    }
+
+    #[test]
+    fn unquoted_becomes_quoted() {
+        assert_eq!(single("a".into()), "'a'");
+        assert_eq!(single("a b".into()), "'a b'");
+        assert_eq!(single("a\nb".into()), "'a\nb'", "newlines play no role");
+    }
+
+    #[test]
+    fn existing_exclamation_mark_gets_escaped() {
+        assert_eq!(single(r"a!b".into()), r"'a\!b'");
+        assert_eq!(single(r"!".into()), r"'\!'");
+        assert_eq!(single(r"\!".into()), r"'\\!'");
+    }
+
+    #[test]
+    fn existing_quote_gets_escaped() {
+        assert_eq!(single(r"a'b".into()), r"'a\'b'");
+        assert_eq!(single(r"'".into()), r"'\''");
+        assert_eq!(single(r"'\''".into()), r"'\'\\'\''");
+    }
+
+    #[test]
+    fn complex() {
+        let expected = "'\0cmd `arg` $var\\\\'ring\\// arg \"quoted\\!\"'";
+        assert_eq!(single("\0cmd `arg` $var\\'ring\\// arg \"quoted!\"".into()), expected);
+    }
+}
+
 mod ansi_c {
     mod undo {
         use bstr::ByteSlice;
