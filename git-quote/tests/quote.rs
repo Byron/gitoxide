@@ -15,21 +15,21 @@ mod single {
 
     #[test]
     fn existing_exclamation_mark_gets_escaped() {
-        assert_eq!(single(r"a!b".into()), r"'a\!b'");
-        assert_eq!(single(r"!".into()), r"'\!'");
-        assert_eq!(single(r"\!".into()), r"'\\!'");
+        assert_eq!(single(r"a!b".into()), r"'a'\!'b'");
+        assert_eq!(single(r"!".into()), r"''\!''");
+        assert_eq!(single(r"\!".into()), r"'\'\!''");
     }
 
     #[test]
     fn existing_quote_gets_escaped() {
-        assert_eq!(single(r"a'b".into()), r"'a\'b'");
-        assert_eq!(single(r"'".into()), r"'\''");
-        assert_eq!(single(r"'\''".into()), r"'\'\\'\''");
+        assert_eq!(single(r"a'b".into()), r"'a'\''b'");
+        assert_eq!(single(r"'".into()), r"''\'''");
+        assert_eq!(single(r"'\''".into()), r"''\''\'\'''\'''");
     }
 
     #[test]
     fn complex() {
-        let expected = "'\0cmd `arg` $var\\\\'ring\\// arg \"quoted\\!\"'";
+        let expected = "\'\0cmd `arg` $var\\\'\\\'\'ring\\// arg \"quoted\'\\!\'\"\'";
         assert_eq!(single("\0cmd `arg` $var\\'ring\\// arg \"quoted!\"".into()), expected);
     }
 }
