@@ -1,6 +1,5 @@
-use std::{borrow::Cow, env, path::PathBuf};
-
-use bstr::{ByteSlice, ByteVec};
+use std::ffi::OsStr;
+use std::{env, path::PathBuf};
 
 /// The error returned by [git_discover::upwards()][crate::upwards()].
 #[derive(Debug, thiserror::Error)]
@@ -81,7 +80,7 @@ impl Options<'_> {
     // TODO: test
     pub fn apply_environment(mut self) -> Self {
         let name = "GIT_CEILING_DIRECTORIES";
-        if let Some(ceiling_dirs) = env::var_os(name).and_then(|c| Vec::from_os_string(c).ok()) {
+        if let Some(ceiling_dirs) = env::var_os(name) {
             self.ceiling_dirs = parse_ceiling_dirs(&ceiling_dirs);
         }
         self
@@ -89,36 +88,32 @@ impl Options<'_> {
 }
 
 /// Parse a byte-string of `:`-separated paths into `Vec<PathBuf>`.
+/// On Windows, paths are separated by `;`.
 /// Non-absolute paths are discarded.
 /// To match git, all paths are normalized, until an empty path is encountered.
-pub(crate) fn parse_ceiling_dirs(ceiling_dirs: &[u8]) -> Vec<PathBuf> {
+pub(crate) fn parse_ceiling_dirs(ceiling_dirs: &OsStr) -> Vec<PathBuf> {
     let mut should_normalize = true;
-    let mut result = Vec::new();
-    for ceiling_dir in ceiling_dirs.split_str(":") {
-        if ceiling_dir.is_empty() {
+    let mut out = Vec::new();
+    for ceiling_dir in std::env::split_paths(ceiling_dirs) {
+        if ceiling_dir.as_os_str().is_empty() {
             should_normalize = false;
             continue;
         }
 
-        // Paths that are invalid unicode can't be handled
-        let mut dir = match ceiling_dir.to_path() {
-            Ok(dir) => Cow::Borrowed(dir),
-            Err(_) => continue,
-        };
-
         // Only absolute paths are allowed
-        if dir.is_relative() {
+        if ceiling_dir.is_relative() {
             continue;
         }
 
+        let mut dir = ceiling_dir;
         if should_normalize {
             if let Ok(normalized) = git_path::realpath(&dir) {
-                dir = Cow::Owned(normalized);
+                dir = normalized;
             }
         }
-        result.push(dir.into_owned());
+        out.push(dir);
     }
-    result
+    out
 }
 
 #[cfg(test)]
@@ -141,7 +136,7 @@ mod tests {
         // Parse & build ceiling dirs string
         let symlink_str = symlink_path.to_str().expect("symlink path is valid utf8");
         let ceiling_dir_string = format!("{}:relative::{}", symlink_str, symlink_str);
-        let ceiling_dirs = parse_ceiling_dirs(ceiling_dir_string.as_bytes());
+        let ceiling_dirs = parse_ceiling_dirs(OsStr::new(ceiling_dir_string.as_str()));
 
         assert_eq!(ceiling_dirs.len(), 2, "Relative path is discarded");
         assert_eq!(
@@ -149,6 +144,35 @@ mod tests {
             symlink_path.canonicalize().expect("symlink path exists"),
             "Symlinks are resolved"
         );
+        assert_eq!(
+            ceiling_dirs[1], symlink_path,
+            "Symlink are not resolved after empty item"
+        );
+
+        dir.close()
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn parse_ceiling_dirs_from_environment_format() -> std::io::Result<()> {
+        use std::{fs, os::windows::fs::symlink_dir};
+
+        use super::*;
+
+        // Setup filesystem
+        let dir = tempfile::tempdir().expect("success creating temp dir");
+        let direct_path = dir.path().join("direct");
+        let symlink_path = dir.path().join("symlink");
+        fs::create_dir(&direct_path)?;
+        symlink_dir(&direct_path, &symlink_path)?;
+
+        // Parse & build ceiling dirs string
+        let symlink_str = symlink_path.to_str().expect("symlink path is valid utf8");
+        let ceiling_dir_string = format!("{};relative;;{}", symlink_str, symlink_str);
+        let ceiling_dirs = parse_ceiling_dirs(OsStr::new(ceiling_dir_string.as_str()));
+
+        assert_eq!(ceiling_dirs.len(), 2, "Relative path is discarded");
+        assert_eq!(ceiling_dirs[0], direct_path, "Symlinks are resolved");
         assert_eq!(
             ceiling_dirs[1], symlink_path,
             "Symlink are not resolved after empty item"
