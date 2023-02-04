@@ -134,9 +134,11 @@ mod relative {
     }
 
     #[test]
-    #[should_panic] // TODO: fix
-    fn large_offsets_can_panic_elsewhere() {
-        git_date::parse("9999999999 weeks ago", Some(std::time::UNIX_EPOCH)).ok();
+    fn large_offsets_do_not_panic() {
+        assert!(matches!(
+            git_date::parse("9999999999 weeks ago", Some(std::time::UNIX_EPOCH)),
+            Err(git_date::parse::Error::RelativeTimeConversion)
+        ));
     }
 
     #[test]

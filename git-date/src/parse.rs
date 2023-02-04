@@ -3,6 +3,8 @@
 pub enum Error {
     #[error("Cannot represent times before UNIX epoch at timestamp {timestamp}")]
     TooEarly { timestamp: i64 },
+    #[error("Could not convert a duration into a date")]
+    RelativeTimeConversion,
     #[error("Date string can not be parsed")]
     InvalidDateString,
     #[error("Dates past 2038 can not be represented.")]
@@ -114,10 +116,13 @@ mod relative {
     pub(crate) fn parse(input: &str, now: Option<SystemTime>) -> Option<Result<OffsetDateTime, Error>> {
         parse_inner(input).map(|offset| {
             let offset = std::time::Duration::from_secs(offset.whole_seconds().try_into()?);
-            now.ok_or(Error::MissingCurrentTime).map(|now| {
-                now.checked_sub(offset)
-                    .expect("BUG: values can't be large enough to cause underflow")
-                    .into()
+            now.ok_or(Error::MissingCurrentTime).and_then(|now| {
+                std::panic::catch_unwind(|| {
+                    now.checked_sub(offset)
+                        .expect("BUG: values can't be large enough to cause underflow")
+                        .into()
+                })
+                .map_err(|_| Error::RelativeTimeConversion)
             })
         })
     }
