@@ -1,5 +1,7 @@
-use std::borrow::Cow;
-use std::fmt::{Display, Formatter};
+use std::{
+    borrow::Cow,
+    fmt::{Display, Formatter},
+};
 
 use crosstermion::crossterm::style::Stylize;
 use git_repository as git;

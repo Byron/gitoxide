@@ -2,8 +2,10 @@ use std::convert::TryInto;
 
 use git_object::bstr::ByteSlice;
 
-use crate::file::{store, store_at, store_with_packed_refs};
-use crate::util::hex_to_id;
+use crate::{
+    file::{store, store_at, store_with_packed_refs},
+    util::hex_to_id,
+};
 
 mod with_namespace {
     use git_object::bstr::{BString, ByteSlice};

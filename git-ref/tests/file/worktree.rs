@@ -193,7 +193,6 @@ mod read_only {
 mod writable {
     use std::convert::TryInto;
 
-    use crate::util::hex_to_id;
     use git_lock::acquire::Fail;
     use git_ref::{
         file::{transaction::PackedRefs, Store},
@@ -201,9 +200,12 @@ mod writable {
         FullName, FullNameRef, Target,
     };
 
-    use crate::file::{
-        transaction::prepare_and_commit::committer,
-        worktree::{main_store, worktree_store, Mode},
+    use crate::{
+        file::{
+            transaction::prepare_and_commit::committer,
+            worktree::{main_store, worktree_store, Mode},
+        },
+        util::hex_to_id,
     };
 
     fn change_with_id(id: git_hash::ObjectId) -> Change {

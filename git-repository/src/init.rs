@@ -6,8 +6,7 @@ use git_ref::{
     FullName, Target,
 };
 
-use crate::config::tree::Init;
-use crate::{bstr::BString, ThreadSafeRepository};
+use crate::{bstr::BString, config::tree::Init, ThreadSafeRepository};
 
 /// The name of the branch to use if non is configured via git configuration.
 ///

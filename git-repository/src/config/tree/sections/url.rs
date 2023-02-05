@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Key, Section, SubSectionRequirement, Url};
+use crate::{
+    config,
+    config::tree::{keys, Key, Section, SubSectionRequirement, Url},
+};
 
 const BASE_PARAMETER: Option<SubSectionRequirement> = Some(SubSectionRequirement::Parameter("base"));
 

@@ -1,8 +1,7 @@
 use std::path::PathBuf;
 
-use crate::hex_to_id;
-
 use super::multi_index;
+use crate::hex_to_id;
 
 #[test]
 fn lookup_with_ambiguity() {

@@ -4,8 +4,7 @@ use git_hash::ObjectId;
 use git_odb::{store, store::iter::Ordering, Find, FindExt, Header, Write};
 use git_testtools::fixture_path;
 
-use crate::hex_to_id;
-use crate::odb::db;
+use crate::{hex_to_id, odb::db};
 
 fn all_orderings() -> [Ordering; 2] {
     [

@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Core, Key, Section};
+use crate::{
+    config,
+    config::tree::{keys, Core, Key, Section},
+};
 
 impl Core {
     /// The `core.abbrev` key.
@@ -107,11 +109,9 @@ pub type LogAllRefUpdates = keys::Any<validate::LogAllRefUpdates>;
 pub type Disambiguate = keys::Any<validate::Disambiguate>;
 
 mod disambiguate {
-    use crate::bstr::BStr;
-    use crate::config;
-    use crate::config::tree::core::Disambiguate;
-    use crate::revision::spec::parse::ObjectKindHint;
     use std::borrow::Cow;
+
+    use crate::{bstr::BStr, config, config::tree::core::Disambiguate, revision::spec::parse::ObjectKindHint};
 
     impl Disambiguate {
         /// Convert a disambiguation marker into the respective enum.
@@ -134,10 +134,9 @@ mod disambiguate {
 }
 
 mod log_all_ref_updates {
-    use crate::bstr::BStr;
-    use crate::config;
-    use crate::config::tree::core::LogAllRefUpdates;
     use std::borrow::Cow;
+
+    use crate::{bstr::BStr, config, config::tree::core::LogAllRefUpdates};
 
     impl LogAllRefUpdates {
         /// Returns the mode for ref-updates as parsed from `value`. If `value` is not a boolean, `string_on_failure` will be called
@@ -165,10 +164,9 @@ mod log_all_ref_updates {
 }
 
 mod check_stat {
-    use crate::bstr::BStr;
-    use crate::config;
-    use crate::config::tree::core::CheckStat;
     use std::borrow::Cow;
+
+    use crate::{bstr::BStr, config, config::tree::core::CheckStat};
 
     impl CheckStat {
         /// Returns true if the full set of stat entries should be checked, and it's just as lenient as git.
@@ -188,11 +186,15 @@ mod check_stat {
 }
 
 mod abbrev {
-    use crate::bstr::{BStr, ByteSlice};
-    use crate::config;
-    use crate::config::tree::core::Abbrev;
-    use config::abbrev::Error;
     use std::borrow::Cow;
+
+    use config::abbrev::Error;
+
+    use crate::{
+        bstr::{BStr, ByteSlice},
+        config,
+        config::tree::core::Abbrev,
+    };
 
     impl Abbrev {
         /// Convert the given `hex_len_str` into the amount of characters that a short hash should have.
@@ -240,8 +242,7 @@ mod abbrev {
 }
 
 mod validate {
-    use crate::bstr::BStr;
-    use crate::config::tree::keys;
+    use crate::{bstr::BStr, config::tree::keys};
 
     pub struct LockTimeout;
     impl keys::Validate for LockTimeout {

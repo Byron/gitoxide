@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{gitoxide, keys, Committer, Key, Section};
+use crate::{
+    config,
+    config::tree::{gitoxide, keys, Committer, Key, Section},
+};
 
 impl Committer {
     /// The `committer.name` key.

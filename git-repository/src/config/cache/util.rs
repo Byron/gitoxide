@@ -1,7 +1,9 @@
 use super::Error;
-use crate::config;
-use crate::config::tree::{gitoxide, Core};
-use crate::revision::spec::parse::ObjectKindHint;
+use crate::{
+    config,
+    config::tree::{gitoxide, Core},
+    revision::spec::parse::ObjectKindHint,
+};
 
 pub(crate) fn interpolate_context<'a>(
     git_install_dir: Option<&'a std::path::Path>,

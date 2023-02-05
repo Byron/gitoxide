@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Clone, Key, Section};
+use crate::{
+    config,
+    config::tree::{keys, Clone, Key, Section},
+};
 
 impl Clone {
     /// The `clone.defaultRemoteName` key.

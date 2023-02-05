@@ -1,5 +1,4 @@
-use std::ffi::OsStr;
-use std::io::ErrorKind;
+use std::{ffi::OsStr, io::ErrorKind};
 
 use bstr::{BString, ByteSlice, ByteVec};
 

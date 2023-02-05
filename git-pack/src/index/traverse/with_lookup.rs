@@ -3,13 +3,14 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use git_features::{
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
+    threading::{lock, Mutable, OwnShared},
 };
 
 use super::{Error, Reducer};
-use crate::{data, index, index::util};
-
-use crate::index::traverse::Outcome;
-use git_features::threading::{lock, Mutable, OwnShared};
+use crate::{
+    data, index,
+    index::{traverse::Outcome, util},
+};
 
 /// Traversal options for [`index::File::traverse_with_lookup()`]
 pub struct Options<F> {

@@ -1,5 +1,6 @@
-use crate::bstr::{BStr, BString, ByteVec};
 use std::borrow::Cow;
+
+use crate::bstr::{BStr, BString, ByteVec};
 
 /// Provide information about a configuration section.
 pub trait Section {

@@ -3,8 +3,7 @@ mod existing {
 
     use git_ref::{PartialName, PartialNameRef};
 
-    use crate::file::store_at;
-    use crate::util::hex_to_id;
+    use crate::{file::store_at, util::hex_to_id};
 
     #[test]
     fn with_packed_refs() -> crate::Result {

@@ -1,9 +1,14 @@
-use crate::bstr::BStr;
-use crate::config;
-use crate::config::tree::{Key, Link, Note, Section, SubSectionRequirement};
-use std::borrow::Cow;
-use std::error::Error;
-use std::fmt::{Debug, Formatter};
+use std::{
+    borrow::Cow,
+    error::Error,
+    fmt::{Debug, Formatter},
+};
+
+use crate::{
+    bstr::BStr,
+    config,
+    config::tree::{Key, Link, Note, Section, SubSectionRequirement},
+};
 
 /// Implements a value without any constraints, i.e. a any value.
 pub struct Any<T: Validate = validate::All> {
@@ -180,10 +185,12 @@ pub type PushRefSpec = Any<validate::PushRefSpec>;
 pub type FetchRefSpec = Any<validate::FetchRefSpec>;
 
 mod duration {
-    use crate::config;
-    use crate::config::tree::keys::DurationInMilliseconds;
-    use crate::config::tree::Section;
     use std::time::Duration;
+
+    use crate::{
+        config,
+        config::tree::{keys::DurationInMilliseconds, Section},
+    };
 
     impl DurationInMilliseconds {
         /// Create a new instance.
@@ -206,11 +213,14 @@ mod duration {
 }
 
 mod lock_timeout {
-    use crate::config;
-    use crate::config::tree::keys::LockTimeout;
-    use crate::config::tree::Section;
-    use git_lock::acquire::Fail;
     use std::time::Duration;
+
+    use git_lock::acquire::Fail;
+
+    use crate::{
+        config,
+        config::tree::{keys::LockTimeout, Section},
+    };
 
     impl LockTimeout {
         /// Create a new instance.
@@ -236,8 +246,10 @@ mod lock_timeout {
 }
 
 mod refspecs {
-    use crate::config::tree::keys::{validate, FetchRefSpec, PushRefSpec};
-    use crate::config::tree::Section;
+    use crate::config::tree::{
+        keys::{validate, FetchRefSpec, PushRefSpec},
+        Section,
+    };
 
     impl PushRefSpec {
         /// Create a new instance.
@@ -255,11 +267,16 @@ mod refspecs {
 }
 
 mod url {
-    use crate::bstr::BStr;
-    use crate::config;
-    use crate::config::tree::keys::{validate, Url};
-    use crate::config::tree::Section;
     use std::borrow::Cow;
+
+    use crate::{
+        bstr::BStr,
+        config,
+        config::tree::{
+            keys::{validate, Url},
+            Section,
+        },
+    };
 
     impl Url {
         /// Create a new instance.
@@ -304,8 +321,7 @@ impl Path {
 }
 
 mod workers {
-    use crate::config::tree::keys::UnsignedInteger;
-    use crate::config::tree::Section;
+    use crate::config::tree::{keys::UnsignedInteger, Section};
 
     impl UnsignedInteger {
         /// Create a new instance.
@@ -358,10 +374,15 @@ mod workers {
 }
 
 mod time {
-    use crate::bstr::{BStr, ByteSlice};
-    use crate::config::tree::keys::{validate, Time};
-    use crate::config::tree::Section;
     use std::borrow::Cow;
+
+    use crate::{
+        bstr::{BStr, ByteSlice},
+        config::tree::{
+            keys::{validate, Time},
+            Section,
+        },
+    };
 
     impl Time {
         /// Create a new instance.
@@ -389,9 +410,13 @@ mod time {
 }
 
 mod boolean {
-    use crate::config;
-    use crate::config::tree::keys::{validate, Boolean};
-    use crate::config::tree::Section;
+    use crate::{
+        config,
+        config::tree::{
+            keys::{validate, Boolean},
+            Section,
+        },
+    };
 
     impl Boolean {
         /// Create a new instance.
@@ -412,11 +437,13 @@ mod boolean {
 }
 
 mod remote_name {
-    use crate::bstr::{BStr, BString};
-    use crate::config;
-    use crate::config::tree::keys::RemoteName;
-    use crate::config::tree::Section;
     use std::borrow::Cow;
+
+    use crate::{
+        bstr::{BStr, BString},
+        config,
+        config::tree::{keys::RemoteName, Section},
+    };
 
     impl RemoteName {
         /// Create a new instance.
@@ -443,11 +470,13 @@ pub trait Validate {
 
 /// various implementations of the `Validate` trait.
 pub mod validate {
-    use crate::bstr::{BStr, ByteSlice};
-    use crate::config::tree::keys::Validate;
-    use crate::remote;
-    use std::borrow::Cow;
-    use std::error::Error;
+    use std::{borrow::Cow, error::Error};
+
+    use crate::{
+        bstr::{BStr, ByteSlice},
+        config::tree::keys::Validate,
+        remote,
+    };
 
     /// Everything is valid.
     #[derive(Default)]

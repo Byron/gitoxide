@@ -47,11 +47,10 @@ mod reflog {
 }
 
 mod peel {
-    use crate::util::hex_to_id;
     use git_odb::pack::Find;
     use git_ref::{file::ReferenceExt, peel, Reference};
 
-    use crate::{file, file::store_with_packed_refs};
+    use crate::{file, file::store_with_packed_refs, util::hex_to_id};
 
     #[test]
     fn one_level() -> crate::Result {
@@ -180,9 +179,10 @@ mod parse {
         mktest!(ref_tag, b"reff: hello", "\"reff: hello\" could not be parsed");
     }
     mod valid {
-        use crate::util::hex_to_id;
         use git_object::bstr::ByteSlice;
         use git_ref::file::loose::Reference;
+
+        use crate::util::hex_to_id;
 
         macro_rules! mktest {
             ($name:ident, $input:literal, $kind:path, $id:expr, $ref:expr) => {

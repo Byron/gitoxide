@@ -1,5 +1,4 @@
-use std::collections::BTreeMap;
-use std::marker::PhantomData;
+use std::{collections::BTreeMap, marker::PhantomData};
 
 /// Statistics regarding object encountered during execution of the [`traverse()`][crate::index::File::traverse()] method.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]

@@ -7,8 +7,9 @@ use crate::index;
 
 ///
 pub mod integrity {
-    use git_object::bstr::BString;
     use std::marker::PhantomData;
+
+    use git_object::bstr::BString;
 
     /// Returned by [`index::File::verify_integrity()`][crate::index::File::verify_integrity()].
     #[derive(thiserror::Error, Debug)]

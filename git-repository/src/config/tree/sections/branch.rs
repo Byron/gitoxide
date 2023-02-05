@@ -1,5 +1,4 @@
-use crate::config::tree::traits::SubSectionRequirement;
-use crate::config::tree::{keys, Branch, Key, Section};
+use crate::config::tree::{keys, traits::SubSectionRequirement, Branch, Key, Section};
 
 const NAME_PARAMETER: Option<SubSectionRequirement> = Some(SubSectionRequirement::Parameter("name"));
 
@@ -30,10 +29,11 @@ impl Section for Branch {
 pub type Merge = keys::Any<validate::FullNameRef>;
 
 mod merge {
-    use crate::bstr::BStr;
-    use crate::config::tree::branch::Merge;
-    use git_ref::FullNameRef;
     use std::borrow::Cow;
+
+    use git_ref::FullNameRef;
+
+    use crate::{bstr::BStr, config::tree::branch::Merge};
 
     impl Merge {
         /// Return the validated full ref name from `value` if it is valid.
@@ -50,9 +50,10 @@ mod merge {
 
 ///
 pub mod validate {
-    use crate::bstr::BStr;
-    use crate::config::tree::branch::Merge;
-    use crate::config::tree::keys;
+    use crate::{
+        bstr::BStr,
+        config::tree::{branch::Merge, keys},
+    };
 
     pub struct FullNameRef;
     impl keys::Validate for FullNameRef {

@@ -308,8 +308,9 @@ pub mod pack {
     pub mod index {
         use std::path::PathBuf;
 
-        use super::AsIterationMode;
         use gitoxide_core as core;
+
+        use super::AsIterationMode;
 
         #[derive(Debug, clap::Subcommand)]
         pub enum Subcommands {
@@ -346,10 +347,12 @@ pub mod pack {
     }
 
     mod clap_util {
-        use clap::builder::{NonEmptyStringValueParser, PossibleValue, TypedValueParser};
-        use clap::{Arg, Command, Error};
-        use std::ffi::OsStr;
-        use std::str::FromStr;
+        use std::{ffi::OsStr, str::FromStr};
+
+        use clap::{
+            builder::{NonEmptyStringValueParser, PossibleValue, TypedValueParser},
+            Arg, Command, Error,
+        };
 
         #[derive(Clone)]
         pub struct AsObjectExpansion;

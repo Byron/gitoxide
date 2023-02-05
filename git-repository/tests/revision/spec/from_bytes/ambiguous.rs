@@ -1,4 +1,3 @@
-use crate::util::hex_to_id;
 use git_repository::{
     prelude::{ObjectIdExt, RevSpecExt},
     revision::{
@@ -8,9 +7,12 @@ use git_repository::{
 };
 
 use super::repo;
-use crate::revision::spec::from_bytes::{
-    parse_spec, parse_spec_better_than_baseline, parse_spec_no_baseline, parse_spec_no_baseline_opts, parse_spec_opts,
-    rev_parse,
+use crate::{
+    revision::spec::from_bytes::{
+        parse_spec, parse_spec_better_than_baseline, parse_spec_no_baseline, parse_spec_no_baseline_opts,
+        parse_spec_opts, rev_parse,
+    },
+    util::hex_to_id,
 };
 
 #[test]

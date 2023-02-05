@@ -1,5 +1,6 @@
-use git_hash::ObjectId;
 use std::path::{Path, PathBuf};
+
+use git_hash::ObjectId;
 
 mod access;
 mod entry;

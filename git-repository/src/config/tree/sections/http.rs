@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Http, Key, Section};
+use crate::{
+    config,
+    config::tree::{keys, Http, Key, Section},
+};
 
 impl Http {
     /// The `http.sslVersion` key.
@@ -87,8 +89,10 @@ pub type ProxyAuthMethod = keys::Any<validate::ProxyAuthMethod>;
 pub type Version = keys::Any<validate::Version>;
 
 mod key_impls {
-    use crate::config::tree::http::{ProxyAuthMethod, SslVersion};
-    use crate::config::tree::{keys, Section};
+    use crate::config::tree::{
+        http::{ProxyAuthMethod, SslVersion},
+        keys, Section,
+    };
 
     impl SslVersion {
         pub const fn new_ssl_version(name: &'static str, section: &'static dyn Section) -> Self {
@@ -237,9 +241,12 @@ mod key_impls {
 }
 
 pub mod validate {
-    use crate::bstr::{BStr, ByteSlice};
-    use crate::config::tree::keys::Validate;
     use std::error::Error;
+
+    use crate::{
+        bstr::{BStr, ByteSlice},
+        config::tree::keys::Validate,
+    };
 
     pub struct SslVersion;
     impl Validate for SslVersion {

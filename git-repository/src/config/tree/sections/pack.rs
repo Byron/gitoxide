@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Key, Pack, Section};
+use crate::{
+    config,
+    config::tree::{keys, Key, Pack, Section},
+};
 
 impl Pack {
     /// The `pack.threads` key.
@@ -16,8 +18,7 @@ impl Pack {
 pub type IndexVersion = keys::Any<validate::IndexVersion>;
 
 mod index_version {
-    use crate::config;
-    use crate::config::tree::sections::pack::IndexVersion;
+    use crate::{config, config::tree::sections::pack::IndexVersion};
 
     impl IndexVersion {
         /// Try to interpret an integer value as index version.
@@ -46,8 +47,7 @@ impl Section for Pack {
 }
 
 mod validate {
-    use crate::bstr::BStr;
-    use crate::config::tree::keys;
+    use crate::{bstr::BStr, config::tree::keys};
 
     pub struct IndexVersion;
     impl keys::Validate for IndexVersion {

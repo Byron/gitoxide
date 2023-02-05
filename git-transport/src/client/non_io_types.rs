@@ -92,8 +92,9 @@ pub(crate) mod connect {
 }
 
 mod error {
-    use bstr::BString;
     use std::ffi::OsString;
+
+    use bstr::BString;
 
     use crate::client::capabilities;
     #[cfg(feature = "http-client")]

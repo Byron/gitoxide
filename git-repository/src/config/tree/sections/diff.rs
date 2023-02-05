@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Diff, Key, Section};
+use crate::{
+    config,
+    config::tree::{keys, Diff, Key, Section},
+};
 
 impl Diff {
     /// The `diff.algorithm` key.
@@ -21,11 +23,13 @@ impl Section for Diff {
 pub type Algorithm = keys::Any<validate::Algorithm>;
 
 mod algorithm {
-    use crate::bstr::BStr;
-    use crate::config;
-    use crate::config::diff::algorithm::Error;
-    use crate::config::tree::sections::diff::Algorithm;
     use std::borrow::Cow;
+
+    use crate::{
+        bstr::BStr,
+        config,
+        config::{diff::algorithm::Error, tree::sections::diff::Algorithm},
+    };
 
     impl Algorithm {
         /// Derive the diff algorithm identified by `name`, case-insensitively.
@@ -51,8 +55,10 @@ mod algorithm {
 }
 
 mod validate {
-    use crate::bstr::BStr;
-    use crate::config::tree::{keys, Diff};
+    use crate::{
+        bstr::BStr,
+        config::tree::{keys, Diff},
+    };
 
     pub struct Algorithm;
     impl keys::Validate for Algorithm {

@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Extensions, Key, Section};
+use crate::{
+    config,
+    config::tree::{keys, Extensions, Key, Section},
+};
 
 impl Extensions {
     /// The `extensions.worktreeConfig` key.
@@ -15,10 +17,9 @@ impl Extensions {
 pub type ObjectFormat = keys::Any<validate::ObjectFormat>;
 
 mod object_format {
-    use crate::bstr::BStr;
-    use crate::config;
-    use crate::config::tree::sections::extensions::ObjectFormat;
     use std::borrow::Cow;
+
+    use crate::{bstr::BStr, config, config::tree::sections::extensions::ObjectFormat};
 
     impl ObjectFormat {
         pub fn try_into_object_format(
@@ -45,8 +46,7 @@ impl Section for Extensions {
 }
 
 mod validate {
-    use crate::bstr::BStr;
-    use crate::config::tree::keys;
+    use crate::{bstr::BStr, config::tree::keys};
 
     pub struct ObjectFormat;
 

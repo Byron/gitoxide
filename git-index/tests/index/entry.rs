@@ -1,6 +1,7 @@
 mod time {
-    use git_index::entry;
     use std::time::SystemTime;
+
+    use git_index::entry;
 
     #[test]
     fn conversion_roundtrip() {

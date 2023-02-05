@@ -1,7 +1,7 @@
-use std::marker::PhantomData;
 use std::{
     io,
     io::Write,
+    marker::PhantomData,
     path::{Path, PathBuf},
     sync::{atomic::AtomicBool, Arc},
 };

@@ -355,8 +355,9 @@ pub mod revision {
 pub mod exclude {
     use std::ffi::OsString;
 
-    use super::AsPathSpec;
     use git_repository as git;
+
+    use super::AsPathSpec;
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -405,10 +406,13 @@ pub mod index {
 pub mod free;
 
 mod clap_util {
-    use clap::builder::{OsStringValueParser, TypedValueParser};
-    use clap::{Arg, Command, Error};
-    use git_repository as git;
     use std::ffi::OsStr;
+
+    use clap::{
+        builder::{OsStringValueParser, TypedValueParser},
+        Arg, Command, Error,
+    };
+    use git_repository as git;
 
     #[derive(Clone)]
     pub struct AsPathSpec;

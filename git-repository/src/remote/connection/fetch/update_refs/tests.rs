@@ -10,9 +10,9 @@ fn hex_to_id(hex: &str) -> git_hash::ObjectId {
 mod update {
     use std::convert::TryInto;
 
-    use super::hex_to_id;
     use git_testtools::Result;
 
+    use super::hex_to_id;
     use crate as git;
 
     fn base_repo_path() -> String {
@@ -43,12 +43,11 @@ mod update {
     }
     use git_ref::{transaction::Change, TargetRef};
 
-    use crate::remote::fetch::refs::tests::restricted;
     use crate::{
         bstr::BString,
         remote::{
             fetch,
-            fetch::{Mapping, RefLogMessage, Source, SpecIndex},
+            fetch::{refs::tests::restricted, Mapping, RefLogMessage, Source, SpecIndex},
         },
     };
 

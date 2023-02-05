@@ -1,5 +1,4 @@
-use std::ffi::OsStr;
-use std::{env, path::PathBuf};
+use std::{env, ffi::OsStr, path::PathBuf};
 
 /// The error returned by [git_discover::upwards()][crate::upwards()].
 #[derive(Debug, thiserror::Error)]

@@ -1,5 +1,4 @@
-use crate::config::tree::Branch;
-use crate::{config, remote, Reference};
+use crate::{config, config::tree::Branch, remote, Reference};
 
 /// Remotes
 impl<'repo> Reference<'repo> {

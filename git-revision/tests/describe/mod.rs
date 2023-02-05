@@ -1,12 +1,13 @@
 use std::borrow::Cow;
 
-use crate::hex_to_id;
 use git_object::bstr::ByteSlice;
 use git_repository::{
     odb::{Find, FindExt},
     Repository,
 };
 use git_revision::describe;
+
+use crate::hex_to_id;
 
 mod format;
 

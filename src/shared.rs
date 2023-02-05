@@ -237,14 +237,12 @@ pub fn from_env<T: argh::TopLevelCommand>() -> T {
 }
 
 mod clap {
-    use clap::builder::PossibleValue;
-    use clap::error::ErrorKind;
-    use clap::{builder, Arg, Command, Error};
+    use std::{ffi::OsStr, str::FromStr};
+
+    use clap::{builder, builder::PossibleValue, error::ErrorKind, Arg, Command, Error};
     use git_repository as git;
     use git_repository::bstr::BString;
     use gitoxide_core as core;
-    use std::ffi::OsStr;
-    use std::str::FromStr;
 
     #[derive(Clone)]
     pub struct AsBString;

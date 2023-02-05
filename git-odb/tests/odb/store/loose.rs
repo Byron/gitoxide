@@ -90,8 +90,7 @@ mod lookup_prefix {
     use git_testtools::fixture_path;
     use maplit::hashset;
 
-    use crate::odb::hex_to_id;
-    use crate::store::loose::ldb;
+    use crate::{odb::hex_to_id, store::loose::ldb};
 
     #[test]
     fn returns_none_for_prefixes_without_any_match() {
@@ -330,8 +329,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     }
 
     mod header {
-        use crate::odb::hex_to_id;
-        use crate::odb::store::loose::ldb;
+        use crate::odb::{hex_to_id, store::loose::ldb};
 
         #[test]
         fn existing() -> crate::Result {

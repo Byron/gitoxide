@@ -1,7 +1,9 @@
-use crate::util::hex_to_id;
 use git_repository::{prelude::ObjectIdExt, revision::Spec};
 
-use crate::revision::spec::from_bytes::{parse_spec, repo};
+use crate::{
+    revision::spec::from_bytes::{parse_spec, repo},
+    util::hex_to_id,
+};
 
 #[test]
 fn peel_to_object() {

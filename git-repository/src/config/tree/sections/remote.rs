@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{http, keys, Key, Remote, Section, SubSectionRequirement};
+use crate::{
+    config,
+    config::tree::{http, keys, Key, Remote, Section, SubSectionRequirement},
+};
 
 const NAME_PARAMETER: Option<SubSectionRequirement> = Some(SubSectionRequirement::Parameter("name"));
 
@@ -54,10 +56,9 @@ impl Section for Remote {
 pub type TagOpt = keys::Any<validate::TagOpt>;
 
 mod tag_opts {
-    use crate::bstr::BStr;
-    use crate::config::tree::remote::TagOpt;
-    use crate::{config, remote};
     use std::borrow::Cow;
+
+    use crate::{bstr::BStr, config, config::tree::remote::TagOpt, remote};
 
     impl TagOpt {
         /// Try to interpret `value` as tag option.
@@ -81,10 +82,9 @@ mod tag_opts {
 }
 
 pub mod validate {
-    use crate::bstr::BStr;
-    use crate::config::tree::keys::Validate;
-    use std::borrow::Cow;
-    use std::error::Error;
+    use std::{borrow::Cow, error::Error};
+
+    use crate::{bstr::BStr, config::tree::keys::Validate};
 
     pub struct TagOpt;
     impl Validate for TagOpt {

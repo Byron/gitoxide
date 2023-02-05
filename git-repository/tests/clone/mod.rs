@@ -1,7 +1,6 @@
 use git_repository as git;
 
-use crate::remote;
-use crate::util::restricted;
+use crate::{remote, util::restricted};
 
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
@@ -10,8 +9,7 @@ mod blocking_io {
     use git_repository as git;
     use git_repository::remote::fetch::SpecIndex;
 
-    use crate::remote;
-    use crate::util::restricted;
+    use crate::{remote, util::restricted};
 
     #[test]
     fn fetch_only_with_configuration() -> crate::Result {

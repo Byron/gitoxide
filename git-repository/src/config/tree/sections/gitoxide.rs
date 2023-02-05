@@ -51,8 +51,10 @@ impl Section for Gitoxide {
 }
 
 mod subsections {
-    use crate::config::tree::{http, keys, Gitoxide, Key, Section};
-    use crate::config::Tree;
+    use crate::config::{
+        tree::{http, keys, Gitoxide, Key, Section},
+        Tree,
+    };
 
     /// The `Http` sub-section.
     #[derive(Copy, Clone, Default)]
@@ -341,9 +343,9 @@ mod subsections {
 }
 
 pub mod validate {
-    use crate::bstr::BStr;
-    use crate::config::tree::keys::Validate;
     use std::error::Error;
+
+    use crate::{bstr::BStr, config::tree::keys::Validate};
 
     pub struct ProtocolFromUser;
     impl Validate for ProtocolFromUser {
@@ -356,5 +358,6 @@ pub mod validate {
     }
 }
 
-use crate::config;
 pub use subsections::{Allow, Author, Commit, Committer, Http, Https, Objects, Ssh, User};
+
+use crate::config;

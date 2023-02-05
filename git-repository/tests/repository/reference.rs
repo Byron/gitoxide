@@ -82,8 +82,9 @@ mod set_namespace {
 }
 
 mod iter_references {
-    use crate::util::hex_to_id;
     use git_repository as git;
+
+    use crate::util::hex_to_id;
 
     fn repo() -> crate::Result<git::Repository> {
         crate::repo("make_references_repo.sh").map(|r| r.to_thread_local())
@@ -187,9 +188,10 @@ mod iter_references {
 
 mod head {
 
-    use crate::util::hex_to_id;
     use git_ref::transaction::PreviousValue;
     use git_repository as git;
+
+    use crate::util::hex_to_id;
 
     #[test]
     fn symbolic() -> crate::Result {

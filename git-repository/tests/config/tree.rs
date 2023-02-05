@@ -1,16 +1,19 @@
-use git_object::bstr::BStr;
 use std::borrow::Cow;
+
+use git_object::bstr::BStr;
 
 fn bcow(input: &str) -> Cow<'_, BStr> {
     Cow::Borrowed(input.into())
 }
 
 mod keys {
-    use crate::config::tree::bcow;
+    use std::borrow::Cow;
+
     use git_object::bstr::ByteSlice;
     use git_repository as git;
     use git_repository::config::tree::{Key, Section};
-    use std::borrow::Cow;
+
+    use crate::config::tree::bcow;
 
     #[test]
     fn string() -> crate::Result {
@@ -69,8 +72,9 @@ mod keys {
 }
 
 mod branch {
-    use crate::config::tree::bcow;
     use git_repository::config::tree::{branch, Branch, Key};
+
+    use crate::config::tree::bcow;
 
     #[test]
     fn merge() {
@@ -90,9 +94,10 @@ mod ssh {
     #[test]
     #[cfg(feature = "blocking-network-client")]
     fn variant() -> crate::Result {
-        use crate::config::tree::bcow;
         use git_protocol::transport::client::ssh::ProgramKind;
         use git_repository::config::tree::Ssh;
+
+        use crate::config::tree::bcow;
         for (actual, expected) in [
             ("auto", None),
             ("ssh", Some(ProgramKind::Ssh)),
@@ -114,9 +119,10 @@ mod ssh {
 }
 
 mod diff {
-    use crate::config::tree::bcow;
     use git_diff::blob::Algorithm;
     use git_repository::config::tree::{Diff, Key};
+
+    use crate::config::tree::bcow;
 
     #[test]
     fn algorithm() -> crate::Result {
@@ -147,11 +153,15 @@ mod diff {
 }
 
 mod core {
-    use crate::config::tree::bcow;
-    use git_lock::acquire::Fail;
-    use git_repository::config::tree::{Core, Key};
-    use git_repository::revision::spec::parse::ObjectKindHint;
     use std::time::Duration;
+
+    use git_lock::acquire::Fail;
+    use git_repository::{
+        config::tree::{Core, Key},
+        revision::spec::parse::ObjectKindHint,
+    };
+
+    use crate::config::tree::bcow;
 
     fn signed(value: i64) -> Result<i64, git_config::value::Error> {
         Ok(value)
@@ -305,8 +315,9 @@ mod core {
 }
 
 mod extensions {
-    use crate::config::tree::bcow;
     use git_repository::config::tree::{Extensions, Key};
+
+    use crate::config::tree::bcow;
 
     #[test]
     fn object_format() -> crate::Result {
@@ -382,9 +393,12 @@ mod pack {
 
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
 mod protocol {
+    use git_repository::{
+        config::tree::{protocol, Key, Protocol},
+        remote::url::scheme_permission::Allow,
+    };
+
     use crate::config::tree::bcow;
-    use git_repository::config::tree::{protocol, Key, Protocol};
-    use git_repository::remote::url::scheme_permission::Allow;
 
     #[test]
     fn allow() -> crate::Result {
@@ -494,10 +508,12 @@ mod gitoxide {
     feature = "blocking-http-transport-curl"
 ))]
 mod http {
-    use crate::config::tree::bcow;
+    use std::borrow::Cow;
+
     use git_object::bstr::ByteSlice;
     use git_repository::config::tree::{Http, Key};
-    use std::borrow::Cow;
+
+    use crate::config::tree::bcow;
 
     #[test]
     fn follow_redirects() -> crate::Result {
@@ -637,9 +653,12 @@ mod http {
 }
 
 mod remote {
+    use git_repository::{
+        config::tree::{Key, Remote},
+        remote,
+    };
+
     use crate::config::tree::bcow;
-    use git_repository::config::tree::{Key, Remote};
-    use git_repository::remote;
 
     #[test]
     fn tag_opt() -> crate::Result {

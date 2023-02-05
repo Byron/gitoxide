@@ -2,10 +2,12 @@ use std::{borrow::Cow, convert::TryFrom};
 
 pub use error::Error;
 
-use crate::config::tree::{credential, Core, Credential, Key};
 use crate::{
     bstr::{ByteSlice, ByteVec},
-    config::Snapshot,
+    config::{
+        tree::{credential, Core, Credential, Key},
+        Snapshot,
+    },
 };
 
 mod error {

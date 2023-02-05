@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{gitoxide, keys, Key, Section, User};
+use crate::{
+    config,
+    config::tree::{gitoxide, keys, Key, Section, User},
+};
 
 impl User {
     /// The `user.name` key

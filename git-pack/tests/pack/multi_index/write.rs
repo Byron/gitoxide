@@ -1,8 +1,9 @@
 use std::{path::PathBuf, sync::atomic::AtomicBool};
 
-use crate::hex_to_id;
 use git_features::progress;
 use git_testtools::fixture_path_standalone;
+
+use crate::hex_to_id;
 
 #[test]
 fn from_paths() -> crate::Result {

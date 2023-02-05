@@ -3,10 +3,12 @@ use std::{borrow::Cow, path::PathBuf};
 use git_features::threading::OwnShared;
 
 use super::{Error, Options};
-use crate::config::tree::{gitoxide, Core, Key, Safe};
 use crate::{
     config,
-    config::cache::{interpolate_context, util::ApplyLeniency},
+    config::{
+        cache::{interpolate_context, util::ApplyLeniency},
+        tree::{gitoxide, Core, Key, Safe},
+    },
     permission, Permissions, ThreadSafeRepository,
 };
 

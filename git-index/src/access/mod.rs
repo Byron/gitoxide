@@ -1,5 +1,6 @@
-use bstr::{BStr, ByteSlice, ByteVec};
 use std::cmp::Ordering;
+
+use bstr::{BStr, ByteSlice, ByteVec};
 
 use crate::{entry, extension, Entry, PathStorage, State, Version};
 

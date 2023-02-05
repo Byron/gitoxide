@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Credential, Key, Section};
+use crate::{
+    config,
+    config::tree::{keys, Credential, Key, Section},
+};
 
 impl Credential {
     /// The `credential.helper` key.

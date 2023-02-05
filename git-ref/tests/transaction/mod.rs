@@ -98,13 +98,12 @@ mod refedit_ext {
     mod splitting {
         use std::{cell::Cell, convert::TryInto};
 
-        use crate::util::hex_to_id;
         use git_ref::{
             transaction::{Change, LogChange, PreviousValue, RefEdit, RefEditsExt, RefLog},
             FullNameRef, PartialNameRef, Target,
         };
 
-        use crate::transaction::refedit_ext::MockStore;
+        use crate::{transaction::refedit_ext::MockStore, util::hex_to_id};
 
         fn find<'a>(edits: &'a [RefEdit], name: &str) -> &'a RefEdit {
             let name: &FullNameRef = name.try_into().unwrap();

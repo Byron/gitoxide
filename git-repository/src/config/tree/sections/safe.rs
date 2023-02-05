@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Key, Safe, Section};
+use crate::{
+    config,
+    config::tree::{keys, Key, Safe, Section},
+};
 
 impl Safe {
     /// The `safe.directory` key

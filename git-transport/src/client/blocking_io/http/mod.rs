@@ -1,4 +1,3 @@
-use base64::Engine;
 use std::{
     any::Any,
     borrow::Cow,
@@ -7,6 +6,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use base64::Engine;
 use bstr::BStr;
 use git_packetline::PacketLineRef;
 pub use traits::{Error, GetResponse, Http, PostBodyDataKind, PostResponse};

@@ -1,7 +1,9 @@
-use crate::util::hex_to_id;
 use git_repository::prelude::ObjectIdExt;
 
-use crate::revision::spec::from_bytes::{parse_spec_no_baseline, repo};
+use crate::{
+    revision::spec::from_bytes::{parse_spec_no_baseline, repo},
+    util::hex_to_id,
+};
 
 mod with_known_revision {
     use git_repository::revision::Spec;

@@ -214,8 +214,9 @@ mod program_kind {
     }
 
     mod line_to_err {
-        use crate::client::ssh::ProgramKind;
         use std::io::ErrorKind;
+
+        use crate::client::ssh::ProgramKind;
 
         #[test]
         fn all() {

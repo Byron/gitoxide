@@ -1,8 +1,10 @@
 use std::{borrow::Cow, collections::BTreeMap, convert::TryFrom};
 
-use crate::bstr::{BStr, BString, ByteSlice};
-use crate::config;
-use crate::config::tree::{gitoxide, Key, Protocol};
+use crate::{
+    bstr::{BStr, BString, ByteSlice},
+    config,
+    config::tree::{gitoxide, Key, Protocol},
+};
 
 /// All allowed values of the `protocol.allow` key.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

@@ -14,8 +14,7 @@ use crate::{
 
 ///
 pub mod integrity {
-    use std::marker::PhantomData;
-    use std::path::PathBuf;
+    use std::{marker::PhantomData, path::PathBuf};
 
     use crate::pack;
 

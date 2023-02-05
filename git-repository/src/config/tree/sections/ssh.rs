@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Key, Section, Ssh};
+use crate::{
+    config,
+    config::tree::{keys, Key, Section, Ssh},
+};
 
 impl Ssh {
     /// The `ssh.variant` key
@@ -13,10 +15,9 @@ pub type Variant = keys::Any<validate::Variant>;
 
 #[cfg(feature = "blocking-network-client")]
 mod variant {
-    use crate::bstr::BStr;
-    use crate::config;
-    use crate::config::tree::ssh::Variant;
     use std::borrow::Cow;
+
+    use crate::{bstr::BStr, config, config::tree::ssh::Variant};
 
     impl Variant {
         pub fn try_into_variant(
@@ -49,8 +50,7 @@ impl Section for Ssh {
 }
 
 mod validate {
-    use crate::bstr::BStr;
-    use crate::config::tree::keys;
+    use crate::{bstr::BStr, config::tree::keys};
 
     pub struct Variant;
     impl keys::Validate for Variant {

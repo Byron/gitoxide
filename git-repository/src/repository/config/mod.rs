@@ -32,8 +32,10 @@ impl crate::Repository {
     pub fn ssh_connect_options(
         &self,
     ) -> Result<git_protocol::transport::client::ssh::connect::Options, config::ssh_connect_options::Error> {
-        use crate::config::cache::util::ApplyLeniency;
-        use crate::config::tree::{gitoxide, Core, Ssh};
+        use crate::config::{
+            cache::util::ApplyLeniency,
+            tree::{gitoxide, Core, Ssh},
+        };
 
         let config = &self.config.resolved;
         let mut trusted = self.filter_config_section();

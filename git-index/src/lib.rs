@@ -9,7 +9,6 @@
 use std::{ops::Range, path::PathBuf};
 
 use filetime::FileTime;
-
 pub use git_hash as hash;
 
 ///
@@ -110,8 +109,9 @@ pub struct State {
 }
 
 mod impls {
-    use crate::State;
     use std::fmt::{Debug, Formatter};
+
+    use crate::State;
 
     impl Debug for State {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

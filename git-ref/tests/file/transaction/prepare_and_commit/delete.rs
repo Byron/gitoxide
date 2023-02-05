@@ -1,6 +1,5 @@
 use std::convert::TryInto;
 
-use crate::util::hex_to_id;
 use git_lock::acquire::Fail;
 use git_ref::{
     file::ReferenceExt,
@@ -8,9 +7,12 @@ use git_ref::{
     Reference, Target,
 };
 
-use crate::file::{
-    store_writable,
-    transaction::prepare_and_commit::{committer, empty_store},
+use crate::{
+    file::{
+        store_writable,
+        transaction::prepare_and_commit::{committer, empty_store},
+    },
+    util::hex_to_id,
 };
 
 #[test]

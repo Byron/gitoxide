@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Init, Key, Section};
+use crate::{
+    config,
+    config::tree::{keys, Init, Key, Section},
+};
 
 impl Init {
     /// The `init.defaultBranch` key.

@@ -19,8 +19,9 @@ mod impls {
 }
 
 mod impl_ {
-    use crate::{File, State};
     use std::fmt::Formatter;
+
+    use crate::{File, State};
 
     impl std::fmt::Debug for File {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -66,8 +67,9 @@ mod access {
 }
 
 mod mutation {
-    use crate::File;
     use std::path::PathBuf;
+
+    use crate::File;
 
     /// Mutating access
     impl File {

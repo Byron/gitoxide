@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Key, Protocol, Section};
+use crate::{
+    config,
+    config::tree::{keys, Key, Protocol, Section},
+};
 
 impl Protocol {
     /// The `protocol.allow` key.
@@ -14,11 +16,9 @@ pub type Allow = keys::Any<validate::Allow>;
 
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
 mod allow {
-    use crate::bstr::BStr;
-    use crate::config;
-    use crate::config::tree::protocol::Allow;
-    use crate::remote::url::scheme_permission;
     use std::borrow::Cow;
+
+    use crate::{bstr::BStr, config, config::tree::protocol::Allow, remote::url::scheme_permission};
 
     impl Allow {
         /// Convert `value` into its respective `Allow` variant, possibly informing about the `scheme` we are looking at in the error.
@@ -72,8 +72,7 @@ impl Section for Protocol {
 }
 
 mod validate {
-    use crate::bstr::BStr;
-    use crate::config::tree::keys;
+    use crate::{bstr::BStr, config::tree::keys};
 
     pub struct Allow;
     impl keys::Validate for Allow {

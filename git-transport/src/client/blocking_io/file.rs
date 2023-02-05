@@ -1,9 +1,8 @@
-use std::ffi::OsStr;
 use std::{
     any::Any,
     borrow::Cow,
     error::Error,
-    ffi::OsString,
+    ffi::{OsStr, OsString},
     io::Write,
     process::{self, Stdio},
 };

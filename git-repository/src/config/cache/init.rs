@@ -3,11 +3,14 @@ use std::borrow::Cow;
 use git_sec::Permission;
 
 use super::{interpolate_context, util, Error, StageOne};
-use crate::config::tree::{gitoxide, Core, Http};
 use crate::{
     bstr::BString,
     config,
-    config::{cache::util::ApplyLeniency, Cache},
+    config::{
+        cache::util::ApplyLeniency,
+        tree::{gitoxide, Core, Http},
+        Cache,
+    },
     repository,
 };
 

@@ -64,14 +64,11 @@ mod access {
 }
 
 mod _impls {
-    use std::cmp::Ordering;
-    use std::ops::Add;
-    use std::time::SystemTime;
+    use std::{cmp::Ordering, ops::Add, time::SystemTime};
 
     use bstr::BStr;
 
-    use crate::entry::Time;
-    use crate::{Entry, State};
+    use crate::{entry::Time, Entry, State};
 
     impl From<SystemTime> for Time {
         fn from(s: SystemTime) -> Self {

@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Checkout, Key, Section};
+use crate::{
+    config,
+    config::tree::{keys, Checkout, Key, Section},
+};
 
 impl Checkout {
     /// The `checkout.workers` key.
@@ -41,8 +43,7 @@ mod workers {
 
 ///
 pub mod validate {
-    use crate::bstr::BStr;
-    use crate::config::tree::keys;
+    use crate::{bstr::BStr, config::tree::keys};
 
     pub struct Workers;
     impl keys::Validate for Workers {

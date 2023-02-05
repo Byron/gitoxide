@@ -1,8 +1,8 @@
-use crate::config::cache::util::ApplyLeniency;
-use crate::config::tree::Pack;
-
 use super::Error;
-use crate::Repository;
+use crate::{
+    config::{cache::util::ApplyLeniency, tree::Pack},
+    Repository,
+};
 
 pub fn index_threads(repo: &Repository) -> Result<Option<usize>, Error> {
     Ok(repo

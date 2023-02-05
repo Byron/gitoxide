@@ -9,10 +9,12 @@ fn pack_at(at: &str) -> pack::data::File {
 mod method {
     use std::sync::atomic::AtomicBool;
 
-    use crate::hex_to_id;
     use git_features::progress;
 
-    use crate::pack::{data::file::pack_at, SMALL_PACK};
+    use crate::{
+        hex_to_id,
+        pack::{data::file::pack_at, SMALL_PACK},
+    };
 
     #[test]
     fn checksum() {

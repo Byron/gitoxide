@@ -2,12 +2,15 @@ use std::{borrow::Cow, path::PathBuf, time::Duration};
 
 use git_lock::acquire::Fail;
 
-use crate::config::cache::util::ApplyLeniency;
-use crate::config::tree::{Checkout, Core, Key};
 use crate::{
     bstr::BStr,
     config,
-    config::{cache::util::ApplyLeniencyDefault, checkout_options, Cache},
+    config::{
+        cache::util::{ApplyLeniency, ApplyLeniencyDefault},
+        checkout_options,
+        tree::{Checkout, Core, Key},
+        Cache,
+    },
     remote,
     repository::identity,
 };
