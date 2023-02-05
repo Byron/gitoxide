@@ -40,7 +40,7 @@ impl index::File {
         let footer_size = hash_len * 2;
         if idx_len < FAN_LEN * N32_SIZE + footer_size {
             return Err(Error::Corrupt {
-                message: format!("Pack index of size {} is too small for even an empty index", idx_len),
+                message: format!("Pack index of size {idx_len} is too small for even an empty index"),
             });
         }
         let (kind, fan, num_objects) = {

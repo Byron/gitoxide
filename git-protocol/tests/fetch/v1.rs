@@ -28,7 +28,7 @@ async fn clone() -> crate::Result {
             "agent",
         )
         .await?;
-        assert_eq!(dlg.pack_bytes, 876, "{}: It be able to read pack bytes", fixture);
+        assert_eq!(dlg.pack_bytes, 876, "{fixture}: It be able to read pack bytes");
     }
     Ok(())
 }

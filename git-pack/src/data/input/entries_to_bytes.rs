@@ -90,11 +90,11 @@ where
         } else {
             header_bytes.len() as u64
         };
-        self.output.seek(std::io::SeekFrom::Start(0))?;
+        self.output.rewind()?;
         self.output.write_all(&header_bytes[..])?;
         self.output.flush()?;
 
-        self.output.seek(std::io::SeekFrom::Start(0))?;
+        self.output.rewind()?;
         let interrupt_never = std::sync::atomic::AtomicBool::new(false);
         let digest = hash::bytes(
             &mut self.output,

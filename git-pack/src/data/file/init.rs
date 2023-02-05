@@ -23,8 +23,7 @@ impl data::File {
         let pack_len = data.len();
         if pack_len < N32_SIZE * 3 + hash_len {
             return Err(data::header::decode::Error::Corrupt(format!(
-                "Pack data of size {} is too small for even an empty pack with shortest hash",
-                pack_len
+                "Pack data of size {pack_len} is too small for even an empty pack with shortest hash"
             )));
         }
         let (kind, num_objects) =

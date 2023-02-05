@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use std::{borrow::Cow, path::PathBuf};
 
 use git_features::threading::OwnShared;

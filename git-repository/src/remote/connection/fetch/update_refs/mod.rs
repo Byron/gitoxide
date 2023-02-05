@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use std::{collections::BTreeMap, convert::TryInto, path::PathBuf};
 
 use git_odb::{Find, FindExt};

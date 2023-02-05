@@ -33,8 +33,7 @@ fn size_in_memory() {
     let actual = std::mem::size_of::<git_object::Object>();
     assert!(
         actual <= 264,
-        "{} <= 264: Prevent unexpected growth of what should be lightweight objects",
-        actual
+        "{actual} <= 264: Prevent unexpected growth of what should be lightweight objects"
     )
 }
 

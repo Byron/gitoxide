@@ -156,7 +156,7 @@ pub mod create_or_update {
                             .and_then(|_| committer.write_to(&mut file))
                             .and_then(|_| {
                                 if !message.is_empty() {
-                                    writeln!(file, "\t{}", message)
+                                    writeln!(file, "\t{message}")
                                 } else {
                                     writeln!(file)
                                 }

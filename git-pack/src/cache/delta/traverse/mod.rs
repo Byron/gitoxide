@@ -143,7 +143,7 @@ where
                     (
                         Vec::<u8>::with_capacity(4096),
                         lock(&object_progress)
-                            .add_child_with_id(format!("thread {}", thread_index), git_features::progress::UNKNOWN),
+                            .add_child_with_id(format!("thread {thread_index}"), git_features::progress::UNKNOWN),
                         new_thread_state(),
                         resolve.clone(),
                         inspect_object.clone(),

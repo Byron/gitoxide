@@ -40,7 +40,7 @@ impl ProgramKind {
                         .env("GIT_PROTOCOL", format!("version={}", desired_version as usize))
                 }
                 if let Some(port) = url.port {
-                    prepare = prepare.arg(format!("-p{}", port));
+                    prepare = prepare.arg(format!("-p{port}"));
                 }
             }
             ProgramKind::Plink | ProgramKind::Putty | ProgramKind::TortoisePlink => {

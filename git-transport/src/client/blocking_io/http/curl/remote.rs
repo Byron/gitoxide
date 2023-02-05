@@ -54,7 +54,7 @@ impl Handler {
         };
         match Self::parse_status_inner(data) {
             Ok(status) if !(200..=valid_end).contains(&status) => {
-                Some((status, format!("Received HTTP status {}", status).into()))
+                Some((status, format!("Received HTTP status {status}").into()))
             }
             Ok(_) => None,
             Err(err) => Some((500, err)),

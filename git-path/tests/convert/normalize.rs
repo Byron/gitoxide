@@ -127,8 +127,7 @@ fn trailing_relative_components_are_resolved() {
         assert_eq!(
             normalize(path, cwd).unwrap_or_else(|| panic!("{path:?}")),
             Cow::Borrowed(p(expected)),
-            "'{}' got an unexpected result",
-            input
+            "'{input}' got an unexpected result"
         );
     }
 }

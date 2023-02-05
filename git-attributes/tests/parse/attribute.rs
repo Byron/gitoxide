@@ -275,7 +275,7 @@ fn unspecified(attr: &str) -> (BString, StateRef) {
     (attr.into(), StateRef::Unspecified)
 }
 
-fn value<'a, 'b>(attr: &'a str, value: &'b str) -> (BString, StateRef<'b>) {
+fn value<'b>(attr: &str, value: &'b str) -> (BString, StateRef<'b>) {
     (attr.into(), StateRef::Value(value.as_bytes().as_bstr()))
 }
 

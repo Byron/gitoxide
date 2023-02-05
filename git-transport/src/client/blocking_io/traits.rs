@@ -83,10 +83,10 @@ impl<T: Transport> TransportV2Ext for T {
         arguments: Option<impl Iterator<Item = BString>>,
     ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error> {
         let mut writer = self.request(WriteMode::OneLfTerminatedLinePerWriteCall, MessageKind::Flush)?;
-        writer.write_all(format!("command={}", command).as_bytes())?;
+        writer.write_all(format!("command={command}").as_bytes())?;
         for (name, value) in capabilities {
             match value {
-                Some(value) => writer.write_all(format!("{}={}", name, value.as_ref()).as_bytes()),
+                Some(value) => writer.write_all(format!("{name}={}", value.as_ref()).as_bytes()),
                 None => writer.write_all(name.as_bytes()),
             }?;
         }

@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use git_repository::{open, Repository, ThreadSafeRepository};
 use git_testtools::tempfile;
 

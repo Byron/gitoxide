@@ -61,11 +61,10 @@ fn compare_baseline_with_ours() {
         } in Baseline::new(&input)
         {
             total_matches += 1;
-            assert!(seen.insert(m), "duplicate match entry: {:?}", m);
+            assert!(seen.insert(m), "duplicate match entry: {m:?}");
             assert_eq!(
                 is_match, *expected_matches,
-                "baseline for matches must be {} - check baseline and git version: {:?}",
-                expected_matches, m
+                "baseline for matches must be {expected_matches} - check baseline and git version: {m:?}"
             );
             match std::panic::catch_unwind(|| {
                 let pattern = pat(pattern);

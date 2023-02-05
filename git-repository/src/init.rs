@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use std::{borrow::Cow, convert::TryInto, path::Path};
 
 use git_ref::{

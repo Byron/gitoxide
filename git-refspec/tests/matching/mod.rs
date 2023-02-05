@@ -113,10 +113,10 @@ pub mod baseline {
                 Err(e) if e.to_string() == err => {
                     saw_err = true;
                 }
-                Err(err) => panic!("Unexpected parse error: {:?}", err),
+                Err(err) => panic!("Unexpected parse error: {err:?}"),
             }
         }
-        assert!(saw_err, "Failed to see error when parsing specs: {:?}", err)
+        assert!(saw_err, "Failed to see error when parsing specs: {err:?}")
     }
 
     /// Here we checked by hand which refs are actually written with a particular refspec
@@ -143,7 +143,7 @@ pub mod baseline {
         let key: Vec<_> = specs.into_iter().map(BString::from).collect();
         let expected = BASELINE
             .get(&key)
-            .unwrap_or_else(|| panic!("BUG: Need {:?} added to the baseline", key))
+            .unwrap_or_else(|| panic!("BUG: Need {key:?} added to the baseline"))
             .as_ref();
 
         let actual = match_group.match_remotes(input()).validated();
@@ -175,22 +175,15 @@ pub mod baseline {
         assert_eq!(
             actual.len(),
             expected.len(),
-            "got a different amount of mappings: {:?} != {:?}",
-            actual,
-            expected
+            "got a different amount of mappings: {actual:?} != {expected:?}"
         );
 
         for (idx, (actual, expected)) in actual.iter().zip(expected).enumerate() {
-            assert_eq!(
-                source_to_bstring(actual.lhs),
-                expected.remote,
-                "{}: remote mismatch",
-                idx
-            );
+            assert_eq!(source_to_bstring(actual.lhs), expected.remote, "{idx}: remote mismatch");
             if let Some(expected) = expected.local.as_ref() {
                 match actual.rhs.as_ref() {
-                    None => panic!("{}: Expected local ref to be {}, got none", idx, expected),
-                    Some(actual) => assert_eq!(actual.as_ref(), expected, "{}: mismatched local ref", idx),
+                    None => panic!("{idx}: Expected local ref to be {expected}, got none"),
+                    Some(actual) => assert_eq!(actual.as_ref(), expected, "{idx}: mismatched local ref"),
                 }
             }
         }

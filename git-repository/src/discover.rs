@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use std::path::Path;
 
 pub use git_discover::*;

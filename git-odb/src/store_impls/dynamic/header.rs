@@ -119,7 +119,7 @@ where
                                         }
 
                                         out.unwrap_or_else(|| {
-                                            panic!("could not find object {} in any index after looking up one of its base objects {}", id, base_id)
+                                            panic!("could not find object {id} in any index after looking up one of its base objects {base_id}")
                                         })
                                     }
                                 };

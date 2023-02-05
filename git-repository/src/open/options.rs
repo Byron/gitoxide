@@ -140,6 +140,7 @@ impl Options {
     }
 
     /// Open a repository at `path` with the options set so far.
+    #[allow(clippy::result_large_err)]
     pub fn open(self, path: impl Into<PathBuf>) -> Result<ThreadSafeRepository, Error> {
         ThreadSafeRepository::open_opts(path, self)
     }

@@ -188,7 +188,7 @@ impl Url {
             (Some(_user), None) => unreachable!("BUG: should not be possible to have a user but no host"),
         };
         if let Some(port) = &self.port {
-            write!(&mut out, ":{}", port)?;
+            write!(&mut out, ":{port}")?;
         }
         if self.serialize_alternative_form && self.scheme == Scheme::Ssh {
             out.write_all(b":")?;

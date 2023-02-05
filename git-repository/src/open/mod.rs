@@ -61,9 +61,7 @@ mod tests {
         let limit = 160;
         assert!(
             actual <= limit,
-            "{} <= {}: size shouldn't change without us knowing (on windows, it's bigger)",
-            actual,
-            limit
+            "{actual} <= {limit}: size shouldn't change without us knowing (on windows, it's bigger)"
         );
     }
 }

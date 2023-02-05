@@ -30,10 +30,7 @@ fn conflicting_creation_without_packed_refs() -> crate::Result {
     match res {
         Ok(_) if case_sensitive => {}
         Ok(_) if !case_sensitive => panic!("should fail as 'a' and 'A' clash"),
-        Err(err) if case_sensitive => panic!(
-            "should work as case sensitivity allows 'a' and 'A' to coexist: {:?}",
-            err
-        ),
+        Err(err) if case_sensitive => panic!("should work as case sensitivity allows 'a' and 'A' to coexist: {err:?}"),
         Err(err) if !case_sensitive => {
             assert_eq!(err.to_string(), "A lock could not be obtained for reference \"refs/A\"")
         }

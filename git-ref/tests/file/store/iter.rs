@@ -302,7 +302,7 @@ fn loose_iter_with_broken_refs() -> crate::Result {
             "tags/t1"
         ]
         .into_iter()
-        .map(|p| format!("refs/{}", p))
+        .map(|p| format!("refs/{p}"))
         .collect::<Vec<_>>(),
         "all paths are as expected"
     );

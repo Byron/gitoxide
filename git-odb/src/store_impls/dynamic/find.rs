@@ -70,7 +70,7 @@ pub(crate) mod error {
         #[test]
         fn error_size() {
             let actual = std::mem::size_of::<Error>();
-            assert!(actual <= 88, "{} <= 88: should not grow without us noticing", actual);
+            assert!(actual <= 88, "{actual} <= 88: should not grow without us noticing");
         }
     }
 }
@@ -219,7 +219,7 @@ where
                                         }
 
                                         out.unwrap_or_else(|| {
-                                           panic!("could not find object {} in any index after looking up one of its base objects {}", id, base_id)
+                                           panic!("could not find object {id} in any index after looking up one of its base objects {base_id}" )
                                        })
                                     }
                                 };

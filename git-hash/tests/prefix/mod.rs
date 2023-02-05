@@ -47,7 +47,7 @@ mod new {
             let num_of_zeros = oid.kind().len_in_hex() - hex_len;
             expected.extend(std::iter::repeat('0').take(num_of_zeros));
             let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
-            assert_eq!(prefix.as_oid().to_hex().to_string(), expected, "{}", hex_len);
+            assert_eq!(prefix.as_oid().to_hex().to_string(), expected, "{hex_len}");
             assert_eq!(prefix.hex_len(), hex_len);
             assert_eq!(prefix.cmp_oid(&oid), Ordering::Equal);
         }

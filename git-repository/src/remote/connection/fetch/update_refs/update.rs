@@ -81,7 +81,7 @@ impl std::fmt::Display for Mode {
             Mode::Forced => "forced-update",
             Mode::New => "new",
             Mode::ImplicitTagNotSentByRemote => "unrelated tag on remote",
-            Mode::RejectedSourceObjectNotFound { id } => return write!(f, "rejected ({} not found)", id),
+            Mode::RejectedSourceObjectNotFound { id } => return write!(f, "rejected ({id} not found)"),
             Mode::RejectedTagUpdate => "rejected (would overwrite existing tag)",
             Mode::RejectedNonFastForward => "rejected (non-fast-forward)",
             Mode::RejectedSymbolic => "rejected (refusing to write symbolic refs)",

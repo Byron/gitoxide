@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use std::any::Any;
 
 use crate::bstr::BStr;
@@ -170,7 +171,7 @@ impl crate::Repository {
                                         .with_leniency(lenient)
                                 },
                             )
-                            .map_err(|err| config::transport::http::Error::InvalidFollowRedirects(err))?
+                            .map_err(config::transport::http::Error::InvalidFollowRedirects)?
                     };
 
                     opts.low_speed_time_seconds = config
@@ -178,14 +179,14 @@ impl crate::Repository {
                         .map(|value| config::tree::Http::LOW_SPEED_TIME.try_into_u64(value))
                         .transpose()
                         .with_leniency(lenient)
-                        .map_err(|err| config::transport::http::Error::from(err))?
+                        .map_err(config::transport::http::Error::from)?
                         .unwrap_or_default();
                     opts.low_speed_limit_bytes_per_second = config
                         .integer_filter_by_key("http.lowSpeedLimit", &mut trusted_only)
                         .map(|value| config::tree::Http::LOW_SPEED_LIMIT.try_into_u32(value))
                         .transpose()
                         .with_leniency(lenient)
-                        .map_err(|err| config::transport::http::Error::from(err))?
+                        .map_err(config::transport::http::Error::from)?
                         .unwrap_or_default();
                     opts.proxy = proxy(
                         remote_name

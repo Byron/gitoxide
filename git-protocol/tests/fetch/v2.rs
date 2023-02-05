@@ -140,7 +140,7 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
             assert_eq!(err.kind(), std::io::ErrorKind::Other);
             assert_eq!(err.get_ref().expect("other error").to_string(), "hello world");
         }
-        err => panic!("should not have another error here, got: {}", err),
+        err => panic!("should not have another error here, got: {err}"),
     }
     Ok(())
 }

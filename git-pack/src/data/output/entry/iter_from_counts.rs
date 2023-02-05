@@ -143,7 +143,7 @@ pub(crate) mod function {
                         Vec::new(), // object data buffer
                         progress
                             .lock()
-                            .add_child_with_id(format!("thread {}", n), git_features::progress::UNKNOWN),
+                            .add_child_with_id(format!("thread {n}"), git_features::progress::UNKNOWN),
                     )
                 }
             },

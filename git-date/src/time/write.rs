@@ -26,7 +26,7 @@ impl Time {
         const SECONDS_PER_HOUR: i32 = 60 * 60;
         let offset = self.offset_in_seconds.abs();
         let hours = offset / SECONDS_PER_HOUR;
-        assert!(hours < 25, "offset is more than a day: {}", hours);
+        assert!(hours < 25, "offset is more than a day: {hours}");
         let minutes = (offset - (hours * SECONDS_PER_HOUR)) / 60;
 
         if hours < 10 {

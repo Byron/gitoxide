@@ -81,7 +81,7 @@ impl packed::Transaction {
                         Some(kind) if kind == git_object::Kind::Tag => {
                             next_id = git_object::TagRefIter::from_bytes(&buf).target_id().map_err(|_| {
                                 prepare::Error::Resolve(
-                                    format!("Couldn't get target object id from tag {}", next_id).into(),
+                                    format!("Couldn't get target object id from tag {next_id}").into(),
                                 )
                             })?;
                         }
@@ -90,7 +90,7 @@ impl packed::Transaction {
                         }
                         None => {
                             return Err(prepare::Error::Resolve(
-                                format!("Couldn't find object with id {}", next_id).into(),
+                                format!("Couldn't find object with id {next_id}").into(),
                             ))
                         }
                     }
@@ -194,7 +194,7 @@ fn write_packed_ref(mut out: impl std::io::Write, pref: packed::Reference<'_>) -
     out.write_all(pref.name.as_bstr())?;
     out.write_all(b"\n")?;
     if let Some(object) = pref.object {
-        writeln!(out, "^{}", object)?;
+        writeln!(out, "^{object}")?;
     }
     Ok(())
 }
@@ -206,11 +206,11 @@ fn write_edit(mut out: impl std::io::Write, edit: &Edit, lines_written: &mut i32
             new: Target::Peeled(target_oid),
             ..
         } => {
-            write!(out, "{} ", target_oid)?;
+            write!(out, "{target_oid} ")?;
             out.write_all(edit.inner.name.as_bstr())?;
             out.write_all(b"\n")?;
             if let Some(object) = edit.peeled {
-                writeln!(out, "^{}", object)?;
+                writeln!(out, "^{object}")?;
             }
             *lines_written += 1;
         }

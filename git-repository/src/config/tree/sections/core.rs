@@ -115,7 +115,7 @@ mod disambiguate {
 
     impl Disambiguate {
         /// Convert a disambiguation marker into the respective enum.
-        pub fn try_into_object_kind_hint<'a>(
+        pub fn try_into_object_kind_hint(
             &'static self,
             value: Cow<'_, BStr>,
         ) -> Result<Option<ObjectKindHint>, config::key::GenericErrorWithValue> {

@@ -27,6 +27,7 @@ pub mod set_target_id {
         /// Furthermore, refrain from using this method for more than a one-off change as it creates a transaction for each invocation.
         /// If multiple reference should be changed, use [Repository::edit_references()][crate::Repository::edit_references()]
         /// or the lower level reference database instead.
+        #[allow(clippy::result_large_err)]
         pub fn set_target_id(
             &mut self,
             id: impl Into<git_hash::ObjectId>,

@@ -231,10 +231,10 @@ impl State {
     /// - ignores entries which aren't blobs
     /// - ignores ignore entries which are not skip-worktree
     /// - within merges, picks 'our' stage both for ignore and attribute files.
-    pub fn build_attribute_list<'paths>(
+    pub fn build_attribute_list(
         &self,
         index: &git_index::State,
-        paths: &'paths git_index::PathStorageRef,
+        paths: &git_index::PathStorageRef,
         case: Case,
     ) -> Vec<PathOidMapping> {
         let a1_backing;

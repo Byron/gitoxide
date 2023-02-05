@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use super::{util, Error};
 use crate::config::tree::{Core, Extensions};
 

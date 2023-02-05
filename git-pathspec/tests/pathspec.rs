@@ -266,11 +266,7 @@ mod parse {
         fn empty_input() {
             let input = "";
 
-            assert!(
-                !check_against_baseline(input),
-                "This pathspec is valid in git: {}",
-                input
-            );
+            assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
             let output = git_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
@@ -285,11 +281,7 @@ mod parse {
             ];
 
             for input in inputs.into_iter() {
-                assert!(
-                    !check_against_baseline(input),
-                    "This pathspec is valid in git: {}",
-                    input
-                );
+                assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
                 let output = git_pathspec::parse(input.as_bytes());
                 assert!(output.is_err());
@@ -307,11 +299,7 @@ mod parse {
             ];
 
             for input in inputs.into_iter() {
-                assert!(
-                    !check_against_baseline(input),
-                    "This pathspec is valid in git: {}",
-                    input
-                );
+                assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
                 let output = git_pathspec::parse(input.as_bytes());
                 assert!(output.is_err());
@@ -329,14 +317,10 @@ mod parse {
             ];
 
             for input in inputs {
-                assert!(
-                    !check_against_baseline(input),
-                    "This pathspec is valid in git: {}",
-                    input
-                );
+                assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
                 let output = git_pathspec::parse(input.as_bytes());
-                assert!(output.is_err(), "This pathspec did not produce an error {}", input);
+                assert!(output.is_err(), "This pathspec did not produce an error {input}");
                 assert!(matches!(output.unwrap_err(), Error::InvalidAttribute { .. }));
             }
         }
@@ -355,18 +339,13 @@ mod parse {
             ];
 
             for input in inputs {
-                assert!(
-                    !check_against_baseline(input),
-                    "This pathspec is valid in git: {}",
-                    input
-                );
+                assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
                 let output = git_pathspec::parse(input.as_bytes());
-                assert!(output.is_err(), "This pathspec did not produce an error {}", input);
+                assert!(output.is_err(), "This pathspec did not produce an error {input}");
                 assert!(
                     matches!(output.unwrap_err(), Error::InvalidAttributeValue { .. }),
-                    "Errors did not match for pathspec: {}",
-                    input
+                    "Errors did not match for pathspec: {input}"
                 );
             }
         }
@@ -380,14 +359,10 @@ mod parse {
             ];
 
             for input in inputs {
-                assert!(
-                    !check_against_baseline(input),
-                    "This pathspec is valid in git: {}",
-                    input
-                );
+                assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
                 let output = git_pathspec::parse(input.as_bytes());
-                assert!(output.is_err(), "This pathspec did not produce an error {}", input);
+                assert!(output.is_err(), "This pathspec did not produce an error {input}");
                 assert!(matches!(output.unwrap_err(), Error::TrailingEscapeCharacter));
             }
         }
@@ -396,11 +371,7 @@ mod parse {
         fn empty_attribute_specification() {
             let input = ":(attr:)";
 
-            assert!(
-                !check_against_baseline(input),
-                "This pathspec is valid in git: {}",
-                input
-            );
+            assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
             let output = git_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
@@ -411,11 +382,7 @@ mod parse {
         fn multiple_attribute_specifications() {
             let input = ":(attr:one,attr:two)some/path";
 
-            assert!(
-                !check_against_baseline(input),
-                "This pathspec is valid in git: {}",
-                input
-            );
+            assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
             let output = git_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
@@ -426,11 +393,7 @@ mod parse {
         fn missing_parentheses() {
             let input = ":(top";
 
-            assert!(
-                !check_against_baseline(input),
-                "This pathspec is valid in git: {}",
-                input
-            );
+            assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
             let output = git_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
@@ -441,11 +404,7 @@ mod parse {
         fn glob_and_literal_keywords_present() {
             let input = ":(glob,literal)some/path";
 
-            assert!(
-                !check_against_baseline(input),
-                "This pathspec is valid in git: {}",
-                input
-            );
+            assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
             let output = git_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
@@ -457,14 +416,13 @@ mod parse {
         for (input, expected) in inputs.into_iter() {
             assert!(
                 check_against_baseline(input),
-                "This pathspec is invalid in git: {}",
-                input
+                "This pathspec is invalid in git: {input}"
             );
 
             let pattern: PatternForTesting = git_pathspec::parse(input.as_bytes())
-                .unwrap_or_else(|_| panic!("parsing should not fail with pathspec {}", input))
+                .unwrap_or_else(|_| panic!("parsing should not fail with pathspec {input}"))
                 .into();
-            assert_eq!(pattern, expected, "while checking input: \"{}\"", input);
+            assert_eq!(pattern, expected, "while checking input: \"{input}\"");
         }
     }
 
@@ -509,7 +467,7 @@ mod parse {
         let key: &BStr = pathspec.into();
         let base = BASELINE
             .get(key)
-            .unwrap_or_else(|| panic!("missing baseline for pathspec: {:?}", pathspec));
+            .unwrap_or_else(|| panic!("missing baseline for pathspec: {pathspec:?}"));
         *base == 0
     }
 }

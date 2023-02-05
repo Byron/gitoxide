@@ -76,7 +76,7 @@ where
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
         let chunk_stats: Vec<_> = match input {
             Err(err @ traverse::Error::PackDecode { .. }) if !self.check.fatal_decode_error() => {
-                lock(&self.progress).info(format!("Ignoring decode error: {}", err));
+                lock(&self.progress).info(format!("Ignoring decode error: {err}"));
                 return Ok(());
             }
             res => res,

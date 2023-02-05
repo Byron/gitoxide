@@ -180,7 +180,7 @@ impl<'a> From<&'a [u8; SIZE_OF_SHA1_DIGEST]> for &'a oid {
 impl fmt::Display for &oid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for b in self.as_bytes() {
-            write!(f, "{:02x}", b)?;
+            write!(f, "{b:02x}")?;
         }
         Ok(())
     }

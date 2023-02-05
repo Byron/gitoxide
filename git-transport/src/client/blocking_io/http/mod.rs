@@ -252,8 +252,7 @@ impl<H: Http> Transport<H> {
         }) {
             return Err(client::Error::Http(Error::Detail {
                 description: format!(
-                    "Didn't find '{}' header to indicate 'smart' protocol, and 'dumb' protocol is not supported.",
-                    wanted_content_type
+                    "Didn't find '{wanted_content_type}' header to indicate 'smart' protocol, and 'dumb' protocol is not supported."
                 ),
             }));
         }
@@ -271,7 +270,7 @@ impl<H: Http> Transport<H> {
             }
             headers.push(Cow::Owned(format!(
                 "Authorization: Basic {}",
-                base64::engine::general_purpose::STANDARD.encode(format!("{}:{}", username, password))
+                base64::engine::general_purpose::STANDARD.encode(format!("{username}:{password}"))
             )))
         }
         Ok(())
@@ -377,13 +376,13 @@ impl<H: Http> client::Transport for Transport<H> {
                 &extra_parameters
                     .iter()
                     .map(|(key, value)| match value {
-                        Some(value) => format!("{}={}", key, value),
+                        Some(value) => format!("{key}={value}"),
                         None => key.to_string(),
                     })
                     .collect::<Vec<_>>()
                     .join(":"),
             );
-            dynamic_headers.push(format!("Git-Protocol: {}", parameters).into());
+            dynamic_headers.push(format!("Git-Protocol: {parameters}").into());
         }
         self.add_basic_auth_if_present(&mut dynamic_headers)?;
         let GetResponse { headers, body } =

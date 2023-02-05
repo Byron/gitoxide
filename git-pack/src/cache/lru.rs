@@ -40,7 +40,7 @@ mod memory {
                         .with_scale(CustomScale),
                 ),
                 free_list: Vec::new(),
-                debug: git_features::cache::Debug::new(format!("MemoryCappedHashmap({}B)", memory_cap_in_bytes)),
+                debug: git_features::cache::Debug::new(format!("MemoryCappedHashmap({memory_cap_in_bytes}B)")),
             }
         }
     }
@@ -113,7 +113,7 @@ mod _static {
             StaticLinkedList {
                 inner: Default::default(),
                 free_list: Vec::new(),
-                debug: git_features::cache::Debug::new(format!("StaticLinkedList<{}>", SIZE)),
+                debug: git_features::cache::Debug::new(format!("StaticLinkedList<{SIZE}>")),
             }
         }
     }

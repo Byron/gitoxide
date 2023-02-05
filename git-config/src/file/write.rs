@@ -67,7 +67,7 @@ pub(crate) fn ends_with_newline(e: &[crate::parse::Event<'_>], nl: impl AsRef<[u
         .unwrap_or(false)
 }
 
-pub(crate) fn extract_newline<'a, 'b>(e: &'a Event<'b>) -> Option<&'a BStr> {
+pub(crate) fn extract_newline<'a>(e: &'a Event<'_>) -> Option<&'a BStr> {
     match e {
         Event::Newline(b) => b.as_ref().into(),
         _ => None,

@@ -82,7 +82,7 @@ mod ignore {
                     );
                 }
                 (None, None) => {}
-                (actual, expected) => panic!("actual {:?} should match {:?} with path '{}'", actual, expected, path),
+                (actual, expected) => panic!("actual {actual:?} should match {expected:?} with path '{path}'"),
             }
         }
         Ok(())

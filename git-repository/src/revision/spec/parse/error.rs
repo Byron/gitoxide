@@ -35,11 +35,11 @@ pub enum CandidateInfo {
 impl std::fmt::Display for CandidateInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CandidateInfo::FindError { source } => write!(f, "lookup error: {}", source),
-            CandidateInfo::Tag { name } => write!(f, "tag {:?}", name),
+            CandidateInfo::FindError { source } => write!(f, "lookup error: {source}"),
+            CandidateInfo::Tag { name } => write!(f, "tag {name:?}"),
             CandidateInfo::Object { kind } => std::fmt::Display::fmt(kind, f),
             CandidateInfo::Commit { date, title } => {
-                write!(f, "commit {} {:?}", date.format(git_date::time::format::SHORT), title)
+                write!(f, "commit {} {title:?}", date.format(git_date::time::format::SHORT))
             }
         }
     }

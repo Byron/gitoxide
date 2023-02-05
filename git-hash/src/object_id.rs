@@ -157,7 +157,7 @@ impl std::fmt::Debug for ObjectId {
             ObjectId::Sha1(_hash) => f.write_str("Sha1(")?,
         }
         for b in self.as_bytes() {
-            write!(f, "{:02x}", b)?;
+            write!(f, "{b:02x}")?;
         }
         f.write_str(")")
     }
@@ -173,7 +173,7 @@ impl From<&[u8]> for ObjectId {
     fn from(v: &[u8]) -> Self {
         match v.len() {
             20 => Self::Sha1(v.try_into().expect("prior length validation")),
-            other => panic!("BUG: unsupported hash len: {}", other),
+            other => panic!("BUG: unsupported hash len: {other}"),
         }
     }
 }

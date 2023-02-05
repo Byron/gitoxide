@@ -316,19 +316,13 @@ mod submodules {
             let (path, _trust) = git_discover::upwards(&submodule_m1_workdir)?;
             assert!(
                 matches!(path, git_discover::repository::Path::LinkedWorkTree{ref work_dir, ref git_dir} if work_dir == &submodule_m1_workdir && git_dir == &submodule_m1_gitdir),
-                "{:?} should match {:?} {:?}",
-                path,
-                submodule_m1_workdir,
-                submodule_m1_gitdir
+                "{path:?} should match {submodule_m1_workdir:?} {submodule_m1_gitdir:?}"
             );
 
             let (path, _trust) = git_discover::upwards(submodule_m1_workdir.join("subdir"))?;
             assert!(
                 matches!(path, git_discover::repository::Path::LinkedWorkTree{ref work_dir, ref git_dir} if work_dir == &submodule_m1_workdir && git_dir == &submodule_m1_gitdir),
-                "{:?} should match {:?} {:?}",
-                path,
-                submodule_m1_workdir,
-                submodule_m1_gitdir
+                "{path:?} should match {submodule_m1_workdir:?} {submodule_m1_gitdir:?}"
             );
         }
         Ok(())
@@ -343,9 +337,7 @@ mod submodules {
             let (path, _trust) = git_discover::upwards(&submodule_m1_gitdir)?;
             assert!(
                 matches!(path, git_discover::repository::Path::Repository(ref dir) if dir == &submodule_m1_gitdir),
-                "{:?} should match {:?}",
-                path,
-                submodule_m1_gitdir
+                "{path:?} should match {submodule_m1_gitdir:?}"
             );
         }
         Ok(())

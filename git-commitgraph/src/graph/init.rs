@@ -62,7 +62,7 @@ impl Graph {
                 err: e,
                 path: chain_file_path.clone(),
             })?;
-            let graph_file_path = commit_graphs_dir.join(format!("graph-{}.graph", hash));
+            let graph_file_path = commit_graphs_dir.join(format!("graph-{hash}.graph"));
             files.push(File::at(&graph_file_path).map_err(|e| Error::File {
                 err: e,
                 path: graph_file_path.clone(),

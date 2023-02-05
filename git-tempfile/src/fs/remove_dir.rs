@@ -20,10 +20,7 @@ impl<'a> Iter<'a> {
         if !target.starts_with(boundary) {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
-                format!(
-                    "Removal target {:?} must be contained in boundary {:?}",
-                    target, boundary
-                ),
+                format!("Removal target {target:?} must be contained in boundary {boundary:?}"),
             ));
         }
         let cursor = if target == boundary {

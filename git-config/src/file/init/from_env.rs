@@ -56,10 +56,10 @@ impl File<'static> {
         let mut config = File::new(meta);
         for i in 0..count {
             let key = git_path::os_string_into_bstring(
-                env::var_os(format!("GIT_CONFIG_KEY_{}", i)).ok_or(Error::InvalidKeyId { key_id: i })?,
+                env::var_os(format!("GIT_CONFIG_KEY_{i}")).ok_or(Error::InvalidKeyId { key_id: i })?,
             )
             .map_err(|_| Error::IllformedUtf8 { index: i, kind: "key" })?;
-            let value = env::var_os(format!("GIT_CONFIG_VALUE_{}", i)).ok_or(Error::InvalidValueId { value_id: i })?;
+            let value = env::var_os(format!("GIT_CONFIG_VALUE_{i}")).ok_or(Error::InvalidValueId { value_id: i })?;
             let key = parse::key(<_ as AsRef<BStr>>::as_ref(&key)).ok_or_else(|| Error::InvalidKeyValue {
                 key_id: i,
                 key_val: key.to_string(),

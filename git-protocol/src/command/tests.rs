@@ -1,6 +1,6 @@
 mod v1 {
     fn capabilities(input: &str) -> git_transport::client::Capabilities {
-        git_transport::client::Capabilities::from_bytes(format!("\0{}", input).as_bytes())
+        git_transport::client::Capabilities::from_bytes(format!("\0{input}").as_bytes())
             .expect("valid input capabilities")
             .0
     }
@@ -54,7 +54,7 @@ mod v2 {
     use git_transport::client::Capabilities;
 
     fn capabilities(command: &str, input: &str) -> Capabilities {
-        Capabilities::from_lines(format!("version 2\n{}={}", command, input).into())
+        Capabilities::from_lines(format!("version 2\n{command}={input}").into())
             .expect("valid input for V2 capabilities")
     }
 

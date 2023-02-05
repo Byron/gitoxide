@@ -163,7 +163,7 @@ mod invoke {
     fn fixtures<'a>(names: impl IntoIterator<Item = &'a str>) -> Vec<Program> {
         names
             .into_iter()
-            .map(|name| git_path::realpath(fixture_path(format!("{}.sh", name))).unwrap())
+            .map(|name| git_path::realpath(fixture_path(format!("{name}.sh"))).unwrap())
             .map(|path| {
                 let mut script = git_path::to_unix_separators_on_windows(git_path::into_bstr(path)).into_owned();
                 script.insert_str(0, "sh ");

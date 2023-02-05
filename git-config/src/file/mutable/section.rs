@@ -217,9 +217,9 @@ impl<'a, 'event> SectionMut<'a, 'event> {
         }
     }
 
-    pub(crate) fn get<'key>(
+    pub(crate) fn get(
         &self,
-        key: &Key<'key>,
+        key: &Key<'_>,
         start: Index,
         end: Index,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {

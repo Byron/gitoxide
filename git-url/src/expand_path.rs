@@ -28,7 +28,7 @@ impl From<ForUser> for Option<BString> {
 pub enum Error {
     #[error("UTF8 conversion on non-unix system failed for path: {path:?}")]
     IllformedUtf8 { path: BString },
-    #[error("Home directory could not be obtained for {}", match user {Some(user) => format!("user '{}'", user), None => "current user".into()})]
+    #[error("Home directory could not be obtained for {}", match user {Some(user) => format!("user '{user}'"), None => "current user".into()})]
     MissingHome { user: Option<BString> },
 }
 

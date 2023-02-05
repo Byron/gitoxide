@@ -23,18 +23,18 @@ fn assert_error_status(
     kind: std::io::ErrorKind,
 ) -> Result<(mock::Server, http::Transport<http::Impl>), crate::Error> {
     let (server, mut client) =
-        mock::serve_and_connect(&format!("http-{}.response", status), "path/not-important", Protocol::V1)?;
+        mock::serve_and_connect(&format!("http-{status}.response"), "path/not-important", Protocol::V1)?;
     let error = client
         .handshake(Service::UploadPack, &[])
         .err()
         .expect("non-200 status causes error");
     let error = error
         .source()
-        .unwrap_or_else(|| panic!("no source() in: {:?} ", error))
+        .unwrap_or_else(|| panic!("no source() in: {error:?} "))
         .downcast_ref::<std::io::Error>()
         .expect("io error as source");
     assert_eq!(error.kind(), kind);
-    let expected = format!("Received HTTP status {}", status);
+    let expected = format!("Received HTTP status {status}");
     assert_eq!(error.to_string().get(..expected.len()), Some(expected).as_deref());
     drop(server.received());
     Ok((server, client))

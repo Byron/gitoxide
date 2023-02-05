@@ -81,8 +81,7 @@ mod tests {
         let actual = std::mem::size_of::<Change>();
         assert!(
             actual <= 46,
-            "{} <= 46: this type shouldn't grow without us knowing",
-            actual
+            "{actual} <= 46: this type shouldn't grow without us knowing"
         )
     }
 }

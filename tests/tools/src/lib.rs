@@ -183,7 +183,7 @@ pub fn spawn_git_daemon(working_dir: impl AsRef<Path>) -> std::io::Result<GitDae
     }
     Ok(GitDaemon {
         child,
-        url: format!("git://{}", server_addr),
+        url: format!("git://{server_addr}"),
     })
 }
 

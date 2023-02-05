@@ -64,7 +64,7 @@ mod message {
             out.extend_from_slice(host.as_bytes());
             if let Some(port) = port {
                 out.push_byte(b':');
-                out.push_str(&format!("{}", port));
+                out.push_str(&format!("{port}"));
             }
             out.push(0);
         }
@@ -87,7 +87,7 @@ mod message {
             }
             for (key, value) in extra_parameters {
                 match value {
-                    Some(value) => out.push_str(format!("{}={}", key, value)),
+                    Some(value) => out.push_str(format!("{key}={value}")),
                     None => out.push_str(key),
                 }
                 out.push(0);

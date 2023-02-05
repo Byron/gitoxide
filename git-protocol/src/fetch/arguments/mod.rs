@@ -157,7 +157,7 @@ impl Arguments {
         }
     }
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
-        self.args.push(format!("{}{}", prefix, value).into());
+        self.args.push(format!("{prefix}{value}").into());
     }
     /// Create a new instance to help setting up arguments to send to the server as part of a `fetch` operation
     /// for which `features` are the available and configured features to use.
@@ -181,7 +181,7 @@ impl Arguments {
                 let baked_features = features
                     .iter()
                     .map(|(n, v)| match v {
-                        Some(v) => format!("{}={}", n, v),
+                        Some(v) => format!("{n}={v}"),
                         None => n.to_string(),
                     })
                     .collect::<Vec<_>>();

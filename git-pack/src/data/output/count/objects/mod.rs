@@ -79,7 +79,7 @@ where
                     {
                         let mut p = progress
                             .lock()
-                            .add_child_with_id(format!("thread {}", n), git_features::progress::UNKNOWN);
+                            .add_child_with_id(format!("thread {n}"), git_features::progress::UNKNOWN);
                         p.init(None, git_features::progress::count("objects"));
                         p
                     },

@@ -148,7 +148,7 @@ impl Display for Name {
             Self::White => write!(f, "white"),
             Self::BrightWhite => write!(f, "brightwhite"),
             Self::Ansi(num) => num.fmt(f),
-            Self::Rgb(r, g, b) => write!(f, "#{:02x}{:02x}{:02x}", r, g, b),
+            Self::Rgb(r, g, b) => write!(f, "#{r:02x}{g:02x}{b:02x}"),
         }
     }
 }

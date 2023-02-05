@@ -88,7 +88,7 @@ impl<'a> Display for Format<'a> {
         }
 
         if let Some(suffix) = &self.dirty_suffix {
-            write!(f, "-{}", suffix)?;
+            write!(f, "-{suffix}")?;
         }
         Ok(())
     }

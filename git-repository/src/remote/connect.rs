@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use git_protocol::transport::client::Transport;
 
 use crate::{remote::Connection, Progress, Remote};

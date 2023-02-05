@@ -148,7 +148,7 @@ impl TryFrom<&Path> for File {
                 if chunk_size % entry_size != 0 {
                     return Err(Error::InvalidChunkSize {
                         id: COMMIT_DATA_CHUNK_ID,
-                        msg: format!("chunk size {} is not a multiple of {}", chunk_size, entry_size),
+                        msg: format!("chunk size {chunk_size} is not a multiple of {entry_size}"),
                     });
                 }
                 Ok((
@@ -166,7 +166,7 @@ impl TryFrom<&Path> for File {
             if chunk_size != expected_size {
                 return Err(Error::InvalidChunkSize {
                     id: OID_FAN_CHUNK_ID,
-                    msg: format!("expected chunk length {}, got {}", expected_size, chunk_size),
+                    msg: format!("expected chunk length {expected_size}, got {chunk_size}"),
                 });
             }
             Ok(chunk_range.start)

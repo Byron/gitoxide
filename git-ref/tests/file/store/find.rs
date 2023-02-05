@@ -109,7 +109,7 @@ mod loose {
                         Err(git_ref::file::find::existing::Error::NotFound { name }) => {
                             assert_eq!(name, Path::new(*partial_name));
                         }
-                        Err(err) => panic!("Unexpected err: {:?}", err),
+                        Err(err) => panic!("Unexpected err: {err:?}"),
                     },
                 }
             }

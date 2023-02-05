@@ -34,7 +34,7 @@ where
         self.assure_one_name_has_one_edit().map_err(|name| {
             std::io::Error::new(
                 std::io::ErrorKind::AlreadyExists,
-                format!("A reference named '{}' has multiple edits", name),
+                format!("A reference named '{name}' has multiple edits"),
             )
         })
     }
@@ -121,10 +121,7 @@ where
             if round == 5 {
                 break Err(std::io::Error::new(
                     std::io::ErrorKind::WouldBlock,
-                    format!(
-                        "Could not follow all splits after {} rounds, assuming reference cycle",
-                        round
-                    ),
+                    format!("Could not follow all splits after {round} rounds, assuming reference cycle"),
                 ));
             }
             round += 1;

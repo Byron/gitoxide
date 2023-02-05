@@ -62,7 +62,7 @@ mod mutate {
             self.host = url.host().map(ToOwned::to_owned).map(|mut host| {
                 if let Some(port) = url.port {
                     use std::fmt::Write;
-                    write!(host, ":{}", port).expect("infallible");
+                    write!(host, ":{port}").expect("infallible");
                 }
                 host
             });

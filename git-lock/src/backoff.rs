@@ -102,21 +102,16 @@ mod tests {
             }
             assert!(
                 actual * 1000 >= (expected - 1) * 750,
-                "value too small: {} < {}",
-                actual,
-                expected
+                "value too small: {actual} < {expected}"
             );
             assert!(
                 actual * 1000 <= (expected + 1) * 1250,
-                "value too big: {} > {}",
-                actual,
-                expected
+                "value too big: {actual} > {expected}"
             );
         }
         assert!(
             num_identities < EXPECTED_TILL_SECOND.len(),
-            "too many untransformed values: {}",
-            num_identities
+            "too many untransformed values: {num_identities}"
         );
     }
 

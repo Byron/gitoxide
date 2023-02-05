@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use super::Error;
 use crate::{
     config,
@@ -102,7 +103,7 @@ pub(crate) fn disambiguate_hint(
     lenient_config: bool,
 ) -> Result<Option<ObjectKindHint>, config::key::GenericErrorWithValue> {
     match config.string_by_key("core.disambiguate") {
-        None => return Ok(None),
+        None => Ok(None),
         Some(value) => Core::DISAMBIGUATE
             .try_into_object_kind_hint(value)
             .with_leniency(lenient_config),

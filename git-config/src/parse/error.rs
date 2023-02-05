@@ -55,7 +55,7 @@ impl Display for Error {
                     data_size - 10
                 )
             }
-            (Ok(data), _) => write!(f, "'{}'", data),
+            (Ok(data), _) => write!(f, "'{data}'"),
             (Err(_), _) => self.parsed_until.fmt(f),
         }
     }

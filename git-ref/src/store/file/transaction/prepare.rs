@@ -183,7 +183,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     let mut lock = lock.take().map(Ok).unwrap_or_else(obtain_lock)?;
 
                     lock.with_mut(|file| match new {
-                        Target::Peeled(oid) => write!(file, "{}", oid),
+                        Target::Peeled(oid) => write!(file, "{oid}"),
                         Target::Symbolic(name) => write!(file, "ref: {}", name.0),
                     })?;
                     Some(lock.close()?)

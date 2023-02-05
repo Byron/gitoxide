@@ -123,7 +123,7 @@ where
     let mut round = 1;
     'negotiation: loop {
         progress.step();
-        progress.set_name(format!("negotiate (round {})", round));
+        progress.set_name(format!("negotiate (round {round})"));
         round += 1;
         let action = delegate.negotiate(&refs, &mut arguments, previous_response.as_ref())?;
         let mut reader = arguments.send(&mut transport, action == Action::Cancel).await?;

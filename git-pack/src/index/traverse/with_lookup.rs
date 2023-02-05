@@ -136,7 +136,7 @@ impl index::File {
                             new_processor(),
                             Vec::with_capacity(2048), // decode buffer
                             lock(&reduce_progress)
-                                .add_child_with_id(format!("thread {}", index), git_features::progress::UNKNOWN), // per thread progress
+                                .add_child_with_id(format!("thread {index}"), git_features::progress::UNKNOWN), // per thread progress
                         )
                     }
                 };
@@ -171,7 +171,7 @@ impl index::File {
                             progress.inc();
                             let stat = match result {
                                 Err(err @ Error::PackDecode { .. }) if !check.fatal_decode_error() => {
-                                    progress.info(format!("Ignoring decode error: {}", err));
+                                    progress.info(format!("Ignoring decode error: {err}"));
                                     continue;
                                 }
                                 res => res,

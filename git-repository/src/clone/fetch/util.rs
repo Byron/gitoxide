@@ -12,6 +12,7 @@ use crate::{
     Repository,
 };
 
+#[allow(clippy::result_large_err)]
 pub fn write_remote_to_local_config_file(
     remote: &mut crate::Remote<'_>,
     remote_name: BString,

@@ -49,7 +49,7 @@ mod memory {
                         .with_scale(CustomScale),
                 ),
                 free_list: Vec::new(),
-                debug: git_features::cache::Debug::new(format!("MemoryCappedObjectHashmap({}B)", memory_cap_in_bytes)),
+                debug: git_features::cache::Debug::new(format!("MemoryCappedObjectHashmap({memory_cap_in_bytes}B)")),
             }
         }
     }

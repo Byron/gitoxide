@@ -25,7 +25,7 @@ mod changes {
         ) -> crate::Result<TreeRefIter<'a>> {
             let tree_id = db
                 .try_find(commit, buf)?
-                .ok_or_else(|| format!("start commit {:?} to be present", commit))?
+                .ok_or_else(|| format!("start commit {commit:?} to be present"))?
                 .0
                 .decode()?
                 .into_commit()
@@ -66,7 +66,7 @@ mod changes {
             let (main_tree_id, parent_commit_id) = {
                 let commit = db
                     .try_find(commit_id, &mut buf)?
-                    .ok_or_else(|| format!("start commit {:?} to be present", commit_id))?
+                    .ok_or_else(|| format!("start commit {commit_id:?} to be present"))?
                     .0
                     .decode()?
                     .into_commit()

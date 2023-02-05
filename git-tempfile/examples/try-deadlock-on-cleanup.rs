@@ -66,11 +66,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
             if let Err(err) = tmp.close() {
-                eprintln!("Error when removing tempdir: {}", err);
+                eprintln!("Error when removing tempdir: {err}");
             }
             eprintln!(
-                "OK: survived {}s without deadlock with {} tempfiles created, lock obtained {} times, cleanup handler ran {} times",
-                secs_to_run,
+                "OK: survived {secs_to_run}s without deadlock with {} tempfiles created, lock obtained {} times, cleanup handler ran {} times",
                 tempfiles_created.load(Ordering::SeqCst),
                 tempfiles_registry_locked.load(Ordering::SeqCst),
                 signal_raised.load(Ordering::SeqCst)
@@ -88,7 +87,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn tempfile_for_thread_or_panic(tid: i32, tmp: &Path, count: &AtomicUsize) -> Handle<Writable> {
     let res = git_tempfile::writable_at(
-        tmp.join(format!("thread-{}", tid)),
+        tmp.join(format!("thread-{tid}")),
         ContainingDirectory::Exists,
         AutoRemove::Tempfile,
     )

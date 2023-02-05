@@ -95,21 +95,19 @@ username=bob";
     #[test]
     fn quit_supports_git_config_boolean_values() {
         for true_value in ["1", "42", "-42", "true", "on", "yes"] {
-            let input = format!("quit={}", true_value);
+            let input = format!("quit={true_value}");
             assert_eq!(
                 Context::from_bytes(input.as_bytes()).unwrap().quit,
                 Some(true),
-                "{}",
-                input
+                "{input}"
             )
         }
         for false_value in ["0", "false", "off", "no"] {
-            let input = format!("quit={}", false_value);
+            let input = format!("quit={false_value}");
             assert_eq!(
                 Context::from_bytes(input.as_bytes()).unwrap().quit,
                 Some(false),
-                "{}",
-                input
+                "{input}"
             )
         }
     }

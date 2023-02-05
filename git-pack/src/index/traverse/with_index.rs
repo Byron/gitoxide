@@ -150,7 +150,7 @@ impl index::File {
                         );
                         match result {
                             Err(err @ Error::PackDecode { .. }) if !check.fatal_decode_error() => {
-                                progress.info(format!("Ignoring decode error: {}", err));
+                                progress.info(format!("Ignoring decode error: {err}"));
                                 Ok(())
                             }
                             res => res,
