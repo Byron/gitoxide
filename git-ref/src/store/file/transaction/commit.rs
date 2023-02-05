@@ -8,7 +8,9 @@ impl<'s, 'p> Transaction<'s, 'p> {
     /// Make all [prepared][Transaction::prepare()] permanent and return the performed edits which represent the current
     /// state of the affected refs in the ref store in that instant. Please note that the obtained edits may have been
     /// adjusted to contain more dependent edits or additional information.
-    /// `committer` is used in the reflog.
+    /// `committer` is used in the reflog and only if the reflog is actually written, which is why it is optional. Please note
+    /// that if `None` is passed and the reflog needs to be written, the operation will be aborted late and a few refs may have been
+    /// successfully committed already, making clear the non-atomic nature of multi-file edits.
     ///
     /// On error the transaction may have been performed partially, depending on the nature of the error, and no attempt to roll back
     /// partial changes is made.
@@ -23,7 +25,11 @@ impl<'s, 'p> Transaction<'s, 'p> {
     ///   along with empty parent directories
     ///
     /// Note that transactions will be prepared automatically as needed.
-    pub fn commit(self, committer: git_actor::SignatureRef<'_>) -> Result<Vec<RefEdit>, Error> {
+    pub fn commit<'a>(self, committer: impl Into<Option<git_actor::SignatureRef<'a>>>) -> Result<Vec<RefEdit>, Error> {
+        self.commit_inner(committer.into())
+    }
+
+    fn commit_inner(self, committer: Option<git_actor::SignatureRef<'_>>) -> Result<Vec<RefEdit>, Error> {
         let mut updates = self.updates.expect("BUG: must call prepare before commit");
         let delete_loose_refs = matches!(
             self.packed_refs,

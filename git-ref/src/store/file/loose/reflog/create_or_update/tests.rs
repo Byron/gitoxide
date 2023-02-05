@@ -63,7 +63,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
             full_name,
             None,
             &new,
-            committer.to_ref(),
+            committer.to_ref().into(),
             b"the message".as_bstr(),
             false,
         )?;
@@ -85,7 +85,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
                     full_name,
                     Some(previous),
                     &new,
-                    committer.to_ref(),
+                    committer.to_ref().into(),
                     b"next message".as_bstr(),
                     false,
                 )?;
@@ -121,7 +121,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
             full_name,
             None,
             &new,
-            committer.to_ref(),
+            committer.to_ref().into(),
             b"more complicated reflog creation".as_bstr(),
             false,
         )?;

@@ -8,11 +8,13 @@ use crate::bstr::{BStr, BString, ByteSlice, ByteVec};
 #[error("remote names must be valid within refspecs for fetching: {name:?}")]
 #[allow(missing_docs)]
 pub struct Error {
-    source: git_refspec::parse::Error,
-    name: BString,
+    pub source: git_refspec::parse::Error,
+    pub name: BString,
 }
 
-/// Return `name` if it is valid or convert it into an `Error`.
+/// Return `name` if it is valid as symbolic remote name.
+///
+/// This means it has to be valid within a the ref path of a tracking branch.
 pub fn validated(name: impl Into<BString>) -> Result<BString, Error> {
     let name = name.into();
     match git_refspec::parse(

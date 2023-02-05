@@ -33,15 +33,21 @@ impl crate::Repository {
         &self,
     ) -> Result<git_protocol::transport::client::ssh::connect::Options, config::ssh_connect_options::Error> {
         use crate::config::cache::util::ApplyLeniency;
+        use crate::config::tree::{gitoxide, Core, Ssh};
 
         let config = &self.config.resolved;
         let mut trusted = self.filter_config_section();
         let mut fallback_active = false;
         let ssh_command = config
-            .string_filter_by_key("core.sshCommand", &mut trusted)
+            .string_filter("core", None, Core::SSH_COMMAND.name, &mut trusted)
             .or_else(|| {
                 fallback_active = true;
-                config.string_filter_by_key("gitoxide.ssh.commandWithoutShellFallback", &mut trusted)
+                config.string_filter(
+                    "gitoxide",
+                    Some("ssh".into()),
+                    gitoxide::Ssh::COMMAND_WITHOUT_SHELL_FALLBACK.name,
+                    &mut trusted,
+                )
             })
             .map(|cmd| git_path::from_bstr(cmd).into_owned().into());
         let opts = git_protocol::transport::client::ssh::connect::Options {
@@ -49,22 +55,7 @@ impl crate::Repository {
             command: ssh_command,
             kind: config
                 .string_filter_by_key("ssh.variant", &mut trusted)
-                .and_then(|s| {
-                    use git_protocol::transport::client::ssh::ProgramKind;
-                    Some(Ok(match s.as_ref().as_ref() {
-                        b"auto" => return None,
-                        b"ssh" => ProgramKind::Ssh,
-                        b"plink" => ProgramKind::Plink,
-                        b"putty" => ProgramKind::Putty,
-                        b"tortoiseplink" => ProgramKind::TortoisePlink,
-                        b"simple" => ProgramKind::Simple,
-                        _ => {
-                            return Some(Err(config::ssh_connect_options::Error::SshVariant {
-                                name: s.into_owned(),
-                            }))
-                        }
-                    }))
-                })
+                .and_then(|variant| Ssh::VARIANT.try_into_variant(variant).transpose())
                 .transpose()
                 .with_leniency(self.options.lenient_config)?,
         };
@@ -154,10 +145,7 @@ mod branch {
             self.config
                 .resolved
                 .string("branch", Some(short_branch_name.into()), "merge")
-                .map(|v| match v {
-                    Cow::Borrowed(v) => v.try_into().map(Cow::Borrowed),
-                    Cow::Owned(v) => v.try_into().map(Cow::Owned),
-                })
+                .map(crate::config::tree::branch::Merge::try_into_fullrefname)
         }
 
         /// Returns the unvalidated name of the remote associated with the given `short_branch_name`,

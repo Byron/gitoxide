@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::marker::PhantomData;
 
 /// Statistics regarding object encountered during execution of the [`traverse()`][crate::index::File::traverse()] method.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
@@ -109,4 +110,15 @@ impl Default for Algorithm {
     fn default() -> Self {
         Algorithm::DeltaTreeLookup
     }
+}
+
+/// The progress ids used in [`traverse()`][crate::index::File::traverse()] .
+///
+/// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
+#[derive(Debug, Copy, Clone)]
+pub enum ProgressId {
+    /// A root progress which isn't actually used, but links to the `ProgressId` of the lookup version of the algorithm.
+    WithLookup(PhantomData<super::with_lookup::ProgressId>),
+    /// A root progress which isn't actually used, but links to the `ProgressId` of the indexed version of the algorithm.
+    WithIndex(PhantomData<super::with_index::ProgressId>),
 }

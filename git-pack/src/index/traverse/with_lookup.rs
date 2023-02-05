@@ -8,13 +8,16 @@ use git_features::{
 use super::{Error, Reducer};
 use crate::{data, index, index::util};
 
-/// Traversal options for [`traverse()`][crate::index::File::traverse_with_lookup()]
+use crate::index::traverse::Outcome;
+use git_features::threading::{lock, Mutable, OwnShared};
+
+/// Traversal options for [`index::File::traverse_with_lookup()`]
 pub struct Options<F> {
     /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
     /// the amount of available logical cores.
     pub thread_limit: Option<usize>,
     /// The kinds of safety checks to perform.
-    pub check: crate::index::traverse::SafetyCheck,
+    pub check: index::traverse::SafetyCheck,
     /// A function to create a pack cache
     pub make_pack_lookup_cache: F,
 }
@@ -29,9 +32,31 @@ impl Default for Options<fn() -> crate::cache::Never> {
     }
 }
 
-use git_features::threading::{lock, Mutable, OwnShared};
+/// The progress ids used in [`index::File::traverse_with_lookup()`].
+///
+/// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
+#[derive(Debug, Copy, Clone)]
+pub enum ProgressId {
+    /// The amount of bytes currently processed to generate a checksum of the *pack data file*.
+    HashPackDataBytes,
+    /// The amount of bytes currently processed to generate a checksum of the *pack index file*.
+    HashPackIndexBytes,
+    /// Collect all object hashes into a vector and sort it by their pack offset.
+    CollectSortedIndexEntries,
+    /// The amount of objects which were decoded by brute-force.
+    DecodedObjects,
+}
 
-use crate::index::traverse::Outcome;
+impl From<ProgressId> for git_features::progress::Id {
+    fn from(v: ProgressId) -> Self {
+        match v {
+            ProgressId::HashPackDataBytes => *b"PTHP",
+            ProgressId::HashPackIndexBytes => *b"PTHI",
+            ProgressId::CollectSortedIndexEntries => *b"PTCE",
+            ProgressId::DecodedObjects => *b"PTRO",
+        }
+    }
+}
 
 /// Verify and validate the content of the index file
 impl index::File {
@@ -70,14 +95,14 @@ impl index::File {
                         "Hash of pack '{}'",
                         pack.path().file_name().expect("pack has filename").to_string_lossy()
                     ),
-                    *b"PTHP", /* Pack Traverse Hash Pack bytes */
+                    ProgressId::HashPackDataBytes.into(),
                 );
                 let index_progress = progress.add_child_with_id(
                     format!(
                         "Hash of index '{}'",
                         self.path.file_name().expect("index has filename").to_string_lossy()
                     ),
-                    *b"PTHI", /* Pack Traverse Hash Index bytes */
+                    ProgressId::HashPackIndexBytes.into(),
                 );
                 move || {
                     let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
@@ -90,15 +115,15 @@ impl index::File {
             || {
                 let index_entries = util::index_entries_sorted_by_offset_ascending(
                     self,
-                    progress.add_child_with_id("collecting sorted index", *b"PTCE"),
-                ); /* Pack Traverse Collect sorted Entries */
+                    progress.add_child_with_id("collecting sorted index", ProgressId::CollectSortedIndexEntries.into()),
+                );
 
                 let (chunk_size, thread_limit, available_cores) =
                     parallel::optimize_chunk_size_and_thread_limit(1000, Some(index_entries.len()), thread_limit, None);
                 let there_are_enough_entries_to_process = || index_entries.len() > chunk_size * available_cores;
                 let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
                 let reduce_progress = OwnShared::new(Mutable::new({
-                    let mut p = progress.add_child_with_id("Traversing", *b"PTRO"); /* Pack Traverse Resolve Objects */
+                    let mut p = progress.add_child_with_id("Traversing", ProgressId::DecodedObjects.into());
                     p.init(Some(self.num_objects() as usize), progress::count("objects"));
                     p
                 }));

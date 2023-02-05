@@ -1,9 +1,12 @@
-use std::{borrow::Cow, convert::TryInto, path::PathBuf, time::Duration};
+use std::{borrow::Cow, path::PathBuf, time::Duration};
 
 use git_lock::acquire::Fail;
 
+use crate::config::cache::util::ApplyLeniency;
+use crate::config::tree::{Checkout, Core, Key};
 use crate::{
     bstr::BStr,
+    config,
     config::{cache::util::ApplyLeniencyDefault, checkout_options, Cache},
     remote,
     repository::identity,
@@ -11,7 +14,7 @@ use crate::{
 
 /// Access
 impl Cache {
-    pub(crate) fn diff_algorithm(&self) -> Result<git_diff::blob::Algorithm, crate::config::diff::algorithm::Error> {
+    pub(crate) fn diff_algorithm(&self) -> Result<git_diff::blob::Algorithm, config::diff::algorithm::Error> {
         use crate::config::diff::algorithm::Error;
         self.diff_algorithm
             .get_or_try_init(|| {
@@ -19,26 +22,13 @@ impl Cache {
                     .resolved
                     .string("diff", None, "algorithm")
                     .unwrap_or_else(|| Cow::Borrowed("myers".into()));
-                if name.eq_ignore_ascii_case(b"myers") || name.eq_ignore_ascii_case(b"default") {
-                    Ok(git_diff::blob::Algorithm::Myers)
-                } else if name.eq_ignore_ascii_case(b"minimal") {
-                    Ok(git_diff::blob::Algorithm::MyersMinimal)
-                } else if name.eq_ignore_ascii_case(b"histogram") {
-                    Ok(git_diff::blob::Algorithm::Histogram)
-                } else if name.eq_ignore_ascii_case(b"patience") {
-                    if self.lenient_config {
-                        Ok(git_diff::blob::Algorithm::Histogram)
-                    } else {
-                        Err(Error::Unimplemented {
-                            name: name.into_owned(),
-                        })
-                    }
-                } else {
-                    Err(Error::Unknown {
-                        name: name.into_owned(),
+                config::tree::Diff::ALGORITHM
+                    .try_into_algorithm(name)
+                    .or_else(|err| match err {
+                        Error::Unimplemented { .. } if self.lenient_config => Ok(git_diff::blob::Algorithm::Histogram),
+                        err => Err(err),
                     })
-                }
-                .with_lenient_default(self.lenient_config)
+                    .with_lenient_default(self.lenient_config)
             })
             .copied()
     }
@@ -46,11 +36,12 @@ impl Cache {
     /// Returns a user agent for use with servers.
     #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
     pub(crate) fn user_agent_tuple(&self) -> (&'static str, Option<Cow<'static, str>>) {
+        use config::tree::Gitoxide;
         let agent = self
             .user_agent
             .get_or_init(|| {
                 self.resolved
-                    .string_by_key("gitoxide.userAgent")
+                    .string_by_key(Gitoxide::USER_AGENT.logical_name().as_str())
                     .map(|s| s.to_string())
                     .unwrap_or_else(|| crate::env::agent().into())
             })
@@ -69,9 +60,7 @@ impl Cache {
     }
 
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
-    pub(crate) fn url_scheme(
-        &self,
-    ) -> Result<&remote::url::SchemePermission, remote::url::scheme_permission::init::Error> {
+    pub(crate) fn url_scheme(&self) -> Result<&remote::url::SchemePermission, config::protocol::allow::Error> {
         self.url_scheme
             .get_or_try_init(|| remote::url::SchemePermission::from_config(&self.resolved, self.filter_config_section))
     }
@@ -79,39 +68,26 @@ impl Cache {
     /// Returns (file-timeout, pack-refs timeout)
     pub(crate) fn lock_timeout(
         &self,
-    ) -> Result<(git_lock::acquire::Fail, git_lock::acquire::Fail), git_config::value::Error> {
-        enum Kind {
-            RefFiles,
-            RefPackFile,
-        }
+    ) -> Result<(git_lock::acquire::Fail, git_lock::acquire::Fail), config::lock_timeout::Error> {
         let mut out: [git_lock::acquire::Fail; 2] = Default::default();
-
-        for (idx, kind) in [Kind::RefFiles, Kind::RefPackFile].iter().enumerate() {
-            let (key, default_ms) = match kind {
-                Kind::RefFiles => ("filesRefLockTimeout", 100),
-                Kind::RefPackFile => ("packedRefsTimeout", 1000),
-            };
-            let mk_default = || Fail::AfterDurationWithBackoff(Duration::from_millis(default_ms));
-            let mut fnp = self.filter_config_section;
-
-            let lock_mode = match self.resolved.integer_filter("core", None, key, &mut fnp) {
-                Some(Ok(val)) if val < 0 => Fail::AfterDurationWithBackoff(Duration::from_secs(u64::MAX)),
-                Some(Ok(val)) if val == 0 => Fail::Immediately,
-                Some(Ok(val)) => Fail::AfterDurationWithBackoff(Duration::from_millis(
-                    val.try_into().expect("i64 can be repsented by u64"),
-                )),
-                Some(Err(_)) if self.lenient_config => mk_default(),
-                Some(Err(err)) => return Err(err),
-                None => mk_default(),
-            };
-            out[idx] = lock_mode;
+        for (idx, (key, default_ms)) in [(&Core::FILES_REF_LOCK_TIMEOUT, 100), (&Core::PACKED_REFS_TIMEOUT, 1000)]
+            .into_iter()
+            .enumerate()
+        {
+            out[idx] = self
+                .resolved
+                .integer_filter("core", None, key.name, &mut self.filter_config_section.clone())
+                .map(|res| key.try_into_lock_timeout(res))
+                .transpose()
+                .with_leniency(self.lenient_config)?
+                .unwrap_or_else(|| Fail::AfterDurationWithBackoff(Duration::from_millis(default_ms)));
         }
         Ok((out[0], out[1]))
     }
 
     /// The path to the user-level excludes file to ignore certain files in the worktree.
     pub(crate) fn excludes_file(&self) -> Option<Result<PathBuf, git_config::path::interpolate::Error>> {
-        self.trusted_file_path("core", None, "excludesFile")?
+        self.trusted_file_path("core", None, Core::EXCLUDES_FILE.name)?
             .map(|p| p.into_owned())
             .into()
     }
@@ -138,12 +114,7 @@ impl Cache {
     }
 
     pub(crate) fn apply_leniency<T, E>(&self, res: Option<Result<T, E>>) -> Result<Option<T>, E> {
-        match res {
-            Some(Ok(v)) => Ok(Some(v)),
-            Some(Err(_err)) if self.lenient_config => Ok(None),
-            Some(Err(err)) => Err(err),
-            None => Ok(None),
-        }
+        res.transpose().with_leniency(self.lenient_config)
     }
 
     /// Collect everything needed to checkout files into a worktree.
@@ -153,30 +124,19 @@ impl Cache {
         &self,
         git_dir: &std::path::Path,
     ) -> Result<git_worktree::index::checkout::Options, checkout_options::Error> {
-        fn checkout_thread_limit_from_config(
-            config: &git_config::File<'static>,
-        ) -> Option<Result<usize, checkout_options::Error>> {
-            config.integer("checkout", None, "workers").map(|val| match val {
-                Ok(v) if v < 0 => Ok(0),
-                Ok(v) => Ok(v.try_into().expect("positive i64 can always be usize on 64 bit")),
-                Err(err) => Err(checkout_options::Error::Configuration {
-                    key: "checkout.workers",
-                    source: err,
-                }),
-            })
-        }
-
-        fn boolean(me: &Cache, full_key: &'static str, default: bool) -> Result<bool, checkout_options::Error> {
-            let mut tokens = full_key.split('.');
-            let section = tokens.next().expect("section");
-            let key = tokens.next().expect("key");
-            assert!(tokens.next().is_none(), "core.<key>");
+        fn boolean(
+            me: &Cache,
+            full_key: &str,
+            key: &'static config::tree::keys::Boolean,
+            default: bool,
+        ) -> Result<bool, checkout_options::Error> {
+            debug_assert_eq!(
+                full_key,
+                key.logical_name(),
+                "BUG: key name and hardcoded name must match"
+            );
             Ok(me
-                .apply_leniency(me.resolved.boolean(section, None, key))
-                .map_err(|err| checkout_options::Error::Configuration {
-                    key: full_key,
-                    source: err,
-                })?
+                .apply_leniency(me.resolved.boolean_by_key(full_key).map(|v| key.enrich_error(v)))?
                 .unwrap_or(default))
         }
 
@@ -184,7 +144,10 @@ impl Cache {
             me: &Cache,
             _git_dir: &std::path::Path,
         ) -> Result<git_attributes::MatchGroup, checkout_options::Error> {
-            let _attributes_file = match me.trusted_file_path("core", None, "attributesFile").transpose()? {
+            let _attributes_file = match me
+                .trusted_file_path("core", None, Core::ATTRIBUTES_FILE.name)
+                .transpose()?
+            {
                 Some(attributes) => Some(attributes.into_owned()),
                 None => me.xdg_config_path("attributes").ok().flatten(),
             };
@@ -192,23 +155,30 @@ impl Cache {
             Ok(Default::default())
         }
 
-        let thread_limit = self.apply_leniency(checkout_thread_limit_from_config(&self.resolved))?;
+        let thread_limit = self.apply_leniency(
+            self.resolved
+                .integer_filter_by_key("checkout.workers", &mut self.filter_config_section.clone())
+                .map(|value| Checkout::WORKERS.try_from_workers(value)),
+        )?;
         Ok(git_worktree::index::checkout::Options {
             fs: git_worktree::fs::Capabilities {
-                precompose_unicode: boolean(self, "core.precomposeUnicode", false)?,
-                ignore_case: boolean(self, "core.ignoreCase", false)?,
-                executable_bit: boolean(self, "core.fileMode", true)?,
-                symlink: boolean(self, "core.symlinks", true)?,
+                precompose_unicode: boolean(self, "core.precomposeUnicode", &Core::PRECOMPOSE_UNICODE, false)?,
+                ignore_case: boolean(self, "core.ignoreCase", &Core::IGNORE_CASE, false)?,
+                executable_bit: boolean(self, "core.fileMode", &Core::FILE_MODE, true)?,
+                symlink: boolean(self, "core.symlinks", &Core::SYMLINKS, true)?,
             },
             thread_limit,
             destination_is_initially_empty: false,
             overwrite_existing: false,
             keep_going: false,
-            trust_ctime: boolean(self, "core.trustCTime", true)?,
+            trust_ctime: boolean(self, "core.trustCTime", &Core::TRUST_C_TIME, true)?,
             check_stat: self
-                .resolved
-                .string("core", None, "checkStat")
-                .map_or(true, |v| v.as_ref() != "minimal"),
+                .apply_leniency(
+                    self.resolved
+                        .string("core", None, "checkStat")
+                        .map(|v| Core::CHECK_STAT.try_into_checkstat(v)),
+                )?
+                .unwrap_or(true),
             attribute_globals: assemble_attribute_globals(self, git_dir)?,
         })
     }

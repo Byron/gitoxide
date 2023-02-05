@@ -8,7 +8,7 @@ use crate::{
     remote::{
         connection::fetch::config,
         fetch,
-        fetch::{negotiate, refs, Error, Outcome, Prepare, RefLogMessage, Status},
+        fetch::{negotiate, refs, Error, Outcome, Prepare, ProgressId, RefLogMessage, Status},
     },
     Progress,
 };
@@ -230,7 +230,7 @@ fn setup_remote_progress<P>(
 {
     use git_protocol::transport::client::ExtendedBufRead;
     reader.set_progress_handler(Some(Box::new({
-        let mut remote_progress = progress.add_child_with_id("remote", *b"FERP"); /* FEtch Remote Progress*/
+        let mut remote_progress = progress.add_child_with_id("remote", ProgressId::RemoteProgress.into());
         move |is_err: bool, data: &[u8]| {
             git_protocol::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress)
         }

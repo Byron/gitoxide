@@ -153,6 +153,7 @@ pub struct Options {
     pub low_speed_time_seconds: u64,
     /// A curl-style proxy declaration of the form `[protocol://][user[:password]@]proxyhost[:port]`.
     ///
+    /// Note that an empty string means the proxy is disabled entirely.
     /// Refers to `http.proxy`.
     pub proxy: Option<String>,
     /// The comma-separated list of hosts to not send through the `proxy`, or `*` to entirely disable all proxying.

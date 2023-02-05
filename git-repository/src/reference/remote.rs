@@ -1,6 +1,5 @@
-use std::convert::TryInto;
-
-use crate::{remote, Reference};
+use crate::config::tree::Branch;
+use crate::{config, remote, Reference};
 
 /// Remotes
 impl<'repo> Reference<'repo> {
@@ -21,11 +20,11 @@ impl<'repo> Reference<'repo> {
         (direction == remote::Direction::Push)
             .then(|| {
                 config
-                    .string("branch", Some(name), "pushRemote")
-                    .or_else(|| config.string("remote", None, "pushDefault"))
+                    .string("branch", Some(name), Branch::PUSH_REMOTE.name)
+                    .or_else(|| config.string("remote", None, config::tree::Remote::PUSH_DEFAULT.name))
             })
             .flatten()
-            .or_else(|| config.string("branch", Some(name), "remote"))
+            .or_else(|| config.string("branch", Some(name), Branch::REMOTE.name))
             .and_then(|name| name.try_into().ok())
     }
 

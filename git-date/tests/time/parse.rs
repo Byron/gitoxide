@@ -118,7 +118,7 @@ fn git_default() {
 fn invalid_dates_can_be_produced_without_current_time() {
     assert!(matches!(
         git_date::parse("foobar", None).unwrap_err(),
-        git_date::parse::Error::InvalidDateString
+        git_date::parse::Error::InvalidDateString { input } if input == "foobar"
     ));
 }
 

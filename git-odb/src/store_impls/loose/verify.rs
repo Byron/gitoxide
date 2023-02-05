@@ -38,6 +38,23 @@ pub mod integrity {
         /// The amount of loose objects we checked.
         pub num_objects: usize,
     }
+
+    /// The progress ids used in [`verify_integrity()`][super::Store::verify_integrity()].
+    ///
+    /// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
+    #[derive(Debug, Copy, Clone)]
+    pub enum ProgressId {
+        /// The amount of loose objects that have been verified.
+        LooseObjects,
+    }
+
+    impl From<ProgressId> for git_features::progress::Id {
+        fn from(v: ProgressId) -> Self {
+            match v {
+                ProgressId::LooseObjects => *b"VILO",
+            }
+        }
+    }
 }
 
 impl Store {
@@ -52,7 +69,7 @@ impl Store {
 
         let mut num_objects = 0;
         let start = Instant::now();
-        let mut progress = progress.add_child_with_id("Validating", *b"VILO"); /* Verify Integrity Loose Objects */
+        let mut progress = progress.add_child_with_id("Validating", integrity::ProgressId::LooseObjects.into());
         progress.init(None, git_features::progress::count("loose objects"));
         for id in self.iter().filter_map(Result::ok) {
             let object = self

@@ -3,6 +3,7 @@ use std::{borrow::Cow, path::PathBuf};
 use git_features::threading::OwnShared;
 
 use super::{Error, Options};
+use crate::config::tree::{gitoxide, Core, Key, Safe};
 use crate::{
     config,
     config::cache::{interpolate_context, util::ApplyLeniency},
@@ -24,7 +25,7 @@ pub(crate) struct EnvironmentOverrides {
 impl EnvironmentOverrides {
     fn from_env() -> Result<Self, permission::env_var::resource::Error> {
         let mut worktree_dir = None;
-        if let Some(path) = std::env::var_os("GIT_WORK_TREE") {
+        if let Some(path) = std::env::var_os(Core::WORKTREE.the_environment_override()) {
             worktree_dir = PathBuf::from(path).into();
         }
         let mut git_dir = None;
@@ -93,7 +94,7 @@ impl ThreadSafeRepository {
     // TODO: tests, with hooks, GIT_QUARANTINE for ref-log and transaction control (needs git-sec support to remove write access in git-ref)
     // TODO: The following vars should end up as overrides of the respective configuration values (see git-config).
     //       GIT_PROXY_SSL_CERT, GIT_PROXY_SSL_KEY, GIT_PROXY_SSL_CERT_PASSWORD_PROTECTED.
-    //       GIT_PROXY_SSL_CAINFO, GIT_SSL_VERSION, GIT_SSL_CIPHER_LIST, GIT_HTTP_MAX_REQUESTS, GIT_CURL_FTP_NO_EPSV,
+    //       GIT_PROXY_SSL_CAINFO, GIT_SSL_CIPHER_LIST, GIT_HTTP_MAX_REQUESTS, GIT_CURL_FTP_NO_EPSV,
     pub fn open_with_environment_overrides(
         fallback_directory: impl Into<PathBuf>,
         trust_map: git_sec::trust::Mapping<Options>,
@@ -203,7 +204,7 @@ impl ThreadSafeRepository {
         if !config.is_bare {
             if let Some(wt) = config
                 .resolved
-                .path_filter("core", None, "worktree", &mut filter_config_section)
+                .path_filter("core", None, Core::WORKTREE.name, &mut filter_config_section)
             {
                 let wt_path = wt
                     .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
@@ -273,23 +274,25 @@ fn replacement_objects_refs_prefix(
     lenient: bool,
     mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
 ) -> Result<Option<PathBuf>, Error> {
-    let key = "gitoxide.objects.noReplace";
     let is_disabled = config
-        .boolean_filter_by_key(key, &mut filter_config_section)
+        .boolean_filter_by_key("gitoxide.objects.noReplace", &mut filter_config_section)
+        .map(|b| gitoxide::Objects::NO_REPLACE.enrich_error(b))
         .transpose()
         .with_leniency(lenient)
-        .map_err(|err| config::Error::Value { source: err, key })?
+        .map_err(config::Error::ConfigBoolean)?
         .unwrap_or_default();
 
     if is_disabled {
         return Ok(None);
     }
 
-    let ref_base = git_path::from_bstr(
+    let ref_base = git_path::from_bstr({
+        let key = "gitoxide.objects.replaceRefBase";
+        debug_assert_eq!(gitoxide::Objects::REPLACE_REF_BASE.logical_name(), key);
         config
-            .string_filter_by_key("gitoxide.objects.replaceRefBase", &mut filter_config_section)
-            .unwrap_or_else(|| Cow::Borrowed("refs/replace/".into())),
-    )
+            .string_filter_by_key(key, &mut filter_config_section)
+            .unwrap_or_else(|| Cow::Borrowed("refs/replace/".into()))
+    })
     .into_owned();
     Ok(ref_base.into())
 }
@@ -307,10 +310,7 @@ fn check_safe_directories(
     };
     for safe_dir in config
         .resolved
-        .strings_filter("safe", None, "directory", &mut |meta| {
-            let kind = meta.source.kind();
-            kind == git_config::source::Kind::System || kind == git_config::source::Kind::Global
-        })
+        .strings_filter("safe", None, Safe::DIRECTORY.name, &mut Safe::directory_filter)
         .unwrap_or_default()
     {
         if safe_dir.as_ref() == "*" {

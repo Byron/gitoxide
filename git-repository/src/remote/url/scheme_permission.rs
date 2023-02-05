@@ -1,26 +1,22 @@
 use std::{borrow::Cow, collections::BTreeMap, convert::TryFrom};
 
 use crate::bstr::{BStr, BString, ByteSlice};
+use crate::config;
+use crate::config::tree::{gitoxide, Key, Protocol};
 
-///
-pub mod init {
-    use crate::bstr::BString;
-
-    #[derive(Debug, thiserror::Error)]
-    pub enum Error {
-        #[error("{value:?} must be allow|deny|user in configuration key protocol{0}.allow", scheme.as_ref().map(|s| format!(".{}", s)).unwrap_or_default())]
-        InvalidConfiguration { scheme: Option<String>, value: BString },
-    }
-}
-
+/// All allowed values of the `protocol.allow` key.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-enum Allow {
+pub enum Allow {
+    /// Allow use this protocol.
     Always,
+    /// Forbid using this protocol
     Never,
+    /// Only supported if the `GIT_PROTOCOL_FROM_USER` is unset or is set to `1`.
     User,
 }
 
 impl Allow {
+    /// Return true if we represent something like 'allow == true'.
     pub fn to_bool(self, user_allowed: Option<bool>) -> bool {
         match self {
             Allow::Always => true,
@@ -59,15 +55,11 @@ impl SchemePermission {
     pub fn from_config(
         config: &git_config::File<'static>,
         mut filter: fn(&git_config::file::Metadata) -> bool,
-    ) -> Result<Self, init::Error> {
+    ) -> Result<Self, config::protocol::allow::Error> {
         let allow: Option<Allow> = config
             .string_filter_by_key("protocol.allow", &mut filter)
-            .map(Allow::try_from)
-            .transpose()
-            .map_err(|invalid| init::Error::InvalidConfiguration {
-                value: invalid,
-                scheme: None,
-            })?;
+            .map(|value| Protocol::ALLOW.try_into_allow(value, None))
+            .transpose()?;
 
         let mut saw_user = allow.map_or(false, |allow| allow == Allow::User);
         let allow_per_scheme = match config.sections_by_name_and_filter("protocol", &mut filter) {
@@ -83,12 +75,8 @@ impl SchemePermission {
                 }) {
                     if let Some(value) = section
                         .value("allow")
-                        .map(Allow::try_from)
-                        .transpose()
-                        .map_err(|invalid| init::Error::InvalidConfiguration {
-                            scheme: Some(scheme.as_str().into()),
-                            value: invalid,
-                        })?
+                        .map(|value| Protocol::ALLOW.try_into_allow(value, Some(scheme.as_str())))
+                        .transpose()?
                     {
                         saw_user |= value == Allow::User;
                         map.insert(scheme, value);
@@ -101,7 +89,7 @@ impl SchemePermission {
 
         let user_allowed = saw_user.then(|| {
             config
-                .string_filter_by_key("gitoxide.allow.protocolFromUser", &mut filter)
+                .string_filter_by_key(gitoxide::Allow::PROTOCOL_FROM_USER.logical_name().as_str(), &mut filter)
                 .map_or(true, |val| val.as_ref() == "1")
         });
         Ok(SchemePermission {

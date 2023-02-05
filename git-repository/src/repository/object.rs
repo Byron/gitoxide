@@ -196,8 +196,8 @@ impl crate::Repository {
         Name: TryInto<FullName, Error = E>,
         commit::Error: From<E>,
     {
-        let author = self.author().ok_or(commit::Error::AuthorMissing)?;
-        let committer = self.committer().ok_or(commit::Error::CommitterMissing)?;
+        let author = self.author().ok_or(commit::Error::AuthorMissing)??;
+        let committer = self.committer().ok_or(commit::Error::CommitterMissing)??;
         self.commit_as(committer, author, reference, message, tree, parents)
     }
 

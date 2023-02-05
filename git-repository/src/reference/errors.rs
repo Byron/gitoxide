@@ -1,5 +1,7 @@
 ///
 pub mod edit {
+    use crate::config;
+
     /// The error returned by [edit_references(…)][crate::Repository::edit_references()], and others
     /// which ultimately create a reference.
     #[derive(Debug, thiserror::Error)]
@@ -12,9 +14,9 @@ pub mod edit {
         #[error(transparent)]
         NameValidation(#[from] git_validate::reference::name::Error),
         #[error("Could not interpret core.filesRefLockTimeout or core.packedRefsTimeout, it must be the number in milliseconds to wait for locks or negative to wait forever")]
-        LockTimeoutConfiguration(#[from] git_config::value::Error),
-        #[error("The committer identity is required to produce a ref-log is not configured.")]
-        ReflogCommitterMissing,
+        LockTimeoutConfiguration(#[from] config::lock_timeout::Error),
+        #[error(transparent)]
+        ParseCommitterTime(#[from] crate::config::time::Error),
     }
 }
 

@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use crate::{bstr::BStr, remote, remote::find, Remote};
+use crate::{bstr::BStr, config, remote, remote::find, Remote};
 
 impl crate::Repository {
     /// Create a new remote available at the given `url`.
@@ -79,61 +79,74 @@ impl crate::Repository {
         name_or_url: impl Into<&'a BStr>,
         rewrite_urls: bool,
     ) -> Option<Result<Remote<'_>, find::Error>> {
+        fn config_spec<T: config::tree::keys::Validate>(
+            specs: Vec<std::borrow::Cow<'_, BStr>>,
+            name_or_url: &BStr,
+            key: &'static config::tree::keys::Any<T>,
+            op: git_refspec::parse::Operation,
+        ) -> Result<Vec<git_refspec::RefSpec>, find::Error> {
+            let kind = key.name;
+            specs
+                .into_iter()
+                .map(|spec| {
+                    key.try_into_refspec(spec, op).map_err(|err| find::Error::RefSpec {
+                        remote_name: name_or_url.into(),
+                        kind,
+                        source: err,
+                    })
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map(|mut specs| {
+                    specs.sort();
+                    specs.dedup();
+                    specs
+                })
+        }
+
         let mut filter = self.filter_config_section();
         let name_or_url = name_or_url.into();
-        let mut config_url = |field: &str, kind: &'static str| {
+        let mut config_url = |key: &'static config::tree::keys::Url, kind: &'static str| {
             self.config
                 .resolved
-                .string_filter("remote", Some(name_or_url), field, &mut filter)
+                .string_filter("remote", Some(name_or_url), key.name, &mut filter)
                 .map(|url| {
-                    git_url::parse::parse(url.as_ref()).map_err(|err| find::Error::Url {
+                    key.try_into_url(url).map_err(|err| find::Error::Url {
                         kind,
-                        url: url.into_owned(),
+                        remote_name: name_or_url.into(),
                         source: err,
                     })
                 })
         };
-        let url = config_url("url", "fetch");
-        let push_url = config_url("pushUrl", "push");
+        let url = config_url(&config::tree::Remote::URL, "fetch");
+        let push_url = config_url(&config::tree::Remote::PUSH_URL, "push");
         let config = &self.config.resolved;
 
-        let mut config_spec = |op: git_refspec::parse::Operation| {
-            let kind = match op {
-                git_refspec::parse::Operation::Fetch => "fetch",
-                git_refspec::parse::Operation::Push => "push",
-            };
-            config
-                .strings_filter("remote", Some(name_or_url), kind, &mut filter)
-                .map(|specs| {
-                    specs
-                        .into_iter()
-                        .map(|spec| {
-                            git_refspec::parse(spec.as_ref(), op)
-                                .map(|spec| spec.to_owned())
-                                .map_err(|err| find::Error::RefSpec {
-                                    spec: spec.into_owned(),
-                                    kind,
-                                    source: err,
-                                })
-                        })
-                        .collect::<Result<Vec<_>, _>>()
-                        .map(|mut specs| {
-                            specs.sort();
-                            specs.dedup();
-                            specs
-                        })
-                })
-        };
-        let fetch_specs = config_spec(git_refspec::parse::Operation::Fetch);
-        let push_specs = config_spec(git_refspec::parse::Operation::Push);
+        let fetch_specs = config
+            .strings_filter("remote", Some(name_or_url), "fetch", &mut filter)
+            .map(|specs| {
+                config_spec(
+                    specs,
+                    name_or_url,
+                    &config::tree::Remote::FETCH,
+                    git_refspec::parse::Operation::Fetch,
+                )
+            });
+        let push_specs = config
+            .strings_filter("remote", Some(name_or_url), "push", &mut filter)
+            .map(|specs| {
+                config_spec(
+                    specs,
+                    name_or_url,
+                    &config::tree::Remote::PUSH,
+                    git_refspec::parse::Operation::Push,
+                )
+            });
         let fetch_tags = config
             .string_filter("remote", Some(name_or_url), "tagOpt", &mut filter)
-            .map(|tag| {
-                Ok(match tag.as_ref().as_ref() {
-                    b"--tags" => remote::fetch::Tags::All,
-                    b"--no-tags" => remote::fetch::Tags::None,
-                    unknown => return Err(find::Error::TagOpt { value: unknown.into() }),
-                })
+            .map(|value| {
+                config::tree::Remote::TAG_OPT
+                    .try_into_tag_opt(value)
+                    .map_err(Into::into)
             });
         let fetch_tags = match fetch_tags {
             Some(Ok(v)) => v,

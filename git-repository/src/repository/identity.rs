@@ -1,6 +1,8 @@
 use std::time::SystemTime;
 
-use crate::bstr::{BString, ByteSlice};
+use crate::bstr::BString;
+use crate::config;
+use crate::config::tree::{gitoxide, keys, Author, Committer, Key, User};
 
 /// Identity handling.
 ///
@@ -17,15 +19,16 @@ impl crate::Repository {
     /// * …the `GIT_COMMITTER_(NAME|EMAIL|DATE)` environment variables…
     /// * …the configuration for `user.name|email` as fallback…
     ///
-    /// …and in that order, or `None` if there was nothing configured.
+    /// …and in that order, or `None` if no committer name or email was configured, or `Some(Err(…))`
+    /// if the committer date could not be parsed.
     ///
     /// # Note
     ///
     /// The values are cached when the repository is instantiated.
-    pub fn committer(&self) -> Option<git_actor::SignatureRef<'_>> {
+    pub fn committer(&self) -> Option<Result<git_actor::SignatureRef<'_>, config::time::Error>> {
         let p = self.config.personas();
 
-        git_actor::SignatureRef {
+        Ok(git_actor::SignatureRef {
             name: p.committer.name.as_ref().or(p.user.name.as_ref()).map(|v| v.as_ref())?,
             email: p
                 .committer
@@ -33,8 +36,11 @@ impl crate::Repository {
                 .as_ref()
                 .or(p.user.email.as_ref())
                 .map(|v| v.as_ref())?,
-            time: p.committer.time.unwrap_or_else(git_date::Time::now_local_or_utc),
-        }
+            time: match extract_time_or_default(p.committer.time.as_ref(), &gitoxide::Commit::COMMITTER_DATE) {
+                Ok(t) => t,
+                Err(err) => return Some(Err(err)),
+            },
+        })
         .into()
     }
 
@@ -49,15 +55,29 @@ impl crate::Repository {
     /// # Note
     ///
     /// The values are cached when the repository is instantiated.
-    pub fn author(&self) -> Option<git_actor::SignatureRef<'_>> {
+    pub fn author(&self) -> Option<Result<git_actor::SignatureRef<'_>, config::time::Error>> {
         let p = self.config.personas();
 
-        git_actor::SignatureRef {
+        Ok(git_actor::SignatureRef {
             name: p.author.name.as_ref().or(p.user.name.as_ref()).map(|v| v.as_ref())?,
             email: p.author.email.as_ref().or(p.user.email.as_ref()).map(|v| v.as_ref())?,
-            time: p.author.time.unwrap_or_else(git_date::Time::now_local_or_utc),
-        }
+            time: match extract_time_or_default(p.author.time.as_ref(), &gitoxide::Commit::AUTHOR_DATE) {
+                Ok(t) => t,
+                Err(err) => return Some(Err(err)),
+            },
+        })
         .into()
+    }
+}
+
+fn extract_time_or_default(
+    time: Option<&Result<git_actor::Time, git_date::parse::Error>>,
+    config_key: &'static keys::Time,
+) -> Result<git_actor::Time, config::time::Error> {
+    match time {
+        Some(Ok(t)) => Ok(*t),
+        None => Ok(git_date::Time::now_local_or_utc()),
+        Some(Err(err)) => Err(config::time::Error::from(config_key).with_source(err.clone())),
     }
 }
 
@@ -65,8 +85,8 @@ impl crate::Repository {
 pub(crate) struct Entity {
     pub name: Option<BString>,
     pub email: Option<BString>,
-    /// A time parsed from an environment variable.
-    pub time: Option<git_actor::Time>,
+    /// A time parsed from an environment variable, handling potential errors is delayed.
+    pub time: Option<Result<git_actor::Time, git_date::parse::Error>>,
 }
 
 #[derive(Debug, Clone)]
@@ -79,41 +99,59 @@ pub(crate) struct Personas {
 impl Personas {
     pub fn from_config_and_env(config: &git_config::File<'_>) -> Self {
         fn entity_in_section(
-            section_name: &str,
             config: &git_config::File<'_>,
-            fallback: bool,
+            name_key: &keys::Any,
+            email_key: &keys::Any,
+            fallback: Option<(&keys::Any, &keys::Any)>,
         ) -> (Option<BString>, Option<BString>) {
-            let fallback = fallback
-                .then(|| config.section("gitoxide", Some(section_name.into())).ok())
-                .flatten();
+            let fallback = fallback.and_then(|(name_key, email_key)| {
+                debug_assert_eq!(name_key.section.name(), email_key.section.name());
+                config
+                    .section("gitoxide", Some(name_key.section.name().into()))
+                    .ok()
+                    .map(|section| (section, name_key, email_key))
+            });
             (
                 config
-                    .string(section_name, None, "name")
-                    .or_else(|| fallback.as_ref().and_then(|s| s.value("nameFallback")))
+                    .string(name_key.section.name(), None, name_key.name)
+                    .or_else(|| fallback.as_ref().and_then(|(s, name_key, _)| s.value(name_key.name)))
                     .map(|v| v.into_owned()),
                 config
-                    .string(section_name, None, "email")
-                    .or_else(|| fallback.as_ref().and_then(|s| s.value("emailFallback")))
+                    .string(email_key.section.name(), None, email_key.name)
+                    .or_else(|| fallback.as_ref().and_then(|(s, _, email_key)| s.value(email_key.name)))
                     .map(|v| v.into_owned()),
             )
         }
         let now = SystemTime::now();
-        let parse_date = |key: &str| -> Option<git_date::Time> {
-            config.string_by_key(key).and_then(|date| {
-                date.to_str()
-                    .ok()
-                    .and_then(|date| git_date::parse(date, Some(now)).ok())
-            })
+        let parse_date = |key: &str, date: &keys::Time| -> Option<Result<git_date::Time, git_date::parse::Error>> {
+            debug_assert_eq!(
+                key,
+                date.logical_name(),
+                "BUG: drift of expected name and actual name of the key (we hardcode it to save an allocation)"
+            );
+            config
+                .string_by_key(key)
+                .map(|time| date.try_into_time(time, now.into()))
         };
 
-        let (committer_name, committer_email) = entity_in_section("committer", config, true);
-        let (author_name, author_email) = entity_in_section("author", config, true);
-        let (user_name, mut user_email) = entity_in_section("user", config, false);
+        let fallback = (
+            &gitoxide::Committer::NAME_FALLBACK,
+            &gitoxide::Committer::EMAIL_FALLBACK,
+        );
+        let (committer_name, committer_email) =
+            entity_in_section(config, &Committer::NAME, &Committer::EMAIL, Some(fallback));
+        let fallback = (&gitoxide::Author::NAME_FALLBACK, &gitoxide::Author::EMAIL_FALLBACK);
+        let (author_name, author_email) = entity_in_section(config, &Author::NAME, &Author::EMAIL, Some(fallback));
+        let (user_name, mut user_email) = entity_in_section(config, &User::NAME, &User::EMAIL, None);
 
-        let committer_date = parse_date("gitoxide.commit.committerDate");
-        let author_date = parse_date("gitoxide.commit.authorDate");
+        let committer_date = parse_date("gitoxide.commit.committerDate", &gitoxide::Commit::COMMITTER_DATE);
+        let author_date = parse_date("gitoxide.commit.authorDate", &gitoxide::Commit::AUTHOR_DATE);
 
-        user_email = user_email.or_else(|| config.string_by_key("gitoxide.user.email").map(|v| v.into_owned()));
+        user_email = user_email.or_else(|| {
+            config
+                .string_by_key(gitoxide::User::EMAIL_FALLBACK.logical_name().as_str())
+                .map(|v| v.into_owned())
+        });
         Personas {
             user: Entity {
                 name: user_name,

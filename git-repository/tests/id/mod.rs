@@ -1,6 +1,8 @@
+use git_object::bstr::BString;
 use std::cmp::Ordering;
 
 use git_repository as git;
+use git_repository::config::tree::{Core, Key};
 use git_repository::prelude::ObjectIdExt;
 
 /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
@@ -10,40 +12,44 @@ fn hex_to_id(hex: &str) -> git_hash::ObjectId {
 
 #[test]
 fn prefix() -> crate::Result {
-    let (repo, worktree_dir) = crate::repo_rw("make_repo_with_fork_and_dates.sh")?;
+    let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
+    let work_dir = repo.work_dir().expect("non-bare");
     let id = hex_to_id("288e509293165cb5630d08f4185bdf2445bf6170").attach(&repo);
     let prefix = id.shorten()?;
     assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
     assert_eq!(prefix.hex_len(), 7, "preconfigured via core.abbrev default value");
 
-    // TODO: do this in-memory (with or without writing to disk)
-    assert!(
-        git_testtools::run_git(worktree_dir.path(), &["config", "--int", "core.abbrev", "5"])?.success(),
-        "set core abbrev value successfully"
-    );
-
-    let repo = git_repository::open(worktree_dir.path()).unwrap();
+    let repo = git::open_opts(
+        work_dir,
+        git::open::Options::isolated().config_overrides(Core::ABBREV.validated_assignment("5".into())),
+    )
+    .unwrap();
     let id = id.detach().attach(&repo);
     let prefix = id.shorten()?;
     assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
-    assert_eq!(prefix.hex_len(), 5, "preconfigured via core.abbrev in the repo file");
+    assert_eq!(prefix.hex_len(), 5, "preconfigured via core.abbrev");
 
     assert!(
-        git_testtools::run_git(worktree_dir.path(), &["config", "core.abbrev", ""])?.success(),
-        "set core abbrev value to empty successfully"
+        git::open_opts(
+            work_dir,
+            git::open::Options::isolated().config_overrides(Some(BString::from("core.abbrev=invalid")))
+        )
+        .is_ok(),
+        "By default gitoxide acts like `libgit2` here and we prefer to be lenient when possible"
     );
 
     assert!(
         matches!(
-            git_repository::open_opts(worktree_dir.path(), git::open::Options::isolated().strict_config(true))
-                .unwrap_err(),
-            git::open::Error::Config(git::config::Error::EmptyValue { .. })
+            git::open_opts(
+                work_dir,
+                git::open::Options::isolated()
+                    .strict_config(true)
+                    .config_overrides(Some(BString::from("core.abbrev=invalid")))
+            )
+            .unwrap_err(),
+            git::open::Error::Config(git::config::Error::CoreAbbrev(_))
         ),
         "an empty core.abbrev fails the open operation in strict config mode, emulating git behaviour"
-    );
-    assert!(
-        git_repository::open(worktree_dir.path()).is_ok(),
-        "By default gitoxide acts like `libgit2` here and we prefer to be lenient when possible"
     );
     Ok(())
 }

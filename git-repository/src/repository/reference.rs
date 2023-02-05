@@ -136,7 +136,7 @@ impl crate::Repository {
         self.refs
             .transaction()
             .prepare(edits, file_lock_fail, packed_refs_lock_fail)?
-            .commit(self.committer().ok_or(reference::edit::Error::ReflogCommitterMissing)?)
+            .commit(self.committer().transpose()?)
             .map_err(Into::into)
     }
 

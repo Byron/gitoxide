@@ -44,41 +44,12 @@
 //!
 //! # Cargo-features
 //!
-//! To make using  _sub-crates_ easier these are re-exported into the root of this crate. Note that these may change their major version
-//! even if this crate doesn't, hence breaking downstream.
+//! To make using  _sub-crates_ easier these are re-exported into the root of this crate. Here we list how to access nested plumbing
+//! crates which are otherwise harder to discover:
 //!
-//! `git_repository::`
-//! * [`attrs`]
-//! * [`hash`]
-//! * [`url`]
-//! * [`actor`]
-//! * [`bstr`]
-//! * [`date`]
-//! * [`mod@discover`]
-//! * [`features`]
-//! * [`index`]
-//! * [`glob`]
-//! * [`path`]
-//! * [`credentials`]
-//! * [`prompt`]
-//! * [`sec`]
-//! * [`worktree`]
-//! * [`mailmap`]
-//! * [`objs`]
+//! **`git_repository::`**
 //! * [`odb`]
 //!   * [`pack`][odb::pack]
-//! * [`refs`]
-//! * [`revision`]
-//! * [`interrupt`]
-//! * [`tempfile`]
-//! * [`lock`]
-//! * [`traverse`]
-//! * [`diff`]
-//! * [`parallel`]
-//! * [`refspec`]
-//! * [`Progress`]
-//! * [`progress`]
-//! * [`interrupt`]
 //! * [`protocol`]
 //!   * [`transport`][protocol::transport]
 //!     * [`packetline`][protocol::transport::packetline]

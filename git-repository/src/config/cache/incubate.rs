@@ -1,4 +1,5 @@
 use super::{util, Error};
+use crate::config::tree::{Core, Extensions};
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
@@ -32,27 +33,29 @@ impl StageOne {
 
         // Note that we assume the repo is bare by default unless we are told otherwise. This is relevant if
         // the repo doesn't have a configuration file.
-        let is_bare = util::config_bool(&config, "core.bare", true, lenient)?;
+        let is_bare = util::config_bool(&config, &Core::BARE, "core.bare", true, lenient)?;
         let repo_format_version = config
-            .value::<git_config::Integer>("core", None, "repositoryFormatVersion")
-            .map_or(0, |v| v.to_decimal().unwrap_or_default());
+            .integer_by_key("core.repositoryFormatVersion")
+            .map(|version| Core::REPOSITORY_FORMAT_VERSION.try_into_usize(version))
+            .transpose()?
+            .unwrap_or_default();
         let object_hash = (repo_format_version != 1)
             .then_some(Ok(git_hash::Kind::Sha1))
             .or_else(|| {
-                config.string("extensions", None, "objectFormat").map(|format| {
-                    if format.as_ref().eq_ignore_ascii_case(b"sha1") {
-                        Ok(git_hash::Kind::Sha1)
-                    } else {
-                        Err(Error::UnsupportedObjectFormat {
-                            name: format.to_vec().into(),
-                        })
-                    }
-                })
+                config
+                    .string("extensions", None, "objectFormat")
+                    .map(|format| Extensions::OBJECT_FORMAT.try_into_object_format(format))
             })
             .transpose()?
             .unwrap_or(git_hash::Kind::Sha1);
 
-        let extension_worktree = util::config_bool(&config, "extensions.worktreeConfig", false, lenient)?;
+        let extension_worktree = util::config_bool(
+            &config,
+            &Extensions::WORKTREE_CONFIG,
+            "extensions.worktreeConfig",
+            false,
+            lenient,
+        )?;
         if extension_worktree {
             let worktree_config = load_config(
                 git_dir.join("config.worktree"),

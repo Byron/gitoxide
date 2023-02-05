@@ -246,7 +246,7 @@ pub(crate) fn update(
                 )
                 .prepare(edits, file_lock_fail, packed_refs_lock_fail)
                 .map_err(crate::reference::edit::Error::from)?
-                .commit(repo.committer().ok_or(crate::reference::edit::Error::ReflogCommitterMissing)?)
+                .commit(repo.committer().transpose().map_err(|err| update::Error::EditReferences(crate::reference::edit::Error::ParseCommitterTime(err)))?)
                 .map_err(crate::reference::edit::Error::from)?
         }
         fetch::DryRun::Yes => edits,

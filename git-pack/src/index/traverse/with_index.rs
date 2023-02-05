@@ -18,6 +18,38 @@ pub struct Options {
     pub check: crate::index::traverse::SafetyCheck,
 }
 
+/// The progress ids used in [`index::File::traverse_with_index()`].
+///
+/// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
+#[derive(Debug, Copy, Clone)]
+pub enum ProgressId {
+    /// The amount of bytes currently processed to generate a checksum of the *pack data file*.
+    HashPackDataBytes,
+    /// The amount of bytes currently processed to generate a checksum of the *pack index file*.
+    HashPackIndexBytes,
+    /// Collect all object hashes into a vector and sort it by their pack offset.
+    CollectSortedIndexEntries,
+    /// Count the objects processed when building a cache tree from all objects in a pack index.
+    TreeFromOffsetsObjects,
+    /// The amount of objects which were decoded.
+    DecodedObjects,
+    /// The amount of bytes that were decoded in total, as the sum of all bytes to represent all decoded objects.
+    DecodedBytes,
+}
+
+impl From<ProgressId> for git_features::progress::Id {
+    fn from(v: ProgressId) -> Self {
+        match v {
+            ProgressId::HashPackDataBytes => *b"PTHP",
+            ProgressId::HashPackIndexBytes => *b"PTHI",
+            ProgressId::CollectSortedIndexEntries => *b"PTCE",
+            ProgressId::TreeFromOffsetsObjects => *b"PTDI",
+            ProgressId::DecodedObjects => *b"PTRO",
+            ProgressId::DecodedBytes => *b"PTDB",
+        }
+    }
+}
+
 /// Traversal with index
 impl index::File {
     /// Iterate through all _decoded objects_ in the given `pack` and handle them with a `Processor`, using an index to reduce waste
@@ -49,14 +81,14 @@ impl index::File {
                         "Hash of pack '{}'",
                         pack.path().file_name().expect("pack has filename").to_string_lossy()
                     ),
-                    *b"PTHP", /* Pack Traverse Hash Pack bytes */
+                    ProgressId::HashPackDataBytes.into(),
                 );
                 let index_progress = progress.add_child_with_id(
                     format!(
                         "Hash of index '{}'",
                         self.path.file_name().expect("index has filename").to_string_lossy()
                     ),
-                    *b"PTHI", /* Pack Traverse Hash Index bytes */
+                    ProgressId::HashPackIndexBytes.into(),
                 );
                 move || {
                     let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
@@ -69,14 +101,14 @@ impl index::File {
             || -> Result<_, Error<_>> {
                 let sorted_entries = index_entries_sorted_by_offset_ascending(
                     self,
-                    progress.add_child_with_id("collecting sorted index", *b"PTCE"),
+                    progress.add_child_with_id("collecting sorted index", ProgressId::CollectSortedIndexEntries.into()),
                 ); /* Pack Traverse Collect sorted Entries */
                 let tree = crate::cache::delta::Tree::from_offsets_in_pack(
                     pack.path(),
                     sorted_entries.into_iter().map(Entry::from),
                     |e| e.index_entry.pack_offset,
                     |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
-                    progress.add_child_with_id("indexing", *b"PTDI"), /* Pack Traverse Delta Index creation */
+                    progress.add_child_with_id("indexing", ProgressId::TreeFromOffsetsObjects.into()),
                     should_interrupt,
                     self.object_hash,
                 )?;
@@ -125,8 +157,8 @@ impl index::File {
                         }
                     },
                     crate::cache::delta::traverse::Options {
-                        object_progress: progress.add_child_with_id("Resolving", *b"PTRO"), /* Pack Traverse Resolve Objects */
-                        size_progress: progress.add_child_with_id("Decoding", *b"PTDB"), /* Pack Traverse Decode Bytes */
+                        object_progress: progress.add_child_with_id("Resolving", ProgressId::DecodedObjects.into()),
+                        size_progress: progress.add_child_with_id("Decoding", ProgressId::DecodedBytes.into()),
                         thread_limit,
                         should_interrupt,
                         object_hash: self.object_hash,

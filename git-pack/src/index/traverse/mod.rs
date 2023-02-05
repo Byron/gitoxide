@@ -15,7 +15,7 @@ mod error;
 pub use error::Error;
 
 mod types;
-pub use types::{Algorithm, SafetyCheck, Statistics};
+pub use types::{Algorithm, ProgressId, SafetyCheck, Statistics};
 
 /// Traversal options for [`index::File::traverse()`].
 #[derive(Debug, Clone)]

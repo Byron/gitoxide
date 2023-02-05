@@ -15,8 +15,8 @@ pub enum Error {
     RemoteInit(#[from] crate::remote::init::Error),
     #[error("Custom configuration of remote to clone from failed")]
     RemoteConfiguration(#[source] Box<dyn std::error::Error + Send + Sync>),
-    #[error("Default remote configured at `clone.defaultRemoteName` is invalid")]
-    RemoteName(#[from] crate::remote::name::Error),
+    #[error(transparent)]
+    RemoteName(#[from] crate::config::remote::symbolic_name::Error),
     #[error("Failed to load repo-local git configuration before writing")]
     LoadConfig(#[from] git_config::file::init::from_paths::Error),
     #[error("Failed to store configured remote in memory")]
@@ -28,8 +28,6 @@ pub enum Error {
         source: git_validate::refname::Error,
         head_ref_name: BString,
     },
-    #[error("The committer identity is required to produce a ref-log is not configured.")]
-    ReflogCommitterMissing,
     #[error("Failed to update HEAD with values from remote")]
     HeadUpdate(#[from] crate::reference::edit::Error),
 }
@@ -67,9 +65,10 @@ impl PrepareFetch {
             None => repo
                 .config
                 .resolved
-                .string_by_key("clone.defaultRemoteName")
-                .map(|n| remote::name::validated(n.into_owned()))
-                .unwrap_or_else(|| Ok("origin".into()))?,
+                .string("clone", None, crate::config::tree::Clone::DEFAULT_REMOTE_NAME.name)
+                .map(|n| crate::config::tree::Clone::DEFAULT_REMOTE_NAME.try_into_symbolic_name(n))
+                .transpose()?
+                .unwrap_or_else(|| "origin".into()),
         };
 
         let mut remote = repo

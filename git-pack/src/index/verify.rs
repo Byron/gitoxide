@@ -8,6 +8,7 @@ use crate::index;
 ///
 pub mod integrity {
     use git_object::bstr::BString;
+    use std::marker::PhantomData;
 
     /// Returned by [`index::File::verify_integrity()`][crate::index::File::verify_integrity()].
     #[derive(thiserror::Error, Debug)]
@@ -60,6 +61,26 @@ pub mod integrity {
                 traversal: Default::default(),
                 thread_limit: None,
                 make_pack_lookup_cache: || crate::cache::Never,
+            }
+        }
+    }
+
+    /// The progress ids used in [`index::File::verify_integrity()`][crate::index::File::verify_integrity()].
+    ///
+    /// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
+    #[derive(Debug, Copy, Clone)]
+    pub enum ProgressId {
+        /// The amount of bytes read to verify the index checksum.
+        ChecksumBytes,
+        /// A root progress for traversal which isn't actually used directly, but here to link to the respective `ProgressId` types.
+        Traverse(PhantomData<crate::index::verify::index::traverse::ProgressId>),
+    }
+
+    impl From<ProgressId> for git_features::progress::Id {
+        fn from(v: ProgressId) -> Self {
+            match v {
+                ProgressId::ChecksumBytes => *b"PTHI",
+                ProgressId::Traverse(_) => git_features::progress::UNKNOWN,
             }
         }
     }
@@ -201,10 +222,7 @@ impl index::File {
                 }),
             None => self
                 .verify_checksum(
-                    progress.add_child_with_id(
-                        "Sha1 of index",
-                        *b"PTHI", /* Pack Traverse Hash Index bytes (semantically the same as in branch above) */
-                    ),
+                    progress.add_child_with_id("Sha1 of index", integrity::ProgressId::ChecksumBytes.into()),
                     should_interrupt,
                 )
                 .map_err(Into::into)

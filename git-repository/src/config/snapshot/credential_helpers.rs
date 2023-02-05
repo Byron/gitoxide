@@ -2,6 +2,7 @@ use std::{borrow::Cow, convert::TryFrom};
 
 pub use error::Error;
 
+use crate::config::tree::{credential, Core, Credential, Key};
 use crate::{
     bstr::{ByteSlice, ByteVec},
     config::Snapshot,
@@ -81,13 +82,22 @@ impl Snapshot<'_> {
                         if pattern.user().is_some() && pattern.user() != url.user() {
                             return None;
                         }
-                        (scheme == &url.scheme && host_matches(host, url.host()) && ports.0 == ports.1)
-                            .then_some(section)
+                        (scheme == &url.scheme && host_matches(host, url.host()) && ports.0 == ports.1).then_some((
+                            section,
+                            &credential::UrlParameter::HELPER,
+                            &credential::UrlParameter::USERNAME,
+                            &credential::UrlParameter::USE_HTTP_PATH,
+                        ))
                     }),
-                    None => Some(section),
+                    None => Some((
+                        section,
+                        &Credential::HELPER,
+                        &Credential::USERNAME,
+                        &Credential::USE_HTTP_PATH,
+                    )),
                 };
-                if let Some(section) = section {
-                    for value in section.values("helper") {
+                if let Some((section, helper_key, username_key, use_http_path_key)) = section {
+                    for value in section.values(helper_key.name) {
                         if value.trim().is_empty() {
                             programs.clear();
                         } else {
@@ -96,7 +106,7 @@ impl Snapshot<'_> {
                     }
                     if let Some(Some(user)) = (!url_had_user_initially).then(|| {
                         section
-                            .value("username")
+                            .value(username_key.name)
                             .filter(|n| !n.trim().is_empty())
                             .and_then(|n| {
                                 let n: Vec<_> = Cow::into_owned(n).into();
@@ -106,7 +116,7 @@ impl Snapshot<'_> {
                         url.set_user(Some(user));
                     }
                     if let Some(toggle) = section
-                        .value("useHttpPath")
+                        .value(use_http_path_key.name)
                         .map(|val| {
                             git_config::Boolean::try_from(val)
                                 .map_err(|err| Error::InvalidUseHttpPath {
@@ -127,7 +137,7 @@ impl Snapshot<'_> {
         let allow_ssh_env = self.repo.options.permissions.env.ssh_prefix.is_allowed();
         let prompt_options = git_prompt::Options {
             askpass: self
-                .trusted_path("core.askpass")
+                .trusted_path(Core::ASKPASS.logical_name().as_str())
                 .transpose()?
                 .map(|c| Cow::Owned(c.into_owned())),
             ..Default::default()

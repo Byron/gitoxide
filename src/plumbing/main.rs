@@ -168,7 +168,7 @@ pub fn main() -> Result<()> {
                 },
             )
         }
-        Subcommands::Progress => show_progress(),
+        Subcommands::ConfigTree => show_progress(),
         Subcommands::Credential(cmd) => core::repository::credential(
             repository(Mode::StrictWithGitInstallConfig)?,
             match cmd {

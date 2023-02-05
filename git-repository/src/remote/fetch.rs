@@ -161,4 +161,6 @@ pub struct Mapping {
 }
 
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
-pub use super::connection::fetch::{negotiate, prepare, refs, Error, Outcome, Prepare, RefLogMessage, Status};
+pub use super::connection::fetch::{
+    negotiate, prepare, refs, Error, Outcome, Prepare, ProgressId, RefLogMessage, Status,
+};
