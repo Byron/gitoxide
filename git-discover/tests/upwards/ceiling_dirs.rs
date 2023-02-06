@@ -32,6 +32,24 @@ fn git_dir_candidate_within_ceiling_allows_discovery() -> crate::Result {
 }
 
 #[test]
+fn git_dir_candidate_with_cwd_ceiling() -> crate::Result {
+    let work_dir = repo_path()?;
+    let dir = work_dir.join("some/very/deeply/nested/subdir");
+    let (repo_path, _trust) = git_discover::upwards_opts(
+        dir.clone(),
+        Options {
+            ceiling_dirs: vec![dir],
+            match_ceiling_dir_or_error: false,
+            ..Default::default()
+        },
+    )
+    .expect("ceiling dir should be skipped");
+    assert_repo_is_current_workdir(repo_path, &work_dir);
+
+    Ok(())
+}
+
+#[test]
 fn ceiling_dir_limits_are_respected_and_prevent_discovery() -> crate::Result {
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");

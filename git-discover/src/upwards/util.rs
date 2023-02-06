@@ -56,6 +56,7 @@ pub(crate) fn find_ceiling_height(search_dir: &Path, ceiling_dirs: &[PathBuf], c
                 .strip_prefix(ceiling_dir.as_ref())
                 .ok()
                 .map(|path_relative_to_ceiling| path_relative_to_ceiling.components().count())
+                .filter(|height| *height > 0)
         })
         .min()
 }
