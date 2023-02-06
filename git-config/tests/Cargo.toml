@@ -27,7 +27,7 @@ git-testtools = { path = "../../tests/tools"}
 git-repository = { path = "../../git-repository" }
 git-ref = { path = "../../git-ref" }
 git-path = { path = "../../git-path" }
-serial_test = "0.10.0"
+serial_test = "1.0.0"
 serde_derive = "1.0"
 criterion = "0.4.0"
 tempfile = "3.2.0"
