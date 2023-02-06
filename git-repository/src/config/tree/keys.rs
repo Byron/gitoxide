@@ -125,8 +125,8 @@ impl<T: Validate> Key for Any<T> {
         self.name
     }
 
-    fn validate(&self, value: &BStr) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-        self.validate.validate(value)
+    fn validate(&self, value: &BStr) -> Result<(), config::tree::key::validate::Error> {
+        Ok(self.validate.validate(value)?)
     }
 
     fn section(&self) -> &dyn Section {
