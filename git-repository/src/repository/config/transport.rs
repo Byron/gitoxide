@@ -53,7 +53,6 @@ impl crate::Repository {
                         http::options::{ProxyAuthMethod, SslVersion, SslVersionRangeInclusive},
                     };
 
-                    #[cfg(debug_assertions)]
                     use crate::config::tree::Key;
                     use crate::{
                         config,
