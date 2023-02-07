@@ -41,8 +41,12 @@ pub struct Options<'a> {
     /// Set it to `Full` to only see repositories that [are owned by the current user][git_sec::Trust::from_path_ownership()].
     pub required_trust: git_sec::Trust,
     /// When discovering a repository, ignore any repositories that are located in these directories or any of their parents.
+    ///
+    /// Note that we ignore ceiling directories if the search directory is directly on top of one, which by default is an error
+    /// if `match_ceiling_dir_or_error` is true, the default.
     pub ceiling_dirs: Vec<PathBuf>,
-    /// If true, and `ceiling_dirs` is not empty, we expect at least one ceiling directory to match or else there will be an error.
+    /// If true, default true, and `ceiling_dirs` is not empty, we expect at least one ceiling directory to
+    /// contain our search dir or else there will be an error.
     pub match_ceiling_dir_or_error: bool,
     /// if `true` avoid crossing filesystem boundaries.
     /// Only supported on Unix-like systems.

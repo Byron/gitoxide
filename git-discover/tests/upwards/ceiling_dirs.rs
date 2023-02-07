@@ -32,6 +32,48 @@ fn git_dir_candidate_within_ceiling_allows_discovery() -> crate::Result {
 }
 
 #[test]
+fn ceiling_dir_is_ignored_if_we_are_standing_on_the_ceiling_and_no_match_is_required() -> crate::Result {
+    let work_dir = repo_path()?;
+    let dir = work_dir.join("some/very/deeply/nested/subdir");
+    // the ceiling dir is equal to the input dir, which itself doesn't contain a repository.
+    // But we can ignore that just like git does (see https://github.com/Byron/gitoxide/pull/723 for more information)
+    // and imagine us to 'stand on the ceiling', hence we are already past it.
+    let (repo_path, _trust) = git_discover::upwards_opts(
+        dir.clone(),
+        Options {
+            ceiling_dirs: vec![dir],
+            match_ceiling_dir_or_error: false,
+            ..Default::default()
+        },
+    )
+    .expect("ceiling dir should be skipped");
+    assert_repo_is_current_workdir(repo_path, &work_dir);
+
+    Ok(())
+}
+
+#[test]
+fn discovery_fails_if_we_require_a_matching_ceiling_dir_but_are_standing_on_it() -> crate::Result {
+    let work_dir = repo_path()?;
+    let dir = work_dir.join("some/very/deeply/nested/subdir");
+    let err = git_discover::upwards_opts(
+        dir.clone(),
+        Options {
+            ceiling_dirs: vec![dir],
+            match_ceiling_dir_or_error: true,
+            ..Default::default()
+        },
+    )
+    .unwrap_err();
+
+    assert!(
+        matches!(err, git_discover::upwards::Error::NoMatchingCeilingDir),
+        "since standing on the ceiling dir doesn't match it, we get exactly the semantically correct error"
+    );
+    Ok(())
+}
+
+#[test]
 fn ceiling_dir_limits_are_respected_and_prevent_discovery() -> crate::Result {
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");
