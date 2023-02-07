@@ -51,10 +51,7 @@ fn upwards_with_relative_directories_and_optional_ceiling() -> git_testtools::Re
         )
         .unwrap_err();
 
-        assert!(
-            matches!(err, git_discover::upwards::Error::NoMatchingCeilingDir),
-            "limiting the ceiling to the CWD cannot work as it's just an empty dir"
-        );
+        assert!(matches!(err, git_discover::upwards::Error::NoMatchingCeilingDir));
     }
 
     Ok(())
