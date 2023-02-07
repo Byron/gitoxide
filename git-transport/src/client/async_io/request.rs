@@ -38,7 +38,7 @@ impl<'a> futures_io::AsyncWrite for RequestWriter<'a> {
 impl<'a> RequestWriter<'a> {
     /// Create a new instance from a `writer` (commonly a socket), a `reader` into which to transform once the
     /// writes are finished, along with configuration for the `write_mode` and information about which message to write
-    /// when this instance is converted into a `reader` to read the request's response.
+    /// when this instance is converted [into a `reader`][RequestWriter::into_read()] to read the request's response.
     pub fn new_from_bufread<W: AsyncWrite + Unpin + 'a>(
         writer: W,
         reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
@@ -80,15 +80,23 @@ impl<'a> RequestWriter<'a> {
         .map(|_| ())
     }
     /// Discard the ability to write and turn this instance into the reader for obtaining the other side's response.
+    ///
+    /// Doing so will also write the message type this instance was initialized with.
     pub async fn into_read(mut self) -> std::io::Result<Box<dyn ExtendedBufRead + Unpin + 'a>> {
         self.write_message(self.on_into_read).await?;
         Ok(self.reader)
     }
 
-    /// Dissolve this instance into its write and read handles without any side-effect.
+    /// Dissolve this instance into its write and read handles without any message-writing side-effect as in [RequestWriter::into_read()].
     ///
-    /// This is useful to take more over when to write with packetline or not, which is why the writer doesn't write
-    /// packetlines but verbatim.
+    /// Furthermore, the writer will not encode everything it writes as packetlines, but write everything verbatim into the
+    /// underlying channel.
+    ///
+    /// # Note
+    ///
+    /// It's of utmost importance to drop the request writer before reading the response as these might be inter-dependent, depending on
+    /// the underlying transport mechanism. Failure to do so may result in a deadlock depending on how the write and read mechanism
+    /// is implemented.
     pub fn into_parts(self) -> (Box<dyn AsyncWrite + Unpin + 'a>, Box<dyn ExtendedBufRead + Unpin + 'a>) {
         (self.writer.into_inner(), self.reader)
     }
