@@ -11,7 +11,7 @@ pub enum Error {
     #[error(transparent)]
     PackIter(#[from] crate::data::input::Error),
     #[error("Could not move a temporary file into its desired place")]
-    Perist(#[from] git_tempfile::handle::persist::Error<Writable>),
+    Persist(#[from] git_tempfile::handle::persist::Error<Writable>),
     #[error(transparent)]
     IndexWrite(#[from] crate::index::write::Error),
 }

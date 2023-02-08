@@ -16,7 +16,7 @@ impl Default for Version {
     }
 }
 
-/// An index into our [`File::index_names()`] array yielding the name of the index and by impclication, its pack file.
+/// An index into our [`File::index_names()`] array yielding the name of the index and by implication, its pack file.
 pub type PackIndex = u32;
 
 /// The type for referring to indices of an entry within the index file.

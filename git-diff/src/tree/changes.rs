@@ -184,13 +184,13 @@ fn catchup_rhs_with_lhs<R: tree::Visit>(
         match rhs_entries.peek() {
             Some(Ok(rhs)) => match lhs.filename.cmp(rhs.filename) {
                 Equal => {
-                    let rhs = rhs_entries.next().transpose()?.expect("the peeked item tobe present");
+                    let rhs = rhs_entries.next().transpose()?.expect("the peeked item to be present");
                     delegate.pop_path_component();
                     handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, queue, delegate)?;
                     break;
                 }
                 Greater => {
-                    let rhs = rhs_entries.next().transpose()?.expect("the peeked item tobe present");
+                    let rhs = rhs_entries.next().transpose()?.expect("the peeked item to be present");
                     delegate.pop_path_component();
                     add_entry_schedule_recursion(rhs, queue, delegate)?;
                 }

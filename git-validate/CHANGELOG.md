@@ -25,7 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
+    - prepare changelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - Merge branch 'fixture-async' ([`eca6705`](https://github.com/Byron/gitoxide/commit/eca670585db212985d653cb2c6ec3636ec560905))
     - improve docs a little (tagname()) ([`5cda36e`](https://github.com/Byron/gitoxide/commit/5cda36e4be31aeb1cdcb713771d9fb5b8f764865))
     - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
@@ -208,7 +208,7 @@ This release contains no functional changes.
     - Update changelogs ([`c857d61`](https://github.com/Byron/gitoxide/commit/c857d61ce3ce342012a2c4ba10a8327822aa530e))
     - Avoid adding newlines which make writing unstable ([`6b5c394`](https://github.com/Byron/gitoxide/commit/6b5c394f49282a8d09c2a9ffece840e4683572db))
     - Fix section headline level ([`9d6f263`](https://github.com/Byron/gitoxide/commit/9d6f263beef289d227dec1acc2d4240087cb9be6))
-    - Write first version of changlogs thus far… ([`719b6bd`](https://github.com/Byron/gitoxide/commit/719b6bdf543b8269ccafad9ad6b46e0c55efaa38))
+    - Write first version of changelogs thus far… ([`719b6bd`](https://github.com/Byron/gitoxide/commit/719b6bdf543b8269ccafad9ad6b46e0c55efaa38))
  * **[#205](https://github.com/Byron/gitoxide/issues/205)**
     - validate assumption about '(null)' as ref-name ([`2576168`](https://github.com/Byron/gitoxide/commit/2576168aa04d6451fc29c5dadfa698a9a50dac32))
  * **Uncategorized**

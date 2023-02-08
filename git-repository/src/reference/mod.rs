@@ -66,7 +66,7 @@ impl<'repo> Reference<'repo> {
     /// Follow all symbolic targets this reference might point to and peel the underlying object
     /// to the end of the chain, and return it.
     ///
-    /// This is useful to learn where this reference is ulitmately pointing to.
+    /// This is useful to learn where this reference is ultimately pointing to.
     pub fn peel_to_id_in_place(&mut self) -> Result<Id<'repo>, peel::Error> {
         let repo = &self.repo;
         let oid = self.inner.peel_to_id_in_place(&repo.refs, |oid, buf| {

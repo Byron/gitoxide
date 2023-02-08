@@ -538,7 +538,7 @@ mod section {
     }
 
     #[test]
-    fn section_handles_extranous_whitespace_before_comment() {
+    fn section_handles_extraneous_whitespace_before_comment() {
         let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[s]hello             #world", &mut node).unwrap(),
@@ -866,7 +866,7 @@ mod key_value_pair {
     }
 
     #[test]
-    fn whitespace_is_not_ambigious() {
+    fn whitespace_is_not_ambiguous() {
         let mut node = ParseNode::SectionHeader;
         let mut vec = Default::default();
         assert!(key_value(b"a =b", &mut node, &mut vec).is_ok());

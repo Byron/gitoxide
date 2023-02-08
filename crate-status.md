@@ -1,6 +1,6 @@
 ### gitoxide
 
-**gix** is a command-line interface (*CLI*) to access git repositories in various ways best decribed as low-level
+**gix** is a command-line interface (*CLI*) to access git repositories in various ways best described as low-level
 for use by experts or those validating functionality in real-world scenarios. Performance and efficiency are staples
 of the implementation.
 

@@ -31,7 +31,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
+    - prepare changelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
     - thanks clippy ([`f1160fb`](https://github.com/Byron/gitoxide/commit/f1160fb42acf59b37cbeda546a7079af3c9bc050))
     - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
@@ -368,7 +368,7 @@ This release contains no functional changes, but a more useful changelog.
     - [ref] fix build ([`b4dcdfc`](https://github.com/Byron/gitoxide/commit/b4dcdfc9b2f2edcbcf9fb144d1f97e9a841463ad))
     - [lock] support recoverable commits ([`b2217e7`](https://github.com/Byron/gitoxide/commit/b2217e7d25df9801354f702b0625d3168f8d3271))
     - [lock] refactor ([`48861b2`](https://github.com/Byron/gitoxide/commit/48861b23406bbeee33081b32b2a528533997910d))
-    - [lock] FAIL: trying to make peristence recoverable… ([`1fcdd1e`](https://github.com/Byron/gitoxide/commit/1fcdd1e5da51fe8f15e9bfab86b22a82ef936bcc))
+    - [lock] FAIL: trying to make persistence recoverable… ([`1fcdd1e`](https://github.com/Byron/gitoxide/commit/1fcdd1e5da51fe8f15e9bfab86b22a82ef936bcc))
     - [ref] try fix windows, once again ([`95e74dd`](https://github.com/Byron/gitoxide/commit/95e74dd9f1510fd288f281beea3f560319ad323d))
     - [lock] access to the locked resource path ([`797bafa`](https://github.com/Byron/gitoxide/commit/797bafaa0a83449be2acb647f875a67476548afe))
     - [lock] allow accessing the lock file path more easily ([`b808b00`](https://github.com/Byron/gitoxide/commit/b808b00f62f587679ffbfe9e465b33419cdd5879))
@@ -403,12 +403,12 @@ This release contains no functional changes, but a more useful changelog.
     - [lock] add [must_use = "reason"] attribute where it matters ([`813c46b`](https://github.com/Byron/gitoxide/commit/813c46b1ac9ed5454c7832a6bad5a112f145b565))
     - thanks clippy ([`29782e8`](https://github.com/Byron/gitoxide/commit/29782e8c32d0b062e33a77bd4d639438e88b91b4))
     - [lock] lock acquire with backoff, but without test for now ([`bb2ba81`](https://github.com/Byron/gitoxide/commit/bb2ba81b2723cca11b4d98efa176ce5d184ab594))
-    - [lock] prevent flakyness due to rounding or something ([`6f8fbcc`](https://github.com/Byron/gitoxide/commit/6f8fbcc197446068b680ea4c41e79bfc6356fcff))
+    - [lock] prevent flakiness due to rounding or something ([`6f8fbcc`](https://github.com/Byron/gitoxide/commit/6f8fbcc197446068b680ea4c41e79bfc6356fcff))
     - [lock] refactor ([`ddc2170`](https://github.com/Byron/gitoxide/commit/ddc2170498d3822ebf6fc35e2e4b336f7af6d9f3))
     - [lock] remaining test for everything proper exponential backoff needs ([`368d994`](https://github.com/Byron/gitoxide/commit/368d9944b2b3379b0d01be93aea02cae25d1c867))
     - [lock] support for randomization ([`220eb99`](https://github.com/Byron/gitoxide/commit/220eb9945b2006f79b82d80eaabd09b5e291953b))
     - [lock] better overshoot test for exponential backoff ([`62c17d8`](https://github.com/Byron/gitoxide/commit/62c17d8721a8d797fe7475ea36a90931e835ebc4))
-    - [lock] a sketch of exponential backoff, without rnadomization ([`55670b4`](https://github.com/Byron/gitoxide/commit/55670b458d248f6249f0031ec73c5eb4f72e36f7))
+    - [lock] a sketch of exponential backoff, without randomization ([`55670b4`](https://github.com/Byron/gitoxide/commit/55670b458d248f6249f0031ec73c5eb4f72e36f7))
     - [lock] refactor, remaining docs ([`956e69f`](https://github.com/Byron/gitoxide/commit/956e69fcb96085d96124b6c56d829607b36adf9f))
     - [lock] tests green ([`3706b26`](https://github.com/Byron/gitoxide/commit/3706b2669ebee5cd25a75a42d9b0a4a380707ee1))
     - [lock] creation of lockfiles, with immediate failure mode ([`fda7da8`](https://github.com/Byron/gitoxide/commit/fda7da8ec43f7999effdfd76791a6541f8c52338))

@@ -138,7 +138,7 @@ mod entry_mode {
         assert_eq!(
             std::mem::size_of::<EntryMode>(),
             2,
-            "it should not change without notiice"
+            "it should not change without notice"
         );
     }
 }

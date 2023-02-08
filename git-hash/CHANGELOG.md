@@ -508,7 +508,7 @@ A automated maintenance release without impact to the public API.
 
  * **Uncategorized**
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
-    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
+    - prepare changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - don't use panicking const fn just yet to not require rust 1.57 ([`d2e2ea0`](https://github.com/Byron/gitoxide/commit/d2e2ea0a9b9c5f756d8b02b4872e6950faa03b3e))
 </details>
 
@@ -796,7 +796,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
     - Add additional variant for Sha256 in ObjectId ([`3dd7c43`](https://github.com/Byron/gitoxide/commit/3dd7c4350e140b72c21598f95a4557e6115d3124))
     - Make ObjectId into an enum to soon hold more bytes (and type) ([`4bf0c1a`](https://github.com/Byron/gitoxide/commit/4bf0c1a5a5c23bb0c0836ab8cea41eb06a232906))
     - Impl == and != for common combinations of ObjectId/oid ([`2455178`](https://github.com/Byron/gitoxide/commit/24551781cee4fcf312567ca9270d54a95bc4d7ae))
-    - Remove now unused gith-hash::borrowed::Id ([`59ab1bd`](https://github.com/Byron/gitoxide/commit/59ab1bd9a8ea57e1770caf8841a0af5d38905bec))
+    - Remove now unused git-hash::borrowed::Id ([`59ab1bd`](https://github.com/Byron/gitoxide/commit/59ab1bd9a8ea57e1770caf8841a0af5d38905bec))
     - More general to-hex for ObjectId ([`e2be868`](https://github.com/Byron/gitoxide/commit/e2be868ad4a131682d4aae629ca5b3a5b7ed0d5f))
     - Fix incorrectly implemented display for `oid` ([`c4186b0`](https://github.com/Byron/gitoxide/commit/c4186b0a986b4b49f8aa70308b492063bd33285c))
     - git-commitgraph uses `oid` now ([`0b72966`](https://github.com/Byron/gitoxide/commit/0b72966249523b97fce1bc7b29082ac68fa86a4f))

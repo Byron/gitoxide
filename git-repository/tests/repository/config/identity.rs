@@ -21,7 +21,7 @@ fn author_and_committer_and_fallback() -> crate::Result {
             .set("GIT_AUTHOR_NAME", "author")
             .set("GIT_AUTHOR_EMAIL", "author@email")
             .set("GIT_AUTHOR_DATE", "Thu, 1 Aug 2022 12:45:06 +0800")
-            .set("GIT_COMMITTER_NAME", "commiter-overrider-unused")
+            .set("GIT_COMMITTER_NAME", "committer-overrider-unused")
             .set("GIT_COMMITTER_EMAIL", "committer-override-unused@email")
             .set("GIT_COMMITTER_DATE", "Thu, 1 Aug 2022 12:45:06 -0200")
             .set("EMAIL", "general@email-unused")

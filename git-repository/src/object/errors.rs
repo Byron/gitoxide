@@ -17,7 +17,7 @@ pub mod conversion {
 
 ///
 pub mod find {
-    /// Indicate that an error occoured when trying to find an object.
+    /// Indicate that an error occurred when trying to find an object.
     pub type Error = git_odb::store::find::Error;
 
     ///

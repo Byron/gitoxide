@@ -108,18 +108,18 @@ mod key {
     }
 
     #[test]
-    fn case_insentive_eq() {
+    fn case_insensitive_eq() {
         assert_eq!(key("aB-c"), key("Ab-C"));
     }
 
     #[test]
-    fn case_insentive_ord() {
+    fn case_insensitive_ord() {
         assert_eq!(key("a").cmp(&key("a")), Ordering::Equal);
         assert_eq!(key("aBc").cmp(&key("AbC")), Ordering::Equal);
     }
 
     #[test]
-    fn case_insentive_hash() {
+    fn case_insensitive_hash() {
         fn calculate_hash<T: std::hash::Hash>(t: T) -> u64 {
             use std::hash::Hasher;
             let mut s = std::collections::hash_map::DefaultHasher::new();

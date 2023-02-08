@@ -3,7 +3,7 @@ use crate::{bstr::BString, object, reference};
 /// A hint to know what to do if refs and object names are equal.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum RefsHint {
-    /// This is the default, and leads to specs that look like objects identified by full hex sha and are objets to be used
+    /// This is the default, and leads to specs that look like objects identified by full hex sha and are objects to be used
     /// instead of similarly named references. The latter is not typical but can absolutely happen by accident.
     /// If the object prefix is shorter than the maximum hash length of the repository, use the reference instead, which is
     /// preferred as there are many valid object names like `beef` and `cafe` that are short and both valid and typical prefixes

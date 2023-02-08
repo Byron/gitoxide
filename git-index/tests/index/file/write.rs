@@ -206,7 +206,7 @@ fn compare_states(actual: &State, actual_version: Version, expected: &State, opt
     );
 
     // As `write_to` does / should not mutate we can test those properties here.
-    // Anything that can be configured has to be tested separately when comparing againt baseline
+    // Anything that can be configured has to be tested separately when comparing against baseline
     assert_eq!(
         actual.version(),
         expected.version(),

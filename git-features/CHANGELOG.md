@@ -130,7 +130,7 @@ A maintenance release without user-facing changes.
 
  * **Uncategorized**
     - Release git-date v0.3.1, git-features v0.25.0, git-actor v0.15.0, git-glob v0.5.1, git-path v0.7.0, git-attributes v0.7.0, git-config-value v0.10.0, git-lock v3.0.1, git-validate v0.7.1, git-object v0.24.0, git-ref v0.21.0, git-sec v0.6.0, git-config v0.13.0, git-prompt v0.3.0, git-url v0.12.0, git-credentials v0.8.0, git-diff v0.24.0, git-discover v0.10.0, git-traverse v0.20.0, git-index v0.10.0, git-mailmap v0.7.0, git-pack v0.28.0, git-odb v0.38.0, git-packetline v0.14.1, git-transport v0.24.0, git-protocol v0.25.0, git-revision v0.8.0, git-refspec v0.5.0, git-worktree v0.10.0, git-repository v0.30.0, safety bump 26 crates ([`e6b9906`](https://github.com/Byron/gitoxide/commit/e6b9906c486b11057936da16ed6e0ec450a0fb83))
-    - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
+    - prepare changelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
     - thanks clippy ([`f1160fb`](https://github.com/Byron/gitoxide/commit/f1160fb42acf59b37cbeda546a7079af3c9bc050))
     - add support for explicit non-parallel iteration. ([`0f27c67`](https://github.com/Byron/gitoxide/commit/0f27c67c92fc0bc23a6712b5c4c730ad6a0156bf))
@@ -784,7 +784,7 @@ A maintenance release thanks to upgrade to `prodash` 18.
     - Release git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`d78aab7`](https://github.com/Byron/gitoxide/commit/d78aab7b9c4b431d437ac70a0ef96263acb64e46))
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepare changelogs for release ([`674ec73`](https://github.com/Byron/gitoxide/commit/674ec73b0816baa2c63b4ef1b40b7a41849c5e95))
-    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
+    - prepare changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - upgrade to tui 0.17 and prodash 18 ([`eba101a`](https://github.com/Byron/gitoxide/commit/eba101a576ecb7bc0f63357d0dd81eb817b94be4))
 </details>
 
@@ -871,7 +871,7 @@ A maintenance release thanks to upgrade to `prodash` 18.
 
 ### Changed (BREAKING)
 
- - <csr-id-e7526b2a7b51cbac4018e1ab3b623a85987fadc2/> parallel utilities now use `Send + Clone` insted of `Send + Sync`
+ - <csr-id-e7526b2a7b51cbac4018e1ab3b623a85987fadc2/> parallel utilities now use `Send + Clone` instead of `Send + Sync`
    This helps to assure that thread-local computations always work with the
    kind of types we provide. The ones that are carrying out actions are
    notably not `Sync` anymore.
@@ -907,7 +907,7 @@ A maintenance release thanks to upgrade to `prodash` 18.
     - remove trait bounds to allow single-threaded applications to exist ([`3c790e0`](https://github.com/Byron/gitoxide/commit/3c790e01de0dbd3ffa2683d5cf060723d11d64a5))
  * **[#263](https://github.com/Byron/gitoxide/issues/263)**
     - Make it possible to return read guards with packed buffers ([`f5c3c8f`](https://github.com/Byron/gitoxide/commit/f5c3c8f7309bf53b9e53f786e75931d701a8585c))
-    - parallel utilities now use `Send + Clone` insted of `Send + Sync` ([`e7526b2`](https://github.com/Byron/gitoxide/commit/e7526b2a7b51cbac4018e1ab3b623a85987fadc2))
+    - parallel utilities now use `Send + Clone` instead of `Send + Sync` ([`e7526b2`](https://github.com/Byron/gitoxide/commit/e7526b2a7b51cbac4018e1ab3b623a85987fadc2))
     - A mad attempt to use thread-local everywhere and avoid Sync… ([`0af5077`](https://github.com/Byron/gitoxide/commit/0af5077e1f028c1c69bbdc098bb567e486282c37))
     - add threading primitives with feature toggle ([`7e95d8a`](https://github.com/Byron/gitoxide/commit/7e95d8ab29051ffc892f2dcbaf5369e8c7e7b294))
  * **Uncategorized**
@@ -1119,7 +1119,7 @@ This release contains no functional changes.
     - fix docs ([`e68d460`](https://github.com/Byron/gitoxide/commit/e68d460716dc51c7f4757c11f3c8af6c3881e2cf))
     - Remove mentions of interrupt handling feature toggles ([`833ac04`](https://github.com/Byron/gitoxide/commit/833ac0464b42bd3ecc76c6263b4b06e8ab4ff182))
     - Fix everything up so that… ([`5930563`](https://github.com/Byron/gitoxide/commit/5930563601d6c2148cf39e109f69f8b7c7dfcb36))
-    - A first attempt to make intrerupt tools work, but… ([`8fb8d37`](https://github.com/Byron/gitoxide/commit/8fb8d374ecfeffa3ae1bd07bf9bc5014351730f5))
+    - A first attempt to make interrupt tools work, but… ([`8fb8d37`](https://github.com/Byron/gitoxide/commit/8fb8d374ecfeffa3ae1bd07bf9bc5014351730f5))
     - First step towards moving git-features::interrupt… ([`8a741d0`](https://github.com/Byron/gitoxide/commit/8a741d0c5423ed7c35d9382307c760a6b9460ccd))
     - fix build ([`ea2bfac`](https://github.com/Byron/gitoxide/commit/ea2bfac65f742ca7617bc77a50376c29156c4ea5))
     - refactor ([`7f9be36`](https://github.com/Byron/gitoxide/commit/7f9be36ea909ee67555591287bcb140fdc54c801))
@@ -1130,7 +1130,7 @@ This release contains no functional changes.
     - [features] sketch of iterator to auto-check for interruptions ([`61d3a15`](https://github.com/Byron/gitoxide/commit/61d3a15c66b4c1be1d98715b8a60705a3a314455))
     - [tempfile] integrate with git-features to have a single top-level interrupt… ([`6e9400d`](https://github.com/Byron/gitoxide/commit/6e9400d9cb8e370d870c3aa635718b134c82268f))
     - [features] protect interrupt handler from multi-initialization ([`592404c`](https://github.com/Byron/gitoxide/commit/592404c2b24dc9d24465ff5f73216213436a277a))
-    - [interrupt] remove any user mesasages as it can't be done in a handler. ([`8a10af7`](https://github.com/Byron/gitoxide/commit/8a10af77db654ebce940bb05f8eefd171036ef40))
+    - [interrupt] remove any user messages as it can't be done in a handler. ([`8a10af7`](https://github.com/Byron/gitoxide/commit/8a10af77db654ebce940bb05f8eefd171036ef40))
     - [tempfile] a first somewhat working version of signal-hooks for interrupt handling ([`07b3242`](https://github.com/Byron/gitoxide/commit/07b3242e446cb4520dbc54308632ab6221fc19c8))
     - Update to latest prodash to get rid of ctrlc ([`c070d6f`](https://github.com/Byron/gitoxide/commit/c070d6f5273d7ef9049ddd02fd26332623dc0ae6))
     - refactor ([`2e86723`](https://github.com/Byron/gitoxide/commit/2e8672312a4b1e2638e3ffe82a97cc2f87b496cf))
@@ -1354,7 +1354,7 @@ This release contains no functional changes.
     - (cargo-release) version 0.5.0 ([`fc7d600`](https://github.com/Byron/gitoxide/commit/fc7d600ac2c438c8b6b91f67cb69b0ac5ec37675))
     - more docs for owned git-object ([`b79101d`](https://github.com/Byron/gitoxide/commit/b79101d714f59a42a30eb47776486a212ec0f738))
     - fix io::pipe tests ([`9604154`](https://github.com/Byron/gitoxide/commit/9604154e687813a11f0eee469e408561a6a74a4e))
-    - uograde everything else ([`0cd79d0`](https://github.com/Byron/gitoxide/commit/0cd79d00bce3f042b5cc849cf48739e29f95fcb0))
+    - upgrade everything else ([`0cd79d0`](https://github.com/Byron/gitoxide/commit/0cd79d00bce3f042b5cc849cf48739e29f95fcb0))
     - upgrade prodash and tui ([`b5eadca`](https://github.com/Byron/gitoxide/commit/b5eadca343bbaa1af86722b5f1bcd33f4e3939a6))
     - add remaining docs to git-features using the missing_docs directive ([`f8aafd6`](https://github.com/Byron/gitoxide/commit/f8aafd6c78687899a2ca3a3e6147d93fc45b8cb9))
 </details>
@@ -1527,7 +1527,7 @@ This release contains no functional changes.
     - thanks clippy ([`6725104`](https://github.com/Byron/gitoxide/commit/6725104d2841e6518db641d06e3e107cf4f40f96))
     - first step towards parallelizing file hashes and traversal! ([`9573836`](https://github.com/Byron/gitoxide/commit/95738369e0d3accf7f6239c8cd966a7f5c36825a))
     - better usability for units ([`b226253`](https://github.com/Byron/gitoxide/commit/b226253636d8146a084a7bcd7c0c320e37f9d2fb))
-    - update dependencie ([`ade06b4`](https://github.com/Byron/gitoxide/commit/ade06b46bb3c16ac1e26dbbb4a7045f0c09f2d8e))
+    - update dependencies ([`ade06b4`](https://github.com/Byron/gitoxide/commit/ade06b46bb3c16ac1e26dbbb4a7045f0c09f2d8e))
     - Make obvious that interrupt request was received ([`34b2373`](https://github.com/Byron/gitoxide/commit/34b23737f560fe52d4f98fb886eba754652f9a5e))
     - Remove once_cell dependency as it is really not required anymore ([`5ac9538`](https://github.com/Byron/gitoxide/commit/5ac95385cc8d1c50c16da6e5fb0c66ac138f9966))
     - make interrupt handler work reliably ([`e71da0f`](https://github.com/Byron/gitoxide/commit/e71da0fce6d6eab68f7b81b13cdc78ce8e9b7ee3))
@@ -1615,8 +1615,8 @@ This release contains no functional changes.
     - Don't just ignore send errors - we should panic for now ([`f128117`](https://github.com/Byron/gitoxide/commit/f128117138b24de780a00bb96e7c1c9f987e8aa0))
     - Proper implementation of line renderer into 'lean' CLI ([`e98e7c2`](https://github.com/Byron/gitoxide/commit/e98e7c280d73e9d9ebd13202afb93a56cb2f7c9c))
     - upgrade to prodash version 7 ([`af02b46`](https://github.com/Byron/gitoxide/commit/af02b46cc1eff5ba1da7da20d3f524a79fad686f))
-    - update prodash to verion 6.0 ([`a4731a3`](https://github.com/Byron/gitoxide/commit/a4731a3aca159f8916b29d9ce5a71856089c5a6b))
-    - Add metadata to allow docs.rs build all featueres ([`10f9386`](https://github.com/Byron/gitoxide/commit/10f9386a12decc1f13999aee72be484c8f6d48ce))
+    - update prodash to version 6.0 ([`a4731a3`](https://github.com/Byron/gitoxide/commit/a4731a3aca159f8916b29d9ce5a71856089c5a6b))
+    - Add metadata to allow docs.rs build all features ([`10f9386`](https://github.com/Byron/gitoxide/commit/10f9386a12decc1f13999aee72be484c8f6d48ce))
     - Switch to prodash 5.0 for windows support ([`88542e1`](https://github.com/Byron/gitoxide/commit/88542e117dd1c2e7606fcbe88b30c51b4c115989))
     - Allow to limit the logging depth for less cluttered output ([`fce7035`](https://github.com/Byron/gitoxide/commit/fce703531d7006f7d961d6ffa66f51f6c9bc0efc))
     - finally speed up logging progress properly - needs input throttling ([`1a550c6`](https://github.com/Byron/gitoxide/commit/1a550c6458b10fad2e42b641899216c5517c6e26))

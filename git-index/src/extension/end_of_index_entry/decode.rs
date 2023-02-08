@@ -12,7 +12,7 @@ use crate::{
 /// From there it's possible to traverse the chunks of all set extensions, hash them, and compare that hash with all extensions
 /// stored prior to this one to assure they are correct.
 ///
-/// If the checksum wasn't matched, we will ignoree this extension entirely.
+/// If the checksum wasn't matched, we will ignore this extension entirely.
 pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<usize> {
     let hash_len = object_hash.len_in_bytes();
     if data.len() < MIN_SIZE_WITH_HEADER + hash_len {

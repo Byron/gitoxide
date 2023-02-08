@@ -25,7 +25,7 @@ pub mod parse {
         )]
         MalformedV2RefLine(BString),
         #[error("The ref attribute {attribute:?} is unknown. Found in line {line:?}")]
-        UnkownAttribute { attribute: BString, line: BString },
+        UnknownAttribute { attribute: BString, line: BString },
         #[error("{message}")]
         InvariantViolation { message: &'static str },
     }

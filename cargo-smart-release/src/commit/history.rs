@@ -26,7 +26,7 @@ mod tests {
         assert_eq!(
             std::mem::size_of::<Item>(),
             200,
-            "there are plenty of these loaded at a time and we should not let it grow unnnoticed."
+            "there are plenty of these loaded at a time and we should not let it grow unnoticed."
         )
     }
 }

@@ -1,4 +1,4 @@
-// Clone a repository from any URL or Path to a given taget directory
+// Clone a repository from any URL or Path to a given target directory
 
 use anyhow::Context;
 use git_repository as git;

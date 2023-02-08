@@ -217,7 +217,7 @@ It's also an attempt to trigger CI to build binary releases.
     - collect `stderr` and print it afterwards to avoid intersection with line progress. ([`3a05328`](https://github.com/Byron/gitoxide/commit/3a053284cfefe27873dcc5b4f74d63a560bb5d41))
     - reduce verbosity of `clone` and print once entire clone is done ([`9a476df`](https://github.com/Byron/gitoxide/commit/9a476df519bccfc6bcda8bd02aa4c1573a2691e7))
     - first rough sketch of `gix clone` ([`23a5e8b`](https://github.com/Byron/gitoxide/commit/23a5e8b658c5642c3f3060e013fd0eab06cbf027))
-    - progress totals (planned, devitaion) ([`63947ae`](https://github.com/Byron/gitoxide/commit/63947ae77ecb5952d7b5da5c6695f002bb7a7c4c))
+    - progress totals (planned, deviation) ([`63947ae`](https://github.com/Byron/gitoxide/commit/63947ae77ecb5952d7b5da5c6695f002bb7a7c4c))
     - prepare attribute-group setup as far as possible. ([`f5e2eeb`](https://github.com/Byron/gitoxide/commit/f5e2eebe9560f664f044b82ffa0cd19fd0df311f))
     - update usage of `core.checkState` ([`8b2aba1`](https://github.com/Byron/gitoxide/commit/8b2aba1d2baf42a3578ee8c9ce89dbe29d4d3f4c))
     - update progress based on filesystem config usage ([`de13c66`](https://github.com/Byron/gitoxide/commit/de13c66ade29635ff585241fec2783cf972dd5c3))
@@ -355,7 +355,7 @@ It's also an attempt to trigger CI to build binary releases.
 ### Changed (BREAKING)
 
  - <csr-id-dda995790c260131048484a11e66185b9c841311/> remove `gix free remote ref-list` in favor of `gix remote refs`
-   The functinality is the same, but the latter is built on top of a
+   The functionality is the same, but the latter is built on top of a
    repository which is slightly less flexible, but preferable over
    maintaining a non-repo version.
 
@@ -606,7 +606,7 @@ which usually are `Clone` too as they are passed by immutable reference (which i
    some speedups might be desirable, one might not want to commit all cores
    to this amount of waste.
  - <csr-id-25da30f3652bd72c157e84439dd6e3957471fa08/> in-manifest and in-bin documentation of feature toggles
-   Unfortunately, these don't show up on docs.rs due to it being a abinary
+   Unfortunately, these don't show up on docs.rs due to it being a binary
    only crate. One could consider throwing in a lib just for good measure.
 
 ### Commit Statistics
@@ -963,7 +963,7 @@ Many small and possibly breaking changes are not mentioned here.
  * **Uncategorized**
     - Make obvious that interrupt request was received ([`34b2373`](https://github.com/Byron/gitoxide/commit/34b23737f560fe52d4f98fb886eba754652f9a5e))
     - make interrupt handler work reliably ([`e71da0f`](https://github.com/Byron/gitoxide/commit/e71da0fce6d6eab68f7b81b13cdc78ce8e9b7ee3))
-    - unify used ranges for line renderer amond pretty and lean interface ([`f59f66e`](https://github.com/Byron/gitoxide/commit/f59f66e189732f567414f68c7463364e510f41c4))
+    - unify used ranges for line renderer among pretty and lean interface ([`f59f66e`](https://github.com/Byron/gitoxide/commit/f59f66e189732f567414f68c7463364e510f41c4))
     - Add percentage and throughput to tasks that matter ([`763d7ca`](https://github.com/Byron/gitoxide/commit/763d7caa4c70111b7cb3ef5733d2c3c697758c28))
     - Upgrade to latest iteration of prodash ([`3a4faec`](https://github.com/Byron/gitoxide/commit/3a4faecab56e37670c553e6563f11a46d740c333))
     - support for JSON format output ([`1931575`](https://github.com/Byron/gitoxide/commit/19315750f4f409e3f105c3c4054c4afbef91daad))
@@ -995,8 +995,8 @@ Many small and possibly breaking changes are not mentioned here.
     - rename verify-pack to pack-verify (keeping it more formal) ([`ec8c48a`](https://github.com/Byron/gitoxide/commit/ec8c48a8fcbcd748c9c764734d881b5f0217e1e4))
     - refactor ([`d3c00c8`](https://github.com/Byron/gitoxide/commit/d3c00c841ee1aeda6bb0534fe365db13c31f8d3c))
     - Change bin names from 'gio' to 'gix' and 'gixp' ([`5e23137`](https://github.com/Byron/gitoxide/commit/5e231371432ad02c67b095448564b2aa6af76799))
-    - Revert "Invert --statitics switch to become --no-statistics" ([`93a9b30`](https://github.com/Byron/gitoxide/commit/93a9b30069d9abc5742546ade90913026ac5774b))
-    - Invert --statitics switch to become --no-statistics ([`aeb8778`](https://github.com/Byron/gitoxide/commit/aeb87789ecc5cf3fd0ac69d67c7d0785e4eb329c))
+    - Revert "Invert --statistics switch to become --no-statistics" ([`93a9b30`](https://github.com/Byron/gitoxide/commit/93a9b30069d9abc5742546ade90913026ac5774b))
+    - Invert --statistics switch to become --no-statistics ([`aeb8778`](https://github.com/Byron/gitoxide/commit/aeb87789ecc5cf3fd0ac69d67c7d0785e4eb329c))
     - use faster algorithm by default ([`bb45c3d`](https://github.com/Byron/gitoxide/commit/bb45c3d8a2aabf87231981000240f0444abf6fc4))
     - Fix clippy ([`ec40e09`](https://github.com/Byron/gitoxide/commit/ec40e093d72f93d86168f39ebaca5b122ca0bec3))
     - Change course and do pack streaming first ([`bcb275e`](https://github.com/Byron/gitoxide/commit/bcb275e91cfd6f0a71b3cb59a2b706b60608a594))

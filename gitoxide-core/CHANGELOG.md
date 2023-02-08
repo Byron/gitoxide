@@ -413,7 +413,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed (BREAKING)
 
  - <csr-id-dda995790c260131048484a11e66185b9c841311/> remove `gix free remote ref-list` in favor of `gix remote refs`
-   The functinality is the same, but the latter is built on top of a
+   The functionality is the same, but the latter is built on top of a
    repository which is slightly less flexible, but preferable over
    maintaining a non-repo version.
 
@@ -470,7 +470,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    That way it won't clash with the higher-level constructs on top of it
    which use the same names.
  - <csr-id-12589cc6f08e4d7aabae30bcdadaa0c2b4850229/> adapt to changes in `git-url` and use `BString` to represent URLs.
-   They can contain paths, which is why `String` can't repsent a URL
+   They can contain paths, which is why `String` can't represent a URL
    losslessly.
    
    For HTTP urls these are ultimately UTF-8 strings though.
@@ -729,7 +729,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **[#298](https://github.com/Byron/gitoxide/issues/298)**
-    - restrict signature changes to 'Ancestores::sorting()` ([`d71bd9d`](https://github.com/Byron/gitoxide/commit/d71bd9ded1e5e5a61a27be3d55f4b85ee4049bcf))
+    - restrict signature changes to 'Ancestors::sorting()` ([`d71bd9d`](https://github.com/Byron/gitoxide/commit/d71bd9ded1e5e5a61a27be3d55f4b85ee4049bcf))
     - Adjust to changes in git-traverse ([`8240622`](https://github.com/Byron/gitoxide/commit/824062215865e6ec12afeb2d51b3c63f15291244))
     - support for the --max-candidates flag ([`b9e6754`](https://github.com/Byron/gitoxide/commit/b9e67540801f2630be8aa1acbfddfec4202360ac))
     - Reduce amount of max candidates, add --debug flag ([`c8c13e3`](https://github.com/Byron/gitoxide/commit/c8c13e398671a21e96282547fc0e3bd445627e2f))
@@ -774,7 +774,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    When converting a remote URL to a destination directory name,
    keep extension strings if they are not equal to "git". For example,
  - <csr-id-6d3f52dc13d7243a6bce6dab89a985114a75d94b/> Avoid the dashmap being cloned for each thread
-   Intead, share it by reference, it's sync after all.
+   Instead, share it by reference, it's sync after all.
    
    This issue was introduced when switching to a `Send + Clone` model,
    instead of `Send + Sync`, to allow thread-local caches in database
@@ -805,7 +805,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    The packed refs buffer is shared across clones and it's recommended
    to clone one `file::Store` instance per thread, each of which can
    use its own namespace.
- - <csr-id-e7526b2a7b51cbac4018e1ab3b623a85987fadc2/> parallel utilities now use `Send + Clone` insted of `Send + Sync`
+ - <csr-id-e7526b2a7b51cbac4018e1ab3b623a85987fadc2/> parallel utilities now use `Send + Clone` instead of `Send + Sync`
    This helps to assure that thread-local computations always work with the
    kind of types we provide. The ones that are carrying out actions are
    notably not `Sync` anymore.
@@ -847,13 +847,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#263](https://github.com/Byron/gitoxide/issues/263)**
     - Adjust to chagne signature of peel_to_id_in_place (again?) ([`dd5341f`](https://github.com/Byron/gitoxide/commit/dd5341f6d258c72441e84b3874eede45798d87cc))
     - file::Store::(try_)find(…, packed) was removed ([`15d429b`](https://github.com/Byron/gitoxide/commit/15d429bb50602363292453606902bdce5042d9a5))
-    - parallel utilities now use `Send + Clone` insted of `Send + Sync` ([`e7526b2`](https://github.com/Byron/gitoxide/commit/e7526b2a7b51cbac4018e1ab3b623a85987fadc2))
+    - parallel utilities now use `Send + Clone` instead of `Send + Sync` ([`e7526b2`](https://github.com/Byron/gitoxide/commit/e7526b2a7b51cbac4018e1ab3b623a85987fadc2))
     - A mad attempt to use thread-local everywhere and avoid Sync… ([`0af5077`](https://github.com/Byron/gitoxide/commit/0af5077e1f028c1c69bbdc098bb567e486282c37))
  * **[#266](https://github.com/Byron/gitoxide/issues/266)**
     - upgrade dependencies ([`c301abe`](https://github.com/Byron/gitoxide/commit/c301abe7a7f0f0a2613250c772d4cc74faca0e5e))
     - Make single-threaded programs possible to use with git-repository ([`dde5c6b`](https://github.com/Byron/gitoxide/commit/dde5c6ba76ff849f69f742c985b4bc65ca830883))
     - Use new store in git-repository ([`2f9e342`](https://github.com/Byron/gitoxide/commit/2f9e342b63f9e5c925d8e85ebc0a0be693ca0901))
-    - Adjust object-acess to test new contains method ([`8488b41`](https://github.com/Byron/gitoxide/commit/8488b41651751d9177f53a23233b7ddd655dd696))
+    - Adjust object-access to test new contains method ([`8488b41`](https://github.com/Byron/gitoxide/commit/8488b41651751d9177f53a23233b7ddd655dd696))
     - Use handle with default cache configuration in 'ein hours' ([`f71806f`](https://github.com/Byron/gitoxide/commit/f71806f1221daaf86b6c7b8846a85a134d0ac1ce))
     - adapt to changes in git-repository ([`fae309b`](https://github.com/Byron/gitoxide/commit/fae309b43f5cbc2aeb6b44b40e20f09ac0af5ca1))
     - Adjustments to match changes in `git-repository` ([`117d5f8`](https://github.com/Byron/gitoxide/commit/117d5f8625fd3af8f501e48eb0fad6d09fa814ba))
@@ -1338,7 +1338,7 @@ This is a maintenance release signalling breaking changes because some of the cr
     - clippy cleanup; fix CI build ([`3e943f2`](https://github.com/Byron/gitoxide/commit/3e943f2afd5f0cfe7294a21cca8e0344c7dd0216))
     - thanks clippy ([`3f7e27b`](https://github.com/Byron/gitoxide/commit/3f7e27b91e2c7d66959f5f4c1a667f3315111cd6))
     - Fix everything up so that… ([`5930563`](https://github.com/Byron/gitoxide/commit/5930563601d6c2148cf39e109f69f8b7c7dfcb36))
-    - A first attempt to make intrerupt tools work, but… ([`8fb8d37`](https://github.com/Byron/gitoxide/commit/8fb8d374ecfeffa3ae1bd07bf9bc5014351730f5))
+    - A first attempt to make interrupt tools work, but… ([`8fb8d37`](https://github.com/Byron/gitoxide/commit/8fb8d374ecfeffa3ae1bd07bf9bc5014351730f5))
     - fix build ([`ea2bfac`](https://github.com/Byron/gitoxide/commit/ea2bfac65f742ca7617bc77a50376c29156c4ea5))
     - refactor ([`7f9be36`](https://github.com/Byron/gitoxide/commit/7f9be36ea909ee67555591287bcb140fdc54c801))
     - And one less usage of the global interrupt handler… ([`5da57a3`](https://github.com/Byron/gitoxide/commit/5da57a3b0efef75ad82cb4d1cd496fc7fc0f1c23))
@@ -1742,7 +1742,7 @@ This is a maintenance release signalling breaking changes because some of the cr
     - [clone] minor refactor; it's definitely the read() that doesn't work… ([`406829b`](https://github.com/Byron/gitoxide/commit/406829b951164673c0b8152d1e9de76f1318df0a))
     - [clone] This actually works: first MVP of retrieving packs via clone ([`c06d819`](https://github.com/Byron/gitoxide/commit/c06d8194173f9ec468ddd0faf72dd6d8dbf7d35d))
     - [clone] First step towards implementing a working pack receiving… ([`264ec82`](https://github.com/Byron/gitoxide/commit/264ec821ca92a08d1756222abab11ffebb6dc0ff))
-    - [clone] Support for reading multi-step negoritaions, but… ([`507d342`](https://github.com/Byron/gitoxide/commit/507d342dfe2a714a4dd0bc100d96ed9e64a58243))
+    - [clone] Support for reading multi-step negotiations, but… ([`507d342`](https://github.com/Byron/gitoxide/commit/507d342dfe2a714a4dd0bc100d96ed9e64a58243))
     - [clone] support for progress that can handle writing pack files ([`46e0055`](https://github.com/Byron/gitoxide/commit/46e0055eab47e402807b15c63b6a4577f5c0b7bb))
     - [clone] Actually pass pack file to the delegate ([`94c5e62`](https://github.com/Byron/gitoxide/commit/94c5e62b274b0fc39f64ee5b04273db5ead4a470))
     - refactor ([`61e9812`](https://github.com/Byron/gitoxide/commit/61e98128ddd85cde1a352b70f83870fdea0c6bac))
@@ -1782,7 +1782,7 @@ This is a maintenance release signalling breaking changes because some of the cr
     - update to quick-error 2.0 ([`4b1b784`](https://github.com/Byron/gitoxide/commit/4b1b7849b47a54092b49821c39e864c86adda979))
     - better progress for Sha1 of pack and index ([`310a59e`](https://github.com/Byron/gitoxide/commit/310a59ee99ce78a4f14326c0058ea0c543a1d24c))
     - first successful test of moving the streaming iterator into its own thread ([`c9fcb68`](https://github.com/Byron/gitoxide/commit/c9fcb68c644c96a15cb9956a754bec7b65bb5fbd))
-    - unify used ranges for line renderer amond pretty and lean interface ([`f59f66e`](https://github.com/Byron/gitoxide/commit/f59f66e189732f567414f68c7463364e510f41c4))
+    - unify used ranges for line renderer among pretty and lean interface ([`f59f66e`](https://github.com/Byron/gitoxide/commit/f59f66e189732f567414f68c7463364e510f41c4))
     - Add convenience method to get a new bundle for the index/data just written ([`a6d74ad`](https://github.com/Byron/gitoxide/commit/a6d74ad7b65cdc293c8504dae73ea1c717e5bfca))
     - support for JSON format output ([`1931575`](https://github.com/Byron/gitoxide/commit/19315750f4f409e3f105c3c4054c4afbef91daad))
     - first pieces of the index-from-pack journey tests ([`181d69c`](https://github.com/Byron/gitoxide/commit/181d69c1da46a931c513cbd7d8bca7b2fa53351c))
@@ -1802,7 +1802,7 @@ This is a maintenance release signalling breaking changes because some of the cr
     - refactor; better tests ([`12d14bf`](https://github.com/Byron/gitoxide/commit/12d14bfe2aa089723a395287c5100aad6e838935))
     - update tasks ([`45c3520`](https://github.com/Byron/gitoxide/commit/45c352009092dbfd80bcb3e367d848d5b10737d4))
     - it looks like something is wrong with the object stream implementation ([`d187b5a`](https://github.com/Byron/gitoxide/commit/d187b5a769b62ec706c1265e0db8403327d8e92d))
-    - Loose object verifycation - but it doesn't seem to work as expected ([`9dd5676`](https://github.com/Byron/gitoxide/commit/9dd56761ae75eac691449cd86a1be04c11c0fecb))
+    - Loose object verification - but it doesn't seem to work as expected ([`9dd5676`](https://github.com/Byron/gitoxide/commit/9dd56761ae75eac691449cd86a1be04c11c0fecb))
     - prepare full 'verify' implementation ([`ee45c7f`](https://github.com/Byron/gitoxide/commit/ee45c7f47b95fc406cc5922a322c8fd6c0f52775))
     - refactor ([`0a33b24`](https://github.com/Byron/gitoxide/commit/0a33b24f5b61ccdf1358f1e9adcf0f6fd4099c1c))
     - Allow sink-compress configuration; choose best algorithm ([`29b9c23`](https://github.com/Byron/gitoxide/commit/29b9c230e35ba9b4334797b63ab9fa88c2fe59d0))
@@ -1864,7 +1864,7 @@ This is a maintenance release signalling breaking changes because some of the cr
 
  * **Uncategorized**
     - Make crates publishable ([`5688a34`](https://github.com/Byron/gitoxide/commit/5688a3427ff3673e1422d43106f4d685fa837aed))
-    - Add metadata to allow docs.rs build all featueres ([`10f9386`](https://github.com/Byron/gitoxide/commit/10f9386a12decc1f13999aee72be484c8f6d48ce))
+    - Add metadata to allow docs.rs build all features ([`10f9386`](https://github.com/Byron/gitoxide/commit/10f9386a12decc1f13999aee72be484c8f6d48ce))
     - support for json in pretty-plumbing and gitoxide (on demand) ([`b3780f8`](https://github.com/Byron/gitoxide/commit/b3780f87438d34b372c48b7385199f7ea22b3965))
     - git-odb with serde support ([`0da930c`](https://github.com/Byron/gitoxide/commit/0da930cf23f215cc1e2bda8f7340a5d69370735a))
     - pass serde1 through from gitoxide ([`1991b9f`](https://github.com/Byron/gitoxide/commit/1991b9ffef1a2b9a402d080d0a31e0857c434bc4))

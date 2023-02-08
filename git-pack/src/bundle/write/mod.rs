@@ -49,7 +49,7 @@ impl From<ProgressId> for git_features::progress::Id {
 impl crate::Bundle {
     /// Given a `pack` data stream, write it along with a generated index into the `directory` if `Some` or discard all output if `None`.
     ///
-    /// In the latter case, the functionality provided here is more akind of pack data stream validation.
+    /// In the latter case, the functionality provided here is more a kind of pack data stream validation.
     ///
     /// * `progress` provides detailed progress information which can be discarded with [`git_features::progress::Discard`].
     /// * `should_interrupt` is checked regularly and when true, the whole operation will stop.

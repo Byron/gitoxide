@@ -49,7 +49,7 @@ pub mod integrity {
         pub verify_mode: crate::index::verify::Mode,
         /// The way to traverse packs
         pub traversal: crate::index::traverse::Algorithm,
-        /// The amount of theads to use of `Some(N)`, with `None|Some(0)` using all available cores are used.
+        /// The amount of threads to use of `Some(N)`, with `None|Some(0)` using all available cores are used.
         pub thread_limit: Option<usize>,
         /// A function to create a pack cache
         pub make_pack_lookup_cache: F,

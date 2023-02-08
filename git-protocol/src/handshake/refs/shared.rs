@@ -214,7 +214,7 @@ pub(in crate::handshake::refs) fn parse_v2(line: &BStr) -> Result<Ref, Error> {
                                 },
                             },
                             _ => {
-                                return Err(Error::UnkownAttribute {
+                                return Err(Error::UnknownAttribute {
                                     attribute: attribute.to_owned().into(),
                                     line: trimmed.to_owned().into(),
                                 })

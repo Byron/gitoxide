@@ -46,7 +46,7 @@ impl Default for Options<fn() -> crate::cache::Never> {
 pub struct Outcome<P> {
     /// The checksum obtained when hashing the file, which matched the checksum contained within the file.
     pub actual_index_checksum: git_hash::ObjectId,
-    /// The statistics obtaine during traversal.
+    /// The statistics obtained during traversal.
     pub statistics: Statistics,
     /// The input progress to allow reuse.
     pub progress: P,

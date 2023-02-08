@@ -65,7 +65,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     )
                     .map_err(|err| Error::LockAcquire {
                         source: err,
-                        full_name: "borrowchk won't allow change.name()".into(),
+                        full_name: "borrowcheck won't allow change.name()".into(),
                     })?
                     .into()
                 };
@@ -115,7 +115,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     )
                     .map_err(|err| Error::LockAcquire {
                         source: err,
-                        full_name: "borrowchk won't allow change.name() and this will be corrected by caller".into(),
+                        full_name: "borrowcheck won't allow change.name() and this will be corrected by caller".into(),
                     })
                 };
                 let mut lock = (!has_global_lock).then(obtain_lock).transpose()?;

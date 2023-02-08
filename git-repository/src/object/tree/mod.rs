@@ -32,7 +32,7 @@ impl<'repo> Tree<'repo> {
     /// to re-use a vector and use a binary search instead, which might be able to improve performance over all.
     /// However, a benchmark should be created first to have some data and see which trade-off to choose here.
     ///
-    /// # Why is this consunming?
+    /// # Why is this consuming?
     ///
     /// The borrow checker shows pathological behaviour in loops that mutate a buffer, but also want to return from it.
     /// Workarounds include keeping an index and doing a separate access to the memory, which seems hard to do here without

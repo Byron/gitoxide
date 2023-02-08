@@ -100,7 +100,7 @@ fn include_and_includeif_correct_inclusion_order_and_delayed_resolve_include() -
                 cow_str("second-incl-path"),
                 cow_str("base-past-second-include"),
             ]),
-            "include order isn't changed also in relation to the root configuratino, delayed_resolve = {}",
+            "include order isn't changed also in relation to the root configuration, delayed_resolve = {}",
             delayed_resolve,
         );
         assert_eq!(config.sections().count(), 11);
