@@ -29,15 +29,48 @@ mod blocking_and_async_io {
         dir.join(name)
     }
 
-    pub(crate) fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
+    #[allow(clippy::result_large_err)]
+    pub(crate) fn try_repo_rw(
+        name: &str,
+    ) -> Result<(git::Repository, git_testtools::tempfile::TempDir), git::open::Error> {
         let dir = git_testtools::scripted_fixture_writable_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
             git_testtools::Creation::ExecuteScript,
         )
         .unwrap();
-        let repo = git::open_opts(dir.path().join(name), crate::restricted()).unwrap();
-        (repo, dir)
+        let repo = git::open_opts(dir.path().join(name), crate::restricted())?;
+        Ok((repo, dir))
+    }
+
+    pub(crate) fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
+        try_repo_rw(name).unwrap()
+    }
+
+    #[test]
+    #[cfg(feature = "blocking-network-client")]
+    fn collate_fetch_error() -> Result<(), git::env::collate::fetch::Error<std::io::Error>> {
+        let (repo, _tmp) = try_repo_rw("two-origins")?;
+        let remote = repo
+            .head()?
+            .into_remote(Fetch)
+            .expect("present")?
+            .with_fetch_tags(fetch::Tags::Included);
+
+        remote
+            .connect(Fetch, git::progress::Discard)?
+            .prepare_fetch(Default::default())?
+            .receive(&AtomicBool::default())?;
+
+        assert!(
+            repo.path()
+                .join("HEAD")
+                .metadata()
+                .map_err(git::env::collate::fetch::Error::Other)?
+                .is_file(),
+            "just to show off the 'Other' error type"
+        );
+        Ok(())
     }
 
     #[maybe_async::test(
@@ -47,9 +80,9 @@ mod blocking_and_async_io {
     async fn fetch_empty_pack() -> crate::Result {
         let daemon = spawn_git_daemon_if_async(repo_path("base"))?;
         for (fetch_tags, expected_ref_count) in [
-            (git::remote::fetch::Tags::None, 1),
-            (git::remote::fetch::Tags::Included, 7),
-            (git::remote::fetch::Tags::All, 7),
+            (fetch::Tags::None, 1),
+            (fetch::Tags::Included, 7),
+            (fetch::Tags::All, 7),
         ] {
             let (repo, _tmp) = repo_rw("two-origins");
             let mut remote = into_daemon_remote_if_async(
@@ -71,7 +104,7 @@ mod blocking_and_async_io {
                 .await?;
 
             match res.status {
-                git::remote::fetch::Status::Change { write_pack_bundle, update_refs } => {
+                fetch::Status::Change { write_pack_bundle, update_refs } => {
                     assert_eq!(write_pack_bundle.index.data_hash, hex_to_id("029d08823bd8a8eab510ad6ac75c823cfd3ed31e"));
                     assert_eq!(write_pack_bundle.index.num_objects, 0, "empty pack");
                     assert!(write_pack_bundle.data_path.as_deref().map_or(false, |p| p.is_file()));
