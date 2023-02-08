@@ -58,7 +58,7 @@ fn all_unknown_in_section() {
 }
 
 #[test]
-fn unknown_link_and_headling() {
+fn unknown_link_and_headline() {
     let fixture = fixture("known-section-unknown-headline-with-link.md").unwrap();
     let log = ChangeLog::from_markdown(&fixture);
     assert_eq!(

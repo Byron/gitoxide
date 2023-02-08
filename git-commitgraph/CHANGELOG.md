@@ -485,7 +485,7 @@ This is a maintenance release without functional changes.
     - Bump thiserror from 1.0.25 to 1.0.26 ([`9682590`](https://github.com/Byron/gitoxide/commit/9682590095dc3a502b0c84ccd206ca4797635092))
     - (cargo-release) version 0.3.0 ([`6b33678`](https://github.com/Byron/gitoxide/commit/6b33678f83e6d261ca15c4a7634ff5b4e66d81dd))
     - (cargo-release) version 0.2.0 ([`3286e42`](https://github.com/Byron/gitoxide/commit/3286e42547b59df6365087cbae9ce1c9c959faad))
-    - fix git-commigraph build (broke after git-hash changed its ways) ([`08fd7a0`](https://github.com/Byron/gitoxide/commit/08fd7a08800d926bcfeb1cfe6faa1f02c0b8904e))
+    - fix git-commitgraph build (broke after git-hash changed its ways) ([`08fd7a0`](https://github.com/Byron/gitoxide/commit/08fd7a08800d926bcfeb1cfe6faa1f02c0b8904e))
     - (cargo-release) version 0.4.0 ([`866f86f`](https://github.com/Byron/gitoxide/commit/866f86f59e66652968dcafc1a57912f9849cb21d))
     - (cargo-release) version 0.15.0 ([`d69d9fb`](https://github.com/Byron/gitoxide/commit/d69d9fb0931f8257cef96ef14a89da9340ad9738))
     - Put 'sha1' behind a feature toggle ([`4f326bc`](https://github.com/Byron/gitoxide/commit/4f326bc261c4e7f0d5510df74ad4215da3580696))

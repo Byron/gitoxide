@@ -26,7 +26,7 @@ pub mod streaming_peek_iter {
         rd.read_line().await;
 
         let res = rd.peek_line().await;
-        assert!(res.is_none(), "we hit the delmiter, and thus are EOF");
+        assert!(res.is_none(), "we hit the delimiter, and thus are EOF");
         assert_eq!(
             rd.stopped_at(),
             Some(PacketLineRef::Flush),

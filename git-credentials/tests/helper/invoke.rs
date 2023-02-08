@@ -38,7 +38,7 @@ fn store_and_reject() {
         let outcome = git_credentials::helper::invoke(&mut script_helper("last-pass"), &action).unwrap();
         assert!(
             outcome.is_none(),
-            "store and erase have no outcome, they just shouln't fail"
+            "store and erase have no outcome, they just shouldn't fail"
         );
     }
 }

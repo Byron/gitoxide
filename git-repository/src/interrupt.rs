@@ -123,7 +123,7 @@ where
     I: Iterator,
     EFN: FnOnce() -> E,
 {
-    /// Create a new iterator over `inner` which checks for interruptions on each iteration and cals `make_err()` to
+    /// Create a new iterator over `inner` which checks for interruptions on each iteration and calls `make_err()` to
     /// signal an interruption happened, causing no further items to be iterated from that point on.
     pub fn new(inner: I, make_err: EFN) -> Self {
         Iter {

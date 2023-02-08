@@ -31,7 +31,7 @@ impl<'r> Iter<'r> {
 impl<'r> Platform<'r> {
     /// Return an iterator over all references in the repository.
     ///
-    /// Even broken or otherwise unparsible or inaccessible references are returned and have to be handled by the caller on a
+    /// Even broken or otherwise unparsable or inaccessible references are returned and have to be handled by the caller on a
     /// case by case basis.
     pub fn all(&self) -> Result<Iter<'_>, init::Error> {
         Ok(Iter::new(self.repo, self.platform.all()?))

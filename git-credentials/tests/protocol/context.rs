@@ -1,4 +1,4 @@
-mod desctructure_url_in_place {
+mod destructure_url_in_place {
     use git_credentials::protocol::Context;
 
     fn url_ctx(url: &str) -> Context {

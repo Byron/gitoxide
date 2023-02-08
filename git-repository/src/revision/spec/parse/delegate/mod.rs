@@ -47,7 +47,7 @@ impl<'repo> Delegate<'repo> {
     }
 
     pub fn into_rev_spec(mut self) -> Result<crate::revision::Spec<'repo>, Error> {
-        fn zero_or_one_objects_or_ambguity_err(
+        fn zero_or_one_objects_or_ambiguity_err(
             mut candidates: [Option<HashSet<ObjectId>>; 2],
             prefix: [Option<git_hash::Prefix>; 2],
             mut errors: Vec<Error>,
@@ -101,7 +101,7 @@ impl<'repo> Delegate<'repo> {
             })
         }
 
-        let range = zero_or_one_objects_or_ambguity_err(self.objs, self.prefix, self.err, self.repo)?;
+        let range = zero_or_one_objects_or_ambiguity_err(self.objs, self.prefix, self.err, self.repo)?;
         Ok(crate::revision::Spec {
             first_ref: self.refs[0].take(),
             second_ref: self.refs[1].take(),

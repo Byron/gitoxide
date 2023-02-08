@@ -30,7 +30,7 @@ mod _ref {
             }
         }
 
-        /// Return the actor's name and email, effectively exclusing the time stamp of this signature.
+        /// Return the actor's name and email, effectively excluding the time stamp of this signature.
         pub fn actor(&self) -> (&BStr, &BStr) {
             (self.name, self.email)
         }

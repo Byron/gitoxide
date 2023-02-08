@@ -33,7 +33,7 @@ where
     W: std::io::Read + std::io::Write + std::io::Seek,
 {
     /// Create a new instance reading [entries][input::Entry] from an `input` iterator and write pack data bytes to
-    /// `output` writer, resembling a pack of `version`. The amount of entries will be dynaimcally determined and
+    /// `output` writer, resembling a pack of `version`. The amount of entries will be dynamically determined and
     /// the pack is completed once the last entry was written.
     /// `object_hash` is the kind of hash to use for the pack checksum and maybe other places, depending on the version.
     ///

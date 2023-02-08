@@ -95,7 +95,7 @@ fn walking_up_too_much_yield_none() {
 }
 
 #[test]
-fn trailing_directories_after_too_numereous_parent_dirs_yield_none() {
+fn trailing_directories_after_too_numerous_parent_dirs_yield_none() {
     assert_eq!(
         normalize(p("./a/b/../../../../../actually-invalid"), "/users").as_ref(),
         None,

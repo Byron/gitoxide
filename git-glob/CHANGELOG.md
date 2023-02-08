@@ -57,7 +57,7 @@ A maintenance release without user-facing changes.
 
  * **Uncategorized**
     - Release git-date v0.3.1, git-features v0.25.0, git-actor v0.15.0, git-glob v0.5.1, git-path v0.7.0, git-attributes v0.7.0, git-config-value v0.10.0, git-lock v3.0.1, git-validate v0.7.1, git-object v0.24.0, git-ref v0.21.0, git-sec v0.6.0, git-config v0.13.0, git-prompt v0.3.0, git-url v0.12.0, git-credentials v0.8.0, git-diff v0.24.0, git-discover v0.10.0, git-traverse v0.20.0, git-index v0.10.0, git-mailmap v0.7.0, git-pack v0.28.0, git-odb v0.38.0, git-packetline v0.14.1, git-transport v0.24.0, git-protocol v0.25.0, git-revision v0.8.0, git-refspec v0.5.0, git-worktree v0.10.0, git-repository v0.30.0, safety bump 26 crates ([`e6b9906`](https://github.com/Byron/gitoxide/commit/e6b9906c486b11057936da16ed6e0ec450a0fb83))
-    - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
+    - prepare changelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
     - adjust to changes in `git-testtools` ([`4eb842c`](https://github.com/Byron/gitoxide/commit/4eb842c7150b980e1c2637217e1f9657a671cea7))
     - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
@@ -428,7 +428,7 @@ This is a maintenance release with no functional changes.
     - refactor ([`f285ca0`](https://github.com/Byron/gitoxide/commit/f285ca03094655590d7014770ffb6f6a77d02289))
     - basic infrastructure for running git-baseline against our implementation ([`027869d`](https://github.com/Byron/gitoxide/commit/027869d57bd7fcb7234e814d1a22197cb64c05cf))
     - baseline tests for matches and no-matches ([`621c2ca`](https://github.com/Byron/gitoxide/commit/621c2cac7eed822cc8226c7b9aa8becf3db6872c))
-    - bring in all ~140 tests for git pattern matching, git-ignore styile ([`f9ab830`](https://github.com/Byron/gitoxide/commit/f9ab830df2920387c1cffec048be3a4089f4aa40))
+    - bring in all ~140 tests for git pattern matching, git-ignore style ([`f9ab830`](https://github.com/Byron/gitoxide/commit/f9ab830df2920387c1cffec048be3a4089f4aa40))
     - refactor ([`dbe7305`](https://github.com/Byron/gitoxide/commit/dbe7305d371c7dad02d8888492b60b882b418a46))
     - refactor ([`8a54341`](https://github.com/Byron/gitoxide/commit/8a543410e10326ce506b8a7ba65e662641835849))
  * **Uncategorized**

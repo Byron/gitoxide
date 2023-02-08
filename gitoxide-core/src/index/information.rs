@@ -1,6 +1,6 @@
 pub struct Options {
     pub index: super::Options,
-    /// If true, show exstension in detail.
+    /// If true, show extension in detail.
     pub extension_details: bool,
 }
 

@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
+    - prepare changelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
     - thanks clippy ([`f1160fb`](https://github.com/Byron/gitoxide/commit/f1160fb42acf59b37cbeda546a7079af3c9bc050))
     - Merge branch 'remove-lines-parsing' ([`9d8e32d`](https://github.com/Byron/gitoxide/commit/9d8e32d3c276fec34e3fce0feb29de0d24a8d1d2))
@@ -233,7 +233,7 @@ A maintenance release without user facing changes.
 
  * **Uncategorized**
     - Release git-date v0.0.3, git-actor v0.11.1, git-attributes v0.3.1, git-tempfile v2.0.3, git-object v0.20.1, git-ref v0.15.1, git-config v0.6.1, git-diff v0.17.1, git-discover v0.4.0, git-bitmap v0.1.1, git-index v0.4.1, git-mailmap v0.3.1, git-traverse v0.16.1, git-pack v0.21.1, git-odb v0.31.1, git-packetline v0.12.6, git-url v0.7.1, git-transport v0.19.1, git-protocol v0.18.1, git-revision v0.4.0, git-worktree v0.4.1, git-repository v0.21.0, safety bump 5 crates ([`c96473d`](https://github.com/Byron/gitoxide/commit/c96473dce21c3464aacbc0a62d520c1a33172611))
-    - prepare changelogs prior to reelase ([`c06ae1c`](https://github.com/Byron/gitoxide/commit/c06ae1c606b6af9c2a12021103d99c2810750d60))
+    - prepare changelogs prior to release ([`c06ae1c`](https://github.com/Byron/gitoxide/commit/c06ae1c606b6af9c2a12021103d99c2810750d60))
     - Merge pull request #2 from SidneyDouw/main ([`ce885ad`](https://github.com/Byron/gitoxide/commit/ce885ad4c3324c09c83751c32e014f246c748766))
     - Merge branch 'Byron:main' into main ([`9b9ea02`](https://github.com/Byron/gitoxide/commit/9b9ea0275f8ff5862f24cf5a4ca53bb1cd610709))
     - Merge branch 'main' into rev-parse-delegate ([`6da8250`](https://github.com/Byron/gitoxide/commit/6da82507588d3bc849217c11d9a1d398b67f2ed6))
@@ -338,7 +338,7 @@ A maintenance release thanks to changed dependencies.
     - Release git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`d78aab7`](https://github.com/Byron/gitoxide/commit/d78aab7b9c4b431d437ac70a0ef96263acb64e46))
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepare changelogs for release ([`674ec73`](https://github.com/Byron/gitoxide/commit/674ec73b0816baa2c63b4ef1b40b7a41849c5e95))
-    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
+    - prepare changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - Merge branch 'sync-db-draft' ([`7d2e20c`](https://github.com/Byron/gitoxide/commit/7d2e20c6fedc2c7e71a307d8d072412fa847a4aa))
     - thanks clippy ([`d1a956d`](https://github.com/Byron/gitoxide/commit/d1a956d8ccc9d0e27d81ce1c7973e339e6c9b66b))
     - thanks clippy ([`7dd2313`](https://github.com/Byron/gitoxide/commit/7dd2313d980fe7c058319ae66d313b3097e3ae5f))
@@ -467,7 +467,7 @@ A maintenance release due to properly dealing with previously breaking changes i
     - Update changelogs ([`c857d61`](https://github.com/Byron/gitoxide/commit/c857d61ce3ce342012a2c4ba10a8327822aa530e))
     - Avoid adding newlines which make writing unstable ([`6b5c394`](https://github.com/Byron/gitoxide/commit/6b5c394f49282a8d09c2a9ffece840e4683572db))
     - Fix section headline level ([`9d6f263`](https://github.com/Byron/gitoxide/commit/9d6f263beef289d227dec1acc2d4240087cb9be6))
-    - Write first version of changlogs thus far… ([`719b6bd`](https://github.com/Byron/gitoxide/commit/719b6bdf543b8269ccafad9ad6b46e0c55efaa38))
+    - Write first version of changelogs thus far… ([`719b6bd`](https://github.com/Byron/gitoxide/commit/719b6bdf543b8269ccafad9ad6b46e0c55efaa38))
     - Parse more user generated section content, adapt existing changelogs to work correctly ([`2f43a54`](https://github.com/Byron/gitoxide/commit/2f43a54298e7ecfff2334627df149fe0882b5d1d))
  * **[#200](https://github.com/Byron/gitoxide/issues/200)**
     - parse issue numbers from description and clean it up ([`95c0a51`](https://github.com/Byron/gitoxide/commit/95c0a510f875e8fd889b87caee356a4c1e099ea8))
@@ -719,7 +719,7 @@ A maintenance release due to properly dealing with previously breaking changes i
     - [git-packetline] refactor ([`d698d7b`](https://github.com/Byron/gitoxide/commit/d698d7bc4cfd49c6f752dab17f669bce27aa437a))
     - [git-packetline] All tests for high-level writer pass ([`eef8c9f`](https://github.com/Byron/gitoxide/commit/eef8c9f0b320cea89e900cfd7b5eed54d3bc7a8f))
     - [git-packetline] OMG it's green! ([`fbffd89`](https://github.com/Byron/gitoxide/commit/fbffd898eedc3a16369aeb65a496f6460fd5238e))
-    - [git-packetline] An owning inplementation of the LineWriter ([`70ce3c9`](https://github.com/Byron/gitoxide/commit/70ce3c96f189e51a0d4d8b5f1f572372f64bcb0a))
+    - [git-packetline] An owning implementation of the LineWriter ([`70ce3c9`](https://github.com/Byron/gitoxide/commit/70ce3c96f189e51a0d4d8b5f1f572372f64bcb0a))
     - [git-packetline] An owning LineWriter ([`445fac6`](https://github.com/Byron/gitoxide/commit/445fac6b079a8728a5b17f1a5cb70178fafe2c8a))
     - Revert "[git-packetline] Use no pin projections" - let's own the writer ([`6c5750a`](https://github.com/Byron/gitoxide/commit/6c5750a810fd8a13c67e947b72ec4dcdb717552b))
     - [git-packetline] Use no pin projections ([`dc4e0e5`](https://github.com/Byron/gitoxide/commit/dc4e0e5946dd24e92b52c592863e28736fcb636e))
@@ -921,7 +921,7 @@ A maintenance release due to properly dealing with previously breaking changes i
 
  * **Uncategorized**
     - (cargo-release) version 0.2.0 ([`da830de`](https://github.com/Byron/gitoxide/commit/da830defc9cfa81ce159f6d908da828227760845))
-    - [clone] Support for reading multi-step negoritaions, but… ([`507d342`](https://github.com/Byron/gitoxide/commit/507d342dfe2a714a4dd0bc100d96ed9e64a58243))
+    - [clone] Support for reading multi-step negotiations, but… ([`507d342`](https://github.com/Byron/gitoxide/commit/507d342dfe2a714a4dd0bc100d96ed9e64a58243))
     - thanks clippy ([`6aeb68c`](https://github.com/Byron/gitoxide/commit/6aeb68c587916610352644e0e7c4fe812957debd))
     - [clone] support for stopped_at() in provider and reader ([`6bd8c87`](https://github.com/Byron/gitoxide/commit/6bd8c8723617e70c3e9daaddf284884aacefc483))
     - [ref-ls] A way to abort on multiple delimiters; first tests work ([`8d44912`](https://github.com/Byron/gitoxide/commit/8d44912e7215b85c6931b7b829bd73ac38584424))

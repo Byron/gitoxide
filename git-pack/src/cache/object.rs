@@ -1,7 +1,7 @@
 //! # Note
 //!
 //! This module is a bit 'misplaced' if spelled out like 'git_pack::cache::object::*' but is best placed here for code re-use and
-//! general usefulnes.
+//! general usefulness.
 use crate::cache;
 
 #[cfg(feature = "object-cache-dynamic")]

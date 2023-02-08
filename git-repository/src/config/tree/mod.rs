@@ -24,7 +24,7 @@ pub(crate) mod root {
         pub const CHECKOUT: sections::Checkout = sections::Checkout;
         /// The `clone` section.
         pub const CLONE: sections::Clone = sections::Clone;
-        /// The `commiter` section.
+        /// The `committer` section.
         pub const COMMITTER: sections::Committer = sections::Committer;
         /// The `core` section.
         pub const CORE: sections::Core = sections::Core;

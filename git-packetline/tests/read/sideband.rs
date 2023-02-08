@@ -209,7 +209,7 @@ async fn peek_past_an_actual_eof_is_an_error() -> crate::Result {
     assert_eq!(
         res.expect("an err").expect_err("foo").kind(),
         std::io::ErrorKind::UnexpectedEof,
-        "peeking past the end is not an error as the caller should make sure we dont try 'invalid' reads"
+        "peeking past the end is not an error as the caller should make sure we don't try 'invalid' reads"
     );
     Ok(())
 }

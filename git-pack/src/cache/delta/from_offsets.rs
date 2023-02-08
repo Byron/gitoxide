@@ -58,13 +58,13 @@ impl<T> Tree<T> {
             })?,
         );
 
-        let anticpiated_num_objects = if let Some(num_objects) = data_sorted_by_offsets.size_hint().1 {
+        let anticipated_num_objects = if let Some(num_objects) = data_sorted_by_offsets.size_hint().1 {
             progress.init(Some(num_objects), progress::count("objects"));
             num_objects
         } else {
             0
         };
-        let mut tree = Tree::with_capacity(anticpiated_num_objects)?;
+        let mut tree = Tree::with_capacity(anticipated_num_objects)?;
 
         {
             // safety check - assure ourselves it's a pack we can handle

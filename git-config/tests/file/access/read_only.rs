@@ -64,7 +64,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             &[cow_str("")],
         );
 
-        assert_eq!(config.string("doesnt", None, "exist"), None);
+        assert_eq!(config.string("doesn't", None, "exist"), None);
 
         assert_eq!(
             config.value::<Integer>("core", None, "integer-no-prefix")?,

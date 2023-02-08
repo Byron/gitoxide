@@ -190,7 +190,7 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
 impl<'s> Platform<'s> {
     /// Return an iterator over all references, loose or `packed`, sorted by their name.
     ///
-    /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
+    /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themselves.
     pub fn all(&self) -> std::io::Result<LooseThenPacked<'_, '_>> {
         self.store.iter_packed(self.packed.as_ref().map(|b| &***b))
     }
@@ -322,7 +322,7 @@ impl<'a> IterInfo<'a> {
 impl file::Store {
     /// Return an iterator over all references, loose or `packed`, sorted by their name.
     ///
-    /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
+    /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themselves.
     pub fn iter_packed<'s, 'p>(
         &'s self,
         packed: Option<&'p packed::Buffer>,

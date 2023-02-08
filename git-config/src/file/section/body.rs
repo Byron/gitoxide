@@ -89,7 +89,7 @@ impl<'event> Body<'event> {
             .filter_map(|e| if let Event::SectionKey(k) = e { Some(k) } else { None })
     }
 
-    /// Returns true if the section containss the provided key.
+    /// Returns true if the section contains the provided key.
     #[must_use]
     pub fn contains_key(&self, key: impl AsRef<str>) -> bool {
         let key = &Key::from_str_unchecked(key.as_ref());
