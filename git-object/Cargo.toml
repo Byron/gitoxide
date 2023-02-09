@@ -1,6 +1,6 @@
 [package]
 name = "git-object"
-version = "0.26.0"
+version = "0.26.1"
 description = "Immutable and mutable git objects with decoding and encoding support"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
@@ -22,10 +22,10 @@ serde1 = ["serde", "bstr/serde", "smallvec/serde", "git-hash/serde1", "git-actor
 verbose-object-parsing-errors = ["nom/std"]
 
 [dependencies]
-git-features = { version = "^0.26.0", path = "../git-features", features = ["rustsha1"] }
-git-hash = { version = "^0.10.1", path = "../git-hash" }
-git-validate = { version = "^0.7.1", path = "../git-validate" }
-git-actor = { version = "^0.17.0", path = "../git-actor" }
+git-features = { version = "^0.26.2", path = "../git-features", features = ["rustsha1"] }
+git-hash = { version = "^0.10.2", path = "../git-hash" }
+git-validate = { version = "^0.7.2", path = "../git-validate" }
+git-actor = { version = "^0.17.1", path = "../git-actor" }
 
 btoi = "0.4.2"
 itoa = "1.0.1"

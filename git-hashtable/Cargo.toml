@@ -1,6 +1,6 @@
 [package]
 name = "git-hashtable"
-version = "0.1.0"
+version = "0.1.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate that provides hashtable based data structures optimized to utilize ObjectId keys"
@@ -17,5 +17,5 @@ hashbrown = { version = "0.13.1", default-features = false, features = [
   "inline-more",
   "raw"
 ] }
-git-hash = { version = "^0.10.1", path = "../git-hash" }
+git-hash = { version = "^0.10.2", path = "../git-hash" }
 

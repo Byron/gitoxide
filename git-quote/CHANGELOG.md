@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.4.1 (2023-02-09)
 
 ### New Features
 
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 79 calendar days.
+ - 7 commits contributed to the release over the course of 79 calendar days.
  - 79 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#691](https://github.com/Byron/gitoxide/issues/691)
@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#691](https://github.com/Byron/gitoxide/issues/691)**
     - set `rust-version` to 1.64 ([`55066ce`](https://github.com/Byron/gitoxide/commit/55066ce5fd71209abb5d84da2998b903504584bb))
  * **Uncategorized**
+    - prepare changelogs prior to release ([`7c846d2`](https://github.com/Byron/gitoxide/commit/7c846d2102dc767366771925212712ef8cc9bf07))
     - fix single-quotes to be similar to their source material. ([`0506a1f`](https://github.com/Byron/gitoxide/commit/0506a1f39f2b6d3218d179fe20c2118e2d4b0da0))
     - Merge branch 'ssh-quoting' ([`cc35025`](https://github.com/Byron/gitoxide/commit/cc350250d4ee6800c8033891074389455b115072))
     - refactor ([`deed1f1`](https://github.com/Byron/gitoxide/commit/deed1f1a81669c53475a88a504f593884d179363))

@@ -1,6 +1,6 @@
 [package]
 name = "git-worktree"
-version = "0.12.1"
+version = "0.12.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated implementing everything around working trees and git excludes"
@@ -30,13 +30,13 @@ internal-testing-git-features-parallel = ["git-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
-git-index = { version = "^0.12.2", path = "../git-index" }
-git-hash = { version = "^0.10.1", path = "../git-hash" }
-git-object = { version = "^0.26.0", path = "../git-object" }
-git-glob = { version = "^0.5.2", path = "../git-glob" }
-git-path = { version = "^0.7.0", path = "../git-path" }
-git-attributes = { version = "^0.8.1", path = "../git-attributes" }
-git-features = { version = "^0.26.1", path = "../git-features" }
+git-index = { version = "^0.12.3", path = "../git-index" }
+git-hash = { version = "^0.10.2", path = "../git-hash" }
+git-object = { version = "^0.26.1", path = "../git-object" }
+git-glob = { version = "^0.5.3", path = "../git-glob" }
+git-path = { version = "^0.7.1", path = "../git-path" }
+git-attributes = { version = "^0.8.2", path = "../git-attributes" }
+git-features = { version = "^0.26.2", path = "../git-features" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 

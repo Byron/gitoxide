@@ -1,6 +1,6 @@
 [package]
 name = "git-ref"
-version = "0.23.1"
+version = "0.24.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate to handle git references"
@@ -19,12 +19,12 @@ test = true
 serde1 = ["serde", "git-hash/serde1", "git-actor/serde1", "git-object/serde1"]
 
 [dependencies]
-git-features = { version = "^0.26.1", path = "../git-features", features = ["walkdir"]}
-git-path = { version = "^0.7.0", path = "../git-path" }
-git-hash = { version = "^0.10.1", path = "../git-hash" }
-git-object = { version = "^0.26.0", path = "../git-object" }
-git-validate = { version = "^0.7.1", path = "../git-validate" }
-git-actor = { version = "^0.17.0", path = "../git-actor" }
+git-features = { version = "^0.26.2", path = "../git-features", features = ["walkdir"]}
+git-path = { version = "^0.7.1", path = "../git-path" }
+git-hash = { version = "^0.10.2", path = "../git-hash" }
+git-object = { version = "^0.26.1", path = "../git-object" }
+git-validate = { version = "^0.7.2", path = "../git-validate" }
+git-actor = { version = "^0.17.1", path = "../git-actor" }
 git-lock = { version = "^3.0.0", path = "../git-lock" }
 git-tempfile = { version = "^3.0.0", path = "../git-tempfile" }
 

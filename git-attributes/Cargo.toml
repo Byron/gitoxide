@@ -1,6 +1,6 @@
 [package]
 name = "git-attributes"
-version = "0.8.1"
+version = "0.8.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dealing .gitattributes files"
@@ -17,10 +17,10 @@ doctest = false
 serde1 = ["serde", "bstr/serde", "git-glob/serde1", "compact_str/serde"]
 
 [dependencies]
-git-features = { version = "^0.26.1", path = "../git-features" }
-git-path = { version = "^0.7.0", path = "../git-path" }
-git-quote = { version = "^0.4.0", path = "../git-quote" }
-git-glob = { version = "^0.5.2", path = "../git-glob" }
+git-features = { version = "^0.26.2", path = "../git-features" }
+git-path = { version = "^0.7.1", path = "../git-path" }
+git-quote = { version = "^0.4.1", path = "../git-quote" }
+git-glob = { version = "^0.5.3", path = "../git-glob" }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"]}
 unicode-bom = "1.1.4"

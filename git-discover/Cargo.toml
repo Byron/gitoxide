@@ -1,6 +1,6 @@
 [package]
 name = "git-discover"
-version = "0.12.1"
+version = "0.13.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Discover git repositories and check if a directory is a git repository"
@@ -13,10 +13,10 @@ rust-version = "1.64"
 doctest = false
 
 [dependencies]
-git-sec = { version = "^0.6.1", path = "../git-sec" }
-git-path = { version = "^0.7.0", path = "../git-path" }
-git-ref = { version = "^0.23.1", path = "../git-ref" }
-git-hash = { version = "^0.10.1", path = "../git-hash" }
+git-sec = { version = "^0.6.2", path = "../git-sec" }
+git-path = { version = "^0.7.1", path = "../git-path" }
+git-ref = { version = "^0.24.0", path = "../git-ref" }
+git-hash = { version = "^0.10.2", path = "../git-hash" }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"] }
 thiserror = "1.0.26"

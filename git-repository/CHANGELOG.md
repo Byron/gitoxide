@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.34.0 (2023-02-09)
+
+<csr-id-a01f5d72346c36fdcb77af095273da6f4ab86e21/>
 
 ### Documentation
 
@@ -49,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 18 commits contributed to the release over the course of 25 calendar days.
+ - 19 commits contributed to the release over the course of 25 calendar days.
  - 30 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#706](https://github.com/Byron/gitoxide/issues/706)
@@ -69,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#706](https://github.com/Byron/gitoxide/issues/706)**
     - don't panic, but error when parsing the rev-specs `^`, `..`, `...`. ([`5d3a3a2`](https://github.com/Byron/gitoxide/commit/5d3a3a245968d5ad8c29ea11a99b4896d1b41191))
  * **Uncategorized**
+    - prepare changelogs prior to release ([`7c846d2`](https://github.com/Byron/gitoxide/commit/7c846d2102dc767366771925212712ef8cc9bf07))
     - Merge branch 'adjustments-for-cargo' ([`a3df7b5`](https://github.com/Byron/gitoxide/commit/a3df7b5e3cd1fdacc78fedb057010e40e92a8565))
     - add `env::collate::fetch::Error` - a combined error type with its own API. ([`297d59e`](https://github.com/Byron/gitoxide/commit/297d59e8396fbe2e5a2224a8524fa0778e786773))
     - Merge branch 'Lioness100/main' ([`1e544e8`](https://github.com/Byron/gitoxide/commit/1e544e82455bf9ecb5e3c2146280eaf7ecd81f16))

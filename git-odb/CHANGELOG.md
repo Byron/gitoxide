@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.40.2 (2023-02-09)
 
 ### Documentation
 
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 28 calendar days.
+ - 11 commits contributed to the release over the course of 28 calendar days.
  - 30 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#691](https://github.com/Byron/gitoxide/issues/691), [#724](https://github.com/Byron/gitoxide/issues/724)
@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#724](https://github.com/Byron/gitoxide/issues/724)**
     - fix typo proper ([`ffc99b8`](https://github.com/Byron/gitoxide/commit/ffc99b8edaacdb20c940624549acb4a4ee7f8c66))
  * **Uncategorized**
+    - prepare changelogs prior to release ([`7c846d2`](https://github.com/Byron/gitoxide/commit/7c846d2102dc767366771925212712ef8cc9bf07))
     - Merge branch 'Lioness100/main' ([`1e544e8`](https://github.com/Byron/gitoxide/commit/1e544e82455bf9ecb5e3c2146280eaf7ecd81f16))
     - undo typo-fix which reversed the meaning of the word. ([`eb232ff`](https://github.com/Byron/gitoxide/commit/eb232ffa7c6c939eb8286e07eed295d585afbe37))
     - fix typos ([`39ed9ed`](https://github.com/Byron/gitoxide/commit/39ed9eda62b7718d5109135e5ad406fb1fe2978c))
