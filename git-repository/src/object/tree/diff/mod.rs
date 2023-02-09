@@ -59,6 +59,33 @@ enum Tracking {
     Path,
 }
 
+/// A structure to capture how to perform rename tracking
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct Renames {
+    /// If true, default false, copies will be detected as well.
+    ///
+    /// Note that this is an even more expensive operation then detecting renames as files which were
+    /// determined as renamed can't be removed from the set.
+    pub copies: bool,
+    /// The percentage of similarity needed for files to be considered renamed or copied, defaulting to `Some(0.5)`.
+    ///
+    /// If `None`, files are only considered equal if their content matches 100%.
+    pub percentage: Option<f32>,
+    /// The amount of files to consider for rename or copy tracking. Defaults to 1000.
+    /// If 0, there is no limit.
+    pub limit: usize,
+}
+
+impl Default for Renames {
+    fn default() -> Self {
+        Renames {
+            copies: false,
+            percentage: Some(0.5),
+            limit: 1000,
+        }
+    }
+}
+
 /// Configuration
 impl<'a, 'repo> Platform<'a, 'repo> {
     /// Keep track of file-names, which makes the [`location`][Change::location] field usable with the filename of the changed item.

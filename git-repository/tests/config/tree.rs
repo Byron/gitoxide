@@ -121,8 +121,44 @@ mod ssh {
 mod diff {
     use git_diff::blob::Algorithm;
     use git_repository::config::tree::{Diff, Key};
+    use git_repository::diff::rename::Tracking;
 
     use crate::config::tree::bcow;
+
+    #[test]
+    fn renames() -> crate::Result {
+        assert_eq!(
+            Diff::RENAMES.try_into_renames(Ok(true), || unreachable!())?,
+            Tracking::Renames
+        );
+        assert!(Diff::RENAMES.validate("1".into()).is_ok());
+        assert_eq!(
+            Diff::RENAMES.try_into_renames(Ok(false), || unreachable!())?,
+            Tracking::Disabled
+        );
+        assert!(Diff::RENAMES.validate("0".into()).is_ok());
+        assert_eq!(
+            Diff::RENAMES.try_into_renames(Err(git_config::value::Error::new("err", "err")), || Some(bcow("copy")))?,
+            Tracking::RenamesAndCopies
+        );
+        assert!(Diff::RENAMES.validate("copy".into()).is_ok());
+        assert_eq!(
+            Diff::RENAMES.try_into_renames(Err(git_config::value::Error::new("err", "err")), || Some(bcow(
+                "copies"
+            )))?,
+            Tracking::RenamesAndCopies
+        );
+        assert!(Diff::RENAMES.validate("copies".into()).is_ok());
+
+        assert_eq!(
+            Diff::RENAMES
+                .try_into_renames(Err(git_config::value::Error::new("err", "err")), || Some(bcow("foo")))
+                .unwrap_err()
+                .to_string(),
+            "The value of key \"diff.renames=foo\" was invalid"
+        );
+        Ok(())
+    }
 
     #[test]
     fn algorithm() -> crate::Result {

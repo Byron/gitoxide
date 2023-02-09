@@ -70,7 +70,6 @@ pub use git_actor as actor;
 pub use git_attributes as attrs;
 pub use git_credentials as credentials;
 pub use git_date as date;
-pub use git_diff as diff;
 pub use git_features as features;
 use git_features::threading::OwnShared;
 pub use git_features::{parallel, progress::Progress, threading};
@@ -137,6 +136,26 @@ pub mod tag;
 pub mod progress {
     pub use git_features::progress::*;
     pub use prodash::tree;
+}
+
+///
+pub mod diff {
+    pub use git_diff::*;
+    ///
+    pub mod rename {
+        /// Determine how to do rename tracking.
+        #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+        pub enum Tracking {
+            /// Do not track renames at all, the fastest option.
+            Disabled,
+            /// Track renames.
+            Renames,
+            /// Track renames and copies.
+            ///
+            /// This is the most expensive option.
+            RenamesAndCopies,
+        }
+    }
 }
 
 /// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
