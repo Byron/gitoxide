@@ -45,7 +45,7 @@ pub trait Find {
     /// Returns true if the object exists in the database.
     fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool;
 
-    /// Find an object matching `id` in the database while placing its raw, un-encoded data into `buffer`.
+    /// Find an object matching `id` in the database while placing its raw, possibly encoded data into `buffer`.
     ///
     /// Returns `Some` object if it was present in the database, or the error that occurred during lookup or object
     /// retrieval.
