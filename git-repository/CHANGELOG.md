@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 21 commits contributed to the release over the course of 25 calendar days.
+ - 22 commits contributed to the release over the course of 25 calendar days.
  - 30 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#706](https://github.com/Byron/gitoxide/issues/706)
@@ -71,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#706](https://github.com/Byron/gitoxide/issues/706)**
     - don't panic, but error when parsing the rev-specs `^`, `..`, `...`. ([`5d3a3a2`](https://github.com/Byron/gitoxide/commit/5d3a3a245968d5ad8c29ea11a99b4896d1b41191))
  * **Uncategorized**
+    - Release git-repository v0.34.0 ([`a42e930`](https://github.com/Byron/gitoxide/commit/a42e930d0022cc91730cce97a5145d3e65c67c01))
     - Release git-refspec v0.7.2, git-repository v0.34.0 ([`1210c19`](https://github.com/Byron/gitoxide/commit/1210c1926851495df5d6fd3f6906602a7e423548))
     - Release git-date v0.4.2, git-hash v0.10.2, git-features v0.26.2, git-actor v0.17.1, git-glob v0.5.3, git-path v0.7.1, git-quote v0.4.1, git-attributes v0.8.2, git-config-value v0.10.1, git-tempfile v3.0.2, git-lock v3.0.2, git-validate v0.7.2, git-object v0.26.1, git-ref v0.24.0, git-sec v0.6.2, git-config v0.16.0, git-command v0.2.3, git-prompt v0.3.2, git-url v0.13.2, git-credentials v0.9.1, git-diff v0.26.1, git-discover v0.13.0, git-hashtable v0.1.1, git-bitmap v0.2.1, git-traverse v0.22.1, git-index v0.12.3, git-mailmap v0.9.2, git-chunk v0.4.1, git-pack v0.30.2, git-odb v0.40.2, git-packetline v0.14.2, git-transport v0.25.4, git-protocol v0.26.3, git-revision v0.10.2, git-refspec v0.7.2, git-worktree v0.12.2, git-repository v0.34.0, safety bump 3 crates ([`c196d20`](https://github.com/Byron/gitoxide/commit/c196d206d57a310b1ce974a1cf0e7e6d6db5c4d6))
     - prepare changelogs prior to release ([`7c846d2`](https://github.com/Byron/gitoxide/commit/7c846d2102dc767366771925212712ef8cc9bf07))
