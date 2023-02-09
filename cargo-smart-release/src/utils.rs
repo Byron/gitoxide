@@ -82,7 +82,7 @@ pub fn workspace_package_by_dependency<'a>(meta: &'a Metadata, dep: &Dependency)
 pub fn package_by_name<'a>(meta: &'a Metadata, name: &str) -> anyhow::Result<&'a Package> {
     meta.packages
         .iter()
-        .find(|p| p.name == name)
+        .find(|p| p.name == name && p.source.as_ref().map_or(true, |s| !s.is_crates_io()))
         .ok_or_else(|| anyhow!("workspace member '{}' must be a listed package", name))
 }
 

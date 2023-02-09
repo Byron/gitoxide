@@ -52,7 +52,13 @@ impl Context {
             .parent()
             .expect("parent of a file is always present")
             .strip_prefix(&self.root)
-            .expect("workspace members are relative to the root directory");
+            .unwrap_or_else(|_| {
+                panic!(
+                    "workspace members are relative to the root directory: {:?} should contain {:?}",
+                    self.root,
+                    p.manifest_path.parent()
+                )
+            });
 
         if dir.as_os_str().is_empty() {
             None
