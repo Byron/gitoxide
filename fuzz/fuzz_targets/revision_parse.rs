@@ -1,20 +1,17 @@
 #![no_main]
-use git_revision::spec::parse::{Delegate, delegate};
+use git_revision::spec::parse::{delegate, Delegate};
 use libfuzzer_sys::fuzz_target;
 
 use bstr::BStr;
 
-
 fuzz_target!(|data: &[u8]| {
-	drop(git_revision::spec::parse(data.into(), &mut Noop));
+    drop(git_revision::spec::parse(data.into(), &mut Noop));
 });
 
-struct Noop ;
+struct Noop;
 
 impl Delegate for Noop {
-    fn done(&mut self) {
-        
-    }
+    fn done(&mut self) {}
 }
 
 impl delegate::Kind for Noop {
@@ -46,7 +43,11 @@ impl delegate::Revision for Noop {
         Some(())
     }
 
-    fn disambiguate_prefix(&mut self, _prefix: git_hash::Prefix, _hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
+    fn disambiguate_prefix(
+        &mut self,
+        _prefix: git_hash::Prefix,
+        _hint: Option<delegate::PrefixHint<'_>>,
+    ) -> Option<()> {
         Some(())
     }
 

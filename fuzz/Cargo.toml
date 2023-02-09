@@ -1,0 +1,97 @@
+[package]
+name = "gitoxide-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+git-actor = {path= "../git-actor"}
+git-attributes = {path= "../git-attributes"}
+git-bitmap = {path= "../git-bitmap"}
+git-chunk = {path= "../git-chunk"}
+git-command = {path= "../git-command"}
+git-commitgraph = {path= "../git-commitgraph"}
+git-config = {path= "../git-config"}
+git-config-value = {path= "../git-config-value"}
+git-credentials = {path= "../git-credentials"}
+git-date = {path= "../git-date"}
+git-diff = {path= "../git-diff"}
+git-discover = {path= "../git-discover"}
+git-features = {path= "../git-features"}
+git-fetchhead = {path= "../git-fetchhead"}
+git-filter = {path= "../git-filter"}
+git-glob = {path= "../git-glob"}
+git-hash = {path= "../git-hash"}
+git-hashtable = {path= "../git-hashtable"}
+git-index = {path= "../git-index"}
+git-lfs = {path= "../git-lfs"}
+git-lock = {path= "../git-lock"}
+git-mailmap = {path= "../git-mailmap"}
+git-note = {path= "../git-note"}
+git-object = {path= "../git-object"}
+git-odb = {path= "../git-odb"}
+git-pack = {path= "../git-pack"}
+git-packetline = {path= "../git-packetline"}
+git-path = {path= "../git-path"}
+git-pathspec = {path= "../git-pathspec"}
+git-prompt = {path= "../git-prompt"}
+git-protocol = {path= "../git-protocol"}
+git-quote = {path= "../git-quote"}
+git-rebase = {path= "../git-rebase"}
+git-ref = {path= "../git-ref"}
+git-refspec = {path= "../git-refspec"}
+git-repository = {path= "../git-repository"}
+git-revision = {path= "../git-revision"}
+git-sec = {path= "../git-sec"}
+git-sequencer = {path= "../git-sequencer"}
+git-submodule = {path= "../git-submodule"}
+git-tempfile = {path= "../git-tempfile"}
+git-tix = {path= "../git-tix"}
+git-transport = {path= "../git-transport"}
+git-traverse = {path= "../git-traverse"}
+git-tui = {path= "../git-tui"}
+git-url = {path= "../git-url"}
+git-validate = {path= "../git-validate"}
+git-worktree = {path= "../git-worktree"}
+bstr = { version = "1.2.0", features = ["std"] }
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "config_parse"
+path = "fuzz_targets/config_parse.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "pathspec_parse"
+path = "fuzz_targets/pathspec_parse.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "refspec_parse"
+path = "fuzz_targets/refspec_parse.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "date_parse"
+path = "fuzz_targets/date_parse.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "revision_parse"
+path = "fuzz_targets/revision_parse.rs"
+test = false
+doc = false
