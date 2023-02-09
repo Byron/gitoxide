@@ -4,6 +4,7 @@ use git_object::TreeRefIter;
 use git_odb::FindExt;
 
 use super::{change, Action, Change, Platform, Tracking};
+use crate::object::tree::diff::Renames;
 use crate::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     ext::ObjectIdExt,
@@ -39,6 +40,7 @@ impl<'a, 'old> Platform<'a, 'old> {
             repo: self.lhs.repo,
             other_repo: other.repo,
             tracking: self.tracking,
+            _renames: self.renames,
             location: BString::default(),
             path_deque: Default::default(),
             visit: for_each,
@@ -67,6 +69,7 @@ struct Delegate<'old, 'new, VisitFn, E> {
     repo: &'old Repository,
     other_repo: &'new Repository,
     tracking: Option<Tracking>,
+    _renames: Option<Renames>,
     location: BString,
     path_deque: VecDeque<BString>,
     visit: VisitFn,

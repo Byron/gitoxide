@@ -90,7 +90,7 @@ pub mod diff {
             FnH: FnMut(line::Change<'_, '_>) -> Result<(), E>,
             E: std::error::Error,
         {
-            let input = git_diff::blob::intern::InternedInput::new(self.old.data.as_bytes(), self.new.data.as_bytes());
+            let input = self.line_tokens();
             let mut err = None;
             let mut lines = Vec::new();
             git_diff::blob::diff(self.algo, &input, |before: Range<u32>, after: Range<u32>| {

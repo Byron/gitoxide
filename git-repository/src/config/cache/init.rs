@@ -179,6 +179,7 @@ impl Cache {
             user_agent: Default::default(),
             personas: Default::default(),
             url_rewrite: Default::default(),
+            diff_renames: Default::default(),
             #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
             url_scheme: Default::default(),
             diff_algorithm: Default::default(),
@@ -226,6 +227,7 @@ impl Cache {
         self.user_agent = Default::default();
         self.personas = Default::default();
         self.url_rewrite = Default::default();
+        self.diff_renames = Default::default();
         self.diff_algorithm = Default::default();
         (self.pack_cache_bytes, self.object_cache_bytes) =
             util::parse_object_caches(config, self.lenient_config, self.filter_config_section)?;

@@ -8,8 +8,13 @@ impl Diff {
     pub const ALGORITHM: Algorithm = Algorithm::new_with_validate("algorithm", &config::Tree::DIFF, validate::Algorithm)
                                         .with_deviation("'patience' diff is not implemented and can default to 'histogram' if lenient config is used, and defaults to histogram if unset for fastest and best results");
     /// The `diff.renameLimit` key.
-    pub const RENAME_LIMIT: keys::UnsignedInteger =
-        keys::UnsignedInteger::new_unsigned_integer("renameLimit", &config::Tree::DIFF);
+    pub const RENAME_LIMIT: keys::UnsignedInteger = keys::UnsignedInteger::new_unsigned_integer(
+        "renameLimit",
+        &config::Tree::DIFF,
+    )
+    .with_note(
+        "The limit is actually squared, so 1000 stands for up to 1 million diffs if fuzzy rename tracking is enabled",
+    );
     /// The `diff.renames` key.
     pub const RENAMES: Renames = Renames::new_renames("renames", &config::Tree::DIFF);
 }
