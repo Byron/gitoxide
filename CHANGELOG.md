@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.21.0 (2023-02-09)
+
+### Chore
+
+ - <csr-id-1d9a5e925890883e9e712db14ac82411ad2fdfc3/> upgrade to clap 4.1
+
+### New Features
+
+ - <csr-id-b81f650b476354c5bd030aa03b9a723d9d7a0970/> `gix clone <url>` is now permitted without specifying a destination directory.
+   Note that the implementation doesn't take into account potential redirects and renames
+   as it's implemented only with the first URL it sees (not the redirected ones).
+ - <csr-id-38ae61a805bd8cca5df8d1c1dcf3a8a0f9c85f5a/> make more HTTP options available
+   - `http.schannelCheckRevoke`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 15 commits contributed to the release over the course of 47 calendar days.
+ - 49 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#683](https://github.com/Byron/gitoxide/issues/683)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#683](https://github.com/Byron/gitoxide/issues/683)**
+    - `gix clone <url>` is now permitted without specifying a destination directory. ([`b81f650`](https://github.com/Byron/gitoxide/commit/b81f650b476354c5bd030aa03b9a723d9d7a0970))
+ * **Uncategorized**
+    - make fmt ([`e22080e`](https://github.com/Byron/gitoxide/commit/e22080e4a29d0bad15a99d565a5e3e304a8743ec))
+    - Merge branch 'adjustments-for-cargo' ([`7bba270`](https://github.com/Byron/gitoxide/commit/7bba2709488b7eb999b8136dbab03af977241678))
+    - `gix progress` now usees the configuration tree as basis for data. ([`ea76bf5`](https://github.com/Byron/gitoxide/commit/ea76bf5ba1b06bcf94bcadf5129ce265c90144d3))
+    - thanks clippy ([`f7b8794`](https://github.com/Byron/gitoxide/commit/f7b879448258a058b8607916da0ddf13b83896d9))
+    - upgrade to clap 4.1 ([`1d9a5e9`](https://github.com/Byron/gitoxide/commit/1d9a5e925890883e9e712db14ac82411ad2fdfc3))
+    - Merge branch 'patch-1' ([`b93f0c4`](https://github.com/Byron/gitoxide/commit/b93f0c49fc677b6c19aea332cbfc1445ce475375))
+    - thanks clippy ([`9e04685`](https://github.com/Byron/gitoxide/commit/9e04685dd3f109bfb27663f9dc7c04102e660bf2))
+    - upgrade `tabled` ([`7aed326`](https://github.com/Byron/gitoxide/commit/7aed326e706b13ae88f98880de055201b2a869cc))
+    - Merge branch 'gix-clone-improvements' ([`76c99f3`](https://github.com/Byron/gitoxide/commit/76c99f3005f1b0031921b536f5d268715e41f3c8))
+    - Merge branch 'adjustments-for-cargo' ([`f8c562a`](https://github.com/Byron/gitoxide/commit/f8c562a559e6dc3377583cc7200585dad7c3d481))
+    - adapt to changes in git-repository and git-transport ([`d336368`](https://github.com/Byron/gitoxide/commit/d336368ea2b6e5918b709220522cf1509ef30be2))
+    - update planned usage of `ssh` related configuration variables. ([`3f91088`](https://github.com/Byron/gitoxide/commit/3f910880fdf691b59460eea272772c7aff284716))
+    - Merge branch 'adjustments-for-cargo' ([`d821fc5`](https://github.com/Byron/gitoxide/commit/d821fc5b4ef4ba606f2b6bb68b66f7260a0205dc))
+    - make more HTTP options available ([`38ae61a`](https://github.com/Byron/gitoxide/commit/38ae61a805bd8cca5df8d1c1dcf3a8a0f9c85f5a))
+</details>
+
 ## 0.20.0 (2022-12-22)
 
 This release also fixes compatibility issues that formerly prevented to fetch or clone form `https://googlesource.com`.
@@ -53,7 +107,7 @@ This release also fixes compatibility issues that formerly prevented to fetch or
 
 <csr-read-only-do-not-edit/>
 
- - 21 commits contributed to the release over the course of 30 calendar days.
+ - 22 commits contributed to the release over the course of 30 calendar days.
  - 30 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -68,6 +122,7 @@ This release also fixes compatibility issues that formerly prevented to fetch or
     - fix label for `ein t estimate-hours` command ([`4c93de1`](https://github.com/Byron/gitoxide/commit/4c93de113898c6ff6ae1da3ea38d646626c86205))
     - Merge branch 'read-header' ([`3d01252`](https://github.com/Byron/gitoxide/commit/3d0125271ec7bd606734bd74757a7e31a18c7ce5))
     - `gix odb stats` to calculate statistics on the object database. ([`8c9c243`](https://github.com/Byron/gitoxide/commit/8c9c243fc574dc17b92a8e2025fbd8efdf2833da))
+    - Merge branch 'main' into read-split-index ([`c57bdde`](https://github.com/Byron/gitoxide/commit/c57bdde6de37eca9672ea715962bbd02aa3eb055))
     - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
     - `gix clone --no-tags` support. ([`e2b8c5d`](https://github.com/Byron/gitoxide/commit/e2b8c5dce7185b5fa194b90f32e642e5c9d1227f))
     - update `gix progress` to inform about `remote.<name>.tagOpt` ([`3ebb340`](https://github.com/Byron/gitoxide/commit/3ebb3405f265fbd78a89c01bd30c3ad34036ef84))
@@ -217,7 +272,7 @@ It's also an attempt to trigger CI to build binary releases.
     - collect `stderr` and print it afterwards to avoid intersection with line progress. ([`3a05328`](https://github.com/Byron/gitoxide/commit/3a053284cfefe27873dcc5b4f74d63a560bb5d41))
     - reduce verbosity of `clone` and print once entire clone is done ([`9a476df`](https://github.com/Byron/gitoxide/commit/9a476df519bccfc6bcda8bd02aa4c1573a2691e7))
     - first rough sketch of `gix clone` ([`23a5e8b`](https://github.com/Byron/gitoxide/commit/23a5e8b658c5642c3f3060e013fd0eab06cbf027))
-    - progress totals (planned, deviation) ([`63947ae`](https://github.com/Byron/gitoxide/commit/63947ae77ecb5952d7b5da5c6695f002bb7a7c4c))
+    - progress totals (planned, devitaion) ([`63947ae`](https://github.com/Byron/gitoxide/commit/63947ae77ecb5952d7b5da5c6695f002bb7a7c4c))
     - prepare attribute-group setup as far as possible. ([`f5e2eeb`](https://github.com/Byron/gitoxide/commit/f5e2eebe9560f664f044b82ffa0cd19fd0df311f))
     - update usage of `core.checkState` ([`8b2aba1`](https://github.com/Byron/gitoxide/commit/8b2aba1d2baf42a3578ee8c9ce89dbe29d4d3f4c))
     - update progress based on filesystem config usage ([`de13c66`](https://github.com/Byron/gitoxide/commit/de13c66ade29635ff585241fec2783cf972dd5c3))
@@ -963,7 +1018,7 @@ Many small and possibly breaking changes are not mentioned here.
  * **Uncategorized**
     - Make obvious that interrupt request was received ([`34b2373`](https://github.com/Byron/gitoxide/commit/34b23737f560fe52d4f98fb886eba754652f9a5e))
     - make interrupt handler work reliably ([`e71da0f`](https://github.com/Byron/gitoxide/commit/e71da0fce6d6eab68f7b81b13cdc78ce8e9b7ee3))
-    - unify used ranges for line renderer among pretty and lean interface ([`f59f66e`](https://github.com/Byron/gitoxide/commit/f59f66e189732f567414f68c7463364e510f41c4))
+    - unify used ranges for line renderer amond pretty and lean interface ([`f59f66e`](https://github.com/Byron/gitoxide/commit/f59f66e189732f567414f68c7463364e510f41c4))
     - Add percentage and throughput to tasks that matter ([`763d7ca`](https://github.com/Byron/gitoxide/commit/763d7caa4c70111b7cb3ef5733d2c3c697758c28))
     - Upgrade to latest iteration of prodash ([`3a4faec`](https://github.com/Byron/gitoxide/commit/3a4faecab56e37670c553e6563f11a46d740c333))
     - support for JSON format output ([`1931575`](https://github.com/Byron/gitoxide/commit/19315750f4f409e3f105c3c4054c4afbef91daad))
@@ -995,8 +1050,8 @@ Many small and possibly breaking changes are not mentioned here.
     - rename verify-pack to pack-verify (keeping it more formal) ([`ec8c48a`](https://github.com/Byron/gitoxide/commit/ec8c48a8fcbcd748c9c764734d881b5f0217e1e4))
     - refactor ([`d3c00c8`](https://github.com/Byron/gitoxide/commit/d3c00c841ee1aeda6bb0534fe365db13c31f8d3c))
     - Change bin names from 'gio' to 'gix' and 'gixp' ([`5e23137`](https://github.com/Byron/gitoxide/commit/5e231371432ad02c67b095448564b2aa6af76799))
-    - Revert "Invert --statistics switch to become --no-statistics" ([`93a9b30`](https://github.com/Byron/gitoxide/commit/93a9b30069d9abc5742546ade90913026ac5774b))
-    - Invert --statistics switch to become --no-statistics ([`aeb8778`](https://github.com/Byron/gitoxide/commit/aeb87789ecc5cf3fd0ac69d67c7d0785e4eb329c))
+    - Revert "Invert --statitics switch to become --no-statistics" ([`93a9b30`](https://github.com/Byron/gitoxide/commit/93a9b30069d9abc5742546ade90913026ac5774b))
+    - Invert --statitics switch to become --no-statistics ([`aeb8778`](https://github.com/Byron/gitoxide/commit/aeb87789ecc5cf3fd0ac69d67c7d0785e4eb329c))
     - use faster algorithm by default ([`bb45c3d`](https://github.com/Byron/gitoxide/commit/bb45c3d8a2aabf87231981000240f0444abf6fc4))
     - Fix clippy ([`ec40e09`](https://github.com/Byron/gitoxide/commit/ec40e093d72f93d86168f39ebaca5b122ca0bec3))
     - Change course and do pack streaming first ([`bcb275e`](https://github.com/Byron/gitoxide/commit/bcb275e91cfd6f0a71b3cb59a2b706b60608a594))
