@@ -1,6 +1,5 @@
-use std::borrow::Cow;
-
 use crate::bstr::{BStr, BString, ByteVec};
+use crate::config::tree::key::validate_assignment;
 
 /// Provide information about a configuration section.
 pub trait Section {
@@ -50,13 +49,7 @@ pub trait Key: std::fmt::Debug {
     /// The key's name, like `url` in `remote.origin.url`.
     fn name(&self) -> &str;
     /// See if `value` is allowed as value of this key, or return a descriptive error if it is not.
-    ///
-    /// Note that these errors might not be optimized for user consumption, their primary audience is developers who set overrides.
-    fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
-    /// foo
-    fn validate_any<'a>(&self, value: Cow<'a, BStr>) -> Cow<'a, BStr> {
-        value
-    }
+    fn validate(&self, value: &BStr) -> Result<(), crate::config::tree::key::validate::Error>;
     /// The section containing this key. Git configuration has no free-standing keys, they are always underneath a section.
     fn section(&self) -> &dyn Section;
     /// The return value encodes three possible states to indicate subsection requirements
@@ -124,10 +117,7 @@ pub trait Key: std::fmt::Debug {
     /// The full name of the key for use in configuration overrides, like `core.bare`, or `remote.<subsection>.url` if `subsection` is
     /// not `None`.
     /// May fail if this key needs a subsection, or may not have a subsection.
-    fn full_name(
-        &self,
-        subsection: Option<&BStr>,
-    ) -> Result<BString, Box<dyn std::error::Error + Send + Sync + 'static>> {
+    fn full_name(&self, subsection: Option<&BStr>) -> Result<BString, String> {
         let section = self.section();
         let mut buf = BString::default();
         let subsection = match self.subsection_requirement() {
@@ -137,15 +127,13 @@ pub trait Key: std::fmt::Debug {
                     return Err(format!(
                         "The key named '{}' cannot be used with non-static subsections.",
                         self.logical_name()
-                    )
-                    .into());
+                    ));
                 }
                 (SubSectionRequirement::Parameter(_), None) => {
                     return Err(format!(
                         "The key named '{}' cannot be used without subsections.",
                         self.logical_name()
-                    )
-                    .into())
+                    ))
                 }
                 _ => subsection,
             },
@@ -171,15 +159,24 @@ pub trait Key: std::fmt::Debug {
 
     /// Return an assignment with the keys full name to `value`, suitable for [configuration overrides][crate::open::Options::config_overrides()].
     /// Note that this will fail if the key requires a subsection name.
-    fn validated_assignment(
-        &self,
-        value: &BStr,
-    ) -> Result<BString, Box<dyn std::error::Error + Send + Sync + 'static>> {
+    fn validated_assignment(&self, value: &BStr) -> Result<BString, validate_assignment::Error> {
         self.validate(value)?;
-        let mut key = self.full_name(None)?;
+        let mut key = self
+            .full_name(None)
+            .map_err(|message| validate_assignment::Error::Name { message })?;
         key.push(b'=');
         key.push_str(value);
         Ok(key)
+    }
+
+    /// Return an assignment with the keys full name to `value`, suitable for [configuration overrides][crate::open::Options::config_overrides()].
+    /// Note that this will fail if the key requires a subsection name.
+    fn validated_assignment_fmt(
+        &self,
+        value: &dyn std::fmt::Display,
+    ) -> Result<BString, crate::config::tree::key::validate_assignment::Error> {
+        let value = value.to_string();
+        self.validated_assignment(value.as_str().into())
     }
 
     /// Return an assignment to `value` with the keys full name within `subsection`, suitable for [configuration overrides][crate::open::Options::config_overrides()].
@@ -188,9 +185,11 @@ pub trait Key: std::fmt::Debug {
         &self,
         value: &BStr,
         subsection: &BStr,
-    ) -> Result<BString, Box<dyn std::error::Error + Send + Sync + 'static>> {
+    ) -> Result<BString, crate::config::tree::key::validate_assignment::Error> {
         self.validate(value)?;
-        let mut key = self.full_name(Some(subsection))?;
+        let mut key = self
+            .full_name(Some(subsection))
+            .map_err(|message| validate_assignment::Error::Name { message })?;
         key.push(b'=');
         key.push_str(value);
         Ok(key)

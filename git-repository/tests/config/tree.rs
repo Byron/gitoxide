@@ -431,6 +431,19 @@ mod protocol {
 }
 
 mod gitoxide {
+    mod http {
+        use git_repository::config::tree::{gitoxide, Key};
+        use std::time::Duration;
+
+        #[test]
+        fn connect_timeout() -> crate::Result {
+            assert_eq!(
+                gitoxide::Http::CONNECT_TIMEOUT.validated_assignment_fmt(&Duration::from_millis(1000).as_millis())?,
+                "gitoxide.http.connectTimeout=1000"
+            );
+            Ok(())
+        }
+    }
     mod allow {
         use git_repository::config::tree::{gitoxide, Key};
 
