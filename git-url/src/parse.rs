@@ -36,7 +36,7 @@ fn str_to_protocol(s: &str) -> Scheme {
 fn guess_protocol(url: &[u8]) -> Option<&str> {
     match url.find_byte(b':') {
         Some(colon_pos) => {
-            if url[..colon_pos].find_byte(b'.').is_some() {
+            if url[..colon_pos].find_byteset(b"@.").is_some() {
                 "ssh"
             } else {
                 url.get(colon_pos + 1..).and_then(|from_colon| {

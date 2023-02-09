@@ -1,3 +1,4 @@
+use bstr::ByteSlice;
 use git_url::Scheme;
 
 use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
@@ -40,6 +41,14 @@ fn username_expansion_without_username() -> crate::Result {
 }
 
 #[test]
+fn scp_like_with_ssh_host_alias() -> crate::Result {
+    assert_url_roundtrip(
+        "user@alias:username/repo.git",
+        url_alternate(Scheme::Ssh, "user", "alias", None, b"username/repo.git"),
+    )
+}
+
+#[test]
 fn with_user_and_without_port() -> crate::Result {
     assert_url_roundtrip(
         "ssh://user@host.xz/.git",
@@ -56,11 +65,27 @@ fn with_user_and_port_and_absolute_path() -> crate::Result {
 }
 
 #[test]
+fn ssh_alias_needs_username_to_not_be_considered_a_filepath() {
+    let url = git_url::Url::from_parts_as_alternative_form(
+        Scheme::Ssh,
+        None,
+        "alias".to_string().into(),
+        None,
+        b"path/to/git".as_bstr().into(),
+    )
+    .expect("valid");
+    assert_eq!(
+        url.scheme,
+        Scheme::File,
+        "we need a user name to differentiate the scp form from a path"
+    );
+    assert_eq!(url.to_bstring(), "alias:path/to/git");
+}
+
+#[test]
 fn default_port_is_22() -> crate::Result {
     let url = url_alternate(Scheme::Ssh, None, "host.xz", None, b"path/to/git");
-
     assert_eq!(url.port_or_default(), Some(22));
-
     Ok(())
 }
 

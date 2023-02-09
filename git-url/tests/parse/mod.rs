@@ -53,14 +53,16 @@ fn url_alternate<'a, 'b>(
     port: impl Into<Option<u16>>,
     path: &[u8],
 ) -> git_url::Url {
-    git_url::Url::from_parts_as_alternative_form(
-        protocol,
+    let url = git_url::Url::from_parts_as_alternative_form(
+        protocol.clone(),
         user.into().map(Into::into),
         host.into().map(Into::into),
         port.into(),
         path.into(),
     )
-    .expect("valid")
+    .expect("valid");
+    assert_eq!(url.scheme, protocol);
+    url
 }
 
 mod file;
