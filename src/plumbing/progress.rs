@@ -433,6 +433,22 @@ static GIT_CONFIG: &[Record] = &[
             note: Some("required for big monorepos, and typically used in conjunction with sparse indices")
         }
     },
+    Record {
+        config: "merge.renameLimit",
+        usage: Planned { note: Some("The same as diff.renameLimit") }
+    },
+    Record {
+        config: "merge.renames",
+        usage: Planned { note: Some("The same as diff.renames") }
+    },
+    Record {
+        config: "status.renameLimit",
+        usage: Planned { note: Some("definitely needed to do status properly, even though it doesn't have to be there for day one. The same as diff.renameLimit") }
+    },
+    Record {
+        config: "status.renames",
+        usage: Planned { note: Some("the same as diff.renames") }
+    },
 ];
 
 /// A programmatic way to record and display progress.
