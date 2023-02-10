@@ -24,6 +24,6 @@ Initial release.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Add `gix` crate to reserve name ([`390c914`](https://github.com/Byron/gitoxide/commit/390c914714e8062ef09664ca9f3e5c0d3405ffe6))
+    - Add `gix` crate to reserve name ([`5104a78`](https://github.com/Byron/gitoxide/commit/5104a787127bf0b1f9b65f371b7c5b79f491e396))
 </details>
 
