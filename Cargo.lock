@@ -2315,6 +2315,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix"
+version = "0.0.0"
+
+[[package]]
 name = "gloo-timers"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"

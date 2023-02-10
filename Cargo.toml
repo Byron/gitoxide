@@ -173,6 +173,7 @@ members = [
     "git-refspec",
     "git-path",
     "git-repository",
+    "gix",
     "gitoxide-core",
     "git-hashtable",
     "git-tui",
