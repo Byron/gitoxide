@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{
     collections::{BTreeMap, HashMap},
     iter::FromIterator,
@@ -132,13 +133,17 @@ pub fn crate_ref_segments<'h>(
     };
 
     let dir = ctx.repo_relative_path(package);
-    let filter = dir
+    let mut filter = dir
         .map(|dir| {
             let mut components = dir.components().collect::<Vec<_>>();
             match components.len() {
                 0 => unreachable!("BUG: it's None if empty"),
-                1 => Filter::Fast(components.pop().map(component_to_bytes).expect("exactly one")),
-                _ => Filter::Slow(components.into_iter().map(component_to_bytes).collect()),
+                1 => Filter::Fast {
+                    name: components.pop().map(component_to_bytes).expect("exactly one").into(),
+                },
+                _ => Filter::Slow {
+                    components: components.into_iter().map(component_to_bytes).collect(),
+                },
             }
         })
         .unwrap_or_else(|| {
@@ -150,13 +155,15 @@ pub fn crate_ref_segments<'h>(
                     package.name
                 );
                 // TODO: analyse .targets to find actual source directory.
-                Filter::Fast(b"src")
+                Filter::Fast {
+                    name: Cow::Borrowed(b"src"),
+                }
             }
         });
 
     for item in history.items.iter() {
         match tags_by_commit.remove(&item.id) {
-            None => add_item_if_package_changed(ctx, &mut segment, &filter, item, &history.data_by_tree_id)?,
+            None => add_item_if_package_changed(ctx, &mut segment, &mut filter, item, &history.data_by_tree_id)?,
             Some(next_ref) => {
                 match scope {
                     SegmentScope::EntireHistory => {
@@ -173,7 +180,7 @@ pub fn crate_ref_segments<'h>(
                         return Ok(segments);
                     }
                 }
-                add_item_if_package_changed(ctx, &mut segment, &filter, item, &history.data_by_tree_id)?
+                add_item_if_package_changed(ctx, &mut segment, &mut filter, item, &history.data_by_tree_id)?
             }
         }
     }
@@ -195,29 +202,32 @@ pub fn crate_ref_segments<'h>(
 }
 
 enum Filter<'a> {
+    /// Unconditionally use history items, we always consider them relevant for the package.
     None,
-    Fast(&'a [u8]),
-    Slow(Vec<&'a [u8]>),
+    /// The package sits directly at the root, allowing us to use our cached trees exclusively, which is the fastest possible change detection.
+    Fast { name: Cow<'a, [u8]> },
+    /// The package sits at a deeper level which means we have to read other trees as well while determining its hash.
+    Slow { components: Vec<&'a [u8]> },
 }
 
 fn add_item_if_package_changed<'a>(
     ctx: &Context,
     segment: &mut Segment<'a>,
-    filter: &Filter<'_>,
+    filter: &mut Filter<'_>,
     item: &'a Item,
     data_by_tree_id: &HashMap<git::ObjectId, Vec<u8>>,
 ) -> anyhow::Result<()> {
     let history = &mut segment.history;
     match filter {
         Filter::None => history.push(item),
-        Filter::Fast(comp) => {
+        Filter::Fast { name } => {
             let current = git::objs::TreeRefIter::from_bytes(&data_by_tree_id[&item.tree_id])
                 .filter_map(Result::ok)
-                .find(|e| e.filename == comp);
+                .find(|e| e.filename == name.as_ref());
             let parent = item.parent_tree_id.and_then(|parent| {
                 git::objs::TreeRefIter::from_bytes(&data_by_tree_id[&parent])
                     .filter_map(Result::ok)
-                    .find(|e| e.filename == comp)
+                    .find(|e| e.filename == name.as_ref())
             });
             match (current, parent) {
                 (Some(current), Some(parent)) => {
@@ -225,11 +235,25 @@ fn add_item_if_package_changed<'a>(
                         history.push(item)
                     }
                 }
-                (Some(_), None) => history.push(item),
+                (Some(current), None) => {
+                    if let Some(prev_item) = item.parent_tree_id.and_then(|parent| {
+                        git::objs::TreeRefIter::from_bytes(&data_by_tree_id[&parent])
+                            .filter_map(Result::ok)
+                            .find(|e| e.oid == current.oid)
+                    }) {
+                        log::debug!(
+                            "Tracking package named {:?} as {:?}",
+                            name.as_bstr(),
+                            prev_item.filename
+                        );
+                        *name.to_mut() = prev_item.filename.to_owned().into();
+                    }
+                    history.push(item)
+                }
                 (None, Some(_)) | (None, None) => {}
             };
         }
-        Filter::Slow(ref components) => {
+        Filter::Slow { ref components } => {
             let mut repo = ctx.repo.clone();
             repo.object_cache_size(1024 * 1024);
             let current = git::Tree::from_data(item.id, data_by_tree_id[&item.tree_id].to_owned(), &ctx.repo)
