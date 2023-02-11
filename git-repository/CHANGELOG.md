@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+This is the last release under this name and merely a notice to inform that `git-repository` from now on is `gix`.
+
+Furthermore, all `git-*` crates belonging to the `gitoxide` project will be renamed to `gix-*`.
+
+### New Features
+
+ - <csr-id-069eb6c3f0844b43873ae1bd536e2bca53ff5c8a/> tree diffs with simple rename and copy tracking in cases where there is no additional modification.
+   As the fastest way of rename tracking, we now offer support for tracking renames and copies,
+   that is a file was renamed or copied without modification.
+ - <csr-id-f6ed34aa254d34e596ad027c33f78404a630ff76/> Add `diff.renames` and `diff.renameLimit` keys to config tree.
+   In preparation for the implementation.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 1 day passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'rename-tracking' ([`9e7d792`](https://github.com/Byron/gitoxide/commit/9e7d79273487abfcb99ed2d439c475a659cd25e6))
+    - tree diffs with simple rename and copy tracking in cases where there is no additional modification. ([`069eb6c`](https://github.com/Byron/gitoxide/commit/069eb6c3f0844b43873ae1bd536e2bca53ff5c8a))
+    - Add `diff.renames` and `diff.renameLimit` keys to config tree. ([`f6ed34a`](https://github.com/Byron/gitoxide/commit/f6ed34aa254d34e596ad027c33f78404a630ff76))
+</details>
+
 ## 0.34.0 (2023-02-09)
 
 <csr-id-a01f5d72346c36fdcb77af095273da6f4ab86e21/>
@@ -51,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 22 commits contributed to the release over the course of 25 calendar days.
+ - 23 commits contributed to the release over the course of 25 calendar days.
  - 30 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#706](https://github.com/Byron/gitoxide/issues/706)
@@ -71,6 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#706](https://github.com/Byron/gitoxide/issues/706)**
     - don't panic, but error when parsing the rev-specs `^`, `..`, `...`. ([`5d3a3a2`](https://github.com/Byron/gitoxide/commit/5d3a3a245968d5ad8c29ea11a99b4896d1b41191))
  * **Uncategorized**
+    - Release git-repository v0.34.0 ([`d2f12bd`](https://github.com/Byron/gitoxide/commit/d2f12bdd712fd3b2fcf2d28447a175d299f96764))
     - Release git-repository v0.34.0 ([`a42e930`](https://github.com/Byron/gitoxide/commit/a42e930d0022cc91730cce97a5145d3e65c67c01))
     - Release git-refspec v0.7.2, git-repository v0.34.0 ([`1210c19`](https://github.com/Byron/gitoxide/commit/1210c1926851495df5d6fd3f6906602a7e423548))
     - Release git-date v0.4.2, git-hash v0.10.2, git-features v0.26.2, git-actor v0.17.1, git-glob v0.5.3, git-path v0.7.1, git-quote v0.4.1, git-attributes v0.8.2, git-config-value v0.10.1, git-tempfile v3.0.2, git-lock v3.0.2, git-validate v0.7.2, git-object v0.26.1, git-ref v0.24.0, git-sec v0.6.2, git-config v0.16.0, git-command v0.2.3, git-prompt v0.3.2, git-url v0.13.2, git-credentials v0.9.1, git-diff v0.26.1, git-discover v0.13.0, git-hashtable v0.1.1, git-bitmap v0.2.1, git-traverse v0.22.1, git-index v0.12.3, git-mailmap v0.9.2, git-chunk v0.4.1, git-pack v0.30.2, git-odb v0.40.2, git-packetline v0.14.2, git-transport v0.25.4, git-protocol v0.26.3, git-revision v0.10.2, git-refspec v0.7.2, git-worktree v0.12.2, git-repository v0.34.0, safety bump 3 crates ([`c196d20`](https://github.com/Byron/gitoxide/commit/c196d206d57a310b1ce974a1cf0e7e6d6db5c4d6))

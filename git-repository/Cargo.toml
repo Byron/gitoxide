@@ -1,7 +1,7 @@
 [package]
 name = "git-repository"
 repository = "https://github.com/Byron/gitoxide"
-description = "Abstractions for git repositories"
+description = "This crate is now named 'gix' and not available under this name anymore"
 license = "MIT/Apache-2.0"
 version = "0.34.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
