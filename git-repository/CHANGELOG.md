@@ -5,11 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.35.0 (2023-02-11)
 
 This is the last release under this name and merely a notice to inform that `git-repository` from now on is `gix`.
 
 Furthermore, all `git-*` crates belonging to the `gitoxide` project will be renamed to `gix-*`.
+
+### Changed (BREAKING)
+
+ - <csr-id-1408482fd21be7487b46753bb54a018c7a164f34/> a note of the pending rename of `git-repository` to `gix`
 
 ### New Features
 
@@ -23,9 +27,9 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 1 day passed between releases.
- - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -35,6 +39,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - a note of the pending rename of `git-repository` to `gix` ([`1408482`](https://github.com/Byron/gitoxide/commit/1408482fd21be7487b46753bb54a018c7a164f34))
     - Merge branch 'rename-tracking' ([`9e7d792`](https://github.com/Byron/gitoxide/commit/9e7d79273487abfcb99ed2d439c475a659cd25e6))
     - tree diffs with simple rename and copy tracking in cases where there is no additional modification. ([`069eb6c`](https://github.com/Byron/gitoxide/commit/069eb6c3f0844b43873ae1bd536e2bca53ff5c8a))
     - Add `diff.renames` and `diff.renameLimit` keys to config tree. ([`f6ed34a`](https://github.com/Byron/gitoxide/commit/f6ed34aa254d34e596ad027c33f78404a630ff76))
