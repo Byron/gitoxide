@@ -1,5 +1,6 @@
 use anyhow::bail;
-use git::{
+
+use gix::{
     bstr::{BStr, BString},
     revision::plumbing::{
         spec,
@@ -10,12 +11,11 @@ use git::{
         },
     },
 };
-use git_repository as git;
 
 pub fn explain(spec: std::ffi::OsString, mut out: impl std::io::Write) -> anyhow::Result<()> {
     let mut explain = Explain::new(&mut out);
-    let spec = git::path::os_str_into_bstr(&spec)?;
-    git::revision::plumbing::spec::parse(spec, &mut explain)?;
+    let spec = gix::path::os_str_into_bstr(&spec)?;
+    gix::revision::plumbing::spec::parse(spec, &mut explain)?;
     if let Some(err) = explain.err {
         bail!(err);
     }
@@ -26,7 +26,7 @@ struct Explain<'a> {
     out: &'a mut dyn std::io::Write,
     call: usize,
     ref_name: Option<BString>,
-    oid_prefix: Option<git::hash::Prefix>,
+    oid_prefix: Option<gix::hash::Prefix>,
     has_implicit_anchor: bool,
     err: Option<String>,
 }
@@ -63,7 +63,7 @@ impl<'a> delegate::Revision for Explain<'a> {
         writeln!(self.out, "Lookup the '{}' reference", name).ok()
     }
 
-    fn disambiguate_prefix(&mut self, prefix: git::hash::Prefix, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
+    fn disambiguate_prefix(&mut self, prefix: gix::hash::Prefix, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
         self.prefix()?;
         self.oid_prefix = Some(prefix);
         writeln!(
@@ -97,7 +97,7 @@ impl<'a> delegate::Revision for Explain<'a> {
             ReflogLookup::Date(time) => writeln!(
                 self.out,
                 "Find entry closest to time {} in reflog of '{}' reference",
-                time.format(git::date::time::format::ISO8601),
+                time.format(gix::date::time::format::ISO8601),
                 ref_name
             )
             .ok(),

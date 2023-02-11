@@ -1,8 +1,7 @@
 use anyhow::{Context, Result};
-use git_repository as git;
 
 pub fn describe(
-    mut repo: git::Repository,
+    mut repo: gix::Repository,
     rev_spec: Option<&str>,
     mut out: impl std::io::Write,
     mut err: impl std::io::Write,
@@ -21,7 +20,7 @@ pub fn describe(
         Some(spec) => repo.rev_parse_single(spec)?.object()?.try_into_commit()?,
         None => repo.head_commit()?,
     };
-    use git::commit::describe::SelectRef::*;
+    use gix::commit::describe::SelectRef::*;
     let select_ref = if all_refs {
         AllRefs
     } else if all_tags {

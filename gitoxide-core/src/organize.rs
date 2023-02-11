@@ -3,8 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git::{objs::bstr::ByteSlice, progress, Progress};
-use git_repository as git;
+use gix::{objs::bstr::ByteSlice, progress, Progress};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Mode {
@@ -22,12 +21,12 @@ fn find_git_repository_workdirs<P: Progress>(
     root: impl AsRef<Path>,
     mut progress: P,
     debug: bool,
-) -> impl Iterator<Item = (PathBuf, git::Kind)>
+) -> impl Iterator<Item = (PathBuf, gix::Kind)>
 where
     P::SubProgress: Sync,
 {
     progress.init(None, progress::count("filesystem items"));
-    fn is_repository(path: &Path) -> Option<git::Kind> {
+    fn is_repository(path: &Path) -> Option<gix::Kind> {
         // Can be git dir or worktree checkout (file)
         if path.file_name() != Some(OsStr::new(".git")) {
             return None;
@@ -35,17 +34,17 @@ where
 
         if path.is_dir() {
             if path.join("HEAD").is_file() && path.join("config").is_file() {
-                git::discover::is_git(path).ok().map(Into::into)
+                gix::discover::is_git(path).ok().map(Into::into)
             } else {
                 None
             }
         } else {
             // git files are always worktrees
-            Some(git::Kind::WorkTree { is_linked: true })
+            Some(gix::Kind::WorkTree { is_linked: true })
         }
     }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
-        if git::discover::is_bare(&git_dir) {
+        if gix::discover::is_bare(&git_dir) {
             git_dir
         } else {
             git_dir.parent().expect("git is never in the root").to_owned()
@@ -54,7 +53,7 @@ where
 
     #[derive(Debug, Default)]
     struct State {
-        kind: Option<git::Kind>,
+        kind: Option<gix::Kind>,
     }
 
     let walk = jwalk::WalkDirGeneric::<((), State)>::new(root)
@@ -100,9 +99,9 @@ where
 
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
     let non_bare = repo.join(".git").join("config");
-    let local = git::config::Source::Local;
-    let config = git::config::File::from_path_no_includes(non_bare.as_path(), local)
-        .or_else(|_| git::config::File::from_path_no_includes(repo.join("config").as_path(), local))?;
+    let local = gix::config::Source::Local;
+    let config = gix::config::File::from_path_no_includes(non_bare.as_path(), local)
+        .or_else(|_| gix::config::File::from_path_no_includes(repo.join("config").as_path(), local))?;
     Ok(config
         .string_by_key("remote.origin.url")
         .map(|url| git_url::Url::from_bytes(url.as_ref()))
@@ -111,12 +110,12 @@ fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
 
 fn handle(
     mode: Mode,
-    kind: git::Kind,
+    kind: gix::Kind,
     git_workdir: &Path,
     canonicalized_destination: &Path,
     progress: &mut impl Progress,
 ) -> anyhow::Result<()> {
-    if let git::Kind::WorkTree { is_linked: true } = kind {
+    if let gix::Kind::WorkTree { is_linked: true } = kind {
         return Ok(());
     }
     fn to_relative(path: PathBuf) -> PathBuf {
@@ -180,11 +179,11 @@ fn handle(
         .join(to_relative({
             let mut path = git_url::expand_path(None, url.path.as_bstr())?;
             match kind {
-                git::Kind::Submodule => {
+                gix::Kind::Submodule => {
                     unreachable!("BUG: We should not try to relocated submodules and not find them the first place")
                 }
-                git::Kind::Bare => path,
-                git::Kind::WorkTree { .. } => {
+                gix::Kind::Bare => path,
+                gix::Kind::WorkTree { .. } => {
                     if let Some(ext) = path.extension() {
                         if ext == "git" {
                             path.set_extension("");

@@ -33,7 +33,7 @@ internal-testing-to-avoid-being-run-by-cargo-test-all = []
 git-index = { version = "^0.12.1", path = ".." }
 git-features = { version = "^0.26.1", path = "../../git-features", features = ["rustsha1", "progress"] }
 git-testtools = { path = "../../tests/tools"}
-git-repository = { path = "../../git-repository"}
+gix = { path = "../../gix"}
 git-hash = { path = "../../git-hash"}
 filetime = "0.2.15"
 bstr = { version = "1.0.1", default-features = false }

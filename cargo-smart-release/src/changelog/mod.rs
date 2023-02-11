@@ -34,7 +34,7 @@ pub enum Section {
         /// text of events of everything we couldn't parse
         unknown: String,
         /// Removed git conventional messages parsed back from html tags. These may live without a headline, to delete the headline.
-        removed_messages: Vec<git_repository::hash::ObjectId>,
+        removed_messages: Vec<gix::hash::ObjectId>,
         /// portions of a release
         segments: Vec<section::Segment>,
     },

@@ -1,8 +1,7 @@
 use std::io;
 
-use git_repository as git;
 #[cfg(feature = "serde1")]
-use git_repository::mailmap::Entry;
+use gix::mailmap::Entry;
 
 use crate::OutputFormat;
 
@@ -18,7 +17,7 @@ struct JsonEntry {
 #[cfg(feature = "serde1")]
 impl<'a> From<Entry<'a>> for JsonEntry {
     fn from(v: Entry<'a>) -> Self {
-        use git_repository::bstr::ByteSlice;
+        use gix::bstr::ByteSlice;
         JsonEntry {
             new_name: v.new_name().map(|s| s.to_str_lossy().into_owned()),
             new_email: v.new_email().map(|s| s.to_str_lossy().into_owned()),
@@ -29,7 +28,7 @@ impl<'a> From<Entry<'a>> for JsonEntry {
 }
 
 pub fn entries(
-    repo: git::Repository,
+    repo: gix::Repository,
     format: OutputFormat,
     #[cfg_attr(not(feature = "serde1"), allow(unused_variables))] out: impl io::Write,
     mut err: impl io::Write,
@@ -38,7 +37,7 @@ pub fn entries(
         writeln!(err, "Defaulting to JSON as human format isn't implemented").ok();
     }
 
-    let mut mailmap = git::mailmap::Snapshot::default();
+    let mut mailmap = gix::mailmap::Snapshot::default();
     if let Err(e) = repo.open_mailmap_into(&mut mailmap) {
         writeln!(err, "Error while loading mailmap, the first error is: {}", e).ok();
     }

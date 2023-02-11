@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 
 use git_object::bstr::ByteSlice;
-use git_repository::{
+use git_revision::describe;
+use gix::{
     odb::{Find, FindExt},
     Repository,
 };
-use git_revision::describe;
 
 use crate::hex_to_id;
 
@@ -174,7 +174,7 @@ fn typical_usecases() {
     assert_eq!(res.id, commit.id);
     assert_eq!(res.depth, 1);
 
-    let shallow_repo = git_repository::open(repo.work_dir().expect("non-bare").join("shallow-clone")).unwrap();
+    let shallow_repo = gix::open(repo.work_dir().expect("non-bare").join("shallow-clone")).unwrap();
 
     let res = git_revision::describe(
         &commit.id,
@@ -196,5 +196,5 @@ fn typical_usecases() {
 
 fn repo() -> Repository {
     let dir = git_testtools::scripted_fixture_read_only_standalone("make_repo_with_branches.sh").unwrap();
-    git_repository::open(dir).unwrap()
+    gix::open(dir).unwrap()
 }

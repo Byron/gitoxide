@@ -1,8 +1,8 @@
 use std::{collections::BTreeMap, ops::Sub};
 
 use cargo_metadata::Package;
-use git_repository as git;
-use git_repository::prelude::ObjectIdExt;
+
+use gix::prelude::ObjectIdExt;
 use time::OffsetDateTime;
 
 use crate::{
@@ -22,7 +22,7 @@ impl Section {
     pub fn from_history_segment(
         package: &Package,
         segment: &commit::history::Segment<'_>,
-        repo: &git::Repository,
+        repo: &gix::Repository,
         selection: section::segment::Selection,
         prev_segment: Option<&commit::history::Segment<'_>>,
     ) -> Self {
@@ -158,7 +158,7 @@ impl Section {
     }
 }
 
-fn segment_head_time(segment: &commit::history::Segment<'_>, repo: &git::Repository) -> OffsetDateTime {
+fn segment_head_time(segment: &commit::history::Segment<'_>, repo: &gix::Repository) -> OffsetDateTime {
     let time = segment
         .head
         .peeled

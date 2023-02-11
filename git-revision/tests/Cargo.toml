@@ -24,6 +24,6 @@ git-revision = { path = "..", default-features = false }
 git-hash = { path = "../../git-hash" }
 git-object = { path = "../../git-object" }
 git-testtools = { path = "../../tests/tools" }
-git-repository = { path = "../../git-repository", default-features = false }
+gix = { path = "../../gix", default-features = false }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std"]}

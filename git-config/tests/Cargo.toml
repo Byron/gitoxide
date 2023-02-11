@@ -24,7 +24,7 @@ serde1 = ["git-config/serde1"]
 [dev-dependencies]
 git-config = { path = ".."}
 git-testtools = { path = "../../tests/tools"}
-git-repository = { path = "../../git-repository" }
+gix = { path = "../../gix" }
 git-ref = { path = "../../git-ref" }
 git-path = { path = "../../git-path" }
 serial_test = "1.0.0"

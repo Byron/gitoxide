@@ -1,4 +1,4 @@
-use git_repository::ObjectId;
+use gix::ObjectId;
 
 mod parse;
 

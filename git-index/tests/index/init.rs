@@ -1,7 +1,7 @@
 use git_index::{verify::extensions::no_find, State};
-use git_repository as git;
-use git_repository::prelude::FindExt;
 use git_testtools::scripted_fixture_read_only_standalone;
+
+use gix::prelude::FindExt;
 
 #[test]
 fn from_tree() -> crate::Result {
@@ -14,7 +14,7 @@ fn from_tree() -> crate::Result {
 
     for fixture in fixtures {
         let repo_dir = scripted_fixture_read_only_standalone(fixture)?;
-        let repo = git::open(&repo_dir)?;
+        let repo = gix::open(&repo_dir)?;
 
         let tree_id = repo.head_commit()?.tree_id()?;
 

@@ -2,8 +2,8 @@ use std::process::Command;
 
 use anyhow::{anyhow, bail};
 use cargo_metadata::{camino::Utf8Path, Package};
-use git_repository as git;
-use git_repository::{
+
+use gix::{
     bstr::{BStr, ByteSlice},
     object,
     refs::FullNameRef,
@@ -37,7 +37,7 @@ pub fn change_since_last_release(package: &Package, ctx: &crate::Context) -> any
 
             match repo_relative_crate_dir
                 // If it's a top-level crate, use the src-directory for now
-                // KEEP THIS IN SYNC with git::create_ref_history()!
+                // KEEP THIS IN SYNC with gix::create_ref_history()!
                 .or_else(|| (ctx.meta.workspace_members.len() != 1).then(|| Utf8Path::new("src")))
             {
                 None => (current_commit != released_target).then_some(PackageChangeKind::ChangedOrNew),
@@ -85,22 +85,22 @@ pub fn assure_clean_working_tree() -> anyhow::Result<()> {
         .output()?
         .stdout;
     if !untracked.trim().is_empty() {
-        let err = anyhow!(git_repository::bstr::BString::from(untracked));
+        let err = anyhow!(gix::bstr::BString::from(untracked));
         return Err(err.context("Found untracked files which would possibly be packaged when publishing."));
     }
     Ok(())
 }
 
-pub fn remote_url(repo: &git::Repository) -> anyhow::Result<Option<git::Url>> {
+pub fn remote_url(repo: &gix::Repository) -> anyhow::Result<Option<gix::Url>> {
     Ok(repo
         .head()?
-        .into_remote(git::remote::Direction::Push)
+        .into_remote(gix::remote::Direction::Push)
         .transpose()?
-        .and_then(|r| r.url(git::remote::Direction::Push).map(ToOwned::to_owned)))
+        .and_then(|r| r.url(gix::remote::Direction::Push).map(ToOwned::to_owned)))
 }
 
-pub fn author() -> anyhow::Result<git_repository::actor::Signature> {
-    Ok(git_repository::actor::SignatureRef::from_bytes::<()>(
+pub fn author() -> anyhow::Result<gix::actor::Signature> {
+    Ok(gix::actor::SignatureRef::from_bytes::<()>(
         &Command::new("git").arg("var").arg("GIT_AUTHOR_IDENT").output()?.stdout,
     )?
     .to_owned())

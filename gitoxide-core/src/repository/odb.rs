@@ -1,13 +1,12 @@
 use std::io;
 
 use anyhow::bail;
-use git_repository as git;
 
 use crate::OutputFormat;
 
 #[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
 pub fn info(
-    repo: git::Repository,
+    repo: gix::Repository,
     format: OutputFormat,
     out: impl io::Write,
     mut err: impl io::Write,
@@ -21,8 +20,8 @@ pub fn info(
         pub path: std::path::PathBuf,
         pub object_hash: String,
         pub use_multi_pack_index: bool,
-        pub structure: Vec<git::odb::store::structure::Record>,
-        pub metrics: git::odb::store::Metrics,
+        pub structure: Vec<gix::odb::store::structure::Record>,
+        pub metrics: gix::odb::store::Metrics,
     }
 
     let store = repo.objects.store_ref();
@@ -56,20 +55,20 @@ pub mod statistics {
 
 #[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
 pub fn statistics(
-    repo: git::Repository,
-    mut progress: impl git::Progress,
+    repo: gix::Repository,
+    mut progress: impl gix::Progress,
     out: impl io::Write,
     mut err: impl io::Write,
     statistics::Options { format, thread_limit }: statistics::Options,
 ) -> anyhow::Result<()> {
     use bytesize::ByteSize;
-    use git::odb::{find, HeaderExt};
+    use gix::odb::{find, HeaderExt};
 
     if format == OutputFormat::Human {
         writeln!(err, "Only JSON is implemented - using that instead")?;
     }
 
-    progress.init(None, git::progress::count("objects"));
+    progress.init(None, gix::progress::count("objects"));
     progress.set_name("counting");
     let counter = progress.counter();
     let start = std::time::Instant::now();
@@ -93,8 +92,8 @@ pub fn statistics(
     }
 
     impl Statistics {
-        fn count(&mut self, kind: git::object::Kind, size: u64) {
-            use git::object::Kind::*;
+        fn count(&mut self, kind: gix::object::Kind, size: u64) {
+            use gix::object::Kind::*;
             match kind {
                 Commit => {
                     self.commits += 1;
@@ -114,7 +113,7 @@ pub fn statistics(
                 }
             }
         }
-        fn consume(&mut self, item: git::odb::find::Header) {
+        fn consume(&mut self, item: gix::odb::find::Header) {
             match item {
                 find::Header::Loose { size, kind } => {
                     self.loose_objects += 1;
@@ -135,8 +134,8 @@ pub fn statistics(
         stats: Statistics,
     }
 
-    impl git::parallel::Reduce for Reduce {
-        type Input = Result<Vec<git::odb::find::Header>, anyhow::Error>;
+    impl gix::parallel::Reduce for Reduce {
+        type Input = Result<Vec<gix::odb::find::Header>, anyhow::Error>;
         type FeedProduce = ();
         type Output = Statistics;
         type Error = anyhow::Error;
@@ -157,10 +156,10 @@ pub fn statistics(
     let cancelled = || anyhow::anyhow!("Cancelled by user");
     let object_ids = repo.objects.store_ref().iter()?.filter_map(Result::ok);
     let chunk_size = 1_000;
-    let stats = if git::parallel::num_threads(thread_limit) > 1 {
-        git::parallel::in_parallel(
-            git::interrupt::Iter::new(
-                git::features::iter::Chunks {
+    let stats = if gix::parallel::num_threads(thread_limit) > 1 {
+        gix::parallel::in_parallel(
+            gix::interrupt::Iter::new(
+                gix::features::iter::Chunks {
                     inner: object_ids,
                     size: chunk_size,
                 },
@@ -185,7 +184,7 @@ pub fn statistics(
         let mut stats = Statistics::default();
 
         for (count, id) in object_ids.enumerate() {
-            if count % chunk_size == 0 && git::interrupt::is_triggered() {
+            if count % chunk_size == 0 && gix::interrupt::is_triggered() {
                 return Err(cancelled());
             }
             stats.consume(repo.objects.header(id)?);
@@ -204,7 +203,7 @@ pub fn statistics(
     Ok(())
 }
 
-pub fn entries(repo: git::Repository, format: OutputFormat, mut out: impl io::Write) -> anyhow::Result<()> {
+pub fn entries(repo: gix::Repository, format: OutputFormat, mut out: impl io::Write) -> anyhow::Result<()> {
     if format != OutputFormat::Human {
         bail!("Only human output format is supported at the moment");
     }

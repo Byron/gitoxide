@@ -6,20 +6,20 @@
 performance while providing a pleasant and unsurprising developer experience. 
 
 `gitoxide` provides the `gix` and `ein` binaries for use on the command-line to allow experimentation with key features
-like `fetch` and `clone`, and to validate the usability and control of the API offered by the [`git-repository`] crate. 
+like `fetch` and `clone`, and to validate the usability and control of the API offered by the [`gix`] crate. 
 
 `gitoxide` aspires to be a production-grade server implementation and the `ein` binary aspires to become the default way to interact with git repositories.
 
 [![asciicast](https://asciinema.org/a/542159.svg)](https://asciinema.org/a/542159)
 
-[`git-repository`]: https://docs.rs/git-repository
+[`gix`]: https://docs.rs/gix
 
 ## Development Status
 
 The command-line tools as well as the status of each crate is described in 
 [the crate status document](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap).
 
-For use in applications, look for the [`git-repository`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-repository) crate, 
+For use in applications, look for the [`gix`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix) crate, 
 which serves as entrypoint to the functionality provided by various lower-level plumbing crates like
 [`git-config`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config).
 
@@ -74,7 +74,7 @@ is usable to some extent.
   * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
   * [git-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-discover)
   * [git-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-path)
-  * [git-repository](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-repository)
+  * [gix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix)
   * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
   * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)

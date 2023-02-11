@@ -1,5 +1,4 @@
 mod repository_url {
-    use git_repository as git;
 
     use crate::changelog::write::RepositoryUrl;
 
@@ -13,7 +12,7 @@ mod repository_url {
             "git@github.com:byron/gitoxide.git",
             "git@github.com:byron/gitoxide",
         ] {
-            let url = RepositoryUrl::from(git::url::parse(input.into()).unwrap());
+            let url = RepositoryUrl::from(gix::url::parse(input.into()).unwrap());
             assert_eq!(
                 url.github_https().expect("possible"),
                 "https://github.com/byron/gitoxide"

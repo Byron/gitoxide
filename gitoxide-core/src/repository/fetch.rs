@@ -1,5 +1,4 @@
-use git::bstr::BString;
-use git_repository as git;
+use gix::bstr::BString;
 
 use crate::OutputFormat;
 
@@ -16,14 +15,14 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub(crate) mod function {
     use anyhow::bail;
-    use git_repository as git;
-    use git_repository::{prelude::ObjectIdExt, refspec::match_group::validate::Fix, remote::fetch::Status};
+
+    use gix::{prelude::ObjectIdExt, refspec::match_group::validate::Fix, remote::fetch::Status};
 
     use super::Options;
     use crate::OutputFormat;
 
     pub fn fetch<P>(
-        repo: git::Repository,
+        repo: gix::Repository,
         progress: P,
         mut out: impl std::io::Write,
         err: impl std::io::Write,
@@ -36,7 +35,7 @@ pub(crate) mod function {
         }: Options,
     ) -> anyhow::Result<()>
     where
-        P: git::Progress,
+        P: gix::Progress,
         P::SubProgress: 'static,
     {
         if format != OutputFormat::Human {
@@ -45,21 +44,21 @@ pub(crate) mod function {
 
         let mut remote = crate::repository::remote::by_name_or_url(&repo, remote.as_deref())?;
         if !ref_specs.is_empty() {
-            remote.replace_refspecs(ref_specs.iter(), git::remote::Direction::Fetch)?;
-            remote = remote.with_fetch_tags(git::remote::fetch::Tags::None);
+            remote.replace_refspecs(ref_specs.iter(), gix::remote::Direction::Fetch)?;
+            remote = remote.with_fetch_tags(gix::remote::fetch::Tags::None);
         }
-        let res: git::remote::fetch::Outcome = remote
-            .connect(git::remote::Direction::Fetch, progress)?
+        let res: gix::remote::fetch::Outcome = remote
+            .connect(gix::remote::Direction::Fetch, progress)?
             .prepare_fetch(Default::default())?
             .with_dry_run(dry_run)
-            .receive(&git::interrupt::IS_INTERRUPTED)?;
+            .receive(&gix::interrupt::IS_INTERRUPTED)?;
 
         if handshake_info {
             writeln!(out, "Handshake Information")?;
             writeln!(out, "\t{:?}", res.ref_map.handshake)?;
         }
 
-        let ref_specs = remote.refspecs(git::remote::Direction::Fetch);
+        let ref_specs = remote.refspecs(gix::remote::Direction::Fetch);
         match res.status {
             Status::NoPackReceived { update_refs } => {
                 print_updates(&repo, update_refs, ref_specs, res.ref_map, &mut out, err)
@@ -86,14 +85,14 @@ pub(crate) mod function {
     }
 
     pub(crate) fn print_updates(
-        repo: &git::Repository,
-        update_refs: git::remote::fetch::refs::update::Outcome,
-        refspecs: &[git::refspec::RefSpec],
-        mut map: git::remote::fetch::RefMap,
+        repo: &gix::Repository,
+        update_refs: gix::remote::fetch::refs::update::Outcome,
+        refspecs: &[gix::refspec::RefSpec],
+        mut map: gix::remote::fetch::RefMap,
         mut out: impl std::io::Write,
         mut err: impl std::io::Write,
     ) -> anyhow::Result<()> {
-        let mut last_spec_index = git::remote::fetch::SpecIndex::ExplicitInRemote(usize::MAX);
+        let mut last_spec_index = gix::remote::fetch::SpecIndex::ExplicitInRemote(usize::MAX);
         let mut updates = update_refs
             .iter_mapping_updates(&map.mappings, refspecs, &map.extra_refspecs)
             .filter_map(|(update, mapping, spec, edit)| spec.map(|spec| (update, mapping, spec, edit)))
@@ -120,7 +119,7 @@ pub(crate) mod function {
                 if is_implicit {
                     write!(&mut out, " (implicit")?;
                     if spec.to_ref()
-                        == git::remote::fetch::Tags::Included
+                        == gix::remote::fetch::Tags::Included
                             .to_refspec()
                             .expect("always yields refspec")
                     {
@@ -133,7 +132,7 @@ pub(crate) mod function {
             }
 
             if let Some(num_skipped) = skipped_due_to_implicit_tag.as_mut() {
-                if matches!(update.mode, git::remote::fetch::refs::update::Mode::NoChangeNeeded) {
+                if matches!(update.mode, gix::remote::fetch::refs::update::Mode::NoChangeNeeded) {
                     *num_skipped += 1;
                     continue;
                 }
@@ -141,10 +140,10 @@ pub(crate) mod function {
 
             write!(out, "\t")?;
             match &mapping.remote {
-                git::remote::fetch::Source::ObjectId(id) => {
+                gix::remote::fetch::Source::ObjectId(id) => {
                     write!(out, "{}", id.attach(repo).shorten_or_id())?;
                 }
-                git::remote::fetch::Source::Ref(r) => {
+                gix::remote::fetch::Source::Ref(r) => {
                     crate::repository::remote::refs::print_ref(&mut out, r)?;
                 }
             };

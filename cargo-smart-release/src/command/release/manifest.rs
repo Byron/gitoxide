@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Package};
-use git_repository::{lock::File, Id};
+use gix::{lock::File, Id};
 use semver::{Version, VersionReq};
 
 use super::{cargo, git, Context, Options};
@@ -61,9 +61,9 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 entry_store = entry;
                 entry_store.get_mut()
             }
-            Entry::Vacant(entry) => entry.insert(git_repository::lock::File::acquire_to_update_resource(
+            Entry::Vacant(entry) => entry.insert(gix::lock::File::acquire_to_update_resource(
                 &package.manifest_path,
-                git_repository::lock::acquire::Fail::Immediately,
+                gix::lock::acquire::Fail::Immediately,
                 None,
             )?),
         };
@@ -391,9 +391,9 @@ fn gather_changelog_data<'a, 'meta>(
     } = &mut out;
     let next_commit_date = crate::utils::time_to_offset_date_time(crate::git::author()?.time);
     for (publishee, new_version) in crates_and_versions_to_be_published {
-        let lock = git_repository::lock::File::acquire_to_update_resource(
+        let lock = gix::lock::File::acquire_to_update_resource(
             &publishee.manifest_path,
-            git_repository::lock::acquire::Fail::Immediately,
+            gix::lock::acquire::Fail::Immediately,
             None,
         )?;
         let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);

@@ -3,22 +3,22 @@
 //!
 //! ### What is `gix`?
 //!
-//! `gix` is a tool to aid developers of `gitoxide` run their code in real-world situations and to validate the `git-repository` API.
+//! `gix` is a tool to aid developers of `gitoxide` run their code in real-world situations and to validate the `gix` API.
 //! This makes it more of a test-bed than a tool that could ever rival `git` in terms of feature-set.
 //!
 //! That said, `gix` may actively carve out a niche for itself where it sees the greatest benefits for users of `git`.
 //!
-//! ### This crate is internal - use `git-repository` instead.
+//! ### This crate is internal - use `gix` instead.
 //!
 //! It's important to understand that this crate consider itself an implementation detail of the `gix` CLI and is not meant to be
 //! used for external consumption by means of `cargo` dependency. This is emphasized by there being no other documentation.
 //! There is also no intention of ever stabilizing this crate.
 //!
-//! If you want to get started with what powers `gix`, please take a look at the `git-repository` crate which provides all the building
+//! If you want to get started with what powers `gix`, please take a look at the `gix` crate which provides all the building
 //! blocks to create any application, including a carbon-copy of `git` itself (at least aspirationally as not all capabilities are
-//! available in `git-repository` yet).
+//! available in `gix` yet).
 //!
-//! For users of `git-repository`, this codebase might serve as elaborate example as most of not all of its APIs are used here.
+//! For users of `gix`, this codebase might serve as elaborate example as most of not all of its APIs are used here.
 //!
 //! ## Feature Flags
 #![cfg_attr(

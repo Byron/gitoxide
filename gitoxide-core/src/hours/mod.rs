@@ -1,8 +1,8 @@
 use std::{collections::BTreeSet, convert::Infallible, io, path::Path, sync::atomic::Ordering, time::Instant};
 
 use anyhow::{anyhow, bail};
-use git_repository as git;
-use git_repository::{
+
+use gix::{
     actor,
     bstr::{BStr, ByteSlice},
     interrupt,
@@ -53,7 +53,7 @@ where
     W: io::Write,
     P: Progress,
 {
-    let repo = git::discover(working_dir)?;
+    let repo = gix::discover(working_dir)?;
     let commit_id = repo.rev_parse_single(rev_spec)?.detach();
     let mut string_heap = BTreeSet::<&'static [u8]>::new();
     let needs_stats = file_stats || line_stats;
@@ -92,7 +92,7 @@ where
             let commit_thread = scope.spawn(move || -> anyhow::Result<Vec<_>> {
                 let mut out = Vec::new();
                 for (commit_idx, commit_data) in rx {
-                    if let Ok(author) = git::objs::CommitRefIter::from_bytes(&commit_data)
+                    if let Ok(author) = gix::objs::CommitRefIter::from_bytes(&commit_data)
                         .author()
                         .map(|author| mailmap.resolve_cow(author.trim()))
                     {
@@ -134,7 +134,7 @@ where
             let (tx_tree_id, stat_threads) = needs_stats
                 .then(|| {
                     let (tx, rx) =
-                        crossbeam_channel::unbounded::<Vec<(u32, Option<git::hash::ObjectId>, git::hash::ObjectId)>>();
+                        crossbeam_channel::unbounded::<Vec<(u32, Option<gix::hash::ObjectId>, gix::hash::ObjectId)>>();
                     let stat_workers = (0..threads)
                         .map(|_| {
                             scope.spawn({
@@ -151,7 +151,7 @@ where
                                             if let Some(c) = commit_counter.as_ref() {
                                                 c.fetch_add(1, Ordering::SeqCst);
                                             }
-                                            if git::interrupt::is_triggered() {
+                                            if gix::interrupt::is_triggered() {
                                                 return Ok(out);
                                             }
                                             let mut files = FileStats::default();
@@ -176,7 +176,7 @@ where
                                                 .track_filename()
                                                 .track_renames(None)
                                                 .for_each_to_obtain_tree(&to, |change| {
-                                                    use git::object::tree::diff::change::Event::*;
+                                                    use gix::object::tree::diff::change::Event::*;
                                                     if let Some(c) = change_counter.as_ref() {
                                                         c.fetch_add(1, Ordering::SeqCst);
                                                     }
@@ -237,7 +237,7 @@ where
                                                                     files.modified += 1;
                                                                     if line_stats {
                                                                         let is_text_file = mime_guess::from_path(
-                                                                            git::path::from_bstr(change.location)
+                                                                            gix::path::from_bstr(change.location)
                                                                                 .as_ref(),
                                                                         )
                                                                         .first_or_text_plain()
@@ -286,7 +286,7 @@ where
                     repo.objects.find(oid, buf).map(|obj| {
                         tx.send((commit_idx, obj.data.to_owned())).ok();
                         if let Some((tx_tree, first_parent, commit)) = tx_tree_id.as_ref().and_then(|tx| {
-                            let mut parents = git::objs::CommitRefIter::from_bytes(obj.data).parent_ids();
+                            let mut parents = gix::objs::CommitRefIter::from_bytes(obj.data).parent_ids();
                             let res = parents
                                 .next()
                                 .map(|first_parent| (tx, Some(first_parent), oid.to_owned()));
@@ -307,7 +307,7 @@ where
                             }
                         }
                         commit_idx = commit_idx.checked_add(1).expect("less then 4 billion commits");
-                        git::objs::CommitRefIter::from_bytes(obj.data)
+                        gix::objs::CommitRefIter::from_bytes(obj.data)
                     })
                 }),
                 || anyhow!("Cancelled by user"),
@@ -316,7 +316,7 @@ where
             for c in commit_iter {
                 match c? {
                     Ok(c) => c,
-                    Err(git::traverse::commit::ancestors::Error::FindExisting { .. }) => {
+                    Err(gix::traverse::commit::ancestors::Error::FindExisting { .. }) => {
                         is_shallow = true;
                         break;
                     }
@@ -336,7 +336,7 @@ where
                     let mut stats = Vec::new();
                     for handle in stat_threads {
                         stats.extend(handle.join().expect("no panic")?);
-                        if git::interrupt::is_triggered() {
+                        if gix::interrupt::is_triggered() {
                             bail!("Cancelled by user");
                         }
                     }

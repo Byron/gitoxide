@@ -13,7 +13,7 @@ use git_ref::{
     transaction::{Change, PreviousValue, RefEdit},
     FullName, Target,
 };
-use git_repository as git;
+
 use tempfile::tempdir;
 
 use crate::file::{cow_str, init::from_paths::includes::conditional::git_init};
@@ -181,7 +181,7 @@ enum Value {
 
 #[derive(Debug)]
 struct GitEnv {
-    repo: git::Repository,
+    repo: gix::Repository,
     dir: tempfile::TempDir,
 }
 
@@ -284,8 +284,8 @@ value = branch-override-by-include
                 },
                 deref: false,
             }),
-            git::lock::acquire::Fail::Immediately,
-            git::lock::acquire::Fail::Immediately,
+            gix::lock::acquire::Fail::Immediately,
+            gix::lock::acquire::Fail::Immediately,
         )?
         .commit(repo.committer().transpose()?)?;
 

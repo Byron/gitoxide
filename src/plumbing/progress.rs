@@ -4,7 +4,6 @@ use std::{
 };
 
 use crosstermion::crossterm::style::Stylize;
-use git_repository as git;
 use owo_colors::OwoColorize;
 use tabled::{Style, TableIteratorExt, Tabled};
 
@@ -455,15 +454,15 @@ static GIT_CONFIG: &[Record] = &[
 pub fn show_progress() -> anyhow::Result<()> {
     let sorted = {
         let mut v: Vec<_> = GIT_CONFIG.into();
-        v.extend(git::config::Tree.sections().iter().flat_map(|section| {
-            fn to_record(key: &dyn git::config::tree::Key) -> Record {
+        v.extend(gix::config::Tree.sections().iter().flat_map(|section| {
+            fn to_record(key: &dyn gix::config::tree::Key) -> Record {
                 let config = key.logical_name();
                 let note = key.note().map(|note| match note {
-                    git::config::tree::Note::Deviation(n) | git::config::tree::Note::Informative(n) => n.to_string(),
+                    gix::config::tree::Note::Deviation(n) | gix::config::tree::Note::Informative(n) => n.to_string(),
                 });
                 let link = key.link().map(|link| match link {
-                    git::config::tree::Link::FallbackKey(key) => format!("fallback is '{}'", key.logical_name()),
-                    git::config::tree::Link::EnvironmentOverride(name) => format!("overridden by '{name}'"),
+                    gix::config::tree::Link::FallbackKey(key) => format!("fallback is '{}'", key.logical_name()),
+                    gix::config::tree::Link::EnvironmentOverride(name) => format!("overridden by '{name}'"),
                 });
                 let deviation = match (note, link) {
                     (Some(n), Some(l)) => Some(format!("{n}. {l}")),

@@ -10,13 +10,12 @@ pub(crate) mod function {
     use std::ffi::OsString;
 
     use anyhow::Context;
-    use git_repository as git;
 
     use super::Options;
     use crate::{repository::revision, OutputFormat};
 
     pub fn resolve(
-        mut repo: git::Repository,
+        mut repo: gix::Repository,
         specs: Vec<OsString>,
         mut out: impl std::io::Write,
         Options {
@@ -33,7 +32,7 @@ pub(crate) mod function {
                     if explain {
                         return revision::explain(spec, out);
                     }
-                    let spec = git::path::os_str_into_bstr(&spec)?;
+                    let spec = gix::path::os_str_into_bstr(&spec)?;
                     let spec = repo.rev_parse(spec)?;
                     if cat_file {
                         return display_object(spec, out);
@@ -51,7 +50,7 @@ pub(crate) mod function {
                     &specs
                         .into_iter()
                         .map(|spec| {
-                            git::path::os_str_into_bstr(&spec)
+                            gix::path::os_str_into_bstr(&spec)
                                 .map_err(anyhow::Error::from)
                                 .and_then(|spec| repo.rev_parse(spec).map_err(Into::into))
                                 .map(|spec| spec.detach())
@@ -63,11 +62,11 @@ pub(crate) mod function {
         Ok(())
     }
 
-    fn display_object(spec: git::revision::Spec<'_>, mut out: impl std::io::Write) -> anyhow::Result<()> {
+    fn display_object(spec: gix::revision::Spec<'_>, mut out: impl std::io::Write) -> anyhow::Result<()> {
         let id = spec.single().context("rev-spec must resolve to a single object")?;
         let object = id.object()?;
         match object.kind {
-            git::object::Kind::Tree => {
+            gix::object::Kind::Tree => {
                 for entry in object.into_tree().iter() {
                     writeln!(out, "{}", entry?)?;
                 }

@@ -55,7 +55,7 @@ clippy: ## Run cargo clippy on all crates
 	cargo clippy --all --no-default-features --features lean-async --tests
 
 check-msrv: ## run cargo msrv to validate the current msrv requirements, similar to what CI does
-	cd git-repository && cargo check --package git-repository --no-default-features --features async-network-client,max-performance
+	cd gix && cargo check --package gix --no-default-features --features async-network-client,max-performance
 
 check: ## Build all code in suitable configurations
 	cargo check --all
@@ -124,7 +124,7 @@ check: ## Build all code in suitable configurations
 					&& cargo check --features blocking-client \
 					&& cargo check --features async-client
 	cd git-protocol && if cargo check --all-features 2>/dev/null; then false; else true; fi
-	cd git-repository && cargo check --no-default-features --features async-network-client \
+	cd gix && cargo check --no-default-features --features async-network-client \
 					  && cargo check --no-default-features --features async-network-client-async-std \
 					  && cargo check --no-default-features --features blocking-network-client \
 					  && cargo check --no-default-features --features blocking-http-transport-curl \
@@ -157,7 +157,7 @@ unit-tests: ## run all unit tests
 	cd git-protocol && cargo test --features blocking-client \
 					&& cargo test --features async-client \
 					&& cargo test
-	cd git-repository && cargo test \
+	cd gix && cargo test \
 					&& cargo test --features async-network-client \
 					&& cargo test --features blocking-network-client \
 					&& cargo test --features regex
@@ -288,12 +288,12 @@ bench-git-config:
 
 check-msrv-on-ci: ## Check the minimal support rust version for currently installed Rust version
 	rustc --version
-	cargo check --package git-repository
-	cargo check --package git-repository --no-default-features --features async-network-client,max-performance
+	cargo check --package gix
+	cargo check --package gix --no-default-features --features async-network-client,max-performance
 
 ##@ Maintenance
 
-baseline_asset_dir = git-repository/src/assets/baseline-init
+baseline_asset_dir = gix/src/assets/baseline-init
 baseline_asset_fixture = tests/fixtures/baseline-init
 
 $(baseline_asset_fixture):

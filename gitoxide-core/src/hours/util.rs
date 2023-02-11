@@ -1,7 +1,6 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use git::bstr::{BStr, ByteSlice};
-use git_repository as git;
+use gix::bstr::{BStr, ByteSlice};
 use itertools::Itertools;
 
 use crate::hours::core::HOURS_PER_WORKDAY;
@@ -156,7 +155,7 @@ impl LineStats {
     }
 }
 
-pub fn add_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, mut lines: &mut LineStats, id: git::Id<'_>) {
+pub fn add_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, mut lines: &mut LineStats, id: gix::Id<'_>) {
     if let Some(Ok(blob)) = line_stats.then(|| id.object()) {
         let nl = blob.data.lines_with_terminator().count();
         lines.added += nl;
@@ -166,7 +165,7 @@ pub fn add_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, mut line
     }
 }
 
-pub fn remove_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, mut lines: &mut LineStats, id: git::Id<'_>) {
+pub fn remove_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, mut lines: &mut LineStats, id: gix::Id<'_>) {
     if let Some(Ok(blob)) = line_stats.then(|| id.object()) {
         let nl = blob.data.lines_with_terminator().count();
         lines.removed += nl;

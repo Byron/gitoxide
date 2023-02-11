@@ -1,7 +1,5 @@
 use std::path::Path;
 
-use git_repository as git;
-
 use crate::index::{parse_file, Options};
 
 pub fn entries(
@@ -36,15 +34,15 @@ pub fn entries(
 #[cfg(feature = "serde1")]
 pub(crate) fn to_json(
     mut out: &mut impl std::io::Write,
-    file: &git::index::File,
-    entry: &git::index::Entry,
+    file: &gix::index::File,
+    entry: &gix::index::Entry,
     is_last: bool,
 ) -> anyhow::Result<()> {
-    use git_repository::bstr::ByteSlice;
+    use gix::bstr::ByteSlice;
 
     #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
     struct Entry<'a> {
-        stat: &'a git::index::entry::Stat,
+        stat: &'a gix::index::entry::Stat,
         hex_id: String,
         flags: u32,
         mode: u32,
@@ -72,8 +70,8 @@ pub(crate) fn to_json(
 
 pub(crate) fn to_human(
     out: &mut impl std::io::Write,
-    file: &git::index::File,
-    entry: &git::index::Entry,
+    file: &gix::index::File,
+    entry: &gix::index::Entry,
 ) -> std::io::Result<()> {
     writeln!(
         out,

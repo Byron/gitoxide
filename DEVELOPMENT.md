@@ -192,7 +192,7 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 
 In _plumbing_ crates, prefer to default to keeping references if this is feasible to avoid typically expensive clones.
 
-In _porcelain_ crates, like `git-repository`, we have `Platforms` which are typically cheap enough to create on demand as they configure one or more method calls. These
+In _porcelain_ crates, like `gix`, we have `Platforms` which are typically cheap enough to create on demand as they configure one or more method calls. These
 should keep a reference to the `Repository` instance that created them as the user is expected to clone the `Repository` if there is the need.
 However, if these structures are more expensive, call them `Cache` or `<NotPlatform>` and prefer to clone the `Repository` into them or otherwise keep them free of lifetimes
 to allow the user to keep this structure around for repeated calls. References for this paragraph are [this PR](https://github.com/Canop/bacon/pull/98) and 

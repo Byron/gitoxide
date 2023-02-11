@@ -2,8 +2,8 @@ use std::{io, path::Path, str::FromStr, sync::atomic::AtomicBool};
 
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
-use git_repository as git;
-use git_repository::{
+
+use gix::{
     object, odb,
     odb::{pack, pack::index},
     Progress,
@@ -62,7 +62,7 @@ pub struct Context<'a, W1: io::Write, W2: io::Write> {
     pub mode: index::verify::Mode,
     pub algorithm: Algorithm,
     pub should_interrupt: &'a AtomicBool,
-    pub object_hash: git::hash::Kind,
+    pub object_hash: gix::hash::Kind,
 }
 
 enum EitherCache<const SIZE: usize> {
@@ -143,9 +143,9 @@ where
                 .ok();
 
             idx.verify_integrity(
-                pack.as_ref().map(|p| git::odb::pack::index::verify::PackContext {
+                pack.as_ref().map(|p| gix::odb::pack::index::verify::PackContext {
                     data: p,
-                    options: git::odb::pack::index::verify::integrity::Options {
+                    options: gix::odb::pack::index::verify::integrity::Options {
                         verify_mode: mode,
                         traversal: algorithm.into(),
                         make_pack_lookup_cache: cache,
@@ -161,8 +161,8 @@ where
         "" => {
             match path.file_name() {
                 Some(file_name) if file_name == "multi-pack-index" => {
-                    let multi_index = git::odb::pack::multi_index::File::at(path)?;
-                    let res = multi_index.verify_integrity(progress, should_interrupt, git::odb::pack::index::verify::integrity::Options{
+                    let multi_index = gix::odb::pack::multi_index::File::at(path)?;
+                    let res = multi_index.verify_integrity(progress, should_interrupt, gix::odb::pack::index::verify::integrity::Options{
                         verify_mode: mode,
                         traversal: algorithm.into(),
                         thread_limit,

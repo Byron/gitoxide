@@ -28,7 +28,7 @@ default = ["max"]
 ## Makes the crate execute as fast as possible by supporting parallel computation of otherwise long-running functions
 ## as well as fast, hardware accelerated hashing, along with a faster zlib backend.
 ## If disabled, the binary will be visibly smaller.
-fast = ["git-repository/max-performance"]
+fast = ["gix/max-performance"]
 
 ## Use `clap` 3.0 to build the prettiest, best documented and most user-friendly CLI at the expense of binary size.
 ## Provides a terminal user interface for detailed and exhaustive progress.
@@ -43,7 +43,7 @@ prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-cro
 #! These combine common choices of the above features to represent typical builds
 
 ## *fast* + *prodash-render-tui-crossterm* + *prodash-render-line-crossterm* + *http* + *gitoxide-core-tools* + *client-networking*
-max = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure", "git-repository/regex" ]
+max = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure", "gix/regex" ]
 
 ## *fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-networking*.
 lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line" ]
@@ -57,7 +57,7 @@ lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-async-
 small = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash-render-line", "is-terminal"  ]
 
 ## Makes the crate execute as fast as possible without pulling in C libraries, while keeping everything else minimal akin to the `small` build.
-max-pure = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash-render-line", "prodash-render-tui", "git-repository/max-performance-safe", "http-client-reqwest", "gitoxide-core-blocking-client", "gitoxide-core-tools", "prodash/render-line-autoconfigure" ]
+max-pure = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash-render-line", "prodash-render-tui", "gix/max-performance-safe", "http-client-reqwest", "gitoxide-core-blocking-client", "gitoxide-core-tools", "prodash/render-line-autoconfigure" ]
 
 #! ### `gitoxide-core` Configuration
 
@@ -70,9 +70,9 @@ gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
 ## Use blocking client networking.
 gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
 ## Support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) using **curl**.
-http-client-curl = ["git-repository/blocking-http-transport-curl"]
+http-client-curl = ["gix/blocking-http-transport-curl"]
 ## Support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) using **reqwest**.
-http-client-reqwest = ["git-repository/blocking-http-transport-reqwest-rust-tls"]
+http-client-reqwest = ["gix/blocking-http-transport-reqwest-rust-tls"]
 ## Use async client networking.
 gitoxide-core-async-client = ["gitoxide-core/async-client", "futures-lite"]
 
@@ -86,7 +86,7 @@ anyhow = "1.0.42"
 
 gitoxide-core = { version = "^0.24.0", path = "gitoxide-core" }
 git-features = { version = "^0.26.2", path = "git-features" }
-git-repository = { version = "^0.35.0", path = "git-repository", default-features = false }
+gix = { version = "^0.35.0", path = "gix", default-features = false }
 
 clap = { version = "4.1.1", features = ["derive", "cargo"] }
 prodash = { version = "23.0", optional = true, default-features = false }
@@ -172,7 +172,6 @@ members = [
     "git-pathspec",
     "git-refspec",
     "git-path",
-    "git-repository",
     "gix",
     "gitoxide-core",
     "git-hashtable",

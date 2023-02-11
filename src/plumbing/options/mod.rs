@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-use git_repository::bstr::BString;
 use gitoxide_core as core;
+use gix::bstr::BString;
 
 #[derive(Debug, clap::Parser)]
 #[clap(name = "gix-plumbing", about = "The git underworld", version = clap::crate_version!())]
@@ -63,8 +63,8 @@ pub struct Args {
     pub format: core::OutputFormat,
 
     /// The object format to assume when reading files that don't inherently know about it, or when writing files.
-    #[clap(long, default_value_t = git_repository::hash::Kind::default(), value_parser = crate::shared::AsHashKind)]
-    pub object_hash: git_repository::hash::Kind,
+    #[clap(long, default_value_t = gix::hash::Kind::default(), value_parser = crate::shared::AsHashKind)]
+    pub object_hash: gix::hash::Kind,
 
     #[clap(subcommand)]
     pub cmd: Subcommands,
@@ -117,8 +117,8 @@ pub enum Subcommands {
 }
 
 pub mod config {
-    use git::bstr::BString;
-    use git_repository as git;
+
+    use gix::bstr::BString;
 
     /// Print all entries in a configuration file or access other sub-commands
     #[derive(Debug, clap::Parser)]
@@ -153,7 +153,7 @@ pub mod fetch {
 
         /// Override the built-in and configured ref-specs with one or more of the given ones.
         #[clap(value_parser = crate::shared::AsBString)]
-        pub ref_spec: Vec<git_repository::bstr::BString>,
+        pub ref_spec: Vec<gix::bstr::BString>,
     }
 }
 
@@ -214,7 +214,7 @@ pub mod remote {
             show_unmapped_remote_refs: bool,
             /// Override the built-in and configured ref-specs with one or more of the given ones.
             #[clap(value_parser = crate::shared::AsBString)]
-            ref_spec: Vec<git_repository::bstr::BString>,
+            ref_spec: Vec<gix::bstr::BString>,
         },
     }
 }
@@ -355,8 +355,6 @@ pub mod revision {
 pub mod exclude {
     use std::ffi::OsString;
 
-    use git_repository as git;
-
     use super::AsPathSpec;
 
     #[derive(Debug, clap::Subcommand)]
@@ -375,7 +373,7 @@ pub mod exclude {
             patterns: Vec<OsString>,
             /// The git path specifications to check for exclusion, or unset to read from stdin one per line.
             #[clap(value_parser = AsPathSpec)]
-            pathspecs: Vec<git::path::Spec>,
+            pathspecs: Vec<gix::path::Spec>,
         },
     }
 }
@@ -412,17 +410,16 @@ mod clap_util {
         builder::{OsStringValueParser, TypedValueParser},
         Arg, Command, Error,
     };
-    use git_repository as git;
 
     #[derive(Clone)]
     pub struct AsPathSpec;
 
     impl TypedValueParser for AsPathSpec {
-        type Value = git::path::Spec;
+        type Value = gix::path::Spec;
 
         fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
             OsStringValueParser::new()
-                .try_map(|arg| git::path::Spec::try_from(arg.as_os_str()))
+                .try_map(|arg| gix::path::Spec::try_from(arg.as_os_str()))
                 .parse_ref(cmd, arg, value)
         }
     }

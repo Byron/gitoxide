@@ -429,7 +429,7 @@ Please note that these are based on the following value system:
     - First off, this needs an experiment to try it out quickly.
     - **initial thoughts**
         - ❌ Depending on the actual implementation of `Policy`, `Repository/Easy` will or will not be thread-safe. This excludes using a `Box<…>` there as it has different
-          trait bounds (once with and once without `Send + Sync`. I would like to avoid more feature toggles in `git-repository`, but could live with it.
+          trait bounds (once with and once without `Send + Sync`. I would like to avoid more feature toggles in `gix`, but could live with it.
             - ✔️ `Repository` would end up with type parameters if feature toggles aren't used, which could be compensated for with typedefs for the few known policies. However, this
               would also lead in a type-explosion for `Easy` and may force it to have a type parameter too.
         - ❌ To keep the `Repository` free of type parameters we could boil policies down to typical policies, like Eager, Lazy, LazyThreadSafe, PooledLazy, PooledLazyThreadSafe,

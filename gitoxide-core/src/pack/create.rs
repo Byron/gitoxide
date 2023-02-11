@@ -1,8 +1,8 @@
 use std::{ffi::OsStr, io, path::Path, str::FromStr, time::Instant};
 
 use anyhow::anyhow;
-use git_repository as git;
-use git_repository::{
+
+use gix::{
     hash,
     hash::ObjectId,
     interrupt,
@@ -118,7 +118,7 @@ where
     P: Progress,
     P::SubProgress: 'static,
 {
-    let repo = git::discover(repository_path)?.into_sync();
+    let repo = gix::discover(repository_path)?.into_sync();
     progress.init(Some(2), progress::steps());
     let tips = tips.into_iter();
     let make_cancellation_err = || anyhow!("Cancelled by user");
@@ -187,7 +187,7 @@ where
         if nondeterministic_thread_count.is_some() && !may_use_multiple_threads {
             progress.fail("Cannot use multi-threaded counting in tree-diff object expansion mode as it may yield way too many objects.");
         }
-        let (_, _, thread_count) = git::parallel::optimize_chunk_size_and_thread_limit(50, None, thread_limit, None);
+        let (_, _, thread_count) = gix::parallel::optimize_chunk_size_and_thread_limit(50, None, thread_limit, None);
         let progress = progress::ThroughputOnDrop::new(progress);
 
         {
@@ -373,7 +373,7 @@ struct Statistics {
 }
 
 pub mod input_iteration {
-    use git_repository::{hash, traverse};
+    use gix::{hash, traverse};
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
         #[error("input objects couldn't be iterated completely")]

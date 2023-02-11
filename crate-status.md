@@ -8,7 +8,7 @@ of the implementation.
 with the potential to become the preferred way to interact with git repositories.
 
 Please note that all functionality comes from the `gitoxide-core` library, which mirrors these capabilities
-and itself relies on all `git-*` crates. It's not meant for consumption, for application development, please use `git-repository`.
+and itself relies on all `git-*` crates. It's not meant for consumption, for application development, please use `gix`.
 
 * **the `ein` program** - convenient and for humans
     * [x] **init** - initialize a new non-bare repository with a `main` branch
@@ -417,7 +417,7 @@ Provides a trust model to share across gitoxide crates. It helps configuring how
 
 * **integrations**
    * [x] git-config
-   * [x] git-repository
+   * [x] gix
 
 ### git-rebase
 * [ ] obtain rebase status
@@ -575,7 +575,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 * [x] API documentation
     * [x] Some examples
 
-### git-repository
+### gix
 * [x] utilities for applications to make long running operations interruptible gracefully and to support timeouts in servers.
 * [ ] handle `core.repositoryFormatVersion` and extensions
 * [x] support for unicode-precomposition of command-line arguments (needs explicit use in parent application)

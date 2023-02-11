@@ -4,8 +4,8 @@ use std::{
 };
 
 use anyhow::bail;
-use git::{odb::FindExt, worktree::index::checkout, Progress};
-use git_repository as git;
+
+use gix::{odb::FindExt, worktree::index::checkout, Progress};
 
 use crate::{
     index,
@@ -26,7 +26,7 @@ pub fn checkout_exclusive(
         thread_limit,
     }: index::checkout_exclusive::Options,
 ) -> anyhow::Result<()> {
-    let repo = repo.map(git_repository::discover).transpose()?;
+    let repo = repo.map(gix::discover).transpose()?;
 
     let dest_directory = dest_directory.as_ref();
     if dest_directory.exists() {
@@ -41,23 +41,23 @@ pub fn checkout_exclusive(
 
     let mut num_skipped = 0;
     let maybe_symlink_mode = if !empty_files && repo.is_some() {
-        git::index::entry::Mode::DIR
+        gix::index::entry::Mode::DIR
     } else {
-        git::index::entry::Mode::SYMLINK
+        gix::index::entry::Mode::SYMLINK
     };
     for entry in index.entries_mut().iter_mut().filter(|e| {
         e.mode
-            .contains(maybe_symlink_mode | git::index::entry::Mode::DIR | git::index::entry::Mode::COMMIT)
+            .contains(maybe_symlink_mode | gix::index::entry::Mode::DIR | gix::index::entry::Mode::COMMIT)
     }) {
-        entry.flags.insert(git::index::entry::Flags::SKIP_WORKTREE);
+        entry.flags.insert(gix::index::entry::Flags::SKIP_WORKTREE);
         num_skipped += 1;
     }
     if num_skipped > 0 {
         progress.info(format!("Skipping {} DIR/SYMLINK/COMMIT entries", num_skipped));
     }
 
-    let opts = git::worktree::index::checkout::Options {
-        fs: git::worktree::fs::Capabilities::probe(dest_directory),
+    let opts = gix::worktree::index::checkout::Options {
+        fs: gix::worktree::fs::Capabilities::probe(dest_directory),
 
         destination_is_initially_empty: true,
         overwrite_existing: false,
@@ -70,8 +70,8 @@ pub fn checkout_exclusive(
     let mut bytes = progress.add_child("writing");
 
     let entries_for_checkout = index.entries().len() - num_skipped;
-    files.init(Some(entries_for_checkout), git::progress::count("files"));
-    bytes.init(None, git::progress::bytes());
+    files.init(Some(entries_for_checkout), gix::progress::count("files"));
+    bytes.init(None, gix::progress::bytes());
 
     let start = std::time::Instant::now();
     let no_repo = repo.is_none();
@@ -81,7 +81,7 @@ pub fn checkout_exclusive(
         files_updated,
         bytes_written,
     } = match repo {
-        Some(repo) => git::worktree::index::checkout(
+        Some(repo) => gix::worktree::index::checkout(
             &mut index,
             dest_directory,
             {
@@ -93,7 +93,7 @@ pub fn checkout_exclusive(
                         objects.find_blob(oid, buf)?;
                         buf.clear();
                         // …but write nothing
-                        Ok(git::objs::BlobRef { data: buf })
+                        Ok(gix::objs::BlobRef { data: buf })
                     } else {
                         objects.find_blob(oid, buf)
                     }
@@ -104,12 +104,12 @@ pub fn checkout_exclusive(
             should_interrupt,
             opts,
         ),
-        None => git::worktree::index::checkout(
+        None => gix::worktree::index::checkout(
             &mut index,
             dest_directory,
             |_, buf| {
                 buf.clear();
-                Ok(git::objs::BlobRef { data: buf })
+                Ok(gix::objs::BlobRef { data: buf })
             },
             &mut files,
             &mut bytes,
@@ -134,7 +134,7 @@ pub fn checkout_exclusive(
                 )
             })
             .unwrap_or_default(),
-        git::progress::bytes()
+        gix::progress::bytes()
             .unwrap()
             .display(bytes_written as usize, None, None)
     ));

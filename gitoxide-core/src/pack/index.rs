@@ -1,6 +1,6 @@
 use std::{fs, io, path::PathBuf, str::FromStr, sync::atomic::AtomicBool};
 
-use git_repository::{odb::pack, Progress};
+use gix::{odb::pack, Progress};
 
 use crate::OutputFormat;
 
@@ -55,7 +55,7 @@ pub struct Context<'a, W: io::Write> {
     pub format: OutputFormat,
     pub should_interrupt: &'a AtomicBool,
     pub out: W,
-    pub object_hash: git_repository::hash::Kind,
+    pub object_hash: gix::hash::Kind,
 }
 
 pub fn stream_len(mut s: impl io::Seek) -> io::Result<u64> {

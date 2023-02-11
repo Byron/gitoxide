@@ -8,5 +8,5 @@ Tempfiles can also be used as locks as only one tempfile can exist at a given pa
     * [x] close temporary files to convert them into a marker while saving system resources
     * [x] mark paths with a closed temporary file
 * [x] persist temporary files to prevent them from perishing.
-* [x] signal-handler integration with `git-repository` to clean lockfiles before the process is aborted.
+* [x] signal-handler integration with `gix` to clean lockfiles before the process is aborted.
 * [x] use a temporary file transparently due thanks to implementations of `std::io` traits

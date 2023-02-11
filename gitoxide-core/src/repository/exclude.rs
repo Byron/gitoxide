@@ -1,8 +1,8 @@
 use std::io;
 
 use anyhow::{bail, Context};
-use git_repository as git;
-use git_repository::prelude::FindExt;
+
+use gix::prelude::FindExt;
 
 use crate::OutputFormat;
 
@@ -19,8 +19,8 @@ pub mod query {
 }
 
 pub fn query(
-    repo: git::Repository,
-    pathspecs: impl Iterator<Item = git::path::Spec>,
+    repo: gix::Repository,
+    pathspecs: impl Iterator<Item = gix::path::Spec>,
     mut out: impl io::Write,
     query::Options {
         overrides,
@@ -38,7 +38,7 @@ pub fn query(
     let index = worktree.index()?;
     let mut cache = worktree.excludes(
         &index,
-        Some(git::attrs::MatchGroup::<git::attrs::Ignore>::from_overrides(overrides)),
+        Some(gix::attrs::MatchGroup::<gix::attrs::Ignore>::from_overrides(overrides)),
     )?;
 
     let prefix = repo.prefix().expect("worktree - we have an index by now")?;
@@ -47,7 +47,7 @@ pub fn query(
         for path in spec.apply_prefix(&prefix).items() {
             // TODO: what about paths that end in /? Pathspec might handle it, it's definitely something git considers
             //       even if the directory doesn't exist. Seems to work as long as these are kept in the spec.
-            let is_dir = git::path::from_bstr(path).metadata().ok().map(|m| m.is_dir());
+            let is_dir = gix::path::from_bstr(path).metadata().ok().map(|m| m.is_dir());
             let entry = cache.at_entry(path, is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
             let match_ = entry
                 .matching_exclude_pattern()

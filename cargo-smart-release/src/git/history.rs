@@ -7,8 +7,8 @@ use std::{
 
 use anyhow::bail;
 use cargo_metadata::Package;
-use git_repository as git;
-use git_repository::{
+
+use gix::{
     bstr::ByteSlice,
     head,
     prelude::{ObjectIdExt, ReferenceExt},
@@ -29,7 +29,7 @@ pub enum SegmentScope {
     EntireHistory,
 }
 
-pub fn collect(repo: &git::Repository) -> anyhow::Result<Option<commit::History>> {
+pub fn collect(repo: &gix::Repository) -> anyhow::Result<Option<commit::History>> {
     let mut handle = repo.clone();
     handle.object_cache_size(64 * 1024);
     let reference = match handle.head()?.peeled()?.kind {
@@ -43,7 +43,7 @@ pub fn collect(repo: &git::Repository) -> anyhow::Result<Option<commit::History>
     for commit_id in reference
         .id()
         .ancestors()
-        .sorting(git::traverse::commit::Sorting::ByCommitTimeNewestFirst)
+        .sorting(gix::traverse::commit::Sorting::ByCommitTimeNewestFirst)
         .all()?
     {
         let commit_id = commit_id?;
@@ -215,17 +215,17 @@ fn add_item_if_package_changed<'a>(
     segment: &mut Segment<'a>,
     filter: &mut Filter<'_>,
     item: &'a Item,
-    data_by_tree_id: &HashMap<git::ObjectId, Vec<u8>>,
+    data_by_tree_id: &HashMap<gix::ObjectId, Vec<u8>>,
 ) -> anyhow::Result<()> {
     let history = &mut segment.history;
     match filter {
         Filter::None => history.push(item),
         Filter::Fast { name } => {
-            let current = git::objs::TreeRefIter::from_bytes(&data_by_tree_id[&item.tree_id])
+            let current = gix::objs::TreeRefIter::from_bytes(&data_by_tree_id[&item.tree_id])
                 .filter_map(Result::ok)
                 .find(|e| e.filename == name.as_ref());
             let parent = item.parent_tree_id.and_then(|parent| {
-                git::objs::TreeRefIter::from_bytes(&data_by_tree_id[&parent])
+                gix::objs::TreeRefIter::from_bytes(&data_by_tree_id[&parent])
                     .filter_map(Result::ok)
                     .find(|e| e.filename == name.as_ref())
             });
@@ -237,7 +237,7 @@ fn add_item_if_package_changed<'a>(
                 }
                 (Some(current), None) => {
                     if let Some(prev_item) = item.parent_tree_id.and_then(|parent| {
-                        git::objs::TreeRefIter::from_bytes(&data_by_tree_id[&parent])
+                        gix::objs::TreeRefIter::from_bytes(&data_by_tree_id[&parent])
                             .filter_map(Result::ok)
                             .find(|e| e.oid == current.oid)
                     }) {
@@ -256,10 +256,10 @@ fn add_item_if_package_changed<'a>(
         Filter::Slow { ref components } => {
             let mut repo = ctx.repo.clone();
             repo.object_cache_size(1024 * 1024);
-            let current = git::Tree::from_data(item.id, data_by_tree_id[&item.tree_id].to_owned(), &ctx.repo)
+            let current = gix::Tree::from_data(item.id, data_by_tree_id[&item.tree_id].to_owned(), &ctx.repo)
                 .lookup_entry(components.iter().copied())?;
             let parent = match item.parent_tree_id {
-                Some(tree_id) => git::Tree::from_data(tree_id, data_by_tree_id[&tree_id].to_owned(), &ctx.repo)
+                Some(tree_id) => gix::Tree::from_data(tree_id, data_by_tree_id[&tree_id].to_owned(), &ctx.repo)
                     .lookup_entry(components.iter().copied())?,
                 None => None,
             };
