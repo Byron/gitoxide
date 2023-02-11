@@ -7,6 +7,16 @@ impl Diff {
     /// The `diff.algorithm` key.
     pub const ALGORITHM: Algorithm = Algorithm::new_with_validate("algorithm", &config::Tree::DIFF, validate::Algorithm)
                                         .with_deviation("'patience' diff is not implemented and can default to 'histogram' if lenient config is used, and defaults to histogram if unset for fastest and best results");
+    /// The `diff.renameLimit` key.
+    pub const RENAME_LIMIT: keys::UnsignedInteger = keys::UnsignedInteger::new_unsigned_integer(
+        "renameLimit",
+        &config::Tree::DIFF,
+    )
+    .with_note(
+        "The limit is actually squared, so 1000 stands for up to 1 million diffs if fuzzy rename tracking is enabled",
+    );
+    /// The `diff.renames` key.
+    pub const RENAMES: Renames = Renames::new_renames("renames", &config::Tree::DIFF);
 }
 
 impl Section for Diff {
@@ -15,12 +25,15 @@ impl Section for Diff {
     }
 
     fn keys(&self) -> &[&dyn Key] {
-        &[&Self::ALGORITHM]
+        &[&Self::ALGORITHM, &Self::RENAME_LIMIT, &Self::RENAMES]
     }
 }
 
 /// The `diff.algorithm` key.
 pub type Algorithm = keys::Any<validate::Algorithm>;
+
+/// The `diff.renames` key.
+pub type Renames = keys::Any<validate::Renames>;
 
 mod algorithm {
     use std::borrow::Cow;
@@ -54,16 +67,63 @@ mod algorithm {
     }
 }
 
+mod renames {
+    use std::borrow::Cow;
+
+    use crate::config::tree::{keys, Section};
+    use crate::diff::rename::Tracking;
+    use crate::{
+        bstr::BStr,
+        config::{key::GenericError, tree::sections::diff::Renames},
+    };
+
+    impl Renames {
+        /// Create a new instance.
+        pub const fn new_renames(name: &'static str, section: &'static dyn Section) -> Self {
+            keys::Any::new_with_validate(name, section, super::validate::Renames)
+        }
+        /// Try to convert the configuration into a valid rename tracking variant. Use `value` and if it's an error, call `value_string`
+        /// to try and interpret the key as string.
+        pub fn try_into_renames<'a>(
+            &'static self,
+            value: Result<bool, git_config::value::Error>,
+            value_string: impl FnOnce() -> Option<Cow<'a, BStr>>,
+        ) -> Result<Tracking, GenericError> {
+            Ok(match value {
+                Ok(true) => Tracking::Renames,
+                Ok(false) => Tracking::Disabled,
+                Err(err) => {
+                    let value = value_string().ok_or_else(|| GenericError::from(self))?;
+                    match value.as_ref().as_ref() {
+                        b"copy" | b"copies" => Tracking::RenamesAndCopies,
+                        _ => return Err(GenericError::from_value(self, value.into_owned()).with_source(err)),
+                    }
+                }
+            })
+        }
+    }
+}
+
 mod validate {
     use crate::{
         bstr::BStr,
         config::tree::{keys, Diff},
     };
+    use std::borrow::Cow;
 
     pub struct Algorithm;
     impl keys::Validate for Algorithm {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
             Diff::ALGORITHM.try_into_algorithm(value.into())?;
+            Ok(())
+        }
+    }
+
+    pub struct Renames;
+    impl keys::Validate for Renames {
+        fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            let boolean = git_config::Boolean::try_from(value).map(|b| b.0);
+            Diff::RENAMES.try_into_renames(boolean, || Some(Cow::Borrowed(value)))?;
             Ok(())
         }
     }

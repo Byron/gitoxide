@@ -69,6 +69,16 @@ impl Cache {
             .get_or_try_init(|| remote::url::SchemePermission::from_config(&self.resolved, self.filter_config_section))
     }
 
+    pub(crate) fn diff_renames(
+        &self,
+    ) -> Result<Option<crate::object::tree::diff::Renames>, crate::object::tree::diff::renames::Error> {
+        self.diff_renames
+            .get_or_try_init(|| {
+                crate::object::tree::diff::Renames::try_from_config(&self.resolved, self.lenient_config)
+            })
+            .copied()
+    }
+
     /// Returns (file-timeout, pack-refs timeout)
     pub(crate) fn lock_timeout(
         &self,

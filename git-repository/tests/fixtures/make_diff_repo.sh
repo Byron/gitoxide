@@ -17,3 +17,6 @@ git commit -q -am c2
 
 echo a1 >> a
 git commit -q -am c3
+
+git mv a dir/a-moved
+git commit -q -am r1-identity
