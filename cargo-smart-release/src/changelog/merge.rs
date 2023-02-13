@@ -97,7 +97,9 @@ impl Section {
                 };
                 for rhs_segment in src_segments {
                     match rhs_segment {
-                        Segment::User { .. } => unreachable!("BUG: User segments are never auto-generated"),
+                        Segment::User { markdown } => {
+                            unreachable!("BUG: User segments are never auto-generated: {markdown}")
+                        }
                         Segment::Details(section::Data::Parsed)
                         | Segment::Statistics(section::Data::Parsed)
                         | Segment::Clippy(section::Data::Parsed) => {
