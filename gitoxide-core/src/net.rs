@@ -20,7 +20,7 @@ impl FromStr for Protocol {
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod impls {
-    use git_repository::protocol::transport;
+    use gix::protocol::transport;
 
     use super::Protocol;
 
@@ -43,4 +43,4 @@ impl Default for Protocol {
 }
 
 #[cfg(any(feature = "async-client", feature = "blocking-client"))]
-pub use git_repository::protocol::transport::connect;
+pub use gix::protocol::transport::connect;

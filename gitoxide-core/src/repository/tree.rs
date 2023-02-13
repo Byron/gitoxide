@@ -1,21 +1,20 @@
 use std::{borrow::Cow, io};
 
 use anyhow::bail;
-use git_repository as git;
-use git_repository::{prelude::ObjectIdExt, Tree};
+
+use gix::{prelude::ObjectIdExt, Tree};
 
 use crate::OutputFormat;
 
 mod entries {
     use std::collections::VecDeque;
 
-    use git::{
+    use gix::bstr::{ByteSlice, ByteVec};
+    use gix::{
         bstr::{BStr, BString},
         objs::tree::EntryRef,
         traverse::tree::visit::Action,
     };
-    use git_repository as git;
-    use git_repository::bstr::{ByteSlice, ByteVec};
 
     use crate::repository::tree::format_entry;
 
@@ -35,14 +34,14 @@ mod entries {
 
     pub struct Traverse<'repo, 'a> {
         pub stats: Statistics,
-        repo: Option<&'repo git::Repository>,
+        repo: Option<&'repo gix::Repository>,
         out: Option<&'a mut dyn std::io::Write>,
         path: BString,
         path_deque: VecDeque<BString>,
     }
 
     impl<'repo, 'a> Traverse<'repo, 'a> {
-        pub fn new(repo: Option<&'repo git::Repository>, out: Option<&'a mut dyn std::io::Write>) -> Self {
+        pub fn new(repo: Option<&'repo gix::Repository>, out: Option<&'a mut dyn std::io::Write>) -> Self {
             Traverse {
                 stats: Default::default(),
                 repo,
@@ -68,7 +67,7 @@ mod entries {
         }
     }
 
-    impl<'repo, 'a> git::traverse::tree::Visit for Traverse<'repo, 'a> {
+    impl<'repo, 'a> gix::traverse::tree::Visit for Traverse<'repo, 'a> {
         fn pop_front_tracked_path_and_set_current(&mut self) {
             self.path = self.path_deque.pop_front().expect("every parent is set only once");
         }
@@ -92,7 +91,7 @@ mod entries {
         }
 
         fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> Action {
-            use git::objs::tree::EntryMode::*;
+            use gix::objs::tree::EntryMode::*;
             let size = self
                 .repo
                 .and_then(|repo| repo.find_object(entry.oid).map(|o| o.data.len()).ok());
@@ -117,7 +116,7 @@ mod entries {
 
 #[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
 pub fn info(
-    repo: git::Repository,
+    repo: gix::Repository,
     treeish: Option<&str>,
     extended: bool,
     format: OutputFormat,
@@ -143,7 +142,7 @@ pub fn info(
 }
 
 pub fn entries(
-    repo: git::Repository,
+    repo: gix::Repository,
     treeish: Option<&str>,
     recursive: bool,
     extended: bool,
@@ -176,9 +175,9 @@ pub fn entries(
     Ok(())
 }
 
-fn treeish_to_tree<'repo>(treeish: Option<&str>, repo: &'repo git::Repository) -> anyhow::Result<Tree<'repo>> {
+fn treeish_to_tree<'repo>(treeish: Option<&str>, repo: &'repo gix::Repository) -> anyhow::Result<Tree<'repo>> {
     Ok(match treeish {
-        Some(hex) => git::hash::ObjectId::from_hex(hex.as_bytes())
+        Some(hex) => gix::hash::ObjectId::from_hex(hex.as_bytes())
             .map(|id| id.attach(repo))?
             .object()?
             .try_into_tree()?,
@@ -188,11 +187,11 @@ fn treeish_to_tree<'repo>(treeish: Option<&str>, repo: &'repo git::Repository) -
 
 fn format_entry(
     mut out: impl io::Write,
-    entry: &git::objs::tree::EntryRef<'_>,
-    filename: &git::bstr::BStr,
+    entry: &gix::objs::tree::EntryRef<'_>,
+    filename: &gix::bstr::BStr,
     size: Option<usize>,
 ) -> std::io::Result<()> {
-    use git::objs::tree::EntryMode::*;
+    use gix::objs::tree::EntryMode::*;
     writeln!(
         out,
         "{} {}{} {}",

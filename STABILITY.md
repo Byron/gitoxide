@@ -47,7 +47,7 @@ The following schematic helps to visualize what follows.
     ║    └───────────────────────────────────┘    ║   
     ║                      │                      ║   
     ║                      ▼                      ║   
-    ║    git-repository──────────────────────┐    ║   
+    ║    gix   ──────────────────────────────┐    ║   
     ║    │                application crate  │─ ─ ╬ ─ 
     ║    └───────────────────────────────────┘    ║  │
     ║                      │                      ║   
@@ -123,7 +123,7 @@ Minor version updates for new features can be released when needed assuming ther
 
 ## The _Minimal Supported Rust Version_ (->MSRV)
 
-The MSRV is automatically assumed to be the latest stable version for all crates with the following exception: `git-repository` and all it's dependencies must
+The MSRV is automatically assumed to be the latest stable version for all crates with the following exception: `gix` and all it's dependencies must
 adhere to an MSRV, as validated by the `msrv.yml` GitHub workflow.
 
 Increasing the MSRV is considered a breaking change and warrants a major version bump itself for stable crates and a minor version bump for IDP crates.

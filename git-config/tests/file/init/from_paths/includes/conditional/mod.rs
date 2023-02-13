@@ -4,7 +4,7 @@ use git_config::{
     file::{includes, init},
     path, File,
 };
-use git_repository as git;
+
 use tempfile::tempdir;
 
 use crate::file::{cow_str, init::from_paths::escape_backslashes};
@@ -139,16 +139,16 @@ fn options_with_git_dir(git_dir: &Path) -> init::Options<'_> {
     }
 }
 
-fn git_init(path: impl AsRef<std::path::Path>, bare: bool) -> crate::Result<git::Repository> {
-    Ok(git::ThreadSafeRepository::init_opts(
+fn git_init(path: impl AsRef<std::path::Path>, bare: bool) -> crate::Result<gix::Repository> {
+    Ok(gix::ThreadSafeRepository::init_opts(
         path,
         if bare {
-            git::create::Kind::Bare
+            gix::create::Kind::Bare
         } else {
-            git::create::Kind::WithWorktree
+            gix::create::Kind::WithWorktree
         },
-        git::create::Options::default(),
-        git::open::Options::isolated().config_overrides(["user.name=gitoxide", "user.email=gitoxide@localhost"]),
+        gix::create::Options::default(),
+        gix::open::Options::isolated().config_overrides(["user.name=gitoxide", "user.email=gitoxide@localhost"]),
     )?
     .to_thread_local())
 }

@@ -9,9 +9,9 @@ use std::{
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
+use gix::bstr::io::BufReadExt;
 
 use crate::{
     plumbing::{
@@ -51,14 +51,13 @@ pub mod async_util {
 }
 
 pub fn main() -> Result<()> {
-    let args: Args = Args::parse_from(git_repository::env::args_os());
+    let args: Args = Args::parse_from(gix::env::args_os());
     let thread_limit = args.threads;
     let verbose = args.verbose;
     let format = args.format;
     let cmd = args.cmd;
     let object_hash = args.object_hash;
     let config = args.config;
-    use git_repository as git;
     let repository = args.repository;
     enum Mode {
         Strict,
@@ -69,8 +68,8 @@ pub fn main() -> Result<()> {
 
     let repository = {
         let config = config.clone();
-        move |mode: Mode| -> Result<git::Repository> {
-            let mut mapping: git::sec::trust::Mapping<git::open::Options> = Default::default();
+        move |mode: Mode| -> Result<gix::Repository> {
+            let mut mapping: gix::sec::trust::Mapping<gix::open::Options> = Default::default();
             let strict_toggle = matches!(mode, Mode::Strict | Mode::StrictWithGitInstallConfig) || args.strict;
             mapping.full = mapping.full.strict_config(strict_toggle);
             mapping.reduced = mapping.reduced.strict_config(strict_toggle);
@@ -78,7 +77,7 @@ pub fn main() -> Result<()> {
                 mode,
                 Mode::StrictWithGitInstallConfig | Mode::LenientWithGitInstallConfig
             );
-            let to_match_settings = |mut opts: git::open::Options| {
+            let to_match_settings = |mut opts: gix::open::Options| {
                 opts.permissions.config.git_binary = git_installation;
                 if config.is_empty() {
                     opts
@@ -88,11 +87,11 @@ pub fn main() -> Result<()> {
             };
             mapping.full.modify(to_match_settings);
             mapping.reduced.modify(to_match_settings);
-            let mut repo = git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
-                .map(git::Repository::from)?;
+            let mut repo = gix::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
+                .map(gix::Repository::from)?;
             if !config.is_empty() {
                 repo.config_snapshot_mut()
-                    .append_config(config.iter(), git::config::Source::Cli)
+                    .append_config(config.iter(), gix::config::Source::Cli)
                     .context("Unable to parse command-line configuration")?;
             }
             Ok(repo)
@@ -114,7 +113,7 @@ pub fn main() -> Result<()> {
     let auto_verbose = !progress && !args.no_verbose;
 
     let should_interrupt = Arc::new(AtomicBool::new(false));
-    git_repository::interrupt::init_handler({
+    gix::interrupt::init_handler({
         let should_interrupt = Arc::clone(&should_interrupt);
         move || should_interrupt.store(true, Ordering::SeqCst)
     })?;
@@ -172,9 +171,9 @@ pub fn main() -> Result<()> {
         Subcommands::Credential(cmd) => core::repository::credential(
             repository(Mode::StrictWithGitInstallConfig)?,
             match cmd {
-                credential::Subcommands::Fill => git::credentials::program::main::Action::Get,
-                credential::Subcommands::Approve => git::credentials::program::main::Action::Store,
-                credential::Subcommands::Reject => git::credentials::program::main::Action::Erase,
+                credential::Subcommands::Fill => gix::credentials::program::main::Action::Get,
+                credential::Subcommands::Approve => gix::credentials::program::main::Action::Store,
+                credential::Subcommands::Reject => gix::credentials::program::main::Action::Erase,
             },
         ),
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
@@ -609,7 +608,7 @@ pub fn main() -> Result<()> {
                                     format,
                                     out,
                                     object_hash,
-                                    should_interrupt: &git_repository::interrupt::IS_INTERRUPTED,
+                                    should_interrupt: &gix::interrupt::IS_INTERRUPTED,
                                 },
                             )
                         },
@@ -832,7 +831,7 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, _err| {
-                    use git::bstr::ByteSlice;
+                    use gix::bstr::ByteSlice;
                     core::repository::exclude::query(
                         repository(Mode::Strict)?,
                         if pathspecs.is_empty() {
@@ -840,8 +839,8 @@ pub fn main() -> Result<()> {
                                 stdin_or_bail()?
                                     .byte_lines()
                                     .filter_map(Result::ok)
-                                    .filter_map(|line| git::path::Spec::from_bytes(line.as_bstr())),
-                            ) as Box<dyn Iterator<Item = git::path::Spec>>
+                                    .filter_map(|line| gix::path::Spec::from_bytes(line.as_bstr())),
+                            ) as Box<dyn Iterator<Item = gix::path::Spec>>
                         } else {
                             Box::new(pathspecs.into_iter())
                         },

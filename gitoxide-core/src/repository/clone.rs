@@ -13,8 +13,8 @@ pub(crate) mod function {
     use std::ffi::OsStr;
 
     use anyhow::{bail, Context};
-    use git_repository as git;
-    use git_repository::{bstr::BString, remote::fetch::Status, Progress};
+
+    use gix::{bstr::BString, remote::fetch::Status, Progress};
 
     use super::Options;
     use crate::{repository::fetch::function::print_updates, OutputFormat};
@@ -41,39 +41,39 @@ pub(crate) mod function {
             bail!("JSON output isn't yet supported for fetching.");
         }
 
-        let url: git::Url = url.as_ref().try_into()?;
+        let url: gix::Url = url.as_ref().try_into()?;
         let directory = directory.map(|dir| Ok(dir.into())).unwrap_or_else(|| {
-            git::path::from_bstr(url.path.as_ref())
+            gix::path::from_bstr(url.path.as_ref())
                 .as_ref()
                 .file_stem()
                 .map(Into::into)
                 .context("Filename extraction failed - path too short")
         })?;
-        let mut prepare = git::clone::PrepareFetch::new(
+        let mut prepare = gix::clone::PrepareFetch::new(
             url,
             directory,
             if bare {
-                git::create::Kind::Bare
+                gix::create::Kind::Bare
             } else {
-                git::create::Kind::WithWorktree
+                gix::create::Kind::WithWorktree
             },
-            git::create::Options::default(),
+            gix::create::Options::default(),
             {
-                let mut opts = git::open::Options::default().config_overrides(overrides);
+                let mut opts = gix::open::Options::default().config_overrides(overrides);
                 opts.permissions.config.git_binary = true;
                 opts
             },
         )?;
         if no_tags {
-            prepare = prepare.configure_remote(|r| Ok(r.with_fetch_tags(git::remote::fetch::Tags::None)));
+            prepare = prepare.configure_remote(|r| Ok(r.with_fetch_tags(gix::remote::fetch::Tags::None)));
         }
         let (mut checkout, fetch_outcome) =
-            prepare.fetch_then_checkout(&mut progress, &git::interrupt::IS_INTERRUPTED)?;
+            prepare.fetch_then_checkout(&mut progress, &gix::interrupt::IS_INTERRUPTED)?;
 
         let (repo, outcome) = if bare {
             (checkout.persist(), None)
         } else {
-            let (repo, outcome) = checkout.main_worktree(progress, &git::interrupt::IS_INTERRUPTED)?;
+            let (repo, outcome) = checkout.main_worktree(progress, &gix::interrupt::IS_INTERRUPTED)?;
             (repo, Some(outcome))
         };
 
@@ -89,14 +89,14 @@ pub(crate) mod function {
             Status::DryRun { .. } => unreachable!("dry-run unsupported"),
             Status::Change { update_refs, .. } => {
                 let remote = repo
-                    .find_default_remote(git::remote::Direction::Fetch)
+                    .find_default_remote(gix::remote::Direction::Fetch)
                     .expect("one origin remote")?;
-                let ref_specs = remote.refspecs(git::remote::Direction::Fetch);
+                let ref_specs = remote.refspecs(gix::remote::Direction::Fetch);
                 print_updates(&repo, update_refs, ref_specs, fetch_outcome.ref_map, &mut out, &mut err)?;
             }
         };
 
-        if let Some(git::worktree::index::checkout::Outcome { collisions, errors, .. }) = outcome {
+        if let Some(gix::worktree::index::checkout::Outcome { collisions, errors, .. }) = outcome {
             if !(collisions.is_empty() && errors.is_empty()) {
                 let mut messages = Vec::new();
                 if !errors.is_empty() {

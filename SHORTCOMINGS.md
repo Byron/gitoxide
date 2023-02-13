@@ -1,6 +1,6 @@
 This file is for tracking features that are less well implemented or less powerful than their `git` counterparts for one reason or another.
 
-#### `git-repository`
+#### `gix`
 
 ### git-index
 

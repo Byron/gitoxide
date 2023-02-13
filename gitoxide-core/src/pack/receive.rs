@@ -5,8 +5,7 @@ use std::{
     sync::{atomic::AtomicBool, Arc},
 };
 
-pub use git_repository as git;
-use git_repository::{
+pub use gix::{
     hash::ObjectId,
     objs::bstr::{BString, ByteSlice},
     odb::pack,
@@ -29,7 +28,7 @@ pub struct Context<W> {
     pub format: OutputFormat,
     pub should_interrupt: Arc<AtomicBool>,
     pub out: W,
-    pub object_hash: git_repository::hash::Kind,
+    pub object_hash: gix::hash::Kind,
 }
 
 struct CloneDelegate<W> {
@@ -117,8 +116,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
 mod blocking_io {
     use std::{io, io::BufRead, path::PathBuf};
 
-    use git_repository as git;
-    use git_repository::{
+    use gix::{
         bstr::BString,
         protocol,
         protocol::{fetch::Response, handshake::Ref},
@@ -163,7 +161,7 @@ mod blocking_io {
     {
         let transport = net::connect(
             url,
-            git::protocol::transport::client::connect::Options {
+            gix::protocol::transport::client::connect::Options {
                 version: protocol.unwrap_or_default().into(),
                 ..Default::default()
             },
@@ -181,7 +179,7 @@ mod blocking_io {
             protocol::credentials::builtin,
             progress,
             protocol::FetchConnection::TerminateOnSuccessfulCompletion,
-            git::env::agent(),
+            gix::env::agent(),
         )?;
         Ok(())
     }
@@ -189,7 +187,7 @@ mod blocking_io {
 
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::receive;
-use git_repository::protocol::ls_refs;
+use gix::protocol::ls_refs;
 
 #[cfg(feature = "async-client")]
 mod async_io {
@@ -197,8 +195,8 @@ mod async_io {
 
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
-    use git_repository as git;
-    use git_repository::{
+
+    use gix::{
         bstr::{BString, ByteSlice},
         odb::pack,
         protocol,
@@ -244,7 +242,7 @@ mod async_io {
     {
         let transport = net::connect(
             url,
-            git::protocol::transport::client::connect::Options {
+            gix::protocol::transport::client::connect::Options {
                 version: protocol.unwrap_or_default().into(),
                 ..Default::default()
             },
@@ -264,7 +262,7 @@ mod async_io {
                 protocol::credentials::builtin,
                 progress,
                 protocol::FetchConnection::TerminateOnSuccessfulCompletion,
-                git::env::agent(),
+                gix::env::agent(),
             ))
         })
         .await?;
@@ -336,7 +334,7 @@ fn print(out: &mut impl io::Write, res: pack::bundle::write::Outcome, refs: &[Re
 fn write_raw_refs(refs: &[Ref], directory: PathBuf) -> std::io::Result<()> {
     let assure_dir_exists = |path: &BString| {
         assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
-        let path = directory.join(git::path::from_byte_slice(path));
+        let path = directory.join(gix::path::from_byte_slice(path));
         std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
     };
     for r in refs {

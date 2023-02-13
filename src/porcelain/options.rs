@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
-use git::bstr::BString;
-use git_repository as git;
+use gix::bstr::BString;
 
 #[derive(Debug, clap::Parser)]
 #[clap(about = "The rusty git", version = clap::crate_version!())]
@@ -125,7 +124,6 @@ mod validator {
     use std::{ffi::OsStr, path::PathBuf};
 
     use anyhow::Context;
-    use git_repository as git;
 
     #[derive(Clone)]
     pub struct IsRepo;
@@ -153,7 +151,7 @@ mod validator {
 
     fn assure_is_repo(dir: &OsStr) -> anyhow::Result<()> {
         let git_dir = PathBuf::from(dir).join(".git");
-        let p = git::path::realpath(&git_dir)
+        let p = gix::path::realpath(&git_dir)
             .with_context(|| format!("Could not canonicalize git repository at '{}'", git_dir.display()))?;
         if p.extension().unwrap_or_default() == "git"
             || p.file_name().unwrap_or_default() == ".git"

@@ -1,5 +1,4 @@
-use git_repository as git;
-use git_repository::{bstr::ByteSlice, url::Scheme, Url};
+use gix::{bstr::ByteSlice, url::Scheme, Url};
 
 use crate::{
     changelog,
@@ -39,10 +38,10 @@ pub enum Linkables {
 
 #[derive(Clone)]
 pub struct RepositoryUrl {
-    pub inner: git::Url,
+    pub inner: gix::Url,
 }
 
-impl From<git::Url> for RepositoryUrl {
+impl From<gix::Url> for RepositoryUrl {
     fn from(v: Url) -> Self {
         RepositoryUrl { inner: v }
     }
@@ -381,7 +380,7 @@ fn format_category(cat: &Category, link_mode: &Linkables) -> String {
     }
 }
 
-fn format_oid(id: &git::oid, link_mode: &Linkables) -> String {
+fn format_oid(id: &gix::oid, link_mode: &Linkables) -> String {
     match link_mode {
         Linkables::AsText => id.to_hex_with_len(7).to_string(),
         Linkables::AsLinks { repository_url } => match repository_url.github_https() {

@@ -2,7 +2,7 @@
 name = "gitoxide-core"
 description = "The library implementing all capabilities of the gitoxide CLI"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.23.0"
+version = "0.24.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
 edition = "2021"
@@ -24,19 +24,19 @@ estimate-hours = ["itertools", "fs-err", "num_cpus", "crossbeam-channel", "mime_
 #! If both are set, _blocking-client_ will take precedence, allowing `--all-features` to be used.
 
 ## If set, the client used to connect to git servers will use a blocking API. It supports more transports and is what most would want.
-blocking-client = ["git-repository/blocking-network-client"]
+blocking-client = ["gix/blocking-network-client"]
 ## The client to connect to git servers will be async, while supporting only the 'git' transport itself.
 ## It's the most limited and can be seen as example on how to use custom transports for custom servers.
-async-client = ["git-repository/async-network-client-async-std", "git-transport-configuration-only/async-std", "async-trait", "futures-io", "async-net", "async-io", "futures-lite", "blocking"]
+async-client = ["gix/async-network-client-async-std", "git-transport-configuration-only/async-std", "async-trait", "futures-io", "async-net", "async-io", "futures-lite", "blocking"]
 
 #! ### Other
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serde", "bytesize/serde"]
+serde1 = ["git-commitgraph/serde1", "gix/serde1", "serde_json", "serde", "bytesize/serde"]
 
 
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
-git-repository = { version = "^0.34.0", path = "../git-repository", default-features = false }
+gix = { version = "^0.35.0", path = "../gix", default-features = false }
 git-pack-for-configuration-only = { package = "git-pack", version = "^0.30.2", path = "../git-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
 git-transport-configuration-only = { package = "git-transport", version = "^0.25.4", path = "../git-transport", default-features = false }
 git-commitgraph = { version = "^0.13.0", path = "../git-commitgraph" }

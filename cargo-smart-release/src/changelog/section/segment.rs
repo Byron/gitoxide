@@ -1,10 +1,8 @@
 use std::collections::BTreeMap;
 
 use bitflags::bitflags;
-use git_repository as git;
 
 pub mod conventional {
-    use git_repository as git;
 
     /// A message that is associated with a Segment for a particular git-conventional segment
     #[derive(PartialEq, Eq, Debug, Clone)]
@@ -15,7 +13,7 @@ pub mod conventional {
         },
         Generated {
             /// The id of the message/commit the data is coming from, useful to identify the markdown associate with this message.
-            id: git::ObjectId,
+            id: gix::ObjectId,
             title: String,
             body: Option<String>,
         },
@@ -51,7 +49,7 @@ pub struct Conventional {
     /// Whether or not the segment contains only breaking changes
     pub is_breaking: bool,
     /// object IDs parsed from markdown with no surrounding text. These are considered removed, so we shouldn't repopulate them.
-    pub removed: Vec<git::ObjectId>,
+    pub removed: Vec<gix::ObjectId>,
     /// The messages to convey
     pub messages: Vec<conventional::Message>,
 }
@@ -64,8 +62,6 @@ impl Conventional {
 
 pub mod details {
     use std::fmt;
-
-    use git_repository as git;
 
     #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Clone)]
     pub enum Category {
@@ -85,7 +81,7 @@ pub mod details {
     #[derive(PartialEq, Eq, Debug, Clone)]
     pub struct Message {
         pub title: String,
-        pub id: git::ObjectId,
+        pub id: gix::ObjectId,
     }
 
     impl From<&crate::commit::history::Item> for Message {

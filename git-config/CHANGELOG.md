@@ -112,7 +112,7 @@ A maintenance release without user-facing changes.
     - Release git-ref v0.23.0, git-config v0.15.0, git-command v0.2.2, git-diff v0.26.0, git-discover v0.12.0, git-mailmap v0.9.0, git-pack v0.30.0, git-odb v0.40.0, git-transport v0.25.2, git-protocol v0.26.1, git-revision v0.10.0, git-refspec v0.7.0, git-worktree v0.12.0, git-repository v0.32.0 ([`ffb5b6a`](https://github.com/Byron/gitoxide/commit/ffb5b6a21cb415315db6fd5294940c7c6deb4538))
     - prepare changelogs prior to release ([`4381a03`](https://github.com/Byron/gitoxide/commit/4381a03a34c305f31713cce234c2afbf8ac60f01))
     - Merge branch 'signature-resolution' ([`0f7edc1`](https://github.com/Byron/gitoxide/commit/0f7edc1ec87774917c8683dfea2c4989d0762648))
-    - adapt to changes in `git-repository` ([`d9b7df9`](https://github.com/Byron/gitoxide/commit/d9b7df937ef7196068c3e163536f2aa35a38495b))
+    - adapt to changes in `gix` ([`d9b7df9`](https://github.com/Byron/gitoxide/commit/d9b7df937ef7196068c3e163536f2aa35a38495b))
     - Release git-date v0.4.0, git-actor v0.17.0, git-object v0.26.0, git-traverse v0.22.0, git-index v0.12.0, safety bump 15 crates ([`0e3d0a5`](https://github.com/Byron/gitoxide/commit/0e3d0a56d7e6a60c6578138f2690b4fa54a2072d))
 </details>
 
@@ -230,7 +230,7 @@ A maintenance release without user-facing changes.
    values into those for the worktree at hand.
    
    Note that linked worktrees are not supported - for that use
-   `git-repository` instead.
+   `gix` instead.
 
 ### New Features (BREAKING)
 

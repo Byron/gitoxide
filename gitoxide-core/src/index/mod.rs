@@ -1,9 +1,7 @@
 use std::path::Path;
 
-use git_repository as git;
-
 pub struct Options {
-    pub object_hash: git::hash::Kind,
+    pub object_hash: gix::hash::Kind,
     pub format: crate::OutputFormat,
 }
 
@@ -12,8 +10,8 @@ pub use entries::entries;
 
 pub mod information;
 
-fn parse_file(index_path: impl AsRef<Path>, object_hash: git::hash::Kind) -> anyhow::Result<git::index::File> {
-    git::index::File::at(index_path.as_ref(), object_hash, Default::default()).map_err(Into::into)
+fn parse_file(index_path: impl AsRef<Path>, object_hash: gix::hash::Kind) -> anyhow::Result<gix::index::File> {
+    gix::index::File::at(index_path.as_ref(), object_hash, Default::default()).map_err(Into::into)
 }
 
 pub mod checkout_exclusive {
@@ -40,7 +38,7 @@ pub fn verify(
     let file = parse_file(index_path, object_hash)?;
     file.verify_integrity()?;
     file.verify_entries()?;
-    file.verify_extensions(false, git::index::verify::extensions::no_find)?;
+    file.verify_extensions(false, gix::index::verify::extensions::no_find)?;
     #[cfg_attr(not(feature = "serde1"), allow(irrefutable_let_patterns))]
     if let crate::OutputFormat::Human = format {
         writeln!(out, "OK").ok();

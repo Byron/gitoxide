@@ -1,7 +1,6 @@
 use std::collections::{hash_map::Entry, HashMap};
 
-use git::bstr::BStr;
-use git_repository as git;
+use gix::bstr::BStr;
 use itertools::Itertools;
 
 use crate::hours::{FileStats, LineStats, WorkByEmail, WorkByPerson};
@@ -10,7 +9,7 @@ const MINUTES_PER_HOUR: f32 = 60.0;
 pub const HOURS_PER_WORKDAY: f32 = 8.0;
 
 pub fn estimate_hours(
-    commits: &[(u32, git::actor::SignatureRef<'static>)],
+    commits: &[(u32, gix::actor::SignatureRef<'static>)],
     stats: &[(u32, FileStats, LineStats)],
 ) -> WorkByEmail {
     assert!(!commits.is_empty());
@@ -19,7 +18,7 @@ pub fn estimate_hours(
 
     let hours_for_commits = commits.iter().map(|t| &t.1).rev().tuple_windows().fold(
         0_f32,
-        |hours, (cur, next): (&git::actor::SignatureRef<'_>, &git::actor::SignatureRef<'_>)| {
+        |hours, (cur, next): (&gix::actor::SignatureRef<'_>, &gix::actor::SignatureRef<'_>)| {
             let change_in_minutes = (next
                 .time
                 .seconds_since_unix_epoch

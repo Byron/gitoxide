@@ -1,10 +1,9 @@
 use anyhow::Context;
-use git_repository as git;
 
 use crate::OutputFormat;
 
 pub fn previous_branches(
-    repo: git::Repository,
+    repo: gix::Repository,
     mut out: impl std::io::Write,
     format: OutputFormat,
 ) -> anyhow::Result<()> {

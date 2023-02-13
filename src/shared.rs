@@ -177,7 +177,7 @@ pub mod pretty {
                         Event::UiDone => {
                             // We don't know why the UI is done, usually it's the user aborting.
                             // We need the computation to stop as well so let's wait for that to happen
-                            git_repository::interrupt::trigger();
+                            gix::interrupt::trigger();
                             continue;
                         }
                         Event::ComputationDone(res, out) => {
@@ -240,9 +240,8 @@ mod clap {
     use std::{ffi::OsStr, str::FromStr};
 
     use clap::{builder, builder::PossibleValue, error::ErrorKind, Arg, Command, Error};
-    use git_repository as git;
-    use git_repository::bstr::BString;
     use gitoxide_core as core;
+    use gix::bstr::BString;
 
     #[derive(Clone)]
     pub struct AsBString;
@@ -251,7 +250,7 @@ mod clap {
         type Value = BString;
 
         fn parse_ref(&self, _cmd: &Command, _arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
-            git::env::os_str_to_bstring(value).ok_or_else(|| Error::new(ErrorKind::InvalidUtf8))
+            gix::env::os_str_to_bstring(value).ok_or_else(|| Error::new(ErrorKind::InvalidUtf8))
         }
     }
 
@@ -276,11 +275,11 @@ mod clap {
     pub struct AsHashKind;
 
     impl builder::TypedValueParser for AsHashKind {
-        type Value = git::hash::Kind;
+        type Value = gix::hash::Kind;
 
         fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
             builder::StringValueParser::new()
-                .try_map(|arg| git::hash::Kind::from_str(&arg))
+                .try_map(|arg| gix::hash::Kind::from_str(&arg))
                 .parse_ref(cmd, arg, value)
         }
 

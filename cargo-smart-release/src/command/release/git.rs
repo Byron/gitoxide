@@ -2,8 +2,8 @@ use std::{convert::TryInto, process::Command};
 
 use anyhow::{anyhow, bail};
 use cargo_metadata::Package;
-use git_repository as git;
-use git_repository::{bstr::ByteSlice, refs, refs::transaction::PreviousValue, Id};
+
+use gix::{bstr::ByteSlice, refs, refs::transaction::PreviousValue, Id};
 
 use super::{tag_name, Options};
 use crate::utils::will;
@@ -65,7 +65,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
                 let tag = ctx.repo.tag(
                     tag_name,
                     target,
-                    git_repository::objs::Kind::Commit,
+                    gix::objs::Kind::Commit,
                     Some(crate::git::author()?.to_ref()),
                     message,
                     constraint,
@@ -85,7 +85,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
 
 // TODO: Use gitoxide here
 pub fn push_tags_and_head(
-    repo: &git::Repository,
+    repo: &gix::Repository,
     tag_names: &[refs::FullName],
     Options { dry_run, skip_push, .. }: Options,
 ) -> anyhow::Result<()> {
@@ -97,7 +97,7 @@ pub fn push_tags_and_head(
     cmd.arg("push")
         .arg(
             repo.head()?
-                .into_remote(git::remote::Direction::Push)
+                .into_remote(gix::remote::Direction::Push)
                 .ok_or_else(|| anyhow!("Cannot push in uninitialized repo"))??
                 .name()
                 .expect("configured remotes have a name")

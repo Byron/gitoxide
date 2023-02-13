@@ -6,7 +6,7 @@ use std::{
 };
 
 use anyhow::{anyhow, Result};
-use git_repository::{
+use gix::{
     hash::ObjectId,
     object, objs, odb,
     odb::{loose, pack, Write},
@@ -100,7 +100,7 @@ enum OutputWriter {
     Sink(odb::Sink),
 }
 
-impl git_repository::odb::Write for OutputWriter {
+impl gix::odb::Write for OutputWriter {
     type Error = Error;
 
     fn write_buf(&self, kind: object::Kind, from: &[u8]) -> Result<ObjectId, Self::Error> {
@@ -119,7 +119,7 @@ impl git_repository::odb::Write for OutputWriter {
 }
 
 impl OutputWriter {
-    fn new(path: Option<impl AsRef<Path>>, compress: bool, object_hash: git_repository::hash::Kind) -> Self {
+    fn new(path: Option<impl AsRef<Path>>, compress: bool, object_hash: gix::hash::Kind) -> Self {
         match path {
             Some(path) => OutputWriter::Loose(loose::Store::at(path.as_ref(), object_hash)),
             None => OutputWriter::Sink(odb::sink(object_hash).compress(compress)),
@@ -134,7 +134,7 @@ pub struct Context {
     pub sink_compress: bool,
     pub verify: bool,
     pub should_interrupt: Arc<AtomicBool>,
-    pub object_hash: git_repository::hash::Kind,
+    pub object_hash: gix::hash::Kind,
 }
 
 pub fn pack_or_pack_index(

@@ -1,5 +1,4 @@
-use git_repository as git;
-use git_repository::bstr::ByteSlice;
+use gix::bstr::ByteSlice;
 
 use crate::commit::Message;
 
@@ -97,7 +96,7 @@ impl From<&'_ str> for Message {
                 )
             })
             .unwrap_or_else(|_| {
-                let m = git::objs::commit::MessageRef::from_bytes(m.as_bytes());
+                let m = gix::objs::commit::MessageRef::from_bytes(m.as_bytes());
                 (
                     m.summary().as_ref().to_string().into(),
                     None,

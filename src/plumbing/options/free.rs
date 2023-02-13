@@ -39,8 +39,8 @@ pub mod index {
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
         /// The object format to assume when reading files that don't inherently know about it, or when writing files.
-        #[clap(long, default_value_t = git_repository::hash::Kind::default(), value_parser = crate::shared::AsHashKind)]
-        pub object_hash: git_repository::hash::Kind,
+        #[clap(long, default_value_t = gix::hash::Kind::default(), value_parser = crate::shared::AsHashKind)]
+        pub object_hash: gix::hash::Kind,
 
         /// The path to the index file.
         #[clap(short = 'i', long, default_value = ".git/index")]

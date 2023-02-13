@@ -5,7 +5,7 @@ use std::{
     str::FromStr,
 };
 
-use git_repository::bstr::ByteSlice;
+use gix::bstr::ByteSlice;
 use nom::{
     branch::alt,
     bytes::complete::{tag, tag_no_case, take_till, take_while, take_while_m_n},
@@ -401,14 +401,14 @@ fn make_user_message_and_consume_item(
     events.take_while(|(e, _)| !matches!(e, Event::End(Tag::Item))).count();
 }
 
-fn parse_message_id(html: &str) -> Option<git_repository::hash::ObjectId> {
+fn parse_message_id(html: &str) -> Option<gix::hash::ObjectId> {
     let html = html.strip_prefix(section::segment::Conventional::REMOVED_HTML_PREFIX)?;
     let end_of_hex = html.find(|c| {
         !matches!(c,
             'a'..='f' | '0'..='9'
         )
     })?;
-    git_repository::hash::ObjectId::from_hex(html[..end_of_hex].as_bytes()).ok()
+    gix::hash::ObjectId::from_hex(html[..end_of_hex].as_bytes()).ok()
 }
 
 fn update_unknown_range(target: &mut Option<Range<usize>>, source: Range<usize>) {

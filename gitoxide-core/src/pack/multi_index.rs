@@ -1,15 +1,15 @@
 use std::{io::BufWriter, path::PathBuf, sync::atomic::AtomicBool};
 
 use anyhow::bail;
-use git_repository as git;
-use git_repository::Progress;
+
+use gix::Progress;
 
 use crate::OutputFormat;
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub fn verify(multi_index_path: PathBuf, progress: impl Progress, should_interrupt: &AtomicBool) -> anyhow::Result<()> {
-    git::odb::pack::multi_index::File::at(multi_index_path)?.verify_integrity_fast(progress, should_interrupt)?;
+    gix::odb::pack::multi_index::File::at(multi_index_path)?.verify_integrity_fast(progress, should_interrupt)?;
     Ok(())
 }
 
@@ -18,19 +18,19 @@ pub fn create(
     output_path: PathBuf,
     progress: impl Progress,
     should_interrupt: &AtomicBool,
-    object_hash: git::hash::Kind,
+    object_hash: gix::hash::Kind,
 ) -> anyhow::Result<()> {
-    let mut out = BufWriter::new(git::lock::File::acquire_to_update_resource(
+    let mut out = BufWriter::new(gix::lock::File::acquire_to_update_resource(
         output_path,
-        git::lock::acquire::Fail::Immediately,
+        gix::lock::acquire::Fail::Immediately,
         None,
     )?);
-    git::odb::pack::multi_index::File::write_from_index_paths(
+    gix::odb::pack::multi_index::File::write_from_index_paths(
         index_paths,
         &mut out,
         progress,
         should_interrupt,
-        git::odb::pack::multi_index::write::Options { object_hash },
+        gix::odb::pack::multi_index::write::Options { object_hash },
     )?;
     out.into_inner()?.commit()?;
     Ok(())
@@ -61,7 +61,7 @@ pub fn info(
     }
     #[cfg(feature = "serde1")]
     {
-        let file = git::odb::pack::multi_index::File::at(&multi_index_path)?;
+        let file = gix::odb::pack::multi_index::File::at(&multi_index_path)?;
         serde_json::to_writer_pretty(
             out,
             &info::Statistics {
@@ -79,7 +79,7 @@ pub fn entries(multi_index_path: PathBuf, format: OutputFormat, mut out: impl st
     if format != OutputFormat::Human {
         bail!("Only human format is supported right now");
     }
-    let file = git::odb::pack::multi_index::File::at(&multi_index_path)?;
+    let file = gix::odb::pack::multi_index::File::at(&multi_index_path)?;
     for entry in file.iter() {
         writeln!(out, "{} {} {}", entry.oid, entry.pack_index, entry.pack_offset)?;
     }

@@ -6,7 +6,7 @@ pub struct Options {
 
 #[cfg(feature = "serde1")]
 mod serde_only {
-    use git_repository as git;
+
     mod ext {
         #[derive(serde::Serialize)]
         pub(crate) struct Tree {
@@ -19,11 +19,11 @@ mod serde_only {
         }
 
         mod tree {
-            use git_repository as git;
-            use git_repository::bstr::ByteSlice;
 
-            impl<'a> From<&'a git::index::extension::Tree> for super::Tree {
-                fn from(t: &'a git_repository::index::extension::Tree) -> Self {
+            use gix::bstr::ByteSlice;
+
+            impl<'a> From<&'a gix::index::extension::Tree> for super::Tree {
+                fn from(t: &'a gix::index::extension::Tree) -> Self {
                     super::Tree {
                         name: t.name.as_bstr().to_string(),
                         id: t.id.to_hex().to_string(),
@@ -79,7 +79,7 @@ mod serde_only {
     }
 
     impl Collection {
-        pub fn try_from_file(f: git::index::File, extension_details: bool) -> anyhow::Result<Self> {
+        pub fn try_from_file(f: gix::index::File, extension_details: bool) -> anyhow::Result<Self> {
             Ok(Collection {
                 version: f.version() as u8,
                 checksum: f.checksum().expect("just read from disk").to_hex().to_string(),
@@ -116,17 +116,17 @@ mod serde_only {
                             invalid => anyhow::bail!("Invalid stage {} encountered", invalid),
                         }
                         match entry.mode {
-                            git::index::entry::Mode::DIR => dir += 1,
-                            git::index::entry::Mode::FILE => file += 1,
-                            git::index::entry::Mode::FILE_EXECUTABLE => executable += 1,
-                            git::index::entry::Mode::SYMLINK => symlink += 1,
-                            git::index::entry::Mode::COMMIT => submodule += 1,
+                            gix::index::entry::Mode::DIR => dir += 1,
+                            gix::index::entry::Mode::FILE => file += 1,
+                            gix::index::entry::Mode::FILE_EXECUTABLE => executable += 1,
+                            gix::index::entry::Mode::SYMLINK => symlink += 1,
+                            gix::index::entry::Mode::COMMIT => submodule += 1,
                             _ => other += 1,
                         }
-                        if entry.flags.contains(git::index::entry::Flags::INTENT_TO_ADD) {
+                        if entry.flags.contains(gix::index::entry::Flags::INTENT_TO_ADD) {
                             intent_to_add += 1;
                         }
-                        if entry.flags.contains(git::index::entry::Flags::SKIP_WORKTREE) {
+                        if entry.flags.contains(gix::index::entry::Flags::SKIP_WORKTREE) {
                             skip_worktree += 1;
                         }
                     }

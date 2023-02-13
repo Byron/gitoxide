@@ -1141,7 +1141,7 @@ a 'frozen' version of the packed buffer for any amount of operations.
  - <csr-id-80f3d504eeb669f16c5621fac06f6c763ce84e47/> file::Store::from(PathBuf) removed
    At this low level, it's important to be clear about RefLogs and rather
    force the caller to specify the ref-log mode. Technically it depends
-   on a few factors, `git-repository` deals with them, but certainly
+   on a few factors, `gix` deals with them, but certainly
    shouldn't default to anything without being clear.
  - <csr-id-bfb32aee4e64fd6b1f18c830623cc3fddd059874/> Reference log line access
    `Reference::log_iter(…)` now is a platform instead of a forward iterator,

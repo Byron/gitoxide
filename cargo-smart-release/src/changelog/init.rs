@@ -2,7 +2,6 @@ use cargo_metadata::{
     camino::{Utf8Path, Utf8PathBuf},
     Package,
 };
-use git_repository as git;
 
 use crate::{
     changelog::{section::segment, Section},
@@ -32,7 +31,7 @@ impl State {
 pub struct Outcome {
     pub log: ChangeLog,
     pub state: State,
-    pub lock: git::lock::File,
+    pub lock: gix::lock::File,
     pub previous_content: Option<String>,
 }
 
@@ -63,7 +62,7 @@ impl ChangeLog {
         );
         let changelog_path = path_from_manifest(&package.manifest_path);
         let lock =
-            git::lock::File::acquire_to_update_resource(&changelog_path, git::lock::acquire::Fail::Immediately, None)?;
+            gix::lock::File::acquire_to_update_resource(&changelog_path, gix::lock::acquire::Fail::Immediately, None)?;
         let (log, state, previous_content) = if let Ok(markdown) = std::fs::read_to_string(changelog_path) {
             let existing_log = ChangeLog::from_markdown(&markdown);
             let copy_of_existing = existing_log.clone();
@@ -98,7 +97,7 @@ impl ChangeLog {
     pub fn from_history_segments(
         package: &Package,
         segments: &[commit::history::Segment<'_>],
-        repo: &git::Repository,
+        repo: &gix::Repository,
         selection: segment::Selection,
     ) -> Self {
         ChangeLog {

@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, iter::FromIterator};
 
-use git_repository::hash::ObjectId;
+use gix::hash::ObjectId;
 
 use crate::{
     changelog::{
@@ -146,7 +146,7 @@ fn merge_read_only_segment(
 }
 
 fn merge_conventional(
-    removed_in_release: &[git_repository::hash::ObjectId],
+    removed_in_release: &[gix::hash::ObjectId],
     dest_segments: &mut Vec<Segment>,
     mut src: section::segment::Conventional,
 ) {

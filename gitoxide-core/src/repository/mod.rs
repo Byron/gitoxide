@@ -1,13 +1,12 @@
 use std::path::PathBuf;
 
 use anyhow::{Context as AnyhowContext, Result};
-use git_repository as git;
 
-pub fn init(directory: Option<PathBuf>) -> Result<git::discover::repository::Path> {
-    git::create::into(
+pub fn init(directory: Option<PathBuf>) -> Result<gix::discover::repository::Path> {
+    gix::create::into(
         directory.unwrap_or_default(),
-        git::create::Kind::WithWorktree,
-        git::create::Options::default(),
+        gix::create::Kind::WithWorktree,
+        gix::create::Options::default(),
     )
     .with_context(|| "Repository initialization failed")
 }

@@ -1,11 +1,11 @@
 use anyhow::{bail, Result};
-use git::bstr::{BStr, BString};
-use git_repository as git;
+
+use gix::bstr::{BStr, BString};
 
 use crate::OutputFormat;
 
 pub fn list(
-    repo: git::Repository,
+    repo: gix::Repository,
     filters: Vec<BString>,
     overrides: Vec<BString>,
     format: OutputFormat,
@@ -14,7 +14,7 @@ pub fn list(
     if format != OutputFormat::Human {
         bail!("Only human output format is supported at the moment");
     }
-    let repo = git::open_opts(
+    let repo = gix::open_opts(
         repo.git_dir(),
         repo.open_options().clone().lossy_config(false).cli_overrides(overrides),
     )?;
@@ -58,7 +58,7 @@ struct Filter {
 
 impl Filter {
     fn new(input: BString) -> Self {
-        match git::config::parse::key(<_ as AsRef<BStr>>::as_ref(&input)) {
+        match gix::config::parse::key(<_ as AsRef<BStr>>::as_ref(&input)) {
             Some(key) => Filter {
                 name: key.section_name.into(),
                 subsection: key.subsection_name.map(ToOwned::to_owned),
@@ -70,15 +70,15 @@ impl Filter {
         }
     }
 
-    fn matches_section(&self, section: &git::config::file::Section<'_>) -> bool {
-        let ignore_case = git::glob::wildmatch::Mode::IGNORE_CASE;
+    fn matches_section(&self, section: &gix::config::file::Section<'_>) -> bool {
+        let ignore_case = gix::glob::wildmatch::Mode::IGNORE_CASE;
 
-        if !git::glob::wildmatch(self.name.as_bytes().into(), section.header().name(), ignore_case) {
+        if !gix::glob::wildmatch(self.name.as_bytes().into(), section.header().name(), ignore_case) {
             return false;
         }
         match (self.subsection.as_deref(), section.header().subsection_name()) {
             (Some(filter), Some(name)) => {
-                if !git::glob::wildmatch(filter.as_slice().into(), name, ignore_case) {
+                if !gix::glob::wildmatch(filter.as_slice().into(), name, ignore_case) {
                     return false;
                 }
             }
@@ -89,7 +89,7 @@ impl Filter {
     }
 }
 
-fn write_meta(meta: &git::config::file::Metadata, out: &mut impl std::io::Write) -> std::io::Result<()> {
+fn write_meta(meta: &gix::config::file::Metadata, out: &mut impl std::io::Write) -> std::io::Result<()> {
     writeln!(
         out,
         "# From '{}' ({:?}{}{})",
@@ -101,7 +101,7 @@ fn write_meta(meta: &git::config::file::Metadata, out: &mut impl std::io::Write)
         (meta.level != 0)
             .then(|| format!(", include level {}", meta.level))
             .unwrap_or_default(),
-        (meta.trust != git::sec::Trust::Full)
+        (meta.trust != gix::sec::Trust::Full)
             .then_some(", untrusted")
             .unwrap_or_default()
     )

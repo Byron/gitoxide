@@ -1,7 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
-use git_repository as git;
-use git_repository::Progress;
+use gix::Progress;
 
 use crate::{pack, OutputFormat};
 
@@ -20,7 +19,7 @@ pub struct Context {
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub fn integrity(
-    repo: git::Repository,
+    repo: gix::Repository,
     mut out: impl std::io::Write,
     progress: impl Progress,
     should_interrupt: &AtomicBool,
@@ -35,19 +34,19 @@ pub fn integrity(
     let mut outcome = repo.objects.store_ref().verify_integrity(
         progress,
         should_interrupt,
-        git_repository::odb::pack::index::verify::integrity::Options {
+        gix::odb::pack::index::verify::integrity::Options {
             verify_mode,
             traversal: algorithm.into(),
             thread_limit,
             // TODO: a way to get the pack cache from a handle
-            make_pack_lookup_cache: || git_repository::odb::pack::cache::Never,
+            make_pack_lookup_cache: || gix::odb::pack::cache::Never,
         },
     )?;
     if let Some(index) = repo.worktree().map(|wt| wt.index()).transpose()? {
         index.verify_integrity()?;
         index.verify_entries()?;
         index.verify_extensions(true, {
-            use git::odb::FindExt;
+            use gix::odb::FindExt;
             let objects = repo.objects;
             move |oid, buf: &mut Vec<u8>| objects.find_tree_iter(oid, buf).ok()
         })?;

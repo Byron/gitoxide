@@ -1,20 +1,18 @@
-use git_repository as git;
-
 use crate::commit::Message;
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 pub struct Segment<'a> {
-    pub head: git::refs::Reference,
+    pub head: gix::refs::Reference,
     /// only relevant history items, that is those that change code in the respective crate.
     pub history: Vec<&'a Item>,
 }
 
 pub struct Item {
-    pub id: git::ObjectId,
+    pub id: gix::ObjectId,
     pub message: Message,
-    pub commit_time: git::actor::Time,
-    pub tree_id: git::ObjectId,
-    pub parent_tree_id: Option<git::ObjectId>,
+    pub commit_time: gix::actor::Time,
+    pub tree_id: gix::ObjectId,
+    pub parent_tree_id: Option<gix::ObjectId>,
 }
 
 #[cfg(test)]

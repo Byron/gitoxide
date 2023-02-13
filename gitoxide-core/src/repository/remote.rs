@@ -1,8 +1,8 @@
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod refs_impl {
     use anyhow::bail;
-    use git_repository as git;
-    use git_repository::{
+
+    use gix::{
         protocol::handshake,
         refspec::{match_group::validate::Fix, RefSpec},
         remote::fetch::Source,
@@ -12,7 +12,7 @@ mod refs_impl {
     use crate::OutputFormat;
 
     pub mod refs {
-        use git_repository::bstr::BString;
+        use gix::bstr::BString;
 
         use crate::OutputFormat;
 
@@ -35,11 +35,11 @@ mod refs_impl {
         pub(crate) use super::{print, print_ref};
     }
 
-    #[git::protocol::maybe_async::maybe_async]
+    #[gix::protocol::maybe_async::maybe_async]
     pub async fn refs_fn(
-        repo: git::Repository,
+        repo: gix::Repository,
         kind: refs::Kind,
-        mut progress: impl git::Progress,
+        mut progress: impl gix::Progress,
         mut out: impl std::io::Write,
         err: impl std::io::Write,
         refs::Options {
@@ -59,8 +59,8 @@ mod refs_impl {
                 bail!("JSON output isn't yet supported for listing ref-mappings.");
             }
             if !ref_specs.is_empty() {
-                remote.replace_refspecs(ref_specs.iter(), git::remote::Direction::Fetch)?;
-                remote = remote.with_fetch_tags(git::remote::fetch::Tags::None);
+                remote.replace_refspecs(ref_specs.iter(), gix::remote::Direction::Fetch)?;
+                remote = remote.with_fetch_tags(gix::remote::fetch::Tags::None);
             }
             *show_unmapped_remote_refs
         } else {
@@ -69,14 +69,14 @@ mod refs_impl {
         progress.info(format!(
             "Connecting to {:?}",
             remote
-                .url(git::remote::Direction::Fetch)
+                .url(gix::remote::Direction::Fetch)
                 .context("Remote didn't have a URL to connect to")?
                 .to_bstring()
         ));
         let map = remote
-            .connect(git::remote::Direction::Fetch, progress)
+            .connect(gix::remote::Direction::Fetch, progress)
             .await?
-            .ref_map(git::remote::ref_map::Options {
+            .ref_map(gix::remote::ref_map::Options {
                 prefix_from_spec_as_filter_on_remote: !matches!(kind, refs::Kind::Remote),
                 ..Default::default()
             })
@@ -89,7 +89,7 @@ mod refs_impl {
         match kind {
             refs::Kind::Tracking { .. } => print_refmap(
                 &repo,
-                remote.refspecs(git::remote::Direction::Fetch),
+                remote.refspecs(gix::remote::Direction::Fetch),
                 map,
                 show_unmapped,
                 out,
@@ -110,14 +110,14 @@ mod refs_impl {
     }
 
     pub(crate) fn print_refmap(
-        repo: &git::Repository,
+        repo: &gix::Repository,
         refspecs: &[RefSpec],
-        mut map: git::remote::fetch::RefMap,
+        mut map: gix::remote::fetch::RefMap,
         show_unmapped_remotes: bool,
         mut out: impl std::io::Write,
         mut err: impl std::io::Write,
     ) -> anyhow::Result<()> {
-        let mut last_spec_index = git::remote::fetch::SpecIndex::ExplicitInRemote(usize::MAX);
+        let mut last_spec_index = gix::remote::fetch::SpecIndex::ExplicitInRemote(usize::MAX);
         map.mappings.sort_by_key(|m| m.spec_index);
         for mapping in &map.mappings {
             if mapping.spec_index != last_spec_index {
@@ -131,7 +131,7 @@ mod refs_impl {
                 if is_implicit {
                     write!(&mut out, " (implicit")?;
                     if spec.to_ref()
-                        == git::remote::fetch::Tags::Included
+                        == gix::remote::fetch::Tags::Included
                             .to_refspec()
                             .expect("always yields refspec")
                     {
@@ -144,11 +144,11 @@ mod refs_impl {
 
             write!(out, "\t")?;
             let target_id = match &mapping.remote {
-                git::remote::fetch::Source::ObjectId(id) => {
+                gix::remote::fetch::Source::ObjectId(id) => {
                     write!(out, "{}", id)?;
                     id
                 }
-                git::remote::fetch::Source::Ref(r) => print_ref(&mut out, r)?,
+                gix::remote::fetch::Source::Ref(r) => print_ref(&mut out, r)?,
             };
             match &mapping.local {
                 Some(local) => {
@@ -283,7 +283,7 @@ mod refs_impl {
         }
     }
 
-    pub(crate) fn print_ref(mut out: impl std::io::Write, r: &handshake::Ref) -> std::io::Result<&git::hash::oid> {
+    pub(crate) fn print_ref(mut out: impl std::io::Write, r: &handshake::Ref) -> std::io::Result<&gix::hash::oid> {
         match r {
             handshake::Ref::Direct {
                 full_ref_name: path,
@@ -300,7 +300,7 @@ mod refs_impl {
                 object,
             } => write!(&mut out, "{} {} symref-target:{}", object, path, target).map(|_| object.as_ref()),
             handshake::Ref::Unborn { full_ref_name, target } => {
-                static NULL: git::hash::ObjectId = git::hash::ObjectId::null(git::hash::Kind::Sha1);
+                static NULL: gix::hash::ObjectId = gix::hash::ObjectId::null(gix::hash::Kind::Sha1);
                 write!(&mut out, "unborn {} symref-target:{}", full_ref_name, target).map(|_| NULL.as_ref())
             }
         }
@@ -319,21 +319,21 @@ pub use refs_impl::{refs, refs_fn as refs, JsonRef};
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub(crate) fn by_name_or_url<'repo>(
-    repo: &'repo git_repository::Repository,
+    repo: &'repo gix::Repository,
     name_or_url: Option<&str>,
-) -> anyhow::Result<git_repository::Remote<'repo>> {
+) -> anyhow::Result<gix::Remote<'repo>> {
     use anyhow::Context;
     Ok(match name_or_url {
         Some(name) => {
             if name.contains('/') || name.contains('.') {
-                repo.remote_at(git_repository::url::parse(name.into())?)?
+                repo.remote_at(gix::url::parse(name.into())?)?
             } else {
                 repo.find_remote(name)?
             }
         }
         None => repo
             .head()?
-            .into_remote(git_repository::remote::Direction::Fetch)
+            .into_remote(gix::remote::Direction::Fetch)
             .context("Cannot find a remote for unborn branch")??,
     })
 }

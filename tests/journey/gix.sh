@@ -31,9 +31,9 @@ title "git-tempfile crate"
 )
 
 title "git-tempfile crate"
-(when "testing 'git-repository'"
-  snapshot="$snapshot/git-repository"
-  cd git-repository
+(when "testing 'gix'"
+  snapshot="$snapshot/gix"
+  cd gix
   ABORTED=143
 
   (when "running the example program to check order of signal handlers"
