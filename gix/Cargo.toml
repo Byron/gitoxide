@@ -99,13 +99,13 @@ git-sec = { version = "^0.6.2", path = "../git-sec" }
 git-date = { version = "^0.4.2", path = "../git-date" }
 git-refspec = { version = "^0.7.2", path = "../git-refspec" }
 
-git-config = { version = "^0.16.0", path = "../git-config" }
+git-config = { version = "^0.16.1", path = "../git-config" }
 git-odb = { version = "^0.40.2", path = "../git-odb" }
 git-hash = { version = "^0.10.2", path = "../git-hash" }
 git-object = { version = "^0.26.1", path = "../git-object" }
 git-actor = { version = "^0.17.1", path = "../git-actor" }
 git-pack = { version = "^0.30.2", path = "../git-pack", features = ["object-cache-dynamic"] }
-git-revision = { version = "^0.10.2", path = "../git-revision" }
+git-revision = { version = "^0.10.3", path = "../git-revision" }
 
 git-path = { version = "^0.7.1", path = "../git-path" }
 git-url = { version = "^0.13.2", path = "../git-url" }

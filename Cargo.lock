@@ -1293,7 +1293,7 @@ dependencies = [
 
 [[package]]
 name = "git-config"
-version = "0.16.0"
+version = "0.16.1"
 dependencies = [
  "bstr",
  "criterion",
@@ -1946,7 +1946,7 @@ dependencies = [
 
 [[package]]
 name = "git-revision"
-version = "0.10.2"
+version = "0.10.3"
 dependencies = [
  "bstr",
  "document-features",
