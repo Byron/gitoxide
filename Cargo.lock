@@ -899,6 +899,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dunce"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0bd4b30a6560bbd9b4620f4de34c3f14f60848e58a9b7216801afcb4c7b31c3c"
+
+[[package]]
 name = "either"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1440,6 +1446,7 @@ version = "0.13.0"
 dependencies = [
  "bstr",
  "defer",
+ "dunce",
  "git-hash 0.10.2",
  "git-path 0.7.1",
  "git-ref 0.24.0",

@@ -21,6 +21,9 @@ git-hash = { version = "^0.10.2", path = "../git-hash" }
 bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"] }
 thiserror = "1.0.26"
 
+[target.'cfg(windows)'.dependencies]
+dunce = "1.0.3"
+
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
 serial_test = "1.0.0"

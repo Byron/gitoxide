@@ -139,6 +139,28 @@ fn git_version_from_bytes(bytes: &[u8]) -> Result<(u8, u8, u8)> {
     })?)
 }
 
+/// Set the current working dir to `new_cwd` and return a type that returns to the previous working dir on drop.
+pub fn set_current_dir(new_cwd: impl AsRef<Path>) -> std::io::Result<AutoRevertToPreviousCWD> {
+    let cwd = std::env::current_dir()?;
+    std::env::set_current_dir(new_cwd)?;
+    Ok(AutoRevertToPreviousCWD(cwd))
+}
+
+/// A utility to set the current working dir to the given value, on drop.
+///
+/// # Panics
+///
+/// Note that this will panic if the CWD cannot be set on drop.
+#[derive(Debug)]
+#[must_use]
+pub struct AutoRevertToPreviousCWD(PathBuf);
+
+impl Drop for AutoRevertToPreviousCWD {
+    fn drop(&mut self) {
+        std::env::set_current_dir(&self.0).unwrap();
+    }
+}
+
 /// Run `git` in `working_dir` with all provided `args`.
 pub fn run_git(working_dir: &Path, args: &[&str]) -> std::io::Result<std::process::ExitStatus> {
     std::process::Command::new("git")
