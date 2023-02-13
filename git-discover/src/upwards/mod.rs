@@ -41,6 +41,8 @@ pub(crate) mod function {
             .map(|cwd| Ok(Cow::Borrowed(cwd)))
             .unwrap_or_else(|| std::env::current_dir().map(Cow::Owned))?;
         let directory = directory.as_ref();
+        #[cfg(windows)]
+        let directory = dunce::simplified(directory);
         let dir = git_path::normalize(directory, cwd.as_ref()).ok_or_else(|| Error::InvalidInput {
             directory: directory.into(),
         })?;

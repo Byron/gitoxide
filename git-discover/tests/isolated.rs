@@ -8,7 +8,7 @@ use serial_test::serial;
 fn upwards_with_relative_directories_and_optional_ceiling() -> git_testtools::Result {
     let repo = git_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
 
-    std::env::set_current_dir(repo.join("subdir"))?;
+    let _keep = git_testtools::set_current_dir(repo.join("subdir"))?;
     let cwd = std::env::current_dir()?;
 
     for (search_dir, ceiling_dir_component) in [
@@ -54,6 +54,67 @@ fn upwards_with_relative_directories_and_optional_ceiling() -> git_testtools::Re
         assert!(matches!(err, git_discover::upwards::Error::NoMatchingCeilingDir));
     }
 
+    Ok(())
+}
+
+#[test]
+#[serial]
+fn unc_paths_are_handled_on_windows() -> git_testtools::Result {
+    let repo = git_testtools::scripted_fixture_read_only("make_basic_repo.sh").unwrap();
+
+    let _keep = git_testtools::set_current_dir(repo.join("some/very/deeply/nested/subdir")).unwrap();
+    let cwd = std::env::current_dir().unwrap();
+    let parent = cwd.parent().unwrap();
+    // all discoveries should fail, as they'll hit `parent` before finding a git repository.
+
+    // dir: normal, ceiling: normal
+    let res = git_discover::upwards_opts(
+        &cwd,
+        Options {
+            ceiling_dirs: vec![parent.to_path_buf()],
+            match_ceiling_dir_or_error: false,
+            ..Default::default()
+        },
+    );
+    assert!(res.is_err(), "{res:?}");
+
+    let parent = parent.canonicalize().unwrap();
+    // dir: normal, ceiling: extended
+    let res = git_discover::upwards_opts(
+        &cwd,
+        Options {
+            ceiling_dirs: vec![parent],
+            match_ceiling_dir_or_error: false,
+            ..Default::default()
+        },
+    );
+    assert!(res.is_err(), "{res:?}");
+
+    let cwd = cwd.canonicalize().unwrap();
+
+    let parent = cwd.parent().unwrap();
+    // dir: extended, ceiling: normal
+    let res = git_discover::upwards_opts(
+        &cwd,
+        Options {
+            ceiling_dirs: vec![parent.to_path_buf()],
+            match_ceiling_dir_or_error: false,
+            ..Default::default()
+        },
+    );
+    assert!(res.is_err(), "{res:?}");
+
+    let parent = parent.canonicalize().unwrap();
+    // dir: extended, ceiling: extended
+    let res = git_discover::upwards_opts(
+        &cwd,
+        Options {
+            ceiling_dirs: vec![parent],
+            match_ceiling_dir_or_error: false,
+            ..Default::default()
+        },
+    );
+    assert!(res.is_err(), "{res:?}");
     Ok(())
 }
 
