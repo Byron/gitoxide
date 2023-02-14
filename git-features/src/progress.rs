@@ -1,6 +1,7 @@
 //! Various `prodash` types along with various utilities for comfort.
 use std::io;
 
+pub use prodash;
 pub use prodash::{
     messages::MessageLevel,
     progress::{Discard, DoOrDiscard, Either, Id, Step, StepShared, ThroughputOnDrop, UNKNOWN},
