@@ -17,6 +17,8 @@
 )]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
+#![cfg(all(target_arch = "wasm32", target_os = "unknown", not(feature = "wasm")))]
+compile_error!("the wasm32-unknown-unknown target is not supported by default,  and the \"wasm\" feature is required.");
 
 ///
 pub mod bundle;

@@ -11,7 +11,10 @@ rust-version = "1.64"
 autotests = false
 
 [features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "git-hash/serde1", "git-object/serde1"]
+## Make it possible to compile to the `wasm32-unknown-unknown` target.
+wasm = ["dep:getrandom"]
 
 [lib]
 doctest = false
@@ -22,3 +25,4 @@ git-object = { version = "^0.26.1", path = "../git-object" }
 thiserror = "1.0.32"
 imara-diff = "0.1.3"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
+getrandom = { version = "0.2.8", optional = true, default-features = false, features = ["js"] }

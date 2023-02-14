@@ -24,6 +24,8 @@ pack-cache-lru-dynamic = ["clru"]
 object-cache-dynamic = ["clru"]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "git-object/serde1"]
+## Make it possible to compile to the `wasm32-unknown-unknown` target.
+wasm = ["git-diff/wasm"]
 
 [dependencies]
 git-features = { version = "^0.26.4", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
