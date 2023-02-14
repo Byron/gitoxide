@@ -22,7 +22,7 @@ serde1 = ["serde", "bstr/serde", "smallvec/serde", "git-hash/serde1", "git-actor
 verbose-object-parsing-errors = ["nom/std"]
 
 [dependencies]
-git-features = { version = "^0.26.2", path = "../git-features", features = ["rustsha1"] }
+git-features = { version = "^0.26.3", path = "../git-features", features = ["rustsha1"] }
 git-hash = { version = "^0.10.2", path = "../git-hash" }
 git-validate = { version = "^0.7.2", path = "../git-validate" }
 git-actor = { version = "^0.17.1", path = "../git-actor" }

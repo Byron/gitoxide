@@ -26,7 +26,7 @@ object-cache-dynamic = ["clru"]
 serde1 = ["serde", "git-object/serde1"]
 
 [dependencies]
-git-features = { version = "^0.26.2", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
+git-features = { version = "^0.26.3", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
 git-path = { version = "^0.7.1", path = "../git-path" }
 git-hash = { version = "^0.10.2", path = "../git-hash" }
 git-chunk = { version = "^0.4.1", path = "../git-chunk" }

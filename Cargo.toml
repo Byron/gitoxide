@@ -85,7 +85,7 @@ cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 anyhow = "1.0.42"
 
 gitoxide-core = { version = "^0.24.0", path = "gitoxide-core" }
-git-features = { version = "^0.26.2", path = "git-features" }
+git-features = { version = "^0.26.3", path = "git-features" }
 gix = { version = "^0.35.0", path = "gix", default-features = false }
 
 clap = { version = "4.1.1", features = ["derive", "cargo"] }
