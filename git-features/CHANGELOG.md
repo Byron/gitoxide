@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.26.4 (2023-02-14)
+
+### New Features
+
+ - <csr-id-a3bd14a7753716e7ad67cd56d24eee1fa099a6fd/> re-export `prodash::progress::(Task|Value)` directly under `progress`
+   This is in addition to the `progress` re-export which allows everything
+   but yields less optimal import paths.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - re-export `prodash::progress::(Task|Value)` directly under `progress` ([`a3bd14a`](https://github.com/Byron/gitoxide/commit/a3bd14a7753716e7ad67cd56d24eee1fa099a6fd))
+</details>
+
 ## 0.26.3 (2023-02-14)
 
 ### New Features
@@ -16,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 4 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -28,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-features v0.26.3 ([`1ecfb7f`](https://github.com/Byron/gitoxide/commit/1ecfb7f8bfb24432690d8f31367488f2e59a642a))
     - re-export `prodash` in `progress` module. ([`4260572`](https://github.com/Byron/gitoxide/commit/426057247a80821b3da22b4ae5d67bda89ce0631))
 </details>
 

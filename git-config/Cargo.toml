@@ -17,7 +17,7 @@ autotests = false
 serde1 = ["serde", "bstr/serde", "git-sec/serde1", "git-ref/serde1", "git-glob/serde1", "git-config-value/serde1"]
 
 [dependencies]
-git-features = { version = "^0.26.3", path = "../git-features"}
+git-features = { version = "^0.26.4", path = "../git-features"}
 git-config-value = { version = "^0.10.1", path = "../git-config-value" }
 git-path = { version = "^0.7.1", path = "../git-path" }
 git-sec = { version = "^0.6.2", path = "../git-sec" }
