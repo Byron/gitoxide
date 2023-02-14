@@ -4,7 +4,7 @@ use std::io;
 pub use prodash;
 pub use prodash::{
     messages::MessageLevel,
-    progress::{Discard, DoOrDiscard, Either, Id, Step, StepShared, ThroughputOnDrop, UNKNOWN},
+    progress::{Discard, DoOrDiscard, Either, Id, Step, StepShared, Task, ThroughputOnDrop, Value, UNKNOWN},
     unit, Progress, Unit,
 };
 
