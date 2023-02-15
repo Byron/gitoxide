@@ -17,17 +17,15 @@
 )]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
-#![cfg(all(target_arch = "wasm32", target_os = "unknown", not(feature = "wasm")))]
-compile_error!("the wasm32-unknown-unknown target is not supported by default,  and the \"wasm\" feature is required.");
 
 ///
 pub mod bundle;
 /// A bundle of pack data and the corresponding pack index
 pub struct Bundle {
     /// The pack file corresponding to `index`
-    pub pack: crate::data::File,
+    pub pack: data::File,
     /// The index file corresponding to `pack`
-    pub index: crate::index::File,
+    pub index: index::File,
 }
 
 ///
@@ -39,7 +37,6 @@ pub mod cache;
 pub mod data;
 
 mod find_traits;
-
 pub use find_traits::{Find, FindExt};
 
 ///
