@@ -3,6 +3,7 @@ pub mod init;
 
 mod find;
 ///
+#[cfg(not(feature = "wasm"))]
 pub mod write;
 
 ///

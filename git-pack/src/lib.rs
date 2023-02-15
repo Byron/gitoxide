@@ -23,9 +23,9 @@ pub mod bundle;
 /// A bundle of pack data and the corresponding pack index
 pub struct Bundle {
     /// The pack file corresponding to `index`
-    pub pack: crate::data::File,
+    pub pack: data::File,
     /// The index file corresponding to `pack`
-    pub index: crate::index::File,
+    pub index: index::File,
 }
 
 ///
@@ -37,7 +37,6 @@ pub mod cache;
 pub mod data;
 
 mod find_traits;
-
 pub use find_traits::{Find, FindExt};
 
 ///
