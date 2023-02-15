@@ -7,13 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.35.0 (2023-02-13)
 
-This is the last release under this name and merely a notice to inform that `gix` from now on is `gix`.
+This is the last release under this name and merely a notice to inform that `git-repository` from now on is `gix`.
 
 Furthermore, all `git-*` crates belonging to the `gitoxide` project will be renamed to `gix-*`.
 
 ### Changed (BREAKING)
 
- - <csr-id-1408482fd21be7487b46753bb54a018c7a164f34/> a note of the pending rename of `gix` to `gix`
+ - <csr-id-1408482fd21be7487b46753bb54a018c7a164f34/> a note of the pending rename of `git-repository` to `gix`
 
 ### New Features
 
