@@ -113,15 +113,15 @@ fn overwrite_entries() {
     assert_eq!(snapshot.entries().len(), 4);
 }
 
-fn signature(name: &str, email: &str) -> git_actor::Signature {
-    git_actor::Signature {
+fn signature(name: &str, email: &str) -> gix_actor::Signature {
+    gix_actor::Signature {
         name: name.into(),
         email: email.into(),
-        time: git_actor::Time {
+        time: gix_actor::Time {
             // marker
             seconds_since_unix_epoch: 42,
             offset_in_seconds: 53,
-            sign: git_actor::Sign::Minus,
+            sign: gix_actor::Sign::Minus,
         },
     }
 }

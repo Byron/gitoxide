@@ -17,7 +17,7 @@ pub struct LineRef<'a> {
     pub new_oid: &'a BStr,
     /// The signature of the currently configured committer.
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub signature: git_actor::SignatureRef<'a>,
+    pub signature: gix_actor::SignatureRef<'a>,
     /// The message providing details about the operation performed in this log line.
     pub message: &'a BStr,
 }

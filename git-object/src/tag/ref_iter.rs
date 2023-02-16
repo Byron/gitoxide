@@ -47,7 +47,7 @@ impl<'a> TagRefIter<'a> {
 
     /// Returns the taggers signature if there is no decoding error, and if this field exists.
     /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not.
-    pub fn tagger(mut self) -> Result<Option<git_actor::SignatureRef<'a>>, crate::decode::Error> {
+    pub fn tagger(mut self) -> Result<Option<gix_actor::SignatureRef<'a>>, crate::decode::Error> {
         self.find_map(|t| match t {
             Ok(Token::Tagger(signature)) => Some(Ok(signature)),
             Err(err) => Some(Err(err)),
@@ -147,7 +147,7 @@ pub enum Token<'a> {
     },
     TargetKind(Kind),
     Name(&'a BStr),
-    Tagger(Option<git_actor::SignatureRef<'a>>),
+    Tagger(Option<gix_actor::SignatureRef<'a>>),
     Body {
         message: &'a BStr,
         pgp_signature: Option<&'a BStr>,

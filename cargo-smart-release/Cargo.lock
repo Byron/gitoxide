@@ -521,7 +521,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-actor"
+name = "gix-actor"
 version = "0.10.1"
 dependencies = [
  "bstr",
@@ -695,7 +695,7 @@ name = "git-mailmap"
 version = "0.2.0"
 dependencies = [
  "bstr",
- "git-actor",
+ "gix-actor",
  "quick-error",
 ]
 
@@ -705,7 +705,7 @@ version = "0.19.0"
 dependencies = [
  "bstr",
  "btoi",
- "git-actor",
+ "gix-actor",
  "gix-features",
  "gix-hash",
  "gix-validate",
@@ -777,7 +777,7 @@ dependencies = [
 name = "git-ref"
 version = "0.14.0"
 dependencies = [
- "git-actor",
+ "gix-actor",
  "gix-features",
  "gix-hash",
  "git-lock",
@@ -796,7 +796,7 @@ version = "0.19.0"
 dependencies = [
  "byte-unit",
  "clru",
- "git-actor",
+ "gix-actor",
  "git-attributes",
  "git-config",
  "git-credentials",

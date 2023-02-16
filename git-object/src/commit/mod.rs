@@ -51,14 +51,14 @@ impl<'a> CommitRef<'a> {
     /// Return the author, with whitespace trimmed.
     ///
     /// This is different from the `author` field which may contain whitespace.
-    pub fn author(&self) -> git_actor::SignatureRef<'a> {
+    pub fn author(&self) -> gix_actor::SignatureRef<'a> {
         self.author.trim()
     }
 
     /// Return the committer, with whitespace trimmed.
     ///
     /// This is different from the `committer` field which may contain whitespace.
-    pub fn committer(&self) -> git_actor::SignatureRef<'a> {
+    pub fn committer(&self) -> gix_actor::SignatureRef<'a> {
         self.committer.trim()
     }
 
@@ -68,7 +68,7 @@ impl<'a> CommitRef<'a> {
     }
 
     /// Returns the time at which this commit was created.
-    pub fn time(&self) -> git_actor::Time {
+    pub fn time(&self) -> gix_actor::Time {
         self.committer.time
     }
 }

@@ -103,7 +103,7 @@ pub mod create_or_update {
             name: &FullNameRef,
             previous_oid: Option<ObjectId>,
             new: &oid,
-            committer: Option<git_actor::SignatureRef<'_>>,
+            committer: Option<gix_actor::SignatureRef<'_>>,
             message: &BStr,
             mut force_create_reflog: bool,
         ) -> Result<(), Error> {

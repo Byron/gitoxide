@@ -1189,34 +1189,16 @@ dependencies = [
 
 [[package]]
 name = "git-actor"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9e5fd7bc63ad527d64584f8d01f99b89c051f5fbb8144b58ae5f812775065cf"
-dependencies = [
- "bstr",
- "btoi",
- "git-date 0.4.1",
- "itoa",
- "nom",
- "quick-error 2.0.1",
-]
-
-[[package]]
-name = "git-actor"
 version = "0.17.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "896ef44213fd88eb4ca4eb07ed2623619cfd8c867cc7702d19279cbb8dac37dc"
 dependencies = [
  "bstr",
  "btoi",
- "document-features",
- "git-date 0.4.2",
- "git-testtools",
- "gix-features",
- "gix-hash",
+ "git-date 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itoa",
  "nom",
- "pretty_assertions",
  "quick-error 2.0.1",
- "serde",
 ]
 
 [[package]]
@@ -1368,18 +1350,6 @@ dependencies = [
 
 [[package]]
 name = "git-date"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3777ed3a92334193bc5032d468dee2ddb7d1101263e58e0d2edcc308c06948b5"
-dependencies = [
- "bstr",
- "itoa",
- "thiserror",
- "time",
-]
-
-[[package]]
-name = "git-date"
 version = "0.4.2"
 dependencies = [
  "bstr",
@@ -1389,6 +1359,18 @@ dependencies = [
  "itoa",
  "once_cell",
  "serde",
+ "thiserror",
+ "time",
+]
+
+[[package]]
+name = "git-date"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e62061a2a74d3dd7b06d477f6c8a340c484f5ccf6408cf33c896d6ce80e9894c"
+dependencies = [
+ "bstr",
+ "itoa",
  "thiserror",
  "time",
 ]
@@ -1596,8 +1578,8 @@ version = "0.9.2"
 dependencies = [
  "bstr",
  "document-features",
- "git-actor 0.17.1",
  "git-testtools",
+ "gix-actor",
  "quick-error 2.0.1",
  "serde",
 ]
@@ -1614,7 +1596,7 @@ checksum = "3f8563e2d6f524d7053f3106714f99ecdc3adbba2cb7108c09d71a02579f2e19"
 dependencies = [
  "bstr",
  "btoi",
- "git-actor 0.17.0",
+ "git-actor",
  "git-features",
  "git-hash",
  "git-validate",
@@ -1632,8 +1614,8 @@ dependencies = [
  "bstr",
  "btoi",
  "document-features",
- "git-actor 0.17.1",
  "git-testtools",
+ "gix-actor",
  "gix-features",
  "gix-hash",
  "gix-validate",
@@ -1654,11 +1636,11 @@ dependencies = [
  "crossbeam-channel",
  "document-features",
  "filetime",
- "git-actor 0.17.1",
  "git-object 0.26.1",
  "git-pack",
  "git-quote 0.4.1",
  "git-testtools",
+ "gix-actor",
  "gix-features",
  "gix-hash",
  "gix-path",
@@ -1822,7 +1804,7 @@ version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a2c29bab109acaf626d49a54f1f85ab7f0911268fbf62c2b39680ef4ef19069"
 dependencies = [
- "git-actor 0.17.0",
+ "git-actor",
  "git-features",
  "git-hash",
  "git-lock 3.0.1",
@@ -1840,11 +1822,11 @@ name = "git-ref"
 version = "0.24.0"
 dependencies = [
  "document-features",
- "git-actor 0.17.1",
  "git-lock 3.0.2",
  "git-object 0.26.1",
  "git-tempfile 3.0.2",
  "git-testtools",
+ "gix-actor",
  "gix-features",
  "gix-hash",
  "gix-path",
@@ -1860,7 +1842,6 @@ dependencies = [
 name = "git-ref-tests"
 version = "0.0.0"
 dependencies = [
- "git-actor 0.17.1",
  "git-discover 0.13.0",
  "git-lock 3.0.2",
  "git-object 0.26.1",
@@ -1868,6 +1849,7 @@ dependencies = [
  "git-ref 0.24.0",
  "git-testtools",
  "git-worktree 0.12.2",
+ "gix-actor",
  "gix-features",
  "gix-hash",
  "gix-validate",
@@ -2188,7 +2170,6 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "git-actor 0.17.1",
  "git-attributes 0.8.2",
  "git-config",
  "git-credentials",
@@ -2213,6 +2194,7 @@ dependencies = [
  "git-traverse 0.22.1",
  "git-url",
  "git-worktree 0.12.2",
+ "gix-actor",
  "gix-features",
  "gix-glob",
  "gix-hash",
@@ -2232,6 +2214,24 @@ dependencies = [
  "thiserror",
  "unicode-normalization",
  "walkdir",
+]
+
+[[package]]
+name = "gix-actor"
+version = "0.17.1"
+dependencies = [
+ "bstr",
+ "btoi",
+ "document-features",
+ "git-date 0.4.2",
+ "git-testtools",
+ "gix-features",
+ "gix-hash",
+ "itoa",
+ "nom",
+ "pretty_assertions",
+ "quick-error 2.0.1",
+ "serde",
 ]
 
 [[package]]

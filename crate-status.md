@@ -85,7 +85,7 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 [git-hours]: https://github.com/kimmobrunfeldt/git-hours/blob/8aaeee237cb9d9028e7a2592a25ad8468b1f45e4/index.js#L114-L143
 [git-hours-discussion]: https://github.com/Byron/gitoxide/discussions/78
 
-### git-actor
+### gix-actor
 * [x] read and write a signature that uniquely identifies an actor within a git repository
 * [ ] a way to parse `name <email>` tuples (instead of full signatures) to facilitate parsing
       commit trailers.

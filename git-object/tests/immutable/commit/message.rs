@@ -223,12 +223,12 @@ mod body {
 mod summary {
     use std::borrow::Cow;
 
-    use git_actor::{Sign, SignatureRef, Time};
     use git_object::{
         bstr::{BStr, ByteSlice},
         commit::MessageRef,
         CommitRef,
     };
+    use gix_actor::{Sign, SignatureRef, Time};
 
     fn summary(input: &[u8]) -> Cow<'_, BStr> {
         let summary = MessageRef::from_bytes(input).summary();

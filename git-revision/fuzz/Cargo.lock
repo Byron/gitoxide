@@ -41,7 +41,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2fff2a6927b3bb87f9595d67196a70493f627687a71d87a0d692242c33f58c11"
 
 [[package]]
-name = "git-actor"
+name = "gix-actor"
 version = "0.11.0"
 dependencies = [
  "bstr",
@@ -84,7 +84,7 @@ version = "0.20.0"
 dependencies = [
  "bstr",
  "btoi",
- "git-actor",
+ "gix-actor",
  "gix-features",
  "gix-hash",
  "gix-validate",

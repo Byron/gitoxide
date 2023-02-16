@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use git_actor::{Sign, Time};
+use gix_actor::{Sign, Time};
 
 mod commit;
 mod tag;
@@ -23,9 +23,9 @@ fn fixture_bytes(kind: &str, path: &str) -> Vec<u8> {
     fixup(super::fixture_bytes(PathBuf::from(kind).join(path).to_str().unwrap()))
 }
 
-fn signature(time: u32) -> git_actor::SignatureRef<'static> {
+fn signature(time: u32) -> gix_actor::SignatureRef<'static> {
     use git_object::bstr::ByteSlice;
-    git_actor::SignatureRef {
+    gix_actor::SignatureRef {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"sebastian.thiel@icloud.com".as_bstr(),
         time: Time {
@@ -36,9 +36,9 @@ fn signature(time: u32) -> git_actor::SignatureRef<'static> {
     }
 }
 
-fn linus_signature(time: u32) -> git_actor::SignatureRef<'static> {
+fn linus_signature(time: u32) -> gix_actor::SignatureRef<'static> {
     use git_object::bstr::ByteSlice;
-    git_actor::SignatureRef {
+    gix_actor::SignatureRef {
         name: b"Linus Torvalds".as_bstr(),
         email: b"torvalds@linux-foundation.org".as_bstr(),
         time: Time {

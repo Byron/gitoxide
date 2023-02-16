@@ -69,7 +69,7 @@ impl<'a> CommitRefIter<'a> {
     /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not
     /// if not exactly two signatures were iterable.
     /// Errors are not the common case - if an error needs to be detectable, use this instance as iterator.
-    pub fn signatures(self) -> impl Iterator<Item = git_actor::SignatureRef<'a>> + 'a {
+    pub fn signatures(self) -> impl Iterator<Item = gix_actor::SignatureRef<'a>> + 'a {
         self.filter_map(|t| match t {
             Ok(Token::Author { signature }) | Ok(Token::Committer { signature }) => Some(signature),
             _ => None,
@@ -77,7 +77,7 @@ impl<'a> CommitRefIter<'a> {
     }
 
     /// Returns the committer signature if there is no decoding error.
-    pub fn committer(mut self) -> Result<git_actor::SignatureRef<'a>, crate::decode::Error> {
+    pub fn committer(mut self) -> Result<gix_actor::SignatureRef<'a>, crate::decode::Error> {
         self.find_map(|t| match t {
             Ok(Token::Committer { signature }) => Some(Ok(signature)),
             Err(err) => Some(Err(err)),
@@ -89,7 +89,7 @@ impl<'a> CommitRefIter<'a> {
     /// Returns the author signature if there is no decoding error.
     ///
     /// It may contain white space surrounding it, and is exactly as parsed.
-    pub fn author(mut self) -> Result<git_actor::SignatureRef<'a>, crate::decode::Error> {
+    pub fn author(mut self) -> Result<gix_actor::SignatureRef<'a>, crate::decode::Error> {
         self.find_map(|t| match t {
             Ok(Token::Author { signature }) => Some(Ok(signature)),
             Err(err) => Some(Err(err)),
@@ -248,11 +248,11 @@ pub enum Token<'a> {
     },
     /// A person who authored the content of the commit.
     Author {
-        signature: git_actor::SignatureRef<'a>,
+        signature: gix_actor::SignatureRef<'a>,
     },
     /// A person who committed the authors work to the repository.
     Committer {
-        signature: git_actor::SignatureRef<'a>,
+        signature: gix_actor::SignatureRef<'a>,
     },
     Encoding(&'a BStr),
     ExtraHeader((&'a BStr, Cow<'a, BStr>)),

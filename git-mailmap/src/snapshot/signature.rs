@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use bstr::{BStr, BString, ByteSlice};
 
-/// A signature like [`git_actor::Signature`], but with all string fields being a `Cow`.
+/// A signature like [`gix_actor::Signature`], but with all string fields being a `Cow`.
 #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature<'a> {
@@ -11,12 +11,12 @@ pub struct Signature<'a> {
     /// The possibly mapped email.
     pub email: Cow<'a, BStr>,
     /// The time stamp at which the signature is performed.
-    pub time: git_actor::Time,
+    pub time: gix_actor::Time,
 }
 
-impl<'a> From<Signature<'a>> for git_actor::Signature {
+impl<'a> From<Signature<'a>> for gix_actor::Signature {
     fn from(s: Signature<'a>) -> Self {
-        git_actor::Signature {
+        gix_actor::Signature {
             name: s.name.into_owned(),
             email: s.email.into_owned(),
             time: s.time,
@@ -24,8 +24,8 @@ impl<'a> From<Signature<'a>> for git_actor::Signature {
     }
 }
 
-impl<'a> From<git_actor::SignatureRef<'a>> for Signature<'a> {
-    fn from(s: git_actor::SignatureRef<'a>) -> Self {
+impl<'a> From<gix_actor::SignatureRef<'a>> for Signature<'a> {
+    fn from(s: gix_actor::SignatureRef<'a>) -> Self {
         Signature {
             name: s.name.into(),
             email: s.email.into(),

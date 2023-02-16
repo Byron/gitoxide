@@ -27,10 +27,10 @@ impl crate::Repository {
     /// # Note
     ///
     /// The values are cached when the repository is instantiated.
-    pub fn committer(&self) -> Option<Result<git_actor::SignatureRef<'_>, config::time::Error>> {
+    pub fn committer(&self) -> Option<Result<gix_actor::SignatureRef<'_>, config::time::Error>> {
         let p = self.config.personas();
 
-        Ok(git_actor::SignatureRef {
+        Ok(gix_actor::SignatureRef {
             name: p.committer.name.as_ref().or(p.user.name.as_ref()).map(|v| v.as_ref())?,
             email: p
                 .committer
@@ -57,10 +57,10 @@ impl crate::Repository {
     /// # Note
     ///
     /// The values are cached when the repository is instantiated.
-    pub fn author(&self) -> Option<Result<git_actor::SignatureRef<'_>, config::time::Error>> {
+    pub fn author(&self) -> Option<Result<gix_actor::SignatureRef<'_>, config::time::Error>> {
         let p = self.config.personas();
 
-        Ok(git_actor::SignatureRef {
+        Ok(gix_actor::SignatureRef {
             name: p.author.name.as_ref().or(p.user.name.as_ref()).map(|v| v.as_ref())?,
             email: p.author.email.as_ref().or(p.user.email.as_ref()).map(|v| v.as_ref())?,
             time: match extract_time_or_default(p.author.time.as_ref(), &gitoxide::Commit::AUTHOR_DATE) {
@@ -73,9 +73,9 @@ impl crate::Repository {
 }
 
 fn extract_time_or_default(
-    time: Option<&Result<git_actor::Time, git_date::parse::Error>>,
+    time: Option<&Result<gix_actor::Time, git_date::parse::Error>>,
     config_key: &'static keys::Time,
-) -> Result<git_actor::Time, config::time::Error> {
+) -> Result<gix_actor::Time, config::time::Error> {
     match time {
         Some(Ok(t)) => Ok(*t),
         None => Ok(git_date::Time::now_local_or_utc()),
@@ -88,7 +88,7 @@ pub(crate) struct Entity {
     pub name: Option<BString>,
     pub email: Option<BString>,
     /// A time parsed from an environment variable, handling potential errors is delayed.
-    pub time: Option<Result<git_actor::Time, git_date::parse::Error>>,
+    pub time: Option<Result<gix_actor::Time, git_date::parse::Error>>,
 }
 
 #[derive(Debug, Clone)]

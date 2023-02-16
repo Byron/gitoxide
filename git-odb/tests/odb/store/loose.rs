@@ -1,8 +1,8 @@
 use std::sync::atomic::AtomicBool;
 
-use git_actor::{Sign, Time};
 use git_object::bstr::ByteSlice;
 use git_odb::loose::Store;
+use gix_actor::{Sign, Time};
 use gix_features::progress;
 use pretty_assertions::assert_eq;
 
@@ -369,8 +369,8 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     }
 }
 
-fn signature(time: u32) -> git_actor::SignatureRef<'static> {
-    git_actor::SignatureRef {
+fn signature(time: u32) -> gix_actor::SignatureRef<'static> {
+    gix_actor::SignatureRef {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"byronimo@gmail.com".as_bstr(),
         time: Time {

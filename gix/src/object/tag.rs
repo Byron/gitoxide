@@ -9,7 +9,7 @@ impl<'repo> Tag<'repo> {
     }
 
     /// Decode this tag partially and return the tagger, if the field exists.
-    pub fn tagger(&self) -> Result<Option<git_actor::SignatureRef<'_>>, git_object::decode::Error> {
+    pub fn tagger(&self) -> Result<Option<gix_actor::SignatureRef<'_>>, git_object::decode::Error> {
         git_object::TagRefIter::from_bytes(&self.data).tagger()
     }
 }

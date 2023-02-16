@@ -1,5 +1,5 @@
 [package]
-name = "git-actor"
+name = "gix-actor"
 version = "0.17.1"
 description = "A way to identify git actors"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

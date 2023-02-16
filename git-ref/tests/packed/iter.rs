@@ -83,9 +83,9 @@ fn iter_prefix() -> crate::Result {
 #[test]
 fn packed_refs_without_header() -> crate::Result {
     let packed_refs = b"916840c0e2f67d370291042cb5274a597f4fa9bc refs/tags/TEST-0.0.1
-c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
+c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/gix-actor-v0.1.0
 ^13da90b54699a6b500ec5cd7d175f2cd5a1bed06
-0b92c8a256ae06c189e3b9c30b646d62ac8f7d10 refs/tags/git-actor-v0.1.1\n";
+0b92c8a256ae06c189e3b9c30b646d62ac8f7d10 refs/tags/gix-actor-v0.1.1\n";
     assert_eq!(
         packed::Iter::new(packed_refs)?.collect::<Result<Vec<_>, _>>()?,
         vec![
@@ -95,12 +95,12 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
                 object: None
             },
             packed::Reference {
-                name: "refs/tags/git-actor-v0.1.0".try_into()?,
+                name: "refs/tags/gix-actor-v0.1.0".try_into()?,
                 target: "c4cebba92af964f2d126be90b8a6298c4cf84d45".into(),
                 object: Some("13da90b54699a6b500ec5cd7d175f2cd5a1bed06".into())
             },
             packed::Reference {
-                name: "refs/tags/git-actor-v0.1.1".try_into()?,
+                name: "refs/tags/gix-actor-v0.1.1".try_into()?,
                 target: "0b92c8a256ae06c189e3b9c30b646d62ac8f7d10".into(),
                 object: None
             }
@@ -114,7 +114,7 @@ fn broken_ref_doesnt_end_the_iteration() -> crate::Result {
     let packed_refs = b"916840c0e2f67d370291042cb5274a597f4fa9bc refs/tags/TEST-0.0.1
 buggy-hash refs/wrong
 ^buggy-hash-too
-0b92c8a256ae06c189e3b9c30b646d62ac8f7d10 refs/tags/git-actor-v0.1.1\n";
+0b92c8a256ae06c189e3b9c30b646d62ac8f7d10 refs/tags/gix-actor-v0.1.1\n";
     let mut iter = packed::Iter::new(packed_refs)?;
 
     assert!(iter.next().expect("first ref").is_ok(), "first line is valid");

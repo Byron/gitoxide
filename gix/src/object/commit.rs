@@ -65,7 +65,7 @@ impl<'repo> Commit<'repo> {
     /// Decode the commit and obtain the time at which the commit was created.
     ///
     /// For the time at which it was authored, refer to `.decode()?.author.time`.
-    pub fn time(&self) -> Result<git_actor::Time, Error> {
+    pub fn time(&self) -> Result<gix_actor::Time, Error> {
         Ok(self.committer()?.time)
     }
 
@@ -86,14 +86,14 @@ impl<'repo> Commit<'repo> {
     }
 
     /// Return the commits author, with surrounding whitespace trimmed.
-    pub fn author(&self) -> Result<git_actor::SignatureRef<'_>, git_object::decode::Error> {
+    pub fn author(&self) -> Result<gix_actor::SignatureRef<'_>, git_object::decode::Error> {
         git_object::CommitRefIter::from_bytes(&self.data)
             .author()
             .map(|s| s.trim())
     }
 
     /// Return the commits committer. with surrounding whitespace trimmed.
-    pub fn committer(&self) -> Result<git_actor::SignatureRef<'_>, git_object::decode::Error> {
+    pub fn committer(&self) -> Result<gix_actor::SignatureRef<'_>, git_object::decode::Error> {
         git_object::CommitRefIter::from_bytes(&self.data)
             .committer()
             .map(|s| s.trim())

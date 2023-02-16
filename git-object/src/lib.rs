@@ -80,14 +80,14 @@ pub struct CommitRef<'a> {
     /// Who wrote this commit. Name and email might contain whitespace and are not trimmed to ensure round-tripping.
     ///
     /// Use the [`author()`][CommitRef::author()] method to received a trimmed version of it.
-    pub author: git_actor::SignatureRef<'a>,
+    pub author: gix_actor::SignatureRef<'a>,
     /// Who committed this commit. Name and email might contain whitespace and are not trimmed to ensure round-tripping.
     ///
     /// Use the [`committer()`][CommitRef::committer()] method to received a trimmed version of it.
     ///
     /// This may be different from the `author` in case the author couldn't write to the repository themselves and
     /// is commonly encountered with contributed commits.
-    pub committer: git_actor::SignatureRef<'a>,
+    pub committer: gix_actor::SignatureRef<'a>,
     /// The name of the message encoding, otherwise [UTF-8 should be assumed](https://github.com/git/git/blob/e67fbf927dfdf13d0b21dc6ea15dc3c7ef448ea0/commit.c#L1493:L1493).
     pub encoding: Option<&'a BStr>,
     /// The commit message documenting the change.
@@ -113,12 +113,12 @@ pub struct Commit {
     /// Hash of each parent commit. Empty for the first commit in repository.
     pub parents: SmallVec<[gix_hash::ObjectId; 1]>,
     /// Who wrote this commit.
-    pub author: git_actor::Signature,
+    pub author: gix_actor::Signature,
     /// Who committed this commit.
     ///
     /// This may be different from the `author` in case the author couldn't write to the repository themselves and
     /// is commonly encountered with contributed commits.
-    pub committer: git_actor::Signature,
+    pub committer: gix_actor::Signature,
     /// The name of the message encoding, otherwise [UTF-8 should be assumed](https://github.com/git/git/blob/e67fbf927dfdf13d0b21dc6ea15dc3c7ef448ea0/commit.c#L1493:L1493).
     pub encoding: Option<BString>,
     /// The commit message documenting the change.
@@ -140,7 +140,7 @@ pub struct TagRef<'a> {
     /// The name of the tag, e.g. "v1.0".
     pub name: &'a BStr,
     /// The author of the tag.
-    pub tagger: Option<git_actor::SignatureRef<'a>>,
+    pub tagger: Option<gix_actor::SignatureRef<'a>>,
     /// The message describing this release.
     pub message: &'a BStr,
     /// A cryptographic signature over the entire content of the serialized tag object thus far.
@@ -166,7 +166,7 @@ pub struct Tag {
     /// The name of the tag, e.g. "v1.0".
     pub name: BString,
     /// The tags author.
-    pub tagger: Option<git_actor::Signature>,
+    pub tagger: Option<gix_actor::Signature>,
     /// The message describing the tag.
     pub message: BString,
     /// A pgp signature over all bytes of the encoded tag, excluding the pgp signature itself.

@@ -54,7 +54,7 @@ pub(crate) fn trusted_header_field(name: &[u8], value: &[u8], mut out: impl io::
 
 pub(crate) fn trusted_header_signature(
     name: &[u8],
-    value: &git_actor::SignatureRef<'_>,
+    value: &gix_actor::SignatureRef<'_>,
     mut out: impl io::Write,
 ) -> io::Result<()> {
     out.write_all(name)?;

@@ -238,13 +238,13 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 -----END PGP SIGNATURE-----"
                 .as_bstr(),
         ),
-        tagger: Some(git_actor::SignatureRef {
+        tagger: Some(gix_actor::SignatureRef {
             name: b"Sebastian Thiel".as_bstr(),
             email: b"byronimo@gmail.com".as_bstr(),
-            time: git_actor::Time {
+            time: gix_actor::Time {
                 seconds_since_unix_epoch: 1528473343,
                 offset_in_seconds: offset,
-                sign: git_actor::Sign::Plus,
+                sign: gix_actor::Sign::Plus,
             },
         }),
     }

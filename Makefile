@@ -80,7 +80,7 @@ check: ## Build all code in suitable configurations
 	cd gix-glob && cargo check --features serde1
 	cd git-mailmap && cargo check --features serde1
 	cd git-worktree && cargo check --features serde1
-	cd git-actor && cargo check --features serde1
+	cd gix-actor && cargo check --features serde1
 	cd git-date && cargo check --features serde1
 	cd git-pack && cargo check --features serde1 \
 			   && cargo check --features pack-cache-lru-static \

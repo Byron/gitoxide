@@ -1,6 +1,6 @@
 mod write_to {
     mod invalid {
-        use git_actor::{Sign, Signature, Time};
+        use gix_actor::{Sign, Signature, Time};
 
         #[test]
         fn name() {
@@ -52,11 +52,11 @@ mod write_to {
 }
 
 use bstr::ByteSlice;
-use git_actor::Signature;
+use gix_actor::Signature;
 
 #[test]
 fn trim() {
-    let sig = git_actor::SignatureRef::from_bytes::<()>(b" \t hello there \t < \t email \t > 1 -0030").unwrap();
+    let sig = gix_actor::SignatureRef::from_bytes::<()>(b" \t hello there \t < \t email \t > 1 -0030").unwrap();
     let sig = sig.trim();
     assert_eq!(sig.name, "hello there");
     assert_eq!(sig.email, "email");
@@ -70,7 +70,7 @@ fn round_trip() -> Result<(), Box<dyn std::error::Error>> {
         ".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere  <byronimo@gmail.com> 1528473343 +0230"
             .as_bytes(),
     ] {
-        let signature: Signature = git_actor::SignatureRef::from_bytes::<()>(input)?.into();
+        let signature: Signature = gix_actor::SignatureRef::from_bytes::<()>(input)?.into();
         let mut output = Vec::new();
         signature.write_to(&mut output)?;
         assert_eq!(output.as_bstr(), input.as_bstr());

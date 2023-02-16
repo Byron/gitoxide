@@ -137,7 +137,7 @@ pub mod decode {
             tuple((
                 context("<old-hexsha>", terminated(hex_hash, tag(b" "))),
                 context("<new-hexsha>", terminated(hex_hash, tag(b" "))),
-                context("<name> <<email>> <timestamp>", git_actor::signature::decode),
+                context("<name> <<email>> <timestamp>", gix_actor::signature::decode),
                 opt(tag(b"\t")),
                 context("<optional message>", message),
             )),
@@ -168,8 +168,8 @@ pub mod decode {
 
     #[cfg(test)]
     mod test {
-        use git_actor::{Sign, Time};
         use git_object::bstr::ByteSlice;
+        use gix_actor::{Sign, Time};
 
         use super::*;
 
@@ -221,7 +221,7 @@ pub mod decode {
                     LineRef {
                         previous_oid: NULL_SHA1.as_bstr(),
                         new_oid: NULL_SHA1.as_bstr(),
-                        signature: git_actor::SignatureRef {
+                        signature: gix_actor::SignatureRef {
                             name: b"name".as_bstr(),
                             email: b"foo@example.com".as_bstr(),
                             time: Time {
@@ -247,7 +247,7 @@ pub mod decode {
                 let actual = LineRef {
                     previous_oid: b"a5828ae6b52137b913b978e16cd2334482eb4c1f".as_bstr(),
                     new_oid: b"89b43f80a514aee58b662ad606e6352e03eaeee4".as_bstr(),
-                    signature: git_actor::SignatureRef {
+                    signature: gix_actor::SignatureRef {
                         name: b"Sebastian Thiel".as_bstr(),
                         email: b"foo@example.com".as_bstr(),
                         time: Time {

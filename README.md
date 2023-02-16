@@ -55,7 +55,7 @@ These crates may be missing some features and thus are somewhat incomplete, but 
 is usable to some extent.
 
 * **usable** _(with rough but complete docs, possibly incomplete functionality)_
-  * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
+  * [gix-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-actor)
   * [gix-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hash)
   * [git-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-object)
   * [gix-validate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-validate)

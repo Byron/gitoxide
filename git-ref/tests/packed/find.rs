@@ -45,9 +45,9 @@ fn binary_search_a_name_past_the_end_of_the_packed_refs_file() -> crate::Result 
 fn find_packed_refs_with_peeled_items_and_full_or_partial_names() -> crate::Result {
     let packed_refs = b"# pack-refs with: peeled fully-peeled sorted
 916840c0e2f67d370291042cb5274a597f4fa9bc refs/tags/TEST-0.0.1
-c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
+c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/gix-actor-v0.1.0
 ^13da90b54699a6b500ec5cd7d175f2cd5a1bed06
-0b92c8a256ae06c189e3b9c30b646d62ac8f7d10 refs/tags/git-actor-v0.1.1\n";
+0b92c8a256ae06c189e3b9c30b646d62ac8f7d10 refs/tags/gix-actor-v0.1.1\n";
     let (_keep, path) = write_packed_refs_with(packed_refs)?;
 
     let buf = packed::Buffer::open(path, 1024)?;
@@ -60,7 +60,7 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
             object: None
         }
     );
-    let name = "refs/tags/git-actor-v0.1.0";
+    let name = "refs/tags/gix-actor-v0.1.0";
     assert_eq!(
         buf.try_find(name)?.expect("reference exists"),
         packed::Reference {
@@ -69,7 +69,7 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
             object: Some("13da90b54699a6b500ec5cd7d175f2cd5a1bed06".into())
         }
     );
-    let name = "refs/tags/git-actor-v0.1.1";
+    let name = "refs/tags/gix-actor-v0.1.1";
     assert_eq!(
         buf.try_find(name)?.expect("reference exists"),
         packed::Reference {
@@ -145,14 +145,14 @@ fn partial_name_to_full_name_conversion_rules_are_applied() -> crate::Result {
 fn invalid_refs_within_a_file_do_not_lead_to_incorrect_results() -> crate::Result {
     let broken_packed_refs = b"# pack-refs with: peeled fully-peeled sorted
 916840c0e2f67d370291042cb5274a597f4fa9bc refs/tags/TEST-0.0.1
-bogus refs/tags/git-actor-v0.1.0
+bogus refs/tags/gix-actor-v0.1.0
 ^13da90b54699a6b500ec5cd7d175f2cd5a1bed06
-0b92c8a256ae06c189e3b9c30b646d62ac8f7d10 refs/tags/git-actor-v0.1.1\n";
+0b92c8a256ae06c189e3b9c30b646d62ac8f7d10 refs/tags/gix-actor-v0.1.1\n";
     let (_keep, path) = write_packed_refs_with(broken_packed_refs)?;
 
     let buf = packed::Buffer::open(path, 1024)?;
 
-    let name = "refs/tags/git-actor-v0.1.1";
+    let name = "refs/tags/gix-actor-v0.1.1";
     assert_eq!(
         buf.try_find(name)?.expect("reference exists"),
         packed::Reference {
@@ -162,7 +162,7 @@ bogus refs/tags/git-actor-v0.1.0
         }
     );
 
-    for failing_name in &["refs/tags/TEST-0.0.1", "refs/tags/git-actor-v0.1.0"] {
+    for failing_name in &["refs/tags/TEST-0.0.1", "refs/tags/gix-actor-v0.1.0"] {
         assert_eq!(
             buf.try_find(*failing_name)
                 .expect_err("it should detect an err")

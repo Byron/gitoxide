@@ -14,7 +14,7 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "bstr/serde", "smallvec/serde", "gix-hash/serde1", "git-actor/serde1"]
+serde1 = ["serde", "bstr/serde", "smallvec/serde", "gix-hash/serde1", "gix-actor/serde1"]
 ## When parsing objects by default errors will only be available on the granularity of success or failure, and with the above flag enabled
 ## details information about the error location will be collected.
 ## Use it in applications which expect broken or invalid objects or for debugging purposes. Incorrectly formatted objects aren't at all
@@ -25,7 +25,7 @@ verbose-object-parsing-errors = ["nom/std"]
 gix-features = { version = "^0.26.4", path = "../gix-features", features = ["rustsha1"] }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-validate = { version = "^0.7.2", path = "../gix-validate" }
-git-actor = { version = "^0.17.1", path = "../git-actor" }
+gix-actor = { version = "^0.17.1", path = "../gix-actor" }
 
 btoi = "0.4.2"
 itoa = "1.0.1"

@@ -106,7 +106,7 @@ git-object = { opt-level = 3 }
 git-ref = { opt-level = 3 }
 #git-pack = { opt-level = 3 }
 gix-hash = { opt-level = 3 }
-git-actor = { opt-level = 3 }
+gix-actor = { opt-level = 3 }
 git-config = { opt-level = 3 }
 miniz_oxide = { opt-level = 3 }
 sha1 = { opt-level = 3 }
@@ -128,7 +128,7 @@ build-override = { opt-level = 0 }
 
 [workspace]
 members = [
-    "git-actor",
+    "gix-actor",
     "git-url",
     "gix-hash",
     "gix-validate",

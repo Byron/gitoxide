@@ -32,7 +32,7 @@ git-testtools = { path = "../../tests/tools" }
 git-discover = { path = "../../git-discover" }
 git-worktree = { path = "../../git-worktree" }
 git-odb = { path = "../../git-odb" }
-git-actor = { path = "../../git-actor" }
+gix-actor = { path = "../../gix-actor" }
 gix-hash = { path = "../../gix-hash" }
 gix-validate = { path = "../../gix-validate" }
 git-lock = { path = "../../git-lock" }

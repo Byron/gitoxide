@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_actor::SignatureRef;
+use gix_actor::SignatureRef;
 
 use crate::Snapshot;
 
@@ -87,7 +87,7 @@ impl Snapshot {
     /// `alex@example.com`. This leads to better mapping results and saves entries in the mailmap.
     ///
     /// This is the fastest possible lookup as there is no allocation.
-    pub fn try_resolve_ref(&self, signature: git_actor::SignatureRef<'_>) -> Option<ResolvedSignature<'_>> {
+    pub fn try_resolve_ref(&self, signature: gix_actor::SignatureRef<'_>) -> Option<ResolvedSignature<'_>> {
         let email: EncodedStringRef<'_> = signature.email.into();
         let pos = self
             .entries_by_old_email
@@ -120,7 +120,7 @@ impl Snapshot {
     /// with the mapped name and/or email replaced accordingly.
     ///
     /// Return `None` if no such mapping was found.
-    pub fn try_resolve(&self, signature: git_actor::SignatureRef<'_>) -> Option<git_actor::Signature> {
+    pub fn try_resolve(&self, signature: gix_actor::SignatureRef<'_>) -> Option<gix_actor::Signature> {
         self.try_resolve_ref(signature)
             .map(|new| enriched_signature(signature, new).into())
     }
@@ -129,13 +129,13 @@ impl Snapshot {
     /// of `signature` if no mapping was found.
     ///
     /// Note that this method will always allocate.
-    pub fn resolve(&self, signature: git_actor::SignatureRef<'_>) -> git_actor::Signature {
+    pub fn resolve(&self, signature: gix_actor::SignatureRef<'_>) -> gix_actor::Signature {
         self.try_resolve(signature).unwrap_or_else(|| signature.to_owned())
     }
 
     /// Like [`try_resolve()`][Snapshot::try_resolve()], but always returns a special copy-on-write signature, which contains
     /// changed names or emails as `Cow::Owned`, or `Cow::Borrowed` if no mapping was found.
-    pub fn resolve_cow<'a>(&self, signature: git_actor::SignatureRef<'a>) -> Signature<'a> {
+    pub fn resolve_cow<'a>(&self, signature: gix_actor::SignatureRef<'a>) -> Signature<'a> {
         self.try_resolve_ref(signature)
             .map(|new| enriched_signature(signature, new))
             .unwrap_or_else(|| signature.into())

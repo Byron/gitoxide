@@ -42,7 +42,7 @@ fn author_and_committer_and_fallback() -> crate::Result {
 
         assert_eq!(
             repo.author().expect("present")?,
-            git_actor::SignatureRef {
+            gix_actor::SignatureRef {
                 name: "author".into(),
                 email: "author@email".into(),
                 time: git_date::Time {
@@ -55,7 +55,7 @@ fn author_and_committer_and_fallback() -> crate::Result {
 
         assert_eq!(
             repo.committer().expect("present")?,
-            git_actor::SignatureRef {
+            gix_actor::SignatureRef {
                 name: "committer".into(),
                 email: "committer@email".into(),
                 time: git_date::Time {
@@ -161,7 +161,7 @@ fn author_from_different_config_sections() -> crate::Result {
 
     assert_eq!(
         repo.author().transpose()?,
-        Some(git_actor::SignatureRef {
+        Some(gix_actor::SignatureRef {
             name: "global name".into(),
             email: "local@example.com".into(),
             time: git_date::Time {
@@ -175,7 +175,7 @@ fn author_from_different_config_sections() -> crate::Result {
     );
     assert_eq!(
         repo.committer().transpose()?,
-        Some(git_actor::SignatureRef {
+        Some(gix_actor::SignatureRef {
             name: "local committer".into(),
             email: "global-committer@example.com".into(),
             time: git_date::Time {

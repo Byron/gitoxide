@@ -1,13 +1,13 @@
 pub(crate) mod prepare_and_commit {
     use std::convert::TryInto;
 
-    use git_actor::{Sign, Time};
     use git_object::bstr::BString;
     use git_ref::{
         file,
         transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
         Target,
     };
+    use gix_actor::{Sign, Time};
     use gix_hash::ObjectId;
 
     use crate::util::hex_to_id;
@@ -28,8 +28,8 @@ pub(crate) mod prepare_and_commit {
         Ok((dir, store))
     }
 
-    pub(crate) fn committer() -> git_actor::Signature {
-        git_actor::Signature {
+    pub(crate) fn committer() -> gix_actor::Signature {
+        gix_actor::Signature {
             name: "committer".into(),
             email: "committer@example.com".into(),
             time: Time {

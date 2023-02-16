@@ -16,7 +16,7 @@ function indent () {
 
 echo "in root: gitoxide CLI"
 (enter cargo-smart-release && indent cargo diet -n --package-size-limit 100KB)
-(enter git-actor && indent cargo diet -n --package-size-limit 5KB)
+(enter gix-actor && indent cargo diet -n --package-size-limit 5KB)
 (enter git-pathspec && indent cargo diet -n --package-size-limit 25KB)
 (enter git-refspec && indent cargo diet -n --package-size-limit 25KB)
 (enter gix-path && indent cargo diet -n --package-size-limit 20KB)

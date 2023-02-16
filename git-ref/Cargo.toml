@@ -16,7 +16,7 @@ test = true
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "gix-hash/serde1", "git-actor/serde1", "git-object/serde1"]
+serde1 = ["serde", "gix-hash/serde1", "gix-actor/serde1", "git-object/serde1"]
 
 [dependencies]
 gix-features = { version = "^0.26.4", path = "../gix-features", features = ["walkdir"]}
@@ -24,7 +24,7 @@ gix-path = { version = "^0.7.1", path = "../gix-path" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 git-object = { version = "^0.26.1", path = "../git-object" }
 gix-validate = { version = "^0.7.2", path = "../gix-validate" }
-git-actor = { version = "^0.17.1", path = "../git-actor" }
+gix-actor = { version = "^0.17.1", path = "../gix-actor" }
 git-lock = { version = "^3.0.0", path = "../git-lock" }
 git-tempfile = { version = "^3.0.0", path = "../git-tempfile" }
 

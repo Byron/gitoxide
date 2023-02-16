@@ -97,7 +97,7 @@ impl crate::Repository {
         name: impl AsRef<str>,
         target: impl AsRef<gix_hash::oid>,
         target_kind: git_object::Kind,
-        tagger: Option<git_actor::SignatureRef<'_>>,
+        tagger: Option<gix_actor::SignatureRef<'_>>,
         message: impl AsRef<str>,
         constraint: PreviousValue,
     ) -> Result<Reference<'_>, tag::Error> {
@@ -118,8 +118,8 @@ impl crate::Repository {
     /// This forces setting the commit time and author time by hand. Note that typically, committer and author are the same.
     pub fn commit_as<'a, 'c, Name, E>(
         &self,
-        committer: impl Into<git_actor::SignatureRef<'c>>,
-        author: impl Into<git_actor::SignatureRef<'a>>,
+        committer: impl Into<gix_actor::SignatureRef<'c>>,
+        author: impl Into<gix_actor::SignatureRef<'a>>,
         reference: Name,
         message: impl AsRef<str>,
         tree: impl Into<ObjectId>,
