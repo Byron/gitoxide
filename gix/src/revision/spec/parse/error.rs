@@ -26,7 +26,7 @@ pub enum CandidateInfo {
     /// The candidate is a commit.
     Commit {
         /// The date of the commit.
-        date: git_date::Time,
+        date: gix_date::Time,
         /// The subject line.
         title: BString,
     },
@@ -39,7 +39,7 @@ impl std::fmt::Display for CandidateInfo {
             CandidateInfo::Tag { name } => write!(f, "tag {name:?}"),
             CandidateInfo::Object { kind } => std::fmt::Display::fmt(kind, f),
             CandidateInfo::Commit { date, title } => {
-                write!(f, "commit {} {title:?}", date.format(git_date::time::format::SHORT))
+                write!(f, "commit {} {title:?}", date.format(gix_date::time::format::SHORT))
             }
         }
     }

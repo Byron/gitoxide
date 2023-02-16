@@ -391,7 +391,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 * [ ] a way to handle `safe.directory`
      - note that it's less critical to support it as `gitoxide` allows access but prevents untrusted configuration to become effective.
 
-### git-date
+### gix-date
 * [ ] parse git dates
 * [ ] serialize `Time`
  
@@ -461,7 +461,7 @@ Make it the best-performing implementation and the most convenient one.
 * parse specifications 
     * [x] parsing and navigation
     * [x] revision ranges
-    * [ ] full date parsing support (depends on `git-date`)
+    * [ ] full date parsing support (depends on `gix-date`)
  
 ### git-submodule
 * CRUD for submodules

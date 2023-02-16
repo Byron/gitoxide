@@ -439,7 +439,7 @@ where
                         source: None,
                     })
                     .and_then(|date| {
-                        git_date::parse(date, Some(SystemTime::now())).map_err(|err| Error::Time {
+                        gix_date::parse(date, Some(SystemTime::now())).map_err(|err| Error::Time {
                             input: nav.into(),
                             source: err.into(),
                         })

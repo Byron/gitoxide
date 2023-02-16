@@ -1,11 +1,11 @@
 use std::time::SystemTime;
 
-use git_date::{time::Sign, Time};
+use gix_date::{time::Sign, Time};
 
 #[test]
 fn special_time_is_ok_for_now() {
     assert_eq!(
-        git_date::parse("1979-02-26 18:30:00", Some(SystemTime::now())).unwrap(),
+        gix_date::parse("1979-02-26 18:30:00", Some(SystemTime::now())).unwrap(),
         Time {
             seconds_since_unix_epoch: 42,
             offset_in_seconds: 1800,
@@ -17,7 +17,7 @@ fn special_time_is_ok_for_now() {
 #[test]
 fn short() {
     assert_eq!(
-        git_date::parse("1979-02-26", Some(SystemTime::now())).unwrap(),
+        gix_date::parse("1979-02-26", Some(SystemTime::now())).unwrap(),
         Time {
             seconds_since_unix_epoch: 288835200,
             offset_in_seconds: 0,
@@ -30,7 +30,7 @@ fn short() {
 #[test]
 fn rfc2822() {
     assert_eq!(
-        git_date::parse("Thu, 18 Aug 2022 12:45:06 +0800", None).unwrap(),
+        gix_date::parse("Thu, 18 Aug 2022 12:45:06 +0800", None).unwrap(),
         Time {
             seconds_since_unix_epoch: 1660797906,
             offset_in_seconds: 28800,
@@ -47,11 +47,11 @@ fn git_rfc2822() {
         sign: Sign::Plus,
     };
     assert_eq!(
-        git_date::parse("Thu, 1 Aug 2022 12:45:06 +0800", None).unwrap(),
+        gix_date::parse("Thu, 1 Aug 2022 12:45:06 +0800", None).unwrap(),
         expected,
     );
     assert_eq!(
-        git_date::parse("Thu,  1 Aug 2022 12:45:06 +0800", None).unwrap(),
+        gix_date::parse("Thu,  1 Aug 2022 12:45:06 +0800", None).unwrap(),
         expected,
     );
 }
@@ -59,7 +59,7 @@ fn git_rfc2822() {
 #[test]
 fn raw() {
     assert_eq!(
-        git_date::parse("1660874655 +0800", None).unwrap(),
+        gix_date::parse("1660874655 +0800", None).unwrap(),
         Time {
             seconds_since_unix_epoch: 1660874655,
             offset_in_seconds: 28800,
@@ -80,7 +80,7 @@ fn raw() {
         "  1660874655  -0800  ",
         "1660874655\t-0800",
     ] {
-        assert_eq!(git_date::parse(date_str, None).unwrap(), expected);
+        assert_eq!(gix_date::parse(date_str, None).unwrap(), expected);
     }
 }
 
@@ -98,14 +98,14 @@ fn bad_raw() {
         "123456+0600",
         "123456 + 600",
     ] {
-        assert!(git_date::parse(bad_date_str, None).is_err());
+        assert!(gix_date::parse(bad_date_str, None).is_err());
     }
 }
 
 #[test]
 fn git_default() {
     assert_eq!(
-        git_date::parse("Thu Aug 8 12:45:06 2022 +0800", None).unwrap(),
+        gix_date::parse("Thu Aug 8 12:45:06 2022 +0800", None).unwrap(),
         Time {
             seconds_since_unix_epoch: 1659933906,
             offset_in_seconds: 28800,
@@ -117,40 +117,40 @@ fn git_default() {
 #[test]
 fn invalid_dates_can_be_produced_without_current_time() {
     assert!(matches!(
-        git_date::parse("foobar", None).unwrap_err(),
-        git_date::parse::Error::InvalidDateString { input } if input == "foobar"
+        gix_date::parse("foobar", None).unwrap_err(),
+        gix_date::parse::Error::InvalidDateString { input } if input == "foobar"
     ));
 }
 
 mod relative {
     use std::time::SystemTime;
 
-    use git_date::{parse::Error, time::Sign};
+    use gix_date::{parse::Error, time::Sign};
     use time::{Duration, OffsetDateTime};
 
     #[test]
     fn large_offsets() {
-        git_date::parse("999999999999999 weeks ago", Some(std::time::UNIX_EPOCH)).ok();
+        gix_date::parse("999999999999999 weeks ago", Some(std::time::UNIX_EPOCH)).ok();
     }
 
     #[test]
     fn large_offsets_do_not_panic() {
         assert!(matches!(
-            git_date::parse("9999999999 weeks ago", Some(std::time::UNIX_EPOCH)),
-            Err(git_date::parse::Error::RelativeTimeConversion)
+            gix_date::parse("9999999999 weeks ago", Some(std::time::UNIX_EPOCH)),
+            Err(gix_date::parse::Error::RelativeTimeConversion)
         ));
     }
 
     #[test]
     fn offset_leading_to_before_unix_epoch_cannot_be_represented() {
-        let err = git_date::parse("1 second ago", Some(std::time::UNIX_EPOCH)).unwrap_err();
+        let err = gix_date::parse("1 second ago", Some(std::time::UNIX_EPOCH)).unwrap_err();
         assert!(matches!(err, Error::TooEarly{timestamp} if timestamp == -1));
     }
 
     #[test]
     fn various() {
         let now = Some(SystemTime::now());
-        let two_weeks_ago = git_date::parse("2 weeks ago", now).unwrap();
+        let two_weeks_ago = gix_date::parse("2 weeks ago", now).unwrap();
         assert_eq!(Sign::Plus, two_weeks_ago.sign);
         assert_eq!(0, two_weeks_ago.offset_in_seconds);
         let expected = OffsetDateTime::from(now.unwrap()).saturating_sub(Duration::weeks(2));
@@ -169,7 +169,7 @@ mod fuzz {
     #[test]
     fn invalid_but_does_not_cause_panic() {
         for input in ["7	-𬞋", "5 ڜ-09", "-4 week ago Z"] {
-            let _ = git_date::parse(input, Some(std::time::UNIX_EPOCH)).unwrap_err();
+            let _ = gix_date::parse(input, Some(std::time::UNIX_EPOCH)).unwrap_err();
         }
     }
 }

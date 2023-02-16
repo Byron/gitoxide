@@ -41,7 +41,7 @@ pub enum Sorting {
     ///
     /// As the query is usually repeated with different cutoff dates, this search mode benefits greatly from an object cache.
     ByCommitTimeNewestFirstCutoffOlderThan {
-        /// The amount of seconds since unix epoch, the same value obtained by any `git_date::Time` structure and the way git counts time.
+        /// The amount of seconds since unix epoch, the same value obtained by any `gix_date::Time` structure and the way git counts time.
         time_in_seconds_since_epoch: u32,
     },
 }

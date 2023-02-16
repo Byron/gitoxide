@@ -45,10 +45,10 @@ fn author_and_committer_and_fallback() -> crate::Result {
             gix_actor::SignatureRef {
                 name: "author".into(),
                 email: "author@email".into(),
-                time: git_date::Time {
+                time: gix_date::Time {
                     seconds_since_unix_epoch: 1659329106,
                     offset_in_seconds: 28800,
-                    sign: git_date::time::Sign::Plus
+                    sign: gix_date::time::Sign::Plus
                 }
             }
         );
@@ -58,10 +58,10 @@ fn author_and_committer_and_fallback() -> crate::Result {
             gix_actor::SignatureRef {
                 name: "committer".into(),
                 email: "committer@email".into(),
-                time: git_date::Time {
+                time: gix_date::Time {
                     seconds_since_unix_epoch: 1659365106,
                     offset_in_seconds: -7200,
-                    sign: git_date::time::Sign::Minus
+                    sign: gix_date::time::Sign::Minus
                 }
             }
         );
@@ -164,10 +164,10 @@ fn author_from_different_config_sections() -> crate::Result {
         Some(gix_actor::SignatureRef {
             name: "global name".into(),
             email: "local@example.com".into(),
-            time: git_date::Time {
+            time: gix_date::Time {
                 seconds_since_unix_epoch: 42,
                 offset_in_seconds: 1800,
-                sign: git_date::time::Sign::Plus
+                sign: gix_date::time::Sign::Plus
             }
         }),
         "author name comes from global config, \
@@ -178,10 +178,10 @@ fn author_from_different_config_sections() -> crate::Result {
         Some(gix_actor::SignatureRef {
             name: "local committer".into(),
             email: "global-committer@example.com".into(),
-            time: git_date::Time {
+            time: gix_date::Time {
                 seconds_since_unix_epoch: 320437800,
                 offset_in_seconds: 0,
-                sign: git_date::time::Sign::Plus,
+                sign: gix_date::time::Sign::Plus,
             }
         }),
         "committer name comes from repository-local config, \

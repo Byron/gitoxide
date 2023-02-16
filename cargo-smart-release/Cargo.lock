@@ -526,7 +526,7 @@ version = "0.10.1"
 dependencies = [
  "bstr",
  "btoi",
- "git-date",
+ "gix-date",
  "gix-features",
  "itoa",
  "nom",
@@ -600,7 +600,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-date"
+name = "gix-date"
 version = "0.0.1"
 dependencies = [
  "bstr",
@@ -831,7 +831,7 @@ name = "git-revision"
 version = "0.2.1"
 dependencies = [
  "bstr",
- "git-date",
+ "gix-date",
  "gix-hash",
  "gix-object",
  "hash_hasher",

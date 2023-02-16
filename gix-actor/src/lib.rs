@@ -10,7 +10,7 @@
 #![forbid(unsafe_code)]
 
 use bstr::{BStr, BString};
-pub use git_date::{time::Sign, Time};
+pub use gix_date::{time::Sign, Time};
 
 ///
 pub mod signature;
@@ -41,5 +41,5 @@ pub struct SignatureRef<'a> {
     /// The actor's email.
     pub email: &'a BStr,
     /// The time stamp at which the signature was performed.
-    pub time: git_date::Time,
+    pub time: gix_date::Time,
 }

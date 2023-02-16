@@ -1,4 +1,4 @@
-use git_date::{
+use gix_date::{
     time::{format, Format, Sign},
     Time,
 };
@@ -51,11 +51,11 @@ fn git_rfc2822() {
 #[test]
 fn default() {
     assert_eq!(
-        time().format(git_date::time::format::GITOXIDE),
+        time().format(gix_date::time::format::GITOXIDE),
         "Fri Nov 30 1973 00:03:09 +0230"
     );
     assert_eq!(
-        time_dec1().format(git_date::time::format::GITOXIDE),
+        time_dec1().format(gix_date::time::format::GITOXIDE),
         "Sat Dec 01 1973 00:03:09 +0230"
     )
 }
@@ -63,11 +63,11 @@ fn default() {
 #[test]
 fn git_default() {
     assert_eq!(
-        time().format(git_date::time::format::DEFAULT),
+        time().format(gix_date::time::format::DEFAULT),
         "Fri Nov 30 00:03:09 1973 +0230"
     );
     assert_eq!(
-        time_dec1().format(git_date::time::format::DEFAULT),
+        time_dec1().format(gix_date::time::format::DEFAULT),
         "Sat Dec 1 00:03:09 1973 +0230"
     )
 }

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, time::SystemTime};
 
-use git_date::time::{format, Format};
+use gix_date::time::{format, Format};
 use once_cell::sync::Lazy;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -51,7 +51,7 @@ fn parse_compare_format() {
         },
     ) in BASELINE.iter()
     {
-        let res = git_date::parse(pattern.as_str(), Some(SystemTime::now()));
+        let res = gix_date::parse(pattern.as_str(), Some(SystemTime::now()));
         assert_eq!(
             res.is_ok(),
             *exit_code == 0,

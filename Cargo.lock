@@ -1195,7 +1195,7 @@ checksum = "896ef44213fd88eb4ca4eb07ed2623619cfd8c867cc7702d19279cbb8dac37dc"
 dependencies = [
  "bstr",
  "btoi",
- "git-date 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-date",
  "itoa",
  "nom",
  "quick-error 2.0.1",
@@ -1290,21 +1290,6 @@ dependencies = [
  "gix-sec",
  "serde",
  "thiserror",
-]
-
-[[package]]
-name = "git-date"
-version = "0.4.2"
-dependencies = [
- "bstr",
- "document-features",
- "git-testtools",
- "gix-hash",
- "itoa",
- "once_cell",
- "serde",
- "thiserror",
- "time",
 ]
 
 [[package]]
@@ -1727,8 +1712,8 @@ version = "0.10.3"
 dependencies = [
  "bstr",
  "document-features",
- "git-date 0.4.2",
  "git-hashtable 0.1.1",
+ "gix-date",
  "gix-hash",
  "gix-object",
  "serde",
@@ -2011,7 +1996,6 @@ dependencies = [
  "async-std",
  "document-features",
  "git-credentials",
- "git-date 0.4.2",
  "git-diff",
  "git-discover 0.13.0",
  "git-hashtable 0.1.1",
@@ -2031,6 +2015,7 @@ dependencies = [
  "gix-actor",
  "gix-attributes",
  "gix-config",
+ "gix-date",
  "gix-features",
  "gix-glob",
  "gix-hash",
@@ -2063,8 +2048,8 @@ dependencies = [
  "bstr",
  "btoi",
  "document-features",
- "git-date 0.4.2",
  "git-testtools",
+ "gix-date",
  "gix-features",
  "gix-hash",
  "itoa",
@@ -2141,6 +2126,21 @@ dependencies = [
  "libc",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "gix-date"
+version = "0.4.2"
+dependencies = [
+ "bstr",
+ "document-features",
+ "git-testtools",
+ "gix-hash",
+ "itoa",
+ "once_cell",
+ "serde",
+ "thiserror",
+ "time",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 [package]
-name = "git-date"
+name = "gix-date"
 version = "0.4.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

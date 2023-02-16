@@ -144,7 +144,7 @@ members = [
     "gix-object",
     "gix-glob",
     "git-diff",
-    "git-date",
+    "gix-date",
     "git-traverse",
     "git-index",
     "git-bitmap",

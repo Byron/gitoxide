@@ -396,12 +396,12 @@ mod time {
             &self,
             value: Cow<'_, BStr>,
             now: Option<std::time::SystemTime>,
-        ) -> Result<git_date::Time, git_date::parse::Error> {
-            git_date::parse(
+        ) -> Result<gix_date::Time, gix_date::parse::Error> {
+            gix_date::parse(
                 value
                     .as_ref()
                     .to_str()
-                    .map_err(|_| git_date::parse::Error::InvalidDateString {
+                    .map_err(|_| gix_date::parse::Error::InvalidDateString {
                         input: value.to_string(),
                     })?,
                 now,
@@ -496,7 +496,7 @@ pub mod validate {
 
     impl Validate for Time {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-            git_date::parse(value.to_str()?, std::time::SystemTime::now().into())?;
+            gix_date::parse(value.to_str()?, std::time::SystemTime::now().into())?;
             Ok(())
         }
     }

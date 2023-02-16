@@ -1,11 +1,11 @@
 use bstr::ByteSlice;
-use git_date::{time::Sign, Time};
+use gix_date::{time::Sign, Time};
 
 mod baseline;
 mod format;
 mod parse;
 mod init {
-    use git_date::Time;
+    use gix_date::Time;
 
     #[test]
     fn utc_local_handles_signs_correctly() {

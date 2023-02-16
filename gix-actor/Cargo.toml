@@ -14,11 +14,11 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "bstr/serde", "git-date/serde1"]
+serde1 = ["serde", "bstr/serde", "gix-date/serde1"]
 
 [dependencies]
 gix-features = { version = "^0.26.4", path = "../gix-features", optional = true }
-git-date = { version = "^0.4.2", path = "../git-date" }
+gix-date = { version = "^0.4.2", path = "../gix-date" }
 
 quick-error = "2.0.0"
 btoi = "0.4.2"
