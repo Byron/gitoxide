@@ -1,6 +1,6 @@
 pub trait Sealed {}
 
-impl Sealed for git_ref::Reference {}
+impl Sealed for gix_ref::Reference {}
 
 /// Extensions for [revision specifications][git_revision::Spec].
 pub trait RevSpecExt {

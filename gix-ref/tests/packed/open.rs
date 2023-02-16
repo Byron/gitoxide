@@ -13,14 +13,14 @@ fn sorted_buffer_works() {
 #[test]
 fn empty_buffers_should_not_exist_but_are_fine_to_open() -> crate::Result {
     let (_keep, path) = write_packed_refs_with(&[])?;
-    assert_eq!(git_ref::packed::Buffer::open(path, 512)?.iter()?.count(), 0);
+    assert_eq!(gix_ref::packed::Buffer::open(path, 512)?.iter()?.count(), 0);
     Ok(())
 }
 
 #[test]
 fn unsorted_buffers_or_those_without_a_header_can_be_opened_and_searched() {
     for (fixture, cutoff) in [("without-header", 20u64), ("unsorted", 32 * 1024)] {
-        let buffer = git_ref::packed::Buffer::open(
+        let buffer = gix_ref::packed::Buffer::open(
             fixture_path_standalone(Path::new("packed-refs").join(fixture).to_str().expect("utf8")),
             cutoff,
         )
@@ -42,7 +42,7 @@ fn bogus_content_triggers_an_error() -> crate::Result {
     let packed_refs_data = b"starts with a bogus record, not a header anyway";
     let (_keep, path) = write_packed_refs_with(packed_refs_data)?;
 
-    match git_ref::packed::Buffer::open(path, 32) {
+    match gix_ref::packed::Buffer::open(path, 32) {
         Ok(_) => unreachable!("unsorted buffers can't be opened"),
         Err(err) => assert_eq!(
             err.to_string(),

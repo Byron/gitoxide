@@ -1,6 +1,6 @@
-use git_ref::file;
+use gix_ref::file;
 
-// TODO: when ready, add a new test entry point with a feature toggle to switch this to `git_ref::Store`.
+// TODO: when ready, add a new test entry point with a feature toggle to switch this to `gix_ref::Store`.
 //       That way all tests can run against the new general store to validate its truly working.
 //       The same can be done when RefTable is available, and its corresponding tests.
 pub type Store = file::Store;
@@ -17,7 +17,7 @@ pub fn store_at(name: &str) -> crate::Result<Store> {
     let path = git_testtools::scripted_fixture_read_only_standalone(name)?;
     Ok(Store::at(
         path.join(".git"),
-        git_ref::store::WriteReflog::Normal,
+        gix_ref::store::WriteReflog::Normal,
         gix_hash::Kind::Sha1,
     ))
 }
@@ -27,7 +27,7 @@ fn store_writable(name: &str) -> crate::Result<(git_testtools::tempfile::TempDir
     let git_dir = dir.path().join(".git");
     Ok((
         dir,
-        Store::at(git_dir, git_ref::store::WriteReflog::Normal, gix_hash::Kind::Sha1),
+        Store::at(git_dir, gix_ref::store::WriteReflog::Normal, gix_hash::Kind::Sha1),
     ))
 }
 

@@ -2,11 +2,11 @@
 use std::convert::TryInto;
 
 use git_odb::{Find, FindExt, Write};
-use git_ref::{
+use gix_hash::ObjectId;
+use gix_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
 };
-use gix_hash::ObjectId;
 
 use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference, Tree};
 
@@ -129,7 +129,7 @@ impl crate::Repository {
         Name: TryInto<FullName, Error = E>,
         commit::Error: From<E>,
     {
-        use git_ref::{
+        use gix_ref::{
             transaction::{Change, RefEdit},
             Target,
         };

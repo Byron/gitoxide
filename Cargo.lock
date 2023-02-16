@@ -1288,11 +1288,11 @@ dependencies = [
  "bstr",
  "criterion",
  "document-features",
- "git-ref 0.24.0",
  "gix-config-value",
  "gix-features",
  "gix-glob",
  "gix-path",
+ "gix-ref",
  "gix-sec",
  "memchr",
  "nom",
@@ -1310,10 +1310,10 @@ dependencies = [
  "bstr",
  "criterion",
  "git-config",
- "git-ref 0.24.0",
  "git-testtools",
  "gix",
  "gix-path",
+ "gix-ref",
  "gix-sec",
  "serde_derive",
  "serial_test",
@@ -1408,7 +1408,7 @@ dependencies = [
  "bstr",
  "git-hash",
  "git-path",
- "git-ref 0.23.1",
+ "git-ref",
  "git-sec",
  "thiserror",
 ]
@@ -1420,10 +1420,10 @@ dependencies = [
  "bstr",
  "defer",
  "dunce",
- "git-ref 0.24.0",
  "git-testtools",
  "gix-hash",
  "gix-path",
+ "gix-ref",
  "gix-sec",
  "is_ci",
  "serial_test",
@@ -1787,45 +1787,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-ref"
-version = "0.24.0"
-dependencies = [
- "document-features",
- "git-testtools",
- "gix-actor",
- "gix-features",
- "gix-hash",
- "gix-lock",
- "gix-object",
- "gix-path",
- "gix-tempfile",
- "gix-validate",
- "memmap2",
- "nom",
- "serde",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
-name = "git-ref-tests"
-version = "0.0.0"
-dependencies = [
- "git-discover 0.13.0",
- "git-odb",
- "git-ref 0.24.0",
- "git-testtools",
- "git-worktree 0.12.2",
- "gix-actor",
- "gix-features",
- "gix-hash",
- "gix-lock",
- "gix-object",
- "gix-validate",
- "tempfile",
-]
-
-[[package]]
 name = "git-refspec"
 version = "0.7.2"
 dependencies = [
@@ -2140,7 +2101,6 @@ dependencies = [
  "git-pack",
  "git-prompt",
  "git-protocol",
- "git-ref 0.24.0",
  "git-refspec",
  "git-revision",
  "git-testtools",
@@ -2155,6 +2115,7 @@ dependencies = [
  "gix-lock",
  "gix-object",
  "gix-path",
+ "gix-ref",
  "gix-sec",
  "gix-tempfile",
  "gix-validate",
@@ -2288,6 +2249,45 @@ dependencies = [
  "bstr",
  "tempfile",
  "thiserror",
+]
+
+[[package]]
+name = "gix-ref"
+version = "0.24.0"
+dependencies = [
+ "document-features",
+ "git-testtools",
+ "gix-actor",
+ "gix-features",
+ "gix-hash",
+ "gix-lock",
+ "gix-object",
+ "gix-path",
+ "gix-tempfile",
+ "gix-validate",
+ "memmap2",
+ "nom",
+ "serde",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-ref-tests"
+version = "0.0.0"
+dependencies = [
+ "git-discover 0.13.0",
+ "git-odb",
+ "git-testtools",
+ "git-worktree 0.12.2",
+ "gix-actor",
+ "gix-features",
+ "gix-hash",
+ "gix-lock",
+ "gix-object",
+ "gix-ref",
+ "gix-validate",
+ "tempfile",
 ]
 
 [[package]]

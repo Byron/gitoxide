@@ -2,7 +2,7 @@ use std::io::Write;
 use std::{borrow::Cow, convert::TryInto};
 
 use git_odb::Find;
-use git_ref::{
+use gix_ref::{
     transaction::{LogChange, RefLog},
     FullNameRef,
 };
@@ -68,7 +68,7 @@ pub fn update_head(
     reflog_message: &BStr,
     remote_name: &BStr,
 ) -> Result<(), Error> {
-    use git_ref::{
+    use gix_ref::{
         transaction::{PreviousValue, RefEdit},
         Target,
     };
@@ -92,7 +92,7 @@ pub fn update_head(
         None => return Ok(()),
     };
 
-    let head: git_ref::FullName = "HEAD".try_into().expect("valid");
+    let head: gix_ref::FullName = "HEAD".try_into().expect("valid");
     let reflog_message = || LogChange {
         mode: RefLog::AndReference,
         force_create_reflog: false,
@@ -100,13 +100,13 @@ pub fn update_head(
     };
     match head_ref {
         Some(referent) => {
-            let referent: git_ref::FullName = referent.try_into().map_err(|err| Error::InvalidHeadRef {
+            let referent: gix_ref::FullName = referent.try_into().map_err(|err| Error::InvalidHeadRef {
                 head_ref_name: referent.to_owned(),
                 source: err,
             })?;
             repo.refs
                 .transaction()
-                .packed_refs(git_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdates(
+                .packed_refs(gix_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdates(
                     Box::new(|oid, buf| {
                         repo.objects
                             .try_find(oid, buf)
@@ -117,7 +117,7 @@ pub fn update_head(
                 .prepare(
                     {
                         let mut edits = vec![RefEdit {
-                            change: git_ref::transaction::Change::Update {
+                            change: gix_ref::transaction::Change::Update {
                                 log: reflog_message(),
                                 expected: PreviousValue::Any,
                                 new: Target::Symbolic(referent.clone()),
@@ -127,7 +127,7 @@ pub fn update_head(
                         }];
                         if let Some(head_peeled_id) = head_peeled_id {
                             edits.push(RefEdit {
-                                change: git_ref::transaction::Change::Update {
+                                change: gix_ref::transaction::Change::Update {
                                     log: reflog_message(),
                                     expected: PreviousValue::Any,
                                     new: Target::Peeled(head_peeled_id.to_owned()),
@@ -153,7 +153,7 @@ pub fn update_head(
                 let mut log = reflog_message();
                 log.mode = RefLog::Only;
                 repo.edit_reference(RefEdit {
-                    change: git_ref::transaction::Change::Update {
+                    change: gix_ref::transaction::Change::Update {
                         log,
                         expected: PreviousValue::Any,
                         new: Target::Peeled(head_peeled_id.to_owned()),
@@ -167,7 +167,7 @@ pub fn update_head(
         }
         None => {
             repo.edit_reference(RefEdit {
-                change: git_ref::transaction::Change::Update {
+                change: gix_ref::transaction::Change::Update {
                     log: reflog_message(),
                     expected: PreviousValue::Any,
                     new: Target::Peeled(
@@ -194,7 +194,7 @@ fn setup_branch_config(
     remote_name: &BStr,
 ) -> Result<(), Error> {
     let short_name = match branch.category_and_short_name() {
-        Some((cat, shortened)) if cat == git_ref::Category::LocalBranch => match shortened.to_str() {
+        Some((cat, shortened)) if cat == gix_ref::Category::LocalBranch => match shortened.to_str() {
             Ok(s) => s,
             Err(_) => return Ok(()),
         },

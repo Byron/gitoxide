@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::{borrow::Cow, convert::TryInto, path::Path};
 
-use git_ref::{
+use gix_ref::{
     store::WriteReflog,
     transaction::{PreviousValue, RefEdit},
     FullName, Target,
@@ -85,7 +85,7 @@ impl ThreadSafeRepository {
             let prev_write_reflog = repo.refs.write_reflog;
             repo.refs.write_reflog = WriteReflog::Disable;
             repo.edit_reference(RefEdit {
-                change: git_ref::transaction::Change::Update {
+                change: gix_ref::transaction::Change::Update {
                     log: Default::default(),
                     expected: PreviousValue::Any,
                     new: Target::Symbolic(sym_ref),

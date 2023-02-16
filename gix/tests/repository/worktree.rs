@@ -1,4 +1,4 @@
-use git_ref::bstr;
+use gix_ref::bstr;
 
 mod with_core_worktree_config {
     use std::io::BufRead;

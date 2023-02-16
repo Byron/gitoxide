@@ -11,7 +11,7 @@ pub(crate) struct StageOne {
     pub is_bare: bool,
     pub lossy: Option<bool>,
     pub object_hash: gix_hash::Kind,
-    pub reflog: Option<git_ref::store::WriteReflog>,
+    pub reflog: Option<gix_ref::store::WriteReflog>,
 }
 
 /// Initialization

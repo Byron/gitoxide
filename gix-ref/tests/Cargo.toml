@@ -1,5 +1,5 @@
 [package]
-name = "git-ref-tests"
+name = "gix-ref-tests"
 version = "0.0.0"
 publish = false
 repository = "https://github.com/Byron/gitoxide"
@@ -12,7 +12,7 @@ rust-version = "1.64"
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["git-ref/serde"]
+serde1 = ["gix-ref/serde"]
 internal-testing-gix-features-parallel = ["gix-features/parallel"] # test sorted parallel loose file traversal
 
 [[test]]
@@ -26,7 +26,7 @@ path = "refs-parallel.rs"
 required-features = ["internal-testing-gix-features-parallel"]
 
 [dev-dependencies]
-git-ref = { path = ".." }
+gix-ref = { path = ".." }
 gix-features = { version = "^0.26.1", path = "../../gix-features", features = ["walkdir"]}
 git-testtools = { path = "../../tests/tools" }
 git-discover = { path = "../../git-discover" }

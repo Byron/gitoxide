@@ -31,7 +31,7 @@ pub type Merge = keys::Any<validate::FullNameRef>;
 mod merge {
     use std::borrow::Cow;
 
-    use git_ref::FullNameRef;
+    use gix_ref::FullNameRef;
 
     use crate::{bstr::BStr, config::tree::branch::Merge};
 

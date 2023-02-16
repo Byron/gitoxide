@@ -163,7 +163,7 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
     fn nth_checked_out_branch(&mut self, branch_no: usize) -> Option<()> {
         self.unset_disambiguate_call();
         fn prior_checkouts_iter<'a>(
-            platform: &'a mut git_ref::file::log::iter::Platform<'static, '_>,
+            platform: &'a mut gix_ref::file::log::iter::Platform<'static, '_>,
         ) -> Result<impl Iterator<Item = (BString, ObjectId)> + 'a, Error> {
             match platform.rev().ok().flatten() {
                 Some(log) => Ok(log.filter_map(Result::ok).filter_map(|line| {

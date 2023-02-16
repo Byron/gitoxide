@@ -1,7 +1,10 @@
 use std::convert::TryInto;
 
 use git_odb::Find;
-use git_ref::{
+use gix_hash::ObjectId;
+use gix_lock::acquire::Fail;
+use gix_object::bstr::{BString, ByteSlice};
+use gix_ref::{
     file::{
         transaction::{self, PackedRefs},
         ReferenceExt,
@@ -10,9 +13,6 @@ use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target,
 };
-use gix_hash::ObjectId;
-use gix_lock::acquire::Fail;
-use gix_object::bstr::{BString, ByteSlice};
 
 use crate::{
     file::{
@@ -253,7 +253,7 @@ fn reference_with_must_not_exist_constraint_cannot_be_created_if_it_exists_alrea
 #[test]
 fn namespaced_updates_or_deletions_are_transparent_and_not_observable() -> crate::Result {
     let (_keep, mut store) = empty_store()?;
-    store.namespace = git_ref::namespace::expand("foo")?.into();
+    store.namespace = gix_ref::namespace::expand("foo")?.into();
     let actual = vec![
         delete_at("refs/for/deletion"),
         create_symbolic_at("HEAD", "refs/heads/hello"),
@@ -417,7 +417,7 @@ fn symbolic_reference_writes_reflog_if_previous_value_is_set() -> crate::Result 
     assert_eq!(edits.len(), 1, "no split was performed");
     let head = store.find_loose(&edits[0].name)?;
     assert_eq!(head.name.as_bstr(), "refs/heads/symbolic");
-    assert_eq!(head.kind(), git_ref::Kind::Symbolic);
+    assert_eq!(head.kind(), gix_ref::Kind::Symbolic);
     assert_eq!(
         head.target.to_ref().try_name().map(|n| n.as_bstr()),
         Some(referent.as_bytes().as_bstr())
@@ -479,7 +479,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
 
         let head = store.find_loose(&edits[0].name)?;
         assert_eq!(head.name.as_bstr(), "HEAD");
-        assert_eq!(head.kind(), git_ref::Kind::Symbolic);
+        assert_eq!(head.kind(), gix_ref::Kind::Symbolic);
         assert_eq!(
             head.target.to_ref().try_name().map(|n| n.as_bstr()),
             Some(referent.as_bytes().as_bstr())
@@ -543,7 +543,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         let head = store.find_loose("HEAD")?;
         assert_eq!(
             head.kind(),
-            git_ref::Kind::Symbolic,
+            gix_ref::Kind::Symbolic,
             "head is still symbolic, not detached"
         );
         assert_eq!(
@@ -553,7 +553,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         );
 
         let referent_ref = store.find_loose(referent)?;
-        assert_eq!(referent_ref.kind(), git_ref::Kind::Peeled, "referent is a peeled ref");
+        assert_eq!(referent_ref.kind(), gix_ref::Kind::Peeled, "referent is a peeled ref");
         assert_eq!(
             referent_ref.target.to_ref().try_id(),
             Some(new_oid.as_ref()),
@@ -717,7 +717,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
         .prepare(
             store
                 .loose_iter()?
-                .filter_map(|r| r.ok().filter(|r| r.kind() == git_ref::Kind::Peeled))
+                .filter_map(|r| r.ok().filter(|r| r.kind() == gix_ref::Kind::Peeled))
                 .map(|r| RefEdit {
                     change: Change::Update {
                         log: LogChange::default(),
@@ -742,7 +742,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
         store
             .loose_iter()?
             .filter_map(Result::ok)
-            .all(|r| r.kind() == git_ref::Kind::Symbolic),
+            .all(|r| r.kind() == gix_ref::Kind::Symbolic),
         "only symbolic refs are left"
     );
 

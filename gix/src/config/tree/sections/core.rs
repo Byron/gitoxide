@@ -146,15 +146,15 @@ mod log_all_ref_updates {
             &'static self,
             value: Option<Result<bool, git_config::value::Error>>,
             string_on_failure: impl FnOnce() -> Option<Cow<'a, BStr>>,
-        ) -> Result<Option<git_ref::store::WriteReflog>, config::key::GenericErrorWithValue> {
+        ) -> Result<Option<gix_ref::store::WriteReflog>, config::key::GenericErrorWithValue> {
             match value.transpose().ok().flatten() {
                 Some(bool) => Ok(Some(if bool {
-                    git_ref::store::WriteReflog::Normal
+                    gix_ref::store::WriteReflog::Normal
                 } else {
-                    git_ref::store::WriteReflog::Disable
+                    gix_ref::store::WriteReflog::Disable
                 })),
                 None => match string_on_failure() {
-                    Some(val) if val.eq_ignore_ascii_case(b"always") => Ok(Some(git_ref::store::WriteReflog::Always)),
+                    Some(val) if val.eq_ignore_ascii_case(b"always") => Ok(Some(gix_ref::store::WriteReflog::Always)),
                     Some(val) => Err(config::key::GenericErrorWithValue::from_value(self, val.into_owned())),
                     None => Ok(None),
                 },

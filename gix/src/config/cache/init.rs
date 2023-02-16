@@ -28,7 +28,7 @@ impl Cache {
             reflog: _,
         }: StageOne,
         git_dir: &std::path::Path,
-        branch_name: Option<&git_ref::FullNameRef>,
+        branch_name: Option<&gix_ref::FullNameRef>,
         filter_config_section: fn(&git_config::file::Metadata) -> bool,
         git_install_dir: Option<&std::path::Path>,
         home: Option<&std::path::Path>,

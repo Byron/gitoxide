@@ -122,7 +122,7 @@ mod remote {
 mod branch {
     use std::{borrow::Cow, collections::BTreeSet, convert::TryInto};
 
-    use git_ref::FullNameRef;
+    use gix_ref::FullNameRef;
     use gix_validate::reference::name::Error as ValidateNameError;
 
     use crate::bstr::BStr;

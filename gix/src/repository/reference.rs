@@ -1,10 +1,10 @@
 use std::convert::TryInto;
 
-use git_ref::{
+use gix_hash::ObjectId;
+use gix_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     FullName, PartialNameRef, Target,
 };
-use gix_hash::ObjectId;
 
 use crate::{bstr::BString, ext::ReferenceExt, reference, Reference};
 
@@ -33,7 +33,7 @@ impl crate::Repository {
         assert_eq!(edits.len(), 1, "reference splits should ever happen");
         let edit = edits.pop().expect("exactly one item");
         Ok(Reference {
-            inner: git_ref::Reference {
+            inner: gix_ref::Reference {
                 name: edit.name,
                 target: id.into(),
                 peeled: None,
@@ -45,12 +45,12 @@ impl crate::Repository {
     /// Returns the currently set namespace for references, or `None` if it is not set.
     ///
     /// Namespaces allow to partition references, and is configured per `Easy`.
-    pub fn namespace(&self) -> Option<&git_ref::Namespace> {
+    pub fn namespace(&self) -> Option<&gix_ref::Namespace> {
         self.refs.namespace.as_ref()
     }
 
     /// Remove the currently set reference namespace and return it, affecting only this `Easy`.
-    pub fn clear_namespace(&mut self) -> Option<git_ref::Namespace> {
+    pub fn clear_namespace(&mut self) -> Option<gix_ref::Namespace> {
         self.refs.namespace.take()
     }
 
@@ -60,12 +60,12 @@ impl crate::Repository {
     pub fn set_namespace<'a, Name, E>(
         &mut self,
         namespace: Name,
-    ) -> Result<Option<git_ref::Namespace>, gix_validate::refname::Error>
+    ) -> Result<Option<gix_ref::Namespace>, gix_validate::refname::Error>
     where
         Name: TryInto<&'a PartialNameRef, Error = E>,
         gix_validate::refname::Error: From<E>,
     {
-        let namespace = git_ref::namespace::expand(namespace)?;
+        let namespace = gix_ref::namespace::expand(namespace)?;
         Ok(self.refs.namespace.replace(namespace))
     }
 
@@ -106,7 +106,7 @@ impl crate::Repository {
             "only one reference can be created, splits aren't possible"
         );
 
-        Ok(git_ref::Reference {
+        Ok(gix_ref::Reference {
             name: edits.pop().expect("exactly one edit").name,
             target: Target::Peeled(id),
             peeled: None,
@@ -205,7 +205,7 @@ impl crate::Repository {
     pub fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_>, reference::find::existing::Error>
     where
         Name: TryInto<&'a PartialNameRef, Error = E>,
-        git_ref::file::find::Error: From<E>,
+        gix_ref::file::find::Error: From<E>,
     {
         self.try_find_reference(name)?
             .ok_or(reference::find::existing::Error::NotFound)
@@ -229,7 +229,7 @@ impl crate::Repository {
     pub fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_>>, reference::find::Error>
     where
         Name: TryInto<&'a PartialNameRef, Error = E>,
-        git_ref::file::find::Error: From<E>,
+        gix_ref::file::find::Error: From<E>,
     {
         let state = self;
         match state.refs.try_find(name) {

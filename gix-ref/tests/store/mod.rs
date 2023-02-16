@@ -1,16 +1,16 @@
 #[test]
 #[cfg(feature = "internal-testing-gix-features-parallel")]
 fn is_send_and_sync() {
-    pub fn store_at(name: &str) -> crate::Result<git_ref::file::Store> {
+    pub fn store_at(name: &str) -> crate::Result<gix_ref::file::Store> {
         let path = git_testtools::scripted_fixture_read_only_standalone(name)?;
-        Ok(git_ref::file::Store::at(
+        Ok(gix_ref::file::Store::at(
             path.join(".git"),
-            git_ref::store::WriteReflog::Normal,
+            gix_ref::store::WriteReflog::Normal,
             gix_hash::Kind::Sha1,
         ))
     }
 
-    pub fn store_with_packed_refs() -> crate::Result<git_ref::file::Store> {
+    pub fn store_with_packed_refs() -> crate::Result<gix_ref::file::Store> {
         store_at("make_packed_ref_repository.sh")
     }
     fn assert_type<T: Send + Sync>(_t: T) {}

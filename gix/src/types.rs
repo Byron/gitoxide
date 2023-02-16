@@ -124,7 +124,7 @@ pub struct ObjectDetached {
 #[derive(Clone)]
 pub struct Reference<'r> {
     /// The actual reference data
-    pub inner: git_ref::Reference,
+    pub inner: gix_ref::Reference,
     pub(crate) repo: &'r Repository,
 }
 

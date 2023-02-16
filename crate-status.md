@@ -689,7 +689,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 * [x] validate ref names
 * [x] [validate][tagname-validation] tag names
 
-### git-ref
+### gix-ref
 * [ ] Prepare code for arrival of longer hashes like Sha256. It's part of the [V2 proposal][reftable-v2] but should work for loose refs as well.
 * **Stores**
   * [ ] disable transactions during [quarantine]

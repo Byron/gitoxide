@@ -14,14 +14,14 @@ autotests = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "bstr/serde", "gix-sec/serde1", "git-ref/serde1", "gix-glob/serde1", "gix-config-value/serde1"]
+serde1 = ["serde", "bstr/serde", "gix-sec/serde1", "gix-ref/serde1", "gix-glob/serde1", "gix-config-value/serde1"]
 
 [dependencies]
 gix-features = { version = "^0.26.4", path = "../gix-features"}
 gix-config-value = { version = "^0.10.1", path = "../gix-config-value" }
 gix-path = { version = "^0.7.1", path = "../gix-path" }
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }
-git-ref = { version = "^0.24.0", path = "../git-ref" }
+gix-ref = { version = "^0.24.0", path = "../gix-ref" }
 gix-glob = { version = "^0.5.3", path = "../gix-glob" }
 
 nom = { version = "7", default_features = false, features = [ "std" ] }

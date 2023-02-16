@@ -41,7 +41,7 @@ impl<'repo> Spec<'repo> {
 }
 
 struct Delegate<'repo> {
-    refs: [Option<git_ref::Reference>; 2],
+    refs: [Option<gix_ref::Reference>; 2],
     objs: [Option<HashSet<ObjectId>>; 2],
     /// The originally encountered ambiguous objects for potential later use in errors.
     ambiguous_objects: [Option<HashSet<ObjectId>>; 2],

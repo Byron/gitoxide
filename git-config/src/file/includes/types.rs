@@ -126,6 +126,6 @@ pub mod conditional {
         /// The name of the branch that is currently checked out. If `None`, `onbranch` conditions cause an error.
         ///
         /// Used for conditional includes, e.g. `includeIf.onbranch:main.…`
-        pub branch_name: Option<&'a git_ref::FullNameRef>,
+        pub branch_name: Option<&'a gix_ref::FullNameRef>,
     }
 }

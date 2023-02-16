@@ -94,7 +94,7 @@ impl ThreadSafeRepository {
     ///
     /// Note that this will read various `GIT_*` environment variables to check for overrides, and is probably most useful when implementing
     /// custom hooks.
-    // TODO: tests, with hooks, GIT_QUARANTINE for ref-log and transaction control (needs gix-sec support to remove write access in git-ref)
+    // TODO: tests, with hooks, GIT_QUARANTINE for ref-log and transaction control (needs gix-sec support to remove write access in gix-ref)
     // TODO: The following vars should end up as overrides of the respective configuration values (see git-config).
     //       GIT_PROXY_SSL_CERT, GIT_PROXY_SSL_KEY, GIT_PROXY_SSL_CERT_PASSWORD_PROTECTED.
     //       GIT_PROXY_SSL_CAINFO, GIT_SSL_CIPHER_LIST, GIT_HTTP_MAX_REQUESTS, GIT_CURL_FTP_NO_EPSV,
@@ -171,7 +171,7 @@ impl ThreadSafeRepository {
             lenient_config,
         )?;
         let mut refs = {
-            let reflog = repo_config.reflog.unwrap_or(git_ref::store::WriteReflog::Disable);
+            let reflog = repo_config.reflog.unwrap_or(gix_ref::store::WriteReflog::Disable);
             let object_hash = repo_config.object_hash;
             match &common_dir {
                 Some(common_dir) => crate::RefStore::for_linked_worktree(&git_dir, common_dir, reflog, object_hash),
@@ -238,7 +238,7 @@ impl ThreadSafeRepository {
                 let prefix = prefix.to_str()?;
                 let replacements = iter
                     .filter_map(Result::ok)
-                    .filter_map(|r: git_ref::Reference| {
+                    .filter_map(|r: gix_ref::Reference| {
                         let target = r.target.try_id()?.to_owned();
                         let source =
                             gix_hash::ObjectId::from_hex(r.name.as_bstr().strip_prefix(prefix.as_bytes())?).ok()?;

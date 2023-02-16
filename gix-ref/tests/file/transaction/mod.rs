@@ -1,30 +1,30 @@
 pub(crate) mod prepare_and_commit {
     use std::convert::TryInto;
 
-    use git_ref::{
+    use gix_actor::{Sign, Time};
+    use gix_hash::ObjectId;
+    use gix_object::bstr::BString;
+    use gix_ref::{
         file,
         transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
         Target,
     };
-    use gix_actor::{Sign, Time};
-    use gix_hash::ObjectId;
-    use gix_object::bstr::BString;
 
     use crate::util::hex_to_id;
 
-    fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<git_ref::log::Line>> {
+    fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<gix_ref::log::Line>> {
         let mut buf = Vec::new();
         let res = store
             .reflog_iter(name, &mut buf)?
             .expect("existing reflog")
-            .map(|l| l.map(git_ref::log::Line::from))
+            .map(|l| l.map(gix_ref::log::Line::from))
             .collect::<std::result::Result<Vec<_>, _>>()?;
         Ok(res)
     }
 
     pub(crate) fn empty_store() -> crate::Result<(tempfile::TempDir, file::Store)> {
         let dir = tempfile::TempDir::new().unwrap();
-        let store = file::Store::at(dir.path(), git_ref::store::WriteReflog::Normal, gix_hash::Kind::Sha1);
+        let store = file::Store::at(dir.path(), gix_ref::store::WriteReflog::Normal, gix_hash::Kind::Sha1);
         Ok((dir, store))
     }
 
@@ -40,8 +40,8 @@ pub(crate) mod prepare_and_commit {
         }
     }
 
-    fn log_line(previous: ObjectId, new: ObjectId, message: impl Into<BString>) -> git_ref::log::Line {
-        git_ref::log::Line {
+    fn log_line(previous: ObjectId, new: ObjectId, message: impl Into<BString>) -> gix_ref::log::Line {
+        gix_ref::log::Line {
             previous_oid: previous,
             new_oid: new,
             signature: committer(),

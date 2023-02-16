@@ -64,14 +64,14 @@ impl<'repo> Spec<'repo> {
 
     /// Return the name of the first reference we encountered while resolving the rev-spec, or `None` if a short hash
     /// was used. For example, `@` might yield `Some(HEAD)`, but `abcd` yields `None`.
-    pub fn first_reference(&self) -> Option<&git_ref::Reference> {
+    pub fn first_reference(&self) -> Option<&gix_ref::Reference> {
         self.first_ref.as_ref()
     }
 
     /// Return the name of the second reference we encountered while resolving the rev-spec, or `None` if a short hash
     /// was used or there was no second reference. For example, `..@` might yield `Some(HEAD)`, but `..abcd` or `@`
     /// yields `None`.
-    pub fn second_reference(&self) -> Option<&git_ref::Reference> {
+    pub fn second_reference(&self) -> Option<&gix_ref::Reference> {
         self.second_ref.as_ref()
     }
 

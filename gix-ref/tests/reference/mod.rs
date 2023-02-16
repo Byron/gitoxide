@@ -1,11 +1,11 @@
 use std::convert::TryInto;
 
-use git_ref::{FullName, Target};
+use gix_ref::{FullName, Target};
 
 #[test]
 fn strip_namespace() {
-    let ns = git_ref::namespace::expand("ns").unwrap();
-    let mut r = git_ref::Reference {
+    let ns = gix_ref::namespace::expand("ns").unwrap();
+    let mut r = gix_ref::Reference {
         name: {
             let mut n: FullName = "refs/heads/main".try_into().unwrap();
             n.prefix_namespace(&ns);

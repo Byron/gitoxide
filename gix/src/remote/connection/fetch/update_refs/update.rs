@@ -28,7 +28,7 @@ pub use error::Error;
 #[derive(Debug, Clone)]
 pub struct Outcome {
     /// All edits that were performed to update local refs.
-    pub edits: Vec<git_ref::transaction::RefEdit>,
+    pub edits: Vec<gix_ref::transaction::RefEdit>,
     /// Each update provides more information about what happened to the corresponding mapping.
     /// Use [`iter_mapping_updates()`][Self::iter_mapping_updates()] to recombine the update information with ref-edits and their
     /// mapping.
@@ -113,7 +113,7 @@ impl Outcome {
             &super::Update,
             &'a fetch::Mapping,
             Option<&'b git_refspec::RefSpec>,
-            Option<&git_ref::transaction::RefEdit>,
+            Option<&gix_ref::transaction::RefEdit>,
         ),
     > {
         self.updates.iter().zip(mappings.iter()).map(move |(update, mapping)| {

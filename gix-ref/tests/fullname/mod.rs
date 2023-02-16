@@ -1,6 +1,6 @@
 use std::{borrow::Cow, convert::TryInto};
 
-use git_ref::{Category, FullNameRef, PartialNameRef};
+use gix_ref::{Category, FullNameRef, PartialNameRef};
 
 #[test]
 fn cow() {
@@ -10,7 +10,7 @@ fn cow() {
 
 #[test]
 fn file_name() {
-    let name: git_ref::FullName = "refs/heads/main".try_into().unwrap();
+    let name: gix_ref::FullName = "refs/heads/main".try_into().unwrap();
     assert_eq!(name.as_ref().file_name(), "main");
 }
 #[test]
@@ -75,7 +75,7 @@ fn shorten_and_category() {
             true,
         ),
     ] {
-        let name: git_ref::FullName = input.try_into().unwrap();
+        let name: gix_ref::FullName = input.try_into().unwrap();
         assert_eq!(category.is_worktree_private(), is_worktree_private);
         let category = Some(category);
         assert_eq!(name.as_ref().shorten(), expected);
@@ -89,7 +89,7 @@ fn shorten_and_category() {
     }
 
     for special in ["hello/world", "main-worktree/head"] {
-        let name: git_ref::FullName = special.try_into().unwrap();
+        let name: gix_ref::FullName = special.try_into().unwrap();
         assert_eq!(
             name.shorten(),
             special,
@@ -101,8 +101,8 @@ fn shorten_and_category() {
 
 #[test]
 fn prefix_with_namespace_and_stripping() {
-    let ns = git_ref::namespace::expand("foo").unwrap();
-    let mut name: git_ref::FullName = "refs/heads/main".try_into().unwrap();
+    let ns = gix_ref::namespace::expand("foo").unwrap();
+    let mut name: gix_ref::FullName = "refs/heads/main".try_into().unwrap();
     assert_eq!(
         name.prefix_namespace(&ns).as_bstr(),
         "refs/namespaces/foo/refs/heads/main"

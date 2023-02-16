@@ -1,11 +1,11 @@
 use std::convert::TryInto;
 
-use git_ref::{
+use gix_lock::acquire::Fail;
+use gix_ref::{
     file::transaction::PackedRefs,
     transaction::{Change, LogChange, PreviousValue, RefEdit},
     Target,
 };
-use gix_lock::acquire::Fail;
 
 use crate::{
     file::transaction::prepare_and_commit::{committer, create_at, create_symbolic_at, delete_at, empty_store},

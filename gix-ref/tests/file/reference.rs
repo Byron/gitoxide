@@ -1,6 +1,6 @@
 mod reflog {
     mod packed {
-        use git_ref::file::ReferenceExt;
+        use gix_ref::file::ReferenceExt;
 
         use crate::file;
 
@@ -48,7 +48,7 @@ mod reflog {
 
 mod peel {
     use git_odb::pack::Find;
-    use git_ref::{file::ReferenceExt, peel, Reference};
+    use gix_ref::{file::ReferenceExt, peel, Reference};
 
     use crate::{file, file::store_with_packed_refs, util::hex_to_id};
 
@@ -56,17 +56,17 @@ mod peel {
     fn one_level() -> crate::Result {
         let store = file::store()?;
         let r = store.find_loose("HEAD")?;
-        assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
+        assert_eq!(r.kind(), gix_ref::Kind::Symbolic, "there is something to peel");
 
         let nr = Reference::from(r).follow(&store).expect("exists").expect("no failure");
         assert!(
-            matches!(nr.target.to_ref(), git_ref::TargetRef::Peeled(_)),
+            matches!(nr.target.to_ref(), gix_ref::TargetRef::Peeled(_)),
             "iteration peels a single level"
         );
         assert!(nr.follow(&store).is_none(), "end of iteration");
         assert_eq!(
             nr.target.to_ref(),
-            git_ref::TargetRef::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
+            gix_ref::TargetRef::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
             "we still have the peeled target"
         );
         Ok(())
@@ -97,7 +97,7 @@ mod peel {
         );
         assert_eq!(
             head.kind(),
-            git_ref::Kind::Peeled,
+            gix_ref::Kind::Peeled,
             "its peeled, but does have another step to peel to"
         );
 
@@ -107,7 +107,7 @@ mod peel {
             Some(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
             "packed refs are always peeled (at least the ones we choose to read)"
         );
-        assert_eq!(peeled.kind(), git_ref::Kind::Peeled, "it's terminally peeled now");
+        assert_eq!(peeled.kind(), gix_ref::Kind::Peeled, "it's terminally peeled now");
         assert!(peeled.follow(&store).is_none());
         Ok(())
     }
@@ -116,7 +116,7 @@ mod peel {
     fn to_id_multi_hop() -> crate::Result {
         let store = file::store()?;
         let mut r: Reference = store.find_loose("multi-link")?.into();
-        assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
+        assert_eq!(r.kind(), gix_ref::Kind::Symbolic, "there is something to peel");
 
         let commit = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
         assert_eq!(r.peel_to_id_in_place(&store, peel::none)?, commit);
@@ -147,12 +147,12 @@ mod peel {
     fn to_id_cycle() -> crate::Result {
         let store = file::store()?;
         let mut r: Reference = store.find_loose("loop-a")?.into();
-        assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
+        assert_eq!(r.kind(), gix_ref::Kind::Symbolic, "there is something to peel");
         assert_eq!(r.name.as_bstr(), "refs/loop-a");
 
         assert!(matches!(
             r.peel_to_id_in_place(&store, peel::none).unwrap_err(),
-            git_ref::peel::to_id::Error::Cycle { .. }
+            gix_ref::peel::to_id::Error::Cycle { .. }
         ));
         assert_eq!(r.name.as_bstr(), "refs/loop-a", "the ref is not changed on error");
         Ok(())
@@ -161,7 +161,7 @@ mod peel {
 
 mod parse {
     mod invalid {
-        use git_ref::file::loose::Reference;
+        use gix_ref::file::loose::Reference;
 
         macro_rules! mktest {
             ($name:ident, $input:literal, $err:literal) => {
@@ -179,8 +179,8 @@ mod parse {
         mktest!(ref_tag, b"reff: hello", "\"reff: hello\" could not be parsed");
     }
     mod valid {
-        use git_ref::file::loose::Reference;
         use gix_object::bstr::ByteSlice;
+        use gix_ref::file::loose::Reference;
 
         use crate::util::hex_to_id;
 
@@ -204,7 +204,7 @@ mod parse {
         mktest!(
             peeled,
             b"c5241b835b93af497cda80ce0dceb8f49800df1c\n",
-            git_ref::Kind::Peeled,
+            gix_ref::Kind::Peeled,
             Some(hex_to_id("c5241b835b93af497cda80ce0dceb8f49800df1c").as_ref()),
             None
         );
@@ -212,7 +212,7 @@ mod parse {
         mktest!(
             symbolic,
             b"ref: refs/heads/main\n",
-            git_ref::Kind::Symbolic,
+            gix_ref::Kind::Symbolic,
             None,
             Some(b"refs/heads/main".as_bstr())
         );
@@ -220,7 +220,7 @@ mod parse {
         mktest!(
             symbolic_more_than_one_space,
             b"ref:        refs/foobar\n",
-            git_ref::Kind::Symbolic,
+            gix_ref::Kind::Symbolic,
             None,
             Some(b"refs/foobar".as_bstr())
         );

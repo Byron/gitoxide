@@ -2,8 +2,8 @@ use crate::{remote, util::restricted};
 
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
-    use git_ref::TargetRef;
     use gix_object::bstr::ByteSlice;
+    use gix_ref::TargetRef;
 
     use gix::remote::fetch::SpecIndex;
 
@@ -131,7 +131,7 @@ mod blocking_io {
                     let r = repo
                         .find_reference(edit.name.as_ref())
                         .unwrap_or_else(|_| panic!("didn't find created reference: {:?}", edit));
-                    if r.name().category().expect("known") != git_ref::Category::Tag {
+                    if r.name().category().expect("known") != gix_ref::Category::Tag {
                         assert!(r
                             .name()
                             .category_and_short_name()
@@ -226,7 +226,7 @@ mod blocking_io {
         Ok(())
     }
 
-    fn assert_reflog(log: std::io::Result<Option<git_ref::file::log::iter::Forward<'_>>>) {
+    fn assert_reflog(log: std::io::Result<Option<gix_ref::file::log::iter::Forward<'_>>>) {
         let lines = log
             .unwrap()
             .expect("log present")

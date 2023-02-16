@@ -25,12 +25,12 @@ mod with_namespace {
         let store = store_at("make_namespaced_packed_ref_repository.sh")?;
         let packed = store.open_packed_buffer()?;
 
-        let ns_two = git_ref::namespace::expand("bar")?;
+        let ns_two = gix_ref::namespace::expand("bar")?;
         let namespaced_refs = store
             .iter()?
             .prefixed(ns_two.to_path())?
             .map(Result::unwrap)
-            .map(|r: git_ref::Reference| r.name)
+            .map(|r: gix_ref::Reference| r.name)
             .collect::<Vec<_>>();
         let expected_namespaced_refs = vec![
             "refs/namespaces/bar/refs/heads/multi-link-target1",
@@ -85,13 +85,13 @@ mod with_namespace {
             );
         }
 
-        let ns_one = git_ref::namespace::expand("foo")?;
+        let ns_one = gix_ref::namespace::expand("foo")?;
         assert_eq!(
             store
                 .iter()?
                 .prefixed(ns_one.to_path())?
                 .map(Result::unwrap)
-                .map(|r: git_ref::Reference| (
+                .map(|r: gix_ref::Reference| (
                     r.name.as_bstr().to_owned(),
                     r.name_without_namespace(&ns_one)
                         .expect("stripping correct namespace always works")
@@ -118,7 +118,7 @@ mod with_namespace {
                 .all()?
                 .map(Result::unwrap)
                 .filter_map(
-                    |r: git_ref::Reference| if r.name.as_bstr().starts_with_str("refs/namespaces") {
+                    |r: gix_ref::Reference| if r.name.as_bstr().starts_with_str("refs/namespaces") {
                         None
                     } else {
                         Some(r.name.as_bstr().to_owned())
@@ -139,7 +139,7 @@ mod with_namespace {
 
     #[test]
     fn iteration_on_store_with_namespace_makes_namespace_transparent() -> crate::Result {
-        let ns_two = git_ref::namespace::expand("bar")?;
+        let ns_two = gix_ref::namespace::expand("bar")?;
         let mut ns_store = {
             let mut s = store_at("make_namespaced_packed_ref_repository.sh")?;
             s.namespace = ns_two.clone().into();
@@ -157,7 +157,7 @@ mod with_namespace {
             .iter()?
             .all()?
             .map(Result::unwrap)
-            .map(|r: git_ref::Reference| r.name)
+            .map(|r: gix_ref::Reference| r.name)
             .collect::<Vec<_>>();
         assert_eq!(ref_names.iter().map(|n| n.as_bstr()).collect::<Vec<_>>(), expected_refs);
 
@@ -220,7 +220,7 @@ mod with_namespace {
             ns_store.namespace = prev;
         }
 
-        let ns_one = git_ref::namespace::expand("foo")?;
+        let ns_one = gix_ref::namespace::expand("foo")?;
         ns_store.namespace = ns_one.into();
 
         assert_eq!(
@@ -228,7 +228,7 @@ mod with_namespace {
                 .iter()?
                 .all()?
                 .map(Result::unwrap)
-                .map(|r: git_ref::Reference| r.name.into_inner())
+                .map(|r: gix_ref::Reference| r.name.into_inner())
                 .collect::<Vec<_>>(),
             vec!["refs/d1", "refs/remotes/origin/HEAD", "refs/remotes/origin/main"],
         );
@@ -377,7 +377,7 @@ fn loose_iter_with_partial_prefix() -> crate::Result {
 
 #[test]
 fn overlay_iter() -> crate::Result {
-    use git_ref::Target::*;
+    use gix_ref::Target::*;
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
@@ -423,7 +423,7 @@ fn overlay_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
 
 #[test]
 fn overlay_prefixed_iter() -> crate::Result {
-    use git_ref::Target::*;
+    use gix_ref::Target::*;
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
@@ -445,7 +445,7 @@ fn overlay_prefixed_iter() -> crate::Result {
 
 #[test]
 fn overlay_partial_prefix_iter() -> crate::Result {
-    use git_ref::Target::*;
+    use gix_ref::Target::*;
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store

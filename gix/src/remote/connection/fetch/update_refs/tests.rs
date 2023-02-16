@@ -41,7 +41,7 @@ mod update {
         let repo = gix::open_opts(dir.path().join(name), restricted()).unwrap();
         (repo, dir)
     }
-    use git_ref::{transaction::Change, TargetRef};
+    use gix_ref::{transaction::Change, TargetRef};
 
     use crate::{
         bstr::BString,

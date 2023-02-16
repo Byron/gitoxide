@@ -6,7 +6,7 @@ mod error {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        ReferenceNameValidation(#[from] git_ref::name::Error),
+        ReferenceNameValidation(#[from] gix_ref::name::Error),
         #[error(transparent)]
         WriteObject(#[from] crate::object::write::Error),
         #[error(transparent)]

@@ -1,7 +1,7 @@
 mod line {
     mod write_to {
-        use git_ref::file::log;
         use gix_object::bstr::ByteVec;
+        use gix_ref::file::log;
 
         #[test]
         fn newlines_in_message_of_the_input_fails_and_we_trust_signature_writing_validation() -> crate::Result {
@@ -52,7 +52,7 @@ mod iter {
             fn any_line() {
                 let mut buf = [0u8; 0];
                 assert!(
-                    git_ref::file::log::iter::reverse(std::io::Cursor::new(b"won't matter".as_ref()), &mut buf)
+                    gix_ref::file::log::iter::reverse(std::io::Cursor::new(b"won't matter".as_ref()), &mut buf)
                         .is_err(),
                     "zero sized buffers aren't allowed"
                 );
@@ -73,7 +73,7 @@ mod iter {
                 };
                 for line in &[two_lines, two_lines_trailing_nl] {
                     let read = std::io::Cursor::new(line);
-                    let mut iter = git_ref::file::log::iter::reverse(read, &mut buf)?;
+                    let mut iter = gix_ref::file::log::iter::reverse(read, &mut buf)?;
                     assert_eq!(
                         iter.next()
                             .expect("an error")
@@ -90,7 +90,7 @@ mod iter {
         }
 
         mod with_buffer_big_enough_for_largest_line {
-            use git_ref::log::Line;
+            use gix_ref::log::Line;
 
             use crate::util::hex_to_id;
 
@@ -105,7 +105,7 @@ mod iter {
                 };
                 for line in &[two_lines, two_lines_trailing_nl] {
                     let read = std::io::Cursor::new(line);
-                    let mut iter = git_ref::file::log::iter::reverse(read, &mut buf)?;
+                    let mut iter = gix_ref::file::log::iter::reverse(read, &mut buf)?;
                     let Line {
                         previous_oid,
                         new_oid,
@@ -133,7 +133,7 @@ mod iter {
                     let mut buf = vec![0; *buf_size];
                     for line in &lines {
                         let read = std::io::Cursor::new(line);
-                        let mut iter = git_ref::file::log::iter::reverse(read, &mut buf)?;
+                        let mut iter = gix_ref::file::log::iter::reverse(read, &mut buf)?;
                         let Line {
                             previous_oid,
                             new_oid,
@@ -167,10 +167,10 @@ mod iter {
         #[test]
         fn all_success() -> crate::Result {
             let log = reflog("HEAD")?;
-            let iter = git_ref::file::log::iter::forward(&log);
+            let iter = gix_ref::file::log::iter::forward(&log);
             assert_eq!(iter.count(), 5, "the log as a known amount of entries");
 
-            let mut iter = git_ref::file::log::iter::forward(&log);
+            let mut iter = gix_ref::file::log::iter::forward(&log);
             let line = iter.next().unwrap()?;
             assert_eq!(line.previous_oid(), gix_hash::Kind::Sha1.null());
             assert_eq!(line.new_oid, B("134385f6d781b7e97062102c6a483440bfda2a03"));
@@ -184,7 +184,7 @@ mod iter {
             let log_first_broken = "0000000000000000000000000000000000000000 134385fbroken7062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit
 0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1\n";
 
-            let mut iter = git_ref::file::log::iter::forward(log_first_broken.as_bytes());
+            let mut iter = gix_ref::file::log::iter::forward(log_first_broken.as_bytes());
             let err = iter.next().expect("error is not none").expect_err("the line is broken");
             assert_eq!(err.to_string(), "In line 1: \"0000000000000000000000000000000000000000 134385fbroken7062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000\\tcommit\" did not match '<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>'");
             assert!(iter.next().expect("a second line").is_ok(), "line parses ok");

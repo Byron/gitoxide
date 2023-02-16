@@ -101,8 +101,8 @@ fn tree_named<'repo>(repo: &'repo gix::Repository, rev_spec: &str) -> gix::Tree<
 mod renames {
     use crate::object::tree::diff::tree_named;
     use crate::util::named_repo;
-    use git_ref::bstr::BStr;
     use gix::object::tree::diff::change::Event;
+    use gix_ref::bstr::BStr;
     use std::convert::Infallible;
 
     #[test]

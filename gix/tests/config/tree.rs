@@ -261,17 +261,17 @@ mod core {
     fn log_all_ref_updates() -> crate::Result {
         assert_eq!(
             Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(Some(Ok(true)), || None)?,
-            Some(git_ref::store::WriteReflog::Normal)
+            Some(gix_ref::store::WriteReflog::Normal)
         );
         assert!(Core::LOG_ALL_REF_UPDATES.validate("true".into()).is_ok());
         assert_eq!(
             Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(Some(Ok(false)), || None)?,
-            Some(git_ref::store::WriteReflog::Disable)
+            Some(gix_ref::store::WriteReflog::Disable)
         );
         assert!(Core::LOG_ALL_REF_UPDATES.validate("0".into()).is_ok());
         assert_eq!(
             Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(None, || Some(bcow("always")))?,
-            Some(git_ref::store::WriteReflog::Always)
+            Some(gix_ref::store::WriteReflog::Always)
         );
         assert!(Core::LOG_ALL_REF_UPDATES.validate("always".into()).is_ok());
         assert_eq!(

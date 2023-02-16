@@ -125,7 +125,7 @@ mod tag {
             gix_object::Kind::Commit,
             Some(repo.committer().expect("present")?),
             message,
-            git_ref::transaction::PreviousValue::MustNotExist,
+            gix_ref::transaction::PreviousValue::MustNotExist,
         )?;
         assert_eq!(tag_ref.name().as_bstr(), "refs/tags/v1.0.0");
         assert_ne!(tag_ref.id(), current_head_id, "it points to the tag object");

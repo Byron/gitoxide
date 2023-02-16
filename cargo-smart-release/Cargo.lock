@@ -570,7 +570,7 @@ dependencies = [
  "gix-features",
  "gix-glob",
  "gix-path",
- "git-ref",
+ "gix-ref",
  "gix-sec",
  "libc",
  "memchr",
@@ -623,7 +623,7 @@ dependencies = [
  "bstr",
  "gix-hash",
  "gix-path",
- "git-ref",
+ "gix-ref",
  "gix-sec",
  "thiserror",
 ]
@@ -774,7 +774,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-ref"
+name = "gix-ref"
 version = "0.14.0"
 dependencies = [
  "gix-actor",
@@ -812,7 +812,7 @@ dependencies = [
  "git-odb",
  "git-pack",
  "gix-path",
- "git-ref",
+ "gix-ref",
  "git-revision",
  "gix-sec",
  "gix-tempfile",

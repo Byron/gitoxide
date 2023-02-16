@@ -48,7 +48,7 @@ pub(crate) fn config_bool(
 pub(crate) fn query_refupdates(
     config: &git_config::File<'static>,
     lenient_config: bool,
-) -> Result<Option<git_ref::store::WriteReflog>, Error> {
+) -> Result<Option<gix_ref::store::WriteReflog>, Error> {
     let key = "core.logAllRefUpdates";
     Core::LOG_ALL_REF_UPDATES
         .try_into_ref_updates(config.boolean_by_key(key), || config.string_by_key(key))
@@ -57,13 +57,13 @@ pub(crate) fn query_refupdates(
 }
 
 pub(crate) fn reflog_or_default(
-    config_reflog: Option<git_ref::store::WriteReflog>,
+    config_reflog: Option<gix_ref::store::WriteReflog>,
     has_worktree: bool,
-) -> git_ref::store::WriteReflog {
+) -> gix_ref::store::WriteReflog {
     config_reflog.unwrap_or(if has_worktree {
-        git_ref::store::WriteReflog::Normal
+        gix_ref::store::WriteReflog::Normal
     } else {
-        git_ref::store::WriteReflog::Disable
+        gix_ref::store::WriteReflog::Disable
     })
 }
 

@@ -1,7 +1,7 @@
 mod existing {
     use std::convert::{TryFrom, TryInto};
 
-    use git_ref::{PartialName, PartialNameRef};
+    use gix_ref::{PartialName, PartialNameRef};
 
     use crate::{file::store_at, util::hex_to_id};
 
@@ -24,7 +24,7 @@ mod existing {
 
         struct CustomType(String);
         impl<'a> TryFrom<&'a CustomType> for &'a PartialNameRef {
-            type Error = git_ref::name::Error;
+            type Error = gix_ref::name::Error;
 
             fn try_from(value: &'a CustomType) -> Result<Self, Self::Error> {
                 value.0.as_str().try_into()
@@ -49,7 +49,7 @@ mod existing {
                     .try_into()
                     .expect("cannot fail")
             }
-            fn to_full_name(&self) -> git_ref::FullName {
+            fn to_full_name(&self) -> gix_ref::FullName {
                 format!("{}/{}", self.remote, self.branch)
                     .try_into()
                     .expect("always valid")
@@ -57,7 +57,7 @@ mod existing {
         }
 
         impl<'a> TryFrom<&'a CustomName> for PartialName {
-            type Error = git_ref::name::Error;
+            type Error = gix_ref::name::Error;
 
             fn try_from(value: &'a CustomName) -> Result<Self, Self::Error> {
                 PartialName::try_from(value.to_partial_name())
@@ -106,7 +106,7 @@ mod loose {
                     Some(expected_path) => assert_eq!(reference?.name.as_bstr(), expected_path),
                     None => match reference {
                         Ok(_) => panic!("Expected error"),
-                        Err(git_ref::file::find::existing::Error::NotFound { name }) => {
+                        Err(gix_ref::file::find::existing::Error::NotFound { name }) => {
                             assert_eq!(name, Path::new(*partial_name));
                         }
                         Err(err) => panic!("Unexpected err: {err:?}"),
@@ -121,18 +121,18 @@ mod loose {
     fn success() -> crate::Result {
         let store = store()?;
         for (partial_name, expected_path, expected_ref_kind) in &[
-            ("dt1", "refs/tags/dt1", git_ref::Kind::Peeled), // tags before heads
-            ("heads/dt1", "refs/heads/dt1", git_ref::Kind::Peeled),
-            ("d1", "refs/d1", git_ref::Kind::Peeled), // direct refs before heads
-            ("heads/d1", "refs/heads/d1", git_ref::Kind::Peeled),
-            ("HEAD", "HEAD", git_ref::Kind::Symbolic), // it finds shortest paths first
-            ("origin", "refs/remotes/origin/HEAD", git_ref::Kind::Symbolic),
-            ("origin/HEAD", "refs/remotes/origin/HEAD", git_ref::Kind::Symbolic),
-            ("origin/main", "refs/remotes/origin/main", git_ref::Kind::Peeled),
-            ("t1", "refs/tags/t1", git_ref::Kind::Peeled),
-            ("main", "refs/heads/main", git_ref::Kind::Peeled),
-            ("heads/main", "refs/heads/main", git_ref::Kind::Peeled),
-            ("refs/heads/main", "refs/heads/main", git_ref::Kind::Peeled),
+            ("dt1", "refs/tags/dt1", gix_ref::Kind::Peeled), // tags before heads
+            ("heads/dt1", "refs/heads/dt1", gix_ref::Kind::Peeled),
+            ("d1", "refs/d1", gix_ref::Kind::Peeled), // direct refs before heads
+            ("heads/d1", "refs/heads/d1", gix_ref::Kind::Peeled),
+            ("HEAD", "HEAD", gix_ref::Kind::Symbolic), // it finds shortest paths first
+            ("origin", "refs/remotes/origin/HEAD", gix_ref::Kind::Symbolic),
+            ("origin/HEAD", "refs/remotes/origin/HEAD", gix_ref::Kind::Symbolic),
+            ("origin/main", "refs/remotes/origin/main", gix_ref::Kind::Peeled),
+            ("t1", "refs/tags/t1", gix_ref::Kind::Peeled),
+            ("main", "refs/heads/main", gix_ref::Kind::Peeled),
+            ("heads/main", "refs/heads/main", gix_ref::Kind::Peeled),
+            ("refs/heads/main", "refs/heads/main", gix_ref::Kind::Peeled),
         ] {
             let reference = store.try_find_loose(*partial_name)?.expect("exists");
             assert_eq!(reference.name.as_bstr(), expected_path);

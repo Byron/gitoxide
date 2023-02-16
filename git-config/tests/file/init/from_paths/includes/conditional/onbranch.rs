@@ -9,7 +9,7 @@ use git_config::file::{
     includes::conditional,
     init::{self},
 };
-use git_ref::{
+use gix_ref::{
     transaction::{Change, PreviousValue, RefEdit},
     FullName, Target,
 };

@@ -138,7 +138,7 @@ check: ## Build all code in suitable configurations
 unit-tests: ## run all unit tests
 	cargo test --all
 	cd gix-features && cargo test && cargo test --all-features
-	cd git-ref/tests && cargo test --all-features
+	cd gix-ref/tests && cargo test --all-features
 	cd git-odb && cargo test && cargo test --all-features
 	cd gix-object && cargo test && cargo test --features verbose-object-parsing-errors
 	cd git-pack/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \

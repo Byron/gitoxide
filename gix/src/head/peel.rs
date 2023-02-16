@@ -32,7 +32,7 @@ pub mod to_commit {
         #[error(transparent)]
         Peel(#[from] super::Error),
         #[error("Branch '{name}' does not have any commits")]
-        Unborn { name: git_ref::FullName },
+        Unborn { name: gix_ref::FullName },
         #[error(transparent)]
         ObjectKind(#[from] object::try_into::Error),
     }

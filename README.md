@@ -44,7 +44,7 @@ Documentation is complete and was reviewed at least once.
 
 * [git-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap)
 * [git-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-chunk)
-* [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
+* [gix-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-ref)
 * [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
 * [gix-config-value](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config-value)
 * [gix-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-glob)

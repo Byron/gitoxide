@@ -1011,7 +1011,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
 <csr-id-951c050ecbb70c9de216603e55c7cfbc89a067e3/>
 <csr-id-0e1875363fea09452789d7a90fc6860a7996d6d3/>
 
-With changes to `git-ref`, what follows is all the adjustments made to simplify the `gix` implementation.
+With changes to `gix-ref`, what follows is all the adjustments made to simplify the `gix` implementation.
 
 ### Changed (BREAKING)
 
@@ -1026,7 +1026,7 @@ With changes to `git-ref`, what follows is all the adjustments made to simplify 
    The packed refs buffer is shared across clones and it's recommended
    to clone one `file::Store` instance per thread, each of which can
    use its own namespace.
- - <csr-id-95247322a8191edfa7fac9c5aa72b40239f3aa88/> move `git_ref::file::WriteRefLog` to `git_ref::store::WriteRefLog`
+ - <csr-id-95247322a8191edfa7fac9c5aa72b40239f3aa88/> move `gix_ref::file::WriteRefLog` to `gix_ref::store::WriteRefLog`
 
 ### Bug Fixes (BREAKING)
 

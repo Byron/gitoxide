@@ -796,7 +796,7 @@ A first usable version of `gix` to make using `gitoxide` from your applications 
 * Packs are now reproducible by default, which means that the same tip will always generate a pack with the same hash. This may be a desirable property for some kinds of packs, but not for others which is why it can be turned off for a considerable speed boost.
 * `gix-tempfile` crate
 * `gix-lock` crate
-* `git-ref` crate with complete loose-ref, packed-ref and transaction support.
+* `gix-ref` crate with complete loose-ref, packed-ref and transaction support.
 
 
 ### Performance

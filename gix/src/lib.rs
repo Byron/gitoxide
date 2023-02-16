@@ -75,7 +75,6 @@ pub use git_odb as odb;
 pub use git_prompt as prompt;
 #[cfg(all(feature = "git-protocol"))]
 pub use git_protocol as protocol;
-pub use git_ref as refs;
 pub use git_refspec as refspec;
 pub use git_traverse as traverse;
 pub use git_url as url;
@@ -90,6 +89,7 @@ pub use gix_hash as hash;
 pub use gix_lock as lock;
 pub use gix_object as objs;
 pub use gix_object::bstr;
+pub use gix_ref as refs;
 pub use gix_sec as sec;
 pub use gix_tempfile as tempfile;
 pub use hash::{oid, ObjectId};
@@ -109,7 +109,7 @@ pub mod prelude {
 pub mod path;
 
 /// The standard type for a store to handle git references.
-pub type RefStore = git_ref::file::Store;
+pub type RefStore = gix_ref::file::Store;
 /// A handle for finding objects in an object database, abstracting away caches for thread-local use.
 pub type OdbHandle = git_odb::Handle;
 /// A way to access git configuration

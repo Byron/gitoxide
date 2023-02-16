@@ -72,7 +72,7 @@ pub enum Error {
     PriorCheckoutOutOfRange { desired: usize, available: usize },
     #[error("Reference {:?} has {available} ref-log entries and entry number {desired} is out of range", reference.name.as_bstr())]
     RefLogEntryOutOfRange {
-        reference: git_ref::Reference,
+        reference: gix_ref::Reference,
         desired: usize,
         available: usize,
     },
@@ -104,7 +104,7 @@ pub enum Error {
     #[error(transparent)]
     RevWalkIterInit(#[from] crate::reference::iter::init::Error),
     #[error(transparent)]
-    RevWalkAllReferences(#[from] git_ref::packed::buffer::open::Error),
+    RevWalkAllReferences(#[from] gix_ref::packed::buffer::open::Error),
     #[cfg(feature = "regex")]
     #[error(transparent)]
     InvalidRegex(#[from] regex::Error),
@@ -136,12 +136,12 @@ pub enum Error {
         /// The prefix to look for.
         prefix: gix_hash::Prefix,
         /// The reference matching the prefix.
-        reference: git_ref::Reference,
+        reference: gix_ref::Reference,
     },
     #[error(transparent)]
     IdFromHex(#[from] gix_hash::decode::Error),
     #[error(transparent)]
-    FindReference(#[from] git_ref::file::find::existing::Error),
+    FindReference(#[from] gix_ref::file::find::existing::Error),
     #[error(transparent)]
     FindObject(#[from] object::find::existing::Error),
     #[error(transparent)]

@@ -20,8 +20,8 @@ pub mod spec;
 pub struct Spec<'repo> {
     pub(crate) inner: git_revision::Spec,
     /// The first name of a reference as seen while parsing a `RevSpec`, for completeness.
-    pub(crate) first_ref: Option<git_ref::Reference>,
+    pub(crate) first_ref: Option<gix_ref::Reference>,
     /// The second name of a reference as seen while parsing a `RevSpec`, for completeness.
-    pub(crate) second_ref: Option<git_ref::Reference>,
+    pub(crate) second_ref: Option<gix_ref::Reference>,
     pub(crate) repo: &'repo crate::Repository,
 }
