@@ -1429,7 +1429,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-lfs"
+name = "gix-lfs"
 version = "0.0.0"
 
 [[package]]

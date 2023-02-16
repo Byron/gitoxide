@@ -157,7 +157,7 @@ members = [
     "gix-prompt",
     "git-filter",
     "gix-sec",
-    "git-lfs",
+    "gix-lfs",
     "gix-rebase",
     "gix-sequencer",
     "gix-submodule",

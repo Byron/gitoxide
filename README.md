@@ -92,7 +92,7 @@ is usable to some extent.
   * [gix-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-note)
   * [git-fetchhead](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-fetchhead)
   * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)
-  * [git-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lfs)
+  * [gix-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-lfs)
   * [gix-rebase](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-rebase)
   * [gix-sequencer](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-sequencer)
   * [gix-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-submodule)
@@ -231,7 +231,7 @@ Project non-goals can change over time as we learn more, and they can be challen
 
 If what you have seen so far sparked your interest to contribute, then let us say: We are happy to have you and help you to get started.
 
-> ❗️Note❗️: For cloning, `git-lfs` needs to be locally installed or the checkout will fail. `git lfs install` must have been called once, followed
+> ❗️Note❗️: For cloning, `gix-lfs` needs to be locally installed or the checkout will fail. `git lfs install` must have been called once, followed
   by `git lfs pull` to replace the `lfs`-pointer files.
 
 We recommend running `make tests check-size` during the development process to assure CI is green before pushing.
@@ -288,7 +288,7 @@ Provide a CLI to for the most basic user journey:
 
 ### Ideas for Spin-Offs
 
-* [ ] A system to integrate tightly with `git-lfs` to allow a multi-tier architecture so that assets can be stored in git and are accessible quickly from an intranet location
+* [ ] A system to integrate tightly with `gix-lfs` to allow a multi-tier architecture so that assets can be stored in git and are accessible quickly from an intranet location
   (for example by accessing the storage read-only over the network) while changes are pushed immediately by the server to other edge locations, like _the cloud_ or backups. Sparse checkouts along with explorer/finder integrations
   make it convenient to only work on a small subset of files locally. Clones can contain all configuration somebody would need to work efficiently from their location,
   and authentication for the git history as well as LFS resources make the system secure. One could imagine encryption support for untrusted locations in _the cloud_

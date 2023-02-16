@@ -427,7 +427,7 @@ Provides a trust model to share across gitoxide crates. It helps configuring how
 
 Handle human-aided operations which cannot be completed in one command invocation.
 
-### git-lfs
+### gix-lfs
 
 Implement git large file support using the process protocol and make it flexible enough to handle a variety of cases.
 Make it the best-performing implementation and the most convenient one.

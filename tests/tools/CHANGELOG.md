@@ -25,8 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
- - <csr-id-761b7d71977a5aa4876010faa61ab88f0dba6eab/> don't overwrite unexpanded `git-lfs` pointer files.
-   It's possible for those with incomplete `git-lfs` installations
+ - <csr-id-761b7d71977a5aa4876010faa61ab88f0dba6eab/> don't overwrite unexpanded `gix-lfs` pointer files.
+   It's possible for those with incomplete `gix-lfs` installations
    (and many more situations) to end up in a spot where pointer files
    aren't expanded. If we overwrite the with archives, files look
    changed which can be confusing and lead to even bigger messes
@@ -82,8 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#450](https://github.com/Byron/gitoxide/issues/450)**
     - add `Env::unset()` for convenience ([`09da4c5`](https://github.com/Byron/gitoxide/commit/09da4c5eeff5c6657beb9c53c168f90e74d6f758))
  * **[#607](https://github.com/Byron/gitoxide/issues/607)**
-    - don't overwrite unexpanded `git-lfs` pointer files. ([`761b7d7`](https://github.com/Byron/gitoxide/commit/761b7d71977a5aa4876010faa61ab88f0dba6eab))
-    - improve documentation to inform about the need for `git-lfs`. ([`519db50`](https://github.com/Byron/gitoxide/commit/519db50eac6576906f266a6f0b980f88098e3f9f))
+    - don't overwrite unexpanded `gix-lfs` pointer files. ([`761b7d7`](https://github.com/Byron/gitoxide/commit/761b7d71977a5aa4876010faa61ab88f0dba6eab))
+    - improve documentation to inform about the need for `gix-lfs`. ([`519db50`](https://github.com/Byron/gitoxide/commit/519db50eac6576906f266a6f0b980f88098e3f9f))
  * **[#650](https://github.com/Byron/gitoxide/issues/650)**
     - allow execution of scripts without 'bash'. ([`15ecd84`](https://github.com/Byron/gitoxide/commit/15ecd841cfe7c77bbdfdfa232dd51a44c4940bbc))
     - rename `scripted_fixture_*` to not contain 'repo' in the name. ([`dbf6c8c`](https://github.com/Byron/gitoxide/commit/dbf6c8c87cdca8169ac01aa89aefe56a33215142))
@@ -94,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Release gix-hash v0.10.1, gix-hashtable v0.1.0 ([`7717170`](https://github.com/Byron/gitoxide/commit/771717095d9a67b0625021eb0928828ab686e772))
     - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
     - Release gix-hash v0.10.0, gix-features v0.24.0, gix-date v0.3.0, gix-actor v0.14.0, gix-glob v0.5.0, gix-path v0.6.0, gix-quote v0.4.0, git-attributes v0.6.0, gix-config-value v0.9.0, gix-tempfile v3.0.0, gix-lock v3.0.0, gix-validate v0.7.0, gix-object v0.23.0, gix-ref v0.20.0, gix-sec v0.5.0, gix-config v0.12.0, gix-command v0.2.0, gix-prompt v0.2.0, gix-url v0.11.0, gix-credentials v0.7.0, git-diff v0.23.0, git-discover v0.9.0, gix-bitmap v0.2.0, gix-traverse v0.19.0, git-index v0.9.0, git-mailmap v0.6.0, gix-chunk v0.4.0, git-pack v0.27.0, git-odb v0.37.0, gix-packetline v0.14.0, gix-transport v0.23.0, gix-protocol v0.24.0, gix-revision v0.7.0, gix-refspec v0.4.0, git-worktree v0.9.0, git-repository v0.29.0, git-commitgraph v0.11.0, gitoxide-core v0.21.0, gitoxide v0.19.0, safety bump 28 crates ([`b2c301e`](https://github.com/Byron/gitoxide/commit/b2c301ef131ffe1871314e19f387cf10a8d2ac16))
-    - Merge branch 'git-lfs-improvements' ([`4c1685b`](https://github.com/Byron/gitoxide/commit/4c1685b971bb18117897a2c958ac2434bcb4f9e8))
+    - Merge branch 'gix-lfs-improvements' ([`4c1685b`](https://github.com/Byron/gitoxide/commit/4c1685b971bb18117897a2c958ac2434bcb4f9e8))
     - Merge branch 'jpgrayson/main' ([`b242853`](https://github.com/Byron/gitoxide/commit/b242853abd790e5234b2f18b4aaeddb8f6f4d36f))
     - Disable tag.gpgSign in test scripts ([`1ce3190`](https://github.com/Byron/gitoxide/commit/1ce3190000f6211ce31468c7603d491bb5b90293))
     - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))
@@ -251,7 +251,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - assure there are no archive file-name clashes across crates ([`c30bebf`](https://github.com/Byron/gitoxide/commit/c30bebf4f0272fe728e18b1932e419128f63ed44))
     - actual compression of archives ([`5dd3d82`](https://github.com/Byron/gitoxide/commit/5dd3d82aa68c9024cd1742043a3c56cd6b0665fd))
     - simple creation of test-archives ([`f1e107a`](https://github.com/Byron/gitoxide/commit/f1e107aa864107e02309b15b41da8d8f962e19a6))
-    - make sure archives are handled by git-lfs ([`f744a6c`](https://github.com/Byron/gitoxide/commit/f744a6cc8b453ea349664540af4be0566e376528))
+    - make sure archives are handled by gix-lfs ([`f744a6c`](https://github.com/Byron/gitoxide/commit/f744a6cc8b453ea349664540af4be0566e376528))
     - frame for extracting and generating archives ([`92c7044`](https://github.com/Byron/gitoxide/commit/92c7044cfbc3054b237ea7c79da981bb91908812))
     - further partition generated test directories by script name ([`e141ddb`](https://github.com/Byron/gitoxide/commit/e141ddbdd2e0677e921856b30096733530fde569))
     - auto-set commit.gpgsign=false when executing git ([`c23feb6`](https://github.com/Byron/gitoxide/commit/c23feb64ad157180cfba8a11c882b829733ea8f6))

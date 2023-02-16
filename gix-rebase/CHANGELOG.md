@@ -24,6 +24,6 @@ An empty crate without any content to reserve the name for the gitoxide project.
 <details><summary>view details</summary>
 
  * **[#382](https://github.com/Byron/gitoxide/issues/382)**
-    - add dummy crates for gix-rebase and git-lfs ([`94c8122`](https://github.com/Byron/gitoxide/commit/94c81226e2713c869462241429df608e04c4418d))
+    - add dummy crates for gix-rebase and gix-lfs ([`94c8122`](https://github.com/Byron/gitoxide/commit/94c81226e2713c869462241429df608e04c4418d))
 </details>
 
