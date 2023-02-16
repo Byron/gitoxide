@@ -1,5 +1,5 @@
 [package]
-name = "git-transport"
+name = "gix-transport"
 version = "0.25.4"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

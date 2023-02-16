@@ -323,7 +323,7 @@ and reachability bitmaps and repacks existing packs geometrically. Every 24h it 
     - It will be interesting to think of solutions involving the introduction of a bigger machine and migration of all repositories to there before the disk space runs out.
       Otherwise we believe that managing disk space is part of operation and not the server process itself.
 * **10** - write failure - fail connection
-    - write failures aren't specifically handled but result in typical Rust error behaviour probably alongside error reporting on the respective channels of the git-transport sideband.
+    - write failures aren't specifically handled but result in typical Rust error behaviour probably alongside error reporting on the respective channels of the gix-transport sideband.
     - `gitoxide` is made to cleanup on failure and leave nothing behind that could accumulate.
 * **11** - loose ref database - namespace isn't per connection
     - This needs fixing in `gitoxide` to probably be unshared by default. Namespaces are most useful on the server, which would use an `EasyArcExclusive` per connection.
@@ -384,7 +384,7 @@ The default favors speed and using all available cores, but savvy users can run 
     - This solution is implemented on application side (and not in `gitoxide`), it's interesting enough to mention though for systems that operate themselves.
     - One could also imagine that it tries to spend the nights aggressively compression repositories, some low-hanging fruits there.
 * **10** - write failure - fail connection
-    - write failures aren't specifically handled but result in typical Rust error behaviour probably alongside error reporting on the respective channels of the git-transport sideband.
+    - write failures aren't specifically handled but result in typical Rust error behaviour probably alongside error reporting on the respective channels of the gix-transport sideband.
     - `gitoxide` is made to cleanup on failure and leave nothing behind that could accumulate.
 * **11** - loose ref database - namespace isn't per connection
     - Needs fixing in `gitoxide`.

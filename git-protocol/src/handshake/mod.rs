@@ -1,5 +1,5 @@
 use bstr::BString;
-use git_transport::client::Capabilities;
+use gix_transport::client::Capabilities;
 
 /// A git reference, commonly referred to as 'ref', as returned by a git server before sending a pack.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -49,7 +49,7 @@ pub enum Ref {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The protocol version the server responded with. It might have downgraded the desired version.
-    pub server_protocol_version: git_transport::Protocol,
+    pub server_protocol_version: gix_transport::Protocol,
     /// The references reported as part of the Protocol::V1 handshake, or `None` otherwise as V2 requires a separate request.
     pub refs: Option<Vec<Ref>>,
     /// The server capabilities.
@@ -58,7 +58,7 @@ pub struct Outcome {
 
 mod error {
     use bstr::BString;
-    use git_transport::client;
+    use gix_transport::client;
 
     use crate::{credentials, handshake::refs};
 
@@ -73,12 +73,12 @@ mod error {
         #[error(transparent)]
         Transport(#[from] client::Error),
         #[error("The transport didn't accept the advertised server version {actual_version:?} and closed the connection client side")]
-        TransportProtocolPolicyViolation { actual_version: git_transport::Protocol },
+        TransportProtocolPolicyViolation { actual_version: gix_transport::Protocol },
         #[error(transparent)]
         ParseRefs(#[from] refs::parse::Error),
     }
 
-    impl git_transport::IsSpuriousError for Error {
+    impl gix_transport::IsSpuriousError for Error {
         fn is_spurious(&self) -> bool {
             match self {
                 Error::Transport(err) => err.is_spurious(),

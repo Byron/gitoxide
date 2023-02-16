@@ -5,7 +5,7 @@ use crate::bstr::BStr;
 
 impl crate::Repository {
     /// Produce configuration suitable for `url`, as differentiated by its protocol/scheme, to be passed to a transport instance via
-    /// [configure()][git_transport::client::TransportWithoutIO::configure()] (via `&**config` to pass the contained `Any` and not the `Box`).
+    /// [configure()][gix_transport::client::TransportWithoutIO::configure()] (via `&**config` to pass the contained `Any` and not the `Box`).
     /// `None` is returned if there is no known configuration. If `remote_name` is not `None`, the remote's name may contribute to
     /// configuration overrides, typically for the HTTP transport.
     ///
@@ -48,7 +48,7 @@ impl crate::Repository {
                         sync::{Arc, Mutex},
                     };
 
-                    use git_transport::client::{
+                    use gix_transport::client::{
                         http,
                         http::options::{ProxyAuthMethod, SslVersion, SslVersionRangeInclusive},
                     };

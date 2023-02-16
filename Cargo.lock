@@ -1583,11 +1583,11 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "git-testtools",
- "git-transport",
  "gix-credentials",
  "gix-features",
  "gix-hash",
  "gix-packetline",
+ "gix-transport",
  "maybe-async",
  "nom",
  "serde",
@@ -1729,35 +1729,6 @@ name = "git-tix"
 version = "0.0.0"
 
 [[package]]
-name = "git-transport"
-version = "0.25.4"
-dependencies = [
- "async-std",
- "async-trait",
- "base64",
- "blocking",
- "bstr",
- "curl",
- "document-features",
- "futures-io",
- "futures-lite",
- "git-pack",
- "gix-command",
- "gix-credentials",
- "gix-features",
- "gix-hash",
- "gix-packetline",
- "gix-quote",
- "gix-sec",
- "gix-url",
- "maybe-async",
- "pin-project-lite",
- "reqwest",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "git-traverse"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1848,8 +1819,8 @@ dependencies = [
  "futures-lite",
  "git-commitgraph",
  "git-pack",
- "git-transport",
  "gix",
+ "gix-transport",
  "gix-url",
  "itertools",
  "jwalk",
@@ -1878,7 +1849,6 @@ dependencies = [
  "git-refspec",
  "git-revision",
  "git-testtools",
- "git-transport",
  "gix-actor",
  "gix-attributes",
  "gix-config",
@@ -1895,6 +1865,7 @@ dependencies = [
  "gix-ref",
  "gix-sec",
  "gix-tempfile",
+ "gix-transport",
  "gix-traverse",
  "gix-url",
  "gix-validate",
@@ -2252,6 +2223,35 @@ dependencies = [
  "signal-hook",
  "signal-hook-registry",
  "tempfile",
+]
+
+[[package]]
+name = "gix-transport"
+version = "0.25.4"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "base64",
+ "blocking",
+ "bstr",
+ "curl",
+ "document-features",
+ "futures-io",
+ "futures-lite",
+ "git-pack",
+ "gix-command",
+ "gix-credentials",
+ "gix-features",
+ "gix-hash",
+ "gix-packetline",
+ "gix-quote",
+ "gix-sec",
+ "gix-url",
+ "maybe-async",
+ "pin-project-lite",
+ "reqwest",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 use std::io;
 
-use git_transport::client;
+use gix_transport::client;
 
 use crate::{fetch::response, handshake, ls_refs};
 

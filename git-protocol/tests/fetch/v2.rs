@@ -1,7 +1,7 @@
 use bstr::ByteSlice;
 use git_protocol::{fetch, handshake, ls_refs, FetchConnection};
-use git_transport::Protocol;
 use gix_features::progress;
+use gix_transport::Protocol;
 
 use crate::fetch::{helper_unused, oid, transport, CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 
@@ -16,7 +16,7 @@ async fn clone_abort_prep() -> crate::Result {
         out,
         "v2/clone.response",
         Protocol::V2,
-        git_transport::client::git::ConnectMode::Daemon,
+        gix_transport::client::git::ConnectMode::Daemon,
     );
     let agent = "agent";
     let err = git_protocol::fetch(
@@ -62,7 +62,7 @@ async fn ls_remote() -> crate::Result {
         out,
         "v2/clone.response",
         Protocol::V2,
-        git_transport::client::git::ConnectMode::Daemon,
+        gix_transport::client::git::ConnectMode::Daemon,
     );
     let agent = "agent";
     git_protocol::fetch(
@@ -117,7 +117,7 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
         out,
         "v2/clone.response",
         Protocol::V2,
-        git_transport::client::git::ConnectMode::Daemon,
+        gix_transport::client::git::ConnectMode::Daemon,
     );
     let err = git_protocol::fetch(
         &mut transport,
@@ -156,7 +156,7 @@ async fn ref_in_want() -> crate::Result {
         out,
         "v2/clone-ref-in-want.response",
         Protocol::V2,
-        git_transport::client::git::ConnectMode::Daemon,
+        gix_transport::client::git::ConnectMode::Daemon,
     );
 
     let agent = "agent";

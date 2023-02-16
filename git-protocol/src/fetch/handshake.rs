@@ -1,5 +1,5 @@
-use git_transport::{client, Service};
 use gix_features::progress::Progress;
+use gix_transport::{client, Service};
 use maybe_async::maybe_async;
 
 use crate::{

@@ -1,5 +1,5 @@
 use futures_lite::io::AsyncWriteExt;
-use git_transport::{client, client::TransportV2Ext};
+use gix_transport::{client, client::TransportV2Ext};
 
 use crate::{fetch::Arguments, Command};
 
@@ -14,7 +14,7 @@ impl Arguments {
             assert!(add_done_argument, "If there are no haves, is_done must be true.");
         }
         match self.version {
-            git_transport::Protocol::V1 => {
+            gix_transport::Protocol::V1 => {
                 let (on_into_read, retained_state) = self.prepare_v1(
                     transport.connection_persists_across_multiple_requests(),
                     add_done_argument,
@@ -36,7 +36,7 @@ impl Arguments {
                 }
                 Ok(line_writer.into_read().await?)
             }
-            git_transport::Protocol::V2 => {
+            gix_transport::Protocol::V2 => {
                 let retained_state = self.args.clone();
                 self.args.append(&mut self.haves);
                 if add_done_argument {

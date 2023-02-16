@@ -5,7 +5,7 @@ use std::{
 };
 
 use bstr::BString;
-use git_transport::client::Capabilities;
+use gix_transport::client::Capabilities;
 
 use crate::{
     fetch::{Arguments, Response},
@@ -65,7 +65,7 @@ pub trait DelegateBlocking {
     /// `server` capabilities is a list of features the server supports for your information, along with enabled `features` that the server knows about.
     fn prepare_fetch(
         &mut self,
-        _version: git_transport::Protocol,
+        _version: gix_transport::Protocol,
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         _refs: &[Ref],
@@ -124,7 +124,7 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
 
     fn prepare_fetch(
         &mut self,
-        _version: git_transport::Protocol,
+        _version: gix_transport::Protocol,
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         _refs: &[Ref],
@@ -158,7 +158,7 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
 
     fn prepare_fetch(
         &mut self,
-        _version: git_transport::Protocol,
+        _version: gix_transport::Protocol,
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         _refs: &[Ref],

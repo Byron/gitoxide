@@ -19,7 +19,7 @@ impl Command {
 #[cfg(any(test, feature = "async-client", feature = "blocking-client"))]
 mod with_io {
     use bstr::{BString, ByteSlice};
-    use git_transport::client::Capabilities;
+    use gix_transport::client::Capabilities;
 
     use crate::{command::Feature, Command};
 
@@ -56,11 +56,11 @@ mod with_io {
             }
         }
 
-        fn all_features(&self, version: git_transport::Protocol) -> &'static [&'static str] {
+        fn all_features(&self, version: gix_transport::Protocol) -> &'static [&'static str] {
             match self {
                 Command::LsRefs => &[],
                 Command::Fetch => match version {
-                    git_transport::Protocol::V1 => &[
+                    gix_transport::Protocol::V1 => &[
                         "multi_ack",
                         "thin-pack",
                         "side-band",
@@ -78,7 +78,7 @@ mod with_io {
                         "no-done",
                         "filter",
                     ],
-                    git_transport::Protocol::V2 => &[
+                    gix_transport::Protocol::V2 => &[
                         "shallow",
                         "filter",
                         "ref-in-want",
@@ -115,12 +115,12 @@ mod with_io {
         /// Note that this is the basis for any fetch operation as these features fulfil basic requirements and reasonably up-to-date servers.
         pub fn default_features(
             &self,
-            version: git_transport::Protocol,
+            version: gix_transport::Protocol,
             server_capabilities: &Capabilities,
         ) -> Vec<Feature> {
             match self {
                 Command::Fetch => match version {
-                    git_transport::Protocol::V1 => {
+                    gix_transport::Protocol::V1 => {
                         let has_multi_ack_detailed = server_capabilities.contains("multi_ack_detailed");
                         let has_sideband_64k = server_capabilities.contains("side-band-64k");
                         self.all_features(version)
@@ -135,7 +135,7 @@ mod with_io {
                             .map(|s| (s, None))
                             .collect()
                     }
-                    git_transport::Protocol::V2 => {
+                    gix_transport::Protocol::V2 => {
                         let supported_features: Vec<_> = server_capabilities
                             .iter()
                             .find_map(|c| {
@@ -160,7 +160,7 @@ mod with_io {
         /// Panics if the given arguments and features don't match what's statically known. It's considered a bug in the delegate.
         pub(crate) fn validate_argument_prefixes_or_panic(
             &self,
-            version: git_transport::Protocol,
+            version: gix_transport::Protocol,
             server: &Capabilities,
             arguments: &[BString],
             features: &[Feature],
@@ -173,7 +173,7 @@ mod with_io {
                 panic!("{}: argument {} is not known or allowed", self.as_str(), arg);
             }
             match version {
-                git_transport::Protocol::V1 => {
+                gix_transport::Protocol::V1 => {
                     for (feature, _) in features {
                         if server
                             .iter()
@@ -184,7 +184,7 @@ mod with_io {
                         panic!("{}: capability {} is not supported", self.as_str(), feature);
                     }
                 }
-                git_transport::Protocol::V2 => {
+                gix_transport::Protocol::V2 => {
                     let allowed = server
                         .iter()
                         .find_map(|c| {

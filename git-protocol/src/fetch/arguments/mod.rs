@@ -22,7 +22,7 @@ pub struct Arguments {
 
     features_for_first_want: Option<Vec<String>>,
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
-    version: git_transport::Protocol,
+    version: gix_transport::Protocol,
 }
 
 impl Arguments {
@@ -162,7 +162,7 @@ impl Arguments {
     /// Create a new instance to help setting up arguments to send to the server as part of a `fetch` operation
     /// for which `features` are the available and configured features to use.
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
-    pub fn new(version: git_transport::Protocol, features: Vec<crate::command::Feature>) -> Self {
+    pub fn new(version: gix_transport::Protocol, features: Vec<crate::command::Feature>) -> Self {
         use crate::Command;
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         let filter = has("filter");
@@ -173,7 +173,7 @@ impl Arguments {
         let mut deepen_relative = shallow;
         let supports_include_tag;
         let (initial_arguments, features_for_first_want) = match version {
-            git_transport::Protocol::V1 => {
+            gix_transport::Protocol::V1 => {
                 deepen_since = has("deepen-since");
                 deepen_not = has("deepen-not");
                 deepen_relative = has("deepen-relative");
@@ -187,7 +187,7 @@ impl Arguments {
                     .collect::<Vec<_>>();
                 (Vec::new(), Some(baked_features))
             }
-            git_transport::Protocol::V2 => {
+            gix_transport::Protocol::V2 => {
                 supports_include_tag = true;
                 (Command::Fetch.initial_arguments(&features), None)
             }
@@ -213,7 +213,7 @@ impl Arguments {
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod shared {
     use bstr::{BString, ByteSlice};
-    use git_transport::{client, client::MessageKind};
+    use gix_transport::{client, client::MessageKind};
 
     use crate::fetch::Arguments;
 

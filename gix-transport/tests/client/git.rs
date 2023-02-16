@@ -8,7 +8,7 @@ use std::{
 use bstr::ByteSlice;
 #[cfg(feature = "async-client")]
 use futures_lite::{AsyncBufReadExt, AsyncWriteExt, StreamExt};
-use git_transport::{
+use gix_transport::{
     client,
     client::{git, Transport, TransportV2Ext, TransportWithoutIO},
     Protocol, Service,

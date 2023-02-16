@@ -1,4 +1,4 @@
-use git_transport::{client, client::Capabilities};
+use gix_transport::{client, client::Capabilities};
 
 /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
 fn oid(hex: &str) -> gix_hash::ObjectId {
@@ -159,7 +159,7 @@ impl<'a> std::io::BufRead for Fixture<'a> {
 }
 
 #[cfg(feature = "blocking-client")]
-impl<'a> git_transport::client::ReadlineBufRead for Fixture<'a> {
+impl<'a> gix_transport::client::ReadlineBufRead for Fixture<'a> {
     fn readline(
         &mut self,
     ) -> Option<std::io::Result<Result<gix_packetline::PacketLineRef<'_>, gix_packetline::decode::Error>>> {
@@ -209,7 +209,7 @@ impl<'a> futures_io::AsyncBufRead for Fixture<'a> {
 
 #[cfg(feature = "async-client")]
 #[async_trait::async_trait(?Send)]
-impl<'a> git_transport::client::ReadlineBufRead for Fixture<'a> {
+impl<'a> gix_transport::client::ReadlineBufRead for Fixture<'a> {
     async fn readline(
         &mut self,
     ) -> Option<std::io::Result<Result<gix_packetline::PacketLineRef<'_>, gix_packetline::decode::Error>>> {

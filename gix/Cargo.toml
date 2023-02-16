@@ -38,13 +38,13 @@ default = ["max-performance-safe"]
 ## Make `git-protocol` available along with an async client.
 async-network-client = ["git-protocol/async-client"]
 ## Use this if your crate uses `async-std` as runtime, and enable basic runtime integration when connecting to remote servers.
-async-network-client-async-std = ["async-std", "async-network-client", "git-transport/async-std"]
+async-network-client-async-std = ["async-std", "async-network-client", "gix-transport/async-std"]
 ## Make `git-protocol` available along with a blocking client.
 blocking-network-client = ["git-protocol/blocking-client"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole.
-blocking-http-transport-curl = ["blocking-network-client", "git-transport/http-client-curl"]
+blocking-http-transport-curl = ["blocking-network-client", "gix-transport/http-client-curl"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole.
-blocking-http-transport-reqwest = ["blocking-network-client", "git-transport/http-client-reqwest"]
+blocking-http-transport-reqwest = ["blocking-network-client", "gix-transport/http-client-reqwest"]
 ## Stacks with `blocking-http-transport-reqwest` and enables HTTPS via the `rustls` crate. Note that https isn't available without a selection.
 blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls", "reqwest-for-configuration-only/trust-dns"]
 ## Stacks with `blocking-http-transport-reqwest` and enables HTTPS via the `native-tls` crate. Note that https isn't available without a selection.
@@ -58,7 +58,7 @@ serde1 = [  "serde",
             "git-pack/serde1",
             "gix-object/serde1",
             "git-protocol?/serde1",
-            "git-transport?/serde1",
+            "gix-transport?/serde1",
             "gix-ref/serde1",
             "git-odb/serde1",
             "git-index/serde1",
@@ -111,7 +111,7 @@ gix-path = { version = "^0.7.1", path = "../gix-path" }
 gix-url = { version = "^0.13.2", path = "../gix-url" }
 gix-traverse = { version = "^0.22.1", path = "../gix-traverse" }
 git-protocol = { version = "^0.26.3", path = "../git-protocol", optional = true }
-git-transport = { version = "^0.25.4", path = "../git-transport", optional = true }
+gix-transport = { version = "^0.25.4", path = "../gix-transport", optional = true }
 git-diff = { version = "^0.26.1", path = "../git-diff" }
 git-mailmap = { version = "^0.9.2", path = "../git-mailmap" }
 gix-features = { version = "^0.26.4", path = "../gix-features", features = ["progress", "once_cell"] }

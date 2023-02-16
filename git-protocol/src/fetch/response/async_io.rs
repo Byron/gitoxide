@@ -1,7 +1,7 @@
 use std::io;
 
 use futures_lite::AsyncBufReadExt;
-use git_transport::{client, Protocol};
+use gix_transport::{client, Protocol};
 
 use crate::fetch::{
     response,

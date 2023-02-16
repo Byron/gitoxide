@@ -87,7 +87,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release gix-date v0.4.1, gix-features v0.26.1, gix-glob v0.5.2, gix-attributes v0.8.1, gix-tempfile v3.0.1, gix-ref v0.23.1, gix-sec v0.6.1, gix-config v0.15.1, gix-prompt v0.3.1, gix-url v0.13.1, git-discover v0.12.1, git-index v0.12.2, git-mailmap v0.9.1, git-pack v0.30.1, git-odb v0.40.1, git-transport v0.25.3, git-protocol v0.26.2, git-revision v0.10.1, git-refspec v0.7.1, gix-worktree v0.12.1, git-repository v0.33.0 ([`5b5b380`](https://github.com/Byron/gitoxide/commit/5b5b3809faa71c658db38b40dfc410224d08a367))
+    - Release gix-date v0.4.1, gix-features v0.26.1, gix-glob v0.5.2, gix-attributes v0.8.1, gix-tempfile v3.0.1, gix-ref v0.23.1, gix-sec v0.6.1, gix-config v0.15.1, gix-prompt v0.3.1, gix-url v0.13.1, git-discover v0.12.1, git-index v0.12.2, git-mailmap v0.9.1, git-pack v0.30.1, git-odb v0.40.1, gix-transport v0.25.3, git-protocol v0.26.2, git-revision v0.10.1, git-refspec v0.7.1, gix-worktree v0.12.1, git-repository v0.33.0 ([`5b5b380`](https://github.com/Byron/gitoxide/commit/5b5b3809faa71c658db38b40dfc410224d08a367))
     - prepare changelogs prior to release ([`93bef97`](https://github.com/Byron/gitoxide/commit/93bef97b3c0c75d4bf7119fdd787516e1efc77bf))
     - Merge branch 'patch-1' ([`b93f0c4`](https://github.com/Byron/gitoxide/commit/b93f0c49fc677b6c19aea332cbfc1445ce475375))
     - thanks clippy ([`9e04685`](https://github.com/Byron/gitoxide/commit/9e04685dd3f109bfb27663f9dc7c04102e660bf2))
@@ -125,7 +125,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release gix-ref v0.23.0, gix-config v0.15.0, gix-command v0.2.2, git-diff v0.26.0, git-discover v0.12.0, git-mailmap v0.9.0, git-pack v0.30.0, git-odb v0.40.0, git-transport v0.25.2, git-protocol v0.26.1, git-revision v0.10.0, git-refspec v0.7.0, gix-worktree v0.12.0, git-repository v0.32.0 ([`ffb5b6a`](https://github.com/Byron/gitoxide/commit/ffb5b6a21cb415315db6fd5294940c7c6deb4538))
+    - Release gix-ref v0.23.0, gix-config v0.15.0, gix-command v0.2.2, git-diff v0.26.0, git-discover v0.12.0, git-mailmap v0.9.0, git-pack v0.30.0, git-odb v0.40.0, gix-transport v0.25.2, git-protocol v0.26.1, git-revision v0.10.0, git-refspec v0.7.0, gix-worktree v0.12.0, git-repository v0.32.0 ([`ffb5b6a`](https://github.com/Byron/gitoxide/commit/ffb5b6a21cb415315db6fd5294940c7c6deb4538))
     - prepare changelogs prior to release ([`4381a03`](https://github.com/Byron/gitoxide/commit/4381a03a34c305f31713cce234c2afbf8ac60f01))
     - Merge branch 'gix-clone-improvements' ([`76c99f3`](https://github.com/Byron/gitoxide/commit/76c99f3005f1b0031921b536f5d268715e41f3c8))
     - `gix clone ssh://...` won't deadlock anymore. ([`6ba799c`](https://github.com/Byron/gitoxide/commit/6ba799c9d6b17ed665d3c352c3c4bb35c9f771bb))
@@ -160,7 +160,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release git-transport v0.25.1 ([`e0b12fe`](https://github.com/Byron/gitoxide/commit/e0b12fe64b50a1b614111924b55ce02f1c39ac00))
+    - Release gix-transport v0.25.1 ([`e0b12fe`](https://github.com/Byron/gitoxide/commit/e0b12fe64b50a1b614111924b55ce02f1c39ac00))
     - file:// command invocation won't spill stderr output. ([`ec2f2e3`](https://github.com/Byron/gitoxide/commit/ec2f2e31a714334bc0942eab08d306d4e0952933))
 </details>
 
@@ -204,7 +204,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release gix-features v0.26.0, gix-actor v0.16.0, gix-attributes v0.8.0, gix-object v0.25.0, gix-ref v0.22.0, gix-config v0.14.0, gix-command v0.2.1, gix-url v0.13.0, gix-credentials v0.9.0, git-diff v0.25.0, git-discover v0.11.0, gix-traverse v0.21.0, git-index v0.11.0, git-mailmap v0.8.0, git-pack v0.29.0, git-odb v0.39.0, git-transport v0.25.0, git-protocol v0.26.0, git-revision v0.9.0, git-refspec v0.6.0, gix-worktree v0.11.0, git-repository v0.31.0, safety bump 24 crates ([`5ac9fbe`](https://github.com/Byron/gitoxide/commit/5ac9fbe265a5b61c533a2a6b3abfed2bdf7f89ad))
+    - Release gix-features v0.26.0, gix-actor v0.16.0, gix-attributes v0.8.0, gix-object v0.25.0, gix-ref v0.22.0, gix-config v0.14.0, gix-command v0.2.1, gix-url v0.13.0, gix-credentials v0.9.0, git-diff v0.25.0, git-discover v0.11.0, gix-traverse v0.21.0, git-index v0.11.0, git-mailmap v0.8.0, git-pack v0.29.0, git-odb v0.39.0, gix-transport v0.25.0, git-protocol v0.26.0, git-revision v0.9.0, git-refspec v0.6.0, gix-worktree v0.11.0, git-repository v0.31.0, safety bump 24 crates ([`5ac9fbe`](https://github.com/Byron/gitoxide/commit/5ac9fbe265a5b61c533a2a6b3abfed2bdf7f89ad))
     - prepare changelogs prior to release ([`30d8ca1`](https://github.com/Byron/gitoxide/commit/30d8ca19284049dcfbb0de2698cafae1d1a16b0c))
     - improve error message for when an invoked transport program can't be found. ([`fed38c9`](https://github.com/Byron/gitoxide/commit/fed38c90df546c4bfc57ef66c92b4c9312c90586))
     - assure processing thread is up before continuing. ([`f0997bf`](https://github.com/Byron/gitoxide/commit/f0997bfab2ba66fb12b0c9d4d673faeabda9687c))
@@ -244,7 +244,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release gix-features v0.25.1, gix-url v0.12.2, git-odb v0.38.1, git-transport v0.24.2, git-repository v0.30.2 ([`bb0a07b`](https://github.com/Byron/gitoxide/commit/bb0a07b5edd5f980989d1a92e74df7f183febe87))
+    - Release gix-features v0.25.1, gix-url v0.12.2, git-odb v0.38.1, gix-transport v0.24.2, git-repository v0.30.2 ([`bb0a07b`](https://github.com/Byron/gitoxide/commit/bb0a07b5edd5f980989d1a92e74df7f183febe87))
     - Merge branch 'adjustments-for-cargo' ([`d821fc5`](https://github.com/Byron/gitoxide/commit/d821fc5b4ef4ba606f2b6bb68b66f7260a0205dc))
     - add and implement various new http options for the `curl` backend. ([`d59d362`](https://github.com/Byron/gitoxide/commit/d59d362f12bf617656bae80596120c8bf823b090))
     - Merge branch 'fix/ssh-clone' ([`3678a6a`](https://github.com/Byron/gitoxide/commit/3678a6abab6f59ff7008ccfe02bb8d61da47e166))
@@ -272,7 +272,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release gix-url v0.12.1, git-transport v0.24.1, git-protocol v0.25.1, git-repository v0.30.1, git-commitgraph v0.12.0, gitoxide-core v0.22.0, gitoxide v0.20.0 ([`08ec3a9`](https://github.com/Byron/gitoxide/commit/08ec3a93d77a1018439a5c41c23729ffed27c5a5))
+    - Release gix-url v0.12.1, gix-transport v0.24.1, git-protocol v0.25.1, git-repository v0.30.1, git-commitgraph v0.12.0, gitoxide-core v0.22.0, gitoxide v0.20.0 ([`08ec3a9`](https://github.com/Byron/gitoxide/commit/08ec3a93d77a1018439a5c41c23729ffed27c5a5))
     - prepare changelogs prior to release ([`68ce15d`](https://github.com/Byron/gitoxide/commit/68ce15d07b50cfacdac0d1e42fe7f5e6330ba523))
     - Merge branch 'adjustments-for-cargo' ([`5afa7f5`](https://github.com/Byron/gitoxide/commit/5afa7f51342deaf0938e7fb2ebe6a578e83ab645))
 </details>
@@ -372,7 +372,7 @@ A maintenance release without user-facing changes.
  * **[#639](https://github.com/Byron/gitoxide/issues/639)**
     - correctly display what's actual and expected when failing to parse capabilities. ([`7ab7c24`](https://github.com/Byron/gitoxide/commit/7ab7c2409a47fae587531c0c3b203cd646e32984))
  * **Uncategorized**
-    - Release gix-date v0.3.1, gix-features v0.25.0, gix-actor v0.15.0, gix-glob v0.5.1, gix-path v0.7.0, gix-attributes v0.7.0, gix-config-value v0.10.0, gix-lock v3.0.1, gix-validate v0.7.1, gix-object v0.24.0, gix-ref v0.21.0, gix-sec v0.6.0, gix-config v0.13.0, gix-prompt v0.3.0, gix-url v0.12.0, gix-credentials v0.8.0, git-diff v0.24.0, git-discover v0.10.0, gix-traverse v0.20.0, git-index v0.10.0, git-mailmap v0.7.0, git-pack v0.28.0, git-odb v0.38.0, gix-packetline v0.14.1, git-transport v0.24.0, git-protocol v0.25.0, git-revision v0.8.0, git-refspec v0.5.0, gix-worktree v0.10.0, git-repository v0.30.0, safety bump 26 crates ([`e6b9906`](https://github.com/Byron/gitoxide/commit/e6b9906c486b11057936da16ed6e0ec450a0fb83))
+    - Release gix-date v0.3.1, gix-features v0.25.0, gix-actor v0.15.0, gix-glob v0.5.1, gix-path v0.7.0, gix-attributes v0.7.0, gix-config-value v0.10.0, gix-lock v3.0.1, gix-validate v0.7.1, gix-object v0.24.0, gix-ref v0.21.0, gix-sec v0.6.0, gix-config v0.13.0, gix-prompt v0.3.0, gix-url v0.12.0, gix-credentials v0.8.0, git-diff v0.24.0, git-discover v0.10.0, gix-traverse v0.20.0, git-index v0.10.0, git-mailmap v0.7.0, git-pack v0.28.0, git-odb v0.38.0, gix-packetline v0.14.1, gix-transport v0.24.0, git-protocol v0.25.0, git-revision v0.8.0, git-refspec v0.5.0, gix-worktree v0.10.0, git-repository v0.30.0, safety bump 26 crates ([`e6b9906`](https://github.com/Byron/gitoxide/commit/e6b9906c486b11057936da16ed6e0ec450a0fb83))
     - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - make streaming otional for any reqwest. ([`041eca5`](https://github.com/Byron/gitoxide/commit/041eca547a6629c8540728eba95dbcd636285ba9))
     - don't enforce V2 as protocol, but smoothly downgrade like git does. ([`5f2276b`](https://github.com/Byron/gitoxide/commit/5f2276b63129163096be3cb229864fc589348da8))
@@ -458,7 +458,7 @@ A maintenance release without user-facing changes.
  * **[#602](https://github.com/Byron/gitoxide/issues/602)**
     - `max-pure` now builds without any C build tooling due to lack of `openssl-sys`. ([`4308a20`](https://github.com/Byron/gitoxide/commit/4308a209dddcbb461c34d45fb9af8b4621d4600a))
  * **Uncategorized**
-    - Release gix-hash v0.10.0, gix-features v0.24.0, gix-date v0.3.0, gix-actor v0.14.0, gix-glob v0.5.0, gix-path v0.6.0, gix-quote v0.4.0, gix-attributes v0.6.0, gix-config-value v0.9.0, gix-tempfile v3.0.0, gix-lock v3.0.0, gix-validate v0.7.0, gix-object v0.23.0, gix-ref v0.20.0, gix-sec v0.5.0, gix-config v0.12.0, gix-command v0.2.0, gix-prompt v0.2.0, gix-url v0.11.0, gix-credentials v0.7.0, git-diff v0.23.0, git-discover v0.9.0, git-bitmap v0.2.0, gix-traverse v0.19.0, git-index v0.9.0, git-mailmap v0.6.0, git-chunk v0.4.0, git-pack v0.27.0, git-odb v0.37.0, gix-packetline v0.14.0, git-transport v0.23.0, git-protocol v0.24.0, git-revision v0.7.0, git-refspec v0.4.0, gix-worktree v0.9.0, git-repository v0.29.0, git-commitgraph v0.11.0, gitoxide-core v0.21.0, gitoxide v0.19.0, safety bump 28 crates ([`b2c301e`](https://github.com/Byron/gitoxide/commit/b2c301ef131ffe1871314e19f387cf10a8d2ac16))
+    - Release gix-hash v0.10.0, gix-features v0.24.0, gix-date v0.3.0, gix-actor v0.14.0, gix-glob v0.5.0, gix-path v0.6.0, gix-quote v0.4.0, gix-attributes v0.6.0, gix-config-value v0.9.0, gix-tempfile v3.0.0, gix-lock v3.0.0, gix-validate v0.7.0, gix-object v0.23.0, gix-ref v0.20.0, gix-sec v0.5.0, gix-config v0.12.0, gix-command v0.2.0, gix-prompt v0.2.0, gix-url v0.11.0, gix-credentials v0.7.0, git-diff v0.23.0, git-discover v0.9.0, git-bitmap v0.2.0, gix-traverse v0.19.0, git-index v0.9.0, git-mailmap v0.6.0, git-chunk v0.4.0, git-pack v0.27.0, git-odb v0.37.0, gix-packetline v0.14.0, gix-transport v0.23.0, git-protocol v0.24.0, git-revision v0.7.0, git-refspec v0.4.0, gix-worktree v0.9.0, git-repository v0.29.0, git-commitgraph v0.11.0, gitoxide-core v0.21.0, gitoxide v0.19.0, safety bump 28 crates ([`b2c301e`](https://github.com/Byron/gitoxide/commit/b2c301ef131ffe1871314e19f387cf10a8d2ac16))
     - prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
     - Merge branch 'max-pure' ([`03ff188`](https://github.com/Byron/gitoxide/commit/03ff1882f2982fba38fbbf245eea13ef9df50f33))
     - thanks clippy ([`c7cba33`](https://github.com/Byron/gitoxide/commit/c7cba333dd8654995b367498609b4280fe394402))
@@ -513,7 +513,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release gix-glob v0.4.2, gix-config-value v0.8.2, gix-lock v2.2.0, gix-ref v0.19.0, gix-config v0.11.0, git-discover v0.8.0, git-index v0.8.0, git-transport v0.22.0, git-protocol v0.23.0, gix-worktree v0.8.0, git-repository v0.28.0, gitoxide-core v0.20.0, gitoxide v0.18.0, safety bump 9 crates ([`0c253b1`](https://github.com/Byron/gitoxide/commit/0c253b15143dcedfe4c66d64ab1ea6e097030651))
+    - Release gix-glob v0.4.2, gix-config-value v0.8.2, gix-lock v2.2.0, gix-ref v0.19.0, gix-config v0.11.0, git-discover v0.8.0, git-index v0.8.0, gix-transport v0.22.0, git-protocol v0.23.0, gix-worktree v0.8.0, git-repository v0.28.0, gitoxide-core v0.20.0, gitoxide v0.18.0, safety bump 9 crates ([`0c253b1`](https://github.com/Byron/gitoxide/commit/0c253b15143dcedfe4c66d64ab1ea6e097030651))
     - prepare changelogs prior to release ([`fe5721f`](https://github.com/Byron/gitoxide/commit/fe5721f888c64c79fe9a734a9e33b94a282f8d97))
     - Merge branch 'http-config' ([`665b53e`](https://github.com/Byron/gitoxide/commit/665b53e1c2e1de65fafa28b669f58977868bbc81))
     - Merge branch 'push-support' ([`42356ab`](https://github.com/Byron/gitoxide/commit/42356abf9d08dd86ce464fa48e25bbcc98ceefd4))
@@ -572,7 +572,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release git-diff v0.22.0, git-index v0.7.1, git-pack v0.26.0, git-odb v0.36.0, git-transport v0.21.2, git-repository v0.27.0, safety bump 6 crates ([`f0cab31`](https://github.com/Byron/gitoxide/commit/f0cab317bb0c2799fa80d16f3ae1b89d6aee4284))
+    - Release git-diff v0.22.0, git-index v0.7.1, git-pack v0.26.0, git-odb v0.36.0, gix-transport v0.21.2, git-repository v0.27.0, safety bump 6 crates ([`f0cab31`](https://github.com/Byron/gitoxide/commit/f0cab317bb0c2799fa80d16f3ae1b89d6aee4284))
     - prepare changelogs prior to release ([`f5f3a9e`](https://github.com/Byron/gitoxide/commit/f5f3a9edd038a89c8c6c4da02054e5439bcc0071))
     - fix build ([`910d665`](https://github.com/Byron/gitoxide/commit/910d665e66d6e737a7bab3598c0c0ebfdda1a9cc))
     - thanks clippy ([`0dc4c6f`](https://github.com/Byron/gitoxide/commit/0dc4c6fb2199514437acd7629ea2a4c6bc0555c5))
@@ -608,7 +608,7 @@ A maintenance release without user-facing changes.
  * **[#450](https://github.com/Byron/gitoxide/issues/450)**
     - `client::Capabilities` lifetimes now point to `'a` instead of `'self`. ([`4b5d6df`](https://github.com/Byron/gitoxide/commit/4b5d6dfb58f325bba692e1e32636c24ba058022f))
  * **Uncategorized**
-    - Release gix-features v0.23.1, gix-glob v0.4.1, gix-config-value v0.8.1, gix-tempfile v2.0.6, gix-object v0.22.1, gix-ref v0.18.0, gix-sec v0.4.2, gix-config v0.10.0, gix-prompt v0.1.1, gix-url v0.10.1, gix-credentials v0.6.1, git-diff v0.21.0, git-discover v0.7.0, git-index v0.7.0, git-pack v0.25.0, git-odb v0.35.0, git-transport v0.21.1, git-protocol v0.22.0, git-refspec v0.3.1, gix-worktree v0.7.0, git-repository v0.26.0, git-commitgraph v0.10.0, gitoxide-core v0.19.0, gitoxide v0.17.0, safety bump 9 crates ([`d071583`](https://github.com/Byron/gitoxide/commit/d071583c5576fdf5f7717765ffed5681792aa81f))
+    - Release gix-features v0.23.1, gix-glob v0.4.1, gix-config-value v0.8.1, gix-tempfile v2.0.6, gix-object v0.22.1, gix-ref v0.18.0, gix-sec v0.4.2, gix-config v0.10.0, gix-prompt v0.1.1, gix-url v0.10.1, gix-credentials v0.6.1, git-diff v0.21.0, git-discover v0.7.0, git-index v0.7.0, git-pack v0.25.0, git-odb v0.35.0, gix-transport v0.21.1, git-protocol v0.22.0, git-refspec v0.3.1, gix-worktree v0.7.0, git-repository v0.26.0, git-commitgraph v0.10.0, gitoxide-core v0.19.0, gitoxide v0.17.0, safety bump 9 crates ([`d071583`](https://github.com/Byron/gitoxide/commit/d071583c5576fdf5f7717765ffed5681792aa81f))
     - prepare changelogs prior to release ([`423af90`](https://github.com/Byron/gitoxide/commit/423af90c8202d62dc1ea4a76a0df6421d1f0aa06))
     - Merge branch 'git_protocol_host' ([`d13c590`](https://github.com/Byron/gitoxide/commit/d13c59070ae6f1661dd6fee056cef1ff75c89222))
     - Avoid invalid invocations of `git` by removing `GIT_CONFIG_COUNT` ([`aa315b4`](https://github.com/Byron/gitoxide/commit/aa315b4a136bec57a1cce4b245c606904adc5c12))
@@ -712,7 +712,7 @@ A maintenance release without user-facing changes.
     - Revert "FAIL: try to make the transport configurable after being boxed, but…" ([`fbb96e4`](https://github.com/Byron/gitoxide/commit/fbb96e4d55e322243bf5500605f72e93b103e308))
     - try to make the transport configurable after being boxed, but… ([`5bef0a0`](https://github.com/Byron/gitoxide/commit/5bef0a00e8d01110c054a517f6d9696f981a7efc))
  * **Uncategorized**
-    - Release gix-hash v0.9.11, gix-features v0.23.0, gix-actor v0.13.0, gix-attributes v0.5.0, gix-object v0.22.0, gix-ref v0.17.0, gix-sec v0.4.1, gix-config v0.9.0, gix-url v0.10.0, gix-credentials v0.6.0, git-diff v0.20.0, git-discover v0.6.0, gix-traverse v0.18.0, git-index v0.6.0, git-mailmap v0.5.0, git-pack v0.24.0, git-odb v0.34.0, gix-packetline v0.13.1, git-transport v0.21.0, git-protocol v0.21.0, git-revision v0.6.0, git-refspec v0.3.0, gix-worktree v0.6.0, git-repository v0.25.0, safety bump 24 crates ([`104d922`](https://github.com/Byron/gitoxide/commit/104d922add61ab21c534c24ce8ed37cddf3e275a))
+    - Release gix-hash v0.9.11, gix-features v0.23.0, gix-actor v0.13.0, gix-attributes v0.5.0, gix-object v0.22.0, gix-ref v0.17.0, gix-sec v0.4.1, gix-config v0.9.0, gix-url v0.10.0, gix-credentials v0.6.0, git-diff v0.20.0, git-discover v0.6.0, gix-traverse v0.18.0, git-index v0.6.0, git-mailmap v0.5.0, git-pack v0.24.0, git-odb v0.34.0, gix-packetline v0.13.1, gix-transport v0.21.0, git-protocol v0.21.0, git-revision v0.6.0, git-refspec v0.3.0, gix-worktree v0.6.0, git-repository v0.25.0, safety bump 24 crates ([`104d922`](https://github.com/Byron/gitoxide/commit/104d922add61ab21c534c24ce8ed37cddf3e275a))
     - prepare changelogs for release ([`d232567`](https://github.com/Byron/gitoxide/commit/d23256701a95284857dc8d1cb37c7c94cada973c))
     - Merge branch 'fix-smart-release' ([`aa80b60`](https://github.com/Byron/gitoxide/commit/aa80b606e5570f327660cca42ea81581a6e9d5e3))
     - make fmt ([`7b9c065`](https://github.com/Byron/gitoxide/commit/7b9c06547b75929e3e5bf4240f43c7e9bc7d54e0))
@@ -741,7 +741,7 @@ A maintenance release without user-facing changes.
     - frame for filling in the reqwest implementation ([`943fd15`](https://github.com/Byron/gitoxide/commit/943fd153a2daca25c0e716388c528a83ad43be95))
     - Add 'http-client-reqwest' feature toggle ([`2c9b63c`](https://github.com/Byron/gitoxide/commit/2c9b63cfcc92d4815ddec53d885b6985739f627e))
     - compare 'Content-Type' header case-insensitively, as required by the http spec. ([`237682a`](https://github.com/Byron/gitoxide/commit/237682a529dc54e33e4738f34915d872aeb89514))
-    - Merge branch 'paulyoung/git-transport-http-client' ([`c845c16`](https://github.com/Byron/gitoxide/commit/c845c162100ad88f3f7fbc69a5badf80d76d86da))
+    - Merge branch 'paulyoung/gix-transport-http-client' ([`c845c16`](https://github.com/Byron/gitoxide/commit/c845c162100ad88f3f7fbc69a5badf80d76d86da))
     - Add `client::http::Transport::new_http()` constructor. ([`0fd57c6`](https://github.com/Byron/gitoxide/commit/0fd57c6b491a3c8d0127bc1d1f0eb958437edff9))
     - Introduce http-client feature to decouple from curl ([`31aa2c9`](https://github.com/Byron/gitoxide/commit/31aa2c92ae4d87071bdb436c0995883f53fb355d))
     - Make Content-Type header check case-insensitive ([`7aa8ab8`](https://github.com/Byron/gitoxide/commit/7aa8ab8b889b278d5f1f49cff570574dfa3146ac))
@@ -776,8 +776,8 @@ A maintenance release without user-facing changes.
  * **[#470](https://github.com/Byron/gitoxide/issues/470)**
     - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
  * **Uncategorized**
-    - Release gix-command v0.1.0, gix-prompt v0.1.0, gix-url v0.9.0, gix-credentials v0.5.0, git-diff v0.19.0, git-mailmap v0.4.0, git-chunk v0.3.2, git-pack v0.23.0, git-odb v0.33.0, gix-packetline v0.13.0, git-transport v0.20.0, git-protocol v0.20.0, git-revision v0.5.0, git-refspec v0.2.0, git-repository v0.24.0, git-commitgraph v0.9.0, gitoxide-core v0.18.0, gitoxide v0.16.0 ([`f5c36d8`](https://github.com/Byron/gitoxide/commit/f5c36d85755d1f0f503b77d9a565fad6aecf6728))
-    - Release gix-hash v0.9.10, gix-features v0.22.5, gix-date v0.2.0, gix-actor v0.12.0, gix-glob v0.4.0, gix-path v0.5.0, gix-quote v0.3.0, gix-attributes v0.4.0, gix-config-value v0.8.0, gix-tempfile v2.0.5, gix-validate v0.6.0, gix-object v0.21.0, gix-ref v0.16.0, gix-sec v0.4.0, gix-config v0.8.0, git-discover v0.5.0, gix-traverse v0.17.0, git-index v0.5.0, gix-worktree v0.5.0, git-testtools v0.9.0, gix-command v0.1.0, gix-prompt v0.1.0, gix-url v0.9.0, gix-credentials v0.5.0, git-diff v0.19.0, git-mailmap v0.4.0, git-chunk v0.3.2, git-pack v0.23.0, git-odb v0.33.0, gix-packetline v0.13.0, git-transport v0.20.0, git-protocol v0.20.0, git-revision v0.5.0, git-refspec v0.2.0, git-repository v0.24.0, git-commitgraph v0.9.0, gitoxide-core v0.18.0, gitoxide v0.16.0, safety bump 28 crates ([`29a043b`](https://github.com/Byron/gitoxide/commit/29a043be6808a3e9199a9b26bd076fe843afe4f4))
+    - Release gix-command v0.1.0, gix-prompt v0.1.0, gix-url v0.9.0, gix-credentials v0.5.0, git-diff v0.19.0, git-mailmap v0.4.0, git-chunk v0.3.2, git-pack v0.23.0, git-odb v0.33.0, gix-packetline v0.13.0, gix-transport v0.20.0, git-protocol v0.20.0, git-revision v0.5.0, git-refspec v0.2.0, git-repository v0.24.0, git-commitgraph v0.9.0, gitoxide-core v0.18.0, gitoxide v0.16.0 ([`f5c36d8`](https://github.com/Byron/gitoxide/commit/f5c36d85755d1f0f503b77d9a565fad6aecf6728))
+    - Release gix-hash v0.9.10, gix-features v0.22.5, gix-date v0.2.0, gix-actor v0.12.0, gix-glob v0.4.0, gix-path v0.5.0, gix-quote v0.3.0, gix-attributes v0.4.0, gix-config-value v0.8.0, gix-tempfile v2.0.5, gix-validate v0.6.0, gix-object v0.21.0, gix-ref v0.16.0, gix-sec v0.4.0, gix-config v0.8.0, git-discover v0.5.0, gix-traverse v0.17.0, git-index v0.5.0, gix-worktree v0.5.0, git-testtools v0.9.0, gix-command v0.1.0, gix-prompt v0.1.0, gix-url v0.9.0, gix-credentials v0.5.0, git-diff v0.19.0, git-mailmap v0.4.0, git-chunk v0.3.2, git-pack v0.23.0, git-odb v0.33.0, gix-packetline v0.13.0, gix-transport v0.20.0, git-protocol v0.20.0, git-revision v0.5.0, git-refspec v0.2.0, git-repository v0.24.0, git-commitgraph v0.9.0, gitoxide-core v0.18.0, gitoxide v0.16.0, safety bump 28 crates ([`29a043b`](https://github.com/Byron/gitoxide/commit/29a043be6808a3e9199a9b26bd076fe843afe4f4))
     - Merge branch 'filter-refs' ([`3773b92`](https://github.com/Byron/gitoxide/commit/3773b92b8372c9a40a74d281149ca65b057a7da9))
     - Merge branch 'filter-refs' ([`fd14489`](https://github.com/Byron/gitoxide/commit/fd14489f729172d615d0fa1e8dbd605e9eacf69d))
     - Release gix-features v0.22.6 ([`c9eda72`](https://github.com/Byron/gitoxide/commit/c9eda729d8f8bc266c7516c613d38acfb83a4743))
@@ -811,7 +811,7 @@ Maintenance release without user-facing changes.
  * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
     - prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
  * **Uncategorized**
-    - Release gix-object v0.20.3, gix-ref v0.15.4, gix-config v0.7.1, git-diff v0.18.0, gix-traverse v0.16.3, git-pack v0.22.0, git-odb v0.32.0, gix-url v0.7.3, git-transport v0.19.3, git-protocol v0.19.1, git-refspec v0.1.1, git-repository v0.23.0, safety bump 6 crates ([`85a3bed`](https://github.com/Byron/gitoxide/commit/85a3bedd68d2e5f36592a2f691c977dc55298279))
+    - Release gix-object v0.20.3, gix-ref v0.15.4, gix-config v0.7.1, git-diff v0.18.0, gix-traverse v0.16.3, git-pack v0.22.0, git-odb v0.32.0, gix-url v0.7.3, gix-transport v0.19.3, git-protocol v0.19.1, git-refspec v0.1.1, git-repository v0.23.0, safety bump 6 crates ([`85a3bed`](https://github.com/Byron/gitoxide/commit/85a3bedd68d2e5f36592a2f691c977dc55298279))
     - Release gix-features v0.22.3, git-revision v0.4.4 ([`c2660e2`](https://github.com/Byron/gitoxide/commit/c2660e2503323531ba02519eaa51124ee22fec51))
     - Merge branch 'main' into filter-refs-by-spec ([`cfa1440`](https://github.com/Byron/gitoxide/commit/cfa144031dbcac2707ab0cec012bc35e78f9c475))
 </details>
@@ -854,7 +854,7 @@ Maintenance release without user-facing changes.
     - adjust to changes in `gix-url` ([`bb83843`](https://github.com/Byron/gitoxide/commit/bb838430ecbaa18921ef60af04ff684809572ce2))
     - Make async `conenct()` signature compatible with the blocking implementation. ([`5220f9a`](https://github.com/Byron/gitoxide/commit/5220f9a59fb699e111342b076145a6899d36d433))
  * **Uncategorized**
-    - Release gix-date v0.0.5, gix-hash v0.9.8, gix-features v0.22.2, gix-actor v0.11.3, gix-glob v0.3.2, gix-quote v0.2.1, gix-attributes v0.3.2, gix-tempfile v2.0.4, gix-lock v2.1.1, gix-validate v0.5.5, gix-object v0.20.2, gix-ref v0.15.2, gix-sec v0.3.1, gix-config v0.7.0, gix-credentials v0.4.0, git-diff v0.17.2, git-discover v0.4.1, git-bitmap v0.1.2, git-index v0.4.2, git-mailmap v0.3.2, git-chunk v0.3.1, gix-traverse v0.16.2, git-pack v0.21.2, git-odb v0.31.2, gix-packetline v0.12.7, gix-url v0.7.2, git-transport v0.19.2, git-protocol v0.19.0, git-revision v0.4.2, git-refspec v0.1.0, gix-worktree v0.4.2, git-repository v0.22.0, safety bump 4 crates ([`4974eca`](https://github.com/Byron/gitoxide/commit/4974eca96d525d1ee4f8cad79bb713af7a18bf9d))
+    - Release gix-date v0.0.5, gix-hash v0.9.8, gix-features v0.22.2, gix-actor v0.11.3, gix-glob v0.3.2, gix-quote v0.2.1, gix-attributes v0.3.2, gix-tempfile v2.0.4, gix-lock v2.1.1, gix-validate v0.5.5, gix-object v0.20.2, gix-ref v0.15.2, gix-sec v0.3.1, gix-config v0.7.0, gix-credentials v0.4.0, git-diff v0.17.2, git-discover v0.4.1, git-bitmap v0.1.2, git-index v0.4.2, git-mailmap v0.3.2, git-chunk v0.3.1, gix-traverse v0.16.2, git-pack v0.21.2, git-odb v0.31.2, gix-packetline v0.12.7, gix-url v0.7.2, gix-transport v0.19.2, git-protocol v0.19.0, git-revision v0.4.2, git-refspec v0.1.0, gix-worktree v0.4.2, git-repository v0.22.0, safety bump 4 crates ([`4974eca`](https://github.com/Byron/gitoxide/commit/4974eca96d525d1ee4f8cad79bb713af7a18bf9d))
     - Merge branch 'remote-ls-refs' ([`39d585d`](https://github.com/Byron/gitoxide/commit/39d585d9f9ac6f3ecf51359c8e37f0a50e21ed45))
     - Merge branch 'main' into remote-ls-refs ([`e2ee3de`](https://github.com/Byron/gitoxide/commit/e2ee3ded97e5c449933712883535b30d151c7c78))
     - Merge branch 'docsrs-show-features' ([`31c2351`](https://github.com/Byron/gitoxide/commit/31c235140cad212d16a56195763fbddd971d87ce))
@@ -906,17 +906,17 @@ A maintenance release without user facing changes.
 
  * **[#450](https://github.com/Byron/gitoxide/issues/450)**
     - sketch of simple delegate to collect listed refs ([`1c5f561`](https://github.com/Byron/gitoxide/commit/1c5f5617940efe818a5e2aca5afe2cbd7f4ad940))
-    - adjust to changes in `git-transport` ([`94a623b`](https://github.com/Byron/gitoxide/commit/94a623b57e8fa2876731f74224b406ac56838edc))
+    - adjust to changes in `gix-transport` ([`94a623b`](https://github.com/Byron/gitoxide/commit/94a623b57e8fa2876731f74224b406ac56838edc))
     - fix async `connect()` to match new signature ([`eb15a79`](https://github.com/Byron/gitoxide/commit/eb15a7971f864bfe02073a21d545ce9ac3dc58e5))
     - `client::connect()` supports anything that parses into a `gix_url::Url`; turn http url back to &str ([`9509ce4`](https://github.com/Byron/gitoxide/commit/9509ce4faeca8b4e1527bac625370403495bb03c))
     - `client::connect()` now takes a `&BStr` as URL ([`52e8c14`](https://github.com/Byron/gitoxide/commit/52e8c149ff17ce894cc30d03ead1988f52f0663e))
     - `connect()` method is available in when `async-std` feature is set along with `async-client` ([`f6a6a49`](https://github.com/Byron/gitoxide/commit/f6a6a499f20e12e2bcca734bdf3c8599d37f6a6f))
     - use `thiserror` instead of `quickerror` ([`71a43d0`](https://github.com/Byron/gitoxide/commit/71a43d0bc12661efcb9c94697c704f700a3be488))
-    - better docs for `git-transport` ([`30b7b67`](https://github.com/Byron/gitoxide/commit/30b7b67740f80b9954c7fe77d7007722cb95d673))
+    - better docs for `gix-transport` ([`30b7b67`](https://github.com/Byron/gitoxide/commit/30b7b67740f80b9954c7fe77d7007722cb95d673))
     - adapt to changes in `gix-url` ([`9456146`](https://github.com/Byron/gitoxide/commit/9456146531226e5efc6e1e4e2e89b03683f8a422))
     - adapt to changes in `gix-url` and use `BString` to represent URLs. ([`12589cc`](https://github.com/Byron/gitoxide/commit/12589cc6f08e4d7aabae30bcdadaa0c2b4850229))
  * **Uncategorized**
-    - Release gix-date v0.0.3, gix-actor v0.11.1, gix-attributes v0.3.1, gix-tempfile v2.0.3, gix-object v0.20.1, gix-ref v0.15.1, gix-config v0.6.1, git-diff v0.17.1, git-discover v0.4.0, git-bitmap v0.1.1, git-index v0.4.1, git-mailmap v0.3.1, gix-traverse v0.16.1, git-pack v0.21.1, git-odb v0.31.1, gix-packetline v0.12.6, gix-url v0.7.1, git-transport v0.19.1, git-protocol v0.18.1, git-revision v0.4.0, gix-worktree v0.4.1, git-repository v0.21.0, safety bump 5 crates ([`c96473d`](https://github.com/Byron/gitoxide/commit/c96473dce21c3464aacbc0a62d520c1a33172611))
+    - Release gix-date v0.0.3, gix-actor v0.11.1, gix-attributes v0.3.1, gix-tempfile v2.0.3, gix-object v0.20.1, gix-ref v0.15.1, gix-config v0.6.1, git-diff v0.17.1, git-discover v0.4.0, git-bitmap v0.1.1, git-index v0.4.1, git-mailmap v0.3.1, gix-traverse v0.16.1, git-pack v0.21.1, git-odb v0.31.1, gix-packetline v0.12.6, gix-url v0.7.1, gix-transport v0.19.1, git-protocol v0.18.1, git-revision v0.4.0, gix-worktree v0.4.1, git-repository v0.21.0, safety bump 5 crates ([`c96473d`](https://github.com/Byron/gitoxide/commit/c96473dce21c3464aacbc0a62d520c1a33172611))
     - prepare changelogs prior to reelase ([`c06ae1c`](https://github.com/Byron/gitoxide/commit/c06ae1c606b6af9c2a12021103d99c2810750d60))
     - Release gix-hash v0.9.7, gix-features v0.22.1 ([`232784a`](https://github.com/Byron/gitoxide/commit/232784a59ded3e8016e4257c7e146ad385cdd64a))
     - Merge pull request #2 from SidneyDouw/main ([`ce885ad`](https://github.com/Byron/gitoxide/commit/ce885ad4c3324c09c83751c32e014f246c748766))
@@ -953,8 +953,8 @@ This is a maintenance release with no functional changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release gix-config v0.6.0, gix-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, gix-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, gix-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, gix-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0 ([`aa639d8`](https://github.com/Byron/gitoxide/commit/aa639d8c43f3098cc4a5b50614c5ae94a8156928))
-    - Release gix-hash v0.9.6, gix-features v0.22.0, gix-date v0.0.2, gix-actor v0.11.0, gix-glob v0.3.1, gix-path v0.4.0, gix-attributes v0.3.0, gix-tempfile v2.0.2, gix-object v0.20.0, gix-ref v0.15.0, gix-sec v0.3.0, gix-config v0.6.0, gix-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, gix-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, gix-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, gix-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0, safety bump 22 crates ([`4737b1e`](https://github.com/Byron/gitoxide/commit/4737b1eea1d4c9a8d5a69fb63ecac5aa5d378ae5))
+    - Release gix-config v0.6.0, gix-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, gix-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, gix-url v0.7.0, gix-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, gix-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0 ([`aa639d8`](https://github.com/Byron/gitoxide/commit/aa639d8c43f3098cc4a5b50614c5ae94a8156928))
+    - Release gix-hash v0.9.6, gix-features v0.22.0, gix-date v0.0.2, gix-actor v0.11.0, gix-glob v0.3.1, gix-path v0.4.0, gix-attributes v0.3.0, gix-tempfile v2.0.2, gix-object v0.20.0, gix-ref v0.15.0, gix-sec v0.3.0, gix-config v0.6.0, gix-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, gix-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, gix-url v0.7.0, gix-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, gix-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0, safety bump 22 crates ([`4737b1e`](https://github.com/Byron/gitoxide/commit/4737b1eea1d4c9a8d5a69fb63ecac5aa5d378ae5))
     - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
     - Merge pull request #1 from Byron/main ([`085e76b`](https://github.com/Byron/gitoxide/commit/085e76b121291ed9bd324139105d2bd4117bedf8))
     - Merge branch 'main' into pathspec ([`89ea12b`](https://github.com/Byron/gitoxide/commit/89ea12b558bcc056b892193ee8fb44b8664b5da4))
@@ -984,7 +984,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release gix-date v0.0.1, gix-hash v0.9.5, gix-features v0.21.1, gix-actor v0.10.1, gix-path v0.2.0, gix-attributes v0.2.0, gix-ref v0.14.0, gix-sec v0.2.0, gix-config v0.5.0, gix-credentials v0.2.0, git-discover v0.2.0, git-pack v0.20.0, git-odb v0.30.0, gix-url v0.6.0, git-transport v0.18.0, git-protocol v0.17.0, git-revision v0.2.1, gix-worktree v0.3.0, git-repository v0.19.0, safety bump 13 crates ([`a417177`](https://github.com/Byron/gitoxide/commit/a41717712578f590f04a33d27adaa63171f25267))
+    - Release gix-date v0.0.1, gix-hash v0.9.5, gix-features v0.21.1, gix-actor v0.10.1, gix-path v0.2.0, gix-attributes v0.2.0, gix-ref v0.14.0, gix-sec v0.2.0, gix-config v0.5.0, gix-credentials v0.2.0, git-discover v0.2.0, git-pack v0.20.0, git-odb v0.30.0, gix-url v0.6.0, gix-transport v0.18.0, git-protocol v0.17.0, git-revision v0.2.1, gix-worktree v0.3.0, git-repository v0.19.0, safety bump 13 crates ([`a417177`](https://github.com/Byron/gitoxide/commit/a41717712578f590f04a33d27adaa63171f25267))
     - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
     - Merge branch 'main' into SidneyDouw-pathspec ([`a22b1d8`](https://github.com/Byron/gitoxide/commit/a22b1d88a21311d44509018729c3ef1936cf052a))
     - Merge branch 'main' into git_includeif ([`598c853`](https://github.com/Byron/gitoxide/commit/598c853087fcf8f77299aa5b9803bcec705c0cd0))
@@ -1017,8 +1017,8 @@ A maintenance release without user-facing changes.
     - adapt to changes in gix-sec ([`c5e2346`](https://github.com/Byron/gitoxide/commit/c5e2346cee53019b1b321e45cf080b210e60bb7a))
     - use `gix-credentials` in `git-protocol` ([`32dc182`](https://github.com/Byron/gitoxide/commit/32dc1829a5661f66396d109c8d0a8eaae6b1f532))
  * **Uncategorized**
-    - Release gix-ref v0.13.0, git-discover v0.1.0, git-index v0.3.0, git-mailmap v0.2.0, gix-traverse v0.15.0, git-pack v0.19.0, git-odb v0.29.0, gix-packetline v0.12.5, gix-url v0.5.0, git-transport v0.17.0, git-protocol v0.16.0, git-revision v0.2.0, gix-worktree v0.2.0, git-repository v0.17.0 ([`349c590`](https://github.com/Byron/gitoxide/commit/349c5904b0dac350838a896759d51576b66880a7))
-    - Release gix-hash v0.9.4, gix-features v0.21.0, gix-actor v0.10.0, gix-glob v0.3.0, gix-path v0.1.1, gix-attributes v0.1.0, gix-sec v0.1.0, gix-config v0.3.0, gix-credentials v0.1.0, gix-validate v0.5.4, gix-object v0.19.0, git-diff v0.16.0, gix-lock v2.1.0, gix-ref v0.13.0, git-discover v0.1.0, git-index v0.3.0, git-mailmap v0.2.0, gix-traverse v0.15.0, git-pack v0.19.0, git-odb v0.29.0, gix-packetline v0.12.5, gix-url v0.5.0, git-transport v0.17.0, git-protocol v0.16.0, git-revision v0.2.0, gix-worktree v0.2.0, git-repository v0.17.0, safety bump 20 crates ([`654cf39`](https://github.com/Byron/gitoxide/commit/654cf39c92d5aa4c8d542a6cadf13d4acef6a78e))
+    - Release gix-ref v0.13.0, git-discover v0.1.0, git-index v0.3.0, git-mailmap v0.2.0, gix-traverse v0.15.0, git-pack v0.19.0, git-odb v0.29.0, gix-packetline v0.12.5, gix-url v0.5.0, gix-transport v0.17.0, git-protocol v0.16.0, git-revision v0.2.0, gix-worktree v0.2.0, git-repository v0.17.0 ([`349c590`](https://github.com/Byron/gitoxide/commit/349c5904b0dac350838a896759d51576b66880a7))
+    - Release gix-hash v0.9.4, gix-features v0.21.0, gix-actor v0.10.0, gix-glob v0.3.0, gix-path v0.1.1, gix-attributes v0.1.0, gix-sec v0.1.0, gix-config v0.3.0, gix-credentials v0.1.0, gix-validate v0.5.4, gix-object v0.19.0, git-diff v0.16.0, gix-lock v2.1.0, gix-ref v0.13.0, git-discover v0.1.0, git-index v0.3.0, git-mailmap v0.2.0, gix-traverse v0.15.0, git-pack v0.19.0, git-odb v0.29.0, gix-packetline v0.12.5, gix-url v0.5.0, gix-transport v0.17.0, git-protocol v0.16.0, git-revision v0.2.0, gix-worktree v0.2.0, git-repository v0.17.0, safety bump 20 crates ([`654cf39`](https://github.com/Byron/gitoxide/commit/654cf39c92d5aa4c8d542a6cadf13d4acef6a78e))
     - Merge branch 'main' into git_includeif ([`05eb340`](https://github.com/Byron/gitoxide/commit/05eb34023933918c51c03cf2afd774db89cc5a33))
     - Merge branch 'main' into msrv-for-windows ([`7cb1972`](https://github.com/Byron/gitoxide/commit/7cb19729133325bdfacedf44cdc0500cbcf36684))
     - make fmt ([`251b6df`](https://github.com/Byron/gitoxide/commit/251b6df5dbdda24b7bdc452085f808f3acef69d8))
@@ -1051,7 +1051,7 @@ A maintenance release without user-facing changes.
     - in-manifest and in-lib documentation of feature toggles ([`39778fd`](https://github.com/Byron/gitoxide/commit/39778fd76191cfdb60df87eab8da59e575e48c78))
     - Document all features related to serde1 ([`72b97f2`](https://github.com/Byron/gitoxide/commit/72b97f2ae4dc7642b160f183c6d5df4502dc186f))
  * **Uncategorized**
-    - Release git-diff v0.14.0, git-bitmap v0.1.0, git-index v0.2.0, gix-tempfile v2.0.1, gix-lock v2.0.0, git-mailmap v0.1.0, gix-traverse v0.13.0, git-pack v0.17.0, gix-quote v0.2.0, git-odb v0.27.0, gix-packetline v0.12.4, gix-url v0.4.0, git-transport v0.16.0, git-protocol v0.15.0, gix-ref v0.12.0, gix-worktree v0.1.0, git-repository v0.15.0, cargo-smart-release v0.9.0, safety bump 5 crates ([`e58dc30`](https://github.com/Byron/gitoxide/commit/e58dc3084cf17a9f618ae3a6554a7323e44428bf))
+    - Release git-diff v0.14.0, git-bitmap v0.1.0, git-index v0.2.0, gix-tempfile v2.0.1, gix-lock v2.0.0, git-mailmap v0.1.0, gix-traverse v0.13.0, git-pack v0.17.0, gix-quote v0.2.0, git-odb v0.27.0, gix-packetline v0.12.4, gix-url v0.4.0, gix-transport v0.16.0, git-protocol v0.15.0, gix-ref v0.12.0, gix-worktree v0.1.0, git-repository v0.15.0, cargo-smart-release v0.9.0, safety bump 5 crates ([`e58dc30`](https://github.com/Byron/gitoxide/commit/e58dc3084cf17a9f618ae3a6554a7323e44428bf))
     - Release gix-hash v0.9.3, gix-features v0.20.0, gix-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - upgrade document-features ([`c35e62e`](https://github.com/Byron/gitoxide/commit/c35e62e0da9ac1f7dcb863f5f9c69108c728d32e))
 </details>
@@ -1084,11 +1084,11 @@ A maintenance release with no relevant changes.
  * **[#279](https://github.com/Byron/gitoxide/issues/279)**
     - Adjust to changes in gix-hash and git-pack ([`0cae25b`](https://github.com/Byron/gitoxide/commit/0cae25b1bb3c902ec323f17a1d9743e42fe213d0))
  * **Uncategorized**
-    - Release git-odb v0.26.0, gix-packetline v0.12.3, gix-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, gix-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`42ebb53`](https://github.com/Byron/gitoxide/commit/42ebb536cd6086f096b8422291776c9720fa0948))
-    - Release git-diff v0.13.0, gix-tempfile v1.0.4, git-chunk v0.3.0, gix-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, gix-packetline v0.12.3, gix-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, gix-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`1b76119`](https://github.com/Byron/gitoxide/commit/1b76119259b8168aeb99cbbec233f7ddaa2d7d2c))
-    - Release gix-actor v0.8.0, gix-config v0.1.10, gix-object v0.17.0, git-diff v0.13.0, gix-tempfile v1.0.4, git-chunk v0.3.0, gix-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, gix-packetline v0.12.3, gix-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, gix-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`8f57c29`](https://github.com/Byron/gitoxide/commit/8f57c297d7d6ed68cf51415ea7ede4bf9263326e))
-    - Release gix-features v0.19.1, gix-actor v0.8.0, gix-config v0.1.10, gix-object v0.17.0, git-diff v0.13.0, gix-tempfile v1.0.4, git-chunk v0.3.0, gix-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, gix-packetline v0.12.3, gix-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, gix-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`d78aab7`](https://github.com/Byron/gitoxide/commit/d78aab7b9c4b431d437ac70a0ef96263acb64e46))
-    - Release gix-hash v0.9.1, gix-features v0.19.1, gix-actor v0.8.0, gix-config v0.1.10, gix-object v0.17.0, git-diff v0.13.0, gix-tempfile v1.0.4, git-chunk v0.3.0, gix-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, gix-packetline v0.12.3, gix-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, gix-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
+    - Release git-odb v0.26.0, gix-packetline v0.12.3, gix-url v0.3.5, gix-transport v0.15.0, git-protocol v0.14.0, gix-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`42ebb53`](https://github.com/Byron/gitoxide/commit/42ebb536cd6086f096b8422291776c9720fa0948))
+    - Release git-diff v0.13.0, gix-tempfile v1.0.4, git-chunk v0.3.0, gix-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, gix-packetline v0.12.3, gix-url v0.3.5, gix-transport v0.15.0, git-protocol v0.14.0, gix-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`1b76119`](https://github.com/Byron/gitoxide/commit/1b76119259b8168aeb99cbbec233f7ddaa2d7d2c))
+    - Release gix-actor v0.8.0, gix-config v0.1.10, gix-object v0.17.0, git-diff v0.13.0, gix-tempfile v1.0.4, git-chunk v0.3.0, gix-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, gix-packetline v0.12.3, gix-url v0.3.5, gix-transport v0.15.0, git-protocol v0.14.0, gix-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`8f57c29`](https://github.com/Byron/gitoxide/commit/8f57c297d7d6ed68cf51415ea7ede4bf9263326e))
+    - Release gix-features v0.19.1, gix-actor v0.8.0, gix-config v0.1.10, gix-object v0.17.0, git-diff v0.13.0, gix-tempfile v1.0.4, git-chunk v0.3.0, gix-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, gix-packetline v0.12.3, gix-url v0.3.5, gix-transport v0.15.0, git-protocol v0.14.0, gix-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`d78aab7`](https://github.com/Byron/gitoxide/commit/d78aab7b9c4b431d437ac70a0ef96263acb64e46))
+    - Release gix-hash v0.9.1, gix-features v0.19.1, gix-actor v0.8.0, gix-config v0.1.10, gix-object v0.17.0, git-diff v0.13.0, gix-tempfile v1.0.4, git-chunk v0.3.0, gix-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, gix-packetline v0.12.3, gix-url v0.3.5, gix-transport v0.15.0, git-protocol v0.14.0, gix-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepare changelogs for release ([`674ec73`](https://github.com/Byron/gitoxide/commit/674ec73b0816baa2c63b4ef1b40b7a41849c5e95))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - Release git-bitmap v0.0.1, gix-hash v0.9.0, gix-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
@@ -1116,8 +1116,8 @@ A maintenance release, triggered by putting too many adjustments into a single c
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release gix-actor v0.7.0, gix-config v0.1.9, gix-object v0.16.0, git-diff v0.12.0, gix-traverse v0.11.0, git-pack v0.15.0, git-odb v0.25.0, gix-packetline v0.12.2, git-transport v0.14.0, git-protocol v0.13.0, gix-ref v0.10.0, git-repository v0.13.0, cargo-smart-release v0.7.0 ([`d3f9227`](https://github.com/Byron/gitoxide/commit/d3f922781a81e8fbb81aa47afdbe9afeb06d666b))
-    - Release gix-features v0.18.0, gix-actor v0.7.0, gix-config v0.1.9, gix-object v0.16.0, git-diff v0.12.0, gix-traverse v0.11.0, git-pack v0.15.0, git-odb v0.25.0, gix-packetline v0.12.2, git-transport v0.14.0, git-protocol v0.13.0, gix-ref v0.10.0, git-repository v0.13.0, cargo-smart-release v0.7.0, safety bump 12 crates ([`acd3737`](https://github.com/Byron/gitoxide/commit/acd37371dcd92ebac3d1f039224d02f2b4e9fa0b))
+    - Release gix-actor v0.7.0, gix-config v0.1.9, gix-object v0.16.0, git-diff v0.12.0, gix-traverse v0.11.0, git-pack v0.15.0, git-odb v0.25.0, gix-packetline v0.12.2, gix-transport v0.14.0, git-protocol v0.13.0, gix-ref v0.10.0, git-repository v0.13.0, cargo-smart-release v0.7.0 ([`d3f9227`](https://github.com/Byron/gitoxide/commit/d3f922781a81e8fbb81aa47afdbe9afeb06d666b))
+    - Release gix-features v0.18.0, gix-actor v0.7.0, gix-config v0.1.9, gix-object v0.16.0, git-diff v0.12.0, gix-traverse v0.11.0, git-pack v0.15.0, git-odb v0.25.0, gix-packetline v0.12.2, gix-transport v0.14.0, git-protocol v0.13.0, gix-ref v0.10.0, git-repository v0.13.0, cargo-smart-release v0.7.0, safety bump 12 crates ([`acd3737`](https://github.com/Byron/gitoxide/commit/acd37371dcd92ebac3d1f039224d02f2b4e9fa0b))
     - Adjust changelogs prior to release ([`ec38950`](https://github.com/Byron/gitoxide/commit/ec3895005d141abe79764eaff7c0f04153e38d73))
 </details>
 
@@ -1143,9 +1143,9 @@ A maintenance release triggered by changes to git-pack and changelog rewrites.
  * **[#254](https://github.com/Byron/gitoxide/issues/254)**
     - Adjust changelogs prior to git-pack release ([`6776a3f`](https://github.com/Byron/gitoxide/commit/6776a3ff9fa5a283da06c9ec5723d13023a0b267))
  * **Uncategorized**
-    - Release gix-config v0.1.8, gix-object v0.15.1, git-diff v0.11.1, gix-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, gix-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, gix-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0 ([`f606fa9`](https://github.com/Byron/gitoxide/commit/f606fa9a0ca338534252df8921cd5e9d3875bf94))
+    - Release gix-config v0.1.8, gix-object v0.15.1, git-diff v0.11.1, gix-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, gix-packetline v0.12.1, gix-transport v0.13.1, git-protocol v0.12.1, gix-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0 ([`f606fa9`](https://github.com/Byron/gitoxide/commit/f606fa9a0ca338534252df8921cd5e9d3875bf94))
     - better changelog descriptions. ([`f69b2d6`](https://github.com/Byron/gitoxide/commit/f69b2d627099639bc144fd94fde678d84a10d6f7))
-    - Adjusting changelogs prior to release of gix-config v0.1.8, gix-object v0.15.1, git-diff v0.11.1, gix-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, gix-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, gix-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0, safety bump 5 crates ([`39b40c8`](https://github.com/Byron/gitoxide/commit/39b40c8c3691029cc146b893fa0d8d25d56d0819))
+    - Adjusting changelogs prior to release of gix-config v0.1.8, gix-object v0.15.1, git-diff v0.11.1, gix-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, gix-packetline v0.12.1, gix-transport v0.13.1, git-protocol v0.12.1, gix-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0, safety bump 5 crates ([`39b40c8`](https://github.com/Byron/gitoxide/commit/39b40c8c3691029cc146b893fa0d8d25d56d0819))
     - Fix false positive clippy warning. ([`9b8363b`](https://github.com/Byron/gitoxide/commit/9b8363bbf559223a424c2544610b4520bbd37aeb))
 </details>
 
@@ -1171,7 +1171,7 @@ A maintenance release due to properly dealing with previously breaking changes i
  * **[#222](https://github.com/Byron/gitoxide/issues/222)**
     - update changelogs prior to release ([`9a493d0`](https://github.com/Byron/gitoxide/commit/9a493d0651b0b6d71cf230dc510a658be7f8cb19))
  * **Uncategorized**
-    - Release gix-hash v0.8.0, gix-features v0.17.0, gix-actor v0.6.0, gix-object v0.15.0, git-diff v0.11.0, gix-traverse v0.10.0, git-pack v0.13.0, git-odb v0.23.0, gix-packetline v0.12.0, git-transport v0.13.0, git-protocol v0.12.0, gix-ref v0.9.0, git-repository v0.11.0, git-commitgraph v0.6.0, gitoxide-core v0.12.0, gitoxide v0.10.0, cargo-smart-release v0.5.0, safety bump 16 crates ([`0e02953`](https://github.com/Byron/gitoxide/commit/0e029537a7f6242d02ccf7e63d8d92f5246e6c5e))
+    - Release gix-hash v0.8.0, gix-features v0.17.0, gix-actor v0.6.0, gix-object v0.15.0, git-diff v0.11.0, gix-traverse v0.10.0, git-pack v0.13.0, git-odb v0.23.0, gix-packetline v0.12.0, gix-transport v0.13.0, git-protocol v0.12.0, gix-ref v0.9.0, git-repository v0.11.0, git-commitgraph v0.6.0, gitoxide-core v0.12.0, gitoxide v0.10.0, cargo-smart-release v0.5.0, safety bump 16 crates ([`0e02953`](https://github.com/Byron/gitoxide/commit/0e029537a7f6242d02ccf7e63d8d92f5246e6c5e))
 </details>
 
 ## v0.12.0 (2021-10-15)
@@ -1222,8 +1222,8 @@ A maintenance release due to properly dealing with previously breaking changes i
  * **[#200](https://github.com/Byron/gitoxide/issues/200)**
     - feat: Lift io::Errors to response::Error::UploadPack(…)… ([`f293b63`](https://github.com/Byron/gitoxide/commit/f293b633d16c0f7393d0ede64e12f14e47d0296b))
  * **Uncategorized**
-    - Release gix-hash v0.7.0, gix-features v0.16.5, gix-actor v0.5.3, gix-config v0.1.7, gix-validate v0.5.3, gix-object v0.14.1, git-diff v0.10.0, gix-tempfile v1.0.3, gix-lock v1.0.1, gix-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, gix-packetline v0.11.0, gix-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, gix-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0 ([`59ffbd9`](https://github.com/Byron/gitoxide/commit/59ffbd9f15583c8248b7f48b3f55ec6faffe7cfe))
-    - Adjusting changelogs prior to release of gix-hash v0.7.0, gix-features v0.16.5, gix-actor v0.5.3, gix-validate v0.5.3, gix-object v0.14.1, git-diff v0.10.0, gix-tempfile v1.0.3, gix-lock v1.0.1, gix-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, gix-packetline v0.11.0, gix-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, gix-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0, safety bump 3 crates ([`a474395`](https://github.com/Byron/gitoxide/commit/a47439590e36b1cb8b516b6053fd5cbfc42efed7))
+    - Release gix-hash v0.7.0, gix-features v0.16.5, gix-actor v0.5.3, gix-config v0.1.7, gix-validate v0.5.3, gix-object v0.14.1, git-diff v0.10.0, gix-tempfile v1.0.3, gix-lock v1.0.1, gix-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, gix-packetline v0.11.0, gix-url v0.3.4, gix-transport v0.12.0, git-protocol v0.11.0, gix-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0 ([`59ffbd9`](https://github.com/Byron/gitoxide/commit/59ffbd9f15583c8248b7f48b3f55ec6faffe7cfe))
+    - Adjusting changelogs prior to release of gix-hash v0.7.0, gix-features v0.16.5, gix-actor v0.5.3, gix-validate v0.5.3, gix-object v0.14.1, git-diff v0.10.0, gix-tempfile v1.0.3, gix-lock v1.0.1, gix-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, gix-packetline v0.11.0, gix-url v0.3.4, gix-transport v0.12.0, git-protocol v0.11.0, gix-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0, safety bump 3 crates ([`a474395`](https://github.com/Byron/gitoxide/commit/a47439590e36b1cb8b516b6053fd5cbfc42efed7))
     - Update changelogs just for fun ([`21541b3`](https://github.com/Byron/gitoxide/commit/21541b3301de1e053fc0e84373be60d2162fbaae))
     - Merge branch 'changelog-generation' ([`bf0106e`](https://github.com/Byron/gitoxide/commit/bf0106ea21734d4e59d190b424c22743c22da966))
     - Merge branch 'main' into changelog-generation ([`c956f33`](https://github.com/Byron/gitoxide/commit/c956f3351d766c748faf0460780e32ac8dfe8165))
@@ -1250,7 +1250,7 @@ A maintenance release due to properly dealing with previously breaking changes i
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release git-transport v0.11.1 ([`0952976`](https://github.com/Byron/gitoxide/commit/0952976eac1dac9b8f351ecc9867746b650377f9))
+    - Release gix-transport v0.11.1 ([`0952976`](https://github.com/Byron/gitoxide/commit/0952976eac1dac9b8f351ecc9867746b650377f9))
     - [various #184] configure docs.rs build features ([`cc50249`](https://github.com/Byron/gitoxide/commit/cc502492c512293e93e95610ca80a71896076ded))
 </details>
 
@@ -1272,7 +1272,7 @@ A maintenance release due to properly dealing with previously breaking changes i
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Bump git-transport v0.11.0 ([`1149f1b`](https://github.com/Byron/gitoxide/commit/1149f1b716624f8f4fdaed20c803530aebc45599))
+    - Bump gix-transport v0.11.0 ([`1149f1b`](https://github.com/Byron/gitoxide/commit/1149f1b716624f8f4fdaed20c803530aebc45599))
     - [transport #174] prepare for release ([`f8bc517`](https://github.com/Byron/gitoxide/commit/f8bc51763e96d8d0a97d5f367c943441a98c8e95))
     - Bump gix-packetline v0.10.0 ([`b09f391`](https://github.com/Byron/gitoxide/commit/b09f3912e0addd7b4b0ef22bc3a24869d5011646))
     - [packetline #178] refactor ([`23438fd`](https://github.com/Byron/gitoxide/commit/23438fd4a807376c1d4699732ea6c83c0bde574f))
@@ -1297,7 +1297,7 @@ A maintenance release due to properly dealing with previously breaking changes i
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release git-transport v0.10.1 ([`dc74d19`](https://github.com/Byron/gitoxide/commit/dc74d1946b89fb42fa8644db31b1fe1a52a56f05))
+    - Release gix-transport v0.10.1 ([`dc74d19`](https://github.com/Byron/gitoxide/commit/dc74d1946b89fb42fa8644db31b1fe1a52a56f05))
     - Apply nightly rustfmt rules. ([`5e0edba`](https://github.com/Byron/gitoxide/commit/5e0edbadb39673d4de640f112fa306349fb11814))
 </details>
 
@@ -1388,61 +1388,61 @@ A maintenance release due to properly dealing with previously breaking changes i
     - refactor ([`2a406d6`](https://github.com/Byron/gitoxide/commit/2a406d62c02db24c39980f9ae636b87e2d707faf))
     - [async-client] frame for async connect ([`9ada080`](https://github.com/Byron/gitoxide/commit/9ada0805fc5896f8ef1a31dc821b789b7f0438a6))
     - Prevent selecting mutually exclusive features ([`7f5da18`](https://github.com/Byron/gitoxide/commit/7f5da18c39b84af788ea1366ccca2c8b9d09f755))
-    - [git-transport] Fix http build ([`3469e99`](https://github.com/Byron/gitoxide/commit/3469e99afeaf354db4020d5a363b05a031894096))
+    - [gix-transport] Fix http build ([`3469e99`](https://github.com/Byron/gitoxide/commit/3469e99afeaf354db4020d5a363b05a031894096))
     - [git-protocol] fetch in sync and async… ([`4776039`](https://github.com/Byron/gitoxide/commit/47760399bffd030c848e0ef6df52a4765d8fb566))
     - Bump maybe-async from 0.2.4 to 0.2.6 ([`d99a1a8`](https://github.com/Byron/gitoxide/commit/d99a1a815809d22c7384c6ecb1275e39fb911d91))
     - fix docs ([`bca7594`](https://github.com/Byron/gitoxide/commit/bca7594713d623e0f0a4b82b658c26ee9a041eaa))
     - [git-protocol] fix build ([`4cce648`](https://github.com/Byron/gitoxide/commit/4cce6487d6d514541afee1a9aa92043f186136d3))
-    - [git-transport] refactor ([`d09153f`](https://github.com/Byron/gitoxide/commit/d09153f34135609224929f77175f3e0ac04ea12e))
-    - [git-transport] Properly implement Transport for Boxed types ([`47b10c9`](https://github.com/Byron/gitoxide/commit/47b10c9b4ccba5a0928819c92eda472bbfda0c50))
-    - [git-transport] refactor ([`3b0baee`](https://github.com/Byron/gitoxide/commit/3b0baee6b856b510ea839a1e294e9a99aafaa3ac))
+    - [gix-transport] refactor ([`d09153f`](https://github.com/Byron/gitoxide/commit/d09153f34135609224929f77175f3e0ac04ea12e))
+    - [gix-transport] Properly implement Transport for Boxed types ([`47b10c9`](https://github.com/Byron/gitoxide/commit/47b10c9b4ccba5a0928819c92eda472bbfda0c50))
+    - [gix-transport] refactor ([`3b0baee`](https://github.com/Byron/gitoxide/commit/3b0baee6b856b510ea839a1e294e9a99aafaa3ac))
     - refactor ([`2eefe17`](https://github.com/Byron/gitoxide/commit/2eefe1712131a69298be02e94df8b6ba844afcd9))
     - refactor ([`14c9093`](https://github.com/Byron/gitoxide/commit/14c909341d243ca3dcc42d343aeee65d28045b65))
     - [git-protocol] async capabilities and arguments abstractions ([`aa3eacb`](https://github.com/Byron/gitoxide/commit/aa3eacbd53665d6b76bd9706d801d1189a970261))
-    - [git-transport] see how things can be moved to a different thread… ([`c271d32`](https://github.com/Byron/gitoxide/commit/c271d323086486a9d1dbe004b33fdb7d9eec45ed))
-    - [git-transport] partial transfer to thread doesn't work in test… ([`4a6dfd4`](https://github.com/Byron/gitoxide/commit/4a6dfd40e465226d0f9c7eb02cfb721b55bbff41))
-    - [git-transport] allow fetch processing to be offloading to another thread ([`a1302e0`](https://github.com/Byron/gitoxide/commit/a1302e0ff549e96362c441d8eecec56f1ef4ca43))
-    - Revert "[git-transport] async-executor (Local) hangs…" ([`ec8bcd0`](https://github.com/Byron/gitoxide/commit/ec8bcd0f36b46ff319ad6d6da9ffcb80dd5b0429))
-    - [git-transport] async-executor (Local) hangs… ([`68ac51b`](https://github.com/Byron/gitoxide/commit/68ac51b384cae11f5dca103160bf3d519305364e))
-    - Revert "[git-transport] attempt to mix 'blocking' but realize that now things need to be static." ([`e367753`](https://github.com/Byron/gitoxide/commit/e3677537d7858a113008849ac8ace136f5d5c4d2))
-    - [git-transport] attempt to mix 'blocking' but realize that now things need to be static. ([`3d296fa`](https://github.com/Byron/gitoxide/commit/3d296fae08ce0d4c2625008ab1fdcd7ede8dac54))
-    - [git-transport] V2 transport tests work on async ([`e04a1c9`](https://github.com/Byron/gitoxide/commit/e04a1c98a1ee0ba58fa326c9a68bd36230e229da))
-    - [git-transport] first V2 test ([`f9da975`](https://github.com/Byron/gitoxide/commit/f9da975ca777d2345e8c2842771b16a17af79cd3))
-    - [git-transport] adapt extension trait in blocking code to match async version ([`95eee30`](https://github.com/Byron/gitoxide/commit/95eee30191aed9421f69dcd6e1587c0b5a1f2dd2))
-    - [git-transport] extension trait working ([`28fbd28`](https://github.com/Byron/gitoxide/commit/28fbd284d108d5db3f13c8cede5772e065e5f8fb))
-    - [git-transport] a first step towards getting the extension trait to compile ([`b692979`](https://github.com/Byron/gitoxide/commit/b6929792c3d2ef9a73eb049eb88b06c8c763d899))
-    - [git-transport] no warnings when building without any choice of client ([`3dc568a`](https://github.com/Byron/gitoxide/commit/3dc568a3a29dfea6ff311cf965ecce7f7eddbf63))
-    - [git-transport] upgrade to futures-lite 1.12 with BufRead support ([`ee01c79`](https://github.com/Byron/gitoxide/commit/ee01c79887a892e001787bbefa93f75d9c4f1cfc))
-    - [git-transport] Show how to use blocking git-pack code in non-blocking transports ([`de2ba3c`](https://github.com/Byron/gitoxide/commit/de2ba3c4919d454894911c54fd4bb0e0a4665723))
-    - [git-transport] handshakeV1 tests run in async! ([`d1c0e35`](https://github.com/Byron/gitoxide/commit/d1c0e35817d183982a5b1eb7e545bfe83edb141e))
-    - [git-transport] And a chance to have V1 working in async ([`2bf93fc`](https://github.com/Byron/gitoxide/commit/2bf93fc72b3f9dcb63f8b24c77c95d518072431f))
-    - [git-transport] refactor ([`64bb8b3`](https://github.com/Byron/gitoxide/commit/64bb8b3937fcf7f14034ccfb6a72a24bf05f0320))
-    - [git-transport] improve error handling considerably… ([`7b7d314`](https://github.com/Byron/gitoxide/commit/7b7d314851b8db230228c28fb38a5a6541ec865c))
-    - [git-transport] Add remaninig git connection method… ([`73fcf38`](https://github.com/Byron/gitoxide/commit/73fcf38f9c334813572a6aeb7691758a524cac07))
-    - [git-transport] refactor ([`db83600`](https://github.com/Byron/gitoxide/commit/db83600179b3f27770b989f5f8ae1dd459749354))
-    - [git-transport] the first part of async transport for git connections ([`d94fbf8`](https://github.com/Byron/gitoxide/commit/d94fbf83d3e57c54dead3fb849e63b1d37343cb2))
-    - [git-transport] Split git connection into shared and blocking parts ([`0bfe693`](https://github.com/Byron/gitoxide/commit/0bfe69385932698b99871717d823fe645e4eabb8))
-    - [git-transport] refactor ([`2342e8a`](https://github.com/Byron/gitoxide/commit/2342e8a6a4ceca12603cb5e2c350edc2d4e71580))
-    - [git-transport] refactor ([`957403e`](https://github.com/Byron/gitoxide/commit/957403e11e0f7b3c97aa1996b2e936bbdb7ee12c))
-    - [git-transport] refactor ([`e580354`](https://github.com/Byron/gitoxide/commit/e58035452be10328c3e5e1991bafbab3f71d3353))
-    - [git-transport] re-enable `request()` method of main trait… ([`3adbade`](https://github.com/Byron/gitoxide/commit/3adbade31afa163a499fc2946f5af5ef3f367387))
-    - [git-transport] RequestWriter complete ([`a05fff3`](https://github.com/Byron/gitoxide/commit/a05fff3b2d987a5750e11945306bfa3731ed5ca3))
-    - [git-transport] refactor ([`03a3aed`](https://github.com/Byron/gitoxide/commit/03a3aedf17a91465279800d8028cc7435326534a))
-    - [git-transport] ARGH: PIN!!! ([`71379ac`](https://github.com/Byron/gitoxide/commit/71379ac25c44bc744ed0e93d2b126d4959bc4469))
-    - [git-transport] naive attempt to make Request async… ([`b819546`](https://github.com/Byron/gitoxide/commit/b819546b0096a4abfbe5ada25a1ac661a084cfc9))
-    - [git-transport] ExtendedBufRead for Async… ([`d4e56c8`](https://github.com/Byron/gitoxide/commit/d4e56c8efd586b571445e0085ce518c5efb8f5e6))
-    - [git-transport] First stab at ExtendedBufRead, but… ([`13f73d2`](https://github.com/Byron/gitoxide/commit/13f73d2f9b65d5ea829185af669532c3797cf90b))
-    - [git-transport] put request writer into general spot… ([`af07ebf`](https://github.com/Byron/gitoxide/commit/af07ebf44fbb3386cd5176441fd707cc820b71d0))
-    - [git-transport] refactor ([`5f98ac1`](https://github.com/Byron/gitoxide/commit/5f98ac140f9f3260d3d5a784d1aa1e1ac8c37114))
-    - [git-transport] fix docs ([`fbfc827`](https://github.com/Byron/gitoxide/commit/fbfc8271431f7c19adbed5e095d7c2ee10dda5e5))
-    - [git-transport] refactor ([`011ece0`](https://github.com/Byron/gitoxide/commit/011ece04827d75aa6d93e9fcae449aaba4167f80))
-    - [git-transport] the first async trait ([`2abac2a`](https://github.com/Byron/gitoxide/commit/2abac2a2df8033c6d2578e5afb88bb34aab86988))
-    - [git-transport] refactor ([`73df129`](https://github.com/Byron/gitoxide/commit/73df12987a9255efc4724e1761f335a072d3bcaf))
-    - [git-transport] the first async-only type ([`88109a5`](https://github.com/Byron/gitoxide/commit/88109a54ad594df6d18cf6b66a9c89a76fc0cdf5))
-    - [git-transport] all non-IO types are now shared ([`209c780`](https://github.com/Byron/gitoxide/commit/209c780efff32d63ce7edc8b1f92fac0cd1a396d))
-    - [git-transport] feature toggle for async-client; prepare for test ([`95e6801`](https://github.com/Byron/gitoxide/commit/95e6801b121a0744908552090b855cb3dbe99e64))
-    - [git-transport] refactor ([`592d9ac`](https://github.com/Byron/gitoxide/commit/592d9ac03b0d26848435a43480c526a4a0e0efb8))
-    - [git-transport] remove maybe_async from dependencies, add async-client feature ([`e57aad3`](https://github.com/Byron/gitoxide/commit/e57aad3a19ec89fd0aa4d8670430434f0dc4c826))
+    - [gix-transport] see how things can be moved to a different thread… ([`c271d32`](https://github.com/Byron/gitoxide/commit/c271d323086486a9d1dbe004b33fdb7d9eec45ed))
+    - [gix-transport] partial transfer to thread doesn't work in test… ([`4a6dfd4`](https://github.com/Byron/gitoxide/commit/4a6dfd40e465226d0f9c7eb02cfb721b55bbff41))
+    - [gix-transport] allow fetch processing to be offloading to another thread ([`a1302e0`](https://github.com/Byron/gitoxide/commit/a1302e0ff549e96362c441d8eecec56f1ef4ca43))
+    - Revert "[gix-transport] async-executor (Local) hangs…" ([`ec8bcd0`](https://github.com/Byron/gitoxide/commit/ec8bcd0f36b46ff319ad6d6da9ffcb80dd5b0429))
+    - [gix-transport] async-executor (Local) hangs… ([`68ac51b`](https://github.com/Byron/gitoxide/commit/68ac51b384cae11f5dca103160bf3d519305364e))
+    - Revert "[gix-transport] attempt to mix 'blocking' but realize that now things need to be static." ([`e367753`](https://github.com/Byron/gitoxide/commit/e3677537d7858a113008849ac8ace136f5d5c4d2))
+    - [gix-transport] attempt to mix 'blocking' but realize that now things need to be static. ([`3d296fa`](https://github.com/Byron/gitoxide/commit/3d296fae08ce0d4c2625008ab1fdcd7ede8dac54))
+    - [gix-transport] V2 transport tests work on async ([`e04a1c9`](https://github.com/Byron/gitoxide/commit/e04a1c98a1ee0ba58fa326c9a68bd36230e229da))
+    - [gix-transport] first V2 test ([`f9da975`](https://github.com/Byron/gitoxide/commit/f9da975ca777d2345e8c2842771b16a17af79cd3))
+    - [gix-transport] adapt extension trait in blocking code to match async version ([`95eee30`](https://github.com/Byron/gitoxide/commit/95eee30191aed9421f69dcd6e1587c0b5a1f2dd2))
+    - [gix-transport] extension trait working ([`28fbd28`](https://github.com/Byron/gitoxide/commit/28fbd284d108d5db3f13c8cede5772e065e5f8fb))
+    - [gix-transport] a first step towards getting the extension trait to compile ([`b692979`](https://github.com/Byron/gitoxide/commit/b6929792c3d2ef9a73eb049eb88b06c8c763d899))
+    - [gix-transport] no warnings when building without any choice of client ([`3dc568a`](https://github.com/Byron/gitoxide/commit/3dc568a3a29dfea6ff311cf965ecce7f7eddbf63))
+    - [gix-transport] upgrade to futures-lite 1.12 with BufRead support ([`ee01c79`](https://github.com/Byron/gitoxide/commit/ee01c79887a892e001787bbefa93f75d9c4f1cfc))
+    - [gix-transport] Show how to use blocking git-pack code in non-blocking transports ([`de2ba3c`](https://github.com/Byron/gitoxide/commit/de2ba3c4919d454894911c54fd4bb0e0a4665723))
+    - [gix-transport] handshakeV1 tests run in async! ([`d1c0e35`](https://github.com/Byron/gitoxide/commit/d1c0e35817d183982a5b1eb7e545bfe83edb141e))
+    - [gix-transport] And a chance to have V1 working in async ([`2bf93fc`](https://github.com/Byron/gitoxide/commit/2bf93fc72b3f9dcb63f8b24c77c95d518072431f))
+    - [gix-transport] refactor ([`64bb8b3`](https://github.com/Byron/gitoxide/commit/64bb8b3937fcf7f14034ccfb6a72a24bf05f0320))
+    - [gix-transport] improve error handling considerably… ([`7b7d314`](https://github.com/Byron/gitoxide/commit/7b7d314851b8db230228c28fb38a5a6541ec865c))
+    - [gix-transport] Add remaninig git connection method… ([`73fcf38`](https://github.com/Byron/gitoxide/commit/73fcf38f9c334813572a6aeb7691758a524cac07))
+    - [gix-transport] refactor ([`db83600`](https://github.com/Byron/gitoxide/commit/db83600179b3f27770b989f5f8ae1dd459749354))
+    - [gix-transport] the first part of async transport for git connections ([`d94fbf8`](https://github.com/Byron/gitoxide/commit/d94fbf83d3e57c54dead3fb849e63b1d37343cb2))
+    - [gix-transport] Split git connection into shared and blocking parts ([`0bfe693`](https://github.com/Byron/gitoxide/commit/0bfe69385932698b99871717d823fe645e4eabb8))
+    - [gix-transport] refactor ([`2342e8a`](https://github.com/Byron/gitoxide/commit/2342e8a6a4ceca12603cb5e2c350edc2d4e71580))
+    - [gix-transport] refactor ([`957403e`](https://github.com/Byron/gitoxide/commit/957403e11e0f7b3c97aa1996b2e936bbdb7ee12c))
+    - [gix-transport] refactor ([`e580354`](https://github.com/Byron/gitoxide/commit/e58035452be10328c3e5e1991bafbab3f71d3353))
+    - [gix-transport] re-enable `request()` method of main trait… ([`3adbade`](https://github.com/Byron/gitoxide/commit/3adbade31afa163a499fc2946f5af5ef3f367387))
+    - [gix-transport] RequestWriter complete ([`a05fff3`](https://github.com/Byron/gitoxide/commit/a05fff3b2d987a5750e11945306bfa3731ed5ca3))
+    - [gix-transport] refactor ([`03a3aed`](https://github.com/Byron/gitoxide/commit/03a3aedf17a91465279800d8028cc7435326534a))
+    - [gix-transport] ARGH: PIN!!! ([`71379ac`](https://github.com/Byron/gitoxide/commit/71379ac25c44bc744ed0e93d2b126d4959bc4469))
+    - [gix-transport] naive attempt to make Request async… ([`b819546`](https://github.com/Byron/gitoxide/commit/b819546b0096a4abfbe5ada25a1ac661a084cfc9))
+    - [gix-transport] ExtendedBufRead for Async… ([`d4e56c8`](https://github.com/Byron/gitoxide/commit/d4e56c8efd586b571445e0085ce518c5efb8f5e6))
+    - [gix-transport] First stab at ExtendedBufRead, but… ([`13f73d2`](https://github.com/Byron/gitoxide/commit/13f73d2f9b65d5ea829185af669532c3797cf90b))
+    - [gix-transport] put request writer into general spot… ([`af07ebf`](https://github.com/Byron/gitoxide/commit/af07ebf44fbb3386cd5176441fd707cc820b71d0))
+    - [gix-transport] refactor ([`5f98ac1`](https://github.com/Byron/gitoxide/commit/5f98ac140f9f3260d3d5a784d1aa1e1ac8c37114))
+    - [gix-transport] fix docs ([`fbfc827`](https://github.com/Byron/gitoxide/commit/fbfc8271431f7c19adbed5e095d7c2ee10dda5e5))
+    - [gix-transport] refactor ([`011ece0`](https://github.com/Byron/gitoxide/commit/011ece04827d75aa6d93e9fcae449aaba4167f80))
+    - [gix-transport] the first async trait ([`2abac2a`](https://github.com/Byron/gitoxide/commit/2abac2a2df8033c6d2578e5afb88bb34aab86988))
+    - [gix-transport] refactor ([`73df129`](https://github.com/Byron/gitoxide/commit/73df12987a9255efc4724e1761f335a072d3bcaf))
+    - [gix-transport] the first async-only type ([`88109a5`](https://github.com/Byron/gitoxide/commit/88109a54ad594df6d18cf6b66a9c89a76fc0cdf5))
+    - [gix-transport] all non-IO types are now shared ([`209c780`](https://github.com/Byron/gitoxide/commit/209c780efff32d63ce7edc8b1f92fac0cd1a396d))
+    - [gix-transport] feature toggle for async-client; prepare for test ([`95e6801`](https://github.com/Byron/gitoxide/commit/95e6801b121a0744908552090b855cb3dbe99e64))
+    - [gix-transport] refactor ([`592d9ac`](https://github.com/Byron/gitoxide/commit/592d9ac03b0d26848435a43480c526a4a0e0efb8))
+    - [gix-transport] remove maybe_async from dependencies, add async-client feature ([`e57aad3`](https://github.com/Byron/gitoxide/commit/e57aad3a19ec89fd0aa4d8670430434f0dc4c826))
     - (cargo-release) version 0.15.0 ([`d69d9fb`](https://github.com/Byron/gitoxide/commit/d69d9fb0931f8257cef96ef14a89da9340ad9738))
     - [gix-packetline] Use io::(Result|Error) everywhere ([`374f129`](https://github.com/Byron/gitoxide/commit/374f129e0d1473db9a2107c408f655da032efe89))
     - [gix-packetline] refactor ([`f038ca1`](https://github.com/Byron/gitoxide/commit/f038ca1e1c6d99bfcedb0387abc4151b188750c6))
@@ -1452,13 +1452,13 @@ A maintenance release due to properly dealing with previously breaking changes i
     - [gix-packetline] refactor ([`e5769d1`](https://github.com/Byron/gitoxide/commit/e5769d1e7668ae54c667d2593c0c22e7723710c0))
     - [gix-packetline] refactor ([`fef3c9f`](https://github.com/Byron/gitoxide/commit/fef3c9f0aed3f6a509a71e8ff20050c6ea660f56))
     - (cargo-release) version 0.9.0 ([`18f6d01`](https://github.com/Byron/gitoxide/commit/18f6d011043203523f1d0dacf657704ed3f9cf89))
-    - [git-transport] simplify parsing capabilities from lines ([`401af09`](https://github.com/Byron/gitoxide/commit/401af0974742f10c8b9b3c9752e9d30205e96c16))
+    - [gix-transport] simplify parsing capabilities from lines ([`401af09`](https://github.com/Byron/gitoxide/commit/401af0974742f10c8b9b3c9752e9d30205e96c16))
     - refactor ([`8ce28e7`](https://github.com/Byron/gitoxide/commit/8ce28e74545ded2909417df9091da866fb343710))
-    - [git-transport] test capabilities in blocking and async mode ([`66eb2a5`](https://github.com/Byron/gitoxide/commit/66eb2a5c803d3365c8d9522f24843a8b73dff76d))
+    - [gix-transport] test capabilities in blocking and async mode ([`66eb2a5`](https://github.com/Byron/gitoxide/commit/66eb2a5c803d3365c8d9522f24843a8b73dff76d))
     - refactor ([`558b208`](https://github.com/Byron/gitoxide/commit/558b208f5055ab0562d3704e4fb62693eaab94fe))
-    - [git-transport] first round of getting capabilities into 'dual' mode… ([`3af353b`](https://github.com/Byron/gitoxide/commit/3af353b8b3ed0ee608cbc96d1cd45a3165907a12))
-    - [git-transport] remove default features to force being explicit everywhere ([`d1b39f8`](https://github.com/Byron/gitoxide/commit/d1b39f8093c032a172237a584c9208479611a866))
-    - [git-transport] A first async test, right now there is nothing to test though ([`9741ae1`](https://github.com/Byron/gitoxide/commit/9741ae1ee0fcf65c144d87cd17d8fe547b288b12))
+    - [gix-transport] first round of getting capabilities into 'dual' mode… ([`3af353b`](https://github.com/Byron/gitoxide/commit/3af353b8b3ed0ee608cbc96d1cd45a3165907a12))
+    - [gix-transport] remove default features to force being explicit everywhere ([`d1b39f8`](https://github.com/Byron/gitoxide/commit/d1b39f8093c032a172237a584c9208479611a866))
+    - [gix-transport] A first async test, right now there is nothing to test though ([`9741ae1`](https://github.com/Byron/gitoxide/commit/9741ae1ee0fcf65c144d87cd17d8fe547b288b12))
     - Tests follow crate structure closely (again) ([`8d6e46a`](https://github.com/Byron/gitoxide/commit/8d6e46a84c41d7f04f2dbbb1a4602159b1a96c8b))
     - Make the blocking client the default… ([`9d62ca3`](https://github.com/Byron/gitoxide/commit/9d62ca338927139708246ce0934f1cb317f14784))
     - Revert "Remove maybe-async for now" ([`ebd5701`](https://github.com/Byron/gitoxide/commit/ebd57017f80d0c12f6fe9a8d236843323c638311))
@@ -1470,7 +1470,7 @@ A maintenance release due to properly dealing with previously breaking changes i
     - refactor ([`cd02749`](https://github.com/Byron/gitoxide/commit/cd027498944abde8339c421b5527abb9c3495de3))
     - Remove maybe-async for now ([`97e96f4`](https://github.com/Byron/gitoxide/commit/97e96f49ce9e4ac325faebe112cec9c11cdc715c))
     - refactor ([`6e6f4ac`](https://github.com/Byron/gitoxide/commit/6e6f4acf4b3c704989928347f10f1725e6a866bd))
-    - refactor git-transport test in preparation for async testing ([`42d5bf7`](https://github.com/Byron/gitoxide/commit/42d5bf7f5e8f4d88d3f849febec0c6d2678e0d06))
+    - refactor gix-transport test in preparation for async testing ([`42d5bf7`](https://github.com/Byron/gitoxide/commit/42d5bf7f5e8f4d88d3f849febec0c6d2678e0d06))
 </details>
 
 ### Thanks Clippy
@@ -1588,10 +1588,10 @@ A maintenance release due to properly dealing with previously breaking changes i
     - (cargo-release) version 0.5.1 ([`0cf1d06`](https://github.com/Byron/gitoxide/commit/0cf1d06f5e289b541a842af03b59229fec833ca7))
     - silence so far unknown clippy lints ([`b5f2a4b`](https://github.com/Byron/gitoxide/commit/b5f2a4b079665daa8b9e0228acc59d1eddd603b2))
     - thanks clippy ([`343ab9a`](https://github.com/Byron/gitoxide/commit/343ab9adb62da1dde495fc209c179137bbe59a10))
-    - complete git-transport docs ([`fa2dc9d`](https://github.com/Byron/gitoxide/commit/fa2dc9d65100f0f3f97358746a37dc722bae12c3))
-    - documentation for capabilities in git-transport ([`5ec79fa`](https://github.com/Byron/gitoxide/commit/5ec79faaa2568cee9333b4bb0c96e8f0ee5a2433))
-    - more docs for git-transport ([`3a867e9`](https://github.com/Byron/gitoxide/commit/3a867e945edad05dd65b75111628b99fa955c03f))
-    - more git-transport docs ([`6cd69b9`](https://github.com/Byron/gitoxide/commit/6cd69b9a6b79ba8f9297cf2bb6e36dd8f63845a2))
+    - complete gix-transport docs ([`fa2dc9d`](https://github.com/Byron/gitoxide/commit/fa2dc9d65100f0f3f97358746a37dc722bae12c3))
+    - documentation for capabilities in gix-transport ([`5ec79fa`](https://github.com/Byron/gitoxide/commit/5ec79faaa2568cee9333b4bb0c96e8f0ee5a2433))
+    - more docs for gix-transport ([`3a867e9`](https://github.com/Byron/gitoxide/commit/3a867e945edad05dd65b75111628b99fa955c03f))
+    - more gix-transport docs ([`6cd69b9`](https://github.com/Byron/gitoxide/commit/6cd69b9a6b79ba8f9297cf2bb6e36dd8f63845a2))
 </details>
 
 ## v0.5.0 (2020-12-16)
@@ -1894,8 +1894,8 @@ A maintenance release due to properly dealing with previously breaking changes i
     - [clone] http protocol is now optional ([`06c0816`](https://github.com/Byron/gitoxide/commit/06c0816bd0ed0ae0f125c1fa93ffe1b89e7e7eb1))
     - [clone] (very) First stab at http protocol connection ([`218a5eb`](https://github.com/Byron/gitoxide/commit/218a5ebbd5c7b466406fd488ade6c60bde3f78a6))
     - [clone] Better error handling for generalized `connect(…)` ([`713808c`](https://github.com/Byron/gitoxide/commit/713808cd8bd326b632c2b8f0cfbe7f147b1fa0aa))
-    - [clone] fix git-transport crate size ([`720f444`](https://github.com/Byron/gitoxide/commit/720f4442b06702b9efc1c257d2b54d4a22d3649d))
-    - [clone] enable git-transport tests ([`8e07be4`](https://github.com/Byron/gitoxide/commit/8e07be44ae38830f4894ed80ea9faab567593256))
+    - [clone] fix gix-transport crate size ([`720f444`](https://github.com/Byron/gitoxide/commit/720f4442b06702b9efc1c257d2b54d4a22d3649d))
+    - [clone] enable gix-transport tests ([`8e07be4`](https://github.com/Byron/gitoxide/commit/8e07be44ae38830f4894ed80ea9faab567593256))
     - refactor ([`104b7fe`](https://github.com/Byron/gitoxide/commit/104b7fef720751ba7306cee4010e90a20bd6955d))
     - thanks clippy ([`c62bfa2`](https://github.com/Byron/gitoxide/commit/c62bfa277b854ee21c6774ce88f086a2926dd858))
     - [clone] expand-path should be server-side ([`8a38856`](https://github.com/Byron/gitoxide/commit/8a38856a811078d1d453db9c0e0ad7b6baaaed3c))
@@ -1933,6 +1933,6 @@ A maintenance release due to properly dealing with previously breaking changes i
     - Make crates publishable ([`5688a34`](https://github.com/Byron/gitoxide/commit/5688a3427ff3673e1422d43106f4d685fa837aed))
     - \#[forbid(unsafe)] for all crates ([`afda803`](https://github.com/Byron/gitoxide/commit/afda8039259b7a30cfed5dbcdd9caf4773b4c234))
     - cleanup - don't build and run tests while there is nothing to test ([`4a153da`](https://github.com/Byron/gitoxide/commit/4a153da0d60a30615fc402cfecb977f0d771594a))
-    - prepare git-transport just so that we don't forget to take the name ([`2c3ad7d`](https://github.com/Byron/gitoxide/commit/2c3ad7d916ca513cc9dff26ff2150bae0dcb93e1))
+    - prepare gix-transport just so that we don't forget to take the name ([`2c3ad7d`](https://github.com/Byron/gitoxide/commit/2c3ad7d916ca513cc9dff26ff2150bae0dcb93e1))
 </details>
 

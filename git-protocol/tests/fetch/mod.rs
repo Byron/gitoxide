@@ -5,7 +5,7 @@ use git_protocol::{
     fetch::{self, Action, Arguments, Response},
     handshake, ls_refs,
 };
-use git_transport::client::Capabilities;
+use gix_transport::client::Capabilities;
 
 use crate::fixture_bytes;
 
@@ -28,7 +28,7 @@ pub struct CloneDelegate {
 impl fetch::DelegateBlocking for CloneDelegate {
     fn prepare_fetch(
         &mut self,
-        _version: git_transport::Protocol,
+        _version: gix_transport::Protocol,
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         _refs: &[handshake::Ref],
@@ -81,7 +81,7 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
 
     fn prepare_fetch(
         &mut self,
-        _version: git_transport::Protocol,
+        _version: gix_transport::Protocol,
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         refs: &[handshake::Ref],
@@ -127,7 +127,7 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
     }
     fn prepare_fetch(
         &mut self,
-        _version: git_transport::Protocol,
+        _version: gix_transport::Protocol,
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         refs: &[handshake::Ref],
@@ -266,11 +266,11 @@ pub fn oid(hex_sha: &str) -> gix_hash::ObjectId {
 pub fn transport<W: futures_io::AsyncWrite + Unpin>(
     out: W,
     path: &str,
-    desired_version: git_transport::Protocol,
-    mode: git_transport::client::git::ConnectMode,
-) -> git_transport::client::git::Connection<Cursor, W> {
+    desired_version: gix_transport::Protocol,
+    mode: gix_transport::client::git::ConnectMode,
+) -> gix_transport::client::git::Connection<Cursor, W> {
     let response = fixture_bytes(path);
-    git_transport::client::git::Connection::new(
+    gix_transport::client::git::Connection::new(
         Cursor::new(response),
         out,
         desired_version,
@@ -284,11 +284,11 @@ pub fn transport<W: futures_io::AsyncWrite + Unpin>(
 pub fn transport<W: std::io::Write>(
     out: W,
     path: &str,
-    version: git_transport::Protocol,
-    mode: git_transport::client::git::ConnectMode,
-) -> git_transport::client::git::Connection<Cursor, W> {
+    version: gix_transport::Protocol,
+    mode: gix_transport::client::git::ConnectMode,
+) -> gix_transport::client::git::Connection<Cursor, W> {
     let response = fixture_bytes(path);
-    git_transport::client::git::Connection::new(
+    gix_transport::client::git::Connection::new(
         Cursor::new(response),
         out,
         version,

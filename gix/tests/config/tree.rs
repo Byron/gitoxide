@@ -566,7 +566,7 @@ mod http {
 
     #[test]
     fn follow_redirects() -> crate::Result {
-        use git_transport::client::http::options::FollowRedirects;
+        use gix_transport::client::http::options::FollowRedirects;
         assert_eq!(
             Http::FOLLOW_REDIRECTS.try_into_follow_redirects(bcow("initial"), || unreachable!("no call"))?,
             FollowRedirects::Initial
@@ -624,7 +624,7 @@ mod http {
 
     #[test]
     fn http_version() -> crate::Result {
-        use git_transport::client::http::options::HttpVersion;
+        use gix_transport::client::http::options::HttpVersion;
 
         for (actual, expected) in [("HTTP/1.1", HttpVersion::V1_1), ("HTTP/2", HttpVersion::V2)] {
             assert_eq!(Http::VERSION.try_into_http_version(bcow(actual))?, expected);
@@ -644,7 +644,7 @@ mod http {
 
     #[test]
     fn ssl_version() -> crate::Result {
-        use git_transport::client::http::options::SslVersion::*;
+        use gix_transport::client::http::options::SslVersion::*;
 
         for (actual, expected) in [
             ("default", Default),
@@ -674,7 +674,7 @@ mod http {
 
     #[test]
     fn proxy_auth_method() -> crate::Result {
-        use git_transport::client::http::options::ProxyAuthMethod::*;
+        use gix_transport::client::http::options::ProxyAuthMethod::*;
         for (actual, expected) in [
             ("anyauth", AnyAuth),
             ("basic", Basic),

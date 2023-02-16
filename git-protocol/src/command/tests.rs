@@ -1,6 +1,6 @@
 mod v1 {
-    fn capabilities(input: &str) -> git_transport::client::Capabilities {
-        git_transport::client::Capabilities::from_bytes(format!("\0{input}").as_bytes())
+    fn capabilities(input: &str) -> gix_transport::client::Capabilities {
+        gix_transport::client::Capabilities::from_bytes(format!("\0{input}").as_bytes())
             .expect("valid input capabilities")
             .0
     }
@@ -17,7 +17,7 @@ mod v1 {
             fn it_chooses_the_best_multi_ack_and_sideband() {
                 assert_eq!(
                     Command::Fetch.default_features(
-                        git_transport::Protocol::V1,
+                        gix_transport::Protocol::V1,
                         &capabilities("multi_ack side-band side-band-64k multi_ack_detailed")
                     ),
                     &[("side-band-64k", None), ("multi_ack_detailed", None),]
@@ -27,7 +27,7 @@ mod v1 {
             #[test]
             fn it_chooses_all_supported_non_stacking_capabilities_and_leaves_no_progress() {
                 assert_eq!(
-                    Command::Fetch.default_features(git_transport::Protocol::V1, &capabilities(GITHUB_CAPABILITIES)),
+                    Command::Fetch.default_features(gix_transport::Protocol::V1, &capabilities(GITHUB_CAPABILITIES)),
                     &[
                         ("multi_ack", None),
                         ("thin-pack", None),
@@ -51,7 +51,7 @@ mod v1 {
 }
 
 mod v2 {
-    use git_transport::client::Capabilities;
+    use gix_transport::client::Capabilities;
 
     fn capabilities(command: &str, input: &str) -> Capabilities {
         Capabilities::from_lines(format!("version 2\n{command}={input}").into())
@@ -66,7 +66,7 @@ mod v2 {
             fn all_features() {
                 assert_eq!(
                     Command::Fetch.default_features(
-                        git_transport::Protocol::V2,
+                        gix_transport::Protocol::V2,
                         &capabilities("fetch", "shallow filter ref-in-want sideband-all packfile-uris")
                     ),
                     ["shallow", "filter", "ref-in-want", "sideband-all", "packfile-uris"]
@@ -86,7 +86,7 @@ mod v2 {
             fn for_all_features() {
                 assert_eq!(
                     Command::Fetch.initial_arguments(&Command::Fetch.default_features(
-                        git_transport::Protocol::V2,
+                        gix_transport::Protocol::V2,
                         &capabilities("fetch", "shallow filter sideband-all packfile-uris")
                     )),
                     ["thin-pack", "ofs-delta", "sideband-all"]
@@ -107,7 +107,7 @@ mod v2 {
             fn default_as_there_are_no_features() {
                 assert_eq!(
                     Command::LsRefs.default_features(
-                        git_transport::Protocol::V2,
+                        gix_transport::Protocol::V2,
                         &capabilities("something-else", "does not matter as there are none")
                     ),
                     &[]
@@ -123,7 +123,7 @@ mod v2 {
             #[test]
             fn ref_prefixes_can_always_be_used() {
                 Command::LsRefs.validate_argument_prefixes_or_panic(
-                    git_transport::Protocol::V2,
+                    gix_transport::Protocol::V2,
                     &capabilities("something else", "do-not-matter"),
                     &[b"ref-prefix hello/".as_bstr().into()],
                     &[],
@@ -134,7 +134,7 @@ mod v2 {
             #[should_panic]
             fn unknown_argument() {
                 Command::LsRefs.validate_argument_prefixes_or_panic(
-                    git_transport::Protocol::V2,
+                    gix_transport::Protocol::V2,
                     &capabilities("other", "do-not-matter"),
                     &[b"definitely-nothing-we-know".as_bstr().into()],
                     &[],
@@ -145,7 +145,7 @@ mod v2 {
             #[should_panic]
             fn unknown_feature() {
                 Command::LsRefs.validate_argument_prefixes_or_panic(
-                    git_transport::Protocol::V2,
+                    gix_transport::Protocol::V2,
                     &capabilities("other", "do-not-matter"),
                     &[],
                     &[("some-feature-that-does-not-exist", None)],

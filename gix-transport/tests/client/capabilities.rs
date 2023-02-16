@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_transport::client::Capabilities;
+use gix_transport::client::Capabilities;
 
 #[test]
 fn from_bytes() -> crate::Result {

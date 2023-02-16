@@ -112,14 +112,14 @@ check: ## Build all code in suitable configurations
 				 && cargo check
 	cd gix-config && cargo check --all-features \
 				 && cargo check
-	cd git-transport && cargo check \
+	cd gix-transport && cargo check \
 					 && cargo check --features blocking-client \
 					 && cargo check --features async-client \
 					 && cargo check --features async-client,async-std \
 					 && cargo check --features http-client \
 					 && cargo check --features http-client-curl \
 					 && cargo check --features http-client-reqwest
-	cd git-transport && if cargo check --all-features 2>/dev/null; then false; else true; fi
+	cd gix-transport && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-protocol && cargo check \
 					&& cargo check --features blocking-client \
 					&& cargo check --features async-client
@@ -150,7 +150,7 @@ unit-tests: ## run all unit tests
 	cd gix-packetline && cargo test \
 					  && cargo test --features blocking-io,maybe-async/is_sync --test blocking-packetline \
 					  && cargo test --features "async-io" --test async-packetline
-	cd git-transport && cargo test \
+	cd gix-transport && cargo test \
 					 && cargo test --features http-client-curl,maybe-async/is_sync \
 					 && cargo test --features http-client-reqwest,maybe-async/is_sync \
 					 && cargo test --features async-client
@@ -302,7 +302,7 @@ $(baseline_asset_fixture):
 		sed -i '' -E '/bare = true|ignorecase = true|precomposeunicode = true|filemode = true/d' config && \
 		sed -i '' 's/master/main/g' $$(find . -type f)
 
-transport_fixtures = git-transport/tests/fixtures
+transport_fixtures = gix-transport/tests/fixtures
 base_url = https://github.com/Byron/gitoxide.git
 update-curl-fixtures: ## use curl to fetch raw fixtures for use in unit test. Changes there might break them
 	curl -D - -L "$(base_url)/info/refs?service=git-upload-pack"  > $(transport_fixtures)/v1/http-handshake.response

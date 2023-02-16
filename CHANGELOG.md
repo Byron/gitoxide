@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - upgrade `tabled` ([`7aed326`](https://github.com/Byron/gitoxide/commit/7aed326e706b13ae88f98880de055201b2a869cc))
     - Merge branch 'gix-clone-improvements' ([`76c99f3`](https://github.com/Byron/gitoxide/commit/76c99f3005f1b0031921b536f5d268715e41f3c8))
     - Merge branch 'adjustments-for-cargo' ([`f8c562a`](https://github.com/Byron/gitoxide/commit/f8c562a559e6dc3377583cc7200585dad7c3d481))
-    - adapt to changes in git-repository and git-transport ([`d336368`](https://github.com/Byron/gitoxide/commit/d336368ea2b6e5918b709220522cf1509ef30be2))
+    - adapt to changes in git-repository and gix-transport ([`d336368`](https://github.com/Byron/gitoxide/commit/d336368ea2b6e5918b709220522cf1509ef30be2))
     - update planned usage of `ssh` related configuration variables. ([`3f91088`](https://github.com/Byron/gitoxide/commit/3f910880fdf691b59460eea272772c7aff284716))
     - Merge branch 'adjustments-for-cargo' ([`d821fc5`](https://github.com/Byron/gitoxide/commit/d821fc5b4ef4ba606f2b6bb68b66f7260a0205dc))
     - make more HTTP options available ([`38ae61a`](https://github.com/Byron/gitoxide/commit/38ae61a805bd8cca5df8d1c1dcf3a8a0f9c85f5a))
@@ -791,7 +791,7 @@ A first usable version of `gix` to make using `gitoxide` from your applications 
 ### Feature list
 
 * `gix` as hub crate for application development with focus on usability without sacrificing any knob to tune performance.
-* opt-in `async` for `gix-packetline`, `git-transport` and `git-protocol` for fully async git clients, along with the `light-async` feature toggle to build a `gix pack-receive` with an async client instead of a blocking one.
+* opt-in `async` for `gix-packetline`, `gix-transport` and `git-protocol` for fully async git clients, along with the `light-async` feature toggle to build a `gix pack-receive` with an async client instead of a blocking one.
 * Statistics for `gix pack-create` with the `-s/--statistics` flag to have data indicating the cost of the operation. Currently it's doing a lot of work that has to be avoided in order to be useable in production and the numbers underline that. Future iterations will cause key metrics to go down.
 * Packs are now reproducible by default, which means that the same tip will always generate a pack with the same hash. This may be a desirable property for some kinds of packs, but not for others which is why it can be turned off for a considerable speed boost.
 * `gix-tempfile` crate

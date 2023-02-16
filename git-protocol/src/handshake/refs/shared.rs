@@ -76,7 +76,7 @@ impl InternalRef {
 }
 
 pub(crate) fn from_capabilities<'a>(
-    capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
+    capabilities: impl Iterator<Item = gix_transport::client::capabilities::Capability<'a>>,
 ) -> Result<Vec<InternalRef>, Error> {
     let mut out_refs = Vec::new();
     let symref_values = capabilities.filter_map(|c| {

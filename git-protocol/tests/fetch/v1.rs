@@ -1,7 +1,7 @@
 use bstr::ByteSlice;
 use git_protocol::{handshake, FetchConnection};
-use git_transport::Protocol;
 use gix_features::progress;
+use gix_transport::Protocol;
 
 use crate::fetch::{helper_unused, oid, transport, CloneDelegate, LsRemoteDelegate};
 
@@ -19,7 +19,7 @@ async fn clone() -> crate::Result {
                 out,
                 &fixture,
                 Protocol::V1,
-                git_transport::client::git::ConnectMode::Daemon,
+                gix_transport::client::git::ConnectMode::Daemon,
             ),
             &mut dlg,
             helper_unused,
@@ -41,7 +41,7 @@ async fn ls_remote() -> crate::Result {
         out,
         "v1/clone.response",
         Protocol::V1,
-        git_transport::client::git::ConnectMode::Daemon,
+        gix_transport::client::git::ConnectMode::Daemon,
     );
     git_protocol::fetch(
         &mut transport,
@@ -85,7 +85,7 @@ async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
             out,
             "v1/clone.response",
             Protocol::V2,
-            git_transport::client::git::ConnectMode::Process,
+            gix_transport::client::git::ConnectMode::Process,
         ),
         delegate,
         helper_unused,

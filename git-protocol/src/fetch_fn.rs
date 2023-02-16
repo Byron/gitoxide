@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
-use git_transport::client;
 use gix_features::progress::Progress;
+use gix_transport::client;
 use maybe_async::maybe_async;
 
 use crate::{
@@ -98,7 +98,7 @@ where
     let mut fetch_features = fetch.default_features(protocol_version, &capabilities);
     match delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &refs) {
         Ok(Action::Cancel) => {
-            return if matches!(protocol_version, git_transport::Protocol::V1)
+            return if matches!(protocol_version, gix_transport::Protocol::V1)
                 || matches!(fetch_mode, FetchConnection::TerminateOnSuccessfulCompletion)
             {
                 indicate_end_of_interaction(transport).await.map_err(Into::into)
@@ -146,7 +146,7 @@ where
             }
         }
     }
-    if matches!(protocol_version, git_transport::Protocol::V2)
+    if matches!(protocol_version, gix_transport::Protocol::V2)
         && matches!(fetch_mode, FetchConnection::TerminateOnSuccessfulCompletion)
     {
         indicate_end_of_interaction(transport).await?;
@@ -154,7 +154,7 @@ where
     Ok(())
 }
 
-fn setup_remote_progress<P>(progress: &mut P, reader: &mut Box<dyn git_transport::client::ExtendedBufRead + Unpin + '_>)
+fn setup_remote_progress<P>(progress: &mut P, reader: &mut Box<dyn gix_transport::client::ExtendedBufRead + Unpin + '_>)
 where
     P: Progress,
     P::SubProgress: 'static,
@@ -164,5 +164,5 @@ where
         move |is_err: bool, data: &[u8]| {
             crate::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress)
         }
-    }) as git_transport::client::HandleProgress));
+    }) as gix_transport::client::HandleProgress));
 }

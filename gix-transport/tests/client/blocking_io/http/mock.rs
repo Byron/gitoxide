@@ -5,7 +5,7 @@ use std::{
 };
 
 use bstr::ByteVec;
-use git_transport::{
+use gix_transport::{
     client::{http, TransportWithoutIO},
     Protocol,
 };
@@ -105,7 +105,7 @@ pub fn serve_and_connect(
         &server.addr.port(),
         path
     );
-    let client = git_transport::client::http::connect(&url, version);
+    let client = gix_transport::client::http::connect(&url, version);
     assert_eq!(url, client.to_url().as_ref());
     Ok((server, client))
 }

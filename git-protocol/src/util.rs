@@ -11,14 +11,14 @@ pub fn agent(name: impl Into<String>) -> String {
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 #[maybe_async::maybe_async]
 pub async fn indicate_end_of_interaction(
-    mut transport: impl git_transport::client::Transport,
-) -> Result<(), git_transport::client::Error> {
+    mut transport: impl gix_transport::client::Transport,
+) -> Result<(), gix_transport::client::Error> {
     // An empty request marks the (early) end of the interaction. Only relevant in stateful transports though.
     if transport.connection_persists_across_multiple_requests() {
         transport
             .request(
-                git_transport::client::WriteMode::Binary,
-                git_transport::client::MessageKind::Flush,
+                gix_transport::client::WriteMode::Binary,
+                gix_transport::client::MessageKind::Flush,
             )?
             .into_read()
             .await?;

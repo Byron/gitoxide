@@ -254,7 +254,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
 * [x] API documentation
     * [ ] Some examples
 
-### git-transport
+### gix-transport
 * No matter what we do here, timeouts must be supported to prevent hanging forever and to make interrupts destructor-safe.
 * **client**
     * [x] general purpose `connect(…)` for clients

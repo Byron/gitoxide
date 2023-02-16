@@ -8,12 +8,12 @@ mod error {
         #[error(transparent)]
         Io(#[from] std::io::Error),
         #[error(transparent)]
-        Transport(#[from] git_transport::client::Error),
+        Transport(#[from] gix_transport::client::Error),
         #[error(transparent)]
         Parse(#[from] parse::Error),
     }
 
-    impl git_transport::IsSpuriousError for Error {
+    impl gix_transport::IsSpuriousError for Error {
         fn is_spurious(&self) -> bool {
             match self {
                 Error::Io(err) => err.is_spurious(),
@@ -41,8 +41,8 @@ pub(crate) mod function {
     use std::borrow::Cow;
 
     use bstr::BString;
-    use git_transport::client::{Capabilities, Transport, TransportV2Ext};
     use gix_features::progress::Progress;
+    use gix_transport::client::{Capabilities, Transport, TransportV2Ext};
     use maybe_async::maybe_async;
 
     use super::{Action, Error};
@@ -66,7 +66,7 @@ pub(crate) mod function {
         progress: &mut impl Progress,
     ) -> Result<Vec<Ref>, Error> {
         let ls_refs = Command::LsRefs;
-        let mut ls_features = ls_refs.default_features(git_transport::Protocol::V2, capabilities);
+        let mut ls_features = ls_refs.default_features(gix_transport::Protocol::V2, capabilities);
         let mut ls_args = ls_refs.initial_arguments(&ls_features);
         if capabilities
             .capability("ls-refs")
@@ -79,7 +79,7 @@ pub(crate) mod function {
             Ok(Action::Skip) => Vec::new(),
             Ok(Action::Continue) => {
                 ls_refs.validate_argument_prefixes_or_panic(
-                    git_transport::Protocol::V2,
+                    gix_transport::Protocol::V2,
                     capabilities,
                     &ls_args,
                     &ls_features,

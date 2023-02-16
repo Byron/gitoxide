@@ -1,5 +1,5 @@
 use bstr::BString;
-use git_transport::{client, Protocol};
+use gix_transport::{client, Protocol};
 
 use crate::command::Feature;
 
@@ -10,7 +10,7 @@ pub enum Error {
     #[error("Failed to read from line reader")]
     Io(#[source] std::io::Error),
     #[error(transparent)]
-    UploadPack(#[from] git_transport::packetline::read::Error),
+    UploadPack(#[from] gix_transport::packetline::read::Error),
     #[error(transparent)]
     Transport(#[from] client::Error),
     #[error("Currently we require feature {feature:?}, which is not supported by the server")]
@@ -25,7 +25,7 @@ impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Self {
         if err.kind() == std::io::ErrorKind::Other {
             match err.into_inner() {
-                Some(err) => match err.downcast::<git_transport::packetline::read::Error>() {
+                Some(err) => match err.downcast::<gix_transport::packetline::read::Error>() {
                     Ok(err) => Error::UploadPack(*err),
                     Err(err) => Error::Io(std::io::Error::new(std::io::ErrorKind::Other, err)),
                 },
@@ -37,7 +37,7 @@ impl From<std::io::Error> for Error {
     }
 }
 
-impl git_transport::IsSpuriousError for Error {
+impl gix_transport::IsSpuriousError for Error {
     fn is_spurious(&self) -> bool {
         match self {
             Error::Io(err) => err.is_spurious(),

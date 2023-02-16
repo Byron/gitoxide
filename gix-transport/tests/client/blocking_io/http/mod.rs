@@ -9,7 +9,7 @@ use std::{
 };
 
 use bstr::ByteSlice;
-use git_transport::{
+use gix_transport::{
     client::{self, http, SetServiceResponse, Transport, TransportV2Ext, TransportWithoutIO},
     Protocol, Service,
 };
@@ -108,10 +108,10 @@ fn http_will_use_pipelining() {
     });
 
     let url = format!("http://{}:{}/reponame", &addr.ip().to_string(), &addr.port(),);
-    let mut client = git_transport::client::http::connect(&url, git_transport::Protocol::V2);
-    match client.handshake(git_transport::Service::UploadPack, &[]) {
+    let mut client = gix_transport::client::http::connect(&url, gix_transport::Protocol::V2);
+    match client.handshake(gix_transport::Service::UploadPack, &[]) {
         Ok(_) => unreachable!("expecting permission denied to be detected"),
-        Err(git_transport::client::Error::Io(err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {}
+        Err(gix_transport::client::Error::Io(err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {}
         Err(err) => unreachable!("{err:?}"),
     };
     client
@@ -120,9 +120,9 @@ fn http_will_use_pipelining() {
             password: "bar".into(),
         })
         .unwrap();
-    match client.handshake(git_transport::Service::UploadPack, &[]) {
+    match client.handshake(gix_transport::Service::UploadPack, &[]) {
         Ok(_) => unreachable!("expecting permission denied to be detected"),
-        Err(git_transport::client::Error::Io(err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {}
+        Err(gix_transport::client::Error::Io(err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {}
         Err(err) => unreachable!("{err:?}"),
     };
     thread.join().unwrap();
@@ -294,8 +294,8 @@ fn handshake_v1() -> crate::Result {
             "2b80181ad428a9bf267a9660886f347a850fc76f refs/tags/git-repository-v0.1.0^{}",
             "74b85f2bc7a9bcdd59218ee54135d5dd3a8dbd72 refs/tags/git-repository-v0.3.0",
             "e8df6c1ffb7afa27aff9abbe11c7e4b80d19b61e refs/tags/git-repository-v0.3.0^{}",
-            "40046d9f4ab51a8895e8de8a3ed4e213d87f042e refs/tags/git-transport-v0.0.0",
-            "19e7fec7deb5a6419f36a2732c90006377414181 refs/tags/git-transport-v0.0.0^{}",
+            "40046d9f4ab51a8895e8de8a3ed4e213d87f042e refs/tags/gix-transport-v0.0.0",
+            "19e7fec7deb5a6419f36a2732c90006377414181 refs/tags/gix-transport-v0.0.0^{}",
             "64bdbb4ef5415d4cfb088fbbdc8f5f6dca37aeca refs/tags/gix-tui-v0.0.0",
             "a0b73afdd1df9b1096f0c6fe388f795a6dfe7f33 refs/tags/gix-tui-v0.0.0^{}",
             "320c79b59068fc5f0fc11d331de7352bb1952f10 refs/tags/gix-url-v0.0.0",

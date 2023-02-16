@@ -1,5 +1,5 @@
-use git_transport::{client, client::SetServiceResponse, Service};
 use gix_features::{progress, progress::Progress};
+use gix_transport::{client, client::SetServiceResponse, Service};
 use maybe_async::maybe_async;
 
 use super::{Error, Outcome};
@@ -79,7 +79,7 @@ where
             Some(mut refs) => {
                 assert_eq!(
                     actual_protocol,
-                    git_transport::Protocol::V1,
+                    gix_transport::Protocol::V1,
                     "Only V1 auto-responds with refs"
                 );
                 Some(

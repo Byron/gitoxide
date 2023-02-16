@@ -21,7 +21,7 @@ mod v1 {
             self,
             response::{Acknowledgement, ShallowUpdate},
         };
-        use git_transport::Protocol;
+        use gix_transport::Protocol;
 
         use crate::fetch::response::{id, mock_reader};
 
@@ -118,7 +118,7 @@ mod v2 {
             self,
             response::{Acknowledgement, ShallowUpdate},
         };
-        use git_transport::Protocol;
+        use gix_transport::Protocol;
 
         use crate::fetch::response::{id, mock_reader};
 
@@ -184,7 +184,7 @@ mod v2 {
             let mut buf = Vec::new();
             reader.set_progress_handler(Some(Box::new(|is_err: bool, _data: &[u8]| {
                 assert!(!is_err, "fixture does not have an error");
-            }) as git_transport::client::HandleProgress));
+            }) as gix_transport::client::HandleProgress));
             let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 1643, "should be able to read the whole pack");
             assert_eq!(&buf[..4], b"PACK");
@@ -236,7 +236,7 @@ mod v2 {
             let mut buf = Vec::new();
             reader.set_progress_handler(Some(Box::new(|a: bool, b: &[u8]| {
                 git_protocol::RemoteProgress::translate_to_progress(a, b, &mut gix_features::progress::Discard)
-            }) as git_transport::client::HandleProgress));
+            }) as gix_transport::client::HandleProgress));
             let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 5360, "should be able to read the whole pack");
             Ok(())

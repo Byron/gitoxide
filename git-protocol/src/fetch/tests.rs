@@ -1,7 +1,7 @@
 #[cfg(any(feature = "async-client", feature = "blocking-client"))]
 mod arguments {
     use bstr::ByteSlice;
-    use git_transport::Protocol;
+    use gix_transport::Protocol;
 
     use crate::fetch;
 
@@ -23,7 +23,7 @@ mod arguments {
         use std::borrow::Cow;
 
         use bstr::BStr;
-        use git_transport::{
+        use gix_transport::{
             client,
             client::{Error, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
             Protocol, Service,
@@ -81,7 +81,7 @@ mod arguments {
 
         use async_trait::async_trait;
         use bstr::BStr;
-        use git_transport::{
+        use gix_transport::{
             client,
             client::{Error, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
             Protocol, Service,
@@ -136,15 +136,15 @@ mod arguments {
     fn transport(
         out: &mut Vec<u8>,
         stateful: bool,
-    ) -> Transport<git_transport::client::git::Connection<&'static [u8], &mut Vec<u8>>> {
+    ) -> Transport<gix_transport::client::git::Connection<&'static [u8], &mut Vec<u8>>> {
         Transport {
-            inner: git_transport::client::git::Connection::new(
+            inner: gix_transport::client::git::Connection::new(
                 &[],
                 out,
                 Protocol::V1, // does not matter
                 b"does/not/matter".as_bstr().to_owned(),
                 None::<(&str, _)>,
-                git_transport::client::git::ConnectMode::Process, // avoid header to be sent
+                gix_transport::client::git::ConnectMode::Process, // avoid header to be sent
             ),
             stateful,
         }
