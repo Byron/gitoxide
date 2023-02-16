@@ -1,7 +1,7 @@
 mod name {
     use std::str::FromStr;
 
-    use git_config_value::color::Name;
+    use gix_config_value::color::Name;
 
     #[test]
     fn non_bright() {
@@ -60,7 +60,7 @@ mod name {
 mod attribute {
     use std::str::FromStr;
 
-    use git_config_value::color::Attribute;
+    use gix_config_value::color::Attribute;
 
     #[test]
     fn non_inverted() {
@@ -112,7 +112,7 @@ mod from_git {
     use std::convert::TryFrom;
 
     use bstr::BStr;
-    use git_config_value::Color;
+    use gix_config_value::Color;
 
     #[test]
     fn reset() {

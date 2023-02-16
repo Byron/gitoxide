@@ -99,7 +99,7 @@ pub mod decode {
                     "url" => ctx.url = Some(value),
                     "path" => ctx.path = Some(value),
                     "quit" => {
-                        ctx.quit = git_config_value::Boolean::try_from(value.as_ref())
+                        ctx.quit = gix_config_value::Boolean::try_from(value.as_ref())
                             .ok()
                             .map(|b| b.into());
                     }

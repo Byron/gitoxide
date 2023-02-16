@@ -1306,12 +1306,12 @@ dependencies = [
  "bstr",
  "criterion",
  "document-features",
- "git-config-value",
  "git-features 0.26.4",
  "git-glob 0.5.3",
  "git-path 0.7.1",
  "git-ref 0.24.0",
  "git-sec 0.6.2",
+ "gix-config-value",
  "memchr",
  "nom",
  "once_cell",
@@ -1339,19 +1339,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-config-value"
-version = "0.10.1"
-dependencies = [
- "bitflags",
- "bstr",
- "document-features",
- "git-path 0.7.1",
- "libc",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "git-conventional"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1369,12 +1356,12 @@ dependencies = [
  "bstr",
  "document-features",
  "git-command",
- "git-config-value",
  "git-path 0.7.1",
  "git-prompt",
  "git-sec 0.6.2",
  "git-testtools",
  "git-url",
+ "gix-config-value",
  "serde",
  "thiserror",
 ]
@@ -1829,8 +1816,8 @@ version = "0.3.2"
 dependencies = [
  "expectrl",
  "git-command",
- "git-config-value",
  "git-testtools",
+ "gix-config-value",
  "nix 0.26.2",
  "parking_lot 0.12.1",
  "serial_test",
@@ -2323,6 +2310,19 @@ dependencies = [
  "thiserror",
  "unicode-normalization",
  "walkdir",
+]
+
+[[package]]
+name = "gix-config-value"
+version = "0.10.1"
+dependencies = [
+ "bitflags",
+ "bstr",
+ "document-features",
+ "git-path 0.7.1",
+ "libc",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]

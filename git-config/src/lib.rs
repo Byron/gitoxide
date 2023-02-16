@@ -44,7 +44,7 @@ pub mod lookup;
 pub mod parse;
 ///
 pub mod value;
-pub use git_config_value::{color, integer, path, Boolean, Color, Integer, Path};
+pub use gix_config_value::{color, integer, path, Boolean, Color, Integer, Path};
 
 mod types;
 pub use types::{File, Source};

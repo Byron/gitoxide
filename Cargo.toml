@@ -135,7 +135,7 @@ members = [
     "git-ref",
     "git-command",
     "git-config",
-    "git-config-value",
+    "gix-config-value",
     "git-discover",
     "git-features",
     "git-commitgraph",

@@ -546,7 +546,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-tempfile/REA
 
 See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md).
 
-### git-config-value
+### gix-config-value
 * **parse** 
     * [x] boolean
     * [x] integer
@@ -559,7 +559,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 ### git-config
 * [x] read
     * zero-copy parsing with event emission
-    * all config values as per the `git-config-value` crate  
+    * all config values as per the `gix-config-value` crate  
     * **includeIf**
       * [x] `gitdir`,  `gitdir/i`, and `onbranch`
       * [ ] `hasconfig`

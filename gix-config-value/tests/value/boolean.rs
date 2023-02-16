@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use git_config_value::Boolean;
+use gix_config_value::Boolean;
 
 use crate::b;
 

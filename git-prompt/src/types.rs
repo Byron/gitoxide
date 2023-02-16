@@ -74,7 +74,7 @@ impl Options<'_> {
         self.mode = use_git_terminal_prompt
             .then(|| {
                 std::env::var_os("GIT_TERMINAL_PROMPT")
-                    .and_then(|val| git_config_value::Boolean::try_from(val).ok())
+                    .and_then(|val| gix_config_value::Boolean::try_from(val).ok())
                     .and_then(|allow| (!allow.0).then_some(Mode::Disable))
             })
             .flatten()

@@ -20,7 +20,7 @@ git-sec = { version = "^0.6.2", path = "../git-sec" }
 git-url = { version = "^0.13.2", path = "../git-url" }
 git-path = { version = "^0.7.1", path = "../git-path" }
 git-command = { version = "^0.2.3", path = "../git-command" }
-git-config-value = { version = "^0.10.1", path = "../git-config-value" }
+gix-config-value = { version = "^0.10.1", path = "../gix-config-value" }
 git-prompt = { version = "^0.3.2", path = "../git-prompt" }
 
 thiserror = "1.0.32"

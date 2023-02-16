@@ -4,14 +4,14 @@ mod interpolate {
         path::{Path, PathBuf},
     };
 
-    use git_config_value::path;
+    use gix_config_value::path;
 
     use crate::{b, cow_str};
 
     #[test]
     fn backslash_is_not_special_and_they_are_not_escaping_anything() -> crate::Result {
         for path in ["C:\\foo\\bar", "/foo/bar"] {
-            let actual = git_config_value::Path::from(Cow::Borrowed(b(path))).interpolate(Default::default())?;
+            let actual = gix_config_value::Path::from(Cow::Borrowed(b(path))).interpolate(Default::default())?;
             assert_eq!(actual, Path::new(path));
             assert!(
                 matches!(actual, Cow::Borrowed(_)),
@@ -36,7 +36,7 @@ mod interpolate {
                 let expected =
                     std::path::PathBuf::from(format!("{}{}{}", git_install_dir, std::path::MAIN_SEPARATOR, expected));
                 assert_eq!(
-                    git_config_value::Path::from(cow_str(val))
+                    gix_config_value::Path::from(cow_str(val))
                         .interpolate(path::interpolate::Context {
                             git_install_dir: Path::new(git_install_dir).into(),
                             ..Default::default()
@@ -54,7 +54,7 @@ mod interpolate {
         let path = "./%(prefix)/foo/bar";
         let git_install_dir = "/tmp/git";
         assert_eq!(
-            git_config_value::Path::from(Cow::Borrowed(b(path)))
+            gix_config_value::Path::from(Cow::Borrowed(b(path)))
                 .interpolate(path::interpolate::Context {
                     git_install_dir: Path::new(git_install_dir).into(),
                     ..Default::default()
@@ -76,7 +76,7 @@ mod interpolate {
         let home = std::env::current_dir()?;
         let expected = home.join("user").join("bar");
         assert_eq!(
-            git_config_value::Path::from(cow_str(path))
+            gix_config_value::Path::from(cow_str(path))
                 .interpolate(path::interpolate::Context {
                     home_dir: Some(&home),
                     home_for_user: Some(home_for_user),
@@ -94,7 +94,7 @@ mod interpolate {
     fn tilde_with_given_user_is_unsupported_on_windows() {
         assert!(matches!(
             interpolate_without_context("~baz/foo/bar"),
-            Err(git_config_value::path::interpolate::Error::UserInterpolationUnsupported)
+            Err(gix_config_value::path::interpolate::Error::UserInterpolationUnsupported)
         ));
     }
 
@@ -114,8 +114,8 @@ mod interpolate {
 
     fn interpolate_without_context(
         path: impl AsRef<str>,
-    ) -> Result<Cow<'static, Path>, git_config_value::path::interpolate::Error> {
-        git_config_value::Path::from(Cow::Owned(path.as_ref().to_owned().into())).interpolate(
+    ) -> Result<Cow<'static, Path>, gix_config_value::path::interpolate::Error> {
+        gix_config_value::Path::from(Cow::Owned(path.as_ref().to_owned().into())).interpolate(
             path::interpolate::Context {
                 home_for_user: Some(home_for_user),
                 ..Default::default()

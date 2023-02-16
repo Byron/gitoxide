@@ -46,7 +46,7 @@ Documentation is complete and was reviewed at least once.
 * [git-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-chunk)
 * [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
 * [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
-* [git-config-value](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config-value)
+* [gix-config-value](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config-value)
 * [git-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-glob)
 
 ### Initial Development

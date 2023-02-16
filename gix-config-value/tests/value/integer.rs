@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use git_config_value::{integer::Suffix, Integer};
+use gix_config_value::{integer::Suffix, Integer};
 
 use crate::b;
 
