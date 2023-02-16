@@ -67,3 +67,32 @@ mod rename_section {
         ));
     }
 }
+mod set_meta {
+    use git_config::file;
+
+    #[test]
+    fn affects_newly_added_sections() -> crate::Result {
+        let mut file = git_config::File::default();
+        let expected = &file::Metadata::api();
+        assert_eq!(file.meta(), expected);
+
+        {
+            let section = file.new_section("new", None)?;
+            assert_eq!(
+                section.meta(),
+                expected,
+                "sections inherit the underlying files metadata"
+            );
+        }
+        let meta = file::Metadata {
+            path: None,
+            source: git_config::Source::Local,
+            level: 0,
+            trust: git_sec::Trust::Reduced,
+        };
+        file.set_meta(meta.clone());
+        let section = file.new_section("new", None)?;
+        assert_eq!(section.meta(), &meta, "it picks up changes as well");
+        Ok(())
+    }
+}

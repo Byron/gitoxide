@@ -279,11 +279,20 @@ impl<'event> File<'event> {
         self.sections.values().all(|s| s.body.is_void())
     }
 
-    /// Return the file's metadata to guide filtering of all values upon retrieval.
+    /// Return this file's metadata, typically set when it was first created to indicate its origins.
     ///
-    /// This is the metadata the file was instantiated with for use in all newly created sections.
+    /// It will be used in all newly created sections to identify them.
+    /// Change it with [`File::set_meta()`].
     pub fn meta(&self) -> &Metadata {
         &self.meta
+    }
+
+    /// Change the origin of this instance to be the given `meta`data.
+    ///
+    /// This is useful to control what origin about-to-be-added sections receive.
+    pub fn set_meta(&mut self, meta: impl Into<OwnShared<Metadata>>) -> &mut Self {
+        self.meta = meta.into();
+        self
     }
 
     /// Similar to [`meta()`][File::meta()], but with shared ownership.

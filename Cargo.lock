@@ -1330,6 +1330,7 @@ dependencies = [
  "git-config",
  "git-path 0.7.1",
  "git-ref 0.24.0",
+ "git-sec 0.6.2",
  "git-testtools",
  "gix",
  "serde_derive",
