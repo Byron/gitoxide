@@ -691,7 +691,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-mailmap"
+name = "gix-mailmap"
 version = "0.2.0"
 dependencies = [
  "bstr",
@@ -807,7 +807,7 @@ dependencies = [
  "gix-hash",
  "git-index",
  "gix-lock",
- "git-mailmap",
+ "gix-mailmap",
  "gix-object",
  "git-odb",
  "git-pack",

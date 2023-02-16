@@ -78,7 +78,7 @@ check: ## Build all code in suitable configurations
 	cd gix-revision && cargo check --features serde1
 	cd gix-attributes && cargo check --features serde1
 	cd gix-glob && cargo check --features serde1
-	cd git-mailmap && cargo check --features serde1
+	cd gix-mailmap && cargo check --features serde1
 	cd gix-worktree && cargo check --features serde1
 	cd gix-actor && cargo check --features serde1
 	cd gix-date && cargo check --features serde1

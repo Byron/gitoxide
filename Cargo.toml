@@ -151,7 +151,7 @@ members = [
     "gix-worktree",
     "gix-revision",
     "gix-packetline",
-    "git-mailmap",
+    "gix-mailmap",
     "gix-note",
     "gix-fetchhead",
     "gix-prompt",

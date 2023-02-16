@@ -1,5 +1,5 @@
 [package]
-name = "git-mailmap"
+name = "gix-mailmap"
 version = "0.9.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

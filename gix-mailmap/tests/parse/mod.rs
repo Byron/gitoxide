@@ -1,10 +1,10 @@
-use git_mailmap::{parse, Entry};
 use git_testtools::fixture_bytes;
+use gix_mailmap::{parse, Entry};
 
 #[test]
 fn line_numbers_are_counted_correctly_in_errors() {
     let input = fixture_bytes("invalid.txt");
-    let mut actual = git_mailmap::parse(&input).collect::<Vec<_>>().into_iter();
+    let mut actual = gix_mailmap::parse(&input).collect::<Vec<_>>().into_iter();
     assert_eq!(actual.len(), 2);
 
     let err = actual.next().expect("two items left").unwrap_err();
@@ -17,7 +17,7 @@ fn line_numbers_are_counted_correctly_in_errors() {
 #[test]
 fn a_typical_mailmap() {
     let input = fixture_bytes("typical.txt");
-    let actual = git_mailmap::parse(&input).map(Result::unwrap).collect::<Vec<_>>();
+    let actual = gix_mailmap::parse(&input).map(Result::unwrap).collect::<Vec<_>>();
     assert_eq!(
         actual,
         vec![
@@ -37,8 +37,8 @@ fn a_typical_mailmap() {
 
 #[test]
 fn empty_lines_and_comments_are_ignored() {
-    assert!(git_mailmap::parse(b"# comment").next().is_none());
-    assert!(git_mailmap::parse(b"\n\r\n\t\t   \n").next().is_none());
+    assert!(gix_mailmap::parse(b"# comment").next().is_none());
+    assert!(gix_mailmap::parse(b"\n\r\n\t\t   \n").next().is_none());
     assert_eq!(
         line(" # this is a name <email>"),
         Entry::change_name_by_email("# this is a name", "email"),
@@ -48,7 +48,7 @@ fn empty_lines_and_comments_are_ignored() {
 
 #[test]
 fn windows_and_unix_line_endings_are_supported() {
-    let actual = git_mailmap::parse(b"a <a@example.com>\n<b-new><b-old>\r\nc <c@example.com>")
+    let actual = gix_mailmap::parse(b"a <a@example.com>\n<b-new><b-old>\r\nc <c@example.com>")
         .map(Result::unwrap)
         .collect::<Vec<_>>();
     assert_eq!(
@@ -123,7 +123,7 @@ fn line(input: &str) -> Entry<'_> {
 }
 
 fn try_line(input: &str) -> Result<Entry<'_>, parse::Error> {
-    let mut lines = git_mailmap::parse(input.as_bytes());
+    let mut lines = gix_mailmap::parse(input.as_bytes());
     let res = lines.next().expect("single line");
     assert!(lines.next().is_none(), "only one line provided");
     res

@@ -336,7 +336,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
   * [x] quote
   * [ ] unquote
    
-### git-mailmap
+### gix-mailmap
 * [x] parsing
 * [x] lookup and mapping of author names
 

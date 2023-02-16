@@ -1,4 +1,4 @@
-pub use git_mailmap::*;
+pub use gix_mailmap::*;
 
 ///
 pub mod load {

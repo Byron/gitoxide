@@ -5,8 +5,8 @@ impl crate::Repository {
     ///
     /// This represents typical usage within git, which also works with what's there without considering a populated mailmap
     /// a reason to abort an operation, considering it optional.
-    pub fn open_mailmap(&self) -> git_mailmap::Snapshot {
-        let mut out = git_mailmap::Snapshot::default();
+    pub fn open_mailmap(&self) -> gix_mailmap::Snapshot {
+        let mut out = gix_mailmap::Snapshot::default();
         self.open_mailmap_into(&mut out).ok();
         out
     }
@@ -21,7 +21,7 @@ impl crate::Repository {
     ///
     /// Only the first error will be reported, and as many source mailmaps will be merged into `target` as possible.
     /// Parsing errors will be ignored.
-    pub fn open_mailmap_into(&self, target: &mut git_mailmap::Snapshot) -> Result<(), crate::mailmap::load::Error> {
+    pub fn open_mailmap_into(&self, target: &mut gix_mailmap::Snapshot) -> Result<(), crate::mailmap::load::Error> {
         let mut err = None::<crate::mailmap::load::Error>;
         let mut buf = Vec::new();
         let mut blob_id = self
@@ -60,13 +60,13 @@ impl crate::Repository {
                     std::io::copy(&mut file, &mut buf)
                         .map_err(|e| err.get_or_insert(e.into()))
                         .ok();
-                    target.merge(git_mailmap::parse_ignore_errors(&buf));
+                    target.merge(gix_mailmap::parse_ignore_errors(&buf));
                 }
             }
         }
 
         if let Some(blob) = blob_id.and_then(|id| self.find_object(id).map_err(|e| err.get_or_insert(e.into())).ok()) {
-            target.merge(git_mailmap::parse_ignore_errors(&blob.data));
+            target.merge(gix_mailmap::parse_ignore_errors(&blob.data));
         }
 
         let configured_path = self
@@ -101,7 +101,7 @@ impl crate::Repository {
             std::io::copy(&mut file, &mut buf)
                 .map_err(|e| err.get_or_insert(e.into()))
                 .ok();
-            target.merge(git_mailmap::parse_ignore_errors(&buf));
+            target.merge(gix_mailmap::parse_ignore_errors(&buf));
         }
 
         err.map(Err).unwrap_or(Ok(()))

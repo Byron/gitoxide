@@ -17,7 +17,7 @@ like `fetch` and `clone`, and to validate the usability and control of the API o
 ## Development Status
 
 The command-line tools as well as the status of each crate is described in 
-[the crate status document](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap).
+[the crate status document](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-mailmap).
 
 For use in applications, look for the [`gix`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix) crate, 
 which serves as entrypoint to the functionality provided by various lower-level plumbing crates like
@@ -42,7 +42,7 @@ Follow linked crate name for detailed status. Please note that all crates follow
 Crates that seem feature complete and need to see some more use before they can be released as 1.0.
 Documentation is complete and was reviewed at least once.
 
-* [git-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap)
+* [gix-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-mailmap)
 * [gix-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-chunk)
 * [gix-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-ref)
 * [gix-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config)

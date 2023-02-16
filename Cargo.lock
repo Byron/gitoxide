@@ -1414,18 +1414,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-mailmap"
-version = "0.9.2"
-dependencies = [
- "bstr",
- "document-features",
- "git-testtools",
- "gix-actor",
- "quick-error 2.0.1",
- "serde",
-]
-
-[[package]]
 name = "git-object"
 version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1714,7 +1702,6 @@ dependencies = [
  "document-features",
  "git-diff",
  "git-index 0.12.3",
- "git-mailmap",
  "git-odb",
  "git-pack",
  "git-testtools",
@@ -1729,6 +1716,7 @@ dependencies = [
  "gix-hash",
  "gix-hashtable",
  "gix-lock",
+ "gix-mailmap",
  "gix-object",
  "gix-path",
  "gix-prompt",
@@ -1992,6 +1980,18 @@ dependencies = [
  "gix-tempfile",
  "quick-error 2.0.1",
  "tempfile",
+]
+
+[[package]]
+name = "gix-mailmap"
+version = "0.9.2"
+dependencies = [
+ "bstr",
+ "document-features",
+ "git-testtools",
+ "gix-actor",
+ "quick-error 2.0.1",
+ "serde",
 ]
 
 [[package]]

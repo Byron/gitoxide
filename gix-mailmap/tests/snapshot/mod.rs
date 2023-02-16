@@ -1,5 +1,5 @@
-use git_mailmap::Snapshot;
 use git_testtools::fixture_bytes;
+use gix_mailmap::Snapshot;
 
 #[test]
 fn try_resolve() {
@@ -56,9 +56,9 @@ fn try_resolve() {
 fn non_name_and_name_mappings_will_not_clash() {
     let entries = vec![
         // add mapping from email
-        git_mailmap::Entry::change_name_by_email("new-name", "old-email"),
+        gix_mailmap::Entry::change_name_by_email("new-name", "old-email"),
         // add mapping from name and email
-        git_mailmap::Entry::change_name_and_email_by_name_and_email(
+        gix_mailmap::Entry::change_name_and_email_by_name_and_email(
             "other-new-name",
             "other-new-email",
             "old-name",
