@@ -686,7 +686,7 @@ name = "git-lock"
 version = "2.1.0"
 dependencies = [
  "fastrand",
- "git-tempfile",
+ "gix-tempfile",
  "quick-error",
 ]
 
@@ -745,7 +745,7 @@ dependencies = [
  "gix-hash",
  "gix-object",
  "gix-path",
- "git-tempfile",
+ "gix-tempfile",
  "git-traverse",
  "hash_hasher",
  "memmap2",
@@ -783,7 +783,7 @@ dependencies = [
  "git-lock",
  "gix-object",
  "gix-path",
- "git-tempfile",
+ "gix-tempfile",
  "gix-validate",
  "memmap2",
  "nom",
@@ -815,7 +815,7 @@ dependencies = [
  "git-ref",
  "git-revision",
  "gix-sec",
- "git-tempfile",
+ "gix-tempfile",
  "git-traverse",
  "git-url",
  "gix-validate",
@@ -851,7 +851,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-tempfile"
+name = "gix-tempfile"
 version = "2.0.1"
 dependencies = [
  "dashmap",

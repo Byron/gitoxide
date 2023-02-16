@@ -3,7 +3,7 @@
 //! In this model, reads are always atomic and can be performed directly while writes are facilitated by a locking mechanism
 //! implemented here.
 //!
-//! Lock files mostly `git-tempfile` with its auto-cleanup and the following:
+//! Lock files mostly `gix-tempfile` with its auto-cleanup and the following:
 //!
 //! * consistent naming of lock files
 //! * block the thread (with timeout) or fail immediately if a lock cannot be obtained right away
@@ -12,13 +12,13 @@
 //! # Limitations
 //!
 //! * As the lock file is separate from the actual resource, locking is merely a convention rather than being enforced.
-//! * The limitations of `git-tempfile` apply.
+//! * The limitations of `gix-tempfile` apply.
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 use std::path::PathBuf;
 
-pub use git_tempfile as tempfile;
-use git_tempfile::handle::{Closed, Writable};
+pub use gix_tempfile as tempfile;
+use gix_tempfile::handle::{Closed, Writable};
 
 const DOT_LOCK_SUFFIX: &str = ".lock";
 
@@ -35,7 +35,7 @@ pub mod commit;
 #[must_use = "A File that is immediately dropped doesn't allow resource updates"]
 #[derive(Debug)]
 pub struct File {
-    inner: git_tempfile::Handle<Writable>,
+    inner: gix_tempfile::Handle<Writable>,
     lock_path: PathBuf,
 }
 
@@ -46,7 +46,7 @@ pub struct File {
 #[must_use = "A Marker that is immediately dropped doesn't lock a resource meaningfully"]
 #[derive(Debug)]
 pub struct Marker {
-    inner: git_tempfile::Handle<Closed>,
+    inner: gix_tempfile::Handle<Closed>,
     created_from_file: bool,
     lock_path: PathBuf,
 }

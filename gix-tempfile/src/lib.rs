@@ -1,7 +1,7 @@
 //! git-style registered tempfiles that are removed upon typical termination signals.
 //!
 //! To register signal handlers in a typical application that doesn't have its own, call
-//! [`git_tempfile::setup(Default::default())`][setup()] before creating the first tempfile.
+//! [`gix_tempfile::setup(Default::default())`][setup()] before creating the first tempfile.
 //!
 //! Signal handlers are powered by [`signal-hook`] to get notified when the application is told to shut down
 //! to assure tempfiles are deleted. The deletion is filtered by process id to allow forks to have their own
@@ -194,7 +194,7 @@ pub fn setup(mode: SignalHandlerMode) {
 
 /// DO NOT USE - use [`setup()`] instead.
 ///
-/// Indeed this is merely the old name of `setup()`, which is now a required part of configuring git-tempfile.
+/// Indeed this is merely the old name of `setup()`, which is now a required part of configuring gix-tempfile.
 #[deprecated(
     since = "2.0.0",
     note = "call setup(…) instead, this function will be removed in the next major release"

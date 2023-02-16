@@ -1558,7 +1558,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e7cf6a3c9d1a9932bb9bcb7e0044e2e429f9d94711969a7d2a09e34ae21f6437"
 dependencies = [
  "fastrand",
- "git-tempfile 3.0.1",
+ "git-tempfile",
  "quick-error 2.0.1",
 ]
 
@@ -1567,7 +1567,7 @@ name = "git-lock"
 version = "3.0.2"
 dependencies = [
  "fastrand",
- "git-tempfile 3.0.2",
+ "gix-tempfile",
  "quick-error 2.0.1",
  "tempfile",
 ]
@@ -1643,13 +1643,13 @@ dependencies = [
  "git-chunk",
  "git-diff",
  "git-hashtable 0.1.1",
- "git-tempfile 3.0.2",
  "git-testtools",
  "git-traverse 0.22.1",
  "gix-features",
  "gix-hash",
  "gix-object",
  "gix-path",
+ "gix-tempfile",
  "memmap2",
  "parking_lot 0.12.1",
  "serde",
@@ -1789,7 +1789,7 @@ dependencies = [
  "git-lock 3.0.1",
  "git-object",
  "git-path",
- "git-tempfile 3.0.1",
+ "git-tempfile",
  "git-validate",
  "memmap2",
  "nom",
@@ -1802,13 +1802,13 @@ version = "0.24.0"
 dependencies = [
  "document-features",
  "git-lock 3.0.2",
- "git-tempfile 3.0.2",
  "git-testtools",
  "gix-actor",
  "gix-features",
  "gix-hash",
  "gix-object",
  "gix-path",
+ "gix-tempfile",
  "gix-validate",
  "memmap2",
  "nom",
@@ -1897,21 +1897,9 @@ version = "0.0.0"
 
 [[package]]
 name = "git-tempfile"
-version = "3.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d851911a2b043dc1ab6cd5432ce7a3ee3a2fd614ed87428cec1b15f5abb7e0c"
-dependencies = [
- "dashmap",
- "libc",
- "once_cell",
- "signal-hook",
- "signal-hook-registry",
- "tempfile",
-]
-
-[[package]]
-name = "git-tempfile"
 version = "3.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ef5e1b33d3b1526b9ce401205a04bc6aff181796f1a57e4ab735fd540dba440"
 dependencies = [
  "dashmap",
  "libc",
@@ -2166,7 +2154,6 @@ dependencies = [
  "git-ref 0.24.0",
  "git-refspec",
  "git-revision",
- "git-tempfile 3.0.2",
  "git-testtools",
  "git-transport",
  "git-traverse 0.22.1",
@@ -2179,6 +2166,7 @@ dependencies = [
  "gix-object",
  "gix-path",
  "gix-sec",
+ "gix-tempfile",
  "gix-validate",
  "is_ci",
  "log",
@@ -2314,6 +2302,18 @@ dependencies = [
  "serde",
  "tempfile",
  "windows 0.43.0",
+]
+
+[[package]]
+name = "gix-tempfile"
+version = "3.0.2"
+dependencies = [
+ "dashmap",
+ "libc",
+ "once_cell",
+ "signal-hook",
+ "signal-hook-registry",
+ "tempfile",
 ]
 
 [[package]]

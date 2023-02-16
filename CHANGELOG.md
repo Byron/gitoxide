@@ -794,7 +794,7 @@ A first usable version of `gix` to make using `gitoxide` from your applications 
 * opt-in `async` for `git-packetline`, `git-transport` and `git-protocol` for fully async git clients, along with the `light-async` feature toggle to build a `gix pack-receive` with an async client instead of a blocking one.
 * Statistics for `gix pack-create` with the `-s/--statistics` flag to have data indicating the cost of the operation. Currently it's doing a lot of work that has to be avoided in order to be useable in production and the numbers underline that. Future iterations will cause key metrics to go down.
 * Packs are now reproducible by default, which means that the same tip will always generate a pack with the same hash. This may be a desirable property for some kinds of packs, but not for others which is why it can be turned off for a considerable speed boost.
-* `git-tempfile` crate
+* `gix-tempfile` crate
 * `git-lock` crate
 * `git-ref` crate with complete loose-ref, packed-ref and transaction support.
 

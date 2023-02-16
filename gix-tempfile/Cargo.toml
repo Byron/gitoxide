@@ -1,5 +1,5 @@
 [package]
-name = "git-tempfile"
+name = "gix-tempfile"
 version = "3.0.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

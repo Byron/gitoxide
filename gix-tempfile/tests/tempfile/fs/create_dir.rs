@@ -1,5 +1,5 @@
 mod all {
-    use git_tempfile::create_dir;
+    use gix_tempfile::create_dir;
 
     #[test]
     fn a_deeply_nested_directory() -> crate::Result {
@@ -13,7 +13,7 @@ mod all {
 mod iter {
     pub use std::io::ErrorKind::*;
 
-    use git_tempfile::{
+    use gix_tempfile::{
         create_dir,
         create_dir::{Error::*, Retries},
     };

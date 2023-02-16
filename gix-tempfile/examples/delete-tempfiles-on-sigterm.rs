@@ -3,12 +3,12 @@ use std::{
     path::PathBuf,
 };
 
-use git_tempfile::{AutoRemove, ContainingDirectory};
+use gix_tempfile::{AutoRemove, ContainingDirectory};
 
 fn main() -> std::io::Result<()> {
-    git_tempfile::setup(Default::default());
+    gix_tempfile::setup(Default::default());
     let filepath = PathBuf::new().join("tempfile.ext");
-    let _tempfile = git_tempfile::mark_at(&filepath, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
+    let _tempfile = gix_tempfile::mark_at(&filepath, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
     assert!(filepath.is_file(), "a tempfile was created");
 
     writeln!(stdout(), "{}", filepath.display())?;

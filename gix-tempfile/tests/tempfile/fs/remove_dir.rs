@@ -1,7 +1,7 @@
 mod empty_upwards_until_boundary {
     use std::{io, path::Path};
 
-    use git_tempfile::remove_dir;
+    use gix_tempfile::remove_dir;
 
     #[test]
     fn boundary_must_contain_target_dir() -> crate::Result {
@@ -99,7 +99,7 @@ mod empty_depth_first {
         touch(&tree_parent.join("a").join("b"), "hello.ext")?;
         create_dir_all(tree_parent.join("one").join("two").join("empty"))?;
 
-        assert!(git_tempfile::remove_dir::empty_depth_first(nested_parent).is_err());
+        assert!(gix_tempfile::remove_dir::empty_depth_first(nested_parent).is_err());
         Ok(())
     }
 
@@ -118,7 +118,7 @@ mod empty_depth_first {
         create_dir_all(tree_parent.join("one").join("two").join("three")).unwrap();
         create_dir_all(tree_parent.join("c")).unwrap();
         for empty in &[nested_parent, single_parent, tree_parent] {
-            git_tempfile::remove_dir::empty_depth_first(empty).unwrap();
+            gix_tempfile::remove_dir::empty_depth_first(empty).unwrap();
         }
     }
 }
@@ -126,7 +126,7 @@ mod empty_depth_first {
 /// We assume that all checks above also apply to the iterator, so won't repeat them here
 /// Test outside interference only
 mod iter {
-    use git_tempfile::remove_dir;
+    use gix_tempfile::remove_dir;
 
     #[test]
     fn racy_directory_creation_during_deletion_always_wins_immediately() -> crate::Result {

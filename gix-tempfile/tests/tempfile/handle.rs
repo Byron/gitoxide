@@ -1,12 +1,12 @@
 mod mark_path {
-    use git_tempfile::{AutoRemove, ContainingDirectory};
+    use gix_tempfile::{AutoRemove, ContainingDirectory};
 
     #[test]
     fn it_persists_markers_along_with_newly_created_directories() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let target = dir.path().join("a").join("b").join("file.tmp");
         let new_filename = target.parent().unwrap().join("file.ext");
-        let handle = git_tempfile::mark_at(
+        let handle = gix_tempfile::mark_at(
             &target,
             ContainingDirectory::CreateAllRaceProof(Default::default()),
             AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
@@ -35,7 +35,7 @@ mod mark_path {
         let dir = tempfile::tempdir()?;
         let first_dir = "dir";
         let filename = dir.path().join(first_dir).join("subdir").join("file.tmp");
-        let tempfile = git_tempfile::mark_at(
+        let tempfile = gix_tempfile::mark_at(
             &filename,
             ContainingDirectory::CreateAllRaceProof(Default::default()),
             AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
@@ -56,14 +56,14 @@ mod mark_path {
     }
 }
 mod at_path {
-    use git_tempfile::{AutoRemove, ContainingDirectory};
+    use gix_tempfile::{AutoRemove, ContainingDirectory};
 
     #[test]
     fn reduce_resource_usage_by_converting_files_to_markers_and_persist_them() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let target = dir.path().join("a").join("file.tmp");
         let new_filename = target.parent().unwrap().join("file.ext");
-        let mut file = git_tempfile::writable_at(
+        let mut file = gix_tempfile::writable_at(
             &target,
             ContainingDirectory::CreateAllRaceProof(Default::default()),
             AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
@@ -96,7 +96,7 @@ mod at_path {
             !new_filename.is_file(),
             "the filename for persistence doesn't exist yet"
         );
-        let handle = git_tempfile::writable_at(
+        let handle = gix_tempfile::writable_at(
             &target,
             ContainingDirectory::CreateAllRaceProof(Default::default()),
             AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
@@ -131,7 +131,7 @@ mod at_path {
         let dir = tempfile::tempdir()?;
         let first_dir = "dir";
         let filename = dir.path().join(first_dir).join("subdir").join("file.tmp");
-        let tempfile = git_tempfile::writable_at(
+        let tempfile = gix_tempfile::writable_at(
             &filename,
             ContainingDirectory::CreateAllRaceProof(Default::default()),
             AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
@@ -156,8 +156,8 @@ mod at_path {
     fn it_names_files_correctly_and_similarly_named_tempfiles_cannot_be_created() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let filename = dir.path().join("something-specific.ext");
-        let tempfile = git_tempfile::writable_at(&filename, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
-        let res = git_tempfile::writable_at(&filename, ContainingDirectory::Exists, AutoRemove::Tempfile);
+        let tempfile = gix_tempfile::writable_at(&filename, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
+        let res = gix_tempfile::writable_at(&filename, ContainingDirectory::Exists, AutoRemove::Tempfile);
         assert!(
             matches!(res, Err(err) if err.kind() == ErrorKind::AlreadyExists),
             "only one tempfile can be created at a time, they are exclusive"
@@ -176,7 +176,7 @@ mod new {
         path::Path,
     };
 
-    use git_tempfile::{AutoRemove, ContainingDirectory};
+    use gix_tempfile::{AutoRemove, ContainingDirectory};
 
     fn filecount_in(path: impl AsRef<Path>) -> usize {
         std::fs::read_dir(path).expect("valid dir").count()
@@ -186,7 +186,7 @@ mod new {
     fn it_can_be_kept() -> crate::Result {
         let dir = tempfile::tempdir()?;
         drop(
-            git_tempfile::new(dir.path(), ContainingDirectory::Exists, AutoRemove::Tempfile)?
+            gix_tempfile::new(dir.path(), ContainingDirectory::Exists, AutoRemove::Tempfile)?
                 .take()
                 .expect("not taken yet")
                 .keep()?,
@@ -199,7 +199,7 @@ mod new {
     fn it_is_removed_if_it_goes_out_of_scope() -> crate::Result {
         let dir = tempfile::tempdir()?;
         {
-            let _keep = git_tempfile::new(dir.path(), ContainingDirectory::Exists, AutoRemove::Tempfile)?;
+            let _keep = gix_tempfile::new(dir.path(), ContainingDirectory::Exists, AutoRemove::Tempfile)?;
             assert_eq!(filecount_in(&dir), 1, "a temp file was created");
         }
         assert_eq!(filecount_in(&dir), 0, "lock was automatically removed");
@@ -212,7 +212,7 @@ mod new {
         let containing_dir = dir.path().join("dir");
         assert!(!containing_dir.exists());
         {
-            let mut writable = git_tempfile::new(
+            let mut writable = gix_tempfile::new(
                 &containing_dir,
                 ContainingDirectory::CreateAllRaceProof(Default::default()),
                 AutoRemove::TempfileAndEmptyParentDirectoriesUntil {

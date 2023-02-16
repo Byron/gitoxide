@@ -538,9 +538,9 @@ The git staging area.
 * [x] API documentation
     * [ ] Some examples
     
-### git-tempfile
+### gix-tempfile
 
-See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-tempfile/README.md).
+See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-tempfile/README.md).
 
 ### git-lock
 

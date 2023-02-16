@@ -52,7 +52,7 @@ dashmap = "5.1.0"
 
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-git-tempfile = { version = "^3.0.0", path = "../git-tempfile" }
+gix-tempfile = { version = "^3.0.0", path = "../gix-tempfile" }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools"}

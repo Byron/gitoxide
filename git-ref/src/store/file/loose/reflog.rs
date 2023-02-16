@@ -119,7 +119,7 @@ pub mod create_or_update {
 
                     if force_create_reflog || self.should_autocreate_reflog(&full_name) {
                         let parent_dir = log_path.parent().expect("always with parent directory");
-                        git_tempfile::create_dir::all(parent_dir, Default::default()).map_err(|err| {
+                        gix_tempfile::create_dir::all(parent_dir, Default::default()).map_err(|err| {
                             Error::CreateLeadingDirectories {
                                 source: err,
                                 reflog_directory: parent_dir.to_owned(),
@@ -134,7 +134,7 @@ pub mod create_or_update {
                         Err(err) => {
                             // TODO: when Kind::IsADirectory becomes stable, use that.
                             if log_path.is_dir() {
-                                git_tempfile::remove_dir::empty_depth_first(&log_path)
+                                gix_tempfile::remove_dir::empty_depth_first(&log_path)
                                     .and_then(|_| options.open(&log_path))
                                     .map(Some)
                                     .map_err(|_| Error::Append {

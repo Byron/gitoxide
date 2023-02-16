@@ -78,7 +78,6 @@ pub use git_prompt as prompt;
 pub use git_protocol as protocol;
 pub use git_ref as refs;
 pub use git_refspec as refspec;
-pub use git_tempfile as tempfile;
 pub use git_traverse as traverse;
 pub use git_url as url;
 #[doc(inline)]
@@ -92,6 +91,7 @@ pub use gix_hash as hash;
 pub use gix_object as objs;
 pub use gix_object::bstr;
 pub use gix_sec as sec;
+pub use gix_tempfile as tempfile;
 pub use hash::{oid, ObjectId};
 
 pub mod interrupt;

@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use git_tempfile::{AutoRemove, ContainingDirectory};
+use gix_tempfile::{AutoRemove, ContainingDirectory};
 use quick_error::quick_error;
 
 use crate::{backoff, File, Marker, DOT_LOCK_SUFFIX};
@@ -63,7 +63,7 @@ impl File {
         boundary_directory: Option<PathBuf>,
     ) -> Result<File, Error> {
         let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
-            git_tempfile::writable_at(p, d, c)
+            gix_tempfile::writable_at(p, d, c)
         })?;
         Ok(File {
             inner: handle,
@@ -84,7 +84,7 @@ impl Marker {
         boundary_directory: Option<PathBuf>,
     ) -> Result<Marker, Error> {
         let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
-            git_tempfile::mark_at(p, d, c)
+            gix_tempfile::mark_at(p, d, c)
         })?;
         Ok(Marker {
             created_from_file: false,

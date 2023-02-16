@@ -35,7 +35,7 @@ Follow linked crate name for detailed status. Please note that all crates follow
   - [git-lock](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md)
      
 * **Stability Tier 2**
-  - [git-tempfile](https://github.com/Byron/gitoxide/blob/main/git-tempfile/README.md)
+  - [gix-tempfile](https://github.com/Byron/gitoxide/blob/main/gix-tempfile/README.md)
    
 ### Stabilization Candidates
 

@@ -7,7 +7,7 @@ use std::{
     time::Duration,
 };
 
-use git_tempfile::{handle::Writable, AutoRemove, ContainingDirectory, Handle};
+use gix_tempfile::{handle::Writable, AutoRemove, ContainingDirectory, Handle};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let secs_to_run: usize = std::env::args()
@@ -19,7 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tempfiles_created = Arc::new(AtomicUsize::default());
     let tempfiles_registry_locked = Arc::new(AtomicUsize::default());
     let signal_raised = Arc::new(AtomicUsize::default());
-    git_tempfile::setup(git_tempfile::SignalHandlerMode::DeleteTempfilesOnTermination);
+    gix_tempfile::setup(gix_tempfile::SignalHandlerMode::DeleteTempfilesOnTermination);
 
     for tid in 0..suspected_dashmap_block_size {
         std::thread::spawn({
@@ -86,7 +86,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn tempfile_for_thread_or_panic(tid: i32, tmp: &Path, count: &AtomicUsize) -> Handle<Writable> {
-    let res = git_tempfile::writable_at(
+    let res = gix_tempfile::writable_at(
         tmp.join(format!("thread-{tid}")),
         ContainingDirectory::Exists,
         AutoRemove::Tempfile,

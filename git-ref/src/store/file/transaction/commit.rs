@@ -93,7 +93,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                         if let Some(Err(err)) = lock.map(|l| l.commit()) {
                             // TODO: when Kind::IsADirectory becomes stable, use that.
                             let err = if err.instance.resource_path().is_dir() {
-                                git_tempfile::remove_dir::empty_depth_first(err.instance.resource_path())
+                                gix_tempfile::remove_dir::empty_depth_first(err.instance.resource_path())
                                     .map_err(|io_err| std::io::Error::new(std::io::ErrorKind::Other, io_err))
                                     .and_then(|_| err.instance.commit().map_err(|err| err.error))
                                     .err()
@@ -130,7 +130,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                             });
                         }
                     } else {
-                        git_tempfile::remove_dir::empty_upward_until_boundary(
+                        gix_tempfile::remove_dir::empty_upward_until_boundary(
                             reflog_path.parent().expect("never without parent"),
                             &reflog_root,
                         )

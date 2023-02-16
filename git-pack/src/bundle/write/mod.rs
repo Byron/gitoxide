@@ -6,8 +6,8 @@ use std::{
     sync::{atomic::AtomicBool, Arc},
 };
 
-use git_tempfile::{AutoRemove, ContainingDirectory};
 use gix_features::{interrupt, progress, progress::Progress};
+use gix_tempfile::{AutoRemove, ContainingDirectory};
 
 use crate::data;
 
@@ -84,8 +84,8 @@ impl crate::Bundle {
         let data_file = Arc::new(parking_lot::Mutex::new(io::BufWriter::with_capacity(
             64 * 1024,
             match directory.as_ref() {
-                Some(directory) => git_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?,
-                None => git_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
+                Some(directory) => gix_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?,
+                None => gix_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
             },
         )));
         let (pack_entries_iter, pack_version): (
@@ -194,8 +194,8 @@ impl crate::Bundle {
         };
 
         let data_file = Arc::new(parking_lot::Mutex::new(io::BufWriter::new(match directory.as_ref() {
-            Some(directory) => git_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?,
-            None => git_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
+            Some(directory) => gix_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?,
+            None => gix_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
         })));
         let object_hash = options.object_hash;
         let eight_pages = 4096 * 8;
@@ -290,7 +290,7 @@ impl crate::Bundle {
         Ok(match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
-                let mut index_file = git_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
+                let mut index_file = gix_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
 
                 let outcome = crate::index::File::write_data_iter_to_stream(
                     index_kind,

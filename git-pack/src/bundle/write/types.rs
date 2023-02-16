@@ -1,6 +1,6 @@
 use std::{hash::Hash, io, io::SeekFrom, path::PathBuf, sync::Arc};
 
-use git_tempfile::handle::Writable;
+use gix_tempfile::handle::Writable;
 
 /// Configuration for [write_to_directory][crate::Bundle::write_to_directory()] or
 /// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]
@@ -60,7 +60,7 @@ impl Outcome {
     }
 }
 
-pub(crate) type SharedTempFile = Arc<parking_lot::Mutex<std::io::BufWriter<git_tempfile::Handle<Writable>>>>;
+pub(crate) type SharedTempFile = Arc<parking_lot::Mutex<std::io::BufWriter<gix_tempfile::Handle<Writable>>>>;
 
 pub(crate) struct PassThrough<R> {
     pub reader: R,

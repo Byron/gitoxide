@@ -89,7 +89,7 @@ mod init {
                     }
                     let msg_idx = INTERRUPT_COUNT.fetch_add(1, Ordering::SeqCst);
                     if msg_idx == 1 {
-                        git_tempfile::handler::cleanup_tempfiles();
+                        gix_tempfile::handler::cleanup_tempfiles();
                         signal_hook::low_level::emulate_default_handler(*sig).ok();
                     }
                     interrupt();
@@ -100,7 +100,7 @@ mod init {
         }
 
         // This means that they won't setup a handler allowing us to call them right before we actually abort.
-        git_tempfile::setup(git_tempfile::SignalHandlerMode::None);
+        gix_tempfile::setup(gix_tempfile::SignalHandlerMode::None);
 
         Ok(Deregister(hooks))
     }

@@ -1,6 +1,6 @@
 use std::io;
 
-use git_tempfile::handle::Writable;
+use gix_tempfile::handle::Writable;
 
 /// The error returned by [`Bundle::write_to_directory()`][crate::Bundle::write_to_directory()]
 #[derive(thiserror::Error, Debug)]
@@ -11,7 +11,7 @@ pub enum Error {
     #[error(transparent)]
     PackIter(#[from] crate::data::input::Error),
     #[error("Could not move a temporary file into its desired place")]
-    Persist(#[from] git_tempfile::handle::persist::Error<Writable>),
+    Persist(#[from] gix_tempfile::handle::persist::Error<Writable>),
     #[error(transparent)]
     IndexWrite(#[from] crate::index::write::Error),
 }
