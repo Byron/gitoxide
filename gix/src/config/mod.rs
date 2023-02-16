@@ -321,7 +321,7 @@ pub mod string {
 ///
 pub mod refspec {
     /// The error produced when failing to parse a refspec from the configuration.
-    pub type Error = super::key::Error<git_refspec::parse::Error, 'r', 'p'>;
+    pub type Error = super::key::Error<gix_refspec::parse::Error, 'r', 'p'>;
 }
 
 ///

@@ -106,13 +106,13 @@ impl Outcome {
     pub fn iter_mapping_updates<'a, 'b>(
         &self,
         mappings: &'a [fetch::Mapping],
-        refspecs: &'b [git_refspec::RefSpec],
-        extra_refspecs: &'b [git_refspec::RefSpec],
+        refspecs: &'b [gix_refspec::RefSpec],
+        extra_refspecs: &'b [gix_refspec::RefSpec],
     ) -> impl Iterator<
         Item = (
             &super::Update,
             &'a fetch::Mapping,
-            Option<&'b git_refspec::RefSpec>,
+            Option<&'b gix_refspec::RefSpec>,
             Option<&gix_ref::transaction::RefEdit>,
         ),
     > {

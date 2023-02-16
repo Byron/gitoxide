@@ -1629,19 +1629,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-refspec"
-version = "0.7.2"
-dependencies = [
- "bstr",
- "git-testtools",
- "gix-hash",
- "gix-revision",
- "gix-validate",
- "smallvec",
- "thiserror",
-]
-
-[[package]]
 name = "git-sec"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1808,7 +1795,6 @@ dependencies = [
  "git-odb",
  "git-pack",
  "git-protocol",
- "git-refspec",
  "git-testtools",
  "gix-actor",
  "gix-attributes",
@@ -1824,6 +1810,7 @@ dependencies = [
  "gix-path",
  "gix-prompt",
  "gix-ref",
+ "gix-refspec",
  "gix-revision",
  "gix-sec",
  "gix-tempfile",
@@ -2159,6 +2146,19 @@ dependencies = [
  "gix-validate",
  "gix-worktree",
  "tempfile",
+]
+
+[[package]]
+name = "gix-refspec"
+version = "0.7.2"
+dependencies = [
+ "bstr",
+ "git-testtools",
+ "gix-hash",
+ "gix-revision",
+ "gix-validate",
+ "smallvec",
+ "thiserror",
 ]
 
 [[package]]

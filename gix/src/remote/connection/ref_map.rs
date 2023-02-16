@@ -31,7 +31,7 @@ pub enum Error {
     #[error(transparent)]
     ConfigureCredentials(#[from] crate::config::credential_helpers::Error),
     #[error(transparent)]
-    MappingValidation(#[from] git_refspec::match_group::validate::Error),
+    MappingValidation(#[from] gix_refspec::match_group::validate::Error),
 }
 
 impl git_protocol::transport::IsSpuriousError for Error {
@@ -58,7 +58,7 @@ pub struct Options {
     /// A list of refspecs to use as implicit refspecs which won't be saved or otherwise be part of the remote in question.
     ///
     /// This is useful for handling `remote.<name>.tagOpt` for example.
-    pub extra_refspecs: Vec<git_refspec::RefSpec>,
+    pub extra_refspecs: Vec<gix_refspec::RefSpec>,
 }
 
 impl Default for Options {
@@ -128,11 +128,11 @@ where
             .fetch_refs(prefix_from_spec_as_filter_on_remote, handshake_parameters, &specs)
             .await?;
         let num_explicit_specs = self.remote.fetch_specs.len();
-        let group = git_refspec::MatchGroup::from_fetch_specs(specs.iter().map(|s| s.to_ref()));
+        let group = gix_refspec::MatchGroup::from_fetch_specs(specs.iter().map(|s| s.to_ref()));
         let (res, fixes) = group
             .match_remotes(remote.refs.iter().map(|r| {
                 let (full_ref_name, target, object) = r.unpack();
-                git_refspec::match_group::Item {
+                gix_refspec::match_group::Item {
                     full_ref_name,
                     target: target.unwrap_or(&null),
                     object,
@@ -148,7 +148,7 @@ where
                     .map(|idx| fetch::Source::Ref(remote.refs[idx].clone()))
                     .unwrap_or_else(|| {
                         fetch::Source::ObjectId(match m.lhs {
-                            git_refspec::match_group::SourceRef::ObjectId(id) => id,
+                            gix_refspec::match_group::SourceRef::ObjectId(id) => id,
                             _ => unreachable!("no item index implies having an object id"),
                         })
                     }),
@@ -178,7 +178,7 @@ where
         &mut self,
         filter_by_prefix: bool,
         extra_parameters: Vec<(String, Option<String>)>,
-        refspecs: &[git_refspec::RefSpec],
+        refspecs: &[gix_refspec::RefSpec],
     ) -> Result<HandshakeWithRefs, Error> {
         let mut credentials_storage;
         let url = self.transport.to_url();

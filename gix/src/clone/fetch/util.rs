@@ -203,10 +203,10 @@ fn setup_branch_config(
     let remote = repo
         .find_remote(remote_name)
         .expect("remote was just created and must be visible in config");
-    let group = git_refspec::MatchGroup::from_fetch_specs(remote.fetch_specs.iter().map(|s| s.to_ref()));
+    let group = gix_refspec::MatchGroup::from_fetch_specs(remote.fetch_specs.iter().map(|s| s.to_ref()));
     let null = gix_hash::ObjectId::null(repo.object_hash());
     let res = group.match_remotes(
-        Some(git_refspec::match_group::Item {
+        Some(gix_refspec::match_group::Item {
             full_ref_name: branch.as_bstr(),
             target: branch_id.unwrap_or(&null),
             object: None,

@@ -1,4 +1,4 @@
-use git_refspec::RefSpec;
+use gix_refspec::RefSpec;
 
 use crate::{bstr::BStr, remote, Remote};
 
@@ -77,7 +77,7 @@ impl Remote<'_> {
         &mut self,
         specs: impl IntoIterator<Item = Spec>,
         direction: remote::Direction,
-    ) -> Result<(), git_refspec::parse::Error>
+    ) -> Result<(), gix_refspec::parse::Error>
     where
         Spec: AsRef<BStr>,
     {
@@ -85,11 +85,11 @@ impl Remote<'_> {
         let specs: Vec<_> = specs
             .into_iter()
             .map(|spec| {
-                git_refspec::parse(
+                gix_refspec::parse(
                     spec.as_ref(),
                     match direction {
-                        Push => git_refspec::parse::Operation::Push,
-                        Fetch => git_refspec::parse::Operation::Fetch,
+                        Push => gix_refspec::parse::Operation::Push,
+                        Fetch => gix_refspec::parse::Operation::Fetch,
                     },
                 )
                 .map(|url| url.to_owned())

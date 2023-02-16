@@ -71,7 +71,6 @@ pub use git_index as index;
 pub use git_odb as odb;
 #[cfg(all(feature = "git-protocol"))]
 pub use git_protocol as protocol;
-pub use git_refspec as refspec;
 pub use gix_actor as actor;
 pub use gix_attributes as attrs;
 pub use gix_credentials as credentials;
@@ -86,6 +85,7 @@ pub use gix_object as objs;
 pub use gix_object::bstr;
 pub use gix_prompt as prompt;
 pub use gix_ref as refs;
+pub use gix_refspec as refspec;
 pub use gix_sec as sec;
 pub use gix_tempfile as tempfile;
 pub use gix_traverse as traverse;

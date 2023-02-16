@@ -48,7 +48,7 @@ mod single {
 }
 
 mod multiple {
-    use git_refspec::{
+    use gix_refspec::{
         match_group::validate::Fix,
         parse::{Error, Operation},
     };
@@ -163,7 +163,7 @@ mod multiple {
     #[test]
     fn fetch_and_update_with_fixes() {
         let glob_spec = "refs/heads/f*:foo/f*";
-        let glob_spec_ref = git_refspec::parse(glob_spec.into(), Operation::Fetch).unwrap();
+        let glob_spec_ref = gix_refspec::parse(glob_spec.into(), Operation::Fetch).unwrap();
         baseline::agrees_and_applies_fixes(
             [glob_spec, "f1:f1"],
             [

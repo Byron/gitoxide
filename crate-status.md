@@ -353,7 +353,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
 * [x] parse
 * [ ] matching of paths
 
-### git-refspec
+### gix-refspec
 * [x] parse
 * [x] matching of references and object names
     * [x] for fetch

@@ -1,8 +1,8 @@
 use std::panic::catch_unwind;
 
 use bstr::ByteSlice;
-use git_refspec::parse::Operation;
 use git_testtools::scripted_fixture_read_only;
+use gix_refspec::parse::Operation;
 
 #[test]
 fn baseline() {
@@ -40,8 +40,8 @@ fn baseline() {
                     match (res.as_ref().err(), err_code == 0) {
                         (
                             Some(
-                                git_refspec::parse::Error::NegativePartialName
-                                | git_refspec::parse::Error::NegativeGlobPattern,
+                                gix_refspec::parse::Error::NegativePartialName
+                                | gix_refspec::parse::Error::NegativeGlobPattern,
                             ),
                             true,
                         ) => {} // we prefer failing fast, git let's it pass
@@ -70,11 +70,11 @@ fn baseline() {
 
 #[test]
 fn local_and_remote() -> crate::Result {
-    let spec = git_refspec::parse("remote:local".into(), Operation::Fetch)?;
+    let spec = gix_refspec::parse("remote:local".into(), Operation::Fetch)?;
     assert_eq!(spec.remote(), spec.source());
     assert_eq!(spec.local(), spec.destination());
 
-    let spec = git_refspec::parse("local:remote".into(), Operation::Push)?;
+    let spec = gix_refspec::parse("local:remote".into(), Operation::Push)?;
     assert_eq!(spec.local(), spec.source());
     assert_eq!(spec.remote(), spec.destination());
     Ok(())
@@ -85,14 +85,14 @@ mod invalid;
 mod push;
 
 mod util {
-    use git_refspec::{parse::Operation, Instruction, RefSpecRef};
+    use gix_refspec::{parse::Operation, Instruction, RefSpecRef};
 
     pub fn b(input: &str) -> &bstr::BStr {
         input.into()
     }
 
-    pub fn try_parse(spec: &str, op: Operation) -> Result<RefSpecRef<'_>, git_refspec::parse::Error> {
-        git_refspec::parse(spec.into(), op)
+    pub fn try_parse(spec: &str, op: Operation) -> Result<RefSpecRef<'_>, gix_refspec::parse::Error> {
+        gix_refspec::parse(spec.into(), op)
     }
 
     pub fn assert_parse<'a>(spec: &'a str, expected: Instruction<'_>) -> RefSpecRef<'a> {

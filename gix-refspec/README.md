@@ -1,4 +1,4 @@
-# `git-refspec`
+# `gix-refspec`
 
 ### Testing
 

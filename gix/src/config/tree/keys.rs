@@ -91,9 +91,9 @@ impl<T: Validate> Any<T> {
     pub fn try_into_refspec(
         &'static self,
         value: std::borrow::Cow<'_, BStr>,
-        op: git_refspec::parse::Operation,
-    ) -> Result<git_refspec::RefSpec, config::refspec::Error> {
-        git_refspec::parse(value.as_ref(), op)
+        op: gix_refspec::parse::Operation,
+    ) -> Result<gix_refspec::RefSpec, config::refspec::Error> {
+        gix_refspec::parse(value.as_ref(), op)
             .map(|spec| spec.to_owned())
             .map_err(|err| config::refspec::Error::from_value(self, value.into_owned()).with_source(err))
     }
@@ -571,7 +571,7 @@ pub mod validate {
     pub struct PushRefSpec;
     impl Validate for PushRefSpec {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            git_refspec::parse(value, git_refspec::parse::Operation::Push)?;
+            gix_refspec::parse(value, gix_refspec::parse::Operation::Push)?;
             Ok(())
         }
     }
@@ -581,7 +581,7 @@ pub mod validate {
     pub struct FetchRefSpec;
     impl Validate for FetchRefSpec {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            git_refspec::parse(value, git_refspec::parse::Operation::Fetch)?;
+            gix_refspec::parse(value, gix_refspec::parse::Operation::Fetch)?;
             Ok(())
         }
     }

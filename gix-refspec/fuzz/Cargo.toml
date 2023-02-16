@@ -1,5 +1,5 @@
 [package]
-name = "git-refspec-fuzz"
+name = "gix-refspec-fuzz"
 version = "0.0.0"
 authors = ["Automatically generated"]
 publish = false
@@ -11,7 +11,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 
-[dependencies.git-refspec]
+[dependencies.gix-refspec]
 path = ".."
 
 # Prevent this from interfering with workspaces

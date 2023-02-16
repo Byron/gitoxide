@@ -267,13 +267,13 @@ mod find_remote {
         Ok(())
     }
 
-    fn fetchspec(spec: &str) -> git_refspec::RefSpec {
+    fn fetchspec(spec: &str) -> gix_refspec::RefSpec {
         gix::refspec::parse(spec.into(), gix::refspec::parse::Operation::Fetch)
             .unwrap()
             .to_owned()
     }
 
-    fn pushspec(spec: &str) -> git_refspec::RefSpec {
+    fn pushspec(spec: &str) -> gix_refspec::RefSpec {
         gix::refspec::parse(spec.into(), gix::refspec::parse::Operation::Push)
             .unwrap()
             .to_owned()

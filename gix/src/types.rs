@@ -192,9 +192,9 @@ pub struct Remote<'repo> {
     /// The rewritten `push_url`, if it was rewritten.
     pub(crate) push_url_alias: Option<gix_url::Url>,
     /// Refspecs for use when fetching.
-    pub(crate) fetch_specs: Vec<git_refspec::RefSpec>,
+    pub(crate) fetch_specs: Vec<gix_refspec::RefSpec>,
     /// Refspecs for use when pushing.
-    pub(crate) push_specs: Vec<git_refspec::RefSpec>,
+    pub(crate) push_specs: Vec<gix_refspec::RefSpec>,
     /// Tell us what to do with tags when fetched.
     pub(crate) fetch_tags: remote::fetch::Tags,
     // /// Delete local tracking branches that don't exist on the remote anymore.

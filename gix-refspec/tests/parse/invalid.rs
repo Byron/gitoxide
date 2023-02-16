@@ -1,4 +1,4 @@
-use git_refspec::parse::{Error, Operation};
+use gix_refspec::parse::{Error, Operation};
 
 use crate::parse::try_parse;
 

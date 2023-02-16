@@ -549,8 +549,8 @@ mod update {
     }
 
     fn mapping_from_spec(spec: &str, repo: &gix::Repository) -> (Vec<fetch::Mapping>, Vec<gix::refspec::RefSpec>) {
-        let spec = git_refspec::parse(spec.into(), git_refspec::parse::Operation::Fetch).unwrap();
-        let group = git_refspec::MatchGroup::from_fetch_specs(Some(spec));
+        let spec = gix_refspec::parse(spec.into(), gix_refspec::parse::Operation::Fetch).unwrap();
+        let group = gix_refspec::MatchGroup::from_fetch_specs(Some(spec));
         let references = repo.references().unwrap();
         let mut references: Vec<_> = references.all().unwrap().map(|r| into_remote_ref(r.unwrap())).collect();
         references.push(into_remote_ref(repo.find_reference("HEAD").unwrap()));
@@ -563,7 +563,7 @@ mod update {
                     .item_index
                     .map(|idx| fetch::Source::Ref(references[idx].clone()))
                     .unwrap_or_else(|| match m.lhs {
-                        git_refspec::match_group::SourceRef::ObjectId(id) => fetch::Source::ObjectId(id),
+                        gix_refspec::match_group::SourceRef::ObjectId(id) => fetch::Source::ObjectId(id),
                         _ => unreachable!("not a ref, must be id: {:?}", m),
                     }),
                 local: m.rhs.map(|r| r.into_owned()),
@@ -592,9 +592,9 @@ mod update {
         }
     }
 
-    fn remote_ref_to_item(r: &git_protocol::handshake::Ref) -> git_refspec::match_group::Item<'_> {
+    fn remote_ref_to_item(r: &git_protocol::handshake::Ref) -> gix_refspec::match_group::Item<'_> {
         let (full_ref_name, target, object) = r.unpack();
-        git_refspec::match_group::Item {
+        gix_refspec::match_group::Item {
             full_ref_name,
             target: target.expect("no unborn HEAD"),
             object,

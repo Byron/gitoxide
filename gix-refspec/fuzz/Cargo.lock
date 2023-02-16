@@ -108,7 +108,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-refspec"
+name = "gix-refspec"
 version = "0.0.0"
 dependencies = [
  "bstr",
@@ -120,10 +120,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-refspec-fuzz"
+name = "gix-refspec-fuzz"
 version = "0.0.0"
 dependencies = [
- "git-refspec",
+ "gix-refspec",
  "libfuzzer-sys",
 ]
 

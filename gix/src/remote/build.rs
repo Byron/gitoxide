@@ -52,7 +52,7 @@ impl Remote<'_> {
         mut self,
         specs: impl IntoIterator<Item = Spec>,
         direction: remote::Direction,
-    ) -> Result<Self, git_refspec::parse::Error>
+    ) -> Result<Self, gix_refspec::parse::Error>
     where
         Spec: AsRef<BStr>,
     {
@@ -60,11 +60,11 @@ impl Remote<'_> {
         let new_specs = specs
             .into_iter()
             .map(|spec| {
-                git_refspec::parse(
+                gix_refspec::parse(
                     spec.as_ref(),
                     match direction {
-                        Push => git_refspec::parse::Operation::Push,
-                        Fetch => git_refspec::parse::Operation::Fetch,
+                        Push => gix_refspec::parse::Operation::Push,
+                        Fetch => gix_refspec::parse::Operation::Fetch,
                     },
                 )
                 .map(|s| s.to_owned())

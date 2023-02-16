@@ -1,4 +1,4 @@
-use git_refspec::{
+use gix_refspec::{
     instruction::Fetch,
     parse::{Error, Operation},
     Instruction,

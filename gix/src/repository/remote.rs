@@ -84,8 +84,8 @@ impl crate::Repository {
             specs: Vec<std::borrow::Cow<'_, BStr>>,
             name_or_url: &BStr,
             key: &'static config::tree::keys::Any<T>,
-            op: git_refspec::parse::Operation,
-        ) -> Result<Vec<git_refspec::RefSpec>, find::Error> {
+            op: gix_refspec::parse::Operation,
+        ) -> Result<Vec<gix_refspec::RefSpec>, find::Error> {
             let kind = key.name;
             specs
                 .into_iter()
@@ -129,7 +129,7 @@ impl crate::Repository {
                     specs,
                     name_or_url,
                     &config::tree::Remote::FETCH,
-                    git_refspec::parse::Operation::Fetch,
+                    gix_refspec::parse::Operation::Fetch,
                 )
             });
         let push_specs = config
@@ -139,7 +139,7 @@ impl crate::Repository {
                     specs,
                     name_or_url,
                     &config::tree::Remote::PUSH,
-                    git_refspec::parse::Operation::Push,
+                    gix_refspec::parse::Operation::Push,
                 )
             });
         let fetch_tags = config

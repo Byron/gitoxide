@@ -6,13 +6,13 @@ pub mod baseline {
     use std::{borrow::Borrow, collections::HashMap};
 
     use bstr::{BString, ByteSlice, ByteVec};
-    use git_refspec::{
+    use git_testtools::once_cell::sync::Lazy;
+    use gix_hash::ObjectId;
+    use gix_refspec::{
         match_group::{validate::Fix, SourceRef},
         parse::Operation,
         MatchGroup,
     };
-    use git_testtools::once_cell::sync::Lazy;
-    use gix_hash::ObjectId;
 
     use crate::matching::BASELINE;
 
@@ -25,8 +25,8 @@ pub mod baseline {
     }
 
     impl Ref {
-        pub fn to_item(&self) -> git_refspec::match_group::Item<'_> {
-            git_refspec::match_group::Item {
+        pub fn to_item(&self) -> gix_refspec::match_group::Item<'_> {
+            gix_refspec::match_group::Item {
                 full_ref_name: self.name.borrow(),
                 target: &self.target,
                 object: self.object.as_deref(),
@@ -45,7 +45,7 @@ pub mod baseline {
         pub local: Option<BString>,
     }
 
-    pub fn input() -> impl Iterator<Item = git_refspec::match_group::Item<'static>> + ExactSizeIterator + Clone {
+    pub fn input() -> impl Iterator<Item = gix_refspec::match_group::Item<'static>> + ExactSizeIterator + Clone {
         INPUT.iter().map(Ref::to_item)
     }
 
@@ -67,7 +67,7 @@ pub mod baseline {
                 expected: expected
                     .into_iter()
                     .map(|s| {
-                        let spec = git_refspec::parse(s.into(), Operation::Fetch).expect("valid spec");
+                        let spec = gix_refspec::parse(s.into(), Operation::Fetch).expect("valid spec");
                         Mapping {
                             remote: spec.source().unwrap().into(),
                             local: spec.destination().map(ToOwned::to_owned),
@@ -103,12 +103,12 @@ pub mod baseline {
 
     pub fn invalid_specs_fail_to_parse_where_git_shows_surprising_behaviour<'a>(
         specs: impl IntoIterator<Item = &'a str>,
-        err: git_refspec::parse::Error,
+        err: gix_refspec::parse::Error,
     ) {
         let err = err.to_string();
         let mut saw_err = false;
         for spec in specs {
-            match git_refspec::parse(spec.into(), Operation::Fetch) {
+            match gix_refspec::parse(spec.into(), Operation::Fetch) {
                 Ok(_) => {}
                 Err(e) if e.to_string() == err => {
                     saw_err = true;
@@ -137,7 +137,7 @@ pub mod baseline {
             specs
                 .clone()
                 .into_iter()
-                .map(|spec| git_refspec::parse(spec.into(), Operation::Fetch).unwrap()),
+                .map(|spec| gix_refspec::parse(spec.into(), Operation::Fetch).unwrap()),
         );
 
         let key: Vec<_> = specs.into_iter().map(BString::from).collect();
@@ -157,7 +157,7 @@ pub mod baseline {
                     let (actual, fixed) = actual.unwrap();
                     assert_eq!(
                         fixed,
-                        Vec::<git_refspec::match_group::validate::Fix>::new(),
+                        Vec::<gix_refspec::match_group::validate::Fix>::new(),
                         "we don't expect any issues to be fixed here"
                     );
                     (actual.mappings, expected.expect("no error"))

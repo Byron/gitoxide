@@ -170,7 +170,7 @@ members = [
     "gix-lock",
     "gix-attributes",
     "gix-pathspec",
-    "git-refspec",
+    "gix-refspec",
     "gix-path",
     "gix",
     "gitoxide-core",

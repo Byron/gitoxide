@@ -94,9 +94,9 @@ impl PrepareFetch {
 
         // Add HEAD after the remote was written to config, we need it to know what to checkout later, and assure
         // the ref that HEAD points to is present no matter what.
-        let head_refspec = git_refspec::parse(
+        let head_refspec = gix_refspec::parse(
             format!("HEAD:refs/remotes/{remote_name}/HEAD").as_str().into(),
-            git_refspec::parse::Operation::Fetch,
+            gix_refspec::parse::Operation::Fetch,
         )
         .expect("valid")
         .to_owned();

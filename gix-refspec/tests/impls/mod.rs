@@ -3,11 +3,11 @@ use std::{
     iter::FromIterator,
 };
 
-use git_refspec::{parse::Operation, RefSpec};
+use gix_refspec::{parse::Operation, RefSpec};
 
 fn pair() -> Vec<RefSpec> {
-    let lhs = git_refspec::parse("refs/heads/foo".into(), Operation::Push).unwrap();
-    let rhs = git_refspec::parse("refs/heads/foo:refs/heads/foo".into(), Operation::Push).unwrap();
+    let lhs = gix_refspec::parse("refs/heads/foo".into(), Operation::Push).unwrap();
+    let rhs = gix_refspec::parse("refs/heads/foo:refs/heads/foo".into(), Operation::Push).unwrap();
     vec![lhs.to_owned(), rhs.to_owned()]
 }
 

@@ -1,5 +1,5 @@
 mod prefix {
-    use git_refspec::{parse::Operation, RefSpec};
+    use gix_refspec::{parse::Operation, RefSpec};
 
     #[test]
     fn head_is_specifically_known() {
@@ -24,7 +24,7 @@ mod prefix {
     #[test]
     fn push_specs_use_the_destination() {
         assert_eq!(
-            git_refspec::parse("refs/local/main:refs/remote/main".into(), Operation::Push)
+            gix_refspec::parse("refs/local/main:refs/remote/main".into(), Operation::Push)
                 .unwrap()
                 .prefix()
                 .unwrap(),
@@ -56,12 +56,12 @@ mod prefix {
     }
 
     fn parse(spec: &str) -> RefSpec {
-        git_refspec::parse(spec.into(), Operation::Fetch).unwrap().to_owned()
+        gix_refspec::parse(spec.into(), Operation::Fetch).unwrap().to_owned()
     }
 }
 
 mod expand_prefixes {
-    use git_refspec::parse::Operation;
+    use gix_refspec::parse::Operation;
 
     #[test]
     fn head_is_specifically_known() {
@@ -103,7 +103,7 @@ mod expand_prefixes {
     #[test]
     fn push_specs_use_the_destination() {
         let mut out = Vec::new();
-        git_refspec::parse("refs/local/main:refs/remote/main".into(), Operation::Push)
+        gix_refspec::parse("refs/local/main:refs/remote/main".into(), Operation::Push)
             .unwrap()
             .expand_prefixes(&mut out);
         assert_eq!(out, ["refs/remote/"]);
@@ -121,7 +121,7 @@ mod expand_prefixes {
 
     fn parse(spec: &str) -> Vec<String> {
         let mut out = Vec::new();
-        git_refspec::parse(spec.into(), Operation::Fetch)
+        gix_refspec::parse(spec.into(), Operation::Fetch)
             .unwrap()
             .to_owned()
             .to_ref()

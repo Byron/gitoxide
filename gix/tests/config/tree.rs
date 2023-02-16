@@ -748,26 +748,26 @@ mod remote {
     fn refspecs() {
         let fetch_spec = "+refs/heads/*:refs/remotes/origin/*";
         assert!(Remote::FETCH
-            .try_into_refspec(bcow(fetch_spec), git_refspec::parse::Operation::Fetch)
+            .try_into_refspec(bcow(fetch_spec), gix_refspec::parse::Operation::Fetch)
             .is_ok());
         assert!(Remote::FETCH.validate(fetch_spec.into()).is_ok());
 
         let push_spec = "HEAD:refs/heads/name";
         assert!(Remote::PUSH
-            .try_into_refspec(bcow(push_spec), git_refspec::parse::Operation::Push)
+            .try_into_refspec(bcow(push_spec), gix_refspec::parse::Operation::Push)
             .is_ok());
         assert!(Remote::PUSH.validate(push_spec.into()).is_ok());
 
         assert_eq!(
             Remote::FETCH
-                .try_into_refspec(bcow("*/*/*"), git_refspec::parse::Operation::Fetch)
+                .try_into_refspec(bcow("*/*/*"), gix_refspec::parse::Operation::Fetch)
                 .unwrap_err()
                 .to_string(),
             "The refspec at \"remote.<name>.fetch=*/*/*\" could not be parsed"
         );
         assert_eq!(
             Remote::PUSH
-                .try_into_refspec(bcow("*/*/*"), git_refspec::parse::Operation::Push)
+                .try_into_refspec(bcow("*/*/*"), gix_refspec::parse::Operation::Push)
                 .unwrap_err()
                 .to_string(),
             "The refspec at \"remote.<name>.push=*/*/*\" could not be parsed"

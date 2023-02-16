@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use git_refspec::RefSpec;
+use gix_refspec::RefSpec;
 
 use crate::{config, remote, Remote, Repository};
 

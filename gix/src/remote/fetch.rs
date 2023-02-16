@@ -41,10 +41,10 @@ impl Tags {
     /// Obtain a refspec that determines whether or not to fetch all tags, depending on this variant.
     ///
     /// The returned refspec is the default refspec for tags, but won't overwrite local tags ever.
-    pub fn to_refspec(&self) -> Option<git_refspec::RefSpecRef<'static>> {
+    pub fn to_refspec(&self) -> Option<gix_refspec::RefSpecRef<'static>> {
         match self {
             Tags::All | Tags::Included => Some(
-                git_refspec::parse("refs/tags/*:refs/tags/*".into(), git_refspec::parse::Operation::Fetch)
+                gix_refspec::parse("refs/tags/*:refs/tags/*".into(), gix_refspec::parse::Operation::Fetch)
                     .expect("valid"),
             ),
             Tags::None => None,
@@ -62,9 +62,9 @@ pub struct RefMap {
     /// [`extra_refspecs` in RefMap options][crate::remote::ref_map::Options::extra_refspecs].
     ///
     /// They are never persisted nor are they typically presented to the user.
-    pub extra_refspecs: Vec<git_refspec::RefSpec>,
+    pub extra_refspecs: Vec<gix_refspec::RefSpec>,
     /// Information about the fixes applied to the `mapping` due to validation and sanitization.
-    pub fixes: Vec<git_refspec::match_group::validate::Fix>,
+    pub fixes: Vec<gix_refspec::match_group::validate::Fix>,
     /// All refs advertised by the remote.
     pub remote_refs: Vec<git_protocol::handshake::Ref>,
     /// Additional information provided by the server as part of the handshake.
@@ -130,9 +130,9 @@ impl SpecIndex {
     /// Depending on our index variant, get the index either from `refspecs` or from `extra_refspecs` for `Implicit` variants.
     pub fn get<'a>(
         self,
-        refspecs: &'a [git_refspec::RefSpec],
-        extra_refspecs: &'a [git_refspec::RefSpec],
-    ) -> Option<&'a git_refspec::RefSpec> {
+        refspecs: &'a [gix_refspec::RefSpec],
+        extra_refspecs: &'a [gix_refspec::RefSpec],
+    ) -> Option<&'a gix_refspec::RefSpec> {
         match self {
             SpecIndex::ExplicitInRemote(idx) => refspecs.get(idx),
             SpecIndex::Implicit(idx) => extra_refspecs.get(idx),
