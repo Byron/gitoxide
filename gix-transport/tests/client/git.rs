@@ -119,8 +119,8 @@ async fn handshake_v1_and_request() -> crate::Result {
     let expected_entries = 3;
     #[cfg(feature = "async-client")]
     let reader = futures_lite::io::BlockOn::new(reader);
-    use git_pack::data::input;
-    let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
+    use gix_pack::data::input;
+    let entries = gix_pack::data::input::BytesToEntriesIter::new_from_header(
         reader,
         input::Mode::Verify,
         input::EntryDataMode::Crc32,
@@ -395,8 +395,8 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
     #[cfg(feature = "async-client")]
     let reader = futures_lite::io::BlockOn::new(reader);
 
-    use git_pack::data::input;
-    let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
+    use gix_pack::data::input;
+    let entries = gix_pack::data::input::BytesToEntriesIter::new_from_header(
         reader,
         input::Mode::Verify,
         input::EntryDataMode::Crc32,

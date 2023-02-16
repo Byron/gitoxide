@@ -61,7 +61,7 @@ fn lookup_missing() {
 fn general() {
     let (file, path) = multi_index();
 
-    assert_eq!(file.version(), git_pack::multi_index::Version::V1);
+    assert_eq!(file.version(), gix_pack::multi_index::Version::V1);
     assert_eq!(file.path(), path);
     assert_eq!(file.num_indices(), 1);
     assert_eq!(file.object_hash(), gix_hash::Kind::Sha1);

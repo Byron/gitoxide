@@ -1,6 +1,6 @@
 mod lookup_ref_delta_objects {
-    use git_pack::data::{entry::Header, input, input::LookupRefDeltaObjectsIter};
     use gix_hash::ObjectId;
+    use gix_pack::data::{entry::Header, input, input::LookupRefDeltaObjectsIter};
 
     use crate::pack::hex_to_id;
 

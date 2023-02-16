@@ -7,8 +7,8 @@ use crate::{data, find};
 /// Find effectively needs [generic associated types][issue] to allow a trait for the returned object type.
 /// Until then, we will have to make due with explicit types and give them the potentially added features we want.
 ///
-/// Furthermore, despite this trait being in `git-pack`, it leaks knowledge about objects potentially not being packed.
-/// This is a necessary trade-off to allow this trait to live in `git-pack` where it is used in functions to create a pack.
+/// Furthermore, despite this trait being in `gix-pack`, it leaks knowledge about objects potentially not being packed.
+/// This is a necessary trade-off to allow this trait to live in `gix-pack` where it is used in functions to create a pack.
 ///
 /// [issue]: https://github.com/rust-lang/rust/issues/44265
 pub trait Find {

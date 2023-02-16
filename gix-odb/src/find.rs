@@ -66,7 +66,7 @@ pub enum Header {
     ///
     /// Note that this does not imply it is unique in the database, as it might be present in more than one pack and even
     /// as loose object.
-    Packed(git_pack::data::decode::header::Outcome),
+    Packed(gix_pack::data::decode::header::Outcome),
 }
 
 mod header {
@@ -96,8 +96,8 @@ mod header {
         }
     }
 
-    impl From<git_pack::data::decode::header::Outcome> for Header {
-        fn from(packed_header: git_pack::data::decode::header::Outcome) -> Self {
+    impl From<gix_pack::data::decode::header::Outcome> for Header {
+        fn from(packed_header: gix_pack::data::decode::header::Outcome) -> Self {
             Header::Packed(packed_header)
         }
     }

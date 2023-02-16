@@ -1,14 +1,14 @@
 use std::{convert::Infallible, sync::atomic::AtomicBool};
 
-use git_pack::data::{
-    output,
-    output::{count, entry},
-};
 use gix_features::{
     parallel::{reduce::Finalize, InOrderIter},
     progress,
 };
 use gix_odb::{pack, pack::FindExt};
+use gix_pack::data::{
+    output,
+    output::{count, entry},
+};
 use gix_traverse::commit;
 
 use crate::pack::{
@@ -411,7 +411,7 @@ fn write_and_verify(
     bundle.verify_integrity(
         progress::Discard,
         &should_interrupt,
-        git_pack::index::verify::integrity::Options {
+        gix_pack::index::verify::integrity::Options {
             verify_mode: pack::index::verify::Mode::HashCrc32DecodeEncode,
             traversal: pack::index::traverse::Algorithm::Lookup,
             make_pack_lookup_cache: || pack::cache::Never,

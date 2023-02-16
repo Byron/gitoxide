@@ -152,15 +152,15 @@ where
             }
         };
 
-        let options = git_pack::bundle::write::Options {
+        let options = gix_pack::bundle::write::Options {
             thread_limit: config::index_threads(repo)?,
             index_version: config::pack_index_version(repo)?,
-            iteration_mode: git_pack::data::input::Mode::Verify,
+            iteration_mode: gix_pack::data::input::Mode::Verify,
             object_hash: con.remote.repo.object_hash(),
         };
 
         let mut write_pack_bundle = if matches!(self.dry_run, fetch::DryRun::No) {
-            Some(git_pack::Bundle::write_to_directory(
+            Some(gix_pack::Bundle::write_to_directory(
                 #[cfg(feature = "async-network-client")]
                 {
                     gix_protocol::futures_lite::io::BlockOn::new(reader)

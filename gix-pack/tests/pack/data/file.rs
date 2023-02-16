@@ -44,7 +44,7 @@ mod method {
 /// All hardcoded offsets are obtained via `git pack-verify --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`
 mod decode_entry {
     use bstr::ByteSlice;
-    use git_pack::{cache, data::decode::entry::ResolvedBase};
+    use gix_pack::{cache, data::decode::entry::ResolvedBase};
 
     use crate::{
         fixture_path, fixup,
@@ -146,8 +146,8 @@ mod resolve_header {
         assert_eq!(out.num_deltas, 0);
     }
 
-    fn resolve_header_at_offset(offset: u64) -> git_pack::data::decode::header::Outcome {
-        fn resolve_with_panic(_oid: &gix_hash::oid) -> Option<git_pack::data::decode::header::ResolvedBase> {
+    fn resolve_header_at_offset(offset: u64) -> gix_pack::data::decode::header::Outcome {
+        fn resolve_with_panic(_oid: &gix_hash::oid) -> Option<gix_pack::data::decode::header::ResolvedBase> {
             panic!("should not want to resolve an id here")
         }
 

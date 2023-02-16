@@ -12,7 +12,7 @@ use crate::{
 
 mod version {
     mod v1 {
-        use git_pack::index;
+        use gix_pack::index;
 
         use crate::{fixture_path, pack::INDEX_V1};
 
@@ -57,7 +57,7 @@ mod version {
     }
 
     mod v2 {
-        use git_pack::index;
+        use gix_pack::index;
 
         use crate::{fixture_path, pack::INDEX_V2};
 
@@ -113,12 +113,12 @@ mod version {
     mod any {
         use std::{fs, io, sync::atomic::AtomicBool};
 
-        use git_pack::{
+        use gix_features::progress;
+        use gix_odb::pack;
+        use gix_pack::{
             data::{input, EntryRange},
             index,
         };
-        use gix_features::progress;
-        use gix_odb::pack;
 
         use crate::{
             fixture_path,
@@ -273,8 +273,8 @@ fn traverse_with_index_and_forward_ref_deltas() {
     assert_eq!(count.load(Ordering::SeqCst), 9, "we traverse all objects");
 }
 
-use git_pack::{cache, data::decode::entry::Outcome, index};
 use gix_features::progress;
+use gix_pack::{cache, data::decode::entry::Outcome, index};
 use maplit::btreemap;
 
 use crate::pack::{INDEX_V2, PACK_FOR_INDEX_V2};
@@ -384,9 +384,9 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
             for mode in MODES {
                 assert_eq!(
                     idx.verify_integrity(
-                        Some(git_pack::index::verify::PackContext {
+                        Some(gix_pack::index::verify::PackContext {
                             data: &pack,
-                            options: git_pack::index::verify::integrity::Options {
+                            options: gix_pack::index::verify::integrity::Options {
                                 verify_mode: *mode,
                                 traversal: *algo,
                                 make_pack_lookup_cache: || cache::Never,
@@ -491,7 +491,7 @@ fn iter() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
             idx.verify_integrity(
-                None::<git_pack::index::verify::PackContext<'_, fn() -> cache::Never>>,
+                None::<gix_pack::index::verify::PackContext<'_, fn() -> cache::Never>>,
                 progress::Discard,
                 &AtomicBool::new(false)
             )

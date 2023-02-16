@@ -1,13 +1,13 @@
 use std::{convert::TryInto, ops::Deref};
 
-use git_pack::cache::DecodeEntry;
+use gix_pack::cache::DecodeEntry;
 
 use crate::store::{handle, load_index};
 
 pub(crate) mod error {
     use crate::{loose, pack};
 
-    /// Returned by [`Handle::try_find()`][git_pack::Find::try_find()]
+    /// Returned by [`Handle::try_find()`][gix_pack::Find::try_find()]
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -89,7 +89,7 @@ where
         pack_cache: &mut impl DecodeEntry,
         snapshot: &mut load_index::Snapshot,
         recursion: Option<error::DeltaBaseRecursion<'_>>,
-    ) -> Result<Option<(gix_object::Data<'a>, Option<git_pack::data::entry::Location>)>, Error> {
+    ) -> Result<Option<(gix_object::Data<'a>, Option<gix_pack::data::entry::Location>)>, Error> {
         if let Some(r) = recursion {
             if r.depth >= self.max_recursion_depth {
                 return Err(Error::DeltaBaseRecursionLimit {
@@ -149,7 +149,7 @@ where
                             buffer,
                             |id, _out| {
                                 index_file.pack_offset_by_id(id).map(|pack_offset| {
-                                    git_pack::data::decode::entry::ResolvedBase::InPack(pack.entry(pack_offset))
+                                    gix_pack::data::decode::entry::ResolvedBase::InPack(pack.entry(pack_offset))
                                 })
                             },
                             pack_cache,
@@ -159,13 +159,13 @@ where
                                     kind: r.kind,
                                     data: buffer.as_slice(),
                                 },
-                                Some(git_pack::data::entry::Location {
+                                Some(gix_pack::data::entry::Location {
                                     pack_id: pack.id,
                                     pack_offset,
                                     entry_size: r.compressed_size + header_size,
                                 }),
                             )),
-                            Err(git_pack::data::decode::Error::DeltaBaseUnresolved(base_id)) => {
+                            Err(gix_pack::data::decode::Error::DeltaBaseUnresolved(base_id)) => {
                                 // Only with multi-pack indices it's allowed to jump to refer to other packs within this
                                 // multi-pack. Otherwise this would constitute a thin pack which is only allowed in transit.
                                 // However, if we somehow end up with that, we will resolve it safely, even though we could
@@ -235,7 +235,7 @@ where
                                         index_file
                                             .pack_offset_by_id(id)
                                             .map(|pack_offset| {
-                                                git_pack::data::decode::entry::ResolvedBase::InPack(
+                                                gix_pack::data::decode::entry::ResolvedBase::InPack(
                                                     pack.entry(pack_offset),
                                                 )
                                             })
@@ -243,7 +243,7 @@ where
                                                 (id == base_id).then(|| {
                                                     out.resize(buf.len(), 0);
                                                     out.copy_from_slice(buf.as_slice());
-                                                    git_pack::data::decode::entry::ResolvedBase::OutOfPack {
+                                                    gix_pack::data::decode::entry::ResolvedBase::OutOfPack {
                                                         kind: obj_kind,
                                                         end: out.len(),
                                                     }
@@ -258,7 +258,7 @@ where
                                             kind: r.kind,
                                             data: buffer.as_slice(),
                                         },
-                                        Some(git_pack::data::entry::Location {
+                                        Some(gix_pack::data::entry::Location {
                                             pack_id: pack.id,
                                             pack_offset,
                                             entry_size: r.compressed_size + header_size,
@@ -302,7 +302,7 @@ where
     }
 }
 
-impl<S> git_pack::Find for super::Handle<S>
+impl<S> gix_pack::Find for super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
@@ -344,7 +344,7 @@ where
         id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
-    ) -> Result<Option<(gix_object::Data<'a>, Option<git_pack::data::entry::Location>)>, Self::Error> {
+    ) -> Result<Option<(gix_object::Data<'a>, Option<gix_pack::data::entry::Location>)>, Self::Error> {
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
         self.try_find_cached_inner(id, buffer, pack_cache, &mut snapshot, None)
@@ -354,7 +354,7 @@ where
         &self,
         id: impl AsRef<gix_hash::oid>,
         buf: &mut Vec<u8>,
-    ) -> Option<git_pack::data::entry::Location> {
+    ) -> Option<gix_pack::data::entry::Location> {
         assert!(
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
@@ -405,7 +405,7 @@ where
                         assert_eq!(pack.id, pack_id.to_intrinsic_pack_id(), "both ids must always match");
 
                         let res = pack.decompress_entry(&entry, buf).ok().map(|entry_size_past_header| {
-                            git_pack::data::entry::Location {
+                            gix_pack::data::entry::Location {
                                 pack_id: pack.id,
                                 pack_offset,
                                 entry_size: entry.header_size() + entry_size_past_header,
@@ -456,7 +456,7 @@ where
         }
     }
 
-    fn entry_by_location(&self, location: &git_pack::data::entry::Location) -> Option<git_pack::find::Entry> {
+    fn entry_by_location(&self, location: &gix_pack::data::entry::Location) -> Option<gix_pack::find::Entry> {
         assert!(
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
@@ -480,7 +480,7 @@ where
                         };
                         return pack
                             .entry_slice(location.entry_range(location.pack_offset))
-                            .map(|data| git_pack::find::Entry {
+                            .map(|data| gix_pack::find::Entry {
                                 data: data.to_owned(),
                                 version: pack.version(),
                             });
@@ -501,12 +501,12 @@ where
 impl<S> Find for super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
-    Self: git_pack::Find,
+    Self: gix_pack::Find,
 {
-    type Error = <Self as git_pack::Find>::Error;
+    type Error = <Self as gix_pack::Find>::Error;
 
     fn contains(&self, id: impl AsRef<gix_hash::oid>) -> bool {
-        git_pack::Find::contains(self, id)
+        gix_pack::Find::contains(self, id)
     }
 
     fn try_find<'a>(
@@ -514,6 +514,6 @@ where
         id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
     ) -> Result<Option<gix_object::Data<'a>>, Self::Error> {
-        git_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
+        gix_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
     }
 }

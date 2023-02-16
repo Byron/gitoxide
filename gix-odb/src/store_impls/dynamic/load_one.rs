@@ -15,7 +15,7 @@ impl super::Store {
         &self,
         id: types::PackId,
         marker: types::SlotIndexMarker,
-    ) -> std::io::Result<Option<Arc<git_pack::data::File>>> {
+    ) -> std::io::Result<Option<Arc<gix_pack::data::File>>> {
         let index = self.index.load();
         if index.generation != marker.generation {
             return Ok(None);
@@ -24,14 +24,14 @@ impl super::Store {
             path: &Path,
             id: types::PackId,
             object_hash: gix_hash::Kind,
-        ) -> std::io::Result<Arc<git_pack::data::File>> {
-            git_pack::data::File::at(path, object_hash)
+        ) -> std::io::Result<Arc<gix_pack::data::File>> {
+            gix_pack::data::File::at(path, object_hash)
                 .map(|mut pack| {
                     pack.id = id.to_intrinsic_pack_id();
                     Arc::new(pack)
                 })
                 .map_err(|err| match err {
-                    git_pack::data::header::decode::Error::Io { source, .. } => source,
+                    gix_pack::data::header::decode::Error::Io { source, .. } => source,
                     other => std::io::Error::new(std::io::ErrorKind::Other, other),
                 })
         }

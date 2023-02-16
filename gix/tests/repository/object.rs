@@ -55,7 +55,7 @@ mod write_blob {
 }
 
 mod find {
-    use git_pack::Find;
+    use gix_pack::Find;
 
     use crate::basic_repo;
 

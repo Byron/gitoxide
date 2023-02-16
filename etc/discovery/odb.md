@@ -435,7 +435,7 @@ Please note that these are based on the following value system:
         - ❌ To keep the `Repository` free of type parameters we could boil policies down to typical policies, like Eager, Lazy, LazyThreadSafe, PooledLazy, PooledLazyThreadSafe,
           all with different tradeoffs. On that level, maybe 3 to 5 feature toggles would work, but who likes feature toggles especially if they aren't additive?
         - ✔️ `contains(oid)` is not actually exposed in any trait and not used much in `git` either, even though it is optimized for by loading pack data only on demand. We, however,
-          use `git_pack::Bundle` as smallest unit, which is a mapped index _and_ data file, thus forcing more work to be done in some cases. There is only one multi-pack index
+          use `gix_pack::Bundle` as smallest unit, which is a mapped index _and_ data file, thus forcing more work to be done in some cases. There is only one multi-pack index
           per repository, but that would force all packs to be loaded if it was implemented similarly, but that shows that Bundle's probably aren't the right abstraction or
           have to make their pack data optional. If that happens, we definitely need some sort of policy to make this work. Definitely put `contains(oid)` into the `Find` trait
           or a separate trait to enforce us dealing with this and keep multi-pack indices in mind.
@@ -508,7 +508,7 @@ Please note that these are based on the following value system:
           Existing implementations need to adjust their trait bounds and operate differently to accommodate. Counting objects and packing would be a good benchmark though, even though
           the latter doesn't even scale that well due to the required dashmap to check for existing objects. In other words, currently there seems to be no actual benchmark for parallel
           usage.
-            - In single-threaded operation the trait-bounds would prevent creation of packs unless they are adjusted as well, leading to `git-pack` requiring its own feature toggle
+            - In single-threaded operation the trait-bounds would prevent creation of packs unless they are adjusted as well, leading to `gix-pack` requiring its own feature toggle
               which we really try hard to avoid, but probably can be placed on application level, which has to use that to setup gix-features accordingly, making it bearable. This
               means though that we need to implement single-threaded and multi-threaded versions of everything important, like pack generation based on the count (which already has
               a single-threaded version).

@@ -1,5 +1,5 @@
 [package]
-name = "git-pack-tests"
+name = "gix-pack-tests"
 version = "0.30.1"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
@@ -13,13 +13,13 @@ rust-version = "1.64"
 
 ## Provide a fixed-size allocation-free LRU cache for packs. It's useful if caching is desired while keeping the memory footprint
 ## for the LRU-cache itself low.
-pack-cache-lru-static = ["git-pack/pack-cache-lru-static"]
+pack-cache-lru-static = ["gix-pack/pack-cache-lru-static"]
 ## Provide a hash-map based LRU cache whose eviction is based a memory cap calculated from object data.
-pack-cache-lru-dynamic = ["git-pack/pack-cache-lru-dynamic"]
+pack-cache-lru-dynamic = ["gix-pack/pack-cache-lru-dynamic"]
 ## If set, select algorithms may additionally use a full-object cache which is queried before the pack itself.
-object-cache-dynamic = ["git-pack/object-cache-dynamic"]
+object-cache-dynamic = ["gix-pack/object-cache-dynamic"]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["git-pack/serde1"]
+serde1 = ["gix-pack/serde1"]
 
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
@@ -35,7 +35,7 @@ path = "pack-single-threaded.rs"
 required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
 [dev-dependencies]
-git-pack = { path = ".." }
+gix-pack = { path = ".." }
 gix-features = { version = "^0.26.1", path = "../../gix-features" }
 git-testtools = { path = "../../tests/tools"}
 gix-odb = { path = "../../gix-odb" }

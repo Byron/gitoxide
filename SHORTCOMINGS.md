@@ -11,7 +11,7 @@ This file is for tracking features that are less well implemented or less powerf
     * This can be fixed by making response parsing.
     * Note that this does not affect cloning, which works fine.
 
-### `git-pack`
+### `gix-pack`
 * **Packfiles use memory maps**
     * Even though they are comfortable to use and fast, they squelch IO errors.
     * _potential remedy_: We could generalize the Pack to make it possible to work on in-memory buffers directly. That way, one

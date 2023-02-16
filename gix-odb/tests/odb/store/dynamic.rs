@@ -166,7 +166,7 @@ fn multi_index_keep_open() -> crate::Result {
         "it opened the multi-pack index for iteration"
     );
     let mut buf = Vec::new();
-    use git_pack::Find;
+    use gix_pack::Find;
     let location = stable_handle
         .location_by_oid(oid, &mut buf)
         .expect("oid exists and is packed");
@@ -837,7 +837,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
     );
 
     {
-        use git_pack::Find;
+        use gix_pack::Find;
         let mut stable_handle = handle.clone();
         stable_handle.prevent_pack_unload();
         let location = stable_handle

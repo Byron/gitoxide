@@ -76,7 +76,7 @@ The following schematic helps to visualize what follows.
     │    │ │   gix-odb   │   │  gix-diff   │ │    │  │
     │    │ └─────────────┘   └─────────────┘ │    │   
     │    │ ┌─────────────┐   ┌─────────────┐ │    │  │
-    │    │ │gix-traverse │   │  git-pack   │ │◀ ─ ┼ ─ 
+    │    │ │gix-traverse │   │  gix-pack   │ │◀ ─ ┼ ─ 
     │    │ └─────────────┘   └─────────────┘ │    │   
     │    │ ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐ │    │   
     │    │            …many more…            │    │   

@@ -8,7 +8,7 @@ use crate::{Commit, Id, Object, ObjectDetached, Tag, Tree};
 
 mod errors;
 pub(crate) mod cache {
-    pub use git_pack::cache::object::MemoryCappedHashmap;
+    pub use gix_pack::cache::object::MemoryCappedHashmap;
 }
 pub use errors::{conversion, find, write};
 ///

@@ -8,12 +8,12 @@ use std::{
 use crate::Cache;
 
 /// A type to store pack caches in boxes.
-pub type PackCache = dyn git_pack::cache::DecodeEntry + Send + 'static;
+pub type PackCache = dyn gix_pack::cache::DecodeEntry + Send + 'static;
 /// A constructor for boxed pack caches.
 pub type NewPackCacheFn = dyn Fn() -> Box<PackCache> + Send + Sync + 'static;
 
 /// A type to store object caches in boxes.
-pub type ObjectCache = dyn git_pack::cache::Object + Send + 'static;
+pub type ObjectCache = dyn gix_pack::cache::Object + Send + 'static;
 /// A constructor for boxed object caches.
 pub type NewObjectCacheFn = dyn Fn() -> Box<ObjectCache> + Send + Sync + 'static;
 
@@ -93,7 +93,7 @@ impl<S> Cache<S> {
 
 impl<S> From<S> for Cache<S>
 where
-    S: git_pack::Find,
+    S: gix_pack::Find,
 {
     fn from(store: S) -> Self {
         Self {
@@ -135,9 +135,9 @@ impl<S> DerefMut for Cache<S> {
 mod impls {
     use std::{io::Read, ops::DerefMut};
 
-    use git_pack::cache::Object;
     use gix_hash::{oid, ObjectId};
     use gix_object::{Data, Kind};
+    use gix_pack::cache::Object;
 
     use crate::{find::Header, pack::data::entry::Location, Cache};
 
@@ -154,7 +154,7 @@ mod impls {
 
     impl<S> crate::Find for Cache<S>
     where
-        S: git_pack::Find,
+        S: gix_pack::Find,
     {
         type Error = S::Error;
 
@@ -163,7 +163,7 @@ mod impls {
         }
 
         fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
-            git_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
+            gix_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
         }
     }
 
@@ -178,9 +178,9 @@ mod impls {
         }
     }
 
-    impl<S> git_pack::Find for Cache<S>
+    impl<S> gix_pack::Find for Cache<S>
     where
-        S: git_pack::Find,
+        S: gix_pack::Find,
     {
         type Error = S::Error;
 
@@ -195,7 +195,7 @@ mod impls {
         ) -> Result<Option<(Data<'a>, Option<Location>)>, Self::Error> {
             match self.pack_cache.as_ref().map(|rc| rc.borrow_mut()) {
                 Some(mut pack_cache) => self.try_find_cached(id, buffer, pack_cache.deref_mut()),
-                None => self.try_find_cached(id, buffer, &mut git_pack::cache::Never),
+                None => self.try_find_cached(id, buffer, &mut gix_pack::cache::Never),
             }
         }
 
@@ -203,8 +203,8 @@ mod impls {
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
-            pack_cache: &mut impl git_pack::cache::DecodeEntry,
-        ) -> Result<Option<(Data<'a>, Option<git_pack::data::entry::Location>)>, Self::Error> {
+            pack_cache: &mut impl gix_pack::cache::DecodeEntry,
+        ) -> Result<Option<(Data<'a>, Option<gix_pack::data::entry::Location>)>, Self::Error> {
             if let Some(mut obj_cache) = self.object_cache.as_ref().map(|rc| rc.borrow_mut()) {
                 if let Some(kind) = obj_cache.get(&id.as_ref().to_owned(), buffer) {
                     return Ok(Some((Data::new(kind, buffer), None)));
@@ -219,7 +219,7 @@ mod impls {
             Ok(possibly_obj)
         }
 
-        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<git_pack::data::entry::Location> {
+        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<gix_pack::data::entry::Location> {
             self.inner.location_by_oid(id, buf)
         }
 
@@ -227,7 +227,7 @@ mod impls {
             self.inner.pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &Location) -> Option<git_pack::find::Entry> {
+        fn entry_by_location(&self, location: &Location) -> Option<gix_pack::find::Entry> {
             self.inner.entry_by_location(location)
         }
     }

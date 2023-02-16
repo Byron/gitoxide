@@ -2,8 +2,8 @@
 //! to be sure we don't loose coverage. This might, however, be overlapping with much more thorough
 //! tests o the general store itself, so they can possibly be removed at some point.
 mod iter {
-    use git_pack::Find;
     use gix_odb::Header;
+    use gix_pack::Find;
 
     use crate::odb::db;
 
@@ -27,8 +27,8 @@ mod iter {
 }
 
 mod locate {
-    use git_pack::Find;
     use gix_odb::Handle;
+    use gix_pack::Find;
 
     use crate::{hex_to_id, odb::db};
 

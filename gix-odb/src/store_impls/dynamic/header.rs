@@ -73,11 +73,11 @@ where
                         let entry = pack.entry(pack_offset);
                         let res = match pack.decode_header(entry, |id| {
                             index_file.pack_offset_by_id(id).map(|pack_offset| {
-                                git_pack::data::decode::header::ResolvedBase::InPack(pack.entry(pack_offset))
+                                gix_pack::data::decode::header::ResolvedBase::InPack(pack.entry(pack_offset))
                             })
                         }) {
                             Ok(header) => Ok(header.into()),
-                            Err(git_pack::data::decode::Error::DeltaBaseUnresolved(base_id)) => {
+                            Err(gix_pack::data::decode::Error::DeltaBaseUnresolved(base_id)) => {
                                 // Only with multi-pack indices it's allowed to jump to refer to other packs within this
                                 // multi-pack. Otherwise this would constitute a thin pack which is only allowed in transit.
                                 // However, if we somehow end up with that, we will resolve it safely, even though we could
@@ -131,13 +131,13 @@ where
                                     index_file
                                         .pack_offset_by_id(id)
                                         .map(|pack_offset| {
-                                            git_pack::data::decode::header::ResolvedBase::InPack(
+                                            gix_pack::data::decode::header::ResolvedBase::InPack(
                                                 pack.entry(pack_offset),
                                             )
                                         })
                                         .or_else(|| {
                                             (id == base_id).then(|| {
-                                                git_pack::data::decode::header::ResolvedBase::OutOfPack {
+                                                gix_pack::data::decode::header::ResolvedBase::OutOfPack {
                                                     kind: hdr.kind(),
                                                     num_deltas: hdr.num_deltas(),
                                                 }

@@ -104,7 +104,7 @@ document-features = { version = "0.2.0", optional = true }
 [profile.dev.package]
 gix-object = { opt-level = 3 }
 gix-ref = { opt-level = 3 }
-#git-pack = { opt-level = 3 }
+#gix-pack = { opt-level = 3 }
 gix-hash = { opt-level = 3 }
 gix-actor = { opt-level = 3 }
 gix-config = { opt-level = 3 }
@@ -164,7 +164,7 @@ members = [
     "gix-transport",
     "gix-credentials",
     "gix-protocol",
-    "git-pack",
+    "gix-pack",
     "gix-odb",
     "gix-tempfile",
     "gix-lock",
@@ -183,7 +183,7 @@ members = [
 
     "gix-revision/tests",
     "gix-diff/tests",
-    "git-pack/tests",
+    "gix-pack/tests",
     "gix-index/tests",
     "gix-ref/tests",
     "gix-config/tests",

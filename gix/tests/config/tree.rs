@@ -406,12 +406,12 @@ mod pack {
     fn index_version() -> crate::Result {
         assert_eq!(
             Pack::INDEX_VERSION.try_into_index_version(Ok(1))?,
-            git_pack::index::Version::V1
+            gix_pack::index::Version::V1
         );
         assert!(Pack::INDEX_VERSION.validate("1".into()).is_ok());
         assert_eq!(
             Pack::INDEX_VERSION.try_into_index_version(Ok(2))?,
-            git_pack::index::Version::V2
+            gix_pack::index::Version::V2
         );
         assert!(Pack::INDEX_VERSION.validate("2".into()).is_ok());
         assert_eq!(

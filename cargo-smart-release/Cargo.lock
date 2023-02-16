@@ -724,7 +724,7 @@ dependencies = [
  "gix-features",
  "gix-hash",
  "gix-object",
- "git-pack",
+ "gix-pack",
  "gix-path",
  "gix-quote",
  "parking_lot",
@@ -733,7 +733,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-pack"
+name = "gix-pack"
 version = "0.20.0"
 dependencies = [
  "bytesize",
@@ -810,7 +810,7 @@ dependencies = [
  "gix-mailmap",
  "gix-object",
  "gix-odb",
- "git-pack",
+ "gix-pack",
  "gix-path",
  "gix-ref",
  "gix-revision",

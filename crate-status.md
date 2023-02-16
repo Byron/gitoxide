@@ -120,14 +120,14 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 * [x] API documentation
     * [ ] Some examples
 
-### git-pack
+### gix-pack
 * **packs**
     * [x] traverse pack index
     * [x] 'object' abstraction
         * [x] decode (zero copy)
         * [x] verify checksum
     * [x] simple and fast pack traversal
-        * [ ] [fast pack traversal works with ref-deltas](https://github.com/Byron/gitoxide/blob/8f9a55bb31af32b266d7c53426bc925361a627b2/git-pack/src/cache/delta/from_offsets.rs#L101-L105)
+        * [ ] [fast pack traversal works with ref-deltas](https://github.com/Byron/gitoxide/blob/8f9a55bb31af32b266d7c53426bc925361a627b2/gix-pack/src/cache/delta/from_offsets.rs#L101-L105)
     * [x] decode
         * [x] full objects
         * [x] deltified objects

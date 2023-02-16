@@ -35,7 +35,7 @@ pub struct PackId {
     /// This is the index in the slot map at which the packs index is located.
     pub(crate) index: IndexId,
     /// If the pack is in a multi-pack index, this additional index is the pack-index within the multi-pack index identified by `index`.
-    pub(crate) multipack_index: Option<git_pack::multi_index::PackIndex>,
+    pub(crate) multipack_index: Option<gix_pack::multi_index::PackIndex>,
 }
 
 impl PackId {
@@ -44,7 +44,7 @@ impl PackId {
         (1 << 15) - 1
     }
     /// Returns the maximum of packs we can represent if stored in a multi-index.
-    pub(crate) const fn max_packs_in_multi_index() -> git_pack::multi_index::PackIndex {
+    pub(crate) const fn max_packs_in_multi_index() -> gix_pack::multi_index::PackIndex {
         (1 << 16) - 1
     }
     /// Packs have a built-in identifier to make data structures simpler, and this method represents ourselves as such id
@@ -52,21 +52,21 @@ impl PackId {
     ///
     /// Bit 16 is a marker to tell us if it's a multi-pack or not, the ones before are the index file itself, the ones after
     /// are used to encode the pack index within the multi-pack.
-    pub(crate) fn to_intrinsic_pack_id(self) -> git_pack::data::Id {
+    pub(crate) fn to_intrinsic_pack_id(self) -> gix_pack::data::Id {
         assert!(self.index < (1 << 15), "There shouldn't be more than 2^15 indices");
         match self.multipack_index {
-            None => self.index as git_pack::data::Id,
+            None => self.index as gix_pack::data::Id,
             Some(midx) => {
                 assert!(
                     midx <= Self::max_packs_in_multi_index(),
                     "There shouldn't be more than 2^16 packs per multi-index"
                 );
-                ((self.index as git_pack::data::Id | 1 << 15) | midx << 16) as git_pack::data::Id
+                ((self.index as gix_pack::data::Id | 1 << 15) | midx << 16) as gix_pack::data::Id
             }
         }
     }
 
-    pub(crate) fn from_intrinsic_pack_id(pack_id: git_pack::data::Id) -> Self {
+    pub(crate) fn from_intrinsic_pack_id(pack_id: gix_pack::data::Id) -> Self {
         if pack_id & (1 << 15) == 0 {
             PackId {
                 index: (pack_id & 0x7fff) as IndexId,
@@ -230,14 +230,14 @@ impl<T: Clone> OnDiskFile<T> {
 
 #[derive(Clone)]
 pub(crate) struct IndexFileBundle {
-    pub index: OnDiskFile<Arc<git_pack::index::File>>,
-    pub data: OnDiskFile<Arc<git_pack::data::File>>,
+    pub index: OnDiskFile<Arc<gix_pack::index::File>>,
+    pub data: OnDiskFile<Arc<gix_pack::data::File>>,
 }
 
 #[derive(Clone)]
 pub(crate) struct MultiIndexFileBundle {
-    pub multi_index: OnDiskFile<Arc<git_pack::multi_index::File>>,
-    pub data: Vec<OnDiskFile<Arc<git_pack::data::File>>>,
+    pub multi_index: OnDiskFile<Arc<gix_pack::multi_index::File>>,
+    pub data: Vec<OnDiskFile<Arc<gix_pack::data::File>>>,
 }
 
 #[derive(Clone)]
@@ -313,19 +313,19 @@ impl IndexAndPacks {
     pub(crate) fn load_index(&mut self, object_hash: gix_hash::Kind) -> std::io::Result<()> {
         match self {
             IndexAndPacks::Index(bundle) => bundle.index.load_strict(|path| {
-                git_pack::index::File::at(path, object_hash)
+                gix_pack::index::File::at(path, object_hash)
                     .map(Arc::new)
                     .map_err(|err| match err {
-                        git_pack::index::init::Error::Io { source, .. } => source,
+                        gix_pack::index::init::Error::Io { source, .. } => source,
                         err => std::io::Error::new(std::io::ErrorKind::Other, err),
                     })
             }),
             IndexAndPacks::MultiIndex(bundle) => {
                 bundle.multi_index.load_strict(|path| {
-                    git_pack::multi_index::File::at(path)
+                    gix_pack::multi_index::File::at(path)
                         .map(Arc::new)
                         .map_err(|err| match err {
-                            git_pack::multi_index::init::Error::Io { source, .. } => source,
+                            gix_pack::multi_index::init::Error::Io { source, .. } => source,
                             err => std::io::Error::new(std::io::ErrorKind::Other, err),
                         })
                 })?;
@@ -353,7 +353,7 @@ impl IndexAndPacks {
         })
     }
 
-    pub(crate) fn new_multi_from_open_file(multi_index: Arc<git_pack::multi_index::File>, mtime: SystemTime) -> Self {
+    pub(crate) fn new_multi_from_open_file(multi_index: Arc<gix_pack::multi_index::File>, mtime: SystemTime) -> Self {
         let data = Self::index_names_to_pack_paths(&multi_index);
         Self::MultiIndex(MultiIndexFileBundle {
             multi_index: OnDiskFile {
@@ -366,8 +366,8 @@ impl IndexAndPacks {
     }
 
     fn index_names_to_pack_paths(
-        multi_index: &git_pack::multi_index::File,
-    ) -> Vec<OnDiskFile<Arc<git_pack::data::File>>> {
+        multi_index: &gix_pack::multi_index::File,
+    ) -> Vec<OnDiskFile<Arc<gix_pack::data::File>>> {
         let parent_dir = multi_index.path().parent().expect("parent present");
         let data = multi_index
             .index_names()

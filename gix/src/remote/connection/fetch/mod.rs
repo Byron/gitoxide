@@ -51,7 +51,7 @@ pub enum Status {
     /// There was at least one tip with a new object which we received.
     Change {
         /// Information collected while writing the pack and its index.
-        write_pack_bundle: git_pack::bundle::write::Outcome,
+        write_pack_bundle: gix_pack::bundle::write::Outcome,
         /// Information collected while updating references.
         update_refs: refs::update::Outcome,
     },

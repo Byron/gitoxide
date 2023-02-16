@@ -1,5 +1,5 @@
 [package]
-name = "git-pack"
+name = "gix-pack"
 version = "0.30.2"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

@@ -90,9 +90,9 @@ pub mod integrity {
         /// Contains the path of the currently validated loose object database.
         VerifyLooseObjectDbPath,
         /// The root progress for all verification of an index. It doesn't contain any useful information itself.
-        VerifyIndex(PhantomData<git_pack::index::verify::integrity::ProgressId>),
+        VerifyIndex(PhantomData<gix_pack::index::verify::integrity::ProgressId>),
         /// The root progress for all verification of a multi-index. It doesn't contain any useful information itself.
-        VerifyMultiIndex(PhantomData<git_pack::multi_index::verify::integrity::ProgressId>),
+        VerifyMultiIndex(PhantomData<gix_pack::multi_index::verify::integrity::ProgressId>),
     }
 
     impl From<ProgressId> for gix_features::progress::Id {

@@ -1,6 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
-use git_pack::data::output;
+use gix_pack::data::output;
 
 #[test]
 fn size_of_entry() {

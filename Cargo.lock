@@ -1359,49 +1359,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-pack"
-version = "0.30.2"
-dependencies = [
- "bytesize",
- "clru",
- "dashmap",
- "document-features",
- "git-testtools",
- "gix-chunk",
- "gix-diff",
- "gix-features",
- "gix-hash",
- "gix-hashtable",
- "gix-object",
- "gix-path",
- "gix-tempfile",
- "gix-traverse",
- "memmap2",
- "parking_lot 0.12.1",
- "serde",
- "smallvec",
- "thiserror",
- "uluru",
-]
-
-[[package]]
-name = "git-pack-tests"
-version = "0.30.1"
-dependencies = [
- "bstr",
- "git-pack",
- "git-testtools",
- "gix-features",
- "gix-hash",
- "gix-object",
- "gix-odb",
- "gix-traverse",
- "maplit",
- "memmap2",
- "tempfile",
-]
-
-[[package]]
 name = "git-path"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1579,9 +1536,9 @@ dependencies = [
  "fs-err",
  "futures-io",
  "futures-lite",
- "git-pack",
  "gix",
  "gix-commitgraph",
+ "gix-pack",
  "gix-transport",
  "gix-url",
  "itertools",
@@ -1601,7 +1558,6 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "git-pack",
  "git-testtools",
  "gix-actor",
  "gix-attributes",
@@ -1619,6 +1575,7 @@ dependencies = [
  "gix-mailmap",
  "gix-object",
  "gix-odb",
+ "gix-pack",
  "gix-path",
  "gix-prompt",
  "gix-protocol",
@@ -2002,12 +1959,12 @@ dependencies = [
  "crossbeam-channel",
  "document-features",
  "filetime",
- "git-pack",
  "git-testtools",
  "gix-actor",
  "gix-features",
  "gix-hash",
  "gix-object",
+ "gix-pack",
  "gix-path",
  "gix-quote",
  "maplit",
@@ -2017,6 +1974,49 @@ dependencies = [
  "serde",
  "tempfile",
  "thiserror",
+]
+
+[[package]]
+name = "gix-pack"
+version = "0.30.2"
+dependencies = [
+ "bytesize",
+ "clru",
+ "dashmap",
+ "document-features",
+ "git-testtools",
+ "gix-chunk",
+ "gix-diff",
+ "gix-features",
+ "gix-hash",
+ "gix-hashtable",
+ "gix-object",
+ "gix-path",
+ "gix-tempfile",
+ "gix-traverse",
+ "memmap2",
+ "parking_lot 0.12.1",
+ "serde",
+ "smallvec",
+ "thiserror",
+ "uluru",
+]
+
+[[package]]
+name = "gix-pack-tests"
+version = "0.30.1"
+dependencies = [
+ "bstr",
+ "git-testtools",
+ "gix-features",
+ "gix-hash",
+ "gix-object",
+ "gix-odb",
+ "gix-pack",
+ "gix-traverse",
+ "maplit",
+ "memmap2",
+ "tempfile",
 ]
 
 [[package]]
@@ -2238,11 +2238,11 @@ dependencies = [
  "document-features",
  "futures-io",
  "futures-lite",
- "git-pack",
  "gix-command",
  "gix-credentials",
  "gix-features",
  "gix-hash",
+ "gix-pack",
  "gix-packetline",
  "gix-quote",
  "gix-sec",

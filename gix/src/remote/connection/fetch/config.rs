@@ -14,7 +14,7 @@ pub fn index_threads(repo: &Repository) -> Result<Option<usize>, Error> {
         .with_leniency(repo.options.lenient_config)?)
 }
 
-pub fn pack_index_version(repo: &Repository) -> Result<git_pack::index::Version, Error> {
+pub fn pack_index_version(repo: &Repository) -> Result<gix_pack::index::Version, Error> {
     Ok(repo
         .config
         .resolved
@@ -22,5 +22,5 @@ pub fn pack_index_version(repo: &Repository) -> Result<git_pack::index::Version,
         .map(|value| Pack::INDEX_VERSION.try_into_index_version(value))
         .transpose()
         .with_leniency(repo.options.lenient_config)?
-        .unwrap_or(git_pack::index::Version::V2))
+        .unwrap_or(gix_pack::index::Version::V2))
 }

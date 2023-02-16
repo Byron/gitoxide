@@ -24,8 +24,8 @@ fn integrity() {
     assert_eq!(outcome.actual_index_checksum, file.checksum());
     assert_eq!(
         outcome.pack_traverse_statistics,
-        vec![git_pack::index::traverse::Statistics {
-            average: git_pack::data::decode::entry::Outcome {
+        vec![gix_pack::index::traverse::Statistics {
+            average: gix_pack::data::decode::entry::Outcome {
                 kind: gix_object::Kind::Tree,
                 num_deltas: 1,
                 decompressed_size: 47,

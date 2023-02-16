@@ -24,7 +24,7 @@ pub(crate) struct Snapshot {
 mod error {
     use std::path::PathBuf;
 
-    use git_pack::multi_index::PackIndex;
+    use gix_pack::multi_index::PackIndex;
 
     /// Returned by [`crate::at_opts()`]
     #[derive(thiserror::Error, Debug)]
@@ -450,7 +450,7 @@ impl super::Store {
                         is_multipack_index(p)
                             .then(|| {
                                 // we always open the multi-pack here to be able to remove indices
-                                git_pack::multi_index::File::at(p)
+                                gix_pack::multi_index::File::at(p)
                                     .ok()
                                     .filter(|midx| midx.object_hash() == hash)
                                     .map(|midx| (midx, *a, *b))
@@ -675,7 +675,7 @@ impl<'a> Drop for IncOnDrop<'a> {
 
 pub(crate) enum Either {
     IndexPath(PathBuf),
-    MultiIndexFile(Arc<git_pack::multi_index::File>),
+    MultiIndexFile(Arc<gix_pack::multi_index::File>),
 }
 
 impl Either {

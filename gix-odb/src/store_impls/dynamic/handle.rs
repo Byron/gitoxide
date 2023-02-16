@@ -13,28 +13,28 @@ use crate::store::{handle, types, RefreshMode};
 
 pub(crate) enum SingleOrMultiIndex {
     Single {
-        index: Arc<git_pack::index::File>,
-        data: Option<Arc<git_pack::data::File>>,
+        index: Arc<gix_pack::index::File>,
+        data: Option<Arc<gix_pack::data::File>>,
     },
     Multi {
-        index: Arc<git_pack::multi_index::File>,
-        data: Vec<Option<Arc<git_pack::data::File>>>,
+        index: Arc<gix_pack::multi_index::File>,
+        data: Vec<Option<Arc<gix_pack::data::File>>>,
     },
 }
 
 /// A utility to allow looking up pack offsets for a particular pack
 pub(crate) enum IntraPackLookup<'a> {
-    Single(&'a git_pack::index::File),
+    Single(&'a gix_pack::index::File),
     /// the internal pack-id inside of a multi-index for which the lookup is supposed to be.
     /// Used to prevent ref-delta OIDs to, for some reason, point to a different pack.
     Multi {
-        index: &'a git_pack::multi_index::File,
-        required_pack_index: git_pack::multi_index::PackIndex,
+        index: &'a gix_pack::multi_index::File,
+        required_pack_index: gix_pack::multi_index::PackIndex,
     },
 }
 
 impl<'a> IntraPackLookup<'a> {
-    pub(crate) fn pack_offset_by_id(&self, id: &oid) -> Option<git_pack::data::Offset> {
+    pub(crate) fn pack_offset_by_id(&self, id: &oid) -> Option<gix_pack::data::Offset> {
         match self {
             IntraPackLookup::Single(index) => index
                 .lookup(id)
@@ -73,7 +73,7 @@ pub(crate) mod index_lookup {
     pub(crate) struct Outcome<'a> {
         pub object_index: handle::IndexForObjectInPack,
         pub index_file: IntraPackLookup<'a>,
-        pub pack: &'a mut Option<Arc<git_pack::data::File>>,
+        pub pack: &'a mut Option<Arc<gix_pack::data::File>>,
     }
 
     impl handle::IndexLookup {
@@ -82,7 +82,7 @@ pub(crate) mod index_lookup {
         pub(crate) fn iter(
             &self,
             pack_id: types::PackId,
-        ) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
+        ) -> Option<Box<dyn Iterator<Item = gix_pack::index::Entry> + '_>> {
             (self.id == pack_id.index).then(|| match &self.file {
                 handle::SingleOrMultiIndex::Single { index, .. } => index.iter(),
                 handle::SingleOrMultiIndex::Multi { index, .. } => {
@@ -90,7 +90,7 @@ pub(crate) mod index_lookup {
                         "BUG: multi-pack index must be set if this is a multi-pack, pack-indices seem unstable",
                     );
                     Box::new(index.iter().filter_map(move |e| {
-                        (e.pack_index == pack_index).then_some(git_pack::index::Entry {
+                        (e.pack_index == pack_index).then_some(gix_pack::index::Entry {
                             oid: e.oid,
                             pack_offset: e.pack_offset,
                             crc32: None,
@@ -100,7 +100,7 @@ pub(crate) mod index_lookup {
             })
         }
 
-        pub(crate) fn pack(&mut self, pack_id: types::PackId) -> Option<&'_ mut Option<Arc<git_pack::data::File>>> {
+        pub(crate) fn pack(&mut self, pack_id: types::PackId) -> Option<&'_ mut Option<Arc<gix_pack::data::File>>> {
             (self.id == pack_id.index).then(move || match &mut self.file {
                 handle::SingleOrMultiIndex::Single { data, .. } => data,
                 handle::SingleOrMultiIndex::Multi { data, .. } => {

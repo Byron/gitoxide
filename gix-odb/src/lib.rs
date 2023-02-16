@@ -22,8 +22,8 @@ use std::{
 };
 
 use arc_swap::ArcSwap;
-pub use git_pack as pack;
 use gix_features::{threading::OwnShared, zlib::stream::deflate};
+pub use gix_pack as pack;
 
 mod store_impls;
 pub use store_impls::{dynamic as store, loose};

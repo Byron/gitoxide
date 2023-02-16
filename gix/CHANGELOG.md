@@ -362,7 +362,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
    who is adhering to the MSRV, but let's be careful and mark it
    breaking.
    
-   Note that `gix-features` and `git-pack` are still on edition 2018
+   Note that `gix-features` and `gix-pack` are still on edition 2018
    as they make use of a workaround to support (safe) mutable access
    to non-overlapping entries in a slice which doesn't work anymore
    in edition 2021.
@@ -972,9 +972,9 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
    created while adding support for reusing their data buffers thanks
    to a simple free-list stored with the handle.
  - <csr-id-880b56426859306aa30038ff35e2ad14607e9e90/> rename `easy::Object` to `OwnedObject`; remove `Ref` suffix from `ObjectRef` and `TreeRef`
- - <csr-id-f9c0493460ab7c664aaa231ffcf7dfd56076c920/> use `gix_odb::Find*` traits in prelude, instead of `git_pack::Find*`
+ - <csr-id-f9c0493460ab7c664aaa231ffcf7dfd56076c920/> use `gix_odb::Find*` traits in prelude, instead of `gix_pack::Find*`
    These are higher-level and generally more desirable.
-   The Find traits in `git-pack` are more useful internally when packs
+   The Find traits in `gix-pack` are more useful internally when packs
    have to be handled directly, for example when generating packs.
  - <csr-id-83d7b31e7dd6d09eea79fc3c68620d099459132f/> rename easy::State to easy::Handle
    As the first step to remove the 'Easy' abstraction.
@@ -1002,7 +1002,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
  - remove pack-cache from `Find::try_find(…)`
    With the new architecture this can be an implementation detail without
    forcing it to be Sync.
- - move git_pack::data::Object to gix_object::Data, massively alter gix_odb::Find trait
+ - move gix_pack::data::Object to gix_object::Data, massively alter gix_odb::Find trait
    This will break a lot, but has to happen to prepare these traits for the
    next generation of object databases.
 
@@ -1159,8 +1159,8 @@ A maintenance release to properly dealing with previously breaking changes in `g
 ### Refactor
 
  - <csr-id-8fe461281842b58aa11437445637c6e587bedd63/> split data::output::count::objects into files
- - <csr-id-b209da29f361512ba757febf56bc1aca039f2a41/> use new git_pack::cache::Object trait
- - <csr-id-741558dd8194590c5cc8566aa22f96e73df38edf/> remove object cache impl which now lives in git-pack
+ - <csr-id-b209da29f361512ba757febf56bc1aca039f2a41/> use new gix_pack::cache::Object trait
+ - <csr-id-741558dd8194590c5cc8566aa22f96e73df38edf/> remove object cache impl which now lives in gix-pack
 
 ### Other
 

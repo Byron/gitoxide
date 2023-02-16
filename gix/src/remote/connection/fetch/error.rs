@@ -20,7 +20,7 @@ pub enum Error {
     #[error(transparent)]
     Client(#[from] gix_protocol::transport::client::Error),
     #[error(transparent)]
-    WritePack(#[from] git_pack::bundle::write::Error),
+    WritePack(#[from] gix_pack::bundle::write::Error),
     #[error(transparent)]
     UpdateRefs(#[from] super::refs::update::Error),
     #[error("Failed to remove .keep file at \"{}\"", path.display())]

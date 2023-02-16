@@ -55,7 +55,7 @@ blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest",
 
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = [  "serde",
-            "git-pack/serde1",
+            "gix-pack/serde1",
             "gix-object/serde1",
             "gix-protocol?/serde1",
             "gix-transport?/serde1",
@@ -80,8 +80,8 @@ fast-sha1 = [ "gix-features/fast-sha1" ]
 ## on some platforms.
 max-performance-safe = [
     "gix-features/parallel",
-    "git-pack/pack-cache-lru-static",
-    "git-pack/pack-cache-lru-dynamic",
+    "gix-pack/pack-cache-lru-static",
+    "gix-pack/pack-cache-lru-dynamic",
     "gix-features/fs-walkdir-parallel"
 ]
 ## Print debugging information about usage of object database caches, useful for tuning cache sizes.
@@ -104,7 +104,7 @@ gix-odb = { version = "^0.40.2", path = "../gix-odb" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-object = { version = "^0.26.1", path = "../gix-object" }
 gix-actor = { version = "^0.17.1", path = "../gix-actor" }
-git-pack = { version = "^0.30.2", path = "../git-pack", features = ["object-cache-dynamic"] }
+gix-pack = { version = "^0.30.2", path = "../gix-pack", features = ["object-cache-dynamic"] }
 gix-revision = { version = "^0.10.3", path = "../gix-revision" }
 
 gix-path = { version = "^0.7.1", path = "../gix-path" }
