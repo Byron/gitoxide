@@ -1,5 +1,5 @@
 [package]
-name = "git-index-tests"
+name = "gix-index-tests"
 version = "0.0.0"
 publish = false
 repository = "https://github.com/Byron/gitoxide"
@@ -22,7 +22,7 @@ required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["git-index/serde"]
+serde1 = ["gix-index/serde"]
 
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
@@ -30,7 +30,7 @@ internal-testing-to-avoid-being-run-by-cargo-test-all = []
 [dependencies]
 
 [dev-dependencies]
-git-index = { version = "^0.12.1", path = ".." }
+gix-index = { version = "^0.12.1", path = ".." }
 gix-features = { version = "^0.26.1", path = "../../gix-features", features = ["rustsha1", "progress"] }
 git-testtools = { path = "../../tests/tools"}
 gix = { path = "../../gix"}

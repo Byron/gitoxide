@@ -1,5 +1,5 @@
 use filetime::FileTime;
-use git_index::{entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
+use gix_index::{entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
 
 use crate::index::Fixture::*;
 

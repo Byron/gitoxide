@@ -13,7 +13,7 @@ pub(crate) mod entry;
 /// `git_dir` is the `.git` directory for reading additional per-repository configuration files.
 #[allow(clippy::too_many_arguments)]
 pub fn checkout<Find, E>(
-    index: &mut git_index::State,
+    index: &mut gix_index::State,
     dir: impl Into<std::path::PathBuf>,
     find: Find,
     files: &mut impl Progress,
@@ -32,8 +32,8 @@ where
 }
 #[allow(clippy::too_many_arguments)]
 fn checkout_inner<Find, E>(
-    index: &mut git_index::State,
-    paths: &git_index::PathStorage,
+    index: &mut gix_index::State,
+    paths: &gix_index::PathStorage,
     dir: impl Into<std::path::PathBuf>,
     find: Find,
     files: &mut impl Progress,
@@ -192,7 +192,7 @@ mod chunk {
     pub struct Outcome<'a> {
         pub collisions: Vec<checkout::Collision>,
         pub errors: Vec<checkout::ErrorRecord>,
-        pub delayed: Vec<(&'a mut git_index::Entry, &'a BStr)>,
+        pub delayed: Vec<(&'a mut gix_index::Entry, &'a BStr)>,
         pub bytes_written: u64,
     }
 
@@ -208,7 +208,7 @@ mod chunk {
     }
 
     pub fn process<'entry, Find, E>(
-        entries_with_paths: impl Iterator<Item = (&'entry mut git_index::Entry, &'entry BStr)>,
+        entries_with_paths: impl Iterator<Item = (&'entry mut gix_index::Entry, &'entry BStr)>,
         files: &mut impl Progress,
         bytes: &mut impl Progress,
         ctx: &mut Context<'_, Find>,
@@ -224,7 +224,7 @@ mod chunk {
 
         for (entry, entry_path) in entries_with_paths {
             // TODO: write test for that
-            if entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
+            if entry.flags.contains(gix_index::entry::Flags::SKIP_WORKTREE) {
                 files.inc();
                 continue;
             }
@@ -235,7 +235,7 @@ mod chunk {
             // And to keep things sane, we just do the same on non-windows as well which is similar to what git does and adds some safety
             // around writing through symlinks (even though we handle this).
             // This also means that we prefer content in files over symlinks in case of collisions, which probably is for the better, too.
-            if entry.mode == git_index::entry::Mode::SYMLINK {
+            if entry.mode == gix_index::entry::Mode::SYMLINK {
                 delayed.push((entry, entry_path));
                 continue;
             }
@@ -254,7 +254,7 @@ mod chunk {
     }
 
     pub fn checkout_entry_handle_result<Find, E>(
-        entry: &mut git_index::Entry,
+        entry: &mut gix_index::Entry,
         entry_path: &BStr,
         errors: &mut Vec<checkout::ErrorRecord>,
         collisions: &mut Vec<checkout::Collision>,

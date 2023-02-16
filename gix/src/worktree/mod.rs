@@ -7,9 +7,9 @@ use crate::{
     Repository,
 };
 
-pub(crate) type IndexStorage = gix_features::threading::OwnShared<gix_features::fs::MutableSnapshot<git_index::File>>;
+pub(crate) type IndexStorage = gix_features::threading::OwnShared<gix_features::fs::MutableSnapshot<gix_index::File>>;
 /// A lazily loaded and auto-updated worktree index.
-pub type Index = gix_features::fs::SharedSnapshot<git_index::File>;
+pub type Index = gix_features::fs::SharedSnapshot<gix_index::File>;
 
 /// A stand-in to a worktree as result of a worktree iteration.
 ///
@@ -84,12 +84,12 @@ pub mod open_index {
             err: gix_config::value::Error,
         },
         #[error(transparent)]
-        IndexFile(#[from] git_index::file::init::Error),
+        IndexFile(#[from] gix_index::file::init::Error),
     }
 
     impl<'repo> crate::Worktree<'repo> {
         /// A shortcut to [`crate::Repository::open_index()`].
-        pub fn open_index(&self) -> Result<git_index::File, Error> {
+        pub fn open_index(&self) -> Result<gix_index::File, Error> {
             self.parent.open_index()
         }
 
@@ -123,7 +123,7 @@ pub mod excludes {
         // TODO: test, provide higher-level interface that is much easier to use and doesn't panic.
         pub fn excludes(
             &self,
-            index: &git_index::State,
+            index: &gix_index::State,
             overrides: Option<gix_attributes::MatchGroup<gix_attributes::Ignore>>,
         ) -> Result<gix_worktree::fs::Cache, Error> {
             let repo = self.parent;

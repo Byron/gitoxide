@@ -1,40 +1,40 @@
 use std::path::{Path, PathBuf};
 
 use bstr::ByteSlice;
-use git_index::{
+use gix_index::{
     entry::{self, Flags, Mode},
     Version,
 };
 
 use crate::{hex_to_id, loose_file_path};
 
-fn verify(index: git_index::File) -> git_index::File {
+fn verify(index: gix_index::File) -> gix_index::File {
     index.verify_integrity().unwrap();
     index.verify_entries().unwrap();
     index
-        .verify_extensions(false, git_index::verify::extensions::no_find)
+        .verify_extensions(false, gix_index::verify::extensions::no_find)
         .unwrap();
     index
 }
 
-pub(crate) fn loose_file(name: &str) -> git_index::File {
+pub(crate) fn loose_file(name: &str) -> gix_index::File {
     let path = loose_file_path(name);
-    let file = git_index::File::at(path, gix_hash::Kind::Sha1, Default::default()).unwrap();
+    let file = gix_index::File::at(path, gix_hash::Kind::Sha1, Default::default()).unwrap();
     verify(file)
 }
-pub(crate) fn try_file(name: &str) -> Result<git_index::File, git_index::file::init::Error> {
-    let file = git_index::File::at(
+pub(crate) fn try_file(name: &str) -> Result<gix_index::File, gix_index::file::init::Error> {
+    let file = gix_index::File::at(
         crate::fixture_index_path(name),
         gix_hash::Kind::Sha1,
         Default::default(),
     )?;
     Ok(verify(file))
 }
-pub(crate) fn file(name: &str) -> git_index::File {
+pub(crate) fn file(name: &str) -> gix_index::File {
     try_file(name).unwrap()
 }
-fn file_opt(name: &str, opts: git_index::decode::Options) -> git_index::File {
-    let file = git_index::File::at(crate::fixture_index_path(name), gix_hash::Kind::Sha1, opts).unwrap();
+fn file_opt(name: &str, opts: gix_index::decode::Options) -> gix_index::File {
+    let file = gix_index::File::at(crate::fixture_index_path(name), gix_hash::Kind::Sha1, opts).unwrap();
     verify(file)
 }
 
@@ -42,7 +42,7 @@ fn file_opt(name: &str, opts: git_index::decode::Options) -> git_index::File {
 fn v2_with_single_entry_tree_and_eoie_ext() {
     let file_disallow_threaded_loading = file_opt(
         "v2",
-        git_index::decode::Options {
+        gix_index::decode::Options {
             min_extension_block_in_bytes_for_threading: 100000,
             ..Default::default()
         },
@@ -115,7 +115,7 @@ fn find_shared_index_for(index: impl AsRef<Path>) -> PathBuf {
 
 #[test]
 fn split_index_without_any_extension() {
-    let file = git_index::File::at(
+    let file = gix_index::File::at(
         find_shared_index_for(crate::fixture_index_path("v2_split_index")),
         gix_hash::Kind::Sha1,
         Default::default(),
@@ -296,7 +296,7 @@ fn v2_split_index_recursion_is_handled_gracefully() {
     let err = try_file("v2_split_index_recursive").expect_err("recursion fails gracefully");
     assert!(matches!(
         err,
-        git_index::file::init::Error::Decode(git_index::decode::Error::ChecksumMismatch { .. })
+        gix_index::file::init::Error::Decode(gix_index::decode::Error::ChecksumMismatch { .. })
     ));
 }
 
@@ -308,7 +308,7 @@ fn split_index_and_regular_index_of_same_content_are_indeed_the_same() {
     .unwrap();
 
     let split =
-        verify(git_index::File::at(base.join("split/.git/index"), gix_hash::Kind::Sha1, Default::default()).unwrap());
+        verify(gix_index::File::at(base.join("split/.git/index"), gix_hash::Kind::Sha1, Default::default()).unwrap());
 
     assert!(
         split.link().is_none(),
@@ -316,7 +316,7 @@ fn split_index_and_regular_index_of_same_content_are_indeed_the_same() {
     );
 
     let regular = verify(
-        git_index::File::at(
+        gix_index::File::at(
             base.join("regular/.git/index"),
             gix_hash::Kind::Sha1,
             Default::default(),

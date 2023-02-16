@@ -1,5 +1,5 @@
-use git_index::{verify::extensions::no_find, State};
 use git_testtools::scripted_fixture_read_only_standalone;
+use gix_index::{verify::extensions::no_find, State};
 
 use gix::prelude::FindExt;
 
@@ -30,7 +30,7 @@ fn from_tree() -> crate::Result {
 fn new() {
     let state = State::new(gix_hash::Kind::Sha1);
     assert_eq!(state.entries().len(), 0);
-    assert_eq!(state.version(), git_index::Version::V2);
+    assert_eq!(state.version(), gix_index::Version::V2);
     assert_eq!(state.object_hash(), gix_hash::Kind::Sha1);
 }
 

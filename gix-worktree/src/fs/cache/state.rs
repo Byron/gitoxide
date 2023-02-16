@@ -233,8 +233,8 @@ impl State {
     /// - within merges, picks 'our' stage both for ignore and attribute files.
     pub fn build_attribute_list(
         &self,
-        index: &git_index::State,
-        paths: &git_index::PathStorageRef,
+        index: &gix_index::State,
+        paths: &gix_index::PathStorageRef,
         case: Case,
     ) -> Vec<PathOidMapping> {
         let a1_backing;
@@ -265,7 +265,7 @@ impl State {
 
                 // Stage 0 means there is no merge going on, stage 2 means it's 'our' side of the merge, but then
                 // there won't be a stage 0.
-                if entry.mode == git_index::entry::Mode::FILE && (entry.stage() == 0 || entry.stage() == 2) {
+                if entry.mode == gix_index::entry::Mode::FILE && (entry.stage() == 0 || entry.stage() == 2) {
                     let basename = path
                         .rfind_byte(b'/')
                         .map(|pos| path[pos + 1..].as_bstr())
@@ -278,7 +278,7 @@ impl State {
                         .then_some(t.1)
                     })?;
                     // See https://github.com/git/git/blob/master/dir.c#L912:L912
-                    if is_ignore && !entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
+                    if is_ignore && !entry.flags.contains(gix_index::entry::Flags::SKIP_WORKTREE) {
                         return None;
                     }
                     Some((path.to_owned(), entry.id))

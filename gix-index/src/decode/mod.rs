@@ -88,7 +88,7 @@ impl State {
                             || {
                                 scope
                                     .builder()
-                                    .name("git-index.from_bytes.load-extensions".into())
+                                    .name("gix-index.from_bytes.load-extensions".into())
                                     .spawn(|_| extension::decode::all(extensions_data, object_hash))
                                     .expect("valid name")
                             }
@@ -103,7 +103,7 @@ impl State {
                                 threads.push(
                                     scope
                                         .builder()
-                                        .name(format!("git-index.from_bytes.read-entries.{id}"))
+                                        .name(format!("gix-index.from_bytes.read-entries.{id}"))
                                         .spawn(move |_| {
                                             let num_entries_for_chunks =
                                                 chunks.iter().map(|c| c.num_entries).sum::<u32>() as usize;

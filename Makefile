@@ -72,7 +72,7 @@ check: ## Build all code in suitable configurations
 				&& cargo check
 	cd gix-object && cargo check --all-features \
                   && cargo check --features verbose-object-parsing-errors
-	cd git-index && cargo check --features serde1
+	cd gix-index && cargo check --features serde1
 	cd gix-credentials && cargo check --features serde1
 	cd gix-sec && cargo check --features serde1
 	cd gix-revision && cargo check --features serde1
@@ -143,7 +143,7 @@ unit-tests: ## run all unit tests
 	cd gix-object && cargo test && cargo test --features verbose-object-parsing-errors
 	cd git-pack/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-gix-features-parallel"
-	cd git-index/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
+	cd gix-index/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-gix-features-parallel"
 	cd gix-worktree && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-gix-features-parallel"

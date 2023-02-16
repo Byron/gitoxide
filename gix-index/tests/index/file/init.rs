@@ -3,7 +3,7 @@ mod at_or_new {
 
     #[test]
     fn opens_existing() {
-        git_index::File::at_or_default(
+        gix_index::File::at_or_default(
             Generated("v4_more_files_IEOT").to_path(),
             gix_hash::Kind::Sha1,
             Default::default(),
@@ -13,7 +13,7 @@ mod at_or_new {
 
     #[test]
     fn create_empty_in_memory_state_if_file_does_not_exist() {
-        let index = git_index::File::at_or_default(
+        let index = gix_index::File::at_or_default(
             "__definitely no file that exists ever__",
             gix_hash::Kind::Sha1,
             Default::default(),
@@ -26,7 +26,7 @@ mod at_or_new {
 }
 
 mod from_state {
-    use git_index::Version::{V2, V3};
+    use gix_index::Version::{V2, V3};
 
     use crate::index::Fixture::*;
 
@@ -46,12 +46,12 @@ mod from_state {
             let new_index_path = tmp.path().join(fixture.to_name());
             assert!(!new_index_path.exists());
 
-            let index = git_index::File::at(fixture.to_path(), gix_hash::Kind::Sha1, Default::default())?;
-            let mut index = git_index::File::from_state(index.into(), new_index_path.clone());
+            let index = gix_index::File::at(fixture.to_path(), gix_hash::Kind::Sha1, Default::default())?;
+            let mut index = gix_index::File::from_state(index.into(), new_index_path.clone());
             assert!(index.checksum().is_none());
             assert_eq!(index.path(), new_index_path);
 
-            index.write(git_index::write::Options::default())?;
+            index.write(gix_index::write::Options::default())?;
             assert!(index.checksum().is_some(), "checksum is adjusted after writing");
             assert!(index.path().is_file());
             assert_eq!(index.version(), expected_version,);

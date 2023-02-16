@@ -665,7 +665,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-index"
+name = "gix-index"
 version = "0.3.0"
 dependencies = [
  "atoi",
@@ -805,7 +805,7 @@ dependencies = [
  "gix-features",
  "gix-glob",
  "gix-hash",
- "git-index",
+ "gix-index",
  "gix-lock",
  "gix-mailmap",
  "gix-object",
@@ -923,7 +923,7 @@ dependencies = [
  "gix-features",
  "gix-glob",
  "gix-hash",
- "git-index",
+ "gix-index",
  "gix-object",
  "gix-path",
  "io-close",

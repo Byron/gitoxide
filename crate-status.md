@@ -477,7 +477,7 @@ A plumbing crate with shared functionality regarding EWAH compressed bitmaps, as
   * [x] decode on-disk representation
   * [ ] encode on-disk representation
 
-### git-index
+### gix-index
 
 The git staging area.
 

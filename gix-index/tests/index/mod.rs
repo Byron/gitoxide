@@ -24,10 +24,10 @@ pub fn loose_file_path(name: &str) -> PathBuf {
 
 #[test]
 fn size_of_entry() {
-    assert_eq!(std::mem::size_of::<git_index::Entry>(), 80);
+    assert_eq!(std::mem::size_of::<gix_index::Entry>(), 80);
 
     // the reason we have our own time is half the size.
-    assert_eq!(std::mem::size_of::<git_index::entry::Time>(), 8);
+    assert_eq!(std::mem::size_of::<gix_index::entry::Time>(), 8);
     assert_eq!(std::mem::size_of::<filetime::FileTime>(), 16);
 }
 
@@ -49,8 +49,8 @@ impl Fixture {
         }
     }
 
-    pub fn open(&self) -> git_index::File {
-        git_index::File::at(self.to_path(), gix_hash::Kind::Sha1, Default::default())
+    pub fn open(&self) -> gix_index::File {
+        gix_index::File::at(self.to_path(), gix_hash::Kind::Sha1, Default::default())
             .expect("fixtures are always readable")
     }
 }

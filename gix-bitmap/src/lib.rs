@@ -1,4 +1,4 @@
-//! An implementation of the shared parts of git bitmaps used in `git-pack`, `git-index` and `gix-worktree`.
+//! An implementation of the shared parts of git bitmaps used in `git-pack`, `gix-index` and `gix-worktree`.
 //!
 //! Note that many tests are performed indirectly by tests in the aforementioned consumer crates.
 #![deny(rust_2018_idioms, unsafe_code)]

@@ -1,8 +1,8 @@
 use std::{convert::TryInto, fs::OpenOptions, io::Write, path::Path, time::Duration};
 
 use bstr::BStr;
-use git_index::Entry;
 use gix_hash::oid;
+use gix_index::Entry;
 use io_close::Close;
 
 use crate::{fs, index, os};
@@ -36,11 +36,11 @@ where
     let dest_relative = gix_path::try_from_bstr(entry_path).map_err(|_| index::checkout::Error::IllformedUtf8 {
         path: entry_path.to_owned(),
     })?;
-    let is_dir = Some(entry.mode == git_index::entry::Mode::COMMIT || entry.mode == git_index::entry::Mode::DIR);
+    let is_dir = Some(entry.mode == gix_index::entry::Mode::COMMIT || entry.mode == gix_index::entry::Mode::DIR);
     let dest = path_cache.at_path(dest_relative, is_dir, &mut *find)?.path();
 
     let object_size = match entry.mode {
-        git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
+        gix_index::entry::Mode::FILE | gix_index::entry::Mode::FILE_EXECUTABLE => {
             let obj = find(&entry.id, buf).map_err(|err| index::checkout::Error::Find {
                 err,
                 oid: entry.id,
@@ -49,7 +49,7 @@ where
 
             #[cfg_attr(not(unix), allow(unused_mut))]
             let mut options = open_options(dest, destination_is_initially_empty, overwrite_existing);
-            let needs_executable_bit = executable_bit && entry.mode == git_index::entry::Mode::FILE_EXECUTABLE;
+            let needs_executable_bit = executable_bit && entry.mode == gix_index::entry::Mode::FILE_EXECUTABLE;
             #[cfg(unix)]
             if needs_executable_bit && destination_is_initially_empty {
                 use std::os::unix::fs::OpenOptionsExt;
@@ -75,7 +75,7 @@ where
             file.close()?;
             obj.data.len()
         }
-        git_index::entry::Mode::SYMLINK => {
+        gix_index::entry::Mode::SYMLINK => {
             let obj = find(&entry.id, buf).map_err(|err| index::checkout::Error::Find {
                 err,
                 oid: entry.id,
@@ -97,8 +97,8 @@ where
             update_fstat(entry, std::fs::symlink_metadata(dest)?)?;
             obj.data.len()
         }
-        git_index::entry::Mode::DIR => todo!(),
-        git_index::entry::Mode::COMMIT => todo!(),
+        gix_index::entry::Mode::DIR => todo!(),
+        gix_index::entry::Mode::COMMIT => todo!(),
         _ => unreachable!(),
     };
     Ok(object_size)

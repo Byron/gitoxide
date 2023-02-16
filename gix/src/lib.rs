@@ -66,8 +66,6 @@
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
-#[doc(inline)]
-pub use git_index as index;
 pub use git_odb as odb;
 pub use gix_actor as actor;
 pub use gix_attributes as attrs;
@@ -78,6 +76,8 @@ use gix_features::threading::OwnShared;
 pub use gix_features::{parallel, progress::Progress, threading};
 pub use gix_glob as glob;
 pub use gix_hash as hash;
+#[doc(inline)]
+pub use gix_index as index;
 pub use gix_lock as lock;
 pub use gix_object as objs;
 pub use gix_object::bstr;

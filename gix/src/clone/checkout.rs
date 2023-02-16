@@ -22,7 +22,7 @@ pub mod main_worktree {
             source: gix_traverse::tree::breadthfirst::Error,
         },
         #[error(transparent)]
-        WriteIndex(#[from] git_index::file::write::Error),
+        WriteIndex(#[from] gix_index::file::write::Error),
         #[error(transparent)]
         CheckoutOptions(#[from] crate::config::checkout_options::Error),
         #[error(transparent)]
@@ -86,12 +86,12 @@ pub mod main_worktree {
                     ))
                 }
             };
-            let index = git_index::State::from_tree(&root_tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())
+            let index = gix_index::State::from_tree(&root_tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())
                 .map_err(|err| Error::IndexFromTree {
                     id: root_tree,
                     source: err,
                 })?;
-            let mut index = git_index::File::from_state(index, repo.index_path());
+            let mut index = gix_index::File::from_state(index, repo.index_path());
 
             let mut opts = repo.config.checkout_options(repo.git_dir())?;
             opts.destination_is_initially_empty = true;

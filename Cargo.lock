@@ -1309,28 +1309,6 @@ dependencies = [
 [[package]]
 name = "git-index"
 version = "0.12.3"
-dependencies = [
- "atoi",
- "bitflags",
- "bstr",
- "document-features",
- "filetime",
- "gix-bitmap",
- "gix-features",
- "gix-hash",
- "gix-lock",
- "gix-object",
- "gix-traverse",
- "itoa",
- "memmap2",
- "serde",
- "smallvec",
- "thiserror",
-]
-
-[[package]]
-name = "git-index"
-version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0be73045cb2e9f319daa8c4ffd526245db0d2c18111fc7a37629d0618c6bbc14"
 dependencies = [
@@ -1348,19 +1326,6 @@ dependencies = [
  "memmap2",
  "smallvec",
  "thiserror",
-]
-
-[[package]]
-name = "git-index-tests"
-version = "0.0.0"
-dependencies = [
- "bstr",
- "filetime",
- "git-index 0.12.3",
- "git-testtools",
- "gix",
- "gix-features",
- "gix-hash",
 ]
 
 [[package]]
@@ -1583,7 +1548,7 @@ dependencies = [
  "git-features",
  "git-glob",
  "git-hash",
- "git-index 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-index",
  "git-object",
  "git-path",
  "io-close",
@@ -1661,7 +1626,6 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "git-index 0.12.3",
  "git-odb",
  "git-pack",
  "git-testtools",
@@ -1676,6 +1640,7 @@ dependencies = [
  "gix-glob",
  "gix-hash",
  "gix-hashtable",
+ "gix-index",
  "gix-lock",
  "gix-mailmap",
  "gix-object",
@@ -1966,6 +1931,41 @@ version = "0.1.1"
 dependencies = [
  "gix-hash",
  "hashbrown 0.13.2",
+]
+
+[[package]]
+name = "gix-index"
+version = "0.12.3"
+dependencies = [
+ "atoi",
+ "bitflags",
+ "bstr",
+ "document-features",
+ "filetime",
+ "gix-bitmap",
+ "gix-features",
+ "gix-hash",
+ "gix-lock",
+ "gix-object",
+ "gix-traverse",
+ "itoa",
+ "memmap2",
+ "serde",
+ "smallvec",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-index-tests"
+version = "0.0.0"
+dependencies = [
+ "bstr",
+ "filetime",
+ "git-testtools",
+ "gix",
+ "gix-features",
+ "gix-hash",
+ "gix-index",
 ]
 
 [[package]]
@@ -2308,13 +2308,13 @@ version = "0.12.2"
 dependencies = [
  "bstr",
  "document-features",
- "git-index 0.12.3",
  "git-odb",
  "git-testtools",
  "gix-attributes",
  "gix-features",
  "gix-glob",
  "gix-hash",
+ "gix-index",
  "gix-object",
  "gix-path",
  "io-close",

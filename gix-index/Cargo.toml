@@ -1,5 +1,5 @@
 [package]
-name = "git-index"
+name = "gix-index"
 version = "0.12.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
