@@ -175,7 +175,7 @@ members = [
     "gix",
     "gitoxide-core",
     "git-hashtable",
-    "git-tui",
+    "gix-tui",
     "git-tix",
 
     "cargo-smart-release",

@@ -747,7 +747,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
     * provides a faster SHA1 implementation using CPU intrinsics
 * [x] API documentation
 
-### git-tui
+### gix-tui
 * _a terminal user interface seeking to replace and improve on `tig`_
 * Can display complex history in novel ways to make them graspable. Maybe [this post] can be an inspiration.
  
