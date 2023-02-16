@@ -1,4 +1,4 @@
-fn file(input: &str) -> git_config::File<'static> {
+fn file(input: &str) -> gix_config::File<'static> {
     input.parse().unwrap()
 }
 
@@ -7,7 +7,7 @@ fn assert_set_value(value: &str) {
     file.set_raw_value("a", None, "k", value).unwrap();
     assert_eq!(file.raw_value("a", None, "k").unwrap().as_ref(), value);
 
-    let file: git_config::File = file.to_string().parse().unwrap();
+    let file: gix_config::File = file.to_string().parse().unwrap();
     assert_eq!(
         file.raw_value("a", None, "k").unwrap().as_ref(),
         value,
@@ -52,7 +52,7 @@ fn comment_included() {
 
 #[test]
 fn non_existing_values_cannot_be_set() -> crate::Result {
-    let mut file = git_config::File::default();
+    let mut file = gix_config::File::default();
     file.set_raw_value("new", None, "key", "value")?;
     file.set_raw_value("new", Some("subsection".into()), "key", "subsection-value")?;
 

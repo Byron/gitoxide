@@ -7,7 +7,7 @@ use std::{
 };
 
 use bstr::{BString, ByteSlice};
-use git_config::file::init::{self};
+use gix_config::file::init::{self};
 
 use crate::file::{
     cow_str,
@@ -127,10 +127,10 @@ pub fn assert_section_value(
         paths.push(env.home_dir().join(".gitconfig"));
     }
 
-    let config = git_config::File::from_paths_metadata(
+    let config = gix_config::File::from_paths_metadata(
         paths
             .into_iter()
-            .map(|path| git_config::file::Metadata::try_from_path(path, git_config::Source::Local).unwrap()),
+            .map(|path| gix_config::file::Metadata::try_from_path(path, gix_config::Source::Local).unwrap()),
         env.to_init_options(),
     )?
     .expect("non-empty");
@@ -142,7 +142,7 @@ pub fn assert_section_value(
             Some(Value::Override) => Some(cow_str("override-value")),
             None => None,
         },
-        "git-config disagrees with the expected value, {:?} for debugging",
+        "gix-config disagrees with the expected value, {:?} for debugging",
         env.tempdir.into_path()
     );
     assure_git_agrees(expected, env)
@@ -183,7 +183,7 @@ fn assure_git_agrees(expected: Option<Value>, env: GitEnv) -> crate::Result {
             Some(Value::Override) => "override-value",
             None => "",
         },
-        "git disagrees with git-config, {:?} for debugging",
+        "git disagrees with gix-config, {:?} for debugging",
         env.tempdir.into_path()
     );
     Ok(())

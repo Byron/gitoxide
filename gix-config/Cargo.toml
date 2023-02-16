@@ -1,12 +1,12 @@
 [package]
-name = "git-config"
+name = "gix-config"
 version = "0.16.1"
 repository = "https://github.com/Byron/gitoxide"
-description = "A git-config file parser and editor from the gitoxide project"
+description = "A gix-config file parser and editor from the gitoxide project"
 license = "MIT OR Apache-2.0"
 authors = ["Edward Shen <code@eddie.sh>"]
 edition = "2021"
-keywords = ["git-config", "git", "config", "gitoxide"]
+keywords = ["gix-config", "git", "config", "gitoxide"]
 categories = ["config", "parser-implementations"]
 include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 rust-version = "1.64"

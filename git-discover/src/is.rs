@@ -28,7 +28,7 @@ pub fn submodule_git_dir(git_dir: impl AsRef<Path>) -> bool {
 }
 
 /// What constitutes a valid git repository, returning the guessed repository kind
-/// purely based on the presence of files. Note that the git-config ultimately decides what's bare.
+/// purely based on the presence of files. Note that the gix-config ultimately decides what's bare.
 ///
 /// Returns the `Kind` of git directory that was passed, possibly alongside the supporting private worktree git dir.
 ///

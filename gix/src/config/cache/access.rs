@@ -100,7 +100,7 @@ impl Cache {
     }
 
     /// The path to the user-level excludes file to ignore certain files in the worktree.
-    pub(crate) fn excludes_file(&self) -> Option<Result<PathBuf, git_config::path::interpolate::Error>> {
+    pub(crate) fn excludes_file(&self) -> Option<Result<PathBuf, gix_config::path::interpolate::Error>> {
         self.trusted_file_path("core", None, Core::EXCLUDES_FILE.name)?
             .map(|p| p.into_owned())
             .into()
@@ -113,7 +113,7 @@ impl Cache {
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
-    ) -> Option<Result<Cow<'_, std::path::Path>, git_config::path::interpolate::Error>> {
+    ) -> Option<Result<Cow<'_, std::path::Path>, gix_config::path::interpolate::Error>> {
         let path = self.resolved.path_filter(
             section_name,
             subsection_name,
@@ -223,7 +223,7 @@ impl Cache {
 
     /// Return the home directory if we are allowed to read it and if it is set in the environment.
     ///
-    /// We never fail for here even if the permission is set to deny as we `git-config` will fail later
+    /// We never fail for here even if the permission is set to deny as we `gix-config` will fail later
     /// if it actually wants to use the home directory - we don't want to fail prematurely.
     pub(crate) fn home_dir(&self) -> Option<PathBuf> {
         std::env::var_os("HOME")

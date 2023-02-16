@@ -138,12 +138,12 @@ mod diff {
         );
         assert!(Diff::RENAMES.validate("0".into()).is_ok());
         assert_eq!(
-            Diff::RENAMES.try_into_renames(Err(git_config::value::Error::new("err", "err")), || Some(bcow("copy")))?,
+            Diff::RENAMES.try_into_renames(Err(gix_config::value::Error::new("err", "err")), || Some(bcow("copy")))?,
             Tracking::RenamesAndCopies
         );
         assert!(Diff::RENAMES.validate("copy".into()).is_ok());
         assert_eq!(
-            Diff::RENAMES.try_into_renames(Err(git_config::value::Error::new("err", "err")), || Some(bcow(
+            Diff::RENAMES.try_into_renames(Err(gix_config::value::Error::new("err", "err")), || Some(bcow(
                 "copies"
             )))?,
             Tracking::RenamesAndCopies
@@ -152,7 +152,7 @@ mod diff {
 
         assert_eq!(
             Diff::RENAMES
-                .try_into_renames(Err(git_config::value::Error::new("err", "err")), || Some(bcow("foo")))
+                .try_into_renames(Err(gix_config::value::Error::new("err", "err")), || Some(bcow("foo")))
                 .unwrap_err()
                 .to_string(),
             "The value of key \"diff.renames=foo\" was invalid"
@@ -199,7 +199,7 @@ mod core {
 
     use crate::config::tree::bcow;
 
-    fn signed(value: i64) -> Result<i64, git_config::value::Error> {
+    fn signed(value: i64) -> Result<i64, gix_config::value::Error> {
         Ok(value)
     }
 
@@ -223,7 +223,7 @@ mod core {
         assert!(Core::FILES_REF_LOCK_TIMEOUT.validate("2500".into()).is_ok());
         assert_eq!(
             Core::FILES_REF_LOCK_TIMEOUT
-                .try_into_lock_timeout(Err(git_config::value::Error::new("err", "bogus")))
+                .try_into_lock_timeout(Err(gix_config::value::Error::new("err", "bogus")))
                 .unwrap_err()
                 .to_string(),
             "The timeout at key \"core.filesRefLockTimeout\" was invalid"
@@ -382,7 +382,7 @@ mod extensions {
 mod checkout {
     use gix::config::tree::{Checkout, Key};
 
-    fn int(value: i64) -> Result<i64, git_config::value::Error> {
+    fn int(value: i64) -> Result<i64, gix_config::value::Error> {
         Ok(value)
     }
 
@@ -586,7 +586,7 @@ mod http {
 
         assert_eq!(
             Http::FOLLOW_REDIRECTS
-                .try_into_follow_redirects(bcow("something"), || Err(git_config::value::Error::new(
+                .try_into_follow_redirects(bcow("something"), || Err(gix_config::value::Error::new(
                     "invalid", "value"
                 )))
                 .unwrap_err()

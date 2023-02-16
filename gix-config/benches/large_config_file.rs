@@ -1,9 +1,9 @@
 use std::convert::TryFrom;
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use git_config::{parse::Events, File};
+use gix_config::{parse::Events, File};
 
-fn git_config(c: &mut Criterion) {
+fn gix_config(c: &mut Criterion) {
     c.bench_function("GitConfig large config file", |b| {
         b.iter(|| File::try_from(black_box(CONFIG_FILE)).unwrap())
     });
@@ -15,7 +15,7 @@ fn parser(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, git_config, parser);
+criterion_group!(benches, gix_config, parser);
 criterion_main!(benches);
 
 // Found from https://gist.github.com/pksunkara/988716

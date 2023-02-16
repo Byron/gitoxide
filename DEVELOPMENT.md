@@ -79,7 +79,7 @@ There is value in organizing commits by topic and [_Stacked Git_](https://stacke
   
 ## Configuration and overrides
 
-As a general rule, respect and implement all applicable [git-config](https://git-scm.com/docs/git-config) by default, but allow the
+As a general rule, respect and implement all applicable [gix-config](https://git-scm.com/docs/gix-config) by default, but allow the
 caller to set overrides. How overrides work depends on the goals of the particular API so it can be done on the main call path,
 forcing a choice, or more typically, as a side-lane where overrides can be done on demand.
 
@@ -186,7 +186,7 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 
 - Use `Options` whenever there is something to configure in terms of branching behaviour. It can be defaulted, and if it can't these fields should be parameters of the method
   that takes these `Options`.
-- Use `Context` when data is required to perform an operation at all. See `git_config::path::Context` as reference. It can't be defaulted and the fields could also be parameters.
+- Use `Context` when data is required to perform an operation at all. See `gix_config::path::Context` as reference. It can't be defaulted and the fields could also be parameters.
 
 ## Lifetimes
 

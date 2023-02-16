@@ -119,7 +119,7 @@ mod key_impls {
         pub fn try_into_follow_redirects(
             &'static self,
             value: std::borrow::Cow<'_, crate::bstr::BStr>,
-            boolean: impl FnOnce() -> Result<Option<bool>, git_config::value::Error>,
+            boolean: impl FnOnce() -> Result<Option<bool>, gix_config::value::Error>,
         ) -> Result<
             crate::protocol::transport::client::http::options::FollowRedirects,
             crate::config::key::GenericErrorWithValue,
@@ -303,7 +303,7 @@ pub mod validate {
                 feature = "blocking-http-transport-curl"
             ))]
             super::Http::FOLLOW_REDIRECTS.try_into_follow_redirects(std::borrow::Cow::Borrowed(_value), || {
-                git_config::Boolean::try_from(_value).map(|b| Some(b.0))
+                gix_config::Boolean::try_from(_value).map(|b| Some(b.0))
             })?;
             Ok(())
         }

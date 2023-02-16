@@ -5,8 +5,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git_config::parse::section;
 use git_discover::DOT_GIT_DIR;
+use gix_config::parse::section;
 
 /// The error used in [`into()`].
 #[derive(Debug, thiserror::Error)]
@@ -115,7 +115,7 @@ pub struct Options {
     ///
     /// By default repos with worktree can be initialized into a non-empty repository as long as there is no `.git` directory.
     pub destination_must_be_empty: bool,
-    /// If set, use these filesystem capabilities to populate the respective git-config fields.
+    /// If set, use these filesystem capabilities to populate the respective gix-config fields.
     /// If `None`, the directory will be probed.
     pub fs_capabilities: Option<git_worktree::fs::Capabilities>,
 }
@@ -206,7 +206,7 @@ pub fn into(
     }
 
     {
-        let mut config = git_config::File::default();
+        let mut config = gix_config::File::default();
         {
             let caps = fs_capabilities.unwrap_or_else(|| git_worktree::fs::Capabilities::probe(&dot_git));
             let mut core = config.new_section("core", None).expect("valid section name");

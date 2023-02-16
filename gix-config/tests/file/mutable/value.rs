@@ -4,7 +4,7 @@ mod get {
     use crate::file::mutable::value::init_config;
 
     fn config_get(input: &str) -> BString {
-        let mut file: git_config::File = input.parse().unwrap();
+        let mut file: gix_config::File = input.parse().unwrap();
         file.raw_value_mut("a", None, "k").unwrap().get().unwrap().into_owned()
     }
 
@@ -42,7 +42,7 @@ mod set_string {
     use crate::file::mutable::value::init_config;
 
     fn assert_set_string(expected: &str) {
-        let nl = git_config::File::default().detect_newline_style().to_string();
+        let nl = gix_config::File::default().detect_newline_style().to_string();
         for input in [
             "[a] k = v",
             "[a] k = ",
@@ -52,14 +52,14 @@ mod set_string {
             "[a] k$nl",
             "[a] k",
         ] {
-            let mut file: git_config::File = input.replace("$nl", &nl).parse().unwrap();
+            let mut file: gix_config::File = input.replace("$nl", &nl).parse().unwrap();
             let mut v = file.raw_value_mut("a", None, "k").unwrap();
             v.set_string(expected);
 
             assert_eq!(v.get().unwrap().as_ref(), expected);
 
             let file_string = file.to_string();
-            let file: git_config::File = match file_string.parse() {
+            let file: gix_config::File = match file_string.parse() {
                 Ok(f) => f,
                 Err(err) => panic!("{:?} failed with: {}", file_string, err),
             };
@@ -220,7 +220,7 @@ mod delete {
 
     #[test]
     fn multi_line_value() -> crate::Result {
-        let mut config: git_config::File = r#"[core]
+        let mut config: gix_config::File = r#"[core]
             a=b"100"\
 c\
 b
@@ -239,8 +239,8 @@ b
     }
 }
 
-fn init_config() -> git_config::File<'static> {
-    git_config::File::try_from(
+fn init_config() -> gix_config::File<'static> {
+    gix_config::File::try_from(
         r#"[core]
             a=b"100"
         [core]

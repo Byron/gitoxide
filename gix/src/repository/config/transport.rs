@@ -99,10 +99,10 @@ impl crate::Repository {
                     }
 
                     fn ssl_version(
-                        config: &git_config::File<'static>,
+                        config: &gix_config::File<'static>,
                         key_str: &'static str,
                         key: &'static config::tree::http::SslVersion,
-                        mut filter: fn(&git_config::file::Metadata) -> bool,
+                        mut filter: fn(&gix_config::file::Metadata) -> bool,
                         lenient: bool,
                     ) -> Result<Option<SslVersion>, config::transport::Error> {
                         debug_assert_eq!(

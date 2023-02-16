@@ -1,9 +1,9 @@
-# git-config
+# gix-config
 
-**git-config is a library for interacting with `git-config` files.**
+**gix-config is a library for interacting with `gix-config` files.**
 
 This crate intents to be a performant Rust implementation for reading and
-writing `git-config` files. It exposes tiers of abstractions, from simple
+writing `gix-config` files. It exposes tiers of abstractions, from simple
 config value wrappers to a high level reader and writer.
 
 The highlight of this crate is the zero-copy parser. We employ techniques to
@@ -47,7 +47,7 @@ Licensed under either of <a href="LICENSE-APACHE">Apache License, Version
 
 <sub>
 Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in git-config by you, as defined in the Apache-2.0 license, shall
+for inclusion in gix-config by you, as defined in the Apache-2.0 license, shall
 be dual licensed as above, without any additional terms or conditions.
 </sub>
 

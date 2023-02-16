@@ -21,7 +21,7 @@ The command-line tools as well as the status of each crate is described in
 
 For use in applications, look for the [`gix`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix) crate, 
 which serves as entrypoint to the functionality provided by various lower-level plumbing crates like
-[`git-config`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config).
+[`gix-config`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config).
 
 ### Crates
 
@@ -45,7 +45,7 @@ Documentation is complete and was reviewed at least once.
 * [git-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap)
 * [git-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-chunk)
 * [gix-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-ref)
-* [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
+* [gix-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config)
 * [gix-config-value](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config-value)
 * [gix-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-glob)
 

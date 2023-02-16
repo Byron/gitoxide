@@ -1,4 +1,4 @@
-use git_config::parse;
+use gix_config::parse;
 
 #[test]
 fn missing_dot_is_invalid() {

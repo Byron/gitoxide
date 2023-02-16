@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 
 use bstr::ByteVec;
-use git_config::file::{init, Metadata};
+use gix_config::file::{init, Metadata};
 
 #[test]
 fn empty_sections_roundtrip() {
@@ -13,7 +13,7 @@ fn empty_sections_roundtrip() {
             [d]
 "#;
 
-    let config = git_config::File::try_from(input).unwrap();
+    let config = gix_config::File::try_from(input).unwrap();
     assert_eq!(config.to_bstring(), input);
 }
 
@@ -28,7 +28,7 @@ fn empty_sections_with_comments_roundtrip() {
             [d] # side d
 "#;
 
-    let mut config = git_config::File::try_from(input).unwrap();
+    let mut config = gix_config::File::try_from(input).unwrap();
     let mut single_string = config.to_bstring();
     assert_eq!(single_string, input);
     assert_eq!(
@@ -89,10 +89,10 @@ fn complex_lossless_roundtrip() {
             f;  \
             unset f" ; here we go
     "#;
-    let config = git_config::File::try_from(input).unwrap();
+    let config = gix_config::File::try_from(input).unwrap();
     assert_eq!(config.to_bstring(), input);
 
-    let lossy_config = git_config::File::from_bytes_owned(
+    let lossy_config = gix_config::File::from_bytes_owned(
         &mut input.as_bytes().into(),
         Metadata::api(),
         init::Options {
@@ -102,7 +102,7 @@ fn complex_lossless_roundtrip() {
     )
     .unwrap();
 
-    let lossy_config: git_config::File = lossy_config.to_string().parse().unwrap();
+    let lossy_config: gix_config::File = lossy_config.to_string().parse().unwrap();
     assert_eq!(
         lossy_config, config,
         "Even lossy configuration serializes properly to be able to restore all values"
@@ -112,14 +112,14 @@ fn complex_lossless_roundtrip() {
 mod to_filter {
     use crate::file::cow_str;
     use bstr::ByteSlice;
-    use git_config::file::Metadata;
+    use gix_config::file::Metadata;
 
     #[test]
     fn allows_only_selected_sections() -> crate::Result {
-        let mut config = git_config::File::new(Metadata::api());
+        let mut config = gix_config::File::new(Metadata::api());
         config.set_raw_value("a", None, "b", "c")?;
 
-        let meta: Metadata = git_config::Source::Local.into();
+        let meta: Metadata = gix_config::Source::Local.into();
         config.set_meta(meta);
 
         config
@@ -127,7 +127,7 @@ mod to_filter {
             .push("b".try_into()?, Some("c".into()))
             .push("c".try_into()?, Some("d".into()));
 
-        let meta: Metadata = git_config::Source::User.into();
+        let meta: Metadata = gix_config::Source::User.into();
         config.set_meta(meta);
 
         config
@@ -136,7 +136,7 @@ mod to_filter {
             .push("c".try_into()?, Some("d".into()));
 
         let mut buf = Vec::<u8>::new();
-        config.write_to_filter(&mut buf, |s| s.meta().source == git_config::Source::Local)?;
+        config.write_to_filter(&mut buf, |s| s.meta().source == gix_config::Source::Local)?;
         let nl = config.detect_newline_style();
         assert_eq!(buf.to_str_lossy(), format!("[a \"local\"]{nl}\tb = c{nl}\tc = d{nl}"));
 

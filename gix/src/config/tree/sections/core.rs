@@ -141,10 +141,10 @@ mod log_all_ref_updates {
     impl LogAllRefUpdates {
         /// Returns the mode for ref-updates as parsed from `value`. If `value` is not a boolean, `string_on_failure` will be called
         /// to obtain the key `core.logAllRefUpdates` as string instead. For correctness, this two step process is necessary as
-        /// the interpretation of booleans in special in `git-config`, i.e. we can't just treat it as string.
+        /// the interpretation of booleans in special in `gix-config`, i.e. we can't just treat it as string.
         pub fn try_into_ref_updates<'a>(
             &'static self,
-            value: Option<Result<bool, git_config::value::Error>>,
+            value: Option<Result<bool, gix_config::value::Error>>,
             string_on_failure: impl FnOnce() -> Option<Cow<'a, BStr>>,
         ) -> Result<Option<gix_ref::store::WriteReflog>, config::key::GenericErrorWithValue> {
             match value.transpose().ok().flatten() {
@@ -215,10 +215,10 @@ mod abbrev {
                 Ok(None)
             } else {
                 let value_bytes = hex_len_str.as_ref();
-                if let Ok(false) = git_config::Boolean::try_from(value_bytes).map(Into::into) {
+                if let Ok(false) = gix_config::Boolean::try_from(value_bytes).map(Into::into) {
                     Ok(object_hash.len_in_hex().into())
                 } else {
-                    let value = git_config::Integer::try_from(value_bytes)
+                    let value = gix_config::Integer::try_from(value_bytes)
                         .map_err(|_| Error {
                             value: hex_len_str.clone().into_owned(),
                             max,
@@ -247,7 +247,7 @@ mod validate {
     pub struct LockTimeout;
     impl keys::Validate for LockTimeout {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            let value = git_config::Integer::try_from(value)?
+            let value = gix_config::Integer::try_from(value)?
                 .to_decimal()
                 .ok_or_else(|| format!("integer {value} cannot be represented as integer"));
             super::Core::FILES_REF_LOCK_TIMEOUT.try_into_lock_timeout(Ok(value?))?;
@@ -267,7 +267,7 @@ mod validate {
     impl keys::Validate for LogAllRefUpdates {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
             super::Core::LOG_ALL_REF_UPDATES
-                .try_into_ref_updates(Some(git_config::Boolean::try_from(value).map(|b| b.0)), || {
+                .try_into_ref_updates(Some(gix_config::Boolean::try_from(value).map(|b| b.0)), || {
                     Some(value.into())
                 })?;
             Ok(())

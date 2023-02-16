@@ -3,7 +3,7 @@ mod remove_section {
 
     #[test]
     fn removal_of_all_sections_programmatically_with_sections_and_ids_by_name() {
-        let mut file = git_config::File::try_from("[core] \na = b\nb=c\n\n[core \"name\"]\nd = 1\ne = 2").unwrap();
+        let mut file = gix_config::File::try_from("[core] \na = b\nb=c\n\n[core \"name\"]\nd = 1\ne = 2").unwrap();
         for id in file
             .sections_and_ids_by_name("core")
             .expect("2 sections present")
@@ -18,7 +18,7 @@ mod remove_section {
 
     #[test]
     fn removal_of_all_sections_programmatically_with_sections_and_ids() {
-        let mut file = git_config::File::try_from("[core] \na = b\nb=c\n\n[core \"name\"]\nd = 1\ne = 2").unwrap();
+        let mut file = gix_config::File::try_from("[core] \na = b\nb=c\n\n[core \"name\"]\nd = 1\ne = 2").unwrap();
         for id in file.sections_and_ids().map(|(_, id)| id).collect::<Vec<_>>() {
             file.remove_section_by_id(id);
         }
@@ -28,7 +28,7 @@ mod remove_section {
 
     #[test]
     fn removal_is_complete_and_sections_can_be_readded() {
-        let mut file = git_config::File::try_from("[core] \na = b\nb=c\n\n[core \"name\"]\nd = 1\ne = 2").unwrap();
+        let mut file = gix_config::File::try_from("[core] \na = b\nb=c\n\n[core \"name\"]\nd = 1\ne = 2").unwrap();
         assert_eq!(file.sections().count(), 2);
 
         let removed = file.remove_section("core", None).expect("removed correct section");
@@ -49,11 +49,11 @@ mod remove_section {
 mod rename_section {
     use std::{borrow::Cow, convert::TryFrom};
 
-    use git_config::{file::rename_section, parse::section};
+    use gix_config::{file::rename_section, parse::section};
 
     #[test]
     fn section_renaming_validates_new_name() {
-        let mut file = git_config::File::try_from("[core] a = b").unwrap();
+        let mut file = gix_config::File::try_from("[core] a = b").unwrap();
         assert!(matches!(
             file.rename_section("core", None, "new_core", None),
             Err(rename_section::Error::Section(section::header::Error::InvalidName))
@@ -68,11 +68,11 @@ mod rename_section {
     }
 }
 mod set_meta {
-    use git_config::file;
+    use gix_config::file;
 
     #[test]
     fn affects_newly_added_sections() -> crate::Result {
-        let mut file = git_config::File::default();
+        let mut file = gix_config::File::default();
         let expected = &file::Metadata::api();
         assert_eq!(file.meta(), expected);
 
@@ -86,7 +86,7 @@ mod set_meta {
         }
         let meta = file::Metadata {
             path: None,
-            source: git_config::Source::Local,
+            source: gix_config::Source::Local,
             level: 0,
             trust: gix_sec::Trust::Reduced,
         };

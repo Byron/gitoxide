@@ -21,8 +21,8 @@ pub(crate) struct Rewrite {
 /// Init
 impl Rewrite {
     pub fn from_config(
-        config: &git_config::File<'static>,
-        mut filter: fn(&git_config::file::Metadata) -> bool,
+        config: &gix_config::File<'static>,
+        mut filter: fn(&gix_config::file::Metadata) -> bool,
     ) -> Rewrite {
         config
             .sections_by_name_and_filter("url", &mut filter)

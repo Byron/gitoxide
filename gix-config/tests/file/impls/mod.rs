@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use git_config::File;
+use gix_config::File;
 
 #[test]
 fn can_reconstruct_empty_config() {

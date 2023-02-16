@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use git_config::{lookup, File};
+use gix_config::{lookup, File};
 
 #[test]
 fn single_section() -> crate::Result {

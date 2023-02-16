@@ -139,7 +139,7 @@ This release also fixes compatibility issues that formerly prevented to fetch or
     - update progress of http.proxyAuthMethod ([`872dc1a`](https://github.com/Byron/gitoxide/commit/872dc1ab43ce626b4166dae3dc8bddf8e85c9409))
     - add `--strict` option to enforce strict checking of configuration. ([`aeb4a1d`](https://github.com/Byron/gitoxide/commit/aeb4a1d5cb76316058c7d687e26f5c7db351c09c))
     - don't lock stdout/stderr as it will deadlock on dbg-printing ([`62cae0e`](https://github.com/Byron/gitoxide/commit/62cae0e6bfe8113c0225152a896338017c8de474))
-    - adapt to changes in `git-config` ([`1c2e755`](https://github.com/Byron/gitoxide/commit/1c2e755e517b0f9fe8671187f5c30076ce43a3c9))
+    - adapt to changes in `gix-config` ([`1c2e755`](https://github.com/Byron/gitoxide/commit/1c2e755e517b0f9fe8671187f5c30076ce43a3c9))
     - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
 </details>
 

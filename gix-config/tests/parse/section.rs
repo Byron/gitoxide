@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use git_config::parse::{section, Event};
+use gix_config::parse::{section, Event};
 
 pub fn header_event(name: &'static str, subsection: impl Into<Option<&'static str>>) -> Event<'static> {
     Event::SectionHeader(section::Header::new(name, subsection.into().map(|s| Cow::Borrowed(s.into()))).unwrap())
@@ -15,7 +15,7 @@ mod header {
         Some(Cow::Borrowed(name.into()))
     }
     mod write_to {
-        use git_config::parse::section;
+        use gix_config::parse::section;
 
         use crate::parse::section::header::cow_section;
 
@@ -42,7 +42,7 @@ mod header {
         }
     }
     mod new {
-        use git_config::parse::section;
+        use gix_config::parse::section;
 
         use crate::parse::section::header::cow_section;
 
@@ -72,7 +72,7 @@ mod header {
 mod name {
     use std::convert::TryFrom;
 
-    use git_config::parse::section::Name;
+    use gix_config::parse::section::Name;
 
     #[test]
     fn alphanum_and_dash_are_valid() {
@@ -92,7 +92,7 @@ mod name {
 mod key {
     use std::{cmp::Ordering, convert::TryFrom};
 
-    use git_config::parse::section::Key;
+    use gix_config::parse::section::Key;
 
     fn key(k: &str) -> Key<'_> {
         Key::try_from(k).unwrap()

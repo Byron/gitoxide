@@ -32,7 +32,7 @@ use bstr::{BStr, BString, ByteSlice};
 /// ```
 /// # use std::borrow::Cow;
 /// # use bstr::ByteSlice;
-/// # use git_config::value::normalize_bstr;
+/// # use gix_config::value::normalize_bstr;
 /// assert!(matches!(normalize_bstr("hello world"), Cow::Borrowed(_)));
 /// ```
 ///
@@ -41,7 +41,7 @@ use bstr::{BStr, BString, ByteSlice};
 /// ```
 /// # use std::borrow::Cow;
 /// # use bstr::{BStr, BString};
-/// # use git_config::value::{normalize_bstr};
+/// # use gix_config::value::{normalize_bstr};
 /// assert_eq!(normalize_bstr("hello \"world\""), Cow::<BStr>::Owned(BString::from("hello world")));
 /// ```
 ///
@@ -50,7 +50,7 @@ use bstr::{BStr, BString, ByteSlice};
 /// ```
 /// # use std::borrow::Cow;
 /// # use bstr::{BStr, BString};
-/// # use git_config::value::normalize_bstr;
+/// # use gix_config::value::normalize_bstr;
 /// assert_eq!(normalize_bstr(r#"hello "world\"""#), Cow::<BStr>::Owned(BString::from(r#"hello world""#)));
 /// ```
 #[must_use]

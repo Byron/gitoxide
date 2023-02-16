@@ -4,7 +4,7 @@ use std::{
 };
 
 use bstr::{BString, ByteSlice};
-use git_config::file::{
+use gix_config::file::{
     includes,
     includes::conditional,
     init::{self},
@@ -248,10 +248,10 @@ value = branch-override-by-include
         ..Default::default()
     };
 
-    let config = git_config::File::from_paths_metadata(
-        Some(git_config::file::Metadata::try_from_path(
+    let config = gix_config::File::from_paths_metadata(
+        Some(gix_config::file::Metadata::try_from_path(
             &root_config,
-            git_config::Source::Local,
+            gix_config::Source::Local,
         )?),
         options,
     )?
@@ -317,7 +317,7 @@ fn assure_git_agrees(expected: Value, dir: tempfile::TempDir) -> crate::Result<t
             Value::Base => "base-value",
             Value::OverrideByInclude => "branch-override-by-include",
         },
-        "git disagrees with git-config, {:?} for debugging",
+        "git disagrees with gix-config, {:?} for debugging",
         dir.into_path()
     );
     Ok(dir)

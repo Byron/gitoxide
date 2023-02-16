@@ -11,29 +11,29 @@ pub enum Error {
     #[error("Key {key:?} could not be parsed")]
     SectionKey {
         key: BString,
-        source: git_config::parse::section::key::Error,
+        source: gix_config::parse::section::key::Error,
     },
     #[error(transparent)]
-    SectionHeader(#[from] git_config::parse::section::header::Error),
+    SectionHeader(#[from] gix_config::parse::section::header::Error),
 }
 
 pub(crate) fn append(
-    config: &mut git_config::File<'static>,
+    config: &mut gix_config::File<'static>,
     values: impl IntoIterator<Item = impl AsRef<BStr>>,
-    source: git_config::Source,
+    source: gix_config::Source,
     mut make_comment: impl FnMut(&BStr) -> Option<BString>,
 ) -> Result<(), Error> {
-    let mut file = git_config::File::new(git_config::file::Metadata::from(source));
+    let mut file = gix_config::File::new(gix_config::file::Metadata::from(source));
     for key_value in values {
         let key_value = key_value.as_ref();
         let mut tokens = key_value.splitn(2, |b| *b == b'=').map(|v| v.trim());
         let key = tokens.next().expect("always one value").as_bstr();
         let value = tokens.next();
-        let key = git_config::parse::key(key.to_str().map_err(|_| Error::InvalidKey { input: key.into() })?)
+        let key = gix_config::parse::key(key.to_str().map_err(|_| Error::InvalidKey { input: key.into() })?)
             .ok_or_else(|| Error::InvalidKey { input: key.into() })?;
         let mut section = file.section_mut_or_create_new(key.section_name, key.subsection_name)?;
         let key =
-            git_config::parse::section::Key::try_from(key.value_name.to_owned()).map_err(|err| Error::SectionKey {
+            gix_config::parse::section::Key::try_from(key.value_name.to_owned()).map_err(|err| Error::SectionKey {
                 source: err,
                 key: key.value_name.into(),
             })?;

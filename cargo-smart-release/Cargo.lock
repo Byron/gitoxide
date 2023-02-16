@@ -562,7 +562,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-config"
+name = "gix-config"
 version = "0.5.0"
 dependencies = [
  "bstr",
@@ -798,7 +798,7 @@ dependencies = [
  "clru",
  "gix-actor",
  "git-attributes",
- "git-config",
+ "gix-config",
  "git-credentials",
  "git-diff",
  "git-discover",

@@ -1,4 +1,4 @@
-use git_config::parse::Events;
+use gix_config::parse::Events;
 
 use super::*;
 

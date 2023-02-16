@@ -20,10 +20,10 @@ mod error {
         #[error("Could not parse 'useHttpPath' key in section {section}")]
         InvalidUseHttpPath {
             section: BString,
-            source: git_config::value::Error,
+            source: gix_config::value::Error,
         },
         #[error("core.askpass could not be read")]
-        CoreAskpass(#[from] git_config::path::interpolate::Error),
+        CoreAskpass(#[from] gix_config::path::interpolate::Error),
     }
 }
 
@@ -120,7 +120,7 @@ impl Snapshot<'_> {
                     if let Some(toggle) = section
                         .value(use_http_path_key.name)
                         .map(|val| {
-                            git_config::Boolean::try_from(val)
+                            gix_config::Boolean::try_from(val)
                                 .map_err(|err| Error::InvalidUseHttpPath {
                                     source: err,
                                     section: section.header().to_bstring(),

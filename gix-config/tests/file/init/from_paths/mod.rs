@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use git_config::{File, Source};
+use gix_config::{File, Source};
 use tempfile::tempdir;
 
 use crate::file::cow_str;
@@ -16,9 +16,9 @@ mod from_path_no_includes {
         let dir = tempfile::tempdir().unwrap();
         let config_path = dir.path().join("config");
 
-        let err = git_config::File::from_path_no_includes(config_path, git_config::Source::Local).unwrap_err();
+        let err = gix_config::File::from_path_no_includes(config_path, gix_config::Source::Local).unwrap_err();
         assert!(
-            matches!(err,  git_config::file::init::from_paths::Error::Io(io_error) if io_error.kind() == std::io::ErrorKind::NotFound)
+            matches!(err,  gix_config::file::init::from_paths::Error::Io(io_error) if io_error.kind() == std::io::ErrorKind::NotFound)
         );
     }
 
@@ -28,7 +28,7 @@ mod from_path_no_includes {
         let config_path = dir.path().join("config");
         std::fs::write(config_path.as_path(), b"[core]\nboolean = true").unwrap();
 
-        let config = git_config::File::from_path_no_includes(config_path, git_config::Source::Local).unwrap();
+        let config = gix_config::File::from_path_no_includes(config_path, gix_config::Source::Local).unwrap();
 
         assert_eq!(config.raw_value("core", None, "boolean").unwrap().as_ref(), "true");
         assert_eq!(config.num_values(), 1);
@@ -162,7 +162,7 @@ fn multiple_paths_multi_value_and_filter() -> crate::Result {
     let config = File::from_paths_metadata(
         paths_and_source
             .iter()
-            .map(|(p, s)| git_config::file::Metadata::try_from_path(p, *s).unwrap()),
+            .map(|(p, s)| gix_config::file::Metadata::try_from_path(p, *s).unwrap()),
         Default::default(),
     )?
     .expect("non-empty");
@@ -213,10 +213,10 @@ fn multiple_paths_multi_value_and_filter() -> crate::Result {
     Ok(())
 }
 
-fn into_meta(paths: impl IntoIterator<Item = PathBuf>) -> impl IntoIterator<Item = git_config::file::Metadata> {
+fn into_meta(paths: impl IntoIterator<Item = PathBuf>) -> impl IntoIterator<Item = gix_config::file::Metadata> {
     paths
         .into_iter()
-        .map(|p| git_config::file::Metadata::try_from_path(p, git_config::Source::Local).unwrap())
+        .map(|p| gix_config::file::Metadata::try_from_path(p, gix_config::Source::Local).unwrap())
 }
 
 mod includes {

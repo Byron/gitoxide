@@ -1,6 +1,6 @@
 use std::{borrow::Cow, convert::TryFrom};
 
-use git_config::parse::{Event, Events, Section};
+use gix_config::parse::{Event, Events, Section};
 
 mod error;
 mod from_bytes;
@@ -52,7 +52,7 @@ fn consecutive_newlines() {
 }
 
 fn name(name: &'static str) -> Event<'static> {
-    Event::SectionKey(git_config::parse::section::Key::try_from(name).unwrap())
+    Event::SectionKey(gix_config::parse::section::Key::try_from(name).unwrap())
 }
 
 fn value(value: &'static str) -> Event<'static> {

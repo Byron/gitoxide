@@ -416,7 +416,7 @@ Provide base-implementations for dealing with smudge and clean filters as well a
 Provides a trust model to share across gitoxide crates. It helps configuring how to interact with external processes, among other things.
 
 * **integrations**
-   * [x] git-config
+   * [x] gix-config
    * [x] gix
 
 ### git-rebase
@@ -556,7 +556,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
     * [ ] date
     * [ ] [permission][https://github.com/git/git/blob/71a8fab31b70c417e8f5b5f716581f89955a7082/setup.c#L1526:L1526]
     
-### git-config
+### gix-config
 * [x] read
     * zero-copy parsing with event emission
     * all config values as per the `gix-config-value` crate  
@@ -595,7 +595,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
       * [x] run `git credential` directly
       * [x] use credential helper configuration and to obtain credentials with `git_credentials::helper::Cascade`
     * **config**
-      * [ ] facilities to apply the [url-match](https://git-scm.com/docs/git-config#Documentation/git-config.txt-httplturlgt) algorithm and to
+      * [ ] facilities to apply the [url-match](https://git-scm.com/docs/gix-config#Documentation/gix-config.txt-httplturlgt) algorithm and to
             [normalize urls](https://github.com/git/git/blob/be1a02a17ede4082a86dfbfee0f54f345e8b43ac/urlmatch.c#L109:L109) before comparison.
     * **traverse** 
       * [x] commit graphs
@@ -664,7 +664,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
     * **config**
        * [x] read the primitive types `boolean`, `integer`, `string`
        * [x] read and interpolate trusted paths
-       * [x] low-level API for more elaborate access to all details of `git-config` files
+       * [x] low-level API for more elaborate access to all details of `gix-config` files
        * [ ] a way to make changes to individual configuration files
     * [x] mailmap   
     * [x] object replacements (`git replace`)

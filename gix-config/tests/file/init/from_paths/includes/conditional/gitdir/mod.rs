@@ -99,12 +99,12 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
             )
             .set("GIT_CONFIG_VALUE_0", "./include.path");
 
-        let res = git_config::File::from_env(env.to_init_options());
+        let res = gix_config::File::from_env(env.to_init_options());
         assert!(
             matches!(
                 res,
-                Err(git_config::file::init::from_env::Error::Includes(
-                    git_config::file::includes::Error::MissingConfigPath
+                Err(gix_config::file::init::from_env::Error::Includes(
+                    gix_config::file::includes::Error::MissingConfigPath
                 ))
             ),
             "this is a failure of resolving the include path, after trying to include it"
@@ -118,12 +118,12 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
             .set("GIT_CONFIG_KEY_0", "includeIf.gitdir:./worktree/.path")
             .set("GIT_CONFIG_VALUE_0", &absolute_path);
 
-        let res = git_config::File::from_env(env.to_init_options());
+        let res = gix_config::File::from_env(env.to_init_options());
         assert!(
             matches!(
                 res,
-                Err(git_config::file::init::from_env::Error::Includes(
-                    git_config::file::includes::Error::MissingConfigPath
+                Err(gix_config::file::init::from_env::Error::Includes(
+                    gix_config::file::includes::Error::MissingConfigPath
                 ))
             ),
             "here the pattern path tries to be resolved and fails as target config isn't set"
@@ -139,7 +139,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
             )
             .set("GIT_CONFIG_VALUE_0", absolute_path);
 
-        let res = git_config::File::from_env(env.to_init_options());
+        let res = gix_config::File::from_env(env.to_init_options());
         assert!(res.is_ok(), "missing paths are ignored as before");
     }
 

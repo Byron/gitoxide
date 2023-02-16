@@ -1,6 +1,6 @@
 use std::{fs, path::Path, str::FromStr};
 
-use git_config::{
+use gix_config::{
     file::{includes, init},
     path, File,
 };
@@ -78,7 +78,7 @@ fn include_and_includeif_correct_inclusion_order_and_delayed_resolve_include() -
 
     let dir = config_path.join(".git");
     for delayed_resolve in [false, true] {
-        let meta = git_config::file::Metadata::try_from_path(&config_path, git_config::Source::Api)?;
+        let meta = gix_config::file::Metadata::try_from_path(&config_path, gix_config::Source::Api)?;
         let options = options_with_git_dir(&dir);
         let config = if delayed_resolve {
             let mut config = File::from_bytes_owned(&mut root_config.as_bytes().into(), meta, Default::default())?;

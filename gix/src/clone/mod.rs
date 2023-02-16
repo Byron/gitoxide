@@ -72,7 +72,7 @@ impl PrepareFetch {
         create_opts.destination_must_be_empty = true;
         let mut repo = crate::ThreadSafeRepository::init_opts(path, kind, create_opts, open_opts)?.to_thread_local();
         if repo.committer().is_none() {
-            let mut config = git_config::File::new(git_config::file::Metadata::api());
+            let mut config = gix_config::File::new(gix_config::file::Metadata::api());
             config
                 .set_raw_value(
                     "gitoxide",

@@ -55,8 +55,8 @@ pub(crate) struct SchemePermission {
 impl SchemePermission {
     /// NOTE: _intentionally without leniency_
     pub fn from_config(
-        config: &git_config::File<'static>,
-        mut filter: fn(&git_config::file::Metadata) -> bool,
+        config: &gix_config::File<'static>,
+        mut filter: fn(&gix_config::file::Metadata) -> bool,
     ) -> Result<Self, config::protocol::allow::Error> {
         let allow: Option<Allow> = config
             .string_filter_by_key("protocol.allow", &mut filter)

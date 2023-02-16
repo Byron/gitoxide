@@ -9,23 +9,23 @@ use crate::{
 pub(crate) fn interpolate_context<'a>(
     git_install_dir: Option<&'a std::path::Path>,
     home_dir: Option<&'a std::path::Path>,
-) -> git_config::path::interpolate::Context<'a> {
-    git_config::path::interpolate::Context {
+) -> gix_config::path::interpolate::Context<'a> {
+    gix_config::path::interpolate::Context {
         git_install_dir,
         home_dir,
-        home_for_user: Some(git_config::path::interpolate::home_for_user), // TODO: figure out how to configure this
+        home_for_user: Some(gix_config::path::interpolate::home_for_user), // TODO: figure out how to configure this
     }
 }
 
-pub(crate) fn base_options(lossy: Option<bool>) -> git_config::file::init::Options<'static> {
-    git_config::file::init::Options {
+pub(crate) fn base_options(lossy: Option<bool>) -> gix_config::file::init::Options<'static> {
+    gix_config::file::init::Options {
         lossy: lossy.unwrap_or(!cfg!(debug_assertions)),
         ..Default::default()
     }
 }
 
 pub(crate) fn config_bool(
-    config: &git_config::File<'_>,
+    config: &gix_config::File<'_>,
     key: &'static config::tree::keys::Boolean,
     key_str: &str,
     default: bool,
@@ -46,7 +46,7 @@ pub(crate) fn config_bool(
 }
 
 pub(crate) fn query_refupdates(
-    config: &git_config::File<'static>,
+    config: &gix_config::File<'static>,
     lenient_config: bool,
 ) -> Result<Option<gix_ref::store::WriteReflog>, Error> {
     let key = "core.logAllRefUpdates";
@@ -67,11 +67,11 @@ pub(crate) fn reflog_or_default(
     })
 }
 
-/// Return `(pack_cache_bytes, object_cache_bytes)` as parsed from git-config
+/// Return `(pack_cache_bytes, object_cache_bytes)` as parsed from gix-config
 pub(crate) fn parse_object_caches(
-    config: &git_config::File<'static>,
+    config: &gix_config::File<'static>,
     lenient: bool,
-    mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
+    mut filter_config_section: fn(&gix_config::file::Metadata) -> bool,
 ) -> Result<(Option<usize>, usize), Error> {
     let pack_cache_bytes = config
         .integer_filter_by_key("core.deltaBaseCacheLimit", &mut filter_config_section)
@@ -88,7 +88,7 @@ pub(crate) fn parse_object_caches(
 }
 
 pub(crate) fn parse_core_abbrev(
-    config: &git_config::File<'static>,
+    config: &gix_config::File<'static>,
     object_hash: gix_hash::Kind,
 ) -> Result<Option<usize>, Error> {
     Ok(config
@@ -99,7 +99,7 @@ pub(crate) fn parse_core_abbrev(
 }
 
 pub(crate) fn disambiguate_hint(
-    config: &git_config::File<'static>,
+    config: &gix_config::File<'static>,
     lenient_config: bool,
 ) -> Result<Option<ObjectKindHint>, config::key::GenericErrorWithValue> {
     match config.string_by_key("core.disambiguate") {

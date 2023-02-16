@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use git_config::value::normalize_bstr;
+use gix_config::value::normalize_bstr;
 
 use crate::file::cow_str;
 

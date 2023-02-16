@@ -110,7 +110,7 @@ check: ## Build all code in suitable configurations
 			   && cargo check
 	cd gix-config-value && cargo check --all-features \
 				 && cargo check
-	cd git-config && cargo check --all-features \
+	cd gix-config && cargo check --all-features \
 				 && cargo check
 	cd git-transport && cargo check \
 					 && cargo check --features blocking-client \
@@ -274,7 +274,7 @@ stress: ## Run various algorithms on big repositories
 	rm -Rf delme; mkdir delme && time ./target/release/gix --verbose no-repo pack explode .git/objects/pack/*.idx delme/
 
 	$(MAKE) stress-commitgraph
-	$(MAKE) bench-git-config
+	$(MAKE) bench-gix-config
 
 .PHONY: stress-commitgraph
 stress-commitgraph: release-lean $(commit_graphs)
@@ -282,9 +282,9 @@ stress-commitgraph: release-lean $(commit_graphs)
 		time ./target/release/gix --verbose no-repo commit-graph verify $$path; \
 	done
 
-.PHONY: bench-git-config
-bench-git-config:
-	cd git-config && cargo bench
+.PHONY: bench-gix-config
+bench-gix-config:
+	cd gix-config && cargo bench
 
 check-msrv-on-ci: ## Check the minimal support rust version for currently installed Rust version
 	rustc --version

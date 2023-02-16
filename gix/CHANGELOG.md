@@ -117,7 +117,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
    originating from separate config files), the fallback name and email
    ("gitoxide" and "gitoxide@localhost") would be used.
    
-   The solution is to use git_config::File::string() to lookup the name and
+   The solution is to use gix_config::File::string() to lookup the name and
    email separately. The string() method correctly resolves the value by
    looking through all sections from all files in the correct order.
 
@@ -534,7 +534,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
    When true, default false, inject the git installation configuration file
    if present at the cost of one `git config` invocation.
    
-   Note that we rely on the underlying `git-config` crate to not load
+   Note that we rely on the underlying `gix-config` crate to not load
    duplicate files.
    
    We also currently lie about the scope which is actually unclear - have
@@ -671,7 +671,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
  - <csr-id-47619f7c06a49dcf60a30e1a43a5352914183092/> add `Repository::object_cache_size_if_unset()`
  - <csr-id-d2611cee61841bc7bd978bef5af7dc66154248a2/> `Commit::message_raw_sloppy()` to provide yet another way to obtain a commit message.
  - <csr-id-906c95845fa4aa2d4390c522bb566a188b8c0e78/> add `rev_spec::parse::ObjectKindHint` to support `core.disambiguate`.
-   The latter is seemingly undocumented in the typical place, git-config.
+   The latter is seemingly undocumented in the typical place, gix-config.
  - <csr-id-ef187f0180d89544d9015cbc2bc03d8cb51f4615/> `Remote::with_refspec()` to add new unique refspecs
  - <csr-id-d51ba42c643d8ee03a3c6b648f8524ff04827170/> `Remote::push_url()` to set it after the fact
  - <csr-id-9b07b91ad065836e7473df6635025659af2865ee/> `Repository::remote_at(…)` to create an unnamed remote
@@ -736,7 +736,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
    directory.
  - <csr-id-840d9a3018d11146bb8e80fc92693c65eb534d91/> permissions for configuration.
    It provides fine-grained control over what sources to load.
- - <csr-id-657080829867d9dcb0c9b9cb6c1c8126c4df3783/> `git-config` is now accessible in `git-repository::config`.
+ - <csr-id-657080829867d9dcb0c9b9cb6c1c8126c4df3783/> `gix-config` is now accessible in `git-repository::config`.
  - <csr-id-d99453ebeb970ed493be236def299d1e82b01f83/> `gix config` lists all entries of all configuration files git considers.
    Filters allow to narrow down the output.
  - <csr-id-ebedd03e119aa5d46da07e577bfccad621eaecb5/> repository now initializes global configuration files and resolves includes
@@ -745,7 +745,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
    We also apply trust-based config query during initialization to assure
    we don't use paths which aren't owned by the current user.
  - <csr-id-5f9bfa89ceb61f484be80575b0379bbf9d7a36b3/> `Repository::config_snapshot()` to access configuration values.
- - <csr-id-7f67b23b9462b805591b1fe5a8406f8d7404f372/> Use `git-config` to write config file on initialization, including `logallrefupdates` and `precomposeunicode`.
+ - <csr-id-7f67b23b9462b805591b1fe5a8406f8d7404f372/> Use `gix-config` to write config file on initialization, including `logallrefupdates` and `precomposeunicode`.
  - <csr-id-e263e13d312e41aa1481d104fa79ede509fbe1c5/> respect `core.logallrefupdates` configuration setting.
 
 ### Changed (BREAKING)

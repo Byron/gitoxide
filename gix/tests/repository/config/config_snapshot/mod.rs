@@ -91,7 +91,7 @@ fn apply_cli_overrides() -> crate::Result {
             "implicit.bool-true",
             "implicit.bool-false = ",
         ],
-        git_config::Source::Cli,
+        gix_config::Source::Cli,
     )?;
 
     let config = repo.config_snapshot();

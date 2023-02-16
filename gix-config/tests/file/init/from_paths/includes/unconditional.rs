@@ -1,6 +1,6 @@
 use std::fs;
 
-use git_config::{
+use gix_config::{
     file::{includes, init, init::from_paths},
     File,
 };

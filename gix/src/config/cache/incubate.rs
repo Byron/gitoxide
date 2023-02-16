@@ -5,7 +5,7 @@ use crate::config::tree::{Core, Extensions};
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
 pub(crate) struct StageOne {
-    pub git_dir_config: git_config::File<'static>,
+    pub git_dir_config: gix_config::File<'static>,
     pub buf: Vec<u8>,
 
     pub is_bare: bool,
@@ -27,7 +27,7 @@ impl StageOne {
         let mut config = load_config(
             common_dir.join("config"),
             &mut buf,
-            git_config::Source::Local,
+            gix_config::Source::Local,
             git_dir_trust,
             lossy,
         )?;
@@ -61,7 +61,7 @@ impl StageOne {
             let worktree_config = load_config(
                 git_dir.join("config.worktree"),
                 &mut buf,
-                git_config::Source::Worktree,
+                gix_config::Source::Worktree,
                 git_dir_trust,
                 lossy,
             )?;
@@ -83,26 +83,26 @@ impl StageOne {
 fn load_config(
     config_path: std::path::PathBuf,
     buf: &mut Vec<u8>,
-    source: git_config::Source,
+    source: gix_config::Source,
     git_dir_trust: gix_sec::Trust,
     lossy: Option<bool>,
-) -> Result<git_config::File<'static>, Error> {
+) -> Result<gix_config::File<'static>, Error> {
     buf.clear();
-    let metadata = git_config::file::Metadata::from(source)
+    let metadata = gix_config::file::Metadata::from(source)
         .at(&config_path)
         .with(git_dir_trust);
     let mut file = match std::fs::File::open(&config_path) {
         Ok(f) => f,
-        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(git_config::File::new(metadata)),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(gix_config::File::new(metadata)),
         Err(err) => return Err(err.into()),
     };
     std::io::copy(&mut file, buf)?;
 
-    let config = git_config::File::from_bytes_owned(
+    let config = gix_config::File::from_bytes_owned(
         buf,
         metadata,
-        git_config::file::init::Options {
-            includes: git_config::file::includes::Options::no_follow(),
+        gix_config::file::init::Options {
+            includes: gix_config::file::includes::Options::no_follow(),
             ..util::base_options(lossy)
         },
     )?;

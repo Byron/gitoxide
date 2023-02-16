@@ -99,7 +99,7 @@ gix-sec = { version = "^0.6.2", path = "../gix-sec" }
 git-date = { version = "^0.4.2", path = "../git-date" }
 git-refspec = { version = "^0.7.2", path = "../git-refspec" }
 
-git-config = { version = "^0.16.1", path = "../git-config" }
+gix-config = { version = "^0.16.1", path = "../gix-config" }
 git-odb = { version = "^0.40.2", path = "../git-odb" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-object = { version = "^0.26.1", path = "../gix-object" }

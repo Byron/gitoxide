@@ -12,7 +12,7 @@ mod get {
 
     #[test]
     fn multi_line() -> crate::Result {
-        let mut config: git_config::File = r#"[core]
+        let mut config: gix_config::File = r#"[core]
             a=b\
 "100"
         [core]
@@ -59,7 +59,7 @@ mod set {
             values.set_all(value);
 
             let config_str = config.to_string();
-            let config: git_config::File = config_str.parse()?;
+            let config: gix_config::File = config_str.parse()?;
             assert_eq!(
                 config.raw_values("core", None, "a")?,
                 vec![cow_str(value), cow_str(value), cow_str(value)],
@@ -151,7 +151,7 @@ mod delete {
     }
 }
 
-fn init_config() -> git_config::File<'static> {
+fn init_config() -> gix_config::File<'static> {
     r#"[core]
     a = b"100"
     [core]

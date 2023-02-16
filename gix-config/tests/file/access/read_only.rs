@@ -1,7 +1,7 @@
 use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
-use git_config::{
+use gix_config::{
     color,
     file::{init, Metadata},
     integer, path, Boolean, Color, File, Integer,
@@ -131,7 +131,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         );
 
         {
-            let actual = config.value::<git_config::Path>("core", None, "location")?;
+            let actual = config.value::<gix_config::Path>("core", None, "location")?;
             assert_eq!(&*actual, "~/tmp", "no interpolation occurs when querying a path");
 
             let home = std::env::current_dir()?;
@@ -156,7 +156,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         let actual = config.path("core", None, "location-quoted").expect("present");
         assert_eq!(&*actual, "~/quoted");
 
-        let actual = config.value::<git_config::Path>("core", None, "location-quoted")?;
+        let actual = config.value::<gix_config::Path>("core", None, "location-quoted")?;
         assert_eq!(&*actual, "~/quoted", "but the path is unquoted");
     }
 
@@ -261,7 +261,7 @@ fn unknown_section() -> crate::Result {
     let config = File::default();
     assert!(matches!(
         config.section("missing", None).unwrap_err(),
-        git_config::lookup::existing::Error::SectionMissing
+        gix_config::lookup::existing::Error::SectionMissing
     ));
 
     let config = r#"
@@ -271,7 +271,7 @@ fn unknown_section() -> crate::Result {
     let mut config = File::try_from(config)?;
     assert!(matches!(
         config.section("present", Some("subsection".into())).unwrap_err(),
-        git_config::lookup::existing::Error::SubSectionMissing
+        gix_config::lookup::existing::Error::SubSectionMissing
     ));
 
     config.set_raw_value("present", Some("subsection".into()), "key", "value")?;
@@ -285,7 +285,7 @@ fn unknown_section() -> crate::Result {
     }
     assert!(matches!(
         config.section("present", None).unwrap_err(),
-        git_config::lookup::existing::Error::SectionMissing
+        gix_config::lookup::existing::Error::SectionMissing
     ));
 
     Ok(())

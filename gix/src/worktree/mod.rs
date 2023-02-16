@@ -81,7 +81,7 @@ pub mod open_index {
         ConfigIndexThreads {
             value: BString,
             #[source]
-            err: git_config::value::Error,
+            err: gix_config::value::Error,
         },
         #[error(transparent)]
         IndexFile(#[from] git_index::file::init::Error),
@@ -113,7 +113,7 @@ pub mod excludes {
         #[error(transparent)]
         EnvironmentPermission(#[from] gix_sec::permission::Error<PathBuf>),
         #[error("The value for `core.excludesFile` could not be read from configuration")]
-        ExcludesFilePathInterpolation(#[from] git_config::path::interpolate::Error),
+        ExcludesFilePathInterpolation(#[from] gix_config::path::interpolate::Error),
     }
 
     impl<'repo> crate::Worktree<'repo> {

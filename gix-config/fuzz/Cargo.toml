@@ -1,6 +1,6 @@
 
 [package]
-name = "git-config-fuzz"
+name = "gix-config-fuzz"
 version = "0.0.0"
 authors = ["Automatically generated"]
 publish = false
@@ -12,7 +12,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.3"
 
-[dependencies.git-config]
+[dependencies.gix-config]
 path = ".."
 
 # Prevent this from interfering with workspaces

@@ -170,7 +170,7 @@ mod branch {
 }
 
 impl crate::Repository {
-    pub(crate) fn filter_config_section(&self) -> fn(&git_config::file::Metadata) -> bool {
+    pub(crate) fn filter_config_section(&self) -> fn(&gix_config::file::Metadata) -> bool {
         self.options
             .filter_config_section
             .unwrap_or(config::section::is_trusted)

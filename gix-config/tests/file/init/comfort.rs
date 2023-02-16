@@ -1,10 +1,10 @@
-use git_config::source;
 use git_testtools::Env;
+use gix_config::source;
 use serial_test::serial;
 
 #[test]
 fn from_globals() {
-    let config = git_config::File::from_globals().unwrap();
+    let config = gix_config::File::from_globals().unwrap();
     assert!(config.sections().all(|section| {
         let kind = section.meta().source.kind();
         kind != source::Kind::Repository && kind != source::Kind::Override
@@ -14,7 +14,7 @@ fn from_globals() {
 #[test]
 #[serial]
 fn from_environment_overrides() {
-    let config = git_config::File::from_environment_overrides().unwrap();
+    let config = gix_config::File::from_environment_overrides().unwrap();
     assert!(config.is_void());
 }
 
@@ -37,7 +37,7 @@ fn from_git_dir() -> crate::Result {
             worktree_dir.join("c.config").display().to_string(),
         );
 
-    let config = git_config::File::from_git_dir(git_dir)?;
+    let config = gix_config::File::from_git_dir(git_dir)?;
     assert_eq!(
         config.string("a", None, "local").expect("present").as_ref(),
         "value",
@@ -87,7 +87,7 @@ fn from_git_dir_with_worktree_extension() -> crate::Result {
     let git_dir = git_testtools::scripted_fixture_read_only_standalone("config_with_worktree_extension.sh")?
         .join("main-worktree")
         .join(".git");
-    let config = git_config::File::from_git_dir(git_dir)?;
+    let config = gix_config::File::from_git_dir(git_dir)?;
 
     assert_eq!(
         config

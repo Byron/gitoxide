@@ -57,7 +57,7 @@ The following schematic helps to visualize what follows.
     ║    │ │  gix-hash   │   │  gix-actor  │ │    ║   
     ║    │ └─────────────┘   └─────────────┘ │    ║  │
     ║    │ ┌─────────────┐   ┌─────────────┐ │    ║   
-    ║    │ │   gix-ref   │   │ git-config  │ │    ║  │
+    ║    │ │   gix-ref   │   │ gix-config  │ │    ║  │
     ║    │ └─────────────┘   └─────────────┘ │    ║   
     ║    │ ┌─────────────┐   ┌─────────────┐ │    ║  │
     ║    │ │ gix-object  │   │  gix-lock   │ │    ║   

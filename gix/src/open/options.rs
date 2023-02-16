@@ -42,14 +42,14 @@ impl Options {
 impl Options {
     /// Apply the given configuration `values` like `init.defaultBranch=special` or `core.bool-implicit-true` in memory to as early
     /// as the configuration is initialized to allow affecting the repository instantiation phase, both on disk or when opening.
-    /// The configuration is marked with [source API][git_config::Source::Api].
+    /// The configuration is marked with [source API][gix_config::Source::Api].
     pub fn config_overrides(mut self, values: impl IntoIterator<Item = impl Into<BString>>) -> Self {
         self.api_config_overrides = values.into_iter().map(Into::into).collect();
         self
     }
 
     /// Set configuration values of the form `core.abbrev=5` or `remote.origin.url = foo` or `core.bool-implicit-true` for application
-    /// as CLI overrides to the repository configuration, marked with [source CLI][git_config::Source::Cli].
+    /// as CLI overrides to the repository configuration, marked with [source CLI][gix_config::Source::Cli].
     /// These are equivalent to CLI overrides passed with `-c` in `git`, for example.
     pub fn cli_overrides(mut self, values: impl IntoIterator<Item = impl Into<BString>>) -> Self {
         self.cli_config_overrides = values.into_iter().map(Into::into).collect();
@@ -114,8 +114,8 @@ impl Options {
     /// hence it returns true if it is eligible.
     ///
     /// The default filter selects sections whose trust level is [`full`][gix_sec::Trust::Full] or
-    /// whose source is not [`repository-local`][git_config::source::Kind::Repository].
-    pub fn filter_config_section(mut self, filter: fn(&git_config::file::Metadata) -> bool) -> Self {
+    /// whose source is not [`repository-local`][gix_config::source::Kind::Repository].
+    pub fn filter_config_section(mut self, filter: fn(&gix_config::file::Metadata) -> bool) -> Self {
         self.filter_config_section = Some(filter);
         self
     }

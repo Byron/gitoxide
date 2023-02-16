@@ -22,7 +22,7 @@ fn section_mut_or_create_new_filter_may_reject_existing_sections() -> crate::Res
     assert_eq!(section.to_bstring(), "[a]\n");
     assert_eq!(
         section.meta(),
-        &git_config::file::Metadata::api(),
+        &gix_config::file::Metadata::api(),
         "new sections are of source 'API'"
     );
     Ok(())
@@ -123,13 +123,13 @@ mod set {
 mod push {
     use std::convert::{TryFrom, TryInto};
 
-    use git_config::parse::section::Key;
+    use gix_config::parse::section::Key;
 
     use crate::file::cow_str;
 
     #[test]
     fn none_as_value_omits_the_key_value_separator() -> crate::Result {
-        let mut file = git_config::File::default();
+        let mut file = gix_config::File::default();
         let mut section = file.section_mut_or_create_new("a", Some("sub".into()))?;
         section.push("key".try_into()?, None);
         let expected = format!("[a \"sub\"]{nl}\tkey{nl}", nl = section.newline());
@@ -158,7 +158,7 @@ mod push {
                 (Some(" "), Some("  ")),
             ),
         ] {
-            let mut config: git_config::File = input.parse()?;
+            let mut config: gix_config::File = input.parse()?;
             let section = config.section_mut("a", None)?;
             assert_eq!(
                 section.leading_whitespace(),
@@ -190,7 +190,7 @@ mod push {
             ("#c", "$head\tk = \"#c\"$nl"),
             ("a\nb\n\tc", "$head\tk = a\\nb\\n\\tc$nl"),
         ] {
-            let mut config = git_config::File::default();
+            let mut config = gix_config::File::default();
             let mut section = config.new_section("a", None).unwrap();
             section.set_implicit_newline(false);
             section.push(Key::try_from("k").unwrap(), Some(value.into()));
@@ -203,7 +203,7 @@ mod push {
 }
 
 mod push_with_comment {
-    use git_config::parse::section::Key;
+    use gix_config::parse::section::Key;
 
     #[test]
     fn various_comments_and_escaping() {
@@ -221,7 +221,7 @@ mod push_with_comment {
                 "$head\tk = v # a\rb\r linefeeds aren't special$nl",
             ),
         ] {
-            let mut config = git_config::File::default();
+            let mut config = gix_config::File::default();
             let mut section = config.new_section("a", None).unwrap();
             section.set_implicit_newline(false);
             section.push_with_comment(Key::try_from("k").unwrap(), Some("v".into()), comment);
@@ -237,13 +237,13 @@ mod set_leading_whitespace {
     use std::{borrow::Cow, convert::TryFrom};
 
     use bstr::BString;
-    use git_config::parse::section::Key;
+    use gix_config::parse::section::Key;
 
     use crate::file::cow_str;
 
     #[test]
     fn any_whitespace_is_ok() -> crate::Result {
-        let mut config = git_config::File::default();
+        let mut config = gix_config::File::default();
         let mut section = config.new_section("core", None)?;
 
         let nl = section.newline().to_owned();
@@ -257,13 +257,13 @@ mod set_leading_whitespace {
     #[test]
     #[should_panic]
     fn panics_if_non_whitespace_is_used() {
-        let mut config = git_config::File::default();
+        let mut config = gix_config::File::default();
         let mut section = config.new_section("core", None).unwrap();
         section.set_leading_whitespace(cow_str("foo").into());
     }
 }
 
-fn multi_value_section() -> git_config::File<'static> {
+fn multi_value_section() -> gix_config::File<'static> {
     r#"
         [a]
             a = v

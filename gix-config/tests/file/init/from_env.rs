@@ -1,10 +1,10 @@
 use std::{borrow::Cow, fs};
 
-use git_config::{
+use git_testtools::Env;
+use gix_config::{
     file::{includes, init, init::from_env},
     File,
 };
-use git_testtools::Env;
 use serial_test::serial;
 use tempfile::tempdir;
 
@@ -45,7 +45,7 @@ fn single_key_value_pair() -> crate::Result {
     assert_eq!(config.raw_value("core", None, "key")?, Cow::<[u8]>::Borrowed(b"value"));
     assert_eq!(
         config.section_by_key("core")?.meta(),
-        &git_config::file::Metadata::from(git_config::Source::Env),
+        &gix_config::file::Metadata::from(gix_config::Source::Env),
         "source if configured correctly"
     );
     assert_eq!(config.num_values(), 1);

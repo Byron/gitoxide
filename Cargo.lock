@@ -1282,45 +1282,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-config"
-version = "0.16.1"
-dependencies = [
- "bstr",
- "criterion",
- "document-features",
- "gix-config-value",
- "gix-features",
- "gix-glob",
- "gix-path",
- "gix-ref",
- "gix-sec",
- "memchr",
- "nom",
- "once_cell",
- "serde",
- "smallvec",
- "thiserror",
- "unicode-bom",
-]
-
-[[package]]
-name = "git-config-tests"
-version = "0.0.0"
-dependencies = [
- "bstr",
- "criterion",
- "git-config",
- "git-testtools",
- "gix",
- "gix-path",
- "gix-ref",
- "gix-sec",
- "serde_derive",
- "serial_test",
- "tempfile",
-]
-
-[[package]]
 name = "git-conventional"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2089,7 +2050,6 @@ dependencies = [
  "async-std",
  "document-features",
  "git-attributes 0.8.2",
- "git-config",
  "git-credentials",
  "git-date 0.4.2",
  "git-diff",
@@ -2109,6 +2069,7 @@ dependencies = [
  "git-url",
  "git-worktree 0.12.2",
  "gix-actor",
+ "gix-config",
  "gix-features",
  "gix-glob",
  "gix-hash",
@@ -2150,6 +2111,45 @@ dependencies = [
  "pretty_assertions",
  "quick-error 2.0.1",
  "serde",
+]
+
+[[package]]
+name = "gix-config"
+version = "0.16.1"
+dependencies = [
+ "bstr",
+ "criterion",
+ "document-features",
+ "gix-config-value",
+ "gix-features",
+ "gix-glob",
+ "gix-path",
+ "gix-ref",
+ "gix-sec",
+ "memchr",
+ "nom",
+ "once_cell",
+ "serde",
+ "smallvec",
+ "thiserror",
+ "unicode-bom",
+]
+
+[[package]]
+name = "gix-config-tests"
+version = "0.0.0"
+dependencies = [
+ "bstr",
+ "criterion",
+ "git-testtools",
+ "gix",
+ "gix-config",
+ "gix-path",
+ "gix-ref",
+ "gix-sec",
+ "serde_derive",
+ "serial_test",
+ "tempfile",
 ]
 
 [[package]]

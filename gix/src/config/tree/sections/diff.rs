@@ -86,7 +86,7 @@ mod renames {
         /// to try and interpret the key as string.
         pub fn try_into_renames<'a>(
             &'static self,
-            value: Result<bool, git_config::value::Error>,
+            value: Result<bool, gix_config::value::Error>,
             value_string: impl FnOnce() -> Option<Cow<'a, BStr>>,
         ) -> Result<Tracking, GenericError> {
             Ok(match value {
@@ -122,7 +122,7 @@ mod validate {
     pub struct Renames;
     impl keys::Validate for Renames {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            let boolean = git_config::Boolean::try_from(value).map(|b| b.0);
+            let boolean = gix_config::Boolean::try_from(value).map(|b| b.0);
             Diff::RENAMES.try_into_renames(boolean, || Some(Cow::Borrowed(value)))?;
             Ok(())
         }

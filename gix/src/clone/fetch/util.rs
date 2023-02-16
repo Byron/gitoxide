@@ -22,28 +22,28 @@ enum WriteMode {
 pub fn write_remote_to_local_config_file(
     remote: &mut crate::Remote<'_>,
     remote_name: BString,
-) -> Result<git_config::File<'static>, Error> {
-    let mut config = git_config::File::new(local_config_meta(remote.repo));
+) -> Result<gix_config::File<'static>, Error> {
+    let mut config = gix_config::File::new(local_config_meta(remote.repo));
     remote.save_as_to(remote_name, &mut config)?;
 
     write_to_local_config(&config, WriteMode::Append)?;
     Ok(config)
 }
 
-fn local_config_meta(repo: &Repository) -> git_config::file::Metadata {
+fn local_config_meta(repo: &Repository) -> gix_config::file::Metadata {
     let meta = repo.config.resolved.meta().clone();
     assert_eq!(
         meta.source,
-        git_config::Source::Local,
+        gix_config::Source::Local,
         "local path is the default for new sections"
     );
     meta
 }
 
-fn write_to_local_config(config: &git_config::File<'static>, mode: WriteMode) -> std::io::Result<()> {
+fn write_to_local_config(config: &gix_config::File<'static>, mode: WriteMode) -> std::io::Result<()> {
     assert_eq!(
         config.meta().source,
-        git_config::Source::Local,
+        gix_config::Source::Local,
         "made for appending to local configuration file"
     );
     let mut local_config = std::fs::OpenOptions::new()
@@ -52,10 +52,10 @@ fn write_to_local_config(config: &git_config::File<'static>, mode: WriteMode) ->
         .append(matches!(mode, WriteMode::Append))
         .open(config.meta().path.as_deref().expect("local config with path set"))?;
     local_config.write_all(config.detect_newline_style())?;
-    config.write_to_filter(&mut local_config, |s| s.meta().source == git_config::Source::Local)
+    config.write_to_filter(&mut local_config, |s| s.meta().source == gix_config::Source::Local)
 }
 
-pub fn append_config_to_repo_config(repo: &mut Repository, config: git_config::File<'static>) {
+pub fn append_config_to_repo_config(repo: &mut Repository, config: gix_config::File<'static>) {
     let repo_config = gix_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
     repo_config.append(config);
 }

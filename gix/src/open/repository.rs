@@ -95,7 +95,7 @@ impl ThreadSafeRepository {
     /// Note that this will read various `GIT_*` environment variables to check for overrides, and is probably most useful when implementing
     /// custom hooks.
     // TODO: tests, with hooks, GIT_QUARANTINE for ref-log and transaction control (needs gix-sec support to remove write access in gix-ref)
-    // TODO: The following vars should end up as overrides of the respective configuration values (see git-config).
+    // TODO: The following vars should end up as overrides of the respective configuration values (see gix-config).
     //       GIT_PROXY_SSL_CERT, GIT_PROXY_SSL_KEY, GIT_PROXY_SSL_CERT_PASSWORD_PROTECTED.
     //       GIT_PROXY_SSL_CAINFO, GIT_SSL_CIPHER_LIST, GIT_HTTP_MAX_REQUESTS, GIT_CURL_FTP_NO_EPSV,
     pub fn open_with_environment_overrides(
@@ -273,9 +273,9 @@ impl ThreadSafeRepository {
 
 // TODO: tests
 fn replacement_objects_refs_prefix(
-    config: &git_config::File<'static>,
+    config: &gix_config::File<'static>,
     lenient: bool,
-    mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
+    mut filter_config_section: fn(&gix_config::file::Metadata) -> bool,
 ) -> Result<Option<PathBuf>, Error> {
     let is_disabled = config
         .boolean_filter_by_key("gitoxide.objects.noReplace", &mut filter_config_section)
@@ -325,7 +325,7 @@ fn check_safe_directories(
             continue;
         }
         if !is_safe {
-            let safe_dir = match git_config::Path::from(std::borrow::Cow::Borrowed(safe_dir.as_ref()))
+            let safe_dir = match gix_config::Path::from(std::borrow::Cow::Borrowed(safe_dir.as_ref()))
                 .interpolate(interpolate_context(git_install_dir, home))
             {
                 Ok(path) => path,

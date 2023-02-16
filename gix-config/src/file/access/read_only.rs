@@ -33,8 +33,8 @@ impl<'event> File<'event> {
     /// # Examples
     ///
     /// ```
-    /// # use git_config::File;
-    /// # use git_config::{Integer, Boolean};
+    /// # use gix_config::File;
+    /// # use gix_config::{Integer, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -42,11 +42,11 @@ impl<'event> File<'event> {
     ///         a = 10k
     ///         c = false
     /// "#;
-    /// let git_config = git_config::File::try_from(config)?;
+    /// let gix_config = gix_config::File::try_from(config)?;
     /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.value::<Integer>("core", None, "a")?;
+    /// let a_value = gix_config.value::<Integer>("core", None, "a")?;
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Boolean = git_config.value("core", None, "c")?;
+    /// let c_value: Boolean = gix_config.value("core", None, "c")?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn value<'a, T: TryFrom<Cow<'a, BStr>>>(
@@ -83,8 +83,8 @@ impl<'event> File<'event> {
     /// # Examples
     ///
     /// ```
-    /// # use git_config::File;
-    /// # use git_config::{Integer, Boolean};
+    /// # use gix_config::File;
+    /// # use gix_config::{Integer, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// # use bstr::ByteSlice;
@@ -96,9 +96,9 @@ impl<'event> File<'event> {
     ///         a
     ///         a = false
     /// "#;
-    /// let git_config = git_config::File::try_from(config).unwrap();
+    /// let gix_config = gix_config::File::try_from(config).unwrap();
     /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.values::<Boolean>("core", None, "a")?;
+    /// let a_value = gix_config.values::<Boolean>("core", None, "a")?;
     /// assert_eq!(
     ///     a_value,
     ///     vec![
@@ -108,7 +108,7 @@ impl<'event> File<'event> {
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Vec<Boolean> = git_config.values("core", None, "c").unwrap();
+    /// let c_value: Vec<Boolean> = gix_config.values("core", None, "c").unwrap();
     /// assert_eq!(c_value, vec![Boolean(false)]);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
@@ -198,8 +198,8 @@ impl<'event> File<'event> {
     /// Calling this method will yield all sections:
     ///
     /// ```
-    /// # use git_config::File;
-    /// # use git_config::{Integer, Boolean};
+    /// # use gix_config::File;
+    /// # use gix_config::{Integer, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -210,8 +210,8 @@ impl<'event> File<'event> {
     ///     [core "apple"]
     ///         e = f
     /// "#;
-    /// let git_config = git_config::File::try_from(config)?;
-    /// assert_eq!(git_config.sections_by_name("core").map_or(0, |s|s.count()), 3);
+    /// let gix_config = gix_config::File::try_from(config)?;
+    /// assert_eq!(gix_config.sections_by_name("core").map_or(0, |s|s.count()), 3);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     #[must_use]

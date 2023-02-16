@@ -18,7 +18,7 @@ pub enum Error {
     #[error(transparent)]
     RemoteName(#[from] crate::config::remote::symbolic_name::Error),
     #[error("Failed to load repo-local git configuration before writing")]
-    LoadConfig(#[from] git_config::file::init::from_paths::Error),
+    LoadConfig(#[from] gix_config::file::init::from_paths::Error),
     #[error("Failed to store configured remote in memory")]
     SaveConfig(#[from] crate::remote::save::AsError),
     #[error("Failed to write repository configuration to disk")]

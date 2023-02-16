@@ -99,9 +99,9 @@ pub(crate) struct Personas {
 }
 
 impl Personas {
-    pub fn from_config_and_env(config: &git_config::File<'_>) -> Self {
+    pub fn from_config_and_env(config: &gix_config::File<'_>) -> Self {
         fn entity_in_section(
-            config: &git_config::File<'_>,
+            config: &gix_config::File<'_>,
             name_key: &keys::Any,
             email_key: &keys::Any,
             fallback: Option<(&keys::Any, &keys::Any)>,
