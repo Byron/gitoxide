@@ -7,9 +7,9 @@ use std::{
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
-use git_odb::FindExt;
 use gix_features::progress;
 use gix_object::bstr::ByteSlice;
+use gix_odb::FindExt;
 use gix_worktree::{fs::Capabilities, index, index::checkout::Collision};
 use tempfile::TempDir;
 
@@ -392,7 +392,7 @@ fn checkout_index_in_tmp_dir_opts(
     let source_tree = fixture_path(name);
     let git_dir = source_tree.join(".git");
     let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default())?;
-    let odb = git_odb::at(git_dir.join("objects"))?.into_inner().into_arc()?;
+    let odb = gix_odb::at(git_dir.join("objects"))?.into_inner().into_arc()?;
     let destination = tempfile::tempdir_in(std::env::current_dir()?)?;
     prep_dest(destination.path())?;
 
@@ -403,7 +403,7 @@ fn checkout_index_in_tmp_dir_opts(
             if allow_return_object(oid) {
                 odb.find_blob(oid, buf)
             } else {
-                Err(git_odb::find::existing_object::Error::NotFound { oid: oid.to_owned() })
+                Err(gix_odb::find::existing_object::Error::NotFound { oid: oid.to_owned() })
             }
         },
         &mut progress::Discard,

@@ -1,7 +1,7 @@
 mod locate {
     use bstr::ByteSlice;
-    use git_odb::pack;
     use gix_object::Kind;
+    use gix_odb::pack;
 
     use crate::{fixture_path, hex_to_id, pack::SMALL_PACK_INDEX};
 
@@ -15,7 +15,7 @@ mod locate {
     }
 
     mod locate_and_verify {
-        use git_odb::pack;
+        use gix_odb::pack;
 
         use crate::{fixture_path, pack::PACKS_AND_INDICES};
 
@@ -78,8 +78,8 @@ mod locate {
 mod write_to_directory {
     use std::{fs, path::Path, sync::atomic::AtomicBool};
 
-    use git_odb::pack;
     use gix_features::progress;
+    use gix_odb::pack;
     use tempfile::TempDir;
 
     use crate::{

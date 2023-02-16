@@ -33,7 +33,7 @@ impl File {
 
     /// Returns an object id at the given index in our list of (sorted) hashes.
     /// The position ranges from 0 to self.num_commits()
-    // copied from git-odb/src/pack/index/ext
+    // copied from gix-odb/src/pack/index/ext
     pub fn id_at(&self, pos: file::Position) -> &gix_hash::oid {
         assert!(
             pos.0 < self.num_commits(),
@@ -69,7 +69,7 @@ impl File {
     }
 
     /// Translate the given object hash to its position within this file, if present.
-    // copied from git-odb/src/pack/index/ext
+    // copied from gix-odb/src/pack/index/ext
     pub fn lookup(&self, id: impl AsRef<gix_hash::oid>) -> Option<file::Position> {
         let id = id.as_ref();
         let first_byte = usize::from(id.first_byte());

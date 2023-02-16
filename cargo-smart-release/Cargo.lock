@@ -717,7 +717,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-odb"
+name = "gix-odb"
 version = "0.30.0"
 dependencies = [
  "arc-swap",
@@ -809,7 +809,7 @@ dependencies = [
  "gix-lock",
  "gix-mailmap",
  "gix-object",
- "git-odb",
+ "gix-odb",
  "git-pack",
  "gix-path",
  "gix-ref",

@@ -116,7 +116,7 @@ mod blocking_io {
         match out.status {
             gix::remote::fetch::Status::Change { update_refs, .. } => {
                 for edit in &update_refs.edits {
-                    use git_odb::Find;
+                    use gix_odb::Find;
                     match edit.change.new_value().expect("always set/no deletion") {
                         TargetRef::Symbolic(referent) => {
                             assert!(

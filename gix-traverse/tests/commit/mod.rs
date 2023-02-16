@@ -1,6 +1,6 @@
 mod ancestor {
-    use git_odb::pack::FindExt;
     use gix_hash::{oid, ObjectId};
+    use gix_odb::pack::FindExt;
     use gix_traverse::commit;
 
     use crate::hex_to_id;
@@ -36,9 +36,9 @@ mod ancestor {
     }
 
     impl TraversalAssertion<'_> {
-        fn setup(&self) -> crate::Result<(git_odb::Handle, Vec<ObjectId>, Vec<ObjectId>)> {
+        fn setup(&self) -> crate::Result<(gix_odb::Handle, Vec<ObjectId>, Vec<ObjectId>)> {
             let dir = git_testtools::scripted_fixture_read_only_standalone(self.init_script)?;
-            let store = git_odb::at(dir.join(".git").join("objects"))?;
+            let store = gix_odb::at(dir.join(".git").join("objects"))?;
             let tips: Vec<_> = self.tips.iter().copied().map(hex_to_id).collect();
             let expected: Vec<ObjectId> = tips
                 .clone()
@@ -239,7 +239,7 @@ mod ancestor {
     fn committer_date_sorted_commits_with_cutoff_is_applied_to_starting_position() -> crate::Result {
         let dir =
             git_testtools::scripted_fixture_read_only_standalone("make_traversal_repo_for_commits_with_dates.sh")?;
-        let store = git_odb::at(dir.join(".git").join("objects"))?;
+        let store = gix_odb::at(dir.join(".git").join("objects"))?;
         let iter = commit::Ancestors::new(
             Some(hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7")),
             commit::ancestors::State::default(),

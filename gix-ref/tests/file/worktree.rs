@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, path::PathBuf};
 
-use git_odb::Find;
 use git_testtools::Creation;
+use gix_odb::Find;
 use gix_ref::{file::ReferenceExt, Reference};
 
 fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile::TempDir>)> {
@@ -21,13 +21,13 @@ fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile:
 fn main_store(
     packed: bool,
     writable: impl Into<bool>,
-) -> crate::Result<(gix_ref::file::Store, git_odb::Handle, Option<tempfile::TempDir>)> {
+) -> crate::Result<(gix_ref::file::Store, gix_odb::Handle, Option<tempfile::TempDir>)> {
     let writable = writable.into();
     let (dir, tmp) = dir(packed, writable)?;
     let git_dir = dir.join("repo").join(".git");
     Ok((
         gix_ref::file::Store::at(&git_dir, Default::default(), Default::default()),
-        git_odb::at(git_dir.join("objects"))?,
+        gix_odb::at(git_dir.join("objects"))?,
         tmp,
     ))
 }
@@ -36,7 +36,7 @@ fn worktree_store(
     packed: bool,
     worktree_name: &str,
     writable: impl Into<bool>,
-) -> crate::Result<(gix_ref::file::Store, git_odb::Handle, Option<tempfile::TempDir>)> {
+) -> crate::Result<(gix_ref::file::Store, gix_odb::Handle, Option<tempfile::TempDir>)> {
     let (dir, tmp) = dir(packed, writable.into())?;
     let (git_dir, _work_tree) = gix_discover::upwards(dir.join(worktree_name))?
         .0
@@ -44,19 +44,19 @@ fn worktree_store(
     let common_dir = git_dir.join("../..");
     Ok((
         gix_ref::file::Store::for_linked_worktree(git_dir, &common_dir, Default::default(), Default::default()),
-        git_odb::at(common_dir.join("objects"))?,
+        gix_odb::at(common_dir.join("objects"))?,
         tmp,
     ))
 }
 
 fn into_peel(
     store: &gix_ref::file::Store,
-    odb: git_odb::Handle,
+    odb: gix_odb::Handle,
 ) -> impl Fn(gix_ref::Reference) -> gix_hash::ObjectId + '_ {
     move |mut r: gix_ref::Reference| {
         r.peel_to_id_in_place(
             store,
-            |id, buf| -> Result<Option<(gix_object::Kind, &[u8])>, git_odb::store::find::Error> {
+            |id, buf| -> Result<Option<(gix_object::Kind, &[u8])>, gix_odb::store::find::Error> {
                 let data = odb.try_find(id, buf)?;
                 Ok(data.map(|d| (d.kind, d.data)))
             },

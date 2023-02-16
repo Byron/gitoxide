@@ -1,4 +1,4 @@
-use git_odb::pack;
+use gix_odb::pack;
 
 #[test]
 fn size_of_entry() {
@@ -12,7 +12,7 @@ fn size_of_entry() {
 mod new_from_header {
     use std::fs;
 
-    use git_odb::{
+    use gix_odb::{
         pack,
         pack::data::input::{EntryDataMode, Mode},
     };

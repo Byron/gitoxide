@@ -58,7 +58,7 @@ impl Options {
 
     /// Set the amount of slots to use for the object database. It's a value that doesn't need changes on the client, typically,
     /// but should be controlled on the server.
-    pub fn object_store_slots(mut self, slots: git_odb::store::init::Slots) -> Self {
+    pub fn object_store_slots(mut self, slots: gix_odb::store::init::Slots) -> Self {
         self.object_store_slots = slots;
         self
     }
@@ -163,7 +163,7 @@ impl gix_sec::trust::DefaultForLevel for Options {
                 current_dir: None,
             },
             gix_sec::Trust::Reduced => Options {
-                object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
+                object_store_slots: gix_odb::store::init::Slots::Given(32), // limit resource usage
                 permissions: Permissions::default_for_level(level),
                 git_dir_trust: gix_sec::Trust::Reduced.into(),
                 filter_config_section: Some(config::section::is_trusted),

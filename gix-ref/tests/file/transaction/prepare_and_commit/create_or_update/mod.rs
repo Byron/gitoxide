@@ -1,9 +1,9 @@
 use std::convert::TryInto;
 
-use git_odb::Find;
 use gix_hash::ObjectId;
 use gix_lock::acquire::Fail;
 use gix_object::bstr::{BString, ByteSlice};
+use gix_odb::Find;
 use gix_ref::{
     file::{
         transaction::{self, PackedRefs},
@@ -704,7 +704,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
         store.open_packed_buffer()?.is_none(),
         "there should be no packed refs to start out with"
     );
-    let odb = git_odb::at(store.git_dir().join("objects"))?;
+    let odb = gix_odb::at(store.git_dir().join("objects"))?;
     let edits = store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(

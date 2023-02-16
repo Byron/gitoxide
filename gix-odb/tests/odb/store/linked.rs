@@ -2,8 +2,8 @@
 //! to be sure we don't loose coverage. This might, however, be overlapping with much more thorough
 //! tests o the general store itself, so they can possibly be removed at some point.
 mod iter {
-    use git_odb::Header;
     use git_pack::Find;
+    use gix_odb::Header;
 
     use crate::odb::db;
 
@@ -27,8 +27,8 @@ mod iter {
 }
 
 mod locate {
-    use git_odb::Handle;
     use git_pack::Find;
+    use gix_odb::Handle;
 
     use crate::{hex_to_id, odb::db};
 
@@ -54,8 +54,8 @@ mod locate {
 }
 
 mod init {
-    use git_odb::Find;
     use gix_hash::ObjectId;
+    use gix_odb::Find;
 
     use crate::odb::{alternate::alternate, db};
 
@@ -63,7 +63,7 @@ mod init {
     fn multiple_linked_repositories_via_alternates() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let (object_path, _linked_object_path) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
-        let db = git_odb::at(object_path.clone())?;
+        let db = gix_odb::at(object_path.clone())?;
         db.contains(ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
 
         assert_eq!(db.store_ref().metrics().loose_dbs, 2);
@@ -75,7 +75,7 @@ mod init {
     #[test]
     fn a_db_without_alternates() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
-        let db = git_odb::at(tmp.path())?;
+        let db = gix_odb::at(tmp.path())?;
         db.contains(ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
         assert_eq!(db.store_ref().metrics().loose_dbs, 1);
         assert_eq!(db.store_ref().path(), tmp.path());

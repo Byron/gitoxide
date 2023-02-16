@@ -68,7 +68,7 @@ impl loose::Store {
             inner: fs::walkdir_new(
                 &self.path,
                 fs::walkdir::Parallelism::ThreadPoolPerTraversal {
-                    thread_name: "git_odb::loose::Store::iter: fs-walk",
+                    thread_name: "gix_odb::loose::Store::iter: fs-walk",
                 },
             )
             .min_depth(2)

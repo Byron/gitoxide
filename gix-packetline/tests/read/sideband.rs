@@ -4,7 +4,7 @@ use std::io::{BufRead, Read};
 use bstr::{BString, ByteSlice};
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 use futures_lite::io::AsyncReadExt;
-use git_odb::pack;
+use gix_odb::pack;
 use gix_packetline::PacketLineRef;
 
 use crate::read::streaming_peek_iter::fixture_bytes;

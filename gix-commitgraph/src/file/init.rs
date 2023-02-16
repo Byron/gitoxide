@@ -244,7 +244,7 @@ impl TryFrom<&Path> for File {
     }
 }
 
-// Copied from git-odb/pack/index/init.rs
+// Copied from gix-odb/pack/index/init.rs
 fn read_fan(d: &[u8]) -> ([u32; FAN_LEN], usize) {
     let mut fan = [0; FAN_LEN];
     for (c, f) in d.chunks(4).zip(fan.iter_mut()) {

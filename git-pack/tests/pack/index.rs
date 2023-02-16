@@ -2,8 +2,8 @@ const SHA1_SIZE: usize = gix_hash::Kind::Sha1.len_in_bytes();
 
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-use git_odb::pack;
 use gix_object::{self as object};
+use gix_odb::pack;
 
 use crate::{
     fixture_path, hex_to_id,
@@ -113,12 +113,12 @@ mod version {
     mod any {
         use std::{fs, io, sync::atomic::AtomicBool};
 
-        use git_odb::pack;
         use git_pack::{
             data::{input, EntryRange},
             index,
         };
         use gix_features::progress;
+        use gix_odb::pack;
 
         use crate::{
             fixture_path,

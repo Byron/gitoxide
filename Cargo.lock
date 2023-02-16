@@ -1359,31 +1359,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-odb"
-version = "0.40.2"
-dependencies = [
- "arc-swap",
- "crossbeam-channel",
- "document-features",
- "filetime",
- "git-pack",
- "git-testtools",
- "gix-actor",
- "gix-features",
- "gix-hash",
- "gix-object",
- "gix-path",
- "gix-quote",
- "maplit",
- "num_cpus",
- "parking_lot 0.12.1",
- "pretty_assertions",
- "serde",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
 name = "git-pack"
 version = "0.30.2"
 dependencies = [
@@ -1414,12 +1389,12 @@ name = "git-pack-tests"
 version = "0.30.1"
 dependencies = [
  "bstr",
- "git-odb",
  "git-pack",
  "git-testtools",
  "gix-features",
  "gix-hash",
  "gix-object",
+ "gix-odb",
  "gix-traverse",
  "maplit",
  "memmap2",
@@ -1626,7 +1601,6 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "git-odb",
  "git-pack",
  "git-testtools",
  "gix-actor",
@@ -1644,6 +1618,7 @@ dependencies = [
  "gix-lock",
  "gix-mailmap",
  "gix-object",
+ "gix-odb",
  "gix-path",
  "gix-prompt",
  "gix-protocol",
@@ -1845,11 +1820,11 @@ dependencies = [
 name = "gix-diff-tests"
 version = "0.0.0"
 dependencies = [
- "git-odb",
  "git-testtools",
  "gix-diff",
  "gix-hash",
  "gix-object",
+ "gix-odb",
  "gix-traverse",
 ]
 
@@ -2020,6 +1995,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-odb"
+version = "0.40.2"
+dependencies = [
+ "arc-swap",
+ "crossbeam-channel",
+ "document-features",
+ "filetime",
+ "git-pack",
+ "git-testtools",
+ "gix-actor",
+ "gix-features",
+ "gix-hash",
+ "gix-object",
+ "gix-path",
+ "gix-quote",
+ "maplit",
+ "num_cpus",
+ "parking_lot 0.12.1",
+ "pretty_assertions",
+ "serde",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "gix-packetline"
 version = "0.14.2"
 dependencies = [
@@ -2028,8 +2028,8 @@ dependencies = [
  "document-features",
  "futures-io",
  "futures-lite",
- "git-odb",
  "gix-hash",
+ "gix-odb",
  "hex",
  "maybe-async",
  "pin-project-lite",
@@ -2134,7 +2134,6 @@ dependencies = [
 name = "gix-ref-tests"
 version = "0.0.0"
 dependencies = [
- "git-odb",
  "git-testtools",
  "gix-actor",
  "gix-discover",
@@ -2142,6 +2141,7 @@ dependencies = [
  "gix-hash",
  "gix-lock",
  "gix-object",
+ "gix-odb",
  "gix-ref",
  "gix-validate",
  "gix-worktree",
@@ -2268,10 +2268,10 @@ dependencies = [
 name = "gix-traverse-tests"
 version = "0.0.0"
 dependencies = [
- "git-odb",
  "git-testtools",
  "gix-hash",
  "gix-object",
+ "gix-odb",
  "gix-traverse",
 ]
 
@@ -2308,7 +2308,6 @@ version = "0.12.2"
 dependencies = [
  "bstr",
  "document-features",
- "git-odb",
  "git-testtools",
  "gix-attributes",
  "gix-features",
@@ -2316,6 +2315,7 @@ dependencies = [
  "gix-hash",
  "gix-index",
  "gix-object",
+ "gix-odb",
  "gix-path",
  "io-close",
  "serde",

@@ -972,7 +972,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
    created while adding support for reusing their data buffers thanks
    to a simple free-list stored with the handle.
  - <csr-id-880b56426859306aa30038ff35e2ad14607e9e90/> rename `easy::Object` to `OwnedObject`; remove `Ref` suffix from `ObjectRef` and `TreeRef`
- - <csr-id-f9c0493460ab7c664aaa231ffcf7dfd56076c920/> use `git_odb::Find*` traits in prelude, instead of `git_pack::Find*`
+ - <csr-id-f9c0493460ab7c664aaa231ffcf7dfd56076c920/> use `gix_odb::Find*` traits in prelude, instead of `git_pack::Find*`
    These are higher-level and generally more desirable.
    The Find traits in `git-pack` are more useful internally when packs
    have to be handled directly, for example when generating packs.
@@ -1002,7 +1002,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
  - remove pack-cache from `Find::try_find(…)`
    With the new architecture this can be an implementation detail without
    forcing it to be Sync.
- - move git_pack::data::Object to gix_object::Data, massively alter git_odb::Find trait
+ - move git_pack::data::Object to gix_object::Data, massively alter gix_odb::Find trait
    This will break a lot, but has to happen to prepare these traits for the
    next generation of object databases.
 

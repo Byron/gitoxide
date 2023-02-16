@@ -1,6 +1,5 @@
 use std::{convert::Infallible, sync::atomic::AtomicBool};
 
-use git_odb::{pack, pack::FindExt};
 use git_pack::data::{
     output,
     output::{count, entry},
@@ -9,6 +8,7 @@ use gix_features::{
     parallel::{reduce::Finalize, InOrderIter},
     progress,
 };
+use gix_odb::{pack, pack::FindExt};
 use gix_traverse::commit;
 
 use crate::pack::{
@@ -333,7 +333,7 @@ fn empty_pack_is_allowed() {
 }
 
 fn write_and_verify(
-    db: git_odb::HandleArc,
+    db: gix_odb::HandleArc,
     entries: Vec<output::Entry>,
     expected_pack_hash: gix_hash::ObjectId,
     expected_thin_pack_hash: Option<gix_hash::ObjectId>,
@@ -347,7 +347,7 @@ fn write_and_verify(
     let (num_written_bytes, pack_hash) = {
         let num_entries = entries.len();
         let mut pack_writer = output::bytes::FromEntriesIter::new(
-            std::iter::once(Ok::<_, entry::iter_from_counts::Error<git_odb::store::find::Error>>(
+            std::iter::once(Ok::<_, entry::iter_from_counts::Error<gix_odb::store::find::Error>>(
                 entries,
             )),
             &mut pack_file,

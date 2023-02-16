@@ -1,12 +1,12 @@
 use crate::fixture_path;
 
-fn db() -> git_odb::Handle {
-    git_odb::at(fixture_path("objects")).expect("valid object path")
+fn db() -> gix_odb::Handle {
+    gix_odb::at(fixture_path("objects")).expect("valid object path")
 }
 
 use crate::hex_to_id;
 
-fn can_find(db: impl git_odb::Find, hex_id: &str) {
+fn can_find(db: impl gix_odb::Find, hex_id: &str) {
     let mut buf = vec![];
     assert!(db
         .try_find(hex_to_id(hex_id), &mut buf)

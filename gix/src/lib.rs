@@ -66,7 +66,6 @@
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
-pub use git_odb as odb;
 pub use gix_actor as actor;
 pub use gix_attributes as attrs;
 pub use gix_credentials as credentials;
@@ -81,6 +80,7 @@ pub use gix_index as index;
 pub use gix_lock as lock;
 pub use gix_object as objs;
 pub use gix_object::bstr;
+pub use gix_odb as odb;
 pub use gix_prompt as prompt;
 #[cfg(all(feature = "gix-protocol"))]
 pub use gix_protocol as protocol;
@@ -99,8 +99,8 @@ pub mod interrupt;
 mod ext;
 ///
 pub mod prelude {
-    pub use git_odb::{Find, FindExt, Header, HeaderExt, Write};
     pub use gix_features::parallel::reduce::Finalize;
+    pub use gix_odb::{Find, FindExt, Header, HeaderExt, Write};
 
     pub use crate::ext::*;
 }
@@ -111,7 +111,7 @@ pub mod path;
 /// The standard type for a store to handle git references.
 pub type RefStore = gix_ref::file::Store;
 /// A handle for finding objects in an object database, abstracting away caches for thread-local use.
-pub type OdbHandle = git_odb::Handle;
+pub type OdbHandle = gix_odb::Handle;
 /// A way to access git configuration
 pub(crate) type Config = OwnShared<gix_config::File<'static>>;
 

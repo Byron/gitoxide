@@ -31,7 +31,7 @@ gix-features = { version = "^0.26.1", path = "../../gix-features", features = ["
 git-testtools = { path = "../../tests/tools" }
 gix-discover = { path = "../../gix-discover" }
 gix-worktree = { path = "../../gix-worktree" }
-git-odb = { path = "../../git-odb" }
+gix-odb = { path = "../../gix-odb" }
 gix-actor = { path = "../../gix-actor" }
 gix-hash = { path = "../../gix-hash" }
 gix-validate = { path = "../../gix-validate" }

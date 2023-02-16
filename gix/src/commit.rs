@@ -25,9 +25,9 @@ pub enum Error {
 pub mod describe {
     use std::borrow::Cow;
 
-    use git_odb::Find;
     use gix_hash::ObjectId;
     use gix_hashtable::HashMap;
+    use gix_odb::Find;
 
     use crate::{bstr::BStr, ext::ObjectIdExt, Repository};
 
@@ -52,7 +52,7 @@ pub mod describe {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Describe(#[from] gix_revision::describe::Error<git_odb::store::find::Error>),
+        Describe(#[from] gix_revision::describe::Error<gix_odb::store::find::Error>),
         #[error("Could not produce an unambiguous shortened id for formatting.")]
         ShortId(#[from] crate::id::shorten::Error),
         #[error(transparent)]

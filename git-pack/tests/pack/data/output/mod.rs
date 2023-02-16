@@ -25,14 +25,14 @@ enum DbKind {
     DeterministicGeneratedContentMultiIndex,
 }
 
-fn db(kind: DbKind) -> crate::Result<git_odb::HandleArc> {
+fn db(kind: DbKind) -> crate::Result<gix_odb::HandleArc> {
     use DbKind::*;
     let name = match kind {
         DeterministicGeneratedContent => "make_pack_gen_repo.sh",
         DeterministicGeneratedContentMultiIndex => "make_pack_gen_repo_multi_index.sh",
     };
     let path: PathBuf = crate::scripted_fixture_read_only(name)?.join(".git").join("objects");
-    git_odb::Store::at_opts(path, Vec::new(), git_odb::store::init::Options::default())
+    gix_odb::Store::at_opts(path, Vec::new(), gix_odb::store::init::Options::default())
         .map_err(Into::into)
         .map(|store| {
             let mut cache = Arc::new(store).to_cache_arc();

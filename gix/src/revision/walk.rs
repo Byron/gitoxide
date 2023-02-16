@@ -1,5 +1,5 @@
-use git_odb::FindExt;
 use gix_hash::ObjectId;
+use gix_odb::FindExt;
 
 use crate::{revision, Repository};
 

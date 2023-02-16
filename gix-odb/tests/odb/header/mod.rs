@@ -1,6 +1,6 @@
 use crate::{hex_to_id, odb::db};
 
-fn find_header(db: impl git_odb::Header, hex_id: &str) -> git_odb::find::Header {
+fn find_header(db: impl gix_odb::Header, hex_id: &str) -> gix_odb::find::Header {
     db.try_header(hex_to_id(hex_id))
         .expect("no read error")
         .expect("object exists")
@@ -16,7 +16,7 @@ fn pack_object() {
     let db = db();
     assert_eq!(
         find_header(&db, "501b297447a8255d3533c6858bb692575cdefaa0"), // pack 11fd
-        git_odb::find::Header::Packed(git_pack::data::decode::header::Outcome {
+        gix_odb::find::Header::Packed(git_pack::data::decode::header::Outcome {
             kind: gix_object::Kind::Commit,
             object_size: 225,
             num_deltas: 0,
@@ -24,7 +24,7 @@ fn pack_object() {
     );
     assert_eq!(
         find_header(&db, "4dac9989f96bc5b5b1263b582c08f0c5f0b58542"), // pack a2bf
-        git_odb::find::Header::Packed(git_pack::data::decode::header::Outcome {
+        gix_odb::find::Header::Packed(git_pack::data::decode::header::Outcome {
             kind: gix_object::Kind::Tree,
             object_size: 34,
             num_deltas: 0,
@@ -32,7 +32,7 @@ fn pack_object() {
     );
     assert_eq!(
         find_header(&db, "dd25c539efbb0ab018caa4cda2d133285634e9b5"), // pack c043
-        git_odb::find::Header::Packed(git_pack::data::decode::header::Outcome {
+        gix_odb::find::Header::Packed(git_pack::data::decode::header::Outcome {
             kind: gix_object::Kind::Blob,
             object_size: 860,
             num_deltas: 0,

@@ -1,16 +1,16 @@
 mod changes {
     mod to_obtain_tree {
-        use git_odb::pack::Find;
         use gix_diff::tree::{recorder, recorder::Change::*};
         use gix_hash::{oid, ObjectId};
         use gix_object::{bstr::ByteSlice, tree::EntryMode, TreeRefIter};
+        use gix_odb::pack::Find;
 
         use crate::hex_to_id;
 
         type Changes = Vec<recorder::Change>;
 
-        fn db(args: impl IntoIterator<Item = &'static str>) -> crate::Result<git_odb::Handle> {
-            git_odb::at(
+        fn db(args: impl IntoIterator<Item = &'static str>) -> crate::Result<gix_odb::Handle> {
+            gix_odb::at(
                 git_testtools::scripted_fixture_read_only_with_args_standalone("make_diff_repo.sh", args)?
                     .join(".git")
                     .join("objects"),
@@ -19,7 +19,7 @@ mod changes {
         }
 
         fn locate_tree_by_commit<'a>(
-            db: &git_odb::Handle,
+            db: &gix_odb::Handle,
             commit: &oid,
             buf: &'a mut Vec<u8>,
         ) -> crate::Result<TreeRefIter<'a>> {
@@ -40,7 +40,7 @@ mod changes {
                 .expect("id to be a tree"))
         }
 
-        fn diff_commits(db: &git_odb::Handle, lhs: impl Into<Option<ObjectId>>, rhs: &oid) -> crate::Result<Changes> {
+        fn diff_commits(db: &gix_odb::Handle, lhs: impl Into<Option<ObjectId>>, rhs: &oid) -> crate::Result<Changes> {
             let mut buf = Vec::new();
             let lhs_tree = lhs
                 .into()
@@ -52,7 +52,7 @@ mod changes {
                 rhs_tree,
                 gix_diff::tree::State::default(),
                 |oid, buf| {
-                    use git_odb::pack::FindExt;
+                    use gix_odb::pack::FindExt;
                     db.find(oid, buf)
                         .map(|obj| obj.0.try_into_tree_iter().expect("only called for trees"))
                 },
@@ -61,7 +61,7 @@ mod changes {
             Ok(recorder.records)
         }
 
-        fn diff_with_previous_commit_from(db: &git_odb::Handle, commit_id: &oid) -> crate::Result<Changes> {
+        fn diff_with_previous_commit_from(db: &gix_odb::Handle, commit_id: &oid) -> crate::Result<Changes> {
             let mut buf = Vec::new();
             let (main_tree_id, parent_commit_id) = {
                 let commit = db
@@ -99,7 +99,7 @@ mod changes {
                 current_tree,
                 &mut gix_diff::tree::State::default(),
                 |oid, buf| {
-                    use git_odb::pack::FindExt;
+                    use gix_odb::pack::FindExt;
                     db.find(oid, buf)
                         .map(|(obj, _)| obj.try_into_tree_iter().expect("only called for trees"))
                 },
@@ -108,7 +108,7 @@ mod changes {
             Ok(recorder.records)
         }
 
-        fn head_of(db: &git_odb::Handle) -> ObjectId {
+        fn head_of(db: &gix_odb::Handle) -> ObjectId {
             ObjectId::from_hex(
                 std::fs::read(
                     db.store_ref()
@@ -126,12 +126,12 @@ mod changes {
             .expect("valid hex id")
         }
 
-        fn all_commits(db: &git_odb::Handle) -> Vec<ObjectId> {
+        fn all_commits(db: &gix_odb::Handle) -> Vec<ObjectId> {
             use gix_traverse::commit;
 
             let head = head_of(db);
             commit::Ancestors::new(Some(head), commit::ancestors::State::default(), |oid, buf| {
-                use git_odb::FindExt;
+                use gix_odb::FindExt;
                 db.find_commit_iter(oid, buf)
             })
             .collect::<Vec<_>>()

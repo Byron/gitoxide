@@ -64,7 +64,7 @@ is usable to some extent.
   * [gix-transport](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-transport)
   * [gix-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-protocol)
   * [git-pack](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pack)
-  * [git-odb](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-odb)
+  * [gix-odb](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-odb)
   * [gix-commitgraph](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-commitgraph)
   * [gix-diff](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-diff)
   * [gix-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-traverse)

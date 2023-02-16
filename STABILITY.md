@@ -73,7 +73,7 @@ The following schematic helps to visualize what follows.
     │                                             │   
     │    Plumbing Crates─────────────────────┐    │  │
     │    │ ┌─────────────┐   ┌─────────────┐ │    │   
-    │    │ │   git-odb   │   │  gix-diff   │ │    │  │
+    │    │ │   gix-odb   │   │  gix-diff   │ │    │  │
     │    │ └─────────────┘   └─────────────┘ │    │   
     │    │ ┌─────────────┐   ┌─────────────┐ │    │  │
     │    │ │gix-traverse │   │  git-pack   │ │◀ ─ ┼ ─ 
@@ -98,8 +98,8 @@ Released plumbing crates are marked with major version number 1 or above, for ex
 
 Breaking changes are collected and may be released no more often than every 4 weeks by incrementing the major version number.
 
-For example, `git-odb` and `gix-ref` both have breaking changes, where `git-odb`'s change is on August 1st and `gix-ref`'s dependent change
-is on September 10th. `git-odb`'s breaking change can be released earliest on September 1st, whereas `gix-ref` can be released earliest at October 10th.
+For example, `gix-odb` and `gix-ref` both have breaking changes, where `gix-odb`'s change is on August 1st and `gix-ref`'s dependent change
+is on September 10th. `gix-odb`'s breaking change can be released earliest on September 1st, whereas `gix-ref` can be released earliest at October 10th.
 
 If there are additional breaking changes without a release, these push back the earliest release date accordingly.
 

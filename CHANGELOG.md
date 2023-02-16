@@ -701,7 +701,7 @@ which usually are `Clone` too as they are passed by immutable reference (which i
  * **[#287](https://github.com/Byron/gitoxide/issues/287)**
     - share and pass cli arguments for pack verification ([`db43e47`](https://github.com/Byron/gitoxide/commit/db43e47fc0a43ef45824ac1c9426c1889bdb13a3))
     - Very rough version of repository verification ([`80a4a7a`](https://github.com/Byron/gitoxide/commit/80a4a7add688d16376b9bf2ed7f1c7f655b7c912))
-    - Adjustments to deal with changes to git-pack/git-odb ([`fcf8fde`](https://github.com/Byron/gitoxide/commit/fcf8fde7272974a70df808bd7ac03e925b7e39a8))
+    - Adjustments to deal with changes to git-pack/gix-odb ([`fcf8fde`](https://github.com/Byron/gitoxide/commit/fcf8fde7272974a70df808bd7ac03e925b7e39a8))
  * **[#289](https://github.com/Byron/gitoxide/issues/289)**
     - 'pack' with its own sub-commands ([`fb64af4`](https://github.com/Byron/gitoxide/commit/fb64af4d747960bfa40ec23051ecb03ea8ec5d83))
     - 'remote' with its own sub-commands ([`8677f7e`](https://github.com/Byron/gitoxide/commit/8677f7edd516ea54ec652a4a59cb220422036b90))

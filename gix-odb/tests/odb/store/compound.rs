@@ -3,11 +3,11 @@
 //! tests o the general store itself, so they can possibly be removed at some point.
 
 mod locate {
-    use git_odb::Find;
+    use gix_odb::Find;
 
     use crate::{hex_to_id, odb::db};
 
-    fn can_locate(db: &git_odb::Handle, hex_id: &str) {
+    fn can_locate(db: &gix_odb::Handle, hex_id: &str) {
         let mut buf = vec![];
         assert!(db
             .try_find(hex_to_id(hex_id), &mut buf)

@@ -250,10 +250,10 @@ impl ThreadSafeRepository {
             .unwrap_or_default();
 
         Ok(ThreadSafeRepository {
-            objects: OwnShared::new(git_odb::Store::at_opts(
+            objects: OwnShared::new(gix_odb::Store::at_opts(
                 common_dir_ref.join("objects"),
                 replacements,
-                git_odb::store::init::Options {
+                gix_odb::store::init::Options {
                     slots: object_store_slots,
                     object_hash: config.object_hash,
                     use_multi_pack_index: config.use_multi_pack_index,

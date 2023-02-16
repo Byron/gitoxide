@@ -48,7 +48,7 @@ io-close = "0.3.7"
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
-git-odb = { path = "../git-odb" }
+gix-odb = { path = "../gix-odb" }
 symlink = "0.1.0"
 
 walkdir = "2.3.2"

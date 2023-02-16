@@ -1,8 +1,8 @@
 #![allow(clippy::result_large_err)]
 use std::convert::TryInto;
 
-use git_odb::{Find, FindExt, Write};
 use gix_hash::ObjectId;
+use gix_odb::{Find, FindExt, Write};
 use gix_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,

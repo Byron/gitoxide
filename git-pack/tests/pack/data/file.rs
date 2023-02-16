@@ -1,4 +1,4 @@
-use git_odb::pack;
+use gix_odb::pack;
 
 use crate::fixture_path;
 

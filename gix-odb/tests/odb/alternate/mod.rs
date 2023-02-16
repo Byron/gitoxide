@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git_odb::alternate;
+use gix_odb::alternate;
 
 pub fn alternate(
     objects_at: impl Into<PathBuf>,

@@ -16,6 +16,6 @@ path = "traverse.rs"
 [dev-dependencies]
 gix-traverse = { path = ".." }
 git-testtools = { path = "../../tests/tools" }
-git-odb = { path = "../../git-odb" }
+gix-odb = { path = "../../gix-odb" }
 gix-hash = { path = "../../gix-hash" }
 gix-object = { path = "../../gix-object" }

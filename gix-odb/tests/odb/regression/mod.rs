@@ -1,5 +1,5 @@
 mod repo_with_small_packs {
-    use git_odb::Find;
+    use gix_odb::Find;
 
     use crate::odb::{db_small_packs, hex_to_id};
 
@@ -23,7 +23,7 @@ mod repo_with_small_packs {
             let base = git_testtools::scripted_fixture_read_only_with_args("make_repo_multi_index.sh", Some(arg))?
                 .join(".git")
                 .join("objects");
-            let store = git_odb::at(base)?;
+            let store = gix_odb::at(base)?;
             let (tx, barrier) = crossbeam_channel::unbounded::<()>();
             let handles = (0..num_cpus::get()).map(|tid| {
                 std::thread::spawn({
@@ -54,7 +54,7 @@ mod repo_with_small_packs {
             assert_eq!(
                 store
                     .iter()?
-                    .with_ordering(git_odb::store::iter::Ordering::PackAscendingOffsetThenLooseLexicographical)
+                    .with_ordering(gix_odb::store::iter::Ordering::PackAscendingOffsetThenLooseLexicographical)
                     .count(),
                 expected,
                 "different ordering doesn't change the count"

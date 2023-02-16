@@ -1,8 +1,8 @@
 use std::process::Command;
 
-use git_odb::{store, store::iter::Ordering, Find, FindExt, Header, Write};
 use git_testtools::fixture_path;
 use gix_hash::ObjectId;
+use gix_odb::{store, store::iter::Ordering, Find, FindExt, Header, Write};
 
 use crate::{hex_to_id, odb::db};
 
@@ -14,7 +14,7 @@ fn all_orderings() -> [Ordering; 2] {
 }
 
 /// indices, multi-pack-index, loose odb
-fn db_with_all_object_sources() -> crate::Result<(git_odb::Handle, tempfile::TempDir)> {
+fn db_with_all_object_sources() -> crate::Result<(gix_odb::Handle, tempfile::TempDir)> {
     let objects_dir = git_testtools::tempfile::tempdir()?;
     git_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir)?;
 
@@ -22,7 +22,7 @@ fn db_with_all_object_sources() -> crate::Result<(git_odb::Handle, tempfile::Tem
         .write(true)
         .create_new(true)
         .open(objects_dir.path().join("pack/multi-pack-index"))?;
-    git_odb::pack::multi_index::File::write_from_index_paths(
+    gix_odb::pack::multi_index::File::write_from_index_paths(
         vec![
             fixture_path("objects/pack/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx"),
             fixture_path("objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"),
@@ -30,21 +30,21 @@ fn db_with_all_object_sources() -> crate::Result<(git_odb::Handle, tempfile::Tem
         multi_pack_index,
         gix_features::progress::Discard,
         &std::sync::atomic::AtomicBool::default(),
-        git_odb::pack::multi_index::write::Options {
+        gix_odb::pack::multi_index::write::Options {
             object_hash: gix_hash::Kind::Sha1,
         },
     )?;
-    Ok((git_odb::at(objects_dir.path())?, objects_dir))
+    Ok((gix_odb::at(objects_dir.path())?, objects_dir))
 }
 
 #[test]
 fn multi_index_access() -> crate::Result {
     let dir = git_testtools::scripted_fixture_writable("make_repo_multi_index.sh")?;
-    let handle = git_odb::at(dir.path().join(".git/objects"))?;
+    let handle = gix_odb::at(dir.path().join(".git/objects"))?;
 
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 0,
             open_reachable_indices: 0,
@@ -76,7 +76,7 @@ fn multi_index_access() -> crate::Result {
 
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
             open_reachable_indices: 1,
@@ -96,7 +96,7 @@ fn multi_index_access() -> crate::Result {
 
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 2,
             open_reachable_indices: 1,
@@ -119,7 +119,7 @@ fn multi_index_access() -> crate::Result {
 
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 2 + 1 /*legit refresh with changes*/ + 1 /*a refresh attempt with no changes, causing 'contains()' to give up*/,
             open_reachable_indices: 1,
@@ -142,7 +142,7 @@ fn multi_index_access() -> crate::Result {
 fn multi_index_keep_open() -> crate::Result {
     let dir = git_testtools::scripted_fixture_writable("make_repo_multi_index.sh")?;
     let (stable_handle, handle) = {
-        let mut stable_handle = git_odb::at(dir.path().join(".git/objects"))?;
+        let mut stable_handle = gix_odb::at(dir.path().join(".git/objects"))?;
         let handle = stable_handle.clone();
         stable_handle.prevent_pack_unload();
         (stable_handle, handle)
@@ -151,7 +151,7 @@ fn multi_index_keep_open() -> crate::Result {
 
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 1,
             open_reachable_indices: 1,
@@ -176,11 +176,11 @@ fn multi_index_keep_open() -> crate::Result {
         handle.store_ref().path().join("pack/multi-pack-index"),
         filetime::FileTime::now(),
     )?;
-    git_odb::Find::contains(&handle, non_existing_to_trigger_refresh);
+    gix_odb::Find::contains(&handle, non_existing_to_trigger_refresh);
 
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 3,
             open_reachable_indices: 1,
@@ -196,7 +196,7 @@ fn multi_index_keep_open() -> crate::Result {
     );
 
     assert!(
-        git_odb::pack::Find::entry_by_location(&stable_handle, &location).is_some(),
+        gix_odb::pack::Find::entry_by_location(&stable_handle, &location).is_some(),
         "the entry can still be found even though the location is invalid"
     );
     assert_eq!(handle.store_ref().structure()?.len(), 2);
@@ -206,7 +206,7 @@ fn multi_index_keep_open() -> crate::Result {
 #[test]
 fn write() -> crate::Result {
     let dir = tempfile::tempdir()?;
-    let mut handle = git_odb::at(dir.path())?;
+    let mut handle = gix_odb::at(dir.path())?;
     // It should refresh once even if the refresh mode is never, just to initialize the index
     handle.refresh_never();
 
@@ -218,7 +218,7 @@ fn write() -> crate::Result {
 #[test]
 fn object_replacement() -> crate::Result {
     let dir = git_testtools::scripted_fixture_read_only("make_replaced_history.sh")?;
-    let handle = git_odb::at(dir.join(".git/objects"))?;
+    let handle = gix_odb::at(dir.join(".git/objects"))?;
     let mut buf = Vec::new();
     let short_history_link = hex_to_id("434e5a872d6738d1fffd1e11e52a1840b73668c6");
     let third_commit = handle.find_commit(short_history_link, &mut buf)?;
@@ -245,10 +245,10 @@ fn object_replacement() -> crate::Result {
         ObjectId::null(handle.store_ref().object_hash()),
     );
 
-    let mut handle = git_odb::at_opts(
+    let mut handle = gix_odb::at_opts(
         dir.join(".git/objects"),
         vec![(short_history_link, long_history_tip), unrelated_mapping],
-        git_odb::store::init::Options { ..Default::default() },
+        gix_odb::store::init::Options { ..Default::default() },
     )?;
     drop(orphan);
 
@@ -293,7 +293,7 @@ fn contains() {
     assert!(handle.contains(hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"))); // loose object
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
             open_reachable_indices: 0,
@@ -313,7 +313,7 @@ fn contains() {
 
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
             open_reachable_indices: 1,
@@ -335,7 +335,7 @@ fn contains() {
     assert!(new_handle.contains(hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0")));
     assert_eq!(
         new_handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 1,
             open_reachable_indices: 3,
@@ -353,7 +353,7 @@ fn contains() {
     assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
         new_handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 2,
             open_reachable_indices: 3,
@@ -372,7 +372,7 @@ fn contains() {
     assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
         new_handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 2,
             open_reachable_indices: 3,
@@ -394,7 +394,7 @@ fn contains() {
 fn lookup() {
     let mut handle = db();
 
-    fn can_locate(db: &git_odb::Handle, hex_id: &str) {
+    fn can_locate(db: &gix_odb::Handle, hex_id: &str) {
         let id = hex_to_id(hex_id);
         assert!(db.contains(id));
 
@@ -407,7 +407,7 @@ fn lookup() {
     }
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 0,
             open_reachable_indices: 0,
@@ -427,7 +427,7 @@ fn lookup() {
     can_locate(&handle, "4dac9989f96bc5b5b1263b582c08f0c5f0b58542"); // pack a2bf
     can_locate(&handle, "dd25c539efbb0ab018caa4cda2d133285634e9b5"); // pack c043
 
-    let mut all_loaded = git_odb::store::Metrics {
+    let mut all_loaded = gix_odb::store::Metrics {
         num_handles: 1,
         num_refreshes: 1,
         open_reachable_indices: 3,
@@ -471,10 +471,10 @@ fn lookup() {
     );
 }
 
-fn assert_all_indices_loaded(handle: &git_odb::Handle, num_refreshes: usize, open_reachable_indices: usize) {
+fn assert_all_indices_loaded(handle: &gix_odb::Handle, num_refreshes: usize, open_reachable_indices: usize) {
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes,
             open_reachable_indices,
@@ -501,7 +501,7 @@ fn packed_object_count_causes_all_indices_to_be_loaded() {
 mod disambiguate_prefix {
     use std::cmp::Ordering;
 
-    use git_odb::store::prefix::disambiguate::Candidate;
+    use gix_odb::store::prefix::disambiguate::Candidate;
 
     use crate::{
         odb::{hex_to_id, store::dynamic::all_orderings},
@@ -557,7 +557,7 @@ mod disambiguate_prefix {
 
         assert_eq!(
             handle.store_ref().metrics(),
-            git_odb::store::Metrics {
+            gix_odb::store::Metrics {
                 num_handles: 1,
                 num_refreshes: 1,
                 open_reachable_indices: 1,
@@ -584,7 +584,7 @@ mod disambiguate_prefix {
 }
 
 mod iter {
-    use git_odb::store::iter::Ordering;
+    use gix_odb::store::iter::Ordering;
 
     use crate::odb::{
         db,
@@ -703,7 +703,7 @@ fn missing_objects_triggers_everything_is_loaded() {
 
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 2,
             open_reachable_indices: 3,
@@ -725,7 +725,7 @@ fn missing_objects_triggers_everything_is_loaded() {
 
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 3,
             open_reachable_indices: 3,
@@ -786,7 +786,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
     hide_pack("pack-11fdfa9e156ab73caae3b6da867192221f2089c2");
     hide_pack("pack-a2bf8e71d8c18879e499335762dd95119d93d9f1");
 
-    let handle = git_odb::at(tmp.path().join("objects"))?;
+    let handle = gix_odb::at(tmp.path().join("objects"))?;
     let mut buf = Vec::new();
     assert!(
         handle
@@ -796,7 +796,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
     );
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
             open_reachable_indices: 1,
@@ -821,7 +821,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
     );
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 2,
             open_reachable_indices: 1,
@@ -859,7 +859,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
         );
         assert_eq!(
             handle.store_ref().metrics(),
-            git_odb::store::Metrics {
+            gix_odb::store::Metrics {
                 num_handles: 2,
                 num_refreshes: 3,
                 open_reachable_indices: 1,
@@ -894,7 +894,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
     );
     assert_eq!(
         handle.store_ref().metrics(),
-        git_odb::store::Metrics {
+        gix_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 4,
             open_reachable_indices: 1,
@@ -941,15 +941,15 @@ mod verify {
         );
         assert_eq!(
             outcome.loose_object_stores,
-            vec![git_odb::store::verify::integrity::LooseObjectStatistics {
+            vec![gix_odb::store::verify::integrity::LooseObjectStatistics {
                 path: fixture_path("objects"),
-                statistics: git_odb::loose::verify::integrity::Statistics { num_objects: 7 }
+                statistics: gix_odb::loose::verify::integrity::Statistics { num_objects: 7 }
             }]
         );
 
         assert_eq!(
             handle.store_ref().metrics(),
-            git_odb::store::Metrics {
+            gix_odb::store::Metrics {
                 num_handles: 1,
                 num_refreshes: 1,
                 open_reachable_indices: 0,

@@ -32,7 +32,7 @@ impl<'repo> Id<'repo> {
             Ok,
         )?;
 
-        let prefix = git_odb::store::prefix::disambiguate::Candidate::new(self.inner, hex_len)
+        let prefix = gix_odb::store::prefix::disambiguate::Candidate::new(self.inner, hex_len)
             .expect("BUG: internal hex-len must always be valid");
         self.repo
             .objects
@@ -60,9 +60,9 @@ pub mod shorten {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        PackedObjectsCount(#[from] git_odb::store::load_index::Error),
+        PackedObjectsCount(#[from] gix_odb::store::load_index::Error),
         #[error(transparent)]
-        DisambiguatePrefix(#[from] git_odb::store::prefix::disambiguate::Error),
+        DisambiguatePrefix(#[from] gix_odb::store::prefix::disambiguate::Error),
         #[error("Id could not be shortened as the object with id {} could not be found", .oid)]
         NotFound { oid: gix_hash::ObjectId },
     }

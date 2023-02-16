@@ -164,7 +164,7 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 * [x] API documentation
     * [ ] Some examples
 
-### git-odb
+### gix-odb
 * **loose object store**
     * [x] traverse
     * [x] read

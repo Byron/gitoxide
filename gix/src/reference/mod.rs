@@ -1,6 +1,6 @@
 //!
 
-use git_odb::pack::Find;
+use gix_odb::pack::Find;
 use gix_ref::file::ReferenceExt;
 
 use crate::{Id, Reference};

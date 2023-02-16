@@ -1,9 +1,9 @@
 use std::sync::atomic::AtomicBool;
 
-use git_odb::loose::Store;
 use gix_actor::{Sign, Time};
 use gix_features::progress;
 use gix_object::bstr::ByteSlice;
+use gix_odb::loose::Store;
 use pretty_assertions::assert_eq;
 
 use crate::{fixture_path, hex_to_id};
@@ -42,7 +42,7 @@ fn verify_integrity() {
 }
 
 mod write {
-    use git_odb::{loose, Write};
+    use gix_odb::{loose, Write};
 
     use crate::store::loose::{locate_oid, object_ids};
 
@@ -118,7 +118,7 @@ mod lookup_prefix {
             b"fake",
         )
         .unwrap();
-        let store = git_odb::loose::Store::at(objects_dir.path(), gix_hash::Kind::Sha1);
+        let store = gix_odb::loose::Store::at(objects_dir.path(), gix_hash::Kind::Sha1);
         let input_id = hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
         let prefix = gix_hash::Prefix::new(input_id, 4).unwrap();
         assert_eq!(
@@ -165,8 +165,8 @@ mod lookup_prefix {
 }
 
 mod find {
-    use git_odb::loose;
     use gix_object::{bstr::ByteSlice, tree::EntryMode, BlobRef, CommitRef, Kind, TagRef, TreeRef};
+    use gix_odb::loose;
 
     use crate::{
         hex_to_id,

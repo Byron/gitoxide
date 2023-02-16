@@ -60,7 +60,7 @@ serde1 = [  "serde",
             "gix-protocol?/serde1",
             "gix-transport?/serde1",
             "gix-ref/serde1",
-            "git-odb/serde1",
+            "gix-odb/serde1",
             "gix-index/serde1",
             "gix-mailmap/serde1",
             "gix-url/serde1",
@@ -100,7 +100,7 @@ gix-date = { version = "^0.4.2", path = "../gix-date" }
 gix-refspec = { version = "^0.7.2", path = "../gix-refspec" }
 
 gix-config = { version = "^0.16.1", path = "../gix-config" }
-git-odb = { version = "^0.40.2", path = "../git-odb" }
+gix-odb = { version = "^0.40.2", path = "../gix-odb" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-object = { version = "^0.26.1", path = "../gix-object" }
 gix-actor = { version = "^0.17.1", path = "../gix-actor" }

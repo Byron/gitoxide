@@ -165,7 +165,7 @@ members = [
     "gix-credentials",
     "gix-protocol",
     "git-pack",
-    "git-odb",
+    "gix-odb",
     "gix-tempfile",
     "gix-lock",
     "gix-attributes",

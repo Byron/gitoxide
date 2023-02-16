@@ -47,7 +47,7 @@ mod reflog {
 }
 
 mod peel {
-    use git_odb::pack::Find;
+    use gix_odb::pack::Find;
     use gix_ref::{file::ReferenceExt, peel, Reference};
 
     use crate::{file, file::store_with_packed_refs, util::hex_to_id};
@@ -129,7 +129,7 @@ mod peel {
             "points to a tag object without actual object lookup"
         );
 
-        let odb = git_odb::at(store.git_dir().join("objects"))?;
+        let odb = gix_odb::at(store.git_dir().join("objects"))?;
         let mut r: Reference = store.find_loose("dt1")?.into();
         assert_eq!(
             r.peel_to_id_in_place(&store, |oid, buf| {

@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
-use git_odb::FindExt;
+use gix_odb::FindExt;
 use gix_protocol::transport::client::Transport;
 
 use crate::{

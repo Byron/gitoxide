@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::{borrow::Cow, convert::TryInto};
 
-use git_odb::Find;
+use gix_odb::Find;
 use gix_ref::{
     transaction::{LogChange, RefLog},
     FullNameRef,

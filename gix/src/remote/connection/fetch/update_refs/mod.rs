@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::{collections::BTreeMap, convert::TryInto, path::PathBuf};
 
-use git_odb::{Find, FindExt};
+use gix_odb::{Find, FindExt};
 use gix_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target, TargetRef,

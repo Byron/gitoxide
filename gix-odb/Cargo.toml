@@ -1,5 +1,5 @@
 [package]
-name = "git-odb"
+name = "gix-odb"
 version = "0.40.2"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

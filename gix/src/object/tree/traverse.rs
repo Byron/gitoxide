@@ -1,4 +1,4 @@
-use git_odb::FindExt;
+use gix_odb::FindExt;
 
 use crate::Tree;
 

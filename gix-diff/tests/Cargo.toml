@@ -22,6 +22,6 @@ path = "diff.rs"
 gix-diff = { path = ".." }
 gix-hash = { path = "../../gix-hash" }
 gix-object = { path = "../../gix-object" }
-git-odb = { path = "../../git-odb" }
+gix-odb = { path = "../../gix-odb" }
 gix-traverse = { path = "../../gix-traverse" }
 git-testtools = { path = "../../tests/tools" }

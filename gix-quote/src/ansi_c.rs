@@ -39,7 +39,7 @@ use bstr::{BStr, BString, ByteSlice};
 ///
 /// See [the tests][tests] for quotation examples.
 ///
-/// [tests]: https://github.com/Byron/gitoxide/blob/e355b4ad133075152312816816af5ce72cf79cff/git-odb/src/alternate/unquote.rs#L110-L118
+/// [tests]: https://github.com/Byron/gitoxide/blob/e355b4ad133075152312816816af5ce72cf79cff/gix-odb/src/alternate/unquote.rs#L110-L118
 pub fn undo(input: &BStr) -> Result<(Cow<'_, BStr>, usize), undo::Error> {
     if !input.starts_with(b"\"") {
         return Ok((input.into(), input.len()));
