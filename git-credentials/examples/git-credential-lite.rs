@@ -15,7 +15,7 @@ pub fn main() -> Result<(), git_credentials::program::main::Error> {
                         Erase => git_credentials::helper::Action::Erase(context.to_bstring()),
                         Store => git_credentials::helper::Action::Store(context.to_bstring()),
                     },
-                    git_prompt::Options::default().apply_environment(true, true, true),
+                    gix_prompt::Options::default().apply_environment(true, true, true),
                 )
                 .map(|outcome| outcome.and_then(|outcome| (&outcome.next).try_into().ok()))
         },

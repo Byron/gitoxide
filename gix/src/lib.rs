@@ -70,7 +70,6 @@ pub use git_credentials as credentials;
 #[doc(inline)]
 pub use git_index as index;
 pub use git_odb as odb;
-pub use git_prompt as prompt;
 #[cfg(all(feature = "git-protocol"))]
 pub use git_protocol as protocol;
 pub use git_refspec as refspec;
@@ -85,6 +84,7 @@ pub use gix_hash as hash;
 pub use gix_lock as lock;
 pub use gix_object as objs;
 pub use gix_object::bstr;
+pub use gix_prompt as prompt;
 pub use gix_ref as refs;
 pub use gix_sec as sec;
 pub use gix_tempfile as tempfile;

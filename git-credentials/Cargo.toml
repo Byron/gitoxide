@@ -21,7 +21,7 @@ gix-url = { version = "^0.13.2", path = "../gix-url" }
 gix-path = { version = "^0.7.1", path = "../gix-path" }
 gix-command = { version = "^0.2.3", path = "../gix-command" }
 gix-config-value = { version = "^0.10.1", path = "../gix-config-value" }
-git-prompt = { version = "^0.3.2", path = "../git-prompt" }
+gix-prompt = { version = "^0.3.2", path = "../gix-prompt" }
 
 thiserror = "1.0.32"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }

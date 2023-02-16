@@ -80,7 +80,7 @@ is usable to some extent.
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)
   * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
   * [gix-command](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-command)
-  * [git-prompt](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-prompt)
+  * [gix-prompt](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-prompt)
   * [git-refspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-refspec)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_

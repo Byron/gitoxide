@@ -364,7 +364,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
 * [x] execute commands with `sh`
 * [ ] support for `GIT_EXEC_PATH` environment variable with `gix-sec` filter
 
-### git-prompt
+### gix-prompt
 * [x] open prompts for usernames for example
 * [x] secure prompts for password
 * [x] use `askpass` program if available

@@ -74,7 +74,7 @@ mod baseline {
 
         assert_ne!(
             prompt_options.mode,
-            git_prompt::Mode::Disable,
+            gix_prompt::Mode::Disable,
             "isolated repos may show prompts"
         );
         assert!(

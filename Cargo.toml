@@ -154,7 +154,7 @@ members = [
     "git-mailmap",
     "git-note",
     "git-fetchhead",
-    "git-prompt",
+    "gix-prompt",
     "git-filter",
     "gix-sec",
     "git-lfs",

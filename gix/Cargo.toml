@@ -119,7 +119,7 @@ gix-features = { version = "^0.26.4", path = "../gix-features", features = ["pro
 gix-attributes = { version = "^0.8.2", path = "../gix-attributes" }
 gix-glob = { version = "^0.5.3", path = "../gix-glob" }
 git-credentials = { version = "^0.9.1", path = "../git-credentials" }
-git-prompt = { version = "^0.3.2", path = "../git-prompt" }
+gix-prompt = { version = "^0.3.2", path = "../gix-prompt" }
 git-index = { version = "^0.12.3", path = "../git-index" }
 gix-worktree = { version = "^0.12.2", path = "../gix-worktree" }
 gix-hashtable = { version = "^0.1.1", path = "../gix-hashtable" }

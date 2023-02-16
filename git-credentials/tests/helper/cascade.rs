@@ -128,8 +128,8 @@ mod invoke {
             .extend(fixtures(["username", "password"]))
             .invoke(
                 Action::get_for_url("ssh://git@host/repo"),
-                git_prompt::Options {
-                    mode: git_prompt::Mode::Disable,
+                gix_prompt::Options {
+                    mode: gix_prompt::Mode::Disable,
                     askpass: None,
                 },
             )
@@ -153,8 +153,8 @@ mod invoke {
     fn invoke_cascade<'a>(names: impl IntoIterator<Item = &'a str>, action: Action) -> protocol::Result {
         Cascade::default().use_http_path(true).extend(fixtures(names)).invoke(
             action,
-            git_prompt::Options {
-                mode: git_prompt::Mode::Disable,
+            gix_prompt::Options {
+                mode: gix_prompt::Mode::Disable,
                 askpass: None,
             },
         )

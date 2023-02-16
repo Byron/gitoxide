@@ -1273,11 +1273,11 @@ version = "0.9.1"
 dependencies = [
  "bstr",
  "document-features",
- "git-prompt",
  "git-testtools",
  "gix-command",
  "gix-config-value",
  "gix-path",
+ "gix-prompt",
  "gix-sec",
  "gix-url",
  "serde",
@@ -1589,20 +1589,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-prompt"
-version = "0.3.2"
-dependencies = [
- "expectrl",
- "git-testtools",
- "gix-command",
- "gix-config-value",
- "nix 0.26.2",
- "parking_lot 0.12.1",
- "serial_test",
- "thiserror",
-]
-
-[[package]]
 name = "git-protocol"
 version = "0.26.3"
 dependencies = [
@@ -1906,7 +1892,6 @@ dependencies = [
  "git-mailmap",
  "git-odb",
  "git-pack",
- "git-prompt",
  "git-protocol",
  "git-refspec",
  "git-revision",
@@ -1923,6 +1908,7 @@ dependencies = [
  "gix-lock",
  "gix-object",
  "gix-path",
+ "gix-prompt",
  "gix-ref",
  "gix-sec",
  "gix-tempfile",
@@ -2177,6 +2163,20 @@ dependencies = [
  "gix-attributes",
  "gix-glob",
  "once_cell",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-prompt"
+version = "0.3.2"
+dependencies = [
+ "expectrl",
+ "git-testtools",
+ "gix-command",
+ "gix-config-value",
+ "nix 0.26.2",
+ "parking_lot 0.12.1",
+ "serial_test",
  "thiserror",
 ]
 

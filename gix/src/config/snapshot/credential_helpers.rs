@@ -51,7 +51,7 @@ impl Snapshot<'_> {
         (
             git_credentials::helper::Cascade,
             git_credentials::helper::Action,
-            git_prompt::Options<'static>,
+            gix_prompt::Options<'static>,
         ),
         Error,
     > {
@@ -137,7 +137,7 @@ impl Snapshot<'_> {
 
         let allow_git_env = self.repo.options.permissions.env.git_prefix.is_allowed();
         let allow_ssh_env = self.repo.options.permissions.env.ssh_prefix.is_allowed();
-        let prompt_options = git_prompt::Options {
+        let prompt_options = gix_prompt::Options {
             askpass: self
                 .trusted_path(Core::ASKPASS.logical_name().as_str())
                 .transpose()?

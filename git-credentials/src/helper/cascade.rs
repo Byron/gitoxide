@@ -64,12 +64,12 @@ impl Cascade {
 /// Finalize
 impl Cascade {
     /// Invoke the cascade by `invoking` each program with `action`, and configuring potential prompts with `prompt` options.
-    /// The latter can also be used to disable the prompt entirely when setting the `mode` to [`Disable`][git_prompt::Mode::Disable];=.
+    /// The latter can also be used to disable the prompt entirely when setting the `mode` to [`Disable`][gix_prompt::Mode::Disable];=.
     ///
     /// When _getting_ credentials, all programs are asked until the credentials are complete, stopping the cascade.
     /// When _storing_ or _erasing_ all programs are instructed in order.
     #[allow(clippy::result_large_err)]
-    pub fn invoke(&mut self, mut action: helper::Action, mut prompt: git_prompt::Options<'_>) -> protocol::Result {
+    pub fn invoke(&mut self, mut action: helper::Action, mut prompt: gix_prompt::Options<'_>) -> protocol::Result {
         let mut url = action
             .context_mut()
             .map(|ctx| {
@@ -122,13 +122,13 @@ impl Cascade {
             }
         }
 
-        if prompt.mode != git_prompt::Mode::Disable {
+        if prompt.mode != gix_prompt::Mode::Disable {
             if let Some(ctx) = action.context_mut() {
                 ctx.url = url;
                 if ctx.username.is_none() {
                     let message = ctx.to_prompt("Username");
-                    prompt.mode = git_prompt::Mode::Visible;
-                    ctx.username = git_prompt::ask(&message, &prompt)
+                    prompt.mode = gix_prompt::Mode::Visible;
+                    ctx.username = gix_prompt::ask(&message, &prompt)
                         .map_err(|err| protocol::Error::Prompt {
                             prompt: message,
                             source: err,
@@ -137,8 +137,8 @@ impl Cascade {
                 }
                 if ctx.password.is_none() {
                     let message = ctx.to_prompt("Password");
-                    prompt.mode = git_prompt::Mode::Hidden;
-                    ctx.password = git_prompt::ask(&message, &prompt)
+                    prompt.mode = gix_prompt::Mode::Hidden;
+                    ctx.password = gix_prompt::ask(&message, &prompt)
                         .map_err(|err| protocol::Error::Prompt {
                             prompt: message,
                             source: err,
