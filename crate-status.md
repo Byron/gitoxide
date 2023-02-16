@@ -419,7 +419,7 @@ Provides a trust model to share across gitoxide crates. It helps configuring how
    * [x] gix-config
    * [x] gix
 
-### git-rebase
+### gix-rebase
 * [ ] obtain rebase status
 * [ ] drive a rebase operation
 

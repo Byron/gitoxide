@@ -1606,7 +1606,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-rebase"
+name = "gix-rebase"
 version = "0.0.0"
 
 [[package]]
