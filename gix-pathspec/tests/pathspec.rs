@@ -4,8 +4,8 @@ mod parse {
     use std::collections::HashMap;
 
     use bstr::{BStr, BString, ByteSlice};
-    use git_pathspec::{MagicSignature, MatchMode, Pattern};
     use gix_attributes::State;
+    use gix_pathspec::{MagicSignature, MatchMode, Pattern};
     use once_cell::sync::Lazy;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -50,7 +50,7 @@ mod parse {
     #[test]
     fn baseline() {
         for (pattern, exit_code) in BASELINE.iter() {
-            let res = git_pathspec::parse(pattern);
+            let res = gix_pathspec::parse(pattern);
             assert_eq!(
                 res.is_ok(),
                 *exit_code == 0,
@@ -60,8 +60,8 @@ mod parse {
     }
 
     mod succeed {
-        use git_pathspec::{MagicSignature, MatchMode};
         use gix_attributes::State;
+        use gix_pathspec::{MagicSignature, MatchMode};
 
         use crate::parse::{
             check_valid_inputs, pat, pat_with_attrs, pat_with_path, pat_with_path_and_sig, pat_with_search_mode,
@@ -258,7 +258,7 @@ mod parse {
     }
 
     mod fail {
-        use git_pathspec::parse::Error;
+        use gix_pathspec::parse::Error;
 
         use crate::parse::check_against_baseline;
 
@@ -268,7 +268,7 @@ mod parse {
 
             assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-            let output = git_pathspec::parse(input.as_bytes());
+            let output = gix_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
             assert!(matches!(output.unwrap_err(), Error::EmptyString));
         }
@@ -283,7 +283,7 @@ mod parse {
             for input in inputs.into_iter() {
                 assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-                let output = git_pathspec::parse(input.as_bytes());
+                let output = gix_pathspec::parse(input.as_bytes());
                 assert!(output.is_err());
                 assert!(matches!(output.unwrap_err(), Error::Unimplemented { .. }));
             }
@@ -301,7 +301,7 @@ mod parse {
             for input in inputs.into_iter() {
                 assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-                let output = git_pathspec::parse(input.as_bytes());
+                let output = gix_pathspec::parse(input.as_bytes());
                 assert!(output.is_err());
                 assert!(matches!(output.unwrap_err(), Error::InvalidKeyword { .. }));
             }
@@ -319,7 +319,7 @@ mod parse {
             for input in inputs {
                 assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-                let output = git_pathspec::parse(input.as_bytes());
+                let output = gix_pathspec::parse(input.as_bytes());
                 assert!(output.is_err(), "This pathspec did not produce an error {input}");
                 assert!(matches!(output.unwrap_err(), Error::InvalidAttribute { .. }));
             }
@@ -341,7 +341,7 @@ mod parse {
             for input in inputs {
                 assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-                let output = git_pathspec::parse(input.as_bytes());
+                let output = gix_pathspec::parse(input.as_bytes());
                 assert!(output.is_err(), "This pathspec did not produce an error {input}");
                 assert!(
                     matches!(output.unwrap_err(), Error::InvalidAttributeValue { .. }),
@@ -361,7 +361,7 @@ mod parse {
             for input in inputs {
                 assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-                let output = git_pathspec::parse(input.as_bytes());
+                let output = gix_pathspec::parse(input.as_bytes());
                 assert!(output.is_err(), "This pathspec did not produce an error {input}");
                 assert!(matches!(output.unwrap_err(), Error::TrailingEscapeCharacter));
             }
@@ -373,7 +373,7 @@ mod parse {
 
             assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-            let output = git_pathspec::parse(input.as_bytes());
+            let output = gix_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
             assert!(matches!(output.unwrap_err(), Error::EmptyAttribute));
         }
@@ -384,7 +384,7 @@ mod parse {
 
             assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-            let output = git_pathspec::parse(input.as_bytes());
+            let output = gix_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
             assert!(matches!(output.unwrap_err(), Error::MultipleAttributeSpecifications));
         }
@@ -395,7 +395,7 @@ mod parse {
 
             assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-            let output = git_pathspec::parse(input.as_bytes());
+            let output = gix_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
             assert!(matches!(output.unwrap_err(), Error::MissingClosingParenthesis { .. }));
         }
@@ -406,7 +406,7 @@ mod parse {
 
             assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-            let output = git_pathspec::parse(input.as_bytes());
+            let output = gix_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
             assert!(matches!(output.unwrap_err(), Error::IncompatibleSearchModes));
         }
@@ -419,7 +419,7 @@ mod parse {
                 "This pathspec is invalid in git: {input}"
             );
 
-            let pattern: PatternForTesting = git_pathspec::parse(input.as_bytes())
+            let pattern: PatternForTesting = gix_pathspec::parse(input.as_bytes())
                 .unwrap_or_else(|_| panic!("parsing should not fail with pathspec {input}"))
                 .into();
             assert_eq!(pattern, expected, "while checking input: \"{input}\"");

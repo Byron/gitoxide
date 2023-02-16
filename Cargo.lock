@@ -1638,19 +1638,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-pathspec"
-version = "0.1.0"
-dependencies = [
- "bitflags",
- "bstr",
- "git-testtools",
- "gix-attributes",
- "gix-glob",
- "once_cell",
- "thiserror",
-]
-
-[[package]]
 name = "git-prompt"
 version = "0.3.2"
 dependencies = [
@@ -2239,6 +2226,19 @@ version = "0.7.1"
 dependencies = [
  "bstr",
  "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-pathspec"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "bstr",
+ "git-testtools",
+ "gix-attributes",
+ "gix-glob",
+ "once_cell",
  "thiserror",
 ]
 

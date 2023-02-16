@@ -1,4 +1,4 @@
-# `git-pathspec`
+# `gix-pathspec`
 
 ### Testing
 

@@ -349,7 +349,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [ ] parse
     * [ ] check for match
 
-### git-pathspec
+### gix-pathspec
 * [x] parse
 * [ ] matching of paths
 

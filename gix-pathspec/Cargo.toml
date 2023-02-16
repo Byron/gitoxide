@@ -1,5 +1,5 @@
 [package]
-name = "git-pathspec"
+name = "gix-pathspec"
 version = "0.1.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

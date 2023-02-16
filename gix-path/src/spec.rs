@@ -25,7 +25,7 @@ fn assert_valid_hack(input: &BStr) {
 
 impl Spec {
     /// Parse `input` into a `Spec` or `None` if it could not be parsed
-    // TODO: tests, actual implementation probably via `git-pathspec` to make use of the crate after all.
+    // TODO: tests, actual implementation probably via `gix-pathspec` to make use of the crate after all.
     pub fn from_bytes(input: &BStr) -> Option<Self> {
         assert_valid_hack(input);
         Spec(input.into()).into()
