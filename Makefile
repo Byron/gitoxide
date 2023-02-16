@@ -106,7 +106,7 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features zlib-stock \
 			   && cargo check --features zlib,zlib-stock \
 			   && cargo check --features cache-efficiency-debug
-	cd git-commitgraph && cargo check --all-features \
+	cd gix-commitgraph && cargo check --all-features \
 			   && cargo check
 	cd gix-config-value && cargo check --all-features \
 				 && cargo check

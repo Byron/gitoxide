@@ -7,7 +7,7 @@ use std::{
     process::Command,
 };
 
-use git_commitgraph::{graph::Position as GraphPosition, Graph};
+use gix_commitgraph::{graph::Position as GraphPosition, Graph};
 
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 

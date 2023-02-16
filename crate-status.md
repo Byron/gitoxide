@@ -528,7 +528,7 @@ The git staging area.
 * [x] API documentation
     * [ ] Some examples
 
-### git-commitgraph
+### gix-commitgraph
 
 * [x] read-only access
     * [x] Graph lookup of commit information to obtain timestamps, generation and parents, and extra edges

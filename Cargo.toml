@@ -138,7 +138,7 @@ members = [
     "gix-config-value",
     "gix-discover",
     "gix-features",
-    "git-commitgraph",
+    "gix-commitgraph",
     "gix-chunk",
     "gix-quote",
     "gix-object",

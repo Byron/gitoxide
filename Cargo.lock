@@ -1227,21 +1227,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-commitgraph"
-version = "0.13.0"
-dependencies = [
- "bstr",
- "document-features",
- "git-testtools",
- "gix-chunk",
- "gix-features",
- "gix-hash",
- "memmap2",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "git-conventional"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1678,9 +1663,9 @@ dependencies = [
  "fs-err",
  "futures-io",
  "futures-lite",
- "git-commitgraph",
  "git-pack",
  "gix",
+ "gix-commitgraph",
  "gix-transport",
  "gix-url",
  "itertools",
@@ -1802,6 +1787,21 @@ version = "0.2.3"
 dependencies = [
  "bstr",
  "git-testtools",
+]
+
+[[package]]
+name = "gix-commitgraph"
+version = "0.13.0"
+dependencies = [
+ "bstr",
+ "document-features",
+ "git-testtools",
+ "gix-chunk",
+ "gix-features",
+ "gix-hash",
+ "memmap2",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]

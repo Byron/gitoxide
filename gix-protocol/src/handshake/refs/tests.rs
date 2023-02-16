@@ -67,8 +67,8 @@ async fn extract_references_from_v1_refs() {
 21c9b7500cb144b3169a6537961ec2b9e865be81 MISSING_NAMESPACE_TARGET
 73a6868963993a3328e7d8fe94e5a6ac5078a944 refs/heads/main
 8e472f9ccc7d745927426cbb2d9d077de545aa4e refs/pull/13/head
-dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/git-commitgraph-v0.0.0
-21c9b7500cb144b3169a6537961ec2b9e865be81 refs/tags/git-commitgraph-v0.0.0^{}"
+dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/gix-commitgraph-v0.0.0
+21c9b7500cb144b3169a6537961ec2b9e865be81 refs/tags/gix-commitgraph-v0.0.0^{}"
             .as_bytes(),
     );
     let out = refs::from_v1_refs_received_as_part_of_handshake_and_capabilities(
@@ -101,7 +101,7 @@ dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/git-commitgraph-v0.0.0
                 object: oid("8e472f9ccc7d745927426cbb2d9d077de545aa4e")
             },
             Ref::Peeled {
-                full_ref_name: "refs/tags/git-commitgraph-v0.0.0".into(),
+                full_ref_name: "refs/tags/gix-commitgraph-v0.0.0".into(),
                 tag: oid("dce0ea858eef7ff61ad345cc5cdac62203fb3c10"),
                 object: oid("21c9b7500cb144b3169a6537961ec2b9e865be81")
             },

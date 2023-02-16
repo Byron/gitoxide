@@ -1,4 +1,4 @@
-use git_commitgraph::Graph;
+use gix_commitgraph::Graph;
 
 use crate::{check_common, inspect_refs, make_readonly_repo};
 
