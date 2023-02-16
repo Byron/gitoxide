@@ -27,7 +27,7 @@ pub enum Error {
     #[error(transparent)]
     ReferenceName(#[from] gix_validate::refname::Error),
     #[error(transparent)]
-    RevSpec(#[from] git_revision::spec::parse::Error),
+    RevSpec(#[from] gix_revision::spec::parse::Error),
 }
 
 /// Define how the parsed refspec should be used.
@@ -173,7 +173,7 @@ pub(crate) mod function {
                         .map_err(Error::from)
                         .or_else(|err| {
                             if allow_revspecs {
-                                match git_revision::spec::parse(spec, &mut super::revparse::Noop) {
+                                match gix_revision::spec::parse(spec, &mut super::revparse::Noop) {
                                     Ok(_) => {
                                         if spec.iter().any(|b| b.is_ascii_whitespace()) {
                                             Err(err)
@@ -197,7 +197,7 @@ pub(crate) mod function {
 
 mod revparse {
     use bstr::BStr;
-    use git_revision::spec::parse::delegate::{
+    use gix_revision::spec::parse::delegate::{
         Kind, Navigate, PeelTo, PrefixHint, ReflogLookup, Revision, SiblingBranch, Traversal,
     };
 
@@ -244,12 +244,12 @@ mod revparse {
     }
 
     impl Kind for Noop {
-        fn kind(&mut self, _kind: git_revision::spec::Kind) -> Option<()> {
+        fn kind(&mut self, _kind: gix_revision::spec::Kind) -> Option<()> {
             Some(())
         }
     }
 
-    impl git_revision::spec::parse::Delegate for Noop {
+    impl gix_revision::spec::parse::Delegate for Noop {
         fn done(&mut self) {}
     }
 }

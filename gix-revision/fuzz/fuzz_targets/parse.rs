@@ -1,11 +1,11 @@
 #![no_main]
-use git_revision::spec::parse::{delegate, Delegate};
+use gix_revision::spec::parse::{delegate, Delegate};
 use libfuzzer_sys::fuzz_target;
 
 use bstr::BStr;
 
 fuzz_target!(|data: &[u8]| {
-    drop(git_revision::spec::parse(data.into(), &mut Noop));
+    drop(gix_revision::spec::parse(data.into(), &mut Noop));
 });
 
 struct Noop;
@@ -15,7 +15,7 @@ impl Delegate for Noop {
 }
 
 impl delegate::Kind for Noop {
-    fn kind(&mut self, _kind: git_revision::spec::Kind) -> Option<()> {
+    fn kind(&mut self, _kind: gix_revision::spec::Kind) -> Option<()> {
         Some(())
     }
 }

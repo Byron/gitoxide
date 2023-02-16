@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 
-use git_revision::describe;
 use gix::{
     odb::{Find, FindExt},
     Repository,
 };
 use gix_object::bstr::ByteSlice;
+use gix_revision::describe;
 
 use crate::hex_to_id;
 
@@ -15,7 +15,7 @@ mod format;
 fn option_none_if_no_tag_found() -> crate::Result {
     let repo = repo();
     let commit = repo.head_commit()?;
-    let res = git_revision::describe(
+    let res = gix_revision::describe(
         &commit.id,
         |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
         Default::default(),
@@ -28,7 +28,7 @@ fn option_none_if_no_tag_found() -> crate::Result {
 fn fallback_if_configured_in_options_but_no_candidate_or_names() -> crate::Result {
     let repo = repo();
     let commit = repo.head_commit()?;
-    let res = git_revision::describe(
+    let res = gix_revision::describe(
         &commit.id,
         |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
         describe::Options {
@@ -51,7 +51,7 @@ fn fallback_if_configured_in_options_but_no_candidate_or_names() -> crate::Resul
 fn fallback_if_configured_in_options_and_max_candidates_zero() -> crate::Result {
     let repo = repo();
     let commit = repo.head_commit()?;
-    let res = git_revision::describe(
+    let res = gix_revision::describe(
         &commit.id,
         |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
         describe::Options {
@@ -74,7 +74,7 @@ fn not_enough_candidates() -> crate::Result {
     let commit = repo.head_commit()?;
 
     let name = Cow::Borrowed(b"at-c5".as_bstr());
-    let res = git_revision::describe(
+    let res = gix_revision::describe(
         &commit.id,
         |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
         describe::Options {
@@ -109,7 +109,7 @@ fn typical_usecases() {
     let repo = repo();
     let commit = repo.head_commit().unwrap();
     let name = Cow::Borrowed(b"main".as_bstr());
-    let res = git_revision::describe(
+    let res = gix_revision::describe(
         &commit.id,
         |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "shouldn't be called")),
         describe::Options {
@@ -130,7 +130,7 @@ fn typical_usecases() {
     assert_eq!(res.depth, 0);
 
     let name = Cow::Borrowed(b"at-c5".as_bstr());
-    let res = git_revision::describe(
+    let res = gix_revision::describe(
         &commit.id,
         |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
         describe::Options {
@@ -158,7 +158,7 @@ fn typical_usecases() {
     assert_eq!(res.depth, 3);
     assert_eq!(res.commits_seen, 6);
 
-    let res = git_revision::describe(
+    let res = gix_revision::describe(
         &commit.id,
         |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
         describe::Options {
@@ -176,7 +176,7 @@ fn typical_usecases() {
 
     let shallow_repo = gix::open(repo.work_dir().expect("non-bare").join("shallow-clone")).unwrap();
 
-    let res = git_revision::describe(
+    let res = gix_revision::describe(
         &commit.id,
         |id, buf| {
             shallow_repo

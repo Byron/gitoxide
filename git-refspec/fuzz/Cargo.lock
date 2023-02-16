@@ -113,7 +113,7 @@ version = "0.0.0"
 dependencies = [
  "bstr",
  "gix-hash",
- "git-revision",
+ "gix-revision",
  "gix-validate",
  "smallvec",
  "thiserror",
@@ -128,7 +128,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-revision"
+name = "gix-revision"
 version = "0.3.0"
 dependencies = [
  "bstr",

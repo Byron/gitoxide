@@ -1,4 +1,4 @@
-use git_revision::spec;
+use gix_revision::spec;
 
 use crate::spec::parse::{try_parse, try_parse_opts, Options};
 
@@ -27,7 +27,7 @@ fn delegate_can_refuse_spec_kinds() {
 }
 
 mod include_parents {
-    use git_revision::spec;
+    use gix_revision::spec;
 
     use crate::spec::parse::{kind::prefix, parse, try_parse, Call};
 
@@ -62,7 +62,7 @@ mod include_parents {
 }
 
 mod exclude_parents {
-    use git_revision::spec;
+    use gix_revision::spec;
 
     use crate::spec::parse::{kind::prefix, parse, try_parse, Call};
 
@@ -71,7 +71,7 @@ mod exclude_parents {
         let rec = parse("^!");
         assert_eq!(
             rec.kind,
-            Some(git_revision::spec::Kind::ExcludeReachable),
+            Some(gix_revision::spec::Kind::ExcludeReachable),
             "the delegate has to be able to deal with this"
         );
     }
@@ -107,7 +107,7 @@ mod exclude_parents {
 }
 
 mod exclusive {
-    use git_revision::spec;
+    use gix_revision::spec;
 
     use crate::spec::parse::{kind::prefix, parse};
 
@@ -116,7 +116,7 @@ mod exclusive {
         let rec = parse("^");
         assert_eq!(
             rec.kind,
-            Some(git_revision::spec::Kind::ExcludeReachable),
+            Some(gix_revision::spec::Kind::ExcludeReachable),
             "the delegate has to be able to deal with this"
         );
     }
@@ -150,7 +150,7 @@ mod exclusive {
 }
 
 mod range {
-    use git_revision::{spec, spec::parse::delegate::Traversal};
+    use gix_revision::{spec, spec::parse::delegate::Traversal};
 
     use crate::spec::parse::{kind::prefix, parse, try_parse, Call};
 
@@ -257,7 +257,7 @@ mod range {
         let rec = parse("..");
         assert_eq!(
             rec.kind,
-            Some(git_revision::spec::Kind::RangeBetween),
+            Some(gix_revision::spec::Kind::RangeBetween),
             "the delegate has to be able to deal with this"
         );
     }
@@ -343,7 +343,7 @@ mod range {
 }
 
 mod mergebase {
-    use git_revision::{spec, spec::parse::delegate::Traversal};
+    use gix_revision::{spec, spec::parse::delegate::Traversal};
 
     use crate::spec::parse::{kind::prefix, parse};
 
@@ -352,7 +352,7 @@ mod mergebase {
         let rec = parse("...");
         assert_eq!(
             rec.kind,
-            Some(git_revision::spec::Kind::ReachableToMergeBase),
+            Some(gix_revision::spec::Kind::ReachableToMergeBase),
             "the delegate has to be able to deal with this"
         );
     }

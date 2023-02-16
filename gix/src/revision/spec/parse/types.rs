@@ -155,7 +155,7 @@ pub enum Error {
         expected: gix_object::Kind,
     },
     #[error(transparent)]
-    Parse(#[from] git_revision::spec::parse::Error),
+    Parse(#[from] gix_revision::spec::parse::Error),
     #[error("An object prefixed {prefix} could not be found")]
     PrefixNotFound { prefix: gix_hash::Prefix },
     #[error("Short id {prefix} is ambiguous. Candidates are:\n{}", info.iter().map(|(oid, info)| format!("\t{oid} {info}")).collect::<Vec<_>>().join("\n"))]

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use git_revision::spec::parse;
 use gix_hash::ObjectId;
+use gix_revision::spec::parse;
 
 use crate::{bstr::BStr, revision::Spec, Repository};
 
@@ -32,7 +32,7 @@ impl<'repo> Spec<'repo> {
     /// Note that it's easier and to use [`repo.rev_parse()`][Repository::rev_parse()] instead.
     pub fn from_bstr<'a>(spec: impl Into<&'a BStr>, repo: &'repo Repository, opts: Options) -> Result<Self, Error> {
         let mut delegate = Delegate::new(repo, opts);
-        match git_revision::spec::parse(spec.into(), &mut delegate) {
+        match gix_revision::spec::parse(spec.into(), &mut delegate) {
             Err(parse::Error::Delegate) => Err(delegate.into_err()),
             Err(err) => Err(err.into()),
             Ok(()) => delegate.into_rev_spec(),
@@ -46,7 +46,7 @@ struct Delegate<'repo> {
     /// The originally encountered ambiguous objects for potential later use in errors.
     ambiguous_objects: [Option<HashSet<ObjectId>>; 2],
     idx: usize,
-    kind: Option<git_revision::spec::Kind>,
+    kind: Option<gix_revision::spec::Kind>,
 
     opts: Options,
     err: Vec<Error>,

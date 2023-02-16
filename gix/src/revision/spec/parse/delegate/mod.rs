@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use git_revision::spec::{
+use gix_hash::ObjectId;
+use gix_revision::spec::{
     parse,
     parse::delegate::{self},
 };
-use gix_hash::ObjectId;
 use smallvec::SmallVec;
 
 use super::{Delegate, Error, ObjectKindHint};
@@ -81,23 +81,23 @@ impl<'repo> Delegate<'repo> {
         }
 
         fn kind_to_spec(
-            kind: Option<git_revision::spec::Kind>,
+            kind: Option<gix_revision::spec::Kind>,
             [first, second]: [Option<ObjectId>; 2],
-        ) -> Result<git_revision::Spec, Error> {
-            use git_revision::spec::Kind::*;
+        ) -> Result<gix_revision::Spec, Error> {
+            use gix_revision::spec::Kind::*;
             Ok(match kind.unwrap_or_default() {
-                IncludeReachable => git_revision::Spec::Include(first.ok_or(Error::Malformed)?),
-                ExcludeReachable => git_revision::Spec::Exclude(first.ok_or(Error::Malformed)?),
-                RangeBetween => git_revision::Spec::Range {
+                IncludeReachable => gix_revision::Spec::Include(first.ok_or(Error::Malformed)?),
+                ExcludeReachable => gix_revision::Spec::Exclude(first.ok_or(Error::Malformed)?),
+                RangeBetween => gix_revision::Spec::Range {
                     from: first.ok_or(Error::Malformed)?,
                     to: second.ok_or(Error::Malformed)?,
                 },
-                ReachableToMergeBase => git_revision::Spec::Merge {
+                ReachableToMergeBase => gix_revision::Spec::Merge {
                     theirs: first.ok_or(Error::Malformed)?,
                     ours: second.ok_or(Error::Malformed)?,
                 },
-                IncludeReachableFromParents => git_revision::Spec::IncludeOnlyParents(first.ok_or(Error::Malformed)?),
-                ExcludeReachableFromParents => git_revision::Spec::ExcludeParents(first.ok_or(Error::Malformed)?),
+                IncludeReachableFromParents => gix_revision::Spec::IncludeOnlyParents(first.ok_or(Error::Malformed)?),
+                ExcludeReachableFromParents => gix_revision::Spec::ExcludeParents(first.ok_or(Error::Malformed)?),
             })
         }
 
@@ -123,8 +123,8 @@ impl<'repo> parse::Delegate for Delegate<'repo> {
 }
 
 impl<'repo> delegate::Kind for Delegate<'repo> {
-    fn kind(&mut self, kind: git_revision::spec::Kind) -> Option<()> {
-        use git_revision::spec::Kind::*;
+    fn kind(&mut self, kind: gix_revision::spec::Kind) -> Option<()> {
+        use gix_revision::spec::Kind::*;
         self.kind = Some(kind);
 
         if self.kind_implies_committish() {
@@ -140,7 +140,7 @@ impl<'repo> delegate::Kind for Delegate<'repo> {
 
 impl<'repo> Delegate<'repo> {
     fn kind_implies_committish(&self) -> bool {
-        self.kind.unwrap_or(git_revision::spec::Kind::IncludeReachable) != git_revision::spec::Kind::IncludeReachable
+        self.kind.unwrap_or(gix_revision::spec::Kind::IncludeReachable) != gix_revision::spec::Kind::IncludeReachable
     }
     fn disambiguate_objects_by_fallback_hint(&mut self, hint: Option<ObjectKindHint>) {
         fn require_object_kind(repo: &Repository, obj: &gix_hash::oid, kind: gix_object::Kind) -> Result<(), Error> {

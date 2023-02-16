@@ -1633,38 +1633,12 @@ name = "git-refspec"
 version = "0.7.2"
 dependencies = [
  "bstr",
- "git-revision",
  "git-testtools",
  "gix-hash",
+ "gix-revision",
  "gix-validate",
  "smallvec",
  "thiserror",
-]
-
-[[package]]
-name = "git-revision"
-version = "0.10.3"
-dependencies = [
- "bstr",
- "document-features",
- "gix-date",
- "gix-hash",
- "gix-hashtable",
- "gix-object",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "git-revision-tests"
-version = "0.0.0"
-dependencies = [
- "bstr",
- "git-revision",
- "git-testtools",
- "gix",
- "gix-hash",
- "gix-object",
 ]
 
 [[package]]
@@ -1679,14 +1653,6 @@ dependencies = [
  "libc",
  "windows 0.43.0",
 ]
-
-[[package]]
-name = "gix-sequencer"
-version = "0.0.0"
-
-[[package]]
-name = "gix-submodule"
-version = "0.0.0"
 
 [[package]]
 name = "git-tempfile"
@@ -1843,7 +1809,6 @@ dependencies = [
  "git-pack",
  "git-protocol",
  "git-refspec",
- "git-revision",
  "git-testtools",
  "gix-actor",
  "gix-attributes",
@@ -1859,6 +1824,7 @@ dependencies = [
  "gix-path",
  "gix-prompt",
  "gix-ref",
+ "gix-revision",
  "gix-sec",
  "gix-tempfile",
  "gix-transport",
@@ -2196,6 +2162,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-revision"
+version = "0.10.3"
+dependencies = [
+ "bstr",
+ "document-features",
+ "gix-date",
+ "gix-hash",
+ "gix-hashtable",
+ "gix-object",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-revision-tests"
+version = "0.0.0"
+dependencies = [
+ "bstr",
+ "git-testtools",
+ "gix",
+ "gix-hash",
+ "gix-object",
+ "gix-revision",
+]
+
+[[package]]
 name = "gix-sec"
 version = "0.6.2"
 dependencies = [
@@ -2208,6 +2200,14 @@ dependencies = [
  "tempfile",
  "windows 0.43.0",
 ]
+
+[[package]]
+name = "gix-sequencer"
+version = "0.0.0"
+
+[[package]]
+name = "gix-submodule"
+version = "0.0.0"
 
 [[package]]
 name = "gix-tempfile"

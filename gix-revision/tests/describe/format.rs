@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
-use git_revision::describe;
 use gix_object::bstr::ByteSlice;
+use gix_revision::describe;
 
 use crate::hex_to_id;
 

@@ -149,7 +149,7 @@ members = [
     "git-index",
     "git-bitmap",
     "gix-worktree",
-    "git-revision",
+    "gix-revision",
     "gix-packetline",
     "git-mailmap",
     "git-note",
@@ -181,7 +181,7 @@ members = [
     "cargo-smart-release",
     "tests/tools",
 
-    "git-revision/tests",
+    "gix-revision/tests",
     "git-diff/tests",
     "git-pack/tests",
     "git-index/tests",

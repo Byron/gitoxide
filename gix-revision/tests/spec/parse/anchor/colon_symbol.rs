@@ -1,4 +1,4 @@
-use git_revision::spec;
+use gix_revision::spec;
 
 use crate::spec::parse::{parse, try_parse};
 

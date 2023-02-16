@@ -53,7 +53,7 @@ fn fully_failed_disambiguation_still_yields_an_ambiguity_error() {
 fn ranges_are_auto_disambiguated_by_committish() {
     let repo = repo("ambiguous_blob_tree_commit").unwrap();
     let id = hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b");
-    let expected = git_revision::Spec::Range { from: id, to: id }.attach(&repo);
+    let expected = gix_revision::Spec::Range { from: id, to: id }.attach(&repo);
 
     for spec in ["000000000..000000000", "..000000000", "000000000.."] {
         assert_eq!(
@@ -63,7 +63,7 @@ fn ranges_are_auto_disambiguated_by_committish() {
         );
     }
 
-    let expected = git_revision::Spec::Merge { theirs: id, ours: id }.attach(&repo);
+    let expected = gix_revision::Spec::Merge { theirs: id, ours: id }.attach(&repo);
     for spec in ["000000000...000000000", "...000000000", "000000000..."] {
         assert_eq!(parse_spec(spec, &repo).unwrap(), expected);
     }
@@ -238,7 +238,7 @@ fn repository_local_disambiguation_hints_disambiguate() {
 
     {
         let id = hex_to_id("00000000000434887f772f53e14e39497f7747d3");
-        let expected = git_revision::Spec::Range { from: id, to: id }.attach(&r);
+        let expected = gix_revision::Spec::Range { from: id, to: id }.attach(&r);
         assert_eq!(
             rev_parse("00000000000..00000000000", &r).unwrap(),
             expected,

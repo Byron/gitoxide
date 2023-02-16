@@ -11,7 +11,7 @@ fn oid2() -> gix_hash::ObjectId {
 #[test]
 fn include() {
     assert_eq!(
-        git_revision::Spec::Include(oid()).to_string(),
+        gix_revision::Spec::Include(oid()).to_string(),
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     );
 }
@@ -19,7 +19,7 @@ fn include() {
 #[test]
 fn exclude() {
     assert_eq!(
-        git_revision::Spec::Exclude(oid()).to_string(),
+        gix_revision::Spec::Exclude(oid()).to_string(),
         "^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     );
 }
@@ -27,7 +27,7 @@ fn exclude() {
 #[test]
 fn range() {
     assert_eq!(
-        git_revision::Spec::Range {
+        gix_revision::Spec::Range {
             from: oid(),
             to: oid2()
         }
@@ -39,7 +39,7 @@ fn range() {
 #[test]
 fn merge() {
     assert_eq!(
-        git_revision::Spec::Merge {
+        gix_revision::Spec::Merge {
             theirs: oid(),
             ours: oid2()
         }
@@ -51,7 +51,7 @@ fn merge() {
 #[test]
 fn include_parents() {
     assert_eq!(
-        git_revision::Spec::IncludeOnlyParents(oid()).to_string(),
+        gix_revision::Spec::IncludeOnlyParents(oid()).to_string(),
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^@"
     );
 }
@@ -59,7 +59,7 @@ fn include_parents() {
 #[test]
 fn exclude_parents() {
     assert_eq!(
-        git_revision::Spec::ExcludeParents(oid()).to_string(),
+        gix_revision::Spec::ExcludeParents(oid()).to_string(),
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^!"
     );
 }

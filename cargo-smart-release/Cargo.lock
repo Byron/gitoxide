@@ -813,7 +813,7 @@ dependencies = [
  "git-pack",
  "gix-path",
  "gix-ref",
- "git-revision",
+ "gix-revision",
  "gix-sec",
  "gix-tempfile",
  "gix-traverse",
@@ -827,7 +827,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-revision"
+name = "gix-revision"
 version = "0.2.1"
 dependencies = [
  "bstr",

@@ -1,8 +1,8 @@
-use git_revision::{
+use gix_object::bstr::{BStr, BString};
+use gix_revision::{
     spec,
     spec::parse::{delegate, Delegate},
 };
-use gix_object::bstr::{BStr, BString};
 
 #[derive(Default, Debug, Eq, PartialEq, Ord, PartialOrd)]
 struct Options {

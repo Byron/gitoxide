@@ -456,7 +456,7 @@ Make it the best-performing implementation and the most convenient one.
 * [x] access to all .gitignore/exclude information 
 * [ ] access to all attributes information
  
-### git-revision
+### gix-revision
 * [x] `describe()` (similar to `git name-rev`)
 * parse specifications 
     * [x] parsing and navigation

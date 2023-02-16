@@ -1,5 +1,5 @@
 [package]
-name = "git-revision-fuzz"
+name = "gix-revision-fuzz"
 version = "0.0.0"
 authors = ["Automatically generated"]
 publish = false
@@ -13,7 +13,7 @@ libfuzzer-sys = "0.4"
 gix-hash = { path = "../../gix-hash" }
 bstr = "1.0.1"
 
-[dependencies.git-revision]
+[dependencies.gix-revision]
 path = ".."
 
 # Prevent this from interfering with workspaces

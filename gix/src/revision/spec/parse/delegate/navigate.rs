@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use git_revision::spec::parse::{
+use gix_hash::ObjectId;
+use gix_revision::spec::parse::{
     delegate,
     delegate::{PeelTo, Traversal},
 };
-use gix_hash::ObjectId;
 use gix_traverse::commit::Sorting;
 
 use crate::{

@@ -65,7 +65,7 @@ serde1 = [  "serde",
             "git-mailmap/serde1",
             "gix-url/serde1",
             "gix-attributes/serde1",
-            "git-revision/serde1",
+            "gix-revision/serde1",
             "gix-credentials/serde1" ]
 
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
@@ -105,7 +105,7 @@ gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-object = { version = "^0.26.1", path = "../gix-object" }
 gix-actor = { version = "^0.17.1", path = "../gix-actor" }
 git-pack = { version = "^0.30.2", path = "../git-pack", features = ["object-cache-dynamic"] }
-git-revision = { version = "^0.10.3", path = "../git-revision" }
+gix-revision = { version = "^0.10.3", path = "../gix-revision" }
 
 gix-path = { version = "^0.7.1", path = "../gix-path" }
 gix-url = { version = "^0.13.2", path = "../gix-url" }

@@ -1,4 +1,4 @@
-# `git-revision`
+# `gix-revision`
 
 ### Testing
 
