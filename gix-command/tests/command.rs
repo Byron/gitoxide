@@ -6,7 +6,7 @@ mod prepare {
     }
     #[test]
     fn single_and_multiple_arguments() {
-        let cmd = std::process::Command::from(git_command::prepare("ls").arg("first").args(["second", "third"]));
+        let cmd = std::process::Command::from(gix_command::prepare("ls").arg("first").args(["second", "third"]));
         assert_eq!(format!("{cmd:?}"), quoted(&["ls", "first", "second", "third"]));
     }
 }
@@ -18,7 +18,7 @@ mod spawn {
     #[test]
     #[cfg(unix)]
     fn environment_variables_are_passed_one_by_one() -> crate::Result {
-        let out = git_command::prepare("echo $FIRST $SECOND")
+        let out = gix_command::prepare("echo $FIRST $SECOND")
             .env("FIRST", "first")
             .env("SECOND", "second")
             .with_shell()
@@ -31,13 +31,13 @@ mod spawn {
     #[test]
     #[cfg(unix)]
     fn disallow_shell() -> crate::Result {
-        let out = git_command::prepare("echo hi")
+        let out = gix_command::prepare("echo hi")
             .with_shell()
             .spawn()?
             .wait_with_output()?;
         assert_eq!(out.stdout.as_bstr(), "hi\n");
         assert!(
-            git_command::prepare("echo hi")
+            gix_command::prepare("echo hi")
                 .with_shell()
                 .without_shell()
                 .spawn()
@@ -49,7 +49,7 @@ mod spawn {
 
     #[test]
     fn direct_command_execution_searches_in_path() -> crate::Result {
-        assert!(git_command::prepare(if cfg!(unix) { "ls" } else { "dir.exe" })
+        assert!(gix_command::prepare(if cfg!(unix) { "ls" } else { "dir.exe" })
             .spawn()?
             .wait()?
             .success());
@@ -59,7 +59,7 @@ mod spawn {
     #[cfg(unix)]
     #[test]
     fn direct_command_with_absolute_command_path() -> crate::Result {
-        assert!(git_command::prepare("/bin/ls").spawn()?.wait()?.success());
+        assert!(gix_command::prepare("/bin/ls").spawn()?.wait()?.success());
         Ok(())
     }
 
@@ -68,7 +68,7 @@ mod spawn {
 
         #[test]
         fn command_in_path_with_args() -> crate::Result {
-            assert!(git_command::prepare(if cfg!(unix) { "ls -l" } else { "dir.exe -a" })
+            assert!(gix_command::prepare(if cfg!(unix) { "ls -l" } else { "dir.exe -a" })
                 .with_shell()
                 .spawn()?
                 .wait()?
@@ -78,13 +78,13 @@ mod spawn {
 
         #[test]
         fn sh_shell_specific_script_code() -> crate::Result {
-            assert!(git_command::prepare(":;:;:").with_shell().spawn()?.wait()?.success());
+            assert!(gix_command::prepare(":;:;:").with_shell().spawn()?.wait()?.success());
             Ok(())
         }
 
         #[test]
         fn sh_shell_specific_script_code_with_single_extra_arg() -> crate::Result {
-            let out = git_command::prepare("echo")
+            let out = gix_command::prepare("echo")
                 .with_shell()
                 .arg("1")
                 .spawn()?
@@ -99,7 +99,7 @@ mod spawn {
 
         #[test]
         fn sh_shell_specific_script_code_with_multiple_extra_args() -> crate::Result {
-            let out = git_command::prepare("echo")
+            let out = gix_command::prepare("echo")
                 .with_shell()
                 .arg("1")
                 .arg("2")

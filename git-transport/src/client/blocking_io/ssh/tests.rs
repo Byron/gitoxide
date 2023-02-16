@@ -198,12 +198,12 @@ mod program_kind {
             kind: ProgramKind,
             url: &str,
             version: Protocol,
-        ) -> std::result::Result<git_command::Prepare, ssh::invocation::Error> {
+        ) -> std::result::Result<gix_command::Prepare, ssh::invocation::Error> {
             let ssh_cmd = kind.exe().unwrap_or_else(|| OsStr::new("simple"));
             let url = gix_url::parse(url.into()).expect("valid url");
             kind.prepare_invocation(ssh_cmd, &url, version, false)
         }
-        fn call(kind: ProgramKind, url: &str, version: Protocol) -> git_command::Prepare {
+        fn call(kind: ProgramKind, url: &str, version: Protocol) -> gix_command::Prepare {
             try_call(kind, url, version).expect("no error")
         }
         fn call_args(kind: ProgramKind, url: &str, version: Protocol) -> String {

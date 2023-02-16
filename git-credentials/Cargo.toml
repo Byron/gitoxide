@@ -19,7 +19,7 @@ serde1 = ["serde", "bstr/serde", "gix-sec/serde1"]
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }
 gix-url = { version = "^0.13.2", path = "../gix-url" }
 gix-path = { version = "^0.7.1", path = "../gix-path" }
-git-command = { version = "^0.2.3", path = "../git-command" }
+gix-command = { version = "^0.2.3", path = "../gix-command" }
 gix-config-value = { version = "^0.10.1", path = "../gix-config-value" }
 git-prompt = { version = "^0.3.2", path = "../git-prompt" }
 

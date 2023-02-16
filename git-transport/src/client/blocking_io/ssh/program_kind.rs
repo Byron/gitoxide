@@ -26,8 +26,8 @@ impl ProgramKind {
         url: &gix_url::Url,
         desired_version: Protocol,
         disallow_shell: bool,
-    ) -> Result<git_command::Prepare, ssh::invocation::Error> {
-        let mut prepare = git_command::prepare(ssh_cmd).with_shell();
+    ) -> Result<gix_command::Prepare, ssh::invocation::Error> {
+        let mut prepare = gix_command::prepare(ssh_cmd).with_shell();
         if disallow_shell {
             prepare.use_shell = false;
         }

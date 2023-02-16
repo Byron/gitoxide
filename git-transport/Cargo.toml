@@ -53,7 +53,7 @@ path = "tests/async-transport.rs"
 required-features = ["async-client"]
 
 [dependencies]
-git-command = { version = "^0.2.3", path = "../git-command" }
+gix-command = { version = "^0.2.3", path = "../gix-command" }
 gix-features = { version = "^0.26.4", path = "../gix-features" }
 gix-url = { version = "^0.13.2", path = "../gix-url" }
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }

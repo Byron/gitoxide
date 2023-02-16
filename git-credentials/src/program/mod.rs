@@ -92,7 +92,7 @@ impl Program {
             }
             | Kind::ExternalPath {
                 path_and_args: for_shell,
-            } => git_command::prepare(gix_path::from_bstr(for_shell.as_bstr()).as_ref())
+            } => gix_command::prepare(gix_path::from_bstr(for_shell.as_bstr()).as_ref())
                 .with_shell()
                 .arg(action.as_arg(true))
                 .into(),

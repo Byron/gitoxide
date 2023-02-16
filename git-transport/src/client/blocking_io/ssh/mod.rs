@@ -98,7 +98,7 @@ pub fn connect(
     let mut kind = options.kind.unwrap_or_else(|| ProgramKind::from(ssh_cmd));
     if options.kind.is_none() && kind == ProgramKind::Simple {
         kind = if std::process::Command::from(
-            git_command::prepare(ssh_cmd)
+            gix_command::prepare(ssh_cmd)
                 .stderr(Stdio::null())
                 .stdout(Stdio::null())
                 .stdin(Stdio::null())

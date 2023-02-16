@@ -1242,14 +1242,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-command"
-version = "0.2.3"
-dependencies = [
- "bstr",
- "git-testtools",
-]
-
-[[package]]
 name = "git-commitgraph"
 version = "0.13.0"
 dependencies = [
@@ -1281,9 +1273,9 @@ version = "0.9.1"
 dependencies = [
  "bstr",
  "document-features",
- "git-command",
  "git-prompt",
  "git-testtools",
+ "gix-command",
  "gix-config-value",
  "gix-path",
  "gix-sec",
@@ -1601,8 +1593,8 @@ name = "git-prompt"
 version = "0.3.2"
 dependencies = [
  "expectrl",
- "git-command",
  "git-testtools",
+ "gix-command",
  "gix-config-value",
  "nix 0.26.2",
  "parking_lot 0.12.1",
@@ -1780,9 +1772,9 @@ dependencies = [
  "document-features",
  "futures-io",
  "futures-lite",
- "git-command",
  "git-credentials",
  "git-pack",
+ "gix-command",
  "gix-features",
  "gix-hash",
  "gix-packetline",
@@ -1986,6 +1978,14 @@ dependencies = [
  "serde",
  "thiserror",
  "unicode-bom",
+]
+
+[[package]]
+name = "gix-command"
+version = "0.2.3"
+dependencies = [
+ "bstr",
+ "git-testtools",
 ]
 
 [[package]]

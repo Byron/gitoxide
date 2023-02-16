@@ -133,7 +133,7 @@ members = [
     "gix-hash",
     "gix-validate",
     "gix-ref",
-    "git-command",
+    "gix-command",
     "gix-config",
     "gix-config-value",
     "git-discover",

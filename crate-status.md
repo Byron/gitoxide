@@ -359,7 +359,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
     * [x] for fetch
     * [ ] for push
 
-### git-command
+### gix-command
 * [x] execute commands directly
 * [x] execute commands with `sh`
 * [ ] support for `GIT_EXEC_PATH` environment variable with `gix-sec` filter
