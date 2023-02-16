@@ -26,7 +26,7 @@ fn integrity() {
         outcome.pack_traverse_statistics,
         vec![git_pack::index::traverse::Statistics {
             average: git_pack::data::decode::entry::Outcome {
-                kind: git_object::Kind::Tree,
+                kind: gix_object::Kind::Tree,
                 num_deltas: 1,
                 decompressed_size: 47,
                 compressed_size: 46,

@@ -2,8 +2,8 @@ use crate::{remote, util::restricted};
 
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
-    use git_object::bstr::ByteSlice;
     use git_ref::TargetRef;
+    use gix_object::bstr::ByteSlice;
 
     use gix::remote::fetch::SpecIndex;
 

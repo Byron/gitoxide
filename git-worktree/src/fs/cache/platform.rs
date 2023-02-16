@@ -58,7 +58,7 @@ pub struct StackDelegate<'a, Find> {
 
 impl<'a, Find, E> fs::stack::Delegate for StackDelegate<'a, Find>
 where
-    Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::BlobRef<'b>, E>,
+    Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
     E: std::error::Error + Send + Sync + 'static,
 {
     fn push_directory(&mut self, stack: &fs::Stack) -> std::io::Result<()> {

@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
-use git_object::bstr::ByteSlice;
 use gix_features::fs::walkdir::DirEntryIter;
+use gix_object::bstr::ByteSlice;
 
 use crate::{file::iter::LooseThenPacked, store_impl::file, BString, FullName};
 

@@ -69,7 +69,7 @@ impl<'repo> Object<'repo> {
 
     /// Peel this object into a tree and return it, if this is possible.
     pub fn peel_to_tree(self) -> Result<Tree<'repo>, peel::to_kind::Error> {
-        Ok(self.peel_to_kind(git_object::Kind::Tree)?.into_tree())
+        Ok(self.peel_to_kind(gix_object::Kind::Tree)?.into_tree())
     }
 
     // TODO: tests

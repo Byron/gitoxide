@@ -426,7 +426,7 @@ fn possibly_adjust_name_for_prefixes(name: &FullNameRef) -> Option<FullName> {
 }
 
 mod error {
-    use git_object::bstr::BString;
+    use gix_object::bstr::BString;
 
     use crate::{
         store_impl::{file, packed},

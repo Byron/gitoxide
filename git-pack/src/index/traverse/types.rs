@@ -32,7 +32,7 @@ pub struct Statistics {
 impl Default for Statistics {
     fn default() -> Self {
         Statistics {
-            average: crate::data::decode::entry::Outcome::default_from_kind(git_object::Kind::Tree),
+            average: crate::data::decode::entry::Outcome::default_from_kind(gix_object::Kind::Tree),
             objects_per_chain_length: Default::default(),
             total_compressed_entries_size: 0,
             total_decompressed_entries_size: 0,

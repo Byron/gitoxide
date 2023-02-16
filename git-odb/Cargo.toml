@@ -15,7 +15,7 @@ doctest = false
 [features]
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "gix-hash/serde1", "git-object/serde1", "git-pack/serde1" ]
+serde1 = ["serde", "gix-hash/serde1", "gix-object/serde1", "git-pack/serde1" ]
 
 [[test]]
 name = "multi-threaded"
@@ -32,7 +32,7 @@ gix-features = { version = "^0.26.4", path = "../gix-features", features = ["rus
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-path = { version = "^0.7.1", path = "../gix-path" }
 git-quote = { version = "^0.4.1", path = "../git-quote" }
-git-object = { version = "^0.26.1", path = "../git-object" }
+gix-object = { version = "^0.26.1", path = "../gix-object" }
 git-pack = { version = "^0.30.2", path = "../git-pack" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 

@@ -1,7 +1,7 @@
 use std::fmt::Formatter;
 
-use git_object::bstr::BString;
 use gix_hash::ObjectId;
+use gix_object::bstr::BString;
 
 use crate::{
     store_impl::{file, file::Transaction},
@@ -15,7 +15,7 @@ use crate::{
 pub type FindObjectFn<'a> = dyn FnMut(
         gix_hash::ObjectId,
         &mut Vec<u8>,
-    ) -> Result<Option<git_object::Kind>, Box<dyn std::error::Error + Send + Sync + 'static>>
+    ) -> Result<Option<gix_object::Kind>, Box<dyn std::error::Error + Send + Sync + 'static>>
     + 'a;
 
 /// How to handle packed refs during a transaction

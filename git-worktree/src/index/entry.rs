@@ -30,7 +30,7 @@ pub fn checkout<Find, E>(
     }: index::checkout::Options,
 ) -> Result<usize, index::checkout::Error<E>>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
     E: std::error::Error + Send + Sync + 'static,
 {
     let dest_relative = gix_path::try_from_bstr(entry_path).map_err(|_| index::checkout::Error::IllformedUtf8 {

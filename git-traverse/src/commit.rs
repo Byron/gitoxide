@@ -61,8 +61,8 @@ pub mod ancestors {
     };
 
     use git_hashtable::HashSet;
-    use git_object::CommitRefIter;
     use gix_hash::{oid, ObjectId};
+    use gix_object::CommitRefIter;
 
     use crate::commit::{Ancestors, Parents, Sorting};
 
@@ -76,7 +76,7 @@ pub mod ancestors {
             source: Box<dyn std::error::Error + Send + Sync + 'static>,
         },
         #[error(transparent)]
-        ObjectDecode(#[from] git_object::decode::Error),
+        ObjectDecode(#[from] gix_object::decode::Error),
     }
 
     type TimeInSeconds = u32;
@@ -280,8 +280,8 @@ pub mod ancestors {
                         count += 1;
                         let is_first = count == 1;
                         match token {
-                            Ok(git_object::commit::ref_iter::Token::Tree { .. }) => continue,
-                            Ok(git_object::commit::ref_iter::Token::Parent { id }) => {
+                            Ok(gix_object::commit::ref_iter::Token::Tree { .. }) => continue,
+                            Ok(gix_object::commit::ref_iter::Token::Parent { id }) => {
                                 let was_inserted = state.seen.insert(id);
                                 if !(was_inserted && (self.predicate)(&id)) {
                                     if is_first && matches!(self.parents, Parents::First) {
@@ -349,8 +349,8 @@ pub mod ancestors {
                 Ok(commit_iter) => {
                     for token in commit_iter {
                         match token {
-                            Ok(git_object::commit::ref_iter::Token::Tree { .. }) => continue,
-                            Ok(git_object::commit::ref_iter::Token::Parent { id }) => {
+                            Ok(gix_object::commit::ref_iter::Token::Tree { .. }) => continue,
+                            Ok(gix_object::commit::ref_iter::Token::Parent { id }) => {
                                 let was_inserted = state.seen.insert(id);
                                 if was_inserted && (self.predicate)(&id) {
                                     state.next.push_back((id, 0));

@@ -1,7 +1,6 @@
 use std::convert::TryInto;
 
 use git_lock::acquire::Fail;
-use git_object::bstr::{BString, ByteSlice};
 use git_odb::Find;
 use git_ref::{
     file::{
@@ -13,6 +12,7 @@ use git_ref::{
     Target,
 };
 use gix_hash::ObjectId;
+use gix_object::bstr::{BString, ByteSlice};
 
 use crate::{
     file::{
@@ -782,7 +782,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
     let edits = store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
-            Ok(Some(git_object::Kind::Commit))
+            Ok(Some(gix_object::Kind::Commit))
         })))
         .prepare(edits, Fail::Immediately, Fail::Immediately)?
         .commit(committer().to_ref())?;

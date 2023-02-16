@@ -2,15 +2,15 @@
 pub fn none(
     _id: gix_hash::ObjectId,
     #[allow(clippy::ptr_arg)] _buf: &mut Vec<u8>,
-) -> Result<Option<(git_object::Kind, &[u8])>, std::convert::Infallible> {
-    Ok(Some((git_object::Kind::Commit, &[])))
+) -> Result<Option<(gix_object::Kind, &[u8])>, std::convert::Infallible> {
+    Ok(Some((gix_object::Kind::Commit, &[])))
 }
 
 ///
 pub mod to_id {
     use std::path::PathBuf;
 
-    use git_object::bstr::BString;
+    use gix_object::bstr::BString;
 
     use crate::file;
 

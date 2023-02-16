@@ -1,9 +1,9 @@
 use std::sync::atomic::AtomicBool;
 
-use git_object::bstr::ByteSlice;
 use git_odb::loose::Store;
 use gix_actor::{Sign, Time};
 use gix_features::progress;
+use gix_object::bstr::ByteSlice;
 use pretty_assertions::assert_eq;
 
 use crate::{fixture_path, hex_to_id};
@@ -30,7 +30,7 @@ fn iter() {
     oids.sort();
     assert_eq!(oids, object_ids());
 }
-pub fn locate_oid(id: gix_hash::ObjectId, buf: &mut Vec<u8>) -> git_object::Data<'_> {
+pub fn locate_oid(id: gix_hash::ObjectId, buf: &mut Vec<u8>) -> gix_object::Data<'_> {
     ldb().try_find(id, buf).expect("read success").expect("id present")
 }
 
@@ -165,15 +165,15 @@ mod lookup_prefix {
 }
 
 mod find {
-    use git_object::{bstr::ByteSlice, tree::EntryMode, BlobRef, CommitRef, Kind, TagRef, TreeRef};
     use git_odb::loose;
+    use gix_object::{bstr::ByteSlice, tree::EntryMode, BlobRef, CommitRef, Kind, TagRef, TreeRef};
 
     use crate::{
         hex_to_id,
         store::loose::{ldb, locate_oid, signature},
     };
 
-    fn find<'a>(hex: &str, buf: &'a mut Vec<u8>) -> git_object::Data<'a> {
+    fn find<'a>(hex: &str, buf: &'a mut Vec<u8>) -> gix_object::Data<'a> {
         locate_oid(hex_to_id(hex), buf)
     }
 
@@ -291,7 +291,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         Ok(())
     }
 
-    fn try_locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> Option<git_object::Data<'a>> {
+    fn try_locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> Option<gix_object::Data<'a>> {
         ldb().try_find(hex_to_id(hex), buf).ok().flatten()
     }
 
@@ -308,14 +308,14 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 
         let expected = TreeRef {
             entries: vec![
-                git_object::tree::EntryRef {
+                gix_object::tree::EntryRef {
                     mode: EntryMode::Tree,
                     filename: b"dir".as_bstr(),
                     oid: as_id(&[
                         150, 174, 134, 139, 53, 57, 245, 81, 200, 143, 213, 240, 35, 148, 208, 34, 88, 27, 17, 176,
                     ]),
                 },
-                git_object::tree::EntryRef {
+                gix_object::tree::EntryRef {
                     mode: EntryMode::Blob,
                     filename: b"file.txt".as_bstr(),
                     oid: as_id(&[
@@ -337,7 +337,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             assert_eq!(
                 db.try_header(hex_to_id("a706d7cd20fc8ce71489f34b50cf01011c104193"))?
                     .expect("present"),
-                (56915, git_object::Kind::Blob)
+                (56915, gix_object::Kind::Blob)
             );
             Ok(())
         }

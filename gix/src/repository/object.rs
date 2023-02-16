@@ -26,7 +26,7 @@ impl crate::Repository {
         if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
             return Ok(Object {
                 id,
-                kind: git_object::Kind::Tree,
+                kind: gix_object::Kind::Tree,
                 data: Vec::new(),
                 repo: self,
             });
@@ -42,7 +42,7 @@ impl crate::Repository {
         if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
             return Ok(Some(Object {
                 id,
-                kind: git_object::Kind::Tree,
+                kind: gix_object::Kind::Tree,
                 data: Vec::new(),
                 repo: self,
             }));
@@ -59,7 +59,7 @@ impl crate::Repository {
     }
 
     /// Write the given object into the object database and return its object id.
-    pub fn write_object(&self, object: impl git_object::WriteTo) -> Result<Id<'_>, object::write::Error> {
+    pub fn write_object(&self, object: impl gix_object::WriteTo) -> Result<Id<'_>, object::write::Error> {
         self.objects
             .write(object)
             .map(|oid| oid.attach(self))
@@ -69,7 +69,7 @@ impl crate::Repository {
     /// Write a blob from the given `bytes`.
     pub fn write_blob(&self, bytes: impl AsRef<[u8]>) -> Result<Id<'_>, object::write::Error> {
         self.objects
-            .write_buf(git_object::Kind::Blob, bytes.as_ref())
+            .write_buf(gix_object::Kind::Blob, bytes.as_ref())
             .map(|oid| oid.attach(self))
     }
 
@@ -83,7 +83,7 @@ impl crate::Repository {
         bytes.seek(std::io::SeekFrom::Start(current))?;
 
         self.objects
-            .write_stream(git_object::Kind::Blob, len, bytes)
+            .write_stream(gix_object::Kind::Blob, len, bytes)
             .map(|oid| oid.attach(self))
     }
 
@@ -96,12 +96,12 @@ impl crate::Repository {
         &self,
         name: impl AsRef<str>,
         target: impl AsRef<gix_hash::oid>,
-        target_kind: git_object::Kind,
+        target_kind: gix_object::Kind,
         tagger: Option<gix_actor::SignatureRef<'_>>,
         message: impl AsRef<str>,
         constraint: PreviousValue,
     ) -> Result<Reference<'_>, tag::Error> {
-        let tag = git_object::Tag {
+        let tag = gix_object::Tag {
             target: target.as_ref().into(),
             target_kind,
             name: name.as_ref().into(),
@@ -137,7 +137,7 @@ impl crate::Repository {
         // TODO: possibly use CommitRef to save a few allocations (but will have to allocate for object ids anyway.
         //       This can be made vastly more efficient though if we wanted to, so we lie in the API
         let reference = reference.try_into()?;
-        let commit = git_object::Commit {
+        let commit = gix_object::Commit {
             message: message.as_ref().into(),
             tree: tree.into(),
             author: author.into().to_owned(),

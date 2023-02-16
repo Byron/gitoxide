@@ -18,7 +18,7 @@ That would be quite some work though.
 
 [extra-iop]: https://github.com/Byron/gitoxide/blob/2958145a0ae1ef582bbf88352f5567d5c2b5eaf0/git-odb/src/store/linked/find.rs#L33
 
-### git-object
+### gix-object
 
 * **tree-parsing performance**
   * when diffing trees parsing [can take substantial time](https://github.com/Byron/gitoxide/discussions/74#discussioncomment-684927). Maybe optimizations are possible here.

@@ -48,7 +48,7 @@ pub struct Object<'repo> {
     /// The id of the object
     pub id: ObjectId,
     /// The kind of the object
-    pub kind: git_object::Kind,
+    pub kind: gix_object::Kind,
     /// The fully decoded object data
     pub data: Vec<u8>,
     pub(crate) repo: &'repo Repository,
@@ -113,7 +113,7 @@ pub struct ObjectDetached {
     /// The id of the object
     pub id: ObjectId,
     /// The kind of the object
-    pub kind: git_object::Kind,
+    pub kind: gix_object::Kind,
     /// The fully decoded object data
     pub data: Vec<u8>,
 }

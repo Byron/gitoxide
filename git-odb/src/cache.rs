@@ -135,9 +135,9 @@ impl<S> DerefMut for Cache<S> {
 mod impls {
     use std::{io::Read, ops::DerefMut};
 
-    use git_object::{Data, Kind};
     use git_pack::cache::Object;
     use gix_hash::{oid, ObjectId};
+    use gix_object::{Data, Kind};
 
     use crate::{find::Header, pack::data::entry::Location, Cache};
 

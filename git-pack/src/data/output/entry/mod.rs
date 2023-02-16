@@ -13,7 +13,7 @@ pub use iter_from_counts::function::iter_from_counts;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
     /// A complete base object, including its kind
-    Base(git_object::Kind),
+    Base(gix_object::Kind),
     /// A delta against the object with the given index. It's always an index that was already encountered to refer only
     /// to object we have written already.
     DeltaRef {
@@ -44,7 +44,7 @@ impl output::Entry {
     pub fn invalid() -> output::Entry {
         output::Entry {
             id: gix_hash::Kind::Sha1.null(), // NOTE: the actual object hash used in the repo doesn't matter here, this is a sentinel value.
-            kind: Kind::Base(git_object::Kind::Blob),
+            kind: Kind::Base(gix_object::Kind::Blob),
             decompressed_size: 0,
             compressed_data: vec![],
         }
@@ -78,10 +78,10 @@ impl output::Entry {
 
         use crate::data::entry::Header::*;
         match pack_entry.header {
-            Commit => Some(output::entry::Kind::Base(git_object::Kind::Commit)),
-            Tree => Some(output::entry::Kind::Base(git_object::Kind::Tree)),
-            Blob => Some(output::entry::Kind::Base(git_object::Kind::Blob)),
-            Tag => Some(output::entry::Kind::Base(git_object::Kind::Tag)),
+            Commit => Some(output::entry::Kind::Base(gix_object::Kind::Commit)),
+            Tree => Some(output::entry::Kind::Base(gix_object::Kind::Tree)),
+            Blob => Some(output::entry::Kind::Base(gix_object::Kind::Blob)),
+            Tag => Some(output::entry::Kind::Base(gix_object::Kind::Tag)),
             OfsDelta { base_distance } => {
                 let pack_location = count.entry_pack_location.as_ref().expect("packed");
                 let base_offset = pack_location
@@ -127,7 +127,7 @@ impl output::Entry {
     }
 
     /// Create a new instance from the given `oid` and its corresponding git `obj`ect data.
-    pub fn from_data(count: &output::Count, obj: &git_object::Data<'_>) -> Result<Self, Error> {
+    pub fn from_data(count: &output::Count, obj: &gix_object::Data<'_>) -> Result<Self, Error> {
         Ok(output::Entry {
             id: count.id.to_owned(),
             kind: Kind::Base(obj.kind),
@@ -164,7 +164,7 @@ impl output::Entry {
         use Kind::*;
         match self.kind {
             Base(kind) => {
-                use git_object::Kind::*;
+                use gix_object::Kind::*;
                 match kind {
                     Tree => data::entry::Header::Tree,
                     Blob => data::entry::Header::Blob,

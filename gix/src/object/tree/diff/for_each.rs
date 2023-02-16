@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
-use git_object::TreeRefIter;
 use git_odb::FindExt;
+use gix_object::TreeRefIter;
 
 use super::{change, Action, Change, Platform, Tracking};
 use crate::object::tree::diff::Renames;

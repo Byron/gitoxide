@@ -520,7 +520,7 @@ where
                         cursor += consumed;
                         return Ok(input[cursor..].as_bstr());
                     } else if number == 0 {
-                        delegate.peel_until(delegate::PeelTo::ObjectKind(git_object::Kind::Commit))
+                        delegate.peel_until(delegate::PeelTo::ObjectKind(gix_object::Kind::Commit))
                     } else {
                         delegate.traverse(delegate::Traversal::NthParent(
                             number.try_into().expect("positive number"),
@@ -533,10 +533,10 @@ where
                 {
                     cursor += consumed;
                     let target = match kind.as_ref().as_ref() {
-                        b"commit" => delegate::PeelTo::ObjectKind(git_object::Kind::Commit),
-                        b"tag" => delegate::PeelTo::ObjectKind(git_object::Kind::Tag),
-                        b"tree" => delegate::PeelTo::ObjectKind(git_object::Kind::Tree),
-                        b"blob" => delegate::PeelTo::ObjectKind(git_object::Kind::Blob),
+                        b"commit" => delegate::PeelTo::ObjectKind(gix_object::Kind::Commit),
+                        b"tag" => delegate::PeelTo::ObjectKind(gix_object::Kind::Tag),
+                        b"tree" => delegate::PeelTo::ObjectKind(gix_object::Kind::Tree),
+                        b"blob" => delegate::PeelTo::ObjectKind(gix_object::Kind::Blob),
                         b"object" => delegate::PeelTo::ValidObject,
                         b"" => delegate::PeelTo::RecursiveTagObject,
                         regex if regex.starts_with(b"/") => {

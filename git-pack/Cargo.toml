@@ -23,7 +23,7 @@ pack-cache-lru-dynamic = ["dep:clru"]
 ## If set, select algorithms may additionally use a full-object cache which is queried before the pack itself.
 object-cache-dynamic = ["dep:clru"]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["dep:serde", "git-object/serde1"]
+serde1 = ["dep:serde", "gix-object/serde1"]
 ## Make it possible to compile to the `wasm32-unknown-unknown` target.
 wasm = ["git-diff/wasm"]
 
@@ -32,7 +32,7 @@ gix-features = { version = "^0.26.4", path = "../gix-features", features = ["crc
 gix-path = { version = "^0.7.1", path = "../gix-path" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 git-chunk = { version = "^0.4.1", path = "../git-chunk" }
-git-object = { version = "^0.26.1", path = "../git-object" }
+gix-object = { version = "^0.26.1", path = "../gix-object" }
 git-traverse = { version = "^0.22.1", path = "../git-traverse" }
 git-diff = { version = "^0.26.1", path = "../git-diff" }
 git-hashtable = { version = "^0.1.1", path = "../git-hashtable" }

@@ -13,7 +13,7 @@ macro_rules! round_trip {
             use std::convert::TryFrom;
             use std::io::Write;
             use crate::fixture_bytes;
-            use git_object::{ObjectRef, Object, WriteTo};
+            use gix_object::{ObjectRef, Object, WriteTo};
             use bstr::ByteSlice;
 
             for input in &[
@@ -60,8 +60,8 @@ macro_rules! round_trip {
 
 mod tag {
     round_trip!(
-        git_object::Tag,
-        git_object::TagRef,
+        gix_object::Tag,
+        gix_object::TagRef,
         "tag/empty.txt",
         "tag/no-tagger.txt",
         "tag/whitespace.txt",
@@ -72,8 +72,8 @@ mod tag {
 
 mod commit {
     round_trip!(
-        git_object::Commit,
-        git_object::CommitRef,
+        gix_object::Commit,
+        gix_object::CommitRef,
         "commit/signed-whitespace.txt",
         "commit/two-multiline-headers.txt",
         "commit/mergetag.txt",
@@ -88,10 +88,10 @@ mod commit {
 }
 
 mod tree {
-    round_trip!(git_object::Tree, git_object::TreeRef, "tree/everything.tree");
+    round_trip!(gix_object::Tree, gix_object::TreeRef, "tree/everything.tree");
 }
 
 mod blob {
     // It doesn't matter which data we use - it's not interpreted.
-    round_trip!(git_object::Blob, git_object::BlobRef, "tree/everything.tree");
+    round_trip!(gix_object::Blob, gix_object::BlobRef, "tree/everything.tree");
 }

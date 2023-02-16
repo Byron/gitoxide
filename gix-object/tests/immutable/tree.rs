@@ -1,5 +1,5 @@
 mod iter {
-    use git_object::{bstr::ByteSlice, tree, tree::EntryRef, TreeRefIter};
+    use gix_object::{bstr::ByteSlice, tree, tree::EntryRef, TreeRefIter};
 
     use crate::{hex_to_id, immutable::fixture_bytes};
 
@@ -56,7 +56,7 @@ mod iter {
 }
 
 mod from_bytes {
-    use git_object::{bstr::ByteSlice, tree, tree::EntryRef, TreeRef};
+    use gix_object::{bstr::ByteSlice, tree, tree::EntryRef, TreeRef};
 
     use crate::{hex_to_id, immutable::fixture_bytes};
 
@@ -131,7 +131,7 @@ mod from_bytes {
 }
 
 mod entry_mode {
-    use git_object::tree::EntryMode;
+    use gix_object::tree::EntryMode;
 
     #[test]
     fn size_in_bytes() {

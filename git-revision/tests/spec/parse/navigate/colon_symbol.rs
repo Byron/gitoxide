@@ -49,7 +49,7 @@ fn paths_have_to_be_last_but_stack_with_other_navigation() {
     assert_eq!(
         rec.peel_to,
         vec![
-            PeelTo::ObjectKind(git_object::Kind::Commit),
+            PeelTo::ObjectKind(gix_object::Kind::Commit),
             PeelTo::Path("README.md".into())
         ]
     );

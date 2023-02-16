@@ -19,7 +19,7 @@ pub enum Error {
     #[error("The delegate cancelled the operation")]
     Cancelled,
     #[error(transparent)]
-    EntriesDecode(#[from] git_object::decode::Error),
+    EntriesDecode(#[from] gix_object::decode::Error),
 }
 
 impl<'a> tree::Changes<'a> {
@@ -45,16 +45,16 @@ impl<'a> tree::Changes<'a> {
     ///   borrowcheck complains as Drop is present (even though it's not)
     ///
     /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
-    /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/git-object/src/mutable/tree.rs#L52-L55
+    /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/gix-object/src/mutable/tree.rs#L52-L55
     pub fn needed_to_obtain<FindFn, R, StateMut, E>(
         mut self,
-        other: git_object::TreeRefIter<'_>,
+        other: gix_object::TreeRefIter<'_>,
         mut state: StateMut,
         mut find: FindFn,
         delegate: &mut R,
     ) -> Result<(), Error>
     where
-        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::TreeRefIter<'b>, E>,
+        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<gix_object::TreeRefIter<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
         R: tree::Visit,
         StateMut: BorrowMut<tree::State>,
@@ -127,7 +127,7 @@ impl<'a> tree::Changes<'a> {
 }
 
 fn delete_entry_schedule_recursion<R: tree::Visit>(
-    entry: git_object::tree::EntryRef<'_>,
+    entry: gix_object::tree::EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -150,7 +150,7 @@ fn delete_entry_schedule_recursion<R: tree::Visit>(
 }
 
 fn add_entry_schedule_recursion<R: tree::Visit>(
-    entry: git_object::tree::EntryRef<'_>,
+    entry: gix_object::tree::EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -172,9 +172,9 @@ fn add_entry_schedule_recursion<R: tree::Visit>(
     Ok(())
 }
 fn catchup_rhs_with_lhs<R: tree::Visit>(
-    rhs_entries: &mut IteratorType<git_object::TreeRefIter<'_>>,
-    lhs: git_object::tree::EntryRef<'_>,
-    rhs: git_object::tree::EntryRef<'_>,
+    rhs_entries: &mut IteratorType<gix_object::TreeRefIter<'_>>,
+    lhs: gix_object::tree::EntryRef<'_>,
+    rhs: gix_object::tree::EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -212,9 +212,9 @@ fn catchup_rhs_with_lhs<R: tree::Visit>(
 }
 
 fn catchup_lhs_with_rhs<R: tree::Visit>(
-    lhs_entries: &mut IteratorType<git_object::TreeRefIter<'_>>,
-    lhs: git_object::tree::EntryRef<'_>,
-    rhs: git_object::tree::EntryRef<'_>,
+    lhs_entries: &mut IteratorType<gix_object::TreeRefIter<'_>>,
+    lhs: gix_object::tree::EntryRef<'_>,
+    rhs: gix_object::tree::EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -252,12 +252,12 @@ fn catchup_lhs_with_rhs<R: tree::Visit>(
 }
 
 fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
-    lhs: git_object::tree::EntryRef<'_>,
-    rhs: git_object::tree::EntryRef<'_>,
+    lhs: gix_object::tree::EntryRef<'_>,
+    rhs: gix_object::tree::EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
-    use git_object::tree::EntryMode::*;
+    use gix_object::tree::EntryMode::*;
     match (lhs.mode, rhs.mode) {
         (Tree, Tree) => {
             delegate.push_back_tracked_path_component(lhs.filename);

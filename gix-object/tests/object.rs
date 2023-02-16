@@ -30,7 +30,7 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
 
 #[test]
 fn size_in_memory() {
-    let actual = std::mem::size_of::<git_object::Object>();
+    let actual = std::mem::size_of::<gix_object::Object>();
     assert!(
         actual <= 264,
         "{actual} <= 264: Prevent unexpected growth of what should be lightweight objects"

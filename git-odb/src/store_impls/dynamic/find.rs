@@ -89,7 +89,7 @@ where
         pack_cache: &mut impl DecodeEntry,
         snapshot: &mut load_index::Snapshot,
         recursion: Option<error::DeltaBaseRecursion<'_>>,
-    ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::data::entry::Location>)>, Error> {
+    ) -> Result<Option<(gix_object::Data<'a>, Option<git_pack::data::entry::Location>)>, Error> {
         if let Some(r) = recursion {
             if r.depth >= self.max_recursion_depth {
                 return Err(Error::DeltaBaseRecursionLimit {
@@ -155,7 +155,7 @@ where
                             pack_cache,
                         ) {
                             Ok(r) => Ok((
-                                git_object::Data {
+                                gix_object::Data {
                                     kind: r.kind,
                                     data: buffer.as_slice(),
                                 },
@@ -254,7 +254,7 @@ where
                                 )
                                 .map(move |r| {
                                     (
-                                        git_object::Data {
+                                        gix_object::Data {
                                             kind: r.kind,
                                             data: buffer.as_slice(),
                                         },
@@ -344,7 +344,7 @@ where
         id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
-    ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::data::entry::Location>)>, Self::Error> {
+    ) -> Result<Option<(gix_object::Data<'a>, Option<git_pack::data::entry::Location>)>, Self::Error> {
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
         self.try_find_cached_inner(id, buffer, pack_cache, &mut snapshot, None)
@@ -513,7 +513,7 @@ where
         &self,
         id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
-    ) -> Result<Option<git_object::Data<'a>>, Self::Error> {
+    ) -> Result<Option<gix_object::Data<'a>>, Self::Error> {
         git_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
     }
 }

@@ -20,7 +20,7 @@ pub enum Error {
         path: PathBuf,
     },
     #[error(transparent)]
-    Decode(#[from] git_object::decode::LooseHeaderDecodeError),
+    Decode(#[from] gix_object::decode::LooseHeaderDecodeError),
     #[error("Could not {action} data at '{path}'")]
     Io {
         source: std::io::Error,
@@ -110,7 +110,7 @@ impl Store {
         &self,
         id: impl AsRef<gix_hash::oid>,
         out: &'a mut Vec<u8>,
-    ) -> Result<Option<git_object::Data<'a>>, Error> {
+    ) -> Result<Option<gix_object::Data<'a>>, Error> {
         debug_assert_eq!(self.object_hash, id.as_ref().kind());
         match self.find_inner(id.as_ref(), out) {
             Ok(obj) => Ok(Some(obj)),
@@ -137,7 +137,7 @@ impl Store {
 
     /// Return only the decompressed size of the object and its kind without fully reading it into memory as tuple of `(size, kind)`.
     /// Returns `None` if `id` does not exist in the database.
-    pub fn try_header(&self, id: impl AsRef<gix_hash::oid>) -> Result<Option<(usize, git_object::Kind)>, Error> {
+    pub fn try_header(&self, id: impl AsRef<gix_hash::oid>) -> Result<Option<(usize, gix_object::Kind)>, Error> {
         const BUF_SIZE: usize = 256;
         let mut buf = [0_u8; BUF_SIZE];
         let path = hash_path(id.as_ref(), self.path.clone());
@@ -176,11 +176,11 @@ impl Store {
                 path,
             });
         }
-        let (kind, size, _header_size) = git_object::decode::loose_header(&header_buf[..consumed_out])?;
+        let (kind, size, _header_size) = gix_object::decode::loose_header(&header_buf[..consumed_out])?;
         Ok(Some((size, kind)))
     }
 
-    fn find_inner<'a>(&self, id: &gix_hash::oid, buf: &'a mut Vec<u8>) -> Result<git_object::Data<'a>, Error> {
+    fn find_inner<'a>(&self, id: &gix_hash::oid, buf: &'a mut Vec<u8>) -> Result<gix_object::Data<'a>, Error> {
         let path = hash_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();
@@ -218,7 +218,7 @@ impl Store {
 
         let decompressed_start = bytes_read;
         let (kind, size, header_size) =
-            git_object::decode::loose_header(&buf[decompressed_start..decompressed_start + consumed_out])?;
+            gix_object::decode::loose_header(&buf[decompressed_start..decompressed_start + consumed_out])?;
 
         if status == zlib::Status::StreamEnd {
             let decompressed_body_bytes_sans_header =
@@ -257,6 +257,6 @@ impl Store {
             buf.copy_within(decompressed_start + header_size.., 0);
         }
         buf.resize(size, 0);
-        Ok(git_object::Data { kind, data: buf })
+        Ok(gix_object::Data { kind, data: buf })
     }
 }

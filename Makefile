@@ -70,7 +70,7 @@ check: ## Build all code in suitable configurations
 	cd gitoxide-core && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd gix-hash && cargo check --all-features \
 				&& cargo check
-	cd git-object && cargo check --all-features \
+	cd gix-object && cargo check --all-features \
                   && cargo check --features verbose-object-parsing-errors
 	cd git-index && cargo check --features serde1
 	cd git-credentials && cargo check --features serde1
@@ -140,7 +140,7 @@ unit-tests: ## run all unit tests
 	cd gix-features && cargo test && cargo test --all-features
 	cd git-ref/tests && cargo test --all-features
 	cd git-odb && cargo test && cargo test --all-features
-	cd git-object && cargo test && cargo test --features verbose-object-parsing-errors
+	cd gix-object && cargo test && cargo test --features verbose-object-parsing-errors
 	cd git-pack/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-gix-features-parallel"
 	cd git-index/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \

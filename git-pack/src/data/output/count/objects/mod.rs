@@ -138,9 +138,9 @@ where
 mod expand {
     use std::sync::atomic::{AtomicBool, Ordering};
 
-    use git_object::{CommitRefIter, TagRefIter};
     use gix_features::progress::Progress;
     use gix_hash::{oid, ObjectId};
+    use gix_object::{CommitRefIter, TagRefIter};
 
     use super::{
         tree,
@@ -190,7 +190,7 @@ mod expand {
             stats.input_objects += 1;
             match input_object_expansion {
                 TreeAdditionsComparedToAncestor => {
-                    use git_object::Kind::*;
+                    use gix_object::Kind::*;
                     let mut obj = obj;
                     let mut location = location;
                     let mut id = id.to_owned();
@@ -218,7 +218,7 @@ mod expand {
                                     parent_commit_ids.clear();
                                     for token in commit_iter {
                                         match token {
-                                            Ok(git_object::commit::ref_iter::Token::Parent { id }) => {
+                                            Ok(gix_object::commit::ref_iter::Token::Parent { id }) => {
                                                 parent_commit_ids.push(id)
                                             }
                                             Ok(_) => break,
@@ -229,7 +229,7 @@ mod expand {
                                     push_obj_count_unique(
                                         &mut out, seen_objs, &tree_id, location, progress, stats, true,
                                     );
-                                    git_object::TreeRefIter::from_bytes(obj.data)
+                                    gix_object::TreeRefIter::from_bytes(obj.data)
                                 };
 
                                 let objects = if parent_commit_ids.is_empty() {
@@ -276,7 +276,7 @@ mod expand {
                                                 stats,
                                                 true,
                                             );
-                                            git_object::TreeRefIter::from_bytes(parent_tree_obj.data)
+                                            gix_object::TreeRefIter::from_bytes(parent_tree_obj.data)
                                         };
 
                                         changes_delegate.clear();
@@ -303,7 +303,7 @@ mod expand {
                     }
                 }
                 TreeContents => {
-                    use git_object::Kind::*;
+                    use gix_object::Kind::*;
                     let mut id = id;
                     let mut obj = (obj, location);
                     loop {
@@ -312,7 +312,7 @@ mod expand {
                             Tree => {
                                 traverse_delegate.clear();
                                 git_traverse::tree::breadthfirst(
-                                    git_object::TreeRefIter::from_bytes(obj.0.data),
+                                    gix_object::TreeRefIter::from_bytes(obj.0.data),
                                     &mut tree_traversal_state,
                                     |oid, buf| {
                                         stats.decoded_objects += 1;

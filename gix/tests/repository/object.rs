@@ -76,15 +76,15 @@ mod find {
             }
             for commit_id in repo.head()?.peeled()?.id().expect("born").ancestors().all()? {
                 let commit = commit_id?;
-                assert_eq!(commit.object()?.kind, git_object::Kind::Commit);
+                assert_eq!(commit.object()?.kind, gix_object::Kind::Commit);
                 if round == 2 {
                     assert_eq!(
                         commit.object()?.kind,
-                        git_object::Kind::Commit,
+                        gix_object::Kind::Commit,
                         "repeated request triggers cache and doesn't fail"
                     );
                 }
-                assert_eq!(commit.try_object()?.expect("exists").kind, git_object::Kind::Commit,);
+                assert_eq!(commit.try_object()?.expect("exists").kind, gix_object::Kind::Commit,);
             }
         }
         Ok(())
@@ -122,7 +122,7 @@ mod tag {
         let tag_ref = repo.tag(
             "v1.0.0",
             current_head_id,
-            git_object::Kind::Commit,
+            gix_object::Kind::Commit,
             Some(repo.committer().expect("present")?),
             message,
             git_ref::transaction::PreviousValue::MustNotExist,
@@ -133,7 +133,7 @@ mod tag {
         let tag = tag.try_to_tag_ref()?;
         assert_eq!(tag.name, "v1.0.0");
         assert_eq!(current_head_id, tag.target(), "the tag points to the commit");
-        assert_eq!(tag.target_kind, git_object::Kind::Commit);
+        assert_eq!(tag.target_kind, gix_object::Kind::Commit);
         assert_eq!(
             tag.tagger.as_ref().expect("tagger").actor(),
             repo.committer().expect("present")?.actor()

@@ -36,7 +36,7 @@ gix-actor = { path = "../../gix-actor" }
 gix-hash = { path = "../../gix-hash" }
 gix-validate = { path = "../../gix-validate" }
 git-lock = { path = "../../git-lock" }
-git-object = { path = "../../git-object" }
+gix-object = { path = "../../gix-object" }
 tempfile = "3.2.0"
 
 

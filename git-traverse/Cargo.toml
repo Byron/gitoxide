@@ -15,6 +15,6 @@ doctest = false
 
 [dependencies]
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
-git-object = { version = "^0.26.1", path = "../git-object" }
+gix-object = { version = "^0.26.1", path = "../gix-object" }
 git-hashtable = { version = "^0.1.1", path = "../git-hashtable" }
 thiserror = "1.0.32"

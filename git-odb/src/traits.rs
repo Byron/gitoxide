@@ -1,6 +1,6 @@
 use std::io;
 
-use git_object::WriteTo;
+use gix_object::WriteTo;
 
 /// Describe the capability to write git objects into an object store.
 pub trait Write {
@@ -16,15 +16,15 @@ pub trait Write {
         object.write_to(&mut buf)?;
         self.write_stream(object.kind(), buf.len() as u64, buf.as_slice())
     }
-    /// As [`write`][Write::write], but takes an [`object` kind][git_object::Kind] along with its encoded bytes.
-    fn write_buf(&self, object: git_object::Kind, from: &[u8]) -> Result<gix_hash::ObjectId, Self::Error> {
+    /// As [`write`][Write::write], but takes an [`object` kind][gix_object::Kind] along with its encoded bytes.
+    fn write_buf(&self, object: gix_object::Kind, from: &[u8]) -> Result<gix_hash::ObjectId, Self::Error> {
         self.write_stream(object, from.len() as u64, from)
     }
     /// As [`write`][Write::write], but takes an input stream.
     /// This is commonly used for writing blobs directly without reading them to memory first.
     fn write_stream(
         &self,
-        kind: git_object::Kind,
+        kind: gix_object::Kind,
         size: u64,
         from: impl io::Read,
     ) -> Result<gix_hash::ObjectId, Self::Error>;
@@ -53,7 +53,7 @@ pub trait Find {
         &self,
         id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
-    ) -> Result<Option<git_object::Data<'a>>, Self::Error>;
+    ) -> Result<Option<gix_object::Data<'a>>, Self::Error>;
 }
 
 /// A way to obtain object properties without fully decoding it.
@@ -67,8 +67,8 @@ pub trait Header {
 mod _impls {
     use std::{io::Read, ops::Deref, rc::Rc, sync::Arc};
 
-    use git_object::{Data, Kind, WriteTo};
     use gix_hash::{oid, ObjectId};
+    use gix_object::{Data, Kind, WriteTo};
 
     use crate::find::Header;
 
@@ -209,7 +209,7 @@ mod _impls {
 }
 
 mod ext {
-    use git_object::{BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
+    use gix_object::{BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
 
     use crate::find;
 
@@ -287,7 +287,7 @@ mod ext {
             &self,
             id: impl AsRef<gix_hash::oid>,
             buffer: &'a mut Vec<u8>,
-        ) -> Result<git_object::Data<'a>, find::existing::Error<Self::Error>> {
+        ) -> Result<gix_object::Data<'a>, find::existing::Error<Self::Error>> {
             let id = id.as_ref();
             self.try_find(id, buffer)
                 .map_err(find::existing::Error::Find)?

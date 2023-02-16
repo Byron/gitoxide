@@ -802,7 +802,7 @@ A first usable version of `gix` to make using `gitoxide` from your applications 
 ### Performance
 
 * On M1, thanks to [a new release](https://github.com/RustCrypto/hashes/pull/289#event-5035369215), Sha1 is now computed much faster which unlocks a massive performance boost. In my test, verifying/decoding the entire linux kernel pack now happens in 17s, as compared to 37s for canonical `git`.
-* `git-object` parsing is a few percent faster thanks a reworked error handling for objects. By default, error collection is disabled entirely making the error case zero-sized. If needed, verbose and stacked errors can be turned on using a feature toggle for applications who expect repositories with malformed objects and need detailed diagnostics.
+* `gix-object` parsing is a few percent faster thanks a reworked error handling for objects. By default, error collection is disabled entirely making the error case zero-sized. If needed, verbose and stacked errors can be turned on using a feature toggle for applications who expect repositories with malformed objects and need detailed diagnostics.
 
 ### New Features
 
@@ -887,7 +887,7 @@ could not be installed anymore.
 This was eventually fixed with new minor releases across the ecosystem.
 
 Finally, yet another breaking change due to the introduction of the `gix-hash`
-crate to break a dependency cycle between `git-object` and `gix-features` caused
+crate to break a dependency cycle between `gix-object` and `gix-features` caused
 yet another maintenance release.
 
 ## v0.5.0 (2020-12-15)

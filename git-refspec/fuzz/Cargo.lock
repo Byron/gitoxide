@@ -91,7 +91,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-object"
+name = "gix-object"
 version = "0.20.0"
 dependencies = [
  "bstr",
@@ -134,7 +134,7 @@ dependencies = [
  "bstr",
  "git-date",
  "gix-hash",
- "git-object",
+ "gix-object",
  "hash_hasher",
  "thiserror",
 ]

@@ -24,7 +24,7 @@ fn fixture_bytes(kind: &str, path: &str) -> Vec<u8> {
 }
 
 fn signature(time: u32) -> gix_actor::SignatureRef<'static> {
-    use git_object::bstr::ByteSlice;
+    use gix_object::bstr::ByteSlice;
     gix_actor::SignatureRef {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"sebastian.thiel@icloud.com".as_bstr(),
@@ -37,7 +37,7 @@ fn signature(time: u32) -> gix_actor::SignatureRef<'static> {
 }
 
 fn linus_signature(time: u32) -> gix_actor::SignatureRef<'static> {
-    use git_object::bstr::ByteSlice;
+    use gix_object::bstr::ByteSlice;
     gix_actor::SignatureRef {
         name: b"Linus Torvalds".as_bstr(),
         email: b"torvalds@linux-foundation.org".as_bstr(),

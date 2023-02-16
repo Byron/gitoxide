@@ -102,7 +102,7 @@ tabled = { version = "0.10.0", default-features = false }
 document-features = { version = "0.2.0", optional = true }
 
 [profile.dev.package]
-git-object = { opt-level = 3 }
+gix-object = { opt-level = 3 }
 git-ref = { opt-level = 3 }
 #git-pack = { opt-level = 3 }
 gix-hash = { opt-level = 3 }
@@ -141,7 +141,7 @@ members = [
     "git-commitgraph",
     "git-chunk",
     "git-quote",
-    "git-object",
+    "gix-object",
     "gix-glob",
     "git-diff",
     "git-date",

@@ -45,9 +45,9 @@ impl Header {
         }
         pack_offset.checked_sub(distance)
     }
-    /// Convert the header's object kind into [`git_object::Kind`] if possible
-    pub fn as_kind(&self) -> Option<git_object::Kind> {
-        use git_object::Kind::*;
+    /// Convert the header's object kind into [`gix_object::Kind`] if possible
+    pub fn as_kind(&self) -> Option<gix_object::Kind> {
+        use gix_object::Kind::*;
         Some(match self {
             Header::Tree => Tree,
             Header::Blob => Blob,

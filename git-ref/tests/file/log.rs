@@ -1,7 +1,7 @@
 mod line {
     mod write_to {
-        use git_object::bstr::ByteVec;
         use git_ref::file::log;
+        use gix_object::bstr::ByteVec;
 
         #[test]
         fn newlines_in_message_of_the_input_fails_and_we_trust_signature_writing_validation() -> crate::Result {
@@ -160,7 +160,7 @@ mod iter {
         }
     }
     mod forward {
-        use git_object::bstr::B;
+        use gix_object::bstr::B;
 
         use crate::file::log::iter::reflog;
 

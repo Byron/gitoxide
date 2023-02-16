@@ -103,7 +103,7 @@ mod remote_at {
 mod find_remote {
     use std::io::BufRead;
 
-    use git_object::bstr::BString;
+    use gix_object::bstr::BString;
 
     use gix::{remote::Direction, Repository};
 

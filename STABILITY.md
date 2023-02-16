@@ -60,7 +60,7 @@ The following schematic helps to visualize what follows.
     ║    │ │   git-ref   │   │ git-config  │ │    ║  │
     ║    │ └─────────────┘   └─────────────┘ │    ║   
     ║    │ ┌─────────────┐   ┌─────────────┐ │    ║  │
-    ║    │ │ git-object  │   │  git-lock   │ │    ║   
+    ║    │ │ gix-object  │   │  git-lock   │ │    ║   
     ║    │ └─────────────┘   └─────────────┘ │    ║  │
     ║    │ ┌───────────────────────────────┐ │    ║   
     ║    │ │         gix-features          │ │    ║  │

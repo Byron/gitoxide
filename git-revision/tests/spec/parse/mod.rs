@@ -1,8 +1,8 @@
-use git_object::bstr::{BStr, BString};
 use git_revision::{
     spec,
     spec::parse::{delegate, Delegate},
 };
+use gix_object::bstr::{BStr, BString};
 
 #[derive(Default, Debug, Eq, PartialEq, Ord, PartialOrd)]
 struct Options {
@@ -52,7 +52,7 @@ pub enum Call {
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum PeelToOwned {
-    ObjectKind(git_object::Kind),
+    ObjectKind(gix_object::Kind),
     ExistingObject,
     RecursiveTagObject,
     Path(BString),

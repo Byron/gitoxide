@@ -22,7 +22,7 @@ pub fn checkout<Find, E>(
     options: checkout::Options,
 ) -> Result<checkout::Outcome, checkout::Error<E>>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Send + Clone,
+    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Send + Clone,
     E: std::error::Error + Send + Sync + 'static,
 {
     let paths = index.take_path_backing();
@@ -42,7 +42,7 @@ fn checkout_inner<Find, E>(
     options: checkout::Options,
 ) -> Result<checkout::Outcome, checkout::Error<E>>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Send + Clone,
+    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Send + Clone,
     E: std::error::Error + Send + Sync + 'static,
 {
     let num_files = AtomicUsize::default();
@@ -214,7 +214,7 @@ mod chunk {
         ctx: &mut Context<'_, Find>,
     ) -> Result<Outcome<'entry>, checkout::Error<E>>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Clone,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
         let mut delayed = Vec::new();
@@ -269,7 +269,7 @@ mod chunk {
         }: &mut Context<'_, Find>,
     ) -> Result<usize, checkout::Error<E>>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Clone,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
         let res = entry::checkout(

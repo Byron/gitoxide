@@ -45,7 +45,7 @@ mod existing {
                 self.to_partial_name().try_into().expect("cannot fail")
             }
             fn to_partial_name_from_bstring(&self) -> PartialName {
-                git_object::bstr::BString::from(self.to_partial_name())
+                gix_object::bstr::BString::from(self.to_partial_name())
                     .try_into()
                     .expect("cannot fail")
             }

@@ -1,7 +1,7 @@
 use std::{convert::TryInto, fs, io, io::Write, path::PathBuf};
 
-use git_object::WriteTo;
 use gix_features::{hash, zlib::stream::deflate};
+use gix_object::WriteTo;
 use tempfile::NamedTempFile;
 
 use super::Store;
@@ -48,9 +48,9 @@ impl crate::traits::Write for Store {
     /// Write the given buffer in `from` to disk in one syscall at best.
     ///
     /// This will cost at least 4 IO operations.
-    fn write_buf(&self, kind: git_object::Kind, from: &[u8]) -> Result<gix_hash::ObjectId, Self::Error> {
+    fn write_buf(&self, kind: gix_object::Kind, from: &[u8]) -> Result<gix_hash::ObjectId, Self::Error> {
         let mut to = self.dest()?;
-        to.write_all(&git_object::encode::loose_header(kind, from.len()))
+        to.write_all(&gix_object::encode::loose_header(kind, from.len()))
             .map_err(|err| Error::Io {
                 source: err,
                 message: "write header to tempfile in",
@@ -71,12 +71,12 @@ impl crate::traits::Write for Store {
     /// This will cost at least 4 IO operations.
     fn write_stream(
         &self,
-        kind: git_object::Kind,
+        kind: gix_object::Kind,
         size: u64,
         mut from: impl io::Read,
     ) -> Result<gix_hash::ObjectId, Self::Error> {
         let mut to = self.dest()?;
-        to.write_all(&git_object::encode::loose_header(
+        to.write_all(&gix_object::encode::loose_header(
             kind,
             size.try_into().expect("object size to fit into usize"),
         ))

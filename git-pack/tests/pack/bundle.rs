@@ -1,11 +1,11 @@
 mod locate {
     use bstr::ByteSlice;
-    use git_object::Kind;
     use git_odb::pack;
+    use gix_object::Kind;
 
     use crate::{fixture_path, hex_to_id, pack::SMALL_PACK_INDEX};
 
-    fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> git_object::Data<'a> {
+    fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> gix_object::Data<'a> {
         let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX), gix_hash::Kind::Sha1).expect("pack and idx");
         bundle
             .find(hex_to_id(hex_id), out, &mut pack::cache::Never)

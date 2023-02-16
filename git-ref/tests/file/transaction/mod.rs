@@ -1,7 +1,6 @@
 pub(crate) mod prepare_and_commit {
     use std::convert::TryInto;
 
-    use git_object::bstr::BString;
     use git_ref::{
         file,
         transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
@@ -9,6 +8,7 @@ pub(crate) mod prepare_and_commit {
     };
     use gix_actor::{Sign, Time};
     use gix_hash::ObjectId;
+    use gix_object::bstr::BString;
 
     use crate::util::hex_to_id;
 

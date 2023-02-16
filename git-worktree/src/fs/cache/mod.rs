@@ -98,7 +98,7 @@ impl Cache {
         find: Find,
     ) -> std::io::Result<Platform<'_>>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
         let mut delegate = platform::StackDelegate {
@@ -121,7 +121,7 @@ impl Cache {
         find: Find,
     ) -> std::io::Result<Platform<'_>>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
         let relative = relative.into();

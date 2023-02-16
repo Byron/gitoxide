@@ -1002,7 +1002,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
  - remove pack-cache from `Find::try_find(…)`
    With the new architecture this can be an implementation detail without
    forcing it to be Sync.
- - move git_pack::data::Object to git_object::Data, massively alter git_odb::Find trait
+ - move git_pack::data::Object to gix_object::Data, massively alter git_odb::Find trait
    This will break a lot, but has to happen to prepare these traits for the
    next generation of object databases.
 

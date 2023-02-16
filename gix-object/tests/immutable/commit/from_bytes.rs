@@ -1,5 +1,5 @@
-use git_object::{bstr::ByteSlice, commit::message::body::TrailerRef, CommitRef};
 use gix_actor::{Sign, SignatureRef, Time};
+use gix_object::{bstr::ByteSlice, commit::message::body::TrailerRef, CommitRef};
 use smallvec::SmallVec;
 
 use crate::immutable::{

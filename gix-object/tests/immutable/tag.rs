@@ -1,7 +1,7 @@
-use git_object::{bstr::ByteSlice, Kind, TagRef};
+use gix_object::{bstr::ByteSlice, Kind, TagRef};
 
 mod method {
-    use git_object::TagRef;
+    use gix_object::TagRef;
     use pretty_assertions::assert_eq;
 
     use crate::{hex_to_id, immutable::fixture_bytes};
@@ -17,7 +17,7 @@ mod method {
 }
 
 mod iter {
-    use git_object::{bstr::ByteSlice, tag::ref_iter::Token, Kind, TagRefIter};
+    use gix_object::{bstr::ByteSlice, tag::ref_iter::Token, Kind, TagRefIter};
 
     use crate::{
         hex_to_id,
@@ -118,7 +118,7 @@ KLMHist5yj0sw1E4hDTyQa0=
 }
 
 mod from_bytes {
-    use git_object::{bstr::ByteSlice, Kind, TagRef};
+    use gix_object::{bstr::ByteSlice, Kind, TagRef};
 
     use crate::immutable::{fixture_bytes, signature, tag::tag_fixture};
 

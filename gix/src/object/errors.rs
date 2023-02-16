@@ -6,11 +6,11 @@ pub mod conversion {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Decode(#[from] git_object::decode::Error),
+        Decode(#[from] gix_object::decode::Error),
         #[error("Expected object type {}, but got {}", .expected, .actual)]
         UnexpectedType {
-            expected: git_object::Kind,
-            actual: git_object::Kind,
+            expected: gix_object::Kind,
+            actual: gix_object::Kind,
         },
     }
 }

@@ -140,7 +140,7 @@ where
         oid: gix_hash::ObjectId,
     },
     #[error("A commit could not be decoded during traversal")]
-    Decode(#[from] git_object::decode::Error),
+    Decode(#[from] gix_object::decode::Error),
 }
 
 pub(crate) mod function {
@@ -148,8 +148,8 @@ pub(crate) mod function {
 
     use bstr::BStr;
     use git_hashtable::{hash_map, HashMap};
-    use git_object::CommitRefIter;
     use gix_hash::oid;
+    use gix_object::CommitRefIter;
 
     use super::{Error, Outcome};
     use crate::describe::{Flags, Options, MAX_CANDIDATES};
@@ -339,8 +339,8 @@ pub(crate) mod function {
             })?;
         for token in commit_iter {
             match token {
-                Ok(git_object::commit::ref_iter::Token::Tree { .. }) => continue,
-                Ok(git_object::commit::ref_iter::Token::Parent { id: parent_id }) => match seen.entry(parent_id) {
+                Ok(gix_object::commit::ref_iter::Token::Tree { .. }) => continue,
+                Ok(gix_object::commit::ref_iter::Token::Parent { id: parent_id }) => match seen.entry(parent_id) {
                     hash_map::Entry::Vacant(entry) => {
                         let parent = match find(&parent_id, parent_buf).map_err(|err| Error::Find {
                             err: Some(err),

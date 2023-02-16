@@ -18,4 +18,4 @@ git-traverse = { path = ".." }
 git-testtools = { path = "../../tests/tools" }
 git-odb = { path = "../../git-odb" }
 gix-hash = { path = "../../gix-hash" }
-git-object = { path = "../../git-object" }
+gix-object = { path = "../../gix-object" }

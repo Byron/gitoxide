@@ -25,9 +25,9 @@
 
 use std::borrow::Cow;
 
-pub use git_object::bstr;
-use git_object::bstr::{BStr, BString};
 use gix_hash::{oid, ObjectId};
+pub use gix_object::bstr;
+use gix_object::bstr::{BStr, BString};
 
 #[path = "store/mod.rs"]
 mod store_impl;

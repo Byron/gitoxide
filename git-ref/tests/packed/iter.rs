@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
-use git_object::bstr::ByteSlice;
 use git_ref::packed;
+use gix_object::bstr::ByteSlice;
 
 use crate::file::{store_at, store_with_packed_refs};
 

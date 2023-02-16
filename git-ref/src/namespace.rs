@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
+use gix_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
 use crate::{FullName, FullNameRef, Namespace, PartialNameRef};
 

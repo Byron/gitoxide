@@ -151,8 +151,8 @@ pub enum Error {
     #[error("Object {oid} was a {actual}, but needed it to be a {expected}")]
     ObjectKind {
         oid: gix_hash::Prefix,
-        actual: git_object::Kind,
-        expected: git_object::Kind,
+        actual: gix_object::Kind,
+        expected: gix_object::Kind,
     },
     #[error(transparent)]
     Parse(#[from] git_revision::spec::parse::Error),

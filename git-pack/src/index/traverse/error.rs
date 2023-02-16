@@ -28,7 +28,7 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
         expected: gix_hash::ObjectId,
         actual: gix_hash::ObjectId,
         offset: u64,
-        kind: git_object::Kind,
+        kind: gix_object::Kind,
     },
     #[error(
         "The CRC32 of {kind} object at offset {offset} didn't match the checksum in the index file: expected {expected}, got {actual}"
@@ -37,7 +37,7 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
         expected: u32,
         actual: u32,
         offset: u64,
-        kind: git_object::Kind,
+        kind: gix_object::Kind,
     },
     #[error("Interrupted")]
     Interrupted,

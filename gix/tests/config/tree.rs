@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use git_object::bstr::BStr;
+use gix_object::bstr::BStr;
 
 fn bcow(input: &str) -> Cow<'_, BStr> {
     Cow::Borrowed(input.into())
@@ -9,7 +9,7 @@ fn bcow(input: &str) -> Cow<'_, BStr> {
 mod keys {
     use std::borrow::Cow;
 
-    use git_object::bstr::ByteSlice;
+    use gix_object::bstr::ByteSlice;
 
     use gix::config::tree::{Key, Section};
 
@@ -559,8 +559,8 @@ mod gitoxide {
 mod http {
     use std::borrow::Cow;
 
-    use git_object::bstr::ByteSlice;
     use gix::config::tree::{Http, Key};
+    use gix_object::bstr::ByteSlice;
 
     use crate::config::tree::bcow;
 

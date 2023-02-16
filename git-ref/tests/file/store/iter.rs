@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use git_object::bstr::ByteSlice;
+use gix_object::bstr::ByteSlice;
 
 use crate::{
     file::{store, store_at, store_with_packed_refs},
@@ -8,7 +8,7 @@ use crate::{
 };
 
 mod with_namespace {
-    use git_object::bstr::{BString, ByteSlice};
+    use gix_object::bstr::{BString, ByteSlice};
 
     use crate::file::{store_at, transaction::prepare_and_commit::empty_store};
 

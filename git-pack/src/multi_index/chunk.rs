@@ -2,14 +2,14 @@
 pub mod index_names {
     use std::path::{Path, PathBuf};
 
-    use git_object::bstr::{BString, ByteSlice};
+    use gix_object::bstr::{BString, ByteSlice};
 
     /// The ID used for the index-names chunk.
     pub const ID: git_chunk::Id = *b"PNAM";
 
     ///
     pub mod decode {
-        use git_object::bstr::BString;
+        use gix_object::bstr::BString;
 
         /// The error returned by [from_bytes()][super::from_bytes()].
         #[derive(Debug, thiserror::Error)]

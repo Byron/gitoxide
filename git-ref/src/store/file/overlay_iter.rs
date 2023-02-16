@@ -408,7 +408,7 @@ impl file::Store {
 mod error {
     use std::{io, path::PathBuf};
 
-    use git_object::bstr::BString;
+    use gix_object::bstr::BString;
 
     use crate::store_impl::file;
 

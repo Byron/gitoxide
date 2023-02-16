@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_object::{decode, encode, Kind, ObjectRef};
+use gix_object::{decode, encode, Kind, ObjectRef};
 
 #[test]
 fn all() -> Result<(), Box<dyn std::error::Error>> {

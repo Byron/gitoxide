@@ -20,9 +20,9 @@ pub use types::{Options, Outcome};
 
 use crate::bundle::write::types::SharedTempFile;
 
-type ThinPackLookupFn = Box<dyn for<'a> FnMut(gix_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>>>;
+type ThinPackLookupFn = Box<dyn for<'a> FnMut(gix_hash::ObjectId, &'a mut Vec<u8>) -> Option<gix_object::Data<'a>>>;
 type ThinPackLookupFnSend =
-    Box<dyn for<'a> FnMut(gix_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>> + Send + 'static>;
+    Box<dyn for<'a> FnMut(gix_hash::ObjectId, &'a mut Vec<u8>) -> Option<gix_object::Data<'a>> + Send + 'static>;
 
 /// The progress ids used in [`write_to_directory()`][crate::Bundle::write_to_directory()].
 ///

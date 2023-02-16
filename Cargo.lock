@@ -1380,8 +1380,8 @@ name = "git-diff"
 version = "0.26.1"
 dependencies = [
  "getrandom",
- "git-object 0.26.1",
  "gix-hash",
+ "gix-object",
  "imara-diff",
  "serde",
  "thiserror",
@@ -1392,11 +1392,11 @@ name = "git-diff-tests"
 version = "0.0.0"
 dependencies = [
  "git-diff",
- "git-object 0.26.1",
  "git-odb",
  "git-testtools",
  "git-traverse 0.22.1",
  "gix-hash",
+ "gix-object",
 ]
 
 [[package]]
@@ -1504,7 +1504,7 @@ dependencies = [
  "git-features",
  "git-hash",
  "git-lock 3.0.1",
- "git-object 0.26.0",
+ "git-object",
  "git-traverse 0.22.0",
  "itoa",
  "memmap2",
@@ -1523,10 +1523,10 @@ dependencies = [
  "filetime",
  "git-bitmap 0.2.1",
  "git-lock 3.0.2",
- "git-object 0.26.1",
  "git-traverse 0.22.1",
  "gix-features",
  "gix-hash",
+ "gix-object",
  "itoa",
  "memmap2",
  "serde",
@@ -1608,27 +1608,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-object"
-version = "0.26.1"
-dependencies = [
- "bstr",
- "btoi",
- "document-features",
- "git-testtools",
- "gix-actor",
- "gix-features",
- "gix-hash",
- "gix-validate",
- "hex",
- "itoa",
- "nom",
- "pretty_assertions",
- "serde",
- "smallvec",
- "thiserror",
-]
-
-[[package]]
 name = "git-odb"
 version = "0.40.2"
 dependencies = [
@@ -1636,13 +1615,13 @@ dependencies = [
  "crossbeam-channel",
  "document-features",
  "filetime",
- "git-object 0.26.1",
  "git-pack",
  "git-quote 0.4.1",
  "git-testtools",
  "gix-actor",
  "gix-features",
  "gix-hash",
+ "gix-object",
  "gix-path",
  "maplit",
  "num_cpus",
@@ -1664,12 +1643,12 @@ dependencies = [
  "git-chunk",
  "git-diff",
  "git-hashtable 0.1.1",
- "git-object 0.26.1",
  "git-tempfile 3.0.2",
  "git-testtools",
  "git-traverse 0.22.1",
  "gix-features",
  "gix-hash",
+ "gix-object",
  "gix-path",
  "memmap2",
  "parking_lot 0.12.1",
@@ -1684,13 +1663,13 @@ name = "git-pack-tests"
 version = "0.30.1"
 dependencies = [
  "bstr",
- "git-object 0.26.1",
  "git-odb",
  "git-pack",
  "git-testtools",
  "git-traverse 0.22.1",
  "gix-features",
  "gix-hash",
+ "gix-object",
  "maplit",
  "memmap2",
  "tempfile",
@@ -1808,7 +1787,7 @@ dependencies = [
  "git-features",
  "git-hash",
  "git-lock 3.0.1",
- "git-object 0.26.0",
+ "git-object",
  "git-path",
  "git-tempfile 3.0.1",
  "git-validate",
@@ -1823,12 +1802,12 @@ version = "0.24.0"
 dependencies = [
  "document-features",
  "git-lock 3.0.2",
- "git-object 0.26.1",
  "git-tempfile 3.0.2",
  "git-testtools",
  "gix-actor",
  "gix-features",
  "gix-hash",
+ "gix-object",
  "gix-path",
  "gix-validate",
  "memmap2",
@@ -1844,7 +1823,6 @@ version = "0.0.0"
 dependencies = [
  "git-discover 0.13.0",
  "git-lock 3.0.2",
- "git-object 0.26.1",
  "git-odb",
  "git-ref 0.24.0",
  "git-testtools",
@@ -1852,6 +1830,7 @@ dependencies = [
  "gix-actor",
  "gix-features",
  "gix-hash",
+ "gix-object",
  "gix-validate",
  "tempfile",
 ]
@@ -1877,8 +1856,8 @@ dependencies = [
  "document-features",
  "git-date 0.4.2",
  "git-hashtable 0.1.1",
- "git-object 0.26.1",
  "gix-hash",
+ "gix-object",
  "serde",
  "thiserror",
 ]
@@ -1888,11 +1867,11 @@ name = "git-revision-tests"
 version = "0.0.0"
 dependencies = [
  "bstr",
- "git-object 0.26.1",
  "git-revision",
  "git-testtools",
  "gix",
  "gix-hash",
+ "gix-object",
 ]
 
 [[package]]
@@ -2005,7 +1984,7 @@ checksum = "bd356da21ec00f69b9d4f105df4cb85543c746b18f4b7fc81529ce77713cdb29"
 dependencies = [
  "git-hash",
  "git-hashtable 0.1.0",
- "git-object 0.26.0",
+ "git-object",
  "thiserror",
 ]
 
@@ -2014,8 +1993,8 @@ name = "git-traverse"
 version = "0.22.1"
 dependencies = [
  "git-hashtable 0.1.1",
- "git-object 0.26.1",
  "gix-hash",
+ "gix-object",
  "thiserror",
 ]
 
@@ -2023,11 +2002,11 @@ dependencies = [
 name = "git-traverse-tests"
 version = "0.0.0"
 dependencies = [
- "git-object 0.26.1",
  "git-odb",
  "git-testtools",
  "git-traverse 0.22.1",
  "gix-hash",
+ "gix-object",
 ]
 
 [[package]]
@@ -2070,7 +2049,7 @@ dependencies = [
  "git-glob",
  "git-hash",
  "git-index 0.12.2",
- "git-object 0.26.0",
+ "git-object",
  "git-path",
  "io-close",
  "thiserror",
@@ -2084,12 +2063,12 @@ dependencies = [
  "document-features",
  "git-attributes 0.8.2",
  "git-index 0.12.3",
- "git-object 0.26.1",
  "git-odb",
  "git-testtools",
  "gix-features",
  "gix-glob",
  "gix-hash",
+ "gix-object",
  "gix-path",
  "io-close",
  "serde",
@@ -2180,7 +2159,6 @@ dependencies = [
  "git-index 0.12.3",
  "git-lock 3.0.2",
  "git-mailmap",
- "git-object 0.26.1",
  "git-odb",
  "git-pack",
  "git-prompt",
@@ -2198,6 +2176,7 @@ dependencies = [
  "gix-features",
  "gix-glob",
  "gix-hash",
+ "gix-object",
  "gix-path",
  "gix-sec",
  "gix-validate",
@@ -2290,6 +2269,27 @@ dependencies = [
  "git-testtools",
  "hex",
  "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-object"
+version = "0.26.1"
+dependencies = [
+ "bstr",
+ "btoi",
+ "document-features",
+ "git-testtools",
+ "gix-actor",
+ "gix-features",
+ "gix-hash",
+ "gix-validate",
+ "hex",
+ "itoa",
+ "nom",
+ "pretty_assertions",
+ "serde",
+ "smallvec",
  "thiserror",
 ]
 

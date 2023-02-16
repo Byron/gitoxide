@@ -12,7 +12,7 @@ pub enum ResolvedBase {
     /// Indicates the object of `kind` was found outside of the pack.
     OutOfPack {
         /// The kind of object we found when reading the header of the out-of-pack base.
-        kind: git_object::Kind,
+        kind: gix_object::Kind,
         /// The amount of deltas encountered if the object was packed as well.
         num_deltas: Option<u32>,
     },
@@ -25,7 +25,7 @@ pub enum ResolvedBase {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The kind of resolved object.
-    pub kind: git_object::Kind,
+    pub kind: gix_object::Kind,
     /// The decompressed size of the object.
     pub object_size: u64,
     /// The amount of deltas in the chain of objects that had to be resolved beforehand.

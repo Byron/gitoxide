@@ -56,7 +56,7 @@ blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest",
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = [  "serde",
             "git-pack/serde1",
-            "git-object/serde1",
+            "gix-object/serde1",
             "git-protocol?/serde1",
             "git-transport?/serde1",
             "git-ref/serde1",
@@ -102,7 +102,7 @@ git-refspec = { version = "^0.7.2", path = "../git-refspec" }
 git-config = { version = "^0.16.1", path = "../git-config" }
 git-odb = { version = "^0.40.2", path = "../git-odb" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
-git-object = { version = "^0.26.1", path = "../git-object" }
+gix-object = { version = "^0.26.1", path = "../gix-object" }
 gix-actor = { version = "^0.17.1", path = "../gix-actor" }
 git-pack = { version = "^0.30.2", path = "../git-pack", features = ["object-cache-dynamic"] }
 git-revision = { version = "^0.10.3", path = "../git-revision" }

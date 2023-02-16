@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use git_object::bstr::{BStr, BString, ByteSlice};
+use gix_object::bstr::{BStr, BString, ByteSlice};
 
 use crate::{store_impl::packed, FullNameRef, PartialNameRef};
 

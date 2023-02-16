@@ -106,7 +106,7 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 * [x] hashset
 
 
-### git-object
+### gix-object
 * *decode (zero-copy)* borrowed objects
     * [x] commit
       * [ ] parse [trailers](https://git-scm.com/docs/git-interpret-trailers#_description) 

@@ -50,7 +50,7 @@ impl<'a, 'repo> Platform<'a, 'repo> {
     where
         V: git_traverse::tree::Visit,
     {
-        let root = git_object::TreeRefIter::from_bytes(&self.root.data);
+        let root = gix_object::TreeRefIter::from_bytes(&self.root.data);
         let state = git_traverse::tree::breadthfirst::State::default();
         git_traverse::tree::breadthfirst(
             root,

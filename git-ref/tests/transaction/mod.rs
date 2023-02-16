@@ -1,11 +1,11 @@
 mod refedit_ext {
     use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
 
-    use git_object::bstr::{BString, ByteSlice};
     use git_ref::{
         transaction::{Change, PreviousValue, RefEdit, RefEditsExt, RefLog},
         PartialNameRef, Target,
     };
+    use gix_object::bstr::{BString, ByteSlice};
 
     #[derive(Default)]
     struct MockStore {

@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_object::commit::MessageRef;
+use gix_object::commit::MessageRef;
 
 #[test]
 fn only_title_no_trailing_newline() {
@@ -132,7 +132,7 @@ fn title_with_windows_separator_and_empty_body() {
 }
 
 mod body {
-    use git_object::commit::{
+    use gix_object::commit::{
         message::{body::TrailerRef, BodyRef},
         MessageRef,
     };
@@ -223,12 +223,12 @@ mod body {
 mod summary {
     use std::borrow::Cow;
 
-    use git_object::{
+    use gix_actor::{Sign, SignatureRef, Time};
+    use gix_object::{
         bstr::{BStr, ByteSlice},
         commit::MessageRef,
         CommitRef,
     };
-    use gix_actor::{Sign, SignatureRef, Time};
 
     fn summary(input: &[u8]) -> Cow<'_, BStr> {
         let summary = MessageRef::from_bytes(input).summary();

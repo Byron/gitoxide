@@ -24,11 +24,11 @@ pub mod existing_object {
         #[error(transparent)]
         Find(T),
         #[error(transparent)]
-        Decode(git_object::decode::Error),
+        Decode(gix_object::decode::Error),
         #[error("An object with id {} could not be found", .oid)]
         NotFound { oid: ObjectId },
         #[error("Expected object of kind {} something else", .expected)]
-        ObjectKind { expected: git_object::Kind },
+        ObjectKind { expected: gix_object::Kind },
     }
 }
 
@@ -45,7 +45,7 @@ pub mod existing_iter {
         #[error("An object with id {} could not be found", .oid)]
         NotFound { oid: ObjectId },
         #[error("Expected object of kind {} something else", .expected)]
-        ObjectKind { expected: git_object::Kind },
+        ObjectKind { expected: gix_object::Kind },
     }
 }
 

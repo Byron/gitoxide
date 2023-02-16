@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 
-use git_object::bstr::ByteSlice;
 use git_revision::describe;
 use gix::{
     odb::{Find, FindExt},
     Repository,
 };
+use gix_object::bstr::ByteSlice;
 
 use crate::hex_to_id;
 

@@ -179,8 +179,8 @@ mod parse {
         mktest!(ref_tag, b"reff: hello", "\"reff: hello\" could not be parsed");
     }
     mod valid {
-        use git_object::bstr::ByteSlice;
         use git_ref::file::loose::Reference;
+        use gix_object::bstr::ByteSlice;
 
         use crate::util::hex_to_id;
 

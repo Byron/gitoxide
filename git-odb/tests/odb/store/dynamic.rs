@@ -210,7 +210,7 @@ fn write() -> crate::Result {
     // It should refresh once even if the refresh mode is never, just to initialize the index
     handle.refresh_never();
 
-    let written_id = handle.write_buf(git_object::Kind::Blob, b"hello world")?;
+    let written_id = handle.write_buf(gix_object::Kind::Blob, b"hello world")?;
     assert_eq!(written_id, hex_to_id("95d09f2b10159347eece71399a7e2e907ea3df4f"));
     Ok(())
 }
@@ -231,13 +231,13 @@ fn object_replacement() -> crate::Result {
     );
     drop(third_commit);
     let hdr = handle.try_header(short_history_link)?.expect("present");
-    assert_eq!(hdr.kind(), git_object::Kind::Commit);
+    assert_eq!(hdr.kind(), gix_object::Kind::Commit);
     assert_eq!(handle.find(short_history_link, &mut buf)?.data.len() as u64, hdr.size());
 
     let orphan = handle.find_commit(orphan_of_new_history, &mut buf)?;
     assert_eq!(orphan.parents.len(), 0);
     let hdr = handle.try_header(orphan_of_new_history)?.expect("present");
-    assert_eq!(hdr.kind(), git_object::Kind::Commit);
+    assert_eq!(hdr.kind(), gix_object::Kind::Commit);
 
     let long_history_tip = hex_to_id("71f537d9d78bf6ae89a29a17e54b95a914d3d2ef");
     let unrelated_mapping = (
@@ -260,7 +260,7 @@ fn object_replacement() -> crate::Result {
         "replacements are applied by default when present"
     );
     let hdr = handle.try_header(short_history_link)?.expect("present");
-    assert_eq!(hdr.kind(), git_object::Kind::Commit);
+    assert_eq!(hdr.kind(), gix_object::Kind::Commit);
     drop(replaced);
     assert_eq!(handle.find(short_history_link, &mut buf)?.data.len() as u64, hdr.size());
 
@@ -272,7 +272,7 @@ fn object_replacement() -> crate::Result {
         "no replacements are made if explicitly disabled"
     );
     let hdr = handle.try_header(short_history_link)?.expect("present");
-    assert_eq!(hdr.kind(), git_object::Kind::Commit);
+    assert_eq!(hdr.kind(), gix_object::Kind::Commit);
     drop(not_replaced);
     assert_eq!(handle.find(short_history_link, &mut buf)?.data.len() as u64, hdr.size());
 

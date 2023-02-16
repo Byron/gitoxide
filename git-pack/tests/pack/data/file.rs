@@ -117,7 +117,7 @@ mod resolve_header {
     #[test]
     fn commit() {
         let out = resolve_header_at_offset(1968);
-        assert_eq!(out.kind, git_object::Kind::Commit);
+        assert_eq!(out.kind, gix_object::Kind::Commit);
         assert_eq!(out.object_size, 187);
         assert_eq!(out.num_deltas, 0);
     }
@@ -125,7 +125,7 @@ mod resolve_header {
     #[test]
     fn blob_ofs_delta_two_links() {
         let out = resolve_header_at_offset(3033);
-        assert_eq!(out.kind, git_object::Kind::Blob);
+        assert_eq!(out.kind, gix_object::Kind::Blob);
         assert_eq!(out.object_size, 173);
         assert_eq!(out.num_deltas, 2);
     }
@@ -133,7 +133,7 @@ mod resolve_header {
     #[test]
     fn blob_ofs_delta_single_link() {
         let out = resolve_header_at_offset(3569);
-        assert_eq!(out.kind, git_object::Kind::Blob);
+        assert_eq!(out.kind, gix_object::Kind::Blob);
         assert_eq!(out.object_size, 1163);
         assert_eq!(out.num_deltas, 1);
     }
@@ -141,7 +141,7 @@ mod resolve_header {
     #[test]
     fn tree() {
         let out = resolve_header_at_offset(2097);
-        assert_eq!(out.kind, git_object::Kind::Tree);
+        assert_eq!(out.kind, gix_object::Kind::Tree);
         assert_eq!(out.object_size, 34);
         assert_eq!(out.num_deltas, 0);
     }
@@ -159,7 +159,7 @@ mod resolve_header {
 }
 
 mod decompress_entry {
-    use git_object::bstr::ByteSlice;
+    use gix_object::bstr::ByteSlice;
 
     use crate::pack::{data::file::pack_at, SMALL_PACK};
 

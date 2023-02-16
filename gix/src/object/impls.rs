@@ -16,7 +16,7 @@ impl<'repo> From<Commit<'repo>> for ObjectDetached {
     fn from(mut v: Commit<'repo>) -> Self {
         ObjectDetached {
             id: v.id,
-            kind: git_object::Kind::Commit,
+            kind: gix_object::Kind::Commit,
             data: std::mem::take(&mut v.data),
         }
     }
@@ -26,7 +26,7 @@ impl<'repo> From<Tag<'repo>> for ObjectDetached {
     fn from(mut v: Tag<'repo>) -> Self {
         ObjectDetached {
             id: v.id,
-            kind: git_object::Kind::Tag,
+            kind: gix_object::Kind::Tag,
             data: std::mem::take(&mut v.data),
         }
     }
@@ -36,7 +36,7 @@ impl<'repo> From<Commit<'repo>> for Object<'repo> {
     fn from(mut v: Commit<'repo>) -> Self {
         Object {
             id: v.id,
-            kind: git_object::Kind::Commit,
+            kind: gix_object::Kind::Commit,
             data: steal_from_freelist(&mut v.data),
             repo: v.repo,
         }
@@ -105,7 +105,7 @@ impl<'repo> TryFrom<Object<'repo>> for Tree<'repo> {
 
 impl<'r> std::fmt::Debug for Object<'r> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use git_object::Kind::*;
+        use gix_object::Kind::*;
         let type_name = match self.kind {
             Blob => "Blob",
             Commit => "Commit",

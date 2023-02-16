@@ -118,8 +118,8 @@ struct Baseline<'a> {
 mod baseline {
     use std::path::{Path, PathBuf};
 
-    use git_object::bstr::BStr;
     use gix::bstr::{BString, ByteSlice};
+    use gix_object::bstr::BStr;
 
     use super::Baseline;
 

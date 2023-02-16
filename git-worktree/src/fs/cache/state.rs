@@ -151,7 +151,7 @@ impl Ignore {
         mut find: Find,
     ) -> std::io::Result<()>
     where
-        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::BlobRef<'b>, E>,
+        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
         let rela_dir = dir.strip_prefix(root).expect("dir in root");

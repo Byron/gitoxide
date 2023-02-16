@@ -203,7 +203,7 @@ mod tests {
         use super::Item;
         pub struct EntryWithDefault {
             _index_entry: crate::index::Entry,
-            _kind: git_object::Kind,
+            _kind: gix_object::Kind,
             _object_size: u64,
             _decompressed_size: u64,
             _compressed_size: u64,

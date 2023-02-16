@@ -154,8 +154,8 @@ mod object_caches {
 mod with_overrides {
     use std::borrow::Cow;
 
-    use git_object::bstr::BStr;
     use git_testtools::Env;
+    use gix_object::bstr::BStr;
     use gix_sec::Permission;
 
     use serial_test::serial;

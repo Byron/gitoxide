@@ -10,7 +10,7 @@ mod memory {
 
     struct Entry {
         data: Vec<u8>,
-        kind: git_object::Kind,
+        kind: gix_object::Kind,
         compressed_size: usize,
     }
 
@@ -46,7 +46,7 @@ mod memory {
     }
 
     impl DecodeEntry for MemoryCappedHashmap {
-        fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
+        fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: gix_object::Kind, compressed_size: usize) {
             self.debug.put();
             if let Ok(Some(previous_entry)) = self.inner.put_with_weight(
                 (pack_id, offset),
@@ -69,7 +69,7 @@ mod memory {
             }
         }
 
-        fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
+        fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(gix_object::Kind, usize)> {
             let res = self.inner.get(&(pack_id, offset)).map(|e| {
                 out.resize(e.data.len(), 0);
                 out.copy_from_slice(&e.data);
@@ -95,7 +95,7 @@ mod _static {
         pack_id: u32,
         offset: u64,
         data: Vec<u8>,
-        kind: git_object::Kind,
+        kind: gix_object::Kind,
         compressed_size: usize,
     }
 
@@ -119,7 +119,7 @@ mod _static {
     }
 
     impl<const SIZE: usize> DecodeEntry for StaticLinkedList<SIZE> {
-        fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
+        fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: gix_object::Kind, compressed_size: usize) {
             self.debug.put();
             if let Some(previous) = self.inner.insert(Entry {
                 offset,
@@ -141,7 +141,7 @@ mod _static {
             }
         }
 
-        fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
+        fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(gix_object::Kind, usize)> {
             let res = self.inner.lookup(|e: &mut Entry| {
                 if e.pack_id == pack_id && e.offset == offset {
                     out.resize(e.data.len(), 0);

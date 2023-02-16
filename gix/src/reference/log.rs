@@ -1,6 +1,6 @@
 //!
-use git_object::commit::MessageRef;
 use git_ref::file::ReferenceExt;
+use gix_object::commit::MessageRef;
 
 use crate::{
     bstr::{BStr, BString, ByteVec},

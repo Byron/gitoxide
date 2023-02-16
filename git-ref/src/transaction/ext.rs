@@ -1,4 +1,4 @@
-use git_object::bstr::BString;
+use gix_object::bstr::BString;
 
 use crate::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog, Target},

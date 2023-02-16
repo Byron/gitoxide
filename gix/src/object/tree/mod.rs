@@ -1,5 +1,5 @@
-use git_object::{bstr::BStr, TreeRefIter};
 use gix_hash::ObjectId;
+use gix_object::{bstr::BStr, TreeRefIter};
 
 use crate::{object::find, Id, Tree};
 
@@ -107,7 +107,7 @@ impl<'r> std::fmt::Debug for Tree<'r> {
 /// An entry in a [`Tree`], similar to an entry in a directory.
 #[derive(PartialEq, Debug, Clone)]
 pub struct Entry<'repo> {
-    inner: git_object::tree::Entry,
+    inner: gix_object::tree::Entry,
     repo: &'repo crate::Repository,
 }
 
@@ -117,7 +117,7 @@ mod entry {
     /// Access
     impl<'repo> Entry<'repo> {
         /// The kind of object to which `oid` is pointing to.
-        pub fn mode(&self) -> git_object::tree::EntryMode {
+        pub fn mode(&self) -> gix_object::tree::EntryMode {
             self.inner.mode
         }
 
@@ -150,7 +150,7 @@ mod entry {
     /// Consuming
     impl Entry<'_> {
         /// Return the contained object.
-        pub fn detach(self) -> git_object::tree::Entry {
+        pub fn detach(self) -> gix_object::tree::Entry {
             self.inner
         }
     }

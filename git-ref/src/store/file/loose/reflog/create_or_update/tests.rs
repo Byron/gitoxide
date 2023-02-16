@@ -1,7 +1,7 @@
 use std::{convert::TryInto, path::Path};
 
-use git_object::bstr::ByteSlice;
 use gix_actor::{Sign, Signature, Time};
+use gix_object::bstr::ByteSlice;
 use tempfile::TempDir;
 
 use super::*;

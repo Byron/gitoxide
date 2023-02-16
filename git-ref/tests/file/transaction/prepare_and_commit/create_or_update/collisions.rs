@@ -69,7 +69,7 @@ fn packed_refs_lock_is_mandatory_for_multiple_ongoing_transactions_even_if_one_d
     let _t1 = store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
-            Box::new(|_, _| Ok(Some(git_object::Kind::Commit))),
+            Box::new(|_, _| Ok(Some(gix_object::Kind::Commit))),
         ))
         .prepare([create_at(ref_name)], Fail::Immediately, Fail::Immediately)?;
 
@@ -86,7 +86,7 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
     store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
-            Box::new(|_, _| Ok(Some(git_object::Kind::Commit))),
+            Box::new(|_, _| Ok(Some(gix_object::Kind::Commit))),
         ))
         .prepare(
             [
@@ -118,7 +118,7 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
     store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
-            Box::new(|_, _| Ok(Some(git_object::Kind::Commit))),
+            Box::new(|_, _| Ok(Some(gix_object::Kind::Commit))),
         ))
         .prepare(
             [

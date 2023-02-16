@@ -92,7 +92,7 @@ impl index::File {
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
         Processor: FnMut(
-            git_object::Kind,
+            gix_object::Kind,
             &[u8],
             &index::Entry,
             &mut <P::SubProgress as Progress>::SubProgress,
@@ -159,7 +159,7 @@ impl index::File {
         buf: &mut Vec<u8>,
         progress: &mut P,
         index_entry: &crate::index::Entry,
-        processor: &mut impl FnMut(git_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
+        processor: &mut impl FnMut(gix_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
     ) -> Result<crate::data::decode::entry::Outcome, Error<E>>
     where
         C: crate::cache::DecodeEntry,
@@ -204,12 +204,12 @@ impl index::File {
 #[allow(clippy::too_many_arguments)]
 fn process_entry<P, E>(
     check: SafetyCheck,
-    object_kind: git_object::Kind,
+    object_kind: gix_object::Kind,
     decompressed: &[u8],
     progress: &mut P,
     index_entry: &crate::index::Entry,
     pack_entry_crc32: impl FnOnce() -> u32,
-    processor: &mut impl FnMut(git_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
+    processor: &mut impl FnMut(gix_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
 ) -> Result<(), Error<E>>
 where
     P: Progress,
@@ -217,7 +217,7 @@ where
 {
     if check.object_checksum() {
         let mut hasher = gix_features::hash::hasher(index_entry.oid.kind());
-        hasher.update(&git_object::encode::loose_header(object_kind, decompressed.len()));
+        hasher.update(&gix_object::encode::loose_header(object_kind, decompressed.len()));
         hasher.update(decompressed);
 
         let actual_oid = gix_hash::ObjectId::from(hasher.digest());

@@ -53,8 +53,8 @@ mod reference {
 }
 
 mod header {
-    use git_object::bstr::ByteSlice;
     use git_testtools::to_bstr_err;
+    use gix_object::bstr::ByteSlice;
 
     use super::Result;
     use crate::store_impl::packed::{

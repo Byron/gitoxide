@@ -42,7 +42,7 @@ impl Tree {
     ///
     pub fn verify<F>(&self, use_find: bool, mut find: F) -> Result<(), Error>
     where
-        F: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>>,
+        F: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Option<gix_object::TreeRefIter<'a>>,
     {
         fn verify_recursive<F>(
             parent_id: gix_hash::ObjectId,
@@ -51,7 +51,7 @@ impl Tree {
             find: &mut F,
         ) -> Result<Option<u32>, Error>
         where
-            F: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>>,
+            F: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Option<gix_object::TreeRefIter<'a>>,
         {
             if children.is_empty() {
                 return Ok(None);
@@ -76,7 +76,7 @@ impl Tree {
                 let mut num_entries = 0;
                 for entry in tree_entries
                     .filter_map(Result::ok)
-                    .filter(|e| e.mode == git_object::tree::EntryMode::Tree)
+                    .filter(|e| e.mode == gix_object::tree::EntryMode::Tree)
                 {
                     children
                         .binary_search_by(|e| e.name.as_bstr().cmp(entry.filename))

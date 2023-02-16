@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use git_object::bstr::BString;
+use gix_object::bstr::BString;
 
 use gix::{
     config::tree::{Core, Key},

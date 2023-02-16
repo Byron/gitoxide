@@ -116,7 +116,7 @@ pub enum Traversal {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum PeelTo<'a> {
     /// An object of the given kind.
-    ObjectKind(git_object::Kind),
+    ObjectKind(gix_object::Kind),
     /// Ensure the object at hand exists and is valid (actually without peeling it),
     /// without imposing any restrictions to its type.
     /// The object needs to be looked up to assure that it is valid, but it doesn't need to be decoded.

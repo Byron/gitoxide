@@ -3,8 +3,8 @@ use git_testtools::Env;
 mod baseline {
     use std::collections::HashMap;
 
-    use git_object::bstr::BString;
     use git_testtools::once_cell::sync::Lazy;
+    use gix_object::bstr::BString;
 
     use crate::remote;
 

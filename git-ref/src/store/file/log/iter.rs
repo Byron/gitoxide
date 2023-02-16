@@ -1,4 +1,4 @@
-use git_object::bstr::ByteSlice;
+use gix_object::bstr::ByteSlice;
 
 use crate::{
     file,
@@ -64,7 +64,7 @@ pub fn forward(lines: &[u8]) -> Forward<'_> {
 
 /// An iterator yielding parsed lines in a file from start to end, oldest to newest.
 pub struct Forward<'a> {
-    inner: std::iter::Enumerate<git_object::bstr::Lines<'a>>,
+    inner: std::iter::Enumerate<gix_object::bstr::Lines<'a>>,
 }
 
 impl<'a> Iterator for Forward<'a> {

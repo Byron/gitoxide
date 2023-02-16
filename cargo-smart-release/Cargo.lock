@@ -612,7 +612,7 @@ name = "git-diff"
 version = "0.16.0"
 dependencies = [
  "gix-hash",
- "git-object",
+ "gix-object",
  "quick-error",
 ]
 
@@ -675,7 +675,7 @@ dependencies = [
  "git-bitmap",
  "gix-features",
  "gix-hash",
- "git-object",
+ "gix-object",
  "memmap2",
  "quick-error",
  "smallvec",
@@ -700,7 +700,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-object"
+name = "gix-object"
 version = "0.19.0"
 dependencies = [
  "bstr",
@@ -723,7 +723,7 @@ dependencies = [
  "arc-swap",
  "gix-features",
  "gix-hash",
- "git-object",
+ "gix-object",
  "git-pack",
  "gix-path",
  "git-quote",
@@ -743,7 +743,7 @@ dependencies = [
  "git-diff",
  "gix-features",
  "gix-hash",
- "git-object",
+ "gix-object",
  "gix-path",
  "git-tempfile",
  "git-traverse",
@@ -781,7 +781,7 @@ dependencies = [
  "gix-features",
  "gix-hash",
  "git-lock",
- "git-object",
+ "gix-object",
  "gix-path",
  "git-tempfile",
  "gix-validate",
@@ -808,7 +808,7 @@ dependencies = [
  "git-index",
  "git-lock",
  "git-mailmap",
- "git-object",
+ "gix-object",
  "git-odb",
  "git-pack",
  "gix-path",
@@ -833,7 +833,7 @@ dependencies = [
  "bstr",
  "git-date",
  "gix-hash",
- "git-object",
+ "gix-object",
  "hash_hasher",
  "thiserror",
 ]
@@ -889,7 +889,7 @@ name = "git-traverse"
 version = "0.15.0"
 dependencies = [
  "gix-hash",
- "git-object",
+ "gix-object",
  "hash_hasher",
  "quick-error",
 ]
@@ -924,7 +924,7 @@ dependencies = [
  "gix-glob",
  "gix-hash",
  "git-index",
- "git-object",
+ "gix-object",
  "gix-path",
  "io-close",
  "thiserror",

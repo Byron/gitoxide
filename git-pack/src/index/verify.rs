@@ -1,7 +1,7 @@
 use std::sync::atomic::AtomicBool;
 
-use git_object::{bstr::ByteSlice, WriteTo};
 use gix_features::progress::Progress;
+use gix_object::{bstr::ByteSlice, WriteTo};
 
 use crate::index;
 
@@ -9,7 +9,7 @@ use crate::index;
 pub mod integrity {
     use std::marker::PhantomData;
 
-    use git_object::bstr::BString;
+    use gix_object::bstr::BString;
 
     /// Returned by [`index::File::verify_integrity()`][crate::index::File::verify_integrity()].
     #[derive(thiserror::Error, Debug)]
@@ -19,13 +19,13 @@ pub mod integrity {
         Fan { index: usize },
         #[error("{kind} object {id} could not be decoded")]
         ObjectDecode {
-            source: git_object::decode::Error,
-            kind: git_object::Kind,
+            source: gix_object::decode::Error,
+            kind: gix_object::Kind,
             id: gix_hash::ObjectId,
         },
         #[error("{kind} object {id} wasn't re-encoded without change, wanted\n{expected}\n\nGOT\n\n{actual}")]
         ObjectEncodeMismatch {
-            kind: git_object::Kind,
+            kind: gix_object::Kind,
             id: gix_hash::ObjectId,
             expected: BString,
             actual: BString,
@@ -239,7 +239,7 @@ impl index::File {
     fn verify_entry<P>(
         verify_mode: Mode,
         encode_buf: &mut Vec<u8>,
-        object_kind: git_object::Kind,
+        object_kind: gix_object::Kind,
         buf: &[u8],
         index_entry: &index::Entry,
         progress: &mut P,
@@ -248,10 +248,10 @@ impl index::File {
         P: Progress,
     {
         if let Mode::HashCrc32Decode | Mode::HashCrc32DecodeEncode = verify_mode {
-            use git_object::Kind::*;
+            use gix_object::Kind::*;
             match object_kind {
                 Tree | Commit | Tag => {
-                    let object = git_object::ObjectRef::from_bytes(object_kind, buf).map_err(|err| {
+                    let object = gix_object::ObjectRef::from_bytes(object_kind, buf).map_err(|err| {
                         integrity::Error::ObjectDecode {
                             source: err,
                             kind: object_kind,
@@ -265,7 +265,7 @@ impl index::File {
                             .expect("writing to a memory buffer never fails");
                         if encode_buf.as_slice() != buf {
                             let mut should_return_error = true;
-                            if let git_object::Kind::Tree = object_kind {
+                            if let gix_object::Kind::Tree = object_kind {
                                 if buf.as_bstr().find(b"100664").is_some() || buf.as_bstr().find(b"100640").is_some() {
                                     progress.info(format!("Tree object {} would be cleaned up during re-serialization, replacing mode '100664|100640' with '100644'", index_entry.oid));
                                     should_return_error = false

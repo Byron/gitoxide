@@ -1,6 +1,6 @@
 use std::{borrow::Cow, path::PathBuf};
 
-use git_object::bstr::ByteSlice;
+use gix_object::bstr::ByteSlice;
 
 /// Returned as part of [`crate::alternate::Error::Parse`]
 #[derive(thiserror::Error, Debug)]

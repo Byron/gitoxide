@@ -119,7 +119,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
             }
             PeelTo::Path(path) => {
                 let lookup_path = |obj: &ObjectId| {
-                    let tree_id = peel(repo, obj, git_object::Kind::Tree)?;
+                    let tree_id = peel(repo, obj, gix_object::Kind::Tree)?;
                     if path.is_empty() {
                         return Ok(tree_id);
                     }
@@ -239,7 +239,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                         r.id()
                                             .object()
                                             .ok()
-                                            .map(|obj| obj.kind == git_object::Kind::Commit)
+                                            .map(|obj| obj.kind == gix_object::Kind::Commit)
                                             .unwrap_or(false)
                                     })
                                     .filter_map(|r| r.detach().peeled),

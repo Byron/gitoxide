@@ -17,7 +17,7 @@ pub enum ResolvedBase {
     /// Indicates the object of `kind` was found outside of the pack, and its data was written into an output
     /// vector which now has a length of `end`.
     #[allow(missing_docs)]
-    OutOfPack { kind: git_object::Kind, end: usize },
+    OutOfPack { kind: gix_object::Kind, end: usize },
 }
 
 #[derive(Debug)]
@@ -37,7 +37,7 @@ struct Delta {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The kind of resolved object.
-    pub kind: git_object::Kind,
+    pub kind: gix_object::Kind,
     /// The amount of deltas in the chain of objects that had to be resolved beforehand.
     ///
     /// This number is affected by the [`Cache`][cache::DecodeEntry] implementation, with cache hits shortening the
@@ -52,7 +52,7 @@ pub struct Outcome {
 }
 
 impl Outcome {
-    pub(crate) fn default_from_kind(kind: git_object::Kind) -> Self {
+    pub(crate) fn default_from_kind(kind: gix_object::Kind) -> Self {
         Self {
             kind,
             num_deltas: 0,
@@ -61,7 +61,7 @@ impl Outcome {
             object_size: 0,
         }
     }
-    fn from_object_entry(kind: git_object::Kind, entry: &data::Entry, compressed_size: usize) -> Self {
+    fn from_object_entry(kind: gix_object::Kind, entry: &data::Entry, compressed_size: usize) -> Self {
         Self {
             kind,
             num_deltas: 0,
@@ -199,7 +199,7 @@ impl File {
         let first_entry = last.clone();
         let mut cursor = last;
         let mut base_buffer_size: Option<usize> = None;
-        let mut object_kind: Option<git_object::Kind> = None;
+        let mut object_kind: Option<gix_object::Kind> = None;
         let mut consumed_input: Option<usize> = None;
 
         // Find the first full base, either an undeltified object in the pack or a reference to another object.

@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use git_object::bstr::{BStr, BString};
+use gix_object::bstr::{BStr, BString};
 
 /// A trait to allow responding to a traversal designed to observe all entries in a tree, recursively while keeping track of
 /// paths if desired.
@@ -18,13 +18,13 @@ pub trait Visit {
     /// [`Action::Skip`][visit::Action::Skip] can be used to prevent traversing it, for example if it's known to the caller already.
     ///
     /// The implementation may use the current path to learn where in the tree the change is located.
-    fn visit_tree(&mut self, entry: &git_object::tree::EntryRef<'_>) -> visit::Action;
+    fn visit_tree(&mut self, entry: &gix_object::tree::EntryRef<'_>) -> visit::Action;
 
     /// Observe a tree entry that is NO tree and return an instruction whether to continue or not.
     /// [`Action::Skip`][visit::Action::Skip] has no effect here.
     ///
     /// The implementation may use the current path to learn where in the tree the change is located.
-    fn visit_nontree(&mut self, entry: &git_object::tree::EntryRef<'_>) -> visit::Action;
+    fn visit_nontree(&mut self, entry: &gix_object::tree::EntryRef<'_>) -> visit::Action;
 }
 
 /// A [Visit][Visit] implementation to record every observed change and keep track of the changed paths.

@@ -28,7 +28,7 @@ pub trait Find {
         &self,
         id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
-    ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
+    ) -> Result<Option<(gix_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
         self.try_find_cached(id, buffer, &mut crate::cache::Never)
     }
 
@@ -43,7 +43,7 @@ pub trait Find {
         id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl crate::cache::DecodeEntry,
-    ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error>;
+    ) -> Result<Option<(gix_object::Data<'a>, Option<data::entry::Location>)>, Self::Error>;
 
     /// Find the packs location where an object with `id` can be found in the database, or `None` if there is no pack
     /// holding the object.
@@ -67,7 +67,7 @@ pub trait Find {
 }
 
 mod ext {
-    use git_object::{BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
+    use gix_object::{BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
 
     use crate::find;
 
@@ -135,7 +135,7 @@ mod ext {
             &self,
             id: impl AsRef<gix_hash::oid>,
             buffer: &'a mut Vec<u8>,
-        ) -> Result<(git_object::Data<'a>, Option<crate::data::entry::Location>), find::existing::Error<Self::Error>>
+        ) -> Result<(gix_object::Data<'a>, Option<crate::data::entry::Location>), find::existing::Error<Self::Error>>
         {
             let id = id.as_ref();
             self.try_find(id, buffer)
@@ -180,7 +180,7 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
+        ) -> Result<Option<(gix_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
             (*self).try_find_cached(id, buffer, pack_cache)
         }
 
@@ -212,7 +212,7 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
+        ) -> Result<Option<(gix_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
             self.deref().try_find_cached(id, buffer, pack_cache)
         }
 
@@ -244,7 +244,7 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
+        ) -> Result<Option<(gix_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
             self.deref().try_find_cached(id, buffer, pack_cache)
         }
 
@@ -276,7 +276,7 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
+        ) -> Result<Option<(gix_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
             self.deref().try_find_cached(id, buffer, pack_cache)
         }
 

@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 
-use git_object::{bstr::ByteSlice, tree::EntryMode};
+use gix_object::{bstr::ByteSlice, tree::EntryMode};
 
 use gix::object::{blob::diff::line::Change, tree::diff::change::Event};
 

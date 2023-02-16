@@ -12,7 +12,7 @@
 //!   - errors during preparations will cause a perfect rollback
 //! * prepared transactions are committed to finalize the change
 //!   - errors when committing while leave the ref store in an inconsistent, but operational state.
-use git_object::bstr::BString;
+use gix_object::bstr::BString;
 
 use crate::{FullName, Target};
 

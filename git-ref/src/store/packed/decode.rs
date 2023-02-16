@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use git_object::bstr::{BStr, ByteSlice};
+use gix_object::bstr::{BStr, ByteSlice};
 use nom::{
     bytes::complete::{tag, take_while},
     combinator::{map, map_res, opt},

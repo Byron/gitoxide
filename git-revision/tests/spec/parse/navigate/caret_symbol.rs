@@ -32,8 +32,8 @@ fn multiple_calls_stack() {
     assert_eq!(
         rec.peel_to,
         vec![
-            PeelTo::ObjectKind(git_object::Kind::Commit),
-            PeelTo::ObjectKind(git_object::Kind::Tag)
+            PeelTo::ObjectKind(gix_object::Kind::Commit),
+            PeelTo::ObjectKind(gix_object::Kind::Tag)
         ]
     );
     assert_eq!(rec.calls, 7);
@@ -49,7 +49,7 @@ fn followed_by_zero_is_peeling_to_commit() {
     assert_eq!(rec.traversal.len(), 0, "traversals by parent are never zero");
     assert_eq!(
         rec.peel_to,
-        vec![PeelTo::ObjectKind(git_object::Kind::Commit)],
+        vec![PeelTo::ObjectKind(gix_object::Kind::Commit)],
         "instead 0 serves as shortcut"
     );
     assert_eq!(rec.calls, 2);
@@ -81,10 +81,10 @@ fn explicit_parent_number() {
 #[test]
 fn peel_to_object_type() {
     for (spec, expected) in [
-        ("HEAD^{commit}", PeelTo::ObjectKind(git_object::Kind::Commit)),
-        ("abcd^{tree}", PeelTo::ObjectKind(git_object::Kind::Tree)),
-        ("v1.3.4^{blob}", PeelTo::ObjectKind(git_object::Kind::Blob)),
-        ("v1.3.4-12-g1234^{tag}", PeelTo::ObjectKind(git_object::Kind::Tag)),
+        ("HEAD^{commit}", PeelTo::ObjectKind(gix_object::Kind::Commit)),
+        ("abcd^{tree}", PeelTo::ObjectKind(gix_object::Kind::Tree)),
+        ("v1.3.4^{blob}", PeelTo::ObjectKind(gix_object::Kind::Blob)),
+        ("v1.3.4-12-g1234^{tag}", PeelTo::ObjectKind(gix_object::Kind::Tag)),
         ("v1.3.4-12-g1234^{object}", PeelTo::ExistingObject),
     ] {
         let rec = parse(spec);

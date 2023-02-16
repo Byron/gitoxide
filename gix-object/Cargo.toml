@@ -1,5 +1,5 @@
 [package]
-name = "git-object"
+name = "gix-object"
 version = "0.26.1"
 description = "Immutable and mutable git objects with decoding and encoding support"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

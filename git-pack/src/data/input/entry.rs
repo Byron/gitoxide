@@ -6,7 +6,7 @@ impl input::Entry {
     /// Create a new input entry from a given data `obj` set to be placed at the given `pack_offset`.
     ///
     /// This method is useful when arbitrary base entries are created
-    pub fn from_data_obj(obj: &git_object::Data<'_>, pack_offset: u64) -> Result<Self, input::Error> {
+    pub fn from_data_obj(obj: &gix_object::Data<'_>, pack_offset: u64) -> Result<Self, input::Error> {
         let header = to_header(obj.kind);
         let compressed = compress_data(obj)?;
         let compressed_size = compressed.len() as u64;
@@ -40,8 +40,8 @@ impl input::Entry {
     }
 }
 
-fn to_header(kind: git_object::Kind) -> Header {
-    use git_object::Kind::*;
+fn to_header(kind: gix_object::Kind) -> Header {
+    use gix_object::Kind::*;
     match kind {
         Tree => Header::Tree,
         Blob => Header::Blob,
@@ -50,7 +50,7 @@ fn to_header(kind: git_object::Kind) -> Header {
     }
 }
 
-fn compress_data(obj: &git_object::Data<'_>) -> Result<Vec<u8>, input::Error> {
+fn compress_data(obj: &gix_object::Data<'_>) -> Result<Vec<u8>, input::Error> {
     let mut out = gix_features::zlib::stream::deflate::Write::new(Vec::new());
     if let Err(err) = std::io::copy(&mut &*obj.data, &mut out) {
         match err.kind() {

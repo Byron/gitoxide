@@ -1,6 +1,6 @@
 use std::{convert, convert::Infallible, ffi::OsStr, path::Path};
 
-use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
+use gix_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
 use crate::{Category, FullName, FullNameRef, PartialName, PartialNameRef};
 

@@ -67,7 +67,7 @@ impl index::File {
     where
         P: Progress,
         Processor: FnMut(
-            git_object::Kind,
+            gix_object::Kind,
             &[u8],
             &index::Entry,
             &mut <P::SubProgress as Progress>::SubProgress,
@@ -178,7 +178,7 @@ impl index::File {
 
 struct Entry {
     index_entry: crate::index::Entry,
-    object_kind: git_object::Kind,
+    object_kind: gix_object::Kind,
     object_size: u64,
     decompressed_size: u64,
     compressed_size: u64,
@@ -190,7 +190,7 @@ impl From<crate::index::Entry> for Entry {
         Entry {
             index_entry,
             level: 0,
-            object_kind: git_object::Kind::Tree,
+            object_kind: gix_object::Kind::Tree,
             object_size: 0,
             decompressed_size: 0,
             compressed_size: 0,
@@ -211,7 +211,7 @@ fn digest_statistics(traverse::Outcome { roots, children }: traverse::Outcome<En
         average.compressed_size += item.data.compressed_size as usize;
         average.object_size += item.data.object_size;
         average.num_deltas += item.data.level as u32;
-        use git_object::Kind::*;
+        use gix_object::Kind::*;
         match item.data.object_kind {
             Blob => res.num_blobs += 1,
             Tree => res.num_trees += 1,

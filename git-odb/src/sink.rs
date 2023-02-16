@@ -25,14 +25,14 @@ impl crate::traits::Write for Sink {
 
     fn write_stream(
         &self,
-        kind: git_object::Kind,
+        kind: gix_object::Kind,
         size: u64,
         mut from: impl io::Read,
     ) -> Result<gix_hash::ObjectId, Self::Error> {
         let mut size = size.try_into().expect("object size to fit into usize");
         use gix_features::hash::Sha1;
         let mut buf = [0u8; 8096];
-        let header = git_object::encode::loose_header(kind, size);
+        let header = gix_object::encode::loose_header(kind, size);
 
         let possibly_compress = |buf: &[u8]| -> io::Result<()> {
             if let Some(compressor) = self.compressor.as_ref() {

@@ -1,4 +1,4 @@
-use git_object::{bstr::ByteSlice, commit::ref_iter::Token, CommitRefIter};
+use gix_object::{bstr::ByteSlice, commit::ref_iter::Token, CommitRefIter};
 
 use crate::{
     hex_to_id,
@@ -175,7 +175,7 @@ fn mergetag() -> crate::Result {
 }
 
 mod method {
-    use git_object::CommitRefIter;
+    use gix_object::CommitRefIter;
 
     use crate::{
         hex_to_id,

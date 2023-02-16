@@ -90,7 +90,7 @@ pub fn hasher(kind: gix_hash::Kind) -> Sha1 {
 ///
 /// # Note
 ///
-/// * Only available with the `git-object` feature enabled due to usage of the [`gix_hash::Kind`] enum and the
+/// * Only available with the `gix-object` feature enabled due to usage of the [`gix_hash::Kind`] enum and the
 ///   [`gix_hash::ObjectId`] return value.
 /// * [Interrupts][crate::interrupt] are supported.
 #[cfg(all(feature = "progress", any(feature = "rustsha1", feature = "fast-sha1")))]

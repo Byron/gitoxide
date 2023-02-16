@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, convert::TryFrom, path::Path};
 
-use git_object::bstr::{BStr, BString, ByteSlice};
+use gix_object::bstr::{BStr, BString, ByteSlice};
 
 use crate::{bstr::ByteVec, name::is_pseudo_ref, Category, FullName, FullNameRef, Namespace, PartialNameRef};
 

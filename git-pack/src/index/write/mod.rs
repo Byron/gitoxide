@@ -254,9 +254,9 @@ impl crate::index::File {
 }
 
 fn modify_base(entry: &mut TreeEntry, pack_entry: &crate::data::Entry, decompressed: &[u8], hash: gix_hash::Kind) {
-    fn compute_hash(kind: git_object::Kind, bytes: &[u8], object_hash: gix_hash::Kind) -> gix_hash::ObjectId {
+    fn compute_hash(kind: gix_object::Kind, bytes: &[u8], object_hash: gix_hash::Kind) -> gix_hash::ObjectId {
         let mut hasher = gix_features::hash::hasher(object_hash);
-        hasher.update(&git_object::encode::loose_header(kind, bytes.len()));
+        hasher.update(&gix_object::encode::loose_header(kind, bytes.len()));
         hasher.update(bytes);
         gix_hash::ObjectId::from(hasher.digest())
     }

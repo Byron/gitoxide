@@ -38,8 +38,8 @@ fn traversals() -> crate::Result {
         fn total(&self) -> usize {
             self.tags + self.trees + self.commits + self.blobs
         }
-        fn add(&mut self, kind: git_object::Kind) {
-            use git_object::Kind::*;
+        fn add(&mut self, kind: gix_object::Kind) {
+            use gix_object::Kind::*;
             match kind {
                 Tree => self.trees += 1,
                 Commit => self.commits += 1,
@@ -53,7 +53,7 @@ fn traversals() -> crate::Result {
             self.tags + self.trees + self.commits + self.blobs + self.delta_ref + self.delta_oid
         }
         fn add(&mut self, kind: output::entry::Kind) {
-            use git_object::Kind::*;
+            use gix_object::Kind::*;
             use output::entry::Kind::*;
             match kind {
                 Base(Tree) => self.trees += 1,

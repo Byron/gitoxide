@@ -143,7 +143,7 @@ impl<'repo> Delegate<'repo> {
         self.kind.unwrap_or(git_revision::spec::Kind::IncludeReachable) != git_revision::spec::Kind::IncludeReachable
     }
     fn disambiguate_objects_by_fallback_hint(&mut self, hint: Option<ObjectKindHint>) {
-        fn require_object_kind(repo: &Repository, obj: &gix_hash::oid, kind: git_object::Kind) -> Result<(), Error> {
+        fn require_object_kind(repo: &Repository, obj: &gix_hash::oid, kind: gix_object::Kind) -> Result<(), Error> {
             let obj = repo.find_object(obj)?;
             if obj.kind == kind {
                 Ok(())
@@ -165,8 +165,8 @@ impl<'repo> Delegate<'repo> {
                     Some(kind_hint) => match kind_hint {
                         ObjectKindHint::Treeish | ObjectKindHint::Committish => {
                             let kind = match kind_hint {
-                                ObjectKindHint::Treeish => git_object::Kind::Tree,
-                                ObjectKindHint::Committish => git_object::Kind::Commit,
+                                ObjectKindHint::Treeish => gix_object::Kind::Tree,
+                                ObjectKindHint::Committish => gix_object::Kind::Commit,
                                 _ => unreachable!("BUG: we narrow possibilities above"),
                             };
                             objs.iter()
@@ -175,9 +175,9 @@ impl<'repo> Delegate<'repo> {
                         }
                         ObjectKindHint::Tree | ObjectKindHint::Commit | ObjectKindHint::Blob => {
                             let kind = match kind_hint {
-                                ObjectKindHint::Tree => git_object::Kind::Tree,
-                                ObjectKindHint::Commit => git_object::Kind::Commit,
-                                ObjectKindHint::Blob => git_object::Kind::Blob,
+                                ObjectKindHint::Tree => gix_object::Kind::Tree,
+                                ObjectKindHint::Commit => gix_object::Kind::Commit,
+                                ObjectKindHint::Blob => gix_object::Kind::Blob,
                                 _ => unreachable!("BUG: we narrow possibilities above"),
                             };
                             objs.iter()
@@ -223,7 +223,7 @@ impl<'repo> Delegate<'repo> {
     }
 }
 
-fn peel(repo: &Repository, obj: &gix_hash::oid, kind: git_object::Kind) -> Result<ObjectId, Error> {
+fn peel(repo: &Repository, obj: &gix_hash::oid, kind: gix_object::Kind) -> Result<ObjectId, Error> {
     let mut obj = repo.find_object(obj)?;
     obj = obj.peel_to_kind(kind)?;
     debug_assert_eq!(obj.kind, kind, "bug in Object::peel_to_kind() which didn't deliver");

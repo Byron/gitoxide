@@ -11,7 +11,7 @@ pub enum Error {
     #[error("The delegate cancelled the operation")]
     Cancelled,
     #[error(transparent)]
-    ObjectDecode(#[from] git_object::decode::Error),
+    ObjectDecode(#[from] gix_object::decode::Error),
 }
 
 /// The state used and potentially shared by multiple tree traversals.
@@ -31,8 +31,8 @@ impl State {
 pub(crate) mod impl_ {
     use std::borrow::BorrowMut;
 
-    use git_object::{tree::EntryMode, TreeRefIter};
     use gix_hash::oid;
+    use gix_object::{tree::EntryMode, TreeRefIter};
 
     use super::{Error, State};
     use crate::tree::Visit;

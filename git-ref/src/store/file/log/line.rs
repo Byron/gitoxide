@@ -12,7 +12,7 @@ impl<'a> LineRef<'a> {
 mod write {
     use std::io;
 
-    use git_object::bstr::{BStr, ByteSlice};
+    use gix_object::bstr::{BStr, ByteSlice};
 
     use crate::log::Line;
 
@@ -73,7 +73,7 @@ impl<'a> From<LineRef<'a>> for Line {
 
 ///
 pub mod decode {
-    use git_object::bstr::{BStr, ByteSlice};
+    use gix_object::bstr::{BStr, ByteSlice};
     use nom::{
         bytes::complete::{tag, take_while},
         combinator::opt,
@@ -86,7 +86,7 @@ pub mod decode {
 
     ///
     mod error {
-        use git_object::bstr::{BString, ByteSlice};
+        use gix_object::bstr::{BString, ByteSlice};
 
         /// The error returned by [from_bytes(…)][super::Line::from_bytes()]
         #[derive(Debug)]
@@ -168,8 +168,8 @@ pub mod decode {
 
     #[cfg(test)]
     mod test {
-        use git_object::bstr::ByteSlice;
         use gix_actor::{Sign, Time};
+        use gix_object::bstr::ByteSlice;
 
         use super::*;
 

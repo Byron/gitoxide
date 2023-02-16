@@ -1,4 +1,4 @@
-use git_object::bstr::{BString, ByteSlice};
+use gix_object::bstr::{BString, ByteSlice};
 
 use crate::store_impl::{packed, packed::decode};
 
@@ -101,7 +101,7 @@ impl<'a> packed::Iter<'a> {
 }
 
 mod error {
-    use git_object::bstr::BString;
+    use gix_object::bstr::BString;
 
     /// The error returned by [`Iter`][super::packed::Iter],
     #[derive(Debug, thiserror::Error)]

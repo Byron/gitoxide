@@ -7,10 +7,10 @@ use std::{
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
-use git_object::bstr::ByteSlice;
 use git_odb::FindExt;
 use git_worktree::{fs::Capabilities, index, index::checkout::Collision};
 use gix_features::progress;
+use gix_object::bstr::ByteSlice;
 use tempfile::TempDir;
 
 use crate::fixture_path;

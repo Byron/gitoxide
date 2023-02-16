@@ -56,7 +56,7 @@ fn into_peel(
     move |mut r: git_ref::Reference| {
         r.peel_to_id_in_place(
             store,
-            |id, buf| -> Result<Option<(git_object::Kind, &[u8])>, git_odb::store::find::Error> {
+            |id, buf| -> Result<Option<(gix_object::Kind, &[u8])>, git_odb::store::find::Error> {
                 let data = odb.try_find(id, buf)?;
                 Ok(data.map(|d| (d.kind, d.data)))
             },
@@ -228,7 +228,7 @@ mod writable {
             let mut t = store.transaction();
             if packed {
                 t = t.packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
-                    Ok(Some(git_object::Kind::Commit))
+                    Ok(Some(gix_object::Kind::Commit))
                 })));
             }
 
@@ -483,7 +483,7 @@ mod writable {
             let mut t = store.transaction();
             if packed {
                 t = t.packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
-                    Ok(Some(git_object::Kind::Commit))
+                    Ok(Some(gix_object::Kind::Commit))
                 })));
             }
 

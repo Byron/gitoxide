@@ -1,13 +1,13 @@
-use git_object::{
+use gix_hash::ObjectId;
+use gix_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     tree,
 };
-use gix_hash::ObjectId;
 
 use crate::tree::{visit::Action, Recorder, Visit};
 
 /// An owned entry as observed by a call to [`visit_(tree|nontree)(…)`][Visit::visit_tree()], enhanced with the full path to it.
-/// Otherwise similar to [`git_object::tree::EntryRef`].
+/// Otherwise similar to [`gix_object::tree::EntryRef`].
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Entry {
     /// The kind of entry, similar to entries in a unix directory tree.

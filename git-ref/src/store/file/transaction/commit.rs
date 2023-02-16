@@ -174,7 +174,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
     }
 }
 mod error {
-    use git_object::bstr::BString;
+    use gix_object::bstr::BString;
 
     use crate::store_impl::{file, packed};
 

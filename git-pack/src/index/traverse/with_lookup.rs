@@ -82,7 +82,7 @@ impl index::File {
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
         Processor: FnMut(
-            git_object::Kind,
+            gix_object::Kind,
             &[u8],
             &index::Entry,
             &mut <P::SubProgress as Progress>::SubProgress,

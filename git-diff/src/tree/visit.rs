@@ -1,5 +1,5 @@
-use git_object::{bstr::BStr, tree};
 use gix_hash::ObjectId;
+use gix_object::{bstr::BStr, tree};
 
 /// Represents any possible change in order to turn one tree into another.
 #[derive(Debug, Clone, PartialOrd, PartialEq, Ord, Eq, Hash)]

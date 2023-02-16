@@ -24,11 +24,11 @@ pub mod existing_object {
         #[error(transparent)]
         Find(T),
         #[error(transparent)]
-        Decode(git_object::decode::Error),
+        Decode(gix_object::decode::Error),
         #[error("An object with id {oid} could not be found")]
         NotFound { oid: ObjectId },
         #[error("Expected object of kind {expected}")]
-        ObjectKind { expected: git_object::Kind },
+        ObjectKind { expected: gix_object::Kind },
     }
 }
 
@@ -45,7 +45,7 @@ pub mod existing_iter {
         #[error("An object with id {oid} could not be found")]
         NotFound { oid: ObjectId },
         #[error("Expected object of kind {expected}")]
-        ObjectKind { expected: git_object::Kind },
+        ObjectKind { expected: gix_object::Kind },
     }
 }
 
@@ -58,7 +58,7 @@ pub enum Header {
     /// in the object database.
     Loose {
         /// The kind of the object.
-        kind: git_object::Kind,
+        kind: gix_object::Kind,
         /// The size of the object's data in bytes.
         size: u64,
     },
@@ -74,7 +74,7 @@ mod header {
 
     impl Header {
         /// Return the object kind of the object we represent.
-        pub fn kind(&self) -> git_object::Kind {
+        pub fn kind(&self) -> gix_object::Kind {
             match self {
                 Header::Packed(out) => out.kind,
                 Header::Loose { kind, .. } => *kind,
@@ -102,8 +102,8 @@ mod header {
         }
     }
 
-    impl From<(usize, git_object::Kind)> for Header {
-        fn from((object_size, kind): (usize, git_object::Kind)) -> Self {
+    impl From<(usize, gix_object::Kind)> for Header {
+        fn from((object_size, kind): (usize, gix_object::Kind)) -> Self {
             Header::Loose {
                 kind,
                 size: object_size as u64,

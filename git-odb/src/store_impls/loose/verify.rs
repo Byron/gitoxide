@@ -15,13 +15,13 @@ pub mod integrity {
     pub enum Error {
         #[error("{kind} object {id} could not be decoded")]
         ObjectDecode {
-            source: git_object::decode::Error,
-            kind: git_object::Kind,
+            source: gix_object::decode::Error,
+            kind: gix_object::Kind,
             id: gix_hash::ObjectId,
         },
         #[error("{kind} object {expected} wasn't re-encoded without change - new hash is {actual}")]
         ObjectHashMismatch {
-            kind: git_object::Kind,
+            kind: gix_object::Kind,
             actual: gix_hash::ObjectId,
             expected: gix_hash::ObjectId,
         },

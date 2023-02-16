@@ -91,7 +91,7 @@ where
     IterErr: std::error::Error + 'static,
 {
     #[error(transparent)]
-    CommitDecode(git_object::decode::Error),
+    CommitDecode(gix_object::decode::Error),
     #[error(transparent)]
     FindExisting(#[from] FindErr),
     #[error(transparent)]

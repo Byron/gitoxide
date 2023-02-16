@@ -131,7 +131,7 @@ dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
 =T+RI
 -----END PGP SIGNATURE-----";
 mod method {
-    use git_object::CommitRef;
+    use gix_object::CommitRef;
     use pretty_assertions::assert_eq;
 
     use crate::{hex_to_id, immutable::fixture_bytes};

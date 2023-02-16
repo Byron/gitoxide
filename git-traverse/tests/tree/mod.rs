@@ -26,8 +26,8 @@ fn basic_nesting() -> crate::Result<()> {
         &mut recorder,
     )?;
 
-    use git_object::tree::EntryMode::*;
     use git_traverse::tree::recorder::Entry;
+    use gix_object::tree::EntryMode::*;
     assert_eq!(
         recorder.records,
         vec![
