@@ -1685,7 +1685,7 @@ name = "git-sequencer"
 version = "0.0.0"
 
 [[package]]
-name = "git-submodule"
+name = "gix-submodule"
 version = "0.0.0"
 
 [[package]]

@@ -25,6 +25,6 @@ Initial release with no content.
 
  * **[#301](https://github.com/Byron/gitoxide/issues/301)**
     - prepare changelog ([`d9f20d4`](https://github.com/Byron/gitoxide/commit/d9f20d4fea247d7eb616acb7359c303da67eb83b))
-    - add stub for git-submodule ([`54ff648`](https://github.com/Byron/gitoxide/commit/54ff6488da4e1a0c40b0279bfe8d7ebbbe7536d5))
+    - add stub for gix-submodule ([`54ff648`](https://github.com/Byron/gitoxide/commit/54ff6488da4e1a0c40b0279bfe8d7ebbbe7536d5))
 </details>
 

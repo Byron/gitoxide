@@ -463,7 +463,7 @@ Make it the best-performing implementation and the most convenient one.
     * [x] revision ranges
     * [ ] full date parsing support (depends on `gix-date`)
  
-### git-submodule
+### gix-submodule
 * CRUD for submodules
 * try to handle with all the nifty interactions and be a little more comfortable than what git offers, lay a foundation for smarter git submodules.
 
