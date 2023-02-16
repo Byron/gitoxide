@@ -72,7 +72,7 @@ impl crate::Repository {
     pub fn kind(&self) -> crate::Kind {
         match self.worktree() {
             Some(wt) => {
-                if git_discover::is_submodule_git_dir(self.git_dir()) {
+                if gix_discover::is_submodule_git_dir(self.git_dir()) {
                     crate::Kind::Submodule
                 } else {
                     crate::Kind::WorkTree {

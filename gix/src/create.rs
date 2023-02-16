@@ -5,8 +5,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git_discover::DOT_GIT_DIR;
 use gix_config::parse::section;
+use gix_discover::DOT_GIT_DIR;
 
 /// The error used in [`into()`].
 #[derive(Debug, thiserror::Error)]
@@ -132,7 +132,7 @@ pub fn into(
         fs_capabilities,
         destination_must_be_empty,
     }: Options,
-) -> Result<git_discover::repository::Path, Error> {
+) -> Result<gix_discover::repository::Path, Error> {
     let mut dot_git = directory.into();
     let bare = matches!(kind, Kind::Bare);
 
@@ -227,12 +227,12 @@ pub fn into(
         })?;
     }
 
-    Ok(git_discover::repository::Path::from_dot_git_dir(
+    Ok(gix_discover::repository::Path::from_dot_git_dir(
         dot_git,
         if bare {
-            git_discover::repository::Kind::Bare
+            gix_discover::repository::Kind::Bare
         } else {
-            git_discover::repository::Kind::WorkTree { linked_git_dir: None }
+            gix_discover::repository::Kind::WorkTree { linked_git_dir: None }
         },
         std::env::current_dir()?,
     )

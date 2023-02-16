@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::path::Path;
 
-pub use git_discover::*;
+pub use gix_discover::*;
 
 use crate::{bstr::BString, ThreadSafeRepository};
 

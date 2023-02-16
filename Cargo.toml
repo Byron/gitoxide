@@ -136,7 +136,7 @@ members = [
     "gix-command",
     "gix-config",
     "gix-config-value",
-    "git-discover",
+    "gix-discover",
     "gix-features",
     "git-commitgraph",
     "gix-chunk",

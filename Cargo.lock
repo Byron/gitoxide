@@ -1303,24 +1303,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-discover"
-version = "0.13.0"
-dependencies = [
- "bstr",
- "defer",
- "dunce",
- "git-testtools",
- "gix-hash",
- "gix-path",
- "gix-ref",
- "gix-sec",
- "is_ci",
- "serial_test",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
 name = "git-features"
 version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1332,14 +1314,6 @@ dependencies = [
  "sha1_smol",
  "walkdir",
 ]
-
-[[package]]
-name = "gix-fetchhead"
-version = "0.0.0"
-
-[[package]]
-name = "gix-filter"
-version = "0.0.0"
 
 [[package]]
 name = "git-glob"
@@ -1429,10 +1403,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gix-lfs"
-version = "0.0.0"
-
-[[package]]
 name = "git-lock"
 version = "3.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1454,10 +1424,6 @@ dependencies = [
  "quick-error 2.0.1",
  "serde",
 ]
-
-[[package]]
-name = "gix-note"
-version = "0.0.0"
 
 [[package]]
 name = "git-object"
@@ -1622,7 +1588,7 @@ dependencies = [
  "fastrand",
  "fs_extra",
  "git-attributes",
- "git-discover 0.12.1",
+ "git-discover",
  "git-lock",
  "git-worktree",
  "io-close",
@@ -1747,7 +1713,6 @@ dependencies = [
  "async-std",
  "document-features",
  "git-diff",
- "git-discover 0.13.0",
  "git-index 0.12.3",
  "git-mailmap",
  "git-odb",
@@ -1758,6 +1723,7 @@ dependencies = [
  "gix-config",
  "gix-credentials",
  "gix-date",
+ "gix-discover",
  "gix-features",
  "gix-glob",
  "gix-hash",
@@ -1935,6 +1901,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-discover"
+version = "0.13.0"
+dependencies = [
+ "bstr",
+ "defer",
+ "dunce",
+ "git-testtools",
+ "gix-hash",
+ "gix-path",
+ "gix-ref",
+ "gix-sec",
+ "is_ci",
+ "serial_test",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "gix-features"
 version = "0.26.4"
 dependencies = [
@@ -1957,6 +1941,14 @@ dependencies = [
  "sha1_smol",
  "walkdir",
 ]
+
+[[package]]
+name = "gix-fetchhead"
+version = "0.0.0"
+
+[[package]]
+name = "gix-filter"
+version = "0.0.0"
 
 [[package]]
 name = "gix-glob"
@@ -1989,6 +1981,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-lfs"
+version = "0.0.0"
+
+[[package]]
 name = "gix-lock"
 version = "3.0.2"
 dependencies = [
@@ -1997,6 +1993,10 @@ dependencies = [
  "quick-error 2.0.1",
  "tempfile",
 ]
+
+[[package]]
+name = "gix-note"
+version = "0.0.0"
 
 [[package]]
 name = "gix-object"
@@ -2134,10 +2134,10 @@ dependencies = [
 name = "gix-ref-tests"
 version = "0.0.0"
 dependencies = [
- "git-discover 0.13.0",
  "git-odb",
  "git-testtools",
  "gix-actor",
+ "gix-discover",
  "gix-features",
  "gix-hash",
  "gix-lock",

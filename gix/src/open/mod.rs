@@ -36,7 +36,7 @@ pub enum Error {
     Config(#[from] config::Error),
     #[error("\"{path}\" does not appear to be a git repository")]
     NotARepository {
-        source: git_discover::is_git::Error,
+        source: gix_discover::is_git::Error,
         path: PathBuf,
     },
     #[error(transparent)]

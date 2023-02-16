@@ -28,7 +28,7 @@ mod error {
         UnknownProtocol { given: BString },
         #[error("Could not verify that \"{}\" url is a valid git directory before attempting to use it", url.to_bstring())]
         FileUrl {
-            source: Box<git_discover::is_git::Error>,
+            source: Box<gix_discover::is_git::Error>,
             url: gix_url::Url,
         },
     }
@@ -111,16 +111,16 @@ impl<'repo> Remote<'repo> {
         fn sanitize(mut url: gix_url::Url) -> Result<gix_url::Url, Error> {
             if url.scheme == gix_url::Scheme::File {
                 let mut dir = gix_path::to_native_path_on_windows(url.path.as_ref());
-                let kind = git_discover::is_git(dir.as_ref())
+                let kind = gix_discover::is_git(dir.as_ref())
                     .or_else(|_| {
-                        dir.to_mut().push(git_discover::DOT_GIT_DIR);
-                        git_discover::is_git(dir.as_ref())
+                        dir.to_mut().push(gix_discover::DOT_GIT_DIR);
+                        gix_discover::is_git(dir.as_ref())
                     })
                     .map_err(|err| Error::FileUrl {
                         source: err.into(),
                         url: url.clone(),
                     })?;
-                let (git_dir, _work_dir) = git_discover::repository::Path::from_dot_git_dir(
+                let (git_dir, _work_dir) = gix_discover::repository::Path::from_dot_git_dir(
                     dir.clone().into_owned(),
                     kind,
                     std::env::current_dir()?,

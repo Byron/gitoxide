@@ -1,5 +1,5 @@
 [package]
-name = "git-discover"
+name = "gix-discover"
 version = "0.13.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

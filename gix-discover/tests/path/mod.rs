@@ -34,7 +34,7 @@ mod from_git_dir_file {
 
     fn write_and_read(content: &[u8]) -> crate::Result<(PathBuf, PathBuf)> {
         let file = gitdir_with_content(content)?;
-        Ok((git_discover::path::from_gitdir_file(file.path())?, file.path().into()))
+        Ok((gix_discover::path::from_gitdir_file(file.path())?, file.path().into()))
     }
 
     fn gitdir_with_content(content: &[u8]) -> std::io::Result<NamedTempFile> {

@@ -381,7 +381,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 * [ ] parse `FETCH_HEAD` information back entirely
 * [ ] write typical fetch-head lines
  
-### git-discover
+### gix-discover
 
 * [x] check if a git directory is a git repository
 * [x] find a git repository by searching upward

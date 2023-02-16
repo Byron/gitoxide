@@ -617,7 +617,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-discover"
+name = "gix-discover"
 version = "0.2.0"
 dependencies = [
  "bstr",
@@ -801,7 +801,7 @@ dependencies = [
  "gix-config",
  "gix-credentials",
  "git-diff",
- "git-discover",
+ "gix-discover",
  "gix-features",
  "gix-glob",
  "gix-hash",
@@ -870,7 +870,7 @@ dependencies = [
  "crc",
  "fs_extra",
  "gix-attributes",
- "git-discover",
+ "gix-discover",
  "gix-hash",
  "gix-lock",
  "gix-worktree",

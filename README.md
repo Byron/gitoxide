@@ -72,7 +72,7 @@ is usable to some extent.
   * [gix-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-credentials)
   * [gix-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-sec)
   * [gix-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-quote)
-  * [git-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-discover)
+  * [gix-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-discover)
   * [gix-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-path)
   * [gix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix)
   * [gix-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-attributes)

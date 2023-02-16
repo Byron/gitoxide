@@ -584,7 +584,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
    It's unclear what is causing this except that git2 doesn't like libz
    with zlibng support enabled, which happens if git2 in the
    same tree is with us.
- - Transitively through a kindly contributed fix in the `git-discover` crate, `Repository` can now be opened on `exFat` volumes.
+ - Transitively through a kindly contributed fix in the `gix-discover` crate, `Repository` can now be opened on `exFat` volumes.
 
 ## 0.23.0 (2022-08-28)
 

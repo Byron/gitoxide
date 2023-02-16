@@ -29,7 +29,7 @@ required-features = ["internal-testing-gix-features-parallel"]
 gix-ref = { path = ".." }
 gix-features = { version = "^0.26.1", path = "../../gix-features", features = ["walkdir"]}
 git-testtools = { path = "../../tests/tools" }
-git-discover = { path = "../../git-discover" }
+gix-discover = { path = "../../gix-discover" }
 gix-worktree = { path = "../../gix-worktree" }
 git-odb = { path = "../../git-odb" }
 gix-actor = { path = "../../gix-actor" }

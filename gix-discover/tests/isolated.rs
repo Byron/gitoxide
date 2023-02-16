@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use git_discover::upwards::Options;
+use gix_discover::upwards::Options;
 use serial_test::serial;
 
 #[test]
@@ -18,7 +18,7 @@ fn upwards_with_relative_directories_and_optional_ceiling() -> git_testtools::Re
         (".", "./does-not-exist/../.."),
     ] {
         let ceiling_dir = cwd.join(ceiling_dir_component);
-        let (repo_path, _trust) = git_discover::upwards_opts(
+        let (repo_path, _trust) = gix_discover::upwards_opts(
             search_dir,
             Options {
                 ceiling_dirs: vec![ceiling_dir],
@@ -29,10 +29,10 @@ fn upwards_with_relative_directories_and_optional_ceiling() -> git_testtools::Re
         assert_repo_is_current_workdir(repo_path, Path::new(".."));
 
         let (repo_path, _trust) =
-            git_discover::upwards_opts(search_dir, Default::default()).expect("without ceiling dir we see the same");
+            gix_discover::upwards_opts(search_dir, Default::default()).expect("without ceiling dir we see the same");
         assert_repo_is_current_workdir(repo_path, Path::new(".."));
 
-        let (repo_path, _trust) = git_discover::upwards_opts(
+        let (repo_path, _trust) = gix_discover::upwards_opts(
             search_dir,
             Options {
                 ceiling_dirs: vec![PathBuf::from("..")],
@@ -42,7 +42,7 @@ fn upwards_with_relative_directories_and_optional_ceiling() -> git_testtools::Re
         .expect("purely relative ceiling dirs work as well");
         assert_repo_is_current_workdir(repo_path, Path::new(".."));
 
-        let err = git_discover::upwards_opts(
+        let err = gix_discover::upwards_opts(
             search_dir,
             Options {
                 ceiling_dirs: vec![PathBuf::from(".")],
@@ -51,7 +51,7 @@ fn upwards_with_relative_directories_and_optional_ceiling() -> git_testtools::Re
         )
         .unwrap_err();
 
-        assert!(matches!(err, git_discover::upwards::Error::NoMatchingCeilingDir));
+        assert!(matches!(err, gix_discover::upwards::Error::NoMatchingCeilingDir));
     }
 
     Ok(())
@@ -68,7 +68,7 @@ fn unc_paths_are_handled_on_windows() -> git_testtools::Result {
     // all discoveries should fail, as they'll hit `parent` before finding a git repository.
 
     // dir: normal, ceiling: normal
-    let res = git_discover::upwards_opts(
+    let res = gix_discover::upwards_opts(
         &cwd,
         Options {
             ceiling_dirs: vec![parent.to_path_buf()],
@@ -80,7 +80,7 @@ fn unc_paths_are_handled_on_windows() -> git_testtools::Result {
 
     let parent = parent.canonicalize().unwrap();
     // dir: normal, ceiling: extended
-    let res = git_discover::upwards_opts(
+    let res = gix_discover::upwards_opts(
         &cwd,
         Options {
             ceiling_dirs: vec![parent],
@@ -94,7 +94,7 @@ fn unc_paths_are_handled_on_windows() -> git_testtools::Result {
 
     let parent = cwd.parent().unwrap();
     // dir: extended, ceiling: normal
-    let res = git_discover::upwards_opts(
+    let res = gix_discover::upwards_opts(
         &cwd,
         Options {
             ceiling_dirs: vec![parent.to_path_buf()],
@@ -106,7 +106,7 @@ fn unc_paths_are_handled_on_windows() -> git_testtools::Result {
 
     let parent = parent.canonicalize().unwrap();
     // dir: extended, ceiling: extended
-    let res = git_discover::upwards_opts(
+    let res = gix_discover::upwards_opts(
         &cwd,
         Options {
             ceiling_dirs: vec![parent],
@@ -118,7 +118,7 @@ fn unc_paths_are_handled_on_windows() -> git_testtools::Result {
     Ok(())
 }
 
-fn assert_repo_is_current_workdir(path: git_discover::repository::Path, work_dir: &Path) {
+fn assert_repo_is_current_workdir(path: gix_discover::repository::Path, work_dir: &Path) {
     assert_eq!(
         path.into_repository_and_work_tree_directories().1.expect("work dir"),
         work_dir,

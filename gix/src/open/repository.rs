@@ -53,13 +53,13 @@ impl ThreadSafeRepository {
         let (path, kind) = {
             let path = path.into();
             let looks_like_git_dir =
-                path.ends_with(git_discover::DOT_GIT_DIR) || path.extension() == Some(std::ffi::OsStr::new("git"));
+                path.ends_with(gix_discover::DOT_GIT_DIR) || path.extension() == Some(std::ffi::OsStr::new("git"));
             let candidate = if !options.open_path_as_is && !looks_like_git_dir {
-                Cow::Owned(path.join(git_discover::DOT_GIT_DIR))
+                Cow::Owned(path.join(gix_discover::DOT_GIT_DIR))
             } else {
                 Cow::Borrowed(&path)
             };
-            match git_discover::is_git(candidate.as_ref()) {
+            match gix_discover::is_git(candidate.as_ref()) {
                 Ok(kind) => (candidate.into_owned(), kind),
                 Err(err) => {
                     if options.open_path_as_is || matches!(candidate, Cow::Borrowed(_)) {
@@ -68,7 +68,7 @@ impl ThreadSafeRepository {
                             path: candidate.into_owned(),
                         });
                     }
-                    match git_discover::is_git(&path) {
+                    match gix_discover::is_git(&path) {
                         Ok(kind) => (path, kind),
                         Err(err) => return Err(Error::NotARepository { source: err, path }),
                     }
@@ -76,7 +76,7 @@ impl ThreadSafeRepository {
             }
         };
         let cwd = std::env::current_dir()?;
-        let (git_dir, worktree_dir) = git_discover::repository::Path::from_dot_git_dir(path, kind, &cwd)
+        let (git_dir, worktree_dir) = gix_discover::repository::Path::from_dot_git_dir(path, kind, &cwd)
             .expect("we have sanitized path with is_git()")
             .into_repository_and_work_tree_directories();
         if options.git_dir_trust.is_none() {
@@ -104,7 +104,7 @@ impl ThreadSafeRepository {
     ) -> Result<Self, Error> {
         let overrides = EnvironmentOverrides::from_env()?;
         let (path, path_kind): (PathBuf, _) = match overrides.git_dir {
-            Some(git_dir) => git_discover::is_git(&git_dir)
+            Some(git_dir) => gix_discover::is_git(&git_dir)
                 .map_err(|err| Error::NotARepository {
                     source: err,
                     path: git_dir.clone(),
@@ -112,7 +112,7 @@ impl ThreadSafeRepository {
                 .map(|kind| (git_dir, kind))?,
             None => {
                 let fallback_directory = fallback_directory.into();
-                git_discover::is_git(&fallback_directory)
+                gix_discover::is_git(&fallback_directory)
                     .map_err(|err| Error::NotARepository {
                         source: err,
                         path: fallback_directory.clone(),
@@ -122,7 +122,7 @@ impl ThreadSafeRepository {
         };
 
         let cwd = std::env::current_dir()?;
-        let (git_dir, worktree_dir) = git_discover::repository::Path::from_dot_git_dir(path, path_kind, &cwd)
+        let (git_dir, worktree_dir) = gix_discover::repository::Path::from_dot_git_dir(path, path_kind, &cwd)
             .expect("we have sanitized path with is_git()")
             .into_repository_and_work_tree_directories();
         let worktree_dir = worktree_dir.or(overrides.worktree_dir);
@@ -158,7 +158,7 @@ impl ThreadSafeRepository {
         //       This would be something read in later as have to first check for extensions. Also this means
         //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
         //       as it may have its own configuration. That's fine actually.
-        let common_dir = git_discover::path::from_plain_file(git_dir.join("commondir"))
+        let common_dir = gix_discover::path::from_plain_file(git_dir.join("commondir"))
             .transpose()?
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);

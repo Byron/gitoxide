@@ -38,7 +38,7 @@ fn worktree_store(
     writable: impl Into<bool>,
 ) -> crate::Result<(gix_ref::file::Store, git_odb::Handle, Option<tempfile::TempDir>)> {
     let (dir, tmp) = dir(packed, writable.into())?;
-    let (git_dir, _work_tree) = git_discover::upwards(dir.join(worktree_name))?
+    let (git_dir, _work_tree) = gix_discover::upwards(dir.join(worktree_name))?
         .0
         .into_repository_and_work_tree_directories();
     let common_dir = git_dir.join("../..");

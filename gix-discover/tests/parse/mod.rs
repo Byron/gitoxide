@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use git_discover::parse;
+use gix_discover::parse;
 
 #[test]
 fn valid() -> crate::Result {
