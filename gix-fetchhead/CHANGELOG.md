@@ -24,7 +24,7 @@ The initial release to reserve the name.
 <details><summary>view details</summary>
 
  * **[#450](https://github.com/Byron/gitoxide/issues/450)**
-    - prepare changelog for initial `git-fetchhead` release ([`7aff085`](https://github.com/Byron/gitoxide/commit/7aff0856b76043f1e9021fff72ce96d4f69d255e))
-    - frame for `git-fetchhead` crate ([`f9aeda8`](https://github.com/Byron/gitoxide/commit/f9aeda88554fb852dd21ae8402000e0da742e2b2))
+    - prepare changelog for initial `gix-fetchhead` release ([`7aff085`](https://github.com/Byron/gitoxide/commit/7aff0856b76043f1e9021fff72ce96d4f69d255e))
+    - frame for `gix-fetchhead` crate ([`f9aeda8`](https://github.com/Byron/gitoxide/commit/f9aeda88554fb852dd21ae8402000e0da742e2b2))
 </details>
 
