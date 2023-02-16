@@ -13,7 +13,7 @@ pub(crate) const HEADER_LINE: &[u8] = b"# pack-refs with: peeled fully-peeled so
 impl packed::Transaction {
     pub(crate) fn new_from_pack_and_lock(
         buffer: Option<file::packed::SharedBufferSnapshot>,
-        lock: git_lock::File,
+        lock: gix_lock::File,
     ) -> Self {
         packed::Transaction {
             buffer,
@@ -225,9 +225,9 @@ fn write_edit(mut out: impl std::io::Write, edit: &Edit, lines_written: &mut i32
 /// Convert this buffer to be used as the basis for a transaction.
 pub(crate) fn buffer_into_transaction(
     buffer: file::packed::SharedBufferSnapshot,
-    lock_mode: git_lock::acquire::Fail,
-) -> Result<packed::Transaction, git_lock::acquire::Error> {
-    let lock = git_lock::File::acquire_to_update_resource(&buffer.path, lock_mode, None)?;
+    lock_mode: gix_lock::acquire::Fail,
+) -> Result<packed::Transaction, gix_lock::acquire::Error> {
+    let lock = gix_lock::File::acquire_to_update_resource(&buffer.path, lock_mode, None)?;
     Ok(packed::Transaction {
         buffer: Some(buffer),
         lock: Some(lock),
@@ -258,7 +258,7 @@ pub mod commit {
     #[allow(missing_docs)]
     pub enum Error {
         #[error("Changes to the resource could not be committed")]
-        Commit(#[from] git_lock::commit::Error<git_lock::File>),
+        Commit(#[from] gix_lock::commit::Error<gix_lock::File>),
         #[error("Some references in the packed refs buffer could not be parsed")]
         Iteration(#[from] packed::iter::Error),
         #[error("Failed to write a ref line to the packed ref file")]

@@ -35,9 +35,9 @@ struct Edit {
 pub(crate) struct Transaction {
     buffer: Option<file::packed::SharedBufferSnapshot>,
     edits: Option<Vec<Edit>>,
-    lock: Option<git_lock::File>,
+    lock: Option<gix_lock::File>,
     #[allow(dead_code)] // It just has to be kept alive, hence no reads
-    closed_lock: Option<git_lock::Marker>,
+    closed_lock: Option<gix_lock::Marker>,
 }
 
 /// A reference as parsed from the `packed-refs` file

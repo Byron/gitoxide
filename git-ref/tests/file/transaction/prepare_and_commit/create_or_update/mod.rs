@@ -1,6 +1,5 @@
 use std::convert::TryInto;
 
-use git_lock::acquire::Fail;
 use git_odb::Find;
 use git_ref::{
     file::{
@@ -12,6 +11,7 @@ use git_ref::{
     Target,
 };
 use gix_hash::ObjectId;
+use gix_lock::acquire::Fail;
 use gix_object::bstr::{BString, ByteSlice};
 
 use crate::{

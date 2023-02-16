@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::{borrow::Cow, path::PathBuf, time::Duration};
 
-use git_lock::acquire::Fail;
+use gix_lock::acquire::Fail;
 
 use crate::{
     bstr::BStr,
@@ -82,8 +82,8 @@ impl Cache {
     /// Returns (file-timeout, pack-refs timeout)
     pub(crate) fn lock_timeout(
         &self,
-    ) -> Result<(git_lock::acquire::Fail, git_lock::acquire::Fail), config::lock_timeout::Error> {
-        let mut out: [git_lock::acquire::Fail; 2] = Default::default();
+    ) -> Result<(gix_lock::acquire::Fail, gix_lock::acquire::Fail), config::lock_timeout::Error> {
+        let mut out: [gix_lock::acquire::Fail; 2] = Default::default();
         for (idx, (key, default_ms)) in [(&Core::FILES_REF_LOCK_TIMEOUT, 100), (&Core::PACKED_REFS_TIMEOUT, 1000)]
             .into_iter()
             .enumerate()

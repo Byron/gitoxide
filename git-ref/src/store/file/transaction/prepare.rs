@@ -16,7 +16,7 @@ use crate::{
 impl<'s, 'p> Transaction<'s, 'p> {
     fn lock_ref_and_apply_change(
         store: &file::Store,
-        lock_fail_mode: git_lock::acquire::Fail,
+        lock_fail_mode: gix_lock::acquire::Fail,
         packed: Option<&packed::Buffer>,
         change: &mut Edit,
         has_global_lock: bool,
@@ -58,7 +58,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                 let lock = if has_global_lock {
                     None
                 } else {
-                    git_lock::Marker::acquire_to_hold_resource(
+                    gix_lock::Marker::acquire_to_hold_resource(
                         base.join(relative_path.as_ref()),
                         lock_fail_mode,
                         Some(base.clone().into_owned()),
@@ -108,7 +108,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
             Change::Update { expected, new, .. } => {
                 let (base, relative_path) = store.reference_path_with_base(change.update.name.as_ref());
                 let obtain_lock = || {
-                    git_lock::File::acquire_to_update_resource(
+                    gix_lock::File::acquire_to_update_resource(
                         base.join(relative_path.as_ref()),
                         lock_fail_mode,
                         Some(base.clone().into_owned()),
@@ -206,8 +206,8 @@ impl<'s, 'p> Transaction<'s, 'p> {
     pub fn prepare(
         mut self,
         edits: impl IntoIterator<Item = RefEdit>,
-        ref_files_lock_fail_mode: git_lock::acquire::Fail,
-        packed_refs_lock_fail_mode: git_lock::acquire::Fail,
+        ref_files_lock_fail_mode: gix_lock::acquire::Fail,
+        packed_refs_lock_fail_mode: gix_lock::acquire::Fail,
     ) -> Result<Self, Error> {
         assert!(self.updates.is_none(), "BUG: Must not call prepare(…) multiple times");
         let store = self.store;
@@ -440,7 +440,7 @@ mod error {
         #[error("The packed ref buffer could not be loaded")]
         Packed(#[from] packed::buffer::open::Error),
         #[error("The lock for the packed-ref file could not be obtained")]
-        PackedTransactionAcquire(#[source] git_lock::acquire::Error),
+        PackedTransactionAcquire(#[source] gix_lock::acquire::Error),
         #[error("The packed transaction could not be prepared")]
         PackedTransactionPrepare(#[from] packed::transaction::prepare::Error),
         #[error("The packed ref file could not be parsed")]
@@ -449,7 +449,7 @@ mod error {
         PreprocessingFailed(#[source] std::io::Error),
         #[error("A lock could not be obtained for reference {full_name:?}")]
         LockAcquire {
-            source: git_lock::acquire::Error,
+            source: gix_lock::acquire::Error,
             full_name: BString,
         },
         #[error("An IO error occurred while applying an edit")]

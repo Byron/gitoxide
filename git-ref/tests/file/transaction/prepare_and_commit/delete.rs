@@ -1,11 +1,11 @@
 use std::convert::TryInto;
 
-use git_lock::acquire::Fail;
 use git_ref::{
     file::ReferenceExt,
     transaction::{Change, PreviousValue, RefEdit, RefLog},
     Reference, Target,
 };
+use gix_lock::acquire::Fail;
 
 use crate::{
     file::{

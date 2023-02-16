@@ -191,11 +191,11 @@ mod diff {
 mod core {
     use std::time::Duration;
 
-    use git_lock::acquire::Fail;
     use gix::{
         config::tree::{Core, Key},
         revision::spec::parse::ObjectKindHint,
     };
+    use gix_lock::acquire::Fail;
 
     use crate::config::tree::bcow;
 

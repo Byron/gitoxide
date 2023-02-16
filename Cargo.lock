@@ -1503,7 +1503,7 @@ dependencies = [
  "git-bitmap 0.2.0",
  "git-features",
  "git-hash",
- "git-lock 3.0.1",
+ "git-lock",
  "git-object",
  "git-traverse 0.22.0",
  "itoa",
@@ -1522,10 +1522,10 @@ dependencies = [
  "document-features",
  "filetime",
  "git-bitmap 0.2.1",
- "git-lock 3.0.2",
  "git-traverse 0.22.1",
  "gix-features",
  "gix-hash",
+ "gix-lock",
  "gix-object",
  "itoa",
  "memmap2",
@@ -1553,23 +1553,13 @@ version = "0.0.0"
 
 [[package]]
 name = "git-lock"
-version = "3.0.1"
+version = "3.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7cf6a3c9d1a9932bb9bcb7e0044e2e429f9d94711969a7d2a09e34ae21f6437"
+checksum = "be53e39e84c34c001f8c72b8e849e7e070f156d36b2cfa493972c3559eac4bb8"
 dependencies = [
  "fastrand",
  "git-tempfile",
  "quick-error 2.0.1",
-]
-
-[[package]]
-name = "git-lock"
-version = "3.0.2"
-dependencies = [
- "fastrand",
- "gix-tempfile",
- "quick-error 2.0.1",
- "tempfile",
 ]
 
 [[package]]
@@ -1786,7 +1776,7 @@ dependencies = [
  "git-actor",
  "git-features",
  "git-hash",
- "git-lock 3.0.1",
+ "git-lock",
  "git-object",
  "git-path",
  "git-tempfile",
@@ -1801,11 +1791,11 @@ name = "git-ref"
 version = "0.24.0"
 dependencies = [
  "document-features",
- "git-lock 3.0.2",
  "git-testtools",
  "gix-actor",
  "gix-features",
  "gix-hash",
+ "gix-lock",
  "gix-object",
  "gix-path",
  "gix-tempfile",
@@ -1822,7 +1812,6 @@ name = "git-ref-tests"
 version = "0.0.0"
 dependencies = [
  "git-discover 0.13.0",
- "git-lock 3.0.2",
  "git-odb",
  "git-ref 0.24.0",
  "git-testtools",
@@ -1830,6 +1819,7 @@ dependencies = [
  "gix-actor",
  "gix-features",
  "gix-hash",
+ "gix-lock",
  "gix-object",
  "gix-validate",
  "tempfile",
@@ -1919,7 +1909,7 @@ dependencies = [
  "fs_extra",
  "git-attributes 0.8.1",
  "git-discover 0.12.1",
- "git-lock 3.0.1",
+ "git-lock",
  "git-worktree 0.12.1",
  "io-close",
  "is_ci",
@@ -2145,7 +2135,6 @@ dependencies = [
  "git-discover 0.13.0",
  "git-hashtable 0.1.1",
  "git-index 0.12.3",
- "git-lock 3.0.2",
  "git-mailmap",
  "git-odb",
  "git-pack",
@@ -2163,6 +2152,7 @@ dependencies = [
  "gix-features",
  "gix-glob",
  "gix-hash",
+ "gix-lock",
  "gix-object",
  "gix-path",
  "gix-sec",
@@ -2258,6 +2248,16 @@ dependencies = [
  "hex",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "gix-lock"
+version = "3.0.2"
+dependencies = [
+ "fastrand",
+ "gix-tempfile",
+ "quick-error 2.0.1",
+ "tempfile",
 ]
 
 [[package]]

@@ -682,7 +682,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-lock"
+name = "gix-lock"
 version = "2.1.0"
 dependencies = [
  "fastrand",
@@ -780,7 +780,7 @@ dependencies = [
  "gix-actor",
  "gix-features",
  "gix-hash",
- "git-lock",
+ "gix-lock",
  "gix-object",
  "gix-path",
  "gix-tempfile",
@@ -806,7 +806,7 @@ dependencies = [
  "gix-glob",
  "gix-hash",
  "git-index",
- "git-lock",
+ "gix-lock",
  "git-mailmap",
  "gix-object",
  "git-odb",
@@ -872,7 +872,7 @@ dependencies = [
  "git-attributes",
  "git-discover",
  "gix-hash",
- "git-lock",
+ "gix-lock",
  "git-worktree",
  "io-close",
  "is_ci",

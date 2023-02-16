@@ -32,7 +32,7 @@ Follow linked crate name for detailed status. Please note that all crates follow
 ### Production Grade
 
 * **Stability Tier 1**
-  - [git-lock](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md)
+  - [gix-lock](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.md)
      
 * **Stability Tier 2**
   - [gix-tempfile](https://github.com/Byron/gitoxide/blob/main/gix-tempfile/README.md)

@@ -216,7 +216,7 @@ mod duration {
 mod lock_timeout {
     use std::time::Duration;
 
-    use git_lock::acquire::Fail;
+    use gix_lock::acquire::Fail;
 
     use crate::{
         config,
@@ -233,7 +233,7 @@ mod lock_timeout {
         pub fn try_into_lock_timeout(
             &'static self,
             value: Result<i64, git_config::value::Error>,
-        ) -> Result<git_lock::acquire::Fail, config::lock_timeout::Error> {
+        ) -> Result<gix_lock::acquire::Fail, config::lock_timeout::Error> {
             let value = value.map_err(|err| config::lock_timeout::Error::from(self).with_source(err))?;
             Ok(match value {
                 val if val < 0 => Fail::AfterDurationWithBackoff(Duration::from_secs(u64::MAX)),

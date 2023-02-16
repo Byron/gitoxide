@@ -93,7 +93,7 @@ cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 git-ref = { version = "^0.24.0", path = "../git-ref" }
 git-discover = { version = "^0.13.0", path = "../git-discover" }
 gix-tempfile = { version = "^3.0.0", path = "../gix-tempfile" }
-git-lock = { version = "^3.0.0", path = "../git-lock" }
+gix-lock = { version = "^3.0.0", path = "../gix-lock" }
 gix-validate = { version = "^0.7.2", path = "../gix-validate" }
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }
 git-date = { version = "^0.4.2", path = "../git-date" }

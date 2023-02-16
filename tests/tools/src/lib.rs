@@ -197,7 +197,7 @@ pub fn spawn_git_daemon(working_dir: impl AsRef<Path>) -> std::io::Result<GitDae
         .spawn()?;
 
     let server_addr = addr_at(free_port);
-    for time in git_lock::backoff::Exponential::default_with_random() {
+    for time in gix_lock::backoff::Exponential::default_with_random() {
         std::thread::sleep(time);
         if std::net::TcpStream::connect(server_addr).is_ok() {
             break;
@@ -374,8 +374,8 @@ fn scripted_fixture_read_only_with_args_inner(
     root: DirectoryRoot,
 ) -> Result<PathBuf> {
     // Assure tempfiles get removed when aborting the test.
-    git_lock::tempfile::setup(
-        git_lock::tempfile::SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour,
+    gix_lock::tempfile::setup(
+        gix_lock::tempfile::SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour,
     );
 
     let script_location = script_name.as_ref();
@@ -420,9 +420,9 @@ fn scripted_fixture_read_only_with_args_inner(
         (false, dir)
     });
 
-    let _marker = git_lock::Marker::acquire_to_hold_resource(
+    let _marker = gix_lock::Marker::acquire_to_hold_resource(
         script_basename,
-        git_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(3 * 60)),
+        gix_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(3 * 60)),
         None,
     )?;
     let failure_marker = script_result_directory.join("_invalid_state_due_to_script_failure_");

@@ -167,7 +167,7 @@ members = [
     "git-pack",
     "git-odb",
     "gix-tempfile",
-    "git-lock",
+    "gix-lock",
     "git-attributes",
     "git-pathspec",
     "git-refspec",

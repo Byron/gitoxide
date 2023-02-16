@@ -39,7 +39,7 @@ impl Default for PackedRefs<'_> {
 #[derive(Debug)]
 pub(in crate::store_impl::file) struct Edit {
     update: RefEdit,
-    lock: Option<git_lock::Marker>,
+    lock: Option<gix_lock::Marker>,
     /// Set if this update is coming from a symbolic reference and used to make it appear like it is the one that is handled,
     /// instead of the referent reference.
     parent_index: Option<usize>,

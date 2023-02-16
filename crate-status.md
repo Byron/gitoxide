@@ -542,9 +542,9 @@ The git staging area.
 
 See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-tempfile/README.md).
 
-### git-lock
+### gix-lock
 
-See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md).
+See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.md).
 
 ### gix-config-value
 * **parse** 

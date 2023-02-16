@@ -193,12 +193,12 @@ mod read_only {
 mod writable {
     use std::convert::TryInto;
 
-    use git_lock::acquire::Fail;
     use git_ref::{
         file::{transaction::PackedRefs, Store},
         transaction::{Change, LogChange, PreviousValue, RefEdit},
         FullName, FullNameRef, Target,
     };
+    use gix_lock::acquire::Fail;
 
     use crate::{
         file::{

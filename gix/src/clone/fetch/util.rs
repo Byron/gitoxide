@@ -138,8 +138,8 @@ pub fn update_head(
                         };
                         edits
                     },
-                    git_lock::acquire::Fail::Immediately,
-                    git_lock::acquire::Fail::Immediately,
+                    gix_lock::acquire::Fail::Immediately,
+                    gix_lock::acquire::Fail::Immediately,
                 )
                 .map_err(crate::reference::edit::Error::from)?
                 .commit(

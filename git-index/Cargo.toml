@@ -25,7 +25,7 @@ gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 git-bitmap = { version = "^0.2.1", path = "../git-bitmap" }
 gix-object = { version = "^0.26.1", path = "../gix-object" }
 git-traverse = { version = "^0.22.1", path = "../git-traverse" }
-git-lock = { version = "^3.0.0", path = "../git-lock" }
+gix-lock = { version = "^3.0.0", path = "../gix-lock" }
 
 thiserror = "1.0.32"
 memmap2 = "0.5.0"

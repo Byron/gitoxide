@@ -71,7 +71,6 @@ pub use git_credentials as credentials;
 pub use git_date as date;
 #[doc(inline)]
 pub use git_index as index;
-pub use git_lock as lock;
 pub use git_odb as odb;
 pub use git_prompt as prompt;
 #[cfg(all(feature = "git-protocol"))]
@@ -88,6 +87,7 @@ use gix_features::threading::OwnShared;
 pub use gix_features::{parallel, progress::Progress, threading};
 pub use gix_glob as glob;
 pub use gix_hash as hash;
+pub use gix_lock as lock;
 pub use gix_object as objs;
 pub use gix_object::bstr;
 pub use gix_sec as sec;

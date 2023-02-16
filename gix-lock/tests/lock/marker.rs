@@ -2,16 +2,16 @@
 mod acquire {
     use std::time::{Duration, Instant};
 
-    use git_lock::acquire::Fail;
+    use gix_lock::acquire::Fail;
 
     #[test]
     fn fail_mode_immediately_produces_a_descriptive_error() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let resource = dir.path().join("the-resource");
-        let guard = git_lock::Marker::acquire_to_hold_resource(&resource, Fail::Immediately, None)?;
+        let guard = gix_lock::Marker::acquire_to_hold_resource(&resource, Fail::Immediately, None)?;
         assert!(guard.lock_path().ends_with("the-resource.lock"));
         assert!(guard.resource_path().ends_with("the-resource"));
-        let err_str = git_lock::Marker::acquire_to_hold_resource(resource, Fail::Immediately, None)
+        let err_str = gix_lock::Marker::acquire_to_hold_resource(resource, Fail::Immediately, None)
             .expect_err("the lock is taken and there is a failure obtaining it again")
             .to_string();
 
@@ -24,11 +24,11 @@ mod acquire {
     fn fail_mode_after_duration_fails_after_a_given_duration_or_more() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let resource = dir.path().join("the-resource");
-        let _guard = git_lock::Marker::acquire_to_hold_resource(&resource, Fail::Immediately, None)?;
+        let _guard = gix_lock::Marker::acquire_to_hold_resource(&resource, Fail::Immediately, None)?;
         let start = Instant::now();
         let time_to_wait = Duration::from_millis(50);
         let err_str =
-            git_lock::Marker::acquire_to_hold_resource(resource, Fail::AfterDurationWithBackoff(time_to_wait), None)
+            gix_lock::Marker::acquire_to_hold_resource(resource, Fail::AfterDurationWithBackoff(time_to_wait), None)
                 .expect_err("the lock is taken and there is a failure obtaining it again after some delay")
                 .to_string();
         assert!(
@@ -44,13 +44,13 @@ mod acquire {
     }
 }
 mod commit {
-    use git_lock::acquire::Fail;
+    use gix_lock::acquire::Fail;
 
     #[test]
     fn failure_to_commit_does_return_a_registered_marker() {
         let dir = tempfile::tempdir().unwrap();
         let resource = dir.path().join("the-resource");
-        let file = git_lock::File::acquire_to_update_resource(&resource, Fail::Immediately, None).unwrap();
+        let file = gix_lock::File::acquire_to_update_resource(&resource, Fail::Immediately, None).unwrap();
         let mark = file.close().unwrap();
         let resource_lock_path = mark.lock_path().to_owned();
 
@@ -71,7 +71,7 @@ mod commit {
     fn fails_for_ordinary_marker_that_was_never_writable() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let resource = dir.path().join("the-resource");
-        let mark = git_lock::Marker::acquire_to_hold_resource(resource, Fail::Immediately, None)?;
+        let mark = gix_lock::Marker::acquire_to_hold_resource(resource, Fail::Immediately, None)?;
         let err = mark.commit().expect_err("should always fail");
         assert_eq!(err.error.kind(), std::io::ErrorKind::Other);
         assert_eq!(

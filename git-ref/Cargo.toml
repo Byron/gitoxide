@@ -25,7 +25,7 @@ gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-object = { version = "^0.26.1", path = "../gix-object" }
 gix-validate = { version = "^0.7.2", path = "../gix-validate" }
 gix-actor = { version = "^0.17.1", path = "../gix-actor" }
-git-lock = { version = "^3.0.0", path = "../git-lock" }
+gix-lock = { version = "^3.0.0", path = "../gix-lock" }
 gix-tempfile = { version = "^3.0.0", path = "../gix-tempfile" }
 
 thiserror = "1.0.34"

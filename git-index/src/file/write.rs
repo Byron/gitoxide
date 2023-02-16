@@ -9,9 +9,9 @@ pub enum Error {
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error("Could not acquire lock for index file")]
-    AcquireLock(#[from] git_lock::acquire::Error),
+    AcquireLock(#[from] gix_lock::acquire::Error),
     #[error("Could not commit lock for index file")]
-    CommitLock(#[from] git_lock::commit::Error<git_lock::File>),
+    CommitLock(#[from] gix_lock::commit::Error<gix_lock::File>),
 }
 
 impl File {
@@ -34,9 +34,9 @@ impl File {
     ///
     /// Note that the hash produced will be stored which is why we need to be mutable.
     pub fn write(&mut self, options: write::Options) -> Result<(), Error> {
-        let mut lock = std::io::BufWriter::new(git_lock::File::acquire_to_update_resource(
+        let mut lock = std::io::BufWriter::new(gix_lock::File::acquire_to_update_resource(
             &self.path,
-            git_lock::acquire::Fail::Immediately,
+            gix_lock::acquire::Fail::Immediately,
             None,
         )?);
         let (version, digest) = self.write_to(&mut lock, options)?;
