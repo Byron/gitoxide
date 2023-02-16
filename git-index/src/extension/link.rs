@@ -10,9 +10,9 @@ pub const SIGNATURE: Signature = *b"link";
 #[derive(Clone)]
 pub struct Bitmaps {
     /// A bitmap to signal which entries to delete, maybe.
-    pub delete: git_bitmap::ewah::Vec,
+    pub delete: gix_bitmap::ewah::Vec,
     /// A bitmap to signal which entries to replace, maybe.
-    pub replace: git_bitmap::ewah::Vec,
+    pub replace: gix_bitmap::ewah::Vec,
 }
 
 ///
@@ -26,7 +26,7 @@ pub mod decode {
         Corrupt(&'static str),
         #[error("{kind} bitmap corrupt")]
         BitmapDecode {
-            err: git_bitmap::ewah::decode::Error,
+            err: gix_bitmap::ewah::decode::Error,
             kind: &'static str,
         },
     }
@@ -53,9 +53,9 @@ pub(crate) fn decode(data: &[u8], object_hash: gix_hash::Kind) -> Result<Link, d
     }
 
     let (delete, data) =
-        git_bitmap::ewah::decode(data).map_err(|err| decode::Error::BitmapDecode { kind: "delete", err })?;
+        gix_bitmap::ewah::decode(data).map_err(|err| decode::Error::BitmapDecode { kind: "delete", err })?;
     let (replace, data) =
-        git_bitmap::ewah::decode(data).map_err(|err| decode::Error::BitmapDecode { kind: "replace", err })?;
+        gix_bitmap::ewah::decode(data).map_err(|err| decode::Error::BitmapDecode { kind: "replace", err })?;
 
     if !data.is_empty() {
         return Err(decode::Error::Corrupt("garbage trailing link extension"));

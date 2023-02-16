@@ -548,7 +548,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-bitmap"
+name = "gix-bitmap"
 version = "0.1.0"
 dependencies = [
  "quick-error",
@@ -672,7 +672,7 @@ dependencies = [
  "bitflags",
  "bstr",
  "filetime",
- "git-bitmap",
+ "gix-bitmap",
  "gix-features",
  "gix-hash",
  "gix-object",

@@ -76,9 +76,9 @@ pub fn decode(data: &[u8], object_hash: gix_hash::Kind) -> Option<UntrackedCache
     if directories.len() != num_directory_blocks {
         return None;
     }
-    let (valid, data) = git_bitmap::ewah::decode(data).ok()?;
-    let (check_only, data) = git_bitmap::ewah::decode(data).ok()?;
-    let (hash_valid, mut data) = git_bitmap::ewah::decode(data).ok()?;
+    let (valid, data) = gix_bitmap::ewah::decode(data).ok()?;
+    let (check_only, data) = gix_bitmap::ewah::decode(data).ok()?;
+    let (hash_valid, mut data) = gix_bitmap::ewah::decode(data).ok()?;
 
     if valid.num_bits() > num_directory_blocks
         || check_only.num_bits() > num_directory_blocks

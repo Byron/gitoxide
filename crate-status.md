@@ -467,7 +467,7 @@ Make it the best-performing implementation and the most convenient one.
 * CRUD for submodules
 * try to handle with all the nifty interactions and be a little more comfortable than what git offers, lay a foundation for smarter git submodules.
 
-### git-bitmap
+### gix-bitmap
 
 A plumbing crate with shared functionality regarding EWAH compressed bitmaps, as well as other kinds of bitmap implementations.
 

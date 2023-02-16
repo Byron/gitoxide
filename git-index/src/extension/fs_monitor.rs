@@ -28,7 +28,7 @@ pub fn decode(data: &[u8]) -> Option<FsMonitor> {
     };
 
     let (ewah_size, data) = read_u32(data)?;
-    let (entry_dirty, data) = git_bitmap::ewah::decode(&data[..ewah_size as usize]).ok()?;
+    let (entry_dirty, data) = gix_bitmap::ewah::decode(&data[..ewah_size as usize]).ok()?;
 
     if !data.is_empty() {
         return None;

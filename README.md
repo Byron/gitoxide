@@ -85,7 +85,7 @@ is usable to some extent.
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
   * [gix-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree)
-  * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
+  * [gix-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bitmap)
   * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)
   * [gix-hashtable](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hashtable)
 * **idea** _(just a name placeholder)_

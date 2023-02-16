@@ -1220,14 +1220,6 @@ dependencies = [
 [[package]]
 name = "git-bitmap"
 version = "0.2.1"
-dependencies = [
- "git-testtools",
- "quick-error 2.0.1",
-]
-
-[[package]]
-name = "git-bitmap"
-version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13e85f0cae0128742a9e287714b0e78ff1670b406ab4ff9b55c812b5db01344f"
 dependencies = [
@@ -1395,7 +1387,7 @@ dependencies = [
  "bstr",
  "document-features",
  "filetime",
- "git-bitmap 0.2.1",
+ "gix-bitmap",
  "gix-features",
  "gix-hash",
  "gix-lock",
@@ -1418,7 +1410,7 @@ dependencies = [
  "bitflags",
  "bstr",
  "filetime",
- "git-bitmap 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-bitmap",
  "git-features",
  "git-hash",
  "git-lock",
@@ -1840,6 +1832,14 @@ dependencies = [
  "serde",
  "thiserror",
  "unicode-bom",
+]
+
+[[package]]
+name = "gix-bitmap"
+version = "0.2.1"
+dependencies = [
+ "git-testtools",
+ "quick-error 2.0.1",
 ]
 
 [[package]]

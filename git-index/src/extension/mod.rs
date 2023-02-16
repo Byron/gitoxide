@@ -66,7 +66,7 @@ pub struct UntrackedCache {
 pub struct FsMonitor {
     token: fs_monitor::Token,
     /// if a bit is true, the respective entry is NOT valid as per the fs monitor.
-    entry_dirty: git_bitmap::ewah::Vec,
+    entry_dirty: gix_bitmap::ewah::Vec,
 }
 
 mod iter;

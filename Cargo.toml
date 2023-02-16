@@ -147,7 +147,7 @@ members = [
     "gix-date",
     "gix-traverse",
     "git-index",
-    "git-bitmap",
+    "gix-bitmap",
     "gix-worktree",
     "gix-revision",
     "gix-packetline",
