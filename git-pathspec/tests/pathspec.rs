@@ -4,8 +4,8 @@ mod parse {
     use std::collections::HashMap;
 
     use bstr::{BStr, BString, ByteSlice};
-    use git_attributes::State;
     use git_pathspec::{MagicSignature, MatchMode, Pattern};
+    use gix_attributes::State;
     use once_cell::sync::Lazy;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -60,8 +60,8 @@ mod parse {
     }
 
     mod succeed {
-        use git_attributes::State;
         use git_pathspec::{MagicSignature, MatchMode};
+        use gix_attributes::State;
 
         use crate::parse::{
             check_valid_inputs, pat, pat_with_attrs, pat_with_path, pat_with_path_and_sig, pat_with_search_mode,

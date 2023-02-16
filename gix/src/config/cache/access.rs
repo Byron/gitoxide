@@ -157,7 +157,7 @@ impl Cache {
         fn assemble_attribute_globals(
             me: &Cache,
             _git_dir: &std::path::Path,
-        ) -> Result<git_attributes::MatchGroup, checkout_options::Error> {
+        ) -> Result<gix_attributes::MatchGroup, checkout_options::Error> {
             let _attributes_file = match me
                 .trusted_file_path("core", None, Core::ATTRIBUTES_FILE.name)
                 .transpose()?
@@ -165,7 +165,7 @@ impl Cache {
                 Some(attributes) => Some(attributes.into_owned()),
                 None => me.xdg_config_path("attributes").ok().flatten(),
             };
-            // TODO: implement git_attributes::MatchGroup::<git_attributes::Attributes>::from_git_dir(), similar to what's done for `Ignore`.
+            // TODO: implement gix_attributes::MatchGroup::<gix_attributes::Attributes>::from_git_dir(), similar to what's done for `Ignore`.
             Ok(Default::default())
         }
 

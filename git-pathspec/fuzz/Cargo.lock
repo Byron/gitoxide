@@ -65,7 +65,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-attributes"
+name = "gix-attributes"
 version = "0.3.0"
 dependencies = [
  "bstr",
@@ -116,7 +116,7 @@ version = "0.0.0"
 dependencies = [
  "bitflags",
  "bstr",
- "git-attributes",
+ "gix-attributes",
  "gix-glob",
  "thiserror",
 ]

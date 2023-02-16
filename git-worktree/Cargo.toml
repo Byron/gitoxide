@@ -35,7 +35,7 @@ gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-object = { version = "^0.26.1", path = "../gix-object" }
 gix-glob = { version = "^0.5.3", path = "../gix-glob" }
 gix-path = { version = "^0.7.1", path = "../gix-path" }
-git-attributes = { version = "^0.8.2", path = "../git-attributes" }
+gix-attributes = { version = "^0.8.2", path = "../gix-attributes" }
 gix-features = { version = "^0.26.4", path = "../gix-features" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

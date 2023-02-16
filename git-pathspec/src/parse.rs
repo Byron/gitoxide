@@ -147,14 +147,14 @@ fn split_on_non_escaped_char(
     f(last_keyword)
 }
 
-fn parse_attributes(input: &[u8]) -> Result<Vec<git_attributes::Assignment>, Error> {
+fn parse_attributes(input: &[u8]) -> Result<Vec<gix_attributes::Assignment>, Error> {
     if input.is_empty() {
         return Err(Error::EmptyAttribute);
     }
 
     let unescaped = unescape_attribute_values(input.into())?;
 
-    git_attributes::parse::Iter::new(unescaped.as_bstr())
+    gix_attributes::parse::Iter::new(unescaped.as_bstr())
         .map(|res| res.map(|v| v.to_owned()))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| Error::InvalidAttribute { attribute: e.attribute })

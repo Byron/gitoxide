@@ -6,8 +6,8 @@ use gix_hash::oid;
 
 use crate::fs::{cache::State, PathOidMapping};
 
-type AttributeMatchGroup = git_attributes::MatchGroup<git_attributes::Attributes>;
-type IgnoreMatchGroup = git_attributes::MatchGroup<git_attributes::Ignore>;
+type AttributeMatchGroup = gix_attributes::MatchGroup<gix_attributes::Attributes>;
+type IgnoreMatchGroup = gix_attributes::MatchGroup<gix_attributes::Ignore>;
 
 /// State related to attributes associated with files in the repository.
 #[derive(Default, Clone)]
@@ -79,7 +79,7 @@ impl Ignore {
         relative_path: &BStr,
         is_dir: Option<bool>,
         case: Case,
-    ) -> Option<git_attributes::Match<'_, ()>> {
+    ) -> Option<gix_attributes::Match<'_, ()>> {
         let groups = self.match_groups();
         let mut dir_match = None;
         if let Some((source, mapping)) = self
@@ -93,7 +93,7 @@ impl Ignore {
             })
             .next()
         {
-            let match_ = git_attributes::Match {
+            let match_ = gix_attributes::Match {
                 pattern: &mapping.pattern,
                 value: &mapping.value,
                 sequence_number: mapping.sequence_number,

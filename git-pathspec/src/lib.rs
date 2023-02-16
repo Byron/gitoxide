@@ -23,7 +23,7 @@ pub struct Pattern {
     /// All attributes that were included in the `ATTR` part of the pathspec, if present.
     ///
     /// `:(attr:a=one b=):path` would yield attribute `a` and `b`.
-    pub attributes: Vec<git_attributes::Assignment>,
+    pub attributes: Vec<gix_attributes::Assignment>,
 }
 
 bitflags! {

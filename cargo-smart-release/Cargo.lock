@@ -534,7 +534,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-attributes"
+name = "gix-attributes"
 version = "0.2.0"
 dependencies = [
  "bstr",
@@ -797,7 +797,7 @@ dependencies = [
  "byte-unit",
  "clru",
  "gix-actor",
- "git-attributes",
+ "gix-attributes",
  "gix-config",
  "git-credentials",
  "git-diff",
@@ -869,7 +869,7 @@ dependencies = [
  "bstr",
  "crc",
  "fs_extra",
- "git-attributes",
+ "gix-attributes",
  "git-discover",
  "gix-hash",
  "gix-lock",
@@ -919,7 +919,7 @@ name = "git-worktree"
 version = "0.3.0"
 dependencies = [
  "bstr",
- "git-attributes",
+ "gix-attributes",
  "gix-features",
  "gix-glob",
  "gix-hash",

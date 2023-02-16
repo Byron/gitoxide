@@ -325,9 +325,9 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [x] API documentation
     * [ ] Some examples
 
-### git-attributes
-* [x] parse git-ignore files (aka git-attributes without the attributes or negation)
-* [x] parse git-attributes files
+### gix-attributes
+* [x] parse git-ignore files (aka gix-attributes without the attributes or negation)
+* [x] parse gix-attributes files
 * [ ] create an attributes stack, ideally one that includes 'ignored' status from .gitignore files.
    * [ ] support for built-in `binary` macro for `-text -diff -merge`
     

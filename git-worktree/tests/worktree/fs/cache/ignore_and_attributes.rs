@@ -45,7 +45,7 @@ fn special_exclude_cases_we_handle_differently() {
         Default::default(),
         git_worktree::fs::cache::state::Ignore::new(
             Default::default(),
-            git_attributes::MatchGroup::from_git_dir(&git_dir, None, &mut buf).unwrap(),
+            gix_attributes::MatchGroup::from_git_dir(&git_dir, None, &mut buf).unwrap(),
             None,
             case,
         ),
@@ -99,8 +99,8 @@ fn check_against_baseline() -> crate::Result {
     let state = git_worktree::fs::cache::State::for_add(
         Default::default(), // TODO: attribute tests
         git_worktree::fs::cache::state::Ignore::new(
-            git_attributes::MatchGroup::from_overrides(vec!["!force-include"]),
-            git_attributes::MatchGroup::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf)?,
+            gix_attributes::MatchGroup::from_overrides(vec!["!force-include"]),
+            gix_attributes::MatchGroup::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf)?,
             None,
             case,
         ),

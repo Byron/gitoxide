@@ -124,7 +124,7 @@ pub mod excludes {
         pub fn excludes(
             &self,
             index: &git_index::State,
-            overrides: Option<git_attributes::MatchGroup<git_attributes::Ignore>>,
+            overrides: Option<gix_attributes::MatchGroup<gix_attributes::Ignore>>,
         ) -> Result<git_worktree::fs::Cache, Error> {
             let repo = self.parent;
             let case = repo
@@ -139,7 +139,7 @@ pub mod excludes {
             };
             let state = git_worktree::fs::cache::State::IgnoreStack(git_worktree::fs::cache::state::Ignore::new(
                 overrides.unwrap_or_default(),
-                git_attributes::MatchGroup::<git_attributes::Ignore>::from_git_dir(
+                gix_attributes::MatchGroup::<gix_attributes::Ignore>::from_git_dir(
                     repo.git_dir(),
                     excludes_file,
                     &mut buf,

@@ -1,6 +1,6 @@
 use bstr::{BString, ByteSlice};
-use git_attributes::{parse, StateRef};
 use git_testtools::fixture_bytes;
+use gix_attributes::{parse, StateRef};
 use gix_glob::pattern::Mode;
 
 #[test]
@@ -52,13 +52,13 @@ fn line_endings_can_be_windows_or_unix() {
 
 #[test]
 fn comment_lines_are_ignored_as_well_as_empty_ones() {
-    assert!(git_attributes::parse(b"# hello world").next().is_none());
-    assert!(git_attributes::parse(b"# \"hello world\"").next().is_none());
+    assert!(gix_attributes::parse(b"# hello world").next().is_none());
+    assert!(gix_attributes::parse(b"# \"hello world\"").next().is_none());
     assert!(
-        git_attributes::parse(b" \t\r# \"hello world\"").next().is_none(),
+        gix_attributes::parse(b" \t\r# \"hello world\"").next().is_none(),
         "also behind leading whitespace"
     );
-    assert!(git_attributes::parse(b"\n\r\n\t\t   \n").next().is_none());
+    assert!(gix_attributes::parse(b"\n\r\n\t\t   \n").next().is_none());
 }
 
 #[test]
@@ -261,7 +261,7 @@ fn trailing_whitespace_in_attributes_is_ignored() {
     );
 }
 
-type ExpandedAttribute<'a> = (parse::Kind, Vec<(BString, git_attributes::StateRef<'a>)>, usize);
+type ExpandedAttribute<'a> = (parse::Kind, Vec<(BString, gix_attributes::StateRef<'a>)>, usize);
 
 fn set(attr: &str) -> (BString, StateRef) {
     (attr.into(), StateRef::Set)
@@ -288,7 +288,7 @@ fn pattern(name: &str, flags: gix_glob::pattern::Mode, first_wildcard_pos: Optio
 }
 
 fn try_line(input: &str) -> Result<ExpandedAttribute, parse::Error> {
-    let mut lines = git_attributes::parse(input.as_bytes());
+    let mut lines = gix_attributes::parse(input.as_bytes());
     let res = expand(lines.next().unwrap())?;
     assert!(lines.next().is_none(), "expected only one line");
     Ok(res)
@@ -299,7 +299,7 @@ fn line(input: &str) -> ExpandedAttribute {
 }
 
 fn try_lines(input: &str) -> Result<Vec<ExpandedAttribute>, parse::Error> {
-    git_attributes::parse(input.as_bytes()).map(expand).collect()
+    gix_attributes::parse(input.as_bytes()).map(expand).collect()
 }
 
 fn expand(

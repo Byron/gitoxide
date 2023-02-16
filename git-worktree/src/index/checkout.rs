@@ -1,6 +1,6 @@
 #![allow(missing_docs)]
 use bstr::BString;
-use git_attributes::Attributes;
+use gix_attributes::Attributes;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Collision {
@@ -60,7 +60,7 @@ pub struct Options {
     /// Default true.
     pub check_stat: bool,
     /// A group of attribute patterns that are applied globally, i.e. aren't rooted within the repository itself.
-    pub attribute_globals: git_attributes::MatchGroup<Attributes>,
+    pub attribute_globals: gix_attributes::MatchGroup<Attributes>,
 }
 
 impl Default for Options {

@@ -5,7 +5,7 @@ use gix_glob::{pattern::Mode, Pattern};
 #[test]
 fn byte_order_marks_are_no_patterns() {
     assert_eq!(
-        flatten(git_attributes::parse::ignore("\u{feff}hello".as_bytes()).next()),
+        flatten(gix_attributes::parse::ignore("\u{feff}hello".as_bytes()).next()),
         Some((r"hello".into(), Mode::NO_SUB_DIR, 1))
     );
 }
@@ -13,7 +13,7 @@ fn byte_order_marks_are_no_patterns() {
 #[test]
 fn line_numbers_are_counted_correctly() {
     let input = fixture_bytes("ignore/various.txt");
-    let actual: Vec<_> = git_attributes::parse::ignore(&input).map(flat_map).collect();
+    let actual: Vec<_> = gix_attributes::parse::ignore(&input).map(flat_map).collect();
     assert_eq!(
         actual,
         vec![
@@ -31,7 +31,7 @@ fn line_numbers_are_counted_correctly() {
 #[test]
 fn line_endings_can_be_windows_or_unix() {
     assert_eq!(
-        git_attributes::parse::ignore(b"unix\nwindows\r\nlast")
+        gix_attributes::parse::ignore(b"unix\nwindows\r\nlast")
             .map(flat_map)
             .collect::<Vec<_>>(),
         vec![
@@ -44,14 +44,14 @@ fn line_endings_can_be_windows_or_unix() {
 
 #[test]
 fn comments_are_ignored_as_well_as_empty_ones() {
-    assert!(git_attributes::parse::ignore(b"# hello world").next().is_none());
-    assert!(git_attributes::parse::ignore(b"\n\r\n\t\t   \n").next().is_none());
+    assert!(gix_attributes::parse::ignore(b"# hello world").next().is_none());
+    assert!(gix_attributes::parse::ignore(b"\n\r\n\t\t   \n").next().is_none());
 }
 
 #[test]
 fn backslashes_before_hashes_are_no_comments() {
     assert_eq!(
-        flatten(git_attributes::parse::ignore(br"\#hello").next()),
+        flatten(gix_attributes::parse::ignore(br"\#hello").next()),
         Some((r"#hello".into(), Mode::NO_SUB_DIR, 1))
     );
 }

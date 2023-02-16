@@ -2,7 +2,7 @@ mod ignore {
     use std::io::Read;
 
     use bstr::{BStr, ByteSlice};
-    use git_attributes::{Ignore, Match, MatchGroup};
+    use gix_attributes::{Ignore, Match, MatchGroup};
     use gix_glob::pattern::Case;
 
     struct Expectations<'a> {
@@ -91,7 +91,7 @@ mod ignore {
     #[test]
     fn from_overrides() {
         let input = ["simple", "pattern/"];
-        let group = git_attributes::MatchGroup::<Ignore>::from_overrides(input);
+        let group = gix_attributes::MatchGroup::<Ignore>::from_overrides(input);
         assert_eq!(
             group.pattern_matching_relative_path("Simple", None, gix_glob::pattern::Case::Fold),
             Some(pattern_to_match(&gix_glob::parse("simple").unwrap(), 0))
@@ -102,7 +102,7 @@ mod ignore {
         );
         assert_eq!(group.patterns.len(), 1);
         assert_eq!(
-            git_attributes::PatternList::<Ignore>::from_overrides(input),
+            gix_attributes::PatternList::<Ignore>::from_overrides(input),
             group.patterns.into_iter().next().unwrap()
         );
     }

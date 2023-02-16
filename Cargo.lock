@@ -1203,9 +1203,9 @@ dependencies = [
 
 [[package]]
 name = "git-attributes"
-version = "0.8.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2c9687a890892650e8574e123b4b633d277b99953cb877dc02aba852a0139fa"
+checksum = "d5ee4927fda9cae8543b8322080e35abb4538a3344991a4af4b4a6016faf9154"
 dependencies = [
  "bstr",
  "compact_str",
@@ -1213,23 +1213,6 @@ dependencies = [
  "git-glob",
  "git-path",
  "git-quote",
- "thiserror",
- "unicode-bom",
-]
-
-[[package]]
-name = "git-attributes"
-version = "0.8.2"
-dependencies = [
- "bstr",
- "compact_str",
- "document-features",
- "git-testtools",
- "gix-features",
- "gix-glob",
- "gix-path",
- "gix-quote",
- "serde",
  "thiserror",
  "unicode-bom",
 ]
@@ -1394,9 +1377,9 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.26.1"
+version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0019327672cb759f851d1b18fdcc36bb797dc62b925cb93c8c881b54735eb2c2"
+checksum = "688ac55de8f6126dd2e43cf51a74e94b8407102334a5d7810948c5b6f2772668"
 dependencies = [
  "git-hash",
  "libc",
@@ -1660,8 +1643,8 @@ version = "0.1.0"
 dependencies = [
  "bitflags",
  "bstr",
- "git-attributes 0.8.2",
  "git-testtools",
+ "gix-attributes",
  "gix-glob",
  "once_cell",
  "thiserror",
@@ -1820,7 +1803,7 @@ dependencies = [
  "crc",
  "fastrand",
  "fs_extra",
- "git-attributes 0.8.1",
+ "git-attributes",
  "git-discover 0.12.1",
  "git-lock",
  "git-worktree 0.12.1",
@@ -1935,7 +1918,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c28b292694c98bba8225c39d4e86605843882ba7117ca98491841761e710547"
 dependencies = [
  "bstr",
- "git-attributes 0.8.1",
+ "git-attributes",
  "git-features",
  "git-glob",
  "git-hash",
@@ -1952,10 +1935,10 @@ version = "0.12.2"
 dependencies = [
  "bstr",
  "document-features",
- "git-attributes 0.8.2",
  "git-index 0.12.3",
  "git-odb",
  "git-testtools",
+ "gix-attributes",
  "gix-features",
  "gix-glob",
  "gix-hash",
@@ -2040,7 +2023,6 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "git-attributes 0.8.2",
  "git-credentials",
  "git-date 0.4.2",
  "git-diff",
@@ -2060,6 +2042,7 @@ dependencies = [
  "git-url",
  "git-worktree 0.12.2",
  "gix-actor",
+ "gix-attributes",
  "gix-config",
  "gix-features",
  "gix-glob",
@@ -2102,6 +2085,23 @@ dependencies = [
  "pretty_assertions",
  "quick-error 2.0.1",
  "serde",
+]
+
+[[package]]
+name = "gix-attributes"
+version = "0.8.2"
+dependencies = [
+ "bstr",
+ "compact_str",
+ "document-features",
+ "git-testtools",
+ "gix-features",
+ "gix-glob",
+ "gix-path",
+ "gix-quote",
+ "serde",
+ "thiserror",
+ "unicode-bom",
 ]
 
 [[package]]

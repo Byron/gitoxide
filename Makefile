@@ -76,7 +76,7 @@ check: ## Build all code in suitable configurations
 	cd git-credentials && cargo check --features serde1
 	cd gix-sec && cargo check --features serde1
 	cd git-revision && cargo check --features serde1
-	cd git-attributes && cargo check --features serde1
+	cd gix-attributes && cargo check --features serde1
 	cd gix-glob && cargo check --features serde1
 	cd git-mailmap && cargo check --features serde1
 	cd git-worktree && cargo check --features serde1
