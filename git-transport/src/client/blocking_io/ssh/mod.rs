@@ -7,7 +7,7 @@ use crate::{client::blocking_io, Protocol};
 #[allow(missing_docs)]
 pub enum Error {
     #[error("The scheme in \"{}\" is not usable for an ssh connection", .0.to_bstring())]
-    UnsupportedScheme(git_url::Url),
+    UnsupportedScheme(gix_url::Url),
 }
 
 impl crate::IsSpuriousError for Error {}
@@ -87,11 +87,11 @@ pub mod connect {
 /// The `desired_version` is the preferred protocol version when establishing the connection, but note that it can be
 /// downgraded by servers not supporting it.
 pub fn connect(
-    url: git_url::Url,
+    url: gix_url::Url,
     desired_version: Protocol,
     options: connect::Options,
 ) -> Result<blocking_io::file::SpawnProcessOnDemand, Error> {
-    if url.scheme != git_url::Scheme::Ssh || url.host().is_none() {
+    if url.scheme != gix_url::Scheme::Ssh || url.host().is_none() {
         return Err(Error::UnsupportedScheme(url));
     }
     let ssh_cmd = options.ssh_command();
@@ -116,7 +116,7 @@ pub fn connect(
         };
     }
 
-    let path = git_url::expand_path::for_shell(url.path.clone());
+    let path = gix_url::expand_path::for_shell(url.path.clone());
     Ok(blocking_io::file::SpawnProcessOnDemand::new_ssh(
         url,
         ssh_cmd,

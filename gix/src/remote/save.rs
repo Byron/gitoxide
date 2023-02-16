@@ -10,7 +10,7 @@ use crate::{
 #[allow(missing_docs)]
 pub enum Error {
     #[error("The remote pointing to {} is anonymous and can't be saved.", url.to_bstring())]
-    NameMissing { url: git_url::Url },
+    NameMissing { url: gix_url::Url },
 }
 
 /// The error returned by [`Remote::save_as_to()`].

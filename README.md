@@ -59,7 +59,7 @@ is usable to some extent.
   * [gix-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hash)
   * [gix-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-object)
   * [gix-validate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-validate)
-  * [git-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-url)
+  * [gix-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-url)
   * [git-packetline](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-packetline)
   * [git-transport](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-transport)
   * [git-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-protocol)

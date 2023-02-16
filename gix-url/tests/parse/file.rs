@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_url::Scheme;
+use gix_url::Scheme;
 
 use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
 
@@ -47,7 +47,7 @@ fn no_username_expansion_for_file_paths_with_protocol() -> crate::Result {
 
 #[test]
 fn non_utf8_file_path_without_protocol() -> crate::Result {
-    let parsed = git_url::parse(b"/path/to\xff/git".as_bstr())?;
+    let parsed = gix_url::parse(b"/path/to\xff/git".as_bstr())?;
     assert_eq!(
         parsed,
         url_alternate(Scheme::File, None, None, None, b"/path/to\xff/git",)
@@ -143,7 +143,7 @@ fn url_from_absolute_path() -> crate::Result {
 }
 
 mod windows {
-    use git_url::Scheme;
+    use gix_url::Scheme;
 
     #[test]
     #[cfg(windows)]

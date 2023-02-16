@@ -17,12 +17,12 @@ pub(crate) mod function {
         options: super::Options,
     ) -> Result<Box<dyn crate::client::Transport + Send>, Error>
     where
-        Url: TryInto<git_url::Url, Error = E>,
-        git_url::parse::Error: From<E>,
+        Url: TryInto<gix_url::Url, Error = E>,
+        gix_url::parse::Error: From<E>,
     {
-        let mut url = url.try_into().map_err(git_url::parse::Error::from)?;
+        let mut url = url.try_into().map_err(gix_url::parse::Error::from)?;
         Ok(match url.scheme {
-            git_url::Scheme::Git => {
+            gix_url::Scheme::Git => {
                 if url.user().is_some() {
                     return Err(Error::UnsupportedUrlTokens {
                         url: url.to_bstring(),

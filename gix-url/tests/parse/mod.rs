@@ -1,8 +1,8 @@
 use bstr::ByteSlice;
-use git_url::Scheme;
+use gix_url::Scheme;
 
-fn assert_url(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::Error> {
-    let actual = git_url::parse(url.into())?;
+fn assert_url(url: &str, expected: gix_url::Url) -> Result<gix_url::Url, crate::Error> {
+    let actual = gix_url::parse(url.into())?;
     assert_eq!(actual, expected);
     if actual.scheme.as_str().starts_with("http") {
         assert!(
@@ -17,14 +17,14 @@ fn assert_url(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::
     Ok(expected)
 }
 
-fn assert_url_roundtrip(url: &str, expected: git_url::Url) -> crate::Result {
+fn assert_url_roundtrip(url: &str, expected: gix_url::Url) -> crate::Result {
     assert_eq!(assert_url(url, expected)?.to_bstring(), url);
     Ok(())
 }
 
 fn assert_failure(url: &str, expected_err: impl ToString) {
     assert_eq!(
-        git_url::parse(url.into()).unwrap_err().to_string(),
+        gix_url::parse(url.into()).unwrap_err().to_string(),
         expected_err.to_string()
     );
 }
@@ -35,8 +35,8 @@ fn url<'a, 'b>(
     host: impl Into<Option<&'b str>>,
     port: impl Into<Option<u16>>,
     path: &[u8],
-) -> git_url::Url {
-    git_url::Url::from_parts(
+) -> gix_url::Url {
+    gix_url::Url::from_parts(
         protocol,
         user.into().map(Into::into),
         host.into().map(Into::into),
@@ -52,8 +52,8 @@ fn url_alternate<'a, 'b>(
     host: impl Into<Option<&'b str>>,
     port: impl Into<Option<u16>>,
     path: &[u8],
-) -> git_url::Url {
-    let url = git_url::Url::from_parts_as_alternative_form(
+) -> gix_url::Url {
+    let url = gix_url::Url::from_parts_as_alternative_form(
         protocol.clone(),
         user.into().map(Into::into),
         host.into().map(Into::into),
@@ -70,7 +70,7 @@ mod invalid;
 mod ssh;
 
 mod radicle {
-    use git_url::Scheme;
+    use gix_url::Scheme;
 
     use crate::parse::{assert_url_roundtrip, url};
 
@@ -90,7 +90,7 @@ mod radicle {
 }
 
 mod http {
-    use git_url::Scheme;
+    use gix_url::Scheme;
 
     use crate::parse::{assert_url, assert_url_roundtrip, url};
 
@@ -117,7 +117,7 @@ mod http {
     }
 }
 mod git {
-    use git_url::Scheme;
+    use gix_url::Scheme;
 
     use crate::parse::{assert_url_roundtrip, url};
 
@@ -131,7 +131,7 @@ mod git {
 }
 
 mod unknown {
-    use git_url::Scheme;
+    use gix_url::Scheme;
 
     use crate::parse::{assert_url_roundtrip, url};
 

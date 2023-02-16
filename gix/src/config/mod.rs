@@ -309,7 +309,7 @@ pub mod unsigned_integer {
 ///
 pub mod url {
     /// The error produced when failing to parse a url from the configuration.
-    pub type Error = super::key::Error<git_url::parse::Error, 'u', 'p'>;
+    pub type Error = super::key::Error<gix_url::parse::Error, 'u', 'p'>;
 }
 
 ///
@@ -364,7 +364,7 @@ pub mod transport {
             source: crate::config::string::Error,
         },
         #[error("Invalid URL passed for configuration")]
-        ParseUrl(#[from] git_url::parse::Error),
+        ParseUrl(#[from] gix_url::parse::Error),
         #[error("Could obtain configuration for an HTTP url")]
         Http(#[from] http::Error),
     }

@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_url::Scheme;
+use gix_url::Scheme;
 
 use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
 
@@ -66,7 +66,7 @@ fn with_user_and_port_and_absolute_path() -> crate::Result {
 
 #[test]
 fn ssh_alias_needs_username_to_not_be_considered_a_filepath() {
-    let url = git_url::Url::from_parts_as_alternative_form(
+    let url = gix_url::Url::from_parts_as_alternative_form(
         Scheme::Ssh,
         None,
         "alias".to_string().into(),

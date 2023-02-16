@@ -19,7 +19,7 @@ mod error {
         #[error(transparent)]
         SchemePermission(#[from] config::protocol::allow::Error),
         #[error("Protocol {scheme:?} of url {url:?} is denied per configuration")]
-        ProtocolDenied { url: BString, scheme: git_url::Scheme },
+        ProtocolDenied { url: BString, scheme: gix_url::Scheme },
         #[error(transparent)]
         Connect(#[from] git_protocol::transport::client::connect::Error),
         #[error("The {} url was missing - don't know where to establish a connection to", direction.as_str())]
@@ -29,7 +29,7 @@ mod error {
         #[error("Could not verify that \"{}\" url is a valid git directory before attempting to use it", url.to_bstring())]
         FileUrl {
             source: Box<git_discover::is_git::Error>,
-            url: git_url::Url,
+            url: gix_url::Url,
         },
     }
 
@@ -85,7 +85,7 @@ impl<'repo> Remote<'repo> {
     {
         let (url, version) = self.sanitized_url_and_version(direction)?;
         #[cfg(feature = "blocking-network-client")]
-        let scheme_is_ssh = url.scheme == git_url::Scheme::Ssh;
+        let scheme_is_ssh = url.scheme == gix_url::Scheme::Ssh;
         let transport = git_protocol::transport::connect(
             url,
             git_protocol::transport::client::connect::Options {
@@ -107,9 +107,9 @@ impl<'repo> Remote<'repo> {
     pub fn sanitized_url_and_version(
         &self,
         direction: crate::remote::Direction,
-    ) -> Result<(git_url::Url, git_protocol::transport::Protocol), Error> {
-        fn sanitize(mut url: git_url::Url) -> Result<git_url::Url, Error> {
-            if url.scheme == git_url::Scheme::File {
+    ) -> Result<(gix_url::Url, git_protocol::transport::Protocol), Error> {
+        fn sanitize(mut url: gix_url::Url) -> Result<gix_url::Url, Error> {
+            if url.scheme == gix_url::Scheme::File {
                 let mut dir = gix_path::to_native_path_on_windows(url.path.as_ref());
                 let kind = git_discover::is_git(dir.as_ref())
                     .or_else(|_| {

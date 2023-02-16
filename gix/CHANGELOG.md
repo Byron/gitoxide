@@ -1110,7 +1110,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 ### New Features
 
- - <csr-id-11b64fce4630371633b6415f227eecdc6b42b20b/> Make `git_url::Url` available under `gix::Url`
+ - <csr-id-11b64fce4630371633b6415f227eecdc6b42b20b/> Make `gix_url::Url` available under `gix::Url`
  - <csr-id-80b8331092f4856f52afa1d85fa375ae688bdd28/> add easy::ext::ObjectAccessExt::tag(…) to create tag objects
    It's a quick sketch on how tag object creation could work.
    
@@ -1121,7 +1121,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
    Most will only ever need one, right?
    
    Even in my example that's not the case, so maybe we have to rename it.
- - <csr-id-0ebfeb614264ca06ab763189e55e6c016c9997af/> Make `git_url::Url` available under `gix::Url`
+ - <csr-id-0ebfeb614264ca06ab763189e55e6c016c9997af/> Make `gix_url::Url` available under `gix::Url`
 
 ### BREAKING Changes
 

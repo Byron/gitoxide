@@ -52,7 +52,7 @@ pub(crate) mod connect {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Url(#[from] git_url::parse::Error),
+        Url(#[from] gix_url::parse::Error),
         #[error("The git repository path could not be converted to UTF8")]
         PathConversion(#[from] bstr::Utf8Error),
         #[error("connection failed")]
@@ -60,15 +60,15 @@ pub(crate) mod connect {
         #[error("The url {url:?} contains information that would not be used by the {scheme} protocol")]
         UnsupportedUrlTokens {
             url: bstr::BString,
-            scheme: git_url::Scheme,
+            scheme: gix_url::Scheme,
         },
         #[error("The '{0}' protocol is currently unsupported")]
-        UnsupportedScheme(git_url::Scheme),
+        UnsupportedScheme(gix_url::Scheme),
         #[cfg(not(any(feature = "http-client-curl", feature = "http-client-reqwest")))]
         #[error(
             "'{0}' is not compiled in. Compile with the 'http-client-curl' or 'http-client-reqwest' cargo feature"
         )]
-        CompiledWithoutHttp(git_url::Scheme),
+        CompiledWithoutHttp(gix_url::Scheme),
     }
 
     // TODO: maybe fix this workaround: want `IsSpuriousError`  in `Connection(…)`

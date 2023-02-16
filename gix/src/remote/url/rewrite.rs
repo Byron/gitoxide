@@ -66,7 +66,7 @@ impl Rewrite {
         }
     }
 
-    pub fn longest(&self, url: &git_url::Url, direction: Direction) -> Option<BString> {
+    pub fn longest(&self, url: &gix_url::Url, direction: Direction) -> Option<BString> {
         if self.replacements_for(direction).is_empty() {
             None
         } else {

@@ -230,7 +230,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
     
 [git-traverse-performance]: https://github.com/Byron/gitoxide/discussions/76
 
-### git-url
+### gix-url
 * As documented here: https://www.git-scm.com/docs/git-clone#_git_urls
 * **parse**
     * [x] ssh URLs and SCP like syntax

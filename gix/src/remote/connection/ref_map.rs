@@ -189,7 +189,7 @@ where
                     .remote
                     .url(Direction::Fetch)
                     .map(ToOwned::to_owned)
-                    .unwrap_or_else(|| git_url::parse(url.as_ref()).expect("valid URL to be provided by transport"));
+                    .unwrap_or_else(|| gix_url::parse(url.as_ref()).expect("valid URL to be provided by transport"));
                 credentials_storage = self.configured_credentials(url)?;
                 &mut credentials_storage
             }

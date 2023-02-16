@@ -39,7 +39,7 @@ const ENV_VARS_TO_REMOVE: &[&str] = &[
 /// It can only be instantiated using the local [`connect()`] or [ssh connect][crate::client::ssh::connect()].
 pub struct SpawnProcessOnDemand {
     desired_version: Protocol,
-    url: git_url::Url,
+    url: gix_url::Url,
     path: BString,
     ssh_cmd: Option<(OsString, ssh::ProgramKind)>,
     /// The environment variables to set in the invoked command.
@@ -51,7 +51,7 @@ pub struct SpawnProcessOnDemand {
 
 impl SpawnProcessOnDemand {
     pub(crate) fn new_ssh(
-        url: git_url::Url,
+        url: gix_url::Url,
         program: impl Into<OsString>,
         path: BString,
         ssh_kind: ssh::ProgramKind,
@@ -71,7 +71,7 @@ impl SpawnProcessOnDemand {
     }
     fn new_local(path: BString, version: Protocol) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
-            url: git_url::Url::from_parts_as_alternative_form(git_url::Scheme::File, None, None, None, path.clone())
+            url: gix_url::Url::from_parts_as_alternative_form(gix_url::Scheme::File, None, None, None, path.clone())
                 .expect("valid url"),
             path,
             ssh_cmd: None,
@@ -88,7 +88,7 @@ impl SpawnProcessOnDemand {
 
 impl client::TransportWithoutIO for SpawnProcessOnDemand {
     fn set_identity(&mut self, identity: gix_sec::identity::Account) -> Result<(), client::Error> {
-        if self.url.scheme == git_url::Scheme::Ssh {
+        if self.url.scheme == gix_url::Scheme::Ssh {
             self.url
                 .set_user((!identity.username.is_empty()).then_some(identity.username));
             Ok(())
@@ -278,7 +278,7 @@ mod tests {
                     ("user@host.xy:../username/repo", "../username/repo"),
                     ("user@host.xy:~/repo", "~/repo"),
                 ] {
-                    let url = git_url::parse((*url).into()).expect("valid url");
+                    let url = gix_url::parse((*url).into()).expect("valid url");
                     let cmd = connect(url, Protocol::V1, Default::default()).expect("parse success");
                     assert_eq!(cmd.path, expected, "the path will be substituted by the remote shell");
                 }

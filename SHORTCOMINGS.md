@@ -26,9 +26,9 @@ This file is for tracking features that are less well implemented or less powerf
     * in-memory representations objects cannot handle objects greater than the amount of addressable memory.
     * This will not affect git LFS though.
 
-### `git-url`
+### `gix-url`
 
-* **git-url** _might_ be more restrictive than what git allows as for the most part, it uses a browser grade URL parser.
+* **gix-url** _might_ be more restrictive than what git allows as for the most part, it uses a browser grade URL parser.
     * Thus far there is no proof for this, and as _potential remedy_ we could certainly re-implement exactly what git does
       to handle its URLs.
 

@@ -817,7 +817,7 @@ dependencies = [
  "gix-sec",
  "gix-tempfile",
  "git-traverse",
- "git-url",
+ "gix-url",
  "gix-validate",
  "git-worktree",
  "log",
@@ -895,7 +895,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-url"
+name = "gix-url"
 version = "0.6.0"
 dependencies = [
  "bstr",

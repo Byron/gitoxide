@@ -33,7 +33,7 @@ impl<'repo> Remote<'repo> {
     /// the `remote.<name>.url`.
     /// Note that it's possible to only have the push url set, in which case there will be no way to fetch from the remote as
     /// the push-url isn't used for that.
-    pub fn url(&self, direction: remote::Direction) -> Option<&git_url::Url> {
+    pub fn url(&self, direction: remote::Direction) -> Option<&gix_url::Url> {
         match direction {
             remote::Direction::Fetch => self.url_alias.as_ref().or(self.url.as_ref()),
             remote::Direction::Push => self

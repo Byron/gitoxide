@@ -19,7 +19,7 @@ pub type Result = std::result::Result<Option<Outcome>, Error>;
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    UrlParse(#[from] git_url::parse::Error),
+    UrlParse(#[from] gix_url::parse::Error),
     #[error("The 'url' field must be set when performing a 'get/fill' action")]
     UrlMissing,
     #[error(transparent)]

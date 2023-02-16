@@ -23,7 +23,7 @@ impl ProgramKind {
     pub(crate) fn prepare_invocation(
         &self,
         ssh_cmd: &OsStr,
-        url: &git_url::Url,
+        url: &gix_url::Url,
         desired_version: Protocol,
         disallow_shell: bool,
     ) -> Result<git_command::Prepare, ssh::invocation::Error> {

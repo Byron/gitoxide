@@ -10,8 +10,8 @@ impl crate::Repository {
     /// See [`with_fetch_tags(…)`][Remote::with_fetch_tags()] for a way to change it.
     pub fn remote_at<Url, E>(&self, url: Url) -> Result<Remote<'_>, remote::init::Error>
     where
-        Url: TryInto<git_url::Url, Error = E>,
-        git_url::parse::Error: From<E>,
+        Url: TryInto<gix_url::Url, Error = E>,
+        gix_url::parse::Error: From<E>,
     {
         Remote::from_fetch_url(url, true, self)
     }
@@ -22,8 +22,8 @@ impl crate::Repository {
     /// rules][Remote::rewrite_urls()] later and do so non-destructively.
     pub fn remote_at_without_url_rewrite<Url, E>(&self, url: Url) -> Result<Remote<'_>, remote::init::Error>
     where
-        Url: TryInto<git_url::Url, Error = E>,
-        git_url::parse::Error: From<E>,
+        Url: TryInto<gix_url::Url, Error = E>,
+        gix_url::parse::Error: From<E>,
     {
         Remote::from_fetch_url(url, false, self)
     }

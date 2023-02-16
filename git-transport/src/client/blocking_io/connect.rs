@@ -16,13 +16,13 @@ pub(crate) mod function {
     /// Use `options` to further control specifics of the transport resulting from the connection.
     pub fn connect<Url, E>(url: Url, options: super::Options) -> Result<Box<dyn Transport + Send>, Error>
     where
-        Url: TryInto<git_url::Url, Error = E>,
-        git_url::parse::Error: From<E>,
+        Url: TryInto<gix_url::Url, Error = E>,
+        gix_url::parse::Error: From<E>,
     {
-        let mut url = url.try_into().map_err(git_url::parse::Error::from)?;
+        let mut url = url.try_into().map_err(gix_url::parse::Error::from)?;
         Ok(match url.scheme {
-            git_url::Scheme::Ext(_) => return Err(Error::UnsupportedScheme(url.scheme)),
-            git_url::Scheme::File => {
+            gix_url::Scheme::Ext(_) => return Err(Error::UnsupportedScheme(url.scheme)),
+            gix_url::Scheme::File => {
                 if url.user().is_some() || url.host().is_some() || url.port.is_some() {
                     return Err(Error::UnsupportedUrlTokens {
                         url: url.to_bstring(),
@@ -34,11 +34,11 @@ pub(crate) mod function {
                         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
                 )
             }
-            git_url::Scheme::Ssh => Box::new({
+            gix_url::Scheme::Ssh => Box::new({
                 crate::client::blocking_io::ssh::connect(url, options.version, options.ssh)
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?
             }),
-            git_url::Scheme::Git => {
+            gix_url::Scheme::Git => {
                 if url.user().is_some() {
                     return Err(Error::UnsupportedUrlTokens {
                         url: url.to_bstring(),
@@ -57,9 +57,9 @@ pub(crate) mod function {
                 })
             }
             #[cfg(not(any(feature = "http-client-curl", feature = "http-client-reqwest")))]
-            git_url::Scheme::Https | git_url::Scheme::Http => return Err(Error::CompiledWithoutHttp(url.scheme)),
+            gix_url::Scheme::Https | gix_url::Scheme::Http => return Err(Error::CompiledWithoutHttp(url.scheme)),
             #[cfg(any(feature = "http-client-curl", feature = "http-client-reqwest"))]
-            git_url::Scheme::Https | git_url::Scheme::Http => Box::new(crate::client::http::connect(
+            gix_url::Scheme::Https | gix_url::Scheme::Http => Box::new(crate::client::http::connect(
                 &url.to_bstring().to_string(),
                 options.version,
             )),

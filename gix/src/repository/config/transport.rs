@@ -26,8 +26,8 @@ impl crate::Repository {
         url: impl Into<&'a BStr>,
         remote_name: Option<&BStr>,
     ) -> Result<Option<Box<dyn Any>>, crate::config::transport::Error> {
-        let url = git_url::parse(url.into())?;
-        use git_url::Scheme::*;
+        let url = gix_url::parse(url.into())?;
+        use gix_url::Scheme::*;
 
         match &url.scheme {
             Http | Https => {
@@ -271,7 +271,7 @@ impl crate::Repository {
                         .proxy
                         .as_deref()
                         .filter(|url| !url.is_empty())
-                        .map(|url| git_url::parse(url.into()))
+                        .map(|url| gix_url::parse(url.into()))
                         .transpose()?
                         .filter(|url| url.user().is_some())
                         .map(|url| -> Result<_, config::transport::http::Error> {

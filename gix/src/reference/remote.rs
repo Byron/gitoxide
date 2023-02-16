@@ -39,7 +39,7 @@ impl<'repo> Reference<'repo> {
         // TODO: use `branch.<name>.merge`
         self.remote_name(direction).map(|name| match name {
             remote::Name::Symbol(name) => self.repo.find_remote(name.as_ref()).map_err(Into::into),
-            remote::Name::Url(url) => git_url::parse(url.as_ref()).map_err(Into::into).and_then(|url| {
+            remote::Name::Url(url) => gix_url::parse(url.as_ref()).map_err(Into::into).and_then(|url| {
                 self.repo
                     .remote_at(url)
                     .map_err(|err| remote::find::existing::Error::Find(remote::find::Error::Init(err)))

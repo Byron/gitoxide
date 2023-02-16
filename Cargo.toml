@@ -129,7 +129,7 @@ build-override = { opt-level = 0 }
 [workspace]
 members = [
     "gix-actor",
-    "git-url",
+    "gix-url",
     "gix-hash",
     "gix-validate",
     "gix-ref",

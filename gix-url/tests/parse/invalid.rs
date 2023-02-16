@@ -1,4 +1,4 @@
-use git_url::parse::Error;
+use gix_url::parse::Error;
 
 use crate::parse::assert_failure;
 

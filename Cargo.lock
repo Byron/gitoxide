@@ -1284,10 +1284,10 @@ dependencies = [
  "git-command",
  "git-prompt",
  "git-testtools",
- "git-url",
  "gix-config-value",
  "gix-path",
  "gix-sec",
+ "gix-url",
  "serde",
  "thiserror",
 ]
@@ -1810,11 +1810,11 @@ dependencies = [
  "git-credentials",
  "git-pack",
  "git-packetline",
- "git-url",
  "gix-features",
  "gix-hash",
  "gix-quote",
  "gix-sec",
+ "gix-url",
  "maybe-async",
  "pin-project-lite",
  "reqwest",
@@ -1858,20 +1858,6 @@ dependencies = [
 [[package]]
 name = "git-tui"
 version = "0.0.0"
-
-[[package]]
-name = "git-url"
-version = "0.13.2"
-dependencies = [
- "bstr",
- "document-features",
- "gix-features",
- "gix-path",
- "home",
- "serde",
- "thiserror",
- "url",
-]
 
 [[package]]
 name = "git-validate"
@@ -1976,8 +1962,8 @@ dependencies = [
  "git-commitgraph",
  "git-pack",
  "git-transport",
- "git-url",
  "gix",
+ "gix-url",
  "itertools",
  "jwalk",
  "mime_guess",
@@ -2010,7 +1996,6 @@ dependencies = [
  "git-testtools",
  "git-transport",
  "git-traverse 0.22.1",
- "git-url",
  "git-worktree 0.12.2",
  "gix-actor",
  "gix-attributes",
@@ -2025,6 +2010,7 @@ dependencies = [
  "gix-ref",
  "gix-sec",
  "gix-tempfile",
+ "gix-url",
  "gix-validate",
  "is_ci",
  "log",
@@ -2314,6 +2300,20 @@ dependencies = [
  "signal-hook",
  "signal-hook-registry",
  "tempfile",
+]
+
+[[package]]
+name = "gix-url"
+version = "0.13.2"
+dependencies = [
+ "bstr",
+ "document-features",
+ "gix-features",
+ "gix-path",
+ "home",
+ "serde",
+ "thiserror",
+ "url",
 ]
 
 [[package]]

@@ -48,7 +48,7 @@ pub(crate) struct SchemePermission {
     /// The general allow value from `protocol.allow`.
     allow: Option<Allow>,
     /// Per scheme allow information
-    allow_per_scheme: BTreeMap<git_url::Scheme, Allow>,
+    allow_per_scheme: BTreeMap<gix_url::Scheme, Allow>,
 }
 
 /// Init
@@ -72,7 +72,7 @@ impl SchemePermission {
                         scheme
                             .to_str()
                             .ok()
-                            .and_then(|scheme| git_url::Scheme::try_from(scheme).ok().map(|scheme| (section, scheme)))
+                            .and_then(|scheme| gix_url::Scheme::try_from(scheme).ok().map(|scheme| (section, scheme)))
                     })
                 }) {
                     if let Some(value) = section
@@ -104,10 +104,10 @@ impl SchemePermission {
 
 /// Access
 impl SchemePermission {
-    pub fn allow(&self, scheme: &git_url::Scheme) -> bool {
+    pub fn allow(&self, scheme: &gix_url::Scheme) -> bool {
         self.allow_per_scheme.get(scheme).or(self.allow.as_ref()).map_or_else(
             || {
-                use git_url::Scheme::*;
+                use gix_url::Scheme::*;
                 match scheme {
                     File | Git | Ssh | Http | Https => true,
                     Ext(_) => false,

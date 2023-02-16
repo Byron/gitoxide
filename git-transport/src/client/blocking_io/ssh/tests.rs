@@ -174,7 +174,7 @@ mod program_kind {
 
         #[test]
         fn disallow_shell_is_honored() -> Result {
-            let url = git_url::parse("ssh://host/path".into()).expect("valid url");
+            let url = gix_url::parse("ssh://host/path".into()).expect("valid url");
 
             let disallow_shell = false;
             let prepare =
@@ -200,7 +200,7 @@ mod program_kind {
             version: Protocol,
         ) -> std::result::Result<git_command::Prepare, ssh::invocation::Error> {
             let ssh_cmd = kind.exe().unwrap_or_else(|| OsStr::new("simple"));
-            let url = git_url::parse(url.into()).expect("valid url");
+            let url = gix_url::parse(url.into()).expect("valid url");
             kind.prepare_invocation(ssh_cmd, &url, version, false)
         }
         fn call(kind: ProgramKind, url: &str, version: Protocol) -> git_command::Prepare {

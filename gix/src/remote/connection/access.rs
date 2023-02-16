@@ -46,7 +46,7 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
     /// default way of handling credentials, which they can call as fallback.
     pub fn configured_credentials(
         &self,
-        url: git_url::Url,
+        url: gix_url::Url,
     ) -> Result<AuthenticateFn<'static>, crate::config::credential_helpers::Error> {
         let (mut cascade, _action_with_normalized_url, prompt_opts) =
             self.remote.repo.config_snapshot().credential_helpers(url)?;

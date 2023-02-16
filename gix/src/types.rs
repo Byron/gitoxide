@@ -184,13 +184,13 @@ pub struct Remote<'repo> {
     pub(crate) name: Option<remote::Name<'static>>,
     /// The url of the host to talk to, after application of replacements. If it is unset, the `push_url` must be set.
     /// and fetches aren't possible.
-    pub(crate) url: Option<git_url::Url>,
+    pub(crate) url: Option<gix_url::Url>,
     /// The rewritten `url`, if it was rewritten.
-    pub(crate) url_alias: Option<git_url::Url>,
+    pub(crate) url_alias: Option<gix_url::Url>,
     /// The url to use for pushing specifically.
-    pub(crate) push_url: Option<git_url::Url>,
+    pub(crate) push_url: Option<gix_url::Url>,
     /// The rewritten `push_url`, if it was rewritten.
-    pub(crate) push_url_alias: Option<git_url::Url>,
+    pub(crate) push_url_alias: Option<gix_url::Url>,
     /// Refspecs for use when fetching.
     pub(crate) fetch_specs: Vec<git_refspec::RefSpec>,
     /// Refspecs for use when pushing.

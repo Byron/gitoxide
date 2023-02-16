@@ -46,7 +46,7 @@ impl Snapshot<'_> {
     // TODO: when dealing with `http.*.*` configuration, generalize this algorithm as needed and support precedence.
     pub fn credential_helpers(
         &self,
-        mut url: git_url::Url,
+        mut url: gix_url::Url,
     ) -> Result<
         (
             git_credentials::helper::Cascade,
@@ -68,9 +68,9 @@ impl Snapshot<'_> {
         {
             for section in credential_sections {
                 let section = match section.header().subsection_name() {
-                    Some(pattern) => git_url::parse(pattern).ok().and_then(|mut pattern| {
+                    Some(pattern) => gix_url::parse(pattern).ok().and_then(|mut pattern| {
                         normalize(&mut pattern);
-                        let is_http = matches!(pattern.scheme, git_url::Scheme::Https | git_url::Scheme::Http);
+                        let is_http = matches!(pattern.scheme, gix_url::Scheme::Https | gix_url::Scheme::Http);
                         let scheme = &pattern.scheme;
                         let host = pattern.host();
                         let ports = is_http
@@ -150,7 +150,7 @@ impl Snapshot<'_> {
                 programs,
                 use_http_path,
                 // The default ssh implementation uses binaries that do their own auth, so our passwords aren't used.
-                query_user_only: url.scheme == git_url::Scheme::Ssh,
+                query_user_only: url.scheme == gix_url::Scheme::Ssh,
                 ..Default::default()
             },
             git_credentials::helper::Action::get_for_url(url.to_bstring()),
@@ -176,7 +176,7 @@ fn host_matches(pattern: Option<&str>, host: Option<&str>) -> bool {
     }
 }
 
-fn normalize(url: &mut git_url::Url) {
+fn normalize(url: &mut gix_url::Url) {
     if !url.path_is_root() && url.path.ends_with(b"/") {
         url.path.pop();
     }

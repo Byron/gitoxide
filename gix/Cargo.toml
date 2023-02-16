@@ -63,7 +63,7 @@ serde1 = [  "serde",
             "git-odb/serde1",
             "git-index/serde1",
             "git-mailmap/serde1",
-            "git-url/serde1",
+            "gix-url/serde1",
             "gix-attributes/serde1",
             "git-revision/serde1",
             "git-credentials/serde1" ]
@@ -108,7 +108,7 @@ git-pack = { version = "^0.30.2", path = "../git-pack", features = ["object-cach
 git-revision = { version = "^0.10.3", path = "../git-revision" }
 
 gix-path = { version = "^0.7.1", path = "../gix-path" }
-git-url = { version = "^0.13.2", path = "../git-url" }
+gix-url = { version = "^0.13.2", path = "../gix-url" }
 git-traverse = { version = "^0.22.1", path = "../git-traverse" }
 git-protocol = { version = "^0.26.3", path = "../git-protocol", optional = true }
 git-transport = { version = "^0.25.4", path = "../git-transport", optional = true }

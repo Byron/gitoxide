@@ -91,7 +91,7 @@ check: ## Build all code in suitable configurations
 					   && cargo check --features blocking-io \
 					   && cargo check --features async-io
 	cd git-packetline && if cargo check --all-features 2>/dev/null; then false; else true; fi
-	cd git-url && cargo check --all-features \
+	cd gix-url && cargo check --all-features \
 			   && cargo check
 	cd gix-features && cargo check --all-features \
 			   && cargo check --features parallel \

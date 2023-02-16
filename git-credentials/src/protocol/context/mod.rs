@@ -56,7 +56,7 @@ mod mutate {
         /// normally this isn't the case.
         #[allow(clippy::result_large_err)]
         pub fn destructure_url_in_place(&mut self, use_http_path: bool) -> Result<&mut Self, protocol::Error> {
-            let url = git_url::parse(self.url.as_ref().ok_or(protocol::Error::UrlMissing)?.as_ref())?;
+            let url = gix_url::parse(self.url.as_ref().ok_or(protocol::Error::UrlMissing)?.as_ref())?;
             self.protocol = Some(url.scheme.as_str().into());
             self.username = url.user().map(ToOwned::to_owned);
             self.host = url.host().map(ToOwned::to_owned).map(|mut host| {
@@ -66,7 +66,7 @@ mod mutate {
                 }
                 host
             });
-            if !matches!(url.scheme, git_url::Scheme::Http | git_url::Scheme::Https) || use_http_path {
+            if !matches!(url.scheme, gix_url::Scheme::Http | gix_url::Scheme::Https) || use_http_path {
                 let path = url.path.trim_with(|b| b == '/');
                 self.path = (!path.is_empty()).then(|| path.into());
             }
