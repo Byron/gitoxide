@@ -25,11 +25,11 @@ impl index::File {
     ///
     /// The `object_hash` is a way to read (and write) the same file format with different hashes, as the hash kind
     /// isn't stored within the file format itself.
-    pub fn at(path: impl AsRef<Path>, object_hash: git_hash::Kind) -> Result<index::File, Error> {
+    pub fn at(path: impl AsRef<Path>, object_hash: gix_hash::Kind) -> Result<index::File, Error> {
         Self::at_inner(path.as_ref(), object_hash)
     }
 
-    fn at_inner(path: &Path, object_hash: git_hash::Kind) -> Result<index::File, Error> {
+    fn at_inner(path: &Path, object_hash: gix_hash::Kind) -> Result<index::File, Error> {
         let data = crate::mmap::read_only(path).map_err(|source| Error::Io {
             source,
             path: path.to_owned(),

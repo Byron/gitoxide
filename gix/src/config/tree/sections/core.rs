@@ -202,7 +202,7 @@ mod abbrev {
         pub fn try_into_abbreviation(
             &'static self,
             hex_len_str: Cow<'_, BStr>,
-            object_hash: git_hash::Kind,
+            object_hash: gix_hash::Kind,
         ) -> Result<Option<usize>, Error> {
             let max = object_hash.len_in_hex() as u8;
             if hex_len_str.trim().is_empty() {
@@ -286,7 +286,7 @@ mod validate {
     impl keys::Validate for Abbrev {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
             // TODO: when there is options, validate against all hashes and assure all fail to trigger a validation failure.
-            super::Core::ABBREV.try_into_abbreviation(value.into(), git_hash::Kind::Sha1)?;
+            super::Core::ABBREV.try_into_abbreviation(value.into(), gix_hash::Kind::Sha1)?;
             Ok(())
         }
     }

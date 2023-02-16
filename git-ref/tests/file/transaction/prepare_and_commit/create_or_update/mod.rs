@@ -1,6 +1,5 @@
 use std::convert::TryInto;
 
-use git_hash::ObjectId;
 use git_lock::acquire::Fail;
 use git_object::bstr::{BString, ByteSlice};
 use git_odb::Find;
@@ -13,6 +12,7 @@ use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target,
 };
+use gix_hash::ObjectId;
 
 use crate::{
     file::{
@@ -107,7 +107,7 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
 fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
     let (_keep, store) = empty_store()?;
 
-    let new_target = Target::Peeled(git_hash::Kind::Sha1.null());
+    let new_target = Target::Peeled(gix_hash::Kind::Sha1.null());
     let res = store.transaction().prepare(
         Some(RefEdit {
             change: Change::Update {
@@ -142,7 +142,7 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
         Some(RefEdit {
             change: Change::Update {
                 log: LogChange::default(),
-                new: Target::Peeled(git_hash::Kind::Sha1.null()),
+                new: Target::Peeled(gix_hash::Kind::Sha1.null()),
                 expected: PreviousValue::MustExistAndMatch(Target::Peeled(hex_to_id(
                     "28ce6a8b26aa170e1de65536fe8abe1832bd3242",
                 ))),
@@ -166,14 +166,14 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
 #[test]
 fn the_existing_must_match_constraint_allow_non_existing_references_to_be_created() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let expected = PreviousValue::ExistingMustMatch(Target::Peeled(ObjectId::empty_tree(git_hash::Kind::Sha1)));
+    let expected = PreviousValue::ExistingMustMatch(Target::Peeled(ObjectId::empty_tree(gix_hash::Kind::Sha1)));
     let edits = store
         .transaction()
         .prepare(
             Some(RefEdit {
                 change: Change::Update {
                     log: LogChange::default(),
-                    new: Target::Peeled(git_hash::Kind::Sha1.null()),
+                    new: Target::Peeled(gix_hash::Kind::Sha1.null()),
                     expected: expected.clone(),
                 },
                 name: "refs/heads/new".try_into()?,
@@ -189,7 +189,7 @@ fn the_existing_must_match_constraint_allow_non_existing_references_to_be_create
         vec![RefEdit {
             change: Change::Update {
                 log: LogChange::default(),
-                new: Target::Peeled(git_hash::Kind::Sha1.null()),
+                new: Target::Peeled(gix_hash::Kind::Sha1.null()),
                 expected,
             },
             name: "refs/heads/new".try_into()?,
@@ -210,7 +210,7 @@ fn the_existing_must_match_constraint_requires_existing_references_to_have_the_g
         Some(RefEdit {
             change: Change::Update {
                 log: LogChange::default(),
-                new: Target::Peeled(git_hash::Kind::Sha1.null()),
+                new: Target::Peeled(gix_hash::Kind::Sha1.null()),
                 expected: PreviousValue::ExistingMustMatch(Target::Peeled(hex_to_id(
                     "28ce6a8b26aa170e1de65536fe8abe1832bd3242",
                 ))),
@@ -274,7 +274,7 @@ fn reference_with_must_exist_constraint_must_exist_already_with_any_value() -> c
     let target = head.target;
     let previous_reflog_count = reflog_lines(&store, "HEAD")?.len();
 
-    let new_target = Target::Peeled(ObjectId::empty_tree(git_hash::Kind::Sha1));
+    let new_target = Target::Peeled(ObjectId::empty_tree(gix_hash::Kind::Sha1));
     let edits = store
         .transaction()
         .prepare(
@@ -564,7 +564,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         for ref_name in &["HEAD", referent] {
             match reflog_writemode {
                 WriteReflog::Normal | WriteReflog::Always => {
-                    let expected_line = log_line(git_hash::Kind::Sha1.null(), new_oid, "an actual change");
+                    let expected_line = log_line(gix_hash::Kind::Sha1.null(), new_oid, "an actual change");
                     assert_eq!(reflog_lines(&store, ref_name)?, vec![expected_line]);
                 }
                 WriteReflog::Disable => {

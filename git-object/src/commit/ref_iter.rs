@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use bstr::BStr;
-use git_hash::{oid, ObjectId};
+use gix_hash::{oid, ObjectId};
 use nom::{
     branch::alt,
     bytes::complete::is_not,
@@ -57,7 +57,7 @@ impl<'a> CommitRefIter<'a> {
     /// Return all parent_ids as iterator.
     ///
     /// Parsing errors are ignored quietly.
-    pub fn parent_ids(self) -> impl Iterator<Item = git_hash::ObjectId> + 'a {
+    pub fn parent_ids(self) -> impl Iterator<Item = gix_hash::ObjectId> + 'a {
         self.filter_map(|t| match t {
             Ok(Token::Parent { id }) => Some(id),
             _ => None,

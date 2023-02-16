@@ -92,9 +92,9 @@ impl Default for Version {
 
 impl Version {
     /// The kind of hash to produce to be compatible to this kind of index
-    pub fn hash(&self) -> git_hash::Kind {
+    pub fn hash(&self) -> gix_hash::Kind {
         match self {
-            Version::V1 | Version::V2 => git_hash::Kind::Sha1,
+            Version::V1 | Version::V2 => gix_hash::Kind::Sha1,
         }
     }
 }
@@ -116,7 +116,7 @@ pub struct File {
     num_objects: u32,
     fan: [u32; FAN_LEN],
     hash_len: usize,
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
 }
 
 /// Basic file information
@@ -134,7 +134,7 @@ impl File {
         self.num_objects
     }
     /// The kind of hash we assume
-    pub fn object_hash(&self) -> git_hash::Kind {
+    pub fn object_hash(&self) -> gix_hash::Kind {
         self.object_hash
     }
 }

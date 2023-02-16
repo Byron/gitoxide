@@ -43,11 +43,11 @@ pub(crate) enum InternalRef {
     /// A ref pointing to a `tag` object, which in turns points to an `object`, usually a commit
     Peeled {
         path: BString,
-        tag: git_hash::ObjectId,
-        object: git_hash::ObjectId,
+        tag: gix_hash::ObjectId,
+        object: gix_hash::ObjectId,
     },
     /// A ref pointing to a commit object
-    Direct { path: BString, object: git_hash::ObjectId },
+    Direct { path: BString, object: gix_hash::ObjectId },
     /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
     Symbolic {
         path: BString,
@@ -56,7 +56,7 @@ pub(crate) enum InternalRef {
         ///
         /// The latter is more of an edge case, please [this issue][#205] for details.
         target: Option<BString>,
-        object: git_hash::ObjectId,
+        object: gix_hash::ObjectId,
     },
     /// extracted from V1 capabilities, which contain some important symbolic refs along with their targets
     /// These don't contain the Id
@@ -64,7 +64,7 @@ pub(crate) enum InternalRef {
 }
 
 impl InternalRef {
-    fn unpack_direct(self) -> Option<(BString, git_hash::ObjectId)> {
+    fn unpack_direct(self) -> Option<(BString, gix_hash::ObjectId)> {
         match self {
             InternalRef::Direct { path, object } => Some((path, object)),
             _ => None,
@@ -138,11 +138,11 @@ pub(in crate::handshake::refs) fn parse_v1(
             out_refs.push(InternalRef::Peeled {
                 path: previous_path,
                 tag,
-                object: git_hash::ObjectId::from_hex(hex_hash.as_bytes())?,
+                object: gix_hash::ObjectId::from_hex(hex_hash.as_bytes())?,
             });
         }
         None => {
-            let object = git_hash::ObjectId::from_hex(hex_hash.as_bytes())?;
+            let object = gix_hash::ObjectId::from_hex(hex_hash.as_bytes())?;
             match out_refs
                 .iter()
                 .take(num_initial_out_refs)
@@ -174,7 +174,7 @@ pub(in crate::handshake::refs) fn parse_v2(line: &BStr) -> Result<Ref, Error> {
             let id = if hex_hash == b"unborn" {
                 None
             } else {
-                Some(git_hash::ObjectId::from_hex(hex_hash.as_bytes())?)
+                Some(gix_hash::ObjectId::from_hex(hex_hash.as_bytes())?)
             };
             if path.is_empty() {
                 return Err(Error::MalformedV2RefLine(trimmed.to_owned().into()));
@@ -189,7 +189,7 @@ pub(in crate::handshake::refs) fn parse_v2(line: &BStr) -> Result<Ref, Error> {
                         match attribute {
                             b"peeled" => Ref::Peeled {
                                 full_ref_name: path.into(),
-                                object: git_hash::ObjectId::from_hex(value.as_bytes())?,
+                                object: gix_hash::ObjectId::from_hex(value.as_bytes())?,
                                 tag: id.ok_or(Error::InvariantViolation {
                                     message: "got 'unborn' as tag target",
                                 })?,

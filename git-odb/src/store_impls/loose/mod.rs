@@ -11,7 +11,7 @@ pub struct Store {
     /// The directory in which objects are stored, containing 256 folders representing the hashes first byte.
     pub(crate) path: PathBuf,
     /// The kind of hash we should assume during iteration and when writing new objects.
-    pub(crate) object_hash: git_hash::Kind,
+    pub(crate) object_hash: gix_hash::Kind,
 }
 
 /// Initialization
@@ -22,7 +22,7 @@ impl Store {
     /// In a git repository, this would be `.git/objects`.
     ///
     /// The `object_hash` determines which hash to use when writing, finding or iterating objects.
-    pub fn at(objects_directory: impl Into<PathBuf>, object_hash: git_hash::Kind) -> Store {
+    pub fn at(objects_directory: impl Into<PathBuf>, object_hash: gix_hash::Kind) -> Store {
         Store {
             path: objects_directory.into(),
             object_hash,
@@ -35,13 +35,13 @@ impl Store {
     }
 
     /// Return the kind of hash we would iterate and write.
-    pub fn object_hash(&self) -> git_hash::Kind {
+    pub fn object_hash(&self) -> gix_hash::Kind {
         self.object_hash
     }
 }
 
-fn hash_path(id: &git_hash::oid, mut root: PathBuf) -> PathBuf {
-    let mut hex = git_hash::Kind::hex_buf();
+fn hash_path(id: &gix_hash::oid, mut root: PathBuf) -> PathBuf {
+    let mut hex = gix_hash::Kind::hex_buf();
     let hex_len = id.hex_to_buf(hex.as_mut());
     let buf = std::str::from_utf8(&hex[..hex_len]).expect("ascii only in hex");
     root.push(&buf[..2]);
@@ -56,7 +56,7 @@ pub mod iter;
 ///
 pub mod verify;
 
-/// The type for an iterator over `Result<git_hash::ObjectId, Error>)`
+/// The type for an iterator over `Result<gix_hash::ObjectId, Error>)`
 pub struct Iter {
     inner: fs::walkdir::DirEntryIter,
     hash_hex_len: usize,

@@ -10,13 +10,13 @@ use crate::{file::WriteReflog, FullNameRef};
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
-fn hex_to_id(hex: &str) -> git_hash::ObjectId {
-    git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+fn hex_to_id(hex: &str) -> gix_hash::ObjectId {
+    gix_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
 }
 
 fn empty_store(writemode: WriteReflog) -> Result<(TempDir, file::Store)> {
     let dir = TempDir::new()?;
-    let store = file::Store::at(dir.path(), writemode, git_hash::Kind::Sha1);
+    let store = file::Store::at(dir.path(), writemode, gix_hash::Kind::Sha1);
     Ok((dir, store))
 }
 
@@ -74,7 +74,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
                 assert_eq!(
                     reflog_lines(&store, full_name_str, &mut buf)?,
                     vec![crate::log::Line {
-                        previous_oid: git_hash::Kind::Sha1.null(),
+                        previous_oid: gix_hash::Kind::Sha1.null(),
                         new_oid: new,
                         signature: committer.clone(),
                         message: "the message".into()

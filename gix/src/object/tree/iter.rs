@@ -26,7 +26,7 @@ impl<'repo, 'a> EntryRef<'repo, 'a> {
     }
 
     /// Return the entries id, without repository connection.
-    pub fn oid(&self) -> git_hash::ObjectId {
+    pub fn oid(&self) -> gix_hash::ObjectId {
         self.inner.oid.to_owned()
     }
 }

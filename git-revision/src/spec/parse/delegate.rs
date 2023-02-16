@@ -16,7 +16,7 @@ pub trait Revision {
     /// An object prefix to disambiguate, returning `None` if it is ambiguous or wasn't found at all.
     ///
     /// If `hint` is set, it should be used to disambiguate multiple objects with the same prefix.
-    fn disambiguate_prefix(&mut self, prefix: git_hash::Prefix, hint: Option<PrefixHint<'_>>) -> Option<()>;
+    fn disambiguate_prefix(&mut self, prefix: gix_hash::Prefix, hint: Option<PrefixHint<'_>>) -> Option<()>;
 
     /// Lookup the reflog of the previously set reference, or dereference `HEAD` to its reference
     /// to obtain the ref name (as opposed to `HEAD` itself).

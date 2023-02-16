@@ -9,7 +9,7 @@
 use std::{ops::Range, path::PathBuf};
 
 use filetime::FileTime;
-pub use git_hash as hash;
+pub use gix_hash as hash;
 
 ///
 pub mod file;
@@ -51,7 +51,7 @@ pub struct Entry {
     /// The filesystem stat information for the file on disk.
     pub stat: entry::Stat,
     /// The object id for this entry's ODB representation (assuming it's up-to-date with it).
-    pub id: git_hash::ObjectId,
+    pub id: gix_hash::ObjectId,
     /// Additional flags for use in algorithms and for efficiently storing stage information.
     pub flags: entry::Flags,
     /// The kind of item this entry represents - it's not all blobs in the index anymore.
@@ -69,7 +69,7 @@ pub struct File {
     /// The path from which the index was read or to which it is supposed to be written.
     pub(crate) path: PathBuf,
     /// The checksum of all bytes prior to the checksum itself.
-    pub(crate) checksum: Option<git_hash::ObjectId>,
+    pub(crate) checksum: Option<gix_hash::ObjectId>,
 }
 
 /// The type to use and store paths to all entries.
@@ -86,7 +86,7 @@ pub struct State {
     /// The kind of object hash used when storing the underlying file.
     ///
     /// Empty states for example won't have a single object id, so deduction of the hash used isn't always possible.
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
     /// The time at which the state was created, indicating its freshness compared to other files on disk.
     ///
     /// Note that on platforms that only have a precisions of a second for this time, we will treat all entries with the

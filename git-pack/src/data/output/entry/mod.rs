@@ -1,6 +1,6 @@
 use std::{convert::TryFrom, io::Write};
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{data, data::output, find};
 
@@ -43,7 +43,7 @@ impl output::Entry {
     /// An object which can be identified as invalid easily which happens if objects didn't exist even if they were referred to.
     pub fn invalid() -> output::Entry {
         output::Entry {
-            id: git_hash::Kind::Sha1.null(), // NOTE: the actual object hash used in the repo doesn't matter here, this is a sentinel value.
+            id: gix_hash::Kind::Sha1.null(), // NOTE: the actual object hash used in the repo doesn't matter here, this is a sentinel value.
             kind: Kind::Base(git_object::Kind::Blob),
             decompressed_size: 0,
             compressed_data: vec![],

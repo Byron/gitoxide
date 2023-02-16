@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-use git_hash::ObjectId;
 use git_object::bstr::{BStr, BString};
+use gix_hash::ObjectId;
 use memmap2::Mmap;
 
 use crate::{file, transaction::RefEdit, FullNameRef};
@@ -55,7 +55,7 @@ pub struct Reference<'a> {
 impl<'a> Reference<'a> {
     /// Decode the target as object
     pub fn target(&self) -> ObjectId {
-        git_hash::ObjectId::from_hex(self.target).expect("parser validation")
+        gix_hash::ObjectId::from_hex(self.target).expect("parser validation")
     }
 
     /// Decode the object this reference is ultimately pointing to. Note that this is

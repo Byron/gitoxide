@@ -151,7 +151,7 @@ pub(crate) mod function {
     }
 
     fn looks_like_object_hash(spec: &BStr) -> bool {
-        spec.len() >= git_hash::Kind::shortest().len_in_hex() && spec.iter().all(|b| b.is_ascii_hexdigit())
+        spec.len() >= gix_hash::Kind::shortest().len_in_hex() && spec.iter().all(|b| b.is_ascii_hexdigit())
     }
 
     fn validated(spec: Option<&BStr>, allow_revspecs: bool) -> Result<(Option<&BStr>, bool), Error> {
@@ -208,7 +208,7 @@ mod revparse {
             Some(())
         }
 
-        fn disambiguate_prefix(&mut self, _prefix: git_hash::Prefix, _hint: Option<PrefixHint<'_>>) -> Option<()> {
+        fn disambiguate_prefix(&mut self, _prefix: gix_hash::Prefix, _hint: Option<PrefixHint<'_>>) -> Option<()> {
             Some(())
         }
 

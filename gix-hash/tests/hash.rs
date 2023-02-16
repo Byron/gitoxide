@@ -1,4 +1,4 @@
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 mod kind;
 mod object_id;

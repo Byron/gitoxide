@@ -54,7 +54,7 @@ impl TryFrom<&Path> for File {
             path: path.to_owned(),
         })?;
 
-        const TRAILER_LEN: usize = git_hash::Kind::shortest().len_in_bytes(); /* trailing hash */
+        const TRAILER_LEN: usize = gix_hash::Kind::shortest().len_in_bytes(); /* trailing hash */
         if data.len()
             < Self::HEADER_LEN
                 + git_chunk::file::Index::size_for_entries(4 /*index names, fan, offsets, oids*/)
@@ -80,7 +80,7 @@ impl TryFrom<&Path> for File {
             };
 
             let (object_hash, data) = data.split_at(1);
-            let object_hash = git_hash::Kind::try_from(object_hash[0])
+            let object_hash = gix_hash::Kind::try_from(object_hash[0])
                 .map_err(|unknown| Error::UnsupportedObjectHash { kind: unknown })?;
             let (num_chunks, data) = data.split_at(1);
             let num_chunks = num_chunks[0];

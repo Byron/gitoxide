@@ -70,7 +70,6 @@ pub use git_actor as actor;
 pub use git_attributes as attrs;
 pub use git_credentials as credentials;
 pub use git_date as date;
-pub use git_hash as hash;
 #[doc(inline)]
 pub use git_index as index;
 pub use git_lock as lock;
@@ -91,6 +90,7 @@ pub use gix_features as features;
 use gix_features::threading::OwnShared;
 pub use gix_features::{parallel, progress::Progress, threading};
 pub use gix_glob as glob;
+pub use gix_hash as hash;
 pub use gix_sec as sec;
 pub use hash::{oid, ObjectId};
 

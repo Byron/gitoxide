@@ -68,7 +68,7 @@ check: ## Build all code in suitable configurations
                      && cargo check --features blocking-client \
                      && cargo check --features async-client
 	cd gitoxide-core && if cargo check --all-features 2>/dev/null; then false; else true; fi
-	cd git-hash && cargo check --all-features \
+	cd gix-hash && cargo check --all-features \
 				&& cargo check
 	cd git-object && cargo check --all-features \
                   && cargo check --features verbose-object-parsing-errors

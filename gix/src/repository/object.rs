@@ -1,12 +1,12 @@
 #![allow(clippy::result_large_err)]
 use std::convert::TryInto;
 
-use git_hash::ObjectId;
 use git_odb::{Find, FindExt, Write};
 use git_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
 };
+use gix_hash::ObjectId;
 
 use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference, Tree};
 
@@ -23,7 +23,7 @@ impl crate::Repository {
     /// Loose object could be partially decoded, even though that's not implemented.
     pub fn find_object(&self, id: impl Into<ObjectId>) -> Result<Object<'_>, object::find::existing::Error> {
         let id = id.into();
-        if id == git_hash::ObjectId::empty_tree(self.object_hash()) {
+        if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
             return Ok(Object {
                 id,
                 kind: git_object::Kind::Tree,
@@ -39,7 +39,7 @@ impl crate::Repository {
     /// Try to find the object with `id` or return `None` it it wasn't found.
     pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::Error> {
         let id = id.into();
-        if id == git_hash::ObjectId::empty_tree(self.object_hash()) {
+        if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
             return Ok(Some(Object {
                 id,
                 kind: git_object::Kind::Tree,
@@ -95,7 +95,7 @@ impl crate::Repository {
     pub fn tag(
         &self,
         name: impl AsRef<str>,
-        target: impl AsRef<git_hash::oid>,
+        target: impl AsRef<gix_hash::oid>,
         target_kind: git_object::Kind,
         tagger: Option<git_actor::SignatureRef<'_>>,
         message: impl AsRef<str>,
@@ -207,7 +207,7 @@ impl crate::Repository {
     /// Note that it is special and doesn't physically exist in the object database even though it can be returned.
     /// This means that this object can be used in an uninitialized, empty repository which would report to have no objects at all.
     pub fn empty_tree(&self) -> Tree<'_> {
-        self.find_object(git_hash::ObjectId::empty_tree(self.object_hash()))
+        self.find_object(gix_hash::ObjectId::empty_tree(self.object_hash()))
             .expect("always present")
             .into_tree()
     }

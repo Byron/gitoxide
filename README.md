@@ -56,7 +56,7 @@ is usable to some extent.
 
 * **usable** _(with rough but complete docs, possibly incomplete functionality)_
   * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
-  * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
+  * [gix-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hash)
   * [git-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-object)
   * [git-validate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-validate)
   * [git-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-url)

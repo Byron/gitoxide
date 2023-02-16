@@ -1,7 +1,7 @@
 mod from_hex {
 
     mod valid {
-        use git_hash::ObjectId;
+        use gix_hash::ObjectId;
 
         #[test]
         fn twenty_hex_chars_lowercase() {
@@ -15,7 +15,7 @@ mod from_hex {
     }
 
     mod invalid {
-        use git_hash::{decode, ObjectId};
+        use gix_hash::{decode, ObjectId};
 
         #[test]
         fn non_hex_characters() {

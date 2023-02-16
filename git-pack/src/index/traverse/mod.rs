@@ -45,7 +45,7 @@ impl Default for Options<fn() -> crate::cache::Never> {
 /// The outcome of the [`traverse()`][index::File::traverse()] method.
 pub struct Outcome<P> {
     /// The checksum obtained when hashing the file, which matched the checksum contained within the file.
-    pub actual_index_checksum: git_hash::ObjectId,
+    pub actual_index_checksum: gix_hash::ObjectId,
     /// The statistics obtained during traversal.
     pub statistics: Statistics,
     /// The input progress to allow reuse.
@@ -128,7 +128,7 @@ impl index::File {
         pack_progress: impl Progress,
         index_progress: impl Progress,
         should_interrupt: &AtomicBool,
-    ) -> Result<git_hash::ObjectId, Error<E>>
+    ) -> Result<gix_hash::ObjectId, Error<E>>
     where
         E: std::error::Error + Send + Sync + 'static,
     {
@@ -220,7 +220,7 @@ where
         hasher.update(&git_object::encode::loose_header(object_kind, decompressed.len()));
         hasher.update(decompressed);
 
-        let actual_oid = git_hash::ObjectId::from(hasher.digest());
+        let actual_oid = gix_hash::ObjectId::from(hasher.digest());
         if actual_oid != index_entry.oid {
             return Err(Error::PackObjectMismatch {
                 actual: actual_oid,

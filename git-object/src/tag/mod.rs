@@ -16,7 +16,7 @@ impl<'a> TagRef<'a> {
             .map_err(crate::decode::Error::from)
     }
     /// The object this tag points to as `Id`.
-    pub fn target(&self) -> git_hash::ObjectId {
-        git_hash::ObjectId::from_hex(self.target).expect("prior validation")
+    pub fn target(&self) -> gix_hash::ObjectId {
+        gix_hash::ObjectId::from_hex(self.target).expect("prior validation")
     }
 }

@@ -5,7 +5,7 @@
 //! Refs are the way to keep track of objects and come in two flavors.
 //!
 //! * symbolic refs are pointing to another reference
-//! * peeled refs point to the an object by its [ObjectId][git_hash::ObjectId]
+//! * peeled refs point to the an object by its [ObjectId][gix_hash::ObjectId]
 //!
 //! They can be identified by a relative path and stored in various flavors.
 //!
@@ -25,9 +25,9 @@
 
 use std::borrow::Cow;
 
-use git_hash::{oid, ObjectId};
 pub use git_object::bstr;
 use git_object::bstr::{BStr, BString};
+use gix_hash::{oid, ObjectId};
 
 #[path = "store/mod.rs"]
 mod store_impl;

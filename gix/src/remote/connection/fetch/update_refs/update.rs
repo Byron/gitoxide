@@ -55,7 +55,7 @@ pub enum Mode {
     /// The object id to set the target reference to could not be found.
     RejectedSourceObjectNotFound {
         /// The id of the object that didn't exist in the object database, even though it should since it should be part of the pack.
-        id: git_hash::ObjectId,
+        id: gix_hash::ObjectId,
     },
     /// Tags can never be overwritten (whether the new object would be a fast-forward or not, or unchanged), unless the refspec
     /// specifies force.

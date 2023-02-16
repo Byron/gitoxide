@@ -1063,7 +1063,7 @@ With changes to `git-ref`, what follows is all the adjustments made to simplify 
 
 ## v0.11.0 (2021-10-19)
 
-A maintenance release to properly dealing with previously breaking changes in `git-hash`.
+A maintenance release to properly dealing with previously breaking changes in `gix-hash`.
 
 ## v0.10.0 (2021-10-15)
 

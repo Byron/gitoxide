@@ -89,7 +89,7 @@ pub(crate) fn parse_object_caches(
 
 pub(crate) fn parse_core_abbrev(
     config: &git_config::File<'static>,
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
 ) -> Result<Option<usize>, Error> {
     Ok(config
         .string_by_key("core.abbrev")

@@ -109,9 +109,9 @@ pub struct CommitRefIter<'a> {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Commit {
     /// The hash of recorded working tree state.
-    pub tree: git_hash::ObjectId,
+    pub tree: gix_hash::ObjectId,
     /// Hash of each parent commit. Empty for the first commit in repository.
-    pub parents: SmallVec<[git_hash::ObjectId; 1]>,
+    pub parents: SmallVec<[gix_hash::ObjectId; 1]>,
     /// Who wrote this commit.
     pub author: git_actor::Signature,
     /// Who committed this commit.
@@ -160,7 +160,7 @@ pub struct TagRefIter<'a> {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tag {
     /// The hash this tag is pointing to.
-    pub target: git_hash::ObjectId,
+    pub target: gix_hash::ObjectId,
     /// The kind of object this tag is pointing to.
     pub target_kind: Kind,
     /// The name of the tag, e.g. "v1.0".

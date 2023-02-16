@@ -11,8 +11,8 @@ mod error {
         Io(#[from] std::io::Error),
         #[error("Index checksum should have been {expected}, but was {actual}")]
         ChecksumMismatch {
-            actual: git_hash::ObjectId,
-            expected: git_hash::ObjectId,
+            actual: gix_hash::ObjectId,
+            expected: gix_hash::ObjectId,
         },
         #[error("Checksum of in-memory index wasn't computed yet")]
         NoChecksum,

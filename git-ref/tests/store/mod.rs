@@ -6,7 +6,7 @@ fn is_send_and_sync() {
         Ok(git_ref::file::Store::at(
             path.join(".git"),
             git_ref::store::WriteReflog::Normal,
-            git_hash::Kind::Sha1,
+            gix_hash::Kind::Sha1,
         ))
     }
 

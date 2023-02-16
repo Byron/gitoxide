@@ -27,7 +27,7 @@ async-client = ["git-transport/async-client", "async-trait", "futures-io", "futu
 
 #! ### Other
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "bstr/serde", "git-transport/serde1", "git-hash/serde1"]
+serde1 = ["serde", "bstr/serde", "git-transport/serde1", "gix-hash/serde1"]
 
 [[test]]
 name = "blocking-client-protocol"
@@ -42,7 +42,7 @@ required-features = ["async-client"]
 [dependencies]
 gix-features = { version = "^0.26.4", path = "../gix-features", features = ["progress"] }
 git-transport = { version = "^0.25.4", path = "../git-transport" }
-git-hash = { version = "^0.10.2", path = "../git-hash" }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 git-credentials = { version = "^0.9.1", path = "../git-credentials" }
 
 thiserror = "1.0.32"

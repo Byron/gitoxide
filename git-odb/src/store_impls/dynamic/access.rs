@@ -8,7 +8,7 @@ impl Store {
     }
 
     /// The kind of object hash to assume when dealing with pack indices and pack data files.
-    pub fn object_hash(&self) -> git_hash::Kind {
+    pub fn object_hash(&self) -> gix_hash::Kind {
         self.object_hash
     }
 
@@ -18,7 +18,7 @@ impl Store {
     }
 
     /// An iterator over replacements from object-ids `X` to `X-replaced` as `(X, X-replaced)`, sorted by the original id `X`.
-    pub fn replacements(&self) -> impl Iterator<Item = (git_hash::ObjectId, git_hash::ObjectId)> + '_ {
+    pub fn replacements(&self) -> impl Iterator<Item = (gix_hash::ObjectId, gix_hash::ObjectId)> + '_ {
         self.replacements.iter().cloned()
     }
 }

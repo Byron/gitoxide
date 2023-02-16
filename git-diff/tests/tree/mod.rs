@@ -1,9 +1,9 @@
 mod changes {
     mod to_obtain_tree {
         use git_diff::tree::{recorder, recorder::Change::*};
-        use git_hash::{oid, ObjectId};
         use git_object::{bstr::ByteSlice, tree::EntryMode, TreeRefIter};
         use git_odb::pack::Find;
+        use gix_hash::{oid, ObjectId};
 
         use crate::hex_to_id;
 

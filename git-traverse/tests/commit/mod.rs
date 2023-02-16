@@ -1,7 +1,7 @@
 mod ancestor {
-    use git_hash::{oid, ObjectId};
     use git_odb::pack::FindExt;
     use git_traverse::commit;
+    use gix_hash::{oid, ObjectId};
 
     use crate::hex_to_id;
 

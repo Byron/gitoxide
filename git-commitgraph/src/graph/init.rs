@@ -22,9 +22,9 @@ pub enum Error {
     #[error("Commit-graph files mismatch: '{}' uses hash {hash1:?}, but '{}' uses hash {hash2:?}", .path1.display(), .path2.display())]
     HashVersionMismatch {
         path1: PathBuf,
-        hash1: git_hash::Kind,
+        hash1: gix_hash::Kind,
         path2: PathBuf,
-        hash2: git_hash::Kind,
+        hash2: gix_hash::Kind,
     },
     #[error("Did not find any files that look like commit graphs at '{}'", .0.display())]
     InvalidPath(PathBuf),

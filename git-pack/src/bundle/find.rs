@@ -1,5 +1,5 @@
 impl crate::Bundle {
-    /// Find an object with the given [`ObjectId`][git_hash::ObjectId] and place its data into `out`.
+    /// Find an object with the given [`ObjectId`][gix_hash::ObjectId] and place its data into `out`.
     ///
     /// [`cache`][crate::cache::DecodeEntry] is used to accelerate the lookup.
     ///
@@ -7,7 +7,7 @@ impl crate::Bundle {
     /// for thin packs, which by now are expected to be resolved already.
     pub fn find<'a>(
         &self,
-        id: impl AsRef<git_hash::oid>,
+        id: impl AsRef<gix_hash::oid>,
         out: &'a mut Vec<u8>,
         cache: &mut impl crate::cache::DecodeEntry,
     ) -> Result<Option<(git_object::Data<'a>, crate::data::entry::Location)>, crate::data::decode::Error> {

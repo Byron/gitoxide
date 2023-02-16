@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
-use git_hash::ObjectId;
 use git_revision::spec::parse::{
     delegate,
     delegate::{PeelTo, Traversal},
 };
 use git_traverse::commit::Sorting;
+use gix_hash::ObjectId;
 
 use crate::{
     bstr::{BStr, ByteSlice},

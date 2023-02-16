@@ -65,13 +65,13 @@ dependencies = [
 name = "gix-features"
 version = "0.22.0"
 dependencies = [
- "git-hash",
+ "gix-hash",
  "libc",
  "sha1_smol",
 ]
 
 [[package]]
-name = "git-hash"
+name = "gix-hash"
 version = "0.9.6"
 dependencies = [
  "hex",
@@ -86,7 +86,7 @@ dependencies = [
  "btoi",
  "git-actor",
  "gix-features",
- "git-hash",
+ "gix-hash",
  "git-validate",
  "hex",
  "itoa",
@@ -101,7 +101,7 @@ version = "0.3.0"
 dependencies = [
  "bstr",
  "git-date",
- "git-hash",
+ "gix-hash",
  "git-object",
  "hash_hasher",
  "thiserror",
@@ -112,7 +112,7 @@ name = "git-revision-fuzz"
 version = "0.0.0"
 dependencies = [
  "bstr",
- "git-hash",
+ "gix-hash",
  "git-revision",
  "libfuzzer-sys",
 ]

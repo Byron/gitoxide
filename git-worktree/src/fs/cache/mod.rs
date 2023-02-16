@@ -2,7 +2,7 @@
 use std::path::{Path, PathBuf};
 
 use bstr::{BStr, ByteSlice};
-use git_hash::oid;
+use gix_hash::oid;
 
 use super::Cache;
 use crate::{fs, fs::PathOidMapping};

@@ -26,7 +26,7 @@ pub use error::Error;
 
 /// An entry suitable for sorting and writing
 pub(crate) struct Entry {
-    pub(crate) id: git_hash::ObjectId,
+    pub(crate) id: gix_hash::ObjectId,
     pub(crate) pack_index: u32,
     pub(crate) pack_offset: crate::data::Offset,
     /// Used for sorting in case of duplicates
@@ -36,13 +36,13 @@ pub(crate) struct Entry {
 /// Options for use in [`multi_index::File::write_from_index_paths()`].
 pub struct Options {
     /// The kind of hash to use for objects and to expect in the input files.
-    pub object_hash: git_hash::Kind,
+    pub object_hash: gix_hash::Kind,
 }
 
 /// The result of [`multi_index::File::write_from_index_paths()`].
 pub struct Outcome<P> {
     /// The calculated multi-index checksum of the file at `multi_index_path`.
-    pub multi_index_checksum: git_hash::ObjectId,
+    pub multi_index_checksum: gix_hash::ObjectId,
     /// The input progress
     pub progress: P,
 }
@@ -216,7 +216,7 @@ impl multi_index::File {
         }
 
         // write trailing checksum
-        let multi_index_checksum: git_hash::ObjectId = out.inner.hash.digest().into();
+        let multi_index_checksum: gix_hash::ObjectId = out.inner.hash.digest().into();
         out.inner.inner.write_all(multi_index_checksum.as_slice())?;
         out.progress.show_throughput(write_start);
 
@@ -230,7 +230,7 @@ impl multi_index::File {
         mut out: impl std::io::Write,
         num_chunks: u8,
         num_indices: u32,
-        object_hash: git_hash::Kind,
+        object_hash: gix_hash::Kind,
     ) -> std::io::Result<usize> {
         out.write_all(Self::SIGNATURE)?;
         out.write_all(&[crate::multi_index::Version::V1 as u8])?;

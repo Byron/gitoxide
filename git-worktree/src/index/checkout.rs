@@ -89,7 +89,7 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
     Find {
         #[source]
         err: E,
-        oid: git_hash::ObjectId,
+        oid: gix_hash::ObjectId,
         path: std::path::PathBuf,
     },
 }

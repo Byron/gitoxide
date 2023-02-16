@@ -16,7 +16,7 @@ impl State {
     }
 
     /// Return the kind of hashes used in this instance.
-    pub fn object_hash(&self) -> git_hash::Kind {
+    pub fn object_hash(&self) -> gix_hash::Kind {
         self.object_hash
     }
 
@@ -157,7 +157,7 @@ impl State {
     pub fn dangerously_push_entry(
         &mut self,
         stat: entry::Stat,
-        id: git_hash::ObjectId,
+        id: gix_hash::ObjectId,
         flags: entry::Flags,
         mode: entry::Mode,
         path: &BStr,

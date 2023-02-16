@@ -14,12 +14,12 @@ pub struct Outcome<'name> {
     /// If `None`, no name was found but it was requested to provide the `id` itself as fallback.
     pub name: Option<Cow<'name, BStr>>,
     /// The input commit object id that we describe.
-    pub id: git_hash::ObjectId,
+    pub id: gix_hash::ObjectId,
     /// The number of commits that are between the tag or branch with `name` and `id`.
     /// These commits are all in the future of the named tag or branch.
     pub depth: u32,
     /// The mapping between object ids and their names initially provided by the describe call.
-    pub name_by_oid: HashMap<git_hash::ObjectId, Cow<'name, BStr>>,
+    pub name_by_oid: HashMap<gix_hash::ObjectId, Cow<'name, BStr>>,
     /// The amount of commits we traversed.
     pub commits_seen: u32,
 }
@@ -46,7 +46,7 @@ pub struct Format<'a> {
     /// If `None`, the `id` will be displayed as a fallback.
     pub name: Option<Cow<'a, BStr>>,
     /// The `id` of the commit to describe.
-    pub id: git_hash::ObjectId,
+    pub id: gix_hash::ObjectId,
     /// The amount of hex characters to use to display `id`.
     pub hex_len: usize,
     /// The amount of commits between `name` and `id`, where `id` is in the future of `name`.
@@ -102,7 +102,7 @@ const MAX_CANDIDATES: usize = std::mem::size_of::<Flags>() * 8;
 pub struct Options<'name> {
     /// The candidate names from which to determine the `name` to use for the describe string,
     /// as a mapping from a commit id and the name associated with it.
-    pub name_by_oid: HashMap<git_hash::ObjectId, Cow<'name, BStr>>,
+    pub name_by_oid: HashMap<gix_hash::ObjectId, Cow<'name, BStr>>,
     /// The amount of names we will keep track of. Defaults to the maximum of 32.
     ///
     /// If the number is exceeded, it will be capped at 32 and defaults to 10.
@@ -137,7 +137,7 @@ where
     Find {
         #[source]
         err: Option<E>,
-        oid: git_hash::ObjectId,
+        oid: gix_hash::ObjectId,
     },
     #[error("A commit could not be decoded during traversal")]
     Decode(#[from] git_object::decode::Error),
@@ -147,9 +147,9 @@ pub(crate) mod function {
     use std::{borrow::Cow, cmp::Ordering, collections::VecDeque, iter::FromIterator};
 
     use bstr::BStr;
-    use git_hash::oid;
     use git_hashtable::{hash_map, HashMap};
     use git_object::CommitRefIter;
+    use gix_hash::oid;
 
     use super::{Error, Outcome};
     use crate::describe::{Flags, Options, MAX_CANDIDATES};
@@ -205,7 +205,7 @@ pub(crate) mod function {
         let mut candidates = Vec::new();
         let mut commits_seen = 0;
         let mut gave_up_on_commit = None;
-        let mut seen = HashMap::<git_hash::ObjectId, Flags>::default();
+        let mut seen = HashMap::<gix_hash::ObjectId, Flags>::default();
         seen.insert(commit.to_owned(), 0u32);
 
         while let Some((commit, _commit_time)) = queue.pop_front() {
@@ -318,9 +318,9 @@ pub(crate) mod function {
         find: &mut Find,
         buf: &mut Vec<u8>,
         parent_buf: &mut Vec<u8>,
-        queue: &mut VecDeque<(git_hash::ObjectId, u32)>,
-        seen: &mut HashMap<git_hash::ObjectId, Flags>,
-        commit: &git_hash::oid,
+        queue: &mut VecDeque<(gix_hash::ObjectId, u32)>,
+        seen: &mut HashMap<gix_hash::ObjectId, Flags>,
+        commit: &gix_hash::oid,
         commit_flags: Flags,
         first_parent: bool,
     ) -> Result<(), Error<E>>
@@ -378,10 +378,10 @@ pub(crate) mod function {
 
     #[allow(clippy::too_many_arguments)]
     fn finish_depth_computation<'name, Find, E>(
-        mut queue: VecDeque<(git_hash::ObjectId, u32)>,
+        mut queue: VecDeque<(gix_hash::ObjectId, u32)>,
         mut find: Find,
         best_candidate: &mut Candidate<'name>,
-        mut seen: HashMap<git_hash::ObjectId, Flags>,
+        mut seen: HashMap<gix_hash::ObjectId, Flags>,
         mut buf: Vec<u8>,
         mut parent_buf: Vec<u8>,
         first_parent: bool,

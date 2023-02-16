@@ -30,7 +30,7 @@ pub mod set_target_id {
         #[allow(clippy::result_large_err)]
         pub fn set_target_id(
             &mut self,
-            id: impl Into<git_hash::ObjectId>,
+            id: impl Into<gix_hash::ObjectId>,
             reflog_message: impl Into<BString>,
         ) -> Result<(), Error> {
             match &self.inner.target {

@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use git_hash::ObjectId;
 use git_revision::spec::parse::{
     delegate,
     delegate::{ReflogLookup, SiblingBranch},
 };
+use gix_hash::ObjectId;
 
 use crate::{
     bstr::{BStr, BString, ByteSlice},
@@ -33,14 +33,14 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
 
     fn disambiguate_prefix(
         &mut self,
-        prefix: git_hash::Prefix,
+        prefix: gix_hash::Prefix,
         _must_be_commit: Option<delegate::PrefixHint<'_>>,
     ) -> Option<()> {
         self.last_call_was_disambiguate_prefix[self.idx] = true;
         let mut candidates = Some(HashSet::default());
         self.prefix[self.idx] = Some(prefix);
 
-        let empty_tree_id = git_hash::ObjectId::empty_tree(prefix.as_oid().kind());
+        let empty_tree_id = gix_hash::ObjectId::empty_tree(prefix.as_oid().kind());
         let res = if prefix.as_oid() == empty_tree_id {
             candidates.as_mut().expect("set").insert(empty_tree_id);
             Ok(Some(Err(())))

@@ -29,7 +29,7 @@ pub struct File {
     path: std::path::PathBuf,
     version: Version,
     hash_len: usize,
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
     /// The amount of pack files contained within
     num_indices: u32,
     num_objects: u32,

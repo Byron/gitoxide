@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use bstr::BString;
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{
     entry,
@@ -41,7 +41,7 @@ pub const SIGNATURE: Signature = *b"UNTR";
 
 // #[allow(unused)]
 /// Decode an untracked cache extension from `data`, assuming object hashes are of type `object_hash`.
-pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<UntrackedCache> {
+pub fn decode(data: &[u8], object_hash: gix_hash::Kind) -> Option<UntrackedCache> {
     if !data.last().map(|b| *b == 0).unwrap_or(false) {
         return None;
     }

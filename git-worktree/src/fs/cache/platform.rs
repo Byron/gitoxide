@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use bstr::ByteSlice;
-use git_hash::oid;
+use gix_hash::oid;
 
 use crate::{
     fs,

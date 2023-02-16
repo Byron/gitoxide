@@ -17,5 +17,5 @@ path = "traverse.rs"
 git-traverse = { path = ".." }
 git-testtools = { path = "../../tests/tools" }
 git-odb = { path = "../../git-odb" }
-git-hash = { path = "../../git-hash" }
+gix-hash = { path = "../../gix-hash" }
 git-object = { path = "../../git-object" }

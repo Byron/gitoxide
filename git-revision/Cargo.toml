@@ -15,10 +15,10 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = [ "serde", "git-hash/serde1", "git-object/serde1" ]
+serde1 = [ "serde", "gix-hash/serde1", "git-object/serde1" ]
 
 [dependencies]
-git-hash = { version = "^0.10.2", path = "../git-hash" }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 git-object = { version = "^0.26.1", path = "../git-object" }
 git-date = { version = "^0.4.2", path = "../git-date" }
 git-hashtable = { version = "^0.1.1", path = "../git-hashtable" }

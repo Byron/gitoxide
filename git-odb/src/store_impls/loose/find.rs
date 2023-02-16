@@ -34,7 +34,7 @@ impl Store {
     const OPEN_ACTION: &'static str = "open";
 
     /// Returns true if the given id is contained in our repository.
-    pub fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool {
+    pub fn contains(&self, id: impl AsRef<gix_hash::oid>) -> bool {
         debug_assert_eq!(self.object_hash, id.as_ref().kind());
         hash_path(id.as_ref(), self.path.clone()).is_file()
     }
@@ -51,8 +51,8 @@ impl Store {
     /// one would have received if it remained `None`.
     pub fn lookup_prefix(
         &self,
-        prefix: git_hash::Prefix,
-        mut candidates: Option<&mut HashSet<git_hash::ObjectId>>,
+        prefix: gix_hash::Prefix,
+        mut candidates: Option<&mut HashSet<gix_hash::ObjectId>>,
     ) -> Result<Option<crate::store::prefix::lookup::Outcome>, crate::loose::iter::Error> {
         let single_directory_iter = crate::loose::Iter {
             inner: gix_features::fs::walkdir_new(
@@ -101,14 +101,14 @@ impl Store {
         }
     }
 
-    /// Return the object identified by the given [`ObjectId`][git_hash::ObjectId] if present in this database,
+    /// Return the object identified by the given [`ObjectId`][gix_hash::ObjectId] if present in this database,
     /// writing its raw data into the given `out` buffer.
     ///
     /// Returns `Err` if there was an error locating or reading the object. Returns `Ok<None>` if
     /// there was no such object.
     pub fn try_find<'a>(
         &self,
-        id: impl AsRef<git_hash::oid>,
+        id: impl AsRef<gix_hash::oid>,
         out: &'a mut Vec<u8>,
     ) -> Result<Option<git_object::Data<'a>>, Error> {
         debug_assert_eq!(self.object_hash, id.as_ref().kind());
@@ -137,7 +137,7 @@ impl Store {
 
     /// Return only the decompressed size of the object and its kind without fully reading it into memory as tuple of `(size, kind)`.
     /// Returns `None` if `id` does not exist in the database.
-    pub fn try_header(&self, id: impl AsRef<git_hash::oid>) -> Result<Option<(usize, git_object::Kind)>, Error> {
+    pub fn try_header(&self, id: impl AsRef<gix_hash::oid>) -> Result<Option<(usize, git_object::Kind)>, Error> {
         const BUF_SIZE: usize = 256;
         let mut buf = [0_u8; BUF_SIZE];
         let path = hash_path(id.as_ref(), self.path.clone());
@@ -180,7 +180,7 @@ impl Store {
         Ok(Some((size, kind)))
     }
 
-    fn find_inner<'a>(&self, id: &git_hash::oid, buf: &'a mut Vec<u8>) -> Result<git_object::Data<'a>, Error> {
+    fn find_inner<'a>(&self, id: &gix_hash::oid, buf: &'a mut Vec<u8>) -> Result<git_object::Data<'a>, Error> {
         let path = hash_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();

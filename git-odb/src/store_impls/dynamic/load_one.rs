@@ -23,7 +23,7 @@ impl super::Store {
         fn load_pack(
             path: &Path,
             id: types::PackId,
-            object_hash: git_hash::Kind,
+            object_hash: gix_hash::Kind,
         ) -> std::io::Result<Arc<git_pack::data::File>> {
             git_pack::data::File::at(path, object_hash)
                 .map(|mut pack| {

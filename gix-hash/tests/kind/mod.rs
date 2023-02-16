@@ -1,5 +1,5 @@
 mod from_hex_len {
-    use git_hash::Kind;
+    use gix_hash::Kind;
 
     #[test]
     fn some_sha1() {

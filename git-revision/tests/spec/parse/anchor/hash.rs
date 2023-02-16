@@ -8,7 +8,7 @@ fn short_hex_literals_are_considered_prefixes() {
         rec.find_ref[0], None,
         "references are not resolved if prefix lookups succeed"
     );
-    assert_eq!(rec.prefix[0], Some(git_hash::Prefix::from_hex("abcd").unwrap()));
+    assert_eq!(rec.prefix[0], Some(gix_hash::Prefix::from_hex("abcd").unwrap()));
     assert_eq!(rec.prefix_hint[0], None);
     assert_eq!(rec.calls, 1);
 

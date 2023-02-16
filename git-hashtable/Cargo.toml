@@ -17,5 +17,5 @@ hashbrown = { version = "0.13.1", default-features = false, features = [
   "inline-more",
   "raw"
 ] }
-git-hash = { version = "^0.10.2", path = "../git-hash" }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 

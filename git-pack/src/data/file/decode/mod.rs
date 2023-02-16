@@ -12,5 +12,5 @@ pub enum Error {
     #[error("Failed to decompress pack entry")]
     ZlibInflate(#[from] gix_features::zlib::inflate::Error),
     #[error("A delta chain could not be followed as the ref base with id {0} could not be found")]
-    DeltaBaseUnresolved(git_hash::ObjectId),
+    DeltaBaseUnresolved(gix_hash::ObjectId),
 }

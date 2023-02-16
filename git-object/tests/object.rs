@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 mod encode;
 mod immutable;

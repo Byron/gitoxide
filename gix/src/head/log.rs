@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{
     bstr::{BString, ByteSlice},

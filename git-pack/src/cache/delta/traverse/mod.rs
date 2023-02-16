@@ -66,7 +66,7 @@ pub struct Options<'a, P1, P2> {
     pub should_interrupt: &'a AtomicBool,
     /// specifies what kind of hashes we expect to be stored in oid-delta entries, which is viable to decoding them
     /// with the correct size.
-    pub object_hash: git_hash::Kind,
+    pub object_hash: gix_hash::Kind,
 }
 
 /// The outcome of [`Tree::traverse()`]

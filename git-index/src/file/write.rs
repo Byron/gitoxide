@@ -21,13 +21,13 @@ impl File {
         &self,
         mut out: impl std::io::Write,
         options: write::Options,
-    ) -> std::io::Result<(Version, git_hash::ObjectId)> {
+    ) -> std::io::Result<(Version, gix_hash::ObjectId)> {
         let mut hasher = hash::Write::new(&mut out, self.state.object_hash);
         let version = self.state.write_to(&mut hasher, options)?;
 
         let hash = hasher.hash.digest();
         out.write_all(&hash)?;
-        Ok((version, git_hash::ObjectId::from(hash)))
+        Ok((version, gix_hash::ObjectId::from(hash)))
     }
 
     /// Write ourselves to the path we were read from after acquiring a lock, using `options`.

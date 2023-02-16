@@ -9,13 +9,13 @@ use crate::{
     multi_index::{EntryIndex, File, PackIndex, Version},
 };
 
-/// Represents an entry within a multi index file, effectively mapping object [`IDs`][git_hash::ObjectId] to pack data
+/// Represents an entry within a multi index file, effectively mapping object [`IDs`][gix_hash::ObjectId] to pack data
 /// files and the offset within.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     /// The ID of the object.
-    pub oid: git_hash::ObjectId,
+    pub oid: gix_hash::ObjectId,
     /// The offset to the object's header in the pack data file.
     pub pack_offset: data::Offset,
     /// The index of the pack matching our [`File::index_names()`] slice.
@@ -44,14 +44,14 @@ impl File {
         self.num_objects
     }
     /// Returns the kind of hash function used for object ids available in this index.
-    pub fn object_hash(&self) -> git_hash::Kind {
+    pub fn object_hash(&self) -> gix_hash::Kind {
         self.object_hash
     }
     /// Returns the checksum over the entire content of the file (excluding the checksum itself).
     ///
     /// It can be used to validate it didn't change after creation.
-    pub fn checksum(&self) -> git_hash::ObjectId {
-        git_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])
+    pub fn checksum(&self) -> gix_hash::ObjectId {
+        gix_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])
     }
     /// Return all names of index files (`*.idx`) whose objects we contain.
     ///
@@ -63,11 +63,11 @@ impl File {
 
 impl File {
     /// Return the object id at the given `index`, which ranges from 0 to [File::num_objects()].
-    pub fn oid_at_index(&self, index: EntryIndex) -> &git_hash::oid {
+    pub fn oid_at_index(&self, index: EntryIndex) -> &gix_hash::oid {
         debug_assert!(index < self.num_objects, "index out of bounds");
         let index: usize = index as usize;
         let start = self.lookup_ofs + index * self.hash_len;
-        git_hash::oid::from_bytes_unchecked(&self.data[start..][..self.hash_len])
+        gix_hash::oid::from_bytes_unchecked(&self.data[start..][..self.hash_len])
     }
 
     /// Given a `prefix`, find an object that matches it uniquely within this index and return `Some(Ok(entry_index))`.
@@ -82,7 +82,7 @@ impl File {
     //       as well.
     pub fn lookup_prefix(
         &self,
-        prefix: git_hash::Prefix,
+        prefix: gix_hash::Prefix,
         candidates: Option<&mut Range<EntryIndex>>,
     ) -> Option<PrefixLookupResult> {
         crate::index::access::lookup_prefix(
@@ -97,7 +97,7 @@ impl File {
     /// Find the index ranging from 0 to [File::num_objects()] that belongs to data associated with `id`, or `None` if it wasn't found.
     ///
     /// Use this index for finding additional information via [`File::pack_id_and_pack_offset_at_index()`].
-    pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<EntryIndex> {
+    pub fn lookup(&self, id: impl AsRef<gix_hash::oid>) -> Option<EntryIndex> {
         crate::index::access::lookup(id, &self.fan, |idx| self.oid_at_index(idx))
     }
 

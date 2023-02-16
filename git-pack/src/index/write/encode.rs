@@ -13,10 +13,10 @@ use crate::index::{util::Count, V2_SIGNATURE};
 pub(crate) fn write_to(
     out: impl io::Write,
     entries_sorted_by_oid: Vec<crate::cache::delta::Item<crate::index::write::TreeEntry>>,
-    pack_hash: &git_hash::ObjectId,
+    pack_hash: &gix_hash::ObjectId,
     kind: crate::index::Version,
     mut progress: impl Progress,
-) -> io::Result<git_hash::ObjectId> {
+) -> io::Result<gix_hash::ObjectId> {
     use io::Write;
     assert_eq!(kind, crate::index::Version::V2, "Can only write V2 packs right now");
     assert!(
@@ -79,7 +79,7 @@ pub(crate) fn write_to(
 
     let bytes_written_without_trailer = out.bytes;
     let mut out = out.inner.into_inner()?;
-    let index_hash: git_hash::ObjectId = out.hash.digest().into();
+    let index_hash: gix_hash::ObjectId = out.hash.digest().into();
     out.inner.write_all(index_hash.as_slice())?;
     out.inner.flush()?;
 

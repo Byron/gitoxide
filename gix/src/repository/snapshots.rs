@@ -31,7 +31,7 @@ impl crate::Repository {
             .ok()
             .and_then(|spec| {
                 // TODO: actually resolve this as spec (once we can do that)
-                git_hash::ObjectId::from_hex(spec.as_ref())
+                gix_hash::ObjectId::from_hex(spec.as_ref())
                     .map_err(|e| err.get_or_insert(e.into()))
                     .ok()
             });

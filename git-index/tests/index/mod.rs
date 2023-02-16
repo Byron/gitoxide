@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 mod access;
 mod entry;
@@ -50,7 +50,7 @@ impl Fixture {
     }
 
     pub fn open(&self) -> git_index::File {
-        git_index::File::at(self.to_path(), git_hash::Kind::Sha1, Default::default())
+        git_index::File::at(self.to_path(), gix_hash::Kind::Sha1, Default::default())
             .expect("fixtures are always readable")
     }
 }

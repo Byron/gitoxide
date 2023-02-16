@@ -58,8 +58,8 @@ pub mod verify {
     pub enum Error {
         #[error("Object expected to have id {desired}, but actual id was {actual}")]
         ChecksumMismatch {
-            desired: git_hash::ObjectId,
-            actual: git_hash::ObjectId,
+            desired: gix_hash::ObjectId,
+            actual: gix_hash::ObjectId,
         },
     }
 
@@ -67,13 +67,13 @@ pub mod verify {
         /// Compute the checksum of `self` and compare it with the `desired` hash.
         /// If the hashes do not match, an [`Error`] is returned, containing the actual
         /// hash of `self`.
-        pub fn verify_checksum(&self, desired: impl AsRef<git_hash::oid>) -> Result<(), Error> {
+        pub fn verify_checksum(&self, desired: impl AsRef<gix_hash::oid>) -> Result<(), Error> {
             let desired = desired.as_ref();
             let mut hasher = gix_features::hash::hasher(desired.kind());
             hasher.update(&crate::encode::loose_header(self.kind, self.data.len()));
             hasher.update(self.data);
 
-            let actual_id = git_hash::ObjectId::from(hasher.digest());
+            let actual_id = gix_hash::ObjectId::from(hasher.digest());
             if desired != actual_id {
                 return Err(Error::ChecksumMismatch {
                     desired: desired.into(),

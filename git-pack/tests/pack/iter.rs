@@ -30,14 +30,14 @@ mod new_from_header {
                 std::io::BufReader::new(data.as_slice()),
                 Mode::AsIs,
                 EntryDataMode::Ignore,
-                git_hash::Kind::Sha1,
+                gix_hash::Kind::Sha1,
             )? {
                 let entry = entry?;
 
                 let mut buf = Vec::<u8>::new();
                 entry.header.write_to(entry.decompressed_size, &mut buf)?;
                 let new_entry =
-                    pack::data::Entry::from_bytes(&buf, entry.pack_offset, git_hash::Kind::Sha1.len_in_bytes());
+                    pack::data::Entry::from_bytes(&buf, entry.pack_offset, gix_hash::Kind::Sha1.len_in_bytes());
 
                 assert_eq!(
                     new_entry.header_size(),
@@ -67,7 +67,7 @@ mod new_from_header {
                     std::io::BufReader::new(fs::File::open(fixture_path(SMALL_PACK))?),
                     *trailer_mode,
                     *compression_mode,
-                    git_hash::Kind::Sha1,
+                    gix_hash::Kind::Sha1,
                 )?;
 
                 let num_objects = iter.len();
@@ -78,7 +78,7 @@ mod new_from_header {
                 let entry = iter.next().expect("last object")?;
                 assert_eq!(
                     entry.trailer.expect("trailer id"),
-                    pack::data::File::at(fixture_path(SMALL_PACK), git_hash::Kind::Sha1)?.checksum(),
+                    pack::data::File::at(fixture_path(SMALL_PACK), gix_hash::Kind::Sha1)?.checksum(),
                     "last object contains the trailer - a hash over all bytes in the pack"
                 );
                 assert_eq!(iter.len(), 0);
@@ -109,13 +109,13 @@ mod new_from_header {
             std::io::BufReader::new(&pack[..pack.len() - 20]),
             Mode::Restore,
             EntryDataMode::Ignore,
-            git_hash::Kind::Sha1,
+            gix_hash::Kind::Sha1,
         )?;
         let num_objects = iter.len();
         assert_eq!(iter.by_ref().take(42 - 1).count(), num_objects - 1);
         assert_eq!(
             iter.next().expect("last object")?.trailer.expect("trailer id"),
-            pack::data::File::at(fixture_path(SMALL_PACK), git_hash::Kind::Sha1)?.checksum(),
+            pack::data::File::at(fixture_path(SMALL_PACK), gix_hash::Kind::Sha1)?.checksum(),
             "the correct checksum should be restored"
         );
         Ok(())
@@ -128,7 +128,7 @@ mod new_from_header {
             std::io::BufReader::new(&pack[..pack.len() / 2]),
             Mode::Restore,
             EntryDataMode::Ignore,
-            git_hash::Kind::Sha1,
+            gix_hash::Kind::Sha1,
         )?;
         let mut num_objects = 0;
         while let Some(entry) = iter.next() {

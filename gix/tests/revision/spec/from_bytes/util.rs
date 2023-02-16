@@ -30,13 +30,13 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spe
             Kind::IncludeReachableFromParents | Kind::ExcludeReachableFromParents => return None,
         })
     }
-    fn object_id_of_next(lines: &mut std::iter::Peekable<bstr::Lines<'_>>) -> git_hash::ObjectId {
+    fn object_id_of_next(lines: &mut std::iter::Peekable<bstr::Lines<'_>>) -> gix_hash::ObjectId {
         let hex_hash = lines.next().expect("valid respect yields enough lines");
         object_id_of(hex_hash).expect("git yields full objects ids")
     }
-    fn object_id_of(input: &[u8]) -> Option<git_hash::ObjectId> {
+    fn object_id_of(input: &[u8]) -> Option<gix_hash::ObjectId> {
         let hex_hash = input.strip_prefix(b"^").unwrap_or(input);
-        git_hash::ObjectId::from_str(hex_hash.to_str().expect("hex is ascii")).ok()
+        gix_hash::ObjectId::from_str(hex_hash.to_str().expect("hex is ascii")).ok()
     }
     let mut baseline_map = HashMap::new();
     let base = git_testtools::scripted_fixture_read_only(FIXTURE_NAME).unwrap();

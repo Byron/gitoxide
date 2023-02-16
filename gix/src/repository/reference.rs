@@ -1,10 +1,10 @@
 use std::convert::TryInto;
 
-use git_hash::ObjectId;
 use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     FullName, PartialNameRef, Target,
 };
+use gix_hash::ObjectId;
 
 use crate::{bstr::BString, ext::ReferenceExt, reference, Reference};
 

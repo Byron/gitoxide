@@ -135,9 +135,9 @@ impl<S> DerefMut for Cache<S> {
 mod impls {
     use std::{io::Read, ops::DerefMut};
 
-    use git_hash::{oid, ObjectId};
     use git_object::{Data, Kind};
     use git_pack::cache::Object;
+    use gix_hash::{oid, ObjectId};
 
     use crate::{find::Header, pack::data::entry::Location, Cache};
 
@@ -223,7 +223,7 @@ mod impls {
             self.inner.location_by_oid(id, buf)
         }
 
-        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, gix_hash::ObjectId)>> {
             self.inner.pack_offsets_and_oid(pack_id)
         }
 

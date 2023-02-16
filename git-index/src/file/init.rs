@@ -31,7 +31,7 @@ impl File {
     /// Note that the `path` will not be written if it doesn't exist.
     pub fn at_or_default(
         path: impl Into<PathBuf>,
-        object_hash: git_hash::Kind,
+        object_hash: gix_hash::Kind,
         options: decode::Options,
     ) -> Result<Self, Error> {
         let path = path.into();
@@ -45,7 +45,7 @@ impl File {
     }
 
     /// Open an index file at `path` with `options`, assuming `object_hash` is used throughout the file.
-    pub fn at(path: impl Into<PathBuf>, object_hash: git_hash::Kind, options: decode::Options) -> Result<Self, Error> {
+    pub fn at(path: impl Into<PathBuf>, object_hash: gix_hash::Kind, options: decode::Options) -> Result<Self, Error> {
         let path = path.into();
         let (data, mtime) = {
             // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.

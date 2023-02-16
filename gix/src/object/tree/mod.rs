@@ -1,5 +1,5 @@
-use git_hash::ObjectId;
 use git_object::{bstr::BStr, TreeRefIter};
+use gix_hash::ObjectId;
 
 use crate::{object::find, Id, Tree};
 
@@ -137,12 +137,12 @@ mod entry {
         }
 
         /// Return the plain object id of this entry, without access to the repository.
-        pub fn oid(&self) -> &git_hash::oid {
+        pub fn oid(&self) -> &gix_hash::oid {
             &self.inner.oid
         }
 
         /// Return the plain object id of this entry, without access to the repository.
-        pub fn object_id(&self) -> git_hash::ObjectId {
+        pub fn object_id(&self) -> gix_hash::ObjectId {
             self.inner.oid
         }
     }

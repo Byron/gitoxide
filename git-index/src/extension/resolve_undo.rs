@@ -1,5 +1,5 @@
 use bstr::BString;
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{
     extension::Signature,
@@ -27,7 +27,7 @@ pub struct Stage {
 
 pub const SIGNATURE: Signature = *b"REUC";
 
-pub fn decode(mut data: &[u8], object_hash: git_hash::Kind) -> Option<Paths> {
+pub fn decode(mut data: &[u8], object_hash: gix_hash::Kind) -> Option<Paths> {
     let hash_len = object_hash.len_in_bytes();
     let mut out = Vec::new();
 

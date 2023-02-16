@@ -82,7 +82,7 @@ dependencies = [
 name = "gix-features"
 version = "0.22.0"
 dependencies = [
- "git-hash",
+ "gix-hash",
  "libc",
 ]
 
@@ -95,7 +95,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-hash"
+name = "gix-hash"
 version = "0.9.6"
 dependencies = [
  "hex",

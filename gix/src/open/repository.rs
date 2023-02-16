@@ -241,7 +241,7 @@ impl ThreadSafeRepository {
                     .filter_map(|r: git_ref::Reference| {
                         let target = r.target.try_id()?.to_owned();
                         let source =
-                            git_hash::ObjectId::from_hex(r.name.as_bstr().strip_prefix(prefix.as_bytes())?).ok()?;
+                            gix_hash::ObjectId::from_hex(r.name.as_bstr().strip_prefix(prefix.as_bytes())?).ok()?;
                         Some((source, target))
                     })
                     .collect::<Vec<_>>();

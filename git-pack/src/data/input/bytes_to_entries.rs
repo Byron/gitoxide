@@ -1,11 +1,11 @@
 use std::{fs, io};
 
-use git_hash::ObjectId;
 use gix_features::{
     hash,
     hash::Sha1,
     zlib::{stream::inflate::ReadBoxed, Decompress},
 };
+use gix_hash::ObjectId;
 
 use crate::data::input;
 
@@ -24,7 +24,7 @@ pub struct BytesToEntriesIter<BR> {
     compressed: input::EntryDataMode,
     compressed_buf: Option<Vec<u8>>,
     hash_len: usize,
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
 }
 
 /// Access
@@ -53,7 +53,7 @@ where
         mut read: BR,
         mode: input::Mode,
         compressed: input::EntryDataMode,
-        object_hash: git_hash::Kind,
+        object_hash: gix_hash::Kind,
     ) -> Result<BytesToEntriesIter<BR>, input::Error> {
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
@@ -148,7 +148,7 @@ where
         }
 
         let crc32 = if self.compressed.crc32() {
-            let mut header_buf = [0u8; 12 + git_hash::Kind::longest().len_in_bytes()];
+            let mut header_buf = [0u8; 12 + gix_hash::Kind::longest().len_in_bytes()];
             let header_len = entry.header.write_to(bytes_copied, header_buf.as_mut())?;
             let state = gix_features::hash::crc32_update(0, &header_buf[..header_len]);
             Some(gix_features::hash::crc32_update(state, &compressed))
@@ -180,7 +180,7 @@ where
 
     fn try_read_trailer(&mut self) -> Result<Option<ObjectId>, input::Error> {
         Ok(if self.objects_left == 0 {
-            let mut id = git_hash::ObjectId::null(self.object_hash);
+            let mut id = gix_hash::ObjectId::null(self.object_hash);
             if let Err(err) = self.read.read_exact(id.as_mut_slice()) {
                 if self.mode != input::Mode::Restore {
                     return Err(err.into());
@@ -188,7 +188,7 @@ where
             }
 
             if let Some(hash) = self.hash.take() {
-                let actual_id = git_hash::ObjectId::from(hash.digest());
+                let actual_id = gix_hash::ObjectId::from(hash.digest());
                 if self.mode == input::Mode::Restore {
                     id = actual_id;
                 }
@@ -202,7 +202,7 @@ where
             Some(id)
         } else if self.mode == input::Mode::Restore {
             let hash = self.hash.clone().expect("in restore mode a hash is set");
-            Some(git_hash::ObjectId::from(hash.digest()))
+            Some(gix_hash::ObjectId::from(hash.digest()))
         } else {
             None
         })

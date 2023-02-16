@@ -24,14 +24,14 @@ required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = [ "serde", "bstr/serde", "git-index/serde1", "git-hash/serde1", "git-object/serde1" ]
+serde1 = [ "serde", "bstr/serde", "git-index/serde1", "gix-hash/serde1", "git-object/serde1" ]
 
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
 git-index = { version = "^0.12.3", path = "../git-index" }
-git-hash = { version = "^0.10.2", path = "../git-hash" }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 git-object = { version = "^0.26.1", path = "../git-object" }
 gix-glob = { version = "^0.5.3", path = "../gix-glob" }
 gix-path = { version = "^0.7.1", path = "../gix-path" }

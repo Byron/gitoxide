@@ -54,7 +54,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                                 // identified by the expectation of what could be there, as is the case when cloning.
                                 match expected {
                                     PreviousValue::ExistingMustMatch(Target::Peeled(oid)) => {
-                                        Some((Some(git_hash::ObjectId::null(oid.kind())), oid))
+                                        Some((Some(gix_hash::ObjectId::null(oid.kind())), oid))
                                     }
                                     _ => None,
                                 }

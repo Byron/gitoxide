@@ -11,13 +11,13 @@ pub enum Error {
     PackParse(#[from] crate::data::header::decode::Error),
     #[error("pack checksum in trailer was {expected}, but actual checksum was {actual}")]
     ChecksumMismatch {
-        expected: git_hash::ObjectId,
-        actual: git_hash::ObjectId,
+        expected: gix_hash::ObjectId,
+        actual: gix_hash::ObjectId,
     },
     #[error("pack is incomplete: it was decompressed into {actual} bytes but {expected} bytes where expected.")]
     IncompletePack { actual: u64, expected: u64 },
     #[error("The object {object_id} could not be decoded or wasn't found")]
-    NotFound { object_id: git_hash::ObjectId },
+    NotFound { object_id: gix_hash::ObjectId },
 }
 
 /// Iteration Mode

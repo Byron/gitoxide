@@ -15,11 +15,11 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`
-serde1 = ["serde", "git-hash/serde1", "bstr/serde"]
+serde1 = ["serde", "gix-hash/serde1", "bstr/serde"]
 
 [dependencies]
 gix-features = { version = "^0.26.4", path = "../gix-features", features = ["rustsha1"] }
-git-hash = { version = "^0.10.2", path = "../git-hash" }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 git-chunk = { version = "^0.4.1", path = "../git-chunk" }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std"] }

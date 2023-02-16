@@ -15,7 +15,7 @@ pub mod parse {
         #[error(transparent)]
         DecodePacketline(#[from] git_transport::packetline::decode::Error),
         #[error(transparent)]
-        Id(#[from] git_hash::decode::Error),
+        Id(#[from] gix_hash::decode::Error),
         #[error("{symref:?} could not be parsed. A symref is expected to look like <NAME>:<target>.")]
         MalformedSymref { symref: BString },
         #[error("{0:?} could not be parsed. A V1 ref line should be '<hex-hash> <path>'.")]
@@ -36,7 +36,7 @@ impl Ref {
     /// In case of peeled refs, the tag object itself is returned as it is what the ref directly refers to, and target of the tag is returned
     /// as `peeled`.
     /// If `unborn`, the first object id will be the null oid.
-    pub fn unpack(&self) -> (&BStr, Option<&git_hash::oid>, Option<&git_hash::oid>) {
+    pub fn unpack(&self) -> (&BStr, Option<&gix_hash::oid>, Option<&gix_hash::oid>) {
         match self {
             Ref::Direct { full_ref_name, object }
             | Ref::Symbolic {

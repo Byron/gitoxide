@@ -28,7 +28,7 @@ fn roundtrips() -> crate::Result {
         let mut out_bytes = Vec::new();
 
         let (actual_version, _digest) = expected.write_to(&mut out_bytes, options)?;
-        let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), git_hash::Kind::Sha1, Default::default())?;
+        let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), gix_hash::Kind::Sha1, Default::default())?;
 
         let name = fixture.to_name();
         compare_states_against_baseline(&actual, actual_version, &expected, options, name);
@@ -68,7 +68,7 @@ fn roundtrips_sparse_index() -> crate::Result {
         let mut out_bytes = Vec::new();
 
         let (actual_version, _) = expected.write_to(&mut out_bytes, options)?;
-        let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), git_hash::Kind::Sha1, Default::default())?;
+        let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), gix_hash::Kind::Sha1, Default::default())?;
 
         compare_states_against_baseline(&actual, actual_version, &expected, options, fixture.to_name());
         // TODO: make this work and re-enable it, once this is done the fixtures can be merged into the main "roundtrip" test
@@ -120,7 +120,7 @@ fn state_comparisons_with_various_extension_configurations() {
             let (actual_version, _digest) = expected.write_to(&mut out, options).unwrap();
 
             let (actual, _) =
-                State::from_bytes(&out, FileTime::now(), git_hash::Kind::Sha1, Default::default()).unwrap();
+                State::from_bytes(&out, FileTime::now(), gix_hash::Kind::Sha1, Default::default()).unwrap();
             compare_states(&actual, actual_version, &expected, options, fixture);
         }
     }
@@ -151,7 +151,7 @@ fn remove_flag_is_respected() -> crate::Result {
     let mut buf = Vec::<u8>::new();
     index.write_to(&mut buf, Default::default())?;
 
-    let (state, _checksum) = State::from_bytes(&buf, FileTime::now(), git_hash::Kind::Sha1, Default::default())?;
+    let (state, _checksum) = State::from_bytes(&buf, FileTime::now(), gix_hash::Kind::Sha1, Default::default())?;
     assert_eq!(
         state.entries().len(),
         total_entries - entries_to_remove,

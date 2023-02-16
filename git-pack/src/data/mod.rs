@@ -79,7 +79,7 @@ pub struct File {
     /// The size of the hash contained within. This is entirely determined by the caller, and repositories have to know which hash to use
     /// based on their configuration.
     hash_len: usize,
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
 }
 
 /// Information about the pack data file itself
@@ -97,7 +97,7 @@ impl File {
         self.data.len()
     }
     /// The kind of hash we use internally.
-    pub fn object_hash(&self) -> git_hash::Kind {
+    pub fn object_hash(&self) -> gix_hash::Kind {
         self.object_hash
     }
     /// The position of the byte one past the last pack entry, or in other terms, the first byte of the trailing hash.

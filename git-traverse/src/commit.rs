@@ -60,9 +60,9 @@ pub mod ancestors {
         iter::FromIterator,
     };
 
-    use git_hash::{oid, ObjectId};
     use git_hashtable::HashSet;
     use git_object::CommitRefIter;
+    use gix_hash::{oid, ObjectId};
 
     use crate::commit::{Ancestors, Parents, Sorting};
 

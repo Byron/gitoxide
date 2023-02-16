@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{
     packed, peel,
@@ -24,14 +24,14 @@ pub trait ReferenceExt: Sealed {
     fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
         &mut self,
         store: &file::Store,
-        find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
+        find: impl FnMut(gix_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
     ) -> Result<ObjectId, peel::to_id::Error>;
 
     /// For details, see [Reference::peel_to_id_in_place()], with support for a known stable packed buffer.
     fn peel_to_id_in_place_packed<E: std::error::Error + Send + Sync + 'static>(
         &mut self,
         store: &file::Store,
-        find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
+        find: impl FnMut(gix_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
         packed: Option<&packed::Buffer>,
     ) -> Result<ObjectId, peel::to_id::Error>;
 
@@ -69,7 +69,7 @@ impl ReferenceExt for Reference {
     fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
         &mut self,
         store: &file::Store,
-        find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
+        find: impl FnMut(gix_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
     ) -> Result<ObjectId, peel::to_id::Error> {
         let packed = store.assure_packed_refs_uptodate().map_err(|err| {
             peel::to_id::Error::Follow(file::find::existing::Error::Find(file::find::Error::PackedOpen(err)))
@@ -80,7 +80,7 @@ impl ReferenceExt for Reference {
     fn peel_to_id_in_place_packed<E: std::error::Error + Send + Sync + 'static>(
         &mut self,
         store: &file::Store,
-        mut find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
+        mut find: impl FnMut(gix_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
         packed: Option<&packed::Buffer>,
     ) -> Result<ObjectId, peel::to_id::Error> {
         match self.peeled {

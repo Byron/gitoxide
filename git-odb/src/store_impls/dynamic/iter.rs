@@ -1,6 +1,6 @@
 use std::{ops::Deref, option::Option::None, sync::Arc, vec::IntoIter};
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{
     loose,

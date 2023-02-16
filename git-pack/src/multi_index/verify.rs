@@ -14,7 +14,7 @@ pub mod integrity {
     pub enum Error {
         #[error("Object {id} should be at pack-offset {expected_pack_offset} but was found at {actual_pack_offset}")]
         PackOffsetMismatch {
-            id: git_hash::ObjectId,
+            id: gix_hash::ObjectId,
             expected_pack_offset: u64,
             actual_pack_offset: u64,
         },
@@ -27,7 +27,7 @@ pub mod integrity {
         #[error("Counted {actual} objects, but expected {expected} as per multi-index")]
         UnexpectedObjectCount { actual: usize, expected: usize },
         #[error("{id} wasn't found in the index referenced in the multi-pack index")]
-        OidNotFound { id: git_hash::ObjectId },
+        OidNotFound { id: gix_hash::ObjectId },
         #[error("The object id at multi-index entry {index} wasn't in order")]
         OutOfOrder { index: EntryIndex },
         #[error("The fan at index {index} is out of order as it's larger then the following value.")]
@@ -41,7 +41,7 @@ pub mod integrity {
     /// Returned by [`multi_index::File::verify_integrity()`][crate::multi_index::File::verify_integrity()].
     pub struct Outcome<P> {
         /// The computed checksum of the multi-index which matched the stored one.
-        pub actual_index_checksum: git_hash::ObjectId,
+        pub actual_index_checksum: gix_hash::ObjectId,
         /// The for each entry in [`index_names()`][super::File::index_names()] provide the corresponding pack traversal outcome.
         pub pack_traverse_statistics: Vec<crate::index::traverse::Statistics>,
         /// The provided progress instance.
@@ -82,7 +82,7 @@ impl File {
         &self,
         progress: impl Progress,
         should_interrupt: &AtomicBool,
-    ) -> Result<git_hash::ObjectId, checksum::Error> {
+    ) -> Result<gix_hash::ObjectId, checksum::Error> {
         crate::verify::checksum_on_disk_or_mmap(
             self.path(),
             &self.data,
@@ -100,7 +100,7 @@ impl File {
         &self,
         progress: P,
         should_interrupt: &AtomicBool,
-    ) -> Result<(git_hash::ObjectId, P), integrity::Error>
+    ) -> Result<(gix_hash::ObjectId, P), integrity::Error>
     where
         P: Progress,
     {

@@ -23,7 +23,7 @@ pub struct Entry {
     pub decompressed_size: u64,
     /// Set for the last object in the iteration, providing the hash over all bytes of the iteration
     /// for use as trailer in a pack or to verify it matches the trailer.
-    pub trailer: Option<git_hash::ObjectId>,
+    pub trailer: Option<gix_hash::ObjectId>,
 }
 
 mod entry;

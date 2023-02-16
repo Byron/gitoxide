@@ -1,10 +1,10 @@
 use crate::hex_to_id;
 
-fn oid() -> git_hash::ObjectId {
+fn oid() -> gix_hash::ObjectId {
     hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 }
 
-fn oid2() -> git_hash::ObjectId {
+fn oid2() -> gix_hash::ObjectId {
     hex_to_id("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
 }
 

@@ -1,4 +1,4 @@
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{FullName, Target};
 
@@ -15,7 +15,7 @@ pub struct Reference {
 }
 
 mod convert {
-    use git_hash::ObjectId;
+    use gix_hash::ObjectId;
 
     use crate::{
         raw::Reference,

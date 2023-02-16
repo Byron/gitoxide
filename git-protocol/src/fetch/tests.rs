@@ -150,8 +150,8 @@ mod arguments {
         }
     }
 
-    fn id(hex: &str) -> git_hash::ObjectId {
-        git_hash::ObjectId::from_hex(hex.as_bytes()).expect("expect valid hex id")
+    fn id(hex: &str) -> gix_hash::ObjectId {
+        gix_hash::ObjectId::from_hex(hex.as_bytes()).expect("expect valid hex id")
     }
 
     mod v1 {

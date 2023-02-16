@@ -69,9 +69,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 mod visit {
-    use git_hash::oid;
     use git_object::{bstr::BStr, tree::EntryRef};
     use git_traverse::tree::visit::Action;
+    use gix_hash::oid;
 
     pub(crate) struct Tree {
         pub num_trees: usize,

@@ -3,8 +3,8 @@ pub mod changes {
         visit::{Action, Change},
         Visit,
     };
-    use git_hash::ObjectId;
     use git_object::{bstr::BStr, tree::EntryMode};
+    use gix_hash::ObjectId;
 
     use crate::data::output::count::objects_impl::util::InsertImmutable;
 
@@ -59,12 +59,12 @@ pub mod changes {
 }
 
 pub mod traverse {
-    use git_hash::ObjectId;
     use git_object::{
         bstr::BStr,
         tree::{EntryMode, EntryRef},
     };
     use git_traverse::tree::{visit::Action, Visit};
+    use gix_hash::ObjectId;
 
     use crate::data::output::count::objects_impl::util::InsertImmutable;
 

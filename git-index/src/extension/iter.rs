@@ -15,7 +15,7 @@ impl<'a> Iter<'a> {
     /// hash of type `object_hash`.
     pub fn new_without_checksum(
         data_at_beginning_of_extensions: &'a [u8],
-        object_hash: git_hash::Kind,
+        object_hash: gix_hash::Kind,
     ) -> Option<Self> {
         let end = data_at_beginning_of_extensions
             .len()

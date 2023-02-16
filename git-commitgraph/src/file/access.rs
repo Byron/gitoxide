@@ -27,14 +27,14 @@ impl File {
     /// The kind of hash used in this File.
     ///
     /// Note that it is always conforming to the hash used in the owning repository.
-    pub fn object_hash(&self) -> git_hash::Kind {
+    pub fn object_hash(&self) -> gix_hash::Kind {
         self.object_hash
     }
 
     /// Returns an object id at the given index in our list of (sorted) hashes.
     /// The position ranges from 0 to self.num_commits()
     // copied from git-odb/src/pack/index/ext
-    pub fn id_at(&self, pos: file::Position) -> &git_hash::oid {
+    pub fn id_at(&self, pos: file::Position) -> &gix_hash::oid {
         assert!(
             pos.0 < self.num_commits(),
             "expected lexigraphical position less than {}, got {}",
@@ -46,16 +46,16 @@ impl File {
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
         let start = self.oid_lookup_offset + (pos * self.hash_len);
-        git_hash::oid::from_bytes_unchecked(&self.data[start..][..self.hash_len])
+        gix_hash::oid::from_bytes_unchecked(&self.data[start..][..self.hash_len])
     }
 
     /// Return an iterator over all object hashes stored in the base graph.
-    pub fn iter_base_graph_ids(&self) -> impl Iterator<Item = &git_hash::oid> {
+    pub fn iter_base_graph_ids(&self) -> impl Iterator<Item = &gix_hash::oid> {
         let start = self.base_graphs_list_offset.unwrap_or(0);
         let base_graphs_list = &self.data[start..][..self.hash_len * usize::from(self.base_graph_count)];
         base_graphs_list
             .chunks(self.hash_len)
-            .map(git_hash::oid::from_bytes_unchecked)
+            .map(gix_hash::oid::from_bytes_unchecked)
     }
 
     /// return an iterator over all commits in this file.
@@ -64,13 +64,13 @@ impl File {
     }
 
     /// Return an iterator over all object hashes stored in this file.
-    pub fn iter_ids(&self) -> impl Iterator<Item = &git_hash::oid> {
+    pub fn iter_ids(&self) -> impl Iterator<Item = &gix_hash::oid> {
         (0..self.num_commits()).map(move |i| self.id_at(file::Position(i)))
     }
 
     /// Translate the given object hash to its position within this file, if present.
     // copied from git-odb/src/pack/index/ext
-    pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<file::Position> {
+    pub fn lookup(&self, id: impl AsRef<gix_hash::oid>) -> Option<file::Position> {
         let id = id.as_ref();
         let first_byte = usize::from(id.first_byte());
         let mut upper_bound = self.fan[first_byte];

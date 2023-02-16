@@ -6,7 +6,7 @@ mod locate {
     use crate::{fixture_path, hex_to_id, pack::SMALL_PACK_INDEX};
 
     fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> git_object::Data<'a> {
-        let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX), git_hash::Kind::Sha1).expect("pack and idx");
+        let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX), gix_hash::Kind::Sha1).expect("pack and idx");
         bundle
             .find(hex_to_id(hex_id), out, &mut pack::cache::Never)
             .expect("read success")
@@ -23,8 +23,8 @@ mod locate {
         fn all() -> Result<(), Box<dyn std::error::Error>> {
             for (index_path, data_path) in PACKS_AND_INDICES {
                 // both paths are equivalent
-                pack::Bundle::at(fixture_path(index_path), git_hash::Kind::Sha1)?;
-                let bundle = pack::Bundle::at(fixture_path(data_path), git_hash::Kind::Sha1)?;
+                pack::Bundle::at(fixture_path(index_path), gix_hash::Kind::Sha1)?;
+                let bundle = pack::Bundle::at(fixture_path(data_path), gix_hash::Kind::Sha1)?;
 
                 let mut buf = Vec::new();
                 for entry in bundle.index.iter() {
@@ -91,15 +91,15 @@ mod write_to_directory {
         Ok(pack::bundle::write::Outcome {
             index: pack::index::write::Outcome {
                 index_version: pack::index::Version::V2,
-                index_hash: git_hash::ObjectId::from_hex(b"544a7204a55f6e9cacccf8f6e191ea8f83575de3")?,
-                data_hash: git_hash::ObjectId::from_hex(b"0f3ea84cd1bba10c2a03d736a460635082833e59")?,
+                index_hash: gix_hash::ObjectId::from_hex(b"544a7204a55f6e9cacccf8f6e191ea8f83575de3")?,
+                data_hash: gix_hash::ObjectId::from_hex(b"0f3ea84cd1bba10c2a03d736a460635082833e59")?,
                 num_objects: 42,
             },
             pack_version: pack::data::Version::V2,
             index_path: None,
             data_path: None,
             keep_path: None,
-            object_hash: git_hash::Kind::Sha1,
+            object_hash: gix_hash::Kind::Sha1,
         })
     }
 
@@ -109,7 +109,7 @@ mod write_to_directory {
         assert_eq!(res, expected_outcome()?);
         assert_eq!(
             res.index.index_hash,
-            pack::index::File::at(fixture_path(SMALL_PACK_INDEX), git_hash::Kind::Sha1)?.index_checksum()
+            pack::index::File::at(fixture_path(SMALL_PACK_INDEX), gix_hash::Kind::Sha1)?.index_checksum()
         );
         assert!(res.to_bundle().is_none());
         Ok(())
@@ -163,7 +163,7 @@ mod write_to_directory {
                 thread_limit: None,
                 iteration_mode: pack::data::input::Mode::Verify,
                 index_version: pack::index::Version::V2,
-                object_hash: git_hash::Kind::Sha1,
+                object_hash: gix_hash::Kind::Sha1,
             },
         )
         .map_err(Into::into)

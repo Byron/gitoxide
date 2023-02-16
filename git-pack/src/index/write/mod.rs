@@ -9,7 +9,7 @@ pub(crate) mod encode;
 mod error;
 
 pub(crate) struct TreeEntry {
-    pub id: git_hash::ObjectId,
+    pub id: gix_hash::ObjectId,
     pub crc32: u32,
 }
 
@@ -20,10 +20,10 @@ pub struct Outcome {
     /// The version of the verified index
     pub index_version: crate::index::Version,
     /// The verified checksum of the verified index
-    pub index_hash: git_hash::ObjectId,
+    pub index_hash: gix_hash::ObjectId,
 
     /// The hash of the '.pack' file, also found in its trailing bytes
-    pub data_hash: git_hash::ObjectId,
+    pub data_hash: gix_hash::ObjectId,
     /// The amount of objects that were verified, always the amount of objects in the pack.
     pub num_objects: u32,
 }
@@ -91,7 +91,7 @@ impl crate::index::File {
         mut root_progress: impl Progress,
         out: impl io::Write,
         should_interrupt: &AtomicBool,
-        object_hash: git_hash::Kind,
+        object_hash: gix_hash::Kind,
         pack_version: crate::data::Version,
     ) -> Result<Outcome, Error>
     where
@@ -227,7 +227,7 @@ impl crate::index::File {
                 let header = crate::data::header::encode(pack_version, 0);
                 let mut hasher = gix_features::hash::hasher(object_hash);
                 hasher.update(&header);
-                git_hash::ObjectId::from(hasher.digest())
+                gix_hash::ObjectId::from(hasher.digest())
             }
             None => return Err(Error::IteratorInvariantTrailer),
         };
@@ -253,12 +253,12 @@ impl crate::index::File {
     }
 }
 
-fn modify_base(entry: &mut TreeEntry, pack_entry: &crate::data::Entry, decompressed: &[u8], hash: git_hash::Kind) {
-    fn compute_hash(kind: git_object::Kind, bytes: &[u8], object_hash: git_hash::Kind) -> git_hash::ObjectId {
+fn modify_base(entry: &mut TreeEntry, pack_entry: &crate::data::Entry, decompressed: &[u8], hash: gix_hash::Kind) {
+    fn compute_hash(kind: git_object::Kind, bytes: &[u8], object_hash: gix_hash::Kind) -> gix_hash::ObjectId {
         let mut hasher = gix_features::hash::hasher(object_hash);
         hasher.update(&git_object::encode::loose_header(kind, bytes.len()));
         hasher.update(bytes);
-        git_hash::ObjectId::from(hasher.digest())
+        gix_hash::ObjectId::from(hasher.digest())
     }
 
     let object_kind = pack_entry.header.as_kind().expect("base object as source of iteration");

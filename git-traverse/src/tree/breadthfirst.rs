@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 /// The error is part of the item returned by the [`traverse()`][impl_::traverse()] function.
 #[derive(Debug, thiserror::Error)]
@@ -31,8 +31,8 @@ impl State {
 pub(crate) mod impl_ {
     use std::borrow::BorrowMut;
 
-    use git_hash::oid;
     use git_object::{tree::EntryMode, TreeRefIter};
+    use gix_hash::oid;
 
     use super::{Error, State};
     use crate::tree::Visit;

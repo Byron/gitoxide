@@ -1,8 +1,8 @@
 use std::borrow::BorrowMut;
 
-use git_hash::oid;
 use git_object::TreeRefIter;
 use git_traverse::tree::breadthfirst;
+use gix_hash::oid;
 
 pub trait Sealed {}
 

@@ -13,7 +13,7 @@ pub struct Options {
     /// The version of pack index to write, should be [`crate::index::Version::default()`]
     pub index_version: crate::index::Version,
     /// The kind of hash to use when writing the bundle.
-    pub object_hash: git_hash::Kind,
+    pub object_hash: gix_hash::Kind,
 }
 
 impl Default for Options {
@@ -38,7 +38,7 @@ pub struct Outcome {
     /// The version of the pack
     pub pack_version: crate::data::Version,
     /// The kind of hash stored within the pack and indices
-    pub object_hash: git_hash::Kind,
+    pub object_hash: gix_hash::Kind,
 
     /// The path to the pack index file
     pub index_path: Option<PathBuf>,

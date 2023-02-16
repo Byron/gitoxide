@@ -162,7 +162,7 @@ impl<'a> RefSpecRef<'a> {
                         out.push(source.into());
                     }
                     return;
-                } else if git_hash::ObjectId::from_hex(source).is_ok() {
+                } else if gix_hash::ObjectId::from_hex(source).is_ok() {
                     return;
                 }
                 expand_partial_name(source, |expanded| {

@@ -20,9 +20,9 @@ pub use types::{Options, Outcome};
 
 use crate::bundle::write::types::SharedTempFile;
 
-type ThinPackLookupFn = Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>>>;
+type ThinPackLookupFn = Box<dyn for<'a> FnMut(gix_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>>>;
 type ThinPackLookupFnSend =
-    Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>> + Send + 'static>;
+    Box<dyn for<'a> FnMut(gix_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>> + Send + 'static>;
 
 /// The progress ids used in [`write_to_directory()`][crate::Bundle::write_to_directory()].
 ///
@@ -114,7 +114,7 @@ impl crate::Bundle {
                         writer: data_file.clone(),
                     },
                     pack_version,
-                    git_hash::Kind::Sha1, // Thin packs imply a pack being transported, and there we only ever know SHA1 at the moment.
+                    gix_hash::Kind::Sha1, // Thin packs imply a pack being transported, and there we only ever know SHA1 at the moment.
                 );
                 (Box::new(pack_entries_iter), pack_version)
             }

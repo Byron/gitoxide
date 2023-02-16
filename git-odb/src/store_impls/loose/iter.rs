@@ -9,7 +9,7 @@ impl loose::Iter {
     fn path_to_id(
         &self,
         res: Result<fs::walkdir::DirEntry, fs::walkdir::Error>,
-    ) -> Option<Result<git_hash::ObjectId, Error>> {
+    ) -> Option<Result<gix_hash::ObjectId, Error>> {
         use std::path::Component::Normal;
 
         match res {
@@ -20,13 +20,13 @@ impl loose::Iter {
                 if let (Some(Normal(c1)), Some(Normal(c2))) = (c1, c2) {
                     if c1.len() == 2 && c2.len() == self.hash_hex_len - 2 {
                         if let (Some(c1), Some(c2)) = (c1.to_str(), c2.to_str()) {
-                            let mut buf = git_hash::Kind::hex_buf();
+                            let mut buf = gix_hash::Kind::hex_buf();
                             {
                                 let (first_byte, rest) = buf[..self.hash_hex_len].split_at_mut(2);
                                 first_byte.copy_from_slice(c1.as_bytes());
                                 rest.copy_from_slice(c2.as_bytes());
                             }
-                            if let Ok(b) = git_hash::ObjectId::from_hex(&buf[..self.hash_hex_len]) {
+                            if let Ok(b) = gix_hash::ObjectId::from_hex(&buf[..self.hash_hex_len]) {
                                 return Some(Ok(b));
                             }
                         }
@@ -40,7 +40,7 @@ impl loose::Iter {
 }
 
 impl Iterator for loose::Iter {
-    type Item = Result<git_hash::ObjectId, Error>;
+    type Item = Result<gix_hash::ObjectId, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(res) = self.inner.next() {
@@ -56,7 +56,7 @@ impl Iterator for loose::Iter {
 impl loose::Store {
     /// Return an iterator over all objects contained in the database.
     ///
-    /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][loose::Store::try_find()] method.
+    /// The [`Id`][gix_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][loose::Store::try_find()] method.
     /// _Note_ that the result is not sorted or stable, thus ordering can change between runs.
     ///
     /// # Notes

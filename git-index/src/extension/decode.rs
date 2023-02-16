@@ -28,7 +28,7 @@ pub use error::Error;
 
 pub(crate) fn all(
     maybe_beginning_of_extensions: &[u8],
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
 ) -> Result<(Outcome, &[u8]), Error> {
     let mut ext_iter = match extension::Iter::new_without_checksum(maybe_beginning_of_extensions, object_hash) {
         Some(iter) => iter,

@@ -60,7 +60,7 @@ mod access {
         /// The checksum over the file that was read or written to disk, or `None` if the state in memory was never serialized.
         ///
         /// Note that even if `Some`, it will only represent the state in memory right after reading or [writing][File::write()].
-        pub fn checksum(&self) -> Option<git_hash::ObjectId> {
+        pub fn checksum(&self) -> Option<gix_hash::ObjectId> {
             self.checksum
         }
     }

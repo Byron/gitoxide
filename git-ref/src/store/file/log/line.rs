@@ -1,4 +1,4 @@
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{log::Line, store_impl::file::log::LineRef};
 
@@ -174,8 +174,8 @@ pub mod decode {
         use super::*;
 
         /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
-        fn hex_to_oid(hex: &str) -> git_hash::ObjectId {
-            git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+        fn hex_to_oid(hex: &str) -> gix_hash::ObjectId {
+            gix_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
         }
 
         fn with_newline(mut v: Vec<u8>) -> Vec<u8> {

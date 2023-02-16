@@ -112,7 +112,7 @@ where
             mut extra_refspecs,
         }: Options,
     ) -> Result<fetch::RefMap, Error> {
-        let null = git_hash::ObjectId::null(git_hash::Kind::Sha1); // OK to hardcode Sha1, it's not supposed to match, ever.
+        let null = gix_hash::ObjectId::null(gix_hash::Kind::Sha1); // OK to hardcode Sha1, it's not supposed to match, ever.
 
         if let Some(tag_spec) = self.remote.fetch_tags.to_refspec().map(|spec| spec.to_owned()) {
             if !extra_refspecs.contains(&tag_spec) {
@@ -250,7 +250,7 @@ where
 fn extract_object_format(
     _repo: &crate::Repository,
     outcome: &git_protocol::handshake::Outcome,
-) -> Result<git_hash::Kind, Error> {
+) -> Result<gix_hash::Kind, Error> {
     use bstr::ByteSlice;
     let object_hash =
         if let Some(object_format) = outcome.capabilities.capability("object-format").and_then(|c| c.value()) {
@@ -258,11 +258,11 @@ fn extract_object_format(
                 format: object_format.into(),
             })?;
             match object_format {
-                "sha1" => git_hash::Kind::Sha1,
+                "sha1" => gix_hash::Kind::Sha1,
                 unknown => return Err(Error::UnknownObjectFormat { format: unknown.into() }),
             }
         } else {
-            git_hash::Kind::Sha1
+            gix_hash::Kind::Sha1
         };
     Ok(object_hash)
 }

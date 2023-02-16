@@ -54,7 +54,7 @@ The following schematic helps to visualize what follows.
     ║                      ▼                      ║  │
     ║    Foundation Crates───────────────────┐    ║   
     ║    │ ┌─────────────┐   ┌─────────────┐ │    ║  │
-    ║    │ │  git-hash   │   │  git-actor  │ │    ║   
+    ║    │ │  gix-hash   │   │  git-actor  │ │    ║   
     ║    │ └─────────────┘   └─────────────┘ │    ║  │
     ║    │ ┌─────────────┐   ┌─────────────┐ │    ║   
     ║    │ │   git-ref   │   │ git-config  │ │    ║  │

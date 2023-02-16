@@ -190,7 +190,7 @@ pub fn update_head(
 fn setup_branch_config(
     repo: &mut Repository,
     branch: &FullNameRef,
-    branch_id: Option<&git_hash::oid>,
+    branch_id: Option<&gix_hash::oid>,
     remote_name: &BStr,
 ) -> Result<(), Error> {
     let short_name = match branch.category_and_short_name() {
@@ -204,7 +204,7 @@ fn setup_branch_config(
         .find_remote(remote_name)
         .expect("remote was just created and must be visible in config");
     let group = git_refspec::MatchGroup::from_fetch_specs(remote.fetch_specs.iter().map(|s| s.to_ref()));
-    let null = git_hash::ObjectId::null(repo.object_hash());
+    let null = gix_hash::ObjectId::null(repo.object_hash());
     let res = group.match_remotes(
         Some(git_refspec::match_group::Item {
             full_ref_name: branch.as_bstr(),

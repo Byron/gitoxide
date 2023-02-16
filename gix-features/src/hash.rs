@@ -76,9 +76,9 @@ pub fn crc32(bytes: &[u8]) -> u32 {
 
 /// Produce a hasher suitable for the given kind of hash.
 #[cfg(any(feature = "rustsha1", feature = "fast-sha1"))]
-pub fn hasher(kind: git_hash::Kind) -> Sha1 {
+pub fn hasher(kind: gix_hash::Kind) -> Sha1 {
     match kind {
-        git_hash::Kind::Sha1 => Sha1::default(),
+        gix_hash::Kind::Sha1 => Sha1::default(),
     }
 }
 
@@ -90,17 +90,17 @@ pub fn hasher(kind: git_hash::Kind) -> Sha1 {
 ///
 /// # Note
 ///
-/// * Only available with the `git-object` feature enabled due to usage of the [`git_hash::Kind`] enum and the
-///   [`git_hash::ObjectId`] return value.
+/// * Only available with the `git-object` feature enabled due to usage of the [`gix_hash::Kind`] enum and the
+///   [`gix_hash::ObjectId`] return value.
 /// * [Interrupts][crate::interrupt] are supported.
 #[cfg(all(feature = "progress", any(feature = "rustsha1", feature = "fast-sha1")))]
 pub fn bytes_of_file(
     path: impl AsRef<std::path::Path>,
     num_bytes_from_start: usize,
-    kind: git_hash::Kind,
+    kind: gix_hash::Kind,
     progress: &mut impl crate::progress::Progress,
     should_interrupt: &std::sync::atomic::AtomicBool,
-) -> std::io::Result<git_hash::ObjectId> {
+) -> std::io::Result<gix_hash::ObjectId> {
     bytes(
         std::fs::File::open(path)?,
         num_bytes_from_start,
@@ -115,10 +115,10 @@ pub fn bytes_of_file(
 pub fn bytes(
     mut read: impl std::io::Read,
     num_bytes_from_start: usize,
-    kind: git_hash::Kind,
+    kind: gix_hash::Kind,
     progress: &mut impl crate::progress::Progress,
     should_interrupt: &std::sync::atomic::AtomicBool,
-) -> std::io::Result<git_hash::ObjectId> {
+) -> std::io::Result<gix_hash::ObjectId> {
     let mut hasher = hasher(kind);
     let start = std::time::Instant::now();
     // init progress before the possibility for failure, as convenience in case people want to recover
@@ -139,7 +139,7 @@ pub fn bytes(
         }
     }
 
-    let id = git_hash::ObjectId::from(hasher.digest());
+    let id = gix_hash::ObjectId::from(hasher.digest());
     progress.show_throughput(start);
     Ok(id)
 }
@@ -176,9 +176,9 @@ mod write {
         T: std::io::Write,
     {
         /// Create a new hash writer which hashes all bytes written to `inner` with a hash of `kind`.
-        pub fn new(inner: T, object_hash: git_hash::Kind) -> Self {
+        pub fn new(inner: T, object_hash: gix_hash::Kind) -> Self {
             match object_hash {
-                git_hash::Kind::Sha1 => Write {
+                gix_hash::Kind::Sha1 => Write {
                     inner,
                     hash: Sha1::default(),
                 },

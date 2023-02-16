@@ -27,7 +27,7 @@ fn from_paths() -> crate::Result {
         progress::Discard,
         &AtomicBool::new(false),
         git_pack::multi_index::write::Options {
-            object_hash: git_hash::Kind::Sha1,
+            object_hash: gix_hash::Kind::Sha1,
         },
     )?;
 

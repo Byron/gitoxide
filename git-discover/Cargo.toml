@@ -16,7 +16,7 @@ doctest = false
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }
 gix-path = { version = "^0.7.1", path = "../gix-path" }
 git-ref = { version = "^0.24.0", path = "../git-ref" }
-git-hash = { version = "^0.10.2", path = "../git-hash" }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"] }
 thiserror = "1.0.26"

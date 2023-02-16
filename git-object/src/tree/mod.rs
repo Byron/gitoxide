@@ -69,7 +69,7 @@ pub struct EntryRef<'a> {
     // TODO: figure out how these should be called. id or oid? It's inconsistent around the codebase.
     // Answer: make it 'id', as in `git2`
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub oid: &'a git_hash::oid,
+    pub oid: &'a gix_hash::oid,
 }
 
 impl<'a> PartialOrd for EntryRef<'a> {
@@ -95,7 +95,7 @@ pub struct Entry {
     /// The name of the file in the parent tree.
     pub filename: BString,
     /// The id of the object representing the entry.
-    pub oid: git_hash::ObjectId,
+    pub oid: gix_hash::ObjectId,
 }
 
 impl PartialOrd for Entry {

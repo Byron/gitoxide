@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use super::Error;
 use crate::{bstr, bstr::BString, ext::ObjectIdExt, Repository};
@@ -46,7 +46,7 @@ impl std::fmt::Display for CandidateInfo {
 }
 
 impl Error {
-    pub(crate) fn ambiguous(candidates: HashSet<ObjectId>, prefix: git_hash::Prefix, repo: &Repository) -> Self {
+    pub(crate) fn ambiguous(candidates: HashSet<ObjectId>, prefix: gix_hash::Prefix, repo: &Repository) -> Self {
         #[derive(PartialOrd, Ord, Eq, PartialEq, Copy, Clone)]
         enum Order {
             Tag,

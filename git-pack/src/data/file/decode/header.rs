@@ -3,7 +3,7 @@ use crate::{
     data::{delta, file::decode::Error, File},
 };
 
-/// A return value of a resolve function, which given an [`ObjectId`][git_hash::ObjectId] determines where an object can be found.
+/// A return value of a resolve function, which given an [`ObjectId`][gix_hash::ObjectId] determines where an object can be found.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ResolvedBase {
@@ -38,12 +38,12 @@ impl File {
     ///
     /// The `entry` determines which object to decode, and is commonly obtained with the help of a pack index file or through pack iteration.
     ///
-    /// `resolve` is a function to lookup objects with the given [`ObjectId`][git_hash::ObjectId], in case the full object id
+    /// `resolve` is a function to lookup objects with the given [`ObjectId`][gix_hash::ObjectId], in case the full object id
     /// is used to refer to a base object, instead of an in-pack offset.
     pub fn decode_header(
         &self,
         mut entry: data::Entry,
-        resolve: impl Fn(&git_hash::oid) -> Option<ResolvedBase>,
+        resolve: impl Fn(&gix_hash::oid) -> Option<ResolvedBase>,
     ) -> Result<Outcome, Error> {
         use crate::data::entry::Header::*;
         let mut num_deltas = 0;

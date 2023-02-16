@@ -17,11 +17,11 @@ path = "revision.rs"
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = [ "git-revision/serde", "git-hash/serde1", "git-object/serde1" ]
+serde1 = [ "git-revision/serde", "gix-hash/serde1", "git-object/serde1" ]
 
 [dev-dependencies]
 git-revision = { path = "..", default-features = false }
-git-hash = { path = "../../git-hash" }
+gix-hash = { path = "../../gix-hash" }
 git-object = { path = "../../git-object" }
 git-testtools = { path = "../../tests/tools" }
 gix = { path = "../../gix", default-features = false }

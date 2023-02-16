@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use bstr::{BStr, BString};
-use git_hash::oid;
+use gix_hash::oid;
 
 use crate::RefSpecRef;
 
@@ -45,7 +45,7 @@ pub enum SourceRef<'a> {
     /// Note that it might not be advertised by the remote but part of the object graph,
     /// and thus gets sent in the pack. The server is expected to fail unless the desired
     /// object is present but at some time it is merely a request by the user.
-    ObjectId(git_hash::ObjectId),
+    ObjectId(gix_hash::ObjectId),
 }
 
 impl SourceRef<'_> {
@@ -69,7 +69,7 @@ pub enum Source {
     /// Note that it might not be advertised by the remote but part of the object graph,
     /// and thus gets sent in the pack. The server is expected to fail unless the desired
     /// object is present but at some time it is merely a request by the user.
-    ObjectId(git_hash::ObjectId),
+    ObjectId(gix_hash::ObjectId),
 }
 
 impl std::fmt::Display for Source {

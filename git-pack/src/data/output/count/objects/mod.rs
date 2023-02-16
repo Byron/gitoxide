@@ -3,8 +3,8 @@ use std::{
     sync::{atomic::AtomicBool, Arc},
 };
 
-use git_hash::ObjectId;
 use gix_features::{parallel, progress::Progress};
+use gix_hash::ObjectId;
 
 use crate::{data::output, find};
 
@@ -138,9 +138,9 @@ where
 mod expand {
     use std::sync::atomic::{AtomicBool, Ordering};
 
-    use git_hash::{oid, ObjectId};
     use git_object::{CommitRefIter, TagRefIter};
     use gix_features::progress::Progress;
+    use gix_hash::{oid, ObjectId};
 
     use super::{
         tree,

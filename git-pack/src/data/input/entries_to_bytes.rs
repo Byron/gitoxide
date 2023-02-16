@@ -15,7 +15,7 @@ pub struct EntriesToBytesIter<I: Iterator, W> {
     /// A way of writing encoded bytes.
     output: W,
     /// Our trailing hash when done writing all input entries
-    trailer: Option<git_hash::ObjectId>,
+    trailer: Option<gix_hash::ObjectId>,
     /// The amount of objects in the iteration and the version of the packfile to be written.
     /// Will be `None` to signal the header was written already.
     data_version: crate::data::Version,
@@ -24,7 +24,7 @@ pub struct EntriesToBytesIter<I: Iterator, W> {
     /// If we are done, no additional writes will occur
     is_done: bool,
     /// The kind of hash to use for the digest
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
 }
 
 impl<I, W> EntriesToBytesIter<I, W>
@@ -40,13 +40,13 @@ where
     /// # Panics
     ///
     /// Not all combinations of `object_hash` and `version` are supported currently triggering assertion errors.
-    pub fn new(input: I, output: W, version: crate::data::Version, object_hash: git_hash::Kind) -> Self {
+    pub fn new(input: I, output: W, version: crate::data::Version, object_hash: gix_hash::Kind) -> Self {
         assert!(
             matches!(version, crate::data::Version::V2),
             "currently only pack version 2 can be written",
         );
         assert!(
-            matches!(object_hash, git_hash::Kind::Sha1),
+            matches!(object_hash, gix_hash::Kind::Sha1),
             "currently only Sha1 is supported, right now we don't know how other hashes are encoded",
         );
         EntriesToBytesIter {
@@ -62,7 +62,7 @@ where
 
     /// Returns the trailing hash over all ~ entries once done.
     /// It's `None` if we are not yet done writing.
-    pub fn digest(&self) -> Option<git_hash::ObjectId> {
+    pub fn digest(&self) -> Option<gix_hash::ObjectId> {
         self.trailer
     }
 

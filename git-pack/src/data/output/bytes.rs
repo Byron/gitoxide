@@ -25,7 +25,7 @@ pub struct FromEntriesIter<I, W> {
     /// A way of writing encoded bytes.
     output: hash::Write<W>,
     /// Our trailing hash when done writing all input entries
-    trailer: Option<git_hash::ObjectId>,
+    trailer: Option<gix_hash::ObjectId>,
     /// The amount of objects in the iteration and the version of the packfile to be written.
     /// Will be `None` to signal the header was written already.
     header_info: Option<(crate::data::Version, u32)>,
@@ -62,7 +62,7 @@ where
         output: W,
         num_entries: u32,
         version: crate::data::Version,
-        object_hash: git_hash::Kind,
+        object_hash: gix_hash::Kind,
     ) -> Self {
         assert!(
             matches!(version, crate::data::Version::V2),
@@ -89,7 +89,7 @@ where
 
     /// Returns the trailing hash over all written entries once done.
     /// It's `None` if we are not yet done writing.
-    pub fn digest(&self) -> Option<git_hash::ObjectId> {
+    pub fn digest(&self) -> Option<gix_hash::ObjectId> {
         self.trailer
     }
 
@@ -125,7 +125,7 @@ where
                 self.written += digest.len() as u64;
                 self.output.inner.flush()?;
                 self.is_done = true;
-                self.trailer = Some(git_hash::ObjectId::from(digest));
+                self.trailer = Some(gix_hash::ObjectId::from(digest));
             }
         };
         Ok(self.written - previous_written)

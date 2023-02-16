@@ -80,13 +80,13 @@ pub enum Error {
         "Commit {oid} has {available} ancestors along the first parent and ancestor number {desired} is out of range"
     )]
     AncestorOutOfRange {
-        oid: git_hash::Prefix,
+        oid: gix_hash::Prefix,
         desired: usize,
         available: usize,
     },
     #[error("Commit {oid} has {available} parents and parent number {desired} is out of range")]
     ParentOutOfRange {
-        oid: git_hash::Prefix,
+        oid: gix_hash::Prefix,
         desired: usize,
         available: usize,
     },
@@ -118,7 +118,7 @@ pub enum Error {
     )]
     NoRegexMatch {
         regex: BString,
-        oid: git_hash::Prefix,
+        oid: gix_hash::Prefix,
         commits_searched: usize,
     },
     #[cfg_attr(
@@ -134,12 +134,12 @@ pub enum Error {
     "The short hash {prefix} matched both the reference {} and at least one object", reference.name)]
     AmbiguousRefAndObject {
         /// The prefix to look for.
-        prefix: git_hash::Prefix,
+        prefix: gix_hash::Prefix,
         /// The reference matching the prefix.
         reference: git_ref::Reference,
     },
     #[error(transparent)]
-    IdFromHex(#[from] git_hash::decode::Error),
+    IdFromHex(#[from] gix_hash::decode::Error),
     #[error(transparent)]
     FindReference(#[from] git_ref::file::find::existing::Error),
     #[error(transparent)]
@@ -150,23 +150,23 @@ pub enum Error {
     PeelToKind(#[from] object::peel::to_kind::Error),
     #[error("Object {oid} was a {actual}, but needed it to be a {expected}")]
     ObjectKind {
-        oid: git_hash::Prefix,
+        oid: gix_hash::Prefix,
         actual: git_object::Kind,
         expected: git_object::Kind,
     },
     #[error(transparent)]
     Parse(#[from] git_revision::spec::parse::Error),
     #[error("An object prefixed {prefix} could not be found")]
-    PrefixNotFound { prefix: git_hash::Prefix },
+    PrefixNotFound { prefix: gix_hash::Prefix },
     #[error("Short id {prefix} is ambiguous. Candidates are:\n{}", info.iter().map(|(oid, info)| format!("\t{oid} {info}")).collect::<Vec<_>>().join("\n"))]
     AmbiguousPrefix {
-        prefix: git_hash::Prefix,
-        info: Vec<(git_hash::Prefix, super::error::CandidateInfo)>,
+        prefix: gix_hash::Prefix,
+        info: Vec<(gix_hash::Prefix, super::error::CandidateInfo)>,
     },
     #[error("Could not find path {path:?} in tree {tree} of parent object {object}")]
     PathNotFound {
-        object: git_hash::Prefix,
-        tree: git_hash::Prefix,
+        object: gix_hash::Prefix,
+        tree: gix_hash::Prefix,
         path: BString,
     },
     #[error("{current}")]

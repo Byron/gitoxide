@@ -1,8 +1,8 @@
 //!
 use std::convert::TryInto;
 
-use git_hash::ObjectId;
 pub use git_object::Kind;
+use gix_hash::ObjectId;
 
 use crate::{Commit, Id, Object, ObjectDetached, Tag, Tree};
 
@@ -29,7 +29,7 @@ pub mod try_into {
     pub struct Error {
         pub actual: git_object::Kind,
         pub expected: git_object::Kind,
-        pub id: git_hash::ObjectId,
+        pub id: gix_hash::ObjectId,
     }
 }
 

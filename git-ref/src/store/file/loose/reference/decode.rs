@@ -1,7 +1,7 @@
 use std::convert::{TryFrom, TryInto};
 
-use git_hash::ObjectId;
 use git_object::bstr::BString;
+use gix_hash::ObjectId;
 use nom::{
     bytes::complete::{tag, take_while},
     combinator::{map, opt},

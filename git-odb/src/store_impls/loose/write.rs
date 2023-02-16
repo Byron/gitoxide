@@ -29,7 +29,7 @@ pub enum Error {
 impl crate::traits::Write for Store {
     type Error = Error;
 
-    fn write(&self, object: impl WriteTo) -> Result<git_hash::ObjectId, Self::Error> {
+    fn write(&self, object: impl WriteTo) -> Result<gix_hash::ObjectId, Self::Error> {
         let mut to = self.dest()?;
         to.write_all(&object.loose_header()).map_err(|err| Error::Io {
             source: err,
@@ -48,7 +48,7 @@ impl crate::traits::Write for Store {
     /// Write the given buffer in `from` to disk in one syscall at best.
     ///
     /// This will cost at least 4 IO operations.
-    fn write_buf(&self, kind: git_object::Kind, from: &[u8]) -> Result<git_hash::ObjectId, Self::Error> {
+    fn write_buf(&self, kind: git_object::Kind, from: &[u8]) -> Result<gix_hash::ObjectId, Self::Error> {
         let mut to = self.dest()?;
         to.write_all(&git_object::encode::loose_header(kind, from.len()))
             .map_err(|err| Error::Io {
@@ -74,7 +74,7 @@ impl crate::traits::Write for Store {
         kind: git_object::Kind,
         size: u64,
         mut from: impl io::Read,
-    ) -> Result<git_hash::ObjectId, Self::Error> {
+    ) -> Result<gix_hash::ObjectId, Self::Error> {
         let mut to = self.dest()?;
         to.write_all(&git_object::encode::loose_header(
             kind,
@@ -113,8 +113,8 @@ impl Store {
     fn finalize_object(
         &self,
         hash::Write { hash, inner: file }: hash::Write<CompressedTempfile>,
-    ) -> Result<git_hash::ObjectId, Error> {
-        let id = git_hash::ObjectId::from(hash.digest());
+    ) -> Result<gix_hash::ObjectId, Error> {
+        let id = gix_hash::ObjectId::from(hash.digest());
         let object_path = loose::hash_path(&id, self.path.clone());
         let object_dir = object_path
             .parent()

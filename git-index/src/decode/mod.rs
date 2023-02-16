@@ -24,8 +24,8 @@ mod error {
         UnexpectedTrailerLength { expected: usize, actual: usize },
         #[error("Shared index checksum was {actual_checksum} but should have been {expected_checksum}")]
         ChecksumMismatch {
-            actual_checksum: git_hash::ObjectId,
-            expected_checksum: git_hash::ObjectId,
+            actual_checksum: gix_hash::ObjectId,
+            expected_checksum: gix_hash::ObjectId,
         },
     }
 }
@@ -49,7 +49,7 @@ pub struct Options {
     /// Set the expected hash of this index if we are read as part of a `link` extension.
     ///
     /// We will abort reading this file if it doesn't match.
-    pub expected_checksum: Option<git_hash::ObjectId>,
+    pub expected_checksum: Option<gix_hash::ObjectId>,
 }
 
 impl State {
@@ -58,13 +58,13 @@ impl State {
     pub fn from_bytes(
         data: &[u8],
         timestamp: FileTime,
-        object_hash: git_hash::Kind,
+        object_hash: gix_hash::Kind,
         Options {
             thread_limit,
             min_extension_block_in_bytes_for_threading,
             expected_checksum,
         }: Options,
-    ) -> Result<(Self, git_hash::ObjectId), Error> {
+    ) -> Result<(Self, gix_hash::ObjectId), Error> {
         let (version, num_entries, post_header_data) = header::decode(data, object_hash)?;
         let start_of_extensions = extension::end_of_index_entry::decode(data, object_hash);
 
@@ -214,7 +214,7 @@ impl State {
             });
         }
 
-        let checksum = git_hash::ObjectId::from(data);
+        let checksum = gix_hash::ObjectId::from(data);
         if let Some(expected_checksum) = expected_checksum {
             if checksum != expected_checksum {
                 return Err(Error::ChecksumMismatch {
@@ -268,7 +268,7 @@ fn entries(
     post_header_data: &[u8],
     path_backing_buffer_size: usize,
     num_entries: u32,
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
     version: Version,
 ) -> Result<(EntriesOutcome, &[u8]), Error> {
     let mut entries = Vec::with_capacity(num_entries as usize);

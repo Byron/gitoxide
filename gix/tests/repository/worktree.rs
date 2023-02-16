@@ -138,7 +138,7 @@ mod baseline {
         pub root: PathBuf,
         pub bare: bool,
         pub locked: Option<Reason>,
-        pub peeled: git_hash::ObjectId,
+        pub peeled: gix_hash::ObjectId,
         pub branch: Option<BString>,
         pub prunable: Option<Reason>,
     }
@@ -150,7 +150,7 @@ mod baseline {
             let root = gix_path::from_bstr(fields(self.lines.next()?).1).into_owned();
             let mut bare = false;
             let mut branch = None;
-            let mut peeled = git_hash::ObjectId::null(git_hash::Kind::Sha1);
+            let mut peeled = gix_hash::ObjectId::null(gix_hash::Kind::Sha1);
             let mut locked = None;
             let mut prunable = None;
             for line in self.lines.by_ref() {
@@ -165,7 +165,7 @@ mod baseline {
                 }
                 let (field, value) = fields(line);
                 match field {
-                    f if f == "HEAD" => peeled = git_hash::ObjectId::from_hex(value).expect("valid hash"),
+                    f if f == "HEAD" => peeled = gix_hash::ObjectId::from_hex(value).expect("valid hash"),
                     f if f == "branch" => branch = Some(value.to_owned()),
                     f if f == "locked" => locked = Some(value.to_owned()),
                     f if f == "prunable" => prunable = Some(value.to_owned()),

@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::data::{entry::Header, input};
 
@@ -63,7 +63,7 @@ where
             size_change_in_bytes: size_change,
             oid: oid.into().unwrap_or_else(||
                 // NOTE: this value acts as sentinel and the actual hash kind doesn't matter.
-                git_hash::Kind::Sha1.null()),
+                gix_hash::Kind::Sha1.null()),
         });
         self.inserted_entries_length_in_bytes += size_change;
     }

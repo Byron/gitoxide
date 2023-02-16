@@ -33,7 +33,7 @@ mod init {
         /// Create a new instance at the given `git_dir`, which commonly is a standard git repository with a
         /// `refs/` subdirectory.
         /// The `object_hash` defines which kind of hash we should recognize.
-        pub fn at(git_dir: impl Into<PathBuf>, write_reflog: file::WriteReflog, object_hash: git_hash::Kind) -> Self {
+        pub fn at(git_dir: impl Into<PathBuf>, write_reflog: file::WriteReflog, object_hash: gix_hash::Kind) -> Self {
             file::Store {
                 git_dir: git_dir.into(),
                 common_dir: None,
@@ -50,7 +50,7 @@ mod init {
             git_dir: impl Into<PathBuf>,
             common_dir: impl Into<PathBuf>,
             write_reflog: file::WriteReflog,
-            object_hash: git_hash::Kind,
+            object_hash: gix_hash::Kind,
         ) -> Self {
             file::Store {
                 git_dir: git_dir.into(),

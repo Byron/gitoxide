@@ -19,7 +19,7 @@ pub mod to_kind {
             FindExistingObject(#[from] object::find::existing::Error),
             #[error("Last encountered object {oid} was {actual} while trying to peel to {expected}")]
             NotFound {
-                oid: git_hash::Prefix,
+                oid: gix_hash::Prefix,
                 actual: object::Kind,
                 expected: object::Kind,
             },

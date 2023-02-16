@@ -310,7 +310,7 @@ impl IndexAndPacks {
         }
     }
 
-    pub(crate) fn load_index(&mut self, object_hash: git_hash::Kind) -> std::io::Result<()> {
+    pub(crate) fn load_index(&mut self, object_hash: gix_hash::Kind) -> std::io::Result<()> {
         match self {
             IndexAndPacks::Index(bundle) => bundle.index.load_strict(|path| {
                 git_pack::index::File::at(path, object_hash)

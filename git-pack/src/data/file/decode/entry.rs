@@ -8,7 +8,7 @@ use crate::{
     data::{delta, file::decode::Error, File},
 };
 
-/// A return value of a resolve function, which given an [`ObjectId`][git_hash::ObjectId] determines where an object can be found.
+/// A return value of a resolve function, which given an [`ObjectId`][gix_hash::ObjectId] determines where an object can be found.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ResolvedBase {
@@ -150,7 +150,7 @@ impl File {
     ///
     /// The `entry` determines which object to decode, and is commonly obtained with the help of a pack index file or through pack iteration.
     ///
-    /// `resolve` is a function to lookup objects with the given [`ObjectId`][git_hash::ObjectId], in case the full object id is used to refer to
+    /// `resolve` is a function to lookup objects with the given [`ObjectId`][gix_hash::ObjectId], in case the full object id is used to refer to
     /// a base object, instead of an in-pack offset.
     ///
     /// `delta_cache` is a mechanism to avoid looking up base objects multiple times when decompressing multiple objects in a row.
@@ -159,7 +159,7 @@ impl File {
         &self,
         entry: data::Entry,
         out: &mut Vec<u8>,
-        resolve: impl Fn(&git_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
+        resolve: impl Fn(&gix_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
         delta_cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
         use crate::data::entry::Header::*;
@@ -190,7 +190,7 @@ impl File {
     fn resolve_deltas(
         &self,
         last: data::Entry,
-        resolve: impl Fn(&git_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
+        resolve: impl Fn(&gix_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {

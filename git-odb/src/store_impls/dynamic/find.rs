@@ -24,34 +24,34 @@ pub(crate) mod error {
             /// the maximum recursion depth we encountered.
             max_depth: usize,
             /// The original object to lookup
-            id: git_hash::ObjectId,
+            id: gix_hash::ObjectId,
         },
         #[error("The base object {} could not be found but is required to decode {}", .base_id, .id)]
         DeltaBaseMissing {
             /// the id of the base object which failed to lookup
-            base_id: git_hash::ObjectId,
+            base_id: gix_hash::ObjectId,
             /// The original object to lookup
-            id: git_hash::ObjectId,
+            id: gix_hash::ObjectId,
         },
         #[error("An error occurred when looking up a ref delta base object {} to decode {}", .base_id, .id)]
         DeltaBaseLookup {
             #[source]
             err: Box<Self>,
             /// the id of the base object which failed to lookup
-            base_id: git_hash::ObjectId,
+            base_id: gix_hash::ObjectId,
             /// The original object to lookup
-            id: git_hash::ObjectId,
+            id: gix_hash::ObjectId,
         },
     }
 
     #[derive(Copy, Clone)]
     pub(crate) struct DeltaBaseRecursion<'a> {
         pub depth: usize,
-        pub original_id: &'a git_hash::oid,
+        pub original_id: &'a gix_hash::oid,
     }
 
     impl<'a> DeltaBaseRecursion<'a> {
-        pub fn new(id: &'a git_hash::oid) -> Self {
+        pub fn new(id: &'a gix_hash::oid) -> Self {
             Self {
                 original_id: id,
                 depth: 0,
@@ -84,7 +84,7 @@ where
 {
     fn try_find_cached_inner<'a, 'b>(
         &'b self,
-        mut id: &'b git_hash::oid,
+        mut id: &'b gix_hash::oid,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
         snapshot: &mut load_index::Snapshot,
@@ -309,7 +309,7 @@ where
     type Error = Error;
 
     // TODO: probably make this method fallible, but that would mean its own error type.
-    fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool {
+    fn contains(&self, id: impl AsRef<gix_hash::oid>) -> bool {
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
         loop {
@@ -341,7 +341,7 @@ where
 
     fn try_find_cached<'a>(
         &self,
-        id: impl AsRef<git_hash::oid>,
+        id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
     ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::data::entry::Location>)>, Self::Error> {
@@ -352,7 +352,7 @@ where
 
     fn location_by_oid(
         &self,
-        id: impl AsRef<git_hash::oid>,
+        id: impl AsRef<gix_hash::oid>,
         buf: &mut Vec<u8>,
     ) -> Option<git_pack::data::entry::Location> {
         assert!(
@@ -430,7 +430,7 @@ where
         }
     }
 
-    fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+    fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, gix_hash::ObjectId)>> {
         assert!(
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
@@ -505,13 +505,13 @@ where
 {
     type Error = <Self as git_pack::Find>::Error;
 
-    fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool {
+    fn contains(&self, id: impl AsRef<gix_hash::oid>) -> bool {
         git_pack::Find::contains(self, id)
     }
 
     fn try_find<'a>(
         &self,
-        id: impl AsRef<git_hash::oid>,
+        id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
     ) -> Result<Option<git_object::Data<'a>>, Self::Error> {
         git_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))

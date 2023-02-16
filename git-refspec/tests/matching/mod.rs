@@ -6,13 +6,13 @@ pub mod baseline {
     use std::{borrow::Borrow, collections::HashMap};
 
     use bstr::{BString, ByteSlice, ByteVec};
-    use git_hash::ObjectId;
     use git_refspec::{
         match_group::{validate::Fix, SourceRef},
         parse::Operation,
         MatchGroup,
     };
     use git_testtools::once_cell::sync::Lazy;
+    use gix_hash::ObjectId;
 
     use crate::matching::BASELINE;
 
@@ -286,7 +286,7 @@ pub mod baseline {
         if !name.contains(&b'/') || name.starts_with(b"sub/") || name.starts_with(b"suub/") {
             if looks_like_tag(&name) {
                 name.insert_str(0, b"refs/tags/");
-            } else if let Ok(_id) = git_hash::ObjectId::from_hex(name.as_ref()) {
+            } else if let Ok(_id) = gix_hash::ObjectId::from_hex(name.as_ref()) {
                 // keep as is
             } else if name != "HEAD" {
                 name.insert_str(0, b"refs/heads/");

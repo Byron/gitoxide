@@ -35,7 +35,7 @@ impl crate::Repository {
     /// It can be configured further before starting the actual walk.
     pub fn rev_walk(
         &self,
-        tips: impl IntoIterator<Item = impl Into<git_hash::ObjectId>>,
+        tips: impl IntoIterator<Item = impl Into<gix_hash::ObjectId>>,
     ) -> revision::walk::Platform<'_> {
         revision::walk::Platform::new(tips, self)
     }

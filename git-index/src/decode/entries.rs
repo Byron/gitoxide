@@ -18,10 +18,10 @@ pub fn estimate_path_storage_requirements_in_bytes(
     num_entries: u32,
     on_disk_size: usize,
     offset_to_extensions: Option<usize>,
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
     version: Version,
 ) -> usize {
-    const fn on_disk_entry_sans_path(object_hash: git_hash::Kind) -> usize {
+    const fn on_disk_entry_sans_path(object_hash: gix_hash::Kind) -> usize {
         8 + // ctime
         8 + // mtime
         (4 * 6) +  // various stat fields
@@ -45,7 +45,7 @@ pub fn chunk<'a>(
     entries: &mut Vec<Entry>,
     path_backing: &mut Vec<u8>,
     num_entries: u32,
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
     version: Version,
 ) -> Result<(Outcome, &'a [u8]), decode::Error> {
     let mut is_sparse = false;
@@ -156,7 +156,7 @@ fn load_one<'a>(
                 gid,
                 size,
             },
-            id: git_hash::ObjectId::from(hash),
+            id: gix_hash::ObjectId::from(hash),
             flags: flags & !entry::Flags::PATH_LEN,
             // This forces us to add the bits we need before being able to use them.
             mode: entry::Mode::from_bits_truncate(mode),

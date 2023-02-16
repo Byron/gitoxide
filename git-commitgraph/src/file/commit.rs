@@ -15,13 +15,13 @@ use crate::{
 #[allow(missing_docs)]
 pub enum Error {
     #[error("commit {0}'s extra edges overflows the commit-graph file's extra edges list")]
-    ExtraEdgesListOverflow(git_hash::ObjectId),
+    ExtraEdgesListOverflow(gix_hash::ObjectId),
     #[error("commit {0}'s first parent is an extra edge index, which is invalid")]
-    FirstParentIsExtraEdgeIndex(git_hash::ObjectId),
+    FirstParentIsExtraEdgeIndex(gix_hash::ObjectId),
     #[error("commit {0} has extra edges, but commit-graph file has no extra edges list")]
-    MissingExtraEdgesList(git_hash::ObjectId),
+    MissingExtraEdgesList(gix_hash::ObjectId),
     #[error("commit {0} has a second parent but not a first parent")]
-    SecondParentWithoutFirstParent(git_hash::ObjectId),
+    SecondParentWithoutFirstParent(gix_hash::ObjectId),
 }
 
 /// A commit as stored in a [`File`].
@@ -33,7 +33,7 @@ pub struct Commit<'a> {
     generation: u32,
     parent1: ParentEdge,
     parent2: ParentEdge,
-    root_tree_id: &'a git_hash::oid,
+    root_tree_id: &'a gix_hash::oid,
 }
 
 #[inline]
@@ -47,7 +47,7 @@ impl<'a> Commit<'a> {
         Commit {
             file,
             pos,
-            root_tree_id: git_hash::oid::from_bytes_unchecked(&bytes[..file.hash_len]),
+            root_tree_id: gix_hash::oid::from_bytes_unchecked(&bytes[..file.hash_len]),
             parent1: ParentEdge::from_raw(read_u32(&bytes[file.hash_len..][..4])),
             parent2: ParentEdge::from_raw(read_u32(&bytes[file.hash_len + 4..][..4])),
             generation: read_u32(&bytes[file.hash_len + 8..][..4]) >> 2,
@@ -83,7 +83,7 @@ impl<'a> Commit<'a> {
     }
 
     /// Returns the hash of this commit.
-    pub fn id(&self) -> &'a git_hash::oid {
+    pub fn id(&self) -> &'a gix_hash::oid {
         self.file.id_at(self.pos)
     }
 
@@ -98,7 +98,7 @@ impl<'a> Commit<'a> {
     }
 
     /// Return the hash of the tree this commit points to.
-    pub fn root_tree_id(&self) -> &git_hash::oid {
+    pub fn root_tree_id(&self) -> &gix_hash::oid {
         self.root_tree_id
     }
 }

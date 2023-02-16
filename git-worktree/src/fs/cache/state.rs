@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use bstr::{BStr, BString, ByteSlice};
-use git_hash::oid;
 use gix_glob::pattern::Case;
+use gix_hash::oid;
 
 use crate::fs::{cache::State, PathOidMapping};
 

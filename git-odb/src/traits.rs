@@ -9,15 +9,15 @@ pub trait Write {
     /// _Note_ the default implementations require the `From<io::Error>` bound.
     type Error: std::error::Error + From<io::Error>;
 
-    /// Write objects using the intrinsic kind of [`hash`][git_hash::Kind] into the database,
+    /// Write objects using the intrinsic kind of [`hash`][gix_hash::Kind] into the database,
     /// returning id to reference it in subsequent reads.
-    fn write(&self, object: impl WriteTo) -> Result<git_hash::ObjectId, Self::Error> {
+    fn write(&self, object: impl WriteTo) -> Result<gix_hash::ObjectId, Self::Error> {
         let mut buf = Vec::with_capacity(2048);
         object.write_to(&mut buf)?;
         self.write_stream(object.kind(), buf.len() as u64, buf.as_slice())
     }
     /// As [`write`][Write::write], but takes an [`object` kind][git_object::Kind] along with its encoded bytes.
-    fn write_buf(&self, object: git_object::Kind, from: &[u8]) -> Result<git_hash::ObjectId, Self::Error> {
+    fn write_buf(&self, object: git_object::Kind, from: &[u8]) -> Result<gix_hash::ObjectId, Self::Error> {
         self.write_stream(object, from.len() as u64, from)
     }
     /// As [`write`][Write::write], but takes an input stream.
@@ -27,7 +27,7 @@ pub trait Write {
         kind: git_object::Kind,
         size: u64,
         from: impl io::Read,
-    ) -> Result<git_hash::ObjectId, Self::Error>;
+    ) -> Result<gix_hash::ObjectId, Self::Error>;
 }
 
 /// Describe how object can be located in an object store.
@@ -43,7 +43,7 @@ pub trait Find {
     type Error: std::error::Error + 'static;
 
     /// Returns true if the object exists in the database.
-    fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool;
+    fn contains(&self, id: impl AsRef<gix_hash::oid>) -> bool;
 
     /// Find an object matching `id` in the database while placing its raw, possibly encoded data into `buffer`.
     ///
@@ -51,7 +51,7 @@ pub trait Find {
     /// retrieval.
     fn try_find<'a>(
         &self,
-        id: impl AsRef<git_hash::oid>,
+        id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
     ) -> Result<Option<git_object::Data<'a>>, Self::Error>;
 }
@@ -61,14 +61,14 @@ pub trait Header {
     /// The error returned by [`try_header()`][Header::try_header()].
     type Error: std::error::Error + 'static;
     /// Try to read the header of the object associated with `id` or return `None` if it could not be found.
-    fn try_header(&self, id: impl AsRef<git_hash::oid>) -> Result<Option<find::Header>, Self::Error>;
+    fn try_header(&self, id: impl AsRef<gix_hash::oid>) -> Result<Option<find::Header>, Self::Error>;
 }
 
 mod _impls {
     use std::{io::Read, ops::Deref, rc::Rc, sync::Arc};
 
-    use git_hash::{oid, ObjectId};
     use git_object::{Data, Kind, WriteTo};
+    use gix_hash::{oid, ObjectId};
 
     use crate::find::Header;
 
@@ -219,7 +219,7 @@ mod ext {
             /// while returning the desired object type.
             fn $method<'a>(
                 &self,
-                id: impl AsRef<git_hash::oid>,
+                id: impl AsRef<gix_hash::oid>,
                 buffer: &'a mut Vec<u8>,
             ) -> Result<$object_type, find::existing_object::Error<Self::Error>> {
                 let id = id.as_ref();
@@ -245,7 +245,7 @@ mod ext {
             /// while returning the desired iterator type.
             fn $method<'a>(
                 &self,
-                id: impl AsRef<git_hash::oid>,
+                id: impl AsRef<gix_hash::oid>,
                 buffer: &'a mut Vec<u8>,
             ) -> Result<$object_type, find::existing_iter::Error<Self::Error>> {
                 let id = id.as_ref();
@@ -269,7 +269,7 @@ mod ext {
         /// Like [`try_header(…)`][super::Header::try_header()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
         fn header(
             &self,
-            id: impl AsRef<git_hash::oid>,
+            id: impl AsRef<gix_hash::oid>,
         ) -> Result<crate::find::Header, find::existing::Error<Self::Error>> {
             let id = id.as_ref();
             self.try_header(id)
@@ -285,7 +285,7 @@ mod ext {
         /// Like [`try_find(…)`][super::Find::try_find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
         fn find<'a>(
             &self,
-            id: impl AsRef<git_hash::oid>,
+            id: impl AsRef<gix_hash::oid>,
             buffer: &'a mut Vec<u8>,
         ) -> Result<git_object::Data<'a>, find::existing::Error<Self::Error>> {
             let id = id.as_ref();

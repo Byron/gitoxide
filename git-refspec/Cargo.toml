@@ -15,7 +15,7 @@ doctest = false
 [dependencies]
 git-revision = { version = "^0.10.2", path = "../git-revision" }
 git-validate = { version = "^0.7.2", path = "../git-validate" }
-git-hash = { version = "^0.10.2", path = "../git-hash" }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std"]}
 thiserror = "1.0.26"

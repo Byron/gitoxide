@@ -54,11 +54,11 @@ pub mod cache;
 ///
 pub struct Sink {
     compressor: Option<RefCell<deflate::Write<std::io::Sink>>>,
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
 }
 
 /// Create a new [`Sink`] with compression disabled.
-pub fn sink(object_hash: git_hash::Kind) -> Sink {
+pub fn sink(object_hash: gix_hash::Kind) -> Sink {
     Sink {
         compressor: None,
         object_hash,
@@ -109,7 +109,7 @@ pub struct Store {
     pub(crate) current_dir: PathBuf,
 
     /// A set of replacements that given a source OID return a destination OID. The vector is sorted.
-    pub(crate) replacements: Vec<(git_hash::ObjectId, git_hash::ObjectId)>,
+    pub(crate) replacements: Vec<(gix_hash::ObjectId, gix_hash::ObjectId)>,
 
     /// A list of indices keeping track of which slots are filled with data. These are usually, but not always, consecutive.
     pub(crate) index: ArcSwap<types::SlotMapIndex>,
@@ -130,7 +130,7 @@ pub struct Store {
     /// If true, we are allowed to use multi-pack indices and they must have the `object_hash` or be ignored.
     use_multi_pack_index: bool,
     /// The hash kind to use for some operations
-    object_hash: git_hash::Kind,
+    object_hash: gix_hash::Kind,
 }
 
 /// Create a new cached handle to the object store with support for additional options.
@@ -139,7 +139,7 @@ pub struct Store {
 /// This means that when asking for object `X`, one will receive object `X-replaced` given an iterator like `Some((X, X-replaced))`.
 pub fn at_opts(
     objects_dir: impl Into<PathBuf>,
-    replacements: impl IntoIterator<Item = (git_hash::ObjectId, git_hash::ObjectId)>,
+    replacements: impl IntoIterator<Item = (gix_hash::ObjectId, gix_hash::ObjectId)>,
     options: store::init::Options,
 ) -> std::io::Result<Handle> {
     let handle = OwnShared::new(Store::at_opts(objects_dir, replacements, options)?).to_handle();

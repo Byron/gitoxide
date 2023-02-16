@@ -66,14 +66,14 @@ pub fn make_readonly_repo(script_path: &str) -> std::path::PathBuf {
 }
 
 pub struct RefInfo {
-    id: git_hash::ObjectId,
-    parent_ids: Vec<git_hash::ObjectId>,
+    id: gix_hash::ObjectId,
+    parent_ids: Vec<gix_hash::ObjectId>,
     pos: GraphPosition,
-    root_tree_id: git_hash::ObjectId,
+    root_tree_id: gix_hash::ObjectId,
 }
 
 impl RefInfo {
-    pub fn id(&self) -> &git_hash::oid {
+    pub fn id(&self) -> &gix_hash::oid {
         &self.id
     }
 
@@ -81,11 +81,11 @@ impl RefInfo {
         self.pos
     }
 
-    pub fn parent_ids(&self) -> impl IntoIterator<Item = &git_hash::oid> {
+    pub fn parent_ids(&self) -> impl IntoIterator<Item = &gix_hash::oid> {
         self.parent_ids.iter().map(|x| x.as_ref())
     }
 
-    pub fn root_tree_id(&self) -> &git_hash::oid {
+    pub fn root_tree_id(&self) -> &gix_hash::oid {
         &self.root_tree_id
     }
 }
@@ -110,18 +110,18 @@ pub fn inspect_refs(repo_dir: impl AsRef<Path>, refs: &[&'static str]) -> HashMa
             let parts = x.trim_end().split(' ').collect::<Vec<_>>();
             (
                 parts[0].to_string(),
-                git_hash::ObjectId::from_hex(parts[1].as_bytes()).expect("40 bytes hex"),
-                git_hash::ObjectId::from_hex(parts[2].as_bytes()).expect("40 bytes hex"),
+                gix_hash::ObjectId::from_hex(parts[1].as_bytes()).expect("40 bytes hex"),
+                gix_hash::ObjectId::from_hex(parts[2].as_bytes()).expect("40 bytes hex"),
                 parts[3..]
                     .iter()
-                    .map(|x| git_hash::ObjectId::from_hex(x.as_bytes()).expect("40 bytes hex"))
+                    .map(|x| gix_hash::ObjectId::from_hex(x.as_bytes()).expect("40 bytes hex"))
                     .collect(),
             )
         })
         .collect();
     infos.sort_by_key(|x| x.1);
 
-    let get_pos = |id: &git_hash::oid| -> GraphPosition {
+    let get_pos = |id: &gix_hash::oid| -> GraphPosition {
         let pos: u32 = infos
             .binary_search_by_key(&id, |x| &x.1)
             .expect("sorted_ids to contain id")

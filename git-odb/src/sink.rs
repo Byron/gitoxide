@@ -28,7 +28,7 @@ impl crate::traits::Write for Sink {
         kind: git_object::Kind,
         size: u64,
         mut from: impl io::Read,
-    ) -> Result<git_hash::ObjectId, Self::Error> {
+    ) -> Result<gix_hash::ObjectId, Self::Error> {
         let mut size = size.try_into().expect("object size to fit into usize");
         use gix_features::hash::Sha1;
         let mut buf = [0u8; 8096];
@@ -41,7 +41,7 @@ impl crate::traits::Write for Sink {
             Ok(())
         };
         match self.object_hash {
-            git_hash::Kind::Sha1 => {
+            gix_hash::Kind::Sha1 => {
                 let mut hasher = Sha1::default();
                 hasher.update(&header);
                 possibly_compress(&header)?;

@@ -19,7 +19,7 @@ pub enum Error {
     #[error(transparent)]
     Header(#[from] crate::data::header::decode::Error),
     #[error("Could find object with id {id} in this pack. Thin packs are not supported")]
-    UnresolvedRefDelta { id: git_hash::ObjectId },
+    UnresolvedRefDelta { id: gix_hash::ObjectId },
     #[error(transparent)]
     Tree(#[from] crate::cache::delta::Error),
     #[error("Interrupted")]
@@ -36,7 +36,7 @@ impl<T> Tree<T> {
     /// * `pack_path` is the path to the pack file itself and from which to read the entry data, which is a pack file matching the offsets
     /// returned by `get_pack_offset(…)`.
     /// * `progress` is used to track progress when creating the tree.
-    /// * `resolve_in_pack_id(git_hash::oid) -> Option<data::Offset>` takes an object ID and tries to resolve it to an object within this pack if
+    /// * `resolve_in_pack_id(gix_hash::oid) -> Option<data::Offset>` takes an object ID and tries to resolve it to an object within this pack if
     /// possible. Failing to do so aborts the operation, and this function is not expected to be called in usual packs. It's a theoretical
     /// possibility though as old packs might have referred to their objects using the 20 bytes hash, instead of their encoded offset from the base.
     ///
@@ -45,10 +45,10 @@ impl<T> Tree<T> {
         pack_path: impl AsRef<std::path::Path>,
         data_sorted_by_offsets: impl Iterator<Item = T>,
         get_pack_offset: impl Fn(&T) -> data::Offset,
-        resolve_in_pack_id: impl Fn(&git_hash::oid) -> Option<data::Offset>,
+        resolve_in_pack_id: impl Fn(&gix_hash::oid) -> Option<data::Offset>,
         mut progress: impl Progress,
         should_interrupt: &AtomicBool,
-        object_hash: git_hash::Kind,
+        object_hash: gix_hash::Kind,
     ) -> Result<Self, Error> {
         let mut r = io::BufReader::with_capacity(
             8192 * 8, // this value directly corresponds to performance, 8k (default) is about 4x slower than 64k

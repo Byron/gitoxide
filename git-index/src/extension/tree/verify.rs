@@ -10,15 +10,15 @@ use crate::extension::Tree;
 pub enum Error {
     #[error("The entry {entry_id} at path '{name}' in parent tree {parent_id} wasn't found in the nodes children, making it incomplete")]
     MissingTreeDirectory {
-        parent_id: git_hash::ObjectId,
-        entry_id: git_hash::ObjectId,
+        parent_id: gix_hash::ObjectId,
+        entry_id: gix_hash::ObjectId,
         name: BString,
     },
     #[error("The tree with id {oid} wasn't found in the object database")]
-    TreeNodeNotFound { oid: git_hash::ObjectId },
+    TreeNodeNotFound { oid: gix_hash::ObjectId },
     #[error("The tree with id {oid} should have {expected_childcount} children, but its cached representation had {actual_childcount} of them")]
     TreeNodeChildcountMismatch {
-        oid: git_hash::ObjectId,
+        oid: gix_hash::ObjectId,
         expected_childcount: usize,
         actual_childcount: usize,
     },
@@ -32,7 +32,7 @@ pub enum Error {
         "Parent tree '{parent_id}' contained out-of order trees prev = '{previous_path}' and next = '{current_path}'"
     )]
     OutOfOrder {
-        parent_id: git_hash::ObjectId,
+        parent_id: gix_hash::ObjectId,
         current_path: BString,
         previous_path: BString,
     },
@@ -42,16 +42,16 @@ impl Tree {
     ///
     pub fn verify<F>(&self, use_find: bool, mut find: F) -> Result<(), Error>
     where
-        F: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>>,
+        F: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>>,
     {
         fn verify_recursive<F>(
-            parent_id: git_hash::ObjectId,
+            parent_id: gix_hash::ObjectId,
             children: &[Tree],
             mut find_buf: Option<&mut Vec<u8>>,
             find: &mut F,
         ) -> Result<Option<u32>, Error>
         where
-            F: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>>,
+            F: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>>,
         {
             if children.is_empty() {
                 return Ok(None);

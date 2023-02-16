@@ -74,7 +74,7 @@ impl<'a> MatchGroup<'a> {
         }
 
         if let Some(id) = has_negation.then(|| items.next().map(|i| i.target)).flatten() {
-            let null_id = git_hash::ObjectId::null(id.kind());
+            let null_id = gix_hash::ObjectId::null(id.kind());
             for matcher in matchers
                 .into_iter()
                 .zip(self.specs.iter())

@@ -54,8 +54,8 @@ mod locate {
 }
 
 mod init {
-    use git_hash::ObjectId;
     use git_odb::Find;
+    use gix_hash::ObjectId;
 
     use crate::odb::{alternate::alternate, db};
 
@@ -64,7 +64,7 @@ mod init {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let (object_path, _linked_object_path) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
         let db = git_odb::at(object_path.clone())?;
-        db.contains(ObjectId::null(git_hash::Kind::Sha1)); // trigger load
+        db.contains(ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
 
         assert_eq!(db.store_ref().metrics().loose_dbs, 2);
         assert_eq!(db.iter()?.count(), 0, "the test locations are actually empty");
@@ -76,7 +76,7 @@ mod init {
     fn a_db_without_alternates() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let db = git_odb::at(tmp.path())?;
-        db.contains(ObjectId::null(git_hash::Kind::Sha1)); // trigger load
+        db.contains(ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
         assert_eq!(db.store_ref().metrics().loose_dbs, 1);
         assert_eq!(db.store_ref().path(), tmp.path());
         Ok(())
@@ -85,7 +85,7 @@ mod init {
     #[test]
     fn has_packs() {
         let db = db();
-        db.contains(ObjectId::null(git_hash::Kind::Sha1)); // trigger load
+        db.contains(ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
         assert_eq!(db.store_ref().metrics().known_packs, 3);
     }
 }

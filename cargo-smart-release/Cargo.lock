@@ -611,7 +611,7 @@ dependencies = [
 name = "git-diff"
 version = "0.16.0"
 dependencies = [
- "git-hash",
+ "gix-hash",
  "git-object",
  "quick-error",
 ]
@@ -621,7 +621,7 @@ name = "git-discover"
 version = "0.2.0"
 dependencies = [
  "bstr",
- "git-hash",
+ "gix-hash",
  "gix-path",
  "git-ref",
  "gix-sec",
@@ -636,7 +636,7 @@ dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",
  "flate2",
- "git-hash",
+ "gix-hash",
  "jwalk",
  "libc",
  "num_cpus",
@@ -657,7 +657,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-hash"
+name = "gix-hash"
 version = "0.9.5"
 dependencies = [
  "hex",
@@ -674,7 +674,7 @@ dependencies = [
  "filetime",
  "git-bitmap",
  "gix-features",
- "git-hash",
+ "gix-hash",
  "git-object",
  "memmap2",
  "quick-error",
@@ -707,7 +707,7 @@ dependencies = [
  "btoi",
  "git-actor",
  "gix-features",
- "git-hash",
+ "gix-hash",
  "git-validate",
  "hex",
  "itoa",
@@ -722,7 +722,7 @@ version = "0.30.0"
 dependencies = [
  "arc-swap",
  "gix-features",
- "git-hash",
+ "gix-hash",
  "git-object",
  "git-pack",
  "gix-path",
@@ -742,7 +742,7 @@ dependencies = [
  "git-chunk",
  "git-diff",
  "gix-features",
- "git-hash",
+ "gix-hash",
  "git-object",
  "gix-path",
  "git-tempfile",
@@ -779,7 +779,7 @@ version = "0.14.0"
 dependencies = [
  "git-actor",
  "gix-features",
- "git-hash",
+ "gix-hash",
  "git-lock",
  "git-object",
  "gix-path",
@@ -804,7 +804,7 @@ dependencies = [
  "git-discover",
  "gix-features",
  "gix-glob",
- "git-hash",
+ "gix-hash",
  "git-index",
  "git-lock",
  "git-mailmap",
@@ -832,7 +832,7 @@ version = "0.2.1"
 dependencies = [
  "bstr",
  "git-date",
- "git-hash",
+ "gix-hash",
  "git-object",
  "hash_hasher",
  "thiserror",
@@ -871,7 +871,7 @@ dependencies = [
  "fs_extra",
  "git-attributes",
  "git-discover",
- "git-hash",
+ "gix-hash",
  "git-lock",
  "git-worktree",
  "io-close",
@@ -888,7 +888,7 @@ dependencies = [
 name = "git-traverse"
 version = "0.15.0"
 dependencies = [
- "git-hash",
+ "gix-hash",
  "git-object",
  "hash_hasher",
  "quick-error",
@@ -922,7 +922,7 @@ dependencies = [
  "git-attributes",
  "gix-features",
  "gix-glob",
- "git-hash",
+ "gix-hash",
  "git-index",
  "git-object",
  "gix-path",

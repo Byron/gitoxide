@@ -17,13 +17,13 @@ pub mod integrity {
         ObjectDecode {
             source: git_object::decode::Error,
             kind: git_object::Kind,
-            id: git_hash::ObjectId,
+            id: gix_hash::ObjectId,
         },
         #[error("{kind} object {expected} wasn't re-encoded without change - new hash is {actual}")]
         ObjectHashMismatch {
             kind: git_object::Kind,
-            actual: git_hash::ObjectId,
-            expected: git_hash::ObjectId,
+            actual: gix_hash::ObjectId,
+            expected: gix_hash::ObjectId,
         },
         #[error("Objects were deleted during iteration - try again")]
         Retry,

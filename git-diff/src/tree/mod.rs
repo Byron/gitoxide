@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
-use git_hash::ObjectId;
 use git_object::TreeRefIter;
+use gix_hash::ObjectId;
 
 /// The state required to visit [Changes] to be instantiated with `State::default()`.
 #[derive(Default, Clone)]

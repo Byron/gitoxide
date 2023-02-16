@@ -26,7 +26,7 @@ pub enum Header {
     /// happen.
     ///
     /// **The naming** is exactly the same as the canonical implementation uses, namely **REF_DELTA**.
-    RefDelta { base_id: git_hash::ObjectId },
+    RefDelta { base_id: gix_hash::ObjectId },
     /// Describes a delta-object present in this pack which acts as base for this object.
     /// The base object is measured as a distance from this objects
     /// pack offset, so that `base_pack_offset = this_objects_pack_offset - base_distance`

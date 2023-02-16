@@ -52,7 +52,7 @@ fn worktree_store(
 fn into_peel(
     store: &git_ref::file::Store,
     odb: git_odb::Handle,
-) -> impl Fn(git_ref::Reference) -> git_hash::ObjectId + '_ {
+) -> impl Fn(git_ref::Reference) -> gix_hash::ObjectId + '_ {
     move |mut r: git_ref::Reference| {
         r.peel_to_id_in_place(
             store,
@@ -208,7 +208,7 @@ mod writable {
         util::hex_to_id,
     };
 
-    fn change_with_id(id: git_hash::ObjectId) -> Change {
+    fn change_with_id(id: gix_hash::ObjectId) -> Change {
         Change::Update {
             log: LogChange::default(),
             expected: PreviousValue::MustNotExist,

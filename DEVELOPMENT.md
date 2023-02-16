@@ -137,7 +137,7 @@ Parameters which are not available in git or specific to `gitoxide` or the needs
     * **this is optional but desirable if…**
       * …there is no leakage otherwise to support user interfaces. They background long-running operations and need them to be cancellable.
       
-* **prepare for SHA256 support by using `git_hash::ObjectId` and `git_hash::oid`**
+* **prepare for SHA256 support by using `gix_hash::ObjectId` and `gix_hash::oid`**
   * eventually there will be the need to support both Sha1 and Sha256. We anticipate it by using the `Id` type instead 
     of slices or arrays of 20 bytes. This way, eventually we can support multiple hash digest sizes.
   * Right now it's unclear how Sha256 is going to work in git, so we only support Sha1 for now. It might be an avenue to proactively

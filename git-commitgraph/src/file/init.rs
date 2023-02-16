@@ -52,7 +52,7 @@ pub enum Error {
 const MIN_FILE_SIZE: usize = HEADER_LEN
     + git_chunk::file::Index::size_for_entries(3 /*OIDF, OIDL, CDAT*/)
     + FAN_LEN * 4 /* FANOUT TABLE CHUNK OIDF */
-    + git_hash::Kind::shortest().len_in_bytes();
+    + gix_hash::Kind::shortest().len_in_bytes();
 
 impl File {
     /// Try to parse the commit graph file at `path`.
@@ -100,7 +100,7 @@ impl TryFrom<&Path> for File {
         };
         ofs += 1;
 
-        let object_hash = git_hash::Kind::try_from(data[ofs]).map_err(Error::UnsupportedHashVersion)?;
+        let object_hash = gix_hash::Kind::try_from(data[ofs]).map_err(Error::UnsupportedHashVersion)?;
         ofs += 1;
 
         let chunk_count = data[ofs];

@@ -74,7 +74,7 @@ pub struct RefMap {
     /// The kind of hash used for all data sent by the server, if understood by this client implementation.
     ///
     /// It was extracted from the `handshake` as advertised by the server.
-    pub object_hash: git_hash::Kind,
+    pub object_hash: gix_hash::Kind,
 }
 
 /// Either an object id that the remote has or the matched remote ref itself.
@@ -82,7 +82,7 @@ pub struct RefMap {
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
 pub enum Source {
     /// An object id, as the matched ref-spec was an object id itself.
-    ObjectId(git_hash::ObjectId),
+    ObjectId(gix_hash::ObjectId),
     /// The remote reference that matched the ref-specs name.
     Ref(git_protocol::handshake::Ref),
 }
@@ -92,7 +92,7 @@ impl Source {
     /// Return either the direct object id we refer to or the direct target that a reference refers to.
     /// The latter may be a direct or a symbolic reference, and we degenerate this to the peeled object id.
     /// If unborn, `None` is returned.
-    pub fn as_id(&self) -> Option<&git_hash::oid> {
+    pub fn as_id(&self) -> Option<&gix_hash::oid> {
         match self {
             Source::ObjectId(id) => Some(id),
             Source::Ref(r) => r.unpack().1,

@@ -65,7 +65,7 @@ impl crate::Repository {
     }
 
     /// The kind of object hash the repository is configured to use.
-    pub fn object_hash(&self) -> git_hash::Kind {
+    pub fn object_hash(&self) -> gix_hash::Kind {
         self.config.object_hash
     }
 }

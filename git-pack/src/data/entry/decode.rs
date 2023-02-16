@@ -27,7 +27,7 @@ impl data::Entry {
             }
             REF_DELTA => {
                 let delta = RefDelta {
-                    base_id: git_hash::ObjectId::from(&d[consumed..][..hash_len]),
+                    base_id: gix_hash::ObjectId::from(&d[consumed..][..hash_len]),
                 };
                 consumed += hash_len;
                 delta
@@ -64,12 +64,12 @@ impl data::Entry {
                 delta
             }
             REF_DELTA => {
-                let mut buf = git_hash::Kind::buf();
+                let mut buf = gix_hash::Kind::buf();
                 let hash = &mut buf[..hash_len];
                 r.read_exact(hash)?;
                 #[allow(clippy::redundant_slicing)]
                 let delta = RefDelta {
-                    base_id: git_hash::ObjectId::from(&hash[..]),
+                    base_id: gix_hash::ObjectId::from(&hash[..]),
                 };
                 consumed += hash_len;
                 delta

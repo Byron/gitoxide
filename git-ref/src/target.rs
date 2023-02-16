@@ -1,6 +1,6 @@
 use std::{convert::TryFrom, fmt};
 
-use git_hash::{oid, ObjectId};
+use gix_hash::{oid, ObjectId};
 
 use crate::{FullName, FullNameRef, Kind, Target, TargetRef};
 

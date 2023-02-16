@@ -16,7 +16,7 @@ pub trait Find {
     type Error: std::error::Error + Send + Sync + 'static;
 
     /// Returns true if the object exists in the database.
-    fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool;
+    fn contains(&self, id: impl AsRef<gix_hash::oid>) -> bool;
 
     /// Find an object matching `id` in the database while placing its raw, decoded data into `buffer`.
     /// A `pack_cache` can be used to speed up subsequent lookups, set it to [`crate::cache::Never`] if the
@@ -26,7 +26,7 @@ pub trait Find {
     /// or the error that occurred during lookup or object retrieval.
     fn try_find<'a>(
         &self,
-        id: impl AsRef<git_hash::oid>,
+        id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
     ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
         self.try_find_cached(id, buffer, &mut crate::cache::Never)
@@ -40,7 +40,7 @@ pub trait Find {
     /// or the error that occurred during lookup or object retrieval.
     fn try_find_cached<'a>(
         &self,
-        id: impl AsRef<git_hash::oid>,
+        id: impl AsRef<gix_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl crate::cache::DecodeEntry,
     ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error>;
@@ -49,10 +49,10 @@ pub trait Find {
     /// holding the object.
     ///
     /// _Note_ that this is always None if the object isn't packed even though it exists as loose object.
-    fn location_by_oid(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>) -> Option<data::entry::Location>;
+    fn location_by_oid(&self, id: impl AsRef<gix_hash::oid>, buf: &mut Vec<u8>) -> Option<data::entry::Location>;
 
     /// Obtain a vector of all offsets, in index order, along with their object id.
-    fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(data::Offset, git_hash::ObjectId)>>;
+    fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(data::Offset, gix_hash::ObjectId)>>;
 
     /// Return the [`find::Entry`] for `location` if it is backed by a pack.
     ///
@@ -77,7 +77,7 @@ mod ext {
             /// while returning the desired object type.
             fn $method<'a>(
                 &self,
-                id: impl AsRef<git_hash::oid>,
+                id: impl AsRef<gix_hash::oid>,
                 buffer: &'a mut Vec<u8>,
             ) -> Result<($object_type, Option<crate::data::entry::Location>), find::existing_object::Error<Self::Error>>
             {
@@ -108,7 +108,7 @@ mod ext {
             /// while returning the desired iterator type.
             fn $method<'a>(
                 &self,
-                id: impl AsRef<git_hash::oid>,
+                id: impl AsRef<gix_hash::oid>,
                 buffer: &'a mut Vec<u8>,
             ) -> Result<($object_type, Option<crate::data::entry::Location>), find::existing_iter::Error<Self::Error>> {
                 let id = id.as_ref();
@@ -133,7 +133,7 @@ mod ext {
         /// Like [`try_find(…)`][super::Find::try_find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
         fn find<'a>(
             &self,
-            id: impl AsRef<git_hash::oid>,
+            id: impl AsRef<gix_hash::oid>,
             buffer: &'a mut Vec<u8>,
         ) -> Result<(git_object::Data<'a>, Option<crate::data::entry::Location>), find::existing::Error<Self::Error>>
         {
@@ -161,7 +161,7 @@ pub use ext::FindExt;
 mod find_impls {
     use std::{ops::Deref, rc::Rc};
 
-    use git_hash::oid;
+    use gix_hash::oid;
 
     use crate::{data, find};
 
@@ -188,7 +188,7 @@ mod find_impls {
             (*self).location_by_oid(id, buf)
         }
 
-        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(data::Offset, git_hash::ObjectId)>> {
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(data::Offset, gix_hash::ObjectId)>> {
             (*self).pack_offsets_and_oid(pack_id)
         }
 
@@ -220,7 +220,7 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(data::Offset, git_hash::ObjectId)>> {
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(data::Offset, gix_hash::ObjectId)>> {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 
@@ -252,7 +252,7 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(data::Offset, git_hash::ObjectId)>> {
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(data::Offset, gix_hash::ObjectId)>> {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 
@@ -284,7 +284,7 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(data::Offset, git_hash::ObjectId)>> {
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(data::Offset, gix_hash::ObjectId)>> {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 

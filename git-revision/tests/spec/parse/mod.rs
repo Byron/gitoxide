@@ -15,7 +15,7 @@ struct Options {
 struct Recorder {
     // anchors
     find_ref: [Option<BString>; 2],
-    prefix: [Option<git_hash::Prefix>; 2],
+    prefix: [Option<gix_hash::Prefix>; 2],
     prefix_hint: [Option<PrefixHintOwned>; 2],
     current_branch_reflog_entry: [Option<String>; 2],
     nth_checked_out_branch: [Option<usize>; 2],
@@ -98,7 +98,7 @@ impl delegate::Revision for Recorder {
         set_val("find_ref", &mut self.find_ref, input.into())
     }
 
-    fn disambiguate_prefix(&mut self, input: git_hash::Prefix, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
+    fn disambiguate_prefix(&mut self, input: gix_hash::Prefix, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
         self.called(Call::DisambiguatePrefix);
         if self.opts.reject_prefix {
             return None;

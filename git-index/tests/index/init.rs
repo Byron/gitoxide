@@ -28,10 +28,10 @@ fn from_tree() -> crate::Result {
 
 #[test]
 fn new() {
-    let state = State::new(git_hash::Kind::Sha1);
+    let state = State::new(gix_hash::Kind::Sha1);
     assert_eq!(state.entries().len(), 0);
     assert_eq!(state.version(), git_index::Version::V2);
-    assert_eq!(state.object_hash(), git_hash::Kind::Sha1);
+    assert_eq!(state.object_hash(), gix_hash::Kind::Sha1);
 }
 
 fn compare_states(actual: &State, expected: &State, fixture: &str) {

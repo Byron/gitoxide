@@ -33,7 +33,7 @@ git-discover = { path = "../../git-discover" }
 git-worktree = { path = "../../git-worktree" }
 git-odb = { path = "../../git-odb" }
 git-actor = { path = "../../git-actor" }
-git-hash = { path = "../../git-hash" }
+gix-hash = { path = "../../gix-hash" }
 git-validate = { path = "../../git-validate" }
 git-lock = { path = "../../git-lock" }
 git-object = { path = "../../git-object" }

@@ -1,5 +1,5 @@
-use git_hash::ObjectId;
 use git_odb::FindExt;
+use gix_hash::ObjectId;
 
 use crate::{revision, Repository};
 
@@ -77,7 +77,7 @@ pub(crate) mod iter {
     pub struct Walk<'repo> {
         pub(crate) repo: &'repo crate::Repository,
         pub(crate) inner:
-            Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'repo>,
+            Box<dyn Iterator<Item = Result<gix_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'repo>,
         pub(crate) error_on_missing_commit: bool,
         // TODO: tests
         /// After iteration this flag is true if the iteration was stopped prematurely due to missing parent commits.

@@ -23,7 +23,7 @@ pub struct Tree {
     /// The name of the tree/directory, or empty if it's the root tree.
     pub name: SmallVec<[u8; 23]>,
     /// The id of the directory tree of the associated tree object.
-    pub id: git_hash::ObjectId,
+    pub id: gix_hash::ObjectId,
     /// The amount of non-tree items in this directory tree, including sub-trees, recursively.
     /// The value of the top-level tree is thus equal to the value of the total amount of entries.
     /// If `None`, the tree is considered invalid and needs to be refreshed
@@ -36,7 +36,7 @@ pub struct Tree {
 #[derive(Clone)]
 pub struct Link {
     /// The checksum of the shared index as last seen.
-    pub shared_index_checksum: git_hash::ObjectId,
+    pub shared_index_checksum: gix_hash::ObjectId,
     /// Bitmaps to tell us which entries to delete or replace.
     pub bitmaps: Option<link::Bitmaps>,
 }

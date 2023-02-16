@@ -248,7 +248,7 @@ fn traversals() -> crate::Result {
             .map(Result::unwrap)
             .collect::<Vec<_>>();
             if let Some(take) = take {
-                commits.resize(take, git_hash::Kind::Sha1.null());
+                commits.resize(take, gix_hash::Kind::Sha1.null());
             }
 
             let deterministic_count_needs_single_thread = Some(1);
@@ -335,8 +335,8 @@ fn empty_pack_is_allowed() {
 fn write_and_verify(
     db: git_odb::HandleArc,
     entries: Vec<output::Entry>,
-    expected_pack_hash: git_hash::ObjectId,
-    expected_thin_pack_hash: Option<git_hash::ObjectId>,
+    expected_pack_hash: gix_hash::ObjectId,
+    expected_thin_pack_hash: Option<gix_hash::ObjectId>,
 ) -> crate::Result {
     let tmp_dir = tempfile::TempDir::new()?;
     let pack_file_path = tmp_dir.path().join("new.pack");
@@ -353,7 +353,7 @@ fn write_and_verify(
             &mut pack_file,
             num_entries as u32,
             pack::data::Version::V2,
-            git_hash::Kind::Sha1,
+            gix_hash::Kind::Sha1,
         );
         let mut n = pack_writer.next().expect("one entries bundle was written")?;
         n += pack_writer.next().expect("the trailer was written")?;
@@ -372,7 +372,7 @@ fn write_and_verify(
         pack_file.metadata()?.len(),
         "it reports the correct amount of written bytes"
     );
-    let pack = pack::data::File::at(&pack_file_path, git_hash::Kind::Sha1)?;
+    let pack = pack::data::File::at(&pack_file_path, gix_hash::Kind::Sha1)?;
     let should_interrupt = AtomicBool::new(false);
     let hash = pack.verify_checksum(progress::Discard, &should_interrupt)?;
     assert_eq!(
@@ -383,7 +383,7 @@ fn write_and_verify(
     assert_eq!(hash, expected_pack_hash, "pack hashes are stable if the input is");
 
     // Re-generate the index from the pack for validation.
-    let object_hash = git_hash::Kind::Sha1; // TODO: parameterize this
+    let object_hash = gix_hash::Kind::Sha1; // TODO: parameterize this
     let bundle = pack::Bundle::at(
         pack::Bundle::write_to_directory(
             std::io::BufReader::new(std::fs::File::open(pack_file_path)?),

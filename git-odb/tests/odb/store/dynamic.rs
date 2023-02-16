@@ -1,8 +1,8 @@
 use std::process::Command;
 
-use git_hash::ObjectId;
 use git_odb::{store, store::iter::Ordering, Find, FindExt, Header, Write};
 use git_testtools::fixture_path;
+use gix_hash::ObjectId;
 
 use crate::{hex_to_id, odb::db};
 
@@ -31,7 +31,7 @@ fn db_with_all_object_sources() -> crate::Result<(git_odb::Handle, tempfile::Tem
         gix_features::progress::Discard,
         &std::sync::atomic::AtomicBool::default(),
         git_odb::pack::multi_index::write::Options {
-            object_hash: git_hash::Kind::Sha1,
+            object_hash: gix_hash::Kind::Sha1,
         },
     )?;
     Ok((git_odb::at(objects_dir.path())?, objects_dir))
@@ -574,7 +574,7 @@ mod disambiguate_prefix {
     #[test]
     fn returns_none_if_id_does_not_exist() {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
-        let null = git_hash::ObjectId::null(git_hash::Kind::Sha1);
+        let null = gix_hash::ObjectId::null(gix_hash::Kind::Sha1);
         assert!(handle
             .disambiguate_prefix(Candidate::new(null, 7).unwrap())
             .unwrap()
@@ -631,7 +631,7 @@ mod lookup_prefix {
     #[test]
     fn returns_none_for_prefixes_without_any_match() {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
-        let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
+        let prefix = gix_hash::Prefix::new(gix_hash::ObjectId::null(gix_hash::Kind::Sha1), 7).unwrap();
         assert!(handle.lookup_prefix(prefix, None).unwrap().is_none());
         assert_all_indices_loaded(&handle, 2, 2);
 
@@ -645,7 +645,7 @@ mod lookup_prefix {
     fn returns_some_err_for_prefixes_with_more_than_one_match() {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
         let input_id = hex_to_id("a7065b5e971a6d8b55875d8cf634a3a37202ab23");
-        let prefix = git_hash::Prefix::new(input_id, 4).unwrap();
+        let prefix = gix_hash::Prefix::new(input_id, 4).unwrap();
         assert_eq!(
             handle.lookup_prefix(prefix, None).unwrap(),
             Some(Err(())),
@@ -677,7 +677,7 @@ mod lookup_prefix {
             for (index, oid) in handle.iter()?.with_ordering(order).map(Result::unwrap).enumerate() {
                 for mut candidates in [None, Some(HashSet::default())] {
                     let hex_len = hex_lengths[index % hex_lengths.len()];
-                    let prefix = git_hash::Prefix::new(oid, hex_len)?;
+                    let prefix = gix_hash::Prefix::new(oid, hex_len)?;
                     assert_eq!(
                         handle
                             .lookup_prefix(prefix, candidates.as_mut())?

@@ -82,7 +82,7 @@ impl Arguments {
     /// Add the given `id` pointing to a commit to the 'want' list.
     ///
     /// As such it should be included in the server response as it's not present on the client.
-    pub fn want(&mut self, id: impl AsRef<git_hash::oid>) {
+    pub fn want(&mut self, id: impl AsRef<gix_hash::oid>) {
         match self.features_for_first_want.take() {
             Some(features) => self.prefixed("want ", format!("{} {}", id.as_ref(), features.join(" "))),
             None => self.prefixed("want ", id.as_ref()),
@@ -100,11 +100,11 @@ impl Arguments {
     /// Add the given `id` pointing to a commit to the 'have' list.
     ///
     /// As such it should _not_ be included in the server response as it's already present on the client.
-    pub fn have(&mut self, id: impl AsRef<git_hash::oid>) {
+    pub fn have(&mut self, id: impl AsRef<gix_hash::oid>) {
         self.haves.push(format!("have {}", id.as_ref()).into());
     }
     /// Add the given `id` pointing to a commit to the 'shallow' list.
-    pub fn shallow(&mut self, id: impl AsRef<git_hash::oid>) {
+    pub fn shallow(&mut self, id: impl AsRef<gix_hash::oid>) {
         debug_assert!(self.shallow, "'shallow' feature required for 'shallow <id>'");
         if self.shallow {
             self.prefixed("shallow ", id.as_ref());

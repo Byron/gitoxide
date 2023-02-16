@@ -9,10 +9,10 @@ use pretty_assertions::assert_eq;
 use crate::{fixture_path, hex_to_id};
 
 fn ldb() -> Store {
-    Store::at(fixture_path("objects"), git_hash::Kind::Sha1)
+    Store::at(fixture_path("objects"), gix_hash::Kind::Sha1)
 }
 
-pub fn object_ids() -> Vec<git_hash::ObjectId> {
+pub fn object_ids() -> Vec<gix_hash::ObjectId> {
     vec![
         hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"), // blob
         hex_to_id("595dfd62fc1ad283d61bb47a24e7a1f66398f84d"), // blob
@@ -30,7 +30,7 @@ fn iter() {
     oids.sort();
     assert_eq!(oids, object_ids());
 }
-pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_object::Data<'_> {
+pub fn locate_oid(id: gix_hash::ObjectId, buf: &mut Vec<u8>) -> git_object::Data<'_> {
     ldb().try_find(id, buf).expect("read success").expect("id present")
 }
 
@@ -49,7 +49,7 @@ mod write {
     #[test]
     fn read_and_write() -> Result<(), Box<dyn std::error::Error>> {
         let dir = tempfile::tempdir()?;
-        let db = loose::Store::at(dir.path(), git_hash::Kind::Sha1);
+        let db = loose::Store::at(dir.path(), gix_hash::Kind::Sha1);
         let mut buf = Vec::new();
         let mut buf2 = Vec::new();
 
@@ -95,7 +95,7 @@ mod lookup_prefix {
     #[test]
     fn returns_none_for_prefixes_without_any_match() {
         let store = ldb();
-        let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
+        let prefix = gix_hash::Prefix::new(gix_hash::ObjectId::null(gix_hash::Kind::Sha1), 7).unwrap();
         assert!(store.lookup_prefix(prefix, None).unwrap().is_none());
 
         let mut candidates = HashSet::default();
@@ -118,9 +118,9 @@ mod lookup_prefix {
             b"fake",
         )
         .unwrap();
-        let store = git_odb::loose::Store::at(objects_dir.path(), git_hash::Kind::Sha1);
+        let store = git_odb::loose::Store::at(objects_dir.path(), gix_hash::Kind::Sha1);
         let input_id = hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
-        let prefix = git_hash::Prefix::new(input_id, 4).unwrap();
+        let prefix = gix_hash::Prefix::new(input_id, 4).unwrap();
         assert_eq!(
             store.lookup_prefix(prefix, None).unwrap(),
             Some(Err(())),
@@ -147,7 +147,7 @@ mod lookup_prefix {
         for (index, oid) in store.iter().map(Result::unwrap).enumerate() {
             for mut candidates in [None, Some(HashSet::default())] {
                 let hex_len = hex_lengths[index % hex_lengths.len()];
-                let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
+                let prefix = gix_hash::Prefix::new(oid, hex_len).unwrap();
                 assert_eq!(
                     store
                         .lookup_prefix(prefix, candidates.as_mut())
@@ -183,7 +183,7 @@ mod find {
         let base = tmp.path().join("aa");
         std::fs::create_dir(&base)?;
         std::fs::write(base.join("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), [])?;
-        let db = loose::Store::at(tmp.path(), git_hash::Kind::Sha1);
+        let db = loose::Store::at(tmp.path(), gix_hash::Kind::Sha1);
 
         let mut buf = Vec::new();
         let id = hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -295,7 +295,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         ldb().try_find(hex_to_id(hex), buf).ok().flatten()
     }
 
-    pub fn as_id(id: &[u8; 20]) -> &git_hash::oid {
+    pub fn as_id(id: &[u8; 20]) -> &gix_hash::oid {
         id.into()
     }
 

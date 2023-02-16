@@ -2,13 +2,13 @@ pub(crate) mod prepare_and_commit {
     use std::convert::TryInto;
 
     use git_actor::{Sign, Time};
-    use git_hash::ObjectId;
     use git_object::bstr::BString;
     use git_ref::{
         file,
         transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
         Target,
     };
+    use gix_hash::ObjectId;
 
     use crate::util::hex_to_id;
 
@@ -24,7 +24,7 @@ pub(crate) mod prepare_and_commit {
 
     pub(crate) fn empty_store() -> crate::Result<(tempfile::TempDir, file::Store)> {
         let dir = tempfile::TempDir::new().unwrap();
-        let store = file::Store::at(dir.path(), git_ref::store::WriteReflog::Normal, git_hash::Kind::Sha1);
+        let store = file::Store::at(dir.path(), git_ref::store::WriteReflog::Normal, gix_hash::Kind::Sha1);
         Ok((dir, store))
     }
 

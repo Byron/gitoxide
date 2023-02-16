@@ -1,5 +1,5 @@
 use bstr::BStr;
-use git_hash::{oid, ObjectId};
+use gix_hash::{oid, ObjectId};
 use nom::{
     bytes::complete::take_while1,
     character::is_alphabetic,

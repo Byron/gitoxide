@@ -414,7 +414,7 @@ pub(crate) struct Cache {
     /// true if the repository is designated as 'bare', without work tree.
     pub is_bare: bool,
     /// The type of hash to use.
-    pub object_hash: git_hash::Kind,
+    pub object_hash: gix_hash::Kind,
     /// If true, multi-pack indices, whether present or not, may be used by the object database.
     pub use_multi_pack_index: bool,
     /// The representation of `core.logallrefupdates`, or `None` if the variable wasn't set.

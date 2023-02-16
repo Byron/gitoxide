@@ -4,7 +4,7 @@
 #![deny(missing_docs, rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 pub use hashbrown::{hash_map, hash_set, raw, Equivalent};
 
 ///

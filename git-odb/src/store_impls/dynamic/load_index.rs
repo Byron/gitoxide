@@ -422,7 +422,7 @@ impl super::Store {
     pub(crate) fn collect_indices_and_mtime_sorted_by_size(
         db_paths: Vec<PathBuf>,
         initial_capacity: Option<usize>,
-        multi_pack_index_object_hash: Option<git_hash::Kind>,
+        multi_pack_index_object_hash: Option<gix_hash::Kind>,
     ) -> Result<Vec<(Either, SystemTime, u64)>, Error> {
         let mut indices_by_modification_time = Vec::with_capacity(initial_capacity.unwrap_or_default());
         for db_path in db_paths {

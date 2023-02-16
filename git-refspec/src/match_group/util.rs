@@ -1,7 +1,7 @@
 use std::{borrow::Cow, ops::Range};
 
 use bstr::{BStr, BString, ByteSlice, ByteVec};
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{match_group::Item, RefSpecRef};
 
@@ -144,7 +144,7 @@ impl<'a> From<&'a BStr> for Needle<'a> {
             }
         } else if v.starts_with(b"refs/") {
             Needle::FullName(v)
-        } else if let Ok(id) = git_hash::ObjectId::from_hex(v) {
+        } else if let Ok(id) = gix_hash::ObjectId::from_hex(v) {
             Needle::Object(id)
         } else {
             Needle::PartialName(v)

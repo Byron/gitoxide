@@ -52,7 +52,7 @@ impl git_transport::IsSpuriousError for Error {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Acknowledgement {
     /// The contained `id` is in common.
-    Common(git_hash::ObjectId),
+    Common(gix_hash::ObjectId),
     /// The server is ready to receive more lines.
     Ready,
     /// The server isn't ready yet.
@@ -64,9 +64,9 @@ pub enum Acknowledgement {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ShallowUpdate {
     /// Shallow the given `id`.
-    Shallow(git_hash::ObjectId),
+    Shallow(gix_hash::ObjectId),
     /// Don't shallow the given `id` anymore.
-    Unshallow(git_hash::ObjectId),
+    Unshallow(gix_hash::ObjectId),
 }
 
 /// A wanted-ref line received from the server.
@@ -74,7 +74,7 @@ pub enum ShallowUpdate {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct WantedRef {
     /// The object id of the wanted ref, as seen by the server.
-    pub id: git_hash::ObjectId,
+    pub id: gix_hash::ObjectId,
     /// The name of the ref, as requested by the client as a `want-ref` argument.
     pub path: BString,
 }
@@ -84,7 +84,7 @@ impl ShallowUpdate {
     pub fn from_line(line: &str) -> Result<ShallowUpdate, Error> {
         match line.trim_end().split_once(' ') {
             Some((prefix, id)) => {
-                let id = git_hash::ObjectId::from_hex(id.as_bytes())
+                let id = gix_hash::ObjectId::from_hex(id.as_bytes())
                     .map_err(|_| Error::UnknownLineType { line: line.to_owned() })?;
                 Ok(match prefix {
                     "shallow" => ShallowUpdate::Shallow(id),
@@ -107,7 +107,7 @@ impl Acknowledgement {
                 "NAK" => Acknowledgement::Nak,     // V1
                 "ACK" => {
                     let id = match id {
-                        Some(id) => git_hash::ObjectId::from_hex(id.as_bytes())
+                        Some(id) => gix_hash::ObjectId::from_hex(id.as_bytes())
                             .map_err(|_| Error::UnknownLineType { line: line.to_owned() })?,
                         None => return Err(Error::UnknownLineType { line: line.to_owned() }),
                     };
@@ -126,7 +126,7 @@ impl Acknowledgement {
         }
     }
     /// Returns the hash of the acknowledged object if this instance acknowledges a common one.
-    pub fn id(&self) -> Option<&git_hash::ObjectId> {
+    pub fn id(&self) -> Option<&gix_hash::ObjectId> {
         match self {
             Acknowledgement::Common(id) => Some(id),
             _ => None,
@@ -139,7 +139,7 @@ impl WantedRef {
     pub fn from_line(line: &str) -> Result<WantedRef, Error> {
         match line.trim_end().split_once(' ') {
             Some((id, path)) => {
-                let id = git_hash::ObjectId::from_hex(id.as_bytes())
+                let id = gix_hash::ObjectId::from_hex(id.as_bytes())
                     .map_err(|_| Error::UnknownLineType { line: line.to_owned() })?;
                 Ok(WantedRef { id, path: path.into() })
             }

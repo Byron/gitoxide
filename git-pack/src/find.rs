@@ -1,6 +1,6 @@
 ///
 pub mod existing {
-    use git_hash::ObjectId;
+    use gix_hash::ObjectId;
 
     /// The error returned by the [`find(…)`][crate::FindExt::find()] trait methods.
     #[derive(Debug, thiserror::Error)]
@@ -15,7 +15,7 @@ pub mod existing {
 
 ///
 pub mod existing_object {
-    use git_hash::ObjectId;
+    use gix_hash::ObjectId;
 
     /// The error returned by the various [`find_*`][crate::FindExt::find_commit()] trait methods.
     #[derive(Debug, thiserror::Error)]
@@ -34,7 +34,7 @@ pub mod existing_object {
 
 ///
 pub mod existing_iter {
-    use git_hash::ObjectId;
+    use gix_hash::ObjectId;
 
     /// The error returned by the various [`find_*`][crate::FindExt::find_commit()] trait methods.
     #[derive(Debug, thiserror::Error)]

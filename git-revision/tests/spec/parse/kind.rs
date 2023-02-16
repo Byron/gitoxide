@@ -423,6 +423,6 @@ mod mergebase {
     }
 }
 
-fn prefix(hex: &str) -> git_hash::Prefix {
-    git_hash::Prefix::from_hex(hex).unwrap()
+fn prefix(hex: &str) -> gix_hash::Prefix {
+    gix_hash::Prefix::from_hex(hex).unwrap()
 }

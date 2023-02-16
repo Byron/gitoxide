@@ -13,7 +13,7 @@ pub struct Options {
     /// How to obtain a size for the slot map.
     pub slots: Slots,
     /// The kind of hash we expect in our packs and would use for loose object iteration and object writing.
-    pub object_hash: git_hash::Kind,
+    pub object_hash: gix_hash::Kind,
     /// If false, no multi-pack indices will be used. If true, they will be used if their hash matches `object_hash`.
     pub use_multi_pack_index: bool,
     /// The current directory of the process at the time of instantiation.
@@ -71,7 +71,7 @@ impl Store {
     /// This means that when asking for object `X`, one will receive object `X-replaced` given an iterator like `Some((X, X-replaced))`.
     pub fn at_opts(
         objects_dir: impl Into<PathBuf>,
-        replacements: impl IntoIterator<Item = (git_hash::ObjectId, git_hash::ObjectId)>,
+        replacements: impl IntoIterator<Item = (gix_hash::ObjectId, gix_hash::ObjectId)>,
         Options {
             slots,
             object_hash,

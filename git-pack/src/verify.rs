@@ -12,8 +12,8 @@ pub mod checksum {
         Interrupted,
         #[error("index checksum mismatch: expected {expected}, got {actual}")]
         Mismatch {
-            expected: git_hash::ObjectId,
-            actual: git_hash::ObjectId,
+            expected: gix_hash::ObjectId,
+            actual: gix_hash::ObjectId,
         },
     }
 }
@@ -31,11 +31,11 @@ pub fn fan(data: &[u32]) -> Option<usize> {
 pub fn checksum_on_disk_or_mmap(
     data_path: &Path,
     data: &[u8],
-    expected: git_hash::ObjectId,
-    object_hash: git_hash::Kind,
+    expected: gix_hash::ObjectId,
+    object_hash: gix_hash::Kind,
     mut progress: impl Progress,
     should_interrupt: &AtomicBool,
-) -> Result<git_hash::ObjectId, checksum::Error> {
+) -> Result<gix_hash::ObjectId, checksum::Error> {
     let data_len_without_trailer = data.len() - object_hash.len_in_bytes();
     let actual = match gix_features::hash::bytes_of_file(
         data_path,
@@ -52,7 +52,7 @@ pub fn checksum_on_disk_or_mmap(
             hasher.update(&data[..data_len_without_trailer]);
             progress.inc_by(data_len_without_trailer);
             progress.show_throughput(start);
-            git_hash::ObjectId::from(hasher.digest())
+            gix_hash::ObjectId::from(hasher.digest())
         }
     };
 

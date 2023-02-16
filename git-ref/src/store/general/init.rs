@@ -24,7 +24,7 @@ impl crate::Store {
     pub fn at(
         git_dir: impl Into<PathBuf>,
         reflog_mode: WriteReflog,
-        object_hash: git_hash::Kind,
+        object_hash: gix_hash::Kind,
     ) -> Result<Self, Error> {
         // for now, just try to read the directory - later we will do that naturally as we have to figure out if it's a ref-table or not.
         let git_dir = git_dir.into();

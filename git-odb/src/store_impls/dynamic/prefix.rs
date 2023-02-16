@@ -21,7 +21,7 @@ pub mod lookup {
 
     /// A way to indicate if a lookup, despite successful, was ambiguous or yielded exactly
     /// one result in the particular index.
-    pub type Outcome = Result<git_hash::ObjectId, ()>;
+    pub type Outcome = Result<gix_hash::ObjectId, ()>;
 }
 
 ///
@@ -29,7 +29,7 @@ pub mod disambiguate {
     /// A potentially ambiguous prefix for use with `Handle::disambiguate_prefix()`.
     #[derive(Debug, Copy, Clone)]
     pub struct Candidate {
-        id: git_hash::ObjectId,
+        id: gix_hash::ObjectId,
         hex_len: usize,
     }
 
@@ -38,15 +38,15 @@ pub mod disambiguate {
         ///
         /// It is considered ambiguous until it's disambiguated by validating that there is only a single object
         /// matching this prefix.
-        pub fn new(id: impl Into<git_hash::ObjectId>, hex_len: usize) -> Result<Self, git_hash::prefix::Error> {
+        pub fn new(id: impl Into<gix_hash::ObjectId>, hex_len: usize) -> Result<Self, gix_hash::prefix::Error> {
             let id = id.into();
-            git_hash::Prefix::new(id, hex_len)?;
+            gix_hash::Prefix::new(id, hex_len)?;
             Ok(Candidate { id, hex_len })
         }
 
         /// Transform ourselves into a `Prefix` with our current hex lengths.
-        pub fn to_prefix(&self) -> git_hash::Prefix {
-            git_hash::Prefix::new(self.id, self.hex_len).expect("our hex-len to always be in bounds")
+        pub fn to_prefix(&self) -> gix_hash::Prefix {
+            gix_hash::Prefix::new(self.id, self.hex_len).expect("our hex-len to always be in bounds")
         }
 
         pub(crate) fn inc_hex_len(&mut self) {
@@ -54,7 +54,7 @@ pub mod disambiguate {
             assert!(self.hex_len <= self.id.kind().len_in_hex());
         }
 
-        pub(crate) fn id(&self) -> &git_hash::oid {
+        pub(crate) fn id(&self) -> &gix_hash::oid {
             &self.id
         }
 
@@ -103,7 +103,7 @@ where
     pub fn disambiguate_prefix(
         &self,
         mut candidate: disambiguate::Candidate,
-    ) -> Result<Option<git_hash::Prefix>, disambiguate::Error> {
+    ) -> Result<Option<gix_hash::Prefix>, disambiguate::Error> {
         let max_hex_len = candidate.id().kind().len_in_hex();
         if candidate.hex_len() == max_hex_len {
             return Ok(self.contains(candidate.id()).then(|| candidate.to_prefix()));
@@ -141,10 +141,10 @@ where
     ///   as there is no early abort.
     pub fn lookup_prefix(
         &self,
-        prefix: git_hash::Prefix,
-        mut candidates: Option<&mut HashSet<git_hash::ObjectId>>,
+        prefix: gix_hash::Prefix,
+        mut candidates: Option<&mut HashSet<gix_hash::ObjectId>>,
     ) -> Result<Option<lookup::Outcome>, lookup::Error> {
-        let mut candidate: Option<git_hash::ObjectId> = None;
+        let mut candidate: Option<gix_hash::ObjectId> = None;
         loop {
             let snapshot = self.snapshot.borrow();
             for index in snapshot.indices.iter() {
@@ -181,7 +181,7 @@ where
             }
         }
 
-        fn check_candidate(lookup_result: Option<lookup::Outcome>, candidate: &mut Option<git_hash::ObjectId>) -> bool {
+        fn check_candidate(lookup_result: Option<lookup::Outcome>, candidate: &mut Option<gix_hash::ObjectId>) -> bool {
             match (lookup_result, &*candidate) {
                 (Some(Ok(oid)), Some(candidate)) if *candidate != oid => false,
                 (Some(Ok(_)), Some(_)) | (None, None) | (None, Some(_)) => true,

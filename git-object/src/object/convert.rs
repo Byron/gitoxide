@@ -13,7 +13,7 @@ impl From<TagRef<'_>> for Tag {
             pgp_signature,
         } = other;
         Tag {
-            target: git_hash::ObjectId::from_hex(target).expect("prior parser validation"),
+            target: gix_hash::ObjectId::from_hex(target).expect("prior parser validation"),
             name: name.to_owned(),
             target_kind,
             message: message.to_owned(),
@@ -35,10 +35,10 @@ impl From<CommitRef<'_>> for Commit {
             extra_headers,
         } = other;
         Commit {
-            tree: git_hash::ObjectId::from_hex(tree).expect("prior parser validation"),
+            tree: gix_hash::ObjectId::from_hex(tree).expect("prior parser validation"),
             parents: parents
                 .iter()
-                .map(|parent| git_hash::ObjectId::from_hex(parent).expect("prior parser validation"))
+                .map(|parent| gix_hash::ObjectId::from_hex(parent).expect("prior parser validation"))
                 .collect(),
             author: author.into(),
             committer: committer.into(),

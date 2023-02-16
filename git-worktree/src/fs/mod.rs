@@ -71,7 +71,7 @@ pub struct Cache {
     attribute_files_in_index: Vec<PathOidMapping>,
 }
 
-pub(crate) type PathOidMapping = (BString, git_hash::ObjectId);
+pub(crate) type PathOidMapping = (BString, gix_hash::ObjectId);
 
 ///
 pub mod cache;

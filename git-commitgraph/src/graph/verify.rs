@@ -19,8 +19,8 @@ pub enum Error<E: std::error::Error + 'static> {
     BaseGraphCount { actual: u8, expected: u8, path: PathBuf },
     #[error("'{}' base graph at index {index} should have ID {expected} but is {actual}", .path.display())]
     BaseGraphId {
-        actual: git_hash::ObjectId,
-        expected: git_hash::ObjectId,
+        actual: gix_hash::ObjectId,
+        expected: gix_hash::ObjectId,
         index: u8,
         path: PathBuf,
     },
@@ -39,13 +39,13 @@ pub enum Error<E: std::error::Error + 'static> {
     Generation {
         actual: u32,
         expected: u32,
-        id: git_hash::ObjectId,
+        id: gix_hash::ObjectId,
     },
     #[error(
         "Commit {id} has parent position {parent_pos} that is out of range (should be in range 0-{max_valid_pos})"
     )]
     ParentOutOfRange {
-        id: git_hash::ObjectId,
+        id: gix_hash::ObjectId,
         max_valid_pos: graph::Position,
         parent_pos: graph::Position,
     },

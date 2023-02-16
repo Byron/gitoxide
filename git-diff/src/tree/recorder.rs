@@ -1,10 +1,10 @@
 use std::collections::VecDeque;
 
-use git_hash::ObjectId;
 use git_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     tree,
 };
+use gix_hash::ObjectId;
 
 use crate::tree::visit;
 

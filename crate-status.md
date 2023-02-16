@@ -90,7 +90,7 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 * [ ] a way to parse `name <email>` tuples (instead of full signatures) to facilitate parsing
       commit trailers.
 
-### git-hash
+### gix-hash
 * types to represent hash digests to identify git objects.
 * used to abstract over different kinds of hashes, like SHA1 and the upcoming SHA256
 * [x] API documentation

@@ -1,6 +1,6 @@
 use std::{cell::RefCell, path::PathBuf};
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{head, remote};
 

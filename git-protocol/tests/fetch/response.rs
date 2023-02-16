@@ -6,8 +6,8 @@ fn mock_reader(path: &str) -> git_packetline::StreamingPeekableIter<Cursor> {
     git_packetline::StreamingPeekableIter::new(Cursor::new(buf), &[git_packetline::PacketLineRef::Flush])
 }
 
-fn id(hex: &str) -> git_hash::ObjectId {
-    git_hash::ObjectId::from_hex(hex.as_bytes()).expect("expect valid hex id")
+fn id(hex: &str) -> gix_hash::ObjectId {
+    gix_hash::ObjectId::from_hex(hex.as_bytes()).expect("expect valid hex id")
 }
 
 mod v1 {
@@ -189,7 +189,7 @@ mod v2 {
             assert_eq!(bytes_read, 1643, "should be able to read the whole pack");
             assert_eq!(&buf[..4], b"PACK");
             assert_eq!(
-                git_hash::ObjectId::from(&buf[buf.len() - git_hash::Kind::Sha1.len_in_bytes()..]).to_string(),
+                gix_hash::ObjectId::from(&buf[buf.len() - gix_hash::Kind::Sha1.len_in_bytes()..]).to_string(),
                 "f34c9be7e0c3ef2c3ed7c62cc7791dbf6dc5ec9a"
             );
             Ok(())

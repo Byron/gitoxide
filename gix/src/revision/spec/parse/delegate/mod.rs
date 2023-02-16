@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use git_hash::ObjectId;
 use git_revision::spec::{
     parse,
     parse::delegate::{self},
 };
+use gix_hash::ObjectId;
 use smallvec::SmallVec;
 
 use super::{Delegate, Error, ObjectKindHint};
@@ -49,7 +49,7 @@ impl<'repo> Delegate<'repo> {
     pub fn into_rev_spec(mut self) -> Result<crate::revision::Spec<'repo>, Error> {
         fn zero_or_one_objects_or_ambiguity_err(
             mut candidates: [Option<HashSet<ObjectId>>; 2],
-            prefix: [Option<git_hash::Prefix>; 2],
+            prefix: [Option<gix_hash::Prefix>; 2],
             mut errors: Vec<Error>,
             repo: &Repository,
         ) -> Result<[Option<ObjectId>; 2], Error> {
@@ -143,7 +143,7 @@ impl<'repo> Delegate<'repo> {
         self.kind.unwrap_or(git_revision::spec::Kind::IncludeReachable) != git_revision::spec::Kind::IncludeReachable
     }
     fn disambiguate_objects_by_fallback_hint(&mut self, hint: Option<ObjectKindHint>) {
-        fn require_object_kind(repo: &Repository, obj: &git_hash::oid, kind: git_object::Kind) -> Result<(), Error> {
+        fn require_object_kind(repo: &Repository, obj: &gix_hash::oid, kind: git_object::Kind) -> Result<(), Error> {
             let obj = repo.find_object(obj)?;
             if obj.kind == kind {
                 Ok(())
@@ -223,7 +223,7 @@ impl<'repo> Delegate<'repo> {
     }
 }
 
-fn peel(repo: &Repository, obj: &git_hash::oid, kind: git_object::Kind) -> Result<ObjectId, Error> {
+fn peel(repo: &Repository, obj: &gix_hash::oid, kind: git_object::Kind) -> Result<ObjectId, Error> {
     let mut obj = repo.find_object(obj)?;
     obj = obj.peel_to_kind(kind)?;
     debug_assert_eq!(obj.kind, kind, "bug in Object::peel_to_kind() which didn't deliver");

@@ -886,7 +886,7 @@ These are created to account for breaking changes within the dependency graph of
 could not be installed anymore.
 This was eventually fixed with new minor releases across the ecosystem.
 
-Finally, yet another breaking change due to the introduction of the `git-hash`
+Finally, yet another breaking change due to the introduction of the `gix-hash`
 crate to break a dependency cycle between `git-object` and `gix-features` caused
 yet another maintenance release.
 

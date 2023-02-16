@@ -38,12 +38,12 @@ pub mod decode {
     }
 }
 
-pub(crate) fn decode(data: &[u8], object_hash: git_hash::Kind) -> Result<Link, decode::Error> {
+pub(crate) fn decode(data: &[u8], object_hash: gix_hash::Kind) -> Result<Link, decode::Error> {
     let (id, data) = split_at_pos(data, object_hash.len_in_bytes())
         .ok_or(decode::Error::Corrupt(
             "link extension too short to read share index checksum",
         ))
-        .map(|(id, d)| (git_hash::ObjectId::from(id), d))?;
+        .map(|(id, d)| (gix_hash::ObjectId::from(id), d))?;
 
     if data.is_empty() {
         return Ok(Link {
@@ -71,7 +71,7 @@ impl Link {
     pub(crate) fn dissolve_into(
         self,
         split_index: &mut crate::File,
-        object_hash: git_hash::Kind,
+        object_hash: gix_hash::Kind,
         options: crate::decode::Options,
     ) -> Result<(), crate::file::init::Error> {
         let shared_index_path = split_index

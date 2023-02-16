@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use git_hash::ObjectId;
 use git_revision::spec::parse;
+use gix_hash::ObjectId;
 
 use crate::{bstr::BStr, revision::Spec, Repository};
 
@@ -51,7 +51,7 @@ struct Delegate<'repo> {
     opts: Options,
     err: Vec<Error>,
     /// The ambiguous prefix obtained during a call to `disambiguate_prefix()`.
-    prefix: [Option<git_hash::Prefix>; 2],
+    prefix: [Option<gix_hash::Prefix>; 2],
     /// If true, we didn't try to do any other transformation which might have helped with disambiguation.
     last_call_was_disambiguate_prefix: [bool; 2],
 

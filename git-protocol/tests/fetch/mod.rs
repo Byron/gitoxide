@@ -258,8 +258,8 @@ mod async_io {
     }
 }
 
-pub fn oid(hex_sha: &str) -> git_hash::ObjectId {
-    git_hash::ObjectId::from_hex(hex_sha.as_bytes()).expect("valid input")
+pub fn oid(hex_sha: &str) -> gix_hash::ObjectId {
+    gix_hash::ObjectId::from_hex(hex_sha.as_bytes()).expect("valid input")
 }
 
 #[cfg(feature = "async-client")]

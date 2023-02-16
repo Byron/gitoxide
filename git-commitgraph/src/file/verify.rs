@@ -18,30 +18,30 @@ pub enum Error<E: std::error::Error + 'static> {
     Commit(#[from] file::commit::Error),
     #[error("commit at file position {pos} has invalid ID {id}")]
     CommitId {
-        id: git_hash::ObjectId,
+        id: gix_hash::ObjectId,
         pos: file::Position,
     },
     #[error("commit at file position {pos} with ID {id} is out of order relative to its predecessor with ID {predecessor_id}")]
     CommitsOutOfOrder {
-        id: git_hash::ObjectId,
+        id: gix_hash::ObjectId,
         pos: file::Position,
-        predecessor_id: git_hash::ObjectId,
+        predecessor_id: gix_hash::ObjectId,
     },
     #[error("commit-graph filename should be {0}")]
     Filename(String),
     #[error("commit {id} has invalid generation {generation}")]
-    Generation { generation: u32, id: git_hash::ObjectId },
+    Generation { generation: u32, id: gix_hash::ObjectId },
     #[error("checksum mismatch: expected {expected}, got {actual}")]
     Mismatch {
-        actual: git_hash::ObjectId,
-        expected: git_hash::ObjectId,
+        actual: gix_hash::ObjectId,
+        expected: gix_hash::ObjectId,
     },
     #[error("{0}")]
     Processor(#[source] E),
     #[error("commit {id} has invalid root tree ID {root_tree_id}")]
     RootTreeId {
-        id: git_hash::ObjectId,
-        root_tree_id: git_hash::ObjectId,
+        id: gix_hash::ObjectId,
+        root_tree_id: gix_hash::ObjectId,
     },
 }
 
@@ -64,8 +64,8 @@ pub struct Outcome {
 /// Verification
 impl File {
     /// Returns the trailing checksum over the entire content of this file.
-    pub fn checksum(&self) -> &git_hash::oid {
-        git_hash::oid::from_bytes_unchecked(&self.data[self.data.len() - self.hash_len..])
+    pub fn checksum(&self) -> &gix_hash::oid {
+        gix_hash::oid::from_bytes_unchecked(&self.data[self.data.len() - self.hash_len..])
     }
 
     /// Traverse all [commits][file::Commit] stored in this file and call `processor(commit) -> Result<(), Error>` on it.
@@ -91,7 +91,7 @@ impl File {
         };
 
         // TODO: Verify self.fan values as we go.
-        let mut prev_id: &git_hash::oid = null_id;
+        let mut prev_id: &gix_hash::oid = null_id;
         for commit in self.iter_commits() {
             if commit.id() <= prev_id {
                 if commit.id() == null_id {
@@ -142,7 +142,7 @@ impl File {
     /// checksum itself.
     ///
     /// Return the actual checksum on success or `(actual checksum, expected checksum)` if there is a mismatch.
-    pub fn verify_checksum(&self) -> Result<git_hash::ObjectId, (git_hash::ObjectId, git_hash::ObjectId)> {
+    pub fn verify_checksum(&self) -> Result<gix_hash::ObjectId, (gix_hash::ObjectId, gix_hash::ObjectId)> {
         // Even though we could use gix_features::hash::bytes_of_file(…), this would require using our own
         // Error type to support io::Error and Mismatch. As we only gain progress, there probably isn't much value
         // as these files are usually small enough to process them in less than a second, even for the large ones.
@@ -150,7 +150,7 @@ impl File {
         let data_len_without_trailer = self.data.len() - self.hash_len;
         let mut hasher = gix_features::hash::hasher(self.object_hash());
         hasher.update(&self.data[..data_len_without_trailer]);
-        let actual = git_hash::ObjectId::from(hasher.digest().as_ref());
+        let actual = gix_hash::ObjectId::from(hasher.digest().as_ref());
 
         let expected = self.checksum();
         if actual == expected {
@@ -163,13 +163,13 @@ impl File {
 
 /// If the given path's filename matches "graph-{hash}.graph", check that `hash` matches the
 /// expected hash.
-fn verify_split_chain_filename_hash(path: impl AsRef<Path>, expected: &git_hash::oid) -> Result<(), String> {
+fn verify_split_chain_filename_hash(path: impl AsRef<Path>, expected: &gix_hash::oid) -> Result<(), String> {
     let path = path.as_ref();
     path.file_name()
         .and_then(|filename| filename.to_str())
         .and_then(|filename| filename.strip_suffix(".graph"))
         .and_then(|stem| stem.strip_prefix("graph-"))
-        .map_or(Ok(()), |hex| match git_hash::ObjectId::from_hex(hex.as_bytes()) {
+        .map_or(Ok(()), |hex| match gix_hash::ObjectId::from_hex(hex.as_bytes()) {
             Ok(actual) if actual == expected => Ok(()),
             _ => Err(format!("graph-{}.graph", expected.to_hex())),
         })

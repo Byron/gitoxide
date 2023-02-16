@@ -105,7 +105,7 @@ document-features = { version = "0.2.0", optional = true }
 git-object = { opt-level = 3 }
 git-ref = { opt-level = 3 }
 #git-pack = { opt-level = 3 }
-git-hash = { opt-level = 3 }
+gix-hash = { opt-level = 3 }
 git-actor = { opt-level = 3 }
 git-config = { opt-level = 3 }
 miniz_oxide = { opt-level = 3 }
@@ -130,7 +130,7 @@ build-override = { opt-level = 0 }
 members = [
     "git-actor",
     "git-url",
-    "git-hash",
+    "gix-hash",
     "git-validate",
     "git-ref",
     "git-command",

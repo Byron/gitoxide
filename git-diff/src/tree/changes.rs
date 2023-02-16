@@ -1,6 +1,6 @@
 use std::{borrow::BorrowMut, collections::VecDeque};
 
-use git_hash::{oid, ObjectId};
+use gix_hash::{oid, ObjectId};
 
 use crate::{
     tree,

@@ -1,8 +1,8 @@
 use std::{convert::TryInto, fs::OpenOptions, io::Write, path::Path, time::Duration};
 
 use bstr::BStr;
-use git_hash::oid;
 use git_index::Entry;
+use gix_hash::oid;
 use io_close::Close;
 
 use crate::{fs, index, os};

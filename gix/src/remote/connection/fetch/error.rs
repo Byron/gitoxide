@@ -12,8 +12,8 @@ pub enum Error {
     FetchResponse(#[from] git_protocol::fetch::response::Error),
     #[error("Cannot fetch from a remote that uses {remote} while local repository uses {local} for object hashes")]
     IncompatibleObjectHash {
-        local: git_hash::Kind,
-        remote: git_hash::Kind,
+        local: gix_hash::Kind,
+        remote: gix_hash::Kind,
     },
     #[error(transparent)]
     Negotiate(#[from] super::negotiate::Error),

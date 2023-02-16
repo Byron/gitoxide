@@ -16,7 +16,7 @@ mod from_tree {
     /// Initialization
     impl State {
         /// Return a new and empty in-memory index assuming the given `object_hash`.
-        pub fn new(object_hash: git_hash::Kind) -> Self {
+        pub fn new(object_hash: gix_hash::Kind) -> Self {
             State {
                 object_hash,
                 timestamp: filetime::FileTime::now(),
@@ -35,9 +35,9 @@ mod from_tree {
         /// with `find`.
         ///
         /// **No extension data is currently produced**.
-        pub fn from_tree<Find>(tree: &git_hash::oid, mut find: Find) -> Result<Self, breadthfirst::Error>
+        pub fn from_tree<Find>(tree: &gix_hash::oid, mut find: Find) -> Result<Self, breadthfirst::Error>
         where
-            Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
+            Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
         {
             let mut buf = Vec::new();
             let root = find(tree, &mut buf).ok_or(breadthfirst::Error::NotFound { oid: tree.into() })?;

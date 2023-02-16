@@ -11,12 +11,12 @@ const V1_HEADER_SIZE: usize = FAN_LEN * N32_SIZE;
 const V2_HEADER_SIZE: usize = N32_SIZE * 2 + FAN_LEN * N32_SIZE;
 const N32_HIGH_BIT: u32 = 1 << 31;
 
-/// Represents an entry within a pack index file, effectively mapping object [`IDs`][git_hash::ObjectId] to pack data file locations.
+/// Represents an entry within a pack index file, effectively mapping object [`IDs`][gix_hash::ObjectId] to pack data file locations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     /// The ID of the object
-    pub oid: git_hash::ObjectId,
+    pub oid: gix_hash::ObjectId,
     /// The offset to the object's header in the pack data file
     pub pack_offset: data::Offset,
     /// The CRC32 hash over all bytes of the pack data entry.
@@ -36,7 +36,7 @@ impl index::File {
                 .map(|c| {
                     let (ofs, oid) = c.split_at(N32_SIZE);
                     Entry {
-                        oid: git_hash::ObjectId::from(oid),
+                        oid: gix_hash::ObjectId::from(oid),
                         pack_offset: crate::read_u32(ofs) as u64,
                         crc32: None,
                     }
@@ -55,7 +55,7 @@ impl index::File {
             )
             .take(self.num_objects as usize)
             .map(move |(oid, crc32, ofs32)| Entry {
-                oid: git_hash::ObjectId::from(oid),
+                oid: gix_hash::ObjectId::from(oid),
                 pack_offset: self.pack_offset_from_offset_v2(ofs32, pack64_offset),
                 crc32: Some(crate::read_u32(crc32)),
             }),
@@ -69,13 +69,13 @@ impl index::File {
     /// # Panics
     ///
     /// If `index` is out of bounds.
-    pub fn oid_at_index(&self, index: EntryIndex) -> &git_hash::oid {
+    pub fn oid_at_index(&self, index: EntryIndex) -> &gix_hash::oid {
         let index = index as usize;
         let start = match self.version {
             index::Version::V2 => V2_HEADER_SIZE + index * self.hash_len,
             index::Version::V1 => V1_HEADER_SIZE + index * (N32_SIZE + self.hash_len) + N32_SIZE,
         };
-        git_hash::oid::from_bytes_unchecked(&self.data[start..][..self.hash_len])
+        gix_hash::oid::from_bytes_unchecked(&self.data[start..][..self.hash_len])
     }
 
     /// Returns the offset into our pack data file at which to start reading the object at `index`.
@@ -118,7 +118,7 @@ impl index::File {
     /// [`pack_offset_at_index()`][index::File::pack_offset_at_index()] or [`crc32_at_index()`][index::File::crc32_at_index()].
     // NOTE: pretty much the same things as in `multi_index::File::lookup`, change things there
     //       as well.
-    pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<EntryIndex> {
+    pub fn lookup(&self, id: impl AsRef<gix_hash::oid>) -> Option<EntryIndex> {
         lookup(id, &self.fan, |idx| self.oid_at_index(idx))
     }
 
@@ -134,7 +134,7 @@ impl index::File {
     //       as well.
     pub fn lookup_prefix(
         &self,
-        prefix: git_hash::Prefix,
+        prefix: gix_hash::Prefix,
         candidates: Option<&mut Range<EntryIndex>>,
     ) -> Option<PrefixLookupResult> {
         lookup_prefix(
@@ -203,10 +203,10 @@ impl index::File {
 }
 
 pub(crate) fn lookup_prefix<'a>(
-    prefix: git_hash::Prefix,
+    prefix: gix_hash::Prefix,
     candidates: Option<&mut Range<EntryIndex>>,
     fan: &[u32; FAN_LEN],
-    oid_at_index: impl Fn(EntryIndex) -> &'a git_hash::oid,
+    oid_at_index: impl Fn(EntryIndex) -> &'a gix_hash::oid,
     num_objects: u32,
 ) -> Option<PrefixLookupResult> {
     let first_byte = prefix.as_oid().first_byte() as usize;
@@ -266,9 +266,9 @@ pub(crate) fn lookup_prefix<'a>(
 }
 
 pub(crate) fn lookup<'a>(
-    id: impl AsRef<git_hash::oid>,
+    id: impl AsRef<gix_hash::oid>,
     fan: &[u32; FAN_LEN],
-    oid_at_index: impl Fn(EntryIndex) -> &'a git_hash::oid,
+    oid_at_index: impl Fn(EntryIndex) -> &'a gix_hash::oid,
 ) -> Option<EntryIndex> {
     let id = id.as_ref();
     let first_byte = id.first_byte() as usize;

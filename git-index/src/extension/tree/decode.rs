@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{
     extension::Tree,
@@ -8,7 +8,7 @@ use crate::{
 };
 
 /// A recursive data structure
-pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<Tree> {
+pub fn decode(data: &[u8], object_hash: gix_hash::Kind) -> Option<Tree> {
     let (tree, data) = one_recursive(data, object_hash.len_in_bytes())?;
     assert!(
         data.is_empty(),
@@ -32,7 +32,7 @@ fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
         (ObjectId::from(hash), data)
     } else {
         (
-            ObjectId::null(git_hash::Kind::from_hex_len(hash_len * 2).expect("valid hex_len")),
+            ObjectId::null(gix_hash::Kind::from_hex_len(hash_len * 2).expect("valid hex_len")),
             data,
         )
     };

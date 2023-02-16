@@ -3,7 +3,7 @@ use git_odb::pack;
 use crate::fixture_path;
 
 fn pack_at(at: &str) -> pack::data::File {
-    pack::data::File::at(fixture_path(at).as_path(), git_hash::Kind::Sha1).expect("valid pack file")
+    pack::data::File::at(fixture_path(at).as_path(), gix_hash::Kind::Sha1).expect("valid pack file")
 }
 
 mod method {
@@ -97,7 +97,7 @@ mod decode_entry {
     }
 
     fn decode_entry_at_offset(offset: u64) -> Vec<u8> {
-        fn resolve_with_panic(_oid: &git_hash::oid, _out: &mut Vec<u8>) -> Option<ResolvedBase> {
+        fn resolve_with_panic(_oid: &gix_hash::oid, _out: &mut Vec<u8>) -> Option<ResolvedBase> {
             panic!("should not want to resolve an id here")
         }
 
@@ -147,7 +147,7 @@ mod resolve_header {
     }
 
     fn resolve_header_at_offset(offset: u64) -> git_pack::data::decode::header::Outcome {
-        fn resolve_with_panic(_oid: &git_hash::oid) -> Option<git_pack::data::decode::header::ResolvedBase> {
+        fn resolve_with_panic(_oid: &gix_hash::oid) -> Option<git_pack::data::decode::header::ResolvedBase> {
             panic!("should not want to resolve an id here")
         }
 

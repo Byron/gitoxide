@@ -99,7 +99,7 @@ mod intercept {
     pub(crate) struct InterceptRev<'a, T> {
         pub inner: &'a mut T,
         pub last_ref: Option<BString>, // TODO: smallvec to save the unnecessary allocation? Can't keep ref due to lifetime constraints in traits
-        pub last_prefix: Option<(git_hash::Prefix, Option<PrefixHintOwned>)>,
+        pub last_prefix: Option<(gix_hash::Prefix, Option<PrefixHintOwned>)>,
         pub done: bool,
     }
 
@@ -138,7 +138,7 @@ mod intercept {
 
         fn disambiguate_prefix(
             &mut self,
-            prefix: git_hash::Prefix,
+            prefix: gix_hash::Prefix,
             hint: Option<delegate::PrefixHint<'_>>,
         ) -> Option<()> {
             self.last_prefix = Some((prefix, hint.map(Into::into)));
@@ -191,7 +191,7 @@ mod intercept {
 use intercept::InterceptRev;
 
 fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
-    git_hash::Prefix::from_hex(hex_name.to_str().expect("hexadecimal only"))
+    gix_hash::Prefix::from_hex(hex_name.to_str().expect("hexadecimal only"))
         .ok()
         .and_then(|prefix| delegate.disambiguate_prefix(prefix, hint))
 }
@@ -378,7 +378,7 @@ where
             Some(pos) => Some(pos),
         };
     } else {
-        (consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN)
+        (consecutive_hex_chars.unwrap_or(0) >= gix_hash::Prefix::MIN_HEX_LEN)
             .then(|| try_set_prefix(delegate, name, None))
             .flatten()
             .or_else(|| {

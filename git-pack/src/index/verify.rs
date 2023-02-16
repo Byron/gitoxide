@@ -21,12 +21,12 @@ pub mod integrity {
         ObjectDecode {
             source: git_object::decode::Error,
             kind: git_object::Kind,
-            id: git_hash::ObjectId,
+            id: gix_hash::ObjectId,
         },
         #[error("{kind} object {id} wasn't re-encoded without change, wanted\n{expected}\n\nGOT\n\n{actual}")]
         ObjectEncodeMismatch {
             kind: git_object::Kind,
-            id: git_hash::ObjectId,
+            id: gix_hash::ObjectId,
             expected: BString,
             actual: BString,
         },
@@ -35,7 +35,7 @@ pub mod integrity {
     /// Returned by [`index::File::verify_integrity()`][crate::index::File::verify_integrity()].
     pub struct Outcome<P> {
         /// The computed checksum of the index which matched the stored one.
-        pub actual_index_checksum: git_hash::ObjectId,
+        pub actual_index_checksum: gix_hash::ObjectId,
         /// The packs traversal outcome, if one was provided
         pub pack_traverse_statistics: Option<crate::index::traverse::Statistics>,
         /// The provided progress instance.
@@ -125,16 +125,16 @@ impl index::File {
     /// Returns the trailing hash stored at the end of this index file.
     ///
     /// It's a hash over all bytes of the index.
-    pub fn index_checksum(&self) -> git_hash::ObjectId {
-        git_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])
+    pub fn index_checksum(&self) -> gix_hash::ObjectId {
+        gix_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])
     }
 
     /// Returns the hash of the pack data file that this index file corresponds to.
     ///
     /// It should [`crate::data::File::checksum()`] of the corresponding pack data file.
-    pub fn pack_checksum(&self) -> git_hash::ObjectId {
+    pub fn pack_checksum(&self) -> gix_hash::ObjectId {
         let from = self.data.len() - self.hash_len * 2;
-        git_hash::ObjectId::from(&self.data[from..][..self.hash_len])
+        gix_hash::ObjectId::from(&self.data[from..][..self.hash_len])
     }
 
     /// Validate that our [`index_checksum()`][index::File::index_checksum()] matches the actual contents
@@ -143,7 +143,7 @@ impl index::File {
         &self,
         progress: impl Progress,
         should_interrupt: &AtomicBool,
-    ) -> Result<git_hash::ObjectId, checksum::Error> {
+    ) -> Result<gix_hash::ObjectId, checksum::Error> {
         crate::verify::checksum_on_disk_or_mmap(
             self.path(),
             &self.data,

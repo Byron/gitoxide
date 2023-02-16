@@ -10,7 +10,7 @@ pub(crate) struct StageOne {
 
     pub is_bare: bool,
     pub lossy: Option<bool>,
-    pub object_hash: git_hash::Kind,
+    pub object_hash: gix_hash::Kind,
     pub reflog: Option<git_ref::store::WriteReflog>,
 }
 
@@ -41,14 +41,14 @@ impl StageOne {
             .transpose()?
             .unwrap_or_default();
         let object_hash = (repo_format_version != 1)
-            .then_some(Ok(git_hash::Kind::Sha1))
+            .then_some(Ok(gix_hash::Kind::Sha1))
             .or_else(|| {
                 config
                     .string("extensions", None, "objectFormat")
                     .map(|format| Extensions::OBJECT_FORMAT.try_into_object_format(format))
             })
             .transpose()?
-            .unwrap_or(git_hash::Kind::Sha1);
+            .unwrap_or(gix_hash::Kind::Sha1);
 
         let extension_worktree = util::config_bool(
             &config,

@@ -17,7 +17,7 @@ mod memory {
         kind: git_object::Kind,
     }
 
-    type Key = git_hash::ObjectId;
+    type Key = gix_hash::ObjectId;
 
     struct CustomScale;
 
@@ -56,7 +56,7 @@ mod memory {
 
     impl cache::Object for MemoryCappedHashmap {
         /// Put the object going by `id` of `kind` with `data` into the cache.
-        fn put(&mut self, id: git_hash::ObjectId, kind: git_object::Kind, data: &[u8]) {
+        fn put(&mut self, id: gix_hash::ObjectId, kind: git_object::Kind, data: &[u8]) {
             self.debug.put();
             if let Ok(Some(previous_entry)) = self.inner.put_with_weight(
                 id,
@@ -79,7 +79,7 @@ mod memory {
         }
 
         /// Try to retrieve the object named `id` and place its data into `out` if available and return `Some(kind)` if found.
-        fn get(&mut self, id: &git_hash::ObjectId, out: &mut Vec<u8>) -> Option<git_object::Kind> {
+        fn get(&mut self, id: &gix_hash::ObjectId, out: &mut Vec<u8>) -> Option<git_object::Kind> {
             let res = self.inner.get(id).map(|e| {
                 out.resize(e.data.len(), 0);
                 out.copy_from_slice(&e.data);
@@ -102,21 +102,21 @@ pub struct Never;
 
 impl cache::Object for Never {
     /// Noop
-    fn put(&mut self, _id: git_hash::ObjectId, _kind: git_object::Kind, _data: &[u8]) {}
+    fn put(&mut self, _id: gix_hash::ObjectId, _kind: git_object::Kind, _data: &[u8]) {}
 
     /// Noop
-    fn get(&mut self, _id: &git_hash::ObjectId, _out: &mut Vec<u8>) -> Option<git_object::Kind> {
+    fn get(&mut self, _id: &gix_hash::ObjectId, _out: &mut Vec<u8>) -> Option<git_object::Kind> {
         None
     }
 }
 
 impl<T: cache::Object + ?Sized> cache::Object for Box<T> {
-    fn put(&mut self, id: git_hash::ObjectId, kind: git_object::Kind, data: &[u8]) {
+    fn put(&mut self, id: gix_hash::ObjectId, kind: git_object::Kind, data: &[u8]) {
         use std::ops::DerefMut;
         self.deref_mut().put(id, kind, data)
     }
 
-    fn get(&mut self, id: &git_hash::ObjectId, out: &mut Vec<u8>) -> Option<git_object::Kind> {
+    fn get(&mut self, id: &gix_hash::ObjectId, out: &mut Vec<u8>) -> Option<git_object::Kind> {
         use std::ops::DerefMut;
         self.deref_mut().get(id, out)
     }

@@ -93,7 +93,7 @@ fn check_against_baseline() -> crate::Result {
     let user_exclude_path = dir.join("user.exclude");
     assert!(user_exclude_path.is_file());
 
-    let mut index = git_index::File::at(git_dir.join("index"), git_hash::Kind::Sha1, Default::default())?;
+    let mut index = git_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default())?;
     let odb = git_odb::at(git_dir.join("objects"))?;
     let case = gix_glob::pattern::Case::Sensitive;
     let state = git_worktree::fs::cache::State::for_add(

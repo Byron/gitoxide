@@ -1,4 +1,4 @@
-const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
+const SHA1_SIZE: usize = gix_hash::Kind::Sha1.len_in_bytes();
 
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
@@ -18,7 +18,7 @@ mod version {
 
         #[test]
         fn lookup() -> Result<(), Box<dyn std::error::Error>> {
-            let object_hash = git_hash::Kind::Sha1;
+            let object_hash = gix_hash::Kind::Sha1;
             let file = index::File::at(&fixture_path(INDEX_V1), object_hash)?;
             for (id, desired_index, assertion) in &[
                 (&b"036bd66fe9b6591e959e6df51160e636ab1a682e"[..], Some(0), "first"),
@@ -26,7 +26,7 @@ mod version {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    file.lookup(git_hash::ObjectId::from_hex(*id)?),
+                    file.lookup(gix_hash::ObjectId::from_hex(*id)?),
                     *desired_index,
                     "{}",
                     assertion
@@ -40,7 +40,7 @@ mod version {
                     assert_eq!(entry.crc32, file.crc32_at_index(index));
 
                     let hex_len = (entry_index % object_hash.len_in_hex()).max(7);
-                    let prefix = git_hash::Prefix::new(entry.oid, hex_len)?;
+                    let prefix = gix_hash::Prefix::new(entry.oid, hex_len)?;
                     assert_eq!(
                         file.lookup_prefix(prefix, candidates.as_mut())
                             .expect("object exists")
@@ -63,7 +63,7 @@ mod version {
 
         #[test]
         fn lookup() -> Result<(), Box<dyn std::error::Error>> {
-            let object_hash = git_hash::Kind::Sha1;
+            let object_hash = gix_hash::Kind::Sha1;
             let file = index::File::at(&fixture_path(INDEX_V2), object_hash)?;
             for (id, expected, assertion_message, hex_len) in [
                 (&b"0ead45fc727edcf5cadca25ef922284f32bb6fc1"[..], Some(0), "first", 4),
@@ -71,10 +71,10 @@ mod version {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack", 7),
             ] {
                 for mut candidates in [None, Some(1..1)] {
-                    let id = git_hash::ObjectId::from_hex(id)?;
+                    let id = gix_hash::ObjectId::from_hex(id)?;
                     assert_eq!(file.lookup(id), expected, "{}", assertion_message);
                     assert_eq!(
-                        file.lookup_prefix(git_hash::Prefix::new(id, hex_len)?, candidates.as_mut()),
+                        file.lookup_prefix(gix_hash::Prefix::new(id, hex_len)?, candidates.as_mut()),
                         expected.map(Ok)
                     );
                     if let Some(candidates) = candidates {
@@ -93,7 +93,7 @@ mod version {
                     assert_eq!(entry.crc32, file.crc32_at_index(index), "{} {:?}", index, entry);
 
                     let hex_len = (entry_index % object_hash.len_in_hex()).max(7);
-                    let prefix = git_hash::Prefix::new(entry.oid, hex_len)?;
+                    let prefix = gix_hash::Prefix::new(entry.oid, hex_len)?;
                     assert_eq!(
                         file.lookup_prefix(prefix, candidates.as_mut())
                             .expect("object exists")
@@ -141,7 +141,7 @@ mod version {
                     io::BufReader::new(fs::File::open(fixture_path(data_path))?),
                     *mode,
                     *compressed,
-                    git_hash::Kind::Sha1,
+                    gix_hash::Kind::Sha1,
                 )?;
 
                 let mut actual = Vec::<u8>::new();
@@ -156,7 +156,7 @@ mod version {
                     progress::Discard,
                     &mut actual,
                     &AtomicBool::new(false),
-                    git_hash::Kind::Sha1,
+                    gix_hash::Kind::Sha1,
                     pack_version,
                 )?;
 
@@ -210,7 +210,7 @@ mod version {
                 assert_eq!(outcome.index_version, desired_kind);
                 assert_eq!(
                     outcome.index_hash,
-                    git_hash::ObjectId::from(&expected[end_of_pack_hash..end_of_index_hash])
+                    gix_hash::ObjectId::from(&expected[end_of_pack_hash..end_of_index_hash])
                 );
                 Ok(())
             }
@@ -236,8 +236,8 @@ mod version {
 
         #[test]
         fn lookup_missing() {
-            let file = index::File::at(&fixture_path(INDEX_V2), git_hash::Kind::Sha1).unwrap();
-            let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
+            let file = index::File::at(&fixture_path(INDEX_V2), gix_hash::Kind::Sha1).unwrap();
+            let prefix = gix_hash::Prefix::new(gix_hash::ObjectId::null(gix_hash::Kind::Sha1), 7).unwrap();
             assert!(file.lookup_prefix(prefix, None).is_none());
 
             let mut candidates = 1..1;
@@ -375,8 +375,8 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
             },
         ),
     ] {
-        let idx = index::File::at(&fixture_path(index_path), git_hash::Kind::Sha1)?;
-        let pack = pack::data::File::at(&fixture_path(pack_path), git_hash::Kind::Sha1)?;
+        let idx = index::File::at(&fixture_path(index_path), gix_hash::Kind::Sha1)?;
+        let pack = pack::data::File::at(&fixture_path(pack_path), gix_hash::Kind::Sha1)?;
 
         assert_eq!(pack.version(), pack::data::Version::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
@@ -486,7 +486,7 @@ fn iter() -> Result<(), Box<dyn std::error::Error>> {
             "0f3ea84cd1bba10c2a03d736a460635082833e59",
         ),
     ] {
-        let idx = index::File::at(&fixture_path(path), git_hash::Kind::Sha1)?;
+        let idx = index::File::at(&fixture_path(path), gix_hash::Kind::Sha1)?;
         assert_eq!(idx.version(), *kind);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(

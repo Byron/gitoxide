@@ -1,7 +1,7 @@
 use std::{io::Read, ops::Deref};
 
-use git_hash::ObjectId;
 use git_object::Kind;
+use gix_hash::ObjectId;
 
 use crate::store;
 

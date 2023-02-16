@@ -287,7 +287,7 @@ mod core {
 
     #[test]
     fn abbrev() -> crate::Result {
-        let object_hash = git_hash::Kind::Sha1;
+        let object_hash = gix_hash::Kind::Sha1;
         assert_eq!(Core::ABBREV.try_into_abbreviation(bcow("4"), object_hash)?, Some(4));
         assert_eq!(Core::ABBREV.try_into_abbreviation(bcow("auto"), object_hash)?, None);
         assert_eq!(
@@ -359,11 +359,11 @@ mod extensions {
     fn object_format() -> crate::Result {
         assert_eq!(
             Extensions::OBJECT_FORMAT.try_into_object_format(bcow("sha1"))?,
-            git_hash::Kind::Sha1
+            gix_hash::Kind::Sha1
         );
         assert_eq!(
             Extensions::OBJECT_FORMAT.try_into_object_format(bcow("SHA1"))?,
-            git_hash::Kind::Sha1,
+            gix_hash::Kind::Sha1,
             "case-insensitive"
         );
         assert_eq!(

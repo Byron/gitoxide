@@ -1,7 +1,7 @@
 use std::fmt::Formatter;
 
-use git_hash::ObjectId;
 use git_object::bstr::BString;
+use gix_hash::ObjectId;
 
 use crate::{
     store_impl::{file, file::Transaction},
@@ -13,7 +13,7 @@ use crate::{
 ///
 /// Resolution means to follow tag objects until the end of the chain.
 pub type FindObjectFn<'a> = dyn FnMut(
-        git_hash::ObjectId,
+        gix_hash::ObjectId,
         &mut Vec<u8>,
     ) -> Result<Option<git_object::Kind>, Box<dyn std::error::Error + Send + Sync + 'static>>
     + 'a;

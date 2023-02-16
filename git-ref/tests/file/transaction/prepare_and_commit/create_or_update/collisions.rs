@@ -126,7 +126,7 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
                     change: Change::Update {
                         log: LogChange::default(),
                         expected: PreviousValue::Any,
-                        new: Target::Peeled(git_hash::Kind::Sha1.null()),
+                        new: Target::Peeled(gix_hash::Kind::Sha1.null()),
                     },
                     name: "refs/a".try_into().expect("valid"),
                     deref: false,
@@ -137,7 +137,7 @@ fn conflicting_creation_into_packed_refs() -> crate::Result {
                         expected: PreviousValue::MustExistAndMatch(Target::Peeled(hex_to_id(
                             "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
                         ))),
-                        new: Target::Peeled(git_hash::Kind::Sha1.null()),
+                        new: Target::Peeled(gix_hash::Kind::Sha1.null()),
                     },
                     name: "refs/A".try_into().expect("valid"),
                     deref: false,

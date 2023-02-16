@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use git_hash::oid;
+use gix_hash::oid;
 
 use super::find::Error;
 use crate::{
@@ -14,7 +14,7 @@ where
 {
     fn try_header_inner<'b>(
         &'b self,
-        mut id: &'b git_hash::oid,
+        mut id: &'b gix_hash::oid,
         snapshot: &mut load_index::Snapshot,
         recursion: Option<DeltaBaseRecursion<'_>>,
     ) -> Result<Option<Header>, Error> {

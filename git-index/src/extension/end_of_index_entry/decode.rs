@@ -13,7 +13,7 @@ use crate::{
 /// stored prior to this one to assure they are correct.
 ///
 /// If the checksum wasn't matched, we will ignore this extension entirely.
-pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<usize> {
+pub fn decode(data: &[u8], object_hash: gix_hash::Kind) -> Option<usize> {
     let hash_len = object_hash.len_in_bytes();
     if data.len() < MIN_SIZE_WITH_HEADER + hash_len {
         return None;
@@ -29,11 +29,11 @@ pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<usize> {
 
     let (offset, checksum) = ext_data.split_at(4);
     let offset = from_be_u32(offset) as usize;
-    if offset < header::SIZE || offset > start_of_eoie || checksum.len() != git_hash::Kind::Sha1.len_in_bytes() {
+    if offset < header::SIZE || offset > start_of_eoie || checksum.len() != gix_hash::Kind::Sha1.len_in_bytes() {
         return None;
     }
 
-    let mut hasher = gix_features::hash::hasher(git_hash::Kind::Sha1);
+    let mut hasher = gix_features::hash::hasher(gix_hash::Kind::Sha1);
     let mut last_chunk = None;
     for (signature, chunk) in extension::Iter::new(&data[offset..data.len() - MIN_SIZE_WITH_HEADER - hash_len]) {
         hasher.update(&signature);

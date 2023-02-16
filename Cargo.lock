@@ -1209,9 +1209,9 @@ dependencies = [
  "btoi",
  "document-features",
  "git-date 0.4.2",
- "git-hash 0.10.2",
  "git-testtools",
  "gix-features",
+ "gix-hash",
  "itoa",
  "nom",
  "pretty_assertions",
@@ -1291,9 +1291,9 @@ dependencies = [
  "bstr",
  "document-features",
  "git-chunk",
- "git-hash 0.10.2",
  "git-testtools",
  "gix-features",
+ "gix-hash",
  "memmap2",
  "serde",
  "thiserror",
@@ -1384,8 +1384,8 @@ version = "0.4.2"
 dependencies = [
  "bstr",
  "document-features",
- "git-hash 0.10.2",
  "git-testtools",
+ "gix-hash",
  "itoa",
  "once_cell",
  "serde",
@@ -1398,8 +1398,8 @@ name = "git-diff"
 version = "0.26.1"
 dependencies = [
  "getrandom",
- "git-hash 0.10.2",
  "git-object 0.26.1",
+ "gix-hash",
  "imara-diff",
  "serde",
  "thiserror",
@@ -1410,11 +1410,11 @@ name = "git-diff-tests"
 version = "0.0.0"
 dependencies = [
  "git-diff",
- "git-hash 0.10.2",
  "git-object 0.26.1",
  "git-odb",
  "git-testtools",
  "git-traverse 0.22.1",
+ "gix-hash",
 ]
 
 [[package]]
@@ -1424,7 +1424,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2738a9941f1411cff31e6ea4399a6c7304cc3ea34fb8c1c6f1aef1f667d46cc"
 dependencies = [
  "bstr",
- "git-hash 0.10.1",
+ "git-hash",
  "git-path",
  "git-ref 0.23.1",
  "git-sec",
@@ -1438,9 +1438,9 @@ dependencies = [
  "bstr",
  "defer",
  "dunce",
- "git-hash 0.10.2",
  "git-ref 0.24.0",
  "git-testtools",
+ "gix-hash",
  "gix-path",
  "gix-sec",
  "is_ci",
@@ -1455,7 +1455,7 @@ version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0019327672cb759f851d1b18fdcc36bb797dc62b925cb93c8c881b54735eb2c2"
 dependencies = [
- "git-hash 0.10.1",
+ "git-hash",
  "libc",
  "prodash",
  "sha1_smol",
@@ -1482,22 +1482,11 @@ dependencies = [
 
 [[package]]
 name = "git-hash"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1532d82bf830532f8d545c5b7b568e311e3593f16cf7ee9dd0ce03c74b12b99d"
-dependencies = [
- "hex",
- "thiserror",
-]
-
-[[package]]
-name = "git-hash"
 version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dfea33ea1987a757e7bdda54c42d1c5bbcd741a997db98b6be5d2e739a221602"
 dependencies = [
- "document-features",
- "git-testtools",
  "hex",
- "serde",
  "thiserror",
 ]
 
@@ -1507,7 +1496,7 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c52b625ad8cc360a0b7f426266f21fb07bd49b8f4ccf1b3ca7bc89424db1dec4"
 dependencies = [
- "git-hash 0.10.1",
+ "git-hash",
  "hashbrown 0.13.2",
 ]
 
@@ -1515,7 +1504,7 @@ dependencies = [
 name = "git-hashtable"
 version = "0.1.1"
 dependencies = [
- "git-hash 0.10.2",
+ "gix-hash",
  "hashbrown 0.13.2",
 ]
 
@@ -1531,7 +1520,7 @@ dependencies = [
  "filetime",
  "git-bitmap 0.2.0",
  "git-features",
- "git-hash 0.10.1",
+ "git-hash",
  "git-lock 3.0.1",
  "git-object 0.26.0",
  "git-traverse 0.22.0",
@@ -1551,11 +1540,11 @@ dependencies = [
  "document-features",
  "filetime",
  "git-bitmap 0.2.1",
- "git-hash 0.10.2",
  "git-lock 3.0.2",
  "git-object 0.26.1",
  "git-traverse 0.22.1",
  "gix-features",
+ "gix-hash",
  "itoa",
  "memmap2",
  "serde",
@@ -1569,11 +1558,11 @@ version = "0.0.0"
 dependencies = [
  "bstr",
  "filetime",
- "git-hash 0.10.2",
  "git-index 0.12.3",
  "git-testtools",
  "gix",
  "gix-features",
+ "gix-hash",
 ]
 
 [[package]]
@@ -1627,7 +1616,7 @@ dependencies = [
  "btoi",
  "git-actor 0.17.0",
  "git-features",
- "git-hash 0.10.1",
+ "git-hash",
  "git-validate 0.7.1",
  "hex",
  "itoa",
@@ -1644,10 +1633,10 @@ dependencies = [
  "btoi",
  "document-features",
  "git-actor 0.17.1",
- "git-hash 0.10.2",
  "git-testtools",
  "git-validate 0.7.2",
  "gix-features",
+ "gix-hash",
  "hex",
  "itoa",
  "nom",
@@ -1666,12 +1655,12 @@ dependencies = [
  "document-features",
  "filetime",
  "git-actor 0.17.1",
- "git-hash 0.10.2",
  "git-object 0.26.1",
  "git-pack",
  "git-quote 0.4.1",
  "git-testtools",
  "gix-features",
+ "gix-hash",
  "gix-path",
  "maplit",
  "num_cpus",
@@ -1692,13 +1681,13 @@ dependencies = [
  "document-features",
  "git-chunk",
  "git-diff",
- "git-hash 0.10.2",
  "git-hashtable 0.1.1",
  "git-object 0.26.1",
  "git-tempfile 3.0.2",
  "git-testtools",
  "git-traverse 0.22.1",
  "gix-features",
+ "gix-hash",
  "gix-path",
  "memmap2",
  "parking_lot 0.12.1",
@@ -1713,13 +1702,13 @@ name = "git-pack-tests"
 version = "0.30.1"
 dependencies = [
  "bstr",
- "git-hash 0.10.2",
  "git-object 0.26.1",
  "git-odb",
  "git-pack",
  "git-testtools",
  "git-traverse 0.22.1",
  "gix-features",
+ "gix-hash",
  "maplit",
  "memmap2",
  "tempfile",
@@ -1734,8 +1723,8 @@ dependencies = [
  "document-features",
  "futures-io",
  "futures-lite",
- "git-hash 0.10.2",
  "git-odb",
+ "gix-hash",
  "hex",
  "maybe-async",
  "pin-project-lite",
@@ -1792,11 +1781,11 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "git-credentials",
- "git-hash 0.10.2",
  "git-packetline",
  "git-testtools",
  "git-transport",
  "gix-features",
+ "gix-hash",
  "maybe-async",
  "nom",
  "serde",
@@ -1835,7 +1824,7 @@ checksum = "2a2c29bab109acaf626d49a54f1f85ab7f0911268fbf62c2b39680ef4ef19069"
 dependencies = [
  "git-actor 0.17.0",
  "git-features",
- "git-hash 0.10.1",
+ "git-hash",
  "git-lock 3.0.1",
  "git-object 0.26.0",
  "git-path",
@@ -1852,13 +1841,13 @@ version = "0.24.0"
 dependencies = [
  "document-features",
  "git-actor 0.17.1",
- "git-hash 0.10.2",
  "git-lock 3.0.2",
  "git-object 0.26.1",
  "git-tempfile 3.0.2",
  "git-testtools",
  "git-validate 0.7.2",
  "gix-features",
+ "gix-hash",
  "gix-path",
  "memmap2",
  "nom",
@@ -1873,7 +1862,6 @@ version = "0.0.0"
 dependencies = [
  "git-actor 0.17.1",
  "git-discover 0.13.0",
- "git-hash 0.10.2",
  "git-lock 3.0.2",
  "git-object 0.26.1",
  "git-odb",
@@ -1882,6 +1870,7 @@ dependencies = [
  "git-validate 0.7.2",
  "git-worktree 0.12.2",
  "gix-features",
+ "gix-hash",
  "tempfile",
 ]
 
@@ -1890,10 +1879,10 @@ name = "git-refspec"
 version = "0.7.2"
 dependencies = [
  "bstr",
- "git-hash 0.10.2",
  "git-revision",
  "git-testtools",
  "git-validate 0.7.2",
+ "gix-hash",
  "smallvec",
  "thiserror",
 ]
@@ -1905,9 +1894,9 @@ dependencies = [
  "bstr",
  "document-features",
  "git-date 0.4.2",
- "git-hash 0.10.2",
  "git-hashtable 0.1.1",
  "git-object 0.26.1",
+ "gix-hash",
  "serde",
  "thiserror",
 ]
@@ -1917,11 +1906,11 @@ name = "git-revision-tests"
 version = "0.0.0"
 dependencies = [
  "bstr",
- "git-hash 0.10.2",
  "git-object 0.26.1",
  "git-revision",
  "git-testtools",
  "gix",
+ "gix-hash",
 ]
 
 [[package]]
@@ -2012,12 +2001,12 @@ dependencies = [
  "futures-lite",
  "git-command",
  "git-credentials",
- "git-hash 0.10.2",
  "git-pack",
  "git-packetline",
  "git-quote 0.4.1",
  "git-url",
  "gix-features",
+ "gix-hash",
  "gix-sec",
  "maybe-async",
  "pin-project-lite",
@@ -2032,7 +2021,7 @@ version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd356da21ec00f69b9d4f105df4cb85543c746b18f4b7fc81529ce77713cdb29"
 dependencies = [
- "git-hash 0.10.1",
+ "git-hash",
  "git-hashtable 0.1.0",
  "git-object 0.26.0",
  "thiserror",
@@ -2042,9 +2031,9 @@ dependencies = [
 name = "git-traverse"
 version = "0.22.1"
 dependencies = [
- "git-hash 0.10.2",
  "git-hashtable 0.1.1",
  "git-object 0.26.1",
+ "gix-hash",
  "thiserror",
 ]
 
@@ -2052,11 +2041,11 @@ dependencies = [
 name = "git-traverse-tests"
 version = "0.0.0"
 dependencies = [
- "git-hash 0.10.2",
  "git-object 0.26.1",
  "git-odb",
  "git-testtools",
  "git-traverse 0.22.1",
+ "gix-hash",
 ]
 
 [[package]]
@@ -2106,7 +2095,7 @@ dependencies = [
  "git-attributes 0.8.1",
  "git-features",
  "git-glob",
- "git-hash 0.10.1",
+ "git-hash",
  "git-index 0.12.2",
  "git-object 0.26.0",
  "git-path",
@@ -2121,13 +2110,13 @@ dependencies = [
  "bstr",
  "document-features",
  "git-attributes 0.8.2",
- "git-hash 0.10.2",
  "git-index 0.12.3",
  "git-object 0.26.1",
  "git-odb",
  "git-testtools",
  "gix-features",
  "gix-glob",
+ "gix-hash",
  "gix-path",
  "io-close",
  "serde",
@@ -2215,7 +2204,6 @@ dependencies = [
  "git-date 0.4.2",
  "git-diff",
  "git-discover 0.13.0",
- "git-hash 0.10.2",
  "git-hashtable 0.1.1",
  "git-index 0.12.3",
  "git-lock 3.0.2",
@@ -2237,6 +2225,7 @@ dependencies = [
  "git-worktree 0.12.2",
  "gix-features",
  "gix-glob",
+ "gix-hash",
  "gix-path",
  "gix-sec",
  "is_ci",
@@ -2278,7 +2267,7 @@ dependencies = [
  "crossbeam-utils",
  "document-features",
  "flate2",
- "git-hash 0.10.2",
+ "gix-hash",
  "jwalk",
  "libc",
  "num_cpus",
@@ -2300,6 +2289,17 @@ dependencies = [
  "document-features",
  "git-testtools",
  "serde",
+]
+
+[[package]]
+name = "gix-hash"
+version = "0.10.2"
+dependencies = [
+ "document-features",
+ "git-testtools",
+ "hex",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]

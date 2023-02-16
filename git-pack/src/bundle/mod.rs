@@ -17,7 +17,7 @@ pub mod verify {
         /// Returned by [`Bundle::verify_integrity()`][crate::Bundle::verify_integrity()].
         pub struct Outcome<P> {
             /// The computed checksum of the index which matched the stored one.
-            pub actual_index_checksum: git_hash::ObjectId,
+            pub actual_index_checksum: gix_hash::ObjectId,
             /// The packs traversal outcome
             pub pack_traverse_outcome: crate::index::traverse::Statistics,
             /// The provided progress instance.

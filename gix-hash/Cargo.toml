@@ -1,5 +1,5 @@
 [package]
-name = "git-hash"
+name = "gix-hash"
 version = "0.10.2"
 description = "Borrowed and owned git hash digests used to identify git objects"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

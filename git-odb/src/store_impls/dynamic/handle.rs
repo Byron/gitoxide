@@ -6,8 +6,8 @@ use std::{
     sync::{atomic::Ordering, Arc},
 };
 
-use git_hash::oid;
 use gix_features::threading::OwnShared;
+use gix_hash::oid;
 
 use crate::store::{handle, types, RefreshMode};
 
@@ -66,7 +66,7 @@ pub struct IndexForObjectInPack {
 pub(crate) mod index_lookup {
     use std::{collections::HashSet, sync::Arc};
 
-    use git_hash::oid;
+    use gix_hash::oid;
 
     use crate::store::{handle, handle::IntraPackLookup, types};
 
@@ -121,7 +121,7 @@ pub(crate) mod index_lookup {
         }
 
         /// Return true if the given object id exists in this index
-        pub(crate) fn oid_at_index(&self, entry_index: u32) -> &git_hash::oid {
+        pub(crate) fn oid_at_index(&self, entry_index: u32) -> &gix_hash::oid {
             match &self.file {
                 handle::SingleOrMultiIndex::Single { index, .. } => index.oid_at_index(entry_index),
                 handle::SingleOrMultiIndex::Multi { index, .. } => index.oid_at_index(entry_index),
@@ -139,8 +139,8 @@ pub(crate) mod index_lookup {
         /// Call `lookup_prefix(…)` on either index or multi-index, and transform matches into an object id.
         pub(crate) fn lookup_prefix(
             &self,
-            prefix: git_hash::Prefix,
-            candidates: Option<&mut HashSet<git_hash::ObjectId>>,
+            prefix: gix_hash::Prefix,
+            candidates: Option<&mut HashSet<gix_hash::ObjectId>>,
         ) -> Option<crate::store::prefix::lookup::Outcome> {
             let mut candidate_entries = candidates.as_ref().map(|_| 0..0);
             let res = match &self.file {

@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-use git_hash::oid;
 use gix_features::{interrupt, parallel::in_parallel, progress, progress::Progress};
+use gix_hash::oid;
 
 use crate::fs;
 
@@ -124,8 +124,8 @@ mod chunk {
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     use bstr::BStr;
-    use git_hash::oid;
     use gix_features::progress::Progress;
+    use gix_hash::oid;
 
     use crate::{
         fs, index,

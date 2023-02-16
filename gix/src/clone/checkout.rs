@@ -18,7 +18,7 @@ pub mod main_worktree {
         NoHeadTree(#[from] crate::object::peel::to_kind::Error),
         #[error("Could not create index from tree at {id}")]
         IndexFromTree {
-            id: git_hash::ObjectId,
+            id: gix_hash::ObjectId,
             source: git_traverse::tree::breadthfirst::Error,
         },
         #[error(transparent)]

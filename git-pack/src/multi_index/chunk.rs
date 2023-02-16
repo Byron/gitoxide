@@ -151,7 +151,7 @@ pub mod lookup {
     pub const ID: git_chunk::Id = *b"OIDL";
 
     /// Return the amount of bytes needed to store the data on disk for the given amount of `entries`
-    pub fn storage_size(entries: usize, object_hash: git_hash::Kind) -> u64 {
+    pub fn storage_size(entries: usize, object_hash: gix_hash::Kind) -> u64 {
         (entries * object_hash.len_in_bytes()) as u64
     }
 
@@ -166,7 +166,7 @@ pub mod lookup {
     }
 
     /// Return true if the size of the `offset` range seems to match for a `hash` of the given kind and the amount of objects.
-    pub fn is_valid(offset: &Range<usize>, hash: git_hash::Kind, num_objects: u32) -> bool {
+    pub fn is_valid(offset: &Range<usize>, hash: gix_hash::Kind, num_objects: u32) -> bool {
         (offset.end - offset.start) / hash.len_in_bytes() == num_objects as usize
     }
 }

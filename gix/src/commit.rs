@@ -1,7 +1,7 @@
 //!
 
 /// An empty array of a type usable with the `gix::easy` API to help declaring no parents should be used
-pub const NO_PARENT_IDS: [git_hash::ObjectId; 0] = [];
+pub const NO_PARENT_IDS: [gix_hash::ObjectId; 0] = [];
 
 /// The error returned by [`commit(…)`][crate::Repository::commit()].
 #[derive(Debug, thiserror::Error)]
@@ -25,9 +25,9 @@ pub enum Error {
 pub mod describe {
     use std::borrow::Cow;
 
-    use git_hash::ObjectId;
     use git_hashtable::HashMap;
     use git_odb::Find;
+    use gix_hash::ObjectId;
 
     use crate::{bstr::BStr, ext::ObjectIdExt, Repository};
 
@@ -154,7 +154,7 @@ pub mod describe {
 
     /// A support type to allow configuring a `git describe` operation
     pub struct Platform<'repo> {
-        pub(crate) id: git_hash::ObjectId,
+        pub(crate) id: gix_hash::ObjectId,
         pub(crate) repo: &'repo crate::Repository,
         pub(crate) select: SelectRef,
         pub(crate) first_parent: bool,

@@ -1,5 +1,5 @@
-use git_hash::ObjectId;
 use git_object::bstr::BString;
+use gix_hash::ObjectId;
 
 /// A parsed ref log line that can be changed
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
