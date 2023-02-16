@@ -8,9 +8,9 @@ use std::{
 };
 
 use git_odb::FindExt;
-use git_worktree::{fs::Capabilities, index, index::checkout::Collision};
 use gix_features::progress;
 use gix_object::bstr::ByteSlice;
+use gix_worktree::{fs::Capabilities, index, index::checkout::Collision};
 use tempfile::TempDir;
 
 use crate::fixture_path;
@@ -373,7 +373,7 @@ fn checkout_index_in_tmp_dir(
     PathBuf,
     TempDir,
     git_index::File,
-    git_worktree::index::checkout::Outcome,
+    gix_worktree::index::checkout::Outcome,
 )> {
     checkout_index_in_tmp_dir_opts(opts, name, |_d| true, |_| Ok(()))
 }
@@ -387,7 +387,7 @@ fn checkout_index_in_tmp_dir_opts(
     PathBuf,
     TempDir,
     git_index::File,
-    git_worktree::index::checkout::Outcome,
+    gix_worktree::index::checkout::Outcome,
 )> {
     let source_tree = fixture_path(name);
     let git_dir = source_tree.join(".git");
@@ -419,7 +419,7 @@ fn stripped_prefix(prefix: impl AsRef<Path>, source_files: &[PathBuf]) -> Vec<&P
 }
 
 fn probe_gitoxide_dir() -> crate::Result<Capabilities> {
-    Ok(git_worktree::fs::Capabilities::probe(
+    Ok(gix_worktree::fs::Capabilities::probe(
         std::env::current_dir()?.join("..").join(".git"),
     ))
 }

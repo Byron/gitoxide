@@ -436,7 +436,7 @@ Make it the best-performing implementation and the most convenient one.
 * [x] parse pattern
 * [x] a type for pattern matching of paths and non-paths, optionally case-insensitively.
 
-### git-worktree
+### gix-worktree
 * handle the working **tree/checkout**
   - [x] checkout an index of files, executables and symlinks just as fast as git
      - [x] forbid symlinks in directories

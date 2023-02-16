@@ -79,7 +79,7 @@ check: ## Build all code in suitable configurations
 	cd gix-attributes && cargo check --features serde1
 	cd gix-glob && cargo check --features serde1
 	cd git-mailmap && cargo check --features serde1
-	cd git-worktree && cargo check --features serde1
+	cd gix-worktree && cargo check --features serde1
 	cd gix-actor && cargo check --features serde1
 	cd gix-date && cargo check --features serde1
 	cd git-pack && cargo check --features serde1 \
@@ -145,7 +145,7 @@ unit-tests: ## run all unit tests
 				&& cargo test --features "internal-testing-gix-features-parallel"
 	cd git-index/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-gix-features-parallel"
-	cd git-worktree && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
+	cd gix-worktree && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-gix-features-parallel"
 	cd git-packetline && cargo test \
 					  && cargo test --features blocking-io,maybe-async/is_sync --test blocking-packetline \

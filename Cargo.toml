@@ -148,7 +148,7 @@ members = [
     "git-traverse",
     "git-index",
     "git-bitmap",
-    "git-worktree",
+    "gix-worktree",
     "git-revision",
     "git-packetline",
     "git-mailmap",

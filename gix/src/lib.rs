@@ -39,7 +39,7 @@
 //!
 //! #### WorkingTree and WorkTree
 //!
-//! When reading the documentation of the canonical git-worktree program one gets the impression work tree and working tree are used
+//! When reading the documentation of the canonical gix-worktree program one gets the impression work tree and working tree are used
 //! interchangeably. We use the term _work tree_ only and try to do so consistently as its shorter and assumed to be the same.
 //!
 //! # Cargo-features

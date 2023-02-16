@@ -137,7 +137,7 @@ impl Cache {
     pub(crate) fn checkout_options(
         &self,
         git_dir: &std::path::Path,
-    ) -> Result<git_worktree::index::checkout::Options, checkout_options::Error> {
+    ) -> Result<gix_worktree::index::checkout::Options, checkout_options::Error> {
         fn boolean(
             me: &Cache,
             full_key: &str,
@@ -174,8 +174,8 @@ impl Cache {
                 .integer_filter_by_key("checkout.workers", &mut self.filter_config_section.clone())
                 .map(|value| Checkout::WORKERS.try_from_workers(value)),
         )?;
-        Ok(git_worktree::index::checkout::Options {
-            fs: git_worktree::fs::Capabilities {
+        Ok(gix_worktree::index::checkout::Options {
+            fs: gix_worktree::fs::Capabilities {
                 precompose_unicode: boolean(self, "core.precomposeUnicode", &Core::PRECOMPOSE_UNICODE, false)?,
                 ignore_case: boolean(self, "core.ignoreCase", &Core::IGNORE_CASE, false)?,
                 executable_bit: boolean(self, "core.fileMode", &Core::FILE_MODE, true)?,

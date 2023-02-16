@@ -3,8 +3,8 @@ use std::path::Path;
 use bstr::{BStr, ByteSlice};
 use git_index::entry::Mode;
 use git_odb::{pack::bundle::write::Options, FindExt};
-use git_worktree::fs;
 use gix_glob::pattern::Case;
+use gix_worktree::fs;
 use tempfile::{tempdir, TempDir};
 
 use crate::hex_to_id;
@@ -41,9 +41,9 @@ fn special_exclude_cases_we_handle_differently() {
 
     let mut buf = Vec::new();
     let case = gix_glob::pattern::Case::Sensitive;
-    let state = git_worktree::fs::cache::State::for_add(
+    let state = gix_worktree::fs::cache::State::for_add(
         Default::default(),
-        git_worktree::fs::cache::state::Ignore::new(
+        gix_worktree::fs::cache::state::Ignore::new(
             Default::default(),
             gix_attributes::MatchGroup::from_git_dir(&git_dir, None, &mut buf).unwrap(),
             None,
@@ -96,9 +96,9 @@ fn check_against_baseline() -> crate::Result {
     let mut index = git_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default())?;
     let odb = git_odb::at(git_dir.join("objects"))?;
     let case = gix_glob::pattern::Case::Sensitive;
-    let state = git_worktree::fs::cache::State::for_add(
+    let state = gix_worktree::fs::cache::State::for_add(
         Default::default(), // TODO: attribute tests
-        git_worktree::fs::cache::state::Ignore::new(
+        gix_worktree::fs::cache::state::Ignore::new(
             gix_attributes::MatchGroup::from_overrides(vec!["!force-include"]),
             gix_attributes::MatchGroup::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf)?,
             None,

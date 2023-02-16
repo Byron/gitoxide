@@ -30,7 +30,7 @@ gix-ref = { path = ".." }
 gix-features = { version = "^0.26.1", path = "../../gix-features", features = ["walkdir"]}
 git-testtools = { path = "../../tests/tools" }
 git-discover = { path = "../../git-discover" }
-git-worktree = { path = "../../git-worktree" }
+gix-worktree = { path = "../../gix-worktree" }
 git-odb = { path = "../../git-odb" }
 gix-actor = { path = "../../gix-actor" }
 gix-hash = { path = "../../gix-hash" }

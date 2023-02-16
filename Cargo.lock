@@ -1219,18 +1219,18 @@ dependencies = [
 
 [[package]]
 name = "git-bitmap"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44304093ac66a0ada1b243c15c3a503a165a1d0f50bec748f4e5a9b84a0d0722"
+version = "0.2.1"
 dependencies = [
+ "git-testtools",
  "quick-error 2.0.1",
 ]
 
 [[package]]
 name = "git-bitmap"
 version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13e85f0cae0128742a9e287714b0e78ff1670b406ab4ff9b55c812b5db01344f"
 dependencies = [
- "git-testtools",
  "quick-error 2.0.1",
 ]
 
@@ -1403,16 +1403,6 @@ dependencies = [
 
 [[package]]
 name = "git-hashtable"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c52b625ad8cc360a0b7f426266f21fb07bd49b8f4ccf1b3ca7bc89424db1dec4"
-dependencies = [
- "git-hash",
- "hashbrown 0.13.2",
-]
-
-[[package]]
-name = "git-hashtable"
 version = "0.1.1"
 dependencies = [
  "gix-hash",
@@ -1420,25 +1410,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-index"
-version = "0.12.2"
+name = "git-hashtable"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b82fd3d70ed6fbceb7573f145fbf79371e4d0c8dbdf7ad46f3a03328239ddda7"
+checksum = "04d8fc616344cd80b66067aeacc0af6acc2d4fbe63218077b8a2fa0990abdf52"
 dependencies = [
- "atoi",
- "bitflags",
- "bstr",
- "filetime",
- "git-bitmap 0.2.0",
- "git-features",
  "git-hash",
- "git-lock",
- "git-object",
- "git-traverse 0.22.0",
- "itoa",
- "memmap2",
- "smallvec",
- "thiserror",
+ "hashbrown 0.13.2",
 ]
 
 [[package]]
@@ -1459,6 +1437,28 @@ dependencies = [
  "itoa",
  "memmap2",
  "serde",
+ "smallvec",
+ "thiserror",
+]
+
+[[package]]
+name = "git-index"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0be73045cb2e9f319daa8c4ffd526245db0d2c18111fc7a37629d0618c6bbc14"
+dependencies = [
+ "atoi",
+ "bitflags",
+ "bstr",
+ "filetime",
+ "git-bitmap 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-features",
+ "git-hash",
+ "git-lock",
+ "git-object",
+ "git-traverse 0.22.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "itoa",
+ "memmap2",
  "smallvec",
  "thiserror",
 ]
@@ -1509,9 +1509,9 @@ version = "0.0.0"
 
 [[package]]
 name = "git-object"
-version = "0.26.0"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f8563e2d6f524d7053f3106714f99ecdc3adbba2cb7108c09d71a02579f2e19"
+checksum = "12f41ce4e3d3e972c246ebf26c5fbdf1db20a245fb06db867a9e0f5d99124f56"
 dependencies = [
  "bstr",
  "btoi",
@@ -1778,7 +1778,7 @@ dependencies = [
  "git-attributes",
  "git-discover 0.12.1",
  "git-lock",
- "git-worktree 0.12.1",
+ "git-worktree",
  "io-close",
  "is_ci",
  "nom",
@@ -1824,23 +1824,23 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd356da21ec00f69b9d4f105df4cb85543c746b18f4b7fc81529ce77713cdb29"
+version = "0.22.1"
 dependencies = [
- "git-hash",
- "git-hashtable 0.1.0",
- "git-object",
+ "git-hashtable 0.1.1",
+ "gix-hash",
+ "gix-object",
  "thiserror",
 ]
 
 [[package]]
 name = "git-traverse"
 version = "0.22.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68bb2a1f145c1e2ddd80d7fc3012b5bf89739e7bf0dd3f2f142ff58f3232cd05"
 dependencies = [
- "git-hashtable 0.1.1",
- "gix-hash",
- "gix-object",
+ "git-hash",
+ "git-hashtable 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-object",
  "thiserror",
 ]
 
@@ -1856,10 +1856,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gix-tui"
-version = "0.0.0"
-
-[[package]]
 name = "git-validate"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1871,43 +1867,20 @@ dependencies = [
 
 [[package]]
 name = "git-worktree"
-version = "0.12.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c28b292694c98bba8225c39d4e86605843882ba7117ca98491841761e710547"
+checksum = "d0091fc5d5abef5c17370c2480972ab154d20c73c5d4d53b7557b1274ea8ef43"
 dependencies = [
  "bstr",
  "git-attributes",
  "git-features",
  "git-glob",
  "git-hash",
- "git-index 0.12.2",
+ "git-index 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-object",
  "git-path",
  "io-close",
  "thiserror",
-]
-
-[[package]]
-name = "git-worktree"
-version = "0.12.2"
-dependencies = [
- "bstr",
- "document-features",
- "git-index 0.12.3",
- "git-odb",
- "git-testtools",
- "gix-attributes",
- "gix-features",
- "gix-glob",
- "gix-hash",
- "gix-object",
- "gix-path",
- "io-close",
- "serde",
- "symlink",
- "tempfile",
- "thiserror",
- "walkdir",
 ]
 
 [[package]]
@@ -1996,7 +1969,6 @@ dependencies = [
  "git-testtools",
  "git-transport",
  "git-traverse 0.22.1",
- "git-worktree 0.12.2",
  "gix-actor",
  "gix-attributes",
  "gix-config",
@@ -2012,6 +1984,7 @@ dependencies = [
  "gix-tempfile",
  "gix-url",
  "gix-validate",
+ "gix-worktree",
  "is_ci",
  "log",
  "once_cell",
@@ -2265,7 +2238,6 @@ dependencies = [
  "git-discover 0.13.0",
  "git-odb",
  "git-testtools",
- "git-worktree 0.12.2",
  "gix-actor",
  "gix-features",
  "gix-hash",
@@ -2273,6 +2245,7 @@ dependencies = [
  "gix-object",
  "gix-ref",
  "gix-validate",
+ "gix-worktree",
  "tempfile",
 ]
 
@@ -2303,6 +2276,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-tui"
+version = "0.0.0"
+
+[[package]]
 name = "gix-url"
 version = "0.13.2"
 dependencies = [
@@ -2323,6 +2300,29 @@ dependencies = [
  "bstr",
  "git-testtools",
  "thiserror",
+]
+
+[[package]]
+name = "gix-worktree"
+version = "0.12.2"
+dependencies = [
+ "bstr",
+ "document-features",
+ "git-index 0.12.3",
+ "git-odb",
+ "git-testtools",
+ "gix-attributes",
+ "gix-features",
+ "gix-glob",
+ "gix-hash",
+ "gix-object",
+ "gix-path",
+ "io-close",
+ "serde",
+ "symlink",
+ "tempfile",
+ "thiserror",
+ "walkdir",
 ]
 
 [[package]]

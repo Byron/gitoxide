@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-pub use git_worktree::*;
+pub use gix_worktree::*;
 
 use crate::{
     bstr::{BStr, BString},
@@ -125,7 +125,7 @@ pub mod excludes {
             &self,
             index: &git_index::State,
             overrides: Option<gix_attributes::MatchGroup<gix_attributes::Ignore>>,
-        ) -> Result<git_worktree::fs::Cache, Error> {
+        ) -> Result<gix_worktree::fs::Cache, Error> {
             let repo = self.parent;
             let case = repo
                 .config
@@ -137,7 +137,7 @@ pub mod excludes {
                 Some(user_path) => Some(user_path),
                 None => repo.config.xdg_config_path("ignore")?,
             };
-            let state = git_worktree::fs::cache::State::IgnoreStack(git_worktree::fs::cache::state::Ignore::new(
+            let state = gix_worktree::fs::cache::State::IgnoreStack(gix_worktree::fs::cache::state::Ignore::new(
                 overrides.unwrap_or_default(),
                 gix_attributes::MatchGroup::<gix_attributes::Ignore>::from_git_dir(
                     repo.git_dir(),
@@ -148,7 +148,7 @@ pub mod excludes {
                 case,
             ));
             let attribute_list = state.build_attribute_list(index, index.path_backing(), case);
-            Ok(git_worktree::fs::Cache::new(
+            Ok(gix_worktree::fs::Cache::new(
                 self.path,
                 state,
                 case,

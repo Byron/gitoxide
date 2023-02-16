@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use git_worktree::fs;
+use gix_worktree::fs;
 use tempfile::{tempdir, TempDir};
 
 fn panic_on_find<'buf>(_oid: &gix_hash::oid, _buf: &'buf mut Vec<u8>) -> std::io::Result<gix_object::BlobRef<'buf>> {

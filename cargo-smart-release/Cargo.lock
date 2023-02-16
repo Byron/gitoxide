@@ -819,7 +819,7 @@ dependencies = [
  "git-traverse",
  "gix-url",
  "gix-validate",
- "git-worktree",
+ "gix-worktree",
  "log",
  "signal-hook",
  "thiserror",
@@ -873,7 +873,7 @@ dependencies = [
  "git-discover",
  "gix-hash",
  "gix-lock",
- "git-worktree",
+ "gix-worktree",
  "io-close",
  "is_ci",
  "nom",
@@ -915,7 +915,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-worktree"
+name = "gix-worktree"
 version = "0.3.0"
 dependencies = [
  "bstr",

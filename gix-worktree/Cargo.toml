@@ -1,5 +1,5 @@
 [package]
-name = "git-worktree"
+name = "gix-worktree"
 version = "0.12.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
