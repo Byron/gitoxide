@@ -1338,7 +1338,7 @@ name = "git-fetchhead"
 version = "0.0.0"
 
 [[package]]
-name = "git-filter"
+name = "gix-filter"
 version = "0.0.0"
 
 [[package]]

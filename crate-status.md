@@ -403,7 +403,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
   - [x] program name with optional arguments, transformed into `git credential-<name>`
 * [x] `helper::main()` for easy custom credential helper programs written in Rust
 
-### git-filter
+### gix-filter
 
 Provide base-implementations for dealing with smudge and clean filters as well as filter processes, facilitating their development.
 

@@ -91,7 +91,7 @@ is usable to some extent.
 * **idea** _(just a name placeholder)_
   * [gix-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-note)
   * [git-fetchhead](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-fetchhead)
-  * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)
+  * [gix-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-filter)
   * [gix-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-lfs)
   * [gix-rebase](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-rebase)
   * [gix-sequencer](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-sequencer)

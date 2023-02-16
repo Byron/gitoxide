@@ -24,6 +24,6 @@ An empty crate without any content to reserve the name for the gitoxide project.
 <details><summary>view details</summary>
 
  * **[#301](https://github.com/Byron/gitoxide/issues/301)**
-    - add git-filter crate for name generation ([`5a3c628`](https://github.com/Byron/gitoxide/commit/5a3c628c757a7eb4ecfc5fd7265fa36c8362797b))
+    - add gix-filter crate for name generation ([`5a3c628`](https://github.com/Byron/gitoxide/commit/5a3c628c757a7eb4ecfc5fd7265fa36c8362797b))
 </details>
 

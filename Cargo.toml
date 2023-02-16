@@ -155,7 +155,7 @@ members = [
     "gix-note",
     "git-fetchhead",
     "gix-prompt",
-    "git-filter",
+    "gix-filter",
     "gix-sec",
     "gix-lfs",
     "gix-rebase",
