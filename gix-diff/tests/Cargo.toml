@@ -1,5 +1,5 @@
 [package]
-name = "git-diff-tests"
+name = "gix-diff-tests"
 version = "0.0.0"
 publish = false
 repository = "https://github.com/Byron/gitoxide"
@@ -11,7 +11,7 @@ include = ["src/**/*"]
 rust-version = "1.64"
 
 [features]
-serde1 = ["git-diff/serde", "gix-hash/serde1", "gix-object/serde1"]
+serde1 = ["gix-diff/serde", "gix-hash/serde1", "gix-object/serde1"]
 
 [[test]]
 name = "diff"
@@ -19,7 +19,7 @@ doctest = false
 path = "diff.rs"
 
 [dev-dependencies]
-git-diff = { path = ".." }
+gix-diff = { path = ".." }
 gix-hash = { path = "../../gix-hash" }
 gix-object = { path = "../../gix-object" }
 git-odb = { path = "../../git-odb" }

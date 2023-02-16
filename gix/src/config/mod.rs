@@ -431,7 +431,7 @@ pub(crate) struct Cache {
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     pub(crate) url_scheme: OnceCell<crate::remote::url::SchemePermission>,
     /// The algorithm to use when diffing blobs
-    pub(crate) diff_algorithm: OnceCell<git_diff::blob::Algorithm>,
+    pub(crate) diff_algorithm: OnceCell<gix_diff::blob::Algorithm>,
     /// The amount of bytes to use for a memory backed delta pack cache. If `Some(0)`, no cache is used, if `None`
     /// a standard cache is used which costs near to nothing and always pays for itself.
     pub(crate) pack_cache_bytes: Option<usize>,

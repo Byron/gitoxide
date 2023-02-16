@@ -405,7 +405,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
 ### Changed (BREAKING)
 
  - <csr-id-c50868c7ed7309515b4f0a188213d332d57dd146/> Move `object::tree::diff::change::DiffPlatform` to `object::blob::diff::Platform`.
- - <csr-id-4ee32713093c2e41a12d148c6030add1df6aa966/> new `DiffPlatform::counts()`, open `DiffPlatform` for use of `git-diff::blob::*`.
+ - <csr-id-4ee32713093c2e41a12d148c6030add1df6aa966/> new `DiffPlatform::counts()`, open `DiffPlatform` for use of `gix-diff::blob::*`.
 
 ## 0.26.0 (2022-11-06)
 
@@ -605,7 +605,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
 
 ### New Features (BREAKING)
 
- - <csr-id-e090f843f5cffc8e8e47a8cac2e6fb98e4c47771/> `git-diff` is now included by default as part of core functionality
+ - <csr-id-e090f843f5cffc8e8e47a8cac2e6fb98e4c47771/> `gix-diff` is now included by default as part of core functionality
 
 ## 0.22.1 (2022-08-24)
 

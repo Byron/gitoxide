@@ -18,7 +18,7 @@ use crate::{
 
 /// Access
 impl Cache {
-    pub(crate) fn diff_algorithm(&self) -> Result<git_diff::blob::Algorithm, config::diff::algorithm::Error> {
+    pub(crate) fn diff_algorithm(&self) -> Result<gix_diff::blob::Algorithm, config::diff::algorithm::Error> {
         use crate::config::diff::algorithm::Error;
         self.diff_algorithm
             .get_or_try_init(|| {
@@ -29,7 +29,7 @@ impl Cache {
                 config::tree::Diff::ALGORITHM
                     .try_into_algorithm(name)
                     .or_else(|err| match err {
-                        Error::Unimplemented { .. } if self.lenient_config => Ok(git_diff::blob::Algorithm::Histogram),
+                        Error::Unimplemented { .. } if self.lenient_config => Ok(gix_diff::blob::Algorithm::Histogram),
                         err => Err(err),
                     })
                     .with_lenient_default(self.lenient_config)

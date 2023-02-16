@@ -1,5 +1,5 @@
 pub mod changes {
-    use git_diff::tree::{
+    use gix_diff::tree::{
         visit::{Action, Change},
         Visit,
     };

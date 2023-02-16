@@ -173,7 +173,7 @@ mod expand {
 
         let mut out = Vec::new();
         let mut tree_traversal_state = gix_traverse::tree::breadthfirst::State::default();
-        let mut tree_diff_state = git_diff::tree::State::default();
+        let mut tree_diff_state = gix_diff::tree::State::default();
         let mut parent_commit_ids = Vec::new();
         let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
         let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
@@ -280,7 +280,7 @@ mod expand {
                                         };
 
                                         changes_delegate.clear();
-                                        git_diff::tree::Changes::from(Some(parent_tree))
+                                        gix_diff::tree::Changes::from(Some(parent_tree))
                                             .needed_to_obtain(
                                                 current_tree_iter.clone(),
                                                 &mut tree_diff_state,

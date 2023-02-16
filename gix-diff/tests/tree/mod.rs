@@ -1,7 +1,7 @@
 mod changes {
     mod to_obtain_tree {
-        use git_diff::tree::{recorder, recorder::Change::*};
         use git_odb::pack::Find;
+        use gix_diff::tree::{recorder, recorder::Change::*};
         use gix_hash::{oid, ObjectId};
         use gix_object::{bstr::ByteSlice, tree::EntryMode, TreeRefIter};
 
@@ -47,10 +47,10 @@ mod changes {
                 .and_then(|lhs| locate_tree_by_commit(db, &lhs, &mut buf).ok());
             let mut buf2 = Vec::new();
             let rhs_tree = locate_tree_by_commit(db, rhs, &mut buf2)?;
-            let mut recorder = git_diff::tree::Recorder::default();
-            git_diff::tree::Changes::from(lhs_tree).needed_to_obtain(
+            let mut recorder = gix_diff::tree::Recorder::default();
+            gix_diff::tree::Changes::from(lhs_tree).needed_to_obtain(
                 rhs_tree,
-                git_diff::tree::State::default(),
+                gix_diff::tree::State::default(),
                 |oid, buf| {
                     use git_odb::pack::FindExt;
                     db.find(oid, buf)
@@ -94,10 +94,10 @@ mod changes {
                     .and_then(|(tree, _)| tree.try_into_tree_iter())
             };
 
-            let mut recorder = git_diff::tree::Recorder::default();
-            git_diff::tree::Changes::from(previous_tree).needed_to_obtain(
+            let mut recorder = gix_diff::tree::Recorder::default();
+            gix_diff::tree::Changes::from(previous_tree).needed_to_obtain(
                 current_tree,
-                &mut git_diff::tree::State::default(),
+                &mut gix_diff::tree::State::default(),
                 |oid, buf| {
                     use git_odb::pack::FindExt;
                     db.find(oid, buf)

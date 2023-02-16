@@ -99,7 +99,7 @@ where
     #[error(transparent)]
     TreeTraverse(gix_traverse::tree::breadthfirst::Error),
     #[error(transparent)]
-    TreeChanges(git_diff::tree::changes::Error),
+    TreeChanges(gix_diff::tree::changes::Error),
     #[error("Operation interrupted")]
     Interrupted,
 }

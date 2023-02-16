@@ -73,7 +73,7 @@ The following schematic helps to visualize what follows.
     │                                             │   
     │    Plumbing Crates─────────────────────┐    │  │
     │    │ ┌─────────────┐   ┌─────────────┐ │    │   
-    │    │ │   git-odb   │   │  git-diff   │ │    │  │
+    │    │ │   git-odb   │   │  gix-diff   │ │    │  │
     │    │ └─────────────┘   └─────────────┘ │    │   
     │    │ ┌─────────────┐   ┌─────────────┐ │    │  │
     │    │ │gix-traverse │   │  git-pack   │ │◀ ─ ┼ ─ 

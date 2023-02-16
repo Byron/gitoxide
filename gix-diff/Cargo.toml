@@ -1,5 +1,5 @@
 [package]
-name = "git-diff"
+name = "gix-diff"
 version = "0.26.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

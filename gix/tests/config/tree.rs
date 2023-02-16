@@ -119,9 +119,9 @@ mod ssh {
 }
 
 mod diff {
-    use git_diff::blob::Algorithm;
     use gix::config::tree::{Diff, Key};
     use gix::diff::rename::Tracking;
+    use gix_diff::blob::Algorithm;
 
     use crate::config::tree::bcow;
 

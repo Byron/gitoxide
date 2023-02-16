@@ -1250,30 +1250,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-diff"
-version = "0.26.1"
-dependencies = [
- "getrandom",
- "gix-hash",
- "gix-object",
- "imara-diff",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "git-diff-tests"
-version = "0.0.0"
-dependencies = [
- "git-diff",
- "git-odb",
- "git-testtools",
- "gix-hash",
- "gix-object",
- "gix-traverse",
-]
-
-[[package]]
 name = "git-discover"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1450,9 +1426,9 @@ dependencies = [
  "clru",
  "dashmap",
  "document-features",
- "git-diff",
  "git-testtools",
  "gix-chunk",
+ "gix-diff",
  "gix-features",
  "gix-hash",
  "gix-hashtable",
@@ -1685,7 +1661,6 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "git-diff",
  "git-index 0.12.3",
  "git-odb",
  "git-pack",
@@ -1695,6 +1670,7 @@ dependencies = [
  "gix-config",
  "gix-credentials",
  "gix-date",
+ "gix-diff",
  "gix-discover",
  "gix-features",
  "gix-glob",
@@ -1886,6 +1862,30 @@ dependencies = [
  "serde",
  "thiserror",
  "time",
+]
+
+[[package]]
+name = "gix-diff"
+version = "0.26.1"
+dependencies = [
+ "getrandom",
+ "gix-hash",
+ "gix-object",
+ "imara-diff",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-diff-tests"
+version = "0.0.0"
+dependencies = [
+ "git-odb",
+ "git-testtools",
+ "gix-diff",
+ "gix-hash",
+ "gix-object",
+ "gix-traverse",
 ]
 
 [[package]]

@@ -608,7 +608,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-diff"
+name = "gix-diff"
 version = "0.16.0"
 dependencies = [
  "gix-hash",
@@ -740,7 +740,7 @@ dependencies = [
  "clru",
  "dashmap",
  "gix-chunk",
- "git-diff",
+ "gix-diff",
  "gix-features",
  "gix-hash",
  "gix-object",
@@ -800,7 +800,7 @@ dependencies = [
  "gix-attributes",
  "gix-config",
  "gix-credentials",
- "git-diff",
+ "gix-diff",
  "gix-discover",
  "gix-features",
  "gix-glob",

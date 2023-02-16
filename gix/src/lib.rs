@@ -140,7 +140,7 @@ pub mod progress {
 
 ///
 pub mod diff {
-    pub use git_diff::*;
+    pub use gix_diff::*;
     ///
     pub mod rename {
         /// Determine how to do rename tracking.

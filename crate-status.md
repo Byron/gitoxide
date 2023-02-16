@@ -196,9 +196,9 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 * [x] API documentation
     * [ ] Some examples
     
-### git-diff
+### gix-diff
 
-Check out the [performance discussion][git-diff-performance] as well.
+Check out the [performance discussion][gix-diff-performance] as well.
 
 * **tree**
   * [x] changes needed to obtain _other tree_
@@ -215,7 +215,7 @@ Check out the [performance discussion][git-diff-performance] as well.
 * [x] API documentation
   * [ ] Examples
     
-[git-diff-performance]: https://github.com/Byron/gitoxide/discussions/74
+[gix-diff-performance]: https://github.com/Byron/gitoxide/discussions/74
 
 ### gix-traverse
 

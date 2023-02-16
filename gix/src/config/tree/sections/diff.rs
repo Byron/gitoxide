@@ -46,13 +46,13 @@ mod algorithm {
 
     impl Algorithm {
         /// Derive the diff algorithm identified by `name`, case-insensitively.
-        pub fn try_into_algorithm(&self, name: Cow<'_, BStr>) -> Result<git_diff::blob::Algorithm, Error> {
+        pub fn try_into_algorithm(&self, name: Cow<'_, BStr>) -> Result<gix_diff::blob::Algorithm, Error> {
             let algo = if name.eq_ignore_ascii_case(b"myers") || name.eq_ignore_ascii_case(b"default") {
-                git_diff::blob::Algorithm::Myers
+                gix_diff::blob::Algorithm::Myers
             } else if name.eq_ignore_ascii_case(b"minimal") {
-                git_diff::blob::Algorithm::MyersMinimal
+                gix_diff::blob::Algorithm::MyersMinimal
             } else if name.eq_ignore_ascii_case(b"histogram") {
-                git_diff::blob::Algorithm::Histogram
+                gix_diff::blob::Algorithm::Histogram
             } else if name.eq_ignore_ascii_case(b"patience") {
                 return Err(config::diff::algorithm::Error::Unimplemented {
                     name: name.into_owned(),
