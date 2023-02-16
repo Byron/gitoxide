@@ -5,7 +5,7 @@ pub mod index_names {
     use gix_object::bstr::{BString, ByteSlice};
 
     /// The ID used for the index-names chunk.
-    pub const ID: git_chunk::Id = *b"PNAM";
+    pub const ID: gix_chunk::Id = *b"PNAM";
 
     ///
     pub mod decode {
@@ -113,7 +113,7 @@ pub mod fanout {
     pub const SIZE: usize = 4 * 256;
 
     /// The id uniquely identifying the fanout table.
-    pub const ID: git_chunk::Id = *b"OIDF";
+    pub const ID: gix_chunk::Id = *b"OIDF";
 
     /// Decode the fanout table contained in `chunk`, or return `None` if it didn't have the expected size.
     pub fn from_bytes(chunk: &[u8]) -> Option<[u32; 256]> {
@@ -148,7 +148,7 @@ pub mod lookup {
     use crate::multi_index;
 
     /// The id uniquely identifying the oid lookup table.
-    pub const ID: git_chunk::Id = *b"OIDL";
+    pub const ID: gix_chunk::Id = *b"OIDL";
 
     /// Return the amount of bytes needed to store the data on disk for the given amount of `entries`
     pub fn storage_size(entries: usize, object_hash: gix_hash::Kind) -> u64 {
@@ -178,7 +178,7 @@ pub mod offsets {
     use crate::multi_index;
 
     /// The id uniquely identifying the offsets table.
-    pub const ID: git_chunk::Id = *b"OOFF";
+    pub const ID: gix_chunk::Id = *b"OOFF";
 
     /// Return the amount of bytes needed to offset data for `entries`.
     pub fn storage_size(entries: usize) -> u64 {
@@ -229,7 +229,7 @@ pub mod large_offsets {
     use crate::{index::write::encode::LARGE_OFFSET_THRESHOLD, multi_index};
 
     /// The id uniquely identifying the large offsets table (with 64 bit offsets)
-    pub const ID: git_chunk::Id = *b"LOFF";
+    pub const ID: gix_chunk::Id = *b"LOFF";
 
     /// Returns Some(num-large-offset) if there are offsets larger than u32.
     pub(crate) fn num_large_offsets(entries: &[multi_index::write::Entry]) -> Option<usize> {

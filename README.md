@@ -43,7 +43,7 @@ Crates that seem feature complete and need to see some more use before they can 
 Documentation is complete and was reviewed at least once.
 
 * [git-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap)
-* [git-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-chunk)
+* [gix-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-chunk)
 * [gix-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-ref)
 * [gix-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config)
 * [gix-config-value](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config-value)

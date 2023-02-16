@@ -96,7 +96,7 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 * [x] API documentation
     * [ ] Some examples
 
-### git-chunk
+### gix-chunk
 * [x] decode the chunk file table of contents and provide convenient API
 * [x] write the table of contents
 

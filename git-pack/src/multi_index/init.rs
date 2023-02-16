@@ -21,17 +21,17 @@ mod error {
         #[error("Unsupported hash kind: {kind})")]
         UnsupportedObjectHash { kind: u8 },
         #[error(transparent)]
-        ChunkFileDecode(#[from] git_chunk::file::decode::Error),
+        ChunkFileDecode(#[from] gix_chunk::file::decode::Error),
         #[error(transparent)]
-        MissingChunk(#[from] git_chunk::file::index::offset_by_kind::Error),
+        MissingChunk(#[from] gix_chunk::file::index::offset_by_kind::Error),
         #[error(transparent)]
-        FileTooLarge(#[from] git_chunk::file::index::data_by_kind::Error),
+        FileTooLarge(#[from] gix_chunk::file::index::data_by_kind::Error),
         #[error("The multi-pack fan doesn't have the correct size of 256 * 4 bytes")]
         MultiPackFanSize,
         #[error(transparent)]
         PackNames(#[from] chunk::index_names::decode::Error),
         #[error("multi-index chunk {:?} has invalid size: {message}", String::from_utf8_lossy(.id))]
-        InvalidChunkSize { id: git_chunk::Id, message: &'static str },
+        InvalidChunkSize { id: gix_chunk::Id, message: &'static str },
     }
 }
 
@@ -57,7 +57,7 @@ impl TryFrom<&Path> for File {
         const TRAILER_LEN: usize = gix_hash::Kind::shortest().len_in_bytes(); /* trailing hash */
         if data.len()
             < Self::HEADER_LEN
-                + git_chunk::file::Index::size_for_entries(4 /*index names, fan, offsets, oids*/)
+                + gix_chunk::file::Index::size_for_entries(4 /*index names, fan, offsets, oids*/)
                 + chunk::fanout::SIZE
                 + TRAILER_LEN
         {
@@ -93,7 +93,7 @@ impl TryFrom<&Path> for File {
             (version, object_hash, num_chunks, num_indices)
         };
 
-        let chunks = git_chunk::file::Index::from_bytes(&data, Self::HEADER_LEN, num_chunks as u32)?;
+        let chunks = gix_chunk::file::Index::from_bytes(&data, Self::HEADER_LEN, num_chunks as u32)?;
 
         let index_names = chunks.data_by_id(&data, chunk::index_names::ID)?;
         let index_names = chunk::index_names::from_bytes(index_names, num_indices)?;

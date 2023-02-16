@@ -1,5 +1,5 @@
 [package]
-name = "git-chunk"
+name = "gix-chunk"
 version = "0.4.1"
 description = "Interact with the git chunk file format used in multi-pack index and commit-graph files"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

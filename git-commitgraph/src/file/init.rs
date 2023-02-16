@@ -42,15 +42,15 @@ pub enum Error {
     #[error("Unsupported commit-graph file version: {0}")]
     UnsupportedVersion(u8),
     #[error(transparent)]
-    ChunkFileDecode(#[from] git_chunk::file::decode::Error),
+    ChunkFileDecode(#[from] gix_chunk::file::decode::Error),
     #[error(transparent)]
-    MissingChunk(#[from] git_chunk::file::index::offset_by_kind::Error),
+    MissingChunk(#[from] gix_chunk::file::index::offset_by_kind::Error),
     #[error("Commit-graph chunk {:?} has invalid size: {msg}", .id.as_bstr())]
     InvalidChunkSize { id: ChunkId, msg: String },
 }
 
 const MIN_FILE_SIZE: usize = HEADER_LEN
-    + git_chunk::file::Index::size_for_entries(3 /*OIDF, OIDL, CDAT*/)
+    + gix_chunk::file::Index::size_for_entries(3 /*OIDF, OIDL, CDAT*/)
     + FAN_LEN * 4 /* FANOUT TABLE CHUNK OIDF */
     + gix_hash::Kind::shortest().len_in_bytes();
 
@@ -111,7 +111,7 @@ impl TryFrom<&Path> for File {
         let base_graph_count = data[ofs];
         ofs += 1;
 
-        let chunks = git_chunk::file::Index::from_bytes(&data, ofs, chunk_count as u32)?;
+        let chunks = gix_chunk::file::Index::from_bytes(&data, ofs, chunk_count as u32)?;
 
         let base_graphs_list_offset = chunks
             .validated_usize_offset_by_id(BASE_GRAPHS_LIST_CHUNK_ID, |chunk_range| {
@@ -206,7 +206,7 @@ impl TryFrom<&Path> for File {
         }
 
         if base_graph_count > 0 && base_graphs_list_offset.is_none() {
-            return Err(git_chunk::file::index::offset_by_kind::Error {
+            return Err(gix_chunk::file::index::offset_by_kind::Error {
                 kind: BASE_GRAPHS_LIST_CHUNK_ID,
             }
             .into());

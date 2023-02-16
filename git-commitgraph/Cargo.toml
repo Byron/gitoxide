@@ -20,7 +20,7 @@ serde1 = ["serde", "gix-hash/serde1", "bstr/serde"]
 [dependencies]
 gix-features = { version = "^0.26.4", path = "../gix-features", features = ["rustsha1"] }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
-git-chunk = { version = "^0.4.1", path = "../git-chunk" }
+gix-chunk = { version = "^0.4.1", path = "../gix-chunk" }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std"] }
 memmap2 = "0.5.0"

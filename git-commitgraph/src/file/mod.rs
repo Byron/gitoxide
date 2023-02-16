@@ -21,7 +21,7 @@ const HEADER_LEN: usize = 8;
 
 const SIGNATURE: &[u8] = b"CGPH";
 
-type ChunkId = git_chunk::Id;
+type ChunkId = gix_chunk::Id;
 const BASE_GRAPHS_LIST_CHUNK_ID: ChunkId = *b"BASE";
 const COMMIT_DATA_CHUNK_ID: ChunkId = *b"CDAT";
 const EXTENDED_EDGES_LIST_CHUNK_ID: ChunkId = *b"EDGE";

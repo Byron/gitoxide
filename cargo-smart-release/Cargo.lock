@@ -555,7 +555,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-chunk"
+name = "gix-chunk"
 version = "0.3.0"
 dependencies = [
  "quick-error",
@@ -739,7 +739,7 @@ dependencies = [
  "bytesize",
  "clru",
  "dashmap",
- "git-chunk",
+ "gix-chunk",
  "git-diff",
  "gix-features",
  "gix-hash",

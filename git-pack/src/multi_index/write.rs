@@ -145,7 +145,7 @@ impl multi_index::File {
             entries
         };
 
-        let mut cf = git_chunk::file::Index::for_writing();
+        let mut cf = gix_chunk::file::Index::for_writing();
         cf.plan_chunk(
             multi_index::chunk::index_names::ID,
             multi_index::chunk::index_names::storage_size(&index_filenames_sorted),

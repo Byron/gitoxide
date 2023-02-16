@@ -1227,20 +1227,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-chunk"
-version = "0.4.1"
-dependencies = [
- "thiserror",
-]
-
-[[package]]
 name = "git-commitgraph"
 version = "0.13.0"
 dependencies = [
  "bstr",
  "document-features",
- "git-chunk",
  "git-testtools",
+ "gix-chunk",
  "gix-features",
  "gix-hash",
  "memmap2",
@@ -1518,9 +1511,9 @@ dependencies = [
  "clru",
  "dashmap",
  "document-features",
- "git-chunk",
  "git-diff",
  "git-testtools",
+ "gix-chunk",
  "gix-features",
  "gix-hash",
  "gix-hashtable",
@@ -1840,6 +1833,13 @@ version = "0.2.1"
 dependencies = [
  "git-testtools",
  "quick-error 2.0.1",
+]
+
+[[package]]
+name = "gix-chunk"
+version = "0.4.1"
+dependencies = [
+ "thiserror",
 ]
 
 [[package]]
