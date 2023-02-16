@@ -73,7 +73,7 @@ is usable to some extent.
   * [git-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sec)
   * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
   * [git-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-discover)
-  * [git-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-path)
+  * [gix-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-path)
   * [gix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix)
   * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
   * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)

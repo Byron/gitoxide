@@ -55,7 +55,7 @@ impl File<'static> {
         };
         let mut config = File::new(meta);
         for i in 0..count {
-            let key = git_path::os_string_into_bstring(
+            let key = gix_path::os_string_into_bstring(
                 env::var_os(format!("GIT_CONFIG_KEY_{i}")).ok_or(Error::InvalidKeyId { key_id: i })?,
             )
             .map_err(|_| Error::IllformedUtf8 { index: i, kind: "key" })?;
@@ -70,7 +70,7 @@ impl File<'static> {
                 .push(
                     section::Key::try_from(key.value_name.to_owned())?,
                     Some(
-                        git_path::os_str_into_bstr(&value)
+                        gix_path::os_str_into_bstr(&value)
                             .map_err(|_| Error::IllformedUtf8 {
                                 index: i,
                                 kind: "value",

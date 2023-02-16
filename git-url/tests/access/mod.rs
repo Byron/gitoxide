@@ -19,8 +19,8 @@ mod canonicalized {
     #[test]
     fn file_that_is_current_dir_is_absolutized() -> crate::Result {
         let url = git_url::parse(".".into())?;
-        assert!(git_path::from_bstr(url.path.as_ref()).is_relative());
-        assert!(git_path::from_bstr(url.canonicalized()?.path.as_ref()).is_absolute());
+        assert!(gix_path::from_bstr(url.path.as_ref()).is_relative());
+        assert!(gix_path::from_bstr(url.canonicalized()?.path.as_ref()).is_absolute());
         Ok(())
     }
 }

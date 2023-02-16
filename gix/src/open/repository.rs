@@ -213,7 +213,7 @@ impl ThreadSafeRepository {
                     .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
                     .map_err(config::Error::PathInterpolation)?;
                 worktree_dir = {
-                    git_path::normalize(git_dir.join(wt_path), current_dir)
+                    gix_path::normalize(git_dir.join(wt_path), current_dir)
                         .and_then(|wt| wt.as_ref().is_dir().then(|| wt.into_owned()))
                 }
             }
@@ -289,7 +289,7 @@ fn replacement_objects_refs_prefix(
         return Ok(None);
     }
 
-    let ref_base = git_path::from_bstr({
+    let ref_base = gix_path::from_bstr({
         let key = "gitoxide.objects.replaceRefBase";
         debug_assert_eq!(gitoxide::Objects::REPLACE_REF_BASE.logical_name(), key);
         config
@@ -307,7 +307,7 @@ fn check_safe_directories(
     config: &config::Cache,
 ) -> Result<(), Error> {
     let mut is_safe = false;
-    let git_dir = match git_path::realpath(git_dir) {
+    let git_dir = match gix_path::realpath(git_dir) {
         Ok(p) => p,
         Err(_) => git_dir.to_owned(),
     };
@@ -329,7 +329,7 @@ fn check_safe_directories(
                 .interpolate(interpolate_context(git_install_dir, home))
             {
                 Ok(path) => path,
-                Err(_) => git_path::from_bstr(safe_dir),
+                Err(_) => gix_path::from_bstr(safe_dir),
             };
             if safe_dir == git_dir {
                 is_safe = true;

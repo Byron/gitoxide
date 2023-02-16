@@ -58,7 +58,7 @@ mod path {
                 if !matches!(dir.components().rev().next(), Some(std::path::Component::ParentDir)) {
                     dir
                 } else {
-                    git_path::normalize(&dir, cwd)?.into_owned()
+                    gix_path::normalize(&dir, cwd)?.into_owned()
                 }
                 .into()
             };
@@ -66,7 +66,7 @@ mod path {
             let dir = dir.into();
             match kind {
                 Kind::Submodule { git_dir } => Path::LinkedWorkTree {
-                    git_dir: git_path::normalize(git_dir, cwd)?.into_owned(),
+                    git_dir: gix_path::normalize(git_dir, cwd)?.into_owned(),
                     work_dir: without_dot_git_dir(normalize_on_trailing_dot_dot(dir)?),
                 },
                 Kind::SubmoduleGitDir => Path::Repository(dir),

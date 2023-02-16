@@ -110,7 +110,7 @@ impl<'repo> Remote<'repo> {
     ) -> Result<(git_url::Url, git_protocol::transport::Protocol), Error> {
         fn sanitize(mut url: git_url::Url) -> Result<git_url::Url, Error> {
             if url.scheme == git_url::Scheme::File {
-                let mut dir = git_path::to_native_path_on_windows(url.path.as_ref());
+                let mut dir = gix_path::to_native_path_on_windows(url.path.as_ref());
                 let kind = git_discover::is_git(dir.as_ref())
                     .or_else(|_| {
                         dir.to_mut().push(git_discover::DOT_GIT_DIR);
@@ -129,7 +129,7 @@ impl<'repo> Remote<'repo> {
                     directory: dir.into_owned(),
                 })?
                 .into_repository_and_work_tree_directories();
-                url.path = git_path::into_bstr(git_dir).into_owned();
+                url.path = gix_path::into_bstr(git_dir).into_owned();
             }
             Ok(url)
         }

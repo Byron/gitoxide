@@ -43,7 +43,7 @@ pub(crate) mod function {
         let directory = directory.as_ref();
         #[cfg(windows)]
         let directory = dunce::simplified(directory);
-        let dir = git_path::normalize(directory, cwd.as_ref()).ok_or_else(|| Error::InvalidInput {
+        let dir = gix_path::normalize(directory, cwd.as_ref()).ok_or_else(|| Error::InvalidInput {
             directory: directory.into(),
         })?;
         let dir_metadata = dir.metadata().map_err(|_| Error::InaccessibleDirectory {
@@ -158,7 +158,7 @@ pub(crate) mod function {
                     dir_made_absolute = true;
                     debug_assert!(!cursor.as_os_str().is_empty());
                     // TODO: realpath or normalize? No test runs into this.
-                    cursor = git_path::normalize(&cursor, cwd.as_ref())
+                    cursor = gix_path::normalize(&cursor, cwd.as_ref())
                         .ok_or_else(|| Error::InvalidInput {
                             directory: cursor.clone(),
                         })?

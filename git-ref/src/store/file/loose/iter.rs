@@ -42,7 +42,7 @@ impl Iterator for SortedLoosePaths {
                         .as_deref()
                         .and_then(|prefix| full_path.file_name().map(|name| (prefix, name)))
                     {
-                        match git_path::os_str_into_bstr(name) {
+                        match gix_path::os_str_into_bstr(name) {
                             Ok(name) => {
                                 if !name.starts_with(prefix) {
                                     continue;
@@ -54,9 +54,9 @@ impl Iterator for SortedLoosePaths {
                     let full_name = full_path
                         .strip_prefix(&self.base)
                         .expect("prefix-stripping cannot fail as prefix is our root");
-                    let full_name = match git_path::try_into_bstr(full_name) {
+                    let full_name = match gix_path::try_into_bstr(full_name) {
                         Ok(name) => {
-                            let name = git_path::to_unix_separators_on_windows(name);
+                            let name = gix_path::to_unix_separators_on_windows(name);
                             name.into_owned()
                         }
                         Err(_) => continue, // TODO: silently skipping ill-formed UTF-8 on windows here, maybe there are better ways?

@@ -55,7 +55,7 @@ impl<'repo> Proxy<'repo> {
 
     /// The name of the worktree, which is derived from its folder within the `worktrees` directory within the parent `.git` folder.
     pub fn id(&self) -> &BStr {
-        git_path::os_str_into_bstr(self.git_dir.file_name().expect("worktrees/ parent dir"))
+        gix_path::os_str_into_bstr(self.git_dir.file_name().expect("worktrees/ parent dir"))
             .expect("no illformed UTF-8")
     }
 

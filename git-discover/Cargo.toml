@@ -14,7 +14,7 @@ doctest = false
 
 [dependencies]
 git-sec = { version = "^0.6.2", path = "../git-sec" }
-git-path = { version = "^0.7.1", path = "../git-path" }
+gix-path = { version = "^0.7.1", path = "../gix-path" }
 git-ref = { version = "^0.24.0", path = "../git-ref" }
 git-hash = { version = "^0.10.2", path = "../git-hash" }
 

@@ -117,11 +117,11 @@ impl Url {
     }
 
     /// Turn a file url like `file://relative` into `file:///root/relative`, hence it assures the url's path component is absolute.
-    pub fn canonicalize(&mut self) -> Result<(), git_path::realpath::Error> {
+    pub fn canonicalize(&mut self) -> Result<(), gix_path::realpath::Error> {
         if self.scheme == Scheme::File {
-            let path = git_path::from_bstr(self.path.as_ref());
-            let abs_path = git_path::realpath(path)?;
-            self.path = git_path::into_bstr(abs_path).into_owned();
+            let path = gix_path::from_bstr(self.path.as_ref());
+            let abs_path = gix_path::realpath(path)?;
+            self.path = gix_path::into_bstr(abs_path).into_owned();
         }
         Ok(())
     }
@@ -160,7 +160,7 @@ impl Url {
 /// Transformation
 impl Url {
     /// Turn a file url like `file://relative` into `file:///root/relative`, hence it assures the url's path component is absolute.
-    pub fn canonicalized(&self) -> Result<Self, git_path::realpath::Error> {
+    pub fn canonicalized(&self) -> Result<Self, gix_path::realpath::Error> {
         let mut res = self.clone();
         res.canonicalize()?;
         Ok(res)

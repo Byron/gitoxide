@@ -36,7 +36,7 @@ pub enum Error {
     #[error("Failed to turn a the relative file url \"{}\" into an absolute one", url.to_bstring())]
     CanonicalizeUrl {
         url: git_url::Url,
-        source: git_path::realpath::Error,
+        source: gix_path::realpath::Error,
     },
 }
 

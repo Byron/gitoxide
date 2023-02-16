@@ -70,8 +70,8 @@ pub struct Transaction<'s, 'p> {
 }
 
 pub(in crate::store_impl::file) fn path_to_name<'a>(path: impl Into<Cow<'a, Path>>) -> Cow<'a, BStr> {
-    let path = git_path::into_bstr(path.into());
-    git_path::to_unix_separators_on_windows(path)
+    let path = gix_path::into_bstr(path.into());
+    gix_path::to_unix_separators_on_windows(path)
 }
 
 ///

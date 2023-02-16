@@ -125,7 +125,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     }
                     let tree = repo.find_object(tree_id)?.into_tree();
                     let entry =
-                        tree.lookup_entry_by_path(git_path::from_bstr(path))?
+                        tree.lookup_entry_by_path(gix_path::from_bstr(path))?
                             .ok_or_else(|| Error::PathNotFound {
                                 path: path.into(),
                                 object: obj.attach(repo).shorten_or_id(),
@@ -321,7 +321,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     let exists = self
                         .repo
                         .work_dir()
-                        .map_or(false, |root| root.join(git_path::from_bstr(path)).exists());
+                        .map_or(false, |root| root.join(gix_path::from_bstr(path)).exists());
                     self.err.push(Error::IndexLookup {
                         desired_path: path.into(),
                         desired_stage: stage.into(),

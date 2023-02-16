@@ -1229,7 +1229,7 @@ dependencies = [
  "compact_str",
  "git-features 0.26.1",
  "git-glob 0.5.2",
- "git-path 0.7.0",
+ "git-path",
  "git-quote 0.4.0",
  "thiserror",
  "unicode-bom",
@@ -1244,9 +1244,9 @@ dependencies = [
  "document-features",
  "git-features 0.26.4",
  "git-glob 0.5.3",
- "git-path 0.7.1",
  "git-quote 0.4.1",
  "git-testtools",
+ "gix-path",
  "serde",
  "thiserror",
  "unicode-bom",
@@ -1308,10 +1308,10 @@ dependencies = [
  "document-features",
  "git-features 0.26.4",
  "git-glob 0.5.3",
- "git-path 0.7.1",
  "git-ref 0.24.0",
  "git-sec 0.6.2",
  "gix-config-value",
+ "gix-path",
  "memchr",
  "nom",
  "once_cell",
@@ -1328,11 +1328,11 @@ dependencies = [
  "bstr",
  "criterion",
  "git-config",
- "git-path 0.7.1",
  "git-ref 0.24.0",
  "git-sec 0.6.2",
  "git-testtools",
  "gix",
+ "gix-path",
  "serde_derive",
  "serial_test",
  "tempfile",
@@ -1356,12 +1356,12 @@ dependencies = [
  "bstr",
  "document-features",
  "git-command",
- "git-path 0.7.1",
  "git-prompt",
  "git-sec 0.6.2",
  "git-testtools",
  "git-url",
  "gix-config-value",
+ "gix-path",
  "serde",
  "thiserror",
 ]
@@ -1425,7 +1425,7 @@ checksum = "a2738a9941f1411cff31e6ea4399a6c7304cc3ea34fb8c1c6f1aef1f667d46cc"
 dependencies = [
  "bstr",
  "git-hash 0.10.1",
- "git-path 0.7.0",
+ "git-path",
  "git-ref 0.23.1",
  "git-sec 0.6.1",
  "thiserror",
@@ -1439,10 +1439,10 @@ dependencies = [
  "defer",
  "dunce",
  "git-hash 0.10.2",
- "git-path 0.7.1",
  "git-ref 0.24.0",
  "git-sec 0.6.2",
  "git-testtools",
+ "gix-path",
  "is_ci",
  "serial_test",
  "tempfile",
@@ -1705,9 +1705,9 @@ dependencies = [
  "git-hash 0.10.2",
  "git-object 0.26.1",
  "git-pack",
- "git-path 0.7.1",
  "git-quote 0.4.1",
  "git-testtools",
+ "gix-path",
  "maplit",
  "num_cpus",
  "parking_lot 0.12.1",
@@ -1731,10 +1731,10 @@ dependencies = [
  "git-hash 0.10.2",
  "git-hashtable 0.1.1",
  "git-object 0.26.1",
- "git-path 0.7.1",
  "git-tempfile 3.0.2",
  "git-testtools",
  "git-traverse 0.22.1",
+ "gix-path",
  "memmap2",
  "parking_lot 0.12.1",
  "serde",
@@ -1780,20 +1780,11 @@ dependencies = [
 
 [[package]]
 name = "git-path"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e40e68481a06da243d3f4dfd86a4be39c24eefb535017a862e845140dcdb878a"
-dependencies = [
- "bstr",
- "thiserror",
-]
-
-[[package]]
-name = "git-path"
 version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b341dcd445ddfe6239e4f15c14000740a384da86526075397c7d8a1d86bd809c"
 dependencies = [
  "bstr",
- "tempfile",
  "thiserror",
 ]
 
@@ -1882,7 +1873,7 @@ dependencies = [
  "git-hash 0.10.1",
  "git-lock 3.0.1",
  "git-object 0.26.0",
- "git-path 0.7.0",
+ "git-path",
  "git-tempfile 3.0.1",
  "git-validate 0.7.1",
  "memmap2",
@@ -1900,10 +1891,10 @@ dependencies = [
  "git-hash 0.10.2",
  "git-lock 3.0.2",
  "git-object 0.26.1",
- "git-path 0.7.1",
  "git-tempfile 3.0.2",
  "git-testtools",
  "git-validate 0.7.2",
+ "gix-path",
  "memmap2",
  "nom",
  "serde",
@@ -1976,7 +1967,7 @@ checksum = "6696a816445a51f76995d579a3122f98247377cc45cd681764f740f3a2666004"
 dependencies = [
  "bitflags",
  "dirs",
- "git-path 0.7.0",
+ "git-path",
  "libc",
  "windows 0.43.0",
 ]
@@ -1988,7 +1979,7 @@ dependencies = [
  "bitflags",
  "dirs",
  "document-features",
- "git-path 0.7.1",
+ "gix-path",
  "libc",
  "serde",
  "tempfile",
@@ -2128,7 +2119,7 @@ dependencies = [
  "bstr",
  "document-features",
  "git-features 0.26.4",
- "git-path 0.7.1",
+ "gix-path",
  "home",
  "serde",
  "thiserror",
@@ -2167,7 +2158,7 @@ dependencies = [
  "git-hash 0.10.1",
  "git-index 0.12.2",
  "git-object 0.26.0",
- "git-path 0.7.0",
+ "git-path",
  "io-close",
  "thiserror",
 ]
@@ -2185,8 +2176,8 @@ dependencies = [
  "git-index 0.12.3",
  "git-object 0.26.1",
  "git-odb",
- "git-path 0.7.1",
  "git-testtools",
+ "gix-path",
  "io-close",
  "serde",
  "symlink",
@@ -2283,7 +2274,6 @@ dependencies = [
  "git-object 0.26.1",
  "git-odb",
  "git-pack",
- "git-path 0.7.1",
  "git-prompt",
  "git-protocol",
  "git-ref 0.24.0",
@@ -2297,6 +2287,7 @@ dependencies = [
  "git-url",
  "git-validate 0.7.2",
  "git-worktree 0.12.2",
+ "gix-path",
  "is_ci",
  "log",
  "once_cell",
@@ -2319,9 +2310,18 @@ dependencies = [
  "bitflags",
  "bstr",
  "document-features",
- "git-path 0.7.1",
+ "gix-path",
  "libc",
  "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-path"
+version = "0.7.1"
+dependencies = [
+ "bstr",
+ "tempfile",
  "thiserror",
 ]
 

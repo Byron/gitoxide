@@ -51,7 +51,7 @@ impl crate::Repository {
                     &mut trusted,
                 )
             })
-            .map(|cmd| git_path::from_bstr(cmd).into_owned().into());
+            .map(|cmd| gix_path::from_bstr(cmd).into_owned().into());
         let opts = git_protocol::transport::client::ssh::connect::Options {
             disallow_shell: fallback_active,
             command: ssh_command,

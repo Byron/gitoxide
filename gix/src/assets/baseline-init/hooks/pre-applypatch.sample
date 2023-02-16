@@ -9,6 +9,6 @@
 # To enable this hook, rename this file to "pre-applypatch".
 
 . git-sh-setup
-precommit="$(git rev-parse --git-path hooks/pre-commit)"
+precommit="$(git rev-parse --gix-path hooks/pre-commit)"
 test -x "$precommit" && exec "$precommit" ${1+"$@"}
 :

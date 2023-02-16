@@ -163,9 +163,9 @@ mod invoke {
     fn fixtures<'a>(names: impl IntoIterator<Item = &'a str>) -> Vec<Program> {
         names
             .into_iter()
-            .map(|name| git_path::realpath(fixture_path(format!("{name}.sh"))).unwrap())
+            .map(|name| gix_path::realpath(fixture_path(format!("{name}.sh"))).unwrap())
             .map(|path| {
-                let mut script = git_path::to_unix_separators_on_windows(git_path::into_bstr(path)).into_owned();
+                let mut script = gix_path::to_unix_separators_on_windows(gix_path::into_bstr(path)).into_owned();
                 script.insert_str(0, "sh ");
                 Program::from_kind(program::Kind::ExternalShellScript(script))
             })

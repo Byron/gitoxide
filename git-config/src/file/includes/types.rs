@@ -17,7 +17,7 @@ pub enum Error {
     #[error("The git directory must be provided to support `gitdir:` conditional includes")]
     MissingGitDir,
     #[error(transparent)]
-    Realpath(#[from] git_path::realpath::Error),
+    Realpath(#[from] gix_path::realpath::Error),
 }
 
 /// Options to handle includes, like `include.path` or `includeIf.<condition>.path`,

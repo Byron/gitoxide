@@ -1,6 +1,6 @@
 use std::{borrow::Cow, path::Path};
 
-use git_path::normalize;
+use gix_path::normalize;
 
 fn p(input: &str) -> &Path {
     Path::new(input)

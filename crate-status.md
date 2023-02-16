@@ -340,7 +340,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [x] parsing
 * [x] lookup and mapping of author names
 
-### git-path
+### gix-path
 * [x] transformations to and from bytes
 * [x] conversions between different platforms
 * [x] virtual canonicalization for more concise paths via `absolutize()`

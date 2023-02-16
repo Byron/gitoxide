@@ -39,7 +39,7 @@ pub mod interpolate {
         Utf8Conversion {
             what: &'static str,
             #[source]
-            err: git_path::Utf8Error,
+            err: gix_path::Utf8Error,
         },
         #[error("Ill-formed UTF-8 in username")]
         UsernameConversion(#[from] std::str::Utf8Error),
@@ -138,7 +138,7 @@ impl<'a> Path<'a> {
             })?;
             let (_prefix, path_without_trailing_slash) = self.split_at(PREFIX.len());
             let path_without_trailing_slash =
-                git_path::try_from_bstring(path_without_trailing_slash).map_err(|err| {
+                gix_path::try_from_bstring(path_without_trailing_slash).map_err(|err| {
                     interpolate::Error::Utf8Conversion {
                         what: "path past %(prefix)",
                         err,
@@ -148,7 +148,7 @@ impl<'a> Path<'a> {
         } else if self.starts_with(USER_HOME) {
             let home_path = home_dir.ok_or(interpolate::Error::Missing { what: "home dir" })?;
             let (_prefix, val) = self.split_at(USER_HOME.len());
-            let val = git_path::try_from_byte_slice(val).map_err(|err| interpolate::Error::Utf8Conversion {
+            let val = gix_path::try_from_byte_slice(val).map_err(|err| interpolate::Error::Utf8Conversion {
                 what: "path past ~/",
                 err,
             })?;
@@ -158,7 +158,7 @@ impl<'a> Path<'a> {
                 what: "home for user lookup",
             })?)
         } else {
-            Ok(git_path::from_bstr(self.value))
+            Ok(gix_path::from_bstr(self.value))
         }
     }
 
@@ -184,7 +184,7 @@ impl<'a> Path<'a> {
         let username = std::str::from_utf8(username)?;
         let home = home_for_user(username).ok_or(interpolate::Error::Missing { what: "pwd user info" })?;
         let path_past_user_prefix =
-            git_path::try_from_byte_slice(&path_with_leading_slash["/".len()..]).map_err(|err| {
+            gix_path::try_from_byte_slice(&path_with_leading_slash["/".len()..]).map_err(|err| {
                 interpolate::Error::Utf8Conversion {
                     what: "path past ~user/",
                     err,

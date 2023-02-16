@@ -29,7 +29,7 @@ wasm = ["git-diff/wasm"]
 
 [dependencies]
 git-features = { version = "^0.26.4", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
-git-path = { version = "^0.7.1", path = "../git-path" }
+gix-path = { version = "^0.7.1", path = "../gix-path" }
 git-hash = { version = "^0.10.2", path = "../git-hash" }
 git-chunk = { version = "^0.4.1", path = "../git-chunk" }
 git-object = { version = "^0.26.1", path = "../git-object" }

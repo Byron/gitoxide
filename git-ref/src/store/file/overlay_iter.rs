@@ -298,7 +298,7 @@ impl<'a> IterInfo<'a> {
                 .file_name()
                 .map(ToOwned::to_owned)
                 .map(|p| {
-                    git_path::try_into_bstr(PathBuf::from(p))
+                    gix_path::try_into_bstr(PathBuf::from(p))
                         .map(|p| p.into_owned())
                         .map_err(|_| {
                             std::io::Error::new(std::io::ErrorKind::InvalidInput, "prefix contains ill-formed UTF-8")

@@ -90,7 +90,7 @@ mod impl_ {
         // Home is not actually owned by the corresponding user
         // but it can be considered de-facto owned by the user
         // Ignore errors here and just do the regular checks below
-        if git_path::realpath(path).ok() == dirs::home_dir() {
+        if gix_path::realpath(path).ok() == dirs::home_dir() {
             return Ok(true);
         }
 

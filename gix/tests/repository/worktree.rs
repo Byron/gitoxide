@@ -19,7 +19,7 @@ mod with_core_worktree_config {
             } else {
                 assert_eq!(
                     repo.work_dir().unwrap(),
-                    git_path::realpath(repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"))?,
+                    gix_path::realpath(repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"))?,
                     "absolute workdirs are left untouched"
                 );
             }
@@ -34,7 +34,7 @@ mod with_core_worktree_config {
             assert_eq!(baseline.len(), 1, "git lists the main worktree");
             assert_eq!(
                 baseline[0].root,
-                git_path::realpath(repo.git_dir().parent().unwrap())?,
+                gix_path::realpath(repo.git_dir().parent().unwrap())?,
                 "git lists the original worktree, to which we have no access anymore"
             );
             assert_eq!(
@@ -147,7 +147,7 @@ mod baseline {
         type Item = Worktree;
 
         fn next(&mut self) -> Option<Self::Item> {
-            let root = git_path::from_bstr(fields(self.lines.next()?).1).into_owned();
+            let root = gix_path::from_bstr(fields(self.lines.next()?).1).into_owned();
             let mut bare = false;
             let mut branch = None;
             let mut peeled = git_hash::ObjectId::null(git_hash::Kind::Sha1);

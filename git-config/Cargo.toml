@@ -19,7 +19,7 @@ serde1 = ["serde", "bstr/serde", "git-sec/serde1", "git-ref/serde1", "git-glob/s
 [dependencies]
 git-features = { version = "^0.26.4", path = "../git-features"}
 gix-config-value = { version = "^0.10.1", path = "../gix-config-value" }
-git-path = { version = "^0.7.1", path = "../git-path" }
+gix-path = { version = "^0.7.1", path = "../gix-path" }
 git-sec = { version = "^0.6.2", path = "../git-sec" }
 git-ref = { version = "^0.24.0", path = "../git-ref" }
 git-glob = { version = "^0.5.3", path = "../git-glob" }

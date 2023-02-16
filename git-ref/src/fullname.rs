@@ -79,7 +79,7 @@ impl FullNameRef {
 
     /// Convert this name into the relative path identifying the reference location.
     pub fn to_path(&self) -> &Path {
-        git_path::from_byte_slice(&self.0)
+        gix_path::from_byte_slice(&self.0)
     }
 
     /// Return ourselves as byte string which is a valid refname
@@ -158,7 +158,7 @@ impl FullNameRef {
 impl FullName {
     /// Convert this name into the relative path, lossily, identifying the reference location relative to a repository
     pub fn to_path(&self) -> &Path {
-        git_path::from_byte_slice(&self.0)
+        gix_path::from_byte_slice(&self.0)
     }
 
     /// Dissolve this instance and return the buffer.

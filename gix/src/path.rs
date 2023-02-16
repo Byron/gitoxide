@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-pub use git_path::*;
+pub use gix_path::*;
 
 pub(crate) fn install_dir() -> std::io::Result<PathBuf> {
     std::env::current_exe().and_then(|exe| {

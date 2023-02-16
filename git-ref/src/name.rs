@@ -92,7 +92,7 @@ impl PartialNameRef {
     /// Convert this name into the relative path possibly identifying the reference location.
     /// Note that it may be only a partial path though.
     pub fn to_partial_path(&self) -> &Path {
-        git_path::from_byte_slice(self.0.as_bstr())
+        gix_path::from_byte_slice(self.0.as_bstr())
     }
 
     /// Provide the name as binary string which is known to be a valid partial ref name.
@@ -130,7 +130,7 @@ impl<'a> convert::TryFrom<&'a OsStr> for &'a PartialNameRef {
     type Error = Error;
 
     fn try_from(v: &'a OsStr) -> Result<Self, Self::Error> {
-        let v = git_path::os_str_into_bstr(v).map_err(|_| {
+        let v = gix_path::os_str_into_bstr(v).map_err(|_| {
             Error::Tag(git_validate::tag::name::Error::InvalidByte {
                 byte: "<unknown encoding>".into(),
             })

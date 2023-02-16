@@ -42,7 +42,7 @@ pub(crate) fn find_ceiling_height(search_dir: &Path, ceiling_dirs: &[PathBuf], c
     let search_dir = if search_dir.is_absolute() {
         search_dir
     } else {
-        search_realpath = git_path::realpath_opts(search_dir, cwd, git_path::realpath::MAX_SYMLINKS).ok()?;
+        search_realpath = gix_path::realpath_opts(search_dir, cwd, gix_path::realpath::MAX_SYMLINKS).ok()?;
         search_realpath.as_path()
     };
     ceiling_dirs
@@ -50,9 +50,9 @@ pub(crate) fn find_ceiling_height(search_dir: &Path, ceiling_dirs: &[PathBuf], c
         .filter_map(|ceiling_dir| {
             #[cfg(windows)]
             let ceiling_dir = dunce::simplified(ceiling_dir);
-            let mut ceiling_dir = git_path::normalize(ceiling_dir, cwd)?;
+            let mut ceiling_dir = gix_path::normalize(ceiling_dir, cwd)?;
             if !ceiling_dir.is_absolute() {
-                ceiling_dir = git_path::normalize(cwd.join(ceiling_dir.as_ref()), cwd)?;
+                ceiling_dir = gix_path::normalize(cwd.join(ceiling_dir.as_ref()), cwd)?;
             }
             search_dir
                 .strip_prefix(ceiling_dir.as_ref())

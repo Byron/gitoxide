@@ -271,7 +271,7 @@ fn apply_environment_overrides(
     fn var_as_bstring(var: &str, perm: Permission) -> Option<BString> {
         perm.check_opt(var)
             .and_then(std::env::var_os)
-            .and_then(|val| git_path::os_string_into_bstring(val).ok())
+            .and_then(|val| gix_path::os_string_into_bstring(val).ok())
     }
 
     let mut env_override = git_config::File::new(git_config::file::Metadata::from(git_config::Source::EnvOverride));

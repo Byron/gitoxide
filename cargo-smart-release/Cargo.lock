@@ -541,7 +541,7 @@ dependencies = [
  "compact_str",
  "git-features",
  "git-glob",
- "git-path",
+ "gix-path",
  "git-quote",
  "quick-error",
  "unicode-bom",
@@ -569,7 +569,7 @@ dependencies = [
  "dirs",
  "git-features",
  "git-glob",
- "git-path",
+ "gix-path",
  "git-ref",
  "git-sec",
  "libc",
@@ -622,7 +622,7 @@ version = "0.2.0"
 dependencies = [
  "bstr",
  "git-hash",
- "git-path",
+ "gix-path",
  "git-ref",
  "git-sec",
  "thiserror",
@@ -725,7 +725,7 @@ dependencies = [
  "git-hash",
  "git-object",
  "git-pack",
- "git-path",
+ "gix-path",
  "git-quote",
  "parking_lot",
  "tempfile",
@@ -744,7 +744,7 @@ dependencies = [
  "git-features",
  "git-hash",
  "git-object",
- "git-path",
+ "gix-path",
  "git-tempfile",
  "git-traverse",
  "hash_hasher",
@@ -756,7 +756,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-path"
+name = "gix-path"
 version = "0.2.0"
 dependencies = [
  "bstr",
@@ -782,7 +782,7 @@ dependencies = [
  "git-hash",
  "git-lock",
  "git-object",
- "git-path",
+ "gix-path",
  "git-tempfile",
  "git-validate",
  "memmap2",
@@ -811,7 +811,7 @@ dependencies = [
  "git-object",
  "git-odb",
  "git-pack",
- "git-path",
+ "gix-path",
  "git-ref",
  "git-revision",
  "git-sec",
@@ -844,7 +844,7 @@ version = "0.2.0"
 dependencies = [
  "bitflags",
  "dirs",
- "git-path",
+ "gix-path",
  "libc",
  "thiserror",
  "windows",
@@ -900,7 +900,7 @@ version = "0.6.0"
 dependencies = [
  "bstr",
  "git-features",
- "git-path",
+ "gix-path",
  "home",
  "quick-error",
  "url",
@@ -925,7 +925,7 @@ dependencies = [
  "git-hash",
  "git-index",
  "git-object",
- "git-path",
+ "gix-path",
  "io-close",
  "thiserror",
 ]

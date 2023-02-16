@@ -27,7 +27,7 @@ pub fn gitdir(input: &[u8]) -> Result<PathBuf, gitdir::Error> {
     if path.is_empty() {
         return Err(gitdir::Error::InvalidFormat { input: input.into() });
     }
-    Ok(git_path::try_from_bstr(path)
+    Ok(gix_path::try_from_bstr(path)
         .map_err(|_| gitdir::Error::IllformedUtf8 { input: input.into() })?
         .into_owned())
 }

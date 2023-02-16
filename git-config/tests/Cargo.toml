@@ -26,7 +26,7 @@ git-config = { path = ".."}
 git-testtools = { path = "../../tests/tools"}
 gix = { path = "../../gix" }
 git-ref = { path = "../../git-ref" }
-git-path = { path = "../../git-path" }
+gix-path = { path = "../../gix-path" }
 git-sec = { path = "../../git-sec" }
 serial_test = "1.0.0"
 serde_derive = "1.0"

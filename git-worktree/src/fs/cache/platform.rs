@@ -37,7 +37,7 @@ impl<'a> Platform<'a> {
     pub fn matching_exclude_pattern(&self) -> Option<git_attributes::Match<'_, ()>> {
         let ignore = self.parent.state.ignore_or_panic();
         let relative_path =
-            git_path::to_unix_separators_on_windows(git_path::into_bstr(self.parent.stack.current_relative.as_path()));
+            gix_path::to_unix_separators_on_windows(gix_path::into_bstr(self.parent.stack.current_relative.as_path()));
         ignore.matching_exclude_pattern(relative_path.as_bstr(), self.is_dir, self.parent.case)
     }
 }

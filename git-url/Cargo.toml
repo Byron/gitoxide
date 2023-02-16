@@ -18,7 +18,7 @@ serde1 = ["serde", "bstr/serde"]
 
 [dependencies]
 git-features = { version = "^0.26.4", path = "../git-features" }
-git-path = { version = "^0.7.1", path = "../git-path" }
+gix-path = { version = "^0.7.1", path = "../gix-path" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 thiserror = "1.0.32"

@@ -207,7 +207,7 @@ fn gitdir_matches(
     if !err_on_interpolation_failure && git_dir.is_none() {
         return Ok(false);
     }
-    let git_dir = git_path::to_unix_separators_on_windows(git_path::into_bstr(git_dir.ok_or(Error::MissingGitDir)?));
+    let git_dir = gix_path::to_unix_separators_on_windows(gix_path::into_bstr(git_dir.ok_or(Error::MissingGitDir)?));
 
     let mut pattern_path: Cow<'_, _> = {
         let path = match check_interpolation_result(
@@ -217,11 +217,11 @@ fn gitdir_matches(
             Some(p) => p,
             None => return Ok(false),
         };
-        git_path::into_bstr(path).into_owned().into()
+        gix_path::into_bstr(path).into_owned().into()
     };
     // NOTE: yes, only if we do path interpolation will the slashes be forced to unix separators on windows
     if pattern_path != condition_path {
-        pattern_path = git_path::to_unix_separators_on_windows(pattern_path);
+        pattern_path = gix_path::to_unix_separators_on_windows(pattern_path);
     }
 
     if let Some(relative_pattern_path) = pattern_path.strip_prefix(b"./") {
@@ -232,7 +232,7 @@ fn gitdir_matches(
             .ok_or(Error::MissingConfigPath)?
             .parent()
             .expect("config path can never be /");
-        let mut joined_path = git_path::to_unix_separators_on_windows(git_path::into_bstr(parent_dir)).into_owned();
+        let mut joined_path = gix_path::to_unix_separators_on_windows(gix_path::into_bstr(parent_dir)).into_owned();
         joined_path.push(b'/');
         joined_path.extend_from_slice(relative_pattern_path);
         pattern_path = joined_path.into();
@@ -240,7 +240,7 @@ fn gitdir_matches(
 
     // NOTE: this special handling of leading backslash is needed to do it like git does
     if pattern_path.iter().next() != Some(&(std::path::MAIN_SEPARATOR as u8))
-        && !git_path::from_bstr(pattern_path.clone()).is_absolute()
+        && !gix_path::from_bstr(pattern_path.clone()).is_absolute()
     {
         let mut prefixed = pattern_path.into_owned();
         prefixed.insert_str(0, "**/");
@@ -258,7 +258,7 @@ fn gitdir_matches(
         return Ok(true);
     }
 
-    let expanded_git_dir = git_path::into_bstr(git_path::realpath(git_path::from_byte_slice(&git_dir))?);
+    let expanded_git_dir = gix_path::into_bstr(gix_path::realpath(gix_path::from_byte_slice(&git_dir))?);
     Ok(git_glob::wildmatch(
         pattern_path.as_bstr(),
         expanded_git_dir.as_bstr(),

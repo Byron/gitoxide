@@ -114,7 +114,7 @@ pub(crate) fn parse_ceiling_dirs(ceiling_dirs: &OsStr) -> Vec<PathBuf> {
 
         let mut dir = ceiling_dir;
         if should_normalize {
-            if let Ok(normalized) = git_path::realpath(&dir) {
+            if let Ok(normalized) = gix_path::realpath(&dir) {
                 dir = normalized;
             }
         }

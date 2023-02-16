@@ -64,7 +64,7 @@ fn special_exclude_cases_we_handle_differently() {
         assert_eq!(line, 2);
         assert_eq!(source, ".gitignore");
 
-        let relative_path = git_path::from_byte_slice(relative_entry);
+        let relative_path = gix_path::from_byte_slice(relative_entry);
         let is_dir = dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
 
         let platform = cache
@@ -121,7 +121,7 @@ fn check_against_baseline() -> crate::Result {
         lines: baseline.lines(),
     };
     for (relative_entry, source_and_line) in expectations {
-        let relative_path = git_path::from_byte_slice(relative_entry);
+        let relative_path = gix_path::from_byte_slice(relative_entry);
         let is_dir = worktree_dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
 
         let platform = cache.at_entry(relative_entry, is_dir, |oid, buf| odb.find_blob(oid, buf))?;

@@ -44,13 +44,13 @@ impl Program {
             input.remove(0);
             Kind::ExternalShellScript(input)
         } else {
-            let path = git_path::from_bstr(
+            let path = gix_path::from_bstr(
                 input
                     .find_byte(b' ')
                     .map_or(input.as_slice(), |pos| &input[..pos])
                     .as_bstr(),
             );
-            if git_path::is_absolute(path) {
+            if gix_path::is_absolute(path) {
                 Kind::ExternalPath { path_and_args: input }
             } else {
                 input.insert_str(0, "git credential-");
@@ -92,7 +92,7 @@ impl Program {
             }
             | Kind::ExternalPath {
                 path_and_args: for_shell,
-            } => git_command::prepare(git_path::from_bstr(for_shell.as_bstr()).as_ref())
+            } => git_command::prepare(gix_path::from_bstr(for_shell.as_bstr()).as_ref())
                 .with_shell()
                 .arg(action.as_arg(true))
                 .into(),

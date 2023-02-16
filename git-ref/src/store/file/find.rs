@@ -164,7 +164,7 @@ impl file::Store {
     ) -> (Cow<'_, Path>, &'a FullNameRef) {
         let commondir = self.common_dir_resolved();
         let linked_git_dir =
-            |worktree_name: &BStr| commondir.join("worktrees").join(git_path::from_bstr(worktree_name));
+            |worktree_name: &BStr| commondir.join("worktrees").join(gix_path::from_bstr(worktree_name));
         name.category_and_short_name()
             .and_then(|(c, sn)| {
                 use crate::Category::*;
@@ -198,9 +198,9 @@ impl file::Store {
         (
             base,
             match &self.namespace {
-                None => git_path::to_native_path_on_windows(name.as_bstr()),
+                None => gix_path::to_native_path_on_windows(name.as_bstr()),
                 Some(namespace) => {
-                    git_path::to_native_path_on_windows(namespace.to_owned().into_namespaced_name(name).into_inner())
+                    gix_path::to_native_path_on_windows(namespace.to_owned().into_namespaced_name(name).into_inner())
                 }
             },
         )

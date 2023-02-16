@@ -89,7 +89,7 @@ mod program {
         assert_eq!(
             git_credentials::helper::invoke(
                 &mut Program::from_custom_definition(
-                    git_path::into_bstr(git_path::realpath(git_testtools::fixture_path("custom-helper.sh"))?)
+                    gix_path::into_bstr(gix_path::realpath(git_testtools::fixture_path("custom-helper.sh"))?)
                         .into_owned()
                 ),
                 &helper::Action::get_for_url("/does/not/matter"),
@@ -125,8 +125,8 @@ mod program {
 }
 
 pub fn script_helper(name: &str) -> Program {
-    let mut script = git_path::to_unix_separators_on_windows(git_path::into_bstr(
-        git_path::realpath(fixture_path(format!("{name}.sh"))).unwrap(),
+    let mut script = gix_path::to_unix_separators_on_windows(gix_path::into_bstr(
+        gix_path::realpath(fixture_path(format!("{name}.sh"))).unwrap(),
     ))
     .into_owned();
     script.insert_str(0, "sh ");

@@ -171,7 +171,7 @@ members = [
     "git-attributes",
     "git-pathspec",
     "git-refspec",
-    "git-path",
+    "gix-path",
     "gix",
     "gitoxide-core",
     "git-hashtable",

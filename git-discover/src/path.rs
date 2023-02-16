@@ -46,7 +46,7 @@ pub fn from_plain_file(path: impl AsRef<std::path::Path>) -> Option<std::io::Res
     };
     let trimmed_len = buf.trim_end().len();
     buf.truncate(trimmed_len);
-    Some(Ok(git_path::from_bstring(buf)))
+    Some(Ok(gix_path::from_bstring(buf)))
 }
 
 /// Reads typical `gitdir: ` files from disk as used by worktrees and submodules.

@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_path::{to_unix_separators, to_windows_separators};
+use gix_path::{to_unix_separators, to_windows_separators};
 
 #[test]
 fn assure_unix_separators() {

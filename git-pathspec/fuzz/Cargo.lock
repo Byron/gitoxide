@@ -72,7 +72,7 @@ dependencies = [
  "compact_str",
  "git-features",
  "git-glob",
- "git-path",
+ "gix-path",
  "git-quote",
  "thiserror",
  "unicode-bom",
@@ -103,7 +103,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-path"
+name = "gix-path"
 version = "0.4.0"
 dependencies = [
  "bstr",

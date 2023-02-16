@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use git_path::realpath::MAX_SYMLINKS;
+use gix_path::realpath::MAX_SYMLINKS;
 
 impl crate::Repository {
     /// Return the path to the repository itself, containing objects, references, configuration, and more.
@@ -48,7 +48,7 @@ impl crate::Repository {
     pub fn prefix(&self) -> Option<std::io::Result<PathBuf>> {
         self.work_tree.as_ref().map(|root| {
             std::env::current_dir().and_then(|cwd| {
-                git_path::realpath_opts(root, &cwd, MAX_SYMLINKS)
+                gix_path::realpath_opts(root, &cwd, MAX_SYMLINKS)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
                     .and_then(|root| {
                         cwd.strip_prefix(&root)

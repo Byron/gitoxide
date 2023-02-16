@@ -156,10 +156,10 @@ impl Ignore {
     {
         let rela_dir = dir.strip_prefix(root).expect("dir in root");
         self.matched_directory_patterns_stack
-            .push(self.matching_exclude_pattern_no_dir(git_path::into_bstr(rela_dir).as_ref(), Some(true), self.case));
+            .push(self.matching_exclude_pattern_no_dir(gix_path::into_bstr(rela_dir).as_ref(), Some(true), self.case));
 
         let ignore_path_relative = rela_dir.join(".gitignore");
-        let ignore_path_relative = git_path::to_unix_separators_on_windows(git_path::into_bstr(ignore_path_relative));
+        let ignore_path_relative = gix_path::to_unix_separators_on_windows(gix_path::into_bstr(ignore_path_relative));
         let ignore_file_in_index =
             attribute_files_in_index.binary_search_by(|t| t.0.as_bstr().cmp(ignore_path_relative.as_ref()));
         let follow_symlinks = ignore_file_in_index.is_err();
@@ -171,7 +171,7 @@ impl Ignore {
                 Ok(idx) => {
                     let ignore_blob = find(&attribute_files_in_index[idx].1, buf)
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-                    let ignore_path = git_path::from_bstring(ignore_path_relative.into_owned());
+                    let ignore_path = gix_path::from_bstring(ignore_path_relative.into_owned());
                     self.stack
                         .add_patterns_buffer(ignore_blob.data, ignore_path, Some(root));
                 }

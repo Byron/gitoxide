@@ -100,7 +100,7 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
                             .ok()
                             .and_then(|url| {
                                 let path = url::Url::parse(url).ok()?.to_file_path().ok()?;
-                                path.is_absolute().then(|| git_path::into_bstr(path).into_owned())
+                                path.is_absolute().then(|| gix_path::into_bstr(path).into_owned())
                             })
                             .unwrap_or_else(|| stripped_path.into())
                     } else {

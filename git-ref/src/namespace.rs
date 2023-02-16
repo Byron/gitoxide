@@ -18,14 +18,14 @@ impl Namespace {
     }
     /// Return ourselves as a path for use within the filesystem.
     pub fn to_path(&self) -> &Path {
-        git_path::from_byte_slice(&self.0)
+        gix_path::from_byte_slice(&self.0)
     }
     /// Append the given `prefix` to this namespace so it becomes usable for prefixed iteration.
     pub fn into_namespaced_prefix(mut self, prefix: impl AsRef<Path>) -> PathBuf {
         let path = prefix.as_ref();
-        let prefix = git_path::into_bstr(path);
+        let prefix = gix_path::into_bstr(path);
         self.0.push_str(prefix.as_ref());
-        git_path::to_native_path_on_windows(self.0).into_owned()
+        gix_path::to_native_path_on_windows(self.0).into_owned()
     }
     pub(crate) fn into_namespaced_name(mut self, name: &FullNameRef) -> FullName {
         self.0.push_str(name.as_bstr());

@@ -65,7 +65,7 @@ impl Source {
     pub fn storage_location(self, env_var: &mut dyn FnMut(&str) -> Option<OsString>) -> Option<Cow<'static, Path>> {
         use Source::*;
         match self {
-            GitInstallation => git::install_config_path().map(git_path::from_bstr),
+            GitInstallation => git::install_config_path().map(gix_path::from_bstr),
             System => env_var("GIT_CONFIG_NO_SYSTEM")
                 .is_none()
                 .then(|| PathBuf::from(env_var("GIT_CONFIG_SYSTEM").unwrap_or_else(|| "/etc/gitconfig".into())).into()),

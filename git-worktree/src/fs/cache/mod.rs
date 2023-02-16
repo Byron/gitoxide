@@ -125,7 +125,7 @@ impl Cache {
         E: std::error::Error + Send + Sync + 'static,
     {
         let relative = relative.into();
-        let relative_path = git_path::from_bstr(relative);
+        let relative_path = gix_path::from_bstr(relative);
 
         self.at_path(
             relative_path,

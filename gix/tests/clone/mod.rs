@@ -239,7 +239,7 @@ mod blocking_io {
             "{:?} unexpected",
             line.message
         );
-        let path = git_path::from_bstr(line.message.rsplit(|b| *b == b' ').next().expect("path").as_bstr());
+        let path = gix_path::from_bstr(line.message.rsplit(|b| *b == b' ').next().expect("path").as_bstr());
         assert!(path.is_absolute(), "{:?} must be absolute", path);
     }
 
@@ -262,7 +262,7 @@ mod blocking_io {
 
         let work_dir = repo.work_dir().expect("non-bare");
         for entry in index.entries() {
-            let entry_path = work_dir.join(git_path::from_bstr(entry.path(&index)));
+            let entry_path = work_dir.join(gix_path::from_bstr(entry.path(&index)));
             assert!(entry_path.is_file(), "{:?} not found on disk", entry_path)
         }
         Ok(())

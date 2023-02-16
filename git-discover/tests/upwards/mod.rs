@@ -201,7 +201,7 @@ fn from_existing_worktree() -> crate::Result {
         assert_eq!(trust, expected_trust());
         let (git_dir, worktree) = path.into_repository_and_work_tree_directories();
         assert_eq!(
-            git_dir.strip_prefix(git_path::realpath(&top_level_repo).unwrap()),
+            git_dir.strip_prefix(gix_path::realpath(&top_level_repo).unwrap()),
             Ok(std::path::Path::new(expected_git_dir)),
             "we don't skip over worktrees and discover their git dir (gitdir is absolute in file)"
         );

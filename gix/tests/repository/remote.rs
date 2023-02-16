@@ -280,7 +280,7 @@ mod find_remote {
     }
 
     fn base_dir(repo: &Repository) -> String {
-        git_path::to_unix_separators_on_windows(gix::path::into_bstr(
+        gix_path::to_unix_separators_on_windows(gix::path::into_bstr(
             gix::path::realpath(repo.work_dir().unwrap())
                 .unwrap()
                 .parent()
