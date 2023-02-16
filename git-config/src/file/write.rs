@@ -1,5 +1,6 @@
 use bstr::{BStr, BString, ByteSlice};
 
+use crate::file::Section;
 use crate::{parse::Event, File};
 
 impl File<'_> {
@@ -13,9 +14,13 @@ impl File<'_> {
         buf.into()
     }
 
-    /// Stream ourselves to the given `out`, in order to reproduce this file mostly losslessly
-    /// as it was parsed.
-    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+    /// Stream ourselves to the given `out` in order to reproduce this file mostly losslessly
+    /// as it was parsed, while writing only sections for which `filter` returns true.
+    pub fn write_to_filter(
+        &self,
+        mut out: impl std::io::Write,
+        mut filter: impl FnMut(&Section<'_>) -> bool,
+    ) -> std::io::Result<()> {
         let nl = self.detect_newline_style();
 
         {
@@ -23,7 +28,8 @@ impl File<'_> {
                 event.write_to(&mut out)?;
             }
 
-            if !ends_with_newline(self.frontmatter_events.as_ref(), nl, true) && self.sections.iter().next().is_some() {
+            if !ends_with_newline(self.frontmatter_events.as_ref(), nl, true) && self.sections.values().any(&mut filter)
+            {
                 out.write_all(nl)?;
             }
         }
@@ -34,6 +40,9 @@ impl File<'_> {
                 out.write_all(nl)?;
             }
             let section = self.sections.get(section_id).expect("known section-id");
+            if !filter(section) {
+                continue;
+            }
             section.write_to(&mut out)?;
 
             prev_section_ended_with_newline = ends_with_newline(section.body.0.as_ref(), nl, false);
@@ -53,6 +62,12 @@ impl File<'_> {
         }
 
         Ok(())
+    }
+
+    /// Stream ourselves to the given `out`, in order to reproduce this file mostly losslessly
+    /// as it was parsed.
+    pub fn write_to(&self, out: impl std::io::Write) -> std::io::Result<()> {
+        self.write_to_filter(out, |_| true)
     }
 }
 

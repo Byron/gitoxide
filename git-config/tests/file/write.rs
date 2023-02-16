@@ -108,3 +108,38 @@ fn complex_lossless_roundtrip() {
         "Even lossy configuration serializes properly to be able to restore all values"
     );
 }
+
+mod to_filter {
+    use crate::file::cow_str;
+    use bstr::ByteSlice;
+    use git_config::file::Metadata;
+
+    #[test]
+    fn allows_only_selected_sections() -> crate::Result {
+        let mut config = git_config::File::new(Metadata::api());
+        config.set_raw_value("a", None, "b", "c")?;
+
+        let meta: Metadata = git_config::Source::Local.into();
+        config.set_meta(meta);
+
+        config
+            .new_section("a", cow_str("local"))?
+            .push("b".try_into()?, Some("c".into()))
+            .push("c".try_into()?, Some("d".into()));
+
+        let meta: Metadata = git_config::Source::User.into();
+        config.set_meta(meta);
+
+        config
+            .new_section("a", cow_str("user"))?
+            .push("b".try_into()?, Some("c".into()))
+            .push("c".try_into()?, Some("d".into()));
+
+        let mut buf = Vec::<u8>::new();
+        config.write_to_filter(&mut buf, |s| s.meta().source == git_config::Source::Local)?;
+        let nl = config.detect_newline_style();
+        assert_eq!(buf.to_str_lossy(), format!("[a \"local\"]{nl}\tb = c{nl}\tc = d{nl}"));
+
+        Ok(())
+    }
+}

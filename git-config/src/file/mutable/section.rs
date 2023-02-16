@@ -30,8 +30,9 @@ pub struct SectionMut<'a, 'event> {
 impl<'a, 'event> SectionMut<'a, 'event> {
     /// Adds an entry to the end of this section name `key` and `value`. If `value` is `None`, no equal sign will be written leaving
     /// just the key. This is useful for boolean values which are true if merely the key exists.
-    pub fn push<'b>(&mut self, key: Key<'event>, value: Option<&'b BStr>) {
-        self.push_with_comment_inner(key, value, None)
+    pub fn push<'b>(&mut self, key: Key<'event>, value: Option<&'b BStr>) -> &mut Self {
+        self.push_with_comment_inner(key, value, None);
+        self
     }
 
     /// Adds an entry to the end of this section name `key` and `value`. If `value` is `None`, no equal sign will be written leaving
@@ -43,8 +44,9 @@ impl<'a, 'event> SectionMut<'a, 'event> {
         key: Key<'event>,
         value: Option<&'b BStr>,
         comment: impl Into<&'c BStr>,
-    ) {
-        self.push_with_comment_inner(key, value, comment.into().into())
+    ) -> &mut Self {
+        self.push_with_comment_inner(key, value, comment.into().into());
+        self
     }
 
     fn push_with_comment_inner(&mut self, key: Key<'event>, value: Option<&BStr>, comment: Option<&BStr>) {
@@ -149,11 +151,12 @@ impl<'a, 'event> SectionMut<'a, 'event> {
 
     /// Adds a new line event. Note that you don't need to call this unless
     /// you've disabled implicit newlines.
-    pub fn push_newline(&mut self) {
+    pub fn push_newline(&mut self) -> &mut Self {
         self.section
             .body
             .0
             .push(Event::Newline(Cow::Owned(BString::from(self.newline.to_vec()))));
+        self
     }
 
     /// Return the newline used when calling [`push_newline()`][Self::push_newline()].
@@ -163,8 +166,9 @@ impl<'a, 'event> SectionMut<'a, 'event> {
 
     /// Enables or disables automatically adding newline events after adding
     /// a value. This is _enabled by default_.
-    pub fn set_implicit_newline(&mut self, on: bool) {
+    pub fn set_implicit_newline(&mut self, on: bool) -> &mut Self {
         self.implicit_newline = on;
+        self
     }
 
     /// Sets the exact whitespace to use before each newly created key-value pair,
@@ -177,7 +181,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
     ///
     /// If non-whitespace characters are used. This makes the method only suitable for validated
     /// or known input.
-    pub fn set_leading_whitespace(&mut self, whitespace: Option<Cow<'event, BStr>>) {
+    pub fn set_leading_whitespace(&mut self, whitespace: Option<Cow<'event, BStr>>) -> &mut Self {
         assert!(
             whitespace
                 .as_deref()
@@ -185,6 +189,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
             "input whitespace must only contain whitespace characters."
         );
         self.whitespace.pre_key = whitespace;
+        self
     }
 
     /// Returns the whitespace this section will insert before the
