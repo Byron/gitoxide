@@ -1,10 +1,10 @@
 use bstr::{BString, ByteVec};
-use git_credentials::{helper, protocol::Context, Program};
 use git_testtools::fixture_path;
+use gix_credentials::{helper, protocol::Context, Program};
 
 #[test]
 fn get() {
-    let mut outcome = git_credentials::helper::invoke(
+    let mut outcome = gix_credentials::helper::invoke(
         &mut script_helper("last-pass"),
         &helper::Action::get_for_url("https://github.com/byron/gitoxide"),
     )
@@ -35,7 +35,7 @@ fn store_and_reject() {
         buf.into()
     };
     for action in [helper::Action::Store(ctxbuf()), helper::Action::Erase(ctxbuf())] {
-        let outcome = git_credentials::helper::invoke(&mut script_helper("last-pass"), &action).unwrap();
+        let outcome = gix_credentials::helper::invoke(&mut script_helper("last-pass"), &action).unwrap();
         assert!(
             outcome.is_none(),
             "store and erase have no outcome, they just shouldn't fail"
@@ -44,7 +44,7 @@ fn store_and_reject() {
 }
 
 mod program {
-    use git_credentials::{helper, program::Kind, Program};
+    use gix_credentials::{helper, program::Kind, Program};
 
     use crate::helper::invoke::script_helper;
 
@@ -52,7 +52,7 @@ mod program {
     fn builtin() {
         assert!(
             matches!(
-                git_credentials::helper::invoke(
+                gix_credentials::helper::invoke(
                     &mut Program::from_kind(Kind::Builtin).suppress_stderr(),
                     &helper::Action::get_for_url("/path/without/scheme/fails/with/error"),
                 )
@@ -66,7 +66,7 @@ mod program {
     #[test]
     fn script() {
         assert_eq!(
-            git_credentials::helper::invoke(
+            gix_credentials::helper::invoke(
                 &mut Program::from_custom_definition(
                     "!f() { test \"$1\" = get && echo \"password=pass\" && echo \"username=user\"; }; f"
                 ),
@@ -87,7 +87,7 @@ mod program {
     #[test]
     fn path_to_helper_script() -> crate::Result {
         assert_eq!(
-            git_credentials::helper::invoke(
+            gix_credentials::helper::invoke(
                 &mut Program::from_custom_definition(
                     gix_path::into_bstr(gix_path::realpath(git_testtools::fixture_path("custom-helper.sh"))?)
                         .into_owned()
@@ -108,7 +108,7 @@ mod program {
     #[test]
     fn path_to_helper_as_script_to_workaround_executable_bits() -> crate::Result {
         assert_eq!(
-            git_credentials::helper::invoke(
+            gix_credentials::helper::invoke(
                 &mut script_helper("custom-helper"),
                 &helper::Action::get_for_url("/does/not/matter")
             )?
@@ -130,5 +130,5 @@ pub fn script_helper(name: &str) -> Program {
     ))
     .into_owned();
     script.insert_str(0, "sh ");
-    Program::from_kind(git_credentials::program::Kind::ExternalShellScript(script))
+    Program::from_kind(gix_credentials::program::Kind::ExternalShellScript(script))
 }

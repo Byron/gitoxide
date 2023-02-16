@@ -1,8 +1,8 @@
-use git_credentials::{program, protocol};
+use gix_credentials::{program, protocol};
 
 /// Run like this `echo url=https://example.com | cargo run --example custom-helper -- get`
-pub fn main() -> Result<(), git_credentials::program::main::Error> {
-    git_credentials::program::main(
+pub fn main() -> Result<(), gix_credentials::program::main::Error> {
+    gix_credentials::program::main(
         std::env::args_os().skip(1),
         std::io::stdin(),
         std::io::stdout(),

@@ -1268,23 +1268,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-credentials"
-version = "0.9.1"
-dependencies = [
- "bstr",
- "document-features",
- "git-testtools",
- "gix-command",
- "gix-config-value",
- "gix-path",
- "gix-prompt",
- "gix-sec",
- "gix-url",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "git-date"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1599,9 +1582,9 @@ dependencies = [
  "document-features",
  "futures-io",
  "futures-lite",
- "git-credentials",
  "git-testtools",
  "git-transport",
+ "gix-credentials",
  "gix-features",
  "gix-hash",
  "gix-packetline",
@@ -1758,9 +1741,9 @@ dependencies = [
  "document-features",
  "futures-io",
  "futures-lite",
- "git-credentials",
  "git-pack",
  "gix-command",
+ "gix-credentials",
  "gix-features",
  "gix-hash",
  "gix-packetline",
@@ -1885,7 +1868,6 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "git-credentials",
  "git-diff",
  "git-discover 0.13.0",
  "git-index 0.12.3",
@@ -1900,6 +1882,7 @@ dependencies = [
  "gix-actor",
  "gix-attributes",
  "gix-config",
+ "gix-credentials",
  "gix-date",
  "gix-features",
  "gix-glob",
@@ -2022,6 +2005,23 @@ dependencies = [
  "document-features",
  "gix-path",
  "libc",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-credentials"
+version = "0.9.1"
+dependencies = [
+ "bstr",
+ "document-features",
+ "git-testtools",
+ "gix-command",
+ "gix-config-value",
+ "gix-path",
+ "gix-prompt",
+ "gix-sec",
+ "gix-url",
  "serde",
  "thiserror",
 ]

@@ -1,5 +1,5 @@
 mod destructure_url_in_place {
-    use git_credentials::protocol::Context;
+    use gix_credentials::protocol::Context;
 
     fn url_ctx(url: &str) -> Context {
         Context {
@@ -66,7 +66,7 @@ mod destructure_url_in_place {
 }
 
 mod to_prompt {
-    use git_credentials::protocol::Context;
+    use gix_credentials::protocol::Context;
 
     #[test]
     fn no_scheme_means_no_url() {
@@ -88,7 +88,7 @@ mod to_prompt {
 }
 
 mod to_url {
-    use git_credentials::protocol::Context;
+    use gix_credentials::protocol::Context;
 
     #[test]
     fn no_protocol_is_nothing() {

@@ -43,7 +43,7 @@ required-features = ["async-client"]
 gix-features = { version = "^0.26.4", path = "../gix-features", features = ["progress"] }
 git-transport = { version = "^0.25.4", path = "../git-transport" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
-git-credentials = { version = "^0.9.1", path = "../git-credentials" }
+gix-credentials = { version = "^0.9.1", path = "../gix-credentials" }
 
 thiserror = "1.0.32"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

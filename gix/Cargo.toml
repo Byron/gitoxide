@@ -66,7 +66,7 @@ serde1 = [  "serde",
             "gix-url/serde1",
             "gix-attributes/serde1",
             "git-revision/serde1",
-            "git-credentials/serde1" ]
+            "gix-credentials/serde1" ]
 
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
 ## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
@@ -118,7 +118,7 @@ gix-features = { version = "^0.26.4", path = "../gix-features", features = ["pro
 
 gix-attributes = { version = "^0.8.2", path = "../gix-attributes" }
 gix-glob = { version = "^0.5.3", path = "../gix-glob" }
-git-credentials = { version = "^0.9.1", path = "../git-credentials" }
+gix-credentials = { version = "^0.9.1", path = "../gix-credentials" }
 gix-prompt = { version = "^0.3.2", path = "../gix-prompt" }
 git-index = { version = "^0.12.3", path = "../git-index" }
 gix-worktree = { version = "^0.12.2", path = "../gix-worktree" }

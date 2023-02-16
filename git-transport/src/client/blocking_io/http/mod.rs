@@ -42,7 +42,7 @@ mod traits;
 pub mod options {
     /// A function to authenticate a URL.
     pub type AuthenticateFn =
-        dyn FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result + Send + Sync;
+        dyn FnMut(gix_credentials::helper::Action) -> gix_credentials::protocol::Result + Send + Sync;
 
     /// Possible settings for the `http.followRedirects` configuration option.
     #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -165,7 +165,7 @@ pub struct Options {
     /// If authentication is needed for the proxy as its URL contains a username, this method must be set to provide a password
     /// for it before making the request, and to store it if the connection succeeds.
     pub proxy_authenticate: Option<(
-        git_credentials::helper::Action,
+        gix_credentials::helper::Action,
         Arc<std::sync::Mutex<options::AuthenticateFn>>,
     )>,
     /// The `HTTP` `USER_AGENT` string presented to an `HTTP` server, notably not the user agent present to the `git` server.

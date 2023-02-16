@@ -1,4 +1,4 @@
-use git_credentials::protocol::Context;
+use gix_credentials::protocol::Context;
 
 #[test]
 fn encode_decode_roundtrip_works_only_for_serializing_fields() {
@@ -22,7 +22,7 @@ fn encode_decode_roundtrip_works_only_for_serializing_fields() {
 }
 
 mod write_to {
-    use git_credentials::protocol::Context;
+    use gix_credentials::protocol::Context;
 
     #[test]
     fn quit_is_not_serialized_but_can_be_parsed() {
@@ -59,7 +59,7 @@ mod write_to {
 }
 
 mod from_bytes {
-    use git_credentials::protocol::Context;
+    use gix_credentials::protocol::Context;
 
     #[test]
     fn empty_newlines_cause_skipping_remaining_input() {
@@ -117,7 +117,7 @@ username=bob";
         let err = Context::from_bytes(b"url=https://foo\0").unwrap_err();
         assert!(matches!(
             err,
-            git_credentials::protocol::context::decode::Error::Encoding(_)
+            gix_credentials::protocol::context::decode::Error::Encoding(_)
         ));
     }
 }

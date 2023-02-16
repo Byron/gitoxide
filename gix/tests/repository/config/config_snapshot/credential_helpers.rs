@@ -85,7 +85,7 @@ mod baseline {
             .programs
             .iter()
             .map(|p| match &p.kind {
-                git_credentials::program::Kind::ExternalName { name_and_args } => name_and_args
+                gix_credentials::program::Kind::ExternalName { name_and_args } => name_and_args
                     .strip_prefix(b"git credential-")
                     .expect("resolved name")
                     .into(),

@@ -591,7 +591,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-credentials"
+name = "gix-credentials"
 version = "0.2.0"
 dependencies = [
  "bstr",
@@ -799,7 +799,7 @@ dependencies = [
  "gix-actor",
  "gix-attributes",
  "gix-config",
- "git-credentials",
+ "gix-credentials",
  "git-diff",
  "git-discover",
  "gix-features",

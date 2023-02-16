@@ -49,8 +49,8 @@ impl Snapshot<'_> {
         mut url: gix_url::Url,
     ) -> Result<
         (
-            git_credentials::helper::Cascade,
-            git_credentials::helper::Action,
+            gix_credentials::helper::Cascade,
+            gix_credentials::helper::Action,
             gix_prompt::Options<'static>,
         ),
         Error,
@@ -103,7 +103,7 @@ impl Snapshot<'_> {
                         if value.trim().is_empty() {
                             programs.clear();
                         } else {
-                            programs.push(git_credentials::Program::from_custom_definition(value.into_owned()));
+                            programs.push(gix_credentials::Program::from_custom_definition(value.into_owned()));
                         }
                     }
                     if let Some(Some(user)) = (!url_had_user_initially).then(|| {
@@ -146,14 +146,14 @@ impl Snapshot<'_> {
         }
         .apply_environment(allow_git_env, allow_ssh_env, allow_git_env);
         Ok((
-            git_credentials::helper::Cascade {
+            gix_credentials::helper::Cascade {
                 programs,
                 use_http_path,
                 // The default ssh implementation uses binaries that do their own auth, so our passwords aren't used.
                 query_user_only: url.scheme == gix_url::Scheme::Ssh,
                 ..Default::default()
             },
-            git_credentials::helper::Action::get_for_url(url.to_bstring()),
+            gix_credentials::helper::Action::get_for_url(url.to_bstring()),
             prompt_options,
         ))
     }

@@ -305,7 +305,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
 ### git-protocol
 * _abstract over protocol versions to allow delegates to deal only with a single way of doing things_
 * [x] **credentials**
-    * [x] via git-credentials
+    * [x] via gix-credentials
     * [ ] via pure Rust implementation if no git is installed
 * [x] handshake
     * parse initial response of V1 and V2 servers
@@ -395,7 +395,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 * [ ] parse git dates
 * [ ] serialize `Time`
  
-### git-credentials
+### gix-credentials
 * [x] launch git credentials helpers with a given action
   - [x] built-in `git credential` program
   - [x] as scripts
@@ -593,7 +593,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
     * [x] access to refs and objects
     * **credentials**
       * [x] run `git credential` directly
-      * [x] use credential helper configuration and to obtain credentials with `git_credentials::helper::Cascade`
+      * [x] use credential helper configuration and to obtain credentials with `gix_credentials::helper::Cascade`
     * **config**
       * [ ] facilities to apply the [url-match](https://git-scm.com/docs/gix-config#Documentation/gix-config.txt-httplturlgt) algorithm and to
             [normalize urls](https://github.com/git/git/blob/be1a02a17ede4082a86dfbfee0f54f345e8b43ac/urlmatch.c#L109:L109) before comparison.

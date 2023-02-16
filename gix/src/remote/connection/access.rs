@@ -18,7 +18,7 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
     /// URLs to authenticate with.
     pub fn with_credentials(
         mut self,
-        helper: impl FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result + 'a,
+        helper: impl FnMut(gix_credentials::helper::Action) -> gix_credentials::protocol::Result + 'a,
     ) -> Self {
         self.authenticate = Some(Box::new(helper));
         self

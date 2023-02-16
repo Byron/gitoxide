@@ -69,7 +69,7 @@ is usable to some extent.
   * [git-diff](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-diff)
   * [gix-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-traverse)
   * [gix-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-features)
-  * [git-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-credentials)
+  * [gix-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-credentials)
   * [gix-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-sec)
   * [gix-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-quote)
   * [git-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-discover)

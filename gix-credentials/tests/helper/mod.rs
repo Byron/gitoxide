@@ -3,7 +3,7 @@ mod context;
 mod invoke;
 
 mod invoke_outcome_to_helper_result {
-    use git_credentials::{helper, protocol, protocol::helper_outcome_to_result};
+    use gix_credentials::{helper, protocol, protocol::helper_outcome_to_result};
 
     #[test]
     fn missing_username_or_password_causes_failure_with_get_action() {

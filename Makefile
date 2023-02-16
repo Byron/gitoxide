@@ -73,7 +73,7 @@ check: ## Build all code in suitable configurations
 	cd gix-object && cargo check --all-features \
                   && cargo check --features verbose-object-parsing-errors
 	cd git-index && cargo check --features serde1
-	cd git-credentials && cargo check --features serde1
+	cd gix-credentials && cargo check --features serde1
 	cd gix-sec && cargo check --features serde1
 	cd git-revision && cargo check --features serde1
 	cd gix-attributes && cargo check --features serde1

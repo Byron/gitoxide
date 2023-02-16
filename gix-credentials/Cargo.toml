@@ -1,5 +1,5 @@
 [package]
-name = "git-credentials"
+name = "gix-credentials"
 version = "0.9.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

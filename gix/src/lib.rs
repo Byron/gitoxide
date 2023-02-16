@@ -66,7 +66,6 @@
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
-pub use git_credentials as credentials;
 #[doc(inline)]
 pub use git_index as index;
 pub use git_odb as odb;
@@ -75,6 +74,7 @@ pub use git_protocol as protocol;
 pub use git_refspec as refspec;
 pub use gix_actor as actor;
 pub use gix_attributes as attrs;
+pub use gix_credentials as credentials;
 pub use gix_date as date;
 pub use gix_features as features;
 use gix_features::threading::OwnShared;

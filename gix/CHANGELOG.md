@@ -844,7 +844,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
 
 ### New Features (BREAKING)
 
- - <csr-id-32dc1829a5661f66396d109c8d0a8eaae6b1f532/> use `git-credentials` in `git-protocol`
+ - <csr-id-32dc1829a5661f66396d109c8d0a8eaae6b1f532/> use `gix-credentials` in `git-protocol`
 
 ## 0.16.0 (2022-04-05)
 

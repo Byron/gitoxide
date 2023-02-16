@@ -2,13 +2,13 @@ mod invoke {
     use std::convert::TryInto;
 
     use bstr::{ByteSlice, ByteVec};
-    use git_credentials::{
+    use git_testtools::fixture_path;
+    use gix_credentials::{
         helper::{Action, Cascade},
         program, protocol,
         protocol::Context,
         Program,
     };
-    use git_testtools::fixture_path;
     use gix_sec::identity::Account;
 
     #[test]
