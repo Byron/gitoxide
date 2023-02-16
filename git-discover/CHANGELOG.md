@@ -196,7 +196,7 @@ A maintenance release without user-facing changes.
     - improve error verbosity when fetching and cloning ([`40f7379`](https://github.com/Byron/gitoxide/commit/40f7379b7a89f7fe6f916801384e9e65e5b85c57))
     - read worktree specific configuration to override the one from the shared repository. ([`d1b7ec6`](https://github.com/Byron/gitoxide/commit/d1b7ec605f8016c52c088477b6b0c5adf7ea0ab2))
     - fix typo in docs ([`2d9b2f1`](https://github.com/Byron/gitoxide/commit/2d9b2f16d938e1a4a391534df37f99f1c64c8ea6))
-    - Release gix-hash v0.10.1, git-hashtable v0.1.0 ([`7717170`](https://github.com/Byron/gitoxide/commit/771717095d9a67b0625021eb0928828ab686e772))
+    - Release gix-hash v0.10.1, gix-hashtable v0.1.0 ([`7717170`](https://github.com/Byron/gitoxide/commit/771717095d9a67b0625021eb0928828ab686e772))
     - Merge branch 'main' into http-config ([`6b9632e`](https://github.com/Byron/gitoxide/commit/6b9632e16c416841ffff1b767ee7a6c89b421220))
     - Merge branch 'path-normalize' ([`805329a`](https://github.com/Byron/gitoxide/commit/805329a0a5f6543bbc1d5885977b47bf7baa7f08))
     - adjust for changes in `gix-path` ([`cf25e35`](https://github.com/Byron/gitoxide/commit/cf25e3594b99909defb431f34fb3a4d8a25bd37c))

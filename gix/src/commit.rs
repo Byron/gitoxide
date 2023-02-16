@@ -25,9 +25,9 @@ pub enum Error {
 pub mod describe {
     use std::borrow::Cow;
 
-    use git_hashtable::HashMap;
     use git_odb::Find;
     use gix_hash::ObjectId;
+    use gix_hashtable::HashMap;
 
     use crate::{bstr::BStr, ext::ObjectIdExt, Repository};
 

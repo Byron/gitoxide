@@ -100,7 +100,7 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 * [x] decode the chunk file table of contents and provide convenient API
 * [x] write the table of contents
 
-### git-hashtable
+### gix-hashtable
 
 * [x] hashmap
 * [x] hashset

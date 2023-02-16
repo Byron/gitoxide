@@ -6,11 +6,11 @@ mod trait_impls {
     use std::{cell::RefCell, hash::Hash};
 
     use dashmap::DashSet;
-    use git_hashtable::HashSet;
+    use gix_hashtable::HashSet;
 
     use super::InsertImmutable;
 
-    impl<T: Eq + Hash> InsertImmutable<T> for DashSet<T, git_hashtable::hash::Builder> {
+    impl<T: Eq + Hash> InsertImmutable<T> for DashSet<T, gix_hashtable::hash::Builder> {
         fn insert(&self, item: T) -> bool {
             self.insert(item)
         }

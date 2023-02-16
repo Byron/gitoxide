@@ -1404,14 +1404,6 @@ dependencies = [
 [[package]]
 name = "git-hashtable"
 version = "0.1.1"
-dependencies = [
- "gix-hash",
- "hashbrown 0.13.2",
-]
-
-[[package]]
-name = "git-hashtable"
-version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04d8fc616344cd80b66067aeacc0af6acc2d4fbe63218077b8a2fa0990abdf52"
 dependencies = [
@@ -1561,11 +1553,11 @@ dependencies = [
  "document-features",
  "git-chunk",
  "git-diff",
- "git-hashtable 0.1.1",
  "git-testtools",
  "git-traverse 0.22.1",
  "gix-features",
  "gix-hash",
+ "gix-hashtable",
  "gix-object",
  "gix-path",
  "gix-tempfile",
@@ -1712,9 +1704,9 @@ version = "0.10.3"
 dependencies = [
  "bstr",
  "document-features",
- "git-hashtable 0.1.1",
  "gix-date",
  "gix-hash",
+ "gix-hashtable",
  "gix-object",
  "serde",
  "thiserror",
@@ -1826,8 +1818,8 @@ dependencies = [
 name = "git-traverse"
 version = "0.22.1"
 dependencies = [
- "git-hashtable 0.1.1",
  "gix-hash",
+ "gix-hashtable",
  "gix-object",
  "thiserror",
 ]
@@ -1839,7 +1831,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68bb2a1f145c1e2ddd80d7fc3012b5bf89739e7bf0dd3f2f142ff58f3232cd05"
 dependencies = [
  "git-hash",
- "git-hashtable 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-hashtable",
  "git-object",
  "thiserror",
 ]
@@ -1957,7 +1949,6 @@ dependencies = [
  "git-credentials",
  "git-diff",
  "git-discover 0.13.0",
- "git-hashtable 0.1.1",
  "git-index 0.12.3",
  "git-mailmap",
  "git-odb",
@@ -1976,6 +1967,7 @@ dependencies = [
  "gix-features",
  "gix-glob",
  "gix-hash",
+ "gix-hashtable",
  "gix-lock",
  "gix-object",
  "gix-path",
@@ -2146,6 +2138,14 @@ dependencies = [
  "hex",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "gix-hashtable"
+version = "0.1.1"
+dependencies = [
+ "gix-hash",
+ "hashbrown 0.13.2",
 ]
 
 [[package]]

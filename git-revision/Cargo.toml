@@ -21,7 +21,7 @@ serde1 = [ "serde", "gix-hash/serde1", "gix-object/serde1" ]
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-object = { version = "^0.26.1", path = "../gix-object" }
 gix-date = { version = "^0.4.2", path = "../gix-date" }
-git-hashtable = { version = "^0.1.1", path = "../git-hashtable" }
+gix-hashtable = { version = "^0.1.1", path = "../gix-hashtable" }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std"]}
 thiserror = "1.0.26"

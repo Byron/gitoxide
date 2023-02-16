@@ -60,8 +60,8 @@ pub mod ancestors {
         iter::FromIterator,
     };
 
-    use git_hashtable::HashSet;
     use gix_hash::{oid, ObjectId};
+    use gix_hashtable::HashSet;
     use gix_object::CommitRefIter;
 
     use crate::commit::{Ancestors, Parents, Sorting};

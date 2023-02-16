@@ -227,7 +227,7 @@ A maintenance release without user-facing changes.
     - Merge branch 'fixture-async' ([`eca6705`](https://github.com/Byron/gitoxide/commit/eca670585db212985d653cb2c6ec3636ec560905))
     - async version of ref-line parsing now reads line by line. ([`dadd896`](https://github.com/Byron/gitoxide/commit/dadd8964ec551702908055476df10624b266a79f))
     - Add `Fixture` implementation for `async`. ([`b583c2a`](https://github.com/Byron/gitoxide/commit/b583c2a631a68429aa84f33212586c7c2d1165e5))
-    - Release gix-hash v0.10.1, git-hashtable v0.1.0 ([`7717170`](https://github.com/Byron/gitoxide/commit/771717095d9a67b0625021eb0928828ab686e772))
+    - Release gix-hash v0.10.1, gix-hashtable v0.1.0 ([`7717170`](https://github.com/Byron/gitoxide/commit/771717095d9a67b0625021eb0928828ab686e772))
     - Merge branch 'remove-lines-parsing' ([`9d8e32d`](https://github.com/Byron/gitoxide/commit/9d8e32d3c276fec34e3fce0feb29de0d24a8d1d2))
     - Parse refs from bytes, not from String. ([`806b8c2`](https://github.com/Byron/gitoxide/commit/806b8c2ef392137f3a6ebd0f28da2a3a07a9f3eb))
     - adapt to changes in `git-transport` ([`49461b1`](https://github.com/Byron/gitoxide/commit/49461b1ca92e301734c090220936941fca57db0e))
