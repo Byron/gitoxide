@@ -24,6 +24,6 @@ An empty crate without any content to reserve the name for the gitoxide project.
 <details><summary>view details</summary>
 
  * **[#396](https://github.com/Byron/gitoxide/issues/396)**
-    - Add git-sequencer crate ([`f8160d0`](https://github.com/Byron/gitoxide/commit/f8160d0d0caa6e616a6d0efed346722d093ad60a))
+    - Add gix-sequencer crate ([`f8160d0`](https://github.com/Byron/gitoxide/commit/f8160d0d0caa6e616a6d0efed346722d093ad60a))
 </details>
 

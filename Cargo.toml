@@ -159,7 +159,7 @@ members = [
     "gix-sec",
     "git-lfs",
     "git-rebase",
-    "git-sequencer",
+    "gix-sequencer",
     "gix-submodule",
     "gix-transport",
     "gix-credentials",

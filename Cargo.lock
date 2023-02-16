@@ -1681,7 +1681,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-sequencer"
+name = "gix-sequencer"
 version = "0.0.0"
 
 [[package]]

@@ -423,7 +423,7 @@ Provides a trust model to share across gitoxide crates. It helps configuring how
 * [ ] obtain rebase status
 * [ ] drive a rebase operation
 
-### git-sequencer
+### gix-sequencer
 
 Handle human-aided operations which cannot be completed in one command invocation.
 
