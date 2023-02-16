@@ -1,5 +1,5 @@
 [package]
-name = "git-protocol"
+name = "gix-protocol"
 version = "0.26.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

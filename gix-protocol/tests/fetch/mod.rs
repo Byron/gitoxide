@@ -1,7 +1,7 @@
 use std::{borrow::Cow, io};
 
 use bstr::{BString, ByteSlice};
-use git_protocol::{
+use gix_protocol::{
     fetch::{self, Action, Arguments, Response},
     handshake, ls_refs,
 };
@@ -149,8 +149,8 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
 mod blocking_io {
     use std::io;
 
-    use git_protocol::{fetch, fetch::Response, handshake, handshake::Ref};
     use gix_features::progress::Progress;
+    use gix_protocol::{fetch, fetch::Response, handshake, handshake::Ref};
 
     use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 
@@ -205,8 +205,8 @@ mod async_io {
 
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
-    use git_protocol::{fetch, fetch::Response, handshake, handshake::Ref};
     use gix_features::progress::Progress;
+    use gix_protocol::{fetch, fetch::Response, handshake, handshake::Ref};
 
     use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 

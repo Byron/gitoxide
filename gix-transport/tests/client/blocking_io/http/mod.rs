@@ -282,8 +282,8 @@ fn handshake_v1() -> crate::Result {
             "e8df6c1ffb7afa27aff9abbe11c7e4b80d19b61e refs/tags/git-odb-v0.3.0^{}",
             "d5d9eabaa9f190e535771c8dcc9fd1bcf69b7947 refs/tags/gix-packetline-v0.1.0",
             "9d6b8790e2edd7fa01b3239adff86a7cd2393f10 refs/tags/gix-packetline-v0.1.0^{}",
-            "defd2a7783ab4618f41c270477921aa2336693db refs/tags/git-protocol-v0.0.0",
-            "14615143dc170217ca4acc80191f4e6725dc460a refs/tags/git-protocol-v0.0.0^{}",
+            "defd2a7783ab4618f41c270477921aa2336693db refs/tags/gix-protocol-v0.0.0",
+            "14615143dc170217ca4acc80191f4e6725dc460a refs/tags/gix-protocol-v0.0.0^{}",
             "7e168eef62b8ad6ddd49e4e50d500761b84cfb4f refs/tags/gix-ref-v0.1.0",
             "e66c9ed041c7ebede869e899ecd4398fee47028b refs/tags/gix-ref-v0.1.0^{}",
             "fde229329d5d4540d21a04dcaf8cfb13a1e8a8c5 refs/tags/gix-ref-v0.2.0",
@@ -349,9 +349,9 @@ fn clone_v1() -> crate::Result {
             .received_as_string()
             .lines()
             .map(|l| l.to_lowercase())
-            .find(|l| l.starts_with("git-protocol"))
-            .expect("git-protocol header"),
-        "git-protocol: key=value:value-only",
+            .find(|l| l.starts_with("gix-protocol"))
+            .expect("gix-protocol header"),
+        "gix-protocol: key=value:value-only",
         "it writes extra-parameters without the version"
     );
 

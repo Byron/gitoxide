@@ -412,7 +412,7 @@ impl crate::Repository {
                             .transpose()
                             .with_leniency(lenient)
                             .map_err(config::transport::http::Error::from)?;
-                        let backend = git_protocol::transport::client::http::curl::Options { schannel_check_revoke };
+                        let backend = gix_protocol::transport::client::http::curl::Options { schannel_check_revoke };
                         opts.backend =
                             Some(Arc::new(Mutex::new(backend)) as Arc<Mutex<dyn Any + Send + Sync + 'static>>);
                     }

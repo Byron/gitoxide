@@ -256,7 +256,7 @@ mod update {
         let repo = repo("two-origins");
         let (mut mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/remotes/origin/new", &repo);
         mappings.push(Mapping {
-            remote: Source::Ref(git_protocol::handshake::Ref::Direct {
+            remote: Source::Ref(gix_protocol::handshake::Ref::Direct {
                 full_ref_name: "refs/heads/main".try_into().unwrap(),
                 object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
             }),
@@ -375,7 +375,7 @@ mod update {
         let repo = repo("two-origins");
         let (mut mappings, specs) = mapping_from_spec("HEAD:refs/remotes/origin/new-HEAD", &repo);
         mappings.push(Mapping {
-            remote: Source::Ref(git_protocol::handshake::Ref::Direct {
+            remote: Source::Ref(gix_protocol::handshake::Ref::Direct {
                 full_ref_name: "refs/heads/main".try_into().unwrap(),
                 object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
             }),
@@ -573,17 +573,17 @@ mod update {
         (mappings, vec![spec.to_owned()])
     }
 
-    fn into_remote_ref(mut r: gix::Reference<'_>) -> git_protocol::handshake::Ref {
+    fn into_remote_ref(mut r: gix::Reference<'_>) -> gix_protocol::handshake::Ref {
         let full_ref_name = r.name().as_bstr().into();
         match r.target() {
-            TargetRef::Peeled(id) => git_protocol::handshake::Ref::Direct {
+            TargetRef::Peeled(id) => gix_protocol::handshake::Ref::Direct {
                 full_ref_name,
                 object: id.into(),
             },
             TargetRef::Symbolic(name) => {
                 let target = name.as_bstr().into();
                 let id = r.peel_to_id_in_place().unwrap();
-                git_protocol::handshake::Ref::Symbolic {
+                gix_protocol::handshake::Ref::Symbolic {
                     full_ref_name,
                     target,
                     object: id.detach(),
@@ -592,7 +592,7 @@ mod update {
         }
     }
 
-    fn remote_ref_to_item(r: &git_protocol::handshake::Ref) -> gix_refspec::match_group::Item<'_> {
+    fn remote_ref_to_item(r: &gix_protocol::handshake::Ref) -> gix_refspec::match_group::Item<'_> {
         let (full_ref_name, target, object) = r.unpack();
         gix_refspec::match_group::Item {
             full_ref_name,

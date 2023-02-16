@@ -120,10 +120,10 @@ check: ## Build all code in suitable configurations
 					 && cargo check --features http-client-curl \
 					 && cargo check --features http-client-reqwest
 	cd gix-transport && if cargo check --all-features 2>/dev/null; then false; else true; fi
-	cd git-protocol && cargo check \
+	cd gix-protocol && cargo check \
 					&& cargo check --features blocking-client \
 					&& cargo check --features async-client
-	cd git-protocol && if cargo check --all-features 2>/dev/null; then false; else true; fi
+	cd gix-protocol && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd gix && cargo check --no-default-features --features async-network-client \
 					  && cargo check --no-default-features --features async-network-client-async-std \
 					  && cargo check --no-default-features --features blocking-network-client \
@@ -154,7 +154,7 @@ unit-tests: ## run all unit tests
 					 && cargo test --features http-client-curl,maybe-async/is_sync \
 					 && cargo test --features http-client-reqwest,maybe-async/is_sync \
 					 && cargo test --features async-client
-	cd git-protocol && cargo test --features blocking-client \
+	cd gix-protocol && cargo test --features blocking-client \
 					&& cargo test --features async-client \
 					&& cargo test
 	cd gix && cargo test \

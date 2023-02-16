@@ -163,7 +163,7 @@ members = [
     "gix-submodule",
     "gix-transport",
     "gix-credentials",
-    "git-protocol",
+    "gix-protocol",
     "git-pack",
     "git-odb",
     "gix-tempfile",

@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
-use git_protocol::{fetch, handshake, ls_refs, FetchConnection};
 use gix_features::progress;
+use gix_protocol::{fetch, handshake, ls_refs, FetchConnection};
 use gix_transport::Protocol;
 
 use crate::fetch::{helper_unused, oid, transport, CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
@@ -19,7 +19,7 @@ async fn clone_abort_prep() -> crate::Result {
         gix_transport::client::git::ConnectMode::Daemon,
     );
     let agent = "agent";
-    let err = git_protocol::fetch(
+    let err = gix_protocol::fetch(
         &mut transport,
         &mut dlg,
         helper_unused,
@@ -39,7 +39,7 @@ async fn clone_abort_prep() -> crate::Result {
 0001000csymrefs
 0009peel
 00000000",
-            git_protocol::agent(agent)
+            gix_protocol::agent(agent)
         )
         .as_bytes()
         .as_bstr()
@@ -65,7 +65,7 @@ async fn ls_remote() -> crate::Result {
         gix_transport::client::git::ConnectMode::Daemon,
     );
     let agent = "agent";
-    git_protocol::fetch(
+    gix_protocol::fetch(
         &mut transport,
         &mut delegate,
         helper_unused,
@@ -97,7 +97,7 @@ async fn ls_remote() -> crate::Result {
 0001000csymrefs
 0009peel
 0000",
-            git_protocol::agent(agent)
+            gix_protocol::agent(agent)
         )
         .as_bytes()
         .as_bstr(),
@@ -119,7 +119,7 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
         Protocol::V2,
         gix_transport::client::git::ConnectMode::Daemon,
     );
-    let err = git_protocol::fetch(
+    let err = gix_protocol::fetch(
         &mut transport,
         &mut delegate,
         helper_unused,
@@ -160,7 +160,7 @@ async fn ref_in_want() -> crate::Result {
     );
 
     let agent = "agent";
-    git_protocol::fetch(
+    gix_protocol::fetch(
         &mut transport,
         &mut delegate,
         helper_unused,
@@ -189,7 +189,7 @@ async fn ref_in_want() -> crate::Result {
 001dwant-ref refs/heads/main
 0009done
 00000000",
-            git_protocol::agent(agent)
+            gix_protocol::agent(agent)
         )
         .as_bytes()
         .as_bstr()

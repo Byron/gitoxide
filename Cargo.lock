@@ -1572,29 +1572,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-protocol"
-version = "0.26.3"
-dependencies = [
- "async-std",
- "async-trait",
- "bstr",
- "btoi",
- "document-features",
- "futures-io",
- "futures-lite",
- "git-testtools",
- "gix-credentials",
- "gix-features",
- "gix-hash",
- "gix-packetline",
- "gix-transport",
- "maybe-async",
- "nom",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "git-quote"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1604,10 +1581,6 @@ dependencies = [
  "btoi",
  "quick-error 2.0.1",
 ]
-
-[[package]]
-name = "gix-rebase"
-version = "0.0.0"
 
 [[package]]
 name = "git-ref"
@@ -1794,7 +1767,6 @@ dependencies = [
  "git-mailmap",
  "git-odb",
  "git-pack",
- "git-protocol",
  "git-testtools",
  "gix-actor",
  "gix-attributes",
@@ -1809,6 +1781,7 @@ dependencies = [
  "gix-object",
  "gix-path",
  "gix-prompt",
+ "gix-protocol",
  "gix-ref",
  "gix-refspec",
  "gix-revision",
@@ -2101,6 +2074,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-protocol"
+version = "0.26.3"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "bstr",
+ "btoi",
+ "document-features",
+ "futures-io",
+ "futures-lite",
+ "git-testtools",
+ "gix-credentials",
+ "gix-features",
+ "gix-hash",
+ "gix-packetline",
+ "gix-transport",
+ "maybe-async",
+ "nom",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "gix-quote"
 version = "0.4.1"
 dependencies = [
@@ -2108,6 +2104,10 @@ dependencies = [
  "btoi",
  "quick-error 2.0.1",
 ]
+
+[[package]]
+name = "gix-rebase"
+version = "0.0.0"
 
 [[package]]
 name = "gix-ref"

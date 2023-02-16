@@ -1,4 +1,4 @@
-use git_protocol::transport::client::Transport;
+use gix_protocol::transport::client::Transport;
 
 use crate::{
     bstr::BString,
@@ -106,7 +106,7 @@ pub mod prepare {
         RefMap(#[from] crate::remote::ref_map::Error),
     }
 
-    impl git_protocol::transport::IsSpuriousError for Error {
+    impl gix_protocol::transport::IsSpuriousError for Error {
         fn is_spurious(&self) -> bool {
             match self {
                 Error::RefMap(err) => err.is_spurious(),
@@ -134,7 +134,7 @@ where
     /// making this call block the executor.
     /// It's best to unblock it by placing it into its own thread or offload it should usage in an async context be truly required.
     #[allow(clippy::result_large_err)]
-    #[git_protocol::maybe_async::maybe_async]
+    #[gix_protocol::maybe_async::maybe_async]
     pub async fn prepare_fetch(
         mut self,
         options: ref_map::Options,
@@ -226,14 +226,14 @@ where
                 //       Right now we block the executor by forcing this communication, but that only
                 //       happens if the user didn't actually try to receive a pack, which consumes the
                 //       connection in an async context.
-                git_protocol::futures_lite::future::block_on(git_protocol::indicate_end_of_interaction(
+                gix_protocol::futures_lite::future::block_on(gix_protocol::indicate_end_of_interaction(
                     &mut con.transport,
                 ))
                 .ok();
             }
             #[cfg(not(feature = "async-network-client"))]
             {
-                git_protocol::indicate_end_of_interaction(&mut con.transport).ok();
+                gix_protocol::indicate_end_of_interaction(&mut con.transport).ok();
             }
         }
     }

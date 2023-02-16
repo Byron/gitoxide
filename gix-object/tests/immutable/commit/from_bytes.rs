@@ -154,7 +154,7 @@ fn with_trailer() -> crate::Result {
             author: kim,
             committer: kim,
             encoding: None,
-            message: b"test: use gitoxide for link-git-protocol tests
+            message: b"test: use gitoxide for link-gix-protocol tests
 
 Showcases the abilities of the `git-repository` crate, and standardises
 on using the re-exports through this crate for [stability] reasons
@@ -169,7 +169,7 @@ Signed-off-by: Kim Altintop <kim@eagain.st>"
         }
     );
     let message = commit.message();
-    assert_eq!(message.title, "test: use gitoxide for link-git-protocol tests");
+    assert_eq!(message.title, "test: use gitoxide for link-gix-protocol tests");
     assert_eq!(
         message.body,
         Some(

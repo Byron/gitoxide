@@ -90,7 +90,7 @@ mod http {
                 .as_ref()
                 .map(|b| b.lock().expect("not poisoned"))
                 .expect("backend is set for curl due to specific options");
-            match backend.downcast_ref::<git_protocol::transport::client::http::curl::Options>() {
+            match backend.downcast_ref::<gix_protocol::transport::client::http::curl::Options>() {
                 Some(opts) => {
                     assert_eq!(opts.schannel_check_revoke, Some(true));
                 }

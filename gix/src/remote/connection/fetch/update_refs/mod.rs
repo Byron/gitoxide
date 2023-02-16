@@ -191,7 +191,7 @@ pub(crate) fn update(
                             message: message.compose(reflog_message),
                         },
                         expected: previous_value,
-                        new: if let Source::Ref(git_protocol::handshake::Ref::Symbolic { target, .. }) = &remote {
+                        new: if let Source::Ref(gix_protocol::handshake::Ref::Symbolic { target, .. }) = &remote {
                             match mappings.iter().find_map(|m| {
                                 m.remote.as_name().and_then(|name| {
                                     (name == target)

@@ -168,10 +168,10 @@ mod key_impls {
             &'static self,
             value: std::borrow::Cow<'_, crate::bstr::BStr>,
         ) -> Result<
-            git_protocol::transport::client::http::options::HttpVersion,
+            gix_protocol::transport::client::http::options::HttpVersion,
             crate::config::key::GenericErrorWithValue,
         > {
-            use git_protocol::transport::client::http::options::HttpVersion;
+            use gix_protocol::transport::client::http::options::HttpVersion;
             Ok(match value.as_ref().as_ref() {
                 b"HTTP/1.1" => HttpVersion::V1_1,
                 b"HTTP/2" => HttpVersion::V2,
@@ -194,10 +194,10 @@ mod key_impls {
             &'static self,
             value: std::borrow::Cow<'_, crate::bstr::BStr>,
         ) -> Result<
-            git_protocol::transport::client::http::options::ProxyAuthMethod,
+            gix_protocol::transport::client::http::options::ProxyAuthMethod,
             crate::config::key::GenericErrorWithValue,
         > {
-            use git_protocol::transport::client::http::options::ProxyAuthMethod;
+            use gix_protocol::transport::client::http::options::ProxyAuthMethod;
             Ok(match value.as_ref().as_ref() {
                 b"anyauth" => ProxyAuthMethod::AnyAuth,
                 b"basic" => ProxyAuthMethod::Basic,
@@ -222,9 +222,9 @@ mod key_impls {
         pub fn try_into_ssl_version(
             &'static self,
             value: std::borrow::Cow<'_, crate::bstr::BStr>,
-        ) -> Result<git_protocol::transport::client::http::options::SslVersion, crate::config::ssl_version::Error>
+        ) -> Result<gix_protocol::transport::client::http::options::SslVersion, crate::config::ssl_version::Error>
         {
-            use git_protocol::transport::client::http::options::SslVersion::*;
+            use gix_protocol::transport::client::http::options::SslVersion::*;
             Ok(match value.as_ref().as_ref() {
                 b"default" | b"" => Default,
                 b"tlsv1" => TlsV1,

@@ -1,6 +1,6 @@
 mod parse {
     use bstr::ByteSlice;
-    use git_protocol::RemoteProgress;
+    use gix_protocol::RemoteProgress;
 
     #[test]
     fn a_message_we_dont_understand() {

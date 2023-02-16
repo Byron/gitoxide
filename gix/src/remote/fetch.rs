@@ -66,11 +66,11 @@ pub struct RefMap {
     /// Information about the fixes applied to the `mapping` due to validation and sanitization.
     pub fixes: Vec<gix_refspec::match_group::validate::Fix>,
     /// All refs advertised by the remote.
-    pub remote_refs: Vec<git_protocol::handshake::Ref>,
+    pub remote_refs: Vec<gix_protocol::handshake::Ref>,
     /// Additional information provided by the server as part of the handshake.
     ///
     /// Note that the `refs` field is always `None` as the refs are placed in `remote_refs`.
-    pub handshake: git_protocol::handshake::Outcome,
+    pub handshake: gix_protocol::handshake::Outcome,
     /// The kind of hash used for all data sent by the server, if understood by this client implementation.
     ///
     /// It was extracted from the `handshake` as advertised by the server.
@@ -84,7 +84,7 @@ pub enum Source {
     /// An object id, as the matched ref-spec was an object id itself.
     ObjectId(gix_hash::ObjectId),
     /// The remote reference that matched the ref-specs name.
-    Ref(git_protocol::handshake::Ref),
+    Ref(gix_protocol::handshake::Ref),
 }
 
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
@@ -104,10 +104,10 @@ impl Source {
         match self {
             Source::ObjectId(_) => None,
             Source::Ref(r) => match r {
-                git_protocol::handshake::Ref::Unborn { full_ref_name, .. }
-                | git_protocol::handshake::Ref::Symbolic { full_ref_name, .. }
-                | git_protocol::handshake::Ref::Direct { full_ref_name, .. }
-                | git_protocol::handshake::Ref::Peeled { full_ref_name, .. } => Some(full_ref_name.as_ref()),
+                gix_protocol::handshake::Ref::Unborn { full_ref_name, .. }
+                | gix_protocol::handshake::Ref::Symbolic { full_ref_name, .. }
+                | gix_protocol::handshake::Ref::Direct { full_ref_name, .. }
+                | gix_protocol::handshake::Ref::Peeled { full_ref_name, .. } => Some(full_ref_name.as_ref()),
             },
         }
     }

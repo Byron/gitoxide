@@ -64,7 +64,7 @@ pub fn append_config_to_repo_config(repo: &mut Repository, config: gix_config::F
 /// if we have to, as it might not have been naturally included in the ref-specs.
 pub fn update_head(
     repo: &mut Repository,
-    remote_refs: &[git_protocol::handshake::Ref],
+    remote_refs: &[gix_protocol::handshake::Ref],
     reflog_message: &BStr,
     remote_name: &BStr,
 ) -> Result<(), Error> {
@@ -74,15 +74,15 @@ pub fn update_head(
     };
     let (head_peeled_id, head_ref) = match remote_refs.iter().find_map(|r| {
         Some(match r {
-            git_protocol::handshake::Ref::Symbolic {
+            gix_protocol::handshake::Ref::Symbolic {
                 full_ref_name,
                 target,
                 object,
             } if full_ref_name == "HEAD" => (Some(object.as_ref()), Some(target)),
-            git_protocol::handshake::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
+            gix_protocol::handshake::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
                 (Some(object.as_ref()), None)
             }
-            git_protocol::handshake::Ref::Unborn { full_ref_name, target } if full_ref_name == "HEAD" => {
+            gix_protocol::handshake::Ref::Unborn { full_ref_name, target } if full_ref_name == "HEAD" => {
                 (None, Some(target))
             }
             _ => return None,

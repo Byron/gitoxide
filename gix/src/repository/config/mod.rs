@@ -31,7 +31,7 @@ impl crate::Repository {
     #[cfg(feature = "blocking-network-client")]
     pub fn ssh_connect_options(
         &self,
-    ) -> Result<git_protocol::transport::client::ssh::connect::Options, config::ssh_connect_options::Error> {
+    ) -> Result<gix_protocol::transport::client::ssh::connect::Options, config::ssh_connect_options::Error> {
         use crate::config::{
             cache::util::ApplyLeniency,
             tree::{gitoxide, Core, Ssh},
@@ -52,7 +52,7 @@ impl crate::Repository {
                 )
             })
             .map(|cmd| gix_path::from_bstr(cmd).into_owned().into());
-        let opts = git_protocol::transport::client::ssh::connect::Options {
+        let opts = gix_protocol::transport::client::ssh::connect::Options {
             disallow_shell: fallback_active,
             command: ssh_command,
             kind: config

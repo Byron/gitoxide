@@ -94,8 +94,8 @@ mod ssh {
     #[test]
     #[cfg(feature = "blocking-network-client")]
     fn variant() -> crate::Result {
-        use git_protocol::transport::client::ssh::ProgramKind;
         use gix::config::tree::Ssh;
+        use gix_protocol::transport::client::ssh::ProgramKind;
 
         use crate::config::tree::bcow;
         for (actual, expected) in [

@@ -62,7 +62,7 @@ is usable to some extent.
   * [gix-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-url)
   * [gix-packetline](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-packetline)
   * [gix-transport](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-transport)
-  * [git-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-protocol)
+  * [gix-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-protocol)
   * [git-pack](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pack)
   * [git-odb](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-odb)
   * [git-commitgraph](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-commitgraph)

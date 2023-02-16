@@ -302,7 +302,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
 * **04** -> proxy authentication
 * **05** -> [reauthentication after redirect](https://github.com/git/git/blob/eea7033409a0ed713c78437fc76486983d211e25/http.c#L1931)
     
-### git-protocol
+### gix-protocol
 * _abstract over protocol versions to allow delegates to deal only with a single way of doing things_
 * [x] **credentials**
     * [x] via gix-credentials

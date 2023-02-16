@@ -22,8 +22,8 @@ pub(crate) fn one_round(
     repo: &crate::Repository,
     ref_map: &crate::remote::fetch::RefMap,
     fetch_tags: crate::remote::fetch::Tags,
-    arguments: &mut git_protocol::fetch::Arguments,
-    _previous_response: Option<&git_protocol::fetch::Response>,
+    arguments: &mut gix_protocol::fetch::Arguments,
+    _previous_response: Option<&gix_protocol::fetch::Response>,
 ) -> Result<bool, Error> {
     let tag_refspec_to_ignore = fetch_tags
         .to_refspec()

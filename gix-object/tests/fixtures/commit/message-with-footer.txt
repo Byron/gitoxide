@@ -10,7 +10,7 @@ gpgsig -----BEGIN PGP SIGNATURE-----
  =Mhpp
  -----END PGP SIGNATURE-----
 
-test: use gitoxide for link-git-protocol tests
+test: use gitoxide for link-gix-protocol tests
 
 Showcases the abilities of the `git-repository` crate, and standardises
 on using the re-exports through this crate for [stability] reasons

@@ -58,7 +58,7 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
     }
 
     /// Provide a mutable transport to allow interacting with it according to its actual type.
-    /// Note that the caller _should not_ call [`configure()`][git_protocol::transport::client::TransportWithoutIO::configure()]
+    /// Note that the caller _should not_ call [`configure()`][gix_protocol::transport::client::TransportWithoutIO::configure()]
     /// as we will call it automatically before performing the handshake. Instead, to bring in custom configuration,
     /// call [`with_transport_options()`][Connection::with_transport_options()].
     pub fn transport_mut(&mut self) -> &mut T {

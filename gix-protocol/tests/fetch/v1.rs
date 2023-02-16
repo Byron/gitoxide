@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
-use git_protocol::{handshake, FetchConnection};
 use gix_features::progress;
+use gix_protocol::{handshake, FetchConnection};
 use gix_transport::Protocol;
 
 use crate::fetch::{helper_unused, oid, transport, CloneDelegate, LsRemoteDelegate};
@@ -14,7 +14,7 @@ async fn clone() -> crate::Result {
             "v1/clone{}.response",
             with_keepalive.then_some("-with-keepalive").unwrap_or_default()
         );
-        git_protocol::fetch(
+        gix_protocol::fetch(
             transport(
                 out,
                 &fixture,
@@ -43,7 +43,7 @@ async fn ls_remote() -> crate::Result {
         Protocol::V1,
         gix_transport::client::git::ConnectMode::Daemon,
     );
-    git_protocol::fetch(
+    gix_protocol::fetch(
         &mut transport,
         &mut delegate,
         helper_unused,
@@ -80,7 +80,7 @@ async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
     let out = Vec::new();
     let delegate = LsRemoteDelegate::default();
 
-    git_protocol::fetch(
+    gix_protocol::fetch(
         transport(
             out,
             "v1/clone.response",

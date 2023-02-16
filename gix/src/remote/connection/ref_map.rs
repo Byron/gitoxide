@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use git_protocol::transport::client::Transport;
 use gix_features::progress::Progress;
+use gix_protocol::transport::client::Transport;
 
 use crate::{
     bstr,
@@ -21,20 +21,20 @@ pub enum Error {
     #[error("Failed to configure the transport layer")]
     ConfigureTransport(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error(transparent)]
-    Handshake(#[from] git_protocol::handshake::Error),
+    Handshake(#[from] gix_protocol::handshake::Error),
     #[error("The object format {format:?} as used by the remote is unsupported")]
     UnknownObjectFormat { format: BString },
     #[error(transparent)]
-    ListRefs(#[from] git_protocol::ls_refs::Error),
+    ListRefs(#[from] gix_protocol::ls_refs::Error),
     #[error(transparent)]
-    Transport(#[from] git_protocol::transport::client::Error),
+    Transport(#[from] gix_protocol::transport::client::Error),
     #[error(transparent)]
     ConfigureCredentials(#[from] crate::config::credential_helpers::Error),
     #[error(transparent)]
     MappingValidation(#[from] gix_refspec::match_group::validate::Error),
 }
 
-impl git_protocol::transport::IsSpuriousError for Error {
+impl gix_protocol::transport::IsSpuriousError for Error {
     fn is_spurious(&self) -> bool {
         match self {
             Error::Transport(err) => err.is_spurious(),
@@ -93,17 +93,17 @@ where
     ///
     /// - `gitoxide.userAgent` is read to obtain the application user agent for git servers and for HTTP servers as well.
     #[allow(clippy::result_large_err)]
-    #[git_protocol::maybe_async::maybe_async]
+    #[gix_protocol::maybe_async::maybe_async]
     pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap, Error> {
         let res = self.ref_map_inner(options).await;
-        git_protocol::indicate_end_of_interaction(&mut self.transport)
+        gix_protocol::indicate_end_of_interaction(&mut self.transport)
             .await
             .ok();
         res
     }
 
     #[allow(clippy::result_large_err)]
-    #[git_protocol::maybe_async::maybe_async]
+    #[gix_protocol::maybe_async::maybe_async]
     pub(crate) async fn ref_map_inner(
         &mut self,
         Options {
@@ -173,7 +173,7 @@ where
     }
 
     #[allow(clippy::result_large_err)]
-    #[git_protocol::maybe_async::maybe_async]
+    #[gix_protocol::maybe_async::maybe_async]
     async fn fetch_refs(
         &mut self,
         filter_by_prefix: bool,
@@ -209,13 +209,13 @@ where
             self.transport.configure(&**config)?;
         }
         let mut outcome =
-            git_protocol::fetch::handshake(&mut self.transport, authenticate, extra_parameters, &mut self.progress)
+            gix_protocol::fetch::handshake(&mut self.transport, authenticate, extra_parameters, &mut self.progress)
                 .await?;
         let refs = match outcome.refs.take() {
             Some(refs) => refs,
             None => {
                 let agent_feature = self.remote.repo.config.user_agent_tuple();
-                git_protocol::ls_refs(
+                gix_protocol::ls_refs(
                     &mut self.transport,
                     &outcome.capabilities,
                     move |_capabilities, arguments, features| {
@@ -234,7 +234,7 @@ where
                                 }
                             }
                         }
-                        Ok(git_protocol::ls_refs::Action::Continue)
+                        Ok(gix_protocol::ls_refs::Action::Continue)
                     },
                     &mut self.progress,
                 )
@@ -249,7 +249,7 @@ where
 #[allow(clippy::result_large_err)]
 fn extract_object_format(
     _repo: &crate::Repository,
-    outcome: &git_protocol::handshake::Outcome,
+    outcome: &gix_protocol::handshake::Outcome,
 ) -> Result<gix_hash::Kind, Error> {
     use bstr::ByteSlice;
     let object_hash =

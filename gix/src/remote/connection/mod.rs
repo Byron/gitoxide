@@ -1,8 +1,8 @@
 use crate::Remote;
 
 pub(crate) struct HandshakeWithRefs {
-    outcome: git_protocol::handshake::Outcome,
-    refs: Vec<git_protocol::handshake::Ref>,
+    outcome: gix_protocol::handshake::Outcome,
+    refs: Vec<gix_protocol::handshake::Ref>,
 }
 
 /// A function that performs a given credential action, trying to obtain credentials for an operation that needs it.
