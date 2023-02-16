@@ -685,7 +685,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 * [ ] API documentation
     * [ ] Some examples
 
-### git-validate
+### gix-validate
 * [x] validate ref names
 * [x] [validate][tagname-validation] tag names
 

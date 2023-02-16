@@ -25,7 +25,7 @@ pub enum Error {
     #[error("Both sides of the specification need a pattern, like 'a/*:b/*'")]
     PatternUnbalanced,
     #[error(transparent)]
-    ReferenceName(#[from] git_validate::refname::Error),
+    ReferenceName(#[from] gix_validate::refname::Error),
     #[error(transparent)]
     RevSpec(#[from] git_revision::spec::parse::Error),
 }
@@ -167,9 +167,9 @@ pub(crate) mod function {
                     buf.extend_from_slice(spec);
                     let glob_pos = buf.find_byte(b'*').expect("glob present");
                     buf[glob_pos] = b'a';
-                    git_validate::reference::name_partial(buf.as_bstr())?;
+                    gix_validate::reference::name_partial(buf.as_bstr())?;
                 } else {
-                    git_validate::reference::name_partial(spec)
+                    gix_validate::reference::name_partial(spec)
                         .map_err(Error::from)
                         .or_else(|err| {
                             if allow_revspecs {

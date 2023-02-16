@@ -28,7 +28,7 @@ pub enum Error {
     Parse { content: BString },
     #[error("The path {path:?} to a symbolic reference within a ref file is invalid")]
     RefnameValidation {
-        source: git_validate::reference::name::Error,
+        source: gix_validate::reference::name::Error,
         path: BString,
     },
 }
@@ -39,7 +39,7 @@ impl TryFrom<MaybeUnsafeState> for Target {
     fn try_from(v: MaybeUnsafeState) -> Result<Self, Self::Error> {
         Ok(match v {
             MaybeUnsafeState::Id(id) => Target::Peeled(id),
-            MaybeUnsafeState::UnvalidatedPath(name) => Target::Symbolic(match git_validate::refname(name.as_ref()) {
+            MaybeUnsafeState::UnvalidatedPath(name) => Target::Symbolic(match gix_validate::refname(name.as_ref()) {
                 Ok(_) => FullName(name),
                 Err(err) => {
                     return Err(Error::RefnameValidation {

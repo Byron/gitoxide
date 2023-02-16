@@ -5,7 +5,7 @@ mod name_partial {
             ($name:ident, $input:expr) => {
                 #[test]
                 fn $name() {
-                    assert!(git_validate::reference::name_partial($input.as_bstr()).is_ok())
+                    assert!(gix_validate::reference::name_partial($input.as_bstr()).is_ok())
                 }
             };
         }
@@ -28,13 +28,13 @@ mod name_partial {
 
     mod invalid {
         use bstr::ByteSlice;
-        use git_validate::{reference::name::Error as RefError, tag::name::Error as TagError};
+        use gix_validate::{reference::name::Error as RefError, tag::name::Error as TagError};
 
         macro_rules! mktest {
             ($name:ident, $input:literal, $expected:pat) => {
                 #[test]
                 fn $name() {
-                    match git_validate::reference::name_partial($input.as_bstr()) {
+                    match gix_validate::reference::name_partial($input.as_bstr()) {
                         Err($expected) => {}
                         got => panic!("Wanted {}, got {:?}", stringify!($expected), got),
                     }
@@ -90,7 +90,7 @@ mod name {
             ($name:ident, $input:expr) => {
                 #[test]
                 fn $name() {
-                    assert!(git_validate::refname($input.as_bstr()).is_ok())
+                    assert!(gix_validate::refname($input.as_bstr()).is_ok())
                 }
             };
         }
@@ -111,13 +111,13 @@ mod name {
 
     mod invalid {
         use bstr::ByteSlice;
-        use git_validate::{reference::name::Error as RefError, tag::name::Error as TagError};
+        use gix_validate::{reference::name::Error as RefError, tag::name::Error as TagError};
 
         macro_rules! mktest {
             ($name:ident, $input:literal, $expected:pat) => {
                 #[test]
                 fn $name() {
-                    match git_validate::reference::name($input.as_bstr()) {
+                    match gix_validate::reference::name($input.as_bstr()) {
                         Err($expected) => {}
                         got => panic!("Wanted {}, got {:?}", stringify!($expected), got),
                     }

@@ -62,7 +62,7 @@ impl Iterator for SortedLoosePaths {
                         Err(_) => continue, // TODO: silently skipping ill-formed UTF-8 on windows here, maybe there are better ways?
                     };
 
-                    if git_validate::reference::name_partial(full_name.as_bstr()).is_ok() {
+                    if gix_validate::reference::name_partial(full_name.as_bstr()).is_ok() {
                         let name = FullName(full_name);
                         return Some(Ok((full_path, name)));
                     } else {

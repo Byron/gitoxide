@@ -60,10 +60,10 @@ impl crate::Repository {
     pub fn set_namespace<'a, Name, E>(
         &mut self,
         namespace: Name,
-    ) -> Result<Option<git_ref::Namespace>, git_validate::refname::Error>
+    ) -> Result<Option<git_ref::Namespace>, gix_validate::refname::Error>
     where
         Name: TryInto<&'a PartialNameRef, Error = E>,
-        git_validate::refname::Error: From<E>,
+        gix_validate::refname::Error: From<E>,
     {
         let namespace = git_ref::namespace::expand(namespace)?;
         Ok(self.refs.namespace.replace(namespace))
@@ -83,9 +83,9 @@ impl crate::Repository {
     ) -> Result<Reference<'_>, reference::edit::Error>
     where
         Name: TryInto<FullName, Error = E>,
-        git_validate::reference::name::Error: From<E>,
+        gix_validate::reference::name::Error: From<E>,
     {
-        let name = name.try_into().map_err(git_validate::reference::name::Error::from)?;
+        let name = name.try_into().map_err(gix_validate::reference::name::Error::from)?;
         let id = target.into();
         let mut edits = self.edit_reference(RefEdit {
             change: Change::Update {

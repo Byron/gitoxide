@@ -123,7 +123,7 @@ mod branch {
     use std::{borrow::Cow, collections::BTreeSet, convert::TryInto};
 
     use git_ref::FullNameRef;
-    use git_validate::reference::name::Error as ValidateNameError;
+    use gix_validate::reference::name::Error as ValidateNameError;
 
     use crate::bstr::BStr;
 

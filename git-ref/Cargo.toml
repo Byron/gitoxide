@@ -23,7 +23,7 @@ gix-features = { version = "^0.26.4", path = "../gix-features", features = ["wal
 gix-path = { version = "^0.7.1", path = "../gix-path" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 git-object = { version = "^0.26.1", path = "../git-object" }
-git-validate = { version = "^0.7.2", path = "../git-validate" }
+gix-validate = { version = "^0.7.2", path = "../gix-validate" }
 git-actor = { version = "^0.17.1", path = "../git-actor" }
 git-lock = { version = "^3.0.0", path = "../git-lock" }
 git-tempfile = { version = "^3.0.0", path = "../git-tempfile" }

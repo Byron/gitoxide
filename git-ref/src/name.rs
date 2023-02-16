@@ -5,7 +5,7 @@ use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 use crate::{Category, FullName, FullNameRef, PartialName, PartialNameRef};
 
 /// The error used in the [`PartialNameRef`][super::PartialNameRef]::try_from(…) implementations.
-pub type Error = git_validate::reference::name::Error;
+pub type Error = gix_validate::reference::name::Error;
 
 impl<'a> Category<'a> {
     /// Return the prefix that would contain all references of our kind, or an empty string if the reference would
@@ -107,7 +107,7 @@ impl PartialName {
         let mut b = self.0;
         b.push_byte(b'/');
         b.extend(component.as_ref());
-        git_validate::reference::name_partial(b.as_ref())?;
+        gix_validate::reference::name_partial(b.as_ref())?;
         Ok(PartialName(b))
     }
 }
@@ -116,7 +116,7 @@ impl<'a> convert::TryFrom<&'a BStr> for &'a FullNameRef {
     type Error = Error;
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
-        Ok(FullNameRef::new_unchecked(git_validate::reference::name(v)?))
+        Ok(FullNameRef::new_unchecked(gix_validate::reference::name(v)?))
     }
 }
 
@@ -131,11 +131,11 @@ impl<'a> convert::TryFrom<&'a OsStr> for &'a PartialNameRef {
 
     fn try_from(v: &'a OsStr) -> Result<Self, Self::Error> {
         let v = gix_path::os_str_into_bstr(v).map_err(|_| {
-            Error::Tag(git_validate::tag::name::Error::InvalidByte {
+            Error::Tag(gix_validate::tag::name::Error::InvalidByte {
                 byte: "<unknown encoding>".into(),
             })
         })?;
-        Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(
+        Ok(PartialNameRef::new_unchecked(gix_validate::reference::name_partial(
             v.as_bstr(),
         )?))
     }
@@ -172,7 +172,7 @@ impl<'a> convert::TryFrom<&'a BString> for &'a PartialNameRef {
     type Error = Error;
 
     fn try_from(v: &'a BString) -> Result<Self, Self::Error> {
-        Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(
+        Ok(PartialNameRef::new_unchecked(gix_validate::reference::name_partial(
             v.as_ref(),
         )?))
     }
@@ -182,7 +182,7 @@ impl<'a> convert::TryFrom<&'a BStr> for &'a PartialNameRef {
     type Error = Error;
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
-        Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?))
+        Ok(PartialNameRef::new_unchecked(gix_validate::reference::name_partial(v)?))
     }
 }
 
@@ -199,7 +199,7 @@ impl<'a> convert::TryFrom<&'a str> for &'a FullNameRef {
 
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(FullNameRef::new_unchecked(git_validate::reference::name(v)?))
+        Ok(FullNameRef::new_unchecked(gix_validate::reference::name(v)?))
     }
 }
 
@@ -208,7 +208,7 @@ impl<'a> convert::TryFrom<&'a str> for &'a PartialNameRef {
 
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?))
+        Ok(PartialNameRef::new_unchecked(gix_validate::reference::name_partial(v)?))
     }
 }
 
@@ -217,7 +217,7 @@ impl<'a> convert::TryFrom<&'a str> for PartialName {
 
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(PartialName(git_validate::reference::name_partial(v)?.to_owned()))
+        Ok(PartialName(gix_validate::reference::name_partial(v)?.to_owned()))
     }
 }
 
@@ -234,7 +234,7 @@ impl<'a> convert::TryFrom<&'a String> for &'a FullNameRef {
 
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(FullNameRef::new_unchecked(git_validate::reference::name(v)?))
+        Ok(FullNameRef::new_unchecked(gix_validate::reference::name(v)?))
     }
 }
 
@@ -243,7 +243,7 @@ impl<'a> convert::TryFrom<&'a String> for &'a PartialNameRef {
 
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?))
+        Ok(PartialNameRef::new_unchecked(gix_validate::reference::name_partial(v)?))
     }
 }
 
@@ -251,7 +251,7 @@ impl convert::TryFrom<String> for PartialName {
     type Error = Error;
 
     fn try_from(v: String) -> Result<Self, Self::Error> {
-        git_validate::reference::name_partial(v.as_bytes().as_bstr())?;
+        gix_validate::reference::name_partial(v.as_bytes().as_bstr())?;
         Ok(PartialName(v.into()))
     }
 }
@@ -260,12 +260,12 @@ impl convert::TryFrom<BString> for PartialName {
     type Error = Error;
 
     fn try_from(v: BString) -> Result<Self, Self::Error> {
-        git_validate::reference::name_partial(v.as_ref())?;
+        gix_validate::reference::name_partial(v.as_ref())?;
         Ok(PartialName(v))
     }
 }
 
-/// Note that this method is disagreeing with git_validate as it allows dashes '-' for some reason.
+/// Note that this method is disagreeing with gix_validate as it allows dashes '-' for some reason.
 /// Since partial names cannot be created with dashes inside we adjusted this as it's probably unintended or git creates pseudo-refs
 /// which wouldn't pass its safety checks.
 pub(crate) fn is_pseudo_ref<'a>(name: impl Into<&'a BStr>) -> bool {

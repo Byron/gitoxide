@@ -5,7 +5,7 @@ mod valid {
         ($name:ident, $input:expr) => {
             #[test]
             fn $name() {
-                assert!(git_validate::tag::name($input.as_bstr()).is_ok())
+                assert!(gix_validate::tag::name($input.as_bstr()).is_ok())
             }
         };
     }
@@ -29,8 +29,8 @@ mod invalid {
         ($name:ident, $input:literal, $expected:ident) => {
             #[test]
             fn $name() {
-                match git_validate::tag::name($input.as_bstr()) {
-                    Err(git_validate::tag::name::Error::$expected) => {}
+                match gix_validate::tag::name($input.as_bstr()) {
+                    Err(gix_validate::tag::name::Error::$expected) => {}
                     got => panic!("Wanted {}, got {:?}", stringify!($expected), got),
                 }
             }
@@ -40,8 +40,8 @@ mod invalid {
         ($name:ident, $input:literal) => {
             #[test]
             fn $name() {
-                match git_validate::tag::name($input.as_bstr()) {
-                    Err(git_validate::tag::name::Error::InvalidByte { .. }) => {}
+                match gix_validate::tag::name($input.as_bstr()) {
+                    Err(gix_validate::tag::name::Error::InvalidByte { .. }) => {}
                     got => panic!("Wanted {}, got {:?}", stringify!($expected), got),
                 }
             }

@@ -24,7 +24,7 @@ verbose-object-parsing-errors = ["nom/std"]
 [dependencies]
 gix-features = { version = "^0.26.4", path = "../gix-features", features = ["rustsha1"] }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
-git-validate = { version = "^0.7.2", path = "../git-validate" }
+gix-validate = { version = "^0.7.2", path = "../gix-validate" }
 git-actor = { version = "^0.17.1", path = "../git-actor" }
 
 btoi = "0.4.2"

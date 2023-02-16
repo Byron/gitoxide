@@ -131,7 +131,7 @@ members = [
     "git-actor",
     "git-url",
     "gix-hash",
-    "git-validate",
+    "gix-validate",
     "git-ref",
     "git-command",
     "git-config",

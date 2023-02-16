@@ -5,44 +5,44 @@ use git_object::bstr::{BStr, BString, ByteSlice};
 use crate::{bstr::ByteVec, name::is_pseudo_ref, Category, FullName, FullNameRef, Namespace, PartialNameRef};
 
 impl TryFrom<&str> for FullName {
-    type Error = git_validate::refname::Error;
+    type Error = gix_validate::refname::Error;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Ok(FullName(git_validate::refname(value.as_bytes().as_bstr())?.into()))
+        Ok(FullName(gix_validate::refname(value.as_bytes().as_bstr())?.into()))
     }
 }
 
 impl TryFrom<String> for FullName {
-    type Error = git_validate::refname::Error;
+    type Error = gix_validate::refname::Error;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        git_validate::refname(value.as_bytes().as_bstr())?;
+        gix_validate::refname(value.as_bytes().as_bstr())?;
         Ok(FullName(value.into()))
     }
 }
 
 impl TryFrom<&BStr> for FullName {
-    type Error = git_validate::refname::Error;
+    type Error = gix_validate::refname::Error;
 
     fn try_from(value: &BStr) -> Result<Self, Self::Error> {
-        Ok(FullName(git_validate::refname(value)?.into()))
+        Ok(FullName(gix_validate::refname(value)?.into()))
     }
 }
 
 impl TryFrom<BString> for FullName {
-    type Error = git_validate::refname::Error;
+    type Error = gix_validate::refname::Error;
 
     fn try_from(value: BString) -> Result<Self, Self::Error> {
-        git_validate::refname(value.as_ref())?;
+        gix_validate::refname(value.as_ref())?;
         Ok(FullName(value))
     }
 }
 
 impl TryFrom<&BString> for FullName {
-    type Error = git_validate::refname::Error;
+    type Error = gix_validate::refname::Error;
 
     fn try_from(value: &BString) -> Result<Self, Self::Error> {
-        git_validate::refname(value.as_ref())?;
+        gix_validate::refname(value.as_ref())?;
         Ok(FullName(value.clone()))
     }
 }

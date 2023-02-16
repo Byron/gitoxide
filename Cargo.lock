@@ -1617,7 +1617,7 @@ dependencies = [
  "git-actor 0.17.0",
  "git-features",
  "git-hash",
- "git-validate 0.7.1",
+ "git-validate",
  "hex",
  "itoa",
  "nom",
@@ -1634,9 +1634,9 @@ dependencies = [
  "document-features",
  "git-actor 0.17.1",
  "git-testtools",
- "git-validate 0.7.2",
  "gix-features",
  "gix-hash",
+ "gix-validate",
  "hex",
  "itoa",
  "nom",
@@ -1829,7 +1829,7 @@ dependencies = [
  "git-object 0.26.0",
  "git-path",
  "git-tempfile 3.0.1",
- "git-validate 0.7.1",
+ "git-validate",
  "memmap2",
  "nom",
  "thiserror",
@@ -1845,10 +1845,10 @@ dependencies = [
  "git-object 0.26.1",
  "git-tempfile 3.0.2",
  "git-testtools",
- "git-validate 0.7.2",
  "gix-features",
  "gix-hash",
  "gix-path",
+ "gix-validate",
  "memmap2",
  "nom",
  "serde",
@@ -1867,10 +1867,10 @@ dependencies = [
  "git-odb",
  "git-ref 0.24.0",
  "git-testtools",
- "git-validate 0.7.2",
  "git-worktree 0.12.2",
  "gix-features",
  "gix-hash",
+ "gix-validate",
  "tempfile",
 ]
 
@@ -1881,8 +1881,8 @@ dependencies = [
  "bstr",
  "git-revision",
  "git-testtools",
- "git-validate 0.7.2",
  "gix-hash",
+ "gix-validate",
  "smallvec",
  "thiserror",
 ]
@@ -2068,20 +2068,11 @@ dependencies = [
 
 [[package]]
 name = "git-validate"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0431cf9352c596dc7c8ec9066ee551ce54e63c86c3c767e5baf763f6019ff3c2"
-dependencies = [
- "bstr",
- "thiserror",
-]
-
-[[package]]
-name = "git-validate"
 version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "39184020313e225d32343d19d93e002d74ffd17ec7241061b8b4b6c9200c750d"
 dependencies = [
  "bstr",
- "git-testtools",
  "thiserror",
 ]
 
@@ -2221,13 +2212,13 @@ dependencies = [
  "git-transport",
  "git-traverse 0.22.1",
  "git-url",
- "git-validate 0.7.2",
  "git-worktree 0.12.2",
  "gix-features",
  "gix-glob",
  "gix-hash",
  "gix-path",
  "gix-sec",
+ "gix-validate",
  "is_ci",
  "log",
  "once_cell",
@@ -2323,6 +2314,15 @@ dependencies = [
  "serde",
  "tempfile",
  "windows 0.43.0",
+]
+
+[[package]]
+name = "gix-validate"
+version = "0.7.2"
+dependencies = [
+ "bstr",
+ "git-testtools",
+ "thiserror",
 ]
 
 [[package]]

@@ -34,7 +34,7 @@ git-worktree = { path = "../../git-worktree" }
 git-odb = { path = "../../git-odb" }
 git-actor = { path = "../../git-actor" }
 gix-hash = { path = "../../gix-hash" }
-git-validate = { path = "../../git-validate" }
+gix-validate = { path = "../../gix-validate" }
 git-lock = { path = "../../git-lock" }
 git-object = { path = "../../git-object" }
 tempfile = "3.2.0"

@@ -708,7 +708,7 @@ dependencies = [
  "git-actor",
  "gix-features",
  "gix-hash",
- "git-validate",
+ "gix-validate",
  "hex",
  "itoa",
  "nom",
@@ -784,7 +784,7 @@ dependencies = [
  "git-object",
  "gix-path",
  "git-tempfile",
- "git-validate",
+ "gix-validate",
  "memmap2",
  "nom",
  "quick-error",
@@ -818,7 +818,7 @@ dependencies = [
  "git-tempfile",
  "git-traverse",
  "git-url",
- "git-validate",
+ "gix-validate",
  "git-worktree",
  "log",
  "signal-hook",
@@ -907,7 +907,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-validate"
+name = "gix-validate"
 version = "0.5.4"
 dependencies = [
  "bstr",

@@ -11,7 +11,7 @@ pub enum Error {
     #[error("Tags must not start with a dash: '-'")]
     StartsWithDash,
     #[error("The tag name was no valid reference name")]
-    InvalidRefName(#[from] git_validate::tag::name::Error),
+    InvalidRefName(#[from] gix_validate::tag::name::Error),
 }
 
 impl From<Error> for io::Error {
@@ -97,7 +97,7 @@ impl<'a> crate::WriteTo for TagRef<'a> {
 }
 
 fn validated_name(name: &BStr) -> Result<&BStr, Error> {
-    git_validate::tag::name(name)?;
+    gix_validate::tag::name(name)?;
     if name[0] == b'-' {
         return Err(Error::StartsWithDash);
     }

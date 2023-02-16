@@ -99,7 +99,7 @@ dependencies = [
  "git-actor",
  "gix-features",
  "gix-hash",
- "git-validate",
+ "gix-validate",
  "hex",
  "itoa",
  "nom",
@@ -114,7 +114,7 @@ dependencies = [
  "bstr",
  "gix-hash",
  "git-revision",
- "git-validate",
+ "gix-validate",
  "smallvec",
  "thiserror",
 ]
@@ -140,7 +140,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-validate"
+name = "gix-validate"
 version = "0.5.4"
 dependencies = [
  "bstr",
