@@ -8,8 +8,8 @@ mod invoke {
         protocol::Context,
         Program,
     };
-    use git_sec::identity::Account;
     use git_testtools::fixture_path;
+    use gix_sec::identity::Account;
 
     #[test]
     fn credentials_are_filled_in_one_by_one_and_stop_when_complete() {

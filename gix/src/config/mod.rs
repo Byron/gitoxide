@@ -42,7 +42,7 @@ pub struct CommitAutoRollback<'repo> {
 
 pub(crate) mod section {
     pub fn is_trusted(meta: &git_config::file::Metadata) -> bool {
-        meta.trust == git_sec::Trust::Full || meta.source.kind() != git_config::source::Kind::Repository
+        meta.trust == gix_sec::Trust::Full || meta.source.kind() != git_config::source::Kind::Repository
     }
 }
 
@@ -447,8 +447,8 @@ pub(crate) struct Cache {
     /// Also available in options! Keep in sync!
     pub lenient_config: bool,
     /// Define how we can use values obtained with `xdg_config(…)` and its `XDG_CONFIG_HOME` variable.
-    xdg_config_home_env: git_sec::Permission,
+    xdg_config_home_env: gix_sec::Permission,
     /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.
-    home_env: git_sec::Permission,
+    home_env: gix_sec::Permission,
     // TODO: make core.precomposeUnicode available as well.
 }

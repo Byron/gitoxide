@@ -80,7 +80,7 @@ impl crate::Repository {
                 match path.interpolate(git_config::path::interpolate::Context {
                     git_install_dir: Some(install_dir.as_path()),
                     home_dir: home.as_deref(),
-                    home_for_user: if self.options.git_dir_trust.expect("trust is set") == git_sec::Trust::Full {
+                    home_for_user: if self.options.git_dir_trust.expect("trust is set") == gix_sec::Trust::Full {
                         Some(git_config::path::interpolate::home_for_user)
                     } else {
                         None

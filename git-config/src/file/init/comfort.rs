@@ -38,7 +38,7 @@ impl File<'static> {
                     path,
                     source: *source,
                     level: 0,
-                    trust: git_sec::Trust::Full,
+                    trust: gix_sec::Trust::Full,
                 }
                 .into()
             });

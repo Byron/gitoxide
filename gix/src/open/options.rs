@@ -86,7 +86,7 @@ impl Options {
     /// are interpreted.
     ///
     /// If not called explicitly, it will be determined by looking at its
-    /// ownership via [`git_sec::Trust::from_path_ownership()`].
+    /// ownership via [`gix_sec::Trust::from_path_ownership()`].
     ///
     /// # Security Warning
     ///
@@ -94,7 +94,7 @@ impl Options {
     /// is always controlled by the desired user. Using this capability _only_ saves
     /// a permission check and only so if the [`open()`][Self::open()] method is used,
     /// as opposed to discovery.
-    pub fn with(mut self, trust: git_sec::Trust) -> Self {
+    pub fn with(mut self, trust: gix_sec::Trust) -> Self {
         self.git_dir_trust = trust.into();
         self
     }
@@ -113,7 +113,7 @@ impl Options {
     /// Set the filter which determines if a configuration section can be used to read values from,
     /// hence it returns true if it is eligible.
     ///
-    /// The default filter selects sections whose trust level is [`full`][git_sec::Trust::Full] or
+    /// The default filter selects sections whose trust level is [`full`][gix_sec::Trust::Full] or
     /// whose source is not [`repository-local`][git_config::source::Kind::Repository].
     pub fn filter_config_section(mut self, filter: fn(&git_config::file::Metadata) -> bool) -> Self {
         self.filter_config_section = Some(filter);
@@ -146,13 +146,13 @@ impl Options {
     }
 }
 
-impl git_sec::trust::DefaultForLevel for Options {
-    fn default_for_level(level: git_sec::Trust) -> Self {
+impl gix_sec::trust::DefaultForLevel for Options {
+    fn default_for_level(level: gix_sec::Trust) -> Self {
         match level {
-            git_sec::Trust::Full => Options {
+            gix_sec::Trust::Full => Options {
                 object_store_slots: Default::default(),
                 permissions: Permissions::default_for_level(level),
-                git_dir_trust: git_sec::Trust::Full.into(),
+                git_dir_trust: gix_sec::Trust::Full.into(),
                 filter_config_section: Some(config::section::is_trusted),
                 lossy_config: None,
                 bail_if_untrusted: false,
@@ -162,10 +162,10 @@ impl git_sec::trust::DefaultForLevel for Options {
                 cli_config_overrides: Vec::new(),
                 current_dir: None,
             },
-            git_sec::Trust::Reduced => Options {
+            gix_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
                 permissions: Permissions::default_for_level(level),
-                git_dir_trust: git_sec::Trust::Reduced.into(),
+                git_dir_trust: gix_sec::Trust::Reduced.into(),
                 filter_config_section: Some(config::section::is_trusted),
                 bail_if_untrusted: false,
                 lenient_config: true,

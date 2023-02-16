@@ -6,7 +6,7 @@ use crate::helper;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Outcome {
     /// The identity provide by the helper.
-    pub identity: git_sec::identity::Account,
+    pub identity: gix_sec::identity::Account,
     /// A handle to the action to perform next in another call to [`helper::invoke()`][crate::helper::invoke()].
     pub next: helper::NextAction,
 }

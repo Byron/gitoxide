@@ -22,7 +22,7 @@ impl File<'static> {
     /// Note that the path will be checked for ownership to derive trust.
     pub fn from_path_no_includes(path: impl Into<std::path::PathBuf>, source: crate::Source) -> Result<Self, Error> {
         let path = path.into();
-        let trust = git_sec::Trust::from_path_ownership(&path)?;
+        let trust = gix_sec::Trust::from_path_ownership(&path)?;
 
         let mut buf = Vec::new();
         std::io::copy(&mut std::fs::File::open(&path)?, &mut buf)?;

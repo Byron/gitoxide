@@ -1309,9 +1309,9 @@ dependencies = [
  "git-features 0.26.4",
  "git-glob 0.5.3",
  "git-ref 0.24.0",
- "git-sec 0.6.2",
  "gix-config-value",
  "gix-path",
+ "gix-sec",
  "memchr",
  "nom",
  "once_cell",
@@ -1329,10 +1329,10 @@ dependencies = [
  "criterion",
  "git-config",
  "git-ref 0.24.0",
- "git-sec 0.6.2",
  "git-testtools",
  "gix",
  "gix-path",
+ "gix-sec",
  "serde_derive",
  "serial_test",
  "tempfile",
@@ -1357,11 +1357,11 @@ dependencies = [
  "document-features",
  "git-command",
  "git-prompt",
- "git-sec 0.6.2",
  "git-testtools",
  "git-url",
  "gix-config-value",
  "gix-path",
+ "gix-sec",
  "serde",
  "thiserror",
 ]
@@ -1427,7 +1427,7 @@ dependencies = [
  "git-hash 0.10.1",
  "git-path",
  "git-ref 0.23.1",
- "git-sec 0.6.1",
+ "git-sec",
  "thiserror",
 ]
 
@@ -1440,9 +1440,9 @@ dependencies = [
  "dunce",
  "git-hash 0.10.2",
  "git-ref 0.24.0",
- "git-sec 0.6.2",
  "git-testtools",
  "gix-path",
+ "gix-sec",
  "is_ci",
  "serial_test",
  "tempfile",
@@ -1961,28 +1961,14 @@ dependencies = [
 
 [[package]]
 name = "git-sec"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6696a816445a51f76995d579a3122f98247377cc45cd681764f740f3a2666004"
+checksum = "380a932b8fb71e5c74d92777277acbd8c3384d726265720491640d4018d6dc33"
 dependencies = [
  "bitflags",
  "dirs",
  "git-path",
  "libc",
- "windows 0.43.0",
-]
-
-[[package]]
-name = "git-sec"
-version = "0.6.2"
-dependencies = [
- "bitflags",
- "dirs",
- "document-features",
- "gix-path",
- "libc",
- "serde",
- "tempfile",
  "windows 0.43.0",
 ]
 
@@ -2066,8 +2052,8 @@ dependencies = [
  "git-pack",
  "git-packetline",
  "git-quote 0.4.1",
- "git-sec 0.6.2",
  "git-url",
+ "gix-sec",
  "maybe-async",
  "pin-project-lite",
  "reqwest",
@@ -2279,7 +2265,6 @@ dependencies = [
  "git-ref 0.24.0",
  "git-refspec",
  "git-revision",
- "git-sec 0.6.2",
  "git-tempfile 3.0.2",
  "git-testtools",
  "git-transport",
@@ -2288,6 +2273,7 @@ dependencies = [
  "git-validate 0.7.2",
  "git-worktree 0.12.2",
  "gix-path",
+ "gix-sec",
  "is_ci",
  "log",
  "once_cell",
@@ -2323,6 +2309,20 @@ dependencies = [
  "bstr",
  "tempfile",
  "thiserror",
+]
+
+[[package]]
+name = "gix-sec"
+version = "0.6.2"
+dependencies = [
+ "bitflags",
+ "dirs",
+ "document-features",
+ "gix-path",
+ "libc",
+ "serde",
+ "tempfile",
+ "windows 0.43.0",
 ]
 
 [[package]]

@@ -86,12 +86,12 @@ pub use git_prompt as prompt;
 pub use git_protocol as protocol;
 pub use git_ref as refs;
 pub use git_refspec as refspec;
-pub use git_sec as sec;
 pub use git_tempfile as tempfile;
 pub use git_traverse as traverse;
 pub use git_url as url;
 #[doc(inline)]
 pub use git_url::Url;
+pub use gix_sec as sec;
 pub use hash::{oid, ObjectId};
 
 pub mod interrupt;
@@ -218,8 +218,8 @@ where
 }
 
 fn open_opts_with_git_binary_config() -> open::Options {
-    use git_sec::trust::DefaultForLevel;
-    let mut opts = open::Options::default_for_level(git_sec::Trust::Full);
+    use gix_sec::trust::DefaultForLevel;
+    let mut opts = open::Options::default_for_level(gix_sec::Trust::Full);
     opts.permissions.config.git_binary = true;
     opts
 }
@@ -243,7 +243,7 @@ pub mod permission {
         ///
         pub mod resource {
             ///
-            pub type Error = git_sec::permission::Error<std::path::PathBuf>;
+            pub type Error = gix_sec::permission::Error<std::path::PathBuf>;
         }
     }
 }

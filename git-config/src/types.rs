@@ -79,7 +79,7 @@ pub enum Source {
 /// # Filtering
 ///
 /// All methods exist in a `*_filter(…, filter)` version to allow skipping sections by
-/// their metadata. That way it's possible to select values based on their `git_sec::Trust`
+/// their metadata. That way it's possible to select values based on their `gix_sec::Trust`
 /// for example, or by their location.
 ///
 /// Note that the filter may be executed even on sections that don't contain the key in question,

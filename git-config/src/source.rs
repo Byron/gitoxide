@@ -60,7 +60,7 @@ impl Source {
     /// Be aware that depending on environment overrides, multiple scopes might return the same path, which should
     /// only be loaded once nonetheless.
     ///
-    /// With `env_var` it becomes possible to prevent accessing environment variables entirely to comply with `git-sec`
+    /// With `env_var` it becomes possible to prevent accessing environment variables entirely to comply with `gix-sec`
     /// permissions for example.
     pub fn storage_location(self, env_var: &mut dyn FnMut(&str) -> Option<OsString>) -> Option<Cow<'static, Path>> {
         use Source::*;

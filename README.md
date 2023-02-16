@@ -70,7 +70,7 @@ is usable to some extent.
   * [git-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-traverse)
   * [git-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-features)
   * [git-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-credentials)
-  * [git-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sec)
+  * [gix-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-sec)
   * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
   * [git-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-discover)
   * [gix-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-path)

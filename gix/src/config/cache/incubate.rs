@@ -19,7 +19,7 @@ impl StageOne {
     pub fn new(
         common_dir: &std::path::Path,
         git_dir: &std::path::Path,
-        git_dir_trust: git_sec::Trust,
+        git_dir_trust: gix_sec::Trust,
         lossy: Option<bool>,
         lenient: bool,
     ) -> Result<Self, Error> {
@@ -84,7 +84,7 @@ fn load_config(
     config_path: std::path::PathBuf,
     buf: &mut Vec<u8>,
     source: git_config::Source,
-    git_dir_trust: git_sec::Trust,
+    git_dir_trust: gix_sec::Trust,
     lossy: Option<bool>,
 ) -> Result<git_config::File<'static>, Error> {
     buf.clear();

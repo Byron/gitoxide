@@ -156,7 +156,7 @@ members = [
     "git-fetchhead",
     "git-prompt",
     "git-filter",
-    "git-sec",
+    "gix-sec",
     "git-lfs",
     "git-rebase",
     "git-sequencer",

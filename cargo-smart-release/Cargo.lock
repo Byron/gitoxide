@@ -571,7 +571,7 @@ dependencies = [
  "git-glob",
  "gix-path",
  "git-ref",
- "git-sec",
+ "gix-sec",
  "libc",
  "memchr",
  "nom",
@@ -595,7 +595,7 @@ name = "git-credentials"
 version = "0.2.0"
 dependencies = [
  "bstr",
- "git-sec",
+ "gix-sec",
  "quick-error",
 ]
 
@@ -624,7 +624,7 @@ dependencies = [
  "git-hash",
  "gix-path",
  "git-ref",
- "git-sec",
+ "gix-sec",
  "thiserror",
 ]
 
@@ -814,7 +814,7 @@ dependencies = [
  "gix-path",
  "git-ref",
  "git-revision",
- "git-sec",
+ "gix-sec",
  "git-tempfile",
  "git-traverse",
  "git-url",
@@ -839,7 +839,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-sec"
+name = "gix-sec"
 version = "0.2.0"
 dependencies = [
  "bitflags",

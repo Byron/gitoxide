@@ -6,7 +6,7 @@ mod util;
 pub(crate) mod function {
     use std::{borrow::Cow, path::Path};
 
-    use git_sec::Trust;
+    use gix_sec::Trust;
 
     use super::{Error, Options};
     #[cfg(unix)]

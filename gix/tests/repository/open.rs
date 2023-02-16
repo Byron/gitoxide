@@ -119,7 +119,7 @@ mod submodules {
         Ok(gix::ThreadSafeRepository::discover_opts(
             repo_dir,
             Default::default(),
-            git_sec::trust::Mapping {
+            gix_sec::trust::Mapping {
                 full: crate::restricted(),
                 reduced: crate::restricted(),
             },
@@ -155,8 +155,8 @@ mod with_overrides {
     use std::borrow::Cow;
 
     use git_object::bstr::BStr;
-    use git_sec::Permission;
     use git_testtools::Env;
+    use gix_sec::Permission;
 
     use serial_test::serial;
 

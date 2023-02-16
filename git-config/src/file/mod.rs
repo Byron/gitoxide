@@ -63,7 +63,7 @@ pub struct Metadata {
     /// level 0 file.
     pub level: u8,
     /// The trust-level for the section this meta-data is associated with.
-    pub trust: git_sec::Trust,
+    pub trust: gix_sec::Trust,
 }
 
 /// A section in a git-config file, like `[core]` or `[remote "origin"]`, along with all of its keys.

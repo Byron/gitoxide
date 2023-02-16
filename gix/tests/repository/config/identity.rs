@@ -1,7 +1,7 @@
 use std::path::Path;
 
-use git_sec::Permission;
 use git_testtools::Env;
+use gix_sec::Permission;
 
 use serial_test::serial;
 
@@ -10,7 +10,7 @@ use crate::named_repo;
 #[test]
 #[serial]
 fn author_and_committer_and_fallback() -> crate::Result {
-    for trust in [git_sec::Trust::Full, git_sec::Trust::Reduced] {
+    for trust in [gix_sec::Trust::Full, gix_sec::Trust::Reduced] {
         let repo = named_repo("make_config_repo.sh")?;
         let work_dir = repo.work_dir().expect("present").canonicalize()?;
         let _env = Env::new()
@@ -104,7 +104,7 @@ fn author_and_committer_and_fallback() -> crate::Result {
         assert_eq!(config.try_boolean("core.missing"), None);
 
         let relative_path_key = "a.relative-path";
-        if trust == git_sec::Trust::Full {
+        if trust == gix_sec::Trust::Full {
             assert_eq!(
                 config
                     .trusted_path(relative_path_key)
@@ -148,7 +148,7 @@ fn author_from_different_config_sections() -> crate::Result {
         repo.open_options()
             .clone()
             .config_overrides(None::<&str>)
-            .with(git_sec::Trust::Full)
+            .with(gix_sec::Trust::Full)
             .permissions(gix::Permissions {
                 env: gix::permissions::Environment {
                     xdg_config_home: Permission::Deny,

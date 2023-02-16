@@ -115,7 +115,7 @@ fn http_will_use_pipelining() {
         Err(err) => unreachable!("{err:?}"),
     };
     client
-        .set_identity(git_sec::identity::Account {
+        .set_identity(gix_sec::identity::Account {
             username: "foo".into(),
             password: "bar".into(),
         })
@@ -132,7 +132,7 @@ fn http_will_use_pipelining() {
 fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted() -> crate::Result {
     let (server, mut client) = assert_error_status(401, std::io::ErrorKind::PermissionDenied)?;
     server.next_read_and_respond_with(fixture_bytes("v1/http-handshake.response"));
-    client.set_identity(git_sec::identity::Account {
+    client.set_identity(gix_sec::identity::Account {
         username: "user".into(),
         password: "password".into(),
     })?;

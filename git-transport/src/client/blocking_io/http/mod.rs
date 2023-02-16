@@ -211,7 +211,7 @@ pub struct Transport<H: Http> {
     http: H,
     service: Option<Service>,
     line_provider: Option<git_packetline::StreamingPeekableIter<H::ResponseBody>>,
-    identity: Option<git_sec::identity::Account>,
+    identity: Option<gix_sec::identity::Account>,
 }
 
 impl<H: Http> Transport<H> {
@@ -261,7 +261,7 @@ impl<H: Http> Transport<H> {
 
     #[allow(clippy::unnecessary_wraps, unknown_lints)]
     fn add_basic_auth_if_present(&self, headers: &mut Vec<Cow<'_, str>>) -> Result<(), client::Error> {
-        if let Some(git_sec::identity::Account { username, password }) = &self.identity {
+        if let Some(gix_sec::identity::Account { username, password }) = &self.identity {
             #[cfg(not(debug_assertions))]
             if self.url.starts_with("http://") {
                 return Err(client::Error::AuthenticationRefused(
@@ -287,7 +287,7 @@ fn append_url(base: &str, suffix: &str) -> String {
 }
 
 impl<H: Http> client::TransportWithoutIO for Transport<H> {
-    fn set_identity(&mut self, identity: git_sec::identity::Account) -> Result<(), client::Error> {
+    fn set_identity(&mut self, identity: gix_sec::identity::Account) -> Result<(), client::Error> {
         self.identity = Some(identity);
         Ok(())
     }

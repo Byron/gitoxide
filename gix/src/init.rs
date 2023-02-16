@@ -45,8 +45,8 @@ impl ThreadSafeRepository {
         kind: crate::create::Kind,
         options: crate::create::Options,
     ) -> Result<Self, Error> {
-        use git_sec::trust::DefaultForLevel;
-        let open_options = crate::open::Options::default_for_level(git_sec::Trust::Full);
+        use gix_sec::trust::DefaultForLevel;
+        let open_options = crate::open::Options::default_for_level(gix_sec::Trust::Full);
         Self::init_opts(directory, kind, options, open_options)
     }
 
@@ -64,7 +64,7 @@ impl ThreadSafeRepository {
     ) -> Result<Self, Error> {
         let path = crate::create::into(directory.as_ref(), kind, create_options)?;
         let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
-        open_options.git_dir_trust = Some(git_sec::Trust::Full);
+        open_options.git_dir_trust = Some(gix_sec::Trust::Full);
         open_options.current_dir = std::env::current_dir()?.into();
         let repo = ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, open_options)?;
 

@@ -28,7 +28,7 @@ pub mod capabilities;
 pub use capabilities::Capabilities;
 
 mod non_io_types;
-pub use git_sec::identity::Account;
+pub use gix_sec::identity::Account;
 pub use non_io_types::{Error, MessageKind, WriteMode};
 
 ///

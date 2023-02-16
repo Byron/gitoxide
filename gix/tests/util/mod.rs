@@ -45,8 +45,8 @@ pub fn restricted() -> open::Options {
 
 pub fn restricted_and_git() -> open::Options {
     let mut opts = restricted();
-    opts.permissions.env.git_prefix = git_sec::Permission::Allow;
-    opts.permissions.env.identity = git_sec::Permission::Allow;
+    opts.permissions.env.git_prefix = gix_sec::Permission::Allow;
+    opts.permissions.env.identity = gix_sec::Permission::Allow;
     opts
 }
 
@@ -60,7 +60,7 @@ pub fn repo_rw_opts(name: &str, opts: gix::open::Options) -> Result<(Repository,
         ThreadSafeRepository::discover_opts(
             repo_path.path(),
             Default::default(),
-            git_sec::trust::Mapping {
+            gix_sec::trust::Mapping {
                 full: opts.clone(),
                 reduced: opts,
             },

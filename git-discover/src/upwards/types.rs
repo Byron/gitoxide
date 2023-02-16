@@ -22,7 +22,7 @@ pub enum Error {
     NoTrustedGitRepository {
         path: PathBuf,
         candidate: PathBuf,
-        required: git_sec::Trust,
+        required: gix_sec::Trust,
     },
     #[error("Could not determine trust level for path '{}'.", .path.display())]
     CheckTrust {
@@ -37,9 +37,9 @@ pub enum Error {
 pub struct Options<'a> {
     /// When discovering a repository, assure it has at least this trust level or ignore it otherwise.
     ///
-    /// This defaults to [`Reduced`][git_sec::Trust::Reduced] as our default settings are geared towards avoiding abuse.
-    /// Set it to `Full` to only see repositories that [are owned by the current user][git_sec::Trust::from_path_ownership()].
-    pub required_trust: git_sec::Trust,
+    /// This defaults to [`Reduced`][gix_sec::Trust::Reduced] as our default settings are geared towards avoiding abuse.
+    /// Set it to `Full` to only see repositories that [are owned by the current user][gix_sec::Trust::from_path_ownership()].
+    pub required_trust: gix_sec::Trust,
     /// When discovering a repository, ignore any repositories that are located in these directories or any of their parents.
     ///
     /// Note that we ignore ceiling directories if the search directory is directly on top of one, which by default is an error
@@ -63,7 +63,7 @@ pub struct Options<'a> {
 impl Default for Options<'_> {
     fn default() -> Self {
         Options {
-            required_trust: git_sec::Trust::Reduced,
+            required_trust: gix_sec::Trust::Reduced,
             ceiling_dirs: vec![],
             match_ceiling_dir_or_error: true,
             cross_fs: false,

@@ -111,7 +111,7 @@ pub mod excludes {
         #[error("Could not read repository exclude.")]
         Io(#[from] std::io::Error),
         #[error(transparent)]
-        EnvironmentPermission(#[from] git_sec::permission::Error<PathBuf>),
+        EnvironmentPermission(#[from] gix_sec::permission::Error<PathBuf>),
         #[error("The value for `core.excludesFile` could not be read from configuration")]
         ExcludesFilePathInterpolation(#[from] git_config::path::interpolate::Error),
     }

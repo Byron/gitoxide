@@ -12,7 +12,7 @@ fn get() {
     .expect("mock provides credentials");
     assert_eq!(
         outcome.consume_identity().expect("complete"),
-        git_sec::identity::Account {
+        gix_sec::identity::Account {
             username: "user".into(),
             password: "pass".into()
         }
@@ -76,7 +76,7 @@ mod program {
             .expect("present")
             .consume_identity()
             .expect("complete"),
-            git_sec::identity::Account {
+            gix_sec::identity::Account {
                 username: "user".into(),
                 password: "pass".into()
             }
@@ -97,7 +97,7 @@ mod program {
             .expect("present")
             .consume_identity()
             .expect("complete"),
-            git_sec::identity::Account {
+            gix_sec::identity::Account {
                 username: "user-script".into(),
                 password: "pass-script".into()
             }
@@ -115,7 +115,7 @@ mod program {
             .expect("present")
             .consume_identity()
             .expect("complete"),
-            git_sec::identity::Account {
+            gix_sec::identity::Account {
                 username: "user-script".into(),
                 password: "pass-script".into()
             }

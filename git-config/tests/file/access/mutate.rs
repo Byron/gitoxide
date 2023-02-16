@@ -88,7 +88,7 @@ mod set_meta {
             path: None,
             source: git_config::Source::Local,
             level: 0,
-            trust: git_sec::Trust::Reduced,
+            trust: gix_sec::Trust::Reduced,
         };
         file.set_meta(meta.clone());
         let section = file.new_section("new", None)?;

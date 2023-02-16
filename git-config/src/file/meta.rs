@@ -10,7 +10,7 @@ impl Metadata {
             path: None,
             source: Source::Api,
             level: 0,
-            trust: git_sec::Trust::Full,
+            trust: gix_sec::Trust::Full,
         }
     }
 
@@ -18,7 +18,7 @@ impl Metadata {
     /// by checking its ownership.
     pub fn try_from_path(path: impl Into<PathBuf>, source: Source) -> std::io::Result<Self> {
         let path = path.into();
-        git_sec::Trust::from_path_ownership(&path).map(|trust| Metadata {
+        gix_sec::Trust::from_path_ownership(&path).map(|trust| Metadata {
             path: path.into(),
             source,
             level: 0,
@@ -29,7 +29,7 @@ impl Metadata {
     /// Set the trust level of this instance to the given `trust` and return it.
     ///
     /// Useful in conjunction with `Metadata::from(source)`.
-    pub fn with(mut self, trust: git_sec::Trust) -> Self {
+    pub fn with(mut self, trust: gix_sec::Trust) -> Self {
         self.trust = trust;
         self
     }
@@ -53,7 +53,7 @@ impl From<Source> for Metadata {
             path: None,
             source,
             level: 0,
-            trust: git_sec::Trust::Full,
+            trust: gix_sec::Trust::Full,
         }
     }
 }

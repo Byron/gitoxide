@@ -51,7 +51,7 @@ impl File<'static> {
             path: None,
             source: crate::Source::Env,
             level: 0,
-            trust: git_sec::Trust::Full,
+            trust: gix_sec::Trust::Full,
         };
         let mut config = File::new(meta);
         for i in 0..count {

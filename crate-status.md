@@ -362,7 +362,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 ### git-command
 * [x] execute commands directly
 * [x] execute commands with `sh`
-* [ ] support for `GIT_EXEC_PATH` environment variable with `git-sec` filter
+* [ ] support for `GIT_EXEC_PATH` environment variable with `gix-sec` filter
 
 ### git-prompt
 * [x] open prompts for usernames for example
@@ -411,7 +411,7 @@ Provide base-implementations for dealing with smudge and clean filters as well a
 * [ ] smudge filter base
 * [ ] filter process base
  
-### git-sec
+### gix-sec
 
 Provides a trust model to share across gitoxide crates. It helps configuring how to interact with external processes, among other things.
 

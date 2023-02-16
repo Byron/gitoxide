@@ -87,7 +87,7 @@ impl SpawnProcessOnDemand {
 }
 
 impl client::TransportWithoutIO for SpawnProcessOnDemand {
-    fn set_identity(&mut self, identity: git_sec::identity::Account) -> Result<(), client::Error> {
+    fn set_identity(&mut self, identity: gix_sec::identity::Account) -> Result<(), client::Error> {
         if self.url.scheme == git_url::Scheme::Ssh {
             self.url
                 .set_user((!identity.username.is_empty()).then_some(identity.username));

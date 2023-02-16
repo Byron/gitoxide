@@ -1,7 +1,7 @@
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 mod trust {
-    use git_sec::Trust;
+    use gix_sec::Trust;
 
     #[test]
     fn ordering() {
@@ -10,7 +10,7 @@ mod trust {
 }
 
 mod permission {
-    use git_sec::Permission;
+    use gix_sec::Permission;
 
     #[test]
     fn check() {

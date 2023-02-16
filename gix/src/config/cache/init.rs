@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::borrow::Cow;
 
-use git_sec::Permission;
+use gix_sec::Permission;
 
 use super::{interpolate_context, util, Error, StageOne};
 use crate::{
@@ -103,7 +103,7 @@ impl Cache {
                 path: Some(path),
                 source: *source,
                 level: 0,
-                trust: git_sec::Trust::Full,
+                trust: gix_sec::Trust::Full,
             });
 
             let err_on_nonexisting_paths = false;

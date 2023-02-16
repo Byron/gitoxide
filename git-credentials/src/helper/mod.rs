@@ -37,14 +37,14 @@ impl Outcome {
     /// Try to fetch username _and_ password to form an identity. This will fail if one of them is not set.
     ///
     /// This does nothing if only one of the fields is set, or consume both.
-    pub fn consume_identity(&mut self) -> Option<git_sec::identity::Account> {
+    pub fn consume_identity(&mut self) -> Option<gix_sec::identity::Account> {
         if self.username.is_none() || self.password.is_none() {
             return None;
         }
         self.username
             .take()
             .zip(self.password.take())
-            .map(|(username, password)| git_sec::identity::Account { username, password })
+            .map(|(username, password)| gix_sec::identity::Account { username, password })
     }
 }
 

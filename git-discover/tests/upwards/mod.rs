@@ -2,11 +2,11 @@ use std::path::PathBuf;
 
 use git_discover::repository::Kind;
 
-fn expected_trust() -> git_sec::Trust {
+fn expected_trust() -> gix_sec::Trust {
     if std::env::var_os("GITOXIDE_TEST_EXPECT_REDUCED_TRUST").is_some() {
-        git_sec::Trust::Reduced
+        gix_sec::Trust::Reduced
     } else {
-        git_sec::Trust::Full
+        gix_sec::Trust::Full
     }
 }
 
