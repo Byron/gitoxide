@@ -1725,10 +1725,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-tix"
-version = "0.0.0"
-
-[[package]]
 name = "git-traverse"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2224,6 +2220,10 @@ dependencies = [
  "signal-hook-registry",
  "tempfile",
 ]
+
+[[package]]
+name = "gix-tix"
+version = "0.0.0"
 
 [[package]]
 name = "gix-transport"

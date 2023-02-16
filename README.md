@@ -97,7 +97,7 @@ is usable to some extent.
   * [git-sequencer](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sequencer)
   * [git-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-submodule)
   * [gix-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tui)
-  * [git-tix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tix)
+  * [gix-tix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tix)
   * [git-bundle](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bundle)
   
 ### Stress Testing

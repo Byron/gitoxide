@@ -751,7 +751,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 * _a terminal user interface seeking to replace and improve on `tig`_
 * Can display complex history in novel ways to make them graspable. Maybe [this post] can be an inspiration.
  
-### git-tix
+### gix-tix
 
 A re-implementation of a minimal `tig` like UI that aims to be fast and to the point.
 
