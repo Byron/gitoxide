@@ -31,7 +31,7 @@ required-features = []
 gix-features = { version = "^0.26.4", path = "../gix-features", features = ["rustsha1", "walkdir", "zlib", "crc32" ] }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-path = { version = "^0.7.1", path = "../gix-path" }
-git-quote = { version = "^0.4.1", path = "../git-quote" }
+gix-quote = { version = "^0.4.1", path = "../gix-quote" }
 gix-object = { version = "^0.26.1", path = "../gix-object" }
 git-pack = { version = "^0.30.2", path = "../git-pack" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

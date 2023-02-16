@@ -1,5 +1,5 @@
 [package]
-name = "git-quote"
+name = "gix-quote"
 version = "0.4.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

@@ -140,7 +140,7 @@ members = [
     "gix-features",
     "git-commitgraph",
     "git-chunk",
-    "git-quote",
+    "gix-quote",
     "gix-object",
     "gix-glob",
     "git-diff",

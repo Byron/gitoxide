@@ -73,7 +73,7 @@ dependencies = [
  "gix-features",
  "gix-glob",
  "gix-path",
- "git-quote",
+ "gix-quote",
  "thiserror",
  "unicode-bom",
 ]
@@ -130,7 +130,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-quote"
+name = "gix-quote"
 version = "0.2.0"
 dependencies = [
  "bstr",

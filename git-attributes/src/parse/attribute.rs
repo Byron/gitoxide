@@ -27,7 +27,7 @@ mod error {
         #[error("Macro in line {line_number} has non-ascii characters or starts with '-': {macro_name}")]
         MacroName { line_number: usize, macro_name: BString },
         #[error("Could not unquote attributes line")]
-        Unquote(#[from] git_quote::ansi_c::undo::Error),
+        Unquote(#[from] gix_quote::ansi_c::undo::Error),
     }
 }
 pub use error::Error;
@@ -132,7 +132,7 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
     }
 
     let (line, attrs): (Cow<'_, _>, _) = if line.starts_with(b"\"") {
-        let (unquoted, consumed) = match git_quote::ansi_c::undo(line) {
+        let (unquoted, consumed) = match gix_quote::ansi_c::undo(line) {
             Ok(res) => res,
             Err(err) => return Some(Err(err.into())),
         };

@@ -1212,7 +1212,7 @@ dependencies = [
  "git-features",
  "git-glob",
  "git-path",
- "git-quote 0.4.0",
+ "git-quote",
  "thiserror",
  "unicode-bom",
 ]
@@ -1224,11 +1224,11 @@ dependencies = [
  "bstr",
  "compact_str",
  "document-features",
- "git-quote 0.4.1",
  "git-testtools",
  "gix-features",
  "gix-glob",
  "gix-path",
+ "gix-quote",
  "serde",
  "thiserror",
  "unicode-bom",
@@ -1567,13 +1567,13 @@ dependencies = [
  "document-features",
  "filetime",
  "git-pack",
- "git-quote 0.4.1",
  "git-testtools",
  "gix-actor",
  "gix-features",
  "gix-hash",
  "gix-object",
  "gix-path",
+ "gix-quote",
  "maplit",
  "num_cpus",
  "parking_lot 0.12.1",
@@ -1706,18 +1706,9 @@ dependencies = [
 
 [[package]]
 name = "git-quote"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dd11f4e7f251ab297545faa4c5a4517f4985a43b9c16bf96fa49107f58e837f"
-dependencies = [
- "bstr",
- "btoi",
- "quick-error 2.0.1",
-]
-
-[[package]]
-name = "git-quote"
 version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "715a6ce398a20133abe389de0548da21c174821b331aac9fc6b892ffad1cf3ee"
 dependencies = [
  "bstr",
  "btoi",
@@ -1864,10 +1855,10 @@ dependencies = [
  "git-credentials",
  "git-pack",
  "git-packetline",
- "git-quote 0.4.1",
  "git-url",
  "gix-features",
  "gix-hash",
+ "gix-quote",
  "gix-sec",
  "maybe-async",
  "pin-project-lite",
@@ -2249,6 +2240,15 @@ dependencies = [
  "bstr",
  "tempfile",
  "thiserror",
+]
+
+[[package]]
+name = "gix-quote"
+version = "0.4.1"
+dependencies = [
+ "bstr",
+ "btoi",
+ "quick-error 2.0.1",
 ]
 
 [[package]]

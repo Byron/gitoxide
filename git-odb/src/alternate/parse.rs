@@ -9,7 +9,7 @@ pub enum Error {
     #[error("Could not obtain an object path for the alternate directory '{}'", String::from_utf8_lossy(.0))]
     PathConversion(Vec<u8>),
     #[error("Could not unquote alternate path")]
-    Unquote(#[from] git_quote::ansi_c::undo::Error),
+    Unquote(#[from] gix_quote::ansi_c::undo::Error),
 }
 
 pub(crate) fn content(input: &[u8]) -> Result<Vec<PathBuf>, Error> {
@@ -21,7 +21,7 @@ pub(crate) fn content(input: &[u8]) -> Result<Vec<PathBuf>, Error> {
         }
         out.push(
             gix_path::try_from_bstr(if line.starts_with(b"\"") {
-                git_quote::ansi_c::undo(line)?.0
+                gix_quote::ansi_c::undo(line)?.0
             } else {
                 Cow::Borrowed(line)
             })

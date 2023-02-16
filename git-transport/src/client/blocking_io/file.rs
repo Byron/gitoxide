@@ -214,7 +214,7 @@ impl client::Transport for SpawnProcessOnDemand {
         cmd.stdout = Stdio::piped();
         let repo_path = if self.ssh_cmd.is_some() {
             cmd.args.push(service.as_str().into());
-            git_quote::single(self.path.as_ref()).to_os_str_lossy().into_owned()
+            gix_quote::single(self.path.as_ref()).to_os_str_lossy().into_owned()
         } else {
             self.path.to_os_str_lossy().into_owned()
         };

@@ -1,5 +1,5 @@
 mod single {
-    use git_quote::single;
+    use gix_quote::single;
 
     #[test]
     fn empty() {
@@ -37,7 +37,7 @@ mod single {
 mod ansi_c {
     mod undo {
         use bstr::ByteSlice;
-        use git_quote::ansi_c;
+        use gix_quote::ansi_c;
 
         macro_rules! test {
             ($name:ident, $input:literal, $expected:literal, $consumed:literal) => {

@@ -59,7 +59,7 @@ git-url = { version = "^0.13.2", path = "../git-url" }
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }
 git-packetline = { version = "^0.14.2", path = "../git-packetline" }
 git-credentials = { version = "^0.9.1", path = "../git-credentials", optional = true }
-git-quote = { version = "^0.4.1", path = "../git-quote" }
+gix-quote = { version = "^0.4.1", path = "../gix-quote" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"] }
