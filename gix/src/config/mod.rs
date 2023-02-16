@@ -1,5 +1,5 @@
 pub use git_config::*;
-use git_features::threading::OnceCell;
+use gix_features::threading::OnceCell;
 
 use crate::{bstr::BString, repository::identity, revision::spec, Repository};
 

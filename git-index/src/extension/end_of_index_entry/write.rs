@@ -18,7 +18,7 @@ pub fn write_to(
 
     out.write_all(&offset_to_extensions.to_be_bytes())?;
 
-    let mut hasher = git_features::hash::hasher(hash_kind);
+    let mut hasher = gix_features::hash::hasher(hash_kind);
     for (signature, size) in prior_extensions {
         hasher.update(&signature);
         hasher.update(&size.to_be_bytes());

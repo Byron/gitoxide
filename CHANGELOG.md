@@ -631,7 +631,7 @@ It's also an attempt to trigger CI to build binary releases.
 
 <csr-id-4d2d433e7e98ac42db858688edac06e68ee4d10d/>
 
-Adapt to changes in `git-features` which change `Send + Sync` to `Send + Clone`. This happens to allow non-sync implementations (i.e. thread-local), along with `Sync` ones
+Adapt to changes in `gix-features` which change `Send + Sync` to `Send + Clone`. This happens to allow non-sync implementations (i.e. thread-local), along with `Sync` ones
 which usually are `Clone` too as they are passed by immutable reference (which is `Clone + Copy`).
 
 ### Refactor (BREAKING)
@@ -887,7 +887,7 @@ could not be installed anymore.
 This was eventually fixed with new minor releases across the ecosystem.
 
 Finally, yet another breaking change due to the introduction of the `git-hash`
-crate to break a dependency cycle between `git-object` and `git-features` caused
+crate to break a dependency cycle between `git-object` and `gix-features` caused
 yet another maintenance release.
 
 ## v0.5.0 (2020-12-15)

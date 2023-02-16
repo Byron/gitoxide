@@ -235,7 +235,7 @@ mod v2 {
             assert!(r.has_pack());
             let mut buf = Vec::new();
             reader.set_progress_handler(Some(Box::new(|a: bool, b: &[u8]| {
-                git_protocol::RemoteProgress::translate_to_progress(a, b, &mut git_features::progress::Discard)
+                git_protocol::RemoteProgress::translate_to_progress(a, b, &mut gix_features::progress::Discard)
             }) as git_transport::client::HandleProgress));
             let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 5360, "should be able to read the whole pack");

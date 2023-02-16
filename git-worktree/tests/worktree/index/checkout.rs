@@ -7,10 +7,10 @@ use std::{
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
-use git_features::progress;
 use git_object::bstr::ByteSlice;
 use git_odb::FindExt;
 use git_worktree::{fs::Capabilities, index, index::checkout::Collision};
+use gix_features::progress;
 use tempfile::TempDir;
 
 use crate::fixture_path;
@@ -322,7 +322,7 @@ fn collisions_are_detected_on_a_case_insensitive_filesystem() {
 }
 
 fn multi_threaded() -> bool {
-    git_features::parallel::num_threads(None) > 1
+    gix_features::parallel::num_threads(None) > 1
 }
 
 fn assert_equality(source_tree: &Path, destination: &TempDir, allow_symlinks: bool) -> crate::Result<usize> {
@@ -428,7 +428,7 @@ fn opts_from_probe() -> index::checkout::Options {
     index::checkout::Options {
         fs: probe_gitoxide_dir().unwrap(),
         destination_is_initially_empty: true,
-        thread_limit: git_features::parallel::num_threads(None).into(),
+        thread_limit: gix_features::parallel::num_threads(None).into(),
         ..Default::default()
     }
 }

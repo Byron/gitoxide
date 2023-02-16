@@ -1,11 +1,11 @@
 mod io {
     use std::io::{BufRead, ErrorKind, Read, Write};
 
-    use git_features::io;
+    use gix_features::io;
 
     #[test]
     fn threaded_read_to_end() {
-        let (mut writer, mut reader) = git_features::io::pipe::unidirectional(0);
+        let (mut writer, mut reader) = gix_features::io::pipe::unidirectional(0);
 
         let message = "Hello, world!";
         std::thread::spawn(move || {

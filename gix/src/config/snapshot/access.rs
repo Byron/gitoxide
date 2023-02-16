@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::borrow::Cow;
 
-use git_features::threading::OwnShared;
+use gix_features::threading::OwnShared;
 
 use crate::{
     bstr::BStr,

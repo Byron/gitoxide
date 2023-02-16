@@ -1,7 +1,7 @@
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
     mod protocol_allow {
-        use git_features::progress;
+        use gix_features::progress;
 
         use gix::remote::Direction::Fetch;
         use serial_test::serial;

@@ -1,7 +1,7 @@
 use std::{convert::TryInto, io, sync::atomic::AtomicBool};
 
 pub use error::Error;
-use git_features::progress::{self, Progress};
+use gix_features::progress::{self, Progress};
 
 use crate::cache::delta::{traverse, Tree};
 
@@ -49,7 +49,7 @@ pub enum ProgressId {
     IndexBytesWritten,
 }
 
-impl From<ProgressId> for git_features::progress::Id {
+impl From<ProgressId> for gix_features::progress::Id {
     fn from(v: ProgressId) -> Self {
         match v {
             ProgressId::IndexObjects => *b"IWIO",
@@ -213,7 +213,7 @@ impl crate::index::File {
             let mut items = roots;
             items.extend(children);
             {
-                let _progress = root_progress.add_child_with_id("sorting by id", git_features::progress::UNKNOWN);
+                let _progress = root_progress.add_child_with_id("sorting by id", gix_features::progress::UNKNOWN);
                 items.sort_by_key(|e| e.data.id);
             }
 
@@ -225,7 +225,7 @@ impl crate::index::File {
             Some(ph) => ph,
             None if num_objects == 0 => {
                 let header = crate::data::header::encode(pack_version, 0);
-                let mut hasher = git_features::hash::hasher(object_hash);
+                let mut hasher = gix_features::hash::hasher(object_hash);
                 hasher.update(&header);
                 git_hash::ObjectId::from(hasher.digest())
             }
@@ -255,7 +255,7 @@ impl crate::index::File {
 
 fn modify_base(entry: &mut TreeEntry, pack_entry: &crate::data::Entry, decompressed: &[u8], hash: git_hash::Kind) {
     fn compute_hash(kind: git_object::Kind, bytes: &[u8], object_hash: git_hash::Kind) -> git_hash::ObjectId {
-        let mut hasher = git_features::hash::hasher(object_hash);
+        let mut hasher = gix_features::hash::hasher(object_hash);
         hasher.update(&git_object::encode::loose_header(kind, bytes.len()));
         hasher.update(bytes);
         git_hash::ObjectId::from(hasher.digest())

@@ -22,8 +22,8 @@ use std::{
 };
 
 use arc_swap::ArcSwap;
-use git_features::{threading::OwnShared, zlib::stream::deflate};
 pub use git_pack as pack;
+use gix_features::{threading::OwnShared, zlib::stream::deflate};
 
 mod store_impls;
 pub use store_impls::{dynamic as store, loose};
@@ -78,7 +78,7 @@ pub use traits::{Find, FindExt, Header, HeaderExt, Write};
 
 /// A thread-local handle to access any object.
 pub type Handle = Cache<store::Handle<OwnShared<Store>>>;
-/// A thread-local handle to access any object, but thread-safe and independent of the actual type of `OwnShared` or feature toggles in `git-features`.
+/// A thread-local handle to access any object, but thread-safe and independent of the actual type of `OwnShared` or feature toggles in `gix-features`.
 pub type HandleArc = Cache<store::Handle<Arc<Store>>>;
 
 use store::types;

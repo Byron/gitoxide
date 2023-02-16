@@ -26,11 +26,11 @@ impl File {
         let checksum = self.checksum.ok_or(Error::NoChecksum)?;
         let num_bytes_to_hash = self.path.metadata()?.len() - checksum.as_bytes().len() as u64;
         let should_interrupt = AtomicBool::new(false);
-        let actual = git_features::hash::bytes_of_file(
+        let actual = gix_features::hash::bytes_of_file(
             &self.path,
             num_bytes_to_hash as usize,
             checksum.kind(),
-            &mut git_features::progress::Discard,
+            &mut gix_features::progress::Discard,
             &should_interrupt,
         )?;
         (actual == checksum).then_some(()).ok_or(Error::ChecksumMismatch {

@@ -3,7 +3,7 @@ use std::{
     thread,
 };
 
-use git_features::io;
+use gix_features::io;
 
 use crate::client::{blocking_io::http, http::traits::PostBodyDataKind};
 

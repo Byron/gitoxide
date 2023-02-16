@@ -7,7 +7,7 @@ use std::{
 };
 
 use bstr::BStr;
-use git_features::threading::OwnShared;
+use gix_features::threading::OwnShared;
 
 mod mutable;
 pub use mutable::{multi_value::MultiValueMut, section::SectionMut, value::ValueMut};

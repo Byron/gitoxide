@@ -1,9 +1,9 @@
-use git_features::fs;
+use gix_features::fs;
 
 use crate::store_impls::loose;
 
 /// Returned by [`loose::Store::iter()`]
-pub type Error = git_features::fs::walkdir::Error;
+pub type Error = gix_features::fs::walkdir::Error;
 
 impl loose::Iter {
     fn path_to_id(

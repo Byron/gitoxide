@@ -6,8 +6,8 @@ use std::{
     sync::{atomic::AtomicBool, Arc},
 };
 
-use git_features::{interrupt, progress, progress::Progress};
 use git_tempfile::{AutoRemove, ContainingDirectory};
+use gix_features::{interrupt, progress, progress::Progress};
 
 use crate::data;
 
@@ -37,7 +37,7 @@ pub enum ProgressId {
     IndexingSteps(PhantomData<crate::index::write::ProgressId>),
 }
 
-impl From<ProgressId> for git_features::progress::Id {
+impl From<ProgressId> for gix_features::progress::Id {
     fn from(v: ProgressId) -> Self {
         match v {
             ProgressId::ReadPackBytes => *b"BWRB",
@@ -51,7 +51,7 @@ impl crate::Bundle {
     ///
     /// In the latter case, the functionality provided here is more a kind of pack data stream validation.
     ///
-    /// * `progress` provides detailed progress information which can be discarded with [`git_features::progress::Discard`].
+    /// * `progress` provides detailed progress information which can be discarded with [`gix_features::progress::Discard`].
     /// * `should_interrupt` is checked regularly and when true, the whole operation will stop.
     /// * `thin_pack_base_object_lookup_fn` If set, we expect to see a thin-pack with objects that reference their base object by object id which is
     /// expected to exist in the object database the bundle is contained within.
@@ -242,7 +242,7 @@ impl crate::Bundle {
         };
         let num_objects = pack_entries_iter.size_hint().0;
         let pack_entries_iter =
-            git_features::parallel::EagerIterIf::new(move || num_objects > 25_000, pack_entries_iter, 5_000, 5);
+            gix_features::parallel::EagerIterIf::new(move || num_objects > 25_000, pack_entries_iter, 5_000, 5);
 
         let WriteOutcome {
             outcome,

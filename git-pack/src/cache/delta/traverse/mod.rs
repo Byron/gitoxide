@@ -1,6 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use git_features::{
+use gix_features::{
     parallel::in_parallel_with_slice,
     progress::{self, Progress},
     threading::{lock, Mutable, OwnShared},
@@ -20,7 +20,7 @@ pub(crate) mod util;
 pub enum Error {
     #[error("{message}")]
     ZlibInflate {
-        source: git_features::zlib::inflate::Error,
+        source: gix_features::zlib::inflate::Error,
         message: &'static str,
     },
     #[error("The resolver failed to obtain the pack entry bytes for the entry at {pack_offset}")]
@@ -143,7 +143,7 @@ where
                     (
                         Vec::<u8>::with_capacity(4096),
                         lock(&object_progress)
-                            .add_child_with_id(format!("thread {thread_index}"), git_features::progress::UNKNOWN),
+                            .add_child_with_id(format!("thread {thread_index}"), gix_features::progress::UNKNOWN),
                         new_thread_state(),
                         resolve.clone(),
                         inspect_object.clone(),

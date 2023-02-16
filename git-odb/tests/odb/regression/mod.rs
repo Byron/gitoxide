@@ -17,7 +17,7 @@ mod repo_with_small_packs {
     }
 
     #[test]
-    #[cfg(feature = "internal-testing-git-features-parallel")]
+    #[cfg(feature = "internal-testing-gix-features-parallel")]
     fn multi_threaded_access_will_not_panic() -> crate::Result {
         for arg in ["no", "without-multi-index"] {
             let base = git_testtools::scripted_fixture_read_only_with_args("make_repo_multi_index.sh", Some(arg))?

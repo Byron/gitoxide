@@ -19,7 +19,7 @@ test = true
 serde1 = ["serde", "git-hash/serde1", "git-actor/serde1", "git-object/serde1"]
 
 [dependencies]
-git-features = { version = "^0.26.4", path = "../git-features", features = ["walkdir"]}
+gix-features = { version = "^0.26.4", path = "../gix-features", features = ["walkdir"]}
 gix-path = { version = "^0.7.1", path = "../gix-path" }
 git-hash = { version = "^0.10.2", path = "../git-hash" }
 git-object = { version = "^0.26.1", path = "../git-object" }

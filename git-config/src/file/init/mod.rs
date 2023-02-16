@@ -1,4 +1,4 @@
-use git_features::threading::OwnShared;
+use gix_features::threading::OwnShared;
 
 use crate::{
     file::{includes, section, Metadata},

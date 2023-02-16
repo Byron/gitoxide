@@ -78,8 +78,8 @@ mod locate {
 mod write_to_directory {
     use std::{fs, path::Path, sync::atomic::AtomicBool};
 
-    use git_features::progress;
     use git_odb::pack;
+    use gix_features::progress;
     use tempfile::TempDir;
 
     use crate::{

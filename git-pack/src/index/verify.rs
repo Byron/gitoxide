@@ -1,7 +1,7 @@
 use std::sync::atomic::AtomicBool;
 
-use git_features::progress::Progress;
 use git_object::{bstr::ByteSlice, WriteTo};
+use gix_features::progress::Progress;
 
 use crate::index;
 
@@ -77,11 +77,11 @@ pub mod integrity {
         Traverse(PhantomData<crate::index::verify::index::traverse::ProgressId>),
     }
 
-    impl From<ProgressId> for git_features::progress::Id {
+    impl From<ProgressId> for gix_features::progress::Id {
         fn from(v: ProgressId) -> Self {
             match v {
                 ProgressId::ChecksumBytes => *b"PTHI",
-                ProgressId::Traverse(_) => git_features::progress::UNKNOWN,
+                ProgressId::Traverse(_) => gix_features::progress::UNKNOWN,
             }
         }
     }

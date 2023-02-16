@@ -200,7 +200,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
 
 ### New Features
 
- - <csr-id-1683a848459cae2b9182b365e3e22b0e8ba73534/> expose `git-features` crate at root under `features`.
+ - <csr-id-1683a848459cae2b9182b365e3e22b0e8ba73534/> expose `gix-features` crate at root under `features`.
    That way application developers can use more of the utilities
    that power most of the `gitoxide` plumbing crates.
  - <csr-id-90ef6fc36b440cc4baf3fde4a30060f1b4a0c8cf/> `Remote` knows about its `tagOpt` configuration.
@@ -362,7 +362,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
    who is adhering to the MSRV, but let's be careful and mark it
    breaking.
    
-   Note that `git-features` and `git-pack` are still on edition 2018
+   Note that `gix-features` and `git-pack` are still on edition 2018
    as they make use of a workaround to support (safe) mutable access
    to non-overlapping entries in a slice which doesn't work anymore
    in edition 2021.
@@ -621,7 +621,7 @@ A maintenance release without user facing changes.
 
 ### New Features
 
- - <csr-id-c28bcec19b5526acf888f928e6ddc4671873368e/> support avoiding usage of `fast-sha1` in git-features separately.
+ - <csr-id-c28bcec19b5526acf888f928e6ddc4671873368e/> support avoiding usage of `fast-sha1` in gix-features separately.
    That way one has an angle on compile failures in client libraries,
    see https://github.com/o2sh/onefetch/pull/752 for motivation.
  - <csr-id-4f87a0672f7288486a9b6403c0bb07a6279d2cfe/> `Repository::write_blob[_stream]()` to more easily write blobs.
@@ -1020,7 +1020,7 @@ With changes to `git-ref`, what follows is all the adjustments made to simplify 
    while allowing the exact same iterator machinery to work as before.
  - <csr-id-15d429bb50602363292453606902bdce5042d9a5/> file::Store::(try_)find(…, packed) was removed
    The packed buffer is now handled internally while loading it on demand.
-   When compiled with `git-features/parallel` the `file::Store` remains
+   When compiled with `gix-features/parallel` the `file::Store` remains
    send and sync.
    
    The packed refs buffer is shared across clones and it's recommended

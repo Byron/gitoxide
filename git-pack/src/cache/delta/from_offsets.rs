@@ -6,7 +6,7 @@ use std::{
     time::Instant,
 };
 
-use git_features::progress::{self, Progress};
+use gix_features::progress::{self, Progress};
 
 use crate::{cache::delta::Tree, data};
 

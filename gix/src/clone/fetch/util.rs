@@ -56,7 +56,7 @@ fn write_to_local_config(config: &git_config::File<'static>, mode: WriteMode) ->
 }
 
 pub fn append_config_to_repo_config(repo: &mut Repository, config: git_config::File<'static>) {
-    let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
+    let repo_config = gix_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
     repo_config.append(config);
 }
 

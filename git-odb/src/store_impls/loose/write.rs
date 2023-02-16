@@ -1,7 +1,7 @@
 use std::{convert::TryInto, fs, io, io::Write, path::PathBuf};
 
-use git_features::{hash, zlib::stream::deflate};
 use git_object::WriteTo;
+use gix_features::{hash, zlib::stream::deflate};
 use tempfile::NamedTempFile;
 
 use super::Store;

@@ -7,7 +7,7 @@ use std::{
 };
 
 use curl::easy::{Auth, Easy2};
-use git_features::io::pipe;
+use gix_features::io::pipe;
 
 use crate::client::{
     blocking_io::http::{self, curl::Error, redirect},

@@ -22,7 +22,7 @@ default = []
 ## If set, blocking implementations of the typical git transports become available in `crate::client`
 blocking-client = ["git-packetline/blocking-io"]
 ## Implies `blocking-client`, and adds support for the http and https transports.
-http-client = ["base64", "git-features/io-pipe", "blocking-client", "git-credentials"]
+http-client = ["base64", "gix-features/io-pipe", "blocking-client", "git-credentials"]
 ## Implies `http-client`, and adds support for the http and https transports using the Rust bindings for `libcurl`.
 http-client-curl = ["curl", "http-client"]
 ### Implies `http-client` and adds support for http and https transports using the blocking version of `reqwest`.
@@ -54,7 +54,7 @@ required-features = ["async-client"]
 
 [dependencies]
 git-command = { version = "^0.2.3", path = "../git-command" }
-git-features = { version = "^0.26.4", path = "../git-features" }
+gix-features = { version = "^0.26.4", path = "../gix-features" }
 git-url = { version = "^0.13.2", path = "../git-url" }
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }
 git-packetline = { version = "^0.14.2", path = "../git-packetline" }

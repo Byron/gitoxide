@@ -1,5 +1,5 @@
 [package]
-name = "git-features"
+name = "gix-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"
 repository = "https://github.com/Byron/gitoxide"
 version = "0.26.4"

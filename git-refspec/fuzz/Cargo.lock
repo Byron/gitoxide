@@ -74,7 +74,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-features"
+name = "gix-features"
 version = "0.22.0"
 dependencies = [
  "git-hash",
@@ -97,7 +97,7 @@ dependencies = [
  "bstr",
  "btoi",
  "git-actor",
- "git-features",
+ "gix-features",
  "git-hash",
  "git-validate",
  "hex",

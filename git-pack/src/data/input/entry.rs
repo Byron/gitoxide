@@ -35,8 +35,8 @@ impl input::Entry {
             .header
             .write_to(self.decompressed_size, header_buf.as_mut())
             .expect("write to memory will not fail");
-        let state = git_features::hash::crc32_update(0, &header_buf[..header_len]);
-        git_features::hash::crc32_update(state, self.compressed.as_ref().expect("we always set it"))
+        let state = gix_features::hash::crc32_update(0, &header_buf[..header_len]);
+        gix_features::hash::crc32_update(state, self.compressed.as_ref().expect("we always set it"))
     }
 }
 
@@ -51,7 +51,7 @@ fn to_header(kind: git_object::Kind) -> Header {
 }
 
 fn compress_data(obj: &git_object::Data<'_>) -> Result<Vec<u8>, input::Error> {
-    let mut out = git_features::zlib::stream::deflate::Write::new(Vec::new());
+    let mut out = gix_features::zlib::stream::deflate::Write::new(Vec::new());
     if let Err(err) = std::io::copy(&mut &*obj.data, &mut out) {
         match err.kind() {
             std::io::ErrorKind::Other => return Err(input::Error::Io(err)),

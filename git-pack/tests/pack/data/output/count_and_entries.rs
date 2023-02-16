@@ -1,15 +1,15 @@
 use std::{convert::Infallible, sync::atomic::AtomicBool};
 
-use git_features::{
-    parallel::{reduce::Finalize, InOrderIter},
-    progress,
-};
 use git_odb::{pack, pack::FindExt};
 use git_pack::data::{
     output,
     output::{count, entry},
 };
 use git_traverse::commit;
+use gix_features::{
+    parallel::{reduce::Finalize, InOrderIter},
+    progress,
+};
 
 use crate::pack::{
     data::output::{db, DbKind},

@@ -1,4 +1,4 @@
-#[cfg(not(feature = "internal-testing-git-features-parallel"))]
+#[cfg(not(feature = "internal-testing-gix-features-parallel"))]
 mod worktree;
-#[cfg(not(feature = "internal-testing-git-features-parallel"))]
+#[cfg(not(feature = "internal-testing-gix-features-parallel"))]
 use worktree::*;

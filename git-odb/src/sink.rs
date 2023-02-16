@@ -4,7 +4,7 @@ use std::{
     io::{self, Write},
 };
 
-use git_features::zlib::stream::deflate;
+use gix_features::zlib::stream::deflate;
 
 use crate::Sink;
 
@@ -30,7 +30,7 @@ impl crate::traits::Write for Sink {
         mut from: impl io::Read,
     ) -> Result<git_hash::ObjectId, Self::Error> {
         let mut size = size.try_into().expect("object size to fit into usize");
-        use git_features::hash::Sha1;
+        use gix_features::hash::Sha1;
         let mut buf = [0u8; 8096];
         let header = git_object::encode::loose_header(kind, size);
 

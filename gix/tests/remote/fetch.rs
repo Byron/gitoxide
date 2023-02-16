@@ -2,8 +2,8 @@
 mod blocking_and_async_io {
     use std::sync::atomic::AtomicBool;
 
-    use git_features::progress;
     use git_protocol::maybe_async;
+    use gix_features::progress;
 
     use gix::remote::{fetch, Direction::Fetch};
 

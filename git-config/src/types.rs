@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
-use git_features::threading::OwnShared;
+use gix_features::threading::OwnShared;
 
 use crate::{
     file,

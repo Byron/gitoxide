@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-use git_features::{interrupt, parallel::in_parallel, progress, progress::Progress};
 use git_hash::oid;
+use gix_features::{interrupt, parallel::in_parallel, progress, progress::Progress};
 
 use crate::fs;
 
@@ -52,7 +52,7 @@ where
     } else {
         gix_glob::pattern::Case::Sensitive
     };
-    let (chunk_size, thread_limit, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
+    let (chunk_size, thread_limit, num_threads) = gix_features::parallel::optimize_chunk_size_and_thread_limit(
         100,
         index.entries().len().into(),
         options.thread_limit,
@@ -80,7 +80,7 @@ where
     } else {
         let entries_with_paths = interrupt::Iter::new(index.entries_mut_with_paths_in(paths), should_interrupt);
         in_parallel(
-            git_features::iter::Chunks {
+            gix_features::iter::Chunks {
                 inner: entries_with_paths,
                 size: chunk_size,
             },
@@ -124,8 +124,8 @@ mod chunk {
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     use bstr::BStr;
-    use git_features::progress::Progress;
     use git_hash::oid;
+    use gix_features::progress::Progress;
 
     use crate::{
         fs, index,
@@ -139,7 +139,7 @@ mod chunk {
             sync::atomic::{AtomicUsize, Ordering},
         };
 
-        use git_features::progress::Progress;
+        use gix_features::progress::Progress;
 
         use crate::index::checkout;
 
@@ -151,7 +151,7 @@ mod chunk {
             pub marker: PhantomData<E>,
         }
 
-        impl<'a, 'entry, P1, P2, E> git_features::parallel::Reduce for Reduce<'a, 'entry, P1, P2, E>
+        impl<'a, 'entry, P1, P2, E> gix_features::parallel::Reduce for Reduce<'a, 'entry, P1, P2, E>
         where
             P1: Progress,
             P2: Progress,

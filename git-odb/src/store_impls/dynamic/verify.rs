@@ -4,7 +4,7 @@ use std::{
     time::Instant,
 };
 
-use git_features::progress::{MessageLevel, Progress};
+use gix_features::progress::{MessageLevel, Progress};
 
 use crate::{
     pack,
@@ -95,7 +95,7 @@ pub mod integrity {
         VerifyMultiIndex(PhantomData<git_pack::multi_index::verify::integrity::ProgressId>),
     }
 
-    impl From<ProgressId> for git_features::progress::Id {
+    impl From<ProgressId> for gix_features::progress::Id {
         fn from(v: ProgressId) -> Self {
             match v {
                 ProgressId::VerifyLooseObjectDbPath => *b"VISP",
@@ -134,7 +134,7 @@ impl super::Store {
 
         progress.init(
             Some(index.slot_indices.len()),
-            git_features::progress::count("pack indices"),
+            gix_features::progress::count("pack indices"),
         );
         let mut statistics = Vec::new();
         let index_check_message = |path: &std::path::Path| {
@@ -231,7 +231,7 @@ impl super::Store {
             child_progress.show_throughput_with(
                 start,
                 num_objects as usize,
-                git_features::progress::count("objects").expect("set"),
+                gix_features::progress::count("objects").expect("set"),
                 MessageLevel::Success,
             );
             progress.inc();
@@ -239,7 +239,7 @@ impl super::Store {
 
         progress.init(
             Some(index.loose_dbs.len()),
-            git_features::progress::count("loose object stores"),
+            gix_features::progress::count("loose object stores"),
         );
         let mut loose_object_stores = Vec::new();
         for loose_db in &*index.loose_dbs {

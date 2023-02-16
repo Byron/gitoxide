@@ -4,8 +4,8 @@ use std::{
 };
 
 use bstr::{BStr, BString, ByteSlice, ByteVec};
-use git_features::threading::OwnShared;
 use git_ref::Category;
+use gix_features::threading::OwnShared;
 
 use crate::{
     file,

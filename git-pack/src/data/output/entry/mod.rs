@@ -133,7 +133,7 @@ impl output::Entry {
             kind: Kind::Base(obj.kind),
             decompressed_size: obj.data.len(),
             compressed_data: {
-                let mut out = git_features::zlib::stream::deflate::Write::new(Vec::new());
+                let mut out = gix_features::zlib::stream::deflate::Write::new(Vec::new());
                 if let Err(err) = std::io::copy(&mut &*obj.data, &mut out) {
                     match err.kind() {
                         std::io::ErrorKind::Other => return Err(Error::ZlibDeflate(err)),

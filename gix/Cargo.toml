@@ -70,22 +70,22 @@ serde1 = [  "serde",
 
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
 ## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
-max-performance = [ "git-features/zlib-ng-compat", "fast-sha1", "max-performance-safe" ]
+max-performance = [ "gix-features/zlib-ng-compat", "fast-sha1", "max-performance-safe" ]
 
 ## If enabled, use assembly versions of sha1 on supported platforms.
 ## This might cause compile failures as well which is why it can be turned off separately.
-fast-sha1 = [ "git-features/fast-sha1" ]
+fast-sha1 = [ "gix-features/fast-sha1" ]
 
 ## Activate features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases, skipping the ones known to cause compile failures
 ## on some platforms.
 max-performance-safe = [
-    "git-features/parallel",
+    "gix-features/parallel",
     "git-pack/pack-cache-lru-static",
     "git-pack/pack-cache-lru-dynamic",
-    "git-features/fs-walkdir-parallel"
+    "gix-features/fs-walkdir-parallel"
 ]
 ## Print debugging information about usage of object database caches, useful for tuning cache sizes.
-cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
+cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 
 
 
@@ -114,7 +114,7 @@ git-protocol = { version = "^0.26.3", path = "../git-protocol", optional = true 
 git-transport = { version = "^0.25.4", path = "../git-transport", optional = true }
 git-diff = { version = "^0.26.1", path = "../git-diff" }
 git-mailmap = { version = "^0.9.2", path = "../git-mailmap" }
-git-features = { version = "^0.26.4", path = "../git-features", features = ["progress", "once_cell"] }
+gix-features = { version = "^0.26.4", path = "../gix-features", features = ["progress", "once_cell"] }
 
 git-attributes = { version = "^0.8.2", path = "../git-attributes" }
 gix-glob = { version = "^0.5.3", path = "../gix-glob" }

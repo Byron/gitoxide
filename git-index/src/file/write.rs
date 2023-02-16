@@ -1,4 +1,4 @@
-use git_features::hash;
+use gix_features::hash;
 
 use crate::{write, File, Version};
 

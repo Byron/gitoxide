@@ -30,7 +30,7 @@ mod error {
     }
 }
 pub use error::Error;
-use git_features::parallel::InOrderIter;
+use gix_features::parallel::InOrderIter;
 
 use crate::util::read_u32;
 
@@ -68,7 +68,7 @@ impl State {
         let (version, num_entries, post_header_data) = header::decode(data, object_hash)?;
         let start_of_extensions = extension::end_of_index_entry::decode(data, object_hash);
 
-        let mut num_threads = git_features::parallel::num_threads(thread_limit);
+        let mut num_threads = gix_features::parallel::num_threads(thread_limit);
         let path_backing_buffer_size = entries::estimate_path_storage_requirements_in_bytes(
             num_entries,
             data.len(),
@@ -81,7 +81,7 @@ impl State {
             Some(offset) if num_threads > 1 => {
                 let extensions_data = &data[offset..];
                 let index_offsets_table = extension::index_entry_offset_table::find(extensions_data, object_hash);
-                let (entries_res, ext_res) = git_features::parallel::threads(|scope| {
+                let (entries_res, ext_res) = gix_features::parallel::threads(|scope| {
                     let extension_loading =
                         (extensions_data.len() > min_extension_block_in_bytes_for_threading).then({
                             num_threads -= 1;

@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::{borrow::Cow, path::PathBuf};
 
-use git_features::threading::OwnShared;
+use gix_features::threading::OwnShared;
 
 use super::{Error, Options};
 use crate::{
@@ -266,7 +266,7 @@ impl ThreadSafeRepository {
             config,
             // used when spawning new repositories off this one when following worktrees
             linked_worktree_options: options,
-            index: git_features::fs::MutableSnapshot::new().into(),
+            index: gix_features::fs::MutableSnapshot::new().into(),
         })
     }
 }

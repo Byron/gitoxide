@@ -3,7 +3,7 @@ use std::{
     time::Instant,
 };
 
-use git_features::progress::Progress;
+use gix_features::progress::Progress;
 
 use crate::{loose::Store, Write};
 
@@ -48,7 +48,7 @@ pub mod integrity {
         LooseObjects,
     }
 
-    impl From<ProgressId> for git_features::progress::Id {
+    impl From<ProgressId> for gix_features::progress::Id {
         fn from(v: ProgressId) -> Self {
             match v {
                 ProgressId::LooseObjects => *b"VILO",
@@ -70,7 +70,7 @@ impl Store {
         let mut num_objects = 0;
         let start = Instant::now();
         let mut progress = progress.add_child_with_id("Validating", integrity::ProgressId::LooseObjects.into());
-        progress.init(None, git_features::progress::count("loose objects"));
+        progress.init(None, gix_features::progress::count("loose objects"));
         for id in self.iter().filter_map(Result::ok) {
             let object = self
                 .try_find(id, &mut buf)

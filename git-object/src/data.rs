@@ -69,7 +69,7 @@ pub mod verify {
         /// hash of `self`.
         pub fn verify_checksum(&self, desired: impl AsRef<git_hash::oid>) -> Result<(), Error> {
             let desired = desired.as_ref();
-            let mut hasher = git_features::hash::hasher(desired.kind());
+            let mut hasher = gix_features::hash::hasher(desired.kind());
             hasher.update(&crate::encode::loose_header(self.kind, self.data.len()));
             hasher.update(self.data);
 

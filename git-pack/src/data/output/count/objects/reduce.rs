@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, sync::Arc};
 
-use git_features::{parallel, progress::Progress};
+use gix_features::{parallel, progress::Progress};
 
 use super::Outcome;
 use crate::data::output;

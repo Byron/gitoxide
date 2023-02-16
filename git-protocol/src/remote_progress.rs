@@ -37,7 +37,7 @@ impl<'a> RemoteProgress<'a> {
 
     /// Parse `text`, which is interpreted as error if `is_error` is true, as [`RemoteProgress`] and call the respective
     /// methods on the given `progress` instance.
-    pub fn translate_to_progress(is_error: bool, text: &[u8], progress: &mut impl git_features::progress::Progress) {
+    pub fn translate_to_progress(is_error: bool, text: &[u8], progress: &mut impl gix_features::progress::Progress) {
         fn progress_name(current: Option<String>, action: &[u8]) -> String {
             match current {
                 Some(current) => format!(
@@ -62,7 +62,7 @@ impl<'a> RemoteProgress<'a> {
                     max,
                 }) => {
                     progress.set_name(progress_name(progress.name(), action));
-                    progress.init(max, git_features::progress::count("objects"));
+                    progress.init(max, gix_features::progress::count("objects"));
                     if let Some(step) = step {
                         progress.set(step);
                     }

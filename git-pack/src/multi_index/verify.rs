@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, sync::atomic::AtomicBool, time::Instant};
 
-use git_features::progress::Progress;
+use gix_features::progress::Progress;
 
 use crate::{index, multi_index::File};
 
@@ -59,7 +59,7 @@ pub mod integrity {
         ObjectOffsets,
     }
 
-    impl From<ProgressId> for git_features::progress::Id {
+    impl From<ProgressId> for gix_features::progress::Id {
         fn from(v: ProgressId) -> Self {
             match v {
                 ProgressId::ChecksumBytes => *b"MVCK",
@@ -176,10 +176,10 @@ impl File {
         let mut pack_ids_and_offsets = Vec::with_capacity(self.num_objects as usize);
         {
             let order_start = Instant::now();
-            let mut progress = progress.add_child_with_id("checking oid order", git_features::progress::UNKNOWN);
+            let mut progress = progress.add_child_with_id("checking oid order", gix_features::progress::UNKNOWN);
             progress.init(
                 Some(self.num_objects as usize),
-                git_features::progress::count("objects"),
+                gix_features::progress::count("objects"),
             );
 
             for entry_index in 0..(self.num_objects - 1) {
@@ -207,7 +207,7 @@ impl File {
 
         progress.init(
             Some(self.num_indices as usize),
-            git_features::progress::count("indices"),
+            gix_features::progress::count("indices"),
         );
 
         let mut pack_ids_slice = pack_ids_and_offsets.as_slice();
@@ -242,7 +242,7 @@ impl File {
                     progress.add_child_with_id("verify object offsets", integrity::ProgressId::ObjectOffsets.into());
                 offsets_progress.init(
                     Some(pack_ids_and_offsets.len()),
-                    git_features::progress::count("objects"),
+                    gix_features::progress::count("objects"),
                 );
                 pack_ids_slice = &pack_ids_slice[slice_end..];
 

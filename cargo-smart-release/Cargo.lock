@@ -527,7 +527,7 @@ dependencies = [
  "bstr",
  "btoi",
  "git-date",
- "git-features",
+ "gix-features",
  "itoa",
  "nom",
  "quick-error",
@@ -539,7 +539,7 @@ version = "0.2.0"
 dependencies = [
  "bstr",
  "compact_str",
- "git-features",
+ "gix-features",
  "gix-glob",
  "gix-path",
  "git-quote",
@@ -567,7 +567,7 @@ version = "0.5.0"
 dependencies = [
  "bstr",
  "dirs",
- "git-features",
+ "gix-features",
  "gix-glob",
  "gix-path",
  "git-ref",
@@ -629,7 +629,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-features"
+name = "gix-features"
 version = "0.21.1"
 dependencies = [
  "crc32fast",
@@ -673,7 +673,7 @@ dependencies = [
  "bstr",
  "filetime",
  "git-bitmap",
- "git-features",
+ "gix-features",
  "git-hash",
  "git-object",
  "memmap2",
@@ -706,7 +706,7 @@ dependencies = [
  "bstr",
  "btoi",
  "git-actor",
- "git-features",
+ "gix-features",
  "git-hash",
  "git-validate",
  "hex",
@@ -721,7 +721,7 @@ name = "git-odb"
 version = "0.30.0"
 dependencies = [
  "arc-swap",
- "git-features",
+ "gix-features",
  "git-hash",
  "git-object",
  "git-pack",
@@ -741,7 +741,7 @@ dependencies = [
  "dashmap",
  "git-chunk",
  "git-diff",
- "git-features",
+ "gix-features",
  "git-hash",
  "git-object",
  "gix-path",
@@ -778,7 +778,7 @@ name = "git-ref"
 version = "0.14.0"
 dependencies = [
  "git-actor",
- "git-features",
+ "gix-features",
  "git-hash",
  "git-lock",
  "git-object",
@@ -802,7 +802,7 @@ dependencies = [
  "git-credentials",
  "git-diff",
  "git-discover",
- "git-features",
+ "gix-features",
  "gix-glob",
  "git-hash",
  "git-index",
@@ -899,7 +899,7 @@ name = "git-url"
 version = "0.6.0"
 dependencies = [
  "bstr",
- "git-features",
+ "gix-features",
  "gix-path",
  "home",
  "quick-error",
@@ -920,7 +920,7 @@ version = "0.3.0"
 dependencies = [
  "bstr",
  "git-attributes",
- "git-features",
+ "gix-features",
  "gix-glob",
  "git-hash",
  "git-index",

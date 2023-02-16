@@ -63,7 +63,7 @@ The following schematic helps to visualize what follows.
     ║    │ │ git-object  │   │  git-lock   │ │    ║   
     ║    │ └─────────────┘   └─────────────┘ │    ║  │
     ║    │ ┌───────────────────────────────┐ │    ║   
-    ║    │ │         git-features          │ │    ║  │
+    ║    │ │         gix-features          │ │    ║  │
     ║    │ └───────────────────────────────┘ │    ║   
     ║    └───────────────────────────────────┘    ║  │
     ║                                             ║   

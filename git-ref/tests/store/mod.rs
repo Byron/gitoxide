@@ -1,5 +1,5 @@
 #[test]
-#[cfg(feature = "internal-testing-git-features-parallel")]
+#[cfg(feature = "internal-testing-gix-features-parallel")]
 fn is_send_and_sync() {
     pub fn store_at(name: &str) -> crate::Result<git_ref::file::Store> {
         let path = git_testtools::scripted_fixture_read_only_standalone(name)?;

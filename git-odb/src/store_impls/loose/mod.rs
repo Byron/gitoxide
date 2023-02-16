@@ -3,7 +3,7 @@
 const HEADER_MAX_SIZE: usize = 64;
 use std::path::{Path, PathBuf};
 
-use git_features::fs;
+use gix_features::fs;
 
 /// A database for reading and writing objects to disk, one file per object.
 #[derive(Clone, PartialEq, Eq)]

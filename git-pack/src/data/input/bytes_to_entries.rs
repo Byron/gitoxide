@@ -1,11 +1,11 @@
 use std::{fs, io};
 
-use git_features::{
+use git_hash::ObjectId;
+use gix_features::{
     hash,
     hash::Sha1,
     zlib::{stream::inflate::ReadBoxed, Decompress},
 };
-use git_hash::ObjectId;
 
 use crate::data::input;
 
@@ -73,7 +73,7 @@ where
             version,
             objects_left: num_objects,
             hash: (mode != input::Mode::AsIs).then(|| {
-                let mut hash = git_features::hash::hasher(object_hash);
+                let mut hash = gix_features::hash::hasher(object_hash);
                 hash.update(&header_data);
                 hash
             }),
@@ -150,8 +150,8 @@ where
         let crc32 = if self.compressed.crc32() {
             let mut header_buf = [0u8; 12 + git_hash::Kind::longest().len_in_bytes()];
             let header_len = entry.header.write_to(bytes_copied, header_buf.as_mut())?;
-            let state = git_features::hash::crc32_update(0, &header_buf[..header_len]);
-            Some(git_features::hash::crc32_update(state, &compressed))
+            let state = gix_features::hash::crc32_update(0, &header_buf[..header_len]);
+            Some(gix_features::hash::crc32_update(state, &compressed))
         } else {
             None
         };

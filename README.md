@@ -68,7 +68,7 @@ is usable to some extent.
   * [git-commitgraph](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-commitgraph)
   * [git-diff](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-diff)
   * [git-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-traverse)
-  * [git-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-features)
+  * [gix-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-features)
   * [git-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-credentials)
   * [gix-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-sec)
   * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
@@ -222,7 +222,7 @@ Project non-goals can change over time as we learn more, and they can be challen
  * **use async IO everywhere**
    * for the most part, git operations are heavily reliant on memory mapped IO as well as CPU to decompress data,
      which doesn't lend itself well to async IO out of the box.
-   * Use `blocking` as well as `git-features::interrupt` to bring operations into the async world and to control 
+   * Use `blocking` as well as `gix-features::interrupt` to bring operations into the async world and to control 
      long running operations.
    * When connecting or streaming over TCP connections, especially when receiving on the server, async seems like a must
      though, but behind a feature flag.

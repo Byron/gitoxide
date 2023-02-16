@@ -109,16 +109,16 @@ mod version {
         }
     }
 
-    #[cfg(feature = "internal-testing-git-features-parallel")]
+    #[cfg(feature = "internal-testing-gix-features-parallel")]
     mod any {
         use std::{fs, io, sync::atomic::AtomicBool};
 
-        use git_features::progress;
         use git_odb::pack;
         use git_pack::{
             data::{input, EntryRange},
             index,
         };
+        use gix_features::progress;
 
         use crate::{
             fixture_path,
@@ -218,7 +218,7 @@ mod version {
                 for compressed in &[input::EntryDataMode::Crc32, input::EntryDataMode::KeepAndCrc32] {
                     for (index_path, data_path) in V2_PACKS_AND_INDICES {
                         let resolve = {
-                            let buf = git_features::threading::OwnShared::new({
+                            let buf = gix_features::threading::OwnShared::new({
                                 let file = std::fs::File::open(fixture_path(data_path))?;
                                 unsafe { memmap2::Mmap::map(&file)? }
                             });
@@ -273,8 +273,8 @@ fn traverse_with_index_and_forward_ref_deltas() {
     assert_eq!(count.load(Ordering::SeqCst), 9, "we traverse all objects");
 }
 
-use git_features::progress;
 use git_pack::{cache, data::decode::entry::Outcome, index};
+use gix_features::progress;
 use maplit::btreemap;
 
 use crate::pack::{INDEX_V2, PACK_FOR_INDEX_V2};

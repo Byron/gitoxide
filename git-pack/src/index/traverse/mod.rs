@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
-use git_features::{parallel, progress::Progress};
+use gix_features::{parallel, progress::Progress};
 
 use crate::index;
 
@@ -57,7 +57,7 @@ impl index::File {
     /// Iterate through all _decoded objects_ in the given `pack` and handle them with a `Processor`.
     /// The return value is (pack-checksum, [`Outcome`], `progress`), thus the pack traversal will always verify
     /// the whole packs checksum to assure it was correct. In case of bit-rod, the operation will abort early without
-    /// verifying all objects using the [interrupt mechanism][git_features::interrupt] mechanism.
+    /// verifying all objects using the [interrupt mechanism][gix_features::interrupt] mechanism.
     ///
     /// # Algorithms
     ///
@@ -216,7 +216,7 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     if check.object_checksum() {
-        let mut hasher = git_features::hash::hasher(index_entry.oid.kind());
+        let mut hasher = gix_features::hash::hasher(index_entry.oid.kind());
         hasher.update(&git_object::encode::loose_header(object_kind, decompressed.len()));
         hasher.update(decompressed);
 

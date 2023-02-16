@@ -3,7 +3,7 @@ use std::{
     time::Instant,
 };
 
-use git_features::{
+use gix_features::{
     parallel,
     progress::Progress,
     threading::{lock, Mutable, OwnShared},

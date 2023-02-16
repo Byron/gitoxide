@@ -1,9 +1,9 @@
 use std::sync::atomic::AtomicBool;
 
 use git_actor::{Sign, Time};
-use git_features::progress;
 use git_object::bstr::ByteSlice;
 use git_odb::loose::Store;
+use gix_features::progress;
 use pretty_assertions::assert_eq;
 
 use crate::{fixture_path, hex_to_id};

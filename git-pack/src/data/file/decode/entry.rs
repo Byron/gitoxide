@@ -1,6 +1,6 @@
 use std::{convert::TryInto, ops::Range};
 
-use git_features::zlib;
+use gix_features::zlib;
 use smallvec::SmallVec;
 
 use crate::{

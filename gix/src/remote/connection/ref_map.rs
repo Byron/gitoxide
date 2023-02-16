@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use git_features::progress::Progress;
 use git_protocol::transport::client::Transport;
+use gix_features::progress::Progress;
 
 use crate::{
     bstr,

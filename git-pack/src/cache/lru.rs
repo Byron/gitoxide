@@ -27,7 +27,7 @@ mod memory {
     pub struct MemoryCappedHashmap {
         inner: clru::CLruCache<Key, Entry, std::collections::hash_map::RandomState, CustomScale>,
         free_list: Vec<Vec<u8>>,
-        debug: git_features::cache::Debug,
+        debug: gix_features::cache::Debug,
     }
 
     impl MemoryCappedHashmap {
@@ -40,7 +40,7 @@ mod memory {
                         .with_scale(CustomScale),
                 ),
                 free_list: Vec::new(),
-                debug: git_features::cache::Debug::new(format!("MemoryCappedHashmap({memory_cap_in_bytes}B)")),
+                debug: gix_features::cache::Debug::new(format!("MemoryCappedHashmap({memory_cap_in_bytes}B)")),
             }
         }
     }
@@ -105,7 +105,7 @@ mod _static {
     pub struct StaticLinkedList<const SIZE: usize> {
         inner: uluru::LRUCache<Entry, SIZE>,
         free_list: Vec<Vec<u8>>,
-        debug: git_features::cache::Debug,
+        debug: gix_features::cache::Debug,
     }
 
     impl<const SIZE: usize> Default for StaticLinkedList<SIZE> {
@@ -113,7 +113,7 @@ mod _static {
             StaticLinkedList {
                 inner: Default::default(),
                 free_list: Vec::new(),
-                debug: git_features::cache::Debug::new(format!("StaticLinkedList<{SIZE}>")),
+                debug: gix_features::cache::Debug::new(format!("StaticLinkedList<{SIZE}>")),
             }
         }
     }

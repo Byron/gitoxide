@@ -13,7 +13,7 @@ rust-version = "1.64"
 [[test]]
 name = "multi-threaded"
 path = "index-multi-threaded.rs"
-required-features = ["internal-testing-git-features-parallel"]
+required-features = ["internal-testing-gix-features-parallel"]
 
 [[test]]
 name = "single-threaded"
@@ -24,14 +24,14 @@ required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["git-index/serde"]
 
-internal-testing-git-features-parallel = ["git-features/parallel"]
+internal-testing-gix-features-parallel = ["gix-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
 
 [dev-dependencies]
 git-index = { version = "^0.12.1", path = ".." }
-git-features = { version = "^0.26.1", path = "../../git-features", features = ["rustsha1", "progress"] }
+gix-features = { version = "^0.26.1", path = "../../gix-features", features = ["rustsha1", "progress"] }
 git-testtools = { path = "../../tests/tools"}
 gix = { path = "../../gix"}
 git-hash = { path = "../../git-hash"}

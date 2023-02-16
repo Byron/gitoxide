@@ -12,7 +12,7 @@ use crate::{
 
 pub(crate) mod body;
 pub use body::{Body, BodyIter};
-use git_features::threading::OwnShared;
+use gix_features::threading::OwnShared;
 
 use crate::file::{
     write::{extract_newline, platform_newline},

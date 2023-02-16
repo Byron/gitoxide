@@ -70,9 +70,6 @@ pub use git_actor as actor;
 pub use git_attributes as attrs;
 pub use git_credentials as credentials;
 pub use git_date as date;
-pub use git_features as features;
-use git_features::threading::OwnShared;
-pub use git_features::{parallel, progress::Progress, threading};
 pub use git_hash as hash;
 #[doc(inline)]
 pub use git_index as index;
@@ -90,6 +87,9 @@ pub use git_traverse as traverse;
 pub use git_url as url;
 #[doc(inline)]
 pub use git_url::Url;
+pub use gix_features as features;
+use gix_features::threading::OwnShared;
+pub use gix_features::{parallel, progress::Progress, threading};
 pub use gix_glob as glob;
 pub use gix_sec as sec;
 pub use hash::{oid, ObjectId};
@@ -99,8 +99,8 @@ pub mod interrupt;
 mod ext;
 ///
 pub mod prelude {
-    pub use git_features::parallel::reduce::Finalize;
     pub use git_odb::{Find, FindExt, Header, HeaderExt, Write};
+    pub use gix_features::parallel::reduce::Finalize;
 
     pub use crate::ext::*;
 }
@@ -134,7 +134,7 @@ pub mod tag;
 
 ///
 pub mod progress {
-    pub use git_features::progress::*;
+    pub use gix_features::progress::*;
     pub use prodash::tree;
 }
 

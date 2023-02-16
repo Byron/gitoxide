@@ -145,7 +145,7 @@ pub(crate) mod util {
 
     #[inline]
     pub fn var_int(data: &[u8]) -> Option<(u64, &[u8])> {
-        let (num, consumed) = git_features::decode::leb64_from_read(data).ok()?;
+        let (num, consumed) = gix_features::decode::leb64_from_read(data).ok()?;
         let data = &data[consumed..];
         (num, data).into()
     }

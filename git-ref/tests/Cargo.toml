@@ -13,7 +13,7 @@ rust-version = "1.64"
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["git-ref/serde"]
-internal-testing-git-features-parallel = ["git-features/parallel"] # test sorted parallel loose file traversal
+internal-testing-gix-features-parallel = ["gix-features/parallel"] # test sorted parallel loose file traversal
 
 [[test]]
 name = "refs-single-threaded"
@@ -23,11 +23,11 @@ required-features = []
 [[test]]
 name = "refs-parallel-fs-traversal"
 path = "refs-parallel.rs"
-required-features = ["internal-testing-git-features-parallel"]
+required-features = ["internal-testing-gix-features-parallel"]
 
 [dev-dependencies]
 git-ref = { path = ".." }
-git-features = { version = "^0.26.1", path = "../../git-features", features = ["walkdir"]}
+gix-features = { version = "^0.26.1", path = "../../gix-features", features = ["walkdir"]}
 git-testtools = { path = "../../tests/tools" }
 git-discover = { path = "../../git-discover" }
 git-worktree = { path = "../../git-worktree" }

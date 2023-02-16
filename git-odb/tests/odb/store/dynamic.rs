@@ -28,7 +28,7 @@ fn db_with_all_object_sources() -> crate::Result<(git_odb::Handle, tempfile::Tem
             fixture_path("objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"),
         ],
         multi_pack_index,
-        git_features::progress::Discard,
+        gix_features::progress::Discard,
         &std::sync::atomic::AtomicBool::default(),
         git_odb::pack::multi_index::write::Options {
             object_hash: git_hash::Kind::Sha1,
@@ -914,8 +914,8 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
 mod verify {
     use std::sync::atomic::AtomicBool;
 
-    use git_features::progress;
     use git_testtools::fixture_path;
+    use gix_features::progress;
 
     use crate::store::dynamic::db;
 

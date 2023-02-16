@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 
-use git_features::parallel::InOrderIter;
+use gix_features::parallel::InOrderIter;
 
 #[test]
 fn in_order_stays_in_order() {

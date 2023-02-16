@@ -1,7 +1,7 @@
 use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
-use git_features::threading::OwnShared;
+use gix_features::threading::OwnShared;
 use smallvec::SmallVec;
 
 use crate::{

@@ -5,7 +5,7 @@ use std::{
     time::{Instant, SystemTime},
 };
 
-use git_features::progress::Progress;
+use gix_features::progress::Progress;
 
 use crate::multi_index;
 
@@ -58,7 +58,7 @@ pub enum ProgressId {
     BytesWritten,
 }
 
-impl From<ProgressId> for git_features::progress::Id {
+impl From<ProgressId> for gix_features::progress::Id {
     fn from(v: ProgressId) -> Self {
         match v {
             ProgressId::FromPathsCollectingEntries => *b"MPCE",
@@ -89,7 +89,7 @@ impl multi_index::File {
     where
         P: Progress,
     {
-        let out = git_features::hash::Write::new(out, object_hash);
+        let out = gix_features::hash::Write::new(out, object_hash);
         let (index_paths_sorted, index_filenames_sorted) = {
             index_paths.sort();
             let file_names = index_paths
@@ -104,7 +104,7 @@ impl multi_index::File {
             let start = Instant::now();
             let mut progress =
                 progress.add_child_with_id("Collecting entries", ProgressId::FromPathsCollectingEntries.into());
-            progress.init(Some(index_paths_sorted.len()), git_features::progress::count("indices"));
+            progress.init(Some(index_paths_sorted.len()), gix_features::progress::count("indices"));
 
             // This could be parallelized… but it's probably not worth it unless you have 500mio objects.
             for (index_id, index) in index_paths_sorted.iter().enumerate() {
@@ -130,7 +130,7 @@ impl multi_index::File {
 
             let start = Instant::now();
             progress.set_name("Deduplicate");
-            progress.init(Some(entries.len()), git_features::progress::count("entries"));
+            progress.init(Some(entries.len()), gix_features::progress::count("entries"));
             entries.sort_by(|l, r| {
                 l.id.cmp(&r.id)
                     .then_with(|| l.index_mtime.cmp(&r.index_mtime).reverse())
@@ -172,9 +172,9 @@ impl multi_index::File {
         let write_start = Instant::now();
         write_progress.init(
             Some(cf.planned_storage_size() as usize + Self::HEADER_LEN),
-            git_features::progress::bytes(),
+            gix_features::progress::bytes(),
         );
-        let mut out = git_features::progress::Write {
+        let mut out = gix_features::progress::Write {
             inner: out,
             progress: write_progress,
         };
@@ -188,7 +188,7 @@ impl multi_index::File {
 
         {
             progress.set_name("Writing chunks");
-            progress.init(Some(cf.num_chunks()), git_features::progress::count("chunks"));
+            progress.init(Some(cf.num_chunks()), gix_features::progress::count("chunks"));
 
             let mut chunk_write = cf.into_write(&mut out, bytes_written)?;
             while let Some(chunk_to_write) = chunk_write.next_chunk() {

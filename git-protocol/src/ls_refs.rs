@@ -41,8 +41,8 @@ pub(crate) mod function {
     use std::borrow::Cow;
 
     use bstr::BString;
-    use git_features::progress::Progress;
     use git_transport::client::{Capabilities, Transport, TransportV2Ext};
+    use gix_features::progress::Progress;
     use maybe_async::maybe_async;
 
     use super::{Action, Error};

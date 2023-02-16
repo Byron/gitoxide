@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
-use git_features::progress::Progress;
+use gix_features::progress::Progress;
 
 use crate::data::File;
 
@@ -21,7 +21,7 @@ impl File {
     /// returning the actual checksum equivalent to the return value of [`checksum()`][File::checksum()] if there
     /// is no mismatch.
     ///
-    /// Note that if no `progress` is desired, one can pass [`git_features::progress::Discard`].
+    /// Note that if no `progress` is desired, one can pass [`gix_features::progress::Discard`].
     ///
     /// Have a look at [`index::File::verify_integrity(…)`][crate::index::File::verify_integrity()] for an
     /// even more thorough integrity check.

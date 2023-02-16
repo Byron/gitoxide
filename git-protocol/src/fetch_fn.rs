@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
-use git_features::progress::Progress;
 use git_transport::client;
+use gix_features::progress::Progress;
 use maybe_async::maybe_async;
 
 use crate::{

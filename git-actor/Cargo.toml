@@ -17,7 +17,7 @@ doctest = false
 serde1 = ["serde", "bstr/serde", "git-date/serde1"]
 
 [dependencies]
-git-features = { version = "^0.26.4", path = "../git-features", optional = true }
+gix-features = { version = "^0.26.4", path = "../gix-features", optional = true }
 git-date = { version = "^0.4.2", path = "../git-date" }
 
 quick-error = "2.0.0"

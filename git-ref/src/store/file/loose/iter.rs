@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
-use git_features::fs::walkdir::DirEntryIter;
 use git_object::bstr::ByteSlice;
+use gix_features::fs::walkdir::DirEntryIter;
 
 use crate::{file::iter::LooseThenPacked, store_impl::file, BString, FullName};
 
@@ -20,7 +20,7 @@ impl SortedLoosePaths {
             filename_prefix,
             file_walk: path.is_dir().then(|| {
                 // serial iteration as we expect most refs in packed-refs anyway.
-                git_features::fs::walkdir_sorted_new(path, git_features::fs::walkdir::Parallelism::Serial).into_iter()
+                gix_features::fs::walkdir_sorted_new(path, gix_features::fs::walkdir::Parallelism::Serial).into_iter()
             }),
         }
     }

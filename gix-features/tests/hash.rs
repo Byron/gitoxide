@@ -1,4 +1,4 @@
-use git_features::hash::Sha1;
+use gix_features::hash::Sha1;
 
 #[cfg(not(feature = "fast-sha1"))]
 #[test]

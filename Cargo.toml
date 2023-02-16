@@ -54,10 +54,10 @@ lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-async-
 
 ## As small as it can possibly be, no threading, no fast sha1, line progress only, rust based zlib implementation.
 ## no networking, local operations only.
-small = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash-render-line", "is-terminal"  ]
+small = ["pretty-cli", "gix-features/rustsha1", "gix-features/zlib-rust-backend", "prodash-render-line", "is-terminal"  ]
 
 ## Makes the crate execute as fast as possible without pulling in C libraries, while keeping everything else minimal akin to the `small` build.
-max-pure = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash-render-line", "prodash-render-tui", "gix/max-performance-safe", "http-client-reqwest", "gitoxide-core-blocking-client", "gitoxide-core-tools", "prodash/render-line-autoconfigure" ]
+max-pure = ["pretty-cli", "gix-features/rustsha1", "gix-features/zlib-rust-backend", "prodash-render-line", "prodash-render-tui", "gix/max-performance-safe", "http-client-reqwest", "gitoxide-core-blocking-client", "gitoxide-core-tools", "prodash/render-line-autoconfigure" ]
 
 #! ### `gitoxide-core` Configuration
 
@@ -79,13 +79,13 @@ gitoxide-core-async-client = ["gitoxide-core/async-client", "futures-lite"]
 # internal
 prodash-render-tui = ["prodash/render-tui", "prodash/render-tui-crossterm", "prodash/progress-tree", "futures-lite"]
 prodash-render-line = ["prodash/render-line", "prodash-render-line-crossterm", "prodash/progress-tree"]
-cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
+cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 
 [dependencies]
 anyhow = "1.0.42"
 
 gitoxide-core = { version = "^0.24.0", path = "gitoxide-core" }
-git-features = { version = "^0.26.4", path = "git-features" }
+gix-features = { version = "^0.26.4", path = "gix-features" }
 gix = { version = "^0.35.0", path = "gix", default-features = false }
 
 clap = { version = "4.1.1", features = ["derive", "cargo"] }
@@ -137,7 +137,7 @@ members = [
     "git-config",
     "gix-config-value",
     "git-discover",
-    "git-features",
+    "gix-features",
     "git-commitgraph",
     "git-chunk",
     "git-quote",

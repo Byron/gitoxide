@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use bstr::BStr;
-use git_features::threading::OwnShared;
+use gix_features::threading::OwnShared;
 
 use crate::{
     file::{self, rename_section, write::ends_with_newline, MetadataFilter, SectionBodyIdsLut, SectionId, SectionMut},

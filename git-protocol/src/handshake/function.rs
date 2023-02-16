@@ -1,5 +1,5 @@
-use git_features::{progress, progress::Progress};
 use git_transport::{client, client::SetServiceResponse, Service};
+use gix_features::{progress, progress::Progress};
 use maybe_async::maybe_async;
 
 use super::{Error, Outcome};

@@ -93,7 +93,7 @@ check: ## Build all code in suitable configurations
 	cd git-packetline && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-url && cargo check --all-features \
 			   && cargo check
-	cd git-features && cargo check --all-features \
+	cd gix-features && cargo check --all-features \
 			   && cargo check --features parallel \
 			   && cargo check --features fs-walkdir-parallel \
 			   && cargo check --features rustsha1 \
@@ -137,16 +137,16 @@ check: ## Build all code in suitable configurations
 
 unit-tests: ## run all unit tests
 	cargo test --all
-	cd git-features && cargo test && cargo test --all-features
+	cd gix-features && cargo test && cargo test --all-features
 	cd git-ref/tests && cargo test --all-features
 	cd git-odb && cargo test && cargo test --all-features
 	cd git-object && cargo test && cargo test --features verbose-object-parsing-errors
 	cd git-pack/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
-				&& cargo test --features "internal-testing-git-features-parallel"
+				&& cargo test --features "internal-testing-gix-features-parallel"
 	cd git-index/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
-				&& cargo test --features "internal-testing-git-features-parallel"
+				&& cargo test --features "internal-testing-gix-features-parallel"
 	cd git-worktree && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
-				&& cargo test --features "internal-testing-git-features-parallel"
+				&& cargo test --features "internal-testing-gix-features-parallel"
 	cd git-packetline && cargo test \
 					  && cargo test --features blocking-io,maybe-async/is_sync --test blocking-packetline \
 					  && cargo test --features "async-io" --test async-packetline

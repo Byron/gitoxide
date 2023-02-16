@@ -1,5 +1,5 @@
 mod optimize_chunk_size_and_thread_limit {
-    use git_features::parallel::optimize_chunk_size_and_thread_limit;
+    use gix_features::parallel::optimize_chunk_size_and_thread_limit;
 
     #[test]
     fn not_enough_chunks_for_threads() {
@@ -54,7 +54,7 @@ mod optimize_chunk_size_and_thread_limit {
     }
 
     mod unknown_chunk_count {
-        use git_features::parallel::optimize_chunk_size_and_thread_limit;
+        use gix_features::parallel::optimize_chunk_size_and_thread_limit;
 
         #[test]
         fn medium_chunk_size_many_threads() {
@@ -94,7 +94,7 @@ mod optimize_chunk_size_and_thread_limit {
     }
 
     mod real_values {
-        use git_features::parallel::optimize_chunk_size_and_thread_limit;
+        use gix_features::parallel::optimize_chunk_size_and_thread_limit;
 
         #[test]
         fn linux_kernel_pack_my_machine_lookup() {

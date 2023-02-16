@@ -6,8 +6,8 @@ use std::{
     sync::{atomic::Ordering, Arc},
 };
 
-use git_features::threading::OwnShared;
 use git_hash::oid;
+use gix_features::threading::OwnShared;
 
 use crate::store::{handle, types, RefreshMode};
 
@@ -237,7 +237,7 @@ impl super::Store {
 
     /// Create a new cache filled with a handle to this store, if this store is supporting shared ownership.
     ///
-    /// Note that the actual type of `OwnShared` depends on the `parallel` feature toggle of the `git-features` crate.
+    /// Note that the actual type of `OwnShared` depends on the `parallel` feature toggle of the `gix-features` crate.
     pub fn to_cache(self: &OwnShared<Self>) -> crate::Cache<super::Handle<OwnShared<super::Store>>> {
         self.to_handle().into()
     }
@@ -282,7 +282,7 @@ impl super::Store {
     /// Transform the only instance into an `Arc<Self>` or panic if this is not the only Rc handle
     /// to the contained store.
     ///
-    /// This is meant to be used when the `git_features::threading::OwnShared` refers to an `Rc` as it was compiled without the
+    /// This is meant to be used when the `gix_features::threading::OwnShared` refers to an `Rc` as it was compiled without the
     /// `parallel` feature toggle.
     pub fn into_shared_arc(self: OwnShared<Self>) -> Arc<Self> {
         match OwnShared::try_unwrap(self) {

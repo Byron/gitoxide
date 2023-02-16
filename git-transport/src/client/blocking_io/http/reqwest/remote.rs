@@ -5,7 +5,7 @@ use std::{
     str::FromStr,
 };
 
-use git_features::io::pipe;
+use gix_features::io::pipe;
 
 use crate::client::{
     http,

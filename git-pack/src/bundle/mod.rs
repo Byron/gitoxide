@@ -10,7 +10,7 @@ pub mod write;
 pub mod verify {
     use std::sync::atomic::AtomicBool;
 
-    use git_features::progress::Progress;
+    use gix_features::progress::Progress;
 
     ///
     pub mod integrity {

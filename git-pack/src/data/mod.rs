@@ -127,7 +127,7 @@ impl File {
     /// If `pack_offset` or `size` are pointing to a range outside of the mapped pack data.
     pub fn entry_crc32(&self, pack_offset: Offset, size: usize) -> u32 {
         let pack_offset: usize = pack_offset.try_into().expect("pack_size fits into usize");
-        git_features::hash::crc32(&self.data[pack_offset..pack_offset + size])
+        gix_features::hash::crc32(&self.data[pack_offset..pack_offset + size])
     }
 }
 

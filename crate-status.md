@@ -735,7 +735,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 [quarantine]: https://github.com/git/git/blob/master/Documentation/git-receive-pack.txt#L223:L223
 
 
-### git-features
+### gix-features
 * **io-pipe** feature toggle
     * a unix like pipeline for bytes
 * **parallel** feature toggle

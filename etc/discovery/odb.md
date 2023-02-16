@@ -509,7 +509,7 @@ Please note that these are based on the following value system:
           the latter doesn't even scale that well due to the required dashmap to check for existing objects. In other words, currently there seems to be no actual benchmark for parallel
           usage.
             - In single-threaded operation the trait-bounds would prevent creation of packs unless they are adjusted as well, leading to `git-pack` requiring its own feature toggle
-              which we really try hard to avoid, but probably can be placed on application level, which has to use that to setup git-features accordingly, making it bearable. This
+              which we really try hard to avoid, but probably can be placed on application level, which has to use that to setup gix-features accordingly, making it bearable. This
               means though that we need to implement single-threaded and multi-threaded versions of everything important, like pack generation based on the count (which already has
               a single-threaded version).
             - Maybe… after some benchmarks, we can entirely drop the single-threaded version if it's not significantly faster on a single thread (without thread primiives) than the

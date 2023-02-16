@@ -183,7 +183,7 @@ mod blocking_io {
         ops::DerefMut,
     };
 
-    use git_features::progress::Progress;
+    use gix_features::progress::Progress;
 
     use crate::{
         fetch::{DelegateBlocking, Response},
@@ -246,7 +246,7 @@ mod async_io {
 
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
-    use git_features::progress::Progress;
+    use gix_features::progress::Progress;
 
     use crate::{
         fetch::{DelegateBlocking, Response},

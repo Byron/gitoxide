@@ -33,7 +33,7 @@ pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<usize> {
         return None;
     }
 
-    let mut hasher = git_features::hash::hasher(git_hash::Kind::Sha1);
+    let mut hasher = gix_features::hash::hasher(git_hash::Kind::Sha1);
     let mut last_chunk = None;
     for (signature, chunk) in extension::Iter::new(&data[offset..data.len() - MIN_SIZE_WITH_HEADER - hash_len]) {
         hasher.update(&signature);

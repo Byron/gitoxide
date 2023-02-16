@@ -1,7 +1,7 @@
 use bstr::ByteSlice;
-use git_features::progress;
 use git_protocol::{fetch, handshake, ls_refs, FetchConnection};
 use git_transport::Protocol;
+use gix_features::progress;
 
 use crate::fetch::{helper_unused, oid, transport, CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 

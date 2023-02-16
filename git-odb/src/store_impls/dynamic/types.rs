@@ -8,7 +8,7 @@ use std::{
 };
 
 use arc_swap::ArcSwap;
-use git_features::hash;
+use gix_features::hash;
 
 /// An id to refer to an index file or a multipack index file
 pub type IndexId = usize;

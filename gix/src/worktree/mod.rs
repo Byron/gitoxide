@@ -7,9 +7,9 @@ use crate::{
     Repository,
 };
 
-pub(crate) type IndexStorage = git_features::threading::OwnShared<git_features::fs::MutableSnapshot<git_index::File>>;
+pub(crate) type IndexStorage = gix_features::threading::OwnShared<gix_features::fs::MutableSnapshot<git_index::File>>;
 /// A lazily loaded and auto-updated worktree index.
-pub type Index = git_features::fs::SharedSnapshot<git_index::File>;
+pub type Index = gix_features::fs::SharedSnapshot<git_index::File>;
 
 /// A stand-in to a worktree as result of a worktree iteration.
 ///

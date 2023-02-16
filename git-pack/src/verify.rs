@@ -1,6 +1,6 @@
 use std::{path::Path, sync::atomic::AtomicBool};
 
-use git_features::progress::Progress;
+use gix_features::progress::Progress;
 
 ///
 pub mod checksum {
@@ -37,7 +37,7 @@ pub fn checksum_on_disk_or_mmap(
     should_interrupt: &AtomicBool,
 ) -> Result<git_hash::ObjectId, checksum::Error> {
     let data_len_without_trailer = data.len() - object_hash.len_in_bytes();
-    let actual = match git_features::hash::bytes_of_file(
+    let actual = match gix_features::hash::bytes_of_file(
         data_path,
         data_len_without_trailer,
         object_hash,
@@ -48,7 +48,7 @@ pub fn checksum_on_disk_or_mmap(
         Err(err) if err.kind() == std::io::ErrorKind::Interrupted => return Err(checksum::Error::Interrupted),
         Err(_io_err) => {
             let start = std::time::Instant::now();
-            let mut hasher = git_features::hash::hasher(object_hash);
+            let mut hasher = gix_features::hash::hasher(object_hash);
             hasher.update(&data[..data_len_without_trailer]);
             progress.inc_by(data_len_without_trailer);
             progress.show_throughput(start);

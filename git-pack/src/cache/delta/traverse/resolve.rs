@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::BTreeMap, sync::atomic::Ordering};
 
-use git_features::{
+use gix_features::{
     progress::{unit, Progress},
     zlib,
 };
@@ -17,8 +17,8 @@ use crate::{
 };
 
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
-    object_counter: Option<git_features::progress::StepShared>,
-    size_counter: Option<git_features::progress::StepShared>,
+    object_counter: Option<gix_features::progress::StepShared>,
+    size_counter: Option<gix_features::progress::StepShared>,
     node: &mut crate::cache::delta::Item<T>,
     (bytes_buf, ref mut progress, state, resolve, modify_base, child_items): &mut (
         Vec<u8>,

@@ -3,8 +3,8 @@ use std::{
     sync::{atomic::AtomicBool, Arc},
 };
 
-use git_features::{parallel, progress::Progress};
 use git_hash::ObjectId;
+use gix_features::{parallel, progress::Progress};
 
 use crate::{data::output, find};
 
@@ -60,7 +60,7 @@ where
         thread_limit,
         None,
     );
-    let chunks = git_features::iter::Chunks {
+    let chunks = gix_features::iter::Chunks {
         inner: objects_ids,
         size: chunk_size,
     };
@@ -79,8 +79,8 @@ where
                     {
                         let mut p = progress
                             .lock()
-                            .add_child_with_id(format!("thread {n}"), git_features::progress::UNKNOWN);
-                        p.init(None, git_features::progress::count("objects"));
+                            .add_child_with_id(format!("thread {n}"), gix_features::progress::UNKNOWN);
+                        p.init(None, gix_features::progress::count("objects"));
                         p
                     },
                 )
@@ -138,9 +138,9 @@ where
 mod expand {
     use std::sync::atomic::{AtomicBool, Ordering};
 
-    use git_features::progress::Progress;
     use git_hash::{oid, ObjectId};
     use git_object::{CommitRefIter, TagRefIter};
+    use gix_features::progress::Progress;
 
     use super::{
         tree,

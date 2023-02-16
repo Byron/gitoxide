@@ -1,6 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use git_features::{
+use gix_features::{
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
     threading::{lock, Mutable, OwnShared},
@@ -48,7 +48,7 @@ pub enum ProgressId {
     DecodedObjects,
 }
 
-impl From<ProgressId> for git_features::progress::Id {
+impl From<ProgressId> for gix_features::progress::Id {
     fn from(v: ProgressId) -> Self {
         match v {
             ProgressId::HashPackDataBytes => *b"PTHP",
@@ -136,7 +136,7 @@ impl index::File {
                             new_processor(),
                             Vec::with_capacity(2048), // decode buffer
                             lock(&reduce_progress)
-                                .add_child_with_id(format!("thread {index}"), git_features::progress::UNKNOWN), // per thread progress
+                                .add_child_with_id(format!("thread {index}"), gix_features::progress::UNKNOWN), // per thread progress
                         )
                     }
                 };

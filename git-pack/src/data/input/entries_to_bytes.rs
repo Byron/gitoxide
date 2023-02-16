@@ -1,6 +1,6 @@
 use std::iter::Peekable;
 
-use git_features::hash;
+use gix_features::hash;
 
 use crate::data::input;
 
@@ -100,7 +100,7 @@ where
             &mut self.output,
             num_bytes_written as usize,
             self.object_hash,
-            &mut git_features::progress::Discard,
+            &mut gix_features::progress::Discard,
             &interrupt_never,
         )?;
         self.output.write_all(digest.as_slice())?;

@@ -1,6 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use git_features::{parallel, progress::Progress};
+use gix_features::{parallel, progress::Progress};
 
 use super::Error;
 use crate::{
@@ -37,7 +37,7 @@ pub enum ProgressId {
     DecodedBytes,
 }
 
-impl From<ProgressId> for git_features::progress::Id {
+impl From<ProgressId> for gix_features::progress::Id {
     fn from(v: ProgressId) -> Self {
         match v {
             ProgressId::HashPackDataBytes => *b"PTHP",
@@ -141,7 +141,7 @@ impl index::File {
                                 // TODO: Fix this - we overwrite the header of 'data' which also changes the computed entry size,
                                 // causing index and pack to seemingly mismatch. This is surprising, and should be done differently.
                                 // debug_assert_eq!(&data.index_entry.pack_offset, &pack_entry.pack_offset());
-                                git_features::hash::crc32(
+                                gix_features::hash::crc32(
                                     pack.entry_slice(data.index_entry.pack_offset..entry_end)
                                         .expect("slice pointing into the pack (by now data is verified)"),
                                 )
