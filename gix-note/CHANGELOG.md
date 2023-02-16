@@ -24,6 +24,6 @@ An empty crate without any content to reserve the name for the gitoxide project.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - empty crate for git-note ([`2fb8b46`](https://github.com/Byron/gitoxide/commit/2fb8b46abd3905bdf654977e77ec2f36f09e754f))
+    - empty crate for gix-note ([`2fb8b46`](https://github.com/Byron/gitoxide/commit/2fb8b46abd3905bdf654977e77ec2f36f09e754f))
 </details>
 

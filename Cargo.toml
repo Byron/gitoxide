@@ -152,7 +152,7 @@ members = [
     "gix-revision",
     "gix-packetline",
     "git-mailmap",
-    "git-note",
+    "gix-note",
     "git-fetchhead",
     "gix-prompt",
     "git-filter",

@@ -1,5 +1,5 @@
 [package]
-name = "git-note"
+name = "gix-note"
 version = "0.0.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

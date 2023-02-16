@@ -371,7 +371,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
 * [ ] signal handling (resetting and restoring terminal settings)
 * [ ] windows prompts for `cmd.exe` and mingw terminals
 
-### git-note
+### gix-note
 
 A mechanism to associate metadata with any object, and keep revisions of it using git itself.
 

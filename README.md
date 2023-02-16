@@ -89,7 +89,7 @@ is usable to some extent.
   * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)
   * [gix-hashtable](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hashtable)
 * **idea** _(just a name placeholder)_
-  * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
+  * [gix-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-note)
   * [git-fetchhead](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-fetchhead)
   * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)
   * [git-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lfs)
