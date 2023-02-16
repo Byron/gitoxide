@@ -8,7 +8,7 @@ use std::{
 
 use base64::Engine;
 use bstr::BStr;
-use git_packetline::PacketLineRef;
+use gix_packetline::PacketLineRef;
 pub use traits::{Error, GetResponse, Http, PostBodyDataKind, PostResponse};
 
 use crate::{
@@ -210,7 +210,7 @@ pub struct Transport<H: Http> {
     actual_version: Protocol,
     http: H,
     service: Option<Service>,
-    line_provider: Option<git_packetline::StreamingPeekableIter<H::ResponseBody>>,
+    line_provider: Option<gix_packetline::StreamingPeekableIter<H::ResponseBody>>,
     identity: Option<gix_sec::identity::Account>,
 }
 
@@ -392,7 +392,7 @@ impl<H: Http> client::Transport for Transport<H> {
 
         let line_reader = self
             .line_provider
-            .get_or_insert_with(|| git_packetline::StreamingPeekableIter::new(body, &[PacketLineRef::Flush]));
+            .get_or_insert_with(|| gix_packetline::StreamingPeekableIter::new(body, &[PacketLineRef::Flush]));
 
         // the service announcement is only sent sometimes depending on the exact server/protocol version/used protocol (http?)
         // eat the announcement when its there to avoid errors later (and check that the correct service was announced).
@@ -466,7 +466,7 @@ impl<H: Http, B: BufRead + Unpin> BufRead for HeadersThenBody<H, B> {
 }
 
 impl<H: Http, B: ReadlineBufRead + Unpin> ReadlineBufRead for HeadersThenBody<H, B> {
-    fn readline(&mut self) -> Option<std::io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+    fn readline(&mut self) -> Option<std::io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         if let Err(err) = self.handle_headers() {
             return Some(Err(err));
         }

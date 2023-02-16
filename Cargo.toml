@@ -150,7 +150,7 @@ members = [
     "git-bitmap",
     "gix-worktree",
     "git-revision",
-    "git-packetline",
+    "gix-packetline",
     "git-mailmap",
     "git-note",
     "git-fetchhead",

@@ -5,7 +5,7 @@ mod data_to_write {
     use bstr::ByteSlice;
     #[cfg(all(feature = "async-io", not(feature = "blocking-io")))]
     use futures_lite::io;
-    use git_packetline::encode::data_to_write;
+    use gix_packetline::encode::data_to_write;
 
     use crate::assert_err_display;
 
@@ -44,7 +44,7 @@ mod data_to_write {
 
 mod text_to_write {
     use bstr::ByteSlice;
-    use git_packetline::encode::text_to_write;
+    use gix_packetline::encode::text_to_write;
 
     #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
     async fn always_appends_a_newline() -> crate::Result {
@@ -67,7 +67,7 @@ mod text_to_write {
 
 mod error {
     use bstr::ByteSlice;
-    use git_packetline::encode::error_to_write;
+    use gix_packetline::encode::error_to_write;
 
     #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
     async fn write_line() -> crate::Result {
@@ -81,7 +81,7 @@ mod error {
 
 mod flush_delim_response_end {
     use bstr::ByteSlice;
-    use git_packetline::encode::{delim_to_write, flush_to_write, response_end_to_write};
+    use gix_packetline::encode::{delim_to_write, flush_to_write, response_end_to_write};
 
     #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
     async fn success_flush_delim_response_end() -> crate::Result {

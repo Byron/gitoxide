@@ -1,7 +1,7 @@
 use std::{any::Any, borrow::Cow, error::Error, io::Write};
 
 use bstr::{BStr, BString, ByteVec};
-use git_packetline::PacketLineRef;
+use gix_packetline::PacketLineRef;
 
 use crate::{
     client::{self, capabilities, git, Capabilities, SetServiceResponse},
@@ -57,7 +57,7 @@ where
         extra_parameters: &'a [(&'a str, Option<&'a str>)],
     ) -> Result<SetServiceResponse<'_>, client::Error> {
         if self.mode == git::ConnectMode::Daemon {
-            let mut line_writer = git_packetline::Writer::new(&mut self.writer).binary_mode();
+            let mut line_writer = gix_packetline::Writer::new(&mut self.writer).binary_mode();
             line_writer.write_all(&git::message::connect(
                 service,
                 self.desired_version,
@@ -100,7 +100,7 @@ where
     ) -> Self {
         git::Connection {
             writer: write,
-            line_provider: git_packetline::StreamingPeekableIter::new(read, &[PacketLineRef::Flush]),
+            line_provider: gix_packetline::StreamingPeekableIter::new(read, &[PacketLineRef::Flush]),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             desired_version,

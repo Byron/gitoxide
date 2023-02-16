@@ -20,7 +20,7 @@ default = []
 #! Specifying both causes a compile error, preventing the use of `--all-features`.
 
 ## If set, blocking implementations of the typical git transports become available in `crate::client`
-blocking-client = ["git-packetline/blocking-io"]
+blocking-client = ["gix-packetline/blocking-io"]
 ## Implies `blocking-client`, and adds support for the http and https transports.
 http-client = ["base64", "gix-features/io-pipe", "blocking-client", "git-credentials"]
 ## Implies `http-client`, and adds support for the http and https transports using the Rust bindings for `libcurl`.
@@ -31,7 +31,7 @@ http-client-reqwest = ["reqwest", "http-client"]
 ## Suitable for implementing your own transports while using git's way of communication, typically in conjunction with a custom server.
 ## **Note** that the _blocking_ client has a wide range of available transports, with the _async_ version of it supporting only the TCP based `git` transport leaving you
 ## with the responsibility to providing such an implementation of `futures-io::AsyncRead/AsyncWrite` yourself.
-async-client = ["git-packetline/async-io", "async-trait", "futures-lite", "futures-io", "pin-project-lite"]
+async-client = ["gix-packetline/async-io", "async-trait", "futures-lite", "futures-io", "pin-project-lite"]
 
 #! ### Other
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
@@ -57,7 +57,7 @@ git-command = { version = "^0.2.3", path = "../git-command" }
 gix-features = { version = "^0.26.4", path = "../gix-features" }
 gix-url = { version = "^0.13.2", path = "../gix-url" }
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }
-git-packetline = { version = "^0.14.2", path = "../git-packetline" }
+gix-packetline = { version = "^0.14.2", path = "../gix-packetline" }
 git-credentials = { version = "^0.9.1", path = "../git-credentials", optional = true }
 gix-quote = { version = "^0.4.1", path = "../gix-quote" }
 

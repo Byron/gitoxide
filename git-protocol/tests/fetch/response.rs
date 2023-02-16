@@ -1,9 +1,9 @@
 use crate::fetch::Cursor;
 
-fn mock_reader(path: &str) -> git_packetline::StreamingPeekableIter<Cursor> {
+fn mock_reader(path: &str) -> gix_packetline::StreamingPeekableIter<Cursor> {
     use crate::fixture_bytes;
     let buf = fixture_bytes(path);
-    git_packetline::StreamingPeekableIter::new(Cursor::new(buf), &[git_packetline::PacketLineRef::Flush])
+    gix_packetline::StreamingPeekableIter::new(Cursor::new(buf), &[gix_packetline::PacketLineRef::Flush])
 }
 
 fn id(hex: &str) -> gix_hash::ObjectId {

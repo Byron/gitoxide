@@ -3,7 +3,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use git_packetline::PacketLineRef;
+use gix_packetline::PacketLineRef;
 
 use crate::{
     client::{Error, MessageKind},
@@ -12,7 +12,7 @@ use crate::{
 /// A function `f(is_error, text)` receiving progress or error information.
 pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
 
-/// This trait exists to get a version of a `git_packetline::Provider` without type parameters,
+/// This trait exists to get a version of a `gix_packetline::Provider` without type parameters,
 /// but leave support for reading lines directly without forcing them through `String`.
 ///
 /// For the sake of usability, it also implements [`std::io::BufRead`] making it trivial to
@@ -27,7 +27,7 @@ pub trait ReadlineBufRead: io::BufRead {
     ///  * A `delimiter` packet line encountered
     fn readline(
         &mut self,
-    ) -> Option<io::Result<Result<git_packetline::PacketLineRef<'_>, git_packetline::decode::Error>>>;
+    ) -> Option<io::Result<Result<gix_packetline::PacketLineRef<'_>, gix_packetline::decode::Error>>>;
 }
 
 /// Provide even more access to the underlying packet reader.
@@ -47,7 +47,7 @@ pub trait ExtendedBufRead: ReadlineBufRead {
 }
 
 impl<'a, T: ReadlineBufRead + ?Sized + 'a> ReadlineBufRead for Box<T> {
-    fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+    fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         ReadlineBufRead::readline(self.deref_mut())
     }
 }
@@ -70,19 +70,19 @@ impl<'a, T: ExtendedBufRead + ?Sized + 'a> ExtendedBufRead for Box<T> {
     }
 }
 
-impl<T: io::Read> ReadlineBufRead for git_packetline::read::WithSidebands<'_, T, fn(bool, &[u8])> {
-    fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+impl<T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'_, T, fn(bool, &[u8])> {
+    fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         self.read_data_line()
     }
 }
 
-impl<'a, T: io::Read> ReadlineBufRead for git_packetline::read::WithSidebands<'a, T, HandleProgress> {
-    fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+impl<'a, T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'a, T, HandleProgress> {
+    fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         self.read_data_line()
     }
 }
 
-impl<'a, T: io::Read> ExtendedBufRead for git_packetline::read::WithSidebands<'a, T, HandleProgress> {
+impl<'a, T: io::Read> ExtendedBufRead for gix_packetline::read::WithSidebands<'a, T, HandleProgress> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.set_progress_handler(handle_progress)
     }
@@ -96,19 +96,19 @@ impl<'a, T: io::Read> ExtendedBufRead for git_packetline::read::WithSidebands<'a
     }
     fn reset(&mut self, version: Protocol) {
         match version {
-            Protocol::V1 => self.reset_with(&[git_packetline::PacketLineRef::Flush]),
+            Protocol::V1 => self.reset_with(&[gix_packetline::PacketLineRef::Flush]),
             Protocol::V2 => self.reset_with(&[
-                git_packetline::PacketLineRef::Delimiter,
-                git_packetline::PacketLineRef::Flush,
+                gix_packetline::PacketLineRef::Delimiter,
+                gix_packetline::PacketLineRef::Flush,
             ]),
         }
     }
     fn stopped_at(&self) -> Option<MessageKind> {
         self.stopped_at().map(|l| match l {
-            git_packetline::PacketLineRef::Flush => MessageKind::Flush,
-            git_packetline::PacketLineRef::Delimiter => MessageKind::Delimiter,
-            git_packetline::PacketLineRef::ResponseEnd => MessageKind::ResponseEnd,
-            git_packetline::PacketLineRef::Data(_) => unreachable!("data cannot be a delimiter"),
+            gix_packetline::PacketLineRef::Flush => MessageKind::Flush,
+            gix_packetline::PacketLineRef::Delimiter => MessageKind::Delimiter,
+            gix_packetline::PacketLineRef::ResponseEnd => MessageKind::ResponseEnd,
+            gix_packetline::PacketLineRef::Data(_) => unreachable!("data cannot be a delimiter"),
         })
     }
 }

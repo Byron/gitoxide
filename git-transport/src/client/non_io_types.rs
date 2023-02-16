@@ -125,7 +125,7 @@ mod error {
         #[error("A packet line could not be decoded")]
         LineDecode {
             #[from]
-            err: git_packetline::decode::Error,
+            err: gix_packetline::decode::Error,
         },
         #[error("A {0} line was expected, but there was none")]
         ExpectedLine(&'static str),

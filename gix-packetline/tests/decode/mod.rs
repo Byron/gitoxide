@@ -1,5 +1,5 @@
 mod streaming {
-    use git_packetline::{
+    use gix_packetline::{
         decode::{self, streaming, Stream},
         ErrorRef, PacketLineRef,
     };
@@ -23,7 +23,7 @@ mod streaming {
 
     mod round_trip {
         use bstr::ByteSlice;
-        use git_packetline::{decode, decode::streaming, Channel, PacketLineRef};
+        use gix_packetline::{decode, decode::streaming, Channel, PacketLineRef};
 
         use crate::decode::streaming::assert_complete;
 
@@ -136,7 +136,7 @@ mod streaming {
     }
 
     mod incomplete {
-        use git_packetline::decode::{self, streaming, Stream};
+        use gix_packetline::decode::{self, streaming, Stream};
 
         fn assert_incomplete(res: Result<Stream, decode::Error>, expected_missing: usize) -> crate::Result {
             match res? {

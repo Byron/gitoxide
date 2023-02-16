@@ -16,7 +16,7 @@ pin_project! {
     pub struct RequestWriter<'a> {
         on_into_read: MessageKind,
         #[pin]
-        writer: git_packetline::Writer<Box<dyn AsyncWrite + Unpin + 'a>>,
+        writer: gix_packetline::Writer<Box<dyn AsyncWrite + Unpin + 'a>>,
         reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
     }
 }
@@ -45,7 +45,7 @@ impl<'a> RequestWriter<'a> {
         write_mode: WriteMode,
         on_into_read: MessageKind,
     ) -> Self {
-        let mut writer = git_packetline::Writer::new(Box::new(writer) as Box<dyn AsyncWrite + Unpin>);
+        let mut writer = gix_packetline::Writer::new(Box::new(writer) as Box<dyn AsyncWrite + Unpin>);
         match write_mode {
             WriteMode::Binary => writer.enable_binary_mode(),
             WriteMode::OneLfTerminatedLinePerWriteCall => writer.enable_text_mode(),
@@ -61,21 +61,21 @@ impl<'a> RequestWriter<'a> {
     pub async fn write_message(&mut self, message: MessageKind) -> io::Result<()> {
         match message {
             MessageKind::Flush => {
-                git_packetline::PacketLineRef::Flush
+                gix_packetline::PacketLineRef::Flush
                     .write_to(self.writer.inner_mut())
                     .await
             }
             MessageKind::Delimiter => {
-                git_packetline::PacketLineRef::Delimiter
+                gix_packetline::PacketLineRef::Delimiter
                     .write_to(self.writer.inner_mut())
                     .await
             }
             MessageKind::ResponseEnd => {
-                git_packetline::PacketLineRef::ResponseEnd
+                gix_packetline::PacketLineRef::ResponseEnd
                     .write_to(self.writer.inner_mut())
                     .await
             }
-            MessageKind::Text(t) => git_packetline::TextRef::from(t).write_to(self.writer.inner_mut()).await,
+            MessageKind::Text(t) => gix_packetline::TextRef::from(t).write_to(self.writer.inner_mut()).await,
         }
         .map(|_| ())
     }

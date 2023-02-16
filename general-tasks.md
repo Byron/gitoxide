@@ -8,7 +8,7 @@ don't support that as we would have to keep both the future and the parent that 
 pointers, one could implement the magical part by hand, a custom future, which happily dissolves into its mutable parent iter ref.
 That would be quite some work though.
 
-[WithSidebands]: https://github.com/Byron/gitoxide/blob/fed6c69fd8b2877a66fe9d87916f3d54a3fc342b/git-packetline/src/read/sidebands/async_io.rs#L197
+[WithSidebands]: https://github.com/Byron/gitoxide/blob/fed6c69fd8b2877a66fe9d87916f3d54a3fc342b/gix-packetline/src/read/sidebands/async_io.rs#L197
 
 ## Potential for improving performance
 

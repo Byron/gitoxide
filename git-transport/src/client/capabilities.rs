@@ -131,7 +131,7 @@ impl Capabilities {
 /// internal use
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 impl Capabilities {
-    fn extract_protocol(capabilities_or_version: git_packetline::TextRef<'_>) -> Result<Protocol, client::Error> {
+    fn extract_protocol(capabilities_or_version: gix_packetline::TextRef<'_>) -> Result<Protocol, client::Error> {
         let line = capabilities_or_version.as_bstr();
         let version = if line.starts_with_str("version ") {
             if line.len() != "version X".len() {
@@ -177,7 +177,7 @@ pub mod recv {
         /// If [`Protocol::V1`] was requested, or the remote decided to downgrade, the remote refs
         /// advertisement will also be included in the [`Outcome`].
         pub fn from_lines_with_version_detection<T: io::Read>(
-            rd: &mut git_packetline::StreamingPeekableIter<T>,
+            rd: &mut gix_packetline::StreamingPeekableIter<T>,
         ) -> Result<Outcome<'_>, client::Error> {
             // NOTE that this is vitally important - it is turned on and stays on for all following requests so
             // we automatically abort if the server sends an ERR line anywhere.
@@ -255,7 +255,7 @@ pub mod recv {
         /// If [`Protocol::V1`] was requested, or the remote decided to downgrade, the remote refs
         /// advertisement will also be included in the [`Outcome`].
         pub async fn from_lines_with_version_detection<T: AsyncRead + Unpin>(
-            rd: &mut git_packetline::StreamingPeekableIter<T>,
+            rd: &mut gix_packetline::StreamingPeekableIter<T>,
         ) -> Result<Outcome<'_>, client::Error> {
             // NOTE that this is vitally important - it is turned on and stays on for all following requests so
             // we automatically abort if the server sends an ERR line anywhere.

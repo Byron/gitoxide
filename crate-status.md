@@ -241,7 +241,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
 * [x] API documentation
     * [ ] Some examples
 
-### git-packetline
+### gix-packetline
 * [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
 * [x] encode
 * [x] decode (zero-copy)

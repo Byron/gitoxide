@@ -7,7 +7,7 @@ use crate::client::{ExtendedBufRead, MessageKind, WriteMode};
 /// obtaining the response.
 pub struct RequestWriter<'a> {
     on_into_read: MessageKind,
-    writer: git_packetline::Writer<Box<dyn io::Write + 'a>>,
+    writer: gix_packetline::Writer<Box<dyn io::Write + 'a>>,
     reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
 }
 
@@ -32,7 +32,7 @@ impl<'a> RequestWriter<'a> {
         write_mode: WriteMode,
         on_into_read: MessageKind,
     ) -> Self {
-        let mut writer = git_packetline::Writer::new(Box::new(writer) as Box<dyn io::Write>);
+        let mut writer = gix_packetline::Writer::new(Box::new(writer) as Box<dyn io::Write>);
         match write_mode {
             WriteMode::Binary => writer.enable_binary_mode(),
             WriteMode::OneLfTerminatedLinePerWriteCall => writer.enable_text_mode(),
@@ -47,10 +47,10 @@ impl<'a> RequestWriter<'a> {
     /// Write the given message as packet line.
     pub fn write_message(&mut self, message: MessageKind) -> io::Result<()> {
         match message {
-            MessageKind::Flush => git_packetline::PacketLineRef::Flush.write_to(self.writer.inner_mut()),
-            MessageKind::Delimiter => git_packetline::PacketLineRef::Delimiter.write_to(self.writer.inner_mut()),
-            MessageKind::ResponseEnd => git_packetline::PacketLineRef::ResponseEnd.write_to(self.writer.inner_mut()),
-            MessageKind::Text(t) => git_packetline::TextRef::from(t).write_to(self.writer.inner_mut()),
+            MessageKind::Flush => gix_packetline::PacketLineRef::Flush.write_to(self.writer.inner_mut()),
+            MessageKind::Delimiter => gix_packetline::PacketLineRef::Delimiter.write_to(self.writer.inner_mut()),
+            MessageKind::ResponseEnd => gix_packetline::PacketLineRef::ResponseEnd.write_to(self.writer.inner_mut()),
+            MessageKind::Text(t) => gix_packetline::TextRef::from(t).write_to(self.writer.inner_mut()),
         }
         .map(|_| ())
     }

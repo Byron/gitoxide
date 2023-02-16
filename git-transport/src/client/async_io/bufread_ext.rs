@@ -5,7 +5,7 @@ use std::{
 
 use async_trait::async_trait;
 use futures_io::{AsyncBufRead, AsyncRead};
-use git_packetline::PacketLineRef;
+use gix_packetline::PacketLineRef;
 
 use crate::{
     client::{Error, MessageKind},
@@ -17,7 +17,7 @@ use crate::{
 /// it onto an executor.
 pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
 
-/// This trait exists to get a version of a `git_packetline::Provider` without type parameters,
+/// This trait exists to get a version of a `gix_packetline::Provider` without type parameters,
 /// but leave support for reading lines directly without forcing them through `String`.
 ///
 /// For the sake of usability, it also implements [`std::io::BufRead`] making it trivial to
@@ -33,7 +33,7 @@ pub trait ReadlineBufRead: AsyncBufRead {
     ///  * A `delimiter` packet line encountered
     async fn readline(
         &mut self,
-    ) -> Option<io::Result<Result<git_packetline::PacketLineRef<'_>, git_packetline::decode::Error>>>;
+    ) -> Option<io::Result<Result<gix_packetline::PacketLineRef<'_>, gix_packetline::decode::Error>>>;
 }
 
 /// Provide even more access to the underlying packet reader.
@@ -55,7 +55,7 @@ pub trait ExtendedBufRead: ReadlineBufRead {
 
 #[async_trait(?Send)]
 impl<'a, T: ReadlineBufRead + ?Sized + 'a + Unpin> ReadlineBufRead for Box<T> {
-    async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+    async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         self.deref_mut().readline().await
     }
 }
@@ -80,21 +80,21 @@ impl<'a, T: ExtendedBufRead + ?Sized + 'a + Unpin> ExtendedBufRead for Box<T> {
 }
 
 #[async_trait(?Send)]
-impl<T: AsyncRead + Unpin> ReadlineBufRead for git_packetline::read::WithSidebands<'_, T, for<'b> fn(bool, &'b [u8])> {
-    async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+impl<T: AsyncRead + Unpin> ReadlineBufRead for gix_packetline::read::WithSidebands<'_, T, for<'b> fn(bool, &'b [u8])> {
+    async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         self.read_data_line().await
     }
 }
 
 #[async_trait(?Send)]
-impl<'a, T: AsyncRead + Unpin> ReadlineBufRead for git_packetline::read::WithSidebands<'a, T, HandleProgress> {
-    async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, git_packetline::decode::Error>>> {
+impl<'a, T: AsyncRead + Unpin> ReadlineBufRead for gix_packetline::read::WithSidebands<'a, T, HandleProgress> {
+    async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         self.read_data_line().await
     }
 }
 
 #[async_trait(?Send)]
-impl<'a, T: AsyncRead + Unpin> ExtendedBufRead for git_packetline::read::WithSidebands<'a, T, HandleProgress> {
+impl<'a, T: AsyncRead + Unpin> ExtendedBufRead for gix_packetline::read::WithSidebands<'a, T, HandleProgress> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.set_progress_handler(handle_progress)
     }
@@ -108,19 +108,19 @@ impl<'a, T: AsyncRead + Unpin> ExtendedBufRead for git_packetline::read::WithSid
     }
     fn reset(&mut self, version: Protocol) {
         match version {
-            Protocol::V1 => self.reset_with(&[git_packetline::PacketLineRef::Flush]),
+            Protocol::V1 => self.reset_with(&[gix_packetline::PacketLineRef::Flush]),
             Protocol::V2 => self.reset_with(&[
-                git_packetline::PacketLineRef::Delimiter,
-                git_packetline::PacketLineRef::Flush,
+                gix_packetline::PacketLineRef::Delimiter,
+                gix_packetline::PacketLineRef::Flush,
             ]),
         }
     }
     fn stopped_at(&self) -> Option<MessageKind> {
         self.stopped_at().map(|l| match l {
-            git_packetline::PacketLineRef::Flush => MessageKind::Flush,
-            git_packetline::PacketLineRef::Delimiter => MessageKind::Delimiter,
-            git_packetline::PacketLineRef::ResponseEnd => MessageKind::ResponseEnd,
-            git_packetline::PacketLineRef::Data(_) => unreachable!("data cannot be a delimiter"),
+            gix_packetline::PacketLineRef::Flush => MessageKind::Flush,
+            gix_packetline::PacketLineRef::Delimiter => MessageKind::Delimiter,
+            gix_packetline::PacketLineRef::ResponseEnd => MessageKind::ResponseEnd,
+            gix_packetline::PacketLineRef::Data(_) => unreachable!("data cannot be a delimiter"),
         })
     }
 }

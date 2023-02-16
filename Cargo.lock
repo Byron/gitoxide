@@ -1587,24 +1587,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-packetline"
-version = "0.14.2"
-dependencies = [
- "async-std",
- "bstr",
- "document-features",
- "futures-io",
- "futures-lite",
- "git-odb",
- "gix-hash",
- "hex",
- "maybe-async",
- "pin-project-lite",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "git-path"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1640,11 +1622,11 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "git-credentials",
- "git-packetline",
  "git-testtools",
  "git-transport",
  "gix-features",
  "gix-hash",
+ "gix-packetline",
  "maybe-async",
  "nom",
  "serde",
@@ -1801,9 +1783,9 @@ dependencies = [
  "git-command",
  "git-credentials",
  "git-pack",
- "git-packetline",
  "gix-features",
  "gix-hash",
+ "gix-packetline",
  "gix-quote",
  "gix-sec",
  "gix-url",
@@ -2155,6 +2137,24 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "smallvec",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-packetline"
+version = "0.14.2"
+dependencies = [
+ "async-std",
+ "bstr",
+ "document-features",
+ "futures-io",
+ "futures-lite",
+ "git-odb",
+ "gix-hash",
+ "hex",
+ "maybe-async",
+ "pin-project-lite",
+ "serde",
  "thiserror",
 ]
 

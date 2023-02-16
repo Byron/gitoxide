@@ -162,13 +162,13 @@ impl<'a> std::io::BufRead for Fixture<'a> {
 impl<'a> git_transport::client::ReadlineBufRead for Fixture<'a> {
     fn readline(
         &mut self,
-    ) -> Option<std::io::Result<Result<git_packetline::PacketLineRef<'_>, git_packetline::decode::Error>>> {
+    ) -> Option<std::io::Result<Result<gix_packetline::PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         use bstr::{BStr, ByteSlice};
         let bytes: &BStr = self.0.into();
         let mut lines = bytes.lines();
         let res = lines.next()?;
         self.0 = lines.as_bytes();
-        Some(Ok(Ok(git_packetline::PacketLineRef::Data(res))))
+        Some(Ok(Ok(gix_packetline::PacketLineRef::Data(res))))
     }
 }
 
@@ -212,12 +212,12 @@ impl<'a> futures_io::AsyncBufRead for Fixture<'a> {
 impl<'a> git_transport::client::ReadlineBufRead for Fixture<'a> {
     async fn readline(
         &mut self,
-    ) -> Option<std::io::Result<Result<git_packetline::PacketLineRef<'_>, git_packetline::decode::Error>>> {
+    ) -> Option<std::io::Result<Result<gix_packetline::PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         use bstr::{BStr, ByteSlice};
         let bytes: &BStr = self.0.into();
         let mut lines = bytes.lines();
         let res = lines.next()?;
         self.0 = lines.as_bytes();
-        Some(Ok(Ok(git_packetline::PacketLineRef::Data(res))))
+        Some(Ok(Ok(gix_packetline::PacketLineRef::Data(res))))
     }
 }

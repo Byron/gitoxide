@@ -87,10 +87,10 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features pack-cache-lru-dynamic \
 			   && cargo check --features object-cache-dynamic \
 			   && cargo check
-	cd git-packetline && cargo check \
+	cd gix-packetline && cargo check \
 					   && cargo check --features blocking-io \
 					   && cargo check --features async-io
-	cd git-packetline && if cargo check --all-features 2>/dev/null; then false; else true; fi
+	cd gix-packetline && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd gix-url && cargo check --all-features \
 			   && cargo check
 	cd gix-features && cargo check --all-features \
@@ -147,7 +147,7 @@ unit-tests: ## run all unit tests
 				&& cargo test --features "internal-testing-gix-features-parallel"
 	cd gix-worktree && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-gix-features-parallel"
-	cd git-packetline && cargo test \
+	cd gix-packetline && cargo test \
 					  && cargo test --features blocking-io,maybe-async/is_sync --test blocking-packetline \
 					  && cargo test --features "async-io" --test async-packetline
 	cd git-transport && cargo test \
