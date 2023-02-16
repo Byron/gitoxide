@@ -172,7 +172,7 @@ mod expand {
         use ObjectExpansion::*;
 
         let mut out = Vec::new();
-        let mut tree_traversal_state = git_traverse::tree::breadthfirst::State::default();
+        let mut tree_traversal_state = gix_traverse::tree::breadthfirst::State::default();
         let mut tree_diff_state = git_diff::tree::State::default();
         let mut parent_commit_ids = Vec::new();
         let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
@@ -234,7 +234,7 @@ mod expand {
 
                                 let objects = if parent_commit_ids.is_empty() {
                                     traverse_delegate.clear();
-                                    git_traverse::tree::breadthfirst(
+                                    gix_traverse::tree::breadthfirst(
                                         current_tree_iter,
                                         &mut tree_traversal_state,
                                         |oid, buf| {
@@ -311,7 +311,7 @@ mod expand {
                         match obj.0.kind {
                             Tree => {
                                 traverse_delegate.clear();
-                                git_traverse::tree::breadthfirst(
+                                gix_traverse::tree::breadthfirst(
                                     gix_object::TreeRefIter::from_bytes(obj.0.data),
                                     &mut tree_traversal_state,
                                     |oid, buf| {

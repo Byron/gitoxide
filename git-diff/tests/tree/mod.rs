@@ -127,7 +127,7 @@ mod changes {
         }
 
         fn all_commits(db: &git_odb::Handle) -> Vec<ObjectId> {
-            use git_traverse::commit;
+            use gix_traverse::commit;
 
             let head = head_of(db);
             commit::Ancestors::new(Some(head), commit::ancestors::State::default(), |oid, buf| {

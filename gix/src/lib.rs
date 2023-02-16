@@ -74,7 +74,6 @@ pub use git_prompt as prompt;
 #[cfg(all(feature = "git-protocol"))]
 pub use git_protocol as protocol;
 pub use git_refspec as refspec;
-pub use git_traverse as traverse;
 pub use gix_actor as actor;
 pub use gix_attributes as attrs;
 pub use gix_date as date;
@@ -89,6 +88,7 @@ pub use gix_object::bstr;
 pub use gix_ref as refs;
 pub use gix_sec as sec;
 pub use gix_tempfile as tempfile;
+pub use gix_traverse as traverse;
 pub use gix_url as url;
 #[doc(inline)]
 pub use gix_url::Url;

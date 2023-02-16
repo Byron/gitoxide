@@ -4,8 +4,8 @@ use git_revision::spec::parse::{
     delegate,
     delegate::{PeelTo, Traversal},
 };
-use git_traverse::commit::Sorting;
 use gix_hash::ObjectId;
+use gix_traverse::commit::Sorting;
 
 use crate::{
     bstr::{BStr, ByteSlice},

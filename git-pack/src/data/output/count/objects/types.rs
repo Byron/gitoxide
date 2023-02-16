@@ -97,7 +97,7 @@ where
     #[error(transparent)]
     InputIteration(IterErr),
     #[error(transparent)]
-    TreeTraverse(git_traverse::tree::breadthfirst::Error),
+    TreeTraverse(gix_traverse::tree::breadthfirst::Error),
     #[error(transparent)]
     TreeChanges(git_diff::tree::changes::Error),
     #[error("Operation interrupted")]

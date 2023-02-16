@@ -68,7 +68,7 @@ fn display_and_debug() -> crate::Result {
 }
 
 mod ancestors {
-    use git_traverse::commit;
+    use gix_traverse::commit;
 
     #[test]
     fn all() -> crate::Result {

@@ -19,7 +19,7 @@ pub mod main_worktree {
         #[error("Could not create index from tree at {id}")]
         IndexFromTree {
             id: gix_hash::ObjectId,
-            source: git_traverse::tree::breadthfirst::Error,
+            source: gix_traverse::tree::breadthfirst::Error,
         },
         #[error(transparent)]
         WriteIndex(#[from] git_index::file::write::Error),

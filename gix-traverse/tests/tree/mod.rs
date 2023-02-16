@@ -1,5 +1,5 @@
 use git_odb::pack::FindExt;
-use git_traverse::tree;
+use gix_traverse::tree;
 
 use crate::hex_to_id;
 
@@ -18,7 +18,7 @@ fn basic_nesting() -> crate::Result<()> {
         .find_commit_iter(hex_to_id("85df34aa34848b8138b2b3dcff5fb5c2b734e0ce"), &mut buf)?
         .0;
     let mut recorder = tree::Recorder::default();
-    git_traverse::tree::breadthfirst(
+    gix_traverse::tree::breadthfirst(
         db.find_tree_iter(commit.tree_id().expect("a tree is available in a commit"), &mut buf2)?
             .0,
         tree::breadthfirst::State::default(),
@@ -26,8 +26,8 @@ fn basic_nesting() -> crate::Result<()> {
         &mut recorder,
     )?;
 
-    use git_traverse::tree::recorder::Entry;
     use gix_object::tree::EntryMode::*;
+    use gix_traverse::tree::recorder::Entry;
     assert_eq!(
         recorder.records,
         vec![

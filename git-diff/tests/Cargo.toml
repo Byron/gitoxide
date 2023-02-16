@@ -23,5 +23,5 @@ git-diff = { path = ".." }
 gix-hash = { path = "../../gix-hash" }
 gix-object = { path = "../../gix-object" }
 git-odb = { path = "../../git-odb" }
-git-traverse = { path = "../../git-traverse" }
+gix-traverse = { path = "../../gix-traverse" }
 git-testtools = { path = "../../tests/tools" }

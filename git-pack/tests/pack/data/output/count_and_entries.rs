@@ -5,11 +5,11 @@ use git_pack::data::{
     output,
     output::{count, entry},
 };
-use git_traverse::commit;
 use gix_features::{
     parallel::{reduce::Finalize, InOrderIter},
     progress,
 };
+use gix_traverse::commit;
 
 use crate::pack::{
     data::output::{db, DbKind},

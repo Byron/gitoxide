@@ -2,11 +2,11 @@ mod from_tree {
     use std::collections::VecDeque;
 
     use bstr::{BStr, BString, ByteSlice, ByteVec};
-    use git_traverse::tree::{breadthfirst, visit::Action, Visit};
     use gix_object::{
         tree::{self, EntryMode},
         TreeRefIter,
     };
+    use gix_traverse::tree::{breadthfirst, visit::Action, Visit};
 
     use crate::{
         entry::{Flags, Mode, Stat},
@@ -143,11 +143,11 @@ mod from_tree {
             }
         }
 
-        fn visit_tree(&mut self, _entry: &gix_object::tree::EntryRef<'_>) -> git_traverse::tree::visit::Action {
+        fn visit_tree(&mut self, _entry: &gix_object::tree::EntryRef<'_>) -> gix_traverse::tree::visit::Action {
             Action::Continue
         }
 
-        fn visit_nontree(&mut self, entry: &gix_object::tree::EntryRef<'_>) -> git_traverse::tree::visit::Action {
+        fn visit_nontree(&mut self, entry: &gix_object::tree::EntryRef<'_>) -> gix_traverse::tree::visit::Action {
             self.add_entry(entry);
             Action::Continue
         }

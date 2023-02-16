@@ -33,7 +33,7 @@ gix-path = { version = "^0.7.1", path = "../gix-path" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 git-chunk = { version = "^0.4.1", path = "../git-chunk" }
 gix-object = { version = "^0.26.1", path = "../gix-object" }
-git-traverse = { version = "^0.22.1", path = "../git-traverse" }
+gix-traverse = { version = "^0.22.1", path = "../gix-traverse" }
 git-diff = { version = "^0.26.1", path = "../git-diff" }
 gix-hashtable = { version = "^0.1.1", path = "../gix-hashtable" }
 

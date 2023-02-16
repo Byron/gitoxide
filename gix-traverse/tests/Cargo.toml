@@ -1,5 +1,5 @@
 [package]
-name = "git-traverse-tests"
+name = "gix-traverse-tests"
 version = "0.0.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
@@ -14,7 +14,7 @@ name ="test"
 path = "traverse.rs"
 
 [dev-dependencies]
-git-traverse = { path = ".." }
+gix-traverse = { path = ".." }
 git-testtools = { path = "../../tests/tools" }
 git-odb = { path = "../../git-odb" }
 gix-hash = { path = "../../gix-hash" }

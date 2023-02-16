@@ -746,7 +746,7 @@ dependencies = [
  "gix-object",
  "gix-path",
  "gix-tempfile",
- "git-traverse",
+ "gix-traverse",
  "hash_hasher",
  "memmap2",
  "parking_lot",
@@ -816,7 +816,7 @@ dependencies = [
  "git-revision",
  "gix-sec",
  "gix-tempfile",
- "git-traverse",
+ "gix-traverse",
  "gix-url",
  "gix-validate",
  "gix-worktree",
@@ -885,7 +885,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-traverse"
+name = "gix-traverse"
 version = "0.15.0"
 dependencies = [
  "gix-hash",

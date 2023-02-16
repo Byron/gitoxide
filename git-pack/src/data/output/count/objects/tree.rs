@@ -59,12 +59,12 @@ pub mod changes {
 }
 
 pub mod traverse {
-    use git_traverse::tree::{visit::Action, Visit};
     use gix_hash::ObjectId;
     use gix_object::{
         bstr::BStr,
         tree::{EntryMode, EntryRef},
     };
+    use gix_traverse::tree::{visit::Action, Visit};
 
     use crate::data::output::count::objects_impl::util::InsertImmutable;
 

@@ -109,7 +109,7 @@ git-revision = { version = "^0.10.3", path = "../git-revision" }
 
 gix-path = { version = "^0.7.1", path = "../gix-path" }
 gix-url = { version = "^0.13.2", path = "../gix-url" }
-git-traverse = { version = "^0.22.1", path = "../git-traverse" }
+gix-traverse = { version = "^0.22.1", path = "../gix-traverse" }
 git-protocol = { version = "^0.26.3", path = "../git-protocol", optional = true }
 git-transport = { version = "^0.25.4", path = "../git-transport", optional = true }
 git-diff = { version = "^0.26.1", path = "../git-diff" }

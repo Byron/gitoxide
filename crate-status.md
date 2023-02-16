@@ -217,9 +217,9 @@ Check out the [performance discussion][git-diff-performance] as well.
     
 [git-diff-performance]: https://github.com/Byron/gitoxide/discussions/74
 
-### git-traverse
+### gix-traverse
 
-Check out the [performance discussion][git-traverse-performance] as well.
+Check out the [performance discussion][gix-traverse-performance] as well.
 
 * **trees**
   * [x] nested traversal
@@ -228,7 +228,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [x] API documentation
     * [ ] Examples
     
-[git-traverse-performance]: https://github.com/Byron/gitoxide/discussions/76
+[gix-traverse-performance]: https://github.com/Byron/gitoxide/discussions/76
 
 ### gix-url
 * As documented here: https://www.git-scm.com/docs/git-clone#_git_urls

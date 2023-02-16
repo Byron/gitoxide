@@ -1,5 +1,5 @@
 [package]
-name = "git-traverse"
+name = "gix-traverse"
 version = "0.22.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

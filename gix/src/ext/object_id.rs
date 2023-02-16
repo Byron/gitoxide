@@ -1,5 +1,5 @@
-use git_traverse::commit::{ancestors, Ancestors};
 use gix_hash::ObjectId;
+use gix_traverse::commit::{ancestors, Ancestors};
 
 pub trait Sealed {}
 

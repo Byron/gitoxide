@@ -145,7 +145,7 @@ members = [
     "gix-glob",
     "git-diff",
     "gix-date",
-    "git-traverse",
+    "gix-traverse",
     "git-index",
     "git-bitmap",
     "gix-worktree",
@@ -187,7 +187,7 @@ members = [
     "git-index/tests",
     "gix-ref/tests",
     "gix-config/tests",
-    "git-traverse/tests",
+    "gix-traverse/tests",
 ]
 exclude = ["cargo-smart-release/tests/fixtures/tri-depth-workspace/a",
            "cargo-smart-release/tests/fixtures/tri-depth-workspace/b",
