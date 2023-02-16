@@ -1,4 +1,4 @@
-use git_glob::{pattern::Mode, Pattern};
+use gix_glob::{pattern::Mode, Pattern};
 
 #[test]
 fn display() {

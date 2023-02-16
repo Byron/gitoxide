@@ -25,7 +25,7 @@ pub trait Pattern: Clone + PartialEq + Eq + std::fmt::Debug + std::hash::Hash + 
     fn bytes_to_patterns(bytes: &[u8]) -> Vec<PatternMapping<Self::Value>>;
 
     /// Returns true if the given pattern may be used for matching.
-    fn may_use_glob_pattern(pattern: &git_glob::Pattern) -> bool;
+    fn may_use_glob_pattern(pattern: &gix_glob::Pattern) -> bool;
 }
 
 /// An implementation of the [`Pattern`] trait for ignore patterns.
@@ -45,7 +45,7 @@ impl Pattern for Ignore {
             .collect()
     }
 
-    fn may_use_glob_pattern(_pattern: &git_glob::Pattern) -> bool {
+    fn may_use_glob_pattern(_pattern: &gix_glob::Pattern) -> bool {
         true
     }
 }
@@ -70,9 +70,9 @@ impl Pattern for Attributes {
             .filter_map(|(pattern_kind, assignments, line_number)| {
                 let (pattern, value) = match pattern_kind {
                     crate::parse::Kind::Macro(macro_name) => (
-                        git_glob::Pattern {
+                        gix_glob::Pattern {
                             text: macro_name.as_str().into(),
-                            mode: git_glob::pattern::Mode::all(),
+                            mode: gix_glob::pattern::Mode::all(),
                             first_wildcard_pos: None,
                         },
                         Value::MacroAttributes(into_owned_assignments(assignments).ok()?),
@@ -92,8 +92,8 @@ impl Pattern for Attributes {
             .collect()
     }
 
-    fn may_use_glob_pattern(pattern: &git_glob::Pattern) -> bool {
-        pattern.mode != git_glob::pattern::Mode::all()
+    fn may_use_glob_pattern(pattern: &gix_glob::Pattern) -> bool {
+        pattern.mode != gix_glob::pattern::Mode::all()
     }
 }
 
@@ -101,7 +101,7 @@ impl Pattern for Attributes {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Match<'a, T> {
     /// The glob pattern itself, like `/target/*`.
-    pub pattern: &'a git_glob::Pattern,
+    pub pattern: &'a gix_glob::Pattern,
     /// The value associated with the pattern.
     pub value: &'a T,
     /// The path to the source from which the pattern was loaded, or `None` if it was specified by other means.
@@ -120,7 +120,7 @@ where
         &self,
         relative_path: impl Into<&'a BStr>,
         is_dir: Option<bool>,
-        case: git_glob::pattern::Case,
+        case: gix_glob::pattern::Case,
     ) -> Option<Match<'_, T::Value>> {
         let relative_path = relative_path.into();
         let basename_pos = relative_path.rfind(b"/").map(|p| p + 1);
@@ -262,7 +262,7 @@ where
         relative_path: &BStr,
         basename_pos: Option<usize>,
         is_dir: Option<bool>,
-        case: git_glob::pattern::Case,
+        case: gix_glob::pattern::Case,
     ) -> Option<Match<'_, T::Value>> {
         let (relative_path, basename_start_pos) =
             self.strip_base_handle_recompute_basename_pos(relative_path, basename_pos)?;
@@ -295,7 +295,7 @@ where
         relative_path: &BStr,
         basename_pos: Option<usize>,
         is_dir: Option<bool>,
-        case: git_glob::pattern::Case,
+        case: gix_glob::pattern::Case,
     ) -> Option<usize> {
         let (relative_path, basename_start_pos) =
             self.strip_base_handle_recompute_basename_pos(relative_path, basename_pos)?;
@@ -340,7 +340,7 @@ impl PatternList<Ignore> {
                 .enumerate()
                 .filter_map(|(seq_id, pattern)| {
                     let pattern = gix_path::try_into_bstr(PathBuf::from(pattern)).ok()?;
-                    git_glob::parse(pattern.as_ref()).map(|p| PatternMapping {
+                    gix_glob::parse(pattern.as_ref()).map(|p| PatternMapping {
                         pattern: p,
                         value: (),
                         sequence_number: seq_id,

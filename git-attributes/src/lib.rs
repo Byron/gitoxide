@@ -13,7 +13,7 @@ use std::path::PathBuf;
 
 use bstr::{BStr, BString};
 use compact_str::CompactString;
-pub use git_glob as glob;
+pub use gix_glob as glob;
 
 mod assignment;
 ///
@@ -130,7 +130,7 @@ pub struct PatternList<T: Pattern> {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct PatternMapping<T> {
     /// The pattern itself, like `/target/*`
-    pub pattern: git_glob::Pattern,
+    pub pattern: gix_glob::Pattern,
     /// The value associated with the pattern.
     pub value: T,
     /// Typically the line number in the file the pattern was parsed from.

@@ -540,7 +540,7 @@ dependencies = [
  "bstr",
  "compact_str",
  "git-features",
- "git-glob",
+ "gix-glob",
  "gix-path",
  "git-quote",
  "quick-error",
@@ -568,7 +568,7 @@ dependencies = [
  "bstr",
  "dirs",
  "git-features",
- "git-glob",
+ "gix-glob",
  "gix-path",
  "git-ref",
  "gix-sec",
@@ -649,7 +649,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-glob"
+name = "gix-glob"
 version = "0.3.0"
 dependencies = [
  "bitflags",
@@ -803,7 +803,7 @@ dependencies = [
  "git-diff",
  "git-discover",
  "git-features",
- "git-glob",
+ "gix-glob",
  "git-hash",
  "git-index",
  "git-lock",
@@ -921,7 +921,7 @@ dependencies = [
  "bstr",
  "git-attributes",
  "git-features",
- "git-glob",
+ "gix-glob",
  "git-hash",
  "git-index",
  "git-object",

@@ -48,9 +48,9 @@ where
     let num_files = AtomicUsize::default();
     let dir = dir.into();
     let case = if options.fs.ignore_case {
-        git_glob::pattern::Case::Fold
+        gix_glob::pattern::Case::Fold
     } else {
-        git_glob::pattern::Case::Sensitive
+        gix_glob::pattern::Case::Sensitive
     };
     let (chunk_size, thread_limit, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
         100,

@@ -73,7 +73,6 @@ pub use git_date as date;
 pub use git_features as features;
 use git_features::threading::OwnShared;
 pub use git_features::{parallel, progress::Progress, threading};
-pub use git_glob as glob;
 pub use git_hash as hash;
 #[doc(inline)]
 pub use git_index as index;
@@ -91,6 +90,7 @@ pub use git_traverse as traverse;
 pub use git_url as url;
 #[doc(inline)]
 pub use git_url::Url;
+pub use gix_glob as glob;
 pub use gix_sec as sec;
 pub use hash::{oid, ObjectId};
 

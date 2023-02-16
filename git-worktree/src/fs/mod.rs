@@ -66,7 +66,7 @@ pub struct Cache {
     /// A buffer used when reading attribute or ignore files or their respective objects from the object database.
     buf: Vec<u8>,
     /// If case folding should happen when looking up attributes or exclusions.
-    case: git_glob::pattern::Case,
+    case: gix_glob::pattern::Case,
     /// A lookup table for object ids to read from in some situations when looking up attributes or exclusions.
     attribute_files_in_index: Vec<PathOidMapping>,
 }

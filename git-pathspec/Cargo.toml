@@ -12,7 +12,7 @@ rust-version = "1.64"
 doctest = false
 
 [dependencies]
-git-glob = { version = "^0.5.3", path = "../git-glob" }
+gix-glob = { version = "^0.5.3", path = "../gix-glob" }
 git-attributes = { version = "^0.8.2", path = "../git-attributes" }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std"]}

@@ -432,7 +432,7 @@ Handle human-aided operations which cannot be completed in one command invocatio
 Implement git large file support using the process protocol and make it flexible enough to handle a variety of cases.
 Make it the best-performing implementation and the most convenient one.
 
-### git-glob
+### gix-glob
 * [x] parse pattern
 * [x] a type for pattern matching of paths and non-paths, optionally case-insensitively.
 

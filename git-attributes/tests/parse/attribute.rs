@@ -1,7 +1,7 @@
 use bstr::{BString, ByteSlice};
 use git_attributes::{parse, StateRef};
-use git_glob::pattern::Mode;
 use git_testtools::fixture_bytes;
+use gix_glob::pattern::Mode;
 
 #[test]
 fn byte_order_marks_are_no_patterns() {
@@ -279,8 +279,8 @@ fn value<'b>(attr: &str, value: &'b str) -> (BString, StateRef<'b>) {
     (attr.into(), StateRef::Value(value.as_bytes().as_bstr()))
 }
 
-fn pattern(name: &str, flags: git_glob::pattern::Mode, first_wildcard_pos: Option<usize>) -> parse::Kind {
-    parse::Kind::Pattern(git_glob::Pattern {
+fn pattern(name: &str, flags: gix_glob::pattern::Mode, first_wildcard_pos: Option<usize>) -> parse::Kind {
+    parse::Kind::Pattern(gix_glob::Pattern {
         text: name.into(),
         mode: flags,
         first_wildcard_pos,

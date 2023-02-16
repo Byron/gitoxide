@@ -1,6 +1,6 @@
 use bstr::BString;
-use git_glob::{pattern::Mode, Pattern};
 use git_testtools::fixture_bytes;
+use gix_glob::{pattern::Mode, Pattern};
 
 #[test]
 fn byte_order_marks_are_no_patterns() {
@@ -56,10 +56,10 @@ fn backslashes_before_hashes_are_no_comments() {
     );
 }
 
-fn flatten(input: Option<(Pattern, usize)>) -> Option<(BString, git_glob::pattern::Mode, usize)> {
+fn flatten(input: Option<(Pattern, usize)>) -> Option<(BString, gix_glob::pattern::Mode, usize)> {
     input.map(flat_map)
 }
 
-fn flat_map(input: (Pattern, usize)) -> (BString, git_glob::pattern::Mode, usize) {
+fn flat_map(input: (Pattern, usize)) -> (BString, gix_glob::pattern::Mode, usize) {
     (input.0.text, input.0.mode, input.1)
 }

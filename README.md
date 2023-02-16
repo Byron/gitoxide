@@ -47,7 +47,7 @@ Documentation is complete and was reviewed at least once.
 * [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
 * [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
 * [gix-config-value](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config-value)
-* [git-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-glob)
+* [gix-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-glob)
 
 ### Initial Development
 

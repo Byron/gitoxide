@@ -9,7 +9,7 @@ use crate::{name, AssignmentRef, Name, NameRef, StateRef};
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
     /// A pattern to match paths against
-    Pattern(git_glob::Pattern),
+    Pattern(gix_glob::Pattern),
     /// The name of the macro to define, always a valid attribute name
     Macro(Name),
 }
@@ -151,8 +151,8 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
                 macro_name: err.attribute,
             }),
         None => {
-            let pattern = git_glob::Pattern::from_bytes(line.as_ref())?;
-            if pattern.mode.contains(git_glob::pattern::Mode::NEGATIVE) {
+            let pattern = gix_glob::Pattern::from_bytes(line.as_ref())?;
+            if pattern.mode.contains(gix_glob::pattern::Mode::NEGATIVE) {
                 Err(Error::PatternNegation {
                     line: line.into_owned(),
                     line_number,

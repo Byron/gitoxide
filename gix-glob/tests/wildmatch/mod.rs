@@ -4,7 +4,7 @@ use std::{
 };
 
 use bstr::ByteSlice;
-use git_glob::{pattern::Case, wildmatch, Pattern};
+use gix_glob::{pattern::Case, wildmatch, Pattern};
 
 #[test]
 fn corpus() {
@@ -248,13 +248,13 @@ fn brackets() {
 }
 
 fn multi_match(pattern_text: &str, text: &str) -> (Pattern, MultiMatch) {
-    let pattern = git_glob::Pattern::from_bytes(pattern_text.as_bytes()).expect("valid (enough) pattern");
+    let pattern = gix_glob::Pattern::from_bytes(pattern_text.as_bytes()).expect("valid (enough) pattern");
     let actual_path_match: MatchResult = catch_unwind(|| match_file_path(&pattern, text, Case::Sensitive)).into();
     let actual_path_imatch: MatchResult = catch_unwind(|| match_file_path(&pattern, text, Case::Fold)).into();
     let actual_glob_match: MatchResult =
-        catch_unwind(|| git_glob::wildmatch(pattern.text.as_bstr(), text.into(), wildmatch::Mode::empty())).into();
+        catch_unwind(|| gix_glob::wildmatch(pattern.text.as_bstr(), text.into(), wildmatch::Mode::empty())).into();
     let actual_glob_imatch: MatchResult =
-        catch_unwind(|| git_glob::wildmatch(pattern.text.as_bstr(), text.into(), wildmatch::Mode::IGNORE_CASE)).into();
+        catch_unwind(|| gix_glob::wildmatch(pattern.text.as_bstr(), text.into(), wildmatch::Mode::IGNORE_CASE)).into();
     let actual = MultiMatch {
         path_match: actual_path_match,
         path_imatch: actual_path_imatch,
@@ -366,7 +366,7 @@ impl Display for MatchResult {
     }
 }
 
-fn match_file_path(pattern: &git_glob::Pattern, path: &str, case: Case) -> bool {
+fn match_file_path(pattern: &gix_glob::Pattern, path: &str, case: Case) -> bool {
     pattern.matches_repo_relative_path(path, basename_of(path), false.into() /* is_dir */, case)
 }
 fn basename_of(path: &str) -> Option<usize> {

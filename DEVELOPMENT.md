@@ -10,7 +10,7 @@
    * *use git itself* as reference implementation, and use their test-cases and fixtures where
      appropriate. At the very least, try to learn from them.
       * Run the same test against git whenever feasible to assure git agrees with our implementation. 
-        See `git-glob` for examples.
+        See `gix-glob` for examples.
    * *use libgit2* test fixtures and cases where appropriate, or learn from them.
  * **safety first**
    * handle all errors, never `unwrap()`. If needed, `expect("why")`.

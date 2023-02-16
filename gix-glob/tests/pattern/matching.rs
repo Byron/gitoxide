@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use bstr::{BStr, ByteSlice};
-use git_glob::{pattern, pattern::Case};
+use gix_glob::{pattern, pattern::Case};
 
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
 pub struct GitMatch<'a> {
@@ -118,14 +118,14 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
 fn matches_of_absolute_paths_work() {
     let pattern = "/hello/git";
     assert!(
-        git_glob::wildmatch(pattern.into(), pattern.into(), git_glob::wildmatch::Mode::empty()),
+        gix_glob::wildmatch(pattern.into(), pattern.into(), gix_glob::wildmatch::Mode::empty()),
         "patterns always match themselves"
     );
     assert!(
-        git_glob::wildmatch(
+        gix_glob::wildmatch(
             pattern.into(),
             pattern.into(),
-            git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL
+            gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL
         ),
         "patterns always match themselves, path mode doesn't change that"
     );
@@ -307,15 +307,15 @@ fn single_paths_match_anywhere() {
     );
 }
 
-fn pat<'a>(pattern: impl Into<&'a BStr>) -> git_glob::Pattern {
-    git_glob::Pattern::from_bytes(pattern.into()).expect("parsing works")
+fn pat<'a>(pattern: impl Into<&'a BStr>) -> gix_glob::Pattern {
+    gix_glob::Pattern::from_bytes(pattern.into()).expect("parsing works")
 }
 
-fn match_file<'a>(pattern: &git_glob::Pattern, path: impl Into<&'a BStr>, case: Case) -> bool {
+fn match_file<'a>(pattern: &gix_glob::Pattern, path: impl Into<&'a BStr>, case: Case) -> bool {
     match_path(pattern, path, false.into(), case)
 }
 
-fn match_path<'a>(pattern: &git_glob::Pattern, path: impl Into<&'a BStr>, is_dir: Option<bool>, case: Case) -> bool {
+fn match_path<'a>(pattern: &gix_glob::Pattern, path: impl Into<&'a BStr>, is_dir: Option<bool>, case: Case) -> bool {
     let path = path.into();
     pattern.matches_repo_relative_path(path, basename_start_pos(path), is_dir, case)
 }

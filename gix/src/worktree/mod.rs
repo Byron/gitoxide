@@ -130,7 +130,7 @@ pub mod excludes {
             let case = repo
                 .config
                 .ignore_case
-                .then_some(git_glob::pattern::Case::Fold)
+                .then_some(gix_glob::pattern::Case::Fold)
                 .unwrap_or_default();
             let mut buf = Vec::with_capacity(512);
             let excludes_file = match repo.config.excludes_file().transpose()? {

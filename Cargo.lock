@@ -1228,7 +1228,7 @@ dependencies = [
  "bstr",
  "compact_str",
  "git-features 0.26.1",
- "git-glob 0.5.2",
+ "git-glob",
  "git-path",
  "git-quote 0.4.0",
  "thiserror",
@@ -1243,9 +1243,9 @@ dependencies = [
  "compact_str",
  "document-features",
  "git-features 0.26.4",
- "git-glob 0.5.3",
  "git-quote 0.4.1",
  "git-testtools",
+ "gix-glob",
  "gix-path",
  "serde",
  "thiserror",
@@ -1307,9 +1307,9 @@ dependencies = [
  "criterion",
  "document-features",
  "git-features 0.26.4",
- "git-glob 0.5.3",
  "git-ref 0.24.0",
  "gix-config-value",
+ "gix-glob",
  "gix-path",
  "gix-sec",
  "memchr",
@@ -1496,23 +1496,12 @@ version = "0.0.0"
 
 [[package]]
 name = "git-glob"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa73cf9c9c1a66e28de1cf250fc1ebe323e7c7c59768c1a2331e3b3308e783a3"
-dependencies = [
- "bitflags",
- "bstr",
-]
-
-[[package]]
-name = "git-glob"
 version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28ca8b1a36027c28ab7dba9f96f63493c2f486f133579bafb08106995646f9a6"
 dependencies = [
  "bitflags",
  "bstr",
- "document-features",
- "git-testtools",
- "serde",
 ]
 
 [[package]]
@@ -1795,8 +1784,8 @@ dependencies = [
  "bitflags",
  "bstr",
  "git-attributes 0.8.2",
- "git-glob 0.5.3",
  "git-testtools",
+ "gix-glob",
  "once_cell",
  "thiserror",
 ]
@@ -2140,7 +2129,7 @@ dependencies = [
  "bstr",
  "git-attributes 0.8.1",
  "git-features 0.26.1",
- "git-glob 0.5.2",
+ "git-glob",
  "git-hash 0.10.1",
  "git-index 0.12.2",
  "git-object 0.26.0",
@@ -2157,12 +2146,12 @@ dependencies = [
  "document-features",
  "git-attributes 0.8.2",
  "git-features 0.26.4",
- "git-glob 0.5.3",
  "git-hash 0.10.2",
  "git-index 0.12.3",
  "git-object 0.26.1",
  "git-odb",
  "git-testtools",
+ "gix-glob",
  "gix-path",
  "io-close",
  "serde",
@@ -2251,7 +2240,6 @@ dependencies = [
  "git-diff",
  "git-discover 0.13.0",
  "git-features 0.26.4",
- "git-glob 0.5.3",
  "git-hash 0.10.2",
  "git-hashtable 0.1.1",
  "git-index 0.12.3",
@@ -2272,6 +2260,7 @@ dependencies = [
  "git-url",
  "git-validate 0.7.2",
  "git-worktree 0.12.2",
+ "gix-glob",
  "gix-path",
  "gix-sec",
  "is_ci",
@@ -2300,6 +2289,17 @@ dependencies = [
  "libc",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "gix-glob"
+version = "0.5.3"
+dependencies = [
+ "bitflags",
+ "bstr",
+ "document-features",
+ "git-testtools",
+ "serde",
 ]
 
 [[package]]

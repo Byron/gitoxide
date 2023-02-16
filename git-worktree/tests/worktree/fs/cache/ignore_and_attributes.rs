@@ -1,10 +1,10 @@
 use std::path::Path;
 
 use bstr::{BStr, ByteSlice};
-use git_glob::pattern::Case;
 use git_index::entry::Mode;
 use git_odb::{pack::bundle::write::Options, FindExt};
 use git_worktree::fs;
+use gix_glob::pattern::Case;
 use tempfile::{tempdir, TempDir};
 
 use crate::hex_to_id;
@@ -40,7 +40,7 @@ fn special_exclude_cases_we_handle_differently() {
     let git_dir = dir.join(".git");
 
     let mut buf = Vec::new();
-    let case = git_glob::pattern::Case::Sensitive;
+    let case = gix_glob::pattern::Case::Sensitive;
     let state = git_worktree::fs::cache::State::for_add(
         Default::default(),
         git_worktree::fs::cache::state::Ignore::new(
@@ -95,7 +95,7 @@ fn check_against_baseline() -> crate::Result {
 
     let mut index = git_index::File::at(git_dir.join("index"), git_hash::Kind::Sha1, Default::default())?;
     let odb = git_odb::at(git_dir.join("objects"))?;
-    let case = git_glob::pattern::Case::Sensitive;
+    let case = gix_glob::pattern::Case::Sensitive;
     let state = git_worktree::fs::cache::State::for_add(
         Default::default(), // TODO: attribute tests
         git_worktree::fs::cache::state::Ignore::new(

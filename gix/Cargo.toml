@@ -117,7 +117,7 @@ git-mailmap = { version = "^0.9.2", path = "../git-mailmap" }
 git-features = { version = "^0.26.4", path = "../git-features", features = ["progress", "once_cell"] }
 
 git-attributes = { version = "^0.8.2", path = "../git-attributes" }
-git-glob = { version = "^0.5.3", path = "../git-glob" }
+gix-glob = { version = "^0.5.3", path = "../gix-glob" }
 git-credentials = { version = "^0.9.1", path = "../git-credentials" }
 git-prompt = { version = "^0.3.2", path = "../git-prompt" }
 git-index = { version = "^0.12.3", path = "../git-index" }

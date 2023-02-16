@@ -169,7 +169,7 @@ fn host_matches(pattern: Option<&str>, host: Option<&str>) -> bool {
             }
             lfields
                 .zip(rfields)
-                .all(|(pat, value)| git_glob::wildmatch(pat.into(), value.into(), git_glob::wildmatch::Mode::empty()))
+                .all(|(pat, value)| gix_glob::wildmatch(pat.into(), value.into(), gix_glob::wildmatch::Mode::empty()))
         }
         (None, None) => true,
         (Some(_), None) | (None, Some(_)) => false,

@@ -3,7 +3,7 @@ mod ignore {
 
     use bstr::{BStr, ByteSlice};
     use git_attributes::{Ignore, Match, MatchGroup};
-    use git_glob::pattern::Case;
+    use gix_glob::pattern::Case;
 
     struct Expectations<'a> {
         lines: bstr::Lines<'a>,
@@ -93,12 +93,12 @@ mod ignore {
         let input = ["simple", "pattern/"];
         let group = git_attributes::MatchGroup::<Ignore>::from_overrides(input);
         assert_eq!(
-            group.pattern_matching_relative_path("Simple", None, git_glob::pattern::Case::Fold),
-            Some(pattern_to_match(&git_glob::parse("simple").unwrap(), 0))
+            group.pattern_matching_relative_path("Simple", None, gix_glob::pattern::Case::Fold),
+            Some(pattern_to_match(&gix_glob::parse("simple").unwrap(), 0))
         );
         assert_eq!(
-            group.pattern_matching_relative_path("pattern", Some(true), git_glob::pattern::Case::Sensitive),
-            Some(pattern_to_match(&git_glob::parse("pattern/").unwrap(), 1))
+            group.pattern_matching_relative_path("pattern", Some(true), gix_glob::pattern::Case::Sensitive),
+            Some(pattern_to_match(&gix_glob::parse("pattern/").unwrap(), 1))
         );
         assert_eq!(group.patterns.len(), 1);
         assert_eq!(
@@ -107,7 +107,7 @@ mod ignore {
         );
     }
 
-    fn pattern_to_match(pattern: &git_glob::Pattern, sequence_number: usize) -> Match<'_, ()> {
+    fn pattern_to_match(pattern: &gix_glob::Pattern, sequence_number: usize) -> Match<'_, ()> {
         Match {
             pattern,
             value: &(),

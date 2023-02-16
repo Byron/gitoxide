@@ -1,5 +1,5 @@
 [package]
-name = "git-glob"
+name = "gix-glob"
 version = "0.5.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"

@@ -154,13 +154,13 @@ fn include_condition_match(
             condition,
             target_config_path,
             options,
-            git_glob::wildmatch::Mode::empty(),
+            gix_glob::wildmatch::Mode::empty(),
         ),
         b"gitdir/i" => gitdir_matches(
             condition,
             target_config_path,
             options,
-            git_glob::wildmatch::Mode::IGNORE_CASE,
+            gix_glob::wildmatch::Mode::IGNORE_CASE,
         ),
         b"onbranch" => Ok(onbranch_matches(condition, options.conditional).is_some()),
         _ => Ok(false),
@@ -184,10 +184,10 @@ fn onbranch_matches(
         condition.into()
     };
 
-    git_glob::wildmatch(
+    gix_glob::wildmatch(
         condition.as_ref(),
         branch_name,
-        git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+        gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
     )
     .then_some(())
 }
@@ -202,7 +202,7 @@ fn gitdir_matches(
         err_on_missing_config_path,
         ..
     }: Options<'_>,
-    wildmatch_mode: git_glob::wildmatch::Mode,
+    wildmatch_mode: gix_glob::wildmatch::Mode,
 ) -> Result<bool, Error> {
     if !err_on_interpolation_failure && git_dir.is_none() {
         return Ok(false);
@@ -252,14 +252,14 @@ fn gitdir_matches(
         pattern_path = suffixed.into();
     }
 
-    let match_mode = git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL | wildmatch_mode;
-    let is_match = git_glob::wildmatch(pattern_path.as_bstr(), git_dir.as_bstr(), match_mode);
+    let match_mode = gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL | wildmatch_mode;
+    let is_match = gix_glob::wildmatch(pattern_path.as_bstr(), git_dir.as_bstr(), match_mode);
     if is_match {
         return Ok(true);
     }
 
     let expanded_git_dir = gix_path::into_bstr(gix_path::realpath(gix_path::from_byte_slice(&git_dir))?);
-    Ok(git_glob::wildmatch(
+    Ok(gix_glob::wildmatch(
         pattern_path.as_bstr(),
         expanded_git_dir.as_bstr(),
         match_mode,

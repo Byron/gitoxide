@@ -18,7 +18,7 @@ impl<'a> Lines<'a> {
 }
 
 impl<'a> Iterator for Lines<'a> {
-    type Item = (git_glob::Pattern, usize);
+    type Item = (gix_glob::Pattern, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
         for line in self.lines.by_ref() {
@@ -26,7 +26,7 @@ impl<'a> Iterator for Lines<'a> {
             if line.first() == Some(&b'#') {
                 continue;
             }
-            match git_glob::Pattern::from_bytes(line) {
+            match gix_glob::Pattern::from_bytes(line) {
                 None => continue,
                 Some(pattern) => return Some((pattern, self.line_no)),
             }

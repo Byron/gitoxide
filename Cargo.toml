@@ -142,7 +142,7 @@ members = [
     "git-chunk",
     "git-quote",
     "git-object",
-    "git-glob",
+    "gix-glob",
     "git-diff",
     "git-date",
     "git-traverse",

@@ -33,7 +33,7 @@ pub enum State {
 
 #[cfg(debug_assertions)]
 impl Cache {
-    pub fn set_case(&mut self, case: git_glob::pattern::Case) {
+    pub fn set_case(&mut self, case: gix_glob::pattern::Case) {
         self.case = case;
     }
     pub fn num_mkdir_calls(&self) -> usize {
@@ -72,7 +72,7 @@ impl Cache {
     pub fn new(
         worktree_root: impl Into<PathBuf>,
         state: State,
-        case: git_glob::pattern::Case,
+        case: gix_glob::pattern::Case,
         buf: Vec<u8>,
         attribute_files_in_index: Vec<PathOidMapping>,
     ) -> Self {
