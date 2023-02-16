@@ -228,6 +228,7 @@ impl<'event> File<'event> {
             .section_lookup_tree
             .get_mut(&section.header.name)
             .expect("lookup cache still has name to be deleted");
+        // NOTE: this leaves empty lists in the data structure which our code now has to deal with.
         for entry in lut {
             match section.header.subsection_name.as_deref() {
                 Some(subsection_name) => {

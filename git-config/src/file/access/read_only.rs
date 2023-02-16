@@ -134,9 +134,8 @@ impl<'event> File<'event> {
         name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
     ) -> Result<&file::Section<'event>, lookup::existing::Error> {
-        Ok(self
-            .section_filter(name, subsection_name, &mut |_| true)?
-            .expect("section present as we take all"))
+        self.section_filter(name, subsection_name, &mut |_| true)?
+            .ok_or(lookup::existing::Error::SectionMissing)
     }
 
     /// Returns the last found immutable section with a given `key`, identifying the name and subsection name like `core`

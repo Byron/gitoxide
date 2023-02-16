@@ -238,7 +238,7 @@ fn single_section() {
 }
 
 #[test]
-fn sections_by_name() {
+fn sections_by_name() -> crate::Result {
     let config = r#"
     [core]
         repositoryformatversion = 0
@@ -250,9 +250,45 @@ fn sections_by_name() {
         fetch = +refs/heads/*:refs/remotes/origin/*
     "#;
 
-    let config = File::try_from(config).unwrap();
+    let config = File::try_from(config)?;
     let value = config.string("remote", Some("origin".into()), "url").unwrap();
     assert_eq!(value, cow_str("git@github.com:Byron/gitoxide.git"));
+    Ok(())
+}
+
+#[test]
+fn unknown_section() -> crate::Result {
+    let config = File::default();
+    assert!(matches!(
+        config.section("missing", None).unwrap_err(),
+        git_config::lookup::existing::Error::SectionMissing
+    ));
+
+    let config = r#"
+    [present]
+        key = false
+    "#;
+    let mut config = File::try_from(config)?;
+    assert!(matches!(
+        config.section("present", Some("subsection".into())).unwrap_err(),
+        git_config::lookup::existing::Error::SubSectionMissing
+    ));
+
+    config.set_raw_value("present", Some("subsection".into()), "key", "value")?;
+    assert!(config.section("present", Some("subsection".into())).is_ok());
+
+    config.set_raw_value("new", Some("subsection".into()), "key", "value")?;
+    assert!(config.section("new", Some("subsection".into())).is_ok());
+
+    for id in config.sections_and_ids().map(|(_, id)| id).collect::<Vec<_>>() {
+        assert!(config.remove_section_by_id(id).is_some());
+    }
+    assert!(matches!(
+        config.section("present", None).unwrap_err(),
+        git_config::lookup::existing::Error::SectionMissing
+    ));
+
+    Ok(())
 }
 
 #[test]
