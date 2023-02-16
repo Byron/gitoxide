@@ -88,18 +88,19 @@ fn load_config(
     lossy: Option<bool>,
 ) -> Result<git_config::File<'static>, Error> {
     buf.clear();
+    let metadata = git_config::file::Metadata::from(source)
+        .at(&config_path)
+        .with(git_dir_trust);
     let mut file = match std::fs::File::open(&config_path) {
         Ok(f) => f,
-        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(git_config::File::default()),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(git_config::File::new(metadata)),
         Err(err) => return Err(err.into()),
     };
     std::io::copy(&mut file, buf)?;
 
     let config = git_config::File::from_bytes_owned(
         buf,
-        git_config::file::Metadata::from(source)
-            .at(config_path)
-            .with(git_dir_trust),
+        metadata,
         git_config::file::init::Options {
             includes: git_config::file::includes::Options::no_follow(),
             ..util::base_options(lossy)

@@ -123,7 +123,7 @@ impl PrepareFetch {
             })
             .receive(should_interrupt)?;
 
-        util::replace_changed_local_config_file(repo, config);
+        util::append_config_to_repo_config(repo, config);
         util::update_head(
             repo,
             &outcome.ref_map.remote_refs,

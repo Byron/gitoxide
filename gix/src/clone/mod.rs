@@ -2,6 +2,7 @@
 use std::convert::TryInto;
 
 use crate::bstr::BString;
+use crate::config::tree::gitoxide;
 
 type ConfigureRemoteFn =
     Box<dyn FnMut(crate::Remote<'_>) -> Result<crate::Remote<'_>, Box<dyn std::error::Error + Send + Sync>>>;
@@ -46,6 +47,11 @@ impl PrepareFetch {
     ///
     /// Note that this is merely a handle to perform the actual connection to the remote, and if any of it fails the freshly initialized repository
     /// will be removed automatically as soon as this instance drops.
+    ///
+    /// # Deviation
+    ///
+    /// Similar to `git`, a missing user name and email configuration is not terminal and we will fill it in with dummy values. However,
+    /// instead of deriving values from the system, ours are hardcoded to indicate what happened.
     #[allow(clippy::result_large_err)]
     pub fn new<Url, E>(
         url: Url,
@@ -64,7 +70,29 @@ impl PrepareFetch {
             source: err,
         })?;
         create_opts.destination_must_be_empty = true;
-        let repo = crate::ThreadSafeRepository::init_opts(path, kind, create_opts, open_opts)?.to_thread_local();
+        let mut repo = crate::ThreadSafeRepository::init_opts(path, kind, create_opts, open_opts)?.to_thread_local();
+        if repo.committer().is_none() {
+            let mut config = git_config::File::new(git_config::file::Metadata::api());
+            config
+                .set_raw_value(
+                    "gitoxide",
+                    Some("committer".into()),
+                    gitoxide::Committer::NAME_FALLBACK.name,
+                    "no name configured during clone",
+                )
+                .expect("works - statically known");
+            config
+                .set_raw_value(
+                    "gitoxide",
+                    Some("committer".into()),
+                    gitoxide::Committer::EMAIL_FALLBACK.name,
+                    "noEmailAvailable@example.com",
+                )
+                .expect("works - statically known");
+            let mut repo_config = repo.config_snapshot_mut();
+            repo_config.append(config);
+            repo_config.commit().expect("configuration is still valid");
+        }
         Ok(PrepareFetch {
             url,
             #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]

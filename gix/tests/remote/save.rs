@@ -107,7 +107,7 @@ mod save_as_to {
             let mut existing_section = config
                 .section_mut_or_create_new("remote", Some("origin".into()))
                 .expect("works");
-            existing_section.push("free".try_into().unwrap(), Some("should not be removed".into()))
+            existing_section.push("free".try_into().unwrap(), Some("should not be removed".into()));
         }
         remote.save_as_to(remote_name, &mut config)?;
         assert_eq!(

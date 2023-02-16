@@ -11,6 +11,11 @@ mod missing_config_file {
         );
         assert_eq!(repo.work_dir(), None);
         assert!(repo.worktree().is_none());
+        assert_eq!(
+            repo.config_snapshot().meta().source,
+            gix::config::Source::Local,
+            "config always refers to the local one for safety"
+        );
         Ok(())
     }
 
@@ -26,6 +31,11 @@ mod missing_config_file {
         assert!(
             !repo.is_bare(),
             "without config, we can't really know what the repo is actually but can guess as there is a worktree"
+        );
+        assert_eq!(
+            repo.config_snapshot().meta().source,
+            gix::config::Source::Local,
+            "config always refers to the local one for safety"
         );
         Ok(())
     }
@@ -214,6 +224,11 @@ mod with_overrides {
         opts.permissions.env.identity = Permission::Allow;
         opts.permissions.env.objects = Permission::Allow;
         let repo = named_subrepo_opts("make_config_repos.sh", "http-config", opts)?;
+        assert_eq!(
+            repo.config_snapshot().meta().source,
+            gix::config::Source::Local,
+            "config always refers to the local one for safety"
+        );
         let config = repo.config_snapshot();
         assert_eq!(
             config.strings_by_key("http.userAgent").expect("at least one value"),

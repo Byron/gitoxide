@@ -106,7 +106,7 @@ mod renames {
     use std::convert::Infallible;
 
     #[test]
-    #[ignore]
+    #[ignore = "needs a second round PR to finish it"]
     fn identity() -> crate::Result {
         let repo = named_repo("make_diff_repo.sh")?;
         let from = tree_named(&repo, "@^{/r1-identity}~1");

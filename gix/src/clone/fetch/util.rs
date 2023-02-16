@@ -1,3 +1,4 @@
+use std::io::Write;
 use std::{borrow::Cow, convert::TryInto};
 
 use git_odb::Find;
@@ -12,42 +13,51 @@ use crate::{
     Repository,
 };
 
+enum WriteMode {
+    Overwrite,
+    Append,
+}
+
 #[allow(clippy::result_large_err)]
 pub fn write_remote_to_local_config_file(
     remote: &mut crate::Remote<'_>,
     remote_name: BString,
 ) -> Result<git_config::File<'static>, Error> {
-    let mut metadata = git_config::file::Metadata::from(git_config::Source::Local);
-    let config_path = remote.repo.git_dir().join("config");
-    metadata.path = Some(config_path.clone());
-    let mut config =
-        git_config::File::from_paths_metadata(Some(metadata), Default::default())?.expect("one file to load");
+    let mut config = git_config::File::new(local_config_meta(remote.repo));
     remote.save_as_to(remote_name, &mut config)?;
-    std::fs::write(config_path, config.to_bstring())?;
+
+    write_to_local_config(&config, WriteMode::Append)?;
     Ok(config)
 }
 
-pub fn replace_changed_local_config_file(repo: &mut Repository, mut config: git_config::File<'static>) {
+fn local_config_meta(repo: &Repository) -> git_config::file::Metadata {
+    let meta = repo.config.resolved.meta().clone();
+    assert_eq!(
+        meta.source,
+        git_config::Source::Local,
+        "local path is the default for new sections"
+    );
+    meta
+}
+
+fn write_to_local_config(config: &git_config::File<'static>, mode: WriteMode) -> std::io::Result<()> {
+    assert_eq!(
+        config.meta().source,
+        git_config::Source::Local,
+        "made for appending to local configuration file"
+    );
+    let mut local_config = std::fs::OpenOptions::new()
+        .create(false)
+        .write(matches!(mode, WriteMode::Overwrite))
+        .append(matches!(mode, WriteMode::Append))
+        .open(config.meta().path.as_deref().expect("local config with path set"))?;
+    local_config.write_all(config.detect_newline_style())?;
+    config.write_to_filter(&mut local_config, |s| s.meta().source == git_config::Source::Local)
+}
+
+pub fn append_config_to_repo_config(repo: &mut Repository, config: git_config::File<'static>) {
     let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
-    let ids_to_remove: Vec<_> = repo_config
-        .sections_and_ids()
-        .filter_map(|(s, id)| {
-            matches!(s.meta().source, git_config::Source::Local | git_config::Source::Api).then(|| id)
-        })
-        .collect();
-    for id in ids_to_remove {
-        repo_config.remove_section_by_id(id);
-    }
-    crate::config::overrides::append(
-        &mut config,
-        &repo.options.api_config_overrides,
-        git_config::Source::Api,
-        |_| None,
-    )
-    .expect("applied once and can be applied again");
     repo_config.append(config);
-    repo.reread_values_and_clear_caches()
-        .expect("values could be read once and can be read again");
 }
 
 /// HEAD cannot be written by means of refspec by design, so we have to do it manually here. Also create the pointed-to ref
@@ -174,8 +184,8 @@ pub fn update_head(
     Ok(())
 }
 
-/// Setup the remote configuration for `branch` so that it points to itself, but on the remote, if an only if currently saved refspec
-/// is able to match it.
+/// Setup the remote configuration for `branch` so that it points to itself, but on the remote, if and only if currently
+/// saved refspecs are able to match it.
 /// For that we reload the remote of `remote_name` and use its ref_specs for match.
 fn setup_branch_config(
     repo: &mut Repository,
@@ -204,12 +214,7 @@ fn setup_branch_config(
         .into_iter(),
     );
     if !res.mappings.is_empty() {
-        let mut metadata = git_config::file::Metadata::from(git_config::Source::Local);
-        let config_path = remote.repo.git_dir().join("config");
-        metadata.path = Some(config_path.clone());
-        let mut config =
-            git_config::File::from_paths_metadata(Some(metadata), Default::default())?.expect("one file to load");
-
+        let mut config = repo.config_snapshot_mut();
         let mut section = config
             .new_section("branch", Some(Cow::Owned(short_name.into())))
             .expect("section header name is always valid per naming rules, our input branch name is valid");
@@ -218,8 +223,8 @@ fn setup_branch_config(
             "merge".try_into().expect("valid at compile time"),
             Some(branch.as_bstr()),
         );
-        std::fs::write(config_path, config.to_bstring())?;
-        replace_changed_local_config_file(repo, config);
+        write_to_local_config(&config, WriteMode::Overwrite)?;
+        config.commit().expect("configuration we set is valid");
     }
     Ok(())
 }

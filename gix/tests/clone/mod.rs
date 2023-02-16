@@ -23,8 +23,7 @@ mod blocking_io {
             gix::open::Options::isolated().config_overrides([
                 "init.defaultBranch=unused-as-overridden-by-remote",
                 "core.logAllRefUpdates",
-                "user.name=a",
-                "user.email=b",
+                // missing user and email is acceptable in this special case, i.e. `git` also doesn't mind filling it in.
             ]),
         )?
         .with_remote_name(remote_name)?
@@ -102,6 +101,17 @@ mod blocking_io {
             14,
             "all non-symbolic refs should be stored, if reachable from our refs"
         );
+        let sig = repo
+            .head()?
+            .log_iter()
+            .all()?
+            .expect("present")
+            .next()
+            .expect("one line")?
+            .signature
+            .to_owned();
+        assert_eq!(sig.name, "no name configured during clone");
+        assert_eq!(sig.email, "noEmailAvailable@example.com");
 
         match out.status {
             gix::remote::fetch::Status::Change { update_refs, .. } => {

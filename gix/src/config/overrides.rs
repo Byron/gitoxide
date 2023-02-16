@@ -42,7 +42,7 @@ pub(crate) fn append(
         match comment {
             Some(comment) => section.push_with_comment(key, value, &**comment),
             None => section.push(key, value),
-        }
+        };
     }
     config.append(file);
     Ok(())

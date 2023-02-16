@@ -77,10 +77,10 @@ impl Remote<'_> {
             .section_mut_or_create_new("remote", Some(name.as_ref()))
             .expect("section name is validated and 'remote' is acceptable");
         if let Some(url) = self.url.as_ref() {
-            section.push(as_key("url"), Some(url.to_bstring().as_ref()))
+            section.push(as_key("url"), Some(url.to_bstring().as_ref()));
         }
         if let Some(url) = self.push_url.as_ref() {
-            section.push(as_key("pushurl"), Some(url.to_bstring().as_ref()))
+            section.push(as_key("pushurl"), Some(url.to_bstring().as_ref()));
         }
         if self.fetch_tags != Default::default() {
             section.push(
@@ -91,7 +91,7 @@ impl Remote<'_> {
                     remote::fetch::Tags::Included => unreachable!("BUG: the default shouldn't be written and we try"),
                 })
                 .into(),
-            )
+            );
         }
         for (key, spec) in self
             .fetch_specs
@@ -99,7 +99,7 @@ impl Remote<'_> {
             .map(|spec| ("fetch", spec))
             .chain(self.push_specs.iter().map(|spec| ("push", spec)))
         {
-            section.push(as_key(key), Some(spec.to_ref().to_bstring().as_ref()))
+            section.push(as_key(key), Some(spec.to_ref().to_bstring().as_ref()));
         }
         Ok(())
     }

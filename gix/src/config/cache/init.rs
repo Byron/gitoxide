@@ -122,6 +122,7 @@ impl Cache {
             })?
             .unwrap_or_default();
 
+            let local_meta = git_dir_config.meta_owned();
             globals.append(git_dir_config);
             globals.resolve_includes(options)?;
             if use_env {
@@ -142,6 +143,7 @@ impl Cache {
                     })?;
             }
             apply_environment_overrides(&mut globals, *git_prefix, http_transport, identity, objects)?;
+            globals.set_meta(local_meta);
             globals
         };
 
@@ -241,17 +243,6 @@ impl Cache {
 }
 
 impl crate::Repository {
-    /// Causes our configuration to re-read cached values which will also be applied to the repository in-memory state if applicable.
-    ///
-    /// Similar to `reread_values_and_clear_caches_replacing_config()`, but works on the existing instance instead of a passed
-    /// in one that it them makes the default.
-    #[cfg(feature = "blocking-network-client")]
-    pub(crate) fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
-        self.config.reread_values_and_clear_caches()?;
-        self.apply_changed_values();
-        Ok(())
-    }
-
     /// Replace our own configuration with `config` and re-read all cached values, and apply them to select in-memory instances.
     pub(crate) fn reread_values_and_clear_caches_replacing_config(
         &mut self,
