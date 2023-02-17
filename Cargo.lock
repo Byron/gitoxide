@@ -1203,14 +1203,14 @@ dependencies = [
 
 [[package]]
 name = "git-actor"
-version = "0.17.1"
+version = "0.17.2"
 dependencies = [
  "bstr",
  "btoi",
  "document-features",
- "git-date 0.4.2",
- "git-features 0.26.4",
- "git-hash 0.10.2",
+ "git-date 0.4.3",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
  "git-testtools",
  "itoa",
  "nom",
@@ -1237,15 +1237,15 @@ dependencies = [
 
 [[package]]
 name = "git-attributes"
-version = "0.8.2"
+version = "0.8.3"
 dependencies = [
  "bstr",
  "compact_str",
  "document-features",
- "git-features 0.26.4",
- "git-glob 0.5.3",
- "git-path 0.7.1",
- "git-quote 0.4.1",
+ "git-features 0.26.5",
+ "git-glob 0.5.4",
+ "git-path 0.7.2",
+ "git-quote 0.4.2",
  "git-testtools",
  "serde",
  "thiserror",
@@ -1263,7 +1263,7 @@ dependencies = [
 
 [[package]]
 name = "git-bitmap"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "git-testtools",
  "quick-error 2.0.1",
@@ -1271,14 +1271,14 @@ dependencies = [
 
 [[package]]
 name = "git-chunk"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "thiserror",
 ]
 
 [[package]]
 name = "git-command"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "bstr",
  "git-testtools",
@@ -1286,13 +1286,13 @@ dependencies = [
 
 [[package]]
 name = "git-commitgraph"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "bstr",
  "document-features",
  "git-chunk",
- "git-features 0.26.4",
- "git-hash 0.10.2",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
  "git-testtools",
  "memmap2",
  "serde",
@@ -1301,17 +1301,17 @@ dependencies = [
 
 [[package]]
 name = "git-config"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "bstr",
  "criterion",
  "document-features",
  "git-config-value",
- "git-features 0.26.4",
- "git-glob 0.5.3",
- "git-path 0.7.1",
- "git-ref 0.24.0",
- "git-sec 0.6.2",
+ "git-features 0.26.5",
+ "git-glob 0.5.4",
+ "git-path 0.7.2",
+ "git-ref 0.24.1",
+ "git-sec 0.6.3",
  "memchr",
  "nom",
  "once_cell",
@@ -1328,9 +1328,9 @@ dependencies = [
  "bstr",
  "criterion",
  "git-config",
- "git-path 0.7.1",
- "git-ref 0.24.0",
- "git-sec 0.6.2",
+ "git-path 0.7.2",
+ "git-ref 0.24.1",
+ "git-sec 0.6.3",
  "git-testtools",
  "gix",
  "serde_derive",
@@ -1340,12 +1340,12 @@ dependencies = [
 
 [[package]]
 name = "git-config-value"
-version = "0.10.1"
+version = "0.10.2"
 dependencies = [
  "bitflags",
  "bstr",
  "document-features",
- "git-path 0.7.1",
+ "git-path 0.7.2",
  "libc",
  "serde",
  "thiserror",
@@ -1364,15 +1364,15 @@ dependencies = [
 
 [[package]]
 name = "git-credentials"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "bstr",
  "document-features",
  "git-command",
  "git-config-value",
- "git-path 0.7.1",
+ "git-path 0.7.2",
  "git-prompt",
- "git-sec 0.6.2",
+ "git-sec 0.6.3",
  "git-testtools",
  "git-url",
  "serde",
@@ -1393,11 +1393,11 @@ dependencies = [
 
 [[package]]
 name = "git-date"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "bstr",
  "document-features",
- "git-hash 0.10.2",
+ "git-hash 0.10.3",
  "git-testtools",
  "itoa",
  "once_cell",
@@ -1408,11 +1408,11 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.26.1"
+version = "0.26.2"
 dependencies = [
  "getrandom",
- "git-hash 0.10.2",
- "git-object 0.26.1",
+ "git-hash 0.10.3",
+ "git-object 0.26.2",
  "imara-diff",
  "serde",
  "thiserror",
@@ -1423,11 +1423,11 @@ name = "git-diff-tests"
 version = "0.0.0"
 dependencies = [
  "git-diff",
- "git-hash 0.10.2",
- "git-object 0.26.1",
+ "git-hash 0.10.3",
+ "git-object 0.26.2",
  "git-odb",
  "git-testtools",
- "git-traverse 0.22.1",
+ "git-traverse 0.22.2",
 ]
 
 [[package]]
@@ -1446,15 +1446,15 @@ dependencies = [
 
 [[package]]
 name = "git-discover"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "bstr",
  "defer",
  "dunce",
- "git-hash 0.10.2",
- "git-path 0.7.1",
- "git-ref 0.24.0",
- "git-sec 0.6.2",
+ "git-hash 0.10.3",
+ "git-path 0.7.2",
+ "git-ref 0.24.1",
+ "git-sec 0.6.3",
  "git-testtools",
  "is_ci",
  "serial_test",
@@ -1477,7 +1477,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.26.4"
+version = "0.26.5"
 dependencies = [
  "bstr",
  "bytes",
@@ -1486,7 +1486,7 @@ dependencies = [
  "crossbeam-utils",
  "document-features",
  "flate2",
- "git-hash 0.10.2",
+ "git-hash 0.10.3",
  "jwalk",
  "libc",
  "num_cpus",
@@ -1501,11 +1501,11 @@ dependencies = [
 
 [[package]]
 name = "git-fetchhead"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "git-filter"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "git-glob"
@@ -1519,7 +1519,7 @@ dependencies = [
 
 [[package]]
 name = "git-glob"
-version = "0.5.3"
+version = "0.5.4"
 dependencies = [
  "bitflags",
  "bstr",
@@ -1540,7 +1540,7 @@ dependencies = [
 
 [[package]]
 name = "git-hash"
-version = "0.10.2"
+version = "0.10.3"
 dependencies = [
  "document-features",
  "git-testtools",
@@ -1561,9 +1561,9 @@ dependencies = [
 
 [[package]]
 name = "git-hashtable"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
- "git-hash 0.10.2",
+ "git-hash 0.10.3",
  "hashbrown 0.13.2",
 ]
 
@@ -1591,19 +1591,19 @@ dependencies = [
 
 [[package]]
 name = "git-index"
-version = "0.12.3"
+version = "0.12.4"
 dependencies = [
  "atoi",
  "bitflags",
  "bstr",
  "document-features",
  "filetime",
- "git-bitmap 0.2.1",
- "git-features 0.26.4",
- "git-hash 0.10.2",
- "git-lock 3.0.2",
- "git-object 0.26.1",
- "git-traverse 0.22.1",
+ "git-bitmap 0.2.2",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
+ "git-lock 3.0.3",
+ "git-object 0.26.2",
+ "git-traverse 0.22.2",
  "itoa",
  "memmap2",
  "serde",
@@ -1617,16 +1617,16 @@ version = "0.0.0"
 dependencies = [
  "bstr",
  "filetime",
- "git-features 0.26.4",
- "git-hash 0.10.2",
- "git-index 0.12.3",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
+ "git-index 0.12.4",
  "git-testtools",
  "gix",
 ]
 
 [[package]]
 name = "git-lfs"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "git-lock"
@@ -1641,21 +1641,21 @@ dependencies = [
 
 [[package]]
 name = "git-lock"
-version = "3.0.2"
+version = "3.0.3"
 dependencies = [
  "fastrand",
- "git-tempfile 3.0.2",
+ "git-tempfile 3.0.3",
  "quick-error 2.0.1",
  "tempfile",
 ]
 
 [[package]]
 name = "git-mailmap"
-version = "0.9.2"
+version = "0.9.3"
 dependencies = [
  "bstr",
  "document-features",
- "git-actor 0.17.1",
+ "git-actor 0.17.2",
  "git-testtools",
  "quick-error 2.0.1",
  "serde",
@@ -1663,7 +1663,7 @@ dependencies = [
 
 [[package]]
 name = "git-note"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "git-object"
@@ -1686,16 +1686,16 @@ dependencies = [
 
 [[package]]
 name = "git-object"
-version = "0.26.1"
+version = "0.26.2"
 dependencies = [
  "bstr",
  "btoi",
  "document-features",
- "git-actor 0.17.1",
- "git-features 0.26.4",
- "git-hash 0.10.2",
+ "git-actor 0.17.2",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
  "git-testtools",
- "git-validate 0.7.2",
+ "git-validate 0.7.3",
  "hex",
  "itoa",
  "nom",
@@ -1707,19 +1707,19 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.40.2"
+version = "0.41.0"
 dependencies = [
  "arc-swap",
  "crossbeam-channel",
  "document-features",
  "filetime",
- "git-actor 0.17.1",
- "git-features 0.26.4",
- "git-hash 0.10.2",
- "git-object 0.26.1",
+ "git-actor 0.17.2",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
+ "git-object 0.26.2",
  "git-pack",
- "git-path 0.7.1",
- "git-quote 0.4.1",
+ "git-path 0.7.2",
+ "git-quote 0.4.2",
  "git-testtools",
  "maplit",
  "num_cpus",
@@ -1732,7 +1732,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.30.2"
+version = "0.31.0"
 dependencies = [
  "bytesize",
  "clru",
@@ -1740,14 +1740,14 @@ dependencies = [
  "document-features",
  "git-chunk",
  "git-diff",
- "git-features 0.26.4",
- "git-hash 0.10.2",
- "git-hashtable 0.1.1",
- "git-object 0.26.1",
- "git-path 0.7.1",
- "git-tempfile 3.0.2",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
+ "git-hashtable 0.1.2",
+ "git-object 0.26.2",
+ "git-path 0.7.2",
+ "git-tempfile 3.0.3",
  "git-testtools",
- "git-traverse 0.22.1",
+ "git-traverse 0.22.2",
  "memmap2",
  "parking_lot 0.12.1",
  "serde",
@@ -1761,13 +1761,13 @@ name = "git-pack-tests"
 version = "0.30.1"
 dependencies = [
  "bstr",
- "git-features 0.26.4",
- "git-hash 0.10.2",
- "git-object 0.26.1",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
+ "git-object 0.26.2",
  "git-odb",
  "git-pack",
  "git-testtools",
- "git-traverse 0.22.1",
+ "git-traverse 0.22.2",
  "maplit",
  "memmap2",
  "tempfile",
@@ -1775,14 +1775,14 @@ dependencies = [
 
 [[package]]
 name = "git-packetline"
-version = "0.14.2"
+version = "0.14.3"
 dependencies = [
  "async-std",
  "bstr",
  "document-features",
  "futures-io",
  "futures-lite",
- "git-hash 0.10.2",
+ "git-hash 0.10.3",
  "git-odb",
  "hex",
  "maybe-async",
@@ -1803,7 +1803,7 @@ dependencies = [
 
 [[package]]
 name = "git-path"
-version = "0.7.1"
+version = "0.7.2"
 dependencies = [
  "bstr",
  "tempfile",
@@ -1816,8 +1816,8 @@ version = "0.1.0"
 dependencies = [
  "bitflags",
  "bstr",
- "git-attributes 0.8.2",
- "git-glob 0.5.3",
+ "git-attributes 0.8.3",
+ "git-glob 0.5.4",
  "git-testtools",
  "once_cell",
  "thiserror",
@@ -1825,7 +1825,7 @@ dependencies = [
 
 [[package]]
 name = "git-prompt"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "expectrl",
  "git-command",
@@ -1839,7 +1839,7 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.26.3"
+version = "0.26.4"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1849,8 +1849,8 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "git-credentials",
- "git-features 0.26.4",
- "git-hash 0.10.2",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
  "git-packetline",
  "git-testtools",
  "git-transport",
@@ -1873,7 +1873,7 @@ dependencies = [
 
 [[package]]
 name = "git-quote"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "bstr",
  "btoi",
@@ -1882,7 +1882,7 @@ dependencies = [
 
 [[package]]
 name = "git-rebase"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "git-ref"
@@ -1905,18 +1905,18 @@ dependencies = [
 
 [[package]]
 name = "git-ref"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "document-features",
- "git-actor 0.17.1",
- "git-features 0.26.4",
- "git-hash 0.10.2",
- "git-lock 3.0.2",
- "git-object 0.26.1",
- "git-path 0.7.1",
- "git-tempfile 3.0.2",
+ "git-actor 0.17.2",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
+ "git-lock 3.0.3",
+ "git-object 0.26.2",
+ "git-path 0.7.2",
+ "git-tempfile 3.0.3",
  "git-testtools",
- "git-validate 0.7.2",
+ "git-validate 0.7.3",
  "memmap2",
  "nom",
  "serde",
@@ -1928,43 +1928,43 @@ dependencies = [
 name = "git-ref-tests"
 version = "0.0.0"
 dependencies = [
- "git-actor 0.17.1",
- "git-discover 0.13.0",
- "git-features 0.26.4",
- "git-hash 0.10.2",
- "git-lock 3.0.2",
- "git-object 0.26.1",
+ "git-actor 0.17.2",
+ "git-discover 0.13.1",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
+ "git-lock 3.0.3",
+ "git-object 0.26.2",
  "git-odb",
- "git-ref 0.24.0",
+ "git-ref 0.24.1",
  "git-testtools",
- "git-validate 0.7.2",
- "git-worktree 0.12.2",
+ "git-validate 0.7.3",
+ "git-worktree 0.12.3",
  "tempfile",
 ]
 
 [[package]]
 name = "git-refspec"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "bstr",
- "git-hash 0.10.2",
+ "git-hash 0.10.3",
  "git-revision",
  "git-testtools",
- "git-validate 0.7.2",
+ "git-validate 0.7.3",
  "smallvec",
  "thiserror",
 ]
 
 [[package]]
 name = "git-revision"
-version = "0.10.3"
+version = "0.10.4"
 dependencies = [
  "bstr",
  "document-features",
- "git-date 0.4.2",
- "git-hash 0.10.2",
- "git-hashtable 0.1.1",
- "git-object 0.26.1",
+ "git-date 0.4.3",
+ "git-hash 0.10.3",
+ "git-hashtable 0.1.2",
+ "git-object 0.26.2",
  "serde",
  "thiserror",
 ]
@@ -1974,8 +1974,8 @@ name = "git-revision-tests"
 version = "0.0.0"
 dependencies = [
  "bstr",
- "git-hash 0.10.2",
- "git-object 0.26.1",
+ "git-hash 0.10.3",
+ "git-object 0.26.2",
  "git-revision",
  "git-testtools",
  "gix",
@@ -1996,12 +1996,12 @@ dependencies = [
 
 [[package]]
 name = "git-sec"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "bitflags",
  "dirs",
  "document-features",
- "git-path 0.7.1",
+ "git-path 0.7.2",
  "libc",
  "serde",
  "tempfile",
@@ -2010,11 +2010,11 @@ dependencies = [
 
 [[package]]
 name = "git-sequencer"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "git-submodule"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "git-tempfile"
@@ -2032,7 +2032,7 @@ dependencies = [
 
 [[package]]
 name = "git-tempfile"
-version = "3.0.2"
+version = "3.0.3"
 dependencies = [
  "dashmap",
  "libc",
@@ -2066,11 +2066,11 @@ dependencies = [
 
 [[package]]
 name = "git-tix"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "git-transport"
-version = "0.25.4"
+version = "0.25.5"
 dependencies = [
  "async-std",
  "async-trait",
@@ -2083,12 +2083,12 @@ dependencies = [
  "futures-lite",
  "git-command",
  "git-credentials",
- "git-features 0.26.4",
- "git-hash 0.10.2",
+ "git-features 0.26.5",
+ "git-hash 0.10.3",
  "git-pack",
  "git-packetline",
- "git-quote 0.4.1",
- "git-sec 0.6.2",
+ "git-quote 0.4.2",
+ "git-sec 0.6.3",
  "git-url",
  "maybe-async",
  "pin-project-lite",
@@ -2111,11 +2111,11 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.22.1"
+version = "0.22.2"
 dependencies = [
- "git-hash 0.10.2",
- "git-hashtable 0.1.1",
- "git-object 0.26.1",
+ "git-hash 0.10.3",
+ "git-hashtable 0.1.2",
+ "git-object 0.26.2",
  "thiserror",
 ]
 
@@ -2123,25 +2123,25 @@ dependencies = [
 name = "git-traverse-tests"
 version = "0.0.0"
 dependencies = [
- "git-hash 0.10.2",
- "git-object 0.26.1",
+ "git-hash 0.10.3",
+ "git-object 0.26.2",
  "git-odb",
  "git-testtools",
- "git-traverse 0.22.1",
+ "git-traverse 0.22.2",
 ]
 
 [[package]]
 name = "git-tui"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "git-url"
-version = "0.13.2"
+version = "0.13.3"
 dependencies = [
  "bstr",
  "document-features",
- "git-features 0.26.4",
- "git-path 0.7.1",
+ "git-features 0.26.5",
+ "git-path 0.7.2",
  "home",
  "serde",
  "thiserror",
@@ -2160,7 +2160,7 @@ dependencies = [
 
 [[package]]
 name = "git-validate"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "bstr",
  "git-testtools",
@@ -2187,18 +2187,18 @@ dependencies = [
 
 [[package]]
 name = "git-worktree"
-version = "0.12.2"
+version = "0.12.3"
 dependencies = [
  "bstr",
  "document-features",
- "git-attributes 0.8.2",
- "git-features 0.26.4",
- "git-glob 0.5.3",
- "git-hash 0.10.2",
- "git-index 0.12.3",
- "git-object 0.26.1",
+ "git-attributes 0.8.3",
+ "git-features 0.26.5",
+ "git-glob 0.5.4",
+ "git-hash 0.10.3",
+ "git-index 0.12.4",
+ "git-object 0.26.2",
  "git-odb",
- "git-path 0.7.1",
+ "git-path 0.7.2",
  "git-testtools",
  "io-close",
  "serde",
@@ -2233,7 +2233,7 @@ dependencies = [
  "document-features",
  "env_logger",
  "futures-lite",
- "git-features 0.26.4",
+ "git-features 0.26.5",
  "gitoxide-core",
  "gix",
  "is-terminal",
@@ -2274,42 +2274,42 @@ dependencies = [
 
 [[package]]
 name = "gix"
-version = "0.35.0"
+version = "0.36.0"
 dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "git-actor 0.17.1",
- "git-attributes 0.8.2",
+ "git-actor 0.17.2",
+ "git-attributes 0.8.3",
  "git-config",
  "git-credentials",
- "git-date 0.4.2",
+ "git-date 0.4.3",
  "git-diff",
- "git-discover 0.13.0",
- "git-features 0.26.4",
- "git-glob 0.5.3",
- "git-hash 0.10.2",
- "git-hashtable 0.1.1",
- "git-index 0.12.3",
- "git-lock 3.0.2",
+ "git-discover 0.13.1",
+ "git-features 0.26.5",
+ "git-glob 0.5.4",
+ "git-hash 0.10.3",
+ "git-hashtable 0.1.2",
+ "git-index 0.12.4",
+ "git-lock 3.0.3",
  "git-mailmap",
- "git-object 0.26.1",
+ "git-object 0.26.2",
  "git-odb",
  "git-pack",
- "git-path 0.7.1",
+ "git-path 0.7.2",
  "git-prompt",
  "git-protocol",
- "git-ref 0.24.0",
+ "git-ref 0.24.1",
  "git-refspec",
  "git-revision",
- "git-sec 0.6.2",
- "git-tempfile 3.0.2",
+ "git-sec 0.6.3",
+ "git-tempfile 3.0.3",
  "git-testtools",
  "git-transport",
- "git-traverse 0.22.1",
+ "git-traverse 0.22.2",
  "git-url",
- "git-validate 0.7.2",
- "git-worktree 0.12.2",
+ "git-validate 0.7.3",
+ "git-worktree 0.12.3",
  "is_ci",
  "log",
  "once_cell",

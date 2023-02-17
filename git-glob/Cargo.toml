@@ -1,6 +1,6 @@
 [package]
 name = "git-glob"
-version = "0.5.3"
+version = "0.5.4"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"

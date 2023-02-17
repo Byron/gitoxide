@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.16.2 (2023-02-17)
+
+### New Features
+
+ - <csr-id-4b424ab73d20833deb0c674eeeeaaa8cc2358932/> add `File::write_to_filter()` to have a filter select the section to write.
+   This way, one can selectively write sections to a file, based on the section's origin
+   or other meta-data.
+   
+   For convenience sake, most mutating methods on `SectionMut` can now be chained as well.
+ - <csr-id-3fa86e1d01a75688cd8948a39ba415bcebfef02d/> add `File::set_meta()` to affect what metadata new sections receive.
+   That way it's possible to better control the metadata associated with new sections,
+   given that the config file metadata may not truly reflect its identity anymore since it
+   can be a combination from many different files with various sources.
+
+### Bug Fixes
+
+ - <csr-id-e14dc7d475373d2c266e84ff8f1826c68a34ab92/> note that crates have been renamed from `git-*` to `gix-*`.
+   This also means that the `git-*` prefixed crates of the `gitoxide` project
+   are effectively unmaintained.
+   Use the crates with the `gix-*` prefix instead.
+   
+   If you were using `git-repository`, then `gix` is its substitute.
+ - <csr-id-8836f5ada0078febf8aeb0e6b59d0fc4c588bc28/> `File::section(...)` could panic due to invlid expectation.
+   This has been fixed to prevent panics.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 3 calendar days.
+ - 4 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#737](https://github.com/Byron/gitoxide/issues/737)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#737](https://github.com/Byron/gitoxide/issues/737)**
+    - add `File::write_to_filter()` to have a filter select the section to write. ([`4b424ab`](https://github.com/Byron/gitoxide/commit/4b424ab73d20833deb0c674eeeeaaa8cc2358932))
+    - add `File::set_meta()` to affect what metadata new sections receive. ([`3fa86e1`](https://github.com/Byron/gitoxide/commit/3fa86e1d01a75688cd8948a39ba415bcebfef02d))
+    - `File::section(...)` could panic due to invlid expectation. ([`8836f5a`](https://github.com/Byron/gitoxide/commit/8836f5ada0078febf8aeb0e6b59d0fc4c588bc28))
+ * **Uncategorized**
+    - note that crates have been renamed from `git-*` to `gix-*`. ([`e14dc7d`](https://github.com/Byron/gitoxide/commit/e14dc7d475373d2c266e84ff8f1826c68a34ab92))
+    - Release git-features v0.26.4 ([`109f434`](https://github.com/Byron/gitoxide/commit/109f434e66559a791d541f86876ded8df10766f1))
+    - Release git-features v0.26.3 ([`1ecfb7f`](https://github.com/Byron/gitoxide/commit/1ecfb7f8bfb24432690d8f31367488f2e59a642a))
+</details>
+
 ## 0.16.1 (2023-02-13)
 
 A maintenance release without user-facing changes.
@@ -13,7 +63,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 1 calendar day.
+ - 4 commits contributed to the release over the course of 1 calendar day.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +75,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-config v0.16.1, git-revision v0.10.3, gix v0.35.0 ([`74390ba`](https://github.com/Byron/gitoxide/commit/74390baf9d177a1abe3c7c35f1d9bc67faba1e97))
     - prepare changelogs prior to release ([`446f866`](https://github.com/Byron/gitoxide/commit/446f866d146e255ab8302b89f87bf28f2c5f3733))
     - Merge branch 'rename-crates' ([`6461c3d`](https://github.com/Byron/gitoxide/commit/6461c3da4d6daee857606d94294c3f87fc36965a))
     - rename `git-repository` to `gix` ([`7bed2a9`](https://github.com/Byron/gitoxide/commit/7bed2a96604397fa990f427b1a970ddeb6f09f1c))

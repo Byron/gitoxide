@@ -1,6 +1,6 @@
 [package]
 name = "git-lock"
-version = "3.0.2"
+version = "3.0.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
