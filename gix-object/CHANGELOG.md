@@ -18,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.26.1 (2023-02-17)
 
+<csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
+<csr-id-598698b88c194bc0e6ef69539f9fa7246ebfab70/>
+<csr-id-9c8a36f35b1e8dad66befb102e5a8670b4a6c2b2/>
+<csr-id-5d57c1f7e3b9a84f7b46a4378015572155f3104b/>
+<csr-id-3b9d66c932075feb08cdf2967f7698daef9fd3ff/>
+<csr-id-ec3be19c8d007565b814b4757f17811ec0e9de2c/>
+<csr-id-899c57927ce4ba2e1b5d8182f9e731c2a9094cba/>
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+<csr-id-322b2901382192d3b4ac0fbae32381a9abb49fa9/>
+
 ### Refactor (BREAKING)
 
  - <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/> move git_pack::data::Object to git_object::Data, massively alter git_odb::Find trait
@@ -115,7 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 571 commits contributed to the release over the course of 977 calendar days.
+ - 572 commits contributed to the release over the course of 977 calendar days.
  - 30 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 20 unique issues were worked on: [#198](https://github.com/Byron/gitoxide/issues/198), [#222](https://github.com/Byron/gitoxide/issues/222), [#250](https://github.com/Byron/gitoxide/issues/250), [#254](https://github.com/Byron/gitoxide/issues/254), [#259](https://github.com/Byron/gitoxide/issues/259), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#293](https://github.com/Byron/gitoxide/issues/293), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#364](https://github.com/Byron/gitoxide/issues/364), [#389](https://github.com/Byron/gitoxide/issues/389), [#427](https://github.com/Byron/gitoxide/issues/427), [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#63](https://github.com/Byron/gitoxide/issues/63), [#67](https://github.com/Byron/gitoxide/issues/67), [#691](https://github.com/Byron/gitoxide/issues/691), [#79](https://github.com/Byron/gitoxide/issues/79), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
 
@@ -231,6 +241,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
     - prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
  * **Uncategorized**
+    - Release gix-date v0.4.2, gix-hash v0.10.2, gix-features v0.26.4, gix-actor v0.17.1, gix-glob v0.5.3, gix-path v0.7.1, gix-quote v0.4.1, gix-attributes v0.8.2, gix-config-value v0.10.1, gix-tempfile v3.0.2, gix-lock v3.0.2, gix-validate v0.7.2, gix-object v0.26.1, gix-ref v0.24.0, gix-sec v0.6.2, gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`6ccc88a`](https://github.com/Byron/gitoxide/commit/6ccc88a8e4a56973b1a358cf72dc012ee3c75d56))
     - Merge branch 'rename-crates' into inform-about-gix-rename ([`c9275b9`](https://github.com/Byron/gitoxide/commit/c9275b99ea43949306d93775d9d78c98fb86cfb1))
     - rename `git-testtools` to `gix-testtools` ([`b65c33d`](https://github.com/Byron/gitoxide/commit/b65c33d256cfed65d11adeff41132e3e58754089))
     - fix git-object tests ([`fb92865`](https://github.com/Byron/gitoxide/commit/fb92865fec8c76b710c432b9e2e08ff8e9538fcd))

@@ -32,6 +32,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.16.1 (2023-02-17)
 
+<csr-id-69ec5940d3f37eb4dace8f1ed7616b5988984d15/>
+<csr-id-9cd99337333f5ef4b30e0ec9461fc087699576e6/>
+<csr-id-0076dcf9b37f1d633bdad5573b40d34a9fbaba90/>
+<csr-id-a8604a237782f8d60a185d4730db57bad81424a6/>
+<csr-id-55c00d880535a1f8c37cb7d4405d39ff5a7654a0/>
+<csr-id-32d5b3c695d868ba93755123a25b276bfbe55e0a/>
+<csr-id-949622e461eb2116393ec6f4633ec0cb2e1695b5/>
+<csr-id-bcacfc9bcf19a0339541b24e84de68d95291c62b/>
+<csr-id-41f118d2aa560188fd3399d2390aa43794b0af75/>
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+
 A maintenance release without user-facing changes.
 
 ### Other (BREAKING)
@@ -276,7 +287,7 @@ A maintenance release without user-facing changes.
    to be unfulfilled even though it might have looked OK to most users.
    
    Now it will uphold the invariant for empty values, those without an
-    `=` character.
+   `=` character.
  - <csr-id-9c1e639979a9615fd8334ce0e3a809df137776f6/> greatly improve whitespace handling when removing values.
    Previously, newlines would remain past a value, and whitespace could
    remain before one.
@@ -319,6 +330,8 @@ A maintenance release without user-facing changes.
  - <csr-id-469406dc0d9fece4a06230ef0d8018846202f0ad/> fix usage example in README.md
 
 ### New Features
+
+<csr-id-61af06b905926849abce19677ff4b9ac05d625a3/>
 
  - <csr-id-4b424ab73d20833deb0c674eeeeaaa8cc2358932/> add `File::write_to_filter()` to have a filter select the section to write.
    This way, one can selectively write sections to a file, based on the section's origin
@@ -433,12 +446,11 @@ A maintenance release without user-facing changes.
    rules.
  - <csr-id-e822f566dcff3f6c784c206dff2fbc5f82d543be/> implement a draft for subsection fetching
    - introduce method `sections_by_name_with_header` to allow iterating over tuples of
-     section header and section body
-   - remove the integration test in favor of a doctest
-   - doctest is also a comprehensive usage example
-   - leave a todo note to illustrate the inconsitent order issue, so sections
+   section header and section body
+- remove the integration test in favor of a doctest
+- doctest is also a comprehensive usage example
+- leave a todo note to illustrate the inconsitent order issue, so sections
      do not always arrive in the same order
- - <csr-id-61af06b905926849abce19677ff4b9ac05d625a3/> compatibility with Rust <1.53
 
 ### Documentation
 
@@ -458,7 +470,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 948 commits contributed to the release over the course of 865 calendar days.
+ - 949 commits contributed to the release over the course of 865 calendar days.
  - 149 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 18 unique issues were worked on: [#198](https://github.com/Byron/gitoxide/issues/198), [#213](https://github.com/Byron/gitoxide/issues/213), [#241](https://github.com/Byron/gitoxide/issues/241), [#254](https://github.com/Byron/gitoxide/issues/254), [#266](https://github.com/Byron/gitoxide/issues/266), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#319](https://github.com/Byron/gitoxide/issues/319), [#331](https://github.com/Byron/gitoxide/issues/331), [#386](https://github.com/Byron/gitoxide/issues/386), [#404](https://github.com/Byron/gitoxide/issues/404), [#436](https://github.com/Byron/gitoxide/issues/436), [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#482](https://github.com/Byron/gitoxide/issues/482), [#691](https://github.com/Byron/gitoxide/issues/691), [#737](https://github.com/Byron/gitoxide/issues/737), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
 
@@ -827,6 +839,7 @@ A maintenance release without user-facing changes.
  * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
     - prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
  * **Uncategorized**
+    - Release gix-date v0.4.2, gix-hash v0.10.2, gix-features v0.26.4, gix-actor v0.17.1, gix-glob v0.5.3, gix-path v0.7.1, gix-quote v0.4.1, gix-attributes v0.8.2, gix-config-value v0.10.1, gix-tempfile v3.0.2, gix-lock v3.0.2, gix-validate v0.7.2, gix-object v0.26.1, gix-ref v0.24.0, gix-sec v0.6.2, gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`6ccc88a`](https://github.com/Byron/gitoxide/commit/6ccc88a8e4a56973b1a358cf72dc012ee3c75d56))
     - Merge branch 'rename-crates' into inform-about-gix-rename ([`c9275b9`](https://github.com/Byron/gitoxide/commit/c9275b99ea43949306d93775d9d78c98fb86cfb1))
     - rename `git-testtools` to `gix-testtools` ([`b65c33d`](https://github.com/Byron/gitoxide/commit/b65c33d256cfed65d11adeff41132e3e58754089))
     - adjust to renaming of `git-pack` to `gix-pack` ([`1ee81ad`](https://github.com/Byron/gitoxide/commit/1ee81ad310285ee4aa118118a2be3810dbace574))
@@ -1437,6 +1450,9 @@ A maintenance release without user-facing changes.
     - stub for git-config crate ([`3539531`](https://github.com/Byron/gitoxide/commit/3539531adb06e8f59609f0a83e8ed94d0864c0a1))
 </details>
 
+<csr-unknown>
+ compatibility with Rust <1.53<csr-unknown/>
+
 ## 0.16.0 (2023-02-09)
 
 ### Documentation
@@ -2027,7 +2043,8 @@ This is a maintenance release without functional changes.
  - _None._
 
 <csr-unknown>
-lenfrom_envopen<csr-unknown/>
+lenfrom_envopenlenfrom_envopen<csr-unknown/>
+<csr-unknown/>
 
 ## v0.1.1 (2021-05-09)
 

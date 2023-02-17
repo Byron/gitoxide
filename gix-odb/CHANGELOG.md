@@ -18,6 +18,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.40.2 (2023-02-17)
 
+<csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/>
+<csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
+<csr-id-598698b88c194bc0e6ef69539f9fa7246ebfab70/>
+<csr-id-46636e64c9a48ec0e85e014ac0cc8b48846d8462/>
+<csr-id-e0b8636f96e4bfe1bc72b5aa6ad4c4c8538ff92c/>
+<csr-id-5d57c1f7e3b9a84f7b46a4378015572155f3104b/>
+<csr-id-47ca6ab2ff0cbf8801d0a82cebbbeb8c4f62cdae/>
+<csr-id-2d6960f886c1165f0bdb6f2d653388e1e0b57a2d/>
+<csr-id-424c9b3a2b467f5a1e339700257cd4ab72e2e692/>
+<csr-id-b1c82a7959fba1541642fc8dfae46b27848f2ba3/>
+<csr-id-9235106986e14551a28693bfe4ea92f046c65406/>
+<csr-id-747a13e9a1fe5200c53055dd961507c9fef667e1/>
+<csr-id-4c77e4c97641ab3b02b56aaa702a7d2ca5bced7c/>
+<csr-id-d53c4b0f91f1b29769c9430f2d1c0bcab1170c75/>
+<csr-id-b317200b72096573d511d229c6e61e74e7ba14db/>
+<csr-id-eaae9c1bc723209d793eb93f5587fa2604d5cd92/>
+<csr-id-13159eb972ed78ce4ebee2313b288023cec91c47/>
+<csr-id-0092c256b3bfaf2818566540e660cdefcf68d246/>
+<csr-id-9945eba749afb020e0deaaa5bb01fda6ff9ccd84/>
+<csr-id-cfd8a25f9125c48afe4b66eab6b6ecf71097c486/>
+<csr-id-1525f36d29574699d2fcb16b70678121030fd109/>
+<csr-id-4ff21686c32a6edc84ea041c3040f33ae24f9519/>
+<csr-id-91c8fc1f0c50af55d7cb233bbe813c6d12fe11bc/>
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+<csr-id-c800fdd331e6d7a0b8d756ba822915259f26e9e8/>
+
 ### Refactor (BREAKING)
 
  - <csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/> remove pack-cache from `Find::try_find(…)`
@@ -65,6 +91,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (BREAKING)
 
+<csr-id-ab4e726fcec65871a81056a9c69af8ea3f56b2a3/>
+<csr-id-8bb5c9a75cd91ae0d888bc8e93707cfc9cc08090/>
+<csr-id-580e96c1b2d9782a2e8cf9d1123f6d53a5376a3d/>
+<csr-id-3f05fea55dc8acce1ed62ecbe4e0a1394f2720b7/>
+
  - <csr-id-8c5ae77f06a64c57df9a9ad1190266896a223dbe/> Remove deprecated compound and linked object databases
    The dynamic/general store is the only maintained can-do-it-all
    DB now.
@@ -84,14 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    The `sink()` function now takes the kind of hash as parameter.
  - <csr-id-ad1b9ea17eb4b98ebd2fddebe82a8fee1d63e9dd/> various changes to the `loose::Store`
    - Change `path` field to read-only `path()` method
-   - add `hash_kind` parameter to `loose::Store::at(…, hash_kind)`
- - <csr-id-ab4e726fcec65871a81056a9c69af8ea3f56b2a3/> move `sink::Sink` to the top-level exclusively
- - <csr-id-8bb5c9a75cd91ae0d888bc8e93707cfc9cc08090/> move `loose::iter::Iter` to `loose::Iter`
- - <csr-id-580e96c1b2d9782a2e8cf9d1123f6d53a5376a3d/> Rename `Handle` to `Cache`
-   Because this is exactly what it is effectively.
-   Also add some basic instantiation for the new object store.
- - <csr-id-3f05fea55dc8acce1ed62ecbe4e0a1394f2720b7/> remove `make_object_cache` parameter from `git_pack::data::output::count::objects()`
-   It now is an implementation detail of the Find trait.
+- add `hash_kind` parameter to `loose::Store::at(…, hash_kind)`
 
 ### Refactor
 
@@ -190,7 +214,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1562 commits contributed to the release over the course of 1041 calendar days.
+ - 1563 commits contributed to the release over the course of 1041 calendar days.
  - 60 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 26 unique issues were worked on: [#198](https://github.com/Byron/gitoxide/issues/198), [#222](https://github.com/Byron/gitoxide/issues/222), [#250](https://github.com/Byron/gitoxide/issues/250), [#254](https://github.com/Byron/gitoxide/issues/254), [#259](https://github.com/Byron/gitoxide/issues/259), [#260](https://github.com/Byron/gitoxide/issues/260), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#364](https://github.com/Byron/gitoxide/issues/364), [#384](https://github.com/Byron/gitoxide/issues/384), [#427](https://github.com/Byron/gitoxide/issues/427), [#470](https://github.com/Byron/gitoxide/issues/470), [#536](https://github.com/Byron/gitoxide/issues/536), [#59](https://github.com/Byron/gitoxide/issues/59), [#63](https://github.com/Byron/gitoxide/issues/63), [#67](https://github.com/Byron/gitoxide/issues/67), [#691](https://github.com/Byron/gitoxide/issues/691), [#724](https://github.com/Byron/gitoxide/issues/724), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
 
@@ -472,6 +496,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
     - prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
  * **Uncategorized**
+    - Release gix-date v0.4.2, gix-hash v0.10.2, gix-features v0.26.4, gix-actor v0.17.1, gix-glob v0.5.3, gix-path v0.7.1, gix-quote v0.4.1, gix-attributes v0.8.2, gix-config-value v0.10.1, gix-tempfile v3.0.2, gix-lock v3.0.2, gix-validate v0.7.2, gix-object v0.26.1, gix-ref v0.24.0, gix-sec v0.6.2, gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`6ccc88a`](https://github.com/Byron/gitoxide/commit/6ccc88a8e4a56973b1a358cf72dc012ee3c75d56))
     - apparently some fixtures were changed, so here are the archived ([`e49aed9`](https://github.com/Byron/gitoxide/commit/e49aed9d1d264030c73e431e7cd291d27546927b))
     - Merge branch 'rename-crates' into inform-about-gix-rename ([`c9275b9`](https://github.com/Byron/gitoxide/commit/c9275b99ea43949306d93775d9d78c98fb86cfb1))
     - rename `git-testtools` to `gix-testtools` ([`b65c33d`](https://github.com/Byron/gitoxide/commit/b65c33d256cfed65d11adeff41132e3e58754089))
@@ -1796,6 +1821,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - cargo fmt ([`2aa0857`](https://github.com/Byron/gitoxide/commit/2aa085752aa3e99b51034a3dec882aea8c27ad94))
     - reorganize repository a bit; use different contact email address ([`cb9fa28`](https://github.com/Byron/gitoxide/commit/cb9fa2848476e30767deb9d9807c649e0bc366da))
 </details>
+
+<csr-unknown>
+ move sink::Sink to the top-level exclusively move loose::iter::Iter to loose::Iter Rename Handle to CacheBecause this is exactly what it is effectively.Also add some basic instantiation for the new object store. remove make_object_cache parameter from git_pack::data::output::count::objects()It now is an implementation detail of the Find trait.<csr-unknown/>
 
 ## 0.40.1 (2023-01-10)
 
