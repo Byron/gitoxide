@@ -1,0 +1,25 @@
+[package]
+name = "gix-refspec"
+version = "0.7.2"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project for parsing and representing refspecs"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*", "CHANGELOG.md", "README.md"]
+rust-version = "1.64"
+
+[lib]
+doctest = false
+
+[dependencies]
+gix-revision = { version = "^0.10.2", path = "../gix-revision" }
+gix-validate = { version = "^0.7.2", path = "../gix-validate" }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
+
+bstr = { version = "1.0.1", default-features = false, features = ["std"]}
+thiserror = "1.0.26"
+smallvec = "1.9.0"
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools" }

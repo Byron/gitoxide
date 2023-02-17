@@ -3,21 +3,21 @@ pub fn restricted() -> crate::open::Options {
 }
 
 /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
-fn hex_to_id(hex: &str) -> git_hash::ObjectId {
-    git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+fn hex_to_id(hex: &str) -> gix_hash::ObjectId {
+    gix_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
 }
 
 mod update {
     use std::convert::TryInto;
 
-    use git_testtools::Result;
+    use gix_testtools::Result;
 
     use super::hex_to_id;
     use crate as gix;
 
     fn base_repo_path() -> String {
         gix::path::realpath(
-            git_testtools::scripted_fixture_read_only("make_remote_repos.sh")
+            gix_testtools::scripted_fixture_read_only("make_remote_repos.sh")
                 .unwrap()
                 .join("base"),
         )
@@ -28,20 +28,20 @@ mod update {
 
     fn repo(name: &str) -> gix::Repository {
         let dir =
-            git_testtools::scripted_fixture_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
+            gix_testtools::scripted_fixture_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
         gix::open_opts(dir.join(name), restricted()).unwrap()
     }
-    fn repo_rw(name: &str) -> (gix::Repository, git_testtools::tempfile::TempDir) {
-        let dir = git_testtools::scripted_fixture_writable_with_args(
+    fn repo_rw(name: &str) -> (gix::Repository, gix_testtools::tempfile::TempDir) {
+        let dir = gix_testtools::scripted_fixture_writable_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
-            git_testtools::Creation::ExecuteScript,
+            gix_testtools::Creation::ExecuteScript,
         )
         .unwrap();
         let repo = gix::open_opts(dir.path().join(name), restricted()).unwrap();
         (repo, dir)
     }
-    use git_ref::{transaction::Change, TargetRef};
+    use gix_ref::{transaction::Change, TargetRef};
 
     use crate::{
         bstr::BString,
@@ -180,7 +180,7 @@ mod update {
 
     #[test]
     fn checked_out_branches_in_worktrees_are_rejected_with_additional_information() -> Result {
-        let root = git_path::realpath(git_testtools::scripted_fixture_read_only_with_args(
+        let root = gix_path::realpath(gix_testtools::scripted_fixture_read_only_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
         )?)?;
@@ -256,7 +256,7 @@ mod update {
         let repo = repo("two-origins");
         let (mut mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/remotes/origin/new", &repo);
         mappings.push(Mapping {
-            remote: Source::Ref(git_protocol::handshake::Ref::Direct {
+            remote: Source::Ref(gix_protocol::handshake::Ref::Direct {
                 full_ref_name: "refs/heads/main".try_into().unwrap(),
                 object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
             }),
@@ -375,7 +375,7 @@ mod update {
         let repo = repo("two-origins");
         let (mut mappings, specs) = mapping_from_spec("HEAD:refs/remotes/origin/new-HEAD", &repo);
         mappings.push(Mapping {
-            remote: Source::Ref(git_protocol::handshake::Ref::Direct {
+            remote: Source::Ref(gix_protocol::handshake::Ref::Direct {
                 full_ref_name: "refs/heads/main".try_into().unwrap(),
                 object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
             }),
@@ -549,8 +549,8 @@ mod update {
     }
 
     fn mapping_from_spec(spec: &str, repo: &gix::Repository) -> (Vec<fetch::Mapping>, Vec<gix::refspec::RefSpec>) {
-        let spec = git_refspec::parse(spec.into(), git_refspec::parse::Operation::Fetch).unwrap();
-        let group = git_refspec::MatchGroup::from_fetch_specs(Some(spec));
+        let spec = gix_refspec::parse(spec.into(), gix_refspec::parse::Operation::Fetch).unwrap();
+        let group = gix_refspec::MatchGroup::from_fetch_specs(Some(spec));
         let references = repo.references().unwrap();
         let mut references: Vec<_> = references.all().unwrap().map(|r| into_remote_ref(r.unwrap())).collect();
         references.push(into_remote_ref(repo.find_reference("HEAD").unwrap()));
@@ -563,7 +563,7 @@ mod update {
                     .item_index
                     .map(|idx| fetch::Source::Ref(references[idx].clone()))
                     .unwrap_or_else(|| match m.lhs {
-                        git_refspec::match_group::SourceRef::ObjectId(id) => fetch::Source::ObjectId(id),
+                        gix_refspec::match_group::SourceRef::ObjectId(id) => fetch::Source::ObjectId(id),
                         _ => unreachable!("not a ref, must be id: {:?}", m),
                     }),
                 local: m.rhs.map(|r| r.into_owned()),
@@ -573,17 +573,17 @@ mod update {
         (mappings, vec![spec.to_owned()])
     }
 
-    fn into_remote_ref(mut r: gix::Reference<'_>) -> git_protocol::handshake::Ref {
+    fn into_remote_ref(mut r: gix::Reference<'_>) -> gix_protocol::handshake::Ref {
         let full_ref_name = r.name().as_bstr().into();
         match r.target() {
-            TargetRef::Peeled(id) => git_protocol::handshake::Ref::Direct {
+            TargetRef::Peeled(id) => gix_protocol::handshake::Ref::Direct {
                 full_ref_name,
                 object: id.into(),
             },
             TargetRef::Symbolic(name) => {
                 let target = name.as_bstr().into();
                 let id = r.peel_to_id_in_place().unwrap();
-                git_protocol::handshake::Ref::Symbolic {
+                gix_protocol::handshake::Ref::Symbolic {
                     full_ref_name,
                     target,
                     object: id.detach(),
@@ -592,9 +592,9 @@ mod update {
         }
     }
 
-    fn remote_ref_to_item(r: &git_protocol::handshake::Ref) -> git_refspec::match_group::Item<'_> {
+    fn remote_ref_to_item(r: &gix_protocol::handshake::Ref) -> gix_refspec::match_group::Item<'_> {
         let (full_ref_name, target, object) = r.unpack();
-        git_refspec::match_group::Item {
+        gix_refspec::match_group::Item {
             full_ref_name,
             target: target.expect("no unborn HEAD"),
             object,

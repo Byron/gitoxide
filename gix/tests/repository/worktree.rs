@@ -1,4 +1,4 @@
-use git_ref::bstr;
+use gix_ref::bstr;
 
 mod with_core_worktree_config {
     use std::io::BufRead;
@@ -19,7 +19,7 @@ mod with_core_worktree_config {
             } else {
                 assert_eq!(
                     repo.work_dir().unwrap(),
-                    git_path::realpath(repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"))?,
+                    gix_path::realpath(repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"))?,
                     "absolute workdirs are left untouched"
                 );
             }
@@ -34,7 +34,7 @@ mod with_core_worktree_config {
             assert_eq!(baseline.len(), 1, "git lists the main worktree");
             assert_eq!(
                 baseline[0].root,
-                git_path::realpath(repo.git_dir().parent().unwrap())?,
+                gix_path::realpath(repo.git_dir().parent().unwrap())?,
                 "git lists the original worktree, to which we have no access anymore"
             );
             assert_eq!(
@@ -97,7 +97,7 @@ mod with_core_worktree_config {
     }
 
     fn repo(name: &str) -> gix::Repository {
-        let dir = git_testtools::scripted_fixture_read_only("make_core_worktree_repo.sh").unwrap();
+        let dir = gix_testtools::scripted_fixture_read_only("make_core_worktree_repo.sh").unwrap();
         gix::open_opts(dir.join(name), crate::restricted()).unwrap()
     }
 
@@ -118,8 +118,8 @@ struct Baseline<'a> {
 mod baseline {
     use std::path::{Path, PathBuf};
 
-    use git_object::bstr::BStr;
     use gix::bstr::{BString, ByteSlice};
+    use gix_object::bstr::BStr;
 
     use super::Baseline;
 
@@ -138,7 +138,7 @@ mod baseline {
         pub root: PathBuf,
         pub bare: bool,
         pub locked: Option<Reason>,
-        pub peeled: git_hash::ObjectId,
+        pub peeled: gix_hash::ObjectId,
         pub branch: Option<BString>,
         pub prunable: Option<Reason>,
     }
@@ -147,10 +147,10 @@ mod baseline {
         type Item = Worktree;
 
         fn next(&mut self) -> Option<Self::Item> {
-            let root = git_path::from_bstr(fields(self.lines.next()?).1).into_owned();
+            let root = gix_path::from_bstr(fields(self.lines.next()?).1).into_owned();
             let mut bare = false;
             let mut branch = None;
-            let mut peeled = git_hash::ObjectId::null(git_hash::Kind::Sha1);
+            let mut peeled = gix_hash::ObjectId::null(gix_hash::Kind::Sha1);
             let mut locked = None;
             let mut prunable = None;
             for line in self.lines.by_ref() {
@@ -165,7 +165,7 @@ mod baseline {
                 }
                 let (field, value) = fields(line);
                 match field {
-                    f if f == "HEAD" => peeled = git_hash::ObjectId::from_hex(value).expect("valid hash"),
+                    f if f == "HEAD" => peeled = gix_hash::ObjectId::from_hex(value).expect("valid hash"),
                     f if f == "branch" => branch = Some(value.to_owned()),
                     f if f == "locked" => locked = Some(value.to_owned()),
                     f if f == "prunable" => prunable = Some(value.to_owned()),
@@ -191,10 +191,10 @@ mod baseline {
 
 #[test]
 fn from_bare_parent_repo() {
-    if git_testtools::should_skip_as_git_version_is_smaller_than(2, 31, 0) {
+    if gix_testtools::should_skip_as_git_version_is_smaller_than(2, 31, 0) {
         return;
     }
-    let dir = git_testtools::scripted_fixture_read_only_with_args("make_worktree_repo.sh", ["bare"]).unwrap();
+    let dir = gix_testtools::scripted_fixture_read_only_with_args("make_worktree_repo.sh", ["bare"]).unwrap();
     let repo = gix::open(dir.join("repo.git")).unwrap();
 
     run_assertions(repo, true /* bare */);
@@ -202,10 +202,10 @@ fn from_bare_parent_repo() {
 
 #[test]
 fn from_nonbare_parent_repo() {
-    if git_testtools::should_skip_as_git_version_is_smaller_than(2, 31, 0) {
+    if gix_testtools::should_skip_as_git_version_is_smaller_than(2, 31, 0) {
         return;
     }
-    let dir = git_testtools::scripted_fixture_read_only("make_worktree_repo.sh").unwrap();
+    let dir = gix_testtools::scripted_fixture_read_only("make_worktree_repo.sh").unwrap();
     let repo = gix::open(dir.join("repo")).unwrap();
 
     run_assertions(repo, false /* bare */);

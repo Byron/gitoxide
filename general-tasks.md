@@ -8,22 +8,22 @@ don't support that as we would have to keep both the future and the parent that 
 pointers, one could implement the magical part by hand, a custom future, which happily dissolves into its mutable parent iter ref.
 That would be quite some work though.
 
-[WithSidebands]: https://github.com/Byron/gitoxide/blob/fed6c69fd8b2877a66fe9d87916f3d54a3fc342b/git-packetline/src/read/sidebands/async_io.rs#L197
+[WithSidebands]: https://github.com/Byron/gitoxide/blob/fed6c69fd8b2877a66fe9d87916f3d54a3fc342b/gix-packetline/src/read/sidebands/async_io.rs#L197
 
 ## Potential for improving performance
 
-### git-odb
+### gix-odb
 
 * Finding an object in a loose object store [costs an extra disk IO operation][extra-iop] to pacify the borrow checker. This wouldn't be an issue with polonius.
 
-[extra-iop]: https://github.com/Byron/gitoxide/blob/2958145a0ae1ef582bbf88352f5567d5c2b5eaf0/git-odb/src/store/linked/find.rs#L33
+[extra-iop]: https://github.com/Byron/gitoxide/blob/2958145a0ae1ef582bbf88352f5567d5c2b5eaf0/gix-odb/src/store/linked/find.rs#L33
 
-### git-object
+### gix-object
 
 * **tree-parsing performance**
   * when diffing trees parsing [can take substantial time](https://github.com/Byron/gitoxide/discussions/74#discussioncomment-684927). Maybe optimizations are possible here.
 
-### NLL/Borrowcheck limitation git-odb::(compound|linked)::Db cause additional code complexity
+### NLL/Borrowcheck limitation gix-odb::(compound|linked)::Db cause additional code complexity
 
 * Once polonius is available with production-ready performance, we should simplify the `locate(…)` code in `(compound|linked)::Db()` respectively.
   Currently these first have to obtain an index, and when found, access the data to avoid having the borrowchecker fail to understand our buffer

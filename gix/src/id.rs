@@ -1,7 +1,7 @@
 //!
 use std::ops::Deref;
 
-use git_hash::{oid, ObjectId};
+use gix_hash::{oid, ObjectId};
 
 use crate::{object::find, revision, Id, Object};
 
@@ -26,13 +26,13 @@ impl<'repo> Id<'repo> {
     }
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`.
-    pub fn shorten(&self) -> Result<git_hash::Prefix, shorten::Error> {
+    pub fn shorten(&self) -> Result<gix_hash::Prefix, shorten::Error> {
         let hex_len = self.repo.config.hex_len.map_or_else(
             || self.repo.objects.packed_object_count().map(calculate_auto_hex_len),
             Ok,
         )?;
 
-        let prefix = git_odb::store::prefix::disambiguate::Candidate::new(self.inner, hex_len)
+        let prefix = gix_odb::store::prefix::disambiguate::Candidate::new(self.inner, hex_len)
             .expect("BUG: internal hex-len must always be valid");
         self.repo
             .objects
@@ -42,7 +42,7 @@ impl<'repo> Id<'repo> {
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`, or default
     /// to a prefix which equals our id in the unlikely error case.
-    pub fn shorten_or_id(&self) -> git_hash::Prefix {
+    pub fn shorten_or_id(&self) -> gix_hash::Prefix {
         self.shorten().unwrap_or_else(|_| self.inner.into())
     }
 }
@@ -60,11 +60,11 @@ pub mod shorten {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        PackedObjectsCount(#[from] git_odb::store::load_index::Error),
+        PackedObjectsCount(#[from] gix_odb::store::load_index::Error),
         #[error(transparent)]
-        DisambiguatePrefix(#[from] git_odb::store::prefix::disambiguate::Error),
+        DisambiguatePrefix(#[from] gix_odb::store::prefix::disambiguate::Error),
         #[error("Id could not be shortened as the object with id {} could not be found", .oid)]
-        NotFound { oid: git_hash::ObjectId },
+        NotFound { oid: gix_hash::ObjectId },
     }
 }
 
@@ -101,7 +101,7 @@ impl<'repo> Id<'repo> {
 mod impls {
     use std::{cmp::Ordering, hash::Hasher};
 
-    use git_hash::{oid, ObjectId};
+    use gix_hash::{oid, ObjectId};
 
     use crate::{Id, Object, ObjectDetached};
 

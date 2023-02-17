@@ -103,7 +103,7 @@ mod remote_at {
 mod find_remote {
     use std::io::BufRead;
 
-    use git_object::bstr::BString;
+    use gix_object::bstr::BString;
 
     use gix::{remote::Direction, Repository};
 
@@ -267,20 +267,20 @@ mod find_remote {
         Ok(())
     }
 
-    fn fetchspec(spec: &str) -> git_refspec::RefSpec {
+    fn fetchspec(spec: &str) -> gix_refspec::RefSpec {
         gix::refspec::parse(spec.into(), gix::refspec::parse::Operation::Fetch)
             .unwrap()
             .to_owned()
     }
 
-    fn pushspec(spec: &str) -> git_refspec::RefSpec {
+    fn pushspec(spec: &str) -> gix_refspec::RefSpec {
         gix::refspec::parse(spec.into(), gix::refspec::parse::Operation::Push)
             .unwrap()
             .to_owned()
     }
 
     fn base_dir(repo: &Repository) -> String {
-        git_path::to_unix_separators_on_windows(gix::path::into_bstr(
+        gix_path::to_unix_separators_on_windows(gix::path::into_bstr(
             gix::path::realpath(repo.work_dir().unwrap())
                 .unwrap()
                 .parent()

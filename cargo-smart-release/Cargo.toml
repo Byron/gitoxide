@@ -43,4 +43,4 @@ home = "0.5.3"
 
 [dev-dependencies]
 insta = "1.8.0"
-git-testtools = { path = "../tests/tools"}
+gix-testtools = { path = "../tests/tools"}

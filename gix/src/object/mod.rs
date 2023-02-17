@@ -1,14 +1,14 @@
 //!
 use std::convert::TryInto;
 
-use git_hash::ObjectId;
-pub use git_object::Kind;
+use gix_hash::ObjectId;
+pub use gix_object::Kind;
 
 use crate::{Commit, Id, Object, ObjectDetached, Tag, Tree};
 
 mod errors;
 pub(crate) mod cache {
-    pub use git_pack::cache::object::MemoryCappedHashmap;
+    pub use gix_pack::cache::object::MemoryCappedHashmap;
 }
 pub use errors::{conversion, find, write};
 ///
@@ -27,9 +27,9 @@ pub mod try_into {
     #[allow(missing_docs)]
     #[error("Object named {id} was supposed to be of kind {expected}, but was kind {actual}.")]
     pub struct Error {
-        pub actual: git_object::Kind,
-        pub expected: git_object::Kind,
-        pub id: git_hash::ObjectId,
+        pub actual: gix_object::Kind,
+        pub expected: gix_object::Kind,
+        pub id: gix_hash::ObjectId,
     }
 }
 
@@ -47,7 +47,7 @@ impl ObjectDetached {
 
 impl std::fmt::Debug for ObjectDetached {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use git_object::Kind::*;
+        use gix_object::Kind::*;
         let type_name = match self.kind {
             Blob => "Blob",
             Commit => "Commit",
@@ -95,7 +95,7 @@ impl<'repo> Object<'repo> {
         self.try_into().map_err(|this: Self| try_into::Error {
             id: this.id,
             actual: this.kind,
-            expected: git_object::Kind::Commit,
+            expected: gix_object::Kind::Commit,
         })
     }
 
@@ -104,7 +104,7 @@ impl<'repo> Object<'repo> {
         self.try_into().map_err(|this: Self| try_into::Error {
             id: this.id,
             actual: this.kind,
-            expected: git_object::Kind::Commit,
+            expected: gix_object::Kind::Commit,
         })
     }
 
@@ -113,7 +113,7 @@ impl<'repo> Object<'repo> {
         self.try_into().map_err(|this: Self| try_into::Error {
             id: this.id,
             actual: this.kind,
-            expected: git_object::Kind::Tree,
+            expected: gix_object::Kind::Tree,
         })
     }
 }
@@ -142,17 +142,17 @@ impl<'repo> Object<'repo> {
     ///
     /// - this object is not a commit
     /// - the commit could not be decoded
-    pub fn to_commit_ref(&self) -> git_object::CommitRef<'_> {
+    pub fn to_commit_ref(&self) -> gix_object::CommitRef<'_> {
         self.try_to_commit_ref().expect("BUG: need a commit")
     }
 
     /// Obtain a fully parsed commit whose fields reference our data buffer.
-    pub fn try_to_commit_ref(&self) -> Result<git_object::CommitRef<'_>, conversion::Error> {
-        git_object::Data::new(self.kind, &self.data)
+    pub fn try_to_commit_ref(&self) -> Result<gix_object::CommitRef<'_>, conversion::Error> {
+        gix_object::Data::new(self.kind, &self.data)
             .decode()?
             .into_commit()
             .ok_or(conversion::Error::UnexpectedType {
-                expected: git_object::Kind::Commit,
+                expected: gix_object::Kind::Commit,
                 actual: self.kind,
             })
     }
@@ -162,15 +162,15 @@ impl<'repo> Object<'repo> {
     /// # Panic
     ///
     /// - this object is not a commit
-    pub fn to_commit_ref_iter(&self) -> git_object::CommitRefIter<'_> {
-        git_object::Data::new(self.kind, &self.data)
+    pub fn to_commit_ref_iter(&self) -> gix_object::CommitRefIter<'_> {
+        gix_object::Data::new(self.kind, &self.data)
             .try_into_commit_iter()
             .expect("BUG: This object must be a commit")
     }
 
     /// Obtain a commit token iterator from the data in this instance, if it is a commit.
-    pub fn try_to_commit_ref_iter(&self) -> Option<git_object::CommitRefIter<'_>> {
-        git_object::Data::new(self.kind, &self.data).try_into_commit_iter()
+    pub fn try_to_commit_ref_iter(&self) -> Option<gix_object::CommitRefIter<'_>> {
+        gix_object::Data::new(self.kind, &self.data).try_into_commit_iter()
     }
 
     /// Obtain a tag token iterator from the data in this instance.
@@ -178,8 +178,8 @@ impl<'repo> Object<'repo> {
     /// # Panic
     ///
     /// - this object is not a tag
-    pub fn to_tag_ref_iter(&self) -> git_object::TagRefIter<'_> {
-        git_object::Data::new(self.kind, &self.data)
+    pub fn to_tag_ref_iter(&self) -> gix_object::TagRefIter<'_> {
+        gix_object::Data::new(self.kind, &self.data)
             .try_into_tag_iter()
             .expect("BUG: this object must be a tag")
     }
@@ -189,8 +189,8 @@ impl<'repo> Object<'repo> {
     /// # Panic
     ///
     /// - this object is not a tag
-    pub fn try_to_tag_ref_iter(&self) -> Option<git_object::TagRefIter<'_>> {
-        git_object::Data::new(self.kind, &self.data).try_into_tag_iter()
+    pub fn try_to_tag_ref_iter(&self) -> Option<gix_object::TagRefIter<'_>> {
+        gix_object::Data::new(self.kind, &self.data).try_into_tag_iter()
     }
 
     /// Obtain a tag object from the data in this instance.
@@ -199,17 +199,17 @@ impl<'repo> Object<'repo> {
     ///
     /// - this object is not a tag
     /// - the tag could not be decoded
-    pub fn to_tag_ref(&self) -> git_object::TagRef<'_> {
+    pub fn to_tag_ref(&self) -> gix_object::TagRef<'_> {
         self.try_to_tag_ref().expect("BUG: need tag")
     }
 
     /// Obtain a fully parsed tag object whose fields reference our data buffer.
-    pub fn try_to_tag_ref(&self) -> Result<git_object::TagRef<'_>, conversion::Error> {
-        git_object::Data::new(self.kind, &self.data)
+    pub fn try_to_tag_ref(&self) -> Result<gix_object::TagRef<'_>, conversion::Error> {
+        gix_object::Data::new(self.kind, &self.data)
             .decode()?
             .into_tag()
             .ok_or(conversion::Error::UnexpectedType {
-                expected: git_object::Kind::Tag,
+                expected: gix_object::Kind::Tag,
                 actual: self.kind,
             })
     }

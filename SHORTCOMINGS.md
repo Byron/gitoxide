@@ -2,16 +2,16 @@ This file is for tracking features that are less well implemented or less powerf
 
 #### `gix`
 
-### git-index
+### gix-index
 
 * The `link` extension can be read, but won't be written. This effectively disables the use of a split index once a mutating operation is run on it with `gitixode`.
 
-### git-protocol
+### gix-protocol
 * **fetches using protocol V1 and stateful connections, i.e. ssh, git, file, may hang**
     * This can be fixed by making response parsing.
     * Note that this does not affect cloning, which works fine.
 
-### `git-pack`
+### `gix-pack`
 * **Packfiles use memory maps**
     * Even though they are comfortable to use and fast, they squelch IO errors.
     * _potential remedy_: We could generalize the Pack to make it possible to work on in-memory buffers directly. That way, one
@@ -26,13 +26,13 @@ This file is for tracking features that are less well implemented or less powerf
     * in-memory representations objects cannot handle objects greater than the amount of addressable memory.
     * This will not affect git LFS though.
 
-### `git-url`
+### `gix-url`
 
-* **git-url** _might_ be more restrictive than what git allows as for the most part, it uses a browser grade URL parser.
+* **gix-url** _might_ be more restrictive than what git allows as for the most part, it uses a browser grade URL parser.
     * Thus far there is no proof for this, and as _potential remedy_ we could certainly re-implement exactly what git does
       to handle its URLs.
 
-### `git-features`
+### `gix-features`
 
 * **sha1** isn't hardened (i.e. doesn't have collision detection). Needs [to be contributed](https://github.com/Byron/gitoxide/issues/585).
 * **local time** is currently impeded by [this issue](https://github.com/time-rs/time/issues/293#issuecomment-909158529) but it's planned to resolve it eventually.

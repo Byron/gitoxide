@@ -22,7 +22,7 @@ pub struct PrepareFetch {
     fetch_options: crate::remote::ref_map::Options,
     /// The url to clone from
     #[cfg_attr(not(feature = "blocking-network-client"), allow(dead_code))]
-    url: git_url::Url,
+    url: gix_url::Url,
 }
 
 /// The error returned by [`PrepareFetch::new()`].
@@ -32,11 +32,11 @@ pub enum Error {
     #[error(transparent)]
     Init(#[from] crate::init::Error),
     #[error(transparent)]
-    UrlParse(#[from] git_url::parse::Error),
+    UrlParse(#[from] gix_url::parse::Error),
     #[error("Failed to turn a the relative file url \"{}\" into an absolute one", url.to_bstring())]
     CanonicalizeUrl {
-        url: git_url::Url,
-        source: git_path::realpath::Error,
+        url: gix_url::Url,
+        source: gix_path::realpath::Error,
     },
 }
 
@@ -61,10 +61,10 @@ impl PrepareFetch {
         open_opts: crate::open::Options,
     ) -> Result<Self, Error>
     where
-        Url: TryInto<git_url::Url, Error = E>,
-        git_url::parse::Error: From<E>,
+        Url: TryInto<gix_url::Url, Error = E>,
+        gix_url::parse::Error: From<E>,
     {
-        let mut url = url.try_into().map_err(git_url::parse::Error::from)?;
+        let mut url = url.try_into().map_err(gix_url::parse::Error::from)?;
         url.canonicalize().map_err(|err| Error::CanonicalizeUrl {
             url: url.clone(),
             source: err,
@@ -72,7 +72,7 @@ impl PrepareFetch {
         create_opts.destination_must_be_empty = true;
         let mut repo = crate::ThreadSafeRepository::init_opts(path, kind, create_opts, open_opts)?.to_thread_local();
         if repo.committer().is_none() {
-            let mut config = git_config::File::new(git_config::file::Metadata::api());
+            let mut config = gix_config::File::new(gix_config::file::Metadata::api());
             config
                 .set_raw_value(
                     "gitoxide",

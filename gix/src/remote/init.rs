@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use git_refspec::RefSpec;
+use gix_refspec::RefSpec;
 
 use crate::{config, remote, Remote, Repository};
 
@@ -12,12 +12,12 @@ mod error {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Url(#[from] git_url::parse::Error),
+        Url(#[from] gix_url::parse::Error),
         #[error("The rewritten {kind} url {rewritten_url:?} failed to parse")]
         RewrittenUrlInvalid {
             kind: &'static str,
             rewritten_url: BString,
-            source: git_url::parse::Error,
+            source: gix_url::parse::Error,
         },
     }
 }
@@ -30,8 +30,8 @@ impl<'repo> Remote<'repo> {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn from_preparsed_config(
         name_or_url: Option<BString>,
-        url: Option<git_url::Url>,
-        push_url: Option<git_url::Url>,
+        url: Option<gix_url::Url>,
+        push_url: Option<gix_url::Url>,
         fetch_specs: Vec<RefSpec>,
         push_specs: Vec<RefSpec>,
         should_rewrite_urls: bool,
@@ -64,8 +64,8 @@ impl<'repo> Remote<'repo> {
         repo: &'repo Repository,
     ) -> Result<Self, Error>
     where
-        Url: TryInto<git_url::Url, Error = E>,
-        git_url::parse::Error: From<E>,
+        Url: TryInto<gix_url::Url, Error = E>,
+        gix_url::parse::Error: From<E>,
     {
         let url = url.try_into().map_err(|err| Error::Url(err.into()))?;
         let (url_alias, _) = should_rewrite_urls
@@ -87,12 +87,12 @@ impl<'repo> Remote<'repo> {
 
 pub(crate) fn rewrite_url(
     config: &config::Cache,
-    url: Option<&git_url::Url>,
+    url: Option<&gix_url::Url>,
     direction: remote::Direction,
-) -> Result<Option<git_url::Url>, Error> {
+) -> Result<Option<gix_url::Url>, Error> {
     url.and_then(|url| config.url_rewrite().longest(url, direction))
         .map(|url| {
-            git_url::parse(url.as_ref()).map_err(|err| Error::RewrittenUrlInvalid {
+            gix_url::parse(url.as_ref()).map_err(|err| Error::RewrittenUrlInvalid {
                 kind: match direction {
                     remote::Direction::Fetch => "fetch",
                     remote::Direction::Push => "push",
@@ -106,9 +106,9 @@ pub(crate) fn rewrite_url(
 
 pub(crate) fn rewrite_urls(
     config: &config::Cache,
-    url: Option<&git_url::Url>,
-    push_url: Option<&git_url::Url>,
-) -> Result<(Option<git_url::Url>, Option<git_url::Url>), Error> {
+    url: Option<&gix_url::Url>,
+    push_url: Option<&gix_url::Url>,
+) -> Result<(Option<gix_url::Url>, Option<gix_url::Url>), Error> {
     let url_alias = rewrite_url(config, url, remote::Direction::Fetch)?;
     let push_url_alias = rewrite_url(config, push_url, remote::Direction::Push)?;
 

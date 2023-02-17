@@ -1,4 +1,4 @@
-use git_features::threading::OwnShared;
+use gix_features::threading::OwnShared;
 
 use crate::{
     bstr::{BStr, BString, ByteVec},
@@ -21,8 +21,8 @@ pub(crate) struct Rewrite {
 /// Init
 impl Rewrite {
     pub fn from_config(
-        config: &git_config::File<'static>,
-        mut filter: fn(&git_config::file::Metadata) -> bool,
+        config: &gix_config::File<'static>,
+        mut filter: fn(&gix_config::file::Metadata) -> bool,
     ) -> Rewrite {
         config
             .sections_by_name_and_filter("url", &mut filter)
@@ -66,7 +66,7 @@ impl Rewrite {
         }
     }
 
-    pub fn longest(&self, url: &git_url::Url, direction: Direction) -> Option<BString> {
+    pub fn longest(&self, url: &gix_url::Url, direction: Direction) -> Option<BString> {
         if self.replacements_for(direction).is_empty() {
             None
         } else {

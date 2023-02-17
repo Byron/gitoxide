@@ -1,0 +1,45 @@
+[package]
+name = "gix-ref-tests"
+version = "0.0.0"
+publish = false
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*"]
+rust-version = "1.64"
+
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["gix-ref/serde"]
+internal-testing-gix-features-parallel = ["gix-features/parallel"] # test sorted parallel loose file traversal
+
+[[test]]
+name = "refs-single-threaded"
+path = "refs.rs"
+required-features = []
+
+[[test]]
+name = "refs-parallel-fs-traversal"
+path = "refs-parallel.rs"
+required-features = ["internal-testing-gix-features-parallel"]
+
+[dev-dependencies]
+gix-ref = { path = ".." }
+gix-features = { version = "^0.26.1", path = "../../gix-features", features = ["walkdir"]}
+gix-testtools = { path = "../../tests/tools" }
+gix-discover = { path = "../../gix-discover" }
+gix-worktree = { path = "../../gix-worktree" }
+gix-odb = { path = "../../gix-odb" }
+gix-actor = { path = "../../gix-actor" }
+gix-hash = { path = "../../gix-hash" }
+gix-validate = { path = "../../gix-validate" }
+gix-lock = { path = "../../gix-lock" }
+gix-object = { path = "../../gix-object" }
+tempfile = "3.2.0"
+
+
+[package.metadata.docs.rs]
+features = ["document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

@@ -1,4 +1,4 @@
-pub use git_mailmap::*;
+pub use gix_mailmap::*;
 
 ///
 pub mod load {
@@ -9,9 +9,9 @@ pub mod load {
         #[error("The mailmap file declared in `mailmap.file` could not be read")]
         Io(#[from] std::io::Error),
         #[error("The configured mailmap.blob could not be parsed")]
-        BlobSpec(#[from] git_hash::decode::Error),
+        BlobSpec(#[from] gix_hash::decode::Error),
         #[error(transparent)]
-        PathInterpolate(#[from] git_config::path::interpolate::Error),
+        PathInterpolate(#[from] gix_config::path::interpolate::Error),
         #[error("Could not find object configured in `mailmap.blob`")]
         FindExisting(#[from] crate::object::find::existing::Error),
     }

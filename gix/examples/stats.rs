@@ -69,9 +69,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 mod visit {
-    use git_hash::oid;
-    use git_object::{bstr::BStr, tree::EntryRef};
-    use git_traverse::tree::visit::Action;
+    use gix_hash::oid;
+    use gix_object::{bstr::BStr, tree::EntryRef};
+    use gix_traverse::tree::visit::Action;
 
     pub(crate) struct Tree {
         pub num_trees: usize,
@@ -102,7 +102,7 @@ mod visit {
             }
         }
     }
-    impl git_traverse::tree::Visit for Tree {
+    impl gix_traverse::tree::Visit for Tree {
         fn pop_front_tracked_path_and_set_current(&mut self) {}
 
         fn push_back_tracked_path_component(&mut self, _component: &BStr) {}

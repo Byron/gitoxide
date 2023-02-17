@@ -51,7 +51,7 @@ impl<'repo> Tree<'repo> {
 /// The diffing platform returned by [`Tree::changes()`].
 #[derive(Clone)]
 pub struct Platform<'a, 'repo> {
-    state: git_diff::tree::State,
+    state: gix_diff::tree::State,
     lhs: &'a Tree<'repo>,
     tracking: Option<Tracking>,
     renames: Option<Renames>,

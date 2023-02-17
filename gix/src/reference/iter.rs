@@ -1,25 +1,25 @@
 //!
 use std::path::Path;
 
-use git_odb::pack::Find;
-use git_ref::file::ReferenceExt;
+use gix_odb::pack::Find;
+use gix_ref::file::ReferenceExt;
 
 /// A platform to create iterators over references.
 #[must_use = "Iterators should be obtained from this iterator platform"]
 pub struct Platform<'r> {
-    pub(crate) platform: git_ref::file::iter::Platform<'r>,
+    pub(crate) platform: gix_ref::file::iter::Platform<'r>,
     pub(crate) repo: &'r crate::Repository,
 }
 
 /// An iterator over references, with or without filter.
 pub struct Iter<'r> {
-    inner: git_ref::file::iter::LooseThenPacked<'r, 'r>,
+    inner: gix_ref::file::iter::LooseThenPacked<'r, 'r>,
     peel: bool,
     repo: &'r crate::Repository,
 }
 
 impl<'r> Iter<'r> {
-    fn new(repo: &'r crate::Repository, platform: git_ref::file::iter::LooseThenPacked<'r, 'r>) -> Self {
+    fn new(repo: &'r crate::Repository, platform: gix_ref::file::iter::LooseThenPacked<'r, 'r>) -> Self {
         Iter {
             inner: platform,
             peel: false,
@@ -124,4 +124,4 @@ pub mod init {
 }
 
 /// The error returned by [references()][crate::Repository::references()].
-pub type Error = git_ref::packed::buffer::open::Error;
+pub type Error = gix_ref::packed::buffer::open::Error;

@@ -10,9 +10,9 @@ impl Safe {
 
 impl Safe {
     /// Implements the directory filter to trust only global and system files, for use with `safe.directory`.
-    pub fn directory_filter(meta: &git_config::file::Metadata) -> bool {
+    pub fn directory_filter(meta: &gix_config::file::Metadata) -> bool {
         let kind = meta.source.kind();
-        kind == git_config::source::Kind::System || kind == git_config::source::Kind::Global
+        kind == gix_config::source::Kind::System || kind == gix_config::source::Kind::Global
     }
 }
 

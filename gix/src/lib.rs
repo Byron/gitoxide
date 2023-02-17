@@ -39,7 +39,7 @@
 //!
 //! #### WorkingTree and WorkTree
 //!
-//! When reading the documentation of the canonical git-worktree program one gets the impression work tree and working tree are used
+//! When reading the documentation of the canonical gix-worktree program one gets the impression work tree and working tree are used
 //! interchangeably. We use the term _work tree_ only and try to do so consistently as its shorter and assumed to be the same.
 //!
 //! # Cargo-features
@@ -66,32 +66,32 @@
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
-pub use git_actor as actor;
-pub use git_attributes as attrs;
-pub use git_credentials as credentials;
-pub use git_date as date;
-pub use git_features as features;
-use git_features::threading::OwnShared;
-pub use git_features::{parallel, progress::Progress, threading};
-pub use git_glob as glob;
-pub use git_hash as hash;
+pub use gix_actor as actor;
+pub use gix_attributes as attrs;
+pub use gix_credentials as credentials;
+pub use gix_date as date;
+pub use gix_features as features;
+use gix_features::threading::OwnShared;
+pub use gix_features::{parallel, progress::Progress, threading};
+pub use gix_glob as glob;
+pub use gix_hash as hash;
 #[doc(inline)]
-pub use git_index as index;
-pub use git_lock as lock;
-pub use git_object as objs;
-pub use git_object::bstr;
-pub use git_odb as odb;
-pub use git_prompt as prompt;
-#[cfg(all(feature = "git-protocol"))]
-pub use git_protocol as protocol;
-pub use git_ref as refs;
-pub use git_refspec as refspec;
-pub use git_sec as sec;
-pub use git_tempfile as tempfile;
-pub use git_traverse as traverse;
-pub use git_url as url;
+pub use gix_index as index;
+pub use gix_lock as lock;
+pub use gix_object as objs;
+pub use gix_object::bstr;
+pub use gix_odb as odb;
+pub use gix_prompt as prompt;
+#[cfg(all(feature = "gix-protocol"))]
+pub use gix_protocol as protocol;
+pub use gix_ref as refs;
+pub use gix_refspec as refspec;
+pub use gix_sec as sec;
+pub use gix_tempfile as tempfile;
+pub use gix_traverse as traverse;
+pub use gix_url as url;
 #[doc(inline)]
-pub use git_url::Url;
+pub use gix_url::Url;
 pub use hash::{oid, ObjectId};
 
 pub mod interrupt;
@@ -99,8 +99,8 @@ pub mod interrupt;
 mod ext;
 ///
 pub mod prelude {
-    pub use git_features::parallel::reduce::Finalize;
-    pub use git_odb::{Find, FindExt, Header, HeaderExt, Write};
+    pub use gix_features::parallel::reduce::Finalize;
+    pub use gix_odb::{Find, FindExt, Header, HeaderExt, Write};
 
     pub use crate::ext::*;
 }
@@ -109,11 +109,11 @@ pub mod prelude {
 pub mod path;
 
 /// The standard type for a store to handle git references.
-pub type RefStore = git_ref::file::Store;
+pub type RefStore = gix_ref::file::Store;
 /// A handle for finding objects in an object database, abstracting away caches for thread-local use.
-pub type OdbHandle = git_odb::Handle;
+pub type OdbHandle = gix_odb::Handle;
 /// A way to access git configuration
-pub(crate) type Config = OwnShared<git_config::File<'static>>;
+pub(crate) type Config = OwnShared<gix_config::File<'static>>;
 
 ///
 mod types;
@@ -134,13 +134,13 @@ pub mod tag;
 
 ///
 pub mod progress {
-    pub use git_features::progress::*;
+    pub use gix_features::progress::*;
     pub use prodash::tree;
 }
 
 ///
 pub mod diff {
-    pub use git_diff::*;
+    pub use gix_diff::*;
     ///
     pub mod rename {
         /// Determine how to do rename tracking.
@@ -186,8 +186,8 @@ pub fn prepare_clone_bare<Url, E>(
     path: impl AsRef<std::path::Path>,
 ) -> Result<clone::PrepareFetch, clone::Error>
 where
-    Url: std::convert::TryInto<git_url::Url, Error = E>,
-    git_url::parse::Error: From<E>,
+    Url: std::convert::TryInto<gix_url::Url, Error = E>,
+    gix_url::parse::Error: From<E>,
 {
     clone::PrepareFetch::new(
         url,
@@ -205,8 +205,8 @@ where
 #[allow(clippy::result_large_err)]
 pub fn prepare_clone<Url, E>(url: Url, path: impl AsRef<std::path::Path>) -> Result<clone::PrepareFetch, clone::Error>
 where
-    Url: std::convert::TryInto<git_url::Url, Error = E>,
-    git_url::parse::Error: From<E>,
+    Url: std::convert::TryInto<gix_url::Url, Error = E>,
+    gix_url::parse::Error: From<E>,
 {
     clone::PrepareFetch::new(
         url,
@@ -218,8 +218,8 @@ where
 }
 
 fn open_opts_with_git_binary_config() -> open::Options {
-    use git_sec::trust::DefaultForLevel;
-    let mut opts = open::Options::default_for_level(git_sec::Trust::Full);
+    use gix_sec::trust::DefaultForLevel;
+    let mut opts = open::Options::default_for_level(gix_sec::Trust::Full);
     opts.permissions.config.git_binary = true;
     opts
 }
@@ -243,7 +243,7 @@ pub mod permission {
         ///
         pub mod resource {
             ///
-            pub type Error = git_sec::permission::Error<std::path::PathBuf>;
+            pub type Error = gix_sec::permission::Error<std::path::PathBuf>;
         }
     }
 }

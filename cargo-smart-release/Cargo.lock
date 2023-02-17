@@ -130,7 +130,7 @@ dependencies = [
  "env_logger",
  "git-conventional",
  "git-repository",
- "git-testtools",
+ "gix-testtools",
  "home",
  "insta",
  "log",
@@ -521,57 +521,57 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-actor"
+name = "gix-actor"
 version = "0.10.1"
 dependencies = [
  "bstr",
  "btoi",
- "git-date",
- "git-features",
+ "gix-date",
+ "gix-features",
  "itoa",
  "nom",
  "quick-error",
 ]
 
 [[package]]
-name = "git-attributes"
+name = "gix-attributes"
 version = "0.2.0"
 dependencies = [
  "bstr",
  "compact_str",
- "git-features",
- "git-glob",
- "git-path",
- "git-quote",
+ "gix-features",
+ "gix-glob",
+ "gix-path",
+ "gix-quote",
  "quick-error",
  "unicode-bom",
 ]
 
 [[package]]
-name = "git-bitmap"
+name = "gix-bitmap"
 version = "0.1.0"
 dependencies = [
  "quick-error",
 ]
 
 [[package]]
-name = "git-chunk"
+name = "gix-chunk"
 version = "0.3.0"
 dependencies = [
  "quick-error",
 ]
 
 [[package]]
-name = "git-config"
+name = "gix-config"
 version = "0.5.0"
 dependencies = [
  "bstr",
  "dirs",
- "git-features",
- "git-glob",
- "git-path",
- "git-ref",
- "git-sec",
+ "gix-features",
+ "gix-glob",
+ "gix-path",
+ "gix-ref",
+ "gix-sec",
  "libc",
  "memchr",
  "nom",
@@ -591,16 +591,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-credentials"
+name = "gix-credentials"
 version = "0.2.0"
 dependencies = [
  "bstr",
- "git-sec",
+ "gix-sec",
  "quick-error",
 ]
 
 [[package]]
-name = "git-date"
+name = "gix-date"
 version = "0.0.1"
 dependencies = [
  "bstr",
@@ -608,35 +608,35 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-diff"
+name = "gix-diff"
 version = "0.16.0"
 dependencies = [
- "git-hash",
- "git-object",
+ "gix-hash",
+ "gix-object",
  "quick-error",
 ]
 
 [[package]]
-name = "git-discover"
+name = "gix-discover"
 version = "0.2.0"
 dependencies = [
  "bstr",
- "git-hash",
- "git-path",
- "git-ref",
- "git-sec",
+ "gix-hash",
+ "gix-path",
+ "gix-ref",
+ "gix-sec",
  "thiserror",
 ]
 
 [[package]]
-name = "git-features"
+name = "gix-features"
 version = "0.21.1"
 dependencies = [
  "crc32fast",
  "crossbeam-channel",
  "crossbeam-utils",
  "flate2",
- "git-hash",
+ "gix-hash",
  "jwalk",
  "libc",
  "num_cpus",
@@ -649,7 +649,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-glob"
+name = "gix-glob"
 version = "0.3.0"
 dependencies = [
  "bitflags",
@@ -657,7 +657,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-hash"
+name = "gix-hash"
 version = "0.9.5"
 dependencies = [
  "hex",
@@ -665,50 +665,50 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-index"
+name = "gix-index"
 version = "0.3.0"
 dependencies = [
  "atoi",
  "bitflags",
  "bstr",
  "filetime",
- "git-bitmap",
- "git-features",
- "git-hash",
- "git-object",
+ "gix-bitmap",
+ "gix-features",
+ "gix-hash",
+ "gix-object",
  "memmap2",
  "quick-error",
  "smallvec",
 ]
 
 [[package]]
-name = "git-lock"
+name = "gix-lock"
 version = "2.1.0"
 dependencies = [
  "fastrand",
- "git-tempfile",
+ "gix-tempfile",
  "quick-error",
 ]
 
 [[package]]
-name = "git-mailmap"
+name = "gix-mailmap"
 version = "0.2.0"
 dependencies = [
  "bstr",
- "git-actor",
+ "gix-actor",
  "quick-error",
 ]
 
 [[package]]
-name = "git-object"
+name = "gix-object"
 version = "0.19.0"
 dependencies = [
  "bstr",
  "btoi",
- "git-actor",
- "git-features",
- "git-hash",
- "git-validate",
+ "gix-actor",
+ "gix-features",
+ "gix-hash",
+ "gix-validate",
  "hex",
  "itoa",
  "nom",
@@ -717,36 +717,36 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-odb"
+name = "gix-odb"
 version = "0.30.0"
 dependencies = [
  "arc-swap",
- "git-features",
- "git-hash",
- "git-object",
- "git-pack",
- "git-path",
- "git-quote",
+ "gix-features",
+ "gix-hash",
+ "gix-object",
+ "gix-pack",
+ "gix-path",
+ "gix-quote",
  "parking_lot",
  "tempfile",
  "thiserror",
 ]
 
 [[package]]
-name = "git-pack"
+name = "gix-pack"
 version = "0.20.0"
 dependencies = [
  "bytesize",
  "clru",
  "dashmap",
- "git-chunk",
- "git-diff",
- "git-features",
- "git-hash",
- "git-object",
- "git-path",
- "git-tempfile",
- "git-traverse",
+ "gix-chunk",
+ "gix-diff",
+ "gix-features",
+ "gix-hash",
+ "gix-object",
+ "gix-path",
+ "gix-tempfile",
+ "gix-traverse",
  "hash_hasher",
  "memmap2",
  "parking_lot",
@@ -756,7 +756,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-path"
+name = "gix-path"
 version = "0.2.0"
 dependencies = [
  "bstr",
@@ -765,7 +765,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-quote"
+name = "gix-quote"
 version = "0.2.0"
 dependencies = [
  "bstr",
@@ -774,17 +774,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-ref"
+name = "gix-ref"
 version = "0.14.0"
 dependencies = [
- "git-actor",
- "git-features",
- "git-hash",
- "git-lock",
- "git-object",
- "git-path",
- "git-tempfile",
- "git-validate",
+ "gix-actor",
+ "gix-features",
+ "gix-hash",
+ "gix-lock",
+ "gix-object",
+ "gix-path",
+ "gix-tempfile",
+ "gix-validate",
  "memmap2",
  "nom",
  "quick-error",
@@ -796,30 +796,30 @@ version = "0.19.0"
 dependencies = [
  "byte-unit",
  "clru",
- "git-actor",
- "git-attributes",
- "git-config",
- "git-credentials",
- "git-diff",
- "git-discover",
- "git-features",
- "git-glob",
- "git-hash",
- "git-index",
- "git-lock",
- "git-mailmap",
- "git-object",
- "git-odb",
- "git-pack",
- "git-path",
- "git-ref",
- "git-revision",
- "git-sec",
- "git-tempfile",
- "git-traverse",
- "git-url",
- "git-validate",
- "git-worktree",
+ "gix-actor",
+ "gix-attributes",
+ "gix-config",
+ "gix-credentials",
+ "gix-diff",
+ "gix-discover",
+ "gix-features",
+ "gix-glob",
+ "gix-hash",
+ "gix-index",
+ "gix-lock",
+ "gix-mailmap",
+ "gix-object",
+ "gix-odb",
+ "gix-pack",
+ "gix-path",
+ "gix-ref",
+ "gix-revision",
+ "gix-sec",
+ "gix-tempfile",
+ "gix-traverse",
+ "gix-url",
+ "gix-validate",
+ "gix-worktree",
  "log",
  "signal-hook",
  "thiserror",
@@ -827,31 +827,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-revision"
+name = "gix-revision"
 version = "0.2.1"
 dependencies = [
  "bstr",
- "git-date",
- "git-hash",
- "git-object",
+ "gix-date",
+ "gix-hash",
+ "gix-object",
  "hash_hasher",
  "thiserror",
 ]
 
 [[package]]
-name = "git-sec"
+name = "gix-sec"
 version = "0.2.0"
 dependencies = [
  "bitflags",
  "dirs",
- "git-path",
+ "gix-path",
  "libc",
  "thiserror",
  "windows",
 ]
 
 [[package]]
-name = "git-tempfile"
+name = "gix-tempfile"
 version = "2.0.1"
 dependencies = [
  "dashmap",
@@ -863,17 +863,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-testtools"
+name = "gix-testtools"
 version = "0.7.0"
 dependencies = [
  "bstr",
  "crc",
  "fs_extra",
- "git-attributes",
- "git-discover",
- "git-hash",
- "git-lock",
- "git-worktree",
+ "gix-attributes",
+ "gix-discover",
+ "gix-hash",
+ "gix-lock",
+ "gix-worktree",
  "io-close",
  "is_ci",
  "nom",
@@ -885,29 +885,29 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-traverse"
+name = "gix-traverse"
 version = "0.15.0"
 dependencies = [
- "git-hash",
- "git-object",
+ "gix-hash",
+ "gix-object",
  "hash_hasher",
  "quick-error",
 ]
 
 [[package]]
-name = "git-url"
+name = "gix-url"
 version = "0.6.0"
 dependencies = [
  "bstr",
- "git-features",
- "git-path",
+ "gix-features",
+ "gix-path",
  "home",
  "quick-error",
  "url",
 ]
 
 [[package]]
-name = "git-validate"
+name = "gix-validate"
 version = "0.5.4"
 dependencies = [
  "bstr",
@@ -915,17 +915,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-worktree"
+name = "gix-worktree"
 version = "0.3.0"
 dependencies = [
  "bstr",
- "git-attributes",
- "git-features",
- "git-glob",
- "git-hash",
- "git-index",
- "git-object",
- "git-path",
+ "gix-attributes",
+ "gix-features",
+ "gix-glob",
+ "gix-hash",
+ "gix-index",
+ "gix-object",
+ "gix-path",
  "io-close",
  "thiserror",
 ]

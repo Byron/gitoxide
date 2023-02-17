@@ -1,7 +1,7 @@
 use std::sync::atomic::AtomicBool;
 
-use git_odb::FindExt;
-use git_protocol::transport::client::Transport;
+use gix_odb::FindExt;
+use gix_protocol::transport::client::Transport;
 
 use crate::{
     remote,
@@ -19,7 +19,7 @@ where
     P: Progress,
     P::SubProgress: 'static,
 {
-    /// Receive the pack and perform the operation as configured by git via `git-config` or overridden by various builder methods.
+    /// Receive the pack and perform the operation as configured by git via `gix-config` or overridden by various builder methods.
     /// Return `Ok(None)` if there was nothing to do because all remote refs are at the same state as they are locally, or `Ok(Some(outcome))`
     /// to inform about all the changes that were made.
     ///
@@ -61,14 +61,14 @@ where
     ///
     /// - `gitoxide.userAgent` is read to obtain the application user agent for git servers and for HTTP servers as well.
     ///
-    #[git_protocol::maybe_async::maybe_async]
+    #[gix_protocol::maybe_async::maybe_async]
     pub async fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome, Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
 
         let handshake = &self.ref_map.handshake;
         let protocol_version = handshake.server_protocol_version;
 
-        let fetch = git_protocol::Command::Fetch;
+        let fetch = gix_protocol::Command::Fetch;
         let progress = &mut con.progress;
         let repo = con.remote.repo;
         let fetch_features = {
@@ -77,16 +77,16 @@ where
             f
         };
 
-        git_protocol::fetch::Response::check_required_features(protocol_version, &fetch_features)?;
+        gix_protocol::fetch::Response::check_required_features(protocol_version, &fetch_features)?;
         let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
-        let mut arguments = git_protocol::fetch::Arguments::new(protocol_version, fetch_features);
+        let mut arguments = gix_protocol::fetch::Arguments::new(protocol_version, fetch_features);
         if matches!(con.remote.fetch_tags, crate::remote::fetch::Tags::Included) {
             if !arguments.can_use_include_tag() {
                 unimplemented!("we expect servers to support 'include-tag', otherwise we have to implement another pass to fetch attached tags separately");
             }
             arguments.use_include_tag();
         }
-        let mut previous_response = None::<git_protocol::fetch::Response>;
+        let mut previous_response = None::<gix_protocol::fetch::Response>;
         let mut round = 1;
 
         if self.ref_map.object_hash != repo.object_hash() {
@@ -110,7 +110,7 @@ where
                 previous_response.as_ref(),
             ) {
                 Ok(_) if arguments.is_empty() => {
-                    git_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
+                    gix_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
                     let update_refs = refs::update(
                         repo,
                         self.reflog_message
@@ -130,7 +130,7 @@ where
                 }
                 Ok(is_done) => is_done,
                 Err(err) => {
-                    git_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
+                    gix_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
                     return Err(err.into());
                 }
             };
@@ -139,7 +139,7 @@ where
             if sideband_all {
                 setup_remote_progress(progress, &mut reader);
             }
-            let response = git_protocol::fetch::Response::from_line_reader(protocol_version, &mut reader).await?;
+            let response = gix_protocol::fetch::Response::from_line_reader(protocol_version, &mut reader).await?;
             if response.has_pack() {
                 progress.step();
                 progress.set_name("receiving pack");
@@ -152,18 +152,18 @@ where
             }
         };
 
-        let options = git_pack::bundle::write::Options {
+        let options = gix_pack::bundle::write::Options {
             thread_limit: config::index_threads(repo)?,
             index_version: config::pack_index_version(repo)?,
-            iteration_mode: git_pack::data::input::Mode::Verify,
+            iteration_mode: gix_pack::data::input::Mode::Verify,
             object_hash: con.remote.repo.object_hash(),
         };
 
         let mut write_pack_bundle = if matches!(self.dry_run, fetch::DryRun::No) {
-            Some(git_pack::Bundle::write_to_directory(
+            Some(gix_pack::Bundle::write_to_directory(
                 #[cfg(feature = "async-network-client")]
                 {
-                    git_protocol::futures_lite::io::BlockOn::new(reader)
+                    gix_protocol::futures_lite::io::BlockOn::new(reader)
                 },
                 #[cfg(not(feature = "async-network-client"))]
                 {
@@ -183,8 +183,8 @@ where
             None
         };
 
-        if matches!(protocol_version, git_protocol::transport::Protocol::V2) {
-            git_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
+        if matches!(protocol_version, gix_protocol::transport::Protocol::V2) {
+            gix_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
         }
 
         let update_refs = refs::update(
@@ -223,16 +223,16 @@ where
 
 fn setup_remote_progress<P>(
     progress: &mut P,
-    reader: &mut Box<dyn git_protocol::transport::client::ExtendedBufRead + Unpin + '_>,
+    reader: &mut Box<dyn gix_protocol::transport::client::ExtendedBufRead + Unpin + '_>,
 ) where
     P: Progress,
     P::SubProgress: 'static,
 {
-    use git_protocol::transport::client::ExtendedBufRead;
+    use gix_protocol::transport::client::ExtendedBufRead;
     reader.set_progress_handler(Some(Box::new({
         let mut remote_progress = progress.add_child_with_id("remote", ProgressId::RemoteProgress.into());
         move |is_err: bool, data: &[u8]| {
-            git_protocol::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress)
+            gix_protocol::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress)
         }
-    }) as git_protocol::transport::client::HandleProgress));
+    }) as gix_protocol::transport::client::HandleProgress));
 }

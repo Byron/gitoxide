@@ -1,0 +1,24 @@
+[package]
+name = "gix-tempfile"
+version = "3.0.2"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A tempfile implementation with a global registry to assure cleanup"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
+rust-version = "1.64"
+
+[lib]
+doctest = false
+test = true
+
+[dependencies]
+dashmap = "5.1.0"
+once_cell = { version = "1.8.0", default-features = false, features = ["race", "std"] }
+signal-hook = { version = "0.3.9", default-features = false }
+signal-hook-registry = "1.4.0"
+tempfile = "3.2.0"
+
+[target.'cfg(not(windows))'.dependencies]
+libc = { version = "0.2.98", default-features = false }

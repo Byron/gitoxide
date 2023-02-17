@@ -163,11 +163,11 @@ jobs:
       - name: Install Rust
         run: rustup update stable && rustup default stable && rustup target add ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
-      - run: set +x; for name in git-actor git-attributes git-bitmap git-chunk git-command git-commitgraph git-date git-glob git-hash git-hashtable git-mailmap git-object git-packetline git-path git-pathspec git-quote git-refspec git-revision git-traverse git-validate; do (cd $name && cargo build --target ${{ matrix.target }}); done
+      - run: set +x; for name in gix-actor gix-attributes gix-bitmap gix-chunk gix-command gix-commitgraph gix-date gix-glob gix-hash gix-hashtable gix-mailmap gix-object gix-packetline gix-path gix-pathspec gix-quote gix-refspec gix-revision gix-traverse gix-validate; do (cd $name && cargo build --target ${{ matrix.target }}); done
         name: crates without feature toggles
-      - run: set +x; for feature in progress fs-walkdir-parallel parallel io-pipe crc32 zlib zlib-rust-backend fast-sha1 rustsha1 cache-efficiency-debug; do (cd git-features && cargo build --features $feature --target ${{ matrix.target }}); done
-        name: features of git-features
-      - run: set +x; for name in git-diff git-pack; do (cd $name && cargo build --features wasm --target ${{ matrix.target }}); done
+      - run: set +x; for feature in progress fs-walkdir-parallel parallel io-pipe crc32 zlib zlib-rust-backend fast-sha1 rustsha1 cache-efficiency-debug; do (cd gix-features && cargo build --features $feature --target ${{ matrix.target }}); done
+        name: features of gix-features
+      - run: set +x; for name in gix-diff gix-pack; do (cd $name && cargo build --features wasm --target ${{ matrix.target }}); done
         name: crates with 'wasm' feature
-      - run: cd git-pack && cargo build --all-features --target ${{ matrix.target }}
-        name: git-pack with all features (including wasm)
+      - run: cd gix-pack && cargo build --all-features --target ${{ matrix.target }}
+        name: gix-pack with all features (including wasm)

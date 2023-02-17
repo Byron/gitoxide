@@ -323,7 +323,7 @@ and reachability bitmaps and repacks existing packs geometrically. Every 24h it 
     - It will be interesting to think of solutions involving the introduction of a bigger machine and migration of all repositories to there before the disk space runs out.
       Otherwise we believe that managing disk space is part of operation and not the server process itself.
 * **10** - write failure - fail connection
-    - write failures aren't specifically handled but result in typical Rust error behaviour probably alongside error reporting on the respective channels of the git-transport sideband.
+    - write failures aren't specifically handled but result in typical Rust error behaviour probably alongside error reporting on the respective channels of the gix-transport sideband.
     - `gitoxide` is made to cleanup on failure and leave nothing behind that could accumulate.
 * **11** - loose ref database - namespace isn't per connection
     - This needs fixing in `gitoxide` to probably be unshared by default. Namespaces are most useful on the server, which would use an `EasyArcExclusive` per connection.
@@ -384,7 +384,7 @@ The default favors speed and using all available cores, but savvy users can run 
     - This solution is implemented on application side (and not in `gitoxide`), it's interesting enough to mention though for systems that operate themselves.
     - One could also imagine that it tries to spend the nights aggressively compression repositories, some low-hanging fruits there.
 * **10** - write failure - fail connection
-    - write failures aren't specifically handled but result in typical Rust error behaviour probably alongside error reporting on the respective channels of the git-transport sideband.
+    - write failures aren't specifically handled but result in typical Rust error behaviour probably alongside error reporting on the respective channels of the gix-transport sideband.
     - `gitoxide` is made to cleanup on failure and leave nothing behind that could accumulate.
 * **11** - loose ref database - namespace isn't per connection
     - Needs fixing in `gitoxide`.
@@ -435,7 +435,7 @@ Please note that these are based on the following value system:
         - ❌ To keep the `Repository` free of type parameters we could boil policies down to typical policies, like Eager, Lazy, LazyThreadSafe, PooledLazy, PooledLazyThreadSafe,
           all with different tradeoffs. On that level, maybe 3 to 5 feature toggles would work, but who likes feature toggles especially if they aren't additive?
         - ✔️ `contains(oid)` is not actually exposed in any trait and not used much in `git` either, even though it is optimized for by loading pack data only on demand. We, however,
-          use `git_pack::Bundle` as smallest unit, which is a mapped index _and_ data file, thus forcing more work to be done in some cases. There is only one multi-pack index
+          use `gix_pack::Bundle` as smallest unit, which is a mapped index _and_ data file, thus forcing more work to be done in some cases. There is only one multi-pack index
           per repository, but that would force all packs to be loaded if it was implemented similarly, but that shows that Bundle's probably aren't the right abstraction or
           have to make their pack data optional. If that happens, we definitely need some sort of policy to make this work. Definitely put `contains(oid)` into the `Find` trait
           or a separate trait to enforce us dealing with this and keep multi-pack indices in mind.
@@ -508,8 +508,8 @@ Please note that these are based on the following value system:
           Existing implementations need to adjust their trait bounds and operate differently to accommodate. Counting objects and packing would be a good benchmark though, even though
           the latter doesn't even scale that well due to the required dashmap to check for existing objects. In other words, currently there seems to be no actual benchmark for parallel
           usage.
-            - In single-threaded operation the trait-bounds would prevent creation of packs unless they are adjusted as well, leading to `git-pack` requiring its own feature toggle
-              which we really try hard to avoid, but probably can be placed on application level, which has to use that to setup git-features accordingly, making it bearable. This
+            - In single-threaded operation the trait-bounds would prevent creation of packs unless they are adjusted as well, leading to `gix-pack` requiring its own feature toggle
+              which we really try hard to avoid, but probably can be placed on application level, which has to use that to setup gix-features accordingly, making it bearable. This
               means though that we need to implement single-threaded and multi-threaded versions of everything important, like pack generation based on the count (which already has
               a single-threaded version).
             - Maybe… after some benchmarks, we can entirely drop the single-threaded version if it's not significantly faster on a single thread (without thread primiives) than the

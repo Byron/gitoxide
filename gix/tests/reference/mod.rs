@@ -22,8 +22,8 @@ mod log {
 mod find {
     use std::convert::TryInto;
 
-    use git_ref as refs;
-    use git_ref::FullNameRef;
+    use gix_ref as refs;
+    use gix_ref::FullNameRef;
 
     use crate::util::hex_to_id;
 

@@ -1,6 +1,6 @@
 use std::{cell::RefCell, path::PathBuf};
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use crate::{head, remote};
 
@@ -48,7 +48,7 @@ pub struct Object<'repo> {
     /// The id of the object
     pub id: ObjectId,
     /// The kind of the object
-    pub kind: git_object::Kind,
+    pub kind: gix_object::Kind,
     /// The fully decoded object data
     pub data: Vec<u8>,
     pub(crate) repo: &'repo Repository,
@@ -113,7 +113,7 @@ pub struct ObjectDetached {
     /// The id of the object
     pub id: ObjectId,
     /// The kind of the object
-    pub kind: git_object::Kind,
+    pub kind: gix_object::Kind,
     /// The fully decoded object data
     pub data: Vec<u8>,
 }
@@ -124,7 +124,7 @@ pub struct ObjectDetached {
 #[derive(Clone)]
 pub struct Reference<'r> {
     /// The actual reference data
-    pub inner: git_ref::Reference,
+    pub inner: gix_ref::Reference,
     pub(crate) repo: &'r Repository,
 }
 
@@ -165,7 +165,7 @@ pub struct ThreadSafeRepository {
     /// A store for references to point at objects
     pub refs: crate::RefStore,
     /// A store for objects that contain data
-    pub objects: git_features::threading::OwnShared<git_odb::Store>,
+    pub objects: gix_features::threading::OwnShared<gix_odb::Store>,
     /// The path to the worktree at which to find checked out files
     pub work_tree: Option<PathBuf>,
     /// The path to the common directory if this is a linked worktree repository or it is otherwise set.
@@ -184,17 +184,17 @@ pub struct Remote<'repo> {
     pub(crate) name: Option<remote::Name<'static>>,
     /// The url of the host to talk to, after application of replacements. If it is unset, the `push_url` must be set.
     /// and fetches aren't possible.
-    pub(crate) url: Option<git_url::Url>,
+    pub(crate) url: Option<gix_url::Url>,
     /// The rewritten `url`, if it was rewritten.
-    pub(crate) url_alias: Option<git_url::Url>,
+    pub(crate) url_alias: Option<gix_url::Url>,
     /// The url to use for pushing specifically.
-    pub(crate) push_url: Option<git_url::Url>,
+    pub(crate) push_url: Option<gix_url::Url>,
     /// The rewritten `push_url`, if it was rewritten.
-    pub(crate) push_url_alias: Option<git_url::Url>,
+    pub(crate) push_url_alias: Option<gix_url::Url>,
     /// Refspecs for use when fetching.
-    pub(crate) fetch_specs: Vec<git_refspec::RefSpec>,
+    pub(crate) fetch_specs: Vec<gix_refspec::RefSpec>,
     /// Refspecs for use when pushing.
-    pub(crate) push_specs: Vec<git_refspec::RefSpec>,
+    pub(crate) push_specs: Vec<gix_refspec::RefSpec>,
     /// Tell us what to do with tags when fetched.
     pub(crate) fetch_tags: remote::fetch::Tags,
     // /// Delete local tracking branches that don't exist on the remote anymore.

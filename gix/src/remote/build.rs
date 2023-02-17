@@ -7,8 +7,8 @@ impl Remote<'_> {
     /// Set the `url` to be used when pushing data to a remote.
     pub fn push_url<Url, E>(self, url: Url) -> Result<Self, remote::init::Error>
     where
-        Url: TryInto<git_url::Url, Error = E>,
-        git_url::parse::Error: From<E>,
+        Url: TryInto<gix_url::Url, Error = E>,
+        gix_url::parse::Error: From<E>,
     {
         self.push_url_inner(url, true)
     }
@@ -17,8 +17,8 @@ impl Remote<'_> {
     /// eliminating one failure mode.
     pub fn push_url_without_url_rewrite<Url, E>(self, url: Url) -> Result<Self, remote::init::Error>
     where
-        Url: TryInto<git_url::Url, Error = E>,
-        git_url::parse::Error: From<E>,
+        Url: TryInto<gix_url::Url, Error = E>,
+        gix_url::parse::Error: From<E>,
     {
         self.push_url_inner(url, false)
     }
@@ -31,8 +31,8 @@ impl Remote<'_> {
 
     fn push_url_inner<Url, E>(mut self, push_url: Url, should_rewrite_urls: bool) -> Result<Self, remote::init::Error>
     where
-        Url: TryInto<git_url::Url, Error = E>,
-        git_url::parse::Error: From<E>,
+        Url: TryInto<gix_url::Url, Error = E>,
+        gix_url::parse::Error: From<E>,
     {
         let push_url = push_url
             .try_into()
@@ -52,7 +52,7 @@ impl Remote<'_> {
         mut self,
         specs: impl IntoIterator<Item = Spec>,
         direction: remote::Direction,
-    ) -> Result<Self, git_refspec::parse::Error>
+    ) -> Result<Self, gix_refspec::parse::Error>
     where
         Spec: AsRef<BStr>,
     {
@@ -60,11 +60,11 @@ impl Remote<'_> {
         let new_specs = specs
             .into_iter()
             .map(|spec| {
-                git_refspec::parse(
+                gix_refspec::parse(
                     spec.as_ref(),
                     match direction {
-                        Push => git_refspec::parse::Operation::Push,
-                        Fetch => git_refspec::parse::Operation::Fetch,
+                        Push => gix_refspec::parse::Operation::Push,
+                        Fetch => gix_refspec::parse::Operation::Fetch,
                     },
                 )
                 .map(|s| s.to_owned())

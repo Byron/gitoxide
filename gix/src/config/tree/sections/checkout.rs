@@ -30,7 +30,7 @@ mod workers {
         /// or `None` if the value isn't set which is typically interpreted as "as many threads as available"
         pub fn try_from_workers(
             &'static self,
-            value: Result<i64, git_config::value::Error>,
+            value: Result<i64, gix_config::value::Error>,
         ) -> Result<usize, crate::config::checkout::workers::Error> {
             match value {
                 Ok(v) if v < 0 => Ok(0),
@@ -48,9 +48,9 @@ pub mod validate {
     pub struct Workers;
     impl keys::Validate for Workers {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            super::Checkout::WORKERS.try_from_workers(git_config::Integer::try_from(value).and_then(|i| {
+            super::Checkout::WORKERS.try_from_workers(gix_config::Integer::try_from(value).and_then(|i| {
                 i.to_decimal()
-                    .ok_or_else(|| git_config::value::Error::new("Integer overflow", value.to_owned()))
+                    .ok_or_else(|| gix_config::value::Error::new("Integer overflow", value.to_owned()))
             }))?;
             Ok(())
         }

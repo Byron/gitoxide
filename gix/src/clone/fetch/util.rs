@@ -1,8 +1,8 @@
 use std::io::Write;
 use std::{borrow::Cow, convert::TryInto};
 
-use git_odb::Find;
-use git_ref::{
+use gix_odb::Find;
+use gix_ref::{
     transaction::{LogChange, RefLog},
     FullNameRef,
 };
@@ -22,28 +22,28 @@ enum WriteMode {
 pub fn write_remote_to_local_config_file(
     remote: &mut crate::Remote<'_>,
     remote_name: BString,
-) -> Result<git_config::File<'static>, Error> {
-    let mut config = git_config::File::new(local_config_meta(remote.repo));
+) -> Result<gix_config::File<'static>, Error> {
+    let mut config = gix_config::File::new(local_config_meta(remote.repo));
     remote.save_as_to(remote_name, &mut config)?;
 
     write_to_local_config(&config, WriteMode::Append)?;
     Ok(config)
 }
 
-fn local_config_meta(repo: &Repository) -> git_config::file::Metadata {
+fn local_config_meta(repo: &Repository) -> gix_config::file::Metadata {
     let meta = repo.config.resolved.meta().clone();
     assert_eq!(
         meta.source,
-        git_config::Source::Local,
+        gix_config::Source::Local,
         "local path is the default for new sections"
     );
     meta
 }
 
-fn write_to_local_config(config: &git_config::File<'static>, mode: WriteMode) -> std::io::Result<()> {
+fn write_to_local_config(config: &gix_config::File<'static>, mode: WriteMode) -> std::io::Result<()> {
     assert_eq!(
         config.meta().source,
-        git_config::Source::Local,
+        gix_config::Source::Local,
         "made for appending to local configuration file"
     );
     let mut local_config = std::fs::OpenOptions::new()
@@ -52,11 +52,11 @@ fn write_to_local_config(config: &git_config::File<'static>, mode: WriteMode) ->
         .append(matches!(mode, WriteMode::Append))
         .open(config.meta().path.as_deref().expect("local config with path set"))?;
     local_config.write_all(config.detect_newline_style())?;
-    config.write_to_filter(&mut local_config, |s| s.meta().source == git_config::Source::Local)
+    config.write_to_filter(&mut local_config, |s| s.meta().source == gix_config::Source::Local)
 }
 
-pub fn append_config_to_repo_config(repo: &mut Repository, config: git_config::File<'static>) {
-    let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
+pub fn append_config_to_repo_config(repo: &mut Repository, config: gix_config::File<'static>) {
+    let repo_config = gix_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
     repo_config.append(config);
 }
 
@@ -64,25 +64,25 @@ pub fn append_config_to_repo_config(repo: &mut Repository, config: git_config::F
 /// if we have to, as it might not have been naturally included in the ref-specs.
 pub fn update_head(
     repo: &mut Repository,
-    remote_refs: &[git_protocol::handshake::Ref],
+    remote_refs: &[gix_protocol::handshake::Ref],
     reflog_message: &BStr,
     remote_name: &BStr,
 ) -> Result<(), Error> {
-    use git_ref::{
+    use gix_ref::{
         transaction::{PreviousValue, RefEdit},
         Target,
     };
     let (head_peeled_id, head_ref) = match remote_refs.iter().find_map(|r| {
         Some(match r {
-            git_protocol::handshake::Ref::Symbolic {
+            gix_protocol::handshake::Ref::Symbolic {
                 full_ref_name,
                 target,
                 object,
             } if full_ref_name == "HEAD" => (Some(object.as_ref()), Some(target)),
-            git_protocol::handshake::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
+            gix_protocol::handshake::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
                 (Some(object.as_ref()), None)
             }
-            git_protocol::handshake::Ref::Unborn { full_ref_name, target } if full_ref_name == "HEAD" => {
+            gix_protocol::handshake::Ref::Unborn { full_ref_name, target } if full_ref_name == "HEAD" => {
                 (None, Some(target))
             }
             _ => return None,
@@ -92,7 +92,7 @@ pub fn update_head(
         None => return Ok(()),
     };
 
-    let head: git_ref::FullName = "HEAD".try_into().expect("valid");
+    let head: gix_ref::FullName = "HEAD".try_into().expect("valid");
     let reflog_message = || LogChange {
         mode: RefLog::AndReference,
         force_create_reflog: false,
@@ -100,13 +100,13 @@ pub fn update_head(
     };
     match head_ref {
         Some(referent) => {
-            let referent: git_ref::FullName = referent.try_into().map_err(|err| Error::InvalidHeadRef {
+            let referent: gix_ref::FullName = referent.try_into().map_err(|err| Error::InvalidHeadRef {
                 head_ref_name: referent.to_owned(),
                 source: err,
             })?;
             repo.refs
                 .transaction()
-                .packed_refs(git_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdates(
+                .packed_refs(gix_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdates(
                     Box::new(|oid, buf| {
                         repo.objects
                             .try_find(oid, buf)
@@ -117,7 +117,7 @@ pub fn update_head(
                 .prepare(
                     {
                         let mut edits = vec![RefEdit {
-                            change: git_ref::transaction::Change::Update {
+                            change: gix_ref::transaction::Change::Update {
                                 log: reflog_message(),
                                 expected: PreviousValue::Any,
                                 new: Target::Symbolic(referent.clone()),
@@ -127,7 +127,7 @@ pub fn update_head(
                         }];
                         if let Some(head_peeled_id) = head_peeled_id {
                             edits.push(RefEdit {
-                                change: git_ref::transaction::Change::Update {
+                                change: gix_ref::transaction::Change::Update {
                                     log: reflog_message(),
                                     expected: PreviousValue::Any,
                                     new: Target::Peeled(head_peeled_id.to_owned()),
@@ -138,8 +138,8 @@ pub fn update_head(
                         };
                         edits
                     },
-                    git_lock::acquire::Fail::Immediately,
-                    git_lock::acquire::Fail::Immediately,
+                    gix_lock::acquire::Fail::Immediately,
+                    gix_lock::acquire::Fail::Immediately,
                 )
                 .map_err(crate::reference::edit::Error::from)?
                 .commit(
@@ -153,7 +153,7 @@ pub fn update_head(
                 let mut log = reflog_message();
                 log.mode = RefLog::Only;
                 repo.edit_reference(RefEdit {
-                    change: git_ref::transaction::Change::Update {
+                    change: gix_ref::transaction::Change::Update {
                         log,
                         expected: PreviousValue::Any,
                         new: Target::Peeled(head_peeled_id.to_owned()),
@@ -167,7 +167,7 @@ pub fn update_head(
         }
         None => {
             repo.edit_reference(RefEdit {
-                change: git_ref::transaction::Change::Update {
+                change: gix_ref::transaction::Change::Update {
                     log: reflog_message(),
                     expected: PreviousValue::Any,
                     new: Target::Peeled(
@@ -190,11 +190,11 @@ pub fn update_head(
 fn setup_branch_config(
     repo: &mut Repository,
     branch: &FullNameRef,
-    branch_id: Option<&git_hash::oid>,
+    branch_id: Option<&gix_hash::oid>,
     remote_name: &BStr,
 ) -> Result<(), Error> {
     let short_name = match branch.category_and_short_name() {
-        Some((cat, shortened)) if cat == git_ref::Category::LocalBranch => match shortened.to_str() {
+        Some((cat, shortened)) if cat == gix_ref::Category::LocalBranch => match shortened.to_str() {
             Ok(s) => s,
             Err(_) => return Ok(()),
         },
@@ -203,10 +203,10 @@ fn setup_branch_config(
     let remote = repo
         .find_remote(remote_name)
         .expect("remote was just created and must be visible in config");
-    let group = git_refspec::MatchGroup::from_fetch_specs(remote.fetch_specs.iter().map(|s| s.to_ref()));
-    let null = git_hash::ObjectId::null(repo.object_hash());
+    let group = gix_refspec::MatchGroup::from_fetch_specs(remote.fetch_specs.iter().map(|s| s.to_ref()));
+    let null = gix_hash::ObjectId::null(repo.object_hash());
     let res = group.match_remotes(
-        Some(git_refspec::match_group::Item {
+        Some(gix_refspec::match_group::Item {
             full_ref_name: branch.as_bstr(),
             target: branch_id.unwrap_or(&null),
             object: None,

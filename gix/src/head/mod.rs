@@ -1,8 +1,8 @@
 //!
 use std::convert::TryInto;
 
-use git_hash::ObjectId;
-use git_ref::FullNameRef;
+use gix_hash::ObjectId;
+use gix_ref::FullNameRef;
 
 use crate::{
     ext::{ObjectIdExt, ReferenceExt},
@@ -15,11 +15,11 @@ pub enum Kind {
     /// The existing reference the symbolic HEAD points to.
     ///
     /// This is the common case.
-    Symbolic(git_ref::Reference),
+    Symbolic(gix_ref::Reference),
     /// The yet-to-be-created reference the symbolic HEAD refers to.
     ///
     /// This is the case in a newly initialized repository.
-    Unborn(git_ref::FullName),
+    Unborn(gix_ref::FullName),
     /// The head points to an object directly, not to a symbolic reference.
     ///
     /// This state is less common and can occur when checking out commits directly.

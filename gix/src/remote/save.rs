@@ -10,7 +10,7 @@ use crate::{
 #[allow(missing_docs)]
 pub enum Error {
     #[error("The remote pointing to {} is anonymous and can't be saved.", url.to_bstring())]
-    NameMissing { url: git_url::Url },
+    NameMissing { url: gix_url::Url },
 }
 
 /// The error returned by [`Remote::save_as_to()`].
@@ -25,15 +25,15 @@ pub enum AsError {
     Name(#[from] crate::remote::name::Error),
 }
 
-/// Serialize into git-config.
+/// Serialize into gix-config.
 impl Remote<'_> {
     /// Save ourselves to the given `config` if we are a named remote or fail otherwise.
     ///
     /// Note that all sections named `remote "<name>"` will be cleared of all values we are about to write,
     /// and the last `remote "<name>"` section will be containing all relevant values so that reloading the remote
     /// from `config` would yield the same in-memory state.
-    pub fn save_to(&self, config: &mut git_config::File<'static>) -> Result<(), Error> {
-        fn as_key(name: &str) -> git_config::parse::section::Key<'_> {
+    pub fn save_to(&self, config: &mut gix_config::File<'static>) -> Result<(), Error> {
+        fn as_key(name: &str) -> gix_config::parse::section::Key<'_> {
             name.try_into().expect("valid")
         }
         let name = self.name().ok_or_else(|| Error::NameMissing {
@@ -112,7 +112,7 @@ impl Remote<'_> {
     pub fn save_as_to(
         &mut self,
         name: impl Into<BString>,
-        config: &mut git_config::File<'static>,
+        config: &mut gix_config::File<'static>,
     ) -> Result<(), AsError> {
         let name = crate::remote::name::validated(name)?;
         let prev_name = self.name.take();

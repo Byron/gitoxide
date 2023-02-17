@@ -1,0 +1,21 @@
+[package]
+name = "gix-validate"
+version = "0.7.2"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "Validation functions for various kinds of names in git"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*"]
+rust-version = "1.64"
+
+[lib]
+doctest = false
+test = true
+
+[dependencies]
+thiserror = "1.0.34"
+bstr = { version = "1.0.1", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools" }

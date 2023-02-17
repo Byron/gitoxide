@@ -20,10 +20,10 @@ mod error {
         #[error("Could not parse 'useHttpPath' key in section {section}")]
         InvalidUseHttpPath {
             section: BString,
-            source: git_config::value::Error,
+            source: gix_config::value::Error,
         },
         #[error("core.askpass could not be read")]
-        CoreAskpass(#[from] git_config::path::interpolate::Error),
+        CoreAskpass(#[from] gix_config::path::interpolate::Error),
     }
 }
 
@@ -46,12 +46,12 @@ impl Snapshot<'_> {
     // TODO: when dealing with `http.*.*` configuration, generalize this algorithm as needed and support precedence.
     pub fn credential_helpers(
         &self,
-        mut url: git_url::Url,
+        mut url: gix_url::Url,
     ) -> Result<
         (
-            git_credentials::helper::Cascade,
-            git_credentials::helper::Action,
-            git_prompt::Options<'static>,
+            gix_credentials::helper::Cascade,
+            gix_credentials::helper::Action,
+            gix_prompt::Options<'static>,
         ),
         Error,
     > {
@@ -68,9 +68,9 @@ impl Snapshot<'_> {
         {
             for section in credential_sections {
                 let section = match section.header().subsection_name() {
-                    Some(pattern) => git_url::parse(pattern).ok().and_then(|mut pattern| {
+                    Some(pattern) => gix_url::parse(pattern).ok().and_then(|mut pattern| {
                         normalize(&mut pattern);
-                        let is_http = matches!(pattern.scheme, git_url::Scheme::Https | git_url::Scheme::Http);
+                        let is_http = matches!(pattern.scheme, gix_url::Scheme::Https | gix_url::Scheme::Http);
                         let scheme = &pattern.scheme;
                         let host = pattern.host();
                         let ports = is_http
@@ -103,7 +103,7 @@ impl Snapshot<'_> {
                         if value.trim().is_empty() {
                             programs.clear();
                         } else {
-                            programs.push(git_credentials::Program::from_custom_definition(value.into_owned()));
+                            programs.push(gix_credentials::Program::from_custom_definition(value.into_owned()));
                         }
                     }
                     if let Some(Some(user)) = (!url_had_user_initially).then(|| {
@@ -120,7 +120,7 @@ impl Snapshot<'_> {
                     if let Some(toggle) = section
                         .value(use_http_path_key.name)
                         .map(|val| {
-                            git_config::Boolean::try_from(val)
+                            gix_config::Boolean::try_from(val)
                                 .map_err(|err| Error::InvalidUseHttpPath {
                                     source: err,
                                     section: section.header().to_bstring(),
@@ -137,7 +137,7 @@ impl Snapshot<'_> {
 
         let allow_git_env = self.repo.options.permissions.env.git_prefix.is_allowed();
         let allow_ssh_env = self.repo.options.permissions.env.ssh_prefix.is_allowed();
-        let prompt_options = git_prompt::Options {
+        let prompt_options = gix_prompt::Options {
             askpass: self
                 .trusted_path(Core::ASKPASS.logical_name().as_str())
                 .transpose()?
@@ -146,14 +146,14 @@ impl Snapshot<'_> {
         }
         .apply_environment(allow_git_env, allow_ssh_env, allow_git_env);
         Ok((
-            git_credentials::helper::Cascade {
+            gix_credentials::helper::Cascade {
                 programs,
                 use_http_path,
                 // The default ssh implementation uses binaries that do their own auth, so our passwords aren't used.
-                query_user_only: url.scheme == git_url::Scheme::Ssh,
+                query_user_only: url.scheme == gix_url::Scheme::Ssh,
                 ..Default::default()
             },
-            git_credentials::helper::Action::get_for_url(url.to_bstring()),
+            gix_credentials::helper::Action::get_for_url(url.to_bstring()),
             prompt_options,
         ))
     }
@@ -169,14 +169,14 @@ fn host_matches(pattern: Option<&str>, host: Option<&str>) -> bool {
             }
             lfields
                 .zip(rfields)
-                .all(|(pat, value)| git_glob::wildmatch(pat.into(), value.into(), git_glob::wildmatch::Mode::empty()))
+                .all(|(pat, value)| gix_glob::wildmatch(pat.into(), value.into(), gix_glob::wildmatch::Mode::empty()))
         }
         (None, None) => true,
         (Some(_), None) | (None, Some(_)) => false,
     }
 }
 
-fn normalize(url: &mut git_url::Url) {
+fn normalize(url: &mut gix_url::Url) {
     if !url.path_is_root() && url.path.ends_with(b"/") {
         url.path.pop();
     }

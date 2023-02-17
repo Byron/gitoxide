@@ -117,7 +117,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
    originating from separate config files), the fallback name and email
    ("gitoxide" and "gitoxide@localhost") would be used.
    
-   The solution is to use git_config::File::string() to lookup the name and
+   The solution is to use gix_config::File::string() to lookup the name and
    email separately. The string() method correctly resolves the value by
    looking through all sections from all files in the correct order.
 
@@ -200,7 +200,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
 
 ### New Features
 
- - <csr-id-1683a848459cae2b9182b365e3e22b0e8ba73534/> expose `git-features` crate at root under `features`.
+ - <csr-id-1683a848459cae2b9182b365e3e22b0e8ba73534/> expose `gix-features` crate at root under `features`.
    That way application developers can use more of the utilities
    that power most of the `gitoxide` plumbing crates.
  - <csr-id-90ef6fc36b440cc4baf3fde4a30060f1b4a0c8cf/> `Remote` knows about its `tagOpt` configuration.
@@ -362,7 +362,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
    who is adhering to the MSRV, but let's be careful and mark it
    breaking.
    
-   Note that `git-features` and `git-pack` are still on edition 2018
+   Note that `gix-features` and `gix-pack` are still on edition 2018
    as they make use of a workaround to support (safe) mutable access
    to non-overlapping entries in a slice which doesn't work anymore
    in edition 2021.
@@ -405,7 +405,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
 ### Changed (BREAKING)
 
  - <csr-id-c50868c7ed7309515b4f0a188213d332d57dd146/> Move `object::tree::diff::change::DiffPlatform` to `object::blob::diff::Platform`.
- - <csr-id-4ee32713093c2e41a12d148c6030add1df6aa966/> new `DiffPlatform::counts()`, open `DiffPlatform` for use of `git-diff::blob::*`.
+ - <csr-id-4ee32713093c2e41a12d148c6030add1df6aa966/> new `DiffPlatform::counts()`, open `DiffPlatform` for use of `gix-diff::blob::*`.
 
 ## 0.26.0 (2022-11-06)
 
@@ -534,7 +534,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
    When true, default false, inject the git installation configuration file
    if present at the cost of one `git config` invocation.
    
-   Note that we rely on the underlying `git-config` crate to not load
+   Note that we rely on the underlying `gix-config` crate to not load
    duplicate files.
    
    We also currently lie about the scope which is actually unclear - have
@@ -584,7 +584,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
    It's unclear what is causing this except that git2 doesn't like libz
    with zlibng support enabled, which happens if git2 in the
    same tree is with us.
- - Transitively through a kindly contributed fix in the `git-discover` crate, `Repository` can now be opened on `exFat` volumes.
+ - Transitively through a kindly contributed fix in the `gix-discover` crate, `Repository` can now be opened on `exFat` volumes.
 
 ## 0.23.0 (2022-08-28)
 
@@ -605,7 +605,7 @@ Furthermore, all `git-*` crates belonging to the `gitoxide` project will be rena
 
 ### New Features (BREAKING)
 
- - <csr-id-e090f843f5cffc8e8e47a8cac2e6fb98e4c47771/> `git-diff` is now included by default as part of core functionality
+ - <csr-id-e090f843f5cffc8e8e47a8cac2e6fb98e4c47771/> `gix-diff` is now included by default as part of core functionality
 
 ## 0.22.1 (2022-08-24)
 
@@ -621,7 +621,7 @@ A maintenance release without user facing changes.
 
 ### New Features
 
- - <csr-id-c28bcec19b5526acf888f928e6ddc4671873368e/> support avoiding usage of `fast-sha1` in git-features separately.
+ - <csr-id-c28bcec19b5526acf888f928e6ddc4671873368e/> support avoiding usage of `fast-sha1` in gix-features separately.
    That way one has an angle on compile failures in client libraries,
    see https://github.com/o2sh/onefetch/pull/752 for motivation.
  - <csr-id-4f87a0672f7288486a9b6403c0bb07a6279d2cfe/> `Repository::write_blob[_stream]()` to more easily write blobs.
@@ -671,7 +671,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
  - <csr-id-47619f7c06a49dcf60a30e1a43a5352914183092/> add `Repository::object_cache_size_if_unset()`
  - <csr-id-d2611cee61841bc7bd978bef5af7dc66154248a2/> `Commit::message_raw_sloppy()` to provide yet another way to obtain a commit message.
  - <csr-id-906c95845fa4aa2d4390c522bb566a188b8c0e78/> add `rev_spec::parse::ObjectKindHint` to support `core.disambiguate`.
-   The latter is seemingly undocumented in the typical place, git-config.
+   The latter is seemingly undocumented in the typical place, gix-config.
  - <csr-id-ef187f0180d89544d9015cbc2bc03d8cb51f4615/> `Remote::with_refspec()` to add new unique refspecs
  - <csr-id-d51ba42c643d8ee03a3c6b648f8524ff04827170/> `Remote::push_url()` to set it after the fact
  - <csr-id-9b07b91ad065836e7473df6635025659af2865ee/> `Repository::remote_at(…)` to create an unnamed remote
@@ -700,7 +700,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
  - <csr-id-1c12d49eefa6d79ef50b2960f41b29de680ac8eb/> rename `Repository::load_mailmap*` to `Repository::open_mailmap*`.
    For consistency with other similar methods.
  - <csr-id-ea35183b53f2ff71bdf2270ac4f7470a85d7756f/> remove `Repository::load_index()` in favor of `repo.worktree().open_index()`.
- - <csr-id-4fd096840ba27da6ce86678a85ede33e3be974ff/> `git_revision` is now available in `revision::plumbing`.
+ - <csr-id-4fd096840ba27da6ce86678a85ede33e3be974ff/> `gix_revision` is now available in `revision::plumbing`.
    That way it won't clash with the higher-level constructs on top of it
    which use the same names.
  - <csr-id-2424957cff75daacf6f6f14f74b9639f6875c4fb/> Turn `id::Ancestors` into general-purpose `RevWalk`.
@@ -736,7 +736,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
    directory.
  - <csr-id-840d9a3018d11146bb8e80fc92693c65eb534d91/> permissions for configuration.
    It provides fine-grained control over what sources to load.
- - <csr-id-657080829867d9dcb0c9b9cb6c1c8126c4df3783/> `git-config` is now accessible in `git-repository::config`.
+ - <csr-id-657080829867d9dcb0c9b9cb6c1c8126c4df3783/> `gix-config` is now accessible in `git-repository::config`.
  - <csr-id-d99453ebeb970ed493be236def299d1e82b01f83/> `gix config` lists all entries of all configuration files git considers.
    Filters allow to narrow down the output.
  - <csr-id-ebedd03e119aa5d46da07e577bfccad621eaecb5/> repository now initializes global configuration files and resolves includes
@@ -745,7 +745,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
    We also apply trust-based config query during initialization to assure
    we don't use paths which aren't owned by the current user.
  - <csr-id-5f9bfa89ceb61f484be80575b0379bbf9d7a36b3/> `Repository::config_snapshot()` to access configuration values.
- - <csr-id-7f67b23b9462b805591b1fe5a8406f8d7404f372/> Use `git-config` to write config file on initialization, including `logallrefupdates` and `precomposeunicode`.
+ - <csr-id-7f67b23b9462b805591b1fe5a8406f8d7404f372/> Use `gix-config` to write config file on initialization, including `logallrefupdates` and `precomposeunicode`.
  - <csr-id-e263e13d312e41aa1481d104fa79ede509fbe1c5/> respect `core.logallrefupdates` configuration setting.
 
 ### Changed (BREAKING)
@@ -844,7 +844,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
 
 ### New Features (BREAKING)
 
- - <csr-id-32dc1829a5661f66396d109c8d0a8eaae6b1f532/> use `git-credentials` in `git-protocol`
+ - <csr-id-32dc1829a5661f66396d109c8d0a8eaae6b1f532/> use `gix-credentials` in `gix-protocol`
 
 ## 0.16.0 (2022-04-05)
 
@@ -972,9 +972,9 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
    created while adding support for reusing their data buffers thanks
    to a simple free-list stored with the handle.
  - <csr-id-880b56426859306aa30038ff35e2ad14607e9e90/> rename `easy::Object` to `OwnedObject`; remove `Ref` suffix from `ObjectRef` and `TreeRef`
- - <csr-id-f9c0493460ab7c664aaa231ffcf7dfd56076c920/> use `git_odb::Find*` traits in prelude, instead of `git_pack::Find*`
+ - <csr-id-f9c0493460ab7c664aaa231ffcf7dfd56076c920/> use `gix_odb::Find*` traits in prelude, instead of `gix_pack::Find*`
    These are higher-level and generally more desirable.
-   The Find traits in `git-pack` are more useful internally when packs
+   The Find traits in `gix-pack` are more useful internally when packs
    have to be handled directly, for example when generating packs.
  - <csr-id-83d7b31e7dd6d09eea79fc3c68620d099459132f/> rename easy::State to easy::Handle
    As the first step to remove the 'Easy' abstraction.
@@ -1002,7 +1002,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
  - remove pack-cache from `Find::try_find(…)`
    With the new architecture this can be an implementation detail without
    forcing it to be Sync.
- - move git_pack::data::Object to git_object::Data, massively alter git_odb::Find trait
+ - move gix_pack::data::Object to gix_object::Data, massively alter gix_odb::Find trait
    This will break a lot, but has to happen to prepare these traits for the
    next generation of object databases.
 
@@ -1011,7 +1011,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
 <csr-id-951c050ecbb70c9de216603e55c7cfbc89a067e3/>
 <csr-id-0e1875363fea09452789d7a90fc6860a7996d6d3/>
 
-With changes to `git-ref`, what follows is all the adjustments made to simplify the `gix` implementation.
+With changes to `gix-ref`, what follows is all the adjustments made to simplify the `gix` implementation.
 
 ### Changed (BREAKING)
 
@@ -1020,13 +1020,13 @@ With changes to `git-ref`, what follows is all the adjustments made to simplify 
    while allowing the exact same iterator machinery to work as before.
  - <csr-id-15d429bb50602363292453606902bdce5042d9a5/> file::Store::(try_)find(…, packed) was removed
    The packed buffer is now handled internally while loading it on demand.
-   When compiled with `git-features/parallel` the `file::Store` remains
+   When compiled with `gix-features/parallel` the `file::Store` remains
    send and sync.
    
    The packed refs buffer is shared across clones and it's recommended
    to clone one `file::Store` instance per thread, each of which can
    use its own namespace.
- - <csr-id-95247322a8191edfa7fac9c5aa72b40239f3aa88/> move `git_ref::file::WriteRefLog` to `git_ref::store::WriteRefLog`
+ - <csr-id-95247322a8191edfa7fac9c5aa72b40239f3aa88/> move `gix_ref::file::WriteRefLog` to `gix_ref::store::WriteRefLog`
 
 ### Bug Fixes (BREAKING)
 
@@ -1063,7 +1063,7 @@ With changes to `git-ref`, what follows is all the adjustments made to simplify 
 
 ## v0.11.0 (2021-10-19)
 
-A maintenance release to properly dealing with previously breaking changes in `git-hash`.
+A maintenance release to properly dealing with previously breaking changes in `gix-hash`.
 
 ## v0.10.0 (2021-10-15)
 
@@ -1110,7 +1110,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 ### New Features
 
- - <csr-id-11b64fce4630371633b6415f227eecdc6b42b20b/> Make `git_url::Url` available under `gix::Url`
+ - <csr-id-11b64fce4630371633b6415f227eecdc6b42b20b/> Make `gix_url::Url` available under `gix::Url`
  - <csr-id-80b8331092f4856f52afa1d85fa375ae688bdd28/> add easy::ext::ObjectAccessExt::tag(…) to create tag objects
    It's a quick sketch on how tag object creation could work.
    
@@ -1121,7 +1121,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
    Most will only ever need one, right?
    
    Even in my example that's not the case, so maybe we have to rename it.
- - <csr-id-0ebfeb614264ca06ab763189e55e6c016c9997af/> Make `git_url::Url` available under `gix::Url`
+ - <csr-id-0ebfeb614264ca06ab763189e55e6c016c9997af/> Make `gix_url::Url` available under `gix::Url`
 
 ### BREAKING Changes
 
@@ -1159,8 +1159,8 @@ A maintenance release to properly dealing with previously breaking changes in `g
 ### Refactor
 
  - <csr-id-8fe461281842b58aa11437445637c6e587bedd63/> split data::output::count::objects into files
- - <csr-id-b209da29f361512ba757febf56bc1aca039f2a41/> use new git_pack::cache::Object trait
- - <csr-id-741558dd8194590c5cc8566aa22f96e73df38edf/> remove object cache impl which now lives in git-pack
+ - <csr-id-b209da29f361512ba757febf56bc1aca039f2a41/> use new gix_pack::cache::Object trait
+ - <csr-id-741558dd8194590c5cc8566aa22f96e73df38edf/> remove object cache impl which now lives in gix-pack
 
 ### Other
 

@@ -1,6 +1,6 @@
 //!
-use git_object::commit::MessageRef;
-use git_ref::file::ReferenceExt;
+use gix_object::commit::MessageRef;
+use gix_ref::file::ReferenceExt;
 
 use crate::{
     bstr::{BStr, BString, ByteVec},
@@ -9,7 +9,7 @@ use crate::{
 
 impl<'repo> Reference<'repo> {
     /// Return a platform for obtaining iterators over reference logs.
-    pub fn log_iter(&self) -> git_ref::file::log::iter::Platform<'_, '_> {
+    pub fn log_iter(&self) -> gix_ref::file::log::iter::Platform<'_, '_> {
         self.inner.log_iter(&self.repo.refs)
     }
 }

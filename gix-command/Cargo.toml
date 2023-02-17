@@ -1,0 +1,18 @@
+[package]
+name = "gix-command"
+version = "0.2.3"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project handling internal git command execution"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+rust-version = "1.64"
+
+[lib]
+doctest = false
+
+[dependencies]
+bstr = "1.0.1"
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools" }

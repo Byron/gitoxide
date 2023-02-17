@@ -1,0 +1,21 @@
+[package]
+name = "gix-traverse-tests"
+version = "0.0.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*"]
+rust-version = "1.64"
+
+[[test]]
+name ="test"
+path = "traverse.rs"
+
+[dev-dependencies]
+gix-traverse = { path = ".." }
+gix-testtools = { path = "../../tests/tools" }
+gix-odb = { path = "../../gix-odb" }
+gix-hash = { path = "../../gix-hash" }
+gix-object = { path = "../../gix-object" }

@@ -1,5 +1,5 @@
-pub use git_config::*;
-use git_features::threading::OnceCell;
+pub use gix_config::*;
+use gix_features::threading::OnceCell;
 
 use crate::{bstr::BString, repository::identity, revision::spec, Repository};
 
@@ -31,7 +31,7 @@ pub struct Snapshot<'repo> {
 //       to affect all instances of a repo, probably via `config_mut()` and `config_mut_at()`.
 pub struct SnapshotMut<'repo> {
     pub(crate) repo: Option<&'repo mut Repository>,
-    pub(crate) config: git_config::File<'static>,
+    pub(crate) config: gix_config::File<'static>,
 }
 
 /// A utility structure created by [`SnapshotMut::commit_auto_rollback()`] that restores the previous configuration on drop.
@@ -41,8 +41,8 @@ pub struct CommitAutoRollback<'repo> {
 }
 
 pub(crate) mod section {
-    pub fn is_trusted(meta: &git_config::file::Metadata) -> bool {
-        meta.trust == git_sec::Trust::Full || meta.source.kind() != git_config::source::Kind::Repository
+    pub fn is_trusted(meta: &gix_config::file::Metadata) -> bool {
+        meta.trust == gix_sec::Trust::Full || meta.source.kind() != gix_config::source::Kind::Repository
     }
 }
 
@@ -65,18 +65,18 @@ pub enum Error {
     #[error("Could not read configuration file")]
     Io(#[from] std::io::Error),
     #[error(transparent)]
-    Init(#[from] git_config::file::init::Error),
+    Init(#[from] gix_config::file::init::Error),
     #[error(transparent)]
-    ResolveIncludes(#[from] git_config::file::includes::Error),
+    ResolveIncludes(#[from] gix_config::file::includes::Error),
     #[error(transparent)]
-    FromEnv(#[from] git_config::file::init::from_env::Error),
+    FromEnv(#[from] gix_config::file::init::from_env::Error),
     #[error(transparent)]
-    PathInterpolation(#[from] git_config::path::interpolate::Error),
+    PathInterpolation(#[from] gix_config::path::interpolate::Error),
     #[error("{source:?} configuration overrides at open or init time could not be applied.")]
     ConfigOverrides {
         #[source]
         err: overrides::Error,
-        source: git_config::Source,
+        source: gix_config::Source,
     },
 }
 
@@ -111,7 +111,7 @@ pub mod checkout_options {
         #[error(transparent)]
         CheckoutWorkers(#[from] super::checkout::workers::Error),
         #[error("Failed to interpolate the attribute file configured at `core.attributesFile`")]
-        AttributesFileInterpolation(#[from] git_config::path::interpolate::Error),
+        AttributesFileInterpolation(#[from] gix_config::path::interpolate::Error),
     }
 }
 
@@ -235,10 +235,10 @@ pub mod key {
     }
 
     /// A generic key error for use when it doesn't seem worth it say more than 'key is invalid' along with meta-data.
-    pub type GenericError<E = git_config::value::Error> = Error<E, 'k', 'i'>;
+    pub type GenericError<E = gix_config::value::Error> = Error<E, 'k', 'i'>;
 
     /// A generic key error which will also contain a value.
-    pub type GenericErrorWithValue<E = git_config::value::Error> = Error<E, 'v', 'i'>;
+    pub type GenericErrorWithValue<E = gix_config::value::Error> = Error<E, 'v', 'i'>;
 }
 
 ///
@@ -248,7 +248,7 @@ pub mod checkout {
         use crate::config;
 
         /// The error produced when failing to parse the the `checkout.workers` key.
-        pub type Error = config::key::Error<git_config::value::Error, 'n', 'd'>;
+        pub type Error = config::key::Error<gix_config::value::Error, 'n', 'd'>;
     }
 }
 
@@ -279,37 +279,37 @@ pub mod remote {
 ///
 pub mod time {
     /// The error produced when failing to parse time from configuration.
-    pub type Error = super::key::Error<git_date::parse::Error, 't', 'i'>;
+    pub type Error = super::key::Error<gix_date::parse::Error, 't', 'i'>;
 }
 
 ///
 pub mod lock_timeout {
     /// The error produced when failing to parse timeout for locks.
-    pub type Error = super::key::Error<git_config::value::Error, 'i', 'i'>;
+    pub type Error = super::key::Error<gix_config::value::Error, 'i', 'i'>;
 }
 
 ///
 pub mod duration {
     /// The error produced when failing to parse durations (in milliseconds).
-    pub type Error = super::key::Error<git_config::value::Error, 'd', 'i'>;
+    pub type Error = super::key::Error<gix_config::value::Error, 'd', 'i'>;
 }
 
 ///
 pub mod boolean {
     /// The error produced when failing to parse time from configuration.
-    pub type Error = super::key::Error<git_config::value::Error, 'b', 'i'>;
+    pub type Error = super::key::Error<gix_config::value::Error, 'b', 'i'>;
 }
 
 ///
 pub mod unsigned_integer {
     /// The error produced when failing to parse a signed integer from configuration.
-    pub type Error = super::key::Error<git_config::value::Error, 'k', 'u'>;
+    pub type Error = super::key::Error<gix_config::value::Error, 'k', 'u'>;
 }
 
 ///
 pub mod url {
     /// The error produced when failing to parse a url from the configuration.
-    pub type Error = super::key::Error<git_url::parse::Error, 'u', 'p'>;
+    pub type Error = super::key::Error<gix_url::parse::Error, 'u', 'p'>;
 }
 
 ///
@@ -321,7 +321,7 @@ pub mod string {
 ///
 pub mod refspec {
     /// The error produced when failing to parse a refspec from the configuration.
-    pub type Error = super::key::Error<git_refspec::parse::Error, 'r', 'p'>;
+    pub type Error = super::key::Error<gix_refspec::parse::Error, 'r', 'p'>;
 }
 
 ///
@@ -350,12 +350,12 @@ pub mod transport {
         },
         #[error("Could not interpret configuration key {key:?}")]
         ConfigValue {
-            source: git_config::value::Error,
+            source: gix_config::value::Error,
             key: &'static str,
         },
         #[error("Could not interpolate path at key {key:?}")]
         InterpolatePath {
-            source: git_config::path::interpolate::Error,
+            source: gix_config::path::interpolate::Error,
             key: &'static str,
         },
         #[error("Could not decode value at key {key:?} as UTF-8 string")]
@@ -364,7 +364,7 @@ pub mod transport {
             source: crate::config::string::Error,
         },
         #[error("Invalid URL passed for configuration")]
-        ParseUrl(#[from] git_url::parse::Error),
+        ParseUrl(#[from] gix_url::parse::Error),
         #[error("Could obtain configuration for an HTTP url")]
         Http(#[from] http::Error),
     }
@@ -414,11 +414,11 @@ pub(crate) struct Cache {
     /// true if the repository is designated as 'bare', without work tree.
     pub is_bare: bool,
     /// The type of hash to use.
-    pub object_hash: git_hash::Kind,
+    pub object_hash: gix_hash::Kind,
     /// If true, multi-pack indices, whether present or not, may be used by the object database.
     pub use_multi_pack_index: bool,
     /// The representation of `core.logallrefupdates`, or `None` if the variable wasn't set.
-    pub reflog: Option<git_ref::store::WriteReflog>,
+    pub reflog: Option<gix_ref::store::WriteReflog>,
     /// The configured user agent for presentation to servers.
     pub(crate) user_agent: OnceCell<String>,
     /// identities for later use, lazy initialization.
@@ -431,14 +431,14 @@ pub(crate) struct Cache {
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     pub(crate) url_scheme: OnceCell<crate::remote::url::SchemePermission>,
     /// The algorithm to use when diffing blobs
-    pub(crate) diff_algorithm: OnceCell<git_diff::blob::Algorithm>,
+    pub(crate) diff_algorithm: OnceCell<gix_diff::blob::Algorithm>,
     /// The amount of bytes to use for a memory backed delta pack cache. If `Some(0)`, no cache is used, if `None`
     /// a standard cache is used which costs near to nothing and always pays for itself.
     pub(crate) pack_cache_bytes: Option<usize>,
     /// The amount of bytes to use for caching whole objects, or 0 to turn it off entirely.
     pub(crate) object_cache_bytes: usize,
     /// The config section filter from the options used to initialize this instance. Keep these in sync!
-    filter_config_section: fn(&git_config::file::Metadata) -> bool,
+    filter_config_section: fn(&gix_config::file::Metadata) -> bool,
     /// The object kind to pick if a prefix is ambiguous.
     pub object_kind_hint: Option<spec::parse::ObjectKindHint>,
     /// If true, we are on a case-insensitive file system.
@@ -447,8 +447,8 @@ pub(crate) struct Cache {
     /// Also available in options! Keep in sync!
     pub lenient_config: bool,
     /// Define how we can use values obtained with `xdg_config(…)` and its `XDG_CONFIG_HOME` variable.
-    xdg_config_home_env: git_sec::Permission,
+    xdg_config_home_env: gix_sec::Permission,
     /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.
-    home_env: git_sec::Permission,
+    home_env: gix_sec::Permission,
     // TODO: make core.precomposeUnicode available as well.
 }

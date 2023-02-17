@@ -1,7 +1,7 @@
 //!
 
 /// An empty array of a type usable with the `gix::easy` API to help declaring no parents should be used
-pub const NO_PARENT_IDS: [git_hash::ObjectId; 0] = [];
+pub const NO_PARENT_IDS: [gix_hash::ObjectId; 0] = [];
 
 /// The error returned by [`commit(…)`][crate::Repository::commit()].
 #[derive(Debug, thiserror::Error)]
@@ -14,7 +14,7 @@ pub enum Error {
     #[error("Author identity is not configured")]
     AuthorMissing,
     #[error(transparent)]
-    ReferenceNameValidation(#[from] git_ref::name::Error),
+    ReferenceNameValidation(#[from] gix_ref::name::Error),
     #[error(transparent)]
     WriteObject(#[from] crate::object::write::Error),
     #[error(transparent)]
@@ -25,23 +25,23 @@ pub enum Error {
 pub mod describe {
     use std::borrow::Cow;
 
-    use git_hash::ObjectId;
-    use git_hashtable::HashMap;
-    use git_odb::Find;
+    use gix_hash::ObjectId;
+    use gix_hashtable::HashMap;
+    use gix_odb::Find;
 
     use crate::{bstr::BStr, ext::ObjectIdExt, Repository};
 
     /// The result of [try_resolve()][Platform::try_resolve()].
     pub struct Resolution<'repo> {
         /// The outcome of the describe operation.
-        pub outcome: git_revision::describe::Outcome<'static>,
+        pub outcome: gix_revision::describe::Outcome<'static>,
         /// The id to describe.
         pub id: crate::Id<'repo>,
     }
 
     impl<'repo> Resolution<'repo> {
         /// Turn this instance into something displayable
-        pub fn format(self) -> Result<git_revision::describe::Format<'static>, Error> {
+        pub fn format(self) -> Result<gix_revision::describe::Format<'static>, Error> {
             let prefix = self.id.shorten()?;
             Ok(self.outcome.into_format(prefix.hex_len()))
         }
@@ -52,7 +52,7 @@ pub mod describe {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Describe(#[from] git_revision::describe::Error<git_odb::store::find::Error>),
+        Describe(#[from] gix_revision::describe::Error<gix_odb::store::find::Error>),
         #[error("Could not produce an unambiguous shortened id for formatting.")]
         ShortId(#[from] crate::id::shorten::Error),
         #[error(transparent)]
@@ -154,7 +154,7 @@ pub mod describe {
 
     /// A support type to allow configuring a `git describe` operation
     pub struct Platform<'repo> {
-        pub(crate) id: git_hash::ObjectId,
+        pub(crate) id: gix_hash::ObjectId,
         pub(crate) repo: &'repo crate::Repository,
         pub(crate) select: SelectRef,
         pub(crate) first_parent: bool,
@@ -191,7 +191,7 @@ pub mod describe {
         /// if one was found.
         ///
         /// Note that there will always be `Some(format)`
-        pub fn try_format(&self) -> Result<Option<git_revision::describe::Format<'static>>, Error> {
+        pub fn try_format(&self) -> Result<Option<gix_revision::describe::Format<'static>>, Error> {
             self.try_resolve()?.map(|r| r.format()).transpose()
         }
 
@@ -206,7 +206,7 @@ pub mod describe {
         /// to save ~40% of time.
         pub fn try_resolve(&self) -> Result<Option<Resolution<'repo>>, Error> {
             // TODO: dirty suffix with respective dirty-detection
-            let outcome = git_revision::describe(
+            let outcome = gix_revision::describe(
                 &self.id,
                 |id, buf| {
                     Ok(self
@@ -215,7 +215,7 @@ pub mod describe {
                         .try_find(id, buf)?
                         .and_then(|d| d.try_into_commit_iter()))
                 },
-                git_revision::describe::Options {
+                gix_revision::describe::Options {
                     name_by_oid: self.select.names(self.repo)?,
                     fallback_to_oid: self.id_as_fallback,
                     first_parent: self.first_parent,
@@ -230,7 +230,7 @@ pub mod describe {
         }
 
         /// Like [`try_format()`][Platform::try_format()], but turns `id_as_fallback()` on to always produce a format.
-        pub fn format(&mut self) -> Result<git_revision::describe::Format<'static>, Error> {
+        pub fn format(&mut self) -> Result<gix_revision::describe::Format<'static>, Error> {
             self.id_as_fallback = true;
             Ok(self.try_format()?.expect("BUG: fallback must always produce a format"))
         }

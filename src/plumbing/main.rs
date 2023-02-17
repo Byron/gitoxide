@@ -34,7 +34,7 @@ pub mod async_util {
         range: impl Into<Option<ProgressRange>>,
     ) -> (
         Option<prodash::render::line::JoinHandle>,
-        git_features::progress::DoOrDiscard<prodash::tree::Item>,
+        gix_features::progress::DoOrDiscard<prodash::tree::Item>,
     ) {
         use crate::shared::{self, STANDARD_RANGE};
         shared::init_env_logger();

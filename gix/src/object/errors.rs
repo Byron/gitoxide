@@ -6,11 +6,11 @@ pub mod conversion {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Decode(#[from] git_object::decode::Error),
+        Decode(#[from] gix_object::decode::Error),
         #[error("Expected object type {}, but got {}", .expected, .actual)]
         UnexpectedType {
-            expected: git_object::Kind,
-            actual: git_object::Kind,
+            expected: gix_object::Kind,
+            actual: gix_object::Kind,
         },
     }
 }
@@ -18,17 +18,17 @@ pub mod conversion {
 ///
 pub mod find {
     /// Indicate that an error occurred when trying to find an object.
-    pub type Error = git_odb::store::find::Error;
+    pub type Error = gix_odb::store::find::Error;
 
     ///
     pub mod existing {
         /// An object could not be found in the database, or an error occurred when trying to obtain it.
-        pub type Error = git_odb::find::existing::Error<git_odb::store::find::Error>;
+        pub type Error = gix_odb::find::existing::Error<gix_odb::store::find::Error>;
     }
 }
 
 ///
 pub mod write {
     /// An error to indicate writing to the loose object store failed.
-    pub type Error = git_odb::store::write::Error;
+    pub type Error = gix_odb::store::write::Error;
 }

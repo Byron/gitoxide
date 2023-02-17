@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use git_path::realpath::MAX_SYMLINKS;
+use gix_path::realpath::MAX_SYMLINKS;
 
 impl crate::Repository {
     /// Return the path to the repository itself, containing objects, references, configuration, and more.
@@ -11,7 +11,7 @@ impl crate::Repository {
     }
 
     /// The trust we place in the git-dir, with lower amounts of trust causing access to configuration to be limited.
-    pub fn git_dir_trust(&self) -> git_sec::Trust {
+    pub fn git_dir_trust(&self) -> gix_sec::Trust {
         self.options.git_dir_trust.expect("definitely set by now")
     }
 
@@ -48,7 +48,7 @@ impl crate::Repository {
     pub fn prefix(&self) -> Option<std::io::Result<PathBuf>> {
         self.work_tree.as_ref().map(|root| {
             std::env::current_dir().and_then(|cwd| {
-                git_path::realpath_opts(root, &cwd, MAX_SYMLINKS)
+                gix_path::realpath_opts(root, &cwd, MAX_SYMLINKS)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
                     .and_then(|root| {
                         cwd.strip_prefix(&root)
@@ -72,7 +72,7 @@ impl crate::Repository {
     pub fn kind(&self) -> crate::Kind {
         match self.worktree() {
             Some(wt) => {
-                if git_discover::is_submodule_git_dir(self.git_dir()) {
+                if gix_discover::is_submodule_git_dir(self.git_dir()) {
                     crate::Kind::Submodule
                 } else {
                     crate::Kind::WorkTree {

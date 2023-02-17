@@ -10,7 +10,7 @@
    * *use git itself* as reference implementation, and use their test-cases and fixtures where
      appropriate. At the very least, try to learn from them.
       * Run the same test against git whenever feasible to assure git agrees with our implementation. 
-        See `git-glob` for examples.
+        See `gix-glob` for examples.
    * *use libgit2* test fixtures and cases where appropriate, or learn from them.
  * **safety first**
    * handle all errors, never `unwrap()`. If needed, `expect("why")`.
@@ -79,7 +79,7 @@ There is value in organizing commits by topic and [_Stacked Git_](https://stacke
   
 ## Configuration and overrides
 
-As a general rule, respect and implement all applicable [git-config](https://git-scm.com/docs/git-config) by default, but allow the
+As a general rule, respect and implement all applicable [gix-config](https://git-scm.com/docs/gix-config) by default, but allow the
 caller to set overrides. How overrides work depends on the goals of the particular API so it can be done on the main call path,
 forcing a choice, or more typically, as a side-lane where overrides can be done on demand.
 
@@ -105,7 +105,7 @@ Parameters which are not available in git or specific to `gitoxide` or the needs
     * `blocking` can be used to make `Read` and `Iterator` async, or move any operation onto a thread which blends it into the 
       async world. 
        * Most operations are fast and 'interrupting' them is as easy as ignoring their result by cancelling their task.
-       * Long-running operations can be roughly interacted with using `git_features::interrupt::trigger()` function, and after a moment
+       * Long-running operations can be roughly interacted with using `gix_features::interrupt::trigger()` function, and after a moment
          of waiting the flag can be unset with the `…::uninterrupt()` function to allow new long-running operations to work. 
          Every long running operation supports this.
   * **server-side**
@@ -129,7 +129,7 @@ Parameters which are not available in git or specific to `gitoxide` or the needs
        control of the name to the caller. However, call `.init(…)` to configure the iteration.
      * and when calling `add_child(…)` don't use the parent progress instance for anything else.  
 * **interruption of long-running operations**
-  * Use `git-features::interrupt::*` for building support for interruptions of long-running operations only.
+  * Use `gix-features::interrupt::*` for building support for interruptions of long-running operations only.
     * It's up to the author to decide how to best integrate it, generally we use a poll-based mechanism to check whether
       an interrupt flag is set.
     * **this is a must if…**
@@ -137,7 +137,7 @@ Parameters which are not available in git or specific to `gitoxide` or the needs
     * **this is optional but desirable if…**
       * …there is no leakage otherwise to support user interfaces. They background long-running operations and need them to be cancellable.
       
-* **prepare for SHA256 support by using `git_hash::ObjectId` and `git_hash::oid`**
+* **prepare for SHA256 support by using `gix_hash::ObjectId` and `gix_hash::oid`**
   * eventually there will be the need to support both Sha1 and Sha256. We anticipate it by using the `Id` type instead 
     of slices or arrays of 20 bytes. This way, eventually we can support multiple hash digest sizes.
   * Right now it's unclear how Sha256 is going to work in git, so we only support Sha1 for now. It might be an avenue to proactively
@@ -151,14 +151,14 @@ Parameters which are not available in git or specific to `gitoxide` or the needs
   - in **plumbing**, do not use it at all but instead provide the mutable part (like caches, buffers) as arguments, pushing their handling entirely to the caller.
   - Set on top an optional abstraction that manages the above for you using **interior mutability only if part of the mutable state has to be returned as borrow**
     or if otherwise it wouldn't be possible to borrowcheck. Or in other words: start without interior mutability and try to do it the standard way, but switch when needed.
-  - When using primitives to support interior mutability, use the provided ones and utility functions in `git_features::threading::*` exclusively to allow switching between
+  - When using primitives to support interior mutability, use the provided ones and utility functions in `gix_features::threading::*` exclusively to allow switching between
     thread-safe and none-threadsafe versions at compile time.
       - The preferred way of using it is to start out as upgradable reader, and upgrading to write if needed, keeping contention to a minimum.
   - If _shared ownership_ is involved, one always needs _interior mutability_, but may still decide to use an API that requires `&mut self` if locally stored caches are involved.
-  - Types that are not thread-local must be `Sync`, but only if the `git-features/parallel` is enabled due to the usage of `git_features::threading::…` primitives which won't
+  - Types that are not thread-local must be `Sync`, but only if the `gix-features/parallel` is enabled due to the usage of `gix_features::threading::…` primitives which won't
     be thread-safe without the feature.
 * **when to use shared ownership**
-  - Use `git_features::threading::OwnShared` particularly when shared resources supposed to be used by thread-local handles. Going through a wrapper for shared ownership is fast
+  - Use `gix_features::threading::OwnShared` particularly when shared resources supposed to be used by thread-local handles. Going through a wrapper for shared ownership is fast
     and won't be the bottleneck, as it's only about 16% slower than going through a shared reference on a single core.
 * **Path encoding**
   - For `git`, paths are just bytes no matter on which platform. We assume that on windows its path handling goes through some abstraction layer like `MSYS2`
@@ -186,7 +186,7 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 
 - Use `Options` whenever there is something to configure in terms of branching behaviour. It can be defaulted, and if it can't these fields should be parameters of the method
   that takes these `Options`.
-- Use `Context` when data is required to perform an operation at all. See `git_config::path::Context` as reference. It can't be defaulted and the fields could also be parameters.
+- Use `Context` when data is required to perform an operation at all. See `gix_config::path::Context` as reference. It can't be defaulted and the fields could also be parameters.
 
 ## Lifetimes
 
@@ -264,7 +264,7 @@ get an overview.
 
 - be sure to clone locally and run tests with `GITOXIDE_TEST_IGNORE_ARCHIVES=1` to assure new fixture scripts (if there are any) are validated
   on _MacOS_ and _Windows_. Note that linux doesn't need to be tested that way as CI on linux ignores them by merit of not checking them out
-  via `git-lfs`.
+  via `gix-lfs`.
 
 ## Creating a release
 

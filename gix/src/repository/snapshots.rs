@@ -5,8 +5,8 @@ impl crate::Repository {
     ///
     /// This represents typical usage within git, which also works with what's there without considering a populated mailmap
     /// a reason to abort an operation, considering it optional.
-    pub fn open_mailmap(&self) -> git_mailmap::Snapshot {
-        let mut out = git_mailmap::Snapshot::default();
+    pub fn open_mailmap(&self) -> gix_mailmap::Snapshot {
+        let mut out = gix_mailmap::Snapshot::default();
         self.open_mailmap_into(&mut out).ok();
         out
     }
@@ -21,7 +21,7 @@ impl crate::Repository {
     ///
     /// Only the first error will be reported, and as many source mailmaps will be merged into `target` as possible.
     /// Parsing errors will be ignored.
-    pub fn open_mailmap_into(&self, target: &mut git_mailmap::Snapshot) -> Result<(), crate::mailmap::load::Error> {
+    pub fn open_mailmap_into(&self, target: &mut gix_mailmap::Snapshot) -> Result<(), crate::mailmap::load::Error> {
         let mut err = None::<crate::mailmap::load::Error>;
         let mut buf = Vec::new();
         let mut blob_id = self
@@ -31,7 +31,7 @@ impl crate::Repository {
             .ok()
             .and_then(|spec| {
                 // TODO: actually resolve this as spec (once we can do that)
-                git_hash::ObjectId::from_hex(spec.as_ref())
+                gix_hash::ObjectId::from_hex(spec.as_ref())
                     .map_err(|e| err.get_or_insert(e.into()))
                     .ok()
             });
@@ -47,7 +47,7 @@ impl crate::Repository {
                 });
             }
             Some(root) => {
-                if let Ok(mut file) = git_features::fs::open_options_no_follow()
+                if let Ok(mut file) = gix_features::fs::open_options_no_follow()
                     .read(true)
                     .open(root.join(".mailmap"))
                     .map_err(|e| {
@@ -60,28 +60,28 @@ impl crate::Repository {
                     std::io::copy(&mut file, &mut buf)
                         .map_err(|e| err.get_or_insert(e.into()))
                         .ok();
-                    target.merge(git_mailmap::parse_ignore_errors(&buf));
+                    target.merge(gix_mailmap::parse_ignore_errors(&buf));
                 }
             }
         }
 
         if let Some(blob) = blob_id.and_then(|id| self.find_object(id).map_err(|e| err.get_or_insert(e.into())).ok()) {
-            target.merge(git_mailmap::parse_ignore_errors(&blob.data));
+            target.merge(gix_mailmap::parse_ignore_errors(&blob.data));
         }
 
         let configured_path = self
             .config
             .resolved
-            .value::<git_config::Path<'_>>("mailmap", None, "file")
+            .value::<gix_config::Path<'_>>("mailmap", None, "file")
             .ok()
             .and_then(|path| {
                 let install_dir = self.install_dir().ok()?;
                 let home = self.config.home_dir();
-                match path.interpolate(git_config::path::interpolate::Context {
+                match path.interpolate(gix_config::path::interpolate::Context {
                     git_install_dir: Some(install_dir.as_path()),
                     home_dir: home.as_deref(),
-                    home_for_user: if self.options.git_dir_trust.expect("trust is set") == git_sec::Trust::Full {
-                        Some(git_config::path::interpolate::home_for_user)
+                    home_for_user: if self.options.git_dir_trust.expect("trust is set") == gix_sec::Trust::Full {
+                        Some(gix_config::path::interpolate::home_for_user)
                     } else {
                         None
                     },
@@ -101,7 +101,7 @@ impl crate::Repository {
             std::io::copy(&mut file, &mut buf)
                 .map_err(|e| err.get_or_insert(e.into()))
                 .ok();
-            target.merge(git_mailmap::parse_ignore_errors(&buf));
+            target.merge(gix_mailmap::parse_ignore_errors(&buf));
         }
 
         err.map(Err).unwrap_or(Ok(()))

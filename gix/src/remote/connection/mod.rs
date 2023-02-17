@@ -1,12 +1,12 @@
 use crate::Remote;
 
 pub(crate) struct HandshakeWithRefs {
-    outcome: git_protocol::handshake::Outcome,
-    refs: Vec<git_protocol::handshake::Ref>,
+    outcome: gix_protocol::handshake::Outcome,
+    refs: Vec<gix_protocol::handshake::Ref>,
 }
 
 /// A function that performs a given credential action, trying to obtain credentials for an operation that needs it.
-pub type AuthenticateFn<'a> = Box<dyn FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result + 'a>;
+pub type AuthenticateFn<'a> = Box<dyn FnMut(gix_credentials::helper::Action) -> gix_credentials::protocol::Result + 'a>;
 
 /// A type to represent an ongoing connection to a remote host, typically with the connection already established.
 ///

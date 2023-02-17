@@ -1,0 +1,17 @@
+[package]
+name = "gix-tui"
+version = "0.0.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project dedicated to a terminal user interface to interact with git repositories"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+rust-version = "1.64"
+
+[[bin]]
+name = "gixi"
+path = "src/main.rs"
+doctest = false
+test = false
+
+[dependencies]

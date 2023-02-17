@@ -97,14 +97,14 @@ where
     .filter_map(|mut e| e.client_state.kind.take().map(|kind| (into_workdir(e.path()), kind)))
 }
 
-fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
+fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<gix_url::Url>> {
     let non_bare = repo.join(".git").join("config");
     let local = gix::config::Source::Local;
     let config = gix::config::File::from_path_no_includes(non_bare.as_path(), local)
         .or_else(|_| gix::config::File::from_path_no_includes(repo.join("config").as_path(), local))?;
     Ok(config
         .string_by_key("remote.origin.url")
-        .map(|url| git_url::Url::from_bytes(url.as_ref()))
+        .map(|url| gix_url::Url::from_bytes(url.as_ref()))
         .transpose()?)
 }
 
@@ -177,7 +177,7 @@ fn handle(
             None => return Ok(()),
         })
         .join(to_relative({
-            let mut path = git_url::expand_path(None, url.path.as_bstr())?;
+            let mut path = gix_url::expand_path(None, url.path.as_bstr())?;
             match kind {
                 gix::Kind::Submodule => {
                     unreachable!("BUG: We should not try to relocated submodules and not find them the first place")

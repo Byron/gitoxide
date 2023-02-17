@@ -18,14 +18,14 @@ pub enum Error {
     #[error(transparent)]
     RemoteName(#[from] crate::config::remote::symbolic_name::Error),
     #[error("Failed to load repo-local git configuration before writing")]
-    LoadConfig(#[from] git_config::file::init::from_paths::Error),
+    LoadConfig(#[from] gix_config::file::init::from_paths::Error),
     #[error("Failed to store configured remote in memory")]
     SaveConfig(#[from] crate::remote::save::AsError),
     #[error("Failed to write repository configuration to disk")]
     SaveConfigIo(#[from] std::io::Error),
     #[error("The remote HEAD points to a reference named {head_ref_name:?} which is invalid.")]
     InvalidHeadRef {
-        source: git_validate::refname::Error,
+        source: gix_validate::refname::Error,
         head_ref_name: BString,
     },
     #[error("Failed to update HEAD with values from remote")]
@@ -94,9 +94,9 @@ impl PrepareFetch {
 
         // Add HEAD after the remote was written to config, we need it to know what to checkout later, and assure
         // the ref that HEAD points to is present no matter what.
-        let head_refspec = git_refspec::parse(
+        let head_refspec = gix_refspec::parse(
             format!("HEAD:refs/remotes/{remote_name}/HEAD").as_str().into(),
-            git_refspec::parse::Operation::Fetch,
+            gix_refspec::parse::Operation::Fetch,
         )
         .expect("valid")
         .to_owned();

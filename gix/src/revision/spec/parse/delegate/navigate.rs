@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
-use git_hash::ObjectId;
-use git_revision::spec::parse::{
+use gix_hash::ObjectId;
+use gix_revision::spec::parse::{
     delegate,
     delegate::{PeelTo, Traversal},
 };
-use git_traverse::commit::Sorting;
+use gix_traverse::commit::Sorting;
 
 use crate::{
     bstr::{BStr, ByteSlice},
@@ -119,13 +119,13 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
             }
             PeelTo::Path(path) => {
                 let lookup_path = |obj: &ObjectId| {
-                    let tree_id = peel(repo, obj, git_object::Kind::Tree)?;
+                    let tree_id = peel(repo, obj, gix_object::Kind::Tree)?;
                     if path.is_empty() {
                         return Ok(tree_id);
                     }
                     let tree = repo.find_object(tree_id)?.into_tree();
                     let entry =
-                        tree.lookup_entry_by_path(git_path::from_bstr(path))?
+                        tree.lookup_entry_by_path(gix_path::from_bstr(path))?
                             .ok_or_else(|| Error::PathNotFound {
                                 path: path.into(),
                                 object: obj.attach(repo).shorten_or_id(),
@@ -239,7 +239,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                         r.id()
                                             .object()
                                             .ok()
-                                            .map(|obj| obj.kind == git_object::Kind::Commit)
+                                            .map(|obj| obj.kind == gix_object::Kind::Commit)
                                             .unwrap_or(false)
                                     })
                                     .filter_map(|r| r.detach().peeled),
@@ -321,7 +321,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     let exists = self
                         .repo
                         .work_dir()
-                        .map_or(false, |root| root.join(git_path::from_bstr(path)).exists());
+                        .map_or(false, |root| root.join(gix_path::from_bstr(path)).exists());
                     self.err.push(Error::IndexLookup {
                         desired_path: path.into(),
                         desired_stage: stage.into(),

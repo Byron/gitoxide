@@ -1,4 +1,4 @@
-use git_testtools::tempfile;
+use gix_testtools::tempfile;
 
 mod write_object {
     use crate::repository::object::empty_bare_repo;
@@ -55,7 +55,7 @@ mod write_blob {
 }
 
 mod find {
-    use git_pack::Find;
+    use gix_pack::Find;
 
     use crate::basic_repo;
 
@@ -76,15 +76,15 @@ mod find {
             }
             for commit_id in repo.head()?.peeled()?.id().expect("born").ancestors().all()? {
                 let commit = commit_id?;
-                assert_eq!(commit.object()?.kind, git_object::Kind::Commit);
+                assert_eq!(commit.object()?.kind, gix_object::Kind::Commit);
                 if round == 2 {
                     assert_eq!(
                         commit.object()?.kind,
-                        git_object::Kind::Commit,
+                        gix_object::Kind::Commit,
                         "repeated request triggers cache and doesn't fail"
                     );
                 }
-                assert_eq!(commit.try_object()?.expect("exists").kind, git_object::Kind::Commit,);
+                assert_eq!(commit.try_object()?.expect("exists").kind, gix_object::Kind::Commit,);
             }
         }
         Ok(())
@@ -122,10 +122,10 @@ mod tag {
         let tag_ref = repo.tag(
             "v1.0.0",
             current_head_id,
-            git_object::Kind::Commit,
+            gix_object::Kind::Commit,
             Some(repo.committer().expect("present")?),
             message,
-            git_ref::transaction::PreviousValue::MustNotExist,
+            gix_ref::transaction::PreviousValue::MustNotExist,
         )?;
         assert_eq!(tag_ref.name().as_bstr(), "refs/tags/v1.0.0");
         assert_ne!(tag_ref.id(), current_head_id, "it points to the tag object");
@@ -133,7 +133,7 @@ mod tag {
         let tag = tag.try_to_tag_ref()?;
         assert_eq!(tag.name, "v1.0.0");
         assert_eq!(current_head_id, tag.target(), "the tag points to the commit");
-        assert_eq!(tag.target_kind, git_object::Kind::Commit);
+        assert_eq!(tag.target_kind, gix_object::Kind::Commit);
         assert_eq!(
             tag.tagger.as_ref().expect("tagger").actor(),
             repo.committer().expect("present")?.actor()
@@ -144,7 +144,7 @@ mod tag {
 }
 
 mod commit_as {
-    use git_testtools::tempfile;
+    use gix_testtools::tempfile;
 
     #[test]
     fn specify_committer_and_author() -> crate::Result {
@@ -179,7 +179,7 @@ mod commit_as {
 }
 
 mod commit {
-    use git_testtools::tempfile;
+    use gix_testtools::tempfile;
 
     use crate::{freeze_time, restricted_and_git, util::hex_to_id};
 

@@ -36,7 +36,7 @@ impl Renames {
     ///
     /// Note that missing values will be defaulted similar to what git does.
     #[allow(clippy::result_large_err)]
-    pub fn try_from_config(config: &git_config::File<'static>, lenient: bool) -> Result<Option<Self>, Error> {
+    pub fn try_from_config(config: &gix_config::File<'static>, lenient: bool) -> Result<Option<Self>, Error> {
         let key = "diff.renames";
         let copies = match config
             .boolean_by_key(key)

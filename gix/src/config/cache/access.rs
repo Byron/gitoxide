@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::{borrow::Cow, path::PathBuf, time::Duration};
 
-use git_lock::acquire::Fail;
+use gix_lock::acquire::Fail;
 
 use crate::{
     bstr::BStr,
@@ -18,7 +18,7 @@ use crate::{
 
 /// Access
 impl Cache {
-    pub(crate) fn diff_algorithm(&self) -> Result<git_diff::blob::Algorithm, config::diff::algorithm::Error> {
+    pub(crate) fn diff_algorithm(&self) -> Result<gix_diff::blob::Algorithm, config::diff::algorithm::Error> {
         use crate::config::diff::algorithm::Error;
         self.diff_algorithm
             .get_or_try_init(|| {
@@ -29,7 +29,7 @@ impl Cache {
                 config::tree::Diff::ALGORITHM
                     .try_into_algorithm(name)
                     .or_else(|err| match err {
-                        Error::Unimplemented { .. } if self.lenient_config => Ok(git_diff::blob::Algorithm::Histogram),
+                        Error::Unimplemented { .. } if self.lenient_config => Ok(gix_diff::blob::Algorithm::Histogram),
                         err => Err(err),
                     })
                     .with_lenient_default(self.lenient_config)
@@ -50,7 +50,7 @@ impl Cache {
                     .unwrap_or_else(|| crate::env::agent().into())
             })
             .to_owned();
-        ("agent", Some(git_protocol::agent(agent).into()))
+        ("agent", Some(gix_protocol::agent(agent).into()))
     }
 
     pub(crate) fn personas(&self) -> &identity::Personas {
@@ -82,8 +82,8 @@ impl Cache {
     /// Returns (file-timeout, pack-refs timeout)
     pub(crate) fn lock_timeout(
         &self,
-    ) -> Result<(git_lock::acquire::Fail, git_lock::acquire::Fail), config::lock_timeout::Error> {
-        let mut out: [git_lock::acquire::Fail; 2] = Default::default();
+    ) -> Result<(gix_lock::acquire::Fail, gix_lock::acquire::Fail), config::lock_timeout::Error> {
+        let mut out: [gix_lock::acquire::Fail; 2] = Default::default();
         for (idx, (key, default_ms)) in [(&Core::FILES_REF_LOCK_TIMEOUT, 100), (&Core::PACKED_REFS_TIMEOUT, 1000)]
             .into_iter()
             .enumerate()
@@ -100,7 +100,7 @@ impl Cache {
     }
 
     /// The path to the user-level excludes file to ignore certain files in the worktree.
-    pub(crate) fn excludes_file(&self) -> Option<Result<PathBuf, git_config::path::interpolate::Error>> {
+    pub(crate) fn excludes_file(&self) -> Option<Result<PathBuf, gix_config::path::interpolate::Error>> {
         self.trusted_file_path("core", None, Core::EXCLUDES_FILE.name)?
             .map(|p| p.into_owned())
             .into()
@@ -113,7 +113,7 @@ impl Cache {
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
-    ) -> Option<Result<Cow<'_, std::path::Path>, git_config::path::interpolate::Error>> {
+    ) -> Option<Result<Cow<'_, std::path::Path>, gix_config::path::interpolate::Error>> {
         let path = self.resolved.path_filter(
             section_name,
             subsection_name,
@@ -137,7 +137,7 @@ impl Cache {
     pub(crate) fn checkout_options(
         &self,
         git_dir: &std::path::Path,
-    ) -> Result<git_worktree::index::checkout::Options, checkout_options::Error> {
+    ) -> Result<gix_worktree::index::checkout::Options, checkout_options::Error> {
         fn boolean(
             me: &Cache,
             full_key: &str,
@@ -157,7 +157,7 @@ impl Cache {
         fn assemble_attribute_globals(
             me: &Cache,
             _git_dir: &std::path::Path,
-        ) -> Result<git_attributes::MatchGroup, checkout_options::Error> {
+        ) -> Result<gix_attributes::MatchGroup, checkout_options::Error> {
             let _attributes_file = match me
                 .trusted_file_path("core", None, Core::ATTRIBUTES_FILE.name)
                 .transpose()?
@@ -165,7 +165,7 @@ impl Cache {
                 Some(attributes) => Some(attributes.into_owned()),
                 None => me.xdg_config_path("attributes").ok().flatten(),
             };
-            // TODO: implement git_attributes::MatchGroup::<git_attributes::Attributes>::from_git_dir(), similar to what's done for `Ignore`.
+            // TODO: implement gix_attributes::MatchGroup::<gix_attributes::Attributes>::from_git_dir(), similar to what's done for `Ignore`.
             Ok(Default::default())
         }
 
@@ -174,8 +174,8 @@ impl Cache {
                 .integer_filter_by_key("checkout.workers", &mut self.filter_config_section.clone())
                 .map(|value| Checkout::WORKERS.try_from_workers(value)),
         )?;
-        Ok(git_worktree::index::checkout::Options {
-            fs: git_worktree::fs::Capabilities {
+        Ok(gix_worktree::index::checkout::Options {
+            fs: gix_worktree::fs::Capabilities {
                 precompose_unicode: boolean(self, "core.precomposeUnicode", &Core::PRECOMPOSE_UNICODE, false)?,
                 ignore_case: boolean(self, "core.ignoreCase", &Core::IGNORE_CASE, false)?,
                 executable_bit: boolean(self, "core.fileMode", &Core::FILE_MODE, true)?,
@@ -199,7 +199,7 @@ impl Cache {
     pub(crate) fn xdg_config_path(
         &self,
         resource_file_name: &str,
-    ) -> Result<Option<PathBuf>, git_sec::permission::Error<PathBuf>> {
+    ) -> Result<Option<PathBuf>, gix_sec::permission::Error<PathBuf>> {
         std::env::var_os("XDG_CONFIG_HOME")
             .map(|path| (PathBuf::from(path), &self.xdg_config_home_env))
             .or_else(|| {
@@ -223,7 +223,7 @@ impl Cache {
 
     /// Return the home directory if we are allowed to read it and if it is set in the environment.
     ///
-    /// We never fail for here even if the permission is set to deny as we `git-config` will fail later
+    /// We never fail for here even if the permission is set to deny as we `gix-config` will fail later
     /// if it actually wants to use the home directory - we don't want to fail prematurely.
     pub(crate) fn home_dir(&self) -> Option<PathBuf> {
         std::env::var_os("HOME")

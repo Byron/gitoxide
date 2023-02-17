@@ -1,0 +1,41 @@
+[package]
+name = "gix-credentials"
+version = "0.9.1"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project to interact with git credentials helpers"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+rust-version = "1.64"
+
+[lib]
+doctest = false
+
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["serde", "bstr/serde", "gix-sec/serde1"]
+
+[dependencies]
+gix-sec = { version = "^0.6.2", path = "../gix-sec" }
+gix-url = { version = "^0.13.2", path = "../gix-url" }
+gix-path = { version = "^0.7.1", path = "../gix-path" }
+gix-command = { version = "^0.2.3", path = "../gix-command" }
+gix-config-value = { version = "^0.10.1", path = "../gix-config-value" }
+gix-prompt = { version = "^0.3.2", path = "../gix-prompt" }
+
+thiserror = "1.0.32"
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
+bstr = { version = "1.0.1", default-features = false, features = ["std"]}
+
+
+
+document-features = { version = "0.2.1", optional = true }
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools" }
+gix-sec = { path = "../gix-sec" }
+
+[package.metadata.docs.rs]
+all-features = true
+features = ["document-features"]
+rustdoc-args = ["--cfg", "docsrs"]

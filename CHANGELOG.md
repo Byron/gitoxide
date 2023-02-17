@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - upgrade `tabled` ([`7aed326`](https://github.com/Byron/gitoxide/commit/7aed326e706b13ae88f98880de055201b2a869cc))
     - Merge branch 'gix-clone-improvements' ([`76c99f3`](https://github.com/Byron/gitoxide/commit/76c99f3005f1b0031921b536f5d268715e41f3c8))
     - Merge branch 'adjustments-for-cargo' ([`f8c562a`](https://github.com/Byron/gitoxide/commit/f8c562a559e6dc3377583cc7200585dad7c3d481))
-    - adapt to changes in git-repository and git-transport ([`d336368`](https://github.com/Byron/gitoxide/commit/d336368ea2b6e5918b709220522cf1509ef30be2))
+    - adapt to changes in git-repository and gix-transport ([`d336368`](https://github.com/Byron/gitoxide/commit/d336368ea2b6e5918b709220522cf1509ef30be2))
     - update planned usage of `ssh` related configuration variables. ([`3f91088`](https://github.com/Byron/gitoxide/commit/3f910880fdf691b59460eea272772c7aff284716))
     - Merge branch 'adjustments-for-cargo' ([`d821fc5`](https://github.com/Byron/gitoxide/commit/d821fc5b4ef4ba606f2b6bb68b66f7260a0205dc))
     - make more HTTP options available ([`38ae61a`](https://github.com/Byron/gitoxide/commit/38ae61a805bd8cca5df8d1c1dcf3a8a0f9c85f5a))
@@ -139,7 +139,7 @@ This release also fixes compatibility issues that formerly prevented to fetch or
     - update progress of http.proxyAuthMethod ([`872dc1a`](https://github.com/Byron/gitoxide/commit/872dc1ab43ce626b4166dae3dc8bddf8e85c9409))
     - add `--strict` option to enforce strict checking of configuration. ([`aeb4a1d`](https://github.com/Byron/gitoxide/commit/aeb4a1d5cb76316058c7d687e26f5c7db351c09c))
     - don't lock stdout/stderr as it will deadlock on dbg-printing ([`62cae0e`](https://github.com/Byron/gitoxide/commit/62cae0e6bfe8113c0225152a896338017c8de474))
-    - adapt to changes in `git-config` ([`1c2e755`](https://github.com/Byron/gitoxide/commit/1c2e755e517b0f9fe8671187f5c30076ce43a3c9))
+    - adapt to changes in `gix-config` ([`1c2e755`](https://github.com/Byron/gitoxide/commit/1c2e755e517b0f9fe8671187f5c30076ce43a3c9))
     - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
 </details>
 
@@ -310,7 +310,7 @@ It's also an attempt to trigger CI to build binary releases.
     - diff algorithm is controlled by git configuration `diff.algorithm` ([`b1edb9e`](https://github.com/Byron/gitoxide/commit/b1edb9e3537df86669714f03666f4a88e0ac3709))
     - Merge branch 'main' into gix-clone ([`fa27570`](https://github.com/Byron/gitoxide/commit/fa27570f491388cce6137af44330d76870d07202))
     - Merge branch 'imra-diff' ([`f53f942`](https://github.com/Byron/gitoxide/commit/f53f9426f206686b30abd73a201a92b1405e782d))
-    - adapt to changes in `git-diff` for a 2x speedup when calculating line changes ([`296f3b6`](https://github.com/Byron/gitoxide/commit/296f3b6ee29d5e628a19d56db80ba8736223e226))
+    - adapt to changes in `gix-diff` for a 2x speedup when calculating line changes ([`296f3b6`](https://github.com/Byron/gitoxide/commit/296f3b6ee29d5e628a19d56db80ba8736223e226))
     - update `gix progress` records ([`b05a2e7`](https://github.com/Byron/gitoxide/commit/b05a2e7939df0c25da8186395e7eceda9e1baa9b))
     - Merge branch 'main' into gix-clone ([`de4fe06`](https://github.com/Byron/gitoxide/commit/de4fe06202906ea5c62e667826b42cf7b57b1ff0))
     - Mark the upcoming usage of init.defaultBranch. ([`6225f35`](https://github.com/Byron/gitoxide/commit/6225f35398bc494ad74da342c4ebbe0487b106f8))
@@ -572,7 +572,7 @@ It's also an attempt to trigger CI to build binary releases.
     - migrate mailmap to the new 'free' section ([`141c5f1`](https://github.com/Byron/gitoxide/commit/141c5f1145f9d3864e2d879089c66c62f38a2b5d))
     - first step towards moving all repository-commands one level up. ([`f4e1810`](https://github.com/Byron/gitoxide/commit/f4e1810fb711d57778be79c88f49aa583821abab))
     - make obvious what plumbing and porcelain really are ([`faaf791`](https://github.com/Byron/gitoxide/commit/faaf791cc960c37b180ddef9792dfabc7d106138))
-    - adjustments due to breaking changes in `git_path` ([`4420ae9`](https://github.com/Byron/gitoxide/commit/4420ae932d5b20a9662a6d36353a27111b5cd672))
+    - adjustments due to breaking changes in `gix_path` ([`4420ae9`](https://github.com/Byron/gitoxide/commit/4420ae932d5b20a9662a6d36353a27111b5cd672))
  * **[#427](https://github.com/Byron/gitoxide/issues/427)**
     - Add rough but working version of `rev-parse` ([`f3f176d`](https://github.com/Byron/gitoxide/commit/f3f176db42cef4036cc7c0ced1ee68f247424896))
     - basic infrastructure for delegate implementation ([`d3c0bc6`](https://github.com/Byron/gitoxide/commit/d3c0bc6e8d7764728f4e10500bb895152ccd0b0b))
@@ -585,7 +585,7 @@ It's also an attempt to trigger CI to build binary releases.
     - make fmt ([`0700b09`](https://github.com/Byron/gitoxide/commit/0700b09d6828849fa2470df89af1f75a67bfb27d))
     - Merge branch 'main' into pathspec ([`89ea12b`](https://github.com/Byron/gitoxide/commit/89ea12b558bcc056b892193ee8fb44b8664b5da4))
     - Merge branch 'main' into cont_include_if ([`0e9df36`](https://github.com/Byron/gitoxide/commit/0e9df364c4cddf006b1de18b8d167319b7cc1186))
-    - Use git_path::realpath in all places that allow it right now ([`229dc91`](https://github.com/Byron/gitoxide/commit/229dc917fc7d9241b85e5818260a6fbdd3a5daaa))
+    - Use gix_path::realpath in all places that allow it right now ([`229dc91`](https://github.com/Byron/gitoxide/commit/229dc917fc7d9241b85e5818260a6fbdd3a5daaa))
     - Merge branch 'main' into cont_include_if ([`41ea8ba`](https://github.com/Byron/gitoxide/commit/41ea8ba78e74f5c988148367386a1f4f304cb951))
     - Merge branch 'main' into git_includeif ([`05eb340`](https://github.com/Byron/gitoxide/commit/05eb34023933918c51c03cf2afd774db89cc5a33))
     - Merge branch 'main' into msrv-for-windows ([`7cb1972`](https://github.com/Byron/gitoxide/commit/7cb19729133325bdfacedf44cdc0500cbcf36684))
@@ -631,7 +631,7 @@ It's also an attempt to trigger CI to build binary releases.
 
 <csr-id-4d2d433e7e98ac42db858688edac06e68ee4d10d/>
 
-Adapt to changes in `git-features` which change `Send + Sync` to `Send + Clone`. This happens to allow non-sync implementations (i.e. thread-local), along with `Sync` ones
+Adapt to changes in `gix-features` which change `Send + Sync` to `Send + Clone`. This happens to allow non-sync implementations (i.e. thread-local), along with `Sync` ones
 which usually are `Clone` too as they are passed by immutable reference (which is `Clone + Copy`).
 
 ### Refactor (BREAKING)
@@ -701,7 +701,7 @@ which usually are `Clone` too as they are passed by immutable reference (which i
  * **[#287](https://github.com/Byron/gitoxide/issues/287)**
     - share and pass cli arguments for pack verification ([`db43e47`](https://github.com/Byron/gitoxide/commit/db43e47fc0a43ef45824ac1c9426c1889bdb13a3))
     - Very rough version of repository verification ([`80a4a7a`](https://github.com/Byron/gitoxide/commit/80a4a7add688d16376b9bf2ed7f1c7f655b7c912))
-    - Adjustments to deal with changes to git-pack/git-odb ([`fcf8fde`](https://github.com/Byron/gitoxide/commit/fcf8fde7272974a70df808bd7ac03e925b7e39a8))
+    - Adjustments to deal with changes to gix-pack/gix-odb ([`fcf8fde`](https://github.com/Byron/gitoxide/commit/fcf8fde7272974a70df808bd7ac03e925b7e39a8))
  * **[#289](https://github.com/Byron/gitoxide/issues/289)**
     - 'pack' with its own sub-commands ([`fb64af4`](https://github.com/Byron/gitoxide/commit/fb64af4d747960bfa40ec23051ecb03ea8ec5d83))
     - 'remote' with its own sub-commands ([`8677f7e`](https://github.com/Byron/gitoxide/commit/8677f7edd516ea54ec652a4a59cb220422036b90))
@@ -791,18 +791,18 @@ A first usable version of `gix` to make using `gitoxide` from your applications 
 ### Feature list
 
 * `gix` as hub crate for application development with focus on usability without sacrificing any knob to tune performance.
-* opt-in `async` for `git-packetline`, `git-transport` and `git-protocol` for fully async git clients, along with the `light-async` feature toggle to build a `gix pack-receive` with an async client instead of a blocking one.
+* opt-in `async` for `gix-packetline`, `gix-transport` and `gix-protocol` for fully async git clients, along with the `light-async` feature toggle to build a `gix pack-receive` with an async client instead of a blocking one.
 * Statistics for `gix pack-create` with the `-s/--statistics` flag to have data indicating the cost of the operation. Currently it's doing a lot of work that has to be avoided in order to be useable in production and the numbers underline that. Future iterations will cause key metrics to go down.
 * Packs are now reproducible by default, which means that the same tip will always generate a pack with the same hash. This may be a desirable property for some kinds of packs, but not for others which is why it can be turned off for a considerable speed boost.
-* `git-tempfile` crate
-* `git-lock` crate
-* `git-ref` crate with complete loose-ref, packed-ref and transaction support.
+* `gix-tempfile` crate
+* `gix-lock` crate
+* `gix-ref` crate with complete loose-ref, packed-ref and transaction support.
 
 
 ### Performance
 
 * On M1, thanks to [a new release](https://github.com/RustCrypto/hashes/pull/289#event-5035369215), Sha1 is now computed much faster which unlocks a massive performance boost. In my test, verifying/decoding the entire linux kernel pack now happens in 17s, as compared to 37s for canonical `git`.
-* `git-object` parsing is a few percent faster thanks a reworked error handling for objects. By default, error collection is disabled entirely making the error case zero-sized. If needed, verbose and stacked errors can be turned on using a feature toggle for applications who expect repositories with malformed objects and need detailed diagnostics.
+* `gix-object` parsing is a few percent faster thanks a reworked error handling for objects. By default, error collection is disabled entirely making the error case zero-sized. If needed, verbose and stacked errors can be turned on using a feature toggle for applications who expect repositories with malformed objects and need detailed diagnostics.
 
 ### New Features
 
@@ -886,8 +886,8 @@ These are created to account for breaking changes within the dependency graph of
 could not be installed anymore.
 This was eventually fixed with new minor releases across the ecosystem.
 
-Finally, yet another breaking change due to the introduction of the `git-hash`
-crate to break a dependency cycle between `git-object` and `git-features` caused
+Finally, yet another breaking change due to the introduction of the `gix-hash`
+crate to break a dependency cycle between `gix-object` and `gix-features` caused
 yet another maintenance release.
 
 ## v0.5.0 (2020-12-15)

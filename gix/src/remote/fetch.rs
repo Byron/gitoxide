@@ -41,10 +41,10 @@ impl Tags {
     /// Obtain a refspec that determines whether or not to fetch all tags, depending on this variant.
     ///
     /// The returned refspec is the default refspec for tags, but won't overwrite local tags ever.
-    pub fn to_refspec(&self) -> Option<git_refspec::RefSpecRef<'static>> {
+    pub fn to_refspec(&self) -> Option<gix_refspec::RefSpecRef<'static>> {
         match self {
             Tags::All | Tags::Included => Some(
-                git_refspec::parse("refs/tags/*:refs/tags/*".into(), git_refspec::parse::Operation::Fetch)
+                gix_refspec::parse("refs/tags/*:refs/tags/*".into(), gix_refspec::parse::Operation::Fetch)
                     .expect("valid"),
             ),
             Tags::None => None,
@@ -62,19 +62,19 @@ pub struct RefMap {
     /// [`extra_refspecs` in RefMap options][crate::remote::ref_map::Options::extra_refspecs].
     ///
     /// They are never persisted nor are they typically presented to the user.
-    pub extra_refspecs: Vec<git_refspec::RefSpec>,
+    pub extra_refspecs: Vec<gix_refspec::RefSpec>,
     /// Information about the fixes applied to the `mapping` due to validation and sanitization.
-    pub fixes: Vec<git_refspec::match_group::validate::Fix>,
+    pub fixes: Vec<gix_refspec::match_group::validate::Fix>,
     /// All refs advertised by the remote.
-    pub remote_refs: Vec<git_protocol::handshake::Ref>,
+    pub remote_refs: Vec<gix_protocol::handshake::Ref>,
     /// Additional information provided by the server as part of the handshake.
     ///
     /// Note that the `refs` field is always `None` as the refs are placed in `remote_refs`.
-    pub handshake: git_protocol::handshake::Outcome,
+    pub handshake: gix_protocol::handshake::Outcome,
     /// The kind of hash used for all data sent by the server, if understood by this client implementation.
     ///
     /// It was extracted from the `handshake` as advertised by the server.
-    pub object_hash: git_hash::Kind,
+    pub object_hash: gix_hash::Kind,
 }
 
 /// Either an object id that the remote has or the matched remote ref itself.
@@ -82,9 +82,9 @@ pub struct RefMap {
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
 pub enum Source {
     /// An object id, as the matched ref-spec was an object id itself.
-    ObjectId(git_hash::ObjectId),
+    ObjectId(gix_hash::ObjectId),
     /// The remote reference that matched the ref-specs name.
-    Ref(git_protocol::handshake::Ref),
+    Ref(gix_protocol::handshake::Ref),
 }
 
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
@@ -92,7 +92,7 @@ impl Source {
     /// Return either the direct object id we refer to or the direct target that a reference refers to.
     /// The latter may be a direct or a symbolic reference, and we degenerate this to the peeled object id.
     /// If unborn, `None` is returned.
-    pub fn as_id(&self) -> Option<&git_hash::oid> {
+    pub fn as_id(&self) -> Option<&gix_hash::oid> {
         match self {
             Source::ObjectId(id) => Some(id),
             Source::Ref(r) => r.unpack().1,
@@ -104,10 +104,10 @@ impl Source {
         match self {
             Source::ObjectId(_) => None,
             Source::Ref(r) => match r {
-                git_protocol::handshake::Ref::Unborn { full_ref_name, .. }
-                | git_protocol::handshake::Ref::Symbolic { full_ref_name, .. }
-                | git_protocol::handshake::Ref::Direct { full_ref_name, .. }
-                | git_protocol::handshake::Ref::Peeled { full_ref_name, .. } => Some(full_ref_name.as_ref()),
+                gix_protocol::handshake::Ref::Unborn { full_ref_name, .. }
+                | gix_protocol::handshake::Ref::Symbolic { full_ref_name, .. }
+                | gix_protocol::handshake::Ref::Direct { full_ref_name, .. }
+                | gix_protocol::handshake::Ref::Peeled { full_ref_name, .. } => Some(full_ref_name.as_ref()),
             },
         }
     }
@@ -130,9 +130,9 @@ impl SpecIndex {
     /// Depending on our index variant, get the index either from `refspecs` or from `extra_refspecs` for `Implicit` variants.
     pub fn get<'a>(
         self,
-        refspecs: &'a [git_refspec::RefSpec],
-        extra_refspecs: &'a [git_refspec::RefSpec],
-    ) -> Option<&'a git_refspec::RefSpec> {
+        refspecs: &'a [gix_refspec::RefSpec],
+        extra_refspecs: &'a [gix_refspec::RefSpec],
+    ) -> Option<&'a gix_refspec::RefSpec> {
         match self {
             SpecIndex::ExplicitInRemote(idx) => refspecs.get(idx),
             SpecIndex::Implicit(idx) => extra_refspecs.get(idx),

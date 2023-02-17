@@ -9,7 +9,7 @@ mod impls {
     use crate::revision::Spec;
 
     impl<'repo> Deref for Spec<'repo> {
-        type Target = git_revision::Spec;
+        type Target = gix_revision::Spec;
 
         fn deref(&self) -> &Self::Target {
             &self.inner
@@ -36,7 +36,7 @@ impl<'repo> Spec<'repo> {
     /// Create a single specification which points to `id`.
     pub fn from_id(id: Id<'repo>) -> Self {
         Spec {
-            inner: git_revision::Spec::Include(id.inner),
+            inner: gix_revision::Spec::Include(id.inner),
             repo: id.repo,
             first_ref: None,
             second_ref: None,
@@ -47,7 +47,7 @@ impl<'repo> Spec<'repo> {
 /// Access
 impl<'repo> Spec<'repo> {
     /// Detach the `Repository` from this instance, leaving only plain data that can be moved freely and serialized.
-    pub fn detach(self) -> git_revision::Spec {
+    pub fn detach(self) -> gix_revision::Spec {
         self.inner
     }
 
@@ -64,27 +64,27 @@ impl<'repo> Spec<'repo> {
 
     /// Return the name of the first reference we encountered while resolving the rev-spec, or `None` if a short hash
     /// was used. For example, `@` might yield `Some(HEAD)`, but `abcd` yields `None`.
-    pub fn first_reference(&self) -> Option<&git_ref::Reference> {
+    pub fn first_reference(&self) -> Option<&gix_ref::Reference> {
         self.first_ref.as_ref()
     }
 
     /// Return the name of the second reference we encountered while resolving the rev-spec, or `None` if a short hash
     /// was used or there was no second reference. For example, `..@` might yield `Some(HEAD)`, but `..abcd` or `@`
     /// yields `None`.
-    pub fn second_reference(&self) -> Option<&git_ref::Reference> {
+    pub fn second_reference(&self) -> Option<&gix_ref::Reference> {
         self.second_ref.as_ref()
     }
 
     /// Return the single included object represented by this instance, or `None` if it is a range of any kind.
     pub fn single(&self) -> Option<Id<'repo>> {
         match self.inner {
-            git_revision::Spec::Include(id) | git_revision::Spec::ExcludeParents(id) => {
+            gix_revision::Spec::Include(id) | gix_revision::Spec::ExcludeParents(id) => {
                 Id::from_id(id, self.repo).into()
             }
-            git_revision::Spec::Exclude(_)
-            | git_revision::Spec::Range { .. }
-            | git_revision::Spec::Merge { .. }
-            | git_revision::Spec::IncludeOnlyParents { .. } => None,
+            gix_revision::Spec::Exclude(_)
+            | gix_revision::Spec::Range { .. }
+            | gix_revision::Spec::Merge { .. }
+            | gix_revision::Spec::IncludeOnlyParents { .. } => None,
         }
     }
 }

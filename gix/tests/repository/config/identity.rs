@@ -1,7 +1,7 @@
 use std::path::Path;
 
-use git_sec::Permission;
-use git_testtools::Env;
+use gix_sec::Permission;
+use gix_testtools::Env;
 
 use serial_test::serial;
 
@@ -10,7 +10,7 @@ use crate::named_repo;
 #[test]
 #[serial]
 fn author_and_committer_and_fallback() -> crate::Result {
-    for trust in [git_sec::Trust::Full, git_sec::Trust::Reduced] {
+    for trust in [gix_sec::Trust::Full, gix_sec::Trust::Reduced] {
         let repo = named_repo("make_config_repo.sh")?;
         let work_dir = repo.work_dir().expect("present").canonicalize()?;
         let _env = Env::new()
@@ -42,26 +42,26 @@ fn author_and_committer_and_fallback() -> crate::Result {
 
         assert_eq!(
             repo.author().expect("present")?,
-            git_actor::SignatureRef {
+            gix_actor::SignatureRef {
                 name: "author".into(),
                 email: "author@email".into(),
-                time: git_date::Time {
+                time: gix_date::Time {
                     seconds_since_unix_epoch: 1659329106,
                     offset_in_seconds: 28800,
-                    sign: git_date::time::Sign::Plus
+                    sign: gix_date::time::Sign::Plus
                 }
             }
         );
 
         assert_eq!(
             repo.committer().expect("present")?,
-            git_actor::SignatureRef {
+            gix_actor::SignatureRef {
                 name: "committer".into(),
                 email: "committer@email".into(),
-                time: git_date::Time {
+                time: gix_date::Time {
                     seconds_since_unix_epoch: 1659365106,
                     offset_in_seconds: -7200,
-                    sign: git_date::time::Sign::Minus
+                    sign: gix_date::time::Sign::Minus
                 }
             }
         );
@@ -104,7 +104,7 @@ fn author_and_committer_and_fallback() -> crate::Result {
         assert_eq!(config.try_boolean("core.missing"), None);
 
         let relative_path_key = "a.relative-path";
-        if trust == git_sec::Trust::Full {
+        if trust == gix_sec::Trust::Full {
             assert_eq!(
                 config
                     .trusted_path(relative_path_key)
@@ -148,7 +148,7 @@ fn author_from_different_config_sections() -> crate::Result {
         repo.open_options()
             .clone()
             .config_overrides(None::<&str>)
-            .with(git_sec::Trust::Full)
+            .with(gix_sec::Trust::Full)
             .permissions(gix::Permissions {
                 env: gix::permissions::Environment {
                     xdg_config_home: Permission::Deny,
@@ -161,13 +161,13 @@ fn author_from_different_config_sections() -> crate::Result {
 
     assert_eq!(
         repo.author().transpose()?,
-        Some(git_actor::SignatureRef {
+        Some(gix_actor::SignatureRef {
             name: "global name".into(),
             email: "local@example.com".into(),
-            time: git_date::Time {
+            time: gix_date::Time {
                 seconds_since_unix_epoch: 42,
                 offset_in_seconds: 1800,
-                sign: git_date::time::Sign::Plus
+                sign: gix_date::time::Sign::Plus
             }
         }),
         "author name comes from global config, \
@@ -175,13 +175,13 @@ fn author_from_different_config_sections() -> crate::Result {
     );
     assert_eq!(
         repo.committer().transpose()?,
-        Some(git_actor::SignatureRef {
+        Some(gix_actor::SignatureRef {
             name: "local committer".into(),
             email: "global-committer@example.com".into(),
-            time: git_date::Time {
+            time: gix_date::Time {
                 seconds_since_unix_epoch: 320437800,
                 offset_in_seconds: 0,
-                sign: git_date::time::Sign::Plus,
+                sign: gix_date::time::Sign::Plus,
             }
         }),
         "committer name comes from repository-local config, \

@@ -1,5 +1,5 @@
 mod set_namespace {
-    use git_testtools::tempfile;
+    use gix_testtools::tempfile;
 
     use gix::refs::transaction::PreviousValue;
 
@@ -187,7 +187,7 @@ mod iter_references {
 
 mod head {
 
-    use git_ref::transaction::PreviousValue;
+    use gix_ref::transaction::PreviousValue;
 
     use crate::util::hex_to_id;
 

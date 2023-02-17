@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::borrow::Cow;
 
-use git_sec::Permission;
+use gix_sec::Permission;
 
 use super::{interpolate_context, util, Error, StageOne};
 use crate::{
@@ -28,8 +28,8 @@ impl Cache {
             reflog: _,
         }: StageOne,
         git_dir: &std::path::Path,
-        branch_name: Option<&git_ref::FullNameRef>,
-        filter_config_section: fn(&git_config::file::Metadata) -> bool,
+        branch_name: Option<&gix_ref::FullNameRef>,
+        filter_config_section: fn(&gix_config::file::Metadata) -> bool,
         git_install_dir: Option<&std::path::Path>,
         home: Option<&std::path::Path>,
         repository::permissions::Environment {
@@ -53,17 +53,17 @@ impl Cache {
         api_config_overrides: &[BString],
         cli_config_overrides: &[BString],
     ) -> Result<Self, Error> {
-        let options = git_config::file::init::Options {
+        let options = gix_config::file::init::Options {
             includes: if use_includes {
-                git_config::file::includes::Options::follow(
+                gix_config::file::includes::Options::follow(
                     interpolate_context(git_install_dir, home),
-                    git_config::file::includes::conditional::Context {
+                    gix_config::file::includes::conditional::Context {
                         git_dir: git_dir.into(),
                         branch_name,
                     },
                 )
             } else {
-                git_config::file::includes::Options::no_follow()
+                gix_config::file::includes::Options::no_follow()
             },
             ..util::base_options(lossy)
         };
@@ -73,18 +73,18 @@ impl Cache {
             let xdg_config_home_env = &xdg_config_home_env;
             let git_prefix = &git_prefix;
             let metas = [
-                git_config::source::Kind::GitInstallation,
-                git_config::source::Kind::System,
-                git_config::source::Kind::Global,
+                gix_config::source::Kind::GitInstallation,
+                gix_config::source::Kind::System,
+                gix_config::source::Kind::Global,
             ]
             .iter()
             .flat_map(|kind| kind.sources())
             .filter_map(|source| {
                 match source {
-                    git_config::Source::GitInstallation if !use_installation => return None,
-                    git_config::Source::System if !use_system => return None,
-                    git_config::Source::Git if !use_git => return None,
-                    git_config::Source::User if !use_user => return None,
+                    gix_config::Source::GitInstallation if !use_installation => return None,
+                    gix_config::Source::System if !use_system => return None,
+                    gix_config::Source::Git if !use_git => return None,
+                    gix_config::Source::User if !use_user => return None,
                     _ => {}
                 }
                 source
@@ -99,26 +99,26 @@ impl Cache {
                     })
                     .map(|p| (source, p.into_owned()))
             })
-            .map(|(source, path)| git_config::file::Metadata {
+            .map(|(source, path)| gix_config::file::Metadata {
                 path: Some(path),
                 source: *source,
                 level: 0,
-                trust: git_sec::Trust::Full,
+                trust: gix_sec::Trust::Full,
             });
 
             let err_on_nonexisting_paths = false;
-            let mut globals = git_config::File::from_paths_metadata_buf(
+            let mut globals = gix_config::File::from_paths_metadata_buf(
                 metas,
                 &mut buf,
                 err_on_nonexisting_paths,
-                git_config::file::init::Options {
-                    includes: git_config::file::includes::Options::no_follow(),
+                gix_config::file::init::Options {
+                    includes: gix_config::file::includes::Options::no_follow(),
                     ..options
                 },
             )
             .map_err(|err| match err {
-                git_config::file::init::from_paths::Error::Init(err) => Error::from(err),
-                git_config::file::init::from_paths::Error::Io(err) => err.into(),
+                gix_config::file::init::from_paths::Error::Init(err) => Error::from(err),
+                gix_config::file::init::from_paths::Error::Io(err) => err.into(),
             })?
             .unwrap_or_default();
 
@@ -126,20 +126,20 @@ impl Cache {
             globals.append(git_dir_config);
             globals.resolve_includes(options)?;
             if use_env {
-                globals.append(git_config::File::from_env(options)?.unwrap_or_default());
+                globals.append(gix_config::File::from_env(options)?.unwrap_or_default());
             }
             if !cli_config_overrides.is_empty() {
-                config::overrides::append(&mut globals, cli_config_overrides, git_config::Source::Cli, |_| None)
+                config::overrides::append(&mut globals, cli_config_overrides, gix_config::Source::Cli, |_| None)
                     .map_err(|err| Error::ConfigOverrides {
                         err,
-                        source: git_config::Source::Cli,
+                        source: gix_config::Source::Cli,
                     })?;
             }
             if !api_config_overrides.is_empty() {
-                config::overrides::append(&mut globals, api_config_overrides, git_config::Source::Api, |_| None)
+                config::overrides::append(&mut globals, api_config_overrides, gix_config::Source::Api, |_| None)
                     .map_err(|err| Error::ConfigOverrides {
                         err,
-                        source: git_config::Source::Api,
+                        source: gix_config::Source::Api,
                     })?;
             }
             apply_environment_overrides(&mut globals, *git_prefix, http_transport, identity, objects)?;
@@ -259,7 +259,7 @@ impl crate::Repository {
 }
 
 fn apply_environment_overrides(
-    config: &mut git_config::File<'static>,
+    config: &mut gix_config::File<'static>,
     git_prefix: Permission,
     http_transport: Permission,
     identity: Permission,
@@ -271,10 +271,10 @@ fn apply_environment_overrides(
     fn var_as_bstring(var: &str, perm: Permission) -> Option<BString> {
         perm.check_opt(var)
             .and_then(std::env::var_os)
-            .and_then(|val| git_path::os_string_into_bstring(val).ok())
+            .and_then(|val| gix_path::os_string_into_bstring(val).ok())
     }
 
-    let mut env_override = git_config::File::new(git_config::file::Metadata::from(git_config::Source::EnvOverride));
+    let mut env_override = gix_config::File::new(gix_config::file::Metadata::from(gix_config::Source::EnvOverride));
     for (section_name, subsection_name, permission, data) in [
         (
             "http",

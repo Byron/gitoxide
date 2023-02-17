@@ -1,0 +1,47 @@
+[package]
+name = "gix-ref"
+version = "0.24.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A crate to handle git references"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*"]
+rust-version = "1.64"
+autotests = false
+
+[lib]
+doctest = false
+test = true
+
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["serde", "gix-hash/serde1", "gix-actor/serde1", "gix-object/serde1"]
+
+[dependencies]
+gix-features = { version = "^0.26.4", path = "../gix-features", features = ["walkdir"]}
+gix-path = { version = "^0.7.1", path = "../gix-path" }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
+gix-object = { version = "^0.26.1", path = "../gix-object" }
+gix-validate = { version = "^0.7.2", path = "../gix-validate" }
+gix-actor = { version = "^0.17.1", path = "../gix-actor" }
+gix-lock = { version = "^3.0.0", path = "../gix-lock" }
+gix-tempfile = { version = "^3.0.0", path = "../gix-tempfile" }
+
+thiserror = "1.0.34"
+nom = { version = "7", default-features = false, features = ["std"]}
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
+
+# packed refs
+memmap2 = "0.5.0"
+
+document-features = { version = "0.2.1", optional = true }
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools" }
+tempfile = "3.2.0"
+
+
+[package.metadata.docs.rs]
+features = ["document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

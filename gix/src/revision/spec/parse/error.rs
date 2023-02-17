@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use git_hash::ObjectId;
+use gix_hash::ObjectId;
 
 use super::Error;
 use crate::{bstr, bstr::BString, ext::ObjectIdExt, Repository};
@@ -16,7 +16,7 @@ pub enum CandidateInfo {
     /// The candidate is an object of the given `kind`.
     Object {
         /// The kind of the object.
-        kind: git_object::Kind,
+        kind: gix_object::Kind,
     },
     /// The candidate is a tag.
     Tag {
@@ -26,7 +26,7 @@ pub enum CandidateInfo {
     /// The candidate is a commit.
     Commit {
         /// The date of the commit.
-        date: git_date::Time,
+        date: gix_date::Time,
         /// The subject line.
         title: BString,
     },
@@ -39,14 +39,14 @@ impl std::fmt::Display for CandidateInfo {
             CandidateInfo::Tag { name } => write!(f, "tag {name:?}"),
             CandidateInfo::Object { kind } => std::fmt::Display::fmt(kind, f),
             CandidateInfo::Commit { date, title } => {
-                write!(f, "commit {} {title:?}", date.format(git_date::time::format::SHORT))
+                write!(f, "commit {} {title:?}", date.format(gix_date::time::format::SHORT))
             }
         }
     }
 }
 
 impl Error {
-    pub(crate) fn ambiguous(candidates: HashSet<ObjectId>, prefix: git_hash::Prefix, repo: &Repository) -> Self {
+    pub(crate) fn ambiguous(candidates: HashSet<ObjectId>, prefix: gix_hash::Prefix, repo: &Repository) -> Self {
         #[derive(PartialOrd, Ord, Eq, PartialEq, Copy, Clone)]
         enum Order {
             Tag,
@@ -63,10 +63,10 @@ impl Error {
                     let order = match &obj {
                         Err(_) => Order::Invalid,
                         Ok(obj) => match obj.kind {
-                            git_object::Kind::Tag => Order::Tag,
-                            git_object::Kind::Commit => Order::Commit,
-                            git_object::Kind::Tree => Order::Tree,
-                            git_object::Kind::Blob => Order::Blob,
+                            gix_object::Kind::Tag => Order::Tag,
+                            gix_object::Kind::Commit => Order::Commit,
+                            gix_object::Kind::Tree => Order::Tree,
+                            gix_object::Kind::Blob => Order::Blob,
                         },
                     };
                     (oid, obj, order)
@@ -82,12 +82,12 @@ impl Error {
                 .map(|(oid, find_result, _)| {
                     let info = match find_result {
                         Ok(obj) => match obj.kind {
-                            git_object::Kind::Tree | git_object::Kind::Blob => CandidateInfo::Object { kind: obj.kind },
-                            git_object::Kind::Tag => {
+                            gix_object::Kind::Tree | gix_object::Kind::Blob => CandidateInfo::Object { kind: obj.kind },
+                            gix_object::Kind::Tag => {
                                 let tag = obj.to_tag_ref();
                                 CandidateInfo::Tag { name: tag.name.into() }
                             }
-                            git_object::Kind::Commit => {
+                            gix_object::Kind::Commit => {
                                 use bstr::ByteSlice;
                                 let commit = obj.to_commit_ref();
                                 CandidateInfo::Commit {

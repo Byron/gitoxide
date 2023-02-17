@@ -59,14 +59,14 @@ impl crate::Repository {
     /// It will use the `index.threads` configuration key to learn how many threads to use.
     /// Note that it may fail if there is no index.
     // TODO: test
-    pub fn open_index(&self) -> Result<git_index::File, worktree::open_index::Error> {
+    pub fn open_index(&self) -> Result<gix_index::File, worktree::open_index::Error> {
         let thread_limit = self
             .config
             .resolved
             .boolean("index", None, "threads")
             .map(|res| {
                 res.map(|value| usize::from(!value)).or_else(|err| {
-                    git_config::Integer::try_from(err.input.as_ref())
+                    gix_config::Integer::try_from(err.input.as_ref())
                         .map_err(|err| worktree::open_index::Error::ConfigIndexThreads {
                             value: err.input.clone(),
                             err,
@@ -75,10 +75,10 @@ impl crate::Repository {
                 })
             })
             .transpose()?;
-        git_index::File::at(
+        gix_index::File::at(
             self.index_path(),
             self.object_hash(),
-            git_index::decode::Options {
+            gix_index::decode::Options {
                 thread_limit,
                 min_extension_block_in_bytes_for_threading: 0,
                 expected_checksum: None,
@@ -97,7 +97,7 @@ impl crate::Repository {
                 || self.index_path().metadata().and_then(|m| m.modified()).ok(),
                 || {
                     self.open_index().map(Some).or_else(|err| match err {
-                        worktree::open_index::Error::IndexFile(git_index::file::init::Error::Io(err))
+                        worktree::open_index::Error::IndexFile(gix_index::file::init::Error::Io(err))
                             if err.kind() == std::io::ErrorKind::NotFound =>
                         {
                             Ok(None)
@@ -109,7 +109,7 @@ impl crate::Repository {
             .and_then(|opt| match opt {
                 Some(index) => Ok(index),
                 None => Err(worktree::open_index::Error::IndexFile(
-                    git_index::file::init::Error::Io(std::io::Error::new(
+                    gix_index::file::init::Error::Io(std::io::Error::new(
                         std::io::ErrorKind::NotFound,
                         format!("Could not find index file at {:?} for opening.", self.index_path()),
                     )),

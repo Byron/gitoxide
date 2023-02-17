@@ -1,5 +1,5 @@
-use git_hash::ObjectId;
-use git_object::{bstr::BStr, TreeRefIter};
+use gix_hash::ObjectId;
+use gix_object::{bstr::BStr, TreeRefIter};
 
 use crate::{object::find, Id, Tree};
 
@@ -81,7 +81,7 @@ impl<'repo> Tree<'repo> {
         relative_path: impl AsRef<std::path::Path>,
     ) -> Result<Option<Entry<'repo>>, find::existing::Error> {
         self.lookup_entry(relative_path.as_ref().components().map(|c| {
-            git_path::os_str_into_bstr(c.as_os_str())
+            gix_path::os_str_into_bstr(c.as_os_str())
                 .unwrap_or_else(|_| "".into())
                 .as_ref()
         }))
@@ -107,7 +107,7 @@ impl<'r> std::fmt::Debug for Tree<'r> {
 /// An entry in a [`Tree`], similar to an entry in a directory.
 #[derive(PartialEq, Debug, Clone)]
 pub struct Entry<'repo> {
-    inner: git_object::tree::Entry,
+    inner: gix_object::tree::Entry,
     repo: &'repo crate::Repository,
 }
 
@@ -117,7 +117,7 @@ mod entry {
     /// Access
     impl<'repo> Entry<'repo> {
         /// The kind of object to which `oid` is pointing to.
-        pub fn mode(&self) -> git_object::tree::EntryMode {
+        pub fn mode(&self) -> gix_object::tree::EntryMode {
             self.inner.mode
         }
 
@@ -137,12 +137,12 @@ mod entry {
         }
 
         /// Return the plain object id of this entry, without access to the repository.
-        pub fn oid(&self) -> &git_hash::oid {
+        pub fn oid(&self) -> &gix_hash::oid {
             &self.inner.oid
         }
 
         /// Return the plain object id of this entry, without access to the repository.
-        pub fn object_id(&self) -> git_hash::ObjectId {
+        pub fn object_id(&self) -> gix_hash::ObjectId {
             self.inner.oid
         }
     }
@@ -150,7 +150,7 @@ mod entry {
     /// Consuming
     impl Entry<'_> {
         /// Return the contained object.
-        pub fn detach(self) -> git_object::tree::Entry {
+        pub fn detach(self) -> gix_object::tree::Entry {
             self.inner
         }
     }

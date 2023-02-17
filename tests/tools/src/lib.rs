@@ -26,7 +26,7 @@ pub use tempfile;
 /// Use it like so:
 ///
 /// ```no_run
-/// use git_testtools::Result;
+/// use gix_testtools::Result;
 ///
 /// #[test]
 /// fn this() -> Result {
@@ -261,7 +261,7 @@ fn fixture_bytes_inner(path: impl AsRef<Path>, root: DirectoryRoot) -> Vec<u8> {
 /// If a script result doesn't exist, these will be checked first and extracted if present, which they are by default.
 /// This behaviour can be prohibited by setting the `GITOXIDE_TEST_IGNORE_ARCHIVES` to any value.
 ///
-/// To speed CI up, one can add these archives to the repository. It's absolutely recommended to use `git-lfs` for that to
+/// To speed CI up, one can add these archives to the repository. It's absolutely recommended to use `gix-lfs` for that to
 /// not bloat the repository size.
 ///
 /// #### Disable Archive Creation
@@ -518,7 +518,7 @@ fn write_failure_marker(failure_marker: &Path) {
 }
 
 fn is_lfs_pointer_file(path: &Path) -> bool {
-    const PREFIX: &[u8] = b"version https://git-lfs";
+    const PREFIX: &[u8] = b"version https://gix-lfs";
     let mut buf = [0_u8; PREFIX.len()];
     std::fs::OpenOptions::new()
         .read(true)
@@ -538,7 +538,7 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
     }
     if is_lfs_pointer_file(archive) {
         eprintln!(
-            "Refusing to overwrite `git-lfs` pointer file at \"{}\" - git lfs might not be properly installed.",
+            "Refusing to overwrite `gix-lfs` pointer file at \"{}\" - git lfs might not be properly installed.",
             archive.display()
         );
         return Ok(());

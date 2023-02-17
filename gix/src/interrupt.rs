@@ -89,7 +89,7 @@ mod init {
                     }
                     let msg_idx = INTERRUPT_COUNT.fetch_add(1, Ordering::SeqCst);
                     if msg_idx == 1 {
-                        git_tempfile::handler::cleanup_tempfiles();
+                        gix_tempfile::handler::cleanup_tempfiles();
                         signal_hook::low_level::emulate_default_handler(*sig).ok();
                     }
                     interrupt();
@@ -100,7 +100,7 @@ mod init {
         }
 
         // This means that they won't setup a handler allowing us to call them right before we actually abort.
-        git_tempfile::setup(git_tempfile::SignalHandlerMode::None);
+        gix_tempfile::setup(gix_tempfile::SignalHandlerMode::None);
 
         Ok(Deregister(hooks))
     }
@@ -115,7 +115,7 @@ pub use init::init_handler;
 /// A wrapper for an inner iterator which will check for interruptions on each iteration.
 pub struct Iter<I, EFN> {
     /// The actual iterator to yield elements from.
-    inner: git_features::interrupt::IterWithErr<'static, I, EFN>,
+    inner: gix_features::interrupt::IterWithErr<'static, I, EFN>,
 }
 
 impl<I, EFN, E> Iter<I, EFN>
@@ -127,7 +127,7 @@ where
     /// signal an interruption happened, causing no further items to be iterated from that point on.
     pub fn new(inner: I, make_err: EFN) -> Self {
         Iter {
-            inner: git_features::interrupt::IterWithErr::new(inner, make_err, &IS_INTERRUPTED),
+            inner: gix_features::interrupt::IterWithErr::new(inner, make_err, &IS_INTERRUPTED),
         }
     }
 
@@ -159,7 +159,7 @@ where
 /// It fails a [read][`std::io::Read::read`] while an interrupt was requested.
 pub struct Read<R> {
     /// The actual implementor of [`std::io::Read`] to which interrupt support will be added.
-    inner: git_features::interrupt::Read<'static, R>,
+    inner: gix_features::interrupt::Read<'static, R>,
 }
 
 impl<R> Read<R>
@@ -169,7 +169,7 @@ where
     /// Create a new interruptible reader from `read`.
     pub fn new(read: R) -> Self {
         Read {
-            inner: git_features::interrupt::Read {
+            inner: gix_features::interrupt::Read {
                 inner: read,
                 should_interrupt: &IS_INTERRUPTED,
             },

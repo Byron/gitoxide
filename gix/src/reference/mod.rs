@@ -1,7 +1,7 @@
 //!
 
-use git_odb::pack::Find;
-use git_ref::file::ReferenceExt;
+use gix_odb::pack::Find;
+use gix_ref::file::ReferenceExt;
 
 use crate::{Id, Reference};
 
@@ -16,15 +16,15 @@ use crate::ext::ObjectIdExt;
 
 pub mod log;
 
-pub use git_ref::{Category, Kind};
+pub use gix_ref::{Category, Kind};
 
 /// Access
 impl<'repo> Reference<'repo> {
     /// Returns the attached id we point to, or `None` if this is a symbolic ref.
     pub fn try_id(&self) -> Option<Id<'repo>> {
         match self.inner.target {
-            git_ref::Target::Symbolic(_) => None,
-            git_ref::Target::Peeled(oid) => oid.to_owned().attach(self.repo).into(),
+            gix_ref::Target::Symbolic(_) => None,
+            gix_ref::Target::Peeled(oid) => oid.to_owned().attach(self.repo).into(),
         }
     }
 
@@ -35,17 +35,17 @@ impl<'repo> Reference<'repo> {
     }
 
     /// Return the target to which this reference points to.
-    pub fn target(&self) -> git_ref::TargetRef<'_> {
+    pub fn target(&self) -> gix_ref::TargetRef<'_> {
         self.inner.target.to_ref()
     }
 
     /// Return the reference's full name.
-    pub fn name(&self) -> &git_ref::FullNameRef {
+    pub fn name(&self) -> &gix_ref::FullNameRef {
         self.inner.name.as_ref()
     }
 
     /// Turn this instances into a stand-alone reference.
-    pub fn detach(self) -> git_ref::Reference {
+    pub fn detach(self) -> gix_ref::Reference {
         self.inner
     }
 }
@@ -57,7 +57,7 @@ impl<'repo> std::fmt::Debug for Reference<'repo> {
 }
 
 impl<'repo> Reference<'repo> {
-    pub(crate) fn from_ref(reference: git_ref::Reference, repo: &'repo crate::Repository) -> Self {
+    pub(crate) fn from_ref(reference: gix_ref::Reference, repo: &'repo crate::Repository) -> Self {
         Reference { inner: reference, repo }
     }
 }

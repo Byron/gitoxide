@@ -1,0 +1,49 @@
+[package]
+name = "gix-config"
+version = "0.16.1"
+repository = "https://github.com/Byron/gitoxide"
+description = "A gix-config file parser and editor from the gitoxide project"
+license = "MIT OR Apache-2.0"
+authors = ["Edward Shen <code@eddie.sh>"]
+edition = "2021"
+keywords = ["gix-config", "git", "config", "gitoxide"]
+categories = ["config", "parser-implementations"]
+include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
+rust-version = "1.64"
+autotests = false
+
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["serde", "bstr/serde", "gix-sec/serde1", "gix-ref/serde1", "gix-glob/serde1", "gix-config-value/serde1"]
+
+[dependencies]
+gix-features = { version = "^0.26.4", path = "../gix-features"}
+gix-config-value = { version = "^0.10.1", path = "../gix-config-value" }
+gix-path = { version = "^0.7.1", path = "../gix-path" }
+gix-sec = { version = "^0.6.2", path = "../gix-sec" }
+gix-ref = { version = "^0.24.0", path = "../gix-ref" }
+gix-glob = { version = "^0.5.3", path = "../gix-glob" }
+
+nom = { version = "7", default_features = false, features = [ "std" ] }
+memchr = "2"
+thiserror = "1.0.26"
+unicode-bom = "1.1.4"
+bstr = { version = "1.0.1", default-features = false, features = ["std"] }
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
+smallvec = "1.9.0"
+once_cell = "1.14.0"
+
+document-features = { version = "0.2.0", optional = true }
+
+[dev-dependencies]
+criterion = "0.4.0"
+
+[[bench]]
+name = "large_config_file"
+harness = false
+path = "./benches/large_config_file.rs"
+
+[package.metadata.docs.rs]
+all-features = true
+features = ["document-features"]
+rustdoc-args = ["--cfg", "docsrs"]

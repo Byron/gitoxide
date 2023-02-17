@@ -1,5 +1,5 @@
 mod bare {
-    use git_testtools::tempfile;
+    use gix_testtools::tempfile;
 
     #[test]
     fn init_into_non_existing_directory_creates_it() -> crate::Result {
@@ -52,7 +52,7 @@ mod bare {
 }
 
 mod non_bare {
-    use git_testtools::tempfile;
+    use gix_testtools::tempfile;
 
     #[test]
     fn init_bare_with_custom_branch_name() -> crate::Result {

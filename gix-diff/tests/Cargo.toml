@@ -1,0 +1,27 @@
+[package]
+name = "gix-diff-tests"
+version = "0.0.0"
+publish = false
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*"]
+rust-version = "1.64"
+
+[features]
+serde1 = ["gix-diff/serde", "gix-hash/serde1", "gix-object/serde1"]
+
+[[test]]
+name = "diff"
+doctest = false
+path = "diff.rs"
+
+[dev-dependencies]
+gix-diff = { path = ".." }
+gix-hash = { path = "../../gix-hash" }
+gix-object = { path = "../../gix-object" }
+gix-odb = { path = "../../gix-odb" }
+gix-traverse = { path = "../../gix-traverse" }
+gix-testtools = { path = "../../tests/tools" }

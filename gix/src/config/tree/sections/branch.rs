@@ -31,7 +31,7 @@ pub type Merge = keys::Any<validate::FullNameRef>;
 mod merge {
     use std::borrow::Cow;
 
-    use git_ref::FullNameRef;
+    use gix_ref::FullNameRef;
 
     use crate::{bstr::BStr, config::tree::branch::Merge};
 
@@ -39,7 +39,7 @@ mod merge {
         /// Return the validated full ref name from `value` if it is valid.
         pub fn try_into_fullrefname(
             value: Cow<'_, BStr>,
-        ) -> Result<Cow<'_, FullNameRef>, git_validate::reference::name::Error> {
+        ) -> Result<Cow<'_, FullNameRef>, gix_validate::reference::name::Error> {
             match value {
                 Cow::Borrowed(v) => v.try_into().map(Cow::Borrowed),
                 Cow::Owned(v) => v.try_into().map(Cow::Owned),

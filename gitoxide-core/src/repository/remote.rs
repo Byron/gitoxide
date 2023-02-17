@@ -220,7 +220,7 @@ mod refs_impl {
             }
         }
         if refspecs.is_empty() {
-            bail!("Without refspecs there is nothing to show here. Add refspecs as arguments or configure them in git-config.")
+            bail!("Without refspecs there is nothing to show here. Add refspecs as arguments or configure them in gix-config.")
         }
         Ok(())
     }

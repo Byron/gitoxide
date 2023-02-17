@@ -11,9 +11,9 @@ pub mod diff {
         pub old: crate::Object<'old>,
         /// The new version of the blob.
         pub new: crate::Object<'new>,
-        /// The algorithm to use when calling [imara_diff::diff()][git_diff::blob::diff()].
+        /// The algorithm to use when calling [imara_diff::diff()][gix_diff::blob::diff()].
         /// This value is determined by the `diff.algorithm` configuration.
-        pub algo: git_diff::blob::Algorithm,
+        pub algo: gix_diff::blob::Algorithm,
     }
 
     ///
@@ -93,7 +93,7 @@ pub mod diff {
             let input = self.line_tokens();
             let mut err = None;
             let mut lines = Vec::new();
-            git_diff::blob::diff(self.algo, &input, |before: Range<u32>, after: Range<u32>| {
+            gix_diff::blob::diff(self.algo, &input, |before: Range<u32>, after: Range<u32>| {
                 if err.is_some() {
                     return;
                 }
@@ -131,18 +131,18 @@ pub mod diff {
         }
 
         /// Count the amount of removed and inserted lines efficiently.
-        pub fn line_counts(&self) -> git_diff::blob::sink::Counter<()> {
+        pub fn line_counts(&self) -> gix_diff::blob::sink::Counter<()> {
             let tokens = self.line_tokens();
-            git_diff::blob::diff(self.algo, &tokens, git_diff::blob::sink::Counter::default())
+            gix_diff::blob::diff(self.algo, &tokens, gix_diff::blob::sink::Counter::default())
         }
 
-        /// Return a tokenizer which treats lines as smallest unit for use in a [diff operation][git_diff::blob::diff()].
+        /// Return a tokenizer which treats lines as smallest unit for use in a [diff operation][gix_diff::blob::diff()].
         ///
         /// The line separator is determined according to normal git rules and filters.
-        pub fn line_tokens(&self) -> git_diff::blob::intern::InternedInput<&[u8]> {
+        pub fn line_tokens(&self) -> gix_diff::blob::intern::InternedInput<&[u8]> {
             // TODO: make use of `core.eol` and/or filters to do line-counting correctly. It's probably
             //       OK to just know how these objects are saved to know what constitutes a line.
-            git_diff::blob::intern::InternedInput::new(self.old.data.as_bytes(), self.new.data.as_bytes())
+            gix_diff::blob::intern::InternedInput::new(self.old.data.as_bytes(), self.new.data.as_bytes())
         }
     }
 }

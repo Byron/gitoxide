@@ -1,8 +1,8 @@
 use std::borrow::BorrowMut;
 
-use git_hash::oid;
-use git_object::TreeRefIter;
-use git_traverse::tree::breadthfirst;
+use gix_hash::oid;
+use gix_object::TreeRefIter;
+use gix_traverse::tree::breadthfirst;
 
 pub trait Sealed {}
 
@@ -22,7 +22,7 @@ pub trait TreeIterExt: Sealed {
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
         StateMut: BorrowMut<breadthfirst::State>,
-        V: git_traverse::tree::Visit;
+        V: gix_traverse::tree::Visit;
 }
 
 impl<'d> Sealed for TreeRefIter<'d> {}
@@ -37,7 +37,7 @@ impl<'d> TreeIterExt for TreeRefIter<'d> {
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
         StateMut: BorrowMut<breadthfirst::State>,
-        V: git_traverse::tree::Visit,
+        V: gix_traverse::tree::Visit,
     {
         breadthfirst(self.clone(), state, find, delegate)
     }

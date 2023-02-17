@@ -1,11 +1,11 @@
 ///
 pub mod set_target_id {
-    use git_ref::{transaction::PreviousValue, Target};
+    use gix_ref::{transaction::PreviousValue, Target};
 
     use crate::{bstr::BString, Reference};
 
     mod error {
-        use git_ref::FullName;
+        use gix_ref::FullName;
 
         /// The error returned by [`Reference::set_target_id()`][super::Reference::set_target_id()].
         #[derive(Debug, thiserror::Error)]
@@ -30,7 +30,7 @@ pub mod set_target_id {
         #[allow(clippy::result_large_err)]
         pub fn set_target_id(
             &mut self,
-            id: impl Into<git_hash::ObjectId>,
+            id: impl Into<gix_hash::ObjectId>,
             reflog_message: impl Into<BString>,
         ) -> Result<(), Error> {
             match &self.inner.target {
@@ -52,7 +52,7 @@ pub mod set_target_id {
 
 ///
 pub mod delete {
-    use git_ref::transaction::{Change, PreviousValue, RefEdit, RefLog};
+    use gix_ref::transaction::{Change, PreviousValue, RefEdit, RefLog};
 
     use crate::Reference;
 

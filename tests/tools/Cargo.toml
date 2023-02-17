@@ -1,6 +1,6 @@
 [package]
-name = "git-testtools"
-description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
+name = "gix-testtools"
+description = "Shared code for gitoxide crates to facilitate testing"
 version = "0.11.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"

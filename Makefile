@@ -68,32 +68,32 @@ check: ## Build all code in suitable configurations
                      && cargo check --features blocking-client \
                      && cargo check --features async-client
 	cd gitoxide-core && if cargo check --all-features 2>/dev/null; then false; else true; fi
-	cd git-hash && cargo check --all-features \
+	cd gix-hash && cargo check --all-features \
 				&& cargo check
-	cd git-object && cargo check --all-features \
+	cd gix-object && cargo check --all-features \
                   && cargo check --features verbose-object-parsing-errors
-	cd git-index && cargo check --features serde1
-	cd git-credentials && cargo check --features serde1
-	cd git-sec && cargo check --features serde1
-	cd git-revision && cargo check --features serde1
-	cd git-attributes && cargo check --features serde1
-	cd git-glob && cargo check --features serde1
-	cd git-mailmap && cargo check --features serde1
-	cd git-worktree && cargo check --features serde1
-	cd git-actor && cargo check --features serde1
-	cd git-date && cargo check --features serde1
-	cd git-pack && cargo check --features serde1 \
+	cd gix-index && cargo check --features serde1
+	cd gix-credentials && cargo check --features serde1
+	cd gix-sec && cargo check --features serde1
+	cd gix-revision && cargo check --features serde1
+	cd gix-attributes && cargo check --features serde1
+	cd gix-glob && cargo check --features serde1
+	cd gix-mailmap && cargo check --features serde1
+	cd gix-worktree && cargo check --features serde1
+	cd gix-actor && cargo check --features serde1
+	cd gix-date && cargo check --features serde1
+	cd gix-pack && cargo check --features serde1 \
 			   && cargo check --features pack-cache-lru-static \
 			   && cargo check --features pack-cache-lru-dynamic \
 			   && cargo check --features object-cache-dynamic \
 			   && cargo check
-	cd git-packetline && cargo check \
+	cd gix-packetline && cargo check \
 					   && cargo check --features blocking-io \
 					   && cargo check --features async-io
-	cd git-packetline && if cargo check --all-features 2>/dev/null; then false; else true; fi
-	cd git-url && cargo check --all-features \
+	cd gix-packetline && if cargo check --all-features 2>/dev/null; then false; else true; fi
+	cd gix-url && cargo check --all-features \
 			   && cargo check
-	cd git-features && cargo check --all-features \
+	cd gix-features && cargo check --all-features \
 			   && cargo check --features parallel \
 			   && cargo check --features fs-walkdir-parallel \
 			   && cargo check --features rustsha1 \
@@ -106,24 +106,24 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features zlib-stock \
 			   && cargo check --features zlib,zlib-stock \
 			   && cargo check --features cache-efficiency-debug
-	cd git-commitgraph && cargo check --all-features \
+	cd gix-commitgraph && cargo check --all-features \
 			   && cargo check
-	cd git-config-value && cargo check --all-features \
+	cd gix-config-value && cargo check --all-features \
 				 && cargo check
-	cd git-config && cargo check --all-features \
+	cd gix-config && cargo check --all-features \
 				 && cargo check
-	cd git-transport && cargo check \
+	cd gix-transport && cargo check \
 					 && cargo check --features blocking-client \
 					 && cargo check --features async-client \
 					 && cargo check --features async-client,async-std \
 					 && cargo check --features http-client \
 					 && cargo check --features http-client-curl \
 					 && cargo check --features http-client-reqwest
-	cd git-transport && if cargo check --all-features 2>/dev/null; then false; else true; fi
-	cd git-protocol && cargo check \
+	cd gix-transport && if cargo check --all-features 2>/dev/null; then false; else true; fi
+	cd gix-protocol && cargo check \
 					&& cargo check --features blocking-client \
 					&& cargo check --features async-client
-	cd git-protocol && if cargo check --all-features 2>/dev/null; then false; else true; fi
+	cd gix-protocol && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd gix && cargo check --no-default-features --features async-network-client \
 					  && cargo check --no-default-features --features async-network-client-async-std \
 					  && cargo check --no-default-features --features blocking-network-client \
@@ -132,29 +132,29 @@ check: ## Build all code in suitable configurations
 					  && cargo check --no-default-features --features max-performance \
 					  && cargo check --no-default-features --features max-performance-safe \
 					  && cargo check --no-default-features
-	cd git-odb && cargo check --features serde1
+	cd gix-odb && cargo check --features serde1
 	cd cargo-smart-release && cargo check --all
 
 unit-tests: ## run all unit tests
 	cargo test --all
-	cd git-features && cargo test && cargo test --all-features
-	cd git-ref/tests && cargo test --all-features
-	cd git-odb && cargo test && cargo test --all-features
-	cd git-object && cargo test && cargo test --features verbose-object-parsing-errors
-	cd git-pack/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
-				&& cargo test --features "internal-testing-git-features-parallel"
-	cd git-index/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
-				&& cargo test --features "internal-testing-git-features-parallel"
-	cd git-worktree && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
-				&& cargo test --features "internal-testing-git-features-parallel"
-	cd git-packetline && cargo test \
+	cd gix-features && cargo test && cargo test --all-features
+	cd gix-ref/tests && cargo test --all-features
+	cd gix-odb && cargo test && cargo test --all-features
+	cd gix-object && cargo test && cargo test --features verbose-object-parsing-errors
+	cd gix-pack/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
+				&& cargo test --features "internal-testing-gix-features-parallel"
+	cd gix-index/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
+				&& cargo test --features "internal-testing-gix-features-parallel"
+	cd gix-worktree && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
+				&& cargo test --features "internal-testing-gix-features-parallel"
+	cd gix-packetline && cargo test \
 					  && cargo test --features blocking-io,maybe-async/is_sync --test blocking-packetline \
 					  && cargo test --features "async-io" --test async-packetline
-	cd git-transport && cargo test \
+	cd gix-transport && cargo test \
 					 && cargo test --features http-client-curl,maybe-async/is_sync \
 					 && cargo test --features http-client-reqwest,maybe-async/is_sync \
 					 && cargo test --features async-client
-	cd git-protocol && cargo test --features blocking-client \
+	cd gix-protocol && cargo test --features blocking-client \
 					&& cargo test --features async-client \
 					&& cargo test
 	cd gix && cargo test \
@@ -172,12 +172,12 @@ continuous-unit-tests: ## run all unit tests whenever something changes
 jtt = target/debug/jtt
 journey-tests: always  ## run journey tests (max)
 	cargo build
-	cargo build --package git-testtools --bin jtt
+	cargo build --package gix-testtools --bin jtt
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max
 
 journey-tests-pure: always  ## run journey tests (max-pure)
 	cargo build --no-default-features --features max-pure
-	cargo build --package git-testtools --bin jtt
+	cargo build --package gix-testtools --bin jtt
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max-pure
 
 journey-tests-small: always ## run journey tests (small)
@@ -274,7 +274,7 @@ stress: ## Run various algorithms on big repositories
 	rm -Rf delme; mkdir delme && time ./target/release/gix --verbose no-repo pack explode .git/objects/pack/*.idx delme/
 
 	$(MAKE) stress-commitgraph
-	$(MAKE) bench-git-config
+	$(MAKE) bench-gix-config
 
 .PHONY: stress-commitgraph
 stress-commitgraph: release-lean $(commit_graphs)
@@ -282,9 +282,9 @@ stress-commitgraph: release-lean $(commit_graphs)
 		time ./target/release/gix --verbose no-repo commit-graph verify $$path; \
 	done
 
-.PHONY: bench-git-config
-bench-git-config:
-	cd git-config && cargo bench
+.PHONY: bench-gix-config
+bench-gix-config:
+	cd gix-config && cargo bench
 
 check-msrv-on-ci: ## Check the minimal support rust version for currently installed Rust version
 	rustc --version
@@ -302,7 +302,7 @@ $(baseline_asset_fixture):
 		sed -i '' -E '/bare = true|ignorecase = true|precomposeunicode = true|filemode = true/d' config && \
 		sed -i '' 's/master/main/g' $$(find . -type f)
 
-transport_fixtures = git-transport/tests/fixtures
+transport_fixtures = gix-transport/tests/fixtures
 base_url = https://github.com/Byron/gitoxide.git
 update-curl-fixtures: ## use curl to fetch raw fixtures for use in unit test. Changes there might break them
 	curl -D - -L "$(base_url)/info/refs?service=git-upload-pack"  > $(transport_fixtures)/v1/http-handshake.response

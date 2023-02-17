@@ -1,9 +1,9 @@
 #![allow(clippy::result_large_err)]
 use std::convert::TryInto;
 
-use git_hash::ObjectId;
-use git_odb::{Find, FindExt, Write};
-use git_ref::{
+use gix_hash::ObjectId;
+use gix_odb::{Find, FindExt, Write};
+use gix_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
 };
@@ -23,10 +23,10 @@ impl crate::Repository {
     /// Loose object could be partially decoded, even though that's not implemented.
     pub fn find_object(&self, id: impl Into<ObjectId>) -> Result<Object<'_>, object::find::existing::Error> {
         let id = id.into();
-        if id == git_hash::ObjectId::empty_tree(self.object_hash()) {
+        if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
             return Ok(Object {
                 id,
-                kind: git_object::Kind::Tree,
+                kind: gix_object::Kind::Tree,
                 data: Vec::new(),
                 repo: self,
             });
@@ -39,10 +39,10 @@ impl crate::Repository {
     /// Try to find the object with `id` or return `None` it it wasn't found.
     pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::Error> {
         let id = id.into();
-        if id == git_hash::ObjectId::empty_tree(self.object_hash()) {
+        if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
             return Ok(Some(Object {
                 id,
-                kind: git_object::Kind::Tree,
+                kind: gix_object::Kind::Tree,
                 data: Vec::new(),
                 repo: self,
             }));
@@ -59,7 +59,7 @@ impl crate::Repository {
     }
 
     /// Write the given object into the object database and return its object id.
-    pub fn write_object(&self, object: impl git_object::WriteTo) -> Result<Id<'_>, object::write::Error> {
+    pub fn write_object(&self, object: impl gix_object::WriteTo) -> Result<Id<'_>, object::write::Error> {
         self.objects
             .write(object)
             .map(|oid| oid.attach(self))
@@ -69,7 +69,7 @@ impl crate::Repository {
     /// Write a blob from the given `bytes`.
     pub fn write_blob(&self, bytes: impl AsRef<[u8]>) -> Result<Id<'_>, object::write::Error> {
         self.objects
-            .write_buf(git_object::Kind::Blob, bytes.as_ref())
+            .write_buf(gix_object::Kind::Blob, bytes.as_ref())
             .map(|oid| oid.attach(self))
     }
 
@@ -83,7 +83,7 @@ impl crate::Repository {
         bytes.seek(std::io::SeekFrom::Start(current))?;
 
         self.objects
-            .write_stream(git_object::Kind::Blob, len, bytes)
+            .write_stream(gix_object::Kind::Blob, len, bytes)
             .map(|oid| oid.attach(self))
     }
 
@@ -95,13 +95,13 @@ impl crate::Repository {
     pub fn tag(
         &self,
         name: impl AsRef<str>,
-        target: impl AsRef<git_hash::oid>,
-        target_kind: git_object::Kind,
-        tagger: Option<git_actor::SignatureRef<'_>>,
+        target: impl AsRef<gix_hash::oid>,
+        target_kind: gix_object::Kind,
+        tagger: Option<gix_actor::SignatureRef<'_>>,
         message: impl AsRef<str>,
         constraint: PreviousValue,
     ) -> Result<Reference<'_>, tag::Error> {
-        let tag = git_object::Tag {
+        let tag = gix_object::Tag {
             target: target.as_ref().into(),
             target_kind,
             name: name.as_ref().into(),
@@ -118,8 +118,8 @@ impl crate::Repository {
     /// This forces setting the commit time and author time by hand. Note that typically, committer and author are the same.
     pub fn commit_as<'a, 'c, Name, E>(
         &self,
-        committer: impl Into<git_actor::SignatureRef<'c>>,
-        author: impl Into<git_actor::SignatureRef<'a>>,
+        committer: impl Into<gix_actor::SignatureRef<'c>>,
+        author: impl Into<gix_actor::SignatureRef<'a>>,
         reference: Name,
         message: impl AsRef<str>,
         tree: impl Into<ObjectId>,
@@ -129,7 +129,7 @@ impl crate::Repository {
         Name: TryInto<FullName, Error = E>,
         commit::Error: From<E>,
     {
-        use git_ref::{
+        use gix_ref::{
             transaction::{Change, RefEdit},
             Target,
         };
@@ -137,7 +137,7 @@ impl crate::Repository {
         // TODO: possibly use CommitRef to save a few allocations (but will have to allocate for object ids anyway.
         //       This can be made vastly more efficient though if we wanted to, so we lie in the API
         let reference = reference.try_into()?;
-        let commit = git_object::Commit {
+        let commit = gix_object::Commit {
             message: message.as_ref().into(),
             tree: tree.into(),
             author: author.into().to_owned(),
@@ -207,7 +207,7 @@ impl crate::Repository {
     /// Note that it is special and doesn't physically exist in the object database even though it can be returned.
     /// This means that this object can be used in an uninitialized, empty repository which would report to have no objects at all.
     pub fn empty_tree(&self) -> Tree<'_> {
-        self.find_object(git_hash::ObjectId::empty_tree(self.object_hash()))
+        self.find_object(gix_hash::ObjectId::empty_tree(self.object_hash()))
             .expect("always present")
             .into_tree()
     }

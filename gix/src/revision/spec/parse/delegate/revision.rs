@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use git_hash::ObjectId;
-use git_revision::spec::parse::{
+use gix_hash::ObjectId;
+use gix_revision::spec::parse::{
     delegate,
     delegate::{ReflogLookup, SiblingBranch},
 };
@@ -33,14 +33,14 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
 
     fn disambiguate_prefix(
         &mut self,
-        prefix: git_hash::Prefix,
+        prefix: gix_hash::Prefix,
         _must_be_commit: Option<delegate::PrefixHint<'_>>,
     ) -> Option<()> {
         self.last_call_was_disambiguate_prefix[self.idx] = true;
         let mut candidates = Some(HashSet::default());
         self.prefix[self.idx] = Some(prefix);
 
-        let empty_tree_id = git_hash::ObjectId::empty_tree(prefix.as_oid().kind());
+        let empty_tree_id = gix_hash::ObjectId::empty_tree(prefix.as_oid().kind());
         let res = if prefix.as_oid() == empty_tree_id {
             candidates.as_mut().expect("set").insert(empty_tree_id);
             Ok(Some(Err(())))
@@ -163,7 +163,7 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
     fn nth_checked_out_branch(&mut self, branch_no: usize) -> Option<()> {
         self.unset_disambiguate_call();
         fn prior_checkouts_iter<'a>(
-            platform: &'a mut git_ref::file::log::iter::Platform<'static, '_>,
+            platform: &'a mut gix_ref::file::log::iter::Platform<'static, '_>,
         ) -> Result<impl Iterator<Item = (BString, ObjectId)> + 'a, Error> {
             match platform.rev().ok().flatten() {
                 Some(log) => Ok(log.filter_map(Result::ok).filter_map(|line| {

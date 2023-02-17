@@ -1,5 +1,5 @@
 use crate::bstr::BStr;
-use git_object::tree::EntryMode;
+use gix_object::tree::EntryMode;
 
 use crate::Id;
 
@@ -9,14 +9,14 @@ pub enum Event<'a, 'old, 'new> {
     /// An entry was added, like the addition of a file or directory.
     Addition {
         /// The mode of the added entry.
-        entry_mode: git_object::tree::EntryMode,
+        entry_mode: gix_object::tree::EntryMode,
         /// The object id of the added entry.
         id: Id<'new>,
     },
     /// An entry was deleted, like the deletion of a file or directory.
     Deletion {
         /// The mode of the deleted entry.
-        entry_mode: git_object::tree::EntryMode,
+        entry_mode: gix_object::tree::EntryMode,
         /// The object id of the deleted entry.
         id: Id<'old>,
     },
@@ -24,12 +24,12 @@ pub enum Event<'a, 'old, 'new> {
     /// a file into a symbolic link adjusts its mode.
     Modification {
         /// The mode of the entry before the modification.
-        previous_entry_mode: git_object::tree::EntryMode,
+        previous_entry_mode: gix_object::tree::EntryMode,
         /// The object id of the entry before the modification.
         previous_id: Id<'old>,
 
         /// The mode of the entry after the modification.
-        entry_mode: git_object::tree::EntryMode,
+        entry_mode: gix_object::tree::EntryMode,
         /// The object id after the modification.
         id: Id<'new>,
     },
@@ -45,7 +45,7 @@ pub enum Event<'a, 'old, 'new> {
         /// are tracked.
         source_location: &'a BStr,
         /// The mode of the entry before the rename.
-        source_entry_mode: git_object::tree::EntryMode,
+        source_entry_mode: gix_object::tree::EntryMode,
         /// The object id of the entry before the rename.
         ///
         /// Note that this is the same as `id` if we require the [similarity to be 100%][super::Renames::percentage], but may
@@ -54,7 +54,7 @@ pub enum Event<'a, 'old, 'new> {
 
         /// The mode of the entry after the rename.
         /// It could differ but still be considered a rename as we are concerned only about content.
-        entry_mode: git_object::tree::EntryMode,
+        entry_mode: gix_object::tree::EntryMode,
         /// The object id after the rename.
         id: Id<'new>,
     },
@@ -70,7 +70,7 @@ pub enum Event<'a, 'old, 'new> {
         /// are tracked.
         source_location: &'a BStr,
         /// The mode of the entry that is considered the source.
-        source_entry_mode: git_object::tree::EntryMode,
+        source_entry_mode: gix_object::tree::EntryMode,
         /// The object id of the source of the copy.
         ///
         /// Note that this is the same as `id` if we require the [similarity to be 100%][super::Renames::percentage], but may
@@ -79,7 +79,7 @@ pub enum Event<'a, 'old, 'new> {
 
         /// The mode of the entry after the copy, or the destination of it.
         /// It could differ but still be considered a copy as we are concerned only about content.
-        entry_mode: git_object::tree::EntryMode,
+        entry_mode: gix_object::tree::EntryMode,
         /// The object id after the copy, or the destination of it.
         id: Id<'new>,
     },
@@ -103,7 +103,7 @@ impl<'a, 'old, 'new> Event<'a, 'old, 'new> {
     }
 
     /// Return the current mode of this instance.
-    pub fn entry_mode(&self) -> git_object::tree::EntryMode {
+    pub fn entry_mode(&self) -> gix_object::tree::EntryMode {
         match self {
             Event::Addition { entry_mode, .. }
             | Event::Deletion { entry_mode, .. }

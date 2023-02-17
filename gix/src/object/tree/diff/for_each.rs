@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
-use git_object::TreeRefIter;
-use git_odb::FindExt;
+use gix_object::TreeRefIter;
+use gix_odb::FindExt;
 
 use super::{change, Action, Change, Platform, Tracking};
 use crate::object::tree::diff::Renames;
@@ -16,7 +16,7 @@ use crate::{
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    Diff(#[from] git_diff::tree::changes::Error),
+    Diff(#[from] gix_diff::tree::changes::Error),
     #[error("The user-provided callback failed")]
     ForEach(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
 }
@@ -46,7 +46,7 @@ impl<'a, 'old> Platform<'a, 'old> {
             visit: for_each,
             err: None,
         };
-        match git_diff::tree::Changes::from(TreeRefIter::from_bytes(&self.lhs.data)).needed_to_obtain(
+        match gix_diff::tree::Changes::from(TreeRefIter::from_bytes(&self.lhs.data)).needed_to_obtain(
             TreeRefIter::from_bytes(&other.data),
             &mut self.state,
             |oid, buf| repo.objects.find_tree_iter(oid, buf),
@@ -56,10 +56,10 @@ impl<'a, 'old> Platform<'a, 'old> {
                 Some(err) => Err(Error::ForEach(Box::new(err))),
                 None => Ok(()),
             },
-            Err(git_diff::tree::changes::Error::Cancelled) => delegate
+            Err(gix_diff::tree::changes::Error::Cancelled) => delegate
                 .err
                 .map(|err| Err(Error::ForEach(Box::new(err))))
-                .unwrap_or(Err(Error::Diff(git_diff::tree::changes::Error::Cancelled))),
+                .unwrap_or(Err(Error::Diff(gix_diff::tree::changes::Error::Cancelled))),
             Err(err) => Err(err.into()),
         }
     }
@@ -93,7 +93,7 @@ impl<A, B> Delegate<'_, '_, A, B> {
     }
 }
 
-impl<'old, 'new, VisitFn, E> git_diff::tree::Visit for Delegate<'old, 'new, VisitFn, E>
+impl<'old, 'new, VisitFn, E> gix_diff::tree::Visit for Delegate<'old, 'new, VisitFn, E>
 where
     VisitFn: for<'delegate> FnMut(Change<'delegate, 'old, 'new>) -> Result<Action, E>,
     E: std::error::Error + Sync + Send + 'static,
@@ -133,8 +133,8 @@ where
         }
     }
 
-    fn visit(&mut self, change: git_diff::tree::visit::Change) -> git_diff::tree::visit::Action {
-        use git_diff::tree::visit::Change::*;
+    fn visit(&mut self, change: gix_diff::tree::visit::Change) -> gix_diff::tree::visit::Action {
+        use gix_diff::tree::visit::Change::*;
         let event = match change {
             Addition { entry_mode, oid } => change::Event::Addition {
                 entry_mode,
@@ -160,11 +160,11 @@ where
             event,
             location: self.location.as_ref(),
         }) {
-            Ok(Action::Cancel) => git_diff::tree::visit::Action::Cancel,
-            Ok(Action::Continue) => git_diff::tree::visit::Action::Continue,
+            Ok(Action::Cancel) => gix_diff::tree::visit::Action::Cancel,
+            Ok(Action::Continue) => gix_diff::tree::visit::Action::Continue,
             Err(err) => {
                 self.err = Some(err);
-                git_diff::tree::visit::Action::Cancel
+                gix_diff::tree::visit::Action::Cancel
             }
         }
     }

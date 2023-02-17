@@ -38,14 +38,14 @@ impl<'repo> Proxy<'repo> {
     /// Note that the location might not exist.
     pub fn base(&self) -> std::io::Result<PathBuf> {
         let git_dir = self.git_dir.join("gitdir");
-        let base_dot_git = git_discover::path::from_plain_file(&git_dir).ok_or_else(|| {
+        let base_dot_git = gix_discover::path::from_plain_file(&git_dir).ok_or_else(|| {
             std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 format!("Required file '{}' does not exist", git_dir.display()),
             )
         })??;
 
-        Ok(git_discover::path::without_dot_git_dir(base_dot_git))
+        Ok(gix_discover::path::without_dot_git_dir(base_dot_git))
     }
 
     /// The git directory for the work tree, typically contained within the parent git dir.
@@ -55,7 +55,7 @@ impl<'repo> Proxy<'repo> {
 
     /// The name of the worktree, which is derived from its folder within the `worktrees` directory within the parent `.git` folder.
     pub fn id(&self) -> &BStr {
-        git_path::os_str_into_bstr(self.git_dir.file_name().expect("worktrees/ parent dir"))
+        gix_path::os_str_into_bstr(self.git_dir.file_name().expect("worktrees/ parent dir"))
             .expect("no illformed UTF-8")
     }
 

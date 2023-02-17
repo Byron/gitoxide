@@ -1,5 +1,5 @@
-use git_hash::ObjectId;
-use git_odb::FindExt;
+use gix_hash::ObjectId;
+use gix_odb::FindExt;
 
 use crate::{revision, Repository};
 
@@ -8,8 +8,8 @@ use crate::{revision, Repository};
 pub struct Platform<'repo> {
     pub(crate) repo: &'repo Repository,
     pub(crate) tips: Vec<ObjectId>,
-    pub(crate) sorting: git_traverse::commit::Sorting,
-    pub(crate) parents: git_traverse::commit::Parents,
+    pub(crate) sorting: gix_traverse::commit::Sorting,
+    pub(crate) parents: gix_traverse::commit::Parents,
 }
 
 impl<'repo> Platform<'repo> {
@@ -26,14 +26,14 @@ impl<'repo> Platform<'repo> {
 /// Create-time builder methods
 impl<'repo> Platform<'repo> {
     /// Set the sort mode for commits to the given value. The default is to order by topology.
-    pub fn sorting(mut self, sorting: git_traverse::commit::Sorting) -> Self {
+    pub fn sorting(mut self, sorting: gix_traverse::commit::Sorting) -> Self {
         self.sorting = sorting;
         self
     }
 
     /// Only traverse the first parent of the commit graph.
     pub fn first_parent_only(mut self) -> Self {
-        self.parents = git_traverse::commit::Parents::First;
+        self.parents = gix_traverse::commit::Parents::First;
         self
     }
 }
@@ -46,7 +46,7 @@ impl<'repo> Platform<'repo> {
     ///
     /// It's highly recommended to set an [`object cache`][Repository::object_cache_size()] on the parent repo
     /// to greatly speed up performance if the returned id is supposed to be looked up right after.
-    pub fn all(self) -> Result<revision::Walk<'repo>, git_traverse::commit::ancestors::Error> {
+    pub fn all(self) -> Result<revision::Walk<'repo>, gix_traverse::commit::ancestors::Error> {
         let Platform {
             repo,
             tips,
@@ -56,9 +56,9 @@ impl<'repo> Platform<'repo> {
         Ok(revision::Walk {
             repo,
             inner: Box::new(
-                git_traverse::commit::Ancestors::new(
+                gix_traverse::commit::Ancestors::new(
                     tips,
-                    git_traverse::commit::ancestors::State::default(),
+                    gix_traverse::commit::ancestors::State::default(),
                     move |oid, buf| repo.objects.find_commit_iter(oid, buf),
                 )
                 .sorting(sorting)?
@@ -77,7 +77,7 @@ pub(crate) mod iter {
     pub struct Walk<'repo> {
         pub(crate) repo: &'repo crate::Repository,
         pub(crate) inner:
-            Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'repo>,
+            Box<dyn Iterator<Item = Result<gix_hash::ObjectId, gix_traverse::commit::ancestors::Error>> + 'repo>,
         pub(crate) error_on_missing_commit: bool,
         // TODO: tests
         /// After iteration this flag is true if the iteration was stopped prematurely due to missing parent commits.
@@ -103,7 +103,7 @@ pub(crate) mod iter {
     }
 
     impl<'repo> Iterator for Walk<'repo> {
-        type Item = Result<Id<'repo>, git_traverse::commit::ancestors::Error>;
+        type Item = Result<Id<'repo>, gix_traverse::commit::ancestors::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
             match self.inner.next() {
@@ -112,7 +112,7 @@ pub(crate) mod iter {
                     None
                 }
                 Some(Ok(oid)) => Some(Ok(oid.attach(self.repo))),
-                Some(Err(err @ git_traverse::commit::ancestors::Error::FindExisting { .. })) => {
+                Some(Err(err @ gix_traverse::commit::ancestors::Error::FindExisting { .. })) => {
                     if self.error_on_missing_commit {
                         Some(Err(err))
                     } else {

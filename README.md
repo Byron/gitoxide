@@ -17,11 +17,11 @@ like `fetch` and `clone`, and to validate the usability and control of the API o
 ## Development Status
 
 The command-line tools as well as the status of each crate is described in 
-[the crate status document](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap).
+[the crate status document](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-mailmap).
 
 For use in applications, look for the [`gix`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix) crate, 
 which serves as entrypoint to the functionality provided by various lower-level plumbing crates like
-[`git-config`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config).
+[`gix-config`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config).
 
 ### Crates
 
@@ -32,22 +32,22 @@ Follow linked crate name for detailed status. Please note that all crates follow
 ### Production Grade
 
 * **Stability Tier 1**
-  - [git-lock](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md)
+  - [gix-lock](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.md)
      
 * **Stability Tier 2**
-  - [git-tempfile](https://github.com/Byron/gitoxide/blob/main/git-tempfile/README.md)
+  - [gix-tempfile](https://github.com/Byron/gitoxide/blob/main/gix-tempfile/README.md)
    
 ### Stabilization Candidates
 
 Crates that seem feature complete and need to see some more use before they can be released as 1.0.
 Documentation is complete and was reviewed at least once.
 
-* [git-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap)
-* [git-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-chunk)
-* [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
-* [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
-* [git-config-value](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config-value)
-* [git-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-glob)
+* [gix-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-mailmap)
+* [gix-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-chunk)
+* [gix-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-ref)
+* [gix-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config)
+* [gix-config-value](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config-value)
+* [gix-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-glob)
 
 ### Initial Development
 
@@ -55,49 +55,49 @@ These crates may be missing some features and thus are somewhat incomplete, but 
 is usable to some extent.
 
 * **usable** _(with rough but complete docs, possibly incomplete functionality)_
-  * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
-  * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
-  * [git-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-object)
-  * [git-validate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-validate)
-  * [git-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-url)
-  * [git-packetline](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-packetline)
-  * [git-transport](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-transport)
-  * [git-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-protocol)
-  * [git-pack](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pack)
-  * [git-odb](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-odb)
-  * [git-commitgraph](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-commitgraph)
-  * [git-diff](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-diff)
-  * [git-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-traverse)
-  * [git-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-features)
-  * [git-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-credentials)
-  * [git-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sec)
-  * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
-  * [git-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-discover)
-  * [git-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-path)
+  * [gix-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-actor)
+  * [gix-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hash)
+  * [gix-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-object)
+  * [gix-validate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-validate)
+  * [gix-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-url)
+  * [gix-packetline](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-packetline)
+  * [gix-transport](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-transport)
+  * [gix-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-protocol)
+  * [gix-pack](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-pack)
+  * [gix-odb](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-odb)
+  * [gix-commitgraph](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-commitgraph)
+  * [gix-diff](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-diff)
+  * [gix-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-traverse)
+  * [gix-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-features)
+  * [gix-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-credentials)
+  * [gix-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-sec)
+  * [gix-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-quote)
+  * [gix-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-discover)
+  * [gix-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-path)
   * [gix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix)
-  * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
-  * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
-  * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)
-  * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
-  * [git-command](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-command)
-  * [git-prompt](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-prompt)
-  * [git-refspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-refspec)
+  * [gix-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-attributes)
+  * [gix-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-pathspec)
+  * [gix-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-index)
+  * [gix-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-revision)
+  * [gix-command](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-command)
+  * [gix-prompt](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-prompt)
+  * [gix-refspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-refspec)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
-  * [git-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-worktree)
-  * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
-  * [git-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-date)
-  * [git-hashtable](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hashtable)
+  * [gix-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree)
+  * [gix-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bitmap)
+  * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)
+  * [gix-hashtable](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hashtable)
 * **idea** _(just a name placeholder)_
-  * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
-  * [git-fetchhead](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-fetchhead)
-  * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)
-  * [git-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lfs)
-  * [git-rebase](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-rebase)
-  * [git-sequencer](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sequencer)
-  * [git-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-submodule)
-  * [git-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tui)
-  * [git-tix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tix)
+  * [gix-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-note)
+  * [gix-fetchhead](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fetchhead)
+  * [gix-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-filter)
+  * [gix-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-lfs)
+  * [gix-rebase](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-rebase)
+  * [gix-sequencer](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-sequencer)
+  * [gix-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-submodule)
+  * [gix-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tui)
+  * [gix-tix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tix)
   * [git-bundle](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bundle)
   
 ### Stress Testing
@@ -222,7 +222,7 @@ Project non-goals can change over time as we learn more, and they can be challen
  * **use async IO everywhere**
    * for the most part, git operations are heavily reliant on memory mapped IO as well as CPU to decompress data,
      which doesn't lend itself well to async IO out of the box.
-   * Use `blocking` as well as `git-features::interrupt` to bring operations into the async world and to control 
+   * Use `blocking` as well as `gix-features::interrupt` to bring operations into the async world and to control 
      long running operations.
    * When connecting or streaming over TCP connections, especially when receiving on the server, async seems like a must
      though, but behind a feature flag.
@@ -231,7 +231,7 @@ Project non-goals can change over time as we learn more, and they can be challen
 
 If what you have seen so far sparked your interest to contribute, then let us say: We are happy to have you and help you to get started.
 
-> ❗️Note❗️: For cloning, `git-lfs` needs to be locally installed or the checkout will fail. `git lfs install` must have been called once, followed
+> ❗️Note❗️: For cloning, `gix-lfs` needs to be locally installed or the checkout will fail. `git lfs install` must have been called once, followed
   by `git lfs pull` to replace the `lfs`-pointer files.
 
 We recommend running `make tests check-size` during the development process to assure CI is green before pushing.
@@ -284,11 +284,11 @@ Provide a CLI to for the most basic user journey:
 * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
   as well. What would an MVP look like? Maybe even something that could ship with gitoxide. See [this go implementation as example](https://github.com/filhodanuvem/gitql).
 * [ ] A truly awesome history rewriter which makes it easy to understand what happened while avoiding all pitfalls. Think BFG, but more awesome, if that's possible.
-* [ ] `git-tui` should learn a lot from [fossil-scm] regarding the presentation of data. Maybe [this](https://github.com/Lutetium-Vanadium/requestty/) can be used for prompts. Probably [magit] has a lot to offer, too.
+* [ ] `gix-tui` should learn a lot from [fossil-scm] regarding the presentation of data. Maybe [this](https://github.com/Lutetium-Vanadium/requestty/) can be used for prompts. Probably [magit] has a lot to offer, too.
 
 ### Ideas for Spin-Offs
 
-* [ ] A system to integrate tightly with `git-lfs` to allow a multi-tier architecture so that assets can be stored in git and are accessible quickly from an intranet location
+* [ ] A system to integrate tightly with `gix-lfs` to allow a multi-tier architecture so that assets can be stored in git and are accessible quickly from an intranet location
   (for example by accessing the storage read-only over the network) while changes are pushed immediately by the server to other edge locations, like _the cloud_ or backups. Sparse checkouts along with explorer/finder integrations
   make it convenient to only work on a small subset of files locally. Clones can contain all configuration somebody would need to work efficiently from their location,
   and authentication for the git history as well as LFS resources make the system secure. One could imagine encryption support for untrusted locations in _the cloud_

@@ -18,7 +18,7 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
     /// URLs to authenticate with.
     pub fn with_credentials(
         mut self,
-        helper: impl FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result + 'a,
+        helper: impl FnMut(gix_credentials::helper::Action) -> gix_credentials::protocol::Result + 'a,
     ) -> Self {
         self.authenticate = Some(Box::new(helper));
         self
@@ -46,7 +46,7 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
     /// default way of handling credentials, which they can call as fallback.
     pub fn configured_credentials(
         &self,
-        url: git_url::Url,
+        url: gix_url::Url,
     ) -> Result<AuthenticateFn<'static>, crate::config::credential_helpers::Error> {
         let (mut cascade, _action_with_normalized_url, prompt_opts) =
             self.remote.repo.config_snapshot().credential_helpers(url)?;
@@ -58,7 +58,7 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
     }
 
     /// Provide a mutable transport to allow interacting with it according to its actual type.
-    /// Note that the caller _should not_ call [`configure()`][git_protocol::transport::client::TransportWithoutIO::configure()]
+    /// Note that the caller _should not_ call [`configure()`][gix_protocol::transport::client::TransportWithoutIO::configure()]
     /// as we will call it automatically before performing the handshake. Instead, to bring in custom configuration,
     /// call [`with_transport_options()`][Connection::with_transport_options()].
     pub fn transport_mut(&mut self) -> &mut T {

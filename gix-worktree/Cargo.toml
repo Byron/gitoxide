@@ -1,0 +1,59 @@
+[package]
+name = "gix-worktree"
+version = "0.12.2"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project dedicated implementing everything around working trees and git excludes"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*", "CHANGELOG.md"]
+rust-version = "1.64"
+
+[lib]
+doctest = false
+
+[[test]]
+name = "multi-threaded"
+path = "tests/worktree-multi-threaded.rs"
+required-features = ["internal-testing-gix-features-parallel"]
+
+[[test]]
+name = "single-threaded"
+path = "tests/worktree-single-threaded.rs"
+required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
+
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = [ "serde", "bstr/serde", "gix-index/serde1", "gix-hash/serde1", "gix-object/serde1" ]
+
+internal-testing-gix-features-parallel = ["gix-features/parallel"]
+internal-testing-to-avoid-being-run-by-cargo-test-all = []
+
+[dependencies]
+gix-index = { version = "^0.12.3", path = "../gix-index" }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
+gix-object = { version = "^0.26.1", path = "../gix-object" }
+gix-glob = { version = "^0.5.3", path = "../gix-glob" }
+gix-path = { version = "^0.7.1", path = "../gix-path" }
+gix-attributes = { version = "^0.8.2", path = "../gix-attributes" }
+gix-features = { version = "^0.26.4", path = "../gix-features" }
+
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
+
+thiserror = "1.0.26"
+bstr = { version = "1.0.1", default-features = false }
+
+document-features = { version = "0.2.0", optional = true }
+io-close = "0.3.7"
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools" }
+gix-odb = { path = "../gix-odb" }
+symlink = "0.1.0"
+
+walkdir = "2.3.2"
+tempfile = "3.2.0"
+
+[package.metadata.docs.rs]
+features = ["document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

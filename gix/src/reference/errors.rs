@@ -8,11 +8,11 @@ pub mod edit {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        FileTransactionPrepare(#[from] git_ref::file::transaction::prepare::Error),
+        FileTransactionPrepare(#[from] gix_ref::file::transaction::prepare::Error),
         #[error(transparent)]
-        FileTransactionCommit(#[from] git_ref::file::transaction::commit::Error),
+        FileTransactionCommit(#[from] gix_ref::file::transaction::commit::Error),
         #[error(transparent)]
-        NameValidation(#[from] git_validate::reference::name::Error),
+        NameValidation(#[from] gix_validate::reference::name::Error),
         #[error("Could not interpret core.filesRefLockTimeout or core.packedRefsTimeout, it must be the number in milliseconds to wait for locks or negative to wait forever")]
         LockTimeoutConfiguration(#[from] config::lock_timeout::Error),
         #[error(transparent)]
@@ -28,9 +28,9 @@ pub mod peel {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        ToId(#[from] git_ref::peel::to_id::Error),
+        ToId(#[from] gix_ref::peel::to_id::Error),
         #[error(transparent)]
-        PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
+        PackedRefsOpen(#[from] gix_ref::packed::buffer::open::Error),
     }
 }
 
@@ -45,7 +45,7 @@ pub mod head_id {
         #[error(transparent)]
         PeelToId(#[from] crate::head::peel::Error),
         #[error("Branch '{name}' does not have any commits")]
-        Unborn { name: git_ref::FullName },
+        Unborn { name: gix_ref::FullName },
     }
 }
 
@@ -82,8 +82,8 @@ pub mod find {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Find(#[from] git_ref::file::find::Error),
+        Find(#[from] gix_ref::file::find::Error),
         #[error(transparent)]
-        PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
+        PackedRefsOpen(#[from] gix_ref::packed::buffer::open::Error),
     }
 }

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use git_hash::ObjectId;
-use git_revision::spec::{
+use gix_hash::ObjectId;
+use gix_revision::spec::{
     parse,
     parse::delegate::{self},
 };
@@ -49,7 +49,7 @@ impl<'repo> Delegate<'repo> {
     pub fn into_rev_spec(mut self) -> Result<crate::revision::Spec<'repo>, Error> {
         fn zero_or_one_objects_or_ambiguity_err(
             mut candidates: [Option<HashSet<ObjectId>>; 2],
-            prefix: [Option<git_hash::Prefix>; 2],
+            prefix: [Option<gix_hash::Prefix>; 2],
             mut errors: Vec<Error>,
             repo: &Repository,
         ) -> Result<[Option<ObjectId>; 2], Error> {
@@ -81,23 +81,23 @@ impl<'repo> Delegate<'repo> {
         }
 
         fn kind_to_spec(
-            kind: Option<git_revision::spec::Kind>,
+            kind: Option<gix_revision::spec::Kind>,
             [first, second]: [Option<ObjectId>; 2],
-        ) -> Result<git_revision::Spec, Error> {
-            use git_revision::spec::Kind::*;
+        ) -> Result<gix_revision::Spec, Error> {
+            use gix_revision::spec::Kind::*;
             Ok(match kind.unwrap_or_default() {
-                IncludeReachable => git_revision::Spec::Include(first.ok_or(Error::Malformed)?),
-                ExcludeReachable => git_revision::Spec::Exclude(first.ok_or(Error::Malformed)?),
-                RangeBetween => git_revision::Spec::Range {
+                IncludeReachable => gix_revision::Spec::Include(first.ok_or(Error::Malformed)?),
+                ExcludeReachable => gix_revision::Spec::Exclude(first.ok_or(Error::Malformed)?),
+                RangeBetween => gix_revision::Spec::Range {
                     from: first.ok_or(Error::Malformed)?,
                     to: second.ok_or(Error::Malformed)?,
                 },
-                ReachableToMergeBase => git_revision::Spec::Merge {
+                ReachableToMergeBase => gix_revision::Spec::Merge {
                     theirs: first.ok_or(Error::Malformed)?,
                     ours: second.ok_or(Error::Malformed)?,
                 },
-                IncludeReachableFromParents => git_revision::Spec::IncludeOnlyParents(first.ok_or(Error::Malformed)?),
-                ExcludeReachableFromParents => git_revision::Spec::ExcludeParents(first.ok_or(Error::Malformed)?),
+                IncludeReachableFromParents => gix_revision::Spec::IncludeOnlyParents(first.ok_or(Error::Malformed)?),
+                ExcludeReachableFromParents => gix_revision::Spec::ExcludeParents(first.ok_or(Error::Malformed)?),
             })
         }
 
@@ -123,8 +123,8 @@ impl<'repo> parse::Delegate for Delegate<'repo> {
 }
 
 impl<'repo> delegate::Kind for Delegate<'repo> {
-    fn kind(&mut self, kind: git_revision::spec::Kind) -> Option<()> {
-        use git_revision::spec::Kind::*;
+    fn kind(&mut self, kind: gix_revision::spec::Kind) -> Option<()> {
+        use gix_revision::spec::Kind::*;
         self.kind = Some(kind);
 
         if self.kind_implies_committish() {
@@ -140,10 +140,10 @@ impl<'repo> delegate::Kind for Delegate<'repo> {
 
 impl<'repo> Delegate<'repo> {
     fn kind_implies_committish(&self) -> bool {
-        self.kind.unwrap_or(git_revision::spec::Kind::IncludeReachable) != git_revision::spec::Kind::IncludeReachable
+        self.kind.unwrap_or(gix_revision::spec::Kind::IncludeReachable) != gix_revision::spec::Kind::IncludeReachable
     }
     fn disambiguate_objects_by_fallback_hint(&mut self, hint: Option<ObjectKindHint>) {
-        fn require_object_kind(repo: &Repository, obj: &git_hash::oid, kind: git_object::Kind) -> Result<(), Error> {
+        fn require_object_kind(repo: &Repository, obj: &gix_hash::oid, kind: gix_object::Kind) -> Result<(), Error> {
             let obj = repo.find_object(obj)?;
             if obj.kind == kind {
                 Ok(())
@@ -165,8 +165,8 @@ impl<'repo> Delegate<'repo> {
                     Some(kind_hint) => match kind_hint {
                         ObjectKindHint::Treeish | ObjectKindHint::Committish => {
                             let kind = match kind_hint {
-                                ObjectKindHint::Treeish => git_object::Kind::Tree,
-                                ObjectKindHint::Committish => git_object::Kind::Commit,
+                                ObjectKindHint::Treeish => gix_object::Kind::Tree,
+                                ObjectKindHint::Committish => gix_object::Kind::Commit,
                                 _ => unreachable!("BUG: we narrow possibilities above"),
                             };
                             objs.iter()
@@ -175,9 +175,9 @@ impl<'repo> Delegate<'repo> {
                         }
                         ObjectKindHint::Tree | ObjectKindHint::Commit | ObjectKindHint::Blob => {
                             let kind = match kind_hint {
-                                ObjectKindHint::Tree => git_object::Kind::Tree,
-                                ObjectKindHint::Commit => git_object::Kind::Commit,
-                                ObjectKindHint::Blob => git_object::Kind::Blob,
+                                ObjectKindHint::Tree => gix_object::Kind::Tree,
+                                ObjectKindHint::Commit => gix_object::Kind::Commit,
+                                ObjectKindHint::Blob => gix_object::Kind::Blob,
                                 _ => unreachable!("BUG: we narrow possibilities above"),
                             };
                             objs.iter()
@@ -223,7 +223,7 @@ impl<'repo> Delegate<'repo> {
     }
 }
 
-fn peel(repo: &Repository, obj: &git_hash::oid, kind: git_object::Kind) -> Result<ObjectId, Error> {
+fn peel(repo: &Repository, obj: &gix_hash::oid, kind: gix_object::Kind) -> Result<ObjectId, Error> {
     let mut obj = repo.find_object(obj)?;
     obj = obj.peel_to_kind(kind)?;
     debug_assert_eq!(obj.kind, kind, "bug in Object::peel_to_kind() which didn't deliver");

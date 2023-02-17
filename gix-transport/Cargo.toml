@@ -1,0 +1,98 @@
+[package]
+name = "gix-transport"
+version = "0.25.4"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project dedicated to implementing the git transport layer"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*", "CHANGELOG.md"]
+rust-version = "1.64"
+
+[lib]
+doctest = false
+
+[features]
+default = []
+
+#! ### _Mutually Exclusive Client_
+#! The _client_ portion of transport can be blocking or async. If none is selected, it will be missing entirely.
+#! Specifying both causes a compile error, preventing the use of `--all-features`.
+
+## If set, blocking implementations of the typical git transports become available in `crate::client`
+blocking-client = ["gix-packetline/blocking-io"]
+## Implies `blocking-client`, and adds support for the http and https transports.
+http-client = ["base64", "gix-features/io-pipe", "blocking-client", "gix-credentials"]
+## Implies `http-client`, and adds support for the http and https transports using the Rust bindings for `libcurl`.
+http-client-curl = ["curl", "http-client"]
+### Implies `http-client` and adds support for http and https transports using the blocking version of `reqwest`.
+http-client-reqwest = ["reqwest", "http-client"]
+## If set, an async implementations of the git transports becomes available in `crate::client`.
+## Suitable for implementing your own transports while using git's way of communication, typically in conjunction with a custom server.
+## **Note** that the _blocking_ client has a wide range of available transports, with the _async_ version of it supporting only the TCP based `git` transport leaving you
+## with the responsibility to providing such an implementation of `futures-io::AsyncRead/AsyncWrite` yourself.
+async-client = ["gix-packetline/async-io", "async-trait", "futures-lite", "futures-io", "pin-project-lite"]
+
+#! ### Other
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["serde"]
+
+[[test]]
+name = "blocking-transport"
+path = "tests/blocking-transport.rs"
+required-features = ["blocking-client", "maybe-async/is_sync"]
+
+[[test]]
+name = "blocking-transport-http-only"
+path = "tests/blocking-transport-http.rs"
+required-features = ["http-client-curl", "maybe-async/is_sync"]
+
+[[test]]
+name = "async-transport"
+path = "tests/async-transport.rs"
+required-features = ["async-client"]
+
+[dependencies]
+gix-command = { version = "^0.2.3", path = "../gix-command" }
+gix-features = { version = "^0.26.4", path = "../gix-features" }
+gix-url = { version = "^0.13.2", path = "../gix-url" }
+gix-sec = { version = "^0.6.2", path = "../gix-sec" }
+gix-packetline = { version = "^0.14.2", path = "../gix-packetline" }
+gix-credentials = { version = "^0.9.1", path = "../gix-credentials", optional = true }
+gix-quote = { version = "^0.4.1", path = "../gix-quote" }
+
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
+bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"] }
+thiserror = "1.0.26"
+
+# for async-client
+async-trait = { version = "0.1.51", optional = true }
+futures-io = { version = "0.3.16", optional = true }
+futures-lite = { version  = "1.12.0", optional = true }
+pin-project-lite = { version = "0.2.6", optional = true }
+
+# for http-client
+base64 = { version = "0.21.0", optional = true }
+
+# for http-client-curl. Additional configuration should be performed on higher levels of the dependency tree.
+curl = { version = "0.4", optional = true }
+
+# for http-client-reqwest
+reqwest = { version = "0.11.12", optional = true, default-features = false, features = ["blocking"] }
+
+## If used in conjunction with `async-client`, the `connect()` method will become available along with supporting the git protocol over TCP,
+## where the TCP stream is created using this crate.
+async-std = { version = "1.12.0", optional = true }
+
+document-features = { version = "0.2.0", optional = true }
+
+[dev-dependencies]
+gix-pack = { path = "../gix-pack" }
+gix-hash = { path = "../gix-hash" }
+async-std = { version = "1.9.0", features = ["attributes"] }
+maybe-async = "0.2.6"
+blocking = "1.0.2"
+
+[package.metadata.docs.rs]
+features = ["http-client-curl", "document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

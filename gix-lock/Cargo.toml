@@ -1,0 +1,22 @@
+[package]
+name = "gix-lock"
+version = "3.0.2"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A git-style lock-file implementation"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
+rust-version = "1.64"
+
+[lib]
+doctest = false
+test = true
+
+[dependencies]
+fastrand = "1.5.0"
+gix-tempfile = { version = "^3.0.0", path = "../gix-tempfile" }
+quick-error = "2.0.0"
+
+[dev-dependencies]
+tempfile = "3.2.0"

@@ -1,0 +1,45 @@
+[package]
+name = "gix-index"
+version = "0.12.3"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A work-in-progress crate of the gitoxide project dedicated implementing the git index file"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*", "README.md", "CHANGELOG.md"]
+rust-version = "1.64"
+autotests = false
+
+
+[lib]
+doctest = false
+test = true
+
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["serde", "smallvec/serde", "gix-hash/serde1"]
+
+[dependencies]
+gix-features = { version = "^0.26.4", path = "../gix-features", features = ["rustsha1", "progress"] }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
+gix-bitmap = { version = "^0.2.1", path = "../gix-bitmap" }
+gix-object = { version = "^0.26.1", path = "../gix-object" }
+gix-traverse = { version = "^0.22.1", path = "../gix-traverse" }
+gix-lock = { version = "^3.0.0", path = "../gix-lock" }
+
+thiserror = "1.0.32"
+memmap2 = "0.5.0"
+filetime = "0.2.15"
+bstr = { version = "1.0.1", default-features = false }
+
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
+smallvec = "1.7.0"
+atoi = "2.0.0"
+itoa = "1.0.3"
+bitflags = "1.3.2"
+
+document-features = { version = "0.2.0", optional = true }
+
+[package.metadata.docs.rs]
+features = ["document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

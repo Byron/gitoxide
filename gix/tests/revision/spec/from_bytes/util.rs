@@ -1,28 +1,28 @@
 use std::{collections::HashMap, path::PathBuf, str::FromStr};
 
-use git_object::{bstr, bstr::BStr};
-use git_ref::bstr::{BString, ByteSlice};
-use git_revision::spec::Kind;
-use git_testtools::once_cell::sync::Lazy;
+use gix_object::{bstr, bstr::BStr};
+use gix_ref::bstr::{BString, ByteSlice};
+use gix_revision::spec::Kind;
+use gix_testtools::once_cell::sync::Lazy;
 
 const FIXTURE_NAME: &str = "make_rev_spec_parse_repos.sh";
-static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spec>>>> = Lazy::new(|| {
-    fn kind_of(spec: &BStr) -> git_revision::spec::Kind {
+static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<gix_revision::Spec>>>> = Lazy::new(|| {
+    fn kind_of(spec: &BStr) -> gix_revision::spec::Kind {
         if spec.starts_with(b"^") {
-            git_revision::spec::Kind::IncludeReachable
+            gix_revision::spec::Kind::IncludeReachable
         } else if spec.contains_str(b"...") {
-            git_revision::spec::Kind::ReachableToMergeBase
+            gix_revision::spec::Kind::ReachableToMergeBase
         } else if spec.contains_str(b"..") {
-            git_revision::spec::Kind::RangeBetween
+            gix_revision::spec::Kind::RangeBetween
         } else if spec.ends_with(b"^!") {
-            git_revision::spec::Kind::ExcludeReachableFromParents
+            gix_revision::spec::Kind::ExcludeReachableFromParents
         } else if spec.ends_with(b"^@") {
             unreachable!("BUG: cannot use rev^@ as it won't list the actual commit")
         } else {
-            git_revision::spec::Kind::IncludeReachable
+            gix_revision::spec::Kind::IncludeReachable
         }
     }
-    fn lines_of(kind: git_revision::spec::Kind) -> Option<usize> {
+    fn lines_of(kind: gix_revision::spec::Kind) -> Option<usize> {
         Some(match kind {
             Kind::ExcludeReachable | Kind::IncludeReachable => 1,
             Kind::RangeBetween => 2,
@@ -30,16 +30,16 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spe
             Kind::IncludeReachableFromParents | Kind::ExcludeReachableFromParents => return None,
         })
     }
-    fn object_id_of_next(lines: &mut std::iter::Peekable<bstr::Lines<'_>>) -> git_hash::ObjectId {
+    fn object_id_of_next(lines: &mut std::iter::Peekable<bstr::Lines<'_>>) -> gix_hash::ObjectId {
         let hex_hash = lines.next().expect("valid respect yields enough lines");
         object_id_of(hex_hash).expect("git yields full objects ids")
     }
-    fn object_id_of(input: &[u8]) -> Option<git_hash::ObjectId> {
+    fn object_id_of(input: &[u8]) -> Option<gix_hash::ObjectId> {
         let hex_hash = input.strip_prefix(b"^").unwrap_or(input);
-        git_hash::ObjectId::from_str(hex_hash.to_str().expect("hex is ascii")).ok()
+        gix_hash::ObjectId::from_str(hex_hash.to_str().expect("hex is ascii")).ok()
     }
     let mut baseline_map = HashMap::new();
-    let base = git_testtools::scripted_fixture_read_only(FIXTURE_NAME).unwrap();
+    let base = gix_testtools::scripted_fixture_read_only(FIXTURE_NAME).unwrap();
     for baseline_entry in walkdir::WalkDir::new(base)
         .max_depth(2)
         .follow_links(false)
@@ -68,18 +68,18 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spe
             let num_lines = lines_of(kind);
             let rev_spec = match num_lines {
                 Some(line_count) => match line_count {
-                    1 if kind == git_revision::spec::Kind::IncludeReachable => git_revision::Spec::Include(first_hash),
-                    1 if kind == git_revision::spec::Kind::ExcludeReachable => git_revision::Spec::Exclude(first_hash),
+                    1 if kind == gix_revision::spec::Kind::IncludeReachable => gix_revision::Spec::Include(first_hash),
+                    1 if kind == gix_revision::spec::Kind::ExcludeReachable => gix_revision::Spec::Exclude(first_hash),
                     2 | 3 => {
                         let second_hash = object_id_of_next(&mut lines);
                         if line_count == 2 {
-                            git_revision::Spec::Range {
+                            gix_revision::Spec::Range {
                                 from: second_hash,
                                 to: first_hash,
                             }
                         } else {
                             lines.next().expect("merge-base to consume");
-                            git_revision::Spec::Merge {
+                            gix_revision::Spec::Merge {
                                 theirs: first_hash,
                                 ours: second_hash,
                             }
@@ -89,8 +89,8 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spe
                 },
                 None => {
                     let rev_spec = match kind {
-                        git_revision::spec::Kind::ExcludeReachableFromParents => {
-                            git_revision::Spec::ExcludeParents(first_hash)
+                        gix_revision::spec::Kind::ExcludeReachableFromParents => {
+                            gix_revision::Spec::ExcludeParents(first_hash)
                         }
                         _ => unreachable!(),
                     };
@@ -197,6 +197,6 @@ pub fn parse_spec<'a>(
 }
 
 pub fn repo(name: &str) -> crate::Result<gix::Repository> {
-    let base = git_testtools::scripted_fixture_read_only(FIXTURE_NAME)?;
+    let base = gix_testtools::scripted_fixture_read_only(FIXTURE_NAME)?;
     Ok(gix::open(base.join(name))?)
 }

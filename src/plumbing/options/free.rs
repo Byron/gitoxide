@@ -162,7 +162,7 @@ pub mod pack {
             /// Otherwise the expansion mode is 'tree-traversal' by default.
             tips: Vec<OsString>,
         },
-        /// Use the git-protocol to receive a pack, emulating a clone.
+        /// Use the gix-protocol to receive a pack, emulating a clone.
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         Receive {
             /// The protocol version to use. Valid values are 1 and 2

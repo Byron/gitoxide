@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::path::Path;
 
-pub use git_discover::*;
+pub use gix_discover::*;
 
 use crate::{bstr::BString, ThreadSafeRepository};
 
@@ -34,7 +34,7 @@ impl ThreadSafeRepository {
     pub fn discover_opts(
         directory: impl AsRef<Path>,
         options: upwards::Options<'_>,
-        trust_map: git_sec::trust::Mapping<crate::open::Options>,
+        trust_map: gix_sec::trust::Mapping<crate::open::Options>,
     ) -> Result<Self, Error> {
         let (path, trust) = upwards_opts(directory, options)?;
         let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
@@ -63,7 +63,7 @@ impl ThreadSafeRepository {
     pub fn discover_with_environment_overrides_opts(
         directory: impl AsRef<Path>,
         mut options: upwards::Options<'_>,
-        trust_map: git_sec::trust::Mapping<crate::open::Options>,
+        trust_map: gix_sec::trust::Mapping<crate::open::Options>,
     ) -> Result<Self, Error> {
         fn apply_additional_environment(mut opts: upwards::Options<'_>) -> upwards::Options<'_> {
             use crate::bstr::ByteVec;
@@ -71,7 +71,7 @@ impl ThreadSafeRepository {
             if let Some(cross_fs) = std::env::var_os("GIT_DISCOVERY_ACROSS_FILESYSTEM")
                 .and_then(|v| Vec::from_os_string(v).ok().map(BString::from))
             {
-                if let Ok(b) = git_config::Boolean::try_from(cross_fs.as_ref()) {
+                if let Ok(b) = gix_config::Boolean::try_from(cross_fs.as_ref()) {
                     opts.cross_fs = b.into();
                 }
             }

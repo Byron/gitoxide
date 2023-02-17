@@ -9,7 +9,7 @@ impl crate::Repository {
         let git_dir = self.path();
 
         // This is modeled on the logic from wt_status_get_state in git's wt-status.c and
-        // ps1 from git-prompt.sh.
+        // ps1 from gix-prompt.sh.
 
         if git_dir.join("rebase-apply/applying").is_file() {
             Some(state::InProgress::ApplyMailbox)

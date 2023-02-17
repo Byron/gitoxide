@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use git_features::progress::Progress;
-use git_protocol::transport::client::Transport;
+use gix_features::progress::Progress;
+use gix_protocol::transport::client::Transport;
 
 use crate::{
     bstr,
@@ -21,20 +21,20 @@ pub enum Error {
     #[error("Failed to configure the transport layer")]
     ConfigureTransport(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error(transparent)]
-    Handshake(#[from] git_protocol::handshake::Error),
+    Handshake(#[from] gix_protocol::handshake::Error),
     #[error("The object format {format:?} as used by the remote is unsupported")]
     UnknownObjectFormat { format: BString },
     #[error(transparent)]
-    ListRefs(#[from] git_protocol::ls_refs::Error),
+    ListRefs(#[from] gix_protocol::ls_refs::Error),
     #[error(transparent)]
-    Transport(#[from] git_protocol::transport::client::Error),
+    Transport(#[from] gix_protocol::transport::client::Error),
     #[error(transparent)]
     ConfigureCredentials(#[from] crate::config::credential_helpers::Error),
     #[error(transparent)]
-    MappingValidation(#[from] git_refspec::match_group::validate::Error),
+    MappingValidation(#[from] gix_refspec::match_group::validate::Error),
 }
 
-impl git_protocol::transport::IsSpuriousError for Error {
+impl gix_protocol::transport::IsSpuriousError for Error {
     fn is_spurious(&self) -> bool {
         match self {
             Error::Transport(err) => err.is_spurious(),
@@ -58,7 +58,7 @@ pub struct Options {
     /// A list of refspecs to use as implicit refspecs which won't be saved or otherwise be part of the remote in question.
     ///
     /// This is useful for handling `remote.<name>.tagOpt` for example.
-    pub extra_refspecs: Vec<git_refspec::RefSpec>,
+    pub extra_refspecs: Vec<gix_refspec::RefSpec>,
 }
 
 impl Default for Options {
@@ -93,17 +93,17 @@ where
     ///
     /// - `gitoxide.userAgent` is read to obtain the application user agent for git servers and for HTTP servers as well.
     #[allow(clippy::result_large_err)]
-    #[git_protocol::maybe_async::maybe_async]
+    #[gix_protocol::maybe_async::maybe_async]
     pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap, Error> {
         let res = self.ref_map_inner(options).await;
-        git_protocol::indicate_end_of_interaction(&mut self.transport)
+        gix_protocol::indicate_end_of_interaction(&mut self.transport)
             .await
             .ok();
         res
     }
 
     #[allow(clippy::result_large_err)]
-    #[git_protocol::maybe_async::maybe_async]
+    #[gix_protocol::maybe_async::maybe_async]
     pub(crate) async fn ref_map_inner(
         &mut self,
         Options {
@@ -112,7 +112,7 @@ where
             mut extra_refspecs,
         }: Options,
     ) -> Result<fetch::RefMap, Error> {
-        let null = git_hash::ObjectId::null(git_hash::Kind::Sha1); // OK to hardcode Sha1, it's not supposed to match, ever.
+        let null = gix_hash::ObjectId::null(gix_hash::Kind::Sha1); // OK to hardcode Sha1, it's not supposed to match, ever.
 
         if let Some(tag_spec) = self.remote.fetch_tags.to_refspec().map(|spec| spec.to_owned()) {
             if !extra_refspecs.contains(&tag_spec) {
@@ -128,11 +128,11 @@ where
             .fetch_refs(prefix_from_spec_as_filter_on_remote, handshake_parameters, &specs)
             .await?;
         let num_explicit_specs = self.remote.fetch_specs.len();
-        let group = git_refspec::MatchGroup::from_fetch_specs(specs.iter().map(|s| s.to_ref()));
+        let group = gix_refspec::MatchGroup::from_fetch_specs(specs.iter().map(|s| s.to_ref()));
         let (res, fixes) = group
             .match_remotes(remote.refs.iter().map(|r| {
                 let (full_ref_name, target, object) = r.unpack();
-                git_refspec::match_group::Item {
+                gix_refspec::match_group::Item {
                     full_ref_name,
                     target: target.unwrap_or(&null),
                     object,
@@ -148,7 +148,7 @@ where
                     .map(|idx| fetch::Source::Ref(remote.refs[idx].clone()))
                     .unwrap_or_else(|| {
                         fetch::Source::ObjectId(match m.lhs {
-                            git_refspec::match_group::SourceRef::ObjectId(id) => id,
+                            gix_refspec::match_group::SourceRef::ObjectId(id) => id,
                             _ => unreachable!("no item index implies having an object id"),
                         })
                     }),
@@ -173,12 +173,12 @@ where
     }
 
     #[allow(clippy::result_large_err)]
-    #[git_protocol::maybe_async::maybe_async]
+    #[gix_protocol::maybe_async::maybe_async]
     async fn fetch_refs(
         &mut self,
         filter_by_prefix: bool,
         extra_parameters: Vec<(String, Option<String>)>,
-        refspecs: &[git_refspec::RefSpec],
+        refspecs: &[gix_refspec::RefSpec],
     ) -> Result<HandshakeWithRefs, Error> {
         let mut credentials_storage;
         let url = self.transport.to_url();
@@ -189,7 +189,7 @@ where
                     .remote
                     .url(Direction::Fetch)
                     .map(ToOwned::to_owned)
-                    .unwrap_or_else(|| git_url::parse(url.as_ref()).expect("valid URL to be provided by transport"));
+                    .unwrap_or_else(|| gix_url::parse(url.as_ref()).expect("valid URL to be provided by transport"));
                 credentials_storage = self.configured_credentials(url)?;
                 &mut credentials_storage
             }
@@ -209,13 +209,13 @@ where
             self.transport.configure(&**config)?;
         }
         let mut outcome =
-            git_protocol::fetch::handshake(&mut self.transport, authenticate, extra_parameters, &mut self.progress)
+            gix_protocol::fetch::handshake(&mut self.transport, authenticate, extra_parameters, &mut self.progress)
                 .await?;
         let refs = match outcome.refs.take() {
             Some(refs) => refs,
             None => {
                 let agent_feature = self.remote.repo.config.user_agent_tuple();
-                git_protocol::ls_refs(
+                gix_protocol::ls_refs(
                     &mut self.transport,
                     &outcome.capabilities,
                     move |_capabilities, arguments, features| {
@@ -234,7 +234,7 @@ where
                                 }
                             }
                         }
-                        Ok(git_protocol::ls_refs::Action::Continue)
+                        Ok(gix_protocol::ls_refs::Action::Continue)
                     },
                     &mut self.progress,
                 )
@@ -249,8 +249,8 @@ where
 #[allow(clippy::result_large_err)]
 fn extract_object_format(
     _repo: &crate::Repository,
-    outcome: &git_protocol::handshake::Outcome,
-) -> Result<git_hash::Kind, Error> {
+    outcome: &gix_protocol::handshake::Outcome,
+) -> Result<gix_hash::Kind, Error> {
     use bstr::ByteSlice;
     let object_hash =
         if let Some(object_format) = outcome.capabilities.capability("object-format").and_then(|c| c.value()) {
@@ -258,11 +258,11 @@ fn extract_object_format(
                 format: object_format.into(),
             })?;
             match object_format {
-                "sha1" => git_hash::Kind::Sha1,
+                "sha1" => gix_hash::Kind::Sha1,
                 unknown => return Err(Error::UnknownObjectFormat { format: unknown.into() }),
             }
         } else {
-            git_hash::Kind::Sha1
+            gix_hash::Kind::Sha1
         };
     Ok(object_hash)
 }

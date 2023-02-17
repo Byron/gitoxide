@@ -46,13 +46,13 @@ mod algorithm {
 
     impl Algorithm {
         /// Derive the diff algorithm identified by `name`, case-insensitively.
-        pub fn try_into_algorithm(&self, name: Cow<'_, BStr>) -> Result<git_diff::blob::Algorithm, Error> {
+        pub fn try_into_algorithm(&self, name: Cow<'_, BStr>) -> Result<gix_diff::blob::Algorithm, Error> {
             let algo = if name.eq_ignore_ascii_case(b"myers") || name.eq_ignore_ascii_case(b"default") {
-                git_diff::blob::Algorithm::Myers
+                gix_diff::blob::Algorithm::Myers
             } else if name.eq_ignore_ascii_case(b"minimal") {
-                git_diff::blob::Algorithm::MyersMinimal
+                gix_diff::blob::Algorithm::MyersMinimal
             } else if name.eq_ignore_ascii_case(b"histogram") {
-                git_diff::blob::Algorithm::Histogram
+                gix_diff::blob::Algorithm::Histogram
             } else if name.eq_ignore_ascii_case(b"patience") {
                 return Err(config::diff::algorithm::Error::Unimplemented {
                     name: name.into_owned(),
@@ -86,7 +86,7 @@ mod renames {
         /// to try and interpret the key as string.
         pub fn try_into_renames<'a>(
             &'static self,
-            value: Result<bool, git_config::value::Error>,
+            value: Result<bool, gix_config::value::Error>,
             value_string: impl FnOnce() -> Option<Cow<'a, BStr>>,
         ) -> Result<Tracking, GenericError> {
             Ok(match value {
@@ -122,7 +122,7 @@ mod validate {
     pub struct Renames;
     impl keys::Validate for Renames {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            let boolean = git_config::Boolean::try_from(value).map(|b| b.0);
+            let boolean = gix_config::Boolean::try_from(value).map(|b| b.0);
             Diff::RENAMES.try_into_renames(boolean, || Some(Cow::Borrowed(value)))?;
             Ok(())
         }

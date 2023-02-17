@@ -2,8 +2,8 @@ use crate::{remote, util::restricted};
 
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
-    use git_object::bstr::ByteSlice;
-    use git_ref::TargetRef;
+    use gix_object::bstr::ByteSlice;
+    use gix_ref::TargetRef;
 
     use gix::remote::fetch::SpecIndex;
 
@@ -11,7 +11,7 @@ mod blocking_io {
 
     #[test]
     fn fetch_only_with_configuration() -> crate::Result {
-        let tmp = git_testtools::tempfile::TempDir::new()?;
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
         let called_configure_remote = std::sync::Arc::new(std::sync::atomic::AtomicBool::default());
         let remote_name = "special";
         let desired_fetch_tags = gix::remote::fetch::Tags::Included;
@@ -116,7 +116,7 @@ mod blocking_io {
         match out.status {
             gix::remote::fetch::Status::Change { update_refs, .. } => {
                 for edit in &update_refs.edits {
-                    use git_odb::Find;
+                    use gix_odb::Find;
                     match edit.change.new_value().expect("always set/no deletion") {
                         TargetRef::Symbolic(referent) => {
                             assert!(
@@ -131,7 +131,7 @@ mod blocking_io {
                     let r = repo
                         .find_reference(edit.name.as_ref())
                         .unwrap_or_else(|_| panic!("didn't find created reference: {:?}", edit));
-                    if r.name().category().expect("known") != git_ref::Category::Tag {
+                    if r.name().category().expect("known") != gix_ref::Category::Tag {
                         assert!(r
                             .name()
                             .category_and_short_name()
@@ -226,7 +226,7 @@ mod blocking_io {
         Ok(())
     }
 
-    fn assert_reflog(log: std::io::Result<Option<git_ref::file::log::iter::Forward<'_>>>) {
+    fn assert_reflog(log: std::io::Result<Option<gix_ref::file::log::iter::Forward<'_>>>) {
         let lines = log
             .unwrap()
             .expect("log present")
@@ -239,13 +239,13 @@ mod blocking_io {
             "{:?} unexpected",
             line.message
         );
-        let path = git_path::from_bstr(line.message.rsplit(|b| *b == b' ').next().expect("path").as_bstr());
+        let path = gix_path::from_bstr(line.message.rsplit(|b| *b == b' ').next().expect("path").as_bstr());
         assert!(path.is_absolute(), "{:?} must be absolute", path);
     }
 
     #[test]
     fn fetch_and_checkout() -> crate::Result {
-        let tmp = git_testtools::tempfile::TempDir::new()?;
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
         let mut prepare = gix::clone::PrepareFetch::new(
             remote::repo("base").path(),
             tmp.path(),
@@ -262,7 +262,7 @@ mod blocking_io {
 
         let work_dir = repo.work_dir().expect("non-bare");
         for entry in index.entries() {
-            let entry_path = work_dir.join(git_path::from_bstr(entry.path(&index)));
+            let entry_path = work_dir.join(gix_path::from_bstr(entry.path(&index)));
             assert!(entry_path.is_file(), "{:?} not found on disk", entry_path)
         }
         Ok(())
@@ -270,9 +270,9 @@ mod blocking_io {
 
     #[test]
     fn fetch_and_checkout_empty_remote_repo() -> crate::Result {
-        let tmp = git_testtools::tempfile::TempDir::new()?;
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
         let mut prepare = gix::clone::PrepareFetch::new(
-            git_testtools::scripted_fixture_read_only("make_empty_repo.sh")?,
+            gix_testtools::scripted_fixture_read_only("make_empty_repo.sh")?,
             tmp.path(),
             gix::create::Kind::WithWorktree,
             Default::default(),
@@ -319,7 +319,7 @@ mod blocking_io {
 
     #[test]
     fn fetch_only_without_configuration() -> crate::Result {
-        let tmp = git_testtools::tempfile::TempDir::new()?;
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
         let (repo, out) = gix::clone::PrepareFetch::new(
             remote::repo("base").path(),
             tmp.path(),
@@ -344,7 +344,7 @@ mod blocking_io {
 
 #[test]
 fn clone_and_early_persist_without_receive() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
+    let tmp = gix_testtools::tempfile::TempDir::new()?;
     let repo = gix::clone::PrepareFetch::new(
         remote::repo("base").path(),
         tmp.path(),
@@ -359,7 +359,7 @@ fn clone_and_early_persist_without_receive() -> crate::Result {
 
 #[test]
 fn clone_and_destination_must_be_empty() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
+    let tmp = gix_testtools::tempfile::TempDir::new()?;
     std::fs::write(tmp.path().join("file"), b"hello")?;
     match gix::clone::PrepareFetch::new(
         remote::repo("base").path(),
@@ -378,7 +378,7 @@ fn clone_and_destination_must_be_empty() -> crate::Result {
 
 #[test]
 fn clone_bare_into_empty_directory_and_early_drop() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
+    let tmp = gix_testtools::tempfile::TempDir::new()?;
     // this breaks isolation, but shouldn't be affecting the test. If so, use isolation options for opening the repo.
     let prep = gix::clone::PrepareFetch::new(
         remote::repo("base").path(),
@@ -397,7 +397,7 @@ fn clone_bare_into_empty_directory_and_early_drop() -> crate::Result {
 
 #[test]
 fn clone_into_empty_directory_and_early_drop() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
+    let tmp = gix_testtools::tempfile::TempDir::new()?;
     let prep = gix::clone::PrepareFetch::new(
         remote::repo("base").path(),
         tmp.path(),

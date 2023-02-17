@@ -9,18 +9,18 @@ pub enum Error {
     #[error("The value to configure the pack index version should be 1 or 2")]
     PackIndexVersion(#[from] config::key::GenericError),
     #[error("Could not decode server reply")]
-    FetchResponse(#[from] git_protocol::fetch::response::Error),
+    FetchResponse(#[from] gix_protocol::fetch::response::Error),
     #[error("Cannot fetch from a remote that uses {remote} while local repository uses {local} for object hashes")]
     IncompatibleObjectHash {
-        local: git_hash::Kind,
-        remote: git_hash::Kind,
+        local: gix_hash::Kind,
+        remote: gix_hash::Kind,
     },
     #[error(transparent)]
     Negotiate(#[from] super::negotiate::Error),
     #[error(transparent)]
-    Client(#[from] git_protocol::transport::client::Error),
+    Client(#[from] gix_protocol::transport::client::Error),
     #[error(transparent)]
-    WritePack(#[from] git_pack::bundle::write::Error),
+    WritePack(#[from] gix_pack::bundle::write::Error),
     #[error(transparent)]
     UpdateRefs(#[from] super::refs::update::Error),
     #[error("Failed to remove .keep file at \"{}\"", path.display())]
@@ -30,7 +30,7 @@ pub enum Error {
     },
 }
 
-impl git_protocol::transport::IsSpuriousError for Error {
+impl gix_protocol::transport::IsSpuriousError for Error {
     fn is_spurious(&self) -> bool {
         match self {
             Error::FetchResponse(err) => err.is_spurious(),

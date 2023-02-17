@@ -2,7 +2,7 @@
 //!
 //! This module provides utilities to walk graphs of revisions and specify revisions and ranges of revisions.
 
-pub use git_revision as plumbing;
+pub use gix_revision as plumbing;
 
 ///
 pub mod walk;
@@ -18,10 +18,10 @@ pub mod spec;
 /// to specify revisions and revision ranges.
 #[derive(Clone, Debug)]
 pub struct Spec<'repo> {
-    pub(crate) inner: git_revision::Spec,
+    pub(crate) inner: gix_revision::Spec,
     /// The first name of a reference as seen while parsing a `RevSpec`, for completeness.
-    pub(crate) first_ref: Option<git_ref::Reference>,
+    pub(crate) first_ref: Option<gix_ref::Reference>,
     /// The second name of a reference as seen while parsing a `RevSpec`, for completeness.
-    pub(crate) second_ref: Option<git_ref::Reference>,
+    pub(crate) second_ref: Option<gix_ref::Reference>,
     pub(crate) repo: &'repo crate::Repository,
 }

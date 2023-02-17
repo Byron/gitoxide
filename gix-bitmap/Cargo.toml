@@ -1,0 +1,19 @@
+[package]
+name = "gix-bitmap"
+version = "0.2.1"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project dedicated implementing the standard git bitmap format"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+rust-version = "1.64"
+
+[lib]
+doctest = false
+test = true
+
+[dependencies]
+quick-error = "2.0.0"
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools"}

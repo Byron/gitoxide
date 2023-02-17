@@ -1,10 +1,10 @@
-use git_testtools::Env;
+use gix_testtools::Env;
 
 mod baseline {
     use std::collections::HashMap;
 
-    use git_object::bstr::BString;
-    use git_testtools::once_cell::sync::Lazy;
+    use gix_object::bstr::BString;
+    use gix_testtools::once_cell::sync::Lazy;
 
     use crate::remote;
 
@@ -74,7 +74,7 @@ mod baseline {
 
         assert_ne!(
             prompt_options.mode,
-            git_prompt::Mode::Disable,
+            gix_prompt::Mode::Disable,
             "isolated repos may show prompts"
         );
         assert!(
@@ -85,7 +85,7 @@ mod baseline {
             .programs
             .iter()
             .map(|p| match &p.kind {
-                git_credentials::program::Kind::ExternalName { name_and_args } => name_and_args
+                gix_credentials::program::Kind::ExternalName { name_and_args } => name_and_args
                     .strip_prefix(b"git credential-")
                     .expect("resolved name")
                     .into(),

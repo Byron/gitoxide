@@ -46,6 +46,6 @@ pub fn repo(name: &str) -> gix::Repository {
 
 #[cfg(feature = "blocking-network-client")]
 pub fn repo_opts(name: &str, modify: impl FnOnce(gix::open::Options) -> gix::open::Options) -> gix::Repository {
-    let dir = git_testtools::scripted_fixture_read_only("make_config_repos.sh").unwrap();
+    let dir = gix_testtools::scripted_fixture_read_only("make_config_repos.sh").unwrap();
     gix::open_opts(dir.join(name), modify(gix::open::Options::isolated())).unwrap()
 }

@@ -18,7 +18,7 @@ fn fixup(v: String) -> String {
 }
 
 fn fixture(name: &str) -> std::io::Result<String> {
-    let data = std::fs::read_to_string(git_testtools::fixture_path(
+    let data = std::fs::read_to_string(gix_testtools::fixture_path(
         Path::new("changelog").join("parse").join(name),
     ))?;
     Ok(fixup(data))

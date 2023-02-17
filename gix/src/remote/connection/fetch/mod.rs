@@ -1,4 +1,4 @@
-use git_protocol::transport::client::Transport;
+use gix_protocol::transport::client::Transport;
 
 use crate::{
     bstr::BString,
@@ -51,7 +51,7 @@ pub enum Status {
     /// There was at least one tip with a new object which we received.
     Change {
         /// Information collected while writing the pack and its index.
-        write_pack_bundle: git_pack::bundle::write::Outcome,
+        write_pack_bundle: gix_pack::bundle::write::Outcome,
         /// Information collected while updating references.
         update_refs: refs::update::Outcome,
     },
@@ -83,7 +83,7 @@ pub enum ProgressId {
     RemoteProgress,
 }
 
-impl From<ProgressId> for git_features::progress::Id {
+impl From<ProgressId> for gix_features::progress::Id {
     fn from(v: ProgressId) -> Self {
         match v {
             ProgressId::RemoteProgress => *b"FERP",
@@ -106,7 +106,7 @@ pub mod prepare {
         RefMap(#[from] crate::remote::ref_map::Error),
     }
 
-    impl git_protocol::transport::IsSpuriousError for Error {
+    impl gix_protocol::transport::IsSpuriousError for Error {
         fn is_spurious(&self) -> bool {
             match self {
                 Error::RefMap(err) => err.is_spurious(),
@@ -125,7 +125,7 @@ where
     /// Note that at this point, the `transport` should already be configured using the [`transport_mut()`][Self::transport_mut()]
     /// method, as it will be consumed here.
     ///
-    /// From there additional properties of the fetch can be adjusted to override the defaults that are configured via git-config.
+    /// From there additional properties of the fetch can be adjusted to override the defaults that are configured via gix-config.
     ///
     /// # Async Experimental
     ///
@@ -134,7 +134,7 @@ where
     /// making this call block the executor.
     /// It's best to unblock it by placing it into its own thread or offload it should usage in an async context be truly required.
     #[allow(clippy::result_large_err)]
-    #[git_protocol::maybe_async::maybe_async]
+    #[gix_protocol::maybe_async::maybe_async]
     pub async fn prepare_fetch(
         mut self,
         options: ref_map::Options,
@@ -226,14 +226,14 @@ where
                 //       Right now we block the executor by forcing this communication, but that only
                 //       happens if the user didn't actually try to receive a pack, which consumes the
                 //       connection in an async context.
-                git_protocol::futures_lite::future::block_on(git_protocol::indicate_end_of_interaction(
+                gix_protocol::futures_lite::future::block_on(gix_protocol::indicate_end_of_interaction(
                     &mut con.transport,
                 ))
                 .ok();
             }
             #[cfg(not(feature = "async-network-client"))]
             {
-                git_protocol::indicate_end_of_interaction(&mut con.transport).ok();
+                gix_protocol::indicate_end_of_interaction(&mut con.transport).ok();
             }
         }
     }

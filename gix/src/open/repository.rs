@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::{borrow::Cow, path::PathBuf};
 
-use git_features::threading::OwnShared;
+use gix_features::threading::OwnShared;
 
 use super::{Error, Options};
 use crate::{
@@ -53,13 +53,13 @@ impl ThreadSafeRepository {
         let (path, kind) = {
             let path = path.into();
             let looks_like_git_dir =
-                path.ends_with(git_discover::DOT_GIT_DIR) || path.extension() == Some(std::ffi::OsStr::new("git"));
+                path.ends_with(gix_discover::DOT_GIT_DIR) || path.extension() == Some(std::ffi::OsStr::new("git"));
             let candidate = if !options.open_path_as_is && !looks_like_git_dir {
-                Cow::Owned(path.join(git_discover::DOT_GIT_DIR))
+                Cow::Owned(path.join(gix_discover::DOT_GIT_DIR))
             } else {
                 Cow::Borrowed(&path)
             };
-            match git_discover::is_git(candidate.as_ref()) {
+            match gix_discover::is_git(candidate.as_ref()) {
                 Ok(kind) => (candidate.into_owned(), kind),
                 Err(err) => {
                     if options.open_path_as_is || matches!(candidate, Cow::Borrowed(_)) {
@@ -68,7 +68,7 @@ impl ThreadSafeRepository {
                             path: candidate.into_owned(),
                         });
                     }
-                    match git_discover::is_git(&path) {
+                    match gix_discover::is_git(&path) {
                         Ok(kind) => (path, kind),
                         Err(err) => return Err(Error::NotARepository { source: err, path }),
                     }
@@ -76,11 +76,11 @@ impl ThreadSafeRepository {
             }
         };
         let cwd = std::env::current_dir()?;
-        let (git_dir, worktree_dir) = git_discover::repository::Path::from_dot_git_dir(path, kind, &cwd)
+        let (git_dir, worktree_dir) = gix_discover::repository::Path::from_dot_git_dir(path, kind, &cwd)
             .expect("we have sanitized path with is_git()")
             .into_repository_and_work_tree_directories();
         if options.git_dir_trust.is_none() {
-            options.git_dir_trust = git_sec::Trust::from_path_ownership(&git_dir)?.into();
+            options.git_dir_trust = gix_sec::Trust::from_path_ownership(&git_dir)?.into();
         }
         options.current_dir = Some(cwd);
         ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
@@ -94,17 +94,17 @@ impl ThreadSafeRepository {
     ///
     /// Note that this will read various `GIT_*` environment variables to check for overrides, and is probably most useful when implementing
     /// custom hooks.
-    // TODO: tests, with hooks, GIT_QUARANTINE for ref-log and transaction control (needs git-sec support to remove write access in git-ref)
-    // TODO: The following vars should end up as overrides of the respective configuration values (see git-config).
+    // TODO: tests, with hooks, GIT_QUARANTINE for ref-log and transaction control (needs gix-sec support to remove write access in gix-ref)
+    // TODO: The following vars should end up as overrides of the respective configuration values (see gix-config).
     //       GIT_PROXY_SSL_CERT, GIT_PROXY_SSL_KEY, GIT_PROXY_SSL_CERT_PASSWORD_PROTECTED.
     //       GIT_PROXY_SSL_CAINFO, GIT_SSL_CIPHER_LIST, GIT_HTTP_MAX_REQUESTS, GIT_CURL_FTP_NO_EPSV,
     pub fn open_with_environment_overrides(
         fallback_directory: impl Into<PathBuf>,
-        trust_map: git_sec::trust::Mapping<Options>,
+        trust_map: gix_sec::trust::Mapping<Options>,
     ) -> Result<Self, Error> {
         let overrides = EnvironmentOverrides::from_env()?;
         let (path, path_kind): (PathBuf, _) = match overrides.git_dir {
-            Some(git_dir) => git_discover::is_git(&git_dir)
+            Some(git_dir) => gix_discover::is_git(&git_dir)
                 .map_err(|err| Error::NotARepository {
                     source: err,
                     path: git_dir.clone(),
@@ -112,7 +112,7 @@ impl ThreadSafeRepository {
                 .map(|kind| (git_dir, kind))?,
             None => {
                 let fallback_directory = fallback_directory.into();
-                git_discover::is_git(&fallback_directory)
+                gix_discover::is_git(&fallback_directory)
                     .map_err(|err| Error::NotARepository {
                         source: err,
                         path: fallback_directory.clone(),
@@ -122,12 +122,12 @@ impl ThreadSafeRepository {
         };
 
         let cwd = std::env::current_dir()?;
-        let (git_dir, worktree_dir) = git_discover::repository::Path::from_dot_git_dir(path, path_kind, &cwd)
+        let (git_dir, worktree_dir) = gix_discover::repository::Path::from_dot_git_dir(path, path_kind, &cwd)
             .expect("we have sanitized path with is_git()")
             .into_repository_and_work_tree_directories();
         let worktree_dir = worktree_dir.or(overrides.worktree_dir);
 
-        let git_dir_trust = git_sec::Trust::from_path_ownership(&git_dir)?;
+        let git_dir_trust = gix_sec::Trust::from_path_ownership(&git_dir)?;
         let mut options = trust_map.into_value_by_level(git_dir_trust);
         options.current_dir = Some(cwd);
         ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
@@ -158,7 +158,7 @@ impl ThreadSafeRepository {
         //       This would be something read in later as have to first check for extensions. Also this means
         //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
         //       as it may have its own configuration. That's fine actually.
-        let common_dir = git_discover::path::from_plain_file(git_dir.join("commondir"))
+        let common_dir = gix_discover::path::from_plain_file(git_dir.join("commondir"))
             .transpose()?
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
@@ -171,7 +171,7 @@ impl ThreadSafeRepository {
             lenient_config,
         )?;
         let mut refs = {
-            let reflog = repo_config.reflog.unwrap_or(git_ref::store::WriteReflog::Disable);
+            let reflog = repo_config.reflog.unwrap_or(gix_ref::store::WriteReflog::Disable);
             let object_hash = repo_config.object_hash;
             match &common_dir {
                 Some(common_dir) => crate::RefStore::for_linked_worktree(&git_dir, common_dir, reflog, object_hash),
@@ -199,7 +199,7 @@ impl ThreadSafeRepository {
             cli_config_overrides,
         )?;
 
-        if bail_if_untrusted && git_dir_trust != git_sec::Trust::Full {
+        if bail_if_untrusted && git_dir_trust != gix_sec::Trust::Full {
             check_safe_directories(&git_dir, git_install_dir.as_deref(), home.as_deref(), &config)?;
         }
 
@@ -213,7 +213,7 @@ impl ThreadSafeRepository {
                     .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
                     .map_err(config::Error::PathInterpolation)?;
                 worktree_dir = {
-                    git_path::normalize(git_dir.join(wt_path), current_dir)
+                    gix_path::normalize(git_dir.join(wt_path), current_dir)
                         .and_then(|wt| wt.as_ref().is_dir().then(|| wt.into_owned()))
                 }
             }
@@ -238,10 +238,10 @@ impl ThreadSafeRepository {
                 let prefix = prefix.to_str()?;
                 let replacements = iter
                     .filter_map(Result::ok)
-                    .filter_map(|r: git_ref::Reference| {
+                    .filter_map(|r: gix_ref::Reference| {
                         let target = r.target.try_id()?.to_owned();
                         let source =
-                            git_hash::ObjectId::from_hex(r.name.as_bstr().strip_prefix(prefix.as_bytes())?).ok()?;
+                            gix_hash::ObjectId::from_hex(r.name.as_bstr().strip_prefix(prefix.as_bytes())?).ok()?;
                         Some((source, target))
                     })
                     .collect::<Vec<_>>();
@@ -250,10 +250,10 @@ impl ThreadSafeRepository {
             .unwrap_or_default();
 
         Ok(ThreadSafeRepository {
-            objects: OwnShared::new(git_odb::Store::at_opts(
+            objects: OwnShared::new(gix_odb::Store::at_opts(
                 common_dir_ref.join("objects"),
                 replacements,
-                git_odb::store::init::Options {
+                gix_odb::store::init::Options {
                     slots: object_store_slots,
                     object_hash: config.object_hash,
                     use_multi_pack_index: config.use_multi_pack_index,
@@ -266,16 +266,16 @@ impl ThreadSafeRepository {
             config,
             // used when spawning new repositories off this one when following worktrees
             linked_worktree_options: options,
-            index: git_features::fs::MutableSnapshot::new().into(),
+            index: gix_features::fs::MutableSnapshot::new().into(),
         })
     }
 }
 
 // TODO: tests
 fn replacement_objects_refs_prefix(
-    config: &git_config::File<'static>,
+    config: &gix_config::File<'static>,
     lenient: bool,
-    mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
+    mut filter_config_section: fn(&gix_config::file::Metadata) -> bool,
 ) -> Result<Option<PathBuf>, Error> {
     let is_disabled = config
         .boolean_filter_by_key("gitoxide.objects.noReplace", &mut filter_config_section)
@@ -289,7 +289,7 @@ fn replacement_objects_refs_prefix(
         return Ok(None);
     }
 
-    let ref_base = git_path::from_bstr({
+    let ref_base = gix_path::from_bstr({
         let key = "gitoxide.objects.replaceRefBase";
         debug_assert_eq!(gitoxide::Objects::REPLACE_REF_BASE.logical_name(), key);
         config
@@ -307,7 +307,7 @@ fn check_safe_directories(
     config: &config::Cache,
 ) -> Result<(), Error> {
     let mut is_safe = false;
-    let git_dir = match git_path::realpath(git_dir) {
+    let git_dir = match gix_path::realpath(git_dir) {
         Ok(p) => p,
         Err(_) => git_dir.to_owned(),
     };
@@ -325,11 +325,11 @@ fn check_safe_directories(
             continue;
         }
         if !is_safe {
-            let safe_dir = match git_config::Path::from(std::borrow::Cow::Borrowed(safe_dir.as_ref()))
+            let safe_dir = match gix_config::Path::from(std::borrow::Cow::Borrowed(safe_dir.as_ref()))
                 .interpolate(interpolate_context(git_install_dir, home))
             {
                 Ok(path) => path,
-                Err(_) => git_path::from_bstr(safe_dir),
+                Err(_) => gix_path::from_bstr(safe_dir),
             };
             if safe_dir == git_dir {
                 is_safe = true;

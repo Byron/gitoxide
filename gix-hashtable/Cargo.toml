@@ -1,0 +1,21 @@
+[package]
+name = "gix-hashtable"
+version = "0.1.1"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A crate that provides hashtable based data structures optimized to utilize ObjectId keys"
+authors = ["Pascal Kuthe <pascal.kuthe@semimod.de>"]
+edition = "2021"
+include = ["src/**/*"]
+rust-version = "1.64"
+
+[lib]
+doctest = false
+
+[dependencies]
+hashbrown = { version = "0.13.1", default-features = false, features = [
+  "inline-more",
+  "raw"
+] }
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
+

@@ -31,7 +31,7 @@ impl crate::Repository {
     #[cfg(feature = "blocking-network-client")]
     pub fn ssh_connect_options(
         &self,
-    ) -> Result<git_protocol::transport::client::ssh::connect::Options, config::ssh_connect_options::Error> {
+    ) -> Result<gix_protocol::transport::client::ssh::connect::Options, config::ssh_connect_options::Error> {
         use crate::config::{
             cache::util::ApplyLeniency,
             tree::{gitoxide, Core, Ssh},
@@ -51,8 +51,8 @@ impl crate::Repository {
                     &mut trusted,
                 )
             })
-            .map(|cmd| git_path::from_bstr(cmd).into_owned().into());
-        let opts = git_protocol::transport::client::ssh::connect::Options {
+            .map(|cmd| gix_path::from_bstr(cmd).into_owned().into());
+        let opts = gix_protocol::transport::client::ssh::connect::Options {
             disallow_shell: fallback_active,
             command: ssh_command,
             kind: config
@@ -65,7 +65,7 @@ impl crate::Repository {
     }
 
     /// The kind of object hash the repository is configured to use.
-    pub fn object_hash(&self) -> git_hash::Kind {
+    pub fn object_hash(&self) -> gix_hash::Kind {
         self.config.object_hash
     }
 }
@@ -122,8 +122,8 @@ mod remote {
 mod branch {
     use std::{borrow::Cow, collections::BTreeSet, convert::TryInto};
 
-    use git_ref::FullNameRef;
-    use git_validate::reference::name::Error as ValidateNameError;
+    use gix_ref::FullNameRef;
+    use gix_validate::reference::name::Error as ValidateNameError;
 
     use crate::bstr::BStr;
 
@@ -170,7 +170,7 @@ mod branch {
 }
 
 impl crate::Repository {
-    pub(crate) fn filter_config_section(&self) -> fn(&git_config::file::Metadata) -> bool {
+    pub(crate) fn filter_config_section(&self) -> fn(&gix_config::file::Metadata) -> bool {
         self.options
             .filter_config_section
             .unwrap_or(config::section::is_trusted)

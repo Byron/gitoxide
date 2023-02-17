@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::borrow::Cow;
 
-use git_features::threading::OwnShared;
+use gix_features::threading::OwnShared;
 
 use crate::{
     bstr::BStr,
@@ -25,7 +25,7 @@ impl<'repo> Snapshot<'repo> {
     }
 
     /// Like [`boolean()`][Self::boolean()], but it will report an error if the value couldn't be interpreted as boolean.
-    pub fn try_boolean<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<bool, git_config::value::Error>> {
+    pub fn try_boolean<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<bool, gix_config::value::Error>> {
         self.repo.config.resolved.boolean_by_key(key)
     }
 
@@ -40,7 +40,7 @@ impl<'repo> Snapshot<'repo> {
     }
 
     /// Like [`integer()`][Self::integer()], but it will report an error if the value couldn't be interpreted as boolean.
-    pub fn try_integer<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<i64, git_config::value::Error>> {
+    pub fn try_integer<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<i64, gix_config::value::Error>> {
         self.repo.config.resolved.integer_by_key(key)
     }
 
@@ -57,8 +57,8 @@ impl<'repo> Snapshot<'repo> {
     pub fn trusted_path<'a>(
         &self,
         key: impl Into<&'a BStr>,
-    ) -> Option<Result<Cow<'_, std::path::Path>, git_config::path::interpolate::Error>> {
-        let key = git_config::parse::key(key)?;
+    ) -> Option<Result<Cow<'_, std::path::Path>, gix_config::path::interpolate::Error>> {
+        let key = gix_config::parse::key(key)?;
         self.repo
             .config
             .trusted_file_path(key.section_name, key.subsection_name, key.value_name)
@@ -70,7 +70,7 @@ impl<'repo> Snapshot<'repo> {
     /// Returns the underlying configuration implementation for a complete API, despite being a little less convenient.
     ///
     /// It's expected that more functionality will move up depending on demand.
-    pub fn plumbing(&self) -> &git_config::File<'static> {
+    pub fn plumbing(&self) -> &gix_config::File<'static> {
         &self.repo.config.resolved
     }
 }
@@ -85,7 +85,7 @@ impl<'repo> SnapshotMut<'repo> {
     pub fn append_config(
         &mut self,
         values: impl IntoIterator<Item = impl AsRef<BStr>>,
-        source: git_config::Source,
+        source: gix_config::Source,
     ) -> Result<&mut Self, crate::config::overrides::Error> {
         crate::config::overrides::append(&mut self.config, values, source, |v| Some(format!("-c {v}").into()))?;
         Ok(self)
@@ -119,7 +119,7 @@ impl<'repo> SnapshotMut<'repo> {
     }
 
     /// Don't apply any of the changes after consuming this instance, effectively forgetting them, returning the changed configuration.
-    pub fn forget(mut self) -> git_config::File<'static> {
+    pub fn forget(mut self) -> gix_config::File<'static> {
         self.repo.take();
         std::mem::take(&mut self.config)
     }

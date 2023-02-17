@@ -2,8 +2,8 @@
 mod blocking_and_async_io {
     use std::sync::atomic::AtomicBool;
 
-    use git_features::progress;
-    use git_protocol::maybe_async;
+    use gix_features::progress;
+    use gix_protocol::maybe_async;
 
     use gix::remote::{fetch, Direction::Fetch};
 
@@ -14,7 +14,7 @@ mod blocking_and_async_io {
 
     pub(crate) fn base_repo_path() -> String {
         gix::path::realpath(
-            git_testtools::scripted_fixture_read_only("make_remote_repos.sh")
+            gix_testtools::scripted_fixture_read_only("make_remote_repos.sh")
                 .unwrap()
                 .join("base"),
         )
@@ -25,25 +25,25 @@ mod blocking_and_async_io {
 
     pub(crate) fn repo_path(name: &str) -> std::path::PathBuf {
         let dir =
-            git_testtools::scripted_fixture_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
+            gix_testtools::scripted_fixture_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
         dir.join(name)
     }
 
     #[allow(clippy::result_large_err)]
     pub(crate) fn try_repo_rw(
         name: &str,
-    ) -> Result<(gix::Repository, git_testtools::tempfile::TempDir), gix::open::Error> {
-        let dir = git_testtools::scripted_fixture_writable_with_args(
+    ) -> Result<(gix::Repository, gix_testtools::tempfile::TempDir), gix::open::Error> {
+        let dir = gix_testtools::scripted_fixture_writable_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
-            git_testtools::Creation::ExecuteScript,
+            gix_testtools::Creation::ExecuteScript,
         )
         .unwrap();
         let repo = gix::open_opts(dir.path().join(name), crate::restricted())?;
         Ok((repo, dir))
     }
 
-    pub(crate) fn repo_rw(name: &str) -> (gix::Repository, git_testtools::tempfile::TempDir) {
+    pub(crate) fn repo_rw(name: &str) -> (gix::Repository, gix_testtools::tempfile::TempDir) {
         try_repo_rw(name).unwrap()
     }
 

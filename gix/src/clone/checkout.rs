@@ -4,7 +4,7 @@ use crate::{clone::PrepareCheckout, Repository};
 pub mod main_worktree {
     use std::{path::PathBuf, sync::atomic::AtomicBool};
 
-    use git_odb::FindExt;
+    use gix_odb::FindExt;
 
     use crate::{clone::PrepareCheckout, Progress, Repository};
 
@@ -18,17 +18,17 @@ pub mod main_worktree {
         NoHeadTree(#[from] crate::object::peel::to_kind::Error),
         #[error("Could not create index from tree at {id}")]
         IndexFromTree {
-            id: git_hash::ObjectId,
-            source: git_traverse::tree::breadthfirst::Error,
+            id: gix_hash::ObjectId,
+            source: gix_traverse::tree::breadthfirst::Error,
         },
         #[error(transparent)]
-        WriteIndex(#[from] git_index::file::write::Error),
+        WriteIndex(#[from] gix_index::file::write::Error),
         #[error(transparent)]
         CheckoutOptions(#[from] crate::config::checkout_options::Error),
         #[error(transparent)]
         IndexCheckout(
             #[from]
-            git_worktree::index::checkout::Error<git_odb::find::existing_object::Error<git_odb::store::find::Error>>,
+            gix_worktree::index::checkout::Error<gix_odb::find::existing_object::Error<gix_odb::store::find::Error>>,
         ),
         #[error("Failed to reopen object database as Arc (only if thread-safety wasn't compiled in)")]
         OpenArcOdb(#[from] std::io::Error),
@@ -49,7 +49,7 @@ pub mod main_worktree {
         BytesWritten,
     }
 
-    impl From<ProgressId> for git_features::progress::Id {
+    impl From<ProgressId> for gix_features::progress::Id {
         fn from(v: ProgressId) -> Self {
             match v {
                 ProgressId::CheckoutFiles => *b"CLCF",
@@ -69,7 +69,7 @@ pub mod main_worktree {
             &mut self,
             mut progress: impl crate::Progress,
             should_interrupt: &AtomicBool,
-        ) -> Result<(Repository, git_worktree::index::checkout::Outcome), Error> {
+        ) -> Result<(Repository, gix_worktree::index::checkout::Outcome), Error> {
             let repo = self
                 .repo
                 .as_ref()
@@ -82,16 +82,16 @@ pub mod main_worktree {
                 None => {
                     return Ok((
                         self.repo.take().expect("still present"),
-                        git_worktree::index::checkout::Outcome::default(),
+                        gix_worktree::index::checkout::Outcome::default(),
                     ))
                 }
             };
-            let index = git_index::State::from_tree(&root_tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())
+            let index = gix_index::State::from_tree(&root_tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())
                 .map_err(|err| Error::IndexFromTree {
                     id: root_tree,
                     source: err,
                 })?;
-            let mut index = git_index::File::from_state(index, repo.index_path());
+            let mut index = gix_index::File::from_state(index, repo.index_path());
 
             let mut opts = repo.config.checkout_options(repo.git_dir())?;
             opts.destination_is_initially_empty = true;
@@ -103,7 +103,7 @@ pub mod main_worktree {
             bytes.init(None, crate::progress::bytes());
 
             let start = std::time::Instant::now();
-            let outcome = git_worktree::index::checkout(
+            let outcome = gix_worktree::index::checkout(
                 &mut index,
                 workdir,
                 {

@@ -5,8 +5,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git_config::parse::section;
-use git_discover::DOT_GIT_DIR;
+use gix_config::parse::section;
+use gix_discover::DOT_GIT_DIR;
 
 /// The error used in [`into()`].
 #[derive(Debug, thiserror::Error)]
@@ -115,9 +115,9 @@ pub struct Options {
     ///
     /// By default repos with worktree can be initialized into a non-empty repository as long as there is no `.git` directory.
     pub destination_must_be_empty: bool,
-    /// If set, use these filesystem capabilities to populate the respective git-config fields.
+    /// If set, use these filesystem capabilities to populate the respective gix-config fields.
     /// If `None`, the directory will be probed.
-    pub fs_capabilities: Option<git_worktree::fs::Capabilities>,
+    pub fs_capabilities: Option<gix_worktree::fs::Capabilities>,
 }
 
 /// Create a new `.git` repository of `kind` within the possibly non-existing `directory`
@@ -132,7 +132,7 @@ pub fn into(
         fs_capabilities,
         destination_must_be_empty,
     }: Options,
-) -> Result<git_discover::repository::Path, Error> {
+) -> Result<gix_discover::repository::Path, Error> {
     let mut dot_git = directory.into();
     let bare = matches!(kind, Kind::Bare);
 
@@ -206,9 +206,9 @@ pub fn into(
     }
 
     {
-        let mut config = git_config::File::default();
+        let mut config = gix_config::File::default();
         {
-            let caps = fs_capabilities.unwrap_or_else(|| git_worktree::fs::Capabilities::probe(&dot_git));
+            let caps = fs_capabilities.unwrap_or_else(|| gix_worktree::fs::Capabilities::probe(&dot_git));
             let mut core = config.new_section("core", None).expect("valid section name");
 
             core.push(key("repositoryformatversion"), Some("0".into()));
@@ -227,12 +227,12 @@ pub fn into(
         })?;
     }
 
-    Ok(git_discover::repository::Path::from_dot_git_dir(
+    Ok(gix_discover::repository::Path::from_dot_git_dir(
         dot_git,
         if bare {
-            git_discover::repository::Kind::Bare
+            gix_discover::repository::Kind::Bare
         } else {
-            git_discover::repository::Kind::WorkTree { linked_git_dir: None }
+            gix_discover::repository::Kind::WorkTree { linked_git_dir: None }
         },
         std::env::current_dir()?,
     )

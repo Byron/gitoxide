@@ -1,8 +1,8 @@
 #![allow(clippy::result_large_err)]
 use std::{collections::BTreeMap, convert::TryInto, path::PathBuf};
 
-use git_odb::{Find, FindExt};
-use git_ref::{
+use gix_odb::{Find, FindExt};
+use gix_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target, TargetRef,
 };
@@ -47,8 +47,8 @@ pub(crate) fn update(
     repo: &Repository,
     message: RefLogMessage,
     mappings: &[fetch::Mapping],
-    refspecs: &[git_refspec::RefSpec],
-    extra_refspecs: &[git_refspec::RefSpec],
+    refspecs: &[gix_refspec::RefSpec],
+    extra_refspecs: &[gix_refspec::RefSpec],
     fetch_tags: fetch::Tags,
     dry_run: fetch::DryRun,
     write_packed_refs: fetch::WritePackedRefs,
@@ -110,7 +110,7 @@ pub(crate) fn update(
                                     PreviousValue::MustExistAndMatch(Target::Peeled(local_id.to_owned()));
                                 let (mode, reflog_message) = if local_id == remote_id {
                                     (update::Mode::NoChangeNeeded, "no update will be performed")
-                                } else if let Some(git_ref::Category::Tag) = existing.name().category() {
+                                } else if let Some(gix_ref::Category::Tag) = existing.name().category() {
                                     if spec.allow_non_fast_forward() {
                                         (update::Mode::Forced, "updating tag")
                                     } else {
@@ -132,7 +132,7 @@ pub(crate) fn update(
                                                             .to_owned()
                                                             .ancestors(|id, buf| repo.objects.find_commit_iter(id, buf))
                                                             .sorting(
-                                                                git_traverse::commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+                                                                gix_traverse::commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
                                                                     time_in_seconds_since_epoch: local_commit_time
                                                                 },
                                                             )
@@ -169,10 +169,10 @@ pub(crate) fn update(
                         }
                     }
                     None => {
-                        let name: git_ref::FullName = name.try_into()?;
+                        let name: gix_ref::FullName = name.try_into()?;
                         let reflog_msg = match name.category() {
-                            Some(git_ref::Category::Tag) => "storing tag",
-                            Some(git_ref::Category::LocalBranch) => "storing head",
+                            Some(gix_ref::Category::Tag) => "storing tag",
+                            Some(gix_ref::Category::LocalBranch) => "storing head",
                             _ => "storing ref",
                         };
                         (
@@ -191,7 +191,7 @@ pub(crate) fn update(
                             message: message.compose(reflog_message),
                         },
                         expected: previous_value,
-                        new: if let Source::Ref(git_protocol::handshake::Ref::Symbolic { target, .. }) = &remote {
+                        new: if let Source::Ref(gix_protocol::handshake::Ref::Symbolic { target, .. }) = &remote {
                             match mappings.iter().find_map(|m| {
                                 m.remote.as_name().and_then(|name| {
                                     (name == target)
@@ -236,13 +236,13 @@ pub(crate) fn update(
                 .packed_refs(
                     match write_packed_refs {
                         fetch::WritePackedRefs::Only => {
-                            git_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box::new(|oid, buf| {
+                            gix_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box::new(|oid, buf| {
                                 repo.objects
                                     .try_find(oid, buf)
                                     .map(|obj| obj.map(|obj| obj.kind))
                                     .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
                             }))},
-                        fetch::WritePackedRefs::Never => git_ref::file::transaction::PackedRefs::DeletionsOnly
+                        fetch::WritePackedRefs::Never => gix_ref::file::transaction::PackedRefs::DeletionsOnly
                     }
                 )
                 .prepare(edits, file_lock_fail, packed_refs_lock_fail)
@@ -256,7 +256,7 @@ pub(crate) fn update(
     Ok(update::Outcome { edits, updates })
 }
 
-fn worktree_branches(repo: &Repository) -> Result<BTreeMap<git_ref::FullName, PathBuf>, update::Error> {
+fn worktree_branches(repo: &Repository) -> Result<BTreeMap<gix_ref::FullName, PathBuf>, update::Error> {
     let mut map = BTreeMap::new();
     if let Some((wt_dir, head_ref)) = repo.work_dir().zip(repo.head_ref().ok().flatten()) {
         map.insert(head_ref.inner.name, wt_dir.to_owned());

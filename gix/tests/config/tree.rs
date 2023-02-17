@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use git_object::bstr::BStr;
+use gix_object::bstr::BStr;
 
 fn bcow(input: &str) -> Cow<'_, BStr> {
     Cow::Borrowed(input.into())
@@ -9,7 +9,7 @@ fn bcow(input: &str) -> Cow<'_, BStr> {
 mod keys {
     use std::borrow::Cow;
 
-    use git_object::bstr::ByteSlice;
+    use gix_object::bstr::ByteSlice;
 
     use gix::config::tree::{Key, Section};
 
@@ -94,8 +94,8 @@ mod ssh {
     #[test]
     #[cfg(feature = "blocking-network-client")]
     fn variant() -> crate::Result {
-        use git_protocol::transport::client::ssh::ProgramKind;
         use gix::config::tree::Ssh;
+        use gix_protocol::transport::client::ssh::ProgramKind;
 
         use crate::config::tree::bcow;
         for (actual, expected) in [
@@ -119,9 +119,9 @@ mod ssh {
 }
 
 mod diff {
-    use git_diff::blob::Algorithm;
     use gix::config::tree::{Diff, Key};
     use gix::diff::rename::Tracking;
+    use gix_diff::blob::Algorithm;
 
     use crate::config::tree::bcow;
 
@@ -138,12 +138,12 @@ mod diff {
         );
         assert!(Diff::RENAMES.validate("0".into()).is_ok());
         assert_eq!(
-            Diff::RENAMES.try_into_renames(Err(git_config::value::Error::new("err", "err")), || Some(bcow("copy")))?,
+            Diff::RENAMES.try_into_renames(Err(gix_config::value::Error::new("err", "err")), || Some(bcow("copy")))?,
             Tracking::RenamesAndCopies
         );
         assert!(Diff::RENAMES.validate("copy".into()).is_ok());
         assert_eq!(
-            Diff::RENAMES.try_into_renames(Err(git_config::value::Error::new("err", "err")), || Some(bcow(
+            Diff::RENAMES.try_into_renames(Err(gix_config::value::Error::new("err", "err")), || Some(bcow(
                 "copies"
             )))?,
             Tracking::RenamesAndCopies
@@ -152,7 +152,7 @@ mod diff {
 
         assert_eq!(
             Diff::RENAMES
-                .try_into_renames(Err(git_config::value::Error::new("err", "err")), || Some(bcow("foo")))
+                .try_into_renames(Err(gix_config::value::Error::new("err", "err")), || Some(bcow("foo")))
                 .unwrap_err()
                 .to_string(),
             "The value of key \"diff.renames=foo\" was invalid"
@@ -191,15 +191,15 @@ mod diff {
 mod core {
     use std::time::Duration;
 
-    use git_lock::acquire::Fail;
     use gix::{
         config::tree::{Core, Key},
         revision::spec::parse::ObjectKindHint,
     };
+    use gix_lock::acquire::Fail;
 
     use crate::config::tree::bcow;
 
-    fn signed(value: i64) -> Result<i64, git_config::value::Error> {
+    fn signed(value: i64) -> Result<i64, gix_config::value::Error> {
         Ok(value)
     }
 
@@ -223,7 +223,7 @@ mod core {
         assert!(Core::FILES_REF_LOCK_TIMEOUT.validate("2500".into()).is_ok());
         assert_eq!(
             Core::FILES_REF_LOCK_TIMEOUT
-                .try_into_lock_timeout(Err(git_config::value::Error::new("err", "bogus")))
+                .try_into_lock_timeout(Err(gix_config::value::Error::new("err", "bogus")))
                 .unwrap_err()
                 .to_string(),
             "The timeout at key \"core.filesRefLockTimeout\" was invalid"
@@ -261,17 +261,17 @@ mod core {
     fn log_all_ref_updates() -> crate::Result {
         assert_eq!(
             Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(Some(Ok(true)), || None)?,
-            Some(git_ref::store::WriteReflog::Normal)
+            Some(gix_ref::store::WriteReflog::Normal)
         );
         assert!(Core::LOG_ALL_REF_UPDATES.validate("true".into()).is_ok());
         assert_eq!(
             Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(Some(Ok(false)), || None)?,
-            Some(git_ref::store::WriteReflog::Disable)
+            Some(gix_ref::store::WriteReflog::Disable)
         );
         assert!(Core::LOG_ALL_REF_UPDATES.validate("0".into()).is_ok());
         assert_eq!(
             Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(None, || Some(bcow("always")))?,
-            Some(git_ref::store::WriteReflog::Always)
+            Some(gix_ref::store::WriteReflog::Always)
         );
         assert!(Core::LOG_ALL_REF_UPDATES.validate("always".into()).is_ok());
         assert_eq!(
@@ -287,7 +287,7 @@ mod core {
 
     #[test]
     fn abbrev() -> crate::Result {
-        let object_hash = git_hash::Kind::Sha1;
+        let object_hash = gix_hash::Kind::Sha1;
         assert_eq!(Core::ABBREV.try_into_abbreviation(bcow("4"), object_hash)?, Some(4));
         assert_eq!(Core::ABBREV.try_into_abbreviation(bcow("auto"), object_hash)?, None);
         assert_eq!(
@@ -359,11 +359,11 @@ mod extensions {
     fn object_format() -> crate::Result {
         assert_eq!(
             Extensions::OBJECT_FORMAT.try_into_object_format(bcow("sha1"))?,
-            git_hash::Kind::Sha1
+            gix_hash::Kind::Sha1
         );
         assert_eq!(
             Extensions::OBJECT_FORMAT.try_into_object_format(bcow("SHA1"))?,
-            git_hash::Kind::Sha1,
+            gix_hash::Kind::Sha1,
             "case-insensitive"
         );
         assert_eq!(
@@ -382,7 +382,7 @@ mod extensions {
 mod checkout {
     use gix::config::tree::{Checkout, Key};
 
-    fn int(value: i64) -> Result<i64, git_config::value::Error> {
+    fn int(value: i64) -> Result<i64, gix_config::value::Error> {
         Ok(value)
     }
 
@@ -406,12 +406,12 @@ mod pack {
     fn index_version() -> crate::Result {
         assert_eq!(
             Pack::INDEX_VERSION.try_into_index_version(Ok(1))?,
-            git_pack::index::Version::V1
+            gix_pack::index::Version::V1
         );
         assert!(Pack::INDEX_VERSION.validate("1".into()).is_ok());
         assert_eq!(
             Pack::INDEX_VERSION.try_into_index_version(Ok(2))?,
-            git_pack::index::Version::V2
+            gix_pack::index::Version::V2
         );
         assert!(Pack::INDEX_VERSION.validate("2".into()).is_ok());
         assert_eq!(
@@ -559,14 +559,14 @@ mod gitoxide {
 mod http {
     use std::borrow::Cow;
 
-    use git_object::bstr::ByteSlice;
     use gix::config::tree::{Http, Key};
+    use gix_object::bstr::ByteSlice;
 
     use crate::config::tree::bcow;
 
     #[test]
     fn follow_redirects() -> crate::Result {
-        use git_transport::client::http::options::FollowRedirects;
+        use gix_transport::client::http::options::FollowRedirects;
         assert_eq!(
             Http::FOLLOW_REDIRECTS.try_into_follow_redirects(bcow("initial"), || unreachable!("no call"))?,
             FollowRedirects::Initial
@@ -586,7 +586,7 @@ mod http {
 
         assert_eq!(
             Http::FOLLOW_REDIRECTS
-                .try_into_follow_redirects(bcow("something"), || Err(git_config::value::Error::new(
+                .try_into_follow_redirects(bcow("something"), || Err(gix_config::value::Error::new(
                     "invalid", "value"
                 )))
                 .unwrap_err()
@@ -624,7 +624,7 @@ mod http {
 
     #[test]
     fn http_version() -> crate::Result {
-        use git_transport::client::http::options::HttpVersion;
+        use gix_transport::client::http::options::HttpVersion;
 
         for (actual, expected) in [("HTTP/1.1", HttpVersion::V1_1), ("HTTP/2", HttpVersion::V2)] {
             assert_eq!(Http::VERSION.try_into_http_version(bcow(actual))?, expected);
@@ -644,7 +644,7 @@ mod http {
 
     #[test]
     fn ssl_version() -> crate::Result {
-        use git_transport::client::http::options::SslVersion::*;
+        use gix_transport::client::http::options::SslVersion::*;
 
         for (actual, expected) in [
             ("default", Default),
@@ -674,7 +674,7 @@ mod http {
 
     #[test]
     fn proxy_auth_method() -> crate::Result {
-        use git_transport::client::http::options::ProxyAuthMethod::*;
+        use gix_transport::client::http::options::ProxyAuthMethod::*;
         for (actual, expected) in [
             ("anyauth", AnyAuth),
             ("basic", Basic),
@@ -748,26 +748,26 @@ mod remote {
     fn refspecs() {
         let fetch_spec = "+refs/heads/*:refs/remotes/origin/*";
         assert!(Remote::FETCH
-            .try_into_refspec(bcow(fetch_spec), git_refspec::parse::Operation::Fetch)
+            .try_into_refspec(bcow(fetch_spec), gix_refspec::parse::Operation::Fetch)
             .is_ok());
         assert!(Remote::FETCH.validate(fetch_spec.into()).is_ok());
 
         let push_spec = "HEAD:refs/heads/name";
         assert!(Remote::PUSH
-            .try_into_refspec(bcow(push_spec), git_refspec::parse::Operation::Push)
+            .try_into_refspec(bcow(push_spec), gix_refspec::parse::Operation::Push)
             .is_ok());
         assert!(Remote::PUSH.validate(push_spec.into()).is_ok());
 
         assert_eq!(
             Remote::FETCH
-                .try_into_refspec(bcow("*/*/*"), git_refspec::parse::Operation::Fetch)
+                .try_into_refspec(bcow("*/*/*"), gix_refspec::parse::Operation::Fetch)
                 .unwrap_err()
                 .to_string(),
             "The refspec at \"remote.<name>.fetch=*/*/*\" could not be parsed"
         );
         assert_eq!(
             Remote::PUSH
-                .try_into_refspec(bcow("*/*/*"), git_refspec::parse::Operation::Push)
+                .try_into_refspec(bcow("*/*/*"), gix_refspec::parse::Operation::Push)
                 .unwrap_err()
                 .to_string(),
             "The refspec at \"remote.<name>.push=*/*/*\" could not be parsed"

@@ -9,11 +9,11 @@ mod error {
         #[error(transparent)]
         FindExistingObject(#[from] object::find::existing::Error),
         #[error("The commit could not be decoded fully or partially")]
-        Decode(#[from] git_object::decode::Error),
+        Decode(#[from] gix_object::decode::Error),
         #[error("Expected object of type {}, but got {}", .expected, .actual)]
         ObjectKind {
-            expected: git_object::Kind,
-            actual: git_object::Kind,
+            expected: gix_object::Kind,
+            actual: gix_object::Kind,
         },
     }
 }
@@ -25,7 +25,7 @@ impl<'repo> Commit<'repo> {
     pub fn detached(&self) -> ObjectDetached {
         ObjectDetached {
             id: self.id,
-            kind: git_object::Kind::Commit,
+            kind: gix_object::Kind::Commit,
             data: self.data.clone(),
         }
     }
@@ -38,18 +38,18 @@ impl<'repo> Commit<'repo> {
 
 impl<'repo> Commit<'repo> {
     /// Turn this objects id into a shortened id with a length in hex as configured by `core.abbrev`.
-    pub fn short_id(&self) -> Result<git_hash::Prefix, crate::id::shorten::Error> {
+    pub fn short_id(&self) -> Result<gix_hash::Prefix, crate::id::shorten::Error> {
         use crate::ext::ObjectIdExt;
         self.id.attach(self.repo).shorten()
     }
 
-    /// Parse the commits message into a [`MessageRef`][git_object::commit::MessageRef]
-    pub fn message(&self) -> Result<git_object::commit::MessageRef<'_>, git_object::decode::Error> {
-        Ok(git_object::commit::MessageRef::from_bytes(self.message_raw()?))
+    /// Parse the commits message into a [`MessageRef`][gix_object::commit::MessageRef]
+    pub fn message(&self) -> Result<gix_object::commit::MessageRef<'_>, gix_object::decode::Error> {
+        Ok(gix_object::commit::MessageRef::from_bytes(self.message_raw()?))
     }
     /// Decode the commit object until the message and return it.
-    pub fn message_raw(&self) -> Result<&'_ BStr, git_object::decode::Error> {
-        git_object::CommitRefIter::from_bytes(&self.data).message()
+    pub fn message_raw(&self) -> Result<&'_ BStr, gix_object::decode::Error> {
+        gix_object::CommitRefIter::from_bytes(&self.data).message()
     }
     /// Obtain the message by using intricate knowledge about the encoding, which is fastest and
     /// can't fail at the expense of error handling.
@@ -65,7 +65,7 @@ impl<'repo> Commit<'repo> {
     /// Decode the commit and obtain the time at which the commit was created.
     ///
     /// For the time at which it was authored, refer to `.decode()?.author.time`.
-    pub fn time(&self) -> Result<git_actor::Time, Error> {
+    pub fn time(&self) -> Result<gix_actor::Time, Error> {
         Ok(self.committer()?.time)
     }
 
@@ -76,25 +76,25 @@ impl<'repo> Commit<'repo> {
     /// Note that the returned commit object does make lookup easy and should be
     /// used for successive calls to string-ish information to avoid decoding the object
     /// more than once.
-    pub fn decode(&self) -> Result<git_object::CommitRef<'_>, git_object::decode::Error> {
-        git_object::CommitRef::from_bytes(&self.data)
+    pub fn decode(&self) -> Result<gix_object::CommitRef<'_>, gix_object::decode::Error> {
+        gix_object::CommitRef::from_bytes(&self.data)
     }
 
     /// Return an iterator over tokens, representing this commit piece by piece.
-    pub fn iter(&self) -> git_object::CommitRefIter<'_> {
-        git_object::CommitRefIter::from_bytes(&self.data)
+    pub fn iter(&self) -> gix_object::CommitRefIter<'_> {
+        gix_object::CommitRefIter::from_bytes(&self.data)
     }
 
     /// Return the commits author, with surrounding whitespace trimmed.
-    pub fn author(&self) -> Result<git_actor::SignatureRef<'_>, git_object::decode::Error> {
-        git_object::CommitRefIter::from_bytes(&self.data)
+    pub fn author(&self) -> Result<gix_actor::SignatureRef<'_>, gix_object::decode::Error> {
+        gix_object::CommitRefIter::from_bytes(&self.data)
             .author()
             .map(|s| s.trim())
     }
 
     /// Return the commits committer. with surrounding whitespace trimmed.
-    pub fn committer(&self) -> Result<git_actor::SignatureRef<'_>, git_object::decode::Error> {
-        git_object::CommitRefIter::from_bytes(&self.data)
+    pub fn committer(&self) -> Result<gix_actor::SignatureRef<'_>, gix_object::decode::Error> {
+        gix_object::CommitRefIter::from_bytes(&self.data)
             .committer()
             .map(|s| s.trim())
     }
@@ -104,7 +104,7 @@ impl<'repo> Commit<'repo> {
     pub fn parent_ids(&self) -> impl Iterator<Item = crate::Id<'repo>> + '_ {
         use crate::ext::ObjectIdExt;
         let repo = self.repo;
-        git_object::CommitRefIter::from_bytes(&self.data)
+        gix_object::CommitRefIter::from_bytes(&self.data)
             .parent_ids()
             .map(move |id| id.attach(repo))
     }
@@ -118,8 +118,8 @@ impl<'repo> Commit<'repo> {
     }
 
     /// Parse the commit and return the the tree id it points to.
-    pub fn tree_id(&self) -> Result<crate::Id<'repo>, git_object::decode::Error> {
-        git_object::CommitRefIter::from_bytes(&self.data)
+    pub fn tree_id(&self) -> Result<crate::Id<'repo>, gix_object::decode::Error> {
+        gix_object::CommitRefIter::from_bytes(&self.data)
             .tree_id()
             .map(|id| crate::Id::from_id(id, self.repo))
     }

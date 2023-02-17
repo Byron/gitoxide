@@ -1,7 +1,7 @@
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
     mod protocol_allow {
-        use git_features::progress;
+        use gix_features::progress;
 
         use gix::remote::Direction::Fetch;
         use serial_test::serial;
@@ -27,12 +27,12 @@ mod blocking_io {
         #[serial]
         fn user() -> crate::Result {
             for (env_value, should_allow) in [(None, true), (Some("0"), false), (Some("1"), true)] {
-                let _env = env_value.map(|value| git_testtools::Env::new().set("GIT_PROTOCOL_FROM_USER", value));
+                let _env = env_value.map(|value| gix_testtools::Env::new().set("GIT_PROTOCOL_FROM_USER", value));
                 let repo = gix::open_opts(
                     remote::repo("protocol_file_user").git_dir(),
                     gix::open::Options::isolated().permissions(gix::Permissions {
                         env: gix::permissions::Environment {
-                            git_prefix: git_sec::Permission::Allow,
+                            git_prefix: gix_sec::Permission::Allow,
                             ..gix::permissions::Environment::all()
                         },
                         ..gix::Permissions::isolated()

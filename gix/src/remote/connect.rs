@@ -1,5 +1,5 @@
 #![allow(clippy::result_large_err)]
-use git_protocol::transport::client::Transport;
+use gix_protocol::transport::client::Transport;
 
 use crate::{remote::Connection, Progress, Remote};
 
@@ -19,21 +19,21 @@ mod error {
         #[error(transparent)]
         SchemePermission(#[from] config::protocol::allow::Error),
         #[error("Protocol {scheme:?} of url {url:?} is denied per configuration")]
-        ProtocolDenied { url: BString, scheme: git_url::Scheme },
+        ProtocolDenied { url: BString, scheme: gix_url::Scheme },
         #[error(transparent)]
-        Connect(#[from] git_protocol::transport::client::connect::Error),
+        Connect(#[from] gix_protocol::transport::client::connect::Error),
         #[error("The {} url was missing - don't know where to establish a connection to", direction.as_str())]
         MissingUrl { direction: remote::Direction },
         #[error("Protocol named {given:?} is not a valid protocol. Choose between 1 and 2")]
         UnknownProtocol { given: BString },
         #[error("Could not verify that \"{}\" url is a valid git directory before attempting to use it", url.to_bstring())]
         FileUrl {
-            source: Box<git_discover::is_git::Error>,
-            url: git_url::Url,
+            source: Box<gix_discover::is_git::Error>,
+            url: gix_url::Url,
         },
     }
 
-    impl git_protocol::transport::IsSpuriousError for Error {
+    impl gix_protocol::transport::IsSpuriousError for Error {
         /// Return `true` if retrying might result in a different outcome due to IO working out differently.
         fn is_spurious(&self) -> bool {
             match self {
@@ -74,7 +74,7 @@ impl<'repo> Remote<'repo> {
     /// used transport is well known. If that's not the case, the transport can be created by hand and passed to
     /// [to_connection_with_transport()][Self::to_connection_with_transport()].
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
-    #[git_protocol::maybe_async::maybe_async]
+    #[gix_protocol::maybe_async::maybe_async]
     pub async fn connect<P>(
         &self,
         direction: crate::remote::Direction,
@@ -85,10 +85,10 @@ impl<'repo> Remote<'repo> {
     {
         let (url, version) = self.sanitized_url_and_version(direction)?;
         #[cfg(feature = "blocking-network-client")]
-        let scheme_is_ssh = url.scheme == git_url::Scheme::Ssh;
-        let transport = git_protocol::transport::connect(
+        let scheme_is_ssh = url.scheme == gix_url::Scheme::Ssh;
+        let transport = gix_protocol::transport::connect(
             url,
-            git_protocol::transport::client::connect::Options {
+            gix_protocol::transport::client::connect::Options {
                 version,
                 #[cfg(feature = "blocking-network-client")]
                 ssh: scheme_is_ssh
@@ -107,20 +107,20 @@ impl<'repo> Remote<'repo> {
     pub fn sanitized_url_and_version(
         &self,
         direction: crate::remote::Direction,
-    ) -> Result<(git_url::Url, git_protocol::transport::Protocol), Error> {
-        fn sanitize(mut url: git_url::Url) -> Result<git_url::Url, Error> {
-            if url.scheme == git_url::Scheme::File {
-                let mut dir = git_path::to_native_path_on_windows(url.path.as_ref());
-                let kind = git_discover::is_git(dir.as_ref())
+    ) -> Result<(gix_url::Url, gix_protocol::transport::Protocol), Error> {
+        fn sanitize(mut url: gix_url::Url) -> Result<gix_url::Url, Error> {
+            if url.scheme == gix_url::Scheme::File {
+                let mut dir = gix_path::to_native_path_on_windows(url.path.as_ref());
+                let kind = gix_discover::is_git(dir.as_ref())
                     .or_else(|_| {
-                        dir.to_mut().push(git_discover::DOT_GIT_DIR);
-                        git_discover::is_git(dir.as_ref())
+                        dir.to_mut().push(gix_discover::DOT_GIT_DIR);
+                        gix_discover::is_git(dir.as_ref())
                     })
                     .map_err(|err| Error::FileUrl {
                         source: err.into(),
                         url: url.clone(),
                     })?;
-                let (git_dir, _work_dir) = git_discover::repository::Path::from_dot_git_dir(
+                let (git_dir, _work_dir) = gix_discover::repository::Path::from_dot_git_dir(
                     dir.clone().into_owned(),
                     kind,
                     std::env::current_dir()?,
@@ -129,12 +129,12 @@ impl<'repo> Remote<'repo> {
                     directory: dir.into_owned(),
                 })?
                 .into_repository_and_work_tree_directories();
-                url.path = git_path::into_bstr(git_dir).into_owned();
+                url.path = gix_path::into_bstr(git_dir).into_owned();
             }
             Ok(url)
         }
 
-        use git_protocol::transport::Protocol;
+        use gix_protocol::transport::Protocol;
         let version = self
             .repo
             .config

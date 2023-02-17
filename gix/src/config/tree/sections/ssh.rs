@@ -23,9 +23,9 @@ mod variant {
         pub fn try_into_variant(
             &'static self,
             value: Cow<'_, BStr>,
-        ) -> Result<Option<git_protocol::transport::client::ssh::ProgramKind>, config::key::GenericErrorWithValue>
+        ) -> Result<Option<gix_protocol::transport::client::ssh::ProgramKind>, config::key::GenericErrorWithValue>
         {
-            use git_protocol::transport::client::ssh::ProgramKind;
+            use gix_protocol::transport::client::ssh::ProgramKind;
             Ok(Some(match value.as_ref().as_ref() {
                 b"auto" => return Ok(None),
                 b"ssh" => ProgramKind::Ssh,

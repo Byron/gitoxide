@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use git_object::bstr::BString;
+use gix_object::bstr::BString;
 
 use gix::{
     config::tree::{Core, Key},
@@ -8,8 +8,8 @@ use gix::{
 };
 
 /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
-fn hex_to_id(hex: &str) -> git_hash::ObjectId {
-    git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+fn hex_to_id(hex: &str) -> gix_hash::ObjectId {
+    gix_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
 }
 
 #[test]
@@ -68,7 +68,7 @@ fn display_and_debug() -> crate::Result {
 }
 
 mod ancestors {
-    use git_traverse::commit;
+    use gix_traverse::commit;
 
     #[test]
     fn all() -> crate::Result {

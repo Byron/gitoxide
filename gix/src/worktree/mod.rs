@@ -1,15 +1,15 @@
 use std::path::PathBuf;
 
-pub use git_worktree::*;
+pub use gix_worktree::*;
 
 use crate::{
     bstr::{BStr, BString},
     Repository,
 };
 
-pub(crate) type IndexStorage = git_features::threading::OwnShared<git_features::fs::MutableSnapshot<git_index::File>>;
+pub(crate) type IndexStorage = gix_features::threading::OwnShared<gix_features::fs::MutableSnapshot<gix_index::File>>;
 /// A lazily loaded and auto-updated worktree index.
-pub type Index = git_features::fs::SharedSnapshot<git_index::File>;
+pub type Index = gix_features::fs::SharedSnapshot<gix_index::File>;
 
 /// A stand-in to a worktree as result of a worktree iteration.
 ///
@@ -60,7 +60,7 @@ pub(crate) fn id(git_dir: &std::path::Path, has_common_dir: bool) -> Option<&BSt
     if !has_common_dir {
         return None;
     }
-    let candidate = git_path::os_str_into_bstr(git_dir.file_name().expect("at least one directory level"))
+    let candidate = gix_path::os_str_into_bstr(git_dir.file_name().expect("at least one directory level"))
         .expect("no illformed UTF-8");
     let maybe_worktrees = git_dir.parent()?;
     (maybe_worktrees.file_name()?.to_str()? == "worktrees").then_some(candidate)
@@ -81,15 +81,15 @@ pub mod open_index {
         ConfigIndexThreads {
             value: BString,
             #[source]
-            err: git_config::value::Error,
+            err: gix_config::value::Error,
         },
         #[error(transparent)]
-        IndexFile(#[from] git_index::file::init::Error),
+        IndexFile(#[from] gix_index::file::init::Error),
     }
 
     impl<'repo> crate::Worktree<'repo> {
         /// A shortcut to [`crate::Repository::open_index()`].
-        pub fn open_index(&self) -> Result<git_index::File, Error> {
+        pub fn open_index(&self) -> Result<gix_index::File, Error> {
             self.parent.open_index()
         }
 
@@ -111,9 +111,9 @@ pub mod excludes {
         #[error("Could not read repository exclude.")]
         Io(#[from] std::io::Error),
         #[error(transparent)]
-        EnvironmentPermission(#[from] git_sec::permission::Error<PathBuf>),
+        EnvironmentPermission(#[from] gix_sec::permission::Error<PathBuf>),
         #[error("The value for `core.excludesFile` could not be read from configuration")]
-        ExcludesFilePathInterpolation(#[from] git_config::path::interpolate::Error),
+        ExcludesFilePathInterpolation(#[from] gix_config::path::interpolate::Error),
     }
 
     impl<'repo> crate::Worktree<'repo> {
@@ -123,23 +123,23 @@ pub mod excludes {
         // TODO: test, provide higher-level interface that is much easier to use and doesn't panic.
         pub fn excludes(
             &self,
-            index: &git_index::State,
-            overrides: Option<git_attributes::MatchGroup<git_attributes::Ignore>>,
-        ) -> Result<git_worktree::fs::Cache, Error> {
+            index: &gix_index::State,
+            overrides: Option<gix_attributes::MatchGroup<gix_attributes::Ignore>>,
+        ) -> Result<gix_worktree::fs::Cache, Error> {
             let repo = self.parent;
             let case = repo
                 .config
                 .ignore_case
-                .then_some(git_glob::pattern::Case::Fold)
+                .then_some(gix_glob::pattern::Case::Fold)
                 .unwrap_or_default();
             let mut buf = Vec::with_capacity(512);
             let excludes_file = match repo.config.excludes_file().transpose()? {
                 Some(user_path) => Some(user_path),
                 None => repo.config.xdg_config_path("ignore")?,
             };
-            let state = git_worktree::fs::cache::State::IgnoreStack(git_worktree::fs::cache::state::Ignore::new(
+            let state = gix_worktree::fs::cache::State::IgnoreStack(gix_worktree::fs::cache::state::Ignore::new(
                 overrides.unwrap_or_default(),
-                git_attributes::MatchGroup::<git_attributes::Ignore>::from_git_dir(
+                gix_attributes::MatchGroup::<gix_attributes::Ignore>::from_git_dir(
                     repo.git_dir(),
                     excludes_file,
                     &mut buf,
@@ -148,7 +148,7 @@ pub mod excludes {
                 case,
             ));
             let attribute_list = state.build_attribute_list(index, index.path_backing(), case);
-            Ok(git_worktree::fs::Cache::new(
+            Ok(gix_worktree::fs::Cache::new(
                 self.path,
                 state,
                 case,

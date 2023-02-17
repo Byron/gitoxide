@@ -47,7 +47,7 @@ mod not_a_repository {
     fn shows_proper_error() -> crate::Result {
         for name in ["empty-dir", "with-files"] {
             let name = format!("not-a-repo-{name}");
-            let repo_path = git_testtools::scripted_fixture_read_only("make_config_repos.sh")?.join(name);
+            let repo_path = gix_testtools::scripted_fixture_read_only("make_config_repos.sh")?.join(name);
             let err = gix::open_opts(&repo_path, gix::open::Options::isolated()).unwrap_err();
             assert!(matches!(err, gix::open::Error::NotARepository { path, .. } if path == repo_path));
         }
@@ -88,7 +88,7 @@ mod submodules {
 
     #[test]
     fn by_their_worktree_checkout_and_git_modules_dir() {
-        let dir = git_testtools::scripted_fixture_read_only("make_submodules.sh").unwrap();
+        let dir = gix_testtools::scripted_fixture_read_only("make_submodules.sh").unwrap();
         let parent_repo = Path::new("with-submodules");
         let modules = parent_repo.join(".git").join("modules");
         for module in ["m1", "dir/m1"] {
@@ -114,12 +114,12 @@ mod submodules {
     }
 
     fn discover_repo(name: impl AsRef<Path>) -> crate::Result<gix::Repository> {
-        let dir = git_testtools::scripted_fixture_read_only("make_submodules.sh")?;
+        let dir = gix_testtools::scripted_fixture_read_only("make_submodules.sh")?;
         let repo_dir = dir.join(name);
         Ok(gix::ThreadSafeRepository::discover_opts(
             repo_dir,
             Default::default(),
-            git_sec::trust::Mapping {
+            gix_sec::trust::Mapping {
                 full: crate::restricted(),
                 reduced: crate::restricted(),
             },
@@ -154,9 +154,9 @@ mod object_caches {
 mod with_overrides {
     use std::borrow::Cow;
 
-    use git_object::bstr::BStr;
-    use git_sec::Permission;
-    use git_testtools::Env;
+    use gix_object::bstr::BStr;
+    use gix_sec::Permission;
+    use gix_testtools::Env;
 
     use serial_test::serial;
 
@@ -389,9 +389,9 @@ mod worktree {
     use gix::open;
 
     #[test]
-    fn with_worktree_configs() -> git_testtools::Result {
+    fn with_worktree_configs() -> gix_testtools::Result {
         let manifest_dir = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR")?);
-        let fixture_dir = git_testtools::scripted_fixture_read_only("make_worktree_repo_with_configs.sh")?;
+        let fixture_dir = gix_testtools::scripted_fixture_read_only("make_worktree_repo_with_configs.sh")?;
         let worktree_base = manifest_dir.join(&fixture_dir).join("repo/.git/worktrees");
 
         {

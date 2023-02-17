@@ -5,7 +5,7 @@ use crate::bstr::BStr;
 
 impl crate::Repository {
     /// Produce configuration suitable for `url`, as differentiated by its protocol/scheme, to be passed to a transport instance via
-    /// [configure()][git_transport::client::TransportWithoutIO::configure()] (via `&**config` to pass the contained `Any` and not the `Box`).
+    /// [configure()][gix_transport::client::TransportWithoutIO::configure()] (via `&**config` to pass the contained `Any` and not the `Box`).
     /// `None` is returned if there is no known configuration. If `remote_name` is not `None`, the remote's name may contribute to
     /// configuration overrides, typically for the HTTP transport.
     ///
@@ -26,8 +26,8 @@ impl crate::Repository {
         url: impl Into<&'a BStr>,
         remote_name: Option<&BStr>,
     ) -> Result<Option<Box<dyn Any>>, crate::config::transport::Error> {
-        let url = git_url::parse(url.into())?;
-        use git_url::Scheme::*;
+        let url = gix_url::parse(url.into())?;
+        use gix_url::Scheme::*;
 
         match &url.scheme {
             Http | Https => {
@@ -48,7 +48,7 @@ impl crate::Repository {
                         sync::{Arc, Mutex},
                     };
 
-                    use git_transport::client::{
+                    use gix_transport::client::{
                         http,
                         http::options::{ProxyAuthMethod, SslVersion, SslVersionRangeInclusive},
                     };
@@ -99,10 +99,10 @@ impl crate::Repository {
                     }
 
                     fn ssl_version(
-                        config: &git_config::File<'static>,
+                        config: &gix_config::File<'static>,
                         key_str: &'static str,
                         key: &'static config::tree::http::SslVersion,
-                        mut filter: fn(&git_config::file::Metadata) -> bool,
+                        mut filter: fn(&gix_config::file::Metadata) -> bool,
                         lenient: bool,
                     ) -> Result<Option<SslVersion>, config::transport::Error> {
                         debug_assert_eq!(
@@ -271,7 +271,7 @@ impl crate::Repository {
                         .proxy
                         .as_deref()
                         .filter(|url| !url.is_empty())
-                        .map(|url| git_url::parse(url.into()))
+                        .map(|url| gix_url::parse(url.into()))
                         .transpose()?
                         .filter(|url| url.user().is_some())
                         .map(|url| -> Result<_, config::transport::http::Error> {
@@ -412,7 +412,7 @@ impl crate::Repository {
                             .transpose()
                             .with_leniency(lenient)
                             .map_err(config::transport::http::Error::from)?;
-                        let backend = git_protocol::transport::client::http::curl::Options { schannel_check_revoke };
+                        let backend = gix_protocol::transport::client::http::curl::Options { schannel_check_revoke };
                         opts.backend =
                             Some(Arc::new(Mutex::new(backend)) as Arc<Mutex<dyn Any + Send + Sync + 'static>>);
                     }

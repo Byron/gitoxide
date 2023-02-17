@@ -91,9 +91,9 @@ impl<T: Validate> Any<T> {
     pub fn try_into_refspec(
         &'static self,
         value: std::borrow::Cow<'_, BStr>,
-        op: git_refspec::parse::Operation,
-    ) -> Result<git_refspec::RefSpec, config::refspec::Error> {
-        git_refspec::parse(value.as_ref(), op)
+        op: gix_refspec::parse::Operation,
+    ) -> Result<gix_refspec::RefSpec, config::refspec::Error> {
+        gix_refspec::parse(value.as_ref(), op)
             .map(|spec| spec.to_owned())
             .map_err(|err| config::refspec::Error::from_value(self, value.into_owned()).with_source(err))
     }
@@ -202,7 +202,7 @@ mod duration {
         /// Return a valid duration as parsed from an integer that is interpreted as milliseconds.
         pub fn try_into_duration(
             &'static self,
-            value: Result<i64, git_config::value::Error>,
+            value: Result<i64, gix_config::value::Error>,
         ) -> Result<std::time::Duration, config::duration::Error> {
             let value = value.map_err(|err| config::duration::Error::from(self).with_source(err))?;
             Ok(match value {
@@ -216,7 +216,7 @@ mod duration {
 mod lock_timeout {
     use std::time::Duration;
 
-    use git_lock::acquire::Fail;
+    use gix_lock::acquire::Fail;
 
     use crate::{
         config,
@@ -232,8 +232,8 @@ mod lock_timeout {
         /// Return information on how long to wait for locked files.
         pub fn try_into_lock_timeout(
             &'static self,
-            value: Result<i64, git_config::value::Error>,
-        ) -> Result<git_lock::acquire::Fail, config::lock_timeout::Error> {
+            value: Result<i64, gix_config::value::Error>,
+        ) -> Result<gix_lock::acquire::Fail, config::lock_timeout::Error> {
             let value = value.map_err(|err| config::lock_timeout::Error::from(self).with_source(err))?;
             Ok(match value {
                 val if val < 0 => Fail::AfterDurationWithBackoff(Duration::from_secs(u64::MAX)),
@@ -286,8 +286,8 @@ mod url {
         }
 
         /// Try to parse `value` as URL.
-        pub fn try_into_url(&'static self, value: Cow<'_, BStr>) -> Result<git_url::Url, config::url::Error> {
-            git_url::parse(value.as_ref())
+        pub fn try_into_url(&'static self, value: Cow<'_, BStr>) -> Result<gix_url::Url, config::url::Error> {
+            gix_url::parse(value.as_ref())
                 .map_err(|err| config::url::Error::from_value(self, value.into_owned()).with_source(err))
         }
     }
@@ -333,7 +333,7 @@ mod workers {
         /// Convert `value` into a `usize` or wrap it into a specialized error.
         pub fn try_into_usize(
             &'static self,
-            value: Result<i64, git_config::value::Error>,
+            value: Result<i64, gix_config::value::Error>,
         ) -> Result<usize, crate::config::unsigned_integer::Error> {
             value
                 .map_err(|err| crate::config::unsigned_integer::Error::from(self).with_source(err))
@@ -347,7 +347,7 @@ mod workers {
         /// Convert `value` into a `u64` or wrap it into a specialized error.
         pub fn try_into_u64(
             &'static self,
-            value: Result<i64, git_config::value::Error>,
+            value: Result<i64, gix_config::value::Error>,
         ) -> Result<u64, crate::config::unsigned_integer::Error> {
             value
                 .map_err(|err| crate::config::unsigned_integer::Error::from(self).with_source(err))
@@ -361,7 +361,7 @@ mod workers {
         /// Convert `value` into a `u32` or wrap it into a specialized error.
         pub fn try_into_u32(
             &'static self,
-            value: Result<i64, git_config::value::Error>,
+            value: Result<i64, gix_config::value::Error>,
         ) -> Result<u32, crate::config::unsigned_integer::Error> {
             value
                 .map_err(|err| crate::config::unsigned_integer::Error::from(self).with_source(err))
@@ -396,12 +396,12 @@ mod time {
             &self,
             value: Cow<'_, BStr>,
             now: Option<std::time::SystemTime>,
-        ) -> Result<git_date::Time, git_date::parse::Error> {
-            git_date::parse(
+        ) -> Result<gix_date::Time, gix_date::parse::Error> {
+            gix_date::parse(
                 value
                     .as_ref()
                     .to_str()
-                    .map_err(|_| git_date::parse::Error::InvalidDateString {
+                    .map_err(|_| gix_date::parse::Error::InvalidDateString {
                         input: value.to_string(),
                     })?,
                 now,
@@ -427,10 +427,10 @@ mod boolean {
 
         /// Process the `value` into a result with an improved error message.
         ///
-        /// `value` is expected to be provided by [`git_config::File::boolean()`].
+        /// `value` is expected to be provided by [`gix_config::File::boolean()`].
         pub fn enrich_error(
             &'static self,
-            value: Result<bool, git_config::value::Error>,
+            value: Result<bool, gix_config::value::Error>,
         ) -> Result<bool, config::boolean::Error> {
             value.map_err(|err| config::boolean::Error::from(self).with_source(err))
         }
@@ -464,7 +464,7 @@ mod remote_name {
     }
 }
 
-/// Provide a way to validate a value, or decode a value from `git-config`.
+/// Provide a way to validate a value, or decode a value from `gix-config`.
 pub trait Validate {
     /// Validate `value` or return an error.
     fn validate(&self, value: &BStr) -> Result<(), Box<dyn Error + Send + Sync + 'static>>;
@@ -496,7 +496,7 @@ pub mod validate {
 
     impl Validate for Time {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-            git_date::parse(value.to_str()?, std::time::SystemTime::now().into())?;
+            gix_date::parse(value.to_str()?, std::time::SystemTime::now().into())?;
             Ok(())
         }
     }
@@ -508,7 +508,7 @@ pub mod validate {
     impl Validate for UnsignedInteger {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
             usize::try_from(
-                git_config::Integer::try_from(value)?
+                gix_config::Integer::try_from(value)?
                     .to_decimal()
                     .ok_or_else(|| format!("integer {value} cannot be represented as `usize`"))?,
             )?;
@@ -522,7 +522,7 @@ pub mod validate {
 
     impl Validate for Boolean {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-            git_config::Boolean::try_from(value)?;
+            gix_config::Boolean::try_from(value)?;
             Ok(())
         }
     }
@@ -561,7 +561,7 @@ pub mod validate {
     pub struct Url;
     impl Validate for Url {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            git_url::parse(value)?;
+            gix_url::parse(value)?;
             Ok(())
         }
     }
@@ -571,7 +571,7 @@ pub mod validate {
     pub struct PushRefSpec;
     impl Validate for PushRefSpec {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            git_refspec::parse(value, git_refspec::parse::Operation::Push)?;
+            gix_refspec::parse(value, gix_refspec::parse::Operation::Push)?;
             Ok(())
         }
     }
@@ -581,7 +581,7 @@ pub mod validate {
     pub struct FetchRefSpec;
     impl Validate for FetchRefSpec {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            git_refspec::parse(value, git_refspec::parse::Operation::Fetch)?;
+            gix_refspec::parse(value, gix_refspec::parse::Operation::Fetch)?;
             Ok(())
         }
     }
@@ -590,7 +590,7 @@ pub mod validate {
     pub struct LockTimeout;
     impl Validate for LockTimeout {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            let value = git_config::Integer::try_from(value)?
+            let value = gix_config::Integer::try_from(value)?
                 .to_decimal()
                 .ok_or_else(|| format!("integer {value} cannot be represented as integer"));
             super::super::Core::FILES_REF_LOCK_TIMEOUT.try_into_lock_timeout(Ok(value?))?;
@@ -602,7 +602,7 @@ pub mod validate {
     pub struct DurationInMilliseconds;
     impl Validate for DurationInMilliseconds {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            let value = git_config::Integer::try_from(value)?
+            let value = gix_config::Integer::try_from(value)?
                 .to_decimal()
                 .ok_or_else(|| format!("integer {value} cannot be represented as integer"));
             super::super::gitoxide::Http::CONNECT_TIMEOUT.try_into_duration(Ok(value?))?;

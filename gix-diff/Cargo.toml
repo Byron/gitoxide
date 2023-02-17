@@ -1,0 +1,28 @@
+[package]
+name = "gix-diff"
+version = "0.26.1"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "Calculate differences between various git objects"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*"]
+rust-version = "1.64"
+autotests = false
+
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["serde", "gix-hash/serde1", "gix-object/serde1"]
+## Make it possible to compile to the `wasm32-unknown-unknown` target.
+wasm = ["dep:getrandom"]
+
+[lib]
+doctest = false
+
+[dependencies]
+gix-hash = { version = "^0.10.2", path = "../gix-hash" }
+gix-object = { version = "^0.26.1", path = "../gix-object" }
+thiserror = "1.0.32"
+imara-diff = "0.1.3"
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
+getrandom = { version = "0.2.8", optional = true, default-features = false, features = ["js"] }

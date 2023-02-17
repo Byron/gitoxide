@@ -1,7 +1,7 @@
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod blocking_and_async_io {
-    use git_features::progress;
-    use git_protocol::maybe_async;
+    use gix_features::progress;
+    use gix_protocol::maybe_async;
 
     use gix::remote::Direction::Fetch;
 

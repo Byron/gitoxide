@@ -1,0 +1,14 @@
+[package]
+name = "gix-note"
+version = "0.0.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project dealing with git notes"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+rust-version = "1.64"
+
+[lib]
+doctest = false
+
+[dependencies]

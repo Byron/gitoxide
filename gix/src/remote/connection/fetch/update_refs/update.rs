@@ -10,7 +10,7 @@ mod error {
         #[error(transparent)]
         FindReference(#[from] crate::reference::find::Error),
         #[error("A remote reference had a name that wasn't considered valid. Corrupt remote repo or insufficient checks on remote?")]
-        InvalidRefName(#[from] git_validate::refname::Error),
+        InvalidRefName(#[from] gix_validate::refname::Error),
         #[error("Failed to update references to their new position to match their remote locations")]
         EditReferences(#[from] crate::reference::edit::Error),
         #[error("Failed to read or iterate worktree dir")]
@@ -28,7 +28,7 @@ pub use error::Error;
 #[derive(Debug, Clone)]
 pub struct Outcome {
     /// All edits that were performed to update local refs.
-    pub edits: Vec<git_ref::transaction::RefEdit>,
+    pub edits: Vec<gix_ref::transaction::RefEdit>,
     /// Each update provides more information about what happened to the corresponding mapping.
     /// Use [`iter_mapping_updates()`][Self::iter_mapping_updates()] to recombine the update information with ref-edits and their
     /// mapping.
@@ -55,7 +55,7 @@ pub enum Mode {
     /// The object id to set the target reference to could not be found.
     RejectedSourceObjectNotFound {
         /// The id of the object that didn't exist in the object database, even though it should since it should be part of the pack.
-        id: git_hash::ObjectId,
+        id: gix_hash::ObjectId,
     },
     /// Tags can never be overwritten (whether the new object would be a fast-forward or not, or unchanged), unless the refspec
     /// specifies force.
@@ -106,14 +106,14 @@ impl Outcome {
     pub fn iter_mapping_updates<'a, 'b>(
         &self,
         mappings: &'a [fetch::Mapping],
-        refspecs: &'b [git_refspec::RefSpec],
-        extra_refspecs: &'b [git_refspec::RefSpec],
+        refspecs: &'b [gix_refspec::RefSpec],
+        extra_refspecs: &'b [gix_refspec::RefSpec],
     ) -> impl Iterator<
         Item = (
             &super::Update,
             &'a fetch::Mapping,
-            Option<&'b git_refspec::RefSpec>,
-            Option<&git_ref::transaction::RefEdit>,
+            Option<&'b gix_refspec::RefSpec>,
+            Option<&gix_ref::transaction::RefEdit>,
         ),
     > {
         self.updates.iter().zip(mappings.iter()).map(move |(update, mapping)| {

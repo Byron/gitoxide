@@ -1,0 +1,17 @@
+[package]
+name = "gix-quote"
+version = "0.4.1"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project dealing with various quotations used by git"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+rust-version = "1.64"
+
+[lib]
+doctest = false
+
+[dependencies]
+bstr = { version = "1.0.1", default-features = false, features = ["std"]}
+quick-error = "2.0.0"
+btoi = "0.4.2"

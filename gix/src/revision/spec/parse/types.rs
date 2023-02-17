@@ -72,7 +72,7 @@ pub enum Error {
     PriorCheckoutOutOfRange { desired: usize, available: usize },
     #[error("Reference {:?} has {available} ref-log entries and entry number {desired} is out of range", reference.name.as_bstr())]
     RefLogEntryOutOfRange {
-        reference: git_ref::Reference,
+        reference: gix_ref::Reference,
         desired: usize,
         available: usize,
     },
@@ -80,21 +80,21 @@ pub enum Error {
         "Commit {oid} has {available} ancestors along the first parent and ancestor number {desired} is out of range"
     )]
     AncestorOutOfRange {
-        oid: git_hash::Prefix,
+        oid: gix_hash::Prefix,
         desired: usize,
         available: usize,
     },
     #[error("Commit {oid} has {available} parents and parent number {desired} is out of range")]
     ParentOutOfRange {
-        oid: git_hash::Prefix,
+        oid: gix_hash::Prefix,
         desired: usize,
         available: usize,
     },
     #[error("Path {desired_path:?} did not exist in index at stage {desired_stage}{}{}", stage_hint.map(|actual|format!(". It does exist at stage {actual}")).unwrap_or_default(), exists.then(|| ". It exists on disk").unwrap_or(". It does not exist on disk"))]
     IndexLookup {
         desired_path: BString,
-        desired_stage: git_index::entry::Stage,
-        stage_hint: Option<git_index::entry::Stage>,
+        desired_stage: gix_index::entry::Stage,
+        stage_hint: Option<gix_index::entry::Stage>,
         exists: bool,
     },
     #[error(transparent)]
@@ -104,7 +104,7 @@ pub enum Error {
     #[error(transparent)]
     RevWalkIterInit(#[from] crate::reference::iter::init::Error),
     #[error(transparent)]
-    RevWalkAllReferences(#[from] git_ref::packed::buffer::open::Error),
+    RevWalkAllReferences(#[from] gix_ref::packed::buffer::open::Error),
     #[cfg(feature = "regex")]
     #[error(transparent)]
     InvalidRegex(#[from] regex::Error),
@@ -118,7 +118,7 @@ pub enum Error {
     )]
     NoRegexMatch {
         regex: BString,
-        oid: git_hash::Prefix,
+        oid: gix_hash::Prefix,
         commits_searched: usize,
     },
     #[cfg_attr(
@@ -134,39 +134,39 @@ pub enum Error {
     "The short hash {prefix} matched both the reference {} and at least one object", reference.name)]
     AmbiguousRefAndObject {
         /// The prefix to look for.
-        prefix: git_hash::Prefix,
+        prefix: gix_hash::Prefix,
         /// The reference matching the prefix.
-        reference: git_ref::Reference,
+        reference: gix_ref::Reference,
     },
     #[error(transparent)]
-    IdFromHex(#[from] git_hash::decode::Error),
+    IdFromHex(#[from] gix_hash::decode::Error),
     #[error(transparent)]
-    FindReference(#[from] git_ref::file::find::existing::Error),
+    FindReference(#[from] gix_ref::file::find::existing::Error),
     #[error(transparent)]
     FindObject(#[from] object::find::existing::Error),
     #[error(transparent)]
-    LookupPrefix(#[from] git_odb::store::prefix::lookup::Error),
+    LookupPrefix(#[from] gix_odb::store::prefix::lookup::Error),
     #[error(transparent)]
     PeelToKind(#[from] object::peel::to_kind::Error),
     #[error("Object {oid} was a {actual}, but needed it to be a {expected}")]
     ObjectKind {
-        oid: git_hash::Prefix,
-        actual: git_object::Kind,
-        expected: git_object::Kind,
+        oid: gix_hash::Prefix,
+        actual: gix_object::Kind,
+        expected: gix_object::Kind,
     },
     #[error(transparent)]
-    Parse(#[from] git_revision::spec::parse::Error),
+    Parse(#[from] gix_revision::spec::parse::Error),
     #[error("An object prefixed {prefix} could not be found")]
-    PrefixNotFound { prefix: git_hash::Prefix },
+    PrefixNotFound { prefix: gix_hash::Prefix },
     #[error("Short id {prefix} is ambiguous. Candidates are:\n{}", info.iter().map(|(oid, info)| format!("\t{oid} {info}")).collect::<Vec<_>>().join("\n"))]
     AmbiguousPrefix {
-        prefix: git_hash::Prefix,
-        info: Vec<(git_hash::Prefix, super::error::CandidateInfo)>,
+        prefix: gix_hash::Prefix,
+        info: Vec<(gix_hash::Prefix, super::error::CandidateInfo)>,
     },
     #[error("Could not find path {path:?} in tree {tree} of parent object {object}")]
     PathNotFound {
-        object: git_hash::Prefix,
-        tree: git_hash::Prefix,
+        object: gix_hash::Prefix,
+        tree: gix_hash::Prefix,
         path: BString,
     },
     #[error("{current}")]
@@ -176,7 +176,7 @@ pub enum Error {
         next: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
     },
     #[error(transparent)]
-    Traverse(#[from] git_traverse::commit::ancestors::Error),
+    Traverse(#[from] gix_traverse::commit::ancestors::Error),
     #[error("Spec does not contain a single object id")]
     SingleNotFound,
 }
