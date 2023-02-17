@@ -199,7 +199,11 @@ pub fn new() -> (
                     HttpVersion::V1_1 => curl::easy::HttpVersion::V11,
                     HttpVersion::V2 => curl::easy::HttpVersion::V2,
                 };
-                handle.http_version(version)?;
+                // Failing to set the version isn't critical, and may indeed fail depending on the version
+                // of libcurl we are built against.
+                // Furthermore, `git` itself doesn't actually check for errors when configuring curl at all,
+                // treating all or most flags as non-critical.
+                handle.http_version(version).ok();
             }
 
             let mut proxy_auth_action = None;
