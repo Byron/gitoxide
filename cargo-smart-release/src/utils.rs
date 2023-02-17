@@ -75,7 +75,7 @@ pub fn package_eq_dependency_ignore_dev_without_version(package: &Package, depen
 pub fn workspace_package_by_dependency<'a>(meta: &'a Metadata, dep: &Dependency) -> Option<&'a Package> {
     meta.packages
         .iter()
-        .find(|p| p.name == dep.name)
+        .find(|p| p.name == dep.name && p.source.as_ref().map_or(true, |s| !s.is_crates_io()))
         .filter(|p| meta.workspace_members.iter().any(|m| m == &p.id))
 }
 

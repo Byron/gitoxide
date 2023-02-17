@@ -151,7 +151,7 @@ pub struct Options {
 }
 
 pub fn dependencies(
-    ctx: &crate::Context,
+    ctx: &Context,
     Options {
         allow_auto_publish_of_stable_crates,
         bump_when_needed,
@@ -302,7 +302,7 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                         } else {
                             dependency::Kind::DependencyOrDependentOfUserSelection
                         };
-                        let adjustment = dependency::VersionAdjustment::Breakage {
+                        let adjustment = VersionAdjustment::Breakage {
                             bump,
                             change: None,
                             causing_dependency_names: vec![dependee.package.name.to_owned()],
@@ -425,7 +425,7 @@ impl EditForPublish {
                             make_breaking(&mut adjustment, breaking_bump, causing_dependency_names);
                             adjustment
                         }
-                        None => dependency::VersionAdjustment::Breakage {
+                        None => VersionAdjustment::Breakage {
                             bump: breaking_bump,
                             causing_dependency_names,
                             change: None,
@@ -456,7 +456,7 @@ fn breaking_version_bump(ctx: &Context, package: &Package, bump_when_needed: boo
     version::bump_package_with_spec(package, breaking_spec, ctx, bump_when_needed)
 }
 
-fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: version::Bump, breaking_crate_names: Vec<String>) {
+fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: Bump, breaking_crate_names: Vec<String>) {
     match adjustment {
         VersionAdjustment::Breakage { .. } => {}
         VersionAdjustment::Changed { change, bump } => {
@@ -517,7 +517,7 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
 }
 
 fn depth_first_traversal<'meta>(
-    ctx: &'meta crate::Context,
+    ctx: &'meta Context,
     seen: &mut BTreeSet<&'meta PackageId>,
     crates: &mut Vec<Dependency<'meta>>,
     root: &Package,

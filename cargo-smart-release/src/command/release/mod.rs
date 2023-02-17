@@ -80,7 +80,7 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
     Ok(())
 }
 
-impl From<Options> for crate::traverse::Options {
+impl From<Options> for traverse::Options {
     fn from(v: Options) -> Self {
         Self {
             allow_auto_publish_of_stable_crates: v.allow_auto_publish_of_stable_crates,
@@ -93,7 +93,7 @@ impl From<Options> for crate::traverse::Options {
 
 fn release_depth_first(ctx: Context, opts: Options) -> anyhow::Result<()> {
     let crates = {
-        crate::traverse::dependencies(&ctx.base, opts.into())
+        traverse::dependencies(&ctx.base, opts.into())
             .and_then(|crates| assure_crates_index_is_uptodate(crates, &ctx.base, opts.into()))
             .and_then(|crates| {
                 present_and_validate_dependencies(&crates, &ctx, opts.verbose, opts.dry_run).map(|_| crates)
@@ -109,7 +109,7 @@ fn release_depth_first(ctx: Context, opts: Options) -> anyhow::Result<()> {
 fn assure_crates_index_is_uptodate<'meta>(
     crates: Vec<Dependency<'meta>>,
     ctx: &'meta crate::Context,
-    opts: crate::traverse::Options,
+    opts: traverse::Options,
 ) -> anyhow::Result<Vec<Dependency<'meta>>> {
     if let Some(dep) = crates
         .iter()
@@ -124,14 +124,14 @@ fn assure_crates_index_is_uptodate<'meta>(
         if index.exists() {
             log::warn!("Crate '{}' computed version not greater than the current package version. Updating crates index to assure correct results.", dep.package.name);
             index.update()?;
-            return crate::traverse::dependencies(ctx, opts);
+            return traverse::dependencies(ctx, opts);
         }
     }
     Ok(crates)
 }
 
 fn present_and_validate_dependencies(
-    crates: &[traverse::Dependency<'_>],
+    crates: &[Dependency<'_>],
     ctx: &Context,
     verbose: bool,
     dry_run: bool,
@@ -228,8 +228,8 @@ fn present_and_validate_dependencies(
                     .and_then(|lr| (*lr >= bump.next_release).then_some(lr))
                 {
                     let bump_flag = match dep.kind {
-                        dependency::Kind::UserSelection => "--bump <level>",
-                        dependency::Kind::DependencyOrDependentOfUserSelection => "--bump-dependencies <level>",
+                        Kind::UserSelection => "--bump <level>",
+                        Kind::DependencyOrDependentOfUserSelection => "--bump-dependencies <level>",
                     };
                     if bump.next_release == bump.package_version {
                         log::error!(
@@ -397,7 +397,7 @@ fn assure_working_tree_is_unchanged(options: Options) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn perform_release(ctx: &Context, options: Options, crates: &[traverse::Dependency<'_>]) -> anyhow::Result<()> {
+fn perform_release(ctx: &Context, options: Options, crates: &[Dependency<'_>]) -> anyhow::Result<()> {
     let manifest::Outcome {
         commit_id,
         section_by_package: release_section_by_publishee,
@@ -517,7 +517,7 @@ fn section_to_string(section: &Section, mode: WriteMode) -> Option<String> {
     section
         .write_to(
             &mut b,
-            &changelog::write::Linkables::AsText,
+            &Linkables::AsText,
             match mode {
                 WriteMode::Tag => changelog::write::Components::empty(),
                 WriteMode::GitHubRelease => changelog::write::Components::DETAIL_TAGS,
