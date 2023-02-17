@@ -6,6 +6,10 @@ use cargo_smart_release::command;
 
 fn main() -> anyhow::Result<()> {
     gix::interrupt::init_handler(|| {})?;
+    unsafe {
+        // SAFETY: we don't manipulate the environment from any thread
+        time::util::local_offset::set_soundness(time::util::local_offset::Soundness::Unsound);
+    }
     let args: Args = Args::parse();
     match args.subcommands {
         SubCommands::Changelog {
