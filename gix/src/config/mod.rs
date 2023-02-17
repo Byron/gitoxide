@@ -426,7 +426,7 @@ pub(crate) struct Cache {
     /// A lazily loaded rewrite list for remote urls
     pub(crate) url_rewrite: OnceCell<crate::remote::url::Rewrite>,
     /// The lazy-loaded rename information for diffs.
-    pub(crate) diff_renames: OnceCell<Option<crate::object::tree::diff::Renames>>,
+    pub(crate) diff_renames: OnceCell<Option<crate::object::tree::diff::Rewrites>>,
     /// A lazily loaded mapping to know which url schemes to allow
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     pub(crate) url_scheme: OnceCell<crate::remote::url::SchemePermission>,
