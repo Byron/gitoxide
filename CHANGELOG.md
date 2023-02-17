@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.22.1 (2023-02-17)
+
+### Bug Fixes
+
+ - <csr-id-73372d0bcdca8cf201f057ebee8d67a8e4752625/> re-enable local-time support for all binaries
+   The `time` improved the way one can opt-in to potential unsoundness
+   in their local time support, forcing the application to make that
+   decision at runtime.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - re-enable local-time support for all binaries ([`73372d0`](https://github.com/Byron/gitoxide/commit/73372d0bcdca8cf201f057ebee8d67a8e4752625))
+</details>
+
 ## 0.22.0 (2023-02-17)
 
 A maintenance release without user-facing changes.
