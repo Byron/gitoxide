@@ -137,9 +137,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - <csr-id-d59d362f12bf617656bae80596120c8bf823b090/> add and implement various new http options for the `curl` backend.
    - `schannel_check_revoke` as `curl`-backend specific configuration.
-- `ssl_version`
-- `ssl_ca_info`
-- `http_version`
 
 ### Chore
 
@@ -157,6 +154,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-39ed9eda62b7718d5109135e5ad406fb1fe2978c/> fix typos
 
 ### Bug Fixes
+
+<csr-id-5f2276b63129163096be3cb229864fc589348da8/>
+<csr-id-ff0332e815c228cc5cdfe58c3598ad261bb2879e/>
+<csr-id-85dcda81d3fec03ad5687b0e0329cefedd925722/>
+<csr-id-0d0eb4aa46b265f97ada7b54d8bcc29decc42e50/>
+<csr-id-4927adf1a57166b581fc293a33f84ef628af70db/>
+<csr-id-7ab7c2409a47fae587531c0c3b203cd646e32984/>
+<csr-id-b0083e38c82829b4d8b81542fc8d1025089e2869/>
+<csr-id-375051fa97d79f95fa7179b536e616c4aefd88e2/>
+<csr-id-4b5d6dfb58f325bba692e1e32636c24ba058022f/>
+<csr-id-41b0c19e1aca9406015932862058756af2a26dda/>
+<csr-id-6d8b66a9bee901eb8cb869e6e28dbb25988f1fed/>
+<csr-id-237682a529dc54e33e4738f34915d872aeb89514/>
+<csr-id-5220f9a59fb699e111342b076145a6899d36d433/>
 
  - <csr-id-eff7ad79d8b920ab9d936d6268060cfc8ae1b47a/> make clear in docs that the writer needs to be dropped for good measure.
    Otherwise, some transports might deadlock.
@@ -193,51 +204,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    in user, something that typically won't work with servers that demand `git`.
  - <csr-id-c62e5c7d415351aefafeb75f0ab926c7c45c6ede/> fixes SSH clone from scp-like/relatives URLs
    - Removes git-upload-pack extra parameters (rejected by both github and gitlab)
-   - Removes the double user inclusion in URL
-   - Properly handles relative paths in URL reconstruction on `connect()`
- - <csr-id-5f2276b63129163096be3cb229864fc589348da8/> don't enforce V2 as protocol, but smoothly downgrade like git does.
-   For backward compatibility the shared handshake implementation allows the
-   transport to control which protocol versions it wants to support
-   to allow optiomizing for one special case, namely to prevent it to
-   read all V1 refs on old servers but abort instead, closing the connection
-   without delay.
-   
-   Now we leave this feature for custom transports (who usually come with custom
-   servers) and instead support fallbacks to other protocols if the server
-   demands it.
- - <csr-id-ff0332e815c228cc5cdfe58c3598ad261bb2879e/> http transports can now reuse a connection.
-   This makes connections more efficient generally and `cargo` relies
-   on that behaviour in their tests as well.
- - <csr-id-85dcda81d3fec03ad5687b0e0329cefedd925722/> don't pre-configure curl.
-   These settings can interact strangly with other users of the curl package
-   within the same dependency tree, so it's paramount to only activate features
-   we truly need.
- - <csr-id-0d0eb4aa46b265f97ada7b54d8bcc29decc42e50/> ssh connection remove '=' in port argument
- - <csr-id-4927adf1a57166b581fc293a33f84ef628af70db/> make it possible to parse handshakes without newlines in packetlines #(639)
- - <csr-id-7ab7c2409a47fae587531c0c3b203cd646e32984/> correctly display what's actual and expected when failing to parse capabilities.
- - <csr-id-b0083e38c82829b4d8b81542fc8d1025089e2869/> improve compile-time errors if mutually exclusive http-client features are set.
- - <csr-id-375051fa97d79f95fa7179b536e616c4aefd88e2/> Allow `client::connect()` to function with `http-client-reqwest` enabled.
- - <csr-id-4b5d6dfb58f325bba692e1e32636c24ba058022f/> `client::Capabilities` lifetimes now point to `'a` instead of `'self`.
-   This generally makes returned values longer, and as long as one would
-   expect.
- - <csr-id-41b0c19e1aca9406015932862058756af2a26dda/> set the protocol version for local git transports as well.
-   Previously this was only done for ssh based connections, and requires
-   setting an environment variable.
- - <csr-id-6d8b66a9bee901eb8cb869e6e28dbb25988f1fed/> remove `Drop` for `SpawnProcessOnDemand`.
-   It is well-intended but is likely to hang the calling process
-   if for any reason not all process output was consumed.
-   
-   Even though not waiting for the process leaves it running, it will
-   stop naturally once its output pipe breaks once once
-   our handles for it are inevitable dropped at the same time.
- - <csr-id-237682a529dc54e33e4738f34915d872aeb89514/> compare 'Content-Type' header case-insensitively, as required by the http spec.
- - <csr-id-5220f9a59fb699e111342b076145a6899d36d433/> Make async `conenct()` signature compatible with the blocking implementation.
+- Removes the double user inclusion in URL
+- Properly handles relative paths in URL reconstruction on `connect()`
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 729 commits contributed to the release over the course of 967 calendar days.
+ - 730 commits contributed to the release over the course of 967 calendar days.
  - 61 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 14 unique issues were worked on: [#198](https://github.com/Byron/gitoxide/issues/198), [#200](https://github.com/Byron/gitoxide/issues/200), [#222](https://github.com/Byron/gitoxide/issues/222), [#254](https://github.com/Byron/gitoxide/issues/254), [#279](https://github.com/Byron/gitoxide/issues/279), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#386](https://github.com/Byron/gitoxide/issues/386), [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#602](https://github.com/Byron/gitoxide/issues/602), [#639](https://github.com/Byron/gitoxide/issues/639), [#691](https://github.com/Byron/gitoxide/issues/691), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
 
@@ -322,6 +296,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
     - prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
  * **Uncategorized**
+    - Release gix-features v0.26.4, gix-actor v0.17.1, gix-glob v0.5.3, gix-path v0.7.1, gix-quote v0.4.1, gix-attributes v0.8.2, gix-config-value v0.10.1, gix-tempfile v3.0.2, gix-lock v3.0.2, gix-validate v0.7.2, gix-object v0.26.1, gix-ref v0.24.0, gix-sec v0.6.2, gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`6efd0d3`](https://github.com/Byron/gitoxide/commit/6efd0d31fbeca31ab7319aa2ac97bb31dc4ce055))
     - Release gix-date v0.4.2, gix-hash v0.10.2, gix-features v0.26.4, gix-actor v0.17.1, gix-glob v0.5.3, gix-path v0.7.1, gix-quote v0.4.1, gix-attributes v0.8.2, gix-config-value v0.10.1, gix-tempfile v3.0.2, gix-lock v3.0.2, gix-validate v0.7.2, gix-object v0.26.1, gix-ref v0.24.0, gix-sec v0.6.2, gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`6ccc88a`](https://github.com/Byron/gitoxide/commit/6ccc88a8e4a56973b1a358cf72dc012ee3c75d56))
     - Merge branch 'rename-crates' into inform-about-gix-rename ([`c9275b9`](https://github.com/Byron/gitoxide/commit/c9275b99ea43949306d93775d9d78c98fb86cfb1))
     - fix git-transport tests ([`1727fe9`](https://github.com/Byron/gitoxide/commit/1727fe9e64597a02e231b84fb94a35ed6ed37a50))
@@ -1000,7 +975,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 <csr-unknown>
- improve granularity of IO errors for curl backends.That way it should be possible to tell if curl causedan IO error due to someting that can be considered spurious. IsSpuriousError trait and its implementation.That way all transports can tell if the operation failed due toan issue that’s probably passing, so retrying may be a way to resolvethe issue. client::http::Options::no_proxy to disable a proxy for given hosts.This is a curl-first option which can reasonably be implemented for other backendsas well and thus retains its curl-ish roots in full. client::http::Options::verbose to see more debug output.This means different things depending on the backend, and forcurl it means a lot of debug-output on stderr. Support for proxy authentication in http configuration. client::RequestWriter::into_parts() to obtain a bare write handled along with a buf reader with packetline capabilties.That way it’s possible to perform interactions akin to a V1 puash. reqwest as blocking HTTP backend via http-client-reqwest feature toggle.Note that despite passing the same tests that curl passes, forbulletproof HTTP connections to untrusted servers, the curl backendshould be preferred. reqwest is known to hang if content-length:HTTP headers are longer than the actual content, and no timeout iskicking in to stop the hanging. curl has no trouble with this forexample. Add client::http::Transport::new_http() constructor.This goes along with client::http::connect_http() to supportconnections to via custom transports which are passed from callingcrates, without relying on the implementation to be built-in. Allow defaulting client::Capabilities.This can be useful in conjunction with std::mem::take(), eventhough an empty data structure like that doesn’t bear any significancebeyond that. use docsrs feature in code to show what is feature-gated automatically on docs.rs pass –cfg docsrs when compiling for https://docs.rs connect() method is available in when async-std feature is set along with async-clientThis makes some async support available even trough the base crate,which otherwise would require establishing a connection (with a runtimeof choice) by hand. in-manifest and in-lib documentation of feature toggles<csr-unknown/>
+ssl_versionssl_ca_infohttp_version don’t enforce V2 as protocol, but smoothly downgrade like git does.For backward compatibility the shared handshake implementation allows thetransport to control which protocol versions it wants to supportto allow optiomizing for one special case, namely to prevent it toread all V1 refs on old servers but abort instead, closing the connectionwithout delay.Now we leave this feature for custom transports (who usually come with customservers) and instead support fallbacks to other protocols if the serverdemands it. http transports can now reuse a connection.This makes connections more efficient generally and cargo relieson that behaviour in their tests as well. don’t pre-configure curl.These settings can interact strangly with other users of the curl packagewithin the same dependency tree, so it’s paramount to only activate featureswe truly need. ssh connection remove ‘=’ in port argument make it possible to parse handshakes without newlines in packetlines #(639) correctly display what’s actual and expected when failing to parse capabilities. improve compile-time errors if mutually exclusive http-client features are set. Allow client::connect() to function with http-client-reqwest enabled. client::Capabilities lifetimes now point to 'a instead of 'self.This generally makes returned values longer, and as long as one wouldexpect. set the protocol version for local git transports as well.Previously this was only done for ssh based connections, and requiressetting an environment variable. remove Drop for SpawnProcessOnDemand.It is well-intended but is likely to hang the calling processif for any reason not all process output was consumed.Even though not waiting for the process leaves it running, it willstop naturally once its output pipe breaks once onceour handles for it are inevitable dropped at the same time. compare ‘Content-Type’ header case-insensitively, as required by the http spec. Make async conenct() signature compatible with the blocking implementation.<csr-unknown/>
 
 ## 0.25.3 (2023-01-10)
 

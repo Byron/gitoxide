@@ -447,10 +447,6 @@ A maintenance release without user-facing changes.
  - <csr-id-e822f566dcff3f6c784c206dff2fbc5f82d543be/> implement a draft for subsection fetching
    - introduce method `sections_by_name_with_header` to allow iterating over tuples of
    section header and section body
-- remove the integration test in favor of a doctest
-- doctest is also a comprehensive usage example
-- leave a todo note to illustrate the inconsitent order issue, so sections
-     do not always arrive in the same order
 
 ### Documentation
 
@@ -470,7 +466,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 949 commits contributed to the release over the course of 865 calendar days.
+ - 950 commits contributed to the release over the course of 865 calendar days.
  - 149 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 18 unique issues were worked on: [#198](https://github.com/Byron/gitoxide/issues/198), [#213](https://github.com/Byron/gitoxide/issues/213), [#241](https://github.com/Byron/gitoxide/issues/241), [#254](https://github.com/Byron/gitoxide/issues/254), [#266](https://github.com/Byron/gitoxide/issues/266), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#319](https://github.com/Byron/gitoxide/issues/319), [#331](https://github.com/Byron/gitoxide/issues/331), [#386](https://github.com/Byron/gitoxide/issues/386), [#404](https://github.com/Byron/gitoxide/issues/404), [#436](https://github.com/Byron/gitoxide/issues/436), [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#482](https://github.com/Byron/gitoxide/issues/482), [#691](https://github.com/Byron/gitoxide/issues/691), [#737](https://github.com/Byron/gitoxide/issues/737), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
 
@@ -839,6 +835,7 @@ A maintenance release without user-facing changes.
  * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
     - prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
  * **Uncategorized**
+    - Release gix-features v0.26.4, gix-actor v0.17.1, gix-glob v0.5.3, gix-path v0.7.1, gix-quote v0.4.1, gix-attributes v0.8.2, gix-config-value v0.10.1, gix-tempfile v3.0.2, gix-lock v3.0.2, gix-validate v0.7.2, gix-object v0.26.1, gix-ref v0.24.0, gix-sec v0.6.2, gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`6efd0d3`](https://github.com/Byron/gitoxide/commit/6efd0d31fbeca31ab7319aa2ac97bb31dc4ce055))
     - Release gix-date v0.4.2, gix-hash v0.10.2, gix-features v0.26.4, gix-actor v0.17.1, gix-glob v0.5.3, gix-path v0.7.1, gix-quote v0.4.1, gix-attributes v0.8.2, gix-config-value v0.10.1, gix-tempfile v3.0.2, gix-lock v3.0.2, gix-validate v0.7.2, gix-object v0.26.1, gix-ref v0.24.0, gix-sec v0.6.2, gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`6ccc88a`](https://github.com/Byron/gitoxide/commit/6ccc88a8e4a56973b1a358cf72dc012ee3c75d56))
     - Merge branch 'rename-crates' into inform-about-gix-rename ([`c9275b9`](https://github.com/Byron/gitoxide/commit/c9275b99ea43949306d93775d9d78c98fb86cfb1))
     - rename `git-testtools` to `gix-testtools` ([`b65c33d`](https://github.com/Byron/gitoxide/commit/b65c33d256cfed65d11adeff41132e3e58754089))
@@ -1451,7 +1448,7 @@ A maintenance release without user-facing changes.
 </details>
 
 <csr-unknown>
- compatibility with Rust <1.53<csr-unknown/>
+remove the integration test in favor of a doctestdoctest is also a comprehensive usage exampleleave a todo note to illustrate the inconsitent order issue, so sectionsdo not always arrive in the same order<csr-unknown/>
 
 ## 0.16.0 (2023-02-09)
 
@@ -2043,7 +2040,7 @@ This is a maintenance release without functional changes.
  - _None._
 
 <csr-unknown>
-lenfrom_envopenlenfrom_envopen<csr-unknown/>
+lenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
 <csr-unknown/>
 
 ## v0.1.1 (2021-05-09)
