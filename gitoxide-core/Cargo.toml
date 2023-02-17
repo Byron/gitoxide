@@ -38,7 +38,7 @@ serde1 = ["gix-commitgraph/serde1", "gix/serde1", "serde_json", "serde", "bytesi
 # deselect everything else (like "performance") as this should be controllable by the parent application.
 gix = { version = "^0.36.0", path = "../gix", default-features = false }
 gix-pack-for-configuration-only = { package = "gix-pack", version = "^0.30.2", path = "../gix-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
-gix-transport-configuration-only = { package = "gix-transport", version = "^0.25.4", path = "../gix-transport", default-features = false }
+gix-transport-configuration-only = { package = "gix-transport", version = "^0.25.5", path = "../gix-transport", default-features = false }
 gix-commitgraph = { version = "^0.13.0", path = "../gix-commitgraph" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.42"

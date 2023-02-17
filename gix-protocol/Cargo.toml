@@ -41,7 +41,7 @@ required-features = ["async-client"]
 
 [dependencies]
 gix-features = { version = "^0.26.4", path = "../gix-features", features = ["progress"] }
-gix-transport = { version = "^0.25.4", path = "../gix-transport" }
+gix-transport = { version = "^0.25.5", path = "../gix-transport" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-credentials = { version = "^0.9.1", path = "../gix-credentials" }
 
