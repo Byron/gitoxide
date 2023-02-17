@@ -2,7 +2,7 @@
 name = "git-config-tests"
 version = "0.0.0"
 repository = "https://github.com/Byron/gitoxide"
-description = "A git-config file parser and editor from the gitoxide project"
+description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
 license = "MIT OR Apache-2.0"
 authors = ["Edward Shen <code@eddie.sh>"]
 edition = "2021"

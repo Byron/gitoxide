@@ -1,6 +1,6 @@
 [package]
 name = "git-features"
-description = "A crate to integrate various capabilities using compile-time feature flags"
+description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
 repository = "https://github.com/Byron/gitoxide"
 version = "0.26.4"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
