@@ -11,8 +11,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'cargo-*/**'
-      - 'git*/**'
-      - 'experiments/**'
+      - 'gix*/**'
       - '*.toml'
       - Makefile
   pull_request:
@@ -24,8 +23,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'cargo-*/**'
-      - 'git*/**'
-      - 'experiments/**'
+      - 'gix*/**'
       - '*.toml'
       - Makefile
 
