@@ -31,7 +31,7 @@ compact_str = "0.6.1"
 document-features = { version = "0.2.1", optional = true }
 
 [dev-dependencies]
-git-testtools = { path = "../tests/tools"}
+gix-testtools = { path = "../tests/tools"}
 
 [package.metadata.docs.rs]
 all-features = true

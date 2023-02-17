@@ -36,7 +36,7 @@ mod iter {
 
     fn reflog_dir() -> crate::Result<PathBuf> {
         Ok(
-            git_testtools::scripted_fixture_read_only_standalone("make_repo_for_reflog.sh")?
+            gix_testtools::scripted_fixture_read_only_standalone("make_repo_for_reflog.sh")?
                 .join(".git")
                 .join("logs"),
         )

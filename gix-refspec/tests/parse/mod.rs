@@ -1,8 +1,8 @@
 use std::panic::catch_unwind;
 
 use bstr::ByteSlice;
-use git_testtools::scripted_fixture_read_only;
 use gix_refspec::parse::Operation;
+use gix_testtools::scripted_fixture_read_only;
 
 #[test]
 fn baseline() {

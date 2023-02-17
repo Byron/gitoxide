@@ -51,7 +51,7 @@ fn alternate_with_content(
 
 #[test]
 fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
+    let tmp = gix_testtools::tempfile::TempDir::new()?;
     let tmp = tmp.path().join("sub-dir");
     std::fs::create_dir(&tmp)?;
     let (from, _) = alternate(tmp.join("a"), tmp.join("b"))?;
@@ -84,7 +84,7 @@ fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
 
 #[test]
 fn single_link_with_comment_before_path_and_ansi_c_escape() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
+    let tmp = gix_testtools::tempfile::TempDir::new()?;
     let non_alternate = tmp.path().join("actual");
 
     let (from, to) = alternate_with(tmp.path().join("a"), non_alternate, Some("# comment\n"))?;
@@ -96,7 +96,7 @@ fn single_link_with_comment_before_path_and_ansi_c_escape() -> crate::Result {
 
 #[test]
 fn no_alternate_in_first_objects_dir() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
+    let tmp = gix_testtools::tempfile::TempDir::new()?;
     assert!(alternate::resolve(tmp.path(), std::env::current_dir()?)?.is_empty());
     Ok(())
 }

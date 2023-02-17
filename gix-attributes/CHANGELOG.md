@@ -121,7 +121,7 @@ A maintenance release without user-facing changes.
     - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - Merge branch 'main' into read-split-index ([`c57bdde`](https://github.com/Byron/gitoxide/commit/c57bdde6de37eca9672ea715962bbd02aa3eb055))
     - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
-    - adjust to changes in `git-testtools` ([`4eb842c`](https://github.com/Byron/gitoxide/commit/4eb842c7150b980e1c2637217e1f9657a671cea7))
+    - adjust to changes in `gix-testtools` ([`4eb842c`](https://github.com/Byron/gitoxide/commit/4eb842c7150b980e1c2637217e1f9657a671cea7))
     - Merge branch 'main' into http-config ([`6b9632e`](https://github.com/Byron/gitoxide/commit/6b9632e16c416841ffff1b767ee7a6c89b421220))
     - Release gix-features v0.24.1, gix-actor v0.14.1, gix-index v0.9.1 ([`7893502`](https://github.com/Byron/gitoxide/commit/789350208efc9d5fc6f9bc4f113f77f9cb445156))
     - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
@@ -216,7 +216,7 @@ Maintenance release without user-facing changes.
  * **[#470](https://github.com/Byron/gitoxide/issues/470)**
     - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
  * **Uncategorized**
-    - Release gix-hash v0.9.10, gix-features v0.22.5, gix-date v0.2.0, gix-actor v0.12.0, gix-glob v0.4.0, gix-path v0.5.0, gix-quote v0.3.0, gix-attributes v0.4.0, gix-config-value v0.8.0, gix-tempfile v2.0.5, gix-validate v0.6.0, gix-object v0.21.0, gix-ref v0.16.0, gix-sec v0.4.0, gix-config v0.8.0, gix-discover v0.5.0, gix-traverse v0.17.0, gix-index v0.5.0, gix-worktree v0.5.0, git-testtools v0.9.0, gix-command v0.1.0, gix-prompt v0.1.0, gix-url v0.9.0, gix-credentials v0.5.0, gix-diff v0.19.0, gix-mailmap v0.4.0, gix-chunk v0.3.2, gix-pack v0.23.0, gix-odb v0.33.0, gix-packetline v0.13.0, gix-transport v0.20.0, gix-protocol v0.20.0, gix-revision v0.5.0, gix-refspec v0.2.0, git-repository v0.24.0, gix-commitgraph v0.9.0, gitoxide-core v0.18.0, gitoxide v0.16.0, safety bump 28 crates ([`29a043b`](https://github.com/Byron/gitoxide/commit/29a043be6808a3e9199a9b26bd076fe843afe4f4))
+    - Release gix-hash v0.9.10, gix-features v0.22.5, gix-date v0.2.0, gix-actor v0.12.0, gix-glob v0.4.0, gix-path v0.5.0, gix-quote v0.3.0, gix-attributes v0.4.0, gix-config-value v0.8.0, gix-tempfile v2.0.5, gix-validate v0.6.0, gix-object v0.21.0, gix-ref v0.16.0, gix-sec v0.4.0, gix-config v0.8.0, gix-discover v0.5.0, gix-traverse v0.17.0, gix-index v0.5.0, gix-worktree v0.5.0, gix-testtools v0.9.0, gix-command v0.1.0, gix-prompt v0.1.0, gix-url v0.9.0, gix-credentials v0.5.0, gix-diff v0.19.0, gix-mailmap v0.4.0, gix-chunk v0.3.2, gix-pack v0.23.0, gix-odb v0.33.0, gix-packetline v0.13.0, gix-transport v0.20.0, gix-protocol v0.20.0, gix-revision v0.5.0, gix-refspec v0.2.0, git-repository v0.24.0, gix-commitgraph v0.9.0, gitoxide-core v0.18.0, gitoxide v0.16.0, safety bump 28 crates ([`29a043b`](https://github.com/Byron/gitoxide/commit/29a043be6808a3e9199a9b26bd076fe843afe4f4))
     - Merge branch 'filter-refs' ([`fd14489`](https://github.com/Byron/gitoxide/commit/fd14489f729172d615d0fa1e8dbd605e9eacf69d))
     - Release gix-features v0.22.6 ([`c9eda72`](https://github.com/Byron/gitoxide/commit/c9eda729d8f8bc266c7516c613d38acfb83a4743))
     - upgrade all dependencies, except for `windows` ([`2968181`](https://github.com/Byron/gitoxide/commit/29681819ffe53d3926d631dc482f71d6200cb549))
@@ -248,8 +248,8 @@ Maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release gix-attributes v0.3.3, gix-ref v0.15.3, gix-index v0.4.3, gix-worktree v0.4.3, git-testtools v0.8.0 ([`baad4ce`](https://github.com/Byron/gitoxide/commit/baad4ce51fe0e8c0c1de1b08148d8303878ca37b))
-    - prepare changelogs prior to release of git-testtools ([`7668e38`](https://github.com/Byron/gitoxide/commit/7668e38fab8891ed7e73fae3a6f5a8772e0f0d0b))
+    - Release gix-attributes v0.3.3, gix-ref v0.15.3, gix-index v0.4.3, gix-worktree v0.4.3, gix-testtools v0.8.0 ([`baad4ce`](https://github.com/Byron/gitoxide/commit/baad4ce51fe0e8c0c1de1b08148d8303878ca37b))
+    - prepare changelogs prior to release of gix-testtools ([`7668e38`](https://github.com/Byron/gitoxide/commit/7668e38fab8891ed7e73fae3a6f5a8772e0f0d0b))
     - Release gix-features v0.22.3, gix-revision v0.4.4 ([`c2660e2`](https://github.com/Byron/gitoxide/commit/c2660e2503323531ba02519eaa51124ee22fec51))
     - Merge branch 'main' into filter-refs-by-spec ([`cfa1440`](https://github.com/Byron/gitoxide/commit/cfa144031dbcac2707ab0cec012bc35e78f9c475))
 </details>

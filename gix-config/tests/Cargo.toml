@@ -23,7 +23,7 @@ serde1 = ["gix-config/serde1"]
 
 [dev-dependencies]
 gix-config = { path = ".."}
-git-testtools = { path = "../../tests/tools"}
+gix-testtools = { path = "../../tests/tools"}
 gix = { path = "../../gix" }
 gix-ref = { path = "../../gix-ref" }
 gix-path = { path = "../../gix-path" }

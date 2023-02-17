@@ -4,7 +4,7 @@ mod set_path {
     #[test]
     fn future_writes_respect_the_newly_set_path() -> crate::Result {
         let mut file = read::file("v4_more_files_IEOT");
-        let tmp = git_testtools::tempfile::TempDir::new()?;
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
         let new_index_path = tmp.path().join("new-index");
 
         file.set_path(&new_index_path);

@@ -11,7 +11,7 @@ mod changes {
 
         fn db(args: impl IntoIterator<Item = &'static str>) -> crate::Result<gix_odb::Handle> {
             gix_odb::at(
-                git_testtools::scripted_fixture_read_only_with_args_standalone("make_diff_repo.sh", args)?
+                gix_testtools::scripted_fixture_read_only_with_args_standalone("make_diff_repo.sh", args)?
                     .join(".git")
                     .join("objects"),
             )

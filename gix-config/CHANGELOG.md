@@ -233,7 +233,7 @@ A maintenance release without user-facing changes.
     - prepare chnagelogs prior to git-repository release ([`7114bbb`](https://github.com/Byron/gitoxide/commit/7114bbb6732aa8571d4ab74f28ed3e26e9fbe4d0))
     - Merge branch 'main' into read-split-index ([`c57bdde`](https://github.com/Byron/gitoxide/commit/c57bdde6de37eca9672ea715962bbd02aa3eb055))
     - Merge branch 'adjustments-for-cargo' ([`083909b`](https://github.com/Byron/gitoxide/commit/083909bc7eb902eeee2002034fdb6ed88280dc5c))
-    - adjust to changes in `git-testtools` ([`4eb842c`](https://github.com/Byron/gitoxide/commit/4eb842c7150b980e1c2637217e1f9657a671cea7))
+    - adjust to changes in `gix-testtools` ([`4eb842c`](https://github.com/Byron/gitoxide/commit/4eb842c7150b980e1c2637217e1f9657a671cea7))
     - make fmt ([`747008d`](https://github.com/Byron/gitoxide/commit/747008d9d370844574dda94e5bec1648c4deb57e))
     - Merge branch 'main' into http-config ([`6b9632e`](https://github.com/Byron/gitoxide/commit/6b9632e16c416841ffff1b767ee7a6c89b421220))
     - `File::new_section()` and related now returns their `id` as well. ([`2b36d99`](https://github.com/Byron/gitoxide/commit/2b36d99eaf3ed24ce4cb736a3dd48440dc0c73b7))
@@ -472,7 +472,7 @@ A maintenance release without user-facing changes.
  * **[#470](https://github.com/Byron/gitoxide/issues/470)**
     - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
  * **Uncategorized**
-    - Release gix-hash v0.9.10, gix-features v0.22.5, gix-date v0.2.0, gix-actor v0.12.0, gix-glob v0.4.0, gix-path v0.5.0, gix-quote v0.3.0, gix-attributes v0.4.0, gix-config-value v0.8.0, gix-tempfile v2.0.5, gix-validate v0.6.0, gix-object v0.21.0, gix-ref v0.16.0, gix-sec v0.4.0, gix-config v0.8.0, gix-discover v0.5.0, gix-traverse v0.17.0, gix-index v0.5.0, gix-worktree v0.5.0, git-testtools v0.9.0, gix-command v0.1.0, gix-prompt v0.1.0, gix-url v0.9.0, gix-credentials v0.5.0, gix-diff v0.19.0, gix-mailmap v0.4.0, gix-chunk v0.3.2, gix-pack v0.23.0, gix-odb v0.33.0, gix-packetline v0.13.0, gix-transport v0.20.0, gix-protocol v0.20.0, gix-revision v0.5.0, gix-refspec v0.2.0, git-repository v0.24.0, gix-commitgraph v0.9.0, gitoxide-core v0.18.0, gitoxide v0.16.0, safety bump 28 crates ([`29a043b`](https://github.com/Byron/gitoxide/commit/29a043be6808a3e9199a9b26bd076fe843afe4f4))
+    - Release gix-hash v0.9.10, gix-features v0.22.5, gix-date v0.2.0, gix-actor v0.12.0, gix-glob v0.4.0, gix-path v0.5.0, gix-quote v0.3.0, gix-attributes v0.4.0, gix-config-value v0.8.0, gix-tempfile v2.0.5, gix-validate v0.6.0, gix-object v0.21.0, gix-ref v0.16.0, gix-sec v0.4.0, gix-config v0.8.0, gix-discover v0.5.0, gix-traverse v0.17.0, gix-index v0.5.0, gix-worktree v0.5.0, gix-testtools v0.9.0, gix-command v0.1.0, gix-prompt v0.1.0, gix-url v0.9.0, gix-credentials v0.5.0, gix-diff v0.19.0, gix-mailmap v0.4.0, gix-chunk v0.3.2, gix-pack v0.23.0, gix-odb v0.33.0, gix-packetline v0.13.0, gix-transport v0.20.0, gix-protocol v0.20.0, gix-revision v0.5.0, gix-refspec v0.2.0, git-repository v0.24.0, gix-commitgraph v0.9.0, gitoxide-core v0.18.0, gitoxide v0.16.0, safety bump 28 crates ([`29a043b`](https://github.com/Byron/gitoxide/commit/29a043be6808a3e9199a9b26bd076fe843afe4f4))
     - make fmt ([`429cccc`](https://github.com/Byron/gitoxide/commit/429cccc5831c25a7205a12dc7a0443ac48616e2c))
     - Merge branch 'filter-refs' ([`3773b92`](https://github.com/Byron/gitoxide/commit/3773b92b8372c9a40a74d281149ca65b057a7da9))
     - Merge branch 'filter-refs' ([`fd14489`](https://github.com/Byron/gitoxide/commit/fd14489f729172d615d0fa1e8dbd605e9eacf69d))
@@ -510,7 +510,7 @@ Maintenance release without user-facing changes.
     - prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
  * **Uncategorized**
     - Release gix-object v0.20.3, gix-ref v0.15.4, gix-config v0.7.1, gix-diff v0.18.0, gix-traverse v0.16.3, gix-pack v0.22.0, gix-odb v0.32.0, gix-url v0.7.3, gix-transport v0.19.3, gix-protocol v0.19.1, gix-refspec v0.1.1, git-repository v0.23.0, safety bump 6 crates ([`85a3bed`](https://github.com/Byron/gitoxide/commit/85a3bedd68d2e5f36592a2f691c977dc55298279))
-    - Release gix-attributes v0.3.3, gix-ref v0.15.3, gix-index v0.4.3, gix-worktree v0.4.3, git-testtools v0.8.0 ([`baad4ce`](https://github.com/Byron/gitoxide/commit/baad4ce51fe0e8c0c1de1b08148d8303878ca37b))
+    - Release gix-attributes v0.3.3, gix-ref v0.15.3, gix-index v0.4.3, gix-worktree v0.4.3, gix-testtools v0.8.0 ([`baad4ce`](https://github.com/Byron/gitoxide/commit/baad4ce51fe0e8c0c1de1b08148d8303878ca37b))
     - Release gix-features v0.22.3, gix-revision v0.4.4 ([`c2660e2`](https://github.com/Byron/gitoxide/commit/c2660e2503323531ba02519eaa51124ee22fec51))
     - Merge branch 'main' into filter-refs-by-spec ([`cfa1440`](https://github.com/Byron/gitoxide/commit/cfa144031dbcac2707ab0cec012bc35e78f9c475))
 </details>
@@ -903,7 +903,7 @@ A maintenance release without user facing changes.
     - `File::from_git_dir()` as comfortable way to instantiate most complete git configuration. ([`f9ce1b5`](https://github.com/Byron/gitoxide/commit/f9ce1b5411f1ac788f71060ecf785dda9dfd87bf))
     - Add a way to load multiple configuration files without allocating a read buffer ([`acb4520`](https://github.com/Byron/gitoxide/commit/acb4520a88ab083640c80a7f23a56a2ca3cda335))
     - refactor ([`ec21e95`](https://github.com/Byron/gitoxide/commit/ec21e95f4d9ffac771410947923f27187e88321a))
-    - move `Env` test utility into `git-testtools` ([`bd3f4d0`](https://github.com/Byron/gitoxide/commit/bd3f4d014dd7df7a1e25defa8eea7253eec1560a))
+    - move `Env` test utility into `gix-testtools` ([`bd3f4d0`](https://github.com/Byron/gitoxide/commit/bd3f4d014dd7df7a1e25defa8eea7253eec1560a))
     - refactor ([`b073e29`](https://github.com/Byron/gitoxide/commit/b073e2930bed60ccedadd1709cfaa8889e02ffe3))
     - another failing tests that can't be fixed without a refactor ([`e4d8fd7`](https://github.com/Byron/gitoxide/commit/e4d8fd72f1f648a29e56e487827f2328bfc08d03))
     - an attempt to hack newline handling into place for windows newlines ([`dac1463`](https://github.com/Byron/gitoxide/commit/dac146343a0fbe96b6c0990f4fd4e976e0359a7e))

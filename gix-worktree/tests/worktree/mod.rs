@@ -11,6 +11,6 @@ pub fn hex_to_id(hex: &str) -> ObjectId {
 }
 
 pub fn fixture_path(name: &str) -> PathBuf {
-    let dir = git_testtools::scripted_fixture_read_only(Path::new(name).with_extension("sh")).expect("script works");
+    let dir = gix_testtools::scripted_fixture_read_only(Path::new(name).with_extension("sh")).expect("script works");
     dir
 }

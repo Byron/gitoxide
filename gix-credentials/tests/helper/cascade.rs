@@ -2,7 +2,6 @@ mod invoke {
     use std::convert::TryInto;
 
     use bstr::{ByteSlice, ByteVec};
-    use git_testtools::fixture_path;
     use gix_credentials::{
         helper::{Action, Cascade},
         program, protocol,
@@ -10,6 +9,7 @@ mod invoke {
         Program,
     };
     use gix_sec::identity::Account;
+    use gix_testtools::fixture_path;
 
     #[test]
     fn credentials_are_filled_in_one_by_one_and_stop_when_complete() {

@@ -31,7 +31,7 @@ mod from_state {
     use crate::index::Fixture::*;
 
     #[test]
-    fn writes_data_to_disk_and_is_a_valid_index() -> git_testtools::Result {
+    fn writes_data_to_disk_and_is_a_valid_index() -> gix_testtools::Result {
         let fixtures = [
             (Loose("extended-flags"), V3),
             (Generated("v2"), V2),
@@ -42,7 +42,7 @@ mod from_state {
         ];
 
         for (fixture, expected_version) in fixtures {
-            let tmp = git_testtools::tempfile::TempDir::new()?;
+            let tmp = gix_testtools::tempfile::TempDir::new()?;
             let new_index_path = tmp.path().join(fixture.to_name());
             assert!(!new_index_path.exists());
 

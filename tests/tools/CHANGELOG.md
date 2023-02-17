@@ -162,7 +162,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - some unit tests for the time when something truly unparseable shows up ([`94fc0d6`](https://github.com/Byron/gitoxide/commit/94fc0d60d21c22a0d36f5de986cd9443755141bf))
     - Be more verbose when git version parsing fails ([`9c2f1b5`](https://github.com/Byron/gitoxide/commit/9c2f1b5d03fbcf5dd08c2469ea17da426ea6670c))
  * **Uncategorized**
-    - Release gix-hash v0.9.10, gix-features v0.22.5, gix-date v0.2.0, gix-actor v0.12.0, gix-glob v0.4.0, gix-path v0.5.0, gix-quote v0.3.0, git-attributes v0.4.0, gix-config-value v0.8.0, gix-tempfile v2.0.5, gix-validate v0.6.0, gix-object v0.21.0, gix-ref v0.16.0, gix-sec v0.4.0, gix-config v0.8.0, git-discover v0.5.0, gix-traverse v0.17.0, gix-index v0.5.0, git-worktree v0.5.0, git-testtools v0.9.0, gix-command v0.1.0, gix-prompt v0.1.0, gix-url v0.9.0, gix-credentials v0.5.0, gix-diff v0.19.0, gix-mailmap v0.4.0, gix-chunk v0.3.2, gix-pack v0.23.0, gix-odb v0.33.0, gix-packetline v0.13.0, gix-transport v0.20.0, gix-protocol v0.20.0, gix-revision v0.5.0, gix-refspec v0.2.0, git-repository v0.24.0, gix-commitgraph v0.9.0, gitoxide-core v0.18.0, gitoxide v0.16.0, safety bump 28 crates ([`29a043b`](https://github.com/Byron/gitoxide/commit/29a043be6808a3e9199a9b26bd076fe843afe4f4))
+    - Release gix-hash v0.9.10, gix-features v0.22.5, gix-date v0.2.0, gix-actor v0.12.0, gix-glob v0.4.0, gix-path v0.5.0, gix-quote v0.3.0, git-attributes v0.4.0, gix-config-value v0.8.0, gix-tempfile v2.0.5, gix-validate v0.6.0, gix-object v0.21.0, gix-ref v0.16.0, gix-sec v0.4.0, gix-config v0.8.0, git-discover v0.5.0, gix-traverse v0.17.0, gix-index v0.5.0, git-worktree v0.5.0, gix-testtools v0.9.0, gix-command v0.1.0, gix-prompt v0.1.0, gix-url v0.9.0, gix-credentials v0.5.0, gix-diff v0.19.0, gix-mailmap v0.4.0, gix-chunk v0.3.2, gix-pack v0.23.0, gix-odb v0.33.0, gix-packetline v0.13.0, gix-transport v0.20.0, gix-protocol v0.20.0, gix-revision v0.5.0, gix-refspec v0.2.0, git-repository v0.24.0, gix-commitgraph v0.9.0, gitoxide-core v0.18.0, gitoxide v0.16.0, safety bump 28 crates ([`29a043b`](https://github.com/Byron/gitoxide/commit/29a043be6808a3e9199a9b26bd076fe843afe4f4))
     - Merge branch 'filter-refs' ([`fd14489`](https://github.com/Byron/gitoxide/commit/fd14489f729172d615d0fa1e8dbd605e9eacf69d))
     - make fmt ([`535e967`](https://github.com/Byron/gitoxide/commit/535e967666c6da657ff1b7eff7c64ab27cafb182))
     - Merge branch 'filter-refs-by-spec' ([`5c05198`](https://github.com/Byron/gitoxide/commit/5c051986bd89590a9287d85d84c713d83dfab83a))
@@ -237,7 +237,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - publicly accessible `Result` type ([`f1635c3`](https://github.com/Byron/gitoxide/commit/f1635c3ee36678cff9f26135946c281bf4a75331))
  * **[#331](https://github.com/Byron/gitoxide/issues/331)**
     - expose `on_ci` in the top-level. ([`654b521`](https://github.com/Byron/gitoxide/commit/654b521323a5822cbb86e57bee159d90576fa5ff))
-    - move `Env` test utility into `git-testtools` ([`bd3f4d0`](https://github.com/Byron/gitoxide/commit/bd3f4d014dd7df7a1e25defa8eea7253eec1560a))
+    - move `Env` test utility into `gix-testtools` ([`bd3f4d0`](https://github.com/Byron/gitoxide/commit/bd3f4d014dd7df7a1e25defa8eea7253eec1560a))
  * **[#382](https://github.com/Byron/gitoxide/issues/382)**
     - Simplify state tests ([`fc61c0d`](https://github.com/Byron/gitoxide/commit/fc61c0d4f7cb3cd9073418e4d8edc55cd14f5fb3))
  * **[#384](https://github.com/Byron/gitoxide/issues/384)**
@@ -267,9 +267,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
     - `_with_args(…)` functions now allow non-static strings ([`004dab1`](https://github.com/Byron/gitoxide/commit/004dab17deab4c360adb5ac428f6b4951c974fe3))
  * **Uncategorized**
-    - Release git-worktree v0.4.3, git-testtools v0.8.0 ([`b2e4bf2`](https://github.com/Byron/gitoxide/commit/b2e4bf2c11ff2c3c32efcb91837fb5677714bdf9))
-    - Release git-attributes v0.3.3, gix-ref v0.15.3, gix-index v0.4.3, git-worktree v0.4.3, git-testtools v0.8.0 ([`baad4ce`](https://github.com/Byron/gitoxide/commit/baad4ce51fe0e8c0c1de1b08148d8303878ca37b))
-    - prepare changelogs prior to release of git-testtools ([`7668e38`](https://github.com/Byron/gitoxide/commit/7668e38fab8891ed7e73fae3a6f5a8772e0f0d0b))
+    - Release git-worktree v0.4.3, gix-testtools v0.8.0 ([`b2e4bf2`](https://github.com/Byron/gitoxide/commit/b2e4bf2c11ff2c3c32efcb91837fb5677714bdf9))
+    - Release git-attributes v0.3.3, gix-ref v0.15.3, gix-index v0.4.3, git-worktree v0.4.3, gix-testtools v0.8.0 ([`baad4ce`](https://github.com/Byron/gitoxide/commit/baad4ce51fe0e8c0c1de1b08148d8303878ca37b))
+    - prepare changelogs prior to release of gix-testtools ([`7668e38`](https://github.com/Byron/gitoxide/commit/7668e38fab8891ed7e73fae3a6f5a8772e0f0d0b))
     - Merge branch 'main' into filter-refs-by-spec ([`cfa1440`](https://github.com/Byron/gitoxide/commit/cfa144031dbcac2707ab0cec012bc35e78f9c475))
     - Release gix-date v0.0.5, gix-hash v0.9.8, gix-features v0.22.2, gix-actor v0.11.3, gix-glob v0.3.2, gix-quote v0.2.1, git-attributes v0.3.2, gix-tempfile v2.0.4, gix-lock v2.1.1, gix-validate v0.5.5, gix-object v0.20.2, gix-ref v0.15.2, gix-sec v0.3.1, gix-config v0.7.0, gix-credentials v0.4.0, gix-diff v0.17.2, git-discover v0.4.1, gix-bitmap v0.1.2, gix-index v0.4.2, gix-mailmap v0.3.2, gix-chunk v0.3.1, gix-traverse v0.16.2, gix-pack v0.21.2, gix-odb v0.31.2, gix-packetline v0.12.7, gix-url v0.7.2, gix-transport v0.19.2, gix-protocol v0.19.0, gix-revision v0.4.2, gix-refspec v0.1.0, git-worktree v0.4.2, git-repository v0.22.0, safety bump 4 crates ([`4974eca`](https://github.com/Byron/gitoxide/commit/4974eca96d525d1ee4f8cad79bb713af7a18bf9d))
     - Merge branch 'main' into remote-ls-refs ([`e2ee3de`](https://github.com/Byron/gitoxide/commit/e2ee3ded97e5c449933712883535b30d151c7c78))
@@ -368,7 +368,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#366](https://github.com/Byron/gitoxide/issues/366)**
     - quickfix for unintentionally using 'unicode' feature of bytecode ([`fb5593a`](https://github.com/Byron/gitoxide/commit/fb5593a7272498ae042b6c8c7605faa3d253fa10))
  * **Uncategorized**
-    - Release git-testtools v0.6.0 ([`45386a0`](https://github.com/Byron/gitoxide/commit/45386a0b135656681dbdf8c47ad888b50e68f151))
+    - Release gix-testtools v0.6.0 ([`45386a0`](https://github.com/Byron/gitoxide/commit/45386a0b135656681dbdf8c47ad888b50e68f151))
     - Release gix-hash v0.9.3, gix-features v0.20.0, gix-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - thanks clippy ([`1038dab`](https://github.com/Byron/gitoxide/commit/1038dab842b32ec1359a53236b241a91427ccb65))
     - add `fixture_bytes` to test tools ([`85e3820`](https://github.com/Byron/gitoxide/commit/85e3820caa106a32c3406fd1e9e4c67fb0033bc5))
@@ -403,7 +403,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release git-testtools v0.5.0 ([`86e0a92`](https://github.com/Byron/gitoxide/commit/86e0a92c7dc3b69a766aeac1b675b148d61a7ec5))
+    - Release gix-testtools v0.5.0 ([`86e0a92`](https://github.com/Byron/gitoxide/commit/86e0a92c7dc3b69a766aeac1b675b148d61a7ec5))
     - Upgrade to nom-7 ([`f0aa3e1`](https://github.com/Byron/gitoxide/commit/f0aa3e1b5b407b2afd187c9cb622676fcddaf706))
     - Apply nightly rustfmt rules. ([`5e0edba`](https://github.com/Byron/gitoxide/commit/5e0edbadb39673d4de640f112fa306349fb11814))
 </details>

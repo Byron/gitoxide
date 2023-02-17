@@ -1,7 +1,7 @@
 use std::{path::PathBuf, sync::atomic::AtomicBool};
 
-use git_testtools::fixture_path_standalone;
 use gix_features::progress;
+use gix_testtools::fixture_path_standalone;
 
 use crate::hex_to_id;
 

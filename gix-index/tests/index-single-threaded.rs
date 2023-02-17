@@ -1,4 +1,4 @@
-pub use git_testtools::Result;
+pub use gix_testtools::Result;
 
 #[cfg(not(feature = "internal-testing-gix-features-parallel"))]
 mod index;

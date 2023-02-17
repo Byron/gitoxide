@@ -1,4 +1,4 @@
-use git_testtools::Result;
+use gix_testtools::Result;
 
 mod prepare {
     fn quoted(input: &[&str]) -> String {
@@ -64,7 +64,7 @@ mod spawn {
     }
 
     mod with_shell {
-        use git_testtools::bstr::ByteSlice;
+        use gix_testtools::bstr::ByteSlice;
 
         #[test]
         fn command_in_path_with_args() -> crate::Result {

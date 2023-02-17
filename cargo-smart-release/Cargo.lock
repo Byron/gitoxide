@@ -130,7 +130,7 @@ dependencies = [
  "env_logger",
  "git-conventional",
  "git-repository",
- "git-testtools",
+ "gix-testtools",
  "home",
  "insta",
  "log",
@@ -863,7 +863,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-testtools"
+name = "gix-testtools"
 version = "0.7.0"
 dependencies = [
  "bstr",

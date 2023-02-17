@@ -1,4 +1,4 @@
-use git_testtools::once_cell::sync::Lazy;
+use gix_testtools::once_cell::sync::Lazy;
 
 static BASELINE: Lazy<baseline::Baseline> = Lazy::new(|| baseline::parse().unwrap());
 
@@ -6,13 +6,13 @@ pub mod baseline {
     use std::{borrow::Borrow, collections::HashMap};
 
     use bstr::{BString, ByteSlice, ByteVec};
-    use git_testtools::once_cell::sync::Lazy;
     use gix_hash::ObjectId;
     use gix_refspec::{
         match_group::{validate::Fix, SourceRef},
         parse::Operation,
         MatchGroup,
     };
+    use gix_testtools::once_cell::sync::Lazy;
 
     use crate::matching::BASELINE;
 
@@ -197,7 +197,7 @@ pub mod baseline {
     }
 
     fn parse_input() -> crate::Result<Vec<Ref>> {
-        let dir = git_testtools::scripted_fixture_read_only("match_baseline.sh")?;
+        let dir = gix_testtools::scripted_fixture_read_only("match_baseline.sh")?;
         let refs_buf = std::fs::read(dir.join("clone").join("remote-refs.list"))?;
         let mut out = Vec::new();
         for line in refs_buf.lines() {
@@ -221,7 +221,7 @@ pub mod baseline {
     }
 
     pub(crate) fn parse() -> crate::Result<Baseline> {
-        let dir = git_testtools::scripted_fixture_read_only("match_baseline.sh")?;
+        let dir = gix_testtools::scripted_fixture_read_only("match_baseline.sh")?;
         let buf = std::fs::read(dir.join("clone").join("baseline.git"))?;
 
         let mut map = HashMap::new();

@@ -1,5 +1,5 @@
 mod set_namespace {
-    use git_testtools::tempfile;
+    use gix_testtools::tempfile;
 
     use gix::refs::transaction::PreviousValue;
 

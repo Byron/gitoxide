@@ -24,4 +24,4 @@ gix-hash = { path = "../../gix-hash" }
 gix-object = { path = "../../gix-object" }
 gix-odb = { path = "../../gix-odb" }
 gix-traverse = { path = "../../gix-traverse" }
-git-testtools = { path = "../../tests/tools" }
+gix-testtools = { path = "../../tests/tools" }

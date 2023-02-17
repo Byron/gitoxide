@@ -184,7 +184,7 @@ pub mod decode {
         }
 
         mod invalid {
-            use git_testtools::to_bstr_err;
+            use gix_testtools::to_bstr_err;
             use nom::error::VerboseError;
 
             use super::one;

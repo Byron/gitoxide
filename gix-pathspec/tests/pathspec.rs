@@ -1,4 +1,4 @@
-pub use git_testtools::Result;
+pub use gix_testtools::Result;
 
 mod parse {
     use std::collections::HashMap;
@@ -32,7 +32,7 @@ mod parse {
     }
 
     static BASELINE: Lazy<HashMap<BString, usize>> = Lazy::new(|| {
-        let base = git_testtools::scripted_fixture_read_only("generate_pathspec_baseline.sh").unwrap();
+        let base = gix_testtools::scripted_fixture_read_only("generate_pathspec_baseline.sh").unwrap();
 
         (|| -> crate::Result<_> {
             let mut map = HashMap::new();

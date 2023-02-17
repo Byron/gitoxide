@@ -343,8 +343,8 @@ dependencies = [
  "crates-index",
  "env_logger",
  "git-conventional",
- "git-testtools",
  "gix",
+ "gix-testtools",
  "home",
  "insta",
  "log",
@@ -1426,28 +1426,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-testtools"
-version = "0.11.0"
-dependencies = [
- "bstr",
- "crc",
- "fastrand",
- "fs_extra",
- "git-attributes",
- "git-discover",
- "git-lock",
- "git-worktree",
- "io-close",
- "is_ci",
- "nom",
- "once_cell",
- "parking_lot 0.12.1",
- "tar",
- "tempfile",
- "xz2",
-]
-
-[[package]]
 name = "git-traverse"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1558,7 +1536,6 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "git-testtools",
  "gix-actor",
  "gix-attributes",
  "gix-config",
@@ -1584,6 +1561,7 @@ dependencies = [
  "gix-revision",
  "gix-sec",
  "gix-tempfile",
+ "gix-testtools",
  "gix-transport",
  "gix-traverse",
  "gix-url",
@@ -1611,10 +1589,10 @@ dependencies = [
  "bstr",
  "btoi",
  "document-features",
- "git-testtools",
  "gix-date",
  "gix-features",
  "gix-hash",
+ "gix-testtools",
  "itoa",
  "nom",
  "pretty_assertions",
@@ -1629,11 +1607,11 @@ dependencies = [
  "bstr",
  "compact_str",
  "document-features",
- "git-testtools",
  "gix-features",
  "gix-glob",
  "gix-path",
  "gix-quote",
+ "gix-testtools",
  "serde",
  "thiserror",
  "unicode-bom",
@@ -1643,7 +1621,7 @@ dependencies = [
 name = "gix-bitmap"
 version = "0.2.1"
 dependencies = [
- "git-testtools",
+ "gix-testtools",
  "quick-error 2.0.1",
 ]
 
@@ -1659,7 +1637,7 @@ name = "gix-command"
 version = "0.2.3"
 dependencies = [
  "bstr",
- "git-testtools",
+ "gix-testtools",
 ]
 
 [[package]]
@@ -1668,10 +1646,10 @@ version = "0.13.0"
 dependencies = [
  "bstr",
  "document-features",
- "git-testtools",
  "gix-chunk",
  "gix-features",
  "gix-hash",
+ "gix-testtools",
  "memmap2",
  "serde",
  "thiserror",
@@ -1705,12 +1683,12 @@ version = "0.0.0"
 dependencies = [
  "bstr",
  "criterion",
- "git-testtools",
  "gix",
  "gix-config",
  "gix-path",
  "gix-ref",
  "gix-sec",
+ "gix-testtools",
  "serde_derive",
  "serial_test",
  "tempfile",
@@ -1735,12 +1713,12 @@ version = "0.9.1"
 dependencies = [
  "bstr",
  "document-features",
- "git-testtools",
  "gix-command",
  "gix-config-value",
  "gix-path",
  "gix-prompt",
  "gix-sec",
+ "gix-testtools",
  "gix-url",
  "serde",
  "thiserror",
@@ -1752,8 +1730,8 @@ version = "0.4.2"
 dependencies = [
  "bstr",
  "document-features",
- "git-testtools",
  "gix-hash",
+ "gix-testtools",
  "itoa",
  "once_cell",
  "serde",
@@ -1777,11 +1755,11 @@ dependencies = [
 name = "gix-diff-tests"
 version = "0.0.0"
 dependencies = [
- "git-testtools",
  "gix-diff",
  "gix-hash",
  "gix-object",
  "gix-odb",
+ "gix-testtools",
  "gix-traverse",
 ]
 
@@ -1792,11 +1770,11 @@ dependencies = [
  "bstr",
  "defer",
  "dunce",
- "git-testtools",
  "gix-hash",
  "gix-path",
  "gix-ref",
  "gix-sec",
+ "gix-testtools",
  "is_ci",
  "serial_test",
  "tempfile",
@@ -1842,7 +1820,7 @@ dependencies = [
  "bitflags",
  "bstr",
  "document-features",
- "git-testtools",
+ "gix-testtools",
  "serde",
 ]
 
@@ -1851,7 +1829,7 @@ name = "gix-hash"
 version = "0.10.2"
 dependencies = [
  "document-features",
- "git-testtools",
+ "gix-testtools",
  "hex",
  "serde",
  "thiserror",
@@ -1893,11 +1871,11 @@ version = "0.0.0"
 dependencies = [
  "bstr",
  "filetime",
- "git-testtools",
  "gix",
  "gix-features",
  "gix-hash",
  "gix-index",
+ "gix-testtools",
 ]
 
 [[package]]
@@ -1920,8 +1898,8 @@ version = "0.9.2"
 dependencies = [
  "bstr",
  "document-features",
- "git-testtools",
  "gix-actor",
+ "gix-testtools",
  "quick-error 2.0.1",
  "serde",
 ]
@@ -1937,10 +1915,10 @@ dependencies = [
  "bstr",
  "btoi",
  "document-features",
- "git-testtools",
  "gix-actor",
  "gix-features",
  "gix-hash",
+ "gix-testtools",
  "gix-validate",
  "hex",
  "itoa",
@@ -1959,7 +1937,6 @@ dependencies = [
  "crossbeam-channel",
  "document-features",
  "filetime",
- "git-testtools",
  "gix-actor",
  "gix-features",
  "gix-hash",
@@ -1967,6 +1944,7 @@ dependencies = [
  "gix-pack",
  "gix-path",
  "gix-quote",
+ "gix-testtools",
  "maplit",
  "num_cpus",
  "parking_lot 0.12.1",
@@ -1984,7 +1962,6 @@ dependencies = [
  "clru",
  "dashmap",
  "document-features",
- "git-testtools",
  "gix-chunk",
  "gix-diff",
  "gix-features",
@@ -1993,6 +1970,7 @@ dependencies = [
  "gix-object",
  "gix-path",
  "gix-tempfile",
+ "gix-testtools",
  "gix-traverse",
  "memmap2",
  "parking_lot 0.12.1",
@@ -2007,12 +1985,12 @@ name = "gix-pack-tests"
 version = "0.30.1"
 dependencies = [
  "bstr",
- "git-testtools",
  "gix-features",
  "gix-hash",
  "gix-object",
  "gix-odb",
  "gix-pack",
+ "gix-testtools",
  "gix-traverse",
  "maplit",
  "memmap2",
@@ -2052,9 +2030,9 @@ version = "0.1.0"
 dependencies = [
  "bitflags",
  "bstr",
- "git-testtools",
  "gix-attributes",
  "gix-glob",
+ "gix-testtools",
  "once_cell",
  "thiserror",
 ]
@@ -2064,9 +2042,9 @@ name = "gix-prompt"
 version = "0.3.2"
 dependencies = [
  "expectrl",
- "git-testtools",
  "gix-command",
  "gix-config-value",
+ "gix-testtools",
  "nix 0.26.2",
  "parking_lot 0.12.1",
  "serial_test",
@@ -2084,11 +2062,11 @@ dependencies = [
  "document-features",
  "futures-io",
  "futures-lite",
- "git-testtools",
  "gix-credentials",
  "gix-features",
  "gix-hash",
  "gix-packetline",
+ "gix-testtools",
  "gix-transport",
  "maybe-async",
  "nom",
@@ -2114,7 +2092,6 @@ name = "gix-ref"
 version = "0.24.0"
 dependencies = [
  "document-features",
- "git-testtools",
  "gix-actor",
  "gix-features",
  "gix-hash",
@@ -2122,6 +2099,7 @@ dependencies = [
  "gix-object",
  "gix-path",
  "gix-tempfile",
+ "gix-testtools",
  "gix-validate",
  "memmap2",
  "nom",
@@ -2134,7 +2112,6 @@ dependencies = [
 name = "gix-ref-tests"
 version = "0.0.0"
 dependencies = [
- "git-testtools",
  "gix-actor",
  "gix-discover",
  "gix-features",
@@ -2143,6 +2120,7 @@ dependencies = [
  "gix-object",
  "gix-odb",
  "gix-ref",
+ "gix-testtools",
  "gix-validate",
  "gix-worktree",
  "tempfile",
@@ -2153,9 +2131,9 @@ name = "gix-refspec"
 version = "0.7.2"
 dependencies = [
  "bstr",
- "git-testtools",
  "gix-hash",
  "gix-revision",
+ "gix-testtools",
  "gix-validate",
  "smallvec",
  "thiserror",
@@ -2180,11 +2158,11 @@ name = "gix-revision-tests"
 version = "0.0.0"
 dependencies = [
  "bstr",
- "git-testtools",
  "gix",
  "gix-hash",
  "gix-object",
  "gix-revision",
+ "gix-testtools",
 ]
 
 [[package]]
@@ -2219,6 +2197,28 @@ dependencies = [
  "signal-hook",
  "signal-hook-registry",
  "tempfile",
+]
+
+[[package]]
+name = "gix-testtools"
+version = "0.11.0"
+dependencies = [
+ "bstr",
+ "crc",
+ "fastrand",
+ "fs_extra",
+ "git-attributes",
+ "git-discover",
+ "git-lock",
+ "git-worktree",
+ "io-close",
+ "is_ci",
+ "nom",
+ "once_cell",
+ "parking_lot 0.12.1",
+ "tar",
+ "tempfile",
+ "xz2",
 ]
 
 [[package]]
@@ -2268,10 +2268,10 @@ dependencies = [
 name = "gix-traverse-tests"
 version = "0.0.0"
 dependencies = [
- "git-testtools",
  "gix-hash",
  "gix-object",
  "gix-odb",
+ "gix-testtools",
  "gix-traverse",
 ]
 
@@ -2298,7 +2298,7 @@ name = "gix-validate"
 version = "0.7.2"
 dependencies = [
  "bstr",
- "git-testtools",
+ "gix-testtools",
  "thiserror",
 ]
 
@@ -2308,7 +2308,6 @@ version = "0.12.2"
 dependencies = [
  "bstr",
  "document-features",
- "git-testtools",
  "gix-attributes",
  "gix-features",
  "gix-glob",
@@ -2317,6 +2316,7 @@ dependencies = [
  "gix-object",
  "gix-odb",
  "gix-path",
+ "gix-testtools",
  "io-close",
  "serde",
  "symlink",

@@ -1,6 +1,6 @@
 extern crate core;
 
-use git_testtools::Result;
+use gix_testtools::Result;
 
 mod impls;
 mod match_group;

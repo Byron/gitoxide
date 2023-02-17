@@ -1,4 +1,4 @@
-use git_testtools::tempfile;
+use gix_testtools::tempfile;
 
 mod write_object {
     use crate::repository::object::empty_bare_repo;
@@ -144,7 +144,7 @@ mod tag {
 }
 
 mod commit_as {
-    use git_testtools::tempfile;
+    use gix_testtools::tempfile;
 
     #[test]
     fn specify_committer_and_author() -> crate::Result {
@@ -179,7 +179,7 @@ mod commit_as {
 }
 
 mod commit {
-    use git_testtools::tempfile;
+    use gix_testtools::tempfile;
 
     use crate::{freeze_time, restricted_and_git, util::hex_to_id};
 

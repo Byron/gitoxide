@@ -28,7 +28,7 @@ required-features = ["internal-testing-gix-features-parallel"]
 [dev-dependencies]
 gix-ref = { path = ".." }
 gix-features = { version = "^0.26.1", path = "../../gix-features", features = ["walkdir"]}
-git-testtools = { path = "../../tests/tools" }
+gix-testtools = { path = "../../tests/tools" }
 gix-discover = { path = "../../gix-discover" }
 gix-worktree = { path = "../../gix-worktree" }
 gix-odb = { path = "../../gix-odb" }

@@ -1,5 +1,5 @@
-use git_testtools::fixture_bytes;
 use gix_mailmap::Snapshot;
+use gix_testtools::fixture_bytes;
 
 #[test]
 fn try_resolve() {

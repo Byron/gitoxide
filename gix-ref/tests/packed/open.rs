@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use git_testtools::fixture_path_standalone;
+use gix_testtools::fixture_path_standalone;
 
 use crate::{file::store_with_packed_refs, packed::write_packed_refs_with};
 

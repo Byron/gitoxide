@@ -97,7 +97,7 @@ mod with_core_worktree_config {
     }
 
     fn repo(name: &str) -> gix::Repository {
-        let dir = git_testtools::scripted_fixture_read_only("make_core_worktree_repo.sh").unwrap();
+        let dir = gix_testtools::scripted_fixture_read_only("make_core_worktree_repo.sh").unwrap();
         gix::open_opts(dir.join(name), crate::restricted()).unwrap()
     }
 
@@ -191,10 +191,10 @@ mod baseline {
 
 #[test]
 fn from_bare_parent_repo() {
-    if git_testtools::should_skip_as_git_version_is_smaller_than(2, 31, 0) {
+    if gix_testtools::should_skip_as_git_version_is_smaller_than(2, 31, 0) {
         return;
     }
-    let dir = git_testtools::scripted_fixture_read_only_with_args("make_worktree_repo.sh", ["bare"]).unwrap();
+    let dir = gix_testtools::scripted_fixture_read_only_with_args("make_worktree_repo.sh", ["bare"]).unwrap();
     let repo = gix::open(dir.join("repo.git")).unwrap();
 
     run_assertions(repo, true /* bare */);
@@ -202,10 +202,10 @@ fn from_bare_parent_repo() {
 
 #[test]
 fn from_nonbare_parent_repo() {
-    if git_testtools::should_skip_as_git_version_is_smaller_than(2, 31, 0) {
+    if gix_testtools::should_skip_as_git_version_is_smaller_than(2, 31, 0) {
         return;
     }
-    let dir = git_testtools::scripted_fixture_read_only("make_worktree_repo.sh").unwrap();
+    let dir = gix_testtools::scripted_fixture_read_only("make_worktree_repo.sh").unwrap();
     let repo = gix::open(dir.join("repo")).unwrap();
 
     run_assertions(repo, false /* bare */);

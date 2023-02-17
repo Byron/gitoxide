@@ -1,10 +1,10 @@
-use git_testtools::Env;
+use gix_testtools::Env;
 
 mod baseline {
     use std::collections::HashMap;
 
-    use git_testtools::once_cell::sync::Lazy;
     use gix_object::bstr::BString;
+    use gix_testtools::once_cell::sync::Lazy;
 
     use crate::remote;
 

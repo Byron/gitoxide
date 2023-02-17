@@ -32,7 +32,7 @@ internal-testing-to-avoid-being-run-by-cargo-test-all = []
 [dev-dependencies]
 gix-index = { version = "^0.12.1", path = ".." }
 gix-features = { version = "^0.26.1", path = "../../gix-features", features = ["rustsha1", "progress"] }
-git-testtools = { path = "../../tests/tools"}
+gix-testtools = { path = "../../tests/tools"}
 gix = { path = "../../gix"}
 gix-hash = { path = "../../gix-hash"}
 filetime = "0.2.15"

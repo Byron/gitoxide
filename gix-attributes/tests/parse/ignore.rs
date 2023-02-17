@@ -1,6 +1,6 @@
 use bstr::BString;
-use git_testtools::fixture_bytes;
 use gix_glob::{pattern::Mode, Pattern};
+use gix_testtools::fixture_bytes;
 
 #[test]
 fn byte_order_marks_are_no_patterns() {

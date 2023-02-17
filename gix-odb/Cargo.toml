@@ -44,7 +44,7 @@ arc-swap = "1.5.0"
 document-features = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
-git-testtools = { path = "../tests/tools"}
+gix-testtools = { path = "../tests/tools"}
 gix-actor = { path = "../gix-actor" }
 pretty_assertions = "1.0.0"
 filetime = "0.2.15"

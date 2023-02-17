@@ -1,8 +1,8 @@
 mod apply_environment {
     use std::{borrow::Cow, path::Path};
 
-    use git_testtools::Env;
     use gix_prompt::{Mode, Options};
+    use gix_testtools::Env;
     use serial_test::serial;
 
     #[test]

@@ -1,6 +1,6 @@
 use std::{borrow::Cow, path::PathBuf};
 
-use git_testtools::scripted_fixture_read_only;
+use gix_testtools::scripted_fixture_read_only;
 
 pub(crate) fn repo_path(name: &str) -> PathBuf {
     let dir = scripted_fixture_read_only("make_remote_repos.sh").unwrap();
@@ -19,14 +19,14 @@ pub(crate) fn repo(name: &str) -> gix::Repository {
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 pub(crate) fn spawn_git_daemon_if_async(
     _base_dir: impl AsRef<std::path::Path>,
-) -> std::io::Result<Option<git_testtools::GitDaemon>> {
+) -> std::io::Result<Option<gix_testtools::GitDaemon>> {
     #[cfg(feature = "blocking-network-client")]
     {
         Ok(None)
     }
     #[cfg(feature = "async-network-client-async-std")]
     {
-        git_testtools::spawn_git_daemon(_base_dir).map(Some)
+        gix_testtools::spawn_git_daemon(_base_dir).map(Some)
     }
 }
 
@@ -34,7 +34,7 @@ pub(crate) fn spawn_git_daemon_if_async(
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 pub(crate) fn into_daemon_remote_if_async<'repo, 'a>(
     remote: gix::Remote<'repo>,
-    _daemon: Option<&git_testtools::GitDaemon>,
+    _daemon: Option<&gix_testtools::GitDaemon>,
     _repo_name: impl Into<Option<&'a str>>,
 ) -> gix::Remote<'repo> {
     #[cfg(feature = "blocking-network-client")]

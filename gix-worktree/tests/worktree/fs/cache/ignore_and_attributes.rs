@@ -36,7 +36,7 @@ impl<'a> Iterator for IgnoreExpectations<'a> {
 
 #[test]
 fn special_exclude_cases_we_handle_differently() {
-    let dir = git_testtools::scripted_fixture_read_only("make_special_exclude_case.sh").unwrap();
+    let dir = gix_testtools::scripted_fixture_read_only("make_special_exclude_case.sh").unwrap();
     let git_dir = dir.join(".git");
 
     let mut buf = Vec::new();
@@ -86,7 +86,7 @@ fn special_exclude_cases_we_handle_differently() {
 
 #[test]
 fn check_against_baseline() -> crate::Result {
-    let dir = git_testtools::scripted_fixture_read_only("make_ignore_and_attributes_setup.sh")?;
+    let dir = gix_testtools::scripted_fixture_read_only("make_ignore_and_attributes_setup.sh")?;
     let worktree_dir = dir.join("repo");
     let git_dir = worktree_dir.join(".git");
     let mut buf = Vec::new();

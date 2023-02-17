@@ -1,7 +1,7 @@
 use bstr::{BString, ByteSlice};
-use git_testtools::fixture_bytes;
 use gix_attributes::{parse, StateRef};
 use gix_glob::pattern::Mode;
+use gix_testtools::fixture_bytes;
 
 #[test]
 fn byte_order_marks_are_no_patterns() {

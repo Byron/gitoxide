@@ -61,7 +61,7 @@ mod init {
 
     #[test]
     fn multiple_linked_repositories_via_alternates() -> crate::Result {
-        let tmp = git_testtools::tempfile::TempDir::new()?;
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
         let (object_path, _linked_object_path) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
         let db = gix_odb::at(object_path.clone())?;
         db.contains(ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
@@ -74,7 +74,7 @@ mod init {
 
     #[test]
     fn a_db_without_alternates() -> crate::Result {
-        let tmp = git_testtools::tempfile::TempDir::new()?;
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
         let db = gix_odb::at(tmp.path())?;
         db.contains(ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
         assert_eq!(db.store_ref().metrics().loose_dbs, 1);

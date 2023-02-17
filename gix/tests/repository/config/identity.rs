@@ -1,7 +1,7 @@
 use std::path::Path;
 
-use git_testtools::Env;
 use gix_sec::Permission;
+use gix_testtools::Env;
 
 use serial_test::serial;
 

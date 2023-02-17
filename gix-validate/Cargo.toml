@@ -18,4 +18,4 @@ thiserror = "1.0.34"
 bstr = { version = "1.0.1", default-features = false, features = ["std"] }
 
 [dev-dependencies]
-git-testtools = { path = "../tests/tools" }
+gix-testtools = { path = "../tests/tools" }

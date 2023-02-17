@@ -7,7 +7,7 @@ fn verify_on_exfat() -> crate::Result<()> {
 
     use gix_discover::repository::Kind;
 
-    let fixtures = git_testtools::scripted_fixture_read_only("make_exfat_repo_darwin.sh")?;
+    let fixtures = gix_testtools::scripted_fixture_read_only("make_exfat_repo_darwin.sh")?;
     let mount_point = tempfile::tempdir()?;
 
     let _cleanup = {

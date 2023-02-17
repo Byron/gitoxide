@@ -1,5 +1,5 @@
-use git_testtools::Env;
 use gix_config::source;
+use gix_testtools::Env;
 use serial_test::serial;
 
 #[test]
@@ -21,7 +21,7 @@ fn from_environment_overrides() {
 #[test]
 #[serial]
 fn from_git_dir() -> crate::Result {
-    let worktree_dir = git_testtools::scripted_fixture_read_only_standalone("make_config_repo.sh")?;
+    let worktree_dir = gix_testtools::scripted_fixture_read_only_standalone("make_config_repo.sh")?;
     let git_dir = worktree_dir.join(".git");
     let worktree_dir = worktree_dir.canonicalize()?;
     let _env = Env::new()
@@ -71,7 +71,7 @@ fn from_git_dir() -> crate::Result {
     );
 
     // on CI this file actually exists in xdg home and our values aren't present
-    if !(cfg!(unix) && git_testtools::is_ci::cached()) {
+    if !(cfg!(unix) && gix_testtools::is_ci::cached()) {
         assert_eq!(
             config.string("a", None, "git").expect("present").as_ref(),
             "git-application",
@@ -84,7 +84,7 @@ fn from_git_dir() -> crate::Result {
 #[test]
 #[serial]
 fn from_git_dir_with_worktree_extension() -> crate::Result {
-    let git_dir = git_testtools::scripted_fixture_read_only_standalone("config_with_worktree_extension.sh")?
+    let git_dir = gix_testtools::scripted_fixture_read_only_standalone("config_with_worktree_extension.sh")?
         .join("main-worktree")
         .join(".git");
     let config = gix_config::File::from_git_dir(git_dir)?;

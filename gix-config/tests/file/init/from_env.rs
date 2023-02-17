@@ -1,10 +1,10 @@
 use std::{borrow::Cow, fs};
 
-use git_testtools::Env;
 use gix_config::{
     file::{includes, init, init::from_env},
     File,
 };
+use gix_testtools::Env;
 use serial_test::serial;
 use tempfile::tempdir;
 

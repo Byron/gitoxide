@@ -172,12 +172,12 @@ continuous-unit-tests: ## run all unit tests whenever something changes
 jtt = target/debug/jtt
 journey-tests: always  ## run journey tests (max)
 	cargo build
-	cargo build --package git-testtools --bin jtt
+	cargo build --package gix-testtools --bin jtt
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max
 
 journey-tests-pure: always  ## run journey tests (max-pure)
 	cargo build --no-default-features --features max-pure
-	cargo build --package git-testtools --bin jtt
+	cargo build --package gix-testtools --bin jtt
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max-pure
 
 journey-tests-small: always ## run journey tests (small)

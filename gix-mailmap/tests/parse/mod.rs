@@ -1,5 +1,5 @@
-use git_testtools::fixture_bytes;
 use gix_mailmap::{parse, Entry};
+use gix_testtools::fixture_bytes;
 
 #[test]
 fn line_numbers_are_counted_correctly_in_errors() {

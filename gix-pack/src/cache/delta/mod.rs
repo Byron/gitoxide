@@ -164,7 +164,7 @@ mod tests {
             const INDEX_V1: &str = "objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx";
             const PACK_FOR_INDEX_V1: &str = "objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.pack";
 
-            use git_testtools::fixture_path;
+            use gix_testtools::fixture_path;
 
             #[test]
             fn v1() -> Result<(), Box<dyn std::error::Error>> {

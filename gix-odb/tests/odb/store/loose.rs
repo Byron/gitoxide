@@ -87,7 +87,7 @@ mod contains {
 mod lookup_prefix {
     use std::collections::HashSet;
 
-    use git_testtools::fixture_path;
+    use gix_testtools::fixture_path;
     use maplit::hashset;
 
     use crate::{odb::hex_to_id, store::loose::ldb};
@@ -108,8 +108,8 @@ mod lookup_prefix {
 
     #[test]
     fn returns_some_err_for_prefixes_with_more_than_one_match() {
-        let objects_dir = git_testtools::tempfile::tempdir().unwrap();
-        git_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir).unwrap();
+        let objects_dir = gix_testtools::tempfile::tempdir().unwrap();
+        gix_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir).unwrap();
         std::fs::write(
             objects_dir
                 .path()
@@ -179,7 +179,7 @@ mod find {
 
     #[test]
     fn invalid_object_does_not_trigger_panics() -> crate::Result {
-        let tmp = git_testtools::tempfile::tempdir()?;
+        let tmp = gix_testtools::tempfile::tempdir()?;
         let base = tmp.path().join("aa");
         std::fs::create_dir(&base)?;
         std::fs::write(base.join("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), [])?;

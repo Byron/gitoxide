@@ -1,7 +1,7 @@
 use std::convert::{TryFrom, TryInto};
 
-use git_testtools::fixture_path_standalone;
 use gix_ref::packed;
+use gix_testtools::fixture_path_standalone;
 
 use crate::{
     file::{store_at, store_with_packed_refs},

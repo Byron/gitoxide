@@ -69,7 +69,7 @@ pub fn decode<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
 mod tests {
     mod parse_signature {
         use bstr::ByteSlice;
-        use git_testtools::to_bstr_err;
+        use gix_testtools::to_bstr_err;
         use nom::IResult;
 
         use crate::{signature, Sign, SignatureRef, Time};

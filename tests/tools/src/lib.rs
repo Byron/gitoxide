@@ -26,7 +26,7 @@ pub use tempfile;
 /// Use it like so:
 ///
 /// ```no_run
-/// use git_testtools::Result;
+/// use gix_testtools::Result;
 ///
 /// #[test]
 /// fn this() -> Result {

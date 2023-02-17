@@ -25,7 +25,7 @@ thiserror = "1.0.26"
 dunce = "1.0.3"
 
 [dev-dependencies]
-git-testtools = { path = "../tests/tools" }
+gix-testtools = { path = "../tests/tools" }
 serial_test = "1.0.0"
 is_ci = "1.1.1"
 

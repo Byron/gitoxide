@@ -1,6 +1,6 @@
 mod util;
 
-use git_testtools::Env;
+use gix_testtools::Env;
 use serial_test::serial;
 use util::{assert_section_value, Condition, GitEnv};
 

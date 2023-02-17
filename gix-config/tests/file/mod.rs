@@ -17,8 +17,8 @@ fn size_in_memory() {
 }
 
 mod open {
-    use git_testtools::fixture_path_standalone;
     use gix_config::File;
+    use gix_testtools::fixture_path_standalone;
 
     #[test]
     fn parse_config_with_windows_line_endings_successfully() {

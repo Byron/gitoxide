@@ -13,13 +13,13 @@ pub fn hex_to_id(hex: &str) -> ObjectId {
 
 pub fn fixture_index_path(name: &str) -> PathBuf {
     let dir =
-        git_testtools::scripted_fixture_read_only_standalone(Path::new("make_index").join(name).with_extension("sh"))
+        gix_testtools::scripted_fixture_read_only_standalone(Path::new("make_index").join(name).with_extension("sh"))
             .expect("script works");
     dir.join(".git").join("index")
 }
 
 pub fn loose_file_path(name: &str) -> PathBuf {
-    git_testtools::fixture_path_standalone(Path::new("loose_index").join(name).with_extension("git-index"))
+    gix_testtools::fixture_path_standalone(Path::new("loose_index").join(name).with_extension("git-index"))
 }
 
 #[test]

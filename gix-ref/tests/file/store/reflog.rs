@@ -1,6 +1,6 @@
 fn store() -> crate::Result<crate::file::Store> {
     Ok(crate::file::Store::at(
-        git_testtools::scripted_fixture_read_only_standalone("make_repo_for_reflog.sh")?.join(".git"),
+        gix_testtools::scripted_fixture_read_only_standalone("make_repo_for_reflog.sh")?.join(".git"),
         gix_ref::store::WriteReflog::Disable,
         gix_hash::Kind::Sha1,
     ))

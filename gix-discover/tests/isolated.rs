@@ -5,10 +5,10 @@ use serial_test::serial;
 
 #[test]
 #[serial]
-fn upwards_with_relative_directories_and_optional_ceiling() -> git_testtools::Result {
-    let repo = git_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
+fn upwards_with_relative_directories_and_optional_ceiling() -> gix_testtools::Result {
+    let repo = gix_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
 
-    let _keep = git_testtools::set_current_dir(repo.join("subdir"))?;
+    let _keep = gix_testtools::set_current_dir(repo.join("subdir"))?;
     let cwd = std::env::current_dir()?;
 
     for (search_dir, ceiling_dir_component) in [
@@ -59,10 +59,10 @@ fn upwards_with_relative_directories_and_optional_ceiling() -> git_testtools::Re
 
 #[test]
 #[serial]
-fn unc_paths_are_handled_on_windows() -> git_testtools::Result {
-    let repo = git_testtools::scripted_fixture_read_only("make_basic_repo.sh").unwrap();
+fn unc_paths_are_handled_on_windows() -> gix_testtools::Result {
+    let repo = gix_testtools::scripted_fixture_read_only("make_basic_repo.sh").unwrap();
 
-    let _keep = git_testtools::set_current_dir(repo.join("some/very/deeply/nested/subdir")).unwrap();
+    let _keep = gix_testtools::set_current_dir(repo.join("some/very/deeply/nested/subdir")).unwrap();
     let cwd = std::env::current_dir().unwrap();
     let parent = cwd.parent().unwrap();
     // all discoveries should fail, as they'll hit `parent` before finding a git repository.

@@ -1,8 +1,8 @@
 use std::{cmp::Ordering, path::PathBuf};
 
-use git_testtools::Creation;
 use gix_odb::Find;
 use gix_ref::{file::ReferenceExt, Reference};
+use gix_testtools::Creation;
 
 fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile::TempDir>)> {
     let name = "make_worktree_repo.sh";
@@ -11,10 +11,10 @@ fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile:
         args.push("packed");
     }
     if writable {
-        git_testtools::scripted_fixture_writable_with_args_standalone(name, args, Creation::ExecuteScript)
+        gix_testtools::scripted_fixture_writable_with_args_standalone(name, args, Creation::ExecuteScript)
             .map(|tmp| (tmp.path().to_owned(), tmp.into()))
     } else {
-        git_testtools::scripted_fixture_read_only_with_args_standalone(name, args).map(|p| (p, None))
+        gix_testtools::scripted_fixture_read_only_with_args_standalone(name, args).map(|p| (p, None))
     }
 }
 

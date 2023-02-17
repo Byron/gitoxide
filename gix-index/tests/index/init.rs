@@ -1,5 +1,5 @@
-use git_testtools::scripted_fixture_read_only_standalone;
 use gix_index::{verify::extensions::no_find, State};
+use gix_testtools::scripted_fixture_read_only_standalone;
 
 use gix::prelude::FindExt;
 

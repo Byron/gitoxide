@@ -10,14 +10,14 @@ fn hex_to_id(hex: &str) -> gix_hash::ObjectId {
 mod update {
     use std::convert::TryInto;
 
-    use git_testtools::Result;
+    use gix_testtools::Result;
 
     use super::hex_to_id;
     use crate as gix;
 
     fn base_repo_path() -> String {
         gix::path::realpath(
-            git_testtools::scripted_fixture_read_only("make_remote_repos.sh")
+            gix_testtools::scripted_fixture_read_only("make_remote_repos.sh")
                 .unwrap()
                 .join("base"),
         )
@@ -28,14 +28,14 @@ mod update {
 
     fn repo(name: &str) -> gix::Repository {
         let dir =
-            git_testtools::scripted_fixture_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
+            gix_testtools::scripted_fixture_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
         gix::open_opts(dir.join(name), restricted()).unwrap()
     }
-    fn repo_rw(name: &str) -> (gix::Repository, git_testtools::tempfile::TempDir) {
-        let dir = git_testtools::scripted_fixture_writable_with_args(
+    fn repo_rw(name: &str) -> (gix::Repository, gix_testtools::tempfile::TempDir) {
+        let dir = gix_testtools::scripted_fixture_writable_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
-            git_testtools::Creation::ExecuteScript,
+            gix_testtools::Creation::ExecuteScript,
         )
         .unwrap();
         let repo = gix::open_opts(dir.path().join(name), restricted()).unwrap();
@@ -180,7 +180,7 @@ mod update {
 
     #[test]
     fn checked_out_branches_in_worktrees_are_rejected_with_additional_information() -> Result {
-        let root = gix_path::realpath(git_testtools::scripted_fixture_read_only_with_args(
+        let root = gix_path::realpath(gix_testtools::scripted_fixture_read_only_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
         )?)?;

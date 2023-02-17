@@ -1,8 +1,8 @@
 use std::process::Command;
 
-use git_testtools::fixture_path;
 use gix_hash::ObjectId;
 use gix_odb::{store, store::iter::Ordering, Find, FindExt, Header, Write};
+use gix_testtools::fixture_path;
 
 use crate::{hex_to_id, odb::db};
 
@@ -15,8 +15,8 @@ fn all_orderings() -> [Ordering; 2] {
 
 /// indices, multi-pack-index, loose odb
 fn db_with_all_object_sources() -> crate::Result<(gix_odb::Handle, tempfile::TempDir)> {
-    let objects_dir = git_testtools::tempfile::tempdir()?;
-    git_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir)?;
+    let objects_dir = gix_testtools::tempfile::tempdir()?;
+    gix_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir)?;
 
     let multi_pack_index = std::fs::OpenOptions::new()
         .write(true)
@@ -39,7 +39,7 @@ fn db_with_all_object_sources() -> crate::Result<(gix_odb::Handle, tempfile::Tem
 
 #[test]
 fn multi_index_access() -> crate::Result {
-    let dir = git_testtools::scripted_fixture_writable("make_repo_multi_index.sh")?;
+    let dir = gix_testtools::scripted_fixture_writable("make_repo_multi_index.sh")?;
     let handle = gix_odb::at(dir.path().join(".git/objects"))?;
 
     assert_eq!(
@@ -140,7 +140,7 @@ fn multi_index_access() -> crate::Result {
 
 #[test]
 fn multi_index_keep_open() -> crate::Result {
-    let dir = git_testtools::scripted_fixture_writable("make_repo_multi_index.sh")?;
+    let dir = gix_testtools::scripted_fixture_writable("make_repo_multi_index.sh")?;
     let (stable_handle, handle) = {
         let mut stable_handle = gix_odb::at(dir.path().join(".git/objects"))?;
         let handle = stable_handle.clone();
@@ -217,7 +217,7 @@ fn write() -> crate::Result {
 
 #[test]
 fn object_replacement() -> crate::Result {
-    let dir = git_testtools::scripted_fixture_read_only("make_replaced_history.sh")?;
+    let dir = gix_testtools::scripted_fixture_read_only("make_replaced_history.sh")?;
     let handle = gix_odb::at(dir.join(".git/objects"))?;
     let mut buf = Vec::new();
     let short_history_link = hex_to_id("434e5a872d6738d1fffd1e11e52a1840b73668c6");
@@ -761,7 +761,7 @@ fn iterate_over_a_bunch_of_loose_and_packed_objects() -> crate::Result {
 
 #[test]
 fn auto_refresh_with_and_without_id_stability() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
+    let tmp = gix_testtools::tempfile::TempDir::new()?;
     assert!(
         Command::new("git")
             .arg("-C")
@@ -772,7 +772,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
             .success(),
         "git should work"
     );
-    git_testtools::copy_recursively_into_existing_dir(fixture_path("objects/pack"), tmp.path().join("objects/pack"))?;
+    gix_testtools::copy_recursively_into_existing_dir(fixture_path("objects/pack"), tmp.path().join("objects/pack"))?;
     let hide_pack = |name: &str| {
         let stem = tmp.path().join("objects/pack").join(name);
         std::fs::rename(stem.with_extension("idx"), stem.with_extension("idx.bak")).unwrap();
@@ -914,8 +914,8 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
 mod verify {
     use std::sync::atomic::AtomicBool;
 
-    use git_testtools::fixture_path;
     use gix_features::progress;
+    use gix_testtools::fixture_path;
 
     use crate::store::dynamic::db;
 

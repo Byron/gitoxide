@@ -55,7 +55,7 @@ dashmap = "5.1.0"
 gix-tempfile = { version = "^3.0.0", path = "../gix-tempfile" }
 
 [dev-dependencies]
-git-testtools = { path = "../tests/tools"}
+gix-testtools = { path = "../tests/tools"}
 
 [package.metadata.docs.rs]
 all-features = true
