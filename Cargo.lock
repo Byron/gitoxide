@@ -1497,6 +1497,7 @@ dependencies = [
  "owo-colors",
  "prodash",
  "tabled",
+ "time",
 ]
 
 [[package]]
