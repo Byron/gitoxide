@@ -23,7 +23,7 @@ title "Porcelain ${kind}"
       (with "progress option set"
         it "fails as expected" && {
           WITH_SNAPSHOT="$snapshot/expected-failure-in-thread-with-progress" \
-          expect_run_sh $WITH_FAILURE "$exe --progress panic"
+          expect_run_sh 101 "$exe --progress panic"
         }
       )
     )

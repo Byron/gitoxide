@@ -165,7 +165,7 @@ pub mod pretty {
                         tx.send(Event::UiDone).ok();
                     }
                 });
-                std::thread::spawn(move || {
+                let thread = std::thread::spawn(move || {
                     // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
                     // We know that the printing happens at the end, so this is fine.
                     let mut out = Vec::new();
@@ -173,18 +173,22 @@ pub mod pretty {
                     tx.send(Event::ComputationDone(res, out)).ok();
                 });
                 loop {
-                    match rx.recv()? {
-                        Event::UiDone => {
+                    match rx.recv() {
+                        Ok(Event::UiDone) => {
                             // We don't know why the UI is done, usually it's the user aborting.
                             // We need the computation to stop as well so let's wait for that to happen
                             gix::interrupt::trigger();
                             continue;
                         }
-                        Event::ComputationDone(res, out) => {
+                        Ok(Event::ComputationDone(res, out)) => {
                             ui_handle.join().ok();
                             stdout().write_all(&out)?;
                             break res;
                         }
+                        Err(_err) => match thread.join() {
+                            Ok(()) => unreachable!("BUG: We shouldn't fail to receive unless the thread has panicked"),
+                            Err(panic) => std::panic::resume_unwind(panic),
+                        },
                     }
                 }
             }
