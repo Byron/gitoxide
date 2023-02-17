@@ -755,5 +755,13 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 
 A re-implementation of a minimal `tig` like UI that aims to be fast and to the point.
 
+### gix-lfs
+
+Definitely optimize for performance and see how we fare compared to [oxen](https://github.com/Oxen-AI/oxen-release/blob/main/Performance.md).
+Right now, `git lfs` is 40x slower, due to sequential uploads and lack of fast compression. It seems this can be greatly improved to get
+close to 6min for 200k images (1.4GB). GitHub seems to cap upload speeds to 100kb/s, one major reason it's so slow, and it can only do 
+it sequentially as `git-lfs` doesn't use the new `filter-process` protocol which would allow parallelization.
+Oxen uses the XXH3 (30gb/s) which greatly outperforms SHA1 - however, it doesn't look like the hash is necessarily the bottleneck in typical benchmarks.
+
 [tagname-validation]: https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23
 [this post]: http://blog.danieljanus.pl/2021/07/01/commit-groups/
