@@ -349,9 +349,9 @@ fn clone_v1() -> crate::Result {
             .received_as_string()
             .lines()
             .map(|l| l.to_lowercase())
-            .find(|l| l.starts_with("gix-protocol"))
-            .expect("gix-protocol header"),
-        "gix-protocol: key=value:value-only",
+            .find(|l| l.starts_with("git-protocol"))
+            .expect("git-protocol header"),
+        "git-protocol: key=value:value-only",
         "it writes extra-parameters without the version"
     );
 
