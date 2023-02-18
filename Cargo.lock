@@ -1830,6 +1830,7 @@ name = "gix-hash"
 version = "0.10.2"
 dependencies = [
  "document-features",
+ "gix-features",
  "gix-testtools",
  "hex",
  "serde",

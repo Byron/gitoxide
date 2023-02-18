@@ -99,6 +99,16 @@ impl ObjectId {
         }
     }
 
+    /// The hash of an empty blob
+    #[inline]
+    pub const fn empty_blob(hash: Kind) -> ObjectId {
+        match hash {
+            Kind::Sha1 => {
+                ObjectId::Sha1(*b"\xe6\x9d\xe2\x9b\xb2\xd1\xd6\x43\x4b\x8b\x29\xae\x77\x5a\xd8\xc2\xe4\x8c\x53\x91")
+            }
+        }
+    }
+
     /// The hash of an empty tree
     #[inline]
     pub const fn empty_tree(hash: Kind) -> ObjectId {
