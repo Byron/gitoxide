@@ -174,14 +174,14 @@ where
                                                 };
                                             from.changes()?
                                                 .track_filename()
-                                                .track_renames(None)
+                                                .track_rewrites(None)
                                                 .for_each_to_obtain_tree(&to, |change| {
                                                     use gix::object::tree::diff::change::Event::*;
                                                     if let Some(c) = change_counter.as_ref() {
                                                         c.fetch_add(1, Ordering::SeqCst);
                                                     }
                                                     match change.event {
-                                                        Copy { .. } | Rename { .. } => {
+                                                        Rewrite { .. } => {
                                                             unreachable!("we turned that off")
                                                         }
                                                         Addition { entry_mode, id } => {
