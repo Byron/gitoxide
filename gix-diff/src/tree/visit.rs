@@ -1,4 +1,5 @@
 use gix_hash::ObjectId;
+use gix_object::tree::EntryMode;
 use gix_object::{bstr::BStr, tree};
 
 /// Represents any possible change in order to turn one tree into another.
@@ -31,6 +32,31 @@ pub enum Change {
         /// The object id after the modification.
         oid: ObjectId,
     },
+}
+
+impl Change {
+    /// Return the current object id.
+    pub fn oid(&self) -> &gix_hash::oid {
+        match self {
+            Change::Addition { oid, .. } | Change::Deletion { oid, .. } | Change::Modification { oid, .. } => oid,
+        }
+    }
+    /// Return the current tree entry mode.
+    pub fn entry_mode(&self) -> EntryMode {
+        match self {
+            Change::Addition { entry_mode, .. }
+            | Change::Deletion { entry_mode, .. }
+            | Change::Modification { entry_mode, .. } => *entry_mode,
+        }
+    }
+    /// Return the current object id and tree entry mode of a change.
+    pub fn oid_and_entry_mode(&self) -> (&gix_hash::oid, EntryMode) {
+        match self {
+            Change::Addition { oid, entry_mode }
+            | Change::Deletion { oid, entry_mode }
+            | Change::Modification { oid, entry_mode, .. } => (oid, *entry_mode),
+        }
+    }
 }
 
 /// What to do after a [Change] was [recorded][Visit::visit()].
