@@ -44,6 +44,11 @@ impl EntryMode {
         matches!(self, EntryMode::Blob | EntryMode::BlobExecutable)
     }
 
+    /// Return true if the entry is any kind of blob or symlink.
+    pub fn is_blob_or_symlink(&self) -> bool {
+        matches!(self, EntryMode::Blob | EntryMode::BlobExecutable | EntryMode::Link)
+    }
+
     /// Represent the mode as descriptive string.
     pub fn as_str(&self) -> &'static str {
         use EntryMode::*;
