@@ -53,12 +53,12 @@ mod empty {
     }
 
     #[test]
-    fn empty_blob() {
+    fn blob() {
         assert_eq!(ObjectId::empty_blob(Kind::Sha1), hash_contents(b"blob 0\0"));
     }
 
     #[test]
-    fn empty_tree() {
+    fn tree() {
         assert_eq!(ObjectId::empty_tree(Kind::Sha1), hash_contents(b"tree 0\0"));
     }
 }
