@@ -26,6 +26,7 @@ document-features = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools"}
+gix-features = { path = "../gix-features", features = ["rustsha1"] }
 
 [package.metadata.docs.rs]
 all-features = true

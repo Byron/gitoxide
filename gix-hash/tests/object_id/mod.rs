@@ -41,3 +41,24 @@ mod from_hex {
         }
     }
 }
+
+mod empty {
+    use gix_features::hash::hasher;
+    use gix_hash::{Kind, ObjectId};
+
+    fn hash_contents(s: &[u8]) -> ObjectId {
+        let mut hasher = hasher(Kind::Sha1);
+        hasher.update(s);
+        ObjectId::Sha1(hasher.digest())
+    }
+
+    #[test]
+    fn blob() {
+        assert_eq!(ObjectId::empty_blob(Kind::Sha1), hash_contents(b"blob 0\0"));
+    }
+
+    #[test]
+    fn tree() {
+        assert_eq!(ObjectId::empty_tree(Kind::Sha1), hash_contents(b"tree 0\0"));
+    }
+}
