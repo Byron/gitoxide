@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.10.3 (2023-02-17)
+## 0.10.3 (2023-02-20)
+
+### New Features
+
+ - <csr-id-c817626a501dd3c8edd444c6e31ba04d9da31776/> add `ObjectId::empty_blob()` to obtain the empty blob object.
 
 ### Bug Fixes
 
@@ -16,7 +20,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    
    If you were using `git-repository`, then `gix` is its substitute.
 
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release over the course of 1 calendar day.
+ - 3 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'empty-blob' ([`796f298`](https://github.com/Byron/gitoxide/commit/796f2982ebc0b7682d0ee8987221fd3397e631aa))
+    - refactor ([`231b268`](https://github.com/Byron/gitoxide/commit/231b268964c8e066aa58132978068be7c50b6d63))
+    - add `ObjectId::empty_blob()` to obtain the empty blob object. ([`c817626`](https://github.com/Byron/gitoxide/commit/c817626a501dd3c8edd444c6e31ba04d9da31776))
+</details>
+
 ## 0.10.2 (2023-02-17)
+
+<csr-id-8be4036dce4a857cc14a8b9467aaf2fc0fc2e827/>
+<csr-id-7926f47ebc34e11c769acfd3441ab391fc1b9b36/>
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
 
 ### Refactor (BREAKING)
 
@@ -37,6 +66,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-c5213d2b701ca71af5f3c987647e2a0c5c4d42dd/> break delete me
 
 ### Changed (BREAKING)
+
+<csr-id-67652cb5cf01c45291d6e117c31290c585bab9d1/>
+<csr-id-3363f1e61295810964ddb0c255eed87a87fe6539/>
+<csr-id-75b901eff177dade43a28e770920a2b2206ded69/>
+<csr-id-b596fa0dbbb3cc1d3ac386458ef52e2db9bca55c/>
+<csr-id-3373946d27c91169172e62a637a305ef1e5fbb9e/>
 
  - <csr-id-79dc0d5ba6fa31ddd5c075693ffdc6496c1eaded/> rename `oid::try_from()` to `try_from_bytes()`, add `from_bytes_unchecked()`
    This change was done in the name of consistency, as `from_bytes()` is
@@ -59,19 +94,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    Use `ObjectId::from()` or `ObjectId::try_from()` instead.
  - <csr-id-53c748d7f438f57e8119cdf04402bfeaa9f2a286/> remove various SHA1 specific hex utilities in favor of unspecific new ones
    - removed `to_sha1_hex()`, use `oid::hex_to_buf()` and
-     `oid::hex_to_buf()` instead.
-   - remove `ObjectId::write_hex_to()` in favor of `oid::write_hex_to()`
- - <csr-id-67652cb5cf01c45291d6e117c31290c585bab9d1/> `oid::null_sha1()` replaced with `Kind::null()`
- - <csr-id-3363f1e61295810964ddb0c255eed87a87fe6539/> remove `ObjectId::from_borrowed_sha1()`
- - <csr-id-75b901eff177dade43a28e770920a2b2206ded69/> remove `ObjectId::to_sha1_hex_string()`
-   Use `.to_hex().to_string()` instead.
- - <csr-id-b596fa0dbbb3cc1d3ac386458ef52e2db9bca55c/> SIZE_OF_SHA1_DIGEST is now private
-   Replace it with your own constant derived from
-   `git_hash::Kind::Sha1.len_in_bytes()` or even better, make this
-   value configurable once it's clear how differently sized hashes
-   are used within gits files.
- - <csr-id-3373946d27c91169172e62a637a305ef1e5fbb9e/> rename `Kind::to_hex()` to `Kind::to_hex_with_len()`; add `Kind::to_hex()`
-   The latter prints the oid in full.
+   `oid::hex_to_buf()` instead.
+- remove `ObjectId::write_hex_to()` in favor of `oid::write_hex_to()`
 
 ### Refactor
 
@@ -124,7 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 236 commits contributed to the release over the course of 793 calendar days.
+ - 237 commits contributed to the release over the course of 793 calendar days.
  - 34 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 16 unique issues were worked on: [#198](https://github.com/Byron/gitoxide/issues/198), [#222](https://github.com/Byron/gitoxide/issues/222), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#413](https://github.com/Byron/gitoxide/issues/413), [#427](https://github.com/Byron/gitoxide/issues/427), [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#522](https://github.com/Byron/gitoxide/issues/522), [#63](https://github.com/Byron/gitoxide/issues/63), [#691](https://github.com/Byron/gitoxide/issues/691)
 
@@ -242,6 +266,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#691](https://github.com/Byron/gitoxide/issues/691)**
     - set `rust-version` to 1.64 ([`55066ce`](https://github.com/Byron/gitoxide/commit/55066ce5fd71209abb5d84da2998b903504584bb))
  * **Uncategorized**
+    - Release gix-date v0.4.2, gix-hash v0.10.2, gix-features v0.26.4, gix-actor v0.17.1, gix-glob v0.5.3, gix-path v0.7.1, gix-quote v0.4.1, gix-attributes v0.8.2, gix-config-value v0.10.1, gix-tempfile v3.0.2, gix-lock v3.0.2, gix-validate v0.7.2, gix-object v0.26.1, gix-ref v0.24.0, gix-sec v0.6.2, gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`6ccc88a`](https://github.com/Byron/gitoxide/commit/6ccc88a8e4a56973b1a358cf72dc012ee3c75d56))
     - Merge branch 'rename-crates' into inform-about-gix-rename ([`c9275b9`](https://github.com/Byron/gitoxide/commit/c9275b99ea43949306d93775d9d78c98fb86cfb1))
     - rename `git-testtools` to `gix-testtools` ([`b65c33d`](https://github.com/Byron/gitoxide/commit/b65c33d256cfed65d11adeff41132e3e58754089))
     - adjust to renaming of `git-pack` to `gix-pack` ([`1ee81ad`](https://github.com/Byron/gitoxide/commit/1ee81ad310285ee4aa118118a2be3810dbace574))
@@ -394,6 +419,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - All crates use git-hash::Kind and its types, sometimes through git-object ([`124c171`](https://github.com/Byron/gitoxide/commit/124c171aaf546d8977e9913ff84e65383a80ee98))
     - first incarnation of git-hash to separate concerns and resolve cycle ([`9803041`](https://github.com/Byron/gitoxide/commit/9803041c29c18f2976531c9b487e63cd90fa3e72))
 </details>
+
+<csr-unknown>
+ oid::null_sha1() replaced with Kind::null() remove ObjectId::from_borrowed_sha1() remove ObjectId::to_sha1_hex_string()Use .to_hex().to_string() instead. SIZE_OF_SHA1_DIGEST is now privateReplace it with your own constant derived fromgit_hash::Kind::Sha1.len_in_bytes() or even better, make thisvalue configurable once it’s clear how differently sized hashesare used within gits files. rename Kind::to_hex() to Kind::to_hex_with_len(); add Kind::to_hex()The latter prints the oid in full.<csr-unknown/>
 
 ## 0.10.1 (2022-12-01)
 

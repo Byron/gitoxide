@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.4.3 (2023-02-17)
+## 0.4.3 (2023-02-20)
 
 ### Bug Fixes
 
@@ -15,8 +15,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    Use the crates with the `gix-*` prefix instead.
    
    If you were using `git-repository`, then `gix` is its substitute.
+ - <csr-id-135d317065aae87af302beb6c26bb6ca8e30b6aa/> compatibility with `bstr` v1.3, use `*.as_bytes()` instead of `.as_ref()`.
+   `as_ref()` relies on a known target type which isn't always present. However, once
+   there is only one implementation, that's no problem, but when that changes compilation
+   fails due to ambiguity.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 3 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - compatibility with `bstr` v1.3, use `*.as_bytes()` instead of `.as_ref()`. ([`135d317`](https://github.com/Byron/gitoxide/commit/135d317065aae87af302beb6c26bb6ca8e30b6aa))
+</details>
 
 ## 0.4.2 (2023-02-17)
+
+<csr-id-41fc2bb20e6a926ffc3638c0fac21d733fdc2e3c/>
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+<csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/>
 
 ### Other (BREAKING)
 
@@ -88,6 +115,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
+<csr-id-dff0aa0be600b9cd9518184fefa9b3c8fdb510f2/>
+<csr-id-39655f5f6fa39a55c4420f672e866c483f9b85ed/>
+<csr-id-f4ea59db0a429801ab40b1294da4bffd9e0f80b3/>
+<csr-id-be603f593055309b74685bc2aebb8e35e6de2d59/>
+
  - <csr-id-786f6dc5c1f765b9598cd55ca8fb1714ad177e46/> prevent panics from dates which cannot be represented by the `time` crate
  - <csr-id-3d6c81000559df91b17834ec5e9830b085277af8/> panic in `parse_raw()` (as found by fuzzer)
  - <csr-id-046af94f005a6e095f0d3616c0b57ef1f556f734/> Stricter raw date parsing
@@ -95,41 +127,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    inputs that it should not have. Specifically, it would accept:
    
    - Any character for the timezone offset's sign
-   - Trailing, non-whitespace characters after the timezone offset
-   
-   Now either '+' or '-' is required for the timezone offset sign and only
-   trailing whitespace is allowed.
-   
-   Additional tests are added to cover both acceptable and unacceptable
-   inputs.
-   
-   N.B. the raw date parser is still accepting of whitespace leading, in the
-   middle of, and trailing the date string. A yet stricter parser would only
-   allow a single space character between the seconds-since-epoch and the
-   timezone offset.
- - <csr-id-dff0aa0be600b9cd9518184fefa9b3c8fdb510f2/> Parse git-styled RFC 2822 date strings
-   Git outputs RFC 2822 date strings, for example with `git log -n1
-   --pretty=%aD`, such that the day-of-month field is not zero-padded.
-   
-   The git_date::time::format::RFC2822 format description specifies
-   zero-padded day-of-month, which is perhaps truer to the RFC, but different
-   from git. Thus the RFC2822 format description is good for *formatting*, but
-   too strict for parsing.
-   
-   The time::format_description::well_known::Rfc2822 format description
-   accepts zero-padded, space-padded, and non-padded day-of-month. By
-   replacing the use of git_date::time::format::RFC2822 with
-   time::format_description::well_known::Rfc2822 in git_date::parse(), both
-   git-styled RFC 2822 and strict RFC 2822 date strings can be parsed.
- - <csr-id-39655f5f6fa39a55c4420f672e866c483f9b85ed/> Negative system timezone offsets should be serialized as such
- - <csr-id-f4ea59db0a429801ab40b1294da4bffd9e0f80b3/> correctly parse raw dates with negative timezone offsets
- - <csr-id-be603f593055309b74685bc2aebb8e35e6de2d59/> always consider timestamps as UTC when loading from commits
+- Trailing, non-whitespace characters after the timezone offset
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 185 commits contributed to the release over the course of 309 calendar days.
+ - 186 commits contributed to the release over the course of 309 calendar days.
  - 26 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 7 unique issues were worked on: [#331](https://github.com/Byron/gitoxide/issues/331), [#427](https://github.com/Byron/gitoxide/issues/427), [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#691](https://github.com/Byron/gitoxide/issues/691), [#711](https://github.com/Byron/gitoxide/issues/711), [#720](https://github.com/Byron/gitoxide/issues/720)
 
@@ -165,6 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#720](https://github.com/Byron/gitoxide/issues/720)**
     - prevent panics from dates which cannot be represented by the `time` crate ([`786f6dc`](https://github.com/Byron/gitoxide/commit/786f6dc5c1f765b9598cd55ca8fb1714ad177e46))
  * **Uncategorized**
+    - Release gix-date v0.4.2, gix-hash v0.10.2, gix-features v0.26.4, gix-actor v0.17.1, gix-glob v0.5.3, gix-path v0.7.1, gix-quote v0.4.1, gix-attributes v0.8.2, gix-config-value v0.10.1, gix-tempfile v3.0.2, gix-lock v3.0.2, gix-validate v0.7.2, gix-object v0.26.1, gix-ref v0.24.0, gix-sec v0.6.2, gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`6ccc88a`](https://github.com/Byron/gitoxide/commit/6ccc88a8e4a56973b1a358cf72dc012ee3c75d56))
     - Merge branch 'rename-crates' into inform-about-gix-rename ([`c9275b9`](https://github.com/Byron/gitoxide/commit/c9275b99ea43949306d93775d9d78c98fb86cfb1))
     - rename `git-testtools` to `gix-testtools` ([`b65c33d`](https://github.com/Byron/gitoxide/commit/b65c33d256cfed65d11adeff41132e3e58754089))
     - adjust to renaming of `git-pack` to `gix-pack` ([`1ee81ad`](https://github.com/Byron/gitoxide/commit/1ee81ad310285ee4aa118118a2be3810dbace574))
@@ -339,6 +344,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Merge branch 'main' into repo-status ([`0eb2372`](https://github.com/Byron/gitoxide/commit/0eb23721dca78f6e6bf864c5c3a3e44df8b419f0))
     - Release git-date v0.0.0 ([`2bc2f76`](https://github.com/Byron/gitoxide/commit/2bc2f765dc4f8a4779c132f7729fb782c66c0d99))
 </details>
+
+<csr-unknown>
+Now either ‘+’ or ‘-’ is required for the timezone offset sign and onlytrailing whitespace is allowed.Additional tests are added to cover both acceptable and unacceptableinputs.N.B. the raw date parser is still accepting of whitespace leading, in themiddle of, and trailing the date string. A yet stricter parser would onlyallow a single space character between the seconds-since-epoch and thetimezone offset. Parse git-styled RFC 2822 date stringsGit outputs RFC 2822 date strings, for example with git log -n1 --pretty=%aD, such that the day-of-month field is not zero-padded.The git_date::time::format::RFC2822 format description specifieszero-padded day-of-month, which is perhaps truer to the RFC, but differentfrom git. Thus the RFC2822 format description is good for formatting, buttoo strict for parsing.The time::format_description::well_known::Rfc2822 format descriptionaccepts zero-padded, space-padded, and non-padded day-of-month. Byreplacing the use of git_date::time::format::RFC2822 withtime::format_description::well_known::Rfc2822 in git_date::parse(), bothgit-styled RFC 2822 and strict RFC 2822 date strings can be parsed. Negative system timezone offsets should be serialized as such correctly parse raw dates with negative timezone offsets always consider timestamps as UTC when loading from commits<csr-unknown/>
 
 ## 0.4.1 (2023-01-10)
 

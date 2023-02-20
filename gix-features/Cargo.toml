@@ -2,7 +2,7 @@
 name = "gix-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.26.4"
+version = "0.26.5"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
 edition = "2018"
@@ -97,7 +97,7 @@ required-features = ["io-pipe"]
 [dependencies]
 #! ### Optional Dependencies
 
-gix-hash = { version = "^0.10.2", path = "../gix-hash" }
+gix-hash = { version = "^0.10.3", path = "../gix-hash" }
 
 
 
