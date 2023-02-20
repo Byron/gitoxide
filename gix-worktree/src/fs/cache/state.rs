@@ -114,7 +114,7 @@ impl Ignore {
         groups
             .iter()
             .rev()
-            .find_map(|group| group.pattern_matching_relative_path(relative_path.as_ref(), is_dir, case))
+            .find_map(|group| group.pattern_matching_relative_path(relative_path.as_bytes(), is_dir, case))
             .or(dir_match)
     }
 

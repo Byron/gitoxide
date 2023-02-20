@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use bstr::BStr;
+use bstr::{BStr, ByteSlice};
 
 use crate::{file, file::init, parse, parse::section, path::interpolate, File};
 
@@ -75,7 +75,7 @@ impl File<'static> {
                                 index: i,
                                 kind: "value",
                             })?
-                            .as_ref()
+                            .as_bytes()
                             .into(),
                     ),
                 );

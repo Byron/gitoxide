@@ -58,6 +58,7 @@ pub type TagOpt = keys::Any<validate::TagOpt>;
 mod tag_opts {
     use std::borrow::Cow;
 
+    use crate::bstr::ByteSlice;
     use crate::{bstr::BStr, config, config::tree::remote::TagOpt, remote};
 
     impl TagOpt {
@@ -72,7 +73,7 @@ mod tag_opts {
             &'static self,
             value: Cow<'_, BStr>,
         ) -> Result<remote::fetch::Tags, config::key::GenericErrorWithValue> {
-            Ok(match value.as_ref().as_ref() {
+            Ok(match value.as_ref().as_bytes() {
                 b"--tags" => remote::fetch::Tags::All,
                 b"--no-tags" => remote::fetch::Tags::None,
                 _ => return Err(config::key::GenericErrorWithValue::from_value(self, value.into_owned())),

@@ -322,7 +322,7 @@ where
     fn consume_all(res: Option<()>) -> Result<&'static BStr, Error> {
         res.ok_or(Error::Delegate).map(|_| "".into())
     }
-    match input.as_ref() {
+    match input.as_bytes() {
         [b':'] => return Err(Error::MissingColonSuffix),
         [b':', b'/'] => return Err(Error::EmptyTopLevelRegex),
         [b':', b'/', regex @ ..] => {
@@ -532,7 +532,7 @@ where
                     past_sep.and_then(|past_sep| parens(past_sep).transpose()).transpose()?
                 {
                     cursor += consumed;
-                    let target = match kind.as_ref().as_ref() {
+                    let target = match kind.as_ref().as_bytes() {
                         b"commit" => delegate::PeelTo::ObjectKind(gix_object::Kind::Commit),
                         b"tag" => delegate::PeelTo::ObjectKind(gix_object::Kind::Tag),
                         b"tree" => delegate::PeelTo::ObjectKind(gix_object::Kind::Tree),

@@ -36,7 +36,7 @@ gix-testtools = { path = "../../tests/tools"}
 gix = { path = "../../gix"}
 gix-hash = { path = "../../gix-hash"}
 filetime = "0.2.15"
-bstr = { version = "1.0.1", default-features = false }
+bstr = { version = "1.3.0", default-features = false }
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde1"]

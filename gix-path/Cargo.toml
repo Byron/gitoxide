@@ -13,7 +13,7 @@ rust-version = "1.64"
 doctest = false
 
 [dependencies]
-bstr = { version = "1.0.1", default-features = false, features = ["std"] }
+bstr = { version = "1.3.0", default-features = false, features = ["std"] }
 thiserror = "1.0.26"
 
 [dev-dependencies]

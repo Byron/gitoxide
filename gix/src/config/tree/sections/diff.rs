@@ -70,6 +70,7 @@ mod algorithm {
 mod renames {
     use std::borrow::Cow;
 
+    use crate::bstr::ByteSlice;
     use crate::config::tree::{keys, Section};
     use crate::diff::rename::Tracking;
     use crate::{
@@ -94,7 +95,7 @@ mod renames {
                 Ok(false) => Tracking::Disabled,
                 Err(err) => {
                     let value = value_string().ok_or_else(|| GenericError::from(self))?;
-                    match value.as_ref().as_ref() {
+                    match value.as_ref().as_bytes() {
                         b"copy" | b"copies" => Tracking::RenamesAndCopies,
                         _ => return Err(GenericError::from_value(self, value.into_owned()).with_source(err)),
                     }

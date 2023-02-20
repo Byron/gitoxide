@@ -75,7 +75,7 @@ fn special_exclude_cases_we_handle_differently() {
         let match_ = platform.matching_exclude_pattern().expect("match all values");
         let is_excluded = platform.is_excluded();
 
-        match relative_entry.as_ref() {
+        match relative_entry.as_bytes() {
             b"tld" | b"tld/" | b"tld/file" | b"tld/sd" | b"tld/sd/" => {
                 assert_eq!(match_.pattern.to_string(), "tld/");
             }

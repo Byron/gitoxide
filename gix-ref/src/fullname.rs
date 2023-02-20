@@ -106,7 +106,7 @@ impl FullNameRef {
     pub fn category_and_short_name(&self) -> Option<(Category<'_>, &BStr)> {
         let name = self.0.as_bstr();
         for category in &[Category::Tag, Category::LocalBranch, Category::RemoteBranch] {
-            if let Some(shortened) = name.strip_prefix(category.prefix().as_ref()) {
+            if let Some(shortened) = name.strip_prefix(category.prefix().as_bytes()) {
                 return Some((*category, shortened.as_bstr()));
             }
         }
@@ -129,14 +129,14 @@ impl FullNameRef {
 
         if is_pseudo_ref(name) {
             Some((Category::PseudoRef, name))
-        } else if let Some(shortened) = name.strip_prefix(Category::MainPseudoRef.prefix().as_ref()) {
+        } else if let Some(shortened) = name.strip_prefix(Category::MainPseudoRef.prefix().as_bytes()) {
             if shortened.starts_with_str("refs/") {
                 (Category::MainRef, shortened.as_bstr()).into()
             } else {
                 is_pseudo_ref(shortened).then(|| (Category::MainPseudoRef, shortened.as_bstr()))
             }
         } else if let Some(shortened_with_worktree_name) =
-            name.strip_prefix(Category::LinkedPseudoRef { name: "".into() }.prefix().as_ref())
+            name.strip_prefix(Category::LinkedPseudoRef { name: "".into() }.prefix().as_bytes())
         {
             let (name, shortened) = shortened_with_worktree_name.find_byte(b'/').map(|pos| {
                 (

@@ -26,4 +26,4 @@ gix-object = { path = "../../gix-object" }
 gix-testtools = { path = "../../tests/tools" }
 gix = { path = "../../gix", default-features = false }
 
-bstr = { version = "1.0.1", default-features = false, features = ["std"]}
+bstr = { version = "1.3.0", default-features = false, features = ["std"]}

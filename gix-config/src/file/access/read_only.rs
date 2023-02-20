@@ -1,6 +1,6 @@
 use std::{borrow::Cow, convert::TryFrom};
 
-use bstr::BStr;
+use bstr::{BStr, ByteSlice};
 use gix_features::threading::OwnShared;
 use smallvec::SmallVec;
 
@@ -348,6 +348,6 @@ impl<'event> File<'event> {
     }
 
     pub(crate) fn detect_newline_style_smallvec(&self) -> SmallVec<[u8; 2]> {
-        self.detect_newline_style().as_ref().into()
+        self.detect_newline_style().as_bytes().into()
     }
 }

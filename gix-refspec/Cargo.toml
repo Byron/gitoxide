@@ -17,7 +17,7 @@ gix-revision = { version = "^0.10.3", path = "../gix-revision" }
 gix-validate = { version = "^0.7.2", path = "../gix-validate" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 
-bstr = { version = "1.0.1", default-features = false, features = ["std"]}
+bstr = { version = "1.3.0", default-features = false, features = ["std"]}
 thiserror = "1.0.26"
 smallvec = "1.9.0"
 

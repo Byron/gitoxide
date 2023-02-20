@@ -73,7 +73,7 @@ mod access {
             self.name
                 .0
                 .as_bstr()
-                .strip_prefix(namespace.0.as_bstr().as_ref())
+                .strip_prefix(namespace.0.as_bytes())
                 .map(|stripped| FullNameRef::new_unchecked(stripped.as_bstr()))
         }
 

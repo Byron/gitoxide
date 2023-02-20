@@ -40,7 +40,7 @@ gix-features = { version = "^0.26.1", path = "../../gix-features" }
 gix-testtools = { path = "../../tests/tools"}
 gix-odb = { path = "../../gix-odb" }
 tempfile = "3.1.0"
-bstr = { version = "1.0.1", default-features = false, features = ["std"] }
+bstr = { version = "1.3.0", default-features = false, features = ["std"] }
 maplit = "1.0.2"
 gix-object = {  path = "../../gix-object" }
 gix-traverse = {  path = "../../gix-traverse" }

@@ -25,8 +25,9 @@ mod variant {
             value: Cow<'_, BStr>,
         ) -> Result<Option<gix_protocol::transport::client::ssh::ProgramKind>, config::key::GenericErrorWithValue>
         {
+            use crate::bstr::ByteSlice;
             use gix_protocol::transport::client::ssh::ProgramKind;
-            Ok(Some(match value.as_ref().as_ref() {
+            Ok(Some(match value.as_ref().as_bytes() {
                 b"auto" => return Ok(None),
                 b"ssh" => ProgramKind::Ssh,
                 b"plink" => ProgramKind::Plink,
