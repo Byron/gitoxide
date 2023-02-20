@@ -14,10 +14,10 @@ path = "src/main.rs"
 doctest = false
 
 [dependencies]
-git-lock = "^3.0.0"
-git-discover = "^0.12.1"
-git-attributes = "^0.8.1"
-git-worktree = "^0.12.1"
+gix-lock = "^3.0.0"
+gix-discover = "^0.13"
+gix-attributes = "^0.8.1"
+gix-worktree = "^0.12.1"
 
 nom = { version = "7", default-features = false, features = ["std"]}
 fastrand = "1.8.0"

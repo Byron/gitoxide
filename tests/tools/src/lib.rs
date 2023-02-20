@@ -53,24 +53,24 @@ impl Drop for GitDaemon {
 }
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
-static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache>>> = Lazy::new(|| {
+static EXCLUDE_LUT: Lazy<Mutex<Option<gix_worktree::fs::Cache>>> = Lazy::new(|| {
     let cache = (|| {
-        let (repo_path, _) = git_discover::upwards(Path::new(".")).ok()?;
-        let (git_dir, work_tree) = repo_path.into_repository_and_work_tree_directories();
+        let (repo_path, _) = gix_discover::upwards(Path::new(".")).ok()?;
+        let (gix_dir, work_tree) = repo_path.into_repository_and_work_tree_directories();
         let work_tree = work_tree?.canonicalize().ok()?;
 
         let mut buf = Vec::with_capacity(512);
-        let case = git_worktree::fs::Capabilities::probe(&work_tree)
+        let case = gix_worktree::fs::Capabilities::probe(&work_tree)
             .ignore_case
-            .then_some(git_attributes::glob::pattern::Case::Fold)
+            .then_some(gix_attributes::glob::pattern::Case::Fold)
             .unwrap_or_default();
-        let state = git_worktree::fs::cache::State::IgnoreStack(git_worktree::fs::cache::state::Ignore::new(
+        let state = gix_worktree::fs::cache::State::IgnoreStack(gix_worktree::fs::cache::state::Ignore::new(
             Default::default(),
-            git_attributes::MatchGroup::<git_attributes::Ignore>::from_git_dir(git_dir, None, &mut buf).ok()?,
+            gix_attributes::MatchGroup::<gix_attributes::Ignore>::from_git_dir(gix_dir, None, &mut buf).ok()?,
             None,
             case,
         ));
-        Some(git_worktree::fs::Cache::new(
+        Some(gix_worktree::fs::Cache::new(
             work_tree,
             state,
             case,
@@ -81,7 +81,7 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache>>> = Lazy::new(|| 
     Mutex::new(cache)
 });
 /// The major, minor and patch level of the git version on the system.
-pub static GIT_VERSION: Lazy<(u8, u8, u8)> = Lazy::new(|| parse_git_version().expect("git version to be parsable"));
+pub static GIT_VERSION: Lazy<(u8, u8, u8)> = Lazy::new(|| parse_gix_version().expect("git version to be parsable"));
 
 /// Define how [scripted_fixture_writable_with_args()] uses produces the writable copy.
 pub enum Creation {
@@ -106,9 +106,9 @@ pub fn should_skip_as_git_version_is_smaller_than(major: u8, minor: u8, patch: u
     *GIT_VERSION < (major, minor, patch)
 }
 
-fn parse_git_version() -> Result<(u8, u8, u8)> {
-    let git_program = cfg!(windows).then(|| "git.exe").unwrap_or("git");
-    let output = std::process::Command::new(git_program).arg("--version").output()?;
+fn parse_gix_version() -> Result<(u8, u8, u8)> {
+    let gix_program = cfg!(windows).then(|| "git.exe").unwrap_or("git");
+    let output = std::process::Command::new(gix_program).arg("--version").output()?;
 
     git_version_from_bytes(&output.stdout)
 }
@@ -197,7 +197,7 @@ pub fn spawn_git_daemon(working_dir: impl AsRef<Path>) -> std::io::Result<GitDae
         .spawn()?;
 
     let server_addr = addr_at(free_port);
-    for time in git_lock::backoff::Exponential::default_with_random() {
+    for time in gix_lock::backoff::Exponential::default_with_random() {
         std::thread::sleep(time);
         if std::net::TcpStream::connect(server_addr).is_ok() {
             break;
@@ -374,8 +374,8 @@ fn scripted_fixture_read_only_with_args_inner(
     root: DirectoryRoot,
 ) -> Result<PathBuf> {
     // Assure tempfiles get removed when aborting the test.
-    git_lock::tempfile::setup(
-        git_lock::tempfile::SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour,
+    gix_lock::tempfile::setup(
+        gix_lock::tempfile::SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour,
     );
 
     let script_location = script_name.as_ref();
@@ -420,9 +420,9 @@ fn scripted_fixture_read_only_with_args_inner(
         (false, dir)
     });
 
-    let _marker = git_lock::Marker::acquire_to_hold_resource(
+    let _marker = gix_lock::Marker::acquire_to_hold_resource(
         script_basename,
-        git_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(3 * 60)),
+        gix_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(3 * 60)),
         None,
     )?;
     let failure_marker = script_result_directory.join("_invalid_state_due_to_script_failure_");
