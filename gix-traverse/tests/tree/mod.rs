@@ -1,5 +1,7 @@
+use gix_object::bstr::BString;
 use gix_odb::pack::FindExt;
 use gix_traverse::tree;
+use gix_traverse::tree::recorder::Location;
 
 use crate::hex_to_id;
 
@@ -10,13 +12,14 @@ fn db() -> crate::Result<gix_odb::Handle> {
 }
 
 #[test]
-fn basic_nesting() -> crate::Result<()> {
+fn breadth_first_full_path() -> crate::Result<()> {
     let db = db()?;
     let mut buf = Vec::new();
     let mut buf2 = Vec::new();
     let mut commit = db
         .find_commit_iter(hex_to_id("85df34aa34848b8138b2b3dcff5fb5c2b734e0ce"), &mut buf)?
         .0;
+    // Full paths - that's the default.
     let mut recorder = tree::Recorder::default();
     gix_traverse::tree::breadthfirst(
         db.find_tree_iter(commit.tree_id().expect("a tree is available in a commit"), &mut buf2)?
@@ -93,5 +96,55 @@ fn basic_nesting() -> crate::Result<()> {
             }
         ]
     );
+    Ok(())
+}
+
+#[test]
+fn breadth_first_filename_only() -> crate::Result<()> {
+    let db = db()?;
+    let mut buf = Vec::new();
+    let mut buf2 = Vec::new();
+    let mut commit = db
+        .find_commit_iter(hex_to_id("85df34aa34848b8138b2b3dcff5fb5c2b734e0ce"), &mut buf)?
+        .0;
+    let mut recorder = tree::Recorder::default().track_location(Some(Location::FileName));
+    gix_traverse::tree::breadthfirst(
+        db.find_tree_iter(commit.tree_id().expect("a tree is available in a commit"), &mut buf2)?
+            .0,
+        tree::breadthfirst::State::default(),
+        |oid, buf| db.find_tree_iter(oid, buf).ok().map(|t| t.0),
+        &mut recorder,
+    )?;
+
+    assert_eq!(
+        recorder.records.into_iter().map(|e| e.filepath).collect::<Vec<_>>(),
+        ["a", "b", "c", "d", "e", "f", "a", "b", "c", "d", "z", "x"]
+            .into_iter()
+            .map(BString::from)
+            .collect::<Vec<_>>()
+    );
+    Ok(())
+}
+
+#[test]
+fn breadth_first_no_location() -> crate::Result<()> {
+    let db = db()?;
+    let mut buf = Vec::new();
+    let mut buf2 = Vec::new();
+    let mut commit = db
+        .find_commit_iter(hex_to_id("85df34aa34848b8138b2b3dcff5fb5c2b734e0ce"), &mut buf)?
+        .0;
+    let mut recorder = tree::Recorder::default().track_location(None);
+    gix_traverse::tree::breadthfirst(
+        db.find_tree_iter(commit.tree_id().expect("a tree is available in a commit"), &mut buf2)?
+            .0,
+        tree::breadthfirst::State::default(),
+        |oid, buf| db.find_tree_iter(oid, buf).ok().map(|t| t.0),
+        &mut recorder,
+    )?;
+
+    for path in recorder.records.into_iter().map(|e| e.filepath) {
+        assert_eq!(path, "", "path should be empty as it's not tracked at all")
+    }
     Ok(())
 }

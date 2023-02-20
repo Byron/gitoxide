@@ -6,6 +6,17 @@ use gix_object::{
 
 use crate::tree::{visit::Action, Recorder, Visit};
 
+/// Describe how to track the location of an entry.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum Location {
+    /// Track the entire path, relative to the repository.
+    Path,
+    /// Keep only the file-name as location, which may be enough for some calculations.
+    ///
+    /// This is less expensive than tracking the entire `Path`.
+    FileName,
+}
+
 /// An owned entry as observed by a call to [`visit_(tree|nontree)(…)`][Visit::visit_tree()], enhanced with the full path to it.
 /// Otherwise similar to [`gix_object::tree::EntryRef`].
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -30,6 +41,17 @@ impl Entry {
     }
 }
 
+impl Default for Recorder {
+    fn default() -> Self {
+        Recorder {
+            path_deque: Default::default(),
+            path: Default::default(),
+            location: Location::Path.into(),
+            records: vec![],
+        }
+    }
+}
+
 impl Recorder {
     fn pop_element(&mut self) {
         if let Some(pos) = self.path.rfind_byte(b'/') {
@@ -45,31 +67,64 @@ impl Recorder {
         }
         self.path.push_str(name);
     }
+}
 
-    fn path_clone(&self) -> BString {
+/// Builder
+impl Recorder {
+    /// Obtain a copy of the currently tracked, full path of the entry.
+    pub fn track_location(mut self, location: Option<Location>) -> Self {
+        self.location = location;
+        self
+    }
+}
+
+/// Access
+impl Recorder {
+    /// Obtain a copy of the currently tracked, full path of the entry.
+    pub fn path_clone(&self) -> BString {
         self.path.clone()
+    }
+
+    /// Return the currently set path.
+    pub fn path(&self) -> &BStr {
+        self.path.as_ref()
     }
 }
 
 impl Visit for Recorder {
     fn pop_front_tracked_path_and_set_current(&mut self) {
-        self.path = self
-            .path_deque
-            .pop_front()
-            .expect("every call is matched with push_tracked_path_component");
+        if let Some(Location::Path) = self.location {
+            self.path = self
+                .path_deque
+                .pop_front()
+                .expect("every call is matched with push_tracked_path_component");
+        }
     }
 
     fn push_back_tracked_path_component(&mut self, component: &BStr) {
-        self.push_element(component);
-        self.path_deque.push_back(self.path.clone());
+        if let Some(Location::Path) = self.location {
+            self.push_element(component);
+            self.path_deque.push_back(self.path.clone());
+        }
     }
 
     fn push_path_component(&mut self, component: &BStr) {
-        self.push_element(component);
+        match self.location {
+            None => {}
+            Some(Location::Path) => {
+                self.push_element(component);
+            }
+            Some(Location::FileName) => {
+                self.path.clear();
+                self.path.extend_from_slice(component);
+            }
+        }
     }
 
     fn pop_path_component(&mut self) {
-        self.pop_element();
+        if let Some(Location::Path) = self.location {
+            self.pop_element()
+        }
     }
 
     fn visit_tree(&mut self, entry: &tree::EntryRef<'_>) -> Action {
