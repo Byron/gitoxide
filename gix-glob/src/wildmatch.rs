@@ -245,7 +245,7 @@ pub(crate) mod function {
                                             .enumerate()
                                             .peekable();
                                     } else {
-                                        let class = &pattern.as_ref()[p_idx + 2..closing_bracket_idx - 1];
+                                        let class = &pattern.as_bytes()[p_idx + 2..closing_bracket_idx - 1];
                                         match class {
                                             b"alnum" => {
                                                 if t_ch.is_ascii_alphanumeric() {
