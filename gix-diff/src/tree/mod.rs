@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 
 use gix_hash::ObjectId;
+use gix_object::bstr::BString;
 use gix_object::TreeRefIter;
 
 /// The state required to visit [Changes] to be instantiated with `State::default()`.
@@ -41,7 +42,15 @@ pub mod visit;
 #[doc(inline)]
 pub use visit::Visit;
 
+/// A [Visit][visit::Visit] implementation to record every observed change and keep track of the changed paths.
+#[derive(Clone, Debug)]
+pub struct Recorder {
+    path_deque: VecDeque<BString>,
+    path: BString,
+    location: Option<recorder::Location>,
+    /// The observed changes.
+    pub records: Vec<recorder::Change>,
+}
+
 /// Useful for use as delegate implementing [`Visit`] to keep track of all seen changes. Useful for debugging or printing primarily.
 pub mod recorder;
-#[doc(inline)]
-pub use recorder::Recorder;

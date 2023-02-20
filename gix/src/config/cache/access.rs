@@ -71,10 +71,10 @@ impl Cache {
 
     pub(crate) fn diff_renames(
         &self,
-    ) -> Result<Option<crate::object::tree::diff::Renames>, crate::object::tree::diff::renames::Error> {
+    ) -> Result<Option<crate::object::tree::diff::Rewrites>, crate::object::tree::diff::rewrites::Error> {
         self.diff_renames
             .get_or_try_init(|| {
-                crate::object::tree::diff::Renames::try_from_config(&self.resolved, self.lenient_config)
+                crate::object::tree::diff::Rewrites::try_from_config(&self.resolved, self.lenient_config)
             })
             .copied()
     }

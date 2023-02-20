@@ -1,7 +1,19 @@
 use crate::bstr::BStr;
-use gix_object::tree::EntryMode;
 
 use crate::Id;
+
+/// Information about the diff performed to detect similarity of a [Rewrite][Event::Rewrite].
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+pub struct DiffLineStats {
+    /// The amount of lines to remove from the source to get to the destination.
+    pub removals: u32,
+    /// The amount of lines to add to the source to get to the destination.
+    pub insertions: u32,
+    /// The amount of lines of the previous state, in the source.
+    pub before: u32,
+    /// The amount of lines of the new state, in the destination.
+    pub after: u32,
+}
 
 /// An event emitted when finding differences between two trees.
 #[derive(Debug, Clone, Copy)]
@@ -33,12 +45,17 @@ pub enum Event<'a, 'old, 'new> {
         /// The object id after the modification.
         id: Id<'new>,
     },
-    /// Entries are considered renamed if they are not trees and they, according to some understanding of identity, appeared
-    /// as [`Deletion`][Event::Deletion] in case of the previous source of the rename as well as [`Addition`][Event::Addition]
-    /// acting as destination all the while [rename tracking][super::Platform::track_renames()] is enabled.
+    /// Entries are considered rewritten if they are not trees and they, according to some understanding of identity, were renamed
+    /// or copied.
+    /// In case of renames, this means they originally appeared as [`Deletion`][Event::Deletion] signalling their source as well as an
+    /// [`Addition`][Event::Addition] acting as destination.
+    ///
+    /// In case of copies, the `copy` flag is true and typically represents a perfect copy of a source was made.
+    ///
+    /// This variant can only be encountered if [rewrite tracking][super::Platform::track_rewrites()] is enabled.
     ///
     /// Note that mode changes may have occurred as well, i.e. changes from executable to non-executable or vice-versa.
-    Rename {
+    Rewrite {
         /// The location of the source of the rename operation.
         ///
         /// It may be empty if neither [file names][super::Platform::track_filename()] nor [file paths][super::Platform::track_path()]
@@ -48,40 +65,20 @@ pub enum Event<'a, 'old, 'new> {
         source_entry_mode: gix_object::tree::EntryMode,
         /// The object id of the entry before the rename.
         ///
-        /// Note that this is the same as `id` if we require the [similarity to be 100%][super::Renames::percentage], but may
+        /// Note that this is the same as `id` if we require the [similarity to be 100%][super::Rewrites::percentage], but may
         /// be different otherwise.
         source_id: Id<'old>,
-
+        /// Information about the diff we performed to detect similarity and match the `source_id` with the current state at `id`.
+        /// It's `None` if `source_id` is equal to `id`, as identity made an actual diff computation unnecessary.
+        diff: Option<DiffLineStats>,
         /// The mode of the entry after the rename.
         /// It could differ but still be considered a rename as we are concerned only about content.
         entry_mode: gix_object::tree::EntryMode,
         /// The object id after the rename.
         id: Id<'new>,
-    },
-    /// This entry is considered to be a copy of another, according to some understanding of identity, as its source still exists.
-    /// If the source wouldn't exist, it would be considered a [rename][Event::Rename].
-    ///
-    /// This variant may only occur if [rename tracking][super::Platform::track_renames()] is enabled, otherwise copies appear to be
-    /// plain [additions][Event::Addition].
-    Copy {
-        /// The location of the source of the copy operation.
-        ///
-        /// It may be empty if neither [file names][super::Platform::track_filename()] nor [file paths][super::Platform::track_path()]
-        /// are tracked.
-        source_location: &'a BStr,
-        /// The mode of the entry that is considered the source.
-        source_entry_mode: gix_object::tree::EntryMode,
-        /// The object id of the source of the copy.
-        ///
-        /// Note that this is the same as `id` if we require the [similarity to be 100%][super::Renames::percentage], but may
-        /// be different otherwise.
-        source_id: Id<'old>,
-
-        /// The mode of the entry after the copy, or the destination of it.
-        /// It could differ but still be considered a copy as we are concerned only about content.
-        entry_mode: gix_object::tree::EntryMode,
-        /// The object id after the copy, or the destination of it.
-        id: Id<'new>,
+        /// If true, this rewrite is created by copy, and `source_id` is pointing to its source. Otherwise it's a rename, and `source_id`
+        /// points to a deleted object, as renames are tracked as deletions and additions of the same or similar content.
+        copy: bool,
     },
 }
 
@@ -93,11 +90,13 @@ impl<'a, 'old, 'new> Event<'a, 'old, 'new> {
     ) -> Option<Result<crate::object::blob::diff::Platform<'old, 'new>, crate::object::blob::diff::init::Error>> {
         match self {
             Event::Modification {
-                previous_entry_mode: EntryMode::BlobExecutable | EntryMode::Blob,
+                previous_entry_mode,
                 previous_id,
-                entry_mode: EntryMode::BlobExecutable | EntryMode::Blob,
+                entry_mode,
                 id,
-            } => Some(crate::object::blob::diff::Platform::from_ids(previous_id, id)),
+            } if entry_mode.is_blob() && previous_entry_mode.is_blob() => {
+                Some(crate::object::blob::diff::Platform::from_ids(previous_id, id))
+            }
             _ => None,
         }
     }
@@ -108,8 +107,7 @@ impl<'a, 'old, 'new> Event<'a, 'old, 'new> {
             Event::Addition { entry_mode, .. }
             | Event::Deletion { entry_mode, .. }
             | Event::Modification { entry_mode, .. }
-            | Event::Rename { entry_mode, .. } => *entry_mode,
-            Event::Copy { entry_mode, .. } => *entry_mode,
+            | Event::Rewrite { entry_mode, .. } => *entry_mode,
         }
     }
 }

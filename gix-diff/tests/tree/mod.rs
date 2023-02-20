@@ -1,5 +1,6 @@
 mod changes {
     mod to_obtain_tree {
+        use gix_diff::tree::recorder::Location;
         use gix_diff::tree::{recorder, recorder::Change::*};
         use gix_hash::{oid, ObjectId};
         use gix_object::{bstr::ByteSlice, tree::EntryMode, TreeRefIter};
@@ -40,14 +41,19 @@ mod changes {
                 .expect("id to be a tree"))
         }
 
-        fn diff_commits(db: &gix_odb::Handle, lhs: impl Into<Option<ObjectId>>, rhs: &oid) -> crate::Result<Changes> {
+        fn diff_commits(
+            db: &gix_odb::Handle,
+            lhs: impl Into<Option<ObjectId>>,
+            rhs: &oid,
+            location: Option<Location>,
+        ) -> crate::Result<Changes> {
             let mut buf = Vec::new();
             let lhs_tree = lhs
                 .into()
                 .and_then(|lhs| locate_tree_by_commit(db, &lhs, &mut buf).ok());
             let mut buf2 = Vec::new();
             let rhs_tree = locate_tree_by_commit(db, rhs, &mut buf2)?;
-            let mut recorder = gix_diff::tree::Recorder::default();
+            let mut recorder = gix_diff::tree::Recorder::default().track_location(location);
             gix_diff::tree::Changes::from(lhs_tree).needed_to_obtain(
                 rhs_tree,
                 gix_diff::tree::State::default(),
@@ -512,23 +518,24 @@ mod changes {
                 diff_commits(
                     &db,
                     all_commits[0].to_owned(),
-                    all_commits.last().expect("we have many commits")
+                    all_commits.last().expect("we have many commits"),
+                    None
                 )?,
                 vec![
                     Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "b".into()
+                        path: "".into()
                     },
                     Addition {
                         entry_mode: EntryMode::Tree,
                         oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
-                        path: "g".into()
+                        path: "".into()
                     },
                     Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "g/a".into()
+                        path: "".into()
                     }
                 ]
             );
@@ -536,7 +543,8 @@ mod changes {
                 diff_commits(
                     &db,
                     all_commits.last().expect("we have many commits").to_owned(),
-                    &all_commits[0]
+                    &all_commits[0],
+                    Location::FileName.into()
                 )?,
                 vec![
                     Deletion {
@@ -552,7 +560,7 @@ mod changes {
                     Deletion {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "g/a".into()
+                        path: "a".into()
                     }
                 ]
             );
@@ -565,7 +573,12 @@ mod changes {
             let all_commits = all_commits(&db);
 
             assert_eq!(
-                diff_commits(&db, None::<ObjectId>, &all_commits[all_commits.len() - 6])?,
+                diff_commits(
+                    &db,
+                    None::<ObjectId>,
+                    &all_commits[all_commits.len() - 6],
+                    Some(Location::Path)
+                )?,
                 vec![
                     Addition {
                         entry_mode: EntryMode::Tree,

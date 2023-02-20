@@ -604,7 +604,19 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
     * **diffs/changes**
         * [x] tree with other tree
            * [ ] respect case-sensitivity of host filesystem.
-           * [ ] a way to access various diff related settings or use them
+           * [x] a way to access various diff related settings or use them
+           * **rewrite tracking**
+              * **deviation** - git keeps up to four candidates whereas we use the first-found candidate that matches the similarity percentage.
+                                This can lead to different sources being found. As such, we also don't consider the filename at all.
+              * [ ] handle binary files correctly, and apply filters for that matter
+              * [x] computation limit with observable reduction of precision when it is hit, for copies and renames separately
+              * **by identity** 
+                 * [x] renames (sym-links are only ever compared by identity)
+                 * [x] copies
+              * **by similarity** - similarity factor controllable separately from renames
+                 * [x] renames
+                 * [x] copies
+              * [x] 'find-copies-harder' - find copies with the source being the entire tree.
         * [ ] tree with working tree
         * [x] diffs between modified blobs with various algorithms
         * [ ] tree with index

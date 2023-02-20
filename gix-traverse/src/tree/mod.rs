@@ -28,10 +28,14 @@ pub trait Visit {
 }
 
 /// A [Visit][Visit] implementation to record every observed change and keep track of the changed paths.
-#[derive(Clone, Debug, Default)]
+///
+/// Recorders can also be instructed to track the filename only, or no location at all.
+#[derive(Clone, Debug)]
 pub struct Recorder {
     path_deque: VecDeque<BString>,
     path: BString,
+    /// How to track the location.
+    location: Option<recorder::Location>,
     /// The observed entries.
     pub records: Vec<recorder::Entry>,
 }
