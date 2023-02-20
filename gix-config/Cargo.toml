@@ -22,7 +22,7 @@ gix-config-value = { version = "^0.10.1", path = "../gix-config-value" }
 gix-path = { version = "^0.7.1", path = "../gix-path" }
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }
 gix-ref = { version = "^0.24.0", path = "../gix-ref" }
-gix-glob = { version = "^0.5.3", path = "../gix-glob" }
+gix-glob = { version = "^0.5.4", path = "../gix-glob" }
 
 nom = { version = "7", default_features = false, features = [ "std" ] }
 memchr = "2"

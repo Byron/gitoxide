@@ -117,7 +117,7 @@ gix-mailmap = { version = "^0.9.2", path = "../gix-mailmap" }
 gix-features = { version = "^0.26.4", path = "../gix-features", features = ["progress", "once_cell"] }
 
 gix-attributes = { version = "^0.8.2", path = "../gix-attributes" }
-gix-glob = { version = "^0.5.3", path = "../gix-glob" }
+gix-glob = { version = "^0.5.4", path = "../gix-glob" }
 gix-credentials = { version = "^0.9.1", path = "../gix-credentials" }
 gix-prompt = { version = "^0.3.2", path = "../gix-prompt" }
 gix-index = { version = "^0.12.3", path = "../gix-index" }

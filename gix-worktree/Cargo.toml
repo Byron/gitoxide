@@ -33,7 +33,7 @@ internal-testing-to-avoid-being-run-by-cargo-test-all = []
 gix-index = { version = "^0.12.3", path = "../gix-index" }
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
 gix-object = { version = "^0.26.1", path = "../gix-object" }
-gix-glob = { version = "^0.5.3", path = "../gix-glob" }
+gix-glob = { version = "^0.5.4", path = "../gix-glob" }
 gix-path = { version = "^0.7.1", path = "../gix-path" }
 gix-attributes = { version = "^0.8.2", path = "../gix-attributes" }
 gix-features = { version = "^0.26.4", path = "../gix-features" }
