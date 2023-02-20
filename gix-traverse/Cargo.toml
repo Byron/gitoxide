@@ -1,6 +1,6 @@
 [package]
 name = "gix-traverse"
-version = "0.22.1"
+version = "0.22.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project"
@@ -15,6 +15,6 @@ doctest = false
 
 [dependencies]
 gix-hash = { version = "^0.10.2", path = "../gix-hash" }
-gix-object = { version = "^0.26.1", path = "../gix-object" }
+gix-object = { version = "^0.26.3", path = "../gix-object" }
 gix-hashtable = { version = "^0.1.1", path = "../gix-hashtable" }
 thiserror = "1.0.32"

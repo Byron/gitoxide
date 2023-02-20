@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.37.0 (2023-02-20)
+
+### Bug Fixes
+
+ - <csr-id-d3b974000133caa0ea107cb4724b950eda91d69b/> `Repository::object_cache_size()` now unsets the cache if `Some(0)` is passed.
+   Previously it would fail.
+
+### New Features (BREAKING)
+
+ - <csr-id-ed87f4c7c2799625bc6c7109368687908f0fb6f0/> `object::tree::diff::Platform::track_rewrites(...)`
+   The invocation of `object::tree::diff::Platform::track_rewrites(Rewrites { percentage: None, ..Default::default() })`
+   is now able to explicitly configure perfect rename tracking without percentage of equivalence.
+   
+   By setting `percentage = Some(<fraction>)` one can set how similar both files should be to be considered related.
+   
+   The same can be configured for copy-tracking, which also includes something like `--find-copies-harder`.
+   
+   Note that by default, renames are considered if a file looks 50% similar, and copies tracking is
+   using the same convention.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - `Repository::object_cache_size()` now unsets the cache if `Some(0)` is passed. ([`d3b9740`](https://github.com/Byron/gitoxide/commit/d3b974000133caa0ea107cb4724b950eda91d69b))
+    - Merge branch 'rename-tracking' ([`35415c5`](https://github.com/Byron/gitoxide/commit/35415c5061bf5ea90a04db80d06ac3622d0b0f1a))
+    - `object::tree::diff::Platform::track_rewrites(...)` ([`ed87f4c`](https://github.com/Byron/gitoxide/commit/ed87f4c7c2799625bc6c7109368687908f0fb6f0))
+</details>
+
 ## 0.36.1 (2023-02-20)
 
 ### Bug Fixes
@@ -18,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 2 calendar days.
+ - 5 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -30,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix v0.36.1 ([`fac6bce`](https://github.com/Byron/gitoxide/commit/fac6bce2f9942d7f333f66a92374d5400a00b0a5))
     - Release gix-date v0.4.3, gix-hash v0.10.3, gix-features v0.26.5, gix-actor v0.17.2, gix-glob v0.5.5, gix-path v0.7.2, gix-quote v0.4.2, gix-attributes v0.8.3, gix-validate v0.7.3, gix-object v0.26.2, gix-ref v0.24.1, gix-config v0.16.2, gix-command v0.2.4, gix-url v0.13.3, gix-credentials v0.9.2, gix-discover v0.13.1, gix-index v0.12.4, gix-mailmap v0.9.3, gix-pack v0.30.3, gix-packetline v0.14.3, gix-transport v0.25.6, gix-protocol v0.26.4, gix-revision v0.10.4, gix-refspec v0.7.3, gix-worktree v0.12.3, gix v0.36.1 ([`9604783`](https://github.com/Byron/gitoxide/commit/96047839a20a657a559376b0b14c65aeab96acbd))
     - compatibility with `bstr` v1.3, use `*.as_bytes()` instead of `.as_ref()`. ([`135d317`](https://github.com/Byron/gitoxide/commit/135d317065aae87af302beb6c26bb6ca8e30b6aa))
     - Release gix-glob v0.5.4 ([`c56d336`](https://github.com/Byron/gitoxide/commit/c56d3365fde21120cf6101cf34f8b5669804977c))
