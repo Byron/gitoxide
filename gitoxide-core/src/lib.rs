@@ -73,6 +73,8 @@ pub mod mailmap;
 #[cfg(feature = "organize")]
 pub mod organize;
 pub mod pack;
+#[cfg(feature = "query")]
+pub mod query;
 pub mod repository;
 
 #[cfg(all(feature = "async-client", feature = "blocking-client"))]

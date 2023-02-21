@@ -291,5 +291,20 @@ mod clap {
             Some(Box::new([PossibleValue::new("SHA1")].into_iter()))
         }
     }
+
+    use clap::builder::{OsStringValueParser, TypedValueParser};
+
+    #[derive(Clone)]
+    pub struct AsPathSpec;
+
+    impl TypedValueParser for AsPathSpec {
+        type Value = gix::path::Spec;
+
+        fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
+            OsStringValueParser::new()
+                .try_map(|arg| gix::path::Spec::try_from(arg.as_os_str()))
+                .parse_ref(cmd, arg, value)
+        }
+    }
 }
-pub use self::clap::{AsBString, AsHashKind, AsOutputFormat};
+pub use self::clap::{AsBString, AsHashKind, AsOutputFormat, AsPathSpec};

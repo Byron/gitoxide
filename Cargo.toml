@@ -43,14 +43,14 @@ prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-cro
 #! These combine common choices of the above features to represent typical builds
 
 ## *fast* + *prodash-render-tui-crossterm* + *prodash-render-line-crossterm* + *http* + *gitoxide-core-tools* + *client-networking*
-max = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure", "gix/regex" ]
+max = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools-query", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure", "gix/regex" ]
 
 ## *fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-networking*.
-lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line" ]
+lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools-query", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line" ]
 ## fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-async-networking*.
 ## Due to async client-networking not being implemented for most transports, this one supports only the 'git' transport.
 ## It uses, however, a fully asynchronous networking implementation which can serve a real-world example on how to implement custom async transports.
-lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-async-client", "prodash-render-line"]
+lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-tools-query", "gitoxide-core-async-client", "prodash-render-line"]
 
 ## As small as it can possibly be, no threading, no fast sha1, line progress only, rust based zlib implementation.
 ## no networking, local operations only.
@@ -63,6 +63,9 @@ max-pure = ["pretty-cli", "gix-features/rustsha1", "gix-features/zlib-rust-backe
 
 ##  A way to enable all `gitoxide-core` tools found in `gix tools`
 gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
+
+## A program to perform analytics on a git repository, using an auto-maintained sqlite database
+gitoxide-core-tools-query = ["gitoxide-core-tools", "gitoxide-core/query"]
 
 #! #### Mutually Exclusive Networking
 #! If both are set a compile error is triggered. This also means that `cargo … --all-features` will fail.
