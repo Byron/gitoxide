@@ -40,6 +40,8 @@ nix-shell-macos: ## Enter a nix-shell able to build on macos
 
 tests: clippy check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests journey-tests-smart-release ## run all tests, including journey tests, try building docs
 
+tests-ci: check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests journey-tests-smart-release ## run all tests, without clippy, including journey tests, try building docs
+
 audit: ## run various auditing tools to assure we are legal and safe
 	cargo deny check advisories bans licenses sources
 

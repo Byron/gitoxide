@@ -51,7 +51,7 @@ jobs:
     - name: test
       env:
         CI: true
-      run: make tests
+      run: make tests-ci
 
   test-fast:
     strategy:
@@ -121,7 +121,7 @@ jobs:
           toolchain: 1.65 # clippy is broken for us in 1.66
           components: clippy,rustfmt
       - name: Run cargo clippy
-        run: cargo clippy --all --tests
+        run: make clippy
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
       - name: Run cargo diet
