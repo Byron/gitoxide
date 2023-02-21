@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.16.3 (2023-02-21)
 
 A maintenance release to restore MSRV (1.64) support.
 
@@ -13,7 +13,7 @@ A maintenance release to restore MSRV (1.64) support.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -24,6 +24,7 @@ A maintenance release to restore MSRV (1.64) support.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs prior to release ([`362d659`](https://github.com/Byron/gitoxide/commit/362d659f946ca1ff2cbf915766113a34a9df97b3))
     - restore msrv compatibility by removing sole `if let ... else` ([`9160659`](https://github.com/Byron/gitoxide/commit/91606597b714a6e9b3a2c071bdb08baeacd6056b))
 </details>
 
@@ -2086,7 +2087,7 @@ This is a maintenance release without functional changes.
  - _None._
 
 <csr-unknown>
-lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
+lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
 <csr-unknown/>
 
 ## v0.1.1 (2021-05-09)
