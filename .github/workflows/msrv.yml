@@ -22,5 +22,3 @@ jobs:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@1.64.0 # dictated by `windows` crates effectively, IMPORTANT: adjust etc/msrv-badge.svg as well
       - run: make check-msrv-on-ci
-        continue-on-error: true # TODO: turn this off once the toolchain gets updated. There is a strange error preventing cargo to select the correct libgit2 version
-                                #       like it doesn't exist.
