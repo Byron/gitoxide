@@ -84,9 +84,10 @@ impl<'event> Body<'event> {
 
     /// Returns an iterator visiting all keys in order.
     pub fn keys(&self) -> impl Iterator<Item = &Key<'event>> {
-        self.0
-            .iter()
-            .filter_map(|e| if let Event::SectionKey(k) = e { Some(k) } else { None })
+        self.0.iter().filter_map(|e| match e {
+            Event::SectionKey(k) => Some(k),
+            _ => None,
+        })
     }
 
     /// Returns true if the section contains the provided key.

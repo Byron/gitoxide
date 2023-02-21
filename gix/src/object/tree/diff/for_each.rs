@@ -132,8 +132,9 @@ where
     }
 
     fn process_tracked_changes(&mut self) -> Result<Option<rewrites::Outcome>, Error> {
-        let Some(tracked) = self.tracked.as_mut() else {
-            return Ok(None)
+        let tracked = match self.tracked.as_mut() {
+            Some(t) => t,
+            None => return Ok(None),
         };
 
         let outcome = tracked.emit(
@@ -201,8 +202,8 @@ where
     }
 
     fn visit(&mut self, change: gix_diff::tree::visit::Change) -> gix_diff::tree::visit::Action {
-        if let Some(tracked) = self.tracked.as_mut() {
-            tracked
+        match self.tracked.as_mut() {
+            Some(tracked) => tracked
                 .try_push_change(change, self.recorder.path())
                 .map(|change| {
                     Self::emit_change(
@@ -214,16 +215,15 @@ where
                         &mut self.err,
                     )
                 })
-                .unwrap_or(gix_diff::tree::visit::Action::Continue)
-        } else {
-            Self::emit_change(
+                .unwrap_or(gix_diff::tree::visit::Action::Continue),
+            None => Self::emit_change(
                 change,
                 self.recorder.path(),
                 &mut self.visit,
                 self.src_tree.repo,
                 self.other_repo,
                 &mut self.err,
-            )
+            ),
         }
     }
 }
