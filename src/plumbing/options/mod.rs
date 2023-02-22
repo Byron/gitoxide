@@ -253,7 +253,7 @@ pub mod tree {
             #[clap(long, short = 'e')]
             extended: bool,
 
-            /// The tree to traverse, or the tree at `HEAD` if unspecified.
+            /// The revspec of the tree to traverse, or the tree at `HEAD` if unspecified.
             treeish: Option<String>,
         },
         /// Provide information about a tree.
@@ -261,7 +261,7 @@ pub mod tree {
             /// Provide files size as well. This is expensive as the object is decoded entirely.
             #[clap(long, short = 'e')]
             extended: bool,
-            /// The tree to traverse, or the tree at `HEAD` if unspecified.
+            /// The revspec of the tree to traverse, or the tree at `HEAD` if unspecified.
             treeish: Option<String>,
         },
     }
