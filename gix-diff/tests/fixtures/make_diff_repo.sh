@@ -94,3 +94,10 @@ rm g/aa
 touch g/a
 git add g/a
 git commit -qam 'rm g/aa, add g/a'
+
+rm -Rf ./* && mkdir git-sec gix && touch a git-sec/2 git-sequencer h gix/5 && git add .
+git commit -am "clear slate"
+
+git mv git-sec gix-sec && git commit -m "interesting rename 1"
+
+git mv gix-sec git-sec && git commit -m "interesting rename 2"
