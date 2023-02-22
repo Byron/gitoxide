@@ -278,7 +278,12 @@ impl section::Segment {
                 for (category, messages) in commits_by_category.iter() {
                     writeln!(out, " * **{}**", format_category(category, link_mode))?;
                     for message in messages {
-                        writeln!(out, "    - {} ({})", message.title, format_oid(&message.id, link_mode))?;
+                        writeln!(
+                            out,
+                            "    - {} ({})",
+                            capitalize_message_title(&message.title),
+                            format_oid(&message.id, link_mode)
+                        )?;
                     }
                 }
                 if write_details_tags {
@@ -390,4 +395,10 @@ fn format_oid(id: &gix::oid, link_mode: &Linkables) -> String {
             None => format_oid(id, &Linkables::AsText),
         },
     }
+}
+
+fn capitalize_message_title(title: &String) -> String {
+    let mut v: Vec<char> = title.chars().collect();
+    v[0] = v[0].to_uppercase().nth(0).unwrap();
+    v.into_iter().collect()
 }
