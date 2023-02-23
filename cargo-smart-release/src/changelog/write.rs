@@ -1,4 +1,5 @@
 use gix::{bstr::ByteSlice, url::Scheme, Url};
+use std::borrow::Cow;
 
 use crate::{
     changelog,
@@ -278,7 +279,12 @@ impl section::Segment {
                 for (category, messages) in commits_by_category.iter() {
                     writeln!(out, " * **{}**", format_category(category, link_mode))?;
                     for message in messages {
-                        writeln!(out, "    - {} ({})", message.title, format_oid(&message.id, link_mode))?;
+                        writeln!(
+                            out,
+                            "    - {} ({})",
+                            capitalize_message_title(&message.title),
+                            format_oid(&message.id, link_mode)
+                        )?;
                     }
                 }
                 if write_details_tags {
@@ -390,4 +396,16 @@ fn format_oid(id: &gix::oid, link_mode: &Linkables) -> String {
             None => format_oid(id, &Linkables::AsText),
         },
     }
+}
+
+fn capitalize_message_title<'a>(title: impl Into<Cow<'a, str>>) -> Cow<'a, str> {
+    let mut title = title.into();
+    let mut chars = title.chars();
+    if let Some(first) = chars
+        .next()
+        .and_then(|c| (c.to_uppercase().next() != Some(c)).then_some(c))
+    {
+        *title.to_mut() = first.to_uppercase().chain(chars).collect();
+    }
+    title
 }

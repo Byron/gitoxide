@@ -129,7 +129,7 @@ fn all_section_types_round_trips_lossy() -> Result {
                                         id: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                                     },
                                     section::segment::details::Message {
-                                        title: "title and body".into(),
+                                        title: "Title and body".into(),
                                         id: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5392"),
                                     },
                                 ],
@@ -142,7 +142,7 @@ fn all_section_types_round_trips_lossy() -> Result {
                                         id: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5392"),
                                     },
                                     section::segment::details::Message {
-                                        title: "another title".into(),
+                                        title: "Another title".into(),
                                         id: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                                     },
                                 ],
