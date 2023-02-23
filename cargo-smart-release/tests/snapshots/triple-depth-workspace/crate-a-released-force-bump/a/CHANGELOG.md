@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Initial (89b3920)
+    - Initial (b07fabe)
 </details>
 
 ## v0.8.0 (2021-09-09)
