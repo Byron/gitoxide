@@ -1,4 +1,5 @@
 use gix::{bstr::ByteSlice, url::Scheme, Url};
+use std::borrow::Cow;
 
 use crate::{
     changelog,
@@ -397,8 +398,14 @@ fn format_oid(id: &gix::oid, link_mode: &Linkables) -> String {
     }
 }
 
-fn capitalize_message_title(title: &String) -> String {
-    let mut v: Vec<char> = title.chars().collect();
-    v[0] = v[0].to_uppercase().nth(0).unwrap();
-    v.into_iter().collect()
+fn capitalize_message_title<'a>(title: impl Into<Cow<'a, str>>) -> Cow<'a, str> {
+    let mut title = title.into();
+    let mut chars = title.chars();
+    if let Some(first) = chars
+        .next()
+        .and_then(|c| (c.to_uppercase().next() != Some(c)).then_some(c))
+    {
+        *title.to_mut() = first.to_uppercase().chain(chars).collect();
+    }
+    title
 }
