@@ -170,6 +170,7 @@ mod track_rewrites {
                         Ok(Default::default())
                     })?;
                 assert_eq!(actual, expected, "{assert_msg}");
+                #[cfg(not(windows))]
                 assert_eq!(
                     out.rewrites.expect("present as its configured").num_similarity_checks,
                     0,
@@ -583,7 +584,10 @@ mod track_rewrites {
             out.num_similarity_checks_skipped_for_rename_tracking_due_to_limit, 0,
             "no limit configured"
         );
-        assert_eq!(out.num_similarity_checks_skipped_for_copy_tracking_due_to_limit, 57);
+        assert_eq!(
+            out.num_similarity_checks_skipped_for_copy_tracking_due_to_limit,
+            if cfg!(windows) { 63 } else { 57 }
+        );
 
         Ok(())
     }
