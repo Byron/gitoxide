@@ -253,7 +253,7 @@ pub mod tree {
             #[clap(long, short = 'e')]
             extended: bool,
 
-            /// The tree to traverse, or the tree at `HEAD` if unspecified.
+            /// The revspec of the tree to traverse, or the tree at `HEAD` if unspecified.
             treeish: Option<String>,
         },
         /// Provide information about a tree.
@@ -261,7 +261,7 @@ pub mod tree {
             /// Provide files size as well. This is expensive as the object is decoded entirely.
             #[clap(long, short = 'e')]
             extended: bool,
-            /// The tree to traverse, or the tree at `HEAD` if unspecified.
+            /// The revspec of the tree to traverse, or the tree at `HEAD` if unspecified.
             treeish: Option<String>,
         },
     }
@@ -355,7 +355,7 @@ pub mod revision {
 pub mod exclude {
     use std::ffi::OsString;
 
-    use super::AsPathSpec;
+    use crate::shared::AsPathSpec;
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -402,26 +402,3 @@ pub mod index {
 
 ///
 pub mod free;
-
-mod clap_util {
-    use std::ffi::OsStr;
-
-    use clap::{
-        builder::{OsStringValueParser, TypedValueParser},
-        Arg, Command, Error,
-    };
-
-    #[derive(Clone)]
-    pub struct AsPathSpec;
-
-    impl TypedValueParser for AsPathSpec {
-        type Value = gix::path::Spec;
-
-        fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
-            OsStringValueParser::new()
-                .try_map(|arg| gix::path::Spec::try_from(arg.as_os_str()))
-                .parse_ref(cmd, arg, value)
-        }
-    }
-}
-use clap_util::AsPathSpec;

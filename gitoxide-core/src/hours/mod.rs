@@ -57,10 +57,7 @@ where
     let commit_id = repo.rev_parse_single(rev_spec)?.detach();
     let mut string_heap = BTreeSet::<&'static [u8]>::new();
     let needs_stats = file_stats || line_stats;
-    let threads = {
-        let t = threads.unwrap_or_else(num_cpus::get);
-        (t == 0).then(num_cpus::get_physical).unwrap_or(t)
-    };
+    let threads = gix::features::parallel::num_threads(threads);
 
     let (commit_authors, stats, is_shallow, skipped_merge_commits) = {
         let stat_progress = needs_stats.then(|| progress.add_child("extract stats")).map(|mut p| {
@@ -236,6 +233,8 @@ where
                                                                 (true, true) => {
                                                                     files.modified += 1;
                                                                     if line_stats {
+                                                                        // TODO: replace this with proper git-attributes - this isn't
+                                                                        //       really working, can't see shell scripts for example.
                                                                         let is_text_file = mime_guess::from_path(
                                                                             gix::path::from_bstr(change.location)
                                                                                 .as_ref(),

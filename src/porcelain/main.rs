@@ -26,6 +26,8 @@ pub fn main() -> Result<()> {
     })?;
     let verbose = !args.quiet;
     let progress = args.progress;
+    #[cfg(feature = "gitoxide-core-tools")]
+    let threads = args.threads;
     let progress_keep_open = args.progress_keep_open;
 
     match args.cmd {
@@ -41,16 +43,51 @@ pub fn main() -> Result<()> {
         Subcommands::Init { directory } => core::repository::init(directory).map(|_| ()),
         #[cfg(feature = "gitoxide-core-tools")]
         Subcommands::Tool(tool) => match tool {
-            crate::porcelain::options::ToolCommands::EstimateHours(crate::porcelain::options::EstimateHours {
-                working_dir,
-                rev_spec,
-                no_bots,
-                threads,
-                file_stats,
-                line_stats,
-                show_pii,
-                omit_unify_identities,
+            #[cfg(feature = "gitoxide-core-tools-query")]
+            crate::porcelain::options::ToolCommands::Query(crate::porcelain::options::tools::Query {
+                object_cache_size_mb,
+                find_copies_harder,
+                repo_dir,
+                cmd,
             }) => {
+                use gitoxide_core::query;
+                prepare_and_run(
+                    "query",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    crate::shared::STANDARD_RANGE,
+                    move |mut progress, out, err| {
+                        let engine = query::prepare(
+                            &repo_dir,
+                            &mut progress,
+                            query::Options {
+                                object_cache_size_mb,
+                                find_copies_harder,
+                                threads,
+                            },
+                        )?;
+                        match cmd {
+                            None => writeln!(err, "Choose a command for the query engine")?,
+                            Some(crate::porcelain::options::tools::query::Command::TracePath { path }) => {
+                                engine.run(query::Command::TracePath { spec: path }, out, progress)?;
+                            }
+                        }
+                        Ok(())
+                    },
+                )
+            }
+            crate::porcelain::options::ToolCommands::EstimateHours(
+                crate::porcelain::options::tools::EstimateHours {
+                    working_dir,
+                    rev_spec,
+                    no_bots,
+                    file_stats,
+                    line_stats,
+                    show_pii,
+                    omit_unify_identities,
+                },
+            ) => {
                 use gitoxide_core::hours;
                 prepare_and_run(
                     "estimate-hours",

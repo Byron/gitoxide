@@ -85,6 +85,7 @@ impl<'a> PartialOrd for EntryRef<'a> {
 
 impl<'a> Ord for EntryRef<'a> {
     /// Entries compare by the common portion of the filename. This is critical for proper functioning of algorithms working on trees.
+    /// Doing it like this is needed for compatibility with older, potentially broken(?) trees.
     fn cmp(&self, other: &Self) -> Ordering {
         let len = self.filename.len().min(other.filename.len());
         self.filename[..len].cmp(&other.filename[..len])

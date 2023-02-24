@@ -1,6 +1,7 @@
 use std::{borrow::BorrowMut, collections::VecDeque};
 
 use gix_hash::{oid, ObjectId};
+use gix_object::tree::EntryRef;
 
 use crate::{
     tree,
@@ -107,7 +108,7 @@ impl<'a> tree::Changes<'a> {
                 (Some(lhs), Some(rhs)) => {
                     use std::cmp::Ordering::*;
                     let (lhs, rhs) = (lhs?, rhs?);
-                    match lhs.filename.cmp(rhs.filename) {
+                    match compare(&lhs, &rhs) {
                         Equal => handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, &mut state.trees, delegate)?,
                         Less => catchup_lhs_with_rhs(&mut lhs_entries, lhs, rhs, &mut state.trees, delegate)?,
                         Greater => catchup_rhs_with_lhs(&mut rhs_entries, lhs, rhs, &mut state.trees, delegate)?,
@@ -126,8 +127,17 @@ impl<'a> tree::Changes<'a> {
     }
 }
 
+fn compare(a: &EntryRef<'_>, b: &EntryRef<'_>) -> std::cmp::Ordering {
+    let common = a.filename.len().min(b.filename.len());
+    a.filename[..common].cmp(&b.filename[..common]).then_with(|| {
+        let a = a.filename.get(common).or_else(|| a.mode.is_tree().then_some(&b'/'));
+        let b = b.filename.get(common).or_else(|| b.mode.is_tree().then_some(&b'/'));
+        a.cmp(&b)
+    })
+}
+
 fn delete_entry_schedule_recursion<R: tree::Visit>(
-    entry: gix_object::tree::EntryRef<'_>,
+    entry: EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -150,7 +160,7 @@ fn delete_entry_schedule_recursion<R: tree::Visit>(
 }
 
 fn add_entry_schedule_recursion<R: tree::Visit>(
-    entry: gix_object::tree::EntryRef<'_>,
+    entry: EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -173,8 +183,8 @@ fn add_entry_schedule_recursion<R: tree::Visit>(
 }
 fn catchup_rhs_with_lhs<R: tree::Visit>(
     rhs_entries: &mut IteratorType<gix_object::TreeRefIter<'_>>,
-    lhs: gix_object::tree::EntryRef<'_>,
-    rhs: gix_object::tree::EntryRef<'_>,
+    lhs: EntryRef<'_>,
+    rhs: EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -182,7 +192,7 @@ fn catchup_rhs_with_lhs<R: tree::Visit>(
     add_entry_schedule_recursion(rhs, queue, delegate)?;
     loop {
         match rhs_entries.peek() {
-            Some(Ok(rhs)) => match lhs.filename.cmp(rhs.filename) {
+            Some(Ok(rhs)) => match compare(&lhs, rhs) {
                 Equal => {
                     let rhs = rhs_entries.next().transpose()?.expect("the peeked item to be present");
                     delegate.pop_path_component();
@@ -213,8 +223,8 @@ fn catchup_rhs_with_lhs<R: tree::Visit>(
 
 fn catchup_lhs_with_rhs<R: tree::Visit>(
     lhs_entries: &mut IteratorType<gix_object::TreeRefIter<'_>>,
-    lhs: gix_object::tree::EntryRef<'_>,
-    rhs: gix_object::tree::EntryRef<'_>,
+    lhs: EntryRef<'_>,
+    rhs: EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -222,7 +232,7 @@ fn catchup_lhs_with_rhs<R: tree::Visit>(
     delete_entry_schedule_recursion(lhs, queue, delegate)?;
     loop {
         match lhs_entries.peek() {
-            Some(Ok(lhs)) => match lhs.filename.cmp(rhs.filename) {
+            Some(Ok(lhs)) => match compare(lhs, &rhs) {
                 Equal => {
                     let lhs = lhs_entries.next().expect("the peeked item to be present")?;
                     delegate.pop_path_component();
@@ -252,8 +262,8 @@ fn catchup_lhs_with_rhs<R: tree::Visit>(
 }
 
 fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
-    lhs: gix_object::tree::EntryRef<'_>,
-    rhs: gix_object::tree::EntryRef<'_>,
+    lhs: EntryRef<'_>,
+    rhs: EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -275,7 +285,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             }
             queue.push_back((Some(lhs.oid.to_owned()), Some(rhs.oid.to_owned())));
         }
-        (lhs_mode, Tree) if lhs_mode.is_no_tree() => {
+        (_, Tree) => {
             delegate.push_back_tracked_path_component(lhs.filename);
             if delegate
                 .visit(Change::Deletion {
@@ -297,7 +307,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             };
             queue.push_back((None, Some(rhs.oid.to_owned())));
         }
-        (Tree, rhs_mode) if rhs_mode.is_no_tree() => {
+        (Tree, _) => {
             delegate.push_back_tracked_path_component(lhs.filename);
             if delegate
                 .visit(Change::Deletion {
@@ -343,4 +353,42 @@ type IteratorType<I> = std::mem::ManuallyDrop<std::iter::Peekable<I>>;
 
 fn peekable<I: Iterator>(iter: I) -> IteratorType<I> {
     std::mem::ManuallyDrop::new(iter.peekable())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gix_object::tree::EntryMode;
+    use std::cmp::Ordering;
+
+    #[test]
+    fn compare_select_samples() {
+        let null = gix_hash::ObjectId::null(gix_hash::Kind::Sha1);
+        let actual = compare(
+            &EntryRef {
+                mode: EntryMode::Blob,
+                filename: "plumbing-cli.rs".into(),
+                oid: &null,
+            },
+            &EntryRef {
+                mode: EntryMode::Tree,
+                filename: "plumbing".into(),
+                oid: &null,
+            },
+        );
+        assert_eq!(actual, Ordering::Less);
+        let actual = compare(
+            &EntryRef {
+                mode: EntryMode::Tree,
+                filename: "plumbing-cli.rs".into(),
+                oid: &null,
+            },
+            &EntryRef {
+                mode: EntryMode::Blob,
+                filename: "plumbing".into(),
+                oid: &null,
+            },
+        );
+        assert_eq!(actual, Ordering::Greater);
+    }
 }
