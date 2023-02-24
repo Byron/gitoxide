@@ -283,7 +283,6 @@ pub fn update(
         };
         drop(tx_stats);
 
-        let mut skipped_merge_commits = 0;
         const CHUNK_SIZE: usize = 50;
         let mut chunk = Vec::with_capacity(CHUNK_SIZE);
         let mut chunk_id: SequenceId = 0;
@@ -296,10 +295,7 @@ pub fn update(
                         let mut parents = gix::objs::CommitRefIter::from_bytes(obj.data).parent_ids();
                         let res = parents.next().map(|first_parent| (Some(first_parent), oid.to_owned()));
                         match parents.next() {
-                            Some(_) => {
-                                skipped_merge_commits += 1;
-                                None
-                            }
+                            Some(_) => None,
                             None => res,
                         }
                     };
