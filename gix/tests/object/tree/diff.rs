@@ -682,8 +682,10 @@ mod track_rewrites {
             ]
         );
 
-        let actual = std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline.with-renames"))?;
-        let expected = r#"commit 6974f2b5181772977a9d7d34a566414508552650
+        #[cfg(not(windows))]
+        {
+            let actual = std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline.with-renames"))?;
+            let expected = r#"commit 6974f2b5181772977a9d7d34a566414508552650
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 
@@ -703,7 +705,8 @@ index e69de29..8ba3a16 100644
 @@ -0,0 +1 @@
 +n
 "#;
-        assert_eq!(actual, expected);
+            assert_eq!(actual, expected);
+        }
 
         Ok(())
     }
@@ -738,8 +741,10 @@ index e69de29..8ba3a16 100644
             ]
         );
 
-        let actual = std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline.no-renames"))?;
-        let expected = r#"commit 6974f2b5181772977a9d7d34a566414508552650
+        #[cfg(not(windows))]
+        {
+            let actual = std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline.no-renames"))?;
+            let expected = r#"commit 6974f2b5181772977a9d7d34a566414508552650
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 
@@ -761,7 +766,8 @@ index e69de29..8ba3a16 100644
 @@ -0,0 +1 @@
 +n
 "#;
-        assert_eq!(actual, expected);
+            assert_eq!(actual, expected);
+        }
 
         Ok(())
     }
@@ -786,7 +792,9 @@ index e69de29..8ba3a16 100644
                 Ok(Default::default())
             })?;
 
-        let expected = r#"commit 72de3500e1bff816e56432bee8de02946d3e784b
+        #[cfg(not(windows))]
+        {
+            let expected = r#"commit 72de3500e1bff816e56432bee8de02946d3e784b
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 
@@ -841,10 +849,11 @@ diff --git a/gix-sec/tests/sec.rs b/gix-sec/tests/sec.rs
 new file mode 100644
 index 0000000..e69de29
 "#;
-        assert_eq!(
-            std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline-2.no-renames"))?,
-            expected
-        );
+            assert_eq!(
+                std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline-2.no-renames"))?,
+                expected
+            );
+        }
 
         assert_eq!(
             actual,
@@ -891,7 +900,9 @@ index 0000000..e69de29
                 Ok(Default::default())
             })?;
 
-        let expected = r#"commit dee00f5a20957db20d8d2e0050210716d6b44879
+        #[cfg(not(windows))]
+        {
+            let expected = r#"commit dee00f5a20957db20d8d2e0050210716d6b44879
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 
@@ -911,10 +922,11 @@ deleted file mode 100644
 index e69de29..0000000
 "#;
 
-        assert_eq!(
-            std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline-3.no-renames"))?,
-            expected
-        );
+            assert_eq!(
+                std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline-3.no-renames"))?,
+                expected
+            );
+        }
         assert_eq!(
             actual,
             vec![
@@ -962,7 +974,9 @@ index e69de29..0000000
                 Ok(Default::default())
             })?;
 
-        let expected = r#"commit dee00f5a20957db20d8d2e0050210716d6b44879
+        #[cfg(not(windows))]
+        {
+            let expected = r#"commit dee00f5a20957db20d8d2e0050210716d6b44879
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 
@@ -977,10 +991,11 @@ similarity index 100%
 rename from src/porcelain-cli.rs
 rename to src/gix.rs
 "#;
-        assert_eq!(
-            std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline-3.with-renames"))?,
-            expected
-        );
+            assert_eq!(
+                std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline-3.with-renames"))?,
+                expected
+            );
+        }
         assert_eq!(
             actual,
             vec![
@@ -1028,7 +1043,9 @@ rename to src/gix.rs
                 Ok(Default::default())
             })?;
 
-        let expected = r#"commit 72de3500e1bff816e56432bee8de02946d3e784b
+        #[cfg(not(windows))]
+        {
+            let expected = r#"commit 72de3500e1bff816e56432bee8de02946d3e784b
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 
@@ -1067,10 +1084,11 @@ similarity index 100%
 rename from git-sec/tests/sec.rs
 rename to gix-sec/tests/sec.rs
 "#;
-        assert_eq!(
-            std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline-2.with-renames"))?,
-            expected
-        );
+            assert_eq!(
+                std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline-2.with-renames"))?,
+                expected
+            );
+        }
 
         assert_eq!(
             actual,
