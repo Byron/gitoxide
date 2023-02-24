@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.37.2 (2023-02-24)
 
 ### Bug Fixes
 
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 3 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Fix new diff tests on windows ([`b1ec1b7`](https://github.com/Byron/gitoxide/commit/b1ec1b776696b4b1d73e3dd26cbaf33260367855))
+    - Prepare changelog for release ([`13a1ec1`](https://github.com/Byron/gitoxide/commit/13a1ec1803d677c2e94f3ea0461118c2426f8071))
     - Merge branch 'rename-tracking' ([`550144a`](https://github.com/Byron/gitoxide/commit/550144a5fd37d501d86f4b1c4db2948d951d1c93))
     - Reproduce a diff issue and fix it ([`1d3d22d`](https://github.com/Byron/gitoxide/commit/1d3d22d45e70222c12fcf5a82063ceb9321a0129))
 </details>

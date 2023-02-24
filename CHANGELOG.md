@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.23.0 (2023-02-24)
 
 This release adds the new `ein tool query` analytics engine, which maintains a database of a git repository as acceleration data structure to run useful queries on.
 It's nothing more than an MVP, and was inspired by a program to accelerate [Git-Heat-Map](https://github.com/jmforsythe/Git-Heat-Map/pull/6).

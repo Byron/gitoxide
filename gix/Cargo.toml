@@ -3,7 +3,7 @@ name = "gix"
 repository = "https://github.com/Byron/gitoxide"
 description = "Interact with git repositories just like git would"
 license = "MIT/Apache-2.0"
-version = "0.37.1"
+version = "0.37.2"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "CHANGELOG.md"]
@@ -102,7 +102,7 @@ gix-refspec = { version = "^0.7.3", path = "../gix-refspec" }
 gix-config = { version = "^0.16.3", path = "../gix-config" }
 gix-odb = { version = "^0.40.2", path = "../gix-odb" }
 gix-hash = { version = "^0.10.3", path = "../gix-hash" }
-gix-object = { version = "^0.26.3", path = "../gix-object" }
+gix-object = { version = "^0.26.4", path = "../gix-object" }
 gix-actor = { version = "^0.17.2", path = "../gix-actor" }
 gix-pack = { version = "^0.30.3", path = "../gix-pack", features = ["object-cache-dynamic"] }
 gix-revision = { version = "^0.10.4", path = "../gix-revision" }
@@ -112,7 +112,7 @@ gix-url = { version = "^0.13.3", path = "../gix-url" }
 gix-traverse = { version = "^0.22.2", path = "../gix-traverse" }
 gix-protocol = { version = "^0.26.4", path = "../gix-protocol", optional = true }
 gix-transport = { version = "^0.25.6", path = "../gix-transport", optional = true }
-gix-diff = { version = "^0.26.2", path = "../gix-diff" }
+gix-diff = { version = "^0.26.3", path = "../gix-diff" }
 gix-mailmap = { version = "^0.9.3", path = "../gix-mailmap" }
 gix-features = { version = "^0.26.5", path = "../gix-features", features = ["progress", "once_cell"] }
 

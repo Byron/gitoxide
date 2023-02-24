@@ -1,6 +1,6 @@
 [package]
 name = "gix-object"
-version = "0.26.3"
+version = "0.26.4"
 description = "Immutable and mutable git objects with decoding and encoding support"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
