@@ -121,6 +121,7 @@ pub mod tools {
         #[derive(Debug, clap::Subcommand)]
         pub enum Command {
             /// Follow a file through the entire history reachable from HEAD.
+            #[command(visible_alias = "trace-file")]
             TracePath {
                 /// The path to trace through history.
                 #[clap(value_parser = AsPathSpec)]
