@@ -85,20 +85,15 @@ impl query::Engine {
                     .unwrap_or_default();
                 let mut found = 0;
                 progress.show_throughput(start);
-                let start = std::time::Instant::now();
-                progress.init(Some(self.commits.len()), gix::progress::count("commits"));
-                progress.set_name("associate info");
                 for info in self
                     .commits
                     .iter()
-                    .inspect(|_| progress.inc())
                     .filter_map(|c| info.binary_search_by(|i| i.id.cmp(c)).ok().map(|idx| &info[idx]))
                 {
                     found += 1;
                     info.write_to(&mut out, &self.repo, &seen, max_diff_lines)?;
                 }
                 let missing = info.len() - found;
-                progress.show_throughput(start);
                 if missing > 0 {
                     writeln!(
                         out,
