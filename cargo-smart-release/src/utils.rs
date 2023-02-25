@@ -5,7 +5,6 @@ use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
     Dependency, DependencyKind, Metadata, Package, PackageId,
 };
-
 use gix::bstr::{BStr, ByteSlice};
 use semver::{Version, VersionReq};
 use time::OffsetDateTime;

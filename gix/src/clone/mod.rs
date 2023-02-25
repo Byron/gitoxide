@@ -1,8 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::convert::TryInto;
 
-use crate::bstr::BString;
-use crate::config::tree::gitoxide;
+use crate::{bstr::BString, config::tree::gitoxide};
 
 type ConfigureRemoteFn =
     Box<dyn FnMut(crate::Remote<'_>) -> Result<crate::Remote<'_>, Box<dyn std::error::Error + Send + Sync>>>;

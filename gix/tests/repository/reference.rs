@@ -1,7 +1,6 @@
 mod set_namespace {
-    use gix_testtools::tempfile;
-
     use gix::refs::transaction::PreviousValue;
+    use gix_testtools::tempfile;
 
     fn easy_repo_rw() -> crate::Result<(gix::Repository, tempfile::TempDir)> {
         crate::repo_rw("make_references_repo.sh")

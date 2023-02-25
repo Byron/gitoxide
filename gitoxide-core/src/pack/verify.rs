@@ -2,7 +2,6 @@ use std::{io, path::Path, str::FromStr, sync::atomic::AtomicBool};
 
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
-
 use gix::{
     object, odb,
     odb::{pack, pack::index},

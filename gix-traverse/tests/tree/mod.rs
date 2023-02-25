@@ -1,7 +1,6 @@
 use gix_object::bstr::BString;
 use gix_odb::pack::FindExt;
-use gix_traverse::tree;
-use gix_traverse::tree::recorder::Location;
+use gix_traverse::{tree, tree::recorder::Location};
 
 use crate::hex_to_id;
 

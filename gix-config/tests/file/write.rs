@@ -110,9 +110,10 @@ fn complex_lossless_roundtrip() {
 }
 
 mod to_filter {
-    use crate::file::cow_str;
     use bstr::ByteSlice;
     use gix_config::file::Metadata;
+
+    use crate::file::cow_str;
 
     #[test]
     fn allows_only_selected_sections() -> crate::Result {

@@ -1,6 +1,5 @@
 use gix_hash::ObjectId;
-use gix_object::tree::EntryMode;
-use gix_object::{bstr::BStr, tree};
+use gix_object::{bstr::BStr, tree, tree::EntryMode};
 
 /// Represents any possible change in order to turn one tree into another.
 #[derive(Debug, Clone, PartialOrd, PartialEq, Ord, Eq, Hash)]

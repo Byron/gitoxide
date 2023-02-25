@@ -157,7 +157,6 @@ mod with_overrides {
     use gix_object::bstr::BStr;
     use gix_sec::Permission;
     use gix_testtools::Env;
-
     use serial_test::serial;
 
     use crate::util::named_subrepo_opts;

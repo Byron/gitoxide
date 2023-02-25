@@ -86,8 +86,9 @@ pub enum ToolCommands {
 
 #[cfg(feature = "gitoxide-core-tools")]
 pub mod tools {
-    use gix::bstr::BString;
     use std::path::PathBuf;
+
+    use gix::bstr::BString;
 
     #[cfg(feature = "gitoxide-core-tools-query")]
     #[derive(Debug, clap::Parser)]

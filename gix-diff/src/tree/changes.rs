@@ -357,9 +357,11 @@ fn peekable<I: Iterator>(iter: I) -> IteratorType<I> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use gix_object::tree::EntryMode;
     use std::cmp::Ordering;
+
+    use gix_object::tree::EntryMode;
+
+    use super::*;
 
     #[test]
     fn compare_select_samples() {

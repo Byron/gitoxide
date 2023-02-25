@@ -13,7 +13,6 @@ pub(crate) mod function {
     use std::ffi::OsStr;
 
     use anyhow::{bail, Context};
-
     use gix::{bstr::BString, remote::fetch::Status, Progress};
 
     use super::Options;

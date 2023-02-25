@@ -9,9 +9,8 @@ fn bcow(input: &str) -> Cow<'_, BStr> {
 mod keys {
     use std::borrow::Cow;
 
-    use gix_object::bstr::ByteSlice;
-
     use gix::config::tree::{Key, Section};
+    use gix_object::bstr::ByteSlice;
 
     use crate::config::tree::bcow;
 
@@ -119,8 +118,10 @@ mod ssh {
 }
 
 mod diff {
-    use gix::config::tree::{Diff, Key};
-    use gix::diff::rename::Tracking;
+    use gix::{
+        config::tree::{Diff, Key},
+        diff::rename::Tracking,
+    };
     use gix_diff::blob::Algorithm;
 
     use crate::config::tree::bcow;
@@ -468,8 +469,9 @@ mod protocol {
 
 mod gitoxide {
     mod http {
-        use gix::config::tree::{gitoxide, Key};
         use std::time::Duration;
+
+        use gix::config::tree::{gitoxide, Key};
 
         #[test]
         fn connect_timeout() -> crate::Result {

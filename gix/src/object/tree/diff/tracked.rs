@@ -1,12 +1,18 @@
-use crate::bstr::BStr;
-use crate::ext::ObjectIdExt;
-use crate::object::tree::diff::change::DiffLineStats;
-use crate::object::tree::diff::rewrites::CopySource;
-use crate::object::tree::diff::{rewrites::Outcome, Rewrites};
-use crate::{Repository, Tree};
+use std::ops::Range;
+
 use gix_diff::tree::visit::Change;
 use gix_object::tree::EntryMode;
-use std::ops::Range;
+
+use crate::{
+    bstr::BStr,
+    ext::ObjectIdExt,
+    object::tree::diff::{
+        change::DiffLineStats,
+        rewrites::{CopySource, Outcome},
+        Rewrites,
+    },
+    Repository, Tree,
+};
 
 /// A set of tracked items allows to figure out their relations by figuring out their similarity.
 pub struct Item {
@@ -49,8 +55,7 @@ pub struct State {
 }
 
 pub mod visit {
-    use crate::bstr::BStr;
-    use crate::object::tree::diff::change::DiffLineStats;
+    use crate::{bstr::BStr, object::tree::diff::change::DiffLineStats};
 
     pub struct Source<'a> {
         pub mode: gix_object::tree::EntryMode,
@@ -422,9 +427,10 @@ mod diff {
 }
 
 mod tree_to_events {
-    use crate::bstr::BStr;
     use gix_diff::tree::visit::Change;
     use gix_object::tree::EntryRef;
+
+    use crate::bstr::BStr;
 
     pub struct Delegate<'a> {
         parent: &'a mut super::State,

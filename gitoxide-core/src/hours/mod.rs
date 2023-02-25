@@ -1,7 +1,6 @@
 use std::{collections::BTreeSet, convert::Infallible, io, path::Path, sync::atomic::Ordering, time::Instant};
 
 use anyhow::{anyhow, bail};
-
 use gix::{
     actor,
     bstr::{BStr, ByteSlice},

@@ -1,7 +1,6 @@
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod refs_impl {
     use anyhow::bail;
-
     use gix::{
         protocol::handshake,
         refspec::{match_group::validate::Fix, RefSpec},

@@ -1,7 +1,6 @@
 use std::ffi::OsString;
 
 use anyhow::{bail, Context};
-
 use gix::prelude::ObjectIdExt;
 
 use crate::OutputFormat;

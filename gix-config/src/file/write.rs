@@ -1,7 +1,6 @@
 use bstr::{BStr, BString, ByteSlice};
 
-use crate::file::Section;
-use crate::{parse::Event, File};
+use crate::{file::Section, parse::Event, File};
 
 impl File<'_> {
     /// Serialize this type into a `BString` for convenience.

@@ -2,7 +2,6 @@ use std::{convert::TryInto, process::Command};
 
 use anyhow::{anyhow, bail};
 use cargo_metadata::Package;
-
 use gix::{bstr::ByteSlice, refs, refs::transaction::PreviousValue, Id};
 
 use super::{tag_name, Options};

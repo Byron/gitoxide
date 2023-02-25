@@ -1,5 +1,4 @@
 use anyhow::bail;
-
 use gix::{
     bstr::{BStr, BString},
     revision::plumbing::{

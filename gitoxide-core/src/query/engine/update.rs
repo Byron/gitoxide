@@ -1,16 +1,22 @@
-use crate::query::Options;
+use std::{
+    convert::Infallible,
+    sync::atomic::{AtomicUsize, Ordering},
+    time::Instant,
+};
+
 use anyhow::{anyhow, bail};
-use gix::bstr::{BStr, BString, ByteSlice};
-use gix::features::progress;
-use gix::object::tree::diff::rewrites::CopySource;
-use gix::odb::FindExt;
-use gix::parallel::{InOrderIter, SequenceId};
-use gix::prelude::ObjectIdExt;
-use gix::Progress;
+use gix::{
+    bstr::{BStr, BString, ByteSlice},
+    features::progress,
+    object::tree::diff::rewrites::CopySource,
+    odb::FindExt,
+    parallel::{InOrderIter, SequenceId},
+    prelude::ObjectIdExt,
+    Progress,
+};
 use rusqlite::{params, Statement, Transaction};
-use std::convert::Infallible;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::Instant;
+
+use crate::query::Options;
 
 pub fn update(
     repo: &gix::Repository,

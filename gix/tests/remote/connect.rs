@@ -1,9 +1,8 @@
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
     mod protocol_allow {
-        use gix_features::progress;
-
         use gix::remote::Direction::Fetch;
+        use gix_features::progress;
         use serial_test::serial;
 
         use crate::remote;

@@ -2,9 +2,15 @@ use gix_object::TreeRefIter;
 use gix_odb::FindExt;
 
 use super::{change, Action, Change, Platform};
-use crate::object::tree::diff;
-use crate::object::tree::diff::{rewrites, tracked};
-use crate::{bstr::BStr, ext::ObjectIdExt, Repository, Tree};
+use crate::{
+    bstr::BStr,
+    ext::ObjectIdExt,
+    object::tree::{
+        diff,
+        diff::{rewrites, tracked},
+    },
+    Repository, Tree,
+};
 
 /// The error return by methods on the [diff platform][Platform].
 #[derive(Debug, thiserror::Error)]

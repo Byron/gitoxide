@@ -1,7 +1,6 @@
 use std::io;
 
 use anyhow::{bail, Context};
-
 use gix::prelude::FindExt;
 
 use crate::OutputFormat;

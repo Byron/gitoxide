@@ -195,7 +195,6 @@ mod async_io {
 
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
-
     use gix::{
         bstr::{BString, ByteSlice},
         odb::pack,

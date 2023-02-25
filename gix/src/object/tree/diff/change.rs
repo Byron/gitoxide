@@ -1,6 +1,4 @@
-use crate::bstr::BStr;
-
-use crate::Id;
+use crate::{bstr::BStr, Id};
 
 /// Information about the diff performed to detect similarity of a [Rewrite][Event::Rewrite].
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]

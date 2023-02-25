@@ -111,8 +111,12 @@ pub type Disambiguate = keys::Any<validate::Disambiguate>;
 mod disambiguate {
     use std::borrow::Cow;
 
-    use crate::bstr::ByteSlice;
-    use crate::{bstr::BStr, config, config::tree::core::Disambiguate, revision::spec::parse::ObjectKindHint};
+    use crate::{
+        bstr::{BStr, ByteSlice},
+        config,
+        config::tree::core::Disambiguate,
+        revision::spec::parse::ObjectKindHint,
+    };
 
     impl Disambiguate {
         /// Convert a disambiguation marker into the respective enum.
@@ -167,8 +171,11 @@ mod log_all_ref_updates {
 mod check_stat {
     use std::borrow::Cow;
 
-    use crate::bstr::ByteSlice;
-    use crate::{bstr::BStr, config, config::tree::core::CheckStat};
+    use crate::{
+        bstr::{BStr, ByteSlice},
+        config,
+        config::tree::core::CheckStat,
+    };
 
     impl CheckStat {
         /// Returns true if the full set of stat entries should be checked, and it's just as lenient as git.

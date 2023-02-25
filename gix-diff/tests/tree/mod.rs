@@ -1,11 +1,14 @@
 mod changes {
     mod to_obtain_tree {
-        use gix_diff::tree::recorder::Location;
-        use gix_diff::tree::{recorder, recorder::Change::*};
+        use std::collections::HashMap;
+
+        use gix_diff::tree::{
+            recorder,
+            recorder::{Change::*, Location},
+        };
         use gix_hash::{oid, ObjectId};
         use gix_object::{bstr::ByteSlice, tree::EntryMode, TreeRefIter};
         use gix_odb::pack::Find;
-        use std::collections::HashMap;
 
         use crate::hex_to_id;
 

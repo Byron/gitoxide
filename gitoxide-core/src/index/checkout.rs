@@ -4,7 +4,6 @@ use std::{
 };
 
 use anyhow::bail;
-
 use gix::{odb::FindExt, worktree::index::checkout, Progress};
 
 use crate::{

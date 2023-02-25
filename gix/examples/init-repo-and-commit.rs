@@ -2,7 +2,6 @@
 // adds initial commit with empty tree
 
 use anyhow::Context;
-
 use gix::objs::tree;
 
 fn main() -> anyhow::Result<()> {

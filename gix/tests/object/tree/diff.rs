@@ -1,9 +1,10 @@
-use gix::bstr::BString;
 use std::convert::Infallible;
 
+use gix::{
+    bstr::BString,
+    object::{blob::diff::line::Change, tree::diff::change::Event},
+};
 use gix_object::{bstr::ByteSlice, tree::EntryMode};
-
-use gix::object::{blob::diff::line::Change, tree::diff::change::Event};
 
 use crate::named_repo;
 
@@ -100,13 +101,19 @@ fn tree_named(repo: &gix::Repository, rev_spec: impl AsRef<str>) -> gix::Tree {
 }
 
 mod track_rewrites {
-    use crate::object::tree::diff::{added, deleted, modified, store, tree_named};
-    use crate::util::named_repo;
-    use gix::object::tree::diff::change::{DiffLineStats, Event};
-    use gix::object::tree::diff::rewrites::{Copies, CopySource};
-    use gix::object::tree::diff::Rewrites;
-    use gix_ref::bstr::BStr;
     use std::convert::Infallible;
+
+    use gix::object::tree::diff::{
+        change::{DiffLineStats, Event},
+        rewrites::{Copies, CopySource},
+        Rewrites,
+    };
+    use gix_ref::bstr::BStr;
+
+    use crate::{
+        object::tree::diff::{added, deleted, modified, store, tree_named},
+        util::named_repo,
+    };
 
     #[test]
     fn renames_by_identity() -> crate::Result {

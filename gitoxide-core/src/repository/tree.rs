@@ -1,7 +1,6 @@
 use std::{borrow::Cow, io};
 
 use anyhow::bail;
-
 use gix::Tree;
 
 use crate::OutputFormat;
@@ -9,9 +8,8 @@ use crate::OutputFormat;
 mod entries {
     use std::collections::VecDeque;
 
-    use gix::bstr::{ByteSlice, ByteVec};
     use gix::{
-        bstr::{BStr, BString},
+        bstr::{BStr, BString, ByteSlice, ByteVec},
         objs::tree::EntryRef,
         traverse::tree::visit::Action,
     };

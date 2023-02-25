@@ -1,7 +1,6 @@
+use gix::prelude::FindExt;
 use gix_index::{verify::extensions::no_find, State};
 use gix_testtools::scripted_fixture_read_only_standalone;
-
-use gix::prelude::FindExt;
 
 #[test]
 fn from_tree() -> crate::Result {

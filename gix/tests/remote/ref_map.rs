@@ -1,9 +1,8 @@
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod blocking_and_async_io {
+    use gix::remote::Direction::Fetch;
     use gix_features::progress;
     use gix_protocol::maybe_async;
-
-    use gix::remote::Direction::Fetch;
 
     use crate::{
         remote,

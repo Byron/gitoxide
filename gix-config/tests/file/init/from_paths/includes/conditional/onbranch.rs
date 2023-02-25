@@ -13,7 +13,6 @@ use gix_ref::{
     transaction::{Change, PreviousValue, RefEdit},
     FullName, Target,
 };
-
 use tempfile::tempdir;
 
 use crate::file::{cow_str, init::from_paths::includes::conditional::git_init};

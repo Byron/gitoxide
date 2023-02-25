@@ -1,8 +1,7 @@
 use std::collections::VecDeque;
 
 use gix_hash::ObjectId;
-use gix_object::bstr::BString;
-use gix_object::TreeRefIter;
+use gix_object::{bstr::BString, TreeRefIter};
 
 /// The state required to visit [Changes] to be instantiated with `State::default()`.
 #[derive(Default, Clone)]

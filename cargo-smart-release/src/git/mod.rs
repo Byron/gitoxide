@@ -2,7 +2,6 @@ use std::process::Command;
 
 use anyhow::{anyhow, bail};
 use cargo_metadata::{camino::Utf8Path, Package};
-
 use gix::{
     bstr::{BStr, ByteSlice},
     object,

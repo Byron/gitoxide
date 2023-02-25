@@ -1,5 +1,7 @@
-use crate::bstr::{BStr, BString, ByteVec};
-use crate::config::tree::key::validate_assignment;
+use crate::{
+    bstr::{BStr, BString, ByteVec},
+    config::tree::key::validate_assignment,
+};
 
 /// Provide information about a configuration section.
 pub trait Section {

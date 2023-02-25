@@ -70,12 +70,13 @@ mod algorithm {
 mod renames {
     use std::borrow::Cow;
 
-    use crate::bstr::ByteSlice;
-    use crate::config::tree::{keys, Section};
-    use crate::diff::rename::Tracking;
     use crate::{
-        bstr::BStr,
-        config::{key::GenericError, tree::sections::diff::Renames},
+        bstr::{BStr, ByteSlice},
+        config::{
+            key::GenericError,
+            tree::{keys, sections::diff::Renames, Section},
+        },
+        diff::rename::Tracking,
     };
 
     impl Renames {
@@ -106,11 +107,12 @@ mod renames {
 }
 
 mod validate {
+    use std::borrow::Cow;
+
     use crate::{
         bstr::BStr,
         config::tree::{keys, Diff},
     };
-    use std::borrow::Cow;
 
     pub struct Algorithm;
     impl keys::Validate for Algorithm {

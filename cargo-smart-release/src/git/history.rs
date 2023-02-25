@@ -1,5 +1,5 @@
-use std::borrow::Cow;
 use std::{
+    borrow::Cow,
     collections::{BTreeMap, HashMap},
     iter::FromIterator,
     path::PathBuf,
@@ -7,7 +7,6 @@ use std::{
 
 use anyhow::bail;
 use cargo_metadata::Package;
-
 use gix::{
     bstr::ByteSlice,
     head,

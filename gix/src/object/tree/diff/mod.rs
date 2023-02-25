@@ -1,5 +1,6 @@
-use crate::{bstr::BStr, Tree};
 use gix_diff::tree::recorder::Location;
+
+use crate::{bstr::BStr, Tree};
 
 /// Returned by the `for_each` function to control flow.
 #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]

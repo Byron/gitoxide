@@ -2,7 +2,6 @@ use std::path::Path;
 
 use gix_sec::Permission;
 use gix_testtools::Env;
-
 use serial_test::serial;
 
 use crate::named_repo;

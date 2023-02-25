@@ -1,12 +1,13 @@
-use crate::query;
-use crate::query::engine::update::FileMode;
-use crate::query::Command;
-use anyhow::Context;
-use gix::bstr::ByteSlice;
-use gix::prelude::ObjectIdExt;
-use gix::Progress;
-use rusqlite::{params, OptionalExtension};
 use std::collections::HashMap;
+
+use anyhow::Context;
+use gix::{bstr::ByteSlice, prelude::ObjectIdExt, Progress};
+use rusqlite::{params, OptionalExtension};
+
+use crate::{
+    query,
+    query::{engine::update::FileMode, Command},
+};
 
 impl query::Engine {
     pub fn run(
@@ -110,9 +111,11 @@ impl query::Engine {
 }
 
 mod trace_path {
-    use crate::query::engine::update::FileMode;
-    use gix::prelude::ObjectIdExt;
     use std::collections::HashMap;
+
+    use gix::prelude::ObjectIdExt;
+
+    use crate::query::engine::update::FileMode;
 
     #[derive(Debug, Default, Copy, Clone)]
     pub struct Diff {

@@ -1,7 +1,6 @@
 use std::{io::BufWriter, path::PathBuf, sync::atomic::AtomicBool};
 
 use anyhow::bail;
-
 use gix::Progress;
 
 use crate::OutputFormat;

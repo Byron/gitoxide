@@ -53,12 +53,11 @@ impl crate::Repository {
                         http::options::{ProxyAuthMethod, SslVersion, SslVersionRangeInclusive},
                     };
 
-                    use crate::config::tree::Key;
                     use crate::{
                         config,
                         config::{
                             cache::util::ApplyLeniency,
-                            tree::{gitoxide, Remote},
+                            tree::{gitoxide, Key, Remote},
                         },
                     };
                     fn try_cow_to_string(

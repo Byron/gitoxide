@@ -1,5 +1,4 @@
 use anyhow::{bail, Result};
-
 use gix::bstr::{BStr, BString};
 
 use crate::OutputFormat;

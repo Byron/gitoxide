@@ -1,7 +1,6 @@
 use std::{collections::BTreeMap, ops::Sub};
 
 use cargo_metadata::Package;
-
 use gix::prelude::ObjectIdExt;
 use time::OffsetDateTime;
 

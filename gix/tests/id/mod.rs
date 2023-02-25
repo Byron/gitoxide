@@ -1,11 +1,10 @@
 use std::cmp::Ordering;
 
-use gix_object::bstr::BString;
-
 use gix::{
     config::tree::{Core, Key},
     prelude::ObjectIdExt,
 };
+use gix_object::bstr::BString;
 
 /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
 fn hex_to_id(hex: &str) -> gix_hash::ObjectId {

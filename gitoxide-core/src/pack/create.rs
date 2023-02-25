@@ -1,7 +1,6 @@
 use std::{ffi::OsStr, io, path::Path, str::FromStr, time::Instant};
 
 use anyhow::anyhow;
-
 use gix::{
     hash,
     hash::ObjectId,

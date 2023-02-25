@@ -1,7 +1,8 @@
-use crate::config::cache::util::ApplyLeniency;
-use crate::config::tree::Diff;
-use crate::diff::rename::Tracking;
-use crate::object::tree::diff::Rewrites;
+use crate::{
+    config::{cache::util::ApplyLeniency, tree::Diff},
+    diff::rename::Tracking,
+    object::tree::diff::Rewrites,
+};
 
 /// From where to source copies
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

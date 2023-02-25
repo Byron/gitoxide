@@ -1,5 +1,6 @@
-use gix::{bstr::ByteSlice, url::Scheme, Url};
 use std::borrow::Cow;
+
+use gix::{bstr::ByteSlice, url::Scheme, Url};
 
 use crate::{
     changelog,

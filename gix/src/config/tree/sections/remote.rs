@@ -58,8 +58,12 @@ pub type TagOpt = keys::Any<validate::TagOpt>;
 mod tag_opts {
     use std::borrow::Cow;
 
-    use crate::bstr::ByteSlice;
-    use crate::{bstr::BStr, config, config::tree::remote::TagOpt, remote};
+    use crate::{
+        bstr::{BStr, ByteSlice},
+        config,
+        config::tree::remote::TagOpt,
+        remote,
+    };
 
     impl TagOpt {
         /// Try to interpret `value` as tag option.

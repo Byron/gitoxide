@@ -1,5 +1,4 @@
-use std::io::Write;
-use std::{borrow::Cow, convert::TryInto};
+use std::{borrow::Cow, convert::TryInto, io::Write};
 
 use gix_odb::Find;
 use gix_ref::{

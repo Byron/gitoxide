@@ -124,8 +124,7 @@ mod key_impls {
             crate::protocol::transport::client::http::options::FollowRedirects,
             crate::config::key::GenericErrorWithValue,
         > {
-            use crate::bstr::ByteSlice;
-            use crate::protocol::transport::client::http::options::FollowRedirects;
+            use crate::{bstr::ByteSlice, protocol::transport::client::http::options::FollowRedirects};
             Ok(if value.as_ref().as_bytes() == b"initial" {
                 FollowRedirects::Initial
             } else if let Some(value) = boolean().map_err(|err| {
@@ -172,8 +171,9 @@ mod key_impls {
             gix_protocol::transport::client::http::options::HttpVersion,
             crate::config::key::GenericErrorWithValue,
         > {
-            use crate::bstr::ByteSlice;
             use gix_protocol::transport::client::http::options::HttpVersion;
+
+            use crate::bstr::ByteSlice;
             Ok(match value.as_ref().as_bytes() {
                 b"HTTP/1.1" => HttpVersion::V1_1,
                 b"HTTP/2" => HttpVersion::V2,
@@ -199,8 +199,9 @@ mod key_impls {
             gix_protocol::transport::client::http::options::ProxyAuthMethod,
             crate::config::key::GenericErrorWithValue,
         > {
-            use crate::bstr::ByteSlice;
             use gix_protocol::transport::client::http::options::ProxyAuthMethod;
+
+            use crate::bstr::ByteSlice;
             Ok(match value.as_ref().as_bytes() {
                 b"anyauth" => ProxyAuthMethod::AnyAuth,
                 b"basic" => ProxyAuthMethod::Basic,
@@ -227,8 +228,9 @@ mod key_impls {
             value: std::borrow::Cow<'_, crate::bstr::BStr>,
         ) -> Result<gix_protocol::transport::client::http::options::SslVersion, crate::config::ssl_version::Error>
         {
-            use crate::bstr::ByteSlice;
             use gix_protocol::transport::client::http::options::SslVersion::*;
+
+            use crate::bstr::ByteSlice;
             Ok(match value.as_ref().as_bytes() {
                 b"default" | b"" => Default,
                 b"tlsv1" => TlsV1,
