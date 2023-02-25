@@ -159,7 +159,7 @@ pub fn update(
             compute_stats: bool,
         }
         let (tx_tree_ids, stat_threads) = {
-            let (tx, rx) = crossbeam_channel::unbounded::<(SequenceId, Vec<Task>)>();
+            let (tx, rx) = crossbeam_channel::bounded::<(SequenceId, Vec<Task>)>(threads);
             let stat_workers = (0..threads)
                 .map(|_| {
                     scope.spawn({
@@ -324,12 +324,6 @@ pub fn update(
                         }
                     };
                     if let Some((first_parent, commit)) = res {
-                        if chunk.len() == CHUNK_SIZE {
-                            tx_tree_ids
-                                .send((chunk_id, std::mem::replace(&mut chunk, Vec::with_capacity(CHUNK_SIZE))))
-                                .ok();
-                            chunk_id += 1;
-                        }
                         chunk.push(Task {
                             parent_commit: first_parent,
                             commit,
@@ -341,6 +335,12 @@ pub fn update(
                             commit: oid.to_owned(),
                             compute_stats: false,
                         });
+                    }
+                    if chunk.len() == CHUNK_SIZE {
+                        tx_tree_ids
+                            .send((chunk_id, std::mem::replace(&mut chunk, Vec::with_capacity(CHUNK_SIZE))))
+                            .ok();
+                        chunk_id += 1;
                     }
                 }
                 Ok(gix::objs::CommitRefIter::from_bytes(obj.data))
