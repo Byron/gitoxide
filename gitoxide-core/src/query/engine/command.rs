@@ -3,6 +3,7 @@ use crate::query::engine::update::FileMode;
 use crate::query::Command;
 use anyhow::Context;
 use gix::bstr::ByteSlice;
+use gix::prelude::ObjectIdExt;
 use gix::Progress;
 use rusqlite::{params, OptionalExtension};
 use std::collections::HashMap;
@@ -57,9 +58,11 @@ impl query::Engine {
                             usize,
                         ) = row?;
                         let id = gix::ObjectId::from(hash);
+                        let commit_time = id.attach(&self.repo).object()?.into_commit().committer()?.time;
                         let mode = FileMode::from_usize(mode).context("invalid file mode")?;
                         info.push(trace_path::Info {
                             id,
+                            commit_time,
                             file_id,
                             mode,
                             diff: has_diff.then_some(trace_path::Diff {
@@ -135,6 +138,7 @@ mod trace_path {
     #[derive(Debug)]
     pub struct Info {
         pub id: gix::ObjectId,
+        pub commit_time: gix::date::Time,
         pub file_id: usize,
         pub mode: FileMode,
         pub diff: Option<Diff>,
@@ -154,8 +158,9 @@ mod trace_path {
                 Some(source_id) => {
                     writeln!(
                         out,
-                        "{}|{} {} {} ➡ {}",
+                        "{}| {} | {} {} {} ➡ {}",
                         self.diff.unwrap_or_default().format(max_diff_lines),
+                        self.commit_time.format(gix::date::time::format::SHORT),
                         id.shorten_or_id(),
                         self.mode.as_str(),
                         path_by_id[&source_id],
@@ -165,8 +170,9 @@ mod trace_path {
                 None => {
                     writeln!(
                         out,
-                        "{}|{} {} {}",
+                        "{}| {} | {} {} {}",
                         self.diff.unwrap_or_default().format(max_diff_lines),
+                        self.commit_time.format(gix::date::time::format::SHORT),
                         id.shorten_or_id(),
                         self.mode.as_str(),
                         path_by_id[&self.file_id]
