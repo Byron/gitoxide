@@ -66,17 +66,20 @@ pub fn update(
             changes: Vec<FileChange>,
         }
         let start = Instant::now();
-        let (tx_commits, rx_commits) = std::sync::mpsc::channel::<Commit>();
         let (tx_stats, rx_stats) = std::sync::mpsc::channel::<Result<(SequenceId, Vec<CommitDiffStats>), Infallible>>();
 
-        let mut known_commits =
+        let mut all_commits =
             Vec::with_capacity(con.query_row("SELECT  COUNT(hash) from commits", [], |r| r.get::<_, usize>(0))?);
-        for item in con.prepare("SELECT hash from commits")?.query_map([], |r| {
-            Ok(gix::ObjectId::try_from(r.get_ref(0)?.as_bytes()?)
-                .unwrap_or_else(|_| gix::ObjectId::null(gix::hash::Kind::Sha1)))
-        })? {
-            known_commits.push(item?);
+        for item in con
+            .prepare("SELECT hash from commits ORDER BY ROWID")?
+            .query_map([], |r| {
+                Ok(gix::ObjectId::try_from(r.get_ref(0)?.as_bytes()?)
+                    .unwrap_or_else(|_| gix::ObjectId::null(gix::hash::Kind::Sha1)))
+            })?
+        {
+            all_commits.push(item?);
         }
+        let mut known_commits = all_commits.clone();
         known_commits.sort();
 
         let db_thread = scope.spawn({
@@ -89,10 +92,6 @@ pub fn update(
                         mut insert_commit_file_with_source,
                         mut insert_file_path,
                     } = Updates::new(&trans)?;
-                    for Commit { id } in rx_commits {
-                        new_commit.execute(params![id.as_bytes()])?;
-                        commit_counter.fetch_add(1, Ordering::Relaxed);
-                    }
                     for stats in InOrderIter::from(rx_stats.into_iter()) {
                         for CommitDiffStats { id, changes } in stats.expect("infallible") {
                             new_commit.execute(params![id.as_bytes()])?;
@@ -147,9 +146,13 @@ pub fn update(
             });
             r
         };
+        struct Task {
+            commit: gix::hash::ObjectId,
+            parent_commit: Option<gix::hash::ObjectId>,
+            compute_stats: bool,
+        }
         let (tx_tree_ids, stat_threads) = {
-            let (tx, rx) =
-                crossbeam_channel::unbounded::<(SequenceId, Vec<(Option<gix::hash::ObjectId>, gix::hash::ObjectId)>)>();
+            let (tx, rx) = crossbeam_channel::unbounded::<(SequenceId, Vec<Task>)>();
             let stat_workers = (0..threads)
                 .map(|_| {
                     scope.spawn({
@@ -163,112 +166,126 @@ pub fn update(
                         move || -> anyhow::Result<()> {
                             for (chunk_id, chunk) in rx {
                                 let mut out_chunk = Vec::with_capacity(chunk.len());
-                                for (parent_commit, commit) in chunk {
+                                for Task {
+                                    parent_commit,
+                                    commit,
+                                    compute_stats,
+                                } in chunk
+                                {
                                     stat_counter.fetch_add(1, Ordering::SeqCst);
                                     if gix::interrupt::is_triggered() {
                                         return Ok(());
                                     }
                                     let mut out = Vec::new();
-                                    let from = match parent_commit {
-                                        Some(id) => {
-                                            match repo.find_object(id).ok().and_then(|c| c.peel_to_tree().ok()) {
-                                                Some(tree) => tree,
-                                                None => continue,
-                                            }
-                                        }
-                                        None => repo.empty_tree(),
-                                    };
-                                    let to = match repo.find_object(commit).ok().and_then(|c| c.peel_to_tree().ok()) {
-                                        Some(c) => c,
-                                        None => continue,
-                                    };
-                                    from.changes()?
-                                        .track_path()
-                                        .track_rewrites(Some(rewrites))
-                                        .for_each_to_obtain_tree(&to, |change| {
-                                            use gix::object::tree::diff::change::Event::*;
-                                            change_counter.fetch_add(1, Ordering::SeqCst);
-                                            match change.event {
-                                                Addition { entry_mode, id } => {
-                                                    if entry_mode.is_blob_or_symlink() {
-                                                        add_lines(&mut out, change.location, &lines_counter, id);
-                                                    }
+                                    if compute_stats {
+                                        let from = match parent_commit {
+                                            Some(id) => {
+                                                match repo.find_object(id).ok().and_then(|c| c.peel_to_tree().ok()) {
+                                                    Some(tree) => tree,
+                                                    None => continue,
                                                 }
-                                                Modification {
-                                                    entry_mode,
-                                                    previous_entry_mode,
-                                                    id,
-                                                    previous_id,
-                                                } => match (previous_entry_mode.is_blob(), entry_mode.is_blob()) {
-                                                    (false, false) => {}
-                                                    (false, true) => {
-                                                        add_lines(&mut out, change.location, &lines_counter, id);
-                                                    }
-                                                    (true, false) => {
-                                                        add_lines(
-                                                            &mut out,
-                                                            change.location,
-                                                            &lines_counter,
-                                                            previous_id,
-                                                        );
-                                                    }
-                                                    (true, true) => {
-                                                        // TODO: use git attributes here to know if it's a binary file or not.
-                                                        if let Some(Ok(diff)) = change.event.diff() {
-                                                            let mut nl = 0;
-                                                            let tokens = diff.line_tokens();
-                                                            let counts = gix::diff::blob::diff(
-                                                                diff.algo,
-                                                                &tokens,
-                                                                gix::diff::blob::sink::Counter::default(),
-                                                            );
-                                                            nl += counts.insertions as usize + counts.removals as usize;
-                                                            let lines = LineStats {
-                                                                added: counts.insertions as usize,
-                                                                removed: counts.removals as usize,
-                                                                before: tokens.before.len(),
-                                                                after: tokens.after.len(),
-                                                            };
-                                                            lines_counter.fetch_add(nl, Ordering::SeqCst);
-                                                            out.push(FileChange {
-                                                                relpath: change.location.to_owned(),
-                                                                mode: FileMode::Modified,
-                                                                source_relpath: None,
-                                                                lines: Some(lines),
-                                                            });
+                                            }
+                                            None => repo.empty_tree(),
+                                        };
+                                        let to = match repo.find_object(commit).ok().and_then(|c| c.peel_to_tree().ok())
+                                        {
+                                            Some(c) => c,
+                                            None => continue,
+                                        };
+                                        from.changes()?
+                                            .track_path()
+                                            .track_rewrites(Some(rewrites))
+                                            .for_each_to_obtain_tree(&to, |change| {
+                                                use gix::object::tree::diff::change::Event::*;
+                                                change_counter.fetch_add(1, Ordering::SeqCst);
+                                                match change.event {
+                                                    Addition { entry_mode, id } => {
+                                                        if entry_mode.is_blob_or_symlink() {
+                                                            add_lines(&mut out, change.location, &lines_counter, id);
                                                         }
                                                     }
-                                                },
-                                                Deletion { entry_mode, id } => {
-                                                    if entry_mode.is_blob_or_symlink() {
-                                                        remove_lines(&mut out, change.location, &lines_counter, id);
+                                                    Modification {
+                                                        entry_mode,
+                                                        previous_entry_mode,
+                                                        id,
+                                                        previous_id,
+                                                    } => match (previous_entry_mode.is_blob(), entry_mode.is_blob()) {
+                                                        (false, false) => {}
+                                                        (false, true) => {
+                                                            add_lines(&mut out, change.location, &lines_counter, id);
+                                                        }
+                                                        (true, false) => {
+                                                            add_lines(
+                                                                &mut out,
+                                                                change.location,
+                                                                &lines_counter,
+                                                                previous_id,
+                                                            );
+                                                        }
+                                                        (true, true) => {
+                                                            // TODO: use git attributes here to know if it's a binary file or not.
+                                                            if let Some(Ok(diff)) = change.event.diff() {
+                                                                let mut nl = 0;
+                                                                let tokens = diff.line_tokens();
+                                                                let counts = gix::diff::blob::diff(
+                                                                    diff.algo,
+                                                                    &tokens,
+                                                                    gix::diff::blob::sink::Counter::default(),
+                                                                );
+                                                                nl += counts.insertions as usize
+                                                                    + counts.removals as usize;
+                                                                let lines = LineStats {
+                                                                    added: counts.insertions as usize,
+                                                                    removed: counts.removals as usize,
+                                                                    before: tokens.before.len(),
+                                                                    after: tokens.after.len(),
+                                                                };
+                                                                lines_counter.fetch_add(nl, Ordering::SeqCst);
+                                                                out.push(FileChange {
+                                                                    relpath: change.location.to_owned(),
+                                                                    mode: FileMode::Modified,
+                                                                    source_relpath: None,
+                                                                    lines: Some(lines),
+                                                                });
+                                                            }
+                                                        }
+                                                    },
+                                                    Deletion { entry_mode, id } => {
+                                                        if entry_mode.is_blob_or_symlink() {
+                                                            remove_lines(&mut out, change.location, &lines_counter, id);
+                                                        }
+                                                    }
+                                                    Rewrite {
+                                                        source_location,
+                                                        diff,
+                                                        copy,
+                                                        ..
+                                                    } => {
+                                                        out.push(FileChange {
+                                                            relpath: change.location.to_owned(),
+                                                            source_relpath: Some(source_location.to_owned()),
+                                                            mode: if copy { FileMode::Copy } else { FileMode::Rename },
+                                                            lines: diff.map(|d| LineStats {
+                                                                added: d.insertions as usize,
+                                                                removed: d.removals as usize,
+                                                                before: d.before as usize,
+                                                                after: d.after as usize,
+                                                            }),
+                                                        });
                                                     }
                                                 }
-                                                Rewrite {
-                                                    source_location,
-                                                    diff,
-                                                    copy,
-                                                    ..
-                                                } => {
-                                                    out.push(FileChange {
-                                                        relpath: change.location.to_owned(),
-                                                        source_relpath: Some(source_location.to_owned()),
-                                                        mode: if copy { FileMode::Copy } else { FileMode::Rename },
-                                                        lines: diff.map(|d| LineStats {
-                                                            added: d.insertions as usize,
-                                                            removed: d.removals as usize,
-                                                            before: d.before as usize,
-                                                            after: d.after as usize,
-                                                        }),
-                                                    });
-                                                }
-                                            }
-                                            Ok::<_, Infallible>(Default::default())
-                                        })?;
-                                    out_chunk.push(CommitDiffStats {
-                                        id: commit,
-                                        changes: out,
-                                    });
+                                                Ok::<_, Infallible>(Default::default())
+                                            })?;
+                                        out_chunk.push(CommitDiffStats {
+                                            id: commit,
+                                            changes: out,
+                                        });
+                                    } else {
+                                        out_chunk.push(CommitDiffStats {
+                                            id: commit,
+                                            changes: Vec::new(),
+                                        })
+                                    }
                                 }
                                 if tx_stats.send(Ok((chunk_id, out_chunk))).is_err() {
                                     break;
@@ -306,9 +323,17 @@ pub fn update(
                                 .ok();
                             chunk_id += 1;
                         }
-                        chunk.push((first_parent, commit));
+                        chunk.push(Task {
+                            parent_commit: first_parent,
+                            commit,
+                            compute_stats: true,
+                        });
                     } else {
-                        tx_commits.send(Commit { id: oid.to_owned() }).ok();
+                        chunk.push(Task {
+                            parent_commit: None,
+                            commit: oid.to_owned(),
+                            compute_stats: false,
+                        });
                     }
                 }
                 Ok(gix::objs::CommitRefIter::from_bytes(obj.data))
@@ -319,7 +344,11 @@ pub fn update(
         for c in commit_iter {
             match c? {
                 Ok(c) => {
-                    commits.push(c);
+                    if known_commits.binary_search(&c).is_err() {
+                        commits.push(c);
+                    } else {
+                        break;
+                    }
                 }
                 Err(gix::traverse::commit::ancestors::Error::FindExisting { .. }) => {
                     eprintln!("shallow repository - commit history is truncated");
@@ -328,7 +357,6 @@ pub fn update(
                 Err(err) => return Err(err.into()),
             };
         }
-        drop(tx_commits);
         tx_tree_ids.send((chunk_id, chunk)).ok();
         drop(tx_tree_ids);
         let saw_new_commits = !commits.is_empty();
@@ -358,6 +386,8 @@ pub fn update(
         } else {
             db_progress.info("up to date");
         }
+
+        commits.extend(all_commits);
         Ok(commits)
     })?;
 
