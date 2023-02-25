@@ -15,9 +15,14 @@ mod db;
 mod engine;
 pub use engine::Command;
 
-pub fn prepare(repo_dir: &std::path::Path, mut progress: impl gix::Progress, opts: Options) -> anyhow::Result<Engine> {
+pub fn prepare(
+    repo_dir: &std::path::Path,
+    mut progress: impl gix::Progress,
+    err: impl std::io::Write,
+    opts: Options,
+) -> anyhow::Result<Engine> {
     let repo = gix::discover(repo_dir)?;
     let mut con = db::create(repo.git_dir().join("ein.query"))?;
-    let commits = engine::update(&repo, &mut con, &mut progress, opts)?;
+    let commits = engine::update(&repo, &mut con, &mut progress, err, opts)?;
     Ok(Engine { repo, con, commits })
 }

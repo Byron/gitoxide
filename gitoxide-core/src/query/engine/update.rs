@@ -22,6 +22,7 @@ pub fn update(
     repo: &gix::Repository,
     con: &mut rusqlite::Connection,
     progress: &mut impl gix::Progress,
+    mut err: impl std::io::Write,
     Options {
         object_cache_size_mb,
         find_copies_harder,
@@ -294,7 +295,7 @@ pub fn update(
                                     }
                                 }
                                 if tx_stats.send(Ok((chunk_id, out_chunk))).is_err() {
-                                    break;
+                                    bail!("Thread failed to send result");
                                 }
                             }
                             Ok(())
@@ -357,7 +358,7 @@ pub fn update(
                     }
                 }
                 Err(gix::traverse::commit::ancestors::Error::FindExisting { .. }) => {
-                    eprintln!("shallow repository - commit history is truncated");
+                    writeln!(err, "shallow repository - commit history is truncated").ok();
                     break;
                 }
                 Err(err) => return Err(err.into()),
