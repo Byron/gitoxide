@@ -202,9 +202,6 @@ Check out the [performance discussion][gix-diff-performance] as well.
 
 * **tree**
   * [x] changes needed to obtain _other tree_
-  * [ ] case-insensitive comparisons  
-  * [ ] rename and copy tracking
-  * [ ] readily available caching for 4x+ speedups
 * **patches**    
   * There are various ways to generate a patch from two blobs.
   * [ ] any
