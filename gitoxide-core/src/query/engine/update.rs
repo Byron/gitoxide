@@ -159,7 +159,7 @@ pub fn update(
             compute_stats: bool,
         }
         let (tx_tree_ids, stat_threads) = {
-            let (tx, rx) = crossbeam_channel::bounded::<(SequenceId, Vec<Task>)>(threads);
+            let (tx, rx) = crossbeam_channel::unbounded::<(SequenceId, Vec<Task>)>();
             let stat_workers = (0..threads)
                 .map(|_| {
                     scope.spawn({
