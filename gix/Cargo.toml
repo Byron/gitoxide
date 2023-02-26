@@ -3,7 +3,7 @@ name = "gix"
 repository = "https://github.com/Byron/gitoxide"
 description = "Interact with git repositories just like git would"
 license = "MIT/Apache-2.0"
-version = "0.37.2"
+version = "0.38.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "CHANGELOG.md"]
@@ -90,21 +90,21 @@ cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 
 
 [dependencies]
-gix-ref = { version = "^0.24.1", path = "../gix-ref" }
-gix-discover = { version = "^0.13.1", path = "../gix-discover" }
-gix-tempfile = { version = "^3.0.0", path = "../gix-tempfile", features = ["signals"] }
-gix-lock = { version = "^3.0.0", path = "../gix-lock" }
+gix-ref = { version = "^0.25.0", path = "../gix-ref" }
+gix-discover = { version = "^0.14.0", path = "../gix-discover" }
+gix-tempfile = { version = "^4.0.0", path = "../gix-tempfile", features = ["signals"] }
+gix-lock = { version = "^4.0.0", path = "../gix-lock" }
 gix-validate = { version = "^0.7.3", path = "../gix-validate" }
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }
 gix-date = { version = "^0.4.3", path = "../gix-date" }
 gix-refspec = { version = "^0.7.3", path = "../gix-refspec" }
 
-gix-config = { version = "^0.16.3", path = "../gix-config" }
-gix-odb = { version = "^0.40.2", path = "../gix-odb" }
+gix-config = { version = "^0.17.0", path = "../gix-config" }
+gix-odb = { version = "^0.41.0", path = "../gix-odb" }
 gix-hash = { version = "^0.10.3", path = "../gix-hash" }
 gix-object = { version = "^0.26.4", path = "../gix-object" }
 gix-actor = { version = "^0.17.2", path = "../gix-actor" }
-gix-pack = { version = "^0.30.3", path = "../gix-pack", features = ["object-cache-dynamic"] }
+gix-pack = { version = "^0.31.0", path = "../gix-pack", features = ["object-cache-dynamic"] }
 gix-revision = { version = "^0.10.4", path = "../gix-revision" }
 
 gix-path = { version = "^0.7.2", path = "../gix-path" }
@@ -120,8 +120,8 @@ gix-attributes = { version = "^0.8.3", path = "../gix-attributes" }
 gix-glob = { version = "^0.5.5", path = "../gix-glob" }
 gix-credentials = { version = "^0.9.2", path = "../gix-credentials" }
 gix-prompt = { version = "^0.3.2", path = "../gix-prompt" }
-gix-index = { version = "^0.12.4", path = "../gix-index" }
-gix-worktree = { version = "^0.12.3", path = "../gix-worktree" }
+gix-index = { version = "^0.13.0", path = "../gix-index" }
+gix-worktree = { version = "^0.13.0", path = "../gix-worktree" }
 gix-hashtable = { version = "^0.1.1", path = "../gix-hashtable" }
 
 prodash = { version = "23.0.0", default-features = false, features = ["progress-tree"] }
