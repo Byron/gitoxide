@@ -72,6 +72,8 @@ check: ## Build all code in suitable configurations
 	cd gitoxide-core && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd gix-hash && cargo check --all-features \
 				&& cargo check
+	cd gix-tempfile && cargo check --features signals \
+					&& cargo check
 	cd gix-object && cargo check --all-features \
                   && cargo check --features verbose-object-parsing-errors
 	cd gix-index && cargo check --features serde1
@@ -139,6 +141,8 @@ check: ## Build all code in suitable configurations
 
 unit-tests: ## run all unit tests
 	cargo test --all
+	cd gix-tempfile && cargo test --features signals \
+					&& cargo test
 	cd gix-features && cargo test && cargo test --all-features
 	cd gix-ref/tests && cargo test --all-features
 	cd gix-odb && cargo test && cargo test --all-features
