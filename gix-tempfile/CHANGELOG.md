@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 9 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#339](https://github.com/Byron/gitoxide/issues/339)
@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#339](https://github.com/Byron/gitoxide/issues/339)**
     - Gate all signal handling behind the `signals` feature toggle. ([`441f5ac`](https://github.com/Byron/gitoxide/commit/441f5ac4dd2f0636ec07065f8095e8bae5ce6985))
  * **Uncategorized**
+    - Prepare for git-tempfile release ([`56c005b`](https://github.com/Byron/gitoxide/commit/56c005b13c44376f71e61781e73c0bf93416d0e4))
     - Merge branch 'tempfile-upgrades' ([`3522cba`](https://github.com/Byron/gitoxide/commit/3522cbaac721c8079605be51b9053014bc5e863a))
     - Upgrade `tempfile` to `3.4` ([`2670938`](https://github.com/Byron/gitoxide/commit/2670938df5f6a3ed155b793e301ea0ab64b8cec1))
 </details>
