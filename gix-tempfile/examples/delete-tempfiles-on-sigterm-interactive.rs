@@ -1,9 +1,14 @@
-use std::path::PathBuf;
+#[cfg(not(feature = "signals"))]
+fn main() {
+    panic!("The `signals` feature needs to be set to compile this example");
+}
 
-use gix_tempfile::{AutoRemove, ContainingDirectory};
-
+#[cfg(feature = "signals")]
 fn main() -> std::io::Result<()> {
-    gix_tempfile::setup(Default::default());
+    use gix_tempfile::{AutoRemove, ContainingDirectory};
+    use std::path::PathBuf;
+
+    gix_tempfile::signal::setup(Default::default());
     let filepath = PathBuf::new().join("writable-tempfile.ext");
     let markerpath = PathBuf::new().join("marker.ext");
     let _tempfile = gix_tempfile::writable_at(&filepath, ContainingDirectory::Exists, AutoRemove::Tempfile)?;

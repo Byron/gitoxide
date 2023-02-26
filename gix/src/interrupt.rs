@@ -89,7 +89,7 @@ mod init {
                     }
                     let msg_idx = INTERRUPT_COUNT.fetch_add(1, Ordering::SeqCst);
                     if msg_idx == 1 {
-                        gix_tempfile::handler::cleanup_tempfiles();
+                        gix_tempfile::registry::cleanup_tempfiles_signal_safe();
                         signal_hook::low_level::emulate_default_handler(*sig).ok();
                     }
                     interrupt();

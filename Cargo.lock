@@ -2164,6 +2164,7 @@ name = "gix-tempfile"
 version = "3.0.2"
 dependencies = [
  "dashmap",
+ "document-features",
  "libc",
  "once_cell",
  "signal-hook",

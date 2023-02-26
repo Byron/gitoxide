@@ -1,4 +1,4 @@
-use std::{io::Write, path::Path};
+use std::path::Path;
 
 use tempfile::{NamedTempFile, TempPath};
 
@@ -88,6 +88,7 @@ impl ForksafeTempfile {
     }
 
     pub fn drop_without_deallocation(self) {
+        use std::io::Write;
         let temppath = match self.inner {
             TempfileOrTemppath::Tempfile(file) => {
                 let (mut file, temppath) = file.into_parts();

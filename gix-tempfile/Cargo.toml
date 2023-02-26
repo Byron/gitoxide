@@ -9,6 +9,21 @@ edition = "2021"
 include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 rust-version = "1.64"
 
+[[example]]
+name = "delete-tempfiles-on-sigterm"
+path = "examples/delete-tempfiles-on-sigterm.rs"
+required-features = ["signals"]
+
+[[example]]
+name = "delete-tempfiles-on-sigterm-interactive"
+path = "examples/delete-tempfiles-on-sigterm-interactive.rs"
+required-features = ["signals"]
+
+[[example]]
+name = "try-deadlock-on-cleanup"
+path = "examples/try-deadlock-on-cleanup.rs"
+required-features = ["signals"]
+
 [lib]
 doctest = false
 test = true
@@ -16,9 +31,22 @@ test = true
 [dependencies]
 dashmap = "5.1.0"
 once_cell = { version = "1.8.0", default-features = false, features = ["race", "std"] }
-signal-hook = { version = "0.3.9", default-features = false }
-signal-hook-registry = "1.4.0"
 tempfile = "3.4.0"
+
+signal-hook = { version = "0.3.9", default-features = false, optional = true }
+signal-hook-registry = { version = "1.4.0", optional = true }
+
+document-features = { version = "0.2.0", optional = true }
+
+[features]
+default = []
+signals = ["dep:signal-hook", "dep:signal-hook-registry"]
 
 [target.'cfg(not(windows))'.dependencies]
 libc = { version = "0.2.98", default-features = false }
+
+[package.metadata.docs.rs]
+all-features = true
+features = ["document-features"]
+rustdoc-args = ["--cfg", "docsrs"]
+
