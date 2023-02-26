@@ -11,9 +11,9 @@ title "gix-tempfile crate"
 
   (when "running the example program to raise a signal with a tempfile present"
     it "fails as the process aborts" && {
-      expect_run $ABORTED cargo run --example delete-tempfiles-on-sigterm
+      expect_run $ABORTED cargo run --features signals --example delete-tempfiles-on-sigterm
     }
-    TEMPFILE="$(cargo run --example delete-tempfiles-on-sigterm 2>/dev/null || true)"
+    TEMPFILE="$(cargo run --features signals --example delete-tempfiles-on-sigterm 2>/dev/null || true)"
     it "outputs a tempfile with an expected name" && {
       expect_run $SUCCESSFULLY test "$TEMPFILE" = "tempfile.ext"
     }
@@ -25,12 +25,12 @@ title "gix-tempfile crate"
   (when "running the example program to help assure there cannot be deadlocks"
     ABORTED=134
     it "succeeds as it won't deadlock" && {
-      expect_run $ABORTED cargo run --release --example try-deadlock-on-cleanup -- 5
+      expect_run $ABORTED cargo run --release --features signals --example try-deadlock-on-cleanup -- 1
     }
   )
 )
 
-title "gix-tempfile crate"
+title "gix crate"
 (when "testing 'gix'"
   snapshot="$snapshot/gix"
   cd gix

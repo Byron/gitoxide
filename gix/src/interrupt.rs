@@ -100,7 +100,7 @@ mod init {
         }
 
         // This means that they won't setup a handler allowing us to call them right before we actually abort.
-        gix_tempfile::setup(gix_tempfile::SignalHandlerMode::None);
+        gix_tempfile::signal::setup(gix_tempfile::signal::handler::Mode::None);
 
         Ok(Deregister(hooks))
     }
