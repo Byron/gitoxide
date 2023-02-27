@@ -30,7 +30,7 @@ required-features = ["blocking-network-client"]
 
 [features]
 
-default = ["max-performance-safe"]
+default = ["max-performance-safe", "comfort"]
 
 #! ### Mutually Exclusive Network Client
 #! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
@@ -75,6 +75,9 @@ max-performance = [ "gix-features/zlib-ng-compat", "fast-sha1", "max-performance
 ## If enabled, use assembly versions of sha1 on supported platforms.
 ## This might cause compile failures as well which is why it can be turned off separately.
 fast-sha1 = [ "gix-features/fast-sha1" ]
+
+##
+comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
 
 ## Activate features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases, skipping the ones known to cause compile failures
 ## on some platforms.
