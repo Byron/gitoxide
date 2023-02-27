@@ -37,18 +37,20 @@ pub mod walkdir {
         fn from(v: Parallelism) -> Self {
             match v {
                 Parallelism::Serial => jwalk::Parallelism::Serial,
-                Parallelism::ThreadPoolPerTraversal { thread_name } => {
-                    let pool = jwalk::rayon::ThreadPoolBuilder::new()
-                        .num_threads(num_cpus::get().min(16))
-                        .stack_size(128 * 1024)
-                        .thread_name(move |idx| format!("{thread_name} {idx}"))
-                        .build()
-                        .expect("we only set options that can't cause a build failure");
-                    jwalk::Parallelism::RayonExistingPool {
-                        pool: pool.into(),
-                        busy_timeout: None,
-                    }
-                }
+                Parallelism::ThreadPoolPerTraversal { thread_name } => std::thread::available_parallelism()
+                    .map(|threads| {
+                        let pool = jwalk::rayon::ThreadPoolBuilder::new()
+                            .num_threads(threads.get().min(16))
+                            .stack_size(128 * 1024)
+                            .thread_name(move |idx| format!("{thread_name} {idx}"))
+                            .build()
+                            .expect("we only set options that can't cause a build failure");
+                        jwalk::Parallelism::RayonExistingPool {
+                            pool: pool.into(),
+                            busy_timeout: None,
+                        }
+                    })
+                    .unwrap_or_else(|_| Parallelism::Serial.into()),
             }
         }
     }

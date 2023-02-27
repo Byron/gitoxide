@@ -1618,7 +1618,6 @@ dependencies = [
  "gix-hash 0.10.3",
  "jwalk",
  "libc",
- "num_cpus",
  "once_cell",
  "parking_lot 0.12.1",
  "prodash",

@@ -20,7 +20,7 @@ default = []
 progress = ["prodash"]
 
 ## If set, walkdir iterators will be multi-threaded.
-fs-walkdir-parallel = [ "num_cpus", "jwalk" ]
+fs-walkdir-parallel = [ "jwalk" ]
 
 ## Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
 ## where it makes sense.
@@ -29,7 +29,6 @@ fs-walkdir-parallel = [ "num_cpus", "jwalk" ]
 ## This way, single-threaded applications don't have to pay for threaded primitives.
 parallel = ["crossbeam-utils",
  "crossbeam-channel",
- "num_cpus",
  "parking_lot"]
 #* an in-memory unidirectional pipe using `bytes` as efficient transfer mechanism.
 io-pipe = ["bytes"]
@@ -104,7 +103,6 @@ gix-hash = { version = "^0.10.3", path = "../gix-hash" }
 # 'parallel' feature
 crossbeam-utils = { version = "0.8.7", optional = true }
 crossbeam-channel = { version = "0.5.0", optional = true }
-num_cpus = { version = "1.13.0", optional = true }
 parking_lot = { version = "0.12.0", default-features = false, optional = true }
 
 jwalk = { version = "0.8.1", optional = true }
