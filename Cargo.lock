@@ -1409,7 +1409,7 @@ name = "gix-bitmap"
 version = "0.2.1"
 dependencies = [
  "gix-testtools",
- "quick-error 2.0.1",
+ "thiserror",
 ]
 
 [[package]]
