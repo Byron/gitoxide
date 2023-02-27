@@ -73,6 +73,7 @@ check: ## Build all code in suitable configurations
 	cd gix-hash && cargo check --all-features \
 				&& cargo check
 	cd gix-tempfile && cargo check --features signals \
+					&& cargo check --features hp-hashmap \
 					&& cargo check
 	cd gix-object && cargo check --all-features \
                   && cargo check --features verbose-object-parsing-errors

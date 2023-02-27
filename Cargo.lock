@@ -2177,6 +2177,7 @@ dependencies = [
  "document-features",
  "libc",
  "once_cell",
+ "parking_lot 0.12.1",
  "signal-hook",
  "signal-hook-registry",
  "tempfile",
