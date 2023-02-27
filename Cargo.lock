@@ -535,7 +535,6 @@ dependencies = [
  "castaway",
  "itoa",
  "ryu",
- "serde",
 ]
 
 [[package]]
@@ -1376,7 +1375,6 @@ name = "gix-attributes"
 version = "0.8.3"
 dependencies = [
  "bstr",
- "compact_str",
  "document-features",
  "gix-features 0.26.5",
  "gix-glob 0.5.5",

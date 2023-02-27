@@ -14,7 +14,7 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "bstr/serde", "gix-glob/serde1", "compact_str/serde"]
+serde1 = ["serde", "bstr/serde", "gix-glob/serde1"]
 
 [dependencies]
 gix-features = { version = "^0.26.5", path = "../gix-features" }
@@ -26,7 +26,6 @@ bstr = { version = "1.3.0", default-features = false, features = ["std", "unicod
 unicode-bom = "1.1.4"
 thiserror = "1.0.26"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
-compact_str = "0.6.1"
 
 document-features = { version = "0.2.1", optional = true }
 
