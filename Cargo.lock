@@ -1800,8 +1800,8 @@ dependencies = [
  "document-features",
  "gix-actor 0.17.2",
  "gix-testtools",
- "quick-error 2.0.1",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
