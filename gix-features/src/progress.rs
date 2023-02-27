@@ -8,6 +8,21 @@ pub use prodash::{
     unit, Progress, Unit,
 };
 
+#[cfg(feature = "progress-unit-bytes")]
+pub use bytesize;
+/// A stub for the portions of the `bytesize` crate that we use internally in `gitoxide`.
+#[cfg(not(feature = "progress-unit-bytes"))]
+pub mod bytesize {
+    /// A stub for the `ByteSize` wrapper.
+    pub struct ByteSize(pub u64);
+
+    impl std::fmt::Display for ByteSize {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            self.0.fmt(f)
+        }
+    }
+}
+
 /// A unit for displaying bytes with throughput and progress percentage.
 #[cfg(feature = "progress-unit-bytes")]
 pub fn bytes() -> Option<Unit> {

@@ -21,7 +21,7 @@ progress = ["dep:prodash"]
 ## Provide human-readable numbers as well as easier to read byte units for progress bars.
 progress-unit-human-numbers = ["prodash?/unit-human"]
 ## Provide human readable byte units for progress bars.
-progress-unit-bytes = ["prodash?/unit-bytes"]
+progress-unit-bytes = ["dep:bytesize", "prodash?/unit-bytes"]
 
 ## If set, walkdir iterators will be multi-threaded.
 fs-walkdir-parallel = [ "dep:jwalk" ]
@@ -124,6 +124,7 @@ sha1 = { version = "0.10.0", optional = true }
 
 # progress
 prodash = { version = "23.0", optional = true, default-features = false }
+bytesize = { version = "1.0.1", optional = true }
 
 # pipe
 bytes = { version = "1.0.0", optional = true }
