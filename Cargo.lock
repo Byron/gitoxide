@@ -290,9 +290,9 @@ dependencies = [
 
 [[package]]
 name = "btoi"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97c0869a9faa81f8bbf8102371105d6d0a7b79167a04c340b04ab16892246a11"
+checksum = "9dd6407f73a9b8b6162d8a2ef999fe6afd7cc15902ebf42c5cd296addf17e0ad"
 dependencies = [
  "num-traits",
 ]
@@ -1736,9 +1736,9 @@ dependencies = [
 name = "gix-index"
 version = "0.13.0"
 dependencies = [
- "atoi",
  "bitflags",
  "bstr",
+ "btoi",
  "document-features",
  "filetime",
  "gix-bitmap 0.2.1",

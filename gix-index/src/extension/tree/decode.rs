@@ -22,10 +22,10 @@ fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
     let (path, data) = split_at_byte_exclusive(data, 0)?;
 
     let (entry_count, data) = split_at_byte_exclusive(data, b' ')?;
-    let num_entries: i32 = atoi::atoi(entry_count)?;
+    let num_entries: i32 = btoi::btoi(entry_count).ok()?;
 
     let (subtree_count, data) = split_at_byte_exclusive(data, b'\n')?;
-    let subtree_count: usize = atoi::atoi(subtree_count)?;
+    let subtree_count: usize = btoi::btou(subtree_count).ok()?;
 
     let (id, mut data) = if num_entries >= 0 {
         let (hash, data) = split_at_pos(data, hash_len)?;
