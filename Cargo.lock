@@ -1788,8 +1788,8 @@ version = "4.0.0"
 dependencies = [
  "fastrand",
  "gix-tempfile 4.0.0",
- "quick-error 2.0.1",
  "tempfile",
+ "thiserror",
 ]
 
 [[package]]
