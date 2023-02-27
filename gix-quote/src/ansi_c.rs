@@ -1,20 +1,15 @@
 ///
 pub mod undo {
     use bstr::{BStr, BString};
-    use quick_error::quick_error;
 
-    quick_error! {
-        /// The error returned by [ansi_c][crate::ansi_c::undo()].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            InvalidInput { message: String, input: BString } {
-                display("{}: {:?}", message, input)
-            }
-            UnsupportedEscapeByte { byte: u8, input: BString } {
-                display("Invalid escaped value {} in input {:?}", byte, input)
-            }
-        }
+    /// The error returned by [ansi_c][crate::ansi_c::undo()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("{message}: {input:?}")]
+        InvalidInput { message: String, input: BString },
+        #[error("Invalid escaped value {byte} in input {input:?}")]
+        UnsupportedEscapeByte { byte: u8, input: BString },
     }
 
     impl Error {

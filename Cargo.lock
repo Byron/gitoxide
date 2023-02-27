@@ -2009,7 +2009,7 @@ version = "0.4.2"
 dependencies = [
  "bstr",
  "btoi",
- "quick-error 2.0.1",
+ "thiserror",
 ]
 
 [[package]]
