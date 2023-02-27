@@ -1353,8 +1353,8 @@ dependencies = [
  "itoa",
  "nom",
  "pretty_assertions",
- "quick-error 2.0.1",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
