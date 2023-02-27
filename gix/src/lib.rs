@@ -134,8 +134,9 @@ pub mod tag;
 
 ///
 pub mod progress {
+    #[cfg(feature = "progress-tree")]
+    pub use gix_features::progress::prodash::tree;
     pub use gix_features::progress::*;
-    pub use prodash::tree;
 }
 
 ///

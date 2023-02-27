@@ -1610,6 +1610,7 @@ version = "0.26.5"
 dependencies = [
  "bstr",
  "bytes",
+ "bytesize",
  "crc32fast",
  "crossbeam-channel",
  "crossbeam-utils",
@@ -1875,7 +1876,6 @@ dependencies = [
 name = "gix-pack"
 version = "0.31.0"
 dependencies = [
- "bytesize",
  "clru",
  "dashmap",
  "document-features",
