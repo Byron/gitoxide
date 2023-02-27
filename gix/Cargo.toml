@@ -68,31 +68,41 @@ serde1 = [  "serde",
             "gix-revision/serde1",
             "gix-credentials/serde1" ]
 
-## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
-## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
-max-performance = [ "gix-features/zlib-ng-compat", "fast-sha1", "max-performance-safe" ]
-
 ## Re-export the progress tree root which allows to obtain progress from various functions which take `impl gix::Progress`.
 progress-tree = ["prodash/progress-tree"]
 
-## If enabled, use assembly versions of sha1 on supported platforms.
-## This might cause compile failures as well which is why it can be turned off separately.
-fast-sha1 = [ "gix-features/fast-sha1" ]
-
-##
+## Various progress-related features that improve the look of progress message units.
 comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
+
+## Print debugging information about usage of object database caches, useful for tuning cache sizes.
+cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
+
+#! ### Performance
 
 ## Activate features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases, skipping the ones known to cause compile failures
 ## on some platforms.
 max-performance-safe = [
     "gix-features/parallel",
-    "gix-pack/pack-cache-lru-static",
-    "gix-pack/pack-cache-lru-dynamic",
+    "pack-cache-lru-static",
+    "pack-cache-lru-dynamic",
     "gix-features/fs-walkdir-parallel"
 ]
-## Print debugging information about usage of object database caches, useful for tuning cache sizes.
-cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 
+
+## Provide a fixed-size allocation-free LRU cache for packs. It's useful if caching is desired while keeping the memory footprint
+## for the LRU-cache itself low.
+pack-cache-lru-static = ["gix-pack/pack-cache-lru-static"]
+
+## Provide a hash-map based LRU cache whose eviction is based a memory cap calculated from object data.
+pack-cache-lru-dynamic = ["gix-pack/pack-cache-lru-dynamic"]
+
+## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
+## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
+max-performance = [ "max-performance-safe", "gix-features/zlib-ng-compat", "fast-sha1" ]
+
+## If enabled, use assembly versions of sha1 on supported platforms.
+## This might cause compile failures as well which is why it can be turned off separately.
+fast-sha1 = [ "gix-features/fast-sha1" ]
 
 
 [dependencies]
