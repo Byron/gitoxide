@@ -15,7 +15,7 @@ test = true
 
 [dependencies]
 fastrand = "1.5.0"
-gix-tempfile = { version = "^4.0.0", path = "../gix-tempfile" }
+gix-tempfile = { version = "^4.0.0", default-features = false, path = "../gix-tempfile" }
 thiserror = "1.0.38"
 
 [dev-dependencies]

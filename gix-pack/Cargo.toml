@@ -51,7 +51,7 @@ dashmap = "5.1.0"
 
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-gix-tempfile = { version = "^4.0.0", path = "../gix-tempfile" }
+gix-tempfile = { version = "^4.0.0", default-features = false, path = "../gix-tempfile" }
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools"}
