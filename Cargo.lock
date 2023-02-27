@@ -1622,9 +1622,9 @@ dependencies = [
  "once_cell",
  "parking_lot 0.12.1",
  "prodash",
- "quick-error 2.0.1",
  "sha1",
  "sha1_smol",
+ "thiserror",
  "walkdir",
 ]
 
