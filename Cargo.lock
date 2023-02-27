@@ -1865,7 +1865,6 @@ dependencies = [
  "gix-quote 0.4.2",
  "gix-testtools",
  "maplit",
- "num_cpus",
  "parking_lot 0.12.1",
  "pretty_assertions",
  "serde",
