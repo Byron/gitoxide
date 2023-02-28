@@ -85,11 +85,12 @@ max-performance-safe = [
     "gix-features/parallel",
     "pack-cache-lru-static",
     "pack-cache-lru-dynamic",
-    "hp-tempfile-registry",
     "gix-features/fs-walkdir-parallel"
 ]
 
 ## The tempfile registry uses a better implementation of a thread-safe hashmap, relying on an external crate.
+## This may be useful when tempfiles are created and accessed in a massively parallel fashion and you know that this is indeed faster than
+## the simpler implementation that is the default.
 hp-tempfile-registry = ["gix-tempfile/hp-hashmap"]
 
 ## Provide a fixed-size allocation-free LRU cache for packs. It's useful if caching is desired while keeping the memory footprint
