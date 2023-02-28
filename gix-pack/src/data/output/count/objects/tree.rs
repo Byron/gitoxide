@@ -15,7 +15,7 @@ pub mod changes {
 
     impl<'a, H> AllNew<'a, H>
     where
-        H: InsertImmutable<ObjectId>,
+        H: InsertImmutable,
     {
         pub fn new(all_seen: &'a H) -> Self {
             AllNew {
@@ -30,7 +30,7 @@ pub mod changes {
 
     impl<'a, H> Visit for AllNew<'a, H>
     where
-        H: InsertImmutable<ObjectId>,
+        H: InsertImmutable,
     {
         fn pop_front_tracked_path_and_set_current(&mut self) {}
 
@@ -75,7 +75,7 @@ pub mod traverse {
 
     impl<'a, H> AllUnseen<'a, H>
     where
-        H: InsertImmutable<ObjectId>,
+        H: InsertImmutable,
     {
         pub fn new(all_seen: &'a H) -> Self {
             AllUnseen {
@@ -90,7 +90,7 @@ pub mod traverse {
 
     impl<'a, H> Visit for AllUnseen<'a, H>
     where
-        H: InsertImmutable<ObjectId>,
+        H: InsertImmutable,
     {
         fn pop_front_tracked_path_and_set_current(&mut self) {}
 

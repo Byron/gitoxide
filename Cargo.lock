@@ -1696,6 +1696,7 @@ version = "0.1.1"
 dependencies = [
  "gix-hash 0.10.3",
  "hashbrown 0.13.2",
+ "parking_lot 0.12.1",
 ]
 
 [[package]]
@@ -1875,7 +1876,6 @@ name = "gix-pack"
 version = "0.31.0"
 dependencies = [
  "clru",
- "dashmap",
  "document-features",
  "gix-chunk",
  "gix-diff",

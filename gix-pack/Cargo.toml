@@ -47,7 +47,6 @@ clru = { version = "0.6.1", optional = true }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 ## If enabled, `cargo doc` will see feature documentation from this manifest.
 document-features = { version = "0.2.0", optional = true }
-dashmap = "5.1.0"
 
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
