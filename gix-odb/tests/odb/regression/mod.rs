@@ -25,7 +25,7 @@ mod repo_with_small_packs {
                 .join("objects");
             let store = gix_odb::at(base)?;
             let (tx, barrier) = crossbeam_channel::unbounded::<()>();
-            let handles = (0..num_cpus::get()).map(|tid| {
+            let handles = (0..std::thread::available_parallelism()?.get()).map(|tid| {
                 std::thread::spawn({
                     let store = store.clone();
                     let barrier = barrier.clone();

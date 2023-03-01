@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use gix_features::{
     parallel::{self, in_parallel_if},
-    progress::{self, unit, Progress},
+    progress::{self, Progress},
     threading::{lock, Mutable, OwnShared},
 };
 
@@ -151,10 +151,7 @@ impl index::File {
                      -> Result<Vec<data::decode::entry::Outcome>, Error<_>> {
                         progress.init(
                             Some(entries.len()),
-                            Some(unit::dynamic(unit::Human::new(
-                                unit::human::Formatter::new(),
-                                "objects",
-                            ))),
+                            gix_features::progress::count_with_decimals("objects", 2),
                         );
                         let mut stats = Vec::with_capacity(entries.len());
                         progress.set(0);

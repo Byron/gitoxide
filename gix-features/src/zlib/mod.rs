@@ -2,24 +2,16 @@ pub use flate2::{Decompress, Status};
 
 /// non-streaming interfaces for decompression
 pub mod inflate {
-    use quick_error::quick_error;
-    quick_error! {
-        /// The error returned by various [Inflate methods][super::Inflate]
-        #[allow(missing_docs)]
-        #[derive(Debug)]
-        pub enum Error {
-            WriteInflated(err: std::io::Error) {
-                display("Could not write all bytes when decompressing content")
-                from()
-            }
-            Inflate(err: flate2::DecompressError) {
-                display("Could not decode zip stream, status was '{:?}'", err)
-                from()
-            }
-            Status(status: flate2::Status) {
-                display("The zlib status indicated an error, status was '{:?}'", status)
-            }
-        }
+    /// The error returned by various [Inflate methods][super::Inflate]
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Could not write all bytes when decompressing content")]
+        WriteInflated(#[from] std::io::Error),
+        #[error("Could not decode zip stream, status was '{0:?}'")]
+        Inflate(#[from] flate2::DecompressError),
+        #[error("The zlib status indicated an error, status was '{0:?}'")]
+        Status(flate2::Status),
     }
 }
 

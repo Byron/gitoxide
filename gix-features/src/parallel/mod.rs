@@ -78,7 +78,8 @@ pub fn optimize_chunk_size_and_thread_limit(
     thread_limit: Option<usize>,
     available_threads: Option<usize>,
 ) -> (usize, Option<usize>, usize) {
-    let available_threads = available_threads.unwrap_or_else(num_cpus::get);
+    let available_threads =
+        available_threads.unwrap_or_else(|| std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1));
     let available_threads = thread_limit
         .map(|l| if l == 0 { available_threads } else { l })
         .unwrap_or(available_threads);
@@ -121,7 +122,7 @@ pub fn num_threads(_thread_limit: Option<usize>) -> usize {
 /// Only available with the `parallel` feature toggle set.
 #[cfg(feature = "parallel")]
 pub fn num_threads(thread_limit: Option<usize>) -> usize {
-    let logical_cores = num_cpus::get();
+    let logical_cores = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1);
     thread_limit
         .map(|l| if l == 0 { logical_cores } else { l })
         .unwrap_or(logical_cores)

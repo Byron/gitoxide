@@ -290,9 +290,9 @@ dependencies = [
 
 [[package]]
 name = "btoi"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97c0869a9faa81f8bbf8102371105d6d0a7b79167a04c340b04ab16892246a11"
+checksum = "9dd6407f73a9b8b6162d8a2ef999fe6afd7cc15902ebf42c5cd296addf17e0ad"
 dependencies = [
  "num-traits",
 ]
@@ -535,7 +535,6 @@ dependencies = [
  "castaway",
  "itoa",
  "ryu",
- "serde",
 ]
 
 [[package]]
@@ -1353,8 +1352,8 @@ dependencies = [
  "itoa",
  "nom",
  "pretty_assertions",
- "quick-error 2.0.1",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -1376,7 +1375,6 @@ name = "gix-attributes"
 version = "0.8.3"
 dependencies = [
  "bstr",
- "compact_str",
  "document-features",
  "gix-features 0.26.5",
  "gix-glob 0.5.5",
@@ -1409,7 +1407,7 @@ name = "gix-bitmap"
 version = "0.2.1"
 dependencies = [
  "gix-testtools",
- "quick-error 2.0.1",
+ "thiserror",
 ]
 
 [[package]]
@@ -1610,6 +1608,7 @@ version = "0.26.5"
 dependencies = [
  "bstr",
  "bytes",
+ "bytesize",
  "crc32fast",
  "crossbeam-channel",
  "crossbeam-utils",
@@ -1618,13 +1617,12 @@ dependencies = [
  "gix-hash 0.10.3",
  "jwalk",
  "libc",
- "num_cpus",
  "once_cell",
  "parking_lot 0.12.1",
  "prodash",
- "quick-error 2.0.1",
  "sha1",
  "sha1_smol",
+ "thiserror",
  "walkdir",
 ]
 
@@ -1698,6 +1696,7 @@ version = "0.1.1"
 dependencies = [
  "gix-hash 0.10.3",
  "hashbrown 0.13.2",
+ "parking_lot 0.12.1",
 ]
 
 [[package]]
@@ -1736,9 +1735,9 @@ dependencies = [
 name = "gix-index"
 version = "0.13.0"
 dependencies = [
- "atoi",
  "bitflags",
  "bstr",
+ "btoi",
  "document-features",
  "filetime",
  "gix-bitmap 0.2.1",
@@ -1788,8 +1787,8 @@ version = "4.0.0"
 dependencies = [
  "fastrand",
  "gix-tempfile 4.0.0",
- "quick-error 2.0.1",
  "tempfile",
+ "thiserror",
 ]
 
 [[package]]
@@ -1800,8 +1799,8 @@ dependencies = [
  "document-features",
  "gix-actor 0.17.2",
  "gix-testtools",
- "quick-error 2.0.1",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -1865,7 +1864,6 @@ dependencies = [
  "gix-quote 0.4.2",
  "gix-testtools",
  "maplit",
- "num_cpus",
  "parking_lot 0.12.1",
  "pretty_assertions",
  "serde",
@@ -1877,9 +1875,7 @@ dependencies = [
 name = "gix-pack"
 version = "0.31.0"
 dependencies = [
- "bytesize",
  "clru",
- "dashmap",
  "document-features",
  "gix-chunk",
  "gix-diff",
@@ -2009,7 +2005,7 @@ version = "0.4.2"
 dependencies = [
  "bstr",
  "btoi",
- "quick-error 2.0.1",
+ "thiserror",
 ]
 
 [[package]]
@@ -2181,6 +2177,7 @@ dependencies = [
  "document-features",
  "libc",
  "once_cell",
+ "parking_lot 0.12.1",
  "signal-hook",
  "signal-hook-registry",
  "tempfile",
@@ -3327,15 +3324,14 @@ dependencies = [
 
 [[package]]
 name = "prodash"
-version = "23.0.0"
+version = "23.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d8c414345b4a98cbcd0e8d8829c8f54b47a7ed4fb771c45b7c5c6c0ae23dc4c"
+checksum = "88ee4651b19ce9933cb6077977767f44d332f14603f00d455ce9284e709493d0"
 dependencies = [
  "async-io",
  "atty",
  "bytesize",
  "crosstermion",
- "dashmap",
  "futures-core",
  "futures-lite",
  "human_format",

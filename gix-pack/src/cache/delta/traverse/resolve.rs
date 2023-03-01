@@ -1,9 +1,6 @@
 use std::{cell::RefCell, collections::BTreeMap, sync::atomic::Ordering};
 
-use gix_features::{
-    progress::{unit, Progress},
-    zlib,
-};
+use gix_features::{progress::Progress, zlib};
 
 use crate::{
     cache::delta::{
@@ -52,13 +49,7 @@ where
     };
 
     // Traverse the tree breadth first and loose the data produced for the base as it won't be needed anymore.
-    progress.init(
-        None,
-        Some(unit::dynamic(unit::Human::new(
-            unit::human::Formatter::new(),
-            "objects",
-        ))),
-    );
+    progress.init(None, gix_features::progress::count_with_decimals("objects", 2));
 
     // each node is a base, and its children always start out as deltas which become a base after applying them.
     // These will be pushed onto our stack until all are processed

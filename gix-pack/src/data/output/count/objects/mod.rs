@@ -64,7 +64,7 @@ where
         inner: objects_ids,
         size: chunk_size,
     };
-    let seen_objs = dashmap::DashSet::<ObjectId, gix_hashtable::hash::Builder>::default();
+    let seen_objs = gix_hashtable::sync::ObjectIdMap::default();
     let progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::in_parallel(
@@ -156,7 +156,7 @@ mod expand {
     pub fn this<Find, IterErr, Oid>(
         db: &Find,
         input_object_expansion: ObjectExpansion,
-        seen_objs: &impl util::InsertImmutable<ObjectId>,
+        seen_objs: &impl util::InsertImmutable,
         oids: impl IntoIterator<Item = std::result::Result<Oid, IterErr>>,
         buf1: &mut Vec<u8>,
         #[allow(clippy::ptr_arg)] buf2: &mut Vec<u8>,
@@ -364,7 +364,7 @@ mod expand {
     #[inline]
     fn push_obj_count_unique(
         out: &mut Vec<output::Count>,
-        all_seen: &impl util::InsertImmutable<ObjectId>,
+        all_seen: &impl util::InsertImmutable,
         id: &oid,
         location: Option<crate::data::entry::Location>,
         progress: &mut impl Progress,

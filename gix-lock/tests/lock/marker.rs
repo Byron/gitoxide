@@ -15,7 +15,7 @@ mod acquire {
             .expect_err("the lock is taken and there is a failure obtaining it again")
             .to_string();
 
-        assert!(err_str.contains("the-resource could not be obtained immediately"));
+        assert!(err_str.contains("the-resource' could not be obtained immediately"));
         assert!(err_str.contains("the-resource.lock"), "it mentions the lockfile itself");
         Ok(())
     }

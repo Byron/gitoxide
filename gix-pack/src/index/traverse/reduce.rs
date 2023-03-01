@@ -122,7 +122,7 @@ where
             self.entries_seen,
             elapsed_s,
             objects_per_second,
-            bytesize::ByteSize(self.stats.average.object_size * objects_per_second as u64)
+            gix_features::progress::bytesize::ByteSize(self.stats.average.object_size * objects_per_second as u64)
         ));
         Ok(self.stats)
     }

@@ -1,6 +1,5 @@
 mod fs;
 mod handle;
-mod registry;
 
 #[cfg(feature = "signals")]
 mod setup {

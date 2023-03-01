@@ -78,19 +78,15 @@ mod write {
     use std::io;
 
     use bstr::{BStr, ByteSlice};
-    use quick_error::quick_error;
 
     use crate::{Signature, SignatureRef};
 
-    quick_error! {
-        /// The Error produced by [`Signature::write_to()`].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        enum Error {
-            IllegalCharacter {
-                display("Signature name or email must not contain '<', '>' or \\n")
-            }
-        }
+    /// The Error produced by [`Signature::write_to()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    enum Error {
+        #[error("Signature name or email must not contain '<', '>' or \\n")]
+        IllegalCharacter,
     }
 
     impl From<Error> for io::Error {

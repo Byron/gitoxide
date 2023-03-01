@@ -12,7 +12,6 @@
 use std::path::PathBuf;
 
 use bstr::{BStr, BString};
-use compact_str::CompactString;
 pub use gix_glob as glob;
 
 mod assignment;
@@ -60,7 +59,7 @@ pub enum State {
     Unset,
     /// The attribute is set to the given value, which followed the `=` sign.
     /// Note that values can be empty.
-    Value(CompactString), // TODO: use `kstring`, maybe it gets a binary string soon, needs binary, too, no UTF8 is required for attr values
+    Value(BString), // TODO(performance): Is there a non-utf8 compact_str/KBString crate? See https://github.com/cobalt-org/kstring/issues/37#issuecomment-1446777265 .
     /// The attribute isn't mentioned with a given path or is explicitly set to `Unspecified` using the `!` sign.
     Unspecified,
 }
@@ -68,7 +67,7 @@ pub enum State {
 /// Represents a validated attribute name
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Name(pub(crate) CompactString);
+pub struct Name(pub(crate) String); // TODO(performance): See if `KBString` or `compact_string` could be meaningful here.
 
 /// Holds a validated attribute name as a reference
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]

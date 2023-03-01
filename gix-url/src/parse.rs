@@ -13,9 +13,9 @@ pub enum Error {
     Utf8(#[from] std::str::Utf8Error),
     #[error(transparent)]
     Url(#[from] url::ParseError),
-    #[error("urls require the path to the repository")]
+    #[error("URLs need to specify the path to the repository")]
     MissingResourceLocation,
-    #[error("file urls require an absolute or relative path to the repository")]
+    #[error("file URLs require an absolute or relative path to the repository")]
     MissingRepositoryPath,
     #[error("\"{url}\" is not a valid local path")]
     NotALocalFile { url: BString },

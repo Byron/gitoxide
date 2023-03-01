@@ -10,17 +10,6 @@ pub mod ewah;
 pub(crate) mod decode {
     use std::convert::TryInto;
 
-    use quick_error::quick_error;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Corrupt(message: &'static str) {
-                display("{}", message)
-            }
-        }
-    }
-
     #[inline]
     pub(crate) fn split_at_pos(data: &[u8], pos: usize) -> Option<(&[u8], &[u8])> {
         if data.len() < pos {

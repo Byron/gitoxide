@@ -1,19 +1,18 @@
 mod error {
     use bstr::BString;
-    use quick_error::quick_error;
 
-    quick_error! {
-        /// The error returned by [`parse()`][crate::parse()].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            UnconsumedInput { line_number: usize, line: BString } {
-                display("Line {} has too many names or emails, or none at all: {}", line_number, line)
-            }
-            Malformed { line_number: usize, line: BString, message: String } {
-                display("{}: {:?}: {}", line_number, line, message)
-            }
-        }
+    /// The error returned by [`parse()`][crate::parse()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Line {line_number} has too many names or emails, or none at all: {line:?}")]
+        UnconsumedInput { line_number: usize, line: BString },
+        #[error("{line_number}: {line:?}: {message}")]
+        Malformed {
+            line_number: usize,
+            line: BString,
+            message: String,
+        },
     }
 }
 

@@ -17,24 +17,32 @@ test = false
 default = []
 ## Provide traits and utilities for providing progress information. These can then be rendered
 ## using facilities of the `prodash` crate.
-progress = ["prodash"]
+progress = ["dep:prodash"]
+## Provide human-readable numbers as well as easier to read byte units for progress bars.
+progress-unit-human-numbers = ["prodash?/unit-human"]
+## Provide human readable byte units for progress bars.
+progress-unit-bytes = ["dep:bytesize", "prodash?/unit-bytes"]
 
 ## If set, walkdir iterators will be multi-threaded.
-fs-walkdir-parallel = [ "num_cpus", "jwalk" ]
+fs-walkdir-parallel = [ "dep:jwalk" ]
 
 ## Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
 ## where it makes sense.
 ## As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
 ## The `threading` module will contain thread-safe primitives for shared ownership and mutation, otherwise these will be their single threaded counterparts.
 ## This way, single-threaded applications don't have to pay for threaded primitives.
-parallel = ["crossbeam-utils",
- "crossbeam-channel",
- "num_cpus",
- "parking_lot"]
+parallel = ["dep:crossbeam-utils",
+ "dep:crossbeam-channel",
+ "dep:parking_lot"]
+## If enabled, OnceCell will be made available for interior mutability either in sync or unsync forms.
+once_cell = ["dep:once_cell"]
+## Makes facilities of the `walkdir` crate partially available.
+## In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
+walkdir = ["dep:walkdir"]
 #* an in-memory unidirectional pipe using `bytes` as efficient transfer mechanism.
-io-pipe = ["bytes"]
+io-pipe = ["dep:bytes"]
 ## provide a proven and fast `crc32` implementation.
-crc32 = ["crc32fast"]
+crc32 = ["dep:crc32fast"]
 
 #! ### Mutually Exclusive ZLIB
 
@@ -43,25 +51,25 @@ crc32 = ["crc32fast"]
 ## and reduced performance is acceptable. **zlib-stock** can be used if dynamic linking of an external zlib library is desired or if cmake is not available.
 ## Note that a competitive Zlib implementation is critical to `gitoxide's` object database performance.
 ## Additional backends are supported, each of which overriding the default Rust backend.
-zlib = ["flate2", "flate2/rust_backend", "quick-error"]
+zlib = ["dep:flate2", "flate2?/rust_backend", "dep:thiserror"]
 ## Use zlib-ng (libz-ng-sys) with native API (no compat mode) that can co-exist with system libz.
-zlib-ng= ["flate2/zlib-ng"]
+zlib-ng= ["zlib", "flate2?/zlib-ng"]
 ## Use a C-based backend which can compress and decompress significantly faster than the other options.
-zlib-ng-compat = ["flate2/zlib-ng-compat"]
+zlib-ng-compat = ["zlib", "flate2?/zlib-ng-compat"]
 ## Use a slower C-based backend which can compress and decompress significantly faster than the rust version.
 ## Unlike `zlib-ng-compat`, this allows using dynamic linking with system `zlib` libraries and doesn't require cmake.
-zlib-stock = ["flate2/zlib"]
+zlib-stock = ["zlib", "flate2?/zlib"]
 ## available for completeness even though it's the default - it may be chosen for more specific feature flag names, instead of a bare `zlib`.
-zlib-rust-backend = ["flate2/rust_backend"]
+zlib-rust-backend = ["zlib", "flate2?/rust_backend"]
 
 #! ### Mutually Exclusive SHA1
 ## A fast SHA1 implementation is critical to `gitoxide's` object database performance
 ## A multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on
 ## CPUs that support it, like AMD Ryzen or Intel Core i3, as well as Apple Silicon like M1.
 ## Takes precedence over `rustsha1` if both are specified.
-fast-sha1 = ["sha1"]
+fast-sha1 = ["dep:sha1"]
 ## A standard and well performing pure Rust implementation of Sha1. Will significantly slow down various git operations.
-rustsha1 = ["sha1_smol"]
+rustsha1 = ["dep:sha1_smol"]
 
 #! ### Other
 
@@ -72,22 +80,22 @@ cache-efficiency-debug = []
 [[test]]
 name = "hash"
 path = "tests/hash.rs"
-required-features = ["sha1_smol"]
+required-features = ["rustsha1"]
 
 [[test]]
 name = "parallel"
 path = "tests/parallel_threaded.rs"
-required-features = ["parallel", "sha1_smol"]
+required-features = ["parallel", "rustsha1"]
 
 [[test]]
 name = "multi-threaded"
 path = "tests/parallel_shared_threaded.rs"
-required-features = ["parallel", "sha1_smol"]
+required-features = ["parallel", "rustsha1"]
 
 [[test]]
 name = "single-threaded"
 path = "tests/parallel_shared.rs"
-required-features = ["sha1_smol"]
+required-features = ["rustsha1"]
 
 [[test]]
 name = "pipe"
@@ -104,12 +112,9 @@ gix-hash = { version = "^0.10.3", path = "../gix-hash" }
 # 'parallel' feature
 crossbeam-utils = { version = "0.8.7", optional = true }
 crossbeam-channel = { version = "0.5.0", optional = true }
-num_cpus = { version = "1.13.0", optional = true }
 parking_lot = { version = "0.12.0", default-features = false, optional = true }
 
 jwalk = { version = "0.8.1", optional = true }
-## Makes facilities of the `walkdir` crate partially available.
-## In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
 walkdir = { version = "2.3.2", optional = true } # used when parallel is off
 
 # hashing and 'fast-sha1' feature
@@ -118,16 +123,16 @@ crc32fast = { version = "1.2.1", optional = true }
 sha1 = { version = "0.10.0", optional = true }
 
 # progress
-prodash = { version = "23.0", optional = true, default-features = false, features = ["unit-bytes", "unit-human"] }
+prodash = { version = "23.1", optional = true, default-features = false }
+bytesize = { version = "1.0.1", optional = true }
 
 # pipe
 bytes = { version = "1.0.0", optional = true }
 
 # zlib module
 flate2 = { version = "1.0.17", optional = true, default-features = false }
-quick-error = { version = "2.0.0", optional = true }
+thiserror = { version = "1.0.38", optional = true }
 
-## If enabled, OnceCell will be made available for interior mutability either in sync or unsync forms.
 once_cell = { version = "1.13.0", optional = true }
 
 document-features = { version = "0.2.0", optional = true }

@@ -40,8 +40,58 @@ use std::{
     sync::atomic::AtomicUsize,
 };
 
-use dashmap::DashMap;
 use once_cell::sync::Lazy;
+
+#[cfg(feature = "hp-hashmap")]
+type HashMap<K, V> = dashmap::DashMap<K, V>;
+
+#[cfg(not(feature = "hp-hashmap"))]
+mod hashmap {
+    use parking_lot::Mutex;
+    use std::collections::HashMap;
+
+    // TODO(performance): use the `gix-hashtable` slot-map once available. It seems quite fast already though, so experiment.
+    pub struct Concurrent<K, V> {
+        inner: Mutex<HashMap<K, V>>,
+    }
+
+    impl<K, V> Default for Concurrent<K, V>
+    where
+        K: Eq + std::hash::Hash,
+    {
+        fn default() -> Self {
+            Concurrent {
+                inner: Default::default(),
+            }
+        }
+    }
+
+    impl<K, V> Concurrent<K, V>
+    where
+        K: Eq + std::hash::Hash + Clone,
+    {
+        pub fn insert(&self, key: K, value: V) -> Option<V> {
+            self.inner.lock().insert(key, value)
+        }
+
+        pub fn remove(&self, key: &K) -> Option<(K, V)> {
+            self.inner.lock().remove(key).map(|v| (key.clone(), v))
+        }
+
+        pub fn for_each<F>(&self, cb: F)
+        where
+            Self: Sized,
+            F: FnMut(&mut V),
+        {
+            if let Some(mut guard) = self.inner.try_lock() {
+                guard.values_mut().for_each(cb);
+            }
+        }
+    }
+}
+
+#[cfg(not(feature = "hp-hashmap"))]
+type HashMap<K, V> = hashmap::Concurrent<K, V>;
 
 mod fs;
 pub use fs::{create_dir, remove_dir};
@@ -60,7 +110,7 @@ use crate::handle::{Closed, Writable};
 pub mod registry;
 
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);
-static REGISTRY: Lazy<DashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
+static REGISTRY: Lazy<HashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
     #[cfg(feature = "signals")]
     if signal::handler::MODE.load(std::sync::atomic::Ordering::SeqCst) != signal::handler::Mode::None as usize {
         for sig in signal_hook::consts::TERM_SIGNALS {
@@ -79,7 +129,7 @@ static REGISTRY: Lazy<DashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
             .expect("signals can always be installed");
         }
     }
-    DashMap::new()
+    HashMap::default()
 });
 
 /// A type expressing the ways we can deal with directories containing a tempfile.

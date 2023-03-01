@@ -8,7 +8,23 @@ pub use prodash::{
     unit, Progress, Unit,
 };
 
+#[cfg(feature = "progress-unit-bytes")]
+pub use bytesize;
+/// A stub for the portions of the `bytesize` crate that we use internally in `gitoxide`.
+#[cfg(not(feature = "progress-unit-bytes"))]
+pub mod bytesize {
+    /// A stub for the `ByteSize` wrapper.
+    pub struct ByteSize(pub u64);
+
+    impl std::fmt::Display for ByteSize {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            self.0.fmt(f)
+        }
+    }
+}
+
 /// A unit for displaying bytes with throughput and progress percentage.
+#[cfg(feature = "progress-unit-bytes")]
 pub fn bytes() -> Option<Unit> {
     Some(unit::dynamic_and_mode(
         unit::Bytes,
@@ -16,17 +32,43 @@ pub fn bytes() -> Option<Unit> {
     ))
 }
 
-/// A unit for displaying human readable numbers with throughput and progress percentage.
+/// A unit for displaying bytes with throughput and progress percentage.
+#[cfg(not(feature = "progress-unit-bytes"))]
+pub fn bytes() -> Option<Unit> {
+    Some(unit::label_and_mode(
+        "B",
+        unit::display::Mode::with_throughput().and_percentage(),
+    ))
+}
+
+/// A unit for displaying human readable numbers with throughput and progress percentage, and a single decimal place.
 pub fn count(name: &'static str) -> Option<Unit> {
+    count_with_decimals(name, 1)
+}
+
+/// A unit for displaying human readable numbers with `name` suffix,
+/// with throughput and progress percentage, and `decimals` decimal places.
+#[cfg(feature = "progress-unit-human-numbers")]
+pub fn count_with_decimals(name: &'static str, decimals: usize) -> Option<Unit> {
     Some(unit::dynamic_and_mode(
         unit::Human::new(
             {
                 let mut f = unit::human::Formatter::new();
-                f.with_decimals(1);
+                f.with_decimals(decimals);
                 f
             },
             name,
         ),
+        unit::display::Mode::with_throughput().and_percentage(),
+    ))
+}
+
+/// A unit for displaying human readable numbers with `name` suffix,
+/// with throughput and progress percentage, and `decimals` decimal places.
+#[cfg(not(feature = "progress-unit-human-numbers"))]
+pub fn count_with_decimals(name: &'static str, _decimals: usize) -> Option<Unit> {
+    Some(unit::label_and_mode(
+        name,
         unit::display::Mode::with_throughput().and_percentage(),
     ))
 }
