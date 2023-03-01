@@ -1624,7 +1624,6 @@ dependencies = [
  "bytesize",
  "crc32fast",
  "crossbeam-channel",
- "crossbeam-utils",
  "document-features",
  "flate2",
  "gix-hash 0.10.3",
