@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.27.0 (2023-03-01)
+
+<csr-id-cce96ee1382d3d56d77820a2aba6e2d17b52f91c/>
 
 ### Chore
 
@@ -42,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 3 calendar days.
+ - 9 commits contributed to the release over the course of 3 calendar days.
  - 8 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -54,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`94c99c7`](https://github.com/Byron/gitoxide/commit/94c99c71520f33269cc8dbc26f82a74747cc7e16))
     - Merge branch 'adjustments-for-cargo' ([`d686d94`](https://github.com/Byron/gitoxide/commit/d686d94e1030a8591ba074757d56927a346c8351))
     - Depend on latest version of `prodash` for performance improvements. ([`5d00324`](https://github.com/Byron/gitoxide/commit/5d003242abe82b1604e2188d49dec9690ebb2a6a))
     - Make `bytesize` available in `progress`. ([`7a44231`](https://github.com/Byron/gitoxide/commit/7a442313c57f58fec5217484f268516711c3d52b))

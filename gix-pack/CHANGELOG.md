@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.31.0 (2023-03-01)
 
-### New Features
+### Chore
 
  - <csr-id-3ba25202240d13fdda998581297616afe06422ca/> remove `dashmap` in favor of own sharded concurrent hashmap.
    This speeds up multi-threaded counting greatly, and despite it
@@ -17,35 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    Single-threaded performance is still lacking though, ultimately it needs
    caches to accelerate the counting stage to hopefully be competitive.
 
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 6 commits contributed to the release over the course of 2 calendar days.
- - 8 days passed between releases.
- - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' were seen in commit messages
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - Merge branch 'adjustments-for-cargo' ([`d686d94`](https://github.com/Byron/gitoxide/commit/d686d94e1030a8591ba074757d56927a346c8351))
-    - Remove `dashmap` in favor of own sharded concurrent hashmap. ([`3ba2520`](https://github.com/Byron/gitoxide/commit/3ba25202240d13fdda998581297616afe06422ca))
-    - Adapt to changes in `gix-tempfile` ([`bfcd1e3`](https://github.com/Byron/gitoxide/commit/bfcd1e3a8f2d05d0d6d1f5cf06d369ac9e6e4cdf))
-    - Adapt to changes in `gix-features` ([`a0ed614`](https://github.com/Byron/gitoxide/commit/a0ed6142c9a7ce7ed9fb6576117bb46e5497839c))
-    - Adjust to changes in `gix-features`, use `process::count_with_decimals()` ([`3968133`](https://github.com/Byron/gitoxide/commit/3968133f60609d75806783234253fb8b3972f10e))
-    - Prepare for git-tempfile release ([`56c005b`](https://github.com/Byron/gitoxide/commit/56c005b13c44376f71e61781e73c0bf93416d0e4))
-</details>
-
-## 0.31.0 (2023-02-17)
-
 ### New Features
 
  - <csr-id-f0e40ecddaf1211f76ed60ef30cf03dcfd53a7ab/> add `wasm` feature toggle to allow compilation to wasm32-unknown-unknown
+ - <csr-id-3ba25202240d13fdda998581297616afe06422ca/> remove `dashmap` in favor of own sharded concurrent hashmap.
+   This speeds up multi-threaded counting greatly, and despite it
+   using shared memory which makes it quite wasteful, it is possible to
+   outperform `git` with it if enough cores are thrown at the problem.
+   
+   Single-threaded performance is still lacking though, ultimately it needs
+   caches to accelerate the counting stage to hopefully be competitive.
 
 ### Bug Fixes
 
@@ -64,6 +45,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    available as features.
    
    Besides that, it adds the `wasm` feature toggle to allow compiling to `wasm32` targets.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release over the course of 2 calendar days.
+ - 8 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`94c99c7`](https://github.com/Byron/gitoxide/commit/94c99c71520f33269cc8dbc26f82a74747cc7e16))
+    - Merge branch 'adjustments-for-cargo' ([`d686d94`](https://github.com/Byron/gitoxide/commit/d686d94e1030a8591ba074757d56927a346c8351))
+    - Remove `dashmap` in favor of own sharded concurrent hashmap. ([`3ba2520`](https://github.com/Byron/gitoxide/commit/3ba25202240d13fdda998581297616afe06422ca))
+    - Adapt to changes in `gix-tempfile` ([`bfcd1e3`](https://github.com/Byron/gitoxide/commit/bfcd1e3a8f2d05d0d6d1f5cf06d369ac9e6e4cdf))
+    - Adapt to changes in `gix-features` ([`a0ed614`](https://github.com/Byron/gitoxide/commit/a0ed6142c9a7ce7ed9fb6576117bb46e5497839c))
+    - Adjust to changes in `gix-features`, use `process::count_with_decimals()` ([`3968133`](https://github.com/Byron/gitoxide/commit/3968133f60609d75806783234253fb8b3972f10e))
+    - Prepare for git-tempfile release ([`56c005b`](https://github.com/Byron/gitoxide/commit/56c005b13c44376f71e61781e73c0bf93416d0e4))
+</details>
 
 ## 0.30.3 (2023-02-20)
 

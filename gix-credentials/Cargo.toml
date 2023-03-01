@@ -1,6 +1,6 @@
 [package]
 name = "gix-credentials"
-version = "0.9.2"
+version = "0.10.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project to interact with git credentials helpers"
@@ -17,7 +17,7 @@ serde1 = ["serde", "bstr/serde", "gix-sec/serde1"]
 
 [dependencies]
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }
-gix-url = { version = "^0.13.3", path = "../gix-url" }
+gix-url = { version = "^0.14.0", path = "../gix-url" }
 gix-path = { version = "^0.7.2", path = "../gix-path" }
 gix-command = { version = "^0.2.4", path = "../gix-command" }
 gix-config-value = { version = "^0.10.1", path = "../gix-config-value" }

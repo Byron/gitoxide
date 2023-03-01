@@ -20,11 +20,11 @@ test = true
 serde1 = ["serde", "smallvec/serde", "gix-hash/serde1"]
 
 [dependencies]
-gix-features = { version = "^0.26.5", path = "../gix-features", features = ["rustsha1", "progress"] }
+gix-features = { version = "^0.27.0", path = "../gix-features", features = ["rustsha1", "progress"] }
 gix-hash = { version = "^0.10.3", path = "../gix-hash" }
-gix-bitmap = { version = "^0.2.1", path = "../gix-bitmap" }
-gix-object = { version = "^0.26.2", path = "../gix-object" }
-gix-traverse = { version = "^0.22.1", path = "../gix-traverse" }
+gix-bitmap = { version = "^0.2.2", path = "../gix-bitmap" }
+gix-object = { version = "^0.27.0", path = "../gix-object" }
+gix-traverse = { version = "^0.23.0", path = "../gix-traverse" }
 gix-lock = { version = "^4.0.0", path = "../gix-lock" }
 
 thiserror = "1.0.32"

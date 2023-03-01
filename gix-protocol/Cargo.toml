@@ -1,6 +1,6 @@
 [package]
 name = "gix-protocol"
-version = "0.26.4"
+version = "0.27.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project for implementing git protocols"
@@ -40,10 +40,10 @@ path = "tests/async-protocol.rs"
 required-features = ["async-client"]
 
 [dependencies]
-gix-features = { version = "^0.26.5", path = "../gix-features", features = ["progress"] }
-gix-transport = { version = "^0.25.6", path = "../gix-transport" }
+gix-features = { version = "^0.27.0", path = "../gix-features", features = ["progress"] }
+gix-transport = { version = "^0.26.0", path = "../gix-transport" }
 gix-hash = { version = "^0.10.3", path = "../gix-hash" }
-gix-credentials = { version = "^0.9.2", path = "../gix-credentials" }
+gix-credentials = { version = "^0.10.0", path = "../gix-credentials" }
 
 thiserror = "1.0.32"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
