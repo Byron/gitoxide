@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-1ff1342da793442859526df3dd0ec1ed968a6ded/> add `hp-hashmap` feature toggle (enabled by default).
+   This allows avoiding the `dashmap` dependency, and to optimize load
+   for different applications. It seems that this simple implementation
+   has performance benefits in some situations at least even though it
+   may leave all tempfiles in place if a signal handler tries to cleanup
+   while a lock is held.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release over the course of 1 calendar day.
+ - 2 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'adjustments-for-cargo' ([`d686d94`](https://github.com/Byron/gitoxide/commit/d686d94e1030a8591ba074757d56927a346c8351))
+    - Add `hp-hashmap` feature toggle (enabled by default). ([`1ff1342`](https://github.com/Byron/gitoxide/commit/1ff1342da793442859526df3dd0ec1ed968a6ded))
+    - Avoid clearing the registry while running tests ([`d635fb7`](https://github.com/Byron/gitoxide/commit/d635fb7a060bfbc5b584bec9976549383d369f47))
+</details>
+
 ## 4.0.0 (2023-02-26)
 
 ### New Features (BREAKING)
@@ -23,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 5 commits contributed to the release.
  - 9 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#339](https://github.com/Byron/gitoxide/issues/339)
@@ -37,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#339](https://github.com/Byron/gitoxide/issues/339)**
     - Gate all signal handling behind the `signals` feature toggle. ([`441f5ac`](https://github.com/Byron/gitoxide/commit/441f5ac4dd2f0636ec07065f8095e8bae5ce6985))
  * **Uncategorized**
+    - Release gix-tempfile v4.0.0 ([`ad23f1d`](https://github.com/Byron/gitoxide/commit/ad23f1dd58b3eabf5a12d02c4a1de8b1835051d5))
     - Prepare for git-tempfile release ([`56c005b`](https://github.com/Byron/gitoxide/commit/56c005b13c44376f71e61781e73c0bf93416d0e4))
     - Merge branch 'tempfile-upgrades' ([`3522cba`](https://github.com/Byron/gitoxide/commit/3522cbaac721c8079605be51b9053014bc5e863a))
     - Upgrade `tempfile` to `3.4` ([`2670938`](https://github.com/Byron/gitoxide/commit/2670938df5f6a3ed155b793e301ea0ab64b8cec1))

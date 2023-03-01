@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-256f7d46ed88067aa96f47be2a97a6f9f5b98075/> the `hp-tempfile-registry` feature toggle to control the `dashmap` dependency.
+   And also, probably provide a better performance in certain cases.
+ - <csr-id-fd7eebcd922f98c1aed9e3177b9a48ff1415ffd8/> make `gix-pack` feature toggles related to pack caches available.
+   Previously they would have to be configured by pulling in `gix-pack`, which
+   isn't desirable as the only crate we want to expose like that is `gix-features`.
+ - <csr-id-5b0ebd272c3d98e26c9249ed27b4ea9a8ad80746/> Add `comfort` feature toggle (default enabled) to make better progress units available.
+   This could be a breaking change for those who turned default-features off, as you may now
+   have to re-add the `comfort` feature to get nicer progress messages.
+
+### Bug Fixes
+
+ - <csr-id-b2375e3dbe1f87ee3ac6e814fc8f4898143c438d/> `gix-tempfile` is now configured to not use the high-performance hashmap anymore.
+   It was hard to justify as tests actually seemed to be faster without it.
+
+### New Features (BREAKING)
+
+ - <csr-id-fea8c56089e5b354669396853c5bd0f31bdf0d33/> Put `progress::tree` behind the `progress-tree` feature toggle.
+   It's a convenience export that implies pulling in more dependencies, so it
+   should be gated.
+ - <csr-id-441f5ac4dd2f0636ec07065f8095e8bae5ce6985/> gate all signal handling behind the `signals` feature toggle.
+   This change also consolidates all signal handling into its own module called
+   `signal` to provide reusable handlers and as well as well as signal initialization.
+   
+   Note that the functions to cleanup tempfiles don't interact with the signal registry,
+   hence they still can be called without the `signals` feature enabled.
+   
+   Note that this change sneakily fixes a bug that could have caused a `write_all()`
+   on a tempfile that was removed by a signal to enter an infinite loop.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 4 calendar days.
+ - 4 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#339](https://github.com/Byron/gitoxide/issues/339)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#339](https://github.com/Byron/gitoxide/issues/339)**
+    - Gate all signal handling behind the `signals` feature toggle. ([`441f5ac`](https://github.com/Byron/gitoxide/commit/441f5ac4dd2f0636ec07065f8095e8bae5ce6985))
+ * **Uncategorized**
+    - Merge branch 'adjustments-for-cargo' ([`d686d94`](https://github.com/Byron/gitoxide/commit/d686d94e1030a8591ba074757d56927a346c8351))
+    - `gix-tempfile` is now configured to not use the high-performance hashmap anymore. ([`b2375e3`](https://github.com/Byron/gitoxide/commit/b2375e3dbe1f87ee3ac6e814fc8f4898143c438d))
+    - Depend on latest version of `prodash` for performance improvements. ([`5d00324`](https://github.com/Byron/gitoxide/commit/5d003242abe82b1604e2188d49dec9690ebb2a6a))
+    - The `hp-tempfile-registry` feature toggle to control the `dashmap` dependency. ([`256f7d4`](https://github.com/Byron/gitoxide/commit/256f7d46ed88067aa96f47be2a97a6f9f5b98075))
+    - Make `gix-pack` feature toggles related to pack caches available. ([`fd7eebc`](https://github.com/Byron/gitoxide/commit/fd7eebcd922f98c1aed9e3177b9a48ff1415ffd8))
+    - Put `progress::tree` behind the `progress-tree` feature toggle. ([`fea8c56`](https://github.com/Byron/gitoxide/commit/fea8c56089e5b354669396853c5bd0f31bdf0d33))
+    - Add `comfort` feature toggle (default enabled) to make better progress units available. ([`5b0ebd2`](https://github.com/Byron/gitoxide/commit/5b0ebd272c3d98e26c9249ed27b4ea9a8ad80746))
+    - Prepare for git-tempfile release ([`56c005b`](https://github.com/Byron/gitoxide/commit/56c005b13c44376f71e61781e73c0bf93416d0e4))
+    - Merge branch 'tempfile-upgrades' ([`3522cba`](https://github.com/Byron/gitoxide/commit/3522cbaac721c8079605be51b9053014bc5e863a))
+    - Adjust to changes in `gix-tempfile` ([`c6785fc`](https://github.com/Byron/gitoxide/commit/c6785fc7082b90c8a27cef6a0f5cc5acd8cb8951))
+    - Make fmt ([`8ef1cb2`](https://github.com/Byron/gitoxide/commit/8ef1cb293434c7b9e1fda4a6963368e0435920a9))
+    - Fix diff-tests on windows ([`441a64b`](https://github.com/Byron/gitoxide/commit/441a64b6b703f7f97cfcefe4d3db31bc7427b48c))
+</details>
+
 ## 0.37.2 (2023-02-24)
 
 ### Bug Fixes
@@ -16,7 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 5 commits contributed to the release.
  - 3 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -28,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-object v0.26.4, gix-diff v0.26.3, gix v0.37.2, gix-commitgraph v0.13.1, gitoxide-core v0.25.0, gitoxide v0.23.0 ([`9982949`](https://github.com/Byron/gitoxide/commit/9982949cab401501d5ce3cba4e2ba900bc249c53))
     - Fix new diff tests on windows ([`b1ec1b7`](https://github.com/Byron/gitoxide/commit/b1ec1b776696b4b1d73e3dd26cbaf33260367855))
     - Prepare changelog for release ([`13a1ec1`](https://github.com/Byron/gitoxide/commit/13a1ec1803d677c2e94f3ea0461118c2426f8071))
     - Merge branch 'rename-tracking' ([`550144a`](https://github.com/Byron/gitoxide/commit/550144a5fd37d501d86f4b1c4db2948d951d1c93))
