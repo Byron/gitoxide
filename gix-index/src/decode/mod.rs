@@ -86,10 +86,9 @@ impl State {
                         (extensions_data.len() > min_extension_block_in_bytes_for_threading).then({
                             num_threads -= 1;
                             || {
-                                scope
-                                    .builder()
+                                gix_features::parallel::build_thread()
                                     .name("gix-index.from_bytes.load-extensions".into())
-                                    .spawn(|_| extension::decode::all(extensions_data, object_hash))
+                                    .spawn_scoped(scope, || extension::decode::all(extensions_data, object_hash))
                                     .expect("valid name")
                             }
                         });
@@ -101,10 +100,9 @@ impl State {
                             for (id, chunks) in entry_offsets.chunks(chunk_size).enumerate() {
                                 let chunks = chunks.to_vec();
                                 threads.push(
-                                    scope
-                                        .builder()
+                                    gix_features::parallel::build_thread()
                                         .name(format!("gix-index.from_bytes.read-entries.{id}"))
-                                        .spawn(move |_| {
+                                        .spawn_scoped(scope, move || {
                                             let num_entries_for_chunks =
                                                 chunks.iter().map(|c| c.num_entries).sum::<u32>() as usize;
                                             let mut entries = Vec::with_capacity(num_entries_for_chunks);
@@ -189,8 +187,7 @@ impl State {
                         .map(|thread| thread.join().unwrap())
                         .unwrap_or_else(|| extension::decode::all(extensions_data, object_hash));
                     (entries_res, ext_res)
-                })
-                .unwrap(); // this unwrap is for panics - if these happened we are done anyway.
+                });
                 let (ext, data) = ext_res?;
                 (entries_res?.0, ext, data)
             }
