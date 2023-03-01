@@ -36,7 +36,7 @@ required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
 [dev-dependencies]
 gix-pack = { path = ".." }
-gix-features = { version = "^0.27.0", path = "../../gix-features" }
+gix-features = { path = "../../gix-features" }
 gix-testtools = { path = "../../tests/tools"}
 gix-odb = { path = "../../gix-odb" }
 tempfile = "3.1.0"
