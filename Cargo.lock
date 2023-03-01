@@ -1316,7 +1316,7 @@ dependencies = [
  "gix-refspec",
  "gix-revision",
  "gix-sec 0.6.2",
- "gix-tempfile 4.0.0",
+ "gix-tempfile 4.1.0",
  "gix-testtools",
  "gix-transport",
  "gix-traverse 0.23.0",
@@ -1786,7 +1786,7 @@ name = "gix-lock"
 version = "4.0.0"
 dependencies = [
  "fastrand",
- "gix-tempfile 4.0.0",
+ "gix-tempfile 4.1.0",
  "tempfile",
  "thiserror",
 ]
@@ -1884,7 +1884,7 @@ dependencies = [
  "gix-hashtable 0.1.2",
  "gix-object 0.27.0",
  "gix-path 0.7.2",
- "gix-tempfile 4.0.0",
+ "gix-tempfile 4.1.0",
  "gix-testtools",
  "gix-traverse 0.23.0",
  "memmap2",
@@ -2053,7 +2053,7 @@ dependencies = [
  "gix-lock 4.0.0",
  "gix-object 0.27.0",
  "gix-path 0.7.2",
- "gix-tempfile 4.0.0",
+ "gix-tempfile 4.1.0",
  "gix-testtools",
  "gix-validate 0.7.3",
  "memmap2",
@@ -2171,7 +2171,7 @@ dependencies = [
 
 [[package]]
 name = "gix-tempfile"
-version = "4.0.0"
+version = "4.1.0"
 dependencies = [
  "dashmap",
  "document-features",
