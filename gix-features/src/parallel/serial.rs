@@ -12,40 +12,43 @@ mod not_parallel {
         _marker: std::marker::PhantomData<&'env mut &'env ()>,
     }
 
-    pub struct ThreadBuilder<'a, 'env> {
-        scope: &'a Scope<'env>,
+    pub struct ThreadBuilder;
+
+    /// Create a builder for threads which allows them to be spawned into a scope and configured prior to spawning.
+    pub fn build_thread() -> ThreadBuilder {
+        ThreadBuilder
     }
 
     #[allow(unsafe_code)]
     unsafe impl Sync for Scope<'_> {}
 
-    impl<'a, 'env> ThreadBuilder<'a, 'env> {
+    impl ThreadBuilder {
         pub fn name(self, _new: String) -> Self {
             self
         }
-        pub fn spawn<F, T>(&self, f: F) -> std::io::Result<ScopedJoinHandle<'a, T>>
+        pub fn spawn_scoped<'a, 'env, F, T>(
+            &self,
+            scope: &'a Scope<'env>,
+            f: F,
+        ) -> std::io::Result<ScopedJoinHandle<'a, T>>
         where
-            F: FnOnce(&Scope<'env>) -> T,
+            F: FnOnce() -> T,
             F: Send + 'env,
             T: Send + 'env,
         {
-            Ok(self.scope.spawn(f))
+            Ok(scope.spawn(f))
         }
     }
 
     impl<'env> Scope<'env> {
-        /// Obtain a builder to change settings on the spawned thread.
-        pub fn builder(&self) -> ThreadBuilder<'_, 'env> {
-            ThreadBuilder { scope: self }
-        }
         pub fn spawn<'scope, F, T>(&'scope self, f: F) -> ScopedJoinHandle<'scope, T>
         where
-            F: FnOnce(&Scope<'env>) -> T,
+            F: FnOnce() -> T,
             F: Send + 'env,
             T: Send + 'env,
         {
             ScopedJoinHandle {
-                result: f(self),
+                result: f(),
                 _marker: Default::default(),
             }
         }
@@ -53,13 +56,13 @@ mod not_parallel {
 
     /// Runs `f` with a scope to be used for spawning threads that will not outlive the function call.
     /// Note that this implementation will run the spawned functions immediately.
-    pub fn threads<'env, F, R>(f: F) -> std::thread::Result<R>
+    pub fn threads<'env, F, R>(f: F) -> R
     where
         F: FnOnce(&Scope<'env>) -> R,
     {
-        Ok(f(&Scope {
+        f(&Scope {
             _marker: Default::default(),
-        }))
+        })
     }
 
     /// A handle that can be used to join its scoped thread.
@@ -102,7 +105,7 @@ mod not_parallel {
 }
 
 #[cfg(not(feature = "parallel"))]
-pub use not_parallel::{in_parallel_with_slice, join, threads, Scope, ScopedJoinHandle};
+pub use not_parallel::{build_thread, in_parallel_with_slice, join, threads, Scope, ScopedJoinHandle};
 
 /// Read items from `input` and `consume` them in a single thread, producing an output to be collected by a `reducer`,
 /// whose task is to aggregate these outputs into the final result returned by this function.

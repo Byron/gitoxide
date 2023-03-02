@@ -4,20 +4,17 @@ use crate::parallel::{num_threads, Reduce};
 
 /// Runs `left` and `right` in parallel, returning their output when both are done.
 pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
-    crossbeam_utils::thread::scope(|s| {
-        let left = s
-            .builder()
+    std::thread::scope(|s| {
+        let left = std::thread::Builder::new()
             .name("gitoxide.join.left".into())
-            .spawn(|_| left())
+            .spawn_scoped(s, left)
             .expect("valid name");
-        let right = s
-            .builder()
+        let right = std::thread::Builder::new()
             .name("gitoxide.join.right".into())
-            .spawn(|_| right())
+            .spawn_scoped(s, right)
             .expect("valid name");
         (left.join().unwrap(), right.join().unwrap())
     })
-    .unwrap()
 }
 
 /// Runs `f` with a scope to be used for spawning threads that will not outlive the function call.
@@ -25,11 +22,16 @@ pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl Fn
 ///
 /// Note that the threads should not rely on actual parallelism as threading might be turned off entirely, hence should not
 /// connect each other with channels as deadlock would occur in single-threaded mode.
-pub fn threads<'env, F, R>(f: F) -> std::thread::Result<R>
+pub fn threads<'env, F, R>(f: F) -> R
 where
-    F: FnOnce(&crossbeam_utils::thread::Scope<'env>) -> R,
+    F: for<'scope> FnOnce(&'scope std::thread::Scope<'scope, 'env>) -> R,
 {
-    crossbeam_utils::thread::scope(f)
+    std::thread::scope(f)
+}
+
+/// Create a builder for threads which allows them to be spawned into a scope and configured prior to spawning.
+pub fn build_thread() -> std::thread::Builder {
+    std::thread::Builder::new()
 }
 
 /// Read items from `input` and `consume` them in multiple threads,
@@ -54,19 +56,19 @@ where
     O: Send,
 {
     let num_threads = num_threads(thread_limit);
-    crossbeam_utils::thread::scope(move |s| {
+    std::thread::scope(move |s| {
         let receive_result = {
             let (send_input, receive_input) = crossbeam_channel::bounded::<I>(num_threads);
             let (send_result, receive_result) = crossbeam_channel::bounded::<O>(num_threads);
             for thread_id in 0..num_threads {
-                s.builder()
+                std::thread::Builder::new()
                     .name(format!("gitoxide.in_parallel.produce.{thread_id}"))
-                    .spawn({
+                    .spawn_scoped(s, {
                         let send_result = send_result.clone();
                         let receive_input = receive_input.clone();
                         let new_thread_state = new_thread_state.clone();
                         let consume = consume.clone();
-                        move |_| {
+                        move || {
                             let mut state = new_thread_state(thread_id);
                             for item in receive_input {
                                 if send_result.send(consume(item, &mut state)).is_err() {
@@ -77,9 +79,9 @@ where
                     })
                     .expect("valid name");
             }
-            s.builder()
+            std::thread::Builder::new()
                 .name("gitoxide.in_parallel.feed".into())
-                .spawn(move |_| {
+                .spawn_scoped(s, move || {
                     for item in input {
                         if send_input.send(item).is_err() {
                             break;
@@ -95,7 +97,6 @@ where
         }
         reducer.finalize()
     })
-    .expect("no panic")
 }
 
 /// An experiment to have fine-grained per-item parallelization with built-in aggregation via thread state.
@@ -122,12 +123,12 @@ where
     let index = &AtomicUsize::default();
 
     // TODO: use std::thread::scope() once Rust 1.63 is available.
-    crossbeam_utils::thread::scope({
+    std::thread::scope({
         move |s| {
-            s.builder()
+            std::thread::Builder::new()
                 .name("gitoxide.in_parallel_with_slice.watch-interrupts".into())
-                .spawn({
-                    move |_| loop {
+                .spawn_scoped(s, {
+                    move || loop {
                         if stop_everything.load(Ordering::Relaxed) {
                             break;
                         }
@@ -154,14 +155,14 @@ where
 
             let threads: Vec<_> = (0..num_threads)
                 .map(|thread_id| {
-                    s.builder()
+                    std::thread::Builder::new()
                         .name(format!("gitoxide.in_parallel_with_slice.produce.{thread_id}"))
-                        .spawn({
+                        .spawn_scoped(s, {
                             let mut new_thread_state = new_thread_state.clone();
                             let state_to_rval = state_to_rval.clone();
                             let mut consume = consume.clone();
                             let input = Input(input as *mut [I]);
-                            move |_| {
+                            move || {
                                 let mut state = new_thread_state(thread_id);
                                 while let Ok(input_index) =
                                     index.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| {
@@ -207,5 +208,4 @@ where
             Ok(results)
         }
     })
-    .expect("no panic")
 }
