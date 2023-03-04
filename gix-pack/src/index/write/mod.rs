@@ -103,13 +103,14 @@ impl crate::index::File {
         }
         let mut num_objects: usize = 0;
         let mut last_seen_trailer = None;
-        let anticipated_num_objects = entries.size_hint().1.unwrap_or_else(|| entries.size_hint().0);
-        let mut tree = Tree::with_capacity(anticipated_num_objects)?;
+        let (anticipated_num_objects, upper_bound) = entries.size_hint();
+        let worst_case_num_objects_after_thin_pack_resolution = upper_bound.unwrap_or(anticipated_num_objects);
+        let mut tree = Tree::with_capacity(worst_case_num_objects_after_thin_pack_resolution)?;
         let indexing_start = std::time::Instant::now();
 
         root_progress.init(Some(4), progress::steps());
         let mut objects_progress = root_progress.add_child_with_id("indexing", ProgressId::IndexObjects.into());
-        objects_progress.init(entries.size_hint().1, progress::count("objects"));
+        objects_progress.init(Some(anticipated_num_objects), progress::count("objects"));
         let mut decompressed_progress =
             root_progress.add_child_with_id("decompressing", ProgressId::DecompressedBytes.into());
         decompressed_progress.init(None, progress::bytes());
@@ -167,11 +168,6 @@ impl crate::index::File {
             last_seen_trailer = trailer;
             num_objects += 1;
             objects_progress.inc();
-        }
-        if num_objects != anticipated_num_objects {
-            objects_progress.info(format!(
-                "{anticipated_num_objects} objects were resolved into {num_objects} objects during thin-pack resolution"
-            ));
         }
         let num_objects: u32 = num_objects
             .try_into()
