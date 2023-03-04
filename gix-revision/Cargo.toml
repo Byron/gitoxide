@@ -1,6 +1,6 @@
 [package]
 name = "gix-revision"
-version = "0.11.0"
+version = "0.12.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dealing with finding names for revisions and parsing specifications"
@@ -19,7 +19,7 @@ serde1 = [ "serde", "gix-hash/serde1", "gix-object/serde1" ]
 
 [dependencies]
 gix-hash = { version = "^0.10.3", path = "../gix-hash" }
-gix-object = { version = "^0.27.0", path = "../gix-object" }
+gix-object = { version = "^0.28.0", path = "../gix-object" }
 gix-date = { version = "^0.4.3", path = "../gix-date" }
 gix-hashtable = { version = "^0.1.2", path = "../gix-hashtable" }
 

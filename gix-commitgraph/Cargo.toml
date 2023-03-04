@@ -18,7 +18,7 @@ doctest = false
 serde1 = ["serde", "gix-hash/serde1", "bstr/serde"]
 
 [dependencies]
-gix-features = { version = "^0.27.0", path = "../gix-features", features = ["rustsha1"] }
+gix-features = { version = "^0.28.0", path = "../gix-features", features = ["rustsha1"] }
 gix-hash = { version = "^0.10.3", path = "../gix-hash" }
 gix-chunk = { version = "^0.4.1", path = "../gix-chunk" }
 

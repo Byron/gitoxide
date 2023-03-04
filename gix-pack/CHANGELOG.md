@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.32.0 (2023-03-04)
 
 ### Bug Fixes
 
@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 3 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release of `gix-pack` ([`6db30ef`](https://github.com/Byron/gitoxide/commit/6db30ef6b5e931bbf12135507a3d922051de4d4b))
     - Don't over-estimate the number of objects to be received in the indexing phase. ([`ce182d6`](https://github.com/Byron/gitoxide/commit/ce182d6dae7e277d104893f0eec3285709946233))
 </details>
 

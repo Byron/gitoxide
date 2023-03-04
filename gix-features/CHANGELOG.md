@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.28.0 (2023-03-04)
 
 ### New Features (BREAKING)
 
@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 1 calendar day.
+ - 3 commits contributed to the release over the course of 1 calendar day.
  - 3 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release of `gix-pack` ([`6db30ef`](https://github.com/Byron/gitoxide/commit/6db30ef6b5e931bbf12135507a3d922051de4d4b))
     - Merge branch 'adjustments-for-cargo' ([`04ab852`](https://github.com/Byron/gitoxide/commit/04ab852f3be76bdf151affa25cf4b999b127bdfe))
     - Use `std::thread::scope()` instead of `crossbeam-utils::thread::scope()`. ([`571ec0d`](https://github.com/Byron/gitoxide/commit/571ec0d7c3e1eb167d55daa6551bd2b27d3c5b25))
 </details>
