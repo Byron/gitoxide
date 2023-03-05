@@ -1,7 +1,5 @@
-use std::borrow::Cow;
 use std::path::PathBuf;
 
-use crate::config::tree::{gitoxide, Key};
 use gix_path::realpath::MAX_SYMLINKS;
 
 impl crate::Repository {
@@ -41,20 +39,6 @@ impl crate::Repository {
     /// The directory of the binary path of the current process.
     pub fn install_dir(&self) -> std::io::Result<PathBuf> {
         crate::path::install_dir()
-    }
-
-    /// Return the path to the `shallow` file which contains hashes, one per line, that describe commits that don't have their
-    /// parents within this repository.
-    pub fn shallow_file(&self) -> PathBuf {
-        let shallow_name = self
-            .config
-            .resolved
-            .string_filter_by_key(
-                gitoxide::Core::SHALLOW_FILE.logical_name().as_str(),
-                &mut self.filter_config_section(),
-            )
-            .unwrap_or(Cow::Borrowed("shallow".into()));
-        self.common_dir().join(gix_path::from_bstr(shallow_name))
     }
 
     /// Returns the relative path which is the components between the working tree and the current working dir (CWD).

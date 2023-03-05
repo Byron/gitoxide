@@ -267,6 +267,7 @@ impl ThreadSafeRepository {
             // used when spawning new repositories off this one when following worktrees
             linked_worktree_options: options,
             index: gix_features::fs::MutableSnapshot::new().into(),
+            shallow_commits: gix_features::fs::MutableSnapshot::new().into(),
         })
     }
 }

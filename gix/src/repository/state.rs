@@ -41,11 +41,4 @@ impl crate::Repository {
             None
         }
     }
-
-    /// Return `true` if the repository is a shallow clone, i.e. contains history only up to a certain depth.
-    pub fn is_shallow(&self) -> bool {
-        self.shallow_file()
-            .metadata()
-            .map_or(false, |m| m.is_file() && m.len() > 0)
-    }
 }

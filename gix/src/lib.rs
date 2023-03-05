@@ -98,12 +98,7 @@ pub mod interrupt;
 
 mod ext;
 ///
-pub mod prelude {
-    pub use gix_features::parallel::reduce::Finalize;
-    pub use gix_odb::{Find, FindExt, Header, HeaderExt, Write};
-
-    pub use crate::ext::*;
-}
+pub mod prelude;
 
 ///
 pub mod path;
@@ -133,31 +128,10 @@ mod repository;
 pub mod tag;
 
 ///
-pub mod progress {
-    #[cfg(feature = "progress-tree")]
-    pub use gix_features::progress::prodash::tree;
-    pub use gix_features::progress::*;
-}
+pub mod progress;
 
 ///
-pub mod diff {
-    pub use gix_diff::*;
-    ///
-    pub mod rename {
-        /// Determine how to do rename tracking.
-        #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-        pub enum Tracking {
-            /// Do not track renames at all, the fastest option.
-            Disabled,
-            /// Track renames.
-            Renames,
-            /// Track renames and copies.
-            ///
-            /// This is the most expensive option.
-            RenamesAndCopies,
-        }
-    }
-}
+pub mod diff;
 
 /// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
 #[allow(clippy::result_large_err)]
@@ -238,20 +212,10 @@ pub fn open_opts(directory: impl Into<std::path::PathBuf>, options: open::Option
 }
 
 ///
-pub mod permission {
-    ///
-    pub mod env_var {
-        ///
-        pub mod resource {
-            ///
-            pub type Error = gix_sec::permission::Error<std::path::PathBuf>;
-        }
-    }
-}
+pub mod permission;
+
 ///
-pub mod permissions {
-    pub use crate::repository::permissions::{Config, Environment};
-}
+pub mod permissions;
 pub use repository::permissions::Permissions;
 
 ///
@@ -278,33 +242,10 @@ pub mod remote;
 pub mod init;
 
 /// Not to be confused with 'status'.
-pub mod state {
-    /// Tell what operation is currently in progress.
-    #[derive(Debug, PartialEq, Eq)]
-    pub enum InProgress {
-        /// A mailbox is being applied.
-        ApplyMailbox,
-        /// A rebase is happening while a mailbox is being applied.
-        // TODO: test
-        ApplyMailboxRebase,
-        /// A git bisect operation has not yet been concluded.
-        Bisect,
-        /// A cherry pick operation.
-        CherryPick,
-        /// A cherry pick with multiple commits pending.
-        CherryPickSequence,
-        /// A merge operation.
-        Merge,
-        /// A rebase operation.
-        Rebase,
-        /// An interactive rebase operation.
-        RebaseInteractive,
-        /// A revert operation.
-        Revert,
-        /// A revert operation with multiple commits pending.
-        RevertSequence,
-    }
-}
+pub mod state;
+
+///
+pub mod shallow;
 
 ///
 pub mod discover;
