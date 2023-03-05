@@ -26,11 +26,12 @@ impl Repository {
                     Err(err) => return Err(err.into()),
                 };
 
-                let commits = buf
+                let mut commits = buf
                     .lines()
                     .map(gix_hash::ObjectId::from_hex)
                     .collect::<Result<Vec<_>, _>>()?;
 
+                commits.sort();
                 if commits.is_empty() {
                     Ok(None)
                 } else {

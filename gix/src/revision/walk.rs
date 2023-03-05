@@ -3,6 +3,16 @@ use gix_odb::FindExt;
 
 use crate::{revision, Repository};
 
+/// The error returned by [`Platform::all()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    AncestorIter(#[from] gix_traverse::commit::ancestors::Error),
+    #[error(transparent)]
+    ShallowCommits(#[from] crate::shallow::open::Error),
+}
+
 /// A platform to traverse the revision graph by adding starting points as well as points which shouldn't be crossed,
 /// returned by [`Repository::rev_walk()`].
 pub struct Platform<'repo> {
@@ -46,7 +56,7 @@ impl<'repo> Platform<'repo> {
     ///
     /// It's highly recommended to set an [`object cache`][Repository::object_cache_size()] on the parent repo
     /// to greatly speed up performance if the returned id is supposed to be looked up right after.
-    pub fn all(self) -> Result<revision::Walk<'repo>, gix_traverse::commit::ancestors::Error> {
+    pub fn all(self) -> Result<revision::Walk<'repo>, Error> {
         let Platform {
             repo,
             tips,
@@ -56,16 +66,36 @@ impl<'repo> Platform<'repo> {
         Ok(revision::Walk {
             repo,
             inner: Box::new(
-                gix_traverse::commit::Ancestors::new(
+                gix_traverse::commit::Ancestors::filtered(
                     tips,
                     gix_traverse::commit::ancestors::State::default(),
                     move |oid, buf| repo.objects.find_commit_iter(oid, buf),
+                    {
+                        let shallow_commits = repo.shallow_commits()?;
+                        let mut grafted_parents_to_skip = Vec::new();
+                        let mut buf = Vec::new();
+                        move |id| match shallow_commits.as_ref() {
+                            Some(commits) => {
+                                let id = id.to_owned();
+                                if let Ok(idx) = grafted_parents_to_skip.binary_search(&id) {
+                                    grafted_parents_to_skip.remove(idx);
+                                    return false;
+                                };
+                                if commits.binary_search(&id).is_ok() {
+                                    if let Ok(commit) = repo.objects.find_commit_iter(id, &mut buf) {
+                                        grafted_parents_to_skip.extend(commit.parent_ids());
+                                        grafted_parents_to_skip.sort();
+                                    }
+                                };
+                                true
+                            }
+                            None => true,
+                        }
+                    },
                 )
                 .sorting(sorting)?
                 .parents(parents),
             ),
-            is_shallow: None,
-            error_on_missing_commit: false,
         })
     }
 }
@@ -78,50 +108,13 @@ pub(crate) mod iter {
         pub(crate) repo: &'repo crate::Repository,
         pub(crate) inner:
             Box<dyn Iterator<Item = Result<gix_hash::ObjectId, gix_traverse::commit::ancestors::Error>> + 'repo>,
-        pub(crate) error_on_missing_commit: bool,
-        // TODO: tests
-        /// After iteration this flag is true if the iteration was stopped prematurely due to missing parent commits.
-        /// Note that this flag won't be `Some` if any iteration error occurs, which is the case if
-        /// [`error_on_missing_commit()`][Walk::error_on_missing_commit()] was called.
-        ///
-        /// This happens if a repository is a shallow clone.
-        /// Note that this value is `None` as long as the iteration isn't complete.
-        pub is_shallow: Option<bool>,
-    }
-
-    impl<'repo> Walk<'repo> {
-        // TODO: tests
-        /// Once invoked, the iteration will return an error if a commit cannot be found in the object database. This typically happens
-        /// when operating on a shallow clone and thus is non-critical by default.
-        ///
-        /// Check the [`is_shallow`][Walk::is_shallow] field once the iteration ended otherwise to learn if a shallow commit graph
-        /// was encountered.
-        pub fn error_on_missing_commit(mut self) -> Self {
-            self.error_on_missing_commit = true;
-            self
-        }
     }
 
     impl<'repo> Iterator for Walk<'repo> {
         type Item = Result<Id<'repo>, gix_traverse::commit::ancestors::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
-            match self.inner.next() {
-                None => {
-                    self.is_shallow = Some(false);
-                    None
-                }
-                Some(Ok(oid)) => Some(Ok(oid.attach(self.repo))),
-                Some(Err(err @ gix_traverse::commit::ancestors::Error::FindExisting { .. })) => {
-                    if self.error_on_missing_commit {
-                        Some(Err(err))
-                    } else {
-                        self.is_shallow = Some(true);
-                        None
-                    }
-                }
-                Some(Err(err)) => Some(Err(err)),
-            }
+            self.inner.next().map(|res| res.map(|id| id.attach(self.repo)))
         }
     }
 }

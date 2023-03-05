@@ -177,6 +177,8 @@ pub enum Error {
     },
     #[error(transparent)]
     Traverse(#[from] gix_traverse::commit::ancestors::Error),
+    #[error(transparent)]
+    Walk(#[from] crate::revision::walk::Error),
     #[error("Spec does not contain a single object id")]
     SingleNotFound,
 }
