@@ -77,3 +77,25 @@ fn revert_sequence() -> Result {
 
     Ok(())
 }
+
+mod shallow {
+    use crate::util::named_subrepo_opts;
+
+    #[test]
+    fn without() -> crate::Result {
+        for name in ["base", "empty"] {
+            let repo = named_subrepo_opts("make_shallow_repo.sh", name, gix::open::Options::isolated())?;
+            assert!(!repo.is_shallow());
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn with() -> crate::Result {
+        for name in ["shallow.git", "shallow"] {
+            let repo = named_subrepo_opts("make_shallow_repo.sh", name, gix::open::Options::isolated())?;
+            assert!(repo.is_shallow());
+        }
+        Ok(())
+    }
+}

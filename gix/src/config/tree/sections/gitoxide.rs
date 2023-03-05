@@ -1,3 +1,4 @@
+use crate::config;
 use crate::config::tree::{keys, Gitoxide, Key, Section};
 
 impl Gitoxide {
@@ -5,6 +6,8 @@ impl Gitoxide {
     pub const ALLOW: Allow = Allow;
     /// The `gitoxide.author` section.
     pub const AUTHOR: Author = Author;
+    /// The `gitoxide.core` section.
+    pub const CORE: Core = Core;
     /// The `gitoxide.commit` section.
     pub const COMMIT: Commit = Commit;
     /// The `gitoxide.committer` section.
@@ -39,6 +42,7 @@ impl Section for Gitoxide {
         &[
             &Self::ALLOW,
             &Self::AUTHOR,
+            &Self::CORE,
             &Self::COMMIT,
             &Self::COMMITTER,
             &Self::HTTP,
@@ -55,6 +59,29 @@ mod subsections {
         tree::{http, keys, Gitoxide, Key, Section},
         Tree,
     };
+
+    /// The `Core` sub-section.
+    #[derive(Copy, Clone, Default)]
+    pub struct Core;
+
+    impl Core {
+        /// The `gitoxide.core.shallowFile` key.
+        pub const SHALLOW_FILE: keys::Path = keys::Path::new_path("shallowFile", &Gitoxide::CORE)
+            .with_environment_override("GIT_SHALLOW_FILE")
+            .with_deviation(
+                "relative file paths will always be made relative to the git-common-dir, whereas `git` keeps them as is.",
+            );
+    }
+
+    impl Section for Core {
+        fn name(&self) -> &str {
+            "core"
+        }
+
+        fn keys(&self) -> &[&dyn Key] {
+            &[&Self::SHALLOW_FILE]
+        }
+    }
 
     /// The `Http` sub-section.
     #[derive(Copy, Clone, Default)]
@@ -341,6 +368,7 @@ mod subsections {
         }
     }
 }
+pub use subsections::{Allow, Author, Commit, Committer, Core, Http, Https, Objects, Ssh, User};
 
 pub mod validate {
     use std::error::Error;
@@ -357,7 +385,3 @@ pub mod validate {
         }
     }
 }
-
-pub use subsections::{Allow, Author, Commit, Committer, Http, Https, Objects, Ssh, User};
-
-use crate::config;
