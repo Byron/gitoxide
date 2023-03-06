@@ -152,6 +152,7 @@ pub struct Repository {
     /// Particularly useful when following linked worktrees and instantiating new equally configured worktree repositories.
     pub(crate) options: crate::open::Options,
     pub(crate) index: crate::worktree::IndexStorage,
+    pub(crate) shallow_commits: crate::shallow::CommitsStorage,
 }
 
 /// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
@@ -175,6 +176,7 @@ pub struct ThreadSafeRepository {
     pub(crate) linked_worktree_options: crate::open::Options,
     /// The index of this instances worktree.
     pub(crate) index: crate::worktree::IndexStorage,
+    pub(crate) shallow_commits: crate::shallow::CommitsStorage,
 }
 
 /// A remote which represents a way to interact with hosts for remote clones of the parent repository.

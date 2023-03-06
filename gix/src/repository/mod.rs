@@ -30,6 +30,7 @@ pub(crate) mod permissions;
 mod reference;
 mod remote;
 mod revision;
+mod shallow;
 mod snapshots;
 mod state;
 mod thread_safe;

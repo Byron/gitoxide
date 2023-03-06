@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 
 impl crate::Repository {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn from_refs_and_objects(
         refs: crate::RefStore,
         objects: crate::OdbHandle,
@@ -9,6 +10,7 @@ impl crate::Repository {
         config: crate::config::Cache,
         linked_worktree_options: crate::open::Options,
         index: crate::worktree::IndexStorage,
+        shallow_commits: crate::shallow::CommitsStorage,
     ) -> Self {
         let objects = setup_objects(objects, &config);
         crate::Repository {
@@ -20,6 +22,7 @@ impl crate::Repository {
             config,
             options: linked_worktree_options,
             index,
+            shallow_commits,
         }
     }
 

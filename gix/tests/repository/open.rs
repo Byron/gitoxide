@@ -194,7 +194,8 @@ mod with_overrides {
             .set("GIT_SSL_VERSION", "tlsv1.3")
             .set("GIT_SSH_VARIANT", "ssh-variant-env")
             .set("GIT_SSH_COMMAND", "ssh-command-env")
-            .set("GIT_SSH", "ssh-command-fallback-env");
+            .set("GIT_SSH", "ssh-command-fallback-env")
+            .set("GIT_SHALLOW_FILE", "shallow-file-env");
         let mut opts = gix::open::Options::isolated()
             .cli_overrides([
                 "http.userAgent=agent-from-cli",
@@ -206,6 +207,7 @@ mod with_overrides {
                 "core.sshCommand=ssh-command-cli",
                 "gitoxide.ssh.commandWithoutShellFallback=ssh-command-fallback-cli",
                 "gitoxide.http.proxyAuthMethod=proxy-auth-method-cli",
+                "gitoxide.core.shallowFile=shallow-file-cli",
             ])
             .config_overrides([
                 "http.userAgent=agent-from-api",
@@ -217,6 +219,7 @@ mod with_overrides {
                 "core.sshCommand=ssh-command-api",
                 "gitoxide.ssh.commandWithoutShellFallback=ssh-command-fallback-api",
                 "gitoxide.http.proxyAuthMethod=proxy-auth-method-api",
+                "gitoxide.core.shallowFile=shallow-file-api",
             ]);
         opts.permissions.env.git_prefix = Permission::Allow;
         opts.permissions.env.http_transport = Permission::Allow;
@@ -229,6 +232,16 @@ mod with_overrides {
             "config always refers to the local one for safety"
         );
         let config = repo.config_snapshot();
+        assert_eq!(
+            config
+                .strings_by_key("gitoxide.core.shallowFile")
+                .expect("at least one value"),
+            [
+                cow_bstr("shallow-file-cli"),
+                cow_bstr("shallow-file-api"),
+                cow_bstr("shallow-file-env")
+            ]
+        );
         assert_eq!(
             config.strings_by_key("http.userAgent").expect("at least one value"),
             [

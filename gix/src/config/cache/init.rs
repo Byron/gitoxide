@@ -349,6 +349,15 @@ fn apply_environment_overrides(
         ),
         (
             "gitoxide",
+            Some(Cow::Borrowed("core".into())),
+            git_prefix,
+            &[{
+                let key = &gitoxide::Core::SHALLOW_FILE;
+                (env(key), key.name)
+            }],
+        ),
+        (
+            "gitoxide",
             Some(Cow::Borrowed("author".into())),
             identity,
             &[

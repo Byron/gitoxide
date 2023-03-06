@@ -5,6 +5,7 @@ mod object;
 mod open;
 mod reference;
 mod remote;
+mod shallow;
 mod state;
 mod worktree;
 
