@@ -486,6 +486,11 @@ impl<H: Http, B: ReadlineBufRead + Unpin> ReadlineBufRead for HeadersThenBody<H,
         }
         self.body.readline()
     }
+
+    fn readline_str(&mut self, line: &mut String) -> std::io::Result<usize> {
+        self.handle_headers()?;
+        self.body.readline_str(line)
+    }
 }
 
 impl<H: Http, B: ExtendedBufRead + Unpin> ExtendedBufRead for HeadersThenBody<H, B> {

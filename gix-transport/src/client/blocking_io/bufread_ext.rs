@@ -1,3 +1,4 @@
+use std::io::BufRead;
 use std::{
     io,
     ops::{Deref, DerefMut},
@@ -28,6 +29,12 @@ pub trait ReadlineBufRead: io::BufRead {
     fn readline(
         &mut self,
     ) -> Option<io::Result<Result<gix_packetline::PacketLineRef<'_>, gix_packetline::decode::Error>>>;
+
+    /// Read a line similar to `BufRead::read_line()`, but assure it doesn't try to find newlines
+    /// which might concatenate multiple distinct packet lines.
+    ///
+    /// Making this a trait method allows to handle differences between async and blocking.
+    fn readline_str(&mut self, line: &mut String) -> io::Result<usize>;
 }
 
 /// Provide even more access to the underlying packet reader.
@@ -49,6 +56,9 @@ pub trait ExtendedBufRead: ReadlineBufRead {
 impl<'a, T: ReadlineBufRead + ?Sized + 'a> ReadlineBufRead for Box<T> {
     fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         ReadlineBufRead::readline(self.deref_mut())
+    }
+    fn readline_str(&mut self, line: &mut String) -> io::Result<usize> {
+        self.read_line(line)
     }
 }
 
@@ -74,11 +84,19 @@ impl<T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'_, T,
     fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         self.read_data_line()
     }
+
+    fn readline_str(&mut self, line: &mut String) -> io::Result<usize> {
+        self.read_line(line)
+    }
 }
 
 impl<'a, T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'a, T, HandleProgress> {
     fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         self.read_data_line()
+    }
+
+    fn readline_str(&mut self, line: &mut String) -> io::Result<usize> {
+        self.read_line(line)
     }
 }
 
