@@ -1,6 +1,5 @@
 use std::io;
 
-use futures_lite::AsyncBufReadExt;
 use gix_transport::{client, Protocol};
 
 use crate::fetch::{
@@ -16,7 +15,7 @@ async fn parse_v2_section<T>(
     parse: impl Fn(&str) -> Result<T, response::Error>,
 ) -> Result<bool, response::Error> {
     line.clear();
-    while reader.read_line(line).await? != 0 {
+    while reader.readline_str(line).await? != 0 {
         res.push(parse(line)?);
         line.clear();
     }
@@ -62,7 +61,7 @@ impl Response {
                                 Some(client::MessageKind::Flush),
                                 "If this isn't a flush packet, we don't know what's going on"
                             );
-                            reader.read_line(&mut line).await?;
+                            reader.readline_str(&mut line).await?;
                             reader.reset(Protocol::V1);
                             match reader.peek_data_line().await {
                                 Some(Ok(Ok(line))) => String::from_utf8_lossy(line),
@@ -76,7 +75,11 @@ impl Response {
                     if Response::parse_v1_ack_or_shallow_or_assume_pack(&mut acks, &mut shallows, &peeked_line) {
                         break 'lines true;
                     }
-                    assert_ne!(reader.read_line(&mut line).await?, 0, "consuming a peeked line works");
+                    assert_ne!(
+                        reader.readline_str(&mut line).await?,
+                        0,
+                        "consuming a peeked line works"
+                    );
                 };
                 Ok(Response {
                     acks,
@@ -94,7 +97,7 @@ impl Response {
                 let mut wanted_refs = Vec::<WantedRef>::new();
                 let has_pack = 'section: loop {
                     line.clear();
-                    if reader.read_line(&mut line).await? == 0 {
+                    if reader.readline_str(&mut line).await? == 0 {
                         return Err(response::Error::Io(io::Error::new(
                             io::ErrorKind::UnexpectedEof,
                             "Could not read message headline",

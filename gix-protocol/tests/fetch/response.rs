@@ -70,6 +70,37 @@ mod v1 {
         }
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn unshallow_fetch() -> crate::Result {
+            let mut provider = mock_reader("v1/fetch-unshallow.response");
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader).await?;
+            assert_eq!(
+                r.acknowledgements(),
+                &[
+                    Acknowledgement::Common(id("f99771fe6a1b535783af3163eba95a927aae21d5")),
+                    Acknowledgement::Common(id("2d9d136fb0765f2e24c44a0f91984318d580d03b")),
+                    Acknowledgement::Common(id("dfd0954dabef3b64f458321ef15571cc1a46d552")),
+                ]
+            );
+            assert_eq!(
+                r.shallow_updates(),
+                &[
+                    ShallowUpdate::Unshallow(id("2d9d136fb0765f2e24c44a0f91984318d580d03b")),
+                    ShallowUpdate::Unshallow(id("dfd0954dabef3b64f458321ef15571cc1a46d552"))
+                ]
+            );
+            assert!(r.has_pack());
+            let mut pack = Vec::new();
+            reader.read_to_end(&mut pack).await?;
+            assert_eq!(
+                pack.len(),
+                2662,
+                "should be able to read the whole pack (and progress info)"
+            );
+            Ok(())
+        }
+
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn fetch_acks_without_pack() -> crate::Result {
             let mut provider = mock_reader("v1/fetch-no-pack.response");
             let r = fetch::Response::from_line_reader(Protocol::V1, &mut provider.as_read_without_sidebands()).await?;
@@ -160,6 +191,38 @@ mod v2 {
         }
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn unshallow_fetch() -> crate::Result {
+            let mut provider = mock_reader("v2/fetch-unshallow.response");
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
+            assert_eq!(
+                r.acknowledgements(),
+                &[
+                    Acknowledgement::Common(id("f99771fe6a1b535783af3163eba95a927aae21d5")),
+                    Acknowledgement::Common(id("2d9d136fb0765f2e24c44a0f91984318d580d03b")),
+                    Acknowledgement::Common(id("dfd0954dabef3b64f458321ef15571cc1a46d552")),
+                    Acknowledgement::Ready,
+                ]
+            );
+            assert_eq!(
+                r.shallow_updates(),
+                &[
+                    ShallowUpdate::Unshallow(id("2d9d136fb0765f2e24c44a0f91984318d580d03b")),
+                    ShallowUpdate::Unshallow(id("dfd0954dabef3b64f458321ef15571cc1a46d552"))
+                ]
+            );
+            assert!(r.has_pack());
+            let mut pack = Vec::new();
+            reader.read_to_end(&mut pack).await?;
+            assert_eq!(
+                pack.len(),
+                2664,
+                "should be able to read the whole pack (and progress info)"
+            );
+            Ok(())
+        }
+
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn empty_shallow_clone() -> crate::Result {
             let mut provider = mock_reader("v2/clone-deepen-5.response");
             let mut reader = provider.as_read_without_sidebands();
@@ -199,7 +262,7 @@ mod v2 {
         async fn fetch_acks_without_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch-no-pack.response");
             let r = fetch::Response::from_line_reader(Protocol::V2, &mut provider.as_read_without_sidebands()).await?;
-            assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak,]);
+            assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak]);
             Ok(())
         }
 
