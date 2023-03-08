@@ -5,6 +5,7 @@ pub struct Options {
     pub bare: bool,
     pub handshake_info: bool,
     pub no_tags: bool,
+    pub shallow: gix::remote::fetch::Shallow,
 }
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
@@ -30,6 +31,7 @@ pub(crate) mod function {
             handshake_info,
             bare,
             no_tags,
+            shallow,
         }: Options,
     ) -> anyhow::Result<()>
     where
@@ -66,8 +68,9 @@ pub(crate) mod function {
         if no_tags {
             prepare = prepare.configure_remote(|r| Ok(r.with_fetch_tags(gix::remote::fetch::Tags::None)));
         }
-        let (mut checkout, fetch_outcome) =
-            prepare.fetch_then_checkout(&mut progress, &gix::interrupt::IS_INTERRUPTED)?;
+        let (mut checkout, fetch_outcome) = prepare
+            .with_shallow(shallow)
+            .fetch_then_checkout(&mut progress, &gix::interrupt::IS_INTERRUPTED)?;
 
         let (repo, outcome) = if bare {
             (checkout.persist(), None)

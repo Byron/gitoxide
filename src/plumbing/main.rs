@@ -130,6 +130,7 @@ pub fn main() -> Result<()> {
             bare,
             no_tags,
             remote,
+            shallow,
             directory,
         }) => {
             let opts = core::repository::clone::Options {
@@ -137,6 +138,7 @@ pub fn main() -> Result<()> {
                 bare,
                 handshake_info,
                 no_tags,
+                shallow: shallow.into(),
             };
             prepare_and_run(
                 "clone",
@@ -152,6 +154,7 @@ pub fn main() -> Result<()> {
             dry_run,
             handshake_info,
             remote,
+            shallow,
             ref_spec,
         }) => {
             let opts = core::repository::fetch::Options {
@@ -159,6 +162,7 @@ pub fn main() -> Result<()> {
                 dry_run,
                 remote,
                 handshake_info,
+                shallow: shallow.into(),
                 ref_specs: ref_spec,
             };
             prepare_and_run(
