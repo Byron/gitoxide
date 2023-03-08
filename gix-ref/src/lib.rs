@@ -104,28 +104,27 @@ pub(crate) struct Store {
     inner: store::State,
 }
 
-/// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
-/// of a symbolic reference
+/// A validated complete and fully qualified referenced reference name, safe to use for all operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct FullName(pub(crate) BString);
 
-/// A validated and potentially partial reference name - it can safely be used for common operations.
+/// A validated complete and fully qualified referenced reference name, safe to use for all operations.
 #[derive(Hash, Debug, PartialEq, Eq, Ord, PartialOrd)]
 #[repr(transparent)]
 pub struct FullNameRef(BStr);
 
-/// A validated complete and fully qualified reference name, safe to use for all operations.
+/// A validated and potentially partial reference name, safe to use for common operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct PartialNameCow<'a>(Cow<'a, BStr>);
 
-/// A validated complete and fully qualified referenced reference name, safe to use for all operations.
+/// A validated and potentially partial reference name, safe to use for common operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
 #[repr(transparent)]
 pub struct PartialNameRef(BStr);
 
-/// A validated complete and fully qualified owned reference name, safe to use for all operations.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+/// A validated and potentially partial reference name, safe to use for common operations.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct PartialName(BString);
 
 /// A _validated_ prefix for references to act as a namespace.
