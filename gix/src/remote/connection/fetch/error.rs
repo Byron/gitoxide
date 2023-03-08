@@ -28,6 +28,21 @@ pub enum Error {
         path: std::path::PathBuf,
         source: std::io::Error,
     },
+    #[error(transparent)]
+    ShallowOpen(#[from] crate::shallow::open::Error),
+    #[error("Server lack feature {feature:?}: {description}")]
+    MissingServerFeature {
+        feature: &'static str,
+        description: &'static str,
+    },
+    #[error("Could not write 'shallow' file to incorporate remote updates after fetching")]
+    WriteShallowFile(#[from] crate::shallow::write::Error),
+    #[error("'shallow' file could not be locked in preparation for writing changes")]
+    LockShallowFile(#[from] gix_lock::acquire::Error),
+    #[error("Could not obtain configuration to learn if shallow remotes should be rejected")]
+    RejectShallowRemoteConfig(#[from] config::boolean::Error),
+    #[error("Receiving objects from shallow remotes is prohibited due to the value of `clone.rejectShallow`")]
+    RejectShallowRemote,
 }
 
 impl gix_protocol::transport::IsSpuriousError for Error {

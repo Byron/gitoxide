@@ -1,3 +1,15 @@
+mod shallow {
+    use gix::remote::fetch::Shallow;
+
+    #[test]
+    fn undo() {
+        assert_eq!(
+            Shallow::undo(),
+            Shallow::DepthAtRemote(2147483647u32.try_into().expect("known at compile time"))
+        );
+    }
+}
+
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod blocking_and_async_io {
     use std::sync::atomic::AtomicBool;

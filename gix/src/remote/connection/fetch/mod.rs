@@ -149,6 +149,7 @@ where
             dry_run: DryRun::No,
             reflog_message: None,
             write_packed_refs: WritePackedRefs::Never,
+            shallow: Default::default(),
         })
     }
 }
@@ -179,6 +180,7 @@ where
     dry_run: DryRun,
     reflog_message: Option<RefLogMessage>,
     write_packed_refs: WritePackedRefs,
+    shallow: remote::fetch::Shallow,
 }
 
 /// Builder
@@ -210,6 +212,14 @@ where
     /// Set the reflog message to use when updating refs after fetching a pack.
     pub fn with_reflog_message(mut self, reflog_message: RefLogMessage) -> Self {
         self.reflog_message = reflog_message.into();
+        self
+    }
+
+    /// Define what to do when the current repository is a shallow clone.
+    ///
+    /// *Has no effect if the current repository is not as shallow clone.*
+    pub fn with_shallow(mut self, shallow: remote::fetch::Shallow) -> Self {
+        self.shallow = shallow;
         self
     }
 }
