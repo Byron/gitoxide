@@ -10,15 +10,15 @@ pub enum Error {
     InvalidInput { directory: PathBuf },
     #[error("Failed to access a directory, or path is not a directory: '{}'", .path.display())]
     InaccessibleDirectory { path: PathBuf },
-    #[error("Could find a git repository in '{}' or in any of its parents", .path.display())]
+    #[error("Could not find a git repository in '{}' or in any of its parents", .path.display())]
     NoGitRepository { path: PathBuf },
-    #[error("Could find a git repository in '{}' or in any of its parents within ceiling height of {}", .path.display(), .ceiling_height)]
+    #[error("Could not find a git repository in '{}' or in any of its parents within ceiling height of {}", .path.display(), .ceiling_height)]
     NoGitRepositoryWithinCeiling { path: PathBuf, ceiling_height: usize },
-    #[error("Could find a git repository in '{}' or in any of its parents within device limits below '{}'", .path.display(), .limit.display())]
+    #[error("Could not find a git repository in '{}' or in any of its parents within device limits below '{}'", .path.display(), .limit.display())]
     NoGitRepositoryWithinFs { path: PathBuf, limit: PathBuf },
     #[error("None of the passed ceiling directories prefixed the git-dir candidate, making them ineffective.")]
     NoMatchingCeilingDir,
-    #[error("Could find a trusted git repository in '{}' or in any of its parents, candidate at '{}' discarded", .path.display(), .candidate.display())]
+    #[error("Could not find a trusted git repository in '{}' or in any of its parents, candidate at '{}' discarded", .path.display(), .candidate.display())]
     NoTrustedGitRepository {
         path: PathBuf,
         candidate: PathBuf,
