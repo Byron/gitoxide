@@ -32,7 +32,7 @@ test = true
 parking_lot = "0.12.1"
 dashmap = { version = "5.1.0", optional = true }
 once_cell = { version = "1.8.0", default-features = false, features = ["race", "std"] }
-tempfile = "~3.3.0"
+tempfile = "3.4.0"
 
 signal-hook = { version = "0.3.9", default-features = false, optional = true }
 signal-hook-registry = { version = "1.4.0", optional = true }
