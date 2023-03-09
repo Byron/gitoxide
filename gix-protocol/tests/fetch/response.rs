@@ -137,6 +137,54 @@ mod v1 {
             Ok(())
         }
     }
+
+    mod arguments {
+        use crate::fetch::response::id;
+        use crate::fetch::transport;
+        use bstr::ByteSlice;
+        use gix_protocol::{fetch, Command};
+        use gix_transport::client::Capabilities;
+        use gix_transport::Protocol;
+
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn all() -> crate::Result {
+            let (caps, _) = Capabilities::from_bytes(&b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack filter side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0"[..])?;
+            let mut args = fetch::Arguments::new(Protocol::V1, Command::Fetch.default_features(Protocol::V1, &caps));
+            assert!(args.can_use_shallow());
+            assert!(args.can_use_deepen());
+            assert!(args.can_use_deepen_not());
+            assert!(args.can_use_deepen_relative());
+            assert!(args.can_use_deepen_since());
+            assert!(args.can_use_filter());
+            assert!(args.can_use_include_tag());
+            assert!(
+                !args.can_use_ref_in_want(),
+                "V2 only feature, and we initialize capabilities with V1 for convenience"
+            );
+            assert!(args.is_empty());
+
+            args.shallow(id("97c5a932b3940a09683e924ef6a92b31a6f7c6de"));
+            args.deepen(1);
+            args.deepen_relative();
+            args.deepen_since(123456);
+            args.deepen_not("tag".into());
+            args.want(id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+            args.have(id("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+
+            let mut out = Vec::new();
+            let mut transport = transport(
+                &mut out,
+                "v1/clone.response",
+                Protocol::V2,
+                gix_transport::client::git::ConnectMode::Daemon,
+            );
+
+            let _response = args.send(&mut transport, true).await?;
+            drop(_response);
+            assert_eq!(out.as_slice().as_bstr(), "00aawant aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa thin-pack side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative include-tag multi_ack_detailed filter\n000ddeepen 1\n0014deepen-relative\n0018deepen-since 123456\n0013deepen-not tag\n0035shallow 97c5a932b3940a09683e924ef6a92b31a6f7c6de\n00000032have bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n0009done\n");
+            Ok(())
+        }
+    }
 }
 mod v2 {
     mod from_line_reader {
@@ -302,6 +350,55 @@ mod v2 {
             }) as gix_transport::client::HandleProgress));
             let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 5360, "should be able to read the whole pack");
+            Ok(())
+        }
+    }
+
+    mod arguments {
+        use crate::fetch::response::id;
+        use crate::fetch::transport;
+        use bstr::ByteSlice;
+        use gix_protocol::{fetch, Command};
+        use gix_transport::client::Capabilities;
+        use gix_transport::Protocol;
+
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn all() -> crate::Result {
+            let (caps, _) = Capabilities::from_bytes(&b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack filter side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0"[..])?;
+            let mut args = fetch::Arguments::new(Protocol::V2, Command::Fetch.default_features(Protocol::V1, &caps));
+            assert!(args.can_use_shallow());
+            assert!(args.can_use_deepen());
+            assert!(args.can_use_deepen_not());
+            assert!(args.can_use_deepen_relative());
+            assert!(args.can_use_deepen_since());
+            assert!(args.can_use_filter());
+            assert!(args.can_use_include_tag());
+            assert!(
+                !args.can_use_ref_in_want(),
+                "V2 only feature, and we initialize capabilities with V1 for convenience"
+            );
+            assert!(args.is_empty());
+
+            args.shallow(id("97c5a932b3940a09683e924ef6a92b31a6f7c6de"));
+            args.deepen(1);
+            args.deepen_relative();
+            args.deepen_since(123456);
+            args.deepen_not("tag".into());
+            args.want(id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+            args.have(id("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+
+            let mut out = Vec::new();
+            let mut transport = transport(
+                &mut out,
+                "v1/clone.response",
+                Protocol::V2,
+                gix_transport::client::git::ConnectMode::Daemon,
+            );
+
+            let _response = args.send(&mut transport, true).await?;
+            drop(_response);
+            assert_eq!(out.as_slice().as_bstr(), "0012command=fetch\n0001000ethin-pack\n000eofs-delta\n0035shallow 97c5a932b3940a09683e924ef6a92b31a6f7c6de\n000ddeepen 1\n0014deepen-relative\n0018deepen-since 123456\n0013deepen-not tag\n0032want aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+0032have bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n0009done\n0000");
             Ok(())
         }
     }
