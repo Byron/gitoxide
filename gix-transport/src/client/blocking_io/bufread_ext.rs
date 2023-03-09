@@ -1,4 +1,3 @@
-use std::io::BufRead;
 use std::{
     io,
     ops::{Deref, DerefMut},
@@ -58,7 +57,7 @@ impl<'a, T: ReadlineBufRead + ?Sized + 'a> ReadlineBufRead for Box<T> {
         ReadlineBufRead::readline(self.deref_mut())
     }
     fn readline_str(&mut self, line: &mut String) -> io::Result<usize> {
-        self.read_line(line)
+        ReadlineBufRead::readline_str(self.deref_mut(), line)
     }
 }
 
@@ -86,7 +85,7 @@ impl<T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'_, T,
     }
 
     fn readline_str(&mut self, line: &mut String) -> io::Result<usize> {
-        self.read_line(line)
+        self.read_line_to_string(line)
     }
 }
 
@@ -96,7 +95,7 @@ impl<'a, T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'a
     }
 
     fn readline_str(&mut self, line: &mut String) -> io::Result<usize> {
-        self.read_line(line)
+        self.read_line_to_string(line)
     }
 }
 

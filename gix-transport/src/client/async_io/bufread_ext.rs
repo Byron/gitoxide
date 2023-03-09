@@ -94,7 +94,7 @@ impl<T: AsyncRead + Unpin> ReadlineBufRead for gix_packetline::read::WithSideban
         self.read_data_line().await
     }
     async fn readline_str(&mut self, line: &mut String) -> io::Result<usize> {
-        self.read_line(line).await
+        self.read_line_to_string(line).await
     }
 }
 
@@ -104,7 +104,7 @@ impl<'a, T: AsyncRead + Unpin> ReadlineBufRead for gix_packetline::read::WithSid
         self.read_data_line().await
     }
     async fn readline_str(&mut self, line: &mut String) -> io::Result<usize> {
-        self.read_line(line).await
+        self.read_line_to_string(line).await
     }
 }
 
