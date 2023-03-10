@@ -13,6 +13,7 @@ impl Default for Url {
             serialize_alternative_form: false,
             scheme: Scheme::Ssh,
             user: None,
+            password: None,
             host: None,
             port: None,
             path: bstr::BString::default(),

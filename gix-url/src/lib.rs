@@ -38,6 +38,8 @@ pub struct Url {
     pub scheme: Scheme,
     /// The user to impersonate on the remote.
     user: Option<String>,
+    /// The password associated with a user.
+    password: Option<String>,
     /// The host to which to connect. Localhost is implied if `None`.
     host: Option<String>,
     /// When serializing, use the alternative forms as it was parsed as such.
@@ -50,44 +52,25 @@ pub struct Url {
 
 /// Instantiation
 impl Url {
-    /// Create a new instance from the given parts, which will be validated by parsing them back.
+    /// Create a new instance from the given parts, including a password, which will be validated by parsing them back.
     pub fn from_parts(
         scheme: Scheme,
         user: Option<String>,
+        password: Option<String>,
         host: Option<String>,
         port: Option<u16>,
         path: BString,
+        serialize_alternative_form: bool,
     ) -> Result<Self, parse::Error> {
         parse(
             Url {
                 scheme,
                 user,
+                password,
                 host,
                 port,
                 path,
-                serialize_alternative_form: false,
-            }
-            .to_bstring()
-            .as_ref(),
-        )
-    }
-
-    /// Create a new instance from the given parts, which will be validated by parsing them back from its alternative form.
-    pub fn from_parts_as_alternative_form(
-        scheme: Scheme,
-        user: Option<String>,
-        host: Option<String>,
-        port: Option<u16>,
-        path: BString,
-    ) -> Result<Self, parse::Error> {
-        parse(
-            Url {
-                scheme,
-                user,
-                host,
-                port,
-                path,
-                serialize_alternative_form: true,
+                serialize_alternative_form,
             }
             .to_bstring()
             .as_ref(),
@@ -132,6 +115,10 @@ impl Url {
     /// Returns the user mentioned in the url, if present.
     pub fn user(&self) -> Option<&str> {
         self.user.as_deref()
+    }
+    /// Returns the password mentioned in the url, if present.
+    pub fn password(&self) -> Option<&str> {
+        self.password.as_deref()
     }
     /// Returns the host mentioned in the url, if present.
     pub fn host(&self) -> Option<&str> {
@@ -178,6 +165,10 @@ impl Url {
         match (&self.user, &self.host) {
             (Some(user), Some(host)) => {
                 out.write_all(user.as_bytes())?;
+                if let Some(password) = &self.password {
+                    out.write_all(&[b':'])?;
+                    out.write_all(password.as_bytes())?;
+                }
                 out.write_all(&[b'@'])?;
                 out.write_all(host.as_bytes())?;
             }
