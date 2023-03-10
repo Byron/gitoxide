@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes, but with some fixes in the dependency chain, namely:
+
+- `gix-credentials` allows credential helpers to ignore `stdin`, making it robust when facing helpers that don't read from `stdin`.
+- `gix-tempfile` refers to the most recent version of `tempfile` without pinning it, which removes a security vulnerability.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 1 day passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'password-in-urls' ([`85f8b28`](https://github.com/Byron/gitoxide/commit/85f8b283a1671e2631cda437ca8da93f9a2a4ebd))
+    - Adjust to changes in `gix-url` ([`66602bb`](https://github.com/Byron/gitoxide/commit/66602bbb7fe62f7425c8289902a1d2fce121e87c))
+</details>
+
 ## 0.40.0 (2023-03-09)
 
 ### New Features
@@ -30,8 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 2 calendar days.
- - 3 days passed between releases.
+ - 5 commits contributed to the release over the course of 3 calendar days.
+ - 4 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -42,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix v0.40.0 ([`18e72c9`](https://github.com/Byron/gitoxide/commit/18e72c988a58415080d4555bc869ae04df8d04fa))
     - Merge branch 'shallow-support' ([`6d88fd2`](https://github.com/Byron/gitoxide/commit/6d88fd208bcdec0603d57785bdbfe2f286a65384))
     - Allow to traverse the entire commit graph of shallow repos ([`1046ea2`](https://github.com/Byron/gitoxide/commit/1046ea2b3312838169aa08f30b598bf4ce2338d9))
     - `Repository::shallow_commits()` returns an uptodate list of shallow boundary commits. ([`5bfbb9a`](https://github.com/Byron/gitoxide/commit/5bfbb9a32f8edb8bfb71ae00167277b9109de35a))
