@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.0.0 (2023-03-10)
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-304b0c1ffdfc90bbfaad1bf30162070a5ce4b8c0/> Upgrade `tempfile` to 3.4, fixing a security issue.
+   This is not really a breaking change, but a tactical major version increment
+   to give `cargo` an escape hatch and let it use the vulnerable version for a little
+   longer.
+   
+   This means this `gix` up until v0.40 can be used to pull in `tempfile` 3.3, and
+   all future versions will use tempfile 3.4 (or 3.X) for that matter.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release over the course of 1 calendar day.
+ - 2 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`e06f5f5`](https://github.com/Byron/gitoxide/commit/e06f5f523e83f4da390eddbebcb9a2d58674587b))
+    - Upgrade `tempfile` to 3.4, fixing a security issue. ([`304b0c1`](https://github.com/Byron/gitoxide/commit/304b0c1ffdfc90bbfaad1bf30162070a5ce4b8c0))
+</details>
+
 ## 4.1.1 (2023-03-07)
 
 ### Bug Fixes
@@ -20,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 6 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -32,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-tempfile v4.1.1 ([`2574b75`](https://github.com/Byron/gitoxide/commit/2574b7592b5e0e7a709608ce674568d15b8fc3e8))
     - Switch `tempfile` to `~3.3.0` to help with `cargo` build. ([`6778c5f`](https://github.com/Byron/gitoxide/commit/6778c5f6874ec2a44859de25428e6603dd4e9e8a))
 </details>
 
