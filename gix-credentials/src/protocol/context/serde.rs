@@ -21,7 +21,7 @@ mod write {
                 if let Some(value) = value {
                     validate(key, value.as_slice().into())
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-                    write_key(&mut out, key, value.as_ref())?;
+                    write_key(&mut out, key, value.as_ref()).ok();
                 }
             }
             for (key, value) in [
@@ -33,7 +33,7 @@ mod write {
                 if let Some(value) = value {
                     validate(key, value.as_str().into())
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-                    write_key(&mut out, key, value.as_bytes().as_bstr())?;
+                    write_key(&mut out, key, value.as_bytes().as_bstr()).ok();
                 }
             }
             Ok(())

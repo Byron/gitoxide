@@ -8,8 +8,9 @@ impl Action {
         match self {
             Action::Get(ctx) => ctx.write_to(write),
             Action::Store(last) | Action::Erase(last) => {
-                write.write_all(last)?;
-                write.write_all(&[b'\n'])
+                write.write_all(last).ok();
+                write.write_all(&[b'\n']).ok();
+                Ok(())
             }
         }
     }
