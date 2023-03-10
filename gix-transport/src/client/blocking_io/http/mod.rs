@@ -217,17 +217,31 @@ pub struct Transport<H: Http> {
 impl<H: Http> Transport<H> {
     /// Create a new instance with `http` as implementation to communicate to `url` using the given `desired_version`.
     /// Note that we will always fallback to other versions as supported by the server.
-    pub fn new_http(http: H, url: &str, desired_version: Protocol) -> Self {
+    pub fn new_http(http: H, url: gix_url::Url, desired_version: Protocol) -> Self {
+        let identity = url
+            .user()
+            .zip(url.password())
+            .map(|(user, pass)| gix_sec::identity::Account {
+                username: user.to_string(),
+                password: pass.to_string(),
+            });
         Transport {
-            url: url.to_owned(),
+            url: url.to_bstring().to_string(),
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
             desired_version,
             actual_version: Default::default(),
             service: None,
             http,
             line_provider: None,
-            identity: None,
+            identity,
         }
+    }
+}
+
+impl<H: Http> Transport<H> {
+    /// Returns the identity that the transport uses when connecting to the remote.
+    pub fn identity(&self) -> Option<&gix_sec::identity::Account> {
+        self.identity.as_ref()
     }
 }
 
@@ -236,7 +250,7 @@ impl Transport<Impl> {
     /// Create a new instance to communicate to `url` using the given `desired_version` of the `git` protocol.
     ///
     /// Note that the actual implementation depends on feature toggles.
-    pub fn new(url: &str, desired_version: Protocol) -> Self {
+    pub fn new(url: gix_url::Url, desired_version: Protocol) -> Self {
         Self::new_http(Impl::default(), url, desired_version)
     }
 }
@@ -497,13 +511,13 @@ impl<H: Http, B: ExtendedBufRead + Unpin> ExtendedBufRead for HeadersThenBody<H,
 
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol, with `http` as implementation.
 #[cfg(all(feature = "http-client", not(feature = "http-client-curl")))]
-pub fn connect_http<H: Http>(http: H, url: &str, desired_version: Protocol) -> Transport<H> {
+pub fn connect_http<H: Http>(http: H, url: gix_url::Url, desired_version: Protocol) -> Transport<H> {
     Transport::new_http(http, url, desired_version)
 }
 
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol.
 #[cfg(any(feature = "http-client-curl", feature = "http-client-reqwest"))]
-pub fn connect(url: &str, desired_version: Protocol) -> Transport<Impl> {
+pub fn connect(url: gix_url::Url, desired_version: Protocol) -> Transport<Impl> {
     Transport::new(url, desired_version)
 }
 
