@@ -192,7 +192,7 @@ mod program_kind {
         }
 
         fn joined(input: &[&str]) -> String {
-            input.iter().copied().collect::<Vec<_>>().join(" ")
+            input.to_vec().join(" ")
         }
         fn try_call(
             kind: ProgramKind,
