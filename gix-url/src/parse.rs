@@ -66,10 +66,12 @@ fn has_no_explicit_protocol(url: &[u8]) -> bool {
 }
 
 fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
+    let password = url.password();
     Ok(crate::Url {
         serialize_alternative_form: false,
         scheme: str_to_protocol(url.scheme()),
-        user: if url.username().is_empty() {
+        password: password.map(ToOwned::to_owned),
+        user: if url.username().is_empty() && password.is_none() {
             None
         } else {
             Some(url.username().into())

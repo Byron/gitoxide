@@ -99,13 +99,13 @@ pub fn serve_and_connect(
     version: Protocol,
 ) -> Result<(Server, http::Transport<http::Impl>), crate::Error> {
     let server = serve_once(name);
-    let url = format!(
+    let url_str = format!(
         "http://{}:{}/{}",
         &server.addr.ip().to_string(),
         &server.addr.port(),
         path
     );
-    let client = gix_transport::client::http::connect(&url, version);
-    assert_eq!(url, client.to_url().as_ref());
+    let client = gix_transport::client::http::connect(url_str.as_str().try_into()?, version);
+    assert_eq!(url_str, client.to_url().as_ref());
     Ok((server, client))
 }

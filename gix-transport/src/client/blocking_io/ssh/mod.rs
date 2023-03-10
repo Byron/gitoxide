@@ -86,6 +86,7 @@ pub mod connect {
 ///
 /// The `desired_version` is the preferred protocol version when establishing the connection, but note that it can be
 /// downgraded by servers not supporting it.
+#[allow(clippy::result_large_err)]
 pub fn connect(
     url: gix_url::Url,
     desired_version: Protocol,

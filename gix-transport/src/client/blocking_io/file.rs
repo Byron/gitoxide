@@ -71,7 +71,7 @@ impl SpawnProcessOnDemand {
     }
     fn new_local(path: BString, version: Protocol) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
-            url: gix_url::Url::from_parts_as_alternative_form(gix_url::Scheme::File, None, None, None, path.clone())
+            url: gix_url::Url::from_parts(gix_url::Scheme::File, None, None, None, None, path.clone(), true)
                 .expect("valid url"),
             path,
             ssh_cmd: None,

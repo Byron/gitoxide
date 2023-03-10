@@ -46,6 +46,21 @@ fn http_status_500_is_communicated_via_special_io_error() -> crate::Result {
     Ok(())
 }
 
+#[test]
+fn http_identity_is_picked_up_from_url() -> crate::Result {
+    let transport =
+        gix_transport::client::http::connect("https://user:pass@example.com/repo".try_into()?, Protocol::V2);
+    assert_eq!(transport.to_url().as_ref(), "https://user:pass@example.com/repo");
+    assert_eq!(
+        transport.identity(),
+        Some(&gix_sec::identity::Account {
+            username: "user".into(),
+            password: "pass".into()
+        })
+    );
+    Ok(())
+}
+
 // based on a test in cargo
 #[test]
 fn http_will_use_pipelining() {
@@ -108,7 +123,8 @@ fn http_will_use_pipelining() {
     });
 
     let url = format!("http://{}:{}/reponame", &addr.ip().to_string(), &addr.port(),);
-    let mut client = gix_transport::client::http::connect(&url, gix_transport::Protocol::V2);
+    let mut client =
+        gix_transport::client::http::connect(url.try_into().expect("valid url"), gix_transport::Protocol::V2);
     match client.handshake(gix_transport::Service::UploadPack, &[]) {
         Ok(_) => unreachable!("expecting permission denied to be detected"),
         Err(gix_transport::client::Error::Io(err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {}

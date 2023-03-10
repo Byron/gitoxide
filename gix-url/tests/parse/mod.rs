@@ -39,9 +39,31 @@ fn url<'a, 'b>(
     gix_url::Url::from_parts(
         protocol,
         user.into().map(Into::into),
+        None,
         host.into().map(Into::into),
         port.into(),
         path.into(),
+        false,
+    )
+    .unwrap_or_else(|err| panic!("'{}' failed: {err:?}", path.as_bstr()))
+}
+
+fn url_with_pass<'a, 'b>(
+    protocol: Scheme,
+    user: impl Into<Option<&'a str>>,
+    password: impl Into<String>,
+    host: impl Into<Option<&'b str>>,
+    port: impl Into<Option<u16>>,
+    path: &[u8],
+) -> gix_url::Url {
+    gix_url::Url::from_parts(
+        protocol,
+        user.into().map(Into::into),
+        Some(password.into()),
+        host.into().map(Into::into),
+        port.into(),
+        path.into(),
+        false,
     )
     .unwrap_or_else(|err| panic!("'{}' failed: {err:?}", path.as_bstr()))
 }
@@ -53,12 +75,14 @@ fn url_alternate<'a, 'b>(
     port: impl Into<Option<u16>>,
     path: &[u8],
 ) -> gix_url::Url {
-    let url = gix_url::Url::from_parts_as_alternative_form(
+    let url = gix_url::Url::from_parts(
         protocol.clone(),
         user.into().map(Into::into),
+        None,
         host.into().map(Into::into),
         port.into(),
         path.into(),
+        true,
     )
     .expect("valid");
     assert_eq!(url.scheme, protocol);
@@ -89,33 +113,8 @@ mod radicle {
     }
 }
 
-mod http {
-    use gix_url::Scheme;
+mod http;
 
-    use crate::parse::{assert_url, assert_url_roundtrip, url};
-
-    #[test]
-    fn username_expansion_is_unsupported() -> crate::Result {
-        assert_url_roundtrip(
-            "http://example.com/~byron/hello",
-            url(Scheme::Http, None, "example.com", None, b"/~byron/hello"),
-        )
-    }
-    #[test]
-    fn secure() -> crate::Result {
-        assert_url_roundtrip(
-            "https://github.com/byron/gitoxide",
-            url(Scheme::Https, None, "github.com", None, b"/byron/gitoxide"),
-        )
-    }
-
-    #[test]
-    fn http_missing_path() -> crate::Result {
-        assert_url_roundtrip("http://host.xz/", url(Scheme::Http, None, "host.xz", None, b"/"))?;
-        assert_url("http://host.xz", url(Scheme::Http, None, "host.xz", None, b"/"))?;
-        Ok(())
-    }
-}
 mod git {
     use gix_url::Scheme;
 

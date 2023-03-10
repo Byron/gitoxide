@@ -66,12 +66,14 @@ fn with_user_and_port_and_absolute_path() -> crate::Result {
 
 #[test]
 fn ssh_alias_needs_username_to_not_be_considered_a_filepath() {
-    let url = gix_url::Url::from_parts_as_alternative_form(
+    let url = gix_url::Url::from_parts(
         Scheme::Ssh,
+        None,
         None,
         "alias".to_string().into(),
         None,
         b"path/to/git".as_bstr().into(),
+        true,
     )
     .expect("valid");
     assert_eq!(
