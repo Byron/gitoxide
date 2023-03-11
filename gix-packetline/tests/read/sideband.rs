@@ -5,6 +5,7 @@ use bstr::{BString, ByteSlice};
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 use futures_lite::io::AsyncReadExt;
 use gix_odb::pack;
+use gix_packetline::read::ProgressAction;
 use gix_packetline::PacketLineRef;
 
 use crate::read::streaming_peek_iter::fixture_bytes;
@@ -51,9 +52,10 @@ async fn read_pack_with_progress_extraction() -> crate::Result {
         b"NAK".as_bstr()
     );
     let mut seen_texts = Vec::<BString>::new();
-    let mut do_nothing = |is_err: bool, data: &[u8]| {
+    let mut do_nothing = |is_err: bool, data: &[u8]| -> ProgressAction {
         assert!(!is_err);
         seen_texts.push(data.as_bstr().into());
+        ProgressAction::Continue
     };
     let pack_read = rd.as_read_with_sidebands(&mut do_nothing);
     #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
@@ -132,7 +134,7 @@ async fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Resu
 
     drop(r);
 
-    let mut r = rd.as_read_with_sidebands(|_, _| ());
+    let mut r = rd.as_read_with_sidebands(|_, _| ProgressAction::Continue);
     out.clear();
     r.read_line_to_string(&mut out).await?;
     assert_eq!(out, "&");
@@ -174,7 +176,7 @@ async fn readline_reads_one_packet_line_at_a_time() -> crate::Result {
 
     drop(r);
 
-    let mut r = rd.as_read_with_sidebands(|_, _| ());
+    let mut r = rd.as_read_with_sidebands(|_, _| ProgressAction::Continue);
     let line = r.read_data_line().await.unwrap()??.as_bstr().unwrap();
     assert_eq!(
         line.as_bstr(),

@@ -7,6 +7,7 @@ use std::{
 use futures_io::{AsyncBufRead, AsyncRead};
 use futures_lite::ready;
 
+use crate::read::ProgressAction;
 use crate::{decode, BandRef, PacketLineRef, StreamingPeekableIter, TextRef, U16_HEX_BYTES};
 
 type ReadLineResult<'a> = Option<std::io::Result<Result<PacketLineRef<'a>, decode::Error>>>;
@@ -37,7 +38,7 @@ where
     }
 }
 
-impl<'a, T> WithSidebands<'a, T, fn(bool, &[u8])>
+impl<'a, T> WithSidebands<'a, T, fn(bool, &[u8]) -> ProgressAction>
 where
     T: AsyncRead,
 {
@@ -93,7 +94,7 @@ mod tests {
 impl<'a, T, F> WithSidebands<'a, T, F>
 where
     T: AsyncRead + Unpin,
-    F: FnMut(bool, &[u8]) + Unpin,
+    F: FnMut(bool, &[u8]) -> ProgressAction + Unpin,
 {
     /// Create a new instance with the given `parent` provider and the `handle_progress` function.
     ///
@@ -201,7 +202,7 @@ pub struct ReadDataLineFuture<'a, 'b, T: AsyncRead, F> {
 impl<'a, 'b, T, F> Future for ReadDataLineFuture<'a, 'b, T, F>
 where
     T: AsyncRead + Unpin,
-    F: FnMut(bool, &[u8]) + Unpin,
+    F: FnMut(bool, &[u8]) -> ProgressAction + Unpin,
 {
     type Output = std::io::Result<usize>;
 
@@ -228,7 +229,7 @@ pub struct ReadLineFuture<'a, 'b, T: AsyncRead, F> {
 impl<'a, 'b, T, F> Future for ReadLineFuture<'a, 'b, T, F>
 where
     T: AsyncRead + Unpin,
-    F: FnMut(bool, &[u8]) + Unpin,
+    F: FnMut(bool, &[u8]) -> ProgressAction + Unpin,
 {
     type Output = std::io::Result<usize>;
 
@@ -251,7 +252,7 @@ where
 impl<'a, T, F> AsyncBufRead for WithSidebands<'a, T, F>
 where
     T: AsyncRead + Unpin,
-    F: FnMut(bool, &[u8]) + Unpin,
+    F: FnMut(bool, &[u8]) -> ProgressAction + Unpin,
 {
     fn poll_fill_buf(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
         use std::io;
@@ -310,11 +311,27 @@ where
                                         }
                                         BandRef::Progress(d) => {
                                             let text = TextRef::from(d).0;
-                                            handle_progress(false, text);
+                                            match handle_progress(false, text) {
+                                                ProgressAction::Continue => {}
+                                                ProgressAction::Interrupt => {
+                                                    return Poll::Ready(Err(io::Error::new(
+                                                        std::io::ErrorKind::Other,
+                                                        "interrupted by user",
+                                                    )))
+                                                }
+                                            };
                                         }
                                         BandRef::Error(d) => {
                                             let text = TextRef::from(d).0;
-                                            handle_progress(true, text);
+                                            match handle_progress(true, text) {
+                                                ProgressAction::Continue => {}
+                                                ProgressAction::Interrupt => {
+                                                    return Poll::Ready(Err(io::Error::new(
+                                                        io::ErrorKind::Other,
+                                                        "interrupted by user",
+                                                    )))
+                                                }
+                                            };
                                         }
                                     };
                                 }
@@ -353,7 +370,7 @@ where
 impl<'a, T, F> AsyncRead for WithSidebands<'a, T, F>
 where
     T: AsyncRead + Unpin,
-    F: FnMut(bool, &[u8]) + Unpin,
+    F: FnMut(bool, &[u8]) -> ProgressAction + Unpin,
 {
     fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<std::io::Result<usize>> {
         let nread = {

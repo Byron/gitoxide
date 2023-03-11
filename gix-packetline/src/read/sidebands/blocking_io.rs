@@ -1,5 +1,6 @@
 use std::{io, io::BufRead};
 
+use crate::read::ProgressAction;
 use crate::{BandRef, PacketLineRef, StreamingPeekableIter, TextRef, U16_HEX_BYTES};
 
 /// An implementor of [`BufRead`][io::BufRead] yielding packet lines on each call to [`read_line()`][io::BufRead::read_line()].
@@ -24,7 +25,7 @@ where
     }
 }
 
-impl<'a, T> WithSidebands<'a, T, fn(bool, &[u8])>
+impl<'a, T> WithSidebands<'a, T, fn(bool, &[u8]) -> ProgressAction>
 where
     T: io::Read,
 {
@@ -42,7 +43,7 @@ where
 impl<'a, T, F> WithSidebands<'a, T, F>
 where
     T: io::Read,
-    F: FnMut(bool, &[u8]),
+    F: FnMut(bool, &[u8]) -> ProgressAction,
 {
     /// Create a new instance with the given `parent` provider and the `handle_progress` function.
     ///
@@ -130,7 +131,7 @@ where
 impl<'a, T, F> BufRead for WithSidebands<'a, T, F>
 where
     T: io::Read,
-    F: FnMut(bool, &[u8]),
+    F: FnMut(bool, &[u8]) -> ProgressAction,
 {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
         if self.pos >= self.cap {
@@ -154,11 +155,27 @@ where
                             }
                             BandRef::Progress(d) => {
                                 let text = TextRef::from(d).0;
-                                handle_progress(false, text);
+                                match handle_progress(false, text) {
+                                    ProgressAction::Continue => {}
+                                    ProgressAction::Interrupt => {
+                                        return Err(std::io::Error::new(
+                                            std::io::ErrorKind::Other,
+                                            "interrupted by user",
+                                        ))
+                                    }
+                                };
                             }
                             BandRef::Error(d) => {
                                 let text = TextRef::from(d).0;
-                                handle_progress(true, text);
+                                match handle_progress(true, text) {
+                                    ProgressAction::Continue => {}
+                                    ProgressAction::Interrupt => {
+                                        return Err(std::io::Error::new(
+                                            std::io::ErrorKind::Other,
+                                            "interrupted by user",
+                                        ))
+                                    }
+                                };
                             }
                         };
                     }
@@ -189,7 +206,7 @@ where
 impl<'a, T, F> io::Read for WithSidebands<'a, T, F>
 where
     T: io::Read,
-    F: FnMut(bool, &[u8]),
+    F: FnMut(bool, &[u8]) -> ProgressAction,
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let nread = {
