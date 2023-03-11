@@ -8,6 +8,7 @@ pub struct Options {
     pub remote: Option<String>,
     /// If non-empty, override all ref-specs otherwise configured in the remote
     pub ref_specs: Vec<BString>,
+    pub shallow: gix::remote::fetch::Shallow,
     pub handshake_info: bool,
 }
 
@@ -30,6 +31,7 @@ pub(crate) mod function {
             dry_run,
             remote,
             handshake_info,
+            shallow,
             ref_specs,
         }: Options,
     ) -> anyhow::Result<()>
@@ -50,6 +52,7 @@ pub(crate) mod function {
             .connect(gix::remote::Direction::Fetch, progress)?
             .prepare_fetch(Default::default())?
             .with_dry_run(dry_run)
+            .with_shallow(shallow)
             .receive(&gix::interrupt::IS_INTERRUPTED)?;
 
         if handshake_info {

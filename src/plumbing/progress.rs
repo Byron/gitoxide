@@ -214,8 +214,14 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "clone.rejectShallow",
+        usage: Planned {
+            note: Some("probably trivial to implement once there is protocol support for shallow clones"),
+        },
+    },
+    Record {
+        config: "receive.shallowUpdate",
         usage: NotPlanned {
-            reason: "it's not a use-case we consider important now, but once that changes it can be implemented",
+            reason: "it looks like a server-only setting that allows boundaries to change if refs are pushed that are outside of the boundary.",
         },
     },
     Record {

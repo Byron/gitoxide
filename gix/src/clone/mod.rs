@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::convert::TryInto;
 
-use crate::{bstr::BString, config::tree::gitoxide};
+use crate::{bstr::BString, config::tree::gitoxide, remote};
 
 type ConfigureRemoteFn =
     Box<dyn FnMut(crate::Remote<'_>) -> Result<crate::Remote<'_>, Box<dyn std::error::Error + Send + Sync>>>;
@@ -22,6 +22,9 @@ pub struct PrepareFetch {
     /// The url to clone from
     #[cfg_attr(not(feature = "blocking-network-client"), allow(dead_code))]
     url: gix_url::Url,
+    /// How to handle shallow clones
+    #[cfg_attr(not(feature = "blocking-network-client"), allow(dead_code))]
+    shallow: remote::fetch::Shallow,
 }
 
 /// The error returned by [`PrepareFetch::new()`].
@@ -99,6 +102,7 @@ impl PrepareFetch {
             repo: Some(repo),
             remote_name: None,
             configure_remote: None,
+            shallow: remote::fetch::Shallow::NoChange,
         })
     }
 }

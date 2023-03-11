@@ -1,7 +1,20 @@
+mod shallow {
+    use gix::remote::fetch::Shallow;
+
+    #[test]
+    fn undo() {
+        assert_eq!(
+            Shallow::undo(),
+            Shallow::DepthAtRemote(2147483647u32.try_into().expect("known at compile time"))
+        );
+    }
+}
+
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod blocking_and_async_io {
     use std::sync::atomic::AtomicBool;
 
+    use gix::remote::fetch::Status;
     use gix::remote::{fetch, Direction::Fetch};
     use gix_features::progress;
     use gix_protocol::maybe_async;
@@ -32,9 +45,31 @@ mod blocking_and_async_io {
     pub(crate) fn try_repo_rw(
         name: &str,
     ) -> Result<(gix::Repository, gix_testtools::tempfile::TempDir), gix::open::Error> {
+        try_repo_rw_args(name, Vec::<String>::new(), Mode::FastClone)
+    }
+
+    pub(crate) enum Mode {
+        FastClone,
+        CloneWithShallowSupport,
+    }
+
+    #[allow(clippy::result_large_err)]
+    pub(crate) fn try_repo_rw_args<S: Into<String>>(
+        name: &str,
+        args: impl IntoIterator<Item = S>,
+        mode: Mode,
+    ) -> Result<(gix::Repository, gix_testtools::tempfile::TempDir), gix::open::Error> {
         let dir = gix_testtools::scripted_fixture_writable_with_args(
             "make_fetch_repos.sh",
-            [base_repo_path()],
+            [{
+                let mut url = base_repo_path();
+                if matches!(mode, Mode::CloneWithShallowSupport) {
+                    url.insert_str(0, "file://");
+                }
+                url
+            }]
+            .into_iter()
+            .chain(args.into_iter().map(Into::into)),
             gix_testtools::Creation::ExecuteScript,
         )
         .unwrap();
@@ -68,6 +103,58 @@ mod blocking_and_async_io {
                 .map_err(gix::env::collate::fetch::Error::Other)?
                 .is_file(),
             "just to show off the 'Other' error type"
+        );
+        Ok(())
+    }
+
+    #[maybe_async::test(
+        feature = "blocking-network-client",
+        async(feature = "async-network-client-async-std", async_std::test)
+    )]
+    async fn fetch_shallow_deepen_not_possible() -> crate::Result {
+        let (repo, _tmp) = try_repo_rw_args("two-origins", ["--depth=2"], Mode::CloneWithShallowSupport)?;
+        let remote = repo
+            .head()?
+            .into_remote(Fetch)
+            .expect("present")?
+            .with_fetch_tags(fetch::Tags::Included);
+
+        assert_eq!(
+            repo.shallow_commits()?.expect("shallow clone").as_slice(),
+            [
+                hex_to_id("2d9d136fb0765f2e24c44a0f91984318d580d03b"),
+                hex_to_id("dfd0954dabef3b64f458321ef15571cc1a46d552"),
+                hex_to_id("dfd0954dabef3b64f458321ef15571cc1a46d552")
+            ]
+        );
+        let prev_commits = repo.head_id()?.ancestors().all()?.count();
+        let changes = remote
+            .connect(Fetch, gix::progress::Discard)
+            .await?
+            .prepare_fetch(Default::default())
+            .await?
+            .with_shallow(fetch::Shallow::Deepen(1))
+            .receive(&AtomicBool::default())
+            .await?;
+
+        assert!(
+            matches!(changes.status, Status::Change {write_pack_bundle, ..} if write_pack_bundle.index.num_objects == 0),
+            "we get an empty pack as there is nothing to do"
+        );
+
+        assert_eq!(
+            repo.shallow_commits()?.expect("shallow clone").as_slice(),
+            [
+                hex_to_id("2d9d136fb0765f2e24c44a0f91984318d580d03b"),
+                hex_to_id("dfd0954dabef3b64f458321ef15571cc1a46d552"),
+                hex_to_id("dfd0954dabef3b64f458321ef15571cc1a46d552")
+            ],
+            "the base is shallow, and so is the clone, and we can't extend further"
+        );
+        assert_eq!(
+            repo.head_id()?.ancestors().all()?.count(),
+            prev_commits,
+            "no more commits are available - there simply isn't more information"
         );
         Ok(())
     }

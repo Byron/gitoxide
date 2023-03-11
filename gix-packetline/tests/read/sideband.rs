@@ -1,5 +1,5 @@
 #[cfg(feature = "blocking-io")]
-use std::io::{BufRead, Read};
+use std::io::Read;
 
 use bstr::{BString, ByteSlice};
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
@@ -106,16 +106,16 @@ async fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Resu
 
     let mut out = String::new();
     let mut r = rd.as_read();
-    r.read_line(&mut out).await?;
+    r.read_line_to_string(&mut out).await?;
     assert_eq!(out, "808e50d724f604f69ab93c6da2919c014667bedb HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n");
     out.clear();
-    r.read_line(&mut out).await?;
+    r.read_line_to_string(&mut out).await?;
     assert_eq!(out, "808e50d724f604f69ab93c6da2919c014667bedb refs/heads/master\n");
     out.clear();
-    r.read_line(&mut out).await?;
+    r.read_line_to_string(&mut out).await?;
     assert_eq!(out, "", "flush means empty lines…");
     out.clear();
-    r.read_line(&mut out).await?;
+    r.read_line_to_string(&mut out).await?;
     assert_eq!(out, "", "…which can't be overcome unless the reader is reset");
     assert_eq!(
         r.stopped_at(),
@@ -127,18 +127,18 @@ async fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Resu
     rd.reset();
 
     let mut r = rd.as_read();
-    r.read_line(&mut out).await?;
+    r.read_line_to_string(&mut out).await?;
     assert_eq!(out, "NAK\n");
 
     drop(r);
 
     let mut r = rd.as_read_with_sidebands(|_, _| ());
     out.clear();
-    r.read_line(&mut out).await?;
+    r.read_line_to_string(&mut out).await?;
     assert_eq!(out, "&");
 
     out.clear();
-    r.read_line(&mut out).await?;
+    r.read_line_to_string(&mut out).await?;
     assert_eq!(out, "");
 
     Ok(())
@@ -199,7 +199,7 @@ async fn peek_past_an_actual_eof_is_an_error() -> crate::Result {
     assert_eq!(res.expect("one line")??, b"ERR e");
 
     let mut buf = String::new();
-    reader.read_line(&mut buf).await?;
+    reader.read_line_to_string(&mut buf).await?;
     assert_eq!(
         buf, "ERR e",
         "by default ERR lines won't propagate as failure but are merely text"
@@ -223,7 +223,7 @@ async fn peek_past_a_delimiter_is_no_error() -> crate::Result {
     assert_eq!(res.expect("one line")??, b"hello");
 
     let mut buf = String::new();
-    reader.read_line(&mut buf).await?;
+    reader.read_line_to_string(&mut buf).await?;
     assert_eq!(buf, "hello");
 
     let res = reader.peek_data_line().await;

@@ -12,8 +12,12 @@ impl Repository {
             .map_or(false, |m| m.is_file() && m.len() > 0)
     }
 
-    /// Return a shared list of shallow commits which is updated automatically if the in-memory snapshot has become stale as the underlying file
-    /// on disk has changed.
+    /// Return a shared list of shallow commits which is updated automatically if the in-memory snapshot has become stale
+    /// as the underlying file on disk has changed.
+    ///
+    /// The list of shallow commits represents the shallow boundary, beyond which we are lacking all (parent) commits.
+    /// Note that the list is never empty, as `Ok(None)` is returned in that case indicating the repository
+    /// isn't a shallow clone.
     ///
     /// The shared list is shared across all clones of this repository.
     pub fn shallow_commits(&self) -> Result<Option<crate::shallow::Commits>, crate::shallow::open::Error> {

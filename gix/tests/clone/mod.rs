@@ -2,11 +2,202 @@ use crate::{remote, util::restricted};
 
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
-    use gix::remote::fetch::SpecIndex;
+    use gix::config::tree::{Clone, Core, Init, Key};
+    use gix::remote::Direction;
     use gix_object::bstr::ByteSlice;
     use gix_ref::TargetRef;
+    use std::sync::atomic::AtomicBool;
 
     use crate::{remote, util::restricted};
+
+    use crate::util::hex_to_id;
+    use gix::remote::fetch::{Shallow, SpecIndex};
+
+    #[test]
+    fn fetch_shallow_no_checkout_then_unshallow() -> crate::Result {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let called_configure_remote = std::sync::Arc::new(std::sync::atomic::AtomicBool::default());
+        let remote_name = "special";
+        let desired_fetch_tags = gix::remote::fetch::Tags::Included;
+        let mut prepare = gix::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
+            .with_remote_name(remote_name)?
+            .configure_remote({
+                let called_configure_remote = called_configure_remote;
+                move |r| {
+                    called_configure_remote.store(true, std::sync::atomic::Ordering::Relaxed);
+                    let r = r
+                        .with_refspecs(Some("+refs/tags/b-tag:refs/tags/b-tag"), gix::remote::Direction::Fetch)?
+                        .with_fetch_tags(desired_fetch_tags);
+                    Ok(r)
+                }
+            })
+            .with_shallow(Shallow::DepthAtRemote(2.try_into().expect("non-zero")));
+        let (repo, _out) = prepare.fetch_only(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+        drop(prepare);
+
+        assert_eq!(
+            repo.shallow_commits()?.expect("shallow").as_slice(),
+            [
+                hex_to_id("27e71576a6335294aa6073ab767f8b36bdba81d0"),
+                hex_to_id("2d9d136fb0765f2e24c44a0f91984318d580d03b"),
+                hex_to_id("82024b2ef7858273337471cbd1ca1cedbdfd5616"),
+                hex_to_id("b5152869aedeb21e55696bb81de71ea1bb880c85")
+            ],
+            "shallow information is written"
+        );
+
+        let shallow_commit_count = repo.head_id()?.ancestors().all()?.count();
+        let remote = repo.head()?.into_remote(Direction::Fetch).expect("present")?;
+
+        remote
+            .connect(Direction::Fetch, gix::progress::Discard)?
+            .prepare_fetch(Default::default())?
+            .with_shallow(Shallow::undo())
+            .receive(&AtomicBool::default())?;
+
+        assert!(repo.shallow_commits()?.is_none(), "the repo isn't shallow anymore");
+        assert!(
+            !repo.is_shallow(),
+            "both methods agree - if there are no shallow commits, it shouldn't think the repo is shallow"
+        );
+        assert!(
+            repo.head_id()?.ancestors().all()?.count() > shallow_commit_count,
+            "there are more commits now as the history is complete"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn from_shallow_prohibited_with_option() -> crate::Result {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let err = gix::clone::PrepareFetch::new(
+            remote::repo("base.shallow").path(),
+            tmp.path(),
+            gix::create::Kind::Bare,
+            Default::default(),
+            gix::open::Options::isolated().config_overrides([Clone::REJECT_SHALLOW.validated_assignment_fmt(&true)?]),
+        )?
+        .fetch_only(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())
+        .unwrap_err();
+        assert!(
+            matches!(
+                err,
+                gix::clone::fetch::Error::Fetch(gix::remote::fetch::Error::RejectShallowRemote)
+            ),
+            "we can avoid fetching from remotes with this setting"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn from_shallow_allowed_by_default() -> crate::Result {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let (repo, _change) = gix::prepare_clone_bare(remote::repo("base.shallow").path(), tmp.path())?
+            .fetch_only(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+        assert_eq!(
+            repo.shallow_commits()?.expect("present").as_slice(),
+            vec![
+                hex_to_id("2d9d136fb0765f2e24c44a0f91984318d580d03b"),
+                hex_to_id("dfd0954dabef3b64f458321ef15571cc1a46d552"),
+                hex_to_id("dfd0954dabef3b64f458321ef15571cc1a46d552"),
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn from_non_shallow_then_deepen_then_deepen_since_to_unshallow() -> crate::Result {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let (repo, _change) = gix::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
+            .with_shallow(Shallow::DepthAtRemote(2.try_into()?))
+            .fetch_only(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+        assert!(repo.is_shallow());
+        assert_eq!(
+            repo.shallow_commits()?.expect("present").as_slice(),
+            vec![
+                hex_to_id("2d9d136fb0765f2e24c44a0f91984318d580d03b"),
+                hex_to_id("dfd0954dabef3b64f458321ef15571cc1a46d552"),
+            ]
+        );
+
+        let shallow_commit_count = repo.head_id()?.ancestors().all()?.count();
+
+        let remote = repo.head()?.into_remote(Direction::Fetch).expect("present")?;
+        remote
+            .connect(Direction::Fetch, gix::progress::Discard)?
+            .prepare_fetch(Default::default())?
+            .with_shallow(Shallow::Deepen(1))
+            .receive(&AtomicBool::default())?;
+
+        assert_eq!(
+            repo.shallow_commits()?.expect("present").as_slice(),
+            vec![
+                hex_to_id("27e71576a6335294aa6073ab767f8b36bdba81d0"),
+                hex_to_id("82024b2ef7858273337471cbd1ca1cedbdfd5616"),
+                hex_to_id("b5152869aedeb21e55696bb81de71ea1bb880c85"),
+            ],
+            "the shallow boundary was changed"
+        );
+        assert!(
+            repo.head_id()?.ancestors().all()?.count() > shallow_commit_count,
+            "there are more commits now as the history was deepened"
+        );
+
+        let shallow_commit_count = repo.head_id()?.ancestors().all()?.count();
+        remote
+            .connect(Direction::Fetch, gix::progress::Discard)?
+            .prepare_fetch(Default::default())?
+            .with_shallow(Shallow::Since {
+                cutoff: gix::date::Time::new(1112354053, 0),
+            })
+            .receive(&AtomicBool::default())?;
+
+        assert!(
+            !repo.is_shallow(),
+            "the cutoff date is before the first commit, effectively unshallowing"
+        );
+        assert!(
+            repo.head_id()?.ancestors().all()?.count() > shallow_commit_count,
+            "there is even more commits than previously"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn from_non_shallow_by_deepen_exclude_then_deepen_to_unshallow() -> crate::Result {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let excluded_leaf_refs = ["g", "h", "j"];
+        let (repo, _change) = gix::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
+            .with_shallow(Shallow::Exclude {
+                remote_refs: excluded_leaf_refs
+                    .into_iter()
+                    .map(|n| n.try_into().expect("valid"))
+                    .collect(),
+                since_cutoff: None,
+            })
+            .fetch_only(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+        assert!(repo.is_shallow());
+        assert_eq!(
+            repo.shallow_commits()?.expect("present").as_slice(),
+            vec![
+                hex_to_id("27e71576a6335294aa6073ab767f8b36bdba81d0"),
+                hex_to_id("82024b2ef7858273337471cbd1ca1cedbdfd5616"),
+            ]
+        );
+
+        let remote = repo.head()?.into_remote(Direction::Fetch).expect("present")?;
+        remote
+            .connect(Direction::Fetch, gix::progress::Discard)?
+            .prepare_fetch(Default::default())?
+            .with_shallow(Shallow::Deepen(2))
+            .receive(&AtomicBool::default())?;
+
+        assert!(!repo.is_shallow(), "one is just enough to unshallow it");
+        Ok(())
+    }
 
     #[test]
     fn fetch_only_with_configuration() -> crate::Result {
@@ -20,8 +211,8 @@ mod blocking_io {
             gix::create::Kind::Bare,
             Default::default(),
             gix::open::Options::isolated().config_overrides([
-                "init.defaultBranch=unused-as-overridden-by-remote",
-                "core.logAllRefUpdates",
+                Init::DEFAULT_BRANCH.validated_assignment_fmt(&"unused-as-overridden-by-remote")?,
+                Core::LOG_ALL_REF_UPDATES.logical_name().into(),
                 // missing user and email is acceptable in this special case, i.e. `git` also doesn't mind filling it in.
             ]),
         )?

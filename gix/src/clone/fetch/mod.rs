@@ -121,6 +121,7 @@ impl PrepareFetch {
             .with_reflog_message(RefLogMessage::Override {
                 message: reflog_message.clone(),
             })
+            .with_shallow(self.shallow.clone())
             .receive(should_interrupt)?;
 
         util::append_config_to_repo_config(repo, config);
@@ -183,6 +184,12 @@ impl PrepareFetch {
     pub fn with_remote_name(mut self, name: impl Into<BString>) -> Result<Self, crate::remote::name::Error> {
         self.remote_name = Some(crate::remote::name::validated(name)?);
         Ok(self)
+    }
+
+    /// Make this clone a shallow one with the respective choice of shallow-ness.
+    pub fn with_shallow(mut self, shallow: crate::remote::fetch::Shallow) -> Self {
+        self.shallow = shallow;
+        self
     }
 }
 

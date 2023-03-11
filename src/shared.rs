@@ -292,7 +292,7 @@ mod clap {
         }
     }
 
-    use clap::builder::{OsStringValueParser, TypedValueParser};
+    use clap::builder::{OsStringValueParser, StringValueParser, TypedValueParser};
 
     #[derive(Clone)]
     pub struct AsPathSpec;
@@ -306,5 +306,31 @@ mod clap {
                 .parse_ref(cmd, arg, value)
         }
     }
+
+    #[derive(Clone)]
+    pub struct AsTime;
+
+    impl TypedValueParser for AsTime {
+        type Value = gix::date::Time;
+
+        fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
+            StringValueParser::new()
+                .try_map(|arg| gix::date::parse(&arg, Some(std::time::SystemTime::now())))
+                .parse_ref(cmd, arg, value)
+        }
+    }
+
+    #[derive(Clone)]
+    pub struct AsPartialRefName;
+
+    impl TypedValueParser for AsPartialRefName {
+        type Value = gix::refs::PartialName;
+
+        fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
+            AsBString
+                .try_map(gix::refs::PartialName::try_from)
+                .parse_ref(cmd, arg, value)
+        }
+    }
 }
-pub use self::clap::{AsBString, AsHashKind, AsOutputFormat, AsPathSpec};
+pub use self::clap::{AsBString, AsHashKind, AsOutputFormat, AsPartialRefName, AsPathSpec, AsTime};

@@ -109,6 +109,22 @@ where
         );
         self.parent.read_line()
     }
+
+    /// Like `BufRead::read_line()`, but will only read one packetline at a time.
+    ///
+    /// It will also be easier to call as sometimes it's unclear which implementation we get on a type like this with
+    /// plenty of generic parameters.
+    pub fn read_line_to_string(&mut self, buf: &mut String) -> io::Result<usize> {
+        assert_eq!(
+            self.cap, 0,
+            "we don't support partial buffers right now - read-line must be used consistently"
+        );
+        let line = std::str::from_utf8(self.fill_buf()?).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+        buf.push_str(line);
+        let bytes = line.len();
+        self.cap = 0;
+        Ok(bytes)
+    }
 }
 
 impl<'a, T, F> BufRead for WithSidebands<'a, T, F>
@@ -167,18 +183,6 @@ where
 
     fn consume(&mut self, amt: usize) {
         self.pos = std::cmp::min(self.pos + amt, self.cap);
-    }
-
-    fn read_line(&mut self, buf: &mut String) -> io::Result<usize> {
-        assert_eq!(
-            self.cap, 0,
-            "we don't support partial buffers right now - read-line must be used consistently"
-        );
-        let line = std::str::from_utf8(self.fill_buf()?).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
-        buf.push_str(line);
-        let bytes = line.len();
-        self.cap = 0;
-        Ok(bytes)
     }
 }
 

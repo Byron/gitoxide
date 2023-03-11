@@ -1,16 +1,18 @@
 use std::sync::atomic::AtomicBool;
 
 use gix_odb::FindExt;
+use gix_protocol::fetch::Arguments;
 use gix_protocol::transport::client::Transport;
 
+use crate::config::tree::Clone;
 use crate::{
     remote,
     remote::{
         connection::fetch::config,
         fetch,
-        fetch::{negotiate, refs, Error, Outcome, Prepare, ProgressId, RefLogMessage, Status},
+        fetch::{negotiate, refs, Error, Outcome, Prepare, ProgressId, RefLogMessage, Shallow, Status},
     },
-    Progress,
+    Progress, Repository,
 };
 
 impl<'remote, 'repo, T, P> Prepare<'remote, 'repo, T, P>
@@ -82,10 +84,17 @@ where
         let mut arguments = gix_protocol::fetch::Arguments::new(protocol_version, fetch_features);
         if matches!(con.remote.fetch_tags, crate::remote::fetch::Tags::Included) {
             if !arguments.can_use_include_tag() {
-                unimplemented!("we expect servers to support 'include-tag', otherwise we have to implement another pass to fetch attached tags separately");
+                return Err(Error::MissingServerFeature {
+                    feature: "include-tag",
+                    description:
+                        // NOTE: if this is an issue, we could probably do what's proposed here.
+                        "To make this work we would have to implement another pass to fetch attached tags separately",
+                });
             }
             arguments.use_include_tag();
         }
+        let (shallow_commits, mut shallow_lock) = add_shallow_args(&mut arguments, &self.shallow, repo)?;
+
         let mut previous_response = None::<gix_protocol::fetch::Response>;
         let mut round = 1;
 
@@ -108,6 +117,7 @@ where
                 con.remote.fetch_tags,
                 &mut arguments,
                 previous_response.as_ref(),
+                (self.shallow != Shallow::NoChange).then(|| con.remote.refspecs(remote::Direction::Fetch)),
             ) {
                 Ok(_) if arguments.is_empty() => {
                     gix_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
@@ -146,11 +156,26 @@ where
                 if !sideband_all {
                     setup_remote_progress(progress, &mut reader);
                 }
+                previous_response = Some(response);
                 break 'negotiation reader;
             } else {
                 previous_response = Some(response);
             }
         };
+        let previous_response = previous_response.expect("knowledge of a pack means a response was received");
+        if !previous_response.shallow_updates().is_empty() && shallow_lock.is_none() {
+            let reject_shallow_remote = repo
+                .config
+                .resolved
+                .boolean_filter_by_key("clone.rejectShallow", &mut repo.filter_config_section())
+                .map(|val| Clone::REJECT_SHALLOW.enrich_error(val))
+                .transpose()?
+                .unwrap_or(false);
+            if reject_shallow_remote {
+                return Err(Error::RejectShallowRemote);
+            }
+            shallow_lock = acquire_shallow_lock(repo).map(Some)?;
+        }
 
         let options = gix_pack::bundle::write::Options {
             thread_limit: config::index_threads(repo)?,
@@ -187,6 +212,12 @@ where
             gix_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
         }
 
+        if let Some(shallow_lock) = shallow_lock {
+            if !previous_response.shallow_updates().is_empty() {
+                crate::shallow::write(shallow_lock, shallow_commits, previous_response.shallow_updates())?;
+            }
+        }
+
         let update_refs = refs::update(
             repo,
             self.reflog_message
@@ -219,6 +250,57 @@ where
             },
         })
     }
+}
+
+fn acquire_shallow_lock(repo: &Repository) -> Result<gix_lock::File, Error> {
+    gix_lock::File::acquire_to_update_resource(repo.shallow_file(), gix_lock::acquire::Fail::Immediately, None)
+        .map_err(Into::into)
+}
+
+fn add_shallow_args(
+    args: &mut Arguments,
+    shallow: &Shallow,
+    repo: &Repository,
+) -> Result<(Option<crate::shallow::Commits>, Option<gix_lock::File>), Error> {
+    let expect_change = *shallow != Shallow::NoChange;
+    let shallow_lock = expect_change.then(|| acquire_shallow_lock(repo)).transpose()?;
+
+    let shallow_commits = repo.shallow_commits()?;
+    if (shallow_commits.is_some() || expect_change) && !args.can_use_shallow() {
+        // NOTE: if this is an issue, we can always unshallow the repo ourselves.
+        return Err(Error::MissingServerFeature {
+            feature: "shallow",
+            description: "shallow clones need server support to remain shallow, otherwise bigger than expected packs are sent effectively unshallowing the repository",
+        });
+    }
+    if let Some(shallow_commits) = &shallow_commits {
+        for commit in shallow_commits.iter() {
+            args.shallow(commit);
+        }
+    }
+    match shallow {
+        Shallow::NoChange => {}
+        Shallow::DepthAtRemote(commits) => args.deepen(commits.get() as usize),
+        Shallow::Deepen(commits) => {
+            args.deepen(*commits as usize);
+            args.deepen_relative();
+        }
+        Shallow::Since { cutoff } => {
+            args.deepen_since(cutoff.seconds_since_unix_epoch as usize);
+        }
+        Shallow::Exclude {
+            remote_refs,
+            since_cutoff,
+        } => {
+            if let Some(cutoff) = since_cutoff {
+                args.deepen_since(cutoff.seconds_since_unix_epoch as usize);
+            }
+            for ref_ in remote_refs {
+                args.deepen_not(ref_.as_ref().as_bstr());
+            }
+        }
+    }
+    Ok((shallow_commits, shallow_lock))
 }
 
 fn setup_remote_progress<P>(

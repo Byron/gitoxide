@@ -70,6 +70,37 @@ mod v1 {
         }
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn unshallow_fetch() -> crate::Result {
+            let mut provider = mock_reader("v1/fetch-unshallow.response");
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader).await?;
+            assert_eq!(
+                r.acknowledgements(),
+                &[
+                    Acknowledgement::Common(id("f99771fe6a1b535783af3163eba95a927aae21d5")),
+                    Acknowledgement::Common(id("2d9d136fb0765f2e24c44a0f91984318d580d03b")),
+                    Acknowledgement::Common(id("dfd0954dabef3b64f458321ef15571cc1a46d552")),
+                ]
+            );
+            assert_eq!(
+                r.shallow_updates(),
+                &[
+                    ShallowUpdate::Unshallow(id("2d9d136fb0765f2e24c44a0f91984318d580d03b")),
+                    ShallowUpdate::Unshallow(id("dfd0954dabef3b64f458321ef15571cc1a46d552"))
+                ]
+            );
+            assert!(r.has_pack());
+            let mut pack = Vec::new();
+            reader.read_to_end(&mut pack).await?;
+            assert_eq!(
+                pack.len(),
+                2662,
+                "should be able to read the whole pack (and progress info)"
+            );
+            Ok(())
+        }
+
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn fetch_acks_without_pack() -> crate::Result {
             let mut provider = mock_reader("v1/fetch-no-pack.response");
             let r = fetch::Response::from_line_reader(Protocol::V1, &mut provider.as_read_without_sidebands()).await?;
@@ -103,6 +134,54 @@ mod v1 {
             let mut buf = Vec::new();
             let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 9703, "should be able to read the whole pack");
+            Ok(())
+        }
+    }
+
+    mod arguments {
+        use crate::fetch::response::id;
+        use crate::fetch::transport;
+        use bstr::ByteSlice;
+        use gix_protocol::{fetch, Command};
+        use gix_transport::client::Capabilities;
+        use gix_transport::Protocol;
+
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn all() -> crate::Result {
+            let (caps, _) = Capabilities::from_bytes(&b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack filter side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0"[..])?;
+            let mut args = fetch::Arguments::new(Protocol::V1, Command::Fetch.default_features(Protocol::V1, &caps));
+            assert!(args.can_use_shallow());
+            assert!(args.can_use_deepen());
+            assert!(args.can_use_deepen_not());
+            assert!(args.can_use_deepen_relative());
+            assert!(args.can_use_deepen_since());
+            assert!(args.can_use_filter());
+            assert!(args.can_use_include_tag());
+            assert!(
+                !args.can_use_ref_in_want(),
+                "V2 only feature, and we initialize capabilities with V1 for convenience"
+            );
+            assert!(args.is_empty());
+
+            args.shallow(id("97c5a932b3940a09683e924ef6a92b31a6f7c6de"));
+            args.deepen(1);
+            args.deepen_relative();
+            args.deepen_since(123456);
+            args.deepen_not("tag".into());
+            args.want(id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+            args.have(id("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+
+            let mut out = Vec::new();
+            let mut transport = transport(
+                &mut out,
+                "v1/clone.response",
+                Protocol::V2,
+                gix_transport::client::git::ConnectMode::Daemon,
+            );
+
+            let _response = args.send(&mut transport, true).await?;
+            drop(_response);
+            assert_eq!(out.as_slice().as_bstr(), "00aawant aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa thin-pack side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative include-tag multi_ack_detailed filter\n000ddeepen 1\n0014deepen-relative\n0018deepen-since 123456\n0013deepen-not tag\n0035shallow 97c5a932b3940a09683e924ef6a92b31a6f7c6de\n00000032have bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n0009done\n");
             Ok(())
         }
     }
@@ -160,6 +239,38 @@ mod v2 {
         }
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn unshallow_fetch() -> crate::Result {
+            let mut provider = mock_reader("v2/fetch-unshallow.response");
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
+            assert_eq!(
+                r.acknowledgements(),
+                &[
+                    Acknowledgement::Common(id("f99771fe6a1b535783af3163eba95a927aae21d5")),
+                    Acknowledgement::Common(id("2d9d136fb0765f2e24c44a0f91984318d580d03b")),
+                    Acknowledgement::Common(id("dfd0954dabef3b64f458321ef15571cc1a46d552")),
+                    Acknowledgement::Ready,
+                ]
+            );
+            assert_eq!(
+                r.shallow_updates(),
+                &[
+                    ShallowUpdate::Unshallow(id("2d9d136fb0765f2e24c44a0f91984318d580d03b")),
+                    ShallowUpdate::Unshallow(id("dfd0954dabef3b64f458321ef15571cc1a46d552"))
+                ]
+            );
+            assert!(r.has_pack());
+            let mut pack = Vec::new();
+            reader.read_to_end(&mut pack).await?;
+            assert_eq!(
+                pack.len(),
+                2664,
+                "should be able to read the whole pack (and progress info)"
+            );
+            Ok(())
+        }
+
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn empty_shallow_clone() -> crate::Result {
             let mut provider = mock_reader("v2/clone-deepen-5.response");
             let mut reader = provider.as_read_without_sidebands();
@@ -199,7 +310,7 @@ mod v2 {
         async fn fetch_acks_without_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch-no-pack.response");
             let r = fetch::Response::from_line_reader(Protocol::V2, &mut provider.as_read_without_sidebands()).await?;
-            assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak,]);
+            assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak]);
             Ok(())
         }
 
@@ -239,6 +350,55 @@ mod v2 {
             }) as gix_transport::client::HandleProgress));
             let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 5360, "should be able to read the whole pack");
+            Ok(())
+        }
+    }
+
+    mod arguments {
+        use crate::fetch::response::id;
+        use crate::fetch::transport;
+        use bstr::ByteSlice;
+        use gix_protocol::{fetch, Command};
+        use gix_transport::client::Capabilities;
+        use gix_transport::Protocol;
+
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn all() -> crate::Result {
+            let (caps, _) = Capabilities::from_bytes(&b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack filter side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0"[..])?;
+            let mut args = fetch::Arguments::new(Protocol::V2, Command::Fetch.default_features(Protocol::V1, &caps));
+            assert!(args.can_use_shallow());
+            assert!(args.can_use_deepen());
+            assert!(args.can_use_deepen_not());
+            assert!(args.can_use_deepen_relative());
+            assert!(args.can_use_deepen_since());
+            assert!(args.can_use_filter());
+            assert!(args.can_use_include_tag());
+            assert!(
+                !args.can_use_ref_in_want(),
+                "V2 only feature, and we initialize capabilities with V1 for convenience"
+            );
+            assert!(args.is_empty());
+
+            args.shallow(id("97c5a932b3940a09683e924ef6a92b31a6f7c6de"));
+            args.deepen(1);
+            args.deepen_relative();
+            args.deepen_since(123456);
+            args.deepen_not("tag".into());
+            args.want(id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+            args.have(id("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+
+            let mut out = Vec::new();
+            let mut transport = transport(
+                &mut out,
+                "v1/clone.response",
+                Protocol::V2,
+                gix_transport::client::git::ConnectMode::Daemon,
+            );
+
+            let _response = args.send(&mut transport, true).await?;
+            drop(_response);
+            assert_eq!(out.as_slice().as_bstr(), "0012command=fetch\n0001000ethin-pack\n000eofs-delta\n0035shallow 97c5a932b3940a09683e924ef6a92b31a6f7c6de\n000ddeepen 1\n0014deepen-relative\n0018deepen-since 123456\n0013deepen-not tag\n0032want aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+0032have bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n0009done\n0000");
             Ok(())
         }
     }

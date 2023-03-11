@@ -170,7 +170,7 @@ where
     }
 
     /// Read a packet line as string line.
-    pub fn read_line<'b>(&'b mut self, buf: &'b mut String) -> ReadLineFuture<'a, 'b, T, F> {
+    pub fn read_line_to_string<'b>(&'b mut self, buf: &'b mut String) -> ReadLineFuture<'a, 'b, T, F> {
         ReadLineFuture { parent: self, buf }
     }
 

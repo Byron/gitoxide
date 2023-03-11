@@ -170,6 +170,20 @@ impl<'a> gix_transport::client::ReadlineBufRead for Fixture<'a> {
         self.0 = lines.as_bytes();
         Some(Ok(Ok(gix_packetline::PacketLineRef::Data(res))))
     }
+
+    fn readline_str(&mut self, line: &mut String) -> std::io::Result<usize> {
+        use bstr::{BStr, ByteSlice};
+        let bytes: &BStr = self.0.into();
+        let mut lines = bytes.lines();
+        let res = match lines.next() {
+            None => return Ok(0),
+            Some(line) => line,
+        };
+        self.0 = lines.as_bytes();
+        let len = res.len();
+        line.push_str(res.to_str().expect("valid UTF8 in fixture"));
+        Ok(len)
+    }
 }
 
 #[cfg(feature = "async-client")]
@@ -219,5 +233,18 @@ impl<'a> gix_transport::client::ReadlineBufRead for Fixture<'a> {
         let res = lines.next()?;
         self.0 = lines.as_bytes();
         Some(Ok(Ok(gix_packetline::PacketLineRef::Data(res))))
+    }
+    async fn readline_str(&mut self, line: &mut String) -> std::io::Result<usize> {
+        use bstr::{BStr, ByteSlice};
+        let bytes: &BStr = self.0.into();
+        let mut lines = bytes.lines();
+        let res = match lines.next() {
+            None => return Ok(0),
+            Some(line) => line,
+        };
+        self.0 = lines.as_bytes();
+        let len = res.len();
+        line.push_str(res.to_str().expect("valid UTF8 in fixture"));
+        Ok(len)
     }
 }
