@@ -1,8 +1,9 @@
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use gix_odb::FindExt;
 use gix_protocol::fetch::Arguments;
 use gix_protocol::transport::client::Transport;
+use gix_protocol::transport::packetline::read::ProgressAction;
 
 use crate::config::tree::Clone;
 use crate::{
@@ -147,14 +148,14 @@ where
             round += 1;
             let mut reader = arguments.send(&mut con.transport, is_done).await?;
             if sideband_all {
-                setup_remote_progress(progress, &mut reader);
+                setup_remote_progress(progress, &mut reader, should_interrupt);
             }
             let response = gix_protocol::fetch::Response::from_line_reader(protocol_version, &mut reader).await?;
             if response.has_pack() {
                 progress.step();
                 progress.set_name("receiving pack");
                 if !sideband_all {
-                    setup_remote_progress(progress, &mut reader);
+                    setup_remote_progress(progress, &mut reader, should_interrupt);
                 }
                 previous_response = Some(response);
                 break 'negotiation reader;
@@ -306,6 +307,7 @@ fn add_shallow_args(
 fn setup_remote_progress<P>(
     progress: &mut P,
     reader: &mut Box<dyn gix_protocol::transport::client::ExtendedBufRead + Unpin + '_>,
+    should_interrupt: &AtomicBool,
 ) where
     P: Progress,
     P::SubProgress: 'static,
@@ -313,8 +315,23 @@ fn setup_remote_progress<P>(
     use gix_protocol::transport::client::ExtendedBufRead;
     reader.set_progress_handler(Some(Box::new({
         let mut remote_progress = progress.add_child_with_id("remote", ProgressId::RemoteProgress.into());
+        // SAFETY: Ugh, so, with current Rust I can't declare lifetimes in the involved traits the way they need to
+        //         be and I also can't use scoped threads to pump from local scopes to an Arc version that could be
+        //         used here due to the this being called from sync AND async code (and the async version doesn't work
+        //         with a surrounding `std::thread::scope()`.
+        //         Thus there is only claiming this is 'static which we know works for *our* implementations of ExtendedBufRead
+        //         and typical implementations, but of course it's possible for user code to come along and actually move this
+        //         handler into a context where it can outlive the current function. Is this going to happen? Probably not unless
+        //         somebody really wants to break it. So, with standard usage this value is never used past its actual lifetime.
+        #[allow(unsafe_code)]
+        let should_interrupt: &'static AtomicBool = unsafe { std::mem::transmute(should_interrupt) };
         move |is_err: bool, data: &[u8]| {
-            gix_protocol::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress)
+            gix_protocol::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress);
+            if should_interrupt.load(Ordering::Relaxed) {
+                ProgressAction::Interrupt
+            } else {
+                ProgressAction::Continue
+            }
         }
     }) as gix_protocol::transport::client::HandleProgress));
 }

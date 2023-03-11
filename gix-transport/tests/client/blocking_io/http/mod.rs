@@ -9,6 +9,7 @@ use std::{
 };
 
 use bstr::ByteSlice;
+use gix_packetline::read::ProgressAction;
 use gix_transport::{
     client::{self, http, SetServiceResponse, Transport, TransportV2Ext, TransportWithoutIO},
     Protocol, Service,
@@ -391,7 +392,8 @@ fn clone_v1() -> crate::Result {
             assert!(!is_err);
             sb.deref()
                 .borrow_mut()
-                .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
+                .push(std::str::from_utf8(data).expect("valid utf8").to_owned());
+            ProgressAction::Continue
         }
     })));
     let mut pack = Vec::new();
@@ -621,7 +623,8 @@ Git-Protocol: version=2
             assert!(!is_err);
             sb.deref()
                 .borrow_mut()
-                .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
+                .push(std::str::from_utf8(data).expect("valid utf8").to_owned());
+            ProgressAction::Continue
         }
     })));
 

@@ -49,6 +49,8 @@ impl Default for FetchConnection {
 /// _Note_ that depending on the `delegate`, the actual action performed can be `ls-refs`, `clone` or `fetch`.
 #[allow(clippy::result_large_err)]
 #[maybe_async]
+// TODO: remove this without losing test coverage - we have the same but better in `gix` and it's
+//       not really worth it to maintain the delegates here.
 pub async fn fetch<F, D, T, P>(
     mut transport: T,
     mut delegate: D,
@@ -162,7 +164,8 @@ where
     reader.set_progress_handler(Some(Box::new({
         let mut remote_progress = progress.add_child("remote");
         move |is_err: bool, data: &[u8]| {
-            crate::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress)
+            crate::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress);
+            gix_transport::packetline::read::ProgressAction::Continue
         }
     }) as gix_transport::client::HandleProgress));
 }

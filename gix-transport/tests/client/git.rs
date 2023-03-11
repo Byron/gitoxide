@@ -8,6 +8,7 @@ use std::{
 use bstr::ByteSlice;
 #[cfg(feature = "async-client")]
 use futures_lite::{AsyncBufReadExt, AsyncWriteExt, StreamExt};
+use gix_packetline::read::ProgressAction;
 use gix_transport::{
     client,
     client::{git, Transport, TransportV2Ext, TransportWithoutIO},
@@ -112,7 +113,8 @@ async fn handshake_v1_and_request() -> crate::Result {
             sb.deref()
                 .lock()
                 .expect("no poison")
-                .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
+                .push(std::str::from_utf8(data).expect("valid utf8").to_owned());
+            ProgressAction::Continue
         }
     })));
 
@@ -174,7 +176,8 @@ async fn push_v1_simulated() -> crate::Result {
                 sb.deref()
                     .lock()
                     .expect("no panic in other threads")
-                    .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
+                    .push(std::str::from_utf8(data).expect("valid utf8").to_owned());
+                ProgressAction::Continue
             }
         })));
         let mut lines = read.lines();
@@ -387,7 +390,8 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
             sb.deref()
                 .lock()
                 .expect("no poison")
-                .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
+                .push(std::str::from_utf8(data).expect("valid utf8").to_owned());
+            ProgressAction::Continue
         }
     })));
 

@@ -3,6 +3,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use gix_packetline::read::ProgressAction;
 use gix_packetline::PacketLineRef;
 
 use crate::{
@@ -10,7 +11,7 @@ use crate::{
     Protocol,
 };
 /// A function `f(is_error, text)` receiving progress or error information.
-pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
+pub type HandleProgress = Box<dyn FnMut(bool, &[u8]) -> ProgressAction>;
 
 /// This trait exists to get a version of a `gix_packetline::Provider` without type parameters,
 /// but leave support for reading lines directly without forcing them through `String`.
@@ -79,7 +80,7 @@ impl<'a, T: ExtendedBufRead + ?Sized + 'a> ExtendedBufRead for Box<T> {
     }
 }
 
-impl<T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'_, T, fn(bool, &[u8])> {
+impl<T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'_, T, fn(bool, &[u8]) -> ProgressAction> {
     fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         self.read_data_line()
     }
