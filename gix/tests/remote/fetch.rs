@@ -111,13 +111,56 @@ mod blocking_and_async_io {
         feature = "blocking-network-client",
         async(feature = "async-network-client-async-std", async_std::test)
     )]
+    async fn fetch_shallow_deepen_zero_does_not_fail() -> crate::Result {
+        let (repo, tmp) = try_repo_rw_args("two-origins", ["--depth=2"], Mode::CloneWithShallowSupport)?;
+        let daemon = spawn_git_daemon_if_async(tmp.path().join("base"))?;
+        let remote = into_daemon_remote_if_async(
+            repo.head()?
+                .into_remote(Fetch)
+                .expect("present")?
+                .with_fetch_tags(fetch::Tags::Included),
+            daemon.as_ref(),
+            None,
+        );
+
+        let prev_commits = repo.head_id()?.ancestors().all()?.count();
+
+        let changes = remote
+            .connect(Fetch, gix::progress::Discard)
+            .await?
+            .prepare_fetch(Default::default())
+            .await?
+            .with_shallow(fetch::Shallow::Deepen(0))
+            .receive(&AtomicBool::default())
+            .await?;
+
+        assert!(
+            matches!(changes.status, Status::NoPackReceived { .. }),
+            "we didn't negotiate at all, but ran all other ref updates"
+        );
+        assert_eq!(
+            repo.head_id()?.ancestors().all()?.count(),
+            prev_commits,
+            "no more commits are available - we didn't fetch anything and there would be nothing to fetch"
+        );
+        Ok(())
+    }
+
+    #[maybe_async::test(
+        feature = "blocking-network-client",
+        async(feature = "async-network-client-async-std", async_std::test)
+    )]
     async fn fetch_shallow_deepen_not_possible() -> crate::Result {
-        let (repo, _tmp) = try_repo_rw_args("two-origins", ["--depth=2"], Mode::CloneWithShallowSupport)?;
-        let remote = repo
-            .head()?
-            .into_remote(Fetch)
-            .expect("present")?
-            .with_fetch_tags(fetch::Tags::Included);
+        let (repo, tmp) = try_repo_rw_args("two-origins", ["--depth=2"], Mode::CloneWithShallowSupport)?;
+        let daemon = spawn_git_daemon_if_async(tmp.path().join("base"))?;
+        let remote = into_daemon_remote_if_async(
+            repo.head()?
+                .into_remote(Fetch)
+                .expect("present")?
+                .with_fetch_tags(fetch::Tags::Included),
+            daemon.as_ref(),
+            None,
+        );
 
         assert_eq!(
             repo.shallow_commits()?.expect("shallow clone").as_slice(),

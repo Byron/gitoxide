@@ -118,7 +118,8 @@ where
                 con.remote.fetch_tags,
                 &mut arguments,
                 previous_response.as_ref(),
-                (self.shallow != Shallow::NoChange).then(|| con.remote.refspecs(remote::Direction::Fetch)),
+                (self.shallow != Shallow::NoChange)
+                    .then(|| (&self.shallow, con.remote.refspecs(remote::Direction::Fetch))),
             ) {
                 Ok(_) if arguments.is_empty() => {
                     gix_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();

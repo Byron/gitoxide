@@ -1,3 +1,4 @@
+use crate::remote::fetch;
 use gix_refspec::RefSpec;
 
 /// The way the negotiation is performed
@@ -27,12 +28,21 @@ pub(crate) fn one_round(
     fetch_tags: crate::remote::fetch::Tags,
     arguments: &mut gix_protocol::fetch::Arguments,
     _previous_response: Option<&gix_protocol::fetch::Response>,
-    wants_shallow_change: Option<&[RefSpec]>,
+    wants_shallow_change: Option<(&fetch::Shallow, &[RefSpec])>,
 ) -> Result<bool, Error> {
     let tag_refspec_to_ignore = fetch_tags
         .to_refspec()
         .filter(|_| matches!(fetch_tags, crate::remote::fetch::Tags::Included));
-    let non_wildcard_specs_only = wants_shallow_change;
+    let (shallow, non_wildcard_specs_only) = wants_shallow_change
+        .map(|(a, b)| (Some(a), Some(b)))
+        .unwrap_or_default();
+
+    if let Some(shallow) = shallow {
+        if *shallow == fetch::Shallow::Deepen(0) {
+            return Ok(true);
+        }
+    }
+
     match algo {
         Algorithm::Naive => {
             assert_eq!(round, 1, "Naive always finishes after the first round, it claims.");
