@@ -139,12 +139,11 @@ mod v1 {
     }
 
     mod arguments {
-        use crate::fetch::response::id;
-        use crate::fetch::transport;
         use bstr::ByteSlice;
         use gix_protocol::{fetch, Command};
-        use gix_transport::client::Capabilities;
-        use gix_transport::Protocol;
+        use gix_transport::{client::Capabilities, Protocol};
+
+        use crate::fetch::{response::id, transport};
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn all() -> crate::Result {
@@ -360,12 +359,11 @@ mod v2 {
     }
 
     mod arguments {
-        use crate::fetch::response::id;
-        use crate::fetch::transport;
         use bstr::ByteSlice;
         use gix_protocol::{fetch, Command};
-        use gix_transport::client::Capabilities;
-        use gix_transport::Protocol;
+        use gix_transport::{client::Capabilities, Protocol};
+
+        use crate::fetch::{response::id, transport};
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn all() -> crate::Result {

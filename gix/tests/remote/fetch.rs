@@ -14,8 +14,7 @@ mod shallow {
 mod blocking_and_async_io {
     use std::sync::atomic::AtomicBool;
 
-    use gix::remote::fetch::Status;
-    use gix::remote::{fetch, Direction::Fetch};
+    use gix::remote::{fetch, fetch::Status, Direction::Fetch};
     use gix_features::progress;
     use gix_protocol::maybe_async;
 

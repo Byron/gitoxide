@@ -1,8 +1,10 @@
-use crate::bstr::ByteSlice;
-use crate::config::tree::{gitoxide, Key};
-use crate::Repository;
-use std::borrow::Cow;
-use std::path::PathBuf;
+use std::{borrow::Cow, path::PathBuf};
+
+use crate::{
+    bstr::ByteSlice,
+    config::tree::{gitoxide, Key},
+    Repository,
+};
 
 impl Repository {
     /// Return `true` if the repository is a shallow clone, i.e. contains history only up to a certain depth.

@@ -1,5 +1,6 @@
-use crate::REGISTRY;
 use once_cell::sync::Lazy;
+
+use crate::REGISTRY;
 
 /// Initialize signal handlers and other state to keep track of tempfiles, and **must be called before the first tempfile is created**,
 /// allowing to set the `mode` in which signal handlers are installed.

@@ -7,8 +7,7 @@ use std::{
 use futures_io::{AsyncBufRead, AsyncRead};
 use futures_lite::ready;
 
-use crate::read::ProgressAction;
-use crate::{decode, BandRef, PacketLineRef, StreamingPeekableIter, TextRef, U16_HEX_BYTES};
+use crate::{decode, read::ProgressAction, BandRef, PacketLineRef, StreamingPeekableIter, TextRef, U16_HEX_BYTES};
 
 type ReadLineResult<'a> = Option<std::io::Result<Result<PacketLineRef<'a>, decode::Error>>>;
 /// An implementor of [`AsyncBufRead`] yielding packet lines on each call to [`read_line()`][AsyncBufRead::read_line()].

@@ -135,8 +135,9 @@ pub mod config {
 
 #[cfg(feature = "gitoxide-core-blocking-client")]
 pub mod fetch {
-    use gix::remote::fetch::Shallow;
     use std::num::NonZeroU32;
+
+    use gix::remote::fetch::Shallow;
 
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
@@ -209,9 +210,9 @@ pub mod fetch {
 
 #[cfg(feature = "gitoxide-core-blocking-client")]
 pub mod clone {
+    use std::{ffi::OsString, num::NonZeroU32, path::PathBuf};
+
     use gix::remote::fetch::Shallow;
-    use std::num::NonZeroU32;
-    use std::{ffi::OsString, path::PathBuf};
 
     #[derive(Debug, clap::Parser)]
     pub struct Platform {

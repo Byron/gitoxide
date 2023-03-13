@@ -1,15 +1,14 @@
 //! Various `prodash` types along with various utilities for comfort.
 use std::io;
 
+#[cfg(feature = "progress-unit-bytes")]
+pub use bytesize;
 pub use prodash::{
     self,
     messages::MessageLevel,
     progress::{Discard, DoOrDiscard, Either, Id, Step, StepShared, Task, ThroughputOnDrop, Value, UNKNOWN},
     unit, Progress, Unit,
 };
-
-#[cfg(feature = "progress-unit-bytes")]
-pub use bytesize;
 /// A stub for the portions of the `bytesize` crate that we use internally in `gitoxide`.
 #[cfg(not(feature = "progress-unit-bytes"))]
 pub mod bytesize {

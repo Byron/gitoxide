@@ -1,5 +1,7 @@
-use crate::config;
-use crate::config::tree::{keys, Gitoxide, Key, Section};
+use crate::{
+    config,
+    config::tree::{keys, Gitoxide, Key, Section},
+};
 
 impl Gitoxide {
     /// The `gitoxide.allow` section.

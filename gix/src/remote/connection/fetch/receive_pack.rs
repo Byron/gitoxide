@@ -1,12 +1,13 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use gix_odb::FindExt;
-use gix_protocol::fetch::Arguments;
-use gix_protocol::transport::client::Transport;
-use gix_protocol::transport::packetline::read::ProgressAction;
+use gix_protocol::{
+    fetch::Arguments,
+    transport::{client::Transport, packetline::read::ProgressAction},
+};
 
-use crate::config::tree::Clone;
 use crate::{
+    config::tree::Clone,
     remote,
     remote::{
         connection::fetch::config,

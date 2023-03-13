@@ -8,9 +8,11 @@ pub type Commits = gix_features::fs::SharedSnapshot<Vec<gix_hash::ObjectId>>;
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
 pub mod write {
     pub(crate) mod function {
-        use crate::shallow::{write::Error, Commits};
-        use gix_protocol::fetch::response::ShallowUpdate;
         use std::io::Write;
+
+        use gix_protocol::fetch::response::ShallowUpdate;
+
+        use crate::shallow::{write::Error, Commits};
 
         /// Write the previously obtained (possibly non-existing) `shallow_commits` to the shallow `file`
         /// after applying all `updates`.

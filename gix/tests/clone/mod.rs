@@ -2,17 +2,23 @@ use crate::{remote, util::restricted};
 
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
-    use gix::bstr::BString;
-    use gix::config::tree::{Clone, Core, Init, Key};
-    use gix::remote::Direction;
-    use gix_object::bstr::ByteSlice;
-    use gix_ref::TargetRef;
     use std::sync::atomic::AtomicBool;
 
-    use crate::{remote, util::restricted};
+    use gix::{
+        bstr::BString,
+        config::tree::{Clone, Core, Init, Key},
+        remote::{
+            fetch::{Shallow, SpecIndex},
+            Direction,
+        },
+    };
+    use gix_object::bstr::ByteSlice;
+    use gix_ref::TargetRef;
 
-    use crate::util::hex_to_id;
-    use gix::remote::fetch::{Shallow, SpecIndex};
+    use crate::{
+        remote,
+        util::{hex_to_id, restricted},
+    };
 
     #[test]
     fn fetch_shallow_no_checkout_then_unshallow() -> crate::Result {

@@ -47,8 +47,9 @@ type HashMap<K, V> = dashmap::DashMap<K, V>;
 
 #[cfg(not(feature = "hp-hashmap"))]
 mod hashmap {
-    use parking_lot::Mutex;
     use std::collections::HashMap;
+
+    use parking_lot::Mutex;
 
     // TODO(performance): use the `gix-hashtable` slot-map once available. It seems quite fast already though, so experiment.
     pub struct Concurrent<K, V> {

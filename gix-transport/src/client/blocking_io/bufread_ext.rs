@@ -3,8 +3,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use gix_packetline::read::ProgressAction;
-use gix_packetline::PacketLineRef;
+use gix_packetline::{read::ProgressAction, PacketLineRef};
 
 use crate::{
     client::{Error, MessageKind},

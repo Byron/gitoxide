@@ -35,8 +35,9 @@ fn yes() -> crate::Result {
 }
 
 mod traverse {
-    use crate::util::{hex_to_id, named_subrepo_opts};
     use gix_traverse::commit::Sorting;
+
+    use crate::util::{hex_to_id, named_subrepo_opts};
 
     #[test]
     fn boundary_is_detected_triggering_no_error() -> crate::Result {

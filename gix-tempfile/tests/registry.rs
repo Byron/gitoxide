@@ -1,6 +1,5 @@
 //! These must be run in their own module to avoid interfering with other tests.
-use std::io::Write;
-use std::path::Path;
+use std::{io::Write, path::Path};
 
 use gix_tempfile::{AutoRemove, ContainingDirectory};
 

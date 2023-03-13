@@ -4,10 +4,9 @@ use bstr::ByteSlice;
 use futures_io::AsyncRead;
 use futures_lite::AsyncReadExt;
 
-use crate::read::ProgressAction;
 use crate::{
     decode,
-    read::{ExhaustiveOutcome, WithSidebands},
+    read::{ExhaustiveOutcome, ProgressAction, WithSidebands},
     PacketLineRef, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES,
 };
 

@@ -5,8 +5,9 @@ fn main() {
 
 #[cfg(feature = "signals")]
 fn main() -> std::io::Result<()> {
-    use gix_tempfile::{AutoRemove, ContainingDirectory};
     use std::path::PathBuf;
+
+    use gix_tempfile::{AutoRemove, ContainingDirectory};
 
     gix_tempfile::signal::setup(Default::default());
     let filepath = PathBuf::new().join("writable-tempfile.ext");

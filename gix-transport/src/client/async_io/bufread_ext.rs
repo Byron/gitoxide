@@ -5,8 +5,7 @@ use std::{
 
 use async_trait::async_trait;
 use futures_io::{AsyncBufRead, AsyncRead};
-use gix_packetline::read::ProgressAction;
-use gix_packetline::PacketLineRef;
+use gix_packetline::{read::ProgressAction, PacketLineRef};
 
 use crate::{
     client::{Error, MessageKind},

@@ -3,9 +3,9 @@ pub trait InsertImmutable {
 }
 
 mod trait_impls {
-    use gix_hash::ObjectId;
     use std::cell::RefCell;
 
+    use gix_hash::ObjectId;
     use gix_hashtable::HashSet;
 
     use super::InsertImmutable;
