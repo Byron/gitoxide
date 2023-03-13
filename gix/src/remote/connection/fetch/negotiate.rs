@@ -1,4 +1,4 @@
-use gix_refspec::RefSpec;
+use crate::remote::fetch;
 
 /// The way the negotiation is performed
 #[derive(Copy, Clone)]
@@ -27,12 +27,17 @@ pub(crate) fn one_round(
     fetch_tags: crate::remote::fetch::Tags,
     arguments: &mut gix_protocol::fetch::Arguments,
     _previous_response: Option<&gix_protocol::fetch::Response>,
-    wants_shallow_change: Option<&[RefSpec]>,
+    shallow: Option<&fetch::Shallow>,
 ) -> Result<bool, Error> {
     let tag_refspec_to_ignore = fetch_tags
         .to_refspec()
         .filter(|_| matches!(fetch_tags, crate::remote::fetch::Tags::Included));
-    let non_wildcard_specs_only = wants_shallow_change;
+    if let Some(fetch::Shallow::Deepen(0)) = shallow {
+        // Avoid deepening (relative) with zero as it seems to upset the server. Git also doesn't actually
+        // perform the negotiation for some reason (couldn't find it in code).
+        return Ok(true);
+    }
+
     match algo {
         Algorithm::Naive => {
             assert_eq!(round, 1, "Naive always finishes after the first round, it claims.");
@@ -47,14 +52,6 @@ pub(crate) fn one_round(
                 }) {
                     continue;
                 }
-                if non_wildcard_specs_only
-                    .and_then(|refspecs| mapping.spec_index.get(refspecs, &ref_map.extra_refspecs))
-                    .map_or(false, |spec| {
-                        spec.to_ref().local().map_or(false, |ref_| ref_.contains(&b'*'))
-                    })
-                {
-                    continue;
-                }
                 let have_id = mapping.local.as_ref().and_then(|name| {
                     repo.find_reference(name)
                         .ok()
@@ -63,7 +60,7 @@ pub(crate) fn one_round(
                 match have_id {
                     Some(have_id) => {
                         if let Some(want_id) = mapping.remote.as_id() {
-                            if want_id != have_id || wants_shallow_change.is_some() {
+                            if want_id != have_id {
                                 arguments.want(want_id);
                                 arguments.have(have_id);
                             }
@@ -78,7 +75,7 @@ pub(crate) fn one_round(
                 }
             }
 
-            if has_missing_tracking_branch || (wants_shallow_change.is_some() && arguments.is_empty()) {
+            if has_missing_tracking_branch || (shallow.is_some() && arguments.is_empty()) {
                 if let Ok(Some(r)) = repo.head_ref() {
                     if let Some(id) = r.target().try_id() {
                         arguments.have(id);

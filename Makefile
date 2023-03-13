@@ -170,6 +170,7 @@ unit-tests: ## run all unit tests
 					&& cargo test --features blocking-network-client \
 					&& cargo test --features regex
 	cd gitoxide-core && cargo test --lib
+# cd gix && cargo test --features async-network-client-async-std \ not being run as it's flaky even locally
 
 nextest: ## run tests with `cargo nextest` (all unit-tests, no doc-tests, faster)
 	cargo nextest run --all

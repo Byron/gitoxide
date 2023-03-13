@@ -181,7 +181,7 @@ pub mod fetch {
         pub shallow_exclude: Vec<gix::refs::PartialName>,
 
         /// Remove the shallow boundary and fetch the entire history available on the remote.
-        #[clap(long, conflicts_with_all = ["shallow_since", "shallow_exclude", "depth", "deepen", "unshallow"])]
+        #[clap(long, conflicts_with_all = ["shallow_since", "shallow_exclude", "depth", "deepen"])]
         pub unshallow: bool,
     }
 

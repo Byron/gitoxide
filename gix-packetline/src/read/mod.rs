@@ -2,6 +2,15 @@
 use crate::MAX_LINE_LEN;
 use crate::{PacketLineRef, StreamingPeekableIter, U16_HEX_BYTES};
 
+/// Allow the read-progress handler to determine how to continue.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum ProgressAction {
+    /// Continue reading the next progress if available.
+    Continue,
+    /// Abort all IO even if more would be available, claiming the operation was interrupted.
+    Interrupt,
+}
+
 #[cfg(any(feature = "blocking-io", feature = "async-io"))]
 type ExhaustiveOutcome<'a> = (
     bool,                                                                     // is_done

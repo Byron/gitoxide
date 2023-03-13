@@ -2,6 +2,7 @@ use std::io;
 
 use bstr::ByteSlice;
 
+use crate::read::ProgressAction;
 use crate::{
     decode,
     read::{ExhaustiveOutcome, WithSidebands},
@@ -146,7 +147,10 @@ where
     /// being true in case the `text` is to be interpreted as error.
     ///
     /// _Please note_ that side bands need to be negotiated with the server.
-    pub fn as_read_with_sidebands<F: FnMut(bool, &[u8])>(&mut self, handle_progress: F) -> WithSidebands<'_, T, F> {
+    pub fn as_read_with_sidebands<F: FnMut(bool, &[u8]) -> ProgressAction>(
+        &mut self,
+        handle_progress: F,
+    ) -> WithSidebands<'_, T, F> {
         WithSidebands::with_progress_handler(self, handle_progress)
     }
 
@@ -154,14 +158,15 @@ where
     ///
     /// The type parameter `F` needs to be configured for this method to be callable using the 'turbofish' operator.
     /// Use [`as_read()`][StreamingPeekableIter::as_read()].
-    pub fn as_read_without_sidebands<F: FnMut(bool, &[u8])>(&mut self) -> WithSidebands<'_, T, F> {
+    pub fn as_read_without_sidebands<F: FnMut(bool, &[u8]) -> ProgressAction>(&mut self) -> WithSidebands<'_, T, F> {
         WithSidebands::without_progress_handler(self)
     }
 
     /// Same as [`as_read_with_sidebands(…)`][StreamingPeekableIter::as_read_with_sidebands()], but for channels without side band support.
     ///
     /// Due to the preconfigured function type this method can be called without 'turbofish'.
-    pub fn as_read(&mut self) -> WithSidebands<'_, T, fn(bool, &[u8])> {
+    #[allow(clippy::type_complexity)]
+    pub fn as_read(&mut self) -> WithSidebands<'_, T, fn(bool, &[u8]) -> ProgressAction> {
         WithSidebands::new(self)
     }
 }

@@ -638,11 +638,13 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
             - [ ] respect `branch.<name>.merge` in the returned remote.
     * **remotes**  
         * [x] clone 
-          * [ ] shallow
+          * [x] shallow
             * [ ] include-tags when shallow is used (needs separate fetch)
             * [ ] prune non-existing shallow commits
           * [ ] [bundles](https://git-scm.com/docs/git-bundle)
         * [x] fetch
+           * [x] shallow (remains shallow, options to adjust shallow boundary)
+           * [ ] a way to auto-explode small packs to avoid them to pile up
            * [ ] 'ref-in-want'
            * [ ] standard negotiation algorithms (right now we only have a 'naive' one)
         * [ ] push

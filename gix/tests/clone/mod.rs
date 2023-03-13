@@ -2,6 +2,7 @@ use crate::{remote, util::restricted};
 
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
+    use gix::bstr::BString;
     use gix::config::tree::{Clone, Core, Init, Key};
     use gix::remote::Direction;
     use gix_object::bstr::ByteSlice;
@@ -25,9 +26,14 @@ mod blocking_io {
                 let called_configure_remote = called_configure_remote;
                 move |r| {
                     called_configure_remote.store(true, std::sync::atomic::Ordering::Relaxed);
-                    let r = r
-                        .with_refspecs(Some("+refs/tags/b-tag:refs/tags/b-tag"), gix::remote::Direction::Fetch)?
-                        .with_fetch_tags(desired_fetch_tags);
+                    let mut r = r.with_fetch_tags(desired_fetch_tags);
+                    r.replace_refspecs(
+                        [
+                            BString::from(format!("refs/heads/main:refs/remotes/{remote_name}/main")),
+                            "+refs/tags/b-tag:refs/tags/b-tag".to_owned().into(),
+                        ],
+                        Direction::Fetch,
+                    )?;
                     Ok(r)
                 }
             })
@@ -111,6 +117,10 @@ mod blocking_io {
         let tmp = gix_testtools::tempfile::TempDir::new()?;
         let (repo, _change) = gix::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
             .with_shallow(Shallow::DepthAtRemote(2.try_into()?))
+            .configure_remote(|mut r| {
+                r.replace_refspecs(Some("refs/heads/main:refs/remotes/origin/main"), Direction::Fetch)?;
+                Ok(r)
+            })
             .fetch_only(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
 
         assert!(repo.is_shallow());
