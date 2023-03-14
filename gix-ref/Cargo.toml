@@ -1,6 +1,6 @@
 [package]
 name = "gix-ref"
-version = "0.27.0"
+version = "0.27.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate to handle git references"
@@ -19,7 +19,7 @@ test = true
 serde1 = ["serde", "gix-hash/serde1", "gix-actor/serde1", "gix-object/serde1"]
 
 [dependencies]
-gix-features = { version = "^0.28.0", path = "../gix-features", features = ["walkdir"]}
+gix-features = { version = "^0.28.1", path = "../gix-features", features = ["walkdir"]}
 gix-path = { version = "^0.7.2", path = "../gix-path" }
 gix-hash = { version = "^0.10.3", path = "../gix-hash" }
 gix-object = { version = "^0.28.0", path = "../gix-object" }

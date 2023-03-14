@@ -88,8 +88,8 @@ cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 anyhow = "1.0.42"
 
 gitoxide-core = { version = "^0.26.0", path = "gitoxide-core" }
-gix-features = { version = "^0.28.0", path = "gix-features" }
-gix = { version = "^0.41.0", path = "gix", default-features = false }
+gix-features = { version = "^0.28.1", path = "gix-features" }
+gix = { version = "^0.42.0", path = "gix", default-features = false }
 time = "0.3.19"
 
 clap = { version = "4.1.1", features = ["derive", "cargo"] }
