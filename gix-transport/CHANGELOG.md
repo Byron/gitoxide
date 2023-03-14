@@ -5,7 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without any user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 2 calendar days.
+ - 2 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Make fmt ([`3836cc0`](https://github.com/Byron/gitoxide/commit/3836cc0c9c3e1158b56142b924483c8a77217d53))
+    - Merge branch 'various-fixes' ([`cc0f506`](https://github.com/Byron/gitoxide/commit/cc0f5061fba27d57022dc616c941034b98fd4875))
+    - Adjust to changes in `gix-packetline` ([`4f45814`](https://github.com/Byron/gitoxide/commit/4f45814eea9c20b449effd9b29d31623943ff853))
+    - Merge branch 'shallow-protocol' ([`531dd19`](https://github.com/Byron/gitoxide/commit/531dd19502b8b635fb1a60f747eb381fd12e00ca))
+    - Merge branch 'fix-cred-helper' ([`01277a6`](https://github.com/Byron/gitoxide/commit/01277a681e4997896e04567490c572b5af606f35))
+</details>
+
 ## 0.28.0 (2023-03-10)
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-72ec01b6e37e56fda72e8f137c92dc2276bc0791/> add `ReadLineBufRead::readline_str(&mut String)` to get consistent readline behaviour.
+   Previously the `async` version of the transport implementation would use the default `read_line` implementation
+   which would search for newlines in packetlines. However, these aren't always emitted which could lead to
+   multiple packetlines to be concatenated.
+   
+   Now the we always use our implementation which simply treats one packet line as line, no matter whether
+   or not it ends with optional newline.
+
+### Bug Fixes
+
+ - <csr-id-397ed90a36c0b86e2c9022b2787656746045c5a3/> Assure `ReadlineBufRead::readline_str()` calls our implementation for `Box<T: ReadlineBufRead>` as well.
+   This fixes a bug where the HTTP implementation would incorrectly concatenate packetlines without newlines
+   as sent by the server for shallow info lines.
 
 ### New Features (BREAKING)
 
@@ -18,9 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release.
+ - 8 commits contributed to the release.
  - 6 days passed between releases.
- - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -30,7 +73,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-tempfile v5.0.0, gix-lock v5.0.0, gix-ref v0.27.0, gix-config v0.19.0, gix-url v0.16.0, gix-credentials v0.12.0, gix-discover v0.16.0, gix-index v0.15.0, gix-pack v0.33.0, gix-odb v0.43.0, gix-transport v0.28.0, gix-protocol v0.29.0, gix-worktree v0.15.0, gix v0.41.0, safety bump 12 crates ([`29a0870`](https://github.com/Byron/gitoxide/commit/29a087043d1feb2f127b065341c8028d0bd0301e))
     - Prepare changelogs prior to release ([`e06f5f5`](https://github.com/Byron/gitoxide/commit/e06f5f523e83f4da390eddbebcb9a2d58674587b))
+    - Assure `ReadlineBufRead::readline_str()` calls our implementation for `Box<T: ReadlineBufRead>` as well. ([`397ed90`](https://github.com/Byron/gitoxide/commit/397ed90a36c0b86e2c9022b2787656746045c5a3))
+    - Add `ReadLineBufRead::readline_str(&mut String)` to get consistent readline behaviour. ([`72ec01b`](https://github.com/Byron/gitoxide/commit/72ec01b6e37e56fda72e8f137c92dc2276bc0791))
     - Merge branch 'password-in-urls' ([`85f8b28`](https://github.com/Byron/gitoxide/commit/85f8b283a1671e2631cda437ca8da93f9a2a4ebd))
     - HTTP transport uses url identity if username and password is set. ([`7830f1e`](https://github.com/Byron/gitoxide/commit/7830f1e112ed3c936b08ab53cd20b9eff7feb7d5))
     - Adjust to changes in `gix-url` ([`66602bb`](https://github.com/Byron/gitoxide/commit/66602bbb7fe62f7425c8289902a1d2fce121e87c))
