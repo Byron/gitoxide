@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 set -eu -o pipefail
 
 
@@ -20,6 +21,7 @@ echo m > f
 git commit -qam 'f modified'
 
 rm f
+git add .
 git commit -qam 'f deleted'
 
 echo m > f
