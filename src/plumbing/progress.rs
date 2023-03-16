@@ -173,6 +173,10 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned {note: Some("we can read sparse indices and support for it will be added early on")},
     },
     Record {
+        config: "index.skipHash",
+        usage: Planned {note: Some("important to not unnecessarily reject indices just because they are missing a hash (or it is null)")},
+    },
+    Record {
         config: "merge.renormalize",
         usage: Planned {note: Some("once merging is being implemented, renormalization should be respected")},
     },
