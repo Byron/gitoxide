@@ -61,6 +61,10 @@ pub enum Value {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
 pub struct Attributes;
 
+fn macro_mode() -> gix_glob::pattern::Mode {
+    gix_glob::pattern::Mode::all()
+}
+
 impl Pattern for Attributes {
     type Value = Value;
 
@@ -72,7 +76,7 @@ impl Pattern for Attributes {
                     crate::parse::Kind::Macro(macro_name) => (
                         gix_glob::Pattern {
                             text: macro_name.as_str().into(),
-                            mode: gix_glob::pattern::Mode::all(),
+                            mode: macro_mode(),
                             first_wildcard_pos: None,
                         },
                         Value::MacroAttributes(into_owned_assignments(assignments).ok()?),
@@ -93,7 +97,7 @@ impl Pattern for Attributes {
     }
 
     fn may_use_glob_pattern(pattern: &gix_glob::Pattern) -> bool {
-        pattern.mode != gix_glob::pattern::Mode::all()
+        pattern.mode != macro_mode()
     }
 }
 
