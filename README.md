@@ -98,7 +98,7 @@ is usable to some extent.
   * [gix-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-submodule)
   * [gix-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tui)
   * [gix-tix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tix)
-  * [git-bundle](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bundle)
+  * [gix-bundle](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bundle)
   
 ### Stress Testing
   * [x] Verify huge packs

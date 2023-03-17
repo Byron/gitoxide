@@ -693,7 +693,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 * [ ] API documentation
     * [ ] Some examples
 
-### git-bundle
+### gix-bundle
 * [ ] create a bundle from an archive
    * [ ] respect `export-ignore` and `export-subst`
 * [ ] extract a branch from a bundle into a repository
