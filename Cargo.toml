@@ -181,6 +181,7 @@ members = [
     "gix-hashtable",
     "gix-tui",
     "gix-tix",
+    "gix-archive",
 
     "cargo-smart-release",
     "tests/tools",

@@ -1370,6 +1370,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-archive"
+version = "0.0.0"
+
+[[package]]
 name = "gix-attributes"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

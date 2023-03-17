@@ -693,6 +693,13 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 * [ ] API documentation
     * [ ] Some examples
 
+### gix-archive
+
+Analysis to be done.
+
+* [ ] API documentation
+    * [ ] Some examples
+
 ### gix-bundle
 * [ ] create a bundle from an archive
    * [ ] respect `export-ignore` and `export-subst`
