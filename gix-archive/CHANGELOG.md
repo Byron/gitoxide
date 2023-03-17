@@ -13,9 +13,9 @@ Initial release just for the name and ownership.
 
 <csr-read-only-do-not-edit/>
 
-- 1 commit contributed to the release.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 1 commit contributed to the release.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -23,7 +23,7 @@ Initial release just for the name and ownership.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-   - Add `gix-archive` as crate idea. ([`f70f5a7`](https://github.com/Byron/gitoxide/commit/f70f5a76e88fbcee1f0b432a7e8bd350e830b6ae))
+ * **Uncategorized**
+    - Add `gix-archive` as crate idea. ([`dec8c7c`](https://github.com/Byron/gitoxide/commit/dec8c7c68212c5963aafd68c7ae9e9b4b446e997))
 </details>
 
