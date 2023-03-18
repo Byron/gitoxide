@@ -19,7 +19,7 @@ pub enum Format {
     Zip,
     TarGz,
     Tgz,
-    Custom(FromConfig)
+    Custom(FromConfig),
 }
 
 pub struct FromConfig {
@@ -42,7 +42,7 @@ struct Remote {
     exec: Option<PathBuf>,
 }
 
-struct ArchiveBuilder{
+struct ArchiveBuilder {
     format: Format,
     verbose: bool,
     prefix: Option<PathBuf>,
@@ -73,11 +73,10 @@ impl TryFrom<String> for Treeish {
 
 enum Output {
     File(PathBuf),
-    StdOut
+    StdOut,
 }
 
 impl ArchiveBuilder {
-
     fn new(thee_ish_id: String) -> Result<Self, Error> {
         let mut builder = ArchiveBuilder {
             format: Format::Tar,
@@ -126,13 +125,10 @@ impl ArchiveBuilder {
         self
     }
 
+    // write archive to file or STDOUT
     pub fn archive(&mut self) -> Result<(), Error> {
-
-        // execute
-
         Ok(())
     }
-
 }
 
 pub fn formats() -> Vec<Format> {
@@ -146,17 +142,16 @@ fn get_commit_timestamp(_tree_ish: &str) -> SystemTime {
     SystemTime::now()
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn add_files_prepends_prefix() {
-
-        let builder = ArchiveBuilder::new("80b8ff3e738f698e3801f8de1d6ec4220651a591".into()).expect("valid builder")
+        let builder = ArchiveBuilder::new("80b8ff3e738f698e3801f8de1d6ec4220651a591".into())
+            .expect("valid builder")
             .prefix("pre".into())
-            .add_files(vec![PathBuf::from("a/"), PathBuf::from("b/")]);
+            .add_files(vec![PathBuf::from("a"), PathBuf::from("b")]);
 
         assert_eq!(builder.add_files, vec![PathBuf::from("pre/a"), PathBuf::from("pre/b")])
     }
