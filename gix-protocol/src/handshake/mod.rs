@@ -68,6 +68,8 @@ mod error {
     pub enum Error {
         #[error("Failed to obtain credentials")]
         Credentials(#[from] credentials::protocol::Error),
+        #[error("No credentials were returned at all as if the credential helper isn't functioning unknowingly")]
+        EmptyCredentials,
         #[error("Credentials provided for \"{url}\" were not accepted by the remote")]
         InvalidCredentials { url: BString, source: std::io::Error },
         #[error(transparent)]

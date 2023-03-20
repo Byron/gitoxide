@@ -46,7 +46,7 @@ where
                 progress.set_name("authentication");
                 let credentials::protocol::Outcome { identity, next } =
                     authenticate(credentials::helper::Action::get_for_url(url.clone()))?
-                        .expect("FILL provides an identity or errors");
+                        .ok_or(Error::EmptyCredentials)?;
                 transport.set_identity(identity)?;
                 progress.step();
                 progress.set_name("handshake (authenticated)");
