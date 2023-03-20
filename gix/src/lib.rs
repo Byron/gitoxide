@@ -134,6 +134,15 @@ pub mod progress;
 pub mod diff;
 
 /// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
+///
+/// # Note
+///
+/// **The discovered repository might not be suitable for any operation that requires authentication with remotes**
+/// as it doesn't see the relevant git configuration.
+///
+/// To achieve that, one has to [enable `git_binary` configuration](https://github.com/Byron/gitoxide/blob/9723e1addf52cc336d59322de039ea0537cdca36/src/plumbing/main.rs#L86)
+/// in the open-options and use [`ThreadSafeRepository::discover_opts()`] instead. Alternatively, it might be well-known
+/// that the tool is going to run in a neatly configured environment without relying on bundled configuration.
 #[allow(clippy::result_large_err)]
 pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, discover::Error> {
     ThreadSafeRepository::discover(directory).map(Into::into)
