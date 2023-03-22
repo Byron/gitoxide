@@ -166,23 +166,23 @@ pub mod fetch {
     #[derive(Debug, clap::Parser)]
     pub struct ShallowOptions {
         /// Fetch with the history truncated to the given number of commits as seen from the remote.
-        #[clap(long, conflicts_with_all = ["shallow_since", "shallow_exclude", "deepen", "unshallow"])]
+        #[clap(long, help_heading = Some("SHALLOW"), conflicts_with_all = ["shallow_since", "shallow_exclude", "deepen", "unshallow"])]
         pub depth: Option<NonZeroU32>,
 
         /// Extend the current shallow boundary by the given amount of commits, with 0 meaning no change.
-        #[clap(long, value_name = "DEPTH", conflicts_with_all = ["depth", "shallow_since", "shallow_exclude", "unshallow"])]
+        #[clap(long, help_heading = Some("SHALLOW"), value_name = "DEPTH", conflicts_with_all = ["depth", "shallow_since", "shallow_exclude", "unshallow"])]
         pub deepen: Option<u32>,
 
         /// Cutoff all history past the given date. Can be combined with shallow-exclude.
-        #[clap(long, value_parser = crate::shared::AsTime, value_name = "DATE", conflicts_with_all = ["depth", "deepen", "unshallow"])]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsTime, value_name = "DATE", conflicts_with_all = ["depth", "deepen", "unshallow"])]
         pub shallow_since: Option<gix::date::Time>,
 
         /// Cutoff all history past the tag-name or ref-name. Can be combined with shallow-since.
-        #[clap(long, value_parser = crate::shared::AsPartialRefName, value_name = "REF_NAME", conflicts_with_all = ["depth", "deepen", "unshallow"])]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsPartialRefName, value_name = "REF_NAME", conflicts_with_all = ["depth", "deepen", "unshallow"])]
         pub shallow_exclude: Vec<gix::refs::PartialName>,
 
         /// Remove the shallow boundary and fetch the entire history available on the remote.
-        #[clap(long, conflicts_with_all = ["shallow_since", "shallow_exclude", "depth", "deepen"])]
+        #[clap(long, help_heading = Some("SHALLOW"), conflicts_with_all = ["shallow_since", "shallow_exclude", "depth", "deepen"])]
         pub unshallow: bool,
     }
 
@@ -241,15 +241,15 @@ pub mod clone {
     #[derive(Debug, clap::Parser)]
     pub struct ShallowOptions {
         /// Create a shallow clone with the history truncated to the given number of commits.
-        #[clap(long, conflicts_with_all = ["shallow_since", "shallow_exclude"])]
+        #[clap(long, help_heading = Some("SHALLOW"), conflicts_with_all = ["shallow_since", "shallow_exclude"])]
         pub depth: Option<NonZeroU32>,
 
         /// Cutoff all history past the given date. Can be combined with shallow-exclude.
-        #[clap(long, value_parser = crate::shared::AsTime, value_name = "DATE")]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsTime, value_name = "DATE")]
         pub shallow_since: Option<gix::date::Time>,
 
         /// Cutoff all history past the tag-name or ref-name. Can be combined with shallow-since.
-        #[clap(long, value_parser = crate::shared::AsPartialRefName, value_name = "REF_NAME")]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsPartialRefName, value_name = "REF_NAME")]
         pub shallow_exclude: Vec<gix::refs::PartialName>,
     }
 
