@@ -126,7 +126,7 @@ impl output::Entry {
         })
     }
 
-    /// Create a new instance from the given `oid` and its corresponding git `obj`ect data.
+    /// Create a new instance from the given `oid` and its corresponding git object data `obj`.
     pub fn from_data(count: &output::Count, obj: &gix_object::Data<'_>) -> Result<Self, Error> {
         Ok(output::Entry {
             id: count.id.to_owned(),
