@@ -47,7 +47,7 @@ mod iter {
     }
 
     #[test]
-    fn multiple_intermediate_directories_are_created_automaticaly() -> crate::Result {
+    fn multiple_intermediate_directories_are_created_automatically() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let new_dir = dir.path().join("s1").join("s2").join("new");
         let mut it = create_dir::Iter::new(&new_dir);

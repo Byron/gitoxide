@@ -133,7 +133,7 @@ pub mod options {
 #[derive(Default, Clone)]
 pub struct Options {
     /// Headers to be added to every request.
-    /// They are applied unconditionally and are expected to be valid as they occour in an HTTP request, like `header: value`, without newlines.
+    /// They are applied unconditionally and are expected to be valid as they occur in an HTTP request, like `header: value`, without newlines.
     ///
     /// Refers to `http.extraHeader` multi-var.
     pub extra_headers: Vec<String>,

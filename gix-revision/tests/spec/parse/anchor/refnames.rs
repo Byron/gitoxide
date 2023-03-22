@@ -3,7 +3,7 @@ use gix_revision::spec;
 use crate::spec::parse::{parse, try_parse};
 
 #[test]
-fn at_by_iteself_is_shortcut_for_head() {
+fn at_by_itself_is_shortcut_for_head() {
     let rec = parse("@");
     assert!(rec.kind.is_none());
     assert_eq!(rec.get_ref(0), "HEAD");

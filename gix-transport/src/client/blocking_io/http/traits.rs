@@ -84,7 +84,7 @@ impl<A, B, C> From<PostResponse<A, B, C>> for GetResponse<A, B> {
 }
 
 /// A trait to abstract the HTTP operations needed to power all git interactions: read via GET and write via POST.
-/// Note that 401 must be turned into `std::io::Error(PermissionDenied)`, and other non-success http stati must be transformed
+/// Note that 401 must be turned into `std::io::Error(PermissionDenied)`, and other non-success http statuses must be transformed
 /// into `std::io::Error(Other)`
 #[allow(clippy::type_complexity)]
 pub trait Http {

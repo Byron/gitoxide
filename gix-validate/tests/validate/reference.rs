@@ -23,7 +23,7 @@ mod name_partial {
         mktest!(all_uppercase_with_underscore, b"NEW_HEAD");
         mktest!(partial_name_lowercase, b"main");
         mktest!(chinese_utf8, "heads/你好吗".as_bytes());
-        mktest!(parantheses_special_case_upload_pack, b"(null)");
+        mktest!(parentheses_special_case_upload_pack, b"(null)");
     }
 
     mod invalid {

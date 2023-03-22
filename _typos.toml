@@ -1,0 +1,6 @@
+[files]
+extend-exclude = ["**/CHANGELOG.md", "**/tests/fixtures/**"]
+
+[default.extend-words]
+rela = "rela"
+unter = "unter"

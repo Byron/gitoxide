@@ -136,7 +136,7 @@ impl<'event> File<'event> {
     /// ain order of occurrence.
     ///
     /// The ordering means that the last of the returned values is the one that would be the
-    /// value used in the single-value case.nd key.
+    /// value used in the single-value case.and key.
     ///
     /// # Examples
     ///
