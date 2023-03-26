@@ -134,6 +134,9 @@ impl Options {
     ///
     /// This is recommended for all applications that prefer correctness over usability.
     /// `git` itself defaults to strict configuration mode, flagging incorrect configuration immediately.
+    ///
+    /// Failure to read configuration files due to IO errors will also be a hard error if this mode is enabled, otherwise
+    /// these errors will merely be logged.
     pub fn strict_config(mut self, toggle: bool) -> Self {
         self.lenient_config = !toggle;
         self

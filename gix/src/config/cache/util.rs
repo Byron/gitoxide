@@ -17,9 +17,10 @@ pub(crate) fn interpolate_context<'a>(
     }
 }
 
-pub(crate) fn base_options(lossy: Option<bool>) -> gix_config::file::init::Options<'static> {
+pub(crate) fn base_options(lossy: Option<bool>, lenient: bool) -> gix_config::file::init::Options<'static> {
     gix_config::file::init::Options {
         lossy: lossy.unwrap_or(!cfg!(debug_assertions)),
+        ignore_io_errors: lenient,
         ..Default::default()
     }
 }

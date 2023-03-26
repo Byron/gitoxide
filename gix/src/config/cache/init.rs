@@ -65,7 +65,7 @@ impl Cache {
             } else {
                 gix_config::file::includes::Options::no_follow()
             },
-            ..util::base_options(lossy)
+            ..util::base_options(lossy, lenient_config)
         };
 
         let config = {
@@ -118,7 +118,7 @@ impl Cache {
             )
             .map_err(|err| match err {
                 gix_config::file::init::from_paths::Error::Init(err) => Error::from(err),
-                gix_config::file::init::from_paths::Error::Io(err) => err.into(),
+                gix_config::file::init::from_paths::Error::Io { source, path } => Error::Io { source, path },
             })?
             .unwrap_or_default();
 
