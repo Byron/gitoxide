@@ -1,6 +1,6 @@
 [package]
 name = "gix-diff"
-version = "0.28.0"
+version = "0.28.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Calculate differences between various git objects"

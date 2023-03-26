@@ -1268,7 +1268,7 @@ dependencies = [
 
 [[package]]
 name = "gix"
-version = "0.42.0"
+version = "0.43.0"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1279,7 +1279,7 @@ dependencies = [
  "gix-credentials",
  "gix-date 0.4.3",
  "gix-diff",
- "gix-discover 0.16.0",
+ "gix-discover 0.16.1",
  "gix-features 0.28.1",
  "gix-glob 0.5.5",
  "gix-hash 0.10.3",
@@ -1297,13 +1297,13 @@ dependencies = [
  "gix-refspec",
  "gix-revision",
  "gix-sec 0.6.2",
- "gix-tempfile 5.0.1",
+ "gix-tempfile 5.0.2",
  "gix-testtools",
  "gix-transport",
  "gix-traverse 0.24.0",
  "gix-url",
- "gix-validate 0.7.3",
- "gix-worktree 0.15.0",
+ "gix-validate 0.7.4",
+ "gix-worktree 0.15.1",
  "is_ci",
  "log",
  "once_cell",
@@ -1436,7 +1436,7 @@ dependencies = [
 
 [[package]]
 name = "gix-config"
-version = "0.19.0"
+version = "0.20.0"
 dependencies = [
  "bstr",
  "criterion",
@@ -1533,7 +1533,7 @@ dependencies = [
 
 [[package]]
 name = "gix-diff"
-version = "0.28.0"
+version = "0.28.1"
 dependencies = [
  "getrandom",
  "gix-hash 0.10.3",
@@ -1572,7 +1572,7 @@ dependencies = [
 
 [[package]]
 name = "gix-discover"
-version = "0.16.0"
+version = "0.16.1"
 dependencies = [
  "bstr",
  "defer",
@@ -1772,7 +1772,7 @@ name = "gix-lock"
 version = "5.0.0"
 dependencies = [
  "fastrand",
- "gix-tempfile 5.0.1",
+ "gix-tempfile 5.0.2",
  "tempfile",
  "thiserror",
 ]
@@ -1804,7 +1804,7 @@ dependencies = [
  "gix-actor 0.17.2",
  "gix-features 0.26.5",
  "gix-hash 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-validate 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-validate 0.7.3",
  "hex",
  "itoa",
  "nom",
@@ -1823,7 +1823,7 @@ dependencies = [
  "gix-features 0.28.1",
  "gix-hash 0.10.3",
  "gix-testtools",
- "gix-validate 0.7.3",
+ "gix-validate 0.7.4",
  "hex",
  "itoa",
  "nom",
@@ -1859,7 +1859,7 @@ dependencies = [
 
 [[package]]
 name = "gix-pack"
-version = "0.33.1"
+version = "0.33.2"
 dependencies = [
  "clru",
  "document-features",
@@ -1870,7 +1870,7 @@ dependencies = [
  "gix-hashtable 0.1.2",
  "gix-object 0.28.0",
  "gix-path 0.7.2",
- "gix-tempfile 5.0.1",
+ "gix-tempfile 5.0.2",
  "gix-testtools",
  "gix-traverse 0.24.0",
  "memmap2",
@@ -1950,7 +1950,7 @@ dependencies = [
 
 [[package]]
 name = "gix-prompt"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "expectrl",
  "gix-command",
@@ -1964,7 +1964,7 @@ dependencies = [
 
 [[package]]
 name = "gix-protocol"
-version = "0.30.0"
+version = "0.30.1"
 dependencies = [
  "async-std",
  "async-trait",
@@ -2022,7 +2022,7 @@ dependencies = [
  "gix-object 0.26.4",
  "gix-path 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-tempfile 3.0.2",
- "gix-validate 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-validate 0.7.3",
  "memmap2",
  "nom",
  "thiserror",
@@ -2039,9 +2039,9 @@ dependencies = [
  "gix-lock 5.0.0",
  "gix-object 0.28.0",
  "gix-path 0.7.2",
- "gix-tempfile 5.0.1",
+ "gix-tempfile 5.0.2",
  "gix-testtools",
- "gix-validate 0.7.3",
+ "gix-validate 0.7.4",
  "memmap2",
  "nom",
  "serde",
@@ -2054,7 +2054,7 @@ name = "gix-ref-tests"
 version = "0.0.0"
 dependencies = [
  "gix-actor 0.19.0",
- "gix-discover 0.16.0",
+ "gix-discover 0.16.1",
  "gix-features 0.28.1",
  "gix-hash 0.10.3",
  "gix-lock 5.0.0",
@@ -2062,8 +2062,8 @@ dependencies = [
  "gix-odb",
  "gix-ref 0.27.1",
  "gix-testtools",
- "gix-validate 0.7.3",
- "gix-worktree 0.15.0",
+ "gix-validate 0.7.4",
+ "gix-worktree 0.15.1",
  "tempfile",
 ]
 
@@ -2075,14 +2075,14 @@ dependencies = [
  "gix-hash 0.10.3",
  "gix-revision",
  "gix-testtools",
- "gix-validate 0.7.3",
+ "gix-validate 0.7.4",
  "smallvec",
  "thiserror",
 ]
 
 [[package]]
 name = "gix-revision"
-version = "0.12.0"
+version = "0.12.1"
 dependencies = [
  "bstr",
  "document-features",
@@ -2157,7 +2157,7 @@ dependencies = [
 
 [[package]]
 name = "gix-tempfile"
-version = "5.0.1"
+version = "5.0.2"
 dependencies = [
  "dashmap",
  "document-features",
@@ -2197,7 +2197,7 @@ version = "0.0.0"
 
 [[package]]
 name = "gix-transport"
-version = "0.29.0"
+version = "0.29.1"
 dependencies = [
  "async-std",
  "async-trait",
@@ -2278,19 +2278,19 @@ dependencies = [
 [[package]]
 name = "gix-validate"
 version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b69ddb780ea1465255e66818d75b7098371c58dbc9560da4488a44b9f5c7e443"
 dependencies = [
  "bstr",
- "gix-testtools",
  "thiserror",
 ]
 
 [[package]]
 name = "gix-validate"
-version = "0.7.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b69ddb780ea1465255e66818d75b7098371c58dbc9560da4488a44b9f5c7e443"
+version = "0.7.4"
 dependencies = [
  "bstr",
+ "gix-testtools",
  "thiserror",
 ]
 
@@ -2314,7 +2314,7 @@ dependencies = [
 
 [[package]]
 name = "gix-worktree"
-version = "0.15.0"
+version = "0.15.1"
 dependencies = [
  "bstr",
  "document-features",

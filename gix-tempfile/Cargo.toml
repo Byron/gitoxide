@@ -1,6 +1,6 @@
 [package]
 name = "gix-tempfile"
-version = "5.0.1"
+version = "5.0.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A tempfile implementation with a global registry to assure cleanup"
