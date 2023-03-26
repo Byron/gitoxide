@@ -122,7 +122,7 @@ impl File<'static> {
                     branch_name: None,
                 },
             ),
-            lossy: false,
+            ..Default::default()
         };
 
         let mut globals = Self::from_globals()?;

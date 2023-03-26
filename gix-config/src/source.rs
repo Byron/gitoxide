@@ -127,7 +127,7 @@ mod git {
     fn first_file_from_config_with_origin(source: &BStr) -> Option<&BStr> {
         let file = source.strip_prefix(b"file:")?;
         let end_pos = file.find_byte(b'\t')?;
-        file[..end_pos].as_bstr().into()
+        file[..end_pos].trim_with(|c| c == '"').as_bstr().into()
     }
 
     #[cfg(test)]
@@ -138,6 +138,7 @@ mod git {
             let win_msys =
                 "file:C:/git-sdk-64/etc/gitconfig	core.symlinks=false\r\nfile:C:/git-sdk-64/etc/gitconfig	core.autocrlf=true";
             let win_cmd = "file:C:/Program Files/Git/etc/gitconfig	diff.astextplain.textconv=astextplain\r\nfile:C:/Program Files/Git/etc/gitconfig	filter.lfs.clean=gix-lfs clean -- %f\r\n";
+            let win_msys_old = "file:\"C:\\ProgramData/Git/config\"	diff.astextplain.textconv=astextplain\r\nfile:\"C:\\ProgramData/Git/config\"	filter.lfs.clean=git-lfs clean -- %f\r\n";
             let linux = "file:/home/parallels/.gitconfig	core.excludesfile=~/.gitignore\n";
             let bogus = "something unexpected";
             let empty = "";
@@ -148,6 +149,7 @@ mod git {
                     Some("/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig"),
                 ),
                 (win_msys, Some("C:/git-sdk-64/etc/gitconfig")),
+                (win_msys_old, Some("C:\\ProgramData/Git/config")),
                 (win_cmd, Some("C:/Program Files/Git/etc/gitconfig")),
                 (linux, Some("/home/parallels/.gitconfig")),
                 (bogus, None),

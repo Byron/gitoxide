@@ -30,6 +30,7 @@ impl StageOne {
             gix_config::Source::Local,
             git_dir_trust,
             lossy,
+            lenient,
         )?;
 
         // Note that we assume the repo is bare by default unless we are told otherwise. This is relevant if
@@ -64,6 +65,7 @@ impl StageOne {
                 gix_config::Source::Worktree,
                 git_dir_trust,
                 lossy,
+                lenient,
             )?;
             config.append(worktree_config);
         };
@@ -86,24 +88,47 @@ fn load_config(
     source: gix_config::Source,
     git_dir_trust: gix_sec::Trust,
     lossy: Option<bool>,
+    lenient: bool,
 ) -> Result<gix_config::File<'static>, Error> {
-    buf.clear();
     let metadata = gix_config::file::Metadata::from(source)
         .at(&config_path)
         .with(git_dir_trust);
     let mut file = match std::fs::File::open(&config_path) {
         Ok(f) => f,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(gix_config::File::new(metadata)),
-        Err(err) => return Err(err.into()),
+        Err(err) => {
+            let err = Error::Io {
+                source: err,
+                path: config_path,
+            };
+            if lenient {
+                log::warn!("ignoring: {err:#?}");
+                return Ok(gix_config::File::new(metadata));
+            } else {
+                return Err(err);
+            }
+        }
     };
-    std::io::copy(&mut file, buf)?;
+
+    buf.clear();
+    if let Err(err) = std::io::copy(&mut file, buf) {
+        let err = Error::Io {
+            source: err,
+            path: config_path,
+        };
+        if lenient {
+            log::warn!("ignoring: {err:#?}");
+        } else {
+            return Err(err);
+        }
+    };
 
     let config = gix_config::File::from_bytes_owned(
         buf,
         metadata,
         gix_config::file::init::Options {
             includes: gix_config::file::includes::Options::no_follow(),
-            ..util::base_options(lossy)
+            ..util::base_options(lossy, lenient)
         },
     )?;
 

@@ -9,8 +9,11 @@ use crate::{
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
+    #[error("The configuration file at \"{}\" could not be read", path.display())]
+    Io {
+        source: std::io::Error,
+        path: std::path::PathBuf,
+    },
     #[error(transparent)]
     Init(#[from] init::Error),
 }
@@ -22,10 +25,22 @@ impl File<'static> {
     /// Note that the path will be checked for ownership to derive trust.
     pub fn from_path_no_includes(path: impl Into<std::path::PathBuf>, source: crate::Source) -> Result<Self, Error> {
         let path = path.into();
-        let trust = gix_sec::Trust::from_path_ownership(&path)?;
+        let trust = match gix_sec::Trust::from_path_ownership(&path) {
+            Ok(t) => t,
+            Err(err) => return Err(Error::Io { source: err, path }),
+        };
 
         let mut buf = Vec::new();
-        std::io::copy(&mut std::fs::File::open(&path)?, &mut buf)?;
+        match std::io::copy(
+            &mut match std::fs::File::open(&path) {
+                Ok(f) => f,
+                Err(err) => return Err(Error::Io { source: err, path }),
+            },
+            &mut buf,
+        ) {
+            Ok(_) => {}
+            Err(err) => return Err(Error::Io { source: err, path }),
+        }
 
         Ok(File::from_bytes_owned(
             &mut buf,
@@ -69,14 +84,37 @@ impl File<'static> {
             }
 
             buf.clear();
-            std::io::copy(
+            match std::io::copy(
                 &mut match std::fs::File::open(&path) {
                     Ok(f) => f,
                     Err(err) if !err_on_non_existing_paths && err.kind() == std::io::ErrorKind::NotFound => continue,
-                    Err(err) => return Err(err.into()),
+                    Err(err) => {
+                        let err = Error::Io { source: err, path };
+                        if options.ignore_io_errors {
+                            log::warn!("ignoring: {err:#?}");
+                            continue;
+                        } else {
+                            return Err(err);
+                        }
+                    }
                 },
                 buf,
-            )?;
+            ) {
+                Ok(_) => {}
+                Err(err) => {
+                    if options.ignore_io_errors {
+                        log::warn!(
+                            "ignoring: {:#?}",
+                            Error::Io {
+                                source: err,
+                                path: path.clone()
+                            }
+                        );
+                    } else {
+                        return Err(Error::Io { source: err, path });
+                    }
+                }
+            };
             meta.path = Some(path);
 
             let config = Self::from_bytes_owned(buf, meta, options)?;

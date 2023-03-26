@@ -18,7 +18,7 @@ mod from_path_no_includes {
 
         let err = gix_config::File::from_path_no_includes(config_path, gix_config::Source::Local).unwrap_err();
         assert!(
-            matches!(err,  gix_config::file::init::from_paths::Error::Io(io_error) if io_error.kind() == std::io::ErrorKind::NotFound)
+            matches!(err,  gix_config::file::init::from_paths::Error::Io{source: io_error, ..} if io_error.kind() == std::io::ErrorKind::NotFound)
         );
     }
 

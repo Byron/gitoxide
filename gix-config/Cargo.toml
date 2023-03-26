@@ -24,6 +24,7 @@ gix-sec = { version = "^0.6.2", path = "../gix-sec" }
 gix-ref = { version = "^0.27.0", path = "../gix-ref" }
 gix-glob = { version = "^0.5.5", path = "../gix-glob" }
 
+log = "0.4.17"
 nom = { version = "7", default_features = false, features = [ "std" ] }
 memchr = "2"
 thiserror = "1.0.26"

@@ -62,8 +62,11 @@ pub enum Error {
     UnsupportedObjectFormat { name: BString },
     #[error(transparent)]
     CoreAbbrev(#[from] abbrev::Error),
-    #[error("Could not read configuration file")]
-    Io(#[from] std::io::Error),
+    #[error("Could not read configuration file at \"{}\"", path.display())]
+    Io {
+        source: std::io::Error,
+        path: std::path::PathBuf,
+    },
     #[error(transparent)]
     Init(#[from] gix_config::file::init::Error),
     #[error(transparent)]
