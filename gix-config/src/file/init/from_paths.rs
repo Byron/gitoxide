@@ -110,6 +110,7 @@ impl File<'static> {
                                 path: path.clone()
                             }
                         );
+                        buf.clear();
                     } else {
                         return Err(Error::Io { source: err, path });
                     }

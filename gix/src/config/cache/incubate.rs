@@ -118,6 +118,7 @@ fn load_config(
         };
         if lenient {
             log::warn!("ignoring: {err:#?}");
+            buf.clear();
         } else {
             return Err(err);
         }
