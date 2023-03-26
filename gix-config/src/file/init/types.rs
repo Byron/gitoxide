@@ -22,6 +22,10 @@ pub struct Options<'a> {
     /// Note that doing so will degenerate [`write_to()`][crate::File::write_to()] and strip it off its comments
     /// and additional whitespace entirely, but will otherwise be a valid configuration file.
     pub lossy: bool,
+    /// If true, any IO error happening when reading a configuration file will be ignored.
+    ///
+    /// That way it's possible to pass multiple files and read as many as possible, to have 'something' instead of nothing.
+    pub ignore_io_errors: bool,
 }
 
 impl Options<'_> {

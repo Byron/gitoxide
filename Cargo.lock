@@ -1447,6 +1447,7 @@ dependencies = [
  "gix-path 0.7.2",
  "gix-ref 0.27.1",
  "gix-sec 0.6.2",
+ "log",
  "memchr",
  "nom",
  "once_cell",
