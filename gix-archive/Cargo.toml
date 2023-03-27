@@ -12,3 +12,6 @@ rust-version = "1.64"
 doctest = false
 
 [dependencies]
+thiserror = "1.0.26"
+gix-hash = { version = "^0.10.3", path = "../gix-hash" }
+gix-object = { version = "^0.28.0", path = "../gix-object" }
