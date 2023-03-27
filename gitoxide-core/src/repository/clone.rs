@@ -86,7 +86,7 @@ pub(crate) mod function {
 
         match fetch_outcome.status {
             Status::NoPackReceived { .. } => {
-                unreachable!("clone always has changes")
+                writeln!(err, "The cloned repository appears to be empty")?;
             }
             Status::DryRun { .. } => unreachable!("dry-run unsupported"),
             Status::Change { update_refs, .. } => {
