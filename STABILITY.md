@@ -106,7 +106,7 @@ If there are additional breaking changes without a release, these push back the 
 ### Tier 1: released apps and application crates
 
 Released apps and application crates are marked with major version number 1 or above, like `2.3.0+21.06` and live in tier 1 _(->ST1)_,
-with the build identifiers for year (`21`) and and month `06` appended, based on the actual release year and month.
+with the build identifiers for year (`21`) and month `06` appended, based on the actual release year and month.
 
 Breaking changes are collected and may be released no more often than every 6 months by incrementing the major version number. If there are additional breaking changes,
 these push bac the release date so that they can be tested at least for 3 months. For example, a breaking change happens in January 01, and another breaking change in February 15.

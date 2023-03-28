@@ -250,7 +250,7 @@ pub mod checkout {
     pub mod workers {
         use crate::config;
 
-        /// The error produced when failing to parse the the `checkout.workers` key.
+        /// The error produced when failing to parse the `checkout.workers` key.
         pub type Error = config::key::Error<gix_config::value::Error, 'n', 'd'>;
     }
 }

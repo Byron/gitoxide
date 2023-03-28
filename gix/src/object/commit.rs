@@ -109,7 +109,7 @@ impl<'repo> Commit<'repo> {
             .map(move |id| id.attach(repo))
     }
 
-    /// Parse the commit and return the the tree object it points to.
+    /// Parse the commit and return the tree object it points to.
     pub fn tree(&self) -> Result<Tree<'repo>, Error> {
         match self.tree_id()?.object()?.try_into_tree() {
             Ok(tree) => Ok(tree),
@@ -117,7 +117,7 @@ impl<'repo> Commit<'repo> {
         }
     }
 
-    /// Parse the commit and return the the tree id it points to.
+    /// Parse the commit and return the tree id it points to.
     pub fn tree_id(&self) -> Result<crate::Id<'repo>, gix_object::decode::Error> {
         gix_object::CommitRefIter::from_bytes(&self.data)
             .tree_id()

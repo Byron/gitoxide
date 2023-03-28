@@ -57,7 +57,7 @@ pub enum Event<'a> {
     /// A completed value. This may be any single-line string, including the empty string
     /// if an implicit boolean value is used.
     /// Note that these values may contain spaces and any special character. This value is
-    /// also unprocessed, so it it may contain double quotes that should be
+    /// also unprocessed, so it may contain double quotes that should be
     /// [normalized][crate::value::normalize()] before interpretation.
     Value(Cow<'a, BStr>),
     /// Represents any token used to signify a newline character. On Unix

@@ -121,7 +121,7 @@ impl<'event> Body<'event> {
         &self.0
     }
 
-    /// Returns the the range containing the value events for the `key`, with value range being `None` if there is no key-value separator
+    /// Returns the range containing the value events for the `key`, with value range being `None` if there is no key-value separator
     /// and only a 'fake' Value event with an empty string in side.
     /// If the value is not found, `None` is returned.
     pub(crate) fn key_and_value_range_by(&self, key: &Key<'_>) -> Option<(Range<usize>, Option<Range<usize>>)> {

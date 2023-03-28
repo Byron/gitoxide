@@ -10,7 +10,7 @@ pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
     !(git_dir.join("index").exists() || (git_dir.file_name() == Some(OsStr::new(DOT_GIT_DIR))))
 }
 
-/// Returns true if `git_dir` is is located within a `.git/modules` directory, indicating it's a submodule clone.
+/// Returns true if `git_dir` is located within a `.git/modules` directory, indicating it's a submodule clone.
 pub fn submodule_git_dir(git_dir: impl AsRef<Path>) -> bool {
     let git_dir = git_dir.as_ref();
 
