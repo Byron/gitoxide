@@ -166,10 +166,10 @@ impl file::Store {
         let linked_git_dir =
             |worktree_name: &BStr| commondir.join("worktrees").join(gix_path::from_bstr(worktree_name));
         name.category_and_short_name()
-            .and_then(|(c, sn)| {
+            .map(|(c, sn)| {
                 use crate::Category::*;
                 let sn = FullNameRef::new_unchecked(sn);
-                Some(match c {
+                match c {
                     LinkedPseudoRef { name: worktree_name } => is_reflog
                         .then(|| (linked_git_dir(worktree_name).into(), sn))
                         .unwrap_or((commondir.into(), name)),
@@ -187,7 +187,7 @@ impl file::Store {
                         })
                         .unwrap_or((commondir.into(), sn)),
                     PseudoRef | Bisect | Rewritten | WorktreePrivate => (self.git_dir.as_path().into(), name),
-                })
+                }
             })
             .unwrap_or((commondir.into(), name))
     }
