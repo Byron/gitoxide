@@ -72,7 +72,7 @@ for simple workspaces or single-crate workspaces, as of 2021-08-12, so use it: `
 Here is what `cargo smart-release` does differently: "It tries really hard to do what _I_ want most of the time when publishing workspace `gitoxide` crates".
 
 - ~~be safe to execute, so it's disarmed by default~~
-- specify one ore more crates, and detect which crates need publishing automatically
+- specify one or more crates, and detect which crates need publishing automatically
 - handle dependency cycles in such a way that increases the chances of overall success
 - try really hard to not leave the workspace in an inconsistent state when something goes wrong
 - be a playground for `gitoxide` to have a reason to make it much more convenient and more feasible for application authors (aka dog-fooding)
