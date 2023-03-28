@@ -55,7 +55,7 @@ impl Source {
     /// Returns the location at which a file of this type would be stored, or `None` if
     /// there is no notion of persistent storage for this source, with `env_var` to obtain environment variables.
     /// Note that the location can be relative for repository-local sources like `Local` and `Worktree`,
-    /// and the caller has to known which base it it relative to, namely the `common_dir` in the `Local` case
+    /// and the caller has to known which base it is relative to, namely the `common_dir` in the `Local` case
     /// and the `git_dir` in the `Worktree` case.
     /// Be aware that depending on environment overrides, multiple scopes might return the same path, which should
     /// only be loaded once nonetheless.

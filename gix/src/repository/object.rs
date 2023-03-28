@@ -36,7 +36,7 @@ impl crate::Repository {
         Ok(Object::from_data(id, kind, buf, self))
     }
 
-    /// Try to find the object with `id` or return `None` it it wasn't found.
+    /// Try to find the object with `id` or return `None` if it wasn't found.
     pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::Error> {
         let id = id.into();
         if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {

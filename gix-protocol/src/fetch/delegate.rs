@@ -86,7 +86,7 @@ pub trait DelegateBlocking {
     /// with each call to `negotiate` to find the common base(s).
     ///
     /// Note that you should not `want` and object that you already have.
-    /// `refs` are the the tips of on the server side, effectively the latest objects _they_ have.
+    /// `refs` are the tips of on the server side, effectively the latest objects _they_ have.
     ///
     /// Return `Action::Close` if you know that there are no `haves` on your end to allow the server to send all of its objects
     /// as is the case during initial clones.

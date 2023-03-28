@@ -262,7 +262,7 @@ to happen while it is running.
 
 Scaling near perfectly with added CPU cores and great performance even in the biggest mono-repos are its hallmark.
 
-As the program is is written with missing objects being the default, it gracefully handles and expects such cases. While running in TUI mode, it offers a manual
+As the program is written with missing objects being the default, it gracefully handles and expects such cases. While running in TUI mode, it offers a manual
 refresh to the user in case they fetched or pulled in the meantime, to refresh the screen and update its object database to make all newly added objects available.
 
 **Problems and Solutions**
@@ -287,7 +287,7 @@ and 3 receive-packs per second. At peak times during the day, these values are 1
 _(assumption is 50.000 * 5 pushes and 10 fetches and 2.5 clones)_. Most client-side push operations are sending just 1 or 2 commits with a couple of changes, averaging pack sizes
 of about 20 objects for a total of 5.000.000 new objects per day or an average of ~208.000 per hour. Only 1 branch is typically updated for 250.000 per day or ~10400 per hour.
 
-After each receive-pack was run and the client connection was informed of success, a background job is started to push the changes using the git protocol to a a sibling server
+After each receive-pack was run and the client connection was informed of success, a background job is started to push the changes using the git protocol to a sibling server
 which also takes part in serving clients and also pushes its changes to this server (the writes caused by it are already part of the above measurements).
 
 `git-maintenance` runs every 5 minutes using the built-in scheduling mechanism to repack references, place loose objects into packs, create and update reverse index caches

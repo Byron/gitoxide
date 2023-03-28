@@ -270,7 +270,7 @@ fn fixture_bytes_inner(path: impl AsRef<Path>, root: DirectoryRoot) -> Vec<u8> {
 /// That way it's trivial to prevent creation of all archives with `generated-archives/*.tar.xz` in the root
 /// or more specific `.gitignore` configurations in lower levels of the work tree.
 ///
-/// The latter is useful if the the script's output is platform specific.
+/// The latter is useful if the script's output is platform specific.
 pub fn scripted_fixture_read_only(script_name: impl AsRef<Path>) -> Result<PathBuf> {
     scripted_fixture_read_only_with_args(script_name, None::<String>)
 }
