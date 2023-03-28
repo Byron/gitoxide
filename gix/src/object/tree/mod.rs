@@ -22,6 +22,11 @@ impl<'repo> Tree<'repo> {
         Id::from_id(self.id, self.repo)
     }
 
+    /// Parse our tree data and return the parse tree for direct access to its entries.
+    pub fn decode(&self) -> Result<gix_object::TreeRef<'_>, gix_object::decode::Error> {
+        gix_object::TreeRef::from_bytes(&self.data)
+    }
+
     // TODO: tests.
     /// Follow a sequence of `path` components starting from this instance, and look them up one by one until the last component
     /// is looked up and its tree entry is returned.
@@ -153,6 +158,18 @@ mod entry {
         /// Return the contained object.
         pub fn detach(self) -> gix_object::tree::Entry {
             self.inner
+        }
+    }
+}
+
+mod _impls {
+    use crate::Tree;
+
+    impl TryFrom<Tree<'_>> for gix_object::Tree {
+        type Error = gix_object::decode::Error;
+
+        fn try_from(t: Tree<'_>) -> Result<Self, Self::Error> {
+            t.decode().map(Into::into)
         }
     }
 }

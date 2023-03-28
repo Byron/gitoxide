@@ -20,7 +20,12 @@ fn tree() -> crate::Result {
     let repo = basic_repo()?;
     let commit = repo.head_commit()?;
 
-    assert_eq!(commit.tree()?.id, commit.tree_id().expect("id present"));
+    let tree = commit.tree()?;
+    assert_eq!(tree.id, commit.tree_id().expect("id present"));
+
+    // It's possible to convert a `gix::Tree` into a lower-level tree modify it.
+    let _modififyable_tree: gix::objs::Tree = tree.try_into()?;
+
     assert_eq!(
         commit.tree_id().ok().map(|id| id.detach()),
         Some(hex_to_id("21d3ba9a26b790a4858d67754ae05d04dfce4d0c"))
