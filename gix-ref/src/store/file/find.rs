@@ -186,10 +186,10 @@ impl file::Store {
                             }
                         })
                         .unwrap_or((commondir.into(), sn)),
-                    PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
+                    PseudoRef | Bisect | Rewritten | WorktreePrivate => (self.git_dir.as_path().into(), name),
                 })
             })
-            .unwrap_or((self.git_dir.as_path().into(), name))
+            .unwrap_or((commondir.into(), name))
     }
 
     /// Implements the logic required to transform a fully qualified refname into a filesystem path

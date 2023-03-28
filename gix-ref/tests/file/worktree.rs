@@ -281,6 +281,9 @@ mod writable {
                     ("refs/heads/new", new_id_main_str),
                     ("refs/heads/shared", new_id_linked_str),
                     ("refs/heads/w1", "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7"),
+                    ("refs/stacks/common", "134385f6d781b7e97062102c6a483440bfda2a03"),
+                    ("refs/stacks/w1", "17d78c64cef6c33a10a604573fd2c429e477fd63"),
+                    ("refs/stacks/wtdetached", "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7"),
                     ("refs/tags/dt1", "d3ba65e5e3be5cdd7210da9998307a4762999cc5"),
                     ("refs/tags/t1", "9556057aee5abb06912922e9f26c46386a816822")
                 ]
@@ -289,6 +292,30 @@ mod writable {
                 .collect::<Vec<_>>(),
                 "we traverse only refs of the main worktree"
             );
+            assert_eq!(
+                store
+                    .iter()?
+                    .prefixed("refs/stacks/")?
+                    .map(Result::unwrap)
+                    .map(|r| (r.name.to_string(), r.target.to_string()))
+                    .collect::<Vec<_>>(),
+                [
+                    ("refs/stacks/common", "134385f6d781b7e97062102c6a483440bfda2a03"),
+                    ("refs/stacks/w1", "17d78c64cef6c33a10a604573fd2c429e477fd63"),
+                    ("refs/stacks/wtdetached", "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7"),
+                ]
+                .iter()
+                .map(|(a, b)| (a.to_string(), b.to_string()))
+                .collect::<Vec<_>>(),
+            );
+
+            for name in ["refs/stacks/common", "refs/stacks/w1", "refs/stacks/wtdetached"] {
+                assert_eq!(
+                    store.find(name)?.name.category_and_short_name(),
+                    None,
+                    "uncategorized but present as they are shared"
+                );
+            }
 
             let mut buf = Vec::new();
             let unprefixed_ref_name = "refs/heads/new";
@@ -536,6 +563,9 @@ mod writable {
                     ("refs/heads/new", new_id_main_str),
                     ("refs/heads/shared", new_id_str),
                     ("refs/heads/w1", "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7"),
+                    ("refs/stacks/common", "134385f6d781b7e97062102c6a483440bfda2a03"),
+                    ("refs/stacks/w1", "17d78c64cef6c33a10a604573fd2c429e477fd63"),
+                    ("refs/stacks/wtdetached", "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7"),
                     ("refs/tags/dt1", "d3ba65e5e3be5cdd7210da9998307a4762999cc5"),
                     ("refs/tags/t1", "9556057aee5abb06912922e9f26c46386a816822"),
                     ("refs/worktree/private", new_id_str)
@@ -545,6 +575,30 @@ mod writable {
                 .collect::<Vec<_>>(),
                 "we traverse only refs of the main worktree"
             );
+            assert_eq!(
+                store
+                    .iter()?
+                    .prefixed("refs/stacks/")?
+                    .map(Result::unwrap)
+                    .map(|r| (r.name.to_string(), r.target.to_string()))
+                    .collect::<Vec<_>>(),
+                [
+                    ("refs/stacks/common", "134385f6d781b7e97062102c6a483440bfda2a03"),
+                    ("refs/stacks/w1", "17d78c64cef6c33a10a604573fd2c429e477fd63"),
+                    ("refs/stacks/wtdetached", "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7"),
+                ]
+                .iter()
+                .map(|(a, b)| (a.to_string(), b.to_string()))
+                .collect::<Vec<_>>(),
+            );
+
+            for name in ["refs/stacks/common", "refs/stacks/w1", "refs/stacks/wtdetached"] {
+                assert_eq!(
+                    store.find(name)?.name.category_and_short_name(),
+                    None,
+                    "uncategorized but present as they are shared"
+                );
+            }
 
             let mut buf = Vec::new();
 
