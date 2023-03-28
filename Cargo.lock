@@ -1293,7 +1293,7 @@ dependencies = [
  "gix-path 0.7.2",
  "gix-prompt",
  "gix-protocol",
- "gix-ref 0.27.1",
+ "gix-ref 0.27.2",
  "gix-refspec",
  "gix-revision",
  "gix-sec 0.6.2",
@@ -1445,7 +1445,7 @@ dependencies = [
  "gix-features 0.28.1",
  "gix-glob 0.5.5",
  "gix-path 0.7.2",
- "gix-ref 0.27.1",
+ "gix-ref 0.27.2",
  "gix-sec 0.6.2",
  "log",
  "memchr",
@@ -1466,7 +1466,7 @@ dependencies = [
  "gix",
  "gix-config",
  "gix-path 0.7.2",
- "gix-ref 0.27.1",
+ "gix-ref 0.27.2",
  "gix-sec 0.6.2",
  "gix-testtools",
  "serde_derive",
@@ -1579,7 +1579,7 @@ dependencies = [
  "dunce",
  "gix-hash 0.10.3",
  "gix-path 0.7.2",
- "gix-ref 0.27.1",
+ "gix-ref 0.27.2",
  "gix-sec 0.6.2",
  "gix-testtools",
  "is_ci",
@@ -2030,7 +2030,7 @@ dependencies = [
 
 [[package]]
 name = "gix-ref"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
  "document-features",
  "gix-actor 0.19.0",
@@ -2060,7 +2060,7 @@ dependencies = [
  "gix-lock 5.0.0",
  "gix-object 0.28.0",
  "gix-odb",
- "gix-ref 0.27.1",
+ "gix-ref 0.27.2",
  "gix-testtools",
  "gix-validate 0.7.4",
  "gix-worktree 0.15.1",
