@@ -51,7 +51,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// - Only equal signs (optionally padded by spaces) are valid name/value
 /// delimiters.
 ///
-/// Note that that things such as case-sensitivity or duplicate sections are
+/// Note that things such as case-sensitivity or duplicate sections are
 /// _not_ handled. This parser is a low level _syntactic_ interpreter
 /// and higher level wrappers around this parser, which may
 /// or may not be zero-copy, should handle _semantic_ values. This also means

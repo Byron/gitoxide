@@ -109,7 +109,7 @@ pub mod integrity {
 impl super::Store {
     /// Check the integrity of all objects as per the given `options`.
     ///
-    /// Note that this will not not force loading all indices or packs permanently, as we will only use the momentarily loaded disk state.
+    /// Note that this will not force loading all indices or packs permanently, as we will only use the momentarily loaded disk state.
     /// This does, however, include all alternates.
     pub fn verify_integrity<C, P, F>(
         &self,

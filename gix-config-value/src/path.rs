@@ -108,7 +108,7 @@ impl<'a> Path<'a> {
     ///
     /// If this path starts with `~/` or `~user/` or `%(prefix)/`
     ///  - `~/` is expanded to the value of `home_dir`. The caller can use the [dirs](https://crates.io/crates/dirs) crate to obtain it.
-    ///    It it is required but not set, an error is produced.
+    ///    If it is required but not set, an error is produced.
     ///  - `~user/` to the specified user’s home directory, e.g `~alice` might get expanded to `/home/alice` on linux, but requires
     ///    the `home_for_user` function to be provided.
     ///    The interpolation uses `getpwnam` sys call and is therefore not available on windows.

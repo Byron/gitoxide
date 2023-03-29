@@ -35,7 +35,7 @@ fn sort_entries() {
     assert_eq!(
         file.entry_by_path_and_stage(new_entry_path, 0),
         None,
-        "new entry can't be found to to incorrect order"
+        "new entry can't be found due to incorrect order"
     );
 
     file.sort_entries();
