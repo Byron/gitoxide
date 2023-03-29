@@ -1,4 +1,4 @@
-//! The purpose of of this crate is to abstract the user interface of `gix` (the command-line interface) from the actual implementation.
+//! The purpose of this crate is to abstract the user interface of `gix` (the command-line interface) from the actual implementation.
 //! That way, one day it's possible to provide alternative frontends, including user interfaces.
 //!
 //! ### What is `gix`?

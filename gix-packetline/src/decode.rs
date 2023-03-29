@@ -43,7 +43,7 @@ pub enum Stream<'a> {
         /// The amount of bytes consumed from input
         bytes_consumed: usize,
     },
-    /// A packet line could not yet be parsed to to missing bytes
+    /// A packet line could not yet be parsed due to missing bytes
     Incomplete {
         /// The amount of additional bytes needed for the parsing to complete
         bytes_needed: usize,
