@@ -95,7 +95,7 @@ impl Cache {
                             "HOME" => Some(home_env),
                             _ => None,
                         }
-                        .and_then(|perm| perm.check_opt(name).and_then(std::env::var_os))
+                        .and_then(|perm| perm.check_opt(name).and_then(gix_path::env_var))
                     })
                     .map(|p| (source, p.into_owned()))
             })

@@ -36,7 +36,7 @@ fn default_path() -> PathBuf {
         .or_else(|| {
             std::env::var_os("CARGO_HOME")
                 .map(PathBuf::from)
-                .or_else(|| std::env::var_os("HOME").map(|dir| Path::new(&dir).join(".cargo")))
+                .or_else(|| home::home_dir().map(|dir| Path::new(&dir).join(".cargo")))
         })
         .expect("one of these paths works")
         .join("registry/index")
