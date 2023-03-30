@@ -2,6 +2,7 @@
 use std::{borrow::Cow, path::PathBuf, time::Duration};
 
 use gix_lock::acquire::Fail;
+use gix_path::home;
 
 use crate::{
     bstr::BStr,
@@ -203,10 +204,9 @@ impl Cache {
         std::env::var_os("XDG_CONFIG_HOME")
             .map(|path| (PathBuf::from(path), &self.xdg_config_home_env))
             .or_else(|| {
-                std::env::var_os("HOME").map(|path| {
+                home().map(|mut p| {
                     (
                         {
-                            let mut p = PathBuf::from(path);
                             p.push(".config");
                             p
                         },
@@ -226,8 +226,6 @@ impl Cache {
     /// We never fail for here even if the permission is set to deny as we `gix-config` will fail later
     /// if it actually wants to use the home directory - we don't want to fail prematurely.
     pub(crate) fn home_dir(&self) -> Option<PathBuf> {
-        std::env::var_os("HOME")
-            .map(PathBuf::from)
-            .and_then(|path| self.home_env.check_opt(path))
+        home().and_then(|path| self.home_env.check_opt(path))
     }
 }

@@ -56,6 +56,9 @@
 pub struct Spec(bstr::BString);
 
 mod convert;
+use std::env::var_os;
+use std::path::PathBuf;
+
 pub use convert::*;
 
 mod util;
@@ -66,3 +69,32 @@ mod spec;
 ///
 pub mod realpath;
 pub use realpath::function::{realpath, realpath_opts};
+
+/// Returns a platform independent home directory
+/// On unix this simply returns $HOME on windows this uses %HOMEDRIVE%\%HOMEPATH% or %USERPROFILE%
+pub fn home() -> Option<PathBuf> {
+    if let Some(home) = var_os("HOME") {
+        return Some(home.into());
+    }
+
+    // TODO cache env access on windows? git does this by setting HOME but
+    // setting enviorment variables is a *really* bad idea in library
+
+    // FIXME: technically we should also check HOMESHARE in case HOME is a UNC path
+    // but git doesn't do this either so probably best to wait for an upstream fix
+    #[cfg(windows)]
+    if let Some(homedrive) = var_os("HOMEDRIVE") {
+        if let Some(home_path) = var_os("HOMEPATH") {
+            let home = PathBuf::from(homedrive).join(home_path);
+            if home.metadata().map_or(false, |home| home.is_dir()) {
+                return Some(home);
+            }
+        }
+    }
+    #[cfg(windows)]
+    if let Some(userprofile) = var_os("USERPROFILE") {
+        return Some(userprofile.into());
+    }
+
+    None
+}

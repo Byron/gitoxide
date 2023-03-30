@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use gix_path::home;
+
 use crate::{
     file::{init, Metadata},
     path, source, File, Source,
@@ -30,7 +32,7 @@ impl File<'static> {
             .flat_map(|kind| kind.sources())
             .filter_map(|source| {
                 let path = source
-                    .storage_location(&mut |name| std::env::var_os(name))
+                    .storage_location(&mut crate::env_var)
                     .and_then(|p| p.is_file().then_some(p))
                     .map(|p| p.into_owned());
 
@@ -43,7 +45,7 @@ impl File<'static> {
                 .into()
             });
 
-        let home = std::env::var("HOME").ok().map(PathBuf::from);
+        let home = home();
         let options = init::Options {
             includes: init::includes::Options::follow_without_conditional(home.as_deref()),
             ..Default::default()
@@ -59,7 +61,7 @@ impl File<'static> {
     ///
     /// [`gix-config`'s documentation]: https://git-scm.com/docs/gix-config#Documentation/gix-config.txt-GITCONFIGCOUNT
     pub fn from_environment_overrides() -> Result<File<'static>, init::from_env::Error> {
-        let home = std::env::var("HOME").ok().map(PathBuf::from);
+        let home = home();
         let options = init::Options {
             includes: init::includes::Options::follow_without_conditional(home.as_deref()),
             ..Default::default()
@@ -88,7 +90,7 @@ impl File<'static> {
             let mut path = dir.into();
             path.push(
                 source
-                    .storage_location(&mut |n| std::env::var_os(n))
+                    .storage_location(&mut crate::env_var)
                     .expect("location available for local"),
             );
             let local = Self::from_path_no_includes(&path, source)?;
@@ -101,7 +103,7 @@ impl File<'static> {
                 let source = Source::Worktree;
                 let path = git_dir.join(
                     source
-                        .storage_location(&mut |n| std::env::var_os(n))
+                        .storage_location(&mut crate::env_var)
                         .expect("location available for worktree"),
                 );
                 Self::from_path_no_includes(path, source)
@@ -110,7 +112,7 @@ impl File<'static> {
         }
         .transpose()?;
 
-        let home = std::env::var("HOME").ok().map(PathBuf::from);
+        let home = home();
         let options = init::Options {
             includes: init::includes::Options::follow(
                 path::interpolate::Context {

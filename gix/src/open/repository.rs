@@ -2,6 +2,7 @@
 use std::{borrow::Cow, path::PathBuf};
 
 use gix_features::threading::OwnShared;
+use gix_path::home;
 
 use super::{Error, Options};
 use crate::{
@@ -180,9 +181,7 @@ impl ThreadSafeRepository {
         };
         let head = refs.find("HEAD").ok();
         let git_install_dir = crate::path::install_dir().ok();
-        let home = std::env::var_os("HOME")
-            .map(PathBuf::from)
-            .and_then(|home| env.home.check_opt(home));
+        let home = home().and_then(|home| env.home.check_opt(home));
 
         let mut filter_config_section = filter_config_section.unwrap_or(config::section::is_trusted);
         let config = config::Cache::from_stage_one(

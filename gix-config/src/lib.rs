@@ -44,9 +44,21 @@ pub mod lookup;
 pub mod parse;
 ///
 pub mod value;
+use std::ffi::OsString;
+
 pub use gix_config_value::{color, integer, path, Boolean, Color, Integer, Path};
 
 mod types;
 pub use types::{File, Source};
 ///
 pub mod source;
+
+/// Returns the contents of an eviorment variable with some specical handeling
+/// for certain enviorment variables (like $HOME) for platform compatability
+pub fn env_var(var: &str) -> Option<OsString> {
+    if var == "HOME" {
+        gix_path::home().map(|home| home.into_os_string())
+    } else {
+        std::env::var_os(var)
+    }
+}
