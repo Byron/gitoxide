@@ -1,6 +1,6 @@
 [package]
 name = "gix-config"
-version = "0.20.0"
+version = "0.20.1"
 repository = "https://github.com/Byron/gitoxide"
 description = "A gix-config file parser and editor from the gitoxide project"
 license = "MIT OR Apache-2.0"
@@ -18,8 +18,8 @@ serde1 = ["serde", "bstr/serde", "gix-sec/serde1", "gix-ref/serde1", "gix-glob/s
 
 [dependencies]
 gix-features = { version = "^0.28.0", path = "../gix-features"}
-gix-config-value = { version = "^0.10.1", path = "../gix-config-value" }
-gix-path = { version = "^0.7.2", path = "../gix-path" }
+gix-config-value = { version = "^0.10.2", path = "../gix-config-value" }
+gix-path = { version = "^0.7.3", path = "../gix-path" }
 gix-sec = { version = "^0.6.2", path = "../gix-sec" }
 gix-ref = { version = "^0.27.2", path = "../gix-ref" }
 gix-glob = { version = "^0.5.5", path = "../gix-glob" }

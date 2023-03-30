@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.43.1 (2023-03-30)
+
+### Documentation
+
+ - <csr-id-02c4659984fa6423bc76cc4980a143edaba8ace0/> fix minor typos
+ - <csr-id-cc48c35d0ecf35824910c5b6ecc62fe9b2aff1b5/> fix minor typos
+
+### New Features
+
+ - <csr-id-7c2e5c8d08e4dd1ec115ae06f20f9c8f93d6d616/> add `Tree::decode()` and `TryFrom<Tree> for gix::objs::Tree`.
+   This makes it possible to obtain mutable trees for creating trees by hand
+   for the purpose of making commits.
+
+### Bug Fixes
+
+ - <csr-id-d1bd513f27e17787eb223f7b0521f954c518153e/> $HOME detection on windows
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 3 calendar days.
+ - 4 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'pascalkuthe/main' ([`d47cebe`](https://github.com/Byron/gitoxide/commit/d47cebe3b23080c45829cb307b867220e3af20db))
+    - Refactor ([`d1e5e12`](https://github.com/Byron/gitoxide/commit/d1e5e12d54f79c030325860838c1cfadac1a7ac5))
+    - $HOME detection on windows ([`d1bd513`](https://github.com/Byron/gitoxide/commit/d1bd513f27e17787eb223f7b0521f954c518153e))
+    - Fix minor typos ([`02c4659`](https://github.com/Byron/gitoxide/commit/02c4659984fa6423bc76cc4980a143edaba8ace0))
+    - Fix minor typos ([`cc48c35`](https://github.com/Byron/gitoxide/commit/cc48c35d0ecf35824910c5b6ecc62fe9b2aff1b5))
+    - Add `Tree::decode()` and `TryFrom<Tree> for gix::objs::Tree`. ([`7c2e5c8`](https://github.com/Byron/gitoxide/commit/7c2e5c8d08e4dd1ec115ae06f20f9c8f93d6d616))
+    - Release gix-ref v0.27.2 ([`e965b18`](https://github.com/Byron/gitoxide/commit/e965b18aedcf13ec4538bc7bc700269a56ca615e))
+    - Be sure to clear the buffer after an intermediate read error happened and we ignore it. ([`877951a`](https://github.com/Byron/gitoxide/commit/877951aa0009ab5e2a814c95f4c5d3662305cb27))
+</details>
+
 ## 0.43.0 (2023-03-26)
 
 <csr-id-87f5621d941b5af40abd59a26164a09d0dde2649/>
@@ -24,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 5 calendar days.
+ - 6 commits contributed to the release over the course of 5 calendar days.
  - 11 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#787](https://github.com/Byron/gitoxide/issues/787), [#790](https://github.com/Byron/gitoxide/issues/790)
@@ -40,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#790](https://github.com/Byron/gitoxide/issues/790)**
     - Opening repositories without 'strict' mode also ignores IO errors. ([`7bd8823`](https://github.com/Byron/gitoxide/commit/7bd8823ab4241d6d0401f03aec8c0d34f68c347c))
  * **Uncategorized**
+    - Release gix-tempfile v5.0.2, gix-validate v0.7.4, gix-config v0.20.0, gix-prompt v0.3.3, gix-diff v0.28.1, gix-discover v0.16.1, gix-pack v0.33.2, gix-transport v0.29.1, gix-protocol v0.30.1, gix-revision v0.12.1, gix-worktree v0.15.1, gix v0.43.0, safety bump gix v0.43.0 ([`5dc1f9f`](https://github.com/Byron/gitoxide/commit/5dc1f9f2bcb8b3e147115fcb6f76558e8f48ffef))
     - Prepare changelogs prior to release ([`3016a28`](https://github.com/Byron/gitoxide/commit/3016a285f566bdfe7de2774fa6f2254c1b1a2c51))
     - Merge branch 'fix-790' ([`ee36e5b`](https://github.com/Byron/gitoxide/commit/ee36e5bb985e9ad90bc382cdd051a8b5295ca18c))
     - Less dependencies for tests (via `serial_test` no default features) ([`8f2accd`](https://github.com/Byron/gitoxide/commit/8f2accdf738def9aa4abdf08fc299d0e9807bc3e))
