@@ -344,8 +344,15 @@ where
     {
         let mut cursor = input;
         let mut ofs = 0;
-        while let Some((pos, b)) = cursor.iter().enumerate().find(|(_, b)| {
-            if b"@~^:.".contains(b) {
+        while let Some((pos, b)) = cursor.iter().enumerate().find(|(pos, b)| {
+            if **b == b'@' {
+                cursor.get(pos + 1) == Some(&b'{')
+                    || cursor
+                        .get(pos + 1)
+                        .and_then(|b| Some(b"~^:.".contains(b)))
+                        .unwrap_or(false)
+                    || (*pos == 0 && cursor.get(1) == None)
+            } else if b"~^:.".contains(b) {
                 true
             } else {
                 if let Some(num) = consecutive_hex_chars.as_mut() {
