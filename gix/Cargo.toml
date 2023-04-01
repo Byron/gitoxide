@@ -125,7 +125,7 @@ gix-hash = { version = "^0.10.3", path = "../gix-hash" }
 gix-object = { version = "^0.28.0", path = "../gix-object" }
 gix-actor = { version = "^0.19.0", path = "../gix-actor" }
 gix-pack = { version = "^0.33.2", path = "../gix-pack", features = ["object-cache-dynamic"] }
-gix-revision = { version = "^0.12.1", path = "../gix-revision" }
+gix-revision = { version = "^0.12.2", path = "../gix-revision" }
 
 gix-path = { version = "^0.7.3", path = "../gix-path" }
 gix-url = { version = "^0.16.0", path = "../gix-url" }

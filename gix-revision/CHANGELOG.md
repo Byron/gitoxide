@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.12.2 (2023-04-01)
+
+### Bug Fixes
+
+ - <csr-id-cfaab7ffc67d33224afe4b92e42059c0bb88ea02/> Parse revisions with `@` in their name.
+   Previously these would cause a parse error due to confusing `@` with
+   the short form of `HEAD`.
+   
+   Merge branch 'fix-rev-parse-with-at'
+
+### Other
+
+ - <csr-id-1c27e7a3745b156ea953e430f726576389fad5f2/> Parse revisions with the @ character
+   Fixes https://github.com/Byron/gitoxide/issues/802
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 6 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#802](https://github.com/Byron/gitoxide/issues/802)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#802](https://github.com/Byron/gitoxide/issues/802)**
+    - Parse revisions with `@` in their name. ([`cfaab7f`](https://github.com/Byron/gitoxide/commit/cfaab7ffc67d33224afe4b92e42059c0bb88ea02))
+ * **Uncategorized**
+    - Refactor ([`c0905ce`](https://github.com/Byron/gitoxide/commit/c0905ce74f1bef4c42c9729e2bcf267d7aa6af5e))
+    - Parse revisions with the @ character ([`1c27e7a`](https://github.com/Byron/gitoxide/commit/1c27e7a3745b156ea953e430f726576389fad5f2))
+</details>
+
 ## 0.12.1 (2023-03-26)
 
 A maintenance release without any user-facing changes.
@@ -13,7 +50,7 @@ A maintenance release without any user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 3 calendar days.
+ - 3 commits contributed to the release over the course of 3 calendar days.
  - 21 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +62,7 @@ A maintenance release without any user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-tempfile v5.0.2, gix-validate v0.7.4, gix-config v0.20.0, gix-prompt v0.3.3, gix-diff v0.28.1, gix-discover v0.16.1, gix-pack v0.33.2, gix-transport v0.29.1, gix-protocol v0.30.1, gix-revision v0.12.1, gix-worktree v0.15.1, gix v0.43.0, safety bump gix v0.43.0 ([`5dc1f9f`](https://github.com/Byron/gitoxide/commit/5dc1f9f2bcb8b3e147115fcb6f76558e8f48ffef))
     - Prepare changelogs prior to release ([`3016a28`](https://github.com/Byron/gitoxide/commit/3016a285f566bdfe7de2774fa6f2254c1b1a2c51))
     - Correct more typos with `typos` tool. ([`2321eb9`](https://github.com/Byron/gitoxide/commit/2321eb971c2b89551506e2016a3495fafd15b47d))
 </details>

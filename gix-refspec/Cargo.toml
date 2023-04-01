@@ -13,7 +13,7 @@ rust-version = "1.64"
 doctest = false
 
 [dependencies]
-gix-revision = { version = "^0.12.0", path = "../gix-revision" }
+gix-revision = { version = "^0.12.2", path = "../gix-revision" }
 gix-validate = { version = "^0.7.3", path = "../gix-validate" }
 gix-hash = { version = "^0.10.3", path = "../gix-hash" }
 
