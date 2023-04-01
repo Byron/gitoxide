@@ -50,13 +50,14 @@ impl<'repo> Platform<'repo> {
 
 /// Produce the iterator
 impl<'repo> Platform<'repo> {
-    /// Return an iterator to traverse all commits reachable as configured by the [Platform].
+    /// For each commit, let `filter` return `true` if it and its parents should be included in the traversal, or `false`
+    /// if the traversal should exclude it and its ancestry entirely.
     ///
-    /// # Performance
-    ///
-    /// It's highly recommended to set an [`object cache`][Repository::object_cache_size()] on the parent repo
-    /// to greatly speed up performance if the returned id is supposed to be looked up right after.
-    pub fn all(self) -> Result<revision::Walk<'repo>, Error> {
+    /// If `filter` is None, no pruning of the graph will be performed which is the default.
+    pub fn selected(
+        self,
+        mut filter: impl FnMut(&gix_hash::oid) -> bool + 'repo,
+    ) -> Result<revision::Walk<'repo>, Error> {
         let Platform {
             repo,
             tips,
@@ -74,22 +75,27 @@ impl<'repo> Platform<'repo> {
                         let shallow_commits = repo.shallow_commits()?;
                         let mut grafted_parents_to_skip = Vec::new();
                         let mut buf = Vec::new();
-                        move |id| match shallow_commits.as_ref() {
-                            Some(commits) => {
-                                let id = id.to_owned();
-                                if let Ok(idx) = grafted_parents_to_skip.binary_search(&id) {
-                                    grafted_parents_to_skip.remove(idx);
-                                    return false;
-                                };
-                                if commits.binary_search(&id).is_ok() {
-                                    if let Ok(commit) = repo.objects.find_commit_iter(id, &mut buf) {
-                                        grafted_parents_to_skip.extend(commit.parent_ids());
-                                        grafted_parents_to_skip.sort();
-                                    }
-                                };
-                                true
+                        move |id| {
+                            if !filter(id) {
+                                return false;
                             }
-                            None => true,
+                            match shallow_commits.as_ref() {
+                                Some(commits) => {
+                                    let id = id.to_owned();
+                                    if let Ok(idx) = grafted_parents_to_skip.binary_search(&id) {
+                                        grafted_parents_to_skip.remove(idx);
+                                        return false;
+                                    };
+                                    if commits.binary_search(&id).is_ok() {
+                                        if let Ok(commit) = repo.objects.find_commit_iter(id, &mut buf) {
+                                            grafted_parents_to_skip.extend(commit.parent_ids());
+                                            grafted_parents_to_skip.sort();
+                                        }
+                                    };
+                                    true
+                                }
+                                None => true,
+                            }
                         }
                     },
                 )
@@ -97,6 +103,15 @@ impl<'repo> Platform<'repo> {
                 .parents(parents),
             ),
         })
+    }
+    /// Return an iterator to traverse all commits reachable as configured by the [Platform].
+    ///
+    /// # Performance
+    ///
+    /// It's highly recommended to set an [`object cache`][Repository::object_cache_size()] on the parent repo
+    /// to greatly speed up performance if the returned id is supposed to be looked up right after.
+    pub fn all(self) -> Result<revision::Walk<'repo>, Error> {
+        self.selected(|_| true)
     }
 }
 
