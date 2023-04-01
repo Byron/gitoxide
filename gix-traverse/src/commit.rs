@@ -23,7 +23,7 @@ impl Default for Parents {
 }
 
 /// Specify how to sort commits during traversal.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Sorting {
     /// Commits are sorted as they are mentioned in the commit graph.
     Topological,
