@@ -1,5 +1,3 @@
-use gix_revision::spec;
-
 use crate::spec::parse::{parse, try_parse};
 
 #[test]
@@ -10,15 +8,37 @@ fn at_by_itself_is_shortcut_for_head() {
 }
 
 #[test]
-fn multiple_ats_are_invalid_but_may_cause_callbacks() {
-    let err = try_parse("@@").unwrap_err();
-    assert!(matches!(err, spec::parse::Error::AtNeedsCurlyBrackets {input} if input == "@"));
+fn at_is_allowed() {
+    for name in ["a@b", "@branch", "branch@", "@@", "@inner@"] {
+        let rec = parse(name);
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.get_ref(0), name);
+        assert_eq!(rec.find_ref[1], None);
+    }
 }
 
 #[test]
-fn lonely_at_after_ref_is_invalid() {
-    let err = try_parse("HEAD@").unwrap_err();
-    assert!(matches!(err, spec::parse::Error::AtNeedsCurlyBrackets {input} if input == "@"));
+fn at_in_ranges_is_allowed() {
+    let input = "@@@..";
+    let rec = parse(input);
+    assert_eq!(rec.kind, Some(gix_revision::spec::Kind::RangeBetween));
+    assert_eq!(rec.get_ref(0), "@@@");
+    assert_eq!(rec.get_ref(1), "HEAD");
+
+    let input = "@@...@@";
+    let rec = parse(input);
+    assert_eq!(rec.kind, Some(gix_revision::spec::Kind::ReachableToMergeBase));
+    assert_eq!(rec.get_ref(0), "@@");
+    assert_eq!(rec.get_ref(1), "@@");
+}
+
+#[test]
+fn strange_revspecs_do_not_panic() {
+    let err = try_parse(".@.").unwrap_err();
+    assert!(matches!(
+        err,
+        gix_revision::spec::parse::Error::AtNeedsCurlyBrackets { input } if input == "@."
+    ));
 }
 
 #[test]

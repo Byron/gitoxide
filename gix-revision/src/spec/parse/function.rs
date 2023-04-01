@@ -344,8 +344,19 @@ where
     {
         let mut cursor = input;
         let mut ofs = 0;
-        while let Some((pos, b)) = cursor.iter().enumerate().find(|(_, b)| {
-            if b"@~^:.".contains(b) {
+        const SEPARATORS: &[u8] = b"~^:.";
+        while let Some((pos, b)) = cursor.iter().enumerate().find(|(pos, b)| {
+            if **b == b'@' {
+                if cursor.len() == 1 {
+                    return true;
+                }
+                let next = cursor.get(pos + 1);
+                let next_next = cursor.get(pos + 2);
+                if *pos != 0 && (next, next_next) == (Some(&b'.'), Some(&b'.')) {
+                    return false;
+                }
+                next == Some(&b'{') || next.map_or(false, |b| SEPARATORS.contains(b))
+            } else if SEPARATORS.contains(b) {
                 true
             } else {
                 if let Some(num) = consecutive_hex_chars.as_mut() {
