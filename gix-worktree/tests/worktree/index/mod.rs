@@ -1,1 +1,2 @@
 mod checkout;
+mod diff;

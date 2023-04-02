@@ -13,5 +13,12 @@ pub mod fs;
 pub mod index;
 
 pub(crate) mod os;
+
+///
+pub mod diff;
+
+///
+pub mod untracked;
+
 ///
 pub mod read;
