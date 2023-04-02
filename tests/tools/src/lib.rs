@@ -288,7 +288,7 @@ pub fn scripted_fixture_read_only_standalone(script_name: impl AsRef<Path>) -> R
 /// the tempdir is returned. It will be removed automatically, courtesy of [`tempfile::TempDir`].
 ///
 /// Note that `script_name` is only executed once, so the data can be copied from its read-only location.
-pub fn scripted_fixture_writable(script_name: &str) -> Result<tempfile::TempDir> {
+pub fn scripted_fixture_writable(script_name: impl AsRef<Path>) -> Result<tempfile::TempDir> {
     scripted_fixture_writable_with_args(script_name, None::<String>, Creation::CopyFromReadOnly)
 }
 
@@ -300,7 +300,7 @@ pub fn scripted_fixture_writable_standalone(script_name: &str) -> Result<tempfil
 /// Like [`scripted_fixture_writable()`], but passes `args` to `script_name` while providing control over
 /// the way files are created with `mode`.
 pub fn scripted_fixture_writable_with_args(
-    script_name: &str,
+    script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = impl Into<String>>,
     mode: Creation,
 ) -> Result<tempfile::TempDir> {
@@ -317,7 +317,7 @@ pub fn scripted_fixture_writable_with_args_standalone(
 }
 
 fn scripted_fixture_writable_with_args_inner(
-    script_name: &str,
+    script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = impl Into<String>>,
     mode: Creation,
     root: DirectoryRoot,
