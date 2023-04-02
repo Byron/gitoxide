@@ -91,7 +91,6 @@ pub struct State {
     ///
     /// Note that on platforms that only have a precisions of a second for this time, we will treat all entries with the
     /// same timestamp as this as potentially changed, checking more thoroughly if a change actually happened.
-    #[allow(dead_code)]
     timestamp: FileTime,
     version: Version,
     entries: Vec<Entry>,

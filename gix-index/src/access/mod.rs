@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 
 use bstr::{BStr, ByteSlice, ByteVec};
+use filetime::FileTime;
 
 use crate::{entry, extension, Entry, PathStorage, State, Version};
 
@@ -13,6 +14,11 @@ impl State {
     /// Return the version used to store this state's information on disk.
     pub fn version(&self) -> Version {
         self.version
+    }
+
+    /// Returns time at which the state was created, indicating its freshness compared to other files on disk.
+    pub fn timestamp(&self) -> FileTime {
+        self.timestamp
     }
 
     /// Return the kind of hashes used in this instance.

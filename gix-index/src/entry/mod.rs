@@ -2,6 +2,9 @@
 pub type Stage = u32;
 
 mod mode;
+use std::cmp::Ordering;
+
+use filetime::FileTime;
 pub use mode::Mode;
 
 mod flags;
@@ -18,6 +21,27 @@ pub struct Time {
     pub secs: u32,
     /// The amount of nanoseconds elapsed in the current second, ranging from 0 to 999.999.999 .
     pub nsecs: u32,
+}
+
+impl From<FileTime> for Time {
+    fn from(value: FileTime) -> Self {
+        Time {
+            secs: value.unix_seconds().try_into().expect("can't represent non-unix times"),
+            nsecs: value.nanoseconds(),
+        }
+    }
+}
+
+impl PartialEq<FileTime> for Time {
+    fn eq(&self, other: &FileTime) -> bool {
+        *self == Time::from(*other)
+    }
+}
+
+impl PartialOrd<FileTime> for Time {
+    fn partial_cmp(&self, other: &FileTime) -> Option<Ordering> {
+        self.partial_cmp(&Time::from(*other))
+    }
 }
 
 /// An entry's filesystem stat information.
