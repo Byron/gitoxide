@@ -13,6 +13,7 @@ bitflags! {
     ///
     /// The mode is typically created when parsing the pattern by inspecting it and isn't typically handled by the user.
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Ord, PartialOrd)]
     pub struct Mode: u32 {
         /// The pattern does not contain a sub-directory and - it doesn't contain slashes after removing the trailing one.
         const NO_SUB_DIR = 1 << 0;

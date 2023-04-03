@@ -1,6 +1,7 @@
 use bitflags::bitflags;
 bitflags! {
     /// The kind of file of an entry.
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
     pub struct Mode: u32 {
         /// directory (only used for sparse checkouts), equivalent to a tree, which is _excluded_ from the index via
         /// cone-mode.

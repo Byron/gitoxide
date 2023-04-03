@@ -257,6 +257,9 @@ name = "bitflags"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "487f1e0fcbe47deb8b0574e646def1c903389d95241dd1bbcc6ce4a715dfc0c1"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "block-buffer"
@@ -352,7 +355,7 @@ name = "cargo-smart-release"
 version = "0.18.0"
 dependencies = [
  "anyhow",
- "bitflags 1.3.2",
+ "bitflags 2.0.2",
  "cargo_metadata",
  "cargo_toml",
  "clap 4.1.13",
@@ -1504,7 +1507,7 @@ dependencies = [
 name = "gix-config-value"
 version = "0.10.2"
 dependencies = [
- "bitflags 1.3.2",
+ "bitflags 2.0.2",
  "bstr",
  "document-features",
  "gix-path 0.7.3",
@@ -1662,7 +1665,7 @@ version = "0.0.0"
 name = "gix-glob"
 version = "0.5.5"
 dependencies = [
- "bitflags 1.3.2",
+ "bitflags 2.0.2",
  "bstr",
  "document-features",
  "gix-testtools",
@@ -1747,7 +1750,7 @@ dependencies = [
 name = "gix-index"
 version = "0.15.1"
 dependencies = [
- "bitflags 1.3.2",
+ "bitflags 2.0.2",
  "bstr",
  "btoi",
  "document-features",
@@ -1965,7 +1968,7 @@ dependencies = [
 name = "gix-pathspec"
 version = "0.1.0"
 dependencies = [
- "bitflags 1.3.2",
+ "bitflags 2.0.2",
  "bstr",
  "gix-attributes 0.10.0",
  "gix-glob 0.5.5",

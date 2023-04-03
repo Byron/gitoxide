@@ -83,6 +83,7 @@ impl RepositoryUrl {
 }
 
 bitflags::bitflags! {
+    #[derive(Debug, Copy, Clone)]
     pub struct Components: u8 {
         const SECTION_TITLE = 1<<0;
         const HTML_TAGS = 1<<1;

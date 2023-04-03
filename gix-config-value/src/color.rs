@@ -235,7 +235,7 @@ bitflags::bitflags! {
     /// `gix-config` supports modifiers and their negators. The negating color
     /// attributes are equivalent to having a `no` or `no-` prefix to the normal
     /// variant.
-    #[derive(Default)]
+    #[derive(Default, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
     pub struct Attribute: u32 {
         const BOLD = 1 << 1;
         const DIM = 1 << 2;
