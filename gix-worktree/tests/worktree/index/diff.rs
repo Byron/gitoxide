@@ -21,13 +21,13 @@ fn compute_diff(name: &str, make_worktree_dirty: impl FnOnce(&Path)) -> Vec<(Cha
             } = &mut change.kind
             {
                 modification
-                    .compare_data(&change.worktree_path, change.index_entry, &mut buf, &capapilites)
+                    .compare_data(&change.worktree_path, change.entry, &mut buf, &capapilites)
                     .unwrap();
                 if modification.mode_change.is_none() && !modification.data_changed {
                     return None;
                 }
             }
-            Some((change.kind, change.index_entry.path(&index).to_owned()))
+            Some((change.kind, change.entry.path(&index).to_owned()))
         })
         .collect()
 }
