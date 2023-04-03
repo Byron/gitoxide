@@ -87,6 +87,10 @@ pub static GIT_VERSION: Lazy<(u8, u8, u8)> = Lazy::new(|| parse_gix_version().ex
 pub enum Creation {
     /// Run the script once and copy the data from its output to the writable location.
     /// This is fast but won't work if absolute paths are produced by the script.
+    ///
+    /// ### Limitation
+    ///
+    /// Cannot handle symlinks currently. Waiting for [this PR](https://github.com/webdesus/fs_extra/pull/70).
     CopyFromReadOnly,
     /// Run the script in the writable location. That way, absolute paths match the location.
     ExecuteScript,
