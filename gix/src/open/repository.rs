@@ -146,7 +146,12 @@ impl ThreadSafeRepository {
             lenient_config,
             bail_if_untrusted,
             open_path_as_is: _,
-            permissions: Permissions { ref env, config },
+            permissions:
+                Permissions {
+                    ref env,
+                    config,
+                    attributes,
+                },
             ref api_config_overrides,
             ref cli_config_overrides,
             ref current_dir,
@@ -190,7 +195,8 @@ impl ThreadSafeRepository {
             filter_config_section,
             git_install_dir.as_deref(),
             home.as_deref(),
-            env.clone(),
+            *env,
+            attributes,
             config,
             lenient_config,
             api_config_overrides,

@@ -144,12 +144,19 @@ mod tag {
 }
 
 mod commit_as {
+    use crate::util::restricted_and_git;
     use gix_testtools::tempfile;
 
     #[test]
     fn specify_committer_and_author() -> crate::Result {
         let tmp = tempfile::tempdir()?;
-        let repo = gix::open_opts(gix::init(&tmp)?.path(), crate::restricted())?;
+        let repo = gix::ThreadSafeRepository::init_opts(
+            &tmp,
+            gix::create::Kind::WithWorktree,
+            Default::default(),
+            restricted_and_git(),
+        )?
+        .to_thread_local();
         let empty_tree = repo.empty_tree();
         let committer = gix::actor::Signature {
             name: "c".into(),
@@ -210,7 +217,13 @@ mod commit {
     fn single_line_initial_commit_empty_tree_ref_nonexisting() -> crate::Result {
         let _env = freeze_time();
         let tmp = tempfile::tempdir()?;
-        let repo = gix::open_opts(gix::init(&tmp)?.path(), restricted_and_git())?;
+        let repo = gix::ThreadSafeRepository::init_opts(
+            &tmp,
+            gix::create::Kind::WithWorktree,
+            Default::default(),
+            restricted_and_git(),
+        )?
+        .to_thread_local();
         let empty_tree_id = repo.write_object(&gix::objs::Tree::empty())?;
         let commit_id = repo.commit("HEAD", "initial", empty_tree_id, gix::commit::NO_PARENT_IDS)?;
         assert_eq!(

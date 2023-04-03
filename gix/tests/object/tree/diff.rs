@@ -153,6 +153,7 @@ mod track_rewrites {
 
             for percentage in [None, Some(0.5)] {
                 let mut actual = Vec::new();
+                #[cfg_attr(windows, allow(unused_variables))]
                 let out = from
                     .changes()?
                     .track_path()

@@ -151,7 +151,7 @@ pub mod excludes {
                 None,
                 case,
             ));
-            let attribute_list = state.build_attribute_list(index, index.path_backing(), case);
+            let attribute_list = state.attribute_list_from_index(index, index.path_backing(), case);
             Ok(gix_worktree::fs::Cache::new(
                 self.path,
                 state,

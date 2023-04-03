@@ -3,10 +3,12 @@ use gix_sec::Trust;
 /// Permissions associated with various resources of a git repository
 #[derive(Debug, Clone)]
 pub struct Permissions {
-    /// Permissions related to the environment
+    /// Control which environment variables may be accessed.
     pub env: Environment,
-    /// Permissions related to the handling of git configuration.
+    /// Permissions related where git configuration should be loaded from.
     pub config: Config,
+    /// Permissions related to where `gitattributes` should be loaded from.
+    pub attributes: Attributes,
 }
 
 /// Configure from which sources git configuration may be loaded.
@@ -17,7 +19,7 @@ pub struct Config {
     /// The git binary may come with configuration as part of its configuration, and if this is true (default false)
     /// we will load the configuration of the git binary, if present and not a duplicate of the ones below.
     ///
-    /// It's disable by default as it involves executing the git binary once per execution of the application.
+    /// It's disabled by default as it may involve executing the git binary once per execution of the application.
     pub git_binary: bool,
     /// Whether to use the system configuration.
     /// This is defined as `$(prefix)/etc/gitconfig` on unix.
@@ -50,6 +52,18 @@ impl Config {
             includes: true,
         }
     }
+
+    /// Load only configuration local to the git repository.
+    pub fn isolated() -> Self {
+        Config {
+            git_binary: false,
+            system: false,
+            git: false,
+            user: false,
+            env: false,
+            includes: false,
+        }
+    }
 }
 
 impl Default for Config {
@@ -58,8 +72,55 @@ impl Default for Config {
     }
 }
 
+/// Configure from which `gitattribute` files may be loaded.
+///
+/// Note that `.gitattribute` files from within the repository are always loaded.
+#[derive(Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Debug, Hash)]
+pub struct Attributes {
+    /// The git binary may come with attribute configuration in its installation directory, and if this is true (default false)
+    /// we will load the configuration of the git binary.
+    ///
+    /// It's disabled by default as it involves executing the git binary once per execution of the application.
+    pub git_binary: bool,
+    /// Whether to use the system configuration.
+    /// This is typically defined as `$(prefix)/etc/gitconfig`.
+    pub system: bool,
+    /// Whether to use the git application configuration.
+    ///
+    /// A platform defined location for where a user's git application configuration should be located.
+    /// If `$XDG_CONFIG_HOME` is not set or empty, `$HOME/.config/git/attributes` will be used
+    /// on unix.
+    pub git: bool,
+}
+
+impl Attributes {
+    /// Allow everything which usually relates to a fully trusted environment
+    pub fn all() -> Self {
+        Attributes {
+            git_binary: false,
+            system: true,
+            git: true,
+        }
+    }
+
+    /// Allow loading attributes that are local to the git repository.
+    pub fn isolated() -> Self {
+        Attributes {
+            git_binary: false,
+            system: false,
+            git: false,
+        }
+    }
+}
+
+impl Default for Attributes {
+    fn default() -> Self {
+        Self::all()
+    }
+}
+
 /// Permissions related to the usage of environment variables
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Environment {
     /// Control whether resources pointed to by `XDG_CONFIG_HOME` can be used when looking up common configuration values.
     ///
@@ -101,18 +162,29 @@ impl Environment {
             objects: allow,
         }
     }
+
+    /// Don't allow loading any environment variables.
+    pub fn isolated() -> Self {
+        let deny = gix_sec::Permission::Deny;
+        Environment {
+            xdg_config_home: deny,
+            home: deny,
+            ssh_prefix: deny,
+            git_prefix: deny,
+            http_transport: deny,
+            identity: deny,
+            objects: deny,
+        }
+    }
 }
 
 impl Permissions {
-    /// Return permissions that will not include configuration files not owned by the current user,
-    /// but trust system and global configuration files along with those which are owned by the current user.
-    ///
-    /// This allows to read and write repositories even if they aren't owned by the current user, but avoid using
-    /// anything else that could cause us to write into unknown locations or use programs beyond our `PATH`.
+    /// Secure permissions are similar to `all()`
     pub fn secure() -> Self {
         Permissions {
             env: Environment::all(),
             config: Config::all(),
+            attributes: Attributes::all(),
         }
     }
 
@@ -122,32 +194,16 @@ impl Permissions {
         Permissions {
             env: Environment::all(),
             config: Config::all(),
+            attributes: Attributes::all(),
         }
     }
 
     /// Don't read any but the local git configuration and deny reading any environment variables.
     pub fn isolated() -> Self {
         Permissions {
-            config: Config {
-                git_binary: false,
-                system: false,
-                git: false,
-                user: false,
-                env: false,
-                includes: false,
-            },
-            env: {
-                let deny = gix_sec::Permission::Deny;
-                Environment {
-                    xdg_config_home: deny,
-                    home: deny,
-                    ssh_prefix: deny,
-                    git_prefix: deny,
-                    http_transport: deny,
-                    identity: deny,
-                    objects: deny,
-                }
-            },
+            config: Config::isolated(),
+            attributes: Attributes::isolated(),
+            env: Environment::isolated(),
         }
     }
 }
