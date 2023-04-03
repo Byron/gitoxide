@@ -98,7 +98,7 @@ fn load_one<'a>(
     let (size, data) = read_u32(data)?;
     let (hash, data) = split_at_pos(data, hash_len)?;
     let (flags, data) = read_u16(data)?;
-    let flags = entry::at_rest::Flags::from_bits(flags)?;
+    let flags = entry::at_rest::Flags::from_bits_retain(flags);
     let (flags, data) = if flags.contains(entry::at_rest::Flags::EXTENDED) {
         let (extended_flags, data) = read_u16(data)?;
         let extended_flags = entry::at_rest::FlagsExtended::from_bits(extended_flags)?;

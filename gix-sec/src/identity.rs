@@ -62,7 +62,7 @@ mod impl_ {
         use windows::{
             core::{Error, PCWSTR},
             Win32::{
-                Foundation::{CloseHandle, BOOL, HANDLE, PSID},
+                Foundation::{CloseHandle, BOOL, HANDLE, HLOCAL, PSID},
                 Security::{
                     Authorization::{GetNamedSecurityInfoW, SE_FILE_OBJECT},
                     CheckTokenMembership, EqualSid, GetTokenInformation, IsWellKnownSid, TokenOwner,
@@ -168,7 +168,7 @@ mod impl_ {
                 )
                 .into();
             }
-            LocalFree(pdescriptor.0 as isize);
+            LocalFree(HLOCAL(pdescriptor.0 as isize)).ok();
         }
 
         err_msg.map(|msg| Err(err(msg))).unwrap_or(Ok(is_owned))

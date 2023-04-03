@@ -28,6 +28,7 @@ pub struct Pattern {
 
 bitflags! {
     /// Flags to represent 'magic signatures' which are parsed behind colons, like `:top:`.
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     pub struct MagicSignature: u32 {
         /// Matches patterns from the root of the repository
         const TOP = 1 << 0;

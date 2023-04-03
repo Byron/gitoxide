@@ -133,6 +133,7 @@ impl ThanksClippy {
 }
 
 bitflags! {
+    #[derive(Debug, Copy, Clone)]
     pub struct Selection: u8 {
         const CLIPPY = 1<<0;
         const COMMIT_DETAILS = 1<<1;

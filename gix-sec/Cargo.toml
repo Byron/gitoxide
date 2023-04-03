@@ -14,11 +14,11 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = [ "serde" ]
+serde1 = [ "serde", "bitflags/serde" ]
 
 [dependencies]
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"] }
-bitflags = "1.3.2"
+bitflags = "2"
 
 document-features = { version = "0.2.1", optional = true }
 
@@ -27,8 +27,8 @@ libc = "0.2.123"
 
 [target.'cfg(windows)'.dependencies]
 gix-path = { version = "^0.7.1", path = "../gix-path" }
-dirs = "4"
-windows = { version = "0.43.0", features = [
+dirs = "5"
+windows = { version = "0.48", features = [
     "Win32_Foundation",
     "Win32_Security_Authorization",
     "Win32_Storage_FileSystem",

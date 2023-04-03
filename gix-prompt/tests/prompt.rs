@@ -13,7 +13,6 @@ mod ask {
         p.send_line(" password with space ").unwrap();
         p.expect("\" password with space \"").unwrap();
         p.expect(expectrl::Eof).unwrap();
-        p.wait().unwrap();
     }
 
     #[test]
@@ -31,7 +30,6 @@ mod ask {
         p.send_line(" password with space ").unwrap();
         p.expect("\" password with space \"").unwrap();
         p.expect(expectrl::Eof).unwrap();
-        p.wait().unwrap();
     }
 
     #[test]

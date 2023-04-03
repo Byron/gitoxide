@@ -4,6 +4,7 @@ use crate::entry::Stage;
 
 bitflags! {
     /// In-memory flags
+    #[derive(Debug, Clone, Copy, Eq, PartialEq)]
     pub struct Flags: u32 {
         /// The mask to apply to obtain the stage number of an entry.
         const STAGE_MASK = 0x3000;
@@ -59,21 +60,20 @@ bitflags! {
 impl Flags {
     /// Return the stage as extracted from the bits of this instance.
     pub fn stage(&self) -> Stage {
-        (*self & Flags::STAGE_MASK).bits >> 12
+        (*self & Flags::STAGE_MASK).bits() >> 12
     }
 
     /// Transform ourselves to a storage representation to keep all flags which are to be persisted,
     /// skipping all extended flags. Note that the caller has to check for the `EXTENDED` bit to be present
     /// and write extended flags as well if so.
     pub fn to_storage(mut self) -> at_rest::Flags {
-        at_rest::Flags::from_bits(
+        at_rest::Flags::from_bits_retain(
             {
                 self.remove(Self::PATH_LEN);
                 self
             }
             .bits() as u16,
         )
-        .unwrap()
     }
 }
 
@@ -82,6 +82,7 @@ pub(crate) mod at_rest {
 
     bitflags! {
         /// Flags how they are serialized to a storage location
+        #[derive(Copy, Clone, Debug)]
         pub struct Flags: u16 {
             /// A portion of a the flags that encodes the length of the path that follows.
             const PATH_LEN = 0x0fff;
@@ -95,12 +96,13 @@ pub(crate) mod at_rest {
 
     impl Flags {
         pub fn to_memory(self) -> super::Flags {
-            super::Flags::from_bits(self.bits as u32).expect("PATHLEN is part of memory representation")
+            super::Flags::from_bits_retain(self.bits() as u32)
         }
     }
 
     bitflags! {
         /// Extended flags - add flags for serialization here and offset them down to u16.
+        #[derive(Copy, Clone, Debug)]
         pub struct FlagsExtended: u16 {
             const INTENT_TO_ADD = 1 << (29 - 16);
             const SKIP_WORKTREE = 1 << (30 - 16);
@@ -109,11 +111,12 @@ pub(crate) mod at_rest {
 
     impl FlagsExtended {
         pub fn from_flags(flags: super::Flags) -> Self {
-            Self::from_bits(((flags & (super::Flags::INTENT_TO_ADD | super::Flags::SKIP_WORKTREE)).bits >> 16) as u16)
-                .expect("valid")
+            Self::from_bits_retain(
+                ((flags & (super::Flags::INTENT_TO_ADD | super::Flags::SKIP_WORKTREE)).bits() >> 16) as u16,
+            )
         }
         pub fn to_flags(self) -> Option<super::Flags> {
-            super::Flags::from_bits((self.bits as u32) << 16)
+            super::Flags::from_bits((self.bits() as u32) << 16)
         }
     }
 
@@ -124,7 +127,7 @@ pub(crate) mod at_rest {
         #[test]
         fn flags_from_bits_with_conflict() {
             let input = 0b1110_0010_1000_1011;
-            assert_eq!(Flags::from_bits(input).unwrap().bits, input);
+            assert_eq!(Flags::from_bits_retain(input).bits(), input);
         }
     }
 }

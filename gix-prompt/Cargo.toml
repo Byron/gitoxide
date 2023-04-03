@@ -24,5 +24,5 @@ nix = { version = "0.26.1", default-features = false, features = ["term"] }
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools"}
-serial_test = { version = "1.0.0", default-features = false }
-expectrl = "0.6.0"
+serial_test = { version = "2.0.0", default-features = false }
+expectrl = "0.7.0"
