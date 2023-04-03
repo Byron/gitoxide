@@ -1,4 +1,5 @@
 #![allow(missing_docs)]
+
 use bstr::BString;
 use gix_utils::FilesystemCapabilities;
 
@@ -59,8 +60,8 @@ pub struct Options {
     ///
     /// Default true.
     pub check_stat: bool,
-    /// A group of attribute patterns that are applied globally, i.e. aren't rooted within the repository itself.
-    pub attribute_globals: gix_attributes::Search,
+    /// A stack of attributes to use with the filesystem cache to use as driver for filters.
+    pub attributes: crate::fs::cache::state::Attributes,
 }
 
 impl Default for Options {
@@ -73,7 +74,7 @@ impl Default for Options {
             trust_ctime: true,
             check_stat: true,
             overwrite_existing: false,
-            attribute_globals: Default::default(),
+            attributes: Default::default(),
         }
     }
 }

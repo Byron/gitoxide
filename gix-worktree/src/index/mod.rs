@@ -59,8 +59,8 @@ where
         None,
     );
 
-    let state = fs::cache::State::for_checkout(options.overwrite_existing, options.attribute_globals.clone().into());
-    let attribute_files = state.build_attribute_list(index, paths, case);
+    let state = fs::cache::State::for_checkout(options.overwrite_existing, options.attributes.clone().with_case(case));
+    let attribute_files = state.attribute_list_from_index(index, paths, case);
     let mut ctx = chunk::Context {
         buf: Vec::new(),
         path_cache: fs::Cache::new(dir, state, case, Vec::with_capacity(512), attribute_files),
