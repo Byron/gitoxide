@@ -35,10 +35,7 @@ pub fn query(
         .worktree()
         .with_context(|| "Cannot check excludes without a current worktree")?;
     let index = worktree.index()?;
-    let mut cache = worktree.excludes(
-        &index,
-        Some(gix::attrs::MatchGroup::<gix::attrs::Ignore>::from_overrides(overrides)),
-    )?;
+    let mut cache = worktree.excludes(&index, Some(gix::ignore::Search::from_overrides(overrides)))?;
 
     let prefix = repo.prefix().expect("worktree - we have an index by now")?;
 

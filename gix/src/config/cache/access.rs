@@ -157,7 +157,7 @@ impl Cache {
         fn assemble_attribute_globals(
             me: &Cache,
             _git_dir: &std::path::Path,
-        ) -> Result<gix_attributes::MatchGroup, checkout_options::Error> {
+        ) -> Result<gix_attributes::Search, checkout_options::Error> {
             let _attributes_file = match me
                 .trusted_file_path("core", None, Core::ATTRIBUTES_FILE.name)
                 .transpose()?
@@ -165,7 +165,7 @@ impl Cache {
                 Some(attributes) => Some(attributes.into_owned()),
                 None => me.xdg_config_path("attributes").ok().flatten(),
             };
-            // TODO: implement gix_attributes::MatchGroup::<gix_attributes::Attributes>::from_git_dir(), similar to what's done for `Ignore`.
+            // TODO: implement gix_attributes::Search::from_git_dir(), similar to what's done for `Ignore`.
             Ok(Default::default())
         }
 
@@ -203,7 +203,7 @@ impl Cache {
         std::env::var_os("XDG_CONFIG_HOME")
             .map(|path| (PathBuf::from(path), &self.xdg_config_home_env))
             .or_else(|| {
-                gix_path::home_dir().map(|mut p| {
+                gix_path::env::home_dir().map(|mut p| {
                     (
                         {
                             p.push(".config");
@@ -225,6 +225,6 @@ impl Cache {
     /// We never fail for here even if the permission is set to deny as we `gix-config` will fail later
     /// if it actually wants to use the home directory - we don't want to fail prematurely.
     pub(crate) fn home_dir(&self) -> Option<PathBuf> {
-        gix_path::home_dir().and_then(|path| self.home_env.check_opt(path))
+        gix_path::env::home_dir().and_then(|path| self.home_env.check_opt(path))
     }
 }

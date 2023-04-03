@@ -6,8 +6,8 @@ use gix_hash::oid;
 
 use crate::fs::{cache::State, PathOidMapping};
 
-type AttributeMatchGroup = gix_attributes::MatchGroup<gix_attributes::Attributes>;
-type IgnoreMatchGroup = gix_attributes::MatchGroup<gix_attributes::Ignore>;
+type AttributeMatchGroup = gix_attributes::Search;
+type IgnoreMatchGroup = gix_ignore::Search;
 
 /// State related to attributes associated with files in the repository.
 #[derive(Default, Clone)]
@@ -44,6 +44,8 @@ pub struct Ignore {
 impl Ignore {
     /// The `exclude_file_name_for_directories` is an optional override for the filename to use when checking per-directory
     /// ignore files within the repository, defaults to`.gitignore`.
+    ///
+    // This is what it should be able represent: https://github.com/git/git/blob/140b9478dad5d19543c1cb4fd293ccec228f1240/dir.c#L3354
     // TODO: more docs
     pub fn new(
         overrides: IgnoreMatchGroup,
@@ -79,7 +81,7 @@ impl Ignore {
         relative_path: &BStr,
         is_dir: Option<bool>,
         case: Case,
-    ) -> Option<gix_attributes::Match<'_, ()>> {
+    ) -> Option<gix_ignore::search::Match<'_, ()>> {
         let groups = self.match_groups();
         let mut dir_match = None;
         if let Some((source, mapping)) = self
@@ -93,7 +95,7 @@ impl Ignore {
             })
             .next()
         {
-            let match_ = gix_attributes::Match {
+            let match_ = gix_ignore::search::Match {
                 pattern: &mapping.pattern,
                 value: &mapping.value,
                 sequence_number: mapping.sequence_number,
@@ -135,8 +137,14 @@ impl Ignore {
                 .enumerate()
                 .rev()
                 .find_map(|(plidx, pl)| {
-                    pl.pattern_idx_matching_relative_path(relative_path, basename_pos, is_dir, case)
-                        .map(|idx| (plidx, idx))
+                    gix_ignore::search::pattern_idx_matching_relative_path(
+                        pl,
+                        relative_path,
+                        basename_pos,
+                        is_dir,
+                        case,
+                    )
+                    .map(|idx| (plidx, idx))
                 })
                 .map(|(plidx, pidx)| (gidx, plidx, pidx))
         })
@@ -163,17 +171,24 @@ impl Ignore {
         let ignore_file_in_index =
             attribute_files_in_index.binary_search_by(|t| t.0.as_bstr().cmp(ignore_path_relative.as_ref()));
         let follow_symlinks = ignore_file_in_index.is_err();
-        if !self
-            .stack
-            .add_patterns_file(dir.join(".gitignore"), follow_symlinks, Some(root), buf)?
-        {
+        if !gix_glob::search::add_patterns_file(
+            &mut self.stack.patterns,
+            dir.join(".gitignore"),
+            follow_symlinks,
+            Some(root),
+            buf,
+        )? {
             match ignore_file_in_index {
                 Ok(idx) => {
                     let ignore_blob = find(&attribute_files_in_index[idx].1, buf)
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                     let ignore_path = gix_path::from_bstring(ignore_path_relative.into_owned());
-                    self.stack
-                        .add_patterns_buffer(ignore_blob.data, ignore_path, Some(root));
+                    gix_glob::search::add_patterns_buffer(
+                        &mut self.stack.patterns,
+                        ignore_blob.data,
+                        ignore_path,
+                        Some(root),
+                    );
                 }
                 Err(_) => {
                     // Need one stack level per component so push and pop matches.

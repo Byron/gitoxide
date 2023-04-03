@@ -119,19 +119,20 @@ pub mod excludes {
     impl<'repo> crate::Worktree<'repo> {
         /// Configure a file-system cache checking if files below the repository are excluded.
         ///
-        /// This takes into consideration all the usual repository configuration.
+        /// This takes into consideration all the usual repository configuration, namely:
+        ///
+        /// * `$XDG_CONFIG_HOME/…/ignore` if `core.excludesFile` is *not* set, otherwise use the configured file.
+        /// * `$GIT_DIR/info/exclude` if present.
         ///
         /// `index` may be used to obtain `.gitignore` files directly from the index under certain conditions.
         // TODO: test, provide higher-level interface that is much easier to use and doesn't panic when accessing entries
         //       by non-relative path.
         // TODO: `index` might be so special (given the conditions we are talking about) that it's better obtained internally
         //        so the caller won't have to care.
-        // TODO: global files like `~/.gitignore` seem to be missing here, but we need a way to control if these should be loaded.
-        //       probably that needs another permission in the repo options or a custom config variable. The latter is easiest to manage.
         pub fn excludes(
             &self,
             index: &gix_index::State,
-            overrides: Option<gix_attributes::MatchGroup<gix_attributes::Ignore>>,
+            overrides: Option<gix_ignore::Search>,
         ) -> Result<gix_worktree::fs::Cache, Error> {
             let repo = self.parent;
             let case = if repo.config.ignore_case {
@@ -146,11 +147,7 @@ pub mod excludes {
             };
             let state = gix_worktree::fs::cache::State::IgnoreStack(gix_worktree::fs::cache::state::Ignore::new(
                 overrides.unwrap_or_default(),
-                gix_attributes::MatchGroup::<gix_attributes::Ignore>::from_git_dir(
-                    repo.git_dir(),
-                    excludes_file,
-                    &mut buf,
-                )?,
+                gix_ignore::Search::from_git_dir(repo.git_dir(), excludes_file, &mut buf)?,
                 None,
                 case,
             ));
