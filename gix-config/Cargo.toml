@@ -28,7 +28,7 @@ log = "0.4.17"
 nom = { version = "7", default_features = false, features = [ "std" ] }
 memchr = "2"
 thiserror = "1.0.26"
-unicode-bom = "1.1.4"
+unicode-bom = "2.0.2"
 bstr = { version = "1.3.0", default-features = false, features = ["std"] }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 smallvec = "1.9.0"
