@@ -1,2 +1,2 @@
 mod checkout;
-mod diff;
+mod status;
