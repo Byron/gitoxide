@@ -84,6 +84,7 @@ pub fn main() -> Result<()> {
             );
             let to_match_settings = |mut opts: gix::open::Options| {
                 opts.permissions.config.git_binary = git_installation;
+                opts.permissions.attributes.git_binary = git_installation;
                 if config.is_empty() {
                     opts
                 } else {
