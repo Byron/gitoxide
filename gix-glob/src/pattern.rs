@@ -45,16 +45,20 @@ impl Default for Case {
     }
 }
 
+/// Instantiation
 impl Pattern {
     /// Parse the given `text` as pattern, or return `None` if `text` was empty.
     pub fn from_bytes(text: &[u8]) -> Option<Self> {
         crate::parse::pattern(text).map(|(text, mode, first_wildcard_pos)| Pattern {
-            text,
+            text: text.into(),
             mode,
             first_wildcard_pos,
         })
     }
+}
 
+/// Access
+impl Pattern {
     /// Return true if a match is negated.
     pub fn is_negative(&self) -> bool {
         self.mode.contains(Mode::NEGATIVE)
@@ -67,6 +71,11 @@ impl Pattern {
     /// `basename_start_pos` is the index at which the `path`'s basename starts.
     ///
     /// Lastly, `case` folding can be configured as well.
+    ///
+    /// # Note
+    ///
+    /// This is specific to how exclude patterns match.
+    // TODO: then it should be in `gix-attributes`
     pub fn matches_repo_relative_path<'a>(
         &self,
         path: impl Into<&'a BStr>,
@@ -105,8 +114,9 @@ impl Pattern {
     /// `mode` can identify `value` as path which won't match the slash character, and can match
     /// strings with cases ignored as well. Note that the case folding performed here is ASCII only.
     ///
-    /// Note that this method uses some shortcuts to accelerate simple patterns.
-    fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
+    /// Note that this method uses some shortcuts to accelerate simple patterns, but falls back to
+    /// [wildmatch()][crate::wildmatch()] if these fail.
+    pub fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
         let value = value.into();
         match self.first_wildcard_pos {
             // "*literal" case, overrides starts-with
