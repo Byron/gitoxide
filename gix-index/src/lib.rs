@@ -93,9 +93,10 @@ pub struct State {
     /// same timestamp as this as potentially changed, checking more thoroughly if a change actually happened.
     timestamp: FileTime,
     version: Version,
-    entries: Vec<Entry>,
+    ///
+    pub entries: Vec<Entry>,
     /// A memory area keeping all index paths, in full length, independently of the index version.
-    path_backing: PathStorage,
+    pub path_backing: PathStorage,
     /// True if one entry in the index has a special marker mode
     is_sparse: bool,
 

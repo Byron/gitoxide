@@ -35,11 +35,11 @@
 #[cfg(feature = "parallel")]
 mod in_parallel;
 #[cfg(feature = "parallel")]
-pub use in_parallel::{build_thread, in_parallel, in_parallel_with_slice, join, threads};
+pub use in_parallel::{build_thread, in_parallel, in_parallel_chunks, in_parallel_with_slice, join, threads};
 
 mod serial;
 #[cfg(not(feature = "parallel"))]
-pub use serial::{build_thread, in_parallel, in_parallel_with_slice, join, threads};
+pub use serial::{build_thread, in_parallel, in_parallel_chunks, in_parallel_with_slice, join, threads};
 
 mod in_order;
 pub use in_order::{InOrderIter, SequenceId};
@@ -128,6 +128,53 @@ pub fn num_threads(thread_limit: Option<usize>) -> usize {
         .unwrap_or(logical_cores)
 }
 
+/// Run [`in_parallel()`] only if the given `condition()` returns true when eagerly evaluated.
+///
+/// For parameters, see the documentation of [`in_parallel()`]
+#[cfg(feature = "parallel")]
+pub fn in_parallel_chunks_if<'a, I, S, O, R>(
+    condition: impl FnOnce() -> bool,
+    input: &'a mut [I],
+    chunk_size: usize,
+    thread_limit: Option<usize>,
+    new_thread_state: impl Fn(usize) -> S + Send + Clone,
+    consume: impl Fn(&'a mut I, &mut S) -> Option<O> + Send + Clone,
+    reducer: R,
+) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
+where
+    R: Reduce<Input = O>,
+    I: Send,
+    O: Send,
+{
+    if num_threads(thread_limit) > 1 && condition() {
+        in_parallel_chunks(input, chunk_size, thread_limit, new_thread_state, consume, reducer)
+    } else {
+        serial::in_parallel_chunks(input, chunk_size, thread_limit, new_thread_state, consume, reducer)
+    }
+}
+
+/// Run [`in_parallel()`] only if the given `condition()` returns true when eagerly evaluated.
+///
+/// For parameters, see the documentation of [`in_parallel()`]
+///
+/// Note that the non-parallel version is equivalent to [`in_parallel()`].
+#[cfg(not(feature = "parallel"))]
+pub fn in_parallel_chunks_if<'a, I, S, O, R>(
+    _condition: impl FnOnce() -> bool,
+    input: &'a mut [I],
+    chunk_size: usize,
+    thread_limit: Option<usize>,
+    new_thread_state: impl Fn(usize) -> S + Send + Clone,
+    consume: impl Fn(&'a mut I, &mut S) -> Option<O> + Send + Clone,
+    reducer: R,
+) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
+where
+    R: Reduce<Input = O>,
+    I: Send,
+    O: Send,
+{
+    serial::in_parallel_chunks(input, chunk_size, thread_limit, new_thread_state, consume, reducer)
+}
 /// Run [`in_parallel()`] only if the given `condition()` returns true when eagerly evaluated.
 ///
 /// For parameters, see the documentation of [`in_parallel()`]

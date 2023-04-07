@@ -11,7 +11,7 @@ pub struct Recorder<'index, T = ()> {
     pub records: Vec<(&'index BStr, Status<T>, bool)>,
 }
 
-impl<'index, T> Collector<'index> for Recorder<'index, T> {
+impl<'index, T: Send> Collector<'index> for Recorder<'index, T> {
     type Diff = T;
 
     fn visit_entry(
