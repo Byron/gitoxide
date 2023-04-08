@@ -1407,12 +1407,15 @@ version = "0.10.0"
 dependencies = [
  "bstr",
  "document-features",
- "gix-features 0.28.1",
  "gix-glob 0.5.5",
  "gix-path 0.7.3",
  "gix-quote 0.4.3",
  "gix-testtools",
+ "gix-utils",
+ "kstring",
+ "log",
  "serde",
+ "smallvec",
  "thiserror",
  "unicode-bom 2.0.2",
 ]
@@ -2769,6 +2772,16 @@ checksum = "2735847566356cd2179a2a38264839308f7079fa96e6bd5a42d740460e003c56"
 dependencies = [
  "crossbeam",
  "rayon",
+]
+
+[[package]]
+name = "kstring"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec3066350882a1cd6d950d055997f379ac37fd39f81cd4d8ed186032eb3c5747"
+dependencies = [
+ "serde",
+ "static_assertions",
 ]
 
 [[package]]
