@@ -1668,6 +1668,8 @@ dependencies = [
  "bitflags 2.0.2",
  "bstr",
  "document-features",
+ "gix-features 0.28.1",
+ "gix-path 0.7.3",
  "gix-testtools",
  "serde",
 ]

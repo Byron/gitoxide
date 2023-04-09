@@ -71,11 +71,6 @@ impl Pattern {
     /// `basename_start_pos` is the index at which the `path`'s basename starts.
     ///
     /// Lastly, `case` folding can be configured as well.
-    ///
-    /// # Note
-    ///
-    /// This is specific to how exclude patterns match.
-    // TODO: then it should be in `gix-attributes`
     pub fn matches_repo_relative_path<'a>(
         &self,
         path: impl Into<&'a BStr>,
