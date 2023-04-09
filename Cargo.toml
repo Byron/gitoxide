@@ -173,6 +173,7 @@ members = [
     "gix-tempfile",
     "gix-lock",
     "gix-attributes",
+    "gix-ignore",
     "gix-pathspec",
     "gix-refspec",
     "gix-path",

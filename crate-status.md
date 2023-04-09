@@ -328,11 +328,13 @@ Check out the [performance discussion][gix-traverse-performance] as well.
     * [ ] Some examples
 
 ### gix-attributes
-* [x] parse git-ignore files (aka gix-attributes without the attributes or negation)
-* [x] parse gix-attributes files
-* [ ] create an attributes stack, ideally one that includes 'ignored' status from .gitignore files.
-   * [ ] support for built-in `binary` macro for `-text -diff -merge`
-    
+* [x] parse `.gitattribute` files
+* [ ] an attributes stack for matching paths to their attributes, with support for built-in `binary` macro for `-text -diff -merge`
+
+### gix-ignore
+* [x] parse `.gitignore` files 
+* [x] an attributes stack for checking if paths are excluded
+
 ### gix-quote
 * **ansi-c**
   * [x] quote
