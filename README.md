@@ -143,12 +143,17 @@ The minimum supported Rust version is [documented in the CI configuration](https
 the latest stable one will work as well.
 
 ```
-# The default installation, 'max'
+# A certain way to install `gitoxide` with just Rust and a C compiler installed.
+# If there are problems with SSL certificates during clones, try to omit `--locked`.
+cargo install gitoxide --locked --no-default-features --features max-pure 
+
+# The default installation, 'max', is the fastest, but also needs some libraries available to build successfully.
+# Installing these is platform-dependent and thus can't be explained here.
 cargo install gitoxide
 
 # For smaller binaries and even faster build times that are traded for a less fancy CLI implementation, use `lean`
 # or `lean-termion` respectively.
-cargo install gitoxide --no-default-features --features lean
+cargo install gitoxide --locked --no-default-features --features lean
 ```
 
 The following installs the latest unpublished release directly from git:
