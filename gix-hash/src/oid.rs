@@ -22,6 +22,11 @@ pub struct oid {
     bytes: [u8],
 }
 
+// False positive:
+// Using an automatic implementation of `Hash` for `oid` would lead to
+// it attempting to hash the length of the slice first. On 32 bit systems
+// this can lead to issues with the custom `gix_hashtable` `Hasher` implementation,
+// and it currently ends up being discarded there anyway.
 #[allow(clippy::derive_hash_xor_eq)]
 impl hash::Hash for oid {
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
