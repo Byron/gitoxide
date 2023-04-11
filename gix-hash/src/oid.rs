@@ -22,6 +22,7 @@ pub struct oid {
     bytes: [u8],
 }
 
+#[allow(clippy::derive_hash_xor_eq)]
 impl hash::Hash for oid {
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         state.write(self.as_bytes())
