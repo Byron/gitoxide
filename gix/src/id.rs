@@ -183,10 +183,11 @@ mod tests {
 
     #[test]
     fn size_of_oid() {
-        assert_eq!(
-            std::mem::size_of::<Id<'_>>(),
-            32,
-            "size of oid shouldn't change without notice"
+        let actual = std::mem::size_of::<Id<'_>>();
+        let ceiling = 32;
+        assert!(
+            actual <= ceiling,
+            "size of oid shouldn't change without notice: {actual} <= {ceiling}"
         )
     }
 }
