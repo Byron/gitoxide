@@ -2,56 +2,24 @@
 pub type Stage = u32;
 
 mod mode;
-use std::cmp::Ordering;
-
-use filetime::FileTime;
 pub use mode::Mode;
 
 mod flags;
 pub(crate) use flags::at_rest;
 pub use flags::Flags;
 
+///
+pub mod stat;
 mod write;
-
-/// The time component in a [`Stat`] struct.
-#[derive(Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Time {
-    /// The amount of seconds elapsed since EPOCH
-    pub secs: u32,
-    /// The amount of nanoseconds elapsed in the current second, ranging from 0 to 999.999.999 .
-    pub nsecs: u32,
-}
-
-impl From<FileTime> for Time {
-    fn from(value: FileTime) -> Self {
-        Time {
-            secs: value.unix_seconds().try_into().expect("can't represent non-unix times"),
-            nsecs: value.nanoseconds(),
-        }
-    }
-}
-
-impl PartialEq<FileTime> for Time {
-    fn eq(&self, other: &FileTime) -> bool {
-        *self == Time::from(*other)
-    }
-}
-
-impl PartialOrd<FileTime> for Time {
-    fn partial_cmp(&self, other: &FileTime) -> Option<Ordering> {
-        self.partial_cmp(&Time::from(*other))
-    }
-}
 
 /// An entry's filesystem stat information.
 #[derive(Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Stat {
     /// Modification time
-    pub mtime: Time,
+    pub mtime: stat::Time,
     /// Creation time
-    pub ctime: Time,
+    pub ctime: stat::Time,
     /// Device number
     pub dev: u32,
     /// Inode number
@@ -88,29 +56,11 @@ mod access {
 }
 
 mod _impls {
-    use std::{cmp::Ordering, ops::Add, time::SystemTime};
+    use std::cmp::Ordering;
 
     use bstr::BStr;
 
-    use crate::{entry::Time, Entry, State};
-
-    impl From<SystemTime> for Time {
-        fn from(s: SystemTime) -> Self {
-            let d = s
-                .duration_since(std::time::UNIX_EPOCH)
-                .expect("system time is not before unix epoch!");
-            Time {
-                secs: d.as_secs() as u32,
-                nsecs: d.subsec_nanos(),
-            }
-        }
-    }
-
-    impl From<Time> for SystemTime {
-        fn from(s: Time) -> Self {
-            std::time::UNIX_EPOCH.add(std::time::Duration::new(s.secs.into(), s.nsecs))
-        }
-    }
+    use crate::{Entry, State};
 
     impl Entry {
         /// Compare one entry to another by their path, by comparing only their common path portion byte by byte, then resorting to

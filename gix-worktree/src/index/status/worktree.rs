@@ -1,6 +1,6 @@
 use std::io;
 use std::path::Path;
-use std::time::{Duration, SystemTimeError};
+use std::time::SystemTimeError;
 
 use crate::index::status::visit::worktree::Visit;
 use crate::index::status::visit::worktree::{Error, Status};
@@ -20,54 +20,32 @@ impl Modification {
     /// Computes the status of an `entry` by comparing it with its `fs_stat` while respecting filesystem `capabilities`.
     ///
     /// It does so exclusively by looking at the filesystem stats.
-    pub fn from_fstat(
+    fn from_fstat(
         entry: &index::Entry,
-        fs_stat: &std::fs::Metadata,
-        capabilities: &fs::Capabilities,
+        fstat: &std::fs::Metadata,
+        Options { fs, stat_options, .. }: &Options,
     ) -> Result<Self, SystemTimeError> {
         #[cfg(unix)]
         use std::os::unix::fs::MetadataExt;
 
         let mode_change = match entry.mode {
-            index::entry::Mode::FILE if !fs_stat.is_file() => Some(ModeChange::TypeChange),
+            index::entry::Mode::FILE if !fstat.is_file() => Some(ModeChange::TypeChange),
             #[cfg(unix)]
-            index::entry::Mode::FILE if capabilities.executable_bit && fs_stat.mode() & 0o111 != 0 => {
+            index::entry::Mode::FILE if fs.executable_bit && fstat.mode() & 0o111 != 0 => {
                 Some(ModeChange::ExecutableChange)
             }
             #[cfg(unix)]
-            index::entry::Mode::FILE_EXECUTABLE if capabilities.executable_bit && fs_stat.mode() & 0o111 == 0 => {
+            index::entry::Mode::FILE_EXECUTABLE if fs.executable_bit && fstat.mode() & 0o111 == 0 => {
                 Some(ModeChange::ExecutableChange)
             }
-            index::entry::Mode::SYMLINK if capabilities.symlink && !fs_stat.is_symlink() => {
-                Some(ModeChange::TypeChange)
-            }
-            index::entry::Mode::SYMLINK if !capabilities.symlink && !fs_stat.is_file() => Some(ModeChange::TypeChange),
-            index::entry::Mode::COMMIT if !fs_stat.is_dir() => Some(ModeChange::TypeChange),
+            index::entry::Mode::SYMLINK if fs.symlink && !fstat.is_symlink() => Some(ModeChange::TypeChange),
+            index::entry::Mode::SYMLINK if !fs.symlink && !fstat.is_file() => Some(ModeChange::TypeChange),
+            index::entry::Mode::COMMIT if !fstat.is_dir() => Some(ModeChange::TypeChange),
             _ => None, // TODO: log/error invalid file type
         };
 
-        let data_changed = entry.stat.size as u64 != fs_stat.len();
-
-        let ctime = fs_stat
-            .created()
-            .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
-        let mtime = fs_stat
-            .modified()
-            .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
-
-        let stat = &entry.stat;
-        let stat_changed = stat.mtime.secs
-            != mtime
-                .as_secs()
-                .try_into()
-                .expect("by 2038 we found a solution for this")
-            || stat.mtime.nsecs != mtime.subsec_nanos()
-            || stat.ctime.secs
-                != ctime
-                    .as_secs()
-                    .try_into()
-                    .expect("by 2038 we found a solution for this")
-            || stat.ctime.nsecs != ctime.subsec_nanos();
+        let data_changed = entry.stat.size as u64 != fstat.len();
+        let stat_changed = index::entry::Stat::from_fs(fstat)?.matches(&entry.stat, *stat_options);
 
         Ok(Self {
             mode_change,
@@ -125,15 +103,46 @@ impl Modification {
     }
 }
 
+#[derive(Clone)]
+/// Options that control how the index status of a worktree is computed
+pub struct Options {
+    /// capabilities of the file system
+    pub fs: crate::fs::Capabilities,
+    /// If set, don't use more than this amount of threads.
+    /// Otherwise, usually use as many threads as there are logical cores.
+    /// A value of 0 is interpreted as no-limit
+    pub thread_limit: Option<usize>,
+    /// If true, default false, try don't abort on first error which isn't
+    /// due to a conflict.
+    /// The checkout operation will never fail, but count the encountered errors instead along with their paths.
+    pub keep_going: bool,
+    /// Options that control how stat comparisons are made
+    /// when checking if a file is fresh
+    pub stat_options: index::entry::stat::Options,
+    // /// A group of attribute patterns that are applied globally, i.e. aren't rooted within the repository itself.
+    // pub attribute_globals: gix_attributes::MatchGroup<Attributes>,
+    /// Untracked files that were added to the index with git add but not yet committed
+    /// are marked with special flags and usually receive special treatment. If this option
+    /// is enabled (default true) added events are generated for these files, otherwise
+    /// these files are treated the same as other entries
+    pub check_added: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            fs: fs::Capabilities::default(),
+            thread_limit: None,
+            keep_going: false,
+            stat_options: index::entry::stat::Options::default(),
+            check_added: true,
+        }
+    }
+}
+
 impl<'index> IndexStatus<'index> {
     /// Calculates the status of worktree
-    pub fn of_worktree(
-        self,
-        worktree: &Path,
-        visit: &mut impl Visit<'index>,
-        visit_added: bool,
-        fs_capabilities: &fs::Capabilities,
-    ) {
+    pub fn of_worktree(self, worktree: &Path, visit: &mut impl Visit<'index>, options: Options) {
         for entry in self.index.entries() {
             let conflict = match entry.stage() {
                 0 => false,
@@ -152,7 +161,7 @@ impl<'index> IndexStatus<'index> {
             let git_path = entry.path(self.index);
             let path = path::try_from_bstr(git_path).map(|path| worktree.join(path));
             let status = match &path {
-                Ok(path) => self.of_file(entry, path, visit_added, fs_capabilities),
+                Ok(path) => self.of_file(entry, path, &options),
                 Err(_) => Err(Error::IllformedUtf8),
             };
 
@@ -160,13 +169,7 @@ impl<'index> IndexStatus<'index> {
         }
     }
 
-    fn of_file(
-        &self,
-        entry: &'index index::Entry,
-        path: &Path,
-        visit_added: bool,
-        capabilities: &fs::Capabilities,
-    ) -> Result<Status, Error> {
+    fn of_file(&self, entry: &'index index::Entry, path: &Path, options: &Options) -> Result<Status, Error> {
         let metadata = match path.symlink_metadata() {
             // TODO: check if any parent directory is a symlink
             //       we need to use fs::Cache for that
@@ -187,10 +190,10 @@ impl<'index> IndexStatus<'index> {
                 return Err(err.into());
             }
         };
-        if visit_added && entry.flags.contains(index::entry::Flags::INTENT_TO_ADD) {
+        if options.check_added && entry.flags.contains(index::entry::Flags::INTENT_TO_ADD) {
             return Ok(Status::Added);
         }
-        let mut modification = Modification::from_fstat(entry, &metadata, capabilities)?;
+        let mut modification = Modification::from_fstat(entry, &metadata, options)?;
         modification.detect_racy_stat(self.index, entry);
         if modification.is_changed() {
             Ok(Status::Modified(modification))

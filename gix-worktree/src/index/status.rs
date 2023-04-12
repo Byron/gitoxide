@@ -1,6 +1,7 @@
 //!
 
-mod worktree;
+///
+pub mod worktree;
 
 mod index;
 

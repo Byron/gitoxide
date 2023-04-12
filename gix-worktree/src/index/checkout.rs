@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 use bstr::BString;
 use gix_attributes::Attributes;
+use gix_index::entry::stat;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Collision {
@@ -27,7 +28,7 @@ pub struct Outcome {
     pub errors: Vec<ErrorRecord>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Options {
     /// capabilities of the file system
     pub fs: crate::fs::Capabilities,
@@ -48,35 +49,13 @@ pub struct Options {
     /// due to a conflict.
     /// The checkout operation will never fail, but count the encountered errors instead along with their paths.
     pub keep_going: bool,
-    /// If true, a files creation time is taken into consideration when checking if a file changed.
-    /// Can be set to false in case other tools alter the creation time in ways that interfere with our operation.
-    ///
-    /// Default true.
-    pub trust_ctime: bool,
-    /// If true, all stat fields will be used when checking for up-to-date'ness of the entry. Otherwise
-    /// nano-second parts of mtime and ctime,uid, gid, inode and device number _will not_ be used, leaving only
-    /// the whole-second part of ctime and mtime and the file size to be checked.
-    ///
-    /// Default true.
-    pub check_stat: bool,
+    /// Options that control how stat comparisons are made
+    /// when checking if a file is fresh
+    pub stat_options: stat::Options,
     /// A group of attribute patterns that are applied globally, i.e. aren't rooted within the repository itself.
     pub attribute_globals: gix_attributes::MatchGroup<Attributes>,
 }
 
-impl Default for Options {
-    fn default() -> Self {
-        Options {
-            fs: Default::default(),
-            thread_limit: None,
-            destination_is_initially_empty: false,
-            keep_going: false,
-            trust_ctime: true,
-            check_stat: true,
-            overwrite_existing: false,
-            attribute_globals: Default::default(),
-        }
-    }
-}
 #[derive(Debug, thiserror::Error)]
 pub enum Error<E: std::error::Error + Send + Sync + 'static> {
     #[error("Could not convert path to UTF8: {}", .path)]

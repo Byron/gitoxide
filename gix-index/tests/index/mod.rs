@@ -27,7 +27,7 @@ fn size_of_entry() {
     assert_eq!(std::mem::size_of::<gix_index::Entry>(), 80);
 
     // the reason we have our own time is half the size.
-    assert_eq!(std::mem::size_of::<gix_index::entry::Time>(), 8);
+    assert_eq!(std::mem::size_of::<gix_index::entry::stat::Time>(), 8);
     assert_eq!(std::mem::size_of::<filetime::FileTime>(), 16);
 }
 

@@ -142,11 +142,11 @@ fn load_one<'a>(
     Some((
         Entry {
             stat: entry::Stat {
-                ctime: entry::Time {
+                ctime: entry::stat::Time {
                     secs: ctime_secs,
                     nsecs: ctime_nsecs,
                 },
-                mtime: entry::Time {
+                mtime: entry::stat::Time {
                     secs: mtime_secs,
                     nsecs: mtime_nsecs,
                 },

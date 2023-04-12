@@ -1,7 +1,8 @@
-use std::{convert::TryInto, fs::OpenOptions, io::Write, path::Path, time::Duration};
+use std::{fs::OpenOptions, io::Write, path::Path};
 
 use bstr::BStr;
 use gix_hash::oid;
+use gix_index::entry::Stat;
 use gix_index::Entry;
 use io_close::Close;
 
@@ -71,7 +72,7 @@ where
             }
             // NOTE: we don't call `file.sync_all()` here knowing that some filesystems don't handle this well.
             //       revisit this once there is a bug to fix.
-            update_fstat(entry, file.metadata()?)?;
+            entry.stat = Stat::from_fs(&file.metadata()?)?;
             file.close()?;
             obj.data.len()
         }
@@ -94,7 +95,7 @@ where
                 file.close()?;
             }
 
-            update_fstat(entry, std::fs::symlink_metadata(dest)?)?;
+            entry.stat = Stat::from_fs(&std::fs::symlink_metadata(dest)?)?;
             obj.data.len()
         }
         gix_index::entry::Mode::DIR => todo!(),
@@ -161,29 +162,4 @@ fn open_options(path: &Path, destination_is_initially_empty: bool, overwrite_exi
         .create(!destination_is_initially_empty || overwrite_existing)
         .write(true);
     options
-}
-
-fn update_fstat<E>(entry: &mut Entry, meta: std::fs::Metadata) -> Result<(), index::checkout::Error<E>>
-where
-    E: std::error::Error + Send + Sync + 'static,
-{
-    let ctime = meta
-        .created()
-        .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
-    let mtime = meta
-        .modified()
-        .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
-
-    let stat = &mut entry.stat;
-    stat.mtime.secs = mtime
-        .as_secs()
-        .try_into()
-        .expect("by 2038 we found a solution for this");
-    stat.mtime.nsecs = mtime.subsec_nanos();
-    stat.ctime.secs = ctime
-        .as_secs()
-        .try_into()
-        .expect("by 2038 we found a solution for this");
-    stat.ctime.nsecs = ctime.subsec_nanos();
-    Ok(())
 }

@@ -185,14 +185,17 @@ impl Cache {
             destination_is_initially_empty: false,
             overwrite_existing: false,
             keep_going: false,
-            trust_ctime: boolean(self, "core.trustCTime", &Core::TRUST_C_TIME, true)?,
-            check_stat: self
-                .apply_leniency(
-                    self.resolved
-                        .string("core", None, "checkStat")
-                        .map(|v| Core::CHECK_STAT.try_into_checkstat(v)),
-                )?
-                .unwrap_or(true),
+            stat_options: gix_index::entry::stat::Options {
+                trust_ctime: boolean(self, "core.trustCTime", &Core::TRUST_C_TIME, true)?,
+                check_stat: self
+                    .apply_leniency(
+                        self.resolved
+                            .string("core", None, "checkStat")
+                            .map(|v| Core::CHECK_STAT.try_into_checkstat(v)),
+                    )?
+                    .unwrap_or(true),
+                ..gix_index::entry::stat::Options::default()
+            },
             attribute_globals: assemble_attribute_globals(self, git_dir)?,
         })
     }

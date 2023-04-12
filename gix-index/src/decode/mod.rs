@@ -302,11 +302,11 @@ pub(crate) fn stat(data: &[u8]) -> Option<(entry::Stat, &[u8])> {
     let (size, data) = read_u32(data)?;
     Some((
         entry::Stat {
-            mtime: entry::Time {
+            mtime: entry::stat::Time {
                 secs: ctime_secs,
                 nsecs: ctime_nsecs,
             },
-            ctime: entry::Time {
+            ctime: entry::stat::Time {
                 secs: mtime_secs,
                 nsecs: mtime_nsecs,
             },
