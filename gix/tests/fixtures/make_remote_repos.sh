@@ -33,6 +33,11 @@ git init base
   git add file && git commit -m $'G\n\n initial message'
   git branch g
 
+  env
+  git config -l
+  ls -la
+  whoami
+
   tick
   git checkout --orphan=h
   echo h > file
