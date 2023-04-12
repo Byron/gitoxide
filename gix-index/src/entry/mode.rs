@@ -20,7 +20,29 @@ impl Mode {
     }
 
     /// Compares this mode to the file system version ([`std::fs::symlink_metadata`])
-    /// and returns the change needed to update this mode to match the file if
+    /// and returns the change needed to update this mode to match the file.
+    ///
+    /// * if `has_symlinks` is false symlink entries will simply check if there
+    ///   is a normal file on disk
+    /// * if `executable_bit` is false the executable bit will not be compared
+    ///   `Change::ExecutableBit` will never be generated
+    ///
+    /// If there is a type change then we will use whatever information is
+    /// present on the FS. Specifically if `has_symlinks` is false we will
+    /// never generate `Change::TypeChange { new_mode: Mode::SYMLINK }`. and
+    /// iff `executable_bit` is false we will never generate `Change::TypeChange
+    /// { new_mode: Mode::FILE_EXECUTABLE }` (all files are assumed to be not
+    /// executable). That measn that unstaging and staging files can be a lossy
+    /// operation on such file systems.
+    ///
+    /// If a directory replaced a normal file/symlink we assume that the
+    /// directory is a submodule. Normal (non-submodule) direcotires would
+    /// cause a file to be deleted from the index and should be handled before
+    /// calling this function.
+    ///
+    /// If the stat information belongs to something other than a normal file/
+    /// directory (like a socket) we just return an identity change (non-files
+    /// can not be committed to git)
     pub fn change_to_match_fs(
         self,
         stat: &std::fs::Metadata,
@@ -37,7 +59,7 @@ impl Mode {
             _ => return None,
         };
         let new_mode = if stat.is_dir() {
-            Mode::DIR
+            Mode::COMMIT
         } else if executable_bit && is_executable(stat) {
             Mode::FILE_EXECUTABLE
         } else {
