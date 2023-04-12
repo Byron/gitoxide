@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.3 (2023-04-12)
 
 A release to assure that the hasher isn't used inappropriately which may lead to panics on 32 bit system.
 
@@ -13,7 +13,7 @@ A release to assure that the hasher isn't used inappropriately which may lead to
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 42 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A release to assure that the hasher isn't used inappropriately which may lead to
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`a0a938f`](https://github.com/Byron/gitoxide/commit/a0a938f8fd3442259ad3008778738f91bbc6e1a9))
     - Merge branch 'patch-1' ([`b02bf24`](https://github.com/Byron/gitoxide/commit/b02bf247890c873184e58f734e0912eac6c6bbae))
     - Refactor ([`c862d15`](https://github.com/Byron/gitoxide/commit/c862d1578805f65ea5df79c35fa3852123f9781c))
     - Add tests ([`5c67985`](https://github.com/Byron/gitoxide/commit/5c67985988c3a57c18f3935ac2c5865595e434c6))

@@ -21,7 +21,7 @@ serde1 = ["serde", "smallvec/serde", "gix-hash/serde1"]
 
 [dependencies]
 gix-features = { version = "^0.28.0", path = "../gix-features", features = ["rustsha1", "progress"] }
-gix-hash = { version = "^0.10.3", path = "../gix-hash" }
+gix-hash = { version = "^0.10.4", path = "../gix-hash" }
 gix-bitmap = { version = "^0.2.2", path = "../gix-bitmap" }
 gix-object = { version = "^0.28.0", path = "../gix-object" }
 gix-traverse = { version = "^0.24.0", path = "../gix-traverse" }

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.10.4 (2023-04-12)
 
 ### Bug Fixes
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 5 commits contributed to the release.
  - 50 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`a0a938f`](https://github.com/Byron/gitoxide/commit/a0a938f8fd3442259ad3008778738f91bbc6e1a9))
     - Merge branch 'patch-1' ([`b02bf24`](https://github.com/Byron/gitoxide/commit/b02bf247890c873184e58f734e0912eac6c6bbae))
     - Add comment explaining `oid::hash` ([`cfd93f6`](https://github.com/Byron/gitoxide/commit/cfd93f686dac752a7dc9b7fef3b7a706f265c6b0))
     - Clippy ([`b2a5b9d`](https://github.com/Byron/gitoxide/commit/b2a5b9dc50ae2a26672c2ad8a586beca3e659361))
@@ -447,9 +448,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - All crates use git-hash::Kind and its types, sometimes through git-object ([`124c171`](https://github.com/Byron/gitoxide/commit/124c171aaf546d8977e9913ff84e65383a80ee98))
     - First incarnation of git-hash to separate concerns and resolve cycle ([`9803041`](https://github.com/Byron/gitoxide/commit/9803041c29c18f2976531c9b487e63cd90fa3e72))
 </details>
-
-<csr-unknown>
-remove ObjectId::write_hex_to() in favor of oid::write_hex_to()<csr-unknown/>
 
 ## 0.10.1 (2022-12-01)
 

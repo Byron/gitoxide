@@ -23,7 +23,7 @@ verbose-object-parsing-errors = ["nom/std"]
 
 [dependencies]
 gix-features = { version = "^0.28.0", path = "../gix-features", features = ["rustsha1"] }
-gix-hash = { version = "^0.10.3", path = "../gix-hash" }
+gix-hash = { version = "^0.10.4", path = "../gix-hash" }
 gix-validate = { version = "^0.7.3", path = "../gix-validate" }
 gix-actor = { version = "^0.19.0", path = "../gix-actor" }
 

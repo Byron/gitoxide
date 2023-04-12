@@ -104,7 +104,7 @@ required-features = ["io-pipe"]
 [dependencies]
 #! ### Optional Dependencies
 
-gix-hash = { version = "^0.10.3", path = "../gix-hash" }
+gix-hash = { version = "^0.10.4", path = "../gix-hash" }
 
 
 

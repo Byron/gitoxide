@@ -20,7 +20,7 @@ wasm = ["dep:getrandom"]
 doctest = false
 
 [dependencies]
-gix-hash = { version = "^0.10.2", path = "../gix-hash" }
+gix-hash = { version = "^0.10.4", path = "../gix-hash" }
 gix-object = { version = "^0.28.0", path = "../gix-object" }
 thiserror = "1.0.32"
 imara-diff = "0.1.3"

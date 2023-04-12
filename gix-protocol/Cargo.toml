@@ -42,7 +42,7 @@ required-features = ["async-client"]
 [dependencies]
 gix-features = { version = "^0.28.1", path = "../gix-features", features = ["progress"] }
 gix-transport = { version = "^0.29.1", path = "../gix-transport" }
-gix-hash = { version = "^0.10.3", path = "../gix-hash" }
+gix-hash = { version = "^0.10.4", path = "../gix-hash" }
 gix-credentials = { version = "^0.12.0", path = "../gix-credentials" }
 
 thiserror = "1.0.32"
