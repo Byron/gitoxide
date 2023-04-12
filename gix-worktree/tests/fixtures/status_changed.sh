@@ -17,8 +17,10 @@ git add -A
 git commit -m "Commit"
 
 chmod +x dir/content
-chmod +x dir/content2
 echo "new content" > dir/content2
+chmod -x executable
+echo -n "foo" > executable
+
 rm empty
 ln -sf dir/content empty
 git reset 

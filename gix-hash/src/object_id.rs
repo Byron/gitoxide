@@ -127,6 +127,12 @@ impl ObjectId {
         }
     }
 
+    /// Returns true if this hash is equal to an empty blob
+    #[inline]
+    pub fn is_empty_blob(&self) -> bool {
+        self == &Self::empty_blob(self.kind())
+    }
+
     /// Returns an Digest representing a hash with whose memory is zeroed.
     #[inline]
     pub const fn null(kind: crate::Kind) -> ObjectId {

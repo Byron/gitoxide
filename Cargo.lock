@@ -2347,6 +2347,7 @@ version = "0.15.2"
 dependencies = [
  "bstr",
  "document-features",
+ "filetime",
  "gix-attributes 0.10.0",
  "gix-features 0.28.1",
  "gix-glob 0.5.5",

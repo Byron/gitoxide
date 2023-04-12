@@ -1,31 +1,28 @@
 use bstr::BStr;
 use gix_worktree::fs::{self, Capabilities};
-use gix_worktree::index::status::recorder::worktree::Recorder;
-use gix_worktree::index::status::visit::{worktree, ModeChange, Modification};
-use gix_worktree::index::status::{worktree::Options, IndexStatus};
+use gix_worktree::index::status::diff::Fast;
+use gix_worktree::index::status::recorder::Recorder;
+use gix_worktree::index::status::worktree::{self, Options};
+use gix_worktree::index::status::Status;
 
 use crate::fixture_path;
 
-fn fixture(name: &str, expected_status: &[(&BStr, worktree::Status, bool)]) {
+fn fixture(name: &str, expected_status: &[(&BStr, Status, bool)]) {
     let worktree = fixture_path(name);
     let git_dir = worktree.join(".git");
-    let index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default()).unwrap();
-    let capabilities = fs::Capabilities::probe(&git_dir);
-    let mut recorder = Recorder::new(&capabilities, &index);
-    IndexStatus::from(&index).of_worktree(
+    let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default()).unwrap();
+    let mut recorder = Recorder::default();
+    worktree::status(
+        &mut index,
         &worktree,
         &mut recorder,
+        &Fast,
         Options {
             fs: Capabilities::probe(git_dir),
             ..Options::default()
         },
-    );
-    // disable stat changed since this is not quite deterministic (can have false positives)
-    for (_, change, _) in &mut recorder.records {
-        if let worktree::Status::Modified(modification) = change {
-            modification.stat_changed = false
-        }
-    }
+    )
+    .unwrap();
     assert_eq!(recorder.records, expected_status)
 }
 
@@ -34,10 +31,10 @@ fn removed() {
     fixture(
         "status_removed",
         &[
-            (BStr::new(b"dir/content"), worktree::Status::Removed, false),
-            (BStr::new(b"dir/sub-dir/symlink"), worktree::Status::Removed, false),
-            (BStr::new(b"empty"), worktree::Status::Removed, false),
-            (BStr::new(b"executable"), worktree::Status::Removed, false),
+            (BStr::new(b"dir/content"), Status::Removed, false),
+            (BStr::new(b"dir/sub-dir/symlink"), Status::Removed, false),
+            (BStr::new(b"empty"), Status::Removed, false),
+            (BStr::new(b"executable"), Status::Removed, false),
         ],
     );
 }
@@ -48,34 +45,64 @@ fn unchanged() {
 }
 #[test]
 fn modified() {
+    // run the same status check twice to ensure that racy detection
+    // doesn't change the result of the status check
     fixture(
         "status_changed",
         &[
             (
                 BStr::new(b"dir/content"),
-                worktree::Status::Modified(Modification {
-                    mode_change: Some(ModeChange::ExecutableChange),
-                    stat_changed: false,
-                    data_changed: false,
-                }),
+                Status::Modified {
+                    executable_bit_changed: true,
+                    diff: None,
+                },
                 false,
             ),
             (
                 BStr::new(b"dir/content2"),
-                worktree::Status::Modified(Modification {
-                    mode_change: Some(ModeChange::ExecutableChange),
-                    stat_changed: false,
-                    data_changed: true,
-                }),
+                Status::Modified {
+                    executable_bit_changed: false,
+                    diff: Some(()),
+                },
+                false,
+            ),
+            (BStr::new(b"empty"), Status::TypeChange, false),
+            (
+                BStr::new(b"executable"),
+                Status::Modified {
+                    executable_bit_changed: true,
+                    diff: Some(()),
+                },
+                false,
+            ),
+        ],
+    );
+    fixture(
+        "status_changed",
+        &[
+            (
+                BStr::new(b"dir/content"),
+                Status::Modified {
+                    executable_bit_changed: true,
+                    diff: None,
+                },
                 false,
             ),
             (
-                BStr::new(b"empty"),
-                worktree::Status::Modified(Modification {
-                    mode_change: Some(ModeChange::TypeChange),
-                    stat_changed: false,
-                    data_changed: true,
-                }),
+                BStr::new(b"dir/content2"),
+                Status::Modified {
+                    executable_bit_changed: false,
+                    diff: Some(()),
+                },
+                false,
+            ),
+            (BStr::new(b"empty"), Status::TypeChange, false),
+            (
+                BStr::new(b"executable"),
+                Status::Modified {
+                    executable_bit_changed: true,
+                    diff: Some(()),
+                },
                 false,
             ),
         ],

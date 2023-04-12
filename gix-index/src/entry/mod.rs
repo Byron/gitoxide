@@ -1,7 +1,8 @@
 /// The stage of an entry, one of 0 = base, 1 = ours, 2 = theirs
 pub type Stage = u32;
 
-mod mode;
+///
+pub mod mode;
 pub use mode::Mode;
 
 mod flags;

@@ -1,106 +1,25 @@
 use std::io;
 use std::path::Path;
-use std::time::SystemTimeError;
 
-use crate::index::status::visit::worktree::Visit;
-use crate::index::status::visit::worktree::{Error, Status};
-use crate::index::status::visit::{ModeChange, Modification};
-use crate::index::status::IndexStatus;
+use crate::index::status::diff::{self, Diff};
+use crate::index::status::{Collector, Status};
 use crate::{fs, read};
-use gix_features::hash;
-use gix_hash::ObjectId;
+use filetime::FileTime;
 use gix_index as index;
-use gix_object::encode::loose_header;
 use gix_path as path;
 
 mod untracked;
 
-/// Instantiation
-impl Modification {
-    /// Computes the status of an `entry` by comparing it with its `fs_stat` while respecting filesystem `capabilities`.
-    ///
-    /// It does so exclusively by looking at the filesystem stats.
-    fn from_fstat(
-        entry: &index::Entry,
-        fstat: &std::fs::Metadata,
-        Options { fs, stat_options, .. }: &Options,
-    ) -> Result<Self, SystemTimeError> {
-        #[cfg(unix)]
-        use std::os::unix::fs::MetadataExt;
-
-        let mode_change = match entry.mode {
-            index::entry::Mode::FILE if !fstat.is_file() => Some(ModeChange::TypeChange),
-            #[cfg(unix)]
-            index::entry::Mode::FILE if fs.executable_bit && fstat.mode() & 0o111 != 0 => {
-                Some(ModeChange::ExecutableChange)
-            }
-            #[cfg(unix)]
-            index::entry::Mode::FILE_EXECUTABLE if fs.executable_bit && fstat.mode() & 0o111 == 0 => {
-                Some(ModeChange::ExecutableChange)
-            }
-            index::entry::Mode::SYMLINK if fs.symlink && !fstat.is_symlink() => Some(ModeChange::TypeChange),
-            index::entry::Mode::SYMLINK if !fs.symlink && !fstat.is_file() => Some(ModeChange::TypeChange),
-            index::entry::Mode::COMMIT if !fstat.is_dir() => Some(ModeChange::TypeChange),
-            _ => None, // TODO: log/error invalid file type
-        };
-
-        let data_changed = entry.stat.size as u64 != fstat.len();
-        let stat_changed = index::entry::Stat::from_fs(fstat)?.matches(&entry.stat, *stat_options);
-
-        Ok(Self {
-            mode_change,
-            stat_changed,
-            data_changed,
-        })
-    }
-
-    /// Marks this entry's stats as changed if there is a potential filesystem race condition.
-    pub fn detect_racy_stat(&mut self, index: &index::State, index_entry: &index::Entry) {
-        self.stat_changed = self.stat_changed || index_entry.stat.mtime >= index.timestamp()
-    }
-
-    /// Returns true if this instance has any changes.
-    ///
-    /// The [`detect_racy_stat()`][Self::detect_racy_stat()] method should be called first to account for  race conditions.
-    pub fn is_changed(&self) -> bool {
-        self.mode_change.is_some() || self.stat_changed || self.data_changed
-    }
-
-    /// Read the worktree file denoted by `entry` from the disk rooted at `worktree_path` into `buf` and compare
-    /// it to the index entry's hash to check if the actual data of the file is changed to set [`Self::data_changed`] accordingly,
-    /// while respecting the filesystem's `capabilities`.
-    ///
-    /// Does no computation if we are already sure that the file has or hasn't changed.
-    pub fn compare_data(
-        &mut self,
-        worktree_path: &Path,
-        entry: &index::Entry,
-        buf: &mut Vec<u8>,
-        capabilities: &fs::Capabilities,
-    ) -> io::Result<()> {
-        if self.mode_change == Some(ModeChange::TypeChange) || self.data_changed {
-            return Ok(());
-        }
-
-        let data = read::data_with_buf_and_meta(
-            worktree_path,
-            buf,
-            entry.mode.contains(index::entry::Mode::SYMLINK),
-            capabilities,
-        )?;
-        let header = loose_header(gix_object::Kind::Blob, data.len());
-        let hash_changed = match entry.id {
-            ObjectId::Sha1(entry_hash) => {
-                let mut file_hash = hash::Sha1::default();
-                file_hash.update(&header);
-                file_hash.update(&data);
-                let file_hash = file_hash.digest();
-                entry_hash != file_hash
-            }
-        };
-        self.data_changed = hash_changed;
-        Ok(())
-    }
+/// The error returned by [`compare_to_index()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Could not convert path to UTF8")]
+    IllformedUtf8,
+    #[error("The clock was off when reading file related metadata after updating a file on disk")]
+    Time(#[from] std::time::SystemTimeError),
+    #[error("IO error while writing blob or reading file metadata or changing filetype")]
+    Io(#[from] io::Error),
 }
 
 #[derive(Clone)]
@@ -118,7 +37,7 @@ pub struct Options {
     pub keep_going: bool,
     /// Options that control how stat comparisons are made
     /// when checking if a file is fresh
-    pub stat_options: index::entry::stat::Options,
+    pub stat: index::entry::stat::Options,
     // /// A group of attribute patterns that are applied globally, i.e. aren't rooted within the repository itself.
     // pub attribute_globals: gix_attributes::MatchGroup<Attributes>,
     /// Untracked files that were added to the index with git add but not yet committed
@@ -134,92 +53,155 @@ impl Default for Options {
             fs: fs::Capabilities::default(),
             thread_limit: None,
             keep_going: false,
-            stat_options: index::entry::stat::Options::default(),
+            stat: index::entry::stat::Options::default(),
             check_added: true,
         }
     }
 }
 
-impl<'index> IndexStatus<'index> {
-    /// Calculates the status of worktree
-    pub fn of_worktree(self, worktree: &Path, visit: &mut impl Visit<'index>, options: Options) {
-        for entry in self.index.entries() {
-            let conflict = match entry.stage() {
-                0 => false,
-                1 => true,
-                _ => continue,
-            };
-            if entry.flags.intersects(
-                index::entry::Flags::UPTODATE
-                    | index::entry::Flags::SKIP_WORKTREE
-                    | index::entry::Flags::ASSUME_VALID
-                    | index::entry::Flags::FSMONITOR_VALID,
-            ) {
-                continue;
-            }
+/// Calculates the status of worktree
+pub fn status<'index, T>(
+    index: &'index mut index::State,
+    worktree: &Path,
+    collector: &mut impl Collector<'index, Diff = T>,
+    diff: &impl Diff<Output = T>,
+    options: Options,
+) -> Result<(), Error> {
+    // the order is absoluty critical here
+    // we use the old timestamp to detect racy index entries
+    // (modified at or after the last index update) during
+    // the index update we then set those entries size to 0 (see below)
+    // to ensure they keep showing up as racy and reset the timestamp
+    let timestamp = index.timestamp();
+    index.set_timestamp(FileTime::now());
+    let mut buf = Vec::new();
+    for (entry, git_path) in index.entries_mut_with_paths() {
+        let conflict = match entry.stage() {
+            0 => false,
+            1 => true,
+            _ => continue,
+        };
+        if entry.flags.intersects(
+            index::entry::Flags::UPTODATE
+                | index::entry::Flags::SKIP_WORKTREE
+                | index::entry::Flags::ASSUME_VALID
+                | index::entry::Flags::FSMONITOR_VALID,
+        ) {
+            continue;
+        }
 
-            let git_path = entry.path(self.index);
-            let path = path::try_from_bstr(git_path).map(|path| worktree.join(path));
-            let status = match &path {
-                Ok(path) => self.of_file(entry, path, &options),
-                Err(_) => Err(Error::IllformedUtf8),
-            };
+        let worktree_path = path::try_from_bstr(git_path)
+            .map(|path| worktree.join(path))
+            .map_err(|_| Error::IllformedUtf8)?;
+        let status = status_file(entry, &worktree_path, &options, diff, &mut buf, timestamp)?;
+        collector.visit_entry(entry, git_path, status, conflict);
+    }
+    Ok(())
+}
 
-            visit.visit_entry(entry, status, path.as_deref().map_err(|_| git_path), conflict);
+fn status_file<'index, T>(
+    entry: &'index mut index::Entry,
+    path: &Path,
+    options: &Options,
+    diff: &impl Diff<Output = T>,
+    buf: &mut Vec<u8>,
+    timestamp: FileTime,
+) -> Result<Status<T>, Error> {
+    let metadata = match path.symlink_metadata() {
+        // TODO: check if any parent directory is a symlink
+        //       we need to use fs::Cache for that
+        Ok(metadata) if metadata.is_dir() => {
+            // index entries are normally only for files/symlinks
+            // if a file turned into a directory it was removed
+            // the only exception here are submodules which are
+            // part of the index despite being directories
+            //
+            // TODO: submodules:
+            //   if entry.mode.contains(Mode::COMMIT) &&
+            //     resolve_gitlink_ref(ce->name, "HEAD", &sub))
+            return Ok(Status::Removed);
+        }
+        Ok(metadata) => metadata,
+        Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Status::Removed),
+        Err(err) => {
+            return Err(err.into());
+        }
+    };
+    if options.check_added && entry.flags.contains(index::entry::Flags::INTENT_TO_ADD) {
+        return Ok(Status::Added);
+    }
+    let new_stat = index::entry::Stat::from_fs(&metadata)?;
+    let executable_bit_changed =
+        match entry
+            .mode
+            .change_to_match_fs(&metadata, options.fs.symlink, options.fs.executable_bit)
+        {
+            Some(index::entry::mode::Change::Type { .. }) => return Ok(Status::TypeChange),
+            Some(index::entry::mode::Change::ExecutableBit) => true,
+            None => false,
+        };
+
+    // Here we implement racy-git. See racy-git.txt in the git documentation for a detailed documentation
+    // A file is racy if:
+    // * it's mtime is at/after the last index timestamp, it's entry stat information
+    //   matches the on-disk file but the file contents are actually modified
+    // * it's size is 0 (set after detecting a file was racy previously)
+    //
+    // The first case is detected below (by checking the timestamp if the file is marekd umodified).
+    // The second case is usually detected either because the on-disk file
+    // is not empty (hence the basic stat match fails) or by checking
+    // whether the size doesn't fit the oid (the oid of an empty blob is a constant)
+    let mut racy_clean = false;
+    if !executable_bit_changed
+        && new_stat.matches(&entry.stat, options.stat)
+        && (!entry.id.is_empty_blob() || entry.stat.size == 0)
+    {
+        racy_clean = new_stat.is_racy(timestamp, options.stat);
+        if !racy_clean {
+            return Ok(Status::Unchanged);
         }
     }
 
-    fn of_file(&self, entry: &'index index::Entry, path: &Path, options: &Options) -> Result<Status, Error> {
-        let metadata = match path.symlink_metadata() {
-            // TODO: check if any parent directory is a symlink
-            //       we need to use fs::Cache for that
-            Ok(metadata) if metadata.is_dir() => {
-                // index entries are normally only for files/symlinks
-                // if a file turned into a directory it was removed
-                // the only exception here are submodules which are
-                // part of the index despite being directories
-                //
-                // TODO: submodules:
-                //   if entry.mode.contains(Mode::COMMIT) &&
-                //     resolve_gitlink_ref(ce->name, "HEAD", &sub))
-                return Ok(Status::Removed);
-            }
-            Ok(metadata) => metadata,
-            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Status::Removed),
-            Err(err) => {
-                return Err(err.into());
-            }
-        };
-        if options.check_added && entry.flags.contains(index::entry::Flags::INTENT_TO_ADD) {
-            return Ok(Status::Added);
-        }
-        let mut modification = Modification::from_fstat(entry, &metadata, options)?;
-        modification.detect_racy_stat(self.index, entry);
-        if modification.is_changed() {
-            Ok(Status::Modified(modification))
-        } else {
-            Ok(Status::Unchanged)
-        }
+    let file = WorktreeFile {
+        buf,
+        path,
+        entry,
+        options,
+    };
+    let diff = diff.content_changed::<Error>(entry, metadata.len() as usize, file, |_| Ok(&[]))?;
+    // this file is racy clean! Set the size to 0 so we keep detecting this
+    // as the file is updated
+    if diff.is_some() && racy_clean {
+        entry.stat.size = 0;
+    }
+    if diff.is_some() || executable_bit_changed {
+        Ok(Status::Modified {
+            executable_bit_changed,
+            diff,
+        })
+    } else {
+        // don't diff against this file next time since
+        // we know the file is unchanged
+        entry.stat = new_stat;
+        Ok(Status::Unchanged)
     }
 }
 
-impl Status {
-    /// Checks if files with stat changes have changed content by reading their
-    /// contents from the disk. If the file content is unchanged and there
-    /// are no mode change the Status is changed to Unchanged
-    pub fn compare_data(
-        &mut self,
-        path: &Path,
-        entry: &index::Entry,
-        buf: &mut Vec<u8>,
-        capabilities: &fs::Capabilities,
-    ) -> io::Result<()> {
-        if let Status::Modified(status) = self {
-            status.compare_data(path, entry, buf, capabilities)?;
-            if !status.data_changed && status.mode_change.is_none() {
-                *self = Status::Unchanged
-            }
-        }
-        Ok(())
+struct WorktreeFile<'a> {
+    buf: &'a mut Vec<u8>,
+    path: &'a Path,
+    entry: &'a index::Entry,
+    options: &'a Options,
+}
+
+impl<'a> diff::LazyBlob<'a, Error> for WorktreeFile<'a> {
+    fn read(self) -> Result<&'a [u8], Error> {
+        let res = read::data_to_buf_with_meta(
+            self.path,
+            self.buf,
+            self.entry.mode == index::entry::Mode::SYMLINK,
+            &self.options.fs,
+        )?;
+        Ok(res)
     }
 }
