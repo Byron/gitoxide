@@ -1,4 +1,4 @@
-use std::{convert::TryInto, fmt};
+use std::{convert::TryInto, fmt, hash};
 
 use crate::{ObjectId, SIZE_OF_SHA1_DIGEST};
 
@@ -14,12 +14,24 @@ use crate::{ObjectId, SIZE_OF_SHA1_DIGEST};
 /// hash `[`kind()`][oid::kind()]`.
 /// We expect to have quite a few bits available for such 'conflict resolution' as most hashes aren't longer
 /// than 64 bytes.
-#[derive(PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(PartialEq, Eq, Ord, PartialOrd)]
 #[repr(transparent)]
 #[allow(non_camel_case_types)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
 pub struct oid {
     bytes: [u8],
+}
+
+// False positive:
+// Using an automatic implementation of `Hash` for `oid` would lead to
+// it attempting to hash the length of the slice first. On 32 bit systems
+// this can lead to issues with the custom `gix_hashtable` `Hasher` implementation,
+// and it currently ends up being discarded there anyway.
+#[allow(clippy::derive_hash_xor_eq)]
+impl hash::Hash for oid {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        state.write(self.as_bytes())
+    }
 }
 
 /// A utility able to format itself with the given amount of characters in hex
