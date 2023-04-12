@@ -44,7 +44,7 @@ pub mod hash {
         ($func:ident, $type:ty) => {
             #[cold]
             fn $func(&mut self, _i: $type) {
-                panic!("This hasher only supports manully verified `Hash` implementations")
+                panic!("This hasher only supports manually verified `Hash` implementations")
             }
         };
     }
@@ -59,8 +59,8 @@ pub mod hash {
             self.0 = u64::from_ne_bytes(bytes[..8].try_into().unwrap());
         }
 
-        // Panic if someone tries to use this with a differnt function,
-        // only manully verified types should be used with this hasher
+        // Panic if someone tries to use this with a different function,
+        // only manually verified types should be used with this hasher
         panic_other_writers!(write_u8, u8);
         panic_other_writers!(write_u16, u16);
         panic_other_writers!(write_u32, u32);
