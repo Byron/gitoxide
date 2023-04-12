@@ -3,7 +3,6 @@ pub type Stage = u32;
 
 ///
 pub mod mode;
-pub use mode::Mode;
 
 mod flags;
 pub(crate) use flags::at_rest;
@@ -12,6 +11,29 @@ pub use flags::Flags;
 ///
 pub mod stat;
 mod write;
+
+use bitflags::bitflags;
+
+// TODO: we essentially treat this as an enum withj the only exception being
+// that `FILE_EXECUTABLE.contains(FILE)` works might want to turn this into an
+// enum proper
+bitflags! {
+    /// The kind of file of an entry.
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    pub struct Mode: u32 {
+        /// directory (only used for sparse checkouts), equivalent to a tree, which is _excluded_ from the index via
+        /// cone-mode.
+        const DIR = 0o040000;
+        /// regular file
+        const FILE = 0o100644;
+        /// regular file, executable
+        const FILE_EXECUTABLE = 0o100755;
+        /// Symbolic link
+        const SYMLINK = 0o120000;
+        /// A git commit for submodules
+        const COMMIT = 0o160000;
+    }
+}
 
 /// An entry's filesystem stat information.
 #[derive(Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
