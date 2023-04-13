@@ -6,8 +6,12 @@ use filetime::FileTime;
 use crate::entry::Stat;
 
 impl Stat {
-    /// detect whether this stat entry is racy given the timestamp
-    /// of the index it belongs to
+    /// Detect whether this stat entry is racy given an index timestamp. An
+    /// index entry is considered racy if it's mtime is larger or equal to the
+    /// index timestamp. The index timestamp marks the point in time before
+    /// which we definitely resolved the racy git problem for all index entries
+    /// so any index entries that changed afterwards will need to be examined for
+    /// changes (by actually reading the file from disk) at least once.
     pub fn is_racy(
         &self,
         timestamp: FileTime,
