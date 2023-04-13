@@ -92,6 +92,7 @@ pub use gix_traverse as traverse;
 pub use gix_url as url;
 #[doc(inline)]
 pub use gix_url::Url;
+pub use gix_utils as utils;
 pub use hash::{oid, ObjectId};
 
 pub mod interrupt;

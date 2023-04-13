@@ -3,9 +3,10 @@ use std::{convert::TryInto, fs::OpenOptions, io::Write, path::Path, time::Durati
 use bstr::BStr;
 use gix_hash::oid;
 use gix_index::Entry;
+use gix_utils::FilesystemCapabilities;
 use io_close::Close;
 
-use crate::{fs, index, os};
+use crate::{fs, index};
 
 pub struct Context<'a, Find> {
     pub find: &'a mut Find,
@@ -19,7 +20,7 @@ pub fn checkout<Find, E>(
     entry_path: &BStr,
     Context { find, path_cache, buf }: Context<'_, Find>,
     index::checkout::Options {
-        fs: fs::Capabilities {
+        fs: FilesystemCapabilities {
             symlink,
             executable_bit,
             ..
@@ -85,7 +86,9 @@ where
                 .map_err(|_| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
 
             if symlink {
-                try_write_or_unlink(dest, overwrite_existing, |p| os::create_symlink(symlink_destination, p))?;
+                try_write_or_unlink(dest, overwrite_existing, |p| {
+                    gix_utils::symlink::create(symlink_destination, p)
+                })?;
             } else {
                 let mut file = try_write_or_unlink(dest, overwrite_existing, |p| {
                     open_options(p, destination_is_initially_empty, overwrite_existing).open(dest)
@@ -115,7 +118,7 @@ fn try_write_or_unlink<T>(
     if overwrite_existing {
         match op(path) {
             Ok(res) => Ok(res),
-            Err(err) if os::indicates_collision(&err) => {
+            Err(err) if gix_utils::symlink::error::indicates_collision(&err) => {
                 try_unlink_path_recursively(path, &std::fs::symlink_metadata(path)?)?;
                 op(path)
             }
@@ -130,7 +133,7 @@ fn try_unlink_path_recursively(path: &Path, path_meta: &std::fs::Metadata) -> st
     if path_meta.is_dir() {
         std::fs::remove_dir_all(path)
     } else if path_meta.file_type().is_symlink() {
-        os::remove_symlink(path)
+        gix_utils::symlink::remove(path)
     } else {
         std::fs::remove_file(path)
     }

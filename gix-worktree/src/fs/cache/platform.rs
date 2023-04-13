@@ -153,7 +153,7 @@ fn create_leading_directory(
                 Ok(())
             } else if unlink_on_collision {
                 if meta.file_type().is_symlink() {
-                    crate::os::remove_symlink(stack.current())?;
+                    gix_utils::symlink::remove(stack.current())?;
                 } else {
                     std::fs::remove_file(stack.current())?;
                 }

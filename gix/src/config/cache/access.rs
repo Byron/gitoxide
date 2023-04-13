@@ -175,7 +175,7 @@ impl Cache {
                 .map(|value| Checkout::WORKERS.try_from_workers(value)),
         )?;
         Ok(gix_worktree::index::checkout::Options {
-            fs: gix_worktree::fs::Capabilities {
+            fs: gix_utils::FilesystemCapabilities {
                 precompose_unicode: boolean(self, "core.precomposeUnicode", &Core::PRECOMPOSE_UNICODE, false)?,
                 ignore_case: boolean(self, "core.ignoreCase", &Core::IGNORE_CASE, false)?,
                 executable_bit: boolean(self, "core.fileMode", &Core::FILE_MODE, true)?,
