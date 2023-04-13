@@ -24,7 +24,8 @@ pub trait Diff: Send + Sync {
     ) -> Result<Option<Self::Output>, E>;
 }
 
-/// compares to blobs by comparing their size and oid very fast
+/// compares to blobs by comparing their size and oid, only looks at the file if
+/// the size matches, therefore very fast
 pub struct Fast;
 
 impl Diff for Fast {
@@ -46,20 +47,17 @@ impl Diff for Fast {
         }
         let blob = blob.read()?;
         let header = loose_header(gix_object::Kind::Blob, blob.len());
-        match entry.id {
-            ObjectId::Sha1(entry_hash) => {
-                let mut file_hash = hash::Sha1::default();
-                file_hash.update(&header);
-                file_hash.update(blob);
-                let file_hash = file_hash.digest();
-                Ok((entry_hash != file_hash).then_some(()))
-            }
-        }
+        let mut hasher = hash::hasher(entry.id.kind());
+        hasher.update(&header);
+        hasher.update(blob);
+        let file_hash: ObjectId = hasher.digest().into();
+        Ok((entry.id != file_hash).then_some(()))
     }
 }
 
-/// compares to blobs by comparing their oid
-/// Same as [`FastEq`] but always
+/// Compares files to blobs by comparing their oids. Same as [`Fast`] but does
+/// not contain a fast path for files with mismatched files and therefore always
+/// returns an OID that can be reused later
 pub struct Hash;
 
 impl Diff for Hash {
@@ -74,14 +72,10 @@ impl Diff for Hash {
     ) -> Result<Option<Self::Output>, E> {
         let blob = blob.read()?;
         let header = loose_header(gix_object::Kind::Blob, blob.len());
-        match entry.id {
-            ObjectId::Sha1(entry_hash) => {
-                let mut file_hash = hash::Sha1::default();
-                file_hash.update(&header);
-                file_hash.update(blob);
-                let file_hash = file_hash.digest();
-                Ok((entry_hash != file_hash).then_some(ObjectId::Sha1(file_hash)))
-            }
-        }
+        let mut hasher = hash::hasher(entry.id.kind());
+        hasher.update(&header);
+        hasher.update(blob);
+        let file_hash: ObjectId = hasher.digest().into();
+        Ok((entry.id != file_hash).then_some(file_hash))
     }
 }
