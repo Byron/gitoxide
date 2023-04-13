@@ -24,7 +24,7 @@ pub enum Error {
     Io(#[from] io::Error),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 /// Options that control how the index status of a worktree is computed
 pub struct Options {
     /// capabilities of the file system
@@ -42,23 +42,6 @@ pub struct Options {
     pub stat: index::entry::stat::Options,
     // /// A group of attribute patterns that are applied globally, i.e. aren't rooted within the repository itself.
     // pub attribute_globals: gix_attributes::MatchGroup<Attributes>,
-    /// Untracked files that were added to the index with git add but not yet committed
-    /// are marked with special flags and usually receive special treatment. If this option
-    /// is enabled (default true) added events are generated for these files, otherwise
-    /// these files are treated the same as other entries
-    pub check_added: bool,
-}
-
-impl Default for Options {
-    fn default() -> Self {
-        Options {
-            fs: fs::Capabilities::default(),
-            thread_limit: None,
-            keep_going: false,
-            stat: index::entry::stat::Options::default(),
-            check_added: true,
-        }
-    }
 }
 
 /// Calculates the changes that need to be applied to an index to obtain a
@@ -176,7 +159,7 @@ impl<'index> State<'_, 'index> {
                 return Err(err.into());
             }
         };
-        if self.options.check_added && entry.flags.contains(index::entry::Flags::INTENT_TO_ADD) {
+        if entry.flags.contains(index::entry::Flags::INTENT_TO_ADD) {
             return Ok(Some(Change::Added));
         }
         let new_stat = index::entry::Stat::from_fs(&metadata)?;
