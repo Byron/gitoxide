@@ -4,34 +4,24 @@ use gix_index as index;
 use gix_object::encode::loose_header;
 use index::Entry;
 
-///
+use crate::index::status::ContentComparison;
+
+/// Lazy borrwoed access to blob data from disk or ODB
 pub trait LazyBlob<'a, E> {
-    ///
+    /// Returns the contents of this blob, potentially performs IO
+    /// and other expensive operations and should only be called
+    /// when necessary.
     fn read(self) -> Result<&'a [u8], E>;
 }
 
-///
-pub trait Diff: Send + Sync {
-    ///
-    type Output;
-    ///
-    fn content_changed<'a, E>(
-        &self,
-        entry: &'a Entry,
-        blob_size: usize,
-        blob: impl LazyBlob<'a, E>,
-        resolve_oid: impl FnMut(gix_hash::ObjectId) -> Result<&'a [u8], E>,
-    ) -> Result<Option<Self::Output>, E>;
-}
-
-/// compares to blobs by comparing their size and oid, only looks at the file if
+/// Compares to blobs by comparing their size and oid, only looks at the file if
 /// the size matches, therefore very fast
-pub struct Fast;
+pub struct FastEq;
 
-impl Diff for Fast {
+impl ContentComparison for FastEq {
     type Output = ();
 
-    fn content_changed<'a, E>(
+    fn compare_blob<'a, E>(
         &self,
         entry: &'a Entry,
         blob_size: usize,
@@ -58,12 +48,12 @@ impl Diff for Fast {
 /// Compares files to blobs by comparing their oids. Same as [`Fast`] but does
 /// not contain a fast path for files with mismatched files and therefore always
 /// returns an OID that can be reused later
-pub struct Hash;
+pub struct HashEq;
 
-impl Diff for Hash {
+impl ContentComparison for HashEq {
     type Output = ObjectId;
 
-    fn content_changed<'a, E>(
+    fn compare_blob<'a, E>(
         &self,
         entry: &'a Entry,
         _blob_size: usize,

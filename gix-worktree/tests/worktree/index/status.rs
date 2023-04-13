@@ -1,22 +1,21 @@
 use bstr::BStr;
 use gix_worktree::fs::{self, Capabilities};
-use gix_worktree::index::status::diff::Fast;
-use gix_worktree::index::status::recorder::Recorder;
+use gix_worktree::index::status::content::FastEq;
 use gix_worktree::index::status::worktree::{self, Options};
-use gix_worktree::index::status::Status;
+use gix_worktree::index::status::{Change, Recorder};
 
 use crate::fixture_path;
 
-fn fixture(name: &str, expected_status: &[(&BStr, Status, bool)]) {
+fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
     let worktree = fixture_path(name);
     let git_dir = worktree.join(".git");
     let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default()).unwrap();
     let mut recorder = Recorder::default();
-    worktree::status(
+    worktree::changes_to_obtain(
         &mut index,
         &worktree,
         &mut recorder,
-        &Fast,
+        &FastEq,
         Options {
             fs: Capabilities::probe(git_dir),
             ..Options::default()
@@ -31,10 +30,10 @@ fn removed() {
     fixture(
         "status_removed",
         &[
-            (BStr::new(b"dir/content"), Status::Removed, false),
-            (BStr::new(b"dir/sub-dir/symlink"), Status::Removed, false),
-            (BStr::new(b"empty"), Status::Removed, false),
-            (BStr::new(b"executable"), Status::Removed, false),
+            (BStr::new(b"dir/content"), Some(Change::Removed), false),
+            (BStr::new(b"dir/sub-dir/symlink"), Some(Change::Removed), false),
+            (BStr::new(b"empty"), Some(Change::Removed), false),
+            (BStr::new(b"executable"), Some(Change::Removed), false),
         ],
     );
 }
@@ -52,27 +51,27 @@ fn modified() {
         &[
             (
                 BStr::new(b"dir/content"),
-                Status::Modified {
+                Some(Change::Modification {
                     executable_bit_changed: true,
-                    diff: None,
-                },
+                    content_change: None,
+                }),
                 false,
             ),
             (
                 BStr::new(b"dir/content2"),
-                Status::Modified {
+                Some(Change::Modification {
                     executable_bit_changed: false,
-                    diff: Some(()),
-                },
+                    content_change: Some(()),
+                }),
                 false,
             ),
-            (BStr::new(b"empty"), Status::TypeChange, false),
+            (BStr::new(b"empty"), Some(Change::Type), false),
             (
                 BStr::new(b"executable"),
-                Status::Modified {
+                Some(Change::Modification {
                     executable_bit_changed: true,
-                    diff: Some(()),
-                },
+                    content_change: Some(()),
+                }),
                 false,
             ),
         ],
@@ -82,27 +81,27 @@ fn modified() {
         &[
             (
                 BStr::new(b"dir/content"),
-                Status::Modified {
+                Some(Change::Modification {
                     executable_bit_changed: true,
-                    diff: None,
-                },
+                    content_change: None,
+                }),
                 false,
             ),
             (
                 BStr::new(b"dir/content2"),
-                Status::Modified {
+                Some(Change::Modification {
                     executable_bit_changed: false,
-                    diff: Some(()),
-                },
+                    content_change: Some(()),
+                }),
                 false,
             ),
-            (BStr::new(b"empty"), Status::TypeChange, false),
+            (BStr::new(b"empty"), Some(Change::Type), false),
             (
                 BStr::new(b"executable"),
-                Status::Modified {
+                Some(Change::Modification {
                     executable_bit_changed: true,
-                    diff: Some(()),
-                },
+                    content_change: Some(()),
+                }),
                 false,
             ),
         ],

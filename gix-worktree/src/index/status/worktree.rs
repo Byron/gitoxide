@@ -2,8 +2,7 @@ use std::io;
 use std::marker::PhantomData;
 use std::path::Path;
 
-use crate::index::status::diff::{self, Diff};
-use crate::index::status::{Collector, Status};
+use crate::index::status::{content, Change, Collector, ContentComparison};
 use crate::{fs, read};
 use bstr::BStr;
 use filetime::FileTime;
@@ -62,12 +61,18 @@ impl Default for Options {
     }
 }
 
-/// Calculates the status of worktree
-pub fn status<'index, T: Send>(
+/// Calculates the changes that need to be applied to an index to obtain a
+/// worktree. Note that this isn't technically quite what this function does
+/// as this also provides some additional information (whether a file has
+/// conflicts) and files that were added with `git add` are shown as a special
+/// changes despite not technically requiring a change to the index (since `gid
+/// add` already added the file to the index) but the naming matches the intuition
+/// of a git user (and matches `git status`/git diff`)
+pub fn changes_to_obtain<'index, T: Send>(
     index: &'index mut index::State,
     worktree: &Path,
-    collector: &mut impl Collector<'index, Diff = T>,
-    diff: &impl Diff<Output = T>,
+    collector: &mut impl Collector<'index, ContentChange = T>,
+    diff: &impl ContentComparison<Output = T>,
     options: Options,
 ) -> Result<(), Error> {
     // the order is absoluty critical here
@@ -116,13 +121,13 @@ struct State<'a, 'b> {
     options: &'a Options,
 }
 
-type StatusResult<'index, T> = Result<(&'index index::Entry, &'index BStr, Status<T>, bool), Error>;
+type StatusResult<'index, T> = Result<(&'index index::Entry, &'index BStr, Option<Change<T>>, bool), Error>;
 
 impl<'index> State<'_, 'index> {
     fn process<T>(
         &mut self,
         entry: &'index mut index::Entry,
-        diff: &impl Diff<Output = T>,
+        diff: &impl ContentComparison<Output = T>,
     ) -> Option<StatusResult<'index, T>> {
         let conflict = match entry.stage() {
             0 => false,
@@ -146,8 +151,8 @@ impl<'index> State<'_, 'index> {
         &mut self,
         entry: &mut index::Entry,
         git_path: &BStr,
-        diff: &impl Diff<Output = T>,
-    ) -> Result<Status<T>, Error> {
+        diff: &impl ContentComparison<Output = T>,
+    ) -> Result<Option<Change<T>>, Error> {
         // TODO fs caache
         let worktree_path = path::try_from_bstr(git_path).map_err(|_| Error::IllformedUtf8)?;
         let worktree_path = self.worktree.join(worktree_path);
@@ -163,16 +168,16 @@ impl<'index> State<'_, 'index> {
                 // TODO: submodules:
                 //   if entry.mode.contains(Mode::COMMIT) &&
                 //     resolve_gitlink_ref(ce->name, "HEAD", &sub))
-                return Ok(Status::Removed);
+                return Ok(Some(Change::Removed));
             }
             Ok(metadata) => metadata,
-            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Status::Removed),
+            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Some(Change::Removed)),
             Err(err) => {
                 return Err(err.into());
             }
         };
         if self.options.check_added && entry.flags.contains(index::entry::Flags::INTENT_TO_ADD) {
-            return Ok(Status::Added);
+            return Ok(Some(Change::Added));
         }
         let new_stat = index::entry::Stat::from_fs(&metadata)?;
         let executable_bit_changed =
@@ -180,7 +185,7 @@ impl<'index> State<'_, 'index> {
                 .mode
                 .change_to_match_fs(&metadata, self.options.fs.symlink, self.options.fs.executable_bit)
             {
-                Some(index::entry::mode::Change::Type { .. }) => return Ok(Status::TypeChange),
+                Some(index::entry::mode::Change::Type { .. }) => return Ok(Some(Change::Type)),
                 Some(index::entry::mode::Change::ExecutableBit) => true,
                 None => false,
             };
@@ -202,7 +207,7 @@ impl<'index> State<'_, 'index> {
         {
             racy_clean = new_stat.is_racy(self.timestamp, self.options.stat);
             if !racy_clean {
-                return Ok(Status::Unchanged);
+                return Ok(None);
             }
         }
 
@@ -212,22 +217,22 @@ impl<'index> State<'_, 'index> {
             entry,
             options: self.options,
         };
-        let diff = diff.content_changed::<Error>(entry, metadata.len() as usize, file, |_| Ok(&[]))?;
+        let content_change = diff.compare_blob::<Error>(entry, metadata.len() as usize, file, |_| Ok(&[]))?;
         // this file is racy clean! Set the size to 0 so we keep detecting this
         // as the file is updated
-        if diff.is_some() && racy_clean {
+        if content_change.is_some() && racy_clean {
             entry.stat.size = 0;
         }
-        if diff.is_some() || executable_bit_changed {
-            Ok(Status::Modified {
+        if content_change.is_some() || executable_bit_changed {
+            Ok(Some(Change::Modification {
                 executable_bit_changed,
-                diff,
-            })
+                content_change,
+            }))
         } else {
             // don't diff against this file next time since
             // we know the file is unchanged
             entry.stat = new_stat;
-            Ok(Status::Unchanged)
+            Ok(None)
         }
     }
 }
@@ -237,7 +242,7 @@ struct Reducer<'a, 'index, T: Collector<'index>> {
     phantom: PhantomData<fn(&'index ())>,
 }
 
-impl<'index, T, C: Collector<'index, Diff = T>> Reduce for Reducer<'_, 'index, C> {
+impl<'index, T, C: Collector<'index, ContentChange = T>> Reduce for Reducer<'_, 'index, C> {
     type Input = Vec<StatusResult<'index, T>>;
 
     type FeedProduce = ();
@@ -248,8 +253,8 @@ impl<'index, T, C: Collector<'index, Diff = T>> Reduce for Reducer<'_, 'index, C
 
     fn feed(&mut self, items: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
         for item in items {
-            let (entry, path, status, conflict) = item?;
-            self.collector.visit_entry(entry, path, status, conflict);
+            let (entry, path, change, conflict) = item?;
+            self.collector.visit_entry(entry, path, change, conflict);
         }
         Ok(())
     }
@@ -265,7 +270,7 @@ struct WorktreeFile<'a> {
     options: &'a Options,
 }
 
-impl<'a> diff::LazyBlob<'a, Error> for WorktreeFile<'a> {
+impl<'a> content::LazyBlob<'a, Error> for WorktreeFile<'a> {
     fn read(self) -> Result<&'a [u8], Error> {
         let res = read::data_to_buf_with_meta(
             self.path,
