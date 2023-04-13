@@ -101,10 +101,15 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 * [x] write the table of contents
 
 ### gix-hashtable
-
 * [x] hashmap
 * [x] hashset
 
+### gix-utils
+
+* **filesystem**
+   * [x] probe capabilities
+   * [x] symlink creation and removal
+   * [x] file snapshots
 
 ### gix-object
 * *decode (zero-copy)* borrowed objects

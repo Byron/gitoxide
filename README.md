@@ -84,6 +84,7 @@ is usable to some extent.
   * [gix-refspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-refspec)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
+  * [gix-utils](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-utils)
   * [gix-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree)
   * [gix-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bitmap)
   * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)

@@ -2308,6 +2308,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-utils"
+version = "0.1.0"
+dependencies = [
+ "gix-features 0.28.1",
+]
+
+[[package]]
 name = "gix-validate"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

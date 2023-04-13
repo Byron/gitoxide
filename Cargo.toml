@@ -176,6 +176,7 @@ members = [
     "gix-pathspec",
     "gix-refspec",
     "gix-path",
+    "gix-utils",
     "gix",
     "gitoxide-core",
     "gix-hashtable",
