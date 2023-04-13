@@ -1,5 +1,5 @@
 use bstr::BStr;
-use gix_worktree::fs::{self, Capabilities};
+use gix_worktree::fs::Capabilities;
 use gix_worktree::index::status::content::FastEq;
 use gix_worktree::index::status::worktree::{self, Options};
 use gix_worktree::index::status::{Change, Recorder};
@@ -22,6 +22,7 @@ fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
         },
     )
     .unwrap();
+    recorder.records.sort_unstable_by_key(|(name, _, _)| *name);
     assert_eq!(recorder.records, expected_status)
 }
 
