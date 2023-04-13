@@ -28,7 +28,7 @@ pub enum Error {
 /// Options that control how the index status of a worktree is computed
 pub struct Options {
     /// capabilities of the file system
-    pub fs: crate::fs::Capabilities,
+    pub fs: fs::Capabilities,
     /// If set, don't use more than this amount of threads.
     /// Otherwise, usually use as many threads as there are logical cores.
     /// A value of 0 is interpreted as no-limit
