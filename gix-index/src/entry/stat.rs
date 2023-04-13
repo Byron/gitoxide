@@ -27,7 +27,12 @@ impl Stat {
         }
     }
 
-    /// Compares stat information given a set of git setting
+    /// Compares the stat information of two index entries. Intuitively this is
+    /// basically equivalent to `self == other`. However there a lot of nobs in
+    /// git that tweak whether certain stat information is used when checking
+    /// equality, see [`gix_index::entry::stat::Options`]. This function
+    /// respects those options while performing the stat comparison (and may
+    /// therefore ignore some fields)
     pub fn matches(
         &self,
         other: &Self,
