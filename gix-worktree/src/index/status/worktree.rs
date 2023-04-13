@@ -7,7 +7,7 @@ use crate::index::status::{Collector, Status};
 use crate::{fs, read};
 use bstr::BStr;
 use filetime::FileTime;
-use gix_features::parallel::{in_parallel_chunks_if, Reduce};
+use gix_features::parallel::{in_parallel_if, Reduce};
 use gix_index as index;
 use gix_path as path;
 
@@ -84,10 +84,9 @@ pub fn status<'index, T: Send>(
         None,
     );
     let path_backing = index.path_backing.as_slice();
-    in_parallel_chunks_if(
-        || true,
-        &mut index.entries,
-        chunk_size,
+    in_parallel_if(
+        || true, // TODO: heuristic: when is parallelization not worth it?
+        index.entries.chunks_mut(chunk_size),
         thread_limit,
         |_| State {
             buf: Vec::new(),
@@ -96,7 +95,12 @@ pub fn status<'index, T: Send>(
             worktree,
             options: &options,
         },
-        |entry, state| state.process(entry, diff),
+        |entries, state| {
+            entries
+                .iter_mut()
+                .filter_map(|entry| state.process(entry, diff))
+                .collect()
+        },
         Reducer {
             collector,
             phantom: PhantomData,
@@ -234,7 +238,7 @@ struct Reducer<'a, 'index, T: Collector<'index>> {
 }
 
 impl<'index, T, C: Collector<'index, Diff = T>> Reduce for Reducer<'_, 'index, C> {
-    type Input = StatusResult<'index, T>;
+    type Input = Vec<StatusResult<'index, T>>;
 
     type FeedProduce = ();
 
@@ -242,9 +246,11 @@ impl<'index, T, C: Collector<'index, Diff = T>> Reduce for Reducer<'_, 'index, C
 
     type Error = Error;
 
-    fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
-        let (entry, path, status, conflict) = item?;
-        self.collector.visit_entry(entry, path, status, conflict);
+    fn feed(&mut self, items: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
+        for item in items {
+            let (entry, path, status, conflict) = item?;
+            self.collector.visit_entry(entry, path, status, conflict);
+        }
         Ok(())
     }
 

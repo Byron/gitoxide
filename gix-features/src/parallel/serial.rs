@@ -133,35 +133,3 @@ where
     }
     reducer.finalize()
 }
-
-/// Read items from `input` and `consume` them in a single thread, producing an output to be collected by a `reducer`,
-/// whose task is to aggregate these outputs into the final result returned by this function.
-///
-/// * `new_thread_state(thread_number) -> State` produces thread-local state once per thread to be based to `consume`
-/// * `consume(Item, &mut State) -> Output` produces an output given an input along with mutable state.
-/// * For `reducer`, see the [`Reduce`] trait
-/// * if `thread_limit` has no effect as everything is run on the main thread, but is present to keep the signature
-///   similar to the parallel version.
-///
-/// **This serial version performing all calculations on the current thread.**
-pub fn in_parallel_chunks<'a, I, S, O, R>(
-    input: &'a mut [I],
-    _chunk_size: usize,
-    _thread_limit: Option<usize>,
-    new_thread_state: impl Fn(usize) -> S + Send + Clone,
-    consume: impl Fn(&'a mut I, &mut S) -> Option<O> + Send + Clone,
-    mut reducer: R,
-) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
-where
-    R: Reduce<Input = O>,
-    I: Send,
-    O: Send,
-{
-    let mut state = new_thread_state(0);
-    for item in input {
-        if let Some(res) = consume(item, &mut state) {
-            drop(reducer.feed(res)?);
-        }
-    }
-    reducer.finalize()
-}
