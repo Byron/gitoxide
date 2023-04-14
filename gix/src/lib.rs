@@ -75,6 +75,7 @@ use gix_features::threading::OwnShared;
 pub use gix_features::{parallel, progress::Progress, threading};
 pub use gix_glob as glob;
 pub use gix_hash as hash;
+pub use gix_ignore as ignore;
 #[doc(inline)]
 pub use gix_index as index;
 pub use gix_lock as lock;
@@ -92,6 +93,7 @@ pub use gix_traverse as traverse;
 pub use gix_url as url;
 #[doc(inline)]
 pub use gix_url::Url;
+pub use gix_utils as utils;
 pub use hash::{oid, ObjectId};
 
 pub mod interrupt;

@@ -76,6 +76,7 @@ is usable to some extent.
   * [gix-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-discover)
   * [gix-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-path)
   * [gix-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-attributes)
+  * [gix-ignore](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-ignore)
   * [gix-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-pathspec)
   * [gix-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-index)
   * [gix-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-revision)
@@ -84,6 +85,7 @@ is usable to some extent.
   * [gix-refspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-refspec)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
+  * [gix-utils](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-utils)
   * [gix-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree)
   * [gix-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bitmap)
   * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)

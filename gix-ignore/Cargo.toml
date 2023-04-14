@@ -1,0 +1,36 @@
+[package]
+name = "gix-ignore"
+version = "0.1.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project dealing .gitignore files"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*", "CHANGELOG.md"]
+rust-version = "1.64"
+
+[lib]
+doctest = false
+
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["serde", "bstr/serde", "gix-glob/serde1"]
+
+[dependencies]
+gix-glob = { version = "^0.5.5", path = "../gix-glob" }
+gix-path = { version = "^0.7.3", path = "../gix-path" }
+
+bstr = { version = "1.3.0", default-features = false, features = ["std", "unicode"]}
+unicode-bom = "2.0.2"
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
+
+document-features = { version = "0.2.1", optional = true }
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools"}
+gix-utils = { path = "../gix-utils" }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+features = ["document-features"]

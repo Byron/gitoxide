@@ -117,7 +117,7 @@ pub struct Options {
     pub destination_must_be_empty: bool,
     /// If set, use these filesystem capabilities to populate the respective gix-config fields.
     /// If `None`, the directory will be probed.
-    pub fs_capabilities: Option<gix_worktree::fs::Capabilities>,
+    pub fs_capabilities: Option<gix_utils::FilesystemCapabilities>,
 }
 
 /// Create a new `.git` repository of `kind` within the possibly non-existing `directory`
@@ -208,7 +208,7 @@ pub fn into(
     {
         let mut config = gix_config::File::default();
         {
-            let caps = fs_capabilities.unwrap_or_else(|| gix_worktree::fs::Capabilities::probe(&dot_git));
+            let caps = fs_capabilities.unwrap_or_else(|| gix_utils::FilesystemCapabilities::probe(&dot_git));
             let mut core = config.new_section("core", None).expect("valid section name");
 
             core.push(key("repositoryformatversion"), Some("0".into()));

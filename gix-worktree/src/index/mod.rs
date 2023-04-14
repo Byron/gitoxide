@@ -59,8 +59,8 @@ where
         None,
     );
 
-    let state = fs::cache::State::for_checkout(options.overwrite_existing, options.attribute_globals.clone().into());
-    let attribute_files = state.build_attribute_list(index, paths, case);
+    let state = fs::cache::State::for_checkout(options.overwrite_existing, options.attributes.clone().with_case(case));
+    let attribute_files = state.attribute_list_from_index(index, paths, case);
     let mut ctx = chunk::Context {
         buf: Vec::new(),
         path_cache: fs::Cache::new(dir, state, case, Vec::with_capacity(512), attribute_files),
@@ -130,7 +130,6 @@ mod chunk {
     use crate::{
         fs, index,
         index::{checkout, entry},
-        os,
     };
 
     mod reduce {
@@ -285,7 +284,7 @@ mod chunk {
                 bytes.inc_by(object_size);
                 Ok(object_size)
             }
-            Err(index::checkout::Error::Io(err)) if os::indicates_collision(&err) => {
+            Err(index::checkout::Error::Io(err)) if gix_utils::symlink::error::indicates_collision(&err) => {
                 // We are here because a file existed or was blocked by a directory which shouldn't be possible unless
                 // we are on a file insensitive file system.
                 files.fail(format!("{}: collided ({:?})", entry_path, err.kind()));

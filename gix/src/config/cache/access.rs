@@ -1,4 +1,6 @@
 #![allow(clippy::result_large_err)]
+use gix_attributes::Source;
+use gix_glob::pattern::Case;
 use std::{borrow::Cow, path::PathBuf, time::Duration};
 
 use gix_lock::acquire::Fail;
@@ -154,33 +156,30 @@ impl Cache {
                 .unwrap_or(default))
         }
 
-        fn assemble_attribute_globals(
-            me: &Cache,
-            _git_dir: &std::path::Path,
-        ) -> Result<gix_attributes::MatchGroup, checkout_options::Error> {
-            let _attributes_file = match me
-                .trusted_file_path("core", None, Core::ATTRIBUTES_FILE.name)
-                .transpose()?
-            {
-                Some(attributes) => Some(attributes.into_owned()),
-                None => me.xdg_config_path("attributes").ok().flatten(),
-            };
-            // TODO: implement gix_attributes::MatchGroup::<gix_attributes::Attributes>::from_git_dir(), similar to what's done for `Ignore`.
-            Ok(Default::default())
-        }
-
         let thread_limit = self.apply_leniency(
             self.resolved
                 .integer_filter_by_key("checkout.workers", &mut self.filter_config_section.clone())
                 .map(|value| Checkout::WORKERS.try_from_workers(value)),
         )?;
+        let capabilities = gix_utils::FilesystemCapabilities {
+            precompose_unicode: boolean(self, "core.precomposeUnicode", &Core::PRECOMPOSE_UNICODE, false)?,
+            ignore_case: boolean(self, "core.ignoreCase", &Core::IGNORE_CASE, false)?,
+            executable_bit: boolean(self, "core.fileMode", &Core::FILE_MODE, true)?,
+            symlink: boolean(self, "core.symlinks", &Core::SYMLINKS, true)?,
+        };
+        let case = if capabilities.ignore_case {
+            Case::Fold
+        } else {
+            Case::Sensitive
+        };
         Ok(gix_worktree::index::checkout::Options {
-            fs: gix_worktree::fs::Capabilities {
-                precompose_unicode: boolean(self, "core.precomposeUnicode", &Core::PRECOMPOSE_UNICODE, false)?,
-                ignore_case: boolean(self, "core.ignoreCase", &Core::IGNORE_CASE, false)?,
-                executable_bit: boolean(self, "core.fileMode", &Core::FILE_MODE, true)?,
-                symlink: boolean(self, "core.symlinks", &Core::SYMLINKS, true)?,
-            },
+            attributes: self.assemble_attribute_globals(
+                git_dir,
+                case,
+                gix_worktree::fs::cache::state::attributes::Source::AttributeListThenWorktree,
+                self.attributes,
+            )?,
+            fs: capabilities,
             thread_limit,
             destination_is_initially_empty: false,
             overwrite_existing: false,
@@ -193,23 +192,65 @@ impl Cache {
                         .map(|v| Core::CHECK_STAT.try_into_checkstat(v)),
                 )?
                 .unwrap_or(true),
-            attribute_globals: assemble_attribute_globals(self, git_dir)?,
         })
     }
+
+    // TODO: at least one test, maybe related to core.attributesFile configuration.
+    fn assemble_attribute_globals(
+        &self,
+        git_dir: &std::path::Path,
+        case: gix_glob::pattern::Case,
+        source: gix_worktree::fs::cache::state::attributes::Source,
+        attributes: crate::permissions::Attributes,
+    ) -> Result<gix_worktree::fs::cache::state::Attributes, config::attribute_stack::Error> {
+        let configured_or_user_attributes = match self
+            .trusted_file_path("core", None, Core::ATTRIBUTES_FILE.name)
+            .transpose()?
+        {
+            Some(attributes) => Some(attributes),
+            None => {
+                if attributes.git {
+                    self.xdg_config_path("attributes").ok().flatten().map(Cow::Owned)
+                } else {
+                    None
+                }
+            }
+        };
+        let attribute_files = [gix_attributes::Source::GitInstallation, gix_attributes::Source::System]
+            .into_iter()
+            .filter(|source| match source {
+                Source::GitInstallation => attributes.git_binary,
+                Source::System => attributes.system,
+                Source::Git | Source::Local => unreachable!("we don't offer turning this off right now"),
+            })
+            .filter_map(|source| source.storage_location(&mut Self::make_source_env(self.environment)))
+            .chain(configured_or_user_attributes);
+        let info_attributes_path = git_dir.join("info").join("attributes");
+        let mut buf = Vec::new();
+        let mut collection = gix_attributes::search::MetadataCollection::default();
+        Ok(gix_worktree::fs::cache::state::Attributes::new(
+            gix_attributes::Search::new_globals(attribute_files, &mut buf, &mut collection)?,
+            Some(info_attributes_path),
+            case,
+            source,
+            collection,
+        ))
+    }
+
     pub(crate) fn xdg_config_path(
         &self,
         resource_file_name: &str,
     ) -> Result<Option<PathBuf>, gix_sec::permission::Error<PathBuf>> {
         std::env::var_os("XDG_CONFIG_HOME")
-            .map(|path| (PathBuf::from(path), &self.xdg_config_home_env))
+            .map(|path| (PathBuf::from(path), &self.environment.xdg_config_home))
             .or_else(|| {
-                gix_path::home_dir().map(|mut p| {
+                gix_path::env::home_dir().map(|mut p| {
                     (
                         {
                             p.push(".config");
                             p
                         },
-                        &self.home_env,
+                        &self.environment.home,
                     )
                 })
             })
@@ -225,6 +266,6 @@ impl Cache {
     /// We never fail for here even if the permission is set to deny as we `gix-config` will fail later
     /// if it actually wants to use the home directory - we don't want to fail prematurely.
     pub(crate) fn home_dir(&self) -> Option<PathBuf> {
-        gix_path::home_dir().and_then(|path| self.home_env.check_opt(path))
+        gix_path::env::home_dir().and_then(|path| self.environment.home.check_opt(path))
     }
 }

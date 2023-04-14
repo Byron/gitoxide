@@ -27,6 +27,7 @@ required-features = ["internal-testing-gix-features-parallel"]
 
 [dev-dependencies]
 gix-ref = { path = ".." }
+gix-utils = { path = "../../gix-utils" }
 gix-features = { path = "../../gix-features", features = ["walkdir"]}
 gix-testtools = { path = "../../tests/tools" }
 gix-discover = { path = "../../gix-discover" }

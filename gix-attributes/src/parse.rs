@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use bstr::{BStr, ByteSlice};
+use kstring::KStringRef;
 
 use crate::{name, AssignmentRef, Name, NameRef, StateRef};
 
@@ -58,12 +59,7 @@ impl<'a> Iter<'a> {
         } else if attr.first() == Some(&b'!') {
             (&attr[1..], StateRef::Unspecified)
         } else {
-            (
-                attr,
-                possibly_value
-                    .map(|v| StateRef::Value(v.as_bstr()))
-                    .unwrap_or(StateRef::Set),
-            )
+            (attr, possibly_value.map(StateRef::from_bytes).unwrap_or(StateRef::Set))
         };
         Ok(AssignmentRef::new(check_attr(attr)?, state))
     }
@@ -80,7 +76,7 @@ fn check_attr(attr: &BStr) -> Result<NameRef<'_>, name::Error> {
     }
 
     attr_valid(attr)
-        .then(|| NameRef(attr.to_str().expect("no illformed utf8")))
+        .then(|| NameRef(KStringRef::from_ref(attr.to_str().expect("no illformed utf8"))))
         .ok_or_else(|| name::Error { attribute: attr.into() })
 }
 
@@ -93,6 +89,7 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
+/// Instantiation
 impl<'a> Lines<'a> {
     /// Create a new instance to parse all attributes in all lines of the input `bytes`.
     pub fn new(bytes: &'a [u8]) -> Self {
@@ -145,11 +142,11 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
 
     let kind_res = match line.strip_prefix(b"[attr]") {
         Some(macro_name) => check_attr(macro_name.into())
-            .map(|name| Kind::Macro(name.to_owned()))
             .map_err(|err| Error::MacroName {
                 line_number,
                 macro_name: err.attribute,
-            }),
+            })
+            .map(|name| Kind::Macro(name.to_owned())),
         None => {
             let pattern = gix_glob::Pattern::from_bytes(line.as_ref())?;
             if pattern.mode.contains(gix_glob::pattern::Mode::NEGATIVE) {

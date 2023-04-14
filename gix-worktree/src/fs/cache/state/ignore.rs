@@ -1,23 +1,9 @@
-use std::path::Path;
-
+use crate::fs::cache::state::IgnoreMatchGroup;
+use crate::fs::PathOidMapping;
 use bstr::{BStr, BString, ByteSlice};
 use gix_glob::pattern::Case;
 use gix_hash::oid;
-
-use crate::fs::{cache::State, PathOidMapping};
-
-type AttributeMatchGroup = gix_attributes::MatchGroup<gix_attributes::Attributes>;
-type IgnoreMatchGroup = gix_attributes::MatchGroup<gix_attributes::Ignore>;
-
-/// State related to attributes associated with files in the repository.
-#[derive(Default, Clone)]
-#[allow(unused)]
-pub struct Attributes {
-    /// Attribute patterns that match the currently set directory (in the stack).
-    pub stack: AttributeMatchGroup,
-    /// Attribute patterns which aren't tied to the repository root, hence are global. They are consulted last.
-    pub globals: AttributeMatchGroup,
-}
+use std::path::Path;
 
 /// State related to the exclusion of files.
 #[derive(Default, Clone)]
@@ -35,7 +21,7 @@ pub struct Ignore {
     /// (index into match groups, index into list of pattern lists, index into pattern list)
     matched_directory_patterns_stack: Vec<Option<(usize, usize, usize)>>,
     ///  The name of the file to look for in directories.
-    exclude_file_name_for_directories: BString,
+    pub(crate) exclude_file_name_for_directories: BString,
     /// The case to use when matching directories as they are pushed onto the stack. We run them against the exclude engine
     /// to know if an entire path can be ignored as a parent directory is ignored.
     case: Case,
@@ -44,6 +30,8 @@ pub struct Ignore {
 impl Ignore {
     /// The `exclude_file_name_for_directories` is an optional override for the filename to use when checking per-directory
     /// ignore files within the repository, defaults to`.gitignore`.
+    ///
+    // This is what it should be able represent: https://github.com/git/git/blob/140b9478dad5d19543c1cb4fd293ccec228f1240/dir.c#L3354
     // TODO: more docs
     pub fn new(
         overrides: IgnoreMatchGroup,
@@ -79,7 +67,7 @@ impl Ignore {
         relative_path: &BStr,
         is_dir: Option<bool>,
         case: Case,
-    ) -> Option<gix_attributes::Match<'_, ()>> {
+    ) -> Option<gix_ignore::search::Match<'_, ()>> {
         let groups = self.match_groups();
         let mut dir_match = None;
         if let Some((source, mapping)) = self
@@ -93,7 +81,7 @@ impl Ignore {
             })
             .next()
         {
-            let match_ = gix_attributes::Match {
+            let match_ = gix_ignore::search::Match {
                 pattern: &mapping.pattern,
                 value: &mapping.value,
                 sequence_number: mapping.sequence_number,
@@ -135,8 +123,14 @@ impl Ignore {
                 .enumerate()
                 .rev()
                 .find_map(|(plidx, pl)| {
-                    pl.pattern_idx_matching_relative_path(relative_path, basename_pos, is_dir, case)
-                        .map(|idx| (plidx, idx))
+                    gix_ignore::search::pattern_idx_matching_relative_path(
+                        pl,
+                        relative_path,
+                        basename_pos,
+                        is_dir,
+                        case,
+                    )
+                    .map(|idx| (plidx, idx))
                 })
                 .map(|(plidx, pidx)| (gidx, plidx, pidx))
         })
@@ -163,10 +157,13 @@ impl Ignore {
         let ignore_file_in_index =
             attribute_files_in_index.binary_search_by(|t| t.0.as_bstr().cmp(ignore_path_relative.as_ref()));
         let follow_symlinks = ignore_file_in_index.is_err();
-        if !self
-            .stack
-            .add_patterns_file(dir.join(".gitignore"), follow_symlinks, Some(root), buf)?
-        {
+        if !gix_glob::search::add_patterns_file(
+            &mut self.stack.patterns,
+            dir.join(".gitignore"),
+            follow_symlinks,
+            Some(root),
+            buf,
+        )? {
             match ignore_file_in_index {
                 Ok(idx) => {
                     let ignore_blob = find(&attribute_files_in_index[idx].1, buf)
@@ -182,120 +179,5 @@ impl Ignore {
             }
         }
         Ok(())
-    }
-}
-
-impl Attributes {
-    /// Create a new instance from an attribute match group that represents `globals`.
-    ///
-    /// A stack of attributes will be applied on top of it later.
-    pub fn new(globals: AttributeMatchGroup) -> Self {
-        Attributes {
-            globals,
-            stack: Default::default(),
-        }
-    }
-}
-
-impl From<AttributeMatchGroup> for Attributes {
-    fn from(group: AttributeMatchGroup) -> Self {
-        Attributes::new(group)
-    }
-}
-
-impl State {
-    /// Configure a state to be suitable for checking out files.
-    pub fn for_checkout(unlink_on_collision: bool, attributes: Attributes) -> Self {
-        State::CreateDirectoryAndAttributesStack {
-            unlink_on_collision,
-            #[cfg(debug_assertions)]
-            test_mkdir_calls: 0,
-            attributes,
-        }
-    }
-
-    /// Configure a state for adding files.
-    pub fn for_add(attributes: Attributes, ignore: Ignore) -> Self {
-        State::AttributesAndIgnoreStack { attributes, ignore }
-    }
-
-    /// Configure a state for status retrieval.
-    pub fn for_status(ignore: Ignore) -> Self {
-        State::IgnoreStack(ignore)
-    }
-}
-
-impl State {
-    /// Returns a vec of tuples of relative index paths along with the best usable OID for either ignore, attribute files or both.
-    ///
-    /// - ignores entries which aren't blobs
-    /// - ignores ignore entries which are not skip-worktree
-    /// - within merges, picks 'our' stage both for ignore and attribute files.
-    pub fn build_attribute_list(
-        &self,
-        index: &gix_index::State,
-        paths: &gix_index::PathStorageRef,
-        case: Case,
-    ) -> Vec<PathOidMapping> {
-        let a1_backing;
-        let a2_backing;
-        let names = match self {
-            State::IgnoreStack(v) => {
-                a1_backing = [(v.exclude_file_name_for_directories.as_bytes().as_bstr(), true)];
-                a1_backing.as_ref()
-            }
-            State::AttributesAndIgnoreStack { ignore, .. } => {
-                a2_backing = [
-                    (ignore.exclude_file_name_for_directories.as_bytes().as_bstr(), true),
-                    (".gitattributes".into(), false),
-                ];
-                a2_backing.as_ref()
-            }
-            State::CreateDirectoryAndAttributesStack { .. } => {
-                a1_backing = [(".gitattributes".into(), true)];
-                a1_backing.as_ref()
-            }
-        };
-
-        index
-            .entries()
-            .iter()
-            .filter_map(move |entry| {
-                let path = entry.path_in(paths);
-
-                // Stage 0 means there is no merge going on, stage 2 means it's 'our' side of the merge, but then
-                // there won't be a stage 0.
-                if entry.mode == gix_index::entry::Mode::FILE && (entry.stage() == 0 || entry.stage() == 2) {
-                    let basename = path
-                        .rfind_byte(b'/')
-                        .map(|pos| path[pos + 1..].as_bstr())
-                        .unwrap_or(path);
-                    let is_ignore = names.iter().find_map(|t| {
-                        match case {
-                            Case::Sensitive => basename == t.0,
-                            Case::Fold => basename.eq_ignore_ascii_case(t.0),
-                        }
-                        .then_some(t.1)
-                    })?;
-                    // See https://github.com/git/git/blob/master/dir.c#L912:L912
-                    if is_ignore && !entry.flags.contains(gix_index::entry::Flags::SKIP_WORKTREE) {
-                        return None;
-                    }
-                    Some((path.to_owned(), entry.id))
-                } else {
-                    None
-                }
-            })
-            .collect()
-    }
-
-    pub(crate) fn ignore_or_panic(&self) -> &Ignore {
-        match self {
-            State::IgnoreStack(v) => v,
-            State::AttributesAndIgnoreStack { ignore, .. } => ignore,
-            State::CreateDirectoryAndAttributesStack { .. } => {
-                unreachable!("BUG: must not try to check excludes without it being setup")
-            }
-        }
     }
 }

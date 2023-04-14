@@ -1,11 +1,11 @@
+// TODO: tests
+use crate::FilesystemCapabilities;
 use std::path::Path;
 
-use crate::fs::Capabilities;
-
 #[cfg(windows)]
-impl Default for Capabilities {
+impl Default for FilesystemCapabilities {
     fn default() -> Self {
-        Capabilities {
+        FilesystemCapabilities {
             precompose_unicode: false,
             ignore_case: true,
             executable_bit: false,
@@ -15,9 +15,9 @@ impl Default for Capabilities {
 }
 
 #[cfg(target_os = "macos")]
-impl Default for Capabilities {
+impl Default for FilesystemCapabilities {
     fn default() -> Self {
-        Capabilities {
+        FilesystemCapabilities {
             precompose_unicode: true,
             ignore_case: true,
             executable_bit: true,
@@ -27,9 +27,9 @@ impl Default for Capabilities {
 }
 
 #[cfg(all(unix, not(target_os = "macos")))]
-impl Default for Capabilities {
+impl Default for FilesystemCapabilities {
     fn default() -> Self {
-        Capabilities {
+        FilesystemCapabilities {
             precompose_unicode: false,
             ignore_case: false,
             executable_bit: true,
@@ -38,7 +38,7 @@ impl Default for Capabilities {
     }
 }
 
-impl Capabilities {
+impl FilesystemCapabilities {
     /// try to determine all values in this context by probing them in the given `git_dir`, which
     /// should be on the file system the git repository is located on.
     /// `git_dir` is a typical git repository, expected to be populated with the typical files like `config`.
@@ -46,8 +46,8 @@ impl Capabilities {
     /// All errors are ignored and interpreted on top of the default for the platform the binary is compiled for.
     pub fn probe(git_dir: impl AsRef<Path>) -> Self {
         let root = git_dir.as_ref();
-        let ctx = Capabilities::default();
-        Capabilities {
+        let ctx = FilesystemCapabilities::default();
+        FilesystemCapabilities {
             symlink: Self::probe_symlink(root).unwrap_or(ctx.symlink),
             ignore_case: Self::probe_ignore_case(root).unwrap_or(ctx.ignore_case),
             precompose_unicode: Self::probe_precompose_unicode(root).unwrap_or(ctx.precompose_unicode),
@@ -107,14 +107,14 @@ impl Capabilities {
             .write(true)
             .open(&src_path)?;
         let link_path = root.join("__file_link");
-        if crate::os::create_symlink(&src_path, &link_path).is_err() {
+        if crate::symlink::create(&src_path, &link_path).is_err() {
             std::fs::remove_file(&src_path)?;
             return Ok(false);
         }
 
         let res = std::fs::symlink_metadata(&link_path).map(|m| m.file_type().is_symlink());
 
-        let cleanup = crate::os::remove_symlink(&link_path).or_else(|_| std::fs::remove_file(&link_path));
+        let cleanup = crate::symlink::remove(&link_path).or_else(|_| std::fs::remove_file(&link_path));
         std::fs::remove_file(&src_path).and(cleanup)?;
 
         res

@@ -1,0 +1,11 @@
+    # no attribute for now
+*.[oa] c
+
+# comment
+"*.html" a    b=c
+
+# other comment  
+\!foo.html x
+
+\#a/path -a
+/* !b

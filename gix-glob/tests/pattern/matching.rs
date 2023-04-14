@@ -271,7 +271,7 @@ fn names_do_not_automatically_match_entire_directories() {
 
 #[test]
 fn directory_patterns_do_not_match_files_within_a_directory_as_well_like_slash_star_star() {
-    // this feature is implemented with the directory stack, which excludes entire directories
+    // this feature is implemented with the directory stack in `gix-ignore`, which excludes entire directories
     let pattern = &pat("dir/");
     assert!(!match_path(pattern, "dir/file", None, Case::Sensitive));
     assert!(!match_path(pattern, "base/dir/file", None, Case::Sensitive));

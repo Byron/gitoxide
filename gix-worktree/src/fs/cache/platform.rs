@@ -34,7 +34,7 @@ impl<'a> Platform<'a> {
     /// # Panics
     ///
     /// If the cache was configured without exclude patterns.
-    pub fn matching_exclude_pattern(&self) -> Option<gix_attributes::Match<'_, ()>> {
+    pub fn matching_exclude_pattern(&self) -> Option<gix_ignore::search::Match<'_, ()>> {
         let ignore = self.parent.state.ignore_or_panic();
         let relative_path =
             gix_path::to_unix_separators_on_windows(gix_path::into_bstr(self.parent.stack.current_relative.as_path()));
@@ -153,7 +153,7 @@ fn create_leading_directory(
                 Ok(())
             } else if unlink_on_collision {
                 if meta.file_type().is_symlink() {
-                    crate::os::remove_symlink(stack.current())?;
+                    gix_utils::symlink::remove(stack.current())?;
                 } else {
                     std::fs::remove_file(stack.current())?;
                 }

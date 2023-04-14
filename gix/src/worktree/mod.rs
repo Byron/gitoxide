@@ -7,9 +7,9 @@ use crate::{
     Repository,
 };
 
-pub(crate) type IndexStorage = gix_features::threading::OwnShared<gix_features::fs::MutableSnapshot<gix_index::File>>;
+pub(crate) type IndexStorage = gix_features::threading::OwnShared<gix_utils::SharedFileSnapshotMut<gix_index::File>>;
 /// A lazily loaded and auto-updated worktree index.
-pub type Index = gix_features::fs::SharedSnapshot<gix_index::File>;
+pub type Index = gix_utils::SharedFileSnapshot<gix_index::File>;
 
 /// A stand-in to a worktree as result of a worktree iteration.
 ///
@@ -119,19 +119,27 @@ pub mod excludes {
     impl<'repo> crate::Worktree<'repo> {
         /// Configure a file-system cache checking if files below the repository are excluded.
         ///
-        /// This takes into consideration all the usual repository configuration.
-        // TODO: test, provide higher-level interface that is much easier to use and doesn't panic.
+        /// This takes into consideration all the usual repository configuration, namely:
+        ///
+        /// * `$XDG_CONFIG_HOME/…/ignore` if `core.excludesFile` is *not* set, otherwise use the configured file.
+        /// * `$GIT_DIR/info/exclude` if present.
+        ///
+        /// `index` may be used to obtain `.gitignore` files directly from the index under certain conditions.
+        // TODO: test, provide higher-level interface that is much easier to use and doesn't panic when accessing entries
+        //       by non-relative path.
+        // TODO: `index` might be so special (given the conditions we are talking about) that it's better obtained internally
+        //        so the caller won't have to care.
         pub fn excludes(
             &self,
             index: &gix_index::State,
-            overrides: Option<gix_attributes::MatchGroup<gix_attributes::Ignore>>,
+            overrides: Option<gix_ignore::Search>,
         ) -> Result<gix_worktree::fs::Cache, Error> {
             let repo = self.parent;
-            let case = repo
-                .config
-                .ignore_case
-                .then_some(gix_glob::pattern::Case::Fold)
-                .unwrap_or_default();
+            let case = if repo.config.ignore_case {
+                gix_glob::pattern::Case::Fold
+            } else {
+                gix_glob::pattern::Case::Sensitive
+            };
             let mut buf = Vec::with_capacity(512);
             let excludes_file = match repo.config.excludes_file().transpose()? {
                 Some(user_path) => Some(user_path),
@@ -139,15 +147,11 @@ pub mod excludes {
             };
             let state = gix_worktree::fs::cache::State::IgnoreStack(gix_worktree::fs::cache::state::Ignore::new(
                 overrides.unwrap_or_default(),
-                gix_attributes::MatchGroup::<gix_attributes::Ignore>::from_git_dir(
-                    repo.git_dir(),
-                    excludes_file,
-                    &mut buf,
-                )?,
+                gix_ignore::Search::from_git_dir(repo.git_dir(), excludes_file, &mut buf)?,
                 None,
                 case,
             ));
-            let attribute_list = state.build_attribute_list(index, index.path_backing(), case);
+            let attribute_list = state.attribute_list_from_index(index, index.path_backing(), case);
             Ok(gix_worktree::fs::Cache::new(
                 self.path,
                 state,

@@ -39,7 +39,7 @@ mod init {
                 common_dir: None,
                 write_reflog,
                 namespace: None,
-                packed: gix_features::fs::MutableSnapshot::new().into(),
+                packed: gix_utils::SharedFileSnapshotMut::new().into(),
                 object_hash,
             }
         }
@@ -57,7 +57,7 @@ mod init {
                 common_dir: Some(common_dir.into()),
                 write_reflog,
                 namespace: None,
-                packed: gix_features::fs::MutableSnapshot::new().into(),
+                packed: gix_utils::SharedFileSnapshotMut::new().into(),
                 object_hash,
             }
         }

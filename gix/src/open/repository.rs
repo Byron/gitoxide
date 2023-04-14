@@ -146,7 +146,12 @@ impl ThreadSafeRepository {
             lenient_config,
             bail_if_untrusted,
             open_path_as_is: _,
-            permissions: Permissions { ref env, config },
+            permissions:
+                Permissions {
+                    ref env,
+                    config,
+                    attributes,
+                },
             ref api_config_overrides,
             ref cli_config_overrides,
             ref current_dir,
@@ -180,7 +185,7 @@ impl ThreadSafeRepository {
         };
         let head = refs.find("HEAD").ok();
         let git_install_dir = crate::path::install_dir().ok();
-        let home = gix_path::home_dir().and_then(|home| env.home.check_opt(home));
+        let home = gix_path::env::home_dir().and_then(|home| env.home.check_opt(home));
 
         let mut filter_config_section = filter_config_section.unwrap_or(config::section::is_trusted);
         let config = config::Cache::from_stage_one(
@@ -190,7 +195,8 @@ impl ThreadSafeRepository {
             filter_config_section,
             git_install_dir.as_deref(),
             home.as_deref(),
-            env.clone(),
+            *env,
+            attributes,
             config,
             lenient_config,
             api_config_overrides,
@@ -264,8 +270,8 @@ impl ThreadSafeRepository {
             config,
             // used when spawning new repositories off this one when following worktrees
             linked_worktree_options: options,
-            index: gix_features::fs::MutableSnapshot::new().into(),
-            shallow_commits: gix_features::fs::MutableSnapshot::new().into(),
+            index: gix_utils::SharedFileSnapshotMut::new().into(),
+            shallow_commits: gix_utils::SharedFileSnapshotMut::new().into(),
         })
     }
 }
