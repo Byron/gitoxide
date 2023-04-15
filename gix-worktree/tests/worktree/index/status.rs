@@ -1,7 +1,7 @@
 use bstr::BStr;
 use filetime::{set_file_mtime, FileTime};
 use gix_index as index;
-use gix_worktree::fs::Capabilities;
+use gix_utils::FilesystemCapabilities;
 use gix_worktree::index::status::content::FastEq;
 use gix_worktree::index::status::worktree::{self, Options};
 use gix_worktree::index::status::{Change, Recorder};
@@ -30,7 +30,7 @@ fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
         &mut recorder,
         &FastEq,
         Options {
-            fs: Capabilities::probe(git_dir),
+            fs: FilesystemCapabilities::probe(git_dir),
             stat: TEST_OPTIONS,
             ..Options::default()
         },
@@ -133,7 +133,7 @@ fn racy_git() {
     let dir = gix_testtools::scripted_fixture_writable("racy_git.sh").expect("script works");
     let worktree = dir.path();
     let git_dir = worktree.join(".git");
-    let fs = Capabilities::probe(&git_dir);
+    let fs = FilesystemCapabilities::probe(&git_dir);
     let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default()).unwrap();
     // we artificially mess with mtime so that it's before the timestamp
     // saved by git. This would usually mean an invalid fs/invalid index file
