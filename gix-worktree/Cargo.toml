@@ -24,18 +24,20 @@ required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = [ "serde", "bstr/serde", "gix-index/serde1", "gix-hash/serde1", "gix-object/serde1" ]
+serde1 = [ "serde", "bstr/serde", "gix-index/serde1", "gix-hash/serde1", "gix-object/serde1", "gix-attributes/serde1", "gix-ignore/serde1" ]
 
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
 gix-index = { version = "^0.15.1", path = "../gix-index" }
+gix-utils = { version = "^0.1.0", path = "../gix-utils" }
 gix-hash = { version = "^0.10.4", path = "../gix-hash" }
 gix-object = { version = "^0.28.0", path = "../gix-object" }
 gix-glob = { version = "^0.5.5", path = "../gix-glob" }
 gix-path = { version = "^0.7.3", path = "../gix-path" }
 gix-attributes = { version = "^0.10.0", path = "../gix-attributes" }
+gix-ignore = { version = "^0.1.0", path = "../gix-ignore" }
 gix-features = { version = "^0.28.0", path = "../gix-features" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

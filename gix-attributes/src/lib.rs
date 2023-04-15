@@ -1,4 +1,4 @@
-//! Parse `.gitattribute` and `.gitignore` files and provide utilities to match against them.
+//! Parse `.gitattribute` files and provide utilities to match against them.
 //!
 //! ## Feature Flags
 #![cfg_attr(
@@ -6,25 +6,26 @@
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
-#![deny(missing_docs, rust_2018_idioms)]
-#![forbid(unsafe_code)]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
-use std::path::PathBuf;
-
-use bstr::{BStr, BString};
 pub use gix_glob as glob;
+use kstring::{KString, KStringRef};
 
 mod assignment;
 ///
 pub mod name;
-mod state;
+///
+pub mod state;
 
-mod match_group;
-pub use match_group::{Attributes, Ignore, Match, Pattern};
+///
+pub mod search;
 
 ///
 pub mod parse;
-/// Parse attribute assignments line by line from `bytes`.
+
+/// Parse attribute assignments line by line from `bytes`, and fail the operation on error.
+///
+/// For leniency, ignore errors using `filter_map(Result::ok)` for example.
 pub fn parse(bytes: &[u8]) -> parse::Lines<'_> {
     parse::Lines::new(bytes)
 }
@@ -42,7 +43,7 @@ pub enum StateRef<'a> {
     /// The attribute is set to the given value, which followed the `=` sign.
     /// Note that values can be empty.
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    Value(&'a BStr),
+    Value(state::ValueRef<'a>),
     /// The attribute isn't mentioned with a given path or is explicitly set to `Unspecified` using the `!` sign.
     Unspecified,
 }
@@ -59,7 +60,7 @@ pub enum State {
     Unset,
     /// The attribute is set to the given value, which followed the `=` sign.
     /// Note that values can be empty.
-    Value(BString), // TODO(performance): Is there a non-utf8 compact_str/KBString crate? See https://github.com/cobalt-org/kstring/issues/37#issuecomment-1446777265 .
+    Value(state::Value),
     /// The attribute isn't mentioned with a given path or is explicitly set to `Unspecified` using the `!` sign.
     Unspecified,
 }
@@ -67,11 +68,11 @@ pub enum State {
 /// Represents a validated attribute name
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Name(pub(crate) String); // TODO(performance): See if `KBString` or `compact_string` could be meaningful here.
+pub struct Name(pub(crate) KString);
 
 /// Holds a validated attribute name as a reference
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
-pub struct NameRef<'a>(&'a str);
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+pub struct NameRef<'a>(KStringRef<'a>);
 
 /// Name an attribute and describe it's assigned state.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -84,7 +85,7 @@ pub struct Assignment {
 }
 
 /// Holds validated attribute data as a reference
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
 pub struct AssignmentRef<'a> {
     /// The name of the attribute.
     pub name: NameRef<'a>,
@@ -92,46 +93,34 @@ pub struct AssignmentRef<'a> {
     pub state: StateRef<'a>,
 }
 
-/// A grouping of lists of patterns while possibly keeping associated to their base path.
+/// A grouping of lists of patterns while possibly keeping associated to their base path in order to find matches.
 ///
 /// Pattern lists with base path are queryable relative to that base, otherwise they are relative to the repository root.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
-pub struct MatchGroup<T: Pattern = Attributes> {
+pub struct Search {
     /// A list of pattern lists, each representing a patterns from a file or specified by hand, in the order they were
     /// specified in.
     ///
-    /// During matching, this order is reversed.
-    pub patterns: Vec<PatternList<T>>,
+    /// When matching, this order is reversed.
+    patterns: Vec<gix_glob::search::pattern::List<search::Attributes>>,
 }
 
-/// A list of patterns which optionally know where they were loaded from and what their base is.
+/// A list of known global sources for git attribute files in order of ascending precedence.
 ///
-/// Knowing their base which is relative to a source directory, it will ignore all path to match against
-/// that don't also start with said base.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
-pub struct PatternList<T: Pattern> {
-    /// Patterns and their associated data in the order they were loaded in or specified,
-    /// the line number in its source file or its sequence number (_`(pattern, value, line_number)`_).
+/// This means that values from the first variant will be returned first.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub enum Source {
+    /// The attribute file that the installation itself ships with.
+    GitInstallation,
+    /// System-wide attributes file. This is typically defined as
+    /// `$(prefix)/etc/gitattributes` (where prefix is the git-installation directory).
+    System,
+    /// This is `<xdg-config-home>/git/attributes` and is git application configuration per user.
     ///
-    /// During matching, this order is reversed.
-    pub patterns: Vec<PatternMapping<T::Value>>,
-
-    /// The path from which the patterns were read, or `None` if the patterns
-    /// don't originate in a file on disk.
-    pub source: Option<PathBuf>,
-
-    /// The parent directory of source, or `None` if the patterns are _global_ to match against the repository root.
-    /// It's processed to contain slashes only and to end with a trailing slash, and is relative to the repository root.
-    pub base: Option<BString>,
+    /// Note that there is no `~/.gitattributes` file.
+    Git,
+    /// The configuration of the repository itself, located in `$GIT_DIR/info/attributes`.
+    Local,
 }
 
-/// An association of a pattern with its value, along with a sequence number providing a sort order in relation to its peers.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct PatternMapping<T> {
-    /// The pattern itself, like `/target/*`
-    pub pattern: gix_glob::Pattern,
-    /// The value associated with the pattern.
-    pub value: T,
-    /// Typically the line number in the file the pattern was parsed from.
-    pub sequence_number: usize,
-}
+mod source;

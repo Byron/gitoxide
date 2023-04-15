@@ -2,7 +2,7 @@
 fn from_probing_cwd() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::File::create(dir.path().join("config")).unwrap();
-    let ctx = gix_worktree::fs::Capabilities::probe(dir.path());
+    let ctx = gix_utils::FilesystemCapabilities::probe(dir.path());
     dbg!(ctx);
     let entries: Vec<_> = std::fs::read_dir(dir.path())
         .unwrap()

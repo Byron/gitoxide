@@ -117,6 +117,10 @@ static GIT_CONFIG: &[Record] = &[
         usage: NotApplicable { reason: "we target 32bit systems only and don't use a windowing mechanism" }
     },
     Record {
+        config: "core.checkRoundtripEncoding",
+        usage: Planned { note: Some("needed once working-tree-encoding attributes are supported") }
+    },
+    Record {
         config: "core.bigFileThreshold",
         usage: Planned { note: Some("unfortunately we can't stream packed files yet, even if not delta-compressed, but respecting the threshold for other operations is definitely a must") }
     },
@@ -457,6 +461,18 @@ static GIT_CONFIG: &[Record] = &[
     Record {
         config: "status.renames",
         usage: Planned { note: Some("the same as diff.renames") }
+    },
+    Record {
+        config: "diff.*.textconv",
+        usage: Planned { note: None }
+    },
+    Record {
+        config: "diff.*.cachetextconv",
+        usage: Planned { note: None }
+    },
+    Record {
+        config: "diff.*.command",
+        usage: Planned { note: None }
     },
 ];
 

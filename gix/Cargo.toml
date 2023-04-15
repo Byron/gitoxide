@@ -65,6 +65,7 @@ serde1 = [  "serde",
             "gix-mailmap/serde1",
             "gix-url/serde1",
             "gix-attributes/serde1",
+            "gix-ignore/serde1",
             "gix-revision/serde1",
             "gix-credentials/serde1" ]
 
@@ -110,6 +111,7 @@ fast-sha1 = [ "gix-features/fast-sha1" ]
 
 
 [dependencies]
+gix-utils = { version = "0.1.0", path = "../gix-utils" }
 gix-ref = { version = "^0.27.2", path = "../gix-ref" }
 gix-discover = { version = "^0.16.2", path = "../gix-discover" }
 gix-tempfile = { version = "^5.0.0", path = "../gix-tempfile", default-features = false, features = ["signals"] }
@@ -137,6 +139,7 @@ gix-mailmap = { version = "^0.11.0", path = "../gix-mailmap" }
 gix-features = { version = "^0.28.1", path = "../gix-features", features = ["progress", "once_cell"] }
 
 gix-attributes = { version = "^0.10.0", path = "../gix-attributes" }
+gix-ignore = { version = "^0.1.0", path = "../gix-ignore" }
 gix-glob = { version = "^0.5.5", path = "../gix-glob" }
 gix-credentials = { version = "^0.12.0", path = "../gix-credentials" }
 gix-prompt = { version = "^0.3.3", path = "../gix-prompt" }

@@ -2,7 +2,7 @@ use bitflags::bitflags;
 bitflags! {
     /// The match mode employed in [`Pattern::matches()`][crate::Pattern::matches()].
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-    #[derive(Copy, Clone)]
+    #[derive(Debug, Default, Copy, Clone, Eq, PartialEq)]
     pub struct Mode: u8 {
         /// Let globs like `*` and `?` not match the slash `/` literal, which is useful when matching paths.
         const NO_MATCH_SLASH_LITERAL = 1 << 0;

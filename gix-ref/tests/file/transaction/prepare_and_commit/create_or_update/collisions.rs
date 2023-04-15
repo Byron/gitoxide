@@ -14,7 +14,7 @@ use crate::{
 
 fn case_sensitive(tmp_dir: &std::path::Path) -> bool {
     std::fs::write(tmp_dir.join("config"), "").expect("can create file once");
-    !gix_worktree::fs::Capabilities::probe(tmp_dir).ignore_case
+    !gix_utils::FilesystemCapabilities::probe(tmp_dir).ignore_case
 }
 
 #[test]

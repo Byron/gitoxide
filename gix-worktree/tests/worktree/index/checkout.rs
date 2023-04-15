@@ -10,7 +10,8 @@ use std::{
 use gix_features::progress;
 use gix_object::bstr::ByteSlice;
 use gix_odb::FindExt;
-use gix_worktree::{fs::Capabilities, index, index::checkout::Collision};
+use gix_utils::FilesystemCapabilities;
+use gix_worktree::{index, index::checkout::Collision};
 use tempfile::TempDir;
 
 use crate::fixture_path;
@@ -418,8 +419,8 @@ fn stripped_prefix(prefix: impl AsRef<Path>, source_files: &[PathBuf]) -> Vec<&P
     source_files.iter().flat_map(|p| p.strip_prefix(&prefix)).collect()
 }
 
-fn probe_gitoxide_dir() -> crate::Result<Capabilities> {
-    Ok(gix_worktree::fs::Capabilities::probe(
+fn probe_gitoxide_dir() -> crate::Result<FilesystemCapabilities> {
+    Ok(gix_utils::FilesystemCapabilities::probe(
         std::env::current_dir()?.join("..").join(".git"),
     ))
 }

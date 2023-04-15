@@ -27,6 +27,8 @@ pub struct Pattern {
 ///
 pub mod pattern;
 
+pub mod search;
+
 ///
 pub mod wildmatch;
 pub use wildmatch::function::wildmatch;

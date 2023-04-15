@@ -65,29 +65,19 @@ impl Source {
     pub fn storage_location(self, env_var: &mut dyn FnMut(&str) -> Option<OsString>) -> Option<Cow<'static, Path>> {
         use Source::*;
         match self {
-            GitInstallation => git::install_config_path().map(gix_path::from_bstr),
-            System => env_var("GIT_CONFIG_NO_SYSTEM")
-                .is_none()
-                .then(|| PathBuf::from(env_var("GIT_CONFIG_SYSTEM").unwrap_or_else(|| "/etc/gitconfig".into())).into()),
+            GitInstallation => gix_path::env::installation_config().map(Into::into),
+            System => {
+                if env_var("GIT_CONFIG_NO_SYSTEM").is_some() {
+                    None
+                } else {
+                    env_var("GIT_CONFIG_SYSTEM")
+                        .map(|p| Cow::Owned(p.into()))
+                        .or_else(|| gix_path::env::system_prefix().map(|p| p.join("etc/gitconfig").into()))
+                }
+            }
             Git => match env_var("GIT_CONFIG_GLOBAL") {
                 Some(global_override) => Some(PathBuf::from(global_override).into()),
-                None => env_var("XDG_CONFIG_HOME")
-                    .map(|home| {
-                        let mut p = PathBuf::from(home);
-                        p.push("git");
-                        p.push("config");
-                        p
-                    })
-                    .or_else(|| {
-                        env_var("HOME").map(|home| {
-                            let mut p = PathBuf::from(home);
-                            p.push(".config");
-                            p.push("git");
-                            p.push("config");
-                            p
-                        })
-                    })
-                    .map(Cow::Owned),
+                None => gix_path::env::xdg_config("config", env_var).map(Cow::Owned),
             },
             User => env_var("GIT_CONFIG_GLOBAL")
                 .map(|global_override| PathBuf::from(global_override).into())
@@ -101,65 +91,6 @@ impl Source {
             Local => Some(Path::new("config").into()),
             Worktree => Some(Path::new("config.worktree").into()),
             Env | Cli | Api | EnvOverride => None,
-        }
-    }
-}
-
-/// Environment information involving the `git` program itself.
-mod git {
-    use std::process::{Command, Stdio};
-
-    use bstr::{BStr, BString, ByteSlice};
-
-    /// Returns the file that contains git configuration coming with the installation of the `git` file in the current `PATH`, or `None`
-    /// if no `git` executable was found or there were other errors during execution.
-    pub fn install_config_path() -> Option<&'static BStr> {
-        static PATH: once_cell::sync::Lazy<Option<BString>> = once_cell::sync::Lazy::new(|| {
-            let mut cmd = Command::new(if cfg!(windows) { "git.exe" } else { "git" });
-            cmd.args(["config", "-l", "--show-origin"])
-                .stdin(Stdio::null())
-                .stderr(Stdio::null());
-            first_file_from_config_with_origin(cmd.output().ok()?.stdout.as_slice().into()).map(ToOwned::to_owned)
-        });
-        PATH.as_ref().map(|b| b.as_ref())
-    }
-
-    fn first_file_from_config_with_origin(source: &BStr) -> Option<&BStr> {
-        let file = source.strip_prefix(b"file:")?;
-        let end_pos = file.find_byte(b'\t')?;
-        file[..end_pos].trim_with(|c| c == '"').as_bstr().into()
-    }
-
-    #[cfg(test)]
-    mod tests {
-        #[test]
-        fn first_file_from_config_with_origin() {
-            let macos = "file:/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig	credential.helper=osxkeychain\nfile:/Users/byron/.gitconfig	push.default=simple\n";
-            let win_msys =
-                "file:C:/git-sdk-64/etc/gitconfig	core.symlinks=false\r\nfile:C:/git-sdk-64/etc/gitconfig	core.autocrlf=true";
-            let win_cmd = "file:C:/Program Files/Git/etc/gitconfig	diff.astextplain.textconv=astextplain\r\nfile:C:/Program Files/Git/etc/gitconfig	filter.lfs.clean=gix-lfs clean -- %f\r\n";
-            let win_msys_old = "file:\"C:\\ProgramData/Git/config\"	diff.astextplain.textconv=astextplain\r\nfile:\"C:\\ProgramData/Git/config\"	filter.lfs.clean=git-lfs clean -- %f\r\n";
-            let linux = "file:/home/parallels/.gitconfig	core.excludesfile=~/.gitignore\n";
-            let bogus = "something unexpected";
-            let empty = "";
-
-            for (source, expected) in [
-                (
-                    macos,
-                    Some("/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig"),
-                ),
-                (win_msys, Some("C:/git-sdk-64/etc/gitconfig")),
-                (win_msys_old, Some("C:\\ProgramData/Git/config")),
-                (win_cmd, Some("C:/Program Files/Git/etc/gitconfig")),
-                (linux, Some("/home/parallels/.gitconfig")),
-                (bogus, None),
-                (empty, None),
-            ] {
-                assert_eq!(
-                    super::first_file_from_config_with_origin(source.into()),
-                    expected.map(Into::into)
-                );
-            }
         }
     }
 }

@@ -45,7 +45,7 @@ fn special_exclude_cases_we_handle_differently() {
         Default::default(),
         gix_worktree::fs::cache::state::Ignore::new(
             Default::default(),
-            gix_attributes::MatchGroup::from_git_dir(&git_dir, None, &mut buf).unwrap(),
+            gix_ignore::Search::from_git_dir(&git_dir, None, &mut buf).unwrap(),
             None,
             case,
         ),
@@ -99,14 +99,14 @@ fn check_against_baseline() -> crate::Result {
     let state = gix_worktree::fs::cache::State::for_add(
         Default::default(), // TODO: attribute tests
         gix_worktree::fs::cache::state::Ignore::new(
-            gix_attributes::MatchGroup::from_overrides(vec!["!force-include"]),
-            gix_attributes::MatchGroup::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf)?,
+            gix_ignore::Search::from_overrides(vec!["!force-include"]),
+            gix_ignore::Search::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf)?,
             None,
             case,
         ),
     );
     let paths_storage = index.take_path_backing();
-    let attribute_files_in_index = state.build_attribute_list(&index, &paths_storage, case);
+    let attribute_files_in_index = state.attribute_list_from_index(&index, &paths_storage, case);
     assert_eq!(
         attribute_files_in_index,
         vec![(

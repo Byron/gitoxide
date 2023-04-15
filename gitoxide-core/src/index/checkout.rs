@@ -56,7 +56,7 @@ pub fn checkout_exclusive(
     }
 
     let opts = gix::worktree::index::checkout::Options {
-        fs: gix::worktree::fs::Capabilities::probe(dest_directory),
+        fs: gix::utils::FilesystemCapabilities::probe(dest_directory),
 
         destination_is_initially_empty: true,
         overwrite_existing: false,

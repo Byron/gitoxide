@@ -1,7 +1,8 @@
 #![allow(missing_docs)]
+
 use bstr::BString;
-use gix_attributes::Attributes;
 use gix_index::entry::stat;
+use gix_utils::FilesystemCapabilities;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Collision {
@@ -31,7 +32,7 @@ pub struct Outcome {
 #[derive(Clone, Default)]
 pub struct Options {
     /// capabilities of the file system
-    pub fs: crate::fs::Capabilities,
+    pub fs: FilesystemCapabilities,
     /// If set, don't use more than this amount of threads.
     /// Otherwise, usually use as many threads as there are logical cores.
     /// A value of 0 is interpreted as no-limit
@@ -52,8 +53,8 @@ pub struct Options {
     /// Options that control how stat comparisons are made
     /// when checking if a file is fresh
     pub stat_options: stat::Options,
-    /// A group of attribute patterns that are applied globally, i.e. aren't rooted within the repository itself.
-    pub attribute_globals: gix_attributes::MatchGroup<Attributes>,
+    /// A stack of attributes to use with the filesystem cache to use as driver for filters.
+    pub attributes: crate::fs::cache::state::Attributes,
 }
 
 #[derive(Debug, thiserror::Error)]

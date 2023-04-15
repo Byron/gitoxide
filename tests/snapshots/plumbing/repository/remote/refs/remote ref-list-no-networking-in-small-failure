@@ -1,7 +1,7 @@
 error: unrecognized subcommand 'remote'
 
-  note: subcommands 'r', 'tree', 'free' exist
-  note: to pass 'remote' as a value, use 'gix -- remote'
+  tip: some similar subcommands exist: 'r', 'tree', 'free'
+  tip: to pass 'remote' as a value, use 'gix -- remote'
 
 Usage: gix [OPTIONS] <COMMAND>
 

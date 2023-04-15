@@ -101,10 +101,15 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 * [x] write the table of contents
 
 ### gix-hashtable
-
 * [x] hashmap
 * [x] hashset
 
+### gix-utils
+
+* **filesystem**
+   * [x] probe capabilities
+   * [x] symlink creation and removal
+   * [x] file snapshots
 
 ### gix-object
 * *decode (zero-copy)* borrowed objects
@@ -323,11 +328,13 @@ Check out the [performance discussion][gix-traverse-performance] as well.
     * [ ] Some examples
 
 ### gix-attributes
-* [x] parse git-ignore files (aka gix-attributes without the attributes or negation)
-* [x] parse gix-attributes files
-* [ ] create an attributes stack, ideally one that includes 'ignored' status from .gitignore files.
-   * [ ] support for built-in `binary` macro for `-text -diff -merge`
-    
+* [x] parse `.gitattribute` files
+* [ ] an attributes stack for matching paths to their attributes, with support for built-in `binary` macro for `-text -diff -merge`
+
+### gix-ignore
+* [x] parse `.gitignore` files 
+* [x] an attributes stack for checking if paths are excluded
+
 ### gix-quote
 * **ansi-c**
   * [x] quote
@@ -440,7 +447,7 @@ Make it the best-performing implementation and the most convenient one.
      - [ ] handle submodules
      - [ ] handle sparse directories
      - [ ] handle sparse index
-     - [ ] linear scaling with multi-threading up to IO saturation
+     - [x] linear scaling with multi-threading up to IO saturation
   - supported attributes to affect working tree and index contents
      - [ ] eol
      - [ ] working-tree-encoding
@@ -450,8 +457,10 @@ Make it the best-performing implementation and the most convenient one.
      - [ ] `ident`
      - [ ] filter processes
      - [ ] single-invocation clean/smudge filters
-* [x] access to all .gitignore/exclude information 
-* [ ] access to all attributes information
+* manage multiple worktrees
+* access to per-path information, like `.gitignore` and `.gitattributes` in a manner well suited for efficient lookups
+  * [x] _exclude_ information
+  * [ ] attributes
  
 ### gix-revision
 * [x] `describe()` (similar to `git name-rev`)
@@ -602,6 +611,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
         * [x] tree with other tree
            * [ ] respect case-sensitivity of host filesystem.
            * [x] a way to access various diff related settings or use them
+           * [ ] respect `diff.*.textconv`, `diff.*.cachetextconv` and external diff viewers with `diff.*.command`, 
+                 [along with support for reading `diff` gitattributes](https://github.com/git/git/blob/73876f4861cd3d187a4682290ab75c9dccadbc56/Documentation/gitattributes.txt#L699:L699).
            * **rewrite tracking**
               * **deviation** - git keeps up to four candidates whereas we use the first-found candidate that matches the similarity percentage.
                                 This can lead to different sources being found. As such, we also don't consider the filename at all.
@@ -614,7 +625,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
                  * [x] renames
                  * [x] copies
               * [x] 'find-copies-harder' - find copies with the source being the entire tree.
-        * [ ] tree with working tree
+        * [ ] tree or index with working tree
         * [x] diffs between modified blobs with various algorithms
         * [ ] tree with index
     * [x] initialize
@@ -673,6 +684,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
           * [ ] obtain 'prunable' information
        * [x] proper handling of worktree related refs
        * [ ] create, move, remove, and repair
+       * [x] access exclude information
+       * [ ]  access attribute information
        * [x] respect `core.worktree` configuration
           - **deviation**
              * The delicate interplay between `GIT_COMMON_DIR` and `GIT_WORK_TREE` isn't implemented.

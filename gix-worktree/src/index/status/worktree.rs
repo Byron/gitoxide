@@ -3,12 +3,13 @@ use std::marker::PhantomData;
 use std::path::Path;
 
 use crate::index::status::{content, Change, Collector, ContentComparison};
-use crate::{fs, read};
+use crate::read;
 use bstr::BStr;
 use filetime::FileTime;
 use gix_features::parallel::{in_parallel_if, Reduce};
 use gix_index as index;
 use gix_path as path;
+use gix_utils::FilesystemCapabilities;
 
 mod untracked;
 
@@ -28,7 +29,7 @@ pub enum Error {
 /// Options that control how the index status of a worktree is computed
 pub struct Options {
     /// capabilities of the file system
-    pub fs: fs::Capabilities,
+    pub fs: FilesystemCapabilities,
     /// If set, don't use more than this amount of threads.
     /// Otherwise, usually use as many threads as there are logical cores.
     /// A value of 0 is interpreted as no-limit

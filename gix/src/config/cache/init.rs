@@ -1,5 +1,6 @@
 #![allow(clippy::result_large_err)]
 use std::borrow::Cow;
+use std::ffi::OsString;
 
 use gix_sec::Permission;
 
@@ -32,15 +33,16 @@ impl Cache {
         filter_config_section: fn(&gix_config::file::Metadata) -> bool,
         git_install_dir: Option<&std::path::Path>,
         home: Option<&std::path::Path>,
-        repository::permissions::Environment {
+        environment @ repository::permissions::Environment {
             git_prefix,
-            home: home_env,
-            xdg_config_home: xdg_config_home_env,
             ssh_prefix: _,
+            xdg_config_home: _,
+            home: _,
             http_transport,
             identity,
             objects,
         }: repository::permissions::Environment,
+        attributes: repository::permissions::Attributes,
         repository::permissions::Config {
             git_binary: use_installation,
             system: use_system,
@@ -69,8 +71,6 @@ impl Cache {
         };
 
         let config = {
-            let home_env = &home_env;
-            let xdg_config_home_env = &xdg_config_home_env;
             let git_prefix = &git_prefix;
             let metas = [
                 gix_config::source::Kind::GitInstallation,
@@ -88,15 +88,7 @@ impl Cache {
                     _ => {}
                 }
                 source
-                    .storage_location(&mut |name| {
-                        match name {
-                            git_ if git_.starts_with("GIT_") => Some(git_prefix),
-                            "XDG_CONFIG_HOME" => Some(xdg_config_home_env),
-                            "HOME" => Some(home_env),
-                            _ => None,
-                        }
-                        .and_then(|perm| perm.check_opt(name).and_then(gix_path::env_var))
-                    })
+                    .storage_location(&mut Self::make_source_env(environment))
                     .map(|p| (source, p.into_owned()))
             })
             .map(|(source, path)| gix_config::file::Metadata {
@@ -175,9 +167,9 @@ impl Cache {
             ignore_case,
             hex_len,
             filter_config_section,
-            xdg_config_home_env,
-            home_env,
+            environment,
             lenient_config,
+            attributes,
             user_agent: Default::default(),
             personas: Default::default(),
             url_rewrite: Default::default(),
@@ -239,6 +231,31 @@ impl Cache {
         }
 
         Ok(())
+    }
+
+    pub(crate) fn make_source_env(
+        crate::permissions::Environment {
+            xdg_config_home,
+            git_prefix,
+            home,
+            ..
+        }: crate::permissions::Environment,
+    ) -> impl FnMut(&str) -> Option<OsString> {
+        move |name| {
+            match name {
+                git_ if git_.starts_with("GIT_") => Some(git_prefix),
+                "XDG_CONFIG_HOME" => Some(xdg_config_home),
+                "HOME" => {
+                    return if home.is_allowed() {
+                        gix_path::env::home_dir().map(Into::into)
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            }
+            .and_then(|perm| perm.check_opt(name).and_then(gix_path::env::var))
+        }
     }
 }
 

@@ -12,7 +12,5 @@ pub mod fs;
 ///
 pub mod index;
 
-pub(crate) mod os;
-
 ///
 pub mod read;
