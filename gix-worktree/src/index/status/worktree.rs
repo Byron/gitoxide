@@ -73,10 +73,10 @@ where
         options.thread_limit,
         None,
     );
-    let path_backing = index.path_backing.as_slice();
+    let (entries, path_backing) = index.entries_mut_and_pathbacking();
     in_parallel_if(
         || true, // TODO: heuristic: when is parallelization not worth it?
-        index.entries.chunks_mut(chunk_size),
+        entries.chunks_mut(chunk_size),
         thread_limit,
         {
             let options = &options;

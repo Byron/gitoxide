@@ -164,7 +164,7 @@ fn racy_git() {
     // change.
     // This case doesn't happen in the realworld (except for file corruption) but
     // makes sure we are actually hitting the right codepath.
-    index.entries[0].stat.mtime.secs = timestamp;
+    index.entries_mut()[0].stat.mtime.secs = timestamp;
     set_file_mtime(worktree.join("content"), FileTime::from_unix_time(timestamp as i64, 0))
         .expect("changing filetime works");
     let mut recorder = Recorder::default();
