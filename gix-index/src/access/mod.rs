@@ -132,6 +132,12 @@ impl State {
     pub fn entries_mut(&mut self) -> &mut [Entry] {
         &mut self.entries
     }
+
+    /// Return a writable slice to entries and read-access to their path storage at the same time.
+    pub fn entries_mut_and_pathbacking(&mut self) -> (&mut [Entry], &PathStorage) {
+        (&mut self.entries, &self.path_backing)
+    }
+
     /// Return mutable entries along with their paths in an iterator.
     pub fn entries_mut_with_paths(&mut self) -> impl Iterator<Item = (&mut Entry, &BStr)> {
         let paths = &self.path_backing;
