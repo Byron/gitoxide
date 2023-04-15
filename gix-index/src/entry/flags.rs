@@ -3,25 +3,27 @@ use bitflags::bitflags;
 use crate::entry::Stage;
 
 bitflags! {
-    /// In-memory flags
+    /// In-memory flags.
+    ///
+    /// Notably, not all of these will be persisted but can be used to aid all kinds of operations.
     #[derive(Debug, Clone, Copy, Eq, PartialEq)]
     pub struct Flags: u32 {
-        /// The mask to apply to obtain the stage number of an entry.
-        const STAGE_MASK = 0x3000;
-        /// If set, additional bits need to be written to storage.
-        const EXTENDED = 0x4000;
         // TODO: could we use the pathlen ourselves to save 8 bytes? And how to handle longer paths than that? 0 as sentinel maybe?
-        /// The mask to obtain the length of the path associated with this entry.
+        /// The mask to obtain the length of the path associated with this entry, up to 4095 characters without extension.
         const PATH_LEN = 0x0fff;
+        /// The mask to apply to obtain the stage number of an entry, encoding three value: 0 = base, 1 = ours, 2 = theirs.
+        const STAGE_MASK = 1<<12 | 1<<13;
+        /// If set, additional bits need to be written to storage.
+        const EXTENDED = 1<<14;
         /// If set, the entry be assumed to match with the version on the working tree, as a way to avoid `lstat()`  checks.
         const ASSUME_VALID = 1 << 15;
         /// Indicates that an entry needs to be updated as it's in-memory representation doesn't match what's on disk.
         const UPDATE = 1 << 16;
         /// Indicates an entry should be removed - this typically happens during writing, by simply skipping over them.
         const REMOVE = 1 << 17;
-        /// Indicates that an entry is known to be uptodate.
+        /// Indicates that an entry is known to be up-to-date.
         const UPTODATE = 1 << 18;
-        /// Only temporarily used by unpack_trees() (in C)
+        /// Only temporarily used by unpack_trees() (in C).
         const ADDED = 1 << 19;
 
         /// Whether an up-to-date object hash exists for the entry.
@@ -46,8 +48,8 @@ bitflags! {
         /// Indicates the entry name is present in the base/shared index, and thus doesn't have to be stored in this one.
         const STRIP_NAME = 1 << 28;
 
-        ///
-        /// stored at rest, see at_rest::FlagsExtended
+        /// Created with `git add --intent-to-add` to mark empty entries that have their counter-part in the worktree, but not
+        /// yet in the object database.
         const INTENT_TO_ADD = 1 << 29;
         /// Stored at rest
         const SKIP_WORKTREE = 1 << 30;
@@ -102,7 +104,7 @@ pub(crate) mod at_rest {
 
     bitflags! {
         /// Extended flags - add flags for serialization here and offset them down to u16.
-        #[derive(Copy, Clone, Debug)]
+        #[derive(Copy, Clone, Debug, PartialEq)]
         pub struct FlagsExtended: u16 {
             const INTENT_TO_ADD = 1 << (29 - 16);
             const SKIP_WORKTREE = 1 << (30 - 16);
@@ -123,6 +125,18 @@ pub(crate) mod at_rest {
     #[cfg(test)]
     mod tests {
         use super::*;
+
+        #[test]
+        fn flags_extended_conversion() {
+            assert_eq!(
+                FlagsExtended::all().to_flags(),
+                Some(super::super::Flags::INTENT_TO_ADD | super::super::Flags::SKIP_WORKTREE)
+            );
+            assert_eq!(
+                FlagsExtended::from_flags(super::super::Flags::all()),
+                FlagsExtended::all()
+            );
+        }
 
         #[test]
         fn flags_from_bits_with_conflict() {

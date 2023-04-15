@@ -6,6 +6,7 @@ use gix_index::{
     Version,
 };
 
+use crate::index::Fixture;
 use crate::{hex_to_id, loose_file_path};
 
 fn verify(index: gix_index::File) -> gix_index::File {
@@ -184,6 +185,14 @@ fn fsmn_v1() {
     assert_eq!(file.version(), Version::V2);
 
     assert!(file.fs_monitor().is_some());
+}
+
+#[test]
+fn v3_added_files() {
+    let file = Fixture::Generated("v3_added_files").open();
+    assert_eq!(file.version(), Version::V3, "uses extended attributes");
+    assert_eq!(file.entries().len(), 1);
+    assert_eq!(file.entries()[0].flags, Flags::EXTENDED | Flags::INTENT_TO_ADD);
 }
 
 #[test]

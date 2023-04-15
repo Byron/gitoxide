@@ -96,6 +96,7 @@ fn state_comparisons_with_various_extension_configurations() {
         //       the fixture artificially sets the version to V4 and gitoxide writes it back out as the lowest required version, V2
         // Generated("v4_more_files_IEOT"),
         Generated("v3_skip_worktree"),
+        Generated("v3_added_files"),
         Generated("v3_sparse_index_non_cone"),
         Generated("v3_sparse_index"),
         // TODO: this fails because git writes the sdir extension in this case while gitoxide doesn't
