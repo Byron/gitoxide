@@ -96,6 +96,8 @@ pub struct State {
     ///
     pub entries: Vec<Entry>,
     /// A memory area keeping all index paths, in full length, independently of the index version.
+    ///
+    /// Ranges into this storage are referred to by parts of `entries`.
     pub path_backing: PathStorage,
     /// True if one entry in the index has a special marker mode
     is_sparse: bool,

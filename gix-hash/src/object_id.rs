@@ -77,21 +77,21 @@ pub mod decode {
 
 /// Access and conversion
 impl ObjectId {
-    /// Returns the kind of hash used in this `Id`
+    /// Returns the kind of hash used in this `Id`.
     #[inline]
     pub fn kind(&self) -> crate::Kind {
         match self {
             ObjectId::Sha1(_) => crate::Kind::Sha1,
         }
     }
-    /// Return the raw byte slice representing this hash
+    /// Return the raw byte slice representing this hash.
     #[inline]
     pub fn as_slice(&self) -> &[u8] {
         match self {
             Self::Sha1(b) => b.as_ref(),
         }
     }
-    /// Return the raw mutable byte slice representing this hash
+    /// Return the raw mutable byte slice representing this hash.
     #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
         match self {
@@ -99,7 +99,7 @@ impl ObjectId {
         }
     }
 
-    /// The hash of an empty blob
+    /// The hash of an empty blob.
     #[inline]
     pub const fn empty_blob(hash: Kind) -> ObjectId {
         match hash {
@@ -109,7 +109,7 @@ impl ObjectId {
         }
     }
 
-    /// The hash of an empty tree
+    /// The hash of an empty tree.
     #[inline]
     pub const fn empty_tree(hash: Kind) -> ObjectId {
         match hash {
@@ -119,7 +119,7 @@ impl ObjectId {
         }
     }
 
-    /// Returns true if this hash consists of all null bytes
+    /// Returns true if this hash consists of all null bytes.
     #[inline]
     pub fn is_null(&self) -> bool {
         match self {
@@ -127,7 +127,7 @@ impl ObjectId {
         }
     }
 
-    /// Returns true if this hash is equal to an empty blob
+    /// Returns `true` if this hash is equal to an empty blob.
     #[inline]
     pub fn is_empty_blob(&self) -> bool {
         self == &Self::empty_blob(self.kind())

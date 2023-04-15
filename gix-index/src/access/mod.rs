@@ -21,10 +21,10 @@ impl State {
         self.timestamp
     }
 
-    /// Updates the timestamp of this state, indicating its freshness compared
-    /// to other files on disk. Be careful about using this as setting a
-    /// timestamp without correctly updating the index **will cause (file
-    /// system) race conditions** see racy-git.txt (in the git documentation)
+    /// Updates the timestamp of this state, indicating its freshness compared to other files on disk.
+    ///
+    /// Be careful about using this as setting a timestamp without correctly updating the index
+    /// **will cause (file system) race conditions** see racy-git.txt in the git documentation
     /// for more details.
     pub fn set_timestamp(&mut self, timestamp: FileTime) {
         self.timestamp = timestamp

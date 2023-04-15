@@ -50,8 +50,7 @@ pub struct Options {
     /// due to a conflict.
     /// The checkout operation will never fail, but count the encountered errors instead along with their paths.
     pub keep_going: bool,
-    /// Options that control how stat comparisons are made
-    /// when checking if a file is fresh
+    /// Control how stat comparisons are made when checking if a file is fresh.
     pub stat_options: stat::Options,
     /// A stack of attributes to use with the filesystem cache to use as driver for filters.
     pub attributes: crate::fs::cache::state::Attributes,

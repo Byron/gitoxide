@@ -7,6 +7,7 @@ use crate::fs;
 
 pub mod checkout;
 pub(crate) mod entry;
+///
 pub mod status;
 
 /// Note that interruption still produce an `Ok(…)` value, so the caller should look at `should_interrupt` to communicate the outcome.

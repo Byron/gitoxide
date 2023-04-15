@@ -1,17 +1,20 @@
 use bstr::BStr;
 use filetime::{set_file_mtime, FileTime};
+use gix_features::threading::OwnShared;
 use gix_index as index;
+use gix_index::Entry;
 use gix_utils::FilesystemCapabilities;
-use gix_worktree::index::status::content::FastEq;
+use gix_worktree::index::status::content::{FastEq, ReadDataOnce};
 use gix_worktree::index::status::worktree::{self, Options};
-use gix_worktree::index::status::{Change, Recorder};
+use gix_worktree::index::status::{Change, CompareBlobs, Recorder};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::fixture_path;
 
 // since tests are fixtures a bunch of stat information (like inode number)
 // changes when extracting the data so we need to disable all advanced stat
 // changes and only look at mtime seconds and file size to properly
-// test all code paths (and to trigger racy git)
+// test all code paths (and to trigger racy git).
 const TEST_OPTIONS: index::entry::stat::Options = index::entry::stat::Options {
     trust_ctime: false,
     check_stat: false,
@@ -28,7 +31,8 @@ fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
         &mut index,
         &worktree,
         &mut recorder,
-        &FastEq,
+        FastEq,
+        |_, _| Ok::<_, std::convert::Infallible>(gix_object::BlobRef { data: &[] }),
         Options {
             fs: FilesystemCapabilities::probe(git_dir),
             stat: TEST_OPTIONS,
@@ -127,29 +131,52 @@ fn modified() {
 #[test]
 fn racy_git() {
     let timestamp = 940040400;
-    // we need a writable fixture because we have to mess with mtimes manually,
-    // because touch -d respects the locale so the test wouldn't work depending
-    // on the timezone you run your test in
+    // we need a writable fixture because we have to mess with `mtimes` manually, because touch -d
+    // respects the locale so the test wouldn't work depending on the timezone you
+    // run your test in.
     let dir = gix_testtools::scripted_fixture_writable("racy_git.sh").expect("script works");
     let worktree = dir.path();
     let git_dir = worktree.join(".git");
     let fs = FilesystemCapabilities::probe(&git_dir);
     let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default()).unwrap();
-    // we artificially mess with mtime so that it's before the timestamp
-    // saved by git. This would usually mean an invalid fs/invalid index file
-    // and as a result the racy git mitigation doesn't work and the worktree
-    // shows up as unchanged even tough the file did change. This case
-    // doesn't happen in the realworld (except for file corruption) but
-    // makes sure we are actually hitting the right codepath
+
+    #[derive(Clone)]
+    struct CountCalls(OwnShared<AtomicUsize>, FastEq);
+    impl CompareBlobs for CountCalls {
+        type Output = ();
+
+        fn compare_blobs<'a, E>(
+            &mut self,
+            entry: &'a Entry,
+            worktree_blob_size: usize,
+            worktree_blob: impl ReadDataOnce<'a, E>,
+            entry_blob: impl ReadDataOnce<'a, E>,
+        ) -> Result<Option<Self::Output>, E> {
+            self.0.fetch_add(1, Ordering::Relaxed);
+            self.1
+                .compare_blobs(entry, worktree_blob_size, worktree_blob, entry_blob)
+        }
+    }
+
+    // We artificially mess with the entry's `mtime` so that it's before the timestamp saved by git.
+    // This would usually mean an invalid fs/invalid index file and as a result the racy git
+    // mitigation doesn't work and the worktree shows up as unchanged even tough the file did
+    // change.
+    // This case doesn't happen in the realworld (except for file corruption) but
+    // makes sure we are actually hitting the right codepath.
     index.entries[0].stat.mtime.secs = timestamp;
     set_file_mtime(worktree.join("content"), FileTime::from_unix_time(timestamp as i64, 0))
         .expect("changing filetime works");
     let mut recorder = Recorder::default();
+
+    let count = OwnShared::new(AtomicUsize::new(0));
+    let counter = CountCalls(count.clone(), FastEq);
     worktree::changes_to_obtain(
         &mut index,
         &worktree,
         &mut recorder,
-        &FastEq,
+        counter.clone(),
+        |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "no odb access expected")),
         Options {
             fs,
             stat: TEST_OPTIONS,
@@ -157,18 +184,20 @@ fn racy_git() {
         },
     )
     .unwrap();
+    assert_eq!(count.load(Ordering::Relaxed), 0, "no blob content is accessed");
     assert_eq!(recorder.records, &[], "the testcase triggers racy git");
 
-    // now we also backdate the index timestamp to match the artificially created
-    // mtime above this is now a realistic realworld racecondition which
-    // should trigger racy git and cause proper output
+    // Now we also backdate the index timestamp to match the artificially created
+    // mtime above this is now a realistic realworld race-condition which should trigger racy git
+    // and cause proper output.
     index.set_timestamp(FileTime::from_unix_time(timestamp as i64, 0));
     let mut recorder = Recorder::default();
     worktree::changes_to_obtain(
         &mut index,
         &worktree,
         &mut recorder,
-        &FastEq,
+        counter.clone(),
+        |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "no odb access expected")),
         Options {
             fs,
             stat: TEST_OPTIONS,
@@ -176,6 +205,11 @@ fn racy_git() {
         },
     )
     .unwrap();
+    assert_eq!(
+        count.load(Ordering::Relaxed),
+        1,
+        "no we needed to access the blob content"
+    );
     assert_eq!(
         recorder.records,
         &[(

@@ -6,12 +6,12 @@ use filetime::FileTime;
 use crate::entry::Stat;
 
 impl Stat {
-    /// Detect whether this stat entry is racy given an index timestamp. An
-    /// index entry is considered racy if it's mtime is larger or equal to the
-    /// index timestamp. The index timestamp marks the point in time before
-    /// which we definitely resolved the racy git problem for all index entries
-    /// so any index entries that changed afterwards will need to be examined for
-    /// changes (by actually reading the file from disk) at least once.
+    /// Detect whether this stat entry is racy if stored in a file index with `timestamp`.
+    ///
+    /// An index entry is considered racy if it's `mtime` is larger or equal to the index `timestamp`.
+    /// The index `timestamp` marks the point in time before which we definitely resolved the racy git problem
+    /// for all index entries so any index entries that changed afterwards will need to be examined for
+    /// changes by actually reading the file from disk at least once.
     pub fn is_racy(
         &self,
         timestamp: FileTime,
@@ -27,12 +27,12 @@ impl Stat {
         }
     }
 
-    /// Compares the stat information of two index entries. Intuitively this is
-    /// basically equivalent to `self == other`. However there a lot of nobs in
-    /// git that tweak whether certain stat information is used when checking
-    /// equality, see [`gix_index::entry::stat::Options`]. This function
-    /// respects those options while performing the stat comparison (and may
-    /// therefore ignore some fields)
+    /// Compares the stat information of two index entries.
+    ///
+    /// Intuitively this is basically equivalent to `self == other`.
+    /// However there a lot of nobs in git that tweak whether certain stat information is used when checking
+    /// equality, see [`Options`].
+    /// This function respects those options while performing the stat comparison and may therefore ignore some fields.
     pub fn matches(
         &self,
         other: &Self,
@@ -73,7 +73,7 @@ impl Stat {
         }
     }
 
-    /// Creates stat information from the result of symlink_metadata
+    /// Creates stat information from the result of symlink_metadata.
     pub fn from_fs(fstat: &std::fs::Metadata) -> Result<Stat, SystemTimeError> {
         let mtime = fstat.modified().unwrap_or(std::time::UNIX_EPOCH);
         let ctime = fstat.created().unwrap_or(std::time::UNIX_EPOCH);
@@ -86,7 +86,7 @@ impl Stat {
             ino: 0,
             uid: 0,
             gid: 0,
-            // truncation to 32 bits is on purpose (git does the same)
+            // truncation to 32 bits is on purpose (git does the same).
             size: fstat.len() as u32,
         };
         #[cfg(unix)]
@@ -98,12 +98,12 @@ impl Stat {
             // truncating to 32 bits is fine here because
             // that's what the linux syscalls returns
             // just rust upcasts to 64 bits for some reason?
-            // numbers this large are impractical anyway (that's a lot of harddrvies)
+            // numbers this large are impractical anyway (that's a lot of hard-drives).
             dev: fstat.dev() as u32,
             ino: fstat.ino() as u32,
             uid: fstat.uid(),
             gid: fstat.gid(),
-            // truncation to 32 bits is on purpose (git does the same)
+            // truncation to 32 bits is on purpose (git does the same).
             size: fstat.len() as u32,
         };
 
@@ -133,7 +133,7 @@ impl From<Time> for SystemTime {
 #[derive(Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
-    /// The amount of seconds elapsed since EPOCH
+    /// The amount of seconds elapsed since EPOCH.
     pub secs: u32,
     /// The amount of nanoseconds elapsed in the current second, ranging from 0 to 999.999.999 .
     pub nsecs: u32,
@@ -166,27 +166,24 @@ pub struct Options {
     /// If true, a files creation time is taken into consideration when checking if a file changed.
     /// Can be set to false in case other tools alter the creation time in ways that interfere with our operation.
     ///
-    /// Default true.
+    /// Default `true`.
     pub trust_ctime: bool,
     /// If true, all stat fields will be used when checking for up-to-date'ness of the entry. Otherwise
     /// nano-second parts of mtime and ctime,uid, gid, inode and device number _will not_ be used, leaving only
     /// the whole-second part of ctime and mtime and the file size to be checked.
     ///
-    /// Default true.
+    /// Default `true`.
     pub check_stat: bool,
-    // TODO: enable by default? Seems to be disabled in git??
-    // documentation only talks about this being disabled for linux but I can't
-    // see it being enabled on other OS
     /// Whether to compare nano secs when comparing timestamps. This currently
     /// leads to many false positives on linux and is therefore disabled there.
     ///
-    /// Default false
+    /// Default `false`
     pub use_nsec: bool,
     /// Whether to compare network devices secs when comparing timestamps.
     /// Disabled by default because this can cause many false positives on network
     /// devices where the device number is not stable
     ///
-    /// Default false
+    /// Default `false`.
     pub use_stdev: bool,
 }
 

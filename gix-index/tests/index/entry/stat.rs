@@ -1,24 +1,8 @@
-mod time {
-    use std::time::SystemTime;
+use filetime::FileTime;
+use gix_index::entry::stat::{Options, Time};
+use gix_index::entry::Stat;
 
-    use gix_index::entry;
-
-    #[test]
-    fn conversion_roundtrip() {
-        for sample in [entry::stat::Time::default(), entry::stat::Time { secs: 42, nsecs: 150 }] {
-            let other: SystemTime = sample.into();
-            let new_sample: entry::stat::Time = other.try_into().unwrap();
-            assert_eq!(
-                new_sample, sample,
-                "sample is still the same after conversion to system-time and back"
-            );
-        }
-    }
-}
-
-mod stat {
-    use filetime::FileTime;
-
+mod matches {
     use gix_index::entry::stat::{Options, Time};
     use gix_index::entry::Stat;
 
@@ -249,91 +233,73 @@ mod stat {
             "size is different => mismatch (check_stat=false)"
         );
     }
-
-    #[test]
-    fn racy_timestamp() {
-        let stat1 = Stat {
-            mtime: Time { secs: 1, nsecs: 10 },
-            ctime: Time { secs: 0, nsecs: 0 },
-            dev: 0,
-            ino: 0,
-            uid: 0,
-            gid: 0,
-            size: 0,
-        };
-        assert!(
-            stat1.is_racy(FileTime::from_unix_time(1, 0), Options::default()),
-            "entry with mtime identical (seconds) to timestamp is racy (use_nsec=false)"
-        );
-        assert!(
-            stat1.is_racy(
-                FileTime::from_unix_time(1, 0),
-                Options {
-                    use_nsec: true,
-                    ..Default::default()
-                },
-            ),
-            "entry with mtime after timestamp (nanoseconds) is racy (use_nsec=true)"
-        );
-        assert!(
-            stat1.is_racy(FileTime::from_unix_time(1, 10), Options::default()),
-            "entry with mtime identical (seconds) to timestamp is racy (use_nsec=false)"
-        );
-        assert!(
-            stat1.is_racy(
-                FileTime::from_unix_time(1, 10),
-                Options {
-                    use_nsec: true,
-                    ..Default::default()
-                },
-            ),
-            "entry with mtime identical (seconds and nanseconds) to timestamp is racy (use_nsec=true)"
-        );
-        assert!(
-            stat1.is_racy(FileTime::from_unix_time(1, 20), Options::default()),
-            "entry with mtime identical (seconds) to timestamp is racy (use_nsec=false)"
-        );
-        assert!(
-            !stat1.is_racy(
-                FileTime::from_unix_time(1, 20),
-                Options {
-                    use_nsec: true,
-                    ..Default::default()
-                },
-            ),
-            "entry with mtime before (nanoseconds) timestamp is not racy (use_nsec=true)"
-        );
-        assert!(
-            !stat1.is_racy(FileTime::from_unix_time(2, 0), Options::default()),
-            "entry with mtime before (seconds) timestamp is not racy (use_nsec=false)"
-        );
-        assert!(
-            !stat1.is_racy(
-                FileTime::from_unix_time(2, 0),
-                Options {
-                    use_nsec: true,
-                    ..Default::default()
-                },
-            ),
-            "entry with mtime before (seconds) timestamp is not racy (use_nsec=true)"
-        );
-    }
 }
 
-mod mode {
-    use gix_index::entry::mode::Change;
-    use gix_index::entry::Mode;
-
-    #[test]
-    fn apply_change() {
-        assert_eq!(Change::ExecutableBit.apply(Mode::FILE), Mode::FILE_EXECUTABLE);
-        assert_eq!(Change::ExecutableBit.apply(Mode::FILE_EXECUTABLE), Mode::FILE);
-        assert_eq!(
-            Change::Type {
-                new_mode: Mode::SYMLINK
-            }
-            .apply(Mode::FILE),
-            Mode::SYMLINK
-        );
-    }
+#[test]
+fn is_racy() {
+    let stat1 = Stat {
+        mtime: Time { secs: 1, nsecs: 10 },
+        ctime: Time { secs: 0, nsecs: 0 },
+        dev: 0,
+        ino: 0,
+        uid: 0,
+        gid: 0,
+        size: 0,
+    };
+    assert!(
+        stat1.is_racy(FileTime::from_unix_time(1, 0), Options::default()),
+        "entry with mtime identical (seconds) to timestamp is racy (use_nsec=false)"
+    );
+    assert!(
+        stat1.is_racy(
+            FileTime::from_unix_time(1, 0),
+            Options {
+                use_nsec: true,
+                ..Default::default()
+            },
+        ),
+        "entry with mtime after timestamp (nanoseconds) is racy (use_nsec=true)"
+    );
+    assert!(
+        stat1.is_racy(FileTime::from_unix_time(1, 10), Options::default()),
+        "entry with mtime identical (seconds) to timestamp is racy (use_nsec=false)"
+    );
+    assert!(
+        stat1.is_racy(
+            FileTime::from_unix_time(1, 10),
+            Options {
+                use_nsec: true,
+                ..Default::default()
+            },
+        ),
+        "entry with mtime identical (seconds and nanseconds) to timestamp is racy (use_nsec=true)"
+    );
+    assert!(
+        stat1.is_racy(FileTime::from_unix_time(1, 20), Options::default()),
+        "entry with mtime identical (seconds) to timestamp is racy (use_nsec=false)"
+    );
+    assert!(
+        !stat1.is_racy(
+            FileTime::from_unix_time(1, 20),
+            Options {
+                use_nsec: true,
+                ..Default::default()
+            },
+        ),
+        "entry with mtime before (nanoseconds) timestamp is not racy (use_nsec=true)"
+    );
+    assert!(
+        !stat1.is_racy(FileTime::from_unix_time(2, 0), Options::default()),
+        "entry with mtime before (seconds) timestamp is not racy (use_nsec=false)"
+    );
+    assert!(
+        !stat1.is_racy(
+            FileTime::from_unix_time(2, 0),
+            Options {
+                use_nsec: true,
+                ..Default::default()
+            },
+        ),
+        "entry with mtime before (seconds) timestamp is not racy (use_nsec=true)"
+    );
 }

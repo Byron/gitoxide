@@ -28,10 +28,10 @@ pub struct Prefix {
     hex_len: usize,
 }
 
-/// The size of a SHA1 hash digest in bytes
+/// The size of a SHA1 hash digest in bytes.
 const SIZE_OF_SHA1_DIGEST: usize = 20;
 
-/// Denotes the kind of function to produce a `Id`
+/// Denotes the kind of function to produce a `Id`.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {

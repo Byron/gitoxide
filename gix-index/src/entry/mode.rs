@@ -1,20 +1,20 @@
 use crate::entry::Mode;
 
 #[cfg(unix)]
-/// Returns whether a a file has the executable permission set
+/// Returns whether a a file has the executable permission set.
 fn is_executable(metadata: &std::fs::Metadata) -> bool {
     use std::os::unix::fs::MetadataExt;
     (metadata.mode() & 0o100) != 0
 }
 
 #[cfg(not(unix))]
-/// Returns whether a a file has the executable permission set
+/// Returns whether a a file has the executable permission set.
 fn is_executable(_metadata: &std::fs::Metadata) -> bool {
     false
 }
 
 impl Mode {
-    /// Return true if this is a sparse entry, as it points to a directory which usually isn't what an unsparse index tracks.
+    /// Return true if this is a sparse entry, as it points to a directory which usually isn't what an 'unsparse' index tracks.
     pub fn is_sparse(&self) -> bool {
         *self == Self::DIR
     }
@@ -36,13 +36,13 @@ impl Mode {
     /// operation on such file systems.
     ///
     /// If a directory replaced a normal file/symlink we assume that the
-    /// directory is a submodule. Normal (non-submodule) direcotires would
+    /// directory is a submodule. Normal (non-submodule) directories would
     /// cause a file to be deleted from the index and should be handled before
     /// calling this function.
     ///
     /// If the stat information belongs to something other than a normal file/
     /// directory (like a socket) we just return an identity change (non-files
-    /// can not be committed to git)
+    /// can not be committed to git).
     pub fn change_to_match_fs(
         self,
         stat: &std::fs::Metadata,
@@ -69,24 +69,19 @@ impl Mode {
     }
 }
 
-/// A change of a [`Mode`]
+/// A change of a [`Mode`].
 pub enum Change {
-    /// The type of mode changed (like symlink => file)
+    /// The type of mode changed, like symlink => file.
     Type {
-        /// The mode representing the new index type
+        /// The mode representing the new index type.
         new_mode: Mode,
     },
-    /// The executable permission of this file has changed
+    /// The executable permission of this file has changed.
     ExecutableBit,
 }
 
 impl Change {
-    /// Applies this change to a `Mode` by updating it in place
-    pub fn update(self, mode: &mut Mode) {
-        *mode = self.apply(*mode);
-    }
-
-    /// Applies this change to a `Mode` by updating it in place
+    /// Applies this change to `mode` and returns the changed one.
     pub fn apply(self, mode: Mode) -> Mode {
         match self {
             Change::Type { new_mode } => new_mode,

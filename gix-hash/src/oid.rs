@@ -34,7 +34,7 @@ impl hash::Hash for oid {
     }
 }
 
-/// A utility able to format itself with the given amount of characters in hex
+/// A utility able to format itself with the given amount of characters in hex.
 #[derive(PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct HexDisplay<'a> {
     inner: &'a oid,
@@ -91,7 +91,7 @@ impl oid {
         Self::from_bytes(value)
     }
 
-    /// Only from code that statically assures correct sizes using array conversions
+    /// Only from code that statically assures correct sizes using array conversions.
     pub(crate) fn from_bytes(value: &[u8]) -> &Self {
         #[allow(unsafe_code)]
         unsafe {
@@ -102,13 +102,13 @@ impl oid {
 
 /// Access
 impl oid {
-    /// The kind of hash used for this Digest
+    /// The kind of hash used for this Digest.
     #[inline]
     pub fn kind(&self) -> crate::Kind {
         crate::Kind::from_len_in_bytes(self.bytes.len())
     }
 
-    /// The first byte of the hash, commonly used to partition a set of `Id`s
+    /// The first byte of the hash, commonly used to partition a set of `Id`s.
     #[inline]
     pub fn first_byte(&self) -> u8 {
         self.bytes[0]
@@ -152,7 +152,7 @@ impl oid {
         num_hex_bytes
     }
 
-    /// Write ourselves to `out` in hexadecimal notation
+    /// Write ourselves to `out` in hexadecimal notation.
     #[inline]
     pub fn write_hex_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
         let mut hex = crate::Kind::hex_buf();
@@ -205,7 +205,7 @@ impl PartialEq<crate::ObjectId> for &oid {
 }
 
 /// Manually created from a version that uses a slice, and we forcefully try to convert it into a borrowed array of the desired size
-/// Could be improved by fitting this into serde
+/// Could be improved by fitting this into serde.
 /// Unfortunately the serde::Deserialize derive wouldn't work for borrowed arrays.
 #[cfg(feature = "serde1")]
 impl<'de: 'a, 'a> serde::Deserialize<'de> for &'a oid {

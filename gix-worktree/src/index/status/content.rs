@@ -4,38 +4,39 @@ use gix_index as index;
 use gix_object::encode::loose_header;
 use index::Entry;
 
-use crate::index::status::ContentComparison;
+use crate::index::status::CompareBlobs;
 
-/// Lazy borrwoed access to blob data from disk or ODB
-pub trait LazyBlob<'a, E> {
-    /// Returns the contents of this blob, potentially performs IO
-    /// and other expensive operations and should only be called
-    /// when necessary.
-    fn read(self) -> Result<&'a [u8], E>;
+/// Lazy borrowed access to blob data.
+pub trait ReadDataOnce<'a, E> {
+    /// Returns the contents of this blob.
+    ///
+    /// This potentially performs IO and other expensive operations
+    /// and should only be called when necessary.
+    fn read_data(self) -> Result<&'a [u8], E>;
 }
 
-/// Compares to blobs by comparing their size and oid, only looks at the file if
-/// the size matches, therefore very fast
+/// Compares to blobs by comparing their size and oid, and only looks at the file if
+/// the size matches, therefore it's very fast.
+#[derive(Clone)]
 pub struct FastEq;
 
-impl ContentComparison for FastEq {
+impl CompareBlobs for FastEq {
     type Output = ();
 
-    fn compare_blob<'a, E>(
-        &self,
+    fn compare_blobs<'a, E>(
+        &mut self,
         entry: &'a Entry,
-        blob_size: usize,
-        blob: impl LazyBlob<'a, E>,
-        _resolve_oid: impl FnMut(gix_hash::ObjectId) -> Result<&'a [u8], E>,
+        worktree_blob_size: usize,
+        worktree_blob: impl ReadDataOnce<'a, E>,
+        _entry_blob: impl ReadDataOnce<'a, E>,
     ) -> Result<Option<Self::Output>, E> {
-        // make sure to account for racily smudged entries here
-        // so that they don't always keep showing up as modified even
-        // after their contents have changed again (to a potentially unmodified state)
-        // that means that we want to ignore stat.size == 0 for non_empty_blobs
-        if entry.stat.size as usize != blob_size && (entry.id.is_empty_blob() || entry.stat.size != 0) {
+        // make sure to account for racily smudged entries here so that they don't always keep
+        // showing up as modified even after their contents have changed again, to a potentially
+        // unmodified state. That means that we want to ignore stat.size == 0 for non_empty_blobs.
+        if entry.stat.size as usize != worktree_blob_size && (entry.id.is_empty_blob() || entry.stat.size != 0) {
             return Ok(Some(()));
         }
-        let blob = blob.read()?;
+        let blob = worktree_blob.read_data()?;
         let header = loose_header(gix_object::Kind::Blob, blob.len());
         let mut hasher = hash::hasher(entry.id.kind());
         hasher.update(&header);
@@ -45,22 +46,24 @@ impl ContentComparison for FastEq {
     }
 }
 
-/// Compares files to blobs by comparing their oids. Same as [`Fast`] but does
-/// not contain a fast path for files with mismatched files and therefore always
-/// returns an OID that can be reused later
+/// Compares files to blobs by *always* comparing their hashes.
+///
+/// Same as [`FastEq`] but does not contain a fast path for files with mismatched files and
+/// therefore always returns an OID that can be reused later.
+#[derive(Clone)]
 pub struct HashEq;
 
-impl ContentComparison for HashEq {
+impl CompareBlobs for HashEq {
     type Output = ObjectId;
 
-    fn compare_blob<'a, E>(
-        &self,
+    fn compare_blobs<'a, E>(
+        &mut self,
         entry: &'a Entry,
-        _blob_size: usize,
-        blob: impl LazyBlob<'a, E>,
-        _resolve_oid: impl FnMut(gix_hash::ObjectId) -> Result<&'a [u8], E>,
+        _worktree_blob_size: usize,
+        worktree_blob: impl ReadDataOnce<'a, E>,
+        _entry_blob: impl ReadDataOnce<'a, E>,
     ) -> Result<Option<Self::Output>, E> {
-        let blob = blob.read()?;
+        let blob = worktree_blob.read_data()?;
         let header = loose_header(gix_object::Kind::Blob, blob.len());
         let mut hasher = hash::hasher(entry.id.kind());
         hasher.update(&header);

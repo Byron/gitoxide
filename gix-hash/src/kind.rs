@@ -39,13 +39,13 @@ impl std::fmt::Display for Kind {
 }
 
 impl Kind {
-    /// Returns the shortest hash we support
+    /// Returns the shortest hash we support.
     #[inline]
     pub const fn shortest() -> Self {
         Self::Sha1
     }
 
-    /// Returns the longest hash we support
+    /// Returns the longest hash we support.
     #[inline]
     pub const fn longest() -> Self {
         Self::Sha1
@@ -63,14 +63,14 @@ impl Kind {
         [0u8; Kind::longest().len_in_bytes()]
     }
 
-    /// Returns the amount of ascii-characters needed to encode this has in hex
+    /// Returns the amount of ascii-characters needed to encode this has in hex.
     #[inline]
     pub const fn len_in_hex(&self) -> usize {
         match self {
             Kind::Sha1 => 40,
         }
     }
-    /// Returns the amount of bytes taken up by the hash of the current kind
+    /// Returns the amount of bytes taken up by the hash of the current kind.
     #[inline]
     pub const fn len_in_bytes(&self) -> usize {
         match self {
