@@ -1,6 +1,5 @@
 use bstr::BStr;
 use filetime::{set_file_mtime, FileTime};
-use gix_features::threading::OwnShared;
 use gix_index as index;
 use gix_index::Entry;
 use gix_utils::FilesystemCapabilities;
@@ -8,6 +7,7 @@ use gix_worktree::index::status::content::{FastEq, ReadDataOnce};
 use gix_worktree::index::status::worktree::{self, Options};
 use gix_worktree::index::status::{Change, CompareBlobs, Recorder};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 
 use crate::fixture_path;
 
@@ -58,44 +58,35 @@ fn removed() {
 }
 
 #[test]
+fn intent_to_add() {
+    fixture(
+        "status_intent_to_add",
+        &[(BStr::new(b"content"), Some(Change::IntentToAdd), false)],
+    );
+}
+
+#[test]
+fn conflict() {
+    fixture(
+        "status_conflict",
+        &[(
+            BStr::new(b"content"),
+            Some(Change::Modification {
+                executable_bit_changed: false,
+                content_change: Some(()),
+            }),
+            true,
+        )],
+    );
+}
+
+#[test]
 fn unchanged() {
     fixture("status_unchanged", &[]);
 }
 
 #[test]
 fn modified() {
-    // run the same status check twice to ensure that racy detection
-    // doesn't change the result of the status check
-    fixture(
-        "status_changed",
-        &[
-            (
-                BStr::new(b"dir/content"),
-                Some(Change::Modification {
-                    executable_bit_changed: true,
-                    content_change: None,
-                }),
-                false,
-            ),
-            (
-                BStr::new(b"dir/content2"),
-                Some(Change::Modification {
-                    executable_bit_changed: false,
-                    content_change: Some(()),
-                }),
-                false,
-            ),
-            (BStr::new(b"empty"), Some(Change::Type), false),
-            (
-                BStr::new(b"executable"),
-                Some(Change::Modification {
-                    executable_bit_changed: true,
-                    content_change: Some(()),
-                }),
-                false,
-            ),
-        ],
-    );
     fixture(
         "status_changed",
         &[
@@ -141,7 +132,7 @@ fn racy_git() {
     let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default()).unwrap();
 
     #[derive(Clone)]
-    struct CountCalls(OwnShared<AtomicUsize>, FastEq);
+    struct CountCalls(Arc<AtomicUsize>, FastEq);
     impl CompareBlobs for CountCalls {
         type Output = ();
 
@@ -169,7 +160,7 @@ fn racy_git() {
         .expect("changing filetime works");
     let mut recorder = Recorder::default();
 
-    let count = OwnShared::new(AtomicUsize::new(0));
+    let count = Arc::new(AtomicUsize::new(0));
     let counter = CountCalls(count.clone(), FastEq);
     worktree::changes_to_obtain(
         &mut index,

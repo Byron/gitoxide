@@ -32,11 +32,11 @@ pub enum Change<T = ()> {
         /// changed than this is `None`.
         content_change: Option<T>,
     },
-    /// An index entry that correspond to an untracked worktree file marked with `git add`.
+    /// An index entry that correspond to an untracked worktree file marked with `git add --intent-to-add`.
     ///
-    /// This means it's not available in the git tree yet that the index was created from,
+    /// This means it's not available in the object database yet or the index was created from,
     /// even though now an entry exists that represents the worktree file.
-    Added,
+    IntentToAdd,
 }
 
 /// Observe changes by comparing an index entry to the worktree or another index.

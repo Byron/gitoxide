@@ -46,6 +46,9 @@ pub struct Options {
 /// observable in `collector`, along with information produced by `compare` which gets to see blobs that may have changes.
 /// `options` are used to configure the operation.
 ///
+/// Note that `index` is updated with the latest seen stat information from the worktree, and its timestamp is adjusted to
+/// the current time for which it will be considered fresh.
+///
 /// Note that this isn't technically quite what this function does as this also provides some additional information,
 /// like whether a file has conflicts, and files that were added with `git add` are shown as a special
 /// changes despite not technically requiring a change to the index since `git add` already added the file to the index.
@@ -222,7 +225,7 @@ impl<'index> State<'_, 'index> {
             }
         };
         if entry.flags.contains(index::entry::Flags::INTENT_TO_ADD) {
-            return Ok(Some(Change::Added));
+            return Ok(Some(Change::IntentToAdd));
         }
         let new_stat = index::entry::Stat::from_fs(&metadata)?;
         let executable_bit_changed =
