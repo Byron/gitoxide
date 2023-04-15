@@ -5,6 +5,7 @@ use std::{borrow::Cow, path::PathBuf, time::Duration};
 
 use gix_lock::acquire::Fail;
 
+use crate::config::tree::gitoxide;
 use crate::{
     bstr::BStr,
     config,
@@ -186,6 +187,8 @@ impl Cache {
             keep_going: false,
             stat_options: gix_index::entry::stat::Options {
                 trust_ctime: boolean(self, "core.trustCTime", &Core::TRUST_C_TIME, true)?,
+                use_nsec: boolean(self, "gitoxide.core.useNsec", &gitoxide::Core::USE_NSEC, false)?,
+                use_stdev: boolean(self, "gitoxide.core.useStdev", &gitoxide::Core::USE_STDEV, false)?,
                 check_stat: self
                     .apply_leniency(
                         self.resolved
@@ -193,7 +196,6 @@ impl Cache {
                             .map(|v| Core::CHECK_STAT.try_into_checkstat(v)),
                     )?
                     .unwrap_or(true),
-                ..gix_index::entry::stat::Options::default()
             },
         })
     }

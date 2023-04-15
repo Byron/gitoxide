@@ -67,6 +67,14 @@ mod subsections {
     pub struct Core;
 
     impl Core {
+        /// The `gitoxide.core.useNsec` key.
+        pub const USE_NSEC: keys::Boolean = keys::Boolean::new_boolean("useNsec", &Gitoxide::CORE)
+            .with_note("A runtime version of the USE_NSEC build flag.");
+
+        /// The `gitoxide.core.useStdev` key.
+        pub const USE_STDEV: keys::Boolean = keys::Boolean::new_boolean("useStdev", &Gitoxide::CORE)
+            .with_note("A runtime version of the USE_STDEV build flag.");
+
         /// The `gitoxide.core.shallowFile` key.
         pub const SHALLOW_FILE: keys::Path = keys::Path::new_path("shallowFile", &Gitoxide::CORE)
             .with_environment_override("GIT_SHALLOW_FILE")
@@ -81,7 +89,11 @@ mod subsections {
         }
 
         fn keys(&self) -> &[&dyn Key] {
-            &[&Self::SHALLOW_FILE]
+            &[&Self::USE_NSEC, &Self::USE_STDEV, &Self::SHALLOW_FILE]
+        }
+
+        fn parent(&self) -> Option<&dyn Section> {
+            Some(&Tree::GITOXIDE)
         }
     }
 
