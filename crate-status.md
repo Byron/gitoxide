@@ -105,11 +105,16 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 * [x] hashset
 
 ### gix-utils
-
 * **filesystem**
    * [x] probe capabilities
    * [x] symlink creation and removal
    * [x] file snapshots
+    
+### gix-fs
+* [x] probe capabilities
+* [x] symlink creation and removal
+* [x] file snapshots
+* [x] stack abstraction
 
 ### gix-object
 * *decode (zero-copy)* borrowed objects

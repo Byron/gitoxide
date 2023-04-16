@@ -9,7 +9,6 @@ use filetime::FileTime;
 use gix_features::parallel::{in_parallel_if, Reduce};
 use gix_index as index;
 use gix_path as path;
-use gix_utils::FilesystemCapabilities;
 
 mod untracked {
     // TODO: untracked file detection
@@ -33,7 +32,7 @@ pub enum Error {
 /// Options that control how the index status with a worktree is computed.
 pub struct Options {
     /// Capabilities of the file system which affect the status computation.
-    pub fs: FilesystemCapabilities,
+    pub fs: gix_fs::Capabilities,
     /// If set, don't use more than this amount of threads.
     /// Otherwise, usually use as many threads as there are logical cores.
     /// A value of 0 is interpreted as no-limit

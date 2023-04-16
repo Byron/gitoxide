@@ -2,7 +2,7 @@ use bstr::{BStr, ByteSlice};
 use gix_attributes::search::{AttributeId, Outcome};
 use gix_attributes::{AssignmentRef, NameRef, StateRef};
 use gix_glob::pattern::Case;
-use gix_utils::FilesystemCapabilities;
+
 use std::collections::BTreeMap;
 
 mod specials {
@@ -62,7 +62,7 @@ fn baseline() -> crate::Result {
     let mut buf = Vec::new();
     // Due to the way our setup differs from gits dynamic stack (which involves trying to read files from disk
     // by path) we can only test one case baseline, so we require multiple platforms (or filesystems) to run this.
-    let case = if FilesystemCapabilities::probe("../.git").ignore_case {
+    let case = if gix_fs::Capabilities::probe("../.git").ignore_case {
         Case::Fold
     } else {
         Case::Sensitive

@@ -2,7 +2,6 @@
 
 use bstr::BString;
 use gix_index::entry::stat;
-use gix_utils::FilesystemCapabilities;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Collision {
@@ -32,7 +31,7 @@ pub struct Outcome {
 #[derive(Clone, Default)]
 pub struct Options {
     /// capabilities of the file system
-    pub fs: FilesystemCapabilities,
+    pub fs: gix_fs::Capabilities,
     /// If set, don't use more than this amount of threads.
     /// Otherwise, usually use as many threads as there are logical cores.
     /// A value of 0 is interpreted as no-limit

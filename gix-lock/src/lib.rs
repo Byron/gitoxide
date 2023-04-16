@@ -24,8 +24,8 @@ const DOT_LOCK_SUFFIX: &str = ".lock";
 
 ///
 pub mod acquire;
-///
-pub mod backoff;
+
+pub use gix_utils::backoff;
 ///
 pub mod commit;
 

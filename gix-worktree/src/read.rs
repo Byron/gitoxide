@@ -4,7 +4,7 @@
 
 use gix_object::Blob;
 use gix_path as path;
-use gix_utils::FilesystemCapabilities;
+
 use std::fs::{read_link, File};
 use std::io::{self, Read};
 use std::path::Path;
@@ -14,25 +14,21 @@ use std::path::Path;
 // TODO: what to do about precompose unicode and ignore_case for symlinks
 
 /// Create a blob from a file or symlink.
-pub fn blob(path: &Path, capabilities: &FilesystemCapabilities) -> io::Result<Blob> {
+pub fn blob(path: &Path, capabilities: &gix_fs::Capabilities) -> io::Result<Blob> {
     let mut data = Vec::new();
     data_to_buf(path, &mut data, capabilities)?;
     Ok(Blob { data })
 }
 
 /// Create a blob from a file or symlink.
-pub fn blob_with_meta(path: &Path, is_symlink: bool, capabilities: &FilesystemCapabilities) -> io::Result<Blob> {
+pub fn blob_with_meta(path: &Path, is_symlink: bool, capabilities: &gix_fs::Capabilities) -> io::Result<Blob> {
     let mut data = Vec::new();
     data_to_buf_with_meta(path, &mut data, is_symlink, capabilities)?;
     Ok(Blob { data })
 }
 
 /// Create blob data from a file or symlink.
-pub fn data_to_buf<'a>(
-    path: &Path,
-    buf: &'a mut Vec<u8>,
-    capabilities: &FilesystemCapabilities,
-) -> io::Result<&'a [u8]> {
+pub fn data_to_buf<'a>(path: &Path, buf: &'a mut Vec<u8>, capabilities: &gix_fs::Capabilities) -> io::Result<&'a [u8]> {
     data_to_buf_with_meta(path, buf, path.symlink_metadata()?.is_symlink(), capabilities)
 }
 
@@ -41,7 +37,7 @@ pub fn data_to_buf_with_meta<'a>(
     path: &Path,
     buf: &'a mut Vec<u8>,
     is_symlink: bool,
-    capabilities: &FilesystemCapabilities,
+    capabilities: &gix_fs::Capabilities,
 ) -> io::Result<&'a [u8]> {
     buf.clear();
     // symlinks are only stored as actual symlinks if the FS supports it otherwise they are just

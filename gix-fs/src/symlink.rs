@@ -1,3 +1,4 @@
+use std::io::ErrorKind::AlreadyExists;
 use std::{io, path::Path};
 
 #[cfg(not(windows))]
@@ -35,20 +36,16 @@ pub fn create(original: &Path, link: &Path) -> io::Result<()> {
     }
 }
 
-pub mod error {
-    use std::io::ErrorKind::AlreadyExists;
-
-    #[cfg(not(windows))]
-    pub fn indicates_collision(err: &std::io::Error) -> bool {
-        // TODO: use ::IsDirectory as well when stabilized instead of raw_os_error(), and ::FileSystemLoop respectively
-        err.kind() == AlreadyExists
+#[cfg(not(windows))]
+pub fn is_collision_error(err: &std::io::Error) -> bool {
+    // TODO: use ::IsDirectory as well when stabilized instead of raw_os_error(), and ::FileSystemLoop respectively
+    err.kind() == AlreadyExists
             || err.raw_os_error() == Some(21)
             || err.raw_os_error() == Some(62) // no-follow on symlnk on mac-os
             || err.raw_os_error() == Some(40) // no-follow on symlnk on ubuntu
-    }
+}
 
-    #[cfg(windows)]
-    pub fn indicates_collision(err: &std::io::Error) -> bool {
-        err.kind() == AlreadyExists || err.kind() == std::io::ErrorKind::PermissionDenied
-    }
+#[cfg(windows)]
+pub fn is_collision_error(err: &std::io::Error) -> bool {
+    err.kind() == AlreadyExists || err.kind() == std::io::ErrorKind::PermissionDenied
 }

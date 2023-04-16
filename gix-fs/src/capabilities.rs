@@ -1,11 +1,11 @@
 // TODO: tests
-use crate::FilesystemCapabilities;
+use crate::Capabilities;
 use std::path::Path;
 
 #[cfg(windows)]
-impl Default for FilesystemCapabilities {
+impl Default for Capabilities {
     fn default() -> Self {
-        FilesystemCapabilities {
+        Capabilities {
             precompose_unicode: false,
             ignore_case: true,
             executable_bit: false,
@@ -15,9 +15,9 @@ impl Default for FilesystemCapabilities {
 }
 
 #[cfg(target_os = "macos")]
-impl Default for FilesystemCapabilities {
+impl Default for Capabilities {
     fn default() -> Self {
-        FilesystemCapabilities {
+        Capabilities {
             precompose_unicode: true,
             ignore_case: true,
             executable_bit: true,
@@ -27,9 +27,9 @@ impl Default for FilesystemCapabilities {
 }
 
 #[cfg(all(unix, not(target_os = "macos")))]
-impl Default for FilesystemCapabilities {
+impl Default for Capabilities {
     fn default() -> Self {
-        FilesystemCapabilities {
+        Capabilities {
             precompose_unicode: false,
             ignore_case: false,
             executable_bit: true,
@@ -38,7 +38,7 @@ impl Default for FilesystemCapabilities {
     }
 }
 
-impl FilesystemCapabilities {
+impl Capabilities {
     /// try to determine all values in this context by probing them in the given `git_dir`, which
     /// should be on the file system the git repository is located on.
     /// `git_dir` is a typical git repository, expected to be populated with the typical files like `config`.
@@ -46,8 +46,8 @@ impl FilesystemCapabilities {
     /// All errors are ignored and interpreted on top of the default for the platform the binary is compiled for.
     pub fn probe(git_dir: impl AsRef<Path>) -> Self {
         let root = git_dir.as_ref();
-        let ctx = FilesystemCapabilities::default();
-        FilesystemCapabilities {
+        let ctx = Capabilities::default();
+        Capabilities {
             symlink: Self::probe_symlink(root).unwrap_or(ctx.symlink),
             ignore_case: Self::probe_ignore_case(root).unwrap_or(ctx.ignore_case),
             precompose_unicode: Self::probe_precompose_unicode(root).unwrap_or(ctx.precompose_unicode),

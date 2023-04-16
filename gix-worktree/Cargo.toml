@@ -31,7 +31,7 @@ internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
 gix-index = { version = "^0.15.1", path = "../gix-index" }
-gix-utils = { version = "^0.1.0", path = "../gix-utils" }
+gix-fs = { version = "^0.1.0", path = "../gix-fs" }
 gix-hash = { version = "^0.10.4", path = "../gix-hash" }
 gix-object = { version = "^0.28.0", path = "../gix-object" }
 gix-glob = { version = "^0.5.5", path = "../gix-glob" }

@@ -270,8 +270,8 @@ impl ThreadSafeRepository {
             config,
             // used when spawning new repositories off this one when following worktrees
             linked_worktree_options: options,
-            index: gix_utils::SharedFileSnapshotMut::new().into(),
-            shallow_commits: gix_utils::SharedFileSnapshotMut::new().into(),
+            index: gix_fs::SharedFileSnapshotMut::new().into(),
+            shallow_commits: gix_fs::SharedFileSnapshotMut::new().into(),
         })
     }
 }

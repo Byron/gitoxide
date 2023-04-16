@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use gix_worktree::fs::Stack;
+use gix_fs::Stack;
 
 #[derive(Debug, Default, Eq, PartialEq)]
 struct Record {
@@ -9,7 +9,7 @@ struct Record {
     push: usize,
 }
 
-impl gix_worktree::fs::stack::Delegate for Record {
+impl gix_fs::stack::Delegate for Record {
     fn push_directory(&mut self, stack: &Stack) -> std::io::Result<()> {
         self.push_dir += 1;
         self.dirs.push(stack.current().into());

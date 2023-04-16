@@ -162,7 +162,7 @@ impl Cache {
                 .integer_filter_by_key("checkout.workers", &mut self.filter_config_section.clone())
                 .map(|value| Checkout::WORKERS.try_from_workers(value)),
         )?;
-        let capabilities = gix_utils::FilesystemCapabilities {
+        let capabilities = gix_fs::Capabilities {
             precompose_unicode: boolean(self, "core.precomposeUnicode", &Core::PRECOMPOSE_UNICODE, false)?,
             ignore_case: boolean(self, "core.ignoreCase", &Core::IGNORE_CASE, false)?,
             executable_bit: boolean(self, "core.fileMode", &Core::FILE_MODE, true)?,

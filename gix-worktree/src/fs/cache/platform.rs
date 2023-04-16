@@ -3,12 +3,9 @@ use std::path::Path;
 use bstr::ByteSlice;
 use gix_hash::oid;
 
-use crate::{
-    fs,
-    fs::{
-        cache::{Platform, State},
-        PathOidMapping,
-    },
+use crate::fs::{
+    cache::{Platform, State},
+    PathOidMapping,
 };
 
 impl<'a> Platform<'a> {
@@ -37,7 +34,7 @@ impl<'a> Platform<'a> {
     pub fn matching_exclude_pattern(&self) -> Option<gix_ignore::search::Match<'_, ()>> {
         let ignore = self.parent.state.ignore_or_panic();
         let relative_path =
-            gix_path::to_unix_separators_on_windows(gix_path::into_bstr(self.parent.stack.current_relative.as_path()));
+            gix_path::to_unix_separators_on_windows(gix_path::into_bstr(self.parent.stack.current_relative()));
         ignore.matching_exclude_pattern(relative_path.as_bstr(), self.is_dir, self.parent.case)
     }
 }
@@ -56,12 +53,12 @@ pub struct StackDelegate<'a, Find> {
     pub find: Find,
 }
 
-impl<'a, Find, E> fs::stack::Delegate for StackDelegate<'a, Find>
+impl<'a, Find, E> gix_fs::stack::Delegate for StackDelegate<'a, Find>
 where
     Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
     E: std::error::Error + Send + Sync + 'static,
 {
-    fn push_directory(&mut self, stack: &fs::Stack) -> std::io::Result<()> {
+    fn push_directory(&mut self, stack: &gix_fs::Stack) -> std::io::Result<()> {
         match &mut self.state {
             State::CreateDirectoryAndAttributesStack { attributes: _, .. } => {
                 // TODO: attributes
@@ -69,16 +66,16 @@ where
             State::AttributesAndIgnoreStack { ignore, attributes: _ } => {
                 // TODO: attributes
                 ignore.push_directory(
-                    &stack.root,
-                    &stack.current,
+                    stack.root(),
+                    stack.current(),
                     self.buf,
                     self.attribute_files_in_index,
                     &mut self.find,
                 )?
             }
             State::IgnoreStack(ignore) => ignore.push_directory(
-                &stack.root,
-                &stack.current,
+                stack.root(),
+                stack.current(),
                 self.buf,
                 self.attribute_files_in_index,
                 &mut self.find,
@@ -87,7 +84,7 @@ where
         Ok(())
     }
 
-    fn push(&mut self, is_last_component: bool, stack: &fs::Stack) -> std::io::Result<()> {
+    fn push(&mut self, is_last_component: bool, stack: &gix_fs::Stack) -> std::io::Result<()> {
         match &mut self.state {
             State::CreateDirectoryAndAttributesStack {
                 #[cfg(debug_assertions)]
@@ -133,7 +130,7 @@ where
 
 fn create_leading_directory(
     is_last_component: bool,
-    stack: &fs::Stack,
+    stack: &gix_fs::Stack,
     is_dir: bool,
     #[cfg(debug_assertions)] mkdir_calls: &mut usize,
     unlink_on_collision: bool,
@@ -153,7 +150,7 @@ fn create_leading_directory(
                 Ok(())
             } else if unlink_on_collision {
                 if meta.file_type().is_symlink() {
-                    gix_utils::symlink::remove(stack.current())?;
+                    gix_fs::symlink::remove(stack.current())?;
                 } else {
                     std::fs::remove_file(stack.current())?;
                 }

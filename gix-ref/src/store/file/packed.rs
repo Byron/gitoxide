@@ -69,14 +69,14 @@ pub mod transaction {
 }
 
 /// An up-to-date snapshot of the packed refs buffer.
-pub type SharedBufferSnapshot = gix_utils::SharedFileSnapshot<packed::Buffer>;
+pub type SharedBufferSnapshot = gix_fs::SharedFileSnapshot<packed::Buffer>;
 
 pub(crate) mod modifiable {
     use gix_features::threading::OwnShared;
 
     use crate::{file, packed};
 
-    pub(crate) type MutableSharedBuffer = OwnShared<gix_utils::SharedFileSnapshotMut<packed::Buffer>>;
+    pub(crate) type MutableSharedBuffer = OwnShared<gix_fs::SharedFileSnapshotMut<packed::Buffer>>;
 
     impl file::Store {
         pub(crate) fn force_refresh_packed_buffer(&self) -> Result<(), packed::buffer::open::Error> {

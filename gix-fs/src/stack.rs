@@ -1,7 +1,8 @@
 use std::path::{Path, PathBuf};
 
-use crate::fs::Stack;
+use crate::Stack;
 
+/// Access
 impl Stack {
     /// Returns the top-level path of the stack.
     pub fn root(&self) -> &Path {

@@ -1,9 +1,9 @@
 [package]
-name = "gix-utils"
+name = "gix-fs"
 version = "0.1.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
-description = "A crate with `gitoxide` utilities that don't need feature toggles"
+description = "A crate providing file system specific utilities to `gitoxide`"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 rust-version = "1.64"
@@ -12,4 +12,7 @@ rust-version = "1.64"
 doctest = false
 
 [dependencies]
-fastrand = "1.9.0"
+gix-features = { path = "../gix-features" }
+
+[dev-dependencies]
+tempfile = "3.5.0"

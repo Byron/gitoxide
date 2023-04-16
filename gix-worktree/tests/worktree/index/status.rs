@@ -2,7 +2,7 @@ use bstr::BStr;
 use filetime::{set_file_mtime, FileTime};
 use gix_index as index;
 use gix_index::Entry;
-use gix_utils::FilesystemCapabilities;
+
 use gix_worktree::index::status::content::{FastEq, ReadDataOnce};
 use gix_worktree::index::status::worktree::{self, Options};
 use gix_worktree::index::status::{Change, CompareBlobs, Recorder};
@@ -34,7 +34,7 @@ fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
         FastEq,
         |_, _| Ok::<_, std::convert::Infallible>(gix_object::BlobRef { data: &[] }),
         Options {
-            fs: FilesystemCapabilities::probe(git_dir),
+            fs: gix_fs::Capabilities::probe(git_dir),
             stat: TEST_OPTIONS,
             ..Options::default()
         },
@@ -128,7 +128,7 @@ fn racy_git() {
     let dir = gix_testtools::scripted_fixture_writable("racy_git.sh").expect("script works");
     let worktree = dir.path();
     let git_dir = worktree.join(".git");
-    let fs = FilesystemCapabilities::probe(&git_dir);
+    let fs = gix_fs::Capabilities::probe(&git_dir);
     let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default()).unwrap();
 
     #[derive(Clone)]

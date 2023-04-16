@@ -178,6 +178,7 @@ members = [
     "gix-refspec",
     "gix-path",
     "gix-utils",
+    "gix-fs",
     "gix",
     "gitoxide-core",
     "gix-hashtable",

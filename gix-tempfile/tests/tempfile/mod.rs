@@ -1,4 +1,3 @@
-mod fs;
 mod handle;
 
 #[cfg(feature = "signals")]

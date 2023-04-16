@@ -3,7 +3,6 @@ use std::io::Read;
 use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
 use gix_ignore::search::Match;
-use gix_utils::FilesystemCapabilities;
 
 struct Expectations<'a> {
     lines: bstr::Lines<'a>,
@@ -32,7 +31,7 @@ impl<'a> Iterator for Expectations<'a> {
 
 #[test]
 fn baseline_from_git_dir() -> crate::Result {
-    let case = if FilesystemCapabilities::probe("../.git").ignore_case {
+    let case = if gix_fs::Capabilities::probe("../.git").ignore_case {
         Case::Fold
     } else {
         Case::Sensitive

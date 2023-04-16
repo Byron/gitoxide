@@ -5,7 +5,7 @@ use bstr::{BStr, ByteSlice};
 use gix_hash::oid;
 
 use super::Cache;
-use crate::{fs, fs::PathOidMapping};
+use crate::fs::PathOidMapping;
 
 #[derive(Clone)]
 pub enum State {
@@ -78,7 +78,7 @@ impl Cache {
     ) -> Self {
         let root = worktree_root.into();
         Cache {
-            stack: fs::Stack::new(root),
+            stack: gix_fs::Stack::new(root),
             state,
             case,
             buf,

@@ -286,7 +286,7 @@ mod chunk {
                 bytes.inc_by(object_size);
                 Ok(object_size)
             }
-            Err(index::checkout::Error::Io(err)) if gix_utils::symlink::error::indicates_collision(&err) => {
+            Err(index::checkout::Error::Io(err)) if gix_fs::symlink::is_collision_error(&err) => {
                 // We are here because a file existed or was blocked by a directory which shouldn't be possible unless
                 // we are on a file insensitive file system.
                 files.fail(format!("{}: collided ({:?})", entry_path, err.kind()));
