@@ -15,7 +15,7 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = [ "serde", "gix-hash/serde1", "gix-object/serde1" ]
+serde = [ "dep:serde", "gix-hash/serde", "gix-object/serde" ]
 
 [dependencies]
 gix-hash = { version = "^0.10.4", path = "../gix-hash" }

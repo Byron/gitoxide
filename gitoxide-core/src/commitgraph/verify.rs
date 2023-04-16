@@ -46,10 +46,10 @@ where
         .verify_integrity(noop_processor)
         .with_context(|| "Verification failure")?;
 
-    #[cfg_attr(not(feature = "serde1"), allow(clippy::single_match))]
+    #[cfg_attr(not(feature = "serde"), allow(clippy::single_match))]
     match output_statistics {
         Some(OutputFormat::Human) => drop(print_human_output(&mut out, &stats)),
-        #[cfg(feature = "serde1")]
+        #[cfg(feature = "serde")]
         Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, &stats)?,
         _ => {}
     }

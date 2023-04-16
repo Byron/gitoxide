@@ -23,7 +23,7 @@ pack-cache-lru-dynamic = ["dep:clru"]
 ## If set, select algorithms may additionally use a full-object cache which is queried before the pack itself.
 object-cache-dynamic = ["dep:clru"]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["dep:serde", "gix-object/serde1"]
+serde = ["dep:serde", "gix-object/serde"]
 ## Make it possible to compile to the `wasm32-unknown-unknown` target.
 wasm = ["gix-diff/wasm"]
 
@@ -57,5 +57,5 @@ gix-testtools = { path = "../tests/tools"}
 
 [package.metadata.docs.rs]
 all-features = true
-features = ["document-features", "pack-cache-lru-dynamic", "object-cache-dynamic", "serde1"]
+features = ["document-features", "pack-cache-lru-dynamic", "object-cache-dynamic", "serde"]
 rustdoc-args = ["--cfg", "docsrs"]

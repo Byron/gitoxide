@@ -35,7 +35,7 @@ use std::str::FromStr;
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum OutputFormat {
     Human,
-    #[cfg(feature = "serde1")]
+    #[cfg(feature = "serde")]
     Json,
 }
 
@@ -43,7 +43,7 @@ impl OutputFormat {
     pub fn variants() -> &'static [&'static str] {
         &[
             "human",
-            #[cfg(feature = "serde1")]
+            #[cfg(feature = "serde")]
             "json",
         ]
     }
@@ -56,7 +56,7 @@ impl FromStr for OutputFormat {
         let s_lc = s.to_ascii_lowercase();
         Ok(match s_lc.as_str() {
             "human" => OutputFormat::Human,
-            #[cfg(feature = "serde1")]
+            #[cfg(feature = "serde")]
             "json" => OutputFormat::Json,
             _ => return Err(format!("Invalid output format: '{}'", s)),
         })

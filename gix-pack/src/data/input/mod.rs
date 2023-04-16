@@ -1,6 +1,6 @@
 /// An item of the iteration produced by [`BytesToEntriesIter`]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     /// The header of a pack entry
     pub header: crate::data::entry::Header,

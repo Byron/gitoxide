@@ -49,9 +49,9 @@ pub struct Snapshot {
 ///
 /// Typically created by [parse()].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy, Default)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry<'a> {
-    #[cfg_attr(feature = "serde1", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     /// The name to map to.
     pub(crate) new_name: Option<&'a BStr>,
     /// The email map to.

@@ -40,7 +40,7 @@ pub(crate) mod function {
                     writeln!(out, "{spec}", spec = spec.detach())?;
                 }
             }
-            #[cfg(feature = "serde1")]
+            #[cfg(feature = "serde")]
             OutputFormat::Json => {
                 if explain {
                     anyhow::bail!("Explanations are only for human consumption")

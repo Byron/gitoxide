@@ -47,7 +47,7 @@ pub enum Error<E: std::error::Error + 'static> {
 
 /// The positive result of [`File::traverse()`] providing some statistical information.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct Outcome {
     /// The largest encountered [`file::Commit`] generation number.
     pub max_generation: u32,

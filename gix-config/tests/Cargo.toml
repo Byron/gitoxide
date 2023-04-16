@@ -19,7 +19,7 @@ path = "config.rs"
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["gix-config/serde1"]
+serde = ["gix-config/serde"]
 
 [dev-dependencies]
 gix-config = { path = ".."}

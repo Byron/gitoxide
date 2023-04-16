@@ -8,7 +8,7 @@ pub mod count;
 /// One can expect to have one of these in memory when building big objects, so smaller is better here.
 /// They should contain everything of importance to generate a pack as fast as possible.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Count {
     /// The hash of the object to write
     pub id: ObjectId,
@@ -21,7 +21,7 @@ pub struct Count {
 /// Some of these will be in-flight and in memory while waiting to be written. Memory requirements depend on the amount of compressed
 /// data they hold.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     /// The hash of the object to write
     pub id: ObjectId,

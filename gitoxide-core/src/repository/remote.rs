@@ -97,7 +97,7 @@ mod refs_impl {
             refs::Kind::Remote => {
                 match format {
                     OutputFormat::Human => drop(print(out, &map.remote_refs)),
-                    #[cfg(feature = "serde1")]
+                    #[cfg(feature = "serde")]
                     OutputFormat::Json => serde_json::to_writer_pretty(
                         out,
                         &map.remote_refs.into_iter().map(JsonRef::from).collect::<Vec<_>>(),
@@ -224,7 +224,7 @@ mod refs_impl {
         Ok(())
     }
 
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     pub enum JsonRef {
         Peeled {
             path: String,

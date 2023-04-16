@@ -44,7 +44,7 @@ pub mod integrity {
     }
 
     #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     /// Integrity information about loose object databases
     pub struct LooseObjectStatistics {
         /// The path to the root directory of the loose objects database
@@ -54,7 +54,7 @@ pub mod integrity {
     }
 
     #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     /// Traversal statistics of packs governed by single indices or multi-pack indices.
     #[allow(missing_docs)]
     pub enum SingleOrMultiStatistics {
@@ -64,7 +64,7 @@ pub mod integrity {
 
     /// Statistics gathered when traversing packs of various kinds of indices.
     #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     pub struct IndexStatistics {
         /// The path to the index or multi-pack index for which statics were gathered.
         pub path: PathBuf,

@@ -17,7 +17,7 @@ test = true
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "smallvec/serde", "gix-hash/serde1"]
+serde = ["dep:serde", "smallvec/serde", "gix-hash/serde"]
 
 [dependencies]
 gix-features = { version = "^0.28.0", path = "../gix-features", features = ["rustsha1", "progress"] }
@@ -41,5 +41,5 @@ bitflags = "2"
 document-features = { version = "0.2.0", optional = true }
 
 [package.metadata.docs.rs]
-features = ["document-features", "serde1"]
+features = ["document-features", "dep:serde"]
 rustdoc-args = ["--cfg", "docsrs"]

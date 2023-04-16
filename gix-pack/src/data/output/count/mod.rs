@@ -4,7 +4,7 @@ use crate::data::output::Count;
 
 /// Specifies how the pack location was handled during counting
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PackLocation {
     /// We did not lookup this object
     NotLookedUp,

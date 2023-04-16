@@ -12,7 +12,7 @@ rust-version = "1.64"
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["gix-ref/serde"]
+serde= ["gix-ref/serde"]
 internal-testing-gix-features-parallel = ["gix-features/parallel"] # test sorted parallel loose file traversal
 
 [[test]]
@@ -42,5 +42,5 @@ tempfile = "3.2.0"
 
 
 [package.metadata.docs.rs]
-features = ["document-features", "serde1"]
+features = ["document-features", "serde"]
 rustdoc-args = ["--cfg", "docsrs"]

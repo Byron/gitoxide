@@ -4,7 +4,7 @@ pub struct Options {
     pub extension_details: bool,
 }
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 mod serde_only {
 
     mod ext {
@@ -153,5 +153,5 @@ mod serde_only {
         }
     }
 }
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 pub(crate) use serde_only::Collection;

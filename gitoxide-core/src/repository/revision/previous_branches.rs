@@ -17,7 +17,7 @@ pub fn previous_branches(
                 writeln!(out, "{} {}", id, name)?;
             }
         }
-        #[cfg(feature = "serde1")]
+        #[cfg(feature = "serde")]
         OutputFormat::Json => {
             serde_json::to_writer_pretty(&mut out, &branches)?;
         }

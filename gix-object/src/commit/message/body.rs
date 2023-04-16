@@ -22,10 +22,10 @@ pub struct Trailers<'a> {
 
 /// A trailer as parsed from the commit message body.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TrailerRef<'a> {
     /// The name of the trailer, like "Signed-off-by", up to the separator ": "
-    #[cfg_attr(feature = "serde1", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     pub token: &'a BStr,
     /// The value right after the separator ": ", with leading and trailing whitespace trimmed.
     /// Note that multi-line values aren't currently supported.

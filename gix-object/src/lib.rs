@@ -38,7 +38,7 @@ pub(crate) mod parse;
 pub mod kind;
 
 /// The four types of objects that git differentiates. #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[allow(missing_docs)]
 pub enum Kind {
@@ -49,7 +49,7 @@ pub enum Kind {
 }
 /// A chunk of any [`data`][BlobRef::data].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlobRef<'a> {
     /// The bytes themselves.
     pub data: &'a [u8],
@@ -57,7 +57,7 @@ pub struct BlobRef<'a> {
 
 /// A mutable chunk of any [`data`][Blob::data].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Blob {
     /// The data itself.
     pub data: Vec<u8>,
@@ -68,12 +68,12 @@ pub struct Blob {
 /// A commit encapsulates information about a point in time at which the state of the repository is recorded, usually after a
 /// change which is documented in the commit `message`.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CommitRef<'a> {
     /// HEX hash of tree object we point to. Usually 40 bytes long.
     ///
     /// Use [`tree()`][CommitRef::tree()] to obtain a decoded version of it.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     pub tree: &'a BStr,
     /// HEX hash of each parent commit. Empty for first commit in repository.
     pub parents: SmallVec<[&'a BStr; 1]>,
@@ -106,7 +106,7 @@ pub struct CommitRefIter<'a> {
 
 /// A mutable git commit, representing an annotated state of a working tree along with a reference to its historical commits.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Commit {
     /// The hash of recorded working tree state.
     pub tree: gix_hash::ObjectId,
@@ -130,10 +130,10 @@ pub struct Commit {
 
 /// Represents a git tag, commonly indicating a software release.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TagRef<'a> {
     /// The hash in hexadecimal being the object this tag points to. Use [`target()`][TagRef::target()] to obtain a byte representation.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     pub target: &'a BStr,
     /// The kind of object that `target` points to.
     pub target_kind: Kind,
@@ -157,7 +157,7 @@ pub struct TagRefIter<'a> {
 
 /// A mutable git tag.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tag {
     /// The hash this tag is pointing to.
     pub target: gix_hash::ObjectId,
@@ -181,10 +181,10 @@ pub struct Tag {
 ///
 /// An `ObjectRef` is representing [`Trees`][TreeRef], [`Blobs`][BlobRef], [`Commits`][CommitRef], or [`Tags`][TagRef].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
 pub enum ObjectRef<'a> {
-    #[cfg_attr(feature = "serde1", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     Tree(TreeRef<'a>),
     Blob(BlobRef<'a>),
     Commit(CommitRef<'a>),
@@ -200,7 +200,7 @@ pub enum ObjectRef<'a> {
 ///
 /// An `Object` is representing [`Trees`][Tree], [`Blobs`][Blob], [`Commits`][Commit] or [`Tags`][Tag].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(clippy::large_enum_variant, missing_docs)]
 pub enum Object {
     Tree(Tree),
@@ -210,10 +210,10 @@ pub enum Object {
 }
 /// A directory snapshot containing files (blobs), directories (trees) and submodules (commits).
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreeRef<'a> {
     /// The directories and files contained in this tree.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     pub entries: Vec<tree::EntryRef<'a>>,
 }
 
@@ -226,7 +226,7 @@ pub struct TreeRefIter<'a> {
 
 /// A mutable Tree, containing other trees, blobs or commits.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tree {
     /// The directories and files contained in this tree. They must be and remain sorted by [`filename`][tree::Entry::filename].
     pub entries: Vec<tree::Entry>,

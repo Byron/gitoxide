@@ -22,7 +22,7 @@ pub enum Error {
 
 /// Iteration Mode
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Mode {
     /// Provide the trailer as read from the pack
     AsIs,
@@ -43,7 +43,7 @@ pub enum Mode {
 
 /// Define what to do with the compressed bytes portion of a pack [`Entry`][super::Entry]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EntryDataMode {
     /// Do nothing with the compressed bytes we read
     Ignore,

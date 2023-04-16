@@ -1,6 +1,6 @@
 /// Information gathered during the run of [`iter_from_objects()`][super::objects()].
 #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The amount of objects provided to start the iteration.
     pub input_objects: usize,
@@ -33,7 +33,7 @@ impl Outcome {
 
 /// The way input objects are handled
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ObjectExpansion {
     /// Don't do anything with the input objects except for transforming them into pack entries
     AsIs,
@@ -60,7 +60,7 @@ impl Default for ObjectExpansion {
 
 /// Configuration options for the pack generation functions provided in [this module][crate::data::output].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Options {
     /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
     /// If more than one thread is used, the order of returned [counts][crate::data::output::Count] is not deterministic anymore

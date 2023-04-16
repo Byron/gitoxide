@@ -3,7 +3,7 @@
 /// Note that all [object ids][gix_hash::ObjectId] should be a committish, but don't have to be.
 /// Unless the field name contains `_exclusive`, the respective objects are included in the set.
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Spec {
     /// Include commits reachable from this revision, i.e. `a` and its ancestors.
     ///

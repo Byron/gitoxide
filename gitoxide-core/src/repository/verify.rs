@@ -30,7 +30,7 @@ pub fn integrity(
         algorithm,
     }: Context,
 ) -> anyhow::Result<()> {
-    #[cfg_attr(not(feature = "serde1"), allow(unused))]
+    #[cfg_attr(not(feature = "serde"), allow(unused))]
     let mut outcome = repo.objects.store_ref().verify_integrity(
         progress,
         should_interrupt,
@@ -56,7 +56,7 @@ pub fn integrity(
     }
     match output_statistics {
         Some(OutputFormat::Human) => writeln!(out, "Human output is currently unsupported, use JSON instead")?,
-        #[cfg(feature = "serde1")]
+        #[cfg(feature = "serde")]
         Some(OutputFormat::Json) => {
             serde_json::to_writer_pretty(
                 out,

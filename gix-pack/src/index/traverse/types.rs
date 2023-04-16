@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, marker::PhantomData};
 
 /// Statistics regarding object encountered during execution of the [`traverse()`][crate::index::File::traverse()] method.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Statistics {
     /// The average over all decoded objects
     pub average: crate::data::decode::entry::Outcome,
@@ -48,7 +48,7 @@ impl Default for Statistics {
 
 /// The ways to validate decoded objects before passing them to the processor.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SafetyCheck {
     /// Don't verify the validity of the checksums stored in the index and pack file
     SkipFileChecksumVerification,
@@ -91,7 +91,7 @@ impl Default for SafetyCheck {
 
 /// The way we verify the pack
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Algorithm {
     /// Build an index to allow decoding each delta and base exactly once, saving a lot of computational
     /// resource at the expense of resident memory, as we will use an additional `DeltaTree` to accelerate

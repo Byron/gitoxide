@@ -54,20 +54,20 @@ blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest",
 #! ### Other
 
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = [  "serde",
-            "gix-pack/serde1",
-            "gix-object/serde1",
-            "gix-protocol?/serde1",
-            "gix-transport?/serde1",
-            "gix-ref/serde1",
-            "gix-odb/serde1",
-            "gix-index/serde1",
-            "gix-mailmap/serde1",
-            "gix-url/serde1",
-            "gix-attributes/serde1",
-            "gix-ignore/serde1",
-            "gix-revision/serde1",
-            "gix-credentials/serde1" ]
+serde = [   "dep:serde",
+            "gix-pack/serde",
+            "gix-object/serde",
+            "gix-protocol?/serde",
+            "gix-transport?/serde",
+            "gix-ref/serde",
+            "gix-odb/serde",
+            "gix-index/serde",
+            "gix-mailmap/serde",
+            "gix-url/serde",
+            "gix-attributes/serde",
+            "gix-ignore/serde",
+            "gix-revision/serde",
+            "gix-credentials/serde"]
 
 ## Re-export the progress tree root which allows to obtain progress from various functions which take `impl gix::Progress`.
 progress-tree = ["prodash/progress-tree"]
@@ -179,5 +179,5 @@ serial_test = { version = "2.0.0", default-features = false }
 async-std = { version = "1.12.0", features = ["attributes"] }
 
 [package.metadata.docs.rs]
-features = ["document-features", "max-performance", "blocking-network-client", "serde1"]
+features = ["document-features", "max-performance", "blocking-network-client", "serde"]
 rustdoc-args = ["--cfg", "docsrs"]

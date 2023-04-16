@@ -35,7 +35,7 @@ pub fn create(
     Ok(())
 }
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 mod info {
     use std::path::PathBuf;
 
@@ -48,7 +48,7 @@ mod info {
     }
 }
 
-#[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
+#[cfg_attr(not(feature = "serde"), allow(unused_variables))]
 pub fn info(
     multi_index_path: PathBuf,
     format: OutputFormat,
@@ -58,7 +58,7 @@ pub fn info(
     if format == OutputFormat::Human {
         writeln!(err, "Defaulting to JSON as human format isn't implemented").ok();
     }
-    #[cfg(feature = "serde1")]
+    #[cfg(feature = "serde")]
     {
         let file = gix::odb::pack::multi_index::File::at(&multi_index_path)?;
         serde_json::to_writer_pretty(
