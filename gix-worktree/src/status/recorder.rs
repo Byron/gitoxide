@@ -2,7 +2,7 @@ use bstr::BStr;
 
 use gix_index as index;
 
-use crate::index::status::{Change, VisitEntry};
+use crate::status::{Change, VisitEntry};
 
 /// Convenience implementation of [`VisitEntry`] that collects all non-trivial changes into a `Vec`.
 #[derive(Debug, Default)]

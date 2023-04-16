@@ -3,9 +3,10 @@ use filetime::{set_file_mtime, FileTime};
 use gix_index as index;
 use gix_index::Entry;
 
-use gix_worktree::index::status::content::{FastEq, ReadDataOnce};
-use gix_worktree::index::status::worktree::{self, Options};
-use gix_worktree::index::status::{Change, CompareBlobs, Recorder};
+use gix_worktree::status;
+use gix_worktree::status::content::{FastEq, ReadDataOnce};
+use gix_worktree::status::Options;
+use gix_worktree::status::{content::CompareBlobs, Change, Recorder};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
@@ -27,7 +28,7 @@ fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
     let git_dir = worktree.join(".git");
     let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default()).unwrap();
     let mut recorder = Recorder::default();
-    worktree::changes_to_obtain(
+    status(
         &mut index,
         &worktree,
         &mut recorder,
@@ -162,7 +163,7 @@ fn racy_git() {
 
     let count = Arc::new(AtomicUsize::new(0));
     let counter = CountCalls(count.clone(), FastEq);
-    worktree::changes_to_obtain(
+    status(
         &mut index,
         &worktree,
         &mut recorder,
@@ -183,7 +184,7 @@ fn racy_git() {
     // and cause proper output.
     index.set_timestamp(FileTime::from_unix_time(timestamp as i64, 0));
     let mut recorder = Recorder::default();
-    worktree::changes_to_obtain(
+    status(
         &mut index,
         &worktree,
         &mut recorder,

@@ -1,20 +1,33 @@
 use bstr::BStr;
 
-///
-pub mod worktree;
-
-///
-pub mod index {
-    // TODO: index to index diff
+/// The error returned by [`status()`][crate::status()].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Could not convert path to UTF8")]
+    IllformedUtf8,
+    #[error("The clock was off when reading file related metadata after updating a file on disk")]
+    Time(#[from] std::time::SystemTimeError),
+    #[error("IO error while writing blob or reading file metadata or changing filetype")]
+    Io(#[from] std::io::Error),
+    #[error("Failed to obtain blob from object database")]
+    Find(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
 }
 
-mod recorder;
-pub use recorder::Recorder;
+#[derive(Clone, Default)]
+/// Options that control how the index status with a worktree is computed.
+pub struct Options {
+    /// Capabilities of the file system which affect the status computation.
+    pub fs: gix_fs::Capabilities,
+    /// If set, don't use more than this amount of threads.
+    /// Otherwise, usually use as many threads as there are logical cores.
+    /// A value of 0 is interpreted as no-limit
+    pub thread_limit: Option<usize>,
+    /// Options that control how stat comparisons are made when checking if a file is fresh.
+    pub stat: gix_index::entry::stat::Options,
+}
 
-///
-pub mod content;
-
-/// How an index entry needs to be changed to obtain the destination state, i.e. `entry.apply(this_change) == other-entry`.
+/// How an index entry needs to be changed to obtain the destination worktree state, i.e. `entry.apply(this_change) == worktree-entry`.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Change<T = ()> {
     /// This corresponding file does not exist in the worktree anymore.
@@ -27,7 +40,7 @@ pub enum Change<T = ()> {
         /// Indicates that one of the stat changes was an executable bit change
         /// which is a significant change itself.
         executable_bit_changed: bool,
-        /// The output of the [`CompareBlobs`] run on this entry.
+        /// The output of the [`CompareBlobs`][crate::status::content::CompareBlobs] run on this entry.
         /// If there is no content change and only the executable bit
         /// changed than this is `None`.
         content_change: Option<T>,
@@ -53,22 +66,4 @@ pub trait VisitEntry<'index> {
         change: Option<Change<Self::ContentChange>>,
         conflict: bool,
     );
-}
-
-/// Compares the content of two blobs in some way.
-pub trait CompareBlobs {
-    /// Output data produced by [`compare_blobs()`][CompareBlobs::compare_blobs()].
-    type Output;
-
-    /// Providing the underlying index `entry`, allow comparing a file in the worktree of size `worktree_blob_size`
-    /// and allow reading its bytes using `worktree_blob`.
-    /// If this function returns `None` the `entry` and the `worktree_blob` are assumed to be identical.
-    /// Use `entry_blob` to obtain the data for the blob referred to by `entry`, allowing comparisons of the data itself.
-    fn compare_blobs<'a, E>(
-        &mut self,
-        entry: &'a gix_index::Entry,
-        worktree_blob_size: usize,
-        worktree_blob: impl content::ReadDataOnce<'a, E>,
-        entry_blob: impl content::ReadDataOnce<'a, E>,
-    ) -> Result<Option<Self::Output>, E>;
 }

@@ -140,7 +140,7 @@ impl Cache {
     pub(crate) fn checkout_options(
         &self,
         git_dir: &std::path::Path,
-    ) -> Result<gix_worktree::index::checkout::Options, checkout_options::Error> {
+    ) -> Result<gix_worktree::checkout::Options, checkout_options::Error> {
         fn boolean(
             me: &Cache,
             full_key: &str,
@@ -173,11 +173,11 @@ impl Cache {
         } else {
             Case::Sensitive
         };
-        Ok(gix_worktree::index::checkout::Options {
+        Ok(gix_worktree::checkout::Options {
             attributes: self.assemble_attribute_globals(
                 git_dir,
                 case,
-                gix_worktree::fs::cache::state::attributes::Source::AttributeListThenWorktree,
+                gix_worktree::cache::state::attributes::Source::AttributeListThenWorktree,
                 self.attributes,
             )?,
             fs: capabilities,
@@ -205,9 +205,9 @@ impl Cache {
         &self,
         git_dir: &std::path::Path,
         case: gix_glob::pattern::Case,
-        source: gix_worktree::fs::cache::state::attributes::Source,
+        source: gix_worktree::cache::state::attributes::Source,
         attributes: crate::permissions::Attributes,
-    ) -> Result<gix_worktree::fs::cache::state::Attributes, config::attribute_stack::Error> {
+    ) -> Result<gix_worktree::cache::state::Attributes, config::attribute_stack::Error> {
         let configured_or_user_attributes = match self
             .trusted_file_path("core", None, Core::ATTRIBUTES_FILE.name)
             .transpose()?
@@ -233,7 +233,7 @@ impl Cache {
         let info_attributes_path = git_dir.join("info").join("attributes");
         let mut buf = Vec::new();
         let mut collection = gix_attributes::search::MetadataCollection::default();
-        Ok(gix_worktree::fs::cache::state::Attributes::new(
+        Ok(gix_worktree::cache::state::Attributes::new(
             gix_attributes::Search::new_globals(attribute_files, &mut buf, &mut collection)?,
             Some(info_attributes_path),
             case,

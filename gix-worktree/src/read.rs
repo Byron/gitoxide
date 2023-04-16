@@ -1,6 +1,7 @@
 //! This module allows creating git blobs from worktree files.
-//! For the most part a blob just contains the raw on-disk data.
-//! However symlinks need to be considered properly and attributes/config options need to be considered
+//!
+//! For the most part a blob just contains the raw on-disk data. However symlinks need to be considered properly
+//! and attributes/config options need to be considered.
 
 use gix_object::Blob;
 use gix_path as path;

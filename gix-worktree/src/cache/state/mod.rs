@@ -2,7 +2,7 @@ use bstr::ByteSlice;
 use gix_glob::pattern::Case;
 use std::path::PathBuf;
 
-use crate::fs::{cache::State, PathOidMapping};
+use crate::{cache::State, PathOidMapping};
 
 type AttributeMatchGroup = gix_attributes::Search;
 type IgnoreMatchGroup = gix_ignore::Search;

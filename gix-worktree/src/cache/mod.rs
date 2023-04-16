@@ -5,7 +5,7 @@ use bstr::{BStr, ByteSlice};
 use gix_hash::oid;
 
 use super::Cache;
-use crate::fs::PathOidMapping;
+use crate::PathOidMapping;
 
 #[derive(Clone)]
 pub enum State {

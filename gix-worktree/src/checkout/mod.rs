@@ -52,7 +52,7 @@ pub struct Options {
     /// Control how stat comparisons are made when checking if a file is fresh.
     pub stat_options: stat::Options,
     /// A stack of attributes to use with the filesystem cache to use as driver for filters.
-    pub attributes: crate::fs::cache::state::Attributes,
+    pub attributes: crate::cache::state::Attributes,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -71,3 +71,7 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
         path: std::path::PathBuf,
     },
 }
+
+mod chunk;
+mod entry;
+pub(crate) mod function;

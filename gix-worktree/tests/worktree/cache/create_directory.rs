@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use gix_worktree::fs;
+use gix_worktree::{cache, Cache};
 use tempfile::{tempdir, TempDir};
 
 fn panic_on_find<'buf>(_oid: &gix_hash::oid, _buf: &'buf mut Vec<u8>) -> std::io::Result<gix_object::BlobRef<'buf>> {
@@ -10,9 +10,9 @@ fn panic_on_find<'buf>(_oid: &gix_hash::oid, _buf: &'buf mut Vec<u8>) -> std::io
 #[test]
 fn root_is_assumed_to_exist_and_files_in_root_do_not_create_directory() -> crate::Result {
     let dir = tempdir()?;
-    let mut cache = fs::Cache::new(
+    let mut cache = Cache::new(
         dir.path().join("non-existing-root"),
-        fs::cache::State::for_checkout(false, Default::default()),
+        cache::State::for_checkout(false, Default::default()),
         Default::default(),
         Vec::new(),
         Default::default(),
@@ -98,11 +98,11 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
     Ok(())
 }
 
-fn new_cache() -> (fs::Cache, TempDir) {
+fn new_cache() -> (Cache, TempDir) {
     let dir = tempdir().unwrap();
-    let cache = fs::Cache::new(
+    let cache = Cache::new(
         dir.path(),
-        fs::cache::State::for_checkout(false, Default::default()),
+        cache::State::for_checkout(false, Default::default()),
         Default::default(),
         Vec::new(),
         Default::default(),

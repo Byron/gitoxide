@@ -6,11 +6,11 @@ use gix_index::entry::Stat;
 use gix_index::Entry;
 use io_close::Close;
 
-use crate::{fs, index};
+use crate::Cache;
 
 pub struct Context<'a, Find> {
     pub find: &'a mut Find,
-    pub path_cache: &'a mut fs::Cache,
+    pub path_cache: &'a mut Cache,
     pub buf: &'a mut Vec<u8>,
 }
 
@@ -19,7 +19,7 @@ pub fn checkout<Find, E>(
     entry: &mut Entry,
     entry_path: &BStr,
     Context { find, path_cache, buf }: Context<'_, Find>,
-    index::checkout::Options {
+    crate::checkout::Options {
         fs: gix_fs::Capabilities {
             symlink,
             executable_bit,
@@ -28,13 +28,13 @@ pub fn checkout<Find, E>(
         destination_is_initially_empty,
         overwrite_existing,
         ..
-    }: index::checkout::Options,
-) -> Result<usize, index::checkout::Error<E>>
+    }: crate::checkout::Options,
+) -> Result<usize, crate::checkout::Error<E>>
 where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
     E: std::error::Error + Send + Sync + 'static,
 {
-    let dest_relative = gix_path::try_from_bstr(entry_path).map_err(|_| index::checkout::Error::IllformedUtf8 {
+    let dest_relative = gix_path::try_from_bstr(entry_path).map_err(|_| crate::checkout::Error::IllformedUtf8 {
         path: entry_path.to_owned(),
     })?;
     let is_dir = Some(entry.mode == gix_index::entry::Mode::COMMIT || entry.mode == gix_index::entry::Mode::DIR);
@@ -42,7 +42,7 @@ where
 
     let object_size = match entry.mode {
         gix_index::entry::Mode::FILE | gix_index::entry::Mode::FILE_EXECUTABLE => {
-            let obj = find(&entry.id, buf).map_err(|err| index::checkout::Error::Find {
+            let obj = find(&entry.id, buf).map_err(|err| crate::checkout::Error::Find {
                 err,
                 oid: entry.id,
                 path: dest.to_path_buf(),
@@ -77,13 +77,13 @@ where
             obj.data.len()
         }
         gix_index::entry::Mode::SYMLINK => {
-            let obj = find(&entry.id, buf).map_err(|err| index::checkout::Error::Find {
+            let obj = find(&entry.id, buf).map_err(|err| crate::checkout::Error::Find {
                 err,
                 oid: entry.id,
                 path: dest.to_path_buf(),
             })?;
             let symlink_destination = gix_path::try_from_byte_slice(obj.data)
-                .map_err(|_| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
+                .map_err(|_| crate::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
 
             if symlink {
                 try_write_or_unlink(dest, overwrite_existing, |p| {

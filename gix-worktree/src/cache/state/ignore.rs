@@ -1,5 +1,5 @@
-use crate::fs::cache::state::IgnoreMatchGroup;
-use crate::fs::PathOidMapping;
+use crate::cache::state::IgnoreMatchGroup;
+use crate::PathOidMapping;
 use bstr::{BStr, BString, ByteSlice};
 use gix_glob::pattern::Case;
 use gix_hash::oid;

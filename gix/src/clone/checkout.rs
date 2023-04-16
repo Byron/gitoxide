@@ -27,8 +27,7 @@ pub mod main_worktree {
         CheckoutOptions(#[from] crate::config::checkout_options::Error),
         #[error(transparent)]
         IndexCheckout(
-            #[from]
-            gix_worktree::index::checkout::Error<gix_odb::find::existing_object::Error<gix_odb::store::find::Error>>,
+            #[from] gix_worktree::checkout::Error<gix_odb::find::existing_object::Error<gix_odb::store::find::Error>>,
         ),
         #[error("Failed to reopen object database as Arc (only if thread-safety wasn't compiled in)")]
         OpenArcOdb(#[from] std::io::Error),
@@ -69,7 +68,7 @@ pub mod main_worktree {
             &mut self,
             mut progress: impl crate::Progress,
             should_interrupt: &AtomicBool,
-        ) -> Result<(Repository, gix_worktree::index::checkout::Outcome), Error> {
+        ) -> Result<(Repository, gix_worktree::checkout::Outcome), Error> {
             let repo = self
                 .repo
                 .as_ref()
@@ -82,7 +81,7 @@ pub mod main_worktree {
                 None => {
                     return Ok((
                         self.repo.take().expect("still present"),
-                        gix_worktree::index::checkout::Outcome::default(),
+                        gix_worktree::checkout::Outcome::default(),
                     ))
                 }
             };
@@ -103,7 +102,7 @@ pub mod main_worktree {
             bytes.init(None, crate::progress::bytes());
 
             let start = std::time::Instant::now();
-            let outcome = gix_worktree::index::checkout(
+            let outcome = gix_worktree::checkout(
                 &mut index,
                 workdir,
                 {

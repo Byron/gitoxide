@@ -2,44 +2,12 @@ use std::io;
 use std::marker::PhantomData;
 use std::path::Path;
 
-use crate::index::status::{content, Change, CompareBlobs, VisitEntry};
 use crate::read;
+use crate::status::types::{Error, Options};
+use crate::status::{content, content::CompareBlobs, Change, VisitEntry};
 use bstr::BStr;
 use filetime::FileTime;
 use gix_features::parallel::{in_parallel_if, Reduce};
-use gix_index as index;
-use gix_path as path;
-
-mod untracked {
-    // TODO: untracked file detection
-}
-
-/// The error returned by [`changes_to_obtain()`].
-#[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error("Could not convert path to UTF8")]
-    IllformedUtf8,
-    #[error("The clock was off when reading file related metadata after updating a file on disk")]
-    Time(#[from] std::time::SystemTimeError),
-    #[error("IO error while writing blob or reading file metadata or changing filetype")]
-    Io(#[from] io::Error),
-    #[error("Failed to obtain blob from object database")]
-    Find(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
-}
-
-#[derive(Clone, Default)]
-/// Options that control how the index status with a worktree is computed.
-pub struct Options {
-    /// Capabilities of the file system which affect the status computation.
-    pub fs: gix_fs::Capabilities,
-    /// If set, don't use more than this amount of threads.
-    /// Otherwise, usually use as many threads as there are logical cores.
-    /// A value of 0 is interpreted as no-limit
-    pub thread_limit: Option<usize>,
-    /// Options that control how stat comparisons are made when checking if a file is fresh.
-    pub stat: index::entry::stat::Options,
-}
 
 /// Calculates the changes that need to be applied to an `index` to match the state of the `worktree` and makes them
 /// observable in `collector`, along with information produced by `compare` which gets to see blobs that may have changes.
@@ -51,8 +19,8 @@ pub struct Options {
 /// Note that this isn't technically quite what this function does as this also provides some additional information,
 /// like whether a file has conflicts, and files that were added with `git add` are shown as a special
 /// changes despite not technically requiring a change to the index since `git add` already added the file to the index.
-pub fn changes_to_obtain<'index, T, Find, E>(
-    index: &'index mut index::State,
+pub fn status<'index, T, Find, E>(
+    index: &'index mut gix_index::State,
     worktree: &Path,
     collector: &mut impl VisitEntry<'index, ContentChange = T>,
     compare: impl CompareBlobs<Output = T> + Send + Clone,
@@ -109,6 +77,7 @@ where
         },
     )
 }
+
 struct State<'a, 'b> {
     buf: Vec<u8>,
     odb_buf: Vec<u8>,
@@ -119,12 +88,12 @@ struct State<'a, 'b> {
     options: &'a Options,
 }
 
-type StatusResult<'index, T> = Result<(&'index index::Entry, &'index BStr, Option<Change<T>>, bool), Error>;
+type StatusResult<'index, T> = Result<(&'index gix_index::Entry, &'index BStr, Option<Change<T>>, bool), Error>;
 
 impl<'index> State<'_, 'index> {
     fn process<T, Find, E>(
         &mut self,
-        entry: &'index mut index::Entry,
+        entry: &'index mut gix_index::Entry,
         diff: &mut impl CompareBlobs<Output = T>,
         find: &mut Find,
     ) -> Option<StatusResult<'index, T>>
@@ -138,10 +107,10 @@ impl<'index> State<'_, 'index> {
             _ => return None,
         };
         if entry.flags.intersects(
-            index::entry::Flags::UPTODATE
-                | index::entry::Flags::SKIP_WORKTREE
-                | index::entry::Flags::ASSUME_VALID
-                | index::entry::Flags::FSMONITOR_VALID,
+            gix_index::entry::Flags::UPTODATE
+                | gix_index::entry::Flags::SKIP_WORKTREE
+                | gix_index::entry::Flags::ASSUME_VALID
+                | gix_index::entry::Flags::FSMONITOR_VALID,
         ) {
             return None;
         }
@@ -191,7 +160,7 @@ impl<'index> State<'_, 'index> {
     /// Adapted from [here](https://github.com/Byron/gitoxide/pull/805#discussion_r1164676777).
     fn compute_status<T, Find, E>(
         &mut self,
-        entry: &mut index::Entry,
+        entry: &mut gix_index::Entry,
         git_path: &BStr,
         diff: &mut impl CompareBlobs<Output = T>,
         find: &mut Find,
@@ -201,7 +170,7 @@ impl<'index> State<'_, 'index> {
         Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Send + Clone,
     {
         // TODO fs cache
-        let worktree_path = path::try_from_bstr(git_path).map_err(|_| Error::IllformedUtf8)?;
+        let worktree_path = gix_path::try_from_bstr(git_path).map_err(|_| Error::IllformedUtf8)?;
         let worktree_path = self.worktree.join(worktree_path);
         let metadata = match worktree_path.symlink_metadata() {
             // TODO: check if any parent directory is a symlink
@@ -223,17 +192,17 @@ impl<'index> State<'_, 'index> {
                 return Err(err.into());
             }
         };
-        if entry.flags.contains(index::entry::Flags::INTENT_TO_ADD) {
+        if entry.flags.contains(gix_index::entry::Flags::INTENT_TO_ADD) {
             return Ok(Some(Change::IntentToAdd));
         }
-        let new_stat = index::entry::Stat::from_fs(&metadata)?;
+        let new_stat = gix_index::entry::Stat::from_fs(&metadata)?;
         let executable_bit_changed =
             match entry
                 .mode
                 .change_to_match_fs(&metadata, self.options.fs.symlink, self.options.fs.executable_bit)
             {
-                Some(index::entry::mode::Change::Type { .. }) => return Ok(Some(Change::Type)),
-                Some(index::entry::mode::Change::ExecutableBit) => true,
+                Some(gix_index::entry::mode::Change::Type { .. }) => return Ok(Some(Change::Type)),
+                Some(gix_index::entry::mode::Change::ExecutableBit) => true,
                 None => false,
             };
 
@@ -314,10 +283,11 @@ impl<'index, T, C: VisitEntry<'index, ContentChange = T>> Reduce for ReduceChang
         Ok(())
     }
 }
+
 struct WorktreeBlob<'a> {
     buf: &'a mut Vec<u8>,
     path: &'a Path,
-    entry: &'a index::Entry,
+    entry: &'a gix_index::Entry,
     options: &'a Options,
 }
 
@@ -336,7 +306,7 @@ impl<'a> content::ReadDataOnce<'a, Error> for WorktreeBlob<'a> {
         let res = read::data_to_buf_with_meta(
             self.path,
             self.buf,
-            self.entry.mode == index::entry::Mode::SYMLINK,
+            self.entry.mode == gix_index::entry::Mode::SYMLINK,
             &self.options.fs,
         )?;
         Ok(res)

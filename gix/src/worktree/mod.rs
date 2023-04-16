@@ -133,7 +133,7 @@ pub mod excludes {
             &self,
             index: &gix_index::State,
             overrides: Option<gix_ignore::Search>,
-        ) -> Result<gix_worktree::fs::Cache, Error> {
+        ) -> Result<gix_worktree::Cache, Error> {
             let repo = self.parent;
             let case = if repo.config.ignore_case {
                 gix_glob::pattern::Case::Fold
@@ -145,20 +145,14 @@ pub mod excludes {
                 Some(user_path) => Some(user_path),
                 None => repo.config.xdg_config_path("ignore")?,
             };
-            let state = gix_worktree::fs::cache::State::IgnoreStack(gix_worktree::fs::cache::state::Ignore::new(
+            let state = gix_worktree::cache::State::IgnoreStack(gix_worktree::cache::state::Ignore::new(
                 overrides.unwrap_or_default(),
                 gix_ignore::Search::from_git_dir(repo.git_dir(), excludes_file, &mut buf)?,
                 None,
                 case,
             ));
             let attribute_list = state.attribute_list_from_index(index, index.path_backing(), case);
-            Ok(gix_worktree::fs::Cache::new(
-                self.path,
-                state,
-                case,
-                buf,
-                attribute_list,
-            ))
+            Ok(gix_worktree::Cache::new(self.path, state, case, buf, attribute_list))
         }
     }
 }

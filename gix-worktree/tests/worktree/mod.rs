@@ -1,5 +1,6 @@
-mod fs;
-mod index;
+mod cache;
+mod checkout;
+mod status;
 
 use std::path::{Path, PathBuf};
 

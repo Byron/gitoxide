@@ -1,4 +1,4 @@
-use crate::fs::cache::state::{AttributeMatchGroup, Attributes};
+use crate::cache::state::{AttributeMatchGroup, Attributes};
 use gix_glob::pattern::Case;
 use std::path::PathBuf;
 
@@ -6,7 +6,7 @@ use std::path::PathBuf;
 #[derive(Default, Debug, Clone, Copy)]
 pub enum Source {
     /// Retrieve attribute files from an attribute list, see
-    /// [State::attribute_list_from_index()][crate::fs::cache::State::attribute_list_from_index()].
+    /// [State::attribute_list_from_index()][crate::cache::State::attribute_list_from_index()].
     ///
     /// The attribute list is typically produced from an index. If a tree should be the source, build an attribute list
     /// from a tree instead.

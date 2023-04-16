@@ -3,7 +3,7 @@ use std::path::Path;
 use bstr::ByteSlice;
 use gix_hash::oid;
 
-use crate::fs::{
+use crate::{
     cache::{Platform, State},
     PathOidMapping,
 };

@@ -4,7 +4,23 @@ use gix_index as index;
 use gix_object::encode::loose_header;
 use index::Entry;
 
-use crate::index::status::CompareBlobs;
+/// Compares the content of two blobs in some way.
+pub trait CompareBlobs {
+    /// Output data produced by [`compare_blobs()`][CompareBlobs::compare_blobs()].
+    type Output;
+
+    /// Providing the underlying index `entry`, allow comparing a file in the worktree of size `worktree_blob_size`
+    /// and allow reading its bytes using `worktree_blob`.
+    /// If this function returns `None` the `entry` and the `worktree_blob` are assumed to be identical.
+    /// Use `entry_blob` to obtain the data for the blob referred to by `entry`, allowing comparisons of the data itself.
+    fn compare_blobs<'a, E>(
+        &mut self,
+        entry: &'a gix_index::Entry,
+        worktree_blob_size: usize,
+        worktree_blob: impl ReadDataOnce<'a, E>,
+        entry_blob: impl ReadDataOnce<'a, E>,
+    ) -> Result<Option<Self::Output>, E>;
+}
 
 /// Lazy borrowed access to blob data.
 pub trait ReadDataOnce<'a, E> {
