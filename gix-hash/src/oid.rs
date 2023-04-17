@@ -17,7 +17,7 @@ use crate::{ObjectId, SIZE_OF_SHA1_DIGEST};
 #[derive(PartialEq, Eq, Ord, PartialOrd)]
 #[repr(transparent)]
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct oid {
     bytes: [u8],
 }
@@ -207,7 +207,7 @@ impl PartialEq<crate::ObjectId> for &oid {
 /// Manually created from a version that uses a slice, and we forcefully try to convert it into a borrowed array of the desired size
 /// Could be improved by fitting this into serde
 /// Unfortunately the serde::Deserialize derive wouldn't work for borrowed arrays.
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 impl<'de: 'a, 'a> serde::Deserialize<'de> for &'a oid {
     fn deserialize<D>(deserializer: D) -> Result<Self, <D as serde::Deserializer<'de>>::Error>
     where

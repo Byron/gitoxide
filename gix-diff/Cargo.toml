@@ -12,7 +12,7 @@ autotests = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "gix-hash/serde1", "gix-object/serde1"]
+serde = ["dep:serde", "gix-hash/serde", "gix-object/serde"]
 ## Make it possible to compile to the `wasm32-unknown-unknown` target.
 wasm = ["dep:getrandom"]
 

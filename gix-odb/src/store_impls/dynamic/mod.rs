@@ -94,7 +94,7 @@ pub mod structure {
 
     /// A record of a structural element of an object database.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     pub enum Record {
         /// A loose object database.
         LooseObjectDatabase {
@@ -123,7 +123,7 @@ pub mod structure {
     }
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     /// Possible stats of pack indices.
     pub enum IndexState {
         /// The index is active in memory because a mapping exists.

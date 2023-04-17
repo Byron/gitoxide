@@ -77,17 +77,17 @@ check: ## Build all code in suitable configurations
 					&& cargo check
 	cd gix-object && cargo check --all-features \
                   && cargo check --features verbose-object-parsing-errors
-	cd gix-index && cargo check --features serde1
-	cd gix-credentials && cargo check --features serde1
-	cd gix-sec && cargo check --features serde1
-	cd gix-revision && cargo check --features serde1
-	cd gix-attributes && cargo check --features serde1
-	cd gix-glob && cargo check --features serde1
-	cd gix-mailmap && cargo check --features serde1
-	cd gix-worktree && cargo check --features serde1
-	cd gix-actor && cargo check --features serde1
-	cd gix-date && cargo check --features serde1
-	cd gix-pack && cargo check --features serde1 \
+	cd gix-index && cargo check --features serde
+	cd gix-credentials && cargo check --features serde
+	cd gix-sec && cargo check --features serde
+	cd gix-revision && cargo check --features serde
+	cd gix-attributes && cargo check --features serde
+	cd gix-glob && cargo check --features serde
+	cd gix-mailmap && cargo check --features serde
+	cd gix-worktree && cargo check --features serde
+	cd gix-actor && cargo check --features serde
+	cd gix-date && cargo check --features serde
+	cd gix-pack && cargo check --features serde \
 			   && cargo check --features pack-cache-lru-static \
 			   && cargo check --features pack-cache-lru-dynamic \
 			   && cargo check --features object-cache-dynamic \
@@ -138,7 +138,7 @@ check: ## Build all code in suitable configurations
 					  && cargo check --no-default-features --features max-performance-safe \
 					  && cargo check --no-default-features --features progress-tree \
 					  && cargo check --no-default-features
-	cd gix-odb && cargo check --features serde1
+	cd gix-odb && cargo check --features serde
 	cd cargo-smart-release && cargo check --all
 
 unit-tests: ## run all unit tests

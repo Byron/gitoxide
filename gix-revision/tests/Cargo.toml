@@ -17,7 +17,7 @@ path = "revision.rs"
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = [ "gix-revision/serde", "gix-hash/serde1", "gix-object/serde1" ]
+serde = [ "gix-revision/serde", "gix-hash/serde", "gix-object/serde" ]
 
 [dev-dependencies]
 gix-revision = { path = "..", default-features = false }

@@ -15,7 +15,7 @@ doctest = false
 [features]
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "gix-hash/serde1", "gix-object/serde1", "gix-pack/serde1" ]
+serde= ["dep:serde", "gix-hash/serde", "gix-object/serde", "gix-pack/serde"]
 
 [[test]]
 name = "multi-threaded"
@@ -52,5 +52,5 @@ maplit = "1.0.2"
 crossbeam-channel = "0.5.6"
 
 [package.metadata.docs.rs]
-features = ["document-features", "serde1"]
+features = ["document-features", "serde"]
 rustdoc-args = ["--cfg", "docsrs"]

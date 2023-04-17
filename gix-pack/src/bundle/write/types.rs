@@ -31,7 +31,7 @@ impl Default for Options {
 /// Returned by [write_to_directory][crate::Bundle::write_to_directory()] or
 /// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The successful result of the index write operation
     pub index: crate::index::write::Outcome,

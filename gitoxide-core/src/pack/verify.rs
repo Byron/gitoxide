@@ -174,7 +174,7 @@ where
                                 drop(print_statistics(&mut out, &stats));
                             }
                         },
-                        #[cfg(feature = "serde1")]
+                        #[cfg(feature = "serde")]
                         Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, &multi_index.index_names().iter().zip(res.pack_traverse_statistics).collect::<Vec<_>>())?,
                         _ => {}
                     };
@@ -189,10 +189,10 @@ where
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };
     if let Some(stats) = res.1.as_ref() {
-        #[cfg_attr(not(feature = "serde1"), allow(clippy::single_match))]
+        #[cfg_attr(not(feature = "serde"), allow(clippy::single_match))]
         match output_statistics {
             Some(OutputFormat::Human) => drop(print_statistics(&mut out, stats)),
-            #[cfg(feature = "serde1")]
+            #[cfg(feature = "serde")]
             Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, stats)?,
             _ => {}
         };

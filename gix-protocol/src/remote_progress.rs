@@ -10,9 +10,9 @@ use nom::{
 /// The information usually found in remote progress messages as sent by a git server during
 /// fetch, clone and push operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RemoteProgress<'a> {
-    #[cfg_attr(feature = "serde1", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     /// The name of the action, like "clone".
     pub action: &'a bstr::BStr,
     /// The percentage to indicate progress, between 0 and 100.

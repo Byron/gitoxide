@@ -33,7 +33,7 @@ fast = ["gix/max-performance", "gix/comfort"]
 ## Use `clap` 3.0 to build the prettiest, best documented and most user-friendly CLI at the expense of binary size.
 ## Provides a terminal user interface for detailed and exhaustive progress.
 ## Provides a line renderer for leaner progress display, without the need for a full-blown TUI.
-pretty-cli = [ "gitoxide-core/serde1", "prodash/progress-tree", "prodash/progress-tree-log", "prodash/local-time", "env_logger/humantime", "env_logger/color", "env_logger/auto-color" ]
+pretty-cli = [ "gitoxide-core/serde", "prodash/progress-tree", "prodash/progress-tree-log", "prodash/local-time", "env_logger/humantime", "env_logger/color", "env_logger/auto-color" ]
 
 ## The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
 ## that appears after a short duration.

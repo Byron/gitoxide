@@ -5,13 +5,13 @@ use crate::{State, StateRef};
 
 /// A container to encapsulate a tightly packed and typically unallocated byte value that isn't necessarily UTF8 encoded.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Value(KString);
 
 /// A reference container to encapsulate a tightly packed and typically unallocated byte value that isn't necessarily UTF8 encoded.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct ValueRef<'a>(#[cfg_attr(feature = "serde1", serde(borrow))] KStringRef<'a>);
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct ValueRef<'a>(#[cfg_attr(feature = "serde", serde(borrow))] KStringRef<'a>);
 
 /// Conversions
 impl<'a> ValueRef<'a> {

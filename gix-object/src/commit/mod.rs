@@ -10,10 +10,10 @@ pub mod message;
 ///
 /// Titles can have any amount of whitespace
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageRef<'a> {
     /// The title of the commit, as separated from the body with two consecutive newlines. The newlines are not included.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     pub title: &'a BStr,
     /// All bytes not consumed by the title, excluding the separating newlines.
     ///

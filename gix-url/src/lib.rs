@@ -32,7 +32,7 @@ pub use scheme::Scheme;
 ///
 /// Note that we do not support passing the password using the URL as it's likely leading to accidents.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Url {
     /// The URL scheme.
     pub scheme: Scheme,

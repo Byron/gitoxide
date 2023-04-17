@@ -34,7 +34,7 @@ pub fn parse(bytes: &[u8]) -> parse::Lines<'_> {
 ///
 /// Note that this doesn't contain the name.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum StateRef<'a> {
     /// The attribute is listed, or has the special value 'true'
     Set,
@@ -42,7 +42,7 @@ pub enum StateRef<'a> {
     Unset,
     /// The attribute is set to the given value, which followed the `=` sign.
     /// Note that values can be empty.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     Value(state::ValueRef<'a>),
     /// The attribute isn't mentioned with a given path or is explicitly set to `Unspecified` using the `!` sign.
     Unspecified,
@@ -52,7 +52,7 @@ pub enum StateRef<'a> {
 ///
 /// Note that this doesn't contain the name.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum State {
     /// The attribute is listed, or has the special value 'true'
     Set,
@@ -67,7 +67,7 @@ pub enum State {
 
 /// Represents a validated attribute name
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Name(pub(crate) KString);
 
 /// Holds a validated attribute name as a reference
@@ -76,7 +76,7 @@ pub struct NameRef<'a>(KStringRef<'a>);
 
 /// Name an attribute and describe it's assigned state.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Assignment {
     /// The validated name of the attribute.
     pub name: Name,

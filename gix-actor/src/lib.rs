@@ -19,7 +19,7 @@ pub mod signature;
 ///
 /// Note that this is not a cryptographical signature.
 #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature {
     /// The actors name.
     pub name: BString,
@@ -33,10 +33,10 @@ pub struct Signature {
 ///
 /// Note that this is not a cryptographical signature.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy, Default)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SignatureRef<'a> {
     /// The actor's name.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     pub name: &'a BStr,
     /// The actor's email.
     pub email: &'a BStr,

@@ -22,7 +22,7 @@ required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["gix-index/serde"]
+serde= ["gix-index/serde"]
 
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
@@ -39,5 +39,5 @@ filetime = "0.2.15"
 bstr = { version = "1.3.0", default-features = false }
 
 [package.metadata.docs.rs]
-features = ["document-features", "serde1"]
+features = ["document-features", "serde"]
 rustdoc-args = ["--cfg", "docsrs"]

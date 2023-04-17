@@ -14,7 +14,7 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = [ "serde", "bitflags/serde" ]
+serde = [ "dep:serde", "bitflags/serde" ]
 
 [dependencies]
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"] }

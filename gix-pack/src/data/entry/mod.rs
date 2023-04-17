@@ -11,7 +11,7 @@ const REF_DELTA: u8 = 7;
 
 /// A way to uniquely identify the location of an entry within a pack bundle
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Location {
     /// The id of the pack containing the object. It's unique within its frame of reference which is the owning object database.
     pub pack_id: u32,

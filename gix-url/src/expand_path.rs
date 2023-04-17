@@ -5,7 +5,7 @@ use bstr::{BStr, BString, ByteSlice};
 
 /// Whether a repository is resolving for the current user, or the given one.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ForUser {
     /// The currently logged in user.
     Current,

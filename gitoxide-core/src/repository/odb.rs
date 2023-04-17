@@ -4,7 +4,7 @@ use anyhow::bail;
 
 use crate::OutputFormat;
 
-#[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
+#[cfg_attr(not(feature = "serde"), allow(unused_variables))]
 pub fn info(
     repo: gix::Repository,
     format: OutputFormat,
@@ -15,7 +15,7 @@ pub fn info(
         writeln!(err, "Only JSON is implemented - using that instead")?;
     }
 
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize))]
     pub struct Statistics {
         pub path: std::path::PathBuf,
         pub object_hash: String,
@@ -33,7 +33,7 @@ pub fn info(
         metrics: store.metrics(),
     };
 
-    #[cfg(feature = "serde1")]
+    #[cfg(feature = "serde")]
     {
         serde_json::to_writer_pretty(out, &stats)?;
     }
@@ -53,7 +53,7 @@ pub mod statistics {
     }
 }
 
-#[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
+#[cfg_attr(not(feature = "serde"), allow(unused_variables))]
 pub fn statistics(
     repo: gix::Repository,
     mut progress: impl gix::Progress,
@@ -73,7 +73,7 @@ pub fn statistics(
     let counter = progress.counter();
     let start = std::time::Instant::now();
 
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize))]
     #[derive(Default)]
     struct Statistics {
         total_objects: usize,
@@ -195,7 +195,7 @@ pub fn statistics(
 
     progress.show_throughput(start);
 
-    #[cfg(feature = "serde1")]
+    #[cfg(feature = "serde")]
     {
         serde_json::to_writer_pretty(out, &stats)?;
     }

@@ -16,7 +16,7 @@ mod entries {
 
     use crate::repository::tree::format_entry;
 
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize))]
     #[derive(Default)]
     pub struct Statistics {
         pub num_trees: usize,
@@ -24,9 +24,9 @@ mod entries {
         pub num_blobs: usize,
         pub num_blobs_exec: usize,
         pub num_submodules: usize,
-        #[cfg_attr(feature = "serde1", serde(skip_serializing_if = "Option::is_none"))]
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         pub bytes: Option<u64>,
-        #[cfg_attr(feature = "serde1", serde(skip))]
+        #[cfg_attr(feature = "serde", serde(skip))]
         pub num_bytes: u64,
     }
 
@@ -112,7 +112,7 @@ mod entries {
     }
 }
 
-#[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
+#[cfg_attr(not(feature = "serde"), allow(unused_variables))]
 pub fn info(
     repo: gix::Repository,
     treeish: Option<&str>,
@@ -130,7 +130,7 @@ pub fn info(
     let mut delegate = entries::Traverse::new(extended.then_some(&repo), None);
     tree.traverse().breadthfirst(&mut delegate)?;
 
-    #[cfg(feature = "serde1")]
+    #[cfg(feature = "serde")]
     {
         delegate.stats.bytes = extended.then_some(delegate.stats.num_bytes);
         serde_json::to_writer_pretty(out, &delegate.stats)?;
