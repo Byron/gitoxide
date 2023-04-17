@@ -1,9 +1,13 @@
-use super::Attributes;
-use crate::search::{Assignments, MetadataCollection, Outcome, TrackedAssignment, Value};
-use crate::Search;
+use std::path::{Path, PathBuf};
+
 use bstr::{BStr, ByteSlice};
 use gix_glob::search::{pattern, Pattern};
-use std::path::{Path, PathBuf};
+
+use super::Attributes;
+use crate::{
+    search::{Assignments, MetadataCollection, Outcome, TrackedAssignment, Value},
+    Search,
+};
 
 /// Instantiation and initialization.
 impl Search {

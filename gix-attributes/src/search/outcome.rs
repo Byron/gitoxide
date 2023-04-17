@@ -1,13 +1,16 @@
-use crate::search::{
-    Assignments, AttributeId, Attributes, Match, MatchKind, MatchLocation, Metadata, MetadataCollection, Outcome,
-    TrackedAssignment, Value,
-};
-use crate::{Assignment, NameRef, State};
+use std::{borrow::Cow, path::Path};
+
 use bstr::{BString, ByteSlice};
 use gix_glob::Pattern;
 use kstring::{KString, KStringRef};
-use std::borrow::Cow;
-use std::path::Path;
+
+use crate::{
+    search::{
+        Assignments, AttributeId, Attributes, Match, MatchKind, MatchLocation, Metadata, MetadataCollection, Outcome,
+        TrackedAssignment, Value,
+    },
+    Assignment, NameRef, State,
+};
 
 /// Initialization
 impl<'pattern> Outcome<'pattern> {

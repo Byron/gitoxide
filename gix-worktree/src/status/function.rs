@@ -1,13 +1,18 @@
-use std::io;
-use std::marker::PhantomData;
-use std::path::Path;
+use std::{io, marker::PhantomData, path::Path};
 
-use crate::read;
-use crate::status::types::{Error, Options};
-use crate::status::{content, content::CompareBlobs, Change, VisitEntry};
 use bstr::BStr;
 use filetime::FileTime;
 use gix_features::parallel::{in_parallel_if, Reduce};
+
+use crate::{
+    read,
+    status::{
+        content,
+        content::CompareBlobs,
+        types::{Error, Options},
+        Change, VisitEntry,
+    },
+};
 
 /// Calculates the changes that need to be applied to an `index` to match the state of the `worktree` and makes them
 /// observable in `collector`, along with information produced by `compare` which gets to see blobs that may have changes.

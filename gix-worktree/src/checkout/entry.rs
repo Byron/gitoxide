@@ -2,8 +2,7 @@ use std::{fs::OpenOptions, io::Write, path::Path};
 
 use bstr::BStr;
 use gix_hash::oid;
-use gix_index::entry::Stat;
-use gix_index::Entry;
+use gix_index::{entry::Stat, Entry};
 use io_close::Close;
 
 use crate::Cache;

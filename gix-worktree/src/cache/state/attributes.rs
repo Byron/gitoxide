@@ -1,6 +1,8 @@
-use crate::cache::state::{AttributeMatchGroup, Attributes};
-use gix_glob::pattern::Case;
 use std::path::PathBuf;
+
+use gix_glob::pattern::Case;
+
+use crate::cache::state::{AttributeMatchGroup, Attributes};
 
 /// Decide where to read `.gitattributes` files from.
 #[derive(Default, Debug, Clone, Copy)]

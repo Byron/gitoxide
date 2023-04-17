@@ -26,8 +26,9 @@ mod capabilities;
 
 mod snapshot;
 
-pub use snapshot::{FileSnapshot, SharedFileSnapshot, SharedFileSnapshotMut};
 use std::path::PathBuf;
+
+pub use snapshot::{FileSnapshot, SharedFileSnapshot, SharedFileSnapshotMut};
 
 ///
 pub mod symlink;

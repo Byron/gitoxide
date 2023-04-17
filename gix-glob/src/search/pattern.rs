@@ -1,8 +1,11 @@
-use crate::pattern::Case;
-use crate::search::Pattern;
+use std::{
+    io::Read,
+    path::{Path, PathBuf},
+};
+
 use bstr::{BStr, BString, ByteSlice, ByteVec};
-use std::io::Read;
-use std::path::{Path, PathBuf};
+
+use crate::{pattern::Case, search::Pattern};
 
 /// A list of patterns which optionally know where they were loaded from and what their base is.
 ///

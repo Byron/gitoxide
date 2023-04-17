@@ -144,8 +144,9 @@ mod tag {
 }
 
 mod commit_as {
-    use crate::util::restricted_and_git;
     use gix_testtools::tempfile;
+
+    use crate::util::restricted_and_git;
 
     #[test]
     fn specify_committer_and_author() -> crate::Result {

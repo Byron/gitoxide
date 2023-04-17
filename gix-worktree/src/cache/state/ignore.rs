@@ -1,9 +1,10 @@
-use crate::cache::state::IgnoreMatchGroup;
-use crate::PathOidMapping;
+use std::path::Path;
+
 use bstr::{BStr, BString, ByteSlice};
 use gix_glob::pattern::Case;
 use gix_hash::oid;
-use std::path::Path;
+
+use crate::{cache::state::IgnoreMatchGroup, PathOidMapping};
 
 /// State related to the exclusion of files.
 #[derive(Default, Clone)]

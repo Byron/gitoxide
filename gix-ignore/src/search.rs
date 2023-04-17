@@ -1,8 +1,12 @@
-use crate::Search;
+use std::{
+    ffi::OsString,
+    path::{Path, PathBuf},
+};
+
 use bstr::{BStr, ByteSlice};
 use gix_glob::search::{pattern, Pattern};
-use std::ffi::OsString;
-use std::path::{Path, PathBuf};
+
+use crate::Search;
 
 /// Describes a matching pattern within a search for ignored paths.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

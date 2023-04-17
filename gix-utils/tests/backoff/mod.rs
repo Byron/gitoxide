@@ -1,6 +1,6 @@
+use std::{convert::TryInto, time::Duration};
+
 use gix_utils::backoff::Exponential;
-use std::convert::TryInto;
-use std::time::Duration;
 
 const EXPECTED_TILL_SECOND: &[usize] = &[
     1usize, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225, 256, 289, 324, 361, 400, 441, 484, 529, 576,

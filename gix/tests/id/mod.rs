@@ -67,8 +67,9 @@ fn display_and_debug() -> crate::Result {
 }
 
 mod ancestors {
-    use crate::id::hex_to_id;
     use gix_traverse::commit;
+
+    use crate::id::hex_to_id;
 
     #[test]
     fn all() -> crate::Result {

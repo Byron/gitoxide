@@ -10,7 +10,6 @@ use std::{
 use gix_features::progress;
 use gix_object::bstr::ByteSlice;
 use gix_odb::FindExt;
-
 use gix_worktree::checkout::Collision;
 use tempfile::TempDir;
 

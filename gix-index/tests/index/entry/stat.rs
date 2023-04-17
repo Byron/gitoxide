@@ -1,10 +1,14 @@
 use filetime::FileTime;
-use gix_index::entry::stat::{Options, Time};
-use gix_index::entry::Stat;
+use gix_index::entry::{
+    stat::{Options, Time},
+    Stat,
+};
 
 mod matches {
-    use gix_index::entry::stat::{Options, Time};
-    use gix_index::entry::Stat;
+    use gix_index::entry::{
+        stat::{Options, Time},
+        Stat,
+    };
 
     #[test]
     fn use_nsec() {

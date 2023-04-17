@@ -1,8 +1,13 @@
 mod list {
-    use gix_glob::pattern::Case;
-    use gix_glob::search::pattern::{List, Mapping};
-    use gix_glob::search::Pattern;
     use std::path::Path;
+
+    use gix_glob::{
+        pattern::Case,
+        search::{
+            pattern::{List, Mapping},
+            Pattern,
+        },
+    };
 
     #[derive(Clone, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Default)]
     struct Dummy;

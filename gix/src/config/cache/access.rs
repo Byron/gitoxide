@@ -1,18 +1,17 @@
 #![allow(clippy::result_large_err)]
-use gix_attributes::Source;
-use gix_glob::pattern::Case;
 use std::{borrow::Cow, path::PathBuf, time::Duration};
 
+use gix_attributes::Source;
+use gix_glob::pattern::Case;
 use gix_lock::acquire::Fail;
 
-use crate::config::tree::gitoxide;
 use crate::{
     bstr::BStr,
     config,
     config::{
         cache::util::{ApplyLeniency, ApplyLeniencyDefault},
         checkout_options,
-        tree::{Checkout, Core, Key},
+        tree::{gitoxide, Checkout, Core, Key},
         Cache,
     },
     remote,

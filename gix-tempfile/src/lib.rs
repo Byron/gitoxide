@@ -94,8 +94,7 @@ mod hashmap {
 #[cfg(not(feature = "hp-hashmap"))]
 type HashMap<K, V> = hashmap::Concurrent<K, V>;
 
-pub use gix_fs::dir::create as create_dir;
-pub use gix_fs::dir::remove as remove_dir;
+pub use gix_fs::dir::{create as create_dir, remove as remove_dir};
 
 #[cfg(feature = "signals")]
 /// signal setup and reusable handlers.

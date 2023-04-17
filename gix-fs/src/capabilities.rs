@@ -1,6 +1,7 @@
 // TODO: tests
-use crate::Capabilities;
 use std::path::Path;
+
+use crate::Capabilities;
 
 #[cfg(windows)]
 impl Default for Capabilities {

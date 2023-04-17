@@ -1,7 +1,6 @@
+use std::{borrow::Cow, ffi::OsString, path::Path};
+
 use crate::Source;
-use std::borrow::Cow;
-use std::ffi::OsString;
-use std::path::Path;
 
 impl Source {
     /// Produce a storage location for the this source while potentially querying environment variables using `env_var(<name>)`,

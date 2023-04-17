@@ -6,8 +6,7 @@ use gix_index::{
     Version,
 };
 
-use crate::index::Fixture;
-use crate::{hex_to_id, loose_file_path};
+use crate::{hex_to_id, index::Fixture, loose_file_path};
 
 fn verify(index: gix_index::File) -> gix_index::File {
     index.verify_integrity().unwrap();

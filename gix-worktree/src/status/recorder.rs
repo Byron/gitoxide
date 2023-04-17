@@ -1,5 +1,4 @@
 use bstr::BStr;
-
 use gix_index as index;
 
 use crate::status::{Change, VisitEntry};

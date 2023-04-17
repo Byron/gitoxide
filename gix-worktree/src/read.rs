@@ -3,12 +3,14 @@
 //! For the most part a blob just contains the raw on-disk data. However symlinks need to be considered properly
 //! and attributes/config options need to be considered.
 
+use std::{
+    fs::{read_link, File},
+    io::{self, Read},
+    path::Path,
+};
+
 use gix_object::Blob;
 use gix_path as path;
-
-use std::fs::{read_link, File};
-use std::io::{self, Read};
-use std::path::Path;
 
 // TODO: tests
 

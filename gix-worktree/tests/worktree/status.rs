@@ -1,14 +1,19 @@
+use std::sync::{
+    atomic::{AtomicUsize, Ordering},
+    Arc,
+};
+
 use bstr::BStr;
 use filetime::{set_file_mtime, FileTime};
 use gix_index as index;
 use gix_index::Entry;
-
-use gix_worktree::status;
-use gix_worktree::status::content::{FastEq, ReadDataOnce};
-use gix_worktree::status::Options;
-use gix_worktree::status::{content::CompareBlobs, Change, Recorder};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
+use gix_worktree::{
+    status,
+    status::{
+        content::{CompareBlobs, FastEq, ReadDataOnce},
+        Change, Options, Recorder,
+    },
+};
 
 use crate::fixture_path;
 

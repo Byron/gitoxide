@@ -1,6 +1,5 @@
 #![allow(clippy::result_large_err)]
-use std::borrow::Cow;
-use std::ffi::OsString;
+use std::{borrow::Cow, ffi::OsString};
 
 use gix_sec::Permission;
 

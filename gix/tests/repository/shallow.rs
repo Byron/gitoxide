@@ -1,5 +1,6 @@
-use crate::util::{hex_to_id, named_subrepo_opts};
 use serial_test::parallel;
+
+use crate::util::{hex_to_id, named_subrepo_opts};
 
 #[test]
 #[parallel]
@@ -39,9 +40,9 @@ fn yes() -> crate::Result {
 
 mod traverse {
     use gix_traverse::commit::Sorting;
+    use serial_test::parallel;
 
     use crate::util::{hex_to_id, named_subrepo_opts};
-    use serial_test::parallel;
 
     #[test]
     #[parallel]

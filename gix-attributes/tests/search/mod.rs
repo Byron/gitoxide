@@ -1,15 +1,20 @@
-use bstr::{BStr, ByteSlice};
-use gix_attributes::search::{AttributeId, Outcome};
-use gix_attributes::{AssignmentRef, NameRef, StateRef};
-use gix_glob::pattern::Case;
-
 use std::collections::BTreeMap;
 
+use bstr::{BStr, ByteSlice};
+use gix_attributes::{
+    search::{AttributeId, Outcome},
+    AssignmentRef, NameRef, StateRef,
+};
+use gix_glob::pattern::Case;
+
 mod specials {
-    use gix_attributes::search::{MetadataCollection, Outcome};
-    use gix_attributes::Search;
-    use gix_glob::pattern::Case;
     use std::path::Path;
+
+    use gix_attributes::{
+        search::{MetadataCollection, Outcome},
+        Search,
+    };
+    use gix_glob::pattern::Case;
 
     #[test]
     fn dir_slash_never_matches_but_dir_slah_double_star_does() {
@@ -269,9 +274,9 @@ mod baseline {
 
         Ok((group, collection, base, input))
     }
-    use gix_attributes::search::MetadataCollection;
-    use gix_attributes::{AssignmentRef, StateRef};
     use std::path::PathBuf;
+
+    use gix_attributes::{search::MetadataCollection, AssignmentRef, StateRef};
 
     /// Read user-attributes and baseline in one go.
     pub fn user_attributes(

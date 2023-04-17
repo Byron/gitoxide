@@ -1,6 +1,7 @@
+use std::path::PathBuf;
+
 use bstr::ByteSlice;
 use gix_glob::pattern::Case;
-use std::path::PathBuf;
 
 use crate::{cache::State, PathOidMapping};
 

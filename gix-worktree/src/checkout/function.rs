@@ -1,9 +1,9 @@
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-use crate::checkout::chunk;
-use crate::{cache, Cache};
 use gix_features::{interrupt, parallel::in_parallel, progress, progress::Progress};
 use gix_hash::oid;
+
+use crate::{cache, checkout::chunk, Cache};
 
 /// Note that interruption still produce an `Ok(…)` value, so the caller should look at `should_interrupt` to communicate the outcome.
 /// `dir` is the directory into which to checkout the `index`.

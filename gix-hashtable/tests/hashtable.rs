@@ -1,7 +1,8 @@
 mod hash {
     mod hasher {
-        use gix_hashtable::hash::Hasher as GixHasher;
         use std::hash::Hasher;
+
+        use gix_hashtable::hash::Hasher as GixHasher;
 
         #[test]
         fn write_uses_the_first_8_bytes_verbatim_assuming_a_secure_hash_as_input() {

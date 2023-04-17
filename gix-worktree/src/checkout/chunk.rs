@@ -4,8 +4,7 @@ use bstr::BStr;
 use gix_features::progress::Progress;
 use gix_hash::oid;
 
-use crate::checkout::entry;
-use crate::{checkout, Cache};
+use crate::{checkout, checkout::entry, Cache};
 
 mod reduce {
     use std::{

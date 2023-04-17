@@ -3,8 +3,9 @@ use gix_attributes::StateRef;
 const ILLFORMED_UTF8: &[u8] = b"\xC3\x28\x41";
 
 mod value {
-    use crate::state::ILLFORMED_UTF8;
     use gix_attributes::state::ValueRef;
+
+    use crate::state::ILLFORMED_UTF8;
 
     #[test]
     fn from_bytes() {

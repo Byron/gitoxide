@@ -1,5 +1,4 @@
-use std::io::ErrorKind::AlreadyExists;
-use std::{io, path::Path};
+use std::{io, io::ErrorKind::AlreadyExists, path::Path};
 
 #[cfg(not(windows))]
 pub fn create(original: &Path, link: &Path) -> io::Result<()> {

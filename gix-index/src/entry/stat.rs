@@ -1,5 +1,7 @@
-use std::cmp::Ordering;
-use std::time::{SystemTime, SystemTimeError};
+use std::{
+    cmp::Ordering,
+    time::{SystemTime, SystemTimeError},
+};
 
 use filetime::FileTime;
 

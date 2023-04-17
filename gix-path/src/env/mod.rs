@@ -1,6 +1,9 @@
+use std::{
+    ffi::OsString,
+    path::{Path, PathBuf},
+};
+
 use bstr::{BString, ByteSlice};
-use std::ffi::OsString;
-use std::path::{Path, PathBuf};
 
 mod git;
 
