@@ -27,7 +27,7 @@ async-client = ["gix-transport/async-client", "async-trait", "futures-io", "futu
 
 #! ### Other
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "bstr/serde", "gix-transport/serde1", "gix-hash/serde1"]
+serde = ["dep:serde", "bstr/serde", "gix-transport/serde", "gix-hash/serde"]
 
 [[test]]
 name = "blocking-client-protocol"
@@ -65,5 +65,5 @@ gix-packetline = { path = "../gix-packetline" ,version = "^0.15.1" }
 gix-testtools = { path = "../tests/tools" }
 
 [package.metadata.docs.rs]
-features = ["blocking-client", "document-features", "serde1"]
+features = ["blocking-client", "document-features", "serde"]
 rustdoc-args = ["--cfg", "docsrs"]

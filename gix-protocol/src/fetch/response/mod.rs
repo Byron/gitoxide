@@ -49,7 +49,7 @@ impl gix_transport::IsSpuriousError for Error {
 
 /// An 'ACK' line received from the server.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Acknowledgement {
     /// The contained `id` is in common.
     Common(gix_hash::ObjectId),
@@ -61,7 +61,7 @@ pub enum Acknowledgement {
 
 /// A shallow line received from the server.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ShallowUpdate {
     /// Shallow the given `id`.
     Shallow(gix_hash::ObjectId),
@@ -71,7 +71,7 @@ pub enum ShallowUpdate {
 
 /// A wanted-ref line received from the server.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WantedRef {
     /// The object id of the wanted ref, as seen by the server.
     pub id: gix_hash::ObjectId,

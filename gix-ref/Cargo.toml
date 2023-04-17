@@ -16,7 +16,7 @@ test = true
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "gix-hash/serde1", "gix-actor/serde1", "gix-object/serde1"]
+serde = ["dep:serde", "gix-hash/serde", "gix-actor/serde", "gix-object/serde"]
 
 [dependencies]
 gix-features = { version = "^0.28.1", path = "../gix-features", features = ["walkdir"]}
@@ -45,5 +45,5 @@ tempfile = "3.2.0"
 
 
 [package.metadata.docs.rs]
-features = ["document-features", "serde1"]
+features = ["document-features", "serde"]
 rustdoc-args = ["--cfg", "docsrs"]

@@ -10,7 +10,7 @@ pub fn entries(
     use crate::OutputFormat::*;
     let file = parse_file(index_path, object_hash)?;
 
-    #[cfg(feature = "serde1")]
+    #[cfg(feature = "serde")]
     if let Json = format {
         out.write_all(b"[\n")?;
     }
@@ -19,19 +19,19 @@ pub fn entries(
     while let Some(entry) = entries.next() {
         match format {
             Human => to_human(&mut out, &file, entry)?,
-            #[cfg(feature = "serde1")]
+            #[cfg(feature = "serde")]
             Json => to_json(&mut out, &file, entry, entries.peek().is_none())?,
         }
     }
 
-    #[cfg(feature = "serde1")]
+    #[cfg(feature = "serde")]
     if let Json = format {
         out.write_all(b"]\n")?;
     }
     Ok(())
 }
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 pub(crate) fn to_json(
     mut out: &mut impl std::io::Write,
     file: &gix::index::File,
@@ -40,7 +40,7 @@ pub(crate) fn to_json(
 ) -> anyhow::Result<()> {
     use gix::bstr::ByteSlice;
 
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize))]
     struct Entry<'a> {
         stat: &'a gix::index::entry::Stat,
         hex_id: String,

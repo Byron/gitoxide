@@ -37,7 +37,7 @@ bitflags! {
 
 /// An entry's filesystem stat information.
 #[derive(Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Stat {
     /// Modification time
     pub mtime: stat::Time,

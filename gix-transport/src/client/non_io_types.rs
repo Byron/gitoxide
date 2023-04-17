@@ -1,6 +1,6 @@
 /// Configure how the [`RequestWriter`][crate::client::RequestWriter] behaves when writing bytes.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum WriteMode {
     /// Each [write()][std::io::Write::write()] call writes the bytes verbatim as one or more packet lines.
     ///
@@ -23,7 +23,7 @@ impl Default for WriteMode {
 /// The kind of packet line to write when transforming a [`RequestWriter`][crate::client::RequestWriter] into an
 /// [`ExtendedBufRead`][crate::client::ExtendedBufRead].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum MessageKind {
     /// A `flush` packet.
     Flush,

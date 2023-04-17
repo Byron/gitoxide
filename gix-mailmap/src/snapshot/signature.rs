@@ -4,7 +4,7 @@ use bstr::{BStr, BString, ByteSlice};
 
 /// A signature like [`gix_actor::Signature`], but with all string fields being a `Cow`.
 #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature<'a> {
     /// The possibly mapped name.
     pub name: Cow<'a, BStr>,

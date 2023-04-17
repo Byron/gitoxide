@@ -317,7 +317,7 @@ mod types {
 
     /// Information gathered during the run of [`iter_from_counts()`][crate::data::output::entry::iter_from_counts()].
     #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     pub struct Outcome {
         /// The amount of fully decoded objects. These are the most expensive as they are fully decoded.
         pub decoded_and_recompressed_objects: usize,
@@ -349,7 +349,7 @@ mod types {
 
     /// The way the iterator operates.
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     pub enum Mode {
         /// Copy base objects and deltas from packs, while non-packed objects will be treated as base objects
         /// (i.e. without trying to delta compress them). This is a fast way of obtaining a back while benefiting
@@ -360,7 +360,7 @@ mod types {
 
     /// Configuration options for the pack generation functions provided in [`iter_from_counts()`][crate::data::output::entry::iter_from_counts()].
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     pub struct Options {
         /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
         pub thread_limit: Option<usize>,

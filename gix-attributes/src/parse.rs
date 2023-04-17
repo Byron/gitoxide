@@ -7,7 +7,7 @@ use crate::{name, AssignmentRef, Name, NameRef, StateRef};
 
 /// The kind of attribute that was parsed.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
     /// A pattern to match paths against
     Pattern(gix_glob::Pattern),

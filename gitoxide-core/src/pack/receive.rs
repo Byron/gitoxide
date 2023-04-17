@@ -272,7 +272,7 @@ mod async_io {
 #[cfg(feature = "async-client")]
 pub use self::async_io::receive;
 
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JsonBundleWriteOutcome {
     pub index_version: pack::index::Version,
     pub index_hash: String,
@@ -292,7 +292,7 @@ impl From<pack::index::write::Outcome> for JsonBundleWriteOutcome {
     }
 }
 
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JsonOutcome {
     pub index: JsonBundleWriteOutcome,
     pub pack_kind: pack::data::Version,
@@ -385,7 +385,7 @@ fn receive_pack_blocking<W: io::Write>(
 
     match ctx.format {
         OutputFormat::Human => drop(print(&mut ctx.out, outcome, refs)),
-        #[cfg(feature = "serde1")]
+        #[cfg(feature = "serde")]
         OutputFormat::Json => {
             serde_json::to_writer_pretty(&mut ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
         }

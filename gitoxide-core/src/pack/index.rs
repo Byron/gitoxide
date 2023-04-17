@@ -121,7 +121,7 @@ where
     .with_context(|| "Failed to write pack and index")?;
     match format {
         OutputFormat::Human => drop(human_output(out, res)),
-        #[cfg(feature = "serde1")]
+        #[cfg(feature = "serde")]
         OutputFormat::Json => serde_json::to_writer_pretty(out, &res)?,
     };
     Ok(())

@@ -3,7 +3,7 @@ use gix_object::bstr::BString;
 
 /// A parsed ref log line that can be changed
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Line {
     /// The previous object id. Can be a null-sha to indicate this is a line for a new ref.
     pub previous_oid: ObjectId,

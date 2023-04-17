@@ -5,7 +5,7 @@ use crate::data;
 
 /// The header portion of a pack data entry, identifying the kind of stored object.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
 pub enum Header {
     /// The object is a commit

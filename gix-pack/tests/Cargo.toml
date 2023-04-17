@@ -19,7 +19,7 @@ pack-cache-lru-dynamic = ["gix-pack/pack-cache-lru-dynamic"]
 ## If set, select algorithms may additionally use a full-object cache which is queried before the pack itself.
 object-cache-dynamic = ["gix-pack/object-cache-dynamic"]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["gix-pack/serde1"]
+serde = ["gix-pack/serde"]
 
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []

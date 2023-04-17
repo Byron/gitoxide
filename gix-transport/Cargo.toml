@@ -35,7 +35,7 @@ async-client = ["gix-packetline/async-io", "async-trait", "futures-lite", "futur
 
 #! ### Other
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde"]
+serde= ["dep:serde"]
 
 [[test]]
 name = "blocking-transport"
@@ -94,5 +94,5 @@ maybe-async = "0.2.6"
 blocking = "1.0.2"
 
 [package.metadata.docs.rs]
-features = ["http-client-curl", "document-features", "serde1"]
+features = ["http-client-curl", "document-features", "serde"]
 rustdoc-args = ["--cfg", "docsrs"]

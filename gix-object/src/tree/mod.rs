@@ -14,7 +14,7 @@ pub mod write;
 /// Used in [mutable::Entry][crate::tree::Entry] and [EntryRef].
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
 #[repr(u16)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EntryMode {
     /// A tree, or directory
     Tree = 0o040000u16,
@@ -64,7 +64,7 @@ impl EntryMode {
 
 /// An element of a [`TreeRef`][crate::TreeRef::entries].
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EntryRef<'a> {
     /// The kind of object to which `oid` is pointing.
     pub mode: tree::EntryMode,
@@ -73,7 +73,7 @@ pub struct EntryRef<'a> {
     /// The id of the object representing the entry.
     // TODO: figure out how these should be called. id or oid? It's inconsistent around the codebase.
     // Answer: make it 'id', as in `git2`
-    #[cfg_attr(feature = "serde1", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     pub oid: &'a gix_hash::oid,
 }
 
@@ -94,7 +94,7 @@ impl<'a> Ord for EntryRef<'a> {
 
 /// An entry in a [`Tree`][crate::Tree], similar to an entry in a directory.
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     /// The kind of object to which `oid` is pointing to.
     pub mode: EntryMode,

@@ -11,7 +11,7 @@ include = ["src/**/*"]
 rust-version = "1.64"
 
 [features]
-serde1 = ["gix-diff/serde", "gix-hash/serde1", "gix-object/serde1"]
+serde = ["gix-diff/serde", "gix-hash/serde", "gix-object/serde"]
 
 [[test]]
 name = "diff"

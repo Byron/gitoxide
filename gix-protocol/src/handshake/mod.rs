@@ -3,7 +3,7 @@ use gix_transport::client::Capabilities;
 
 /// A git reference, commonly referred to as 'ref', as returned by a git server before sending a pack.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Ref {
     /// A ref pointing to a `tag` object, which in turns points to an `object`, usually a commit
     Peeled {
@@ -46,7 +46,7 @@ pub enum Ref {
 
 /// The result of the [`handshake()`][super::handshake()] function.
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The protocol version the server responded with. It might have downgraded the desired version.
     pub server_protocol_version: gix_transport::Protocol,

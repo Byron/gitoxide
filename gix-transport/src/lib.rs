@@ -20,7 +20,7 @@ pub use gix_packetline as packetline;
 
 /// The version of the way client and server communicate.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
 pub enum Protocol {
     /// Version 1 was the first one conceived, is stateful, and our implementation was seen to cause deadlocks. Prefer V2
@@ -38,7 +38,7 @@ impl Default for Protocol {
 
 /// The kind of service to invoke on the client or the server side.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Service {
     /// The service sending packs from a server to the client. Used for fetching pack data.
     UploadPack,

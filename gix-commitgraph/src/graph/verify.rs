@@ -57,7 +57,7 @@ pub enum Error<E: std::error::Error + 'static> {
 
 /// Statistics gathered while verifying the integrity of the graph as returned by [`Graph::verify_integrity()`].
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct Outcome {
     /// The length of the longest path between any two commits in this graph.
     ///

@@ -15,7 +15,7 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`
-serde1 = ["serde", "gix-hash/serde1", "bstr/serde"]
+serde = ["dep:serde", "gix-hash/serde", "bstr/serde"]
 
 [dependencies]
 gix-features = { version = "^0.28.1", path = "../gix-features", features = ["rustsha1"] }

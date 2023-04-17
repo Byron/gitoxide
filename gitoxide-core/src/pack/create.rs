@@ -314,7 +314,7 @@ where
 fn print(stats: Statistics, format: OutputFormat, out: impl std::io::Write) -> anyhow::Result<()> {
     match format {
         OutputFormat::Human => human_output(stats, out).map_err(Into::into),
-        #[cfg(feature = "serde1")]
+        #[cfg(feature = "serde")]
         OutputFormat::Json => serde_json::to_writer_pretty(out, &stats).map_err(Into::into),
     }
 }
@@ -365,7 +365,7 @@ fn human_output(
 }
 
 #[derive(Default)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 struct Statistics {
     counts: pack::data::output::count::objects::Outcome,
     entries: pack::data::output::entry::iter_from_counts::Outcome,

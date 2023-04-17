@@ -19,7 +19,7 @@ pub use parse::function::parse;
 
 /// A timestamp with timezone.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
     /// time in seconds since epoch.
     pub seconds_since_unix_epoch: u32,

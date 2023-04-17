@@ -33,7 +33,7 @@ pub mod integrity {
 
     /// The outcome returned by [`verify_integrity()`][super::Store::verify_integrity()].
     #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     pub struct Statistics {
         /// The amount of loose objects we checked.
         pub num_objects: usize,
