@@ -1,29 +1,44 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
+use crate::{Cache, PathIdMapping};
 use gix_glob::pattern::Case;
 
 use crate::cache::state::{AttributeMatchGroup, Attributes};
+use bstr::{BStr, ByteSlice};
 
 /// Decide where to read `.gitattributes` files from.
 #[derive(Default, Debug, Clone, Copy)]
 pub enum Source {
-    /// Retrieve attribute files from an attribute list, see
-    /// [State::attribute_list_from_index()][crate::cache::State::attribute_list_from_index()].
+    /// Retrieve attribute files from id mappings, see
+    /// [State::id_mappings_from_index()][crate::cache::State::id_mappings_from_index()].
     ///
-    /// The attribute list is typically produced from an index. If a tree should be the source, build an attribute list
-    /// from a tree instead.
+    /// These mappings are typically produced from an index.
+    /// If a tree should be the source, build an attribute list from a tree instead, or convert a tree to an index.
+    ///
+    /// Use this when no worktree checkout is available, like in bare repositories or when accessing blobs from other parts
+    /// of the history which aren't checked out.
     #[default]
-    AttributeList,
-    /// Read from an attribute list and if not present, read from the worktree.
-    AttributeListThenWorktree,
-    /// Read from the worktree and if not present, read from the attribute list.
-    WorktreeThenAttributeList,
+    IdMapping,
+    /// Read from an id mappings and if not present, read from the worktree.
+    ///
+    /// This us typically used when *checking out* files.
+    IdMappingThenWorktree,
+    /// Read from the worktree and if not present, read them from the id mappings.
+    ///
+    /// This is typically used when *checking in* files, and it's possible for sparse worktrees not to have a `.gitattribute` file
+    /// checked out even though it's available in the index.
+    WorktreeThenIdMapping,
 }
 
 /// Initialization
 impl Attributes {
-    /// Create a new instance from an attribute match group that represents `globals`.
-    /// `globals` contribute first and consist of all globally available, static files.
+    /// Create a new instance from an attribute match group that represents `globals`. It can more easily be created with
+    /// [AttributeMatchGroup::new_globals()].
+    ///
+    /// * `globals` contribute first and consist of all globally available, static files.
+    /// * `info_attributes` is a path that should refer to `.git/info/attributes`, and it's not an error if the file doesn't exist.
+    /// * `case` is used to control case-sensitivity during matching.
+    /// * `source` specifies from where the directory-based attribute files should be loaded from.
     pub fn new(
         globals: AttributeMatchGroup,
         info_attributes: Option<PathBuf>,
@@ -42,11 +57,145 @@ impl Attributes {
     }
 }
 
+impl Attributes {
+    pub(crate) fn pop_directory(&mut self) {
+        self.stack.pop_pattern_list().expect("something to pop");
+    }
+
+    pub(crate) fn push_directory<Find, E>(
+        &mut self,
+        root: &Path,
+        dir: &Path,
+        buf: &mut Vec<u8>,
+        id_mappings: &[PathIdMapping],
+        mut find: Find,
+    ) -> std::io::Result<()>
+    where
+        Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        let dir_bstr = gix_path::into_bstr(dir);
+        let mut rela_dir = gix_glob::search::pattern::strip_base_handle_recompute_basename_pos(
+            gix_path::into_bstr(root).as_ref(),
+            dir_bstr.as_ref(),
+            None,
+            self.case,
+        )
+        .expect("dir in root")
+        .0;
+        if rela_dir.starts_with(b"/") {
+            rela_dir = &rela_dir[1..];
+        }
+
+        let attr_path_relative =
+            gix_path::to_unix_separators_on_windows(gix_path::join_bstr_unix_pathsep(rela_dir, ".gitattributes"));
+        let attr_file_in_index = id_mappings.binary_search_by(|t| t.0.as_bstr().cmp(attr_path_relative.as_ref()));
+        // Git does not follow symbolic links as per documentation.
+        let no_follow_symlinks = false;
+
+        let mut added = false;
+        match self.source {
+            Source::IdMapping | Source::IdMappingThenWorktree => {
+                if let Ok(idx) = attr_file_in_index {
+                    let blob = find(&id_mappings[idx].1, buf)
+                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+                    let attr_path = gix_path::from_bstring(attr_path_relative.into_owned());
+                    self.stack
+                        .add_patterns_buffer(blob.data, attr_path, Some(Path::new("")), &mut self.collection);
+                    added = true;
+                }
+                if !added && matches!(self.source, Source::IdMappingThenWorktree) {
+                    added = self.stack.add_patterns_file(
+                        dir.join(".gitattributes"),
+                        no_follow_symlinks,
+                        Some(root),
+                        buf,
+                        &mut self.collection,
+                    )?;
+                }
+            }
+            Source::WorktreeThenIdMapping => {
+                added = self.stack.add_patterns_file(
+                    dir.join(".gitattributes"),
+                    no_follow_symlinks,
+                    Some(root),
+                    buf,
+                    &mut self.collection,
+                )?;
+                if let Some(idx) = attr_file_in_index.ok().filter(|_| !added) {
+                    let blob = find(&id_mappings[idx].1, buf)
+                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+                    let attr_path = gix_path::from_bstring(attr_path_relative.into_owned());
+                    self.stack
+                        .add_patterns_buffer(blob.data, attr_path, Some(Path::new("")), &mut self.collection);
+                    added = true;
+                }
+            }
+        }
+
+        // Need one stack level per component so push and pop matches, but only if this isn't the root level which is never popped.
+        if !added && self.info_attributes.is_none() {
+            self.stack
+                .add_patterns_buffer(&[], Path::new("<empty dummy>"), None, &mut self.collection)
+        }
+
+        // When reading the root, always the first call, we can try to also read the `.git/info/attributes` file which is
+        // by nature never popped, and follows the root, as global.
+        if let Some(info_attr) = self.info_attributes.take() {
+            self.stack
+                .add_patterns_file(info_attr, true, None, buf, &mut self.collection)?;
+        }
+
+        Ok(())
+    }
+
+    pub(crate) fn matching_attributes(
+        &self,
+        relative_path: &BStr,
+        case: Case,
+        out: &mut gix_attributes::search::Outcome,
+    ) -> bool {
+        // assure `out` is ready to deal with possibly changed collections (append-only)
+        out.initialize(&self.collection);
+
+        let groups = [&self.globals, &self.stack];
+        let mut has_match = false;
+        groups.iter().rev().any(|group| {
+            has_match |= group.pattern_matching_relative_path(relative_path, case, out);
+            out.is_done()
+        });
+        has_match
+    }
+}
+
 /// Builder
 impl Attributes {
     /// Set the case to use when matching attributes to paths.
     pub fn with_case(mut self, case: gix_glob::pattern::Case) -> Self {
         self.case = case;
         self
+    }
+}
+
+/// Attribute matching specific methods
+impl Cache {
+    /// Creates a new container to store match outcomes for all attribute matches.
+    pub fn attribute_matches(&self) -> gix_attributes::search::Outcome {
+        let mut out = gix_attributes::search::Outcome::default();
+        out.initialize(&self.state.attributes_or_panic().collection);
+        out
+    }
+
+    /// Creates a new container to store match outcomes for the given attributes.
+    pub fn selected_attribute_matches<'a>(
+        &self,
+        given: impl IntoIterator<Item = impl Into<&'a str>>,
+    ) -> gix_attributes::search::Outcome {
+        let mut out = gix_attributes::search::Outcome::default();
+        out.initialize_with_selection(
+            &self.state.attributes_or_panic().collection,
+            given.into_iter().map(|n| n.into()),
+        );
+        out
     }
 }

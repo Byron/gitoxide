@@ -44,10 +44,10 @@ pub struct Cache {
     /// If case folding should happen when looking up attributes or exclusions.
     case: gix_glob::pattern::Case,
     /// A lookup table for object ids to read from in some situations when looking up attributes or exclusions.
-    attribute_files_in_index: Vec<PathOidMapping>,
+    id_mappings: Vec<PathIdMapping>,
 }
 
-pub(crate) type PathOidMapping = (BString, gix_hash::ObjectId);
+pub(crate) type PathIdMapping = (BString, gix_hash::ObjectId);
 
 ///
 pub mod cache;

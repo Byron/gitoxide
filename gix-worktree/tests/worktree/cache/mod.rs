@@ -1,4 +1,4 @@
 mod create_directory;
 
-#[allow(unused)]
+mod attributes;
 mod ignore;
