@@ -25,8 +25,54 @@ mod list {
     }
 
     #[test]
+    fn from_bytes_base() {
+        {
+            let list = List::<Dummy>::from_bytes(&[], "a/b/source", None);
+            assert_eq!(list.base, None, "no root always means no-base, i.e. globals lists");
+            assert_eq!(
+                list.source.as_deref(),
+                Some(Path::new("a/b/source")),
+                "source is verbatim"
+            );
+        }
+
+        {
+            let cwd = std::env::current_dir().expect("cwd available");
+            let list = List::<Dummy>::from_bytes(&[], cwd.join("a/b/source"), Some(cwd.as_path()));
+            assert_eq!(
+                list.base.as_ref().expect("set"),
+                "a/b/",
+                "bases are always relative, needs properly set root"
+            );
+            assert_eq!(
+                list.source.as_deref(),
+                Some(cwd.join("a/b/source").as_path()),
+                "source is verbatim"
+            );
+        }
+
+        {
+            let list = List::<Dummy>::from_bytes(&[], "a/b/source", Some(Path::new("c/")));
+            assert_eq!(
+                list.base, None,
+                "if root doesn't contain source, it silently skips it as base"
+            );
+            assert_eq!(
+                list.source.as_deref(),
+                Some(Path::new("a/b/source")),
+                "source is always verbatim"
+            );
+        }
+    }
+
+    #[test]
     fn strip_base_handle_recompute_basename_pos() {
         let list = List::<Dummy>::from_bytes(&[], "a/b/source", Some(Path::new("")));
+        assert_eq!(
+            list.base.as_ref().expect("set"),
+            "a/b/",
+            "bases are computed if `root` is set, and always uses slashes"
+        );
         let res = list.strip_base_handle_recompute_basename_pos("a/b/file".into(), Some(4), Case::Sensitive);
         assert_eq!(
             res,

@@ -23,7 +23,7 @@ pub trait Pattern: Clone + PartialEq + Eq + std::fmt::Debug + std::hash::Hash + 
 
 /// Add the given file at `source` if it exists, otherwise do nothing.
 /// If a `root` is provided, it's not considered a global file anymore.
-/// Returns true if the file was added, or false if it didn't exist.
+/// Returns `true` if the file was added, or `false` if it didn't exist.
 pub fn add_patterns_file<T: Pattern>(
     patterns: &mut Vec<pattern::List<T>>,
     source: impl Into<PathBuf>,
