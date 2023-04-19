@@ -149,12 +149,23 @@ impl Ignore {
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let rela_dir = dir.strip_prefix(root).expect("dir in root");
+        let dir_bstr = gix_path::into_bstr(dir);
+        let mut rela_dir = gix_glob::search::pattern::strip_base_handle_recompute_basename_pos(
+            gix_path::into_bstr(root).as_ref(),
+            dir_bstr.as_ref(),
+            None,
+            self.case,
+        )
+        .expect("dir in root")
+        .0;
+        if rela_dir.starts_with(b"/") {
+            rela_dir = &rela_dir[1..];
+        }
         self.matched_directory_patterns_stack
-            .push(self.matching_exclude_pattern_no_dir(gix_path::into_bstr(rela_dir).as_ref(), Some(true), self.case));
+            .push(self.matching_exclude_pattern_no_dir(rela_dir, Some(true), self.case));
 
-        let ignore_path_relative = rela_dir.join(".gitignore");
-        let ignore_path_relative = gix_path::to_unix_separators_on_windows(gix_path::into_bstr(ignore_path_relative));
+        let ignore_path_relative =
+            gix_path::to_unix_separators_on_windows(gix_path::join_bstr_unix_pathsep(rela_dir, ".gitignore"));
         let ignore_file_in_index =
             attribute_files_in_index.binary_search_by(|t| t.0.as_bstr().cmp(ignore_path_relative.as_ref()));
         let follow_symlinks = ignore_file_in_index.is_err();

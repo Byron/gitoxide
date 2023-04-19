@@ -6,11 +6,13 @@ cat <<EOF >user.exclude
 user-file-anywhere
 /user-file-from-top
 
-user-dir-anywhere/
+user-Dir-anywhere/
 /user-dir-from-top
 
 user-subdir/file
 **/user-subdir-anywhere/file
+a/b/*
+z/x
 EOF
 
 mkdir repo;
@@ -33,13 +35,15 @@ EOF
   cat <<EOF >.gitignore
 # a sample .gitignore
 top-level-local-file-anywhere
+d/e/*
+e/f
 EOF
 
   mkdir dir-with-ignore
   cat <<EOF >dir-with-ignore/.gitignore
 # a sample .gitignore
 sub-level-local-file-anywhere
-sub-level-dir-anywhere/
+sub-Level-dir-anywhere/
 !/negated
 /negated-dir/
 !/negated-dir/
@@ -63,13 +67,13 @@ EOF
 
   git check-ignore -vn --stdin 2>&1 <<EOF >git-check-ignore.baseline || :
 dir-with-ignore/sub-level-dir-anywhere/
-dir-with-ignore/foo/sub-level-dir-anywhere/
-dir-with-ignore/sub-level-dir-anywhere
+dir-with-ignore/foo/Sub-level-dir-anywhere/
+dir-with-ignore/Sub-level-dir-anywhere
 user-file-anywhere
 dir/user-file-anywhere
 user-file-from-top
 no-match/user-file-from-top
-user-dir-anywhere
+USER-dir-anywhere
 user-dir-from-top
 no-match/user-dir-from-top
 user-subdir/file
@@ -107,6 +111,20 @@ other-dir-with-ignore/other-sub-level-dir-anywhere/hello
 other-dir-with-ignore/other-sub-level-dir-anywhere/
 dir-with-ignore/negated
 dir-with-ignore/negated-dir/hello
+a/b/C
+a/B/c
+A/B/C
+z/x
+Z/x
+z/X
+Z/X
+d/e/F
+d/e/f
+D/e/F
+D/E/F
+e/f
+e/F
+E/f
+E/F
 EOF
-
 )
