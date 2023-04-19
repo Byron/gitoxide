@@ -1438,6 +1438,11 @@ dependencies = [
 [[package]]
 name = "gix-archive"
 version = "0.0.0"
+dependencies = [
+ "gix-hash 0.10.4",
+ "gix-object 0.28.0",
+ "thiserror",
+]
 
 [[package]]
 name = "gix-attributes"
