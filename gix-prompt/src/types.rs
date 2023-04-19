@@ -15,7 +15,7 @@ pub enum Error {
     TtyIo(#[from] std::io::Error),
     #[cfg(unix)]
     #[error("Failed to obtain or set terminal configuration")]
-    TerminalConfiguration(#[from] nix::errno::Errno),
+    TerminalConfiguration(#[from] rustix::io::Errno),
 }
 
 /// The way the user is prompted.
