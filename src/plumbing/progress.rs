@@ -215,6 +215,22 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned {note: Some("needed for filters, but also for doing diffs correctly")}
     },
     Record {
+        config: "core.fsync",
+        usage: Planned {note: Some("more safety for disk write operations is a good thing, definitely on the server")}
+    },
+    Record {
+        config: "core.fsyncMethod",
+        usage: Planned {note: Some("needed to support `core.fsync`")}
+    },
+    Record {
+        config: "core.sharedRepository",
+        usage: NotPlanned {reason: "on demand"}
+    },
+    Record {
+        config: "core.createObject",
+        usage: NotPlanned {reason: "it's valuable not to do writes unless needed on the lowest level, but we hope to avoid issues by not writing duplicate objects in the first place"}
+    },
+    Record {
     config: "clone.filterSubmodules,",
         usage: Planned {
             note: Some("currently object filtering isn't support, a prerequisite for this, see --filter=blob:none for more"),
