@@ -126,7 +126,18 @@ impl Store {
             }
         }
         let file = file.into_inner();
-        file.persist(&object_path).map_err(|err| Error::Persist {
+        let res = file.persist(&object_path);
+        // On windows, we assume that such errors are due to its special filesystem semantics,
+        // on any other platform that would be a legitimate error though.
+        #[cfg(windows)]
+        if let Err(err) = &res {
+            if err.error.kind() == std::io::ErrorKind::PermissionDenied
+                || err.error.kind() == std::io::ErrorKind::AlreadyExists
+            {
+                return Ok(id);
+            }
+        }
+        res.map_err(|err| Error::Persist {
             source: err,
             target: object_path,
         })?;

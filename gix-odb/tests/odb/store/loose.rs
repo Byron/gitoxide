@@ -70,6 +70,35 @@ mod write {
         }
         Ok(())
     }
+
+    #[test]
+    fn collisions_do_not_cause_failure() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+
+        fn write_empty_trees(dir: &std::path::Path) {
+            let db = loose::Store::at(dir, gix_hash::Kind::Sha1);
+            let empty_tree = gix_object::Tree::empty();
+            for _ in 0..2 {
+                let id = db.write(&empty_tree).expect("works");
+                assert!(db.contains(id), "written objects are actually available");
+
+                let empty_blob = db.write_buf(gix_object::Kind::Blob, &[]).expect("works");
+                assert!(db.contains(empty_blob), "written objects are actually available");
+                let id = db
+                    .write_stream(gix_object::Kind::Blob, 0, &mut [].as_slice())
+                    .expect("works");
+                assert_eq!(id, empty_blob);
+                assert!(db.contains(empty_blob), "written objects are actually available");
+            }
+        }
+
+        gix_features::parallel::threads(|scope| {
+            scope.spawn(|| write_empty_trees(dir.path()));
+            scope.spawn(|| write_empty_trees(dir.path()));
+        });
+
+        Ok(())
+    }
 }
 
 mod contains {
