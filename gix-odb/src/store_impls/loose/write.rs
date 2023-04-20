@@ -98,6 +98,16 @@ impl crate::traits::Write for Store {
 
 type CompressedTempfile = deflate::Write<NamedTempFile>;
 
+/// Access
+impl Store {
+    /// Return the path to the object with `id`.
+    ///
+    /// Note that is may not exist yet.
+    pub fn object_path(&self, id: &gix_hash::oid) -> PathBuf {
+        loose::hash_path(id, self.path.clone())
+    }
+}
+
 impl Store {
     fn dest(&self) -> Result<hash::Write<CompressedTempfile>, Error> {
         Ok(hash::Write::new(
@@ -135,6 +145,24 @@ impl Store {
                 || err.error.kind() == std::io::ErrorKind::AlreadyExists
             {
                 return Ok(id);
+            }
+        }
+        #[cfg(unix)]
+        if let Ok(mut perm) = object_path.metadata().map(|m| m.permissions()) {
+            use std::os::unix::fs::PermissionsExt;
+            /// For now we assume the default with standard umask. This can be more sophisticated,
+            /// but we have the bare minimum.
+            fn comp_mode(_mode: u32) -> u32 {
+                0o444
+            }
+            let new_mode = comp_mode(perm.mode());
+            if (perm.mode() ^ new_mode) & !0o170000 != 0 {
+                perm.set_mode(new_mode);
+                std::fs::set_permissions(&object_path, perm).map_err(|err| Error::Io {
+                    source: err,
+                    message: "Failed to set permission bits",
+                    path: object_path.clone(),
+                })?;
             }
         }
         res.map_err(|err| Error::Persist {

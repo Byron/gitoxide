@@ -72,6 +72,33 @@ mod write {
     }
 
     #[test]
+    #[cfg(unix)]
+    fn it_writes_objects_with_similar_permissions() -> crate::Result {
+        let hk = gix_hash::Kind::Sha1;
+        let git_store = loose::Store::at(
+            gix_testtools::scripted_fixture_read_only("repo_with_loose_objects.sh")?.join(".git/objects"),
+            hk,
+        );
+        let expected_perm = git_store
+            .object_path(&gix_hash::ObjectId::empty_blob(hk))
+            .metadata()?
+            .permissions();
+
+        let tmp = tempfile::TempDir::new()?;
+        let store = loose::Store::at(tmp.path(), hk);
+        store.write_buf(gix_object::Kind::Blob, &[])?;
+        let actual_perm = store
+            .object_path(&gix_hash::ObjectId::empty_blob(hk))
+            .metadata()?
+            .permissions();
+        assert_eq!(
+            actual_perm, expected_perm,
+            "we explicitly equalize permissions to be similar to what `git` would do"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn collisions_do_not_cause_failure() -> crate::Result {
         let dir = tempfile::tempdir()?;
 
