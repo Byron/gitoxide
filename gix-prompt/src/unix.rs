@@ -5,7 +5,8 @@ pub const TTY_PATH: &str = "/dev/tty";
 pub(crate) mod imp {
     use std::{
         fs::File,
-        io::{self, BufRead, Read, Write},
+        io,
+        io::{BufRead, Read, Write},
     };
 
     use parking_lot::{const_mutex, lock_api::MutexGuard, Mutex, RawMutex};
@@ -35,7 +36,7 @@ pub(crate) mod imp {
                 if out.ends_with('\r') {
                     out.pop();
                 }
-                buf_read.into_inner().now()?;
+                buf_read.into_inner().restore_term_state()?;
                 Ok(out)
             }
             Mode::Visible => {
@@ -74,18 +75,18 @@ pub(crate) mod imp {
         }
 
         #[inline(always)]
-        fn flush(&mut self) -> io::Result<()> {
-            self.fd.flush()
+        fn write_vectored(&mut self, bufs: &[io::IoSlice<'_>]) -> io::Result<usize> {
+            self.fd.write_vectored(bufs)
         }
 
         #[inline(always)]
-        fn write_vectored(&mut self, bufs: &[io::IoSlice<'_>]) -> io::Result<usize> {
-            self.fd.write_vectored(bufs)
+        fn flush(&mut self) -> io::Result<()> {
+            self.fd.flush()
         }
     }
 
     impl<'a> RestoreTerminalStateOnDrop<'a> {
-        fn now(mut self) -> Result<(), Error> {
+        fn restore_term_state(mut self) -> Result<(), Error> {
             let state = self.state.take().expect("BUG: we exist only if something is saved");
             termios::tcsetattr(&self.fd, termios::OptionalActions::Flush, &state)?;
             Ok(())
@@ -110,7 +111,7 @@ pub(crate) mod imp {
         );
 
         let prev = termios::tcgetattr(&fd)?;
-        let mut new = prev.clone();
+        let mut new = prev;
         *state = prev.into();
 
         new.c_lflag &= !termios::ECHO;
