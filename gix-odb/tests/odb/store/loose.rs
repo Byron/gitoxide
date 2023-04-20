@@ -70,6 +70,62 @@ mod write {
         }
         Ok(())
     }
+
+    #[test]
+    #[cfg(unix)]
+    fn it_writes_objects_with_similar_permissions() -> crate::Result {
+        let hk = gix_hash::Kind::Sha1;
+        let git_store = loose::Store::at(
+            gix_testtools::scripted_fixture_read_only("repo_with_loose_objects.sh")?.join(".git/objects"),
+            hk,
+        );
+        let expected_perm = git_store
+            .object_path(&gix_hash::ObjectId::empty_blob(hk))
+            .metadata()?
+            .permissions();
+
+        let tmp = tempfile::TempDir::new()?;
+        let store = loose::Store::at(tmp.path(), hk);
+        store.write_buf(gix_object::Kind::Blob, &[])?;
+        let actual_perm = store
+            .object_path(&gix_hash::ObjectId::empty_blob(hk))
+            .metadata()?
+            .permissions();
+        assert_eq!(
+            actual_perm, expected_perm,
+            "we explicitly equalize permissions to be similar to what `git` would do"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn collisions_do_not_cause_failure() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+
+        fn write_empty_trees(dir: &std::path::Path) {
+            let db = loose::Store::at(dir, gix_hash::Kind::Sha1);
+            let empty_tree = gix_object::Tree::empty();
+            for _ in 0..2 {
+                let id = db.write(&empty_tree).expect("works");
+                assert!(db.contains(id), "written objects are actually available");
+
+                let empty_blob = db.write_buf(gix_object::Kind::Blob, &[]).expect("works");
+                assert!(db.contains(empty_blob), "written objects are actually available");
+                let id = db
+                    .write_stream(gix_object::Kind::Blob, 0, &mut [].as_slice())
+                    .expect("works");
+                assert_eq!(id, empty_blob);
+                assert!(db.contains(empty_blob), "written objects are actually available");
+            }
+        }
+
+        gix_features::parallel::threads(|scope| {
+            scope.spawn(|| write_empty_trees(dir.path()));
+            scope.spawn(|| write_empty_trees(dir.path()));
+        });
+
+        Ok(())
+    }
 }
 
 mod contains {

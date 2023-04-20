@@ -53,11 +53,7 @@ impl CompareBlobs for FastEq {
             return Ok(Some(()));
         }
         let blob = worktree_blob.read_data()?;
-        let header = loose_header(gix_object::Kind::Blob, blob.len());
-        let mut hasher = hash::hasher(entry.id.kind());
-        hasher.update(&header);
-        hasher.update(blob);
-        let file_hash: ObjectId = hasher.digest().into();
+        let file_hash = gix_object::compute_hash(entry.id.kind(), gix_object::Kind::Blob, blob);
         Ok((entry.id != file_hash).then_some(()))
     }
 }

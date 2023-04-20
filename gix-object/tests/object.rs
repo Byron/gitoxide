@@ -4,6 +4,20 @@ use gix_hash::ObjectId;
 
 mod encode;
 mod immutable;
+mod loose;
+
+#[test]
+fn compute_hash() {
+    let hk = gix_hash::Kind::Sha1;
+    assert_eq!(
+        gix_object::compute_hash(hk, gix_object::Kind::Blob, &[]),
+        gix_hash::ObjectId::empty_blob(hk)
+    );
+    assert_eq!(
+        gix_object::compute_hash(hk, gix_object::Kind::Tree, &[]),
+        gix_hash::ObjectId::empty_tree(hk)
+    );
+}
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 

@@ -216,11 +216,7 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     if check.object_checksum() {
-        let mut hasher = gix_features::hash::hasher(index_entry.oid.kind());
-        hasher.update(&gix_object::encode::loose_header(object_kind, decompressed.len()));
-        hasher.update(decompressed);
-
-        let actual_oid = gix_hash::ObjectId::from(hasher.digest());
+        let actual_oid = gix_object::compute_hash(index_entry.oid.kind(), object_kind, decompressed);
         if actual_oid != index_entry.oid {
             return Err(Error::PackObjectMismatch {
                 actual: actual_oid,

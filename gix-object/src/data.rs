@@ -69,11 +69,7 @@ pub mod verify {
         /// hash of `self`.
         pub fn verify_checksum(&self, desired: impl AsRef<gix_hash::oid>) -> Result<(), Error> {
             let desired = desired.as_ref();
-            let mut hasher = gix_features::hash::hasher(desired.kind());
-            hasher.update(&crate::encode::loose_header(self.kind, self.data.len()));
-            hasher.update(self.data);
-
-            let actual_id = gix_hash::ObjectId::from(hasher.digest());
+            let actual_id = crate::compute_hash(desired.kind(), self.kind, self.data);
             if desired != actual_id {
                 return Err(Error::ChecksumMismatch {
                     desired: desired.into(),

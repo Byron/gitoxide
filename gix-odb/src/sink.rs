@@ -30,7 +30,6 @@ impl crate::traits::Write for Sink {
         mut from: impl io::Read,
     ) -> Result<gix_hash::ObjectId, Self::Error> {
         let mut size = size.try_into().expect("object size to fit into usize");
-        use gix_features::hash::Sha1;
         let mut buf = [0u8; 8096];
         let header = gix_object::encode::loose_header(kind, size);
 
@@ -40,27 +39,24 @@ impl crate::traits::Write for Sink {
             }
             Ok(())
         };
-        match self.object_hash {
-            gix_hash::Kind::Sha1 => {
-                let mut hasher = Sha1::default();
-                hasher.update(&header);
-                possibly_compress(&header)?;
 
-                while size != 0 {
-                    let bytes = size.min(buf.len());
-                    from.read_exact(&mut buf[..bytes])?;
-                    hasher.update(&buf[..bytes]);
-                    possibly_compress(&buf[..bytes])?;
-                    size -= bytes;
-                }
-                if let Some(compressor) = self.compressor.as_ref() {
-                    let mut c = compressor.borrow_mut();
-                    c.flush()?;
-                    c.reset();
-                }
+        let mut hasher = gix_features::hash::hasher(self.object_hash);
+        hasher.update(&header);
+        possibly_compress(&header)?;
 
-                Ok(hasher.digest().into())
-            }
+        while size != 0 {
+            let bytes = size.min(buf.len());
+            from.read_exact(&mut buf[..bytes])?;
+            hasher.update(&buf[..bytes]);
+            possibly_compress(&buf[..bytes])?;
+            size -= bytes;
         }
+        if let Some(compressor) = self.compressor.as_ref() {
+            let mut c = compressor.borrow_mut();
+            c.flush()?;
+            c.reset();
+        }
+
+        Ok(hasher.digest().into())
     }
 }

@@ -375,3 +375,14 @@ pub mod decode {
         Ok((kind, size, size_end + 1))
     }
 }
+
+/// A standalone function to compute a hash of kind `hash_kind` for an object of `object_kind` and its `data`.
+pub fn compute_hash(hash_kind: gix_hash::Kind, object_kind: Kind, data: &[u8]) -> gix_hash::ObjectId {
+    let header = encode::loose_header(object_kind, data.len());
+
+    let mut hasher = gix_features::hash::hasher(hash_kind);
+    hasher.update(&header);
+    hasher.update(data);
+
+    hasher.digest().into()
+}
