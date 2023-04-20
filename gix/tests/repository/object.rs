@@ -54,6 +54,55 @@ mod write_blob {
     }
 }
 
+#[test]
+fn writes_avoid_io_using_duplicate_check() -> crate::Result {
+    let repo = crate::named_repo("make_packed_and_loose.sh")?;
+    let store = gix::odb::loose::Store::at(repo.git_dir().join("objects"), repo.object_hash());
+    let loose_count = store.iter().count();
+    assert_eq!(loose_count, 3, "there are some loose objects");
+    assert_eq!(
+        repo.objects.iter()?.count() - loose_count,
+        6,
+        "there is packed objects as well"
+    );
+
+    for id in repo.objects.iter()? {
+        let id = id?;
+        let obj = repo.find_object(id)?;
+        use gix_object::Kind::*;
+        match obj.kind {
+            Commit => {
+                let commit = obj.into_commit();
+                let new_id = repo.write_object(commit.decode()?)?;
+                assert_eq!(new_id, id);
+            }
+            Tag => {
+                let tag = obj.into_tag();
+                let new_id = repo.write_object(tag.decode()?)?;
+                assert_eq!(new_id, id);
+            }
+            Tree => {
+                let tree = obj.into_tree();
+                let new_id = repo.write_object(tree.decode()?)?;
+                assert_eq!(new_id, id);
+            }
+            Blob => {
+                let new_id = repo.write_blob(&obj.data)?;
+                assert_eq!(new_id, id);
+                let new_id = repo.write_blob_stream(std::io::Cursor::new(&obj.data))?;
+                assert_eq!(new_id, id);
+            }
+        }
+    }
+
+    assert_eq!(
+        store.iter().count(),
+        loose_count,
+        "no new object was written as all of them already existed"
+    );
+    Ok(())
+}
+
 mod find {
     use gix_pack::Find;
 

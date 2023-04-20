@@ -1,5 +1,6 @@
 #![allow(clippy::result_large_err)]
 use std::convert::TryInto;
+use std::ops::DerefMut;
 
 use gix_hash::ObjectId;
 use gix_odb::{Find, FindExt, Write};
@@ -58,32 +59,71 @@ impl crate::Repository {
         }
     }
 
+    fn shared_empty_buf(&self) -> std::cell::RefMut<'_, Vec<u8>> {
+        let mut bufs = self.bufs.borrow_mut();
+        if bufs.last().is_none() {
+            bufs.push(Vec::with_capacity(512));
+        }
+        std::cell::RefMut::map(bufs, |bufs| {
+            let buf = bufs.last_mut().expect("we assure one is present");
+            buf.clear();
+            buf
+        })
+    }
+
     /// Write the given object into the object database and return its object id.
+    ///
+    /// Note that we hash the object in memory to avoid storing objects that are already present. That way,
+    /// we avoid writing duplicate objects using slow disks that will eventually have to be garbage collected.
     pub fn write_object(&self, object: impl gix_object::WriteTo) -> Result<Id<'_>, object::write::Error> {
+        let mut buf = self.shared_empty_buf();
+        object.write_to(buf.deref_mut())?;
+
+        let oid = gix_object::compute_hash(self.object_hash(), object.kind(), &buf);
+        if self.objects.contains(oid) {
+            return Ok(oid.attach(self));
+        }
+
         self.objects
-            .write(object)
+            .write_buf(object.kind(), &buf)
             .map(|oid| oid.attach(self))
             .map_err(Into::into)
     }
 
     /// Write a blob from the given `bytes`.
+    ///
+    /// We avoid writing duplicate objects to slow disks that will eventually have to be garbage collected by
+    /// pre-hashing the data, and checking if the object is already present.
     pub fn write_blob(&self, bytes: impl AsRef<[u8]>) -> Result<Id<'_>, object::write::Error> {
+        let bytes = bytes.as_ref();
+        let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, bytes);
+        if self.objects.contains(oid) {
+            return Ok(oid.attach(self));
+        }
         self.objects
-            .write_buf(gix_object::Kind::Blob, bytes.as_ref())
+            .write_buf(gix_object::Kind::Blob, bytes)
             .map(|oid| oid.attach(self))
     }
 
     /// Write a blob from the given `Read` implementation.
+    ///
+    /// Note that we hash the object in memory to avoid storing objects that are already present. That way,
+    /// we avoid writing duplicate objects using slow disks that will eventually have to be garbage collected.
+    ///
+    /// If that is prohibitive, use the object database directly.
     pub fn write_blob_stream(
         &self,
         mut bytes: impl std::io::Read + std::io::Seek,
     ) -> Result<Id<'_>, object::write::Error> {
-        let current = bytes.stream_position()?;
-        let len = bytes.seek(std::io::SeekFrom::End(0))? - current;
-        bytes.seek(std::io::SeekFrom::Start(current))?;
+        let mut buf = self.shared_empty_buf();
+        std::io::copy(&mut bytes, buf.deref_mut())?;
+        let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, &buf);
+        if self.objects.contains(oid) {
+            return Ok(oid.attach(self));
+        }
 
         self.objects
-            .write_stream(gix_object::Kind::Blob, len, bytes)
+            .write_buf(gix_object::Kind::Blob, &buf)
             .map(|oid| oid.attach(self))
     }
 
