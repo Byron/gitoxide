@@ -62,10 +62,10 @@ mod blocking_io {
         let remote = repo.head()?.into_remote(Direction::Fetch).expect("present")?;
 
         remote
-            .connect(Direction::Fetch, gix::progress::Discard)?
-            .prepare_fetch(Default::default())?
+            .connect(Direction::Fetch)?
+            .prepare_fetch(gix::progress::Discard, Default::default())?
             .with_shallow(Shallow::undo())
-            .receive(&AtomicBool::default())?;
+            .receive(gix::progress::Discard, &AtomicBool::default())?;
 
         assert!(repo.shallow_commits()?.is_none(), "the repo isn't shallow anymore");
         assert!(
@@ -142,10 +142,10 @@ mod blocking_io {
 
         let remote = repo.head()?.into_remote(Direction::Fetch).expect("present")?;
         remote
-            .connect(Direction::Fetch, gix::progress::Discard)?
-            .prepare_fetch(Default::default())?
+            .connect(Direction::Fetch)?
+            .prepare_fetch(gix::progress::Discard, Default::default())?
             .with_shallow(Shallow::Deepen(1))
-            .receive(&AtomicBool::default())?;
+            .receive(gix::progress::Discard, &AtomicBool::default())?;
 
         assert_eq!(
             repo.shallow_commits()?.expect("present").as_slice(),
@@ -163,12 +163,12 @@ mod blocking_io {
 
         let shallow_commit_count = repo.head_id()?.ancestors().all()?.count();
         remote
-            .connect(Direction::Fetch, gix::progress::Discard)?
-            .prepare_fetch(Default::default())?
+            .connect(Direction::Fetch)?
+            .prepare_fetch(gix::progress::Discard, Default::default())?
             .with_shallow(Shallow::Since {
                 cutoff: gix::date::Time::new(1112354053, 0),
             })
-            .receive(&AtomicBool::default())?;
+            .receive(gix::progress::Discard, &AtomicBool::default())?;
 
         assert!(
             !repo.is_shallow(),
@@ -206,10 +206,10 @@ mod blocking_io {
 
         let remote = repo.head()?.into_remote(Direction::Fetch).expect("present")?;
         remote
-            .connect(Direction::Fetch, gix::progress::Discard)?
-            .prepare_fetch(Default::default())?
+            .connect(Direction::Fetch)?
+            .prepare_fetch(gix::progress::Discard, Default::default())?
             .with_shallow(Shallow::Deepen(2))
-            .receive(&AtomicBool::default())?;
+            .receive(gix::progress::Discard, &AtomicBool::default())?;
 
         assert!(!repo.is_shallow(), "one is just enough to unshallow it");
         Ok(())

@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use gix_protocol::transport::client::Transport;
 
-use crate::{remote::Connection, Progress, Remote};
+use crate::{remote::Connection, Remote};
 
 mod error {
     use crate::{bstr::BString, config, remote};
@@ -51,17 +51,15 @@ impl<'repo> Remote<'repo> {
     ///
     /// Note that this method expects the `transport` to be created by the user, which would involve the [`url()`][Self::url()].
     /// It's meant to be used when async operation is needed with runtimes of the user's choice.
-    pub fn to_connection_with_transport<T, P>(&self, transport: T, progress: P) -> Connection<'_, 'repo, T, P>
+    pub fn to_connection_with_transport<T>(&self, transport: T) -> Connection<'_, 'repo, T>
     where
         T: Transport,
-        P: Progress,
     {
         Connection {
             remote: self,
             authenticate: None,
             transport_options: None,
             transport,
-            progress,
         }
     }
 
@@ -75,14 +73,10 @@ impl<'repo> Remote<'repo> {
     /// [to_connection_with_transport()][Self::to_connection_with_transport()].
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
     #[gix_protocol::maybe_async::maybe_async]
-    pub async fn connect<P>(
+    pub async fn connect(
         &self,
         direction: crate::remote::Direction,
-        progress: P,
-    ) -> Result<Connection<'_, 'repo, Box<dyn Transport + Send>, P>, Error>
-    where
-        P: Progress,
-    {
+    ) -> Result<Connection<'_, 'repo, Box<dyn Transport + Send>>, Error> {
         let (url, version) = self.sanitized_url_and_version(direction)?;
         #[cfg(feature = "blocking-network-client")]
         let scheme_is_ssh = url.scheme == gix_url::Scheme::Ssh;
@@ -98,7 +92,7 @@ impl<'repo> Remote<'repo> {
             },
         )
         .await?;
-        Ok(self.to_connection_with_transport(transport, progress))
+        Ok(self.to_connection_with_transport(transport))
     }
 
     /// Produce the sanitized URL and protocol version to use as obtained by querying the repository configuration.

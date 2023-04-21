@@ -91,9 +91,9 @@ mod blocking_and_async_io {
             .with_fetch_tags(fetch::Tags::Included);
 
         remote
-            .connect(Fetch, gix::progress::Discard)?
-            .prepare_fetch(Default::default())?
-            .receive(&AtomicBool::default())?;
+            .connect(Fetch)?
+            .prepare_fetch(gix::progress::Discard, Default::default())?
+            .receive(gix::progress::Discard, &AtomicBool::default())?;
 
         assert!(
             repo.path()
@@ -125,12 +125,12 @@ mod blocking_and_async_io {
         let prev_commits = repo.head_id()?.ancestors().all()?.count();
 
         let changes = remote
-            .connect(Fetch, gix::progress::Discard)
+            .connect(Fetch)
             .await?
-            .prepare_fetch(Default::default())
+            .prepare_fetch(gix::progress::Discard, Default::default())
             .await?
             .with_shallow(fetch::Shallow::Deepen(0))
-            .receive(&AtomicBool::default())
+            .receive(gix::progress::Discard, &AtomicBool::default())
             .await?;
 
         assert!(
@@ -171,12 +171,12 @@ mod blocking_and_async_io {
         );
         let prev_commits = repo.head_id()?.ancestors().all()?.count();
         let changes = remote
-            .connect(Fetch, gix::progress::Discard)
+            .connect(Fetch)
             .await?
-            .prepare_fetch(Default::default())
+            .prepare_fetch(gix::progress::Discard, Default::default())
             .await?
             .with_shallow(fetch::Shallow::Deepen(1))
-            .receive(&AtomicBool::default())
+            .receive(gix::progress::Discard, &AtomicBool::default())
             .await?;
 
         assert!(
@@ -224,11 +224,11 @@ mod blocking_and_async_io {
             remote.replace_refspecs(Some("HEAD:refs/remotes/origin/does-not-yet-exist"), Fetch)?;
 
             let res = remote
-                .connect(Fetch, gix::progress::Discard)
+                .connect(Fetch)
                 .await?
-                .prepare_fetch(Default::default())
+                .prepare_fetch(gix::progress::Discard, Default::default())
                 .await?
-                .receive(&AtomicBool::default())
+                .receive(gix::progress::Discard, &AtomicBool::default())
                 .await?;
 
             match res.status {
@@ -282,11 +282,11 @@ mod blocking_and_async_io {
             remote.replace_refspecs(Some("HEAD"), Fetch)?;
 
             let res: gix::remote::fetch::Outcome = remote
-                .connect(Fetch, gix::progress::Discard)
+                .connect(Fetch)
                 .await?
-                .prepare_fetch(Default::default())
+                .prepare_fetch(gix::progress::Discard, Default::default())
                 .await?
-                .receive(&AtomicBool::default())
+                .receive(gix::progress::Discard, &AtomicBool::default())
                 .await?;
 
             match res.status {
@@ -334,18 +334,18 @@ mod blocking_and_async_io {
                 let remote = into_daemon_remote_if_async(repo.find_remote("origin")?, daemon.as_ref(), "base");
                 {
                     remote
-                        .connect(Fetch, progress::Discard)
+                        .connect(Fetch)
                         .await?
-                        .prepare_fetch(Default::default())
+                        .prepare_fetch(progress::Discard, Default::default())
                         .await?;
                     // early drops are fine and won't block.
                 }
                 let outcome = remote
-                    .connect(Fetch, progress::Discard)
+                    .connect(Fetch)
                     .await?
-                    .prepare_fetch(Default::default())
+                    .prepare_fetch(progress::Discard, Default::default())
                     .await?
-                    .receive(&AtomicBool::default())
+                    .receive(progress::Discard, &AtomicBool::default())
                     .await?;
                 assert!(matches!(
                     outcome.status,
@@ -362,12 +362,12 @@ mod blocking_and_async_io {
                     "clone-as-base-with-changes",
                 );
                 let outcome: gix::remote::fetch::Outcome = remote
-                    .connect(Fetch, progress::Discard)
+                    .connect(Fetch)
                     .await?
-                    .prepare_fetch(Default::default())
+                    .prepare_fetch(progress::Discard, Default::default())
                     .await?
                     .with_dry_run(dry_run)
-                    .receive(&AtomicBool::default())
+                    .receive(progress::Discard, &AtomicBool::default())
                     .await?;
                 let refs = match outcome.status {
                     fetch::Status::Change {

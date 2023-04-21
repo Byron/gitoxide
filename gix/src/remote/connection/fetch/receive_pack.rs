@@ -17,11 +17,9 @@ use crate::{
     Progress, Repository,
 };
 
-impl<'remote, 'repo, T, P> Prepare<'remote, 'repo, T, P>
+impl<'remote, 'repo, T> Prepare<'remote, 'repo, T>
 where
     T: Transport,
-    P: Progress,
-    P::SubProgress: 'static,
 {
     /// Receive the pack and perform the operation as configured by git via `gix-config` or overridden by various builder methods.
     /// Return `Ok(None)` if there was nothing to do because all remote refs are at the same state as they are locally, or `Ok(Some(outcome))`
@@ -66,14 +64,18 @@ where
     /// - `gitoxide.userAgent` is read to obtain the application user agent for git servers and for HTTP servers as well.
     ///
     #[gix_protocol::maybe_async::maybe_async]
-    pub async fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome, Error> {
+    pub async fn receive<P>(mut self, mut progress: P, should_interrupt: &AtomicBool) -> Result<Outcome, Error>
+    where
+        P: Progress,
+        P::SubProgress: 'static,
+    {
         let mut con = self.con.take().expect("receive() can only be called once");
 
         let handshake = &self.ref_map.handshake;
         let protocol_version = handshake.server_protocol_version;
 
         let fetch = gix_protocol::Command::Fetch;
-        let progress = &mut con.progress;
+        let progress = &mut progress;
         let repo = con.remote.repo;
         let fetch_features = {
             let mut f = fetch.default_features(protocol_version, &handshake.capabilities);
@@ -197,7 +199,7 @@ where
                     reader
                 },
                 Some(repo.objects.store_ref().path().join("pack")),
-                con.progress,
+                progress,
                 should_interrupt,
                 Some(Box::new({
                     let repo = repo.clone();
