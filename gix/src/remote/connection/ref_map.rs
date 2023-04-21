@@ -71,10 +71,9 @@ impl Default for Options {
     }
 }
 
-impl<'remote, 'repo, T, P> Connection<'remote, 'repo, T, P>
+impl<'remote, 'repo, T> Connection<'remote, 'repo, T>
 where
     T: Transport,
-    P: Progress,
 {
     /// List all references on the remote that have been filtered through our remote's [`refspecs`][crate::Remote::refspecs()]
     /// for _fetching_.
@@ -94,8 +93,8 @@ where
     /// - `gitoxide.userAgent` is read to obtain the application user agent for git servers and for HTTP servers as well.
     #[allow(clippy::result_large_err)]
     #[gix_protocol::maybe_async::maybe_async]
-    pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap, Error> {
-        let res = self.ref_map_inner(options).await;
+    pub async fn ref_map(mut self, progress: impl Progress, options: Options) -> Result<fetch::RefMap, Error> {
+        let res = self.ref_map_inner(progress, options).await;
         gix_protocol::indicate_end_of_interaction(&mut self.transport)
             .await
             .ok();
@@ -106,6 +105,7 @@ where
     #[gix_protocol::maybe_async::maybe_async]
     pub(crate) async fn ref_map_inner(
         &mut self,
+        progress: impl Progress,
         Options {
             prefix_from_spec_as_filter_on_remote,
             handshake_parameters,
@@ -125,7 +125,12 @@ where
             s
         };
         let remote = self
-            .fetch_refs(prefix_from_spec_as_filter_on_remote, handshake_parameters, &specs)
+            .fetch_refs(
+                prefix_from_spec_as_filter_on_remote,
+                handshake_parameters,
+                &specs,
+                progress,
+            )
             .await?;
         let num_explicit_specs = self.remote.fetch_specs.len();
         let group = gix_refspec::MatchGroup::from_fetch_specs(specs.iter().map(|s| s.to_ref()));
@@ -179,6 +184,7 @@ where
         filter_by_prefix: bool,
         extra_parameters: Vec<(String, Option<String>)>,
         refspecs: &[gix_refspec::RefSpec],
+        mut progress: impl Progress,
     ) -> Result<HandshakeWithRefs, Error> {
         let mut credentials_storage;
         let url = self.transport.to_url();
@@ -209,8 +215,7 @@ where
             self.transport.configure(&**config)?;
         }
         let mut outcome =
-            gix_protocol::fetch::handshake(&mut self.transport, authenticate, extra_parameters, &mut self.progress)
-                .await?;
+            gix_protocol::fetch::handshake(&mut self.transport, authenticate, extra_parameters, &mut progress).await?;
         let refs = match outcome.refs.take() {
             Some(refs) => refs,
             None => {
@@ -236,7 +241,7 @@ where
                         }
                         Ok(gix_protocol::ls_refs::Action::Continue)
                     },
-                    &mut self.progress,
+                    &mut progress,
                 )
                 .await?
             }

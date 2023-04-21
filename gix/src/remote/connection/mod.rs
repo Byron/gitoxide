@@ -12,12 +12,11 @@ pub type AuthenticateFn<'a> = Box<dyn FnMut(gix_credentials::helper::Action) -> 
 ///
 /// It can be used to perform a variety of operations with the remote without worrying about protocol details,
 /// much like a remote procedure call.
-pub struct Connection<'a, 'repo, T, P> {
+pub struct Connection<'a, 'repo, T> {
     pub(crate) remote: &'a Remote<'repo>,
     pub(crate) authenticate: Option<AuthenticateFn<'a>>,
     pub(crate) transport_options: Option<Box<dyn std::any::Any>>,
     pub(crate) transport: T,
-    pub(crate) progress: P,
 }
 
 mod access;

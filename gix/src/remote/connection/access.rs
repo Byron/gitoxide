@@ -4,7 +4,7 @@ use crate::{
 };
 
 /// Builder
-impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
+impl<'a, 'repo, T> Connection<'a, 'repo, T> {
     /// Set a custom credentials callback to provide credentials if the remotes require authentication.
     ///
     /// Otherwise we will use the git configuration to perform the same task as the `git credential` helper program,
@@ -37,8 +37,26 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
     }
 }
 
+/// Mutation
+impl<'a, 'repo, T> Connection<'a, 'repo, T> {
+    /// Like [`with_credentials()`][Self::with_credentials()], but without consuming the connection.
+    pub fn set_credentials(
+        &mut self,
+        helper: impl FnMut(gix_credentials::helper::Action) -> gix_credentials::protocol::Result + 'a,
+    ) -> &mut Self {
+        self.authenticate = Some(Box::new(helper));
+        self
+    }
+
+    /// Like [`with_transport_options()`][Self::with_transport_options()], but without consuming the connection.
+    pub fn set_transport_options(&mut self, config: Box<dyn std::any::Any>) -> &mut Self {
+        self.transport_options = Some(config);
+        self
+    }
+}
+
 /// Access
-impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
+impl<'a, 'repo, T> Connection<'a, 'repo, T> {
     /// A utility to return a function that will use this repository's configuration to obtain credentials, similar to
     /// what `git credential` is doing.
     ///

@@ -73,12 +73,15 @@ mod refs_impl {
                 .to_bstring()
         ));
         let map = remote
-            .connect(gix::remote::Direction::Fetch, progress)
+            .connect(gix::remote::Direction::Fetch)
             .await?
-            .ref_map(gix::remote::ref_map::Options {
-                prefix_from_spec_as_filter_on_remote: !matches!(kind, refs::Kind::Remote),
-                ..Default::default()
-            })
+            .ref_map(
+                &mut progress,
+                gix::remote::ref_map::Options {
+                    prefix_from_spec_as_filter_on_remote: !matches!(kind, refs::Kind::Remote),
+                    ..Default::default()
+                },
+            )
             .await?;
 
         if handshake_info {

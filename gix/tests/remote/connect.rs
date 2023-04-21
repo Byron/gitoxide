@@ -2,7 +2,6 @@
 mod blocking_io {
     mod protocol_allow {
         use gix::remote::Direction::Fetch;
-        use gix_features::progress;
         use serial_test::serial;
 
         use crate::remote;
@@ -13,7 +12,7 @@ mod blocking_io {
                 let repo = remote::repo(name);
                 let remote = repo.find_remote("origin").unwrap();
                 assert!(matches!(
-                    remote.connect(Fetch, progress::Discard).err(),
+                    remote.connect(Fetch).err(),
                     Some(gix::remote::connect::Error::ProtocolDenied {
                         url: _,
                         scheme: gix::url::Scheme::File
@@ -38,12 +37,7 @@ mod blocking_io {
                     }),
                 )?;
                 let remote = repo.find_remote("origin")?;
-                assert_eq!(
-                    remote.connect(Fetch, progress::Discard).is_ok(),
-                    should_allow,
-                    "Value = {:?}",
-                    env_value
-                );
+                assert_eq!(remote.connect(Fetch).is_ok(), should_allow, "Value = {:?}", env_value);
             }
             Ok(())
         }

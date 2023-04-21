@@ -70,9 +70,9 @@ mod blocking_and_async_io {
                 None,
             );
             let map = remote
-                .connect(Fetch, progress::Discard)
+                .connect(Fetch)
                 .await?
-                .ref_map(Default::default())
+                .ref_map(progress::Discard, Default::default())
                 .await?;
             assert_eq!(
                     map.remote_refs.len(),
