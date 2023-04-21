@@ -23,7 +23,7 @@ pub(crate) mod function {
 
     pub fn fetch<P>(
         repo: gix::Repository,
-        progress: P,
+        mut progress: P,
         mut out: impl std::io::Write,
         err: impl std::io::Write,
         Options {
@@ -49,11 +49,11 @@ pub(crate) mod function {
             remote = remote.with_fetch_tags(gix::remote::fetch::Tags::None);
         }
         let res: gix::remote::fetch::Outcome = remote
-            .connect(gix::remote::Direction::Fetch, progress)?
-            .prepare_fetch(Default::default())?
+            .connect(gix::remote::Direction::Fetch)?
+            .prepare_fetch(&mut progress, Default::default())?
             .with_dry_run(dry_run)
             .with_shallow(shallow)
-            .receive(&gix::interrupt::IS_INTERRUPTED)?;
+            .receive(&mut progress, &gix::interrupt::IS_INTERRUPTED)?;
 
         if handshake_info {
             writeln!(out, "Handshake Information")?;
