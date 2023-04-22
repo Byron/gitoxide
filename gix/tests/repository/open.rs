@@ -1,3 +1,31 @@
+use crate::util::named_subrepo_opts;
+
+#[test]
+fn bare_repo_with_index() -> crate::Result {
+    let repo = named_subrepo_opts(
+        "make_basic_repo.sh",
+        "bare-repo-with-index.git",
+        gix::open::Options::isolated(),
+    )?;
+    assert!(
+        repo.is_bare(),
+        "it's properly classified as it reads the configuration (and has no worktree)"
+    );
+    Ok(())
+}
+
+#[test]
+fn none_bare_repo_without_index() -> crate::Result {
+    let repo = named_subrepo_opts(
+        "make_basic_repo.sh",
+        "non-bare-repo-without-index",
+        gix::open::Options::isolated(),
+    )?;
+    assert!(!repo.is_bare(), "worktree isn't dependent on an index file");
+    assert!(repo.worktree().is_some());
+    Ok(())
+}
+
 mod missing_config_file {
 
     use crate::util::named_subrepo_opts;

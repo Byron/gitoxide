@@ -13,3 +13,15 @@ git commit -q -am c2
 mkdir -p some/very/deeply/nested/subdir
 
 git init --bare bare.git
+
+git init --bare bare-repo-with-index.git
+(cd bare-repo-with-index.git
+  touch index
+)
+
+git init non-bare-repo-without-index
+(cd non-bare-repo-without-index
+  touch this
+  git add this && git commit -m "init"
+  rm .git/index
+)
