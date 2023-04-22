@@ -30,6 +30,7 @@ fn from_git_dir() -> crate::Result {
             worktree_dir.join("system.config").display().to_string(),
         )
         .set("HOME", worktree_dir.display().to_string())
+        .set("USERPROFILE", worktree_dir.display().to_string())
         .set("GIT_CONFIG_COUNT", "1")
         .set("GIT_CONFIG_KEY_0", "include.path")
         .set(
