@@ -51,6 +51,22 @@ fn missing_configuration_file_is_not_a_dealbreaker_in_bare_repo() -> crate::Resu
 }
 
 #[test]
+fn bare_repo_with_index_file_looks_still_looks_like_bare() -> crate::Result {
+    let repo = repo_path()?.join("bare-with-index.git");
+    let kind = gix_discover::is_git(repo)?;
+    assert_eq!(kind, gix_discover::repository::Kind::Bare);
+    Ok(())
+}
+
+#[test]
+fn no_bare_repo_without_index_file_looks_like_worktree() -> crate::Result {
+    let repo = repo_path()?.join("non-bare-without-index").join(".git");
+    let kind = gix_discover::is_git(repo)?;
+    assert_eq!(kind, gix_discover::repository::Kind::WorkTree { linked_git_dir: None });
+    Ok(())
+}
+
+#[test]
 fn missing_configuration_file_is_not_a_dealbreaker_in_nonbare_repo() -> crate::Result {
     for name in ["worktree-no-config-after-init/.git", "worktree-no-config/.git"] {
         let repo = repo_path()?.join(name);

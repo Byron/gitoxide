@@ -47,3 +47,15 @@ git init worktree-no-config-after-init
   rm .git/config
 )
 
+git init --bare bare-with-index.git
+(cd bare-with-index.git
+  touch index
+)
+
+git init non-bare-without-index
+(cd non-bare-without-index
+  touch this
+  git add this
+  git commit -m "init"
+  rm .git/index
+)
