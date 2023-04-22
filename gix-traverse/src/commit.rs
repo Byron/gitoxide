@@ -8,24 +8,20 @@ pub struct Ancestors<Find, Predicate, StateMut> {
 }
 
 /// Specify how to handle commit parents during traversal.
-#[derive(Copy, Clone)]
+#[derive(Default, Copy, Clone)]
 pub enum Parents {
     /// Traverse all parents, useful for traversing the entire ancestry.
+    #[default]
     All,
     /// Only traverse along the first parent, which commonly ignores all branches.
     First,
 }
 
-impl Default for Parents {
-    fn default() -> Self {
-        Parents::All
-    }
-}
-
 /// Specify how to sort commits during traversal.
-#[derive(Debug, Copy, Clone)]
+#[derive(Default, Debug, Copy, Clone)]
 pub enum Sorting {
     /// Commits are sorted as they are mentioned in the commit graph.
+    #[default]
     Topological,
     /// Commits are sorted by their commit time in descending order, that is newest first.
     ///
@@ -44,12 +40,6 @@ pub enum Sorting {
         /// The amount of seconds since unix epoch, the same value obtained by any `gix_date::Time` structure and the way git counts time.
         time_in_seconds_since_epoch: u32,
     },
-}
-
-impl Default for Sorting {
-    fn default() -> Self {
-        Sorting::Topological
-    }
 }
 
 ///

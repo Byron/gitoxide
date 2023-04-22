@@ -30,7 +30,7 @@ enum State {
 }
 
 /// Define the order in which objects are returned.
-#[derive(Debug, Copy, Clone)]
+#[derive(Default, Debug, Copy, Clone)]
 pub enum Ordering {
     /// Traverse packs first as sorted by their index files in lexicographical order (sorted by object id), then traverse loose objects
     /// as sorted by their names as well.
@@ -38,6 +38,7 @@ pub enum Ordering {
     /// This mode uses no memory as it's the natural ordering of objects, and is best to obtain all object ids as quickly as possible,
     /// while noting that these may contain duplicates. However, it's very costly to obtain object information or decode them with this
     /// scheme as cache-hits are unlikely with it and memory maps are less efficient when loading them in random order.
+    #[default]
     PackLexicographicalThenLooseLexicographical,
     /// Traverse packs first yielding object ids sorted by their position in the pack, with those at the beginning of the pack file coming first.
     /// Then follow loose objects sorted by their names.
@@ -46,12 +47,6 @@ pub enum Ordering {
     /// memory allocated once per pack. This price is usually worth paying once querying object information is planned as pack caches
     /// are more efficiently used that way.
     PackAscendingOffsetThenLooseLexicographical,
-}
-
-impl Default for Ordering {
-    fn default() -> Self {
-        Ordering::PackLexicographicalThenLooseLexicographical
-    }
 }
 
 /// An iterator over all, _possibly duplicate_, objects of an object store, which by default uses no extra memory but yields an

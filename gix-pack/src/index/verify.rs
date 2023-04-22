@@ -94,7 +94,7 @@ pub mod checksum {
 }
 
 /// Various ways in which a pack and index can be verified
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
+#[derive(Default, Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Mode {
     /// Validate the object hash and CRC32
     HashCrc32,
@@ -103,13 +103,8 @@ pub enum Mode {
     HashCrc32Decode,
     /// Validate hash and CRC32, and decode and encode each non-Blob object.
     /// Each object should yield exactly the same hash when re-encoded.
+    #[default]
     HashCrc32DecodeEncode,
-}
-
-impl Default for Mode {
-    fn default() -> Self {
-        Mode::HashCrc32DecodeEncode
-    }
 }
 
 /// Information to allow verifying the integrity of an index with the help of its corresponding pack.

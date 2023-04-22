@@ -3,17 +3,12 @@ use std::path::PathBuf;
 use memmap2::Mmap;
 
 /// Known multi-index file versions
-#[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Hash, Clone, Copy)]
+#[derive(Default, PartialEq, Eq, Ord, PartialOrd, Debug, Hash, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
 pub enum Version {
+    #[default]
     V1 = 1,
-}
-
-impl Default for Version {
-    fn default() -> Self {
-        Version::V1
-    }
 }
 
 /// An index into our [`File::index_names()`] array yielding the name of the index and by implication, its pack file.

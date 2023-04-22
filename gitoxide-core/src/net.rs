@@ -1,8 +1,9 @@
 use std::str::FromStr;
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Default, Clone, Eq, PartialEq, Debug)]
 pub enum Protocol {
     V1,
+    #[default]
     V2,
 }
 
@@ -31,14 +32,6 @@ mod impls {
                 Protocol::V2 => transport::Protocol::V2,
             }
         }
-    }
-}
-
-impl Default for Protocol {
-    fn default() -> Self {
-        // Note that it's very important this remains V2, as V1 may block forever in stateful (i.e. non-http) connections when fetching
-        // as we chose not to complicate matters by counting which arguments where sent (just yet).
-        Protocol::V2
     }
 }
 

@@ -4,9 +4,10 @@ use gix::{odb::pack, Progress};
 
 use crate::OutputFormat;
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Default, Clone, Eq, PartialEq, Debug)]
 pub enum IterationMode {
     AsIs,
+    #[default]
     Verify,
     Restore,
 }
@@ -14,12 +15,6 @@ pub enum IterationMode {
 impl IterationMode {
     pub fn variants() -> &'static [&'static str] {
         &["as-is", "verify", "restore"]
-    }
-}
-
-impl Default for IterationMode {
-    fn default() -> Self {
-        IterationMode::Verify
     }
 }
 
@@ -60,7 +55,7 @@ pub struct Context<'a, W: io::Write> {
 
 pub fn stream_len(mut s: impl io::Seek) -> io::Result<u64> {
     use io::SeekFrom;
-    let old_pos = s.seek(SeekFrom::Current(0))?;
+    let old_pos = s.stream_position()?;
     let len = s.seek(SeekFrom::End(0))?;
     if old_pos != len {
         s.seek(SeekFrom::Start(old_pos))?;

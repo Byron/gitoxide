@@ -59,18 +59,13 @@ impl Change {
 }
 
 /// What to do after a [Change] was [recorded][Visit::visit()].
-#[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
+#[derive(Default, Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
 pub enum Action {
     /// Continue the traversal of changes.
+    #[default]
     Continue,
     /// Stop the traversal of changes, making this the last call to [visit(…)][Visit::visit()].
     Cancel,
-}
-
-impl Default for Action {
-    fn default() -> Self {
-        Action::Continue
-    }
 }
 
 impl Action {

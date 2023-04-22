@@ -16,8 +16,9 @@ use crate::OutputFormat;
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Default, Eq, PartialEq, Debug, Clone)]
 pub enum ObjectExpansion {
+    #[default]
     None,
     TreeTraversal,
     TreeDiff,
@@ -26,12 +27,6 @@ pub enum ObjectExpansion {
 impl ObjectExpansion {
     pub fn variants() -> &'static [&'static str] {
         &["none", "tree-traversal", "tree-diff"]
-    }
-}
-
-impl Default for ObjectExpansion {
-    fn default() -> Self {
-        ObjectExpansion::None
     }
 }
 

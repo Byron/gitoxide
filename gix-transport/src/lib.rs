@@ -19,7 +19,7 @@ pub use futures_io;
 pub use gix_packetline as packetline;
 
 /// The version of the way client and server communicate.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
 pub enum Protocol {
@@ -27,13 +27,8 @@ pub enum Protocol {
     V1 = 1,
     /// A command-based and stateless protocol with clear semantics, and the one to use assuming the server isn't very old.
     /// This is the default.
+    #[default]
     V2 = 2,
-}
-
-impl Default for Protocol {
-    fn default() -> Self {
-        Protocol::V2
-    }
 }
 
 /// The kind of service to invoke on the client or the server side.

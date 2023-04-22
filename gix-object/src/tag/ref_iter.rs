@@ -9,19 +9,14 @@ use nom::{
 
 use crate::{bstr::ByteSlice, parse, parse::NL, tag::decode, Kind, TagRefIter};
 
-#[derive(Copy, Clone)]
+#[derive(Default, Copy, Clone)]
 pub(crate) enum State {
+    #[default]
     Target,
     TargetKind,
     Name,
     Tagger,
     Message,
-}
-
-impl Default for State {
-    fn default() -> Self {
-        State::Target
-    }
 }
 
 impl<'a> TagRefIter<'a> {

@@ -31,18 +31,13 @@ bitflags! {
 /// Describes whether to match a path case sensitively or not.
 ///
 /// Used in [Pattern::matches_repo_relative_path()].
-#[derive(Debug, PartialOrd, PartialEq, Copy, Clone, Hash, Ord, Eq)]
+#[derive(Default, Debug, PartialOrd, PartialEq, Copy, Clone, Hash, Ord, Eq)]
 pub enum Case {
     /// The case affects the match
+    #[default]
     Sensitive,
     /// Ignore the case of ascii characters.
     Fold,
-}
-
-impl Default for Case {
-    fn default() -> Self {
-        Case::Sensitive
-    }
 }
 
 /// Instantiation

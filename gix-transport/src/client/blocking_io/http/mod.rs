@@ -45,9 +45,10 @@ pub mod options {
         dyn FnMut(gix_credentials::helper::Action) -> gix_credentials::protocol::Result + Send + Sync;
 
     /// Possible settings for the `http.followRedirects` configuration option.
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
     pub enum FollowRedirects {
         /// Follow only the first redirect request, most suitable for typical git requests.
+        #[default]
         Initial,
         /// Follow all redirect requests from the server unconditionally
         All,
@@ -55,16 +56,11 @@ pub mod options {
         None,
     }
 
-    impl Default for FollowRedirects {
-        fn default() -> Self {
-            FollowRedirects::Initial
-        }
-    }
-
     /// The way to configure a proxy for authentication if a username is present in the configured proxy.
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
     pub enum ProxyAuthMethod {
         /// Automatically pick a suitable authentication method.
+        #[default]
         AnyAuth,
         ///HTTP basic authentication.
         Basic,
@@ -74,12 +70,6 @@ pub mod options {
         Negotiate,
         /// NTLM authentication
         Ntlm,
-    }
-
-    impl Default for ProxyAuthMethod {
-        fn default() -> Self {
-            ProxyAuthMethod::AnyAuth
-        }
     }
 
     /// Available SSL version numbers.

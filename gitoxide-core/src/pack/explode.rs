@@ -13,18 +13,13 @@ use gix::{
     Progress,
 };
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Default, Clone, Eq, PartialEq, Debug)]
 pub enum SafetyCheck {
     SkipFileChecksumVerification,
     SkipFileAndObjectChecksumVerification,
     SkipFileAndObjectChecksumVerificationAndNoAbortOnDecodeError,
+    #[default]
     All,
-}
-
-impl Default for SafetyCheck {
-    fn default() -> Self {
-        SafetyCheck::All
-    }
 }
 
 impl SafetyCheck {

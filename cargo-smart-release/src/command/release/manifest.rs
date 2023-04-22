@@ -371,9 +371,9 @@ pub struct GatherOutcome<'meta> {
     made_change: bool,
 }
 
-fn gather_changelog_data<'a, 'meta>(
+fn gather_changelog_data<'meta>(
     ctx: &Context,
-    crates_and_versions_to_be_published: &[(&'meta Package, &'a Version)],
+    crates_and_versions_to_be_published: &[(&'meta Package, &Version)],
     Options {
         dry_run,
         generator_segments,

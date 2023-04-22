@@ -32,10 +32,11 @@ impl Outcome {
 }
 
 /// The way input objects are handled
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ObjectExpansion {
     /// Don't do anything with the input objects except for transforming them into pack entries
+    #[default]
     AsIs,
     /// If the input object is a Commit then turn it into a pack entry. Additionally obtain its tree, turn it into a pack entry
     /// along with all of its contents, that is nested trees, and any other objects reachable from it.
@@ -50,12 +51,6 @@ pub enum ObjectExpansion {
     ///
     /// This mode is useful to build a pack containing only new objects compared to a previous state.
     TreeAdditionsComparedToAncestor,
-}
-
-impl Default for ObjectExpansion {
-    fn default() -> Self {
-        ObjectExpansion::AsIs
-    }
 }
 
 /// Configuration options for the pack generation functions provided in [this module][crate::data::output].

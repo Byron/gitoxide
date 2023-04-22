@@ -57,20 +57,15 @@ pub mod peel;
 ///
 pub mod store {
     /// The way a file store handles the reflog
-    #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
+    #[derive(Default, Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
     pub enum WriteReflog {
         /// Always write the reflog for all references for ref edits, unconditionally.
         Always,
         /// Write a ref log for ref edits according to the standard rules.
+        #[default]
         Normal,
         /// Never write a ref log.
         Disable,
-    }
-
-    impl Default for WriteReflog {
-        fn default() -> Self {
-            WriteReflog::Normal
-        }
     }
 
     /// A thread-local handle for interacting with a [`Store`][crate::Store] to find and iterate references.

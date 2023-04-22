@@ -11,6 +11,7 @@ use crate::{
 };
 
 /// A way to indicate how to treat the connection underlying the transport, potentially allowing to reuse it.
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum FetchConnection {
     /// Use this variant if server should be informed that the operation is completed and no further commands will be issued
     /// at the end of the fetch operation or after deciding that no fetch operation should happen after references were listed.
@@ -19,6 +20,7 @@ pub enum FetchConnection {
     /// Generally it only applies when using persistent transports.
     ///
     /// In most explicit client side failure modes the end-of-operation' notification will be sent to the server automatically.
+    #[default]
     TerminateOnSuccessfulCompletion,
 
     /// Indicate that persistent transport connections can be reused by _not_ sending an 'end-of-operation' notification to the server.
@@ -29,12 +31,6 @@ pub enum FetchConnection {
     /// As an optimization, callers can use `AllowReuse` here as the server will also know the client is done
     /// if the connection is closed.
     AllowReuse,
-}
-
-impl Default for FetchConnection {
-    fn default() -> Self {
-        FetchConnection::TerminateOnSuccessfulCompletion
-    }
 }
 
 /// Perform a 'fetch' operation with the server using `transport`, with `delegate` handling all server interactions.

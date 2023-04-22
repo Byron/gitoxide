@@ -2,12 +2,6 @@ use std::{convert::TryFrom, str::FromStr};
 
 use crate::{oid, Kind, ObjectId};
 
-impl Default for Kind {
-    fn default() -> Self {
-        Kind::Sha1
-    }
-}
-
 impl TryFrom<u8> for Kind {
     type Error = u8;
 

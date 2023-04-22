@@ -5,16 +5,11 @@ use std::{
 
 use gix::{objs::bstr::ByteSlice, progress, Progress};
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Copy, Clone, Eq, PartialEq)]
 pub enum Mode {
     Execute,
+    #[default]
     Simulate,
-}
-
-impl Default for Mode {
-    fn default() -> Self {
-        Mode::Simulate
-    }
 }
 
 fn find_git_repository_workdirs<P: Progress>(
