@@ -98,30 +98,8 @@ pub fn system_prefix() -> Option<&'static Path> {
 }
 
 /// Returns a platform independent home directory.
-///
-/// On unix this simply returns $HOME on windows this uses %HOMEDRIVE%\%HOMEPATH% or %USERPROFILE%
 pub fn home_dir() -> Option<PathBuf> {
-    if let Some(home) = std::env::var_os("HOME") {
-        return Some(home.into());
-    }
-
-    // NOTE: technically we should also check HOMESHARE in case HOME is a UNC path
-    //       but git doesn't do this either so probably best to wait for an upstream fix.
-    #[cfg(windows)]
-    {
-        if let Some(homedrive) = std::env::var_os("HOMEDRIVE") {
-            if let Some(home_path) = std::env::var_os("HOMEPATH") {
-                let home = PathBuf::from(homedrive).join(home_path);
-                if home.metadata().map_or(false, |home| home.is_dir()) {
-                    return Some(home);
-                }
-            }
-        }
-        if let Some(userprofile) = std::env::var_os("USERPROFILE") {
-            return Some(userprofile.into());
-        }
-    }
-    None
+    home::home_dir()
 }
 
 /// Returns the contents of an environment variable of `name` with some special handling
