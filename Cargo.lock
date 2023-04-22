@@ -2017,7 +2017,6 @@ name = "gix-path"
 version = "0.7.3"
 dependencies = [
  "bstr",
- "home",
  "once_cell",
  "tempfile",
  "thiserror",
