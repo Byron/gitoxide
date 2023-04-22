@@ -3,18 +3,13 @@ use gix_diff::tree::recorder::Location;
 use crate::{bstr::BStr, Tree};
 
 /// Returned by the `for_each` function to control flow.
-#[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
+#[derive(Default, Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
 pub enum Action {
     /// Continue the traversal of changes.
+    #[default]
     Continue,
     /// Stop the traversal of changes and stop calling this function.
     Cancel,
-}
-
-impl Default for Action {
-    fn default() -> Self {
-        Action::Continue
-    }
 }
 
 /// Represents any possible change in order to turn one tree into another.

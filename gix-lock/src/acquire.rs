@@ -9,19 +9,14 @@ use gix_tempfile::{AutoRemove, ContainingDirectory};
 use crate::{backoff, File, Marker, DOT_LOCK_SUFFIX};
 
 /// Describe what to do if a lock cannot be obtained as it's already held elsewhere.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Fail {
     /// Fail after the first unsuccessful attempt of obtaining a lock.
+    #[default]
     Immediately,
     /// Retry after failure with exponentially longer sleep times to block the current thread.
     /// Fail once the given duration is exceeded, similar to [Fail::Immediately]
     AfterDurationWithBackoff(Duration),
-}
-
-impl Default for Fail {
-    fn default() -> Self {
-        Fail::Immediately
-    }
 }
 
 impl fmt::Display for Fail {

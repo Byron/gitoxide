@@ -62,9 +62,10 @@ pub mod describe {
     }
 
     /// A selector to choose what kind of references should contribute to names.
-    #[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
+    #[derive(Default, Debug, Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
     pub enum SelectRef {
         /// Only use annotated tags for names.
+        #[default]
         AnnotatedTags,
         /// Use all tags for names, annotated or plain reference.
         AllTags,
@@ -143,12 +144,6 @@ pub mod describe {
                         .collect()
                 }
             })
-        }
-    }
-
-    impl Default for SelectRef {
-        fn default() -> Self {
-            SelectRef::AnnotatedTags
         }
     }
 

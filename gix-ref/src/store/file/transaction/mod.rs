@@ -19,8 +19,10 @@ pub type FindObjectFn<'a> = dyn FnMut(
     + 'a;
 
 /// How to handle packed refs during a transaction
+#[derive(Default)]
 pub enum PackedRefs<'a> {
     /// Only propagate deletions of references. This is the default
+    #[default]
     DeletionsOnly,
     /// Propagate deletions as well as updates to references which are peeled, that is contain an object id
     DeletionsAndNonSymbolicUpdates(Box<FindObjectFn<'a>>),
@@ -28,12 +30,6 @@ pub enum PackedRefs<'a> {
     /// reference which is originally updated if it exists. If it doesn't, the new value will be written into the packed ref right away.
     /// Note that this doesn't affect symbolic references at all, which can't be placed into packed refs.
     DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box<FindObjectFn<'a>>),
-}
-
-impl Default for PackedRefs<'_> {
-    fn default() -> Self {
-        PackedRefs::DeletionsOnly
-    }
 }
 
 #[derive(Debug)]

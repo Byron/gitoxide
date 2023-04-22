@@ -19,22 +19,17 @@ pub(crate) enum WritePackedRefs {
 }
 
 /// Describe how to handle tags when fetching
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Tags {
     /// Fetch all tags from the remote, even if these are not reachable from objects referred to by our refspecs.
     All,
     /// Fetch only the tags that point to the objects being sent.
     /// That way, annotated tags that point to an object we receive are automatically transmitted and their refs are created.
     /// The same goes for lightweight tags.
+    #[default]
     Included,
     /// Do not fetch any tags.
     None,
-}
-
-impl Default for Tags {
-    fn default() -> Self {
-        Tags::Included
-    }
 }
 
 impl Tags {
@@ -55,9 +50,10 @@ impl Tags {
 /// Describe how shallow clones are handled when fetching, with variants defining how the *shallow boundary* is handled.
 ///
 /// The *shallow boundary* is a set of commits whose parents are not present in the repository.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub enum Shallow {
     /// Fetch all changes from the remote without affecting the shallow boundary at all.
+    #[default]
     NoChange,
     /// Receive update to `depth` commits in the history of the refs to fetch (from the viewpoint of the remote),
     /// with the value of `1` meaning to receive only the commit a ref is pointing to.
@@ -82,12 +78,6 @@ pub enum Shallow {
         /// with excluded references.
         since_cutoff: Option<gix_date::Time>,
     },
-}
-
-impl Default for Shallow {
-    fn default() -> Self {
-        Shallow::NoChange
-    }
 }
 
 impl Shallow {

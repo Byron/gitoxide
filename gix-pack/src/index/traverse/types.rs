@@ -47,7 +47,7 @@ impl Default for Statistics {
 }
 
 /// The ways to validate decoded objects before passing them to the processor.
-#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(Default, Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SafetyCheck {
     /// Don't verify the validity of the checksums stored in the index and pack file
@@ -63,6 +63,7 @@ pub enum SafetyCheck {
 
     /// Perform all available safety checks before operating on the pack and
     /// abort if any of them fails
+    #[default]
     All,
 }
 
@@ -83,19 +84,14 @@ impl SafetyCheck {
     }
 }
 
-impl Default for SafetyCheck {
-    fn default() -> Self {
-        SafetyCheck::All
-    }
-}
-
 /// The way we verify the pack
-#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(Default, Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Algorithm {
     /// Build an index to allow decoding each delta and base exactly once, saving a lot of computational
     /// resource at the expense of resident memory, as we will use an additional `DeltaTree` to accelerate
     /// delta chain resolution.
+    #[default]
     DeltaTreeLookup,
     /// We lookup each object similarly to what would happen during normal repository use.
     /// Uses more compute resources as it will resolve delta chains from back to front, but start right away
@@ -103,12 +99,6 @@ pub enum Algorithm {
     ///
     /// This option may be well suited for big packs in memory-starved system that support memory mapping.
     Lookup,
-}
-
-impl Default for Algorithm {
-    fn default() -> Self {
-        Algorithm::DeltaTreeLookup
-    }
 }
 
 /// The progress ids used in [`traverse()`][crate::index::File::traverse()] .

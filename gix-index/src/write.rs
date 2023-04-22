@@ -3,9 +3,10 @@ use std::{convert::TryInto, io::Write};
 use crate::{entry, extension, write::util::CountBytes, State, Version};
 
 /// A way to specify which of the optional extensions to write.
-#[derive(Debug, Copy, Clone)]
+#[derive(Default, Debug, Copy, Clone)]
 pub enum Extensions {
     /// Writes all available optional extensions to avoid loosing any information.
+    #[default]
     All,
     /// Only write the given optional extensions, with each extension being marked by a boolean flag.
     ///
@@ -21,12 +22,6 @@ pub enum Extensions {
     },
     /// Write no optional extension at all for what should be the smallest possible index
     None,
-}
-
-impl Default for Extensions {
-    fn default() -> Self {
-        Extensions::All
-    }
 }
 
 impl Extensions {

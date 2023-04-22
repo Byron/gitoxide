@@ -25,7 +25,7 @@ pub fn estimate_hours(
                 .saturating_sub(cur.time.seconds_since_unix_epoch)) as f32
                 / MINUTES_PER_HOUR;
             if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
-                hours + change_in_minutes as f32 / MINUTES_PER_HOUR
+                hours + change_in_minutes / MINUTES_PER_HOUR
             } else {
                 hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / MINUTES_PER_HOUR)
             }

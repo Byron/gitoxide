@@ -41,22 +41,17 @@ bitflags! {
 
 /// Parts of [magic signatures][MagicSignature] which don't stack as they all configure
 /// the way path specs are matched.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum MatchMode {
     /// Expand special characters like `*` similar to how the shell would do it.
     ///
     /// See [`PathAwareGlob`][MatchMode::PathAwareGlob] for the alternative.
+    #[default]
     ShellGlob,
     /// Special characters in the pattern, like `*` or `?`, are treated literally, effectively turning off globbing.
     Literal,
     /// A single `*` will not match a `/` in the pattern, but a `**` will
     PathAwareGlob,
-}
-
-impl Default for MatchMode {
-    fn default() -> Self {
-        MatchMode::ShellGlob
-    }
 }
 
 /// Parse a git-style pathspec into a [`Pattern`][Pattern].

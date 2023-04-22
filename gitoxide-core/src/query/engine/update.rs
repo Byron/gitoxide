@@ -64,9 +64,6 @@ pub fn update(
     traverse_progress.init(None, progress::count("commits"));
 
     let out = std::thread::scope(|scope| -> anyhow::Result<_> {
-        struct Commit {
-            id: gix::hash::ObjectId,
-        }
         struct CommitDiffStats {
             /// The id of the commit which was diffed with its predecessor
             id: gix::hash::ObjectId,

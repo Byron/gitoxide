@@ -139,7 +139,7 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
             git_dir: dot_git.into_owned(),
         },
         Kind::MaybeRepo => {
-            if bare(git_dir) {
+            if bare(git_dir) || git_dir.extension() == Some(OsStr::new("git")) {
                 crate::repository::Kind::Bare
             } else if submodule_git_dir(git_dir) {
                 crate::repository::Kind::SubmoduleGitDir

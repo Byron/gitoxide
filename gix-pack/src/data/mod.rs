@@ -48,18 +48,13 @@ pub mod output;
 pub type EntryRange = std::ops::Range<Offset>;
 
 /// Supported versions of a pack data file
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
 pub enum Version {
+    #[default]
     V2,
     V3,
-}
-
-impl Default for Version {
-    fn default() -> Self {
-        Version::V2
-    }
 }
 
 /// A pack data file

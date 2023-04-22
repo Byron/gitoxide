@@ -17,20 +17,17 @@ pub(crate) enum SignatureKind {
     Committer,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Default, Copy, Clone)]
 pub(crate) enum State {
+    #[default]
     Tree,
     Parents,
-    Signature { of: SignatureKind },
+    Signature {
+        of: SignatureKind,
+    },
     Encoding,
     ExtraHeaders,
     Message,
-}
-
-impl Default for State {
-    fn default() -> Self {
-        State::Tree
-    }
 }
 
 impl<'a> CommitRefIter<'a> {

@@ -1,11 +1,12 @@
 use crate::Spec;
 
 /// How to interpret a revision specification, or `revspec`.
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Hash)]
+#[derive(Default, Debug, Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
     /// Include commits reachable from this revision, the default when parsing revision `a` for example, i.e. `a` and its ancestors.
     /// Example: `a`.
+    #[default]
     IncludeReachable,
     /// Exclude commits reachable from this revision, i.e. `a` and its ancestors. Example: `^a`.
     ExcludeReachable,
@@ -17,12 +18,6 @@ pub enum Kind {
     IncludeReachableFromParents,
     /// Exclude every commit of all parents of `a`, but not `a` itself. Example: `a^!`.
     ExcludeReachableFromParents,
-}
-
-impl Default for Kind {
-    fn default() -> Self {
-        Kind::IncludeReachable
-    }
 }
 
 impl Spec {
