@@ -11,7 +11,7 @@ fn is_path_owned_by_current_user() -> crate::Result {
 #[test]
 #[cfg(windows)]
 fn windows_home() -> crate::Result {
-    let home = home::home_dir().expect("home dir is available");
+    let home = gix_path::env::home_dir().expect("home dir is available");
     assert!(gix_sec::identity::is_path_owned_by_current_user(home)?);
     Ok(())
 }

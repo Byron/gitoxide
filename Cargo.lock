@@ -2214,7 +2214,6 @@ dependencies = [
  "bitflags 2.1.0",
  "document-features",
  "gix-path 0.7.3",
- "home",
  "libc",
  "serde",
  "tempfile",
