@@ -176,7 +176,7 @@ impl Cache {
             attributes: self.assemble_attribute_globals(
                 git_dir,
                 case,
-                gix_worktree::cache::state::attributes::Source::AttributeListThenWorktree,
+                gix_worktree::cache::state::attributes::Source::IdMappingThenWorktree,
                 self.attributes,
             )?,
             fs: capabilities,
