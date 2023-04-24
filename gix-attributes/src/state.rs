@@ -64,10 +64,10 @@ impl Value {
 }
 
 /// Access
-impl State {
+impl StateRef<'_> {
     /// Return `true` if the associated attribute was set to be unspecified using the `!attr` prefix or it wasn't mentioned.
     pub fn is_unspecified(&self) -> bool {
-        matches!(self, State::Unspecified)
+        matches!(self, StateRef::Unspecified)
     }
 }
 

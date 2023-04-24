@@ -1,21 +1,20 @@
-use std::{borrow::Cow, path::Path};
-
 use bstr::{BString, ByteSlice};
 use gix_glob::Pattern;
 use kstring::{KString, KStringRef};
 
+use crate::search::refmap::RefMapKey;
 use crate::{
     search::{
-        Assignments, AttributeId, Attributes, Match, MatchKind, MatchLocation, Metadata, MetadataCollection, Outcome,
-        TrackedAssignment, Value,
+        Assignments, AttributeId, Attributes, MatchKind, Metadata, MetadataCollection, Outcome, TrackedAssignment,
+        Value,
     },
-    Assignment, NameRef, State,
+    AssignmentRef, NameRef, StateRef,
 };
 
 /// Initialization
-impl<'pattern> Outcome<'pattern> {
+impl Outcome {
     /// Initialize this instance to collect outcomes for all names in `collection`, which represents all possible attributes
-    /// or macros we may visit.
+    /// or macros we may visit, and [`reset`][Self::reset()] it unconditionally.
     ///
     /// This must be called after each time `collection` changes.
     pub fn initialize(&mut self, collection: &MetadataCollection) {
@@ -74,7 +73,7 @@ impl<'pattern> Outcome<'pattern> {
 }
 
 /// Access
-impl<'pattern> Outcome<'pattern> {
+impl Outcome {
     /// Return an iterator over all filled attributes we were initialized with.
     ///
     /// ### Note
@@ -88,47 +87,54 @@ impl<'pattern> Outcome<'pattern> {
     /// the same as what `git` provides.
     /// Ours is in order of declaration, whereas `git` seems to list macros first somehow. Since the values are the same, this
     /// shouldn't be an issue.
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &'a Match<'pattern>> + 'a {
-        self.matches_by_id.iter().filter_map(|item| item.r#match.as_ref())
+    pub fn iter(&self) -> impl Iterator<Item = crate::search::Match<'_>> {
+        self.matches_by_id
+            .iter()
+            .filter_map(|item| item.r#match.as_ref().map(|m| m.to_outer(self)))
     }
 
     /// Iterate over all matches of the attribute selection in their original order.
-    pub fn iter_selected<'a>(&'a self) -> impl Iterator<Item = Cow<'a, Match<'pattern>>> + 'a {
+    ///
+    /// This only yields values if this instance was initialized with [`Outcome::initialize_with_selection()`].
+    pub fn iter_selected(&self) -> impl Iterator<Item = crate::search::Match<'_>> {
         static DUMMY: Pattern = Pattern {
             text: BString::new(Vec::new()),
             mode: gix_glob::pattern::Mode::empty(),
             first_wildcard_pos: None,
         };
         self.selected.iter().map(|(name, id)| {
-            id.and_then(|id| self.matches_by_id[id.0].r#match.as_ref())
-                .map(Cow::Borrowed)
-                .unwrap_or_else(|| {
-                    Cow::Owned(Match {
-                        pattern: &DUMMY,
-                        assignment: Assignment {
-                            name: NameRef::try_from(name.as_bytes().as_bstr())
-                                .unwrap_or_else(|_| NameRef("invalid".into()))
-                                .to_owned(),
-                            state: State::Unspecified,
-                        },
-                        kind: MatchKind::Attribute { macro_id: None },
-                        location: MatchLocation {
-                            source: None,
-                            sequence_number: 0,
-                        },
-                    })
+            id.and_then(|id| self.matches_by_id[id.0].r#match.as_ref().map(|m| m.to_outer(self)))
+                .unwrap_or_else(|| crate::search::Match {
+                    pattern: &DUMMY,
+                    assignment: AssignmentRef {
+                        name: NameRef::try_from(name.as_bytes().as_bstr())
+                            .unwrap_or_else(|_| NameRef("invalid".into())),
+                        state: StateRef::Unspecified,
+                    },
+                    kind: MatchKind::Attribute { macro_id: None },
+                    location: crate::search::MatchLocation {
+                        source: None,
+                        sequence_number: 0,
+                    },
                 })
         })
     }
 
     /// Obtain a match by the order of its attribute, if the order exists in our initialized attribute list and there was a match.
-    pub fn match_by_id(&self, id: AttributeId) -> Option<&Match<'pattern>> {
-        self.matches_by_id.get(id.0).and_then(|m| m.r#match.as_ref())
+    pub fn match_by_id(&self, id: AttributeId) -> Option<crate::search::Match<'_>> {
+        self.matches_by_id
+            .get(id.0)
+            .and_then(|m| m.r#match.as_ref().map(|m| m.to_outer(self)))
+    }
+
+    /// Return `true` if there is nothing more to be done as all attributes were filled.
+    pub fn is_done(&self) -> bool {
+        self.remaining() == 0
     }
 }
 
 /// Mutation
-impl<'pattern> Outcome<'pattern> {
+impl Outcome {
     /// Fill all `attrs` and resolve them recursively if they are macros. Return `true` if there is no attribute left to be resolved and
     /// we are totally done.
     /// `pattern` is what matched a patch and is passed for contextual information,
@@ -136,8 +142,8 @@ impl<'pattern> Outcome<'pattern> {
     pub(crate) fn fill_attributes<'a>(
         &mut self,
         attrs: impl Iterator<Item = &'a TrackedAssignment>,
-        pattern: &'pattern gix_glob::Pattern,
-        source: Option<&'pattern Path>,
+        pattern: &gix_glob::Pattern,
+        source: Option<&std::path::PathBuf>,
         sequence_number: usize,
     ) -> bool {
         self.attrs_stack.extend(attrs.filter_map(|attr| {
@@ -155,8 +161,8 @@ impl<'pattern> Outcome<'pattern> {
             let is_macro = !slot.macro_attributes.is_empty();
 
             slot.r#match = Some(Match {
-                pattern,
-                assignment: assignment.to_owned(),
+                pattern: self.patterns.insert(pattern),
+                assignment: self.assignments.insert_owned(assignment),
                 kind: if is_macro {
                     MatchKind::Macro {
                         parent_macro_id: parent_order,
@@ -165,7 +171,7 @@ impl<'pattern> Outcome<'pattern> {
                     MatchKind::Attribute { macro_id: parent_order }
                 },
                 location: MatchLocation {
-                    source,
+                    source: source.map(|path| self.source_paths.insert(path)),
                     sequence_number,
                 },
             });
@@ -188,7 +194,7 @@ impl<'pattern> Outcome<'pattern> {
     }
 }
 
-impl<'attr> Outcome<'attr> {
+impl Outcome {
     /// Given a list of `attrs` by order, return true if at least one of them is not set
     pub(crate) fn has_unspecified_attributes(&self, mut attrs: impl Iterator<Item = AttributeId>) -> bool {
         attrs.any(|order| self.matches_by_id[order.0].r#match.is_none())
@@ -199,11 +205,6 @@ impl<'attr> Outcome<'attr> {
     pub(crate) fn remaining(&self) -> usize {
         self.remaining
             .expect("BUG: instance must be initialized for each search set")
-    }
-
-    /// Return true if there is nothing more to be done as all attributes were filled.
-    pub(crate) fn is_done(&self) -> bool {
-        self.remaining() == 0
     }
 
     fn reduce_and_check_if_done(&mut self, attr: AttributeId) -> bool {
@@ -311,6 +312,54 @@ impl MatchKind {
     pub fn source_id(&self) -> Option<AttributeId> {
         match self {
             MatchKind::Attribute { macro_id: id } | MatchKind::Macro { parent_macro_id: id } => *id,
+        }
+    }
+}
+
+/// A version of `Match` without references.
+#[derive(Clone, PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+pub struct Match {
+    /// The glob pattern itself, like `/target/*`.
+    pub pattern: RefMapKey,
+    /// The key=value pair of the attribute that matched at the pattern. There can be multiple matches per pattern.
+    pub assignment: RefMapKey,
+    /// Additional information about the kind of match.
+    pub kind: MatchKind,
+    /// Information about the location of the match.
+    pub location: MatchLocation,
+}
+
+impl Match {
+    fn to_outer<'a>(&self, out: &'a Outcome) -> crate::search::Match<'a> {
+        crate::search::Match {
+            pattern: out.patterns.resolve(self.pattern).expect("pattern still present"),
+            assignment: out
+                .assignments
+                .resolve(self.assignment)
+                .expect("assignment present")
+                .as_ref(),
+            kind: self.kind,
+            location: self.location.to_outer(out),
+        }
+    }
+}
+
+/// A version of `MatchLocation` without references.
+#[derive(Clone, PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+pub struct MatchLocation {
+    /// The path to the source from which the pattern was loaded, or `None` if it was specified by other means.
+    pub source: Option<RefMapKey>,
+    /// The line at which the pattern was found in its `source` file, or the occurrence in which it was provided.
+    pub sequence_number: usize,
+}
+
+impl MatchLocation {
+    fn to_outer<'a>(&self, out: &'a Outcome) -> crate::search::MatchLocation<'a> {
+        crate::search::MatchLocation {
+            source: self
+                .source
+                .and_then(|source| out.source_paths.resolve(source).map(|p| p.as_path())),
+            sequence_number: self.sequence_number,
         }
     }
 }

@@ -61,9 +61,11 @@ impl<T> List<T>
 where
     T: Pattern,
 {
-    /// `source` is the location of the `bytes` which represent a list of patterns line by line.
-    pub fn from_bytes(bytes: &[u8], source: impl Into<PathBuf>, root: Option<&Path>) -> Self {
-        let source = source.into();
+    /// `source_file` is the location of the `bytes` which represents a list of patterns, one pattern per line.
+    /// If `root` is `Some(…)` it's used to see `source_file` as relative to itself, if `source_file` is absolute.
+    /// If source is relative and should be treated as base, set `root` to `Some("")`.
+    pub fn from_bytes(bytes: &[u8], source_file: impl Into<PathBuf>, root: Option<&Path>) -> Self {
+        let source = source_file.into();
         let patterns = T::bytes_to_patterns(bytes, source.as_path());
 
         let base = root
@@ -114,24 +116,37 @@ where
         case: Case,
     ) -> Option<(&'a BStr, Option<usize>)> {
         match self.base.as_deref() {
-            Some(base) => (
-                match case {
-                    Case::Sensitive => relative_path.strip_prefix(base.as_slice())?.as_bstr(),
-                    Case::Fold => {
-                        let rela_dir = relative_path.get(..base.len())?;
-                        if !rela_dir.eq_ignore_ascii_case(base) {
-                            return None;
-                        }
-                        &relative_path[base.len()..]
-                    }
-                },
-                basename_pos.and_then(|pos| {
-                    let pos = pos - base.len();
-                    (pos != 0).then_some(pos)
-                }),
-            ),
+            Some(base) => strip_base_handle_recompute_basename_pos(base.as_bstr(), relative_path, basename_pos, case)?,
             None => (relative_path, basename_pos),
         }
         .into()
     }
+}
+
+///  Return`relative_path` as being relative to `base` along with an updated `basename_pos` if it was set.
+/// `case` is respected for the comparison.
+///
+/// This is useful to turn repository-relative paths into paths relative to a particular search base.
+pub fn strip_base_handle_recompute_basename_pos<'a>(
+    base: &BStr,
+    relative_path: &'a BStr,
+    basename_pos: Option<usize>,
+    case: Case,
+) -> Option<(&'a BStr, Option<usize>)> {
+    Some((
+        match case {
+            Case::Sensitive => relative_path.strip_prefix(base.as_bytes())?.as_bstr(),
+            Case::Fold => {
+                let rela_dir = relative_path.get(..base.len())?;
+                if !rela_dir.eq_ignore_ascii_case(base) {
+                    return None;
+                }
+                &relative_path[base.len()..]
+            }
+        },
+        basename_pos.and_then(|pos| {
+            let pos = pos - base.len();
+            (pos != 0).then_some(pos)
+        }),
+    ))
 }

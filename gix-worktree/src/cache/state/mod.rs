@@ -3,14 +3,13 @@ use std::path::PathBuf;
 use bstr::ByteSlice;
 use gix_glob::pattern::Case;
 
-use crate::{cache::State, PathOidMapping};
+use crate::{cache::State, PathIdMapping};
 
 type AttributeMatchGroup = gix_attributes::Search;
 type IgnoreMatchGroup = gix_ignore::Search;
 
 /// State related to attributes associated with files in the repository.
 #[derive(Default, Clone)]
-#[allow(unused)]
 pub struct Attributes {
     /// Attribute patterns which aren't tied to the repository root, hence are global, they contribute first.
     globals: AttributeMatchGroup,
@@ -38,7 +37,7 @@ pub use ignore::Ignore;
 
 /// Initialization
 impl State {
-    /// Configure a state to be suitable for checking out files.
+    /// Configure a state to be suitable for checking out files, which only needs access to attribute files read from the index.
     pub fn for_checkout(unlink_on_collision: bool, attributes: Attributes) -> Self {
         State::CreateDirectoryAndAttributesStack {
             unlink_on_collision,
@@ -48,12 +47,12 @@ impl State {
         }
     }
 
-    /// Configure a state for adding files.
+    /// Configure a state for adding files, with support for ignore files and attribute files.
     pub fn for_add(attributes: Attributes, ignore: Ignore) -> Self {
         State::AttributesAndIgnoreStack { attributes, ignore }
     }
 
-    /// Configure a state for status retrieval.
+    /// Configure a state for status retrieval, which needs access to ignore files only.
     pub fn for_status(ignore: Ignore) -> Self {
         State::IgnoreStack(ignore)
     }
@@ -61,17 +60,24 @@ impl State {
 
 /// Utilities
 impl State {
-    /// Returns a vec of tuples of relative index paths along with the best usable OID for either ignore, attribute files or both.
+    /// Returns a vec of tuples of relative index paths along with the best usable blob OID for
+    /// either *ignore* or *attribute* files or both. This allows files to be accessed directly from
+    /// the object database without the need for a worktree checkout.
     ///
-    /// - ignores entries which aren't blobs
-    /// - ignores ignore entries which are not skip-worktree
-    /// - within merges, picks 'our' stage both for ignore and attribute files.
-    pub fn attribute_list_from_index(
+    /// Note that this method…
+    /// - ignores entries which aren't blobs.
+    /// - ignores ignore entries which are not skip-worktree.
+    /// - within merges, picks 'our' stage both for *ignore* and *attribute* files.
+    ///
+    /// * `index` is where we look for suitable files by path in order to obtain their blob hash.
+    /// * `paths` is the indices storage backend for paths.
+    /// * `case` determines if the search for files should be case-sensitive or not.
+    pub fn id_mappings_from_index(
         &self,
         index: &gix_index::State,
         paths: &gix_index::PathStorageRef,
         case: Case,
-    ) -> Vec<PathOidMapping> {
+    ) -> Vec<PathIdMapping> {
         let a1_backing;
         let a2_backing;
         let names = match self {
@@ -129,6 +135,16 @@ impl State {
             State::IgnoreStack(v) => v,
             State::AttributesAndIgnoreStack { ignore, .. } => ignore,
             State::CreateDirectoryAndAttributesStack { .. } => {
+                unreachable!("BUG: must not try to check excludes without it being setup")
+            }
+        }
+    }
+
+    pub(crate) fn attributes_or_panic(&self) -> &Attributes {
+        match self {
+            State::AttributesAndIgnoreStack { attributes, .. }
+            | State::CreateDirectoryAndAttributesStack { attributes, .. } => attributes,
+            State::IgnoreStack(_) => {
                 unreachable!("BUG: must not try to check excludes without it being setup")
             }
         }

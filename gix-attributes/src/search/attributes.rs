@@ -11,11 +11,14 @@ use crate::{
 
 /// Instantiation and initialization.
 impl Search {
-    /// Create a search instance preloaded with *built-ins* as well as attribute `files` from various global locations.
+    /// Create a search instance preloaded with *built-ins* followed by attribute `files` from various global locations.
+    ///
     /// See [`Source`][crate::Source] for a way to obtain these paths.
+    ///
     /// Note that parsing is lenient and errors are logged.
-    /// `buf` is used to read `files` from disk which will be ignored if they do not exist.
-    /// `collection` will be updated with information necessary to perform lookups later.
+    ///
+    /// * `buf` is used to read `files` from disk which will be ignored if they do not exist.
+    /// * `collection` will be updated with information necessary to perform lookups later.
     pub fn new_globals(
         files: impl IntoIterator<Item = impl Into<PathBuf>>,
         buf: &mut Vec<u8>,
@@ -36,7 +39,7 @@ impl Search {
     /// Add the given file at `source` to our patterns if it exists, otherwise do nothing.
     /// Update `collection` with newly added attribute names.
     /// If a `root` is provided, it's not considered a global file anymore.
-    /// Returns true if the file was added, or false if it didn't exist.
+    /// Returns `true` if the file was added, or `false` if it didn't exist.
     pub fn add_patterns_file(
         &mut self,
         source: impl Into<PathBuf>,
@@ -63,17 +66,22 @@ impl Search {
         self.patterns.push(pattern::List::from_bytes(bytes, source, root));
         collection.update_from_list(self.patterns.last_mut().expect("just added"));
     }
+
+    /// Pop the last attribute patterns list from our queue.
+    pub fn pop_pattern_list(&mut self) -> Option<gix_glob::search::pattern::List<Attributes>> {
+        self.patterns.pop()
+    }
 }
 
 /// Access and matching
 impl Search {
     /// Match `relative_path`, a path relative to the repository, while respective `case`-sensitivity and write them to `out`
-    /// Return true if at least one pattern matched.
+    /// Return `true` if at least one pattern matched.
     pub fn pattern_matching_relative_path<'a, 'b>(
         &'a self,
         relative_path: impl Into<&'b BStr>,
         case: gix_glob::pattern::Case,
-        out: &mut Outcome<'a>,
+        out: &mut Outcome,
     ) -> bool {
         let relative_path = relative_path.into();
         let basename_pos = relative_path.rfind(b"/").map(|p| p + 1);
@@ -166,12 +174,12 @@ fn macro_mode() -> gix_glob::pattern::Mode {
 /// `is_dir` is true if `relative_path` is a directory.
 /// Return `true` if at least one pattern matched.
 #[allow(unused_variables)]
-fn pattern_matching_relative_path<'a>(
-    list: &'a gix_glob::search::pattern::List<Attributes>,
+fn pattern_matching_relative_path(
+    list: &gix_glob::search::pattern::List<Attributes>,
     relative_path: &BStr,
     basename_pos: Option<usize>,
     case: gix_glob::pattern::Case,
-    out: &mut Outcome<'a>,
+    out: &mut Outcome,
 ) -> bool {
     let (relative_path, basename_start_pos) =
         match list.strip_base_handle_recompute_basename_pos(relative_path, basename_pos, case) {
@@ -199,7 +207,7 @@ fn pattern_matching_relative_path<'a>(
         if out.has_unspecified_attributes(attrs.iter().map(|attr| attr.id))
             && pattern.matches_repo_relative_path(relative_path, basename_start_pos, None, case)
         {
-            let all_filled = out.fill_attributes(attrs.iter(), pattern, list.source.as_deref(), *sequence_number);
+            let all_filled = out.fill_attributes(attrs.iter(), pattern, list.source.as_ref(), *sequence_number);
             if all_filled {
                 break 'outer;
             }

@@ -1,10 +1,8 @@
 use std::path::Path;
 
+use crate::{cache::state::IgnoreMatchGroup, PathIdMapping};
 use bstr::{BStr, BString, ByteSlice};
 use gix_glob::pattern::Case;
-use gix_hash::oid;
-
-use crate::{cache::state::IgnoreMatchGroup, PathOidMapping};
 
 /// State related to the exclusion of files.
 #[derive(Default, Clone)]
@@ -25,7 +23,7 @@ pub struct Ignore {
     pub(crate) exclude_file_name_for_directories: BString,
     /// The case to use when matching directories as they are pushed onto the stack. We run them against the exclude engine
     /// to know if an entire path can be ignored as a parent directory is ignored.
-    case: Case,
+    pub(crate) case: Case,
 }
 
 impl Ignore {
@@ -103,7 +101,7 @@ impl Ignore {
         groups
             .iter()
             .rev()
-            .find_map(|group| group.pattern_matching_relative_path(relative_path.as_bytes(), is_dir, case))
+            .find_map(|group| group.pattern_matching_relative_path(relative_path, is_dir, case))
             .or(dir_match)
     }
 
@@ -142,21 +140,31 @@ impl Ignore {
         root: &Path,
         dir: &Path,
         buf: &mut Vec<u8>,
-        attribute_files_in_index: &[PathOidMapping],
+        id_mappings: &[PathIdMapping],
         mut find: Find,
     ) -> std::io::Result<()>
     where
-        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
+        Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let rela_dir = dir.strip_prefix(root).expect("dir in root");
+        let dir_bstr = gix_path::into_bstr(dir);
+        let mut rela_dir = gix_glob::search::pattern::strip_base_handle_recompute_basename_pos(
+            gix_path::into_bstr(root).as_ref(),
+            dir_bstr.as_ref(),
+            None,
+            self.case,
+        )
+        .expect("dir in root")
+        .0;
+        if rela_dir.starts_with(b"/") {
+            rela_dir = &rela_dir[1..];
+        }
         self.matched_directory_patterns_stack
-            .push(self.matching_exclude_pattern_no_dir(gix_path::into_bstr(rela_dir).as_ref(), Some(true), self.case));
+            .push(self.matching_exclude_pattern_no_dir(rela_dir, Some(true), self.case));
 
-        let ignore_path_relative = rela_dir.join(".gitignore");
-        let ignore_path_relative = gix_path::to_unix_separators_on_windows(gix_path::into_bstr(ignore_path_relative));
-        let ignore_file_in_index =
-            attribute_files_in_index.binary_search_by(|t| t.0.as_bstr().cmp(ignore_path_relative.as_ref()));
+        let ignore_path_relative =
+            gix_path::to_unix_separators_on_windows(gix_path::join_bstr_unix_pathsep(rela_dir, ".gitignore"));
+        let ignore_file_in_index = id_mappings.binary_search_by(|t| t.0.as_bstr().cmp(ignore_path_relative.as_ref()));
         let follow_symlinks = ignore_file_in_index.is_err();
         if !gix_glob::search::add_patterns_file(
             &mut self.stack.patterns,
@@ -167,11 +175,11 @@ impl Ignore {
         )? {
             match ignore_file_in_index {
                 Ok(idx) => {
-                    let ignore_blob = find(&attribute_files_in_index[idx].1, buf)
+                    let ignore_blob = find(&id_mappings[idx].1, buf)
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                     let ignore_path = gix_path::from_bstring(ignore_path_relative.into_owned());
                     self.stack
-                        .add_patterns_buffer(ignore_blob.data, ignore_path, Some(root));
+                        .add_patterns_buffer(ignore_blob.data, ignore_path, Some(Path::new("")));
                 }
                 Err(_) => {
                     // Need one stack level per component so push and pop matches.

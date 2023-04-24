@@ -103,7 +103,7 @@ fn baseline() -> crate::Result {
         assert_references(&actual);
         let actual: Vec<_> = actual
             .iter()
-            .filter_map(|m| (!m.assignment.state.is_unspecified()).then(|| m.assignment.as_ref()))
+            .filter_map(|m| (!m.assignment.state.is_unspecified()).then_some(m.assignment))
             .collect();
         assert_eq!(actual, expected, "we have the same matches: {rela_path:?}");
         assert_ne!(has_match, actual.is_empty());
@@ -196,7 +196,7 @@ fn all_attributes_are_listed_in_declaration_order() -> crate::Result {
         out.reset();
         group.pattern_matching_relative_path(rela_path, Case::Sensitive, &mut out);
         assert_references(&out);
-        let actual: Vec<_> = out.iter().map(|m| m.assignment.as_ref()).collect();
+        let actual: Vec<_> = out.iter().map(|m| m.assignment).collect();
         assert_eq!(
             by_name(actual),
             by_name(expected),
@@ -226,10 +226,9 @@ fn given_attributes_are_made_available_in_given_order() -> crate::Result {
         out.reset();
         group.pattern_matching_relative_path(rela_path, Case::Sensitive, &mut out);
         assert_references(&out);
-        let actual: Vec<_> = out.iter_selected().map(|m| m.into_owned().assignment).collect();
+        let actual: Vec<_> = out.iter_selected().map(|m| m.assignment).collect();
         assert_eq!(
-            actual.iter().map(|a| a.as_ref()).collect::<Vec<_>>(),
-            expected,
+            actual, expected,
             "{rela_path}: the order of everything matches perfectly"
         );
     }
@@ -241,7 +240,7 @@ fn given_attributes_are_made_available_in_given_order() -> crate::Result {
     Ok(())
 }
 
-fn by_name(assignments: Vec<AssignmentRef<'_>>) -> BTreeMap<NameRef<'_>, StateRef<'_>> {
+fn by_name(assignments: Vec<AssignmentRef>) -> BTreeMap<NameRef, StateRef> {
     assignments.into_iter().map(|a| (a.name, a.state)).collect()
 }
 
@@ -258,6 +257,8 @@ fn assignments<'a>(
 
 mod baseline {
     use bstr::{BStr, ByteSlice};
+    use gix_attributes::{search::MetadataCollection, AssignmentRef, StateRef};
+    use std::path::PathBuf;
 
     /// Read user-attributes and baseline in one go.
     pub fn user_attributes_named_baseline(
@@ -274,9 +275,6 @@ mod baseline {
 
         Ok((group, collection, base, input))
     }
-    use std::path::PathBuf;
-
-    use gix_attributes::{search::MetadataCollection, AssignmentRef, StateRef};
 
     /// Read user-attributes and baseline in one go.
     pub fn user_attributes(

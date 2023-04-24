@@ -82,6 +82,16 @@ pub fn into_bstr<'a>(path: impl Into<Cow<'a, Path>>) -> Cow<'a, BStr> {
     try_into_bstr(path).expect("prefix path doesn't contain ill-formed UTF-8")
 }
 
+/// Join `path` to `base` such that they are separated with a `/`, i.e. `base/path`.
+pub fn join_bstr_unix_pathsep<'a, 'b>(base: impl Into<Cow<'a, BStr>>, path: impl Into<&'b BStr>) -> Cow<'a, BStr> {
+    let mut base = base.into();
+    if base.last() != Some(&b'/') {
+        base.to_mut().push(b'/');
+    }
+    base.to_mut().extend_from_slice(path.into());
+    base
+}
+
 /// Given `input` bytes, produce a `Path` from them ignoring encoding entirely if on unix.
 ///
 /// On windows, the input is required to be valid UTF-8, which is guaranteed if we wrote it before. There are some potential
