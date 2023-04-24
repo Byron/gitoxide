@@ -81,7 +81,7 @@ impl Search {
         &'a self,
         relative_path: impl Into<&'b BStr>,
         case: gix_glob::pattern::Case,
-        out: &mut Outcome<'a>,
+        out: &mut Outcome,
     ) -> bool {
         let relative_path = relative_path.into();
         let basename_pos = relative_path.rfind(b"/").map(|p| p + 1);
@@ -174,12 +174,12 @@ fn macro_mode() -> gix_glob::pattern::Mode {
 /// `is_dir` is true if `relative_path` is a directory.
 /// Return `true` if at least one pattern matched.
 #[allow(unused_variables)]
-fn pattern_matching_relative_path<'a>(
-    list: &'a gix_glob::search::pattern::List<Attributes>,
+fn pattern_matching_relative_path(
+    list: &gix_glob::search::pattern::List<Attributes>,
     relative_path: &BStr,
     basename_pos: Option<usize>,
     case: gix_glob::pattern::Case,
-    out: &mut Outcome<'a>,
+    out: &mut Outcome,
 ) -> bool {
     let (relative_path, basename_start_pos) =
         match list.strip_base_handle_recompute_basename_pos(relative_path, basename_pos, case) {
@@ -207,7 +207,7 @@ fn pattern_matching_relative_path<'a>(
         if out.has_unspecified_attributes(attrs.iter().map(|attr| attr.id))
             && pattern.matches_repo_relative_path(relative_path, basename_start_pos, None, case)
         {
-            let all_filled = out.fill_attributes(attrs.iter(), pattern, list.source.as_deref(), *sequence_number);
+            let all_filled = out.fill_attributes(attrs.iter(), pattern, list.source.as_ref(), *sequence_number);
             if all_filled {
                 break 'outer;
             }
