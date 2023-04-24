@@ -258,6 +258,8 @@ fn assignments<'a>(
 
 mod baseline {
     use bstr::{BStr, ByteSlice};
+    use gix_attributes::{search::MetadataCollection, AssignmentRef, StateRef};
+    use std::path::PathBuf;
 
     /// Read user-attributes and baseline in one go.
     pub fn user_attributes_named_baseline(
@@ -274,9 +276,6 @@ mod baseline {
 
         Ok((group, collection, base, input))
     }
-    use std::path::PathBuf;
-
-    use gix_attributes::{search::MetadataCollection, AssignmentRef, StateRef};
 
     /// Read user-attributes and baseline in one go.
     pub fn user_attributes(

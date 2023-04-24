@@ -15,7 +15,7 @@ use crate::{
 /// Initialization
 impl<'pattern> Outcome<'pattern> {
     /// Initialize this instance to collect outcomes for all names in `collection`, which represents all possible attributes
-    /// or macros we may visit.
+    /// or macros we may visit, and [`reset`][Self::reset()] it unconditionally.
     ///
     /// This must be called after each time `collection` changes.
     pub fn initialize(&mut self, collection: &MetadataCollection) {
@@ -125,6 +125,11 @@ impl<'pattern> Outcome<'pattern> {
     pub fn match_by_id(&self, id: AttributeId) -> Option<&Match<'pattern>> {
         self.matches_by_id.get(id.0).and_then(|m| m.r#match.as_ref())
     }
+
+    /// Return `true` if there is nothing more to be done as all attributes were filled.
+    pub fn is_done(&self) -> bool {
+        self.remaining() == 0
+    }
 }
 
 /// Mutation
@@ -199,11 +204,6 @@ impl<'attr> Outcome<'attr> {
     pub(crate) fn remaining(&self) -> usize {
         self.remaining
             .expect("BUG: instance must be initialized for each search set")
-    }
-
-    /// Return true if there is nothing more to be done as all attributes were filled.
-    pub(crate) fn is_done(&self) -> bool {
-        self.remaining() == 0
     }
 
     fn reduce_and_check_if_done(&mut self, attr: AttributeId) -> bool {
