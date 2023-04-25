@@ -198,6 +198,7 @@ impl Cache {
         &self,
         git_dir: &std::path::Path,
         overrides: Option<gix_ignore::Search>,
+        source: gix_worktree::cache::state::ignore::Source,
         buf: &mut Vec<u8>,
     ) -> Result<gix_worktree::cache::state::Ignore, config::exclude_stack::Error> {
         let excludes_file = match self.excludes_file().transpose()? {
@@ -208,6 +209,7 @@ impl Cache {
             overrides.unwrap_or_default(),
             gix_ignore::Search::from_git_dir(git_dir, excludes_file, buf)?,
             None,
+            source,
         ))
     }
     // TODO: at least one test, maybe related to core.attributesFile configuration.

@@ -118,7 +118,11 @@ pub mod excludes {
         /// [`Worktree::attributes()`][crate::Worktree::attributes()] for accessing both attributes and excludes.
         pub fn excludes(&self, overrides: Option<gix_ignore::Search>) -> Result<gix_worktree::Cache, Error> {
             let index = self.index()?;
-            Ok(self.parent.excludes(&index, overrides)?)
+            Ok(self.parent.excludes(
+                &index,
+                overrides,
+                gix_worktree::cache::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
+            )?)
         }
     }
 }
@@ -138,20 +142,18 @@ pub mod attributes {
     impl<'repo> crate::Worktree<'repo> {
         /// Configure a file-system cache checking if files below the repository are excluded or for querying their attributes.
         ///
-        /// Use `attribute_source` to specify where to read attributes from. Also note that exclude information will
-        /// always try to read `.gitignore` files from disk before trying to read it from the `index`.
-        ///
         /// This takes into consideration all the usual repository configuration, namely:
         ///
         /// * `$XDG_CONFIG_HOME/…/ignore|attributes` if `core.excludesFile|attributesFile` is *not* set, otherwise use the configured file.
         /// * `$GIT_DIR/info/exclude|attributes` if present.
-        pub fn attributes(
-            &self,
-            source: gix_worktree::cache::state::attributes::Source,
-            overrides: Option<gix_ignore::Search>,
-        ) -> Result<gix_worktree::Cache, Error> {
+        pub fn attributes(&self, overrides: Option<gix_ignore::Search>) -> Result<gix_worktree::Cache, Error> {
             let index = self.index()?;
-            Ok(self.parent.attributes(&index, source, overrides)?)
+            Ok(self.parent.attributes(
+                &index,
+                gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
+                gix_worktree::cache::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
+                overrides,
+            )?)
         }
     }
 }

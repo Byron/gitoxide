@@ -1,7 +1,8 @@
 //! exclude information
 use crate::{config, Repository};
 impl Repository {
-    /// Configure a file-system cache checking if files below the repository are excluded.
+    /// Configure a file-system cache checking if files below the repository are excluded, reading `.gitignore` files from
+    /// the specified `source`.
     ///
     /// Note that no worktree is required for this to work, even though access to in-tree `.gitignore` files would require
     /// a non-empty `index` that represents a tree with `.gitignore` files.
@@ -19,6 +20,7 @@ impl Repository {
         &self,
         index: &gix_index::State,
         overrides: Option<gix_ignore::Search>,
+        source: gix_worktree::cache::state::ignore::Source,
     ) -> Result<gix_worktree::Cache, config::exclude_stack::Error> {
         let case = if self.config.ignore_case {
             gix_glob::pattern::Case::Fold
@@ -28,9 +30,9 @@ impl Repository {
         let mut buf = Vec::with_capacity(512);
         let ignore = self
             .config
-            .assemble_exclude_globals(self.git_dir(), overrides, &mut buf)?;
+            .assemble_exclude_globals(self.git_dir(), overrides, source, &mut buf)?;
         let state = gix_worktree::cache::State::IgnoreStack(ignore);
-        let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
+        let attribute_list = state.id_mappings_from_index(index, index.path_backing(), source, case);
         Ok(gix_worktree::Cache::new(
             // this is alright as we don't cause mutation of that directory, it's virtual.
             self.work_dir().unwrap_or(self.git_dir()),

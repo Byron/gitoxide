@@ -32,7 +32,11 @@ pub fn query(
     }
 
     let index = repo.index()?;
-    let mut cache = repo.excludes(&index, Some(gix::ignore::Search::from_overrides(overrides)))?;
+    let mut cache = repo.excludes(
+        &index,
+        Some(gix::ignore::Search::from_overrides(overrides)),
+        Default::default(),
+    )?;
 
     let prefix = repo.prefix().expect("worktree - we have an index by now")?;
 
