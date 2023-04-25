@@ -4,7 +4,8 @@ use crate::{cache::state::IgnoreMatchGroup, PathIdMapping};
 use bstr::{BStr, BString, ByteSlice};
 use gix_glob::pattern::Case;
 
-/// State related to the exclusion of files.
+/// State related to the exclusion of files, supporting static overrides and globals, along with a stack of dynamically read
+/// ignore files from disk or from the index each time the directory changes.
 #[derive(Default, Clone)]
 #[allow(unused)]
 pub struct Ignore {
@@ -21,25 +22,20 @@ pub struct Ignore {
     matched_directory_patterns_stack: Vec<Option<(usize, usize, usize)>>,
     ///  The name of the file to look for in directories.
     pub(crate) exclude_file_name_for_directories: BString,
-    /// The case to use when matching directories as they are pushed onto the stack. We run them against the exclude engine
-    /// to know if an entire path can be ignored as a parent directory is ignored.
-    pub(crate) case: Case,
 }
 
 impl Ignore {
+    /// Configure gitignore file matching by providing the immutable groups being `overrides` and `globals`, while letting the directory
+    /// stack be dynamic.
+    ///
     /// The `exclude_file_name_for_directories` is an optional override for the filename to use when checking per-directory
     /// ignore files within the repository, defaults to`.gitignore`.
-    ///
-    // This is what it should be able represent: https://github.com/git/git/blob/140b9478dad5d19543c1cb4fd293ccec228f1240/dir.c#L3354
-    // TODO: more docs
     pub fn new(
         overrides: IgnoreMatchGroup,
         globals: IgnoreMatchGroup,
         exclude_file_name_for_directories: Option<&BStr>,
-        case: Case,
     ) -> Self {
         Ignore {
-            case,
             overrides,
             globals,
             stack: Default::default(),
@@ -142,6 +138,7 @@ impl Ignore {
         buf: &mut Vec<u8>,
         id_mappings: &[PathIdMapping],
         mut find: Find,
+        case: Case,
     ) -> std::io::Result<()>
     where
         Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
@@ -152,7 +149,7 @@ impl Ignore {
             gix_path::into_bstr(root).as_ref(),
             dir_bstr.as_ref(),
             None,
-            self.case,
+            case,
         )
         .expect("dir in root")
         .0;
@@ -160,7 +157,7 @@ impl Ignore {
             rela_dir = &rela_dir[1..];
         }
         self.matched_directory_patterns_stack
-            .push(self.matching_exclude_pattern_no_dir(rela_dir, Some(true), self.case));
+            .push(self.matching_exclude_pattern_no_dir(rela_dir, Some(true), case));
 
         let ignore_path_relative =
             gix_path::to_unix_separators_on_windows(gix_path::join_bstr_unix_pathsep(rela_dir, ".gitignore"));

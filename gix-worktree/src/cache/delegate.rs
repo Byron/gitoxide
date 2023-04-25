@@ -7,6 +7,7 @@ pub struct StackDelegate<'a, Find> {
     pub is_dir: bool,
     pub id_mappings: &'a Vec<PathIdMapping>,
     pub find: Find,
+    pub case: gix_glob::pattern::Case,
 }
 
 impl<'a, Find, E> gix_fs::stack::Delegate for StackDelegate<'a, Find>
@@ -23,6 +24,7 @@ where
                     self.buf,
                     self.id_mappings,
                     &mut self.find,
+                    self.case,
                 )?;
             }
             State::AttributesAndIgnoreStack { ignore, attributes } => {
@@ -32,6 +34,7 @@ where
                     self.buf,
                     self.id_mappings,
                     &mut self.find,
+                    self.case,
                 )?;
                 ignore.push_directory(
                     stack.root(),
@@ -39,6 +42,7 @@ where
                     self.buf,
                     self.id_mappings,
                     &mut self.find,
+                    self.case,
                 )?
             }
             State::IgnoreStack(ignore) => ignore.push_directory(
@@ -47,6 +51,7 @@ where
                 self.buf,
                 self.id_mappings,
                 &mut self.find,
+                self.case,
             )?,
         }
         Ok(())

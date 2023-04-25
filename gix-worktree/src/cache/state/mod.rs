@@ -23,9 +23,6 @@ pub struct Attributes {
     info_attributes: Option<PathBuf>,
     /// A lookup table to accelerate searches.
     collection: gix_attributes::search::MetadataCollection,
-    /// The case to use when matching directories as they are pushed onto the stack. We run them against the exclude engine
-    /// to know if an entire path can be ignored as a parent directory is ignored.
-    case: Case,
     /// Where to read `.gitattributes` data from.
     source: attributes::Source,
 }

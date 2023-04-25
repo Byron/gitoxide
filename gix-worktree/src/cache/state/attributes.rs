@@ -42,7 +42,6 @@ impl Attributes {
     pub fn new(
         globals: AttributeMatchGroup,
         info_attributes: Option<PathBuf>,
-        case: Case,
         source: Source,
         collection: gix_attributes::search::MetadataCollection,
     ) -> Self {
@@ -50,7 +49,6 @@ impl Attributes {
             globals,
             stack: Default::default(),
             info_attributes,
-            case,
             source,
             collection,
         }
@@ -69,6 +67,7 @@ impl Attributes {
         buf: &mut Vec<u8>,
         id_mappings: &[PathIdMapping],
         mut find: Find,
+        case: Case,
     ) -> std::io::Result<()>
     where
         Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
@@ -79,7 +78,7 @@ impl Attributes {
             gix_path::into_bstr(root).as_ref(),
             dir_bstr.as_ref(),
             None,
-            self.case,
+            case,
         )
         .expect("dir in root")
         .0;
@@ -165,15 +164,6 @@ impl Attributes {
             out.is_done()
         });
         has_match
-    }
-}
-
-/// Builder
-impl Attributes {
-    /// Set the case to use when matching attributes to paths.
-    pub fn with_case(mut self, case: gix_glob::pattern::Case) -> Self {
-        self.case = case;
-        self
     }
 }
 

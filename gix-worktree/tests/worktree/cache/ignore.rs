@@ -43,7 +43,6 @@ fn special_exclude_cases_we_handle_differently() {
             Default::default(),
             gix_ignore::Search::from_git_dir(&git_dir, None, &mut buf).unwrap(),
             None,
-            case,
         ),
     );
     let mut cache = Cache::new(&dir, state, case, buf, Default::default());
@@ -104,7 +103,6 @@ fn check_against_baseline() -> crate::Result {
             gix_ignore::Search::from_overrides(vec!["!force-include"]),
             gix_ignore::Search::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf)?,
             None,
-            case,
         ),
     );
     let paths_storage = index.take_path_backing();

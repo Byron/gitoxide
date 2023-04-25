@@ -116,6 +116,7 @@ impl Cache {
             is_dir: is_dir.unwrap_or(false),
             id_mappings: &self.id_mappings,
             find,
+            case: self.case,
         };
         self.stack.make_relative_path_current(relative, &mut delegate)?;
         Ok(Platform { parent: self, is_dir })

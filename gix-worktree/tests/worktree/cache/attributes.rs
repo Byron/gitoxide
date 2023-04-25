@@ -24,7 +24,6 @@ fn baseline() -> crate::Result {
         state::Attributes::new(
             gix_attributes::Search::new_globals([base.join("user.attributes")], &mut buf, &mut collection)?,
             Some(git_dir.join("info").join("attributes")),
-            case,
             gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
             collection,
         ),
