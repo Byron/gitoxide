@@ -1,27 +1,20 @@
 use std::path::Path;
 
+use crate::cache::state::Ignore;
 use crate::{cache::state::IgnoreMatchGroup, PathIdMapping};
-use bstr::{BStr, BString, ByteSlice};
+use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
 
-/// State related to the exclusion of files, supporting static overrides and globals, along with a stack of dynamically read
-/// ignore files from disk or from the index each time the directory changes.
-#[derive(Default, Clone)]
-#[allow(unused)]
-pub struct Ignore {
-    /// Ignore patterns passed as overrides to everything else, typically passed on the command-line and the first patterns to
-    /// be consulted.
-    overrides: IgnoreMatchGroup,
-    /// Ignore patterns that match the currently set director (in the stack), which is pushed and popped as needed.
-    stack: IgnoreMatchGroup,
-    /// Ignore patterns which aren't tied to the repository root, hence are global. They are consulted last.
-    globals: IgnoreMatchGroup,
-    /// A matching stack of pattern indices which is empty if we have just been initialized to indicate that the
-    /// currently set directory had a pattern matched. Note that this one could be negated.
-    /// (index into match groups, index into list of pattern lists, index into pattern list)
-    matched_directory_patterns_stack: Vec<Option<(usize, usize, usize)>>,
-    ///  The name of the file to look for in directories.
-    pub(crate) exclude_file_name_for_directories: BString,
+/// Various aggregate numbers related [`Attributes`].
+#[derive(Default, Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Statistics {
+    /// Amount of patterns buffers read from the index.
+    pub patterns_buffers: usize,
+    /// Amount of pattern files read from disk.
+    pub pattern_files: usize,
+    /// Amount of pattern files we tried to find on disk.
+    pub tried_pattern_files: usize,
 }
 
 impl Ignore {
@@ -131,31 +124,22 @@ impl Ignore {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn push_directory<Find, E>(
         &mut self,
         root: &Path,
         dir: &Path,
+        rela_dir: &BStr,
         buf: &mut Vec<u8>,
         id_mappings: &[PathIdMapping],
         mut find: Find,
         case: Case,
+        stats: &mut Statistics,
     ) -> std::io::Result<()>
     where
         Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let dir_bstr = gix_path::into_bstr(dir);
-        let mut rela_dir = gix_glob::search::pattern::strip_base_handle_recompute_basename_pos(
-            gix_path::into_bstr(root).as_ref(),
-            dir_bstr.as_ref(),
-            None,
-            case,
-        )
-        .expect("dir in root")
-        .0;
-        if rela_dir.starts_with(b"/") {
-            rela_dir = &rela_dir[1..];
-        }
         self.matched_directory_patterns_stack
             .push(self.matching_exclude_pattern_no_dir(rela_dir, Some(true), case));
 
@@ -163,13 +147,16 @@ impl Ignore {
             gix_path::to_unix_separators_on_windows(gix_path::join_bstr_unix_pathsep(rela_dir, ".gitignore"));
         let ignore_file_in_index = id_mappings.binary_search_by(|t| t.0.as_bstr().cmp(ignore_path_relative.as_ref()));
         let follow_symlinks = ignore_file_in_index.is_err();
-        if !gix_glob::search::add_patterns_file(
+        let added = gix_glob::search::add_patterns_file(
             &mut self.stack.patterns,
             dir.join(".gitignore"),
             follow_symlinks,
             Some(root),
             buf,
-        )? {
+        )?;
+        stats.pattern_files += usize::from(added);
+        stats.tried_pattern_files += 1;
+        if !added {
             match ignore_file_in_index {
                 Ok(idx) => {
                     let ignore_blob = find(&id_mappings[idx].1, buf)
@@ -177,6 +164,7 @@ impl Ignore {
                     let ignore_path = gix_path::from_bstring(ignore_path_relative.into_owned());
                     self.stack
                         .add_patterns_buffer(ignore_blob.data, ignore_path, Some(Path::new("")));
+                    stats.patterns_buffers += 1;
                 }
                 Err(_) => {
                     // Need one stack level per component so push and pop matches.

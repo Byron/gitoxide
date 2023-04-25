@@ -111,6 +111,8 @@ other-dir-with-ignore/other-sub-level-dir-anywhere/hello
 other-dir-with-ignore/other-sub-level-dir-anywhere/
 dir-with-ignore/negated
 dir-with-ignore/negated-dir/hello
+User-file-ANYWHERE
+User-Dir-ANYWHERE
 a/b/C
 a/B/c
 A/B/C

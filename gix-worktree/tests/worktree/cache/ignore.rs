@@ -154,15 +154,5 @@ fn check_against_baseline() -> crate::Result {
             }
         }
     }
-
-    cache.set_case(Case::Fold);
-    let platform = cache.at_entry("User-file-ANYWHERE", Some(false), |oid, buf| odb.find_blob(oid, buf))?;
-    let m = platform.matching_exclude_pattern().expect("match");
-    assert_eq!(m.pattern.text, "user-file-anywhere");
-
-    cache.set_case(Case::Fold);
-    let platform = cache.at_entry("User-Dir-ANYWHERE", Some(true), |oid, buf| odb.find_blob(oid, buf))?;
-    let m = platform.matching_exclude_pattern().expect("match");
-    assert_eq!(m.pattern.text, "user-Dir-anywhere");
     Ok(())
 }

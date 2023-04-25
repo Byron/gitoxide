@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use bstr::ByteSlice;
+use bstr::{BString, ByteSlice};
 use gix_glob::pattern::Case;
 
 use crate::{cache::State, PathIdMapping};
@@ -27,10 +27,30 @@ pub struct Attributes {
     source: attributes::Source,
 }
 
+/// State related to the exclusion of files, supporting static overrides and globals, along with a stack of dynamically read
+/// ignore files from disk or from the index each time the directory changes.
+#[derive(Default, Clone)]
+#[allow(unused)]
+pub struct Ignore {
+    /// Ignore patterns passed as overrides to everything else, typically passed on the command-line and the first patterns to
+    /// be consulted.
+    overrides: IgnoreMatchGroup,
+    /// Ignore patterns that match the currently set director (in the stack), which is pushed and popped as needed.
+    stack: IgnoreMatchGroup,
+    /// Ignore patterns which aren't tied to the repository root, hence are global. They are consulted last.
+    globals: IgnoreMatchGroup,
+    /// A matching stack of pattern indices which is empty if we have just been initialized to indicate that the
+    /// currently set directory had a pattern matched. Note that this one could be negated.
+    /// (index into match groups, index into list of pattern lists, index into pattern list)
+    matched_directory_patterns_stack: Vec<Option<(usize, usize, usize)>>,
+    ///  The name of the file to look for in directories.
+    pub(crate) exclude_file_name_for_directories: BString,
+}
+
 ///
 pub mod attributes;
-mod ignore;
-pub use ignore::Ignore;
+///
+pub mod ignore;
 
 /// Initialization
 impl State {
@@ -38,8 +58,6 @@ impl State {
     pub fn for_checkout(unlink_on_collision: bool, attributes: Attributes) -> Self {
         State::CreateDirectoryAndAttributesStack {
             unlink_on_collision,
-            #[cfg(debug_assertions)]
-            test_mkdir_calls: 0,
             attributes,
         }
     }
