@@ -57,8 +57,8 @@ where
         None,
     );
 
-    let state = cache::State::for_checkout(options.overwrite_existing, options.attributes.clone().with_case(case));
-    let attribute_files = state.id_mappings_from_index(index, paths, case);
+    let state = cache::State::for_checkout(options.overwrite_existing, options.attributes.clone());
+    let attribute_files = state.id_mappings_from_index(index, paths, Default::default(), case);
     let mut ctx = chunk::Context {
         buf: Vec::new(),
         path_cache: Cache::new(dir, state, case, Vec::with_capacity(512), attribute_files),

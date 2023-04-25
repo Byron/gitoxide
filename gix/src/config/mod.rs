@@ -119,6 +119,23 @@ pub mod checkout_options {
 }
 
 ///
+pub mod exclude_stack {
+    use std::path::PathBuf;
+
+    /// The error produced when setting up a stack to query `gitignore` information.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Could not read repository exclude")]
+        Io(#[from] std::io::Error),
+        #[error(transparent)]
+        EnvironmentPermission(#[from] gix_sec::permission::Error<PathBuf>),
+        #[error("The value for `core.excludesFile` could not be read from configuration")]
+        ExcludesFilePathInterpolation(#[from] gix_config::path::interpolate::Error),
+    }
+}
+
+///
 pub mod attribute_stack {
     /// The error produced when setting up the attribute stack to query `gitattributes`.
     #[derive(Debug, thiserror::Error)]
@@ -462,7 +479,7 @@ pub(crate) struct Cache {
     /// If true, we should default what's possible if something is misconfigured, on case by case basis, to be more resilient.
     /// Also available in options! Keep in sync!
     pub lenient_config: bool,
-    attributes: crate::permissions::Attributes,
-    environment: crate::permissions::Environment,
+    attributes: crate::open::permissions::Attributes,
+    environment: crate::open::permissions::Environment,
     // TODO: make core.precomposeUnicode available as well.
 }

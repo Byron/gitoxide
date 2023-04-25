@@ -10,7 +10,8 @@ use crate::{
         cache::{interpolate_context, util::ApplyLeniency},
         tree::{gitoxide, Core, Key, Safe},
     },
-    permission, Permissions, ThreadSafeRepository,
+    open::Permissions,
+    ThreadSafeRepository,
 };
 
 #[derive(Default, Clone)]
@@ -26,7 +27,7 @@ pub(crate) struct EnvironmentOverrides {
 }
 
 impl EnvironmentOverrides {
-    fn from_env() -> Result<Self, permission::env_var::resource::Error> {
+    fn from_env() -> Result<Self, gix_sec::permission::Error<std::path::PathBuf>> {
         let mut worktree_dir = None;
         if let Some(path) = std::env::var_os(Core::WORKTREE.the_environment_override()) {
             worktree_dir = PathBuf::from(path).into();

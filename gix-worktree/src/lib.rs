@@ -45,6 +45,7 @@ pub struct Cache {
     case: gix_glob::pattern::Case,
     /// A lookup table for object ids to read from in some situations when looking up attributes or exclusions.
     id_mappings: Vec<PathIdMapping>,
+    statistics: cache::Statistics,
 }
 
 pub(crate) type PathIdMapping = (BString, gix_hash::ObjectId);

@@ -1,5 +1,5 @@
 //! A crate with file-system specific utilities.
-#![deny(rust_2018_idioms)]
+#![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
 /// Common knowledge about the worktree that is needed across most interactions with the work tree
@@ -51,4 +51,5 @@ pub struct Stack {
     current_is_directory: bool,
 }
 
+///
 pub mod stack;

@@ -83,16 +83,16 @@ is usable to some extent.
   * [gix-command](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-command)
   * [gix-prompt](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-prompt)
   * [gix-refspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-refspec)
-  * `gitoxide-core`
-* **very early**  _(possibly without any documentation and many rough edges)_
-  * [gix-utils](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-utils)
   * [gix-fs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fs)
+  * [gix-utils](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-utils)
+  * [gix-hashtable](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hashtable)
   * [gix-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree)
   * [gix-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bitmap)
+  * `gitoxide-core`
+* **very early**  _(possibly without any documentation and many rough edges)_
   * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)
-  * [gix-hashtable](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hashtable)
-* **idea** _(just a name placeholder)_
   * [gix-archive](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-archive)
+* **idea** _(just a name placeholder)_
   * [gix-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-note)
   * [gix-fetchhead](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fetchhead)
   * [gix-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-filter)

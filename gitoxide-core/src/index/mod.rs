@@ -5,9 +5,6 @@ pub struct Options {
     pub format: crate::OutputFormat,
 }
 
-mod entries;
-pub use entries::entries;
-
 pub mod information;
 
 fn parse_file(index_path: impl AsRef<Path>, object_hash: gix::hash::Kind) -> anyhow::Result<gix::index::File> {

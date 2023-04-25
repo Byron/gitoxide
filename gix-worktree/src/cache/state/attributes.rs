@@ -6,6 +6,18 @@ use gix_glob::pattern::Case;
 use crate::cache::state::{AttributeMatchGroup, Attributes};
 use bstr::{BStr, ByteSlice};
 
+/// Various aggregate numbers related [`Attributes`].
+#[derive(Default, Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Statistics {
+    /// Amount of patterns buffers read from the index.
+    pub patterns_buffers: usize,
+    /// Amount of pattern files read from disk.
+    pub pattern_files: usize,
+    /// Amount of pattern files we tried to find on disk.
+    pub tried_pattern_files: usize,
+}
+
 /// Decide where to read `.gitattributes` files from.
 #[derive(Default, Debug, Clone, Copy)]
 pub enum Source {
@@ -42,7 +54,6 @@ impl Attributes {
     pub fn new(
         globals: AttributeMatchGroup,
         info_attributes: Option<PathBuf>,
-        case: Case,
         source: Source,
         collection: gix_attributes::search::MetadataCollection,
     ) -> Self {
@@ -50,7 +61,6 @@ impl Attributes {
             globals,
             stack: Default::default(),
             info_attributes,
-            case,
             source,
             collection,
         }
@@ -62,31 +72,21 @@ impl Attributes {
         self.stack.pop_pattern_list().expect("something to pop");
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn push_directory<Find, E>(
         &mut self,
         root: &Path,
         dir: &Path,
+        rela_dir: &BStr,
         buf: &mut Vec<u8>,
         id_mappings: &[PathIdMapping],
         mut find: Find,
+        stats: &mut Statistics,
     ) -> std::io::Result<()>
     where
         Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let dir_bstr = gix_path::into_bstr(dir);
-        let mut rela_dir = gix_glob::search::pattern::strip_base_handle_recompute_basename_pos(
-            gix_path::into_bstr(root).as_ref(),
-            dir_bstr.as_ref(),
-            None,
-            self.case,
-        )
-        .expect("dir in root")
-        .0;
-        if rela_dir.starts_with(b"/") {
-            rela_dir = &rela_dir[1..];
-        }
-
         let attr_path_relative =
             gix_path::to_unix_separators_on_windows(gix_path::join_bstr_unix_pathsep(rela_dir, ".gitattributes"));
         let attr_file_in_index = id_mappings.binary_search_by(|t| t.0.as_bstr().cmp(attr_path_relative.as_ref()));
@@ -103,6 +103,7 @@ impl Attributes {
                     self.stack
                         .add_patterns_buffer(blob.data, attr_path, Some(Path::new("")), &mut self.collection);
                     added = true;
+                    stats.patterns_buffers += 1;
                 }
                 if !added && matches!(self.source, Source::IdMappingThenWorktree) {
                     added = self.stack.add_patterns_file(
@@ -112,6 +113,8 @@ impl Attributes {
                         buf,
                         &mut self.collection,
                     )?;
+                    stats.pattern_files += usize::from(added);
+                    stats.tried_pattern_files += 1;
                 }
             }
             Source::WorktreeThenIdMapping => {
@@ -122,6 +125,8 @@ impl Attributes {
                     buf,
                     &mut self.collection,
                 )?;
+                stats.pattern_files += usize::from(added);
+                stats.tried_pattern_files += 1;
                 if let Some(idx) = attr_file_in_index.ok().filter(|_| !added) {
                     let blob = find(&id_mappings[idx].1, buf)
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
@@ -129,6 +134,7 @@ impl Attributes {
                     self.stack
                         .add_patterns_buffer(blob.data, attr_path, Some(Path::new("")), &mut self.collection);
                     added = true;
+                    stats.patterns_buffers += 1;
                 }
             }
         }
@@ -142,8 +148,11 @@ impl Attributes {
         // When reading the root, always the first call, we can try to also read the `.git/info/attributes` file which is
         // by nature never popped, and follows the root, as global.
         if let Some(info_attr) = self.info_attributes.take() {
-            self.stack
+            let added = self
+                .stack
                 .add_patterns_file(info_attr, true, None, buf, &mut self.collection)?;
+            stats.pattern_files += usize::from(added);
+            stats.tried_pattern_files += 1;
         }
 
         Ok(())
@@ -165,15 +174,6 @@ impl Attributes {
             out.is_done()
         });
         has_match
-    }
-}
-
-/// Builder
-impl Attributes {
-    /// Set the case to use when matching attributes to paths.
-    pub fn with_case(mut self, case: gix_glob::pattern::Case) -> Self {
-        self.case = case;
-        self
     }
 }
 

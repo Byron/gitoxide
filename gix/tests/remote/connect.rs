@@ -28,12 +28,12 @@ mod blocking_io {
                 let _env = env_value.map(|value| gix_testtools::Env::new().set("GIT_PROTOCOL_FROM_USER", value));
                 let repo = gix::open_opts(
                     remote::repo("protocol_file_user").git_dir(),
-                    gix::open::Options::isolated().permissions(gix::Permissions {
-                        env: gix::permissions::Environment {
+                    gix::open::Options::isolated().permissions(gix::open::Permissions {
+                        env: gix::open::permissions::Environment {
                             git_prefix: gix_sec::Permission::Allow,
-                            ..gix::permissions::Environment::all()
+                            ..gix::open::permissions::Environment::all()
                         },
-                        ..gix::Permissions::isolated()
+                        ..gix::open::Permissions::isolated()
                     }),
                 )?;
                 let remote = repo.find_remote("origin")?;

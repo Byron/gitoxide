@@ -690,7 +690,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
        * [x] proper handling of worktree related refs
        * [ ] create, move, remove, and repair
        * [x] access exclude information
-       * [ ]  access attribute information
+       * [x] access attribute information
        * [x] respect `core.worktree` configuration
           - **deviation**
              * The delicate interplay between `GIT_COMMON_DIR` and `GIT_WORK_TREE` isn't implemented.

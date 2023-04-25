@@ -7,16 +7,26 @@ use gix_hash::oid;
 use super::Cache;
 use crate::PathIdMapping;
 
+/// Various aggregate numbers collected from when the corresponding [`Cache`] was instantiated.
+#[derive(Default, Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Statistics {
+    /// The amount of platforms created to do further matching.
+    pub platforms: usize,
+    /// Information about the stack delegate.
+    pub delegate: delegate::Statistics,
+    /// Information about attributes
+    pub attributes: state::attributes::Statistics,
+    /// Information about the ignore stack
+    pub ignore: state::ignore::Statistics,
+}
+
 #[derive(Clone)]
 pub enum State {
     /// Useful for checkout where directories need creation, but we need to access attributes as well.
     CreateDirectoryAndAttributesStack {
         /// If there is a symlink or a file in our path, try to unlink it before creating the directory.
         unlink_on_collision: bool,
-
-        /// just for testing
-        #[cfg(debug_assertions)]
-        test_mkdir_calls: usize,
         /// State to handle attribute information
         attributes: state::Attributes,
     },
@@ -29,35 +39,6 @@ pub enum State {
     },
     /// Used when providing worktree status information.
     IgnoreStack(state::Ignore),
-}
-
-#[cfg(debug_assertions)]
-/// debug builds only for use in tests.
-impl Cache {
-    pub fn set_case(&mut self, case: gix_glob::pattern::Case) {
-        self.case = case;
-    }
-    pub fn num_mkdir_calls(&self) -> usize {
-        match self.state {
-            State::CreateDirectoryAndAttributesStack { test_mkdir_calls, .. } => test_mkdir_calls,
-            _ => 0,
-        }
-    }
-
-    pub fn reset_mkdir_calls(&mut self) {
-        if let State::CreateDirectoryAndAttributesStack { test_mkdir_calls, .. } = &mut self.state {
-            *test_mkdir_calls = 0;
-        }
-    }
-
-    pub fn unlink_on_collision(&mut self, value: bool) {
-        if let State::CreateDirectoryAndAttributesStack {
-            unlink_on_collision, ..
-        } = &mut self.state
-        {
-            *unlink_on_collision = value;
-        }
-    }
 }
 
 #[must_use]
@@ -87,11 +68,12 @@ impl Cache {
             case,
             buf,
             id_mappings,
+            statistics: Statistics::default(),
         }
     }
 }
 
-/// Mutable Access
+/// Entry points for attribute query
 impl Cache {
     /// Append the `relative` path to the root directory of the cache and efficiently create leading directories, while assuring that no
     /// symlinks are in that path.
@@ -110,12 +92,15 @@ impl Cache {
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
+        self.statistics.platforms += 1;
         let mut delegate = StackDelegate {
             state: &mut self.state,
             buf: &mut self.buf,
             is_dir: is_dir.unwrap_or(false),
             id_mappings: &self.id_mappings,
             find,
+            case: self.case,
+            statistics: &mut self.statistics,
         };
         self.stack.make_relative_path_current(relative, &mut delegate)?;
         Ok(Platform { parent: self, is_dir })
@@ -152,8 +137,25 @@ impl Cache {
     }
 }
 
+/// Mutation
+impl Cache {
+    /// Reset the statistics after returning them.
+    pub fn take_statistics(&mut self) -> Statistics {
+        std::mem::take(&mut self.statistics)
+    }
+
+    /// Return our state for applying changes.
+    pub fn state_mut(&mut self) -> &mut State {
+        &mut self.state
+    }
+}
+
 /// Access
 impl Cache {
+    /// Return the statistics we gathered thus far.
+    pub fn statistics(&self) -> &Statistics {
+        &self.statistics
+    }
     /// Return the state for introspection.
     pub fn state(&self) -> &State {
         &self.state
@@ -167,7 +169,8 @@ impl Cache {
     }
 }
 
-mod delegate;
+///
+pub mod delegate;
 use delegate::StackDelegate;
 
 mod platform;

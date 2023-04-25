@@ -1,6 +1,7 @@
+use crate::config::cache::util::ApplyLeniencyDefault;
 use crate::{worktree, Worktree};
 
-/// Worktree iteration
+/// Interact with individual worktrees and their information.
 impl crate::Repository {
     /// Return a list of all _linked_ worktrees sorted by private git dir path as a lightweight proxy.
     ///
@@ -25,10 +26,6 @@ impl crate::Repository {
         res.sort_by(|a, b| a.git_dir.cmp(&b.git_dir));
         Ok(res)
     }
-}
-
-/// Interact with individual worktrees and their information.
-impl crate::Repository {
     /// Return the repository owning the main worktree, typically from a linked worktree.
     ///
     /// Note that it might be the one that is currently open if this repository doesn't point to a linked worktree.
@@ -58,23 +55,14 @@ impl crate::Repository {
     ///
     /// It will use the `index.threads` configuration key to learn how many threads to use.
     /// Note that it may fail if there is no index.
-    // TODO: test
     pub fn open_index(&self) -> Result<gix_index::File, worktree::open_index::Error> {
         let thread_limit = self
             .config
             .resolved
-            .boolean("index", None, "threads")
-            .map(|res| {
-                res.map(|value| usize::from(!value)).or_else(|err| {
-                    gix_config::Integer::try_from(err.input.as_ref())
-                        .map_err(|err| worktree::open_index::Error::ConfigIndexThreads {
-                            value: err.input.clone(),
-                            err,
-                        })
-                        .map(|value| value.to_decimal().and_then(|v| v.try_into().ok()).unwrap_or(1))
-                })
-            })
-            .transpose()?;
+            .string("index", None, "threads")
+            .map(|value| crate::config::tree::Index::THREADS.try_into_index_threads(value))
+            .transpose()
+            .with_lenient_default(self.config.lenient_config)?;
         gix_index::File::at(
             self.index_path(),
             self.object_hash(),

@@ -1,6 +1,6 @@
 use std::io;
 
-use anyhow::{bail, Context};
+use anyhow::bail;
 use gix::prelude::FindExt;
 
 use crate::OutputFormat;
@@ -31,11 +31,12 @@ pub fn query(
         bail!("JSON output isn't implemented yet");
     }
 
-    let worktree = repo
-        .worktree()
-        .with_context(|| "Cannot check excludes without a current worktree")?;
-    let index = worktree.index()?;
-    let mut cache = worktree.excludes(&index, Some(gix::ignore::Search::from_overrides(overrides)))?;
+    let index = repo.index()?;
+    let mut cache = repo.excludes(
+        &index,
+        Some(gix::ignore::Search::from_overrides(overrides)),
+        Default::default(),
+    )?;
 
     let prefix = repo.prefix().expect("worktree - we have an index by now")?;
 

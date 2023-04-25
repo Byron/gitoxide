@@ -55,8 +55,6 @@ pub mod index {
     pub enum Subcommands {
         /// Validate constraints and assumptions of an index along with its integrity.
         Verify,
-        /// Print all entries to standard output
-        Entries,
         /// Print information about the index structure
         Info {
             /// Do not extract specific extension information to gain only a superficial idea of the index's composition.
@@ -107,7 +105,7 @@ pub mod pack {
             /// Possible values are "none" and "tree-traversal". Default is "none".
             expansion: Option<core::pack::create::ObjectExpansion>,
 
-            #[clap(long, default_value_t = 3, requires = "nondeterministic-count")]
+            #[clap(long, default_value_t = 3, requires = "nondeterministic_count")]
             /// The amount of threads to use when counting and the `--nondeterminisitc-count` flag is set, defaulting
             /// to the globally configured threads.
             ///

@@ -17,11 +17,11 @@ fn root_is_assumed_to_exist_and_files_in_root_do_not_create_directory() -> crate
         Vec::new(),
         Default::default(),
     );
-    assert_eq!(cache.num_mkdir_calls(), 0);
+    assert_eq!(cache.statistics().delegate.num_mkdir_calls, 0);
 
     let path = cache.at_path("hello", Some(false), panic_on_find)?.path();
     assert!(!path.parent().unwrap().exists(), "prefix itself is never created");
-    assert_eq!(cache.num_mkdir_calls(), 0);
+    assert_eq!(cache.statistics().delegate.num_mkdir_calls, 0);
     Ok(())
 }
 
@@ -43,7 +43,7 @@ fn directory_paths_are_created_in_full() {
         assert!(path.parent().unwrap().is_dir(), "dir exists");
     }
 
-    assert_eq!(cache.num_mkdir_calls(), 3);
+    assert_eq!(cache.statistics().delegate.num_mkdir_calls, 3);
 }
 
 #[test]
@@ -54,7 +54,7 @@ fn existing_directories_are_fine() -> crate::Result {
     let path = cache.at_path("dir/file", Some(false), panic_on_find)?.path();
     assert!(path.parent().unwrap().is_dir(), "directory is still present");
     assert!(!path.exists(), "it won't create the file");
-    assert_eq!(cache.num_mkdir_calls(), 1);
+    assert_eq!(cache.statistics().delegate.num_mkdir_calls, 1);
     Ok(())
 }
 
@@ -67,7 +67,12 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
     std::fs::write(tmp.path().join("file-in-dir"), &[])?;
 
     for dirname in &["file-in-dir", "link-to-dir"] {
-        cache.unlink_on_collision(false);
+        if let cache::State::CreateDirectoryAndAttributesStack {
+            unlink_on_collision, ..
+        } = cache.state_mut()
+        {
+            *unlink_on_collision = false;
+        }
         let relative_path = format!("{}/file", dirname);
         assert_eq!(
             cache
@@ -78,20 +83,25 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
         );
     }
     assert_eq!(
-        cache.num_mkdir_calls(),
+        cache.statistics().delegate.num_mkdir_calls,
         2,
         "it tries to create each directory once, but it's a file"
     );
-    cache.reset_mkdir_calls();
+    cache.take_statistics();
     for dirname in &["link-to-dir", "file-in-dir"] {
-        cache.unlink_on_collision(true);
+        if let cache::State::CreateDirectoryAndAttributesStack {
+            unlink_on_collision, ..
+        } = cache.state_mut()
+        {
+            *unlink_on_collision = true;
+        }
         let relative_path = format!("{}/file", dirname);
         let path = cache.at_path(&relative_path, Some(false), panic_on_find)?.path();
         assert!(path.parent().unwrap().is_dir(), "directory was forcefully created");
         assert!(!path.exists());
     }
     assert_eq!(
-        cache.num_mkdir_calls(),
+        cache.statistics().delegate.num_mkdir_calls,
         4,
         "like before, but it unlinks what's there and tries again"
     );

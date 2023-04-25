@@ -361,11 +361,11 @@ pub mod commit {
         /// Describe the current commit or the given one using the name of the closest annotated tag in its ancestry.
         Describe {
             /// Use annotated tag references only, not all tags.
-            #[clap(long, short = 't', conflicts_with("all-refs"))]
+            #[clap(long, short = 't', conflicts_with("all_refs"))]
             annotated_tags: bool,
 
             /// Use all references under the `ref/` namespaces, which includes tag references, local and remote branches.
-            #[clap(long, short = 'a', conflicts_with("annotated-tags"))]
+            #[clap(long, short = 'a', conflicts_with("annotated_tags"))]
             all_refs: bool,
 
             /// Only follow the first parent when traversing the commit graph.
@@ -471,6 +471,20 @@ pub mod index {
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
+        /// Print all entries to standard output
+        Entries {
+            /// Do not visualize excluded entries or attributes per path.
+            #[clap(long)]
+            no_attributes: bool,
+            /// Load attribute and ignore files from the index, don't look at the worktree.
+            ///
+            /// This is to see what IO for probing attribute/ignore files does to performance.
+            #[clap(long, short = 'i', conflicts_with = "no_attributes")]
+            attributes_from_index: bool,
+            /// Print various statistics to stderr
+            #[clap(long, short = 's')]
+            statistics: bool,
+        },
         /// Create an index from a tree-ish.
         #[clap(visible_alias = "read-tree")]
         FromTree {

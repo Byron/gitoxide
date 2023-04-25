@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use bstr::ByteSlice;
+use bstr::{BString, ByteSlice};
 use gix_glob::pattern::Case;
 
 use crate::{cache::State, PathIdMapping};
@@ -23,17 +23,36 @@ pub struct Attributes {
     info_attributes: Option<PathBuf>,
     /// A lookup table to accelerate searches.
     collection: gix_attributes::search::MetadataCollection,
-    /// The case to use when matching directories as they are pushed onto the stack. We run them against the exclude engine
-    /// to know if an entire path can be ignored as a parent directory is ignored.
-    case: Case,
     /// Where to read `.gitattributes` data from.
     source: attributes::Source,
 }
 
+/// State related to the exclusion of files, supporting static overrides and globals, along with a stack of dynamically read
+/// ignore files from disk or from the index each time the directory changes.
+#[derive(Default, Clone)]
+#[allow(unused)]
+pub struct Ignore {
+    /// Ignore patterns passed as overrides to everything else, typically passed on the command-line and the first patterns to
+    /// be consulted.
+    overrides: IgnoreMatchGroup,
+    /// Ignore patterns that match the currently set director (in the stack), which is pushed and popped as needed.
+    stack: IgnoreMatchGroup,
+    /// Ignore patterns which aren't tied to the repository root, hence are global. They are consulted last.
+    globals: IgnoreMatchGroup,
+    /// A matching stack of pattern indices which is empty if we have just been initialized to indicate that the
+    /// currently set directory had a pattern matched. Note that this one could be negated.
+    /// (index into match groups, index into list of pattern lists, index into pattern list)
+    matched_directory_patterns_stack: Vec<Option<(usize, usize, usize)>>,
+    ///  The name of the file to look for in directories.
+    pub(crate) exclude_file_name_for_directories: BString,
+    /// Where to read ignore files from
+    source: ignore::Source,
+}
+
 ///
 pub mod attributes;
-mod ignore;
-pub use ignore::Ignore;
+///
+pub mod ignore;
 
 /// Initialization
 impl State {
@@ -41,8 +60,6 @@ impl State {
     pub fn for_checkout(unlink_on_collision: bool, attributes: Attributes) -> Self {
         State::CreateDirectoryAndAttributesStack {
             unlink_on_collision,
-            #[cfg(debug_assertions)]
-            test_mkdir_calls: 0,
             attributes,
         }
     }
@@ -76,6 +93,7 @@ impl State {
         &self,
         index: &gix_index::State,
         paths: &gix_index::PathStorageRef,
+        ignore_source: ignore::Source,
         case: Case,
     ) -> Vec<PathIdMapping> {
         let a1_backing;
@@ -118,9 +136,16 @@ impl State {
                         }
                         .then_some(t.1)
                     })?;
-                    // See https://github.com/git/git/blob/master/dir.c#L912:L912
-                    if is_ignore && !entry.flags.contains(gix_index::entry::Flags::SKIP_WORKTREE) {
-                        return None;
+                    if is_ignore {
+                        match ignore_source {
+                            ignore::Source::IdMapping => {}
+                            ignore::Source::WorktreeThenIdMappingIfNotSkipped => {
+                                // See https://github.com/git/git/blob/master/dir.c#L912:L912
+                                if !entry.flags.contains(gix_index::entry::Flags::SKIP_WORKTREE) {
+                                    return None;
+                                }
+                            }
+                        };
                     }
                     Some((path.to_owned(), entry.id))
                 } else {

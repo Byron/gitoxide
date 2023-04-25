@@ -351,6 +351,30 @@ mod core {
     }
 }
 
+mod index {
+    use crate::config::tree::bcow;
+    use gix::config::tree::{Index, Key};
+
+    #[test]
+    fn threads() {
+        for (value, expected) in [("false", 1), ("true", 0), ("0", 0), ("1", 1), ("2", 2), ("12", 12)] {
+            assert_eq!(
+                Index::THREADS.try_into_index_threads(bcow(value)).unwrap(),
+                expected,
+                "{value}"
+            );
+            assert!(Index::THREADS.validate(value.into()).is_ok());
+        }
+        assert_eq!(
+            Index::THREADS
+                .try_into_index_threads(bcow("nothing"))
+                .unwrap_err()
+                .to_string(),
+            "The key \"index.threads=nothing\" was invalid"
+        );
+    }
+}
+
 mod extensions {
     use gix::config::tree::{Extensions, Key};
 

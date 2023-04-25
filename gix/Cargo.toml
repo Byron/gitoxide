@@ -67,6 +67,7 @@ serde = [   "dep:serde",
             "gix-attributes/serde",
             "gix-ignore/serde",
             "gix-revision/serde",
+            "gix-worktree/serde",
             "gix-credentials/serde"]
 
 ## Re-export the progress tree root which allows to obtain progress from various functions which take `impl gix::Progress`.

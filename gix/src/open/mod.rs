@@ -1,6 +1,17 @@
 use std::path::PathBuf;
 
-use crate::{bstr::BString, config, permission, Permissions};
+use crate::{bstr::BString, config};
+
+/// Permissions associated with various resources of a git repository
+#[derive(Debug, Clone)]
+pub struct Permissions {
+    /// Control which environment variables may be accessed.
+    pub env: permissions::Environment,
+    /// Permissions related where git configuration should be loaded from.
+    pub config: permissions::Config,
+    /// Permissions related to where `gitattributes` should be loaded from.
+    pub attributes: permissions::Attributes,
+}
 
 /// The options used in [`ThreadSafeRepository::open_opts()`][crate::ThreadSafeRepository::open_opts()].
 ///
@@ -44,11 +55,11 @@ pub enum Error {
     #[error("The git directory at '{}' is considered unsafe as it's not owned by the current user.", .path.display())]
     UnsafeGitDir { path: PathBuf },
     #[error(transparent)]
-    EnvironmentAccessDenied(#[from] permission::env_var::resource::Error),
+    EnvironmentAccessDenied(#[from] gix_sec::permission::Error<std::path::PathBuf>),
 }
 
 mod options;
-
+pub mod permissions;
 mod repository;
 
 #[cfg(test)]

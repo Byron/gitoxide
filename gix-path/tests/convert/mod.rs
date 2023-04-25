@@ -56,9 +56,9 @@ mod join_bstr_unix_pathsep {
         assert_eq!(join_bstr_unix_pathsep(b("base/"), ""), b("base/"));
     }
     #[test]
-    fn empty_base_creates_absolute_paths() {
-        assert_eq!(join_bstr_unix_pathsep(b(""), ""), b("/"));
-        assert_eq!(join_bstr_unix_pathsep(b(""), "hi"), b("/hi"));
-        assert_eq!(join_bstr_unix_pathsep(b(""), "/hi"), b("//hi"));
+    fn empty_base_leaves_everything_untouched() {
+        assert_eq!(join_bstr_unix_pathsep(b(""), ""), b(""));
+        assert_eq!(join_bstr_unix_pathsep(b(""), "hi"), b("hi"));
+        assert_eq!(join_bstr_unix_pathsep(b(""), "/hi"), b("/hi"));
     }
 }

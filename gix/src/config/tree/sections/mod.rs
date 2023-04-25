@@ -55,6 +55,11 @@ pub mod gitoxide;
 pub struct Http;
 pub mod http;
 
+/// The `index` top-level section.
+#[derive(Copy, Clone, Default)]
+pub struct Index;
+pub mod index;
+
 /// The `init` top-level section.
 #[derive(Copy, Clone, Default)]
 pub struct Init;

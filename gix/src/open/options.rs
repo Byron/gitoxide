@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use super::{Error, Options};
-use crate::{bstr::BString, config, Permissions, ThreadSafeRepository};
+use crate::{bstr::BString, config, open::Permissions, ThreadSafeRepository};
 
 impl Default for Options {
     fn default() -> Self {

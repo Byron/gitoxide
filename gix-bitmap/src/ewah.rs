@@ -1,13 +1,17 @@
 use std::convert::TryInto;
 
+///
 pub mod decode {
+    /// The error returned by [`decode()`][super::decode()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("{}", message)]
         Corrupt { message: &'static str },
     }
 }
 
+/// Decode `data` as EWAH bitmap.
 pub fn decode(data: &[u8]) -> Result<(Vec, &[u8]), decode::Error> {
     use self::decode::Error;
     use crate::decode;
