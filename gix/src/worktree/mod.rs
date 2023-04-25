@@ -149,7 +149,6 @@ pub mod excludes {
                 overrides.unwrap_or_default(),
                 gix_ignore::Search::from_git_dir(repo.git_dir(), excludes_file, &mut buf)?,
                 None,
-                case,
             ));
             let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
             Ok(gix_worktree::Cache::new(self.path, state, case, buf, attribute_list))

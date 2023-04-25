@@ -2,7 +2,6 @@
 use std::{borrow::Cow, path::PathBuf, time::Duration};
 
 use gix_attributes::Source;
-use gix_glob::pattern::Case;
 use gix_lock::acquire::Fail;
 
 use crate::{
@@ -167,15 +166,9 @@ impl Cache {
             executable_bit: boolean(self, "core.fileMode", &Core::FILE_MODE, true)?,
             symlink: boolean(self, "core.symlinks", &Core::SYMLINKS, true)?,
         };
-        let case = if capabilities.ignore_case {
-            Case::Fold
-        } else {
-            Case::Sensitive
-        };
         Ok(gix_worktree::checkout::Options {
             attributes: self.assemble_attribute_globals(
                 git_dir,
-                case,
                 gix_worktree::cache::state::attributes::Source::IdMappingThenWorktree,
                 self.attributes,
             )?,
@@ -203,7 +196,6 @@ impl Cache {
     fn assemble_attribute_globals(
         &self,
         git_dir: &std::path::Path,
-        case: gix_glob::pattern::Case,
         source: gix_worktree::cache::state::attributes::Source,
         attributes: crate::permissions::Attributes,
     ) -> Result<gix_worktree::cache::state::Attributes, config::attribute_stack::Error> {
@@ -235,7 +227,6 @@ impl Cache {
         Ok(gix_worktree::cache::state::Attributes::new(
             gix_attributes::Search::new_globals(attribute_files, &mut buf, &mut collection)?,
             Some(info_attributes_path),
-            case,
             source,
             collection,
         ))
