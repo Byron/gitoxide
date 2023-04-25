@@ -1,6 +1,7 @@
 use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
 use gix_odb::FindExt;
+use gix_worktree::cache::state::ignore::Source;
 use gix_worktree::Cache;
 
 use crate::hex_to_id;
@@ -43,6 +44,7 @@ fn special_exclude_cases_we_handle_differently() {
             Default::default(),
             gix_ignore::Search::from_git_dir(&git_dir, None, &mut buf).unwrap(),
             None,
+            Source::WorktreeThenIdMappingIfNotSkipped,
         ),
     );
     let mut cache = Cache::new(&dir, state, case, buf, Default::default());
@@ -103,10 +105,11 @@ fn check_against_baseline() -> crate::Result {
             gix_ignore::Search::from_overrides(vec!["!force-include"]),
             gix_ignore::Search::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf)?,
             None,
+            Source::WorktreeThenIdMappingIfNotSkipped,
         ),
     );
     let paths_storage = index.take_path_backing();
-    let attribute_files_in_index = state.id_mappings_from_index(&index, &paths_storage, case);
+    let attribute_files_in_index = state.id_mappings_from_index(&index, &paths_storage, Default::default(), case);
     assert_eq!(
         attribute_files_in_index,
         vec![(

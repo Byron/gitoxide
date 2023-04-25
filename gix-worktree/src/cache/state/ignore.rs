@@ -5,7 +5,24 @@ use crate::{cache::state::IgnoreMatchGroup, PathIdMapping};
 use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
 
-/// Various aggregate numbers related [`Attributes`].
+/// Decide where to read `.gitignore` files from.
+#[derive(Default, Debug, Clone, Copy)]
+pub enum Source {
+    /// Retrieve ignore files from id mappings, see
+    /// [State::id_mappings_from_index()][crate::cache::State::id_mappings_from_index()].
+    ///
+    /// These mappings are typically produced from an index.
+    /// If a tree should be the source, build an attribute list from a tree instead, or convert a tree to an index.
+    ///
+    /// Use this when no worktree checkout is available, like in bare repositories or when accessing blobs from other parts
+    /// of the history which aren't checked out.
+    IdMapping,
+    /// Read from the worktree and if not present, read them from the id mappings *if* these don't have the skip-worktree bit set.
+    #[default]
+    WorktreeThenIdMappingIfNotSkipped,
+}
+
+/// Various aggregate numbers related [`Ignore`].
 #[derive(Default, Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Statistics {
@@ -27,6 +44,7 @@ impl Ignore {
         overrides: IgnoreMatchGroup,
         globals: IgnoreMatchGroup,
         exclude_file_name_for_directories: Option<&BStr>,
+        source: Source,
     ) -> Self {
         Ignore {
             overrides,
@@ -36,6 +54,7 @@ impl Ignore {
             exclude_file_name_for_directories: exclude_file_name_for_directories
                 .map(ToOwned::to_owned)
                 .unwrap_or_else(|| ".gitignore".into()),
+            source,
         }
     }
 }
@@ -146,29 +165,49 @@ impl Ignore {
         let ignore_path_relative =
             gix_path::to_unix_separators_on_windows(gix_path::join_bstr_unix_pathsep(rela_dir, ".gitignore"));
         let ignore_file_in_index = id_mappings.binary_search_by(|t| t.0.as_bstr().cmp(ignore_path_relative.as_ref()));
-        let follow_symlinks = ignore_file_in_index.is_err();
-        let added = gix_glob::search::add_patterns_file(
-            &mut self.stack.patterns,
-            dir.join(".gitignore"),
-            follow_symlinks,
-            Some(root),
-            buf,
-        )?;
-        stats.pattern_files += usize::from(added);
-        stats.tried_pattern_files += 1;
-        if !added {
-            match ignore_file_in_index {
-                Ok(idx) => {
-                    let ignore_blob = find(&id_mappings[idx].1, buf)
-                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-                    let ignore_path = gix_path::from_bstring(ignore_path_relative.into_owned());
-                    self.stack
-                        .add_patterns_buffer(ignore_blob.data, ignore_path, Some(Path::new("")));
-                    stats.patterns_buffers += 1;
+        match self.source {
+            Source::IdMapping => {
+                match ignore_file_in_index {
+                    Ok(idx) => {
+                        let ignore_blob = find(&id_mappings[idx].1, buf)
+                            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+                        let ignore_path = gix_path::from_bstring(ignore_path_relative.into_owned());
+                        self.stack
+                            .add_patterns_buffer(ignore_blob.data, ignore_path, Some(Path::new("")));
+                        stats.patterns_buffers += 1;
+                    }
+                    Err(_) => {
+                        // Need one stack level per component so push and pop matches.
+                        self.stack.patterns.push(Default::default())
+                    }
                 }
-                Err(_) => {
-                    // Need one stack level per component so push and pop matches.
-                    self.stack.patterns.push(Default::default())
+            }
+            Source::WorktreeThenIdMappingIfNotSkipped => {
+                let follow_symlinks = ignore_file_in_index.is_err();
+                let added = gix_glob::search::add_patterns_file(
+                    &mut self.stack.patterns,
+                    dir.join(".gitignore"),
+                    follow_symlinks,
+                    Some(root),
+                    buf,
+                )?;
+                stats.pattern_files += usize::from(added);
+                stats.tried_pattern_files += 1;
+                if !added {
+                    match ignore_file_in_index {
+                        Ok(idx) => {
+                            let ignore_blob = find(&id_mappings[idx].1, buf)
+                                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+                            let ignore_path = gix_path::from_bstring(ignore_path_relative.into_owned());
+                            self.stack
+                                .add_patterns_buffer(ignore_blob.data, ignore_path, Some(Path::new("")));
+                            stats.patterns_buffers += 1;
+                        }
+                        Err(_) => {
+                            // Need one stack level per component so push and pop matches.
+                            self.stack.patterns.push(Default::default())
+                        }
+                    }
                 }
             }
         }

@@ -45,6 +45,8 @@ pub struct Ignore {
     matched_directory_patterns_stack: Vec<Option<(usize, usize, usize)>>,
     ///  The name of the file to look for in directories.
     pub(crate) exclude_file_name_for_directories: BString,
+    /// Where to read ignore files from
+    source: ignore::Source,
 }
 
 ///
@@ -91,6 +93,7 @@ impl State {
         &self,
         index: &gix_index::State,
         paths: &gix_index::PathStorageRef,
+        ignore_source: ignore::Source,
         case: Case,
     ) -> Vec<PathIdMapping> {
         let a1_backing;
@@ -133,9 +136,16 @@ impl State {
                         }
                         .then_some(t.1)
                     })?;
-                    // See https://github.com/git/git/blob/master/dir.c#L912:L912
-                    if is_ignore && !entry.flags.contains(gix_index::entry::Flags::SKIP_WORKTREE) {
-                        return None;
+                    if is_ignore {
+                        match ignore_source {
+                            ignore::Source::IdMapping => {}
+                            ignore::Source::WorktreeThenIdMappingIfNotSkipped => {
+                                // See https://github.com/git/git/blob/master/dir.c#L912:L912
+                                if !entry.flags.contains(gix_index::entry::Flags::SKIP_WORKTREE) {
+                                    return None;
+                                }
+                            }
+                        };
                     }
                     Some((path.to_owned(), entry.id))
                 } else {
