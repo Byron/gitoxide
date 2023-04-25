@@ -855,14 +855,35 @@ pub fn main() -> Result<()> {
             ),
         },
         Subcommands::Index(cmd) => match cmd {
-            index::Subcommands::Entries => prepare_and_run(
+            index::Subcommands::Entries {
+                no_attributes,
+                attributes_from_index,
+                statistics,
+            } => prepare_and_run(
                 "index-entries",
                 verbose,
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, _err| {
-                    core::repository::index::entries(repository(Mode::LenientWithGitInstallConfig)?, out, format)
+                move |_progress, out, err| {
+                    core::repository::index::entries(
+                        repository(Mode::LenientWithGitInstallConfig)?,
+                        out,
+                        err,
+                        core::repository::index::entries::Options {
+                            format,
+                            attributes: if no_attributes {
+                                None
+                            } else {
+                                Some(if attributes_from_index {
+                                    core::repository::index::entries::Attributes::Index
+                                } else {
+                                    core::repository::index::entries::Attributes::WorktreeAndIndex
+                                })
+                            },
+                            statistics,
+                        },
+                    )
                 },
             ),
             index::Subcommands::FromTree {
@@ -897,5 +918,16 @@ fn verify_mode(decode: bool, re_encode: bool) -> verify::Mode {
         (true, false) => verify::Mode::HashCrc32Decode,
         (true, true) | (false, true) => verify::Mode::HashCrc32DecodeEncode,
         (false, false) => verify::Mode::HashCrc32,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn clap() {
+        use clap::CommandFactory;
+        Args::command().debug_assert();
     }
 }

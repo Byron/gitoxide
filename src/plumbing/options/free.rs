@@ -105,7 +105,7 @@ pub mod pack {
             /// Possible values are "none" and "tree-traversal". Default is "none".
             expansion: Option<core::pack::create::ObjectExpansion>,
 
-            #[clap(long, default_value_t = 3, requires = "nondeterministic-count")]
+            #[clap(long, default_value_t = 3, requires = "nondeterministic_count")]
             /// The amount of threads to use when counting and the `--nondeterminisitc-count` flag is set, defaulting
             /// to the globally configured threads.
             ///
