@@ -1,7 +1,7 @@
 use crate::config::cache::util::ApplyLeniencyDefault;
 use crate::{worktree, Worktree};
 
-/// Worktree iteration
+/// Interact with individual worktrees and their information.
 impl crate::Repository {
     /// Return a list of all _linked_ worktrees sorted by private git dir path as a lightweight proxy.
     ///
@@ -26,10 +26,6 @@ impl crate::Repository {
         res.sort_by(|a, b| a.git_dir.cmp(&b.git_dir));
         Ok(res)
     }
-}
-
-/// Interact with individual worktrees and their information.
-impl crate::Repository {
     /// Return the repository owning the main worktree, typically from a linked worktree.
     ///
     /// Note that it might be the one that is currently open if this repository doesn't point to a linked worktree.

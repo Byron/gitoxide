@@ -29,14 +29,17 @@ fn author_and_committer_and_fallback() -> crate::Result {
             .set("GIT_CONFIG_VALUE_0", work_dir.join("c.config").display().to_string());
         let repo = gix::open_opts(
             repo.git_dir(),
-            repo.open_options().clone().with(trust).permissions(gix::Permissions {
-                env: gix::permissions::Environment {
-                    xdg_config_home: Permission::Deny,
-                    home: Permission::Deny,
-                    ..gix::permissions::Environment::all()
-                },
-                ..Default::default()
-            }),
+            repo.open_options()
+                .clone()
+                .with(trust)
+                .permissions(gix::open::Permissions {
+                    env: gix::open::permissions::Environment {
+                        xdg_config_home: Permission::Deny,
+                        home: Permission::Deny,
+                        ..gix::open::permissions::Environment::all()
+                    },
+                    ..Default::default()
+                }),
         )?;
 
         assert_eq!(
@@ -148,11 +151,11 @@ fn author_from_different_config_sections() -> crate::Result {
             .clone()
             .config_overrides(None::<&str>)
             .with(gix_sec::Trust::Full)
-            .permissions(gix::Permissions {
-                env: gix::permissions::Environment {
+            .permissions(gix::open::Permissions {
+                env: gix::open::permissions::Environment {
                     xdg_config_home: Permission::Deny,
                     home: Permission::Deny,
-                    ..gix::permissions::Environment::all()
+                    ..gix::open::permissions::Environment::all()
                 },
                 ..Default::default()
             }),

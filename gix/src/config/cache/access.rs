@@ -197,7 +197,7 @@ impl Cache {
         &self,
         git_dir: &std::path::Path,
         source: gix_worktree::cache::state::attributes::Source,
-        attributes: crate::permissions::Attributes,
+        attributes: crate::open::permissions::Attributes,
     ) -> Result<gix_worktree::cache::state::Attributes, config::attribute_stack::Error> {
         let configured_or_user_attributes = match self
             .trusted_file_path("core", None, Core::ATTRIBUTES_FILE.name)

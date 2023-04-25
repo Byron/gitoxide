@@ -12,7 +12,7 @@ use crate::{
         tree::{gitoxide, Core, Http},
         Cache,
     },
-    repository,
+    open,
 };
 
 /// Initialization
@@ -32,7 +32,7 @@ impl Cache {
         filter_config_section: fn(&gix_config::file::Metadata) -> bool,
         git_install_dir: Option<&std::path::Path>,
         home: Option<&std::path::Path>,
-        environment @ repository::permissions::Environment {
+        environment @ open::permissions::Environment {
             git_prefix,
             ssh_prefix: _,
             xdg_config_home: _,
@@ -40,16 +40,16 @@ impl Cache {
             http_transport,
             identity,
             objects,
-        }: repository::permissions::Environment,
-        attributes: repository::permissions::Attributes,
-        repository::permissions::Config {
+        }: open::permissions::Environment,
+        attributes: open::permissions::Attributes,
+        open::permissions::Config {
             git_binary: use_installation,
             system: use_system,
             git: use_git,
             user: use_user,
             env: use_env,
             includes: use_includes,
-        }: repository::permissions::Config,
+        }: open::permissions::Config,
         lenient_config: bool,
         api_config_overrides: &[BString],
         cli_config_overrides: &[BString],
@@ -233,12 +233,12 @@ impl Cache {
     }
 
     pub(crate) fn make_source_env(
-        crate::permissions::Environment {
+        crate::open::permissions::Environment {
             xdg_config_home,
             git_prefix,
             home,
             ..
-        }: crate::permissions::Environment,
+        }: open::permissions::Environment,
     ) -> impl FnMut(&str) -> Option<OsString> {
         move |name| {
             match name {

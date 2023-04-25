@@ -96,18 +96,14 @@ pub mod open_index {
 
 ///
 pub mod excludes {
-    use std::path::PathBuf;
-
     /// The error returned by [`Worktree::excludes()`][crate::Worktree::excludes()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
-        #[error("Could not read repository exclude.")]
-        Io(#[from] std::io::Error),
         #[error(transparent)]
-        EnvironmentPermission(#[from] gix_sec::permission::Error<PathBuf>),
-        #[error("The value for `core.excludesFile` could not be read from configuration")]
-        ExcludesFilePathInterpolation(#[from] gix_config::path::interpolate::Error),
+        OpenIndex(#[from] crate::worktree::open_index::Error),
+        #[error(transparent)]
+        CreateCache(#[from] crate::repository::excludes::Error),
     }
 
     impl<'repo> crate::Worktree<'repo> {
@@ -117,35 +113,9 @@ pub mod excludes {
         ///
         /// * `$XDG_CONFIG_HOME/…/ignore` if `core.excludesFile` is *not* set, otherwise use the configured file.
         /// * `$GIT_DIR/info/exclude` if present.
-        ///
-        /// `index` may be used to obtain `.gitignore` files directly from the index under certain conditions.
-        // TODO: test, provide higher-level interface that is much easier to use and doesn't panic when accessing entries
-        //       by non-relative path.
-        // TODO: `index` might be so special (given the conditions we are talking about) that it's better obtained internally
-        //        so the caller won't have to care.
-        pub fn excludes(
-            &self,
-            index: &gix_index::State,
-            overrides: Option<gix_ignore::Search>,
-        ) -> Result<gix_worktree::Cache, Error> {
-            let repo = self.parent;
-            let case = if repo.config.ignore_case {
-                gix_glob::pattern::Case::Fold
-            } else {
-                gix_glob::pattern::Case::Sensitive
-            };
-            let mut buf = Vec::with_capacity(512);
-            let excludes_file = match repo.config.excludes_file().transpose()? {
-                Some(user_path) => Some(user_path),
-                None => repo.config.xdg_config_path("ignore")?,
-            };
-            let state = gix_worktree::cache::State::IgnoreStack(gix_worktree::cache::state::Ignore::new(
-                overrides.unwrap_or_default(),
-                gix_ignore::Search::from_git_dir(repo.git_dir(), excludes_file, &mut buf)?,
-                None,
-            ));
-            let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
-            Ok(gix_worktree::Cache::new(self.path, state, case, buf, attribute_list))
+        pub fn excludes(&self, overrides: Option<gix_ignore::Search>) -> Result<gix_worktree::Cache, Error> {
+            let index = self.index()?;
+            Ok(self.parent.excludes(&index, overrides)?)
         }
     }
 }

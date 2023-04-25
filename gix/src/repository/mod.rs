@@ -21,12 +21,12 @@ impl crate::Repository {
 
 mod cache;
 mod config;
+pub mod excludes;
 pub(crate) mod identity;
 mod impls;
 mod init;
 mod location;
 mod object;
-pub(crate) mod permissions;
 mod reference;
 mod remote;
 mod revision;

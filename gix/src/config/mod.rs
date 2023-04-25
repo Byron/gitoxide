@@ -462,7 +462,7 @@ pub(crate) struct Cache {
     /// If true, we should default what's possible if something is misconfigured, on case by case basis, to be more resilient.
     /// Also available in options! Keep in sync!
     pub lenient_config: bool,
-    attributes: crate::permissions::Attributes,
-    environment: crate::permissions::Environment,
+    attributes: crate::open::permissions::Attributes,
+    environment: crate::open::permissions::Environment,
     // TODO: make core.precomposeUnicode available as well.
 }

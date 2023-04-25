@@ -127,7 +127,7 @@ pub mod head;
 pub mod id;
 pub mod object;
 pub mod reference;
-mod repository;
+pub mod repository;
 pub mod tag;
 
 ///
@@ -222,13 +222,6 @@ pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<Repository, open
 pub fn open_opts(directory: impl Into<std::path::PathBuf>, options: open::Options) -> Result<Repository, open::Error> {
     ThreadSafeRepository::open_opts(directory, options).map(Into::into)
 }
-
-///
-pub mod permission;
-
-///
-pub mod permissions;
-pub use repository::permissions::Permissions;
 
 ///
 pub mod create;
