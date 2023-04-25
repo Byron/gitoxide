@@ -38,6 +38,8 @@ pub(crate) mod root {
         pub const GITOXIDE: sections::Gitoxide = sections::Gitoxide;
         /// The `http` section.
         pub const HTTP: sections::Http = sections::Http;
+        /// The `index` section.
+        pub const INDEX: sections::Index = sections::Index;
         /// The `init` section.
         pub const INIT: sections::Init = sections::Init;
         /// The `pack` section.
@@ -69,6 +71,7 @@ pub(crate) mod root {
                 &Self::EXTENSIONS,
                 &Self::GITOXIDE,
                 &Self::HTTP,
+                &Self::INDEX,
                 &Self::INIT,
                 &Self::PACK,
                 &Self::PROTOCOL,
@@ -84,9 +87,9 @@ pub(crate) mod root {
 
 mod sections;
 pub use sections::{
-    branch, checkout, core, credential, diff, extensions, gitoxide, http, protocol, remote, ssh, Author, Branch,
-    Checkout, Clone, Committer, Core, Credential, Diff, Extensions, Gitoxide, Http, Init, Pack, Protocol, Remote, Safe,
-    Ssh, Url, User,
+    branch, checkout, core, credential, diff, extensions, gitoxide, http, index, protocol, remote, ssh, Author, Branch,
+    Checkout, Clone, Committer, Core, Credential, Diff, Extensions, Gitoxide, Http, Index, Init, Pack, Protocol,
+    Remote, Safe, Ssh, Url, User,
 };
 
 /// Generic value implementations for static instantiation.

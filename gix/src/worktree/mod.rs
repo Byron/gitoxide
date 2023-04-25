@@ -71,18 +71,12 @@ pub mod proxy;
 
 ///
 pub mod open_index {
-    use crate::bstr::BString;
-
     /// The error returned by [`Worktree::open_index()`][crate::Worktree::open_index()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
-        #[error("Could not interpret value '{}' as 'index.threads'", .value)]
-        ConfigIndexThreads {
-            value: BString,
-            #[source]
-            err: gix_config::value::Error,
-        },
+        #[error(transparent)]
+        ConfigIndexThreads(#[from] crate::config::key::GenericErrorWithValue),
         #[error(transparent)]
         IndexFile(#[from] gix_index::file::init::Error),
     }

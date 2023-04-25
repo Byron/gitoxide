@@ -1,3 +1,4 @@
+use crate::config::cache::util::ApplyLeniencyDefault;
 use crate::{worktree, Worktree};
 
 /// Worktree iteration
@@ -58,23 +59,14 @@ impl crate::Repository {
     ///
     /// It will use the `index.threads` configuration key to learn how many threads to use.
     /// Note that it may fail if there is no index.
-    // TODO: test
     pub fn open_index(&self) -> Result<gix_index::File, worktree::open_index::Error> {
         let thread_limit = self
             .config
             .resolved
-            .boolean("index", None, "threads")
-            .map(|res| {
-                res.map(|value| usize::from(!value)).or_else(|err| {
-                    gix_config::Integer::try_from(err.input.as_ref())
-                        .map_err(|err| worktree::open_index::Error::ConfigIndexThreads {
-                            value: err.input.clone(),
-                            err,
-                        })
-                        .map(|value| value.to_decimal().and_then(|v| v.try_into().ok()).unwrap_or(1))
-                })
-            })
-            .transpose()?;
+            .string("index", None, "threads")
+            .map(|value| crate::config::tree::Index::THREADS.try_into_index_threads(value))
+            .transpose()
+            .with_lenient_default(self.config.lenient_config)?;
         gix_index::File::at(
             self.index_path(),
             self.object_hash(),
