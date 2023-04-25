@@ -85,12 +85,12 @@ is usable to some extent.
   * [gix-refspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-refspec)
   * [gix-fs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fs)
   * [gix-utils](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-utils)
+  * [gix-hashtable](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hashtable)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
   * [gix-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree)
   * [gix-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bitmap)
   * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)
-  * [gix-hashtable](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hashtable)
 * **idea** _(just a name placeholder)_
   * [gix-archive](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-archive)
   * [gix-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-note)
