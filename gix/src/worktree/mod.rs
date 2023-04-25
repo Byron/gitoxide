@@ -103,7 +103,7 @@ pub mod excludes {
         #[error(transparent)]
         OpenIndex(#[from] crate::worktree::open_index::Error),
         #[error(transparent)]
-        CreateCache(#[from] crate::repository::excludes::Error),
+        CreateCache(#[from] crate::config::exclude_stack::Error),
     }
 
     impl<'repo> crate::Worktree<'repo> {
@@ -113,9 +113,45 @@ pub mod excludes {
         ///
         /// * `$XDG_CONFIG_HOME/…/ignore` if `core.excludesFile` is *not* set, otherwise use the configured file.
         /// * `$GIT_DIR/info/exclude` if present.
+        ///
+        /// When only excludes are desired, this is the most efficient way to obtain them. Otherwise use
+        /// [`Worktree::attributes()`][crate::Worktree::attributes()] for accessing both attributes and excludes.
         pub fn excludes(&self, overrides: Option<gix_ignore::Search>) -> Result<gix_worktree::Cache, Error> {
             let index = self.index()?;
             Ok(self.parent.excludes(&index, overrides)?)
+        }
+    }
+}
+
+///
+pub mod attributes {
+    /// The error returned by [`Worktree::attributes()`][crate::Worktree::attributes()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        OpenIndex(#[from] crate::worktree::open_index::Error),
+        #[error(transparent)]
+        CreateCache(#[from] crate::attributes::Error),
+    }
+
+    impl<'repo> crate::Worktree<'repo> {
+        /// Configure a file-system cache checking if files below the repository are excluded or for querying their attributes.
+        ///
+        /// Use `attribute_source` to specify where to read attributes from. Also note that exclude information will
+        /// always try to read `.gitignore` files from disk before trying to read it from the `index`.
+        ///
+        /// This takes into consideration all the usual repository configuration, namely:
+        ///
+        /// * `$XDG_CONFIG_HOME/…/ignore|attributes` if `core.excludesFile|attributesFile` is *not* set, otherwise use the configured file.
+        /// * `$GIT_DIR/info/exclude|attributes` if present.
+        pub fn attributes(
+            &self,
+            source: gix_worktree::cache::state::attributes::Source,
+            overrides: Option<gix_ignore::Search>,
+        ) -> Result<gix_worktree::Cache, Error> {
+            let index = self.index()?;
+            Ok(self.parent.attributes(&index, source, overrides)?)
         }
     }
 }

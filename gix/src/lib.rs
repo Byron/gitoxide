@@ -99,6 +99,9 @@ pub use hash::{oid, ObjectId};
 
 pub mod interrupt;
 
+///
+pub mod attributes;
+
 mod ext;
 ///
 pub mod prelude;
@@ -127,7 +130,7 @@ pub mod head;
 pub mod id;
 pub mod object;
 pub mod reference;
-pub mod repository;
+mod repository;
 pub mod tag;
 
 ///

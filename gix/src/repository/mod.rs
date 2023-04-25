@@ -19,9 +19,10 @@ impl crate::Repository {
     }
 }
 
+mod attributes;
 mod cache;
 mod config;
-pub mod excludes;
+mod excludes;
 pub(crate) mod identity;
 mod impls;
 mod init;
