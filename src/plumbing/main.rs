@@ -339,16 +339,6 @@ pub fn main() -> Result<()> {
                         )
                     },
                 ),
-                free::index::Subcommands::Entries => prepare_and_run(
-                    "index-entries",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, _err| {
-                        core::index::entries(index_path, out, core::index::Options { object_hash, format })
-                    },
-                ),
                 free::index::Subcommands::Verify => prepare_and_run(
                     "index-verify",
                     auto_verbose,
@@ -865,6 +855,16 @@ pub fn main() -> Result<()> {
             ),
         },
         Subcommands::Index(cmd) => match cmd {
+            index::Subcommands::Entries => prepare_and_run(
+                "index-entries",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| {
+                    core::repository::index::entries(repository(Mode::LenientWithGitInstallConfig)?, out, format)
+                },
+            ),
             index::Subcommands::FromTree {
                 force,
                 index_output_path,

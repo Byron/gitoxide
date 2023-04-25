@@ -471,6 +471,8 @@ pub mod index {
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
+        /// Print all entries to standard output
+        Entries,
         /// Create an index from a tree-ish.
         #[clap(visible_alias = "read-tree")]
         FromTree {

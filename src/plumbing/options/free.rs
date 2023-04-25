@@ -55,8 +55,6 @@ pub mod index {
     pub enum Subcommands {
         /// Validate constraints and assumptions of an index along with its integrity.
         Verify,
-        /// Print all entries to standard output
-        Entries,
         /// Print information about the index structure
         Info {
             /// Do not extract specific extension information to gain only a superficial idea of the index's composition.

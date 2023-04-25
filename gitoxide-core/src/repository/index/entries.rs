@@ -1,26 +1,18 @@
-use std::path::Path;
-
-use crate::index::{parse_file, Options};
-
-pub fn entries(
-    index_path: impl AsRef<Path>,
-    mut out: impl std::io::Write,
-    Options { object_hash, format }: Options,
-) -> anyhow::Result<()> {
+pub fn entries(repo: gix::Repository, mut out: impl std::io::Write, format: crate::OutputFormat) -> anyhow::Result<()> {
     use crate::OutputFormat::*;
-    let file = parse_file(index_path, object_hash)?;
+    let index = repo.index()?;
 
     #[cfg(feature = "serde")]
     if let Json = format {
         out.write_all(b"[\n")?;
     }
 
-    let mut entries = file.entries().iter().peekable();
+    let mut entries = index.entries().iter().peekable();
     while let Some(entry) = entries.next() {
         match format {
-            Human => to_human(&mut out, &file, entry)?,
+            Human => to_human(&mut out, &index, entry)?,
             #[cfg(feature = "serde")]
-            Json => to_json(&mut out, &file, entry, entries.peek().is_none())?,
+            Json => to_json(&mut out, &index, entry, entries.peek().is_none())?,
         }
     }
 
@@ -34,7 +26,7 @@ pub fn entries(
 #[cfg(feature = "serde")]
 pub(crate) fn to_json(
     mut out: &mut impl std::io::Write,
-    file: &gix::index::File,
+    index: &gix::index::File,
     entry: &gix::index::Entry,
     is_last: bool,
 ) -> anyhow::Result<()> {
@@ -56,7 +48,7 @@ pub(crate) fn to_json(
             hex_id: entry.id.to_hex().to_string(),
             flags: entry.flags.bits(),
             mode: entry.mode.bits(),
-            path: entry.path(file).to_str_lossy(),
+            path: entry.path(index).to_str_lossy(),
         },
     )?;
 
