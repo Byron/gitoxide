@@ -39,6 +39,18 @@ pub fn submodule_git_dir(git_dir: impl AsRef<Path>) -> bool {
 ///   * …a refs directory
 ///
 pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::is_git::Error> {
+    let git_dir = git_dir.as_ref();
+    let git_dir_metadata = git_dir.metadata().map_err(|err| crate::is_git::Error::Metadata {
+        source: err,
+        path: git_dir.into(),
+    })?;
+    git_with_metadata(git_dir, git_dir_metadata)
+}
+
+pub(crate) fn git_with_metadata(
+    git_dir: &Path,
+    git_dir_metadata: std::fs::Metadata,
+) -> Result<crate::repository::Kind, crate::is_git::Error> {
     #[derive(Eq, PartialEq)]
     enum Kind {
         MaybeRepo,
@@ -46,11 +58,6 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
         LinkedWorkTreeDir,
         WorkTreeGitDir { work_dir: std::path::PathBuf },
     }
-    let git_dir = git_dir.as_ref();
-    let git_dir_metadata = git_dir.metadata().map_err(|err| crate::is_git::Error::Metadata {
-        source: err,
-        path: git_dir.into(),
-    })?;
     let (dot_git, common_dir, kind) = if git_dir_metadata.is_file() {
         let private_git_dir = crate::path::from_gitdir_file(git_dir)?;
         let common_dir = private_git_dir.join("commondir");

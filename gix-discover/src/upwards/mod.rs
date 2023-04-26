@@ -12,6 +12,7 @@ pub(crate) mod function {
     #[cfg(unix)]
     use crate::upwards::util::device_id;
     use crate::{
+        is::git_with_metadata as is_git_with_metadata,
         is_git,
         upwards::util::{find_ceiling_height, shorten_path_with_cwd},
         DOT_GIT_DIR,
@@ -80,6 +81,7 @@ pub(crate) mod function {
 
         let mut cursor = dir.clone().into_owned();
         let mut current_height = 0;
+        let mut cursor_metadata = Some(dir_metadata);
         'outer: loop {
             if max_height.map_or(false, |x| current_height > x) {
                 return Err(Error::NoGitRepositoryWithinCeiling {
@@ -91,13 +93,15 @@ pub(crate) mod function {
 
             #[cfg(unix)]
             if current_height != 0 && !cross_fs {
-                let metadata = if cursor.as_os_str().is_empty() {
-                    Path::new(".")
-                } else {
-                    cursor.as_ref()
-                }
-                .metadata()
-                .map_err(|_| Error::InaccessibleDirectory { path: cursor.clone() })?;
+                let metadata = cursor_metadata.take().map(Ok).unwrap_or_else(|| {
+                    if cursor.as_os_str().is_empty() {
+                        Path::new(".")
+                    } else {
+                        cursor.as_ref()
+                    }
+                    .metadata()
+                    .map_err(|_| Error::InaccessibleDirectory { path: cursor.clone() })
+                })?;
 
                 if device_id(&metadata) != initial_device {
                     return Err(Error::NoGitRepositoryWithinFs {
@@ -105,13 +109,19 @@ pub(crate) mod function {
                         limit: cursor.clone(),
                     });
                 }
+                cursor_metadata = Some(metadata);
             }
 
+            let mut cursor_metadata_backup = None;
             for append_dot_git in &[true, false] {
                 if *append_dot_git {
                     cursor.push(DOT_GIT_DIR);
+                    cursor_metadata_backup = cursor_metadata.take();
                 }
-                if let Ok(kind) = is_git(&cursor) {
+                if let Ok(kind) = match cursor_metadata.take() {
+                    Some(metadata) => is_git_with_metadata(&cursor, metadata),
+                    None => is_git(&cursor),
+                } {
                     match filter_by_trust(&cursor)? {
                         Some(trust) => {
                             // TODO: test this more, it definitely doesn't always find the shortest path to a directory
@@ -140,6 +150,7 @@ pub(crate) mod function {
                 }
                 if *append_dot_git {
                     cursor.pop();
+                    cursor_metadata = cursor_metadata_backup.take();
                 }
             }
             if cursor.parent().map_or(false, |p| p.as_os_str().is_empty()) {
