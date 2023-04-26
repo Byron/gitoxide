@@ -69,14 +69,9 @@ impl PartialNameRef {
             || name.starts_with(Category::LinkedPseudoRef { name: "".into() }.prefix())
             || is_pseudo_ref(name)
     }
-    pub(crate) fn construct_full_name_ref<'buf>(
-        &self,
-        add_refs_prefix: bool,
-        inbetween: &str,
-        buf: &'buf mut BString,
-    ) -> &'buf FullNameRef {
+    pub(crate) fn construct_full_name_ref<'buf>(&self, inbetween: &str, buf: &'buf mut BString) -> &'buf FullNameRef {
         buf.clear();
-        if add_refs_prefix && !self.looks_like_full_name() {
+        if !self.looks_like_full_name() {
             buf.push_str("refs/");
         }
         if !inbetween.is_empty() {
