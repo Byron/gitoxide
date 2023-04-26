@@ -58,50 +58,12 @@ pub(crate) fn git_with_metadata(
         LinkedWorkTreeDir,
         WorkTreeGitDir { work_dir: std::path::PathBuf },
     }
-    let (dot_git, common_dir, kind) = if git_dir_metadata.is_file() {
+
+    let dot_git = if git_dir_metadata.is_file() {
         let private_git_dir = crate::path::from_gitdir_file(git_dir)?;
-        let common_dir = private_git_dir.join("commondir");
-        match crate::path::from_plain_file(&common_dir) {
-            Some(Err(err)) => {
-                return Err(crate::is_git::Error::MissingCommonDir {
-                    missing: common_dir,
-                    source: err,
-                })
-            }
-            Some(Ok(common_dir)) => {
-                let common_dir = private_git_dir.join(common_dir);
-                (
-                    Cow::Owned(private_git_dir),
-                    Cow::Owned(common_dir),
-                    Kind::LinkedWorkTreeDir,
-                )
-            }
-            None => (
-                Cow::Owned(private_git_dir.clone()),
-                Cow::Owned(private_git_dir),
-                Kind::Submodule,
-            ),
-        }
+        Cow::Owned(private_git_dir)
     } else {
-        let common_dir = git_dir.join("commondir");
-        let worktree_and_common_dir = crate::path::from_plain_file(common_dir)
-            .and_then(Result::ok)
-            .and_then(|cd| {
-                crate::path::from_plain_file(git_dir.join("gitdir"))
-                    .and_then(Result::ok)
-                    .map(|worktree_gitfile| (crate::path::without_dot_git_dir(worktree_gitfile), cd))
-            });
-        match worktree_and_common_dir {
-            Some((work_dir, common_dir)) => {
-                let common_dir = git_dir.join(common_dir);
-                (
-                    Cow::Borrowed(git_dir),
-                    Cow::Owned(common_dir),
-                    Kind::WorkTreeGitDir { work_dir },
-                )
-            }
-            None => (Cow::Borrowed(git_dir), Cow::Borrowed(git_dir), Kind::MaybeRepo),
-        }
+        Cow::Borrowed(git_dir)
     };
 
     {
@@ -126,6 +88,39 @@ pub(crate) fn git_with_metadata(
             });
         }
     }
+
+    let (common_dir, kind) = if git_dir_metadata.is_file() {
+        let common_dir = dot_git.join("commondir");
+        match crate::path::from_plain_file(&common_dir) {
+            Some(Err(err)) => {
+                return Err(crate::is_git::Error::MissingCommonDir {
+                    missing: common_dir,
+                    source: err,
+                })
+            }
+            Some(Ok(common_dir)) => {
+                let common_dir = dot_git.join(common_dir);
+                (Cow::Owned(common_dir), Kind::LinkedWorkTreeDir)
+            }
+            None => (dot_git.clone(), Kind::Submodule),
+        }
+    } else {
+        let common_dir = dot_git.join("commondir");
+        let worktree_and_common_dir = crate::path::from_plain_file(common_dir)
+            .and_then(Result::ok)
+            .and_then(|cd| {
+                crate::path::from_plain_file(dot_git.join("gitdir"))
+                    .and_then(Result::ok)
+                    .map(|worktree_gitfile| (crate::path::without_dot_git_dir(worktree_gitfile), cd))
+            });
+        match worktree_and_common_dir {
+            Some((work_dir, common_dir)) => {
+                let common_dir = dot_git.join(common_dir);
+                (Cow::Owned(common_dir), Kind::WorkTreeGitDir { work_dir })
+            }
+            None => (dot_git.clone(), Kind::MaybeRepo),
+        }
+    };
 
     {
         let objects_path = common_dir.join("objects");
