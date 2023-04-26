@@ -51,3 +51,10 @@ fn push_to_empty() {
         Error::PushToEmpty
     ));
 }
+
+#[test]
+fn fuzzed() {
+    let input = include_bytes!("../fixtures/fuzzed/clusterfuzz-testcase-minimized-gix-refspec-parse-4658733962887168");
+    drop(gix_refspec::parse(input.into(), gix_refspec::parse::Operation::Fetch).unwrap_err());
+    drop(gix_refspec::parse(input.into(), gix_refspec::parse::Operation::Push).unwrap_err());
+}
