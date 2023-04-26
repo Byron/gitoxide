@@ -23,6 +23,8 @@ pub mod is_git {
     pub enum Error {
         #[error("Could not find a valid HEAD reference")]
         FindHeadRef(#[from] gix_ref::file::find::existing::Error),
+        #[error("Missing HEAD at '.git/HEAD'")]
+        MissingHead,
         #[error("Expected HEAD at '.git/HEAD', got '.git/{}'", .name)]
         MisplacedHead { name: bstr::BString },
         #[error("Expected an objects directory at '{}'", .missing.display())]

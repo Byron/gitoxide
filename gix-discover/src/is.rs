@@ -39,6 +39,18 @@ pub fn submodule_git_dir(git_dir: impl AsRef<Path>) -> bool {
 ///   * …a refs directory
 ///
 pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::is_git::Error> {
+    let git_dir = git_dir.as_ref();
+    let git_dir_metadata = git_dir.metadata().map_err(|err| crate::is_git::Error::Metadata {
+        source: err,
+        path: git_dir.into(),
+    })?;
+    git_with_metadata(git_dir, git_dir_metadata)
+}
+
+pub(crate) fn git_with_metadata(
+    git_dir: &Path,
+    git_dir_metadata: std::fs::Metadata,
+) -> Result<crate::repository::Kind, crate::is_git::Error> {
     #[derive(Eq, PartialEq)]
     enum Kind {
         MaybeRepo,
@@ -46,61 +58,20 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
         LinkedWorkTreeDir,
         WorkTreeGitDir { work_dir: std::path::PathBuf },
     }
-    let git_dir = git_dir.as_ref();
-    let (dot_git, common_dir, kind) = if git_dir
-        .metadata()
-        .map_err(|err| crate::is_git::Error::Metadata {
-            source: err,
-            path: git_dir.into(),
-        })?
-        .is_file()
-    {
+
+    let dot_git = if git_dir_metadata.is_file() {
         let private_git_dir = crate::path::from_gitdir_file(git_dir)?;
-        let common_dir = private_git_dir.join("commondir");
-        match crate::path::from_plain_file(&common_dir) {
-            Some(Err(err)) => {
-                return Err(crate::is_git::Error::MissingCommonDir {
-                    missing: common_dir,
-                    source: err,
-                })
-            }
-            Some(Ok(common_dir)) => {
-                let common_dir = private_git_dir.join(common_dir);
-                (
-                    Cow::Owned(private_git_dir),
-                    Cow::Owned(common_dir),
-                    Kind::LinkedWorkTreeDir,
-                )
-            }
-            None => (
-                Cow::Owned(private_git_dir.clone()),
-                Cow::Owned(private_git_dir),
-                Kind::Submodule,
-            ),
-        }
+        Cow::Owned(private_git_dir)
     } else {
-        let common_dir = git_dir.join("commondir");
-        let worktree_and_common_dir = crate::path::from_plain_file(common_dir)
-            .and_then(Result::ok)
-            .and_then(|cd| {
-                crate::path::from_plain_file(git_dir.join("gitdir"))
-                    .and_then(Result::ok)
-                    .map(|worktree_gitfile| (crate::path::without_dot_git_dir(worktree_gitfile), cd))
-            });
-        match worktree_and_common_dir {
-            Some((work_dir, common_dir)) => {
-                let common_dir = git_dir.join(common_dir);
-                (
-                    Cow::Borrowed(git_dir),
-                    Cow::Owned(common_dir),
-                    Kind::WorkTreeGitDir { work_dir },
-                )
-            }
-            None => (Cow::Borrowed(git_dir), Cow::Borrowed(git_dir), Kind::MaybeRepo),
-        }
+        Cow::Borrowed(git_dir)
     };
 
     {
+        // Fast-path: avoid doing the complete search if HEAD is already not there.
+        // TODO(reftable): use a ref-store to lookup HEAD if ref-tables should be supported, or detect ref-tables beforehand.
+        if !dot_git.join("HEAD").exists() {
+            return Err(crate::is_git::Error::MissingHead);
+        }
         // We expect to be able to parse any ref-hash, so we shouldn't have to know the repos hash here.
         // With ref-table, the has is probably stored as part of the ref-db itself, so we can handle it from there.
         // In other words, it's important not to fail on detached heads here because we guessed the hash kind wrongly.
@@ -117,6 +88,39 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
             });
         }
     }
+
+    let (common_dir, kind) = if git_dir_metadata.is_file() {
+        let common_dir = dot_git.join("commondir");
+        match crate::path::from_plain_file(&common_dir) {
+            Some(Err(err)) => {
+                return Err(crate::is_git::Error::MissingCommonDir {
+                    missing: common_dir,
+                    source: err,
+                })
+            }
+            Some(Ok(common_dir)) => {
+                let common_dir = dot_git.join(common_dir);
+                (Cow::Owned(common_dir), Kind::LinkedWorkTreeDir)
+            }
+            None => (dot_git.clone(), Kind::Submodule),
+        }
+    } else {
+        let common_dir = dot_git.join("commondir");
+        let worktree_and_common_dir = crate::path::from_plain_file(common_dir)
+            .and_then(Result::ok)
+            .and_then(|cd| {
+                crate::path::from_plain_file(dot_git.join("gitdir"))
+                    .and_then(Result::ok)
+                    .map(|worktree_gitfile| (crate::path::without_dot_git_dir(worktree_gitfile), cd))
+            });
+        match worktree_and_common_dir {
+            Some((work_dir, common_dir)) => {
+                let common_dir = dot_git.join(common_dir);
+                (Cow::Owned(common_dir), Kind::WorkTreeGitDir { work_dir })
+            }
+            None => (dot_git.clone(), Kind::MaybeRepo),
+        }
+    };
 
     {
         let objects_path = common_dir.join("objects");

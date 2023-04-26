@@ -324,6 +324,67 @@ fn do_not_shorten_absolute_paths() -> crate::Result {
     Ok(())
 }
 
+mod dot_git_only {
+    use crate::upwards::repo_path;
+
+    fn find_dot_git(base: impl AsRef<std::path::Path>) -> gix_discover::repository::Path {
+        gix_discover::upwards_opts(
+            base,
+            gix_discover::upwards::Options {
+                dot_git_only: true,
+                ..Default::default()
+            },
+        )
+        .expect("we can discover the repo")
+        .0
+    }
+
+    fn assert_is_worktree_at(repo_path: gix_discover::repository::Path, expected: impl AsRef<std::path::Path>) {
+        match repo_path {
+            gix_discover::repository::Path::WorkTree(work_dir) => {
+                assert_eq!(work_dir, expected.as_ref());
+            }
+            _ => panic!("expected worktree path"),
+        };
+    }
+
+    #[test]
+    fn succeeds_in_worktree_dir() -> crate::Result {
+        let top_level_repo = repo_path()?;
+        for base in [
+            top_level_repo.join("some/very/deeply/nested/subdir"),
+            top_level_repo.clone(),
+        ] {
+            let repo_path = find_dot_git(base);
+            assert_is_worktree_at(repo_path, &top_level_repo);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn succeeds_from_within_dot_git_dir() -> crate::Result {
+        let top_level_repo = repo_path()?;
+        for inside_git_dir in [top_level_repo.join(".git"), top_level_repo.join(".git").join("refs")] {
+            let repo_path = find_dot_git(inside_git_dir);
+            assert_is_worktree_at(repo_path, &top_level_repo);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn bare_repos_are_ignored() -> crate::Result {
+        let top_level_repo = repo_path()?;
+        for bare_dir in [
+            top_level_repo.join("bare.git"),
+            top_level_repo.join("bare.git").join("refs"),
+        ] {
+            let repo_path = find_dot_git(bare_dir);
+            assert_is_worktree_at(repo_path, &top_level_repo);
+        }
+        Ok(())
+    }
+}
+
 mod submodules {
     #[test]
     fn by_their_worktree_checkout() -> crate::Result {

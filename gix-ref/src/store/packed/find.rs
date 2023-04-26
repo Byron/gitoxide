@@ -26,7 +26,7 @@ impl packed::Buffer {
                 };
                 (name, true)
             } else {
-                let full_name = name.construct_full_name_ref(true, inbetween, &mut buf);
+                let full_name = name.construct_full_name_ref(inbetween, &mut buf);
                 (full_name, false)
             };
             match self.try_find_full_name(name)? {

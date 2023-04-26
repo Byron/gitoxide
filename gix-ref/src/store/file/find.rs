@@ -13,11 +13,6 @@ use crate::{
     BStr, BString, FullNameRef, PartialNameRef, Reference,
 };
 
-enum Transform {
-    EnforceRefsPrefix,
-    None,
-}
-
 impl file::Store {
     /// Find a single reference by the given `path` which is required to be a valid reference name.
     ///
@@ -72,14 +67,8 @@ impl file::Store {
         packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error> {
         let mut buf = BString::default();
-        if partial_name.looks_like_full_name() {
-            if let Some(r) = self.find_inner("", partial_name, None, Transform::None, &mut buf)? {
-                return Ok(Some(r));
-            }
-        }
-
         for inbetween in &["", "tags", "heads", "remotes"] {
-            match self.find_inner(inbetween, partial_name, packed, Transform::EnforceRefsPrefix, &mut buf) {
+            match self.find_inner(inbetween, partial_name, packed, &mut buf) {
                 Ok(Some(r)) => return Ok(Some(r)),
                 Ok(None) => {
                     continue;
@@ -87,17 +76,20 @@ impl file::Store {
                 Err(err) => return Err(err),
             }
         }
-        self.find_inner(
-            "remotes",
-            partial_name
-                .to_owned()
-                .join("HEAD")
-                .expect("HEAD is valid name")
-                .as_ref(),
-            None,
-            Transform::EnforceRefsPrefix,
-            &mut buf,
-        )
+        if partial_name.as_bstr() != "HEAD" {
+            self.find_inner(
+                "remotes",
+                partial_name
+                    .to_owned()
+                    .join("HEAD")
+                    .expect("HEAD is valid name")
+                    .as_ref(),
+                None,
+                &mut buf,
+            )
+        } else {
+            Ok(None)
+        }
     }
 
     fn find_inner(
@@ -105,11 +97,9 @@ impl file::Store {
         inbetween: &str,
         partial_name: &PartialNameRef,
         packed: Option<&packed::Buffer>,
-        transform: Transform,
         path_buf: &mut BString,
     ) -> Result<Option<Reference>, Error> {
-        let add_refs_prefix = matches!(transform, Transform::EnforceRefsPrefix);
-        let full_name = partial_name.construct_full_name_ref(add_refs_prefix, inbetween, path_buf);
+        let full_name = partial_name.construct_full_name_ref(inbetween, path_buf);
         let content_buf = self.ref_contents(full_name).map_err(|err| Error::ReadFileContents {
             source: err,
             path: self.reference_path(full_name),
