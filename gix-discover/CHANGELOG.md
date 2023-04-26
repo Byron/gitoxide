@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.17.0 (2023-04-26)
 
 ### New Features
 
@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 23 calendar days.
+ - 13 commits contributed to the release over the course of 23 calendar days.
  - 27 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`30a1a71`](https://github.com/Byron/gitoxide/commit/30a1a71f36f24faac0e0b362ffdfedea7f9cdbf1))
     - Merge branch 'faster-discovery' ([`282a1a3`](https://github.com/Byron/gitoxide/commit/282a1a3f29572250e6d741c6daa97b0bed679753))
     - `discover_opts` supports an option to see non-bare repos only. ([`1b8d9e6`](https://github.com/Byron/gitoxide/commit/1b8d9e6a408e480ae1912e919c37a26e5c46639d))
     - Common-dir is now queried only when needed. ([`abbae1c`](https://github.com/Byron/gitoxide/commit/abbae1cbca6fb5c4347e51f7122f02d106c8d30a))

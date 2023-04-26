@@ -16,12 +16,12 @@ doctest = false
 serde = ["dep:serde", "bstr/serde", "gix-sec/serde"]
 
 [dependencies]
-gix-sec = { version = "^0.6.2", path = "../gix-sec" }
+gix-sec = { version = "^0.7.0", path = "../gix-sec" }
 gix-url = { version = "^0.17.0", path = "../gix-url" }
-gix-path = { version = "^0.7.2", path = "../gix-path" }
+gix-path = { version = "^0.7.4", path = "../gix-path" }
 gix-command = { version = "^0.2.4", path = "../gix-command" }
-gix-config-value = { version = "^0.10.1", path = "../gix-config-value" }
-gix-prompt = { version = "^0.3.2", path = "../gix-prompt" }
+gix-config-value = { version = "^0.11.0", path = "../gix-config-value" }
+gix-prompt = { version = "^0.4.0", path = "../gix-prompt" }
 
 thiserror = "1.0.32"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
