@@ -98,6 +98,11 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
     };
 
     {
+        // Fast-path: avoid doing the complete search if HEAD is already not there.
+        // TODO(reftable): use a ref-store to lookup HEAD if ref-tables should be supported, or detect ref-tables beforehand.
+        if !dot_git.join("HEAD").exists() {
+            return Err(crate::is_git::Error::MissingHead);
+        }
         // We expect to be able to parse any ref-hash, so we shouldn't have to know the repos hash here.
         // With ref-table, the has is probably stored as part of the ref-db itself, so we can handle it from there.
         // In other words, it's important not to fail on detached heads here because we guessed the hash kind wrongly.
