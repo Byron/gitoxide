@@ -47,14 +47,11 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
         WorkTreeGitDir { work_dir: std::path::PathBuf },
     }
     let git_dir = git_dir.as_ref();
-    let (dot_git, common_dir, kind) = if git_dir
-        .metadata()
-        .map_err(|err| crate::is_git::Error::Metadata {
-            source: err,
-            path: git_dir.into(),
-        })?
-        .is_file()
-    {
+    let git_dir_metadata = git_dir.metadata().map_err(|err| crate::is_git::Error::Metadata {
+        source: err,
+        path: git_dir.into(),
+    })?;
+    let (dot_git, common_dir, kind) = if git_dir_metadata.is_file() {
         let private_git_dir = crate::path::from_gitdir_file(git_dir)?;
         let common_dir = private_git_dir.join("commondir");
         match crate::path::from_plain_file(&common_dir) {

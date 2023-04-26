@@ -107,7 +107,7 @@ pub(crate) mod function {
                 }
             }
 
-            for append_dot_git in &[false, true] {
+            for append_dot_git in &[true, false] {
                 if *append_dot_git {
                     cursor.push(DOT_GIT_DIR);
                 }
