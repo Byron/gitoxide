@@ -87,17 +87,21 @@ impl file::Store {
                 Err(err) => return Err(err),
             }
         }
-        self.find_inner(
-            "remotes",
-            partial_name
-                .to_owned()
-                .join("HEAD")
-                .expect("HEAD is valid name")
-                .as_ref(),
-            None,
-            Transform::EnforceRefsPrefix,
-            &mut buf,
-        )
+        if partial_name.as_bstr() != "HEAD" {
+            self.find_inner(
+                "remotes",
+                partial_name
+                    .to_owned()
+                    .join("HEAD")
+                    .expect("HEAD is valid name")
+                    .as_ref(),
+                None,
+                Transform::EnforceRefsPrefix,
+                &mut buf,
+            )
+        } else {
+            Ok(None)
+        }
     }
 
     fn find_inner(
