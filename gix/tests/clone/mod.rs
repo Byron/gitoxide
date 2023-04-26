@@ -73,6 +73,10 @@ mod blocking_io {
             "both methods agree - if there are no shallow commits, it shouldn't think the repo is shallow"
         );
         assert!(
+            !repo.shallow_file().exists(),
+            "when the repo is not shallow anymore, there is no need for a shallow file"
+        );
+        assert!(
             repo.head_id()?.ancestors().all()?.count() > shallow_commit_count,
             "there are more commits now as the history is complete"
         );

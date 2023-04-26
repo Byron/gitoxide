@@ -36,6 +36,11 @@ pub mod write {
                     ShallowUpdate::Unshallow(id) => shallow_commits.retain(|oid| oid != id),
                 }
             }
+            if shallow_commits.is_empty() {
+                std::fs::remove_file(file.resource_path())?;
+                drop(file);
+                return Ok(());
+            }
 
             if shallow_commits.is_empty() {
                 if let Err(err) = std::fs::remove_file(file.resource_path()) {
