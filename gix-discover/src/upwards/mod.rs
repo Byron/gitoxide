@@ -4,6 +4,7 @@ pub use types::{Error, Options};
 mod util;
 
 pub(crate) mod function {
+    use std::ffi::OsStr;
     use std::{borrow::Cow, path::Path};
 
     use gix_sec::Trust;
@@ -32,6 +33,7 @@ pub(crate) mod function {
             match_ceiling_dir_or_error,
             cross_fs,
             current_dir,
+            dot_git_only,
         }: Options<'_>,
     ) -> Result<(crate::repository::Path, Trust), Error> {
         // Normalize the path so that `Path::parent()` _actually_ gives
@@ -113,8 +115,10 @@ pub(crate) mod function {
             }
 
             let mut cursor_metadata_backup = None;
-            for append_dot_git in &[true, false] {
-                if *append_dot_git {
+            let started_as_dot_git = cursor.file_name() == Some(OsStr::new(DOT_GIT_DIR));
+            let dir_manipulation = if dot_git_only { &[true] as &[_] } else { &[true, false] };
+            for append_dot_git in dir_manipulation {
+                if *append_dot_git && !started_as_dot_git {
                     cursor.push(DOT_GIT_DIR);
                     cursor_metadata_backup = cursor_metadata.take();
                 }
@@ -148,9 +152,13 @@ pub(crate) mod function {
                         }
                     }
                 }
-                if *append_dot_git {
+
+                // Usually `.git` (started_as_dot_git == true) will be a git dir, but if not we can quickly skip over it.
+                if *append_dot_git || started_as_dot_git {
                     cursor.pop();
-                    cursor_metadata = cursor_metadata_backup.take();
+                    if let Some(metadata) = cursor_metadata_backup.take() {
+                        cursor_metadata = Some(metadata);
+                    }
                 }
             }
             if cursor.parent().map_or(false, |p| p.as_os_str().is_empty()) {

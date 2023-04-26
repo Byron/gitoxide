@@ -53,6 +53,12 @@ pub struct Options<'a> {
     // TODO: test on Linux
     // TODO: Handle WASI once https://github.com/rust-lang/rust/issues/71213 is resolved
     pub cross_fs: bool,
+    /// If true, limit discovery to `.git` directories.
+    ///
+    /// This  will fail to find typical bare repositories, but would find them if they happen to be named `.git`.
+    /// Use this option if repos with worktrees are the only kind of repositories you are interested in for
+    /// optimal discovery performance.
+    pub dot_git_only: bool,
     /// If set, the _current working directory_ (absolute path) to use when resolving relative paths. Note that
     /// that this is merely an optimization for those who discover a lot of repositories in the same process.
     ///
@@ -67,6 +73,7 @@ impl Default for Options<'_> {
             ceiling_dirs: vec![],
             match_ceiling_dir_or_error: true,
             cross_fs: false,
+            dot_git_only: false,
             current_dir: None,
         }
     }
