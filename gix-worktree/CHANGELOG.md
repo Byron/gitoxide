@@ -5,6 +5,98 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-c402891d269a77913be39a92b1fc7fccba509557/> `cache::state::ignore::Source` to specify where to read `.gitignore` files from.
+   This allows better tuning and makes it more versatile for usage in any application, not
+   just `git`.
+ - <csr-id-745fc37b87d64e4fd821a692b223eda4f5df81ce/> provide statistics for cache operations, and turn debug API into better public API for `Cache`.
+   That way it's a bit clearer what it is doing and does away with
+   some rather dubious test code.
+ - <csr-id-0a8e50f64a8a730fbbd14b465e08d96ebfcf697d/> diff between worktree and index
+
+### Bug Fixes
+
+ - <csr-id-27157ae7b3bec4e3117645a6456ff8cc28755f81/> `cache::Ignore` assures that case-sensitivity is handled similarly to git.
+   Previously directory excludes like `dir/` could (possibly) yield different results compared to git.
+   This is an opportunitstic change as it wasn't possible to trigger the wanted behaviour in a test
+   related to directory-specific matching. It did trigger, however, when matching normal patterns
+   which indicated there was indeed a bug.
+
+### New Features (BREAKING)
+
+ - <csr-id-af9ca15622be650b0fb65acf1b501918df880fd7/> support to obtain `Attributes` using the `Cache` type.
+ - <csr-id-b83ee366a3c65c717beb587ad809268f1c54b8ad/> Rename `serde1` cargo feature to `serde` and use the weak-deps cargo capability.
+   With it it's possible to not automatically declare all optional dependencies externally visible
+   features, and thus re-use feature names that oterwise are also a crate name.
+   
+   Previously I thought that `serde1` is for future-proofing and supporting multiple serde versions
+   at the same time. However, it's most definitely a burden I wouldn't want anyway, so using
+   `serde` seems to be the way to go into the future.
+ - <csr-id-b645d28f9641c6b4022e1e37ad9fe528922ec747/> remove types that are now available in `gix-os`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 41 commits contributed to the release over the course of 14 calendar days.
+ - 27 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#814](https://github.com/Byron/gitoxide/issues/814)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#814](https://github.com/Byron/gitoxide/issues/814)**
+    - Rename `serde1` cargo feature to `serde` and use the weak-deps cargo capability. ([`b83ee36`](https://github.com/Byron/gitoxide/commit/b83ee366a3c65c717beb587ad809268f1c54b8ad))
+ * **Uncategorized**
+    - Merge branch 'index-entries-attrs' ([`f37a930`](https://github.com/Byron/gitoxide/commit/f37a930aefa27e67f0b693ba9669cc26d49044fa))
+    - Remove ignored archive to assure tests run as intended ([`df28b7d`](https://github.com/Byron/gitoxide/commit/df28b7d3fb7f114c862ba5559ab3974ce752cb65))
+    - `cache::state::ignore::Source` to specify where to read `.gitignore` files from. ([`c402891`](https://github.com/Byron/gitoxide/commit/c402891d269a77913be39a92b1fc7fccba509557))
+    - Provide statistics for cache operations, and turn debug API into better public API for `Cache`. ([`745fc37`](https://github.com/Byron/gitoxide/commit/745fc37b87d64e4fd821a692b223eda4f5df81ce))
+    - Remove duplicate usage of `case` in `cache::state::Attributes|Ignore` types. ([`21b4e67`](https://github.com/Byron/gitoxide/commit/21b4e676ab094850ba808e085e2e1c3b1eb2eb61))
+    - Merge branch 'attributes-cache' ([`3456c84`](https://github.com/Byron/gitoxide/commit/3456c845dfeedd2fa96b4313b1a84c8cbe9433c5))
+    - Support to obtain `Attributes` using the `Cache` type. ([`af9ca15`](https://github.com/Byron/gitoxide/commit/af9ca15622be650b0fb65acf1b501918df880fd7))
+    - `cache::Ignore` assures that case-sensitivity is handled similarly to git. ([`27157ae`](https://github.com/Byron/gitoxide/commit/27157ae7b3bec4e3117645a6456ff8cc28755f81))
+    - Merge branch 'fix-819' ([`69faad0`](https://github.com/Byron/gitoxide/commit/69faad0d7cc100de54d757d42acc152a22edc022))
+    - Adjust to improvements in `gix-object` ([`efeb29d`](https://github.com/Byron/gitoxide/commit/efeb29daaf4199748702f42966470a41ded3c6de))
+    - Release gix-utils v0.1.0, gix-hash v0.11.0, gix-date v0.5.0, gix-features v0.29.0, gix-actor v0.20.0, gix-object v0.29.0, gix-archive v0.1.0, gix-fs v0.1.0, safety bump 25 crates ([`8dbd0a6`](https://github.com/Byron/gitoxide/commit/8dbd0a60557a85acfa231800a058cbac0271a8cf))
+    - Make fmt ([`5d2b5d0`](https://github.com/Byron/gitoxide/commit/5d2b5d02c3869e07dc2507a8f2519ee1df633df7))
+    - Merge branch 'main' into dev ([`cdef398`](https://github.com/Byron/gitoxide/commit/cdef398c4a3bd01baf0be2c27a3f77a400172b0d))
+    - Minor adjustments to the worktree structure. ([`8920229`](https://github.com/Byron/gitoxide/commit/89202296f63dacedfd396aefe25e686b4d426b2a))
+    - Rename the serde1 feature to serde ([`19338d9`](https://github.com/Byron/gitoxide/commit/19338d934b6712b7d6bd3fa3b2e4189bf7e6c8a1))
+    - Create new `gix-fs` crate to consolidate all filesystem utilities ([`f8cc33c`](https://github.com/Byron/gitoxide/commit/f8cc33cb372dd2b4bbe4a09cf4f64916681ab1dd))
+    - Add a test to assure we can detect conflicts ([`055611c`](https://github.com/Byron/gitoxide/commit/055611c6eee840f6ea870418448733bb491437aa))
+    - Adjust to changes in `gix-index` ([`cae539b`](https://github.com/Byron/gitoxide/commit/cae539b87164fabd258255a5d217decf3182d81f))
+    - Refactor ([`691758a`](https://github.com/Byron/gitoxide/commit/691758a4491f8430b61e418dad33d8d901f89361))
+    - Make it compile ([`6acc5f1`](https://github.com/Byron/gitoxide/commit/6acc5f10de5d21115772def2b86bc5d3d8ddf662))
+    - Merge branch 'main' into dev ([`23ee47f`](https://github.com/Byron/gitoxide/commit/23ee47fb24c197f8437bd426544b2aa74e005bdc))
+    - Merge branch 'worktree-stack' ([`3d47919`](https://github.com/Byron/gitoxide/commit/3d47919c1a2f83fc7c1fd7ae590d098057a22626))
+    - First steps of attribute cache initialization. ([`e24b677`](https://github.com/Byron/gitoxide/commit/e24b6773b0626acdd156b2ff205532df530cbcd3))
+    - Adjust to changes in `gix-attributes` ([`1755c81`](https://github.com/Byron/gitoxide/commit/1755c81f64ce8a68807c2026eeae13dc46021db1))
+    - Remove types that are now available in `gix-os` ([`b645d28`](https://github.com/Byron/gitoxide/commit/b645d28f9641c6b4022e1e37ad9fe528922ec747))
+    - Add test for racy git detection ([`c5adbe1`](https://github.com/Byron/gitoxide/commit/c5adbe1849aa776055a1de56b12528b032fee0ff))
+    - Remove unused config option ([`55d8902`](https://github.com/Byron/gitoxide/commit/55d890271ee0a6f2bc25efa7378cce1a76235aa5))
+    - Ensure stable sort order for deterministic tests ([`0582ec5`](https://github.com/Byron/gitoxide/commit/0582ec534d10dad3da0da3ea139c3200083eb86e))
+    - Improve terminology and documentation ([`8b2bcdc`](https://github.com/Byron/gitoxide/commit/8b2bcdccb2351ab533d41159c956a1f157f23eea))
+    - Clean up status::Diff implementations ([`8df154b`](https://github.com/Byron/gitoxide/commit/8df154b5b9cb9a614063498ce64658907955f94f))
+    - Use existing concurrency primitive in_parallel ([`c5f3fc8`](https://github.com/Byron/gitoxide/commit/c5f3fc8b5875745eb50bd80005b43a66cf255acb))
+    - Parallel status check ([`d7f250d`](https://github.com/Byron/gitoxide/commit/d7f250ddbd53a994a17db41f86cc780b45e9ee5a))
+    - Streamline status API ([`0f747f3`](https://github.com/Byron/gitoxide/commit/0f747f303089fd862c24d4ad93b75d3064c9328b))
+    - Centralize index entry Stat creation/comparison ([`870bdb2`](https://github.com/Byron/gitoxide/commit/870bdb2f3957e0f5690679e2aeb6752cd0b8d93e))
+    - Change index/worktree diff to a visitor based API ([`1c43c75`](https://github.com/Byron/gitoxide/commit/1c43c75966994ada6b84cf0d69cd13fb7cebf7cd))
+    - Refactor gix_worktree::read module ([`16eab81`](https://github.com/Byron/gitoxide/commit/16eab8166ea03489c3ac5537365d69626b419bfe))
+    - Refactor ([`31ddda2`](https://github.com/Byron/gitoxide/commit/31ddda2ae47f68c9a487d12c1f7ffa1d14de13d1))
+    - Diff between worktree and index ([`0a8e50f`](https://github.com/Byron/gitoxide/commit/0a8e50f64a8a730fbbd14b465e08d96ebfcf697d))
+    - Add function to read blob from worktree ([`38e228c`](https://github.com/Byron/gitoxide/commit/38e228c61be79e2c03457a69242b2abd523f755b))
+    - Release gix-hash v0.10.4, gix-hashtable v0.1.3 ([`b574a39`](https://github.com/Byron/gitoxide/commit/b574a3904203762a6b9e475e16a7c358d7616599))
+</details>
+
 ## 0.15.2 (2023-03-30)
 
 ### Documentation
@@ -15,7 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 1 calendar day.
+ - 2 commits contributed to the release over the course of 1 calendar day.
  - 4 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-path v0.7.3, gix-config-value v0.10.2, gix-config v0.20.1, gix-discover v0.16.2, gix-index v0.15.1, gix-odb v0.43.1, gix-packetline v0.15.1, gix-protocol v0.30.2, gix-worktree v0.15.2, gix v0.43.1 ([`38eed1d`](https://github.com/Byron/gitoxide/commit/38eed1d06e7cbb8fbcd54b2cad3163ca45e0baf1))
     - Fix minor typos ([`cc48c35`](https://github.com/Byron/gitoxide/commit/cc48c35d0ecf35824910c5b6ecc62fe9b2aff1b5))
 </details>
 

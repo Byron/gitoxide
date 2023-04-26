@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-1e73f3c319caec0298cdd8c34f29ff78ff4060ab/> add `join_bstr_unix_pathsep(base, component)`.
+   It's useful to have to avoid certain conversions to happen otherwise.
+ - <csr-id-0d340f4fdeff1576460d43ca2210b11f0641c5dd/> add `xdg_config_home()`, installation_config` and `installation_config_prefix()` functions.
+
+### Bug Fixes
+
+ - <csr-id-bd1ae0db32191fb96d6b2a55b9fcb635d1652c1f/> `join_bstr_unix_pathsep()` works more suitably if base path is empty.
+ - <csr-id-13edfe96696636c30040ec81ebc4e235ac689429/> use `home` in `env::home_dir()`
+ - <csr-id-ec049fec7f789f6b55ca18a691388c44778603d4/> use `home` in `env::home_dir()`.
+   This way it should work better on windows as it now uses the home_dir implementation
+   of a crate used by `cargo`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 13 calendar days.
+ - 27 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'index-entries-attrs' ([`f37a930`](https://github.com/Byron/gitoxide/commit/f37a930aefa27e67f0b693ba9669cc26d49044fa))
+    - `join_bstr_unix_pathsep()` works more suitably if base path is empty. ([`bd1ae0d`](https://github.com/Byron/gitoxide/commit/bd1ae0db32191fb96d6b2a55b9fcb635d1652c1f))
+    - Merge branch 'attributes-cache' ([`3456c84`](https://github.com/Byron/gitoxide/commit/3456c845dfeedd2fa96b4313b1a84c8cbe9433c5))
+    - Add `join_bstr_unix_pathsep(base, component)`. ([`1e73f3c`](https://github.com/Byron/gitoxide/commit/1e73f3c319caec0298cdd8c34f29ff78ff4060ab))
+    - Merge branch 'utkarshgupta137/main' ([`74cb5ee`](https://github.com/Byron/gitoxide/commit/74cb5ee03d7a5fbba312c0a5c782489a6fc039a7))
+    - Use `home` in `env::home_dir()` ([`13edfe9`](https://github.com/Byron/gitoxide/commit/13edfe96696636c30040ec81ebc4e235ac689429))
+    - Revert "fix: use `home` in `env::home_dir()`." ([`222ece2`](https://github.com/Byron/gitoxide/commit/222ece2a2fb639cbcdec639b06fa1bc2cc36c972))
+    - Merge branch 'utkarshgupta137/main' ([`5092c59`](https://github.com/Byron/gitoxide/commit/5092c59084250af45e5c81d1ec5219428249974d))
+    - Use `home` in `env::home_dir()`. ([`ec049fe`](https://github.com/Byron/gitoxide/commit/ec049fec7f789f6b55ca18a691388c44778603d4))
+    - Make fmt ([`5d2b5d0`](https://github.com/Byron/gitoxide/commit/5d2b5d02c3869e07dc2507a8f2519ee1df633df7))
+    - Merge branch 'main' into dev ([`23ee47f`](https://github.com/Byron/gitoxide/commit/23ee47fb24c197f8437bd426544b2aa74e005bdc))
+    - Merge branch 'worktree-stack' ([`3d47919`](https://github.com/Byron/gitoxide/commit/3d47919c1a2f83fc7c1fd7ae590d098057a22626))
+    - Add `xdg_config_home()`, installation_config` and `installation_config_prefix()` functions. ([`0d340f4`](https://github.com/Byron/gitoxide/commit/0d340f4fdeff1576460d43ca2210b11f0641c5dd))
+</details>
+
 ## 0.7.3 (2023-03-30)
 
 ### Bug Fixes
@@ -15,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 37 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-path v0.7.3, gix-config-value v0.10.2, gix-config v0.20.1, gix-discover v0.16.2, gix-index v0.15.1, gix-odb v0.43.1, gix-packetline v0.15.1, gix-protocol v0.30.2, gix-worktree v0.15.2, gix v0.43.1 ([`38eed1d`](https://github.com/Byron/gitoxide/commit/38eed1d06e7cbb8fbcd54b2cad3163ca45e0baf1))
     - Merge branch 'pascalkuthe/main' ([`d47cebe`](https://github.com/Byron/gitoxide/commit/d47cebe3b23080c45829cb307b867220e3af20db))
     - Refactor ([`d1e5e12`](https://github.com/Byron/gitoxide/commit/d1e5e12d54f79c030325860838c1cfadac1a7ac5))
     - $HOME detection on windows ([`d1bd513`](https://github.com/Byron/gitoxide/commit/d1bd513f27e17787eb223f7b0521f954c518153e))

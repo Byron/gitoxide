@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-1b8d9e6a408e480ae1912e919c37a26e5c46639d/> `discover_opts` supports an option to see non-bare repos only.
+   Knowing this allows for an optimization that saves a few syscalls
+   for maximum performance, or minimum penalty on very slow filesystems.
+
+### Bug Fixes
+
+ - <csr-id-abbae1cbca6fb5c4347e51f7122f02d106c8d30a/> common-dir is now queried only when needed.
+   Previously it added costs that were accumulating during discovery.
+ - <csr-id-761324953a20d061f859c995180d603bb3734f9a/> speedup HEAD detection in `is_git()`
+   Previously it would always check with a `store` which has a fuzzy search
+   right now. Instead, we check once ourselves before trying to read HEAD
+   for validation.
+ - <csr-id-7543fab01c337c086c7b1331ad5fb1d48f9d11ac/> try `.git` subdir early for higher chances of success.
+   This will find worktrees faster, which should be most of the
+   dev directories out there.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 23 calendar days.
+ - 27 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'faster-discovery' ([`282a1a3`](https://github.com/Byron/gitoxide/commit/282a1a3f29572250e6d741c6daa97b0bed679753))
+    - `discover_opts` supports an option to see non-bare repos only. ([`1b8d9e6`](https://github.com/Byron/gitoxide/commit/1b8d9e6a408e480ae1912e919c37a26e5c46639d))
+    - Common-dir is now queried only when needed. ([`abbae1c`](https://github.com/Byron/gitoxide/commit/abbae1cbca6fb5c4347e51f7122f02d106c8d30a))
+    - Avoid redundant metadata queries for directories ([`f36abd5`](https://github.com/Byron/gitoxide/commit/f36abd57ff0719edc2c95058832ef57ff8c53bba))
+    - Speedup HEAD detection in `is_git()` ([`7613249`](https://github.com/Byron/gitoxide/commit/761324953a20d061f859c995180d603bb3734f9a))
+    - Try `.git` subdir early for higher chances of success. ([`7543fab`](https://github.com/Byron/gitoxide/commit/7543fab01c337c086c7b1331ad5fb1d48f9d11ac))
+    - Merge branch 'fix-823' ([`6ebd61e`](https://github.com/Byron/gitoxide/commit/6ebd61e548a36a04e413ac725a03e607a3588334))
+    - Add test to assure we can handle bare repos with `index` file. ([`a68692b`](https://github.com/Byron/gitoxide/commit/a68692b5bfb8082f07dd907b091240106c6b358e))
+    - Release gix-utils v0.1.0, gix-hash v0.11.0, gix-date v0.5.0, gix-features v0.29.0, gix-actor v0.20.0, gix-object v0.29.0, gix-archive v0.1.0, gix-fs v0.1.0, safety bump 25 crates ([`8dbd0a6`](https://github.com/Byron/gitoxide/commit/8dbd0a60557a85acfa231800a058cbac0271a8cf))
+    - Release gix-hash v0.10.4, gix-hashtable v0.1.3 ([`b574a39`](https://github.com/Byron/gitoxide/commit/b574a3904203762a6b9e475e16a7c358d7616599))
+    - Merge branch 'patch-1' ([`d0052c1`](https://github.com/Byron/gitoxide/commit/d0052c13cabcde8058177d2439053b50ea5adbfc))
+    - Upgrade serial-test to v2 ([`6932017`](https://github.com/Byron/gitoxide/commit/69320174685e72940cd0fe600c94abb948a62bdd))
+</details>
+
 ## 0.16.2 (2023-03-30)
 
 ### Documentation
@@ -15,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 2 calendar days.
+ - 3 commits contributed to the release over the course of 2 calendar days.
  - 4 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-path v0.7.3, gix-config-value v0.10.2, gix-config v0.20.1, gix-discover v0.16.2, gix-index v0.15.1, gix-odb v0.43.1, gix-packetline v0.15.1, gix-protocol v0.30.2, gix-worktree v0.15.2, gix v0.43.1 ([`38eed1d`](https://github.com/Byron/gitoxide/commit/38eed1d06e7cbb8fbcd54b2cad3163ca45e0baf1))
     - Fix minor typos ([`cc48c35`](https://github.com/Byron/gitoxide/commit/cc48c35d0ecf35824910c5b6ecc62fe9b2aff1b5))
     - Release gix-ref v0.27.2 ([`e965b18`](https://github.com/Byron/gitoxide/commit/e965b18aedcf13ec4538bc7bc700269a56ca615e))
 </details>
