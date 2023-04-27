@@ -16,7 +16,6 @@ pub enum Attributes {
 
 pub(crate) mod function {
     use crate::repository::index::entries::{Attributes, Options};
-    use gix::bstr::ByteSlice;
     use gix::odb::FindExt;
     use std::borrow::Cow;
     use std::io::{BufWriter, Write};
@@ -133,7 +132,8 @@ pub(crate) mod function {
         attrs: Option<Attrs>,
         is_last: bool,
     ) -> anyhow::Result<()> {
-        #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+        use gix::bstr::ByteSlice;
+        #[derive(serde::Serialize)]
         struct Entry<'a> {
             stat: &'a gix::index::entry::Stat,
             hex_id: String,
