@@ -16,7 +16,6 @@ pub enum Attributes {
 
 pub(crate) mod function {
     use crate::repository::index::entries::{Attributes, Options};
-    use gix::attrs::State;
     use gix::bstr::ByteSlice;
     use gix::odb::FindExt;
     use std::borrow::Cow;
@@ -196,24 +195,8 @@ pub(crate) mod function {
                     if !a.attributes.is_empty() {
                         buf.push_str(" (");
                         for assignment in a.attributes {
-                            match assignment.state {
-                                State::Set => {
-                                    buf.push_str(assignment.name.as_str());
-                                }
-                                State::Unset => {
-                                    buf.push('-');
-                                    buf.push_str(assignment.name.as_str());
-                                }
-                                State::Value(v) => {
-                                    buf.push_str(assignment.name.as_str());
-                                    buf.push('=');
-                                    buf.push_str(v.as_ref().as_bstr().to_str_lossy().as_ref());
-                                }
-                                State::Unspecified => {
-                                    buf.push('!');
-                                    buf.push_str(assignment.name.as_str());
-                                }
-                            }
+                            use std::fmt::Write;
+                            write!(&mut buf, "{}", assignment.as_ref()).ok();
                             buf.push_str(", ");
                         }
                         buf.pop();
