@@ -1,6 +1,6 @@
 [package]
 name = "gix-worktree"
-version = "0.16.0"
+version = "0.17.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated implementing everything around working trees and git excludes"
@@ -34,10 +34,10 @@ gix-index = { version = "^0.16.0", path = "../gix-index" }
 gix-fs = { version = "^0.1.1", path = "../gix-fs" }
 gix-hash = { version = "^0.11.1", path = "../gix-hash" }
 gix-object = { version = "^0.29.1", path = "../gix-object" }
-gix-glob = { version = "^0.6.0", path = "../gix-glob" }
-gix-path = { version = "^0.7.4", path = "../gix-path" }
-gix-attributes = { version = "^0.11.0", path = "../gix-attributes" }
-gix-ignore = { version = "^0.1.0", path = "../gix-ignore" }
+gix-glob = { version = "^0.7.0", path = "../gix-glob" }
+gix-path = { version = "^0.8.0", path = "../gix-path" }
+gix-attributes = { version = "^0.12.0", path = "../gix-attributes" }
+gix-ignore = { version = "^0.2.0", path = "../gix-ignore" }
 gix-features = { version = "^0.29.0", path = "../gix-features" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
