@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Bump gix-path v0.8.0, safety bump 20 crates (gix set to 0.44.1 manually) ([`43ebaf2`](https://github.com/Byron/gitoxide/commit/43ebaf267557218865862538ffc7bdf00558492f))
+    - Adjust to changes in `gix-attributes` ([`11c9ff0`](https://github.com/Byron/gitoxide/commit/11c9ff07a0a8e04ca752a76a1248a5c44d3747ed))
+</details>
+
 ## 0.26.0 (2023-04-27)
 
 ### Documentation
@@ -44,8 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 43 commits contributed to the release over the course of 60 calendar days.
- - 60 days passed between releases.
+ - 44 commits contributed to the release over the course of 61 calendar days.
+ - 61 days passed between releases.
  - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#792](https://github.com/Byron/gitoxide/issues/792), [#814](https://github.com/Byron/gitoxide/issues/814)
 
@@ -66,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#814](https://github.com/Byron/gitoxide/issues/814)**
     - Rename `serde1` cargo feature to `serde` and use the weak-deps cargo capability. ([`b83ee36`](https://github.com/Byron/gitoxide/commit/b83ee366a3c65c717beb587ad809268f1c54b8ad))
  * **Uncategorized**
+    - Release gix-commitgraph v0.14.0, gitoxide-core v0.26.0, gitoxide v0.24.0 ([`9f2317f`](https://github.com/Byron/gitoxide/commit/9f2317f2514872001168d2be6e33e2ee2872420e))
     - Merge branch 'index-entries-attrs' ([`f37a930`](https://github.com/Byron/gitoxide/commit/f37a930aefa27e67f0b693ba9669cc26d49044fa))
     - `gix index entries` also prints attributes. ([`08e8fc2`](https://github.com/Byron/gitoxide/commit/08e8fc2152794652ba1c986df493c2ac915af9e7))
     - Adjust to changes in `gix-worktree` ([`27a39ca`](https://github.com/Byron/gitoxide/commit/27a39cad498ca8b2c9cba05790284e2b68ba7636))
