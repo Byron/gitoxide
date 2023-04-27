@@ -1,3 +1,4 @@
+use anyhow::bail;
 use std::{collections::VecDeque, iter::FromIterator};
 
 use gix::hash::ObjectId;
@@ -14,9 +15,9 @@ use crate::{
 impl ChangeLog {
     /// Bring `generated` into `self` in such a way that `self` preserves everything while enriching itself from `generated`.
     /// Thus we clearly assume that `self` is parsed and `generated` is generated.
-    pub fn merge_generated(mut self, rhs: Self) -> Self {
+    pub fn merge_generated(mut self, rhs: Self) -> anyhow::Result<Self> {
         if self.sections.is_empty() {
-            return rhs;
+            return Ok(rhs);
         }
 
         let mut sections_to_merge = VecDeque::from_iter(rhs.sections);
@@ -36,17 +37,17 @@ impl ChangeLog {
                 Some((idx, level, prefix)) => (idx, *level, prefix.to_owned()),
                 None => {
                     sections.extend(sections_to_merge);
-                    return self;
+                    return Ok(self);
                 }
             };
 
         for mut section_to_merge in sections_to_merge {
             match section_to_merge {
                 Section::Verbatim { .. } => {
-                    unreachable!("BUG: generated logs may only have verbatim sections at the beginning")
+                    bail!("BUG: generated logs may only have verbatim sections at the beginning")
                 }
                 Section::Release { ref name, .. } => match find_target_section(name, sections, first_release_pos) {
-                    Insertion::MergeWith(pos) => sections[pos].merge(section_to_merge),
+                    Insertion::MergeWith(pos) => sections[pos].merge(section_to_merge)?,
                     Insertion::At(pos) => {
                         if let Section::Release {
                             heading_level,
@@ -63,16 +64,16 @@ impl ChangeLog {
             }
         }
 
-        self
+        Ok(self)
     }
 }
 
 impl Section {
-    pub fn merge(&mut self, src: Section) {
+    pub fn merge(&mut self, src: Section) -> anyhow::Result<()> {
         let dest = self;
         match (dest, src) {
             (Section::Verbatim { .. }, _) | (_, Section::Verbatim { .. }) => {
-                unreachable!("BUG: we should never try to merge into or from a verbatim section")
+                bail!("BUG: we should never try to merge into or from a verbatim section")
             }
             (
                 Section::Release {
@@ -98,15 +99,15 @@ impl Section {
                 for rhs_segment in src_segments {
                     match rhs_segment {
                         Segment::User { markdown } => {
-                            unreachable!("BUG: User segments are never auto-generated: {markdown}")
+                            bail!("BUG: User segments are never auto-generated: {markdown}")
                         }
                         Segment::Details(section::Data::Parsed)
                         | Segment::Statistics(section::Data::Parsed)
                         | Segment::Clippy(section::Data::Parsed) => {
-                            unreachable!("BUG: Clippy, statistics, and details are set if generated, or not present")
+                            bail!("BUG: Clippy, statistics, and details are set if generated, or not present")
                         }
                         Segment::Conventional(conventional) => {
-                            merge_conventional(removed_messages, dest_segments, conventional)
+                            merge_conventional(removed_messages, dest_segments, conventional)?
                         }
                         clippy @ Segment::Clippy(_) => {
                             merge_read_only_segment(dest_segments, |s| matches!(s, Segment::Clippy(_)), clippy, mode)
@@ -122,6 +123,7 @@ impl Section {
                 *dest_date = src_date;
             }
         }
+        Ok(())
     }
 }
 
@@ -151,7 +153,7 @@ fn merge_conventional(
     removed_in_release: &[gix::hash::ObjectId],
     dest_segments: &mut Vec<Segment>,
     mut src: section::segment::Conventional,
-) {
+) -> anyhow::Result<()> {
     assert!(
         src.removed.is_empty(),
         "generated sections never contains removed items"
@@ -187,11 +189,11 @@ fn merge_conventional(
                                 .unwrap_or(messages.len());
                             messages.insert(pos, conventional::Message::Generated { id, title, body });
                         }
-                        conventional::Message::User { .. } => unreachable!("User messages are never generated"),
+                        conventional::Message::User { .. } => bail!("User messages are never generated"),
                     }
                 }
             }
-            _ => unreachable!("assured correct type in filter"),
+            _ => bail!("assured correct type in filter"),
         }
         found_one = true;
     }
@@ -222,6 +224,7 @@ fn merge_conventional(
             },
         );
     }
+    Ok(())
 }
 
 fn at_least_one_generated_message_visible(removed_in_release: &[ObjectId], messages: &[conventional::Message]) -> bool {

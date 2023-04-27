@@ -5,7 +5,7 @@ use std::{
     str::FromStr,
 };
 
-use anyhow::bail;
+use anyhow::{bail, Context as ContextTrait};
 use cargo_metadata::{camino::Utf8PathBuf, Package};
 use gix::{lock::File, Id};
 use semver::{Version, VersionReq};
@@ -441,7 +441,7 @@ fn gather_changelog_data<'meta>(
                         .find(|s| matches!(s, changelog::Section::Release {name: changelog::Version::Semantic(v), ..} if v == *new_version))
                     {
                         Some(version_section) => {
-                            version_section.merge(recent_section);
+                            version_section.merge(recent_section).with_context(|| format!("Changelog generation of {:?} failed", publishee.name))?;
                         }
                         None => log.sections.insert(recent_idx, recent_section),
                     }

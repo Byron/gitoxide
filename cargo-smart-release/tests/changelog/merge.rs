@@ -95,7 +95,7 @@ fn sections() {
         ],
     };
 
-    let merged = parsed.merge_generated(generated);
+    let merged = parsed.merge_generated(generated).expect("works");
     assert_eq!(
         merged,
         ChangeLog {
@@ -324,7 +324,7 @@ fn segments() {
             },
         ],
     };
-    let merged = parsed.merge_generated(generated);
+    let merged = parsed.merge_generated(generated).expect("works");
     assert_eq!(
         merged,
         ChangeLog {

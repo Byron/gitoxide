@@ -1,3 +1,4 @@
+use anyhow::Context;
 use cargo_metadata::{
     camino::{Utf8Path, Utf8PathBuf},
     Package,
@@ -66,7 +67,9 @@ impl ChangeLog {
         let (log, state, previous_content) = if let Ok(markdown) = std::fs::read_to_string(changelog_path) {
             let existing_log = ChangeLog::from_markdown(&markdown);
             let copy_of_existing = existing_log.clone();
-            let merged = existing_log.merge_generated(generated);
+            let merged = existing_log
+                .merge_generated(generated)
+                .with_context(|| format!("Changelog generation for crate {:?} failed", package.name))?;
             let changed = merged != copy_of_existing;
             (
                 merged,
