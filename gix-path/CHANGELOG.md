@@ -7,28 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.8.0 (2023-04-27)
 
+A maintenance release without user-facing changes.
+
 ### Changed (BREAKING)
 
  - <csr-id-94564df0b5edcb41f1088c6db04add851c66b2af/> Moved `home_dir()` to `env::home_dir()` and `env_var()` to `env::var()`.
    Please note that this change was previously and erroneously not declared as breaking.
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 1 commit contributed to the release.
- - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' were seen in commit messages
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - Moved `home_dir()` to `env::home_dir()` and `env_var()` to `env::var()`. ([`94564df`](https://github.com/Byron/gitoxide/commit/94564df0b5edcb41f1088c6db04add851c66b2af))
-</details>
 
 ## 0.7.4 (2023-04-26)
 
