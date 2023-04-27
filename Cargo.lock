@@ -2170,7 +2170,7 @@ dependencies = [
 
 [[package]]
 name = "gix-refspec"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "bstr",
  "gix-hash 0.11.1",

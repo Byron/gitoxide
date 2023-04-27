@@ -14,6 +14,26 @@ A maintenance release without user-facing changes.
  - <csr-id-94564df0b5edcb41f1088c6db04add851c66b2af/> Moved `home_dir()` to `env::home_dir()` and `env_var()` to `env::var()`.
    Please note that this change was previously and erroneously not declared as breaking.
 
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`0135158`](https://github.com/Byron/gitoxide/commit/013515897215400539bfd53c25548bd054186ba6))
+    - Bump gix-path v0.8.0, safety bump 20 crates (gix set to 0.44.1 manually) ([`43ebaf2`](https://github.com/Byron/gitoxide/commit/43ebaf267557218865862538ffc7bdf00558492f))
+    - Moved `home_dir()` to `env::home_dir()` and `env_var()` to `env::var()`. ([`94564df`](https://github.com/Byron/gitoxide/commit/94564df0b5edcb41f1088c6db04add851c66b2af))
+</details>
+
 ## 0.7.4 (2023-04-26)
 
 **YANKED** due to accidental breaking changes.
