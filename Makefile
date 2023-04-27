@@ -140,7 +140,7 @@ check: ## Build all code in suitable configurations
 					  && cargo check --no-default-features --features progress-tree \
 					  && cargo check --no-default-features
 	cd gix-odb && cargo check --features serde
-	cd cargo-smart-release && cargo check --all
+	cd cargo-smart-release && cargo check --all && cargo check --features vendored-openssl
 
 unit-tests: ## run all unit tests
 	cargo test --all
