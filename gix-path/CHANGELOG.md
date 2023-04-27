@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.7.4 (2023-04-26)
 
+**YANKED** due to accidental breaking changes.
+
 ### New Features
 
  - <csr-id-1e73f3c319caec0298cdd8c34f29ff78ff4060ab/> add `join_bstr_unix_pathsep(base, component)`.
