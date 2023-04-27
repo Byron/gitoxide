@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.24.0 (2023-04-27)
+
+### New Features
+
+ - <csr-id-08e8fc2152794652ba1c986df493c2ac915af9e7/> `gix index entries` also prints attributes.
+ - <csr-id-9723e1addf52cc336d59322de039ea0537cdca36/> `gix clone` and `gix fetch` with controls for shallow repositories.
+ - <csr-id-f93e964b1f7ba95861966ce58ebef477013dd1b4/> `ein t trace-path` know accepts the `trace-file` alias.
+
+### Bug Fixes
+
+ - <csr-id-dd14a80a78fea3f092b1d5300637c80cfd9e59a7/> printing to stdout for commands that don't show progress is greatly improved.
+   Previously it would have to lock `stdout` on each write, now this is done only once.
+ - <csr-id-7bd8823ab4241d6d0401f03aec8c0d34f68c347c/> opening repositories without 'strict' mode also ignores IO errors.
+   These will instead be logged, but won't make it impossible to open an
+   otherwise fine repository.
+
+### New Features (BREAKING)
+
+ - <csr-id-ca8ebdfb9647ff15b0293823bb3bb3c6779c8dd2/> turn `gix free index entries` into `gix index entries`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 25 commits contributed to the release over the course of 60 calendar days.
+ - 60 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#790](https://github.com/Byron/gitoxide/issues/790)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - Update crate status ([`ed63ec0`](https://github.com/Byron/gitoxide/commit/ed63ec08ac651d642123d5abd1d4589e67049ff2))
+ * **[#790](https://github.com/Byron/gitoxide/issues/790)**
+    - Opening repositories without 'strict' mode also ignores IO errors. ([`7bd8823`](https://github.com/Byron/gitoxide/commit/7bd8823ab4241d6d0401f03aec8c0d34f68c347c))
+ * **Uncategorized**
+    - Merge branch 'index-entries-attrs' ([`f37a930`](https://github.com/Byron/gitoxide/commit/f37a930aefa27e67f0b693ba9669cc26d49044fa))
+    - `gix index entries` also prints attributes. ([`08e8fc2`](https://github.com/Byron/gitoxide/commit/08e8fc2152794652ba1c986df493c2ac915af9e7))
+    - Printing to stdout for commands that don't show progress is greatly improved. ([`dd14a80`](https://github.com/Byron/gitoxide/commit/dd14a80a78fea3f092b1d5300637c80cfd9e59a7))
+    - Turn `gix free index entries` into `gix index entries`. ([`ca8ebdf`](https://github.com/Byron/gitoxide/commit/ca8ebdfb9647ff15b0293823bb3bb3c6779c8dd2))
+    - Merge branch 'attributes-cache' ([`3456c84`](https://github.com/Byron/gitoxide/commit/3456c845dfeedd2fa96b4313b1a84c8cbe9433c5))
+    - Adjust to changes in `gix-worktree` ([`13a070f`](https://github.com/Byron/gitoxide/commit/13a070f405230d52e4377e18f6bdc5c673b718a0))
+    - Merge branch 'fix-819' ([`69faad0`](https://github.com/Byron/gitoxide/commit/69faad0d7cc100de54d757d42acc152a22edc022))
+    - Add information about configuration flags related to fsync usage ([`8d5762c`](https://github.com/Byron/gitoxide/commit/8d5762c2031cc24bcea7eaba2911b907ba443b72))
+    - Merge branch 'main' into dev ([`23ee47f`](https://github.com/Byron/gitoxide/commit/23ee47fb24c197f8437bd426544b2aa74e005bdc))
+    - Merge branch 'worktree-stack' ([`3d47919`](https://github.com/Byron/gitoxide/commit/3d47919c1a2f83fc7c1fd7ae590d098057a22626))
+    - Assure we load all gitattributes when needed. ([`9237121`](https://github.com/Byron/gitoxide/commit/923712175fffaa6d0b71e109f243bdd6bea3ff36))
+    - Merge branch 'fix-790' ([`ee36e5b`](https://github.com/Byron/gitoxide/commit/ee36e5bb985e9ad90bc382cdd051a8b5295ca18c))
+    - Add group headings to all shallow-related arguments. ([`bbb4cb0`](https://github.com/Byron/gitoxide/commit/bbb4cb03ee2bcd0c5dd0635da542a942179cf6fd))
+    - Keep track of `index.skipHash` ([`f29f35c`](https://github.com/Byron/gitoxide/commit/f29f35cfc43f435f15aebc4d678f01d7f7ab7fbf))
+    - Make fmt ([`3836cc0`](https://github.com/Byron/gitoxide/commit/3836cc0c9c3e1158b56142b924483c8a77217d53))
+    - Merge branch 'various-fixes' ([`cc0f506`](https://github.com/Byron/gitoxide/commit/cc0f5061fba27d57022dc616c941034b98fd4875))
+    - Fix clap derive declaration of conflicts ([`c502fa8`](https://github.com/Byron/gitoxide/commit/c502fa8362cb449dc1837a0b8febfad03d9f66ef))
+    - Merge branch 'shallow-protocol' ([`531dd19`](https://github.com/Byron/gitoxide/commit/531dd19502b8b635fb1a60f747eb381fd12e00ca))
+    - `gix clone` and `gix fetch` with controls for shallow repositories. ([`9723e1a`](https://github.com/Byron/gitoxide/commit/9723e1addf52cc336d59322de039ea0537cdca36))
+    - Improve error handling and reporting of `ein t query` ([`d5616b6`](https://github.com/Byron/gitoxide/commit/d5616b66052cd20cbfabbecc1f5f500f754e89a2))
+    - Make fmt ([`8ef1cb2`](https://github.com/Byron/gitoxide/commit/8ef1cb293434c7b9e1fda4a6963368e0435920a9))
+    - Merge branch 'rename-tracking' ([`3827ac6`](https://github.com/Byron/gitoxide/commit/3827ac6c6b002219a7fb0877ec01d8afc909ca4c))
+    - `ein t trace-path` know accepts the `trace-file` alias. ([`f93e964`](https://github.com/Byron/gitoxide/commit/f93e964b1f7ba95861966ce58ebef477013dd1b4))
+</details>
+
 ## 0.23.0 (2023-02-24)
 
 This release adds the new `ein tool query` analytics engine, which maintains a database of a git repository as acceleration data structure to run useful queries on.
