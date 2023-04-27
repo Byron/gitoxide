@@ -53,6 +53,8 @@ impl Tags {
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub enum Shallow {
     /// Fetch all changes from the remote without affecting the shallow boundary at all.
+    ///
+    /// This also means that repositories that aren't shallow will remain like that.
     #[default]
     NoChange,
     /// Receive update to `depth` commits in the history of the refs to fetch (from the viewpoint of the remote),
