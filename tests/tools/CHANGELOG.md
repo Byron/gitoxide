@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.12.0 (2023-04-29)
+
+<csr-id-b973f19274bb2d8218e5ff63ce0a81f34985f54c/>
 
 ### Chore
 
@@ -19,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 61 calendar days.
+ - 6 commits contributed to the release over the course of 61 calendar days.
  - 68 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -31,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release of gix-testtools ([`fc45f1b`](https://github.com/Byron/gitoxide/commit/fc45f1b417bf545d4a0a105c40b37f92c24decad))
     - Upgrade dependencies ([`b973f19`](https://github.com/Byron/gitoxide/commit/b973f19274bb2d8218e5ff63ce0a81f34985f54c))
     - Accept paths in scripted_fixture_writable ([`efcbf0d`](https://github.com/Byron/gitoxide/commit/efcbf0d1cb1c9d77eaf04fbcf6e86dc101c886d2))
     - Add note about shortcomings of `Creation::CopyFromReadOnly` mode. ([`b2e3223`](https://github.com/Byron/gitoxide/commit/b2e322332ac017824e90d260d7041504c38ab57f))
