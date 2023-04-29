@@ -57,7 +57,7 @@ pub enum Fetch<'a> {
     },
     /// Fetch from `src` and update the corresponding destination branches in `dst` accordingly.
     AndUpdate {
-        /// The ref name to fetch on the remote side, or a pattern with a single `*` to match against.
+        /// The ref name to fetch on the remote side, or a pattern with a single `*` to match against, or the full object hex-name.
         src: &'a BStr,
         /// The local destination to update with what was fetched, or a pattern whose single `*` will be replaced with the matching portion
         /// of the `*` from `src`.
