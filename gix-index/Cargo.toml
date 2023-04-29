@@ -41,5 +41,5 @@ bitflags = "2"
 document-features = { version = "0.2.0", optional = true }
 
 [package.metadata.docs.rs]
-features = ["document-features", "dep:serde"]
+features = ["document-features", "serde"]
 rustdoc-args = ["--cfg", "docsrs"]
