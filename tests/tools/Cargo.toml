@@ -14,10 +14,12 @@ path = "src/main.rs"
 doctest = false
 
 [dependencies]
-gix-lock = "^3.0.0"
-gix-discover = "^0.13"
-gix-attributes = "^0.8.1"
-gix-worktree = "^0.12.1"
+gix-lock = "5.0.1"
+gix-discover = "0.18.0"
+gix-ignore = "0.2.0"
+gix-worktree = "0.17.0"
+gix-fs = "0.1.1"
+gix-tempfile = { version = "5.0.3", default-features = false, features = ["signals"] }
 
 nom = { version = "7", default-features = false, features = ["std"]}
 fastrand = "1.8.0"

@@ -53,24 +53,24 @@ impl Drop for GitDaemon {
 }
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
-static EXCLUDE_LUT: Lazy<Mutex<Option<gix_worktree::fs::Cache>>> = Lazy::new(|| {
+static EXCLUDE_LUT: Lazy<Mutex<Option<gix_worktree::Cache>>> = Lazy::new(|| {
     let cache = (|| {
         let (repo_path, _) = gix_discover::upwards(Path::new(".")).ok()?;
         let (gix_dir, work_tree) = repo_path.into_repository_and_work_tree_directories();
         let work_tree = work_tree?.canonicalize().ok()?;
 
         let mut buf = Vec::with_capacity(512);
-        let case = gix_worktree::fs::Capabilities::probe(&work_tree)
+        let case = gix_fs::Capabilities::probe(&work_tree)
             .ignore_case
-            .then_some(gix_attributes::glob::pattern::Case::Fold)
+            .then_some(gix_ignore::glob::pattern::Case::Fold)
             .unwrap_or_default();
-        let state = gix_worktree::fs::cache::State::IgnoreStack(gix_worktree::fs::cache::state::Ignore::new(
+        let state = gix_worktree::cache::State::IgnoreStack(gix_worktree::cache::state::Ignore::new(
             Default::default(),
-            gix_attributes::MatchGroup::<gix_attributes::Ignore>::from_git_dir(gix_dir, None, &mut buf).ok()?,
+            gix_ignore::Search::from_git_dir(gix_dir, None, &mut buf).ok()?,
             None,
-            case,
+            gix_worktree::cache::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
         ));
-        Some(gix_worktree::fs::Cache::new(
+        Some(gix_worktree::Cache::new(
             work_tree,
             state,
             case,
@@ -378,8 +378,8 @@ fn scripted_fixture_read_only_with_args_inner(
     root: DirectoryRoot,
 ) -> Result<PathBuf> {
     // Assure tempfiles get removed when aborting the test.
-    gix_lock::tempfile::setup(
-        gix_lock::tempfile::SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour,
+    gix_tempfile::signal::setup(
+        gix_tempfile::signal::handler::Mode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour,
     );
 
     let script_location = script_name.as_ref();
