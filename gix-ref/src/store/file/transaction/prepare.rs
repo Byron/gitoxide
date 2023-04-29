@@ -184,7 +184,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
 
                     lock.with_mut(|file| match new {
                         Target::Peeled(oid) => write!(file, "{oid}"),
-                        Target::Symbolic(name) => write!(file, "ref: {}", name.0),
+                        Target::Symbolic(name) => writeln!(file, "ref: {}", name.0),
                     })?;
                     Some(lock.close()?)
                 } else {

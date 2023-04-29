@@ -481,6 +481,11 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         assert_eq!(head.name.as_bstr(), "HEAD");
         assert_eq!(head.kind(), gix_ref::Kind::Symbolic);
         assert_eq!(
+            std::fs::read_to_string(store.git_dir().join("HEAD"))?,
+            "ref: refs/heads/alt-main\n",
+            "note the newline - symbolic refs really want a newline just like git does it, otherwise some tools may break"
+        );
+        assert_eq!(
             head.target.to_ref().try_name().map(|n| n.as_bstr()),
             Some(referent.as_bytes().as_bstr())
         );
