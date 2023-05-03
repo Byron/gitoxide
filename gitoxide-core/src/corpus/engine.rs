@@ -327,12 +327,8 @@ impl Engine {
                     Ok(out)
                 });
 
-                let repos = gix::interrupt::Iter::new(
-                    find_git_repository_workdirs(corpus_path, find_progress, false, Some(threads)),
-                    || anyhow::anyhow!("interrupted by user"),
-                );
-                for res in repos {
-                    let (repo_path, _kind) = res?;
+                let repos = find_git_repository_workdirs(corpus_path, find_progress, false, Some(threads))?;
+                for (repo_path, _kind) in repos {
                     path_tx.send(repo_path)?;
                 }
                 drop(path_tx);
