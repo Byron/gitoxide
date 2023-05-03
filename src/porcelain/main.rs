@@ -128,6 +128,7 @@ pub fn main() -> Result<()> {
                             out,
                             progress,
                             debug,
+                            threads,
                         )
                     },
                 )
@@ -154,6 +155,7 @@ pub fn main() -> Result<()> {
                             repository_source.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
                             destination_directory.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
                             progress,
+                            threads,
                         )
                     },
                 )

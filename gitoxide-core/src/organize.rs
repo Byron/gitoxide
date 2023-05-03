@@ -16,6 +16,7 @@ fn find_git_repository_workdirs<P: Progress>(
     root: impl AsRef<Path>,
     mut progress: P,
     debug: bool,
+    threads: Option<usize>,
 ) -> impl Iterator<Item = (PathBuf, gix::Kind)>
 where
     P::SubProgress: Sync,
@@ -54,14 +55,8 @@ where
     let walk = jwalk::WalkDirGeneric::<((), State)>::new(root)
         .follow_links(false)
         .sort(true)
-        .skip_hidden(false);
-
-    // On macos with apple silicon, the IO subsystem is entirely different and one thread can mostly max it out.
-    // Thus using more threads just burns energy unnecessarily.
-    // It's notable that `du` is very fast even on a single core and more power efficient than dua with a single core.
-    // The default of '4' seems related to the amount of performance cores present in the system.
-    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-    let walk = walk.parallelism(jwalk::Parallelism::RayonNewPool(4));
+        .skip_hidden(false)
+        .parallelism(jwalk::Parallelism::RayonNewPool(threads.unwrap_or(0)));
 
     walk.process_read_dir(move |_depth, path, _read_dir_state, siblings| {
         if debug {
@@ -215,12 +210,13 @@ pub fn discover<P: Progress>(
     mut out: impl std::io::Write,
     mut progress: P,
     debug: bool,
+    threads: Option<usize>,
 ) -> anyhow::Result<()>
 where
     <P::SubProgress as Progress>::SubProgress: Sync,
 {
     for (git_workdir, _kind) in
-        find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories"), debug)
+        find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories"), debug, threads)
     {
         writeln!(&mut out, "{}", git_workdir.display())?;
     }
@@ -232,6 +228,7 @@ pub fn run<P: Progress>(
     source_dir: impl AsRef<Path>,
     destination: impl AsRef<Path>,
     mut progress: P,
+    threads: Option<usize>,
 ) -> anyhow::Result<()>
 where
     <P::SubProgress as Progress>::SubProgress: Sync,
@@ -239,7 +236,7 @@ where
     let mut num_errors = 0usize;
     let destination = destination.as_ref().canonicalize()?;
     for (path_to_move, kind) in
-        find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories"), false)
+        find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories"), false, threads)
     {
         if let Err(err) = handle(mode, kind, &path_to_move, &destination, &mut progress) {
             progress.fail(format!(
