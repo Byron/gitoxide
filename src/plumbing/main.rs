@@ -293,6 +293,18 @@ pub fn main() -> Result<()> {
                 index_path,
                 cmd,
             }) => match cmd {
+                free::index::Subcommands::FromList {
+                    force,
+                    index_output_path,
+                    file,
+                } => prepare_and_run(
+                    "index-from-list",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, _out, _err| core::repository::index::from_list(file, index_output_path, force),
+                ),
                 free::index::Subcommands::CheckoutExclusive {
                     directory,
                     empty_files,
@@ -300,7 +312,7 @@ pub fn main() -> Result<()> {
                     keep_going,
                 } => prepare_and_run(
                     "index-checkout",
-                    verbose,
+                    auto_verbose,
                     progress,
                     progress_keep_open,
                     None,

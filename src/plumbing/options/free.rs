@@ -53,6 +53,19 @@ pub mod index {
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
+        /// Create an index from a list of empty files, one per line of the input.
+        FromList {
+            /// Overwrite the specified index file if it already exists.
+            #[clap(long, short = 'f')]
+            force: bool,
+            /// Path to the index file to be written.
+            /// If none is given it will be kept in memory only as a way to measure performance. One day we will probably write the index
+            /// back by default, but that requires us to write more of the index to work.
+            #[clap(long, short = 'i')]
+            index_output_path: Option<PathBuf>,
+            /// The file to read the index entries from, one path per line.
+            file: PathBuf,
+        },
         /// Validate constraints and assumptions of an index along with its integrity.
         Verify,
         /// Print information about the index structure
