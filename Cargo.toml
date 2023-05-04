@@ -25,10 +25,83 @@ doctest = false
 [features]
 default = ["max"]
 
+#! ### Build Configuration
+#! These combine common choices of building blocks to represent typical builds.
+
+## Everything, all at once.
+##
+## As fast as possible, with TUI progress, progress line rendering with auto-configuration, all transports based on their most mature implementation (HTTP), all `ein` tools, CLI colors and local-time support, JSON output, regex support for rev-specs.
+max = ["max-control", "fast", "gitoxide-core-blocking-client", "http-client-curl"]
+
+## Like `max`, but only Rust is allowed.
+##
+## This is the most compatible build as it won't need a C compiler or C toolchains to build. It's also not the fastest as or the most feature-rich in terms of available
+## transports as it uses Rust's HTTP implementation.
+##
+## As fast as possible, with TUI progress, progress line rendering with auto-configuration, all transports available but less mature pure Rust HTTP implementation, all `ein` tools, CLI colors and local-time support, JSON output, regex support for rev-specs.
+max-pure = ["max-control", "gix-features/rustsha1", "gix-features/zlib-rust-backend", "http-client-reqwest", "gitoxide-core-blocking-client" ]
+
+## Like `max`, but with more control for configuration. See the *Package Maintainers* headline for more information.
+max-control = ["fast-safe", "pretty-cli", "gitoxide-core-tools-query", "gitoxide-core-tools", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure", "gix/regex" ]
+
+## All of the good stuff, with less fanciness for smaller binaries.
+##
+## As fast as possible, progress line rendering, all transports based on their most mature implementation (HTTP), all `ein` tools, CLI colors and local-time support, JSON output.
+lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools-query", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line" ]
+
+## The smallest possible build, best suitable for small single-core machines.
+##
+## This build is essentially limited to local operations without any fanciness.
+##
+## Optimized for size, no parallelism thus much slower, progress line rendering.
+small = ["pretty-cli", "gix-features/rustsha1", "gix-features/zlib-rust-backend", "prodash-render-line", "is-terminal"  ]
+
+## Like lean, but uses Rusts async implementations for networking.
+##
+## This build is more of a demonstration showing how async can work with `gitoxide`, which generally is blocking. This also means that the selection of async transports
+## is very limited to only HTTP (without typical `git` configuration) and git over TCP like provided by the `git daemon`.
+##
+## As fast as possible, progress line rendering, less feature-ful HTTP (pure Rust) and only `git-damon` support, all `ein` tools, CLI colors and local-time support, JSON output.
+##
+## Due to async client-networking not being implemented for most transports, this one supports only the 'git+tcp' and HTTP transport.
+## It uses, however, a fully asynchronous networking implementation which can serve a real-world example on how to implement custom async transports.
+lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-tools-query", "gitoxide-core-async-client", "prodash-render-line"]
+
+#! ### Package Maintainers
+#! `*-control` features leave it to you to configure C libraries, involving choices for `zlib`, ! hashing and transport implementation.
+#!
+#! Additional features *can* be provided with `--features` and are handled by the [`gix-features` crate](https://docs.rs/gix-features/latest).
+#! If nothing else is specified, the Rust implementation is used. ! Note that only one feature of each section can be enabled at a time.
+#!
+#! * **zlib**
+#!     - `gix-features/zlib-ng`
+#!     - `gix-features/zlib-ng-compat`
+#!     - `gix-features/zlib-stock`
+#!     - `gix-features/zlib-rust-backend` (*default if no choice is made*)
+#! * **sha1**
+#!     - `gix-features/fast-sha1`
+#!     - `gix-features/rustsha1` (*default if no choice is made*)
+#! * **HTTP** - see the *Building Blocks for mutually exclusive networking* headline
+#!
+#! #### Examples
+#!
+#! * `cargo build --release --no-default-features --features max-control,gix-features/zlib-stock,gitoxide-core-blocking-client,http-client-curl`
+#!     - Create a build just like `max`, but using the stock `zlib` library instead of `zlib-ng`
+#! * `cargo build --release --no-default-features --features max-control,http-client-reqwest,gitoxide-core-blocking-client,gix-features/fast-sha1`
+#!     - Create a build just like `max-pure`, but with faster hashing due to `fast-sha1`.
+
+#! ### Building Blocks
+#! Typical combinations of features of our dependencies, some of which are referred to in the `gitoxide` crate's code for conditional compilation.
+
 ## Makes the crate execute as fast as possible by supporting parallel computation of otherwise long-running functions
 ## as well as fast, hardware accelerated hashing, along with a faster zlib backend.
 ## If disabled, the binary will be visibly smaller.
 fast = ["gix/max-performance", "gix/comfort"]
+
+## Makes the crate execute as fast as possible by supporting parallel computation of otherwise long-running functions
+## as well as fast, hardware accelerated hashing, along with a faster zlib backend.
+## If disabled, the binary will be visibly smaller.
+fast-safe = ["gix/max-performance-safe", "gix/comfort"]
 
 ## Use `clap` 3.0 to build the prettiest, best documented and most user-friendly CLI at the expense of binary size.
 ## Provides a terminal user interface for detailed and exhaustive progress.
@@ -39,50 +112,41 @@ pretty-cli = [ "gitoxide-core/serde", "prodash/progress-tree", "prodash/progress
 ## that appears after a short duration.
 prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "prodash/signal-hook", "is-terminal", "crosstermion"]
 
-#! ### Convenience Features
-#! These combine common choices of the above features to represent typical builds
+## Progress reporting with a TUI, can then be enabled with the `--progress` flag.
+prodash-render-tui = ["prodash/render-tui", "prodash/render-tui-crossterm", "prodash/progress-tree", "futures-lite"]
 
-## *fast* + *prodash-render-tui-crossterm* + *prodash-render-line-crossterm* + *http* + *gitoxide-core-tools* + *client-networking*
-max = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools-query", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure", "gix/regex" ]
+## Progress reporting by visually drawing lines into the terminal without switching to an alternate window.
+prodash-render-line = ["prodash/render-line", "prodash-render-line-crossterm", "prodash/progress-tree"]
 
-## *fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-networking*.
-lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools-query", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line" ]
-## fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-async-networking*.
-## Due to async client-networking not being implemented for most transports, this one supports only the 'git' transport.
-## It uses, however, a fully asynchronous networking implementation which can serve a real-world example on how to implement custom async transports.
-lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-tools-query", "gitoxide-core-async-client", "prodash-render-line"]
+## Prints statistical information to inform about cache efficiency when those are dropped.
+## Use this as a way to understand if bigger caches actually produce greater yiedls.
+cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 
-## As small as it can possibly be, no threading, no fast sha1, line progress only, rust based zlib implementation.
-## no networking, local operations only.
-small = ["pretty-cli", "gix-features/rustsha1", "gix-features/zlib-rust-backend", "prodash-render-line", "is-terminal"  ]
-
-## Makes the crate execute as fast as possible without pulling in C libraries, while keeping everything else minimal akin to the `small` build.
-max-pure = ["pretty-cli", "gix-features/rustsha1", "gix-features/zlib-rust-backend", "prodash-render-line", "prodash-render-tui", "gix/max-performance-safe", "gix/comfort", "http-client-reqwest", "gitoxide-core-blocking-client", "gitoxide-core-tools", "prodash/render-line-autoconfigure" ]
-
-#! ### `gitoxide-core` Configuration
-
-##  A way to enable all `gitoxide-core` tools found in `gix tools`
+##  A way to enable most `gitoxide-core` tools found in `ein tools`, namely `organize` and `estimate hours`.
 gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
 
-## A program to perform analytics on a git repository, using an auto-maintained sqlite database
+## A program to perform analytics on a `git` repository, using an auto-maintained sqlite database
 gitoxide-core-tools-query = ["gitoxide-core-tools", "gitoxide-core/query"]
 
-#! #### Mutually Exclusive Networking
-#! If both are set a compile error is triggered. This also means that `cargo … --all-features` will fail.
-
+#! ### Building Blocks for mutually exclusive networking
+#! Blocking and async features are mutually exclusive and cause a compile-time error. This also means that `cargo … --all-features` will fail.
+#! Within each section, features can be combined.
+#!
+#! #### Blocking
+#! The backends are mutually exclusive, e.g. choose either `curl` or `request`.
+#!
 ## Use blocking client networking.
 gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
 ## Support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) using **curl**.
 http-client-curl = ["gix/blocking-http-transport-curl"]
 ## Support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) using **reqwest**.
 http-client-reqwest = ["gix/blocking-http-transport-reqwest-rust-tls"]
+
+#! #### Async
+#!
 ## Use async client networking.
 gitoxide-core-async-client = ["gitoxide-core/async-client", "futures-lite"]
 
-# internal
-prodash-render-tui = ["prodash/render-tui", "prodash/render-tui-crossterm", "prodash/progress-tree", "futures-lite"]
-prodash-render-line = ["prodash/render-line", "prodash-render-line-crossterm", "prodash/progress-tree"]
-cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 
 [dependencies]
 anyhow = "1.0.42"
