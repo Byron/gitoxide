@@ -145,6 +145,9 @@ effortlessly and for your particular CPU for additional performance gains.
 The minimum supported Rust version is [documented in the CI configuration](https://github.com/Byron/gitoxide/blob/main/.github/workflows/msrv.yml#L23),
 the latest stable one will work as well.
 
+There are various build configurations, all of them are [documented here](https://docs.rs/crate/gitoxide/latest). The documentation should also be useful
+for packagers who need to tune external dependencies.
+
 ```
 # A certain way to install `gitoxide` with just Rust and a C compiler installed.
 # If there are problems with SSL certificates during clones, try to omit `--locked`.
