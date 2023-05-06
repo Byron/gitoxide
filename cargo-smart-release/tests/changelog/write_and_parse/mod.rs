@@ -59,7 +59,7 @@ fn conventional_write_empty_messages() -> Result {
         let log = log.clone();
         for _round in 1..=2 {
             let mut md = String::new();
-            log.write_to(&mut md, link_mode, changelog::write::Components::all())?;
+            log.write_to(&mut md, link_mode, changelog::write::Components::all(), false)?;
             insta::assert_snapshot!(md);
 
             let parsed_log = ChangeLog::from_markdown(&md);
@@ -72,7 +72,7 @@ fn conventional_write_empty_messages() -> Result {
     ] {
         for section in &log.sections {
             let mut buf = String::new();
-            section.write_to(&mut buf, &changelog::write::Linkables::AsText, *components)?;
+            section.write_to(&mut buf, &changelog::write::Linkables::AsText, *components, false)?;
             insta::assert_snapshot!(buf);
         }
     }
@@ -164,7 +164,7 @@ fn all_section_types_round_trips_lossy() -> Result {
     ] {
         // NOTE: we can't run this a second time as the statistical information will be gone (it was never parsed back)
         let mut md = String::new();
-        log.write_to(&mut md, link_mode, changelog::write::Components::all())?;
+        log.write_to(&mut md, link_mode, changelog::write::Components::all(), false)?;
         insta::assert_snapshot!(md);
 
         let parsed_log = ChangeLog::from_markdown(&md);
@@ -178,7 +178,7 @@ fn all_section_types_round_trips_lossy() -> Result {
     ] {
         for section in &log.sections {
             let mut buf = String::new();
-            section.write_to(&mut buf, &changelog::write::Linkables::AsText, *components)?;
+            section.write_to(&mut buf, &changelog::write::Linkables::AsText, *components, false)?;
             insta::assert_snapshot!(buf);
         }
     }

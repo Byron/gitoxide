@@ -25,6 +25,7 @@ pub mod release {
         pub allow_fully_generated_changelogs: bool,
         pub changelog_links: bool,
         pub allow_changelog_github_release: bool,
+        pub capitalize_commit: bool,
     }
 }
 #[path = "release/mod.rs"]
@@ -43,6 +44,7 @@ pub mod changelog {
         // All the segments to generate
         pub generator_segments: segment::Selection,
         pub no_links: bool,
+        pub capitalize_commit: bool,
     }
 }
 #[path = "changelog.rs"]

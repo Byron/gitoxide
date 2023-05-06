@@ -18,6 +18,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         dry_run,
         preview,
         no_links,
+        capitalize_commit,
         ..
     } = opts;
     let bump_spec = if dependencies { BumpSpec::Auto } else { BumpSpec::Keep };
@@ -97,6 +98,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
                 } else {
                     Components::all()
                 },
+                capitalize_commit,
             )
             .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
             file.write_all(buf.as_bytes())
