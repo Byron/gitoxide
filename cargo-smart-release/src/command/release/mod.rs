@@ -437,7 +437,7 @@ fn perform_release(ctx: &Context, options: Options, crates: &[Dependency<'_>]) -
             commit_id,
             release_section_by_publishee
                 .get(&publishee.name.as_str())
-                .and_then(|s| section_to_string(s, WriteMode::Tag)),
+                .and_then(|s| section_to_string(s, WriteMode::Tag, options.capitalize_commit)),
             &ctx.base,
             options,
         )? {
@@ -449,7 +449,7 @@ fn perform_release(ctx: &Context, options: Options, crates: &[Dependency<'_>]) -
         for (publishee, new_version) in successful_publishees_and_version {
             release_section_by_publishee
                 .get(&publishee.name.as_str())
-                .and_then(|s| section_to_string(s, WriteMode::GitHubRelease))
+                .and_then(|s| section_to_string(s, WriteMode::GitHubRelease, options.capitalize_commit))
                 .map(|release_notes| github::create_release(publishee, new_version, &release_notes, options, &ctx.base))
                 .transpose()?;
         }
@@ -512,7 +512,7 @@ enum WriteMode {
     GitHubRelease,
 }
 
-fn section_to_string(section: &Section, mode: WriteMode) -> Option<String> {
+fn section_to_string(section: &Section, mode: WriteMode, capitalize_commit: bool) -> Option<String> {
     let mut b = String::new();
     section
         .write_to(
@@ -522,6 +522,7 @@ fn section_to_string(section: &Section, mode: WriteMode) -> Option<String> {
                 WriteMode::Tag => changelog::write::Components::empty(),
                 WriteMode::GitHubRelease => changelog::write::Components::DETAIL_TAGS,
             },
+            capitalize_commit,
         )
         .ok()
         .map(|_| b)

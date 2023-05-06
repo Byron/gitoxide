@@ -21,6 +21,7 @@ fn main() -> anyhow::Result<()> {
             no_links,
             without,
             allow_dirty,
+            capitalize_commit,
         } => {
             init_logging(false);
             command::changelog(
@@ -31,6 +32,7 @@ fn main() -> anyhow::Result<()> {
                     preview: !no_preview,
                     dependencies: !no_dependencies,
                     generator_segments: names_to_segment_selection(&without)?,
+                    capitalize_commit,
                 },
                 crates,
             )?
@@ -60,6 +62,7 @@ fn main() -> anyhow::Result<()> {
             allow_fully_generated_changelogs,
             no_dependencies,
             no_isolate_dependencies_from_breaking_changes,
+            capitalize_commit
         } => {
             let verbose = execute || verbose;
             init_logging(verbose);
@@ -86,6 +89,7 @@ fn main() -> anyhow::Result<()> {
                     allow_fully_generated_changelogs,
                     changelog_links: !no_changelog_links,
                     allow_changelog_github_release: !no_changelog_github_release,
+                    capitalize_commit,
                 },
                 crates,
                 to_bump_spec(bump.as_deref().unwrap_or(DEFAULT_BUMP_SPEC))?,

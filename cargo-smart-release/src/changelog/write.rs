@@ -107,6 +107,7 @@ impl Section {
         mut out: impl std::fmt::Write,
         link_mode: &Linkables,
         components: Components,
+        capitalize_commit: bool,
     ) -> std::fmt::Result {
         match self {
             Section::Verbatim { text, .. } => {
@@ -149,7 +150,7 @@ impl Section {
 
                 let section_level = *heading_level + 1;
                 for segment in segments {
-                    segment.write_to(section_level, link_mode, components, &mut out)?;
+                    segment.write_to(section_level, link_mode, components, capitalize_commit, &mut out)?;
                 }
                 if !unknown.is_empty() && components.contains(Components::HTML_TAGS) {
                     writeln!(out, "{}", Section::UNKNOWN_TAG_START)?;
@@ -181,9 +182,10 @@ impl ChangeLog {
         mut out: impl std::fmt::Write,
         link_mode: &Linkables,
         components: Components,
+        capitalize_commit: bool,
     ) -> std::fmt::Result {
         for section in &self.sections {
-            section.write_to(&mut out, link_mode, components)?;
+            section.write_to(&mut out, link_mode, components, capitalize_commit)?;
         }
         Ok(())
     }
@@ -195,6 +197,7 @@ impl section::Segment {
         section_level: usize,
         link_mode: &Linkables,
         components: Components,
+        capitalize_commit: bool,
         mut out: impl std::fmt::Write,
     ) -> std::fmt::Result {
         let write_html = components.contains(Components::HTML_TAGS);
@@ -233,6 +236,11 @@ impl section::Segment {
                     for message in messages {
                         match message {
                             Message::Generated { title, id, body } => {
+                                let title = if capitalize_commit {
+                                    capitalize_message_title(title)
+                                } else {
+                                    Cow::Borrowed(title.as_str())
+                                };
                                 if write_html {
                                     writeln!(
                                         out,
