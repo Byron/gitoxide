@@ -157,6 +157,10 @@ pub enum SubCommands {
         /// depend on an unpublished version with "--no-validate".
         #[clap(long, help_heading = Some("EXPERT"))]
         ignore_instability: bool,
+
+        /// Automatically capitalize commit message
+        #[clap(long, help_heading = Some("CHANGELOG"))]
+        capitalize_commit: bool,
     },
     #[clap(name = "changelog", version = clap::crate_version!())]
     /// Generate changelogs from commit histories, non-destructively.
@@ -201,5 +205,9 @@ pub enum SubCommands {
         /// Do not generate links to commits and issues when writing the changelogs. This currently only works for GitHub.
         #[clap(long, help_heading = Some("CUSTOMIZATION"))]
         no_links: bool,
+
+        /// Automatically capitalize commit message
+        #[clap(long, help_heading = Some("CUSTOMIZATION"))]
+        capitalize_commit: bool,
     },
 }

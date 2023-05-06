@@ -377,6 +377,7 @@ fn gather_changelog_data<'meta>(
     Options {
         dry_run,
         generator_segments,
+        capitalize_commit,
         ..
     }: Options,
 ) -> anyhow::Result<GatherOutcome<'meta>> {
@@ -484,6 +485,7 @@ fn gather_changelog_data<'meta>(
                 } else {
                     changelog::write::Components::all()
                 },
+                capitalize_commit
             )?;
             lock.with_mut(|file| file.write_all(write_buf.as_bytes()))?;
             *made_change |= previous_content.map(|previous| write_buf != previous).unwrap_or(true);
