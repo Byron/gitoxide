@@ -158,7 +158,7 @@ pub enum SubCommands {
         #[clap(long, help_heading = Some("EXPERT"))]
         ignore_instability: bool,
 
-        /// Automatically capitalize commit message
+        /// Capitalize commit messages.
         #[clap(long, help_heading = Some("CHANGELOG"))]
         capitalize_commit: bool,
     },
@@ -206,7 +206,7 @@ pub enum SubCommands {
         #[clap(long, help_heading = Some("CUSTOMIZATION"))]
         no_links: bool,
 
-        /// Automatically capitalize commit message
+        /// Capitalize commit messages.
         #[clap(long, help_heading = Some("CUSTOMIZATION"))]
         capitalize_commit: bool,
     },
