@@ -14,6 +14,7 @@ pub mod query {
         pub format: OutputFormat,
         pub overrides: Vec<OsString>,
         pub show_ignore_patterns: bool,
+        pub statistics: bool,
     }
 }
 
@@ -21,10 +22,12 @@ pub fn query(
     repo: gix::Repository,
     pathspecs: impl Iterator<Item = gix::path::Spec>,
     mut out: impl io::Write,
+    mut err: impl io::Write,
     query::Options {
         overrides,
         format,
         show_ignore_patterns,
+        statistics,
     }: query::Options,
 ) -> anyhow::Result<()> {
     if format != OutputFormat::Human {
@@ -61,6 +64,11 @@ pub fn query(
                 None => writeln!(out, "::\t{}", path)?,
             }
         }
+    }
+
+    if let Some(stats) = statistics.then(|| cache.take_statistics()) {
+        out.flush()?;
+        writeln!(err, "{:#?}", stats).ok();
     }
     Ok(())
 }

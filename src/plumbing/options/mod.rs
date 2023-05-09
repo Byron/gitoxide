@@ -469,6 +469,9 @@ pub mod exclude {
     pub enum Subcommands {
         /// Check if path-specs are excluded and print the result similar to `git check-ignore`.
         Query {
+            /// Print various statistics to stderr
+            #[clap(long, short = 's')]
+            statistics: bool,
             /// Show actual ignore patterns instead of un-excluding an entry.
             ///
             /// That way one can understand why an entry might not be excluded.

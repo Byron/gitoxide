@@ -862,6 +862,7 @@ pub fn main() -> Result<()> {
         },
         Subcommands::Exclude(cmd) => match cmd {
             exclude::Subcommands::Query {
+                statistics,
                 patterns,
                 pathspecs,
                 show_ignore_patterns,
@@ -871,7 +872,7 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, _err| {
+                move |_progress, out, err| {
                     use gix::bstr::ByteSlice;
                     core::repository::exclude::query(
                         repository(Mode::Strict)?,
@@ -886,10 +887,12 @@ pub fn main() -> Result<()> {
                             Box::new(pathspecs.into_iter())
                         },
                         out,
+                        err,
                         core::repository::exclude::query::Options {
                             format,
                             show_ignore_patterns,
                             overrides: patterns,
+                            statistics,
                         },
                     )
                 },
