@@ -147,6 +147,13 @@ impl State {
         })
     }
 
+    /// Return all parts that relate to entries, which includes path storage.
+    ///
+    /// This can be useful for obtaining a standalone, boxable iterator
+    pub fn into_entries(self) -> (Vec<Entry>, PathStorage) {
+        (self.entries, self.path_backing)
+    }
+
     /// Sometimes it's needed to remove the path backing to allow certain mutation to happen in the state while supporting reading the entry's
     /// path.
     pub fn take_path_backing(&mut self) -> PathStorage {
