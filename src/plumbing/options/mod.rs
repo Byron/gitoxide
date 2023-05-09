@@ -448,6 +448,16 @@ pub mod attributes {
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
+        /// Run `git check-attr`  and `git check-ignore` on all files of the index or all files passed via stdin and validate that
+        /// we get the same outcome when computing attributes.
+        ValidateBaseline {
+            /// Print various statistics to stderr
+            #[clap(long, short = 's')]
+            statistics: bool,
+            /// Don't validated excludes as obtaining them with `check-ignore` can be very slow.
+            #[clap(long)]
+            no_ignore: bool,
+        },
         /// List all attributes of the given path-specs and display the result similar to `git check-attr`.
         Query {
             /// Print various statistics to stderr
