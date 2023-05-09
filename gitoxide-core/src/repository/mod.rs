@@ -15,6 +15,7 @@ pub mod commit;
 pub mod config;
 mod credential;
 pub use credential::function as credential;
+pub mod attributes;
 #[cfg(feature = "blocking-client")]
 pub mod clone;
 pub mod exclude;
