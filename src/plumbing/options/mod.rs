@@ -103,6 +103,9 @@ pub enum Subcommands {
     /// Interact with the remote hosts.
     #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     Remote(remote::Platform),
+    /// Interact with the attribute files like .gitattributes.
+    #[clap(subcommand, visible_alias = "attrs")]
+    Attributes(attributes::Subcommands),
     /// Interact with the exclude files like .gitignore.
     #[clap(subcommand)]
     Exclude(exclude::Subcommands),
@@ -437,6 +440,23 @@ pub mod revision {
         /// Return the names and hashes of all previously checked-out branches.
         #[clap(visible_alias = "prev")]
         PreviousBranches,
+    }
+}
+
+pub mod attributes {
+    use crate::shared::AsPathSpec;
+
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// List all attributes of the given path-specs and display the result similar to `git check-attr`.
+        Query {
+            /// Print various statistics to stderr
+            #[clap(long, short = 's')]
+            statistics: bool,
+            /// The git path specifications to list attributes for, or unset to read from stdin one per line.
+            #[clap(value_parser = AsPathSpec)]
+            pathspecs: Vec<gix::path::Spec>,
+        },
     }
 }
 
