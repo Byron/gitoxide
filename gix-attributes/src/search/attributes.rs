@@ -25,10 +25,16 @@ impl Search {
         collection: &mut MetadataCollection,
     ) -> std::io::Result<Self> {
         let mut group = Self::default();
-        group.add_patterns_buffer(b"[attr]binary -diff -merge -text", "[builtin]", None, collection);
+        group.add_patterns_buffer(
+            b"[attr]binary -diff -merge -text",
+            "[builtin]",
+            None,
+            collection,
+            true, /* allow macros */
+        );
 
         for path in files.into_iter() {
-            group.add_patterns_file(path, true, None, buf, collection)?;
+            group.add_patterns_file(path, true, None, buf, collection, true /* allow macros */)?;
         }
         Ok(group)
     }
@@ -39,6 +45,7 @@ impl Search {
     /// Add the given file at `source` to our patterns if it exists, otherwise do nothing.
     /// Update `collection` with newly added attribute names.
     /// If a `root` is provided, it's not considered a global file anymore.
+    /// If `allow_macros` is `true`, macros will be processed like normal, otherwise they will be skipped entirely.
     /// Returns `true` if the file was added, or `false` if it didn't exist.
     pub fn add_patterns_file(
         &mut self,
@@ -47,24 +54,39 @@ impl Search {
         root: Option<&Path>,
         buf: &mut Vec<u8>,
         collection: &mut MetadataCollection,
+        allow_macros: bool,
     ) -> std::io::Result<bool> {
+        // TODO: should `Pattern` trait use an instance as first argument to carry this information
+        //       (so no `retain` later, it's slower than skipping)
         let was_added = gix_glob::search::add_patterns_file(&mut self.patterns, source, follow_symlinks, root, buf)?;
         if was_added {
-            collection.update_from_list(self.patterns.last_mut().expect("just added"));
+            let last = self.patterns.last_mut().expect("just added");
+            if !allow_macros {
+                last.patterns
+                    .retain(|p| !matches!(p.value, Value::MacroAssignments { .. }))
+            }
+            collection.update_from_list(last);
         }
         Ok(was_added)
     }
     /// Add patterns as parsed from `bytes`, providing their `source` path and possibly their `root` path, the path they
     /// are relative to. This also means that `source` is contained within `root` if `root` is provided.
+    /// If `allow_macros` is `true`, macros will be processed like normal, otherwise they will be skipped entirely.
     pub fn add_patterns_buffer(
         &mut self,
         bytes: &[u8],
         source: impl Into<PathBuf>,
         root: Option<&Path>,
         collection: &mut MetadataCollection,
+        allow_macros: bool,
     ) {
         self.patterns.push(pattern::List::from_bytes(bytes, source, root));
-        collection.update_from_list(self.patterns.last_mut().expect("just added"));
+        let last = self.patterns.last_mut().expect("just added");
+        if !allow_macros {
+            last.patterns
+                .retain(|p| !matches!(p.value, Value::MacroAssignments { .. }))
+        }
+        collection.update_from_list(last);
     }
 
     /// Pop the last attribute patterns list from our queue.

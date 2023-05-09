@@ -48,6 +48,7 @@ mod specials {
                 .unwrap_or_else(|| Path::new("<memory>").into()),
             rela_containing_dir.map(|_| Path::new("")),
             &mut collection,
+            true,
         );
         let mut out = Outcome::default();
         out.initialize(&collection);
@@ -81,12 +82,14 @@ fn baseline() -> crate::Result {
         ("a/.gitattributes", true),
         ("a/b/.gitattributes", true),
     ] {
+        let is_global = !use_base;
         group.add_patterns_file(
             base.join(file),
             false,
             use_base.then_some(base.as_path()),
             &mut buf,
             &mut collection,
+            is_global, /* allow macros */
         )?;
     }
     assert_eq!(
@@ -131,7 +134,14 @@ fn all_attributes_are_listed_in_declaration_order() -> crate::Result {
     let (mut group, mut collection, base, input) = baseline::user_attributes("lookup-order")?;
 
     let mut buf = Vec::new();
-    group.add_patterns_file(base.join(".gitattributes"), false, None, &mut buf, &mut collection)?;
+    group.add_patterns_file(
+        base.join(".gitattributes"),
+        false,
+        None,
+        &mut buf,
+        &mut collection,
+        true, /* use macros */
+    )?;
 
     let mut out = gix_attributes::search::Outcome::default();
     out.initialize(&collection);
@@ -217,7 +227,14 @@ fn given_attributes_are_made_available_in_given_order() -> crate::Result {
         baseline::user_attributes_named_baseline("lookup-order", "baseline.selected")?;
 
     let mut buf = Vec::new();
-    group.add_patterns_file(base.join(".gitattributes"), false, None, &mut buf, &mut collection)?;
+    group.add_patterns_file(
+        base.join(".gitattributes"),
+        false,
+        None,
+        &mut buf,
+        &mut collection,
+        true, /* use macros */
+    )?;
 
     let mut out = gix_attributes::search::Outcome::default();
     out.initialize_with_selection(&collection, ["my-binary", "recursive", "unspecified"]);
