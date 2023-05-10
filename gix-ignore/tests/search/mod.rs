@@ -81,7 +81,6 @@ fn baseline_from_git_dir() -> crate::Result {
                     sequence_number,
                     pattern: _,
                     source,
-                    value: _,
                 }),
                 Some((expected_source, line, _expected_pattern)),
             ) => {
@@ -119,10 +118,9 @@ fn from_overrides() {
     );
 }
 
-fn pattern_to_match(pattern: &gix_glob::Pattern, sequence_number: usize) -> Match<'_, ()> {
+fn pattern_to_match(pattern: &gix_glob::Pattern, sequence_number: usize) -> Match<'_> {
     Match {
         pattern,
-        value: &(),
         source: None,
         sequence_number,
     }
