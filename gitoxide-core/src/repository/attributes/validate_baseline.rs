@@ -282,8 +282,8 @@ pub(crate) mod function {
         pub sequence_number: usize,
     }
 
-    impl From<gix::ignore::search::Match<'_, ()>> for ExcludeMatch {
-        fn from(value: gix::ignore::search::Match<'_, ()>) -> Self {
+    impl From<gix::ignore::search::Match<'_>> for ExcludeMatch {
+        fn from(value: gix::ignore::search::Match<'_>) -> Self {
             ExcludeMatch {
                 pattern: value.pattern.clone(),
                 source: value.source.map(ToOwned::to_owned),

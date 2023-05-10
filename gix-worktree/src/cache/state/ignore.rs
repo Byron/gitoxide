@@ -74,7 +74,7 @@ impl Ignore {
         relative_path: &BStr,
         is_dir: Option<bool>,
         case: Case,
-    ) -> Option<gix_ignore::search::Match<'_, ()>> {
+    ) -> Option<gix_ignore::search::Match<'_>> {
         let groups = self.match_groups();
         let mut dir_match = None;
         if let Some((source, mapping)) = self
@@ -90,7 +90,6 @@ impl Ignore {
         {
             let match_ = gix_ignore::search::Match {
                 pattern: &mapping.pattern,
-                value: &mapping.value,
                 sequence_number: mapping.sequence_number,
                 source,
             };
