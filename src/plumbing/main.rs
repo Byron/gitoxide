@@ -859,6 +859,33 @@ pub fn main() -> Result<()> {
                     )
                 },
             ),
+            attributes::Subcommands::ValidateBaseline { statistics, no_ignore } => prepare_and_run(
+                "attributes-validate-baseline",
+                auto_verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |progress, out, err| {
+                    use gix::bstr::ByteSlice;
+                    core::repository::attributes::validate_baseline(
+                        repository(Mode::StrictWithGitInstallConfig)?,
+                        stdin_or_bail().ok().map(|stdin| {
+                            stdin
+                                .byte_lines()
+                                .filter_map(Result::ok)
+                                .filter_map(|line| gix::path::Spec::from_bytes(line.as_bstr()))
+                        }),
+                        progress,
+                        out,
+                        err,
+                        core::repository::attributes::validate_baseline::Options {
+                            format,
+                            statistics,
+                            ignore: !no_ignore,
+                        },
+                    )
+                },
+            ),
         },
         Subcommands::Exclude(cmd) => match cmd {
             exclude::Subcommands::Query {

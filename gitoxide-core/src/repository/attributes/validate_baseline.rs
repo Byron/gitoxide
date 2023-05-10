@@ -1,0 +1,366 @@
+use crate::OutputFormat;
+
+pub struct Options {
+    pub format: OutputFormat,
+    pub statistics: bool,
+    pub ignore: bool,
+}
+
+pub(crate) mod function {
+    use std::collections::BTreeSet;
+    use std::io;
+    use std::io::{BufRead, Write};
+    use std::iter::Peekable;
+    use std::ops::Sub;
+    use std::path::PathBuf;
+    use std::sync::atomic::Ordering;
+
+    use anyhow::{anyhow, bail};
+    use gix::odb::FindExt;
+    use gix::Progress;
+
+    use crate::repository::attributes::query::attributes_cache;
+    use crate::repository::attributes::validate_baseline::Options;
+    use crate::OutputFormat;
+
+    pub fn validate_baseline(
+        repo: gix::Repository,
+        pathspecs: Option<impl Iterator<Item = gix::path::Spec> + Send + 'static>,
+        mut progress: impl Progress + 'static,
+        mut out: impl io::Write,
+        mut err: impl io::Write,
+        Options {
+            format,
+            statistics,
+            ignore,
+        }: Options,
+    ) -> anyhow::Result<()> {
+        if format != OutputFormat::Human {
+            bail!("JSON output isn't implemented yet");
+        }
+
+        let mut num_entries = None;
+        let pathspecs = pathspecs
+            .map(|i| anyhow::Result::Ok(Box::new(i) as Box<dyn Iterator<Item = gix::path::Spec> + Send + 'static>))
+            .unwrap_or_else({
+                let repo = repo.clone();
+                let num_entries = &mut num_entries;
+                move || -> anyhow::Result<_> {
+                    let index = repo.open_index()?;
+                    let (entries, path_backing) = index.into_parts().0.into_entries();
+                    *num_entries = Some(entries.len());
+                    Ok(Box::new(entries.into_iter().map(move |e| {
+                        gix::path::Spec::from_bytes(e.path_in(&path_backing)).expect("each entry path is a valid spec")
+                    })))
+                }
+            })?;
+
+        let work_dir = repo
+            .work_dir()
+            .map(ToOwned::to_owned)
+            .ok_or_else(|| anyhow!("repository at {:?} must have a worktree checkout", repo.path()))?;
+        let (tx_base, rx_base) = std::sync::mpsc::channel::<(String, Baseline)>();
+        let feed_attrs = {
+            let (tx, rx) = std::sync::mpsc::sync_channel::<gix::path::Spec>(1);
+            std::thread::spawn({
+                let path = work_dir.clone();
+                let tx_base = tx_base.clone();
+                let mut progress = progress.add_child("attributes");
+                move || -> anyhow::Result<()> {
+                    let mut child = std::process::Command::new(GIT_NAME)
+                        .args(["check-attr", "--stdin", "-a"])
+                        .stdin(std::process::Stdio::piped())
+                        .stdout(std::process::Stdio::piped())
+                        .stderr(std::process::Stdio::null())
+                        .current_dir(path)
+                        .spawn()?;
+
+                    std::thread::spawn({
+                        let mut stdin = child.stdin.take().expect("we configured it");
+                        move || -> anyhow::Result<()> {
+                            progress.init(num_entries, gix::progress::count("paths"));
+                            let start = std::time::Instant::now();
+                            for spec in rx {
+                                progress.inc();
+                                for path in spec.items() {
+                                    stdin.write_all(path.as_ref())?;
+                                    stdin.write_all(b"\n")?;
+                                }
+                            }
+                            progress.show_throughput(start);
+                            Ok(())
+                        }
+                    });
+
+                    let stdout = std::io::BufReader::new(child.stdout.take().expect("we configured it"));
+                    let mut lines = stdout.lines().filter_map(Result::ok).peekable();
+                    while let Some(baseline) = parse_attributes(&mut lines) {
+                        if tx_base.send(baseline).is_err() {
+                            child.kill().ok();
+                            break;
+                        }
+                    }
+
+                    Ok(())
+                }
+            });
+            tx
+        };
+        let feed_excludes = ignore.then(|| {
+            let (tx, rx) = std::sync::mpsc::sync_channel::<gix::path::Spec>(1);
+            std::thread::spawn({
+                let path = work_dir.clone();
+                let tx_base = tx_base.clone();
+                let mut progress = progress.add_child("excludes");
+                move || -> anyhow::Result<()> {
+                    let mut child = std::process::Command::new(GIT_NAME)
+                        .args(["check-ignore", "--stdin", "-nv", "--no-index"])
+                        .stdin(std::process::Stdio::piped())
+                        .stdout(std::process::Stdio::piped())
+                        .stderr(std::process::Stdio::null())
+                        .current_dir(path)
+                        .spawn()?;
+
+                    std::thread::spawn({
+                        let mut stdin = child.stdin.take().expect("we configured it");
+                        move || -> anyhow::Result<()> {
+                            progress.init(num_entries, gix::progress::count("paths"));
+                            let start = std::time::Instant::now();
+                            for spec in rx {
+                                progress.inc();
+                                for path in spec.items() {
+                                    stdin.write_all(path.as_ref())?;
+                                    stdin.write_all(b"\n")?;
+                                }
+                            }
+                            progress.show_throughput(start);
+                            Ok(())
+                        }
+                    });
+
+                    let stdout = std::io::BufReader::new(child.stdout.take().expect("we configured it"));
+                    for line in stdout.lines() {
+                        let line = line?;
+                        if let Some(baseline) = parse_exclude(&line) {
+                            if tx_base.send(baseline).is_err() {
+                                child.kill().ok();
+                                break;
+                            }
+                        } else {
+                            eprintln!("Failed to parse line {line:?} - ignored");
+                        }
+                    }
+
+                    Ok(())
+                }
+            });
+            tx
+        });
+        drop(tx_base);
+
+        std::thread::spawn(move || {
+            for spec in pathspecs {
+                if feed_attrs.send(spec.clone()).is_err() {
+                    break;
+                }
+                if let Some(ch) = feed_excludes.as_ref() {
+                    if ch.send(spec).is_err() {
+                        break;
+                    }
+                }
+            }
+        });
+
+        let mut cache = attributes_cache(&repo)?;
+        let mut matches = cache.attribute_matches();
+        let mut progress = progress.add_child("validate");
+        let mut mismatches = Vec::new();
+        let start = std::time::Instant::now();
+        progress.init(
+            num_entries.map(|n| n + if ignore { n } else { 0 }),
+            gix::progress::count("paths"),
+        );
+
+        for (rela_path, baseline) in rx_base {
+            let entry = cache.at_entry(rela_path.as_str(), Some(false), |oid, buf| {
+                repo.objects.find_blob(oid, buf)
+            })?;
+            match baseline {
+                Baseline::Attribute { assignments: expected } => {
+                    entry.matching_attributes(&mut matches);
+                    let fast_path_mismatch = matches
+                        .iter()
+                        .map(|m| m.assignment)
+                        .zip(expected.iter().map(|a| a.as_ref()))
+                        .any(|(a, b)| a != b);
+                    if fast_path_mismatch {
+                        let actual_set = BTreeSet::from_iter(matches.iter().map(|m| m.assignment));
+                        let expected_set = BTreeSet::from_iter(expected.iter().map(|a| a.as_ref()));
+                        let too_few_or_too_many =
+                            !(expected_set.sub(&actual_set).is_empty() && actual_set.sub(&expected_set).is_empty());
+                        if too_few_or_too_many {
+                            mismatches.push((
+                                rela_path,
+                                Mismatch::Attributes {
+                                    actual: matches.iter().map(|m| m.assignment.to_owned()).collect(),
+                                    expected,
+                                },
+                            ))
+                        }
+                    }
+                }
+                Baseline::Exclude { location } => {
+                    let match_ = entry.matching_exclude_pattern();
+                    if match_.is_some() != location.is_some() {
+                        mismatches.push((
+                            rela_path,
+                            Mismatch::Exclude {
+                                actual: match_.map(Into::into),
+                                expected: location,
+                            },
+                        ))
+                    }
+                }
+            }
+            progress.inc();
+        }
+
+        if let Some(stats) = statistics.then(|| cache.take_statistics()) {
+            out.flush()?;
+            writeln!(err, "{:#?}", stats).ok();
+        }
+        progress.show_throughput(start);
+
+        if mismatches.is_empty() {
+            Ok(())
+        } else {
+            for (rela_path, mm) in &mismatches {
+                writeln!(err, "{rela_path}: {mm:#?}").ok();
+            }
+            bail!(
+                "{}: Validation failed with {} mismatches out of {}",
+                gix::path::realpath(&work_dir).unwrap_or(work_dir).display(),
+                mismatches.len(),
+                progress
+                    .counter()
+                    .map(|a| a.load(Ordering::Relaxed))
+                    .unwrap_or_default()
+            );
+        }
+    }
+
+    static GIT_NAME: &str = if cfg!(windows) { "git.exe" } else { "git" };
+
+    enum Baseline {
+        Attribute { assignments: Vec<gix::attrs::Assignment> },
+        Exclude { location: Option<ExcludeLocation> },
+    }
+
+    #[derive(Debug)]
+    pub struct ExcludeLocation {
+        pub line: usize,
+        pub rela_source_file: String,
+        pub pattern: String,
+    }
+
+    #[derive(Debug)]
+    pub enum Mismatch {
+        Attributes {
+            actual: Vec<gix::attrs::Assignment>,
+            expected: Vec<gix::attrs::Assignment>,
+        },
+        Exclude {
+            actual: Option<ExcludeMatch>,
+            expected: Option<ExcludeLocation>,
+        },
+    }
+
+    #[derive(Debug)]
+    pub struct ExcludeMatch {
+        pub pattern: gix::glob::Pattern,
+        pub source: Option<PathBuf>,
+        pub sequence_number: usize,
+    }
+
+    impl From<gix::ignore::search::Match<'_>> for ExcludeMatch {
+        fn from(value: gix::ignore::search::Match<'_>) -> Self {
+            ExcludeMatch {
+                pattern: value.pattern.clone(),
+                source: value.source.map(ToOwned::to_owned),
+                sequence_number: value.sequence_number,
+            }
+        }
+    }
+
+    fn parse_exclude(line: &str) -> Option<(String, Baseline)> {
+        let (left, value) = line.split_at(line.find(|c| c == '\t')?);
+        let value = &value[1..];
+
+        let location = if left == "::" {
+            None
+        } else {
+            let mut tokens = left.split(|b| b == ':');
+            let source = tokens.next()?;
+            let line_number: usize = tokens.next()?.parse().ok()?;
+            let pattern = tokens.next()?;
+            Some(ExcludeLocation {
+                line: line_number,
+                rela_source_file: source.into(),
+                pattern: pattern.into(),
+            })
+        };
+        Some((value.to_string(), Baseline::Exclude { location }))
+    }
+
+    fn parse_attributes(lines: &mut Peekable<impl Iterator<Item = String>>) -> Option<(String, Baseline)> {
+        let first = lines.next()?;
+        let mut out = Vec::new();
+        let (path, assignment) = parse_attribute_line(&first)?;
+
+        let current = path.to_owned();
+        out.push(assignment.to_owned());
+        loop {
+            let next_line = match lines.peek() {
+                None => break,
+                Some(l) => l,
+            };
+            let (next_path, next_assignment) = parse_attribute_line(next_line)?;
+            if next_path != current {
+                return Some((current, Baseline::Attribute { assignments: out }));
+            } else {
+                out.push(next_assignment.to_owned());
+                lines.next();
+            }
+        }
+        Some((current, Baseline::Attribute { assignments: out }))
+    }
+
+    fn parse_attribute_line(line: &str) -> Option<(&str, gix::attrs::AssignmentRef<'_>)> {
+        use gix::attrs::StateRef;
+        use gix::bstr::ByteSlice;
+
+        let mut prev = None;
+        let mut tokens = line.splitn(3, |b| {
+            let is_match = b == ' ' && prev.take() == Some(':');
+            prev = Some(b);
+            is_match
+        });
+        if let Some(((mut path, attr), info)) = tokens.next().zip(tokens.next()).zip(tokens.next()) {
+            let state = match info {
+                "set" => StateRef::Set,
+                "unset" => StateRef::Unset,
+                "unspecified" => StateRef::Unspecified,
+                _ => StateRef::from_bytes(info.as_bytes()),
+            };
+            path = path.trim_end_matches(|b| b == ':');
+            let attr = attr.trim_end_matches(|b| b == ':');
+            let assignment = gix::attrs::AssignmentRef {
+                name: gix::attrs::NameRef::try_from(attr.as_bytes().as_bstr()).ok()?,
+                state,
+            };
+            Some((path, assignment))
+        } else {
+            None
+        }
+    }
+}

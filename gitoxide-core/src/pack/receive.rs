@@ -221,7 +221,7 @@ mod async_io {
                 &mut self.ctx,
                 futures_lite::io::BlockOn::new(input),
                 progress,
-                &refs,
+                refs,
             )
         }
     }
@@ -241,6 +241,7 @@ mod async_io {
     {
         let transport = net::connect(
             url,
+            #[allow(clippy::needless_update)]
             gix::protocol::transport::client::connect::Options {
                 version: protocol.unwrap_or_default().into(),
                 ..Default::default()

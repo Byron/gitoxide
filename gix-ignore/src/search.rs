@@ -10,11 +10,9 @@ use crate::Search;
 
 /// Describes a matching pattern within a search for ignored paths.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct Match<'a, T> {
+pub struct Match<'a> {
     /// The glob pattern itself, like `/target/*`.
     pub pattern: &'a gix_glob::Pattern,
-    /// The value associated with the pattern.
-    pub value: &'a T,
     /// The path to the source from which the pattern was loaded, or `None` if it was specified by other means.
     pub source: Option<&'a Path>,
     /// The line at which the pattern was found in its `source` file, or the occurrence in which it was provided.
@@ -114,7 +112,7 @@ pub fn pattern_matching_relative_path<'a>(
     basename_pos: Option<usize>,
     is_dir: Option<bool>,
     case: gix_glob::pattern::Case,
-) -> Option<Match<'a, ()>> {
+) -> Option<Match<'a>> {
     let (relative_path, basename_start_pos) =
         list.strip_base_handle_recompute_basename_pos(relative_path, basename_pos, case)?;
     list.patterns
@@ -124,14 +122,13 @@ pub fn pattern_matching_relative_path<'a>(
         .find_map(
             |pattern::Mapping {
                  pattern,
-                 value,
+                 value: (),
                  sequence_number,
              }| {
                 pattern
                     .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
                     .then_some(Match {
                         pattern,
-                        value,
                         source: list.source.as_deref(),
                         sequence_number: *sequence_number,
                     })
@@ -172,7 +169,7 @@ impl Search {
         relative_path: impl Into<&'a BStr>,
         is_dir: Option<bool>,
         case: gix_glob::pattern::Case,
-    ) -> Option<Match<'_, ()>> {
+    ) -> Option<Match<'_>> {
         let relative_path = relative_path.into();
         let basename_pos = relative_path.rfind(b"/").map(|p| p + 1);
         self.patterns
