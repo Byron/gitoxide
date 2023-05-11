@@ -1,16 +1,13 @@
 use gix_object::{bstr::ByteSlice, commit::ref_iter::Token, CommitRefIter};
 
 use crate::{
-    hex_to_id,
-    immutable::{
-        commit::{LONG_MESSAGE, MERGE_TAG, SIGNATURE},
-        fixture_bytes, linus_signature, signature,
-    },
+    commit::{LONG_MESSAGE, MERGE_TAG, SIGNATURE},
+    fixture_name, hex_to_id, linus_signature, signature,
 };
 
 #[test]
 fn newline_right_after_signature_multiline_header() -> crate::Result {
-    let data = fixture_bytes("commit", "signed-whitespace.txt");
+    let data = fixture_name("commit", "signed-whitespace.txt");
     let tokens = CommitRefIter::from_bytes(&data).collect::<Result<Vec<_>, _>>()?;
     assert_eq!(tokens.len(), 7, "mainly a parsing exercise");
     match tokens.last().expect("there are tokens") {
@@ -24,7 +21,7 @@ fn newline_right_after_signature_multiline_header() -> crate::Result {
 
 #[test]
 fn signed_with_encoding() -> crate::Result {
-    let input = fixture_bytes("commit", "signed-with-encoding.txt");
+    let input = fixture_name("commit", "signed-with-encoding.txt");
     let iter = CommitRefIter::from_bytes(&input);
     assert_eq!(
         iter.collect::<Result<Vec<_>, _>>()?,
@@ -55,7 +52,7 @@ fn signed_with_encoding() -> crate::Result {
 #[test]
 fn whitespace() -> crate::Result {
     assert_eq!(
-        CommitRefIter::from_bytes(&fixture_bytes("commit", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
+        CommitRefIter::from_bytes(&fixture_name("commit", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
         vec![
             Token::Tree {
                 id: hex_to_id("9bed6275068a0575243ba8409253e61af81ab2ff")
@@ -78,7 +75,7 @@ fn whitespace() -> crate::Result {
 #[test]
 fn unsigned() -> crate::Result {
     assert_eq!(
-        CommitRefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).collect::<Result<Vec<_>, _>>()?,
+        CommitRefIter::from_bytes(&fixture_name("commit", "unsigned.txt")).collect::<Result<Vec<_>, _>>()?,
         vec![
             Token::Tree {
                 id: hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d")
@@ -98,7 +95,7 @@ fn unsigned() -> crate::Result {
 #[test]
 fn signed_singleline() -> crate::Result {
     assert_eq!(
-        CommitRefIter::from_bytes(&fixture_bytes("commit", "signed-singleline.txt")).collect::<Result<Vec<_>, _>>()?,
+        CommitRefIter::from_bytes(&fixture_name("commit", "signed-singleline.txt")).collect::<Result<Vec<_>, _>>()?,
         vec![
             Token::Tree {
                 id: hex_to_id("00fc39317701176e326974ce44f5bd545a32ec0b")
@@ -117,7 +114,7 @@ fn signed_singleline() -> crate::Result {
         ]
     );
     assert_eq!(
-        CommitRefIter::from_bytes(&fixture_bytes("commit", "signed-singleline.txt"))
+        CommitRefIter::from_bytes(&fixture_name("commit", "signed-singleline.txt"))
             .parent_ids()
             .collect::<Vec<_>>(),
         vec![hex_to_id("09d8d3a12e161a7f6afb522dbe8900a9c09bce06")]
@@ -127,7 +124,7 @@ fn signed_singleline() -> crate::Result {
 
 #[test]
 fn error_handling() -> crate::Result {
-    let data = fixture_bytes("commit", "unsigned.txt");
+    let data = fixture_name("commit", "unsigned.txt");
     let iter = CommitRefIter::from_bytes(&data[..data.len() / 2]);
     let tokens = iter.collect::<Vec<_>>();
     assert!(
@@ -139,7 +136,7 @@ fn error_handling() -> crate::Result {
 
 #[test]
 fn mergetag() -> crate::Result {
-    let input = fixture_bytes("commit", "mergetag.txt");
+    let input = fixture_name("commit", "mergetag.txt");
     let iter = CommitRefIter::from_bytes(&input);
     assert_eq!(
         iter.collect::<Result<Vec<_>, _>>()?,
@@ -177,14 +174,11 @@ fn mergetag() -> crate::Result {
 mod method {
     use gix_object::CommitRefIter;
 
-    use crate::{
-        hex_to_id,
-        immutable::{fixture_bytes, signature},
-    };
+    use crate::{fixture_name, hex_to_id, signature};
 
     #[test]
     fn tree_id() -> crate::Result {
-        let input = fixture_bytes("commit", "unsigned.txt");
+        let input = fixture_name("commit", "unsigned.txt");
         let iter = CommitRefIter::from_bytes(&input);
         assert_eq!(
             iter.clone().tree_id().ok(),
@@ -200,7 +194,7 @@ mod method {
 
     #[test]
     fn signatures() -> crate::Result {
-        let input = fixture_bytes("commit", "unsigned.txt");
+        let input = fixture_name("commit", "unsigned.txt");
         let iter = CommitRefIter::from_bytes(&input);
         assert_eq!(
             iter.signatures().collect::<Vec<_>>(),
