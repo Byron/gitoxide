@@ -43,6 +43,8 @@ pub enum Error {
     RejectShallowRemoteConfig(#[from] config::boolean::Error),
     #[error("Receiving objects from shallow remotes is prohibited due to the value of `clone.rejectShallow`")]
     RejectShallowRemote,
+    #[error(transparent)]
+    NegotiationAlgorithmConfig(#[from] config::key::GenericErrorWithValue),
 }
 
 impl gix_protocol::transport::IsSpuriousError for Error {

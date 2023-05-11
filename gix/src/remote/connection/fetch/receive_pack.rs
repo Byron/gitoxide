@@ -6,6 +6,9 @@ use gix_protocol::{
     transport::{client::Transport, packetline::read::ProgressAction},
 };
 
+use crate::config::cache::util::ApplyLeniency;
+use crate::config::tree::{Fetch, Key};
+use crate::remote::fetch::negotiate::Algorithm;
 use crate::{
     config::tree::Clone,
     remote,
@@ -109,12 +112,21 @@ where
             });
         }
 
+        let algorithm = repo
+            .config
+            .resolved
+            .string_by_key(Fetch::NEGOTIATION_ALGORITHM.logical_name().as_str())
+            .map(|n| Fetch::NEGOTIATION_ALGORITHM.try_into_negotiation_algorithm(n))
+            .transpose()
+            .with_leniency(repo.config.lenient_config)?
+            .unwrap_or(Algorithm::Naive); // TODO: use the default instead once consecutive is implemented
+
         let reader = 'negotiation: loop {
             progress.step();
             progress.set_name(format!("negotiate (round {round})"));
 
             let is_done = match negotiate::one_round(
-                negotiate::Algorithm::Naive,
+                algorithm,
                 round,
                 repo,
                 &self.ref_map,

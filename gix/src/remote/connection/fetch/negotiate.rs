@@ -1,11 +1,5 @@
 use crate::remote::fetch;
-
-/// The way the negotiation is performed
-#[derive(Copy, Clone)]
-pub(crate) enum Algorithm {
-    /// Our very own implementation that probably should be replaced by one of the known algorithms soon.
-    Naive,
-}
+use crate::remote::fetch::negotiate::Algorithm;
 
 /// The error returned during negotiation.
 #[derive(Debug, thiserror::Error)]
@@ -23,8 +17,8 @@ pub(crate) fn one_round(
     algo: Algorithm,
     round: usize,
     repo: &crate::Repository,
-    ref_map: &crate::remote::fetch::RefMap,
-    fetch_tags: crate::remote::fetch::Tags,
+    ref_map: &fetch::RefMap,
+    fetch_tags: fetch::Tags,
     arguments: &mut gix_protocol::fetch::Arguments,
     _previous_response: Option<&gix_protocol::fetch::Response>,
     shallow: Option<&fetch::Shallow>,
@@ -39,6 +33,9 @@ pub(crate) fn one_round(
     }
 
     match algo {
+        Algorithm::Noop | Algorithm::Skipping | Algorithm::Consecutive => {
+            todo!()
+        }
         Algorithm::Naive => {
             assert_eq!(round, 1, "Naive always finishes after the first round, it claims.");
             let mut has_missing_tracking_branch = false;
