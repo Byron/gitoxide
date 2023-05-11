@@ -53,15 +53,15 @@ impl crate::WriteTo for Tree {
         Ok(())
     }
 
+    fn kind(&self) -> Kind {
+        Kind::Tree
+    }
+
     fn size(&self) -> usize {
         self.entries
             .iter()
             .map(|Entry { mode, filename, oid }| mode.as_bytes().len() + 1 + filename.len() + 1 + oid.as_bytes().len())
             .sum()
-    }
-
-    fn kind(&self) -> Kind {
-        Kind::Tree
     }
 }
 
@@ -96,6 +96,10 @@ impl<'a> crate::WriteTo for TreeRef<'a> {
         Ok(())
     }
 
+    fn kind(&self) -> Kind {
+        Kind::Tree
+    }
+
     fn size(&self) -> usize {
         self.entries
             .iter()
@@ -103,9 +107,5 @@ impl<'a> crate::WriteTo for TreeRef<'a> {
                 mode.as_bytes().len() + 1 + filename.len() + 1 + oid.as_bytes().len()
             })
             .sum()
-    }
-
-    fn kind(&self) -> Kind {
-        Kind::Tree
     }
 }

@@ -4,11 +4,11 @@ mod method {
     use gix_object::TagRef;
     use pretty_assertions::assert_eq;
 
-    use crate::{hex_to_id, immutable::fixture_bytes};
+    use crate::{fixture_name, hex_to_id};
 
     #[test]
     fn target() -> crate::Result {
-        let fixture = fixture_bytes("tag", "signed.txt");
+        let fixture = fixture_name("tag", "signed.txt");
         let tag = TagRef::from_bytes(&fixture)?;
         assert_eq!(tag.target(), hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"));
         assert_eq!(tag.target, "ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bytes());
@@ -19,14 +19,11 @@ mod method {
 mod iter {
     use gix_object::{bstr::ByteSlice, tag::ref_iter::Token, Kind, TagRefIter};
 
-    use crate::{
-        hex_to_id,
-        immutable::{fixture_bytes, signature},
-    };
+    use crate::{fixture_name, hex_to_id, signature};
 
     #[test]
     fn empty() -> crate::Result {
-        let tag = fixture_bytes("tag", "empty.txt");
+        let tag = fixture_name("tag", "empty.txt");
         let tag_iter = TagRefIter::from_bytes(&tag);
         let target_id = hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc");
         let tagger = Some(signature(1592381636));
@@ -51,7 +48,7 @@ mod iter {
     #[test]
     fn no_tagger() -> crate::Result {
         assert_eq!(
-            TagRefIter::from_bytes(&fixture_bytes("tag", "no-tagger.txt")).collect::<Result<Vec<_>, _>>()?,
+            TagRefIter::from_bytes(&fixture_name("tag", "no-tagger.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Target {
                     id: hex_to_id("c39ae07f393806ccf406ef966e9a15afc43cc36a")
@@ -87,7 +84,7 @@ KLMHist5yj0sw1E4hDTyQa0=
     #[test]
     fn whitespace() -> crate::Result {
         assert_eq!(
-            TagRefIter::from_bytes(&fixture_bytes("tag", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
+            TagRefIter::from_bytes(&fixture_name("tag", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Target {
                     id: hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc")
@@ -106,7 +103,7 @@ KLMHist5yj0sw1E4hDTyQa0=
 
     #[test]
     fn error_handling() -> crate::Result {
-        let data = fixture_bytes("tag", "empty.txt");
+        let data = fixture_name("tag", "empty.txt");
         let iter = TagRefIter::from_bytes(&data[..data.len() / 3]);
         let tokens = iter.collect::<Vec<_>>();
         assert!(
@@ -120,12 +117,12 @@ KLMHist5yj0sw1E4hDTyQa0=
 mod from_bytes {
     use gix_object::{bstr::ByteSlice, Kind, TagRef};
 
-    use crate::immutable::{fixture_bytes, signature, tag::tag_fixture};
+    use crate::{fixture_name, signature, tag::tag_fixture};
 
     #[test]
     fn signed() -> crate::Result {
         assert_eq!(
-            TagRef::from_bytes(&fixture_bytes("tag", "signed.txt"))?,
+            TagRef::from_bytes(&fixture_name("tag", "signed.txt"))?,
             tag_fixture(9000)
         );
         Ok(())
@@ -134,7 +131,7 @@ mod from_bytes {
     #[test]
     fn empty() -> crate::Result {
         assert_eq!(
-            TagRef::from_bytes(&fixture_bytes("tag", "empty.txt"))?,
+            TagRef::from_bytes(&fixture_name("tag", "empty.txt"))?,
             TagRef {
                 target: b"01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc".as_bstr(),
                 name: b"empty".as_bstr(),
@@ -150,7 +147,7 @@ mod from_bytes {
     #[test]
     fn with_newlines() -> crate::Result {
         assert_eq!(
-            TagRef::from_bytes(&fixture_bytes("tag", "with-newlines.txt"))?,
+            TagRef::from_bytes(&fixture_name("tag", "with-newlines.txt"))?,
             TagRef {
                 target: b"ebdf205038b66108c0331aa590388431427493b7".as_bstr(),
                 name: b"baz".as_bstr(),
@@ -166,7 +163,7 @@ mod from_bytes {
     #[test]
     fn no_tagger() -> crate::Result {
         assert_eq!(
-            TagRef::from_bytes(&fixture_bytes("tag", "no-tagger.txt"))?,
+            TagRef::from_bytes(&fixture_name("tag", "no-tagger.txt"))?,
             TagRef {
                 target: b"c39ae07f393806ccf406ef966e9a15afc43cc36a".as_bstr(),
                 name: b"v2.6.11-tree".as_bstr(),
@@ -198,7 +195,7 @@ KLMHist5yj0sw1E4hDTyQa0=
     #[test]
     fn whitespace() -> crate::Result {
         assert_eq!(
-            TagRef::from_bytes(&fixture_bytes("tag", "whitespace.txt"))?,
+            TagRef::from_bytes(&fixture_name("tag", "whitespace.txt"))?,
             TagRef {
                 target: b"01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc".as_bstr(),
                 name: b"whitespace".as_bstr(),

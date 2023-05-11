@@ -1,7 +1,7 @@
 mod iter {
     use gix_object::{bstr::ByteSlice, tree, tree::EntryRef, TreeRefIter};
 
-    use crate::{hex_to_id, immutable::fixture_bytes};
+    use crate::{fixture_name, hex_to_id};
 
     #[test]
     fn empty() {
@@ -10,7 +10,7 @@ mod iter {
 
     #[test]
     fn error_handling() {
-        let data = fixture_bytes("tree", "everything.tree");
+        let data = fixture_name("tree", "everything.tree");
         let iter = TreeRefIter::from_bytes(&data[..data.len() / 2]);
         let entries = iter.collect::<Vec<_>>();
         assert!(
@@ -22,7 +22,7 @@ mod iter {
     #[test]
     fn everything() -> crate::Result {
         assert_eq!(
-            TreeRefIter::from_bytes(&fixture_bytes("tree", "everything.tree")).collect::<Result<Vec<_>, _>>()?,
+            TreeRefIter::from_bytes(&fixture_name("tree", "everything.tree")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 EntryRef {
                     mode: tree::EntryMode::BlobExecutable,
@@ -58,7 +58,7 @@ mod iter {
 mod from_bytes {
     use gix_object::{bstr::ByteSlice, tree, tree::EntryRef, TreeRef};
 
-    use crate::{hex_to_id, immutable::fixture_bytes};
+    use crate::{fixture_name, hex_to_id};
 
     #[test]
     fn empty() -> crate::Result {
@@ -73,7 +73,7 @@ mod from_bytes {
     #[test]
     fn everything() -> crate::Result {
         assert_eq!(
-            TreeRef::from_bytes(&fixture_bytes("tree", "everything.tree"))?,
+            TreeRef::from_bytes(&fixture_name("tree", "everything.tree"))?,
             TreeRef {
                 entries: vec![
                     EntryRef {
@@ -110,7 +110,7 @@ mod from_bytes {
     #[test]
     fn maybe_special() -> crate::Result {
         assert_eq!(
-            TreeRef::from_bytes(&fixture_bytes("tree", "maybe-special.tree"))?
+            TreeRef::from_bytes(&fixture_name("tree", "maybe-special.tree"))?
                 .entries
                 .len(),
             160
@@ -121,11 +121,34 @@ mod from_bytes {
     #[test]
     fn definitely_special() -> crate::Result {
         assert_eq!(
-            TreeRef::from_bytes(&fixture_bytes("tree", "definitely-special.tree"))?
+            TreeRef::from_bytes(&fixture_name("tree", "definitely-special.tree"))?
                 .entries
                 .len(),
             19
         );
+        Ok(())
+    }
+}
+
+mod entries {
+    use gix_object::{Tree, TreeRef};
+
+    #[test]
+    fn sort_order_is_correct() -> crate::Result {
+        let root = gix_testtools::scripted_fixture_read_only("make_trees.sh")?;
+        let input = std::fs::read(root.join("tree.baseline"))?;
+
+        let mut tree = TreeRef::from_bytes(&input)?;
+        let expected = tree.entries.clone();
+
+        tree.entries.sort();
+        assert_eq!(tree.entries, expected);
+
+        let mut tree: Tree = tree.into();
+        let expected = tree.entries.clone();
+        tree.entries.sort();
+
+        assert_eq!(tree.entries, expected);
         Ok(())
     }
 }

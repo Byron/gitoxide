@@ -2,15 +2,15 @@ use gix_actor::{Sign, SignatureRef, Time};
 use gix_object::{bstr::ByteSlice, commit::message::body::TrailerRef, CommitRef};
 use smallvec::SmallVec;
 
-use crate::immutable::{
+use crate::{
     commit::{LONG_MESSAGE, MERGE_TAG, SIGNATURE},
-    fixture_bytes, linus_signature, signature,
+    fixture_name, linus_signature, signature,
 };
 
 #[test]
 fn unsigned() -> crate::Result {
     assert_eq!(
-        CommitRef::from_bytes(&fixture_bytes("commit", "unsigned.txt"))?,
+        CommitRef::from_bytes(&fixture_name("commit", "unsigned.txt"))?,
         CommitRef {
             tree: b"1b2dfb4ac5e42080b682fc676e9738c94ce6d54d".as_bstr(),
             parents: SmallVec::default(),
@@ -27,7 +27,7 @@ fn unsigned() -> crate::Result {
 #[test]
 fn whitespace() -> crate::Result {
     assert_eq!(
-        CommitRef::from_bytes(&fixture_bytes("commit", "whitespace.txt"))?,
+        CommitRef::from_bytes(&fixture_name("commit", "whitespace.txt"))?,
         CommitRef {
             tree: b"9bed6275068a0575243ba8409253e61af81ab2ff".as_bstr(),
             parents: SmallVec::from(vec![b"26b4df046d1776c123ac69d918f5aec247b58cc6".as_bstr()]),
@@ -44,7 +44,7 @@ fn whitespace() -> crate::Result {
 #[test]
 fn signed_singleline() -> crate::Result {
     assert_eq!(
-        CommitRef::from_bytes(&fixture_bytes("commit", "signed-singleline.txt"))?,
+        CommitRef::from_bytes(&fixture_name("commit", "signed-singleline.txt"))?,
         CommitRef {
             tree: b"00fc39317701176e326974ce44f5bd545a32ec0b".as_bstr(),
             parents: SmallVec::from(vec![b"09d8d3a12e161a7f6afb522dbe8900a9c09bce06".as_bstr()]),
@@ -60,7 +60,7 @@ fn signed_singleline() -> crate::Result {
 
 #[test]
 fn mergetag() -> crate::Result {
-    let fixture = fixture_bytes("commit", "mergetag.txt");
+    let fixture = fixture_name("commit", "mergetag.txt");
     let commit = CommitRef {
         tree: b"1c61918031bf2c7fab9e17dde3c52a6a9884fcb5".as_bstr(),
         parents: SmallVec::from(vec![
@@ -85,7 +85,7 @@ fn mergetag() -> crate::Result {
 #[test]
 fn signed() -> crate::Result {
     assert_eq!(
-        CommitRef::from_bytes(&fixture_bytes("commit", "signed.txt"))?,
+        CommitRef::from_bytes(&fixture_name("commit", "signed.txt"))?,
         CommitRef {
             tree: b"00fc39317701176e326974ce44f5bd545a32ec0b".as_bstr(),
             parents: SmallVec::from(vec![b"09d8d3a12e161a7f6afb522dbe8900a9c09bce06".as_bstr()]),
@@ -102,7 +102,7 @@ fn signed() -> crate::Result {
 #[test]
 fn signed_with_encoding() -> crate::Result {
     assert_eq!(
-        CommitRef::from_bytes(&fixture_bytes("commit", "signed-with-encoding.txt"))?,
+        CommitRef::from_bytes(&fixture_name("commit", "signed-with-encoding.txt"))?,
         CommitRef {
             tree: b"1973afa74d87b2bb73fa884aaaa8752aec43ea88".as_bstr(),
             parents: SmallVec::from(vec![b"79c51cc86923e2b8ca0ee5c4eb75e48027133f9a".as_bstr()]),
@@ -119,7 +119,7 @@ fn signed_with_encoding() -> crate::Result {
 #[test]
 fn with_encoding() -> crate::Result {
     assert_eq!(
-        CommitRef::from_bytes(&fixture_bytes("commit", "with-encoding.txt"))?,
+        CommitRef::from_bytes(&fixture_name("commit", "with-encoding.txt"))?,
         CommitRef {
             tree: b"4a1c03029e7407c0afe9fc0320b3258e188b115e".as_bstr(),
             parents: SmallVec::from(vec![b"7ca98aad461a5c302cb4c9e3acaaa6053cc67a62".as_bstr()]),
@@ -144,7 +144,7 @@ fn with_trailer() -> crate::Result {
             sign: Sign::Plus,
         },
     };
-    let backing = fixture_bytes("commit", "message-with-footer.txt");
+    let backing = fixture_name("commit", "message-with-footer.txt");
     let commit = CommitRef::from_bytes(&backing)?;
     assert_eq!(
         commit,
@@ -224,7 +224,7 @@ instead of depending directly on the lower-level crates.
 #[test]
 fn merge() -> crate::Result {
     assert_eq!(
-        CommitRef::from_bytes(&fixture_bytes("commit", "merge.txt"))?,
+        CommitRef::from_bytes(&fixture_name("commit", "merge.txt"))?,
         CommitRef {
             tree: b"0cf16ce8e229b59a761198975f0c0263229faf82".as_bstr(),
             parents: SmallVec::from(vec![
@@ -255,7 +255,7 @@ iyBBl69jASy41Ug/BlFJbw4+ItkShpXwkJKuBBV/JExChmvbxYWaS7QnyYC9UO0=
 
 #[test]
 fn newline_right_after_signature_multiline_header() -> crate::Result {
-    let fixture = fixture_bytes("commit", "signed-whitespace.txt");
+    let fixture = fixture_name("commit", "signed-whitespace.txt");
     let commit = CommitRef::from_bytes(&fixture)?;
     let pgp_sig = OTHER_SIGNATURE.as_bstr();
     assert_eq!(commit.extra_headers[0].1.as_ref(), pgp_sig);

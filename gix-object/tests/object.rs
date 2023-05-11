@@ -1,10 +1,12 @@
-use std::path::PathBuf;
-
 use gix_hash::ObjectId;
 
+use std::path::PathBuf;
+
+mod commit;
 mod encode;
-mod immutable;
-mod loose;
+mod object_ref;
+mod tag;
+mod tree;
 
 #[test]
 fn compute_hash() {
@@ -42,6 +44,10 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
     fixup(std::fs::read(fixture(path)).unwrap())
 }
 
+fn fixture_name(kind: &str, path: &str) -> Vec<u8> {
+    fixup(fixture_bytes(PathBuf::from(kind).join(path).to_str().unwrap()))
+}
+
 #[test]
 fn size_in_memory() {
     let actual = std::mem::size_of::<gix_object::Object>();
@@ -53,4 +59,32 @@ fn size_in_memory() {
 
 fn hex_to_id(hex: &str) -> ObjectId {
     ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+}
+
+use gix_actor::{Sign, Time};
+
+fn signature(time: u32) -> gix_actor::SignatureRef<'static> {
+    use gix_object::bstr::ByteSlice;
+    gix_actor::SignatureRef {
+        name: b"Sebastian Thiel".as_bstr(),
+        email: b"sebastian.thiel@icloud.com".as_bstr(),
+        time: Time {
+            seconds_since_unix_epoch: time,
+            offset_in_seconds: 28800,
+            sign: Sign::Plus,
+        },
+    }
+}
+
+fn linus_signature(time: u32) -> gix_actor::SignatureRef<'static> {
+    use gix_object::bstr::ByteSlice;
+    gix_actor::SignatureRef {
+        name: b"Linus Torvalds".as_bstr(),
+        email: b"torvalds@linux-foundation.org".as_bstr(),
+        time: Time {
+            seconds_since_unix_epoch: time,
+            offset_in_seconds: -25200,
+            sign: Sign::Minus,
+        },
+    }
 }

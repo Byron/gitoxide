@@ -72,7 +72,7 @@ pub struct EntryRef<'a> {
     pub filename: &'a BStr,
     /// The id of the object representing the entry.
     // TODO: figure out how these should be called. id or oid? It's inconsistent around the codebase.
-    // Answer: make it 'id', as in `git2`
+    //       Answer: make it 'id', as in `git2`
     #[cfg_attr(feature = "serde", serde(borrow))]
     pub oid: &'a gix_hash::oid,
 }
@@ -84,11 +84,14 @@ impl<'a> PartialOrd for EntryRef<'a> {
 }
 
 impl<'a> Ord for EntryRef<'a> {
-    /// Entries compare by the common portion of the filename. This is critical for proper functioning of algorithms working on trees.
-    /// Doing it like this is needed for compatibility with older, potentially broken(?) trees.
-    fn cmp(&self, other: &Self) -> Ordering {
-        let len = self.filename.len().min(other.filename.len());
-        self.filename[..len].cmp(&other.filename[..len])
+    fn cmp(&self, b: &Self) -> Ordering {
+        let a = self;
+        let common = a.filename.len().min(b.filename.len());
+        a.filename[..common].cmp(&b.filename[..common]).then_with(|| {
+            let a = a.filename.get(common).or_else(|| a.mode.is_tree().then_some(&b'/'));
+            let b = b.filename.get(common).or_else(|| b.mode.is_tree().then_some(&b'/'));
+            a.cmp(&b)
+        })
     }
 }
 
@@ -111,12 +114,14 @@ impl PartialOrd for Entry {
 }
 
 impl Ord for Entry {
-    /// Entries compare by the common portion of the filename. This is critical for proper functioning of algorithms working on trees.
-    fn cmp(&self, other: &Self) -> Ordering {
-        let common_len = self.filename.len().min(other.filename.len());
-        self.filename[..common_len]
-            .cmp(&other.filename[..common_len])
-            .then_with(|| self.filename.len().cmp(&other.filename.len()))
+    fn cmp(&self, b: &Self) -> Ordering {
+        let a = self;
+        let common = a.filename.len().min(b.filename.len());
+        a.filename[..common].cmp(&b.filename[..common]).then_with(|| {
+            let a = a.filename.get(common).or_else(|| a.mode.is_tree().then_some(&b'/'));
+            let b = b.filename.get(common).or_else(|| b.mode.is_tree().then_some(&b'/'));
+            a.cmp(&b)
+        })
     }
 }
 
