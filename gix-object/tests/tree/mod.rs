@@ -130,6 +130,29 @@ mod from_bytes {
     }
 }
 
+mod entries {
+    use gix_object::{Tree, TreeRef};
+
+    #[test]
+    fn sort_order_is_correct() -> crate::Result {
+        let root = gix_testtools::scripted_fixture_read_only("make_trees.sh")?;
+        let input = std::fs::read(root.join("tree.baseline"))?;
+
+        let mut tree = TreeRef::from_bytes(&input)?;
+        let expected = tree.entries.clone();
+
+        tree.entries.sort();
+        assert_eq!(tree.entries, expected);
+
+        let mut tree: Tree = tree.into();
+        let expected = tree.entries.clone();
+        tree.entries.sort();
+
+        assert_eq!(tree.entries, expected);
+        Ok(())
+    }
+}
+
 mod entry_mode {
     use gix_object::tree::EntryMode;
 
