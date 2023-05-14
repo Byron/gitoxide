@@ -1,6 +1,9 @@
 use std::sync::atomic::AtomicBool;
 
-use gix_features::{parallel, progress::Progress};
+use gix_features::{
+    parallel,
+    progress::{Progress, RawProgress},
+};
 
 use crate::index;
 
@@ -79,7 +82,7 @@ impl index::File {
         pack: &crate::data::File,
         progress: P,
         should_interrupt: &AtomicBool,
-        new_processor: impl Fn() -> Processor + Send + Clone,
+        processor: Processor,
         Options {
             traversal,
             thread_limit,
@@ -91,17 +94,12 @@ impl index::File {
         P: Progress,
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
-        Processor: FnMut(
-            gix_object::Kind,
-            &[u8],
-            &index::Entry,
-            &mut <P::SubProgress as Progress>::SubProgress,
-        ) -> Result<(), E>,
+        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn RawProgress) -> Result<(), E> + Send + Clone,
         F: Fn() -> C + Send + Clone,
     {
         match traversal {
             Algorithm::Lookup => self.traverse_with_lookup(
-                new_processor,
+                processor,
                 pack,
                 progress,
                 should_interrupt,
@@ -113,10 +111,10 @@ impl index::File {
             ),
             Algorithm::DeltaTreeLookup => self.traverse_with_index(
                 pack,
-                new_processor,
+                processor,
                 progress,
                 should_interrupt,
-                crate::index::traverse::with_index::Options { check, thread_limit },
+                with_index::Options { check, thread_limit },
             ),
         }
     }
@@ -151,19 +149,18 @@ impl index::File {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn decode_and_process_entry<C, P, E>(
+    fn decode_and_process_entry<C, E>(
         &self,
         check: SafetyCheck,
         pack: &crate::data::File,
         cache: &mut C,
         buf: &mut Vec<u8>,
-        progress: &mut P,
-        index_entry: &crate::index::Entry,
-        processor: &mut impl FnMut(gix_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
+        progress: &mut dyn RawProgress,
+        index_entry: &index::Entry,
+        processor: &mut impl FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn RawProgress) -> Result<(), E>,
     ) -> Result<crate::data::decode::entry::Outcome, Error<E>>
     where
         C: crate::cache::DecodeEntry,
-        P: Progress,
         E: std::error::Error + Send + Sync + 'static,
     {
         let pack_entry = pack.entry(index_entry.pack_offset);
@@ -192,9 +189,9 @@ impl index::File {
             check,
             object_kind,
             buf,
-            progress,
             index_entry,
             || pack.entry_crc32(index_entry.pack_offset, entry_len),
+            progress,
             processor,
         )?;
         Ok(entry_stats)
@@ -202,17 +199,16 @@ impl index::File {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn process_entry<P, E>(
+fn process_entry<E>(
     check: SafetyCheck,
     object_kind: gix_object::Kind,
     decompressed: &[u8],
-    progress: &mut P,
-    index_entry: &crate::index::Entry,
+    index_entry: &index::Entry,
     pack_entry_crc32: impl FnOnce() -> u32,
-    processor: &mut impl FnMut(gix_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
+    progress: &dyn RawProgress,
+    processor: &mut impl FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn RawProgress) -> Result<(), E>,
 ) -> Result<(), Error<E>>
 where
-    P: Progress,
     E: std::error::Error + Send + Sync + 'static,
 {
     if check.object_checksum() {

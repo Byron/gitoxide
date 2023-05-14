@@ -198,7 +198,7 @@ impl index::File {
                     pack,
                     progress,
                     should_interrupt,
-                    || {
+                    {
                         let mut encode_buf = Vec::with_capacity(2048);
                         move |kind, data, index_entry, progress| {
                             Self::verify_entry(verify_mode, &mut encode_buf, kind, data, index_entry, progress)
@@ -231,17 +231,14 @@ impl index::File {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn verify_entry<P>(
+    fn verify_entry(
         verify_mode: Mode,
         encode_buf: &mut Vec<u8>,
         object_kind: gix_object::Kind,
         buf: &[u8],
         index_entry: &index::Entry,
-        progress: &mut P,
-    ) -> Result<(), integrity::Error>
-    where
-        P: Progress,
-    {
+        progress: &dyn gix_features::progress::RawProgress,
+    ) -> Result<(), integrity::Error> {
         if let Mode::HashCrc32Decode | Mode::HashCrc32DecodeEncode = verify_mode {
             use gix_object::Kind::*;
             match object_kind {
@@ -260,7 +257,7 @@ impl index::File {
                             .expect("writing to a memory buffer never fails");
                         if encode_buf.as_slice() != buf {
                             let mut should_return_error = true;
-                            if let gix_object::Kind::Tree = object_kind {
+                            if let Tree = object_kind {
                                 if buf.as_bstr().find(b"100664").is_some() || buf.as_bstr().find(b"100640").is_some() {
                                     progress.info(format!("Tree object {} would be cleaned up during re-serialization, replacing mode '100664|100640' with '100644'", index_entry.oid));
                                     should_return_error = false

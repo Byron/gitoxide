@@ -115,28 +115,25 @@ mod version {
 
         use gix_features::progress;
         use gix_odb::pack;
-        use gix_pack::{
-            data::{input, EntryRange},
-            index,
-        };
+        use gix_pack::{data::input, index};
 
         use crate::{
             fixture_path,
             pack::{INDEX_V2, V2_PACKS_AND_INDICES},
         };
 
+        fn slice_map(entry: gix_pack::data::EntryRange, map: &memmap2::Mmap) -> Option<&[u8]> {
+            map.get(entry.start as usize..entry.end as usize)
+        }
+
         #[test]
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
-            fn assert_index_write<F>(
+            fn assert_index_write(
                 mode: &input::Mode,
                 compressed: &input::EntryDataMode,
                 index_path: &&str,
                 data_path: &&str,
-                resolve: F,
-            ) -> Result<(), Box<dyn std::error::Error>>
-            where
-                F: Fn(pack::data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Clone,
-            {
+            ) -> Result<(), Box<dyn std::error::Error>> {
                 let pack_iter = pack::data::input::BytesToEntriesIter::new_from_header(
                     io::BufReader::new(fs::File::open(fixture_path(data_path))?),
                     *mode,
@@ -150,7 +147,11 @@ mod version {
                 let pack_version = pack_iter.version();
                 let outcome = pack::index::File::write_data_iter_to_stream(
                     desired_kind,
-                    move || Ok(resolve),
+                    || {
+                        let file = std::fs::File::open(fixture_path(data_path))?;
+                        let map = unsafe { memmap2::Mmap::map(&file)? };
+                        Ok((slice_map, map))
+                    },
                     pack_iter,
                     None,
                     progress::Discard,
@@ -217,17 +218,7 @@ mod version {
             for mode in &[input::Mode::AsIs, input::Mode::Verify, input::Mode::Restore] {
                 for compressed in &[input::EntryDataMode::Crc32, input::EntryDataMode::KeepAndCrc32] {
                     for (index_path, data_path) in V2_PACKS_AND_INDICES {
-                        let resolve = {
-                            let buf = gix_features::threading::OwnShared::new({
-                                let file = std::fs::File::open(fixture_path(data_path))?;
-                                unsafe { memmap2::Mmap::map(&file)? }
-                            });
-                            move |entry: EntryRange, out: &mut Vec<u8>| {
-                                buf.get(entry.start as usize..entry.end as usize)
-                                    .map(|slice| out.copy_from_slice(slice))
-                            }
-                        };
-                        assert_index_write(mode, compressed, index_path, data_path, resolve)?;
+                        assert_index_write(mode, compressed, index_path, data_path)?;
                     }
                 }
             }
@@ -259,11 +250,9 @@ fn traverse_with_index_and_forward_ref_deltas() {
     let _it_should_work = index
         .traverse_with_index(
             &data,
-            || {
-                |_, _, _, _| {
-                    count.fetch_add(1, Ordering::SeqCst);
-                    Ok::<_, std::io::Error>(())
-                }
+            |_, _, _, _| {
+                count.fetch_add(1, Ordering::SeqCst);
+                Ok::<_, std::io::Error>(())
             },
             progress::Discard,
             &AtomicBool::new(false),

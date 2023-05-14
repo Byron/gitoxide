@@ -62,17 +62,14 @@ impl crate::Bundle {
     /// * the resulting pack may be empty, that is, contains zero objects in some situations. This is a valid reply by a server and should
     ///   be accounted for.
     ///   - Empty packs always have the same name and not handling this case will result in at most one superfluous pack.
-    pub fn write_to_directory<P>(
+    pub fn write_to_directory(
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
-        mut progress: P,
+        mut progress: impl Progress,
         should_interrupt: &AtomicBool,
         thin_pack_base_object_lookup_fn: Option<ThinPackLookupFn>,
         options: Options,
-    ) -> Result<Outcome, Error>
-    where
-        P: Progress,
-    {
+    ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child_with_id("read pack", ProgressId::ReadPackBytes.into());
         read_progress.init(None, progress::bytes());
         let pack = progress::Read {
@@ -354,20 +351,20 @@ impl crate::Bundle {
     }
 }
 
+fn resolve_entry(range: data::EntryRange, mapped_file: &memmap2::Mmap) -> Option<&[u8]> {
+    mapped_file.get(range.start as usize..range.end as usize)
+}
+
 fn new_pack_file_resolver(
     data_file: SharedTempFile,
-) -> io::Result<impl Fn(data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Clone> {
+) -> io::Result<(
+    impl Fn(data::EntryRange, &memmap2::Mmap) -> Option<&[u8]> + Send + Clone,
+    memmap2::Mmap,
+)> {
     let mut guard = data_file.lock();
     guard.flush()?;
-    let mapped_file = Arc::new(crate::mmap::read_only(
-        &guard.get_mut().with_mut(|f| f.path().to_owned())?,
-    )?);
-    let pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
-        mapped_file
-            .get(range.start as usize..range.end as usize)
-            .map(|pack_entry| out.copy_from_slice(pack_entry))
-    };
-    Ok(pack_data_lookup)
+    let mapped_file = crate::mmap::read_only(&guard.get_mut().with_mut(|f| f.path().to_owned())?)?;
+    Ok((resolve_entry, mapped_file))
 }
 
 struct WriteOutcome {
