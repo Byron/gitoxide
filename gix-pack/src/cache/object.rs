@@ -1,5 +1,3 @@
-//! # Note
-//!
 //! This module is a bit 'misplaced' if spelled out like 'gix_pack::cache::object::*' but is best placed here for code re-use and
 //! general usefulness.
 use crate::cache;
