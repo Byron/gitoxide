@@ -14,6 +14,7 @@ use crate::{
     data::EntryRange,
 };
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
     object_counter: Option<gix_features::progress::StepShared>,
     size_counter: Option<gix_features::progress::StepShared>,
@@ -147,8 +148,14 @@ where
 }
 
 fn decompress_all_at_once(b: &[u8], decompressed_len: usize) -> Result<Vec<u8>, Error> {
-    let mut out = Vec::new();
-    out.resize(decompressed_len, 0);
+    let mut out = Vec::with_capacity(decompressed_len);
+    // SAFETY:
+    // 1. we have reserved `decompressed_len`
+    // 2. zlib is going to write all of `decompressed_len`. On error, none of the the buffer is made available to the user.
+    #[allow(unsafe_code, clippy::uninit_vec)]
+    unsafe {
+        out.set_len(decompressed_len);
+    }
     zlib::Inflate::default()
         .once(b, &mut out)
         .map_err(|err| Error::ZlibInflate {
