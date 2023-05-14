@@ -68,7 +68,7 @@ impl index::File {
     pub fn traverse_with_lookup<P, C, Processor, E, F>(
         &self,
         new_processor: impl Fn() -> Processor + Send + Clone,
-        pack: &crate::data::File,
+        pack: &data::File,
         mut progress: P,
         should_interrupt: &AtomicBool,
         Options {
@@ -174,6 +174,9 @@ impl index::File {
                                 res => res,
                             }?;
                             stats.push(stat);
+                            if should_interrupt.load(Ordering::Relaxed) {
+                                break;
+                            }
                         }
                         Ok(stats)
                     },

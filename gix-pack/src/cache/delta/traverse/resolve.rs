@@ -1,3 +1,4 @@
+use std::sync::atomic::AtomicBool;
 use std::{cell::RefCell, collections::BTreeMap, sync::atomic::Ordering};
 
 use gix_features::{progress::Progress, zlib};
@@ -16,7 +17,7 @@ use crate::{
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
     object_counter: Option<gix_features::progress::StepShared>,
     size_counter: Option<gix_features::progress::StepShared>,
-    node: &mut crate::cache::delta::Item<T>,
+    node: &mut Item<T>,
     (bytes_buf, ref mut progress, state, resolve, modify_base, child_items): &mut (
         Vec<u8>,
         P,
@@ -26,6 +27,7 @@ pub(crate) fn deltas<T, F, P, MBFN, S, E>(
         ItemSliceSend<Item<T>>,
     ),
     hash_len: usize,
+    should_interrupt: &AtomicBool,
 ) -> Result<(), Error>
 where
     T: Send,
@@ -62,6 +64,9 @@ where
         },
     )];
     while let Some((level, mut base)) = nodes.pop() {
+        if should_interrupt.load(Ordering::Relaxed) {
+            return Err(Error::Interrupted);
+        }
         let (base_entry, entry_end, base_bytes) = if level == root_level {
             decompress_from_resolver(base.entry_slice())?
         } else {

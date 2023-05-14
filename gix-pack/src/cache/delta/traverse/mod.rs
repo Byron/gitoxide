@@ -159,6 +159,7 @@ where
                         node,
                         state,
                         object_hash.len_in_bytes(),
+                        should_interrupt,
                     )
                 }
             },

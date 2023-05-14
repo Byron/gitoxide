@@ -131,7 +131,7 @@ impl index::File {
                         data.object_kind = object_kind;
                         data.compressed_size = entry_end - pack_entry.data_offset;
                         data.object_size = bytes.len() as u64;
-                        let result = crate::index::traverse::process_entry(
+                        let result = index::traverse::process_entry(
                             check,
                             object_kind,
                             bytes,
@@ -156,7 +156,7 @@ impl index::File {
                             res => res,
                         }
                     },
-                    crate::cache::delta::traverse::Options {
+                    traverse::Options {
                         object_progress: progress.add_child_with_id("Resolving", ProgressId::DecodedObjects.into()),
                         size_progress: progress.add_child_with_id("Decoding", ProgressId::DecodedBytes.into()),
                         thread_limit,
