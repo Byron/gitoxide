@@ -48,7 +48,7 @@ mod memory {
     impl DecodeEntry for MemoryCappedHashmap {
         fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: gix_object::Kind, compressed_size: usize) {
             self.debug.put();
-            if let Ok(Some(previous_entry)) = self.inner.put_with_weight(
+            let res = self.inner.put_with_weight(
                 (pack_id, offset),
                 Entry {
                     data: self
@@ -64,8 +64,11 @@ mod memory {
                     kind,
                     compressed_size,
                 },
-            ) {
-                self.free_list.push(previous_entry.data)
+            );
+            match res {
+                Ok(Some(previous_entry)) => self.free_list.push(previous_entry.data),
+                Ok(None) => {}
+                Err((_key, value)) => self.free_list.push(value.data),
             }
         }
 
