@@ -215,6 +215,8 @@ impl File {
                 }
                 break;
             }
+            // This is a pessimistic guess, as worst possible compression should not be bigger than the data itself.
+            // TODO: is this assumption actually true?
             total_delta_data_size += cursor.decompressed_size;
             let decompressed_size = cursor
                 .decompressed_size
