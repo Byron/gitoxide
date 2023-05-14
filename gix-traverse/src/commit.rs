@@ -343,7 +343,7 @@ pub mod ancestors {
                             Ok(gix_object::commit::ref_iter::Token::Parent { id }) => {
                                 let was_inserted = state.seen.insert(id);
                                 if was_inserted && (self.predicate)(&id) {
-                                    state.next.push_back((id, 0));
+                                    state.next.push_front((id, 0));
                                 }
                                 if matches!(self.parents, Parents::First) {
                                     break;
