@@ -151,7 +151,7 @@ impl Cache {
             lenient_config,
         )?;
         let object_kind_hint = util::disambiguate_hint(&config, lenient_config)?;
-        let (pack_cache_bytes, object_cache_bytes) =
+        let (static_pack_cache_limit_bytes, pack_cache_bytes, object_cache_bytes) =
             util::parse_object_caches(&config, lenient_config, filter_config_section)?;
         // NOTE: When adding a new initial cache, consider adjusting `reread_values_and_clear_caches()` as well.
         Ok(Cache {
@@ -159,6 +159,7 @@ impl Cache {
             use_multi_pack_index,
             object_hash,
             object_kind_hint,
+            static_pack_cache_limit_bytes,
             pack_cache_bytes,
             object_cache_bytes,
             reflog,
@@ -222,8 +223,11 @@ impl Cache {
         self.url_rewrite = Default::default();
         self.diff_renames = Default::default();
         self.diff_algorithm = Default::default();
-        (self.pack_cache_bytes, self.object_cache_bytes) =
-            util::parse_object_caches(config, self.lenient_config, self.filter_config_section)?;
+        (
+            self.static_pack_cache_limit_bytes,
+            self.pack_cache_bytes,
+            self.object_cache_bytes,
+        ) = util::parse_object_caches(config, self.lenient_config, self.filter_config_section)?;
         #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
         {
             self.url_scheme = Default::default();
