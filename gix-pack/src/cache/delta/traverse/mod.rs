@@ -155,7 +155,7 @@ where
                 }
             },
             {
-                move |node, state| {
+                move |node, state, _threads_left, should_interrupt| {
                     resolve::deltas(
                         object_counter.clone(),
                         size_counter.clone(),
