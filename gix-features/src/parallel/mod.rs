@@ -35,11 +35,11 @@
 #[cfg(feature = "parallel")]
 mod in_parallel;
 #[cfg(feature = "parallel")]
-pub use in_parallel::{build_thread, in_parallel, in_parallel_with_slice, join, threads};
+pub use in_parallel::{build_thread, in_parallel, in_parallel_with_slice, join, threads, Scope};
 
 mod serial;
 #[cfg(not(feature = "parallel"))]
-pub use serial::{build_thread, in_parallel, in_parallel_with_slice, join, threads};
+pub use serial::{build_thread, in_parallel, in_parallel_with_slice, join, threads, Scope};
 
 mod in_order;
 pub use in_order::{InOrderIter, SequenceId};
@@ -137,7 +137,7 @@ pub fn in_parallel_if<I, S, O, R>(
     input: impl Iterator<Item = I> + Send,
     thread_limit: Option<usize>,
     new_thread_state: impl Fn(usize) -> S + Send + Clone,
-    consume: impl Fn(I, &mut S) -> O + Send + Clone,
+    consume: impl FnMut(I, &mut S) -> O + Send + Clone,
     reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
 where
@@ -163,7 +163,7 @@ pub fn in_parallel_if<I, S, O, R>(
     input: impl Iterator<Item = I>,
     thread_limit: Option<usize>,
     new_thread_state: impl Fn(usize) -> S,
-    consume: impl Fn(I, &mut S) -> O,
+    consume: impl FnMut(I, &mut S) -> O,
     reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
 where

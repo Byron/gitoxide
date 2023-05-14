@@ -45,7 +45,7 @@ fn in_parallel_with_mut_slice_in_chunks() {
         &mut input,
         None,
         |_| 0usize,
-        |item, acc| {
+        |item, acc, _threads_eft, _should_interrupt| {
             *acc += *item;
             *item += 1;
             Ok::<_, ()>(())

@@ -138,7 +138,10 @@ where
             thread_limit,
             {
                 let object_progress = object_progress.clone();
-                let child_items = ItemSliceSend(child_items as *mut [Item<T>]);
+                let child_items = ItemSliceSend(std::ptr::slice_from_raw_parts_mut(
+                    child_items.as_mut_ptr(),
+                    child_items.len(),
+                ));
                 move |thread_index| {
                     (
                         Vec::<u8>::with_capacity(4096),
@@ -147,7 +150,7 @@ where
                         new_thread_state(),
                         resolve.clone(),
                         inspect_object.clone(),
-                        ItemSliceSend(child_items.0),
+                        child_items.clone(),
                     )
                 }
             },

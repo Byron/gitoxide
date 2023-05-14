@@ -11,12 +11,29 @@ pub struct Write<W> {
     buf: [u8; BUF_SIZE],
 }
 
+impl<W> Clone for Write<W>
+where
+    W: Clone,
+{
+    fn clone(&self) -> Self {
+        Write {
+            compressor: impls::new_compress(),
+            inner: self.inner.clone(),
+            buf: self.buf,
+        }
+    }
+}
+
 mod impls {
     use std::io;
 
     use flate2::{Compress, Compression, FlushCompress, Status};
 
     use crate::zlib::stream::deflate;
+
+    pub(crate) fn new_compress() -> Compress {
+        Compress::new(Compression::fast(), true)
+    }
 
     impl<W> deflate::Write<W>
     where
@@ -25,7 +42,7 @@ mod impls {
         /// Create a new instance writing compressed bytes to `inner`.
         pub fn new(inner: W) -> deflate::Write<W> {
             deflate::Write {
-                compressor: Compress::new(Compression::fast(), true),
+                compressor: new_compress(),
                 inner,
                 buf: [0; deflate::BUF_SIZE],
             }
