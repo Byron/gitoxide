@@ -1,7 +1,5 @@
-use gix_features::hash;
 use gix_hash::ObjectId;
 use gix_index as index;
-use gix_object::encode::loose_header;
 use index::Entry;
 
 /// Compares the content of two blobs in some way.
@@ -76,11 +74,7 @@ impl CompareBlobs for HashEq {
         _entry_blob: impl ReadDataOnce<'a, E>,
     ) -> Result<Option<Self::Output>, E> {
         let blob = worktree_blob.read_data()?;
-        let header = loose_header(gix_object::Kind::Blob, blob.len());
-        let mut hasher = hash::hasher(entry.id.kind());
-        hasher.update(&header);
-        hasher.update(blob);
-        let file_hash: ObjectId = hasher.digest().into();
+        let file_hash = gix_object::compute_hash(entry.id.kind(), gix_object::Kind::Blob, blob);
         Ok((entry.id != file_hash).then_some(file_hash))
     }
 }
