@@ -12,15 +12,12 @@ pub enum Mode {
     Simulate,
 }
 
-fn find_git_repository_workdirs<P: Progress>(
+fn find_git_repository_workdirs(
     root: impl AsRef<Path>,
-    mut progress: P,
+    mut progress: impl Progress,
     debug: bool,
     threads: Option<usize>,
-) -> impl Iterator<Item = (PathBuf, gix::Kind)>
-where
-    P::SubProgress: Sync,
-{
+) -> impl Iterator<Item = (PathBuf, gix::Kind)> {
     progress.init(None, progress::count("filesystem items"));
     fn is_repository(path: &Path) -> Option<gix::Kind> {
         // Can be git dir or worktree checkout (file)
@@ -211,10 +208,7 @@ pub fn discover<P: Progress>(
     mut progress: P,
     debug: bool,
     threads: Option<usize>,
-) -> anyhow::Result<()>
-where
-    <P::SubProgress as Progress>::SubProgress: Sync,
-{
+) -> anyhow::Result<()> {
     for (git_workdir, _kind) in
         find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories"), debug, threads)
     {
@@ -229,10 +223,7 @@ pub fn run<P: Progress>(
     destination: impl AsRef<Path>,
     mut progress: P,
     threads: Option<usize>,
-) -> anyhow::Result<()>
-where
-    <P::SubProgress as Progress>::SubProgress: Sync,
-{
+) -> anyhow::Result<()> {
     let mut num_errors = 0usize;
     let destination = destination.as_ref().canonicalize()?;
     for (path_to_move, kind) in

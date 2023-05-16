@@ -48,7 +48,7 @@ mod memory {
     impl DecodeEntry for MemoryCappedHashmap {
         fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: gix_object::Kind, compressed_size: usize) {
             self.debug.put();
-            if let Ok(Some(previous_entry)) = self.inner.put_with_weight(
+            let res = self.inner.put_with_weight(
                 (pack_id, offset),
                 Entry {
                     data: self
@@ -64,8 +64,11 @@ mod memory {
                     kind,
                     compressed_size,
                 },
-            ) {
-                self.free_list.push(previous_entry.data)
+            );
+            match res {
+                Ok(Some(previous_entry)) => self.free_list.push(previous_entry.data),
+                Ok(None) => {}
+                Err((_key, value)) => self.free_list.push(value.data),
             }
         }
 
@@ -104,41 +107,74 @@ mod _static {
     /// Values of 64 seem to improve performance.
     pub struct StaticLinkedList<const SIZE: usize> {
         inner: uluru::LRUCache<Entry, SIZE>,
-        free_list: Vec<Vec<u8>>,
+        last_evicted: Vec<u8>,
         debug: gix_features::cache::Debug,
+        /// the amount of bytes we are currently holding, taking into account the capacities of all Vecs we keep.
+        mem_used: usize,
+        /// The total amount of memory we should be able to hold with all entries combined.
+        mem_limit: usize,
+    }
+
+    impl<const SIZE: usize> StaticLinkedList<SIZE> {
+        /// Create a new list with a memory limit of `mem_limit` in bytes. If 0, there is no memory limit.
+        pub fn new(mem_limit: usize) -> Self {
+            StaticLinkedList {
+                inner: Default::default(),
+                last_evicted: Vec::new(),
+                debug: gix_features::cache::Debug::new(format!("StaticLinkedList<{SIZE}>")),
+                mem_used: 0,
+                mem_limit: if mem_limit == 0 { usize::MAX } else { mem_limit },
+            }
+        }
     }
 
     impl<const SIZE: usize> Default for StaticLinkedList<SIZE> {
         fn default() -> Self {
-            StaticLinkedList {
-                inner: Default::default(),
-                free_list: Vec::new(),
-                debug: gix_features::cache::Debug::new(format!("StaticLinkedList<{SIZE}>")),
-            }
+            Self::new(96 * 1024 * 1024)
         }
     }
 
     impl<const SIZE: usize> DecodeEntry for StaticLinkedList<SIZE> {
         fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: gix_object::Kind, compressed_size: usize) {
+            // We cannot possibly hold this much.
+            if data.len() > self.mem_limit {
+                return;
+            }
+            // If we could hold it but are are at limit, all we can do is make space.
+            let mem_free = self.mem_limit - self.mem_used;
+            if data.len() > mem_free {
+                // prefer freeing free-lists instead of clearing our cache
+                let free_list_cap = self.last_evicted.len();
+                self.last_evicted = Vec::new();
+                // still not enough? clear everything
+                if data.len() > mem_free + free_list_cap {
+                    self.inner.clear();
+                    self.mem_used = 0;
+                } else {
+                    self.mem_used -= free_list_cap;
+                }
+            }
             self.debug.put();
+            let (prev_cap, cur_cap);
             if let Some(previous) = self.inner.insert(Entry {
                 offset,
                 pack_id,
-                data: self
-                    .free_list
-                    .pop()
-                    .map(|mut v| {
-                        v.clear();
-                        v.resize(data.len(), 0);
-                        v.copy_from_slice(data);
-                        v
-                    })
-                    .unwrap_or_else(|| Vec::from(data)),
+                data: {
+                    let mut v = std::mem::take(&mut self.last_evicted);
+                    prev_cap = v.capacity();
+                    v.clear();
+                    v.resize(data.len(), 0);
+                    v.copy_from_slice(data);
+                    cur_cap = v.capacity();
+                    v
+                },
                 kind,
                 compressed_size,
             }) {
-                self.free_list.push(previous.data)
+                // No need to adjust capacity as we already counted it.
+                self.last_evicted = previous.data;
             }
+            self.mem_used = self.mem_used + cur_cap - prev_cap;
         }
 
         fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(gix_object::Kind, usize)> {
@@ -157,6 +193,56 @@ mod _static {
                 self.debug.miss()
             }
             res
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn no_limit() {
+            let c = StaticLinkedList::<10>::new(0);
+            assert_eq!(
+                c.mem_limit,
+                usize::MAX,
+                "zero is automatically turned into a large limit that is equivalent to unlimited"
+            );
+        }
+
+        #[test]
+        fn journey() {
+            let mut c = StaticLinkedList::<10>::new(100);
+            assert_eq!(c.mem_limit, 100);
+            assert_eq!(c.mem_used, 0);
+
+            // enough memory for normal operation
+            let mut last_mem_used = 0;
+            for _ in 0..10 {
+                c.put(0, 0, &[0], gix_object::Kind::Blob, 1);
+                assert!(c.mem_used > last_mem_used);
+                last_mem_used = c.mem_used;
+            }
+            assert_eq!(c.mem_used, 80, "there is a minimal vec size");
+            assert_eq!(c.inner.len(), 10);
+            assert_eq!(c.last_evicted.len(), 0);
+
+            c.put(0, 0, &(0..20).collect::<Vec<_>>(), gix_object::Kind::Blob, 1);
+            assert_eq!(c.inner.len(), 10);
+            assert_eq!(c.mem_used, 80 + 20);
+            assert_eq!(c.last_evicted.len(), 1);
+
+            c.put(0, 0, &(0..50).collect::<Vec<_>>(), gix_object::Kind::Blob, 1);
+            assert_eq!(c.inner.len(), 1, "cache clearance wasn't necessary");
+            assert_eq!(c.last_evicted.len(), 0, "the free list was cleared");
+            assert_eq!(c.mem_used, 50);
+
+            c.put(0, 0, &(0..101).collect::<Vec<_>>(), gix_object::Kind::Blob, 1);
+            assert_eq!(
+                c.inner.len(),
+                1,
+                "objects that won't ever fit within the memory limit are ignored"
+            );
         }
     }
 }

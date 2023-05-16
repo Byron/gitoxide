@@ -59,19 +59,16 @@ impl index::File {
     pub fn traverse_with_index<P, Processor, E>(
         &self,
         pack: &crate::data::File,
-        new_processor: impl Fn() -> Processor + Send + Clone,
+        mut processor: Processor,
         mut progress: P,
         should_interrupt: &AtomicBool,
         Options { check, thread_limit }: Options,
     ) -> Result<Outcome<P>, Error<E>>
     where
         P: Progress,
-        Processor: FnMut(
-            gix_object::Kind,
-            &[u8],
-            &index::Entry,
-            &mut <P::SubProgress as Progress>::SubProgress,
-        ) -> Result<(), E>,
+        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn gix_features::progress::RawProgress) -> Result<(), E>
+            + Send
+            + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
         let (verify_result, traversal_result) = parallel::join(
@@ -113,29 +110,27 @@ impl index::File {
                     self.object_hash,
                 )?;
                 let mut outcome = digest_statistics(tree.traverse(
-                    |slice, out| pack.entry_slice(slice).map(|entry| out.copy_from_slice(entry)),
+                    |slice, pack| pack.entry_slice(slice),
+                    pack,
                     pack.pack_end() as u64,
-                    new_processor,
-                    |data,
-                     progress,
-                     traverse::Context {
-                         entry: pack_entry,
-                         entry_end,
-                         decompressed: bytes,
-                         state: ref mut processor,
-                         level,
-                     }| {
+                    move |data,
+                          progress,
+                          traverse::Context {
+                              entry: pack_entry,
+                              entry_end,
+                              decompressed: bytes,
+                              level,
+                          }| {
                         let object_kind = pack_entry.header.as_kind().expect("non-delta object");
                         data.level = level;
                         data.decompressed_size = pack_entry.decompressed_size;
                         data.object_kind = object_kind;
                         data.compressed_size = entry_end - pack_entry.data_offset;
                         data.object_size = bytes.len() as u64;
-                        let result = crate::index::traverse::process_entry(
+                        let result = index::traverse::process_entry(
                             check,
                             object_kind,
                             bytes,
-                            progress,
                             &data.index_entry,
                             || {
                                 // TODO: Fix this - we overwrite the header of 'data' which also changes the computed entry size,
@@ -146,7 +141,8 @@ impl index::File {
                                         .expect("slice pointing into the pack (by now data is verified)"),
                                 )
                             },
-                            processor,
+                            progress,
+                            &mut processor,
                         );
                         match result {
                             Err(err @ Error::PackDecode { .. }) if !check.fatal_decode_error() => {
@@ -156,7 +152,7 @@ impl index::File {
                             res => res,
                         }
                     },
-                    crate::cache::delta::traverse::Options {
+                    traverse::Options {
                         object_progress: progress.add_child_with_id("Resolving", ProgressId::DecodedObjects.into()),
                         size_progress: progress.add_child_with_id("Decoding", ProgressId::DecodedBytes.into()),
                         thread_limit,

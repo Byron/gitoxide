@@ -52,6 +52,7 @@ pub mod cache;
 ///
 /// It can optionally compress the content, similarly to what would happen when using a [`loose::Store`][crate::loose::Store].
 ///
+#[derive(Clone)]
 pub struct Sink {
     compressor: Option<RefCell<deflate::Write<std::io::Sink>>>,
     object_hash: gix_hash::Kind,

@@ -783,9 +783,9 @@ dependencies = [
 
 [[package]]
 name = "crossterm"
-version = "0.25.0"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e64e6c0fbe2c17357405f7c758c1ef960fce08bdfb2c03d88d2a18d7e09c4b67"
+checksum = "a84cda67535339806297f1b331d6dd6320470d2a0fe65381e79ee9e156dd3d13"
 dependencies = [
  "bitflags 1.3.2",
  "crossterm_winapi",
@@ -809,9 +809,9 @@ dependencies = [
 
 [[package]]
 name = "crosstermion"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99aabd9b02c2d5f72697f30ffb46f5a9ff4bd240d826049892cf62c31daeed04"
+checksum = "152ef46d620d4614070109e076ffc6ab032f682a380ac2efce412100c5ee7749"
 dependencies = [
  "ansi_term",
  "async-channel",
@@ -819,7 +819,7 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "futures-lite",
- "tui",
+ "ratatui",
  "tui-react",
 ]
 
@@ -1243,7 +1243,7 @@ dependencies = [
  "gix-features 0.29.0",
  "is-terminal",
  "owo-colors",
- "prodash",
+ "prodash 25.0.0",
  "tabled",
  "time",
 ]
@@ -1322,7 +1322,7 @@ dependencies = [
  "is_ci",
  "log",
  "once_cell",
- "prodash",
+ "prodash 25.0.0",
  "regex",
  "reqwest",
  "serde",
@@ -1628,7 +1628,7 @@ dependencies = [
  "libc",
  "once_cell",
  "parking_lot",
- "prodash",
+ "prodash 25.0.0",
  "sha1",
  "sha1_smol",
  "thiserror",
@@ -1643,7 +1643,7 @@ checksum = "cf69b0f5c701cc3ae22d3204b671907668f6437ca88862d355eaf9bc47a4f897"
 dependencies = [
  "gix-hash 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc",
- "prodash",
+ "prodash 23.1.2",
  "sha1_smol",
  "walkdir",
 ]
@@ -3355,6 +3355,12 @@ name = "prodash"
 version = "23.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9516b775656bc3e8985e19cd4b8c0c0de045095074e453d2c0a513b5f978392d"
+
+[[package]]
+name = "prodash"
+version = "25.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3236ce1618b6da4c7b618e0143c4d5b5dc190f75f81c49f248221382f7e9e9ae"
 dependencies = [
  "async-io",
  "atty",
@@ -3366,9 +3372,9 @@ dependencies = [
  "humantime",
  "log",
  "parking_lot",
+ "ratatui",
  "signal-hook",
  "time",
- "tui",
  "tui-react",
  "unicode-segmentation",
  "unicode-width",
@@ -3438,6 +3444,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "ratatui"
+version = "0.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dcc0d032bccba900ee32151ec0265667535c230169f5a011154cdcd984e16829"
+dependencies = [
+ "bitflags 1.3.2",
+ "cassowary",
+ "crossterm",
+ "unicode-segmentation",
+ "unicode-width",
 ]
 
 [[package]]
@@ -4216,26 +4235,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
 
 [[package]]
-name = "tui"
-version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccdd26cbd674007e649a272da4475fb666d3aa0ad0531da7136db6fab0e5bad1"
-dependencies = [
- "bitflags 1.3.2",
- "cassowary",
- "crossterm",
- "unicode-segmentation",
- "unicode-width",
-]
-
-[[package]]
 name = "tui-react"
-version = "0.19.0"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "542c37309aaf01ddaea86891f7845a8b0124194c6ccae6dbae7d223752648f4d"
+checksum = "11f13a7edfda102bf2bc3f9c1714904c961d513ebf4ae0c09decc4f17340f9a7"
 dependencies = [
  "log",
- "tui",
+ "ratatui",
  "unicode-segmentation",
  "unicode-width",
 ]

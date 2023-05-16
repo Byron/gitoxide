@@ -1,6 +1,9 @@
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicUsize, Ordering};
 
 use crate::parallel::{num_threads, Reduce};
+
+/// A scope to start threads within.
+pub type Scope<'scope, 'env> = std::thread::Scope<'scope, 'env>;
 
 /// Runs `left` and `right` in parallel, returning their output when both are done.
 pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
@@ -47,7 +50,7 @@ pub fn in_parallel<I, S, O, R>(
     input: impl Iterator<Item = I> + Send,
     thread_limit: Option<usize>,
     new_thread_state: impl Fn(usize) -> S + Send + Clone,
-    consume: impl Fn(I, &mut S) -> O + Send + Clone,
+    consume: impl FnMut(I, &mut S) -> O + Send + Clone,
     mut reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
 where
@@ -67,7 +70,7 @@ where
                         let send_result = send_result.clone();
                         let receive_input = receive_input.clone();
                         let new_thread_state = new_thread_state.clone();
-                        let consume = consume.clone();
+                        let mut consume = consume.clone();
                         move || {
                             let mut state = new_thread_state(thread_id);
                             for item in receive_input {
@@ -103,12 +106,19 @@ where
 /// This is only good for operations where near-random access isn't detrimental, so it's not usually great
 /// for file-io as it won't make use of sorted inputs well.
 /// Note that `periodic` is not guaranteed to be called in case other threads come up first and finish too fast.
+/// `consume(&mut item, &mut stat, &Scope, &threads_available, &should_interrupt)` is called for performing the actual computation.
+/// Note that `threads_available` should be decremented to start a thread that can steal your own work (as stored in `item`),
+/// which allows callees to implement their own work-stealing in case the work is distributed unevenly.
+/// Work stealing should only start after having processed at least one item to give all threads naturally operating on the slice
+/// some time to start. Starting threads while slice-workers are still starting up would lead to over-allocation of threads,
+/// which is why the number of threads left may turn negative. Once threads are started and stopped, be sure to adjust
+/// the thread-count accordingly.
 // TODO: better docs
 pub fn in_parallel_with_slice<I, S, R, E>(
     input: &mut [I],
     thread_limit: Option<usize>,
     new_thread_state: impl FnMut(usize) -> S + Send + Clone,
-    consume: impl FnMut(&mut I, &mut S) -> Result<(), E> + Send + Clone,
+    consume: impl FnMut(&mut I, &mut S, &AtomicIsize, &AtomicBool) -> Result<(), E> + Send + Clone,
     mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
     state_to_rval: impl FnOnce(S) -> R + Send + Clone,
 ) -> Result<Vec<R>, E>
@@ -121,8 +131,8 @@ where
     let mut results = Vec::with_capacity(num_threads);
     let stop_everything = &AtomicBool::default();
     let index = &AtomicUsize::default();
+    let threads_left = &AtomicIsize::new(num_threads as isize);
 
-    // TODO: use std::thread::scope() once Rust 1.63 is available.
     std::thread::scope({
         move |s| {
             std::thread::Builder::new()
@@ -163,29 +173,35 @@ where
                             let mut consume = consume.clone();
                             let input = Input(input as *mut [I]);
                             move || {
+                                let _ = &input;
+                                threads_left.fetch_sub(1, Ordering::SeqCst);
                                 let mut state = new_thread_state(thread_id);
-                                while let Ok(input_index) =
-                                    index.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| {
-                                        (x < input_len).then_some(x + 1)
-                                    })
-                                {
-                                    if stop_everything.load(Ordering::Relaxed) {
-                                        break;
-                                    }
-                                    // SAFETY: our atomic counter for `input_index` is only ever incremented, yielding
-                                    //         each item exactly once.
-                                    let item = {
-                                        #[allow(unsafe_code)]
-                                        unsafe {
-                                            &mut (&mut *input.0)[input_index]
+                                let res = (|| {
+                                    while let Ok(input_index) =
+                                        index.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| {
+                                            (x < input_len).then_some(x + 1)
+                                        })
+                                    {
+                                        if stop_everything.load(Ordering::Relaxed) {
+                                            break;
                                         }
-                                    };
-                                    if let Err(err) = consume(item, &mut state) {
-                                        stop_everything.store(true, Ordering::Relaxed);
-                                        return Err(err);
+                                        // SAFETY: our atomic counter for `input_index` is only ever incremented, yielding
+                                        //         each item exactly once.
+                                        let item = {
+                                            #[allow(unsafe_code)]
+                                            unsafe {
+                                                &mut (&mut *input.0)[input_index]
+                                            }
+                                        };
+                                        if let Err(err) = consume(item, &mut state, threads_left, stop_everything) {
+                                            stop_everything.store(true, Ordering::Relaxed);
+                                            return Err(err);
+                                        }
                                     }
-                                }
-                                Ok(state_to_rval(state))
+                                    Ok(state_to_rval(state))
+                                })();
+                                threads_left.fetch_add(1, Ordering::SeqCst);
+                                res
                             }
                         })
                         .expect("valid name")

@@ -83,20 +83,22 @@ impl crate::index::File {
     /// It should return `None` if the entry cannot be resolved from the pack that produced the `entries` iterator, causing
     /// the write operation to fail.
     #[allow(clippy::too_many_arguments)]
-    pub fn write_data_iter_to_stream<F, F2>(
+    pub fn write_data_iter_to_stream<F, F2, R, P>(
         version: crate::index::Version,
         make_resolver: F,
         entries: impl Iterator<Item = Result<crate::data::input::Entry, crate::data::input::Error>>,
         thread_limit: Option<usize>,
-        mut root_progress: impl Progress,
+        mut root_progress: P,
         out: impl io::Write,
         should_interrupt: &AtomicBool,
         object_hash: gix_hash::Kind,
         pack_version: crate::data::Version,
     ) -> Result<Outcome, Error>
     where
-        F: FnOnce() -> io::Result<F2>,
-        F2: for<'r> Fn(crate::data::EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Clone,
+        F: FnOnce() -> io::Result<(F2, R)>,
+        R: Send + Sync,
+        F2: for<'r> Fn(crate::data::EntryRange, &'r R) -> Option<&'r [u8]> + Send + Clone,
+        P: Progress,
     {
         if version != crate::index::Version::default() {
             return Err(Error::Unsupported(version));
@@ -180,12 +182,12 @@ impl crate::index::File {
 
         root_progress.inc();
 
-        let resolver = make_resolver()?;
+        let (resolver, pack) = make_resolver()?;
         let sorted_pack_offsets_by_oid = {
             let traverse::Outcome { roots, children } = tree.traverse(
                 resolver,
+                &pack,
                 pack_entries_end,
-                || (),
                 |data,
                  _progress,
                  traverse::Context {
@@ -250,14 +252,7 @@ impl crate::index::File {
 }
 
 fn modify_base(entry: &mut TreeEntry, pack_entry: &crate::data::Entry, decompressed: &[u8], hash: gix_hash::Kind) {
-    fn compute_hash(kind: gix_object::Kind, bytes: &[u8], object_hash: gix_hash::Kind) -> gix_hash::ObjectId {
-        let mut hasher = gix_features::hash::hasher(object_hash);
-        hasher.update(&gix_object::encode::loose_header(kind, bytes.len()));
-        hasher.update(bytes);
-        gix_hash::ObjectId::from(hasher.digest())
-    }
-
     let object_kind = pack_entry.header.as_kind().expect("base object as source of iteration");
-    let id = compute_hash(object_kind, decompressed, hash);
+    let id = gix_object::compute_hash(hash, object_kind, decompressed);
     entry.id = id;
 }

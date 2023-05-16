@@ -151,6 +151,7 @@ unit-tests: ## run all unit tests
 	cd gix-ref/tests && cargo test --all-features
 	cd gix-odb && cargo test && cargo test --all-features
 	cd gix-object && cargo test && cargo test --features verbose-object-parsing-errors
+	cd gix-pack && cargo test --all-features
 	cd gix-pack/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-gix-features-parallel"
 	cd gix-index/tests && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \

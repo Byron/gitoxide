@@ -31,7 +31,7 @@ pub fn integrity(
     }: Context,
 ) -> anyhow::Result<()> {
     #[cfg_attr(not(feature = "serde"), allow(unused))]
-    let mut outcome = repo.objects.store_ref().verify_integrity(
+    let outcome = repo.objects.store_ref().verify_integrity(
         progress,
         should_interrupt,
         gix::odb::pack::index::verify::integrity::Options {

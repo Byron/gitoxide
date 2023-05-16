@@ -46,14 +46,14 @@ pub fn update(
     };
     let commit_counter = db_progress.counter().expect("shared counter available");
 
-    let mut change_progress = {
+    let change_progress = {
         let mut p = progress.add_child("find changes");
         p.init(None, progress::count("modified files"));
         p
     };
     let change_counter = change_progress.counter().expect("shared counter available");
 
-    let mut lines_progress = {
+    let lines_progress = {
         let mut p = progress.add_child("find changes");
         p.init(None, progress::count("diff lines"));
         p

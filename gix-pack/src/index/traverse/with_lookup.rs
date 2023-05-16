@@ -67,8 +67,8 @@ impl index::File {
     /// For more details, see the documentation on the [`traverse()`][index::File::traverse()] method.
     pub fn traverse_with_lookup<P, C, Processor, E, F>(
         &self,
-        new_processor: impl Fn() -> Processor + Send + Clone,
-        pack: &crate::data::File,
+        mut processor: Processor,
+        pack: &data::File,
         mut progress: P,
         should_interrupt: &AtomicBool,
         Options {
@@ -81,12 +81,9 @@ impl index::File {
         P: Progress,
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
-        Processor: FnMut(
-            gix_object::Kind,
-            &[u8],
-            &index::Entry,
-            &mut <P::SubProgress as Progress>::SubProgress,
-        ) -> Result<(), E>,
+        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn gix_features::progress::RawProgress) -> Result<(), E>
+            + Send
+            + Clone,
         F: Fn() -> C + Send + Clone,
     {
         let (verify_result, traversal_result) = parallel::join(
@@ -133,7 +130,6 @@ impl index::File {
                     move |index| {
                         (
                             make_pack_lookup_cache(),
-                            new_processor(),
                             Vec::with_capacity(2048), // decode buffer
                             lock(&reduce_progress)
                                 .add_child_with_id(format!("thread {index}"), gix_features::progress::UNKNOWN), // per thread progress
@@ -146,9 +142,9 @@ impl index::File {
                     input_chunks,
                     thread_limit,
                     state_per_thread,
-                    |entries: &[index::Entry],
-                     (cache, ref mut processor, buf, progress)|
-                     -> Result<Vec<data::decode::entry::Outcome>, Error<_>> {
+                    move |entries: &[index::Entry],
+                          (cache, buf, progress)|
+                          -> Result<Vec<data::decode::entry::Outcome>, Error<_>> {
                         progress.init(
                             Some(entries.len()),
                             gix_features::progress::count_with_decimals("objects", 2),
@@ -163,7 +159,7 @@ impl index::File {
                                 buf,
                                 progress,
                                 index_entry,
-                                processor,
+                                &mut processor,
                             );
                             progress.inc();
                             let stat = match result {
@@ -174,6 +170,9 @@ impl index::File {
                                 res => res,
                             }?;
                             stats.push(stat);
+                            if should_interrupt.load(Ordering::Relaxed) {
+                                break;
+                            }
                         }
                         Ok(stats)
                     },

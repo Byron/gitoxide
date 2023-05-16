@@ -344,10 +344,10 @@ where
                 }
                 None => Vec::new(),
             };
-            if let Some(mut progress) = change_progress {
+            if let Some(progress) = change_progress {
                 progress.show_throughput(start);
             }
-            if let Some(mut progress) = lines_progress {
+            if let Some(progress) = lines_progress {
                 progress.show_throughput(start);
             }
 

@@ -4,6 +4,8 @@ pub struct ItemSliceSend<T>(pub *mut [T])
 where
     T: Send;
 
+/// SAFETY: This would be unsafe if this would ever be abused, but it's used internally and only in a way that assure that the pointers
+///         don't violate aliasing rules.
 impl<T> Clone for ItemSliceSend<T>
 where
     T: Send,
@@ -18,12 +20,12 @@ where
 unsafe impl<T> Send for ItemSliceSend<T> where T: Send {}
 
 /// An item returned by `iter_root_chunks`, allowing access to the `data` stored alongside nodes in a [`Tree`].
-pub struct Node<'a, T> {
+pub struct Node<'a, T: Send> {
     pub item: &'a mut Item<T>,
-    pub child_items: *mut [Item<T>],
+    pub child_items: ItemSliceSend<Item<T>>,
 }
 
-impl<'a, T> Node<'a, T> {
+impl<'a, T: Send> Node<'a, T> {
     /// Returns the offset into the pack at which the `Node`s data is located.
     pub fn offset(&self) -> u64 {
         self.item.offset
@@ -55,8 +57,8 @@ impl<'a, T> Node<'a, T> {
             // SAFETY: The resulting mutable pointer cannot be yielded by any other node.
             #[allow(unsafe_code)]
             Node {
-                item: unsafe { &mut *(children as *mut Item<T>).add(index as usize) },
-                child_items: children,
+                item: &mut unsafe { &mut *children.0 }[index as usize],
+                child_items: children.clone(),
             }
         })
     }

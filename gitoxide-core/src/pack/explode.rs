@@ -90,6 +90,7 @@ enum Error {
 }
 
 #[allow(clippy::large_enum_variant)]
+#[derive(Clone)]
 enum OutputWriter {
     Loose(loose::Store),
     Sink(odb::Sink),
@@ -177,7 +178,7 @@ pub fn pack_or_pack_index(
             }
         });
 
-    let pack::index::traverse::Outcome{mut progress, ..} = bundle
+    let pack::index::traverse::Outcome { progress, .. } = bundle
         .index
         .traverse(
             &bundle.pack,
@@ -185,43 +186,49 @@ pub fn pack_or_pack_index(
             &should_interrupt,
             {
                 let object_path = object_path.map(|p| p.as_ref().to_owned());
-                move || {
-                    let out = OutputWriter::new(object_path.clone(), sink_compress, object_hash);
-                    let loose_odb = verify.then(|| object_path.as_ref().map(|path| loose::Store::at(path, object_hash))).flatten();
-                    let mut read_buf = Vec::new();
-                    move |object_kind, buf, index_entry, progress| {
-                        let written_id = out.write_buf(object_kind, buf).map_err(|err| {
-                            Error::Write{source: Box::new(err) as Box<dyn std::error::Error + Send + Sync>,
+                let out = OutputWriter::new(object_path.clone(), sink_compress, object_hash);
+                let loose_odb = verify
+                    .then(|| object_path.as_ref().map(|path| loose::Store::at(path, object_hash)))
+                    .flatten();
+                let mut read_buf = Vec::new();
+                move |object_kind, buf, index_entry, progress| {
+                    let written_id = out.write_buf(object_kind, buf).map_err(|err| Error::Write {
+                        source: Box::new(err) as Box<dyn std::error::Error + Send + Sync>,
+                        kind: object_kind,
+                        id: index_entry.oid,
+                    })?;
+                    if written_id != index_entry.oid {
+                        if let object::Kind::Tree = object_kind {
+                            progress.info(format!(
+                                "The tree in pack named {} was written as {} due to modes 100664 and 100640 rewritten as 100644.",
+                                index_entry.oid, written_id
+                            ));
+                        } else {
+                            return Err(Error::ObjectEncodeMismatch {
                                 kind: object_kind,
-                                id: index_entry.oid,
-                            }
-                        })?;
-                        if written_id != index_entry.oid {
-                            if let object::Kind::Tree = object_kind {
-                                progress.info(format!(
-                                    "The tree in pack named {} was written as {} due to modes 100664 and 100640 rewritten as 100644.",
-                                    index_entry.oid, written_id
-                                ));
-                            } else {
-                                return Err(Error::ObjectEncodeMismatch{kind: object_kind, actual: index_entry.oid, expected:written_id});
-                            }
+                                actual: index_entry.oid,
+                                expected: written_id,
+                            });
                         }
-                        if let Some(verifier) = loose_odb.as_ref() {
-                            let obj = verifier
-                                .try_find(written_id, &mut read_buf)
-                                .map_err(|err| Error::WrittenFileCorrupt{source:err, id:written_id})?
-                                .ok_or(Error::WrittenFileMissing{id:written_id})?;
-                            obj.verify_checksum(written_id)?;
-                        }
-                        Ok(())
                     }
+                    if let Some(verifier) = loose_odb.as_ref() {
+                        let obj = verifier
+                            .try_find(written_id, &mut read_buf)
+                            .map_err(|err| Error::WrittenFileCorrupt {
+                                source: err,
+                                id: written_id,
+                            })?
+                            .ok_or(Error::WrittenFileMissing { id: written_id })?;
+                        obj.verify_checksum(written_id)?;
+                    }
+                    Ok(())
                 }
             },
             pack::index::traverse::Options {
                 traversal: algorithm,
                 thread_limit,
                 check: check.into(),
-                make_pack_lookup_cache:             pack::cache::lru::StaticLinkedList::<64>::default,
+                make_pack_lookup_cache: pack::cache::lru::StaticLinkedList::<64>::default,
             },
         )
         .with_context(|| "Failed to explode the entire pack - some loose objects may have been created nonetheless")?;

@@ -67,6 +67,11 @@ mod subsections {
     pub struct Core;
 
     impl Core {
+        /// The `gitoxide.core.defaultPackCacheMemoryLimit` key.
+        pub const DEFAULT_PACK_CACHE_MEMORY_LIMIT: keys::UnsignedInteger =
+            keys::UnsignedInteger::new_unsigned_integer("defaultPackCacheMemoryLimit", &Gitoxide::CORE).with_note(
+                "If unset, we default to 96MB memory cap for the default 64 slot LRU cache for object deltas.",
+            );
         /// The `gitoxide.core.useNsec` key.
         pub const USE_NSEC: keys::Boolean = keys::Boolean::new_boolean("useNsec", &Gitoxide::CORE)
             .with_note("A runtime version of the USE_NSEC build flag.");
@@ -89,7 +94,12 @@ mod subsections {
         }
 
         fn keys(&self) -> &[&dyn Key] {
-            &[&Self::USE_NSEC, &Self::USE_STDEV, &Self::SHALLOW_FILE]
+            &[
+                &Self::DEFAULT_PACK_CACHE_MEMORY_LIMIT,
+                &Self::USE_NSEC,
+                &Self::USE_STDEV,
+                &Self::SHALLOW_FILE,
+            ]
         }
 
         fn parent(&self) -> Option<&dyn Section> {
