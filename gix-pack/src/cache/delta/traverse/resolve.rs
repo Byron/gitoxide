@@ -54,15 +54,14 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     let mut decompressed_bytes_by_pack_offset = BTreeMap::new();
-    let mut decompress_from_resolver = |slice: EntryRange, out: &mut Vec<u8>| -> Result<(data::Entry, u64), Error> {
+    let mut decompress_from_resolver = |slice: EntryRange| -> Result<(data::Entry, u64, Vec<u8>), Error> {
         let bytes = resolve(slice.clone(), resolve_data).ok_or(Error::ResolveFailed {
             pack_offset: slice.start,
         })?;
         let entry = data::Entry::from_bytes(bytes, slice.start, hash_len);
         let compressed = &bytes[entry.header_size()..];
         let decompressed_len = entry.decompressed_size as usize;
-        decompress_all_at_once(compressed, decompressed_len, out)?;
-        Ok((entry, slice.end))
+        Ok((entry, slice.end, decompress_all_at_once(compressed, decompressed_len)?))
     };
 
     // each node is a base, and its children always start out as deltas which become a base after applying them.
@@ -76,22 +75,18 @@ where
         },
     )];
     while let Some((level, mut base)) = nodes.pop() {
-        let storage;
         if should_interrupt.load(Ordering::Relaxed) {
             return Err(Error::Interrupted);
         }
         let (base_entry, entry_end, base_bytes) = if level == root_level {
-            let (a, b) = decompress_from_resolver(base.entry_slice(), bytes_buf)?;
-            (a, b, &*bytes_buf)
+            decompress_from_resolver(base.entry_slice())?
         } else {
             if !bytes_buf.is_empty() {
                 *bytes_buf = Vec::new();
             }
-            let (a, b, v) = decompressed_bytes_by_pack_offset
+            decompressed_bytes_by_pack_offset
                 .remove(&base.offset())
-                .expect("we store the resolved delta buffer when done");
-            storage = v;
-            (a, b, &storage)
+                .expect("we store the resolved delta buffer when done")
         };
 
         // anything done here must be repeated further down for leaf-nodes.
@@ -104,7 +99,7 @@ where
                 Context {
                     entry: &base_entry,
                     entry_end,
-                    decompressed: base_bytes,
+                    decompressed: &base_bytes,
                     level,
                 },
             )
@@ -116,8 +111,8 @@ where
         }
 
         for mut child in base.into_child_iter() {
-            let (mut child_entry, entry_end) = decompress_from_resolver(child.entry_slice(), delta_bytes)?;
-            let (base_size, consumed) = data::delta::decode_header_size(delta_bytes);
+            let (mut child_entry, entry_end, delta_bytes) = decompress_from_resolver(child.entry_slice())?;
+            let (base_size, consumed) = data::delta::decode_header_size(&delta_bytes);
             let mut header_ofs = consumed;
             assert_eq!(
                 base_bytes.len(),
@@ -128,7 +123,7 @@ where
             header_ofs += consumed;
 
             resize_vec(fully_resolved_delta_bytes, result_size as usize);
-            data::delta::apply(base_bytes, fully_resolved_delta_bytes, &delta_bytes[header_ofs..]);
+            data::delta::apply(&base_bytes, fully_resolved_delta_bytes, &delta_bytes[header_ofs..]);
 
             // FIXME: this actually invalidates the "pack_offset()" computation, which is not obvious to consumers
             //        at all
@@ -240,19 +235,16 @@ where
                         let size_counter = size_counter.as_ref();
 
                         move || -> Result<(), Error> {
-                            let mut bytes_buf = Vec::new();
-                            let mut delta_bytes = Vec::new();
                             let mut fully_resolved_delta_bytes = Vec::new();
                             let mut decompress_from_resolver =
-                                |slice: EntryRange, out: &mut Vec<u8>| -> Result<(data::Entry, u64), Error> {
+                                |slice: EntryRange| -> Result<(data::Entry, u64, Vec<u8>), Error> {
                                     let bytes = resolve(slice.clone(), resolve_data).ok_or(Error::ResolveFailed {
                                         pack_offset: slice.start,
                                     })?;
                                     let entry = data::Entry::from_bytes(bytes, slice.start, hash_len);
                                     let compressed = &bytes[entry.header_size()..];
                                     let decompressed_len = entry.decompressed_size as usize;
-                                    decompress_all_at_once(compressed, decompressed_len, out)?;
-                                    Ok((entry, slice.end))
+                                    Ok((entry, slice.end, decompress_all_at_once(compressed, decompressed_len)?))
                                 };
 
                             loop {
@@ -263,19 +255,12 @@ where
                                 if should_interrupt.load(Ordering::Relaxed) {
                                     return Err(Error::Interrupted);
                                 }
-                                let storage;
                                 let (base_entry, entry_end, base_bytes) = if level == 0 {
-                                    let (a, b) = decompress_from_resolver(base.entry_slice(), &mut bytes_buf)?;
-                                    (a, b, &*bytes_buf)
+                                    decompress_from_resolver(base.entry_slice())?
                                 } else {
-                                    if !bytes_buf.is_empty() {
-                                        bytes_buf = Vec::new();
-                                    }
-                                    let (a, b, v) = threading::lock(decompressed_bytes_by_pack_offset)
+                                    threading::lock(decompressed_bytes_by_pack_offset)
                                         .remove(&base.offset())
-                                        .expect("we store the resolved delta buffer when done");
-                                    storage = v;
-                                    (a, b, storage.as_slice())
+                                        .expect("we store the resolved delta buffer when done")
                                 };
 
                                 // anything done here must be repeated further down for leaf-nodes.
@@ -288,7 +273,7 @@ where
                                         Context {
                                             entry: &base_entry,
                                             entry_end,
-                                            decompressed: base_bytes,
+                                            decompressed: &base_bytes,
                                             level,
                                         },
                                     )
@@ -300,8 +285,8 @@ where
                                 }
 
                                 for mut child in base.into_child_iter() {
-                                    let (mut child_entry, entry_end) =
-                                        decompress_from_resolver(child.entry_slice(), &mut delta_bytes)?;
+                                    let (mut child_entry, entry_end, delta_bytes) =
+                                        decompress_from_resolver(child.entry_slice())?;
                                     let (base_size, consumed) = data::delta::decode_header_size(&delta_bytes);
                                     let mut header_ofs = consumed;
                                     assert_eq!(
@@ -315,7 +300,7 @@ where
 
                                     fully_resolved_delta_bytes.resize(result_size as usize, 0);
                                     data::delta::apply(
-                                        base_bytes,
+                                        &base_bytes,
                                         &mut fully_resolved_delta_bytes,
                                         &delta_bytes[header_ofs..],
                                     );
@@ -417,13 +402,14 @@ fn resize_vec(v: &mut Vec<u8>, new_len: usize) {
     }
 }
 
-fn decompress_all_at_once(b: &[u8], decompressed_len: usize, out: &mut Vec<u8>) -> Result<(), Error> {
-    resize_vec(out, decompressed_len);
+fn decompress_all_at_once(b: &[u8], decompressed_len: usize) -> Result<Vec<u8>, Error> {
+    let mut out = Vec::new();
+    resize_vec(&mut out, decompressed_len);
     zlib::Inflate::default()
-        .once(b, out)
+        .once(b, &mut out)
         .map_err(|err| Error::ZlibInflate {
             source: err,
             message: "Failed to decompress entry",
         })?;
-    Ok(())
+    Ok(out)
 }
