@@ -8,7 +8,7 @@ use gix::{
     Progress,
 };
 pub use index::verify::Mode;
-pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
+pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 
 use crate::OutputFormat;
 
