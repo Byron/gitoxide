@@ -7,7 +7,7 @@ pub use prodash::{
     self,
     messages::MessageLevel,
     progress::{Discard, DoOrDiscard, Either, Id, Step, StepShared, Task, ThroughputOnDrop, Value, UNKNOWN},
-    unit, Progress, Unit,
+    unit, Progress, RawProgress, Unit,
 };
 /// A stub for the portions of the `bytesize` crate that we use internally in `gitoxide`.
 #[cfg(not(feature = "progress-unit-bytes"))]

@@ -1243,7 +1243,7 @@ dependencies = [
  "gix-features 0.29.0",
  "is-terminal",
  "owo-colors",
- "prodash",
+ "prodash 23.1.2",
  "tabled",
  "time",
 ]
@@ -1322,7 +1322,7 @@ dependencies = [
  "is_ci",
  "log",
  "once_cell",
- "prodash",
+ "prodash 23.1.2",
  "regex",
  "reqwest",
  "serde",
@@ -1628,7 +1628,7 @@ dependencies = [
  "libc",
  "once_cell",
  "parking_lot",
- "prodash",
+ "prodash 25.0.0",
  "sha1",
  "sha1_smol",
  "thiserror",
@@ -1643,7 +1643,7 @@ checksum = "cf69b0f5c701cc3ae22d3204b671907668f6437ca88862d355eaf9bc47a4f897"
 dependencies = [
  "gix-hash 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc",
- "prodash",
+ "prodash 23.1.2",
  "sha1_smol",
  "walkdir",
 ]
@@ -3358,11 +3358,9 @@ checksum = "9516b775656bc3e8985e19cd4b8c0c0de045095074e453d2c0a513b5f978392d"
 dependencies = [
  "async-io",
  "atty",
- "bytesize",
  "crosstermion",
  "futures-core",
  "futures-lite",
- "human_format",
  "humantime",
  "log",
  "parking_lot",
@@ -3372,6 +3370,16 @@ dependencies = [
  "tui-react",
  "unicode-segmentation",
  "unicode-width",
+]
+
+[[package]]
+name = "prodash"
+version = "25.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3236ce1618b6da4c7b618e0143c4d5b5dc190f75f81c49f248221382f7e9e9ae"
+dependencies = [
+ "bytesize",
+ "human_format",
 ]
 
 [[package]]
