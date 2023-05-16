@@ -151,8 +151,7 @@ where
                             bytes_buf: Vec::<u8>::with_capacity(4096),
                             delta_bytes: Vec::<u8>::with_capacity(4096),
                             fully_resolved_delta_bytes: Vec::<u8>::with_capacity(4096),
-                            progress: threading::lock(&object_progress)
-                                .add_child(format!("gix-pack.delta-traverse.inspect-object.{thread_index}")),
+                            progress: threading::lock(&object_progress).add_child(format!("thread {thread_index}")),
                             resolve: resolve.clone(),
                             modify_base: inspect_object.clone(),
                             child_items: child_items.clone(),
