@@ -14,13 +14,13 @@ doctest = false
 test = true
 
 [[test]]
-name = "git"
-path = "tests/git.rs"
+name = "gix"
+path = "tests/gix.rs"
 required-features = []
 
 [[test]]
-name = "git-with-regex"
-path = "tests/git-with-regex.rs"
+name = "gix-with-regex"
+path = "tests/gix-with-regex.rs"
 required-features = ["regex"]
 
 [[example]]
