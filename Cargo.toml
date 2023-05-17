@@ -221,6 +221,7 @@ members = [
     "gix-packetline",
     "gix-mailmap",
     "gix-note",
+    "gix-negotiate",
     "gix-fetchhead",
     "gix-prompt",
     "gix-filter",

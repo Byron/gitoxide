@@ -1,0 +1,16 @@
+[package]
+name = "gix-negotiate"
+version = "0.1.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A crate of the gitoxide project implementing negotiation algorithms"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+rust-version = "1.64"
+
+[lib]
+doctest = false
+test = false
+
+[dependencies]
+gix-revision = { version = "0.13.0", path = "../gix-revision" }

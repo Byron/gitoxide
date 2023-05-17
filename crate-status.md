@@ -386,6 +386,12 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 
 * [ ] CRUD for git notes
 
+### gix-negotiate
+* **algorithms**
+  - [ ] `noop`
+  - [ ] `consecutive`
+  - [ ] `skipping`
+
 ### gix-fetchhead
 * [ ] parse `FETCH_HEAD` information back entirely
 * [ ] write typical fetch-head lines

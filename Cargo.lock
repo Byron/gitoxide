@@ -1861,6 +1861,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-negotiate"
+version = "0.1.0"
+dependencies = [
+ "gix-revision",
+]
+
+[[package]]
 name = "gix-note"
 version = "0.0.0"
 
