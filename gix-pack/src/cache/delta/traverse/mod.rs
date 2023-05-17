@@ -114,7 +114,7 @@ where
         }: Options<'_, P1, P2>,
     ) -> Result<Outcome<T>, Error>
     where
-        F: for<'r> FnMut(EntryRange, &'r R) -> Option<&'r [u8]> + Send + Clone,
+        F: for<'r> Fn(EntryRange, &'r R) -> Option<&'r [u8]> + Send + Clone,
         R: Send + Sync,
         P1: Progress,
         P2: Progress,
@@ -148,7 +148,6 @@ where
                     move |thread_index| {
                         let _ = &child_items;
                         resolve::State {
-                            bytes_buf: Vec::<u8>::with_capacity(4096),
                             delta_bytes: Vec::<u8>::with_capacity(4096),
                             fully_resolved_delta_bytes: Vec::<u8>::with_capacity(4096),
                             progress: threading::lock(&object_progress).add_child(format!("thread {thread_index}")),
