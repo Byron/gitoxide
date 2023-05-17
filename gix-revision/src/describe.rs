@@ -211,7 +211,7 @@ pub(crate) mod function {
 
         while let Some(commit) = queue.pop() {
             commits_seen += 1;
-            if let Some(name) = name_by_oid.get(&commit) {
+            let flags = if let Some(name) = name_by_oid.get(&commit) {
                 if candidates.len() < max_candidates {
                     let identity_bit = 1 << candidates.len();
                     candidates.push(Candidate {
@@ -220,14 +220,17 @@ pub(crate) mod function {
                         identity_bit,
                         order: candidates.len(),
                     });
-                    *seen.get_mut(&commit).expect("inserted") |= identity_bit;
+                    let flags = seen.get_mut(&commit).expect("inserted");
+                    *flags |= identity_bit;
+                    *flags
                 } else {
                     gave_up_on_commit = Some(commit);
                     break;
                 }
-            }
+            } else {
+                seen[&commit]
+            };
 
-            let flags = seen[&commit];
             for candidate in candidates
                 .iter_mut()
                 .filter(|c| (flags & c.identity_bit) != c.identity_bit)
