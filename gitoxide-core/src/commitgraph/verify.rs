@@ -1,7 +1,7 @@
 use std::{io, path::Path};
 
 use anyhow::{Context as AnyhowContext, Result};
-use gix_commitgraph::{graph::verify::Outcome, Graph};
+use gix_commitgraph::Graph;
 
 use crate::OutputFormat;
 
@@ -31,7 +31,7 @@ pub fn graph_or_file<W1, W2>(
         mut out,
         output_statistics,
     }: Context<W1, W2>,
-) -> Result<gix_commitgraph::graph::verify::Outcome>
+) -> Result<gix_commitgraph::verify::Outcome>
 where
     W1: io::Write,
     W2: io::Write,
@@ -57,7 +57,7 @@ where
     Ok(stats)
 }
 
-fn print_human_output(out: &mut impl io::Write, stats: &Outcome) -> io::Result<()> {
+fn print_human_output(out: &mut impl io::Write, stats: &gix_commitgraph::verify::Outcome) -> io::Result<()> {
     writeln!(out, "number of commits with the given number of parents")?;
     let mut parent_counts: Vec<_> = stats.parent_counts.iter().map(|(a, b)| (*a, *b)).collect();
     parent_counts.sort_by_key(|e| e.0);
