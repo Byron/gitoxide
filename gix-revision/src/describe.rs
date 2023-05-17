@@ -144,7 +144,7 @@ where
 }
 
 pub(crate) mod function {
-    use std::{borrow::Cow, cmp::Ordering, collections::VecDeque, iter::FromIterator};
+    use std::{borrow::Cow, cmp::Ordering};
 
     use bstr::BStr;
     use gix_hash::oid;
@@ -152,7 +152,8 @@ pub(crate) mod function {
     use gix_object::CommitRefIter;
 
     use super::{Error, Outcome};
-    use crate::describe::{Flags, Options, MAX_CANDIDATES};
+    use crate::describe::{CommitTime, Flags, Options, MAX_CANDIDATES};
+    use crate::PriorityQueue;
 
     /// Given a `commit` id, traverse the commit graph and collect candidate names from the `name_by_oid` mapping to produce
     /// an `Outcome`, which converted [`into_format()`][Outcome::into_format()] will produce a typical `git describe` string.
@@ -201,14 +202,14 @@ pub(crate) mod function {
         let mut buf = Vec::new();
         let mut parent_buf = Vec::new();
 
-        let mut queue = VecDeque::from_iter(Some((commit.to_owned(), u32::MAX)));
+        let mut queue = PriorityQueue::from_iter(Some((u32::MAX, commit.to_owned())));
         let mut candidates = Vec::new();
         let mut commits_seen = 0;
         let mut gave_up_on_commit = None;
         let mut seen = HashMap::<gix_hash::ObjectId, Flags>::default();
         seen.insert(commit.to_owned(), 0u32);
 
-        while let Some((commit, _commit_time)) = queue.pop_front() {
+        while let Some(commit) = queue.pop() {
             commits_seen += 1;
             if let Some(name) = name_by_oid.get(&commit) {
                 if candidates.len() < max_candidates {
@@ -290,7 +291,7 @@ pub(crate) mod function {
         });
 
         if let Some(commit_id) = gave_up_on_commit {
-            queue.push_front((commit_id, u32::MAX));
+            queue.insert(u32::MAX, commit_id);
             commits_seen -= 1;
         }
 
@@ -318,7 +319,7 @@ pub(crate) mod function {
         find: &mut Find,
         buf: &mut Vec<u8>,
         parent_buf: &mut Vec<u8>,
-        queue: &mut VecDeque<(gix_hash::ObjectId, u32)>,
+        queue: &mut PriorityQueue<CommitTime, gix_hash::ObjectId>,
         seen: &mut HashMap<gix_hash::ObjectId, Flags>,
         commit: &gix_hash::oid,
         commit_flags: Flags,
@@ -356,10 +357,7 @@ pub(crate) mod function {
                             .unwrap_or_default();
 
                         entry.insert(commit_flags);
-                        match queue.binary_search_by(|c| c.1.cmp(&parent_commit_date).reverse()) {
-                            Ok(_) => queue.push_back((parent_id, parent_commit_date)),
-                            Err(pos) => queue.insert(pos, (parent_id, parent_commit_date)),
-                        };
+                        queue.insert(parent_commit_date, parent_id);
                     }
                     hash_map::Entry::Occupied(mut entry) => {
                         *entry.get_mut() |= commit_flags;
@@ -378,7 +376,7 @@ pub(crate) mod function {
 
     #[allow(clippy::too_many_arguments)]
     fn finish_depth_computation<'name, Find, E>(
-        mut queue: VecDeque<(gix_hash::ObjectId, u32)>,
+        mut queue: PriorityQueue<CommitTime, gix_hash::ObjectId>,
         mut find: Find,
         best_candidate: &mut Candidate<'name>,
         mut seen: HashMap<gix_hash::ObjectId, Flags>,
@@ -391,13 +389,13 @@ pub(crate) mod function {
         E: std::error::Error + Send + Sync + 'static,
     {
         let mut commits_seen = 0;
-        while let Some((commit, _commit_time)) = queue.pop_front() {
+        while let Some(commit) = queue.pop() {
             commits_seen += 1;
             let flags = seen[&commit];
             if (flags & best_candidate.identity_bit) == best_candidate.identity_bit {
                 if queue
-                    .iter()
-                    .all(|(id, _)| (seen[id] & best_candidate.identity_bit) == best_candidate.identity_bit)
+                    .iter_random()
+                    .all(|id| (seen[id] & best_candidate.identity_bit) == best_candidate.identity_bit)
                 {
                     break;
                 }
@@ -429,3 +427,5 @@ pub(crate) mod function {
         order: usize,
     }
 }
+
+type CommitTime = u32;
