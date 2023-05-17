@@ -1,7 +1,4 @@
-use crate::{
-    file::{self, Commit, File},
-    graph::{self, Graph},
-};
+use crate::{file, file::Commit, File, Graph, Position};
 
 /// Access
 impl Graph {
@@ -9,7 +6,7 @@ impl Graph {
     ///
     /// # Panics
     /// If `pos` is greater or equal to [`num_commits()`][Graph::num_commits()].
-    pub fn commit_at(&self, pos: graph::Position) -> Commit<'_> {
+    pub fn commit_at(&self, pos: Position) -> Commit<'_> {
         let r = self.lookup_by_pos(pos);
         r.file.commit_at(r.pos)
     }
@@ -24,7 +21,7 @@ impl Graph {
     ///
     /// # Panics
     /// If `pos` is greater or equal to [`num_commits()`][Graph::num_commits()].
-    pub fn id_at(&self, pos: graph::Position) -> &gix_hash::oid {
+    pub fn id_at(&self, pos: Position) -> &gix_hash::oid {
         let r = self.lookup_by_pos(pos);
         r.file.id_at(r.pos)
     }
@@ -40,7 +37,7 @@ impl Graph {
     }
 
     /// Translate the given `id` to its position in the file.
-    pub fn lookup(&self, id: impl AsRef<gix_hash::oid>) -> Option<graph::Position> {
+    pub fn lookup(&self, id: impl AsRef<gix_hash::oid>) -> Option<Position> {
         Some(self.lookup_by_id(id.as_ref())?.graph_pos)
     }
 
@@ -59,7 +56,7 @@ impl Graph {
                 return Some(LookupByIdResult {
                     file,
                     file_pos: lex_pos,
-                    graph_pos: graph::Position(current_file_start + lex_pos.0),
+                    graph_pos: Position(current_file_start + lex_pos.0),
                 });
             }
             current_file_start += file.num_commits();
@@ -67,7 +64,7 @@ impl Graph {
         None
     }
 
-    fn lookup_by_pos(&self, pos: graph::Position) -> LookupByPositionResult<'_> {
+    fn lookup_by_pos(&self, pos: Position) -> LookupByPositionResult<'_> {
         let mut remaining = pos.0;
         for (file_index, file) in self.files.iter().enumerate() {
             match remaining.checked_sub(file.num_commits()) {
@@ -88,7 +85,7 @@ impl Graph {
 #[derive(Clone)]
 struct LookupByIdResult<'a> {
     pub file: &'a File,
-    pub graph_pos: graph::Position,
+    pub graph_pos: Position,
     pub file_pos: file::Position,
 }
 

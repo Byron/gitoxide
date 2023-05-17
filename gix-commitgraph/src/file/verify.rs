@@ -5,10 +5,7 @@ use std::{
     path::Path,
 };
 
-use crate::{
-    file::{self, File},
-    GENERATION_NUMBER_INFINITY, GENERATION_NUMBER_MAX,
-};
+use crate::{file, File, GENERATION_NUMBER_INFINITY, GENERATION_NUMBER_MAX};
 
 /// The error used in [`File::traverse()`].
 #[derive(thiserror::Error, Debug)]

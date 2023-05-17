@@ -6,8 +6,8 @@ use std::{
 };
 
 use crate::{
-    file::{self, File, EXTENDED_EDGES_MASK, LAST_EXTENDED_EDGE_MASK, NO_PARENT},
-    graph,
+    file::{self, EXTENDED_EDGES_MASK, LAST_EXTENDED_EDGE_MASK, NO_PARENT},
+    File, Position,
 };
 
 /// The error used in the [`file::commit`][self] module.
@@ -25,6 +25,7 @@ pub enum Error {
 }
 
 /// A commit as stored in a [`File`].
+#[derive(Copy, Clone)]
 pub struct Commit<'a> {
     file: &'a File,
     pos: file::Position,
@@ -72,11 +73,11 @@ impl<'a> Commit<'a> {
     }
 
     /// Returns an iterator over the parent positions for lookup in the owning [Graph][crate::Graph].
-    pub fn iter_parents(&'a self) -> impl Iterator<Item = Result<graph::Position, Error>> + 'a {
+    pub fn iter_parents(self) -> Parents<'a> {
         // I didn't find a combinator approach that a) was as strict as ParentIterator, b) supported
         // fuse-after-first-error behavior, and b) was significantly shorter or more understandable
         // than ParentIterator. So here we are.
-        ParentIterator {
+        Parents {
             commit_data: self,
             state: ParentIteratorState::First,
         }
@@ -88,7 +89,7 @@ impl<'a> Commit<'a> {
     }
 
     /// Returns the first parent of this commit.
-    pub fn parent1(&self) -> Result<Option<graph::Position>, Error> {
+    pub fn parent1(&self) -> Result<Option<Position>, Error> {
         self.iter_parents().next().transpose()
     }
 
@@ -127,13 +128,13 @@ impl<'a> PartialEq for Commit<'a> {
 }
 
 /// An iterator over parents of a [`Commit`].
-pub struct ParentIterator<'a> {
-    commit_data: &'a Commit<'a>,
+pub struct Parents<'a> {
+    commit_data: Commit<'a>,
     state: ParentIteratorState<'a>,
 }
 
-impl<'a> Iterator for ParentIterator<'a> {
-    type Item = Result<graph::Position, Error>;
+impl<'a> Iterator for Parents<'a> {
+    type Item = Result<Position, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let state = std::mem::replace(&mut self.state, ParentIteratorState::Exhausted);
@@ -221,7 +222,7 @@ enum ParentIteratorState<'a> {
 #[derive(Clone, Copy, Debug)]
 enum ParentEdge {
     None,
-    GraphPosition(graph::Position),
+    GraphPosition(Position),
     ExtraEdgeIndex(u32),
 }
 
@@ -233,22 +234,22 @@ impl ParentEdge {
         if raw & EXTENDED_EDGES_MASK != 0 {
             ParentEdge::ExtraEdgeIndex(raw & !EXTENDED_EDGES_MASK)
         } else {
-            ParentEdge::GraphPosition(graph::Position(raw))
+            ParentEdge::GraphPosition(Position(raw))
         }
     }
 }
 
 enum ExtraEdge {
-    Internal(graph::Position),
-    Last(graph::Position),
+    Internal(Position),
+    Last(Position),
 }
 
 impl ExtraEdge {
     pub fn from_raw(raw: u32) -> Self {
         if raw & LAST_EXTENDED_EDGE_MASK != 0 {
-            Self::Last(graph::Position(raw & !LAST_EXTENDED_EDGE_MASK))
+            Self::Last(Position(raw & !LAST_EXTENDED_EDGE_MASK))
         } else {
-            Self::Internal(graph::Position(raw))
+            Self::Internal(Position(raw))
         }
     }
 }

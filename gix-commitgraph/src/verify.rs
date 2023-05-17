@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     file::{self, commit},
-    graph, Graph, GENERATION_NUMBER_MAX,
+    Graph, Position, GENERATION_NUMBER_MAX,
 };
 
 /// The error used in [`verify_integrity()`][Graph::verify_integrity].
@@ -46,8 +46,8 @@ pub enum Error<E: std::error::Error + 'static> {
     )]
     ParentOutOfRange {
         id: gix_hash::ObjectId,
-        max_valid_pos: graph::Position,
-        parent_pos: graph::Position,
+        max_valid_pos: Position,
+        parent_pos: Position,
     },
     #[error("{0}")]
     Processor(#[source] E),
@@ -97,7 +97,7 @@ impl Graph {
         // TODO: Detect duplicate commit IDs across different files. Not sure how to do this without
         //   a separate loop, e.g. self.iter_sorted_ids().
 
-        let mut file_start_pos = graph::Position(0);
+        let mut file_start_pos = Position(0);
         for (file_index, file) in self.files.iter().enumerate() {
             if usize::from(file.base_graph_count()) != file_index {
                 return Err(Error::BaseGraphCount {
@@ -127,7 +127,7 @@ impl Graph {
                 }
             }
 
-            let next_file_start_pos = graph::Position(file_start_pos.0 + file.num_commits());
+            let next_file_start_pos = Position(file_start_pos.0 + file.num_commits());
             let file_stats = file
                 .traverse(|commit| {
                     let mut max_parent_generation = 0u32;
@@ -137,7 +137,7 @@ impl Graph {
                             return Err(Error::ParentOutOfRange {
                                 parent_pos,
                                 id: commit.id().into(),
-                                max_valid_pos: graph::Position(next_file_start_pos.0 - 1),
+                                max_valid_pos: Position(next_file_start_pos.0 - 1),
                             });
                         }
                         let parent = self.commit_at(parent_pos);
