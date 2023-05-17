@@ -253,7 +253,6 @@ members = [
     "cargo-smart-release",
     "tests/tools",
 
-    "gix-revision/tests",
     "gix-diff/tests",
     "gix-pack/tests",
     "gix-index/tests",

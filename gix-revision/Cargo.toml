@@ -8,7 +8,6 @@ authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "CHANGELOG.md", "README.md"]
 rust-version = "1.64"
-autotests = false
 
 [lib]
 doctest = false
@@ -27,6 +26,10 @@ bstr = { version = "1.3.0", default-features = false, features = ["std"]}
 thiserror = "1.0.26"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 document-features = { version = "0.2.1", optional = true }
+
+[dev-dependencies]
+gix-odb = { path = "../gix-odb" }
+gix-testtools = { path = "../tests/tools" }
 
 [package.metadata.docs.rs]
 all-features = true

@@ -2169,20 +2169,10 @@ dependencies = [
  "gix-hash 0.11.1",
  "gix-hashtable 0.2.0",
  "gix-object 0.29.2",
+ "gix-odb",
+ "gix-testtools",
  "serde",
  "thiserror",
-]
-
-[[package]]
-name = "gix-revision-tests"
-version = "0.0.0"
-dependencies = [
- "bstr",
- "gix",
- "gix-hash 0.11.1",
- "gix-object 0.29.2",
- "gix-revision",
- "gix-testtools",
 ]
 
 [[package]]
