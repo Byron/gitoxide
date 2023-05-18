@@ -45,6 +45,11 @@ pub mod diff;
 pub struct Extensions;
 pub mod extensions;
 
+/// The `fetch` top-level section.
+#[derive(Copy, Clone, Default)]
+pub struct Fetch;
+pub mod fetch;
+
 /// The `gitoxide` top-level section.
 #[derive(Copy, Clone, Default)]
 pub struct Gitoxide;

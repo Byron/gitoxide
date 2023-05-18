@@ -94,7 +94,8 @@ impl<'a> Display for Format<'a> {
     }
 }
 
-type Flags = u32;
+/// A bit-field which keeps track of which commit is reachable by one of 32 candidates names.
+pub type Flags = u32;
 const MAX_CANDIDATES: usize = std::mem::size_of::<Flags>() * 8;
 
 /// The options required to call [`describe()`][function::describe()].
@@ -129,14 +130,11 @@ impl<'name> Default for Options<'name> {
 /// The error returned by the [`describe()`][function::describe()] function.
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
-pub enum Error<E>
-where
-    E: std::error::Error + Send + Sync + 'static,
-{
-    #[error("Commit {} could not be found during graph traversal", .oid.to_hex())]
-    Find {
+pub enum Error {
+    #[error("The parents of commit {} could not be added to graph during traversal", oid.to_hex())]
+    InsertParentsToGraph {
         #[source]
-        err: Option<E>,
+        err: crate::graph::insert_parents::Error,
         oid: gix_hash::ObjectId,
     },
     #[error("A commit could not be decoded during traversal")]
@@ -144,35 +142,30 @@ where
 }
 
 pub(crate) mod function {
-    use std::{borrow::Cow, cmp::Ordering, collections::VecDeque, iter::FromIterator};
+    use std::{borrow::Cow, cmp::Ordering};
 
     use bstr::BStr;
     use gix_hash::oid;
-    use gix_hashtable::{hash_map, HashMap};
-    use gix_object::CommitRefIter;
 
     use super::{Error, Outcome};
-    use crate::describe::{Flags, Options, MAX_CANDIDATES};
+    use crate::describe::{CommitTime, Flags, Options, MAX_CANDIDATES};
+    use crate::{Graph, PriorityQueue};
 
-    /// Given a `commit` id, traverse the commit graph and collect candidate names from the `name_by_oid` mapping to produce
+    /// Given a `commit` id, traverse the commit `graph` and collect candidate names from the `name_by_oid` mapping to produce
     /// an `Outcome`, which converted [`into_format()`][Outcome::into_format()] will produce a typical `git describe` string.
     ///
     /// Note that the `name_by_oid` map is returned in the [`Outcome`], which can be forcefully returned even if there was no matching
     /// candidate by setting `fallback_to_oid` to true.
-    pub fn describe<'name, Find, E>(
+    pub fn describe<'name>(
         commit: &oid,
-        mut find: Find,
+        graph: &mut Graph<'_, Flags>,
         Options {
             name_by_oid,
             mut max_candidates,
             fallback_to_oid,
             first_parent,
         }: Options<'name>,
-    ) -> Result<Option<Outcome<'name>>, Error<E>>
-    where
-        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<Option<CommitRefIter<'b>>, E>,
-        E: std::error::Error + Send + Sync + 'static,
-    {
+    ) -> Result<Option<Outcome<'name>>, Error> {
         max_candidates = max_candidates.min(MAX_CANDIDATES);
         if let Some(name) = name_by_oid.get(commit) {
             return Ok(Some(Outcome {
@@ -198,19 +191,16 @@ pub(crate) mod function {
             };
         }
 
-        let mut buf = Vec::new();
-        let mut parent_buf = Vec::new();
-
-        let mut queue = VecDeque::from_iter(Some((commit.to_owned(), u32::MAX)));
+        let mut queue = PriorityQueue::from_iter(Some((u32::MAX, commit.to_owned())));
         let mut candidates = Vec::new();
         let mut commits_seen = 0;
         let mut gave_up_on_commit = None;
-        let mut seen = HashMap::<gix_hash::ObjectId, Flags>::default();
-        seen.insert(commit.to_owned(), 0u32);
+        graph.clear();
+        graph.insert(commit.to_owned(), 0u32);
 
-        while let Some((commit, _commit_time)) = queue.pop_front() {
+        while let Some(commit) = queue.pop() {
             commits_seen += 1;
-            if let Some(name) = name_by_oid.get(&commit) {
+            let flags = if let Some(name) = name_by_oid.get(&commit) {
                 if candidates.len() < max_candidates {
                     let identity_bit = 1 << candidates.len();
                     candidates.push(Candidate {
@@ -219,14 +209,17 @@ pub(crate) mod function {
                         identity_bit,
                         order: candidates.len(),
                     });
-                    *seen.get_mut(&commit).expect("inserted") |= identity_bit;
+                    let flags = graph.get_mut(&commit).expect("inserted");
+                    *flags |= identity_bit;
+                    *flags
                 } else {
                     gave_up_on_commit = Some(commit);
                     break;
                 }
-            }
+            } else {
+                graph[&commit]
+            };
 
-            let flags = seen[&commit];
             for candidate in candidates
                 .iter_mut()
                 .filter(|c| (flags & c.identity_bit) != c.identity_bit)
@@ -257,16 +250,7 @@ pub(crate) mod function {
                 }
             }
 
-            parents_by_date_onto_queue_and_track_names(
-                &mut find,
-                &mut buf,
-                &mut parent_buf,
-                &mut queue,
-                &mut seen,
-                &commit,
-                flags,
-                first_parent,
-            )?;
+            parents_by_date_onto_queue_and_track_names(graph, &mut queue, commit, flags, first_parent)?;
         }
 
         if candidates.is_empty() {
@@ -290,17 +274,14 @@ pub(crate) mod function {
         });
 
         if let Some(commit_id) = gave_up_on_commit {
-            queue.push_front((commit_id, u32::MAX));
+            queue.insert(u32::MAX, commit_id);
             commits_seen -= 1;
         }
 
         commits_seen += finish_depth_computation(
             queue,
-            find,
+            graph,
             candidates.first_mut().expect("at least one candidate"),
-            seen,
-            buf,
-            parent_buf,
             first_parent,
         )?;
 
@@ -313,91 +294,41 @@ pub(crate) mod function {
         }))
     }
 
-    #[allow(clippy::too_many_arguments)]
-    fn parents_by_date_onto_queue_and_track_names<Find, E>(
-        find: &mut Find,
-        buf: &mut Vec<u8>,
-        parent_buf: &mut Vec<u8>,
-        queue: &mut VecDeque<(gix_hash::ObjectId, u32)>,
-        seen: &mut HashMap<gix_hash::ObjectId, Flags>,
-        commit: &gix_hash::oid,
+    fn parents_by_date_onto_queue_and_track_names(
+        graph: &mut Graph<'_, Flags>,
+        queue: &mut PriorityQueue<CommitTime, gix_hash::ObjectId>,
+        commit: gix_hash::ObjectId,
         commit_flags: Flags,
         first_parent: bool,
-    ) -> Result<(), Error<E>>
-    where
-        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<Option<CommitRefIter<'b>>, E>,
-        E: std::error::Error + Send + Sync + 'static,
-    {
-        let commit_iter = find(commit, buf)
-            .map_err(|err| Error::Find {
-                err: Some(err),
-                oid: commit.to_owned(),
-            })?
-            .ok_or_else(|| Error::Find {
-                err: None,
-                oid: commit.to_owned(),
-            })?;
-        for token in commit_iter {
-            match token {
-                Ok(gix_object::commit::ref_iter::Token::Tree { .. }) => continue,
-                Ok(gix_object::commit::ref_iter::Token::Parent { id: parent_id }) => match seen.entry(parent_id) {
-                    hash_map::Entry::Vacant(entry) => {
-                        let parent = match find(&parent_id, parent_buf).map_err(|err| Error::Find {
-                            err: Some(err),
-                            oid: commit.to_owned(),
-                        })? {
-                            Some(p) => p,
-                            None => continue, // skip missing objects, they don't exist.
-                        };
-
-                        let parent_commit_date = parent
-                            .committer()
-                            .map(|committer| committer.time.seconds_since_unix_epoch)
-                            .unwrap_or_default();
-
-                        entry.insert(commit_flags);
-                        match queue.binary_search_by(|c| c.1.cmp(&parent_commit_date).reverse()) {
-                            Ok(_) => queue.push_back((parent_id, parent_commit_date)),
-                            Err(pos) => queue.insert(pos, (parent_id, parent_commit_date)),
-                        };
-                    }
-                    hash_map::Entry::Occupied(mut entry) => {
-                        *entry.get_mut() |= commit_flags;
-                    }
+    ) -> Result<(), Error> {
+        graph
+            .insert_parents(
+                &commit,
+                |parent_id, parent_commit_date| {
+                    queue.insert(parent_commit_date as u32, parent_id);
+                    commit_flags
                 },
-                Ok(_unused_token) => break,
-                Err(err) => return Err(err.into()),
-            }
-            if first_parent {
-                break;
-            }
-        }
-
+                |_parent_id, flags| *flags |= commit_flags,
+                first_parent,
+            )
+            .map_err(|err| Error::InsertParentsToGraph { err, oid: commit })?;
         Ok(())
     }
 
-    #[allow(clippy::too_many_arguments)]
-    fn finish_depth_computation<'name, Find, E>(
-        mut queue: VecDeque<(gix_hash::ObjectId, u32)>,
-        mut find: Find,
-        best_candidate: &mut Candidate<'name>,
-        mut seen: HashMap<gix_hash::ObjectId, Flags>,
-        mut buf: Vec<u8>,
-        mut parent_buf: Vec<u8>,
+    fn finish_depth_computation(
+        mut queue: PriorityQueue<CommitTime, gix_hash::ObjectId>,
+        graph: &mut Graph<'_, Flags>,
+        best_candidate: &mut Candidate<'_>,
         first_parent: bool,
-    ) -> Result<u32, Error<E>>
-    where
-        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<Option<CommitRefIter<'b>>, E>,
-        E: std::error::Error + Send + Sync + 'static,
-    {
+    ) -> Result<u32, Error> {
         let mut commits_seen = 0;
-        while let Some((commit, _commit_time)) = queue.pop_front() {
+        while let Some(commit) = queue.pop() {
             commits_seen += 1;
-            let flags = seen[&commit];
+            let flags = graph[&commit];
             if (flags & best_candidate.identity_bit) == best_candidate.identity_bit {
                 if queue
-                    .iter()
-                    .all(|(id, _)| (seen[id] & best_candidate.identity_bit) == best_candidate.identity_bit)
+                    .iter_random()
+                    .all(|id| (graph[id] & best_candidate.identity_bit) == best_candidate.identity_bit)
                 {
                     break;
                 }
@@ -405,16 +336,7 @@ pub(crate) mod function {
                 best_candidate.commits_in_its_future += 1;
             }
 
-            parents_by_date_onto_queue_and_track_names(
-                &mut find,
-                &mut buf,
-                &mut parent_buf,
-                &mut queue,
-                &mut seen,
-                &commit,
-                flags,
-                first_parent,
-            )?;
+            parents_by_date_onto_queue_and_track_names(graph, &mut queue, commit, flags, first_parent)?;
         }
         Ok(commits_seen)
     }
@@ -429,3 +351,6 @@ pub(crate) mod function {
         order: usize,
     }
 }
+
+/// The timestamp for the creation date of a commit in seconds since unix epoch.
+type CommitTime = u32;

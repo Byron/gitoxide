@@ -21,4 +21,8 @@ git commit -q --allow-empty -m c5
 git tag at-c5
 git merge branch1 -m m1b1
 
-git clone --depth 1 file://$PWD shallow-clone
+git commit-graph write --no-progress --reachable
+git repack -adq
+
+git clone --depth 1 file://$PWD shallow-1-clone
+git clone --depth 2 file://$PWD shallow-2-clone

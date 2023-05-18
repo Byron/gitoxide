@@ -117,6 +117,36 @@ mod ssh {
     }
 }
 
+mod fetch {
+    use crate::config::tree::bcow;
+    use gix::config::tree::{Fetch, Key};
+    use gix::remote::fetch::negotiate::Algorithm;
+
+    #[test]
+    fn algorithm() -> crate::Result {
+        for (actual, expected) in [
+            ("noop", Algorithm::Noop),
+            ("consecutive", Algorithm::Consecutive),
+            ("skipping", Algorithm::Skipping),
+            ("default", Algorithm::Consecutive), // actually, default can be Skipping of `feature.experimental` is true, but we don't deal with that yet until we implement `skipping`
+        ] {
+            assert_eq!(
+                Fetch::NEGOTIATION_ALGORITHM.try_into_negotiation_algorithm(bcow(actual))?,
+                expected
+            );
+            assert!(Fetch::NEGOTIATION_ALGORITHM.validate(actual.into()).is_ok());
+        }
+        assert_eq!(
+            Fetch::NEGOTIATION_ALGORITHM
+                .try_into_negotiation_algorithm(bcow("foo"))
+                .unwrap_err()
+                .to_string(),
+            "The key \"fetch.negotiationAlgorithm=foo\" was invalid"
+        );
+        Ok(())
+    }
+}
+
 mod diff {
     use gix::{
         config::tree::{Diff, Key},

@@ -7,7 +7,7 @@ use std::{
     process::Command,
 };
 
-use gix_commitgraph::{graph::Position as GraphPosition, Graph};
+use gix_commitgraph::{Graph, Position as GraphPosition};
 
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
@@ -29,7 +29,6 @@ pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHa
 
         let expected_parents: Vec<_> = ref_info
             .parent_ids()
-            .into_iter()
             .map(|id| {
                 expected
                     .values()
@@ -81,7 +80,7 @@ impl RefInfo {
         self.pos
     }
 
-    pub fn parent_ids(&self) -> impl IntoIterator<Item = &gix_hash::oid> {
+    pub fn parent_ids(&self) -> impl Iterator<Item = &gix_hash::oid> {
         self.parent_ids.iter().map(|x| x.as_ref())
     }
 

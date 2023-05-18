@@ -4,12 +4,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{
-    file::{self, File},
-    Graph, MAX_COMMITS,
-};
+use crate::{file, File, Graph, MAX_COMMITS};
 
-/// The error used in the [`graph`][crate::graph] module.
+/// The error returned by initializations functions like [`Graph::at()`].
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {

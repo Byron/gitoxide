@@ -1,3 +1,29 @@
+///
+pub mod negotiate {
+    /// The way the negotiation is performed.
+    #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+    pub enum Algorithm {
+        /// Do not send any information at all, likely at cost of larger-than-necessary packs.
+        Noop,
+        /// Walk over consecutive commits and check each one. This can be costly be assures packs are exactly the size they need to be.
+        #[default]
+        Consecutive,
+        /// Like `Consecutive`, but skips commits to converge faster, at the cost of receiving packs that are larger than they have to be.
+        Skipping,
+        /// Our very own implementation that probably should be replaced by one of the known algorithms soon.
+        Naive,
+    }
+
+    #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
+    pub use super::super::connection::fetch::negotiate::Error;
+
+    #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
+    pub(crate) use super::super::connection::fetch::negotiate::one_round;
+}
+
+#[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
+pub use super::connection::fetch::{prepare, refs, Error, Outcome, Prepare, ProgressId, RefLogMessage, Status};
+
 /// If `Yes`, don't really make changes but do as much as possible to get an idea of what would be done.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
@@ -197,8 +223,3 @@ pub struct Mapping {
     /// The index into the fetch ref-specs used to produce the mapping, allowing it to be recovered.   
     pub spec_index: SpecIndex,
 }
-
-#[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
-pub use super::connection::fetch::{
-    negotiate, prepare, refs, Error, Outcome, Prepare, ProgressId, RefLogMessage, Status,
-};

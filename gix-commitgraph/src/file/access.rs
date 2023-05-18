@@ -4,7 +4,10 @@ use std::{
     path::Path,
 };
 
-use crate::file::{self, commit::Commit, File, COMMIT_DATA_ENTRY_SIZE_SANS_HASH};
+use crate::{
+    file::{self, commit::Commit, COMMIT_DATA_ENTRY_SIZE_SANS_HASH},
+    File,
+};
 
 /// Access
 impl File {

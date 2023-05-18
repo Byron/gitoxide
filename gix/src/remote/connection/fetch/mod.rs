@@ -91,8 +91,7 @@ impl From<ProgressId> for gix_features::progress::Id {
     }
 }
 
-///
-pub mod negotiate;
+pub(crate) mod negotiate;
 
 ///
 pub mod prepare {

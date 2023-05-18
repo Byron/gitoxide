@@ -8,7 +8,6 @@ authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "CHANGELOG.md", "README.md"]
 rust-version = "1.64"
-autotests = false
 
 [lib]
 doctest = false
@@ -22,11 +21,17 @@ gix-hash = { version = "^0.11.1", path = "../gix-hash" }
 gix-object = { version = "^0.29.2", path = "../gix-object" }
 gix-date = { version = "^0.5.0", path = "../gix-date" }
 gix-hashtable = { version = "^0.2.0", path = "../gix-hashtable" }
+gix-commitgraph = { version = "0.14.0", path = "../gix-commitgraph" }
 
 bstr = { version = "1.3.0", default-features = false, features = ["std"]}
 thiserror = "1.0.26"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
+smallvec = "1.10.0"
 document-features = { version = "0.2.1", optional = true }
+
+[dev-dependencies]
+gix-odb = { path = "../gix-odb" }
+gix-testtools = { path = "../tests/tools" }
 
 [package.metadata.docs.rs]
 all-features = true

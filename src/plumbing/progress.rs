@@ -295,12 +295,6 @@ static GIT_CONFIG: &[Record] = &[
         usage: NotPlanned {reason: "'gix' might support it, but there is no intention on copying the 'git' CLI"},
     },
     Record {
-        config: "fetch.negotiationAlgorithm",
-        usage: Planned {
-            note: Some("Implements our own 'naive' algorithm, only"),
-        },
-    },
-    Record {
         config: "remotes.<group>",
         usage: Planned {
             note: Some("useful for multi-remote fetches as part of the standard API, maybe just `group(name) -> Option<Vec<Remote>>`"),

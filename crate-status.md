@@ -469,6 +469,7 @@ Make it the best-performing implementation and the most convenient one.
  
 ### gix-revision
 * [x] `describe()` (similar to `git name-rev`)
+* [x] primitives to help with graph traversal, along with commit-graph acceleration.
 * parse specifications 
     * [x] parsing and navigation
     * [x] revision ranges
@@ -638,7 +639,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
     * **Id**
         * [x] short hashes with detection of ambiguity.
     * **Commit**
-        * [x] `describe()` like functionality
+        * [x] `git describe` like functionality, with optional commit-graph acceleration
         * [x] create new commit from tree
     * **Objects**
         * [x] lookup
