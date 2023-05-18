@@ -68,6 +68,7 @@ serde = [   "dep:serde",
             "gix-ignore/serde",
             "gix-revision/serde",
             "gix-worktree/serde",
+            "gix-commitgraph/serde",
             "gix-credentials/serde"]
 
 ## Re-export the progress tree root which allows to obtain progress from various functions which take `impl gix::Progress`.
@@ -148,6 +149,7 @@ gix-prompt = { version = "^0.5.0", path = "../gix-prompt" }
 gix-index = { version = "^0.16.1", path = "../gix-index" }
 gix-worktree = { version = "^0.17.1", path = "../gix-worktree" }
 gix-hashtable = { version = "^0.2.0", path = "../gix-hashtable" }
+gix-commitgraph = { version = "^0.14.0", path = "../gix-commitgraph" }
 
 prodash = { version = "23.1", optional = true, default-features = false, features = ["progress-tree"] }
 once_cell = "1.14.0"

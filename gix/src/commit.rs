@@ -52,7 +52,7 @@ pub mod describe {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Describe(#[from] gix_revision::describe::Error<gix_odb::store::find::Error>),
+        Describe(#[from] gix_revision::describe::Error),
         #[error("Could not produce an unambiguous shortened id for formatting.")]
         ShortId(#[from] crate::id::shorten::Error),
         #[error(transparent)]
@@ -201,15 +201,18 @@ pub mod describe {
         /// to save ~40% of time.
         pub fn try_resolve(&self) -> Result<Option<Resolution<'repo>>, Error> {
             // TODO: dirty suffix with respective dirty-detection
+            let mut graph = gix_revision::Graph::new(
+                |id, buf| {
+                    self.repo
+                        .objects
+                        .try_find(id, buf)
+                        .map(|r| r.and_then(|d| d.try_into_commit_iter()))
+                },
+                gix_commitgraph::Graph::from_info_dir(self.repo.objects.store_ref().path().join("info")).ok(),
+            );
             let outcome = gix_revision::describe(
                 &self.id,
-                |id, buf| {
-                    Ok(self
-                        .repo
-                        .objects
-                        .try_find(id, buf)?
-                        .and_then(|d| d.try_into_commit_iter()))
-                },
+                &mut graph,
                 gix_revision::describe::Options {
                     name_by_oid: self.select.names(self.repo)?,
                     fallback_to_oid: self.id_as_fallback,
@@ -218,7 +221,7 @@ pub mod describe {
                 },
             )?;
 
-            Ok(outcome.map(|outcome| crate::commit::describe::Resolution {
+            Ok(outcome.map(|outcome| Resolution {
                 outcome,
                 id: self.id.attach(self.repo),
             }))

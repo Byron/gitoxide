@@ -68,6 +68,7 @@
 // APIs/instances anyway.
 pub use gix_actor as actor;
 pub use gix_attributes as attrs;
+pub use gix_commitgraph as commitgraph;
 pub use gix_credentials as credentials;
 pub use gix_date as date;
 pub use gix_features as features;
