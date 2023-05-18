@@ -13,26 +13,29 @@ mod format;
 fn run_test(
     transform_odb: impl FnOnce(gix_odb::Handle) -> gix_odb::Handle,
     options: impl Fn(gix_hash::ObjectId) -> gix_revision::describe::Options<'static>,
-    run_assertions: impl Fn(
-        Result<Option<Outcome<'static>>, Error<gix_odb::store::find::Error>>,
-        gix_hash::ObjectId,
-    ) -> crate::Result,
+    run_assertions: impl Fn(Result<Option<Outcome<'static>>, Error>, gix_hash::ObjectId) -> crate::Result,
 ) -> crate::Result {
     let store = odb_at(".");
     let store = transform_odb(store);
     let commit_id = hex_to_id("01ec18a3ebf2855708ad3c9d244306bc1fae3e9b");
-    run_assertions(
-        gix_revision::describe(
-            &commit_id,
+    for use_commitgraph in [false, true] {
+        let cache = use_commitgraph
+            .then(|| gix_commitgraph::Graph::from_info_dir(store.store_ref().path().join("info")).ok())
+            .flatten();
+        let mut graph = gix_revision::Graph::new(
             |id, buf| {
                 store
                     .try_find(id, buf)
                     .map(|r| r.and_then(|d| d.try_into_commit_iter()))
             },
-            options(commit_id),
-        ),
-        commit_id,
-    )
+            cache,
+        );
+        run_assertions(
+            gix_revision::describe(&commit_id, &mut graph, options(commit_id)),
+            commit_id,
+        )?;
+    }
+    Ok(())
 }
 
 #[test]
