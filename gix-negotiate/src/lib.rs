@@ -3,6 +3,9 @@
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
+mod consecutive;
+mod noop;
+
 /// The way the negotiation is performed.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Algorithm {
@@ -15,21 +18,6 @@ pub enum Algorithm {
     Skipping,
 }
 
-// static int next_flush(int stateless_rpc, int count)
-// {
-// if (stateless_rpc) {
-// if (count < LARGE_FLUSH)
-// count <<= 1;
-// else
-// count = count * 11 / 10;
-// } else {
-// if (count < PIPESAFE_FLUSH)
-// count <<= 1;
-// else
-// count += PIPESAFE_FLUSH;
-// }
-// return count;
-// }
 /// Calculate how many `HAVE` lines we may send in one round, with variation depending on whether the `transport_is_stateless` or not.
 /// `window_size` is the previous (or initial) value of the window size.
 pub fn window_size(transport_is_stateless: bool, window_size: impl Into<Option<usize>>) -> usize {
@@ -46,11 +34,53 @@ pub fn window_size(transport_is_stateless: bool, window_size: impl Into<Option<u
         } else {
             current_size * 11 / 10
         }
+    } else if current_size < PIPESAFE_FLUSH {
+        current_size * 2
     } else {
-        if current_size < PIPESAFE_FLUSH {
-            current_size * 2
-        } else {
-            current_size + PIPESAFE_FLUSH
+        current_size + PIPESAFE_FLUSH
+    }
+}
+
+impl Algorithm {
+    /// Create an instance of a negotiator which implements this algorithm.
+    pub fn into_negotiator<'find, Find, E>(
+        self,
+        find: Find,
+        cache: impl Into<Option<gix_commitgraph::Graph>>,
+    ) -> Box<dyn Negotiator>
+    where
+        Find:
+            for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<Option<gix_object::CommitRefIter<'a>>, E> + 'find,
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        match &self {
+            Algorithm::Noop => Box::new(noop::Noop) as Box<dyn Negotiator>,
+            Algorithm::Consecutive => {
+                let _graph = gix_revision::Graph::<'_, consecutive::Flags>::new(find, cache);
+                todo!()
+            }
+            Algorithm::Skipping => todo!(),
         }
     }
+}
+
+/// A delegate to implement a negotiation algorithm.
+pub trait Negotiator {
+    /// Mark `id` as common between the remote and us.
+    ///
+    /// These ids are typically the local tips of remote tracking branches.
+    fn known_common(&mut self, id: &gix_hash::oid);
+
+    /// Add `id` as starting point of a traversal across commits that aren't necessarily common between the remote and us.
+    ///
+    /// These tips are usually the commits of local references whose tips should lead to objects that we have in common with the remote.
+    fn add_tip(&mut self, id: &gix_hash::oid);
+
+    /// Produce the next id of an object that we want the server to know we have. It's an object we don't know we have in common or not.
+    ///
+    /// Returns `None` if we have exhausted all options, which might mean we have traversed the entire commit graph.
+    fn next_have(&mut self) -> Option<gix_hash::ObjectId>;
+
+    /// Mark `id` as being common with the remote (as informed by the remote itself) and return `true` if we knew it was common already.
+    fn in_common_with_remote(&mut self, id: &gix_hash::oid) -> bool;
 }
