@@ -13,4 +13,4 @@ doctest = false
 test = false
 
 [dependencies]
-gix-revision = { version = "0.13.0", path = "../gix-revision" }
+gix-revision = { version = "^0.14.0", path = "../gix-revision" }

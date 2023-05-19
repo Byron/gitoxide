@@ -24,6 +24,6 @@ Initial release with a single function to calculate the window size for `HAVE` l
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Add new crate for implementing and testing git negotiation logic. ([`b7a0d73`](https://github.com/Byron/gitoxide/commit/b7a0d73501e1754dc3457dab2a2c4eca1a882270))
+    - Add new crate for implementing and testing git negotiation logic. ([`372ba09`](https://github.com/Byron/gitoxide/commit/372ba09bb00e3fab674f0251f697aab11c5559f8))
 </details>
 
