@@ -9,7 +9,7 @@ mod noop;
 /// The way the negotiation is performed.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Algorithm {
-    /// Do not send any information at all, likely at cost of larger-than-necessary packs.
+    /// Do not send any information at all, which typically leads to complete packs to be sent.
     Noop,
     /// Walk over consecutive commits and check each one. This can be costly be assures packs are exactly the size they need to be.
     #[default]

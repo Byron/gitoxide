@@ -1,3 +1,5 @@
+use gix_testtools::Result;
+
 mod window_size {
     use gix_negotiate::window_size;
 
@@ -31,3 +33,5 @@ mod window_size {
         }
     }
 }
+
+mod baseline;
