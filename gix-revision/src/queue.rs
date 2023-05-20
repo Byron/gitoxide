@@ -7,6 +7,18 @@ pub(crate) struct Item<K, T> {
     value: T,
 }
 
+impl<K: Ord + std::fmt::Debug, T: std::fmt::Debug> std::fmt::Debug for Item<K, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({:?}: {:?})", self.key, self.value)
+    }
+}
+
+impl<K: Ord + std::fmt::Debug, T: std::fmt::Debug> std::fmt::Debug for PriorityQueue<K, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.0, f)
+    }
+}
+
 impl<K: Ord, T> PartialEq<Self> for Item<K, T> {
     fn eq(&self, other: &Self) -> bool {
         Ord::cmp(self, other).is_eq()
@@ -28,6 +40,10 @@ impl<K: Ord, T> Ord for Item<K, T> {
 }
 
 impl<K: Ord, T> PriorityQueue<K, T> {
+    /// Create a new instance.
+    pub fn new() -> Self {
+        PriorityQueue(Default::default())
+    }
     /// Insert `value` so that it is ordered according to `key`.
     pub fn insert(&mut self, key: K, value: T) {
         self.0.push(Item { key, value });
