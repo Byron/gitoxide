@@ -6,12 +6,16 @@ use gix_odb::Find;
 #[test]
 fn run() -> crate::Result {
     let root = gix_testtools::scripted_fixture_read_only("make_repos.sh")?;
-    for case in ["no_parents"] {
+    for case in [
+        "no_parents",
+        "clock_skew",
+        "two_colliding_skips", /* "multi_round" */
+    ] {
         let base = root.join(case);
 
         for (algo_name, algo) in [
             ("noop", Algorithm::Noop),
-            // ("consecutive", Algorithm::Consecutive),
+            ("consecutive", Algorithm::Consecutive),
             // ("skipping", Algorithm::Skipping),
         ] {
             let buf = std::fs::read(base.join(format!("baseline.{algo_name}")))?;
@@ -31,26 +35,27 @@ fn run() -> crate::Result {
                     cache,
                 );
                 for tip in &tips {
-                    negotiator.add_tip(tip);
+                    negotiator.add_tip(*tip)?;
                 }
                 for Round { haves, common } in ParseRounds::new(buf.lines()) {
                     for have in haves {
                         let actual = negotiator.next_have().unwrap_or_else(|| {
-                            panic!(
-                                "{algo_name}: one have per baseline: {have} missing or in wrong order, left: {:?}",
-                                std::iter::from_fn(|| negotiator.next_have()).collect::<Vec<_>>()
-                            )
-                        });
-                        assert_eq!(actual, have, "{algo_name}: order and commit matches exactly");
+                            panic!("{algo_name}:{use_cache}: one have per baseline: {have} missing or in wrong order")
+                        })?;
+                        assert_eq!(
+                            actual,
+                            have,
+                            "{algo_name}:{use_cache}: order and commit matches exactly, left: {:?}",
+                            std::iter::from_fn(|| negotiator.next_have()).collect::<Vec<_>>()
+                        );
                     }
                     for common_revision in common {
-                        negotiator.in_common_with_remote(&common_revision);
+                        negotiator.in_common_with_remote(common_revision)?;
                     }
                 }
-                assert_eq!(
-                    negotiator.next_have(),
-                    None,
-                    "{algo_name}: negotiator should be depleted after all recorded baseline rounds"
+                assert!(
+                    negotiator.next_have().is_none(),
+                    "{algo_name}:{use_cache}: negotiator should be depleted after all recorded baseline rounds"
                 );
             }
         }

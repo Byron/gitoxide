@@ -17,6 +17,9 @@ gix-hash = { version = "^0.11.1", path = "../gix-hash" }
 gix-object = { version = "^0.29.2", path = "../gix-object" }
 gix-commitgraph = { version = "^0.15.0", path = "../gix-commitgraph" }
 gix-revision = { version = "^0.14.0", path = "../gix-revision" }
+thiserror = "1.0.40"
+smallvec = "1.10.0"
+bitflags = "2"
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools" }

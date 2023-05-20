@@ -1864,12 +1864,15 @@ dependencies = [
 name = "gix-negotiate"
 version = "0.1.0"
 dependencies = [
+ "bitflags 2.1.0",
  "gix-commitgraph",
  "gix-hash 0.11.1",
  "gix-object 0.29.2",
  "gix-odb",
  "gix-revision",
  "gix-testtools",
+ "smallvec",
+ "thiserror",
 ]
 
 [[package]]

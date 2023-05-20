@@ -47,7 +47,7 @@ impl Algorithm {
         self,
         find: Find,
         cache: impl Into<Option<gix_commitgraph::Graph>>,
-    ) -> Box<dyn Negotiator>
+    ) -> Box<dyn Negotiator + 'find>
     where
         Find:
             for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<Option<gix_object::CommitRefIter<'a>>, E> + 'find,
@@ -56,8 +56,8 @@ impl Algorithm {
         match &self {
             Algorithm::Noop => Box::new(noop::Noop) as Box<dyn Negotiator>,
             Algorithm::Consecutive => {
-                let _graph = gix_revision::Graph::<'_, consecutive::Flags>::new(find, cache);
-                todo!()
+                let graph = gix_revision::Graph::<'_, consecutive::Flags>::new(find, cache);
+                Box::new(consecutive::Algorithm::new(graph))
             }
             Algorithm::Skipping => todo!(),
         }
@@ -69,18 +69,32 @@ pub trait Negotiator {
     /// Mark `id` as common between the remote and us.
     ///
     /// These ids are typically the local tips of remote tracking branches.
-    fn known_common(&mut self, id: &gix_hash::oid);
+    fn known_common(&mut self, id: gix_hash::ObjectId) -> Result<(), Error>;
 
     /// Add `id` as starting point of a traversal across commits that aren't necessarily common between the remote and us.
     ///
     /// These tips are usually the commits of local references whose tips should lead to objects that we have in common with the remote.
-    fn add_tip(&mut self, id: &gix_hash::oid);
+    fn add_tip(&mut self, id: gix_hash::ObjectId) -> Result<(), Error>;
 
     /// Produce the next id of an object that we want the server to know we have. It's an object we don't know we have in common or not.
     ///
     /// Returns `None` if we have exhausted all options, which might mean we have traversed the entire commit graph.
-    fn next_have(&mut self) -> Option<gix_hash::ObjectId>;
+    fn next_have(&mut self) -> Option<Result<gix_hash::ObjectId, Error>>;
 
     /// Mark `id` as being common with the remote (as informed by the remote itself) and return `true` if we knew it was common already.
-    fn in_common_with_remote(&mut self, id: &gix_hash::oid) -> bool;
+    ///
+    /// We can assume to have already seen `id` as we were the one to inform the remote in a prior `have`.
+    fn in_common_with_remote(&mut self, id: gix_hash::ObjectId) -> Result<bool, Error>;
+}
+
+/// An error that happened during any of the methods on a [`Negotiator`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    DecodeCommit(#[from] gix_object::decode::Error),
+    #[error(transparent)]
+    DecodeCommitInGraph(#[from] gix_commitgraph::file::commit::Error),
+    #[error(transparent)]
+    LookupCommitInGraph(#[from] gix_revision::graph::lookup::Error),
 }
