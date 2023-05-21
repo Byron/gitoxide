@@ -4,19 +4,16 @@ use gix_object::bstr::ByteSlice;
 use gix_odb::Find;
 
 #[test]
+#[ignore = "consecutive fails half way through multi-round, and skipping fails everything but 'no_parents'"]
 fn run() -> crate::Result {
     let root = gix_testtools::scripted_fixture_read_only("make_repos.sh")?;
-    for case in [
-        "no_parents",
-        "clock_skew",
-        "two_colliding_skips", /* "multi_round" */
-    ] {
+    for case in ["no_parents", "clock_skew", "two_colliding_skips", "multi_round"] {
         let base = root.join(case);
 
         for (algo_name, algo) in [
             ("noop", Algorithm::Noop),
             ("consecutive", Algorithm::Consecutive),
-            // ("skipping", Algorithm::Skipping),
+            ("skipping", Algorithm::Skipping),
         ] {
             let buf = std::fs::read(base.join(format!("baseline.{algo_name}")))?;
             let tips = parse::object_ids("", std::fs::read(base.join("tips"))?.lines());

@@ -5,6 +5,7 @@
 
 mod consecutive;
 mod noop;
+mod skipping;
 
 /// The way the negotiation is performed.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
@@ -59,7 +60,10 @@ impl Algorithm {
                 let graph = gix_revision::Graph::<'_, consecutive::Flags>::new(find, cache);
                 Box::new(consecutive::Algorithm::new(graph))
             }
-            Algorithm::Skipping => todo!(),
+            Algorithm::Skipping => {
+                let graph = gix_revision::Graph::<'_, skipping::Entry>::new(find, cache);
+                Box::new(skipping::Algorithm::new(graph))
+            }
         }
     }
 }

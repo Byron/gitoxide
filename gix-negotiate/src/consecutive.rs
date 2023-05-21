@@ -6,11 +6,11 @@ bitflags::bitflags! {
     /// Whether something can be read or written.
     #[derive(Debug, Default, Copy, Clone)]
     pub struct Flags: u8 {
-        /// The revision is known to be in common with the remote
+        /// The revision is known to be in common with the remote.
         const COMMON = 1 << 0;
         /// The revision is common and was set by merit of a remote tracking ref (e.g. `refs/heads/origin/main`).
         const COMMON_REF = 1 << 1;
-        /// The revision was processed by us and used to avoid processing it again.
+        /// The revision has entered the priority queue.
         const SEEN = 1 << 2;
         /// The revision was popped off our primary priority queue, used to avoid double-counting of `non_common_revs`
         const POPPED = 1 << 3;
@@ -101,7 +101,7 @@ impl<'a> Algorithm<'a> {
     }
 }
 
-fn collect_parents(
+pub(crate) fn collect_parents(
     parents: gix_revision::graph::commit::Parents<'_>,
     out: &mut SmallVec<[ObjectId; 2]>,
 ) -> Result<(), Error> {
