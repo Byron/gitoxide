@@ -37,7 +37,6 @@ function trace_fetch_baseline () {
   git -C client commit-graph write --no-progress --reachable
   git -C client repack -adq
 
-  for tip in "$@"; do git -C client rev-parse "$tip" >> tips; done
   for algo in noop consecutive skipping; do
     GIT_TRACE_PACKET="$PWD/baseline.$algo" \
     git -C client -c fetch.negotiationAlgorithm="$algo" fetch --negotiate-only $(negotiation_tips "$@") \

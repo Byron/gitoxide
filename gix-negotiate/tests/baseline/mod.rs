@@ -3,6 +3,7 @@ use gix_object::bstr;
 use gix_object::bstr::ByteSlice;
 use gix_odb::Find;
 use gix_odb::FindExt;
+use gix_ref::file::ReferenceExt;
 use gix_ref::store::WriteReflog;
 use std::cell::RefCell;
 
@@ -25,7 +26,6 @@ fn run() -> crate::Result {
         ] {
             let obj_buf = RefCell::new(Vec::new());
             let buf = std::fs::read(base.join(format!("baseline.{algo_name}")))?;
-            let tips = parse::object_ids("", std::fs::read(base.join("tips"))?.lines());
             let store = gix_odb::at(base.join("client").join(".git/objects"))?;
             let refs = gix_ref::file::Store::at(
                 base.join("client").join(".git"),
@@ -35,7 +35,15 @@ fn run() -> crate::Result {
             let lookup_names = |names: &[&str]| -> Vec<gix_hash::ObjectId> {
                 names
                     .iter()
-                    .map(|name| refs.find(*name).expect("one tag per commit").target.into_id())
+                    .filter_map(|name| {
+                        refs.try_find(*name).expect("one tag per commit").map(|mut r| {
+                            r.peel_to_id_in_place(&refs, |id, buf| {
+                                store.try_find(id, buf).map(|d| d.map(|d| (d.kind, d.data)))
+                            })
+                            .expect("works");
+                            r.target.into_id()
+                        })
+                    })
                     .collect()
             };
             let message = |id| {
@@ -61,16 +69,21 @@ fn run() -> crate::Result {
                     cache,
                 );
                 eprintln!("ALGO {algo_name} CASE {case}");
-                // for (common, remote_ref) in ["origin/main"]
-                //     .into_iter()
-                //     .filter_map(|name| refs.try_find(name).ok().flatten().map(|r| (r.target.into_id(), name)))
-                // {
-                //     eprintln!("COMMON {remote_ref} {common}", common = message(common));
+                // // In --negotiate-only mode, which seems to be the only thing that's working after trying --dry-run, we unfortunately
+                // // don't get to see what happens if known-common commits are added as git itself doesn't do that in this mode
+                // // for some reason.
+                // for common in lookup_names(&["origin/main"]) {
+                //     eprintln!("COMMON {name} {common}", name = message(common));
                 //     negotiator.known_common(common)?;
                 // }
-                for tip in &tips {
-                    eprintln!("TIP {}", message(*tip));
-                    negotiator.add_tip(*tip)?;
+                for tip in lookup_names(&["HEAD"]).into_iter().chain(
+                    refs.iter()?
+                        .prefixed("refs/heads")?
+                        .filter_map(Result::ok)
+                        .map(|r| r.target.into_id()),
+                ) {
+                    eprintln!("TIP {name} {tip}", name = message(tip));
+                    negotiator.add_tip(tip)?;
                 }
                 for (round, Round { mut haves, common }) in ParseRounds::new(buf.lines()).enumerate() {
                     if algo == Algorithm::Skipping {
