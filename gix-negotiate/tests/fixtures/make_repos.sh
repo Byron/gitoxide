@@ -19,9 +19,9 @@ function commit() {
   local file="$message.t"
   echo "$1" > "$file"
   git add -- "$file"
+  tick
   git commit -m "$message"
   git tag "$message"
-  tick
 }
 
 function negotiation_tips () {

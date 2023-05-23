@@ -24,3 +24,4 @@ bitflags = "2"
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools" }
 gix-odb = { path = "../gix-odb" }
+gix-ref = { path = "../gix-ref" }

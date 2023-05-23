@@ -3,6 +3,7 @@ use gix_object::bstr;
 use gix_object::bstr::ByteSlice;
 use gix_odb::Find;
 use gix_odb::FindExt;
+use gix_ref::store::WriteReflog;
 use std::cell::RefCell;
 
 #[test]
@@ -14,12 +15,23 @@ fn run() -> crate::Result {
         for (algo_name, algo) in [
             ("noop", Algorithm::Noop),
             ("consecutive", Algorithm::Consecutive),
-            // ("skipping", Algorithm::Skipping),
+            ("skipping", Algorithm::Skipping),
         ] {
             let obj_buf = RefCell::new(Vec::new());
             let buf = std::fs::read(base.join(format!("baseline.{algo_name}")))?;
             let tips = parse::object_ids("", std::fs::read(base.join("tips"))?.lines());
             let store = gix_odb::at(base.join("client").join(".git/objects"))?;
+            let refs = gix_ref::file::Store::at(
+                base.join("client").join(".git"),
+                WriteReflog::Disable,
+                gix_hash::Kind::Sha1,
+            );
+            let lookup_names = |names: &[&str]| -> Vec<gix_hash::ObjectId> {
+                names
+                    .iter()
+                    .map(|name| refs.find(*name).expect("one tag per commit").target.into_id())
+                    .collect()
+            };
             let message = |id| {
                 store
                     .find_commit(id, obj_buf.borrow_mut().as_mut())
@@ -42,12 +54,34 @@ fn run() -> crate::Result {
                     },
                     cache,
                 );
-                eprintln!("ALGO {algo_name}");
+                eprintln!("ALGO {algo_name} CASE {case}");
                 for tip in &tips {
                     eprintln!("TIP {}", message(*tip));
                     negotiator.add_tip(*tip)?;
                 }
-                for Round { haves, common } in ParseRounds::new(buf.lines()) {
+                for (round, Round { mut haves, common }) in ParseRounds::new(buf.lines()).enumerate() {
+                    if algo == Algorithm::Skipping {
+                        if case == "clock_skew" {
+                            // Here for some reason the prio-queue of git manages to not sort the parent of C2, which is in the future, to be
+                            // ahead of old4 that is in the past. In the git version of this test, they say to expect exactly this sequence
+                            // as well even though it's not actually happening (but that they can't see due to the way they are testing).
+                            haves = lookup_names(&["c2", "c1", "old4", "old2", "old1"]);
+                        } else if case == "two_colliding_skips" {
+                            // The same thing, we actually get exactly the right order, whereas git for some reason doesn't.
+                            // This is the order expected in the git tests.
+                            haves = lookup_names(&["c5side", "c11", "c9", "c6", "c1"]);
+                        } else if case == "multi_round" && round == 1 {
+                            // Here, probably also because of priority queue quirks, `git` emits the commits out of order, with only one
+                            // branch, b5 I think, being out of place. This list puts the expectation in the right order, which is ordered
+                            // by commit date.
+                            haves = lookup_names(&[
+                                "b8.c14", "b7.c14", "b6.c14", "b5.c14", "b4.c14", "b3.c14", "b2.c14", "b8.c9", "b7.c9",
+                                "b6.c9", "b5.c9", "b4.c9", "b3.c9", "b2.c9", "b8.c1", "b7.c1", "b6.c1", "b5.c1",
+                                "b4.c1", "b3.c1", "b2.c1", "b8.c0", "b7.c0", "b6.c0", "b5.c0", "b4.c0", "b3.c0",
+                                "b2.c0",
+                            ]);
+                        }
+                    }
                     for have in haves {
                         let actual = negotiator.next_have().unwrap_or_else(|| {
                             panic!("{algo_name}:cache={use_cache}: one have per baseline: {have} missing or in wrong order")

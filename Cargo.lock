@@ -1869,6 +1869,7 @@ dependencies = [
  "gix-hash 0.11.1",
  "gix-object 0.29.2",
  "gix-odb",
+ "gix-ref 0.29.1",
  "gix-revision",
  "gix-testtools",
  "smallvec",

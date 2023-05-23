@@ -60,16 +60,18 @@ impl<'a> Algorithm<'a> {
         let mut is_common = false;
         if let Some(commit) = self
             .graph
-            .try_lookup_and_insert(id, |entry| is_common = entry.flags.contains(Flags::COMMON))?
+            .try_lookup_and_insert(id, |entry| {
+                is_common = entry.flags.contains(Flags::COMMON);
+                entry.flags |= Flags::COMMON;
+            })?
             .filter(|_| !is_common)
         {
-            let mut queue = gix_revision::PriorityQueue::from_iter(Some((commit.committer_timestamp()?, (id, 0))));
+            let mut queue = gix_revision::PriorityQueue::from_iter(Some((commit.committer_timestamp()?, id)));
             let mut parents = SmallVec::new();
-            while let Some((id, generation)) = queue.pop() {
-                // direct-parents only. gen 0 = commit, gen 1 = parents
-                if generation > 1 {
-                    break;
-                }
+            while let Some(id) = queue.pop() {
+                // This is a bit of a problem as there is no representation of the `parsed` based skip, which probably
+                // prevents this traversal from going on for too long. There is no equivalent here, but when artificially
+                // limiting the traversal depth the tests fail as they actually require the traversal to happen.
                 if self
                     .graph
                     .get(&id)
@@ -89,12 +91,12 @@ impl<'a> Algorithm<'a> {
                             .graph
                             .try_lookup_and_insert(parent_id, |entry| {
                                 was_unseen_or_common =
-                                    entry.flags.contains(Flags::SEEN) || entry.flags.contains(Flags::COMMON);
+                                    !entry.flags.contains(Flags::SEEN) || entry.flags.contains(Flags::COMMON);
                                 entry.flags |= Flags::COMMON
                             })?
                             .filter(|_| !was_unseen_or_common)
                         {
-                            queue.insert(parent.committer_timestamp()?, (parent_id, generation + 1));
+                            queue.insert(parent.committer_timestamp()?, parent_id);
                         }
                     }
                 }
@@ -120,7 +122,7 @@ impl<'a> Algorithm<'a> {
         } else {
             self.add_to_queue(parent_id, Flags::default())?;
         }
-        if entry.flags.contains(Flags::COMMON | Flags::ADVERTISED) {
+        if entry.flags.intersects(Flags::COMMON | Flags::ADVERTISED) {
             self.mark_common(parent_id)?;
         } else {
             let new_original_ttl = if entry.ttl > 0 {
