@@ -5,6 +5,46 @@ use serial_test::serial;
 
 #[test]
 #[serial]
+fn upwards_bare_repo_with_index() -> gix_testtools::Result {
+    let repo = gix_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
+
+    let _keep = gix_testtools::set_current_dir(repo.join("bare-with-index.git"))?;
+    let (repo_path, _trust) = gix_discover::upwards(".")?;
+    assert_eq!(
+        repo_path.kind(),
+        gix_discover::repository::Kind::Bare,
+        "bare stays bare, even with index, as it resolves the path as needed in this special case"
+    );
+    Ok(())
+}
+
+#[test]
+#[serial]
+fn in_cwd_upwards_bare_repo_without_index() -> gix_testtools::Result {
+    let repo = gix_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
+
+    let _keep = gix_testtools::set_current_dir(repo.join("bare.git"))?;
+    let (repo_path, _trust) = gix_discover::upwards(".")?;
+    assert_eq!(repo_path.kind(), gix_discover::repository::Kind::Bare);
+    Ok(())
+}
+
+#[test]
+#[serial]
+fn in_cwd_upwards_nonbare_repo_without_index() -> gix_testtools::Result {
+    let repo = gix_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
+
+    let _keep = gix_testtools::set_current_dir(repo.join("non-bare-without-index"))?;
+    let (repo_path, _trust) = gix_discover::upwards(".")?;
+    assert_eq!(
+        repo_path.kind(),
+        gix_discover::repository::Kind::WorkTree { linked_git_dir: None },
+    );
+    Ok(())
+}
+
+#[test]
+#[serial]
 fn upwards_with_relative_directories_and_optional_ceiling() -> gix_testtools::Result {
     let repo = gix_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
 

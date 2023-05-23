@@ -143,9 +143,16 @@ pub(crate) fn git_with_metadata(
             git_dir: dot_git.into_owned(),
         },
         Kind::MaybeRepo => {
-            if bare(git_dir) || git_dir.extension() == Some(OsStr::new("git")) {
+            let conformed_git_dir = if git_dir == Path::new(".") {
+                gix_path::realpath(git_dir)
+                    .map(Cow::Owned)
+                    .unwrap_or(Cow::Borrowed(git_dir))
+            } else {
+                Cow::Borrowed(git_dir)
+            };
+            if bare(conformed_git_dir.as_ref()) || conformed_git_dir.extension() == Some(OsStr::new("git")) {
                 crate::repository::Kind::Bare
-            } else if submodule_git_dir(git_dir) {
+            } else if submodule_git_dir(conformed_git_dir.as_ref()) {
                 crate::repository::Kind::SubmoduleGitDir
             } else {
                 crate::repository::Kind::WorkTree { linked_git_dir: None }
