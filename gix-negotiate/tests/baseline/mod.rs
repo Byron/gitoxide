@@ -2,9 +2,10 @@ use gix_negotiate::Algorithm;
 use gix_object::bstr;
 use gix_object::bstr::ByteSlice;
 use gix_odb::Find;
+use gix_odb::FindExt;
+use std::cell::RefCell;
 
 #[test]
-#[ignore = "consecutive fails half way through multi-round, and skipping fails everything but 'no_parents'"]
 fn run() -> crate::Result {
     let root = gix_testtools::scripted_fixture_read_only("make_repos.sh")?;
     for case in ["no_parents", "clock_skew", "two_colliding_skips", "multi_round"] {
@@ -13,11 +14,21 @@ fn run() -> crate::Result {
         for (algo_name, algo) in [
             ("noop", Algorithm::Noop),
             ("consecutive", Algorithm::Consecutive),
-            ("skipping", Algorithm::Skipping),
+            // ("skipping", Algorithm::Skipping),
         ] {
+            let obj_buf = RefCell::new(Vec::new());
             let buf = std::fs::read(base.join(format!("baseline.{algo_name}")))?;
             let tips = parse::object_ids("", std::fs::read(base.join("tips"))?.lines());
             let store = gix_odb::at(base.join("client").join(".git/objects"))?;
+            let message = |id| {
+                store
+                    .find_commit(id, obj_buf.borrow_mut().as_mut())
+                    .expect("present")
+                    .message
+                    .trim()
+                    .as_bstr()
+                    .to_owned()
+            };
 
             for use_cache in [false, true] {
                 let cache = use_cache
@@ -31,28 +42,34 @@ fn run() -> crate::Result {
                     },
                     cache,
                 );
+                eprintln!("ALGO {algo_name}");
                 for tip in &tips {
+                    eprintln!("TIP {}", message(*tip));
                     negotiator.add_tip(*tip)?;
                 }
                 for Round { haves, common } in ParseRounds::new(buf.lines()) {
                     for have in haves {
                         let actual = negotiator.next_have().unwrap_or_else(|| {
-                            panic!("{algo_name}:{use_cache}: one have per baseline: {have} missing or in wrong order")
+                            panic!("{algo_name}:cache={use_cache}: one have per baseline: {have} missing or in wrong order")
                         })?;
                         assert_eq!(
                             actual,
                             have,
-                            "{algo_name}:{use_cache}: order and commit matches exactly, left: {:?}",
-                            std::iter::from_fn(|| negotiator.next_have()).collect::<Vec<_>>()
+                            "{algo_name}:cache={use_cache}: order and commit matches exactly, wanted {expected}, got {actual}, commits left: {:?}",
+                            std::iter::from_fn(|| negotiator.next_have()).map(|id| message(id.unwrap())).collect::<Vec<_>>(),
+                            actual = message(actual),
+                            expected = message(have)
                         );
+                        eprintln!("have {}", message(actual));
                     }
                     for common_revision in common {
+                        eprintln!("ACK {}", message(common_revision));
                         negotiator.in_common_with_remote(common_revision)?;
                     }
                 }
                 assert!(
                     negotiator.next_have().is_none(),
-                    "{algo_name}:{use_cache}: negotiator should be depleted after all recorded baseline rounds"
+                    "{algo_name}:cache={use_cache}: negotiator should be depleted after all recorded baseline rounds"
                 );
             }
         }

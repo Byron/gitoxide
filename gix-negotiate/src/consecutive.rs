@@ -74,7 +74,7 @@ impl<'a> Algorithm<'a> {
             while let Some((id, generation)) = queue.pop() {
                 if self.graph.get(&id).map_or(true, |d| !d.contains(Flags::SEEN)) {
                     self.add_to_queue(id, Flags::SEEN)?;
-                } else if matches!(ancestors, Ancestors::AllUnseen) || generation == 0 {
+                } else if matches!(ancestors, Ancestors::AllUnseen) || generation < 2 {
                     if let Some(commit) = self.graph.try_lookup_and_insert(id, |_| {})? {
                         collect_parents(commit.iter_parents(), &mut parents)?;
                         for parent_id in parents.drain(..) {
