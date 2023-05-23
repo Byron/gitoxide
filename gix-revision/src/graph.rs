@@ -3,8 +3,38 @@ use gix_hash::oid;
 use smallvec::SmallVec;
 use std::ops::Index;
 
+/// The time in seconds since unix epoch at which a commit was created.
+pub type CommitterTimestamp = u64;
+
+impl<'find, T: std::fmt::Debug> std::fmt::Debug for Graph<'find, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.set, f)
+    }
+}
+
+impl<'find, T: Default> Graph<'find, T> {
+    /// Lookup `id` without failing if the commit doesn't exist, and assure that `id` is inserted into our set.
+    /// If it wasn't, associate it with the default value. Assure `update_data(data)` gets run.
+    /// Return the commit when done.
+    /// Note that none of the data updates happen if there was no commit named `id`.
+    pub fn try_lookup_and_insert(
+        &mut self,
+        id: gix_hash::ObjectId,
+        update_data: impl FnOnce(&mut T),
+    ) -> Result<Option<Commit<'_>>, lookup::Error> {
+        self.try_lookup_and_insert_default(id, || T::default(), update_data)
+    }
+}
+
 impl<'find, T> Graph<'find, T> {
     /// Create a new instance with `find` to retrieve commits and optionally `cache` to accelerate commit access.
+    ///
+    /// ### Performance
+    ///
+    /// `find` should be optimized to access the same object repeatedly, ideally with an object cache to keep the last couple of
+    /// most recently used commits.
+    /// Furthermore, **none-existing commits should not trigger the pack-db to be refreshed.** Otherwise, performance may be sub-optimal
+    /// in shallow repositories as running into non-existing commits will trigger a refresh of the `packs` directory.
     pub fn new<Find, E>(mut find: Find, cache: impl Into<Option<gix_commitgraph::Graph>>) -> Self
     where
         Find:
@@ -20,6 +50,33 @@ impl<'find, T> Graph<'find, T> {
             buf: Vec::new(),
             parent_buf: Vec::new(),
         }
+    }
+
+    /// Lookup `id` without failing if the commit doesn't exist, and assure that `id` is inserted into our set
+    /// with a `default` value assigned to it.
+    /// If it wasn't, associate it with the default value. Assure `update_data(data)` gets run.
+    /// Return the commit when done.
+    /// Note that none of the data updates happen if there was no commit named `id`.
+    pub fn try_lookup_and_insert_default(
+        &mut self,
+        id: gix_hash::ObjectId,
+        default: impl FnOnce() -> T,
+        update_data: impl FnOnce(&mut T),
+    ) -> Result<Option<Commit<'_>>, lookup::Error> {
+        let res = try_lookup(&id, &mut self.find, self.cache.as_ref(), &mut self.buf)?;
+        Ok(res.map(|commit| {
+            match self.set.entry(id) {
+                gix_hashtable::hash_map::Entry::Vacant(entry) => {
+                    let mut data = default();
+                    update_data(&mut data);
+                    entry.insert(data);
+                }
+                gix_hashtable::hash_map::Entry::Occupied(mut entry) => {
+                    update_data(entry.get_mut());
+                }
+            };
+            commit
+        }))
     }
 
     /// Returns true if `id` has data associated with it, meaning that we processed it already.
@@ -66,7 +123,7 @@ impl<'find, T> Graph<'find, T> {
     pub fn insert_parents(
         &mut self,
         id: &gix_hash::oid,
-        mut new_parent_data: impl FnMut(gix_hash::ObjectId, u64) -> T,
+        mut new_parent_data: impl FnMut(gix_hash::ObjectId, CommitterTimestamp) -> T,
         mut update_existing: impl FnMut(gix_hash::ObjectId, &mut T),
         first_parent: bool,
     ) -> Result<(), insert_parents::Error> {
@@ -135,10 +192,10 @@ impl<'a, 'find, T> Index<&'a gix_hash::oid> for Graph<'find, T> {
 pub mod lookup {
     /// The error returned by [`try_lookup()`][crate::Graph::try_lookup()].
     #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error("There was an error looking up a commit")]
-        Find(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
+    #[error("There was an error looking up a commit")]
+    pub struct Error {
+        #[from]
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
     }
 
     ///
@@ -186,7 +243,7 @@ pub struct Commit<'graph> {
 ///
 pub mod commit {
     use super::Commit;
-    use crate::graph::Either;
+    use crate::graph::{CommitterTimestamp, Either};
 
     impl<'graph> Commit<'graph> {
         /// Return an iterator over the parents of this commit.
@@ -202,13 +259,13 @@ pub mod commit {
         ///
         /// This is the single-most important date for determining recency of commits.
         /// Note that this can only fail if the commit is backed by the object database *and* parsing fails.
-        pub fn committer_timestamp(&self) -> Result<u64, gix_object::decode::Error> {
+        pub fn committer_timestamp(&self) -> Result<CommitterTimestamp, gix_object::decode::Error> {
             Ok(match &self.backing {
                 Either::Left(buf) => {
                     gix_object::CommitRefIter::from_bytes(buf)
                         .committer()?
                         .time
-                        .seconds_since_unix_epoch as u64
+                        .seconds_since_unix_epoch as CommitterTimestamp
                 }
                 Either::Right((cache, pos)) => cache.commit_at(*pos).committer_timestamp(),
             })

@@ -15,6 +15,8 @@
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
+use std::path::Path;
+
 /// A single commit-graph file.
 ///
 /// All operations on a `File` are local to that graph file. Since a commit graph can span multiple
@@ -39,6 +41,11 @@ pub struct File {
 /// generated via `git commit-graph write ...` commands.
 pub struct Graph {
     files: Vec<File>,
+}
+
+/// Instantiate a commit graph from an `.git/objects/info` directory, or one of the various commit-graph files.
+pub fn at(path: impl AsRef<Path>) -> Result<Graph, init::Error> {
+    Graph::at(path)
 }
 
 mod access;

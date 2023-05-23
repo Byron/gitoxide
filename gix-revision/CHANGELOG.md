@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.0 (2023-05-19)
+
+### New Features
+
+ - <csr-id-59ce4c606f8ccd9b6a16da2025e6746984d32fd6/> A Graph for quick access to commits and for associating state with them.
+   This data structure should be used whenever stateful traversal is required, usually
+   by associating information with each commit to remember what was seen and what wasn't.
+ - <csr-id-dde8c3aca545ba20cd5752f02283b98647fd3970/> A PriorityQueue that is useful for graph traversal.
+
+### New Features (BREAKING)
+
+ - <csr-id-ed258da9015d2d68734aeac485dd009760fc4da4/> `describe` usees commitgraph.
+   With it it can leverage the commitgraph data structure would would be more prominent
+   on server-side applications, presumably.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 7 calendar days.
+ - 22 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - `describe` usees commitgraph. ([`ed258da`](https://github.com/Byron/gitoxide/commit/ed258da9015d2d68734aeac485dd009760fc4da4))
+    - A Graph for quick access to commits and for associating state with them. ([`59ce4c6`](https://github.com/Byron/gitoxide/commit/59ce4c606f8ccd9b6a16da2025e6746984d32fd6))
+    - A PriorityQueue that is useful for graph traversal. ([`dde8c3a`](https://github.com/Byron/gitoxide/commit/dde8c3aca545ba20cd5752f02283b98647fd3970))
+    - Make clear that we do handle shallow repos, refactor tests ([`fc423e4`](https://github.com/Byron/gitoxide/commit/fc423e470de50491a725d4802066d26c05bd2b2a))
+    - Release gix-object v0.29.2 ([`4f879bf`](https://github.com/Byron/gitoxide/commit/4f879bf35653bdc8f9729d524c6e8e1fb3c6886b))
+</details>
+
 ## 0.13.0 (2023-04-26)
 
 ### New Features (BREAKING)
@@ -21,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 14 calendar days.
+ - 11 commits contributed to the release over the course of 14 calendar days.
  - 25 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#814](https://github.com/Byron/gitoxide/issues/814)
@@ -41,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#814](https://github.com/Byron/gitoxide/issues/814)**
     - Rename `serde1` cargo feature to `serde` and use the weak-deps cargo capability. ([`b83ee36`](https://github.com/Byron/gitoxide/commit/b83ee366a3c65c717beb587ad809268f1c54b8ad))
  * **Uncategorized**
+    - Release gix-index v0.16.0, gix-mailmap v0.12.0, gix-pack v0.34.0, gix-odb v0.44.0, gix-packetline v0.16.0, gix-transport v0.30.0, gix-protocol v0.31.0, gix-revision v0.13.0, gix-refspec v0.10.0, gix-worktree v0.16.0, gix v0.44.0 ([`d7173b2`](https://github.com/Byron/gitoxide/commit/d7173b2d2cb79685fdf7f618c31c576db24fa648))
     - Release gix-index v0.16.0, gix-mailmap v0.12.0, gix-pack v0.34.0, gix-odb v0.44.0, gix-packetline v0.16.0, gix-transport v0.30.0, gix-protocol v0.31.0, gix-revision v0.13.0, gix-refspec v0.10.0, gix-worktree v0.16.0, gix v0.44.0 ([`e4df557`](https://github.com/Byron/gitoxide/commit/e4df5574c0813a0236319fa6e8b3b41bab179fc8))
     - Release gix-hash v0.11.1, gix-path v0.7.4, gix-glob v0.6.0, gix-attributes v0.11.0, gix-config-value v0.11.0, gix-fs v0.1.1, gix-tempfile v5.0.3, gix-utils v0.1.1, gix-lock v5.0.1, gix-object v0.29.1, gix-ref v0.28.0, gix-sec v0.7.0, gix-config v0.21.0, gix-prompt v0.4.0, gix-url v0.17.0, gix-credentials v0.13.0, gix-diff v0.29.0, gix-discover v0.17.0, gix-hashtable v0.2.0, gix-ignore v0.1.0, gix-bitmap v0.2.3, gix-traverse v0.25.0, gix-index v0.16.0, gix-mailmap v0.12.0, gix-pack v0.34.0, gix-odb v0.44.0, gix-packetline v0.16.0, gix-transport v0.30.0, gix-protocol v0.31.0, gix-revision v0.13.0, gix-refspec v0.10.0, gix-worktree v0.16.0, gix v0.44.0, safety bump 7 crates ([`91134a1`](https://github.com/Byron/gitoxide/commit/91134a11c8ba0e942f692488ec9bce9fa1086324))
     - Prepare changelogs prior to release ([`30a1a71`](https://github.com/Byron/gitoxide/commit/30a1a71f36f24faac0e0b362ffdfedea7f9cdbf1))
