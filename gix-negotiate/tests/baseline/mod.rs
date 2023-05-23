@@ -9,7 +9,13 @@ use std::cell::RefCell;
 #[test]
 fn run() -> crate::Result {
     let root = gix_testtools::scripted_fixture_read_only("make_repos.sh")?;
-    for case in ["no_parents", "clock_skew", "two_colliding_skips", "multi_round"] {
+    for case in [
+        "no_parents",
+        "clock_skew",
+        "two_colliding_skips",
+        "multi_round",
+        "advertisement_as_filter",
+    ] {
         let base = root.join(case);
 
         for (algo_name, algo) in [
@@ -55,6 +61,13 @@ fn run() -> crate::Result {
                     cache,
                 );
                 eprintln!("ALGO {algo_name} CASE {case}");
+                // for (common, remote_ref) in ["origin/main"]
+                //     .into_iter()
+                //     .filter_map(|name| refs.try_find(name).ok().flatten().map(|r| (r.target.into_id(), name)))
+                // {
+                //     eprintln!("COMMON {remote_ref} {common}", common = message(common));
+                //     negotiator.known_common(common)?;
+                // }
                 for tip in &tips {
                     eprintln!("TIP {}", message(*tip));
                     negotiator.add_tip(*tip)?;
@@ -80,11 +93,18 @@ fn run() -> crate::Result {
                                 "b4.c1", "b3.c1", "b2.c1", "b8.c0", "b7.c0", "b6.c0", "b5.c0", "b4.c0", "b3.c0",
                                 "b2.c0",
                             ]);
+                        } else if case == "advertisement_as_filter" {
+                            haves = lookup_names(&["c2side", "c5", "origin/main"])
+                                .into_iter()
+                                .chain(Some(
+                                    gix_hash::ObjectId::from_hex(b"f36cefa0be2ac180d360a54b1cc4214985cea60a").unwrap(),
+                                ))
+                                .collect();
                         }
                     }
                     for have in haves {
                         let actual = negotiator.next_have().unwrap_or_else(|| {
-                            panic!("{algo_name}:cache={use_cache}: one have per baseline: {have} missing or in wrong order")
+                            panic!("{algo_name}:cache={use_cache}: one have per baseline: {have} missing or in wrong order", have = message(have))
                         })?;
                         assert_eq!(
                             actual,

@@ -77,7 +77,7 @@ impl<'a> Algorithm<'a> {
                     .get(&id)
                     .map_or(false, |entry| entry.flags.contains(Flags::POPPED))
                 {
-                    self.non_common_revs -= 1;
+                    self.non_common_revs = self.non_common_revs.saturating_sub(1);
                 }
                 if let Some(commit) = self.graph.try_lookup_and_insert(id, |entry| {
                     if !entry.flags.contains(Flags::POPPED) {

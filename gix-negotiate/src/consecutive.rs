@@ -35,17 +35,14 @@ impl<'a> Algorithm<'a> {
     /// Add `id` to our priority queue and *add* `flags` to it.
     fn add_to_queue(&mut self, id: ObjectId, mark: Flags) -> Result<(), Error> {
         let mut is_common = false;
-        let mut had_mark = false;
+        if self.graph.get(&id).map_or(false, |flags| flags.intersects(mark)) {
+            return Ok(());
+        }
         let commit = self.graph.try_lookup_and_insert(id, |current| {
-            had_mark = current.contains(mark);
             *current |= mark;
             is_common = current.contains(Flags::COMMON);
         })?;
-        if let Some(timestamp) = commit
-            .filter(|_| !had_mark)
-            .map(|c| c.committer_timestamp())
-            .transpose()?
-        {
+        if let Some(timestamp) = commit.map(|c| c.committer_timestamp()).transpose()? {
             self.revs.insert(timestamp, id);
             if !is_common {
                 self.non_common_revs += 1;

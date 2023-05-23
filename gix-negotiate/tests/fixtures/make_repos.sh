@@ -33,6 +33,7 @@ function negotiation_tips () {
 }
 
 function trace_fetch_baseline () {
+  local remote="${1:?need remote url}"; shift
   git -C client commit-graph write --no-progress --reachable
   git -C client repack -adq
 
@@ -41,15 +42,15 @@ function trace_fetch_baseline () {
     GIT_TRACE_PACKET="$PWD/baseline.$algo" \
     git -C client -c fetch.negotiationAlgorithm="$algo" fetch --negotiate-only $(negotiation_tips "$@") \
       --upload-pack 'unset GIT_TRACE_PACKET; git-upload-pack' \
-      file://$PWD/server || :
+      "$remote" || :
   done
 }
 
 
 (mkdir no_parents && cd no_parents
-  (git init -q server && cd server
+  git init -q server && cd server
     commit to_fetch
-  )
+  cd ..
 
   (git init -q client && cd client
     for i in $(seq 7); do
@@ -57,13 +58,13 @@ function trace_fetch_baseline () {
     done
   )
 
-  trace_fetch_baseline main
+  trace_fetch_baseline file://$PWD/server main
 )
 
 (mkdir two_colliding_skips && cd two_colliding_skips
-  (git init -q server && cd server
+  git init -q server && cd server
     commit to_fetch
-  )
+  cd ..
 
   (git init -q client && cd client
     for i in $(seq 11); do
@@ -73,15 +74,37 @@ function trace_fetch_baseline () {
     commit c5side
   )
 
-  trace_fetch_baseline HEAD main
+  trace_fetch_baseline file://$PWD/server HEAD main
 )
 
-(mkdir multi_round && cd multi_round
-  (git init -q server && cd server
+(mkdir advertisement_as_filter && cd advertisement_as_filter
+  git init -q server && cd server
+    commit c1
+    commit c2
+    commit c3
+    git tag -d c1 c2 c3
+  cd ..
+  git clone server client && cd client
+    commit c4
+    commit c5
+    git checkout c4^^
+    commit c2side
+  cd ..
+  (cd server
+    git checkout --orphan anotherbranch
     commit to_fetch
   )
 
-  (git init -q client && cd client
+  trace_fetch_baseline origin HEAD main
+)
+
+
+(mkdir multi_round && cd multi_round
+  git init -q server && cd server
+    commit to_fetch
+  cd ..
+
+  git init -q client && cd client
     for i in $(seq 8); do
       git checkout --orphan b$i &&
       commit b$i.c0
@@ -93,19 +116,19 @@ function trace_fetch_baseline () {
         commit b$i.c$j
       done
     done
-  )
+  cd ..
   (cd server
     git fetch --no-tags "$PWD/../client" b1:refs/heads/b1
     git checkout b1
     commit commit-on-b1
   )
-  trace_fetch_baseline $(ls client/.git/refs/heads | sort)
+  trace_fetch_baseline file://$PWD/server $(ls client/.git/refs/heads | sort)
 )
 
 (mkdir clock_skew && cd clock_skew
-  (git init -q server && cd server
+  git init -q server && cd server
     commit to_fetch
-  )
+  cd ..
 
   (git init -q client && cd client
     tick=2000000000
@@ -120,5 +143,5 @@ function trace_fetch_baseline () {
     commit old4
   )
 
-  trace_fetch_baseline HEAD main
+  trace_fetch_baseline file://$PWD/server HEAD main
 )
