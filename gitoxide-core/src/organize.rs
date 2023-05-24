@@ -21,7 +21,7 @@ fn find_git_repository_workdirs(
     progress.init(None, progress::count("filesystem items"));
     fn is_repository(path: &Path) -> Option<gix::Kind> {
         // Can be git dir or worktree checkout (file)
-        if path.file_name() != Some(OsStr::new(".git")) {
+        if path.file_name() != Some(OsStr::new(".git")) && path.extension() != Some(OsStr::new("git")) {
             return None;
         }
 
