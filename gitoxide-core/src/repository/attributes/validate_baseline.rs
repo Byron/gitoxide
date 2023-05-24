@@ -19,7 +19,7 @@ pub(crate) mod function {
     use gix::odb::FindExt;
     use gix::Progress;
 
-    use crate::repository::attributes::query::attributes_cache;
+    use crate::repository::attributes::query::{attributes_cache, index_on_demand};
     use crate::repository::attributes::validate_baseline::Options;
     use crate::OutputFormat;
 
@@ -32,13 +32,22 @@ pub(crate) mod function {
         Options {
             format,
             statistics,
-            ignore,
+            mut ignore,
         }: Options,
     ) -> anyhow::Result<()> {
         if format != OutputFormat::Human {
             bail!("JSON output isn't implemented yet");
         }
 
+        if repo.is_bare() {
+            writeln!(
+                err,
+                "Repo {:?} is bare - disabling git-ignore baseline as `git check-ignore` needs a worktree",
+                repo.path()
+            )
+            .ok();
+            ignore = false;
+        }
         let mut num_entries = None;
         let pathspecs = pathspecs
             .map(|i| anyhow::Result::Ok(Box::new(i) as Box<dyn Iterator<Item = gix::path::Spec> + Send + 'static>))
@@ -46,7 +55,7 @@ pub(crate) mod function {
                 let repo = repo.clone();
                 let num_entries = &mut num_entries;
                 move || -> anyhow::Result<_> {
-                    let index = repo.open_index()?;
+                    let index = index_on_demand(&repo)?.into_owned();
                     let (entries, path_backing) = index.into_parts().0.into_entries();
                     *num_entries = Some(entries.len());
                     Ok(Box::new(entries.into_iter().map(move |e| {
@@ -55,15 +64,11 @@ pub(crate) mod function {
                 }
             })?;
 
-        let work_dir = repo
-            .work_dir()
-            .map(ToOwned::to_owned)
-            .ok_or_else(|| anyhow!("repository at {:?} must have a worktree checkout", repo.path()))?;
         let (tx_base, rx_base) = std::sync::mpsc::channel::<(String, Baseline)>();
         let feed_attrs = {
             let (tx, rx) = std::sync::mpsc::sync_channel::<gix::path::Spec>(1);
             std::thread::spawn({
-                let path = work_dir.clone();
+                let path = repo.path().to_owned();
                 let tx_base = tx_base.clone();
                 let mut progress = progress.add_child("attributes");
                 move || -> anyhow::Result<()> {
@@ -106,10 +111,17 @@ pub(crate) mod function {
             });
             tx
         };
+        let work_dir = ignore
+            .then(|| {
+                repo.work_dir()
+                    .map(ToOwned::to_owned)
+                    .ok_or_else(|| anyhow!("repository at {:?} must have a worktree checkout", repo.path()))
+            })
+            .transpose()?;
         let feed_excludes = ignore.then(|| {
             let (tx, rx) = std::sync::mpsc::sync_channel::<gix::path::Spec>(1);
             std::thread::spawn({
-                let path = work_dir.clone();
+                let path = work_dir.expect("present if we are here");
                 let tx_base = tx_base.clone();
                 let mut progress = progress.add_child("excludes");
                 move || -> anyhow::Result<()> {
@@ -239,7 +251,7 @@ pub(crate) mod function {
             }
             bail!(
                 "{}: Validation failed with {} mismatches out of {}",
-                gix::path::realpath(&work_dir).unwrap_or(work_dir).display(),
+                gix::path::realpath(repo.work_dir().unwrap_or(repo.git_dir()))?.display(),
                 mismatches.len(),
                 progress
                     .counter()
