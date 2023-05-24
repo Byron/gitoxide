@@ -15,6 +15,7 @@ pub enum Attributes {
 }
 
 pub(crate) mod function {
+    use crate::repository::attributes::query::index_on_demand;
     use crate::repository::index::entries::{Attributes, Options};
     use gix::odb::FindExt;
     use std::borrow::Cow;
@@ -31,20 +32,28 @@ pub(crate) mod function {
         }: Options,
     ) -> anyhow::Result<()> {
         use crate::OutputFormat::*;
-        let index = repo.index()?;
+        let index = index_on_demand(&repo)?;
         let mut cache = attributes
             .map(|attrs| {
                 repo.attributes(
                     &index,
                     match attrs {
                         Attributes::WorktreeAndIndex => {
-                            gix::worktree::cache::state::attributes::Source::WorktreeThenIdMapping
+                            if repo.is_bare() {
+                                gix::worktree::cache::state::attributes::Source::IdMapping
+                            } else {
+                                gix::worktree::cache::state::attributes::Source::WorktreeThenIdMapping
+                            }
                         }
                         Attributes::Index => gix::worktree::cache::state::attributes::Source::IdMapping,
                     },
                     match attrs {
                         Attributes::WorktreeAndIndex => {
-                            gix::worktree::cache::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped
+                            if repo.is_bare() {
+                                gix::worktree::cache::state::ignore::Source::IdMapping
+                            } else {
+                                gix::worktree::cache::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped
+                            }
                         }
                         Attributes::Index => gix::worktree::cache::state::ignore::Source::IdMapping,
                     },
