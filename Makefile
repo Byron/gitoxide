@@ -1,10 +1,6 @@
-# TODO: consider adding these clippy fixes and/or some other?
-#	 \
-#	-D  \
-#	-D clippy::range-plus-one \
-
 # Rejected for now, and why
 #	-D clippy::default-trait-access - sometimes makes imports necessary, just for a default value. It's good for more explicit typing though.
+#   -D clippy::range-plus-one - useful, but caused too many false positives as we use range types directly quite a lot
 CLIPPY_FLAGS = \
 	-D clippy::unnested-or-patterns \
 	-D clippy::explicit-iter-loop \
