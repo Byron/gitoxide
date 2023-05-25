@@ -143,6 +143,8 @@ jobs:
           components: clippy,rustfmt
       - name: Run cargo clippy
         run: make clippy
+      - name: Run cargo doc
+        run: make doc
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
       - name: Run cargo diet

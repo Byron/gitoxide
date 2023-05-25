@@ -48,7 +48,7 @@ impl Context {
     }
 }
 
-/// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
+/// In order to try dealing with <https://github.com/sunng87/cargo-release/issues/224> and also to make workspace
 /// releases more selective.
 pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependencies: BumpSpec) -> anyhow::Result<()> {
     if opts.dry_run_cargo_publish && !opts.dry_run {
