@@ -11,8 +11,7 @@ fn size_in_memory() {
     let actual = std::mem::size_of::<gix_config::File<'_>>();
     assert!(
         actual <= 1040,
-        "{} <= 1040: This shouldn't change without us noticing",
-        actual
+        "{actual} <= 1040: This shouldn't change without us noticing"
     );
 }
 

@@ -73,7 +73,7 @@ pub mod details {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
                 Category::Uncategorized => f.write_str("Uncategorized"),
-                Category::Issue(issue) => write!(f, "#{}", issue),
+                Category::Issue(issue) => write!(f, "#{issue}"),
             }
         }
     }

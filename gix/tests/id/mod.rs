@@ -60,7 +60,7 @@ fn display_and_debug() -> crate::Result {
     let repo = crate::basic_repo()?;
     let id = repo.head_id()?;
     assert_eq!(
-        format!("{} {:?}", id, id),
+        format!("{id} {id:?}"),
         "3189cd3cb0af8586c39a838aa3e54fd72a872a41 Sha1(3189cd3cb0af8586c39a838aa3e54fd72a872a41)"
     );
     Ok(())

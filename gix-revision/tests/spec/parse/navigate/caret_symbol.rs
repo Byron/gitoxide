@@ -146,7 +146,7 @@ fn regex_backslash_rules() {
 
         assert!(rec.kind.is_none());
         assert!(rec.find_ref[0].as_ref().is_some() || rec.prefix[0].is_some());
-        assert_eq!(rec.patterns, vec![(regex.into(), false)], "{}", msg);
+        assert_eq!(rec.patterns, vec![(regex.into(), false)], "{msg}");
         assert_eq!(rec.calls, 2);
     }
 }

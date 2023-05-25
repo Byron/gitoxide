@@ -58,7 +58,7 @@ impl RepositoryUrl {
         let path = self.inner.path.to_str_lossy().into_owned();
         let path = path.strip_suffix(".git").map(ToOwned::to_owned).unwrap_or(path);
         if !path.starts_with('/') {
-            format!("/{}", path)
+            format!("/{path}")
         } else {
             path
         }
@@ -250,7 +250,7 @@ impl section::Segment {
                                         title
                                     )?;
                                 } else {
-                                    writeln!(out, " - {}", title)?;
+                                    writeln!(out, " - {title}")?;
                                 }
                                 if let Some(body) = body {
                                     for line in body.as_bytes().as_bstr().lines_with_terminator() {
@@ -388,7 +388,7 @@ fn format_category(cat: &Category, link_mode: &Linkables) -> String {
     match (cat, link_mode) {
         (Category::Issue(id), Linkables::AsLinks { repository_url }) => match repository_url.github_https() {
             Some(base_url) => {
-                format!("[#{}]({}/issues/{})", id, base_url, id)
+                format!("[#{id}]({base_url}/issues/{id})")
             }
             None => format_category(cat, &Linkables::AsText),
         },

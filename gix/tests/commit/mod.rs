@@ -9,7 +9,7 @@ mod describe {
         let mut describe = repo.head_commit()?.describe();
         for filter in &[AnnotatedTags, AllTags, AllRefs] {
             describe = describe.names(*filter);
-            assert_eq!(describe.format()?.to_string(), "v4", "{:?}", filter);
+            assert_eq!(describe.format()?.to_string(), "v4", "{filter:?}");
         }
         Ok(())
     }
@@ -21,7 +21,7 @@ mod describe {
         let mut describe = commit.describe();
         for filter in &[AnnotatedTags, AllTags, AllRefs] {
             describe = describe.names(*filter);
-            assert_eq!(describe.format()?.to_string(), "v1", "{:?}", filter);
+            assert_eq!(describe.format()?.to_string(), "v1", "{filter:?}");
         }
         Ok(())
     }
@@ -38,7 +38,7 @@ mod describe {
                 _ => Some("l0"),
             };
             let actual = describe.try_format()?.map(|f| f.to_string());
-            assert_eq!(actual.as_deref(), expected, "{:?}", filter);
+            assert_eq!(actual.as_deref(), expected, "{filter:?}");
         }
         Ok(())
     }

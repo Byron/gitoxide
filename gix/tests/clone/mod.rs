@@ -340,7 +340,7 @@ mod blocking_io {
                     }
                     let r = repo
                         .find_reference(edit.name.as_ref())
-                        .unwrap_or_else(|_| panic!("didn't find created reference: {:?}", edit));
+                        .unwrap_or_else(|_| panic!("didn't find created reference: {edit:?}"));
                     if r.name().category().expect("known") != gix_ref::Category::Tag {
                         assert!(r
                             .name()
@@ -450,7 +450,7 @@ mod blocking_io {
             line.message
         );
         let path = gix_path::from_bstr(line.message.rsplit(|b| *b == b' ').next().expect("path").as_bstr());
-        assert!(path.is_absolute(), "{:?} must be absolute", path);
+        assert!(path.is_absolute(), "{path:?} must be absolute");
     }
 
     #[test]
@@ -473,7 +473,7 @@ mod blocking_io {
         let work_dir = repo.work_dir().expect("non-bare");
         for entry in index.entries() {
             let entry_path = work_dir.join(gix_path::from_bstr(entry.path(&index)));
-            assert!(entry_path.is_file(), "{:?} not found on disk", entry_path)
+            assert!(entry_path.is_file(), "{entry_path:?} not found on disk")
         }
         Ok(())
     }

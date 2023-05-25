@@ -58,7 +58,7 @@ impl FromStr for OutputFormat {
             "human" => OutputFormat::Human,
             #[cfg(feature = "serde")]
             "json" => OutputFormat::Json,
-            _ => return Err(format!("Invalid output format: '{}'", s)),
+            _ => return Err(format!("Invalid output format: '{s}'")),
         })
     }
 }

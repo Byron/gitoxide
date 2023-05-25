@@ -121,7 +121,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
             if ctx.crate_names.len() != 1 { "s" } else { "" },
             ctx.crate_names
                 .iter()
-                .map(|c| format!("'{}'", c))
+                .map(|c| format!("'{c}'"))
                 .collect::<Vec<_>>()
                 .join(", ")
         )

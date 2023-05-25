@@ -39,7 +39,7 @@ pub fn entries(
 
     let mut mailmap = gix::mailmap::Snapshot::default();
     if let Err(e) = repo.open_mailmap_into(&mut mailmap) {
-        writeln!(err, "Error while loading mailmap, the first error is: {}", e).ok();
+        writeln!(err, "Error while loading mailmap, the first error is: {e}").ok();
     }
 
     #[cfg(feature = "serde")]

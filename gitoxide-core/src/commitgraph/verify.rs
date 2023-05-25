@@ -62,13 +62,13 @@ fn print_human_output(out: &mut impl io::Write, stats: &gix::commitgraph::verify
     let mut parent_counts: Vec<_> = stats.parent_counts.iter().map(|(a, b)| (*a, *b)).collect();
     parent_counts.sort_by_key(|e| e.0);
     for (parent_count, commit_count) in parent_counts.into_iter() {
-        writeln!(out, "\t{:>2}: {}", parent_count, commit_count)?;
+        writeln!(out, "\t{parent_count:>2}: {commit_count}")?;
     }
     writeln!(out, "\t->: {}", stats.num_commits)?;
 
     write!(out, "\nlongest path length between two commits: ")?;
     if let Some(n) = stats.longest_path_length {
-        writeln!(out, "{}", n)?;
+        writeln!(out, "{n}")?;
     } else {
         writeln!(out, "unknown")?;
     }

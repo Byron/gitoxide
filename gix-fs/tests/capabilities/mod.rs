@@ -13,7 +13,6 @@ fn probe() {
     assert_eq!(
         entries.len(),
         0,
-        "there should be no left-over files after probing, found {:?}",
-        entries
+        "there should be no left-over files after probing, found {entries:?}"
     );
 }

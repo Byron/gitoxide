@@ -14,7 +14,7 @@ impl FromStr for Protocol {
         Ok(match s {
             "1" => Protocol::V1,
             "2" => Protocol::V2,
-            _ => return Err(format!("Unsupported protocol version '{}', choose '1' or '2'", s)),
+            _ => return Err(format!("Unsupported protocol version '{s}', choose '1' or '2'")),
         })
     }
 }

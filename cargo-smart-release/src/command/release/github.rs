@@ -43,7 +43,7 @@ pub fn create_release(
         .arg(format!(
             "{}v{}",
             match crate::utils::tag_prefix(publishee, &ctx.repo) {
-                Some(prefix) => Cow::Owned(format!("{} ", prefix)),
+                Some(prefix) => Cow::Owned(format!("{prefix} ")),
                 None => "".into(),
             },
             new_version
