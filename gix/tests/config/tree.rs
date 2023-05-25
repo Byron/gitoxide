@@ -512,8 +512,7 @@ mod protocol {
                 format!(
                     "The value \"User\" must be allow|deny|user in configuration key {}",
                     protocol_name_parameter
-                        .map(|key| format!("protocol.{key}.allow"))
-                        .unwrap_or_else(|| "protocol.allow".into())
+                        .map_or_else(|| "protocol.allow".into(), |key| format!("protocol.{key}.allow"))
                 )
             );
         }

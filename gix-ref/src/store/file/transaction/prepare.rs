@@ -181,7 +181,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                 };
 
                 if (is_effective && !direct_to_packed_refs) || is_symbolic {
-                    let mut lock = lock.take().map(Ok).unwrap_or_else(obtain_lock)?;
+                    let mut lock = lock.take().map_or_else(obtain_lock, Ok)?;
 
                     lock.with_mut(|file| match new {
                         Target::Peeled(oid) => write!(file, "{oid}"),

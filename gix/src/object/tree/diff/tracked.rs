@@ -337,8 +337,7 @@ fn find_match<'a>(
             let end = items
                 .iter()
                 .position(|a| a.change.oid() != item_id)
-                .map(|idx| first_idx + idx)
-                .unwrap_or(items.len());
+                .map_or(items.len(), |idx| first_idx + idx);
             first_idx..end
         }) {
             Some(range) => range,

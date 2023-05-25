@@ -51,10 +51,9 @@ impl crate::WriteTo for Tag {
             + self
             .tagger
             .as_ref()
-            .map(|t| b"tagger".len() + 1 /* space */ + t.size() + 1 /* nl */)
-            .unwrap_or(0)
+            .map_or(0, |t| b"tagger".len() + 1 /* space */ + t.size() + 1 /* nl */)
             + 1 /* nl */ + self.message.len()
-            + self.pgp_signature.as_ref().map(|m| 1 /* nl */ + m.len()).unwrap_or(0)
+            + self.pgp_signature.as_ref().map_or(0, |m| 1 /* nl */ + m.len())
     }
 }
 
@@ -89,10 +88,9 @@ impl<'a> crate::WriteTo for TagRef<'a> {
             + self
                 .tagger
                 .as_ref()
-                .map(|t| b"tagger".len() + 1 /* space */ + t.size() + 1 /* nl */)
-                .unwrap_or(0)
+                .map_or(0, |t| b"tagger".len() + 1 /* space */ + t.size() + 1 /* nl */)
             + 1 /* nl */ + self.message.len()
-            + self.pgp_signature.as_ref().map(|m| 1 /* nl */ + m.len()).unwrap_or(0)
+            + self.pgp_signature.as_ref().map_or(0, |m| 1 /* nl */ + m.len())
     }
 }
 

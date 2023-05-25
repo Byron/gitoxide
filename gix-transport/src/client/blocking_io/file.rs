@@ -151,8 +151,7 @@ fn supervise_stderr(
                         self.recv
                             .recv_timeout(std::time::Duration::from_millis(5))
                             .ok()
-                            .map(Err)
-                            .unwrap_or(Ok(n))
+                            .map_or(Ok(n), Err)
                     }
                     Err(err) => Err(self.recv.recv().ok().unwrap_or(err)),
                 },

@@ -116,8 +116,7 @@ impl Pattern {
                     value
                         .len()
                         .checked_sub(text.len())
-                        .map(|start| text.eq_ignore_ascii_case(&value[start..]))
-                        .unwrap_or(false)
+                        .map_or(false, |start| text.eq_ignore_ascii_case(&value[start..]))
                 } else {
                     value.ends_with(text.as_ref())
                 }

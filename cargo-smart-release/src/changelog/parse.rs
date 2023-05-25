@@ -79,13 +79,10 @@ impl ChangeLog {
             }),
         }
 
-        let insert_sorted_at_pos = sections
-            .first()
-            .map(|s| match s {
-                Section::Verbatim { .. } => 1,
-                Section::Release { .. } => 0,
-            })
-            .unwrap_or(0);
+        let insert_sorted_at_pos = sections.first().map_or(0, |s| match s {
+            Section::Verbatim { .. } => 1,
+            Section::Release { .. } => 0,
+        });
         let mut non_release_sections = Vec::new();
         let mut release_sections = Vec::new();
         for section in sections {
@@ -362,7 +359,7 @@ fn parse_id_fallback_to_user_message(
                     .messages
                     .push(section::segment::conventional::Message::Generated {
                         id,
-                        title: lines.next().map(|l| l.trim()).unwrap_or("").to_owned(),
+                        title: lines.next().map_or("", |l| l.trim()).to_owned(),
                         body: lines
                             .map(|l| {
                                 match l
@@ -520,7 +517,7 @@ fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a 
         ),
         |((hashes, (prefix, version)), date)| Headline {
             level: hashes.len(),
-            version_prefix: prefix.map(ToOwned::to_owned).unwrap_or_else(String::new),
+            version_prefix: prefix.map_or_else(String::new, ToOwned::to_owned),
             version,
             date,
         },

@@ -111,10 +111,7 @@ pub(crate) fn fanout(iter: impl ExactSizeIterator<Item = u8>) -> [u32; 256] {
                         entries_len
                     } else {
                         idx_and_entry = iter.find(|(_, first_byte)| *first_byte != byte);
-                        upper_bound = idx_and_entry
-                            .as_ref()
-                            .map(|(idx, _)| *idx as u32)
-                            .unwrap_or(entries_len);
+                        upper_bound = idx_and_entry.as_ref().map_or(entries_len, |(idx, _)| *idx as u32);
                         upper_bound
                     }
                 }

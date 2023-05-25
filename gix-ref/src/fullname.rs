@@ -92,8 +92,7 @@ impl FullNameRef {
     /// If there is no such prefix, the original name is returned.
     pub fn shorten(&self) -> &BStr {
         self.category_and_short_name()
-            .map(|(_, short)| short)
-            .unwrap_or_else(|| self.0.as_bstr())
+            .map_or_else(|| self.0.as_bstr(), |(_, short)| short)
     }
 
     /// Classify this name, or return `None` if it's unclassified.

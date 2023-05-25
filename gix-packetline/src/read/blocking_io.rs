@@ -62,10 +62,7 @@ where
                             );
                         }
                     }
-                    let len = line
-                        .as_slice()
-                        .map(|s| s.len() + U16_HEX_BYTES)
-                        .unwrap_or(U16_HEX_BYTES);
+                    let len = line.as_slice().map_or(U16_HEX_BYTES, |s| s.len() + U16_HEX_BYTES);
                     if buf_resize {
                         buf.resize(len, 0);
                     }

@@ -92,8 +92,9 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     let guessed_protocol = guess_protocol(input).ok_or_else(|| Error::NotALocalFile { url: input.into() })?;
     let path_without_file_protocol = input.strip_prefix(b"file://");
     if path_without_file_protocol.is_some() || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
-        let path: BString = path_without_file_protocol
-            .map(|stripped_path| {
+        let path: BString = path_without_file_protocol.map_or_else(
+            || input.into(),
+            |stripped_path| {
                 #[cfg(windows)]
                 {
                     if stripped_path.starts_with(b"/") {
@@ -113,8 +114,8 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
                 {
                     stripped_path.into()
                 }
-            })
-            .unwrap_or_else(|| input.into());
+            },
+        );
         if path.is_empty() {
             return Err(Error::MissingRepositoryPath);
         }

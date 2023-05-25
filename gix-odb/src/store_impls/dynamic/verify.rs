@@ -141,8 +141,7 @@ impl super::Store {
             format!(
                 "Checking integrity: {}",
                 path.file_name()
-                    .map(|f| f.to_string_lossy())
-                    .unwrap_or_else(std::borrow::Cow::default)
+                    .map_or_else(std::borrow::Cow::default, |f| f.to_string_lossy())
             )
         };
         for slot_index in &index.slot_indices {

@@ -132,20 +132,8 @@ pub fn crate_ref_segments<'h>(
     };
 
     let dir = ctx.repo_relative_path(package);
-    let mut filter = dir
-        .map(|dir| {
-            let mut components = dir.components().collect::<Vec<_>>();
-            match components.len() {
-                0 => unreachable!("BUG: it's None if empty"),
-                1 => Filter::Fast {
-                    name: components.pop().map(component_to_bytes).expect("exactly one").into(),
-                },
-                _ => Filter::Slow {
-                    components: components.into_iter().map(component_to_bytes).collect(),
-                },
-            }
-        })
-        .unwrap_or_else(|| {
+    let mut filter = dir.map_or_else(
+        || {
             if ctx.meta.workspace_members.len() == 1 {
                 Filter::None
             } else {
@@ -158,7 +146,20 @@ pub fn crate_ref_segments<'h>(
                     name: Cow::Borrowed(b"src"),
                 }
             }
-        });
+        },
+        |dir| {
+            let mut components = dir.components().collect::<Vec<_>>();
+            match components.len() {
+                0 => unreachable!("BUG: it's None if empty"),
+                1 => Filter::Fast {
+                    name: components.pop().map(component_to_bytes).expect("exactly one").into(),
+                },
+                _ => Filter::Slow {
+                    components: components.into_iter().map(component_to_bytes).collect(),
+                },
+            }
+        },
+    );
 
     for item in &history.items {
         match tags_by_commit.remove(&item.id) {

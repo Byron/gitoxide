@@ -140,7 +140,7 @@ mod update {
                 &specs,
                 &[],
                 fetch::Tags::None,
-                reflog_message.map(|_| fetch::DryRun::Yes).unwrap_or(fetch::DryRun::No),
+                reflog_message.map_or(fetch::DryRun::No, |_| fetch::DryRun::Yes),
                 fetch::WritePackedRefs::Never,
             )
             .unwrap();
@@ -153,7 +153,7 @@ mod update {
                 }],
                 "{spec:?}: {detail}"
             );
-            assert_eq!(out.edits.len(), reflog_message.map(|_| 1).unwrap_or(0));
+            assert_eq!(out.edits.len(), reflog_message.map_or(0, |_| 1));
             if let Some(reflog_message) = reflog_message {
                 let edit = &out.edits[0];
                 match &edit.change {
@@ -559,13 +559,13 @@ mod update {
             .mappings
             .into_iter()
             .map(|m| fetch::Mapping {
-                remote: m
-                    .item_index
-                    .map(|idx| fetch::Source::Ref(references[idx].clone()))
-                    .unwrap_or_else(|| match m.lhs {
+                remote: m.item_index.map_or_else(
+                    || match m.lhs {
                         gix_refspec::match_group::SourceRef::ObjectId(id) => fetch::Source::ObjectId(id),
                         _ => unreachable!("not a ref, must be id: {:?}", m),
-                    }),
+                    },
+                    |idx| fetch::Source::Ref(references[idx].clone()),
+                ),
                 local: m.rhs.map(|r| r.into_owned()),
                 spec_index: SpecIndex::ExplicitInRemote(m.spec_index),
             })

@@ -116,7 +116,7 @@ pub(crate) fn bump_package_with_spec(
             } else if unreleased
                 .history
                 .iter()
-                .any(|item| item.message.kind.map(|kind| kind == "feat").unwrap_or(false))
+                .any(|item| item.message.kind.map_or(false, |kind| kind == "feat"))
             {
                 let is_breaking = if is_pre_release(&v) {
                     bump_major_minor_patch(&mut v, Patch)

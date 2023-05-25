@@ -25,10 +25,7 @@ mod additions {
                     .or_else(|| part_to_left[p..].chars().next().map(|c| p + c.len_utf8()))
             })
             .unwrap_or(start);
-        let new_end = s[end..]
-            .find(|c: char| !c.is_whitespace())
-            .map(|p| p + end)
-            .unwrap_or(end);
+        let new_end = s[end..].find(|c: char| !c.is_whitespace()).map_or(end, |p| p + end);
         s.replace_range(
             new_start..new_end,
             if new_end != end && new_start != start { " " } else { "" },
@@ -84,18 +81,8 @@ mod additions {
 
 impl From<&'_ str> for Message {
     fn from(m: &str) -> Self {
-        let (title, kind, body, breaking, breaking_description) = git_conventional::Commit::parse(m)
-            .map(|c: git_conventional::Commit<'_>| {
-                (
-                    c.description().into(),
-                    Some(c.type_()),
-                    c.body().map(Into::into),
-                    c.breaking(),
-                    c.breaking_description()
-                        .and_then(|d| if d == c.description() { None } else { Some(d) }),
-                )
-            })
-            .unwrap_or_else(|_| {
+        let (title, kind, body, breaking, breaking_description) = git_conventional::Commit::parse(m).map_or_else(
+            |_| {
                 let m = gix::objs::commit::MessageRef::from_bytes(m.as_bytes());
                 (
                     m.summary().as_ref().to_string().into(),
@@ -104,7 +91,18 @@ impl From<&'_ str> for Message {
                     false,
                     None,
                 )
-            });
+            },
+            |c: git_conventional::Commit<'_>| {
+                (
+                    c.description().into(),
+                    Some(c.type_()),
+                    c.body().map(Into::into),
+                    c.breaking(),
+                    c.breaking_description()
+                        .and_then(|d| if d == c.description() { None } else { Some(d) }),
+                )
+            },
+        );
         let (title, additions) = additions::strip(title);
         Message {
             title: title.into_owned(),

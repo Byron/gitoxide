@@ -174,9 +174,7 @@ pub fn entries(
 }
 
 fn treeish_to_tree<'repo>(treeish: Option<&str>, repo: &'repo gix::Repository) -> anyhow::Result<Tree<'repo>> {
-    let spec = treeish
-        .map(|spec| format!("{spec}^{{tree}}"))
-        .unwrap_or_else(|| "@^{tree}".into());
+    let spec = treeish.map_or_else(|| "@^{tree}".into(), |spec| format!("{spec}^{{tree}}"));
     Ok(repo.rev_parse_single(spec.as_str())?.object()?.into_tree())
 }
 
@@ -198,7 +196,7 @@ fn format_entry(
             Commit => "SUBM",
         },
         entry.oid,
-        size.map(|s| Cow::Owned(format!(" {s}"))).unwrap_or_else(|| "".into()),
+        size.map_or_else(|| "".into(), |s| Cow::Owned(format!(" {s}"))),
         filename
     )
 }

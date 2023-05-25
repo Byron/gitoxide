@@ -52,8 +52,7 @@ impl Ignore {
             stack: Default::default(),
             matched_directory_patterns_stack: Vec::with_capacity(6),
             exclude_file_name_for_directories: exclude_file_name_for_directories
-                .map(ToOwned::to_owned)
-                .unwrap_or_else(|| ".gitignore".into()),
+                .map_or_else(|| ".gitignore".into(), ToOwned::to_owned),
             source,
         }
     }

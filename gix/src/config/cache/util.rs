@@ -40,8 +40,7 @@ pub(crate) fn config_bool(
     );
     config
         .boolean_by_key(key_str)
-        .map(|res| key.enrich_error(res))
-        .unwrap_or(Ok(default))
+        .map_or(Ok(default), |res| key.enrich_error(res))
         .map_err(Error::from)
         .with_lenient_default(lenient)
 }
