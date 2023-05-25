@@ -147,7 +147,7 @@ mod refs_impl {
             write!(out, "\t")?;
             let target_id = match &mapping.remote {
                 gix::remote::fetch::Source::ObjectId(id) => {
-                    write!(out, "{}", id)?;
+                    write!(out, "{id}")?;
                     id
                 }
                 gix::remote::fetch::Source::Ref(r) => print_ref(&mut out, r)?,
@@ -290,20 +290,20 @@ mod refs_impl {
             handshake::Ref::Direct {
                 full_ref_name: path,
                 object,
-            } => write!(&mut out, "{} {}", object, path).map(|_| object.as_ref()),
+            } => write!(&mut out, "{object} {path}").map(|_| object.as_ref()),
             handshake::Ref::Peeled {
                 full_ref_name: path,
                 tag,
                 object,
-            } => write!(&mut out, "{} {} object:{}", tag, path, object).map(|_| tag.as_ref()),
+            } => write!(&mut out, "{tag} {path} object:{object}").map(|_| tag.as_ref()),
             handshake::Ref::Symbolic {
                 full_ref_name: path,
                 target,
                 object,
-            } => write!(&mut out, "{} {} symref-target:{}", object, path, target).map(|_| object.as_ref()),
+            } => write!(&mut out, "{object} {path} symref-target:{target}").map(|_| object.as_ref()),
             handshake::Ref::Unborn { full_ref_name, target } => {
                 static NULL: gix::hash::ObjectId = gix::hash::ObjectId::null(gix::hash::Kind::Sha1);
-                write!(&mut out, "unborn {} symref-target:{}", full_ref_name, target).map(|_| NULL.as_ref())
+                write!(&mut out, "unborn {full_ref_name} symref-target:{target}").map(|_| NULL.as_ref())
             }
         }
     }

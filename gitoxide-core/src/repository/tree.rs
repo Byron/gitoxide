@@ -198,7 +198,7 @@ fn format_entry(
             Commit => "SUBM",
         },
         entry.oid,
-        size.map(|s| Cow::Owned(format!(" {}", s))).unwrap_or_else(|| "".into()),
+        size.map(|s| Cow::Owned(format!(" {s}"))).unwrap_or_else(|| "".into()),
         filename
     )
 }

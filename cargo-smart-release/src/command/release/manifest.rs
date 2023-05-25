@@ -168,8 +168,7 @@ fn commit_locks_and_generate_bail_message(
                     None
                 } else {
                     Some(format!(
-                        "Write changelog entries for crate(s) {} and try again",
-                        names_of_crates_in_need_of_changelog_entry
+                        "Write changelog entries for crate(s) {names_of_crates_in_need_of_changelog_entry} and try again"
                     ))
                 }
             })
@@ -322,12 +321,10 @@ fn generate_commit_message(
             } else {
                 let names_and_versions = names_and_versions(safety_bumped_packages);
                 match safety_bumped_packages.len() {
-                    1 => format!(", safety bump {}", names_and_versions).into(),
-                    num_crates => format!(
-                        ", safety bump {} crates\n\nSAFETY BUMP: {}",
-                        num_crates, names_and_versions
-                    )
-                    .into(),
+                    1 => format!(", safety bump {names_and_versions}").into(),
+                    num_crates => {
+                        format!(", safety bump {num_crates} crates\n\nSAFETY BUMP: {names_and_versions}").into()
+                    }
                 }
             }
         }
@@ -350,7 +347,7 @@ fn generate_commit_message(
                 num_logs,
                 match num_new {
                     0 => Cow::Borrowed(""),
-                    num_new => format!("({} new) ", num_new).into(),
+                    num_new => format!("({num_new} new) ").into(),
                 }
             )
             .into(),
@@ -547,7 +544,7 @@ fn set_version_and_update_package_dependency(
                                 current_version_req
                             );
                         }
-                        let new_version = format!("^{}", new_version);
+                        let new_version = format!("^{new_version}");
                         if version_req.to_string() != new_version {
                             log::trace!(
                                 "Pending '{}' {}manifest {} update: '{} = \"{}\"' (from {})",
@@ -598,7 +595,7 @@ fn find_dependency_tables(
                             move |(k, v)| match DEP_TABLES.iter().find(|dtn| *dtn == &k.get()) {
                                 Some(dtn) => v.as_table_like_mut().map({
                                     let target_name = target_name.clone();
-                                    move |t| (t, format!("{} ({})", dtn, target_name).into())
+                                    move |t| (t, format!("{dtn} ({target_name})").into())
                                 }),
                                 None => None,
                             }

@@ -55,7 +55,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
                 log::trace!("WOULD create tag {}", tag_name);
             }
         }
-        Ok(Some(format!("refs/tags/{}", tag_name).try_into()?))
+        Ok(Some(format!("refs/tags/{tag_name}").try_into()?))
     } else {
         let target = commit_id.expect("set in --execute mode");
         let constraint = PreviousValue::Any;

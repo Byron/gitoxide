@@ -112,7 +112,7 @@ pub(crate) mod function {
         if format == Human && statistics {
             out.flush()?;
             stats.cache = cache.map(|c| *c.1.statistics());
-            writeln!(err, "{:#?}", stats)?;
+            writeln!(err, "{stats:#?}")?;
         }
         Ok(())
     }

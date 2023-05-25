@@ -52,7 +52,7 @@ pub fn checkout_exclusive(
         num_skipped += 1;
     }
     if num_skipped > 0 {
-        progress.info(format!("Skipping {} DIR/SYMLINK/COMMIT entries", num_skipped));
+        progress.info(format!("Skipping {num_skipped} DIR/SYMLINK/COMMIT entries"));
     }
 
     let opts = gix::worktree::checkout::Options {

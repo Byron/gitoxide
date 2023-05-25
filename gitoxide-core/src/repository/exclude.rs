@@ -61,14 +61,14 @@ pub fn query(
                     m.pattern,
                     path
                 )?,
-                None => writeln!(out, "::\t{}", path)?,
+                None => writeln!(out, "::\t{path}")?,
             }
         }
     }
 
     if let Some(stats) = statistics.then(|| cache.take_statistics()) {
         out.flush()?;
-        writeln!(err, "{:#?}", stats).ok();
+        writeln!(err, "{stats:#?}").ok();
     }
     Ok(())
 }

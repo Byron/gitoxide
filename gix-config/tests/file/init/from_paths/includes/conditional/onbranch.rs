@@ -221,9 +221,8 @@ fn assert_section_value_msg(
 [section]
 value = base-value
 
-[includeIf "onbranch:{}"]
+[includeIf "onbranch:{condition}"]
 path = ./include.config"#,
-            condition,
         ),
     )?;
 

@@ -53,7 +53,7 @@ pub(crate) mod function {
 
         if let Some(stats) = statistics.then(|| cache.take_statistics()) {
             out.flush()?;
-            writeln!(err, "{:#?}", stats).ok();
+            writeln!(err, "{stats:#?}").ok();
         }
         Ok(())
     }

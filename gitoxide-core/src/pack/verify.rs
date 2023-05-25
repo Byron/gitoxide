@@ -32,7 +32,7 @@ impl FromStr for Algorithm {
         Ok(match s_lc.as_str() {
             "less-memory" => Algorithm::LessMemory,
             "less-time" => Algorithm::LessTime,
-            _ => return Err(format!("Invalid verification algorithm: '{}'", s)),
+            _ => return Err(format!("Invalid verification algorithm: '{s}'")),
         })
     }
 }
@@ -207,9 +207,9 @@ fn print_statistics(out: &mut impl io::Write, stats: &index::traverse::Statistic
     let mut total_object_count = 0;
     for (chain_length, object_count) in chain_length_to_object.into_iter() {
         total_object_count += object_count;
-        writeln!(out, "\t{:>2}: {}", chain_length, object_count)?;
+        writeln!(out, "\t{chain_length:>2}: {object_count}")?;
     }
-    writeln!(out, "\t->: {}", total_object_count)?;
+    writeln!(out, "\t->: {total_object_count}")?;
 
     let pack::data::decode::entry::Outcome {
         kind: _,

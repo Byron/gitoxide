@@ -19,7 +19,7 @@ fn nth_prior_checkout() {
         ("@{-4}", "refs/heads/j"),
         ("@{-5}", "refs/heads/h"),
     ] {
-        let parsed = parse_spec(spec, &repo).unwrap_or_else(|_| panic!("{} to be parsed successfully", spec));
+        let parsed = parse_spec(spec, &repo).unwrap_or_else(|_| panic!("{spec} to be parsed successfully"));
         assert_eq!(parsed.first_reference().expect("present").name.as_bstr(), prior_branch);
         assert_eq!(parsed.second_reference(), None);
     }

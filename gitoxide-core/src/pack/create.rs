@@ -288,11 +288,11 @@ where
         .into_inner()
         .digest()
         .expect("iteration is done");
-    let pack_name = format!("{}.pack", hash);
+    let pack_name = format!("{hash}.pack");
     if let (Some(pack_file), Some(dir)) = (named_tempfile_store.take(), output_directory) {
         pack_file.persist(dir.as_ref().join(pack_name))?;
     } else {
-        writeln!(out, "{}", pack_name)?;
+        writeln!(out, "{pack_name}")?;
     }
     stats.entries = in_order_entries.inner.finalize()?;
 

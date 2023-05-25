@@ -37,7 +37,7 @@ mod blocking_io {
                     }),
                 )?;
                 let remote = repo.find_remote("origin")?;
-                assert_eq!(remote.connect(Fetch).is_ok(), should_allow, "Value = {:?}", env_value);
+                assert_eq!(remote.connect(Fetch).is_ok(), should_allow, "Value = {env_value:?}");
             }
             Ok(())
         }

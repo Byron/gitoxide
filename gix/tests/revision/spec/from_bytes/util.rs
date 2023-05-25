@@ -172,15 +172,14 @@ fn compare_with_baseline(
     let spec: BString = spec.into();
     let expected = *BASELINE
         .get(repo.work_dir().unwrap_or_else(|| repo.git_dir()))
-        .unwrap_or_else(|| panic!("No baseline for {:?}", repo))
+        .unwrap_or_else(|| panic!("No baseline for {repo:?}"))
         .get(&spec)
-        .unwrap_or_else(|| panic!("'{}' revspec not found in git baseline", spec));
+        .unwrap_or_else(|| panic!("'{spec}' revspec not found in git baseline"));
     match expectation {
         BaselineExpectation::Same => {
             assert_eq!(
                 actual, expected,
-                "{}: left (ours) should match right (git): {:?}",
-                spec, res
+                "{spec}: left (ours) should match right (git): {res:?}"
             );
         }
         BaselineExpectation::GitFailsWeSucceed => {
