@@ -48,6 +48,8 @@ Documentation is complete and was reviewed at least once.
 * [gix-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config)
 * [gix-config-value](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config-value)
 * [gix-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-glob)
+* [gix-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-actor)
+* [gix-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hash)
 
 ### Initial Development
 
@@ -56,8 +58,6 @@ is usable to some extent.
 
 * **usable** _(with rough but complete docs, possibly incomplete functionality)_
   * [gix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix) (**⬅ entrypoint**)
-  * [gix-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-actor)
-  * [gix-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hash)
   * [gix-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-object)
   * [gix-validate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-validate)
   * [gix-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-url)

@@ -87,8 +87,9 @@ and itself relies on all `git-*` crates. It's not meant for consumption, for app
 
 ### gix-actor
 * [x] read and write a signature that uniquely identifies an actor within a git repository
-* [ ] a way to parse `name <email>` tuples (instead of full signatures) to facilitate parsing
+* [x] a way to parse `name <email>` tuples (instead of full signatures) to facilitate parsing
       commit trailers.
+* [x] a way to write only actors, useful for commit trailers.
 
 ### gix-hash
 * types to represent hash digests to identify git objects.
