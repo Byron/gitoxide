@@ -211,7 +211,7 @@ where
                                     Some(res) => res,
                                     None => {
                                         let mut out = None;
-                                        for index in snapshot.indices.iter_mut() {
+                                        for index in &mut snapshot.indices {
                                             out = index.lookup(id);
                                             if out.is_some() {
                                                 break;
@@ -439,7 +439,7 @@ where
         loop {
             let snapshot = self.snapshot.borrow();
             {
-                for index in snapshot.indices.iter() {
+                for index in &snapshot.indices {
                     if let Some(iter) = index.iter(pack_id) {
                         return Some(iter.map(|e| (e.pack_offset, e.oid)).collect());
                     }
@@ -466,7 +466,7 @@ where
         let marker = snapshot.marker;
         loop {
             {
-                for index in snapshot.indices.iter_mut() {
+                for index in &mut snapshot.indices {
                     if let Some(possibly_pack) = index.pack(pack_id) {
                         let pack = match possibly_pack {
                             Some(pack) => pack,

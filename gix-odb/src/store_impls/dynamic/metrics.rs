@@ -33,7 +33,7 @@ impl super::Store {
                         open_indices += 1;
                     }
                     known_indices += 1;
-                    for pack in multi.data.iter() {
+                    for pack in &multi.data {
                         if pack.is_loaded() {
                             open_packs += 1;
                         }

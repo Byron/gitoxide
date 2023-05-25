@@ -111,7 +111,7 @@ where
                                     Some(res) => res,
                                     None => {
                                         let mut out = None;
-                                        for index in snapshot.indices.iter_mut() {
+                                        for index in &mut snapshot.indices {
                                             out = index.lookup(id);
                                             if out.is_some() {
                                                 break;

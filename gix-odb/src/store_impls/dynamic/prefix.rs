@@ -147,7 +147,7 @@ where
         let mut candidate: Option<gix_hash::ObjectId> = None;
         loop {
             let snapshot = self.snapshot.borrow();
-            for index in snapshot.indices.iter() {
+            for index in &snapshot.indices {
                 #[allow(clippy::needless_option_as_deref)] // needed as it's the equivalent of a reborrow.
                 let lookup_result = index.lookup_prefix(prefix, candidates.as_deref_mut());
                 if candidates.is_none() && !check_candidate(lookup_result, &mut candidate) {

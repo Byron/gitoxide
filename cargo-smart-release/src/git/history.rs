@@ -160,7 +160,7 @@ pub fn crate_ref_segments<'h>(
             }
         });
 
-    for item in history.items.iter() {
+    for item in &history.items {
         match tags_by_commit.remove(&item.id) {
             None => add_item_if_package_changed(ctx, &mut segment, &mut filter, item, &history.data_by_tree_id)?,
             Some(next_ref) => {

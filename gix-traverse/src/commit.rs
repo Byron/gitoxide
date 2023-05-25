@@ -110,7 +110,7 @@ pub mod ancestors {
             if !matches!(self.sorting, Sorting::Topological) {
                 let mut cutoff_time_storage = self.sorting.cutoff_time().map(|cot| (cot, Vec::new()));
                 let state = self.state.borrow_mut();
-                for (commit_id, commit_time) in state.next.iter_mut() {
+                for (commit_id, commit_time) in &mut state.next {
                     let commit_iter = (self.find)(commit_id, &mut state.buf).map_err(|err| Error::FindExisting {
                         oid: *commit_id,
                         source: err.into(),

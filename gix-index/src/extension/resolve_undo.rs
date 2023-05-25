@@ -36,7 +36,7 @@ pub fn decode(mut data: &[u8], object_hash: gix_hash::Kind) -> Option<Paths> {
         data = rest;
 
         let mut modes = [0u32; 3];
-        for mode in modes.iter_mut() {
+        for mode in &mut modes {
             let (mode_ascii, rest) = split_at_byte_exclusive(data, 0)?;
             data = rest;
             *mode = u32::from_str_radix(std::str::from_utf8(mode_ascii).ok()?, 8).ok()?;

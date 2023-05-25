@@ -399,7 +399,7 @@ fn scripted_fixture_read_only_with_args_inner(
                         std::env::current_dir().expect("valid cwd"),
                     )
                 }));
-                for arg in args.iter() {
+                for arg in &args {
                     crc_digest.update(arg.as_bytes());
                 }
                 crc_digest.finalize()

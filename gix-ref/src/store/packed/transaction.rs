@@ -68,7 +68,7 @@ impl packed::Transaction {
             .collect();
 
         let mut buf = Vec::new();
-        for edit in edits.iter_mut() {
+        for edit in &mut edits {
             if let Change::Update {
                 new: Target::Peeled(new),
                 ..

@@ -37,7 +37,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
         );
 
         // Perform updates first so live commits remain referenced
-        for change in updates.iter_mut() {
+        for change in &mut updates {
             assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
             match &change.update.change {
                 // reflog first, then reference
@@ -114,7 +114,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
             }
         }
 
-        for change in updates.iter_mut() {
+        for change in &mut updates {
             let (reflog_root, relative_name) = self.store.reflog_base_and_relative_path(change.update.name.as_ref());
             match &change.update.change {
                 Change::Update { .. } => {}
@@ -147,7 +147,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
             self.store.force_refresh_packed_buffer().ok();
         }
 
-        for change in updates.iter_mut() {
+        for change in &mut updates {
             let take_lock_and_delete = match &change.update.change {
                 Change::Update {
                     log: LogChange { mode, .. },

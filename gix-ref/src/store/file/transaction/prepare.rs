@@ -250,7 +250,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
         {
             let mut edits_for_packed_transaction = Vec::<RefEdit>::new();
             let mut needs_packed_refs_lookups = false;
-            for edit in updates.iter() {
+            for edit in &updates {
                 let log_mode = match edit.update.change {
                     Change::Update {
                         log: LogChange { mode, .. },
