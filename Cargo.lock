@@ -1987,7 +1987,7 @@ dependencies = [
 
 [[package]]
 name = "gix-packetline"
-version = "0.16.0"
+version = "0.16.1"
 dependencies = [
  "async-std",
  "bstr",
