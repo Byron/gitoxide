@@ -81,8 +81,8 @@ impl Filter {
                     return false;
                 }
             }
-            (None, None) | (None, Some(_)) => {}
-            _ => return false,
+            (None, _) => {}
+            (Some(_), None) => return false,
         };
         true
     }

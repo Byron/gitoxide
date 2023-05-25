@@ -249,7 +249,7 @@ fn add_item_if_package_changed<'a>(
                     }
                     history.push(item)
                 }
-                (None, Some(_)) | (None, None) => {}
+                (None, _) => {}
             };
         }
         Filter::Slow { ref components } => {
@@ -269,7 +269,7 @@ fn add_item_if_package_changed<'a>(
                     }
                 }
                 (Some(_), None) => history.push(item),
-                (None, Some(_)) | (None, None) => {}
+                (None, _) => {}
             };
         }
     };

@@ -437,10 +437,12 @@ fn track_unknown_event(unknown_event: Event<'_>, unknown: &mut String) {
         | Event::Code(text)
         | Event::Text(text)
         | Event::FootnoteReference(text)
-        | Event::Start(Tag::FootnoteDefinition(text))
-        | Event::Start(Tag::CodeBlock(pulldown_cmark::CodeBlockKind::Fenced(text)))
-        | Event::Start(Tag::Link(_, text, _))
-        | Event::Start(Tag::Image(_, text, _)) => unknown.push_str(text.as_ref()),
+        | Event::Start(
+            Tag::FootnoteDefinition(text)
+            | Tag::CodeBlock(pulldown_cmark::CodeBlockKind::Fenced(text))
+            | Tag::Link(_, text, _)
+            | Tag::Image(_, text, _),
+        ) => unknown.push_str(text.as_ref()),
         _ => {}
     }
 }

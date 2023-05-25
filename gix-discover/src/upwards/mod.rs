@@ -169,7 +169,7 @@ pub(crate) mod function {
                 if dir_made_absolute
                     || matches!(
                         cursor.components().next(),
-                        Some(std::path::Component::RootDir) | Some(std::path::Component::Prefix(_))
+                        Some(std::path::Component::RootDir | std::path::Component::Prefix(_))
                     )
                 {
                     break Err(Error::NoGitRepository { path: dir.into_owned() });

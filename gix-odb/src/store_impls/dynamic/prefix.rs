@@ -184,7 +184,7 @@ where
         fn check_candidate(lookup_result: Option<lookup::Outcome>, candidate: &mut Option<gix_hash::ObjectId>) -> bool {
             match (lookup_result, &*candidate) {
                 (Some(Ok(oid)), Some(candidate)) if *candidate != oid => false,
-                (Some(Ok(_)), Some(_)) | (None, None) | (None, Some(_)) => true,
+                (Some(Ok(_)) | None, Some(_)) | (None, None) => true,
                 (Some(Err(())), _) => false,
                 (Some(Ok(oid)), None) => {
                     *candidate = Some(oid);
