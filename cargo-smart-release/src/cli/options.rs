@@ -28,7 +28,7 @@ pub enum SubCommands {
         update_crates_index: bool,
 
         /// Don't generate a changelog automatically or update existing ones. This is useful if a manual changelog
-        /// is preferred or if its format strays to far from the suggestions on https://keepachangelog.com, making
+        /// is preferred or if its format strays to far from the suggestions on <https://keepachangelog.com>, making
         /// generated content impossible to properly integrate with what's there.
         #[clap(long, help_heading = Some("MAJOR"))]
         no_changelog: bool,
@@ -109,20 +109,20 @@ pub enum SubCommands {
         #[clap(long, help_heading = Some("EXPERT"))]
         allow_dirty: bool,
 
-        /// Disallow to also publish stable crates when discovering changed crates, bumping their version according to -d <spec>.
+        /// Disallow to also publish stable crates when discovering changed crates, bumping their version according to `-d <spec>`.
         #[clap(long, help_heading = Some("CUSTOMIZATION"))]
         no_auto_publish_of_stable_crates: bool,
 
         /// Do not force 0.X version requirements to be updated in dependent crates on patch update, forcing
         /// an update of the lower bound.
         ///
-        /// It's best to look at this issue for a deeper understanding: https://github.com/Byron/gitoxide/issues/194
+        /// It's best to look at this issue for a deeper understanding: <https://github.com/Byron/gitoxide/issues/194>
         #[clap(long, help_heading = Some("EXPERT"))]
         no_conservative_pre_release_version_handling: bool,
 
         /// Do not bump versions of dependent crates if the crates to be published indicate breaking changes with their semantic version.
         ///
-        /// For details, it's best to look at https://github.com/Byron/gitoxide/issues/192
+        /// For details, it's best to look at <https://github.com/Byron/gitoxide/issues/192>
         #[clap(long, help_heading = Some("EXPERT"))]
         no_isolate_dependencies_from_breaking_changes: bool,
 
