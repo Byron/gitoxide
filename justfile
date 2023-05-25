@@ -32,6 +32,14 @@ clippy:
     cargo clippy --all --no-default-features --features max-pure -- {{clippy-flags}}
     cargo clippy --all --no-default-features --features lean-async --tests -- {{clippy-flags}}
 
+# Run cargo clippy on all crates, fixing what can be fixed
+clippy-fix:
+    cargo clippy --fix --all --tests --examples -- {{clippy-flags}}
+    cargo clippy --fix --allow-dirty --all --no-default-features --features small -- {{clippy-flags}}
+    cargo clippy --fix --allow-dirty --all --no-default-features --features max-pure -- {{clippy-flags}}
+    cargo clippy --fix --allow-dirty --all --no-default-features --features lean-async --tests -- {{clippy-flags}}
+
+
 # Build all code in suitable configurations
 check:
     cargo check --all
@@ -211,4 +219,23 @@ ci-check-msrv:
     rustc --version
     cargo check -p gix
     cargo check -p gix --no-default-features --features async-network-client,max-performance
+
+# Enter a nix-shell able to build on macos
+nix-shell-macos:
+    nix-shell -p pkg-config openssl libiconv darwin.apple_sdk.frameworks.Security darwin.apple_sdk.frameworks.SystemConfiguration
+
+# run various auditing tools to assure we are legal and safe
+audit:
+    cargo deny check advisories bans licenses sources
+
+# run tests with `cargo nextest` (all unit-tests, no doc-tests, faster)
+nextest:
+    cargo nextest run --all
+
+# run nightly rustfmt for its extra features, but check that it won't upset stable rustfmt
+fmt:
+    cargo +nightly fmt --all -- --config-path rustfmt-nightly.toml
+    cargo +stable fmt --all -- --check
+
+
 
