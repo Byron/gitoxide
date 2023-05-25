@@ -2,6 +2,7 @@
 #	-D clippy::default-trait-access - sometimes makes imports necessary, just for a default value. It's good for more explicit typing though.
 #   -D clippy::range-plus-one - useful, but caused too many false positives as we use range types directly quite a lot
 CLIPPY_FLAGS = \
+	-D clippy::uninlined_format_args \
 	-D clippy::unnested-or-patterns \
 	-D clippy::explicit-iter-loop \
 	-D clippy::map-unwrap-or

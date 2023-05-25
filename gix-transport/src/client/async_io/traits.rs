@@ -91,7 +91,7 @@ impl<T: Transport> TransportV2Ext for T {
         arguments: Option<impl Iterator<Item = BString> + 'a>,
     ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error> {
         let mut writer = self.request(WriteMode::OneLfTerminatedLinePerWriteCall, MessageKind::Flush)?;
-        writer.write_all(format!("command={}", command).as_bytes()).await?;
+        writer.write_all(format!("command={command}").as_bytes()).await?;
         for (name, value) in capabilities {
             match value {
                 Some(value) => {
