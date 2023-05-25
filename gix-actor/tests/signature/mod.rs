@@ -64,12 +64,13 @@ fn trim() {
 
 #[test]
 fn round_trip() -> Result<(), Box<dyn std::error::Error>> {
-    for input in &[
-        &b"Sebastian Thiel <byronimo@gmail.com> 1 -0030"[..],
+    static DEFAULTS: &'static [&'static [u8]] =     &[
+        b"Sebastian Thiel <byronimo@gmail.com> 1 -0030",
         ".. ☺️Sebastian 王知明 Thiel🙌 .. <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
-        ".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere  <byronimo@gmail.com> 1528473343 +0230"
-            .as_bytes(),
-    ] {
+        b".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere  <byronimo@gmail.com> 1528473343 +0230"
+    ];
+
+    for input in DEFAULTS {
         let signature: Signature = gix_actor::SignatureRef::from_bytes::<()>(input)?.into();
         let mut output = Vec::new();
         signature.write_to(&mut output)?;

@@ -1,4 +1,4 @@
-//! This crate provides ways of identifying an actor within the git repository both in shared/mutable and mutable variants.
+//! This crate provides ways of identifying an actor within the git repository both in shared and mutable variants.
 //!
 //! ## Feature Flags
 #![cfg_attr(
@@ -12,8 +12,30 @@
 use bstr::{BStr, BString};
 pub use gix_date::{time::Sign, Time};
 
+mod identity;
 ///
 pub mod signature;
+
+/// A person with name and email.
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Identity {
+    /// The actors name.
+    pub name: BString,
+    /// The actor's email.
+    pub email: BString,
+}
+
+/// A person with name and email, as reference.
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct IdentityRef<'a> {
+    /// The actors name.
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    pub name: &'a BStr,
+    /// The actor's email.
+    pub email: &'a BStr,
+}
 
 /// A mutable signature is created by an actor at a certain time.
 ///
@@ -32,7 +54,7 @@ pub struct Signature {
 /// A immutable signature is created by an actor at a certain time.
 ///
 /// Note that this is not a cryptographical signature.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy, Default)]
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SignatureRef<'a> {
     /// The actor's name.

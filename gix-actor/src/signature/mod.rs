@@ -1,7 +1,7 @@
 mod _ref {
-    use bstr::{BStr, ByteSlice};
+    use bstr::ByteSlice;
 
-    use crate::{signature::decode, Signature, SignatureRef};
+    use crate::{signature::decode, IdentityRef, Signature, SignatureRef};
 
     impl<'a> SignatureRef<'a> {
         /// Deserialize a signature from the given `data`.
@@ -31,8 +31,11 @@ mod _ref {
         }
 
         /// Return the actor's name and email, effectively excluding the time stamp of this signature.
-        pub fn actor(&self) -> (&BStr, &BStr) {
-            (self.name, self.email)
+        pub fn actor(&self) -> IdentityRef<'a> {
+            IdentityRef {
+                name: self.name,
+                email: self.email,
+            }
         }
     }
 }
@@ -41,11 +44,6 @@ mod convert {
     use crate::{Signature, SignatureRef};
 
     impl Signature {
-        /// An empty signature, similar to 'null'.
-        pub fn empty() -> Self {
-            Signature::default()
-        }
-
         /// Borrow this instance as immutable
         pub fn to_ref(&self) -> SignatureRef<'_> {
             SignatureRef {
@@ -74,9 +72,7 @@ mod convert {
     }
 }
 
-mod write {
-    use std::io;
-
+pub(crate) mod write {
     use bstr::{BStr, ByteSlice};
 
     use crate::{Signature, SignatureRef};
@@ -84,21 +80,21 @@ mod write {
     /// The Error produced by [`Signature::write_to()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
-    enum Error {
+    pub(crate) enum Error {
         #[error("Signature name or email must not contain '<', '>' or \\n")]
         IllegalCharacter,
     }
 
-    impl From<Error> for io::Error {
+    impl From<Error> for std::io::Error {
         fn from(err: Error) -> Self {
-            io::Error::new(io::ErrorKind::Other, err)
+            std::io::Error::new(std::io::ErrorKind::Other, err)
         }
     }
 
     /// Output
     impl Signature {
         /// Serialize this instance to `out` in the git serialization format for actors.
-        pub fn write_to(&self, out: impl io::Write) -> io::Result<()> {
+        pub fn write_to(&self, out: impl std::io::Write) -> std::io::Result<()> {
             self.to_ref().write_to(out)
         }
         /// Computes the number of bytes necessary to serialize this signature
@@ -109,7 +105,7 @@ mod write {
 
     impl<'a> SignatureRef<'a> {
         /// Serialize this instance to `out` in the git serialization format for actors.
-        pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+        pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
             out.write_all(validated_token(self.name)?)?;
             out.write_all(b" ")?;
             out.write_all(b"<")?;
@@ -123,7 +119,7 @@ mod write {
         }
     }
 
-    fn validated_token(name: &BStr) -> Result<&BStr, Error> {
+    pub(crate) fn validated_token(name: &BStr) -> Result<&BStr, Error> {
         if name.find_byteset(b"<>\n").is_some() {
             return Err(Error::IllegalCharacter);
         }
@@ -132,5 +128,5 @@ mod write {
 }
 
 ///
-mod decode;
-pub use decode::decode;
+pub mod decode;
+pub use decode::function::decode;
