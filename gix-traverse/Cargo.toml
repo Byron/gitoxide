@@ -6,7 +6,7 @@ license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
-include = ["src/**/*"]
+include = ["src/**/*", "LICENSE-*"]
 rust-version = "1.64"
 autotests = false
 

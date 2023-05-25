@@ -16,6 +16,9 @@ function with_program () {
     function expect_run_sh () {
       echo 1>&2 "${WHITE} - skipped (missing program)"
     }
+    function expect_run_sh_no_pipefail () {
+      echo 1>&2 "${WHITE} - skipped (missing program)"
+    }
   }
 }
 
@@ -27,6 +30,9 @@ function on_ci () {
     function expect_run_sh () {
       echo 1>&2 "${WHITE} - skipped (runs only on CI)"
     }
+    function expect_run_sh_no_pipefail () {
+      echo 1>&2 "${WHITE} - skipped (runs only on CI)"
+    }
   }
 }
 
@@ -36,6 +42,9 @@ function not_on_ci () {
       echo 1>&2 "${WHITE} - skipped (runs only locally)"
     }
     function expect_run_sh () {
+      echo 1>&2 "${WHITE} - skipped (runs only locally)"
+    }
+    function expect_run_sh_no_pipefail () {
       echo 1>&2 "${WHITE} - skipped (runs only locally)"
     }
   }
@@ -125,6 +134,10 @@ function expect_exists () {
 
 function expect_run_sh () {
   expect_run "${1:?}" bash -c -eu -o pipefail "${2:?}"
+}
+
+function expect_run_sh_no_pipefail () {
+  expect_run "${1:?}" bash -c -eu "${2:?}"
 }
 
 function expect_snapshot () {

@@ -6,7 +6,7 @@ license = "MIT/Apache-2.0"
 version = "0.45.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
-include = ["src/**/*", "CHANGELOG.md"]
+include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
 rust-version = "1.64"
 
 [lib]

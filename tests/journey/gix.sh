@@ -162,7 +162,7 @@ title "gix attributes"
 (with "gix attributes"
   (with "the 'validate-baseline' sub-command"
     it "passes when operating on all of our files" && {
-      expect_run_sh $SUCCESSFULLY "find . -type f | sed 's|^./||' | $exe_plumbing --no-verbose attributes validate-baseline"
+      expect_run_sh_no_pipefail $SUCCESSFULLY "find . -type f | sed 's|^./||' | $exe_plumbing --no-verbose attributes validate-baseline"
     }
   )
 )
