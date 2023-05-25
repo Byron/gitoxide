@@ -48,10 +48,11 @@ jobs:
     - name: Setup dependencies
       run:
         sudo apt-get install tree
+    - uses: extractions/setup-just@v1
     - name: test
       env:
         CI: true
-      run: make tests-ci
+      run: just ci-test
 
   test-fast:
     strategy:
@@ -141,10 +142,11 @@ jobs:
         with:
           toolchain: stable
           components: clippy,rustfmt
+      - uses: extractions/setup-just@v1
       - name: Run cargo clippy
-        run: make clippy
+        run: just clippy
       - name: Run cargo doc
-        run: make doc
+        run: just doc
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
       - name: Run cargo diet
@@ -154,7 +156,7 @@ jobs:
 
           # Let's not fail CI for this, it will fail locally often enough, and a crate a little bigger
           # than allows is no problem either if it comes to that.
-          make check-size || true
+          just check-size || true
 
   cargo-deny:
     runs-on: ubuntu-latest
