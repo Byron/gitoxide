@@ -26,7 +26,7 @@ fn main() -> anyhow::Result<()> {
         let repo = config.commit_auto_rollback()?;
         let initial_commit_id = repo.commit("HEAD", "initial commit", empty_tree_id, gix::commit::NO_PARENT_IDS)?;
 
-        println!("initial commit id with empty tree: {:?}", initial_commit_id);
+        println!("initial commit id with empty tree: {initial_commit_id:?}");
 
         let blob_id = repo.write_blob("hello world")?.into();
         let entry = tree::Entry {
@@ -40,7 +40,7 @@ fn main() -> anyhow::Result<()> {
 
         let blob_commit_id = repo.commit("HEAD", "hello commit", hello_tree_id, [initial_commit_id])?;
 
-        println!("commit id for 'hello world' blob: {:?}", blob_commit_id);
+        println!("commit id for 'hello world' blob: {blob_commit_id:?}");
     }
 
     Ok(())

@@ -14,7 +14,7 @@ pub fn previous_branches(
     match format {
         OutputFormat::Human => {
             for (name, id) in branches {
-                writeln!(out, "{} {}", id, name)?;
+                writeln!(out, "{id} {name}")?;
             }
         }
         #[cfg(feature = "serde")]

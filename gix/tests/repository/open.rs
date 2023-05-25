@@ -412,9 +412,7 @@ mod with_overrides {
                     .unwrap_or_else(|| panic!("no value for {key}"))
                     .as_ref(),
                 expected,
-                "{} == {}",
-                key,
-                expected
+                "{key} == {expected}"
             );
         }
         Ok(())

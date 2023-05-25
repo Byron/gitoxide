@@ -15,7 +15,7 @@ pub fn verify(path: impl AsRef<Path>, format: OutputFormat, mut out: impl Write)
     let mut err_count = 0;
     for err in gix::mailmap::parse(&buf).filter_map(Result::err) {
         err_count += 1;
-        writeln!(out, "{}", err)?;
+        writeln!(out, "{err}")?;
     }
 
     let mut seen = HashSet::<(_, _)>::default();

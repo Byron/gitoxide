@@ -53,15 +53,10 @@ mod baseline {
     });
 
     pub fn works_but_we_dont_parse_invalid_url(url: &str) {
-        assert!(
-            gix::url::parse(url.into()).is_err(),
-            "{:?} should not be parseable",
-            url
-        );
+        assert!(gix::url::parse(url.into()).is_err(), "{url:?} should not be parseable");
         assert!(
             BASELINE.get(url).is_some(),
-            "Url {} must be in baseline, whether it's valid or not",
-            url
+            "Url {url} must be in baseline, whether it's valid or not"
         );
     }
 
@@ -95,8 +90,8 @@ mod baseline {
 
         let expected = BASELINE
             .get(url)
-            .unwrap_or_else(|| panic!("Url {} must be in baseline.", url));
-        assert_eq!(actual_helpers, expected.helpers, "{}", url);
+            .unwrap_or_else(|| panic!("Url {url} must be in baseline."));
+        assert_eq!(actual_helpers, expected.helpers, "{url}");
 
         let ctx = action.context_mut().expect("get/fill");
         ctx.destructure_url_in_place(cascade.use_http_path).unwrap();

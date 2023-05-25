@@ -44,7 +44,7 @@ impl std::str::FromStr for SafetyCheck {
                 SafetyCheck::SkipFileAndObjectChecksumVerificationAndNoAbortOnDecodeError
             }
             "all" => SafetyCheck::All,
-            _ => return Err(format!("Unknown value for safety check: '{}'", s)),
+            _ => return Err(format!("Unknown value for safety check: '{s}'")),
         })
     }
 }

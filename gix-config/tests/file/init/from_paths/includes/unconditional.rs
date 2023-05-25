@@ -49,7 +49,7 @@ fn multiple() -> crate::Result {
     )?;
 
     let a_path_string = escape_backslashes(a_path.parent().unwrap());
-    let non_canonical_path_a = format!("{}/./a", a_path_string);
+    let non_canonical_path_a = format!("{a_path_string}/./a");
     let non_existing_path = "/dfgwfsghfdsfs";
     let c_path = dir.path().join("c");
     fs::write(

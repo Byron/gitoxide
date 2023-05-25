@@ -59,7 +59,7 @@ impl<'a> delegate::Revision for Explain<'a> {
     fn find_ref(&mut self, name: &BStr) -> Option<()> {
         self.prefix()?;
         self.ref_name = Some(name.into());
-        writeln!(self.out, "Lookup the '{}' reference", name).ok()
+        writeln!(self.out, "Lookup the '{name}' reference").ok()
     }
 
     fn disambiguate_prefix(&mut self, prefix: gix::hash::Prefix, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
@@ -72,10 +72,8 @@ impl<'a> delegate::Revision for Explain<'a> {
             match hint {
                 None => "any object".to_string(),
                 Some(delegate::PrefixHint::MustBeCommit) => "commit".into(),
-                Some(delegate::PrefixHint::DescribeAnchor { ref_name, generation }) => format!(
-                    "commit {} generations in future of reference {:?}",
-                    generation, ref_name
-                ),
+                Some(delegate::PrefixHint::DescribeAnchor { ref_name, generation }) =>
+                    format!("commit {generation} generations in future of reference {ref_name:?}"),
             }
         )
         .ok()
@@ -90,9 +88,7 @@ impl<'a> delegate::Revision for Explain<'a> {
             .map(|n| n.as_ref())
             .unwrap_or_else(|| "HEAD".into());
         match query {
-            ReflogLookup::Entry(no) => {
-                writeln!(self.out, "Find entry {} in reflog of '{}' reference", no, ref_name).ok()
-            }
+            ReflogLookup::Entry(no) => writeln!(self.out, "Find entry {no} in reflog of '{ref_name}' reference").ok(),
             ReflogLookup::Date(time) => writeln!(
                 self.out,
                 "Find entry closest to time {} in reflog of '{}' reference",
@@ -106,14 +102,14 @@ impl<'a> delegate::Revision for Explain<'a> {
     fn nth_checked_out_branch(&mut self, branch_no: usize) -> Option<()> {
         self.prefix()?;
         self.has_implicit_anchor = true;
-        writeln!(self.out, "Find the {}th checked-out branch of 'HEAD'", branch_no).ok()
+        writeln!(self.out, "Find the {branch_no}th checked-out branch of 'HEAD'").ok()
     }
 
     fn sibling_branch(&mut self, kind: SiblingBranch) -> Option<()> {
         self.prefix()?;
         self.has_implicit_anchor = true;
         let ref_info = match self.ref_name.as_ref() {
-            Some(ref_name) => format!("'{}'", ref_name),
+            Some(ref_name) => format!("'{ref_name}'"),
             None => "behind 'HEAD'".into(),
         };
         writeln!(
@@ -137,8 +133,8 @@ impl<'a> delegate::Navigate for Explain<'a> {
             self.out,
             "{}",
             match kind {
-                Traversal::NthAncestor(no) => format!("Traverse to the {}th ancestor of revision named '{}'", no, name),
-                Traversal::NthParent(no) => format!("Select the {}th parent of revision named '{}'", no, name),
+                Traversal::NthAncestor(no) => format!("Traverse to the {no}th ancestor of revision named '{name}'"),
+                Traversal::NthParent(no) => format!("Select the {no}th parent of revision named '{name}'"),
             }
         )
         .ok()
@@ -152,8 +148,8 @@ impl<'a> delegate::Navigate for Explain<'a> {
             match kind {
                 PeelTo::ValidObject => "Assure the current object exists".to_string(),
                 PeelTo::RecursiveTagObject => "Follow the current annotated tag until an object is found".into(),
-                PeelTo::ObjectKind(kind) => format!("Peel the current object until it is a {}", kind),
-                PeelTo::Path(path) => format!("Lookup the object at '{}' from the current tree-ish", path),
+                PeelTo::ObjectKind(kind) => format!("Peel the current object until it is a {kind}"),
+                PeelTo::Path(path) => format!("Lookup the object at '{path}' from the current tree-ish"),
             }
         )
         .ok()
@@ -173,12 +169,10 @@ impl<'a> delegate::Navigate for Explain<'a> {
                 .or_else(|| self.oid_prefix.map(|p| p.to_string()))
             {
                 Some(obj_name) => format!(
-                    "Follow the ancestry of revision '{}' until a commit message {} regex '{}'",
-                    obj_name, negate_text, regex
+                    "Follow the ancestry of revision '{obj_name}' until a commit message {negate_text} regex '{regex}'"
                 ),
                 None => format!(
-                    "Find the most recent commit from any reference including 'HEAD' that {} regex '{}'",
-                    negate_text, regex
+                    "Find the most recent commit from any reference including 'HEAD' that {negate_text} regex '{regex}'"
                 ),
             }
         )

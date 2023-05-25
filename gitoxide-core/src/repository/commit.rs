@@ -44,7 +44,7 @@ pub fn describe(
     let mut describe_id = resolution.format()?;
     describe_id.long(long_format);
 
-    writeln!(out, "{}", describe_id)?;
+    writeln!(out, "{describe_id}")?;
     Ok(())
 }
 

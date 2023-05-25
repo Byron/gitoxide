@@ -77,8 +77,7 @@ mod blocking_and_async_io {
             assert_eq!(
                     map.remote_refs.len(),
                     expected_remote_refs ,
-                    "{:?} fetch-tags={fetch_tags:?}: it gets all remote refs, independently of the refspec. But we use a prefix so pre-filter them.",
-                    version
+                    "{version:?} fetch-tags={fetch_tags:?}: it gets all remote refs, independently of the refspec. But we use a prefix so pre-filter them."
                 );
 
             assert_eq!(map.fixes.len(), 0);

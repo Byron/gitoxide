@@ -210,7 +210,7 @@ pub fn entries(repo: gix::Repository, format: OutputFormat, mut out: impl io::Wr
 
     for object in repo.objects.iter()? {
         let object = object?;
-        writeln!(out, "{}", object)?;
+        writeln!(out, "{object}")?;
     }
 
     Ok(())

@@ -114,8 +114,8 @@ pub fn tag_name(package: &Package, version: &semver::Version, repo: &gix::Reposi
 
 fn tag_name_inner(package_name: Option<&str>, version: &semver::Version) -> String {
     match package_name {
-        Some(name) => format!("{}-v{}", name, version),
-        None => format!("v{}", version),
+        Some(name) => format!("{name}-v{version}"),
+        None => format!("v{version}"),
     }
 }
 

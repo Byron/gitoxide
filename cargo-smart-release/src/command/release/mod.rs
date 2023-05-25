@@ -48,7 +48,7 @@ impl Context {
     }
 }
 
-/// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
+/// In order to try dealing with <https://github.com/sunng87/cargo-release/issues/224> and also to make workspace
 /// releases more selective.
 pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependencies: BumpSpec) -> anyhow::Result<()> {
     if opts.dry_run_cargo_publish && !opts.dry_run {
@@ -195,7 +195,7 @@ fn present_and_validate_dependencies(
                 .map(|(key, names)| format!(
                     "{} = {}",
                     key,
-                    names.iter().map(|n| format!("'{}'", n)).collect::<Vec<_>>().join(", ")
+                    names.iter().map(|n| format!("'{n}'")).collect::<Vec<_>>().join(", ")
                 ))
                 .collect::<Vec<_>>()
                 .join(", ")
@@ -261,14 +261,14 @@ fn present_and_validate_dependencies(
                             .as_ref()
                             .and_then(|latest_release| {
                                 (dep.package.version != *latest_release)
-                                    .then(|| format!(", {} on crates.io", latest_release))
+                                    .then(|| format!(", {latest_release} on crates.io"))
                             })
                             .unwrap_or_default(),
                         breaking_dependencies
                             .map(|causes| format!(
                                 ", for SAFETY due to breaking package{} {}",
                                 if causes.len() == 1 { "" } else { "s" },
-                                causes.iter().map(|n| format!("'{}'", n)).collect::<Vec<_>>().join(", ")
+                                causes.iter().map(|n| format!("'{n}'")).collect::<Vec<_>>().join(", ")
                             ))
                             .unwrap_or_default(),
                         (bump.next_release != bump.desired_release)
@@ -283,7 +283,7 @@ fn present_and_validate_dependencies(
                         dep.package.version,
                         bump.latest_release
                             .as_ref()
-                            .map(|latest_release| format!(" to succeed latest released version {}", latest_release))
+                            .map(|latest_release| format!(" to succeed latest released version {latest_release}"))
                             .unwrap_or_else(|| ", creating a new release 🎉".into()),
                         bump.desired_release
                     );

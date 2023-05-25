@@ -55,7 +55,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
     ) -> io::Result<ls_refs::Action> {
         if server.contains("ls-refs") {
-            arguments.extend(FILTER.iter().map(|r| format!("ref-prefix {}", r).into()));
+            arguments.extend(FILTER.iter().map(|r| format!("ref-prefix {r}").into()));
         }
         Ok(if self.wanted_refs.is_empty() {
             ls_refs::Action::Continue
@@ -319,7 +319,7 @@ impl JsonOutcome {
 fn print_hash_and_path(out: &mut impl io::Write, name: &str, id: ObjectId, path: Option<PathBuf>) -> io::Result<()> {
     match path {
         Some(path) => writeln!(out, "{}: {} ({})", name, id, path.display()),
-        None => writeln!(out, "{}: {}", name, id),
+        None => writeln!(out, "{name}: {id}"),
     }
 }
 
@@ -340,13 +340,13 @@ fn write_raw_refs(refs: &[Ref], directory: PathBuf) -> std::io::Result<()> {
     for r in refs {
         let (path, content) = match r {
             Ref::Unborn { full_ref_name, target } => {
-                (assure_dir_exists(full_ref_name)?, format!("unborn HEAD: {}", target))
+                (assure_dir_exists(full_ref_name)?, format!("unborn HEAD: {target}"))
             }
             Ref::Symbolic {
                 full_ref_name: path,
                 target,
                 ..
-            } => (assure_dir_exists(path)?, format!("ref: {}", target)),
+            } => (assure_dir_exists(path)?, format!("ref: {target}")),
             Ref::Peeled {
                 full_ref_name: path,
                 tag: object,

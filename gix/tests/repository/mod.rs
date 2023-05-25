@@ -15,8 +15,6 @@ fn size_in_memory() {
     let limit = 1200;
     assert!(
         actual_size <= limit,
-        "size of Repository shouldn't change without us noticing, it's meant to be cloned: should have been below {:?}, was {} (bigger on windows)",
-        limit,
-        actual_size
+        "size of Repository shouldn't change without us noticing, it's meant to be cloned: should have been below {limit:?}, was {actual_size} (bigger on windows)"
     );
 }

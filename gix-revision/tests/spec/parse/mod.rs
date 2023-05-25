@@ -89,7 +89,7 @@ fn set_val<T: std::fmt::Debug>(fn_name: &str, store: &mut [Option<T>; 2], val: T
             return Some(());
         }
     }
-    panic!("called {}() more than twice with '{:?}'", fn_name, val);
+    panic!("called {fn_name}() more than twice with '{val:?}'");
 }
 
 impl delegate::Revision for Recorder {
@@ -144,7 +144,7 @@ impl delegate::Revision for Recorder {
 
     fn sibling_branch(&mut self, kind: delegate::SiblingBranch) -> Option<()> {
         self.called(Call::SiblingBranch);
-        set_val("sibling_branch", &mut self.sibling_branch, format!("{:?}", kind))
+        set_val("sibling_branch", &mut self.sibling_branch, format!("{kind:?}"))
     }
 }
 
@@ -188,7 +188,7 @@ impl delegate::Kind for Recorder {
         if self.kind.is_none() {
             self.kind = Some(kind);
         } else if !self.opts.no_internal_assertions {
-            panic!("called kind more than once with '{:?}'", kind);
+            panic!("called kind more than once with '{kind:?}'");
         }
         Some(())
     }
