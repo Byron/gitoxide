@@ -329,7 +329,7 @@ mod expand {
                                     &mut traverse_delegate,
                                 )
                                 .map_err(Error::TreeTraverse)?;
-                                for id in traverse_delegate.non_trees.iter() {
+                                for id in &traverse_delegate.non_trees {
                                     out.push(id_to_count(db, buf1, id, progress, stats, allow_pack_lookups));
                                 }
                                 break;

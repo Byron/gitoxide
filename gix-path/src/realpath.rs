@@ -58,7 +58,7 @@ pub(crate) mod function {
         let mut components = path.components();
         while let Some(component) = components.next() {
             match component {
-                part @ RootDir | part @ Prefix(_) => real_path.push(part),
+                part @ (RootDir | Prefix(_)) => real_path.push(part),
                 CurDir => {}
                 ParentDir => {
                     if !real_path.pop() {

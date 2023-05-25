@@ -81,8 +81,8 @@ impl Filter {
                     return false;
                 }
             }
-            (None, None) | (None, Some(_)) => {}
-            _ => return false,
+            (None, _) => {}
+            (Some(_), None) => return false,
         };
         true
     }
@@ -94,8 +94,7 @@ fn write_meta(meta: &gix::config::file::Metadata, out: &mut impl std::io::Write)
         "# From '{}' ({:?}{}{})",
         meta.path
             .as_deref()
-            .map(|p| p.display().to_string())
-            .unwrap_or_else(|| "memory".into()),
+            .map_or_else(|| "memory".into(), |p| p.display().to_string()),
         meta.source,
         (meta.level != 0)
             .then(|| format!(", include level {}", meta.level))

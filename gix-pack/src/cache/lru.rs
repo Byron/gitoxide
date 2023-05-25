@@ -51,16 +51,15 @@ mod memory {
             let res = self.inner.put_with_weight(
                 (pack_id, offset),
                 Entry {
-                    data: self
-                        .free_list
-                        .pop()
-                        .map(|mut v| {
+                    data: self.free_list.pop().map_or_else(
+                        || Vec::from(data),
+                        |mut v| {
                             v.clear();
                             v.resize(data.len(), 0);
                             v.copy_from_slice(data);
                             v
-                        })
-                        .unwrap_or_else(|| Vec::from(data)),
+                        },
+                    ),
                     kind,
                     compressed_size,
                 },

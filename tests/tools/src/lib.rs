@@ -399,7 +399,7 @@ fn scripted_fixture_read_only_with_args_inner(
                         std::env::current_dir().expect("valid cwd"),
                     )
                 }));
-                for arg in args.iter() {
+                for arg in &args {
                     crc_digest.update(arg.as_bytes());
                 }
                 crc_digest.finalize()
@@ -412,17 +412,20 @@ fn scripted_fixture_read_only_with_args_inner(
         Path::new("generated-archives").join(format!("{}.tar.xz", script_basename.to_str().expect("valid UTF-8"))),
         root,
     );
-    let (force_run, script_result_directory) = destination_dir.map(|d| (true, d.to_owned())).unwrap_or_else(|| {
-        let dir = fixture_path_inner(
-            Path::new("generated-do-not-edit").join(script_basename).join(format!(
-                "{}-{}",
-                script_identity,
-                family_name()
-            )),
-            root,
-        );
-        (false, dir)
-    });
+    let (force_run, script_result_directory) = destination_dir.map_or_else(
+        || {
+            let dir = fixture_path_inner(
+                Path::new("generated-do-not-edit").join(script_basename).join(format!(
+                    "{}-{}",
+                    script_identity,
+                    family_name()
+                )),
+                root,
+            );
+            (false, dir)
+        },
+        |d| (true, d.to_owned()),
+    );
 
     let _marker = gix_lock::Marker::acquire_to_hold_resource(
         script_basename,

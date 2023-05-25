@@ -987,7 +987,7 @@ fn stdin_or_bail() -> Result<std::io::BufReader<std::io::Stdin>> {
 fn verify_mode(decode: bool, re_encode: bool) -> verify::Mode {
     match (decode, re_encode) {
         (true, false) => verify::Mode::HashCrc32Decode,
-        (true, true) | (false, true) => verify::Mode::HashCrc32DecodeEncode,
+        (_, true) => verify::Mode::HashCrc32DecodeEncode,
         (false, false) => verify::Mode::HashCrc32,
     }
 }

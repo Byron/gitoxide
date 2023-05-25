@@ -322,7 +322,7 @@ pub fn new() -> (
                 handler.receive_body.take();
                 match (handler.send_header.take(), handler.send_data.take()) {
                     (Some(header), mut data) => {
-                        if let Err(TrySendError::Disconnected(err)) | Err(TrySendError::Full(err)) =
+                        if let Err(TrySendError::Disconnected(err) | TrySendError::Full(err)) =
                             header.channel.try_send(err)
                         {
                             if let Some(body) = data.take() {

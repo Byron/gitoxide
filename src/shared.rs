@@ -89,7 +89,7 @@ pub mod pretty {
                 res
             }
             #[cfg(not(feature = "prodash-render-tui"))]
-            (true, true) | (false, true) => {
+            (_, true) => {
                 unreachable!("BUG: This branch can't be run without a TUI built-in")
             }
         }
@@ -134,11 +134,11 @@ pub mod pretty {
                 res
             }
             #[cfg(not(feature = "prodash-render-tui"))]
-            (true, true) | (false, true) => {
+            (_, true) => {
                 unreachable!("BUG: This branch can't be run without a TUI built-in")
             }
             #[cfg(feature = "prodash-render-tui")]
-            (true, true) | (false, true) => {
+            (_, true) => {
                 use std::io::Write;
 
                 use crate::shared;

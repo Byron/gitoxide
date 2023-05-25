@@ -59,7 +59,7 @@ impl<'a> Iter<'a> {
         } else if attr.first() == Some(&b'!') {
             (&attr[1..], StateRef::Unspecified)
         } else {
-            (attr, possibly_value.map(StateRef::from_bytes).unwrap_or(StateRef::Set))
+            (attr, possibly_value.map_or(StateRef::Set, StateRef::from_bytes))
         };
         Ok(AssignmentRef::new(check_attr(attr)?, state))
     }
@@ -106,7 +106,7 @@ impl<'a> Iterator for Lines<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         fn skip_blanks(line: &BStr) -> &BStr {
-            line.find_not_byteset(BLANKS).map(|pos| &line[pos..]).unwrap_or(line)
+            line.find_not_byteset(BLANKS).map_or(line, |pos| &line[pos..])
         }
         for line in self.lines.by_ref() {
             self.line_no += 1;

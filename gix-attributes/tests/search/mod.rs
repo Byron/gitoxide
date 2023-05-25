@@ -43,9 +43,7 @@ mod specials {
         let mut collection = MetadataCollection::default();
         search.add_patterns_buffer(
             format!("{pattern} test").as_bytes(),
-            rela_containing_dir
-                .map(|d| Path::new(d).join("filename"))
-                .unwrap_or_else(|| Path::new("<memory>").into()),
+            rela_containing_dir.map_or_else(|| Path::new("<memory>").into(), |d| Path::new(d).join("filename")),
             rela_containing_dir.map(|_| Path::new("")),
             &mut collection,
             true,

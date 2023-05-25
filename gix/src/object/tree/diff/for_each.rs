@@ -209,9 +209,9 @@ where
 
     fn visit(&mut self, change: gix_diff::tree::visit::Change) -> gix_diff::tree::visit::Action {
         match self.tracked.as_mut() {
-            Some(tracked) => tracked
-                .try_push_change(change, self.recorder.path())
-                .map(|change| {
+            Some(tracked) => tracked.try_push_change(change, self.recorder.path()).map_or(
+                gix_diff::tree::visit::Action::Continue,
+                |change| {
                     Self::emit_change(
                         change,
                         self.recorder.path(),
@@ -220,8 +220,8 @@ where
                         self.other_repo,
                         &mut self.err,
                     )
-                })
-                .unwrap_or(gix_diff::tree::visit::Action::Continue),
+                },
+            ),
             None => Self::emit_change(
                 change,
                 self.recorder.path(),

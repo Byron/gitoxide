@@ -65,10 +65,10 @@ pub(crate) fn summary(message: &BStr) -> Cow<'_, BStr> {
                         break out.into();
                     }
                 }
-                let message_to_newline = &message[previous_pos.map(|p| p + 1).unwrap_or(0)..pos];
+                let message_to_newline = &message[previous_pos.map_or(0, |p| p + 1)..pos];
 
                 if let Some(pos_before_whitespace) = message_to_newline.rfind_not_byteset(b"\t\n\x0C\r ") {
-                    out.extend_from_slice(&message_to_newline[..pos_before_whitespace + 1]);
+                    out.extend_from_slice(&message_to_newline[..=pos_before_whitespace]);
                 }
                 out.push_byte(b' ');
                 previous_pos = Some(pos);

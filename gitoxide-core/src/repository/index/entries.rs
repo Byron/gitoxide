@@ -195,26 +195,24 @@ pub(crate) mod function {
             entry.mode,
             entry.id,
             entry.path(file),
-            attrs
-                .map(|a| {
-                    let mut buf = String::new();
-                    if a.is_excluded {
-                        buf.push_str(" ❌");
+            attrs.map_or(Cow::Borrowed(""), |a| {
+                let mut buf = String::new();
+                if a.is_excluded {
+                    buf.push_str(" ❌");
+                }
+                if !a.attributes.is_empty() {
+                    buf.push_str(" (");
+                    for assignment in a.attributes {
+                        use std::fmt::Write;
+                        write!(&mut buf, "{}", assignment.as_ref()).ok();
+                        buf.push_str(", ");
                     }
-                    if !a.attributes.is_empty() {
-                        buf.push_str(" (");
-                        for assignment in a.attributes {
-                            use std::fmt::Write;
-                            write!(&mut buf, "{}", assignment.as_ref()).ok();
-                            buf.push_str(", ");
-                        }
-                        buf.pop();
-                        buf.pop();
-                        buf.push(')');
-                    }
-                    buf.into()
-                })
-                .unwrap_or(Cow::Borrowed(""))
+                    buf.pop();
+                    buf.pop();
+                    buf.push(')');
+                }
+                buf.into()
+            })
         )
     }
 }

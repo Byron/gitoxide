@@ -412,7 +412,7 @@ where
         .expect("at least one commit at this point");
     if show_pii {
         results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
-        for entry in results_by_hours.iter() {
+        for entry in &results_by_hours {
             entry.write_to(
                 total_hours,
                 file_stats.then_some(total_files),

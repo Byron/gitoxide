@@ -183,9 +183,10 @@ impl State {
                             version,
                         ),
                     };
-                    let ext_res = extension_loading
-                        .map(|thread| thread.join().unwrap())
-                        .unwrap_or_else(|| extension::decode::all(extensions_data, object_hash));
+                    let ext_res = extension_loading.map_or_else(
+                        || extension::decode::all(extensions_data, object_hash),
+                        |thread| thread.join().unwrap(),
+                    );
                     (entries_res, ext_res)
                 });
                 let (ext, data) = ext_res?;

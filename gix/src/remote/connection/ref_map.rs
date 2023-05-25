@@ -148,15 +148,15 @@ where
         let mappings = mappings
             .into_iter()
             .map(|m| fetch::Mapping {
-                remote: m
-                    .item_index
-                    .map(|idx| fetch::Source::Ref(remote.refs[idx].clone()))
-                    .unwrap_or_else(|| {
+                remote: m.item_index.map_or_else(
+                    || {
                         fetch::Source::ObjectId(match m.lhs {
                             gix_refspec::match_group::SourceRef::ObjectId(id) => id,
                             _ => unreachable!("no item index implies having an object id"),
                         })
-                    }),
+                    },
+                    |idx| fetch::Source::Ref(remote.refs[idx].clone()),
+                ),
                 local: m.rhs.map(|c| c.into_owned()),
                 spec_index: if m.spec_index < num_explicit_specs {
                     SpecIndex::ExplicitInRemote(m.spec_index)
@@ -191,11 +191,10 @@ where
         let authenticate = match self.authenticate.as_mut() {
             Some(f) => f,
             None => {
-                let url = self
-                    .remote
-                    .url(Direction::Fetch)
-                    .map(ToOwned::to_owned)
-                    .unwrap_or_else(|| gix_url::parse(url.as_ref()).expect("valid URL to be provided by transport"));
+                let url = self.remote.url(Direction::Fetch).map_or_else(
+                    || gix_url::parse(url.as_ref()).expect("valid URL to be provided by transport"),
+                    ToOwned::to_owned,
+                );
                 credentials_storage = self.configured_credentials(url)?;
                 &mut credentials_storage
             }

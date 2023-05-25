@@ -343,7 +343,7 @@ pub(crate) mod function {
                 }
             }
         }
-        t.next().map(|_| NoMatch).unwrap_or(Match)
+        t.next().map_or(Match, |_| NoMatch)
     }
 
     /// Employ pattern matching to see if `value` matches `pattern`.

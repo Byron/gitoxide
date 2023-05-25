@@ -45,10 +45,7 @@ pub fn decode(data: &[u8], object_hash: gix_hash::Kind) -> Option<usize> {
         return None;
     }
     // The last-to-this chunk ends where ours starts
-    if last_chunk
-        .map(|s| s.as_ptr_range().end != (&data[start_of_eoie]) as *const _)
-        .unwrap_or(true)
-    {
+    if last_chunk.map_or(true, |s| s.as_ptr_range().end != (&data[start_of_eoie]) as *const _) {
         return None;
     }
 

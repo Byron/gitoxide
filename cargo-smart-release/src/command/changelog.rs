@@ -66,11 +66,9 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let linkables = if dry_run || no_links {
         Linkables::AsText
     } else {
-        crate::git::remote_url(&ctx.repo)?
-            .map(|url| Linkables::AsLinks {
-                repository_url: url.into(),
-            })
-            .unwrap_or(Linkables::AsText)
+        git::remote_url(&ctx.repo)?.map_or(Linkables::AsText, |url| Linkables::AsLinks {
+            repository_url: url.into(),
+        })
     };
     let mut num_crates = 0;
     for (idx, package) in crates.iter().enumerate() {

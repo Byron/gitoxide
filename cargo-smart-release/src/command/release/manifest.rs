@@ -485,7 +485,7 @@ fn gather_changelog_data<'meta>(
                 capitalize_commit,
             )?;
             lock.with_mut(|file| file.write_all(write_buf.as_bytes()))?;
-            *made_change |= previous_content.map(|previous| write_buf != previous).unwrap_or(true);
+            *made_change |= previous_content.map_or(true, |previous| write_buf != previous);
             pending_changelogs.push((publishee, log_init_state.is_modified(), lock));
             release_section_by_publishee.insert(publishee.name.as_str(), log.take_recent_release_section());
         }
@@ -534,7 +534,7 @@ fn set_version_and_update_package_dependency(
                     let force_update = conservative_pre_release_version_handling
                         && version::is_pre_release(new_version) // setting the lower bound unnecessarily can be harmful
                         // don't claim to be conservative if this is necessary anyway
-                        && req_as_version(&version_req).map(|req_version|!version::rhs_is_breaking_bump_for_lhs(&req_version, new_version)).unwrap_or(false);
+                        && req_as_version(&version_req).map_or(false, |req_version|!version::rhs_is_breaking_bump_for_lhs(&req_version, new_version));
                     if !version_req.matches(new_version) || force_update {
                         if !version_req_unset_or_default(&version_req) {
                             bail!(

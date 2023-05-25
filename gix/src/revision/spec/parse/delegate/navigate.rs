@@ -239,8 +239,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                         r.id()
                                             .object()
                                             .ok()
-                                            .map(|obj| obj.kind == gix_object::Kind::Commit)
-                                            .unwrap_or(false)
+                                            .map_or(false, |obj| obj.kind == gix_object::Kind::Commit)
                                     })
                                     .filter_map(|r| r.detach().peeled),
                             )

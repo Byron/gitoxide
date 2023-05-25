@@ -49,20 +49,22 @@ pub(crate) mod function {
             ignore = false;
         }
         let mut num_entries = None;
-        let pathspecs = pathspecs
-            .map(|i| anyhow::Result::Ok(Box::new(i) as Box<dyn Iterator<Item = gix::path::Spec> + Send + 'static>))
-            .unwrap_or_else({
+        let pathspecs = pathspecs.map_or_else(
+            {
                 let repo = repo.clone();
                 let num_entries = &mut num_entries;
                 move || -> anyhow::Result<_> {
                     let index = index_on_demand(&repo)?.into_owned();
                     let (entries, path_backing) = index.into_parts().0.into_entries();
                     *num_entries = Some(entries.len());
-                    Ok(Box::new(entries.into_iter().map(move |e| {
+                    let iter = Box::new(entries.into_iter().map(move |e| {
                         gix::path::Spec::from_bytes(e.path_in(&path_backing)).expect("each entry path is a valid spec")
-                    })))
+                    }));
+                    Ok(iter as Box<dyn Iterator<Item = gix::path::Spec> + Send + 'static>)
                 }
-            })?;
+            },
+            |i| anyhow::Result::Ok(Box::new(i)),
+        )?;
 
         let (tx_base, rx_base) = std::sync::mpsc::channel::<(String, Baseline)>();
         let feed_attrs = {

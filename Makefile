@@ -1,3 +1,11 @@
+# Rejected for now, and why
+#	-D clippy::default-trait-access - sometimes makes imports necessary, just for a default value. It's good for more explicit typing though.
+#   -D clippy::range-plus-one - useful, but caused too many false positives as we use range types directly quite a lot
+CLIPPY_FLAGS = \
+	-D clippy::uninlined_format_args \
+	-D clippy::unnested-or-patterns \
+	-D clippy::explicit-iter-loop \
+	-D clippy::map-unwrap-or
 
 help:  ## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
@@ -51,10 +59,16 @@ doc: ## Run cargo doc on all crates
 	RUSTDOCFLAGS="-D warnings" cargo doc --features=max,lean,small --all --no-deps
 
 clippy: ## Run cargo clippy on all crates
-	cargo clippy --all --tests --examples
-	cargo clippy --all --no-default-features --features small
-	cargo clippy --all --no-default-features --features max-pure
-	cargo clippy --all --no-default-features --features lean-async --tests
+	cargo clippy --all --tests --examples -- $(CLIPPY_FLAGS)
+	cargo clippy --all --no-default-features --features small -- $(CLIPPY_FLAGS)
+	cargo clippy --all --no-default-features --features max-pure -- $(CLIPPY_FLAGS)
+	cargo clippy --all --no-default-features --features lean-async --tests -- $(CLIPPY_FLAGS)
+
+fix-clippy: ## Run cargo clippy on all crates, fixing what can be fixed
+	cargo clippy --fix --all --tests --examples -- $(CLIPPY_FLAGS)
+	cargo clippy --fix --allow-dirty --all --no-default-features --features small -- $(CLIPPY_FLAGS)
+	cargo clippy --fix --allow-dirty --all --no-default-features --features max-pure -- $(CLIPPY_FLAGS)
+	cargo clippy --fix --allow-dirty --all --no-default-features --features lean-async --tests -- $(CLIPPY_FLAGS)
 
 check-msrv: ## run cargo msrv to validate the current msrv requirements, similar to what CI does
 	cd gix && cargo check --package gix --no-default-features --features async-network-client,max-performance
@@ -342,4 +356,3 @@ fmt: ## run nightly rustfmt for its extra features, but check that it won't upse
 
 try-publish-all: ## Dry-run publish all crates in the currently set version if they are not published yet.
 	(cd cargo-smart-release && cargo build --bin cargo-smart-release) && cargo-smart-release/target/debug/cargo-smart-release smart-release gitoxide
-

@@ -213,7 +213,7 @@ fn long_describe_prefix(name: &BStr) -> Option<(&BStr, delegate::PrefixHint<'_>)
         .and_then(|generation| {
             iter.next().map(|token| {
                 let last_token_len = token.len();
-                let first_token_ptr = iter.last().map(|token| token.as_ptr()).unwrap_or(token.as_ptr());
+                let first_token_ptr = iter.last().map_or(token.as_ptr(), |token| token.as_ptr());
                 // SAFETY: both pointers are definitely part of the same object
                 #[allow(unsafe_code)]
                 let prior_tokens_len: usize = unsafe { token.as_ptr().offset_from(first_token_ptr) }
@@ -413,7 +413,7 @@ where
 
     input = {
         if let Some(b'@') = sep {
-            let past_sep = input[sep_pos.map(|pos| pos + 1).unwrap_or(input.len())..].as_bstr();
+            let past_sep = input[sep_pos.map_or(input.len(), |pos| pos + 1)..].as_bstr();
             let (nav, rest, _consumed) = parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets {
                 input: input[sep_pos.unwrap_or(input.len())..].into(),
             })?;

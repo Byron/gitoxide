@@ -104,6 +104,6 @@ impl crate::Repository {
             target.merge(gix_mailmap::parse_ignore_errors(&buf));
         }
 
-        err.map(Err).unwrap_or(Ok(()))
+        err.map_or(Ok(()), Err)
     }
 }

@@ -152,6 +152,7 @@ impl<'event> Body<'event> {
         key_start.map(|key_start| {
             // value end needs to be offset by one so that the last value's index
             // is included in the range
+            #[allow(clippy::range_plus_one)]
             let value_range = value_range.start..value_range.end + 1;
             let key_range = key_start..value_range.end;
             (key_range, (value_range.start != key_start + 1).then_some(value_range))

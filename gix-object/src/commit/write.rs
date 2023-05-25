@@ -36,8 +36,7 @@ impl crate::WriteTo for Commit {
             + self
                 .encoding
                 .as_ref()
-                .map(|e| b"encoding".len() + 1 /* space */ + e.len() + 1 /* nl */)
-                .unwrap_or(0)
+                .map_or(0, |e| b"encoding".len() + 1 /* space */ + e.len() + 1 /* nl */)
             + self
                 .extra_headers
                 .iter()
@@ -83,8 +82,7 @@ impl<'a> crate::WriteTo for CommitRef<'a> {
             + self
                 .encoding
                 .as_ref()
-                .map(|e| b"encoding".len() + 1 /* space */ + e.len() + 1 /* nl */)
-                .unwrap_or(0)
+                .map_or(0, |e| b"encoding".len() + 1 /* space */ + e.len() + 1 /* nl */)
             + self
                 .extra_headers
                 .iter()

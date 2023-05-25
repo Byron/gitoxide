@@ -80,7 +80,7 @@ impl Store {
         }: Options,
     ) -> std::io::Result<Self> {
         let objects_dir = objects_dir.into();
-        let current_dir = current_dir.map(Ok).unwrap_or_else(std::env::current_dir)?;
+        let current_dir = current_dir.map_or_else(std::env::current_dir, Ok)?;
         if !objects_dir.is_dir() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other, // TODO: use NotADirectory when stabilized

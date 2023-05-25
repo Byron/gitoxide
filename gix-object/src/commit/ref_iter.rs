@@ -68,7 +68,7 @@ impl<'a> CommitRefIter<'a> {
     /// Errors are not the common case - if an error needs to be detectable, use this instance as iterator.
     pub fn signatures(self) -> impl Iterator<Item = gix_actor::SignatureRef<'a>> + 'a {
         self.filter_map(|t| match t {
-            Ok(Token::Author { signature }) | Ok(Token::Committer { signature }) => Some(signature),
+            Ok(Token::Author { signature } | Token::Committer { signature }) => Some(signature),
             _ => None,
         })
     }

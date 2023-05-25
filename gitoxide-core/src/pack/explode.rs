@@ -157,7 +157,7 @@ pub fn pack_or_pack_index(
         )
     })?;
 
-    if !object_path.as_ref().map(|p| p.as_ref().is_dir()).unwrap_or(true) {
+    if !object_path.as_ref().map_or(true, |p| p.as_ref().is_dir()) {
         return Err(anyhow!(
             "The object directory at '{}' is inaccessible",
             object_path
@@ -167,16 +167,16 @@ pub fn pack_or_pack_index(
         ));
     }
 
-    let algorithm = object_path
-        .as_ref()
-        .map(|_| pack::index::traverse::Algorithm::Lookup)
-        .unwrap_or_else(|| {
+    let algorithm = object_path.as_ref().map_or_else(
+        || {
             if sink_compress {
                 pack::index::traverse::Algorithm::Lookup
             } else {
                 pack::index::traverse::Algorithm::DeltaTreeLookup
             }
-        });
+        },
+        |_| pack::index::traverse::Algorithm::Lookup,
+    );
 
     let pack::index::traverse::Outcome { progress, .. } = bundle
         .index

@@ -75,17 +75,17 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     (PreviousValue::MustNotExist, _) => {
                         panic!("BUG: MustNotExist constraint makes no sense if references are to be deleted")
                     }
-                    (PreviousValue::ExistingMustMatch(_), None)
-                    | (PreviousValue::MustExist, Some(_))
-                    | (PreviousValue::Any, Some(_))
-                    | (PreviousValue::Any, None) => {}
-                    (PreviousValue::MustExist, None) | (PreviousValue::MustExistAndMatch(_), None) => {
+                    (PreviousValue::ExistingMustMatch(_) | PreviousValue::Any, None)
+                    | (PreviousValue::MustExist | PreviousValue::Any, Some(_)) => {}
+                    (PreviousValue::MustExist | PreviousValue::MustExistAndMatch(_), None) => {
                         return Err(Error::DeleteReferenceMustExist {
                             full_name: change.name(),
                         })
                     }
-                    (PreviousValue::MustExistAndMatch(previous), Some(existing))
-                    | (PreviousValue::ExistingMustMatch(previous), Some(existing)) => {
+                    (
+                        PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
+                        Some(existing),
+                    ) => {
                         let actual = existing.target.clone();
                         if *previous != actual {
                             let expected = previous.clone();
@@ -124,8 +124,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                 match (&expected, &existing_ref) {
                     (PreviousValue::Any, _)
                     | (PreviousValue::MustExist, Some(_))
-                    | (PreviousValue::MustNotExist, None)
-                    | (PreviousValue::ExistingMustMatch(_), None) => {}
+                    | (PreviousValue::MustNotExist | PreviousValue::ExistingMustMatch(_), None) => {}
                     (PreviousValue::MustExist, None) => {
                         let expected = Target::Peeled(store.object_hash.null());
                         let full_name = change.name();
@@ -141,8 +140,10 @@ impl<'s, 'p> Transaction<'s, 'p> {
                             });
                         }
                     }
-                    (PreviousValue::MustExistAndMatch(previous), Some(existing))
-                    | (PreviousValue::ExistingMustMatch(previous), Some(existing)) => {
+                    (
+                        PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
+                        Some(existing),
+                    ) => {
                         if *previous != existing.target {
                             let actual = existing.target.clone();
                             let expected = previous.to_owned();
@@ -180,7 +181,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                 };
 
                 if (is_effective && !direct_to_packed_refs) || is_symbolic {
-                    let mut lock = lock.take().map(Ok).unwrap_or_else(obtain_lock)?;
+                    let mut lock = lock.take().map_or_else(obtain_lock, Ok)?;
 
                     lock.with_mut(|file| match new {
                         Target::Peeled(oid) => write!(file, "{oid}"),
@@ -249,7 +250,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
         {
             let mut edits_for_packed_transaction = Vec::<RefEdit>::new();
             let mut needs_packed_refs_lookups = false;
-            for edit in updates.iter() {
+            for edit in &updates {
                 let log_mode = match edit.update.change {
                     Change::Update {
                         log: LogChange { mode, .. },

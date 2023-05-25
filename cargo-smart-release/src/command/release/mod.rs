@@ -36,11 +36,9 @@ impl Context {
     ) -> anyhow::Result<Self> {
         let base = crate::Context::new(crate_names, changelog, bump, bump_dependencies)?;
         let changelog_links = if changelog_links {
-            crate::git::remote_url(&base.repo)?
-                .map(|url| Linkables::AsLinks {
-                    repository_url: url.into(),
-                })
-                .unwrap_or(Linkables::AsText)
+            crate::git::remote_url(&base.repo)?.map_or(Linkables::AsText, |url| Linkables::AsLinks {
+                repository_url: url.into(),
+            })
         } else {
             Linkables::AsText
         };
@@ -281,10 +279,10 @@ fn present_and_validate_dependencies(
                         kind,
                         dep.package.name,
                         dep.package.version,
-                        bump.latest_release
-                            .as_ref()
-                            .map(|latest_release| format!(" to succeed latest released version {latest_release}"))
-                            .unwrap_or_else(|| ", creating a new release 🎉".into()),
+                        bump.latest_release.as_ref().map_or_else(
+                            || ", creating a new release 🎉".into(),
+                            |latest_release| format!(" to succeed latest released version {latest_release}")
+                        ),
                         bump.desired_release
                     );
                 };
@@ -455,7 +453,7 @@ fn perform_release(ctx: &Context, options: Options, crates: &[Dependency<'_>]) -
         }
     }
 
-    publish_err.map(Err).unwrap_or(Ok(()))
+    publish_err.map_or(Ok(()), Err)
 }
 
 fn wait_for_release(

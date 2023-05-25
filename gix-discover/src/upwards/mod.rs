@@ -40,9 +40,7 @@ pub(crate) mod function {
         // us the parent directory. (`Path::parent` just strips off the last
         // path component, which means it will not do what you expect when
         // working with paths paths that contain '..'.)
-        let cwd = current_dir
-            .map(|cwd| Ok(Cow::Borrowed(cwd)))
-            .unwrap_or_else(|| std::env::current_dir().map(Cow::Owned))?;
+        let cwd = current_dir.map_or_else(|| std::env::current_dir().map(Cow::Owned), |cwd| Ok(Cow::Borrowed(cwd)))?;
         let directory = directory.as_ref();
         #[cfg(windows)]
         let directory = dunce::simplified(directory);
@@ -95,15 +93,18 @@ pub(crate) mod function {
 
             #[cfg(unix)]
             if current_height != 0 && !cross_fs {
-                let metadata = cursor_metadata.take().map(Ok).unwrap_or_else(|| {
-                    if cursor.as_os_str().is_empty() {
-                        Path::new(".")
-                    } else {
-                        cursor.as_ref()
-                    }
-                    .metadata()
-                    .map_err(|_| Error::InaccessibleDirectory { path: cursor.clone() })
-                })?;
+                let metadata = cursor_metadata.take().map_or_else(
+                    || {
+                        if cursor.as_os_str().is_empty() {
+                            Path::new(".")
+                        } else {
+                            cursor.as_ref()
+                        }
+                        .metadata()
+                        .map_err(|_| Error::InaccessibleDirectory { path: cursor.clone() })
+                    },
+                    Ok,
+                )?;
 
                 if device_id(&metadata) != initial_device {
                     return Err(Error::NoGitRepositoryWithinFs {
@@ -169,7 +170,7 @@ pub(crate) mod function {
                 if dir_made_absolute
                     || matches!(
                         cursor.components().next(),
-                        Some(std::path::Component::RootDir) | Some(std::path::Component::Prefix(_))
+                        Some(std::path::Component::RootDir | std::path::Component::Prefix(_))
                     )
                 {
                     break Err(Error::NoGitRepository { path: dir.into_owned() });

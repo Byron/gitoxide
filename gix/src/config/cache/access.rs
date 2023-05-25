@@ -47,8 +47,7 @@ impl Cache {
             .get_or_init(|| {
                 self.resolved
                     .string_by_key(Gitoxide::USER_AGENT.logical_name().as_str())
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| crate::env::agent().into())
+                    .map_or_else(|| crate::env::agent().into(), |s| s.to_string())
             })
             .to_owned();
         ("agent", Some(gix_protocol::agent(agent).into()))
