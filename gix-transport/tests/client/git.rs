@@ -325,7 +325,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
             "ls-refs",
             [("agent", Some("git/2.28.0")), ("object-format", Some("sha1"))]
                 .iter()
-                .cloned(),
+                .copied(),
             Some(
                 [
                     "peel",
@@ -364,7 +364,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
                 ("object-format", Some("sha1")),
             ]
             .iter()
-            .cloned(),
+            .copied(),
             Some(
                 [
                     "thin-pack",

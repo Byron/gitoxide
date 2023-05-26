@@ -172,7 +172,7 @@ where
                     return match &candidates {
                         Some(candidates) => match candidates.len() {
                             0 => Ok(None),
-                            1 => Ok(candidates.iter().cloned().next().map(Ok)),
+                            1 => Ok(candidates.iter().copied().next().map(Ok)),
                             _ => Ok(Some(Err(()))),
                         },
                         None => Ok(candidate.map(Ok)),

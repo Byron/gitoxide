@@ -51,7 +51,7 @@ where
             Some(match Self::read_line_inner(reader, buf).await {
                 Ok(Ok(line)) => {
                     if delimiters.contains(&line) {
-                        let stopped_at = delimiters.iter().find(|l| **l == line).cloned();
+                        let stopped_at = delimiters.iter().find(|l| **l == line).copied();
                         buf.clear();
                         return (true, stopped_at, None);
                     } else if fail_on_err_lines {

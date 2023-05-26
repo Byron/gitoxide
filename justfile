@@ -19,10 +19,11 @@ ci-test: check doc unit-tests journey-tests-pure journey-tests-small journey-tes
 #   -D clippy::range-plus-one - useful, but caused too many false positives as we use range types directly quite a lot
 
 clippy-flags := """
-  -D clippy::uninlined_format_args \
-  -D clippy::unnested-or-patterns \
+  -D clippy::cloned-instead-of-copied \
   -D clippy::explicit-iter-loop \
   -D clippy::map-unwrap-or \
+  -D clippy::uninlined_format_args \
+  -D clippy::unnested-or-patterns \
 """
 
 # Run cargo clippy on all crates
@@ -32,12 +33,13 @@ clippy:
     cargo clippy --all --no-default-features --features max-pure -- {{ clippy-flags }}
     cargo clippy --all --no-default-features --features lean-async --tests -- {{ clippy-flags }}
 
-# Run cargo clippy on all crates, fixing what can be fixed
+# Run cargo clippy on all crates, fixing what can be fixed, and format all code
 clippy-fix:
     cargo clippy --fix --all --tests --examples -- {{ clippy-flags }}
     cargo clippy --fix --allow-dirty --all --no-default-features --features small -- {{ clippy-flags }}
     cargo clippy --fix --allow-dirty --all --no-default-features --features max-pure -- {{ clippy-flags }}
     cargo clippy --fix --allow-dirty --all --no-default-features --features lean-async --tests -- {{ clippy-flags }}
+    cargo fmt --all
 
 # Build all code in suitable configurations
 check:

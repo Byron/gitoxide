@@ -163,7 +163,7 @@ mod arguments {
         async fn include_tag() {
             let mut out = Vec::new();
             let mut t = transport(&mut out, true);
-            let mut arguments = arguments_v1(["include-tag", "feature-b"].iter().cloned());
+            let mut arguments = arguments_v1(["include-tag", "feature-b"].iter().copied());
             assert!(arguments.can_use_include_tag());
 
             arguments.use_include_tag();
@@ -183,7 +183,7 @@ mod arguments {
         async fn haves_and_wants_for_clone() {
             let mut out = Vec::new();
             let mut t = transport(&mut out, true);
-            let mut arguments = arguments_v1(["feature-a", "feature-b"].iter().cloned());
+            let mut arguments = arguments_v1(["feature-a", "feature-b"].iter().copied());
             assert!(
                 !arguments.can_use_include_tag(),
                 "needs to be enabled by features in V1"
