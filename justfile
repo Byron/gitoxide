@@ -3,7 +3,7 @@
 #   like a script, with `./justfile test`, for example.
 
 default:
-    {{just_executable()}} --list
+    {{ just_executable() }} --list
 
 alias t := test
 alias c := check
@@ -14,10 +14,10 @@ test: clippy check doc unit-tests journey-tests-pure journey-tests-small journey
 # run all tests, without clippy, including journey tests, try building docs
 ci-test: check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests journey-tests-smart-release
 
-
 # Rejected for now, and why
 #	-D clippy::default-trait-access - sometimes makes imports necessary, just for a default value. It's good for more explicit typing though.
 #   -D clippy::range-plus-one - useful, but caused too many false positives as we use range types directly quite a lot
+
 clippy-flags := """
   -D clippy::uninlined_format_args \
   -D clippy::unnested-or-patterns \
@@ -27,18 +27,17 @@ clippy-flags := """
 
 # Run cargo clippy on all crates
 clippy:
-    cargo clippy --all --tests --examples -- {{clippy-flags}}
-    cargo clippy --all --no-default-features --features small -- {{clippy-flags}}
-    cargo clippy --all --no-default-features --features max-pure -- {{clippy-flags}}
-    cargo clippy --all --no-default-features --features lean-async --tests -- {{clippy-flags}}
+    cargo clippy --all --tests --examples -- {{ clippy-flags }}
+    cargo clippy --all --no-default-features --features small -- {{ clippy-flags }}
+    cargo clippy --all --no-default-features --features max-pure -- {{ clippy-flags }}
+    cargo clippy --all --no-default-features --features lean-async --tests -- {{ clippy-flags }}
 
 # Run cargo clippy on all crates, fixing what can be fixed
 clippy-fix:
-    cargo clippy --fix --all --tests --examples -- {{clippy-flags}}
-    cargo clippy --fix --allow-dirty --all --no-default-features --features small -- {{clippy-flags}}
-    cargo clippy --fix --allow-dirty --all --no-default-features --features max-pure -- {{clippy-flags}}
-    cargo clippy --fix --allow-dirty --all --no-default-features --features lean-async --tests -- {{clippy-flags}}
-
+    cargo clippy --fix --all --tests --examples -- {{ clippy-flags }}
+    cargo clippy --fix --allow-dirty --all --no-default-features --features small -- {{ clippy-flags }}
+    cargo clippy --fix --allow-dirty --all --no-default-features --features max-pure -- {{ clippy-flags }}
+    cargo clippy --fix --allow-dirty --all --no-default-features --features lean-async --tests -- {{ clippy-flags }}
 
 # Build all code in suitable configurations
 check:
@@ -179,31 +178,31 @@ unit-tests:
 unit-tests-flaky:
     cargo test -p gix --features async-network-client-async-std
 
-
 jtt := "target/debug/jtt"
+
 # run journey tests (max)
 journey-tests:
     cargo build
     cargo build -p gix-testtools --bin jtt
-    ./tests/journey.sh target/debug/ein target/debug/gix {{jtt}} max
+    ./tests/journey.sh target/debug/ein target/debug/gix {{ jtt }} max
 
 # run journey tests (max-pure)
 journey-tests-pure:
     cargo build --no-default-features --features max-pure
     cargo build -p gix-testtools --bin jtt
-    ./tests/journey.sh target/debug/ein target/debug/gix {{jtt}} max-pure
+    ./tests/journey.sh target/debug/ein target/debug/gix {{ jtt }} max-pure
 
 # run journey tests (small)
 journey-tests-small:
     cargo build --no-default-features --features small
     cargo build -p gix-testtools
-    ./tests/journey.sh target/debug/ein target/debug/gix {{jtt}} small
+    ./tests/journey.sh target/debug/ein target/debug/gix {{ jtt }} small
 
 # run journey tests (lean-async)
 journey-tests-async:
     cargo build --no-default-features --features lean-async
     cargo build -p gix-testtools
-    ./tests/journey.sh target/debug/ein target/debug/gix {{jtt}} async
+    ./tests/journey.sh target/debug/ein target/debug/gix {{ jtt }} async
 
 # run journey tests (cargo-smart-release)
 journey-tests-smart-release:
@@ -236,6 +235,4 @@ nextest:
 fmt:
     cargo +nightly fmt --all -- --config-path rustfmt-nightly.toml
     cargo +stable fmt --all -- --check
-
-
-
+    just --fmt --unstable
