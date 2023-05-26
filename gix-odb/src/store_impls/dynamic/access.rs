@@ -19,6 +19,6 @@ impl Store {
 
     /// An iterator over replacements from object-ids `X` to `X-replaced` as `(X, X-replaced)`, sorted by the original id `X`.
     pub fn replacements(&self) -> impl Iterator<Item = (gix_hash::ObjectId, gix_hash::ObjectId)> + '_ {
-        self.replacements.iter().cloned()
+        self.replacements.iter().copied()
     }
 }

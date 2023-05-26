@@ -566,7 +566,7 @@ Git-Protocol: version=2:value-only:key=value
     drop(refs);
     let res = c.invoke(
         "ls-refs",
-        [("without-value", None), ("with-value", Some("value"))].iter().cloned(),
+        [("without-value", None), ("with-value", Some("value"))].iter().copied(),
         Some(vec!["arg1".as_bytes().as_bstr().to_owned()].into_iter()),
     )?;
     assert_eq!(

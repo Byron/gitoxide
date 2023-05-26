@@ -94,7 +94,7 @@ impl Store {
         match &mut candidates {
             Some(candidates) => match candidates.len() {
                 0 => Ok(None),
-                1 => Ok(candidates.iter().next().cloned().map(Ok)),
+                1 => Ok(candidates.iter().next().copied().map(Ok)),
                 _ => Ok(Some(Err(()))),
             },
             None => Ok(candidate.map(Ok)),
