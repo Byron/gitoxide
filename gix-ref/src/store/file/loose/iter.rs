@@ -36,7 +36,7 @@ impl Iterator for SortedLoosePaths {
                     if !entry.file_type().is_file() {
                         continue;
                     }
-                    let full_path = entry.path().clone();
+                    let full_path = entry.path();
                     if let Some((prefix, name)) = self
                         .filename_prefix
                         .as_deref()
@@ -64,7 +64,7 @@ impl Iterator for SortedLoosePaths {
 
                     if gix_validate::reference::name_partial(full_name.as_bstr()).is_ok() {
                         let name = FullName(full_name);
-                        return Some(Ok((full_path, name)));
+                        return Some(Ok((full_path.to_path_buf(), name)));
                     } else {
                         continue;
                     }
