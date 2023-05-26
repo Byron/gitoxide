@@ -1,17 +1,5 @@
 mod access {
-    use crate::Kind;
-
     impl crate::ThreadSafeRepository {
-        /// Return the kind of repository, either bare or one with a work tree.
-        pub fn kind(&self) -> Kind {
-            match self.work_tree {
-                Some(_) => Kind::WorkTree {
-                    is_linked: crate::worktree::id(self.git_dir(), self.common_dir.is_some()).is_some(),
-                },
-                None => Kind::Bare,
-            }
-        }
-
         /// Add thread-local state to an easy-to-use thread-local repository for the most convenient API.
         pub fn to_thread_local(&self) -> crate::Repository {
             self.into()

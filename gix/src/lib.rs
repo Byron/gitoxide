@@ -120,8 +120,7 @@ pub(crate) type Config = OwnShared<gix_config::File<'static>>;
 ///
 mod types;
 pub use types::{
-    Commit, Head, Id, Kind, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree,
-    Worktree,
+    Commit, Head, Id, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
 };
 
 ///
@@ -131,7 +130,7 @@ pub mod head;
 pub mod id;
 pub mod object;
 pub mod reference;
-mod repository;
+pub mod repository;
 pub mod tag;
 
 ///
@@ -260,5 +259,3 @@ pub mod shallow;
 pub mod discover;
 
 pub mod env;
-
-mod kind;

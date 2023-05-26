@@ -1,4 +1,4 @@
-use crate::Kind;
+use crate::repository::Kind;
 
 impl Kind {
     /// Returns true if this is a bare repository, one without a work tree.

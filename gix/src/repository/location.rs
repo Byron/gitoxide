@@ -69,18 +69,18 @@ impl crate::Repository {
     }
 
     /// Return the kind of repository, either bare or one with a work tree.
-    pub fn kind(&self) -> crate::Kind {
+    pub fn kind(&self) -> crate::repository::Kind {
         match self.worktree() {
             Some(wt) => {
                 if gix_discover::is_submodule_git_dir(self.git_dir()) {
-                    crate::Kind::Submodule
+                    crate::repository::Kind::Submodule
                 } else {
-                    crate::Kind::WorkTree {
+                    crate::repository::Kind::WorkTree {
                         is_linked: !wt.is_main(),
                     }
                 }
             }
-            None => crate::Kind::Bare,
+            None => crate::repository::Kind::Bare,
         }
     }
 }

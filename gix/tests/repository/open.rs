@@ -134,7 +134,7 @@ mod submodules {
                 assert_eq!(repo.git_dir(), dir.join(&submodule_m1_gitdir));
 
                 let repo = gix::open_opts(repo.work_dir().expect("non-bare"), gix::open::Options::isolated()).unwrap();
-                assert_eq!(repo.kind(), gix::Kind::Submodule);
+                assert_eq!(repo.kind(), gix::repository::Kind::Submodule);
                 assert_eq!(repo.work_dir().expect("non-bare"), dir.join(&submodule_m1_workdir));
                 assert_eq!(repo.git_dir(), dir.join(&submodule_m1_gitdir));
             }
