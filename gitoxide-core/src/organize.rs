@@ -17,9 +17,9 @@ fn find_git_repository_workdirs(
     mut progress: impl Progress,
     debug: bool,
     threads: Option<usize>,
-) -> impl Iterator<Item = (PathBuf, gix::Kind)> {
+) -> impl Iterator<Item = (PathBuf, gix::repository::Kind)> {
     progress.init(None, progress::count("filesystem items"));
-    fn is_repository(path: &Path) -> Option<gix::Kind> {
+    fn is_repository(path: &Path) -> Option<gix::repository::Kind> {
         // Can be git dir or worktree checkout (file)
         if path.file_name() != Some(OsStr::new(".git")) && path.extension() != Some(OsStr::new("git")) {
             return None;
@@ -33,7 +33,7 @@ fn find_git_repository_workdirs(
             }
         } else {
             // git files are always worktrees
-            Some(gix::Kind::WorkTree { is_linked: true })
+            Some(gix::repository::Kind::WorkTree { is_linked: true })
         }
     }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
@@ -46,7 +46,7 @@ fn find_git_repository_workdirs(
 
     #[derive(Debug, Default)]
     struct State {
-        kind: Option<gix::Kind>,
+        kind: Option<gix::repository::Kind>,
     }
 
     let walk = jwalk::WalkDirGeneric::<((), State)>::new(root)
@@ -97,12 +97,12 @@ fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<gix_url::Url>> {
 
 fn handle(
     mode: Mode,
-    kind: gix::Kind,
+    kind: gix::repository::Kind,
     git_workdir: &Path,
     canonicalized_destination: &Path,
     progress: &mut impl Progress,
 ) -> anyhow::Result<()> {
-    if let gix::Kind::WorkTree { is_linked: true } = kind {
+    if let gix::repository::Kind::WorkTree { is_linked: true } = kind {
         return Ok(());
     }
     fn to_relative(path: PathBuf) -> PathBuf {
@@ -166,11 +166,11 @@ fn handle(
         .join(to_relative({
             let mut path = gix_url::expand_path(None, url.path.as_bstr())?;
             match kind {
-                gix::Kind::Submodule => {
+                gix::repository::Kind::Submodule => {
                     unreachable!("BUG: We should not try to relocated submodules and not find them the first place")
                 }
-                gix::Kind::Bare => path,
-                gix::Kind::WorkTree { .. } => {
+                gix::repository::Kind::Bare => path,
+                gix::repository::Kind::WorkTree { .. } => {
                     if let Some(ext) = path.extension() {
                         if ext == "git" {
                             path.set_extension("");
