@@ -14,6 +14,13 @@ test: clippy check doc unit-tests journey-tests-pure journey-tests-small journey
 # run all tests, without clippy, including journey tests, try building docs
 ci-test: check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests journey-tests-smart-release
 
+#
+# To find all pedantic lints currently failing and their count (uses ripgrep):
+#   cargo clippy --workspace -- -W clippy::pedantic 2>&1 | rg --trim -- '-W clippy::' | sort | uniq -c | sort -h -r
+#
+# To run clippy or clippy-fix with custom flags:
+#   just 'clippy-flags=-W clippy::implicit-clone' clippy-fix
+#
 # Rejected for now, and why
 #	-D clippy::default-trait-access - sometimes makes imports necessary, just for a default value. It's good for more explicit typing though.
 #   -D clippy::range-plus-one - useful, but caused too many false positives as we use range types directly quite a lot
@@ -21,8 +28,9 @@ ci-test: check doc unit-tests journey-tests-pure journey-tests-small journey-tes
 clippy-flags := """
   -D clippy::cloned-instead-of-copied \
   -D clippy::explicit-iter-loop \
+  -D clippy::implicit-clone \
   -D clippy::map-unwrap-or \
-  -D clippy::uninlined_format_args \
+  -D clippy::uninlined-format-args \
   -D clippy::unnested-or-patterns \
 """
 

@@ -61,7 +61,7 @@ impl PrepareFetch {
             .expect("user error: multiple calls are allowed only until it succeeds");
 
         let remote_name = match self.remote_name.as_ref() {
-            Some(name) => name.to_owned(),
+            Some(name) => name.clone(),
             None => repo
                 .config
                 .resolved

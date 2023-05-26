@@ -34,7 +34,7 @@ impl ChangeLog {
                 } => Some((idx, heading_level, version_prefix)),
                 _ => None,
             }) {
-                Some((idx, level, prefix)) => (idx, *level, prefix.to_owned()),
+                Some((idx, level, prefix)) => (idx, *level, prefix.clone()),
                 None => {
                     sections.extend(sections_to_merge);
                     return Ok(self);

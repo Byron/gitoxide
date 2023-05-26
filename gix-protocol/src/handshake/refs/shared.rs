@@ -87,13 +87,13 @@ pub(crate) fn from_capabilities<'a>(
         }
     });
     for symref in symref_values {
-        let (left, right) = symref.split_at(symref.find_byte(b':').ok_or_else(|| Error::MalformedSymref {
-            symref: symref.to_owned(),
-        })?);
+        let (left, right) = symref.split_at(
+            symref
+                .find_byte(b':')
+                .ok_or_else(|| Error::MalformedSymref { symref: symref.clone() })?,
+        );
         if left.is_empty() || right.is_empty() {
-            return Err(Error::MalformedSymref {
-                symref: symref.to_owned(),
-            });
+            return Err(Error::MalformedSymref { symref: symref.clone() });
         }
         out_refs.push(InternalRef::SymbolicForLookup {
             path: left.into(),

@@ -146,7 +146,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     ) => {
                         if *previous != existing.target {
                             let actual = existing.target.clone();
-                            let expected = previous.to_owned();
+                            let expected = previous.clone();
                             let full_name = change.name();
                             return Err(Error::ReferenceOutOfDate {
                                 full_name,
@@ -157,7 +157,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     }
 
                     (PreviousValue::MustExistAndMatch(previous), None) => {
-                        let expected = previous.to_owned();
+                        let expected = previous.clone();
                         let full_name = change.name();
                         return Err(Error::MustExist { full_name, expected });
                     }

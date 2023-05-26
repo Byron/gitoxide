@@ -87,7 +87,7 @@ pub mod details {
     impl From<&crate::commit::history::Item> for Message {
         fn from(v: &crate::commit::history::Item) -> Self {
             Message {
-                title: v.message.title.to_owned(),
+                title: v.message.title.clone(),
                 id: v.id,
             }
         }

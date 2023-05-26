@@ -97,7 +97,7 @@ pub(crate) mod impl_ {
                     delegate.pop_front_tracked_path_and_set_current();
                     match find(&oid, &mut state.buf) {
                         Some(tree_iter) => tree = tree_iter,
-                        None => return Err(Error::NotFound { oid: oid.to_owned() }),
+                        None => return Err(Error::NotFound { oid }),
                     }
                 }
                 None => break Ok(()),

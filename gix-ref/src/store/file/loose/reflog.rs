@@ -191,9 +191,9 @@ pub mod create_or_update {
                 base.join("logs"),
                 match &self.namespace {
                     None => gix_path::to_native_path_on_windows(name.as_bstr()),
-                    Some(namespace) => gix_path::to_native_path_on_windows(
-                        namespace.to_owned().into_namespaced_name(name).into_inner(),
-                    ),
+                    Some(namespace) => {
+                        gix_path::to_native_path_on_windows(namespace.clone().into_namespaced_name(name).into_inner())
+                    }
                 },
             )
         }

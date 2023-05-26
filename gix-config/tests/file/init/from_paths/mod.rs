@@ -202,7 +202,7 @@ fn multiple_paths_multi_value_and_filter() -> crate::Result {
         config
             .sections()
             .map(|s| (
-                s.meta().path.as_ref().expect("each section has file source").to_owned(),
+                s.meta().path.as_ref().expect("each section has file source").clone(),
                 s.meta().source,
                 s.meta().level
             ))

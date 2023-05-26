@@ -36,7 +36,7 @@ impl Iterator for SortedLoosePaths {
                     if !entry.file_type().is_file() {
                         continue;
                     }
-                    let full_path = entry.path().to_owned();
+                    let full_path = entry.path().clone();
                     if let Some((prefix, name)) = self
                         .filename_prefix
                         .as_deref()

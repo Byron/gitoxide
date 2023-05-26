@@ -210,7 +210,7 @@ fn catchup_rhs_with_lhs<R: tree::Visit>(
                     break;
                 }
             },
-            Some(Err(err)) => return Err(Error::EntriesDecode(err.to_owned())),
+            Some(Err(err)) => return Err(Error::EntriesDecode(err.clone())),
             None => {
                 delegate.pop_path_component();
                 delete_entry_schedule_recursion(lhs, queue, delegate)?;
@@ -250,7 +250,7 @@ fn catchup_lhs_with_rhs<R: tree::Visit>(
                     break;
                 }
             },
-            Some(Err(err)) => return Err(Error::EntriesDecode(err.to_owned())),
+            Some(Err(err)) => return Err(Error::EntriesDecode(err.clone())),
             None => {
                 delegate.pop_path_component();
                 add_entry_schedule_recursion(rhs, queue, delegate)?;

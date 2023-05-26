@@ -34,12 +34,12 @@ impl crate::traits::Write for Store {
         to.write_all(&object.loose_header()).map_err(|err| Error::Io {
             source: err,
             message: "write header to tempfile in",
-            path: self.path.to_owned(),
+            path: self.path.clone(),
         })?;
         object.write_to(&mut to).map_err(|err| Error::Io {
             source: err,
             message: "stream all data into tempfile in",
-            path: self.path.to_owned(),
+            path: self.path.clone(),
         })?;
         to.flush()?;
         self.finalize_object(to)
@@ -54,13 +54,13 @@ impl crate::traits::Write for Store {
             .map_err(|err| Error::Io {
                 source: err,
                 message: "write header to tempfile in",
-                path: self.path.to_owned(),
+                path: self.path.clone(),
             })?;
 
         to.write_all(from).map_err(|err| Error::Io {
             source: err,
             message: "stream all data into tempfile in",
-            path: self.path.to_owned(),
+            path: self.path.clone(),
         })?;
         to.flush()?;
         self.finalize_object(to)
@@ -83,13 +83,13 @@ impl crate::traits::Write for Store {
         .map_err(|err| Error::Io {
             source: err,
             message: "write header to tempfile in",
-            path: self.path.to_owned(),
+            path: self.path.clone(),
         })?;
 
         io::copy(&mut from, &mut to).map_err(|err| Error::Io {
             source: err,
             message: "stream all data into tempfile in",
-            path: self.path.to_owned(),
+            path: self.path.clone(),
         })?;
         to.flush()?;
         self.finalize_object(to)
@@ -114,7 +114,7 @@ impl Store {
             deflate::Write::new(NamedTempFile::new_in(&self.path).map_err(|err| Error::Io {
                 source: err,
                 message: "create named temp file in",
-                path: self.path.to_owned(),
+                path: self.path.clone(),
             })?),
             self.object_hash,
         ))

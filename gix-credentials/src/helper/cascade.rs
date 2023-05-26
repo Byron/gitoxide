@@ -153,7 +153,7 @@ impl Cascade {
                 username: ctx.username.clone(),
                 password: ctx.password.clone(),
                 quit: ctx.quit.unwrap_or(false),
-                next: ctx.to_owned().into(),
+                next: ctx.clone().into(),
             }),
             action,
         )

@@ -90,7 +90,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
             })
             .map_err(|err| Error::ReadFileContents {
                 source: err,
-                path: refpath.to_owned(),
+                path: refpath.clone(),
             })?;
         loose::Reference::try_from_path(name, &self.buf)
             .map_err(|err| {
@@ -366,7 +366,7 @@ impl file::Store {
                 self.iter_from_info(git_dir_info, common_dir_info, packed)
             }
             Some(namespace) => {
-                let prefix = namespace.to_owned().into_namespaced_prefix(prefix);
+                let prefix = namespace.clone().into_namespaced_prefix(prefix);
                 let git_dir_info = IterInfo::from_prefix(self.git_dir(), prefix.clone().into())?;
                 let common_dir_info = self
                     .common_dir()

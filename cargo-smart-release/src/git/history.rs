@@ -71,9 +71,9 @@ pub fn collect(repo: &gix::Repository) -> anyhow::Result<Option<commit::History>
             }
             Ok(m) => m,
         };
-        data_by_tree_id.insert(tree_id, handle.find_object(tree_id)?.data.to_owned());
+        data_by_tree_id.insert(tree_id, handle.find_object(tree_id)?.data.clone());
         if let Some(tree_id) = parent_tree_id {
-            data_by_tree_id.insert(tree_id, handle.find_object(tree_id)?.data.to_owned());
+            data_by_tree_id.insert(tree_id, handle.find_object(tree_id)?.data.clone());
         }
         items.push(commit::history::Item {
             id: commit_id.detach(),
@@ -127,7 +127,7 @@ pub fn crate_ref_segments<'h>(
 
     let mut segments = Vec::new();
     let mut segment = commit::history::Segment {
-        head: history.head.to_owned(),
+        head: history.head.clone(),
         history: vec![],
     };
 
@@ -256,10 +256,10 @@ fn add_item_if_package_changed<'a>(
         Filter::Slow { ref components } => {
             let mut repo = ctx.repo.clone();
             repo.object_cache_size(1024 * 1024);
-            let current = gix::Tree::from_data(item.id, data_by_tree_id[&item.tree_id].to_owned(), &ctx.repo)
+            let current = gix::Tree::from_data(item.id, data_by_tree_id[&item.tree_id].clone(), &ctx.repo)
                 .lookup_entry(components.iter().copied())?;
             let parent = match item.parent_tree_id {
-                Some(tree_id) => gix::Tree::from_data(tree_id, data_by_tree_id[&tree_id].to_owned(), &ctx.repo)
+                Some(tree_id) => gix::Tree::from_data(tree_id, data_by_tree_id[&tree_id].clone(), &ctx.repo)
                     .lookup_entry(components.iter().copied())?,
                 None => None,
             };

@@ -148,7 +148,7 @@ impl<'repo> Remote<'repo> {
                 })
             })?;
 
-        let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
+        let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.clone();
         if !self.repo.config.url_scheme()?.allow(&url.scheme) {
             return Err(Error::ProtocolDenied {
                 url: url.to_bstring(),

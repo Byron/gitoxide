@@ -193,7 +193,7 @@ mod expand {
                     use gix_object::Kind::*;
                     let mut obj = obj;
                     let mut location = location;
-                    let mut id = id.to_owned();
+                    let mut id = id;
 
                     loop {
                         push_obj_count_unique(&mut out, seen_objs, &id, location, progress, stats, false);

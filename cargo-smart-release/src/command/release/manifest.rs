@@ -430,7 +430,7 @@ fn gather_changelog_data<'meta>(
                             new_version
                         );
                     }
-                    *name = changelog::Version::Semantic((*new_version).to_owned());
+                    *name = changelog::Version::Semantic((*new_version).clone());
                     *date = Some(next_commit_date);
                     let recent_section = log.sections.remove(recent_idx);
                     match log

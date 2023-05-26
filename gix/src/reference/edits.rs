@@ -39,7 +39,7 @@ pub mod set_target_id {
                     let changed = self.repo.reference(
                         self.name(),
                         id,
-                        PreviousValue::MustExistAndMatch(Target::Peeled(current_id.to_owned())),
+                        PreviousValue::MustExistAndMatch(Target::Peeled(*current_id)),
                         reflog_message,
                     )?;
                     *self = changed;

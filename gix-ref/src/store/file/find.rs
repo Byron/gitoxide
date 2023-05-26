@@ -112,7 +112,7 @@ impl file::Store {
                         let full_name_backing;
                         let full_name = match &self.namespace {
                             Some(namespace) => {
-                                full_name_backing = namespace.to_owned().into_namespaced_name(full_name);
+                                full_name_backing = namespace.clone().into_namespaced_name(full_name);
                                 full_name_backing.as_ref()
                             }
                             None => full_name,
@@ -190,7 +190,7 @@ impl file::Store {
             match &self.namespace {
                 None => gix_path::to_native_path_on_windows(name.as_bstr()),
                 Some(namespace) => {
-                    gix_path::to_native_path_on_windows(namespace.to_owned().into_namespaced_name(name).into_inner())
+                    gix_path::to_native_path_on_windows(namespace.clone().into_namespaced_name(name).into_inner())
                 }
             },
         )

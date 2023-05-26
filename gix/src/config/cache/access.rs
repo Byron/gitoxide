@@ -49,7 +49,7 @@ impl Cache {
                     .string_by_key(Gitoxide::USER_AGENT.logical_name().as_str())
                     .map_or_else(|| crate::env::agent().into(), |s| s.to_string())
             })
-            .to_owned();
+            .clone();
         ("agent", Some(gix_protocol::agent(agent).into()))
     }
 

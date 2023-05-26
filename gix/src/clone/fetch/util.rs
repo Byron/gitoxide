@@ -100,7 +100,7 @@ pub fn update_head(
     match head_ref {
         Some(referent) => {
             let referent: gix_ref::FullName = referent.try_into().map_err(|err| Error::InvalidHeadRef {
-                head_ref_name: referent.to_owned(),
+                head_ref_name: referent.clone(),
                 source: err,
             })?;
             repo.refs

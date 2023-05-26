@@ -110,7 +110,7 @@ impl output::Entry {
         }
         .map(|kind| {
             Ok(output::Entry {
-                id: count.id.to_owned(),
+                id: count.id,
                 kind,
                 decompressed_size: pack_entry.decompressed_size as usize,
                 compressed_data: {
@@ -129,7 +129,7 @@ impl output::Entry {
     /// Create a new instance from the given `oid` and its corresponding git object data `obj`.
     pub fn from_data(count: &output::Count, obj: &gix_object::Data<'_>) -> Result<Self, Error> {
         Ok(output::Entry {
-            id: count.id.to_owned(),
+            id: count.id,
             kind: Kind::Base(obj.kind),
             decompressed_size: obj.data.len(),
             compressed_data: {
@@ -172,7 +172,7 @@ impl output::Entry {
                     Tag => data::entry::Header::Tag,
                 }
             }
-            DeltaOid { id } => data::entry::Header::RefDelta { base_id: id.to_owned() },
+            DeltaOid { id } => data::entry::Header::RefDelta { base_id: id },
             DeltaRef { object_index } => data::entry::Header::OfsDelta {
                 base_distance: index_to_base_distance(object_index),
             },

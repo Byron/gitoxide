@@ -69,7 +69,7 @@ impl Section {
                             match possibly_issue {
                                 commit::message::Addition::IssueId(issue) => {
                                     mapping
-                                        .entry(section::segment::details::Category::Issue(issue.to_owned()))
+                                        .entry(section::segment::details::Category::Issue(issue.clone()))
                                         .or_insert_with(Vec::new)
                                         .push(item.into());
                                     issue_associations += 1;

@@ -205,7 +205,7 @@ impl super::Store {
         }
         self.num_disk_state_consolidation.fetch_add(1, Ordering::Relaxed);
 
-        let db_paths: Vec<_> = std::iter::once(objects_directory.to_owned())
+        let db_paths: Vec<_> = std::iter::once(objects_directory.clone())
             .chain(crate::alternate::resolve(objects_directory, &self.current_dir)?)
             .collect();
 
@@ -458,7 +458,7 @@ impl super::Store {
                             .map(|t| {
                                 if t.0.num_indices() > PackId::max_packs_in_multi_index() {
                                     Err(Error::TooManyPacksInMultiIndex {
-                                        index_path: p.to_owned(),
+                                        index_path: p.clone(),
                                         actual: t.0.num_indices(),
                                         limit: PackId::max_packs_in_multi_index(),
                                     })

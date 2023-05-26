@@ -305,7 +305,7 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                         let adjustment = VersionAdjustment::Breakage {
                             bump,
                             change: None,
-                            causing_dependency_names: vec![dependee.package.name.to_owned()],
+                            causing_dependency_names: vec![dependee.package.name.clone()],
                         };
                         new_crates_this_round.push(Dependency {
                             package: dependant,

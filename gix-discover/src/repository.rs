@@ -91,7 +91,7 @@ mod path {
         pub fn kind(&self) -> Kind {
             match self {
                 Path::LinkedWorkTree { work_dir: _, git_dir } => Kind::WorkTree {
-                    linked_git_dir: Some(git_dir.to_owned()),
+                    linked_git_dir: Some(git_dir.clone()),
                 },
                 Path::WorkTree(_) => Kind::WorkTree { linked_git_dir: None },
                 Path::Repository(_) => Kind::Bare,

@@ -159,7 +159,7 @@ impl Store {
         let bytes_read = istream.read(compressed_buf).map_err(|e| Error::Io {
             source: e,
             action: "read",
-            path: path.to_owned(),
+            path: path.clone(),
         })?;
         let (compressed_buf, header_buf) = buf.split_at_mut(bytes_read);
         let (status, _consumed_in, consumed_out) =
@@ -167,7 +167,7 @@ impl Store {
                 .once(compressed_buf, header_buf)
                 .map_err(|e| Error::DecompressFile {
                     source: e,
-                    path: path.to_owned(),
+                    path: path.clone(),
                 })?;
 
         if status == zlib::Status::BufError {
@@ -188,14 +188,14 @@ impl Store {
             let mut istream = fs::File::open(&path).map_err(|e| Error::Io {
                 source: e,
                 action: Self::OPEN_ACTION,
-                path: path.to_owned(),
+                path: path.clone(),
             })?;
 
             buf.clear();
             let bytes_read = istream.read_to_end(buf).map_err(|e| Error::Io {
                 source: e,
                 action: "read",
-                path: path.to_owned(),
+                path: path.clone(),
             })?;
             buf.resize(bytes_read + HEADER_MAX_SIZE, 0);
             let (input, output) = buf.split_at_mut(bytes_read);
@@ -204,7 +204,7 @@ impl Store {
                     .once(&input[..bytes_read], output)
                     .map_err(|e| Error::DecompressFile {
                         source: e,
-                        path: path.to_owned(),
+                        path: path.clone(),
                     })?,
                 bytes_read,
             )
@@ -244,7 +244,7 @@ impl Store {
                 .map_err(|e| Error::Io {
                     source: e,
                     action: "deflate",
-                    path: path.to_owned(),
+                    path: path.clone(),
                 })?;
                 if num_decompressed_bytes + consumed_out != size + header_size {
                     return Err(Error::SizeMismatch {

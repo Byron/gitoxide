@@ -201,7 +201,7 @@ impl client::Transport for SpawnProcessOnDemand {
                     .map_err(client::Error::SshInvocation)?
                     .stderr(Stdio::piped()),
                 Some(*kind),
-                Cow::Owned(command.to_owned()),
+                Cow::Owned(command.clone()),
             ),
             None => (
                 gix_command::prepare(service.as_str()).stderr(Stdio::null()),

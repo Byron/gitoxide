@@ -85,7 +85,7 @@ impl ReferenceExt for Reference {
     ) -> Result<ObjectId, peel::to_id::Error> {
         match self.peeled {
             Some(peeled) => {
-                self.target = Target::Peeled(peeled.to_owned());
+                self.target = Target::Peeled(peeled);
                 Ok(peeled)
             }
             None => {

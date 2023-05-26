@@ -106,7 +106,7 @@ pub fn with(
     Ok(match user {
         Some(user) => home_for_user(user)
             .ok_or_else(|| Error::MissingHome {
-                user: user.to_owned().into(),
+                user: user.clone().into(),
             })?
             .join(make_relative(path)),
         None => path.into(),

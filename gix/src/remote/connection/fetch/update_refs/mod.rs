@@ -95,7 +95,7 @@ pub(crate) fn update(
                     Some(existing) => {
                         if let Some(wt_dir) = checked_out_branches.get(existing.name()) {
                             let mode = update::Mode::RejectedCurrentlyCheckedOut {
-                                worktree_dir: wt_dir.to_owned(),
+                                worktree_dir: wt_dir.clone(),
                             };
                             updates.push(mode.into());
                             continue;

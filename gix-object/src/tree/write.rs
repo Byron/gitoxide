@@ -41,7 +41,7 @@ impl crate::WriteTo for Tree {
 
             if filename.find_byte(b'\n').is_some() {
                 return Err(Error::NewlineInFilename {
-                    name: (*filename).to_owned(),
+                    name: (*filename).clone(),
                 }
                 .into());
             }

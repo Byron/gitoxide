@@ -43,7 +43,7 @@ impl Remote<'_> {
                 .as_ref()
                 .or(self.push_url.as_ref())
                 .expect("one url is always set")
-                .to_owned(),
+                .clone(),
         })?;
         if let Some(section_ids) = config.sections_and_ids_by_name("remote").map(|it| {
             it.filter_map(|(s, id)| (s.header().subsection_name() == Some(name.as_bstr())).then_some(id))

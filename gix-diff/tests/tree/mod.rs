@@ -554,7 +554,7 @@ mod changes {
             let last_commit = all_commits["rm g/aa, add g/a"];
             let first_commit = all_commits["f added"];
             assert_eq!(
-                diff_commits(&db, first_commit.to_owned(), &last_commit, None)?,
+                diff_commits(&db, first_commit, &last_commit, None)?,
                 vec![
                     Addition {
                         entry_mode: EntryMode::Blob,
@@ -574,7 +574,7 @@ mod changes {
                 ]
             );
             assert_eq!(
-                diff_commits(&db, last_commit.to_owned(), &first_commit, Location::FileName.into())?,
+                diff_commits(&db, last_commit, &first_commit, Location::FileName.into())?,
                 vec![
                     Deletion {
                         entry_mode: EntryMode::Blob,

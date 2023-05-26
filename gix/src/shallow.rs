@@ -27,7 +27,7 @@ pub mod write {
             shallow_commits: Option<Commits>,
             updates: &[ShallowUpdate],
         ) -> Result<(), Error> {
-            let mut shallow_commits = shallow_commits.map(|sc| (**sc).to_owned()).unwrap_or_default();
+            let mut shallow_commits = shallow_commits.map(|sc| (**sc).clone()).unwrap_or_default();
             for update in updates {
                 match update {
                     ShallowUpdate::Shallow(id) => {

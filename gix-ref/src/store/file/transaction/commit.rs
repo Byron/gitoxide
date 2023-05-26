@@ -61,7 +61,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                             }
                             Target::Peeled(new_oid) => {
                                 let previous = match expected {
-                                    PreviousValue::MustExistAndMatch(Target::Peeled(oid)) => Some(oid.to_owned()),
+                                    PreviousValue::MustExistAndMatch(Target::Peeled(oid)) => Some(*oid),
                                     _ => None,
                                 }
                                 .or(change.leaf_referent_previous_oid);

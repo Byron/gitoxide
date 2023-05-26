@@ -20,7 +20,7 @@ mod http {
             .expect("configuration available for http");
         opts.downcast_ref::<gix_transport::client::http::Options>()
             .expect("http options have been created")
-            .to_owned()
+            .clone()
     }
 
     #[test]
