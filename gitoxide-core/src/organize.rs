@@ -36,8 +36,8 @@ fn find_git_repository_workdirs(
             Some(gix::repository::Kind::WorkTree { is_linked: true })
         }
     }
-    fn into_workdir(git_dir: PathBuf) -> PathBuf {
-        if gix::discover::is_bare(&git_dir) {
+    fn into_workdir(git_dir: PathBuf, kind: &gix::repository::Kind) -> PathBuf {
+        if matches!(kind, gix::repository::Kind::Bare) || gix::discover::is_bare(&git_dir) {
             git_dir
         } else {
             git_dir.parent().expect("git is never in the root").to_owned()
@@ -81,7 +81,12 @@ fn find_git_repository_workdirs(
     .into_iter()
     .inspect(move |_| progress.inc())
     .filter_map(Result::ok)
-    .filter_map(|mut e| e.client_state.kind.take().map(|kind| (into_workdir(e.path()), kind)))
+    .filter_map(|mut e| {
+        e.client_state
+            .kind
+            .take()
+            .map(|kind| (into_workdir(e.path(), &kind), kind))
+    })
 }
 
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<gix_url::Url>> {
