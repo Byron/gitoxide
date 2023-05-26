@@ -2,7 +2,7 @@
 pub mod name {
     use std::convert::Infallible;
 
-    /// The error used in [name()][super::name()] and [name_partial()][super::name_partial()]
+    /// The error used in [name()][super::name()] and [`name_partial()`][super::name_partial()]
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

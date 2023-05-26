@@ -18,7 +18,7 @@ impl File {
 
     /// Returns the commit data for the commit located at the given lexigraphical position.
     ///
-    /// `pos` must range from 0 to self.num_commits().
+    /// `pos` must range from 0 to `self.num_commits()`.
     ///
     /// # Panics
     ///
@@ -35,7 +35,7 @@ impl File {
     }
 
     /// Returns an object id at the given index in our list of (sorted) hashes.
-    /// The position ranges from 0 to self.num_commits()
+    /// The position ranges from 0 to `self.num_commits()`
     // copied from gix-odb/src/pack/index/ext
     pub fn id_at(&self, pos: file::Position) -> &gix_hash::oid {
         assert!(

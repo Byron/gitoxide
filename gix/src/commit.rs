@@ -31,7 +31,7 @@ pub mod describe {
 
     use crate::{bstr::BStr, ext::ObjectIdExt, Repository};
 
-    /// The result of [try_resolve()][Platform::try_resolve()].
+    /// The result of [`try_resolve()`][Platform::try_resolve()].
     pub struct Resolution<'repo> {
         /// The outcome of the describe operation.
         pub outcome: gix_revision::describe::Outcome<'static>,
@@ -47,7 +47,7 @@ pub mod describe {
         }
     }
 
-    /// The error returned by [try_format()][Platform::try_format()].
+    /// The error returned by [`try_format()`][Platform::try_format()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

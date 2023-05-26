@@ -45,7 +45,7 @@ pub enum Source {
 /// Initialization
 impl Attributes {
     /// Create a new instance from an attribute match group that represents `globals`. It can more easily be created with
-    /// [AttributeMatchGroup::new_globals()].
+    /// [`AttributeMatchGroup::new_globals()`].
     ///
     /// * `globals` contribute first and consist of all globally available, static files.
     /// * `info_attributes` is a path that should refer to `.git/info/attributes`, and it's not an error if the file doesn't exist.

@@ -231,7 +231,7 @@ pub mod create_or_update {
 }
 
 mod error {
-    /// The error returned by [crate::file::Store::reflog_iter()].
+    /// The error returned by [`crate::file::Store::reflog_iter()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

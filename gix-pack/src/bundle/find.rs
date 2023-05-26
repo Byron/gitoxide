@@ -19,7 +19,7 @@ impl crate::Bundle {
     }
 
     /// Special-use function to get an object given an index previously returned from
-    /// internal_find_pack_index.
+    /// `internal_find_pack_index`.
     ///
     /// # Panics
     ///

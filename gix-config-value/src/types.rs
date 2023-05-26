@@ -24,7 +24,7 @@ pub struct Color {
 /// wish to obtain the true value of the integer, you must account for the
 /// suffix after fetching the value. [`integer::Suffix`] provides
 /// [`bitwise_offset()`][integer::Suffix::bitwise_offset] to help with the
-/// math, or [to_decimal()][Integer::to_decimal()] for obtaining a usable value in one step.
+/// math, or [`to_decimal()`][Integer::to_decimal()] for obtaining a usable value in one step.
 #[derive(Default, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Integer {
     /// The value, without any suffix modification

@@ -35,7 +35,7 @@ impl crate::IsSpuriousError for Error {
     }
 }
 
-/// The return value of [Http::get()].
+/// The return value of [`Http::get()`].
 pub struct GetResponse<H, B> {
     /// The response headers.
     pub headers: H,
@@ -43,7 +43,7 @@ pub struct GetResponse<H, B> {
     pub body: B,
 }
 
-/// The return value of [Http::post()].
+/// The return value of [`Http::post()`].
 pub struct PostResponse<H, B, PB> {
     /// The body to post to the server as part of the request.
     ///

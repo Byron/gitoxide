@@ -102,7 +102,7 @@ pub mod keys;
 pub mod key {
     ///
     pub mod validate {
-        /// The error returned by [Key::validate()][crate::config::tree::Key::validate()].
+        /// The error returned by [`Key::validate()`][crate::config::tree::Key::validate()].
         #[derive(Debug, thiserror::Error)]
         #[error(transparent)]
         #[allow(missing_docs)]
@@ -113,7 +113,7 @@ pub mod key {
     }
     ///
     pub mod validate_assignment {
-        /// The error returned by [Key::validated_assignment*()][crate::config::tree::Key::validated_assignment_fmt()].
+        /// The error returned by [`Key::validated_assignment`*()][crate::config::tree::Key::validated_assignment_fmt()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {

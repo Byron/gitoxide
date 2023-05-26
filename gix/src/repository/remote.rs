@@ -42,7 +42,7 @@ impl crate::Repository {
 
     /// Find the default remote as configured, or `None` if no such configuration could be found.
     ///
-    /// See [remote_default_name()][Self::remote_default_name()] for more information on the `direction` parameter.
+    /// See [`remote_default_name()`][Self::remote_default_name()] for more information on the `direction` parameter.
     pub fn find_default_remote(
         &self,
         direction: remote::Direction,
@@ -65,7 +65,7 @@ impl crate::Repository {
         self.try_find_remote_inner(name_or_url, true)
     }
 
-    /// Similar to [try_find_remote()][Self::try_find_remote()], but removes a failure mode if rewritten URLs turn out to be invalid
+    /// Similar to [`try_find_remote()`][Self::try_find_remote()], but removes a failure mode if rewritten URLs turn out to be invalid
     /// as it skips rewriting them.
     /// Use this in conjunction with [`Remote::rewrite_urls()`] to non-destructively apply the rules and keep the failed urls unchanged.
     pub fn try_find_remote_without_url_rewrite<'a>(

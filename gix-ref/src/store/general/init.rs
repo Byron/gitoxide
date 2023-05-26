@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::store::WriteReflog;
 
 mod error {
-    /// The error returned by [crate::Store::at()].
+    /// The error returned by [`crate::Store::at()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

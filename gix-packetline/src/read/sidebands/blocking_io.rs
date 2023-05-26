@@ -67,12 +67,12 @@ where
         }
     }
 
-    /// Forwards to the parent [StreamingPeekableIter::reset_with()]
+    /// Forwards to the parent [`StreamingPeekableIter::reset_with()`]
     pub fn reset_with(&mut self, delimiters: &'static [PacketLineRef<'static>]) {
         self.parent.reset_with(delimiters)
     }
 
-    /// Forwards to the parent [StreamingPeekableIter::stopped_at()]
+    /// Forwards to the parent [`StreamingPeekableIter::stopped_at()`]
     pub fn stopped_at(&self) -> Option<PacketLineRef<'static>> {
         self.parent.stopped_at
     }
@@ -82,7 +82,7 @@ where
         self.handle_progress = handle_progress;
     }
 
-    /// Effectively forwards to the parent [StreamingPeekableIter::peek_line()], allowing to see what would be returned
+    /// Effectively forwards to the parent [`StreamingPeekableIter::peek_line()`], allowing to see what would be returned
     /// next on a call to [`read_line()`][io::BufRead::read_line()].
     ///
     /// # Warning

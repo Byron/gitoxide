@@ -31,7 +31,7 @@ const PACK_HEADER_LEN: usize = 12;
 /// Generate tree from certain input
 impl<T> Tree<T> {
     /// Create a new `Tree` from any data sorted by offset, ascending as returned by the `data_sorted_by_offsets` iterator.
-    /// * `get_pack_offset(item: &T`) -> data::Offset` is a function returning the pack offset of the given item, which can be used
+    /// * `get_pack_offset(item: &T) -> data::Offset` is a function returning the pack offset of the given item, which can be used
     /// for obtaining the objects entry within the pack.
     /// * `pack_path` is the path to the pack file itself and from which to read the entry data, which is a pack file matching the offsets
     /// returned by `get_pack_offset(…)`.

@@ -185,7 +185,7 @@ pub fn update_head(
 
 /// Setup the remote configuration for `branch` so that it points to itself, but on the remote, if and only if currently
 /// saved refspecs are able to match it.
-/// For that we reload the remote of `remote_name` and use its ref_specs for match.
+/// For that we reload the remote of `remote_name` and use its `ref_specs` for match.
 fn setup_branch_config(
     repo: &mut Repository,
     branch: &FullNameRef,

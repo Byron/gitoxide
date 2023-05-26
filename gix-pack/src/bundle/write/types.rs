@@ -2,8 +2,8 @@ use std::{hash::Hash, io, io::SeekFrom, path::PathBuf, sync::Arc};
 
 use gix_tempfile::handle::Writable;
 
-/// Configuration for [write_to_directory][crate::Bundle::write_to_directory()] or
-/// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]
+/// Configuration for [`write_to_directory`][crate::Bundle::write_to_directory()] or
+/// [`write_to_directory_eagerly`][crate::Bundle::write_to_directory_eagerly()]
 #[derive(Debug, Clone)]
 pub struct Options {
     /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
@@ -28,8 +28,8 @@ impl Default for Options {
     }
 }
 
-/// Returned by [write_to_directory][crate::Bundle::write_to_directory()] or
-/// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]
+/// Returned by [`write_to_directory`][crate::Bundle::write_to_directory()] or
+/// [`write_to_directory_eagerly`][crate::Bundle::write_to_directory_eagerly()]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {

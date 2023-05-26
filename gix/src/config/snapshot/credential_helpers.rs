@@ -13,7 +13,7 @@ use crate::{
 mod error {
     use crate::bstr::BString;
 
-    /// The error returned by [Snapshot::credential_helpers()][super::Snapshot::credential_helpers()].
+    /// The error returned by [`Snapshot::credential_helpers()`][super::Snapshot::credential_helpers()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

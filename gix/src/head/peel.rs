@@ -6,7 +6,7 @@ use crate::{
 mod error {
     use crate::{object, reference};
 
-    /// The error returned by [Head::peel_to_id_in_place()][super::Head::peel_to_id_in_place()] and [Head::into_fully_peeled_id()][super::Head::into_fully_peeled_id()].
+    /// The error returned by [`Head::peel_to_id_in_place()`][super::Head::peel_to_id_in_place()] and [`Head::into_fully_peeled_id()`][super::Head::into_fully_peeled_id()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -25,7 +25,7 @@ use crate::head::Kind;
 pub mod to_commit {
     use crate::object;
 
-    /// The error returned by [Head::peel_to_commit_in_place()][super::Head::peel_to_commit_in_place()].
+    /// The error returned by [`Head::peel_to_commit_in_place()`][super::Head::peel_to_commit_in_place()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

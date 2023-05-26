@@ -157,7 +157,7 @@ impl<'remote, 'repo, T> Prepare<'remote, 'repo, T>
 where
     T: Transport,
 {
-    /// Return the ref_map (that includes the server handshake) which was part of listing refs prior to fetching a pack.
+    /// Return the `ref_map` (that includes the server handshake) which was part of listing refs prior to fetching a pack.
     pub fn ref_map(&self) -> &RefMap {
         &self.ref_map
     }

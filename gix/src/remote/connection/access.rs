@@ -13,7 +13,7 @@ impl<'a, 'repo, T> Connection<'a, 'repo, T> {
     ///
     /// A custom function may also be used to prevent accessing resources with authentication.
     ///
-    /// Use the [configured_credentials()][Connection::configured_credentials()] method to obtain the implementation
+    /// Use the [`configured_credentials()`][Connection::configured_credentials()] method to obtain the implementation
     /// that would otherwise be used, which can be useful to proxy the default configuration and obtain information about the
     /// URLs to authenticate with.
     pub fn with_credentials(

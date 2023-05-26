@@ -31,8 +31,8 @@ pub trait Transport: TransportWithoutIO {
     /// Returns the service capabilities according according to the actual [Protocol] it supports,
     /// and possibly a list of refs to be obtained.
     /// This means that asking for an unsupported protocol might result in a protocol downgrade to the given one
-    /// if [TransportWithoutIO::supported_protocol_versions()] includes it.
-    /// Exhaust the returned [BufReader][SetServiceResponse::refs] for a list of references in case of protocol V1
+    /// if [`TransportWithoutIO::supported_protocol_versions()`] includes it.
+    /// Exhaust the returned [`BufReader`][SetServiceResponse::refs] for a list of references in case of protocol V1
     /// before making another request.
     fn handshake<'a>(
         &mut self,

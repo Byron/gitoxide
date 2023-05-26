@@ -64,7 +64,7 @@ impl index::File {
     }
 
     /// Returns the object hash at the given index in our list of (sorted) sha1 hashes.
-    /// The index ranges from 0 to self.num_objects()
+    /// The index ranges from 0 to `self.num_objects()`
     ///
     /// # Panics
     ///

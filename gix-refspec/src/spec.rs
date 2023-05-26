@@ -7,7 +7,7 @@ use crate::{
     Instruction, RefSpec, RefSpecRef,
 };
 
-/// Conversion. Use the [RefSpecRef][RefSpec::to_ref()] type for more usage options.
+/// Conversion. Use the [`RefSpecRef`][RefSpec::to_ref()] type for more usage options.
 impl RefSpec {
     /// Return ourselves as reference type.
     pub fn to_ref(&self) -> RefSpecRef<'_> {

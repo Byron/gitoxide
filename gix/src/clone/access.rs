@@ -12,7 +12,7 @@ impl PrepareFetch {
     /// _all changes done in `f()` will be persisted_.
     ///
     /// It can also be used to configure additional options, like those for fetching tags. Note that
-    /// [with_fetch_tags()][crate::Remote::with_fetch_tags()] should be called here to configure the clone as desired.
+    /// [`with_fetch_tags()`][crate::Remote::with_fetch_tags()] should be called here to configure the clone as desired.
     /// Otherwise a clone is configured to be complete and fetches all tags, not only those reachable from all branches.
     pub fn configure_remote(
         mut self,

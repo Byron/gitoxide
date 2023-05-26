@@ -10,7 +10,7 @@ use gix_features::progress::Progress;
 use crate::multi_index;
 
 mod error {
-    /// The error returned by [multi_index::File::write_from_index_paths()][super::multi_index::File::write_from_index_paths()]..
+    /// The error returned by [`multi_index::File::write_from_index_paths()`][super::multi_index::File::write_from_index_paths()]..
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

@@ -144,7 +144,7 @@ pub mod ancestors {
     {
         /// Create a new instance.
         ///
-        /// * `find` - a way to lookup new object data during traversal by their ObjectId, writing their data into buffer and returning
+        /// * `find` - a way to lookup new object data during traversal by their `ObjectId`, writing their data into buffer and returning
         ///    an iterator over commit tokens if the object is present and is a commit. Caching should be implemented within this function
         ///    as needed.
         /// * `state` - all state used for the traversal. If multiple traversals are performed, allocations can be minimized by reusing
@@ -167,7 +167,7 @@ pub mod ancestors {
     {
         /// Create a new instance with commit filtering enabled.
         ///
-        /// * `find` - a way to lookup new object data during traversal by their ObjectId, writing their data into buffer and returning
+        /// * `find` - a way to lookup new object data during traversal by their `ObjectId`, writing their data into buffer and returning
         ///    an iterator over commit tokens if the object is present and is a commit. Caching should be implemented within this function
         ///    as needed.
         /// * `state` - all state used for the traversal. If multiple traversals are performed, allocations can be minimized by reusing

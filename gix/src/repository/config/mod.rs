@@ -155,7 +155,7 @@ mod branch {
         /// In some cases, the returned name will be an URL.
         /// Returns `None` if the remote was not found or if the name contained illformed UTF-8.
         ///
-        /// See also [Reference::remote_name()][crate::Reference::remote_name()] for a more typesafe version
+        /// See also [`Reference::remote_name()`][crate::Reference::remote_name()] for a more typesafe version
         /// to be used when a `Reference` is available.
         pub fn branch_remote_name<'a>(
             &self,

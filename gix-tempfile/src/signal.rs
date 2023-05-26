@@ -8,7 +8,7 @@ use crate::REGISTRY;
 /// Only has an effect the first time it is called.
 ///
 /// Note that it is possible to not call this function and instead call
-/// [registry::cleanup_tempfiles_signal_safe()][crate::registry::cleanup_tempfiles_signal_safe()]
+/// [`registry::cleanup_tempfiles_signal_safe()`][crate::registry::cleanup_tempfiles_signal_safe()]
 /// from a signal handler under the application's control.
 pub fn setup(mode: handler::Mode) {
     handler::MODE.store(mode as usize, std::sync::atomic::Ordering::SeqCst);

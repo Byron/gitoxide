@@ -21,7 +21,7 @@ pub struct Head<'repo> {
     pub(crate) repo: &'repo Repository,
 }
 
-/// An [ObjectId] with access to a repository.
+/// An [`ObjectId`] with access to a repository.
 #[derive(Clone, Copy)]
 pub struct Id<'r> {
     /// The actual object id

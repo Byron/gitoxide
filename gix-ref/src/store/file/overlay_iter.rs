@@ -197,7 +197,7 @@ impl<'s> Platform<'s> {
 
     /// As [`iter(…)`][file::Store::iter()], but filters by `prefix`, i.e. "refs/heads".
     ///
-    /// Please note that "refs/heads` or "refs\\heads" is equivalent to "refs/heads/"
+    /// Please note that "refs/heads" or "refs\\heads" is equivalent to "refs/heads/"
     pub fn prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<LooseThenPacked<'_, '_>> {
         self.store
             .iter_prefixed_packed(prefix, self.packed.as_ref().map(|b| &***b))
@@ -349,7 +349,7 @@ impl file::Store {
 
     /// As [`iter(…)`][file::Store::iter()], but filters by `prefix`, i.e. "refs/heads".
     ///
-    /// Please note that "refs/heads` or "refs\\heads" is equivalent to "refs/heads/"
+    /// Please note that "refs/heads" or "refs\\heads" is equivalent to "refs/heads/"
     pub fn iter_prefixed_packed<'s, 'p>(
         &'s self,
         prefix: impl AsRef<Path>,

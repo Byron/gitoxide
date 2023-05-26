@@ -438,7 +438,7 @@ pub mod transport {
 /// Utility type to keep pre-obtained configuration values, only for those required during initial setup
 /// and other basic operations that are common enough to warrant a permanent cache.
 ///
-/// All other values are obtained lazily using OnceCell.
+/// All other values are obtained lazily using `OnceCell`.
 #[derive(Clone)]
 pub(crate) struct Cache {
     pub resolved: crate::Config,

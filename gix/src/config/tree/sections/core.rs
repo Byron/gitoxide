@@ -36,7 +36,7 @@ impl Core {
         LogAllRefUpdates::new_with_validate("logAllRefUpdates", &config::Tree::CORE, validate::LogAllRefUpdates);
     /// The `core.precomposeUnicode` key.
     ///
-    /// Needs application to use [env::args_os][crate::env::args_os()] to conform all input paths before they are used.
+    /// Needs application to use [`env::args_os`][crate::env::args_os()] to conform all input paths before they are used.
     pub const PRECOMPOSE_UNICODE: keys::Boolean = keys::Boolean::new_boolean("precomposeUnicode", &config::Tree::CORE)
         .with_note("application needs to conform all program input by using gix::env::args_os()");
     /// The `core.repositoryFormatVersion` key.

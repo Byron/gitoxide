@@ -49,7 +49,7 @@ pub fn ask(prompt: &str, opts: &Options<'_>) -> Result<String, Error> {
     imp::ask(prompt, opts)
 }
 
-/// Ask for information typed by the user into the terminal after showing the prompt`, like `"Username: `.
+/// Ask for information typed by the user into the terminal after showing the prompt, like `"Username: `.
 ///
 /// Use [`ask()`] for more control.
 pub fn openly(prompt: impl AsRef<str>) -> Result<String, Error> {

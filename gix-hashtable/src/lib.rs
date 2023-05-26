@@ -1,4 +1,4 @@
-//! Customized HashMap and Hasher implementation optimized for using `ObjectId`s as keys.
+//! Customized `HashMap` and Hasher implementation optimized for using `ObjectId`s as keys.
 //!
 //! The crate mirrors `std::collections` in layout for familiarity.
 #![deny(missing_docs, rust_2018_idioms)]
@@ -35,7 +35,7 @@ pub mod sync {
 
 ///
 pub mod hash {
-    /// A Hasher for usage with HashMap keys that are already robust hashes (like an `ObjectId`).
+    /// A Hasher for usage with `HashMap` keys that are already robust hashes (like an `ObjectId`).
     /// The first `8` bytes of the hash are used as the `HashMap` hash
     #[derive(Default, Clone, Copy)]
     pub struct Hasher(u64);
@@ -75,7 +75,7 @@ pub mod hash {
         panic_other_writers!(write_isize, isize);
     }
 
-    /// A Hasher for usage with HashMap keys that are already robust hashes (like an `ObjectId`).
+    /// A Hasher for usage with `HashMap` keys that are already robust hashes (like an `ObjectId`).
     /// The first `8` bytes of the hash are used as the `HashMap` hash
     #[derive(Default, Clone, Copy)]
     pub struct Builder;
@@ -88,9 +88,9 @@ pub mod hash {
     }
 }
 
-/// A HashMap for usage with keys that are already robust hashes (like an `ObjectId`).
+/// A `HashMap` for usage with keys that are already robust hashes (like an `ObjectId`).
 /// The first `8` bytes of the hash are used as the `HashMap` hash
 pub type HashMap<K, V> = hashbrown::HashMap<K, V, hash::Builder>;
-/// A HashSet for usage with keys that are already robust hashes (like an `ObjectId`).
+/// A `HashSet` for usage with keys that are already robust hashes (like an `ObjectId`).
 /// The first `8` bytes of the hash are used as the `HashMap` hash
 pub type HashSet<T = ObjectId> = hashbrown::HashSet<T, hash::Builder>;

@@ -4,7 +4,7 @@ use bstr::{BString, ByteSlice};
 
 use crate::extension::Tree;
 
-/// The error returned by [Tree::verify()][crate::extension::Tree::verify()].
+/// The error returned by [`Tree::verify()`][crate::extension::Tree::verify()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {

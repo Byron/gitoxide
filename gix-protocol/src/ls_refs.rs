@@ -1,7 +1,7 @@
 mod error {
     use crate::handshake::refs::parse;
 
-    /// The error returned by [ls_refs()][crate::ls_refs()].
+    /// The error returned by [`ls_refs()`][crate::ls_refs()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -25,7 +25,7 @@ mod error {
 }
 pub use error::Error;
 
-/// What to do after preparing ls-refs in [ls_refs()][crate::ls_refs()].
+/// What to do after preparing ls-refs in [`ls_refs()`][crate::ls_refs()].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Action {
     /// Continue by sending a 'ls-refs' command.

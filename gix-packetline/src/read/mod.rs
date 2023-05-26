@@ -95,7 +95,7 @@ impl<T> StreamingPeekableIter<T> {
 
     /// If `value` is `true` the provider will check for special `ERR` packet lines and stop iteration when one is encountered.
     ///
-    /// Use [`stopped_at()]`[StreamingPeekableIter::stopped_at()] to inspect the cause of the end of the iteration.
+    /// Use [`stopped_at()]`[`StreamingPeekableIter::stopped_at()`] to inspect the cause of the end of the iteration.
     /// ne
     pub fn fail_on_err_lines(&mut self, value: bool) {
         self.fail_on_err_lines = value;

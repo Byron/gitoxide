@@ -83,7 +83,7 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<gix_worktree::Cache>>> = Lazy::new(|| {
 /// The major, minor and patch level of the git version on the system.
 pub static GIT_VERSION: Lazy<(u8, u8, u8)> = Lazy::new(|| parse_gix_version().expect("git version to be parsable"));
 
-/// Define how [scripted_fixture_writable_with_args()] uses produces the writable copy.
+/// Define how [`scripted_fixture_writable_with_args()`] uses produces the writable copy.
 pub enum Creation {
     /// Run the script once and copy the data from its output to the writable location.
     /// This is fast but won't work if absolute paths are produced by the script.

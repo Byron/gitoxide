@@ -8,7 +8,7 @@ use crate::{
     tree::{visit::Change, TreeInfoPair},
 };
 
-/// The error returned by [tree::Changes::needed_to_obtain()].
+/// The error returned by [`tree::Changes::needed_to_obtain()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -42,7 +42,7 @@ impl<'a> tree::Changes<'a> {
     ///   by the delegate implementation which should be as specific as possible. Rename tracking can be computed on top of the changes
     ///   received by the `delegate`.
     /// * cycle checking is not performed, but can be performed in the delegate which can return [`tree::visit::Action::Cancel`] to stop the traversal.
-    /// * [std::mem::ManuallyDrop] is used because `Peekable` is needed. When using it as wrapper around our no-drop iterators, all of the sudden
+    /// * [`std::mem::ManuallyDrop`] is used because `Peekable` is needed. When using it as wrapper around our no-drop iterators, all of the sudden
     ///   borrowcheck complains as Drop is present (even though it's not)
     ///
     /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65

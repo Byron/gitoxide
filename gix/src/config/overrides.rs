@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use crate::bstr::{BStr, BString, ByteSlice};
 
-/// The error returned by [SnapshotMut::apply_cli_overrides()][crate::config::SnapshotMut::append_config()].
+/// The error returned by [`SnapshotMut::apply_cli_overrides()`][crate::config::SnapshotMut::append_config()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {

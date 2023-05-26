@@ -13,14 +13,14 @@ pub enum PackLocation {
 }
 
 impl PackLocation {
-    /// Directly go through to LookedUp variant, panic otherwise
+    /// Directly go through to `LookedUp` variant, panic otherwise
     pub fn is_none(&self) -> bool {
         match self {
             PackLocation::LookedUp(opt) => opt.is_none(),
             PackLocation::NotLookedUp => unreachable!("must have been resolved"),
         }
     }
-    /// Directly go through to LookedUp variant, panic otherwise
+    /// Directly go through to `LookedUp` variant, panic otherwise
     pub fn as_ref(&self) -> Option<&crate::data::entry::Location> {
         match self {
             PackLocation::LookedUp(opt) => opt.as_ref(),
