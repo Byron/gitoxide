@@ -1,6 +1,6 @@
 use std::{env, ffi::OsStr, path::PathBuf};
 
-/// The error returned by [gix_discover::upwards()][crate::upwards()].
+/// The error returned by [`gix_discover::upwards()`][crate::upwards()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {

@@ -56,7 +56,7 @@ impl Stack {
     /// Set the current stack to point to the `relative` path and call `push_comp()` each time a new path component is popped
     /// along with the stacks state for inspection to perform an operation that produces some data.
     ///
-    /// The full path to `relative` will be returned along with the data returned by push_comp.
+    /// The full path to `relative` will be returned along with the data returned by `push_comp`.
     /// Note that this only works correctly for the delegate's `push_directory()` and `pop_directory()` methods if
     /// `relative` paths are terminal, so point to their designated file or directory.
     pub fn make_relative_path_current(

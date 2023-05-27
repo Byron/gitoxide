@@ -52,7 +52,7 @@ impl<'a> Section<'a> {
     }
 
     /// Return the unique `id` of the section, for use with the `*_by_id()` family of methods
-    /// in [gix_config::File][crate::File].
+    /// in [`gix_config::File`][crate::File].
     pub fn id(&self) -> SectionId {
         self.id
     }

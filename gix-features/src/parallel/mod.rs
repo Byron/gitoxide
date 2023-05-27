@@ -1,12 +1,12 @@
 //! Run computations in parallel, or not based the `parallel` feature toggle.
 //!
-//! ### in_parallel(…)
+//! ### `in_parallel`(…)
 //!
 //! The [`in_parallel(…)`][in_parallel()] is the typical fan-out-fan-in mode of parallelism, with thread local storage
 //! made available to a `consume(…)` function to process input. The result is sent to the [`Reduce`] running in the calling
 //! thread to aggregate the results into a single output, which is returned by [`in_parallel()`].
 //!
-//! Interruptions can be achieved by letting the reducers [`feed(…)`][Reduce::feed()]` method fail.
+//! Interruptions can be achieved by letting the reducers [`feed(…)`][Reduce::feed()] method fail.
 //!
 //! It gets a boost in usability as it allows threads to borrow variables from the stack, most commonly the repository itself
 //! or the data to work on.

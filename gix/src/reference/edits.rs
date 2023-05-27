@@ -25,7 +25,7 @@ pub mod set_target_id {
         /// Note that the operation will fail on symbolic references, to change their type use the lower level reference database,
         /// or if the reference was deleted or changed in the mean time.
         /// Furthermore, refrain from using this method for more than a one-off change as it creates a transaction for each invocation.
-        /// If multiple reference should be changed, use [Repository::edit_references()][crate::Repository::edit_references()]
+        /// If multiple reference should be changed, use [`Repository::edit_references()`][crate::Repository::edit_references()]
         /// or the lower level reference database instead.
         #[allow(clippy::result_large_err)]
         pub fn set_target_id(

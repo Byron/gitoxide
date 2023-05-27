@@ -63,7 +63,7 @@ impl<'a> RequestWriter<'a> {
         Ok(self.reader)
     }
 
-    /// Dissolve this instance into its write and read handles without any message-writing side-effect as in [RequestWriter::into_read()].
+    /// Dissolve this instance into its write and read handles without any message-writing side-effect as in [`RequestWriter::into_read()`].
     ///
     /// Furthermore, the writer will not encode everything it writes as packetlines, but write everything verbatim into the
     /// underlying channel.

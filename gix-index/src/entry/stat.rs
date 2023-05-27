@@ -75,7 +75,7 @@ impl Stat {
         }
     }
 
-    /// Creates stat information from the result of symlink_metadata.
+    /// Creates stat information from the result of `symlink_metadata`.
     pub fn from_fs(fstat: &std::fs::Metadata) -> Result<Stat, SystemTimeError> {
         let mtime = fstat.modified().unwrap_or(std::time::UNIX_EPOCH);
         let ctime = fstat.created().unwrap_or(std::time::UNIX_EPOCH);

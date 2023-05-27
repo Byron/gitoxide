@@ -11,7 +11,7 @@ pub mod index_names {
     pub mod decode {
         use gix_object::bstr::BString;
 
-        /// The error returned by [from_bytes()][super::from_bytes()].
+        /// The error returned by [`from_bytes()`][super::from_bytes()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {

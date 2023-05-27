@@ -17,7 +17,7 @@ mod _impl {
     pub type Mutable<T> = parking_lot::Mutex<T>;
     /// A guarded reference suitable for safekeeping in a struct.
     pub type RefGuard<'a, T> = parking_lot::RwLockReadGuard<'a, T>;
-    /// A mapped reference created from a RefGuard
+    /// A mapped reference created from a `RefGuard`
     pub type MappedRefGuard<'a, U> = parking_lot::MappedRwLockReadGuard<'a, U>;
 
     /// Get a shared reference through a [`MutableOnDemand`] for read-only access.

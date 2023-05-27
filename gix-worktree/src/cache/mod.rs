@@ -53,7 +53,7 @@ impl Cache {
     /// `state` defines the capabilities of the cache.
     /// The `case` configures attribute and exclusion case sensitivity at *query time*, which should match the case that
     /// `state` might be configured with.
-    /// `buf` is used when reading files, and `id_mappings` should have been created with [State::id_mappings_from_index()].
+    /// `buf` is used when reading files, and `id_mappings` should have been created with [`State::id_mappings_from_index()`].
     pub fn new(
         worktree_root: impl Into<PathBuf>,
         state: State,

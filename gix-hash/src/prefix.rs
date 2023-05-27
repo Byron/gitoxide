@@ -2,7 +2,7 @@ use std::{cmp::Ordering, convert::TryFrom};
 
 use crate::{oid, ObjectId, Prefix};
 
-/// The error returned by [Prefix::new()].
+/// The error returned by [`Prefix::new()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -17,7 +17,7 @@ pub enum Error {
 
 ///
 pub mod from_hex {
-    /// The error returned by [Prefix::from_hex][super::Prefix::from_hex()].
+    /// The error returned by [`Prefix::from_hex`][super::Prefix::from_hex()].
     #[derive(Debug, Eq, PartialEq, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

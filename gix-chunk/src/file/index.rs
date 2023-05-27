@@ -6,7 +6,7 @@ use crate::file::Index;
 pub mod offset_by_kind {
     use std::fmt::{Display, Formatter};
 
-    /// The error returned by [Index::offset_by_kind()][super::Index::offset_by_id()].
+    /// The error returned by [`Index::offset_by_id()`][super::Index::offset_by_id()].
     #[allow(missing_docs)]
     #[derive(Debug)]
     pub struct Error {
@@ -28,7 +28,7 @@ pub mod offset_by_kind {
 
 ///
 pub mod data_by_kind {
-    /// The error returned by [Index::data_by_kind()][super::Index::data_by_id()].
+    /// The error returned by [`Index::data_by_id()`][super::Index::data_by_id()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

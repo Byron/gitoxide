@@ -88,7 +88,7 @@ pub mod decode {
     mod error {
         use gix_object::bstr::{BString, ByteSlice};
 
-        /// The error returned by [from_bytes(…)][super::Line::from_bytes()]
+        /// The error returned by [`from_bytes(…)`][super::Line::from_bytes()]
         #[derive(Debug)]
         pub struct Error {
             pub input: BString,

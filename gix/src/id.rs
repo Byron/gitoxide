@@ -81,7 +81,7 @@ impl<'repo> Id<'repo> {
         Id { inner: id.into(), repo }
     }
 
-    /// Turn this instance into its bare [ObjectId].
+    /// Turn this instance into its bare [`ObjectId`].
     pub fn detach(self) -> ObjectId {
         self.inner
     }

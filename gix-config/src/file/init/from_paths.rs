@@ -63,7 +63,7 @@ impl File<'static> {
         Self::from_paths_metadata_buf(path_meta, &mut buf, err_on_nonexisting_paths, options)
     }
 
-    /// Like [from_paths_metadata()][Self::from_paths_metadata()], but will use `buf` to temporarily store the config file
+    /// Like [`from_paths_metadata()`][Self::from_paths_metadata()], but will use `buf` to temporarily store the config file
     /// contents for parsing instead of allocating an own buffer.
     ///
     /// If `err_on_nonexisting_paths` is false, instead of aborting with error, we will continue to the next path instead.

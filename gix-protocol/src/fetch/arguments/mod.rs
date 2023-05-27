@@ -49,20 +49,20 @@ impl Arguments {
     pub fn can_use_deepen(&self) -> bool {
         self.shallow
     }
-    /// Return true if the 'deepen_since' capability is supported.
+    /// Return true if the '`deepen_since`' capability is supported.
     ///
     /// This is relevant for partial clones when using `--depth X` and retrieving additional history
     /// based on a date beyond which all history should be present.
     pub fn can_use_deepen_since(&self) -> bool {
         self.deepen_since
     }
-    /// Return true if the 'deepen_not' capability is supported.
+    /// Return true if the '`deepen_not`' capability is supported.
     ///
     /// This is relevant for partial clones when using `--depth X`.
     pub fn can_use_deepen_not(&self) -> bool {
         self.deepen_not
     }
-    /// Return true if the 'deepen_relative' capability is supported.
+    /// Return true if the '`deepen_relative`' capability is supported.
     ///
     /// This is relevant for partial clones when using `--depth X`.
     pub fn can_use_deepen_relative(&self) -> bool {

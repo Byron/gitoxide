@@ -17,17 +17,17 @@ pub trait ReferenceExt: Sealed {
     /// A step towards obtaining forward or reverse iterators on reference logs.
     fn log_iter<'a, 's>(&'a self, store: &'s file::Store) -> log::iter::Platform<'a, 's>;
 
-    /// For details, see [Reference::log_exists()].
+    /// For details, see [`Reference::log_exists()`].
     fn log_exists(&self, store: &file::Store) -> bool;
 
-    /// For details, see [Reference::peel_to_id_in_place()].
+    /// For details, see [`Reference::peel_to_id_in_place()`].
     fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
         &mut self,
         store: &file::Store,
         find: impl FnMut(gix_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(gix_object::Kind, &[u8])>, E>,
     ) -> Result<ObjectId, peel::to_id::Error>;
 
-    /// For details, see [Reference::peel_to_id_in_place()], with support for a known stable packed buffer.
+    /// For details, see [`Reference::peel_to_id_in_place()`], with support for a known stable packed buffer.
     fn peel_to_id_in_place_packed<E: std::error::Error + Send + Sync + 'static>(
         &mut self,
         store: &file::Store,

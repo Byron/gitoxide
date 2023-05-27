@@ -43,7 +43,7 @@ pub(crate) mod impl_ {
     ///   * the tree to iterate in a nested fashion.
     /// * `state` - all state used for the iteration. If multiple iterations are performed, allocations can be minimized by reusing
     ///   this state.
-    /// * `find` - a way to lookup new object data during traversal by their ObjectId, writing their data into buffer and returning
+    /// * `find` - a way to lookup new object data during traversal by their `ObjectId`, writing their data into buffer and returning
     ///    an iterator over entries if the object is present and is a tree. Caching should be implemented within this function
     ///    as needed. The return value is `Option<TreeIter>` which degenerates all error information. Not finding a commit should also
     ///    be considered an errors as all objects in the tree DAG should be present in the database. Hence [`Error::NotFound`] should

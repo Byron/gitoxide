@@ -4,7 +4,7 @@ use gix_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
 use crate::{Category, FullName, FullNameRef, PartialName, PartialNameRef};
 
-/// The error used in the [`PartialNameRef`][super::PartialNameRef]::try_from(…) implementations.
+/// The error used in the [`PartialNameRef`][super::PartialNameRef]`::try_from`(…) implementations.
 pub type Error = gix_validate::reference::name::Error;
 
 impl<'a> Category<'a> {
@@ -260,7 +260,7 @@ impl convert::TryFrom<BString> for PartialName {
     }
 }
 
-/// Note that this method is disagreeing with gix_validate as it allows dashes '-' for some reason.
+/// Note that this method is disagreeing with `gix_validate` as it allows dashes '-' for some reason.
 /// Since partial names cannot be created with dashes inside we adjusted this as it's probably unintended or git creates pseudo-refs
 /// which wouldn't pass its safety checks.
 pub(crate) fn is_pseudo_ref<'a>(name: impl Into<&'a BStr>) -> bool {

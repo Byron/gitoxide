@@ -11,7 +11,7 @@ use crate::data::input;
 
 /// An iterator over [`Entries`][input::Entry] in a byte stream.
 ///
-/// The iterator used as part of [Bundle::write_to_directory(…)][crate::Bundle::write_to_directory()].
+/// The iterator used as part of [`Bundle::write_to_directory(…)`][crate::Bundle::write_to_directory()].
 pub struct BytesToEntriesIter<BR> {
     read: BR,
     decompressor: Option<Box<Decompress>>,

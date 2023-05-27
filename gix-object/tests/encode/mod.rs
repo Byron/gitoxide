@@ -1,4 +1,4 @@
-/// Because the TryFrom implementations don't return proper errors
+/// Because the `TryFrom` implementations don't return proper errors
 /// on failure
 #[derive(Debug, thiserror::Error)]
 enum Error {

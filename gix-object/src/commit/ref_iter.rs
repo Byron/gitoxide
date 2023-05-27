@@ -51,7 +51,7 @@ impl<'a> CommitRefIter<'a> {
         Token::try_into_id(tree_id).ok_or_else(missing_field)
     }
 
-    /// Return all parent_ids as iterator.
+    /// Return all `parent_ids` as iterator.
     ///
     /// Parsing errors are ignored quietly.
     pub fn parent_ids(self) -> impl Iterator<Item = gix_hash::ObjectId> + 'a {

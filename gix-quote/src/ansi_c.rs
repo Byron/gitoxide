@@ -2,7 +2,7 @@
 pub mod undo {
     use bstr::{BStr, BString};
 
-    /// The error returned by [ansi_c][crate::ansi_c::undo()].
+    /// The error returned by [`ansi_c`][crate::ansi_c::undo()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

@@ -101,7 +101,7 @@ impl super::Store {
         }
     }
 
-    /// load a new index (if not yet loaded), and return true if one was indeed loaded (leading to a state_id() change) of the current index.
+    /// load a new index (if not yet loaded), and return true if one was indeed loaded (leading to a `state_id()` change) of the current index.
     /// Note that interacting with the slot-map is inherently racy and we have to deal with it, being conservative in what we even try to load
     /// as our index might already be out-of-date as we try to use it to learn what's next.
     fn load_next_index(&self, mut index: arc_swap::Guard<Arc<SlotMapIndex>>) -> bool {

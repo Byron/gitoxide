@@ -10,7 +10,7 @@ mod error {
 
     use crate::{decode, extension};
 
-    /// The error returned by [State::from_bytes()][crate::State::from_bytes()].
+    /// The error returned by [`State::from_bytes()`][crate::State::from_bytes()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

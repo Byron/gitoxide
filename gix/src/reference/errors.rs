@@ -2,7 +2,7 @@
 pub mod edit {
     use crate::config;
 
-    /// The error returned by [edit_references(…)][crate::Repository::edit_references()], and others
+    /// The error returned by [`edit_references(…)`][crate::Repository::edit_references()], and others
     /// which ultimately create a reference.
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
@@ -22,8 +22,8 @@ pub mod edit {
 
 ///
 pub mod peel {
-    /// The error returned by [Reference::peel_to_id_in_place(…)][crate::Reference::peel_to_id_in_place()] and
-    /// [Reference::into_fully_peeled_id(…)][crate::Reference::into_fully_peeled_id()].
+    /// The error returned by [`Reference::peel_to_id_in_place(…)`][crate::Reference::peel_to_id_in_place()] and
+    /// [`Reference::into_fully_peeled_id(…)`][crate::Reference::into_fully_peeled_id()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -36,7 +36,7 @@ pub mod peel {
 
 ///
 pub mod head_id {
-    /// The error returned by [Repository::head_id(…)][crate::Repository::head_id()].
+    /// The error returned by [`Repository::head_id(…)`][crate::Repository::head_id()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -51,7 +51,7 @@ pub mod head_id {
 
 ///
 pub mod head_commit {
-    /// The error returned by [Repository::head_commit(…)][crate::Repository::head_commit()].
+    /// The error returned by [`Repository::head_commit`(…)][crate::Repository::head_commit()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -66,7 +66,7 @@ pub mod head_commit {
 pub mod find {
     ///
     pub mod existing {
-        /// The error returned by [find_reference(…)][crate::Repository::find_reference()], and others.
+        /// The error returned by [`find_reference(…)`][crate::Repository::find_reference()], and others.
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
@@ -77,7 +77,7 @@ pub mod find {
         }
     }
 
-    /// The error returned by [try_find_reference(…)][crate::Repository::try_find_reference()].
+    /// The error returned by [`try_find_reference(…)`][crate::Repository::try_find_reference()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

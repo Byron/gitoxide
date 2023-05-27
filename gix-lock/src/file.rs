@@ -17,7 +17,7 @@ impl File {
         self.inner.with_mut(|tf| f(tf.as_file_mut())).and_then(|res| res)
     }
     /// Close the lock file to prevent further writes and to save system resources.
-    /// A call to [Marker::commit()] is allowed on the [`Marker`] to write changes back to the resource.
+    /// A call to [`Marker::commit()`] is allowed on the [`Marker`] to write changes back to the resource.
     pub fn close(self) -> std::io::Result<Marker> {
         Ok(Marker {
             inner: self.inner.close()?,

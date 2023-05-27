@@ -77,7 +77,7 @@ mod tests {
     use super::*;
     fn receiver<T: Send>(_i: T) {}
 
-    /// We want to declare items containing pointers of StreamingPeekableIter `Send` as well, so it must be `Send` itself.
+    /// We want to declare items containing pointers of `StreamingPeekableIter` `Send` as well, so it must be `Send` itself.
     #[test]
     fn streaming_peekable_iter_is_send() {
         receiver(StreamingPeekableIter::new(Vec::<u8>::new(), &[]));
@@ -118,7 +118,7 @@ where
         }
     }
 
-    /// Forwards to the parent [StreamingPeekableIter::reset_with()]
+    /// Forwards to the parent [`StreamingPeekableIter::reset_with()`]
     pub fn reset_with(&mut self, delimiters: &'static [PacketLineRef<'static>]) {
         if let State::Idle { ref mut parent } = self.state {
             parent
@@ -128,7 +128,7 @@ where
         }
     }
 
-    /// Forwards to the parent [StreamingPeekableIter::stopped_at()]
+    /// Forwards to the parent [`StreamingPeekableIter::stopped_at()`]
     pub fn stopped_at(&self) -> Option<PacketLineRef<'static>> {
         match self.state {
             State::Idle { ref parent } => {
@@ -146,7 +146,7 @@ where
         self.handle_progress = handle_progress;
     }
 
-    /// Effectively forwards to the parent [StreamingPeekableIter::peek_line()], allowing to see what would be returned
+    /// Effectively forwards to the parent [`StreamingPeekableIter::peek_line()`], allowing to see what would be returned
     /// next on a call to [`read_line()`][io::BufRead::read_line()].
     ///
     /// # Warning

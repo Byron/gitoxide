@@ -13,7 +13,7 @@
 //! This also allows to control how `git-tempfiles` integrates with other handlers under application control.
 //!
 //! As a general rule of thumb, use `Default::default()` as argument to emulate the default behaviour and
-//! abort the process after cleaning temporary files. Read more about options in [signal::handler::Mode].
+//! abort the process after cleaning temporary files. Read more about options in [`signal::handler::Mode`].
 //!
 //! # Limitations
 //!

@@ -49,7 +49,7 @@ pub struct Outcome {
     pub num_similarity_checks_skipped_for_copy_tracking_due_to_limit: usize,
 }
 
-/// The error returned by [`Rewrites::try_from_config()].
+/// The error returned by [`Rewrites::try_from_config()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {

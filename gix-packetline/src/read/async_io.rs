@@ -37,7 +37,7 @@ where
     }
 
     /// This function is needed to help the borrow checker allow us to return references all the time
-    /// It contains a bunch of logic shared between peek and read_line invocations.
+    /// It contains a bunch of logic shared between peek and `read_line` invocations.
     async fn read_line_inner_exhaustive<'a>(
         reader: &mut T,
         buf: &'a mut Vec<u8>,

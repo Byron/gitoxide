@@ -37,7 +37,7 @@ pub(crate) mod parse;
 ///
 pub mod kind;
 
-/// The four types of objects that git differentiates. #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+/// The four types of objects that git differentiates.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[allow(missing_docs)]

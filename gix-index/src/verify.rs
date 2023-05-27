@@ -6,7 +6,7 @@ use crate::State;
 pub mod entries {
     use bstr::BString;
 
-    /// The error returned by [State::verify_entries()][crate::State::verify_entries()].
+    /// The error returned by [`State::verify_entries()`][crate::State::verify_entries()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -30,7 +30,7 @@ pub mod extensions {
         None
     }
 
-    /// The error returned by [State::verify_extensions()][crate::State::verify_extensions()].
+    /// The error returned by [`State::verify_extensions()`][crate::State::verify_extensions()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

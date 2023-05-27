@@ -168,7 +168,7 @@ impl crate::Bundle {
     /// # Note
     ///
     /// As it sends portions of the input to a thread it requires the 'static lifetime for the interrupt flags. This can only
-    /// be satisfied by a static AtomicBool which is only suitable for programs that only run one of these operations at a time
+    /// be satisfied by a static `AtomicBool` which is only suitable for programs that only run one of these operations at a time
     /// or don't mind that all of them abort when the flag is set.
     pub fn write_to_directory_eagerly<P>(
         pack: impl io::Read + Send + 'static,

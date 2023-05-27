@@ -11,7 +11,7 @@ pub mod write;
 
 /// The mode of items storable in a tree, similar to the file mode on a unix file system.
 ///
-/// Used in [mutable::Entry][crate::tree::Entry] and [EntryRef].
+/// Used in [`mutable::Entry`][crate::tree::Entry] and [`EntryRef`].
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
 #[repr(u16)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
