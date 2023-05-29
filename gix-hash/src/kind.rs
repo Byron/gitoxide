@@ -57,14 +57,14 @@ impl Kind {
         [0u8; Kind::longest().len_in_bytes()]
     }
 
-    /// Returns the amount of ascii-characters needed to encode this has in hex.
+    /// Returns the amount of bytes needed to encode this instance as hexadecimal characters.
     #[inline]
     pub const fn len_in_hex(&self) -> usize {
         match self {
             Kind::Sha1 => 40,
         }
     }
-    /// Returns the amount of bytes taken up by the hash of the current kind.
+    /// Returns the amount of bytes taken up by the hash of this instance.
     #[inline]
     pub const fn len_in_bytes(&self) -> usize {
         match self {
@@ -73,7 +73,7 @@ impl Kind {
     }
 
     /// Returns the kind of hash that would fit the given `hex_len`, or `None` if there is no fitting hash.
-    /// Note that 0 as `hex_len` fits always yields Sha1.
+    /// Note that `0` as `hex_len` up to 40 always yields `Sha1`.
     #[inline]
     pub const fn from_hex_len(hex_len: usize) -> Option<Self> {
         Some(match hex_len {
@@ -98,7 +98,7 @@ impl Kind {
         }
     }
 
-    /// Create a null-id of our hash kind.
+    /// Create a shared null-id of our hash kind.
     #[inline]
     pub fn null_ref(&self) -> &'static oid {
         match self {
@@ -106,7 +106,7 @@ impl Kind {
         }
     }
 
-    /// Create a null-id of our hash kind.
+    /// Create an owned null-id of our hash kind.
     #[inline]
     pub const fn null(&self) -> ObjectId {
         match self {

@@ -1,6 +1,6 @@
 //! This crate provides types for identifying git objects using a hash digest.
 //!
-//! These are provided in borrowed versions as well as owned ones.
+//! These are provided in [borrowed versions][oid] as well as an [owned one][ObjectId].
 //! ## Feature Flags
 #![cfg_attr(
     feature = "document-features",
@@ -19,8 +19,10 @@ pub use object_id::{decode, ObjectId};
 ///
 pub mod prefix;
 
-/// An partial owned hash possibly identifying an object uniquely,
-/// whose non-prefix bytes are zeroed.
+/// An partial, owned hash possibly identifying an object uniquely, whose non-prefix bytes are zeroed.
+///
+/// An example would `0000000000000000000000000000000032bd3242`, where `32bd3242` is the prefix,
+/// which would be able to match all hashes that *start with* `32bd3242`.
 #[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Prefix {
@@ -31,7 +33,7 @@ pub struct Prefix {
 /// The size of a SHA1 hash digest in bytes.
 const SIZE_OF_SHA1_DIGEST: usize = 20;
 
-/// Denotes the kind of function to produce a `Id`.
+/// Denotes the kind of function to produce a [`ObjectId`].
 #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {

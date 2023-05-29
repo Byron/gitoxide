@@ -11,7 +11,7 @@ use crate::{ObjectId, SIZE_OF_SHA1_DIGEST};
 /// internal `bytes` slice length (a fat pointer, pointing to data and its length in bytes)
 /// to encode additional information. Before accessing or returning the bytes, a new adjusted
 /// slice will be constructed, while the high bits will be used to help resolving the
-/// hash `[`kind()`][oid::kind()]`.
+/// hash [`kind()`][oid::kind()].
 /// We expect to have quite a few bits available for such 'conflict resolution' as most hashes aren't longer
 /// than 64 bytes.
 #[derive(PartialEq, Eq, Ord, PartialOrd)]
@@ -102,13 +102,13 @@ impl oid {
 
 /// Access
 impl oid {
-    /// The kind of hash used for this Digest.
+    /// The kind of hash used for this instance.
     #[inline]
     pub fn kind(&self) -> crate::Kind {
         crate::Kind::from_len_in_bytes(self.bytes.len())
     }
 
-    /// The first byte of the hash, commonly used to partition a set of `Id`s.
+    /// The first byte of the hash, commonly used to partition a set of object ids.
     #[inline]
     pub fn first_byte(&self) -> u8 {
         self.bytes[0]

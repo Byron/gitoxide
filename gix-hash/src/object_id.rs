@@ -1,14 +1,13 @@
 use std::{
     borrow::Borrow,
     convert::TryInto,
-    fmt,
     hash::{Hash, Hasher},
     ops::Deref,
 };
 
 use crate::{borrowed::oid, Kind, SIZE_OF_SHA1_DIGEST};
 
-/// An owned hash identifying objects, most commonly Sha1
+/// An owned hash identifying objects, most commonly `Sha1`
 #[derive(PartialEq, Eq, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ObjectId {
@@ -77,11 +76,11 @@ pub mod decode {
 
 /// Access and conversion
 impl ObjectId {
-    /// Returns the kind of hash used in this `Id`.
+    /// Returns the kind of hash used in this instance.
     #[inline]
-    pub fn kind(&self) -> crate::Kind {
+    pub fn kind(&self) -> Kind {
         match self {
-            ObjectId::Sha1(_) => crate::Kind::Sha1,
+            ObjectId::Sha1(_) => Kind::Sha1,
         }
     }
     /// Return the raw byte slice representing this hash.
@@ -119,7 +118,15 @@ impl ObjectId {
         }
     }
 
-    /// Returns true if this hash consists of all null bytes.
+    /// Returns an instances whose bytes are all zero.
+    #[inline]
+    pub const fn null(kind: Kind) -> ObjectId {
+        match kind {
+            Kind::Sha1 => Self::null_sha1(),
+        }
+    }
+
+    /// Returns `true` if this hash consists of all null bytes.
     #[inline]
     pub fn is_null(&self) -> bool {
         match self {
@@ -133,12 +140,10 @@ impl ObjectId {
         self == &Self::empty_blob(self.kind())
     }
 
-    /// Returns an Digest representing a hash with whose memory is zeroed.
+    /// Returns `true` if this hash is equal to an empty tree.
     #[inline]
-    pub const fn null(kind: crate::Kind) -> ObjectId {
-        match kind {
-            crate::Kind::Sha1 => Self::null_sha1(),
-        }
+    pub fn is_empty_tree(&self) -> bool {
+        self == &Self::empty_tree(self.kind())
     }
 }
 
@@ -194,10 +199,10 @@ impl From<&[u8]> for ObjectId {
     }
 }
 
-impl From<&crate::oid> for ObjectId {
+impl From<&oid> for ObjectId {
     fn from(v: &oid) -> Self {
         match v.kind() {
-            crate::Kind::Sha1 => ObjectId::from_20_bytes(v.as_bytes()),
+            Kind::Sha1 => ObjectId::from_20_bytes(v.as_bytes()),
         }
     }
 }
@@ -210,25 +215,25 @@ impl Deref for ObjectId {
     }
 }
 
-impl AsRef<crate::oid> for ObjectId {
+impl AsRef<oid> for ObjectId {
     fn as_ref(&self) -> &oid {
         oid::from_bytes_unchecked(self.as_slice())
     }
 }
 
-impl Borrow<crate::oid> for ObjectId {
+impl Borrow<oid> for ObjectId {
     fn borrow(&self) -> &oid {
         self.as_ref()
     }
 }
 
-impl fmt::Display for ObjectId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for ObjectId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.to_hex())
     }
 }
 
-impl PartialEq<&crate::oid> for ObjectId {
+impl PartialEq<&oid> for ObjectId {
     fn eq(&self, other: &&oid) -> bool {
         self.as_ref() == *other
     }
