@@ -47,12 +47,25 @@ In the example above, one would manage to fit 68568 repositories into 3.5TB.
 Run `head -n 999 repo_metadata.sample.jsonl | ./clone-repos.sh <corpus>` to clone into the given `<corpus>` location, or any other invocation with 
 your respective `repo_metadata.jsonl` and the computed amount of repos to include as in `head -n <your-count> <your.jsonl>`.
 
-#### Add one large (100GB+) repository by hand
+#### Add one large (100GB+) repository and one with a lot of commits repository by hand
 
 Invoke `git clone --bare https://github.com/NagatoDEV/PlayStation-Home-Master-Archive  <corpus>/github.com/NagatoDEV/PlayStation-Home-Master-Archive` (after replacing `<curpus>` with your base path)
 to obtain one sample of a huge repository with a lot of assets and other binary data whose tree spans more than 440k files. 
 
 That way, we also get to see what happens when we have to handle huge binary files in massive trees.
+
+Another massive tree and a more than 1.3m commits comes in with this invocation: 
+
+`git clone --bare https://github.com/archlinux/svntogit-community <corpus>/github.com/archlinux/svntogit-community`.
+
+Both repos should be topped off with
+```shell
+cd <corpus>
+for d in github.com/archlinux/svntogit-community github.com/NagatoDEV/PlayStation-Home-Master-Archive; do
+    git -C $d read-tree @
+    git -C $d commit-graph write --no-progress --reachable
+done
+```
 
 ### Run on-off `gix` commands by hand
 
