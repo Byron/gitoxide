@@ -6,7 +6,7 @@ license = "MIT/Apache-2.0"
 description = "Calculate differences between various git objects"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
-include = ["src/**/*", "LICENSE-*"]
+include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
 rust-version = "1.64"
 autotests = false
 

@@ -6,7 +6,7 @@ license = "MIT/Apache-2.0"
 description = "A crate that provides hashtable based data structures optimized to utilize ObjectId keys"
 authors = ["Pascal Kuthe <pascal.kuthe@semimod.de>"]
 edition = "2021"
-include = ["src/**/*", "LICENSE-*"]
+include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
 rust-version = "1.64"
 
 [lib]
