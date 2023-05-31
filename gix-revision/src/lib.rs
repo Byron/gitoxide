@@ -35,7 +35,8 @@ pub use spec::types::Spec;
 /// Most usage of the Graph will benefit from fast ODB lookups, so setting up an object cache will be beneficial. If that's not the case,
 /// the method docs will inform about that.
 ///
-/// Additionally, there is *no need for an object cache* as we keep track of everything we traverse in our own hashmap.
+/// Additionally, and only if `T` is [`Commit<T>`][graph::Commit], there is *no need for an object cache* as we keep track of
+/// everything related to commit traversal in our own hashmap.
 pub struct Graph<'find, T> {
     /// A way to resolve a commit from the object database.
     find: Box<graph::FindFn<'find>>,

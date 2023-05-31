@@ -35,3 +35,12 @@ mod window_size {
 }
 
 mod baseline;
+
+#[test]
+fn size_of_entry() {
+    assert_eq!(
+        std::mem::size_of::<gix_revision::graph::Commit<gix_negotiate::Metadata>>(),
+        56,
+        "we may keep a lot of these, so let's not let them grow unnoticed"
+    );
+}

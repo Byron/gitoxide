@@ -10,7 +10,7 @@ pub mod lookup {
 
     ///
     pub mod commit {
-        /// The error returned by [`try_lookup_commit()`][crate::Graph::try_lookup_commit()].
+        /// The error returned by [`try_lookup_or_insert_commit()`][crate::Graph::try_lookup_or_insert_commit()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
