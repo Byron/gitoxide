@@ -327,7 +327,7 @@ pub(crate) mod function {
             let flags = graph[&commit];
             if (flags & best_candidate.identity_bit) == best_candidate.identity_bit {
                 if queue
-                    .iter_random()
+                    .iter_unordered()
                     .all(|id| (graph[id] & best_candidate.identity_bit) == best_candidate.identity_bit)
                 {
                     break;
