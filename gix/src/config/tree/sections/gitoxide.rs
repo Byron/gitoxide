@@ -317,8 +317,7 @@ mod subsections {
                 .with_note("If unset or 0, there is no object cache")
                 .with_environment_override("GITOXIDE_OBJECT_CACHE_MEMORY");
         /// The `gitoxide.objects.noReplace` key.
-        pub const NO_REPLACE: keys::Boolean = keys::Boolean::new_boolean("noReplace", &Gitoxide::OBJECTS)
-            .with_environment_override("GIT_NO_REPLACE_OBJECTS");
+        pub const NO_REPLACE: keys::Boolean = keys::Boolean::new_boolean("noReplace", &Gitoxide::OBJECTS);
         /// The `gitoxide.objects.replaceRefBase` key.
         pub const REPLACE_REF_BASE: keys::Any =
             keys::Any::new("replaceRefBase", &Gitoxide::OBJECTS).with_environment_override("GIT_REPLACE_REF_BASE");
@@ -330,7 +329,7 @@ mod subsections {
         }
 
         fn keys(&self) -> &[&dyn Key] {
-            &[&Self::CACHE_LIMIT, &Self::NO_REPLACE, &Self::REPLACE_REF_BASE]
+            &[&Self::CACHE_LIMIT, &Self::REPLACE_REF_BASE]
         }
 
         fn parent(&self) -> Option<&dyn Section> {

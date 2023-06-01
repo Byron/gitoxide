@@ -427,10 +427,6 @@ fn apply_environment_overrides(
             objects,
             &[
                 {
-                    let key = &gitoxide::Objects::NO_REPLACE;
-                    (env(key), key.name)
-                },
-                {
                     let key = &gitoxide::Objects::REPLACE_REF_BASE;
                     (env(key), key.name)
                 },
@@ -490,6 +486,10 @@ fn apply_environment_overrides(
             {
                 let key = &Core::SSH_COMMAND;
                 (env(key), key.name, git_prefix)
+            },
+            {
+                let key = &Core::USE_REPLACE_REFS;
+                (env(key), key.name, objects)
             },
         ] {
             if let Some(value) = var_as_bstring(var, permission) {

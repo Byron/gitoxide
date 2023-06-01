@@ -394,7 +394,7 @@ mod with_overrides {
         for (key, expected) in [
             ("gitoxide.http.verbose", "true"),
             ("gitoxide.allow.protocolFromUser", "file-allowed"),
-            ("gitoxide.objects.noReplace", "no-replace"),
+            ("core.useReplaceRefs", "no-replace"),
             ("gitoxide.objects.replaceRefBase", "refs/replace-mine"),
             ("gitoxide.committer.nameFallback", "committer name"),
             ("gitoxide.committer.emailFallback", "committer email"),
