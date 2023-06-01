@@ -551,6 +551,7 @@ The git staging area.
 
 * [x] read-only access
     * [x] Graph lookup of commit information to obtain timestamps, generation and parents, and extra edges
+    * [ ] [Corrected generation dates](https://github.com/git/git/commit/e8b63005c48696a26f976f5f9b0ccaf1983e439d)
     * [ ] Bloom filter index
     * [ ] Bloom filter data
 * [ ] create and update graphs and graph files
