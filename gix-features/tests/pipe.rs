@@ -49,7 +49,7 @@ mod io {
         writer.write_all(b"b\nc\n").expect("success");
         drop(writer);
         assert_eq!(
-            reader.lines().flat_map(Result::ok).collect::<Vec<_>>(),
+            reader.lines().map_while(Result::ok).collect::<Vec<_>>(),
             vec!["a", "b", "c"]
         )
     }

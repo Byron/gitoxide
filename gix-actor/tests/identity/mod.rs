@@ -3,7 +3,7 @@ use gix_actor::Identity;
 
 #[test]
 fn round_trip() -> gix_testtools::Result {
-    static DEFAULTS: &'static [&'static [u8]] =     &[
+    static DEFAULTS: &[&[u8]] =     &[
         b"Sebastian Thiel <byronimo@gmail.com>",
         ".. ☺️Sebastian 王知明 Thiel🙌 .. <byronimo@gmail.com>".as_bytes(),
         b".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere  <byronimo@gmail.com>"

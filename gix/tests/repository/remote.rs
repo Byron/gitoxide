@@ -192,7 +192,7 @@ mod find_remote {
         let repo = remote::repo("url-rewriting");
 
         let baseline = std::fs::read(repo.git_dir().join("baseline.git"))?;
-        let mut baseline = baseline.lines().filter_map(Result::ok);
+        let mut baseline = baseline.lines().map_while(Result::ok);
         let expected_fetch_url: BString = baseline.next().expect("fetch").into();
         let expected_push_url: BString = baseline.next().expect("push").into();
 
@@ -223,7 +223,7 @@ mod find_remote {
         let repo = remote::repo("bad-url-rewriting");
 
         let baseline = std::fs::read(repo.git_dir().join("baseline.git"))?;
-        let mut baseline = baseline.lines().filter_map(Result::ok);
+        let mut baseline = baseline.lines().map_while(Result::ok);
         let expected_fetch_url: BString = baseline.next().expect("fetch").into();
         let expected_push_url: BString = baseline.next().expect("push").into();
         assert_eq!(

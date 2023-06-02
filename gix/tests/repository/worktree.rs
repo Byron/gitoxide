@@ -105,7 +105,7 @@ mod with_core_worktree_config {
         std::fs::read(git_dir.join("status.baseline"))
             .unwrap()
             .lines()
-            .filter_map(Result::ok)
+            .map_while(Result::ok)
             .filter(|line| line.contains(" D "))
             .count()
     }
