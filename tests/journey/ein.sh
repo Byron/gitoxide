@@ -112,7 +112,7 @@ title "Porcelain ${kind}"
 
               it "does not change the directory structure at all" && {
                 WITH_SNAPSHOT="$snapshot/initial-directory-structure" \
-                expect_run $SUCCESSFULLY tree -L 2
+                expect_run_sh $SUCCESSFULLY 'find . -maxdepth 2 | sort'
               }
             )
 
@@ -124,7 +124,7 @@ title "Porcelain ${kind}"
 
               it "changes the directory structure" && {
                 WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
-                expect_run $SUCCESSFULLY tree -L 2
+                expect_run_sh $SUCCESSFULLY 'find . -maxdepth 2 | sort'
               }
             )
 
@@ -136,7 +136,7 @@ title "Porcelain ${kind}"
 
               it "does not alter the directory structure as these are already in place" && {
                 WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
-                expect_run $SUCCESSFULLY tree -L 2
+                expect_run_sh $SUCCESSFULLY 'find . -maxdepth 2 | sort'
               }
             )
           )

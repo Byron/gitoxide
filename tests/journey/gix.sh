@@ -462,7 +462,7 @@ title "gix attributes"
                   expect_run $WITH_FAILURE test -e "${PACK_FILE}".idx
                 }
 
-                (with_program tree
+                (with_program find
 
                   if test "$kind" = "small" ; then
                     suffix=miniz-oxide
@@ -473,7 +473,7 @@ title "gix attributes"
                   fi
                   it "creates all pack objects, but the broken ones" && {
                     WITH_SNAPSHOT="$snapshot/broken-with-objects-dir-skip-checks-success-tree-$suffix" \
-                    expect_run $SUCCESSFULLY tree
+                    expect_run_sh $SUCCESSFULLY 'find . -type f | sort'
                   }
                 )
               )
@@ -495,10 +495,10 @@ title "gix attributes"
                                                      "${PACK_FILE}.pack" .
           }
 
-          (with_program tree
+          (with_program find
             it "creates all pack objects" && {
               WITH_SNAPSHOT="$snapshot/with-objects-dir-success-tree" \
-              expect_run $SUCCESSFULLY tree
+              expect_run_sh $SUCCESSFULLY 'find . -type f | sort'
             }
           )
         )

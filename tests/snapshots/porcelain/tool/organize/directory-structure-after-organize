@@ -1,12 +1,12 @@
 .
-├── dir
-├── example.com
-│   ├── a-repo-with-extension
-│   ├── one-origin
-│   └── origin-and-fork
-├── no-origin
-│   └── a
-└── special-origin
-    └── a
-
-7 directories, 2 files
+./dir
+./example.com
+./example.com/a-repo-with-extension
+./example.com/one-origin
+./example.com/origin-and-fork
+./no-origin
+./no-origin/.git
+./no-origin/a
+./special-origin
+./special-origin/.git
+./special-origin/a
