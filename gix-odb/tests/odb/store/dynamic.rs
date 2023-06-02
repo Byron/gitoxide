@@ -135,6 +135,11 @@ fn multi_index_access() -> crate::Result {
     );
 
     assert_eq!(handle.store_ref().structure()?.len(), 2);
+    assert_eq!(
+        handle.store_ref().alternate_db_paths()?.len(),
+        0,
+        "there are no alternates"
+    );
     Ok(())
 }
 
@@ -212,6 +217,26 @@ fn write() -> crate::Result {
 
     let written_id = handle.write_buf(gix_object::Kind::Blob, b"hello world")?;
     assert_eq!(written_id, hex_to_id("95d09f2b10159347eece71399a7e2e907ea3df4f"));
+    Ok(())
+}
+
+#[test]
+fn alternate_dbs_query() -> crate::Result {
+    let dir = gix_testtools::scripted_fixture_read_only("make_alternates_odb.sh")?;
+    let handle = gix_odb::at(dir.join(".git/objects"))?;
+
+    let alternates = handle.store_ref().alternate_db_paths()?;
+    assert_eq!(alternates.len(), 1, "exactly one alternate");
+    assert_eq!(
+        alternates[0]
+            .ancestors()
+            .nth(2)
+            .expect("alternate repo work-dir")
+            .file_name()
+            .expect("present"),
+        "object_source",
+        "the alternate object location is well-known"
+    );
     Ok(())
 }
 
