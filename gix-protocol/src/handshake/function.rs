@@ -77,10 +77,12 @@ where
 
         let parsed_refs = match refs {
             Some(mut refs) => {
-                assert_eq!(
-                    actual_protocol,
-                    gix_transport::Protocol::V1,
-                    "Only V1 auto-responds with refs"
+                assert!(
+                    matches!(
+                        actual_protocol,
+                        gix_transport::Protocol::V0 | gix_transport::Protocol::V1
+                    ),
+                    "Only V(0|1) auto-responds with refs"
                 );
                 Some(
                     refs::from_v1_refs_received_as_part_of_handshake_and_capabilities(&mut refs, capabilities.iter())

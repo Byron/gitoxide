@@ -37,7 +37,7 @@ impl Response {
         reader: &mut (impl client::ExtendedBufRead + Unpin),
     ) -> Result<Response, response::Error> {
         match version {
-            Protocol::V1 => {
+            Protocol::V0 | Protocol::V1 => {
                 let mut line = String::new();
                 let mut acks = Vec::<Acknowledgement>::new();
                 let mut shallows = Vec::<ShallowUpdate>::new();

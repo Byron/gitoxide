@@ -173,7 +173,7 @@ impl Arguments {
         let mut deepen_relative = shallow;
         let supports_include_tag;
         let (initial_arguments, features_for_first_want) = match version {
-            gix_transport::Protocol::V1 => {
+            gix_transport::Protocol::V0 | gix_transport::Protocol::V1 => {
                 deepen_since = has("deepen-since");
                 deepen_not = has("deepen-not");
                 deepen_relative = has("deepen-relative");

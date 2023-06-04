@@ -15,7 +15,7 @@ impl Arguments {
             assert!(add_done_argument, "If there are no haves, is_done must be true.");
         }
         match self.version {
-            gix_transport::Protocol::V1 => {
+            gix_transport::Protocol::V0 | gix_transport::Protocol::V1 => {
                 let (on_into_read, retained_state) = self.prepare_v1(
                     transport.connection_persists_across_multiple_requests(),
                     add_done_argument,

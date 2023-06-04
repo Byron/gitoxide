@@ -170,7 +170,7 @@ impl Response {
     /// make it easy to maintain all versions with a single code base that aims to be and remain maintainable.
     pub fn check_required_features(version: Protocol, features: &[Feature]) -> Result<(), Error> {
         match version {
-            Protocol::V1 => {
+            Protocol::V0 | Protocol::V1 => {
                 let has = |name: &str| features.iter().any(|f| f.0 == name);
                 // Let's focus on V2 standards, and simply not support old servers to keep our code simpler
                 if !has("multi_ack_detailed") {
