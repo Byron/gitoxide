@@ -23,11 +23,27 @@ pub enum Error {
 }
 
 /// A structure to represent multiple [capabilities][Capability] or features supported by the server.
-#[derive(Debug, Clone, Default)]
+///
+/// ### Deviation
+///
+/// As a *shortcoming*, we are unable to parse `V1` as emitted from `git-upload-pack` without a `git-daemon` or server,
+/// as it will not emit any capabilities for some reason. Only `V2` and `V0` work in that context.
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Capabilities {
     data: BString,
     value_sep: u8,
+}
+
+/// This implementation yields exactly those minimal capabilities that are required for `gix` to work, nothing more and nothing less.
+///
+/// This is a bit of a hack just get tests with Protocol V0 to work, which is a good way to enforce stateful transports.
+/// Of course, V1 would also do that but when calling `git-upload-pack` directly, it advertises so badly that this is easier to implement.
+impl Default for Capabilities {
+    fn default() -> Self {
+        Capabilities::from_lines("version 2\nmulti_ack_detailed\nside-band-64k\n".into())
+            .expect("valid format, known at compile time")
+    }
 }
 
 /// The name of a single capability.
@@ -185,44 +201,50 @@ pub mod recv {
             // format looks like, thus there is no binary blob that could ever look like an ERR line by accident.
             rd.fail_on_err_lines(true);
 
-            let line = rd
-                .peek_line()
-                .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
-            let line = line.as_text().ok_or(client::Error::ExpectedLine("text"))?;
-
-            let version = Capabilities::extract_protocol(line)?;
-            match version {
-                Protocol::V1 => {
-                    let (capabilities, delimiter_position) = Capabilities::from_bytes(line.0)?;
-                    rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
-                    Ok(Outcome {
-                        capabilities,
-                        refs: Some(Box::new(rd.as_read())),
-                        protocol: Protocol::V1,
-                    })
-                }
-                Protocol::V2 => Ok(Outcome {
-                    capabilities: {
-                        let mut rd = rd.as_read();
-                        let mut buf = Vec::new();
-                        while let Some(line) = rd.read_data_line() {
-                            let line = line??;
-                            match line.as_bstr() {
-                                Some(line) => {
-                                    buf.push_str(line);
-                                    if buf.last() != Some(&b'\n') {
-                                        buf.push(b'\n');
-                                    }
-                                }
-                                None => break,
+            Ok(match rd.peek_line() {
+                Some(line) => {
+                    let line = line??.as_text().ok_or(client::Error::ExpectedLine("text"))?;
+                    let version = Capabilities::extract_protocol(line)?;
+                    match version {
+                        Protocol::V0 => unreachable!("already handled in `None` case"),
+                        Protocol::V1 => {
+                            let (capabilities, delimiter_position) = Capabilities::from_bytes(line.0)?;
+                            rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
+                            Outcome {
+                                capabilities,
+                                refs: Some(Box::new(rd.as_read())),
+                                protocol: Protocol::V1,
                             }
                         }
-                        Capabilities::from_lines(buf.into())?
-                    },
-                    refs: None,
-                    protocol: Protocol::V2,
-                }),
-            }
+                        Protocol::V2 => Outcome {
+                            capabilities: {
+                                let mut rd = rd.as_read();
+                                let mut buf = Vec::new();
+                                while let Some(line) = rd.read_data_line() {
+                                    let line = line??;
+                                    match line.as_bstr() {
+                                        Some(line) => {
+                                            buf.push_str(line);
+                                            if buf.last() != Some(&b'\n') {
+                                                buf.push(b'\n');
+                                            }
+                                        }
+                                        None => break,
+                                    }
+                                }
+                                Capabilities::from_lines(buf.into())?
+                            },
+                            refs: None,
+                            protocol: Protocol::V2,
+                        },
+                    }
+                }
+                None => Outcome {
+                    capabilities: Capabilities::default(),
+                    refs: Some(Box::new(rd.as_read())),
+                    protocol: Protocol::V0,
+                },
+            })
         }
     }
 }
@@ -263,45 +285,50 @@ pub mod recv {
             // format looks like, thus there is no binary blob that could ever look like an ERR line by accident.
             rd.fail_on_err_lines(true);
 
-            let line = rd
-                .peek_line()
-                .await
-                .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
-            let line = line.as_text().ok_or(client::Error::ExpectedLine("text"))?;
-
-            let version = Capabilities::extract_protocol(line)?;
-            match version {
-                Protocol::V1 => {
-                    let (capabilities, delimiter_position) = Capabilities::from_bytes(line.0)?;
-                    rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
-                    Ok(Outcome {
-                        capabilities,
-                        refs: Some(Box::new(rd.as_read())),
-                        protocol: Protocol::V1,
-                    })
-                }
-                Protocol::V2 => Ok(Outcome {
-                    capabilities: {
-                        let mut rd = rd.as_read();
-                        let mut buf = Vec::new();
-                        while let Some(line) = rd.read_data_line().await {
-                            let line = line??;
-                            match line.as_bstr() {
-                                Some(line) => {
-                                    buf.push_str(line);
-                                    if buf.last() != Some(&b'\n') {
-                                        buf.push(b'\n');
-                                    }
-                                }
-                                None => break,
+            Ok(match rd.peek_line().await {
+                Some(line) => {
+                    let line = line??.as_text().ok_or(client::Error::ExpectedLine("text"))?;
+                    let version = Capabilities::extract_protocol(line)?;
+                    match version {
+                        Protocol::V0 => unreachable!("already handled in `None` case"),
+                        Protocol::V1 => {
+                            let (capabilities, delimiter_position) = Capabilities::from_bytes(line.0)?;
+                            rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
+                            Outcome {
+                                capabilities,
+                                refs: Some(Box::new(rd.as_read())),
+                                protocol: Protocol::V1,
                             }
                         }
-                        Capabilities::from_lines(buf.into())?
-                    },
-                    refs: None,
-                    protocol: Protocol::V2,
-                }),
-            }
+                        Protocol::V2 => Outcome {
+                            capabilities: {
+                                let mut rd = rd.as_read();
+                                let mut buf = Vec::new();
+                                while let Some(line) = rd.read_data_line().await {
+                                    let line = line??;
+                                    match line.as_bstr() {
+                                        Some(line) => {
+                                            buf.push_str(line);
+                                            if buf.last() != Some(&b'\n') {
+                                                buf.push(b'\n');
+                                            }
+                                        }
+                                        None => break,
+                                    }
+                                }
+                                Capabilities::from_lines(buf.into())?
+                            },
+                            refs: None,
+                            protocol: Protocol::V2,
+                        },
+                    }
+                }
+                None => Outcome {
+                    capabilities: Capabilities::default(),
+                    refs: Some(Box::new(rd.as_read())),
+                    protocol: Protocol::V0,
+                },
+            })
         }
     }
 }

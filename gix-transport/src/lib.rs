@@ -23,6 +23,8 @@ pub use gix_packetline as packetline;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
 pub enum Protocol {
+    /// Version 0 is like V1, but doesn't show capabilities at all, at least when hosted without `git-daemon`.
+    V0 = 0,
     /// Version 1 was the first one conceived, is stateful, and our implementation was seen to cause deadlocks. Prefer V2
     V1 = 1,
     /// A command-based and stateless protocol with clear semantics, and the one to use assuming the server isn't very old.
