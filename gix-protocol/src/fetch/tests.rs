@@ -298,6 +298,8 @@ mod arguments {
             let mut out = Vec::new();
             let mut t = transport(&mut out, true);
             let mut arguments = arguments_v2(["feature-a", "shallow"].iter().copied());
+            assert!(arguments.is_stateless(true), "V2 is stateless…");
+            assert!(arguments.is_stateless(false), "…in all cases");
 
             arguments.deepen(1);
             arguments.deepen_relative();
