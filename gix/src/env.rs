@@ -119,7 +119,8 @@ pub mod collate {
                     Error::Fetch(
                         crate::remote::fetch::Error::PackThreads(_)
                         | crate::remote::fetch::Error::PackIndexVersion(_)
-                        | crate::remote::fetch::Error::RemovePackKeepFile { .. },
+                        | crate::remote::fetch::Error::RemovePackKeepFile { .. }
+                        | crate::remote::fetch::Error::Negotiate(_),
                     ) => true,
                     _ => false,
                 }
