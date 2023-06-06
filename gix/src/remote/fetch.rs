@@ -1,24 +1,14 @@
 ///
 pub mod negotiate {
-    /// The way the negotiation is performed.
-    #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
-    pub enum Algorithm {
-        /// Do not send any information at all, likely at cost of larger-than-necessary packs.
-        Noop,
-        /// Walk over consecutive commits and check each one. This can be costly be assures packs are exactly the size they need to be.
-        #[default]
-        Consecutive,
-        /// Like `Consecutive`, but skips commits to converge faster, at the cost of receiving packs that are larger than they have to be.
-        Skipping,
-        /// Our very own implementation that probably should be replaced by one of the known algorithms soon.
-        Naive,
-    }
+    pub use gix_negotiate::Algorithm;
 
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     pub use super::super::connection::fetch::negotiate::Error;
 
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
-    pub(crate) use super::super::connection::fetch::negotiate::one_round;
+    pub(crate) use super::super::connection::fetch::negotiate::{
+        add_wants, mark_complete_and_common_ref, one_round, Action,
+    };
 }
 
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
@@ -154,12 +144,23 @@ pub enum Source {
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
 impl Source {
     /// Return either the direct object id we refer to or the direct target that a reference refers to.
-    /// The latter may be a direct or a symbolic reference, and we degenerate this to the peeled object id.
+    /// The latter may be a direct or a symbolic reference.
     /// If unborn, `None` is returned.
     pub fn as_id(&self) -> Option<&gix_hash::oid> {
         match self {
             Source::ObjectId(id) => Some(id),
             Source::Ref(r) => r.unpack().1,
+        }
+    }
+
+    /// Returns the peeled id of this instance, that is the object that can't be de-referenced anymore.
+    pub fn peeled_id(&self) -> Option<&gix_hash::oid> {
+        match self {
+            Source::ObjectId(id) => Some(id),
+            Source::Ref(r) => {
+                let (_name, target, peeled) = r.unpack();
+                peeled.or(target)
+            }
         }
     }
 

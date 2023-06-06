@@ -6,6 +6,8 @@ use crate::{
 impl Protocol {
     /// The `protocol.allow` key.
     pub const ALLOW: Allow = Allow::new_with_validate("allow", &config::Tree::PROTOCOL, validate::Allow);
+    /// The `protocol.version` key.
+    pub const VERSION: Version = Version::new_with_validate("version", &config::Tree::PROTOCOL, validate::Version);
 
     /// The `protocol.<name>` subsection
     pub const NAME_PARAMETER: NameParameter = NameParameter;
@@ -13,6 +15,9 @@ impl Protocol {
 
 /// The `protocol.allow` key type.
 pub type Allow = keys::Any<validate::Allow>;
+
+/// The `protocol.version` key.
+pub type Version = keys::Any<validate::Version>;
 
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
 mod allow {
@@ -39,7 +44,7 @@ mod allow {
 pub struct NameParameter;
 
 impl NameParameter {
-    /// The `credential.<url>.helper` key.
+    /// The `protocol.<name>.allow` key.
     pub const ALLOW: Allow = Allow::new_with_validate("allow", &Protocol::NAME_PARAMETER, validate::Allow);
 }
 
@@ -63,11 +68,43 @@ impl Section for Protocol {
     }
 
     fn keys(&self) -> &[&dyn Key] {
-        &[&Self::ALLOW]
+        &[&Self::ALLOW, &Self::VERSION]
     }
 
     fn sub_sections(&self) -> &[&dyn Section] {
         &[&Self::NAME_PARAMETER]
+    }
+}
+
+mod key_impls {
+    impl super::Version {
+        /// Convert `value` into the corresponding protocol version, possibly applying the correct default.
+        #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
+        pub fn try_into_protocol_version(
+            &'static self,
+            value: Option<Result<i64, gix_config::value::Error>>,
+        ) -> Result<gix_protocol::transport::Protocol, crate::config::key::GenericErrorWithValue> {
+            let value = match value {
+                None => return Ok(gix_protocol::transport::Protocol::V2),
+                Some(v) => v,
+            };
+            Ok(match value {
+                Ok(0) => gix_protocol::transport::Protocol::V0,
+                Ok(1) => gix_protocol::transport::Protocol::V1,
+                Ok(2) => gix_protocol::transport::Protocol::V2,
+                Ok(other) => {
+                    return Err(crate::config::key::GenericErrorWithValue::from_value(
+                        self,
+                        other.to_string().into(),
+                    ))
+                }
+                Err(err) => {
+                    return Err(
+                        crate::config::key::GenericErrorWithValue::from_value(self, "unknown".into()).with_source(err),
+                    )
+                }
+            })
+        }
     }
 }
 
@@ -80,6 +117,19 @@ mod validate {
             #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
             super::Protocol::ALLOW.try_into_allow(std::borrow::Cow::Borrowed(_value), None)?;
             Ok(())
+        }
+    }
+
+    pub struct Version;
+    impl keys::Validate for Version {
+        fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            let value = gix_config::Integer::try_from(value)?
+                .to_decimal()
+                .ok_or_else(|| format!("integer {value} cannot be represented as integer"))?;
+            match value {
+                0 | 1 | 2 => Ok(()),
+                _ => Err(format!("protocol version {value} is unknown").into()),
+            }
         }
     }
 }

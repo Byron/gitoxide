@@ -44,7 +44,12 @@ impl PrepareFetch {
     /// it was newly initialized.
     ///
     /// Note that all data we created will be removed once this instance drops if the operation wasn't successful.
-    pub fn fetch_only<P>(
+    ///
+    /// ### Note for users of `async`
+    ///
+    /// Even though
+    #[gix_protocol::maybe_async::maybe_async]
+    pub async fn fetch_only<P>(
         &mut self,
         mut progress: P,
         should_interrupt: &std::sync::atomic::AtomicBool,
@@ -101,17 +106,19 @@ impl PrepareFetch {
         .expect("valid")
         .to_owned();
         let pending_pack: remote::fetch::Prepare<'_, '_, _> = {
-            let mut connection = remote.connect(remote::Direction::Fetch)?;
+            let mut connection = remote.connect(remote::Direction::Fetch).await?;
             if let Some(f) = self.configure_connection.as_mut() {
                 f(&mut connection).map_err(|err| Error::RemoteConnection(err))?;
             }
-            connection.prepare_fetch(&mut progress, {
-                let mut opts = self.fetch_options.clone();
-                if !opts.extra_refspecs.contains(&head_refspec) {
-                    opts.extra_refspecs.push(head_refspec)
-                }
-                opts
-            })?
+            connection
+                .prepare_fetch(&mut progress, {
+                    let mut opts = self.fetch_options.clone();
+                    if !opts.extra_refspecs.contains(&head_refspec) {
+                        opts.extra_refspecs.push(head_refspec)
+                    }
+                    opts
+                })
+                .await?
         };
         if pending_pack.ref_map().object_hash != repo.object_hash() {
             unimplemented!("configure repository to expect a different object hash as advertised by the server")
@@ -127,7 +134,8 @@ impl PrepareFetch {
                 message: reflog_message.clone(),
             })
             .with_shallow(self.shallow.clone())
-            .receive(progress, should_interrupt)?;
+            .receive(progress, should_interrupt)
+            .await?;
 
         util::append_config_to_repo_config(repo, config);
         util::update_head(
@@ -141,6 +149,7 @@ impl PrepareFetch {
     }
 
     /// Similar to [`fetch_only()`][Self::fetch_only()`], but passes ownership to a utility type to configure a checkout operation.
+    #[cfg(feature = "blocking-network-client")]
     pub fn fetch_then_checkout<P>(
         &mut self,
         progress: P,
@@ -155,5 +164,4 @@ impl PrepareFetch {
     }
 }
 
-#[cfg(feature = "blocking-network-client")]
 mod util;

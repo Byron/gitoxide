@@ -480,50 +480,52 @@ mod blocking_io {
 
     #[test]
     fn fetch_and_checkout_empty_remote_repo() -> crate::Result {
-        let tmp = gix_testtools::tempfile::TempDir::new()?;
-        let mut prepare = gix::clone::PrepareFetch::new(
-            gix_testtools::scripted_fixture_read_only("make_empty_repo.sh")?,
-            tmp.path(),
-            gix::create::Kind::WithWorktree,
-            Default::default(),
-            restricted(),
-        )?;
-        let (mut checkout, out) = prepare
-            .fetch_then_checkout(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())
-            .unwrap();
-        let (repo, _) = checkout.main_worktree(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+        for version in [
+            gix::protocol::transport::Protocol::V0,
+            gix::protocol::transport::Protocol::V2,
+        ] {
+            let tmp = gix_testtools::tempfile::TempDir::new()?;
+            let mut prepare = gix::clone::PrepareFetch::new(
+                gix_testtools::scripted_fixture_read_only("make_empty_repo.sh")?,
+                tmp.path(),
+                gix::create::Kind::WithWorktree,
+                Default::default(),
+                restricted().config_overrides(Some(format!("protocol.version={}", version as u8))),
+            )?;
+            let (mut checkout, out) =
+                prepare.fetch_then_checkout(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+            let (repo, _) =
+                checkout.main_worktree(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
 
-        assert!(!repo.index_path().is_file(), "newly initialized repos have no index");
-        let head = repo.head()?;
-        assert!(head.is_unborn());
+            assert!(!repo.index_path().is_file(), "newly initialized repos have no index");
+            let head = repo.head()?;
+            assert!(head.is_unborn());
 
-        assert!(
-            head.log_iter().all()?.is_none(),
-            "no reflog for unborn heads (as it needs non-null destination hash)"
-        );
-
-        if out
-            .ref_map
-            .handshake
-            .capabilities
-            .capability("ls-refs")
-            .expect("has ls-refs")
-            .supports("unborn")
-            == Some(true)
-        {
-            assert_eq!(
-                head.referent_name().expect("present").as_bstr(),
-                "refs/heads/special",
-                "we pick up the name as present on the server, not the one we default to"
+            assert!(
+                head.log_iter().all()?.is_none(),
+                "no reflog for unborn heads (as it needs non-null destination hash)"
             );
-        } else {
-            assert_eq!(
-                head.referent_name().expect("present").as_bstr(),
-                "refs/heads/main",
-                "we simply keep our own post-init HEAD which defaults to the branch name we configured locally"
-            );
+
+            let supports_unborn = out
+                .ref_map
+                .handshake
+                .capabilities
+                .capability("ls-refs")
+                .map_or(false, |cap| cap.supports("unborn").unwrap_or(false));
+            if supports_unborn {
+                assert_eq!(
+                    head.referent_name().expect("present").as_bstr(),
+                    "refs/heads/special",
+                    "we pick up the name as present on the server, not the one we default to"
+                );
+            } else {
+                assert_eq!(
+                    head.referent_name().expect("present").as_bstr(),
+                    "refs/heads/main",
+                    "we simply keep our own post-init HEAD which defaults to the branch name we configured locally"
+                );
+            }
         }
-
         Ok(())
     }
 

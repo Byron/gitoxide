@@ -81,6 +81,7 @@ pub use gix_ignore as ignore;
 #[doc(inline)]
 pub use gix_index as index;
 pub use gix_lock as lock;
+pub use gix_negotiate as negotiate;
 pub use gix_object as objs;
 pub use gix_object::bstr;
 pub use gix_odb as odb;

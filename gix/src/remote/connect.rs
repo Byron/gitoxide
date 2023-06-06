@@ -24,8 +24,8 @@ mod error {
         Connect(#[from] gix_protocol::transport::client::connect::Error),
         #[error("The {} url was missing - don't know where to establish a connection to", direction.as_str())]
         MissingUrl { direction: remote::Direction },
-        #[error("Protocol named {given:?} is not a valid protocol. Choose between 1 and 2")]
-        UnknownProtocol { given: BString },
+        #[error("The given protocol version was invalid. Choose between 1 and 2")]
+        UnknownProtocol { source: config::key::GenericErrorWithValue },
         #[error("Could not verify that \"{}\" url is a valid git directory before attempting to use it", url.to_bstring())]
         FileUrl {
             source: Box<gix_discover::is_git::Error>,
@@ -128,25 +128,9 @@ impl<'repo> Remote<'repo> {
             Ok(url)
         }
 
-        use gix_protocol::transport::Protocol;
-        let version = self
-            .repo
-            .config
-            .resolved
-            .integer("protocol", None, "version")
-            .unwrap_or(Ok(2))
-            .map_err(|err| Error::UnknownProtocol { given: err.input })
-            .and_then(|num| {
-                Ok(match num {
-                    1 => Protocol::V1,
-                    2 => Protocol::V2,
-                    num => {
-                        return Err(Error::UnknownProtocol {
-                            given: num.to_string().into(),
-                        })
-                    }
-                })
-            })?;
+        let version = crate::config::tree::Protocol::VERSION
+            .try_into_protocol_version(self.repo.config.resolved.integer("protocol", None, "version"))
+            .map_err(|err| Error::UnknownProtocol { source: err })?;
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
         if !self.repo.config.url_scheme()?.allow(&url.scheme) {
