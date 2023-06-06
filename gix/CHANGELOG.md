@@ -5,6 +5,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+The reason for this release is the ability to properly negotiate packs, also across multiple rounds, and with `protocol.version` 1 or 2, across
+stateless or stateful transports.
+
+### Chore
+
+ - <csr-id-dbc6cbb4363c2532f81b0bd6e351c4577bb9e9a3/> inline format args
+
+### New Features
+
+ - <csr-id-af0ef2f36736e3805f769d8cd59c9fa7eb6a22a0/> use `gix-negotiate` in fetch machinery.
+   Thanks to it we are finally able to do pack negotiations just like git can,
+   as many rounds as it takes and with all available algorithms.
+   
+   Works for V1 and V2 and for stateless and stateful transports.
+ - <csr-id-020ff4e383fc76a255eabf099bb9cf5116a95afa/> Add `gitoxide.core.defaultPackCacheMemoryLimit` to control memory limits.
+   Previously the 64 slot LRU cache didn't have any limit, now one is implemented that
+   defaults to about 96MB.
+
+### New Features (BREAKING)
+
+ - <csr-id-e011e360fb2db0288f718cb3bb2b28b4652bc8ae/> respect `core.useReplaceRefs` and remove `gitoxide.objects.noReplace`.
+   The gitoxide specific variable wasn't needed in the first place.
+
+### Refactor (BREAKING)
+
+ - <csr-id-9689a08d00e9d54f6bb581660ee99077bd214cb4/> Move `Kind` into `repository::Kind`.
+   This type was from old times where `gix` was called `gix-repository`.
+   Also remote `ThreadSafeRepository::kind()` in favor of leaving only
+   `Repository::kind()`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 30 commits contributed to the release over the course of 40 calendar days.
+ - 40 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#851](https://github.com/Byron/gitoxide/issues/851)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#851](https://github.com/Byron/gitoxide/issues/851)**
+    - Add `gitoxide.core.defaultPackCacheMemoryLimit` to control memory limits. ([`020ff4e`](https://github.com/Byron/gitoxide/commit/020ff4e383fc76a255eabf099bb9cf5116a95afa))
+ * **Uncategorized**
+    - Merge branch 'integrate-gix-negotiate' ([`ae845de`](https://github.com/Byron/gitoxide/commit/ae845dea6cee6523c88a23d7a14293589cf8092f))
+    - Add test to validate alternates in the context of fetching ([`ae1bc41`](https://github.com/Byron/gitoxide/commit/ae1bc41817bec3b83fe65104e7e3efe4bd798a78))
+    - Use `gix-negotiate` in fetch machinery. ([`af0ef2f`](https://github.com/Byron/gitoxide/commit/af0ef2f36736e3805f769d8cd59c9fa7eb6a22a0))
+    - Respect `core.useReplaceRefs` and remove `gitoxide.objects.noReplace`. ([`e011e36`](https://github.com/Byron/gitoxide/commit/e011e360fb2db0288f718cb3bb2b28b4652bc8ae))
+    - Thanks clippy ([`9525ac8`](https://github.com/Byron/gitoxide/commit/9525ac822aa902f5325f17e7b08ffb60b683e0e7))
+    - Merge branch 'fix-docs' ([`420553a`](https://github.com/Byron/gitoxide/commit/420553a10d780e0b2dc466cac120989298a5f187))
+    - Minor fixes ([`89a8cfe`](https://github.com/Byron/gitoxide/commit/89a8cfe40e5c3a9d4a4181fa055e3f4a529a8081))
+    - Cleaning up documentation ([`2578e57`](https://github.com/Byron/gitoxide/commit/2578e576bfa365d194a23a1fb0bf09be230873de))
+    - Move `Kind` into `repository::Kind`. ([`9689a08`](https://github.com/Byron/gitoxide/commit/9689a08d00e9d54f6bb581660ee99077bd214cb4))
+    - Merge branch 'auto-clippy' ([`dbf8aa1`](https://github.com/Byron/gitoxide/commit/dbf8aa19d19109195d0274928eae4b94f248cd88))
+    - Autofix map-or-unwrap clippy lint (and manual fix what was left) ([`2087032`](https://github.com/Byron/gitoxide/commit/2087032b5956dcd82bce6ac57e530e8724b57f17))
+    - Merge branch 'main' into auto-clippy ([`3ef5c90`](https://github.com/Byron/gitoxide/commit/3ef5c90aebce23385815f1df674c1d28d58b4b0d))
+    - Merge pull request #864 from nyurik/lint-fmt ([`279dc09`](https://github.com/Byron/gitoxide/commit/279dc09446f41d7f1d76350fbfafb444e53cd7da))
+    - Merge branch 'blinxen/main' ([`9375cd7`](https://github.com/Byron/gitoxide/commit/9375cd75b01aa22a0e2eed6305fe45fabfd6c1ac))
+    - Inline format args ([`dbc6cbb`](https://github.com/Byron/gitoxide/commit/dbc6cbb4363c2532f81b0bd6e351c4577bb9e9a3))
+    - Include license files in all crates ([`facaaf6`](https://github.com/Byron/gitoxide/commit/facaaf633f01c857dcf2572c6dbe0a92b7105c1c))
+    - Merge branch 'consecutive-negotiation' ([`97b3f7e`](https://github.com/Byron/gitoxide/commit/97b3f7e2eaddea20c98f2f7ab6a0d2e2117b0793))
+    - Release gix-commitgraph v0.15.0, gix-revision v0.14.0, gix-negotiate v0.1.0, safety bump 7 crates ([`92832ca`](https://github.com/Byron/gitoxide/commit/92832ca2899cd2f222f4c7b1cc9e766178f55806))
+    - Merge branch 'consecutive-negotiation' ([`4507f94`](https://github.com/Byron/gitoxide/commit/4507f94984c811ea098e43472e5f54ec4dbb90c1))
+    - Adapt to changes in `gix-revision` ([`56f4d30`](https://github.com/Byron/gitoxide/commit/56f4d30960de4afc8c53136af45149cf880547c5))
+    - Refactor ([`f4245f4`](https://github.com/Byron/gitoxide/commit/f4245f4bb0921610456dde2c56068e7c5e4f1d27))
+    - Merge branch 'fix-851' ([`2f275d5`](https://github.com/Byron/gitoxide/commit/2f275d5d3cb49b3b8ba53b30e4b4386fac32662b))
+    - Adjust to changes in `gix-pack` ([`215889c`](https://github.com/Byron/gitoxide/commit/215889ceb976a59368c132aabfffb71a6a2ac9f8))
+    - Support reading the fetch algorithm from configuration ([`33b7770`](https://github.com/Byron/gitoxide/commit/33b777074db21db8cd060ecf8cfdac0409a7e10c))
+    - Release gix-object v0.29.2 ([`4f879bf`](https://github.com/Byron/gitoxide/commit/4f879bf35653bdc8f9729d524c6e8e1fb3c6886b))
+    - Release gix-discover v0.18.1, gix-worktree v0.17.1, gix-testtools v0.12.0 ([`f7b6c6f`](https://github.com/Byron/gitoxide/commit/f7b6c6f27c090cbc584fbd3f5403da5ac1a9ff02))
+    - Release gix-index v0.16.1 ([`08c6f9d`](https://github.com/Byron/gitoxide/commit/08c6f9de95c65ff05db4ce6a5593127c4280b2ef))
+    - Release gix-ref v0.29.1 ([`13e01f5`](https://github.com/Byron/gitoxide/commit/13e01f5742ed2121f00f4b16c1df0cce5e7708ef))
+    - Improve docs for `Shallow` ([`3d95bb7`](https://github.com/Byron/gitoxide/commit/3d95bb76746a56b6e9060245f6c190c3836a0102))
+</details>
+
 ## 0.44.1 (2023-04-27)
 
 A maintenance release without user-facing changes. It's meant to fix breakage that occurred when publishing a breaking change in `gix-path` by accident.
@@ -13,7 +100,7 @@ A maintenance release without user-facing changes. It's meant to fix breakage th
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -24,6 +111,7 @@ A maintenance release without user-facing changes. It's meant to fix breakage th
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-path v0.8.0, gix-glob v0.7.0, gix-attributes v0.12.0, gix-config-value v0.12.0, gix-ref v0.29.0, gix-sec v0.8.0, gix-config v0.22.0, gix-prompt v0.5.0, gix-url v0.18.0, gix-credentials v0.14.0, gix-discover v0.18.0, gix-ignore v0.2.0, gix-pack v0.35.0, gix-odb v0.45.0, gix-transport v0.31.0, gix-protocol v0.32.0, gix-refspec v0.10.1, gix-worktree v0.17.0, gix v0.44.1 ([`7ebc9f7`](https://github.com/Byron/gitoxide/commit/7ebc9f734ec4371dd27daa568c0244185bb49eb5))
     - Prepare changelogs prior to release ([`0135158`](https://github.com/Byron/gitoxide/commit/013515897215400539bfd53c25548bd054186ba6))
     - Bump gix-path v0.8.0, safety bump 20 crates (gix set to 0.44.1 manually) ([`43ebaf2`](https://github.com/Byron/gitoxide/commit/43ebaf267557218865862538ffc7bdf00558492f))
 </details>

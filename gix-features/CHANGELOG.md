@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-d81b7e3036371d0a2a22f02a92df3c2b2950ff22/> add `zlib::Inflate::reset()`.
+   That way, each instance can be reused.
+ - <csr-id-add5ea8b83d00972b560536da82f9914ef6080d3/> make `prodash::RawProgress` available.
+   It's an object-safe version of the `Progress` trait.
+
+### New Features (BREAKING)
+
+ - <csr-id-0fa04bcbdf3102c5435e64cfef894a1bfc8d6e7b/> make current thread-count accessible in slice-workers.
+   Threads started for working on an entry in a slice can now see the amount
+   of threads left for use (and manipulate that variable) which effectively
+   allows them to implement their own parallelization on top of the current one.
+   
+   This is useful if there is there is very imbalanced work within the slice itself.
+   
+   While at it, we also make consumer functions mutable as they exsit per thread.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 18 commits contributed to the release over the course of 22 calendar days.
+ - 48 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#851](https://github.com/Byron/gitoxide/issues/851)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#851](https://github.com/Byron/gitoxide/issues/851)**
+    - Make current thread-count accessible in slice-workers. ([`0fa04bc`](https://github.com/Byron/gitoxide/commit/0fa04bcbdf3102c5435e64cfef894a1bfc8d6e7b))
+ * **Uncategorized**
+    - Merge branch 'integrate-gix-negotiate' ([`ae845de`](https://github.com/Byron/gitoxide/commit/ae845dea6cee6523c88a23d7a14293589cf8092f))
+    - Thanks clippy ([`9525ac8`](https://github.com/Byron/gitoxide/commit/9525ac822aa902f5325f17e7b08ffb60b683e0e7))
+    - Merge branch 'fix-alloc' ([`d9d9bc0`](https://github.com/Byron/gitoxide/commit/d9d9bc01b34ac75b28a5f1b75f40123aa6d83c60))
+    - Add `zlib::Inflate::reset()`. ([`d81b7e3`](https://github.com/Byron/gitoxide/commit/d81b7e3036371d0a2a22f02a92df3c2b2950ff22))
+    - Merge branch 'fix-docs' ([`420553a`](https://github.com/Byron/gitoxide/commit/420553a10d780e0b2dc466cac120989298a5f187))
+    - Cleaning up documentation ([`2578e57`](https://github.com/Byron/gitoxide/commit/2578e576bfa365d194a23a1fb0bf09be230873de))
+    - Merge branch 'auto-clippy' ([`dbf8aa1`](https://github.com/Byron/gitoxide/commit/dbf8aa19d19109195d0274928eae4b94f248cd88))
+    - Autofix map-or-unwrap clippy lint (and manual fix what was left) ([`2087032`](https://github.com/Byron/gitoxide/commit/2087032b5956dcd82bce6ac57e530e8724b57f17))
+    - Merge branch 'main' into auto-clippy ([`3ef5c90`](https://github.com/Byron/gitoxide/commit/3ef5c90aebce23385815f1df674c1d28d58b4b0d))
+    - Auto-fix clippy to remove explicit iter looping ([`3eff567`](https://github.com/Byron/gitoxide/commit/3eff567c683b5c650c14792b68968cbdbc90ec5c))
+    - Merge pull request #865 from nyurik/fix-tests ([`3a45973`](https://github.com/Byron/gitoxide/commit/3a45973c61c4816940b1c9bae4fe60af47a3f6c6))
+    - Merge branch 'blinxen/main' ([`9375cd7`](https://github.com/Byron/gitoxide/commit/9375cd75b01aa22a0e2eed6305fe45fabfd6c1ac))
+    - Include custom clippy settings ([`b057500`](https://github.com/Byron/gitoxide/commit/b057500dd3e6b75be3ebcd258cda0b946bedd9e1))
+    - Make cargo check to pass all tests ([`f4a44f7`](https://github.com/Byron/gitoxide/commit/f4a44f71e894dd8a08dd898a099b743a3ccff557))
+    - Include license files in all crates ([`facaaf6`](https://github.com/Byron/gitoxide/commit/facaaf633f01c857dcf2572c6dbe0a92b7105c1c))
+    - Merge branch 'fix-851' ([`2f275d5`](https://github.com/Byron/gitoxide/commit/2f275d5d3cb49b3b8ba53b30e4b4386fac32662b))
+    - Make `prodash::RawProgress` available. ([`add5ea8`](https://github.com/Byron/gitoxide/commit/add5ea8b83d00972b560536da82f9914ef6080d3))
+</details>
+
 ## 0.29.0 (2023-04-19)
 
 ### New Features (BREAKING)
@@ -15,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 6 calendar days.
+ - 9 commits contributed to the release over the course of 6 calendar days.
  - 35 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-utils v0.1.0, gix-hash v0.11.0, gix-date v0.5.0, gix-features v0.29.0, gix-actor v0.20.0, gix-object v0.29.0, gix-archive v0.1.0, gix-fs v0.1.0, safety bump 25 crates ([`8dbd0a6`](https://github.com/Byron/gitoxide/commit/8dbd0a60557a85acfa231800a058cbac0271a8cf))
     - Prepare changelog prior to release ([`7f06458`](https://github.com/Byron/gitoxide/commit/7f064583bd0e1b078df89a7750f5a25deb70f516))
     - Support native zlib-ng via flate2's zlib-ng feature ([`9a6e0d7`](https://github.com/Byron/gitoxide/commit/9a6e0d7b418ea721da6a7e4bc48c47b47d4dfa79))
     - Merge branch 'main' into dev ([`23ee47f`](https://github.com/Byron/gitoxide/commit/23ee47fb24c197f8437bd426544b2aa74e005bdc))

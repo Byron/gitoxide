@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-dbc6cbb4363c2532f81b0bd6e351c4577bb9e9a3/> inline format args
+
+### New Features
+
+ - <csr-id-1bd93bedd2f184510239c50c345d3dbc41d7d13b/> allow graph sharing by unifying `Flags` type.
+   This makes the graph used in `gix-negotiate` shareable by callers, which can
+   do their own traversal and store their own flags. The knowlege of this traversal
+   can be kept using such shared flags, like the `PARSED` bit which should be set whenever
+   parents are traversed.
+   
+   That way we are able to emulate the algorithms git uses perfectly, as we keep exactly the
+   same state.
+ - <csr-id-9ab205102eacaf0758c143941f43831a481a1f06/> various improvements to the API
+   * make `CommitterTimestamp` available as type, making the code using it more descriptive.
+   * add `new()` to `PriorityQueue`
+   * add `Graph::try_lookup_and_insert_default()`
+   * add `Debug` impl for `Graph`
+
+### New Features (BREAKING)
+
+ - <csr-id-11ad8a890a6233befb5d2b6b41caadbcb296c3f5/> Add version of Graph that handles fully-parsed commits
+   This renames `graph::Commit` to `graph::LazyCommit` to make space for `graph::Commit` to be a fully owned.
+   `LazyCommit::to_owned()` was added to obtain fully owned `Commit` instances.
+   Rename `Graph::try_lookup_and_insert()` to `Graph::try_lookup_or_insert()` and
+   `Graph::try_lookup_and_insert_default()` to `Graph::try_lookup_or_insert_default()`
+   
+   Additionally, add the `peek()` and `iter_unordered()` method to the `PriorityQueue`, along with an implementation for `Clone`
+   Rename `PriorityQueue::iter_random()` to `::iter_unordered()`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 13 calendar days.
+ - 18 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'integrate-gix-negotiate' ([`ae845de`](https://github.com/Byron/gitoxide/commit/ae845dea6cee6523c88a23d7a14293589cf8092f))
+    - Allow graph sharing by unifying `Flags` type. ([`1bd93be`](https://github.com/Byron/gitoxide/commit/1bd93bedd2f184510239c50c345d3dbc41d7d13b))
+    - Add version of Graph that handles fully-parsed commits ([`11ad8a8`](https://github.com/Byron/gitoxide/commit/11ad8a890a6233befb5d2b6b41caadbcb296c3f5))
+    - Merge branch 'auto-clippy' ([`dbf8aa1`](https://github.com/Byron/gitoxide/commit/dbf8aa19d19109195d0274928eae4b94f248cd88))
+    - Autofix map-or-unwrap clippy lint (and manual fix what was left) ([`2087032`](https://github.com/Byron/gitoxide/commit/2087032b5956dcd82bce6ac57e530e8724b57f17))
+    - Merge branch 'main' into auto-clippy ([`3ef5c90`](https://github.com/Byron/gitoxide/commit/3ef5c90aebce23385815f1df674c1d28d58b4b0d))
+    - Merge pull request #864 from nyurik/lint-fmt ([`279dc09`](https://github.com/Byron/gitoxide/commit/279dc09446f41d7f1d76350fbfafb444e53cd7da))
+    - Merge branch 'blinxen/main' ([`9375cd7`](https://github.com/Byron/gitoxide/commit/9375cd75b01aa22a0e2eed6305fe45fabfd6c1ac))
+    - Inline format args ([`dbc6cbb`](https://github.com/Byron/gitoxide/commit/dbc6cbb4363c2532f81b0bd6e351c4577bb9e9a3))
+    - Include license files in all crates ([`facaaf6`](https://github.com/Byron/gitoxide/commit/facaaf633f01c857dcf2572c6dbe0a92b7105c1c))
+    - Merge branch 'consecutive-negotiation' ([`97b3f7e`](https://github.com/Byron/gitoxide/commit/97b3f7e2eaddea20c98f2f7ab6a0d2e2117b0793))
+    - Various improvements to the API ([`9ab2051`](https://github.com/Byron/gitoxide/commit/9ab205102eacaf0758c143941f43831a481a1f06))
+</details>
+
 ## 0.14.0 (2023-05-19)
 
 ### New Features
@@ -24,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 7 calendar days.
+ - 7 commits contributed to the release over the course of 7 calendar days.
  - 22 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -36,6 +99,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-commitgraph v0.15.0, gix-revision v0.14.0, gix-negotiate v0.1.0, safety bump 7 crates ([`92832ca`](https://github.com/Byron/gitoxide/commit/92832ca2899cd2f222f4c7b1cc9e766178f55806))
+    - Merge branch 'consecutive-negotiation' ([`4507f94`](https://github.com/Byron/gitoxide/commit/4507f94984c811ea098e43472e5f54ec4dbb90c1))
     - `describe` usees commitgraph. ([`ed258da`](https://github.com/Byron/gitoxide/commit/ed258da9015d2d68734aeac485dd009760fc4da4))
     - A Graph for quick access to commits and for associating state with them. ([`59ce4c6`](https://github.com/Byron/gitoxide/commit/59ce4c606f8ccd9b6a16da2025e6746984d32fd6))
     - A PriorityQueue that is useful for graph traversal. ([`dde8c3a`](https://github.com/Byron/gitoxide/commit/dde8c3aca545ba20cd5752f02283b98647fd3970))

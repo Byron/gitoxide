@@ -5,6 +5,113 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-3a2d5286084597d4c68549903709cda77dda4357/> improve performance by reducing the trashing of `zlib::Inflate`.
+   Previously, for every zlib inflate operation, we would allocate memory
+   due to the creation of a decompressor.
+   
+   This is now avoided by reusing thread-local copies of such a decompressor,
+   which is reused and reset instead.
+ - <csr-id-14e7ea0217af8a04ed2b50ff7b13c28335c29022/> improve performance by avoiding zeroying buffers.
+   Previously we would use `resize(new_len, 0)` to resize buffers, even though
+   these values would then be overwritten (or the buffer isn't available).
+   
+   Now we use `set_len(new_len)` after calling `reserve` to do the same, but safe
+   a memset.
+
+### Bug Fixes
+
+ - <csr-id-977e135bfa00bdbc1a8f8324f85347ec9078c84f/> static linked list delta cache with memory cap
+   Previously, the 64 slot big LRU cache for pack deltas didn't
+   use any memory limit which could lead to memory exhaustion in the
+   face of untypical, large objects.
+   
+   Now we add a generous default limit to do *better* in such situations.
+   It's worth noting though that that even without any cache, the working
+   set of buffers to do delta resolution takes considerable memory, despite
+   trying to keep it minimal.
+   
+   Note that for bigger objects, the cache is now not used at all, which probably
+   leads to terrible performance as not even the base object can be cached.
+ - <csr-id-f89cbc675b0acc67322e289e7b3a17288b9eae27/> check for interrupt more often
+   Previously when traversing a pack it could appear to hang as checks
+   were only performed on chunk or base (of a delta-tree) level.
+   
+   Now interrupt checks are performed more often to stop all work much quicker.
+ - <csr-id-923692bcda698b45d3d1ad518b29f6d30b23fbc0/> memory capped hashmap as pack delta cache won't trash memory as much.
+   Previously it would take a buffer from the free-list, copy data into it, and
+   when exceeding the capacity loose it entirely.
+   Now the freelist is handled correctly.
+
+### New Features (BREAKING)
+
+ - <csr-id-d22dd8fcc22e8dbe30524a1bdddc09bc841db341/> index-backed tree traversal with a form of work-stealing.
+   When delta-trees are unbalanced, in pathological cases it's possible that that one thread
+   ends up with more than half of the work. In this case it's required that it manages to
+   spawn its own threads to parallelize the work it has.
+ - <csr-id-0fa04bcbdf3102c5435e64cfef894a1bfc8d6e7b/> make current thread-count accessible in slice-workers.
+   Threads started for working on an entry in a slice can now see the amount
+   of threads left for use (and manipulate that variable) which effectively
+   allows them to implement their own parallelization on top of the current one.
+   
+   This is useful if there is there is very imbalanced work within the slice itself.
+   
+   While at it, we also make consumer functions mutable as they exsit per thread.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 26 commits contributed to the release over the course of 25 calendar days.
+ - 40 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#851](https://github.com/Byron/gitoxide/issues/851)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#851](https://github.com/Byron/gitoxide/issues/851)**
+    - Fix performance regression in pack traversal ([`de1f6c2`](https://github.com/Byron/gitoxide/commit/de1f6c22dfccf22f34e2c2c1b4890ca095ced7ac))
+    - Index-backed tree traversal with a form of work-stealing. ([`d22dd8f`](https://github.com/Byron/gitoxide/commit/d22dd8fcc22e8dbe30524a1bdddc09bc841db341))
+    - Improve performance by avoiding zeroying buffers. ([`14e7ea0`](https://github.com/Byron/gitoxide/commit/14e7ea0217af8a04ed2b50ff7b13c28335c29022))
+    - Make current thread-count accessible in slice-workers. ([`0fa04bc`](https://github.com/Byron/gitoxide/commit/0fa04bcbdf3102c5435e64cfef894a1bfc8d6e7b))
+    - Try to get improved hitrate for delta-cache by using it more, and fail ([`969cc77`](https://github.com/Byron/gitoxide/commit/969cc77ec7855fc8c23c2b50353813e6a04b779d))
+    - Static linked list delta cache with memory cap ([`977e135`](https://github.com/Byron/gitoxide/commit/977e135bfa00bdbc1a8f8324f85347ec9078c84f))
+    - Check for interrupt more often ([`f89cbc6`](https://github.com/Byron/gitoxide/commit/f89cbc675b0acc67322e289e7b3a17288b9eae27))
+    - Memory capped hashmap as pack delta cache won't trash memory as much. ([`923692b`](https://github.com/Byron/gitoxide/commit/923692bcda698b45d3d1ad518b29f6d30b23fbc0))
+ * **Uncategorized**
+    - Merge branch 'integrate-gix-negotiate' ([`ae845de`](https://github.com/Byron/gitoxide/commit/ae845dea6cee6523c88a23d7a14293589cf8092f))
+    - Thanks clippy ([`9525ac8`](https://github.com/Byron/gitoxide/commit/9525ac822aa902f5325f17e7b08ffb60b683e0e7))
+    - Merge branch 'fix-alloc' ([`d9d9bc0`](https://github.com/Byron/gitoxide/commit/d9d9bc01b34ac75b28a5f1b75f40123aa6d83c60))
+    - Improve performance by reducing the trashing of `zlib::Inflate`. ([`3a2d528`](https://github.com/Byron/gitoxide/commit/3a2d5286084597d4c68549903709cda77dda4357))
+    - Merge branch 'fix-docs' ([`420553a`](https://github.com/Byron/gitoxide/commit/420553a10d780e0b2dc466cac120989298a5f187))
+    - Minor fixes ([`89a8cfe`](https://github.com/Byron/gitoxide/commit/89a8cfe40e5c3a9d4a4181fa055e3f4a529a8081))
+    - Cleaning up documentation ([`2578e57`](https://github.com/Byron/gitoxide/commit/2578e576bfa365d194a23a1fb0bf09be230873de))
+    - Merge branch 'auto-clippy' ([`dbf8aa1`](https://github.com/Byron/gitoxide/commit/dbf8aa19d19109195d0274928eae4b94f248cd88))
+    - Autofix map-or-unwrap clippy lint (and manual fix what was left) ([`2087032`](https://github.com/Byron/gitoxide/commit/2087032b5956dcd82bce6ac57e530e8724b57f17))
+    - Merge branch 'main' into auto-clippy ([`3ef5c90`](https://github.com/Byron/gitoxide/commit/3ef5c90aebce23385815f1df674c1d28d58b4b0d))
+    - Auto-fix clippy to remove explicit iter looping ([`3eff567`](https://github.com/Byron/gitoxide/commit/3eff567c683b5c650c14792b68968cbdbc90ec5c))
+    - Merge branch 'blinxen/main' ([`9375cd7`](https://github.com/Byron/gitoxide/commit/9375cd75b01aa22a0e2eed6305fe45fabfd6c1ac))
+    - Include license files in all crates ([`facaaf6`](https://github.com/Byron/gitoxide/commit/facaaf633f01c857dcf2572c6dbe0a92b7105c1c))
+    - Further optimize buffer usage when traversing packs ([`78d28a7`](https://github.com/Byron/gitoxide/commit/78d28a72a9ed4773b86b36b23bf200269406384e))
+    - Fix incorrect naming of progress of traversal threads ([`996ba6b`](https://github.com/Byron/gitoxide/commit/996ba6b20a0e13cd6f448b41797deee97922a3e4))
+    - Merge branch 'fix-851' ([`2f275d5`](https://github.com/Byron/gitoxide/commit/2f275d5d3cb49b3b8ba53b30e4b4386fac32662b))
+    - Adjust to changes in `gix-features` ([`c48bbe3`](https://github.com/Byron/gitoxide/commit/c48bbe330e5e99fa357a87a4aa210317ab7c8143))
+    - Release gix-object v0.29.2 ([`4f879bf`](https://github.com/Byron/gitoxide/commit/4f879bf35653bdc8f9729d524c6e8e1fb3c6886b))
+</details>
+
 ## 0.35.0 (2023-04-27)
 
 A maintenance release without user-facing changes.
@@ -13,7 +120,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -24,6 +131,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-path v0.8.0, gix-glob v0.7.0, gix-attributes v0.12.0, gix-config-value v0.12.0, gix-ref v0.29.0, gix-sec v0.8.0, gix-config v0.22.0, gix-prompt v0.5.0, gix-url v0.18.0, gix-credentials v0.14.0, gix-discover v0.18.0, gix-ignore v0.2.0, gix-pack v0.35.0, gix-odb v0.45.0, gix-transport v0.31.0, gix-protocol v0.32.0, gix-refspec v0.10.1, gix-worktree v0.17.0, gix v0.44.1 ([`7ebc9f7`](https://github.com/Byron/gitoxide/commit/7ebc9f734ec4371dd27daa568c0244185bb49eb5))
     - Prepare changelogs prior to release ([`0135158`](https://github.com/Byron/gitoxide/commit/013515897215400539bfd53c25548bd054186ba6))
     - Bump gix-path v0.8.0, safety bump 20 crates (gix set to 0.44.1 manually) ([`43ebaf2`](https://github.com/Byron/gitoxide/commit/43ebaf267557218865862538ffc7bdf00558492f))
 </details>

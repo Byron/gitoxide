@@ -5,6 +5,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-877aa2921d8491d301945f86d5a69382e40fb081/> Add `fetch::Arguments::is_stateless()` to aid proper use of arguments.
+   When arguments are used, haves are reset every round in stateless protocols, while
+   everything else is repeated. However, this also means that previously confirmed common
+   commits aren't repeated unless this is specifically implemented by the user of `Arguments`.
+   
+   That caller can now easily determine if negotiations have to be compensated for.
+   
+   Please note that `Arguments` explicitly doesn't implement repeating of all prior arguments, which
+   would also repeat a lot of *in-vain* haves.
+
+### Bug Fixes
+
+ - <csr-id-c5dc7b4c43f07c04cdfb218de03e6725ff3fdb64/> `include-tag` is now properly handled in V1 fetch arguments
+   Previously it would be added like it's V2 arguments, which makes using it
+   in V1 impossible.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-6a3c02131c9ebca911be5f751e5a6c67fbdbf609/> make V1 stateless negotations work.
+   This is done by working around another V1 negotiation oddity
+   by exploiting client-side knowledge. For very old servers, we probably
+   wouldn't be able to do multi-rounds without dead-locking, but with
+   recent-enough (probably 10 years or so) old git servers all should
+   work fine.
+   
+   All this to not actually have to implement the V1 strangeness, allowing
+   our code to work smoothly with all permutations of stateless/stateful connections
+   and V1/V2 interactions, with a single high-level implementation essentially.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 12 calendar days.
+ - 40 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'integrate-gix-negotiate' ([`ae845de`](https://github.com/Byron/gitoxide/commit/ae845dea6cee6523c88a23d7a14293589cf8092f))
+    - Make V1 stateless negotations work. ([`6a3c021`](https://github.com/Byron/gitoxide/commit/6a3c02131c9ebca911be5f751e5a6c67fbdbf609))
+    - `include-tag` is now properly handled in V1 fetch arguments ([`c5dc7b4`](https://github.com/Byron/gitoxide/commit/c5dc7b4c43f07c04cdfb218de03e6725ff3fdb64))
+    - Add `fetch::Arguments::is_stateless()` to aid proper use of arguments. ([`877aa29`](https://github.com/Byron/gitoxide/commit/877aa2921d8491d301945f86d5a69382e40fb081))
+    - Adapt to changes in `gix-transport` ([`60eaceb`](https://github.com/Byron/gitoxide/commit/60eaceb5cd4b9206e9262cf05d9036c31a7b7d11))
+    - Merge branch 'fix-docs' ([`420553a`](https://github.com/Byron/gitoxide/commit/420553a10d780e0b2dc466cac120989298a5f187))
+    - Cleaning up documentation ([`2578e57`](https://github.com/Byron/gitoxide/commit/2578e576bfa365d194a23a1fb0bf09be230873de))
+    - Apply -W clippy::cloned-instead-of-copied ([`150463c`](https://github.com/Byron/gitoxide/commit/150463c26f0d2e1c2b5facba731ccba29cf23228))
+    - Merge branch 'main' into auto-clippy ([`3ef5c90`](https://github.com/Byron/gitoxide/commit/3ef5c90aebce23385815f1df674c1d28d58b4b0d))
+    - Merge branch 'blinxen/main' ([`9375cd7`](https://github.com/Byron/gitoxide/commit/9375cd75b01aa22a0e2eed6305fe45fabfd6c1ac))
+    - Include license files in all crates ([`facaaf6`](https://github.com/Byron/gitoxide/commit/facaaf633f01c857dcf2572c6dbe0a92b7105c1c))
+</details>
+
 ## 0.32.0 (2023-04-27)
 
 A maintenance release without user-facing changes.
@@ -13,7 +75,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -24,6 +86,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-path v0.8.0, gix-glob v0.7.0, gix-attributes v0.12.0, gix-config-value v0.12.0, gix-ref v0.29.0, gix-sec v0.8.0, gix-config v0.22.0, gix-prompt v0.5.0, gix-url v0.18.0, gix-credentials v0.14.0, gix-discover v0.18.0, gix-ignore v0.2.0, gix-pack v0.35.0, gix-odb v0.45.0, gix-transport v0.31.0, gix-protocol v0.32.0, gix-refspec v0.10.1, gix-worktree v0.17.0, gix v0.44.1 ([`7ebc9f7`](https://github.com/Byron/gitoxide/commit/7ebc9f734ec4371dd27daa568c0244185bb49eb5))
     - Prepare changelogs prior to release ([`0135158`](https://github.com/Byron/gitoxide/commit/013515897215400539bfd53c25548bd054186ba6))
     - Bump gix-path v0.8.0, safety bump 20 crates (gix set to 0.44.1 manually) ([`43ebaf2`](https://github.com/Byron/gitoxide/commit/43ebaf267557218865862538ffc7bdf00558492f))
 </details>
