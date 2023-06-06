@@ -413,11 +413,10 @@ fn decompress_all_at_once_with(b: &[u8], decompressed_len: usize, out: &mut Vec<
     INFLATE.with(|inflate| {
         let mut inflate = inflate.borrow_mut();
         inflate.reset();
-        let res = inflate.once(b, out).map_err(|err| Error::ZlibInflate {
+        inflate.once(b, out).map_err(|err| Error::ZlibInflate {
             source: err,
             message: "Failed to decompress entry",
-        });
-        res
+        })
     })?;
     Ok(())
 }

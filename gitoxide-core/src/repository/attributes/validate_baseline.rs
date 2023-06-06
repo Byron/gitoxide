@@ -100,7 +100,7 @@ pub(crate) mod function {
                     });
 
                     let stdout = std::io::BufReader::new(child.stdout.take().expect("we configured it"));
-                    let mut lines = stdout.lines().filter_map(Result::ok).peekable();
+                    let mut lines = stdout.lines().map_while(Result::ok).peekable();
                     while let Some(baseline) = parse_attributes(&mut lines) {
                         if tx_base.send(baseline).is_err() {
                             child.kill().ok();

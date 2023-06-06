@@ -37,6 +37,7 @@ mod attributes;
 mod cache;
 mod config;
 mod excludes;
+mod graph;
 pub(crate) mod identity;
 mod impls;
 mod init;

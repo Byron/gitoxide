@@ -1,13 +1,15 @@
 .
-├── a-non-bare-repo-with-extension.git
-│   └── a
-├── dir
-│   └── one-origin
-├── no-origin
-│   └── a
-├── origin-and-fork
-│   └── a
-└── special-origin
-    └── a
-
-6 directories, 4 files
+./a-non-bare-repo-with-extension.git
+./a-non-bare-repo-with-extension.git/.git
+./a-non-bare-repo-with-extension.git/a
+./dir
+./dir/one-origin
+./no-origin
+./no-origin/.git
+./no-origin/a
+./origin-and-fork
+./origin-and-fork/.git
+./origin-and-fork/a
+./special-origin
+./special-origin/.git
+./special-origin/a

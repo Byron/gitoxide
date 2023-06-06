@@ -117,6 +117,14 @@ static GIT_CONFIG: &[Record] = &[
         usage: NotApplicable { reason: "we target 32bit systems only and don't use a windowing mechanism" }
     },
     Record {
+        config: "core.alternateRefsCommand",
+        usage: NotPlanned { reason: "there is no need as we can perform the required operation in-binary. This could happen though if there is a use-case and demand." }
+    },
+    Record {
+        config: "core.alternateRefsPrefixes",
+        usage: NotPlanned { reason: "seems like a niche feature, but can be implemented if there is demand" }
+    },
+    Record {
         config: "core.checkRoundtripEncoding",
         usage: Planned { note: Some("needed once working-tree-encoding attributes are supported") }
     },

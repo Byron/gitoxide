@@ -63,6 +63,9 @@ impl Core {
     /// The `core.sshCommand` key.
     pub const SSH_COMMAND: keys::Executable = keys::Executable::new_executable("sshCommand", &config::Tree::CORE)
         .with_environment_override("GIT_SSH_COMMAND");
+    /// The `core.useReplaceRefs` key.
+    pub const USE_REPLACE_REFS: keys::Boolean = keys::Boolean::new_boolean("useReplaceRefs", &config::Tree::CORE)
+        .with_environment_override("GIT_NO_REPLACE_OBJECTS");
 }
 
 impl Section for Core {
@@ -92,6 +95,7 @@ impl Section for Core {
             &Self::EXCLUDES_FILE,
             &Self::ATTRIBUTES_FILE,
             &Self::SSH_COMMAND,
+            &Self::USE_REPLACE_REFS,
         ]
     }
 }

@@ -51,6 +51,9 @@ impl<'a> Commit<'a> {
             root_tree_id: gix_hash::oid::from_bytes_unchecked(&bytes[..file.hash_len]),
             parent1: ParentEdge::from_raw(read_u32(&bytes[file.hash_len..][..4])),
             parent2: ParentEdge::from_raw(read_u32(&bytes[file.hash_len + 4..][..4])),
+            // TODO: Add support for corrected commit date offset overflow.
+            //      See https://github.com/git/git/commit/e8b63005c48696a26f976f5f9b0ccaf1983e439d and
+            //          https://github.com/git/git/commit/f90fca638e99a031dce8e3aca72427b2f9b4bb38 for more details and hints at a test.
             generation: read_u32(&bytes[file.hash_len + 8..][..4]) >> 2,
             commit_timestamp: u64::from_be_bytes(bytes[file.hash_len + 8..][..8].try_into().unwrap())
                 & 0x0003_ffff_ffff,

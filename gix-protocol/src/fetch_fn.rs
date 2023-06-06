@@ -128,7 +128,12 @@ where
         if sideband_all {
             setup_remote_progress(&mut progress, &mut reader);
         }
-        let response = Response::from_line_reader(protocol_version, &mut reader).await?;
+        let response = Response::from_line_reader(
+            protocol_version,
+            &mut reader,
+            true, /* hack, telling us we don't want this delegate approach anymore */
+        )
+        .await?;
         previous_response = if response.has_pack() {
             progress.step();
             progress.set_name("receiving pack");

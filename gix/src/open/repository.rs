@@ -284,12 +284,12 @@ fn replacement_objects_refs_prefix(
     mut filter_config_section: fn(&gix_config::file::Metadata) -> bool,
 ) -> Result<Option<PathBuf>, Error> {
     let is_disabled = config
-        .boolean_filter_by_key("gitoxide.objects.noReplace", &mut filter_config_section)
-        .map(|b| gitoxide::Objects::NO_REPLACE.enrich_error(b))
+        .boolean_filter_by_key("core.useReplaceRefs", &mut filter_config_section)
+        .map(|b| Core::USE_REPLACE_REFS.enrich_error(b))
         .transpose()
         .with_leniency(lenient)
         .map_err(config::Error::ConfigBoolean)?
-        .unwrap_or_default();
+        .unwrap_or(true);
 
     if is_disabled {
         return Ok(None);

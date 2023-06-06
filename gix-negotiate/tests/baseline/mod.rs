@@ -56,11 +56,12 @@ fn run() -> crate::Result {
                     .to_owned()
             };
 
+            let debug = false;
             for use_cache in [false, true] {
                 let cache = use_cache
                     .then(|| gix_commitgraph::at(store.store_ref().path().join("info")).ok())
                     .flatten();
-                let mut negotiator = algo.into_negotiator(
+                let mut graph = gix_revision::Graph::new(
                     |id, buf| {
                         store
                             .try_find(id, buf)
@@ -68,7 +69,10 @@ fn run() -> crate::Result {
                     },
                     cache,
                 );
-                eprintln!("ALGO {algo_name} CASE {case}");
+                let mut negotiator = algo.into_negotiator();
+                if debug {
+                    eprintln!("ALGO {algo_name} CASE {case}");
+                }
                 // // In --negotiate-only mode, which seems to be the only thing that's working after trying --dry-run, we unfortunately
                 // // don't get to see what happens if known-common commits are added as git itself doesn't do that in this mode
                 // // for some reason.
@@ -82,8 +86,10 @@ fn run() -> crate::Result {
                         .filter_map(Result::ok)
                         .map(|r| r.target.into_id()),
                 ) {
-                    eprintln!("TIP {name} {tip}", name = message(tip));
-                    negotiator.add_tip(tip)?;
+                    if debug {
+                        eprintln!("TIP {name} {tip}", name = message(tip));
+                    }
+                    negotiator.add_tip(tip, &mut graph)?;
                 }
                 for (round, Round { mut haves, common }) in ParseRounds::new(buf.lines()).enumerate() {
                     if algo == Algorithm::Skipping {
@@ -116,26 +122,30 @@ fn run() -> crate::Result {
                         }
                     }
                     for have in haves {
-                        let actual = negotiator.next_have().unwrap_or_else(|| {
+                        let actual = negotiator.next_have(&mut graph).unwrap_or_else(|| {
                             panic!("{algo_name}:cache={use_cache}: one have per baseline: {have} missing or in wrong order", have = message(have))
                         })?;
                         assert_eq!(
                             actual,
                             have,
                             "{algo_name}:cache={use_cache}: order and commit matches exactly, wanted {expected}, got {actual}, commits left: {:?}",
-                            std::iter::from_fn(|| negotiator.next_have()).map(|id| message(id.unwrap())).collect::<Vec<_>>(),
+                            std::iter::from_fn(|| negotiator.next_have(&mut graph)).map(|id| message(id.unwrap())).collect::<Vec<_>>(),
                             actual = message(actual),
                             expected = message(have)
                         );
-                        eprintln!("have {}", message(actual));
+                        if debug {
+                            eprintln!("have {}", message(actual));
+                        }
                     }
                     for common_revision in common {
-                        eprintln!("ACK {}", message(common_revision));
-                        negotiator.in_common_with_remote(common_revision)?;
+                        if debug {
+                            eprintln!("ACK {}", message(common_revision));
+                        }
+                        negotiator.in_common_with_remote(common_revision, &mut graph)?;
                     }
                 }
                 assert!(
-                    negotiator.next_have().is_none(),
+                    negotiator.next_have(&mut graph).is_none(),
                     "{algo_name}:cache={use_cache}: negotiator should be depleted after all recorded baseline rounds"
                 );
             }

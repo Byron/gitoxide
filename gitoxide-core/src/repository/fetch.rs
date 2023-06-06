@@ -63,14 +63,34 @@ pub(crate) mod function {
         let ref_specs = remote.refspecs(gix::remote::Direction::Fetch);
         match res.status {
             Status::NoPackReceived { update_refs } => {
-                print_updates(&repo, update_refs, ref_specs, res.ref_map, &mut out, err)
+                print_updates(&repo, 1, update_refs, ref_specs, res.ref_map, &mut out, err)
             }
-            Status::DryRun { update_refs } => print_updates(&repo, update_refs, ref_specs, res.ref_map, &mut out, err),
+            Status::DryRun {
+                update_refs,
+                negotiation_rounds,
+            } => print_updates(
+                &repo,
+                negotiation_rounds,
+                update_refs,
+                ref_specs,
+                res.ref_map,
+                &mut out,
+                err,
+            ),
             Status::Change {
                 update_refs,
                 write_pack_bundle,
+                negotiation_rounds,
             } => {
-                print_updates(&repo, update_refs, ref_specs, res.ref_map, &mut out, err)?;
+                print_updates(
+                    &repo,
+                    negotiation_rounds,
+                    update_refs,
+                    ref_specs,
+                    res.ref_map,
+                    &mut out,
+                    err,
+                )?;
                 if let Some(data_path) = write_pack_bundle.data_path {
                     writeln!(out, "pack  file: \"{}\"", data_path.display()).ok();
                 }
@@ -88,6 +108,7 @@ pub(crate) mod function {
 
     pub(crate) fn print_updates(
         repo: &gix::Repository,
+        negotiation_rounds: usize,
         update_refs: gix::remote::fetch::refs::update::Outcome,
         refspecs: &[gix::refspec::RefSpec],
         mut map: gix::remote::fetch::RefMap,
@@ -190,6 +211,9 @@ pub(crate) mod function {
                 map.remote_refs.len() - map.mappings.len(),
                 refspecs.len()
             )?;
+        }
+        if negotiation_rounds != 1 {
+            writeln!(err, "needed {negotiation_rounds} rounds of pack-negotiation")?;
         }
         Ok(())
     }

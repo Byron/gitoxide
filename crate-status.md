@@ -233,6 +233,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
   * [x] nested traversal
 * **commits**
   * [x] ancestor graph traversal similar to `git revlog`
+  * [ ] `commitgraph` support
 * [x] API documentation
     * [ ] Examples
     
@@ -551,6 +552,7 @@ The git staging area.
 
 * [x] read-only access
     * [x] Graph lookup of commit information to obtain timestamps, generation and parents, and extra edges
+    * [ ] [Corrected generation dates](https://github.com/git/git/commit/e8b63005c48696a26f976f5f9b0ccaf1983e439d)
     * [ ] Bloom filter index
     * [ ] Bloom filter data
 * [ ] create and update graphs and graph files
@@ -669,8 +671,11 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
         * [x] fetch
            * [x] shallow (remains shallow, options to adjust shallow boundary)
            * [ ] a way to auto-explode small packs to avoid them to pile up
-           * [ ] 'ref-in-want'
-           * [ ] standard negotiation algorithms (right now we only have a 'naive' one)
+           * [x] 'ref-in-want'
+           * [ ] 'wanted-ref'
+           * [ ] standard negotiation algorithms `consecutive`, `skipping` and `noop`.
+           * [ ] a more efficient way to deal [with common `have`](https://github.com/git/git/blob/9e49351c3060e1fa6e0d2de64505b7becf157f28/fetch-pack.c#L525)
+                 during negotiation - we would submit known non-common `haves` each round in stateless transports whereas git prunes the set to known common ones.
         * [ ] push
         * [x] ls-refs
         * [x] ls-refs with ref-spec filter

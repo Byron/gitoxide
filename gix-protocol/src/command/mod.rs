@@ -60,7 +60,7 @@ mod with_io {
             match self {
                 Command::LsRefs => &[],
                 Command::Fetch => match version {
-                    gix_transport::Protocol::V1 => &[
+                    gix_transport::Protocol::V0 | gix_transport::Protocol::V1 => &[
                         "multi_ack",
                         "thin-pack",
                         "side-band",
@@ -120,7 +120,7 @@ mod with_io {
         ) -> Vec<Feature> {
             match self {
                 Command::Fetch => match version {
-                    gix_transport::Protocol::V1 => {
+                    gix_transport::Protocol::V0 | gix_transport::Protocol::V1 => {
                         let has_multi_ack_detailed = server_capabilities.contains("multi_ack_detailed");
                         let has_sideband_64k = server_capabilities.contains("side-band-64k");
                         self.all_features(version)
@@ -173,7 +173,7 @@ mod with_io {
                 panic!("{}: argument {} is not known or allowed", self.as_str(), arg);
             }
             match version {
-                gix_transport::Protocol::V1 => {
+                gix_transport::Protocol::V0 | gix_transport::Protocol::V1 => {
                     for (feature, _) in features {
                         if server
                             .iter()

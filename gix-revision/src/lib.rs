@@ -14,18 +14,32 @@ pub use describe::function::describe;
 
 ///
 pub mod spec;
-
-mod types;
-use crate::graph::FindFn;
-pub use types::Spec;
+pub use spec::types::Spec;
 
 /// A graph of commits which additionally allows to associate data with commits.
 ///
 /// It starts empty, but each access may fill it with commit information.
 /// Note that the traversal can be accelerated if a [commit-graph][gix_commitgraph::Graph] is also made available.
+///
+/// ### About replacements
+///
+/// Object replacements is an object database feature to substitute one object with another. We assume that this is transparently
+/// implemented by the `find` function that returns objects. Also we assume that the commitgraph as been written with replacements
+/// active to provide a consistent view.
+///
+/// ### Odb or `find` configuration
+///
+/// The `find` handle should be setup to *quickly determine if an object exists or not* to assure quick operation *on shallow repositories*.
+/// This typically means that it should not re-read the odb if there is an object miss.
+///
+/// Most usage of the Graph will benefit from fast ODB lookups, so setting up an object cache will be beneficial. If that's not the case,
+/// the method docs will inform about that.
+///
+/// Additionally, and only if `T` is [`Commit<T>`][graph::Commit], there is *no need for an object cache* as we keep track of
+/// everything related to commit traversal in our own hashmap.
 pub struct Graph<'find, T> {
     /// A way to resolve a commit from the object database.
-    find: Box<FindFn<'find>>,
+    find: Box<graph::FindFn<'find>>,
     /// A way to speedup commit access, essentially a multi-file commit database.
     cache: Option<gix_commitgraph::Graph>,
     /// The set of cached commits that we have seen once, along with data associated with them.

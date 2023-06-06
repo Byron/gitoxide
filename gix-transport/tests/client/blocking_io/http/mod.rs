@@ -269,7 +269,7 @@ fn handshake_v1() -> crate::Result {
     let refs = refs
         .expect("v1 protocol provides refs")
         .lines()
-        .flat_map(Result::ok)
+        .map_while(Result::ok)
         .collect::<Vec<_>>();
     assert_eq!(
         refs,

@@ -511,7 +511,8 @@ pub mod validate {
                 gix_config::Integer::try_from(value)?
                     .to_decimal()
                     .ok_or_else(|| format!("integer {value} cannot be represented as `usize`"))?,
-            )?;
+            )
+            .map_err(|_| "cannot use sign for unsigned integer")?;
             Ok(())
         }
     }

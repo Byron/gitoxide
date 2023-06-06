@@ -308,3 +308,45 @@ git clone --shared base detached-head
 (cd detached-head
   git checkout @~1
 )
+
+function commit() {
+  local message=${1:?first argument is the commit message}
+  local file="$message.t"
+  echo "$1" > "$file"
+  git add -- "$file"
+  tick
+  git commit -m "$message"
+  git tag "$message"
+}
+
+function optimize_repo() {
+  git commit-graph write --no-progress --reachable
+  git repack -adq
+}
+
+(mkdir multi_round && cd multi_round
+  git init -q server && cd server
+    commit to_fetch
+  cd ..
+
+  git init -q client && cd client
+    for i in $(seq 8); do
+      git checkout --orphan b$i &&
+      commit b$i.c0
+    done
+
+    for j in $(seq 19); do
+      for i in $(seq 8); do
+        git checkout b$i &&
+        commit b$i.c$j
+      done
+    done
+    optimize_repo
+  cd ..
+  (cd server
+    git fetch --no-tags "$PWD/../client" b1:refs/heads/b1
+    git checkout b1
+    commit commit-on-b1
+    optimize_repo
+  )
+)

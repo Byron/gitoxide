@@ -78,6 +78,18 @@ impl Arguments {
     pub fn can_use_include_tag(&self) -> bool {
         self.supports_include_tag
     }
+    /// Return true if we will use a stateless mode of operation, which can be decided in conjunction with `transport_is_stateless`.
+    ///
+    /// * we are always stateless if the transport is stateless, i.e. doesn't support multiple interactions with a single connection.
+    /// * we are always stateless if the protocol version is `2`
+    /// * otherwise we may be stateful.
+    pub fn is_stateless(&self, transport_is_stateless: bool) -> bool {
+        #[cfg(any(feature = "async-client", feature = "blocking-client"))]
+        let res = transport_is_stateless || self.version == gix_transport::Protocol::V2;
+        #[cfg(not(any(feature = "async-client", feature = "blocking-client")))]
+        let res = transport_is_stateless;
+        res
+    }
 
     /// Add the given `id` pointing to a commit to the 'want' list.
     ///
@@ -153,7 +165,18 @@ impl Arguments {
     pub fn use_include_tag(&mut self) {
         debug_assert!(self.supports_include_tag, "'include-tag' feature required");
         if self.supports_include_tag {
-            self.args.push("include-tag".into());
+            match self.version {
+                gix_transport::Protocol::V0 | gix_transport::Protocol::V1 => {
+                    let features = self
+                        .features_for_first_want
+                        .as_mut()
+                        .expect("call use_include_tag before want()");
+                    features.push("include-tag".into())
+                }
+                gix_transport::Protocol::V2 => {
+                    self.args.push("include-tag".into());
+                }
+            }
         }
     }
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
@@ -173,13 +196,16 @@ impl Arguments {
         let mut deepen_relative = shallow;
         let supports_include_tag;
         let (initial_arguments, features_for_first_want) = match version {
-            gix_transport::Protocol::V1 => {
+            gix_transport::Protocol::V0 | gix_transport::Protocol::V1 => {
                 deepen_since = has("deepen-since");
                 deepen_not = has("deepen-not");
                 deepen_relative = has("deepen-relative");
                 supports_include_tag = has("include-tag");
                 let baked_features = features
                     .iter()
+                    .filter(
+                        |(f, _)| *f != "include-tag", /* not a capability in that sense, needs to be turned on by caller later */
+                    )
                     .map(|(n, v)| match v {
                         Some(v) => format!("{n}={v}"),
                         None => n.to_string(),

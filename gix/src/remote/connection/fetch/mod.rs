@@ -43,6 +43,8 @@ impl RefLogMessage {
 pub enum Status {
     /// Nothing changed as the remote didn't have anything new compared to our tracking branches, thus no pack was received
     /// and no new object was added.
+    ///
+    /// As we could determine that nothing changed without remote interaction, there was no negotiation at all.
     NoPackReceived {
         /// However, depending on the refspecs, references might have been updated nonetheless to point to objects as
         /// reported by the remote.
@@ -50,6 +52,8 @@ pub enum Status {
     },
     /// There was at least one tip with a new object which we received.
     Change {
+        /// The number of rounds it took to minimize the pack to contain only the objects we don't have.
+        negotiation_rounds: usize,
         /// Information collected while writing the pack and its index.
         write_pack_bundle: gix_pack::bundle::write::Outcome,
         /// Information collected while updating references.
@@ -58,6 +62,8 @@ pub enum Status {
     /// A dry run was performed which leaves the local repository without any change
     /// nor will a pack have been received.
     DryRun {
+        /// The number of rounds it took to minimize the *would-be-sent*-pack to contain only the objects we don't have.
+        negotiation_rounds: usize,
         /// Information about what updates to refs would have been done.
         update_refs: refs::update::Outcome,
     },

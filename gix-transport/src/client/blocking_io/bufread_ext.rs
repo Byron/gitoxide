@@ -113,7 +113,7 @@ impl<'a, T: io::Read> ExtendedBufRead for gix_packetline::read::WithSidebands<'a
     }
     fn reset(&mut self, version: Protocol) {
         match version {
-            Protocol::V1 => self.reset_with(&[gix_packetline::PacketLineRef::Flush]),
+            Protocol::V0 | Protocol::V1 => self.reset_with(&[gix_packetline::PacketLineRef::Flush]),
             Protocol::V2 => self.reset_with(&[
                 gix_packetline::PacketLineRef::Delimiter,
                 gix_packetline::PacketLineRef::Flush,

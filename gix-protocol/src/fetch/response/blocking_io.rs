@@ -32,12 +32,18 @@ fn parse_v2_section<T>(
 
 impl Response {
     /// Parse a response of the given `version` of the protocol from `reader`.
+    ///
+    /// `client_expects_pack` is only relevant for V1 stateful connections, and if `false`, causes us to stop parsing when seeing `NAK`,
+    /// and if `true` we will keep parsing until we get a pack as the client already signalled to the server that it's done.
+    /// This way of doing things allows us to exploit knowledge about more recent versions of the protocol, which keeps code easier
+    /// and more localized without having to support all the cruft that there is.
     pub fn from_line_reader(
         version: Protocol,
         reader: &mut impl client::ExtendedBufRead,
+        client_expects_pack: bool,
     ) -> Result<Response, response::Error> {
         match version {
-            Protocol::V1 => {
+            Protocol::V0 | Protocol::V1 => {
                 let mut line = String::new();
                 let mut acks = Vec::<Acknowledgement>::new();
                 let mut shallows = Vec::<ShallowUpdate>::new();
@@ -48,8 +54,8 @@ impl Response {
                         // This special case (hang/block forever) deals with a single NAK being a legitimate EOF sometimes
                         // Note that this might block forever in stateful connections as there it's not really clear
                         // if something will be following or not by just looking at the response. Instead you have to know
-                        // the arguments sent to the server and count response lines based on intricate knowledge on how the
-                        // server works.
+                        // [a lot](https://github.com/git/git/blob/9e49351c3060e1fa6e0d2de64505b7becf157f28/fetch-pack.c#L583-L594)
+                        // to deal with this correctly.
                         // For now this is acceptable, as V2 can be used as a workaround, which also is the default.
                         Some(Err(err)) if err.kind() == io::ErrorKind::UnexpectedEof => break 'lines false,
                         Some(Err(err)) => return Err(err.into()),
@@ -74,6 +80,9 @@ impl Response {
 
                     if Response::parse_v1_ack_or_shallow_or_assume_pack(&mut acks, &mut shallows, &peeked_line) {
                         break 'lines true;
+                    }
+                    if let Some(Acknowledgement::Nak) = acks.last().filter(|_| !client_expects_pack) {
+                        break 'lines false;
                     }
                     assert_ne!(reader.readline_str(&mut line)?, 0, "consuming a peeked line works");
                 };

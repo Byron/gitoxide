@@ -1,53 +1,28 @@
-use crate::consecutive::collect_parents;
-use crate::{Error, Negotiator};
+use crate::{Error, Flags, Metadata, Negotiator};
 use gix_hash::ObjectId;
 use gix_revision::graph::CommitterTimestamp;
-use smallvec::SmallVec;
-bitflags::bitflags! {
-    /// Whether something can be read or written.
-    #[derive(Debug, Default, Copy, Clone)]
-    pub struct Flags: u8 {
-        /// The revision is known to be in common with the remote.
-        const COMMON = 1 << 0;
-        /// The remote let us know it has the object. We still have to tell the server we have this object or one of its descendants.
-        /// We won't tell the server about its ancestors.
-        const ADVERTISED = 1 << 1;
-        /// The revision has at one point entered the priority queue (even though it might not be on it anymore).
-        const SEEN = 1 << 2;
-        /// The revision was popped off our priority queue.
-        const POPPED = 1 << 3;
-    }
-}
 
-#[derive(Default, Copy, Clone)]
-pub(crate) struct Entry {
-    flags: Flags,
-    /// Only used if commit is not COMMON
-    original_ttl: u16,
-    ttl: u16,
-}
-
-pub(crate) struct Algorithm<'find> {
-    graph: gix_revision::Graph<'find, Entry>,
+pub(crate) struct Algorithm {
     revs: gix_revision::PriorityQueue<CommitterTimestamp, ObjectId>,
     non_common_revs: usize,
 }
 
-impl<'a> Algorithm<'a> {
-    pub fn new(graph: gix_revision::Graph<'a, Entry>) -> Self {
+impl Default for Algorithm {
+    fn default() -> Self {
         Self {
-            graph,
             revs: gix_revision::PriorityQueue::new(),
             non_common_revs: 0,
         }
     }
+}
 
+impl Algorithm {
     /// Add `id` to our priority queue and *add* `flags` to it.
-    fn add_to_queue(&mut self, id: ObjectId, mark: Flags) -> Result<(), Error> {
-        let commit = self.graph.try_lookup_and_insert(id, |entry| {
+    fn add_to_queue(&mut self, id: ObjectId, mark: Flags, graph: &mut crate::Graph<'_>) -> Result<(), Error> {
+        let commit = graph.try_lookup_or_insert_commit(id, |entry| {
             entry.flags |= mark | Flags::SEEN;
         })?;
-        if let Some(timestamp) = commit.map(|c| c.committer_timestamp()).transpose()? {
+        if let Some(timestamp) = commit.map(|c| c.commit_time) {
             self.revs.insert(timestamp, id);
             if !mark.contains(Flags::COMMON) {
                 self.non_common_revs += 1;
@@ -56,47 +31,38 @@ impl<'a> Algorithm<'a> {
         Ok(())
     }
 
-    fn mark_common(&mut self, id: ObjectId) -> Result<(), Error> {
+    fn mark_common(&mut self, id: ObjectId, graph: &mut crate::Graph<'_>) -> Result<(), Error> {
         let mut is_common = false;
-        if let Some(commit) = self
-            .graph
-            .try_lookup_and_insert(id, |entry| {
+        if let Some(commit) = graph
+            .try_lookup_or_insert_commit(id, |entry| {
                 is_common = entry.flags.contains(Flags::COMMON);
                 entry.flags |= Flags::COMMON;
             })?
             .filter(|_| !is_common)
         {
-            let mut queue = gix_revision::PriorityQueue::from_iter(Some((commit.committer_timestamp()?, id)));
-            let mut parents = SmallVec::new();
+            let mut queue = gix_revision::PriorityQueue::from_iter(Some((commit.commit_time, id)));
             while let Some(id) = queue.pop() {
-                // This is a bit of a problem as there is no representation of the `parsed` based skip, which probably
-                // prevents this traversal from going on for too long. There is no equivalent here, but when artificially
-                // limiting the traversal depth the tests fail as they actually require the traversal to happen.
-                if self
-                    .graph
-                    .get(&id)
-                    .map_or(false, |entry| entry.flags.contains(Flags::POPPED))
-                {
-                    self.non_common_revs = self.non_common_revs.saturating_sub(1);
-                }
-                if let Some(commit) = self.graph.try_lookup_and_insert(id, |entry| {
+                if let Some(commit) = graph.try_lookup_or_insert_commit(id, |entry| {
                     if !entry.flags.contains(Flags::POPPED) {
                         self.non_common_revs -= 1;
                     }
                 })? {
-                    collect_parents(commit.iter_parents(), &mut parents)?;
-                    for parent_id in parents.drain(..) {
+                    for parent_id in commit.parents.clone() {
+                        // This is a bit of a problem as there is no representation of the `parsed` based skip. However,
+                        // We assume that parents that aren't in the graph yet haven't been seen, and that's all we need.
+                        if !graph.contains(&parent_id) {
+                            continue;
+                        }
                         let mut was_unseen_or_common = false;
-                        if let Some(parent) = self
-                            .graph
-                            .try_lookup_and_insert(parent_id, |entry| {
+                        if let Some(parent) = graph
+                            .try_lookup_or_insert_commit(parent_id, |entry| {
                                 was_unseen_or_common =
                                     !entry.flags.contains(Flags::SEEN) || entry.flags.contains(Flags::COMMON);
                                 entry.flags |= Flags::COMMON
                             })?
                             .filter(|_| !was_unseen_or_common)
                         {
-                            queue.insert(parent.committer_timestamp()?, parent_id);
+                            queue.insert(parent.commit_time, parent_id);
                         }
                     }
                 }
@@ -105,25 +71,29 @@ impl<'a> Algorithm<'a> {
         Ok(())
     }
 
-    fn push_parent(&mut self, entry: Entry, parent_id: ObjectId) -> Result<bool, Error> {
+    fn push_parent(
+        &mut self,
+        entry: Metadata,
+        parent_id: ObjectId,
+        graph: &mut crate::Graph<'_>,
+    ) -> Result<bool, Error> {
         let mut was_seen = false;
-        if let Some(parent_entry) = self
-            .graph
+        if let Some(parent) = graph
             .get(&parent_id)
-            .map(|entry| {
-                was_seen = entry.flags.contains(Flags::SEEN);
-                entry
+            .map(|parent| {
+                was_seen = parent.data.flags.contains(Flags::SEEN);
+                parent
             })
             .filter(|_| was_seen)
         {
-            if parent_entry.flags.contains(Flags::POPPED) {
+            if parent.data.flags.contains(Flags::POPPED) {
                 return Ok(false);
             }
         } else {
-            self.add_to_queue(parent_id, Flags::default())?;
+            self.add_to_queue(parent_id, Flags::default(), graph)?;
         }
         if entry.flags.intersects(Flags::COMMON | Flags::ADVERTISED) {
-            self.mark_common(parent_id)?;
+            self.mark_common(parent_id, graph)?;
         } else {
             let new_original_ttl = if entry.ttl > 0 {
                 entry.original_ttl
@@ -131,71 +101,61 @@ impl<'a> Algorithm<'a> {
                 entry.original_ttl * 3 / 2 + 1
             };
             let new_ttl = if entry.ttl > 0 { entry.ttl - 1 } else { new_original_ttl };
-            let parent_entry = self.graph.get_mut(&parent_id).expect("present or inserted");
-            if parent_entry.original_ttl < new_original_ttl {
-                parent_entry.original_ttl = new_original_ttl;
-                parent_entry.ttl = new_ttl;
+            let parent = graph.get_mut(&parent_id).expect("present or inserted");
+            if parent.data.original_ttl < new_original_ttl {
+                parent.data.original_ttl = new_original_ttl;
+                parent.data.ttl = new_ttl;
             }
         }
         Ok(true)
     }
 }
 
-impl<'a> Negotiator for Algorithm<'a> {
-    fn known_common(&mut self, id: ObjectId) -> Result<(), Error> {
-        if self
-            .graph
+impl Negotiator for Algorithm {
+    fn known_common(&mut self, id: ObjectId, graph: &mut crate::Graph<'_>) -> Result<(), Error> {
+        if graph
             .get(&id)
-            .map_or(false, |entry| entry.flags.contains(Flags::SEEN))
+            .map_or(false, |commit| commit.data.flags.contains(Flags::SEEN))
         {
             return Ok(());
         }
-        self.add_to_queue(id, Flags::ADVERTISED)
+        self.add_to_queue(id, Flags::ADVERTISED, graph)
     }
 
-    fn add_tip(&mut self, id: ObjectId) -> Result<(), Error> {
-        if self
-            .graph
+    fn add_tip(&mut self, id: ObjectId, graph: &mut crate::Graph<'_>) -> Result<(), Error> {
+        if graph
             .get(&id)
-            .map_or(false, |entry| entry.flags.contains(Flags::SEEN))
+            .map_or(false, |commit| commit.data.flags.contains(Flags::SEEN))
         {
             return Ok(());
         }
-        self.add_to_queue(id, Flags::default())
+        self.add_to_queue(id, Flags::default(), graph)
     }
 
-    fn next_have(&mut self) -> Option<Result<ObjectId, Error>> {
-        let mut parents = SmallVec::new();
+    fn next_have(&mut self, graph: &mut crate::Graph<'_>) -> Option<Result<ObjectId, Error>> {
         loop {
             let id = self.revs.pop().filter(|_| self.non_common_revs != 0)?;
-            let entry = self.graph.get_mut(&id).expect("it was added to the graph by now");
-            entry.flags |= Flags::POPPED;
+            let commit = graph.get_mut(&id).expect("it was added to the graph by now");
+            commit.data.flags |= Flags::POPPED;
 
-            if !entry.flags.contains(Flags::COMMON) {
+            if !commit.data.flags.contains(Flags::COMMON) {
                 self.non_common_revs -= 1;
             }
             let mut to_send = None;
-            if !entry.flags.contains(Flags::COMMON) && entry.ttl == 0 {
+            if !commit.data.flags.contains(Flags::COMMON) && commit.data.ttl == 0 {
                 to_send = Some(id);
             }
-            let entry = *entry;
 
-            let commit = match self.graph.try_lookup(&id) {
-                Ok(c) => c.expect("it was found before, must still be there"),
-                Err(err) => return Some(Err(err.into())),
-            };
-            if let Err(err) = collect_parents(commit.iter_parents(), &mut parents) {
-                return Some(Err(err));
-            }
+            let data = commit.data;
             let mut parent_pushed = false;
-            for parent_id in parents.drain(..) {
-                parent_pushed |= match self.push_parent(entry, parent_id) {
+            for parent_id in commit.parents.clone() {
+                parent_pushed |= match self.push_parent(data, parent_id, graph) {
                     Ok(r) => r,
                     Err(err) => return Some(Err(err)),
                 }
             }
 
-            if !entry.flags.contains(Flags::COMMON) && !parent_pushed {
+            if !data.flags.contains(Flags::COMMON) && !parent_pushed {
                 to_send = Some(id);
             }
 
@@ -205,17 +165,17 @@ impl<'a> Negotiator for Algorithm<'a> {
         }
     }
 
-    fn in_common_with_remote(&mut self, id: ObjectId) -> Result<bool, Error> {
+    fn in_common_with_remote(&mut self, id: ObjectId, graph: &mut crate::Graph<'_>) -> Result<bool, Error> {
         let mut was_seen = false;
-        let known_to_be_common = self.graph.get(&id).map_or(false, |entry| {
-            was_seen = entry.flags.contains(Flags::SEEN);
-            entry.flags.contains(Flags::COMMON)
+        let known_to_be_common = graph.get(&id).map_or(false, |commit| {
+            was_seen = commit.data.flags.contains(Flags::SEEN);
+            commit.data.flags.contains(Flags::COMMON)
         });
         assert!(
             was_seen,
             "Cannot receive ACK for commit we didn't send a HAVE for: {id}"
         );
-        self.mark_common(id)?;
+        self.mark_common(id, graph)?;
         Ok(known_to_be_common)
     }
 }
