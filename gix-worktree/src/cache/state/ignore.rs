@@ -1,9 +1,12 @@
 use std::path::Path;
 
-use crate::cache::state::Ignore;
-use crate::{cache::state::IgnoreMatchGroup, PathIdMapping};
 use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
+
+use crate::{
+    cache::state::{Ignore, IgnoreMatchGroup},
+    PathIdMapping,
+};
 
 /// Decide where to read `.gitignore` files from.
 #[derive(Default, Debug, Clone, Copy)]

@@ -12,16 +12,18 @@ mod shallow {
 
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod blocking_and_async_io {
-    use gix::config::tree::Key;
     use std::sync::atomic::AtomicBool;
 
-    use gix::remote::{fetch, fetch::Status, Direction::Fetch};
+    use gix::{
+        config::tree::Key,
+        remote::{fetch, fetch::Status, Direction::Fetch},
+    };
     use gix_features::progress;
     use gix_protocol::maybe_async;
     use gix_testtools::tempfile::TempDir;
 
-    use crate::remote;
     use crate::{
+        remote,
         remote::{into_daemon_remote_if_async, spawn_git_daemon_if_async},
         util::hex_to_id,
     };

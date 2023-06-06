@@ -1,6 +1,7 @@
+use smallvec::SmallVec;
+
 use super::LazyCommit;
 use crate::graph::{Commit, CommitterTimestamp, Either, Generation};
-use smallvec::SmallVec;
 
 impl<'graph> LazyCommit<'graph> {
     /// Return an iterator over the parents of this commit.

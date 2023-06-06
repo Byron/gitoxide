@@ -1,6 +1,7 @@
 //! Various permissions to define what can be done when operating a [`Repository`][crate::Repository].
-use crate::open::Permissions;
 use gix_sec::Trust;
+
+use crate::open::Permissions;
 
 /// Configure from which sources git configuration may be loaded.
 ///

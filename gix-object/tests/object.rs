@@ -1,6 +1,6 @@
-use gix_hash::ObjectId;
-
 use std::path::PathBuf;
+
+use gix_hash::ObjectId;
 
 mod commit;
 mod encode;

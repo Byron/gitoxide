@@ -1,5 +1,4 @@
-use crate::config::cache::util::ApplyLeniencyDefault;
-use crate::{worktree, Worktree};
+use crate::{config::cache::util::ApplyLeniencyDefault, worktree, Worktree};
 
 /// Interact with individual worktrees and their information.
 impl crate::Repository {

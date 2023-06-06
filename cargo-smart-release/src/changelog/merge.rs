@@ -1,6 +1,6 @@
-use anyhow::bail;
 use std::{collections::VecDeque, iter::FromIterator};
 
+use anyhow::bail;
 use gix::hash::ObjectId;
 
 use crate::{

@@ -148,8 +148,10 @@ pub(crate) mod function {
     use gix_hash::oid;
 
     use super::{Error, Outcome};
-    use crate::describe::{CommitTime, Flags, Options, MAX_CANDIDATES};
-    use crate::{Graph, PriorityQueue};
+    use crate::{
+        describe::{CommitTime, Flags, Options, MAX_CANDIDATES},
+        Graph, PriorityQueue,
+    };
 
     /// Given a `commit` id, traverse the commit `graph` and collect candidate names from the `name_by_oid` mapping to produce
     /// an `Outcome`, which converted [`into_format()`][Outcome::into_format()] will produce a typical `git describe` string.

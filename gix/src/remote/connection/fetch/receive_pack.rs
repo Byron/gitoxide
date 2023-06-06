@@ -1,23 +1,26 @@
-use std::ops::DerefMut;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::{
+    ops::DerefMut,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
-use gix_odb::store::RefreshMode;
-use gix_odb::FindExt;
+use gix_odb::{store::RefreshMode, FindExt};
 use gix_protocol::{
     fetch::Arguments,
     transport::{client::Transport, packetline::read::ProgressAction},
 };
 
-use crate::config::cache::util::ApplyLeniency;
-use crate::config::tree::{Fetch, Key};
-use crate::remote::fetch::negotiate::Algorithm;
 use crate::{
-    config::tree::Clone,
+    config::{
+        cache::util::ApplyLeniency,
+        tree::{Clone, Fetch, Key},
+    },
     remote,
     remote::{
         connection::fetch::config,
         fetch,
-        fetch::{negotiate, refs, Error, Outcome, Prepare, ProgressId, RefLogMessage, Shallow, Status},
+        fetch::{
+            negotiate, negotiate::Algorithm, refs, Error, Outcome, Prepare, ProgressId, RefLogMessage, Shallow, Status,
+        },
     },
     Progress, Repository,
 };

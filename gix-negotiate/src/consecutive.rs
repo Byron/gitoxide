@@ -1,6 +1,7 @@
-use crate::{Error, Flags, Negotiator};
 use gix_hash::ObjectId;
 use gix_revision::graph::CommitterTimestamp;
+
+use crate::{Error, Flags, Negotiator};
 
 pub(crate) struct Algorithm {
     revs: gix_revision::PriorityQueue<CommitterTimestamp, ObjectId>,

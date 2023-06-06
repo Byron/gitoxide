@@ -1,5 +1,6 @@
-use crate::{Error, Negotiator};
 use gix_hash::ObjectId;
+
+use crate::{Error, Negotiator};
 
 pub(crate) struct Noop;
 

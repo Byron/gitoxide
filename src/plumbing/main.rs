@@ -13,10 +13,12 @@ use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 use gix::bstr::io::BufReadExt;
 
-use crate::plumbing::options::attributes;
 use crate::{
     plumbing::{
-        options::{commit, config, credential, exclude, free, index, mailmap, odb, revision, tree, Args, Subcommands},
+        options::{
+            attributes, commit, config, credential, exclude, free, index, mailmap, odb, revision, tree, Args,
+            Subcommands,
+        },
         show_progress,
     },
     shared::pretty::prepare_and_run,

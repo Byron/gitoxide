@@ -1,10 +1,12 @@
 use std::path::{Path, PathBuf};
 
-use crate::{Cache, PathIdMapping};
+use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
 
-use crate::cache::state::{AttributeMatchGroup, Attributes};
-use bstr::{BStr, ByteSlice};
+use crate::{
+    cache::state::{AttributeMatchGroup, Attributes},
+    Cache, PathIdMapping,
+};
 
 /// Various aggregate numbers related [`Attributes`].
 #[derive(Default, Clone, Copy, Debug)]

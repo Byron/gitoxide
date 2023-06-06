@@ -1,9 +1,10 @@
-use crate::remote::fetch;
-use crate::remote::fetch::Shallow;
+use std::borrow::Cow;
+
 use gix_negotiate::Flags;
 use gix_odb::HeaderExt;
 use gix_pack::Find;
-use std::borrow::Cow;
+
+use crate::remote::{fetch, fetch::Shallow};
 
 type Queue = gix_revision::PriorityQueue<gix_revision::graph::CommitterTimestamp, gix_hash::ObjectId>;
 

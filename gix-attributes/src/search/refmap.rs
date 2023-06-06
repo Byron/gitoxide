@@ -2,10 +2,10 @@
 //!
 //! We chose to use hashing/identity over pointers as it's possible that different objects end up in the same memory location,
 //! which would create obscure bugs. The same could happen with hash collisions, but they these are designed to be less likely.
-use std::collections::btree_map::Entry;
-use std::collections::hash_map::DefaultHasher;
-use std::collections::BTreeMap;
-use std::hash::{Hash, Hasher};
+use std::{
+    collections::{btree_map::Entry, hash_map::DefaultHasher, BTreeMap},
+    hash::{Hash, Hasher},
+};
 
 pub(crate) type RefMapKey = u64;
 pub(crate) struct RefMap<T>(BTreeMap<RefMapKey, T>);

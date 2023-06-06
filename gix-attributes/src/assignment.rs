@@ -1,6 +1,8 @@
-use crate::{Assignment, AssignmentRef, NameRef, StateRef};
-use bstr::ByteSlice;
 use std::fmt::Write;
+
+use bstr::ByteSlice;
+
+use crate::{Assignment, AssignmentRef, NameRef, StateRef};
 
 impl<'a> AssignmentRef<'a> {
     pub(crate) fn new(name: NameRef<'a>, state: StateRef<'a>) -> AssignmentRef<'a> {

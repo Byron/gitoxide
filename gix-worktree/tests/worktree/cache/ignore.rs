@@ -1,8 +1,7 @@
 use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
 use gix_odb::FindExt;
-use gix_worktree::cache::state::ignore::Source;
-use gix_worktree::Cache;
+use gix_worktree::{cache::state::ignore::Source, Cache};
 
 use crate::hex_to_id;
 

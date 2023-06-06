@@ -37,8 +37,7 @@ pub mod lookup {
 
 ///
 pub mod insert_parents {
-    use crate::graph::commit::iter_parents;
-    use crate::graph::lookup;
+    use crate::graph::{commit::iter_parents, lookup};
 
     /// The error returned by [`insert_parents()`][crate::Graph::insert_parents()].
     #[derive(Debug, thiserror::Error)]

@@ -26,13 +26,14 @@ impl Section for Fetch {
 pub type NegotiationAlgorithm = keys::Any<validate::NegotiationAlgorithm>;
 
 mod algorithm {
-    use gix_object::bstr::ByteSlice;
     use std::borrow::Cow;
 
-    use crate::remote::fetch::negotiate;
+    use gix_object::bstr::ByteSlice;
+
     use crate::{
         bstr::BStr,
         config::{key::GenericErrorWithValue, tree::sections::fetch::NegotiationAlgorithm},
+        remote::fetch::negotiate,
     };
 
     impl NegotiationAlgorithm {

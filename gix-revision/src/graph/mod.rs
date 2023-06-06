@@ -1,8 +1,9 @@
-use crate::Graph;
+use std::{fmt::Formatter, ops::Index};
+
 use gix_hash::oid;
 use smallvec::SmallVec;
-use std::fmt::Formatter;
-use std::ops::Index;
+
+use crate::Graph;
 
 ///
 pub mod commit;

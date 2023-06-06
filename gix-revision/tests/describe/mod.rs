@@ -1,10 +1,11 @@
-use std::borrow::Cow;
-use std::path::PathBuf;
+use std::{borrow::Cow, path::PathBuf};
 
 use gix_object::bstr::ByteSlice;
 use gix_odb::Find;
-use gix_revision::describe;
-use gix_revision::describe::{Error, Outcome};
+use gix_revision::{
+    describe,
+    describe::{Error, Outcome},
+};
 
 use crate::hex_to_id;
 

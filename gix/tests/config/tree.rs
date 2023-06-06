@@ -146,9 +146,12 @@ mod ssh {
 }
 
 mod fetch {
+    use gix::{
+        config::tree::{Fetch, Key},
+        remote::fetch::negotiate::Algorithm,
+    };
+
     use crate::config::tree::bcow;
-    use gix::config::tree::{Fetch, Key};
-    use gix::remote::fetch::negotiate::Algorithm;
 
     #[test]
     fn algorithm() -> crate::Result {
@@ -410,8 +413,9 @@ mod core {
 }
 
 mod index {
-    use crate::config::tree::bcow;
     use gix::config::tree::{Index, Key};
+
+    use crate::config::tree::bcow;
 
     #[test]
     fn threads() {
@@ -516,9 +520,9 @@ mod protocol {
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     #[test]
     fn allow() -> crate::Result {
+        use gix::{config::tree::protocol, remote::url::scheme_permission::Allow};
+
         use crate::config::tree::bcow;
-        use gix::config::tree::protocol;
-        use gix::remote::url::scheme_permission::Allow;
 
         for (key, protocol_name_parameter) in [
             (&Protocol::ALLOW, None),

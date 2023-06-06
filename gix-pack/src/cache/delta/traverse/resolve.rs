@@ -1,8 +1,9 @@
-use std::sync::atomic::{AtomicBool, AtomicIsize};
-use std::{collections::BTreeMap, sync::atomic::Ordering};
+use std::{
+    collections::BTreeMap,
+    sync::atomic::{AtomicBool, AtomicIsize, Ordering},
+};
 
-use gix_features::progress::Progress;
-use gix_features::{threading, zlib};
+use gix_features::{progress::Progress, threading, zlib};
 
 use crate::{
     cache::delta::{

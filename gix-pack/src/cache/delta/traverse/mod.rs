@@ -1,10 +1,10 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use gix_features::threading::{Mutable, OwnShared};
 use gix_features::{
     parallel::in_parallel_with_slice,
     progress::{self, Progress},
     threading,
+    threading::{Mutable, OwnShared},
 };
 
 use crate::{

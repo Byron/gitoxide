@@ -1,6 +1,6 @@
-use anyhow::bail;
 use std::{ffi::OsString, path::PathBuf};
 
+use anyhow::bail;
 use gix::prelude::FindExt;
 
 pub fn from_tree(

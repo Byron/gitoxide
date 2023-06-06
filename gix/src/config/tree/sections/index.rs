@@ -13,11 +13,13 @@ impl Index {
 pub type IndexThreads = keys::Any<validate::IndexThreads>;
 
 mod index_threads {
-    use crate::bstr::BStr;
-    use crate::config;
-    use crate::config::key::GenericErrorWithValue;
-    use crate::config::tree::index::IndexThreads;
     use std::borrow::Cow;
+
+    use crate::{
+        bstr::BStr,
+        config,
+        config::{key::GenericErrorWithValue, tree::index::IndexThreads},
+    };
 
     impl IndexThreads {
         /// Parse `value` into the amount of threads to use, with `1` being single-threaded, or `0` indicating

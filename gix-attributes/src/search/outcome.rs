@@ -2,11 +2,10 @@ use bstr::{BString, ByteSlice};
 use gix_glob::Pattern;
 use kstring::{KString, KStringRef};
 
-use crate::search::refmap::RefMapKey;
 use crate::{
     search::{
-        Assignments, AttributeId, Attributes, MatchKind, Metadata, MetadataCollection, Outcome, TrackedAssignment,
-        Value,
+        refmap::RefMapKey, Assignments, AttributeId, Attributes, MatchKind, Metadata, MetadataCollection, Outcome,
+        TrackedAssignment, Value,
     },
     AssignmentRef, NameRef, StateRef,
 };

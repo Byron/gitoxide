@@ -4,8 +4,7 @@ pub use types::{Error, Options};
 mod util;
 
 pub(crate) mod function {
-    use std::ffi::OsStr;
-    use std::{borrow::Cow, path::Path};
+    use std::{borrow::Cow, ffi::OsStr, path::Path};
 
     use gix_sec::Trust;
 

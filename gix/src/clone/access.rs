@@ -1,6 +1,4 @@
-use crate::bstr::BString;
-use crate::clone::PrepareFetch;
-use crate::Repository;
+use crate::{bstr::BString, clone::PrepareFetch, Repository};
 
 /// Builder
 impl PrepareFetch {

@@ -1,6 +1,6 @@
+use std::{cmp::Ordering, collections::BinaryHeap};
+
 use crate::PriorityQueue;
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
 
 pub(crate) struct Item<K, T> {
     key: K,

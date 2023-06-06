@@ -1,11 +1,9 @@
-use gix_negotiate::Algorithm;
-use gix_object::bstr;
-use gix_object::bstr::ByteSlice;
-use gix_odb::Find;
-use gix_odb::FindExt;
-use gix_ref::file::ReferenceExt;
-use gix_ref::store::WriteReflog;
 use std::cell::RefCell;
+
+use gix_negotiate::Algorithm;
+use gix_object::{bstr, bstr::ByteSlice};
+use gix_odb::{Find, FindExt};
+use gix_ref::{file::ReferenceExt, store::WriteReflog};
 
 #[test]
 fn run() -> crate::Result {
@@ -185,8 +183,10 @@ struct Round {
 }
 
 mod parse {
-    use gix_object::bstr;
-    use gix_object::bstr::{BStr, ByteSlice};
+    use gix_object::{
+        bstr,
+        bstr::{BStr, ByteSlice},
+    };
 
     #[derive(Debug, Eq, PartialEq, Copy, Clone)]
     pub enum Command {

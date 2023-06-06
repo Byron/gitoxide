@@ -1,6 +1,6 @@
-use crate::signature::decode;
-use crate::{Identity, IdentityRef};
 use bstr::ByteSlice;
+
+use crate::{signature::decode, Identity, IdentityRef};
 
 impl<'a> IdentityRef<'a> {
     /// Deserialize an identity from the given `data`.
@@ -29,8 +29,7 @@ impl<'a> IdentityRef<'a> {
 }
 
 mod write {
-    use crate::signature::write::validated_token;
-    use crate::{Identity, IdentityRef};
+    use crate::{signature::write::validated_token, Identity, IdentityRef};
 
     /// Output
     impl Identity {

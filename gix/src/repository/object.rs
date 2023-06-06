@@ -1,6 +1,5 @@
 #![allow(clippy::result_large_err)]
-use std::convert::TryInto;
-use std::ops::DerefMut;
+use std::{convert::TryInto, ops::DerefMut};
 
 use gix_hash::ObjectId;
 use gix_odb::{Find, FindExt, Write};

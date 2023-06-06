@@ -7,21 +7,26 @@ pub struct Options {
 }
 
 pub(crate) mod function {
-    use std::collections::BTreeSet;
-    use std::io;
-    use std::io::{BufRead, Write};
-    use std::iter::Peekable;
-    use std::ops::Sub;
-    use std::path::PathBuf;
-    use std::sync::atomic::Ordering;
+    use std::{
+        collections::BTreeSet,
+        io,
+        io::{BufRead, Write},
+        iter::Peekable,
+        ops::Sub,
+        path::PathBuf,
+        sync::atomic::Ordering,
+    };
 
     use anyhow::{anyhow, bail};
-    use gix::odb::FindExt;
-    use gix::Progress;
+    use gix::{odb::FindExt, Progress};
 
-    use crate::repository::attributes::query::{attributes_cache, index_on_demand};
-    use crate::repository::attributes::validate_baseline::Options;
-    use crate::OutputFormat;
+    use crate::{
+        repository::attributes::{
+            query::{attributes_cache, index_on_demand},
+            validate_baseline::Options,
+        },
+        OutputFormat,
+    };
 
     pub fn validate_baseline(
         repo: gix::Repository,
@@ -350,8 +355,7 @@ pub(crate) mod function {
     }
 
     fn parse_attribute_line(line: &str) -> Option<(&str, gix::attrs::AssignmentRef<'_>)> {
-        use gix::attrs::StateRef;
-        use gix::bstr::ByteSlice;
+        use gix::{attrs::StateRef, bstr::ByteSlice};
 
         let mut prev = None;
         let mut tokens = line.splitn(3, |b| {

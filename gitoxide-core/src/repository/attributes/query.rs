@@ -1,5 +1,6 @@
-use crate::OutputFormat;
 use gix::odb::FindExt;
+
+use crate::OutputFormat;
 
 pub struct Options {
     pub format: OutputFormat,
@@ -7,12 +8,15 @@ pub struct Options {
 }
 
 pub(crate) mod function {
-    use crate::repository::attributes::query::{attributes_cache, Options};
-    use crate::OutputFormat;
     use std::io;
 
     use anyhow::bail;
     use gix::prelude::FindExt;
+
+    use crate::{
+        repository::attributes::query::{attributes_cache, Options},
+        OutputFormat,
+    };
 
     pub fn query(
         repo: gix::Repository,

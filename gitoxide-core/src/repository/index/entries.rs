@@ -15,11 +15,17 @@ pub enum Attributes {
 }
 
 pub(crate) mod function {
-    use crate::repository::attributes::query::index_on_demand;
-    use crate::repository::index::entries::{Attributes, Options};
+    use std::{
+        borrow::Cow,
+        io::{BufWriter, Write},
+    };
+
     use gix::odb::FindExt;
-    use std::borrow::Cow;
-    use std::io::{BufWriter, Write};
+
+    use crate::repository::{
+        attributes::query::index_on_demand,
+        index::entries::{Attributes, Options},
+    };
 
     pub fn entries(
         repo: gix::Repository,
