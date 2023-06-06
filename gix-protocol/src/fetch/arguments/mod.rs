@@ -165,7 +165,18 @@ impl Arguments {
     pub fn use_include_tag(&mut self) {
         debug_assert!(self.supports_include_tag, "'include-tag' feature required");
         if self.supports_include_tag {
-            self.args.push("include-tag".into());
+            match self.version {
+                gix_transport::Protocol::V0 | gix_transport::Protocol::V1 => {
+                    let features = self
+                        .features_for_first_want
+                        .as_mut()
+                        .expect("call use_include_tag before want()");
+                    features.push("include-tag".into())
+                }
+                gix_transport::Protocol::V2 => {
+                    self.args.push("include-tag".into());
+                }
+            }
         }
     }
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
@@ -192,6 +203,9 @@ impl Arguments {
                 supports_include_tag = has("include-tag");
                 let baked_features = features
                     .iter()
+                    .filter(
+                        |(f, _)| *f != "include-tag", /* not a capability in that sense, needs to be turned on by caller later */
+                    )
                     .map(|(n, v)| match v {
                         Some(v) => format!("{n}={v}"),
                         None => n.to_string(),
