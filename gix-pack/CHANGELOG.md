@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.36.0 (2023-06-06)
 
 ### New Features
 
@@ -65,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 26 commits contributed to the release over the course of 25 calendar days.
+ - 28 commits contributed to the release over the course of 25 calendar days.
  - 40 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#851](https://github.com/Byron/gitoxide/issues/851)
@@ -92,6 +92,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Check for interrupt more often ([`f89cbc6`](https://github.com/Byron/gitoxide/commit/f89cbc675b0acc67322e289e7b3a17288b9eae27))
     - Memory capped hashmap as pack delta cache won't trash memory as much. ([`923692b`](https://github.com/Byron/gitoxide/commit/923692bcda698b45d3d1ad518b29f6d30b23fbc0))
  * **Uncategorized**
+    - `just fmt` ([`ffc1276`](https://github.com/Byron/gitoxide/commit/ffc1276e0c991ac33ce842f5dca0b45ac69680c0))
+    - Prepare changelogs prior to release ([`8f15cec`](https://github.com/Byron/gitoxide/commit/8f15cec1ec7d5a9d56bb158f155011ef2bb3539b))
     - Merge branch 'integrate-gix-negotiate' ([`ae845de`](https://github.com/Byron/gitoxide/commit/ae845dea6cee6523c88a23d7a14293589cf8092f))
     - Thanks clippy ([`9525ac8`](https://github.com/Byron/gitoxide/commit/9525ac822aa902f5325f17e7b08ffb60b683e0e7))
     - Merge branch 'fix-alloc' ([`d9d9bc0`](https://github.com/Byron/gitoxide/commit/d9d9bc01b34ac75b28a5f1b75f40123aa6d83c60))

@@ -13,9 +13,9 @@ rust-version = "1.64"
 doctest = false
 
 [dependencies]
-gix-revision = { version = "^0.14.0", path = "../gix-revision" }
-gix-validate = { version = "^0.7.3", path = "../gix-validate" }
-gix-hash = { version = "^0.11.1", path = "../gix-hash" }
+gix-revision = { version = "^0.15.0", path = "../gix-revision" }
+gix-validate = { version = "^0.7.5", path = "../gix-validate" }
+gix-hash = { version = "^0.11.2", path = "../gix-hash" }
 
 bstr = { version = "1.3.0", default-features = false, features = ["std"]}
 thiserror = "1.0.26"

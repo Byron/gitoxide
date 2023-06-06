@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.45.0 (2023-06-06)
+
+<csr-id-dbc6cbb4363c2532f81b0bd6e351c4577bb9e9a3/>
+<csr-id-9689a08d00e9d54f6bb581660ee99077bd214cb4/>
 
 The reason for this release is the ability to properly negotiate packs, also across multiple rounds, and with `protocol.version` 1 or 2, across
 stateless or stateful transports.
@@ -41,7 +44,7 @@ stateless or stateful transports.
 
 <csr-read-only-do-not-edit/>
 
- - 30 commits contributed to the release over the course of 40 calendar days.
+ - 32 commits contributed to the release over the course of 40 calendar days.
  - 40 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#851](https://github.com/Byron/gitoxide/issues/851)
@@ -61,6 +64,8 @@ stateless or stateful transports.
  * **[#851](https://github.com/Byron/gitoxide/issues/851)**
     - Add `gitoxide.core.defaultPackCacheMemoryLimit` to control memory limits. ([`020ff4e`](https://github.com/Byron/gitoxide/commit/020ff4e383fc76a255eabf099bb9cf5116a95afa))
  * **Uncategorized**
+    - `just fmt` ([`ffc1276`](https://github.com/Byron/gitoxide/commit/ffc1276e0c991ac33ce842f5dca0b45ac69680c0))
+    - Prepare changelogs prior to release ([`8f15cec`](https://github.com/Byron/gitoxide/commit/8f15cec1ec7d5a9d56bb158f155011ef2bb3539b))
     - Merge branch 'integrate-gix-negotiate' ([`ae845de`](https://github.com/Byron/gitoxide/commit/ae845dea6cee6523c88a23d7a14293589cf8092f))
     - Add test to validate alternates in the context of fetching ([`ae1bc41`](https://github.com/Byron/gitoxide/commit/ae1bc41817bec3b83fe65104e7e3efe4bd798a78))
     - Use `gix-negotiate` in fetch machinery. ([`af0ef2f`](https://github.com/Byron/gitoxide/commit/af0ef2f36736e3805f769d8cd59c9fa7eb6a22a0))

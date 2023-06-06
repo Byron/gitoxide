@@ -1,6 +1,6 @@
 [package]
 name = "gix-negotiate"
-version = "0.1.0"
+version = "0.2.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate of the gitoxide project implementing negotiation algorithms"
@@ -13,10 +13,10 @@ doctest = false
 test = false
 
 [dependencies]
-gix-hash = { version = "^0.11.1", path = "../gix-hash" }
-gix-object = { version = "^0.29.2", path = "../gix-object" }
-gix-commitgraph = { version = "^0.15.0", path = "../gix-commitgraph" }
-gix-revision = { version = "^0.14.0", path = "../gix-revision" }
+gix-hash = { version = "^0.11.2", path = "../gix-hash" }
+gix-object = { version = "^0.30.0", path = "../gix-object" }
+gix-commitgraph = { version = "^0.16.0", path = "../gix-commitgraph" }
+gix-revision = { version = "^0.15.0", path = "../gix-revision" }
 thiserror = "1.0.40"
 smallvec = "1.10.0"
 bitflags = "2"

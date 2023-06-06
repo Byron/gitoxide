@@ -1,6 +1,6 @@
 [package]
 name = "gix-lock"
-version = "5.0.1"
+version = "6.0.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A git-style lock-file implementation"
@@ -14,8 +14,8 @@ doctest = false
 test = true
 
 [dependencies]
-gix-utils = { version = "^0.1.1", default-features = false, path = "../gix-utils" }
-gix-tempfile = { version = "^5.0.0", default-features = false, path = "../gix-tempfile" }
+gix-utils = { version = "^0.1.2", default-features = false, path = "../gix-utils" }
+gix-tempfile = { version = "^6.0.0", default-features = false, path = "../gix-tempfile" }
 thiserror = "1.0.38"
 
 [dev-dependencies]
