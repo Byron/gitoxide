@@ -14,7 +14,7 @@ pub mod lookup {
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
-            #[error("There was an error looking up a commit")]
+            #[error(transparent)]
             Find(#[from] crate::graph::lookup::Error),
             #[error(transparent)]
             ToOwned(#[from] crate::graph::commit::to_owned::Error),
