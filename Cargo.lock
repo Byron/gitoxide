@@ -1279,7 +1279,7 @@ dependencies = [
 
 [[package]]
 name = "gix"
-version = "0.45.0"
+version = "0.45.1"
 dependencies = [
  "anyhow",
  "async-std",
@@ -2178,7 +2178,7 @@ dependencies = [
 
 [[package]]
 name = "gix-revision"
-version = "0.15.0"
+version = "0.15.1"
 dependencies = [
  "bstr",
  "document-features",

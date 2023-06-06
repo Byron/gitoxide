@@ -38,7 +38,7 @@ serde = ["gix/serde", "serde_json", "dep:serde", "bytesize/serde"]
 
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
-gix = { version = "^0.45.0", path = "../gix", default-features = false }
+gix = { version = "^0.45.1", path = "../gix", default-features = false }
 gix-pack-for-configuration-only = { package = "gix-pack", version = "^0.36.0", path = "../gix-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
 gix-transport-configuration-only = { package = "gix-transport", version = "^0.32.0", path = "../gix-transport", default-features = false }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }

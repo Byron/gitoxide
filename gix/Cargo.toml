@@ -3,7 +3,7 @@ name = "gix"
 repository = "https://github.com/Byron/gitoxide"
 description = "Interact with git repositories just like git would"
 license = "MIT/Apache-2.0"
-version = "0.45.0"
+version = "0.45.1"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
@@ -130,7 +130,7 @@ gix-hash = { version = "^0.11.2", path = "../gix-hash" }
 gix-object = { version = "^0.30.0", path = "../gix-object" }
 gix-actor = { version = "^0.21.0", path = "../gix-actor" }
 gix-pack = { version = "^0.36.0", path = "../gix-pack", features = ["object-cache-dynamic"] }
-gix-revision = { version = "^0.15.0", path = "../gix-revision" }
+gix-revision = { version = "^0.15.1", path = "../gix-revision" }
 gix-negotiate = { version = "^0.2.0", path = "../gix-negotiate" }
 
 gix-path = { version = "^0.8.1", path = "../gix-path" }
