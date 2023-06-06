@@ -29,7 +29,7 @@ mod v1 {
         async fn clone() -> crate::Result {
             let mut provider = mock_reader("v1/clone-only.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader, true).await?;
             assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak]);
             assert!(r.has_pack());
             let mut buf = Vec::new();
@@ -42,7 +42,7 @@ mod v1 {
         async fn shallow_clone() -> crate::Result {
             let mut provider = mock_reader("v1/clone-deepen-1.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader, true).await?;
             assert_eq!(
                 r.shallow_updates(),
                 &[ShallowUpdate::Shallow(id("808e50d724f604f69ab93c6da2919c014667bedb"))]
@@ -59,7 +59,7 @@ mod v1 {
         async fn empty_shallow_clone_due_to_depth_being_too_high() -> crate::Result {
             let mut provider = mock_reader("v1/clone-deepen-5.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader, true).await?;
             assert!(r.shallow_updates().is_empty());
             assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak]);
             assert!(r.has_pack());
@@ -73,7 +73,7 @@ mod v1 {
         async fn unshallow_fetch() -> crate::Result {
             let mut provider = mock_reader("v1/fetch-unshallow.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader, true).await?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
@@ -103,7 +103,8 @@ mod v1 {
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn fetch_acks_without_pack() -> crate::Result {
             let mut provider = mock_reader("v1/fetch-no-pack.response");
-            let r = fetch::Response::from_line_reader(Protocol::V1, &mut provider.as_read_without_sidebands()).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut provider.as_read_without_sidebands(), true)
+                .await?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
@@ -119,7 +120,7 @@ mod v1 {
         async fn fetch_acks_and_pack() -> crate::Result {
             let mut provider = mock_reader("v1/fetch.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader, true).await?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
@@ -218,7 +219,7 @@ mod v2 {
                 );
                 let mut provider = mock_reader(&fixture);
                 let mut reader = provider.as_read_without_sidebands();
-                let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
+                let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader, true).await?;
                 assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
                 assert!(r.has_pack());
                 reader.set_progress_handler(Some(Box::new(|_is_err, _text| {
@@ -235,7 +236,7 @@ mod v2 {
         async fn shallow_clone() -> crate::Result {
             let mut provider = mock_reader("v2/clone-deepen-1.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader, true).await?;
             assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
             assert_eq!(
                 r.shallow_updates(),
@@ -252,7 +253,7 @@ mod v2 {
         async fn unshallow_fetch() -> crate::Result {
             let mut provider = mock_reader("v2/fetch-unshallow.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader, true).await?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
@@ -284,7 +285,7 @@ mod v2 {
         async fn empty_shallow_clone() -> crate::Result {
             let mut provider = mock_reader("v2/clone-deepen-5.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader, true).await?;
             assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
             assert!(r.shallow_updates().is_empty(), "it should go straight to the packfile");
             assert!(r.has_pack());
@@ -298,7 +299,7 @@ mod v2 {
         async fn clone_with_sidebands() -> crate::Result {
             let mut provider = mock_reader("v2/clone-only-2.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader, true).await?;
             assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
             assert!(r.has_pack());
 
@@ -320,7 +321,8 @@ mod v2 {
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn fetch_acks_without_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch-no-pack.response");
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut provider.as_read_without_sidebands()).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut provider.as_read_without_sidebands(), true)
+                .await?;
             assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak]);
             Ok(())
         }
@@ -330,7 +332,7 @@ mod v2 {
             let mut provider = mock_reader("v2/fetch-err-line.response");
             provider.fail_on_err_lines(true);
             let mut sidebands = provider.as_read_without_sidebands();
-            match fetch::Response::from_line_reader(Protocol::V2, &mut sidebands).await {
+            match fetch::Response::from_line_reader(Protocol::V2, &mut sidebands, true).await {
                 Ok(_) => panic!("need error response"),
                 Err(err) => match err {
                     fetch::response::Error::UploadPack(err) => {
@@ -345,7 +347,7 @@ mod v2 {
         async fn fetch_acks_and_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader, true).await?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
