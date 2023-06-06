@@ -109,6 +109,53 @@ mod blocking_and_async_io {
         Ok(())
     }
 
+    #[test]
+    #[cfg(feature = "blocking-network-client")]
+    fn fetch_with_alternates_adds_tips_from_alternates() -> crate::Result<()> {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let remote_repo = remote::repo("base");
+        let (_repo, out) = gix::clone::PrepareFetch::new(
+            remote::repo("multi_round/server").path(),
+            tmp.path(),
+            gix::create::Kind::Bare,
+            Default::default(),
+            gix::open::Options::isolated(),
+        )?
+        .configure_remote({
+            move |r| {
+                std::fs::write(
+                    r.repo().objects.store_ref().path().join("info").join("alternates"),
+                    format!(
+                        "{}\n",
+                        gix::path::realpath(remote_repo.objects.store_ref().path())?.display()
+                    )
+                    .as_bytes(),
+                )?;
+                Ok(r)
+            }
+        })
+        .fetch_only(gix::progress::Discard, &AtomicBool::default())?;
+
+        match out.status {
+            Status::Change {
+                negotiation_rounds,
+                write_pack_bundle,
+                ..
+            } => {
+                assert_eq!(
+                    negotiation_rounds, 1,
+                    "we don't really have a way to see that tips from alternates were added, I think"
+                );
+                assert_eq!(
+                    write_pack_bundle.index.num_objects, 66,
+                    "this test just exercises code for adding alternate-repo tips to the negotiator"
+                );
+            }
+            _ => unreachable!("we get a pack as alternates are unrelated"),
+        }
+        Ok(())
+    }
+
     #[maybe_async::test(
         feature = "blocking-network-client",
         async(feature = "async-network-client-async-std", async_std::test)
