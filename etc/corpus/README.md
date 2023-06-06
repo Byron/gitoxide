@@ -49,19 +49,25 @@ your respective `repo_metadata.jsonl` and the computed amount of repos to includ
 
 #### Add one large (100GB+) repository and one with a lot of commits repository by hand
 
-Invoke `git clone --bare https://github.com/NagatoDEV/PlayStation-Home-Master-Archive  <corpus>/github.com/NagatoDEV/PlayStation-Home-Master-Archive` (after replacing `<curpus>` with your base path)
+Invoke `git clone --bare https://github.com/NagatoDEV/PlayStation-Home-Master-Archive  <corpus>/github.com/NagatoDEV/PlayStation-Home-Master-Archive.git` (after replacing `<curpus>` with your base path)
 to obtain one sample of a huge repository with a lot of assets and other binary data whose tree spans more than 440k files. 
 
 That way, we also get to see what happens when we have to handle huge binary files in massive trees.
 
 Another massive tree and a more than 1.3m commits comes in with this invocation: 
 
-`git clone --bare https://github.com/archlinux/svntogit-community <corpus>/github.com/archlinux/svntogit-community`.
+`git clone --bare https://github.com/archlinux/svntogit-community <corpus>/github.com/archlinux/svntogit-community.git`.
 
-Both repos should be topped off with
+This repo has 100MB+ files with a lot of append-only changes to it, giving it a very imbalanced delta-tree that triggers worst-case behaviour that needed
+special mitigations:
+
+`git clone --bare https://github.com/fz139/vigruzki <corpus>/github.com/fz139/vigruzki.git`.
+
+All repos should be topped off with…
+
 ```shell
 cd <corpus>
-for d in github.com/archlinux/svntogit-community github.com/NagatoDEV/PlayStation-Home-Master-Archive; do
+for d in github.com/archlinux/svntogit-community.git github.com/NagatoDEV/PlayStation-Home-Master-Archive.git github.com/fz139/vigruzki.git; do
     git -C $d read-tree @
     git -C $d commit-graph write --no-progress --reachable
 done
