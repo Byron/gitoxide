@@ -41,6 +41,11 @@ impl Inflate {
             (self.state.total_out() - before_out) as usize,
         ))
     }
+
+    /// Ready this instance for decoding another data stream.
+    pub fn reset(&mut self) {
+        self.state.reset(true);
+    }
 }
 
 ///
