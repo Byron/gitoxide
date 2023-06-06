@@ -2252,8 +2252,6 @@ dependencies = [
  "libc",
  "once_cell",
  "parking_lot",
- "signal-hook",
- "signal-hook-registry",
  "tempfile",
 ]
 
@@ -2266,10 +2264,10 @@ dependencies = [
  "fastrand",
  "fs_extra",
  "gix-discover 0.18.0",
- "gix-fs 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-fs 0.1.1",
  "gix-ignore 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-lock 5.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-tempfile 5.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-tempfile 5.0.3",
  "gix-worktree 0.17.0",
  "io-close",
  "is_ci",
