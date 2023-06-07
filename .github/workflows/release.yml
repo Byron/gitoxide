@@ -83,12 +83,12 @@ jobs:
         feature: [ "small", "lean", "max", "max-pure" ]
         include:
           - build: linux
-            os: ubuntu-18.04
+            os: ubuntu-latest
             rust: stable
             target: x86_64-unknown-linux-musl
             feature: "max-pure"
 #           - build: linux-arm
-#             os: ubuntu-18.04
+#             os: ubuntu-latest
 #             rust: nightly
 #             target: arm-unknown-linux-gnueabihf
           - build: macos
@@ -115,7 +115,7 @@ jobs:
           fetch-depth: 1
 
       - name: Install packages (Ubuntu)
-        if: matrix.os == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update && sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool musl-tools libssl-dev
 
