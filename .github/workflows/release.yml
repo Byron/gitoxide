@@ -17,16 +17,16 @@ on:
   push:
     # Enable when testing release infrastructure on a branch.
     # branches:
-      # - fix-releases
+     #  - fix-releases
     tags:
       - "v.*"
 jobs:
   create-release:
     name: create-release
     runs-on: ubuntu-latest
-    # env:
-      # Set to force version number, e.g., when no tag exists.
-      # ARTIFACT_VERSION: TEST-0.0.0
+#    env:
+#      # Set to force version number, e.g., when no tag exists.
+#      ARTIFACT_VERSION: TEST-0.0.0
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -78,34 +78,49 @@ jobs:
     strategy:
       matrix:
 #         build: [ linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc ]
-        build: [ linux, macos, win-msvc, win-gnu, win32-msvc ]
+        build: [ linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc ]
         feature: [ "small", "lean", "max", "max-pure" ]
         include:
           - build: linux
             os: ubuntu-latest
             rust: stable
             target: x86_64-unknown-linux-musl
-            feature: "max-pure"
-#           - build: linux-arm
-#             os: ubuntu-latest
-#             rust: nightly
-#             target: arm-unknown-linux-gnueabihf
+          - build: linux-arm
+            os: ubuntu-latest
+            rust: nightly
+            target: arm-unknown-linux-gnueabihf
           - build: macos
             os: macos-latest
             rust: stable
             target: x86_64-apple-darwin
           - build: win-msvc
-            os: windows-2019
+            os: windows-latest
             rust: nightly
             target: x86_64-pc-windows-msvc
           - build: win-gnu
-            os: windows-2019
+            os: windows-latest
             rust: nightly-x86_64-gnu
             target: x86_64-pc-windows-gnu
           - build: win32-msvc
-            os: windows-2019
+            os: windows-latest
             rust: nightly
             target: i686-pc-windows-msvc
+        # on linux we build with musl which causes trouble with open-ssl. For now, just build max-pure there
+        # even though we could also build with `--features max-control,http-client-reqwest,gitoxide-core-blocking-client,gix-features/fast-sha1` for fast hashing.
+        # It's a TODO.
+        exclude:
+          - build: linux
+            feature: small
+          - build: linux
+            feature: lean
+          - build: linux
+            feature: max
+          - build: linux-arm
+            feature: small
+          - build: linux-arm
+            feature: lean
+          - build: linux-arm
+            feature: max
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -115,9 +130,11 @@ jobs:
           fetch-depth: 1
 
       - name: Install packages (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+        # Because openssl doesn't work on musl by default, we resort to max-pure. And that won't need any dependency, so we can skip this.continue-on-error
+        # Once we want to support better zlib performance, we might have to re-add it.
+        if: matrix.os == 'ubuntu-latest-disabled'
         run: |
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool musl-tools libssl-dev
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool musl-tools
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
@@ -126,7 +143,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Use Cross
-        # if: matrix.os != 'windows-2019'
+        # if: matrix.os != 'windows-latest'
         run: |
           cargo install cross
           echo "CARGO=cross" >> $GITHUB_ENV
@@ -179,7 +196,7 @@ jobs:
 
           cp {README.md,LICENSE-*,CHANGELOG.md} "$staging/"
 
-          if [ "${{ matrix.os }}" = "windows-2019" ]; then
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
             cp target/release/${{ env.EXE_NAME }}.exe target/release/gix.exe "$staging/"
             7z a "$staging.zip" "$staging"
             echo "ASSET=$staging.zip" >> $GITHUB_ENV
