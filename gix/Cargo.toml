@@ -136,7 +136,7 @@ gix-negotiate = { version = "^0.2.0", path = "../gix-negotiate" }
 gix-path = { version = "^0.8.1", path = "../gix-path" }
 gix-url = { version = "^0.19.0", path = "../gix-url" }
 gix-traverse = { version = "^0.26.0", path = "../gix-traverse" }
-gix-protocol = { version = "^0.33.0", path = "../gix-protocol", optional = true }
+gix-protocol = { version = "^0.33.1", path = "../gix-protocol", optional = true }
 gix-transport = { version = "^0.32.0", path = "../gix-transport", optional = true }
 gix-diff = { version = "^0.30.0", path = "../gix-diff" }
 gix-mailmap = { version = "^0.13.0", path = "../gix-mailmap" }
