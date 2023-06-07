@@ -173,6 +173,9 @@ impl<'find, T: Default> Graph<'find, Commit<T>> {
     /// `update_data(data)` gets run either on existing or on new data.
     ///
     /// Note that none of the data updates happen if `id` didn't exist.
+    ///
+    /// If only commit data is desired without the need for attaching custom data, use
+    /// [`try_lookup(id).to_owned()`][Graph::try_lookup()] instead.
     pub fn try_lookup_or_insert_commit(
         &mut self,
         id: gix_hash::ObjectId,
@@ -190,6 +193,9 @@ impl<'find, T> Graph<'find, T> {
     /// Return the commit when done.
     ///
     /// Note that none of the data updates happen if `id` didn't exist.
+    ///
+    /// If only commit data is desired without the need for attaching custom data, use
+    /// [`try_lookup(id)`][Graph::try_lookup()] instead.
     pub fn try_lookup_or_insert_default(
         &mut self,
         id: gix_hash::ObjectId,
@@ -296,6 +302,8 @@ where
 }
 
 /// A commit that provides access to graph-related information, on demand.
+///
+/// The owned version of this type is called [`Commit`] and can be obtained by calling [`LazyCommit::to_owned()`].
 pub struct LazyCommit<'graph> {
     backing: Either<&'graph [u8], (&'graph gix_commitgraph::Graph, gix_commitgraph::Position)>,
 }
