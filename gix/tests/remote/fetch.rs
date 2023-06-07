@@ -14,10 +14,7 @@ mod shallow {
 mod blocking_and_async_io {
     use std::sync::atomic::AtomicBool;
 
-    use gix::{
-        config::tree::Key,
-        remote::{fetch, fetch::Status, Direction::Fetch},
-    };
+    use gix::remote::{fetch, fetch::Status, Direction::Fetch};
     use gix_features::progress;
     use gix_protocol::maybe_async;
     use gix_testtools::tempfile::TempDir;
@@ -190,16 +187,12 @@ mod blocking_and_async_io {
 
                 {
                     let mut config = client_repo.config_snapshot_mut();
-                    config.set_raw_value(
-                        gix::config::tree::Protocol::VERSION.section().name(),
-                        None,
-                        gix::config::tree::Protocol::VERSION.name(),
+                    config.set_value(
+                        &gix::config::tree::Protocol::VERSION,
                         (version as u8).to_string().as_str(),
                     )?;
-                    config.set_raw_value(
-                        gix::config::tree::Fetch::NEGOTIATION_ALGORITHM.section().name(),
-                        None,
-                        gix::config::tree::Fetch::NEGOTIATION_ALGORITHM.name(),
+                    config.set_value(
+                        &gix::config::tree::Fetch::NEGOTIATION_ALGORITHM,
                         algorithm.to_string().as_str(),
                     )?;
                 }
