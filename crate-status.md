@@ -390,9 +390,9 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 
 ### gix-negotiate
 * **algorithms**
-  - [ ] `noop`
-  - [ ] `consecutive`
-  - [ ] `skipping`
+  - [x] `noop`
+  - [x] `consecutive`
+  - [x] `skipping`
 
 ### gix-fetchhead
 * [ ] parse `FETCH_HEAD` information back entirely
@@ -673,9 +673,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
            * [ ] a way to auto-explode small packs to avoid them to pile up
            * [x] 'ref-in-want'
            * [ ] 'wanted-ref'
-           * [ ] standard negotiation algorithms `consecutive`, `skipping` and `noop`.
-           * [ ] a more efficient way to deal [with common `have`](https://github.com/git/git/blob/9e49351c3060e1fa6e0d2de64505b7becf157f28/fetch-pack.c#L525)
-                 during negotiation - we would submit known non-common `haves` each round in stateless transports whereas git prunes the set to known common ones.
+           * [x] standard negotiation algorithms `consecutive`, `skipping` and `noop`.
         * [ ] push
         * [x] ls-refs
         * [x] ls-refs with ref-spec filter

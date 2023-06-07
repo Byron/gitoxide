@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+The main attraction of this release is support for multi-round negotiations thanks to support for the standard negotiations algorithms.
+Further, `gix index entries` now lists attributes as well, and there is the new `gix attribute query` sub-command in the vain of `git check-attrs`.
+
+### New Features
+
+ - <csr-id-e1fcc7f69e7b95aeac8cbbde3719a1e6b9dafeba/> `gix attributes validate` to validate attributes and ignore against `git` as baseline.
+   Use this command to test the entire index for ignored paths and their attributes and use
+   `git check-attr` and `git check-ignore` to validate that `git` agrees. Collect all
+   mismatches and print them.
+ - <csr-id-450b2325909459c7061f3d02f461c3f0f20f1e86/> `--statistics` for `gix excludes query`
+   With it one gets some insights into the work done to fulfil the query.
+ - <csr-id-bfdcb147cdc3d0338a4cd2bc915b0e0eeced1e99/> `gix attribute query` as something similar to `git check-attrs`.
+ - <csr-id-b8db2072bb6a5625f37debe9e58d08461ece67dd/> `no-repo index from-list` to create an index with empty files from the given list.
+   The list could be created with `find . -type f` for example.
+ - <csr-id-13a0f1e568cf9ee462ecf01d416cfcd4949fd9c6/> add pro-forma library to allow feature documentation of `gitoxide` on docs.rs
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 17 commits contributed to the release over the course of 34 calendar days.
+ - 40 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - `just fmt` ([`ffc1276`](https://github.com/Byron/gitoxide/commit/ffc1276e0c991ac33ce842f5dca0b45ac69680c0))
+    - Merge branch 'integrate-gix-negotiate' ([`ae845de`](https://github.com/Byron/gitoxide/commit/ae845dea6cee6523c88a23d7a14293589cf8092f))
+    - Adapt to changes in `gix` ([`7983f6f`](https://github.com/Byron/gitoxide/commit/7983f6fd4ef242d494962fe35b8b8f91a6135f32))
+    - Keep track of core.alternateRefsCommand ([`d925896`](https://github.com/Byron/gitoxide/commit/d9258969047a53bcb437b4ebd9467e6c95d715d7))
+    - Merge branch 'auto-clippy' ([`dbf8aa1`](https://github.com/Byron/gitoxide/commit/dbf8aa19d19109195d0274928eae4b94f248cd88))
+    - Include custom clippy settings ([`b057500`](https://github.com/Byron/gitoxide/commit/b057500dd3e6b75be3ebcd258cda0b946bedd9e1))
+    - Merge branch 'consecutive-negotiation' ([`4507f94`](https://github.com/Byron/gitoxide/commit/4507f94984c811ea098e43472e5f54ec4dbb90c1))
+    - Support reading the fetch algorithm from configuration ([`33b7770`](https://github.com/Byron/gitoxide/commit/33b777074db21db8cd060ecf8cfdac0409a7e10c))
+    - Merge branch 'gix-attributes-validate' ([`a849da8`](https://github.com/Byron/gitoxide/commit/a849da8e35ca14fef9a2431fe1bb1c05b249680e))
+    - `gix attributes validate` to validate attributes and ignore against `git` as baseline. ([`e1fcc7f`](https://github.com/Byron/gitoxide/commit/e1fcc7f69e7b95aeac8cbbde3719a1e6b9dafeba))
+    - Merge branch 'gix-attribute-query' ([`1d70213`](https://github.com/Byron/gitoxide/commit/1d70213b5c41611c9a6172901b78844a76dece0e))
+    - `--statistics` for `gix excludes query` ([`450b232`](https://github.com/Byron/gitoxide/commit/450b2325909459c7061f3d02f461c3f0f20f1e86))
+    - `gix attribute query` as something similar to `git check-attrs`. ([`bfdcb14`](https://github.com/Byron/gitoxide/commit/bfdcb147cdc3d0338a4cd2bc915b0e0eeced1e99))
+    - `no-repo index from-list` to create an index with empty files from the given list. ([`b8db207`](https://github.com/Byron/gitoxide/commit/b8db2072bb6a5625f37debe9e58d08461ece67dd))
+    - Merge branch 'fix-841' ([`edeb4de`](https://github.com/Byron/gitoxide/commit/edeb4de2fa0f4e8ecab0c7f4af169d4443cf0eaf))
+    - Add pro-forma libaray to allow feature documentation of `gitoxide` on docs.rs ([`13a0f1e`](https://github.com/Byron/gitoxide/commit/13a0f1e568cf9ee462ecf01d416cfcd4949fd9c6))
+    - Use unlimited parallelism for `jwalk` to have a better comparison. ([`d67551d`](https://github.com/Byron/gitoxide/commit/d67551d4e43359990b4391ea2902eaf13631dd99))
+</details>
+
 ## 0.25.0 (2023-04-27)
 
 A maintenance release without user-facing changes, just to fix installation

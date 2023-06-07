@@ -5,6 +5,101 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-dbc6cbb4363c2532f81b0bd6e351c4577bb9e9a3/> inline format args
+
+### New Features
+
+ - <csr-id-042f2e1388236e3e50b2b148afb28d59803396b5/> `gix index entries` now works on bare repositories.
+   It creates the index in-memory if needed based on the current HEAD tree.
+   
+   This is useful when inspecting attributes and ignore information.
+ - <csr-id-596ff7a348afa97171d20347fcdc5671081d80df/> `gix attributes validate-baseline` works in bare repostiories.
+ - <csr-id-e1fcc7f69e7b95aeac8cbbde3719a1e6b9dafeba/> `gix attributes validate` to validate attributes and ignore against `git` as baseline.
+   Use this command to test the entire index for ignored paths and their attributes and use
+   `git check-attr` and `git check-ignore` to validate that `git` agrees. Collect all
+   mismatches and print them.
+ - <csr-id-450b2325909459c7061f3d02f461c3f0f20f1e86/> `--statistics` for `gix excludes query`
+   With it one gets some insights into the work done to fulfil the query.
+ - <csr-id-bfdcb147cdc3d0338a4cd2bc915b0e0eeced1e99/> `gix attribute query` as something similar to `git check-attrs`.
+ - <csr-id-b8db2072bb6a5625f37debe9e58d08461ece67dd/> `no-repo index from-list` to create an index with empty files from the given list.
+   The list could be created with `find . -type f` for example.
+
+### Bug Fixes
+
+ - <csr-id-500175f9a932952dfb8b7fe2b1c786a6a8ea9e8c/> make finding bare repos with an index possible with `ein t find`.
+ - <csr-id-39b0ba5af2ae463e244b528be93fe6492d122ae5/> also make it possible to find bare repositories with `ein t find`
+ - <csr-id-0a1a8a87528d34619520251df90d88950cdba175/> pack-verification doesn't show each thread anymore.
+   After all, they don't actually convey interesting information anymore
+   as we switched to using shared counters instead.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 40 commits contributed to the release over the course of 40 calendar days.
+ - 40 days passed between releases.
+ - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-revision v0.15.1, gix v0.45.1 ([`11766a0`](https://github.com/Byron/gitoxide/commit/11766a0a82754fee9918ccdb8eaf92af6d2561ba))
+    - Release gix-date v0.5.1, gix-hash v0.11.2, gix-features v0.30.0, gix-actor v0.21.0, gix-path v0.8.1, gix-glob v0.8.0, gix-quote v0.4.4, gix-attributes v0.13.0, gix-chunk v0.4.2, gix-commitgraph v0.16.0, gix-config-value v0.12.1, gix-fs v0.2.0, gix-tempfile v6.0.0, gix-utils v0.1.2, gix-lock v6.0.0, gix-validate v0.7.5, gix-object v0.30.0, gix-ref v0.30.0, gix-sec v0.8.1, gix-config v0.23.0, gix-command v0.2.5, gix-prompt v0.5.1, gix-url v0.19.0, gix-credentials v0.15.0, gix-diff v0.30.0, gix-discover v0.19.0, gix-hashtable v0.2.1, gix-ignore v0.3.0, gix-bitmap v0.2.4, gix-traverse v0.26.0, gix-index v0.17.0, gix-mailmap v0.13.0, gix-revision v0.15.0, gix-negotiate v0.2.0, gix-pack v0.36.0, gix-odb v0.46.0, gix-packetline v0.16.2, gix-transport v0.32.0, gix-protocol v0.33.0, gix-refspec v0.11.0, gix-worktree v0.18.0, gix v0.45.0, safety bump 29 crates ([`9a9fa96`](https://github.com/Byron/gitoxide/commit/9a9fa96fa8a722bddc5c3b2270b0edf8f6615141))
+    - `just fmt` ([`ffc1276`](https://github.com/Byron/gitoxide/commit/ffc1276e0c991ac33ce842f5dca0b45ac69680c0))
+    - Merge branch 'integrate-gix-negotiate' ([`ae845de`](https://github.com/Byron/gitoxide/commit/ae845dea6cee6523c88a23d7a14293589cf8092f))
+    - Adapt to changes in `gix` ([`7983f6f`](https://github.com/Byron/gitoxide/commit/7983f6fd4ef242d494962fe35b8b8f91a6135f32))
+    - Thanks clippy ([`9525ac8`](https://github.com/Byron/gitoxide/commit/9525ac822aa902f5325f17e7b08ffb60b683e0e7))
+    - Merge branch 'fix-docs' ([`420553a`](https://github.com/Byron/gitoxide/commit/420553a10d780e0b2dc466cac120989298a5f187))
+    - Cleaning up documentation ([`2578e57`](https://github.com/Byron/gitoxide/commit/2578e576bfa365d194a23a1fb0bf09be230873de))
+    - Make finding bare repos with an index possible with `ein t find`. ([`500175f`](https://github.com/Byron/gitoxide/commit/500175f9a932952dfb8b7fe2b1c786a6a8ea9e8c))
+    - Adjust to changes in `gix` ([`0737d97`](https://github.com/Byron/gitoxide/commit/0737d974ff97785dcf36cf8c5578a1e1dee0628f))
+    - Merge branch 'auto-clippy' ([`dbf8aa1`](https://github.com/Byron/gitoxide/commit/dbf8aa19d19109195d0274928eae4b94f248cd88))
+    - Autofix map-or-unwrap clippy lint (and manual fix what was left) ([`2087032`](https://github.com/Byron/gitoxide/commit/2087032b5956dcd82bce6ac57e530e8724b57f17))
+    - Merge branch 'main' into auto-clippy ([`3ef5c90`](https://github.com/Byron/gitoxide/commit/3ef5c90aebce23385815f1df674c1d28d58b4b0d))
+    - Auto-fix clippy to remove explicit iter looping ([`3eff567`](https://github.com/Byron/gitoxide/commit/3eff567c683b5c650c14792b68968cbdbc90ec5c))
+    - Merge pull request #864 from nyurik/lint-fmt ([`279dc09`](https://github.com/Byron/gitoxide/commit/279dc09446f41d7f1d76350fbfafb444e53cd7da))
+    - Merge branch 'blinxen/main' ([`9375cd7`](https://github.com/Byron/gitoxide/commit/9375cd75b01aa22a0e2eed6305fe45fabfd6c1ac))
+    - Include custom clippy settings ([`b057500`](https://github.com/Byron/gitoxide/commit/b057500dd3e6b75be3ebcd258cda0b946bedd9e1))
+    - Inline format args ([`dbc6cbb`](https://github.com/Byron/gitoxide/commit/dbc6cbb4363c2532f81b0bd6e351c4577bb9e9a3))
+    - Include license files in all crates ([`facaaf6`](https://github.com/Byron/gitoxide/commit/facaaf633f01c857dcf2572c6dbe0a92b7105c1c))
+    - `gix index entries` now works on bare repositories. ([`042f2e1`](https://github.com/Byron/gitoxide/commit/042f2e1388236e3e50b2b148afb28d59803396b5))
+    - `gix attributes validate-baseline` works in bare repostiories. ([`596ff7a`](https://github.com/Byron/gitoxide/commit/596ff7a348afa97171d20347fcdc5671081d80df))
+    - Also make it possible to find bare repositories with `ein t find` ([`39b0ba5`](https://github.com/Byron/gitoxide/commit/39b0ba5af2ae463e244b528be93fe6492d122ae5))
+    - Merge branch 'consecutive-negotiation' ([`97b3f7e`](https://github.com/Byron/gitoxide/commit/97b3f7e2eaddea20c98f2f7ab6a0d2e2117b0793))
+    - Release gix-commitgraph v0.15.0, gix-revision v0.14.0, gix-negotiate v0.1.0, safety bump 7 crates ([`92832ca`](https://github.com/Byron/gitoxide/commit/92832ca2899cd2f222f4c7b1cc9e766178f55806))
+    - Merge branch 'consecutive-negotiation' ([`4507f94`](https://github.com/Byron/gitoxide/commit/4507f94984c811ea098e43472e5f54ec4dbb90c1))
+    - Adapt to changes in `gix-revision` ([`56f4d30`](https://github.com/Byron/gitoxide/commit/56f4d30960de4afc8c53136af45149cf880547c5))
+    - Adjust to changes in `gix-commitgraph` ([`2d71d20`](https://github.com/Byron/gitoxide/commit/2d71d20180c3426b40491c1e0bc12361627b3d68))
+    - Pack-verification doesn't show each thread anymore. ([`0a1a8a8`](https://github.com/Byron/gitoxide/commit/0a1a8a87528d34619520251df90d88950cdba175))
+    - Merge branch 'fix-851' ([`2f275d5`](https://github.com/Byron/gitoxide/commit/2f275d5d3cb49b3b8ba53b30e4b4386fac32662b))
+    - Adjust to changes in `gix-pack` ([`215889c`](https://github.com/Byron/gitoxide/commit/215889ceb976a59368c132aabfffb71a6a2ac9f8))
+    - Adjust to changes in `gix-features` ([`c48bbe3`](https://github.com/Byron/gitoxide/commit/c48bbe330e5e99fa357a87a4aa210317ab7c8143))
+    - Merge branch 'gix-attributes-validate' ([`a849da8`](https://github.com/Byron/gitoxide/commit/a849da8e35ca14fef9a2431fe1bb1c05b249680e))
+    - Adjust to changes in `gix-ignore` ([`977447f`](https://github.com/Byron/gitoxide/commit/977447f7255ffa6a36ab1fdaaa8532b60cd6c3a5))
+    - `gix attributes validate` to validate attributes and ignore against `git` as baseline. ([`e1fcc7f`](https://github.com/Byron/gitoxide/commit/e1fcc7f69e7b95aeac8cbbde3719a1e6b9dafeba))
+    - Merge branch 'gix-attribute-query' ([`1d70213`](https://github.com/Byron/gitoxide/commit/1d70213b5c41611c9a6172901b78844a76dece0e))
+    - `--statistics` for `gix excludes query` ([`450b232`](https://github.com/Byron/gitoxide/commit/450b2325909459c7061f3d02f461c3f0f20f1e86))
+    - `gix attribute query` as something similar to `git check-attrs`. ([`bfdcb14`](https://github.com/Byron/gitoxide/commit/bfdcb147cdc3d0338a4cd2bc915b0e0eeced1e99))
+    - `no-repo index from-list` to create an index with empty files from the given list. ([`b8db207`](https://github.com/Byron/gitoxide/commit/b8db2072bb6a5625f37debe9e58d08461ece67dd))
+    - Use unlimited parallelism for `jwalk` to have a better comparison. ([`d67551d`](https://github.com/Byron/gitoxide/commit/d67551d4e43359990b4391ea2902eaf13631dd99))
+    - Fix warning ([`2fac600`](https://github.com/Byron/gitoxide/commit/2fac600c11e0615a231e31d85e1ae8799828c2e9))
+</details>
+
 ## 0.27.0 (2023-04-27)
 
 A maintenance release without user-facing changes.
@@ -13,7 +108,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -24,6 +119,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gitoxide-core v0.27.0, gitoxide v0.25.0 ([`234aee0`](https://github.com/Byron/gitoxide/commit/234aee07b3693f5cf08ed375b9257b1327e0f7d1))
     - Prepare changelogs prior to release ([`a725817`](https://github.com/Byron/gitoxide/commit/a72581797cc8a31fa9f0c8a12b59cff88a448b80))
     - Bump gix-path v0.8.0, safety bump 20 crates (gix set to 0.44.1 manually) ([`43ebaf2`](https://github.com/Byron/gitoxide/commit/43ebaf267557218865862538ffc7bdf00558492f))
     - Adjust to changes in `gix-attributes` ([`11c9ff0`](https://github.com/Byron/gitoxide/commit/11c9ff07a0a8e04ca752a76a1248a5c44d3747ed))
