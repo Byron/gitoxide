@@ -5,13 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.45.1 (2023-06-06)
+## Unreleased
 
-### Bug Fixes
+### New Features
 
- - <csr-id-9010f586ac46fcea5b8abba8f30a5639ed6b9225/> `gix::env::fetch::collate::Error` now considers negotiation errors a sign of corrupt git repos.
-   Indeed, all of these negotiation errors are due to failures reading references or objects that ought
-   to be there.
+ - <csr-id-cc72e497868636b0e7c943f675bda82860c2b53e/> make it possible to use `config::tree::Key` to more conveniently set values via `config::SnapshotMut::set()`
 
 ### Commit Statistics
 
@@ -28,6 +26,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Make it possible to use `config::tree::Key` to more conveniently set values via `config::SnapshotMut::set()` ([`cc72e49`](https://github.com/Byron/gitoxide/commit/cc72e497868636b0e7c943f675bda82860c2b53e))
+    - Release gix-protocol v0.33.1 ([`9c99ed3`](https://github.com/Byron/gitoxide/commit/9c99ed30162081a7f26d72e0ed26966ff62d2b1c))
+</details>
+
+## 0.45.1 (2023-06-06)
+
+### Bug Fixes
+
+ - <csr-id-9010f586ac46fcea5b8abba8f30a5639ed6b9225/> `gix::env::fetch::collate::Error` now considers negotiation errors a sign of corrupt git repos.
+   Indeed, all of these negotiation errors are due to failures reading references or objects that ought
+   to be there.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-revision v0.15.1, gix v0.45.1 ([`11766a0`](https://github.com/Byron/gitoxide/commit/11766a0a82754fee9918ccdb8eaf92af6d2561ba))
     - Merge branch 'adjustments-for-cargo' ([`04f011c`](https://github.com/Byron/gitoxide/commit/04f011c3c3e49e87a3b868d4bf6e77a361b96da8))
     - `gix::env::fetch::collate::Error` now considers negotiation errors a sign of corrupt git repos. ([`9010f58`](https://github.com/Byron/gitoxide/commit/9010f586ac46fcea5b8abba8f30a5639ed6b9225))
 </details>
