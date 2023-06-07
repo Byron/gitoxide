@@ -15,6 +15,11 @@ pub enum Error {
 
 /// A platform to traverse the revision graph by adding starting points as well as points which shouldn't be crossed,
 /// returned by [`Repository::rev_walk()`].
+///
+/// **Note that we don't support the commitgraph data structure** as this API is based on hashes which are supposed to be retrieved
+/// as whole objects. The commitgraph only provides parent information, generation and the commit-time though, which is specifically
+/// tuned to accelerate custom commit walks. For that, please use the [Commit Graph][Repository::commit_graph()] which can attach
+/// data to each commit or accelerate custom walks.
 pub struct Platform<'repo> {
     pub(crate) repo: &'repo Repository,
     pub(crate) tips: Vec<ObjectId>,
