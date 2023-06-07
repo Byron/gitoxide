@@ -63,7 +63,6 @@ jobs:
   build-release:
     name: build-release
     needs: [ "create-release" ]
-    runs-on: ${{ matrix.os }}
     env:
       # For some builds, we use cross to test on 32-bit and big-endian
       # systems.
@@ -108,6 +107,7 @@ jobs:
             rust: nightly
             target: i686-pc-windows-msvc
 
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
