@@ -47,6 +47,7 @@ impl Response {
                 let mut line = String::new();
                 let mut acks = Vec::<Acknowledgement>::new();
                 let mut shallows = Vec::<ShallowUpdate>::new();
+                let mut saw_ready = false;
                 let has_pack = 'lines: loop {
                     line.clear();
                     let peeked_line = match reader.peek_data_line() {
@@ -81,10 +82,12 @@ impl Response {
                     if Response::parse_v1_ack_or_shallow_or_assume_pack(&mut acks, &mut shallows, &peeked_line) {
                         break 'lines true;
                     }
-                    if let Some(Acknowledgement::Nak) = acks.last().filter(|_| !client_expects_pack) {
+                    assert_ne!(reader.readline_str(&mut line)?, 0, "consuming a peeked line works");
+                    // When the server sends ready, we know there is going to be a pack so no need to stop early.
+                    saw_ready |= matches!(acks.last(), Some(Acknowledgement::Ready));
+                    if let Some(Acknowledgement::Nak) = acks.last().filter(|_| !client_expects_pack && !saw_ready) {
                         break 'lines false;
                     }
-                    assert_ne!(reader.readline_str(&mut line)?, 0, "consuming a peeked line works");
                 };
                 Ok(Response {
                     acks,
