@@ -1,4 +1,5 @@
 use crate::named_repo;
+use gix::config::tree::{Branch, Core, Key};
 
 #[test]
 fn commit_auto_rollback() -> crate::Result {
@@ -33,10 +34,15 @@ fn snapshot_mut_commit_and_forget() -> crate::Result {
     let mut repo: gix::Repository = named_repo("make_basic_repo.sh")?;
     let repo = {
         let mut repo = repo.config_snapshot_mut();
-        repo.set_raw_value("core", None, "abbrev", "4")?;
+        repo.set_value(&Core::ABBREV, "4")?;
         repo.commit()?
     };
-    assert_eq!(repo.config_snapshot().integer("core.abbrev").expect("set"), 4);
+    assert_eq!(
+        repo.config_snapshot()
+            .integer(Core::ABBREV.logical_name().as_str())
+            .expect("set"),
+        4
+    );
     {
         let mut repo = repo.config_snapshot_mut();
         repo.set_raw_value("core", None, "abbrev", "8")?;
@@ -51,7 +57,7 @@ fn values_are_set_in_memory_only() {
     let mut repo = named_repo("make_config_repo.sh").unwrap();
     let repo_clone = repo.clone();
     let key = "hallo.welt";
-    let key_subsection = "hallo.unter.welt";
+    let key_subsection = "branch.main.merge";
     assert_eq!(repo.config_snapshot().boolean(key), None, "no value there just yet");
     assert_eq!(repo.config_snapshot().string(key_subsection), None);
 
@@ -59,7 +65,7 @@ fn values_are_set_in_memory_only() {
         let mut config = repo.config_snapshot_mut();
         config.set_raw_value("hallo", None, "welt", "true").unwrap();
         config
-            .set_raw_value("hallo", Some("unter".into()), "welt", "value")
+            .set_subsection_value(&Branch::MERGE, "main", "refs/heads/foo")
             .unwrap();
     }
 
@@ -70,7 +76,7 @@ fn values_are_set_in_memory_only() {
     );
     assert_eq!(
         repo.config_snapshot().string(key_subsection).as_deref(),
-        Some("value".into())
+        Some("refs/heads/foo".into())
     );
 
     assert_eq!(

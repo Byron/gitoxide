@@ -3,6 +3,7 @@ use std::borrow::Cow;
 
 use gix_features::threading::OwnShared;
 
+use crate::bstr::BString;
 use crate::{
     bstr::BStr,
     config::{CommitAutoRollback, Snapshot, SnapshotMut},
@@ -97,6 +98,48 @@ impl<'repo> SnapshotMut<'repo> {
     pub fn commit(mut self) -> Result<&'repo mut crate::Repository, crate::config::Error> {
         let repo = self.repo.take().expect("always present here");
         self.commit_inner(repo)
+    }
+
+    /// Set the value at `key` to `new_value`, possibly creating the section if it doesn't exist yet, or overriding the most recent existing
+    /// value, which will be returned.
+    pub fn set_value<'b>(
+        &mut self,
+        key: &'static dyn crate::config::tree::Key,
+        new_value: impl Into<&'b BStr>,
+    ) -> Result<Option<BString>, crate::config::set_value::Error> {
+        if let Some(crate::config::tree::SubSectionRequirement::Parameter(_)) = key.subsection_requirement() {
+            return Err(crate::config::set_value::Error::SubSectionRequired);
+        }
+        let value = new_value.into();
+        key.validate(value)?;
+        let current = self
+            .config
+            .set_raw_value(key.section().name(), None, key.name(), value)?;
+        Ok(current.map(|v| v.into_owned()))
+    }
+
+    /// Set the value at `key` to `new_value` in the given `subsection`, possibly creating the section and sub-section if it doesn't exist yet,
+    /// or overriding the most recent existing value, which will be returned.
+    pub fn set_subsection_value<'a, 'b>(
+        &mut self,
+        key: &'static dyn crate::config::tree::Key,
+        subsection: impl Into<&'a BStr>,
+        new_value: impl Into<&'b BStr>,
+    ) -> Result<Option<BString>, crate::config::set_value::Error> {
+        if let Some(crate::config::tree::SubSectionRequirement::Never) = key.subsection_requirement() {
+            return Err(crate::config::set_value::Error::SubSectionForbidden);
+        }
+        let value = new_value.into();
+        key.validate(value)?;
+
+        let name = key
+            .full_name(Some(subsection.into()))
+            .expect("we know it needs a subsection");
+        let key = gix_config::parse::key(&**name).expect("statically known keys can always be parsed");
+        let current =
+            self.config
+                .set_raw_value(key.section_name, key.subsection_name, key.value_name.to_owned(), value)?;
+        Ok(current.map(|v| v.into_owned()))
     }
 
     pub(crate) fn commit_inner(
