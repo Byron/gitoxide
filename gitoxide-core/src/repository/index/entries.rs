@@ -22,10 +22,7 @@ pub(crate) mod function {
 
     use gix::odb::FindExt;
 
-    use crate::repository::{
-        attributes::query::index_on_demand,
-        index::entries::{Attributes, Options},
-    };
+    use crate::repository::index::entries::{Attributes, Options};
 
     pub fn entries(
         repo: gix::Repository,
@@ -38,7 +35,7 @@ pub(crate) mod function {
         }: Options,
     ) -> anyhow::Result<()> {
         use crate::OutputFormat::*;
-        let index = index_on_demand(&repo)?;
+        let index = repo.index_or_load_from_head()?;
         let mut cache = attributes
             .map(|attrs| {
                 repo.attributes(
