@@ -40,6 +40,7 @@ mod excludes;
 mod graph;
 pub(crate) mod identity;
 mod impls;
+mod index;
 mod init;
 mod kind;
 mod location;
@@ -52,3 +53,30 @@ mod snapshots;
 mod state;
 mod thread_safe;
 mod worktree;
+
+/// A type to represent an index which either was loaded from disk as it was persisted there, or created on the fly in memory.
+pub enum IndexPersistedOrInMemory {
+    /// The index as loaded from disk, and shared across clones of the owning `Repository`.
+    Persisted(crate::worktree::Index),
+    /// A temporary index as created from the `HEAD^{tree}`, with the file path set to the place where it would be stored naturally.
+    ///
+    /// Note that unless saved explicitly, it will not persist.
+    InMemory(gix_index::File),
+}
+
+///
+pub mod index_or_load_from_head {
+    /// The error returned by [`Repository::index_or_load_from_head()`][crate::Repository::index_or_load_from_head()].
+    #[derive(thiserror::Error, Debug)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        HeadCommit(#[from] crate::reference::head_commit::Error),
+        #[error(transparent)]
+        TreeId(#[from] gix_object::decode::Error),
+        #[error(transparent)]
+        TraverseTree(#[from] gix_traverse::tree::breadthfirst::Error),
+        #[error(transparent)]
+        OpenIndex(#[from] crate::worktree::open_index::Error),
+    }
+}
