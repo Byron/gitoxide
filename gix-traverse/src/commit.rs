@@ -1,3 +1,5 @@
+use smallvec::SmallVec;
+
 /// An iterator over the ancestors one or more starting commits
 pub struct Ancestors<Find, Predicate, StateMut> {
     find: Find,
@@ -42,6 +44,20 @@ pub enum Sorting {
     },
 }
 
+type ParentIds = SmallVec<[gix_hash::ObjectId; 1]>;
+
+/// Information about a commit that we obtained naturally as part of the iteration.
+#[derive(Debug, Clone)]
+pub struct Info {
+    /// The id of the commit.
+    pub id: gix_hash::ObjectId,
+    /// All parent ids we have encountered. Note that these will be at most one if [`Parents::First`] is enabled.
+    pub parent_ids: ParentIds,
+    /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::Topological`], as the walk
+    /// needs to require the commit-date.
+    pub commit_time: Option<u64>,
+}
+
 ///
 pub mod ancestors {
     use std::{
@@ -54,7 +70,7 @@ pub mod ancestors {
     use gix_hashtable::HashSet;
     use gix_object::CommitRefIter;
 
-    use crate::commit::{Ancestors, Parents, Sorting};
+    use crate::commit::{Ancestors, Info, ParentIds, Parents, Sorting};
 
     /// The error is part of the item returned by the [Ancestors] iterator.
     #[derive(Debug, thiserror::Error)]
@@ -222,7 +238,7 @@ pub mod ancestors {
         StateMut: BorrowMut<State>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        type Item = Result<ObjectId, Error>;
+        type Item = Result<Info, Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
             if matches!(self.parents, Parents::First) {
@@ -259,10 +275,11 @@ pub mod ancestors {
         StateMut: BorrowMut<State>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        fn next_by_commit_date(&mut self, cutoff_older_than: Option<TimeInSeconds>) -> Option<Result<ObjectId, Error>> {
+        fn next_by_commit_date(&mut self, cutoff_older_than: Option<TimeInSeconds>) -> Option<Result<Info, Error>> {
             let state = self.state.borrow_mut();
 
-            let (oid, _commit_time) = state.next.pop_front()?;
+            let (oid, commit_time) = state.next.pop_front()?;
+            let mut parents: ParentIds = Default::default();
             match (self.find)(&oid, &mut state.buf) {
                 Ok(commit_iter) => {
                     let mut count = 0;
@@ -272,6 +289,7 @@ pub mod ancestors {
                         match token {
                             Ok(gix_object::commit::ref_iter::Token::Tree { .. }) => continue,
                             Ok(gix_object::commit::ref_iter::Token::Parent { id }) => {
+                                parents.push(id);
                                 let was_inserted = state.seen.insert(id);
                                 if !(was_inserted && (self.predicate)(&id)) {
                                     if is_first && matches!(self.parents, Parents::First) {
@@ -320,7 +338,11 @@ pub mod ancestors {
                     }))
                 }
             }
-            Some(Ok(oid))
+            Some(Ok(Info {
+                id: oid,
+                parent_ids: parents,
+                commit_time: Some(commit_time as u64),
+            }))
         }
     }
 
@@ -332,15 +354,17 @@ pub mod ancestors {
         StateMut: BorrowMut<State>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        fn next_by_topology(&mut self) -> Option<Result<ObjectId, Error>> {
+        fn next_by_topology(&mut self) -> Option<Result<Info, Error>> {
             let state = self.state.borrow_mut();
             let (oid, _commit_time) = state.next.pop_front()?;
+            let mut parents: ParentIds = Default::default();
             match (self.find)(&oid, &mut state.buf) {
                 Ok(commit_iter) => {
                     for token in commit_iter {
                         match token {
                             Ok(gix_object::commit::ref_iter::Token::Tree { .. }) => continue,
                             Ok(gix_object::commit::ref_iter::Token::Parent { id }) => {
+                                parents.push(id);
                                 let was_inserted = state.seen.insert(id);
                                 if was_inserted && (self.predicate)(&id) {
                                     state.next.push_back((id, 0));
@@ -361,7 +385,11 @@ pub mod ancestors {
                     }))
                 }
             }
-            Some(Ok(oid))
+            Some(Ok(Info {
+                id: oid,
+                parent_ids: parents,
+                commit_time: None,
+            }))
         }
     }
 }

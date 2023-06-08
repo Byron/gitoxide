@@ -50,7 +50,7 @@ mod ancestor {
         fn check_with_predicate(&mut self, predicate: impl FnMut(&oid) -> bool) -> crate::Result<()> {
             let (store, tips, expected) = self.setup()?;
 
-            let oids: Result<Vec<_>, _> = commit::Ancestors::filtered(
+            let oids = commit::Ancestors::filtered(
                 tips,
                 commit::ancestors::State::default(),
                 move |oid, buf| store.find_commit_iter(oid, buf).map(|t| t.0),
@@ -58,22 +58,23 @@ mod ancestor {
             )
             .sorting(self.sorting)?
             .parents(self.mode)
-            .collect();
+            .map(|res| res.map(|info| info.id))
+            .collect::<Result<Vec<_>, _>>()?;
 
-            assert_eq!(oids?, expected);
+            assert_eq!(oids, expected);
             Ok(())
         }
 
         fn check(&self) -> crate::Result {
             let (store, tips, expected) = self.setup()?;
-            let oids: Result<Vec<_>, _> =
-                commit::Ancestors::new(tips, commit::ancestors::State::default(), move |oid, buf| {
-                    store.find_commit_iter(oid, buf).map(|t| t.0)
-                })
-                .sorting(self.sorting)?
-                .parents(self.mode)
-                .collect();
-            assert_eq!(oids?, expected);
+            let oids = commit::Ancestors::new(tips, commit::ancestors::State::default(), move |oid, buf| {
+                store.find_commit_iter(oid, buf).map(|t| t.0)
+            })
+            .sorting(self.sorting)?
+            .parents(self.mode)
+            .map(|res| res.map(|info| info.id))
+            .collect::<Result<Vec<_>, _>>()?;
+            assert_eq!(oids, expected);
             Ok(())
         }
     }
