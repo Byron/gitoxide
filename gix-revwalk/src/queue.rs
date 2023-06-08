@@ -72,7 +72,7 @@ impl<K: Ord, T> PriorityQueue<K, T> {
         self.0.push(Item { key, value });
     }
 
-    /// Pop the highest-priority item off the queue.
+    /// Pop the highest-priority item value off the queue.
     pub fn pop(&mut self) -> Option<T> {
         self.0.pop().map(|t| t.value)
     }
@@ -92,9 +92,14 @@ impl<K: Ord, T> PriorityQueue<K, T> {
         self.0.is_empty()
     }
 
-    /// Returns the greatest item `(K, T)` tuple, as ordered by `K` if the queue is not empty.
+    /// Returns the greatest item `(K, T)` tuple, as ordered by `K`, if the queue is not empty, without removing it.
     pub fn peek(&self) -> Option<(&K, &T)> {
         self.0.peek().map(|e| (&e.key, &e.value))
+    }
+
+    /// Drop all items from the queue, without changing its capacity.
+    pub fn clear(&mut self) {
+        self.0.clear()
     }
 }
 

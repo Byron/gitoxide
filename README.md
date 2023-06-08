@@ -80,6 +80,7 @@ is usable to some extent.
   * [gix-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-pathspec)
   * [gix-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-index)
   * [gix-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-revision)
+  * [gix-revwalk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-revwalk)
   * [gix-command](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-command)
   * [gix-prompt](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-prompt)
   * [gix-refspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-refspec)

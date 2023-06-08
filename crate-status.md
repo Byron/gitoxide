@@ -477,12 +477,13 @@ Make it the best-performing implementation and the most convenient one.
  
 ### gix-revision
 * [x] `describe()` (similar to `git name-rev`)
-* [x] primitives to help with graph traversal, along with commit-graph acceleration.
-* [ ] `Graph` based walk, similar to `rev_walk` but tuned to provide all commitgraph information in an iterator.
 * parse specifications 
     * [x] parsing and navigation
     * [x] revision ranges
     * [ ] full date parsing support (depends on `gix-date`)
+ 
+### gix-revision
+* [x] primitives to help with graph traversal, along with commit-graph acceleration.
  
 ### gix-submodule
 * CRUD for submodules

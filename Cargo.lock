@@ -2188,8 +2188,20 @@ dependencies = [
  "gix-hashtable 0.2.1",
  "gix-object 0.30.0",
  "gix-odb",
+ "gix-revwalk",
  "gix-testtools",
  "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-revwalk"
+version = "0.1.0"
+dependencies = [
+ "gix-commitgraph",
+ "gix-hash 0.11.2",
+ "gix-hashtable 0.2.1",
+ "gix-object 0.30.0",
  "smallvec",
  "thiserror",
 ]
