@@ -34,6 +34,28 @@ async fn clone() -> crate::Result {
 }
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+async fn clone_empty_with_capabilities() -> crate::Result {
+    let out = Vec::new();
+    let mut dlg = CloneDelegate::default();
+    gix_protocol::fetch(
+        transport(
+            out,
+            "v1/clone-empty-with-capabilities.response",
+            Protocol::V1,
+            gix_transport::client::git::ConnectMode::Daemon,
+        ),
+        &mut dlg,
+        helper_unused,
+        progress::Discard,
+        FetchConnection::TerminateOnSuccessfulCompletion,
+        "agent",
+    )
+    .await?;
+    assert_eq!(dlg.pack_bytes, 0, "there is no pack");
+    Ok(())
+}
+
+#[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn ls_remote() -> crate::Result {
     let out = Vec::new();
     let mut delegate = LsRemoteDelegate::default();

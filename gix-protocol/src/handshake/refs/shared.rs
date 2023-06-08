@@ -123,6 +123,10 @@ pub(in crate::handshake::refs) fn parse_v1(
     }
     match path.strip_suffix(b"^{}") {
         Some(stripped) => {
+            if hex_hash.iter().all(|b| *b == b'0') && stripped == b"capabilities" {
+                // this is a special dummy-ref just for the sake of getting capabilities across in a repo that is empty.
+                return Ok(());
+            }
             let (previous_path, tag) =
                 out_refs
                     .pop()

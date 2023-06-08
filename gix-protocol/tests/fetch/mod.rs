@@ -33,6 +33,9 @@ impl fetch::DelegateBlocking for CloneDelegate {
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         _refs: &[handshake::Ref],
     ) -> io::Result<Action> {
+        if _refs.is_empty() {
+            return Ok(Action::Cancel);
+        }
         match self.abort_with.take() {
             Some(err) => Err(err),
             None => Ok(Action::Continue),
