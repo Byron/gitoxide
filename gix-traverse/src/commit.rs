@@ -20,14 +20,35 @@ pub enum Parents {
 }
 
 /// Specify how to sort commits during traversal.
+///
+/// ### Sample History
+///
+/// The following history will be referred to for explaining how the sort order works, with the number denoting the commit timestamp
+/// (*their X-alignment doesn't matter*).
+///
+/// ```text
+/// ---1----2----4----7 <- second parent of 8
+///     \              \
+///      3----5----6----8---
+/// ```
+
 #[derive(Default, Debug, Copy, Clone)]
 pub enum Sorting {
     /// Commits are sorted as they are mentioned in the commit graph.
+    ///
+    /// In the *sample history* the order would be `8, 6, 7, 5, 4, 3, 2, 1`
+    ///
+    /// ### Note
+    ///
+    /// This is not to be confused with `git log/rev-list --topo-order`, which is notably different from
+    /// as it avoids overlapping branches.
     #[default]
-    Topological,
+    BreadthFirst,
     /// Commits are sorted by their commit time in descending order, that is newest first.
     ///
     /// The sorting applies to all currently queued commit ids and thus is full.
+    ///
+    /// In the *sample history* the order would be `8, 7, 6, 5, 4, 3, 2, 1`
     ///
     /// # Performance
     ///
@@ -38,6 +59,8 @@ pub enum Sorting {
     /// a given time, stopping the iteration once no younger commits is queued to be traversed.
     ///
     /// As the query is usually repeated with different cutoff dates, this search mode benefits greatly from an object cache.
+    ///
+    /// In the *sample history* and a cut-off date of 4, the returned list of commits would be `8, 7, 6, 4`
     ByCommitTimeNewestFirstCutoffOlderThan {
         /// The amount of seconds since unix epoch, the same value obtained by any `gix_date::Time` structure and the way git counts time.
         time_in_seconds_since_epoch: u32,
@@ -53,7 +76,7 @@ pub struct Info {
     pub id: gix_hash::ObjectId,
     /// All parent ids we have encountered. Note that these will be at most one if [`Parents::First`] is enabled.
     pub parent_ids: ParentIds,
-    /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::Topological`], as the walk
+    /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`], as the walk
     /// needs to require the commit-date.
     pub commit_time: Option<u64>,
 }
@@ -63,7 +86,6 @@ pub mod ancestors {
     use std::{
         borrow::{Borrow, BorrowMut},
         collections::VecDeque,
-        iter::FromIterator,
     };
 
     use gix_hash::{oid, ObjectId};
@@ -88,28 +110,33 @@ pub mod ancestors {
     type TimeInSeconds = u32;
 
     /// The state used and potentially shared by multiple graph traversals.
-    #[derive(Default, Clone)]
+    #[derive(Clone)]
     pub struct State {
-        next: VecDeque<(ObjectId, TimeInSeconds)>,
+        next: VecDeque<ObjectId>,
+        queue: gix_revwalk::PriorityQueue<TimeInSeconds, ObjectId>,
         buf: Vec<u8>,
         seen: HashSet<ObjectId>,
         parents_buf: Vec<u8>,
     }
 
-    impl State {
-        fn clear(&mut self) {
-            self.next.clear();
-            self.buf.clear();
-            self.seen.clear();
+    impl Default for State {
+        fn default() -> Self {
+            State {
+                next: Default::default(),
+                queue: gix_revwalk::PriorityQueue::new(),
+                buf: vec![],
+                seen: Default::default(),
+                parents_buf: vec![],
+            }
         }
     }
 
-    /// Builder
-    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut> {
-        /// Change our commit parent handling mode to the given one.
-        pub fn parents(mut self, mode: Parents) -> Self {
-            self.parents = mode;
-            self
+    impl State {
+        fn clear(&mut self) {
+            self.next.clear();
+            self.queue.clear();
+            self.buf.clear();
+            self.seen.clear();
         }
     }
 
@@ -123,31 +150,51 @@ pub mod ancestors {
         /// Set the sorting method, either topological or by author date
         pub fn sorting(mut self, sorting: Sorting) -> Result<Self, Error> {
             self.sorting = sorting;
-            if !matches!(self.sorting, Sorting::Topological) {
-                let mut cutoff_time_storage = self.sorting.cutoff_time().map(|cot| (cot, Vec::new()));
-                let state = self.state.borrow_mut();
-                for (commit_id, commit_time) in &mut state.next {
-                    let commit_iter = (self.find)(commit_id, &mut state.buf).map_err(|err| Error::FindExisting {
-                        oid: *commit_id,
-                        source: err.into(),
-                    })?;
-                    let time = commit_iter.committer()?.time.seconds_since_unix_epoch;
-                    match &mut cutoff_time_storage {
-                        Some((cutoff_time, storage)) if time >= *cutoff_time => {
-                            storage.push((*commit_id, time));
+            match self.sorting {
+                Sorting::BreadthFirst => {
+                    self.queue_to_vecdeque();
+                }
+                Sorting::ByCommitTimeNewestFirst | Sorting::ByCommitTimeNewestFirstCutoffOlderThan { .. } => {
+                    let cutoff_time = self.sorting.cutoff_time();
+                    let state = self.state.borrow_mut();
+                    for commit_id in state.next.drain(..) {
+                        let commit_iter =
+                            (self.find)(&commit_id, &mut state.buf).map_err(|err| Error::FindExisting {
+                                oid: commit_id,
+                                source: err.into(),
+                            })?;
+                        let time = commit_iter.committer()?.time.seconds_since_unix_epoch;
+                        match cutoff_time {
+                            Some(cutoff_time) if time >= cutoff_time => {
+                                state.queue.insert(time, commit_id);
+                            }
+                            Some(_) => {}
+                            None => {
+                                state.queue.insert(time, commit_id);
+                            }
                         }
-                        Some(_) => {}
-                        None => *commit_time = time,
                     }
                 }
-                let mut v = match cutoff_time_storage {
-                    Some((_, storage)) => storage,
-                    None => Vec::from_iter(std::mem::take(&mut state.next).into_iter()),
-                };
-                v.sort_by(|a, b| a.1.cmp(&b.1).reverse());
-                state.next = v.into();
             }
             Ok(self)
+        }
+
+        /// Change our commit parent handling mode to the given one.
+        pub fn parents(mut self, mode: Parents) -> Self {
+            self.parents = mode;
+            if matches!(self.parents, Parents::First) {
+                self.queue_to_vecdeque();
+            }
+            self
+        }
+
+        fn queue_to_vecdeque(&mut self) {
+            let state = self.state.borrow_mut();
+            state.next.extend(
+                std::mem::replace(&mut state.queue, gix_revwalk::PriorityQueue::new())
+                    .into_iter_unordered()
+                    .map(|(_time, id)| id),
+            );
         }
     }
 
@@ -207,7 +254,7 @@ pub mod ancestors {
                 for tip in tips.map(Into::into) {
                     let was_inserted = state.seen.insert(tip);
                     if was_inserted && predicate(&tip) {
-                        state.next.push_back((tip, 0));
+                        state.next.push_back(tip);
                     }
                 }
             }
@@ -229,6 +276,11 @@ pub mod ancestors {
         pub fn commit_iter(&self) -> CommitRefIter<'_> {
             CommitRefIter::from_bytes(&self.state.borrow().buf)
         }
+
+        /// Return the current commits data.
+        pub fn commit_data(&self) -> &[u8] {
+            &self.state.borrow().buf
+        }
     }
 
     impl<Find, Predicate, StateMut, E> Iterator for Ancestors<Find, Predicate, StateMut>
@@ -245,7 +297,7 @@ pub mod ancestors {
                 self.next_by_topology()
             } else {
                 match self.sorting {
-                    Sorting::Topological => self.next_by_topology(),
+                    Sorting::BreadthFirst => self.next_by_topology(),
                     Sorting::ByCommitTimeNewestFirst => self.next_by_commit_date(None),
                     Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
                         time_in_seconds_since_epoch,
@@ -278,7 +330,7 @@ pub mod ancestors {
         fn next_by_commit_date(&mut self, cutoff_older_than: Option<TimeInSeconds>) -> Option<Result<Info, Error>> {
             let state = self.state.borrow_mut();
 
-            let (oid, commit_time) = state.next.pop_front()?;
+            let (commit_time, oid) = state.queue.pop()?;
             let mut parents: ParentIds = Default::default();
             match (self.find)(&oid, &mut state.buf) {
                 Ok(commit_iter) => {
@@ -309,17 +361,9 @@ pub mod ancestors {
                                     })
                                     .unwrap_or_default();
 
-                                let pos = match state.next.binary_search_by(|c| c.1.cmp(&parent_commit_time).reverse())
-                                {
-                                    Ok(_) => None,
-                                    Err(pos) => Some(pos),
-                                };
                                 match cutoff_older_than {
                                     Some(cutoff_older_than) if parent_commit_time < cutoff_older_than => continue,
-                                    Some(_) | None => match pos {
-                                        Some(pos) => state.next.insert(pos, (id, parent_commit_time)),
-                                        None => state.next.push_back((id, parent_commit_time)),
-                                    },
+                                    Some(_) | None => state.queue.insert(parent_commit_time, id),
                                 }
 
                                 if is_first && matches!(self.parents, Parents::First) {
@@ -356,7 +400,7 @@ pub mod ancestors {
     {
         fn next_by_topology(&mut self) -> Option<Result<Info, Error>> {
             let state = self.state.borrow_mut();
-            let (oid, _commit_time) = state.next.pop_front()?;
+            let oid = state.next.pop_front()?;
             let mut parents: ParentIds = Default::default();
             match (self.find)(&oid, &mut state.buf) {
                 Ok(commit_iter) => {
@@ -367,7 +411,7 @@ pub mod ancestors {
                                 parents.push(id);
                                 let was_inserted = state.seen.insert(id);
                                 if was_inserted && (self.predicate)(&id) {
-                                    state.next.push_back((id, 0));
+                                    state.next.push_back(id);
                                 }
                                 if matches!(self.parents, Parents::First) {
                                     break;

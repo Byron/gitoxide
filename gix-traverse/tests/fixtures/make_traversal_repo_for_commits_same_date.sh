@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eu -o pipefail
 
+# all commits have the same date as it's set by `gix-testtools` to a fixed value.
+
 git init -q
 git config merge.ff false
 

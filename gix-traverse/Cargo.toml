@@ -17,5 +17,6 @@ doctest = false
 gix-hash = { version = "^0.11.2", path = "../gix-hash" }
 gix-object = { version = "^0.30.0", path = "../gix-object" }
 gix-hashtable = { version = "^0.2.1", path = "../gix-hashtable" }
+gix-revwalk = { version = "^0.1.0", path = "../gix-revwalk" }
 smallvec = "1.10.0"
 thiserror = "1.0.32"
