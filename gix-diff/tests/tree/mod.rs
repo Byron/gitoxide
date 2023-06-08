@@ -151,13 +151,13 @@ mod changes {
             .map(|c| {
                 use gix_odb::FindExt;
                 (
-                    db.find_commit(c, &mut buf)
+                    db.find_commit(c.id, &mut buf)
                         .unwrap()
                         .message
                         .trim()
                         .to_str_lossy()
                         .into_owned(),
-                    c,
+                    c.id,
                 )
             })
             .rev()

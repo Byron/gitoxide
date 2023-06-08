@@ -140,7 +140,7 @@ pub(crate) fn update(
                                                 );
                                             match ancestors {
                                                 Ok(mut ancestors) => {
-                                                    ancestors.any(|cid| cid.map_or(false, |cid| cid == local_id))
+                                                    ancestors.any(|cid| cid.map_or(false, |c| c.id == local_id))
                                                 }
                                                 Err(_) => {
                                                     force = true;

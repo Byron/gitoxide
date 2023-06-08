@@ -141,7 +141,7 @@ where
                     let handle = handle.clone();
                     move |oid, buf| handle.find_commit_iter(oid, buf).map(|t| t.0)
                 })
-                .map(|res| res.map_err(Into::into))
+                .map(|res| res.map_err(Into::into).map(|c| c.id))
                 .inspect(move |_| progress.inc()),
             );
             (handle, iter)

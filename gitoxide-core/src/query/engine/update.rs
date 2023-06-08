@@ -346,7 +346,7 @@ pub fn update(
         );
         let mut commits = Vec::new();
         for c in commit_iter {
-            match c? {
+            match c?.map(|c| c.id) {
                 Ok(c) => {
                     if known_commits.binary_search(&c).is_err() {
                         commits.push(c);

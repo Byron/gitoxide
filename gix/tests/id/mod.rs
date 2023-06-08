@@ -107,7 +107,7 @@ mod ancestors {
         let head = repo.head()?.into_fully_peeled_id().expect("born")?;
 
         for sorting in [
-            commit::Sorting::Topological,
+            commit::Sorting::BreadthFirst,
             commit::Sorting::ByCommitTimeNewestFirst,
             commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
                 time_in_seconds_since_epoch: 0,

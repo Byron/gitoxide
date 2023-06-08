@@ -105,7 +105,9 @@ impl<'repo> Platform<'repo> {
                     },
                 )
                 .sorting(sorting)?
-                .parents(parents),
+                .parents(parents)
+                // TODO: use wrapped items instead
+                .map(|res| res.map(|item| item.id)),
             ),
         })
     }
