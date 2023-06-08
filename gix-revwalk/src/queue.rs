@@ -73,8 +73,13 @@ impl<K: Ord, T> PriorityQueue<K, T> {
     }
 
     /// Pop the highest-priority item value off the queue.
-    pub fn pop(&mut self) -> Option<T> {
+    pub fn pop_value(&mut self) -> Option<T> {
         self.0.pop().map(|t| t.value)
+    }
+
+    /// Pop the highest-priority item key and value off the queue.
+    pub fn pop(&mut self) -> Option<(K, T)> {
+        self.0.pop().map(|t| (t.key, t.value))
     }
 
     /// Iterate all items ordered from highest to lowest priority.
