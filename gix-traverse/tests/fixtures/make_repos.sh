@@ -20,6 +20,11 @@ function commit() {
   git commit --allow-empty -m "$message"
 }
 
+function optimize() {
+  git commit-graph write --no-progress --reachable
+  git repack -adq
+}
+
 (git init simple && cd simple
   git config merge.ff false
 
@@ -41,6 +46,8 @@ function commit() {
   git checkout -q main
   commit c5
   git merge branch1 branch2 -m merge
+
+  optimize
 )
 
 (git init intermixed && cd intermixed
@@ -66,4 +73,6 @@ function commit() {
   git checkout -q main
   commit c3
   git merge branch1 branch2 -m merge
+
+  optimize
 )

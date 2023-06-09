@@ -53,34 +53,49 @@ mod ancestor {
                 .collect();
             Ok((store, tips, expected))
         }
-        fn check_with_predicate(&mut self, predicate: impl FnMut(&oid) -> bool) -> crate::Result<()> {
+
+        fn setup_commitgraph(&self, store: &gix_odb::Store, use_graph: bool) -> Option<gix_commitgraph::Graph> {
+            use_graph
+                .then(|| gix_commitgraph::at(store.path().join("info")))
+                .transpose()
+                .expect("graph can be loaded if it exists")
+        }
+
+        fn check_with_predicate(&mut self, predicate: impl FnMut(&oid) -> bool + Clone) -> crate::Result<()> {
             let (store, tips, expected) = self.setup()?;
 
-            let oids = commit::Ancestors::filtered(
-                tips,
-                commit::ancestors::State::default(),
-                move |oid, buf| store.find_commit_iter(oid, buf).map(|t| t.0),
-                predicate,
-            )
-            .sorting(self.sorting)?
-            .parents(self.mode)
-            .map(|res| res.map(|info| info.id))
-            .collect::<Result<Vec<_>, _>>()?;
+            for use_commitgraph in [false, true] {
+                let oids = commit::Ancestors::filtered(
+                    tips.clone(),
+                    commit::ancestors::State::default(),
+                    |oid, buf| store.find_commit_iter(oid, buf).map(|t| t.0),
+                    predicate.clone(),
+                )
+                .sorting(self.sorting)?
+                .parents(self.mode)
+                .commit_graph(self.setup_commitgraph(store.store_ref(), use_commitgraph))
+                .map(|res| res.map(|info| info.id))
+                .collect::<Result<Vec<_>, _>>()?;
 
-            assert_eq!(oids, expected);
+                assert_eq!(oids, expected);
+            }
             Ok(())
         }
 
         fn check(&self) -> crate::Result {
             let (store, tips, expected) = self.setup()?;
-            let oids = commit::Ancestors::new(tips, commit::ancestors::State::default(), move |oid, buf| {
-                store.find_commit_iter(oid, buf).map(|t| t.0)
-            })
-            .sorting(self.sorting)?
-            .parents(self.mode)
-            .map(|res| res.map(|info| info.id))
-            .collect::<Result<Vec<_>, _>>()?;
-            assert_eq!(oids, expected);
+
+            for use_commitgraph in [false, true] {
+                let oids = commit::Ancestors::new(tips.clone(), commit::ancestors::State::default(), |oid, buf| {
+                    store.find_commit_iter(oid, buf).map(|t| t.0)
+                })
+                .sorting(self.sorting)?
+                .parents(self.mode)
+                .commit_graph(self.setup_commitgraph(store.store_ref(), use_commitgraph))
+                .map(|res| res.map(|info| info.id))
+                .collect::<Result<Vec<_>, _>>()?;
+                assert_eq!(oids, expected);
+            }
             Ok(())
         }
     }

@@ -3,6 +3,7 @@ use smallvec::SmallVec;
 /// An iterator over the ancestors one or more starting commits
 pub struct Ancestors<Find, Predicate, StateMut> {
     find: Find,
+    cache: Option<gix_commitgraph::Graph>,
     predicate: Predicate,
     state: StateMut,
     parents: Parents,
@@ -67,10 +68,13 @@ pub enum Sorting {
     },
 }
 
-type ParentIds = SmallVec<[gix_hash::ObjectId; 1]>;
+/// The collection of parent ids we saw as part of the iteration.
+///
+/// Note that this list is truncated if [`Parents::First`] was used.
+pub type ParentIds = SmallVec<[gix_hash::ObjectId; 1]>;
 
 /// Information about a commit that we obtained naturally as part of the iteration.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct Info {
     /// The id of the commit.
     pub id: gix_hash::ObjectId,
@@ -83,6 +87,7 @@ pub struct Info {
 
 ///
 pub mod ancestors {
+    use smallvec::SmallVec;
     use std::{
         borrow::{Borrow, BorrowMut},
         collections::VecDeque,
@@ -92,7 +97,7 @@ pub mod ancestors {
     use gix_hashtable::HashSet;
     use gix_object::CommitRefIter;
 
-    use crate::commit::{Ancestors, Info, ParentIds, Parents, Sorting};
+    use crate::commit::{collect_parents, Ancestors, Either, Info, ParentIds, Parents, Sorting};
 
     /// The error is part of the item returned by the [Ancestors] iterator.
     #[derive(Debug, thiserror::Error)]
@@ -117,6 +122,7 @@ pub mod ancestors {
         buf: Vec<u8>,
         seen: HashSet<ObjectId>,
         parents_buf: Vec<u8>,
+        parent_ids: SmallVec<[(ObjectId, u64); 2]>,
     }
 
     impl Default for State {
@@ -127,6 +133,7 @@ pub mod ancestors {
                 buf: vec![],
                 seen: Default::default(),
                 parents_buf: vec![],
+                parent_ids: Default::default(),
             }
         }
     }
@@ -185,6 +192,15 @@ pub mod ancestors {
             if matches!(self.parents, Parents::First) {
                 self.queue_to_vecdeque();
             }
+            self
+        }
+
+        /// Set the commitgraph as `cache` to greatly accelerate any traversal.
+        ///
+        /// The cache will be used if possible, but we will fall-back without error to using the object
+        /// database for commit lookup. If the cache is corrupt, we will fall back to the object database as well.
+        pub fn commit_graph(mut self, cache: Option<gix_commitgraph::Graph>) -> Self {
+            self.cache = cache;
             self
         }
 
@@ -260,6 +276,7 @@ pub mod ancestors {
             }
             Self {
                 find,
+                cache: None,
                 predicate,
                 state,
                 parents: Default::default(),
@@ -332,23 +349,36 @@ pub mod ancestors {
 
             let (commit_time, oid) = state.queue.pop()?;
             let mut parents: ParentIds = Default::default();
-            match (self.find)(&oid, &mut state.buf) {
-                Ok(commit_iter) => {
-                    let mut count = 0;
+            match super::find(self.cache.as_ref(), &mut self.find, &oid, &mut state.buf) {
+                Ok(Either::CachedCommit(commit)) => {
+                    if !collect_parents(&mut state.parent_ids, self.cache.as_ref(), commit.iter_parents()) {
+                        // drop corrupt caches and try again with ODB
+                        self.cache = None;
+                        return self.next_by_commit_date(cutoff_older_than);
+                    }
+                    for (id, commit_time) in state.parent_ids.drain(..) {
+                        parents.push(id);
+                        let was_inserted = state.seen.insert(id);
+                        if !(was_inserted && (self.predicate)(&id)) {
+                            continue;
+                        }
+
+                        let parent_commit_time = commit_time as u32; // TODO: fix this once we have 64 bit date support
+                        match cutoff_older_than {
+                            Some(cutoff_older_than) if parent_commit_time < cutoff_older_than => continue,
+                            Some(_) | None => state.queue.insert(parent_commit_time, id),
+                        }
+                    }
+                }
+                Ok(Either::CommitRefIter(commit_iter)) => {
                     for token in commit_iter {
-                        count += 1;
-                        let is_first = count == 1;
                         match token {
                             Ok(gix_object::commit::ref_iter::Token::Tree { .. }) => continue,
                             Ok(gix_object::commit::ref_iter::Token::Parent { id }) => {
                                 parents.push(id);
                                 let was_inserted = state.seen.insert(id);
                                 if !(was_inserted && (self.predicate)(&id)) {
-                                    if is_first && matches!(self.parents, Parents::First) {
-                                        break;
-                                    } else {
-                                        continue;
-                                    }
+                                    continue;
                                 }
 
                                 let parent = (self.find)(id.as_ref(), &mut state.parents_buf).ok();
@@ -364,10 +394,6 @@ pub mod ancestors {
                                 match cutoff_older_than {
                                     Some(cutoff_older_than) if parent_commit_time < cutoff_older_than => continue,
                                     Some(_) | None => state.queue.insert(parent_commit_time, id),
-                                }
-
-                                if is_first && matches!(self.parents, Parents::First) {
-                                    break;
                                 }
                             }
                             Ok(_unused_token) => break,
@@ -402,8 +428,26 @@ pub mod ancestors {
             let state = self.state.borrow_mut();
             let oid = state.next.pop_front()?;
             let mut parents: ParentIds = Default::default();
-            match (self.find)(&oid, &mut state.buf) {
-                Ok(commit_iter) => {
+            match super::find(self.cache.as_ref(), &mut self.find, &oid, &mut state.buf) {
+                Ok(Either::CachedCommit(commit)) => {
+                    if !collect_parents(&mut state.parent_ids, self.cache.as_ref(), commit.iter_parents()) {
+                        // drop corrupt caches and try again with ODB
+                        self.cache = None;
+                        return self.next_by_topology();
+                    }
+
+                    for (id, _commit_time) in state.parent_ids.drain(..) {
+                        parents.push(id);
+                        let was_inserted = state.seen.insert(id);
+                        if was_inserted && (self.predicate)(&id) {
+                            state.next.push_back(id);
+                        }
+                        if matches!(self.parents, Parents::First) {
+                            break;
+                        }
+                    }
+                }
+                Ok(Either::CommitRefIter(commit_iter)) => {
                     for token in commit_iter {
                         match token {
                             Ok(gix_object::commit::ref_iter::Token::Tree { .. }) => continue,
@@ -435,5 +479,45 @@ pub mod ancestors {
                 commit_time: None,
             }))
         }
+    }
+}
+
+enum Either<'buf, 'cache> {
+    CommitRefIter(gix_object::CommitRefIter<'buf>),
+    CachedCommit(gix_commitgraph::file::Commit<'cache>),
+}
+
+fn collect_parents(
+    dest: &mut SmallVec<[(gix_hash::ObjectId, u64); 2]>,
+    cache: Option<&gix_commitgraph::Graph>,
+    parents: gix_commitgraph::file::commit::Parents<'_>,
+) -> bool {
+    dest.clear();
+    let cache = cache.as_ref().expect("parents iter is available, backed by `cache`");
+    for parent_id in parents {
+        match parent_id {
+            Ok(pos) => dest.push({
+                let parent = cache.commit_at(pos);
+                (parent.id().to_owned(), parent.committer_timestamp())
+            }),
+            Err(_err) => return false,
+        }
+    }
+    true
+}
+
+fn find<'cache, 'buf, Find, E>(
+    cache: Option<&'cache gix_commitgraph::Graph>,
+    mut find: Find,
+    id: &gix_hash::oid,
+    buf: &'buf mut Vec<u8>,
+) -> Result<Either<'buf, 'cache>, E>
+where
+    Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::CommitRefIter<'a>, E>,
+    E: std::error::Error + Send + Sync + 'static,
+{
+    match cache.and_then(|cache| cache.commit_by_id(id).map(Either::CachedCommit)) {
+        Some(c) => Ok(c),
+        None => find(id, buf).map(Either::CommitRefIter),
     }
 }

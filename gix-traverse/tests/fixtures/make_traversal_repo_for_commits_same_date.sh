@@ -19,3 +19,6 @@ git commit -q --allow-empty -m b1c2
 git checkout -q main
 git commit -q --allow-empty -m c5
 git merge branch1 -m m1b1
+
+git commit-graph write --no-progress --reachable
+git repack -adq
