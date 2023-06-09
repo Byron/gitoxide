@@ -18,3 +18,6 @@ GIT_COMMITTER_DATE="2000-01-02 00:00:00 +0000" git commit -q --allow-empty -m c2
 
 # Commit from branch1 made in 2001 merged in 2002
 GIT_COMMITTER_DATE="2002-01-02 00:00:00 +0000" git merge branch1 -m m1b1 #288e509293165cb5630d08f4185bdf2445bf6170-
+
+git commit-graph write --no-progress --reachable
+git repack -adq

@@ -106,27 +106,30 @@ mod ancestors {
         let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
         let head = repo.head()?.into_fully_peeled_id().expect("born")?;
 
-        for sorting in [
-            commit::Sorting::BreadthFirst,
-            commit::Sorting::ByCommitTimeNewestFirst,
-            commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-                time_in_seconds_since_epoch: 0,
-            },
-        ] {
-            let commits_graph_order = head
-                .ancestors()
-                .sorting(sorting)
-                .selected(|id| {
-                    let _assert_lifetime_works = &repo; // assure we can use repo here.
-                    id != hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7")
-                        && id != hex_to_id("bcb05040a6925f2ff5e10d3ae1f9264f2e8c43ac")
-                })?
-                .collect::<Result<Vec<_>, _>>()?;
-            assert_eq!(
-                commits_graph_order,
-                &[hex_to_id("288e509293165cb5630d08f4185bdf2445bf6170")],
-                "we ignore all but the first"
-            );
+        for use_commit_graph in [false, true] {
+            for sorting in [
+                commit::Sorting::BreadthFirst,
+                commit::Sorting::ByCommitTimeNewestFirst,
+                commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+                    time_in_seconds_since_epoch: 0,
+                },
+            ] {
+                let commits_graph_order = head
+                    .ancestors()
+                    .sorting(sorting)
+                    .use_commit_graph(use_commit_graph)
+                    .selected(|id| {
+                        let _assert_lifetime_works = &repo; // assure we can use repo here.
+                        id != hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7")
+                            && id != hex_to_id("bcb05040a6925f2ff5e10d3ae1f9264f2e8c43ac")
+                    })?
+                    .collect::<Result<Vec<_>, _>>()?;
+                assert_eq!(
+                    commits_graph_order,
+                    &[hex_to_id("288e509293165cb5630d08f4185bdf2445bf6170")],
+                    "we ignore all but the first"
+                );
+            }
         }
         Ok(())
     }

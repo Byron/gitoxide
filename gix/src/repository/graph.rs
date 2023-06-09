@@ -21,4 +21,13 @@ impl crate::Repository {
             gix_commitgraph::at(self.objects.store_ref().path().join("info")).ok(),
         )
     }
+
+    /// Return a cache for commits and their graph structure, as managed by `git commit-graph`, for accelerating commit walks on
+    /// a low level.
+    ///
+    /// Note that [`commit_graph()`][crate::Repository::commit_graph()] should be preferred for general purpose walks that don't
+    /// rely on the actual commit cache to be present, while leveraging it if possible.
+    pub fn commit_cache(&self) -> Result<gix_commitgraph::Graph, gix_commitgraph::init::Error> {
+        gix_commitgraph::at(self.objects.store_ref().path().join("info"))
+    }
 }

@@ -16,15 +16,15 @@ pub enum Error {
 /// A platform to traverse the revision graph by adding starting points as well as points which shouldn't be crossed,
 /// returned by [`Repository::rev_walk()`].
 ///
-/// **Note that we don't support the commitgraph data structure** as this API is based on hashes which are supposed to be retrieved
-/// as whole objects. The commitgraph only provides parent information, generation and the commit-time though, which is specifically
-/// tuned to accelerate custom commit walks. For that, please use the [Commit Graph][Repository::commit_graph()] which can attach
-/// data to each commit or accelerate custom walks.
+/// **Note that we automatically leverage the commitgraph data structure**, but if you know that additional information like
+/// author or commit messages will be required of *all* commits traversed here, it should be better to avoid trying to load it
+/// by [turning commit-graph support off][Platform::use_commit_graph()]. This certainly is a micro-optimization though.
 pub struct Platform<'repo> {
     pub(crate) repo: &'repo Repository,
     pub(crate) tips: Vec<ObjectId>,
     pub(crate) sorting: gix_traverse::commit::Sorting,
     pub(crate) parents: gix_traverse::commit::Parents,
+    pub(crate) use_commit_graph: bool,
 }
 
 impl<'repo> Platform<'repo> {
@@ -34,6 +34,7 @@ impl<'repo> Platform<'repo> {
             tips: tips.into_iter().map(Into::into).collect(),
             sorting: Default::default(),
             parents: Default::default(),
+            use_commit_graph: true,
         }
     }
 }
@@ -49,6 +50,15 @@ impl<'repo> Platform<'repo> {
     /// Only traverse the first parent of the commit graph.
     pub fn first_parent_only(mut self) -> Self {
         self.parents = gix_traverse::commit::Parents::First;
+        self
+    }
+
+    /// Allow using the commitgraph, if present, if `toggle` is `true`, or disallow it with `false`.
+    ///
+    /// Note that the commitgraph will be used by default, and that errors just lead to falling back to the object database,
+    /// it's treated as a cache.
+    pub fn use_commit_graph(mut self, toggle: bool) -> Self {
+        self.use_commit_graph = toggle;
         self
     }
 }
@@ -68,6 +78,7 @@ impl<'repo> Platform<'repo> {
             tips,
             sorting,
             parents,
+            use_commit_graph,
         } = self;
         Ok(revision::Walk {
             repo,
@@ -106,6 +117,7 @@ impl<'repo> Platform<'repo> {
                 )
                 .sorting(sorting)?
                 .parents(parents)
+                .commit_graph(use_commit_graph.then(|| self.repo.commit_cache().ok()).flatten())
                 // TODO: use wrapped items instead
                 .map(|res| res.map(|item| item.id)),
             ),
