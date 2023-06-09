@@ -19,10 +19,10 @@ pub enum Error {
 pub struct Info<'repo> {
     /// The detached id of the commit.
     pub id: gix_hash::ObjectId,
-    /// All parent ids we have encountered. Note that these will be at most one if [`Parents::First`] is enabled.
+    /// All parent ids we have encountered. Note that these will be at most one if [`Parents::First`][gix_traverse::commit::Parents::First] is enabled.
     pub parent_ids: gix_traverse::commit::ParentIds,
-    /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`], as the walk
-    /// needs to require the commit-date.
+    /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`][gix_traverse::commit::Sorting::BreadthFirst],
+    /// as the walk needs to require the commit-date.
     pub commit_time: Option<u64>,
 
     repo: &'repo Repository,
