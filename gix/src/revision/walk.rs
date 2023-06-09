@@ -1,6 +1,7 @@
 use gix_hash::ObjectId;
 use gix_odb::FindExt;
 
+use crate::ext::ObjectIdExt;
 use crate::{revision, Repository};
 
 /// The error returned by [`Platform::all()`].
@@ -13,13 +14,86 @@ pub enum Error {
     ShallowCommits(#[from] crate::shallow::open::Error),
 }
 
+/// Information about a commit that we obtained naturally as part of the iteration.
+#[derive(Debug, Clone)]
+pub struct Info<'repo> {
+    /// The detached id of the commit.
+    pub id: gix_hash::ObjectId,
+    /// All parent ids we have encountered. Note that these will be at most one if [`Parents::First`][gix_traverse::commit::Parents::First] is enabled.
+    pub parent_ids: gix_traverse::commit::ParentIds,
+    /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`][gix_traverse::commit::Sorting::BreadthFirst],
+    /// as the walk needs to require the commit-date.
+    pub commit_time: Option<u64>,
+
+    repo: &'repo Repository,
+}
+
+/// Access
+impl<'repo> Info<'repo> {
+    /// Provide an attached version of our [`id`][Info::id] field.
+    pub fn id(&self) -> crate::Id<'repo> {
+        self.id.attach(self.repo)
+    }
+
+    /// Read the whole object from the object database.
+    ///
+    /// Note that this is an expensive operation which shouldn't be performed unless one needs more than parent ids
+    /// and commit time.
+    pub fn object(&self) -> Result<crate::Commit<'repo>, crate::object::find::existing::Error> {
+        Ok(self.id().object()?.into_commit())
+    }
+
+    /// Provide an iterator yielding attached versions of our [`parent_ids`][Info::parent_ids] field.
+    pub fn parent_ids(&self) -> impl Iterator<Item = crate::Id<'repo>> + '_ {
+        self.parent_ids.iter().map(|id| id.attach(self.repo))
+    }
+
+    /// Returns the commit-time of this commit.
+    ///
+    /// ### Panics
+    ///
+    /// If the iteration wasn't ordered by date.
+    pub fn commit_time(&self) -> u64 {
+        self.commit_time.expect("traversal involving date caused it to be set")
+    }
+}
+
+/// Initialization and detachment
+impl<'repo> Info<'repo> {
+    /// Create a new instance that represents `info`, but is attached to `repo` as well.
+    pub fn new(info: gix_traverse::commit::Info, repo: &'repo Repository) -> Self {
+        Info {
+            id: info.id,
+            parent_ids: info.parent_ids,
+            commit_time: info.commit_time,
+            repo,
+        }
+    }
+    /// Consume this instance and remove the reference to the underlying repository.
+    ///
+    /// This is useful for sending instances across threads, for example.
+    pub fn detach(self) -> gix_traverse::commit::Info {
+        gix_traverse::commit::Info {
+            id: self.id,
+            parent_ids: self.parent_ids,
+            commit_time: self.commit_time,
+        }
+    }
+}
+
 /// A platform to traverse the revision graph by adding starting points as well as points which shouldn't be crossed,
 /// returned by [`Repository::rev_walk()`].
+///
+/// **Note that we automatically leverage the commitgraph data structure**, but if you know that additional information like
+/// author or commit messages will be required of *all* commits traversed here, it should be better to avoid trying to load it
+/// by [turning commit-graph support off][Platform::use_commit_graph()]. This certainly is a micro-optimization though.
 pub struct Platform<'repo> {
     pub(crate) repo: &'repo Repository,
     pub(crate) tips: Vec<ObjectId>,
     pub(crate) sorting: gix_traverse::commit::Sorting,
     pub(crate) parents: gix_traverse::commit::Parents,
+    pub(crate) use_commit_graph: bool,
+    pub(crate) commit_graph: Option<gix_commitgraph::Graph>,
 }
 
 impl<'repo> Platform<'repo> {
@@ -29,13 +103,15 @@ impl<'repo> Platform<'repo> {
             tips: tips.into_iter().map(Into::into).collect(),
             sorting: Default::default(),
             parents: Default::default(),
+            use_commit_graph: true,
+            commit_graph: None,
         }
     }
 }
 
 /// Create-time builder methods
 impl<'repo> Platform<'repo> {
-    /// Set the sort mode for commits to the given value. The default is to order by topology.
+    /// Set the sort mode for commits to the given value. The default is to order topologically breadth-first.
     pub fn sorting(mut self, sorting: gix_traverse::commit::Sorting) -> Self {
         self.sorting = sorting;
         self
@@ -44,6 +120,26 @@ impl<'repo> Platform<'repo> {
     /// Only traverse the first parent of the commit graph.
     pub fn first_parent_only(mut self) -> Self {
         self.parents = gix_traverse::commit::Parents::First;
+        self
+    }
+
+    /// Allow using the commitgraph, if present, if `toggle` is `true`, or disallow it with `false`.
+    ///
+    /// Note that the commitgraph will be used by default, and that errors just lead to falling back to the object database,
+    /// it's treated as a cache.
+    pub fn use_commit_graph(mut self, toggle: bool) -> Self {
+        self.use_commit_graph = toggle;
+        self
+    }
+
+    /// Set or unset the commit-graph to use for the iteration. This is useful if the caller wants to check if a commit-graph exists
+    /// and refer different implementations depending on the outcome.
+    ///
+    /// It interacts with [`use_commit_graph`][Platform::use_commit_graph()] as one would expect, but it's worth noting that if `None`,
+    /// with [`use_commit_graph`][Platform::use_commit_graph()] being `true`, a graph will still be used for iteration.
+    /// To turn the commit-graph off, call [`use_commit_graph(false)`][Platform::use_commit_graph()] instead.
+    pub fn with_commit_graph(mut self, graph: Option<gix_commitgraph::Graph>) -> Self {
+        self.commit_graph = graph;
         self
     }
 }
@@ -63,6 +159,8 @@ impl<'repo> Platform<'repo> {
             tips,
             sorting,
             parents,
+            use_commit_graph,
+            commit_graph,
         } = self;
         Ok(revision::Walk {
             repo,
@@ -100,7 +198,8 @@ impl<'repo> Platform<'repo> {
                     },
                 )
                 .sorting(sorting)?
-                .parents(parents),
+                .parents(parents)
+                .commit_graph(commit_graph.or(use_commit_graph.then(|| self.repo.commit_graph().ok()).flatten())),
             ),
         })
     }
@@ -116,20 +215,21 @@ impl<'repo> Platform<'repo> {
 }
 
 pub(crate) mod iter {
-    use crate::{ext::ObjectIdExt, Id};
-
     /// The iterator returned by [`crate::revision::walk::Platform::all()`].
     pub struct Walk<'repo> {
         pub(crate) repo: &'repo crate::Repository,
-        pub(crate) inner:
-            Box<dyn Iterator<Item = Result<gix_hash::ObjectId, gix_traverse::commit::ancestors::Error>> + 'repo>,
+        pub(crate) inner: Box<
+            dyn Iterator<Item = Result<gix_traverse::commit::Info, gix_traverse::commit::ancestors::Error>> + 'repo,
+        >,
     }
 
     impl<'repo> Iterator for Walk<'repo> {
-        type Item = Result<Id<'repo>, gix_traverse::commit::ancestors::Error>;
+        type Item = Result<super::Info<'repo>, gix_traverse::commit::ancestors::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
-            self.inner.next().map(|res| res.map(|id| id.attach(self.repo)))
+            self.inner
+                .next()
+                .map(|res| res.map(|info| super::Info::new(info, self.repo)))
         }
     }
 }

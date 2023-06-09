@@ -57,7 +57,7 @@ impl Algorithm {
                     self.non_common_revs -= 1;
                 }
             }
-            while let Some((id, generation)) = queue.pop() {
+            while let Some((id, generation)) = queue.pop_value() {
                 if graph
                     .get(&id)
                     .map_or(true, |commit| !commit.data.flags.contains(Flags::SEEN))
@@ -106,7 +106,7 @@ impl Negotiator for Algorithm {
 
     fn next_have(&mut self, graph: &mut crate::Graph<'_>) -> Option<Result<ObjectId, Error>> {
         loop {
-            let id = self.revs.pop().filter(|_| self.non_common_revs != 0)?;
+            let id = self.revs.pop_value().filter(|_| self.non_common_revs != 0)?;
             let commit = graph.get_mut(&id).expect("it was added to the graph by now");
             let flags = &mut commit.data.flags;
             *flags |= Flags::POPPED;

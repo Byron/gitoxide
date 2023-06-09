@@ -18,7 +18,7 @@ default = []
 ## Discover all git repositories within a directory. Particularly useful with [skim](https://github.com/lotabout/skim).
 organize = ["dep:gix-url", "dep:jwalk"]
 ## Derive the amount of time invested into a git repository akin to [git-hours](https://github.com/kimmobrunfeldt/git-hours).
-estimate-hours = ["dep:itertools", "dep:fs-err", "dep:crossbeam-channel", "dep:mime_guess"]
+estimate-hours = ["dep:itertools", "dep:fs-err", "dep:crossbeam-channel", "dep:smallvec"]
 ## Gather information about repositories and store it in a database for easy querying.
 query = ["dep:rusqlite"]
 
@@ -64,7 +64,7 @@ jwalk = { version = "0.8.0", optional = true }
 itertools = { version = "0.10.1", optional = true }
 fs-err = { version = "2.6.0", optional = true }
 crossbeam-channel = { version = "0.5.6", optional = true }
-mime_guess = { version = "2.0.4", optional = true }
+smallvec = { version = "1.10.0", optional = true }
 
 # for 'query'
 rusqlite = { version = "0.29.0", optional = true, features = ["bundled"] }

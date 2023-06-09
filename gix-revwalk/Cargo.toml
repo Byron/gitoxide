@@ -1,14 +1,13 @@
 [package]
-name = "gix-traverse"
-version = "0.26.0"
+name = "gix-revwalk"
+version = "0.1.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
-description = "A WIP crate of the gitoxide project"
+description = "A crate providing utilities for walking the revision graph"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
 rust-version = "1.64"
-autotests = false
 
 [lib]
 doctest = false
@@ -17,7 +16,7 @@ doctest = false
 gix-hash = { version = "^0.11.2", path = "../gix-hash" }
 gix-object = { version = "^0.30.0", path = "../gix-object" }
 gix-hashtable = { version = "^0.2.1", path = "../gix-hashtable" }
-gix-revwalk = { version = "^0.1.0", path = "../gix-revwalk" }
 gix-commitgraph = { version = "^0.16.0", path = "../gix-commitgraph" }
+
+thiserror = "1.0.26"
 smallvec = "1.10.0"
-thiserror = "1.0.32"

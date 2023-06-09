@@ -200,7 +200,7 @@ pub(crate) mod function {
         graph.clear();
         graph.insert(commit.to_owned(), 0u32);
 
-        while let Some(commit) = queue.pop() {
+        while let Some(commit) = queue.pop_value() {
             commits_seen += 1;
             let flags = if let Some(name) = name_by_oid.get(&commit) {
                 if candidates.len() < max_candidates {
@@ -324,7 +324,7 @@ pub(crate) mod function {
         first_parent: bool,
     ) -> Result<u32, Error> {
         let mut commits_seen = 0;
-        while let Some(commit) = queue.pop() {
+        while let Some(commit) = queue.pop_value() {
             commits_seen += 1;
             let flags = graph[&commit];
             if (flags & best_candidate.identity_bit) == best_candidate.identity_bit {

@@ -1,9 +1,14 @@
 use std::collections::{hash_map::Entry, HashMap};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 
 use gix::bstr::BStr;
+use gix::odb::FindExt;
 use itertools::Itertools;
+use smallvec::SmallVec;
 
-use crate::hours::{FileStats, LineStats, WorkByEmail, WorkByPerson};
+use crate::hours::util::{add_lines, remove_lines};
+use crate::hours::{CommitIdx, FileStats, LineStats, WorkByEmail, WorkByPerson};
 
 const MINUTES_PER_HOUR: f32 = 60.0;
 pub const HOURS_PER_WORKDAY: f32 = 8.0;
@@ -59,6 +64,168 @@ pub fn estimate_hours(
         files,
         lines,
     }
+}
+
+type CommitChangeLineCounters = (
+    Option<Arc<AtomicUsize>>,
+    Option<Arc<AtomicUsize>>,
+    Option<Arc<AtomicUsize>>,
+);
+
+type SpawnResultWithReturnChannelAndWorkers<'scope> = (
+    crossbeam_channel::Sender<Vec<(CommitIdx, Option<gix::hash::ObjectId>, gix::hash::ObjectId)>>,
+    Vec<std::thread::ScopedJoinHandle<'scope, anyhow::Result<Vec<(CommitIdx, FileStats, LineStats)>>>>,
+);
+
+pub fn spawn_tree_delta_threads<'scope>(
+    scope: &'scope std::thread::Scope<'scope, '_>,
+    threads: usize,
+    line_stats: bool,
+    repo: gix::Repository,
+    stat_counters: CommitChangeLineCounters,
+) -> SpawnResultWithReturnChannelAndWorkers<'scope> {
+    let (tx, rx) = crossbeam_channel::unbounded::<Vec<(CommitIdx, Option<gix::hash::ObjectId>, gix::hash::ObjectId)>>();
+    let stat_workers = (0..threads)
+        .map(|_| {
+            scope.spawn({
+                let stats_counters = stat_counters.clone();
+                let mut repo = repo.clone();
+                repo.object_cache_size_if_unset((850 * 1024 * 1024) / threads);
+                let rx = rx.clone();
+                move || -> Result<_, anyhow::Error> {
+                    let mut out = Vec::new();
+                    let (commit_counter, change_counter, lines_counter) = stats_counters;
+                    let mut attributes = line_stats
+                        .then(|| -> anyhow::Result<_> {
+                            repo.index_or_load_from_head().map_err(Into::into).and_then(|index| {
+                                repo.attributes(
+                                    &index,
+                                    gix::worktree::cache::state::attributes::Source::IdMapping,
+                                    gix::worktree::cache::state::ignore::Source::IdMapping,
+                                    None,
+                                )
+                                .map_err(Into::into)
+                                .map(|attrs| {
+                                    let matches = attrs.selected_attribute_matches(["binary", "text"]);
+                                    (attrs, matches)
+                                })
+                            })
+                        })
+                        .transpose()?;
+                    for chunk in rx {
+                        for (commit_idx, parent_commit, commit) in chunk {
+                            if let Some(c) = commit_counter.as_ref() {
+                                c.fetch_add(1, Ordering::SeqCst);
+                            }
+                            if gix::interrupt::is_triggered() {
+                                return Ok(out);
+                            }
+                            let mut files = FileStats::default();
+                            let mut lines = LineStats::default();
+                            let from = match parent_commit {
+                                Some(id) => match repo.find_object(id).ok().and_then(|c| c.peel_to_tree().ok()) {
+                                    Some(tree) => tree,
+                                    None => continue,
+                                },
+                                None => repo.empty_tree(),
+                            };
+                            let to = match repo.find_object(commit).ok().and_then(|c| c.peel_to_tree().ok()) {
+                                Some(c) => c,
+                                None => continue,
+                            };
+                            from.changes()?
+                                .track_filename()
+                                .track_rewrites(None)
+                                .for_each_to_obtain_tree(&to, |change| {
+                                    use gix::object::tree::diff::change::Event::*;
+                                    if let Some(c) = change_counter.as_ref() {
+                                        c.fetch_add(1, Ordering::SeqCst);
+                                    }
+                                    match change.event {
+                                        Rewrite { .. } => {
+                                            unreachable!("we turned that off")
+                                        }
+                                        Addition { entry_mode, id } => {
+                                            if entry_mode.is_no_tree() {
+                                                files.added += 1;
+                                                add_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
+                                            }
+                                        }
+                                        Deletion { entry_mode, id } => {
+                                            if entry_mode.is_no_tree() {
+                                                files.removed += 1;
+                                                remove_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
+                                            }
+                                        }
+                                        Modification {
+                                            entry_mode,
+                                            previous_entry_mode,
+                                            id,
+                                            previous_id,
+                                        } => {
+                                            match (previous_entry_mode.is_blob(), entry_mode.is_blob()) {
+                                                (false, false) => {}
+                                                (false, true) => {
+                                                    files.added += 1;
+                                                    add_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
+                                                }
+                                                (true, false) => {
+                                                    files.removed += 1;
+                                                    remove_lines(
+                                                        line_stats,
+                                                        lines_counter.as_deref(),
+                                                        &mut lines,
+                                                        previous_id,
+                                                    );
+                                                }
+                                                (true, true) => {
+                                                    files.modified += 1;
+                                                    if let Some((attrs, matches)) = attributes.as_mut() {
+                                                        let entry = attrs.at_entry(
+                                                            change.location,
+                                                            Some(false),
+                                                            |id, buf| repo.objects.find_blob(id, buf),
+                                                        )?;
+                                                        let is_text_file = if entry.matching_attributes(matches) {
+                                                            let attrs: SmallVec<[_; 2]> =
+                                                                matches.iter_selected().collect();
+                                                            let binary = &attrs[0];
+                                                            let text = &attrs[1];
+                                                            !binary.assignment.state.is_set()
+                                                                && !text.assignment.state.is_unset()
+                                                        } else {
+                                                            // In the absence of binary or text markers, we assume it's text.
+                                                            true
+                                                        };
+
+                                                        if let Some(Ok(diff)) =
+                                                            is_text_file.then(|| change.event.diff()).flatten()
+                                                        {
+                                                            let mut nl = 0;
+                                                            let counts = diff.line_counts();
+                                                            nl += counts.insertions as usize + counts.removals as usize;
+                                                            lines.added += counts.insertions as usize;
+                                                            lines.removed += counts.removals as usize;
+                                                            if let Some(c) = lines_counter.as_ref() {
+                                                                c.fetch_add(nl, Ordering::SeqCst);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Ok::<_, std::io::Error>(Default::default())
+                                })?;
+                            out.push((commit_idx, files, lines));
+                        }
+                    }
+                    Ok(out)
+                }
+            })
+        })
+        .collect::<Vec<_>>();
+    (tx, stat_workers)
 }
 
 pub fn deduplicate_identities(persons: &[WorkByEmail]) -> Vec<WorkByPerson> {

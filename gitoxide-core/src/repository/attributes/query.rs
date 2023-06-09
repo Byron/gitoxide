@@ -1,5 +1,3 @@
-use gix::odb::FindExt;
-
 use crate::OutputFormat;
 
 pub struct Options {
@@ -63,47 +61,8 @@ pub(crate) mod function {
     }
 }
 
-pub(crate) enum Index {
-    Shared(gix::worktree::Index),
-    Owned(gix::index::File),
-}
-
-impl std::ops::Deref for Index {
-    type Target = gix::index::File;
-
-    fn deref(&self) -> &Self::Target {
-        match self {
-            Index::Shared(i) => i,
-            Index::Owned(i) => i,
-        }
-    }
-}
-
-impl Index {
-    pub fn into_owned(self) -> gix::index::File {
-        match self {
-            Index::Shared(i) => gix::index::File::clone(&i),
-            Index::Owned(i) => i,
-        }
-    }
-}
-
-pub(crate) fn index_on_demand(repo: &gix::Repository) -> anyhow::Result<Index> {
-    Ok(match repo.index() {
-        Ok(index) => Index::Shared(index),
-        Err(gix::worktree::open_index::Error::IndexFile(_)) => {
-            let tree = repo.head_commit()?.tree_id()?;
-            Index::Owned(gix::index::File::from_state(
-                gix::index::State::from_tree(&tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?,
-                repo.git_dir().join("index"),
-            ))
-        }
-        Err(err) => return Err(err.into()),
-    })
-}
-
 pub(crate) fn attributes_cache(repo: &gix::Repository) -> anyhow::Result<gix::worktree::Cache> {
-    let index = index_on_demand(repo)?;
+    let index = repo.index_or_load_from_head()?;
     Ok(repo.attributes(
         &index,
         if repo.is_bare() {

@@ -21,10 +21,7 @@ pub(crate) mod function {
     use gix::{odb::FindExt, Progress};
 
     use crate::{
-        repository::attributes::{
-            query::{attributes_cache, index_on_demand},
-            validate_baseline::Options,
-        },
+        repository::attributes::{query::attributes_cache, validate_baseline::Options},
         OutputFormat,
     };
 
@@ -59,7 +56,7 @@ pub(crate) mod function {
                 let repo = repo.clone();
                 let num_entries = &mut num_entries;
                 move || -> anyhow::Result<_> {
-                    let index = index_on_demand(&repo)?.into_owned();
+                    let index = repo.index_or_load_from_head()?.into_owned();
                     let (entries, path_backing) = index.into_parts().0.into_entries();
                     *num_entries = Some(entries.len());
                     let iter = Box::new(entries.into_iter().map(move |e| {

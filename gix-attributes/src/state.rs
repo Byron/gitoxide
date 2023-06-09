@@ -69,6 +69,16 @@ impl StateRef<'_> {
     pub fn is_unspecified(&self) -> bool {
         matches!(self, StateRef::Unspecified)
     }
+
+    /// Return `true` if the associated attribute was set with `attr`. Note that this will also be `true` if a value is assigned.
+    pub fn is_set(&self) -> bool {
+        matches!(self, StateRef::Set | StateRef::Value(_))
+    }
+
+    /// Return `true` if the associated attribute was set with `-attr` to specifically remove it.
+    pub fn is_unset(&self) -> bool {
+        matches!(self, StateRef::Unset)
+    }
 }
 
 /// Initialization

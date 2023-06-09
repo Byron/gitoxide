@@ -9,7 +9,12 @@ fn no() -> crate::Result {
         let repo = named_subrepo_opts("make_shallow_repo.sh", name, crate::restricted())?;
         assert!(!repo.is_shallow());
         assert!(repo.shallow_commits()?.is_none());
-        let commits: Vec<_> = repo.head_id()?.ancestors().all()?.collect::<Result<_, _>>()?;
+        let commits: Vec<_> = repo
+            .head_id()?
+            .ancestors()
+            .all()?
+            .map(|c| c.map(|c| c.id))
+            .collect::<Result<_, _>>()?;
         let expected = if name == "base" {
             vec![
                 hex_to_id("30887839de28edf7ab66c860e5c58b4d445f6b12"),
@@ -49,7 +54,12 @@ mod traverse {
     fn boundary_is_detected_triggering_no_error() -> crate::Result {
         for name in ["shallow.git", "shallow"] {
             let repo = named_subrepo_opts("make_shallow_repo.sh", name, crate::restricted())?;
-            let commits: Vec<_> = repo.head_id()?.ancestors().all()?.collect::<Result<_, _>>()?;
+            let commits: Vec<_> = repo
+                .head_id()?
+                .ancestors()
+                .all()?
+                .map(|c| c.map(|c| c.id))
+                .collect::<Result<_, _>>()?;
             assert_eq!(commits, [hex_to_id("30887839de28edf7ab66c860e5c58b4d445f6b12")]);
         }
         Ok(())
@@ -78,6 +88,7 @@ mod traverse {
                 .ancestors()
                 .sorting(Sorting::ByCommitTimeNewestFirst)
                 .all()?
+                .map(|c| c.map(|c| c.id))
                 .collect::<Result<_, _>>()?;
             assert_eq!(
                 commits,

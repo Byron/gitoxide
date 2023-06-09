@@ -246,6 +246,7 @@ fn traversals() -> crate::Result {
                 move |oid, buf| db.find_commit_iter(oid, buf).map(|t| t.0)
             })
             .map(Result::unwrap)
+            .map(|c| c.id)
             .collect::<Vec<_>>();
             if let Some(take) = take {
                 commits.resize(take, gix_hash::Kind::Sha1.null());

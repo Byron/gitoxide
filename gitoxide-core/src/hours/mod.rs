@@ -1,10 +1,9 @@
-use std::{collections::BTreeSet, convert::Infallible, io, path::Path, sync::atomic::Ordering, time::Instant};
+use std::{collections::BTreeSet, io, path::Path, time::Instant};
 
-use anyhow::{anyhow, bail};
+use anyhow::bail;
 use gix::{
     actor,
     bstr::{BStr, ByteSlice},
-    interrupt,
     prelude::*,
     progress, Progress,
 };
@@ -59,33 +58,12 @@ where
     let threads = gix::features::parallel::num_threads(threads);
 
     let (commit_authors, stats, is_shallow, skipped_merge_commits) = {
-        let stat_progress = needs_stats.then(|| progress.add_child("extract stats")).map(|mut p| {
-            p.init(None, progress::count("commits"));
-            p
-        });
-        let stat_counter = stat_progress.as_ref().and_then(|p| p.counter());
-
-        let change_progress = needs_stats.then(|| progress.add_child("find changes")).map(|mut p| {
-            p.init(None, progress::count("modified files"));
-            p
-        });
-        let change_counter = change_progress.as_ref().and_then(|p| p.counter());
-
-        let lines_progress = line_stats.then(|| progress.add_child("find changes")).map(|mut p| {
-            p.init(None, progress::count("diff lines"));
-            p
-        });
-        let lines_counter = lines_progress.as_ref().and_then(|p| p.counter());
-
-        let mut progress = progress.add_child("traverse commit graph");
-        progress.init(None, progress::count("commits"));
-
         std::thread::scope(|scope| -> anyhow::Result<_> {
             let start = Instant::now();
             let (tx, rx) = std::sync::mpsc::channel::<(u32, Vec<u8>)>();
             let mailmap = repo.open_mailmap();
 
-            let commit_thread = scope.spawn(move || -> anyhow::Result<Vec<_>> {
+            let extract_signatures = scope.spawn(move || -> anyhow::Result<Vec<_>> {
                 let mut out = Vec::new();
                 for (commit_idx, commit_data) in rx {
                     if let Ok(author) = gix::objs::CommitRefIter::from_bytes(&commit_data)
@@ -127,150 +105,37 @@ where
                 Ok(out)
             });
 
+            let (stats_progresses, stats_counters) = needs_stats
+                .then(|| {
+                    let mut sp = progress.add_child("extract stats");
+                    sp.init(None, progress::count("commits"));
+                    let sc = sp.counter();
+
+                    let mut cp = progress.add_child("find changes");
+                    cp.init(None, progress::count("modified files"));
+                    let cc = cp.counter();
+
+                    let mut lp = progress.add_child("find changes");
+                    lp.init(None, progress::count("diff lines"));
+                    let lc = lp.counter();
+
+                    (Some((sp, cp, lp)), Some((sc, cc, lc)))
+                })
+                .unwrap_or_default();
+
+            let mut progress = progress.add_child("traverse commit graph");
+            progress.init(None, progress::count("commits"));
+
             let (tx_tree_id, stat_threads) = needs_stats
                 .then(|| {
-                    let (tx, rx) =
-                        crossbeam_channel::unbounded::<Vec<(u32, Option<gix::hash::ObjectId>, gix::hash::ObjectId)>>();
-                    let stat_workers = (0..threads)
-                        .map(|_| {
-                            scope.spawn({
-                                let commit_counter = stat_counter.clone();
-                                let change_counter = change_counter.clone();
-                                let lines_counter = lines_counter.clone();
-                                let mut repo = repo.clone();
-                                repo.object_cache_size_if_unset((850 * 1024 * 1024) / threads);
-                                let rx = rx.clone();
-                                move || -> Result<_, anyhow::Error> {
-                                    let mut out = Vec::new();
-                                    for chunk in rx {
-                                        for (commit_idx, parent_commit, commit) in chunk {
-                                            if let Some(c) = commit_counter.as_ref() {
-                                                c.fetch_add(1, Ordering::SeqCst);
-                                            }
-                                            if gix::interrupt::is_triggered() {
-                                                return Ok(out);
-                                            }
-                                            let mut files = FileStats::default();
-                                            let mut lines = LineStats::default();
-                                            let from = match parent_commit {
-                                                Some(id) => {
-                                                    match repo.find_object(id).ok().and_then(|c| c.peel_to_tree().ok())
-                                                    {
-                                                        Some(tree) => tree,
-                                                        None => continue,
-                                                    }
-                                                }
-                                                None => repo.empty_tree(),
-                                            };
-                                            let to =
-                                                match repo.find_object(commit).ok().and_then(|c| c.peel_to_tree().ok())
-                                                {
-                                                    Some(c) => c,
-                                                    None => continue,
-                                                };
-                                            from.changes()?
-                                                .track_filename()
-                                                .track_rewrites(None)
-                                                .for_each_to_obtain_tree(&to, |change| {
-                                                    use gix::object::tree::diff::change::Event::*;
-                                                    if let Some(c) = change_counter.as_ref() {
-                                                        c.fetch_add(1, Ordering::SeqCst);
-                                                    }
-                                                    match change.event {
-                                                        Rewrite { .. } => {
-                                                            unreachable!("we turned that off")
-                                                        }
-                                                        Addition { entry_mode, id } => {
-                                                            if entry_mode.is_no_tree() {
-                                                                files.added += 1;
-                                                                add_lines(
-                                                                    line_stats,
-                                                                    lines_counter.as_deref(),
-                                                                    &mut lines,
-                                                                    id,
-                                                                );
-                                                            }
-                                                        }
-                                                        Deletion { entry_mode, id } => {
-                                                            if entry_mode.is_no_tree() {
-                                                                files.removed += 1;
-                                                                remove_lines(
-                                                                    line_stats,
-                                                                    lines_counter.as_deref(),
-                                                                    &mut lines,
-                                                                    id,
-                                                                );
-                                                            }
-                                                        }
-                                                        Modification {
-                                                            entry_mode,
-                                                            previous_entry_mode,
-                                                            id,
-                                                            previous_id,
-                                                        } => {
-                                                            match (previous_entry_mode.is_blob(), entry_mode.is_blob())
-                                                            {
-                                                                (false, false) => {}
-                                                                (false, true) => {
-                                                                    files.added += 1;
-                                                                    add_lines(
-                                                                        line_stats,
-                                                                        lines_counter.as_deref(),
-                                                                        &mut lines,
-                                                                        id,
-                                                                    );
-                                                                }
-                                                                (true, false) => {
-                                                                    files.removed += 1;
-                                                                    remove_lines(
-                                                                        line_stats,
-                                                                        lines_counter.as_deref(),
-                                                                        &mut lines,
-                                                                        previous_id,
-                                                                    );
-                                                                }
-                                                                (true, true) => {
-                                                                    files.modified += 1;
-                                                                    if line_stats {
-                                                                        // TODO: replace this with proper git-attributes - this isn't
-                                                                        //       really working, can't see shell scripts for example.
-                                                                        let is_text_file = mime_guess::from_path(
-                                                                            gix::path::from_bstr(change.location)
-                                                                                .as_ref(),
-                                                                        )
-                                                                        .first_or_text_plain()
-                                                                        .type_()
-                                                                            == mime_guess::mime::TEXT;
-                                                                        if let Some(Ok(diff)) = is_text_file
-                                                                            .then(|| change.event.diff())
-                                                                            .flatten()
-                                                                        {
-                                                                            let mut nl = 0;
-                                                                            let counts = diff.line_counts();
-                                                                            nl += counts.insertions as usize
-                                                                                + counts.removals as usize;
-                                                                            lines.added += counts.insertions as usize;
-                                                                            lines.removed += counts.removals as usize;
-                                                                            if let Some(c) = lines_counter.as_ref() {
-                                                                                c.fetch_add(nl, Ordering::SeqCst);
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    Ok::<_, Infallible>(Default::default())
-                                                })?;
-                                            out.push((commit_idx, files, lines));
-                                        }
-                                    }
-                                    Ok(out)
-                                }
-                            })
-                        })
-                        .collect::<Vec<_>>();
-                    (Some(tx), stat_workers)
+                    let (tx, threads) = spawn_tree_delta_threads(
+                        scope,
+                        threads,
+                        line_stats,
+                        repo.clone(),
+                        stats_counters.clone().expect("counters are set"),
+                    );
+                    (Some(tx), threads)
                 })
                 .unwrap_or_default();
 
@@ -278,24 +143,31 @@ where
             let mut skipped_merge_commits = 0;
             const CHUNK_SIZE: usize = 50;
             let mut chunk = Vec::with_capacity(CHUNK_SIZE);
-            let commit_iter = interrupt::Iter::new(
-                commit_id.ancestors(|oid, buf| {
-                    progress.inc();
-                    repo.objects.find(oid, buf).map(|obj| {
-                        tx.send((commit_idx, obj.data.to_owned())).ok();
-                        if let Some((tx_tree, first_parent, commit)) = tx_tree_id.as_ref().and_then(|tx| {
-                            let mut parents = gix::objs::CommitRefIter::from_bytes(obj.data).parent_ids();
-                            let res = parents
+            let mut commit_iter = commit_id.ancestors(|oid, buf| repo.objects.find_commit_iter(oid, buf));
+            let mut is_shallow = false;
+            while let Some(c) = commit_iter.next() {
+                progress.inc();
+                if gix::interrupt::is_triggered() {
+                    bail!("Cancelled by user");
+                }
+                match c {
+                    Ok(c) => {
+                        tx.send((commit_idx, commit_iter.commit_data().to_owned())).ok();
+                        let tree_delta_info = tx_tree_id.as_ref().and_then(|tx| {
+                            let mut parents = c.parent_ids.into_iter();
+                            parents
                                 .next()
-                                .map(|first_parent| (tx, Some(first_parent), oid.to_owned()));
-                            match parents.next() {
-                                Some(_) => {
-                                    skipped_merge_commits += 1;
-                                    None
-                                }
-                                None => res,
-                            }
-                        }) {
+                                .map(|first_parent| (tx, Some(first_parent), c.id.to_owned()))
+                                .filter(|_| {
+                                    if parents.next().is_some() {
+                                        skipped_merge_commits += 1;
+                                        false
+                                    } else {
+                                        true
+                                    }
+                                })
+                        });
+                        if let Some((tx_tree, first_parent, commit)) = tree_delta_info {
                             if chunk.len() == CHUNK_SIZE {
                                 tx_tree
                                     .send(std::mem::replace(&mut chunk, Vec::with_capacity(CHUNK_SIZE)))
@@ -304,16 +176,8 @@ where
                                 chunk.push((commit_idx, first_parent, commit))
                             }
                         }
-                        commit_idx = commit_idx.checked_add(1).expect("less then 4 billion commits");
-                        gix::objs::CommitRefIter::from_bytes(obj.data)
-                    })
-                }),
-                || anyhow!("Cancelled by user"),
-            );
-            let mut is_shallow = false;
-            for c in commit_iter {
-                match c? {
-                    Ok(c) => c,
+                        commit_idx += 1;
+                    }
                     Err(gix::traverse::commit::ancestors::Error::FindExisting { .. }) => {
                         is_shallow = true;
                         break;
@@ -328,9 +192,9 @@ where
             progress.show_throughput(start);
             drop(progress);
 
-            let stats_by_commit_idx = match stat_progress {
-                Some(mut progress) => {
-                    progress.set_max(Some(commit_idx as usize - skipped_merge_commits));
+            let stats_by_commit_idx = match stats_progresses {
+                Some((mut stat_progress, change_progress, line_progress)) => {
+                    stat_progress.set_max(Some(commit_idx as usize - skipped_merge_commits));
                     let mut stats = Vec::new();
                     for handle in stat_threads {
                         stats.extend(handle.join().expect("no panic")?);
@@ -339,20 +203,16 @@ where
                         }
                     }
                     stats.sort_by_key(|t| t.0);
-                    progress.show_throughput(start);
+                    stat_progress.show_throughput(start);
+                    change_progress.show_throughput(start);
+                    line_progress.show_throughput(start);
                     stats
                 }
                 None => Vec::new(),
             };
-            if let Some(progress) = change_progress {
-                progress.show_throughput(start);
-            }
-            if let Some(progress) = lines_progress {
-                progress.show_throughput(start);
-            }
 
             Ok((
-                commit_thread.join().expect("no panic")?,
+                extract_signatures.join().expect("no panic")?,
                 stats_by_commit_idx,
                 is_shallow,
                 skipped_merge_commits,
@@ -476,4 +336,5 @@ mod core;
 use self::core::{deduplicate_identities, estimate_hours, HOURS_PER_WORKDAY};
 
 mod util;
-use util::{add_lines, remove_lines, FileStats, LineStats, WorkByEmail, WorkByPerson};
+use crate::hours::core::spawn_tree_delta_threads;
+use util::{CommitIdx, FileStats, LineStats, WorkByEmail, WorkByPerson};

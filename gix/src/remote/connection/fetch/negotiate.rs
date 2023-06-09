@@ -234,7 +234,7 @@ fn mark_recent_complete_commits(
         .peek()
         .and_then(|(commit_time, id)| (commit_time >= &cutoff).then_some(*id))
     {
-        queue.pop();
+        queue.pop_value();
         let commit = graph.get(&id).expect("definitely set when adding tips or parents");
         for parent_id in commit.parents.clone() {
             let mut was_complete = false;

@@ -42,7 +42,7 @@ impl Algorithm {
             .filter(|_| !is_common)
         {
             let mut queue = gix_revision::PriorityQueue::from_iter(Some((commit.commit_time, id)));
-            while let Some(id) = queue.pop() {
+            while let Some(id) = queue.pop_value() {
                 if let Some(commit) = graph.try_lookup_or_insert_commit(id, |entry| {
                     if !entry.flags.contains(Flags::POPPED) {
                         self.non_common_revs -= 1;
@@ -135,7 +135,7 @@ impl Negotiator for Algorithm {
 
     fn next_have(&mut self, graph: &mut crate::Graph<'_>) -> Option<Result<ObjectId, Error>> {
         loop {
-            let id = self.revs.pop().filter(|_| self.non_common_revs != 0)?;
+            let id = self.revs.pop_value().filter(|_| self.non_common_revs != 0)?;
             let commit = graph.get_mut(&id).expect("it was added to the graph by now");
             commit.data.flags |= Flags::POPPED;
 

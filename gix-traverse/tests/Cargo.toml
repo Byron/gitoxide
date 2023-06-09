@@ -19,3 +19,4 @@ gix-testtools = { path = "../../tests/tools" }
 gix-odb = { path = "../../gix-odb" }
 gix-hash = { path = "../../gix-hash" }
 gix-object = { path = "../../gix-object" }
+gix-commitgraph = { path = "../../gix-commitgraph" }
