@@ -1,10 +1,9 @@
 use std::{collections::BTreeSet, io, path::Path, time::Instant};
 
-use anyhow::{anyhow, bail};
+use anyhow::bail;
 use gix::{
     actor,
     bstr::{BStr, ByteSlice},
-    interrupt,
     prelude::*,
     progress, Progress,
 };
@@ -144,24 +143,31 @@ where
             let mut skipped_merge_commits = 0;
             const CHUNK_SIZE: usize = 50;
             let mut chunk = Vec::with_capacity(CHUNK_SIZE);
-            let commit_iter = interrupt::Iter::new(
-                commit_id.ancestors(|oid, buf| {
-                    progress.inc();
-                    repo.objects.find(oid, buf).map(|obj| {
-                        tx.send((commit_idx, obj.data.to_owned())).ok();
-                        if let Some((tx_tree, first_parent, commit)) = tx_tree_id.as_ref().and_then(|tx| {
-                            let mut parents = gix::objs::CommitRefIter::from_bytes(obj.data).parent_ids();
-                            let res = parents
+            let mut commit_iter = commit_id.ancestors(|oid, buf| repo.objects.find_commit_iter(oid, buf));
+            let mut is_shallow = false;
+            while let Some(c) = commit_iter.next() {
+                progress.inc();
+                if gix::interrupt::is_triggered() {
+                    bail!("Cancelled by user");
+                }
+                match c {
+                    Ok(c) => {
+                        tx.send((commit_idx, commit_iter.commit_data().to_owned())).ok();
+                        let tree_delta_info = tx_tree_id.as_ref().and_then(|tx| {
+                            let mut parents = c.parent_ids.into_iter();
+                            parents
                                 .next()
-                                .map(|first_parent| (tx, Some(first_parent), oid.to_owned()));
-                            match parents.next() {
-                                Some(_) => {
-                                    skipped_merge_commits += 1;
-                                    None
-                                }
-                                None => res,
-                            }
-                        }) {
+                                .map(|first_parent| (tx, Some(first_parent), c.id.to_owned()))
+                                .filter(|_| {
+                                    if parents.next().is_some() {
+                                        skipped_merge_commits += 1;
+                                        false
+                                    } else {
+                                        true
+                                    }
+                                })
+                        });
+                        if let Some((tx_tree, first_parent, commit)) = tree_delta_info {
                             if chunk.len() == CHUNK_SIZE {
                                 tx_tree
                                     .send(std::mem::replace(&mut chunk, Vec::with_capacity(CHUNK_SIZE)))
@@ -170,16 +176,8 @@ where
                                 chunk.push((commit_idx, first_parent, commit))
                             }
                         }
-                        commit_idx = commit_idx.checked_add(1).expect("less then 4 billion commits");
-                        gix::objs::CommitRefIter::from_bytes(obj.data)
-                    })
-                }),
-                || anyhow!("Cancelled by user"),
-            );
-            let mut is_shallow = false;
-            for c in commit_iter {
-                match c? {
-                    Ok(c) => c,
+                        commit_idx += 1;
+                    }
                     Err(gix::traverse::commit::ancestors::Error::FindExisting { .. }) => {
                         is_shallow = true;
                         break;
