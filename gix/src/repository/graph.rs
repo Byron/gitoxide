@@ -11,7 +11,7 @@ impl crate::Repository {
     ///
     /// Note that the [Graph][gix_revision::Graph] can be sensitive to various object database settings that may affect the performance
     /// of the commit walk.
-    pub fn commit_graph<T>(&self) -> gix_revision::Graph<'_, T> {
+    pub fn revision_graph<T>(&self) -> gix_revision::Graph<'_, T> {
         gix_revision::Graph::new(
             |id, buf| {
                 self.objects
@@ -25,9 +25,9 @@ impl crate::Repository {
     /// Return a cache for commits and their graph structure, as managed by `git commit-graph`, for accelerating commit walks on
     /// a low level.
     ///
-    /// Note that [`commit_graph()`][crate::Repository::commit_graph()] should be preferred for general purpose walks that don't
+    /// Note that [`revision_graph()`][crate::Repository::revision_graph()] should be preferred for general purpose walks that don't
     /// rely on the actual commit cache to be present, while leveraging it if possible.
-    pub fn commit_cache(&self) -> Result<gix_commitgraph::Graph, gix_commitgraph::init::Error> {
+    pub fn commit_graph(&self) -> Result<gix_commitgraph::Graph, gix_commitgraph::init::Error> {
         gix_commitgraph::at(self.objects.store_ref().path().join("info"))
     }
 }

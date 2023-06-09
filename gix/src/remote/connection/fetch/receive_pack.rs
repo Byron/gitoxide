@@ -131,7 +131,7 @@ where
             r.objects.unset_object_cache();
             r
         };
-        let mut graph = graph_repo.commit_graph();
+        let mut graph = graph_repo.revision_graph();
         let action = negotiate::mark_complete_and_common_ref(
             &graph_repo,
             negotiator.deref_mut(),

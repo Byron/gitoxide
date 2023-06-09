@@ -117,7 +117,7 @@ impl<'repo> Platform<'repo> {
                 )
                 .sorting(sorting)?
                 .parents(parents)
-                .commit_graph(use_commit_graph.then(|| self.repo.commit_cache().ok()).flatten())
+                .commit_graph(use_commit_graph.then(|| self.repo.commit_graph().ok()).flatten())
                 // TODO: use wrapped items instead
                 .map(|res| res.map(|item| item.id)),
             ),
