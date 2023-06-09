@@ -43,13 +43,14 @@ pub fn collect(repo: &gix::Repository) -> anyhow::Result<Option<commit::History>
         .id()
         .ancestors()
         .sorting(gix::traverse::commit::Sorting::ByCommitTimeNewestFirst)
+        .use_commit_graph(false)
         .all()?
     {
-        let commit_id = commit_id?;
+        let commit = commit_id?;
         let (message, tree_id, parent_tree_id, commit_time) = {
             let (message, tree_id, commit_time, parent_commit_id) = {
-                let object = commit_id.object()?;
-                let commit = object.to_commit_ref();
+                let object = commit.object()?;
+                let commit = object.decode()?;
                 let parent = commit.parents().next();
                 (commit.message.to_vec(), commit.tree(), commit.committer.time, parent)
             };
@@ -65,7 +66,7 @@ pub fn collect(repo: &gix::Repository) -> anyhow::Result<Option<commit::History>
             Err(_) => {
                 log::warn!(
                     "Commit message of {} could not be decoded to UTF-8 - ignored",
-                    commit_id.as_ref()
+                    commit.id
                 );
                 continue;
             }
@@ -76,7 +77,7 @@ pub fn collect(repo: &gix::Repository) -> anyhow::Result<Option<commit::History>
             data_by_tree_id.insert(tree_id, handle.find_object(tree_id)?.data.to_owned());
         }
         items.push(commit::history::Item {
-            id: commit_id.detach(),
+            id: commit.id,
             commit_time,
             message: commit::Message::from(message),
             tree_id,

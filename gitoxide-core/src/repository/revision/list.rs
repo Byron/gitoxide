@@ -27,7 +27,7 @@ pub fn list(
         .id
         .attach(&repo);
     for commit in commit_id.ancestors().all()? {
-        writeln!(out, "{}", commit?.to_hex())?;
+        writeln!(out, "{}", commit?.id().to_hex())?;
     }
     Ok(())
 }
