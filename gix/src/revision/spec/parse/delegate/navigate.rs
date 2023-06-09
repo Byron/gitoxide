@@ -65,7 +65,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                         .filter_map(Result::ok)
                         .next()
                     {
-                        Some(id) => replacements.push((*obj, id.detach())),
+                        Some(commit) => replacements.push((*obj, commit.id)),
                         None => errors.push((
                             *obj,
                             Error::AncestorOutOfRange {
@@ -193,8 +193,8 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                             let mut matched = false;
                             let mut count = 0;
                             let commits = iter.map(|res| {
-                                res.map_err(Error::from).and_then(|commit_id| {
-                                    commit_id.object().map_err(Error::from).map(|obj| obj.into_commit())
+                                res.map_err(Error::from).and_then(|commit| {
+                                    commit.id().object().map_err(Error::from).map(|obj| obj.into_commit())
                                 })
                             });
                             for commit in commits {
@@ -250,8 +250,8 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                 let mut matched = false;
                                 let mut count = 0;
                                 let commits = iter.map(|res| {
-                                    res.map_err(Error::from).and_then(|commit_id| {
-                                        commit_id.object().map_err(Error::from).map(|obj| obj.into_commit())
+                                    res.map_err(Error::from).and_then(|commit| {
+                                        commit.id().object().map_err(Error::from).map(|obj| obj.into_commit())
                                     })
                                 });
                                 for commit in commits {

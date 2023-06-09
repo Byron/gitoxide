@@ -1,37 +1,39 @@
+use gix::prelude::ObjectIdExt;
 use gix::Reference;
+use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut repo = gix::discover(".")?;
     println!("Repo: {}", repo.work_dir().unwrap_or_else(|| repo.git_dir()).display());
-    let mut max_commit_size = 0;
-    let mut avg_commit_size = 0;
+    let mut max_parents = 0;
+    let mut avg_parents = 0;
     repo.object_cache_size(32 * 1024);
-    let commit_ids = repo
+    let mut most_recent_commit_id = None;
+    let num_commits = repo
         .head()?
         .into_fully_peeled_id()
-        .ok_or("There are no commits - nothing to do here.")??
+        .ok_or("Cannot provide meaningful stats on empty repos")??
         .ancestors()
         .all()?
-        .inspect(|id| {
-            if let Ok(Ok(object)) = id.as_ref().map(|id| id.object()) {
-                avg_commit_size += object.data.len();
-                if object.data.len() > max_commit_size {
-                    max_commit_size = object.data.len();
-                }
+        .map_while(Result::ok)
+        .inspect(|commit| {
+            if most_recent_commit_id.is_none() {
+                most_recent_commit_id = Some(commit.id);
             }
+            avg_parents += commit.parent_ids.len();
+            max_parents = max_parents.max(commit.parent_ids.len());
         })
-        .collect::<Result<Vec<_>, _>>()?;
-    println!("Num Commits: {}", commit_ids.len());
-    println!("Max commit Size: {max_commit_size}");
-    println!("Avg commit Size: {}", avg_commit_size / commit_ids.len());
-    assert!(!commit_ids.is_empty(), "checked that before");
+        .count();
+    println!("Num Commits: {num_commits}");
+    println!("Max parents: {max_parents}");
+    println!("Avg parents: {}", avg_parents / num_commits);
 
-    let last_commit_id = &commit_ids[0];
     println!("Most recent commit message");
 
-    let object = last_commit_id.object()?;
+    let object = most_recent_commit_id.expect("already checked").attach(&repo).object()?;
     let commit = object.into_commit();
     println!("{}", commit.message_raw()?);
+    std::io::stdout().flush()?;
 
     let tree = commit.tree()?;
 

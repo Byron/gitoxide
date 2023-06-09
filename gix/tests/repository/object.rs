@@ -125,15 +125,18 @@ mod find {
             }
             for commit_id in repo.head()?.peeled()?.id().expect("born").ancestors().all()? {
                 let commit = commit_id?;
-                assert_eq!(commit.object()?.kind, gix_object::Kind::Commit);
+                assert_eq!(commit.id().object()?.kind, gix_object::Kind::Commit);
                 if round == 2 {
                     assert_eq!(
-                        commit.object()?.kind,
+                        commit.id().object()?.kind,
                         gix_object::Kind::Commit,
                         "repeated request triggers cache and doesn't fail"
                     );
                 }
-                assert_eq!(commit.try_object()?.expect("exists").kind, gix_object::Kind::Commit,);
+                assert_eq!(
+                    commit.id().try_object()?.expect("exists").kind,
+                    gix_object::Kind::Commit,
+                );
             }
         }
         Ok(())
