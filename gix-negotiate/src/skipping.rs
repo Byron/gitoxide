@@ -1,10 +1,10 @@
+use gix_date::SecondsSinceUnixEpoch;
 use gix_hash::ObjectId;
-use gix_revision::graph::CommitterTimestamp;
 
 use crate::{Error, Flags, Metadata, Negotiator};
 
 pub(crate) struct Algorithm {
-    revs: gix_revision::PriorityQueue<CommitterTimestamp, ObjectId>,
+    revs: gix_revision::PriorityQueue<SecondsSinceUnixEpoch, ObjectId>,
     non_common_revs: usize,
 }
 

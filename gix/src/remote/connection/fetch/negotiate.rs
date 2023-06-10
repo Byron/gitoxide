@@ -1,3 +1,4 @@
+use gix_date::SecondsSinceUnixEpoch;
 use std::borrow::Cow;
 
 use gix_negotiate::Flags;
@@ -6,7 +7,7 @@ use gix_pack::Find;
 
 use crate::remote::{fetch, fetch::Shallow};
 
-type Queue = gix_revision::PriorityQueue<gix_revision::graph::CommitterTimestamp, gix_hash::ObjectId>;
+type Queue = gix_revision::PriorityQueue<SecondsSinceUnixEpoch, gix_hash::ObjectId>;
 
 /// The error returned during negotiation.
 #[derive(Debug, thiserror::Error)]
@@ -85,7 +86,7 @@ pub(crate) fn mark_complete_and_common_ref(
 
     // Compute the cut-off date by checking which of the refs advertised (and matched in refspecs) by the remote we have,
     // and keep the oldest one.
-    let mut cutoff_date = None::<gix_revision::graph::CommitterTimestamp>;
+    let mut cutoff_date = None::<SecondsSinceUnixEpoch>;
     let mut num_mappings_with_change = 0;
     let mut remote_ref_target_known: Vec<bool> = std::iter::repeat(false).take(ref_map.mappings.len()).collect();
 
@@ -228,7 +229,7 @@ pub(crate) fn add_wants(
 fn mark_recent_complete_commits(
     queue: &mut Queue,
     graph: &mut gix_negotiate::Graph<'_>,
-    cutoff: gix_revision::graph::CommitterTimestamp,
+    cutoff: SecondsSinceUnixEpoch,
 ) -> Result<(), Error> {
     while let Some(id) = queue
         .peek()
