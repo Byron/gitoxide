@@ -7,16 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### New Features (BREAKING)
+
+ - <csr-id-7e9f202746d4376332f9779c6e4bd67933d618c7/> `revision::Walk` yields `revision::Info` structs instead of `Id`s.
+   This enables re-use of information that was already obtained, like the parents of
+   a commit and possibly its commit-time.
+
+### Changed (BREAKING)
+
+ - <csr-id-068603a4b7a52eaa397d61212e7aec5a0195ac29/> rename `Repository::commit_graph()` to `::revision_graph()`.
+   THat's a better fix given its locaion in `gix-revision`, while differentiating
+   it further from the lower-level `commit-graph`.
+   
+   Also rename `Repository::commit_cache()` to `::commit_graph()` now that the name is free.
+
+### Other
+
+ - <csr-id-f0ddc3b9c5a34b7930b965dfb1438f95279a8bde/> `gix::revision::walk::Platform` now informas about the commitgraph.
+   In short, one should use the `Graph` to obtain the tools necessary for potentially
+   accelerated, custom commit walks.
+
 ### New Features
 
  - <csr-id-cc72e497868636b0e7c943f675bda82860c2b53e/> make it possible to use `config::tree::Key` to more conveniently set values via `config::SnapshotMut::set()`
+ - <csr-id-b2b88dc11d1b745e787596e9b94122238ccaf34c/> use the `commitgraph` if possible and allow its usage to be controlled via `revision::walk::Platform::use_commit_graph(toggle)`.
+   The commitgraph is a data structure to greatly accelerate commit walks. It is now supported and
+   used by default, but can be deactivated if desired.
+   
+   Further, add `Repository::commit_cache()` for direct access to just the commit-graph datastructure,
+   without the extras provided by `gix_revision::Graph`.
+ - <csr-id-5d320121533d60fc594792da7838a4f9c661dea0/> add `Repository::index_or_load_from_head()`.
+   That way it's possible to either open the existing worktree index, or create one
+   in-memory by turning our HEAD tree into an index on the fly.
+ - <csr-id-2a698fab7323fd5befd14926bcb9cebf09afc312/> make it possible to use `config::tree::Key` to more conveniently set values via `config::SnapshotMut::set()`
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
- - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 13 commits contributed to the release over the course of 2 calendar days.
+ - 3 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -26,7 +57,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Make it possible to use `config::tree::Key` to more conveniently set values via `config::SnapshotMut::set()` ([`cc72e49`](https://github.com/Byron/gitoxide/commit/cc72e497868636b0e7c943f675bda82860c2b53e))
+    - Improve tests related to the handling of shallow repos ([`d50bfa9`](https://github.com/Byron/gitoxide/commit/d50bfa97f528141e0183558f21a364d969911ef4))
+    - Merge branch 'walk-with-commitgraph' ([`fdee9a2`](https://github.com/Byron/gitoxide/commit/fdee9a22873a13ae644d3dc92f8fe93f8f0266c0))
+    - Adapt to changes in `gix` ([`20f73c8`](https://github.com/Byron/gitoxide/commit/20f73c8224ead1b423a1b6331c9cab65f769d46a))
+    - `revision::Walk` yields `revision::Info` structs instead of `Id`s. ([`7e9f202`](https://github.com/Byron/gitoxide/commit/7e9f202746d4376332f9779c6e4bd67933d618c7))
+    - Rename `Repository::commit_graph()` to `::revision_graph()`. ([`068603a`](https://github.com/Byron/gitoxide/commit/068603a4b7a52eaa397d61212e7aec5a0195ac29))
+    - Use the `commitgraph` if possible and allow its usage to be controlled via `revision::walk::Platform::use_commit_graph(toggle)`. ([`b2b88dc`](https://github.com/Byron/gitoxide/commit/b2b88dc11d1b745e787596e9b94122238ccaf34c))
+    - Adapt to changes in `gix-traverse` ([`1f682fd`](https://github.com/Byron/gitoxide/commit/1f682fd991b9b76a8d37e6852567ff239c0ac0db))
+    - Adapt to changes in `gix-revwalk` ([`f7d95d1`](https://github.com/Byron/gitoxide/commit/f7d95d189af1422a7ba48db1857452e32e1d9db9))
+    - Add `Repository::index_or_load_from_head()`. ([`5d32012`](https://github.com/Byron/gitoxide/commit/5d320121533d60fc594792da7838a4f9c661dea0))
+    - `gix::revision::walk::Platform` now informas about the commitgraph. ([`f0ddc3b`](https://github.com/Byron/gitoxide/commit/f0ddc3b9c5a34b7930b965dfb1438f95279a8bde))
+    - Update changelog with information for the `gix` CLI. ([`4e081f2`](https://github.com/Byron/gitoxide/commit/4e081f2141dcb9919597c53dfd5706cc9439d541))
+    - Make it possible to use `config::tree::Key` to more conveniently set values via `config::SnapshotMut::set()` ([`2a698fa`](https://github.com/Byron/gitoxide/commit/2a698fab7323fd5befd14926bcb9cebf09afc312))
     - Release gix-protocol v0.33.1 ([`9c99ed3`](https://github.com/Byron/gitoxide/commit/9c99ed30162081a7f26d72e0ed26966ff62d2b1c))
 </details>
 

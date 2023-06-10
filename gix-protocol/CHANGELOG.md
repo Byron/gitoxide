@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-c8e8b9fc55486215bda4c380d3c84a6c6ae5f602/> support `capabilities^{}` syntax to announce caps in empty repos under V1
+   This is supposed to work for existing code, but doesn't in our case as we really
+   want to associate a branch. In this case, we can ignore the ref as it's a null
+   hash anyway.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 2 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Support `capabilities^{}` syntax to announce caps in empty repos under V1 ([`c8e8b9f`](https://github.com/Byron/gitoxide/commit/c8e8b9fc55486215bda4c380d3c84a6c6ae5f602))
+</details>
+
 ## 0.33.1 (2023-06-07)
 
 ### Bug Fixes
@@ -20,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#882](https://github.com/Byron/gitoxide/issues/882)
 
@@ -32,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **[#882](https://github.com/Byron/gitoxide/issues/882)**
     - Assure we don't stop early on NAK if READY was sent to handle V1 specialty. ([`88670c2`](https://github.com/Byron/gitoxide/commit/88670c2ff995e4478f4a40b2733c6c8ca811fa15))
+ * **Uncategorized**
+    - Release gix-protocol v0.33.1 ([`9c99ed3`](https://github.com/Byron/gitoxide/commit/9c99ed30162081a7f26d72e0ed26966ff62d2b1c))
 </details>
 
 ## 0.33.0 (2023-06-06)
