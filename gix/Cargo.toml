@@ -3,7 +3,7 @@ name = "gix"
 repository = "https://github.com/Byron/gitoxide"
 description = "Interact with git repositories just like git would"
 license = "MIT/Apache-2.0"
-version = "0.45.1"
+version = "0.46.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
@@ -125,30 +125,30 @@ gix-date = { version = "^0.5.1", path = "../gix-date" }
 gix-refspec = { version = "^0.11.0", path = "../gix-refspec" }
 
 gix-config = { version = "^0.23.0", path = "../gix-config" }
-gix-odb = { version = "^0.46.0", path = "../gix-odb" }
+gix-odb = { version = "^0.47.0", path = "../gix-odb" }
 gix-hash = { version = "^0.11.2", path = "../gix-hash" }
 gix-object = { version = "^0.30.0", path = "../gix-object" }
 gix-actor = { version = "^0.21.0", path = "../gix-actor" }
-gix-pack = { version = "^0.36.0", path = "../gix-pack", features = ["object-cache-dynamic"] }
-gix-revision = { version = "^0.15.1", path = "../gix-revision" }
-gix-negotiate = { version = "^0.2.0", path = "../gix-negotiate" }
+gix-pack = { version = "^0.37.0", path = "../gix-pack", features = ["object-cache-dynamic"] }
+gix-revision = { version = "^0.15.2", path = "../gix-revision" }
+gix-negotiate = { version = "^0.2.1", path = "../gix-negotiate" }
 
 gix-path = { version = "^0.8.1", path = "../gix-path" }
 gix-url = { version = "^0.19.0", path = "../gix-url" }
-gix-traverse = { version = "^0.26.0", path = "../gix-traverse" }
-gix-protocol = { version = "^0.33.1", path = "../gix-protocol", optional = true }
+gix-traverse = { version = "^0.27.0", path = "../gix-traverse" }
+gix-protocol = { version = "^0.33.2", path = "../gix-protocol", optional = true }
 gix-transport = { version = "^0.32.0", path = "../gix-transport", optional = true }
-gix-diff = { version = "^0.30.0", path = "../gix-diff" }
+gix-diff = { version = "^0.30.1", path = "../gix-diff" }
 gix-mailmap = { version = "^0.13.0", path = "../gix-mailmap" }
 gix-features = { version = "^0.30.0", path = "../gix-features", features = ["progress", "once_cell"] }
 
-gix-attributes = { version = "^0.13.0", path = "../gix-attributes" }
+gix-attributes = { version = "^0.13.1", path = "../gix-attributes" }
 gix-ignore = { version = "^0.3.0", path = "../gix-ignore" }
 gix-glob = { version = "^0.8.0", path = "../gix-glob" }
 gix-credentials = { version = "^0.15.0", path = "../gix-credentials" }
 gix-prompt = { version = "^0.5.1", path = "../gix-prompt" }
-gix-index = { version = "^0.17.0", path = "../gix-index" }
-gix-worktree = { version = "^0.18.0", path = "../gix-worktree" }
+gix-index = { version = "^0.18.0", path = "../gix-index" }
+gix-worktree = { version = "^0.19.0", path = "../gix-worktree" }
 gix-hashtable = { version = "^0.2.1", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.16.0", path = "../gix-commitgraph" }
 

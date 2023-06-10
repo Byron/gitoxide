@@ -1230,7 +1230,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide"
-version = "0.26.0"
+version = "0.27.0"
 dependencies = [
  "anyhow",
  "clap 4.2.4",
@@ -1250,7 +1250,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide-core"
-version = "0.28.0"
+version = "0.29.0"
 dependencies = [
  "anyhow",
  "async-io",
@@ -1279,13 +1279,13 @@ dependencies = [
 
 [[package]]
 name = "gix"
-version = "0.45.1"
+version = "0.46.0"
 dependencies = [
  "anyhow",
  "async-std",
  "document-features",
  "gix-actor 0.21.0",
- "gix-attributes 0.13.0",
+ "gix-attributes 0.13.1",
  "gix-commitgraph",
  "gix-config",
  "gix-credentials",
@@ -1298,7 +1298,7 @@ dependencies = [
  "gix-hash 0.11.2",
  "gix-hashtable 0.2.1",
  "gix-ignore 0.3.0",
- "gix-index 0.17.0",
+ "gix-index 0.18.0",
  "gix-lock 6.0.0",
  "gix-mailmap",
  "gix-negotiate",
@@ -1315,11 +1315,11 @@ dependencies = [
  "gix-tempfile 6.0.0",
  "gix-testtools",
  "gix-transport",
- "gix-traverse 0.26.0",
+ "gix-traverse 0.27.0",
  "gix-url",
  "gix-utils 0.1.2",
  "gix-validate 0.7.5",
- "gix-worktree 0.18.0",
+ "gix-worktree 0.19.0",
  "is_ci",
  "log",
  "once_cell",
@@ -1395,7 +1395,7 @@ dependencies = [
 
 [[package]]
 name = "gix-attributes"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "bstr",
  "document-features",
@@ -1558,7 +1558,7 @@ dependencies = [
 
 [[package]]
 name = "gix-diff"
-version = "0.30.0"
+version = "0.30.1"
 dependencies = [
  "getrandom",
  "gix-hash 0.11.2",
@@ -1577,7 +1577,7 @@ dependencies = [
  "gix-object 0.30.0",
  "gix-odb",
  "gix-testtools",
- "gix-traverse 0.26.0",
+ "gix-traverse 0.27.0",
 ]
 
 [[package]]
@@ -1791,7 +1791,7 @@ dependencies = [
 
 [[package]]
 name = "gix-index"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "bitflags 2.1.0",
  "bstr",
@@ -1803,7 +1803,7 @@ dependencies = [
  "gix-hash 0.11.2",
  "gix-lock 6.0.0",
  "gix-object 0.30.0",
- "gix-traverse 0.26.0",
+ "gix-traverse 0.27.0",
  "itoa",
  "memmap2",
  "serde",
@@ -1820,7 +1820,7 @@ dependencies = [
  "gix",
  "gix-features 0.30.0",
  "gix-hash 0.11.2",
- "gix-index 0.17.0",
+ "gix-index 0.18.0",
  "gix-testtools",
 ]
 
@@ -1863,7 +1863,7 @@ dependencies = [
 
 [[package]]
 name = "gix-negotiate"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bitflags 2.1.0",
  "gix-commitgraph",
@@ -1923,7 +1923,7 @@ dependencies = [
 
 [[package]]
 name = "gix-odb"
-version = "0.46.0"
+version = "0.47.0"
 dependencies = [
  "arc-swap",
  "crossbeam-channel",
@@ -1947,7 +1947,7 @@ dependencies = [
 
 [[package]]
 name = "gix-pack"
-version = "0.36.0"
+version = "0.37.0"
 dependencies = [
  "clru",
  "document-features",
@@ -1960,7 +1960,7 @@ dependencies = [
  "gix-path 0.8.1",
  "gix-tempfile 6.0.0",
  "gix-testtools",
- "gix-traverse 0.26.0",
+ "gix-traverse 0.27.0",
  "memmap2",
  "parking_lot",
  "serde",
@@ -1980,7 +1980,7 @@ dependencies = [
  "gix-odb",
  "gix-pack",
  "gix-testtools",
- "gix-traverse 0.26.0",
+ "gix-traverse 0.27.0",
  "maplit",
  "memmap2",
  "tempfile",
@@ -2033,7 +2033,7 @@ version = "0.1.0"
 dependencies = [
  "bitflags 2.1.0",
  "bstr",
- "gix-attributes 0.13.0",
+ "gix-attributes 0.13.1",
  "gix-glob 0.8.0",
  "gix-testtools",
  "once_cell",
@@ -2056,7 +2056,7 @@ dependencies = [
 
 [[package]]
 name = "gix-protocol"
-version = "0.33.1"
+version = "0.33.2"
 dependencies = [
  "async-std",
  "async-trait",
@@ -2159,7 +2159,7 @@ dependencies = [
  "gix-ref 0.30.0",
  "gix-testtools",
  "gix-validate 0.7.5",
- "gix-worktree 0.18.0",
+ "gix-worktree 0.19.0",
  "tempfile",
 ]
 
@@ -2178,7 +2178,7 @@ dependencies = [
 
 [[package]]
 name = "gix-revision"
-version = "0.15.1"
+version = "0.15.2"
 dependencies = [
  "bstr",
  "document-features",
@@ -2338,7 +2338,7 @@ dependencies = [
 
 [[package]]
 name = "gix-traverse"
-version = "0.26.0"
+version = "0.27.0"
 dependencies = [
  "gix-commitgraph",
  "gix-hash 0.11.2",
@@ -2358,7 +2358,7 @@ dependencies = [
  "gix-object 0.30.0",
  "gix-odb",
  "gix-testtools",
- "gix-traverse 0.26.0",
+ "gix-traverse 0.27.0",
 ]
 
 [[package]]
@@ -2437,18 +2437,18 @@ dependencies = [
 
 [[package]]
 name = "gix-worktree"
-version = "0.18.0"
+version = "0.19.0"
 dependencies = [
  "bstr",
  "document-features",
  "filetime",
- "gix-attributes 0.13.0",
+ "gix-attributes 0.13.1",
  "gix-features 0.30.0",
  "gix-fs 0.2.0",
  "gix-glob 0.8.0",
  "gix-hash 0.11.2",
  "gix-ignore 0.3.0",
- "gix-index 0.17.0",
+ "gix-index 0.18.0",
  "gix-object 0.30.0",
  "gix-odb",
  "gix-path 0.8.1",
