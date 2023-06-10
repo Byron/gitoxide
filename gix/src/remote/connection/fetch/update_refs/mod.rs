@@ -133,7 +133,7 @@ pub(crate) fn update(
                                                             .ancestors(|id, buf| repo.objects.find_commit_iter(id, buf))
                                                             .sorting(
                                                                 gix_traverse::commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-                                                                    time_in_seconds_since_epoch: local_commit_time
+                                                                    seconds: local_commit_time
                                                                 },
                                                             )
                                                             .map_err(|_| ())
