@@ -1,6 +1,7 @@
 use std::{convert::TryInto, path::Path};
 
-use gix_actor::{Sign, Signature, Time};
+use gix_actor::Signature;
+use gix_date::{time::Sign, Time};
 use gix_object::bstr::ByteSlice;
 use tempfile::TempDir;
 

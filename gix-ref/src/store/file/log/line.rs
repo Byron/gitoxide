@@ -168,7 +168,7 @@ pub mod decode {
 
     #[cfg(test)]
     mod test {
-        use gix_actor::{Sign, Time};
+        use gix_date::{time::Sign, Time};
         use gix_object::bstr::ByteSlice;
 
         use super::*;

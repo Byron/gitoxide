@@ -1856,6 +1856,7 @@ dependencies = [
  "bstr",
  "document-features",
  "gix-actor 0.21.0",
+ "gix-date 0.5.1",
  "gix-testtools",
  "serde",
  "thiserror",
@@ -1908,6 +1909,7 @@ dependencies = [
  "btoi",
  "document-features",
  "gix-actor 0.21.0",
+ "gix-date 0.5.1",
  "gix-features 0.30.0",
  "gix-hash 0.11.2",
  "gix-testtools",
@@ -1930,6 +1932,7 @@ dependencies = [
  "document-features",
  "filetime",
  "gix-actor 0.21.0",
+ "gix-date 0.5.1",
  "gix-features 0.30.0",
  "gix-hash 0.11.2",
  "gix-object 0.30.0",
@@ -2127,6 +2130,7 @@ version = "0.30.0"
 dependencies = [
  "document-features",
  "gix-actor 0.21.0",
+ "gix-date 0.5.1",
  "gix-features 0.30.0",
  "gix-fs 0.2.0",
  "gix-hash 0.11.2",
@@ -2149,6 +2153,7 @@ name = "gix-ref-tests"
 version = "0.0.0"
 dependencies = [
  "gix-actor 0.21.0",
+ "gix-date 0.5.1",
  "gix-discover 0.19.0",
  "gix-features 0.30.0",
  "gix-fs 0.2.0",
@@ -2341,6 +2346,7 @@ name = "gix-traverse"
 version = "0.27.0"
 dependencies = [
  "gix-commitgraph",
+ "gix-date 0.5.1",
  "gix-hash 0.11.2",
  "gix-hashtable 0.2.1",
  "gix-object 0.30.0",

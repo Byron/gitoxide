@@ -214,12 +214,12 @@ mod commit_as {
         let committer = gix::actor::Signature {
             name: "c".into(),
             email: "c@example.com".into(),
-            time: gix::actor::Time::new(1, 1800),
+            time: gix::date::Time::new(1, 1800),
         };
         let author = gix::actor::Signature {
             name: "a".into(),
             email: "a@example.com".into(),
-            time: gix::actor::Time::new(3, 3600),
+            time: gix::date::Time::new(3, 3600),
         };
 
         let commit_id = repo.commit_as(

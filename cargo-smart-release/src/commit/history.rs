@@ -10,7 +10,7 @@ pub struct Segment<'a> {
 pub struct Item {
     pub id: gix::ObjectId,
     pub message: Message,
-    pub commit_time: gix::actor::Time,
+    pub commit_time: gix::date::Time,
     pub tree_id: gix::ObjectId,
     pub parent_tree_id: Option<gix::ObjectId>,
 }

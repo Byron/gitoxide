@@ -34,6 +34,7 @@ gix-discover = { path = "../../gix-discover" }
 gix-worktree = { path = "../../gix-worktree" }
 gix-odb = { path = "../../gix-odb" }
 gix-actor = { path = "../../gix-actor" }
+gix-date = { path = "../../gix-date" }
 gix-hash = { path = "../../gix-hash" }
 gix-validate = { path = "../../gix-validate" }
 gix-lock = { path = "../../gix-lock" }
