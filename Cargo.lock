@@ -1868,6 +1868,7 @@ version = "0.2.1"
 dependencies = [
  "bitflags 2.1.0",
  "gix-commitgraph",
+ "gix-date 0.5.1",
  "gix-hash 0.11.2",
  "gix-object 0.30.0",
  "gix-odb",
@@ -2205,6 +2206,7 @@ name = "gix-revwalk"
 version = "0.1.0"
 dependencies = [
  "gix-commitgraph",
+ "gix-date 0.5.1",
  "gix-hash 0.11.2",
  "gix-hashtable 0.2.1",
  "gix-object 0.30.0",
