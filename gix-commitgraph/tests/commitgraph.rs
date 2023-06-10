@@ -8,12 +8,13 @@ use std::{
 };
 
 use gix_commitgraph::{Graph, Position as GraphPosition};
-
-type Result = std::result::Result<(), Box<dyn std::error::Error>>;
+use gix_testtools::scripted_fixture_read_only;
 
 mod access;
 
 pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHasher>) {
+    cg.verify_integrity(|_| Ok::<_, std::convert::Infallible>(()))
+        .expect("graph is valid");
     assert_eq!(
         usize::try_from(cg.num_commits()).expect("an architecture able to hold 32 bits of integer"),
         expected.len()
@@ -39,6 +40,7 @@ pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHa
 
         let commit = cg.commit_at(ref_info.pos());
         assert_eq!(commit.id(), ref_info.id());
+        assert_eq!(commit.committer_timestamp(), ref_info.time.seconds);
         assert_eq!(commit.root_tree_id(), ref_info.root_tree_id());
         assert_eq!(
             commit.parent1().expect("failed to access commit's parent1"),
@@ -59,13 +61,29 @@ pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHa
     );
 }
 
-use gix_testtools::scripted_fixture_read_only;
-pub fn make_readonly_repo(script_path: &str) -> std::path::PathBuf {
-    scripted_fixture_read_only(script_path).expect("script succeeds all the time")
+pub fn graph_and_expected(
+    script_path: &str,
+    refs: &[&'static str],
+) -> (gix_commitgraph::Graph, HashMap<String, RefInfo>) {
+    graph_and_expected_named(script_path, "", refs)
+}
+
+pub fn graph_and_expected_named(
+    script_path: &str,
+    name: &str,
+    refs: &[&'static str],
+) -> (gix_commitgraph::Graph, HashMap<String, RefInfo>) {
+    let repo_dir = scripted_fixture_read_only(script_path)
+        .expect("script succeeds all the time")
+        .join(name);
+    let expected = inspect_refs(&repo_dir, refs);
+    let cg = Graph::from_info_dir(repo_dir.join(".git").join("objects").join("info")).expect("graph present and valid");
+    (cg, expected)
 }
 
 pub struct RefInfo {
     id: gix_hash::ObjectId,
+    pub time: gix_date::Time,
     parent_ids: Vec<gix_hash::ObjectId>,
     pos: GraphPosition,
     root_tree_id: gix_hash::ObjectId,
@@ -89,13 +107,13 @@ impl RefInfo {
     }
 }
 
-pub fn inspect_refs(repo_dir: impl AsRef<Path>, refs: &[&'static str]) -> HashMap<String, RefInfo> {
+fn inspect_refs(repo_dir: impl AsRef<Path>, refs: &[&'static str]) -> HashMap<String, RefInfo> {
     let output = Command::new("git")
         .arg("-C")
         .arg(repo_dir.as_ref())
         .arg("show")
         .arg("--no-patch")
-        .arg("--pretty=format:%S %H %T %P")
+        .arg("--pretty=format:%S %H %T %ct %P")
         .args(refs)
         .arg("--")
         .env_remove("GIT_DIR")
@@ -111,7 +129,8 @@ pub fn inspect_refs(repo_dir: impl AsRef<Path>, refs: &[&'static str]) -> HashMa
                 parts[0].to_string(),
                 gix_hash::ObjectId::from_hex(parts[1].as_bytes()).expect("40 bytes hex"),
                 gix_hash::ObjectId::from_hex(parts[2].as_bytes()).expect("40 bytes hex"),
-                parts[3..]
+                gix_date::Time::new(parts[3].parse().expect("valid stamp"), 0),
+                parts[4..]
                     .iter()
                     .map(|x| gix_hash::ObjectId::from_hex(x.as_bytes()).expect("40 bytes hex"))
                     .collect(),
@@ -132,13 +151,14 @@ pub fn inspect_refs(repo_dir: impl AsRef<Path>, refs: &[&'static str]) -> HashMa
     infos
         .iter()
         .cloned()
-        .map(|(name, id, root_tree_id, parent_ids)| {
+        .map(|(name, id, root_tree_id, time, parent_ids)| {
             (
                 name,
                 RefInfo {
                     id,
                     parent_ids,
                     root_tree_id,
+                    time,
                     pos: get_pos(&id),
                 },
             )
