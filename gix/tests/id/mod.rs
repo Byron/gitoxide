@@ -74,35 +74,43 @@ mod ancestors {
     #[test]
     fn all() -> crate::Result {
         let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
-        let head = repo.head()?.into_fully_peeled_id().expect("born")?;
-        let commits_graph_order = head
-            .ancestors()
-            .all()?
-            .map(|c| c.map(|c| c.detach()))
-            .collect::<Result<Vec<_>, _>>()?;
-        assert_eq!(commits_graph_order.len(), 4, "need a specific amount of commits");
+        for toggle in [false, true] {
+            let head = repo.head()?.into_fully_peeled_id().expect("born")?;
+            let commits_graph_order = head
+                .ancestors()
+                .use_commit_graph(toggle)
+                .all()?
+                .map(|c| c.map(|c| c.detach()))
+                .collect::<Result<Vec<_>, _>>()?;
+            assert_eq!(commits_graph_order.len(), 4, "need a specific amount of commits");
 
-        let commits_by_commit_date = head
-            .ancestors()
-            .sorting(commit::Sorting::ByCommitTimeNewestFirst)
-            .all()?
-            .map(|c| c.map(|c| c.detach()))
-            .collect::<Result<Vec<_>, _>>()?;
-        assert_eq!(
-            commits_by_commit_date.len(),
-            4,
-            "need a specific amount of commits, ordering doesn't affect that"
-        );
-        assert_ne!(
-            commits_by_commit_date, commits_graph_order,
-            "these are ordered differently"
-        );
+            let commits_by_commit_date = head
+                .ancestors()
+                .use_commit_graph(!toggle)
+                .sorting(commit::Sorting::ByCommitTimeNewestFirst)
+                .all()?
+                .map(|c| c.map(|c| c.detach()))
+                .collect::<Result<Vec<_>, _>>()?;
+            assert_eq!(
+                commits_by_commit_date.len(),
+                4,
+                "need a specific amount of commits, ordering doesn't affect that"
+            );
+            assert_ne!(
+                commits_by_commit_date, commits_graph_order,
+                "these are ordered differently"
+            );
 
-        assert_eq!(
-            head.ancestors().first_parent_only().all()?.count(),
-            3,
-            "It skips merges this way."
-        );
+            assert_eq!(
+                head.ancestors()
+                    .first_parent_only()
+                    .use_commit_graph(toggle)
+                    .all()?
+                    .count(),
+                3,
+                "It skips merges this way."
+            );
+        }
         Ok(())
     }
 
