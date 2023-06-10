@@ -348,14 +348,14 @@ fn add_shallow_args(
             args.deepen_relative();
         }
         Shallow::Since { cutoff } => {
-            args.deepen_since(cutoff.seconds as usize);
+            args.deepen_since(cutoff.seconds);
         }
         Shallow::Exclude {
             remote_refs,
             since_cutoff,
         } => {
             if let Some(cutoff) = since_cutoff {
-                args.deepen_since(cutoff.seconds as usize);
+                args.deepen_since(cutoff.seconds);
             }
             for ref_ in remote_refs {
                 args.deepen_not(ref_.as_ref().as_bstr());
