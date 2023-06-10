@@ -14,7 +14,7 @@ impl Time {
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
         let mut itoa = itoa::Buffer::new();
-        out.write_all(itoa.format(self.seconds_since_unix_epoch).as_bytes())?;
+        out.write_all(itoa.format(self.seconds).as_bytes())?;
         out.write_all(b" ")?;
         out.write_all(match self.sign {
             Sign::Plus => b"+",
@@ -24,7 +24,7 @@ impl Time {
         const ZERO: &[u8; 1] = b"0";
 
         const SECONDS_PER_HOUR: i32 = 60 * 60;
-        let offset = self.offset_in_seconds.abs();
+        let offset = self.offset.abs();
         let hours = offset / SECONDS_PER_HOUR;
         assert!(hours < 25, "offset is more than a day: {hours}");
         let minutes = (offset - (hours * SECONDS_PER_HOUR)) / 60;
@@ -40,30 +40,48 @@ impl Time {
         out.write_all(itoa.format(minutes).as_bytes()).map(|_| ())
     }
 
-    /// Computes the number of bytes necessary to render this time.
+    /// Computes the number of bytes necessary to write it using [`Time::write_to()`].
     pub fn size(&self) -> usize {
-        // TODO: this is not year 2038 safe…but we also can't parse larger numbers (or represent them) anyway. It's a trap nonetheless
-        //       that can be fixed by increasing the size to usize.
-        (if self.seconds_since_unix_epoch >= 1_000_000_000 {
+        (if self.seconds >= 10_000_000_000_000_000_000 {
+            20
+        } else if self.seconds >= 1_000_000_000_000_000_000 {
+            19
+        } else if self.seconds >= 100_000_000_000_000_000 {
+            18
+        } else if self.seconds >= 10_000_000_000_000_000 {
+            17
+        } else if self.seconds >= 1_000_000_000_000_000 {
+            16
+        } else if self.seconds >= 100_000_000_000_000 {
+            15
+        } else if self.seconds >= 10_000_000_000_000 {
+            14
+        } else if self.seconds >= 1_000_000_000_000 {
+            13
+        } else if self.seconds >= 100_000_000_000 {
+            12
+        } else if self.seconds >= 10_000_000_000 {
+            11
+        } else if self.seconds >= 1_000_000_000 {
             10
-        } else if self.seconds_since_unix_epoch >= 100_000_000 {
+        } else if self.seconds >= 100_000_000 {
             9
-        } else if self.seconds_since_unix_epoch >= 10_000_000 {
+        } else if self.seconds >= 10_000_000 {
             8
-        } else if self.seconds_since_unix_epoch >= 1_000_000 {
+        } else if self.seconds >= 1_000_000 {
             7
-        } else if self.seconds_since_unix_epoch >= 100_000 {
+        } else if self.seconds >= 100_000 {
             6
-        } else if self.seconds_since_unix_epoch >= 10_000 {
+        } else if self.seconds >= 10_000 {
             5
-        } else if self.seconds_since_unix_epoch >= 1_000 {
+        } else if self.seconds >= 1_000 {
             4
-        } else if self.seconds_since_unix_epoch >= 100 {
+        } else if self.seconds >= 100 {
             3
-        } else if self.seconds_since_unix_epoch >= 10 {
+        } else if self.seconds >= 10 {
             2
         } else {
             1
-        }) + 2 /*space + sign*/ + 2 /*hours*/ + 2 /*minutes*/
+        }) + 2 /*space + offset sign*/ + 2 /*offset hours*/ + 2 /*offset minutes*/
     }
 }

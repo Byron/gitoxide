@@ -7,8 +7,8 @@ fn special_time_is_ok_for_now() {
     assert_eq!(
         gix_date::parse("1979-02-26 18:30:00", Some(SystemTime::now())).unwrap(),
         Time {
-            seconds_since_unix_epoch: 42,
-            offset_in_seconds: 1800,
+            seconds: 42,
+            offset: 1800,
             sign: Sign::Plus,
         }
     );
@@ -19,8 +19,8 @@ fn short() {
     assert_eq!(
         gix_date::parse("1979-02-26", Some(SystemTime::now())).unwrap(),
         Time {
-            seconds_since_unix_epoch: 288835200,
-            offset_in_seconds: 0,
+            seconds: 288835200,
+            offset: 0,
             sign: Sign::Plus,
         },
         "could not parse with SHORT format"
@@ -32,8 +32,8 @@ fn rfc2822() {
     assert_eq!(
         gix_date::parse("Thu, 18 Aug 2022 12:45:06 +0800", None).unwrap(),
         Time {
-            seconds_since_unix_epoch: 1660797906,
-            offset_in_seconds: 28800,
+            seconds: 1660797906,
+            offset: 28800,
             sign: Sign::Plus,
         },
     );
@@ -42,8 +42,8 @@ fn rfc2822() {
 #[test]
 fn git_rfc2822() {
     let expected = Time {
-        seconds_since_unix_epoch: 1659329106,
-        offset_in_seconds: 28800,
+        seconds: 1659329106,
+        offset: 28800,
         sign: Sign::Plus,
     };
     assert_eq!(
@@ -61,15 +61,15 @@ fn raw() {
     assert_eq!(
         gix_date::parse("1660874655 +0800", None).unwrap(),
         Time {
-            seconds_since_unix_epoch: 1660874655,
-            offset_in_seconds: 28800,
+            seconds: 1660874655,
+            offset: 28800,
             sign: Sign::Plus,
         },
     );
 
     let expected = Time {
-        seconds_since_unix_epoch: 1660874655,
-        offset_in_seconds: -28800,
+        seconds: 1660874655,
+        offset: -28800,
         sign: Sign::Minus,
     };
     for date_str in [
@@ -107,8 +107,8 @@ fn git_default() {
     assert_eq!(
         gix_date::parse("Thu Aug 8 12:45:06 2022 +0800", None).unwrap(),
         Time {
-            seconds_since_unix_epoch: 1659933906,
-            offset_in_seconds: 28800,
+            seconds: 1659933906,
+            offset: 28800,
             sign: Sign::Plus,
         },
     );
@@ -152,12 +152,12 @@ mod relative {
         let now = Some(SystemTime::now());
         let two_weeks_ago = gix_date::parse("2 weeks ago", now).unwrap();
         assert_eq!(Sign::Plus, two_weeks_ago.sign);
-        assert_eq!(0, two_weeks_ago.offset_in_seconds);
+        assert_eq!(0, two_weeks_ago.offset);
         let expected = OffsetDateTime::from(now.unwrap()).saturating_sub(Duration::weeks(2));
         // account for the loss of precision when creating `Time` with seconds
         let expected = expected.replace_nanosecond(0).unwrap();
         assert_eq!(
-            OffsetDateTime::from_unix_timestamp(two_weeks_ago.seconds_since_unix_epoch as i64).unwrap(),
+            OffsetDateTime::from_unix_timestamp(two_weeks_ago.seconds as i64).unwrap(),
             expected,
             "relative times differ"
         );

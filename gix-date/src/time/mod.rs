@@ -6,11 +6,6 @@ impl Time {
     pub fn is_set(&self) -> bool {
         *self != Self::default()
     }
-
-    /// Return the passed seconds since epoch since this signature was made.
-    pub fn seconds(&self) -> u32 {
-        self.seconds_since_unix_epoch
-    }
 }
 
 /// Indicates if a number is positive or negative for use in [`Time`].
@@ -58,8 +53,8 @@ mod impls {
     impl Default for Time {
         fn default() -> Self {
             Time {
-                seconds_since_unix_epoch: 0,
-                offset_in_seconds: 0,
+                seconds: 0,
+                offset: 0,
                 sign: Sign::Plus,
             }
         }

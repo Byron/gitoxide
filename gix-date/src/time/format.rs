@@ -73,7 +73,7 @@ impl Time {
                 .to_time()
                 .format(&format)
                 .expect("well-known format into memory never fails"),
-            Format::Unix => self.seconds_since_unix_epoch.to_string(),
+            Format::Unix => self.seconds.to_string(),
             Format::Raw => self.to_bstring().to_string(),
         }
     }
@@ -81,8 +81,8 @@ impl Time {
 
 impl Time {
     fn to_time(self) -> time::OffsetDateTime {
-        time::OffsetDateTime::from_unix_timestamp(self.seconds_since_unix_epoch as i64)
+        time::OffsetDateTime::from_unix_timestamp(self.seconds as i64)
             .expect("always valid unix time")
-            .to_offset(time::UtcOffset::from_whole_seconds(self.offset_in_seconds).expect("valid offset"))
+            .to_offset(time::UtcOffset::from_whole_seconds(self.offset).expect("valid offset"))
     }
 }

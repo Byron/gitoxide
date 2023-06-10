@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use gix_date::{time::Sign, Time};
+use gix_date::{time::Sign, SecondsSinceUnixEpoch, Time};
 
 mod baseline;
 mod format;
@@ -15,7 +15,7 @@ mod init {
         ] {
             assert_eq!(
                 time.sign,
-                time.offset_in_seconds.into(),
+                time.offset.into(),
                 "the sign matches the sign of the date offset"
             );
         }
@@ -26,7 +26,7 @@ mod init {
 fn is_set() {
     assert!(!Time::default().is_set());
     assert!(Time {
-        seconds_since_unix_epoch: 1,
+        seconds: 1,
         ..Default::default()
     }
     .is_set());
@@ -34,27 +34,35 @@ fn is_set() {
 
 #[test]
 fn write_to() -> Result<(), Box<dyn std::error::Error>> {
-    for (time, expected) in &[
+    for (time, expected) in [
         (
             Time {
-                seconds_since_unix_epoch: 500,
-                offset_in_seconds: 9000,
+                seconds: SecondsSinceUnixEpoch::MAX,
+                offset: 0,
+                sign: Sign::Minus,
+            },
+            "18446744073709551615 -0000",
+        ),
+        (
+            Time {
+                seconds: 500,
+                offset: 9000,
                 sign: Sign::Plus,
             },
             "500 +0230",
         ),
         (
             Time {
-                seconds_since_unix_epoch: 189009009,
-                offset_in_seconds: 36000,
+                seconds: 189009009,
+                offset: -36000,
                 sign: Sign::Minus,
             },
             "189009009 -1000",
         ),
         (
             Time {
-                seconds_since_unix_epoch: 0,
-                offset_in_seconds: 0,
+                seconds: 0,
+                offset: 0,
                 sign: Sign::Minus,
             },
             "0 -0000",
@@ -63,6 +71,10 @@ fn write_to() -> Result<(), Box<dyn std::error::Error>> {
         let mut output = Vec::new();
         time.write_to(&mut output)?;
         assert_eq!(output.as_bstr(), expected);
+        assert_eq!(time.size(), output.len());
+
+        let actual = gix_date::parse(&output.as_bstr().to_string(), None).expect("round-trippable");
+        assert_eq!(time, actual);
     }
     Ok(())
 }

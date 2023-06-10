@@ -7,7 +7,7 @@ pub enum Error {
     RelativeTimeConversion,
     #[error("Date string can not be parsed")]
     InvalidDateString { input: String },
-    #[error("Dates past 2038 can not be represented.")]
+    #[error("The heat-death of the universe happens before this date")]
     InvalidDate(#[from] std::num::TryFromIntError),
     #[error("Current time is missing but required to handle relative dates.")]
     MissingCurrentTime,
@@ -24,7 +24,7 @@ pub(crate) mod function {
             format::{DEFAULT, GITOXIDE, ISO8601, ISO8601_STRICT, SHORT},
             Sign,
         },
-        Time,
+        SecondsSinceUnixEpoch, Time,
     };
 
     #[allow(missing_docs)]
@@ -47,7 +47,7 @@ pub(crate) mod function {
             Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
         } else if let Ok(val) = OffsetDateTime::parse(input, DEFAULT) {
             Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
-        } else if let Ok(val) = u32::from_str(input) {
+        } else if let Ok(val) = SecondsSinceUnixEpoch::from_str(input) {
             // Format::Unix
             Time::new(val, 0)
         } else if let Some(val) = parse_raw(input) {
@@ -60,7 +60,7 @@ pub(crate) mod function {
         })
     }
 
-    fn timestamp(date: OffsetDateTime) -> Result<u32, Error> {
+    fn timestamp(date: OffsetDateTime) -> Result<SecondsSinceUnixEpoch, Error> {
         let timestamp = date.unix_timestamp();
         if timestamp < 0 {
             Err(Error::TooEarly { timestamp })
@@ -71,7 +71,7 @@ pub(crate) mod function {
 
     fn parse_raw(input: &str) -> Option<Time> {
         let mut split = input.split_whitespace();
-        let seconds_since_unix_epoch: u32 = split.next()?.parse().ok()?;
+        let seconds: SecondsSinceUnixEpoch = split.next()?.parse().ok()?;
         let offset = split.next()?;
         if offset.len() != 5 || split.next().is_some() {
             return None;
@@ -88,8 +88,8 @@ pub(crate) mod function {
             offset_in_seconds *= -1;
         };
         let time = Time {
-            seconds_since_unix_epoch,
-            offset_in_seconds,
+            seconds,
+            offset: offset_in_seconds,
             sign,
         };
         Some(time)
