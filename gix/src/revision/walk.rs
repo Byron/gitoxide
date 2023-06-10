@@ -170,6 +170,8 @@ impl<'repo> Platform<'repo> {
                     gix_traverse::commit::ancestors::State::default(),
                     move |oid, buf| repo.objects.find_commit_iter(oid, buf),
                     {
+                        // Note that specific shallow handling for commit-graphs isn't needed as these contain
+                        // all information there is, and exclude shallow parents to be structurally consistent.
                         let shallow_commits = repo.shallow_commits()?;
                         let mut grafted_parents_to_skip = Vec::new();
                         let mut buf = Vec::new();

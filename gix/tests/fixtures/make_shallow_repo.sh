@@ -25,4 +25,7 @@ mkdir empty
 )
 
 git clone --depth 1 --bare file://$PWD/base shallow.git
+git -C  shallow.git commit-graph write --no-progress --reachable
+
 git clone --depth 1 file://$PWD/base shallow
+git -C  shallow commit-graph write --no-progress --reachable
