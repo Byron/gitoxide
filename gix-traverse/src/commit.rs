@@ -64,7 +64,7 @@ pub enum Sorting {
     /// In the *sample history* and a cut-off date of 4, the returned list of commits would be `8, 7, 6, 4`
     ByCommitTimeNewestFirstCutoffOlderThan {
         /// The amount of seconds since unix epoch, the same value obtained by any `gix_date::Time` structure and the way git counts time.
-        time_in_seconds_since_epoch: gix_date::SecondsSinceUnixEpoch,
+        seconds: gix_date::SecondsSinceUnixEpoch,
     },
 }
 
@@ -315,9 +315,9 @@ pub mod ancestors {
                 match self.sorting {
                     Sorting::BreadthFirst => self.next_by_topology(),
                     Sorting::ByCommitTimeNewestFirst => self.next_by_commit_date(None),
-                    Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-                        time_in_seconds_since_epoch,
-                    } => self.next_by_commit_date(time_in_seconds_since_epoch.into()),
+                    Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => {
+                        self.next_by_commit_date(seconds.into())
+                    }
                 }
             }
         }
@@ -327,9 +327,7 @@ pub mod ancestors {
         /// If not topo sort, provide the cutoff date if present.
         fn cutoff_time(&self) -> Option<gix_date::SecondsSinceUnixEpoch> {
             match self {
-                Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-                    time_in_seconds_since_epoch,
-                } => Some(*time_in_seconds_since_epoch),
+                Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => Some(*seconds),
                 _ => None,
             }
         }
@@ -407,7 +405,7 @@ pub mod ancestors {
             Some(Ok(Info {
                 id: oid,
                 parent_ids: parents,
-                commit_time: Some(commit_time as u64),
+                commit_time: Some(commit_time),
             }))
         }
     }

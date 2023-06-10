@@ -388,7 +388,7 @@ mod ancestor {
                 &["bcb05040a6925f2ff5e10d3ae1f9264f2e8c43ac"], /* b1c1 */
             )
             .with_sorting(Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-                time_in_seconds_since_epoch: 978393600, // =2001-01-02 00:00:00 +0000
+                seconds: 978393600, // =2001-01-02 00:00:00 +0000
             })
             .check()
         }
@@ -404,7 +404,7 @@ mod ancestor {
                 move |oid, buf| store.find_commit_iter(oid, buf),
             )
             .sorting(Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-                time_in_seconds_since_epoch: 978393600, // =2001-01-02 00:00:00 +0000
+                seconds: 978393600, // =2001-01-02 00:00:00 +0000
             })?;
             assert_eq!(
                 iter.count(),
