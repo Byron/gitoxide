@@ -9,8 +9,16 @@
 #![deny(missing_docs, rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
+/// The re-exported `bstr` crate.
+///
+/// For convenience to allow using `bstr` without adding it to own cargo manifest.
+pub use bstr;
 use bstr::{BStr, BString};
-pub use gix_date::{time::Sign, Time};
+/// The re-exported `gix-date` crate.
+///
+/// For convenience to allow using `gix-date` without adding it to own cargo manifest.
+pub use gix_date as date;
+use gix_date::Time;
 
 mod identity;
 ///

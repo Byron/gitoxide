@@ -1,6 +1,8 @@
 mod write_to {
     mod invalid {
-        use gix_actor::{Sign, Signature, Time};
+        use gix_actor::Signature;
+        use gix_date::time::Sign;
+        use gix_date::Time;
 
         #[test]
         fn name() {

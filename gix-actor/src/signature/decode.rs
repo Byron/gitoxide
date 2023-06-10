@@ -1,7 +1,8 @@
 pub(crate) mod function {
     use bstr::ByteSlice;
     use btoi::btoi;
-    use gix_date::{OffsetInSeconds, SecondsSinceUnixEpoch};
+    use gix_date::time::Sign;
+    use gix_date::{OffsetInSeconds, SecondsSinceUnixEpoch, Time};
     use nom::{
         branch::alt,
         bytes::complete::{tag, take, take_until, take_while_m_n},
@@ -11,7 +12,7 @@ pub(crate) mod function {
         IResult,
     };
 
-    use crate::{IdentityRef, Sign, SignatureRef, Time};
+    use crate::{IdentityRef, SignatureRef};
 
     const SPACE: &[u8] = b" ";
 
@@ -60,7 +61,7 @@ pub(crate) mod function {
                 email: identity.email,
                 time: Time {
                     seconds: time,
-                    offset: offset,
+                    offset,
                     sign,
                 },
             },
@@ -94,11 +95,12 @@ pub use function::identity;
 mod tests {
     mod parse_signature {
         use bstr::ByteSlice;
+        use gix_date::time::Sign;
         use gix_date::{OffsetInSeconds, SecondsSinceUnixEpoch};
         use gix_testtools::to_bstr_err;
         use nom::IResult;
 
-        use crate::{signature, Sign, SignatureRef, Time};
+        use crate::{signature, SignatureRef, Time};
 
         fn decode(i: &[u8]) -> IResult<&[u8], SignatureRef<'_>, nom::error::VerboseError<&[u8]>> {
             signature::decode(i)
