@@ -239,8 +239,8 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             name: b"Sebastian Thiel".as_bstr(),
             email: b"byronimo@gmail.com".as_bstr(),
             time: gix_actor::Time {
-                seconds_since_unix_epoch: 1528473343,
-                offset_in_seconds: offset,
+                seconds: 1528473343,
+                offset: offset,
                 sign: gix_actor::Sign::Plus,
             },
         }),

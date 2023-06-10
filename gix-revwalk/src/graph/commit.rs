@@ -20,10 +20,7 @@ impl<'graph> LazyCommit<'graph> {
     pub fn committer_timestamp(&self) -> Result<CommitterTimestamp, gix_object::decode::Error> {
         Ok(match &self.backing {
             Either::Left(buf) => {
-                gix_object::CommitRefIter::from_bytes(buf)
-                    .committer()?
-                    .time
-                    .seconds_since_unix_epoch as CommitterTimestamp
+                gix_object::CommitRefIter::from_bytes(buf).committer()?.time.seconds as CommitterTimestamp
             }
             Either::Right((cache, pos)) => cache.commit_at(*pos).committer_timestamp(),
         })
@@ -53,7 +50,7 @@ impl<'graph> LazyCommit<'graph> {
                         Token::Parent { id } => parents.push(id),
                         Token::Author { .. } => {}
                         Token::Committer { signature } => {
-                            timestamp = Some(signature.time.seconds_since_unix_epoch as CommitterTimestamp);
+                            timestamp = Some(signature.time.seconds as CommitterTimestamp);
                             break;
                         }
                         _ => {

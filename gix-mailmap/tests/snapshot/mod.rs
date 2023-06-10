@@ -119,8 +119,8 @@ fn signature(name: &str, email: &str) -> gix_actor::Signature {
         email: email.into(),
         time: gix_actor::Time {
             // marker
-            seconds_since_unix_epoch: 42,
-            offset_in_seconds: 53,
+            seconds: 42,
+            offset: 53,
             sign: gix_actor::Sign::Minus,
         },
     }

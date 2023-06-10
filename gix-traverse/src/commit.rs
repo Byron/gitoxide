@@ -170,7 +170,7 @@ pub mod ancestors {
                                 oid: commit_id,
                                 source: err.into(),
                             })?;
-                        let time = commit_iter.committer()?.time.seconds_since_unix_epoch;
+                        let time = commit_iter.committer()?.time.seconds;
                         match cutoff_time {
                             Some(cutoff_time) if time >= cutoff_time => {
                                 state.queue.insert(time, commit_id);
@@ -383,12 +383,7 @@ pub mod ancestors {
 
                                 let parent = (self.find)(id.as_ref(), &mut state.parents_buf).ok();
                                 let parent_commit_time = parent
-                                    .and_then(|parent| {
-                                        parent
-                                            .committer()
-                                            .ok()
-                                            .map(|committer| committer.time.seconds_since_unix_epoch)
-                                    })
+                                    .and_then(|parent| parent.committer().ok().map(|committer| committer.time.seconds))
                                     .unwrap_or_default();
 
                                 match cutoff_older_than {

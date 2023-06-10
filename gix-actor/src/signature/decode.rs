@@ -1,6 +1,7 @@
 pub(crate) mod function {
     use bstr::ByteSlice;
     use btoi::btoi;
+    use gix_date::{OffsetInSeconds, SecondsSinceUnixEpoch};
     use nom::{
         branch::alt,
         bytes::complete::{tag, take, take_until, take_while_m_n},
@@ -25,7 +26,7 @@ pub(crate) mod function {
                 tag(b" "),
                 context("<timestamp>", |i| {
                     terminated(take_until(SPACE), take(1usize))(i).and_then(|(i, v)| {
-                        btoi::<u32>(v)
+                        btoi::<SecondsSinceUnixEpoch>(v)
                             .map(|v| (i, v))
                             .map_err(|_| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))
                     })
@@ -33,14 +34,14 @@ pub(crate) mod function {
                 context("+|-", alt((tag(b"-"), tag(b"+")))),
                 context("HH", |i| {
                     take_while_m_n(2usize, 2, is_digit)(i).and_then(|(i, v)| {
-                        btoi::<i32>(v)
+                        btoi::<OffsetInSeconds>(v)
                             .map(|v| (i, v))
                             .map_err(|_| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))
                     })
                 }),
                 context("MM", |i| {
                     take_while_m_n(2usize, 2, is_digit)(i).and_then(|(i, v)| {
-                        btoi::<i32>(v)
+                        btoi::<OffsetInSeconds>(v)
                             .map(|v| (i, v))
                             .map_err(|_| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))
                     })
@@ -58,8 +59,8 @@ pub(crate) mod function {
                 name: identity.name,
                 email: identity.email,
                 time: Time {
-                    seconds_since_unix_epoch: time,
-                    offset_in_seconds: offset,
+                    seconds: time,
+                    offset: offset,
                     sign,
                 },
             },
@@ -93,6 +94,7 @@ pub use function::identity;
 mod tests {
     mod parse_signature {
         use bstr::ByteSlice;
+        use gix_date::{OffsetInSeconds, SecondsSinceUnixEpoch};
         use gix_testtools::to_bstr_err;
         use nom::IResult;
 
@@ -105,18 +107,14 @@ mod tests {
         fn signature(
             name: &'static str,
             email: &'static str,
-            time: u32,
+            seconds: SecondsSinceUnixEpoch,
             sign: Sign,
-            offset: i32,
+            offset: OffsetInSeconds,
         ) -> SignatureRef<'static> {
             SignatureRef {
                 name: name.as_bytes().as_bstr(),
                 email: email.as_bytes().as_bstr(),
-                time: Time {
-                    seconds_since_unix_epoch: time,
-                    offset_in_seconds: offset,
-                    sign,
-                },
+                time: Time { seconds, offset, sign },
             }
         }
 
