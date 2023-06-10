@@ -129,11 +129,11 @@ impl Arguments {
             self.prefixed("deepen ", depth);
         }
     }
-    /// Deepen the commit history to include all commits from now to `seconds_since_unix_epoch`.
-    pub fn deepen_since(&mut self, seconds_since_unix_epoch: usize) {
+    /// Deepen the commit history to include all commits from now to (and including) `seconds` as passed since UNIX epoch.
+    pub fn deepen_since(&mut self, seconds: gix_date::SecondsSinceUnixEpoch) {
         debug_assert!(self.deepen_since, "'deepen-since' feature required");
         if self.deepen_since {
-            self.prefixed("deepen-since ", seconds_since_unix_epoch);
+            self.prefixed("deepen-since ", seconds);
         }
     }
     /// Deepen the commit history in a relative instead of absolute fashion.

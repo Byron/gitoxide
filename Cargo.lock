@@ -2069,6 +2069,7 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "gix-credentials",
+ "gix-date 0.5.1",
  "gix-features 0.30.0",
  "gix-hash 0.11.2",
  "gix-packetline",
