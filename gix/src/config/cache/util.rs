@@ -124,6 +124,10 @@ pub trait ApplyLeniencyDefault {
     fn with_lenient_default(self, is_lenient: bool) -> Self;
 }
 
+pub trait ApplyLeniencyDefaultValue<T> {
+    fn with_lenient_default_value(self, is_lenient: bool, default: T) -> Self;
+}
+
 impl<T, E> ApplyLeniency for Result<Option<T>, E> {
     fn with_leniency(self, is_lenient: bool) -> Self {
         match self {
@@ -142,6 +146,16 @@ where
         match self {
             Ok(v) => Ok(v),
             Err(_) if is_lenient => Ok(T::default()),
+            Err(err) => Err(err),
+        }
+    }
+}
+
+impl<T, E> ApplyLeniencyDefaultValue<T> for Result<T, E> {
+    fn with_lenient_default_value(self, is_lenient: bool, default: T) -> Self {
+        match self {
+            Ok(v) => Ok(v),
+            Err(_) if is_lenient => Ok(default),
             Err(err) => Err(err),
         }
     }

@@ -7,6 +7,9 @@ impl crate::Repository {
     /// Note that the commitgraph will be used if it is present and readable, but it won't be an error if it is corrupted. In that case,
     /// it will just not be used.
     ///
+    /// Note that a commitgraph is only allowed to be used if `core.commitGraph` is true (the default), and that configuration errors are
+    /// ignored as well.
+    ///
     /// ### Performance
     ///
     /// Note that the [Graph][gix_revision::Graph] can be sensitive to various object database settings that may affect the performance
@@ -18,7 +21,11 @@ impl crate::Repository {
                     .try_find(id, buf)
                     .map(|r| r.and_then(|d| d.try_into_commit_iter()))
             },
-            gix_commitgraph::at(self.objects.store_ref().path().join("info")).ok(),
+            self.config
+                .may_use_commit_graph()
+                .unwrap_or(true)
+                .then(|| gix_commitgraph::at(self.objects.store_ref().path().join("info")).ok())
+                .flatten(),
         )
     }
 
