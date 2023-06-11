@@ -182,7 +182,7 @@ sha1_smol = { opt-level = 3 }
 
 [profile.release]
 overflow-checks = false
-lto = "fat"
+#lto = "fat"
 # this bloats files but assures destructors are called, important for tempfiles. One day I hope we
 # can wire up the 'abrt' signal handler so tempfiles will be removed in case of panics.
 panic = 'unwind'

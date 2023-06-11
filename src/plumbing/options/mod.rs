@@ -441,6 +441,12 @@ pub mod revision {
         /// List all commits reachable from the given rev-spec.
         #[clap(visible_alias = "l")]
         List {
+            /// How many commits to list at most.
+            #[clap(long, short = 'l')]
+            limit: Option<usize>,
+            /// Write the graph as SVG file to the given path.
+            #[clap(long, short = 's')]
+            svg: Option<std::path::PathBuf>,
             /// The rev-spec to list reachable commits from.
             #[clap(default_value = "@")]
             spec: std::ffi::OsString,

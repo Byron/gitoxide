@@ -1,5 +1,5 @@
-mod list;
-pub use list::list;
+pub mod list;
+pub use list::function::list;
 mod explain;
 pub use explain::explain;
 
