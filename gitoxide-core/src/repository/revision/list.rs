@@ -1,7 +1,7 @@
 use std::ffi::OsString;
 
 use anyhow::{bail, Context};
-use gix::prelude::ObjectIdExt;
+use gix::traverse::commit::Sorting;
 
 use crate::OutputFormat;
 
@@ -20,14 +20,23 @@ pub fn list(
     let id = repo
         .rev_parse_single(spec)
         .context("Only single revisions are currently supported")?;
-    let commit_id = id
+    let commits = id
         .object()?
         .peel_to_kind(gix::object::Kind::Commit)
         .context("Need commitish as starting point")?
-        .id
-        .attach(&repo);
-    for commit in commit_id.ancestors().all()? {
-        writeln!(out, "{}", commit?.id().to_hex())?;
+        .id()
+        .ancestors()
+        .sorting(Sorting::ByCommitTimeNewestFirst)
+        .all()?;
+    for commit in commits {
+        let commit = commit?;
+        writeln!(
+            out,
+            "{} {} {}",
+            commit.id().shorten_or_id(),
+            commit.commit_time.expect("traversal with date"),
+            commit.parent_ids.len()
+        )?;
     }
     Ok(())
 }

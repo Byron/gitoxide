@@ -13,6 +13,7 @@ use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 use gix::bstr::io::BufReadExt;
 
+use crate::plumbing::options::commitgraph;
 use crate::{
     plumbing::{
         options::{
@@ -128,6 +129,36 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::CommitGraph(cmd) => match cmd {
+            commitgraph::Subcommands::List { spec } => prepare_and_run(
+                "commitgraph-list",
+                auto_verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| core::commitgraph::list(repository(Mode::Lenient)?, spec, out, format),
+            )
+            .map(|_| ()),
+            commitgraph::Subcommands::Verify { statistics } => prepare_and_run(
+                "commitgraph-verify",
+                auto_verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, err| {
+                    let output_statistics = if statistics { Some(format) } else { None };
+                    core::commitgraph::verify(
+                        repository(Mode::Lenient)?,
+                        core::commitgraph::verify::Context {
+                            err,
+                            out,
+                            output_statistics,
+                        },
+                    )
+                },
+            )
+            .map(|_| ()),
+        },
         #[cfg(feature = "gitoxide-core-blocking-client")]
         Subcommands::Clone(crate::plumbing::options::clone::Platform {
             handshake_info,
@@ -270,27 +301,6 @@ pub fn main() -> Result<()> {
         )
         .map(|_| ()),
         Subcommands::Free(subcommands) => match subcommands {
-            free::Subcommands::CommitGraph(subcommands) => match subcommands {
-                free::commitgraph::Subcommands::Verify { path, statistics } => prepare_and_run(
-                    "commitgraph-verify",
-                    auto_verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, err| {
-                        let output_statistics = if statistics { Some(format) } else { None };
-                        core::commitgraph::verify::graph_or_file(
-                            path,
-                            core::commitgraph::verify::Context {
-                                err,
-                                out,
-                                output_statistics,
-                            },
-                        )
-                    },
-                )
-                .map(|_| ()),
-            },
             free::Subcommands::Index(free::index::Platform {
                 object_hash,
                 index_path,

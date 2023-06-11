@@ -167,6 +167,35 @@ title "gix attributes"
   )
 )
 
+title "gix commit-graph"
+(when "running 'commit-graph'"
+  snapshot="$snapshot/commit-graph"
+  title "gix commit-graph verify"
+  (with "the 'verify' sub-command"
+    snapshot="$snapshot/verify"
+
+    (small-repo-in-sandbox
+      (with "a valid and complete commit-graph file"
+        git commit-graph write --reachable
+        (with "statistics"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/statistics-success" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose commit-graph verify -s
+          }
+        )
+        if test "$kind" = "max" || test "$kind" = "max-pure"; then
+        (with "statistics --format json"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/statistics-json-success" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --format json commit-graph verify -s
+          }
+        )
+        fi
+      )
+    )
+  )
+)
+
 (with "gix free"
   snapshot="$snapshot/no-repo"
   title "gix free pack"
@@ -621,35 +650,6 @@ title "gix attributes"
             WITH_SNAPSHOT="$snapshot/index-failure" \
             expect_run $WITH_FAILURE "$exe_plumbing" --no-verbose free pack verify index.idx
           }
-        )
-      )
-    )
-  )
-
-  title "gix free commit-graph"
-  (when "running 'commit-graph'"
-    snapshot="$snapshot/commit-graph"
-    title "gix free commit-graph verify"
-    (with "the 'verify' sub-command"
-      snapshot="$snapshot/verify"
-
-      (small-repo-in-sandbox
-        (with "a valid and complete commit-graph file"
-          git commit-graph write --reachable
-          (with "statistics"
-            it "generates the correct output" && {
-              WITH_SNAPSHOT="$snapshot/statistics-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose free commit-graph verify -s .git/objects/info
-            }
-          )
-          if test "$kind" = "max" || test "$kind" = "max-pure"; then
-          (with "statistics --format json"
-            it "generates the correct output" && {
-              WITH_SNAPSHOT="$snapshot/statistics-json-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --format json free commit-graph verify -s .git/objects/info
-            }
-          )
-          fi
         )
       )
     )

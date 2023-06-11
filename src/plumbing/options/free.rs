@@ -1,9 +1,6 @@
 #[derive(Debug, clap::Subcommand)]
 #[clap(visible_alias = "no-repo")]
 pub enum Subcommands {
-    /// Subcommands for interacting with commit-graphs
-    #[clap(subcommand)]
-    CommitGraph(commitgraph::Subcommands),
     /// Subcommands for interacting with mailmaps
     Mailmap {
         #[clap(flatten)]
@@ -14,23 +11,6 @@ pub enum Subcommands {
     Pack(pack::Subcommands),
     /// Subcommands for interacting with a worktree index, typically at .git/index
     Index(index::Platform),
-}
-
-///
-pub mod commitgraph {
-    use std::path::PathBuf;
-
-    #[derive(Debug, clap::Subcommand)]
-    pub enum Subcommands {
-        /// Verify the integrity of a commit graph
-        Verify {
-            /// The path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.
-            path: PathBuf,
-            /// output statistical information about the pack
-            #[clap(long, short = 's')]
-            statistics: bool,
-        },
-    }
 }
 
 pub mod index {
