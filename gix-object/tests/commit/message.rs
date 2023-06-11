@@ -223,7 +223,9 @@ mod body {
 mod summary {
     use std::borrow::Cow;
 
-    use gix_actor::{Sign, SignatureRef, Time};
+    use gix_actor::SignatureRef;
+    use gix_date::time::Sign;
+    use gix_date::Time;
     use gix_object::{
         bstr::{BStr, ByteSlice},
         commit::MessageRef,
@@ -236,8 +238,8 @@ mod summary {
             name: "name".into(),
             email: "email".into(),
             time: Time {
-                seconds_since_unix_epoch: 0,
-                offset_in_seconds: 0,
+                seconds: 0,
+                offset: 0,
                 sign: Sign::Plus,
             },
         };

@@ -12,6 +12,8 @@ pub enum Error {
     AncestorIter(#[from] gix_traverse::commit::ancestors::Error),
     #[error(transparent)]
     ShallowCommits(#[from] crate::shallow::open::Error),
+    #[error(transparent)]
+    ConfigBoolean(#[from] crate::config::boolean::Error),
 }
 
 /// Information about a commit that we obtained naturally as part of the iteration.
@@ -92,7 +94,7 @@ pub struct Platform<'repo> {
     pub(crate) tips: Vec<ObjectId>,
     pub(crate) sorting: gix_traverse::commit::Sorting,
     pub(crate) parents: gix_traverse::commit::Parents,
-    pub(crate) use_commit_graph: bool,
+    pub(crate) use_commit_graph: Option<bool>,
     pub(crate) commit_graph: Option<gix_commitgraph::Graph>,
 }
 
@@ -103,7 +105,7 @@ impl<'repo> Platform<'repo> {
             tips: tips.into_iter().map(Into::into).collect(),
             sorting: Default::default(),
             parents: Default::default(),
-            use_commit_graph: true,
+            use_commit_graph: None,
             commit_graph: None,
         }
     }
@@ -123,12 +125,12 @@ impl<'repo> Platform<'repo> {
         self
     }
 
-    /// Allow using the commitgraph, if present, if `toggle` is `true`, or disallow it with `false`.
+    /// Allow using the commitgraph, if present, if `toggle` is `true`, or disallow it with `false`. Set it to `None` to leave
+    /// control over this to the configuration of `core.commitGraph` (the default).
     ///
-    /// Note that the commitgraph will be used by default, and that errors just lead to falling back to the object database,
-    /// it's treated as a cache.
-    pub fn use_commit_graph(mut self, toggle: bool) -> Self {
-        self.use_commit_graph = toggle;
+    /// Errors when loading the graph lead to falling back to the object database, it's treated as optional cache.
+    pub fn use_commit_graph(mut self, toggle: impl Into<Option<bool>>) -> Self {
+        self.use_commit_graph = toggle.into();
         self
     }
 
@@ -201,7 +203,12 @@ impl<'repo> Platform<'repo> {
                 )
                 .sorting(sorting)?
                 .parents(parents)
-                .commit_graph(commit_graph.or(use_commit_graph.then(|| self.repo.commit_graph().ok()).flatten())),
+                .commit_graph(
+                    commit_graph.or(use_commit_graph
+                        .map_or_else(|| self.repo.config.may_use_commit_graph(), Ok)?
+                        .then(|| self.repo.commit_graph().ok())
+                        .flatten()),
+                ),
             ),
         })
     }

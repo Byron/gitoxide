@@ -14,6 +14,8 @@ use std::borrow::Cow;
 /// For convenience to allow using `bstr` without adding it to own cargo manifest.
 pub use bstr;
 use bstr::{BStr, BString, ByteSlice};
+/// For convenience to allow using `gix-date` without adding it to own cargo manifest.
+pub use gix_date as date;
 use smallvec::SmallVec;
 
 ///

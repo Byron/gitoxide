@@ -68,7 +68,7 @@ impl<'a> CommitRef<'a> {
     }
 
     /// Returns the time at which this commit was created.
-    pub fn time(&self) -> gix_actor::Time {
+    pub fn time(&self) -> gix_date::Time {
         self.committer.time
     }
 }

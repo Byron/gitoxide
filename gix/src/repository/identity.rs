@@ -73,9 +73,9 @@ impl crate::Repository {
 }
 
 fn extract_time_or_default(
-    time: Option<&Result<gix_actor::Time, gix_date::parse::Error>>,
+    time: Option<&Result<gix_date::Time, gix_date::parse::Error>>,
     config_key: &'static keys::Time,
-) -> Result<gix_actor::Time, config::time::Error> {
+) -> Result<gix_date::Time, config::time::Error> {
     match time {
         Some(Ok(t)) => Ok(*t),
         None => Ok(gix_date::Time::now_local_or_utc()),
@@ -88,7 +88,7 @@ pub(crate) struct Entity {
     pub name: Option<BString>,
     pub email: Option<BString>,
     /// A time parsed from an environment variable, handling potential errors is delayed.
-    pub time: Option<Result<gix_actor::Time, gix_date::parse::Error>>,
+    pub time: Option<Result<gix_date::Time, gix_date::parse::Error>>,
 }
 
 #[derive(Debug, Clone)]

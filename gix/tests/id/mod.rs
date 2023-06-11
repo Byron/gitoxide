@@ -123,9 +123,7 @@ mod ancestors {
             for sorting in [
                 commit::Sorting::BreadthFirst,
                 commit::Sorting::ByCommitTimeNewestFirst,
-                commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-                    time_in_seconds_since_epoch: 0,
-                },
+                commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds: 0 },
             ] {
                 let commits_graph_order = head
                     .ancestors()

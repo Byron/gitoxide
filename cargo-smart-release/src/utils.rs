@@ -299,8 +299,8 @@ mod tests {
     }
 }
 
-pub fn time_to_offset_date_time(time: gix::actor::Time) -> OffsetDateTime {
-    time::OffsetDateTime::from_unix_timestamp(time.seconds_since_unix_epoch as i64)
+pub fn time_to_offset_date_time(time: gix::date::Time) -> OffsetDateTime {
+    time::OffsetDateTime::from_unix_timestamp(time.seconds as i64)
         .expect("always valid unix time")
-        .replace_offset(time::UtcOffset::from_whole_seconds(time.offset_in_seconds).expect("valid offset"))
+        .replace_offset(time::UtcOffset::from_whole_seconds(time.offset).expect("valid offset"))
 }

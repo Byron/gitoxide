@@ -126,14 +126,14 @@ pub(crate) fn update(
                                                 .try_into_commit()
                                                 .map_err(|_| ())
                                                 .and_then(|c| {
-                                                    c.committer().map(|a| a.time.seconds_since_unix_epoch).map_err(|_| ())
+                                                    c.committer().map(|a| a.time.seconds).map_err(|_| ())
                                                 }).and_then(|local_commit_time|
                                                         remote_id
                                                             .to_owned()
                                                             .ancestors(|id, buf| repo.objects.find_commit_iter(id, buf))
                                                             .sorting(
                                                                 gix_traverse::commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-                                                                    time_in_seconds_since_epoch: local_commit_time
+                                                                    seconds: local_commit_time
                                                                 },
                                                             )
                                                             .map_err(|_| ())

@@ -61,29 +61,29 @@ fn hex_to_id(hex: &str) -> ObjectId {
     ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
 }
 
-use gix_actor::{Sign, Time};
+use gix_date::{time::Sign, SecondsSinceUnixEpoch, Time};
 
-fn signature(time: u32) -> gix_actor::SignatureRef<'static> {
+fn signature(seconds: SecondsSinceUnixEpoch) -> gix_actor::SignatureRef<'static> {
     use gix_object::bstr::ByteSlice;
     gix_actor::SignatureRef {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"sebastian.thiel@icloud.com".as_bstr(),
         time: Time {
-            seconds_since_unix_epoch: time,
-            offset_in_seconds: 28800,
+            seconds,
+            offset: 28800,
             sign: Sign::Plus,
         },
     }
 }
 
-fn linus_signature(time: u32) -> gix_actor::SignatureRef<'static> {
+fn linus_signature(seconds: SecondsSinceUnixEpoch) -> gix_actor::SignatureRef<'static> {
     use gix_object::bstr::ByteSlice;
     gix_actor::SignatureRef {
         name: b"Linus Torvalds".as_bstr(),
         email: b"torvalds@linux-foundation.org".as_bstr(),
         time: Time {
-            seconds_since_unix_epoch: time,
-            offset_in_seconds: -25200,
+            seconds,
+            offset: -25200,
             sign: Sign::Minus,
         },
     }

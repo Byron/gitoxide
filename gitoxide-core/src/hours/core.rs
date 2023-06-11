@@ -24,11 +24,7 @@ pub fn estimate_hours(
     let hours_for_commits = commits.iter().map(|t| &t.1).rev().tuple_windows().fold(
         0_f32,
         |hours, (cur, next): (&gix::actor::SignatureRef<'_>, &gix::actor::SignatureRef<'_>)| {
-            let change_in_minutes = (next
-                .time
-                .seconds_since_unix_epoch
-                .saturating_sub(cur.time.seconds_since_unix_epoch)) as f32
-                / MINUTES_PER_HOUR;
+            let change_in_minutes = (next.time.seconds.saturating_sub(cur.time.seconds)) as f32 / MINUTES_PER_HOUR;
             if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
                 hours + change_in_minutes / MINUTES_PER_HOUR
             } else {

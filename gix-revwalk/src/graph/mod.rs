@@ -10,9 +10,7 @@ pub mod commit;
 
 mod errors;
 pub use errors::{insert_parents, lookup};
-
-/// The time in seconds since unix epoch at which a commit was created.
-pub type CommitterTimestamp = u64;
+use gix_date::SecondsSinceUnixEpoch;
 
 /// The generation away from the HEAD of graph, useful to limit algorithms by topological depth as well.
 ///
@@ -74,7 +72,7 @@ impl<'find, T> Graph<'find, T> {
     pub fn insert_parents(
         &mut self,
         id: &gix_hash::oid,
-        mut new_parent_data: impl FnMut(gix_hash::ObjectId, CommitterTimestamp) -> T,
+        mut new_parent_data: impl FnMut(gix_hash::ObjectId, SecondsSinceUnixEpoch) -> T,
         mut update_existing: impl FnMut(gix_hash::ObjectId, &mut T),
         first_parent: bool,
     ) -> Result<(), insert_parents::Error> {
@@ -266,7 +264,7 @@ pub struct Commit<T> {
     /// The parents of the commit.
     pub parents: SmallVec<[gix_hash::ObjectId; 1]>,
     /// The time at which the commit was created.
-    pub commit_time: CommitterTimestamp,
+    pub commit_time: SecondsSinceUnixEpoch,
     /// The generation of the commit, if available.
     pub generation: Option<u32>,
     /// Any kind of data to associate with this commit.

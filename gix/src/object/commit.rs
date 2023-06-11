@@ -65,7 +65,7 @@ impl<'repo> Commit<'repo> {
     /// Decode the commit and obtain the time at which the commit was created.
     ///
     /// For the time at which it was authored, refer to `.decode()?.author.time`.
-    pub fn time(&self) -> Result<gix_actor::Time, Error> {
+    pub fn time(&self) -> Result<gix_date::Time, Error> {
         Ok(self.committer()?.time)
     }
 

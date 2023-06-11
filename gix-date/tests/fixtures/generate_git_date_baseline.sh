@@ -38,7 +38,9 @@ baseline '2022-08-17T21:43:13+08:00' 'ISO8601_STRICT'
 baseline 'Thu Sep 04 2022 10:45:06 -0400' '' # cannot round-trip, incorrect day-of-week
 baseline 'Sun Sep 04 2022 10:45:06 -0400' 'GITOXIDE'
 # unix
-baseline '123456789' 'UNIX'
+baseline '1234567890' 'UNIX'
 # raw
 baseline '1660874655 +0800' 'RAW'
+
+# Note that we can't necessarily put 64bit dates here yet as `git` on the system might not yet support it.
 

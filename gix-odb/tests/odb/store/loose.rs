@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
-use gix_actor::{Sign, Time};
+use gix_date::{time::Sign, SecondsSinceUnixEpoch, Time};
 use gix_features::progress;
 use gix_object::bstr::ByteSlice;
 use gix_odb::loose::Store;
@@ -425,13 +425,13 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     }
 }
 
-fn signature(time: u32) -> gix_actor::SignatureRef<'static> {
+fn signature(seconds: SecondsSinceUnixEpoch) -> gix_actor::SignatureRef<'static> {
     gix_actor::SignatureRef {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"byronimo@gmail.com".as_bstr(),
         time: Time {
-            seconds_since_unix_epoch: time,
-            offset_in_seconds: 7200,
+            seconds,
+            offset: 7200,
             sign: Sign::Plus,
         },
     }

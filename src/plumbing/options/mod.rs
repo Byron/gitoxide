@@ -72,6 +72,9 @@ pub struct Args {
 
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
+    /// Subcommands for interacting with commit-graphs
+    #[clap(subcommand)]
+    CommitGraph(commitgraph::Subcommands),
     /// Interact with the object database.
     #[clap(subcommand)]
     Odb(odb::Subcommands),
@@ -412,13 +415,36 @@ pub mod credential {
     }
 }
 
+///
+pub mod commitgraph {
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// Verify the integrity of a commit graph
+        Verify {
+            /// output statistical information about the pack
+            #[clap(long, short = 's')]
+            statistics: bool,
+        },
+        /// List all entries in the commit-graph as reachable by starting from `HEAD`.
+        List {
+            /// The rev-spec to list reachable commits from.
+            #[clap(default_value = "@")]
+            spec: std::ffi::OsString,
+        },
+    }
+}
+
 pub mod revision {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "rev", visible_alias = "r")]
     pub enum Subcommands {
         /// List all commits reachable from the given rev-spec.
         #[clap(visible_alias = "l")]
-        List { spec: std::ffi::OsString },
+        List {
+            /// The rev-spec to list reachable commits from.
+            #[clap(default_value = "@")]
+            spec: std::ffi::OsString,
+        },
         /// Provide the revision specification like `@~1` to explain.
         #[clap(visible_alias = "e")]
         Explain { spec: std::ffi::OsString },

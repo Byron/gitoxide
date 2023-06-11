@@ -1,4 +1,6 @@
-use gix_actor::{Sign, SignatureRef, Time};
+use gix_actor::SignatureRef;
+use gix_date::time::Sign;
+use gix_date::Time;
 use gix_object::{bstr::ByteSlice, commit::message::body::TrailerRef, CommitRef};
 use smallvec::SmallVec;
 
@@ -139,8 +141,8 @@ fn with_trailer() -> crate::Result {
         name: "Kim Altintop".into(),
         email: "kim@eagain.st".into(),
         time: Time {
-            seconds_since_unix_epoch: 1631514803,
-            offset_in_seconds: 7200,
+            seconds: 1631514803,
+            offset: 7200,
             sign: Sign::Plus,
         },
     };

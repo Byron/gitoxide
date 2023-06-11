@@ -64,7 +64,7 @@ pub enum Sorting {
     /// In the *sample history* and a cut-off date of 4, the returned list of commits would be `8, 7, 6, 4`
     ByCommitTimeNewestFirstCutoffOlderThan {
         /// The amount of seconds since unix epoch, the same value obtained by any `gix_date::Time` structure and the way git counts time.
-        time_in_seconds_since_epoch: u32,
+        seconds: gix_date::SecondsSinceUnixEpoch,
     },
 }
 
@@ -87,6 +87,7 @@ pub struct Info {
 
 ///
 pub mod ancestors {
+    use gix_date::SecondsSinceUnixEpoch;
     use smallvec::SmallVec;
     use std::{
         borrow::{Borrow, BorrowMut},
@@ -112,13 +113,11 @@ pub mod ancestors {
         ObjectDecode(#[from] gix_object::decode::Error),
     }
 
-    type TimeInSeconds = u32;
-
     /// The state used and potentially shared by multiple graph traversals.
     #[derive(Clone)]
     pub struct State {
         next: VecDeque<ObjectId>,
-        queue: gix_revwalk::PriorityQueue<TimeInSeconds, ObjectId>,
+        queue: gix_revwalk::PriorityQueue<SecondsSinceUnixEpoch, ObjectId>,
         buf: Vec<u8>,
         seen: HashSet<ObjectId>,
         parents_buf: Vec<u8>,
@@ -170,7 +169,7 @@ pub mod ancestors {
                                 oid: commit_id,
                                 source: err.into(),
                             })?;
-                        let time = commit_iter.committer()?.time.seconds_since_unix_epoch;
+                        let time = commit_iter.committer()?.time.seconds;
                         match cutoff_time {
                             Some(cutoff_time) if time >= cutoff_time => {
                                 state.queue.insert(time, commit_id);
@@ -316,9 +315,9 @@ pub mod ancestors {
                 match self.sorting {
                     Sorting::BreadthFirst => self.next_by_topology(),
                     Sorting::ByCommitTimeNewestFirst => self.next_by_commit_date(None),
-                    Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-                        time_in_seconds_since_epoch,
-                    } => self.next_by_commit_date(time_in_seconds_since_epoch.into()),
+                    Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => {
+                        self.next_by_commit_date(seconds.into())
+                    }
                 }
             }
         }
@@ -326,11 +325,9 @@ pub mod ancestors {
 
     impl Sorting {
         /// If not topo sort, provide the cutoff date if present.
-        fn cutoff_time(&self) -> Option<u32> {
+        fn cutoff_time(&self) -> Option<gix_date::SecondsSinceUnixEpoch> {
             match self {
-                Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-                    time_in_seconds_since_epoch,
-                } => Some(*time_in_seconds_since_epoch),
+                Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => Some(*seconds),
                 _ => None,
             }
         }
@@ -344,7 +341,10 @@ pub mod ancestors {
         StateMut: BorrowMut<State>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        fn next_by_commit_date(&mut self, cutoff_older_than: Option<TimeInSeconds>) -> Option<Result<Info, Error>> {
+        fn next_by_commit_date(
+            &mut self,
+            cutoff_older_than: Option<SecondsSinceUnixEpoch>,
+        ) -> Option<Result<Info, Error>> {
             let state = self.state.borrow_mut();
 
             let (commit_time, oid) = state.queue.pop()?;
@@ -356,14 +356,13 @@ pub mod ancestors {
                         self.cache = None;
                         return self.next_by_commit_date(cutoff_older_than);
                     }
-                    for (id, commit_time) in state.parent_ids.drain(..) {
+                    for (id, parent_commit_time) in state.parent_ids.drain(..) {
                         parents.push(id);
                         let was_inserted = state.seen.insert(id);
                         if !(was_inserted && (self.predicate)(&id)) {
                             continue;
                         }
 
-                        let parent_commit_time = commit_time as u32; // TODO: fix this once we have 64 bit date support
                         match cutoff_older_than {
                             Some(cutoff_older_than) if parent_commit_time < cutoff_older_than => continue,
                             Some(_) | None => state.queue.insert(parent_commit_time, id),
@@ -383,12 +382,7 @@ pub mod ancestors {
 
                                 let parent = (self.find)(id.as_ref(), &mut state.parents_buf).ok();
                                 let parent_commit_time = parent
-                                    .and_then(|parent| {
-                                        parent
-                                            .committer()
-                                            .ok()
-                                            .map(|committer| committer.time.seconds_since_unix_epoch)
-                                    })
+                                    .and_then(|parent| parent.committer().ok().map(|committer| committer.time.seconds))
                                     .unwrap_or_default();
 
                                 match cutoff_older_than {
@@ -411,7 +405,7 @@ pub mod ancestors {
             Some(Ok(Info {
                 id: oid,
                 parent_ids: parents,
-                commit_time: Some(commit_time as u64),
+                commit_time: Some(commit_time),
             }))
         }
     }

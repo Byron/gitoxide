@@ -1,7 +1,8 @@
+use gix_date::SecondsSinceUnixEpoch;
 use smallvec::SmallVec;
 
 use super::LazyCommit;
-use crate::graph::{Commit, CommitterTimestamp, Either, Generation};
+use crate::graph::{Commit, Either, Generation};
 
 impl<'graph> LazyCommit<'graph> {
     /// Return an iterator over the parents of this commit.
@@ -17,14 +18,9 @@ impl<'graph> LazyCommit<'graph> {
     ///
     /// This is the single-most important date for determining recency of commits.
     /// Note that this can only fail if the commit is backed by the object database *and* parsing fails.
-    pub fn committer_timestamp(&self) -> Result<CommitterTimestamp, gix_object::decode::Error> {
+    pub fn committer_timestamp(&self) -> Result<SecondsSinceUnixEpoch, gix_object::decode::Error> {
         Ok(match &self.backing {
-            Either::Left(buf) => {
-                gix_object::CommitRefIter::from_bytes(buf)
-                    .committer()?
-                    .time
-                    .seconds_since_unix_epoch as CommitterTimestamp
-            }
+            Either::Left(buf) => gix_object::CommitRefIter::from_bytes(buf).committer()?.time.seconds,
             Either::Right((cache, pos)) => cache.commit_at(*pos).committer_timestamp(),
         })
     }
@@ -53,7 +49,7 @@ impl<'graph> LazyCommit<'graph> {
                         Token::Parent { id } => parents.push(id),
                         Token::Author { .. } => {}
                         Token::Committer { signature } => {
-                            timestamp = Some(signature.time.seconds_since_unix_epoch as CommitterTimestamp);
+                            timestamp = Some(signature.time.seconds);
                             break;
                         }
                         _ => {

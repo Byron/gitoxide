@@ -11,7 +11,7 @@ pub struct Signature<'a> {
     /// The possibly mapped email.
     pub email: Cow<'a, BStr>,
     /// The time stamp at which the signature is performed.
-    pub time: gix_actor::Time,
+    pub time: gix_date::Time,
 }
 
 impl<'a> From<Signature<'a>> for gix_actor::Signature {

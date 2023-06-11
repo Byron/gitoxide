@@ -1,6 +1,7 @@
 use std::{convert::TryInto, path::Path};
 
-use gix_actor::{Sign, Signature, Time};
+use gix_actor::Signature;
+use gix_date::{time::Sign, Time};
 use gix_object::bstr::ByteSlice;
 use tempfile::TempDir;
 
@@ -54,8 +55,8 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
             name: "committer".into(),
             email: "committer@example.com".into(),
             time: Time {
-                seconds_since_unix_epoch: 1234,
-                offset_in_seconds: 1800,
+                seconds: 1234,
+                offset: 1800,
                 sign: Sign::Plus,
             },
         };

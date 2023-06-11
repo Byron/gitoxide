@@ -15,6 +15,7 @@ doctest = false
 [dependencies]
 gix-hash = { version = "^0.11.2", path = "../gix-hash" }
 gix-object = { version = "^0.30.0", path = "../gix-object" }
+gix-date = { version = "^0.5.1", path = "../gix-date" }
 gix-hashtable = { version = "^0.2.1", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.16.0", path = "../gix-commitgraph" }
 

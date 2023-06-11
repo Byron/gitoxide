@@ -1,7 +1,7 @@
 pub(crate) mod prepare_and_commit {
     use std::convert::TryInto;
 
-    use gix_actor::{Sign, Time};
+    use gix_date::{time::Sign, Time};
     use gix_hash::ObjectId;
     use gix_object::bstr::BString;
     use gix_ref::{
@@ -33,8 +33,8 @@ pub(crate) mod prepare_and_commit {
             name: "committer".into(),
             email: "committer@example.com".into(),
             time: Time {
-                seconds_since_unix_epoch: 1234,
-                offset_in_seconds: 1800,
+                seconds: 1234,
+                offset: 1800,
                 sign: Sign::Plus,
             },
         }

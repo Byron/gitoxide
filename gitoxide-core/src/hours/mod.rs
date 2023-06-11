@@ -95,12 +95,9 @@ where
                 }
                 out.shrink_to_fit();
                 out.sort_by(|a, b| {
-                    a.1.email.cmp(b.1.email).then(
-                        a.1.time
-                            .seconds_since_unix_epoch
-                            .cmp(&b.1.time.seconds_since_unix_epoch)
-                            .reverse(),
-                    )
+                    a.1.email
+                        .cmp(b.1.email)
+                        .then(a.1.time.seconds.cmp(&b.1.time.seconds).reverse())
                 });
                 Ok(out)
             });

@@ -48,8 +48,8 @@ fn author_and_committer_and_fallback() -> crate::Result {
                 name: "author".into(),
                 email: "author@email".into(),
                 time: gix_date::Time {
-                    seconds_since_unix_epoch: 1659329106,
-                    offset_in_seconds: 28800,
+                    seconds: 1659329106,
+                    offset: 28800,
                     sign: gix_date::time::Sign::Plus
                 }
             }
@@ -61,8 +61,8 @@ fn author_and_committer_and_fallback() -> crate::Result {
                 name: "committer".into(),
                 email: "committer@email".into(),
                 time: gix_date::Time {
-                    seconds_since_unix_epoch: 1659365106,
-                    offset_in_seconds: -7200,
+                    seconds: 1659365106,
+                    offset: -7200,
                     sign: gix_date::time::Sign::Minus
                 }
             }
@@ -167,8 +167,8 @@ fn author_from_different_config_sections() -> crate::Result {
             name: "global name".into(),
             email: "local@example.com".into(),
             time: gix_date::Time {
-                seconds_since_unix_epoch: 42,
-                offset_in_seconds: 1800,
+                seconds: 42,
+                offset: 1800,
                 sign: gix_date::time::Sign::Plus
             }
         }),
@@ -181,8 +181,8 @@ fn author_from_different_config_sections() -> crate::Result {
             name: "local committer".into(),
             email: "global-committer@example.com".into(),
             time: gix_date::Time {
-                seconds_since_unix_epoch: 320437800,
-                offset_in_seconds: 0,
+                seconds: 320437800,
+                offset: 0,
                 sign: gix_date::time::Sign::Plus,
             }
         }),

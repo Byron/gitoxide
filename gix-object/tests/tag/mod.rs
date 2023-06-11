@@ -1,3 +1,4 @@
+use gix_date::time::Sign;
 use gix_object::{bstr::ByteSlice, Kind, TagRef};
 
 mod method {
@@ -238,10 +239,10 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         tagger: Some(gix_actor::SignatureRef {
             name: b"Sebastian Thiel".as_bstr(),
             email: b"byronimo@gmail.com".as_bstr(),
-            time: gix_actor::Time {
-                seconds_since_unix_epoch: 1528473343,
-                offset_in_seconds: offset,
-                sign: gix_actor::Sign::Plus,
+            time: gix_date::Time {
+                seconds: 1528473343,
+                offset,
+                sign: Sign::Plus,
             },
         }),
     }

@@ -1,6 +1,7 @@
 use std::{collections::HashMap, time::SystemTime};
 
 use gix_date::time::{format, Format};
+use gix_date::SecondsSinceUnixEpoch;
 use once_cell::sync::Lazy;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -8,7 +9,7 @@ type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 struct Sample {
     format_name: Option<String>,
     exit_code: usize,
-    time_in_seconds_since_unix_epoch: u32,
+    seconds: SecondsSinceUnixEpoch,
 }
 
 static BASELINE: Lazy<HashMap<String, Sample>> = Lazy::new(|| {
@@ -21,7 +22,7 @@ static BASELINE: Lazy<HashMap<String, Sample>> = Lazy::new(|| {
         while let Some(date_str) = lines.next() {
             let format_name = lines.next().expect("four lines per baseline").to_string();
             let exit_code = lines.next().expect("four lines per baseline").parse()?;
-            let time_in_seconds_since_unix_epoch: u32 = lines
+            let seconds: SecondsSinceUnixEpoch = lines
                 .next()
                 .expect("four lines per baseline")
                 .parse()
@@ -31,7 +32,7 @@ static BASELINE: Lazy<HashMap<String, Sample>> = Lazy::new(|| {
                 Sample {
                     format_name: (!format_name.is_empty()).then_some(format_name),
                     exit_code,
-                    time_in_seconds_since_unix_epoch,
+                    seconds,
                 },
             );
         }
@@ -47,7 +48,7 @@ fn parse_compare_format() {
         Sample {
             format_name,
             exit_code,
-            time_in_seconds_since_unix_epoch,
+            seconds: time_in_seconds_since_unix_epoch,
         },
     ) in BASELINE.iter()
     {
@@ -58,7 +59,7 @@ fn parse_compare_format() {
             "{pattern:?} disagrees with baseline: {res:?}"
         );
         if let Ok(t) = res {
-            let actual = t.seconds_since_unix_epoch;
+            let actual = t.seconds;
             assert_eq!(
                 actual, *time_in_seconds_since_unix_epoch,
                 "{pattern:?} disagrees with baseline seconds since epoch: {actual:?}"

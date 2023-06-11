@@ -4,6 +4,7 @@ use std::{borrow::Cow, path::PathBuf, time::Duration};
 use gix_attributes::Source;
 use gix_lock::acquire::Fail;
 
+use crate::config::cache::util::ApplyLeniencyDefaultValue;
 use crate::{
     bstr::BStr,
     config,
@@ -67,6 +68,18 @@ impl Cache {
     pub(crate) fn url_scheme(&self) -> Result<&remote::url::SchemePermission, config::protocol::allow::Error> {
         self.url_scheme
             .get_or_try_init(|| remote::url::SchemePermission::from_config(&self.resolved, self.filter_config_section))
+    }
+
+    pub(crate) fn may_use_commit_graph(&self) -> Result<bool, config::boolean::Error> {
+        const DEFAULT: bool = true;
+        self.resolved
+            .boolean_by_key("core.commitGraph")
+            .map(|res| {
+                Core::COMMIT_GRAPH
+                    .enrich_error(res)
+                    .with_lenient_default_value(self.lenient_config, DEFAULT)
+            })
+            .unwrap_or(Ok(DEFAULT))
     }
 
     pub(crate) fn diff_renames(

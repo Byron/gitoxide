@@ -82,16 +82,16 @@ fn custom_compile_time() {
 
 fn time() -> Time {
     Time {
-        seconds_since_unix_epoch: 123456789,
-        offset_in_seconds: 9000,
+        seconds: 123456789,
+        offset: 9000,
         sign: Sign::Plus,
     }
 }
 
 fn time_dec1() -> Time {
     Time {
-        seconds_since_unix_epoch: 123543189,
-        offset_in_seconds: 9000,
+        seconds: 123543189,
+        offset: 9000,
         sign: Sign::Plus,
     }
 }

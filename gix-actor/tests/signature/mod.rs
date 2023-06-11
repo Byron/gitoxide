@@ -1,6 +1,8 @@
 mod write_to {
     mod invalid {
-        use gix_actor::{Sign, Signature, Time};
+        use gix_actor::Signature;
+        use gix_date::time::Sign;
+        use gix_date::Time;
 
         #[test]
         fn name() {
@@ -43,8 +45,8 @@ mod write_to {
 
         fn default_time() -> Time {
             Time {
-                seconds_since_unix_epoch: 0,
-                offset_in_seconds: 0,
+                seconds: 0,
+                offset: 0,
                 sign: Sign::Plus,
             }
         }
