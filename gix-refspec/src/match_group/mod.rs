@@ -43,7 +43,7 @@ impl<'a> MatchGroup<'a> {
                     push_unique(Mapping {
                         item_index: None,
                         lhs: SourceRef::ObjectId(id),
-                        rhs: m.rhs.map(|n| n.to_bstr()),
+                        rhs: m.rhs.map(Needle::to_bstr),
                         spec_index: idx,
                     });
                     None

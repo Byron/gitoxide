@@ -357,7 +357,7 @@ impl MatchLocation {
         crate::search::MatchLocation {
             source: self
                 .source
-                .and_then(|source| out.source_paths.resolve(source).map(|p| p.as_path())),
+                .and_then(|source| out.source_paths.resolve(source).map(AsRef::as_ref)),
             sequence_number: self.sequence_number,
         }
     }

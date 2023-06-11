@@ -281,8 +281,7 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                 let crate_is_known_already = crates
                     .iter()
                     .find_map(|c| {
-                        (c.package.id == dependant.id)
-                            .then(|| c.mode.version_adjustment_bump().map(|b| b.is_breaking()))
+                        (c.package.id == dependant.id).then(|| c.mode.version_adjustment_bump().map(Bump::is_breaking))
                     })
                     .flatten();
 

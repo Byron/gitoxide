@@ -106,7 +106,7 @@ impl<'a> CommitRefIter<'a> {
             _ => None,
         })
         .transpose()
-        .map(|msg| msg.unwrap_or_default())
+        .map(Option::unwrap_or_default)
     }
 }
 

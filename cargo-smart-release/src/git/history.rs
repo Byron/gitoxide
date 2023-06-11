@@ -11,6 +11,7 @@ use gix::{
     bstr::ByteSlice,
     head,
     prelude::{ObjectIdExt, ReferenceExt},
+    Reference,
 };
 
 use crate::{
@@ -106,7 +107,7 @@ pub fn crate_ref_segments<'h>(
             Some(prefix) => BTreeMap::from_iter(
                 refs.prefixed(PathBuf::from(format!("refs/tags/{prefix}-")))?
                     .peeled()
-                    .filter_map(|r| r.ok().map(|r| r.detach()))
+                    .filter_map(|r| r.ok().map(Reference::detach))
                     .filter(|r| is_tag_name(prefix, strip_tag_path(r.name.as_ref())))
                     .map(|r| {
                         let t = r.peeled.expect("already peeled");
@@ -116,7 +117,7 @@ pub fn crate_ref_segments<'h>(
             None => BTreeMap::from_iter(
                 refs.prefixed("refs/tags")?
                     .peeled()
-                    .filter_map(|r| r.ok().map(|r| r.detach()))
+                    .filter_map(|r| r.ok().map(Reference::detach))
                     .filter(|r| is_tag_version(strip_tag_path(r.name.as_ref())))
                     .map(|r| {
                         let t = r.peeled.expect("already peeled");

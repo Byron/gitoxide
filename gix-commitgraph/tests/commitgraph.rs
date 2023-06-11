@@ -57,7 +57,7 @@ pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHa
 
     assert_eq!(
         cg.iter_ids().collect::<HashSet<_>>(),
-        expected.values().map(|x| x.id()).collect::<HashSet<_>>()
+        expected.values().map(RefInfo::id).collect::<HashSet<_>>()
     );
 }
 
@@ -99,7 +99,7 @@ impl RefInfo {
     }
 
     pub fn parent_ids(&self) -> impl Iterator<Item = &gix_hash::oid> {
-        self.parent_ids.iter().map(|x| x.as_ref())
+        self.parent_ids.iter().map(AsRef::as_ref)
     }
 
     pub fn root_tree_id(&self) -> &gix_hash::oid {

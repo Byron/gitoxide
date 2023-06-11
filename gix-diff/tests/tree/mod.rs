@@ -98,7 +98,7 @@ mod changes {
                 parent_commit_id
                     .and_then(|id| db.try_find(id, &mut buf2).ok().flatten())
                     .and_then(|(c, _l)| c.decode().ok())
-                    .and_then(|c| c.into_commit())
+                    .and_then(gix_object::ObjectRef::into_commit)
                     .map(|c| c.tree())
                     .and_then(|tree| db.try_find(tree, &mut buf2).ok().flatten())
                     .and_then(|(tree, _)| tree.try_into_tree_iter())

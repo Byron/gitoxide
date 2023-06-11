@@ -419,7 +419,7 @@ fn symbolic_reference_writes_reflog_if_previous_value_is_set() -> crate::Result 
     assert_eq!(head.name.as_bstr(), "refs/heads/symbolic");
     assert_eq!(head.kind(), gix_ref::Kind::Symbolic);
     assert_eq!(
-        head.target.to_ref().try_name().map(|n| n.as_bstr()),
+        head.target.to_ref().try_name().map(gix_ref::FullNameRef::as_bstr),
         Some(referent.as_bytes().as_bstr())
     );
     assert!(
@@ -486,7 +486,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             "note the newline - symbolic refs really want a newline just like git does it, otherwise some tools may break"
         );
         assert_eq!(
-            head.target.to_ref().try_name().map(|n| n.as_bstr()),
+            head.target.to_ref().try_name().map(gix_ref::FullNameRef::as_bstr),
             Some(referent.as_bytes().as_bstr())
         );
         assert!(!head.log_exists(&store), "no reflog is written for symbolic ref");
@@ -552,7 +552,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             "head is still symbolic, not detached"
         );
         assert_eq!(
-            head.target.to_ref().try_name().map(|n| n.as_bstr()),
+            head.target.to_ref().try_name().map(gix_ref::FullNameRef::as_bstr),
             Some(referent.as_bytes().as_bstr()),
             "it still points to the referent"
         );

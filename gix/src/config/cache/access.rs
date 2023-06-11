@@ -115,7 +115,7 @@ impl Cache {
     /// The path to the user-level excludes file to ignore certain files in the worktree.
     pub(crate) fn excludes_file(&self) -> Option<Result<PathBuf, gix_config::path::interpolate::Error>> {
         self.trusted_file_path("core", None, Core::EXCLUDES_FILE.name)?
-            .map(|p| p.into_owned())
+            .map(std::borrow::Cow::into_owned)
             .into()
     }
 

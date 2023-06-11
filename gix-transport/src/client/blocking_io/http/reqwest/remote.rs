@@ -91,7 +91,10 @@ impl Default for Remote {
                         }
                     }
                 }
-                let mut res = match client.execute(req).and_then(|res| res.error_for_status()) {
+                let mut res = match client
+                    .execute(req)
+                    .and_then(reqwest::blocking::Response::error_for_status)
+                {
                     Ok(res) => res,
                     Err(err) => {
                         let (kind, err) = match err.status() {

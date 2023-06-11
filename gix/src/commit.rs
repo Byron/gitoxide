@@ -183,7 +183,7 @@ pub mod describe {
         ///
         /// Note that there will always be `Some(format)`
         pub fn try_format(&self) -> Result<Option<gix_revision::describe::Format<'static>>, Error> {
-            self.try_resolve()?.map(|r| r.format()).transpose()
+            self.try_resolve()?.map(Resolution::format).transpose()
         }
 
         /// Try to find a name for the configured commit id using all prior configuration, returning `Some(Outcome)`
@@ -202,7 +202,7 @@ pub mod describe {
                     self.repo
                         .objects
                         .try_find(id, buf)
-                        .map(|r| r.and_then(|d| d.try_into_commit_iter()))
+                        .map(|r| r.and_then(gix_object::Data::try_into_commit_iter))
                 },
                 gix_commitgraph::Graph::from_info_dir(self.repo.objects.store_ref().path().join("info")).ok(),
             );

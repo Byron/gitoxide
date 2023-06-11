@@ -185,7 +185,7 @@ mod expand {
                 return Err(Error::Interrupted);
             }
 
-            let id = id.map(|oid| oid.into()).map_err(Error::InputIteration)?;
+            let id = id.map(Into::into).map_err(Error::InputIteration)?;
             let (obj, location) = db.find(id, buf1)?;
             stats.input_objects += 1;
             match input_object_expansion {

@@ -28,7 +28,7 @@ mod serde_only {
                         name: t.name.as_bstr().to_string(),
                         id: t.id.to_hex().to_string(),
                         num_entries: t.num_entries,
-                        children: t.children.iter().map(|t| t.into()).collect(),
+                        children: t.children.iter().map(Into::into).collect(),
                     }
                 }
             }

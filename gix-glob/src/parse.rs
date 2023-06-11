@@ -21,7 +21,7 @@ pub fn pattern(mut pat: &[u8]) -> Option<(&[u8], pattern::Mode, Option<usize>)> 
             pat = &pat[1..];
         }
     }
-    if pat.iter().all(|b| b.is_ascii_whitespace()) {
+    if pat.iter().all(u8::is_ascii_whitespace) {
         return None;
     }
     if pat.first() == Some(&b'/') {

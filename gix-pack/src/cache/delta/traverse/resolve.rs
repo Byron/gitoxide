@@ -357,7 +357,7 @@ where
             // but may instead find a good way to set the polling interval instead of hard-coding it.
             std::thread::sleep(poll_interval);
             // Get out of threads are already starving or they would be starving soon as no work is left.
-            if threads.iter().any(|t| t.is_finished()) {
+            if threads.iter().any(std::thread::ScopedJoinHandle::is_finished) {
                 let mut running_threads = Vec::new();
                 for thread in threads.drain(..) {
                     if thread.is_finished() {

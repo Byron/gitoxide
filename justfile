@@ -22,6 +22,7 @@ clippy-flags := """
   -D clippy::cloned-instead-of-copied \
   -D clippy::explicit-iter-loop \
   -D clippy::map-unwrap-or \
+  -D clippy::redundant-closure-for-method-calls \
   -D clippy::uninlined_format_args \
   -D clippy::unnested-or-patterns \
 """

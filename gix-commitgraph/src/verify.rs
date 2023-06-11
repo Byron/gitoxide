@@ -111,7 +111,7 @@ impl Graph {
 
             for (base_graph_index, (expected, actual)) in self.files[..file_index]
                 .iter()
-                .map(|base_file| base_file.checksum())
+                .map(crate::File::checksum)
                 .zip(file.iter_base_graph_ids())
                 .enumerate()
             {

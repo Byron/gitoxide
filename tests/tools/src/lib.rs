@@ -643,7 +643,7 @@ fn extract_archive(
     let mut entry_buf = Vec::<u8>::new();
     let (archive_identity, platform): (u32, _) = tar::Archive::new(std::io::Cursor::new(&mut &*archive_buf))
         .entries_with_seek()?
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .find_map(|mut e: tar::Entry<'_, _>| {
             let path = e.path().ok()?;
             if path.parent()?.file_name()? == META_DIR_NAME && path.file_name()? == META_IDENTITY {
@@ -671,7 +671,7 @@ fn extract_archive(
     for entry in tar::Archive::new(&mut &*archive_buf).entries()? {
         let mut entry = entry?;
         let path = entry.path()?;
-        if path.to_str() == Some(META_DIR_NAME) || path.parent().and_then(|p| p.to_str()) == Some(META_DIR_NAME) {
+        if path.to_str() == Some(META_DIR_NAME) || path.parent().and_then(Path::to_str) == Some(META_DIR_NAME) {
             continue;
         }
         entry.unpack_in(destination_dir)?;

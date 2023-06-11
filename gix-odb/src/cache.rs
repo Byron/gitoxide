@@ -133,6 +133,7 @@ impl<S> DerefMut for Cache<S> {
 }
 
 mod impls {
+    use std::cell::RefCell;
     use std::{io::Read, ops::DerefMut};
 
     use gix_hash::{oid, ObjectId};
@@ -193,7 +194,7 @@ mod impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
         ) -> Result<Option<(Data<'a>, Option<Location>)>, Self::Error> {
-            match self.pack_cache.as_ref().map(|rc| rc.borrow_mut()) {
+            match self.pack_cache.as_ref().map(RefCell::borrow_mut) {
                 Some(mut pack_cache) => self.try_find_cached(id, buffer, pack_cache.deref_mut()),
                 None => self.try_find_cached(id, buffer, &mut gix_pack::cache::Never),
             }
@@ -205,14 +206,14 @@ mod impls {
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl gix_pack::cache::DecodeEntry,
         ) -> Result<Option<(Data<'a>, Option<gix_pack::data::entry::Location>)>, Self::Error> {
-            if let Some(mut obj_cache) = self.object_cache.as_ref().map(|rc| rc.borrow_mut()) {
+            if let Some(mut obj_cache) = self.object_cache.as_ref().map(RefCell::borrow_mut) {
                 if let Some(kind) = obj_cache.get(&id.as_ref().to_owned(), buffer) {
                     return Ok(Some((Data::new(kind, buffer), None)));
                 }
             }
             let possibly_obj = self.inner.try_find_cached(id.as_ref(), buffer, pack_cache)?;
             if let (Some(mut obj_cache), Some((obj, _location))) =
-                (self.object_cache.as_ref().map(|rc| rc.borrow_mut()), &possibly_obj)
+                (self.object_cache.as_ref().map(RefCell::borrow_mut), &possibly_obj)
             {
                 obj_cache.put(id.as_ref().to_owned(), obj.kind, obj.data);
             }

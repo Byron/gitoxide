@@ -71,7 +71,7 @@ fn http_will_use_pipelining() {
     fn headers(rdr: &mut dyn BufRead) -> HashSet<String> {
         let valid = ["GET", "Authorization", "Accept"];
         rdr.lines()
-            .map(|s| s.unwrap())
+            .map(Result::unwrap)
             .take_while(|s| s.len() > 2)
             .map(|s| s.trim().to_string())
             .filter(|s| valid.iter().any(|prefix| s.starts_with(*prefix)))
@@ -97,7 +97,7 @@ fn http_will_use_pipelining() {
                     "Accept: */*"
                 ]
                 .into_iter()
-                .map(|s| s.to_string())
+                .map(ToString::to_string)
                 .collect()
             );
 
@@ -117,7 +117,7 @@ fn http_will_use_pipelining() {
                     "Accept: */*",
                 ]
                 .into_iter()
-                .map(|s| s.to_string())
+                .map(ToString::to_string)
                 .collect()
             );
         }
@@ -159,7 +159,7 @@ fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted()
         server
             .received_as_string()
             .lines()
-            .map(|l| l.to_lowercase())
+            .map(str::to_lowercase)
             .collect::<HashSet<_>>(),
         format!(
             "GET /path/not-important/info/refs?service=git-upload-pack HTTP/1.1
@@ -173,7 +173,7 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .map(|l| l.to_lowercase())
+        .map(str::to_lowercase)
         .collect::<HashSet<_>>()
     );
 
@@ -184,7 +184,7 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
         server
             .received_as_string()
             .lines()
-            .map(|l| l.to_lowercase())
+            .map(str::to_lowercase)
             .filter(|l| !l.starts_with("expect: "))
             .collect::<HashSet<_>>(),
         format!(
@@ -203,7 +203,7 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .map(|l| l.to_lowercase())
+        .map(str::to_lowercase)
         .collect::<HashSet<_>>(),
         "the authentication information is used in subsequent calls"
     );
@@ -332,7 +332,7 @@ fn handshake_v1() -> crate::Result {
         server
             .received_as_string()
             .lines()
-            .map(|l| l.to_lowercase())
+            .map(str::to_lowercase)
             .collect::<HashSet<_>>(),
         format!(
             "GET /path/not/important/due/to/mock/info/refs?service=git-upload-pack HTTP/1.1
@@ -345,7 +345,7 @@ User-Agent: git/oxide-{}
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .map(|l| l.to_lowercase())
+        .map(str::to_lowercase)
         .collect::<HashSet<_>>()
     );
     Ok(())
@@ -365,7 +365,7 @@ fn clone_v1() -> crate::Result {
         server
             .received_as_string()
             .lines()
-            .map(|l| l.to_lowercase())
+            .map(str::to_lowercase)
             .find(|l| l.starts_with("git-protocol"))
             .expect("git-protocol header"),
         "git-protocol: key=value:value-only",
@@ -407,7 +407,7 @@ fn clone_v1() -> crate::Result {
         server
             .received_as_string()
             .lines()
-            .map(|l| l.to_lowercase())
+            .map(str::to_lowercase)
             .filter(|l| !l.starts_with("expect: "))
             .collect::<HashSet<_>>(),
         format!(
@@ -425,7 +425,7 @@ Accept: application/x-git-upload-pack-result
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .map(|l| l.to_lowercase())
+        .map(str::to_lowercase)
         .collect::<HashSet<_>>()
     );
     Ok(())
@@ -544,7 +544,7 @@ fn handshake_and_lsrefs_and_fetch_v2_impl(handshake_fixture: &str) -> crate::Res
         server
             .received_as_string()
             .lines()
-            .map(|l| l.to_lowercase())
+            .map(str::to_lowercase)
             .collect::<HashSet<_>>(),
         format!(
             "GET /path/not/important/due/to/mock/info/refs?service=git-upload-pack HTTP/1.1
@@ -558,7 +558,7 @@ Git-Protocol: version=2:value-only:key=value
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .map(|l| l.to_lowercase())
+        .map(str::to_lowercase)
         .collect::<HashSet<_>>()
     );
 
@@ -581,7 +581,7 @@ Git-Protocol: version=2:value-only:key=value
         server
             .received_as_string()
             .lines()
-            .map(|l| l.to_lowercase())
+            .map(str::to_lowercase)
             .filter(|l| !l.starts_with("expect: "))
             .collect::<HashSet<_>>(),
         format!(
@@ -602,7 +602,7 @@ Git-Protocol: version=2
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .map(|l| l.to_lowercase())
+        .map(str::to_lowercase)
         .collect::<HashSet<_>>()
     );
 
@@ -655,9 +655,9 @@ Content-Length: 22
         actual
             .lines()
             .filter(|l| !l.starts_with("expect: "))
-            .map(|l| l.to_lowercase())
+            .map(str::to_lowercase)
             .collect::<HashSet<_>>(),
-        expected.lines().map(|l| l.to_lowercase()).collect::<HashSet<_>>()
+        expected.lines().map(str::to_lowercase).collect::<HashSet<_>>()
     );
     Ok(())
 }

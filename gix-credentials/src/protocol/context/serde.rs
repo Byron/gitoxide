@@ -74,7 +74,10 @@ pub mod decode {
             let mut ctx = Context::default();
             for res in input.lines().take_while(|line| !line.is_empty()).map(|line| {
                 let mut it = line.splitn(2, |b| *b == b'=');
-                match (it.next().and_then(|k| k.to_str().ok()), it.next().map(|v| v.as_bstr())) {
+                match (
+                    it.next().and_then(|k| k.to_str().ok()),
+                    it.next().map(ByteSlice::as_bstr),
+                ) {
                     (Some(key), Some(value)) => validate(key, value)
                         .map(|_| (key, value.to_owned()))
                         .map_err(Into::into),
@@ -99,9 +102,7 @@ pub mod decode {
                     "url" => ctx.url = Some(value),
                     "path" => ctx.path = Some(value),
                     "quit" => {
-                        ctx.quit = gix_config_value::Boolean::try_from(value.as_ref())
-                            .ok()
-                            .map(|b| b.into());
+                        ctx.quit = gix_config_value::Boolean::try_from(value.as_ref()).ok().map(Into::into);
                     }
                     _ => {}
                 }

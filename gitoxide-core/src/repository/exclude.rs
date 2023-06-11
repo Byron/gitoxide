@@ -56,7 +56,7 @@ pub fn query(
                 Some(m) => writeln!(
                     out,
                     "{}:{}:{}\t{}",
-                    m.source.map(|p| p.to_string_lossy()).unwrap_or_default(),
+                    m.source.map(std::path::Path::to_string_lossy).unwrap_or_default(),
                     m.sequence_number,
                     m.pattern,
                     path

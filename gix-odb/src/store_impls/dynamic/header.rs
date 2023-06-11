@@ -87,7 +87,7 @@ where
                                         &base_id,
                                         snapshot,
                                         recursion
-                                            .map(|r| r.inc_depth())
+                                            .map(DeltaBaseRecursion::inc_depth)
                                             .or_else(|| DeltaBaseRecursion::new(id).into()),
                                     )
                                     .map_err(|err| Error::DeltaBaseLookup {

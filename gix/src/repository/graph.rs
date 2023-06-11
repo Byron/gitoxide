@@ -19,7 +19,7 @@ impl crate::Repository {
             |id, buf| {
                 self.objects
                     .try_find(id, buf)
-                    .map(|r| r.and_then(|d| d.try_into_commit_iter()))
+                    .map(|r| r.and_then(gix_object::Data::try_into_commit_iter))
             },
             self.config
                 .may_use_commit_graph()

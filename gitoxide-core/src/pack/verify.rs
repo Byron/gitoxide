@@ -1,4 +1,4 @@
-use std::{io, path::Path, str::FromStr, sync::atomic::AtomicBool};
+use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::atomic::AtomicBool};
 
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
@@ -104,7 +104,7 @@ where
     W2: io::Write,
 {
     let path = path.as_ref();
-    let ext = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
+    let ext = path.extension().and_then(OsStr::to_str).unwrap_or("");
     const CACHE_SIZE: usize = 64;
     let cache = || -> EitherCache<CACHE_SIZE> {
         if matches!(algorithm, Algorithm::LessMemory) {

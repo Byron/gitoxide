@@ -527,7 +527,7 @@ fn set_version_and_update_package_dependency(
             {
                 if let Some(current_version_req) = dep_table
                     .get_mut(name_to_find)
-                    .and_then(|name| name.as_inline_table_mut())
+                    .and_then(toml_edit::Item::as_inline_table_mut)
                     .and_then(|name_table| name_table.get_mut("version"))
                 {
                     let version_req = VersionReq::parse(current_version_req.as_str().expect("versions are strings"))?;

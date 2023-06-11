@@ -39,7 +39,7 @@ fn from_bytes() -> crate::Result {
     );
     assert_eq!(
         caps.iter()
-            .filter_map(|c| c.value().map(|v| v.to_owned()))
+            .filter_map(|c| c.value().map(ToOwned::to_owned))
             .collect::<Vec<_>>(),
         vec![
             b"HEAD:refs/heads/master".as_bstr(),

@@ -192,7 +192,7 @@ impl Iterator for AllObjects {
                 Some(id) => Some(id),
                 None => {
                     *index += 1;
-                    match self.loose_dbs.get(*index).map(|ldb| ldb.iter()) {
+                    match self.loose_dbs.get(*index).map(loose::Store::iter) {
                         Some(new_iter) => {
                             *iter = new_iter;
                             self.next()

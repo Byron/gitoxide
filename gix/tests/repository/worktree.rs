@@ -216,7 +216,7 @@ fn run_assertions(main_repo: gix::Repository, should_be_bare: bool) {
     let mut baseline = Baseline::collect(
         main_repo
             .work_dir()
-            .map_or_else(|| main_repo.git_dir().parent(), |p| p.parent())
+            .map_or_else(|| main_repo.git_dir().parent(), std::path::Path::parent)
             .expect("a temp dir as parent"),
     )
     .unwrap();

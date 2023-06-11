@@ -51,7 +51,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
     fn loose_iter(&mut self, kind: IterKind) -> &mut Peekable<SortedLoosePaths> {
         match kind {
             IterKind::GitAndConsumeCommon => {
-                drop(self.iter_common_dir.as_mut().map(|iter| iter.next()));
+                drop(self.iter_common_dir.as_mut().map(Iterator::next));
                 &mut self.iter_git_dir
             }
             IterKind::Git => &mut self.iter_git_dir,
@@ -299,7 +299,7 @@ impl<'a> IterInfo<'a> {
                 .map(ToOwned::to_owned)
                 .map(|p| {
                     gix_path::try_into_bstr(PathBuf::from(p))
-                        .map(|p| p.into_owned())
+                        .map(std::borrow::Cow::into_owned)
                         .map_err(|_| {
                             std::io::Error::new(std::io::ErrorKind::InvalidInput, "prefix contains ill-formed UTF-8")
                         })

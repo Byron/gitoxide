@@ -14,7 +14,7 @@ pub(crate) fn shorten_path_with_cwd(cursor: PathBuf, cwd: &Path) -> PathBuf {
         }
     }
 
-    debug_assert_eq!(cursor.file_name().and_then(|f| f.to_str()), Some(DOT_GIT_DIR));
+    debug_assert_eq!(cursor.file_name().and_then(std::ffi::OsStr::to_str), Some(DOT_GIT_DIR));
     let parent = cursor.parent().expect(".git appended");
     cwd.strip_prefix(parent)
         .ok()

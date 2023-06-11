@@ -43,7 +43,7 @@ where
 {
     map(
         terminated(take_while(|b: u8| b != b'\r' && b != b'\n'), newline),
-        |not_newline| not_newline.as_bstr(),
+        ByteSlice::as_bstr,
     )(input)
 }
 

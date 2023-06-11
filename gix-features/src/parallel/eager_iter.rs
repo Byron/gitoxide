@@ -54,7 +54,7 @@ where
             assert!(!v.is_empty());
             v.into_iter()
         });
-        self.chunk.as_mut().and_then(|c| c.next())
+        self.chunk.as_mut().and_then(Iterator::next)
     }
 }
 

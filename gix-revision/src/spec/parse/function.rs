@@ -203,7 +203,7 @@ fn long_describe_prefix(name: &BStr) -> Option<(&BStr, delegate::PrefixHint<'_>)
             return None;
         };
         let rest = substr.get(1..)?;
-        rest.iter().all(|b| b.is_ascii_hexdigit()).then(|| rest.as_bstr())
+        rest.iter().all(u8::is_ascii_hexdigit).then(|| rest.as_bstr())
     })?;
 
     let candidate = iter.clone().any(|token| !token.is_empty()).then_some(candidate);
@@ -213,7 +213,7 @@ fn long_describe_prefix(name: &BStr) -> Option<(&BStr, delegate::PrefixHint<'_>)
         .and_then(|generation| {
             iter.next().map(|token| {
                 let last_token_len = token.len();
-                let first_token_ptr = iter.last().map_or(token.as_ptr(), |token| token.as_ptr());
+                let first_token_ptr = iter.last().map_or(token.as_ptr(), <[_]>::as_ptr);
                 // SAFETY: both pointers are definitely part of the same object
                 #[allow(unsafe_code)]
                 let prior_tokens_len: usize = unsafe { token.as_ptr().offset_from(first_token_ptr) }
@@ -234,7 +234,7 @@ fn short_describe_prefix(name: &BStr) -> Option<&BStr> {
     let mut iter = name.split(|b| *b == b'-');
     let candidate = iter
         .next()
-        .and_then(|prefix| prefix.iter().all(|b| b.is_ascii_hexdigit()).then(|| prefix.as_bstr()));
+        .and_then(|prefix| prefix.iter().all(u8::is_ascii_hexdigit).then(|| prefix.as_bstr()));
     (iter.count() == 1).then_some(candidate).flatten()
 }
 
@@ -560,13 +560,13 @@ where
                         invalid => return Err(Error::InvalidObject { input: invalid.into() }),
                     };
                     delegate.peel_until(target).ok_or(Error::Delegate)?;
-                } else if past_sep.and_then(|i| i.first()) == Some(&b'!') {
+                } else if past_sep.and_then(<[_]>::first) == Some(&b'!') {
                     delegate
                         .kind(spec::Kind::ExcludeReachableFromParents)
                         .ok_or(Error::Delegate)?;
                     delegate.done();
                     return Ok(input[cursor + 1..].as_bstr());
-                } else if past_sep.and_then(|i| i.first()) == Some(&b'@') {
+                } else if past_sep.and_then(<[_]>::first) == Some(&b'@') {
                     delegate
                         .kind(spec::Kind::IncludeReachableFromParents)
                         .ok_or(Error::Delegate)?;

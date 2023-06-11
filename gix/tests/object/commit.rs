@@ -27,7 +27,7 @@ fn tree() -> crate::Result {
     let _modififyable_tree: gix::objs::Tree = tree.try_into()?;
 
     assert_eq!(
-        commit.tree_id().ok().map(|id| id.detach()),
+        commit.tree_id().ok().map(gix::Id::detach),
         Some(hex_to_id("21d3ba9a26b790a4858d67754ae05d04dfce4d0c"))
     );
     Ok(())

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::{
     file::{init, Metadata},
     path, source, File, Source,
@@ -30,7 +32,7 @@ impl File<'static> {
                 let path = source
                     .storage_location(&mut gix_path::env::var)
                     .and_then(|p| p.is_file().then_some(p))
-                    .map(|p| p.into_owned());
+                    .map(Cow::into_owned);
 
                 Metadata {
                     path,

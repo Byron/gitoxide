@@ -342,7 +342,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
             if let Err(err) = Self::lock_ref_and_apply_change(
                 self.store,
                 ref_files_lock_fail_mode,
-                self.packed_transaction.as_ref().and_then(|t| t.buffer()),
+                self.packed_transaction.as_ref().and_then(packed::Transaction::buffer),
                 change,
                 self.packed_transaction.is_some(),
                 matches!(
@@ -420,7 +420,7 @@ fn possibly_adjust_name_for_prefixes(name: &FullNameRef) -> Option<FullName> {
                     .map_or(false, |cat| !cat.is_worktree_private())
                     .then_some(sn),
             }
-            .map(|n| n.to_owned())
+            .map(ToOwned::to_owned)
         }
         None => Some(name.to_owned()), // allow (uncategorized/very special) refs to be packed
     }

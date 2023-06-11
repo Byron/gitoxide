@@ -10,6 +10,7 @@ pub(crate) mod function {
     use std::ffi::OsString;
 
     use anyhow::Context;
+    use gix::revision::Spec;
 
     use super::Options;
     use crate::{repository::revision, OutputFormat};
@@ -53,7 +54,7 @@ pub(crate) mod function {
                             gix::path::os_str_into_bstr(&spec)
                                 .map_err(anyhow::Error::from)
                                 .and_then(|spec| repo.rev_parse(spec).map_err(Into::into))
-                                .map(|spec| spec.detach())
+                                .map(Spec::detach)
                         })
                         .collect::<Result<Vec<_>, _>>()?,
                 )?;
@@ -62,7 +63,7 @@ pub(crate) mod function {
         Ok(())
     }
 
-    fn display_object(spec: gix::revision::Spec<'_>, mut out: impl std::io::Write) -> anyhow::Result<()> {
+    fn display_object(spec: Spec<'_>, mut out: impl std::io::Write) -> anyhow::Result<()> {
         let id = spec.single().context("rev-spec must resolve to a single object")?;
         let object = id.object()?;
         match object.kind {

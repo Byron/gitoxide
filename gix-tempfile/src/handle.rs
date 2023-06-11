@@ -88,7 +88,7 @@ impl Handle<Closed> {
     pub fn take(self) -> Option<TempPath> {
         let res = REGISTRY.remove(&self.id);
         std::mem::forget(self);
-        res.and_then(|(_k, v)| v.map(|v| v.into_temppath()))
+        res.and_then(|(_k, v)| v.map(ForksafeTempfile::into_temppath))
     }
 }
 
@@ -187,7 +187,7 @@ mod io_impls {
         }
 
         fn flush(&mut self) -> io::Result<()> {
-            self.with_mut(|f| f.flush())?
+            self.with_mut(io::Write::flush)?
         }
     }
 

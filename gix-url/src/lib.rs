@@ -192,9 +192,9 @@ impl Url {
     pub fn to_bstring(&self) -> bstr::BString {
         let mut buf = Vec::with_capacity(
             (5 + 3)
-                + self.user.as_ref().map(|n| n.len()).unwrap_or_default()
+                + self.user.as_ref().map(String::len).unwrap_or_default()
                 + 1
-                + self.host.as_ref().map(|h| h.len()).unwrap_or_default()
+                + self.host.as_ref().map(String::len).unwrap_or_default()
                 + self.port.map(|_| 5).unwrap_or_default()
                 + self.path.len(),
         );

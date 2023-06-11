@@ -214,7 +214,7 @@ impl Cache {
         let mut out = gix_attributes::search::Outcome::default();
         out.initialize_with_selection(
             &self.state.attributes_or_panic().collection,
-            given.into_iter().map(|n| n.into()),
+            given.into_iter().map(Into::into),
         );
         out
     }
