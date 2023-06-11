@@ -181,6 +181,18 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned {note: Some("it's enabled by default and allows parallel stat checks - it's using a lot of CPU for just minor performance boosts though")},
     },
     Record {
+        config: "commitGraph.generationVersion",
+        usage: NotPlanned { reason: "couldn't find a test that would require corrected generation numbers, even `git` has no test for this." },
+    },
+    Record {
+        config: "commitGraph.maxNewFilters",
+        usage: NotPlanned { reason: "can be considered when the underlying feature is actually used or needed" },
+    },
+    Record {
+        config: "commitGraph.readChangedPaths",
+        usage: NotPlanned { reason: "can be considered when the underlying feature is actually used or needed" },
+    },
+    Record {
         config: "index.sparse",
         usage: Planned {note: Some("we can read sparse indices and support for it will be added early on")},
     },
