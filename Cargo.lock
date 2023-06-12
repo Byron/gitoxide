@@ -1876,7 +1876,7 @@ dependencies = [
  "gix-object 0.30.0",
  "gix-odb",
  "gix-ref 0.30.0",
- "gix-revision",
+ "gix-revwalk",
  "gix-testtools",
  "smallvec",
  "thiserror",

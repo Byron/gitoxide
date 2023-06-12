@@ -59,7 +59,7 @@ fn run() -> crate::Result {
                 let cache = use_cache
                     .then(|| gix_commitgraph::at(store.store_ref().path().join("info")).ok())
                     .flatten();
-                let mut graph = gix_revision::Graph::new(
+                let mut graph = gix_revwalk::Graph::new(
                     |id, buf| {
                         store
                             .try_find(id, buf)
