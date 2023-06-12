@@ -46,7 +46,7 @@ bitflags::bitflags! {
 /// Additional data to store with each commit when used by any of our algorithms.
 ///
 /// It's shared among those who use the [`Negotiator`] trait, and all implementations of it.
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Debug, Copy, Clone)]
 pub struct Metadata {
     /// Used by `skipping`.
     /// Only used if commit is not COMMON
