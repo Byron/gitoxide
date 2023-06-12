@@ -341,7 +341,7 @@ mod blocking_and_async_io {
             (fetch::Tags::Included, 7),
             (fetch::Tags::All, 7),
         ] {
-            let (repo, _tmp) = repo_rw("two-origins");
+            let (repo, _tmp) = repo_rw("two-origins"); // TODO: also try shallow clones
             let mut remote = into_daemon_remote_if_async(
                 repo.head()?
                     .into_remote(Fetch)

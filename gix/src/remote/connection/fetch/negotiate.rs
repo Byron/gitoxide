@@ -68,6 +68,7 @@ pub(crate) fn mark_complete_and_common_ref(
     graph: &mut gix_negotiate::Graph<'_>,
     ref_map: &fetch::RefMap,
     shallow: &fetch::Shallow,
+    mapping_is_ignored: impl Fn(&fetch::Mapping) -> bool,
 ) -> Result<Action, Error> {
     if let fetch::Shallow::Deepen(0) = shallow {
         // Avoid deepening (relative) with zero as it seems to upset the server. Git also doesn't actually
@@ -98,9 +99,11 @@ pub(crate) fn mark_complete_and_common_ref(
             r.target().try_id().map(ToOwned::to_owned)
         });
 
-        // Like git, we don't let known unchanged mappings participate in the tree traversal
-        if want_id.zip(have_id).map_or(true, |(want, have)| want != have) {
-            num_mappings_with_change += 1;
+        if !mapping_is_ignored(mapping) {
+            // Like git, we don't let known unchanged mappings participate in the tree traversal
+            if want_id.zip(have_id).map_or(true, |(want, have)| want != have) {
+                num_mappings_with_change += 1;
+            }
         }
 
         if let Some(commit) = want_id
@@ -114,7 +117,6 @@ pub(crate) fn mark_complete_and_common_ref(
         }
     }
 
-    // If any kind of shallowing operation is desired, the server may still create a pack for us.
     if matches!(shallow, Shallow::NoChange) {
         if num_mappings_with_change == 0 {
             return Ok(Action::NoChange);
@@ -167,6 +169,31 @@ pub(crate) fn mark_complete_and_common_ref(
     })
 }
 
+/// Create a predicate that checks if a refspec mapping should be ignored.
+///
+/// We want to ignore mappings during negotiation if they would be handled implicitly by the server, which is the case
+/// when tags would be sent implicitly due to `Tags::Included`.
+pub(crate) fn make_refmapping_ignore_predicate(
+    fetch_tags: fetch::Tags,
+    ref_map: &fetch::RefMap,
+) -> impl Fn(&fetch::Mapping) -> bool + '_ {
+    // With included tags, we have to keep mappings of tags to handle them later when updating refs, but we don't want to
+    // explicitly `want` them as the server will determine by itself which tags are pointing to a commit it wants to send.
+    // If we would not exclude implicit tag mappings like this, we would get too much of the graph.
+    let tag_refspec_to_ignore = matches!(fetch_tags, crate::remote::fetch::Tags::Included)
+        .then(|| fetch_tags.to_refspec())
+        .flatten();
+    move |mapping| {
+        tag_refspec_to_ignore.map_or(false, |tag_spec| {
+            mapping
+                .spec_index
+                .implicit_index()
+                .and_then(|idx| ref_map.extra_refspecs.get(idx))
+                .map_or(false, |spec| spec.to_ref() == tag_spec)
+        })
+    }
+}
+
 /// Add all `wants` to `arguments`, which is the unpeeled direct target that the advertised remote ref points to.
 pub(crate) fn add_wants(
     repo: &crate::Repository,
@@ -174,15 +201,8 @@ pub(crate) fn add_wants(
     ref_map: &fetch::RefMap,
     mapping_known: &[bool],
     shallow: &fetch::Shallow,
-    fetch_tags: fetch::Tags,
+    mapping_is_ignored: impl Fn(&fetch::Mapping) -> bool,
 ) {
-    // With included tags, we have to keep mappings of tags to handle them later when updating refs, but we don't want to
-    // explicitly `want` them as the server will determine by itself which tags are pointing to a commit it wants to send.
-    // If we would not exclude implicit tag mappings like this, we would get too much of the graph.
-    let tag_refspec_to_ignore = matches!(fetch_tags, crate::remote::fetch::Tags::Included)
-        .then(|| fetch_tags.to_refspec())
-        .flatten();
-
     // When using shallow, we can't exclude `wants` as the remote won't send anything then. Thus we have to resend everything
     // we have as want instead to get exactly the same graph, but possibly deepened.
     let is_shallow = !matches!(shallow, fetch::Shallow::NoChange);
@@ -190,17 +210,9 @@ pub(crate) fn add_wants(
         .mappings
         .iter()
         .zip(mapping_known)
-        .filter_map(|(m, known)| (is_shallow || !*known).then_some(m));
+        .filter_map(|(m, known)| (is_shallow || !*known).then_some(m))
+        .filter(|m| !mapping_is_ignored(m));
     for want in wants {
-        // Here we ignore implicit tag mappings if needed.
-        if tag_refspec_to_ignore.map_or(false, |tag_spec| {
-            want.spec_index
-                .implicit_index()
-                .and_then(|idx| ref_map.extra_refspecs.get(idx))
-                .map_or(false, |spec| spec.to_ref() == tag_spec)
-        }) {
-            continue;
-        }
         let id_on_remote = want.remote.as_id();
         if !arguments.can_use_ref_in_want() || matches!(want.remote, fetch::Source::ObjectId(_)) {
             if let Some(id) = id_on_remote {
