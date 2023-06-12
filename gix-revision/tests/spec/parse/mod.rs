@@ -73,7 +73,7 @@ impl Recorder {
     }
 
     fn get_ref(&self, idx: usize) -> &BStr {
-        self.find_ref[idx].as_ref().map(|b| b.as_ref()).unwrap()
+        self.find_ref[idx].as_ref().map(AsRef::as_ref).unwrap()
     }
 
     fn called(&mut self, f: Call) {

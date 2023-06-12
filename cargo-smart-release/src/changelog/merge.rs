@@ -90,7 +90,7 @@ impl Section {
                 },
             ) => {
                 assert!(src_unknown.is_empty(), "shouldn't ever generate 'unknown' portions");
-                let has_no_read_only_segments = !dest_segments.iter().any(|s| s.is_read_only());
+                let has_no_read_only_segments = !dest_segments.iter().any(Segment::is_read_only);
                 let mode = if has_no_read_only_segments {
                     ReplaceMode::ReplaceAllOrAppend
                 } else {

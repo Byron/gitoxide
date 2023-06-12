@@ -57,7 +57,7 @@ impl Time {
         // TODO: make this work without cfg(unsound_local_offset), see
         //       https://github.com/time-rs/time/issues/293#issuecomment-909158529
         let offset = time::UtcOffset::local_offset_at(now)
-            .map(|ofs| ofs.whole_seconds())
+            .map(time::UtcOffset::whole_seconds)
             .unwrap_or(0);
         Self {
             seconds,

@@ -182,7 +182,7 @@ impl crate::Repository {
             author: author.into().to_owned(),
             committer: committer.into().to_owned(),
             encoding: None,
-            parents: parents.into_iter().map(|id| id.into()).collect(),
+            parents: parents.into_iter().map(Into::into).collect(),
             extra_headers: Default::default(),
         };
 

@@ -110,5 +110,5 @@ pub fn strip_tag_path(name: &FullNameRef) -> &BStr {
 }
 
 pub fn try_strip_tag_path(name: &FullNameRef) -> Option<&BStr> {
-    name.as_bstr().strip_prefix(b"refs/tags/").map(|b| b.as_bstr())
+    name.as_bstr().strip_prefix(b"refs/tags/").map(ByteSlice::as_bstr)
 }

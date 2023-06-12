@@ -185,7 +185,7 @@ where
                                         pack_cache,
                                         snapshot,
                                         recursion
-                                            .map(|r| r.inc_depth())
+                                            .map(error::DeltaBaseRecursion::inc_depth)
                                             .or_else(|| error::DeltaBaseRecursion::new(id).into()),
                                     )
                                     .map_err(|err| Error::DeltaBaseLookup {

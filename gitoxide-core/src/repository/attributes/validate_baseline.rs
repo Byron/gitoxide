@@ -18,7 +18,7 @@ pub(crate) mod function {
     };
 
     use anyhow::{anyhow, bail};
-    use gix::{odb::FindExt, Progress};
+    use gix::{attrs::Assignment, odb::FindExt, Progress};
 
     use crate::{
         repository::attributes::{query::attributes_cache, validate_baseline::Options},
@@ -207,11 +207,11 @@ pub(crate) mod function {
                     let fast_path_mismatch = matches
                         .iter()
                         .map(|m| m.assignment)
-                        .zip(expected.iter().map(|a| a.as_ref()))
+                        .zip(expected.iter().map(Assignment::as_ref))
                         .any(|(a, b)| a != b);
                     if fast_path_mismatch {
                         let actual_set = BTreeSet::from_iter(matches.iter().map(|m| m.assignment));
-                        let expected_set = BTreeSet::from_iter(expected.iter().map(|a| a.as_ref()));
+                        let expected_set = BTreeSet::from_iter(expected.iter().map(Assignment::as_ref));
                         let too_few_or_too_many =
                             !(expected_set.sub(&actual_set).is_empty() && actual_set.sub(&expected_set).is_empty());
                         if too_few_or_too_many {

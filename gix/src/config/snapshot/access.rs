@@ -115,7 +115,7 @@ impl<'repo> SnapshotMut<'repo> {
         let current = self
             .config
             .set_raw_value(key.section().name(), None, key.name(), value)?;
-        Ok(current.map(|v| v.into_owned()))
+        Ok(current.map(std::borrow::Cow::into_owned))
     }
 
     /// Set the value at `key` to `new_value` in the given `subsection`, possibly creating the section and sub-section if it doesn't exist yet,
@@ -139,7 +139,7 @@ impl<'repo> SnapshotMut<'repo> {
         let current =
             self.config
                 .set_raw_value(key.section_name, key.subsection_name, key.value_name.to_owned(), value)?;
-        Ok(current.map(|v| v.into_owned()))
+        Ok(current.map(std::borrow::Cow::into_owned))
     }
 
     pub(crate) fn commit_inner(

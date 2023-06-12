@@ -130,7 +130,7 @@ where
                         ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else(|_| {
                             easy.find_reference(tip.as_ref())
                                 .map_err(anyhow::Error::from)
-                                .and_then(|r| r.into_fully_peeled_id().map(|oid| oid.detach()).map_err(Into::into))
+                                .and_then(|r| r.into_fully_peeled_id().map(gix::Id::detach).map_err(Into::into))
                         })
                     }
                 })

@@ -26,7 +26,7 @@ pub(crate) fn append(
     let mut file = gix_config::File::new(gix_config::file::Metadata::from(source));
     for key_value in values {
         let key_value = key_value.as_ref();
-        let mut tokens = key_value.splitn(2, |b| *b == b'=').map(|v| v.trim());
+        let mut tokens = key_value.splitn(2, |b| *b == b'=').map(ByteSlice::trim);
         let key = tokens.next().expect("always one value").as_bstr();
         let value = tokens.next();
         let key = gix_config::parse::key(key.to_str().map_err(|_| Error::InvalidKey { input: key.into() })?)
@@ -38,7 +38,7 @@ pub(crate) fn append(
                 key: key.value_name.into(),
             })?;
         let comment = make_comment(key_value);
-        let value = value.map(|v| v.as_bstr());
+        let value = value.map(ByteSlice::as_bstr);
         match comment {
             Some(comment) => section.push_with_comment(key, value, &**comment),
             None => section.push(key, value),

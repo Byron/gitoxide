@@ -48,7 +48,7 @@ mod io_impls {
         }
 
         fn flush(&mut self) -> io::Result<()> {
-            self.inner.with_mut(|f| f.flush())?
+            self.inner.with_mut(io::Write::flush)?
         }
     }
 

@@ -39,7 +39,10 @@ mod with_namespace {
             "refs/namespaces/bar/refs/tags/multi-link-target2",
         ];
         assert_eq!(
-            namespaced_refs.iter().map(|n| n.as_bstr()).collect::<Vec<_>>(),
+            namespaced_refs
+                .iter()
+                .map(gix_ref::FullName::as_bstr)
+                .collect::<Vec<_>>(),
             expected_namespaced_refs
         );
         assert_eq!(
@@ -159,7 +162,10 @@ mod with_namespace {
             .map(Result::unwrap)
             .map(|r: gix_ref::Reference| r.name)
             .collect::<Vec<_>>();
-        assert_eq!(ref_names.iter().map(|n| n.as_bstr()).collect::<Vec<_>>(), expected_refs);
+        assert_eq!(
+            ref_names.iter().map(gix_ref::FullName::as_bstr).collect::<Vec<_>>(),
+            expected_refs
+        );
 
         for fullname in ref_names {
             assert_eq!(
@@ -259,7 +265,7 @@ fn loose_iter_with_broken_refs() -> crate::Result {
 
     let mut actual: Vec<_> = store.loose_iter()?.collect();
     assert_eq!(actual.len(), 15);
-    actual.sort_by_key(|r| r.is_err());
+    actual.sort_by_key(Result::is_err);
     let first_error = actual
         .iter()
         .enumerate()

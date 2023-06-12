@@ -163,7 +163,7 @@ impl File {
 fn verify_split_chain_filename_hash(path: impl AsRef<Path>, expected: &gix_hash::oid) -> Result<(), String> {
     let path = path.as_ref();
     path.file_name()
-        .and_then(|filename| filename.to_str())
+        .and_then(std::ffi::OsStr::to_str)
         .and_then(|filename| filename.strip_suffix(".graph"))
         .and_then(|stem| stem.strip_prefix("graph-"))
         .map_or(Ok(()), |hex| match gix_hash::ObjectId::from_hex(hex.as_bytes()) {

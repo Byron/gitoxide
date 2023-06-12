@@ -107,7 +107,7 @@ impl ProgramKind {
 impl<'a> From<&'a OsStr> for ProgramKind {
     fn from(v: &'a OsStr) -> Self {
         let p = std::path::Path::new(v);
-        match p.file_stem().and_then(|s| s.to_str()) {
+        match p.file_stem().and_then(OsStr::to_str) {
             None => ProgramKind::Simple,
             Some(stem) => {
                 if stem.eq_ignore_ascii_case("ssh") {

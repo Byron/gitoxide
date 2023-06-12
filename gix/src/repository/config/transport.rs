@@ -359,7 +359,7 @@ impl crate::Repository {
                                     self.install_dir().ok().as_deref(),
                                     self.config.home_dir().as_deref(),
                                 ))
-                                .map(|cow| cow.into_owned())
+                                .map(std::borrow::Cow::into_owned)
                             })
                             .transpose()
                             .with_leniency(lenient)

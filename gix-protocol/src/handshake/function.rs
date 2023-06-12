@@ -29,7 +29,7 @@ where
 
         let extra_parameters: Vec<_> = extra_parameters
             .iter()
-            .map(|(k, v)| (k.as_str(), v.as_ref().map(|s| s.as_str())))
+            .map(|(k, v)| (k.as_str(), v.as_deref()))
             .collect();
         let supported_versions: Vec<_> = transport.supported_protocol_versions().into();
 

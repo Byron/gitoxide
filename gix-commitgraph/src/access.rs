@@ -28,12 +28,12 @@ impl Graph {
 
     /// Iterate over commits in unsorted order.
     pub fn iter_commits(&self) -> impl Iterator<Item = Commit<'_>> {
-        self.files.iter().flat_map(|file| file.iter_commits())
+        self.files.iter().flat_map(File::iter_commits)
     }
 
     /// Iterate over commit IDs in unsorted order.
     pub fn iter_ids(&self) -> impl Iterator<Item = &gix_hash::oid> {
-        self.files.iter().flat_map(|file| file.iter_ids())
+        self.files.iter().flat_map(File::iter_ids)
     }
 
     /// Translate the given `id` to its position in the file.
@@ -43,7 +43,7 @@ impl Graph {
 
     /// Returns the number of commits stored in this file.
     pub fn num_commits(&self) -> u32 {
-        self.files.iter().map(|f| f.num_commits()).sum()
+        self.files.iter().map(File::num_commits).sum()
     }
 }
 

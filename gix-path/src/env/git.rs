@@ -23,7 +23,7 @@ pub(crate) fn install_config_path() -> Option<&'static BStr> {
             .stderr(Stdio::null());
         first_file_from_config_with_origin(cmd.output().ok()?.stdout.as_slice().into()).map(ToOwned::to_owned)
     });
-    PATH.as_ref().map(|b| b.as_ref())
+    PATH.as_ref().map(AsRef::as_ref)
 }
 
 fn first_file_from_config_with_origin(source: &BStr) -> Option<&BStr> {

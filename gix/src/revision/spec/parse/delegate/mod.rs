@@ -1,10 +1,7 @@
 use std::collections::HashSet;
 
 use gix_hash::ObjectId;
-use gix_revision::spec::{
-    parse,
-    parse::delegate::{self},
-};
+use gix_revision::spec::{parse, parse::delegate};
 use smallvec::SmallVec;
 
 use super::{Delegate, Error, ObjectKindHint};
@@ -209,7 +206,7 @@ impl<'repo> Delegate<'repo> {
                         .attach(repo)
                         .peel_to_id_in_place()
                         .ok()
-                        .map(|id| id.detach())
+                        .map(crate::Id::detach)
                 }) {
                     obj_opt.get_or_insert_with(HashSet::default).insert(id);
                 };

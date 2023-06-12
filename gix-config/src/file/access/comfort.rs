@@ -127,7 +127,7 @@ impl<'event> File<'event> {
                 continue;
             }
             match section.value_implicit(key) {
-                Some(Some(v)) => return Some(crate::Boolean::try_from(v).map(|b| b.into())),
+                Some(Some(v)) => return Some(crate::Boolean::try_from(v).map(Into::into)),
                 Some(None) => return Some(Ok(true)),
                 None => continue,
             }

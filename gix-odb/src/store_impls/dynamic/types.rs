@@ -305,7 +305,7 @@ impl IndexAndPacks {
         match self {
             Self::Index(bundle) => bundle.index.is_disposable() || bundle.data.is_disposable(),
             Self::MultiIndex(bundle) => {
-                bundle.multi_index.is_disposable() || bundle.data.iter().any(|odf| odf.is_disposable())
+                bundle.multi_index.is_disposable() || bundle.data.iter().any(OnDiskFile::is_disposable)
             }
         }
     }

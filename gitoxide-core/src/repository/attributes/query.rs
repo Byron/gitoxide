@@ -7,6 +7,7 @@ pub struct Options {
 
 pub(crate) mod function {
     use std::io;
+    use std::path::Path;
 
     use anyhow::bail;
     use gix::prelude::FindExt;
@@ -43,7 +44,7 @@ pub(crate) mod function {
                     writeln!(
                         out,
                         "{}:{}:{}\t{}\t{}",
-                        m.location.source.map(|p| p.to_string_lossy()).unwrap_or_default(),
+                        m.location.source.map(Path::to_string_lossy).unwrap_or_default(),
                         m.location.sequence_number,
                         m.pattern,
                         path,

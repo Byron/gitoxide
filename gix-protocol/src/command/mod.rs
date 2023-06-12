@@ -140,7 +140,7 @@ mod with_io {
                             .iter()
                             .find_map(|c| {
                                 if c.name() == Command::Fetch.as_str() {
-                                    c.values().map(|v| v.map(|f| f.to_owned()).collect())
+                                    c.values().map(|v| v.map(ToOwned::to_owned).collect())
                                 } else {
                                     None
                                 }
@@ -189,7 +189,7 @@ mod with_io {
                         .iter()
                         .find_map(|c| {
                             if c.name() == self.as_str().as_bytes().as_bstr() {
-                                c.values().map(|v| v.map(|f| f.to_string()).collect::<Vec<_>>())
+                                c.values().map(|v| v.map(ToString::to_string).collect::<Vec<_>>())
                             } else {
                                 None
                             }

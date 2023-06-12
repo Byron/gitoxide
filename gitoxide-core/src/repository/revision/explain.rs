@@ -82,7 +82,7 @@ impl<'a> delegate::Revision for Explain<'a> {
     fn reflog(&mut self, query: ReflogLookup) -> Option<()> {
         self.prefix()?;
         self.has_implicit_anchor = true;
-        let ref_name: &BStr = self.ref_name.as_ref().map_or_else(|| "HEAD".into(), |n| n.as_ref());
+        let ref_name: &BStr = self.ref_name.as_ref().map_or_else(|| "HEAD".into(), AsRef::as_ref);
         match query {
             ReflogLookup::Entry(no) => writeln!(self.out, "Find entry {no} in reflog of '{ref_name}' reference").ok(),
             ReflogLookup::Date(time) => writeln!(
@@ -161,7 +161,7 @@ impl<'a> delegate::Navigate for Explain<'a> {
             match self
                 .ref_name
                 .as_ref()
-                .map(|n| n.to_string())
+                .map(ToString::to_string)
                 .or_else(|| self.oid_prefix.map(|p| p.to_string()))
             {
                 Some(obj_name) => format!(

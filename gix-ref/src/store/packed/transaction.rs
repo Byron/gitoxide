@@ -27,7 +27,7 @@ impl packed::Transaction {
 impl std::fmt::Debug for packed::Transaction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("packed::Transaction")
-            .field("edits", &self.edits.as_ref().map(|e| e.len()))
+            .field("edits", &self.edits.as_ref().map(Vec::len))
             .field("lock", &self.lock)
             .finish_non_exhaustive()
     }
@@ -102,7 +102,7 @@ impl packed::Transaction {
             self.closed_lock = self
                 .lock
                 .take()
-                .map(|l| l.close())
+                .map(gix_lock::File::close)
                 .transpose()
                 .map_err(prepare::Error::CloseLock)?;
         } else {

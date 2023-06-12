@@ -155,7 +155,7 @@ fn parse_attributes(input: &[u8]) -> Result<Vec<gix_attributes::Assignment>, Err
     let unescaped = unescape_attribute_values(input.into())?;
 
     gix_attributes::parse::Iter::new(unescaped.as_bstr())
-        .map(|res| res.map(|v| v.to_owned()))
+        .map(|res| res.map(gix_attributes::AssignmentRef::to_owned))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| Error::InvalidAttribute { attribute: e.attribute })
 }

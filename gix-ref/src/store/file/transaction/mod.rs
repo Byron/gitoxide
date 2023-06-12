@@ -92,7 +92,7 @@ impl std::fmt::Debug for Transaction<'_, '_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Transaction")
             .field("store", self.store)
-            .field("edits", &self.updates.as_ref().map(|u| u.len()))
+            .field("edits", &self.updates.as_ref().map(Vec::len))
             .finish_non_exhaustive()
     }
 }

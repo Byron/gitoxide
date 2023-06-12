@@ -151,7 +151,7 @@ pub(crate) mod function {
     }
 
     fn looks_like_object_hash(spec: &BStr) -> bool {
-        spec.len() >= gix_hash::Kind::shortest().len_in_hex() && spec.iter().all(|b| b.is_ascii_hexdigit())
+        spec.len() >= gix_hash::Kind::shortest().len_in_hex() && spec.iter().all(u8::is_ascii_hexdigit)
     }
 
     fn validated(spec: Option<&BStr>, allow_revspecs: bool) -> Result<(Option<&BStr>, bool), Error> {
@@ -175,7 +175,7 @@ pub(crate) mod function {
                             if allow_revspecs {
                                 match gix_revision::spec::parse(spec, &mut super::revparse::Noop) {
                                     Ok(_) => {
-                                        if spec.iter().any(|b| b.is_ascii_whitespace()) {
+                                        if spec.iter().any(u8::is_ascii_whitespace) {
                                             Err(err)
                                         } else {
                                             Ok(spec)

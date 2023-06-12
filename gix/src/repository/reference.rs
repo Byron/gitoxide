@@ -180,7 +180,7 @@ impl crate::Repository {
     /// The difference to [`head_ref()`][Self::head_ref()] is that the latter requires the reference to exist,
     /// whereas here we merely return a the name of the possibly unborn reference.
     pub fn head_name(&self) -> Result<Option<FullName>, reference::find::existing::Error> {
-        Ok(self.head()?.referent_name().map(|n| n.to_owned()))
+        Ok(self.head()?.referent_name().map(std::borrow::ToOwned::to_owned))
     }
 
     /// Return the reference that `HEAD` points to, or `None` if the head is detached or unborn.

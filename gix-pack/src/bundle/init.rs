@@ -29,7 +29,7 @@ impl Bundle {
     fn at_inner(path: &Path, object_hash: gix_hash::Kind) -> Result<Self, Error> {
         let ext = path
             .extension()
-            .and_then(|e| e.to_str())
+            .and_then(std::ffi::OsStr::to_str)
             .ok_or_else(|| Error::InvalidPath(path.to_owned()))?;
         Ok(match ext {
             "idx" => Self {

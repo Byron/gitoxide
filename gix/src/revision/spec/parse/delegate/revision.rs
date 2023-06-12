@@ -114,7 +114,7 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
             ReflogLookup::Entry(no) => {
                 let r = match &mut self.refs[self.idx] {
                     Some(r) => r.clone().attach(self.repo),
-                    val @ None => match self.repo.head().map(|head| head.try_into_referent()) {
+                    val @ None => match self.repo.head().map(crate::Head::try_into_referent) {
                         Ok(Some(r)) => {
                             *val = Some(r.clone().detach());
                             r
@@ -139,7 +139,7 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
                             Some(())
                         }
                         None => {
-                            let available = platform.rev().ok().flatten().map_or(0, |it| it.count());
+                            let available = platform.rev().ok().flatten().map_or(0, Iterator::count);
                             self.err.push(Error::RefLogEntryOutOfRange {
                                 reference: r.detach(),
                                 desired: no,
@@ -190,7 +190,7 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
             Ok(Some((ref_name, id))) => {
                 let id = match self.repo.find_reference(ref_name.as_bstr()) {
                     Ok(mut r) => {
-                        let id = r.peel_to_id_in_place().map(|id| id.detach()).unwrap_or(id);
+                        let id = r.peel_to_id_in_place().map(crate::Id::detach).unwrap_or(id);
                         self.refs[self.idx] = Some(r.detach());
                         id
                     }
@@ -203,7 +203,7 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
                 self.err.push(Error::PriorCheckoutOutOfRange {
                     desired: branch_no,
                     available: prior_checkouts_iter(&mut head.log_iter())
-                        .map(|it| it.count())
+                        .map(Iterator::count)
                         .unwrap_or(0),
                 });
                 None

@@ -566,7 +566,7 @@ mod update {
                     },
                     |idx| fetch::Source::Ref(references[idx].clone()),
                 ),
-                local: m.rhs.map(|r| r.into_owned()),
+                local: m.rhs.map(std::borrow::Cow::into_owned),
                 spec_index: SpecIndex::ExplicitInRemote(m.spec_index),
             })
             .collect();

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use gix::bstr::ByteSlice;
 
 use crate::commit::Message;
@@ -107,7 +109,7 @@ impl From<&'_ str> for Message {
         Message {
             title: title.into_owned(),
             kind: as_static_str(kind),
-            body: body.map(|b| b.into_owned()),
+            body: body.map(Cow::into_owned),
             breaking,
             breaking_description: breaking_description.map(ToOwned::to_owned),
             additions,

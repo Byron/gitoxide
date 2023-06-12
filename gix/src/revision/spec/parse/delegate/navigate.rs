@@ -15,6 +15,7 @@ use crate::{
         delegate::{handle_errors_and_replacements, peel, Replacements},
         Delegate, Error,
     },
+    Object,
 };
 
 impl<'repo> delegate::Navigate for Delegate<'repo> {
@@ -62,8 +63,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                         .all()
                         .expect("cannot fail without sorting")
                         .skip(num)
-                        .filter_map(Result::ok)
-                        .next()
+                        .find_map(Result::ok)
                     {
                         Some(commit) => replacements.push((*obj, commit.id)),
                         None => errors.push((
@@ -142,7 +142,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
             }
             PeelTo::RecursiveTagObject => {
                 for oid in objs.iter() {
-                    match oid.attach(repo).object().and_then(|obj| obj.peel_tags_to_end()) {
+                    match oid.attach(repo).object().and_then(Object::peel_tags_to_end) {
                         Ok(obj) => replacements.push((*oid, obj.id)),
                         Err(err) => errors.push((*oid, err.into())),
                     }
@@ -194,7 +194,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                             let mut count = 0;
                             let commits = iter.map(|res| {
                                 res.map_err(Error::from).and_then(|commit| {
-                                    commit.id().object().map_err(Error::from).map(|obj| obj.into_commit())
+                                    commit.id().object().map_err(Error::from).map(Object::into_commit)
                                 })
                             });
                             for commit in commits {
@@ -251,7 +251,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                 let mut count = 0;
                                 let commits = iter.map(|res| {
                                     res.map_err(Error::from).and_then(|commit| {
-                                        commit.id().object().map_err(Error::from).map(|obj| obj.into_commit())
+                                        commit.id().object().map_err(Error::from).map(Object::into_commit)
                                     })
                                 });
                                 for commit in commits {

@@ -118,7 +118,7 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
         config
             .frontmatter()
             .expect("present")
-            .map(|e| e.to_string())
+            .map(ToString::to_string)
             .collect::<Vec<_>>()
             .join(""),
         ";before a\n"

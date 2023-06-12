@@ -79,7 +79,7 @@ impl std::fmt::Display for Error {
             },
             self.issues
                 .iter()
-                .map(|issue| issue.to_string())
+                .map(ToString::to_string)
                 .collect::<Vec<_>>()
                 .join("\n\t")
         )

@@ -169,7 +169,7 @@ mod push {
             let (pre_sep, post_sep) = expected_sep;
             assert_eq!(
                 section.separator_whitespace(),
-                (pre_sep.map(|s| s.into()), post_sep.map(|s| s.into())),
+                (pre_sep.map(Into::into), post_sep.map(Into::into)),
                 "{input:?} should find {expected_sep:?} as sep whitespace"
             );
         }

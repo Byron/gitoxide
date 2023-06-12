@@ -470,8 +470,7 @@ impl super::Store {
                 })
                 .transpose()?;
             if let Some((multi_index, mtime, flen)) = multi_index_info {
-                let index_names_in_multi_index: Vec<_> =
-                    multi_index.index_names().iter().map(|p| p.as_path()).collect();
+                let index_names_in_multi_index: Vec<_> = multi_index.index_names().iter().map(AsRef::as_ref).collect();
                 let mut indices_not_in_multi_index: Vec<(Either, _, _)> = indices
                     .into_iter()
                     .filter_map(|(path, a, b)| {

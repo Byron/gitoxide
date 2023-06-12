@@ -185,7 +185,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
         assert!(
             whitespace
                 .as_deref()
-                .map_or(true, |ws| ws.iter().all(|b| b.is_ascii_whitespace())),
+                .map_or(true, |ws| ws.iter().all(u8::is_ascii_whitespace)),
             "input whitespace must only contain whitespace characters."
         );
         self.whitespace.pre_key = whitespace;

@@ -133,7 +133,7 @@ where
             )
             .await?;
         let num_explicit_specs = self.remote.fetch_specs.len();
-        let group = gix_refspec::MatchGroup::from_fetch_specs(specs.iter().map(|s| s.to_ref()));
+        let group = gix_refspec::MatchGroup::from_fetch_specs(specs.iter().map(gix_refspec::RefSpec::to_ref));
         let (res, fixes) = group
             .match_remotes(remote.refs.iter().map(|r| {
                 let (full_ref_name, target, object) = r.unpack();
@@ -157,7 +157,7 @@ where
                     },
                     |idx| fetch::Source::Ref(remote.refs[idx].clone()),
                 ),
-                local: m.rhs.map(|c| c.into_owned()),
+                local: m.rhs.map(std::borrow::Cow::into_owned),
                 spec_index: if m.spec_index < num_explicit_specs {
                     SpecIndex::ExplicitInRemote(m.spec_index)
                 } else {
@@ -204,7 +204,7 @@ where
             self.transport_options = self
                 .remote
                 .repo
-                .transport_options(url.as_ref(), self.remote.name().map(|n| n.as_bstr()))
+                .transport_options(url.as_ref(), self.remote.name().map(crate::remote::Name::as_bstr))
                 .map_err(|err| Error::GatherTransportConfig {
                     source: err,
                     url: url.into_owned(),

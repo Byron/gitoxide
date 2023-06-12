@@ -357,6 +357,9 @@ where
             // but may instead find a good way to set the polling interval instead of hard-coding it.
             std::thread::sleep(poll_interval);
             // Get out of threads are already starving or they would be starving soon as no work is left.
+            //
+            // Lint: ScopedJoinHandle is not the same depending on active features and is not exposed in some cases.
+            #[allow(clippy::redundant_closure_for_method_calls)]
             if threads.iter().any(|t| t.is_finished()) {
                 let mut running_threads = Vec::new();
                 for thread in threads.drain(..) {

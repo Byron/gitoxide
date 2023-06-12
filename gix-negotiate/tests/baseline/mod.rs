@@ -63,7 +63,7 @@ fn run() -> crate::Result {
                     |id, buf| {
                         store
                             .try_find(id, buf)
-                            .map(|r| r.and_then(|d| d.try_into_commit_iter()))
+                            .map(|r| r.and_then(gix_object::Data::try_into_commit_iter))
                     },
                     cache,
                 );

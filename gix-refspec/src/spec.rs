@@ -14,8 +14,8 @@ impl RefSpec {
         RefSpecRef {
             mode: self.mode,
             op: self.op,
-            src: self.src.as_ref().map(|b| b.as_ref()),
-            dst: self.dst.as_ref().map(|b| b.as_ref()),
+            src: self.src.as_ref().map(AsRef::as_ref),
+            dst: self.dst.as_ref().map(AsRef::as_ref),
         }
     }
 

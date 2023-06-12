@@ -90,7 +90,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                         continue;
                     }
                     if update_ref {
-                        if let Some(Err(err)) = lock.map(|l| l.commit()) {
+                        if let Some(Err(err)) = lock.map(gix_lock::Marker::commit) {
                             // TODO: when Kind::IsADirectory becomes stable, use that.
                             let err = if err.instance.resource_path().is_dir() {
                                 gix_tempfile::remove_dir::empty_depth_first(err.instance.resource_path())
