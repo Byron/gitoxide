@@ -90,6 +90,7 @@ pub(crate) fn mark_complete_and_common_ref(
     let mut cutoff_date = None::<SecondsSinceUnixEpoch>;
     let mut num_mappings_with_change = 0;
     let mut remote_ref_target_known: Vec<bool> = std::iter::repeat(false).take(ref_map.mappings.len()).collect();
+    let mut remote_ref_included: Vec<bool> = std::iter::repeat(false).take(ref_map.mappings.len()).collect();
 
     for (mapping_idx, mapping) in ref_map.mappings.iter().enumerate() {
         let want_id = mapping.remote.as_id();
@@ -99,7 +100,9 @@ pub(crate) fn mark_complete_and_common_ref(
             r.target().try_id().map(ToOwned::to_owned)
         });
 
+        // Even for ignored mappings we want to know if the `want` is already present locally, so skip nothing else.
         if !mapping_is_ignored(mapping) {
+            remote_ref_included[mapping_idx] = true;
             // Like git, we don't let known unchanged mappings participate in the tree traversal
             if want_id.zip(have_id).map_or(true, |(want, have)| want != have) {
                 num_mappings_with_change += 1;
@@ -120,7 +123,12 @@ pub(crate) fn mark_complete_and_common_ref(
     if matches!(shallow, Shallow::NoChange) {
         if num_mappings_with_change == 0 {
             return Ok(Action::NoChange);
-        } else if remote_ref_target_known.iter().all(|known| *known) {
+        } else if remote_ref_target_known
+            .iter()
+            .zip(remote_ref_included)
+            .filter_map(|(known, included)| included.then_some(known))
+            .all(|known| *known)
+        {
             return Ok(Action::SkipToRefUpdate);
         }
     }
