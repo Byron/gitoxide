@@ -189,6 +189,8 @@ pub fn main() -> Result<()> {
         Subcommands::Fetch(crate::plumbing::options::fetch::Platform {
             dry_run,
             handshake_info,
+            negotiation_info,
+            open_negotiation_graph,
             remote,
             shallow,
             ref_spec,
@@ -198,6 +200,8 @@ pub fn main() -> Result<()> {
                 dry_run,
                 remote,
                 handshake_info,
+                negotiation_info,
+                open_negotiation_graph,
                 shallow: shallow.into(),
                 ref_specs: ref_spec,
             };
@@ -693,14 +697,26 @@ pub fn main() -> Result<()> {
             },
         ),
         Subcommands::Revision(cmd) => match cmd {
-            revision::Subcommands::List { spec } => prepare_and_run(
+            revision::Subcommands::List { spec, svg, limit } => prepare_and_run(
                 "revision-list",
-                verbose,
+                auto_verbose,
                 progress,
                 progress_keep_open,
-                None,
-                move |_progress, out, _err| {
-                    core::repository::revision::list(repository(Mode::Lenient)?, spec, out, format)
+                core::repository::revision::list::PROGRESS_RANGE,
+                move |progress, out, _err| {
+                    core::repository::revision::list(
+                        repository(Mode::Lenient)?,
+                        progress,
+                        out,
+                        core::repository::revision::list::Context {
+                            limit,
+                            spec,
+                            format,
+                            text: svg.map_or(core::repository::revision::list::Format::Text, |path| {
+                                core::repository::revision::list::Format::Svg { path }
+                            }),
+                        },
+                    )
                 },
             ),
             revision::Subcommands::PreviousBranches => prepare_and_run(

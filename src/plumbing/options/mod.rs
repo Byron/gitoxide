@@ -155,6 +155,14 @@ pub mod fetch {
         #[clap(long, short = 'H')]
         pub handshake_info: bool,
 
+        /// Print statistics about negotiation phase.
+        #[clap(long, short = 's')]
+        pub negotiation_info: bool,
+
+        /// Open the commit graph used for negotiation and write an SVG file to PATH.
+        #[clap(long, value_name = "PATH", short = 'g')]
+        pub open_negotiation_graph: Option<std::path::PathBuf>,
+
         #[clap(flatten)]
         pub shallow: ShallowOptions,
 
@@ -441,6 +449,12 @@ pub mod revision {
         /// List all commits reachable from the given rev-spec.
         #[clap(visible_alias = "l")]
         List {
+            /// How many commits to list at most.
+            #[clap(long, short = 'l')]
+            limit: Option<usize>,
+            /// Write the graph as SVG file to the given path.
+            #[clap(long, short = 's')]
+            svg: Option<std::path::PathBuf>,
             /// The rev-spec to list reachable commits from.
             #[clap(default_value = "@")]
             spec: std::ffi::OsString,

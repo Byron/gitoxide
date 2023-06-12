@@ -46,25 +46,23 @@ pub enum Status {
     ///
     /// As we could determine that nothing changed without remote interaction, there was no negotiation at all.
     NoPackReceived {
+        /// If `true`, we didn't receive a pack due to dry-run mode being enabled.
+        dry_run: bool,
+        /// Information about the pack negotiation phase if negotiation happened at all.
+        ///
+        /// It's possible that negotiation didn't have to happen as no reference of interest changed on the server.
+        negotiate: Option<outcome::Negotiate>,
         /// However, depending on the refspecs, references might have been updated nonetheless to point to objects as
         /// reported by the remote.
         update_refs: refs::update::Outcome,
     },
     /// There was at least one tip with a new object which we received.
     Change {
-        /// The number of rounds it took to minimize the pack to contain only the objects we don't have.
-        negotiation_rounds: usize,
+        /// Information about the pack negotiation phase.
+        negotiate: outcome::Negotiate,
         /// Information collected while writing the pack and its index.
         write_pack_bundle: gix_pack::bundle::write::Outcome,
         /// Information collected while updating references.
-        update_refs: refs::update::Outcome,
-    },
-    /// A dry run was performed which leaves the local repository without any change
-    /// nor will a pack have been received.
-    DryRun {
-        /// The number of rounds it took to minimize the *would-be-sent*-pack to contain only the objects we don't have.
-        negotiation_rounds: usize,
-        /// Information about what updates to refs would have been done.
         update_refs: refs::update::Outcome,
     },
 }
@@ -76,6 +74,46 @@ pub struct Outcome {
     pub ref_map: RefMap,
     /// The status of the operation to indicate what happened.
     pub status: Status,
+}
+
+/// Additional types related to the outcome of a fetch operation.
+pub mod outcome {
+    /// Information about the negotiation phase of a fetch.
+    ///
+    /// Note that negotiation can happen even if no pack is ultimately produced.
+    #[derive(Default, Debug, Clone)]
+    pub struct Negotiate {
+        /// The negotiation graph indicating what kind of information 'the algorithm' collected in the end.
+        pub graph: gix_negotiate::IdMap,
+        /// Additional information for each round of negotiation.
+        pub rounds: Vec<negotiate::Round>,
+    }
+
+    ///
+    pub mod negotiate {
+        /// Key information about each round in the pack-negotiation.
+        #[derive(Debug, Clone)]
+        pub struct Round {
+            /// The amount of `HAVE` lines sent this round.
+            ///
+            /// Each `HAVE` is an object that we tell the server about which would acknowledge each one it has as well.
+            pub haves_sent: usize,
+            /// A total counter, over all previous rounds, indicating how many `HAVE`s we sent without seeing a single acknowledgement,
+            /// i.e. the indication of a common object.
+            ///
+            /// This number maybe zero or be lower compared to the previous round if we have received at least one acknowledgement.
+            pub in_vain: usize,
+            /// The amount of haves we should send in this round.
+            ///
+            /// If the value is lower than `haves_sent` (the `HAVE` lines actually sent), the negotiation algorithm has run out of options
+            /// which typically indicates the end of the negotiation phase.
+            pub haves_to_send: usize,
+            /// If `true`, the server reported, as response to our previous `HAVE`s, that at least one of them is in common by acknowledging it.
+            ///
+            /// This may also lead to the server responding with a pack.
+            pub previous_response_had_at_least_one_in_common: bool,
+        }
+    }
 }
 
 /// The progress ids used in during various steps of the fetch operation.

@@ -137,12 +137,13 @@ mod blocking_and_async_io {
 
         match out.status {
             Status::Change {
-                negotiation_rounds,
+                negotiate,
                 write_pack_bundle,
                 ..
             } => {
                 assert_eq!(
-                    negotiation_rounds, 1,
+                    negotiate.rounds.len(),
+                    1,
                     "we don't really have a way to see that tips from alternates were added, I think"
                 );
                 assert_eq!(
@@ -215,11 +216,12 @@ mod blocking_and_async_io {
                 match changes.status {
                     Status::Change {
                         write_pack_bundle,
-                        negotiation_rounds,
+                        negotiate,
                         ..
                     } => {
                         assert_eq!(
-                            negotiation_rounds, expected_negotiation_rounds,
+                            negotiate.rounds.len(),
+                            expected_negotiation_rounds,
                             "we need multiple rounds"
                         );
                         // the server only has our `b1` and an extra commit or two.
@@ -389,8 +391,9 @@ mod blocking_and_async_io {
                         .await?;
 
                     match res.status {
-                    fetch::Status::NoPackReceived { update_refs } => {
+                    fetch::Status::NoPackReceived { update_refs, negotiate: _, dry_run } => {
                         assert_eq!(update_refs.edits.len(), expected_ref_count, "{shallow_args:?}|{fetch_tags:?}");
+                        assert!(!dry_run, "we actually perform the operation");
                     },
                     _ => unreachable!(
                         "{shallow_args:?}|{fetch_tags:?}: default negotiation is able to realize nothing is required and doesn't get to receiving a pack"
@@ -446,8 +449,8 @@ mod blocking_and_async_io {
                 .await?;
 
             match res.status {
-                gix::remote::fetch::Status::Change { write_pack_bundle, update_refs, negotiation_rounds } => {
-                    assert_eq!(negotiation_rounds, 1);
+                gix::remote::fetch::Status::Change { write_pack_bundle, update_refs, negotiate } => {
+                    assert_eq!(negotiate.rounds.len(), 1);
                     assert_eq!(write_pack_bundle.index.data_hash, hex_to_id(expected_data_hash), );
                     assert_eq!(write_pack_bundle.index.num_objects, 3 + num_objects_offset, "{fetch_tags:?}");
                     assert!(write_pack_bundle.data_path.as_deref().map_or(false, std::path::Path::is_file));
@@ -530,9 +533,9 @@ mod blocking_and_async_io {
                     fetch::Status::Change {
                         write_pack_bundle,
                         update_refs,
-                        negotiation_rounds,
+                        negotiate,
                     } => {
-                        assert_eq!(negotiation_rounds, 1);
+                        assert_eq!(negotiate.rounds.len(), 1);
                         assert_eq!(write_pack_bundle.pack_version, gix::odb::pack::data::Version::V2);
                         assert_eq!(write_pack_bundle.object_hash, repo.object_hash());
                         assert_eq!(write_pack_bundle.index.num_objects, 4, "{dry_run}: this value is 4 when git does it with 'consecutive' negotiation style, but could be 33 if completely naive.");
@@ -568,15 +571,16 @@ mod blocking_and_async_io {
 
                         update_refs
                     }
-                    fetch::Status::DryRun {
+                    fetch::Status::NoPackReceived {
+                        dry_run,
                         update_refs,
-                        negotiation_rounds,
+                        negotiate: _,
                     } => {
-                        assert_eq!(negotiation_rounds, 1);
+                        assert!(
+                            dry_run,
+                            "the only reason we receive no pack is if we are in dry-run mode"
+                        );
                         update_refs
-                    }
-                    fetch::Status::NoPackReceived { .. } => {
-                        unreachable!("we firmly expect changes here, as the other origin has changes")
                     }
                 };
 

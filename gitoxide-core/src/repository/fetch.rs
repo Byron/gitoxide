@@ -10,6 +10,8 @@ pub struct Options {
     pub ref_specs: Vec<BString>,
     pub shallow: gix::remote::fetch::Shallow,
     pub handshake_info: bool,
+    pub negotiation_info: bool,
+    pub open_negotiation_graph: Option<std::path::PathBuf>,
 }
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
@@ -17,6 +19,11 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 pub(crate) mod function {
     use anyhow::bail;
     use gix::{prelude::ObjectIdExt, refspec::match_group::validate::Fix, remote::fetch::Status};
+    use layout::backends::svg::SVGWriter;
+    use layout::core::base::Orientation;
+    use layout::core::geometry::Point;
+    use layout::core::style::StyleAttr;
+    use layout::std_shapes::shapes::{Arrow, Element, ShapeKind};
 
     use super::Options;
     use crate::OutputFormat;
@@ -31,6 +38,8 @@ pub(crate) mod function {
             dry_run,
             remote,
             handshake_info,
+            negotiation_info,
+            open_negotiation_graph,
             shallow,
             ref_specs,
         }: Options,
@@ -62,40 +71,48 @@ pub(crate) mod function {
 
         let ref_specs = remote.refspecs(gix::remote::Direction::Fetch);
         match res.status {
-            Status::NoPackReceived { update_refs } => {
-                print_updates(&repo, 1, update_refs, ref_specs, res.ref_map, &mut out, err)
-            }
-            Status::DryRun {
+            Status::NoPackReceived {
                 update_refs,
-                negotiation_rounds,
-            } => print_updates(
-                &repo,
-                negotiation_rounds,
-                update_refs,
-                ref_specs,
-                res.ref_map,
-                &mut out,
-                err,
-            ),
-            Status::Change {
-                update_refs,
-                write_pack_bundle,
-                negotiation_rounds,
+                negotiate,
+                dry_run: _,
             } => {
+                let negotiate_default = Default::default();
                 print_updates(
                     &repo,
-                    negotiation_rounds,
+                    negotiate.as_ref().unwrap_or(&negotiate_default),
                     update_refs,
                     ref_specs,
                     res.ref_map,
                     &mut out,
                     err,
                 )?;
+                if negotiation_info {
+                    print_negotiate_info(&mut out, negotiate.as_ref())?;
+                }
+                if let Some((negotiate, path)) =
+                    open_negotiation_graph.and_then(|path| negotiate.as_ref().map(|n| (n, path)))
+                {
+                    render_graph(&repo, &negotiate.graph, &path, progress)?;
+                }
+                Ok::<_, anyhow::Error>(())
+            }
+            Status::Change {
+                update_refs,
+                write_pack_bundle,
+                negotiate,
+            } => {
+                print_updates(&repo, &negotiate, update_refs, ref_specs, res.ref_map, &mut out, err)?;
                 if let Some(data_path) = write_pack_bundle.data_path {
                     writeln!(out, "pack  file: \"{}\"", data_path.display()).ok();
                 }
                 if let Some(index_path) = write_pack_bundle.index_path {
                     writeln!(out, "index file: \"{}\"", index_path.display()).ok();
+                }
+                if negotiation_info {
+                    print_negotiate_info(&mut out, Some(&negotiate))?;
+                }
+                if let Some(path) = open_negotiation_graph {
+                    render_graph(&repo, &negotiate.graph, &path, progress)?;
                 }
                 Ok(())
             }
@@ -106,9 +123,83 @@ pub(crate) mod function {
         Ok(())
     }
 
+    fn render_graph(
+        repo: &gix::Repository,
+        graph: &gix::negotiate::IdMap,
+        path: &std::path::Path,
+        mut progress: impl gix::Progress,
+    ) -> anyhow::Result<()> {
+        progress.init(Some(graph.len()), gix::progress::count("commits"));
+        progress.set_name("building graph");
+
+        let mut map = gix::hashtable::HashMap::default();
+        let mut vg = layout::topo::layout::VisualGraph::new(Orientation::TopToBottom);
+
+        for (id, commit) in graph.iter().inspect(|_| progress.inc()) {
+            let source = match map.get(id) {
+                Some(handle) => *handle,
+                None => {
+                    let handle = vg.add_node(new_node(id.attach(repo), commit.data.flags));
+                    map.insert(*id, handle);
+                    handle
+                }
+            };
+
+            for parent_id in &commit.parents {
+                let dest = match map.get(parent_id) {
+                    Some(handle) => *handle,
+                    None => {
+                        let flags = match graph.get(parent_id) {
+                            Some(c) => c.data.flags,
+                            None => continue,
+                        };
+                        let dest = vg.add_node(new_node(parent_id.attach(repo), flags));
+                        map.insert(*parent_id, dest);
+                        dest
+                    }
+                };
+                let arrow = Arrow::simple("");
+                vg.add_edge(arrow, source, dest);
+            }
+        }
+
+        let start = std::time::Instant::now();
+        progress.set_name("layout graph");
+        progress.info(format!("writing {path:?}…"));
+        let mut svg = SVGWriter::new();
+        vg.do_it(false, false, false, &mut svg);
+        std::fs::write(path, svg.finalize().as_bytes())?;
+        open::that(path)?;
+        progress.show_throughput(start);
+
+        return Ok(());
+
+        fn new_node(id: gix::Id<'_>, flags: gix::negotiate::Flags) -> Element {
+            let pt = Point::new(250., 50.);
+            let name = format!("{}\n\n{flags:?}", id.shorten_or_id());
+            let shape = ShapeKind::new_box(name.as_str());
+            let style = StyleAttr::simple();
+            Element::create(shape, style, Orientation::LeftToRight, pt)
+        }
+    }
+
+    fn print_negotiate_info(
+        mut out: impl std::io::Write,
+        negotiate: Option<&gix::remote::fetch::outcome::Negotiate>,
+    ) -> std::io::Result<()> {
+        writeln!(out, "Negotiation Phase Information")?;
+        match negotiate {
+            Some(negotiate) => {
+                writeln!(out, "\t{:?}", negotiate.rounds)?;
+                writeln!(out, "\tnum commits traversed in graph: {}", negotiate.graph.len())
+            }
+            None => writeln!(out, "\tno negotiation performed"),
+        }
+    }
+
     pub(crate) fn print_updates(
         repo: &gix::Repository,
-        negotiation_rounds: usize,
+        negotiate: &gix::remote::fetch::outcome::Negotiate,
         update_refs: gix::remote::fetch::refs::update::Outcome,
         refspecs: &[gix::refspec::RefSpec],
         mut map: gix::remote::fetch::RefMap,
@@ -212,8 +303,10 @@ pub(crate) mod function {
                 refspecs.len()
             )?;
         }
-        if negotiation_rounds != 1 {
-            writeln!(err, "needed {negotiation_rounds} rounds of pack-negotiation")?;
+        match negotiate.rounds.len() {
+            0 => writeln!(err, "no negotiation was necessary")?,
+            1 => {}
+            rounds => writeln!(err, "needed {rounds} rounds of pack-negotiation")?,
         }
         Ok(())
     }

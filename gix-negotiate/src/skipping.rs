@@ -4,14 +4,14 @@ use gix_hash::ObjectId;
 use crate::{Error, Flags, Metadata, Negotiator};
 
 pub(crate) struct Algorithm {
-    revs: gix_revision::PriorityQueue<SecondsSinceUnixEpoch, ObjectId>,
+    revs: gix_revwalk::PriorityQueue<SecondsSinceUnixEpoch, ObjectId>,
     non_common_revs: usize,
 }
 
 impl Default for Algorithm {
     fn default() -> Self {
         Self {
-            revs: gix_revision::PriorityQueue::new(),
+            revs: gix_revwalk::PriorityQueue::new(),
             non_common_revs: 0,
         }
     }
@@ -41,7 +41,7 @@ impl Algorithm {
             })?
             .filter(|_| !is_common)
         {
-            let mut queue = gix_revision::PriorityQueue::from_iter(Some((commit.commit_time, id)));
+            let mut queue = gix_revwalk::PriorityQueue::from_iter(Some((commit.commit_time, id)));
             while let Some(id) = queue.pop_value() {
                 if let Some(commit) = graph.try_lookup_or_insert_commit(id, |entry| {
                     if !entry.flags.contains(Flags::POPPED) {

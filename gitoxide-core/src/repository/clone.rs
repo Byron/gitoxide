@@ -88,14 +88,12 @@ pub(crate) mod function {
         }
 
         match fetch_outcome.status {
-            Status::NoPackReceived { .. } => {
+            Status::NoPackReceived { dry_run, .. } => {
+                assert!(!dry_run, "dry-run unsupported");
                 writeln!(err, "The cloned repository appears to be empty")?;
             }
-            Status::DryRun { .. } => unreachable!("dry-run unsupported"),
             Status::Change {
-                update_refs,
-                negotiation_rounds,
-                ..
+                update_refs, negotiate, ..
             } => {
                 let remote = repo
                     .find_default_remote(gix::remote::Direction::Fetch)
@@ -103,7 +101,7 @@ pub(crate) mod function {
                 let ref_specs = remote.refspecs(gix::remote::Direction::Fetch);
                 print_updates(
                     &repo,
-                    negotiation_rounds,
+                    &negotiate,
                     update_refs,
                     ref_specs,
                     fetch_outcome.ref_map,

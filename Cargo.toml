@@ -12,6 +12,7 @@ resolver = "2"
 
 [[bin]]
 name = "ein"
+doc = false
 path = "src/ein.rs"
 test = false
 doctest = false
@@ -19,6 +20,7 @@ doctest = false
 [[bin]]
 name = "gix"
 path = "src/gix.rs"
+doc = false
 test = false
 doctest = false
 
@@ -182,7 +184,7 @@ sha1_smol = { opt-level = 3 }
 
 [profile.release]
 overflow-checks = false
-lto = "fat"
+#lto = "fat"
 # this bloats files but assures destructors are called, important for tempfiles. One day I hope we
 # can wire up the 'abrt' signal handler so tempfiles will be removed in case of panics.
 panic = 'unwind'
