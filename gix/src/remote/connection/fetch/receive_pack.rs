@@ -138,6 +138,7 @@ where
             &mut graph,
             &self.ref_map,
             &self.shallow,
+            negotiate::make_refmapping_ignore_predicate(con.remote.fetch_tags, &self.ref_map),
         )?;
         let mut previous_response = None::<gix_protocol::fetch::Response>;
         let mut round = 1;
@@ -155,7 +156,7 @@ where
                     &self.ref_map,
                     remote_ref_target_known,
                     &self.shallow,
-                    con.remote.fetch_tags,
+                    negotiate::make_refmapping_ignore_predicate(con.remote.fetch_tags, &self.ref_map),
                 );
                 let is_stateless =
                     arguments.is_stateless(!con.transport.connection_persists_across_multiple_requests());

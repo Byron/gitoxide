@@ -335,38 +335,68 @@ mod blocking_and_async_io {
         async(feature = "async-network-client-async-std", async_std::test)
     )]
     async fn fetch_empty_pack() -> crate::Result {
-        let daemon = spawn_git_daemon_if_async(repo_path("base"))?;
-        for (fetch_tags, expected_ref_count) in [
-            (fetch::Tags::None, 1),
-            (fetch::Tags::Included, 7),
-            (fetch::Tags::All, 7),
+        for version in [
+            gix::protocol::transport::Protocol::V1,
+            gix::protocol::transport::Protocol::V2,
         ] {
-            let (repo, _tmp) = repo_rw("two-origins");
-            let mut remote = into_daemon_remote_if_async(
-                repo.head()?
-                    .into_remote(Fetch)
-                    .expect("present")?
-                    .with_fetch_tags(fetch_tags),
-                daemon.as_ref(),
-                None,
-            );
-            remote.replace_refspecs(Some("HEAD:refs/remotes/origin/does-not-yet-exist"), Fetch)?;
-
-            let res = remote
-                .connect(Fetch)
-                .await?
-                .prepare_fetch(gix::progress::Discard, Default::default())
-                .await?
-                .receive(gix::progress::Discard, &AtomicBool::default())
-                .await?;
-
-            match res.status {
-                fetch::Status::NoPackReceived { update_refs } => {
-                    assert_eq!(update_refs.edits.len(), expected_ref_count);
+            for (shallow_args, expected) in [(None, [1, 7, 7]), (Some("--depth=2"), [1, 2, 2])] {
+                if version == gix::protocol::transport::Protocol::V1 && shallow_args.is_some() {
+                    // TODO: We cannot yet handle shallow mode for V1 as it will send shallow-info as part of the handshake :/.
+                    //       It's probaby not the most important thing to be able to clone from a shallow remote anyway.
+                    continue;
                 }
-                _ => unreachable!(
-                    "default negotiation is able to realize nothing is required and doesn't get to receiving a pack"
-                ),
+                for (fetch_tags, expected_ref_count) in [fetch::Tags::None, fetch::Tags::Included, fetch::Tags::All]
+                    .into_iter()
+                    .zip(expected)
+                {
+                    let (mut repo, _tmp) = try_repo_rw_args(
+                        "two-origins",
+                        shallow_args,
+                        if shallow_args.is_some() {
+                            Mode::CloneWithShallowSupport
+                        } else {
+                            Mode::FastClone
+                        },
+                    )?;
+                    let daemon = spawn_git_daemon_if_async(
+                        repo.work_dir()
+                            .expect("non-bare")
+                            .ancestors()
+                            .nth(1)
+                            .expect("parent")
+                            .join("base"),
+                    )?;
+                    repo.config_snapshot_mut().set_value(
+                        &gix::config::tree::Protocol::VERSION,
+                        (version as u8).to_string().as_str(),
+                    )?;
+                    let mut remote = into_daemon_remote_if_async(
+                        repo.head()?
+                            .into_remote(Fetch)
+                            .expect("present")?
+                            .with_fetch_tags(fetch_tags),
+                        daemon.as_ref(),
+                        None,
+                    );
+                    remote.replace_refspecs(Some("HEAD:refs/remotes/origin/does-not-yet-exist"), Fetch)?;
+
+                    let res = remote
+                        .connect(Fetch)
+                        .await?
+                        .prepare_fetch(gix::progress::Discard, Default::default())
+                        .await?
+                        .receive(gix::progress::Discard, &AtomicBool::default())
+                        .await?;
+
+                    match res.status {
+                    fetch::Status::NoPackReceived { update_refs } => {
+                        assert_eq!(update_refs.edits.len(), expected_ref_count, "{shallow_args:?}|{fetch_tags:?}");
+                    },
+                    _ => unreachable!(
+                        "{shallow_args:?}|{fetch_tags:?}: default negotiation is able to realize nothing is required and doesn't get to receiving a pack"
+                    ),
+                }
+                }
             }
         }
         Ok(())
