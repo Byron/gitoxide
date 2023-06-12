@@ -13,12 +13,11 @@ use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 use gix::bstr::io::BufReadExt;
 
-use crate::plumbing::options::commitgraph;
 use crate::{
     plumbing::{
         options::{
-            attributes, commit, config, credential, exclude, free, index, mailmap, odb, revision, tree, Args,
-            Subcommands,
+            attributes, commit, commitgraph, config, credential, exclude, free, index, mailmap, odb, revision, tree,
+            Args, Subcommands,
         },
         show_progress,
     },
@@ -303,6 +302,27 @@ pub fn main() -> Result<()> {
         )
         .map(|_| ()),
         Subcommands::Free(subcommands) => match subcommands {
+            free::Subcommands::CommitGraph(cmd) => match cmd {
+                free::commitgraph::Subcommands::Verify { path, statistics } => prepare_and_run(
+                    "commitgraph-verify",
+                    auto_verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, err| {
+                        let output_statistics = if statistics { Some(format) } else { None };
+                        core::commitgraph::verify(
+                            path,
+                            core::commitgraph::verify::Context {
+                                err,
+                                out,
+                                output_statistics,
+                            },
+                        )
+                    },
+                )
+                .map(|_| ()),
+            },
             free::Subcommands::Index(free::index::Platform {
                 object_hash,
                 index_path,
