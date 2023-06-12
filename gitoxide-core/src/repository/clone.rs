@@ -101,7 +101,7 @@ pub(crate) mod function {
                 let ref_specs = remote.refspecs(gix::remote::Direction::Fetch);
                 print_updates(
                     &repo,
-                    negotiate,
+                    &negotiate,
                     update_refs,
                     ref_specs,
                     fetch_outcome.ref_map,

@@ -189,6 +189,7 @@ pub fn main() -> Result<()> {
         Subcommands::Fetch(crate::plumbing::options::fetch::Platform {
             dry_run,
             handshake_info,
+            negotiation_info,
             remote,
             shallow,
             ref_spec,
@@ -198,6 +199,7 @@ pub fn main() -> Result<()> {
                 dry_run,
                 remote,
                 handshake_info,
+                negotiation_info,
                 shallow: shallow.into(),
                 ref_specs: ref_spec,
             };

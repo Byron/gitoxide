@@ -10,6 +10,7 @@ pub struct Options {
     pub ref_specs: Vec<BString>,
     pub shallow: gix::remote::fetch::Shallow,
     pub handshake_info: bool,
+    pub negotiation_info: bool,
 }
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
@@ -31,6 +32,7 @@ pub(crate) mod function {
             dry_run,
             remote,
             handshake_info,
+            negotiation_info,
             shallow,
             ref_specs,
         }: Options,
@@ -66,26 +68,36 @@ pub(crate) mod function {
                 update_refs,
                 negotiate,
                 dry_run: _,
-            } => print_updates(
-                &repo,
-                negotiate.unwrap_or_default(),
-                update_refs,
-                ref_specs,
-                res.ref_map,
-                &mut out,
-                err,
-            ),
+            } => {
+                let negotiate_default = Default::default();
+                print_updates(
+                    &repo,
+                    negotiate.as_ref().unwrap_or(&negotiate_default),
+                    update_refs,
+                    ref_specs,
+                    res.ref_map,
+                    &mut out,
+                    err,
+                )?;
+                if negotiation_info {
+                    print_negotiate_info(&mut out, negotiate.as_ref())?;
+                }
+                Ok::<_, anyhow::Error>(())
+            }
             Status::Change {
                 update_refs,
                 write_pack_bundle,
                 negotiate,
             } => {
-                print_updates(&repo, negotiate, update_refs, ref_specs, res.ref_map, &mut out, err)?;
+                print_updates(&repo, &negotiate, update_refs, ref_specs, res.ref_map, &mut out, err)?;
                 if let Some(data_path) = write_pack_bundle.data_path {
                     writeln!(out, "pack  file: \"{}\"", data_path.display()).ok();
                 }
                 if let Some(index_path) = write_pack_bundle.index_path {
                     writeln!(out, "index file: \"{}\"", index_path.display()).ok();
+                }
+                if negotiation_info {
+                    print_negotiate_info(&mut out, Some(&negotiate))?;
                 }
                 Ok(())
             }
@@ -96,9 +108,23 @@ pub(crate) mod function {
         Ok(())
     }
 
+    fn print_negotiate_info(
+        mut out: impl std::io::Write,
+        negotiate: Option<&gix::remote::fetch::outcome::Negotiate>,
+    ) -> std::io::Result<()> {
+        writeln!(out, "Negotiation Phase Information")?;
+        match negotiate {
+            Some(negotiate) => {
+                writeln!(out, "\t{:?}", negotiate.rounds)?;
+                writeln!(out, "\tnum commits traversed in graph: {}", negotiate.graph.len())
+            }
+            None => writeln!(out, "\tno negotiation performed"),
+        }
+    }
+
     pub(crate) fn print_updates(
         repo: &gix::Repository,
-        negotiate: gix::remote::fetch::outcome::Negotiate,
+        negotiate: &gix::remote::fetch::outcome::Negotiate,
         update_refs: gix::remote::fetch::refs::update::Outcome,
         refspecs: &[gix::refspec::RefSpec],
         mut map: gix::remote::fetch::RefMap,

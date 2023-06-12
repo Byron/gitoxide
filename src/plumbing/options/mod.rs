@@ -155,6 +155,10 @@ pub mod fetch {
         #[clap(long, short = 'H')]
         pub handshake_info: bool,
 
+        /// Print statistics about negotiation phase.
+        #[clap(long, short = 's')]
+        pub negotiation_info: bool,
+
         #[clap(flatten)]
         pub shallow: ShallowOptions,
 
