@@ -25,6 +25,7 @@ pub mod fetch;
 pub use clone::function::clone;
 #[cfg(feature = "blocking-client")]
 pub use fetch::function::fetch;
+pub mod commitgraph;
 pub mod index;
 pub mod mailmap;
 pub mod odb;

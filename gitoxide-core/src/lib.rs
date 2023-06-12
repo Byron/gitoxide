@@ -63,9 +63,9 @@ impl FromStr for OutputFormat {
     }
 }
 
+pub mod commitgraph;
 pub mod net;
 
-pub mod commitgraph;
 #[cfg(feature = "estimate-hours")]
 pub mod hours;
 pub mod index;
