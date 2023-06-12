@@ -62,15 +62,13 @@ pub(crate) mod function {
 
         let ref_specs = remote.refspecs(gix::remote::Direction::Fetch);
         match res.status {
-            Status::NoPackReceived { update_refs } => {
-                print_updates(&repo, 1, update_refs, ref_specs, res.ref_map, &mut out, err)
-            }
-            Status::DryRun {
+            Status::NoPackReceived {
                 update_refs,
-                negotiation_rounds,
+                negotiate,
+                dry_run: _,
             } => print_updates(
                 &repo,
-                negotiation_rounds,
+                negotiate.unwrap_or_default(),
                 update_refs,
                 ref_specs,
                 res.ref_map,
@@ -80,17 +78,9 @@ pub(crate) mod function {
             Status::Change {
                 update_refs,
                 write_pack_bundle,
-                negotiation_rounds,
+                negotiate,
             } => {
-                print_updates(
-                    &repo,
-                    negotiation_rounds,
-                    update_refs,
-                    ref_specs,
-                    res.ref_map,
-                    &mut out,
-                    err,
-                )?;
+                print_updates(&repo, negotiate, update_refs, ref_specs, res.ref_map, &mut out, err)?;
                 if let Some(data_path) = write_pack_bundle.data_path {
                     writeln!(out, "pack  file: \"{}\"", data_path.display()).ok();
                 }
@@ -108,7 +98,7 @@ pub(crate) mod function {
 
     pub(crate) fn print_updates(
         repo: &gix::Repository,
-        negotiation_rounds: usize,
+        negotiate: gix::remote::fetch::outcome::Negotiate,
         update_refs: gix::remote::fetch::refs::update::Outcome,
         refspecs: &[gix::refspec::RefSpec],
         mut map: gix::remote::fetch::RefMap,
@@ -212,8 +202,10 @@ pub(crate) mod function {
                 refspecs.len()
             )?;
         }
-        if negotiation_rounds != 1 {
-            writeln!(err, "needed {negotiation_rounds} rounds of pack-negotiation")?;
+        match negotiate.rounds.len() {
+            0 => writeln!(err, "no negotiation was necessary")?,
+            1 => {}
+            rounds => writeln!(err, "needed {rounds} rounds of pack-negotiation")?,
         }
         Ok(())
     }
