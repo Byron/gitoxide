@@ -31,12 +31,13 @@ pub struct Graph<'find, T> {
     /// A way to speedup commit access, essentially a multi-file commit database.
     cache: Option<gix_commitgraph::Graph>,
     /// The set of cached commits that we have seen once, along with data associated with them.
-    set: gix_hashtable::HashMap<gix_hash::ObjectId, T>,
+    map: graph::IdMap<T>,
     /// A buffer for writing commit data into.
     buf: Vec<u8>,
     /// Another buffer we typically use to store parents.
     parent_buf: Vec<u8>,
 }
+
 ///
 pub mod graph;
 

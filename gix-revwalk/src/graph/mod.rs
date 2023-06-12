@@ -5,6 +5,9 @@ use smallvec::SmallVec;
 
 use crate::Graph;
 
+/// A mapping between an object id and arbitrary data, and produced when calling [`Graph::detach`].
+pub type IdMap<T> = gix_hashtable::HashMap<gix_hash::ObjectId, T>;
+
 ///
 pub mod commit;
 
@@ -20,7 +23,7 @@ pub type Generation = u32;
 
 impl<'find, T: std::fmt::Debug> std::fmt::Debug for Graph<'find, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Debug::fmt(&self.set, f)
+        std::fmt::Debug::fmt(&self.map, f)
     }
 }
 
@@ -42,27 +45,27 @@ impl<'find, T: Default> Graph<'find, T> {
 impl<'find, T> Graph<'find, T> {
     /// Returns true if `id` has data associated with it, meaning that we processed it already.
     pub fn contains(&self, id: &gix_hash::oid) -> bool {
-        self.set.contains_key(id.as_ref())
+        self.map.contains_key(id.as_ref())
     }
 
     /// Returns the data associated with `id` if available.
     pub fn get(&self, id: &gix_hash::oid) -> Option<&T> {
-        self.set.get(id)
+        self.map.get(id)
     }
 
     /// Returns the data associated with `id` if available as mutable reference.
     pub fn get_mut(&mut self, id: &gix_hash::oid) -> Option<&mut T> {
-        self.set.get_mut(id)
+        self.map.get_mut(id)
     }
 
     /// Insert `id` into the graph and associate it with `value`, returning the previous value associated with it if it existed.
     pub fn insert(&mut self, id: gix_hash::ObjectId, value: T) -> Option<T> {
-        self.set.insert(id, value)
+        self.map.insert(id, value)
     }
 
     /// Remove all data from the graph to start over.
     pub fn clear(&mut self) {
-        self.set.clear();
+        self.map.clear();
     }
 
     /// Insert the parents of commit named `id` to the graph and associate new parents with data
@@ -80,7 +83,7 @@ impl<'find, T> Graph<'find, T> {
         let parents: SmallVec<[_; 2]> = commit.iter_parents().collect();
         for parent_id in parents {
             let parent_id = parent_id?;
-            match self.set.entry(parent_id) {
+            match self.map.entry(parent_id) {
                 gix_hashtable::hash_map::Entry::Vacant(entry) => {
                     let parent = match try_lookup(&parent_id, &mut self.find, self.cache.as_ref(), &mut self.parent_buf)
                         .map_err(|err| insert_parents::Error::Lookup(lookup::existing::Error::Find(err)))?
@@ -101,6 +104,11 @@ impl<'find, T> Graph<'find, T> {
             }
         }
         Ok(())
+    }
+
+    /// Turn ourselves into the underlying graph structure, which is a mere mapping between object ids and their data.
+    pub fn detach(self) -> IdMap<T> {
+        self.map
     }
 }
 
@@ -125,7 +133,7 @@ impl<'find, T> Graph<'find, T> {
                 find(id, buf).map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
             }),
             cache: cache.into(),
-            set: gix_hashtable::HashMap::default(),
+            map: gix_hashtable::HashMap::default(),
             buf: Vec::new(),
             parent_buf: Vec::new(),
         }
@@ -145,7 +153,7 @@ impl<'find, T> Graph<'find, Commit<T>> {
         new_data: impl FnOnce() -> T,
         update_data: impl FnOnce(&mut T),
     ) -> Result<Option<&mut Commit<T>>, lookup::commit::Error> {
-        match self.set.entry(id) {
+        match self.map.entry(id) {
             gix_hashtable::hash_map::Entry::Vacant(entry) => {
                 let res = try_lookup(&id, &mut self.find, self.cache.as_ref(), &mut self.buf)?;
                 let commit = match res {
@@ -160,7 +168,7 @@ impl<'find, T> Graph<'find, Commit<T>> {
                 update_data(&mut entry.get_mut().data);
             }
         };
-        Ok(self.set.get_mut(&id))
+        Ok(self.map.get_mut(&id))
     }
 }
 
@@ -202,7 +210,7 @@ impl<'find, T> Graph<'find, T> {
     ) -> Result<Option<LazyCommit<'_>>, lookup::Error> {
         let res = try_lookup(&id, &mut self.find, self.cache.as_ref(), &mut self.buf)?;
         Ok(res.map(|commit| {
-            match self.set.entry(id) {
+            match self.map.entry(id) {
                 gix_hashtable::hash_map::Entry::Vacant(entry) => {
                     let mut data = default();
                     update_data(&mut data);
@@ -255,7 +263,7 @@ impl<'a, 'find, T> Index<&'a gix_hash::oid> for Graph<'find, T> {
     type Output = T;
 
     fn index(&self, index: &'a oid) -> &Self::Output {
-        &self.set[index]
+        &self.map[index]
     }
 }
 
