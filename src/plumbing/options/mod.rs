@@ -159,6 +159,10 @@ pub mod fetch {
         #[clap(long, short = 's')]
         pub negotiation_info: bool,
 
+        /// Open the commit graph used for negotiation and write an SVG file to PATH.
+        #[clap(long, value_name = "PATH", short = 'g')]
+        pub open_negotiation_graph: Option<std::path::PathBuf>,
+
         #[clap(flatten)]
         pub shallow: ShallowOptions,
 

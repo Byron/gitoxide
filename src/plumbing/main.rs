@@ -190,6 +190,7 @@ pub fn main() -> Result<()> {
             dry_run,
             handshake_info,
             negotiation_info,
+            open_negotiation_graph,
             remote,
             shallow,
             ref_spec,
@@ -200,6 +201,7 @@ pub fn main() -> Result<()> {
                 remote,
                 handshake_info,
                 negotiation_info,
+                open_negotiation_graph,
                 shallow: shallow.into(),
                 ref_specs: ref_spec,
             };

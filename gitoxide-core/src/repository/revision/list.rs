@@ -17,8 +17,8 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 0..=2;
 
 pub(crate) mod function {
     use anyhow::{bail, Context};
+    use gix::hashtable::HashMap;
     use gix::traverse::commit::Sorting;
-    use std::collections::HashMap;
 
     use gix::Progress;
     use layout::backends::svg::SVGWriter;
@@ -63,7 +63,7 @@ pub(crate) mod function {
             Format::Svg { path } => (
                 layout::topo::layout::VisualGraph::new(Orientation::TopToBottom),
                 path,
-                HashMap::new(),
+                HashMap::default(),
             )
                 .into(),
             Format::Text => None,
@@ -79,14 +79,10 @@ pub(crate) mod function {
             let commit = commit?;
             match vg.as_mut() {
                 Some((vg, _path, map)) => {
-                    let pt = Point::new(100., 30.);
                     let source = match map.get(&commit.id) {
                         Some(handle) => *handle,
                         None => {
-                            let name = commit.id().shorten_or_id().to_string();
-                            let shape = ShapeKind::new_box(name.as_str());
-                            let style = StyleAttr::simple();
-                            let handle = vg.add_node(Element::create(shape, style, Orientation::LeftToRight, pt));
+                            let handle = vg.add_node(new_node(commit.id()));
                             map.insert(commit.id, handle);
                             handle
                         }
@@ -96,10 +92,7 @@ pub(crate) mod function {
                         let dest = match map.get(parent_id.as_ref()) {
                             Some(handle) => *handle,
                             None => {
-                                let name = parent_id.shorten_or_id().to_string();
-                                let shape = ShapeKind::new_box(name.as_str());
-                                let style = StyleAttr::simple();
-                                let dest = vg.add_node(Element::create(shape, style, Orientation::LeftToRight, pt));
+                                let dest = vg.add_node(new_node(parent_id));
                                 map.insert(parent_id.detach(), dest);
                                 dest
                             }
@@ -127,7 +120,7 @@ pub(crate) mod function {
         progress.show_throughput(start);
         if let Some((mut vg, path, _)) = vg {
             let start = std::time::Instant::now();
-            progress.set_name("computing graph");
+            progress.set_name("layout graph");
             progress.info(format!("writing {path:?}…"));
             let mut svg = SVGWriter::new();
             vg.do_it(false, false, false, &mut svg);
@@ -135,6 +128,14 @@ pub(crate) mod function {
             open::that(path)?;
             progress.show_throughput(start);
         }
-        Ok(())
+        return Ok(());
+
+        fn new_node(id: gix::Id<'_>) -> Element {
+            let pt = Point::new(100., 30.);
+            let name = id.shorten_or_id().to_string();
+            let shape = ShapeKind::new_box(name.as_str());
+            let style = StyleAttr::simple();
+            Element::create(shape, style, Orientation::LeftToRight, pt)
+        }
     }
 }

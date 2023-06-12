@@ -11,6 +11,7 @@ pub struct Options {
     pub shallow: gix::remote::fetch::Shallow,
     pub handshake_info: bool,
     pub negotiation_info: bool,
+    pub open_negotiation_graph: Option<std::path::PathBuf>,
 }
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
@@ -18,6 +19,11 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 pub(crate) mod function {
     use anyhow::bail;
     use gix::{prelude::ObjectIdExt, refspec::match_group::validate::Fix, remote::fetch::Status};
+    use layout::backends::svg::SVGWriter;
+    use layout::core::base::Orientation;
+    use layout::core::geometry::Point;
+    use layout::core::style::StyleAttr;
+    use layout::std_shapes::shapes::{Arrow, Element, ShapeKind};
 
     use super::Options;
     use crate::OutputFormat;
@@ -33,6 +39,7 @@ pub(crate) mod function {
             remote,
             handshake_info,
             negotiation_info,
+            open_negotiation_graph,
             shallow,
             ref_specs,
         }: Options,
@@ -82,6 +89,11 @@ pub(crate) mod function {
                 if negotiation_info {
                     print_negotiate_info(&mut out, negotiate.as_ref())?;
                 }
+                if let Some((negotiate, path)) =
+                    open_negotiation_graph.and_then(|path| negotiate.as_ref().map(|n| (n, path)))
+                {
+                    render_graph(&repo, &negotiate.graph, &path, progress)?;
+                }
                 Ok::<_, anyhow::Error>(())
             }
             Status::Change {
@@ -99,6 +111,9 @@ pub(crate) mod function {
                 if negotiation_info {
                     print_negotiate_info(&mut out, Some(&negotiate))?;
                 }
+                if let Some(path) = open_negotiation_graph {
+                    render_graph(&repo, &negotiate.graph, &path, progress)?;
+                }
                 Ok(())
             }
         }?;
@@ -106,6 +121,66 @@ pub(crate) mod function {
             writeln!(out, "DRY-RUN: No ref was updated and no pack was received.").ok();
         }
         Ok(())
+    }
+
+    fn render_graph(
+        repo: &gix::Repository,
+        graph: &gix::negotiate::IdMap,
+        path: &std::path::Path,
+        mut progress: impl gix::Progress,
+    ) -> anyhow::Result<()> {
+        progress.init(Some(graph.len()), gix::progress::count("commits"));
+        progress.set_name("building graph");
+
+        let mut map = gix::hashtable::HashMap::default();
+        let mut vg = layout::topo::layout::VisualGraph::new(Orientation::TopToBottom);
+
+        for (id, commit) in graph.iter().inspect(|_| progress.inc()) {
+            let source = match map.get(id) {
+                Some(handle) => *handle,
+                None => {
+                    let handle = vg.add_node(new_node(id.attach(repo), commit.data.flags));
+                    map.insert(*id, handle);
+                    handle
+                }
+            };
+
+            for parent_id in &commit.parents {
+                let dest = match map.get(parent_id) {
+                    Some(handle) => *handle,
+                    None => {
+                        let flags = match graph.get(parent_id) {
+                            Some(c) => c.data.flags,
+                            None => continue,
+                        };
+                        let dest = vg.add_node(new_node(parent_id.attach(repo), flags));
+                        map.insert(*parent_id, dest);
+                        dest
+                    }
+                };
+                let arrow = Arrow::simple("");
+                vg.add_edge(arrow, source, dest);
+            }
+        }
+
+        let start = std::time::Instant::now();
+        progress.set_name("layout graph");
+        progress.info(format!("writing {path:?}…"));
+        let mut svg = SVGWriter::new();
+        vg.do_it(false, false, false, &mut svg);
+        std::fs::write(path, svg.finalize().as_bytes())?;
+        open::that(path)?;
+        progress.show_throughput(start);
+
+        return Ok(());
+
+        fn new_node(id: gix::Id<'_>, flags: gix::negotiate::Flags) -> Element {
+            let pt = Point::new(250., 50.);
+            let name = format!("{}\n\n{flags:?}", id.shorten_or_id());
+            let shape = ShapeKind::new_box(name.as_str());
+            let style = StyleAttr::simple();
+            Element::create(shape, style, Orientation::LeftToRight, pt)
+        }
     }
 
     fn print_negotiate_info(
