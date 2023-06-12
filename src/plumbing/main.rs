@@ -136,7 +136,9 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, _err| core::commitgraph::list(repository(Mode::Lenient)?, spec, out, format),
+                move |_progress, out, _err| {
+                    core::repository::commitgraph::list(repository(Mode::Lenient)?, spec, out, format)
+                },
             )
             .map(|_| ()),
             commitgraph::Subcommands::Verify { statistics } => prepare_and_run(
@@ -147,9 +149,9 @@ pub fn main() -> Result<()> {
                 None,
                 move |_progress, out, err| {
                     let output_statistics = if statistics { Some(format) } else { None };
-                    core::commitgraph::verify(
+                    core::repository::commitgraph::verify(
                         repository(Mode::Lenient)?,
-                        core::commitgraph::verify::Context {
+                        core::repository::commitgraph::verify::Context {
                             err,
                             out,
                             output_statistics,
