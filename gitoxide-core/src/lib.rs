@@ -64,6 +64,8 @@ impl FromStr for OutputFormat {
 }
 
 pub mod commitgraph;
+#[cfg(feature = "corpus")]
+pub mod corpus;
 pub mod net;
 
 #[cfg(feature = "estimate-hours")]

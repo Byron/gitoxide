@@ -44,12 +44,12 @@ max = ["max-control", "fast", "gitoxide-core-blocking-client", "http-client-curl
 max-pure = ["max-control", "gix-features/rustsha1", "gix-features/zlib-rust-backend", "http-client-reqwest", "gitoxide-core-blocking-client" ]
 
 ## Like `max`, but with more control for configuration. See the *Package Maintainers* headline for more information.
-max-control = ["fast-safe", "pretty-cli", "gitoxide-core-tools-query", "gitoxide-core-tools", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure", "gix/regex" ]
+max-control = ["fast-safe", "pretty-cli", "gitoxide-core-tools-query", "gitoxide-core-tools-corpus", "gitoxide-core-tools", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure", "gix/regex" ]
 
 ## All of the good stuff, with less fanciness for smaller binaries.
 ##
 ## As fast as possible, progress line rendering, all transports based on their most mature implementation (HTTP), all `ein` tools, CLI colors and local-time support, JSON output.
-lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools-query", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line" ]
+lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools-query", "gitoxide-core-tools-corpus", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line" ]
 
 ## The smallest possible build, best suitable for small single-core machines.
 ##
@@ -67,7 +67,7 @@ small = ["pretty-cli", "gix-features/rustsha1", "gix-features/zlib-rust-backend"
 ##
 ## Due to async client-networking not being implemented for most transports, this one supports only the 'git+tcp' and HTTP transport.
 ## It uses, however, a fully asynchronous networking implementation which can serve a real-world example on how to implement custom async transports.
-lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-tools-query", "gitoxide-core-async-client", "prodash-render-line"]
+lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-tools-query", "gitoxide-core-tools-corpus", "gitoxide-core-async-client", "prodash-render-line"]
 
 #! ### Package Maintainers
 #! `*-control` features leave it to you to configure C libraries, involving choices for `zlib`, ! hashing and transport implementation.
@@ -128,7 +128,10 @@ cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
 
 ## A program to perform analytics on a `git` repository, using an auto-maintained sqlite database
-gitoxide-core-tools-query = ["gitoxide-core-tools", "gitoxide-core/query"]
+gitoxide-core-tools-query = ["gitoxide-core/query"]
+
+## A program to run algorithms on a corpus of repositories, recording each run for later comparison.
+gitoxide-core-tools-corpus = ["gitoxide-core/corpus"]
 
 #! ### Building Blocks for mutually exclusive networking
 #! Blocking and async features are mutually exclusive and cause a compile-time error. This also means that `cargo … --all-features` will fail.

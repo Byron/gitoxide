@@ -117,9 +117,38 @@ pub enum Subcommands {
     /// Show which git configuration values are used or planned.
     ConfigTree,
     Config(config::Platform),
+    #[cfg(feature = "gitoxide-core-tools-corpus")]
+    Corpus(corpus::Platform),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+}
+
+#[cfg(feature = "gitoxide-core-tools-corpus")]
+pub mod corpus {
+    use std::path::PathBuf;
+
+    #[derive(Debug, clap::Parser)]
+    #[command(
+        about = "run algorithms on a corpus of git repositories and store their results for later analysis",
+        version = clap::crate_version!(), // TODO: make this an actual version that is git describe, leverage `gix`
+    )]
+    pub struct Platform {
+        /// The path to the database to read and write depending on the sub-command.
+        #[arg(long, default_value = "corpus.db")]
+        pub db: PathBuf,
+        /// The path to the root of the corpus to search repositories in.
+        #[arg(long, short = 'p', default_value = ".")]
+        pub path: PathBuf,
+        #[clap(subcommand)]
+        pub cmd: SubCommands,
+    }
+
+    #[derive(Debug, clap::Subcommand)]
+    pub enum SubCommands {
+        /// Perform a corpus run on all registered repositories.
+        Run,
+    }
 }
 
 pub mod config {

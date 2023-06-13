@@ -128,6 +128,20 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        #[cfg(feature = "gitoxide-core-tools-corpus")]
+        Subcommands::Corpus(crate::plumbing::options::corpus::Platform { db, path, cmd }) => prepare_and_run(
+            "corpus",
+            auto_verbose,
+            progress,
+            progress_keep_open,
+            None,
+            move |progress, _out, _err| {
+                let engine = core::corpus::Engine::open_or_create(db, progress)?;
+                match cmd {
+                    crate::plumbing::options::corpus::SubCommands::Run => engine.run(path),
+                }
+            },
+        ),
         Subcommands::CommitGraph(cmd) => match cmd {
             commitgraph::Subcommands::List { spec } => prepare_and_run(
                 "commitgraph-list",
