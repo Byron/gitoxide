@@ -14,32 +14,19 @@ test: clippy check doc unit-tests journey-tests-pure journey-tests-small journey
 # run all tests, without clippy, including journey tests, try building docs
 ci-test: check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests journey-tests-smart-release
 
-# Rejected for now, and why
-#	-D clippy::default-trait-access - sometimes makes imports necessary, just for a default value. It's good for more explicit typing though.
-#   -D clippy::range-plus-one - useful, but caused too many false positives as we use range types directly quite a lot
-
-clippy-flags := """
-  -D clippy::cloned-instead-of-copied \
-  -D clippy::explicit-iter-loop \
-  -D clippy::map-unwrap-or \
-  -D clippy::redundant-closure-for-method-calls \
-  -D clippy::uninlined_format_args \
-  -D clippy::unnested-or-patterns \
-"""
-
 # Run cargo clippy on all crates
-clippy:
-    cargo clippy --all --tests --examples -- {{ clippy-flags }}
-    cargo clippy --all --no-default-features --features small -- {{ clippy-flags }}
-    cargo clippy --all --no-default-features --features max-pure -- {{ clippy-flags }}
-    cargo clippy --all --no-default-features --features lean-async --tests -- {{ clippy-flags }}
+clippy *clippy-args:
+    cargo clippy --all --tests --examples -- {{ clippy-args }}
+    cargo clippy --all --no-default-features --features small -- {{ clippy-args }}
+    cargo clippy --all --no-default-features --features max-pure -- {{ clippy-args }}
+    cargo clippy --all --no-default-features --features lean-async --tests -- {{ clippy-args }}
 
 # Run cargo clippy on all crates, fixing what can be fixed, and format all code
 clippy-fix:
-    cargo clippy --fix --all --tests --examples -- {{ clippy-flags }}
-    cargo clippy --fix --allow-dirty --all --no-default-features --features small -- {{ clippy-flags }}
-    cargo clippy --fix --allow-dirty --all --no-default-features --features max-pure -- {{ clippy-flags }}
-    cargo clippy --fix --allow-dirty --all --no-default-features --features lean-async --tests -- {{ clippy-flags }}
+    cargo clippy --fix --all --tests --examples
+    cargo clippy --fix --allow-dirty --all --no-default-features --features small
+    cargo clippy --fix --allow-dirty --all --no-default-features --features max-pure
+    cargo clippy --fix --allow-dirty --all --no-default-features --features lean-async --tests
     cargo fmt --all
 
 # Build all code in suitable configurations
