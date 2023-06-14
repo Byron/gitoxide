@@ -134,9 +134,9 @@ pub fn main() -> Result<()> {
             auto_verbose,
             progress,
             progress_keep_open,
-            None,
+            core::corpus::PROGRESS_RANGE,
             move |progress, _out, _err| {
-                let engine = core::corpus::Engine::open_or_create(db, env!("GITOXIDE_VERSION").into(), progress)?;
+                let mut engine = core::corpus::Engine::open_or_create(db, env!("GITOXIDE_VERSION").into(), progress)?;
                 match cmd {
                     crate::plumbing::options::corpus::SubCommands::Run => engine.run(path),
                 }

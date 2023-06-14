@@ -22,7 +22,8 @@ estimate-hours = ["dep:itertools", "dep:fs-err", "dep:crossbeam-channel", "dep:s
 ## Gather information about repositories and store it in a database for easy querying.
 query = ["dep:rusqlite"]
 ## Run algorithms on a corpus of repositories and store their results for later comparison and intelligence gathering.
-corpus = ["dep:rusqlite", "dep:sysinfo"]
+## *Note that* `organize` we need for finding git repositories fast.
+corpus = ["dep:rusqlite", "dep:sysinfo", "organize", "dep:crossbeam-channel"]
 
 #! ### Mutually Exclusive Networking
 #! If both are set, _blocking-client_ will take precedence, allowing `--all-features` to be used.
