@@ -4,7 +4,7 @@ use gitoxide_core as core;
 use gix::bstr::BString;
 
 #[derive(Debug, clap::Parser)]
-#[clap(name = "gix-plumbing", about = "The git underworld", version = clap::crate_version!())]
+#[clap(name = "gix", about = "The git underworld", version = env!("GITOXIDE_VERSION"))]
 #[clap(subcommand_required = true)]
 #[clap(arg_required_else_help = true)]
 pub struct Args {
@@ -129,10 +129,7 @@ pub mod corpus {
     use std::path::PathBuf;
 
     #[derive(Debug, clap::Parser)]
-    #[command(
-        about = "run algorithms on a corpus of git repositories and store their results for later analysis",
-        version = clap::crate_version!(), // TODO: make this an actual version that is git describe, leverage `gix`
-    )]
+    #[command(about = "run algorithms on a corpus of git repositories and store their results for later analysis")]
     pub struct Platform {
         /// The path to the database to read and write depending on the sub-command.
         #[arg(long, default_value = "corpus.db")]
