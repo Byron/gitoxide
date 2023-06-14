@@ -144,7 +144,7 @@ jobs:
           components: clippy,rustfmt
       - uses: extractions/setup-just@v1
       - name: Run cargo clippy
-        run: just clippy
+        run: just clippy -D warnings
       - name: Run cargo doc
         run: just doc
       - name: Run cargo fmt
