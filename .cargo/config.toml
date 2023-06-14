@@ -1,4 +1,4 @@
-[target.'cfg(any(test, not(test)))']
+[build]
 rustflags = [
     # Rustc lints
     # "-W", "warning_name"
