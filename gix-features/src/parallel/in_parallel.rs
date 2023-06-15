@@ -49,7 +49,7 @@ pub fn build_thread() -> std::thread::Builder {
 pub fn in_parallel<I, S, O, R>(
     input: impl Iterator<Item = I> + Send,
     thread_limit: Option<usize>,
-    new_thread_state: impl Fn(usize) -> S + Send + Clone,
+    new_thread_state: impl FnOnce(usize) -> S + Send + Clone,
     consume: impl FnMut(I, &mut S) -> O + Send + Clone,
     mut reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
@@ -117,7 +117,7 @@ where
 pub fn in_parallel_with_slice<I, S, R, E>(
     input: &mut [I],
     thread_limit: Option<usize>,
-    new_thread_state: impl FnMut(usize) -> S + Send + Clone,
+    new_thread_state: impl FnOnce(usize) -> S + Send + Clone,
     consume: impl FnMut(&mut I, &mut S, &AtomicIsize, &AtomicBool) -> Result<(), E> + Send + Clone,
     mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
     state_to_rval: impl FnOnce(S) -> R + Send + Clone,
@@ -168,7 +168,7 @@ where
                     std::thread::Builder::new()
                         .name(format!("gitoxide.in_parallel_with_slice.produce.{thread_id}"))
                         .spawn_scoped(s, {
-                            let mut new_thread_state = new_thread_state.clone();
+                            let new_thread_state = new_thread_state.clone();
                             let state_to_rval = state_to_rval.clone();
                             let mut consume = consume.clone();
                             let input = Input(input as *mut [I]);
