@@ -166,7 +166,7 @@ pub fn statistics(
                 cancelled,
             ),
             thread_limit,
-            move |_| (repo.objects.clone().into_inner(), counter.clone()),
+            move |_| (repo.objects.clone().into_inner(), counter),
             |ids, (handle, counter)| {
                 let ids = ids?;
                 if let Some(counter) = counter {

@@ -58,6 +58,7 @@ impl Engine {
         task_progress.set_name("run");
         task_progress.init(Some(tasks.len()), gix::progress::count("tasks"));
         let threads = gix::parallel::num_threads(threads);
+        let db_path = self.con.path().expect("opened from path on disk").to_owned();
         for (task_id, task) in tasks {
             let task_start = Instant::now();
             let mut repo_progress = task_progress.add_child(format!("run '{}'", task.short_name));
@@ -65,6 +66,8 @@ impl Engine {
 
             if task.execute_exclusive || threads == 1 {
                 let mut run_progress = repo_progress.add_child("set later");
+                let (_guard, current_id) = corpus::trace::override_thread_subscriber(db_path.as_str())?;
+
                 for repo in &repos {
                     if gix::interrupt::is_triggered() {
                         bail!("interrupted by user");
@@ -76,14 +79,19 @@ impl Engine {
                             .expect("corpus contains repo")
                             .display()
                     ));
+
+                    // TODO: wait for new release to be able to provide run_id via span attributes
                     let mut run = Self::insert_run(&self.con, gitoxide_id, runner_id, *task_id, repo.id)?;
-                    task.perform(
-                        &mut run,
-                        &repo.path,
-                        &mut run_progress,
-                        Some(threads),
-                        &gix::interrupt::IS_INTERRUPTED,
-                    );
+                    current_id.store(run.id, Ordering::SeqCst);
+                    tracing::info_span!("run", run_id = run.id).in_scope(|| {
+                        task.perform(
+                            &mut run,
+                            &repo.path,
+                            &mut run_progress,
+                            Some(threads),
+                            &gix::interrupt::IS_INTERRUPTED,
+                        );
+                    });
                     Self::update_run(&self.con, run)?;
                     repo_progress.inc();
                 }
@@ -96,15 +104,16 @@ impl Engine {
                     Some(threads),
                     {
                         let shared_repo_progress = repo_progress.clone();
-                        let path = self.con.path().expect("opened from path on disk").to_owned();
+                        let db_path = db_path.clone();
                         move |tid| {
                             (
+                                corpus::trace::override_thread_subscriber(db_path.as_str()),
                                 gix::threading::lock(&shared_repo_progress).add_child(format!("{tid}")),
-                                rusqlite::Connection::open(&path),
+                                rusqlite::Connection::open(&db_path),
                             )
                         }
                     },
-                    |repo, (progress, con), _threads_left, should_interrupt| -> anyhow::Result<()> {
+                    |repo, (subscriber, progress, con), _threads_left, should_interrupt| -> anyhow::Result<()> {
                         progress.set_name(format!(
                             "{}",
                             repo.path
@@ -112,6 +121,14 @@ impl Engine {
                                 .expect("corpus contains repo")
                                 .display()
                         ));
+                        let current_id = match subscriber {
+                            Ok((_guard, current_id)) => current_id,
+                            Err(err) => {
+                                progress.fail(format!("{err:#?}"));
+                                should_interrupt.store(true, Ordering::SeqCst);
+                                return Ok(());
+                            }
+                        };
                         let con = match con {
                             Ok(con) => con,
                             Err(err) => {
@@ -121,7 +138,10 @@ impl Engine {
                             }
                         };
                         let mut run = Self::insert_run(con, gitoxide_id, runner_id, *task_id, repo.id)?;
-                        task.perform(&mut run, &repo.path, progress, Some(1), should_interrupt);
+                        current_id.store(run.id, Ordering::SeqCst);
+                        tracing::info_span!("run", run_id = run.id).in_scope(|| {
+                            task.perform(&mut run, &repo.path, progress, Some(1), should_interrupt);
+                        });
                         Self::update_run(con, run)?;
                         if let Some(counter) = counter.as_ref() {
                             counter.fetch_add(1, Ordering::SeqCst);
