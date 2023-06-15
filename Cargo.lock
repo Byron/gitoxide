@@ -1246,6 +1246,9 @@ dependencies = [
  "prodash 25.0.0",
  "tabled",
  "time",
+ "tracing",
+ "tracing-forest",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -1320,6 +1323,7 @@ dependencies = [
  "gix-sec 0.8.1",
  "gix-tempfile 6.0.0",
  "gix-testtools",
+ "gix-trace",
  "gix-transport",
  "gix-traverse 0.27.0",
  "gix-url",

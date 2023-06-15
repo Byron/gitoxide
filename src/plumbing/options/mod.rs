@@ -29,6 +29,11 @@ pub struct Args {
     #[clap(long, short = 'v')]
     pub verbose: bool,
 
+    /// Display structured `tracing` output in a tree-like structure.
+    #[clap(long)]
+    #[cfg(feature = "tracing")]
+    pub trace: bool,
+
     /// Turn off verbose message display for commands where these are shown by default.
     #[clap(long, conflicts_with("verbose"))]
     pub no_verbose: bool,
