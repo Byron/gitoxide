@@ -1,7 +1,8 @@
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 0..=3;
+pub(crate) type Progress = gix::progress::DoOrDiscard<gix::progress::prodash::tree::Item>;
 
-pub struct Engine<P> {
-    progress: P,
+pub struct Engine {
+    progress: Progress,
     con: rusqlite::Connection,
     gitoxide_version: String,
 }
@@ -20,7 +21,9 @@ pub(crate) struct Task {
     ///
     /// However, if it is changed it will be treated as new kind of task entirely and won't compare
     /// to previous runs of the task.
-    name: &'static str,
+    short_name: &'static str,
+    /// Explain in greater detail what the task is doing.
+    description: &'static str,
     /// `true` if the task cannot be run in parallel as it needs all resources by itself.
     execute_exclusive: bool,
     /// The actual implementation
@@ -36,13 +39,22 @@ pub(crate) struct Run {
 }
 
 pub(crate) mod run {
+    use crate::corpus;
     use crate::corpus::{Run, Task};
     use std::path::Path;
+    use std::sync::atomic::AtomicBool;
 
     impl Task {
-        pub fn perform(&self, run: &mut Run, repo: &Path) {
+        pub fn perform(
+            &self,
+            run: &mut Run,
+            repo: &Path,
+            progress: &mut corpus::Progress,
+            threads: Option<usize>,
+            should_interrupt: &AtomicBool,
+        ) {
             let start = std::time::Instant::now();
-            if let Err(err) = self.execute.execute(repo) {
+            if let Err(err) = self.execute.execute(repo, progress, threads, should_interrupt) {
                 run.error = Some(format!("{err:#?}"))
             }
             run.duration = start.elapsed();
@@ -52,20 +64,33 @@ pub(crate) mod run {
     /// Note that once runs have been recorded, the implementation must not change anymore to keep it comparable.
     /// If changes have be done, rather change the name of the owning task to start a new kind of task.
     pub(crate) trait Execute {
-        fn execute(&self, repo: &Path) -> anyhow::Result<()>;
+        fn execute(
+            &self,
+            repo: &Path,
+            progress: &mut corpus::Progress,
+            threads: Option<usize>,
+            should_interrupt: &AtomicBool,
+        ) -> anyhow::Result<()>;
     }
 
-    pub(crate) static ALL: &'static [Task] = &[Task {
-        name: "open repository (isolated)",
-        execute_exclusive: true, // TODO: false
+    pub(crate) static ALL: &[Task] = &[Task {
+        short_name: "OPNR",
+        description: "open repository (isolated)",
+        execute_exclusive: false,
         execute: &OpenRepo,
     }];
 
     struct OpenRepo;
 
     impl Execute for OpenRepo {
-        fn execute(&self, repo: &Path) -> anyhow::Result<()> {
-            gix::open_opts(&repo, gix::open::Options::isolated())?;
+        fn execute(
+            &self,
+            repo: &Path,
+            _progress: &mut corpus::Progress,
+            _threads: Option<usize>,
+            _should_interrupt: &AtomicBool,
+        ) -> anyhow::Result<()> {
+            gix::open_opts(repo, gix::open::Options::isolated())?;
             Ok(())
         }
     }

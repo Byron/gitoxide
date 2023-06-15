@@ -1,4 +1,5 @@
 use super::db;
+use crate::corpus;
 use crate::corpus::{Engine, Task};
 use crate::organize::find_git_repository_workdirs;
 use anyhow::{bail, Context};
@@ -6,14 +7,12 @@ use bytesize::ByteSize;
 use gix::Progress;
 use rusqlite::params;
 use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::sync::atomic::Ordering;
+use std::time::{Duration, Instant};
 
-impl<P> Engine<P>
-where
-    P: gix::Progress,
-{
+impl Engine {
     /// Open the corpus DB or create it.
-    pub fn open_or_create(db: PathBuf, gitoxide_version: String, progress: P) -> anyhow::Result<Engine<P>> {
+    pub fn open_or_create(db: PathBuf, gitoxide_version: String, progress: corpus::Progress) -> anyhow::Result<Engine> {
         let con = crate::corpus::db::create(db).context("Could not open or create database")?;
         Ok(Engine {
             progress,
@@ -23,13 +22,13 @@ where
     }
 
     /// Run on the existing set of repositories we have already seen or obtain them from `path` if there is none yet.
-    pub fn run(&mut self, corpus_path: PathBuf) -> anyhow::Result<()> {
+    pub fn run(&mut self, corpus_path: PathBuf, threads: Option<usize>) -> anyhow::Result<()> {
         let (corpus_path, corpus_id) = self.prepare_corpus_path(corpus_path)?;
         let gitoxide_id = self.gitoxide_version_id_or_insert()?;
         let runner_id = self.runner_id_or_insert()?;
         let repos = self.find_repos_or_insert(&corpus_path, corpus_id)?;
         let tasks = self.tasks_or_insert()?;
-        self.perform_run(gitoxide_id, runner_id, &tasks, &repos)
+        self.perform_run(&corpus_path, gitoxide_id, runner_id, &tasks, repos, threads)
     }
 
     pub fn refresh(&mut self, corpus_path: PathBuf) -> anyhow::Result<()> {
@@ -44,42 +43,97 @@ where
     }
 }
 
-impl<P> Engine<P>
-where
-    P: gix::Progress,
-{
+impl Engine {
     fn perform_run(
         &mut self,
+        corpus_path: &Path,
         gitoxide_id: db::Id,
         runner_id: db::Id,
         tasks: &[(db::Id, &'static Task)],
-        repos: &[db::Repo],
+        mut repos: Vec<db::Repo>,
+        threads: Option<usize>,
     ) -> anyhow::Result<()> {
         let start = Instant::now();
         let task_progress = &mut self.progress;
         task_progress.set_name("run");
         task_progress.init(Some(tasks.len()), gix::progress::count("tasks"));
+        let threads = gix::parallel::num_threads(threads);
         for (task_id, task) in tasks {
             let task_start = Instant::now();
-            let mut run_progress = task_progress.add_child(format!("run '{}'", task.name));
-            run_progress.init(Some(repos.len()), gix::progress::count("repos"));
+            let mut repo_progress = task_progress.add_child(format!("run '{}'", task.short_name));
+            repo_progress.init(Some(repos.len()), gix::progress::count("repos"));
 
-            if task.execute_exclusive {
-                for repo in repos {
+            if task.execute_exclusive || threads == 1 {
+                let mut run_progress = repo_progress.add_child("set later");
+                for repo in &repos {
                     if gix::interrupt::is_triggered() {
                         bail!("interrupted by user");
                     }
+                    run_progress.set_name(format!(
+                        "{}",
+                        repo.path
+                            .strip_prefix(corpus_path)
+                            .expect("corpus contains repo")
+                            .display()
+                    ));
                     let mut run = Self::insert_run(&self.con, gitoxide_id, runner_id, *task_id, repo.id)?;
-                    task.perform(&mut run, &repo.path);
+                    task.perform(
+                        &mut run,
+                        &repo.path,
+                        &mut run_progress,
+                        Some(threads),
+                        &gix::interrupt::IS_INTERRUPTED,
+                    );
                     Self::update_run(&self.con, run)?;
-                    run_progress.inc();
+                    repo_progress.inc();
                 }
+                repo_progress.show_throughput(task_start);
             } else {
-                // gix::parallel::in_parallel_with_slice()
-                todo!("shared")
+                let counter = repo_progress.counter();
+                let repo_progress = gix::threading::OwnShared::new(gix::threading::Mutable::new(repo_progress));
+                gix::parallel::in_parallel_with_slice(
+                    &mut repos,
+                    Some(threads),
+                    {
+                        let shared_repo_progress = repo_progress.clone();
+                        let path = self.con.path().expect("opened from path on disk").to_owned();
+                        move |tid| {
+                            (
+                                gix::threading::lock(&shared_repo_progress).add_child(format!("{tid}")),
+                                rusqlite::Connection::open(&path),
+                            )
+                        }
+                    },
+                    |repo, (progress, con), _threads_left, should_interrupt| -> anyhow::Result<()> {
+                        progress.set_name(format!(
+                            "{}",
+                            repo.path
+                                .strip_prefix(corpus_path)
+                                .expect("corpus contains repo")
+                                .display()
+                        ));
+                        let con = match con {
+                            Ok(con) => con,
+                            Err(err) => {
+                                progress.fail(format!("{err:#?}"));
+                                should_interrupt.store(true, Ordering::SeqCst);
+                                return Ok(());
+                            }
+                        };
+                        let mut run = Self::insert_run(con, gitoxide_id, runner_id, *task_id, repo.id)?;
+                        task.perform(&mut run, &repo.path, progress, Some(1), should_interrupt);
+                        Self::update_run(con, run)?;
+                        if let Some(counter) = counter.as_ref() {
+                            counter.fetch_add(1, Ordering::SeqCst);
+                        }
+                        Ok(())
+                    },
+                    || (!gix::interrupt::is_triggered()).then(|| Duration::from_millis(100)),
+                    std::convert::identity,
+                )?;
+                gix::threading::lock(&repo_progress).show_throughput(task_start);
             }
 
-            run_progress.show_throughput(task_start);
             task_progress.inc();
         }
         task_progress.show_throughput(start);

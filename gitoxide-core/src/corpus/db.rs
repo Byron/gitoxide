@@ -69,7 +69,7 @@ pub fn create(path: impl AsRef<std::path::Path>) -> anyhow::Result<rusqlite::Con
         },
         _ => {}
     }
-    con.execute_batch("PRAGMA synchronous = OFF;")?;
+    con.execute_batch("PRAGMA synchronous = OFF; PRAGMA journal_mode = WAL; PRAGMA wal_checkpoint(FULL); ")?;
     con.execute_batch(
         r#"
     CREATE TABLE if not exists runner(
@@ -115,7 +115,8 @@ pub fn create(path: impl AsRef<std::path::Path>) -> anyhow::Result<rusqlite::Con
         r#"
     CREATE TABLE if not exists task(
         id integer PRIMARY KEY,
-        name text UNIQUE -- the unique name of the task, which is considered its id and which is immutable once run once
+        short_name UNIQUE, -- the unique and permanent identifier for the task
+        description text UNIQUE -- the descriptive name of the task, it can be changed at will 
     )
     "#,
     )?;
@@ -142,7 +143,7 @@ pub fn create(path: impl AsRef<std::path::Path>) -> anyhow::Result<rusqlite::Con
 }
 
 /// Utilities
-impl<P> Engine<P> {
+impl Engine {
     pub(crate) fn runner_id_or_insert(&self) -> anyhow::Result<Id> {
         let sys =
             sysinfo::System::new_with_specifics(RefreshKind::new().with_cpu(CpuRefreshKind::new().with_frequency()));
@@ -177,10 +178,10 @@ impl<P> Engine<P> {
     }
     pub(crate) fn tasks_or_insert(&self) -> anyhow::Result<Vec<(Id, &'static super::Task)>> {
         let mut out: Vec<_> = super::run::ALL.iter().map(|task| (0, task)).collect();
-        for (id, task) in out.iter_mut() {
+        for (id, task) in &mut out {
             *id = self.con.query_row(
-                "INSERT INTO task (name) VALUES (?1) ON CONFLICT DO UPDATE SET name = name RETURNING id",
-                [task.name],
+                "INSERT INTO task (short_name, description) VALUES (?1, ?2) ON CONFLICT DO UPDATE SET short_name = short_name, description = ?2 RETURNING id",
+                [task.short_name, task.description],
                 |r| r.get(0),
             )?;
         }
