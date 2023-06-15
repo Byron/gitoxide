@@ -1,10 +1,11 @@
-use crate::corpus::engine::Id;
-use crate::corpus::Engine;
+use crate::corpus::{Engine, Run};
 use anyhow::{bail, Context};
 use bytesize::ByteSize;
 use rusqlite::{params, OptionalExtension};
 use std::path::{Path, PathBuf};
 use sysinfo::{CpuExt, CpuRefreshKind, RefreshKind, SystemExt};
+
+pub(crate) type Id = u32;
 
 /// a husk of a repository
 pub(crate) struct Repo {
@@ -112,14 +113,25 @@ pub fn create(path: impl AsRef<std::path::Path>) -> anyhow::Result<rusqlite::Con
     )?;
     con.execute_batch(
         r#"
+    CREATE TABLE if not exists task(
+        id integer PRIMARY KEY,
+        name text UNIQUE -- the unique name of the task, which is considered its id and which is immutable once run once
+    )
+    "#,
+    )?;
+    con.execute_batch(
+        r#"
     CREATE TABLE if not exists run(
+        id integer PRIMARY KEY,
         repository integer,
         runner integer,
+        task integer,
         gitoxide_version integer,
-        start_time integer,
-        end_time integer, -- or NULL if not yet finished (either successfull or with failure)
-        error text, -- or NULL if there was on error
+        insertion_time integer NOT NULL, -- in seconds since UNIX epoch
+        duration real, -- in seconds or NULL if not yet finished (either successfull or with failure)
+        error text, -- or NULL if there was no error
         FOREIGN KEY (repository) REFERENCES repository (id),
+        FOREIGN KEY (task) REFERENCES task (id),
         FOREIGN KEY (runner) REFERENCES runner (id),
         FOREIGN KEY (gitoxide_version) REFERENCES gitoxide_version (id)
     )
@@ -162,5 +174,38 @@ impl<P> Engine<P> {
                     [&self.gitoxide_version],
                     |r| r.get(0),
                 )?)
+    }
+    pub(crate) fn tasks_or_insert(&self) -> anyhow::Result<Vec<(Id, &'static super::Task)>> {
+        let mut out: Vec<_> = super::run::ALL.iter().map(|task| (0, task)).collect();
+        for (id, task) in out.iter_mut() {
+            *id = self.con.query_row(
+                "INSERT INTO task (name) VALUES (?1) ON CONFLICT DO UPDATE SET name = name RETURNING id",
+                [task.name],
+                |r| r.get(0),
+            )?;
+        }
+        Ok(out)
+    }
+    pub(crate) fn insert_run(
+        con: &rusqlite::Connection,
+        gitoxide_version: Id,
+        runner: Id,
+        task: Id,
+        repository: Id,
+    ) -> anyhow::Result<Run> {
+        let insertion_time = std::time::UNIX_EPOCH.elapsed()?.as_secs();
+        let id = con.query_row("INSERT INTO run (gitoxide_version, runner, task, repository, insertion_time) VALUES (?1, ?2, ?3, ?4, ?5) RETURNING id", params![gitoxide_version, runner, task, repository, insertion_time], |r| r.get(0))?;
+        Ok(Run {
+            id,
+            duration: Default::default(),
+            error: None,
+        })
+    }
+    pub(crate) fn update_run(con: &rusqlite::Connection, run: Run) -> anyhow::Result<()> {
+        con.execute(
+            "UPDATE run SET duration = ?2, error = ?3 WHERE id = ?1",
+            params![run.id, run.duration.as_secs_f64(), run.error.as_deref()],
+        )?;
+        Ok(())
     }
 }

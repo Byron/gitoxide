@@ -1,13 +1,12 @@
 use super::db;
-use crate::corpus::Engine;
+use crate::corpus::{Engine, Task};
 use crate::organize::find_git_repository_workdirs;
-use anyhow::Context;
+use anyhow::{bail, Context};
 use bytesize::ByteSize;
+use gix::Progress;
 use rusqlite::params;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
-
-pub(crate) type Id = u32;
 
 impl<P> Engine<P>
 where
@@ -29,7 +28,8 @@ where
         let gitoxide_id = self.gitoxide_version_id_or_insert()?;
         let runner_id = self.runner_id_or_insert()?;
         let repos = self.find_repos_or_insert(&corpus_path, corpus_id)?;
-        self.perform_run(gitoxide_id, runner_id, repos)
+        let tasks = self.tasks_or_insert()?;
+        self.perform_run(gitoxide_id, runner_id, &tasks, &repos)
     }
 
     pub fn refresh(&mut self, corpus_path: PathBuf) -> anyhow::Result<()> {
@@ -48,17 +48,51 @@ impl<P> Engine<P>
 where
     P: gix::Progress,
 {
-    fn perform_run(&self, _gitoxide_id: Id, _runner_id: Id, _repos: Vec<db::Repo>) -> anyhow::Result<()> {
-        todo!()
+    fn perform_run(
+        &mut self,
+        gitoxide_id: db::Id,
+        runner_id: db::Id,
+        tasks: &[(db::Id, &'static Task)],
+        repos: &[db::Repo],
+    ) -> anyhow::Result<()> {
+        let start = Instant::now();
+        let task_progress = &mut self.progress;
+        task_progress.set_name("run");
+        task_progress.init(Some(tasks.len()), gix::progress::count("tasks"));
+        for (task_id, task) in tasks {
+            let task_start = Instant::now();
+            let mut run_progress = task_progress.add_child(format!("run '{}'", task.name));
+            run_progress.init(Some(repos.len()), gix::progress::count("repos"));
+
+            if task.execute_exclusive {
+                for repo in repos {
+                    if gix::interrupt::is_triggered() {
+                        bail!("interrupted by user");
+                    }
+                    let mut run = Self::insert_run(&self.con, gitoxide_id, runner_id, *task_id, repo.id)?;
+                    task.perform(&mut run, &repo.path);
+                    Self::update_run(&self.con, run)?;
+                    run_progress.inc();
+                }
+            } else {
+                // gix::parallel::in_parallel_with_slice()
+                todo!("shared")
+            }
+
+            run_progress.show_throughput(task_start);
+            task_progress.inc();
+        }
+        task_progress.show_throughput(start);
+        Ok(())
     }
 
-    fn prepare_corpus_path(&self, corpus_path: PathBuf) -> anyhow::Result<(PathBuf, Id)> {
+    fn prepare_corpus_path(&self, corpus_path: PathBuf) -> anyhow::Result<(PathBuf, db::Id)> {
         let corpus_path = gix::path::realpath(corpus_path)?;
         let corpus_id = self.corpus_id_or_insert(&corpus_path)?;
         Ok((corpus_path, corpus_id))
     }
 
-    fn find_repos(&mut self, corpus_id: Id) -> anyhow::Result<Vec<db::Repo>> {
+    fn find_repos(&mut self, corpus_path: &Path, corpus_id: db::Id) -> anyhow::Result<Vec<db::Repo>> {
         self.progress.set_name("query db-repos");
         self.progress.init(None, gix::progress::count("repos"));
 
@@ -68,7 +102,7 @@ where
             .query_map([corpus_id], |r| {
                 Ok(db::Repo {
                     id: r.get(0)?,
-                    path: r.get::<_, String>(1)?.into(),
+                    path: corpus_path.join(r.get::<_, String>(1)?),
                     odb_size: ByteSize(r.get(2)?),
                     num_objects: r.get(3)?,
                     num_references: r.get(4)?,
@@ -78,7 +112,7 @@ where
             .collect::<Result<_, _>>()?)
     }
 
-    fn refresh_repos(&mut self, corpus_path: &Path, corpus_id: Id) -> anyhow::Result<Vec<db::Repo>> {
+    fn refresh_repos(&mut self, corpus_path: &Path, corpus_id: db::Id) -> anyhow::Result<Vec<db::Repo>> {
         let start = Instant::now();
         self.progress.set_name("refresh");
         self.progress.init(None, gix::progress::count("repos"));
@@ -117,7 +151,6 @@ where
                 let write_db = scope.spawn(move || -> anyhow::Result<Vec<db::Repo>> {
                     progress.set_name("write to DB");
                     progress.init(None, gix::progress::count("repos"));
-                    let start = Instant::now();
 
                     let mut out = Vec::new();
                     let transaction = con.transaction()?;
@@ -154,13 +187,12 @@ where
             }
         })?;
 
-        self.progress.show_throughput(start);
         Ok(repos)
     }
 
-    fn find_repos_or_insert(&mut self, corpus_path: &Path, corpus_id: Id) -> anyhow::Result<Vec<db::Repo>> {
+    fn find_repos_or_insert(&mut self, corpus_path: &Path, corpus_id: db::Id) -> anyhow::Result<Vec<db::Repo>> {
         let start = Instant::now();
-        let repos = self.find_repos(corpus_id)?;
+        let repos = self.find_repos(corpus_path, corpus_id)?;
         if repos.is_empty() {
             self.refresh_repos(corpus_path, corpus_id)
         } else {
