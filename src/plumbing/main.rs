@@ -139,6 +139,7 @@ pub fn main() -> Result<()> {
                 let mut engine = core::corpus::Engine::open_or_create(db, env!("GITOXIDE_VERSION").into(), progress)?;
                 match cmd {
                     crate::plumbing::options::corpus::SubCommands::Run => engine.run(path),
+                    crate::plumbing::options::corpus::SubCommands::Refresh => engine.refresh(path),
                 }
             },
         ),

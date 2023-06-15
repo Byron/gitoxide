@@ -145,6 +145,8 @@ pub mod corpus {
     pub enum SubCommands {
         /// Perform a corpus run on all registered repositories.
         Run,
+        /// Re-read all repositories under the corpus directory, and add or update them.
+        Refresh,
     }
 }
 

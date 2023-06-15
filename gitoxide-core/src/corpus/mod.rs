@@ -39,12 +39,37 @@ pub mod engine {
 
         /// Run on the existing set of repositories we have already seen or obtain them from `path` if there is none yet.
         pub fn run(&mut self, corpus_path: PathBuf) -> anyhow::Result<()> {
+            let (corpus_path, corpus_id) = self.prepare_corpus_path(corpus_path)?;
+            let gitoxide_id = self.gitoxide_version_id_or_insert()?;
+            let runner_id = self.runner_id_or_insert()?;
+            let repos = self.find_repos_or_insert(&corpus_path, corpus_id)?;
+            self.perform_run(gitoxide_id, runner_id, repos)
+        }
+
+        pub fn refresh(&mut self, corpus_path: PathBuf) -> anyhow::Result<()> {
+            let (corpus_path, corpus_id) = self.prepare_corpus_path(corpus_path)?;
+            let repos = self.refresh_repos(&corpus_path, corpus_id)?;
+            self.progress.set_name("refresh repos");
+            self.progress.info(format!(
+                "Added or updated {} repositories under {corpus_path:?}",
+                repos.len()
+            ));
+            Ok(())
+        }
+    }
+
+    impl<P> Engine<P>
+    where
+        P: gix::Progress,
+    {
+        fn perform_run(&self, _gitoxide_id: Id, _runner_id: Id, _repos: Vec<db::Repo>) -> anyhow::Result<()> {
+            todo!()
+        }
+
+        fn prepare_corpus_path(&self, corpus_path: PathBuf) -> anyhow::Result<(PathBuf, Id)> {
             let corpus_path = gix::path::realpath(corpus_path)?;
             let corpus_id = self.corpus_id_or_insert(&corpus_path)?;
-            let _gitoxide_id = self.gitoxide_version_id_or_insert()?;
-            let _runner_id = self.runner_id_or_insert()?;
-            let _repos = self.find_repos_or_insert(&corpus_path, corpus_id)?;
-            todo!("do run on repos")
+            Ok((corpus_path, corpus_id))
         }
 
         fn find_repos(&mut self, corpus_id: Id) -> anyhow::Result<Vec<db::Repo>> {
