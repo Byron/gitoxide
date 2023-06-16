@@ -2033,6 +2033,7 @@ name = "gix-path"
 version = "0.8.1"
 dependencies = [
  "bstr",
+ "gix-trace",
  "home",
  "once_cell",
  "tempfile",

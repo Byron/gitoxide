@@ -53,6 +53,7 @@ pub(crate) fn update(
     dry_run: fetch::DryRun,
     write_packed_refs: fetch::WritePackedRefs,
 ) -> Result<update::Outcome, update::Error> {
+    let _span = gix_trace::detail!("update_refs()");
     let mut edits = Vec::new();
     let mut updates = Vec::new();
 

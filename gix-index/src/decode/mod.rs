@@ -65,6 +65,7 @@ impl State {
             expected_checksum,
         }: Options,
     ) -> Result<(Self, gix_hash::ObjectId), Error> {
+        let _span = gix_features::trace::detail!("gix_index::State::from_bytes()");
         let (version, num_entries, post_header_data) = header::decode(data, object_hash)?;
         let start_of_extensions = extension::end_of_index_entry::decode(data, object_hash);
 

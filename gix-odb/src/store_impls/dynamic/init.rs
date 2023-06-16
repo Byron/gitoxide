@@ -79,6 +79,7 @@ impl Store {
             current_dir,
         }: Options,
     ) -> std::io::Result<Self> {
+        let _span = gix_features::trace::detail!("gix_odb::Store::at()");
         let objects_dir = objects_dir.into();
         let current_dir = current_dir.map_or_else(std::env::current_dir, Ok)?;
         if !objects_dir.is_dir() {

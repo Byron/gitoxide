@@ -93,6 +93,7 @@ pub use gix_ref as refs;
 pub use gix_refspec as refspec;
 pub use gix_sec as sec;
 pub use gix_tempfile as tempfile;
+pub use gix_trace as trace;
 pub use gix_traverse as traverse;
 pub use gix_url as url;
 #[doc(inline)]

@@ -69,6 +69,7 @@ pub mod main_worktree {
             mut progress: impl crate::Progress,
             should_interrupt: &AtomicBool,
         ) -> Result<(Repository, gix_worktree::checkout::Outcome), Error> {
+            let _span = gix_trace::coarse!("gix::clone::PrepareCheckout::main_worktree()");
             let repo = self
                 .repo
                 .as_ref()
