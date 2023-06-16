@@ -213,7 +213,6 @@ pub mod pretty {
                     }
                 });
                 let thread = std::thread::spawn({
-                    let progress = progress.clone();
                     let name = name.to_owned();
                     move || {
                         let _trace = init_tracing(trace, true, &progress).ok();
