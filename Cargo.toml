@@ -211,6 +211,7 @@ members = [
     "gix-config-value",
     "gix-discover",
     "gix-features",
+    "gix-trace",
     "gix-commitgraph",
     "gix-chunk",
     "gix-quote",

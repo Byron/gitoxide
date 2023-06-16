@@ -1645,6 +1645,7 @@ dependencies = [
  "document-features",
  "flate2",
  "gix-hash 0.11.2",
+ "gix-trace",
  "jwalk",
  "libc",
  "once_cell",
@@ -2309,6 +2310,14 @@ dependencies = [
 [[package]]
 name = "gix-tix"
 version = "0.0.0"
+
+[[package]]
+name = "gix-trace"
+version = "0.1.0"
+dependencies = [
+ "document-features",
+ "tracing-core",
+]
 
 [[package]]
 name = "gix-transport"

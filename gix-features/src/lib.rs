@@ -27,6 +27,8 @@ pub mod parallel;
 #[cfg(feature = "progress")]
 pub mod progress;
 pub mod threading;
+pub use gix_trace as trace;
+
 ///
 #[cfg(feature = "zlib")]
 pub mod zlib;
