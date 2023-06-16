@@ -7,7 +7,7 @@ description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*"]
-rust-version = "1.64"
+rust-version = "1.65"
 
 [[test]]
 name ="test"

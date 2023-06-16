@@ -7,7 +7,7 @@ version = "0.46.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
-rust-version = "1.64"
+rust-version = "1.65"
 
 [lib]
 doctest = false
@@ -141,6 +141,7 @@ gix-transport = { version = "^0.32.0", path = "../gix-transport", optional = tru
 gix-diff = { version = "^0.30.1", path = "../gix-diff" }
 gix-mailmap = { version = "^0.13.0", path = "../gix-mailmap" }
 gix-features = { version = "^0.30.0", path = "../gix-features", features = ["progress", "once_cell"] }
+gix-trace = { version = "^0.1.0", path = "../gix-trace" }
 
 gix-attributes = { version = "^0.13.1", path = "../gix-attributes" }
 gix-ignore = { version = "^0.3.0", path = "../gix-ignore" }

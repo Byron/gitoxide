@@ -21,6 +21,9 @@ organize = ["dep:gix-url", "dep:jwalk"]
 estimate-hours = ["dep:itertools", "dep:fs-err", "dep:crossbeam-channel", "dep:smallvec"]
 ## Gather information about repositories and store it in a database for easy querying.
 query = ["dep:rusqlite"]
+## Run algorithms on a corpus of repositories and store their results for later comparison and intelligence gathering.
+## *Note that* `organize` we need for finding git repositories fast.
+corpus = [ "dep:rusqlite", "dep:sysinfo", "organize", "dep:crossbeam-channel", "dep:serde_json", "dep:tracing-forest", "dep:tracing-subscriber", "dep:tracing" ]
 
 #! ### Mutually Exclusive Networking
 #! If both are set, _blocking-client_ will take precedence, allowing `--all-features` to be used.
@@ -33,7 +36,7 @@ async-client = ["gix/async-network-client-async-std", "gix-transport-configurati
 
 #! ### Other
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde = ["gix/serde", "serde_json", "dep:serde", "bytesize/serde"]
+serde = ["gix/serde", "dep:serde_json", "dep:serde", "bytesize/serde"]
 
 
 [dependencies]
@@ -45,7 +48,6 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 anyhow = "1.0.42"
 thiserror = "1.0.34"
 bytesize = "1.0.1"
-serde_json = { version = "1.0.65", optional = true }
 tempfile = "3.1.0"
 
 # for async-client
@@ -66,8 +68,15 @@ fs-err = { version = "2.6.0", optional = true }
 crossbeam-channel = { version = "0.5.6", optional = true }
 smallvec = { version = "1.10.0", optional = true }
 
-# for 'query'
+# for 'query' and 'corpus'
 rusqlite = { version = "0.29.0", optional = true, features = ["bundled"] }
+
+# for 'corpus'
+sysinfo = { version = "0.29.2", optional = true, default-features = false }
+serde_json = { version = "1.0.65", optional = true }
+tracing-forest = { version = "0.1.5", features = ["serde"], optional = true }
+tracing-subscriber = { version = "0.3.17", optional = true }
+tracing = { version = "0.1.37", optional = true }
 
 # for svg graph output
 layout-rs = "0.1.1"

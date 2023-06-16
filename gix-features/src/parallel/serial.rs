@@ -94,7 +94,7 @@ mod not_parallel {
     pub fn in_parallel_with_slice<I, S, R, E>(
         input: &mut [I],
         _thread_limit: Option<usize>,
-        mut new_thread_state: impl FnMut(usize) -> S + Clone,
+        new_thread_state: impl FnOnce(usize) -> S + Clone,
         mut consume: impl FnMut(&mut I, &mut S, &AtomicIsize, &AtomicBool) -> Result<(), E> + Clone,
         mut periodic: impl FnMut() -> Option<std::time::Duration>,
         state_to_rval: impl FnOnce(S) -> R + Clone,
@@ -128,7 +128,7 @@ pub use not_parallel::{build_thread, in_parallel_with_slice, join, threads, Scop
 pub fn in_parallel<I, S, O, R>(
     input: impl Iterator<Item = I>,
     _thread_limit: Option<usize>,
-    new_thread_state: impl Fn(usize) -> S,
+    new_thread_state: impl FnOnce(usize) -> S,
     mut consume: impl FnMut(I, &mut S) -> O,
     mut reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>

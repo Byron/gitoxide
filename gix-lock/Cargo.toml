@@ -7,7 +7,7 @@ description = "A git-style lock-file implementation"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
-rust-version = "1.64"
+rust-version = "1.65"
 
 [lib]
 doctest = false

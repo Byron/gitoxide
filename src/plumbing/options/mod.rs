@@ -4,7 +4,7 @@ use gitoxide_core as core;
 use gix::bstr::BString;
 
 #[derive(Debug, clap::Parser)]
-#[clap(name = "gix-plumbing", about = "The git underworld", version = clap::crate_version!())]
+#[clap(name = "gix", about = "The git underworld", version = env!("GITOXIDE_VERSION"))]
 #[clap(subcommand_required = true)]
 #[clap(arg_required_else_help = true)]
 pub struct Args {
@@ -28,6 +28,11 @@ pub struct Args {
     /// Display verbose messages and progress information
     #[clap(long, short = 'v')]
     pub verbose: bool,
+
+    /// Display structured `tracing` output in a tree-like structure.
+    #[clap(long)]
+    #[cfg(feature = "tracing")]
+    pub trace: bool,
 
     /// Turn off verbose message display for commands where these are shown by default.
     #[clap(long, conflicts_with("verbose"))]
@@ -117,9 +122,37 @@ pub enum Subcommands {
     /// Show which git configuration values are used or planned.
     ConfigTree,
     Config(config::Platform),
+    #[cfg(feature = "gitoxide-core-tools-corpus")]
+    Corpus(corpus::Platform),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+}
+
+#[cfg(feature = "gitoxide-core-tools-corpus")]
+pub mod corpus {
+    use std::path::PathBuf;
+
+    #[derive(Debug, clap::Parser)]
+    #[command(about = "run algorithms on a corpus of git repositories and store their results for later analysis")]
+    pub struct Platform {
+        /// The path to the database to read and write depending on the sub-command.
+        #[arg(long, default_value = "corpus.db")]
+        pub db: PathBuf,
+        /// The path to the root of the corpus to search repositories in.
+        #[arg(long, short = 'p', default_value = ".")]
+        pub path: PathBuf,
+        #[clap(subcommand)]
+        pub cmd: SubCommands,
+    }
+
+    #[derive(Debug, clap::Subcommand)]
+    pub enum SubCommands {
+        /// Perform a corpus run on all registered repositories.
+        Run,
+        /// Re-read all repositories under the corpus directory, and add or update them.
+        Refresh,
+    }
 }
 
 pub mod config {

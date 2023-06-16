@@ -64,6 +64,13 @@ pub fn main() -> Result<()> {
     let verbose = args.verbose;
     let format = args.format;
     let cmd = args.cmd;
+    #[cfg_attr(not(feature = "tracing"), allow(unused_mut))]
+    #[cfg_attr(feature = "tracing", allow(unused_assignments))]
+    let mut trace = false;
+    #[cfg(feature = "tracing")]
+    {
+        trace = args.trace
+    }
     let object_hash = args.object_hash;
     let config = args.config;
     let repository = args.repository;
@@ -128,9 +135,26 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        #[cfg(feature = "gitoxide-core-tools-corpus")]
+        Subcommands::Corpus(crate::plumbing::options::corpus::Platform { db, path, cmd }) => prepare_and_run(
+            "corpus",
+            trace,
+            auto_verbose,
+            progress,
+            progress_keep_open,
+            core::corpus::PROGRESS_RANGE,
+            move |progress, _out, _err| {
+                let mut engine = core::corpus::Engine::open_or_create(db, env!("GITOXIDE_VERSION").into(), progress)?;
+                match cmd {
+                    crate::plumbing::options::corpus::SubCommands::Run => engine.run(path, thread_limit),
+                    crate::plumbing::options::corpus::SubCommands::Refresh => engine.refresh(path),
+                }
+            },
+        ),
         Subcommands::CommitGraph(cmd) => match cmd {
             commitgraph::Subcommands::List { spec } => prepare_and_run(
                 "commitgraph-list",
+                trace,
                 auto_verbose,
                 progress,
                 progress_keep_open,
@@ -142,6 +166,7 @@ pub fn main() -> Result<()> {
             .map(|_| ()),
             commitgraph::Subcommands::Verify { statistics } => prepare_and_run(
                 "commitgraph-verify",
+                trace,
                 auto_verbose,
                 progress,
                 progress_keep_open,
@@ -178,6 +203,7 @@ pub fn main() -> Result<()> {
             };
             prepare_and_run(
                 "clone",
+                trace,
                 auto_verbose,
                 progress,
                 progress_keep_open,
@@ -207,6 +233,7 @@ pub fn main() -> Result<()> {
             };
             prepare_and_run(
                 "fetch",
+                trace,
                 auto_verbose,
                 progress,
                 progress_keep_open,
@@ -253,6 +280,7 @@ pub fn main() -> Result<()> {
                     {
                         prepare_and_run(
                             "remote-refs",
+                            trace,
                             auto_verbose,
                             progress,
                             progress_keep_open,
@@ -290,6 +318,7 @@ pub fn main() -> Result<()> {
         }
         Subcommands::Config(config::Platform { filter }) => prepare_and_run(
             "config-list",
+            trace,
             verbose,
             progress,
             progress_keep_open,
@@ -309,6 +338,7 @@ pub fn main() -> Result<()> {
             free::Subcommands::CommitGraph(cmd) => match cmd {
                 free::commitgraph::Subcommands::Verify { path, statistics } => prepare_and_run(
                     "commitgraph-verify",
+                    trace,
                     auto_verbose,
                     progress,
                     progress_keep_open,
@@ -338,6 +368,7 @@ pub fn main() -> Result<()> {
                     file,
                 } => prepare_and_run(
                     "index-from-list",
+                    trace,
                     verbose,
                     progress,
                     progress_keep_open,
@@ -351,6 +382,7 @@ pub fn main() -> Result<()> {
                     keep_going,
                 } => prepare_and_run(
                     "index-checkout",
+                    trace,
                     auto_verbose,
                     progress,
                     progress_keep_open,
@@ -374,6 +406,7 @@ pub fn main() -> Result<()> {
                 ),
                 free::index::Subcommands::Info { no_details } => prepare_and_run(
                     "index-entries",
+                    trace,
                     verbose,
                     progress,
                     progress_keep_open,
@@ -392,6 +425,7 @@ pub fn main() -> Result<()> {
                 ),
                 free::index::Subcommands::Verify => prepare_and_run(
                     "index-verify",
+                    trace,
                     auto_verbose,
                     progress,
                     progress_keep_open,
@@ -406,6 +440,7 @@ pub fn main() -> Result<()> {
             } => match cmd {
                 free::mailmap::Subcommands::Verify => prepare_and_run(
                     "mailmap-verify",
+                    trace,
                     auto_verbose,
                     progress,
                     progress_keep_open,
@@ -429,6 +464,7 @@ pub fn main() -> Result<()> {
                     let has_tips = !tips.is_empty();
                     prepare_and_run(
                         "pack-create",
+                        trace,
                         verbose,
                         progress,
                         progress_keep_open,
@@ -490,6 +526,7 @@ pub fn main() -> Result<()> {
                     refs_directory,
                 } => prepare_and_run(
                     "pack-receive",
+                    trace,
                     verbose,
                     progress,
                     progress_keep_open,
@@ -521,6 +558,7 @@ pub fn main() -> Result<()> {
                     verify,
                 } => prepare_and_run(
                     "pack-explode",
+                    trace,
                     auto_verbose,
                     progress,
                     progress_keep_open,
@@ -553,6 +591,7 @@ pub fn main() -> Result<()> {
                     path,
                 } => prepare_and_run(
                     "pack-verify",
+                    trace,
                     auto_verbose,
                     progress,
                     progress_keep_open,
@@ -581,6 +620,7 @@ pub fn main() -> Result<()> {
                     match cmd {
                         free::pack::multi_index::Subcommands::Entries => prepare_and_run(
                             "pack-multi-index-entries",
+                            trace,
                             verbose,
                             progress,
                             progress_keep_open,
@@ -589,6 +629,7 @@ pub fn main() -> Result<()> {
                         ),
                         free::pack::multi_index::Subcommands::Info => prepare_and_run(
                             "pack-multi-index-info",
+                            trace,
                             verbose,
                             progress,
                             progress_keep_open,
@@ -599,6 +640,7 @@ pub fn main() -> Result<()> {
                         ),
                         free::pack::multi_index::Subcommands::Verify => prepare_and_run(
                             "pack-multi-index-verify",
+                            trace,
                             auto_verbose,
                             progress,
                             progress_keep_open,
@@ -609,6 +651,7 @@ pub fn main() -> Result<()> {
                         ),
                         free::pack::multi_index::Subcommands::Create { index_paths } => prepare_and_run(
                             "pack-multi-index-create",
+                            trace,
                             verbose,
                             progress,
                             progress_keep_open,
@@ -632,6 +675,7 @@ pub fn main() -> Result<()> {
                         directory,
                     } => prepare_and_run(
                         "pack-index-create",
+                        trace,
                         verbose,
                         progress,
                         progress_keep_open,
@@ -677,6 +721,7 @@ pub fn main() -> Result<()> {
                 },
         } => prepare_and_run(
             "verify",
+            trace,
             auto_verbose,
             progress,
             progress_keep_open,
@@ -699,6 +744,7 @@ pub fn main() -> Result<()> {
         Subcommands::Revision(cmd) => match cmd {
             revision::Subcommands::List { spec, svg, limit } => prepare_and_run(
                 "revision-list",
+                trace,
                 auto_verbose,
                 progress,
                 progress_keep_open,
@@ -721,6 +767,7 @@ pub fn main() -> Result<()> {
             ),
             revision::Subcommands::PreviousBranches => prepare_and_run(
                 "revision-previousbranches",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -731,6 +778,7 @@ pub fn main() -> Result<()> {
             ),
             revision::Subcommands::Explain { spec } => prepare_and_run(
                 "revision-explain",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -743,6 +791,7 @@ pub fn main() -> Result<()> {
                 cat_file,
             } => prepare_and_run(
                 "revision-parse",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -773,6 +822,7 @@ pub fn main() -> Result<()> {
                 rev_spec,
             } => prepare_and_run(
                 "commit-describe",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -803,6 +853,7 @@ pub fn main() -> Result<()> {
                 extended,
             } => prepare_and_run(
                 "tree-entries",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -820,6 +871,7 @@ pub fn main() -> Result<()> {
             ),
             tree::Subcommands::Info { treeish, extended } => prepare_and_run(
                 "tree-info",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -839,6 +891,7 @@ pub fn main() -> Result<()> {
         Subcommands::Odb(cmd) => match cmd {
             odb::Subcommands::Stats => prepare_and_run(
                 "odb-stats",
+                trace,
                 auto_verbose,
                 progress,
                 progress_keep_open,
@@ -855,6 +908,7 @@ pub fn main() -> Result<()> {
             ),
             odb::Subcommands::Entries => prepare_and_run(
                 "odb-entries",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -863,6 +917,7 @@ pub fn main() -> Result<()> {
             ),
             odb::Subcommands::Info => prepare_and_run(
                 "odb-info",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -873,6 +928,7 @@ pub fn main() -> Result<()> {
         Subcommands::Mailmap(cmd) => match cmd {
             mailmap::Subcommands::Entries => prepare_and_run(
                 "mailmap-entries",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -885,6 +941,7 @@ pub fn main() -> Result<()> {
         Subcommands::Attributes(cmd) => match cmd {
             attributes::Subcommands::Query { statistics, pathspecs } => prepare_and_run(
                 "attributes-query",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -911,6 +968,7 @@ pub fn main() -> Result<()> {
             ),
             attributes::Subcommands::ValidateBaseline { statistics, no_ignore } => prepare_and_run(
                 "attributes-validate-baseline",
+                trace,
                 auto_verbose,
                 progress,
                 progress_keep_open,
@@ -945,6 +1003,7 @@ pub fn main() -> Result<()> {
                 show_ignore_patterns,
             } => prepare_and_run(
                 "exclude-query",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -982,6 +1041,7 @@ pub fn main() -> Result<()> {
                 statistics,
             } => prepare_and_run(
                 "index-entries",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,
@@ -1013,6 +1073,7 @@ pub fn main() -> Result<()> {
                 spec,
             } => prepare_and_run(
                 "index-from-tree",
+                trace,
                 verbose,
                 progress,
                 progress_keep_open,

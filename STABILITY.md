@@ -126,7 +126,7 @@ Minor version updates for new features can be released when needed assuming ther
 The MSRV is automatically assumed to be the latest stable version for all crates with the following exception: `gix` and all it's dependencies must
 adhere to an MSRV, as validated by the `msrv.yml` GitHub workflow.
 
-Increasing the MSRV is considered a breaking change and warrants a major version bump itself for stable crates and a minor version bump for IDP crates.
+Increasing the MSRV is *not* considered a breaking change like is the case for most other crates in the community.
 
 Please let us know if you have other requirement and we see if we can provide stability guarantees for it or reduce the MSRV to a given version.
 

@@ -52,6 +52,7 @@ impl Store {
     /// implementation. The likelihood of actual changes is low though as these still depend on something
     /// changing on disk and somebody reading at the same time.
     pub fn structure(&self) -> Result<Vec<Record>, load_index::Error> {
+        let _span = gix_features::trace::detail!("gix_odb::Store::structure()");
         let index = self.index.load();
         if !index.is_initialized() {
             self.consolidate_with_disk_state(true, false /*load one new index*/)?;

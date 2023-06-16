@@ -55,6 +55,7 @@ pub mod pretty {
     #[cfg(feature = "small")]
     pub fn prepare_and_run<T>(
         name: &str,
+        _trace: bool,
         verbose: bool,
         progress: bool,
         #[cfg_attr(not(feature = "prodash-render-tui"), allow(unused_variables))] progress_keep_open: bool,
@@ -95,9 +96,44 @@ pub mod pretty {
         }
     }
 
+    #[cfg(feature = "tracing")]
+    fn init_tracing(
+        enable: bool,
+        reverse_lines: bool,
+        progress: &gix::progress::prodash::tree::Root,
+    ) -> anyhow::Result<tracing::subscriber::DefaultGuard> {
+        Ok(if enable {
+            let processor = tracing_forest::Printer::new().formatter({
+                let progress = std::sync::Mutex::new(progress.add_child("tracing"));
+                move |tree: &tracing_forest::tree::Tree| -> Result<String, std::fmt::Error> {
+                    use gix::Progress;
+                    use tracing_forest::Formatter;
+                    let tree = tracing_forest::printer::Pretty.fmt(tree)?;
+                    let progress = &mut progress.lock().unwrap();
+                    if reverse_lines {
+                        for line in tree.lines().rev() {
+                            progress.info(line);
+                        }
+                    } else {
+                        for line in tree.lines() {
+                            progress.info(line);
+                        }
+                    }
+                    Ok(String::new())
+                }
+            });
+            use tracing_subscriber::layer::SubscriberExt;
+            let subscriber = tracing_subscriber::Registry::default().with(tracing_forest::ForestLayer::from(processor));
+            tracing::subscriber::set_default(subscriber)
+        } else {
+            tracing::subscriber::set_default(tracing_subscriber::Registry::default())
+        })
+    }
+
     #[cfg(not(feature = "small"))]
     pub fn prepare_and_run<T: Send + 'static>(
         name: &str,
+        trace: bool,
         verbose: bool,
         progress: bool,
         #[cfg_attr(not(feature = "prodash-render-tui"), allow(unused_variables))] progress_keep_open: bool,
@@ -122,12 +158,18 @@ pub mod pretty {
                 use crate::shared::{self, STANDARD_RANGE};
                 let progress = shared::progress_tree();
                 let sub_progress = progress.add_child(name);
+                let _trace = init_tracing(trace, false, &progress)?;
 
                 let handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
 
                 let mut out = Vec::<u8>::new();
                 let mut err = Vec::<u8>::new();
+
+                let span = gix::trace::coarse!("run");
                 let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut err);
+                #[cfg(feature = "tracing")]
+                drop(span);
+
                 handle.shutdown_and_wait();
                 std::io::Write::write_all(&mut stdout(), &out)?;
                 std::io::Write::write_all(&mut stderr(), &err)?;
@@ -149,6 +191,7 @@ pub mod pretty {
                 }
                 let progress = prodash::tree::Root::new();
                 let sub_progress = progress.add_child(name);
+
                 let render_tui = prodash::render::tui(
                     stdout(),
                     std::sync::Arc::downgrade(&progress),
@@ -169,12 +212,19 @@ pub mod pretty {
                         tx.send(Event::UiDone).ok();
                     }
                 });
-                let thread = std::thread::spawn(move || {
-                    // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
-                    // We know that the printing happens at the end, so this is fine.
-                    let mut out = Vec::new();
-                    let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr());
-                    tx.send(Event::ComputationDone(res, out)).ok();
+                let thread = std::thread::spawn({
+                    let name = name.to_owned();
+                    move || {
+                        let _trace = init_tracing(trace, true, &progress).ok();
+                        // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
+                        // We know that the printing happens at the end, so this is fine.
+                        let mut out = Vec::new();
+                        let span = gix::trace::coarse!("run", name = name);
+                        let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr());
+                        #[cfg(feature = "tracing")]
+                        drop(span);
+                        tx.send(Event::ComputationDone(res, out)).ok();
+                    }
                 });
                 loop {
                     match rx.recv() {

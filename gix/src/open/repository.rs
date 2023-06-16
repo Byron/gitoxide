@@ -51,6 +51,7 @@ impl ThreadSafeRepository {
     ///
     /// Note that you should use [`crate::discover()`] if security should be adjusted by ownership.
     pub fn open_opts(path: impl Into<PathBuf>, mut options: Options) -> Result<Self, Error> {
+        let _span = gix_trace::coarse!("ThreadSafeRepository::open()");
         let (path, kind) = {
             let path = path.into();
             let looks_like_git_dir =
@@ -103,6 +104,7 @@ impl ThreadSafeRepository {
         fallback_directory: impl Into<PathBuf>,
         trust_map: gix_sec::trust::Mapping<Options>,
     ) -> Result<Self, Error> {
+        let _span = gix_trace::coarse!("ThreadSafeRepository::open_with_environment_overrides()");
         let overrides = EnvironmentOverrides::from_env()?;
         let (path, path_kind): (PathBuf, _) = match overrides.git_dir {
             Some(git_dir) => gix_discover::is_git(&git_dir)
@@ -139,6 +141,7 @@ impl ThreadSafeRepository {
         mut worktree_dir: Option<PathBuf>,
         options: Options,
     ) -> Result<Self, Error> {
+        let _span = gix_trace::detail!("open_from_paths()");
         let Options {
             git_dir_trust,
             object_store_slots,
@@ -238,6 +241,7 @@ impl ThreadSafeRepository {
         refs.write_reflog = config::cache::util::reflog_or_default(config.reflog, worktree_dir.is_some());
         let replacements = replacement_objects_refs_prefix(&config.resolved, lenient_config, filter_config_section)?
             .and_then(|prefix| {
+                let _span = gix_trace::detail!("find replacement objects");
                 let platform = refs.iter().ok()?;
                 let iter = platform.prefixed(&prefix).ok()?;
                 let prefix = prefix.to_str()?;

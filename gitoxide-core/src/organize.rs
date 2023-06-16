@@ -12,7 +12,7 @@ pub enum Mode {
     Simulate,
 }
 
-fn find_git_repository_workdirs(
+pub fn find_git_repository_workdirs(
     root: impl AsRef<Path>,
     mut progress: impl Progress,
     debug: bool,

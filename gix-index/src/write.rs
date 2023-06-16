@@ -55,6 +55,7 @@ pub struct Options {
 impl State {
     /// Serialize this instance to `out` with [`options`][Options].
     pub fn write_to(&self, out: impl std::io::Write, Options { extensions }: Options) -> std::io::Result<Version> {
+        let _span = gix_features::trace::detail!("gix_index::State::write()");
         let version = self.detect_required_version();
 
         let mut write = CountBytes::new(out);

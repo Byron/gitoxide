@@ -85,6 +85,7 @@ where
         match *count {
             Some(count) => Ok(count),
             None => {
+                let _span = gix_features::trace::detail!("gix_odb::Handle::packed_object_count()");
                 let mut snapshot = self.snapshot.borrow_mut();
                 *snapshot = self.store.load_all_indices()?;
                 let mut obj_count = 0;

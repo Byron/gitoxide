@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 #[derive(Debug, clap::Parser)]
-#[clap(about = "The rusty git", version = clap::crate_version!())]
+#[clap(about = "The rusty git", version = env!("GITOXIDE_VERSION"))]
 #[clap(subcommand_required = true)]
 pub struct Args {
     /// Do not display verbose messages and progress information
@@ -94,7 +94,6 @@ pub mod tools {
     #[derive(Debug, clap::Parser)]
     #[command(
         about = "a database accelerated engine to extract information and query it",
-        version = clap::crate_version!(),
         visible_alias = "q"
     )]
     pub struct Query {
@@ -135,7 +134,6 @@ pub mod tools {
     #[clap(
         about = "Estimate hours worked based on a commit history",
         long_about = "See https://github.com/kimmobrunfeldt/git-hours#how-it-works for details",
-        version = clap::crate_version!(),
         visible_alias = "h",
         visible_alias = "hours"
     )]

@@ -78,6 +78,7 @@ where
         P: Progress,
         P::SubProgress: 'static,
     {
+        let _span = gix_trace::coarse!("fetch::Prepare::receive()");
         let mut con = self.con.take().expect("receive() can only be called once");
 
         let handshake = &self.ref_map.handshake;
@@ -115,6 +116,7 @@ where
             });
         }
 
+        let negotiate_span = gix_trace::detail!("negotiate");
         let mut negotiator = repo
             .config
             .resolved
@@ -217,6 +219,8 @@ where
                 };
                 let graph = graph.detach();
                 drop(graph_repo);
+                drop(negotiate_span);
+
                 let previous_response = previous_response.expect("knowledge of a pack means a response was received");
                 if !previous_response.shallow_updates().is_empty() && shallow_lock.is_none() {
                     let reject_shallow_remote = repo

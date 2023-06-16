@@ -7,7 +7,7 @@ description = "A work-in-progress crate of the gitoxide project dedicated implem
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
-rust-version = "1.64"
+rust-version = "1.65"
 autotests = false
 
 

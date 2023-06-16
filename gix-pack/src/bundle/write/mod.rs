@@ -70,6 +70,7 @@ impl crate::Bundle {
         thin_pack_base_object_lookup_fn: Option<ThinPackLookupFn>,
         options: Options,
     ) -> Result<Outcome, Error> {
+        let _span = gix_features::trace::coarse!("gix_pack::Bundle::write_to_directory()");
         let mut read_progress = progress.add_child_with_id("read pack", ProgressId::ReadPackBytes.into());
         read_progress.init(None, progress::bytes());
         let pack = progress::Read {
@@ -183,6 +184,7 @@ impl crate::Bundle {
         P: Progress,
         P::SubProgress: 'static,
     {
+        let _span = gix_features::trace::coarse!("gix_pack::Bundle::write_to_directory_eagerly()");
         let mut read_progress = progress.add_child_with_id("read pack", ProgressId::ReadPackBytes.into()); /* Bundle Write Read pack Bytes*/
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
         let pack = progress::Read {

@@ -24,6 +24,7 @@ pub fn main() -> Result<()> {
         let should_interrupt = Arc::clone(&should_interrupt);
         move || should_interrupt.store(true, Ordering::SeqCst)
     })?;
+    let trace = false;
     let verbose = !args.quiet;
     let progress = args.progress;
     #[cfg(feature = "gitoxide-core-tools")]
@@ -34,6 +35,7 @@ pub fn main() -> Result<()> {
         #[cfg(debug_assertions)]
         Subcommands::Panic => prepare_and_run(
             "panic-behaviour",
+            trace,
             verbose,
             progress,
             progress_keep_open,
@@ -53,6 +55,7 @@ pub fn main() -> Result<()> {
                 use gitoxide_core::query;
                 prepare_and_run(
                     "query",
+                    trace,
                     verbose,
                     progress,
                     progress_keep_open,
@@ -92,6 +95,7 @@ pub fn main() -> Result<()> {
                 use gitoxide_core::hours;
                 prepare_and_run(
                     "estimate-hours",
+                    trace,
                     verbose,
                     progress,
                     progress_keep_open,
@@ -118,6 +122,7 @@ pub fn main() -> Result<()> {
                 use gitoxide_core::organize;
                 prepare_and_run(
                     "find",
+                    trace,
                     verbose,
                     progress,
                     progress_keep_open,
@@ -141,6 +146,7 @@ pub fn main() -> Result<()> {
                 use gitoxide_core::organize;
                 prepare_and_run(
                     "organize",
+                    trace,
                     verbose,
                     progress,
                     progress_keep_open,
