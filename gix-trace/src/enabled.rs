@@ -1,4 +1,4 @@
-use tracing_core::{dispatcher::get_default as with_dispatcher, span::Id, Dispatch};
+use tracing_core::{dispatcher::get_default as with_dispatcher, span, span::Id, Dispatch};
 
 // these are used later in macros.
 pub use tracing_core::{field, metadata, Metadata};
@@ -6,11 +6,13 @@ pub use tracing_core::{field, metadata, Metadata};
 /// An entered span which will exit on drop.
 #[derive(Clone)]
 pub struct Span {
-    id: Option<(Id, Dispatch)>,
+    id: Option<(Id, Dispatch, &'static Metadata<'static>)>,
 }
 
 impl Span {
-    #[allow(missing_docs)]
+    /// Create a new span.
+    ///
+    /// This constructor is typically invoked by the [`crate::span!`] macro.
     pub fn new(
         level: crate::Level,
         meta: &'static Metadata<'static>,
@@ -23,16 +25,40 @@ impl Span {
                 let id = dispatch.new_span(&tracing_core::span::Attributes::new(meta, values));
                 dispatch.enter(&id);
                 Self {
-                    id: Some((id, dispatch.clone())),
+                    id: Some((id, dispatch.clone(), meta)),
                 }
             })
         }
+    }
+
+    /// Record a single `field` to take `value`.
+    ///
+    /// Note that this silently fails if the field name wasn't mentioned when the span was created.
+    pub fn record<V>(&self, field: &str, value: V) -> &Self
+    where
+        V: field::Value,
+    {
+        if let Some((_, _, meta)) = &self.id {
+            let fields = meta.fields();
+            if let Some(field) = fields.field(field) {
+                self.record_all(&fields.value_set(&[(&field, Some(&value as &dyn field::Value))]));
+            }
+        }
+        self
+    }
+
+    fn record_all(&self, values: &field::ValueSet<'_>) -> &Self {
+        if let Some((id, dispatch, _)) = &self.id {
+            let record = span::Record::new(values);
+            dispatch.record(id, &record);
+        }
+        self
     }
 }
 
 impl Drop for Span {
     fn drop(&mut self) {
-        if let Some((id, dispatch)) = self.id.take() {
+        if let Some((id, dispatch, _meta)) = self.id.take() {
             dispatch.exit(&id);
             dispatch.try_close(id);
         }

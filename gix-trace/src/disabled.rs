@@ -3,6 +3,13 @@
 #[derive(Clone)]
 pub struct Span;
 
+impl Span {
+    /// A no-op
+    pub fn record<V>(&self, _field: &str, _value: V) -> &Self {
+        self
+    }
+}
+
 /// A macro to create a span.
 #[macro_export]
 macro_rules! span {

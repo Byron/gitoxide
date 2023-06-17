@@ -35,7 +35,7 @@ pub const MAX_LEVEL: Level = Level::Coarse;
 mod enabled;
 
 #[cfg(feature = "tracing")]
-pub use enabled::Span;
+pub use enabled::{field, Span};
 
 impl Span {
     /// Execute `f` in with this span active, consuming it.
@@ -46,7 +46,7 @@ impl Span {
 
 #[cfg(feature = "tracing")]
 #[doc(hidden)]
-pub use enabled::{field, metadata, MetaOnlyCallsite, Metadata};
+pub use enabled::{metadata, MetaOnlyCallsite, Metadata};
 
 #[cfg(not(feature = "tracing"))]
 mod disabled;
