@@ -71,38 +71,37 @@ impl Engine {
         dry_run: bool,
     ) -> anyhow::Result<()> {
         let start = Instant::now();
-        let task_progress = &mut self.state.progress;
-        task_progress.set_name("run");
-        task_progress.init(Some(tasks.len()), gix::progress::count("tasks"));
+        let repo_progress = &mut self.state.progress;
         let threads = gix::parallel::num_threads(threads);
         let db_path = self.con.path().expect("opened from path on disk").to_owned();
-        for (task_id, task) in tasks {
+        'tasks_loop: for (task_id, task) in tasks {
             let task_start = Instant::now();
-            let mut repo_progress = task_progress.add_child(format!("run '{}'", task.short_name));
+            let task_info = format!("run '{}'", task.short_name);
+            repo_progress.set_name(task_info.clone());
+            repo_progress.init(Some(repos.len()), gix::progress::count("repos"));
             if task.execute_exclusive || threads == 1 || dry_run {
                 if dry_run {
-                    task_progress.set_name("WOULD run");
+                    repo_progress.set_name("WOULD run");
                     for repo in &repos {
-                        task_progress.info(format!(
+                        repo_progress.info(format!(
                             "{}",
                             repo.path
                                 .strip_prefix(corpus_path)
                                 .expect("corpus contains repo")
                                 .display()
                         ));
-                        task_progress.inc();
+                        repo_progress.inc();
                     }
-                    task_progress.info(format!("with {} tasks", tasks.len()));
+                    repo_progress.info(format!("with {} tasks", tasks.len()));
                     for (_, task) in tasks {
-                        task_progress.info(format!("task '{}' ({})", task.description, task.short_name))
+                        repo_progress.info(format!("task '{}' ({})", task.description, task.short_name))
                     }
-                    continue;
+                    break 'tasks_loop;
                 }
-                repo_progress.init(Some(repos.len()), gix::progress::count("repos"));
                 let mut run_progress = repo_progress.add_child("set later");
                 let (_guard, current_id) = corpus::trace::override_thread_subscriber(
                     db_path.as_str(),
-                    self.state.trace_to_progress.then(|| task_progress.add_child("trace")),
+                    self.state.trace_to_progress.then(|| repo_progress.add_child("trace")),
                     self.state.reverse_trace_lines,
                 )?;
 
@@ -136,7 +135,9 @@ impl Engine {
                 repo_progress.show_throughput(task_start);
             } else {
                 let counter = repo_progress.counter();
-                let repo_progress = gix::threading::OwnShared::new(gix::threading::Mutable::new(repo_progress));
+                let repo_progress = gix::threading::OwnShared::new(gix::threading::Mutable::new(
+                    repo_progress.add_child("will be changed"),
+                ));
                 gix::parallel::in_parallel_with_slice(
                     &mut repos,
                     Some(threads),
@@ -194,9 +195,9 @@ impl Engine {
                 gix::threading::lock(&repo_progress).show_throughput(task_start);
             }
 
-            task_progress.inc();
+            repo_progress.inc();
         }
-        task_progress.show_throughput(start);
+        repo_progress.show_throughput(start);
         Ok(())
     }
 
