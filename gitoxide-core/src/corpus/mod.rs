@@ -1,4 +1,4 @@
-pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 0..=3;
+pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 0..=5;
 
 pub struct Engine {
     con: rusqlite::Connection,
