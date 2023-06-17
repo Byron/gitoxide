@@ -5,6 +5,8 @@ pub struct Engine {
     progress: Progress,
     con: rusqlite::Connection,
     gitoxide_version: String,
+    trace_to_progress: bool,
+    reverse_trace_lines: bool,
 }
 
 pub struct RunOutcome {

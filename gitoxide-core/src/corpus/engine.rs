@@ -12,12 +12,20 @@ use std::time::{Duration, Instant};
 
 impl Engine {
     /// Open the corpus DB or create it.
-    pub fn open_or_create(db: PathBuf, gitoxide_version: String, progress: corpus::Progress) -> anyhow::Result<Engine> {
+    pub fn open_or_create(
+        db: PathBuf,
+        gitoxide_version: String,
+        progress: corpus::Progress,
+        trace_to_progress: bool,
+        reverse_trace_lines: bool,
+    ) -> anyhow::Result<Engine> {
         let con = crate::corpus::db::create(db).context("Could not open or create database")?;
         Ok(Engine {
             progress,
             con,
             gitoxide_version,
+            trace_to_progress,
+            reverse_trace_lines,
         })
     }
 
@@ -66,7 +74,11 @@ impl Engine {
 
             if task.execute_exclusive || threads == 1 {
                 let mut run_progress = repo_progress.add_child("set later");
-                let (_guard, current_id) = corpus::trace::override_thread_subscriber(db_path.as_str())?;
+                let (_guard, current_id) = corpus::trace::override_thread_subscriber(
+                    db_path.as_str(),
+                    self.trace_to_progress.then(|| task_progress.add_child("trace")),
+                    self.reverse_trace_lines,
+                )?;
 
                 for repo in &repos {
                     if gix::interrupt::is_triggered() {
@@ -80,7 +92,7 @@ impl Engine {
                             .display()
                     ));
 
-                    // TODO: wait for new release to be able to provide run_id via span attributes
+                    // TODO: wait for new release of `tracing-forest` to be able to provide run_id via span attributes
                     let mut run = Self::insert_run(&self.con, gitoxide_id, runner_id, *task_id, repo.id)?;
                     current_id.store(run.id, Ordering::SeqCst);
                     tracing::info_span!("run", run_id = run.id).in_scope(|| {
@@ -106,9 +118,11 @@ impl Engine {
                         let shared_repo_progress = repo_progress.clone();
                         let db_path = db_path.clone();
                         move |tid| {
+                            let mut progress = gix::threading::lock(&shared_repo_progress);
                             (
-                                corpus::trace::override_thread_subscriber(db_path.as_str()),
-                                gix::threading::lock(&shared_repo_progress).add_child(format!("{tid}")),
+                                // threaded printing is usually spammy, and lines interleave so it's useless.
+                                corpus::trace::override_thread_subscriber(db_path.as_str(), None, false),
+                                progress.add_child(format!("{tid}")),
                                 rusqlite::Connection::open(&db_path),
                             )
                         }

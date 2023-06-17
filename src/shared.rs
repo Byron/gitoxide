@@ -108,8 +108,8 @@ pub mod pretty {
                 move |tree: &tracing_forest::tree::Tree| -> Result<String, std::fmt::Error> {
                     use gix::Progress;
                     use tracing_forest::Formatter;
-                    let tree = tracing_forest::printer::Pretty.fmt(tree)?;
                     let progress = &mut progress.lock().unwrap();
+                    let tree = tracing_forest::printer::Pretty.fmt(tree)?;
                     if reverse_lines {
                         for line in tree.lines().rev() {
                             progress.info(line);
