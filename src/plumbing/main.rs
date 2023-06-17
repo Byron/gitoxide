@@ -136,21 +136,36 @@ pub fn main() -> Result<()> {
 
     match cmd {
         #[cfg(feature = "gitoxide-core-tools-corpus")]
-        Subcommands::Corpus(crate::plumbing::options::corpus::Platform { db, path, cmd }) => prepare_and_run(
-            "corpus",
-            trace,
-            auto_verbose,
-            progress,
-            progress_keep_open,
-            core::corpus::PROGRESS_RANGE,
-            move |progress, _out, _err| {
-                let mut engine = core::corpus::Engine::open_or_create(db, env!("GITOXIDE_VERSION").into(), progress)?;
-                match cmd {
-                    crate::plumbing::options::corpus::SubCommands::Run => engine.run(path, thread_limit),
-                    crate::plumbing::options::corpus::SubCommands::Refresh => engine.refresh(path),
-                }
-            },
-        ),
+        Subcommands::Corpus(crate::plumbing::options::corpus::Platform { db, path, cmd }) => {
+            let reverse_trace_lines = progress;
+            prepare_and_run(
+                "corpus",
+                trace,
+                auto_verbose,
+                progress,
+                progress_keep_open,
+                core::corpus::PROGRESS_RANGE,
+                move |progress, _out, _err| {
+                    let mut engine = core::corpus::Engine::open_or_create(
+                        db,
+                        core::corpus::engine::State {
+                            gitoxide_version: env!("GITOXIDE_VERSION").into(),
+                            progress,
+                            trace_to_progress: trace,
+                            reverse_trace_lines,
+                        },
+                    )?;
+                    match cmd {
+                        crate::plumbing::options::corpus::SubCommands::Run {
+                            dry_run,
+                            repo_sql_suffix,
+                            include_task,
+                        } => engine.run(path, thread_limit, dry_run, repo_sql_suffix, include_task),
+                        crate::plumbing::options::corpus::SubCommands::Refresh => engine.refresh(path),
+                    }
+                },
+            )
+        }
         Subcommands::CommitGraph(cmd) => match cmd {
             commitgraph::Subcommands::List { spec } => prepare_and_run(
                 "commitgraph-list",

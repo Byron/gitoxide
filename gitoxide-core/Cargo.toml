@@ -23,7 +23,7 @@ estimate-hours = ["dep:itertools", "dep:fs-err", "dep:crossbeam-channel", "dep:s
 query = ["dep:rusqlite"]
 ## Run algorithms on a corpus of repositories and store their results for later comparison and intelligence gathering.
 ## *Note that* `organize` we need for finding git repositories fast.
-corpus = [ "dep:rusqlite", "dep:sysinfo", "organize", "dep:crossbeam-channel", "dep:serde_json", "dep:tracing-forest", "dep:tracing-subscriber", "dep:tracing" ]
+corpus = [ "dep:rusqlite", "dep:sysinfo", "organize", "dep:crossbeam-channel", "dep:serde_json", "dep:tracing-forest", "dep:tracing-subscriber", "dep:tracing", "dep:parking_lot" ]
 
 #! ### Mutually Exclusive Networking
 #! If both are set, _blocking-client_ will take precedence, allowing `--all-features` to be used.
@@ -72,6 +72,7 @@ smallvec = { version = "1.10.0", optional = true }
 rusqlite = { version = "0.29.0", optional = true, features = ["bundled"] }
 
 # for 'corpus'
+parking_lot = { version = "0.12.1", optional = true }
 sysinfo = { version = "0.29.2", optional = true, default-features = false }
 serde_json = { version = "1.0.65", optional = true }
 tracing-forest = { version = "0.1.5", features = ["serde"], optional = true }

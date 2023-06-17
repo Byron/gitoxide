@@ -10,32 +10,47 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
+pub type ProgressItem = gix::progress::DoOrDiscard<gix::progress::prodash::tree::Item>;
+
+pub struct State {
+    pub progress: ProgressItem,
+    pub gitoxide_version: String,
+    pub trace_to_progress: bool,
+    pub reverse_trace_lines: bool,
+}
+
 impl Engine {
     /// Open the corpus DB or create it.
-    pub fn open_or_create(db: PathBuf, gitoxide_version: String, progress: corpus::Progress) -> anyhow::Result<Engine> {
+    pub fn open_or_create(db: PathBuf, state: State) -> anyhow::Result<Engine> {
         let con = crate::corpus::db::create(db).context("Could not open or create database")?;
-        Ok(Engine {
-            progress,
-            con,
-            gitoxide_version,
-        })
+        Ok(Engine { con, state })
     }
 
     /// Run on the existing set of repositories we have already seen or obtain them from `path` if there is none yet.
-    pub fn run(&mut self, corpus_path: PathBuf, threads: Option<usize>) -> anyhow::Result<()> {
+    pub fn run(
+        &mut self,
+        corpus_path: PathBuf,
+        threads: Option<usize>,
+        dry_run: bool,
+        repo_sql_suffix: Option<String>,
+        allowed_task_names: Vec<String>,
+    ) -> anyhow::Result<()> {
+        let tasks = self.tasks_or_insert(&allowed_task_names)?;
+        if tasks.is_empty() {
+            bail!("Cannot run without any task to perform on the repositories");
+        }
         let (corpus_path, corpus_id) = self.prepare_corpus_path(corpus_path)?;
         let gitoxide_id = self.gitoxide_version_id_or_insert()?;
         let runner_id = self.runner_id_or_insert()?;
-        let repos = self.find_repos_or_insert(&corpus_path, corpus_id)?;
-        let tasks = self.tasks_or_insert()?;
-        self.perform_run(&corpus_path, gitoxide_id, runner_id, &tasks, repos, threads)
+        let repos = self.find_repos_or_insert(&corpus_path, corpus_id, repo_sql_suffix)?;
+        self.perform_run(&corpus_path, gitoxide_id, runner_id, &tasks, repos, threads, dry_run)
     }
 
     pub fn refresh(&mut self, corpus_path: PathBuf) -> anyhow::Result<()> {
         let (corpus_path, corpus_id) = self.prepare_corpus_path(corpus_path)?;
         let repos = self.refresh_repos(&corpus_path, corpus_id)?;
-        self.progress.set_name("refresh repos");
-        self.progress.info(format!(
+        self.state.progress.set_name("refresh repos");
+        self.state.progress.info(format!(
             "Added or updated {} repositories under {corpus_path:?}",
             repos.len()
         ));
@@ -44,6 +59,7 @@ impl Engine {
 }
 
 impl Engine {
+    #[allow(clippy::too_many_arguments)]
     fn perform_run(
         &mut self,
         corpus_path: &Path,
@@ -52,21 +68,42 @@ impl Engine {
         tasks: &[(db::Id, &'static Task)],
         mut repos: Vec<db::Repo>,
         threads: Option<usize>,
+        dry_run: bool,
     ) -> anyhow::Result<()> {
         let start = Instant::now();
-        let task_progress = &mut self.progress;
-        task_progress.set_name("run");
-        task_progress.init(Some(tasks.len()), gix::progress::count("tasks"));
+        let repo_progress = &mut self.state.progress;
         let threads = gix::parallel::num_threads(threads);
         let db_path = self.con.path().expect("opened from path on disk").to_owned();
-        for (task_id, task) in tasks {
+        'tasks_loop: for (task_id, task) in tasks {
             let task_start = Instant::now();
-            let mut repo_progress = task_progress.add_child(format!("run '{}'", task.short_name));
+            let task_info = format!("run '{}'", task.short_name);
+            repo_progress.set_name(task_info.clone());
             repo_progress.init(Some(repos.len()), gix::progress::count("repos"));
-
-            if task.execute_exclusive || threads == 1 {
+            if task.execute_exclusive || threads == 1 || dry_run {
+                if dry_run {
+                    repo_progress.set_name("WOULD run");
+                    for repo in &repos {
+                        repo_progress.info(format!(
+                            "{}",
+                            repo.path
+                                .strip_prefix(corpus_path)
+                                .expect("corpus contains repo")
+                                .display()
+                        ));
+                        repo_progress.inc();
+                    }
+                    repo_progress.info(format!("with {} tasks", tasks.len()));
+                    for (_, task) in tasks {
+                        repo_progress.info(format!("task '{}' ({})", task.description, task.short_name))
+                    }
+                    break 'tasks_loop;
+                }
                 let mut run_progress = repo_progress.add_child("set later");
-                let (_guard, current_id) = corpus::trace::override_thread_subscriber(db_path.as_str())?;
+                let (_guard, current_id) = corpus::trace::override_thread_subscriber(
+                    db_path.as_str(),
+                    self.state.trace_to_progress.then(|| repo_progress.add_child("trace")),
+                    self.state.reverse_trace_lines,
+                )?;
 
                 for repo in &repos {
                     if gix::interrupt::is_triggered() {
@@ -80,7 +117,7 @@ impl Engine {
                             .display()
                     ));
 
-                    // TODO: wait for new release to be able to provide run_id via span attributes
+                    // TODO: wait for new release of `tracing-forest` to be able to provide run_id via span attributes
                     let mut run = Self::insert_run(&self.con, gitoxide_id, runner_id, *task_id, repo.id)?;
                     current_id.store(run.id, Ordering::SeqCst);
                     tracing::info_span!("run", run_id = run.id).in_scope(|| {
@@ -98,7 +135,9 @@ impl Engine {
                 repo_progress.show_throughput(task_start);
             } else {
                 let counter = repo_progress.counter();
-                let repo_progress = gix::threading::OwnShared::new(gix::threading::Mutable::new(repo_progress));
+                let repo_progress = gix::threading::OwnShared::new(gix::threading::Mutable::new(
+                    repo_progress.add_child("will be changed"),
+                ));
                 gix::parallel::in_parallel_with_slice(
                     &mut repos,
                     Some(threads),
@@ -106,9 +145,11 @@ impl Engine {
                         let shared_repo_progress = repo_progress.clone();
                         let db_path = db_path.clone();
                         move |tid| {
+                            let mut progress = gix::threading::lock(&shared_repo_progress);
                             (
-                                corpus::trace::override_thread_subscriber(db_path.as_str()),
-                                gix::threading::lock(&shared_repo_progress).add_child(format!("{tid}")),
+                                // threaded printing is usually spammy, and lines interleave so it's useless.
+                                corpus::trace::override_thread_subscriber(db_path.as_str(), None, false),
+                                progress.add_child(format!("{tid}")),
                                 rusqlite::Connection::open(&db_path),
                             )
                         }
@@ -154,9 +195,9 @@ impl Engine {
                 gix::threading::lock(&repo_progress).show_throughput(task_start);
             }
 
-            task_progress.inc();
+            repo_progress.inc();
         }
-        task_progress.show_throughput(start);
+        repo_progress.show_throughput(start);
         Ok(())
     }
 
@@ -166,13 +207,21 @@ impl Engine {
         Ok((corpus_path, corpus_id))
     }
 
-    fn find_repos(&mut self, corpus_path: &Path, corpus_id: db::Id) -> anyhow::Result<Vec<db::Repo>> {
-        self.progress.set_name("query db-repos");
-        self.progress.init(None, gix::progress::count("repos"));
+    fn find_repos(
+        &mut self,
+        corpus_path: &Path,
+        corpus_id: db::Id,
+        sql_suffix: Option<&str>,
+    ) -> anyhow::Result<Vec<db::Repo>> {
+        self.state.progress.set_name("query db-repos");
+        self.state.progress.init(None, gix::progress::count("repos"));
 
         Ok(self
             .con
-            .prepare("SELECT id, rela_path, odb_size, num_objects, num_references FROM repository WHERE corpus = ?1")?
+            .prepare(&format!(
+                "SELECT id, rela_path, odb_size, num_objects, num_references FROM repository WHERE corpus = ?1 {}",
+                sql_suffix.unwrap_or_default()
+            ))?
             .query_map([corpus_id], |r| {
                 Ok(db::Repo {
                     id: r.get(0)?,
@@ -182,17 +231,17 @@ impl Engine {
                     num_references: r.get(4)?,
                 })
             })?
-            .inspect(|_| self.progress.inc())
+            .inspect(|_| self.state.progress.inc())
             .collect::<Result<_, _>>()?)
     }
 
     fn refresh_repos(&mut self, corpus_path: &Path, corpus_id: db::Id) -> anyhow::Result<Vec<db::Repo>> {
         let start = Instant::now();
-        self.progress.set_name("refresh");
-        self.progress.init(None, gix::progress::count("repos"));
+        self.state.progress.set_name("refresh");
+        self.state.progress.init(None, gix::progress::count("repos"));
 
         let repos = std::thread::scope({
-            let progress = &mut self.progress;
+            let progress = &mut self.state.progress;
             let con = &mut self.con;
             |scope| -> anyhow::Result<_> {
                 let threads = std::thread::available_parallelism()
@@ -264,13 +313,23 @@ impl Engine {
         Ok(repos)
     }
 
-    fn find_repos_or_insert(&mut self, corpus_path: &Path, corpus_id: db::Id) -> anyhow::Result<Vec<db::Repo>> {
+    fn find_repos_or_insert(
+        &mut self,
+        corpus_path: &Path,
+        corpus_id: db::Id,
+        sql_suffix: Option<String>,
+    ) -> anyhow::Result<Vec<db::Repo>> {
         let start = Instant::now();
-        let repos = self.find_repos(corpus_path, corpus_id)?;
+        let repos = self.find_repos(corpus_path, corpus_id, sql_suffix.as_deref())?;
         if repos.is_empty() {
-            self.refresh_repos(corpus_path, corpus_id)
+            let res = self.refresh_repos(corpus_path, corpus_id);
+            if sql_suffix.is_some() {
+                self.find_repos(corpus_path, corpus_id, sql_suffix.as_deref())
+            } else {
+                res
+            }
         } else {
-            self.progress.show_throughput(start);
+            self.state.progress.show_throughput(start);
             Ok(repos)
         }
     }

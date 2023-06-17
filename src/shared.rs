@@ -108,8 +108,8 @@ pub mod pretty {
                 move |tree: &tracing_forest::tree::Tree| -> Result<String, std::fmt::Error> {
                     use gix::Progress;
                     use tracing_forest::Formatter;
-                    let tree = tracing_forest::printer::Pretty.fmt(tree)?;
                     let progress = &mut progress.lock().unwrap();
+                    let tree = tracing_forest::printer::Pretty.fmt(tree)?;
                     if reverse_lines {
                         for line in tree.lines().rev() {
                             progress.info(line);
@@ -165,10 +165,8 @@ pub mod pretty {
                 let mut out = Vec::<u8>::new();
                 let mut err = Vec::<u8>::new();
 
-                let span = gix::trace::coarse!("run");
-                let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut err);
-                #[cfg(feature = "tracing")]
-                drop(span);
+                let res = gix::trace::coarse!("run")
+                    .into_scope(|| run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut err));
 
                 handle.shutdown_and_wait();
                 std::io::Write::write_all(&mut stdout(), &out)?;
@@ -219,10 +217,9 @@ pub mod pretty {
                         // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
                         // We know that the printing happens at the end, so this is fine.
                         let mut out = Vec::new();
-                        let span = gix::trace::coarse!("run", name = name);
-                        let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr());
-                        #[cfg(feature = "tracing")]
-                        drop(span);
+                        let res = gix::trace::coarse!("run", name = name).into_scope(|| {
+                            run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr())
+                        });
                         tx.send(Event::ComputationDone(res, out)).ok();
                     }
                 });

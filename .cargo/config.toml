@@ -2,7 +2,6 @@
 rustflags = [
     # Rustc lints
     # "-W", "warning_name"
-    "-A", "clippy::let_unit_value", # in 'small' builds this triggers as the `span!` macro yields `let x = ()`. No way to prevent it in macro apparently.
 
     # Clippy lints
     "-W", "clippy::cloned_instead_of_copied",

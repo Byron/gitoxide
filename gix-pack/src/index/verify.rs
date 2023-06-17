@@ -15,6 +15,8 @@ pub mod integrity {
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error("Reserialization of an object failed")]
+        Io(#[from] std::io::Error),
         #[error("The fan at index {index} is out of order as it's larger then the following value.")]
         Fan { index: usize },
         #[error("{kind} object {id} could not be decoded")]
@@ -252,9 +254,7 @@ impl index::File {
                     })?;
                     if let Mode::HashCrc32DecodeEncode = verify_mode {
                         encode_buf.clear();
-                        object
-                            .write_to(&mut *encode_buf)
-                            .expect("writing to a memory buffer never fails");
+                        object.write_to(&mut *encode_buf)?;
                         if encode_buf.as_slice() != buf {
                             let mut should_return_error = true;
                             if let Tree = object_kind {
