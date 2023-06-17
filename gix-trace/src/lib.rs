@@ -37,6 +37,13 @@ mod enabled;
 #[cfg(feature = "tracing")]
 pub use enabled::Span;
 
+impl Span {
+    /// Execute `f` in with this span active, consuming it.
+    pub fn into_scope<T>(self, f: impl FnOnce() -> T) -> T {
+        f()
+    }
+}
+
 #[cfg(feature = "tracing")]
 #[doc(hidden)]
 pub use enabled::{field, metadata, MetaOnlyCallsite, Metadata};
@@ -44,7 +51,7 @@ pub use enabled::{field, metadata, MetaOnlyCallsite, Metadata};
 #[cfg(not(feature = "tracing"))]
 mod disabled;
 #[cfg(not(feature = "tracing"))]
-pub use disabled::Unit;
+pub use disabled::Span;
 
 /// Create a new [coarse][Level::Coarse] span.
 #[macro_export]

@@ -4,6 +4,7 @@ use tracing_core::{dispatcher::get_default as with_dispatcher, span::Id, Dispatc
 pub use tracing_core::{field, metadata, Metadata};
 
 /// An entered span which will exit on drop.
+#[derive(Clone)]
 pub struct Span {
     id: Option<(Id, Dispatch)>,
 }

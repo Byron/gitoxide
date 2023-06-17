@@ -1,12 +1,13 @@
 /// A workaround for a clippy warning
 #[doc(hidden)]
-pub struct Unit;
+#[derive(Clone)]
+pub struct Span;
 
 /// A macro to create a span.
 #[macro_export]
 macro_rules! span {
     (target: $target:expr, $lvl:expr, $name:expr, $($fields:tt)*) => {
-        $crate::Unit
+        $crate::Span
     };
     (target: $target:expr, $lvl:expr, $name:expr) => {
         $crate::span!(target: $target, $lvl, $name,)

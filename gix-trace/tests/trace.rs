@@ -2,7 +2,8 @@ use gix_trace::{coarse, detail, span};
 #[test]
 fn span() {
     let _x = span!(gix_trace::Level::Coarse, "hello");
-    span!(gix_trace::Level::Coarse, "hello", x = "value", y = 42);
+    let fourty_two = span!(gix_trace::Level::Coarse, "hello", x = "value", y = 42).into_scope(|| 42);
+    assert_eq!(fourty_two, 42);
     span!(target: "other", gix_trace::Level::Coarse, "hello", x = "value", y = 42);
 }
 
