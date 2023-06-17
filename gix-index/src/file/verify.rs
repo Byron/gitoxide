@@ -23,6 +23,7 @@ pub use error::Error;
 impl File {
     /// Verify the integrity of the index to assure its consistency.
     pub fn verify_integrity(&self) -> Result<(), Error> {
+        let _span = gix_features::trace::coarse!("gix_index::File::verify_integrity()");
         let checksum = self.checksum.ok_or(Error::NoChecksum)?;
         let num_bytes_to_hash = self.path.metadata()?.len() - checksum.as_bytes().len() as u64;
         let should_interrupt = AtomicBool::new(false);

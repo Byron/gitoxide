@@ -76,7 +76,7 @@ impl Engine {
         task_progress.init(Some(tasks.len()), gix::progress::count("tasks"));
         let threads = gix::parallel::num_threads(threads);
         let db_path = self.con.path().expect("opened from path on disk").to_owned();
-        for (task_id, task) in tasks {
+        'tasks_loop: for (task_id, task) in tasks {
             let task_start = Instant::now();
             let mut repo_progress = task_progress.add_child(format!("run '{}'", task.short_name));
             if task.execute_exclusive || threads == 1 || dry_run {
@@ -96,7 +96,7 @@ impl Engine {
                     for (_, task) in tasks {
                         task_progress.info(format!("task '{}' ({})", task.description, task.short_name))
                     }
-                    continue;
+                    break 'tasks_loop;
                 }
                 repo_progress.init(Some(repos.len()), gix::progress::count("repos"));
                 let mut run_progress = repo_progress.add_child("set later");
