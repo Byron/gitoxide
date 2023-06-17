@@ -173,12 +173,25 @@ impl Engine {
                 .con
                 .query_row(
                     "INSERT INTO gitoxide_version (version) VALUES (?1) ON CONFLICT DO UPDATE SET version = version RETURNING id",
-                    [&self.gitoxide_version],
+                    [&self.state.gitoxide_version],
                     |r| r.get(0),
                 )?)
     }
-    pub(crate) fn tasks_or_insert(&self) -> anyhow::Result<Vec<(Id, &'static super::Task)>> {
-        let mut out: Vec<_> = super::run::ALL.iter().map(|task| (0, task)).collect();
+    pub(crate) fn tasks_or_insert(
+        &self,
+        allowed_short_names: &[String],
+    ) -> anyhow::Result<Vec<(Id, &'static super::Task)>> {
+        let mut out: Vec<_> = super::run::ALL
+            .iter()
+            .filter(|task| {
+                if allowed_short_names.is_empty() {
+                    true
+                } else {
+                    allowed_short_names.iter().any(|allowed| task.short_name == allowed)
+                }
+            })
+            .map(|task| (0, task))
+            .collect();
         for (id, task) in &mut out {
             *id = self.con.query_row(
                 "INSERT INTO task (short_name, description) VALUES (?1, ?2) ON CONFLICT DO UPDATE SET short_name = short_name, description = ?2 RETURNING id",

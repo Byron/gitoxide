@@ -148,13 +148,19 @@ pub fn main() -> Result<()> {
                 move |progress, _out, _err| {
                     let mut engine = core::corpus::Engine::open_or_create(
                         db,
-                        env!("GITOXIDE_VERSION").into(),
-                        progress,
-                        trace,
-                        reverse_trace_lines,
+                        core::corpus::engine::State {
+                            gitoxide_version: env!("GITOXIDE_VERSION").into(),
+                            progress,
+                            trace_to_progress: trace,
+                            reverse_trace_lines,
+                        },
                     )?;
                     match cmd {
-                        crate::plumbing::options::corpus::SubCommands::Run => engine.run(path, thread_limit),
+                        crate::plumbing::options::corpus::SubCommands::Run {
+                            dry_run,
+                            repo_sql_suffix,
+                            include_task,
+                        } => engine.run(path, thread_limit, dry_run, repo_sql_suffix, include_task),
                         crate::plumbing::options::corpus::SubCommands::Refresh => engine.refresh(path),
                     }
                 },

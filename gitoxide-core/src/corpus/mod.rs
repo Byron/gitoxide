@@ -1,12 +1,8 @@
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 0..=3;
-pub(crate) type Progress = gix::progress::DoOrDiscard<gix::progress::prodash::tree::Item>;
 
 pub struct Engine {
-    progress: Progress,
     con: rusqlite::Connection,
-    gitoxide_version: String,
-    trace_to_progress: bool,
-    reverse_trace_lines: bool,
+    state: engine::State,
 }
 
 pub struct RunOutcome {
@@ -15,7 +11,7 @@ pub struct RunOutcome {
 }
 
 pub(crate) mod db;
-pub(crate) mod engine;
+pub mod engine;
 
 /// Contains all information necessary to run a task.
 pub(crate) struct Task {

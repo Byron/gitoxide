@@ -8,7 +8,7 @@ impl Task {
         &self,
         run: &mut Run,
         repo: &Path,
-        progress: &mut corpus::Progress,
+        progress: &mut corpus::engine::ProgressItem,
         threads: Option<usize>,
         should_interrupt: &AtomicBool,
     ) {
@@ -26,7 +26,7 @@ pub(crate) trait Execute {
     fn execute(
         &self,
         repo: &Path,
-        progress: &mut corpus::Progress,
+        progress: &mut corpus::engine::ProgressItem,
         threads: Option<usize>,
         should_interrupt: &AtomicBool,
     ) -> anyhow::Result<()>;
@@ -45,7 +45,7 @@ impl Execute for OpenRepo {
     fn execute(
         &self,
         repo: &Path,
-        _progress: &mut corpus::Progress,
+        _progress: &mut corpus::engine::ProgressItem,
         _threads: Option<usize>,
         _should_interrupt: &AtomicBool,
     ) -> anyhow::Result<()> {
