@@ -207,12 +207,12 @@ fn digest_statistics(traverse::Outcome { roots, children }: traverse::Outcome<En
         average.compressed_size += item.data.compressed_size as usize;
         average.object_size += item.data.object_size;
         average.num_deltas += item.data.level as u32;
-        use gix_object::Kind::*;
+        use gix_object::Kind;
         match item.data.object_kind {
-            Blob => res.num_blobs += 1,
-            Tree => res.num_trees += 1,
-            Tag => res.num_tags += 1,
-            Commit => res.num_commits += 1,
+            Kind::Blob => res.num_blobs += 1,
+            Kind::Tree => res.num_trees += 1,
+            Kind::Tag => res.num_tags += 1,
+            Kind::Commit => res.num_commits += 1,
         };
     }
 

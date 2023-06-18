@@ -181,9 +181,9 @@ impl File {
         resolve: impl Fn(&gix_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
         delta_cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
-        use crate::data::entry::Header::*;
+        use crate::data::entry::Header;
         match entry.header {
-            Tree | Blob | Commit | Tag => {
+            Header::Tree | Header::Blob | Header::Commit | Header::Tag => {
                 out.resize(
                     entry
                         .decompressed_size
@@ -199,7 +199,7 @@ impl File {
                     )
                 })
             }
-            OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, out, delta_cache),
+            Header::OfsDelta { .. } | Header::RefDelta { .. } => self.resolve_deltas(entry, resolve, out, delta_cache),
         }
     }
 

@@ -68,17 +68,17 @@ pub(crate) mod impl_ {
                 let entry = entry?;
                 match entry.mode {
                     EntryMode::Tree => {
-                        use crate::tree::visit::Action::*;
+                        use crate::tree::visit::Action;
                         delegate.push_path_component(entry.filename);
                         let action = delegate.visit_tree(&entry);
                         match action {
-                            Skip => {}
-                            Continue => {
+                            Action::Skip => {}
+                            Action::Continue => {
                                 delegate.pop_path_component();
                                 delegate.push_back_tracked_path_component(entry.filename);
                                 state.next.push_back(entry.oid.to_owned())
                             }
-                            Cancel => {
+                            Action::Cancel => {
                                 return Err(Error::Cancelled);
                             }
                         }

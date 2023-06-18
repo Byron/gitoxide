@@ -1,14 +1,19 @@
-use std::collections::{hash_map::Entry, HashMap};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+};
 
-use gix::bstr::BStr;
-use gix::odb::FindExt;
+use gix::{bstr::BStr, odb::FindExt};
 use itertools::Itertools;
 use smallvec::SmallVec;
 
-use crate::hours::util::{add_lines, remove_lines};
-use crate::hours::{CommitIdx, FileStats, LineStats, WorkByEmail, WorkByPerson};
+use crate::hours::{
+    util::{add_lines, remove_lines},
+    CommitIdx, FileStats, LineStats, WorkByEmail, WorkByPerson,
+};
 
 const MINUTES_PER_HOUR: f32 = 60.0;
 pub const HOURS_PER_WORKDAY: f32 = 8.0;
@@ -133,27 +138,27 @@ pub fn spawn_tree_delta_threads<'scope>(
                                 .track_filename()
                                 .track_rewrites(None)
                                 .for_each_to_obtain_tree(&to, |change| {
-                                    use gix::object::tree::diff::change::Event::*;
+                                    use gix::object::tree::diff::change::Event;
                                     if let Some(c) = change_counter.as_ref() {
                                         c.fetch_add(1, Ordering::SeqCst);
                                     }
                                     match change.event {
-                                        Rewrite { .. } => {
+                                        Event::Rewrite { .. } => {
                                             unreachable!("we turned that off")
                                         }
-                                        Addition { entry_mode, id } => {
+                                        Event::Addition { entry_mode, id } => {
                                             if entry_mode.is_no_tree() {
                                                 files.added += 1;
                                                 add_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
                                             }
                                         }
-                                        Deletion { entry_mode, id } => {
+                                        Event::Deletion { entry_mode, id } => {
                                             if entry_mode.is_no_tree() {
                                                 files.removed += 1;
                                                 remove_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
                                             }
                                         }
-                                        Modification {
+                                        Event::Modification {
                                             entry_mode,
                                             previous_entry_mode,
                                             id,

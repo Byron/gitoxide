@@ -1,14 +1,20 @@
-use super::db;
-use crate::corpus;
-use crate::corpus::{Engine, Task};
-use crate::organize::find_git_repository_workdirs;
+use std::{
+    path::{Path, PathBuf},
+    sync::atomic::Ordering,
+    time::{Duration, Instant},
+};
+
 use anyhow::{bail, Context};
 use bytesize::ByteSize;
 use gix::Progress;
 use rusqlite::params;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::Ordering;
-use std::time::{Duration, Instant};
+
+use super::db;
+use crate::{
+    corpus,
+    corpus::{Engine, Task},
+    organize::find_git_repository_workdirs,
+};
 
 pub type ProgressItem = gix::progress::DoOrDiscard<gix::progress::prodash::tree::Item>;
 

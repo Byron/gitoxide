@@ -31,33 +31,32 @@ pub enum EntryMode {
 impl EntryMode {
     /// Return true if this entry mode represents a Tree/directory
     pub fn is_tree(&self) -> bool {
-        *self == EntryMode::Tree
+        *self == Self::Tree
     }
 
     /// Return true if this entry mode represents anything BUT Tree/directory
     pub fn is_no_tree(&self) -> bool {
-        *self != EntryMode::Tree
+        *self != Self::Tree
     }
 
     /// Return true if the entry is any kind of blob.
     pub fn is_blob(&self) -> bool {
-        matches!(self, EntryMode::Blob | EntryMode::BlobExecutable)
+        matches!(self, Self::Blob | Self::BlobExecutable)
     }
 
     /// Return true if the entry is any kind of blob or symlink.
     pub fn is_blob_or_symlink(&self) -> bool {
-        matches!(self, EntryMode::Blob | EntryMode::BlobExecutable | EntryMode::Link)
+        matches!(self, Self::Blob | Self::BlobExecutable | Self::Link)
     }
 
     /// Represent the mode as descriptive string.
     pub fn as_str(&self) -> &'static str {
-        use EntryMode::*;
         match self {
-            Tree => "tree",
-            Blob => "blob",
-            BlobExecutable => "exe",
-            Link => "link",
-            Commit => "commit",
+            Self::Tree => "tree",
+            Self::Blob => "blob",
+            Self::BlobExecutable => "exe",
+            Self::Link => "link",
+            Self::Commit => "commit",
         }
     }
 }
@@ -129,13 +128,12 @@ impl Ord for Entry {
 impl EntryMode {
     /// Return the representation as used in the git internal format.
     pub fn as_bytes(&self) -> &'static [u8] {
-        use EntryMode::*;
         match self {
-            Tree => b"40000",
-            Blob => b"100644",
-            BlobExecutable => b"100755",
-            Link => b"120000",
-            Commit => b"160000",
+            Self::Tree => b"40000",
+            Self::Blob => b"100644",
+            Self::BlobExecutable => b"100755",
+            Self::Link => b"120000",
+            Self::Commit => b"160000",
         }
     }
 }

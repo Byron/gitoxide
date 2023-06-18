@@ -11,7 +11,7 @@ enum Error {
 }
 
 pub fn function(repo: gix::Repository, action: gix::credentials::program::main::Action) -> anyhow::Result<()> {
-    use gix::credentials::program::main::Action::*;
+    use gix::credentials::program::main::Action;
     gix::credentials::program::main(
         Some(action.as_str().into()),
         std::io::stdin(),
@@ -23,9 +23,9 @@ pub fn function(repo: gix::Repository, action: gix::credentials::program::main::
             cascade
                 .invoke(
                     match action {
-                        Get => gix::credentials::helper::Action::Get(context),
-                        Erase => gix::credentials::helper::Action::Erase(context.to_bstring()),
-                        Store => gix::credentials::helper::Action::Store(context.to_bstring()),
+                        Action::Get => gix::credentials::helper::Action::Get(context),
+                        Action::Erase => gix::credentials::helper::Action::Erase(context.to_bstring()),
+                        Action::Store => gix::credentials::helper::Action::Store(context.to_bstring()),
                     },
                     prompt_options,
                 )

@@ -76,10 +76,13 @@ pub(crate) mod function {
                     move |chunk, buf| {
                         let chunk_size = chunk.len();
                         for count in chunk {
-                            use crate::data::output::count::PackLocation::*;
+                            use crate::data::output::count::PackLocation;
                             match count.entry_pack_location {
-                                LookedUp(_) => continue,
-                                NotLookedUp => count.entry_pack_location = LookedUp(db.location_by_oid(count.id, buf)),
+                                PackLocation::LookedUp(_) => continue,
+                                PackLocation::NotLookedUp => {
+                                    count.entry_pack_location =
+                                        PackLocation::LookedUp(db.location_by_oid(count.id, buf))
+                                }
                             }
                         }
                         progress.lock().inc_by(chunk_size);
@@ -97,12 +100,12 @@ pub(crate) mod function {
                 progress.init(Some(counts.len()), gix_features::progress::count("counts"));
                 let start = std::time::Instant::now();
 
-                use crate::data::output::count::PackLocation::*;
+                use crate::data::output::count::PackLocation;
                 counts.sort_by(|lhs, rhs| match (&lhs.entry_pack_location, &rhs.entry_pack_location) {
-                    (LookedUp(None), LookedUp(None)) => Ordering::Equal,
-                    (LookedUp(Some(_)), LookedUp(None)) => Ordering::Greater,
-                    (LookedUp(None), LookedUp(Some(_))) => Ordering::Less,
-                    (LookedUp(Some(lhs)), LookedUp(Some(rhs))) => lhs
+                    (PackLocation::LookedUp(None), PackLocation::LookedUp(None)) => Ordering::Equal,
+                    (PackLocation::LookedUp(Some(_)), PackLocation::LookedUp(None)) => Ordering::Greater,
+                    (PackLocation::LookedUp(None), PackLocation::LookedUp(Some(_))) => Ordering::Less,
+                    (PackLocation::LookedUp(Some(lhs)), PackLocation::LookedUp(Some(rhs))) => lhs
                         .pack_id
                         .cmp(&rhs.pack_id)
                         .then(lhs.pack_offset.cmp(&rhs.pack_offset)),

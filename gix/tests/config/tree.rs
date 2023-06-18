@@ -767,18 +767,18 @@ mod http {
 
     #[test]
     fn ssl_version() -> crate::Result {
-        use gix_transport::client::http::options::SslVersion::*;
+        use gix_transport::client::http::options::SslVersion;
 
         for (actual, expected) in [
-            ("default", Default),
-            ("", Default),
-            ("tlsv1", TlsV1),
-            ("sslv2", SslV2),
-            ("sslv3", SslV3),
-            ("tlsv1.0", TlsV1_0),
-            ("tlsv1.1", TlsV1_1),
-            ("tlsv1.2", TlsV1_2),
-            ("tlsv1.3", TlsV1_3),
+            ("default", SslVersion::Default),
+            ("", SslVersion::Default),
+            ("tlsv1", SslVersion::TlsV1),
+            ("sslv2", SslVersion::SslV2),
+            ("sslv3", SslVersion::SslV3),
+            ("tlsv1.0", SslVersion::TlsV1_0),
+            ("tlsv1.1", SslVersion::TlsV1_1),
+            ("tlsv1.2", SslVersion::TlsV1_2),
+            ("tlsv1.3", SslVersion::TlsV1_3),
         ] {
             assert_eq!(Http::SSL_VERSION.try_into_ssl_version(bcow(actual))?, expected);
             assert!(Http::SSL_VERSION.validate(actual.into()).is_ok());
@@ -797,13 +797,13 @@ mod http {
 
     #[test]
     fn proxy_auth_method() -> crate::Result {
-        use gix_transport::client::http::options::ProxyAuthMethod::*;
+        use gix_transport::client::http::options::ProxyAuthMethod;
         for (actual, expected) in [
-            ("anyauth", AnyAuth),
-            ("basic", Basic),
-            ("digest", Digest),
-            ("negotiate", Negotiate),
-            ("ntlm", Ntlm),
+            ("anyauth", ProxyAuthMethod::AnyAuth),
+            ("basic", ProxyAuthMethod::Basic),
+            ("digest", ProxyAuthMethod::Digest),
+            ("negotiate", ProxyAuthMethod::Negotiate),
+            ("ntlm", ProxyAuthMethod::Ntlm),
         ] {
             assert_eq!(
                 Http::PROXY_AUTH_METHOD.try_into_proxy_auth_method(bcow(actual))?,

@@ -83,11 +83,11 @@ impl File {
             let mid = (lower_bound + upper_bound) / 2;
             let mid_sha = self.id_at(file::Position(mid));
 
-            use std::cmp::Ordering::*;
+            use std::cmp::Ordering;
             match id.cmp(mid_sha) {
-                Less => upper_bound = mid,
-                Equal => return Some(file::Position(mid)),
-                Greater => lower_bound = mid + 1,
+                Ordering::Less => upper_bound = mid,
+                Ordering::Equal => return Some(file::Position(mid)),
+                Ordering::Greater => lower_bound = mid + 1,
             }
         }
         None

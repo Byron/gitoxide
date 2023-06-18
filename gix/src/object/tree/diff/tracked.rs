@@ -29,10 +29,12 @@ impl Item {
         backing[self.location.clone()].as_ref()
     }
     fn entry_mode_compatible(&self, mode: EntryMode) -> bool {
-        use EntryMode::*;
         matches!(
             (mode, self.change.entry_mode()),
-            (Blob | BlobExecutable, Blob | BlobExecutable) | (Link, Link)
+            (
+                EntryMode::Blob | EntryMode::BlobExecutable,
+                EntryMode::Blob | EntryMode::BlobExecutable
+            ) | (EntryMode::Link, EntryMode::Link)
         )
     }
 

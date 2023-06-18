@@ -51,13 +51,12 @@ impl std::str::FromStr for SafetyCheck {
 
 impl From<SafetyCheck> for pack::index::traverse::SafetyCheck {
     fn from(v: SafetyCheck) -> Self {
-        use pack::index::traverse::SafetyCheck::*;
         match v {
-            SafetyCheck::All => All,
-            SafetyCheck::SkipFileChecksumVerification => SkipFileChecksumVerification,
-            SafetyCheck::SkipFileAndObjectChecksumVerification => SkipFileAndObjectChecksumVerification,
+            SafetyCheck::All => Self::All,
+            SafetyCheck::SkipFileChecksumVerification => Self::SkipFileChecksumVerification,
+            SafetyCheck::SkipFileAndObjectChecksumVerification => Self::SkipFileAndObjectChecksumVerification,
             SafetyCheck::SkipFileAndObjectChecksumVerificationAndNoAbortOnDecodeError => {
-                SkipFileAndObjectChecksumVerificationAndNoAbortOnDecodeError
+                Self::SkipFileAndObjectChecksumVerificationAndNoAbortOnDecodeError
             }
         }
     }

@@ -360,16 +360,15 @@ pub mod decode {
     ///
     /// `size` is the uncompressed size of the payload in bytes.
     pub fn loose_header(input: &[u8]) -> Result<(super::Kind, usize, usize), LooseHeaderDecodeError> {
-        use LooseHeaderDecodeError::*;
-        let kind_end = input.find_byte(0x20).ok_or(InvalidHeader {
+        let kind_end = input.find_byte(0x20).ok_or(LooseHeaderDecodeError::InvalidHeader {
             message: "Expected '<type> <size>'",
         })?;
         let kind = super::Kind::from_bytes(&input[..kind_end])?;
-        let size_end = input.find_byte(0x0).ok_or(InvalidHeader {
+        let size_end = input.find_byte(0x0).ok_or(LooseHeaderDecodeError::InvalidHeader {
             message: "Did not find 0 byte in header",
         })?;
         let size_bytes = &input[kind_end + 1..size_end];
-        let size = btoi::btoi(size_bytes).map_err(|source| ParseIntegerError {
+        let size = btoi::btoi(size_bytes).map_err(|source| LooseHeaderDecodeError::ParseIntegerError {
             source,
             message: "Object size in header could not be parsed",
             number: size_bytes.into(),

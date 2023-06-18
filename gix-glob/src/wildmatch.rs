@@ -34,7 +34,6 @@ pub(crate) mod function {
     const NEGATE_CLASS: u8 = b'!';
 
     fn match_recursive(pattern: &BStr, text: &BStr, mode: Mode) -> Result {
-        use self::Result::*;
         let possibly_lowercase = |c: &u8| {
             if mode.contains(Mode::IGNORE_CASE) {
                 c.to_ascii_lowercase()
@@ -48,7 +47,7 @@ pub(crate) mod function {
         while let Some((mut p_idx, mut p_ch)) = p.next() {
             let (mut t_idx, mut t_ch) = match t.next() {
                 Some(c) => c,
-                None if p_ch != STAR => return AbortAll,
+                None if p_ch != STAR => return Result::AbortAll,
                 None => (text.len(), 0),
             };
 
@@ -56,18 +55,18 @@ pub(crate) mod function {
                 match p.next() {
                     Some((_p_idx, p_ch)) => {
                         if p_ch != t_ch {
-                            return NoMatch;
+                            return Result::NoMatch;
                         } else {
                             continue;
                         }
                     }
-                    None => return NoMatch,
+                    None => return Result::NoMatch,
                 };
             }
             match p_ch {
                 b'?' => {
                     if mode.contains(Mode::NO_MATCH_SLASH_LITERAL) && t_ch == SLASH {
-                        return NoMatch;
+                        return Result::NoMatch;
                     } else {
                         continue;
                     }
@@ -88,11 +87,11 @@ pub(crate) mod function {
                                         c == SLASH || (c == BACKSLASH && p.peek().map(|t| t.1) == Some(SLASH))
                                     })
                                 {
-                                    if next.map_or(NoMatch, |(idx, _)| {
+                                    if next.map_or(Result::NoMatch, |(idx, _)| {
                                         match_recursive(pattern[idx + 1..].as_bstr(), text[t_idx..].as_bstr(), mode)
-                                    }) == Match
+                                    }) == Result::Match
                                     {
-                                        return Match;
+                                        return Result::Match;
                                     }
                                     match_slash = true;
                                 } else {
@@ -105,9 +104,9 @@ pub(crate) mod function {
                             match next {
                                 None => {
                                     return if !match_slash && text[t_idx..].contains(&SLASH) {
-                                        NoMatch
+                                        Result::NoMatch
                                     } else {
-                                        Match
+                                        Result::Match
                                     };
                                 }
                                 Some((next_p_idx, next_p_ch)) => {
@@ -119,7 +118,7 @@ pub(crate) mod function {
                                                 for _ in t.by_ref().take(distance_to_slash) {}
                                                 continue;
                                             }
-                                            None => return NoMatch,
+                                            None => return Result::NoMatch,
                                         }
                                     }
                                 }
@@ -127,9 +126,9 @@ pub(crate) mod function {
                         }
                         None => {
                             return if !match_slash && text[t_idx..].contains(&SLASH) {
-                                NoMatch
+                                Result::NoMatch
                             } else {
-                                Match
+                                Result::Match
                             }
                         }
                     }
@@ -149,23 +148,23 @@ pub(crate) mod function {
                                 };
                             }
                             if t_ch != p_ch {
-                                return NoMatch;
+                                return Result::NoMatch;
                             }
                         }
                         let res = match_recursive(pattern[p_idx..].as_bstr(), text[t_idx..].as_bstr(), mode);
-                        if res != NoMatch {
-                            if !match_slash || res != AbortToStarStar {
+                        if res != Result::NoMatch {
+                            if !match_slash || res != Result::AbortToStarStar {
                                 return res;
                             }
                         } else if !match_slash && t_ch == SLASH {
-                            return AbortToStarStar;
+                            return Result::AbortToStarStar;
                         }
                         match t.next() {
                             Some(t) => {
                                 t_idx = t.0;
                                 t_ch = t.1;
                             }
-                            None => break AbortAll,
+                            None => break Result::AbortAll,
                         };
                     };
                 }
@@ -175,7 +174,7 @@ pub(crate) mod function {
                             p_idx = t.0;
                             p_ch = t.1;
                         }
-                        None => return AbortAll,
+                        None => return Result::AbortAll,
                     };
 
                     if p_ch == b'^' {
@@ -187,7 +186,7 @@ pub(crate) mod function {
                     let mut matched = false;
                     loop {
                         match next {
-                            None => return AbortAll,
+                            None => return Result::AbortAll,
                             Some((p_idx, mut p_ch)) => match p_ch {
                                 BACKSLASH => match p.next() {
                                     Some((_, p_ch)) => {
@@ -197,7 +196,7 @@ pub(crate) mod function {
                                             prev_p_ch = p_ch;
                                         }
                                     }
-                                    None => return AbortAll,
+                                    None => return Result::AbortAll,
                                 },
                                 b'-' if prev_p_ch != 0
                                     && p.peek().is_some()
@@ -207,7 +206,7 @@ pub(crate) mod function {
                                     if p_ch == BACKSLASH {
                                         p_ch = match p.next() {
                                             Some(t) => t.1,
-                                            None => return AbortAll,
+                                            None => return Result::AbortAll,
                                         };
                                     }
                                     if t_ch <= p_ch && t_ch >= prev_p_ch {
@@ -231,7 +230,7 @@ pub(crate) mod function {
                                     }
                                     let closing_bracket_idx = match p.next() {
                                         Some((idx, _)) => idx,
-                                        None => return AbortAll,
+                                        None => return Result::AbortAll,
                                     };
                                     const BRACKET__COLON__BRACKET: usize = 3;
                                     if closing_bracket_idx - p_idx < BRACKET__COLON__BRACKET
@@ -311,7 +310,7 @@ pub(crate) mod function {
                                                     matched = true;
                                                 }
                                             }
-                                            _ => return AbortAll,
+                                            _ => return Result::AbortAll,
                                         };
                                         prev_p_ch = 0;
                                     }
@@ -330,20 +329,20 @@ pub(crate) mod function {
                         }
                     }
                     if matched == negated || mode.contains(Mode::NO_MATCH_SLASH_LITERAL) && t_ch == SLASH {
-                        return NoMatch;
+                        return Result::NoMatch;
                     }
                     continue;
                 }
                 non_glob_ch => {
                     if non_glob_ch != t_ch {
-                        return NoMatch;
+                        return Result::NoMatch;
                     } else {
                         continue;
                     }
                 }
             }
         }
-        t.next().map_or(Match, |_| NoMatch)
+        t.next().map_or(Result::Match, |_| Result::NoMatch)
     }
 
     /// Employ pattern matching to see if `value` matches `pattern`.

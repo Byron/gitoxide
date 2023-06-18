@@ -1,4 +1,4 @@
-use std::{mem::size_of, ops::Range};
+use std::{cmp::Ordering, mem::size_of, ops::Range};
 
 use crate::{
     data,
@@ -218,17 +218,16 @@ pub(crate) fn lookup_prefix<'a>(
         let mid = (lower_bound + upper_bound) / 2;
         let mid_sha = oid_at_index(mid);
 
-        use std::cmp::Ordering::*;
         match prefix.cmp_oid(mid_sha) {
-            Less => upper_bound = mid,
-            Equal => match candidates {
+            Ordering::Less => upper_bound = mid,
+            Ordering::Equal => match candidates {
                 Some(candidates) => {
                     let first_past_entry = ((0..mid).rev())
-                        .take_while(|prev| prefix.cmp_oid(oid_at_index(*prev)) == Equal)
+                        .take_while(|prev| prefix.cmp_oid(oid_at_index(*prev)) == Ordering::Equal)
                         .last();
 
                     let last_future_entry = ((mid + 1)..num_objects)
-                        .take_while(|next| prefix.cmp_oid(oid_at_index(*next)) == Equal)
+                        .take_while(|next| prefix.cmp_oid(oid_at_index(*next)) == Ordering::Equal)
                         .last();
 
                     *candidates = match (first_past_entry, last_future_entry) {
@@ -246,16 +245,16 @@ pub(crate) fn lookup_prefix<'a>(
                 }
                 None => {
                     let next = mid + 1;
-                    if next < num_objects && prefix.cmp_oid(oid_at_index(next)) == Equal {
+                    if next < num_objects && prefix.cmp_oid(oid_at_index(next)) == Ordering::Equal {
                         return Some(Err(()));
                     }
-                    if mid != 0 && prefix.cmp_oid(oid_at_index(mid - 1)) == Equal {
+                    if mid != 0 && prefix.cmp_oid(oid_at_index(mid - 1)) == Ordering::Equal {
                         return Some(Err(()));
                     }
                     return Some(Ok(mid));
                 }
             },
-            Greater => lower_bound = mid + 1,
+            Ordering::Greater => lower_bound = mid + 1,
         }
     }
 
@@ -279,11 +278,10 @@ pub(crate) fn lookup<'a>(
         let mid = (lower_bound + upper_bound) / 2;
         let mid_sha = oid_at_index(mid);
 
-        use std::cmp::Ordering::*;
         match id.cmp(mid_sha) {
-            Less => upper_bound = mid,
-            Equal => return Some(mid),
-            Greater => lower_bound = mid + 1,
+            Ordering::Less => upper_bound = mid,
+            Ordering::Equal => return Some(mid),
+            Ordering::Greater => lower_bound = mid + 1,
         }
     }
     None

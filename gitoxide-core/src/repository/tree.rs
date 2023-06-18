@@ -89,7 +89,7 @@ mod entries {
         }
 
         fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> Action {
-            use gix::objs::tree::EntryMode::*;
+            use gix::objs::tree::EntryMode;
             let size = self
                 .repo
                 .and_then(|repo| repo.find_object(entry.oid).map(|o| o.data.len()).ok());
@@ -101,11 +101,11 @@ mod entries {
             }
 
             match entry.mode {
-                Commit => self.stats.num_submodules += 1,
-                Blob => self.stats.num_blobs += 1,
-                BlobExecutable => self.stats.num_blobs_exec += 1,
-                Link => self.stats.num_links += 1,
-                Tree => unreachable!("BUG"),
+                EntryMode::Commit => self.stats.num_submodules += 1,
+                EntryMode::Blob => self.stats.num_blobs += 1,
+                EntryMode::BlobExecutable => self.stats.num_blobs_exec += 1,
+                EntryMode::Link => self.stats.num_links += 1,
+                EntryMode::Tree => unreachable!("BUG"),
             }
             Action::Continue
         }
@@ -184,16 +184,16 @@ fn format_entry(
     filename: &gix::bstr::BStr,
     size: Option<usize>,
 ) -> std::io::Result<()> {
-    use gix::objs::tree::EntryMode::*;
+    use gix::objs::tree::EntryMode;
     writeln!(
         out,
         "{} {}{} {}",
         match entry.mode {
-            Tree => "TREE",
-            Blob => "BLOB",
-            BlobExecutable => " EXE",
-            Link => "LINK",
-            Commit => "SUBM",
+            EntryMode::Tree => "TREE",
+            EntryMode::Blob => "BLOB",
+            EntryMode::BlobExecutable => " EXE",
+            EntryMode::Link => "LINK",
+            EntryMode::Commit => "SUBM",
         },
         entry.oid,
         size.map_or_else(|| "".into(), |s| Cow::Owned(format!(" {s}"))),

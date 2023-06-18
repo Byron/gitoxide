@@ -15,27 +15,27 @@ impl data::Entry {
     pub fn from_bytes(d: &[u8], pack_offset: data::Offset, hash_len: usize) -> data::Entry {
         let (type_id, size, mut consumed) = parse_header_info(d);
 
-        use crate::data::entry::Header::*;
+        use crate::data::entry::Header;
         let object = match type_id {
             OFS_DELTA => {
                 let (distance, leb_bytes) = leb64(&d[consumed..]);
-                let delta = OfsDelta {
+                let delta = Header::OfsDelta {
                     base_distance: distance,
                 };
                 consumed += leb_bytes;
                 delta
             }
             REF_DELTA => {
-                let delta = RefDelta {
+                let delta = Header::RefDelta {
                     base_id: gix_hash::ObjectId::from(&d[consumed..][..hash_len]),
                 };
                 consumed += hash_len;
                 delta
             }
-            BLOB => Blob,
-            TREE => Tree,
-            COMMIT => Commit,
-            TAG => Tag,
+            BLOB => Header::Blob,
+            TREE => Header::Tree,
+            COMMIT => Header::Commit,
+            TAG => Header::Tag,
             _ => panic!("We currently don't support any V3 features or extensions"),
         };
         data::Entry {
@@ -53,11 +53,11 @@ impl data::Entry {
     ) -> Result<data::Entry, io::Error> {
         let (type_id, size, mut consumed) = streaming_parse_header_info(&mut r)?;
 
-        use crate::data::entry::Header::*;
+        use crate::data::entry::Header;
         let object = match type_id {
             OFS_DELTA => {
                 let (distance, leb_bytes) = leb64_from_read(&mut r)?;
-                let delta = OfsDelta {
+                let delta = Header::OfsDelta {
                     base_distance: distance,
                 };
                 consumed += leb_bytes;
@@ -68,16 +68,16 @@ impl data::Entry {
                 let hash = &mut buf[..hash_len];
                 r.read_exact(hash)?;
                 #[allow(clippy::redundant_slicing)]
-                let delta = RefDelta {
+                let delta = Header::RefDelta {
                     base_id: gix_hash::ObjectId::from(&hash[..]),
                 };
                 consumed += hash_len;
                 delta
             }
-            BLOB => Blob,
-            TREE => Tree,
-            COMMIT => Commit,
-            TAG => Tag,
+            BLOB => Header::Blob,
+            TREE => Header::Tree,
+            COMMIT => Header::Commit,
+            TAG => Header::Tag,
             _ => panic!("We currently don't support any V3 features or extensions"),
         };
         Ok(data::Entry {

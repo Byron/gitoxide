@@ -35,27 +35,26 @@ pub(crate) fn select_publishee_bump_spec(name: &String, ctx: &Context) -> BumpSp
 
 /// Returns true if this would be a breaking change for `v`.
 fn bump_major_minor_patch(v: &mut semver::Version, bump_spec: BumpSpec) -> bool {
-    use BumpSpec::*;
     match bump_spec {
-        Major => {
+        BumpSpec::Major => {
             v.major += 1;
             v.minor = 0;
             v.patch = 0;
             v.pre = Prerelease::EMPTY;
             true
         }
-        Minor => {
+        BumpSpec::Minor => {
             v.minor += 1;
             v.patch = 0;
             v.pre = Prerelease::EMPTY;
             is_pre_release(v)
         }
-        Patch => {
+        BumpSpec::Patch => {
             v.patch += 1;
             v.pre = Prerelease::EMPTY;
             false
         }
-        Keep | Auto => unreachable!("BUG: auto mode or keep are unsupported"),
+        BumpSpec::Keep | BumpSpec::Auto => unreachable!("BUG: auto mode or keep are unsupported"),
     }
 }
 
@@ -86,11 +85,10 @@ pub(crate) fn bump_package_with_spec(
     bump_when_needed: bool,
 ) -> anyhow::Result<Bump> {
     let mut v = package.version.clone();
-    use BumpSpec::*;
     let package_version_must_be_breaking = match bump_spec {
-        Major | Minor | Patch => bump_major_minor_patch(&mut v, bump_spec),
-        Keep => false,
-        Auto => {
+        BumpSpec::Major | BumpSpec::Minor | BumpSpec::Patch => bump_major_minor_patch(&mut v, bump_spec),
+        BumpSpec::Keep => false,
+        BumpSpec::Auto => {
             let segments = crate::git::history::crate_ref_segments(
                 package,
                 ctx,
@@ -107,9 +105,9 @@ pub(crate) fn bump_package_with_spec(
                 false
             } else if unreleased.history.iter().any(|item| item.message.breaking) {
                 let is_breaking = if is_pre_release(&v) {
-                    bump_major_minor_patch(&mut v, Minor)
+                    bump_major_minor_patch(&mut v, BumpSpec::Minor)
                 } else {
-                    bump_major_minor_patch(&mut v, Major)
+                    bump_major_minor_patch(&mut v, BumpSpec::Major)
                 };
                 assert!(is_breaking, "BUG: breaking changes are…breaking :D");
                 is_breaking
@@ -119,14 +117,14 @@ pub(crate) fn bump_package_with_spec(
                 .any(|item| item.message.kind.map_or(false, |kind| kind == "feat"))
             {
                 let is_breaking = if is_pre_release(&v) {
-                    bump_major_minor_patch(&mut v, Patch)
+                    bump_major_minor_patch(&mut v, BumpSpec::Patch)
                 } else {
-                    bump_major_minor_patch(&mut v, Minor)
+                    bump_major_minor_patch(&mut v, BumpSpec::Minor)
                 };
                 assert!(!is_breaking, "BUG: new features are never breaking");
                 is_breaking
             } else {
-                let is_breaking = bump_major_minor_patch(&mut v, Patch);
+                let is_breaking = bump_major_minor_patch(&mut v, BumpSpec::Patch);
                 assert!(!is_breaking, "BUG: patch releases are never breaking");
                 false
             }

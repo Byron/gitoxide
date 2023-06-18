@@ -362,16 +362,16 @@ pub fn new() -> (
 }
 
 fn to_curl_ssl_version(vers: SslVersion) -> curl::easy::SslVersion {
-    use curl::easy::SslVersion::*;
+    use curl::easy::SslVersion as CurlSslVersion;
     match vers {
-        SslVersion::Default => Default,
-        SslVersion::TlsV1 => Tlsv1,
-        SslVersion::SslV2 => Sslv2,
-        SslVersion::SslV3 => Sslv3,
-        SslVersion::TlsV1_0 => Tlsv10,
-        SslVersion::TlsV1_1 => Tlsv11,
-        SslVersion::TlsV1_2 => Tlsv12,
-        SslVersion::TlsV1_3 => Tlsv13,
+        SslVersion::Default => CurlSslVersion::Default,
+        SslVersion::TlsV1 => CurlSslVersion::Tlsv1,
+        SslVersion::SslV2 => CurlSslVersion::Sslv2,
+        SslVersion::SslV3 => CurlSslVersion::Sslv3,
+        SslVersion::TlsV1_0 => CurlSslVersion::Tlsv10,
+        SslVersion::TlsV1_1 => CurlSslVersion::Tlsv11,
+        SslVersion::TlsV1_2 => CurlSslVersion::Tlsv12,
+        SslVersion::TlsV1_3 => CurlSslVersion::Tlsv13,
     }
 }
 

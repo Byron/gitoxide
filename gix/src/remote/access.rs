@@ -81,23 +81,23 @@ impl Remote<'_> {
     where
         Spec: AsRef<BStr>,
     {
-        use remote::Direction::*;
+        use remote::Direction;
         let specs: Vec<_> = specs
             .into_iter()
             .map(|spec| {
                 gix_refspec::parse(
                     spec.as_ref(),
                     match direction {
-                        Push => gix_refspec::parse::Operation::Push,
-                        Fetch => gix_refspec::parse::Operation::Fetch,
+                        Direction::Push => gix_refspec::parse::Operation::Push,
+                        Direction::Fetch => gix_refspec::parse::Operation::Fetch,
                     },
                 )
                 .map(|url| url.to_owned())
             })
             .collect::<Result<_, _>>()?;
         let dst = match direction {
-            Push => &mut self.push_specs,
-            Fetch => &mut self.fetch_specs,
+            Direction::Push => &mut self.push_specs,
+            Direction::Fetch => &mut self.fetch_specs,
         };
         *dst = specs;
         Ok(())

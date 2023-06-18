@@ -42,13 +42,12 @@ impl Kind {
 impl Source {
     /// Return true if the source indicates a location within a file of a repository.
     pub const fn kind(self) -> Kind {
-        use Source::*;
         match self {
-            GitInstallation => Kind::GitInstallation,
-            System => Kind::System,
-            Git | User => Kind::Global,
-            Local | Worktree => Kind::Repository,
-            Env | Cli | Api | EnvOverride => Kind::Override,
+            Self::GitInstallation => Kind::GitInstallation,
+            Self::System => Kind::System,
+            Self::Git | Self::User => Kind::Global,
+            Self::Local | Self::Worktree => Kind::Repository,
+            Self::Env | Self::Cli | Self::Api | Self::EnvOverride => Kind::Override,
         }
     }
 
@@ -63,10 +62,9 @@ impl Source {
     /// With `env_var` it becomes possible to prevent accessing environment variables entirely to comply with `gix-sec`
     /// permissions for example.
     pub fn storage_location(self, env_var: &mut dyn FnMut(&str) -> Option<OsString>) -> Option<Cow<'static, Path>> {
-        use Source::*;
         match self {
-            GitInstallation => gix_path::env::installation_config().map(Into::into),
-            System => {
+            Self::GitInstallation => gix_path::env::installation_config().map(Into::into),
+            Self::System => {
                 if env_var("GIT_CONFIG_NO_SYSTEM").is_some() {
                     None
                 } else {
@@ -75,11 +73,11 @@ impl Source {
                         .or_else(|| gix_path::env::system_prefix().map(|p| p.join("etc/gitconfig").into()))
                 }
             }
-            Git => match env_var("GIT_CONFIG_GLOBAL") {
+            Self::Git => match env_var("GIT_CONFIG_GLOBAL") {
                 Some(global_override) => Some(PathBuf::from(global_override).into()),
                 None => gix_path::env::xdg_config("config", env_var).map(Cow::Owned),
             },
-            User => env_var("GIT_CONFIG_GLOBAL")
+            Self::User => env_var("GIT_CONFIG_GLOBAL")
                 .map(|global_override| PathBuf::from(global_override).into())
                 .or_else(|| {
                     env_var("HOME").map(|home| {
@@ -88,9 +86,9 @@ impl Source {
                         p.into()
                     })
                 }),
-            Local => Some(Path::new("config").into()),
-            Worktree => Some(Path::new("config.worktree").into()),
-            Env | Cli | Api | EnvOverride => None,
+            Self::Local => Some(Path::new("config").into()),
+            Self::Worktree => Some(Path::new("config.worktree").into()),
+            Self::Env | Self::Cli | Self::Api | Self::EnvOverride => None,
         }
     }
 }

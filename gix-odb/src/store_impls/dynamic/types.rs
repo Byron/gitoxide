@@ -165,30 +165,28 @@ impl<T: Clone> OnDiskFile<T> {
 
     // On error, always declare the file missing and return an error.
     pub(crate) fn load_strict(&mut self, load: impl FnOnce(&Path) -> std::io::Result<T>) -> std::io::Result<()> {
-        use OnDiskFileState::*;
         match self.state {
-            Unloaded | Missing => match load(&self.path) {
+            OnDiskFileState::Unloaded | OnDiskFileState::Missing => match load(&self.path) {
                 Ok(v) => {
-                    self.state = Loaded(v);
+                    self.state = OnDiskFileState::Loaded(v);
                     Ok(())
                 }
                 Err(err) => {
                     // TODO: Should be provide more information? We don't even know what exactly failed right now, degenerating information.
-                    self.state = Missing;
+                    self.state = OnDiskFileState::Missing;
                     Err(err)
                 }
             },
-            Loaded(_) | Garbage(_) => Ok(()),
+            OnDiskFileState::Loaded(_) | OnDiskFileState::Garbage(_) => Ok(()),
         }
     }
     /// If the file is missing, we don't consider this failure but instead return Ok(None) to allow recovery.
     /// when we know that loading is necessary. This also works around borrow check, which is a nice coincidence.
     pub fn load_with_recovery(&mut self, load: impl FnOnce(&Path) -> std::io::Result<T>) -> std::io::Result<Option<T>> {
-        use OnDiskFileState::*;
         match &mut self.state {
-            Loaded(v) | Garbage(v) => Ok(Some(v.clone())),
-            Missing => Ok(None),
-            Unloaded => match load(&self.path) {
+            OnDiskFileState::Loaded(v) | OnDiskFileState::Garbage(v) => Ok(Some(v.clone())),
+            OnDiskFileState::Missing => Ok(None),
+            OnDiskFileState::Unloaded => match load(&self.path) {
                 Ok(v) => {
                     self.state = OnDiskFileState::Loaded(v.clone());
                     Ok(Some(v))
@@ -203,10 +201,9 @@ impl<T: Clone> OnDiskFile<T> {
     }
 
     pub fn loaded(&self) -> Option<&T> {
-        use OnDiskFileState::*;
         match &self.state {
-            Loaded(v) | Garbage(v) => Some(v),
-            Unloaded | Missing => None,
+            OnDiskFileState::Loaded(v) | OnDiskFileState::Garbage(v) => Some(v),
+            OnDiskFileState::Unloaded | OnDiskFileState::Missing => None,
         }
     }
 

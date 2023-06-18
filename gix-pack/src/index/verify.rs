@@ -242,9 +242,9 @@ impl index::File {
         progress: &dyn gix_features::progress::RawProgress,
     ) -> Result<(), integrity::Error> {
         if let Mode::HashCrc32Decode | Mode::HashCrc32DecodeEncode = verify_mode {
-            use gix_object::Kind::*;
+            use gix_object::Kind;
             match object_kind {
-                Tree | Commit | Tag => {
+                Kind::Tree | Kind::Commit | Kind::Tag => {
                     let object = gix_object::ObjectRef::from_bytes(object_kind, buf).map_err(|err| {
                         integrity::Error::ObjectDecode {
                             source: err,
@@ -257,7 +257,7 @@ impl index::File {
                         object.write_to(&mut *encode_buf)?;
                         if encode_buf.as_slice() != buf {
                             let mut should_return_error = true;
-                            if let Tree = object_kind {
+                            if let Kind::Tree = object_kind {
                                 if buf.as_bstr().find(b"100664").is_some() || buf.as_bstr().find(b"100640").is_some() {
                                     progress.info(format!("Tree object {} would be cleaned up during re-serialization, replacing mode '100664|100640' with '100644'", index_entry.oid));
                                     should_return_error = false
@@ -274,7 +274,7 @@ impl index::File {
                         }
                     }
                 }
-                Blob => {}
+                Kind::Blob => {}
             };
         }
         Ok(())

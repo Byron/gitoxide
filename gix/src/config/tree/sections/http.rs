@@ -228,18 +228,18 @@ mod key_impls {
             value: std::borrow::Cow<'_, crate::bstr::BStr>,
         ) -> Result<gix_protocol::transport::client::http::options::SslVersion, crate::config::ssl_version::Error>
         {
-            use gix_protocol::transport::client::http::options::SslVersion::*;
+            use gix_protocol::transport::client::http::options::SslVersion;
 
             use crate::bstr::ByteSlice;
             Ok(match value.as_ref().as_bytes() {
-                b"default" | b"" => Default,
-                b"tlsv1" => TlsV1,
-                b"sslv2" => SslV2,
-                b"sslv3" => SslV3,
-                b"tlsv1.0" => TlsV1_0,
-                b"tlsv1.1" => TlsV1_1,
-                b"tlsv1.2" => TlsV1_2,
-                b"tlsv1.3" => TlsV1_3,
+                b"default" | b"" => SslVersion::Default,
+                b"tlsv1" => SslVersion::TlsV1,
+                b"sslv2" => SslVersion::SslV2,
+                b"sslv3" => SslVersion::SslV3,
+                b"tlsv1.0" => SslVersion::TlsV1_0,
+                b"tlsv1.1" => SslVersion::TlsV1_1,
+                b"tlsv1.2" => SslVersion::TlsV1_2,
+                b"tlsv1.3" => SslVersion::TlsV1_3,
                 _ => return Err(crate::config::ssl_version::Error::from_value(self, value.into_owned())),
             })
         }

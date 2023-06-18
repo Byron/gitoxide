@@ -107,10 +107,10 @@ impl SchemePermission {
     pub fn allow(&self, scheme: &gix_url::Scheme) -> bool {
         self.allow_per_scheme.get(scheme).or(self.allow.as_ref()).map_or_else(
             || {
-                use gix_url::Scheme::*;
+                use gix_url::Scheme;
                 match scheme {
-                    File | Git | Ssh | Http | Https => true,
-                    Ext(_) => false,
+                    Scheme::File | Scheme::Git | Scheme::Ssh | Scheme::Http | Scheme::Https => true,
+                    Scheme::Ext(_) => false,
                     // TODO: figure out what 'ext' really entails, and what 'other' protocols are which aren't representable for us yet
                 }
             },

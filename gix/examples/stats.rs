@@ -1,6 +1,6 @@
-use gix::prelude::ObjectIdExt;
-use gix::Reference;
 use std::io::Write;
+
+use gix::{prelude::ObjectIdExt, Reference};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut repo = gix::discover(".")?;
@@ -119,19 +119,19 @@ mod visit {
         }
 
         fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> Action {
-            use gix::objs::tree::EntryMode::*;
+            use gix::objs::tree::EntryMode;
             match entry.mode {
-                Commit => self.num_submodules += 1,
-                Blob => {
+                EntryMode::Commit => self.num_submodules += 1,
+                EntryMode::Blob => {
                     self.count_bytes(entry.oid);
                     self.num_blobs += 1
                 }
-                BlobExecutable => {
+                EntryMode::BlobExecutable => {
                     self.count_bytes(entry.oid);
                     self.num_blobs_exec += 1
                 }
-                Link => self.num_links += 1,
-                Tree => unreachable!("BUG"),
+                EntryMode::Link => self.num_links += 1,
+                EntryMode::Tree => unreachable!("BUG"),
             }
             Action::Continue
         }

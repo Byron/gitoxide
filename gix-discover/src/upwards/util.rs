@@ -4,13 +4,13 @@ use crate::DOT_GIT_DIR;
 
 pub(crate) fn shorten_path_with_cwd(cursor: PathBuf, cwd: &Path) -> PathBuf {
     fn comp_len(c: std::path::Component<'_>) -> usize {
-        use std::path::Component::*;
+        use std::path::Component;
         match c {
-            Prefix(p) => p.as_os_str().len(),
-            CurDir => 1,
-            ParentDir => 2,
-            Normal(p) => p.len(),
-            RootDir => 1,
+            Component::Prefix(p) => p.as_os_str().len(),
+            Component::CurDir => 1,
+            Component::ParentDir => 2,
+            Component::Normal(p) => p.len(),
+            Component::RootDir => 1,
         }
     }
 

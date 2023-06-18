@@ -142,11 +142,19 @@ pub mod existing {
 pub(crate) fn transform_full_name_for_lookup(name: &FullNameRef) -> Option<&FullNameRef> {
     match name.category_and_short_name() {
         Some((c, sn)) => {
-            use crate::Category::*;
+            use crate::Category;
             Some(match c {
-                MainRef | LinkedRef { .. } => FullNameRef::new_unchecked(sn),
-                Tag | RemoteBranch | LocalBranch | Bisect | Rewritten | Note => name,
-                MainPseudoRef | PseudoRef | LinkedPseudoRef { .. } | WorktreePrivate => return None,
+                Category::MainRef | Category::LinkedRef { .. } => FullNameRef::new_unchecked(sn),
+                Category::Tag
+                | Category::RemoteBranch
+                | Category::LocalBranch
+                | Category::Bisect
+                | Category::Rewritten
+                | Category::Note => name,
+                Category::MainPseudoRef
+                | Category::PseudoRef
+                | Category::LinkedPseudoRef { .. }
+                | Category::WorktreePrivate => return None,
             })
         }
         None => Some(name),

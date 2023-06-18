@@ -127,19 +127,18 @@ impl visit::Visit for Recorder {
     }
 
     fn visit(&mut self, change: visit::Change) -> visit::Action {
-        use visit::Change::*;
         self.records.push(match change {
-            Deletion { entry_mode, oid } => Change::Deletion {
+            visit::Change::Deletion { entry_mode, oid } => Change::Deletion {
                 entry_mode,
                 oid,
                 path: self.path_clone(),
             },
-            Addition { entry_mode, oid } => Change::Addition {
+            visit::Change::Addition { entry_mode, oid } => Change::Addition {
                 entry_mode,
                 oid,
                 path: self.path_clone(),
             },
-            Modification {
+            visit::Change::Modification {
                 previous_entry_mode,
                 previous_oid,
                 entry_mode,

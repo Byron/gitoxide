@@ -62,7 +62,7 @@ fn main() -> anyhow::Result<()> {
             allow_fully_generated_changelogs,
             no_dependencies,
             no_isolate_dependencies_from_breaking_changes,
-            capitalize_commit
+            capitalize_commit,
         } => {
             let verbose = execute || verbose;
             init_logging(verbose);
@@ -104,13 +104,13 @@ fn main() -> anyhow::Result<()> {
 const DEFAULT_BUMP_SPEC: &str = "auto";
 
 fn to_bump_spec(spec: &str) -> anyhow::Result<cargo_smart_release::version::BumpSpec> {
-    use cargo_smart_release::version::BumpSpec::*;
+    use cargo_smart_release::version::BumpSpec;
     Ok(match spec {
-        "patch" | "Patch" => Patch,
-        "minor" | "Minor" => Minor,
-        "major" | "Major" => Major,
-        "keep" | "Keep" => Keep,
-        "auto" | "Auto" => Auto,
+        "patch" | "Patch" => BumpSpec::Patch,
+        "minor" | "Minor" => BumpSpec::Minor,
+        "major" | "Major" => BumpSpec::Major,
+        "keep" | "Keep" => BumpSpec::Keep,
+        "auto" | "Auto" => BumpSpec::Auto,
         unknown_spec => anyhow::bail!("Unknown bump specification: {:?}", unknown_spec),
     })
 }

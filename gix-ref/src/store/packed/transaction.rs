@@ -154,18 +154,18 @@ impl packed::Transaction {
                     file.with_mut(|out| write_packed_ref(out, pref))?;
                 }
                 (Some(Ok(pref)), Some(edit)) => {
-                    use std::cmp::Ordering::*;
+                    use std::cmp::Ordering;
                     match pref.name.as_bstr().cmp(edit.inner.name.as_bstr()) {
-                        Less => {
+                        Ordering::Less => {
                             let pref = refs_sorted.next().expect("next").expect("valid");
                             num_written_lines += 1;
                             file.with_mut(|out| write_packed_ref(out, pref))?;
                         }
-                        Greater => {
+                        Ordering::Greater => {
                             let edit = peekable_sorted_edits.next().expect("next");
                             file.with_mut(|out| write_edit(out, edit, &mut num_written_lines))?;
                         }
-                        Equal => {
+                        Ordering::Equal => {
                             let _pref = refs_sorted.next().expect("next").expect("valid");
                             let edit = peekable_sorted_edits.next().expect("next");
                             file.with_mut(|out| write_edit(out, edit, &mut num_written_lines))?;

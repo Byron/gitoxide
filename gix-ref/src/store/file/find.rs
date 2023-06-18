@@ -157,15 +157,17 @@ impl file::Store {
             |worktree_name: &BStr| commondir.join("worktrees").join(gix_path::from_bstr(worktree_name));
         name.category_and_short_name()
             .map(|(c, sn)| {
-                use crate::Category::*;
+                use crate::Category;
                 let sn = FullNameRef::new_unchecked(sn);
                 match c {
-                    LinkedPseudoRef { name: worktree_name } => is_reflog
+                    Category::LinkedPseudoRef { name: worktree_name } => is_reflog
                         .then(|| (linked_git_dir(worktree_name).into(), sn))
                         .unwrap_or((commondir.into(), name)),
-                    Tag | LocalBranch | RemoteBranch | Note => (commondir.into(), name),
-                    MainRef | MainPseudoRef => (commondir.into(), sn),
-                    LinkedRef { name: worktree_name } => sn
+                    Category::Tag | Category::LocalBranch | Category::RemoteBranch | Category::Note => {
+                        (commondir.into(), name)
+                    }
+                    Category::MainRef | Category::MainPseudoRef => (commondir.into(), sn),
+                    Category::LinkedRef { name: worktree_name } => sn
                         .category()
                         .map_or(false, |cat| cat.is_worktree_private())
                         .then(|| {
@@ -176,7 +178,9 @@ impl file::Store {
                             }
                         })
                         .unwrap_or((commondir.into(), sn)),
-                    PseudoRef | Bisect | Rewritten | WorktreePrivate => (self.git_dir.as_path().into(), name),
+                    Category::PseudoRef | Category::Bisect | Category::Rewritten | Category::WorktreePrivate => {
+                        (self.git_dir.as_path().into(), name)
+                    }
                 }
             })
             .unwrap_or((commondir.into(), name))
@@ -216,7 +220,7 @@ impl file::Store {
             }
             Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
             #[cfg(windows)]
-            Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => Ok(None),
+            Err(err) if err.kind() == io::ErrorKind::PermissionDenied => Ok(None),
             Err(err) => Err(err),
         }
     }
@@ -229,7 +233,7 @@ pub mod existing {
     pub use error::Error;
 
     use crate::{
-        file::{self},
+        file,
         store_impl::{
             file::{find, loose},
             packed,

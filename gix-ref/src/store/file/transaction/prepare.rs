@@ -410,12 +410,17 @@ impl<'s, 'p> Transaction<'s, 'p> {
 fn possibly_adjust_name_for_prefixes(name: &FullNameRef) -> Option<FullName> {
     match name.category_and_short_name() {
         Some((c, sn)) => {
-            use crate::Category::*;
+            use crate::Category;
             let sn = FullNameRef::new_unchecked(sn);
             match c {
-                Bisect | Rewritten | WorktreePrivate | LinkedPseudoRef { .. } | PseudoRef | MainPseudoRef => None,
-                Tag | LocalBranch | RemoteBranch | Note => name.into(),
-                MainRef | LinkedRef { .. } => sn
+                Category::Bisect
+                | Category::Rewritten
+                | Category::WorktreePrivate
+                | Category::LinkedPseudoRef { .. }
+                | Category::PseudoRef
+                | Category::MainPseudoRef => None,
+                Category::Tag | Category::LocalBranch | Category::RemoteBranch | Category::Note => name.into(),
+                Category::MainRef | Category::LinkedRef { .. } => sn
                     .category()
                     .map_or(false, |cat| !cat.is_worktree_private())
                     .then_some(sn),

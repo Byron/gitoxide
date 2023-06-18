@@ -141,9 +141,7 @@ impl Store {
         // on any other platform that would be a legitimate error though.
         #[cfg(windows)]
         if let Err(err) = &res {
-            if err.error.kind() == std::io::ErrorKind::PermissionDenied
-                || err.error.kind() == std::io::ErrorKind::AlreadyExists
-            {
+            if err.error.kind() == io::ErrorKind::PermissionDenied || err.error.kind() == io::ErrorKind::AlreadyExists {
                 return Ok(id);
             }
         }

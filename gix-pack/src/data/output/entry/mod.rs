@@ -76,13 +76,13 @@ impl output::Entry {
         let pack_entry =
             crate::data::Entry::from_bytes(&entry.data, pack_offset_must_be_zero, count.id.as_slice().len());
 
-        use crate::data::entry::Header::*;
+        use crate::data::entry::Header;
         match pack_entry.header {
-            Commit => Some(output::entry::Kind::Base(gix_object::Kind::Commit)),
-            Tree => Some(output::entry::Kind::Base(gix_object::Kind::Tree)),
-            Blob => Some(output::entry::Kind::Base(gix_object::Kind::Blob)),
-            Tag => Some(output::entry::Kind::Base(gix_object::Kind::Tag)),
-            OfsDelta { base_distance } => {
+            Header::Commit => Some(output::entry::Kind::Base(gix_object::Kind::Commit)),
+            Header::Tree => Some(output::entry::Kind::Base(gix_object::Kind::Tree)),
+            Header::Blob => Some(output::entry::Kind::Base(gix_object::Kind::Blob)),
+            Header::Tag => Some(output::entry::Kind::Base(gix_object::Kind::Tag)),
+            Header::OfsDelta { base_distance } => {
                 let pack_location = count.entry_pack_location.as_ref().expect("packed");
                 let base_offset = pack_location
                     .pack_offset
@@ -106,7 +106,7 @@ impl output::Entry {
                             .map(|id| output::entry::Kind::DeltaOid { id })
                     })
             }
-            RefDelta { base_id: _ } => None, // ref deltas are for thin packs or legacy, repack them as base objects
+            Header::RefDelta { base_id: _ } => None, // ref deltas are for thin packs or legacy, repack them as base objects
         }
         .map(|kind| {
             Ok(output::Entry {
@@ -161,19 +161,18 @@ impl output::Entry {
             "we can only write V2 pack entries for now"
         );
 
-        use Kind::*;
         match self.kind {
-            Base(kind) => {
-                use gix_object::Kind::*;
+            self::Kind::Base(kind) => {
+                use gix_object::Kind;
                 match kind {
-                    Tree => data::entry::Header::Tree,
-                    Blob => data::entry::Header::Blob,
-                    Commit => data::entry::Header::Commit,
-                    Tag => data::entry::Header::Tag,
+                    Kind::Tree => data::entry::Header::Tree,
+                    Kind::Blob => data::entry::Header::Blob,
+                    Kind::Commit => data::entry::Header::Commit,
+                    Kind::Tag => data::entry::Header::Tag,
                 }
             }
-            DeltaOid { id } => data::entry::Header::RefDelta { base_id: id.to_owned() },
-            DeltaRef { object_index } => data::entry::Header::OfsDelta {
+            self::Kind::DeltaOid { id } => data::entry::Header::RefDelta { base_id: id.to_owned() },
+            self::Kind::DeltaRef { object_index } => data::entry::Header::OfsDelta {
                 base_distance: index_to_base_distance(object_index),
             },
         }

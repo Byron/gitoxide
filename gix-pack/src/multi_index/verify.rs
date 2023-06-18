@@ -282,37 +282,37 @@ impl File {
                 } = bundle
                     .verify_integrity(progress, should_interrupt, options.clone())
                     .map_err(|err| {
-                        use index::traverse::Error::*;
+                        use index::traverse::Error;
                         match err {
-                            Processor(err) => Processor(integrity::Error::IndexIntegrity(err)),
-                            VerifyChecksum(err) => VerifyChecksum(err),
-                            Tree(err) => Tree(err),
-                            TreeTraversal(err) => TreeTraversal(err),
-                            PackDecode { id, offset, source } => PackDecode { id, offset, source },
-                            PackMismatch { expected, actual } => PackMismatch { expected, actual },
-                            PackObjectMismatch {
+                            Error::Processor(err) => Error::Processor(integrity::Error::IndexIntegrity(err)),
+                            Error::VerifyChecksum(err) => Error::VerifyChecksum(err),
+                            Error::Tree(err) => Error::Tree(err),
+                            Error::TreeTraversal(err) => Error::TreeTraversal(err),
+                            Error::PackDecode { id, offset, source } => Error::PackDecode { id, offset, source },
+                            Error::PackMismatch { expected, actual } => Error::PackMismatch { expected, actual },
+                            Error::PackObjectMismatch {
                                 expected,
                                 actual,
                                 offset,
                                 kind,
-                            } => PackObjectMismatch {
-                                expected,
-                                actual,
-                                offset,
-                                kind,
-                            },
-                            Crc32Mismatch {
-                                expected,
-                                actual,
-                                offset,
-                                kind,
-                            } => Crc32Mismatch {
+                            } => Error::PackObjectMismatch {
                                 expected,
                                 actual,
                                 offset,
                                 kind,
                             },
-                            Interrupted => Interrupted,
+                            Error::Crc32Mismatch {
+                                expected,
+                                actual,
+                                offset,
+                                kind,
+                            } => Error::Crc32Mismatch {
+                                expected,
+                                actual,
+                                offset,
+                                kind,
+                            },
+                            Error::Interrupted => Error::Interrupted,
                         }
                     })?;
                 progress = returned_progress;

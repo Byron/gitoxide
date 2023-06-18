@@ -22,12 +22,11 @@ impl FromStr for IterationMode {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use IterationMode::*;
         let slc = s.to_ascii_lowercase();
         Ok(match slc.as_str() {
-            "as-is" => AsIs,
-            "verify" => Verify,
-            "restore" => Restore,
+            "as-is" => IterationMode::AsIs,
+            "verify" => IterationMode::Verify,
+            "restore" => IterationMode::Restore,
             _ => return Err("invalid value".into()),
         })
     }
@@ -35,11 +34,10 @@ impl FromStr for IterationMode {
 
 impl From<IterationMode> for pack::data::input::Mode {
     fn from(v: IterationMode) -> Self {
-        use pack::data::input::Mode::*;
         match v {
-            IterationMode::AsIs => AsIs,
-            IterationMode::Verify => Verify,
-            IterationMode::Restore => Restore,
+            IterationMode::AsIs => Self::AsIs,
+            IterationMode::Verify => Self::Verify,
+            IterationMode::Restore => Self::Restore,
         }
     }
 }

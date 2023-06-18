@@ -1,8 +1,10 @@
-use crate::corpus;
-use crate::corpus::{Run, Task};
-use crate::pack::verify::Algorithm;
-use std::path::Path;
-use std::sync::atomic::AtomicBool;
+use std::{path::Path, sync::atomic::AtomicBool};
+
+use crate::{
+    corpus,
+    corpus::{Run, Task},
+    pack::verify::Algorithm,
+};
 
 impl Task {
     pub fn perform(

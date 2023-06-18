@@ -132,13 +132,12 @@ impl Url {
     /// Note that there may be no default port either.
     pub fn port_or_default(&self) -> Option<u16> {
         self.port.or_else(|| {
-            use Scheme::*;
             Some(match self.scheme {
-                Http => 80,
-                Https => 443,
-                Ssh => 22,
-                Git => 9418,
-                File | Ext(_) => return None,
+                Scheme::Http => 80,
+                Scheme::Https => 443,
+                Scheme::Ssh => 22,
+                Scheme::Git => 9418,
+                Scheme::File | Scheme::Ext(_) => return None,
             })
         })
     }

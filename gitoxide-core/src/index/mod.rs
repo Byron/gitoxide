@@ -56,18 +56,17 @@ pub fn information(
         extension_details,
     }: information::Options,
 ) -> anyhow::Result<()> {
-    use crate::OutputFormat::*;
     #[cfg(feature = "serde")]
-    if let Human = format {
+    if let crate::OutputFormat::Human = format {
         writeln!(err, "Defaulting to JSON printing as nothing else will be implemented.").ok();
-        format = Json;
+        format = crate::OutputFormat::Json;
     }
     match format {
-        Human => {
+        crate::OutputFormat::Human => {
             anyhow::bail!("Cannot print information using 'human' format.")
         }
         #[cfg(feature = "serde")]
-        Json => {
+        crate::OutputFormat::Json => {
             let info = information::Collection::try_from_file(parse_file(index_path, object_hash)?, extension_details)?;
             serde_json::to_writer_pretty(out, &info)?;
             Ok(())

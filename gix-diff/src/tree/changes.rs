@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, collections::VecDeque};
+use std::{borrow::BorrowMut, cmp::Ordering, collections::VecDeque};
 
 use gix_hash::{oid, ObjectId};
 use gix_object::tree::EntryRef;
@@ -106,12 +106,15 @@ impl<'a> tree::Changes<'a> {
                     pop_path = false;
                 }
                 (Some(lhs), Some(rhs)) => {
-                    use std::cmp::Ordering::*;
                     let (lhs, rhs) = (lhs?, rhs?);
                     match compare(&lhs, &rhs) {
-                        Equal => handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, &mut state.trees, delegate)?,
-                        Less => catchup_lhs_with_rhs(&mut lhs_entries, lhs, rhs, &mut state.trees, delegate)?,
-                        Greater => catchup_rhs_with_lhs(&mut rhs_entries, lhs, rhs, &mut state.trees, delegate)?,
+                        Ordering::Equal => {
+                            handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, &mut state.trees, delegate)?
+                        }
+                        Ordering::Less => catchup_lhs_with_rhs(&mut lhs_entries, lhs, rhs, &mut state.trees, delegate)?,
+                        Ordering::Greater => {
+                            catchup_rhs_with_lhs(&mut rhs_entries, lhs, rhs, &mut state.trees, delegate)?
+                        }
                     }
                 }
                 (Some(lhs), None) => {
@@ -188,23 +191,22 @@ fn catchup_rhs_with_lhs<R: tree::Visit>(
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
-    use std::cmp::Ordering::*;
     add_entry_schedule_recursion(rhs, queue, delegate)?;
     loop {
         match rhs_entries.peek() {
             Some(Ok(rhs)) => match compare(&lhs, rhs) {
-                Equal => {
+                Ordering::Equal => {
                     let rhs = rhs_entries.next().transpose()?.expect("the peeked item to be present");
                     delegate.pop_path_component();
                     handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, queue, delegate)?;
                     break;
                 }
-                Greater => {
+                Ordering::Greater => {
                     let rhs = rhs_entries.next().transpose()?.expect("the peeked item to be present");
                     delegate.pop_path_component();
                     add_entry_schedule_recursion(rhs, queue, delegate)?;
                 }
-                Less => {
+                Ordering::Less => {
                     delegate.pop_path_component();
                     delete_entry_schedule_recursion(lhs, queue, delegate)?;
                     break;
@@ -228,23 +230,22 @@ fn catchup_lhs_with_rhs<R: tree::Visit>(
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
-    use std::cmp::Ordering::*;
     delete_entry_schedule_recursion(lhs, queue, delegate)?;
     loop {
         match lhs_entries.peek() {
             Some(Ok(lhs)) => match compare(lhs, &rhs) {
-                Equal => {
+                Ordering::Equal => {
                     let lhs = lhs_entries.next().expect("the peeked item to be present")?;
                     delegate.pop_path_component();
                     handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, queue, delegate)?;
                     break;
                 }
-                Less => {
+                Ordering::Less => {
                     let lhs = lhs_entries.next().expect("the peeked item to be present")?;
                     delegate.pop_path_component();
                     delete_entry_schedule_recursion(lhs, queue, delegate)?;
                 }
-                Greater => {
+                Ordering::Greater => {
                     delegate.pop_path_component();
                     add_entry_schedule_recursion(rhs, queue, delegate)?;
                     break;
@@ -267,9 +268,9 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
-    use gix_object::tree::EntryMode::*;
+    use gix_object::tree::EntryMode;
     match (lhs.mode, rhs.mode) {
-        (Tree, Tree) => {
+        (EntryMode::Tree, EntryMode::Tree) => {
             delegate.push_back_tracked_path_component(lhs.filename);
             if lhs.oid != rhs.oid
                 && delegate
@@ -285,7 +286,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             }
             queue.push_back((Some(lhs.oid.to_owned()), Some(rhs.oid.to_owned())));
         }
-        (_, Tree) => {
+        (_, EntryMode::Tree) => {
             delegate.push_back_tracked_path_component(lhs.filename);
             if delegate
                 .visit(Change::Deletion {
@@ -307,7 +308,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             };
             queue.push_back((None, Some(rhs.oid.to_owned())));
         }
-        (Tree, _) => {
+        (EntryMode::Tree, _) => {
             delegate.push_back_tracked_path_component(lhs.filename);
             if delegate
                 .visit(Change::Deletion {

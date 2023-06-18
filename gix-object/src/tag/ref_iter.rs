@@ -58,13 +58,12 @@ fn missing_field() -> crate::decode::Error {
 
 impl<'a> TagRefIter<'a> {
     fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
-        use State::*;
         Ok(match state {
-            Target => {
+            State::Target => {
                 let (i, target) = context("object <40 lowercase hex char>", |i| {
                     parse::header_field(i, b"object", parse::hex_hash)
                 })(i)?;
-                *state = TargetKind;
+                *state = State::TargetKind;
                 (
                     i,
                     Token::Target {
@@ -72,7 +71,7 @@ impl<'a> TagRefIter<'a> {
                     },
                 )
             }
-            TargetKind => {
+            State::TargetKind => {
                 let (i, kind) = context("type <object kind>", |i| {
                     parse::header_field(i, b"type", take_while1(is_alphabetic))
                 })(i)?;
@@ -83,25 +82,25 @@ impl<'a> TagRefIter<'a> {
                         nom::Err::Error(err)
                     }
                 })?;
-                *state = Name;
+                *state = State::Name;
                 (i, Token::TargetKind(kind))
             }
-            Name => {
+            State::Name => {
                 let (i, tag_version) = context("tag <version>", |i| {
                     parse::header_field(i, b"tag", take_while1(|b| b != NL[0]))
                 })(i)?;
-                *state = Tagger;
+                *state = State::Tagger;
                 (i, Token::Name(tag_version.as_bstr()))
             }
-            Tagger => {
+            State::Tagger => {
                 let (i, signature) = context(
                     "tagger <signature>",
                     opt(|i| parse::header_field(i, b"tagger", parse::signature)),
                 )(i)?;
-                *state = Message;
+                *state = State::Message;
                 (i, Token::Tagger(signature))
             }
-            Message => {
+            State::Message => {
                 let (i, (message, pgp_signature)) = all_consuming(decode::message)(i)?;
                 debug_assert!(
                     i.is_empty(),

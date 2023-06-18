@@ -133,8 +133,7 @@ impl<S> DerefMut for Cache<S> {
 }
 
 mod impls {
-    use std::cell::RefCell;
-    use std::{io::Read, ops::DerefMut};
+    use std::{cell::RefCell, io::Read, ops::DerefMut};
 
     use gix_hash::{oid, ObjectId};
     use gix_object::{Data, Kind};

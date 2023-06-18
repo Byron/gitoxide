@@ -105,17 +105,17 @@ where
         other_repo: &'new Repository,
         stored_err: &mut Option<E>,
     ) -> gix_diff::tree::visit::Action {
-        use gix_diff::tree::visit::Change::*;
+        use gix_diff::tree::visit::Change;
         let event = match change {
-            Addition { entry_mode, oid } => change::Event::Addition {
+            Change::Addition { entry_mode, oid } => change::Event::Addition {
                 entry_mode,
                 id: oid.attach(other_repo),
             },
-            Deletion { entry_mode, oid } => change::Event::Deletion {
+            Change::Deletion { entry_mode, oid } => change::Event::Deletion {
                 entry_mode,
                 id: oid.attach(repo),
             },
-            Modification {
+            Change::Modification {
                 previous_entry_mode,
                 previous_oid,
                 entry_mode,
@@ -127,7 +127,7 @@ where
                 id: oid.attach(other_repo),
             },
         };
-        match visit(Change { event, location }) {
+        match visit(diff::Change { event, location }) {
             Ok(Action::Cancel) => gix_diff::tree::visit::Action::Cancel,
             Ok(Action::Continue) => gix_diff::tree::visit::Action::Continue,
             Err(err) => {

@@ -102,7 +102,7 @@ fn lock_with_mode<T>(
     boundary_directory: Option<PathBuf>,
     try_lock: impl Fn(&Path, ContainingDirectory, AutoRemove) -> std::io::Result<T>,
 ) -> Result<(PathBuf, T), Error> {
-    use std::io::ErrorKind::*;
+    use std::io::ErrorKind;
     let (directory, cleanup) = dir_cleanup(boundary_directory);
     let lock_path = add_lock_suffix(resource);
     let mut attempts = 1;
@@ -114,12 +114,12 @@ fn lock_with_mode<T>(
                 match try_lock(&lock_path, directory, cleanup.clone()) {
                     Ok(v) => return Ok((lock_path, v)),
                     #[cfg(windows)]
-                    Err(err) if err.kind() == AlreadyExists || err.kind() == PermissionDenied => {
+                    Err(err) if err.kind() == ErrorKind::AlreadyExists || err.kind() == ErrorKind::PermissionDenied => {
                         std::thread::sleep(wait);
                         continue;
                     }
                     #[cfg(not(windows))]
-                    Err(err) if err.kind() == AlreadyExists => {
+                    Err(err) if err.kind() == ErrorKind::AlreadyExists => {
                         std::thread::sleep(wait);
                         continue;
                     }
@@ -131,7 +131,7 @@ fn lock_with_mode<T>(
     }
     .map(|v| (lock_path, v))
     .map_err(|err| match err.kind() {
-        AlreadyExists => Error::PermanentlyLocked {
+        ErrorKind::AlreadyExists => Error::PermanentlyLocked {
             resource_path: resource.into(),
             mode,
             attempts,

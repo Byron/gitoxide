@@ -1,6 +1,6 @@
+use std::{ffi::OsString, path::PathBuf};
+
 use crate::OutputFormat;
-use std::ffi::OsString;
-use std::path::PathBuf;
 
 pub struct Context {
     pub limit: Option<usize>,
@@ -17,18 +17,14 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 0..=2;
 
 pub(crate) mod function {
     use anyhow::{bail, Context};
-    use gix::hashtable::HashMap;
-    use gix::traverse::commit::Sorting;
+    use gix::{hashtable::HashMap, traverse::commit::Sorting, Progress};
+    use layout::{
+        backends::svg::SVGWriter,
+        core::{base::Orientation, geometry::Point, style::StyleAttr},
+        std_shapes::shapes::{Arrow, Element, ShapeKind},
+    };
 
-    use gix::Progress;
-    use layout::backends::svg::SVGWriter;
-    use layout::core::base::Orientation;
-    use layout::core::geometry::Point;
-    use layout::core::style::StyleAttr;
-    use layout::std_shapes::shapes::{Arrow, Element, ShapeKind};
-
-    use crate::repository::revision::list::Format;
-    use crate::OutputFormat;
+    use crate::{repository::revision::list::Format, OutputFormat};
 
     pub fn list(
         mut repo: gix::Repository,

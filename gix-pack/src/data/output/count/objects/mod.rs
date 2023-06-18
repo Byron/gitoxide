@@ -169,8 +169,6 @@ mod expand {
         Oid: Into<ObjectId>,
         IterErr: std::error::Error,
     {
-        use ObjectExpansion::*;
-
         let mut out = Vec::new();
         let mut tree_traversal_state = gix_traverse::tree::breadthfirst::State::default();
         let mut tree_diff_state = gix_diff::tree::State::default();
@@ -189,8 +187,8 @@ mod expand {
             let (obj, location) = db.find(id, buf1)?;
             stats.input_objects += 1;
             match input_object_expansion {
-                TreeAdditionsComparedToAncestor => {
-                    use gix_object::Kind::*;
+                ObjectExpansion::TreeAdditionsComparedToAncestor => {
+                    use gix_object::Kind;
                     let mut obj = obj;
                     let mut location = location;
                     let mut id = id.to_owned();
@@ -198,8 +196,8 @@ mod expand {
                     loop {
                         push_obj_count_unique(&mut out, seen_objs, &id, location, progress, stats, false);
                         match obj.kind {
-                            Tree | Blob => break,
-                            Tag => {
+                            Kind::Tree | Kind::Blob => break,
+                            Kind::Tag => {
                                 id = TagRefIter::from_bytes(obj.data)
                                     .target_id()
                                     .expect("every tag has a target");
@@ -211,7 +209,7 @@ mod expand {
                                 stats.expanded_objects += 1;
                                 continue;
                             }
-                            Commit => {
+                            Kind::Commit => {
                                 let current_tree_iter = {
                                     let mut commit_iter = CommitRefIter::from_bytes(obj.data);
                                     let tree_id = commit_iter.tree_id().expect("every commit has a tree");
@@ -302,14 +300,14 @@ mod expand {
                         }
                     }
                 }
-                TreeContents => {
-                    use gix_object::Kind::*;
+                ObjectExpansion::TreeContents => {
+                    use gix_object::Kind;
                     let mut id = id;
                     let mut obj = (obj, location);
                     loop {
                         push_obj_count_unique(&mut out, seen_objs, &id, obj.1.clone(), progress, stats, false);
                         match obj.0.kind {
-                            Tree => {
+                            Kind::Tree => {
                                 traverse_delegate.clear();
                                 gix_traverse::tree::breadthfirst(
                                     gix_object::TreeRefIter::from_bytes(obj.0.data),
@@ -334,7 +332,7 @@ mod expand {
                                 }
                                 break;
                             }
-                            Commit => {
+                            Kind::Commit => {
                                 id = CommitRefIter::from_bytes(obj.0.data)
                                     .tree_id()
                                     .expect("every commit has a tree");
@@ -342,8 +340,8 @@ mod expand {
                                 obj = db.find(id, buf1)?;
                                 continue;
                             }
-                            Blob => break,
-                            Tag => {
+                            Kind::Blob => break,
+                            Kind::Tag => {
                                 id = TagRefIter::from_bytes(obj.0.data)
                                     .target_id()
                                     .expect("every tag has a target");
@@ -354,7 +352,9 @@ mod expand {
                         }
                     }
                 }
-                AsIs => push_obj_count_unique(&mut out, seen_objs, &id, location, progress, stats, false),
+                ObjectExpansion::AsIs => {
+                    push_obj_count_unique(&mut out, seen_objs, &id, location, progress, stats, false)
+                }
             }
         }
         outcome.total_objects = out.len();

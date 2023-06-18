@@ -200,15 +200,15 @@ pub fn update(
                                             .track_path()
                                             .track_rewrites(Some(rewrites))
                                             .for_each_to_obtain_tree(&to, |change| {
-                                                use gix::object::tree::diff::change::Event::*;
+                                                use gix::object::tree::diff::change::Event;
                                                 change_counter.fetch_add(1, Ordering::SeqCst);
                                                 match change.event {
-                                                    Addition { entry_mode, id } => {
+                                                    Event::Addition { entry_mode, id } => {
                                                         if entry_mode.is_blob_or_symlink() {
                                                             add_lines(&mut out, change.location, &lines_counter, id);
                                                         }
                                                     }
-                                                    Modification {
+                                                    Event::Modification {
                                                         entry_mode,
                                                         previous_entry_mode,
                                                         id,
@@ -254,12 +254,12 @@ pub fn update(
                                                             }
                                                         }
                                                     },
-                                                    Deletion { entry_mode, id } => {
+                                                    Event::Deletion { entry_mode, id } => {
                                                         if entry_mode.is_blob_or_symlink() {
                                                             remove_lines(&mut out, change.location, &lines_counter, id);
                                                         }
                                                     }
-                                                    Rewrite {
+                                                    Event::Rewrite {
                                                         source_location,
                                                         diff,
                                                         copy,
@@ -441,23 +441,21 @@ pub enum FileMode {
 
 impl FileMode {
     pub fn as_str(&self) -> &'static str {
-        use FileMode::*;
         match self {
-            Added => "+",
-            Removed => "-",
-            Modified => "Δ",
-            Rename => "➡",
-            Copy => "⏸",
+            FileMode::Added => "+",
+            FileMode::Removed => "-",
+            FileMode::Modified => "Δ",
+            FileMode::Rename => "➡",
+            FileMode::Copy => "⏸",
         }
     }
     pub fn from_usize(mode: usize) -> Option<Self> {
-        use FileMode::*;
         match mode {
-            1 => Added,
-            2 => Removed,
-            3 => Modified,
-            4 => Rename,
-            5 => Copy,
+            1 => FileMode::Added,
+            2 => FileMode::Removed,
+            3 => FileMode::Modified,
+            4 => FileMode::Rename,
+            5 => FileMode::Copy,
             _ => return None,
         }
         .into()

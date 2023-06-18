@@ -11,22 +11,20 @@ mod write {
     impl<'a> WriteTo for ObjectRef<'a> {
         /// Write the contained object to `out` in the git serialization format.
         fn write_to(&self, out: impl io::Write) -> io::Result<()> {
-            use crate::ObjectRef::*;
             match self {
-                Tree(v) => v.write_to(out),
-                Blob(v) => v.write_to(out),
-                Commit(v) => v.write_to(out),
-                Tag(v) => v.write_to(out),
+                Self::Tree(v) => v.write_to(out),
+                Self::Blob(v) => v.write_to(out),
+                Self::Commit(v) => v.write_to(out),
+                Self::Tag(v) => v.write_to(out),
             }
         }
 
         fn size(&self) -> usize {
-            use crate::ObjectRef::*;
             match self {
-                Tree(v) => v.size(),
-                Blob(v) => v.size(),
-                Commit(v) => v.size(),
-                Tag(v) => v.size(),
+                Self::Tree(v) => v.size(),
+                Self::Blob(v) => v.size(),
+                Self::Commit(v) => v.size(),
+                Self::Tag(v) => v.size(),
             }
         }
 
@@ -39,22 +37,20 @@ mod write {
     impl WriteTo for Object {
         /// Write the contained object to `out` in the git serialization format.
         fn write_to(&self, out: impl io::Write) -> io::Result<()> {
-            use crate::Object::*;
             match self {
-                Tree(v) => v.write_to(out),
-                Blob(v) => v.write_to(out),
-                Commit(v) => v.write_to(out),
-                Tag(v) => v.write_to(out),
+                Self::Tree(v) => v.write_to(out),
+                Self::Blob(v) => v.write_to(out),
+                Self::Commit(v) => v.write_to(out),
+                Self::Tag(v) => v.write_to(out),
             }
         }
 
         fn size(&self) -> usize {
-            use crate::Object::*;
             match self {
-                Tree(v) => v.size(),
-                Blob(v) => v.size(),
-                Commit(v) => v.size(),
-                Tag(v) => v.size(),
+                Self::Tree(v) => v.size(),
+                Self::Blob(v) => v.size(),
+                Self::Commit(v) => v.size(),
+                Self::Tag(v) => v.size(),
             }
         }
 

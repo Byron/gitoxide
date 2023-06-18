@@ -28,68 +28,68 @@ fn breadth_first_full_path() -> crate::Result<()> {
         &mut recorder,
     )?;
 
-    use gix_object::tree::EntryMode::*;
+    use gix_object::tree::EntryMode;
     use gix_traverse::tree::recorder::Entry;
     assert_eq!(
         recorder.records,
         vec![
             Entry {
-                mode: Blob,
+                mode: EntryMode::Blob,
                 filepath: "a".into(),
                 oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
             },
             Entry {
-                mode: Blob,
+                mode: EntryMode::Blob,
                 filepath: "b".into(),
                 oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
             },
             Entry {
-                mode: Blob,
+                mode: EntryMode::Blob,
                 filepath: "c".into(),
                 oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
             },
             Entry {
-                mode: Tree,
+                mode: EntryMode::Tree,
                 filepath: "d".into(),
                 oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba")
             },
             Entry {
-                mode: Tree,
+                mode: EntryMode::Tree,
                 filepath: "e".into(),
                 oid: hex_to_id("4277b6e69d25e5efa77c455340557b384a4c018a")
             },
             Entry {
-                mode: Tree,
+                mode: EntryMode::Tree,
                 filepath: "f".into(),
                 oid: hex_to_id("70fb16fc77b03e16acb4a5b1a6caf79ba302919a")
             },
             Entry {
-                mode: Blob,
+                mode: EntryMode::Blob,
                 filepath: "d/a".into(),
                 oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
             },
             Entry {
-                mode: Blob,
+                mode: EntryMode::Blob,
                 filepath: "e/b".into(),
                 oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
             },
             Entry {
-                mode: Blob,
+                mode: EntryMode::Blob,
                 filepath: "f/c".into(),
                 oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
             },
             Entry {
-                mode: Tree,
+                mode: EntryMode::Tree,
                 filepath: "f/d".into(),
                 oid: hex_to_id("5805b676e247eb9a8046ad0c4d249cd2fb2513df")
             },
             Entry {
-                mode: Blob,
+                mode: EntryMode::Blob,
                 filepath: "f/z".into(),
                 oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
             },
             Entry {
-                mode: Blob,
+                mode: EntryMode::Blob,
                 filepath: "f/d/x".into(),
                 oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
             }

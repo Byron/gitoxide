@@ -1,4 +1,4 @@
-use std::{io, io::ErrorKind::AlreadyExists, path::Path};
+use std::{io, io::ErrorKind, path::Path};
 
 #[cfg(not(windows))]
 /// Create a new symlink at `link` which points to `original`.
@@ -46,7 +46,7 @@ pub fn create(original: &Path, link: &Path) -> io::Result<()> {
 /// already exists as filesystem object.
 pub fn is_collision_error(err: &std::io::Error) -> bool {
     // TODO: use ::IsDirectory as well when stabilized instead of raw_os_error(), and ::FileSystemLoop respectively
-    err.kind() == AlreadyExists
+    err.kind() == ErrorKind::AlreadyExists
             || err.raw_os_error() == Some(21)
             || err.raw_os_error() == Some(62) // no-follow on symlnk on mac-os
             || err.raw_os_error() == Some(40) // no-follow on symlnk on ubuntu
@@ -56,5 +56,5 @@ pub fn is_collision_error(err: &std::io::Error) -> bool {
 /// Return true if `err` indicates that a file collision happened, i.e. a symlink couldn't be created as the `link`
 /// already exists as filesystem object.
 pub fn is_collision_error(err: &std::io::Error) -> bool {
-    err.kind() == AlreadyExists || err.kind() == std::io::ErrorKind::PermissionDenied
+    err.kind() == ErrorKind::AlreadyExists || err.kind() == ErrorKind::PermissionDenied
 }

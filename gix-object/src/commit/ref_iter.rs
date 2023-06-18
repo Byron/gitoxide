@@ -116,9 +116,8 @@ fn missing_field() -> crate::decode::Error {
 
 impl<'a> CommitRefIter<'a> {
     fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
-        use State::*;
         Ok(match state {
-            Tree => {
+            State::Tree => {
                 let (i, tree) = context("tree <40 lowercase hex char>", |i| {
                     parse::header_field(i, b"tree", parse::hex_hash)
                 })(i)?;
@@ -130,7 +129,7 @@ impl<'a> CommitRefIter<'a> {
                     },
                 )
             }
-            Parents => {
+            State::Parents => {
                 let (i, parent) = context(
                     "commit <40 lowercase hex char>",
                     opt(|i| parse::header_field(i, b"parent", parse::hex_hash)),
@@ -150,7 +149,7 @@ impl<'a> CommitRefIter<'a> {
                     }
                 }
             }
-            Signature { ref mut of } => {
+            State::Signature { ref mut of } => {
                 let who = *of;
                 let (field_name, err_msg) = match of {
                     SignatureKind::Author => {
@@ -171,7 +170,7 @@ impl<'a> CommitRefIter<'a> {
                     },
                 )
             }
-            Encoding => {
+            State::Encoding => {
                 let (i, encoding) = context(
                     "encoding <encoding>",
                     opt(|i| parse::header_field(i, b"encoding", is_not(NL))),
@@ -182,7 +181,7 @@ impl<'a> CommitRefIter<'a> {
                     None => return Self::next_inner(i, state),
                 }
             }
-            ExtraHeaders => {
+            State::ExtraHeaders => {
                 let (i, extra_header) = context(
                     "<field> <single-line|multi-line>",
                     opt(alt((
@@ -201,7 +200,7 @@ impl<'a> CommitRefIter<'a> {
                     }
                 }
             }
-            Message => {
+            State::Message => {
                 let (i, message) = all_consuming(decode::message)(i)?;
                 debug_assert!(
                     i.is_empty(),

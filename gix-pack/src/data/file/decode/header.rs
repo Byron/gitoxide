@@ -45,26 +45,26 @@ impl File {
         mut entry: data::Entry,
         resolve: impl Fn(&gix_hash::oid) -> Option<ResolvedBase>,
     ) -> Result<Outcome, Error> {
-        use crate::data::entry::Header::*;
+        use crate::data::entry::Header;
         let mut num_deltas = 0;
         let mut first_delta_decompressed_size = None::<u64>;
         loop {
             match entry.header {
-                Tree | Blob | Commit | Tag => {
+                Header::Tree | Header::Blob | Header::Commit | Header::Tag => {
                     return Ok(Outcome {
                         kind: entry.header.as_kind().expect("always valid for non-refs"),
                         object_size: first_delta_decompressed_size.unwrap_or(entry.decompressed_size),
                         num_deltas,
                     });
                 }
-                OfsDelta { base_distance } => {
+                Header::OfsDelta { base_distance } => {
                     num_deltas += 1;
                     if first_delta_decompressed_size.is_none() {
                         first_delta_decompressed_size = Some(self.decode_delta_object_size(&entry)?);
                     }
                     entry = self.entry(entry.base_pack_offset(base_distance))
                 }
-                RefDelta { base_id } => {
+                Header::RefDelta { base_id } => {
                     num_deltas += 1;
                     if first_delta_decompressed_size.is_none() {
                         first_delta_decompressed_size = Some(self.decode_delta_object_size(&entry)?);

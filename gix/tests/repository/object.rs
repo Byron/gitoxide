@@ -69,24 +69,24 @@ fn writes_avoid_io_using_duplicate_check() -> crate::Result {
     for id in repo.objects.iter()? {
         let id = id?;
         let obj = repo.find_object(id)?;
-        use gix_object::Kind::*;
+        use gix_object::Kind;
         match obj.kind {
-            Commit => {
+            Kind::Commit => {
                 let commit = obj.into_commit();
                 let new_id = repo.write_object(commit.decode()?)?;
                 assert_eq!(new_id, id);
             }
-            Tag => {
+            Kind::Tag => {
                 let tag = obj.into_tag();
                 let new_id = repo.write_object(tag.decode()?)?;
                 assert_eq!(new_id, id);
             }
-            Tree => {
+            Kind::Tree => {
                 let tree = obj.into_tree();
                 let new_id = repo.write_object(tree.decode()?)?;
                 assert_eq!(new_id, id);
             }
-            Blob => {
+            Kind::Blob => {
                 let new_id = repo.write_blob(&obj.data)?;
                 assert_eq!(new_id, id);
                 let new_id = repo.write_blob_stream(std::io::Cursor::new(&obj.data))?;

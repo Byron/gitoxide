@@ -47,30 +47,29 @@ impl Header {
     }
     /// Convert the header's object kind into [`gix_object::Kind`] if possible
     pub fn as_kind(&self) -> Option<gix_object::Kind> {
-        use gix_object::Kind::*;
+        use gix_object::Kind;
         Some(match self {
-            Header::Tree => Tree,
-            Header::Blob => Blob,
-            Header::Commit => Commit,
-            Header::Tag => Tag,
-            Header::RefDelta { .. } | Header::OfsDelta { .. } => return None,
+            Self::Tree => Kind::Tree,
+            Self::Blob => Kind::Blob,
+            Self::Commit => Kind::Commit,
+            Self::Tag => Kind::Tag,
+            Self::RefDelta { .. } | Self::OfsDelta { .. } => return None,
         })
     }
     /// Convert this header's object kind into the packs internal representation
     pub fn as_type_id(&self) -> u8 {
-        use Header::*;
         match self {
-            Blob => BLOB,
-            Tree => TREE,
-            Commit => COMMIT,
-            Tag => TAG,
-            OfsDelta { .. } => OFS_DELTA,
-            RefDelta { .. } => REF_DELTA,
+            Self::Blob => BLOB,
+            Self::Tree => TREE,
+            Self::Commit => COMMIT,
+            Self::Tag => TAG,
+            Self::OfsDelta { .. } => OFS_DELTA,
+            Self::RefDelta { .. } => REF_DELTA,
         }
     }
     /// Return's true if this is a delta object, i.e. not a full object.
     pub fn is_delta(&self) -> bool {
-        matches!(self, Header::OfsDelta { .. } | Header::RefDelta { .. })
+        matches!(self, Self::OfsDelta { .. } | Self::RefDelta { .. })
     }
     /// Return's true if this is a base object, i.e. not a delta object.
     pub fn is_base(&self) -> bool {
@@ -96,19 +95,18 @@ impl Header {
         }
         out.write_all(&[c])?;
 
-        use Header::*;
         match self {
-            RefDelta { base_id: oid } => {
+            Self::RefDelta { base_id: oid } => {
                 out.write_all(oid.as_slice())?;
                 written += oid.as_slice().len();
             }
-            OfsDelta { base_distance } => {
+            Self::OfsDelta { base_distance } => {
                 let mut buf = [0u8; 10];
                 let buf = leb64_encode(*base_distance, &mut buf);
                 out.write_all(buf)?;
                 written += buf.len();
             }
-            Blob | Tree | Commit | Tag => {}
+            Self::Blob | Self::Tree | Self::Commit | Self::Tag => {}
         }
         Ok(written)
     }

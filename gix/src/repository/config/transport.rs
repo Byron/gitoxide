@@ -27,10 +27,10 @@ impl crate::Repository {
         remote_name: Option<&BStr>,
     ) -> Result<Option<Box<dyn Any>>, crate::config::transport::Error> {
         let url = gix_url::parse(url.into())?;
-        use gix_url::Scheme::*;
+        use gix_url::Scheme;
 
         match &url.scheme {
-            Http | Https => {
+            Scheme::Http | Scheme::Https => {
                 #[cfg(not(any(
                     feature = "blocking-http-transport-reqwest",
                     feature = "blocking-http-transport-curl"
@@ -206,7 +206,7 @@ impl crate::Repository {
                                             .string_filter_by_key(key, &mut trusted_only)
                                             .map(|v| (v, cow_bstr(key), &gitoxide::Http::PROXY))
                                     });
-                                if url.scheme == Https {
+                                if url.scheme == Scheme::Https {
                                     http_proxy.or_else(|| {
                                         let key = "gitoxide.https.proxy";
                                         debug_assert_eq!(key, gitoxide::Https::PROXY.logical_name());
@@ -419,7 +419,7 @@ impl crate::Repository {
                     Ok(Some(Box::new(opts)))
                 }
             }
-            File | Git | Ssh | Ext(_) => Ok(None),
+            Scheme::File | Scheme::Git | Scheme::Ssh | Scheme::Ext(_) => Ok(None),
         }
     }
 }

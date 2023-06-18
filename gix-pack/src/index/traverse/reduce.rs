@@ -90,12 +90,12 @@ where
                 self.stats.total_decompressed_entries_size += stats.decompressed_size;
                 self.stats.total_compressed_entries_size += stats.compressed_size as u64;
                 self.stats.total_object_size += stats.object_size;
-                use gix_object::Kind::*;
+                use gix_object::Kind;
                 match stats.kind {
-                    Commit => self.stats.num_commits += 1,
-                    Tree => self.stats.num_trees += 1,
-                    Blob => self.stats.num_blobs += 1,
-                    Tag => self.stats.num_tags += 1,
+                    Kind::Commit => self.stats.num_commits += 1,
+                    Kind::Tree => self.stats.num_trees += 1,
+                    Kind::Blob => self.stats.num_blobs += 1,
+                    Kind::Tag => self.stats.num_tags += 1,
                 }
                 add_decode_result(&mut total, stats);
                 total

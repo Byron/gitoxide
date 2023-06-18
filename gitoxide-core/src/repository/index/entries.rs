@@ -34,7 +34,7 @@ pub(crate) mod function {
             statistics,
         }: Options,
     ) -> anyhow::Result<()> {
-        use crate::OutputFormat::*;
+        use crate::OutputFormat;
         let index = repo.index_or_load_from_head()?;
         let mut cache = attributes
             .map(|attrs| {
@@ -72,7 +72,7 @@ pub(crate) mod function {
 
         let mut out = BufWriter::new(out);
         #[cfg(feature = "serde")]
-        if let Json = format {
+        if let OutputFormat::Json = format {
             out.write_all(b"[\n")?;
         }
         let mut entries = index.entries().iter().peekable();
@@ -98,21 +98,21 @@ pub(crate) mod function {
                 })
                 .transpose()?;
             match format {
-                Human => to_human(&mut out, &index, entry, attrs)?,
+                OutputFormat::Human => to_human(&mut out, &index, entry, attrs)?,
                 #[cfg(feature = "serde")]
-                Json => to_json(&mut out, &index, entry, attrs, entries.peek().is_none())?,
+                OutputFormat::Json => to_json(&mut out, &index, entry, attrs, entries.peek().is_none())?,
             }
         }
 
         #[cfg(feature = "serde")]
-        if format == Json {
+        if format == OutputFormat::Json {
             out.write_all(b"]\n")?;
             out.flush()?;
             if statistics {
                 serde_json::to_writer_pretty(&mut err, &stats)?;
             }
         }
-        if format == Human && statistics {
+        if format == OutputFormat::Human && statistics {
             out.flush()?;
             stats.cache = cache.map(|c| *c.1.statistics());
             writeln!(err, "{stats:#?}")?;

@@ -1,5 +1,6 @@
-use crate::named_repo;
 use gix::config::tree::{Branch, Core, Key};
+
+use crate::named_repo;
 
 #[test]
 fn commit_auto_rollback() -> crate::Result {

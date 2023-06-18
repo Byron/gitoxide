@@ -34,12 +34,11 @@ impl FromStr for ObjectExpansion {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ObjectExpansion::*;
         let slc = s.to_ascii_lowercase();
         Ok(match slc.as_str() {
-            "none" => None,
-            "tree-traversal" => TreeTraversal,
-            "tree-diff" => TreeDiff,
+            "none" => ObjectExpansion::None,
+            "tree-traversal" => ObjectExpansion::TreeTraversal,
+            "tree-diff" => ObjectExpansion::TreeDiff,
             _ => return Err("invalid value".into()),
         })
     }
@@ -47,11 +46,11 @@ impl FromStr for ObjectExpansion {
 
 impl From<ObjectExpansion> for pack::data::output::count::objects::ObjectExpansion {
     fn from(v: ObjectExpansion) -> Self {
-        use pack::data::output::count::objects::ObjectExpansion::*;
+        use pack::data::output::count::objects::ObjectExpansion as PackObjExpansion;
         match v {
-            ObjectExpansion::None => AsIs,
-            ObjectExpansion::TreeTraversal => TreeContents,
-            ObjectExpansion::TreeDiff => TreeAdditionsComparedToAncestor,
+            ObjectExpansion::None => PackObjExpansion::AsIs,
+            ObjectExpansion::TreeTraversal => PackObjExpansion::TreeContents,
+            ObjectExpansion::TreeDiff => PackObjExpansion::TreeAdditionsComparedToAncestor,
         }
     }
 }

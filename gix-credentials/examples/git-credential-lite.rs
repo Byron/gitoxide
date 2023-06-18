@@ -7,13 +7,13 @@ pub fn main() -> Result<(), gix_credentials::program::main::Error> {
         std::io::stdin(),
         std::io::stdout(),
         |action, context| {
-            use gix_credentials::program::main::Action::*;
+            use gix_credentials::program::main::Action;
             gix_credentials::helper::Cascade::default()
                 .invoke(
                     match action {
-                        Get => gix_credentials::helper::Action::Get(context),
-                        Erase => gix_credentials::helper::Action::Erase(context.to_bstring()),
-                        Store => gix_credentials::helper::Action::Store(context.to_bstring()),
+                        Action::Get => gix_credentials::helper::Action::Get(context),
+                        Action::Erase => gix_credentials::helper::Action::Erase(context.to_bstring()),
+                        Action::Store => gix_credentials::helper::Action::Store(context.to_bstring()),
                     },
                     gix_prompt::Options::default().apply_environment(true, true, true),
                 )

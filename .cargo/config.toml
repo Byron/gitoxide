@@ -5,6 +5,7 @@ rustflags = [
 
     # Clippy lints
     "-W", "clippy::cloned_instead_of_copied",
+    "-W", "clippy::enum_glob_use",
     "-W", "clippy::explicit_iter_loop",
     "-W", "clippy::map_unwrap_or",
     "-W", "clippy::redundant_closure_for_method_calls",

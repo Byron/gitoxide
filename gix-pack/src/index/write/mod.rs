@@ -137,9 +137,9 @@ impl crate::index::File {
 
             let crc32 = crc32.expect("crc32 to be computed by the iterator. Caller assures correct configuration.");
 
-            use crate::data::entry::Header::*;
+            use crate::data::entry::Header;
             match header {
-                Tree | Blob | Commit | Tag => {
+                Header::Tree | Header::Blob | Header::Commit | Header::Tag => {
                     tree.add_root(
                         pack_offset,
                         TreeEntry {
@@ -148,8 +148,8 @@ impl crate::index::File {
                         },
                     )?;
                 }
-                RefDelta { .. } => return Err(Error::IteratorInvariantNoRefDelta),
-                OfsDelta { base_distance } => {
+                Header::RefDelta { .. } => return Err(Error::IteratorInvariantNoRefDelta),
+                Header::OfsDelta { base_distance } => {
                     let base_pack_offset =
                         crate::data::entry::Header::verified_base_pack_offset(pack_offset, base_distance).ok_or(
                             Error::IteratorInvariantBaseOffset {

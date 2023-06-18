@@ -81,20 +81,22 @@ impl<'repo> Delegate<'repo> {
             kind: Option<gix_revision::spec::Kind>,
             [first, second]: [Option<ObjectId>; 2],
         ) -> Result<gix_revision::Spec, Error> {
-            use gix_revision::spec::Kind::*;
+            use gix_revision::spec::Kind;
             Ok(match kind.unwrap_or_default() {
-                IncludeReachable => gix_revision::Spec::Include(first.ok_or(Error::Malformed)?),
-                ExcludeReachable => gix_revision::Spec::Exclude(first.ok_or(Error::Malformed)?),
-                RangeBetween => gix_revision::Spec::Range {
+                Kind::IncludeReachable => gix_revision::Spec::Include(first.ok_or(Error::Malformed)?),
+                Kind::ExcludeReachable => gix_revision::Spec::Exclude(first.ok_or(Error::Malformed)?),
+                Kind::RangeBetween => gix_revision::Spec::Range {
                     from: first.ok_or(Error::Malformed)?,
                     to: second.ok_or(Error::Malformed)?,
                 },
-                ReachableToMergeBase => gix_revision::Spec::Merge {
+                Kind::ReachableToMergeBase => gix_revision::Spec::Merge {
                     theirs: first.ok_or(Error::Malformed)?,
                     ours: second.ok_or(Error::Malformed)?,
                 },
-                IncludeReachableFromParents => gix_revision::Spec::IncludeOnlyParents(first.ok_or(Error::Malformed)?),
-                ExcludeReachableFromParents => gix_revision::Spec::ExcludeParents(first.ok_or(Error::Malformed)?),
+                Kind::IncludeReachableFromParents => {
+                    gix_revision::Spec::IncludeOnlyParents(first.ok_or(Error::Malformed)?)
+                }
+                Kind::ExcludeReachableFromParents => gix_revision::Spec::ExcludeParents(first.ok_or(Error::Malformed)?),
             })
         }
 
@@ -121,13 +123,13 @@ impl<'repo> parse::Delegate for Delegate<'repo> {
 
 impl<'repo> delegate::Kind for Delegate<'repo> {
     fn kind(&mut self, kind: gix_revision::spec::Kind) -> Option<()> {
-        use gix_revision::spec::Kind::*;
+        use gix_revision::spec::Kind;
         self.kind = Some(kind);
 
         if self.kind_implies_committish() {
             self.disambiguate_objects_by_fallback_hint(ObjectKindHint::Committish.into());
         }
-        if matches!(kind, RangeBetween | ReachableToMergeBase) {
+        if matches!(kind, Kind::RangeBetween | Kind::ReachableToMergeBase) {
             self.idx += 1;
         }
 

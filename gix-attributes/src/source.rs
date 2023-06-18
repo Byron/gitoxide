@@ -8,20 +8,19 @@ impl Source {
     ///
     /// Note that local sources are returned as relative paths to be joined with the base in a separate step.
     pub fn storage_location(self, env_var: &mut dyn FnMut(&str) -> Option<OsString>) -> Option<Cow<'static, Path>> {
-        use Source::*;
         Some(match self {
-            GitInstallation => gix_path::env::installation_config_prefix()?
+            Self::GitInstallation => gix_path::env::installation_config_prefix()?
                 .join("gitattributes")
                 .into(),
-            System => {
+            Self::System => {
                 if env_var("GIT_ATTR_NOSYSTEM").is_some() {
                     return None;
                 } else {
                     gix_path::env::system_prefix()?.join("etc/gitattributes").into()
                 }
             }
-            Git => return gix_path::env::xdg_config("attributes", env_var).map(Cow::Owned),
-            Local => Cow::Borrowed(Path::new("info/attributes")),
+            Self::Git => return gix_path::env::xdg_config("attributes", env_var).map(Cow::Owned),
+            Self::Local => Cow::Borrowed(Path::new("info/attributes")),
         })
     }
 }

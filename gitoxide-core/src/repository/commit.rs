@@ -20,11 +20,11 @@ pub fn describe(
         Some(spec) => repo.rev_parse_single(spec)?.object()?.try_into_commit()?,
         None => repo.head_commit()?,
     };
-    use gix::commit::describe::SelectRef::*;
+    use gix::commit::describe::SelectRef;
     let select_ref = if all_refs {
-        AllRefs
+        SelectRef::AllRefs
     } else if all_tags {
-        AllTags
+        SelectRef::AllTags
     } else {
         Default::default()
     };

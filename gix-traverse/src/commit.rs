@@ -87,16 +87,16 @@ pub struct Info {
 
 ///
 pub mod ancestors {
-    use gix_date::SecondsSinceUnixEpoch;
-    use smallvec::SmallVec;
     use std::{
         borrow::{Borrow, BorrowMut},
         collections::VecDeque,
     };
 
+    use gix_date::SecondsSinceUnixEpoch;
     use gix_hash::{oid, ObjectId};
     use gix_hashtable::HashSet;
     use gix_object::CommitRefIter;
+    use smallvec::SmallVec;
 
     use crate::commit::{collect_parents, Ancestors, Either, Info, ParentIds, Parents, Sorting};
 

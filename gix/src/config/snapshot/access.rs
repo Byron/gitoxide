@@ -3,9 +3,8 @@ use std::borrow::Cow;
 
 use gix_features::threading::OwnShared;
 
-use crate::bstr::BString;
 use crate::{
-    bstr::BStr,
+    bstr::{BStr, BString},
     config::{CommitAutoRollback, Snapshot, SnapshotMut},
 };
 

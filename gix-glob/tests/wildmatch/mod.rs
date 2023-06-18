@@ -322,11 +322,10 @@ enum MatchResult {
 
 impl PartialEq<Self> for MatchResult {
     fn eq(&self, other: &Self) -> bool {
-        use MatchResult::*;
         match (self, other) {
-            (Panic, _) | (_, Panic) => true,
-            (Match, NoMatch) | (NoMatch, Match) => false,
-            (Match, Match) | (NoMatch, NoMatch) => true,
+            (Self::Panic, _) | (_, Self::Panic) => true,
+            (Self::Match, Self::NoMatch) | (Self::NoMatch, Self::Match) => false,
+            (Self::Match, Self::Match) | (Self::NoMatch, Self::NoMatch) => true,
         }
     }
 }
@@ -335,21 +334,19 @@ impl std::cmp::Eq for MatchResult {}
 
 impl From<std::thread::Result<bool>> for MatchResult {
     fn from(v: std::thread::Result<bool>) -> Self {
-        use MatchResult::*;
         match v {
-            Ok(v) if v => Match,
-            Ok(_) => NoMatch,
-            Err(_) => Panic,
+            Ok(v) if v => Self::Match,
+            Ok(_) => Self::NoMatch,
+            Err(_) => Self::Panic,
         }
     }
 }
 
 impl From<u8> for MatchResult {
     fn from(v: u8) -> Self {
-        use MatchResult::*;
         match v {
-            1 => Match,
-            0 => NoMatch,
+            1 => Self::Match,
+            0 => Self::NoMatch,
             _ => unreachable!("BUG: only use 0 or 1 for expected values"),
         }
     }
@@ -357,11 +354,10 @@ impl From<u8> for MatchResult {
 
 impl Display for MatchResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        use MatchResult::*;
         f.write_str(match self {
-            Match => "✔️",
-            NoMatch => "⨯",
-            Panic => "E",
+            Self::Match => "✔️",
+            Self::NoMatch => "⨯",
+            Self::Panic => "E",
         })
     }
 }

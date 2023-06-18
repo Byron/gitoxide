@@ -11,11 +11,11 @@ mod all {
     }
 }
 mod iter {
-    pub use std::io::ErrorKind::*;
+    pub use std::io::ErrorKind;
 
     use gix_fs::dir::{
         create,
-        create::{Error::*, Retries},
+        create::{Error, Retries},
     };
 
     #[test]
@@ -52,11 +52,11 @@ mod iter {
         let new_dir = dir.path().join("s1").join("s2").join("new");
         let mut it = create::Iter::new(&new_dir);
         assert!(
-            matches!(it.next(), Some(Err(Intermediate{dir, kind: k})) if k == NotFound && dir == new_dir),
+            matches!(it.next(), Some(Err(Error::Intermediate{dir, kind: k})) if k == ErrorKind::NotFound && dir == new_dir),
             "dir is not present"
         );
         assert!(
-            matches!(it.next(), Some(Err(Intermediate{dir, kind:k})) if k == NotFound && dir == new_dir.parent().unwrap()),
+            matches!(it.next(), Some(Err(Error::Intermediate{dir, kind:k})) if k == ErrorKind::NotFound && dir == new_dir.parent().unwrap()),
             "parent dir is not present"
         );
         assert_eq!(
@@ -91,8 +91,8 @@ mod iter {
             },
         );
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err, ..})) if retries_left.on_create_directory_failure == 0
-                                                                    && err.kind() == NotFound
+            matches!(it.next(), Some(Err(Error::Permanent{ retries_left, dir, err, ..})) if retries_left.on_create_directory_failure == 0
+                                                                    && err.kind() == ErrorKind::NotFound
                                                                     && dir == new_dir),
             "parent dir is not present and we run out of attempts"
         );
@@ -110,7 +110,7 @@ mod iter {
 
         let mut it = create::Iter::new(&new_dir);
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ dir, err, .. })) if err.kind() == AlreadyExists
+            matches!(it.next(), Some(Err(Error::Permanent{ dir, err, .. })) if err.kind() == ErrorKind::AlreadyExists
                                                                     && dir == new_dir),
             "parent dir is not present and we run out of attempts"
         );
@@ -147,9 +147,9 @@ mod iter {
         std::fs::remove_dir(parent_dir)?;
 
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err, .. })) if retries_left.to_create_entire_directory == 0
+            matches!(it.next(), Some(Err(Error::Permanent{ retries_left, dir, err, .. })) if retries_left.to_create_entire_directory == 0
                                                                     && retries_left.on_create_directory_failure == 1
-                                                                    && err.kind() == NotFound
+                                                                    && err.kind() == ErrorKind::NotFound
                                                                     && dir == new_dir),
             "we run out of attempts to retry to combat against raciness"
         );
@@ -164,7 +164,7 @@ mod iter {
         let mut it = create::Iter::new(&new_dir);
 
         assert!(
-            matches!(it.next(), Some(Err(Intermediate{dir, kind:k})) if k == NotFound && dir == new_dir),
+            matches!(it.next(), Some(Err(Error::Intermediate{dir, kind:k})) if k == ErrorKind::NotFound && dir == new_dir),
             "dir is not present, and we go up a level"
         );
         assert!(
@@ -175,7 +175,7 @@ mod iter {
         std::fs::remove_dir(parent_dir)?;
 
         assert!(
-            matches!(it.next(), Some(Err(Intermediate{dir, kind:k})) if k == NotFound && dir == new_dir),
+            matches!(it.next(), Some(Err(Error::Intermediate{dir, kind:k})) if k == ErrorKind::NotFound && dir == new_dir),
             "now when it tries the actual dir its not found"
         );
         assert!(

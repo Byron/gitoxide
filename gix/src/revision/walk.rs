@@ -1,8 +1,7 @@
 use gix_hash::ObjectId;
 use gix_odb::FindExt;
 
-use crate::ext::ObjectIdExt;
-use crate::{revision, Repository};
+use crate::{ext::ObjectIdExt, revision, Repository};
 
 /// The error returned by [`Platform::all()`].
 #[derive(Debug, thiserror::Error)]

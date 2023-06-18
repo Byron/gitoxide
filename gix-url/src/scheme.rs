@@ -24,12 +24,12 @@ pub enum Scheme {
 impl<'a> From<&'a str> for Scheme {
     fn from(value: &'a str) -> Self {
         match value {
-            "ssh" => Scheme::Ssh,
-            "file" => Scheme::File,
-            "git" => Scheme::Git,
-            "http" => Scheme::Http,
-            "https" => Scheme::Https,
-            unknown => Scheme::Ext(unknown.into()),
+            "ssh" => Self::Ssh,
+            "file" => Self::File,
+            "git" => Self::Git,
+            "http" => Self::Http,
+            "https" => Self::Https,
+            unknown => Self::Ext(unknown.into()),
         }
     }
 }
@@ -37,14 +37,13 @@ impl<'a> From<&'a str> for Scheme {
 impl Scheme {
     /// Return ourselves parseable name.
     pub fn as_str(&self) -> &str {
-        use Scheme::*;
         match self {
-            File => "file",
-            Git => "git",
-            Ssh => "ssh",
-            Http => "http",
-            Https => "https",
-            Ext(name) => name.as_str(),
+            Self::File => "file",
+            Self::Git => "git",
+            Self::Ssh => "ssh",
+            Self::Http => "http",
+            Self::Https => "https",
+            Self::Ext(name) => name.as_str(),
         }
     }
 }

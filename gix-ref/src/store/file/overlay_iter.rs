@@ -279,8 +279,11 @@ impl<'a> IterInfo<'a> {
                 "prefix must be a relative path, like 'refs/heads'",
             ));
         }
-        use std::path::Component::*;
-        if prefix.components().any(|c| matches!(c, CurDir | ParentDir)) {
+        use std::path::Component;
+        if prefix
+            .components()
+            .any(|c| matches!(c, Component::CurDir | Component::ParentDir))
+        {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 "Refusing to handle prefixes with relative path components",

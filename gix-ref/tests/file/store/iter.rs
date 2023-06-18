@@ -1,6 +1,7 @@
 use std::convert::TryInto;
 
 use gix_object::bstr::ByteSlice;
+use gix_ref::Target;
 
 use crate::{
     file::{store, store_at, store_with_packed_refs},
@@ -383,8 +384,6 @@ fn loose_iter_with_partial_prefix() -> crate::Result {
 
 #[test]
 fn overlay_iter() -> crate::Result {
-    use gix_ref::Target::*;
-
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
         .iter()?
@@ -396,16 +395,16 @@ fn overlay_iter() -> crate::Result {
     assert_eq!(
         ref_names,
         vec![
-            (b"refs/heads/main".as_bstr().to_owned(), Peeled(c1)),
-            ("refs/heads/newer-as-loose".into(), Peeled(c2)),
+            (b"refs/heads/main".as_bstr().to_owned(), Target::Peeled(c1)),
+            ("refs/heads/newer-as-loose".into(), Target::Peeled(c2)),
             (
                 "refs/remotes/origin/HEAD".into(),
-                Symbolic("refs/remotes/origin/main".try_into()?),
+                Target::Symbolic("refs/remotes/origin/main".try_into()?),
             ),
-            ("refs/remotes/origin/main".into(), Peeled(c1)),
+            ("refs/remotes/origin/main".into(), Target::Peeled(c1)),
             (
                 "refs/tags/tag-object".into(),
-                Peeled(hex_to_id("b3109a7e51fc593f85b145a76c70ddd1d133fafd")),
+                Target::Peeled(hex_to_id("b3109a7e51fc593f85b145a76c70ddd1d133fafd")),
             )
         ]
     );
@@ -429,8 +428,6 @@ fn overlay_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
 
 #[test]
 fn overlay_prefixed_iter() -> crate::Result {
-    use gix_ref::Target::*;
-
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
         .iter()?
@@ -442,8 +439,8 @@ fn overlay_prefixed_iter() -> crate::Result {
     assert_eq!(
         ref_names,
         vec![
-            (b"refs/heads/main".as_bstr().to_owned(), Peeled(c1)),
-            ("refs/heads/newer-as-loose".into(), Peeled(c2)),
+            (b"refs/heads/main".as_bstr().to_owned(), Target::Peeled(c1)),
+            ("refs/heads/newer-as-loose".into(), Target::Peeled(c2)),
         ]
     );
     Ok(())
@@ -451,8 +448,6 @@ fn overlay_prefixed_iter() -> crate::Result {
 
 #[test]
 fn overlay_partial_prefix_iter() -> crate::Result {
-    use gix_ref::Target::*;
-
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
         .iter()?
@@ -460,6 +455,9 @@ fn overlay_partial_prefix_iter() -> crate::Result {
         .map(|r| r.map(|r| (r.name.as_bstr().to_owned(), r.target)))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-    assert_eq!(ref_names, vec![(b"refs/heads/main".as_bstr().to_owned(), Peeled(c1)),]);
+    assert_eq!(
+        ref_names,
+        vec![(b"refs/heads/main".as_bstr().to_owned(), Target::Peeled(c1)),]
+    );
     Ok(())
 }

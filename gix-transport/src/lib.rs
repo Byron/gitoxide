@@ -69,12 +69,28 @@ mod traits {
     impl IsSpuriousError for std::io::Error {
         fn is_spurious(&self) -> bool {
             // TODO: also include the new special Kinds (currently unstable)
-            use std::io::ErrorKind::*;
+            use std::io::ErrorKind;
             match self.kind() {
-                Unsupported | WriteZero | InvalidInput | InvalidData | WouldBlock | AlreadyExists
-                | AddrNotAvailable | NotConnected | Other | PermissionDenied | NotFound => false,
-                Interrupted | UnexpectedEof | OutOfMemory | TimedOut | BrokenPipe | AddrInUse | ConnectionAborted
-                | ConnectionReset | ConnectionRefused => true,
+                ErrorKind::Unsupported
+                | ErrorKind::WriteZero
+                | ErrorKind::InvalidInput
+                | ErrorKind::InvalidData
+                | ErrorKind::WouldBlock
+                | ErrorKind::AlreadyExists
+                | ErrorKind::AddrNotAvailable
+                | ErrorKind::NotConnected
+                | ErrorKind::Other
+                | ErrorKind::PermissionDenied
+                | ErrorKind::NotFound => false,
+                ErrorKind::Interrupted
+                | ErrorKind::UnexpectedEof
+                | ErrorKind::OutOfMemory
+                | ErrorKind::TimedOut
+                | ErrorKind::BrokenPipe
+                | ErrorKind::AddrInUse
+                | ErrorKind::ConnectionAborted
+                | ErrorKind::ConnectionReset
+                | ErrorKind::ConnectionRefused => true,
                 _ => false,
             }
         }

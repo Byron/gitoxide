@@ -41,12 +41,12 @@ impl input::Entry {
 }
 
 fn to_header(kind: gix_object::Kind) -> Header {
-    use gix_object::Kind::*;
+    use gix_object::Kind;
     match kind {
-        Tree => Header::Tree,
-        Blob => Header::Blob,
-        Commit => Header::Commit,
-        Tag => Header::Tag,
+        Kind::Tree => Header::Tree,
+        Kind::Blob => Header::Blob,
+        Kind::Commit => Header::Commit,
+        Kind::Tag => Header::Tag,
     }
 }
 

@@ -92,19 +92,19 @@ impl<T> Tree<T> {
             })?;
             previous_cursor_position = Some(pack_offset + entry.header_size() as u64);
 
-            use crate::data::entry::Header::*;
+            use crate::data::entry::Header;
             match entry.header {
-                Tree | Blob | Commit | Tag => {
+                Header::Tree | Header::Blob | Header::Commit | Header::Tag => {
                     tree.add_root(pack_offset, data)?;
                 }
-                RefDelta { base_id } => {
+                Header::RefDelta { base_id } => {
                     resolve_in_pack_id(base_id.as_ref())
                         .ok_or(Error::UnresolvedRefDelta { id: base_id })
                         .and_then(|base_pack_offset| {
                             tree.add_child(base_pack_offset, pack_offset, data).map_err(Into::into)
                         })?;
                 }
-                OfsDelta { base_distance } => {
+                Header::OfsDelta { base_distance } => {
                     let base_pack_offset = pack_offset
                         .checked_sub(base_distance)
                         .expect("in bound distance for deltas");

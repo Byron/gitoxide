@@ -93,21 +93,21 @@ pub fn statistics(
 
     impl Statistics {
         fn count(&mut self, kind: gix::object::Kind, size: u64) {
-            use gix::object::Kind::*;
+            use gix::object::Kind;
             match kind {
-                Commit => {
+                Kind::Commit => {
                     self.commits += 1;
                     self.commits_size += size;
                 }
-                Tree => {
+                Kind::Tree => {
                     self.trees += 1;
                     self.trees_size += size;
                 }
-                Tag => {
+                Kind::Tag => {
                     self.tags += 1;
                     self.tags_size += size;
                 }
-                Blob => {
+                Kind::Blob => {
                     self.blobs += 1;
                     self.blobs_size += size;
                 }

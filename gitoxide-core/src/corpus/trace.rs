@@ -1,9 +1,14 @@
+use std::{
+    path::Path,
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        Arc,
+    },
+};
+
 use gix::progress::DoOrDiscard;
 use parking_lot::Mutex;
 use rusqlite::params;
-use std::path::Path;
-use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::Arc;
 use tracing_forest::tree::Tree;
 use tracing_subscriber::layer::SubscriberExt;
 
