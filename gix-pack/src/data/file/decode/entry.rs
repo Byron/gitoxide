@@ -126,18 +126,6 @@ impl File {
         let offset: usize = data_offset.try_into().expect("offset representable by machine");
         assert!(offset < self.data.len(), "entry offset out of bounds");
 
-        // use std::cell::RefCell;
-        // thread_local! {
-        //     pub static INFLATE: RefCell<zlib::Inflate> = RefCell::new(zlib::Inflate::default());
-        // }
-        // INFLATE.with(|inflate| {
-        //     let mut inflate = inflate.borrow_mut();
-        //     let res = inflate
-        //         .once(&self.data[offset..], out)
-        //         .map(|(_status, consumed_in, _consumed_out)| consumed_in);
-        //     inflate.reset();
-        //     res
-        // })
         zlib::Inflate::default()
             .once(&self.data[offset..], out)
             .map(|(_status, consumed_in, _consumed_out)| consumed_in)
@@ -152,20 +140,6 @@ impl File {
         let offset: usize = data_offset.try_into().expect("offset representable by machine");
         assert!(offset < self.data.len(), "entry offset out of bounds");
 
-        // TODO: put this back in once we know that zlib-ng doesn't fail once in a million times (see tree-traversal)
-        // use std::cell::RefCell;
-        // thread_local! {
-        //     pub static INFLATE: RefCell<zlib::Inflate> = RefCell::new(zlib::Inflate::default());
-        // }
-        //
-        // INFLATE.with(|inflate| {
-        //     let mut inflate = inflate.borrow_mut();
-        //     let res = inflate
-        //         .once(&self.data[offset..], out)
-        //         .map(|(_status, consumed_in, consumed_out)| (consumed_in, consumed_out));
-        //     inflate.reset();
-        //     res
-        // })
         zlib::Inflate::default()
             .once(&self.data[offset..], out)
             .map(|(_status, consumed_in, consumed_out)| (consumed_in, consumed_out))

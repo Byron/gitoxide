@@ -53,14 +53,15 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     let mut decompressed_bytes_by_pack_offset = BTreeMap::new();
-    let decompress_from_resolver = |slice: EntryRange, out: &mut Vec<u8>| -> Result<(data::Entry, u64), Error> {
+    let mut inflate = zlib::Inflate::default();
+    let mut decompress_from_resolver = |slice: EntryRange, out: &mut Vec<u8>| -> Result<(data::Entry, u64), Error> {
         let bytes = resolve(slice.clone(), resolve_data).ok_or(Error::ResolveFailed {
             pack_offset: slice.start,
         })?;
         let entry = data::Entry::from_bytes(bytes, slice.start, hash_len);
         let compressed = &bytes[entry.header_size()..];
         let decompressed_len = entry.decompressed_size as usize;
-        decompress_all_at_once_with(compressed, decompressed_len, out)?;
+        decompress_all_at_once_with(&mut inflate, compressed, decompressed_len, out)?;
         Ok((entry, slice.end))
     };
 
@@ -235,7 +236,8 @@ where
                         move || -> Result<(), Error> {
                             let mut fully_resolved_delta_bytes = Vec::new();
                             let mut delta_bytes = Vec::new();
-                            let decompress_from_resolver =
+                            let mut inflate = zlib::Inflate::default();
+                            let mut decompress_from_resolver =
                                 |slice: EntryRange, out: &mut Vec<u8>| -> Result<(data::Entry, u64), Error> {
                                     let bytes = resolve(slice.clone(), resolve_data).ok_or(Error::ResolveFailed {
                                         pack_offset: slice.start,
@@ -243,7 +245,7 @@ where
                                     let entry = data::Entry::from_bytes(bytes, slice.start, hash_len);
                                     let compressed = &bytes[entry.header_size()..];
                                     let decompressed_len = entry.decompressed_size as usize;
-                                    decompress_all_at_once_with(compressed, decompressed_len, out)?;
+                                    decompress_all_at_once_with(&mut inflate, compressed, decompressed_len, out)?;
                                     Ok((entry, slice.end))
                                 };
 
@@ -407,31 +409,17 @@ fn set_len(v: &mut Vec<u8>, new_len: usize) {
     }
 }
 
-fn decompress_all_at_once_with(b: &[u8], decompressed_len: usize, out: &mut Vec<u8>) -> Result<(), Error> {
+fn decompress_all_at_once_with(
+    inflate: &mut zlib::Inflate,
+    b: &[u8],
+    decompressed_len: usize,
+    out: &mut Vec<u8>,
+) -> Result<(), Error> {
     set_len(out, decompressed_len);
-    // TODO: try to put this back after the next zlib-ng upgrade.
-    // This is from 3a2d5286084597d4c68549903709cda77dda4357 and it worked until zlib-ng-sys 1.1.9. Then it started to
-    // fail with `incorrect data check` 25% of the time.
-    // Note that thread_local! usage was also removed in two other places in `decode/entry.rs` for good measure.
-    // use std::cell::RefCell;
-    // thread_local! {
-    //     pub static INFLATE: RefCell<zlib::Inflate> = RefCell::new(zlib::Inflate::default());
-    // }
-    //
-    // INFLATE.with(|inflate| {
-    //     let mut inflate = inflate.borrow_mut();
-    //     let res = inflate.once(b, out).map_err(|err| Error::ZlibInflate {
-    //         source: err,
-    //         message: "Failed to decompress entry",
-    //     });
-    //     inflate.reset();
-    //     res
-    // })?;
-    zlib::Inflate::default()
-        .once(b, out)
-        .map_err(|err| Error::ZlibInflate {
-            source: err,
-            message: "Failed to decompress entry",
-        })?;
+    inflate.reset();
+    inflate.once(b, out).map_err(|err| Error::ZlibInflate {
+        source: err,
+        message: "Failed to decompress entry",
+    })?;
     Ok(())
 }
