@@ -8,7 +8,7 @@ of the implementation.
 with the potential to become the preferred way to interact with git repositories.
 
 Please note that all functionality comes from the `gitoxide-core` library, which mirrors these capabilities
-and itself relies on all `git-*` crates. It's not meant for consumption, for application development, please use `gix`.
+and itself relies on all `gix-*` crates. It's not meant for consumption, for application development, please use `gix`.
 
 * **the `ein` program** - convenient and for humans
     * [x] **init** - initialize a new non-bare repository with a `main` branch
