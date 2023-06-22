@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/> Add `clippy::redundant-closure-for-method-calls` lint
+
+### New Features
+
+ - <csr-id-3cffa268460eb2d41bd6a30d45778b88db4ec602/> provide basic `tracing` spans for common operations.
+   This is just the beginning and more crates will integrate with it over time.
+
+### Bug Fixes
+
+ - <csr-id-b9eb40730b53f788d2e4bffe4ef6d9028440782e/> revert 3a2d5286084597d4c68549903709cda77dda4357 to fix 'incorrect data check' error.
+   This error could occour in heavily threaded code for unknown reason.
+   But maybe it's due to threads somehow not cleaning up their reused decompressor properly
+   (maybe related to the zlib-ng version). It's strange and sad as this really costs performnace
+   for no good reason.
+ - <csr-id-8817c248dd7c6453ced654d4df304f98ff18ecda/> don't crash when object validation failed during verification.
+   When objects can't be serialized, they will trigger an error that manifests as IO error.
+   Previously we didn't think of the possibility that writing to an im-memory buffer could fail
+   would indeed panic during verification.
+   
+   This is now fixed.
+ - <csr-id-cd747f9292fb034e7fd5ee6c5a94a4e53df42e86/> ScopedJoinHandle is not always available
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release over the course of 10 calendar days.
+ - 12 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Try tree-traversal without thread_local! ([`5a9a7a3`](https://github.com/Byron/gitoxide/commit/5a9a7a31c1537aa54cd81a5145ca319a040b9951))
+    - Revert 3a2d5286084597d4c68549903709cda77dda4357 to fix 'incorrect data check' error. ([`b9eb407`](https://github.com/Byron/gitoxide/commit/b9eb40730b53f788d2e4bffe4ef6d9028440782e))
+    - Merge branch 'gix-corpus' ([`5861afb`](https://github.com/Byron/gitoxide/commit/5861afb45f32c16eefcd8e7b7480309bf44b6edc))
+    - Don't crash when object validation failed during verification. ([`8817c24`](https://github.com/Byron/gitoxide/commit/8817c248dd7c6453ced654d4df304f98ff18ecda))
+    - Merge branch 'corpus' ([`aa16c8c`](https://github.com/Byron/gitoxide/commit/aa16c8ce91452a3e3063cf1cf0240b6014c4743f))
+    - Change MSRV to 1.65 ([`4f635fc`](https://github.com/Byron/gitoxide/commit/4f635fc4429350bae2582d25de86429969d28f30))
+    - Provide basic `tracing` spans for common operations. ([`3cffa26`](https://github.com/Byron/gitoxide/commit/3cffa268460eb2d41bd6a30d45778b88db4ec602))
+    - Merge branch 'help-874-redundant-closures' ([`fe59956`](https://github.com/Byron/gitoxide/commit/fe59956ad667303a923d7cfd9ffd72283df41d78))
+    - ScopedJoinHandle is not always available ([`cd747f9`](https://github.com/Byron/gitoxide/commit/cd747f9292fb034e7fd5ee6c5a94a4e53df42e86))
+    - Add `clippy::redundant-closure-for-method-calls` lint ([`bcad5c2`](https://github.com/Byron/gitoxide/commit/bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d))
+</details>
+
 ## 0.37.0 (2023-06-10)
 
 A maintenance release without user-facing changes.
@@ -13,7 +67,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +79,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-attributes v0.13.1, gix-diff v0.30.1, gix-revwalk v0.1.0, gix-traverse v0.27.0, gix-index v0.18.0, gix-revision v0.15.2, gix-negotiate v0.2.1, gix-pack v0.37.0, gix-odb v0.47.0, gix-protocol v0.33.2, gix-worktree v0.19.0, gix v0.46.0, safety bump 7 crates ([`2560a2c`](https://github.com/Byron/gitoxide/commit/2560a2cc3e1d8c60cd812e15696fa4761d036e19))
     - Prepare changelogs prior to release ([`298f3d7`](https://github.com/Byron/gitoxide/commit/298f3d7359c5b183314d8c584e45dcdd559d88b3))
     - Merge branch 'walk-with-commitgraph' ([`fdee9a2`](https://github.com/Byron/gitoxide/commit/fdee9a22873a13ae644d3dc92f8fe93f8f0266c0))
     - Adapt to changes in `gix-traverse` ([`1f682fd`](https://github.com/Byron/gitoxide/commit/1f682fd991b9b76a8d37e6852567ff239c0ac0db))

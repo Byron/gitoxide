@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/> Add `clippy::redundant-closure-for-method-calls` lint
+
+### New Features
+
+ - <csr-id-3cffa268460eb2d41bd6a30d45778b88db4ec602/> provide basic `tracing` spans for common operations.
+   This is just the beginning and more crates will integrate with it over time.
+ - <csr-id-47c7b0dff9ca82e7c0c60b1dcf1d120f7bec7955/> expose `hashtable` in root for access to optimized-for-object-ids sets and maps.
+
+### Bug Fixes
+
+ - <csr-id-67c06d99dc8387ce566c2fe436c28cdaa041bf07/> make sure empty packs in shallow clones are working as well.
+ - <csr-id-db69e31d8bb73aba886a9a323bfa154a23deacf8/> no-want detection for negotiation phase is now consistent.
+   It being inconsistent was a reason for 'failing to parse server response' which
+   was empty as we didn't provide any wants to the server, but didn't detect that case
+   in the initial negotiation-preparation phase.
+   
+   Turns out we didn't detect it as our special handling of implicit tags was not done
+   in the negotiation-preparation phase.
+   
+   The fix consists of unifying the filtering phase to all places that needed, so
+   the preparation phase outcome is now consistent with what would have come later.
+
+### New Features (BREAKING)
+
+ - <csr-id-682def03ce6ec93d7bcd2f79eedea52021b77f03/> provide `fetch::outcome::Negotiate` for details on what happened during negotiation.
+   We also remove the `negotiation_rounds` field in favor of a far more detailed `fetch::outcome::Negotiate` struct.
+ - <csr-id-574e0f4786719bd56da2fa218772f879fda282bf/> respect the `core.commitGraph` option.
+   Previously, we would always use the commitgraph when available, but now we only do so
+   if the `core.commitGraph` option is set.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 20 commits contributed to the release over the course of 11 calendar days.
+ - 12 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add a span for another potentially expensive portion of the negotiation ([`f2e7ec4`](https://github.com/Byron/gitoxide/commit/f2e7ec4d80299933327ebdc932a758d5d9c7f218))
+    - `just fmt` ([`871dd0b`](https://github.com/Byron/gitoxide/commit/871dd0b977caf17159092a4739ba5408403cdb2c))
+    - Merge branch 'corpus' ([`aa16c8c`](https://github.com/Byron/gitoxide/commit/aa16c8ce91452a3e3063cf1cf0240b6014c4743f))
+    - Change MSRV to 1.65 ([`4f635fc`](https://github.com/Byron/gitoxide/commit/4f635fc4429350bae2582d25de86429969d28f30))
+    - Provide basic `tracing` spans for common operations. ([`3cffa26`](https://github.com/Byron/gitoxide/commit/3cffa268460eb2d41bd6a30d45778b88db4ec602))
+    - Merge branch 'gix-revision-graph' ([`036e60a`](https://github.com/Byron/gitoxide/commit/036e60a3ad39ba9b018c0b56454f12fad455c7bb))
+    - Expose `hashtable` in root for access to optimized-for-object-ids sets and maps. ([`47c7b0d`](https://github.com/Byron/gitoxide/commit/47c7b0dff9ca82e7c0c60b1dcf1d120f7bec7955))
+    - Provide `fetch::outcome::Negotiate` for details on what happened during negotiation. ([`682def0`](https://github.com/Byron/gitoxide/commit/682def03ce6ec93d7bcd2f79eedea52021b77f03))
+    - Merge branch 'fix-no-want-detection' ([`71efcbb`](https://github.com/Byron/gitoxide/commit/71efcbba112376b4acaf37d662cdb38d369462be))
+    - Make sure empty packs in shallow clones are working as well. ([`67c06d9`](https://github.com/Byron/gitoxide/commit/67c06d99dc8387ce566c2fe436c28cdaa041bf07))
+    - No-want detection for negotiation phase is now consistent. ([`db69e31`](https://github.com/Byron/gitoxide/commit/db69e31d8bb73aba886a9a323bfa154a23deacf8))
+    - Merge branch 'help-874-redundant-closures' ([`fe59956`](https://github.com/Byron/gitoxide/commit/fe59956ad667303a923d7cfd9ffd72283df41d78))
+    - Add `clippy::redundant-closure-for-method-calls` lint ([`bcad5c2`](https://github.com/Byron/gitoxide/commit/bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d))
+    - Merge branch 'future-dates' ([`8d2e6a9`](https://github.com/Byron/gitoxide/commit/8d2e6a91ac92a033e9e3daad5cffa90263075536))
+    - Respect the `core.commitGraph` option. ([`574e0f4`](https://github.com/Byron/gitoxide/commit/574e0f4786719bd56da2fa218772f879fda282bf))
+    - Adapt to changes in `gix-revision`/`gix-revwalk` ([`1fdaf71`](https://github.com/Byron/gitoxide/commit/1fdaf71d32eb60ad056376d27837ff37d4d314cd))
+    - Adapt to changes in `gix-protocol` ([`b785e81`](https://github.com/Byron/gitoxide/commit/b785e811232d645ad72bfb87459efbd80cb0a399))
+    - Adapt to changes in `gix-traverse` ([`b447f47`](https://github.com/Byron/gitoxide/commit/b447f478b8a5a28c659cef178b2a06b666f89ec3))
+    - Adapt to changes in `gix-actor` ([`4a80e86`](https://github.com/Byron/gitoxide/commit/4a80e868f9530896616e649838e9be64b6d10036))
+    - Adapt to changes in `gix-date` ([`d575336`](https://github.com/Byron/gitoxide/commit/d575336c26e6026e463cd06d88266bb2bdd3e162))
+</details>
+
 ## 0.46.0 (2023-06-10)
 
 <csr-id-f0ddc3b9c5a34b7930b965dfb1438f95279a8bde/>
@@ -47,7 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 2 calendar days.
+ - 15 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -59,6 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-attributes v0.13.1, gix-diff v0.30.1, gix-revwalk v0.1.0, gix-traverse v0.27.0, gix-index v0.18.0, gix-revision v0.15.2, gix-negotiate v0.2.1, gix-pack v0.37.0, gix-odb v0.47.0, gix-protocol v0.33.2, gix-worktree v0.19.0, gix v0.46.0, safety bump 7 crates ([`2560a2c`](https://github.com/Byron/gitoxide/commit/2560a2cc3e1d8c60cd812e15696fa4761d036e19))
     - Prepare changelogs prior to release ([`298f3d7`](https://github.com/Byron/gitoxide/commit/298f3d7359c5b183314d8c584e45dcdd559d88b3))
     - Improve tests related to the handling of shallow repos ([`d50bfa9`](https://github.com/Byron/gitoxide/commit/d50bfa97f528141e0183558f21a364d969911ef4))
     - Merge branch 'walk-with-commitgraph' ([`fdee9a2`](https://github.com/Byron/gitoxide/commit/fdee9a22873a13ae644d3dc92f8fe93f8f0266c0))

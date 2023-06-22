@@ -10,6 +10,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This release fixes a possibility for V1 fetches to deadlock if negotiation would span multiple rounds 
 (see issue [#882](https://github.com/Byron/gitoxide/issues/882)) for details.
 
+### New Features (BREAKING)
+
+ - <csr-id-b82edc8b965344a866039f6c99295db4f8e776e2/> list commit-graph entries by graph traversal, move commit-graph up to `gix` level.
+   This is merely a debug tool to learn about generation numbers.
+   All commit-graph commands now operate on a repository.
+
+### New Features
+
+ - <csr-id-c494cfd6f80cf273107c626d0f2cbe054db378ee/> `gix --trace` to also print tree-like instrumentation
+ - <csr-id-452ed6b79ed0e12ae214af3c8cd49a87dba91c73/> `gix fetch --open-negotiation-graph[=limit]`
+   Open the negotiation graph as SVG, after optionally specifying a limit
+   as rendering/layouting can be very slow.
+   
+   It's useful to see how the negotiation algorithm is reasoning about each commit.
+ - <csr-id-096838ffa529148b2da3a2382a2d1fdbfe5bee5b/> `gix fetch --negotiation-info` to provide additional information about the negotiation phase.
+ - <csr-id-bd32e393fedd01e27a4f6984281bcc3182c63b67/> `bit revision list --svg` to create a visual graph of commits.
+   It's mainly a test of how well `layout-rs` performs.
+
+### Chore
+
+ - <csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/> Add `clippy::redundant-closure-for-method-calls` lint
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 26 commits contributed to the release over the course of 10 calendar days.
+ - 15 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'gix-corpus' ([`5861afb`](https://github.com/Byron/gitoxide/commit/5861afb45f32c16eefcd8e7b7480309bf44b6edc))
+    - Add `corpus --dry-run` and `--task-sql-suffix` and `--repo-sql-suffix` ([`4cef57d`](https://github.com/Byron/gitoxide/commit/4cef57db735c20da3fa1c56d9c1744e4f653bce0))
+    - Gix-corpus now respects the --trace flag ([`0f973ac`](https://github.com/Byron/gitoxide/commit/0f973ac53df631ad2abdf85dbe2453e528c7e6c3))
+    - Adapt to changes in `gix-trace` ([`bd6e3d7`](https://github.com/Byron/gitoxide/commit/bd6e3d7682d122997f8d3543eb87a62121ef0669))
+    - Merge branch 'corpus' ([`aa16c8c`](https://github.com/Byron/gitoxide/commit/aa16c8ce91452a3e3063cf1cf0240b6014c4743f))
+    - Thanks clippy ([`361cf96`](https://github.com/Byron/gitoxide/commit/361cf964f523fff5d92a8641bc3805b7e1082b18))
+    - `gix --trace` to also print tree-like instrumentation ([`c494cfd`](https://github.com/Byron/gitoxide/commit/c494cfd6f80cf273107c626d0f2cbe054db378ee))
+    - Run tasks in parallel ([`cfd8e88`](https://github.com/Byron/gitoxide/commit/cfd8e88e428075701a162cf8da6986700fd8c5af))
+    - Refresh a corpus repositories by updating all of them. ([`a0b4385`](https://github.com/Byron/gitoxide/commit/a0b4385d33112fc3f950ac40d874883e7ad075c0))
+    - Obtain a repository-list with classifiers ([`a4300c8`](https://github.com/Byron/gitoxide/commit/a4300c8318ded98dc465405d39ed014e0534de66))
+    - Provide all the meta-data that is needed to make a run (and associate it with that) ([`fcbda1d`](https://github.com/Byron/gitoxide/commit/fcbda1d2fee735c8bf3e7357a8691af2f7637922))
+    - A build script to set a `gitoxide` version according to what's in git ([`83f6466`](https://github.com/Byron/gitoxide/commit/83f646674118ff6227a605dc17b0be7325481069))
+    - A basic command to perform a corpus run ([`d9e74ff`](https://github.com/Byron/gitoxide/commit/d9e74ffdedf585a68d09d04f493c98eda729ff3b))
+    - Merge branch 'gix-revision-graph' ([`036e60a`](https://github.com/Byron/gitoxide/commit/036e60a3ad39ba9b018c0b56454f12fad455c7bb))
+    - `gix fetch --open-negotiation-graph[=limit]` ([`452ed6b`](https://github.com/Byron/gitoxide/commit/452ed6b79ed0e12ae214af3c8cd49a87dba91c73))
+    - `gix fetch --negotiation-info` to provide additional information about the negotiation phase. ([`096838f`](https://github.com/Byron/gitoxide/commit/096838ffa529148b2da3a2382a2d1fdbfe5bee5b))
+    - Make top-level `gix` docs available when using `cargo doc` ([`518159d`](https://github.com/Byron/gitoxide/commit/518159da99cf07384e9cacdc1d62a5dc1e02f09c))
+    - `bit revision list --svg` to create a visual graph of commits. ([`bd32e39`](https://github.com/Byron/gitoxide/commit/bd32e393fedd01e27a4f6984281bcc3182c63b67))
+    - Merge branch 'help-874-redundant-closures' ([`fe59956`](https://github.com/Byron/gitoxide/commit/fe59956ad667303a923d7cfd9ffd72283df41d78))
+    - Merge branch 'fix-commitgraph' ([`2213321`](https://github.com/Byron/gitoxide/commit/22133210f2d073eb472c51c83f29b18cf8bdd7ca))
+    - Bring back the no-repo commitgraph for stress-tests to work ([`ff8d42a`](https://github.com/Byron/gitoxide/commit/ff8d42aef988b99153950a24efda80acebde5cac))
+    - Move commit-graph implementation into its correct place ([`750b07a`](https://github.com/Byron/gitoxide/commit/750b07a69c659cedd46f33396468d4faa7e73f10))
+    - Add `clippy::redundant-closure-for-method-calls` lint ([`bcad5c2`](https://github.com/Byron/gitoxide/commit/bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d))
+    - Merge branch 'future-dates' ([`8d2e6a9`](https://github.com/Byron/gitoxide/commit/8d2e6a91ac92a033e9e3daad5cffa90263075536))
+    - List commit-graph entries by graph traversal, move commit-graph up to `gix` level. ([`b82edc8`](https://github.com/Byron/gitoxide/commit/b82edc8b965344a866039f6c99295db4f8e776e2))
+    - Add options related to commitgraph to `gix config tree` ([`7aaaebf`](https://github.com/Byron/gitoxide/commit/7aaaebfea9c1935f0a87ab81cef4261e00e4c159))
+</details>
+
 ## 0.26.0 (2023-06-07)
 
 The main attraction of this release is support for multi-round negotiations thanks to support for the standard negotiations algorithms.

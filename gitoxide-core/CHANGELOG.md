@@ -5,6 +5,95 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/> Add `clippy::redundant-closure-for-method-calls` lint
+
+### New Features
+
+ - <csr-id-c494cfd6f80cf273107c626d0f2cbe054db378ee/> `gix --trace` to also print tree-like instrumentation
+ - <csr-id-452ed6b79ed0e12ae214af3c8cd49a87dba91c73/> `gix fetch --open-negotiation-graph[=limit]`
+   Open the negotiation graph as SVG, after optionally specifying a limit
+   as rendering/layouting can be very slow.
+   
+   It's useful to see how the negotiation algorithm is reasoning about each commit.
+ - <csr-id-096838ffa529148b2da3a2382a2d1fdbfe5bee5b/> `gix fetch --negotiation-info` to provide additional information about the negotiation phase.
+ - <csr-id-bd32e393fedd01e27a4f6984281bcc3182c63b67/> `bit revision list --svg` to create a visual graph of commits.
+   It's mainly a test of how well `layout-rs` performs.
+ - <csr-id-2f5e9eb11f2719011f1cc7fdc9d3ee9257ccce32/> `ein t hours` uses git-attributes to see if a file is considered binary
+
+### Bug Fixes
+
+ - <csr-id-8817c248dd7c6453ced654d4df304f98ff18ecda/> don't crash when object validation failed during verification.
+   When objects can't be serialized, they will trigger an error that manifests as IO error.
+   Previously we didn't think of the possibility that writing to an im-memory buffer could fail
+   would indeed panic during verification.
+   
+   This is now fixed.
+
+### New Features (BREAKING)
+
+ - <csr-id-b82edc8b965344a866039f6c99295db4f8e776e2/> list commit-graph entries by graph traversal, move commit-graph up to `gix` level.
+   This is merely a debug tool to learn about generation numbers.
+   All commit-graph commands now operate on a repository.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 37 commits contributed to the release over the course of 12 calendar days.
+ - 15 days passed between releases.
+ - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - `just fmt` ([`871dd0b`](https://github.com/Byron/gitoxide/commit/871dd0b977caf17159092a4739ba5408403cdb2c))
+    - Merge branch 'gix-corpus' ([`5861afb`](https://github.com/Byron/gitoxide/commit/5861afb45f32c16eefcd8e7b7480309bf44b6edc))
+    - Don't crash when object validation failed during verification. ([`8817c24`](https://github.com/Byron/gitoxide/commit/8817c248dd7c6453ced654d4df304f98ff18ecda))
+    - Add more tasks to gather a little more information ([`891a061`](https://github.com/Byron/gitoxide/commit/891a06107883b4a21796facf046a0cd697dc2134))
+    - Add `corpus --dry-run` and `--task-sql-suffix` and `--repo-sql-suffix` ([`4cef57d`](https://github.com/Byron/gitoxide/commit/4cef57db735c20da3fa1c56d9c1744e4f653bce0))
+    - Gix-corpus now respects the --trace flag ([`0f973ac`](https://github.com/Byron/gitoxide/commit/0f973ac53df631ad2abdf85dbe2453e528c7e6c3))
+    - Refactor ([`8a4a0af`](https://github.com/Byron/gitoxide/commit/8a4a0af871c9a666518c65e8de683c7aec025c3b))
+    - Merge branch 'corpus' ([`aa16c8c`](https://github.com/Byron/gitoxide/commit/aa16c8ce91452a3e3063cf1cf0240b6014c4743f))
+    - `gix --trace` to also print tree-like instrumentation ([`c494cfd`](https://github.com/Byron/gitoxide/commit/c494cfd6f80cf273107c626d0f2cbe054db378ee))
+    - A way to store arbitrarily complex data with tracing ([`5c18293`](https://github.com/Byron/gitoxide/commit/5c182937280f70350379b762d7996b62bbf86f01))
+    - Run tasks in parallel ([`cfd8e88`](https://github.com/Byron/gitoxide/commit/cfd8e88e428075701a162cf8da6986700fd8c5af))
+    - A first example of a task that can run in parallel ([`36a3229`](https://github.com/Byron/gitoxide/commit/36a3229a98a6a101286ce7dd2025e9cf3e69baa7))
+    - Refactor ([`daf41bf`](https://github.com/Byron/gitoxide/commit/daf41bf9ddfaf11147f14e8388b070de693e9663))
+    - Refresh a corpus repositories by updating all of them. ([`a0b4385`](https://github.com/Byron/gitoxide/commit/a0b4385d33112fc3f950ac40d874883e7ad075c0))
+    - Obtain a repository-list with classifiers ([`a4300c8`](https://github.com/Byron/gitoxide/commit/a4300c8318ded98dc465405d39ed014e0534de66))
+    - Provide all the meta-data that is needed to make a run (and associate it with that) ([`fcbda1d`](https://github.com/Byron/gitoxide/commit/fcbda1d2fee735c8bf3e7357a8691af2f7637922))
+    - A basic command to perform a corpus run ([`d9e74ff`](https://github.com/Byron/gitoxide/commit/d9e74ffdedf585a68d09d04f493c98eda729ff3b))
+    - Merge branch 'gix-revision-graph' ([`036e60a`](https://github.com/Byron/gitoxide/commit/036e60a3ad39ba9b018c0b56454f12fad455c7bb))
+    - `gix fetch --open-negotiation-graph[=limit]` ([`452ed6b`](https://github.com/Byron/gitoxide/commit/452ed6b79ed0e12ae214af3c8cd49a87dba91c73))
+    - `gix fetch --negotiation-info` to provide additional information about the negotiation phase. ([`096838f`](https://github.com/Byron/gitoxide/commit/096838ffa529148b2da3a2382a2d1fdbfe5bee5b))
+    - Adapt to changes in `gix` ([`3728e10`](https://github.com/Byron/gitoxide/commit/3728e10cf7c252074aa141cc84fed7af33779658))
+    - `bit revision list --svg` to create a visual graph of commits. ([`bd32e39`](https://github.com/Byron/gitoxide/commit/bd32e393fedd01e27a4f6984281bcc3182c63b67))
+    - Merge branch 'help-874-redundant-closures' ([`fe59956`](https://github.com/Byron/gitoxide/commit/fe59956ad667303a923d7cfd9ffd72283df41d78))
+    - Merge branch 'fix-commitgraph' ([`2213321`](https://github.com/Byron/gitoxide/commit/22133210f2d073eb472c51c83f29b18cf8bdd7ca))
+    - Bring back the no-repo commitgraph for stress-tests to work ([`ff8d42a`](https://github.com/Byron/gitoxide/commit/ff8d42aef988b99153950a24efda80acebde5cac))
+    - Move commit-graph implementation into its correct place ([`750b07a`](https://github.com/Byron/gitoxide/commit/750b07a69c659cedd46f33396468d4faa7e73f10))
+    - Add `clippy::redundant-closure-for-method-calls` lint ([`bcad5c2`](https://github.com/Byron/gitoxide/commit/bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d))
+    - Merge branch 'future-dates' ([`8d2e6a9`](https://github.com/Byron/gitoxide/commit/8d2e6a91ac92a033e9e3daad5cffa90263075536))
+    - List commit-graph entries by graph traversal, move commit-graph up to `gix` level. ([`b82edc8`](https://github.com/Byron/gitoxide/commit/b82edc8b965344a866039f6c99295db4f8e776e2))
+    - Adapt to changes in `gix-date` ([`d575336`](https://github.com/Byron/gitoxide/commit/d575336c26e6026e463cd06d88266bb2bdd3e162))
+    - Release gix-attributes v0.13.1, gix-diff v0.30.1, gix-revwalk v0.1.0, gix-traverse v0.27.0, gix-index v0.18.0, gix-revision v0.15.2, gix-negotiate v0.2.1, gix-pack v0.37.0, gix-odb v0.47.0, gix-protocol v0.33.2, gix-worktree v0.19.0, gix v0.46.0, safety bump 7 crates ([`2560a2c`](https://github.com/Byron/gitoxide/commit/2560a2cc3e1d8c60cd812e15696fa4761d036e19))
+    - Merge branch 'walk-with-commitgraph' ([`fdee9a2`](https://github.com/Byron/gitoxide/commit/fdee9a22873a13ae644d3dc92f8fe93f8f0266c0))
+    - Adapt to changes in `gix` ([`20f73c8`](https://github.com/Byron/gitoxide/commit/20f73c8224ead1b423a1b6331c9cab65f769d46a))
+    - `ein t hours` now uses the commit-info structure to avoid parsing a commit once more. ([`329479c`](https://github.com/Byron/gitoxide/commit/329479ca8dd3c9fa6ad862043e18726769744cfa))
+    - Adapt to changes in `gix-traverse` ([`1f682fd`](https://github.com/Byron/gitoxide/commit/1f682fd991b9b76a8d37e6852567ff239c0ac0db))
+    - `ein t hours` uses git-attributes to see if a file is considered binary ([`2f5e9eb`](https://github.com/Byron/gitoxide/commit/2f5e9eb11f2719011f1cc7fdc9d3ee9257ccce32))
+    - Adapt to changes in `gix` ([`2a6015b`](https://github.com/Byron/gitoxide/commit/2a6015b482b38df18b8770ebb6741c201a304dfb))
+</details>
+
 ## 0.28.0 (2023-06-07)
 
 <csr-id-dbc6cbb4363c2532f81b0bd6e351c4577bb9e9a3/>
@@ -42,7 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 41 commits contributed to the release over the course of 40 calendar days.
+ - 42 commits contributed to the release over the course of 40 calendar days.
  - 40 days passed between releases.
  - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -60,6 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gitoxide-core v0.28.0, gitoxide v0.26.0 ([`6c4e470`](https://github.com/Byron/gitoxide/commit/6c4e470783fb40d135b7ef76cbd31e4ce335a2a4))
     - Prepare changelog ([`df87d52`](https://github.com/Byron/gitoxide/commit/df87d5250bd279f759fc19d28ba2f9509ab8337f))
     - Release gix-revision v0.15.1, gix v0.45.1 ([`11766a0`](https://github.com/Byron/gitoxide/commit/11766a0a82754fee9918ccdb8eaf92af6d2561ba))
     - Release gix-date v0.5.1, gix-hash v0.11.2, gix-features v0.30.0, gix-actor v0.21.0, gix-path v0.8.1, gix-glob v0.8.0, gix-quote v0.4.4, gix-attributes v0.13.0, gix-chunk v0.4.2, gix-commitgraph v0.16.0, gix-config-value v0.12.1, gix-fs v0.2.0, gix-tempfile v6.0.0, gix-utils v0.1.2, gix-lock v6.0.0, gix-validate v0.7.5, gix-object v0.30.0, gix-ref v0.30.0, gix-sec v0.8.1, gix-config v0.23.0, gix-command v0.2.5, gix-prompt v0.5.1, gix-url v0.19.0, gix-credentials v0.15.0, gix-diff v0.30.0, gix-discover v0.19.0, gix-hashtable v0.2.1, gix-ignore v0.3.0, gix-bitmap v0.2.4, gix-traverse v0.26.0, gix-index v0.17.0, gix-mailmap v0.13.0, gix-revision v0.15.0, gix-negotiate v0.2.0, gix-pack v0.36.0, gix-odb v0.46.0, gix-packetline v0.16.2, gix-transport v0.32.0, gix-protocol v0.33.0, gix-refspec v0.11.0, gix-worktree v0.18.0, gix v0.45.0, safety bump 29 crates ([`9a9fa96`](https://github.com/Byron/gitoxide/commit/9a9fa96fa8a722bddc5c3b2270b0edf8f6615141))
