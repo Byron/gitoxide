@@ -97,6 +97,11 @@ impl<K: Ord, T> PriorityQueue<K, T> {
         self.0.is_empty()
     }
 
+    /// Return true the amount of items on the queue.
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
     /// Returns the greatest item `(K, T)` tuple, as ordered by `K`, if the queue is not empty, without removing it.
     pub fn peek(&self) -> Option<(&K, &T)> {
         self.0.peek().map(|e| (&e.key, &e.value))
