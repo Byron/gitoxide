@@ -38,7 +38,7 @@ This release fixes a possibility for V1 fetches to deadlock if negotiation would
 
 <csr-read-only-do-not-edit/>
 
- - 26 commits contributed to the release over the course of 10 calendar days.
+ - 27 commits contributed to the release over the course of 10 calendar days.
  - 15 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -56,6 +56,7 @@ This release fixes a possibility for V1 fetches to deadlock if negotiation would
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Make `gitoxide` publishable again ([`c16b1df`](https://github.com/Byron/gitoxide/commit/c16b1dfda63f08c40ebab22b0a07e4617765acf5))
     - Merge branch 'gix-corpus' ([`5861afb`](https://github.com/Byron/gitoxide/commit/5861afb45f32c16eefcd8e7b7480309bf44b6edc))
     - Add `corpus --dry-run` and `--task-sql-suffix` and `--repo-sql-suffix` ([`4cef57d`](https://github.com/Byron/gitoxide/commit/4cef57db735c20da3fa1c56d9c1744e4f653bce0))
     - Gix-corpus now respects the --trace flag ([`0f973ac`](https://github.com/Byron/gitoxide/commit/0f973ac53df631ad2abdf85dbe2453e528c7e6c3))
