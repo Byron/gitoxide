@@ -70,6 +70,7 @@ pub(crate) fn mark_complete_and_common_ref(
     shallow: &fetch::Shallow,
     mapping_is_ignored: impl Fn(&fetch::Mapping) -> bool,
 ) -> Result<Action, Error> {
+    let _span = gix_trace::detail!("mark_complete_and_common_ref");
     if let fetch::Shallow::Deepen(0) = shallow {
         // Avoid deepening (relative) with zero as it seems to upset the server. Git also doesn't actually
         // perform the negotiation for some reason (couldn't find it in code).
