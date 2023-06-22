@@ -53,7 +53,7 @@ pub(crate) fn update(
     dry_run: fetch::DryRun,
     write_packed_refs: fetch::WritePackedRefs,
 ) -> Result<update::Outcome, update::Error> {
-    let _span = gix_trace::detail!("update_refs()");
+    let _span = gix_trace::detail!("update_refs()", mappings = mappings.len());
     let mut edits = Vec::new();
     let mut updates = Vec::new();
 
@@ -228,6 +228,7 @@ pub(crate) fn update(
 
     let edits = match dry_run {
         fetch::DryRun::No => {
+            let _span = gix_trace::detail!("apply", edits = edits.len());
             let (file_lock_fail, packed_refs_lock_fail) = repo
                 .config
                 .lock_timeout()
