@@ -70,7 +70,7 @@ pub(crate) fn mark_complete_and_common_ref(
     shallow: &fetch::Shallow,
     mapping_is_ignored: impl Fn(&fetch::Mapping) -> bool,
 ) -> Result<Action, Error> {
-    let _span = gix_trace::detail!("mark_complete_and_common_ref");
+    let _span = gix_trace::detail!("mark_complete_and_common_ref", mappings = ref_map.mappings.len());
     if let fetch::Shallow::Deepen(0) = shallow {
         // Avoid deepening (relative) with zero as it seems to upset the server. Git also doesn't actually
         // perform the negotiation for some reason (couldn't find it in code).
@@ -149,29 +149,35 @@ pub(crate) fn mark_complete_and_common_ref(
         Cow::Borrowed(&queue)
     };
 
-    // mark all complete advertised refs as common refs.
-    for mapping in ref_map
-        .mappings
-        .iter()
-        .zip(remote_ref_target_known.iter().copied())
-        // We need this filter as the graph wouldn't contain annotated tags.
-        .filter_map(|(mapping, known)| (!known).then_some(mapping))
-    {
-        let want_id = mapping.remote.as_id();
-        if let Some(common_id) = want_id
-            .and_then(|id| graph.get(id).map(|c| (c, id)))
-            .filter(|(c, _)| c.data.flags.contains(Flags::COMPLETE))
-            .map(|(_, id)| id)
+    gix_trace::detail!("mark known_common").into_scope(|| -> Result<_, Error> {
+        // mark all complete advertised refs as common refs.
+        for mapping in ref_map
+            .mappings
+            .iter()
+            .zip(remote_ref_target_known.iter().copied())
+            // We need this filter as the graph wouldn't contain annotated tags.
+            .filter_map(|(mapping, known)| (!known).then_some(mapping))
         {
-            negotiator.known_common(common_id.into(), graph)?;
+            let want_id = mapping.remote.as_id();
+            if let Some(common_id) = want_id
+                .and_then(|id| graph.get(id).map(|c| (c, id)))
+                .filter(|(c, _)| c.data.flags.contains(Flags::COMPLETE))
+                .map(|(_, id)| id)
+            {
+                negotiator.known_common(common_id.into(), graph)?;
+            }
         }
-    }
+        Ok(())
+    })?;
 
     // As negotiators currently may rely on getting `known_common` calls first and tips after, we adhere to that which is the only
     // reason we cached the set of tips.
-    for tip in tips.iter_unordered() {
-        negotiator.add_tip(*tip, graph)?;
-    }
+    gix_trace::detail!("mark tips", num_tips = tips.len()).into_scope(|| -> Result<_, Error> {
+        for tip in tips.iter_unordered() {
+            negotiator.add_tip(*tip, graph)?;
+        }
+        Ok(())
+    })?;
 
     Ok(Action::MustNegotiate {
         remote_ref_target_known,
@@ -252,6 +258,7 @@ fn mark_recent_complete_commits(
     graph: &mut gix_negotiate::Graph<'_>,
     cutoff: SecondsSinceUnixEpoch,
 ) -> Result<(), Error> {
+    let _span = gix_trace::detail!("mark_recent_complete", queue_len = queue.len());
     while let Some(id) = queue
         .peek()
         .and_then(|(commit_time, id)| (commit_time >= &cutoff).then_some(*id))
@@ -280,6 +287,7 @@ fn mark_all_refs_in_repo(
     queue: &mut Queue,
     mark: Flags,
 ) -> Result<(), Error> {
+    let _span = gix_trace::detail!("mark_all_refs");
     for local_ref in repo.references()?.all()?.peeled() {
         let local_ref = local_ref?;
         let id = local_ref.id().detach();
@@ -302,17 +310,14 @@ fn mark_alternate_complete(
     graph: &mut gix_negotiate::Graph<'_>,
     queue: &mut Queue,
 ) -> Result<(), Error> {
-    for alternate_repo in repo
-        .objects
-        .store_ref()
-        .alternate_db_paths()?
-        .into_iter()
-        .filter_map(|path| {
-            path.ancestors()
-                .nth(1)
-                .and_then(|git_dir| crate::open_opts(git_dir, repo.options.clone()).ok())
-        })
-    {
+    let alternates = repo.objects.store_ref().alternate_db_paths()?;
+    let _span = gix_trace::detail!("mark_alternate_refs", num_odb = alternates.len());
+
+    for alternate_repo in alternates.into_iter().filter_map(|path| {
+        path.ancestors()
+            .nth(1)
+            .and_then(|git_dir| crate::open_opts(git_dir, repo.options.clone()).ok())
+    }) {
         mark_all_refs_in_repo(&alternate_repo, graph, queue, Flags::ALTERNATE | Flags::COMPLETE)?;
     }
     Ok(())
