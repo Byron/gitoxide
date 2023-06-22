@@ -149,7 +149,9 @@ pub fn main() -> Result<()> {
                     let mut engine = core::corpus::Engine::open_or_create(
                         db,
                         core::corpus::engine::State {
-                            gitoxide_version: env!("GITOXIDE_VERSION").into(),
+                            gitoxide_version: option_env!("GITOXIDE_VERSION")
+                                .ok_or_else(|| anyhow::anyhow!("GITOXIDE_VERSION must be set in build-script"))?
+                                .into(),
                             progress,
                             trace_to_progress: trace,
                             reverse_trace_lines,

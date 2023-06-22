@@ -4,7 +4,7 @@ use gitoxide_core as core;
 use gix::bstr::BString;
 
 #[derive(Debug, clap::Parser)]
-#[clap(name = "gix", about = "The git underworld", version = env!("GITOXIDE_VERSION"))]
+#[clap(name = "gix", about = "The git underworld", version = option_env!("GITOXIDE_VERSION"))]
 #[clap(subcommand_required = true)]
 #[clap(arg_required_else_help = true)]
 pub struct Args {
