@@ -14,7 +14,7 @@ doctest = false
 
 [dependencies]
 parking_lot = "0.12.1"
-hashbrown = { version = "0.13.1", default-features = false, features = [
+hashbrown = { version = "0.14.0", default-features = false, features = [
   "inline-more",
   "raw"
 ] }

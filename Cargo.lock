@@ -1742,7 +1742,7 @@ name = "gix-hashtable"
 version = "0.2.2"
 dependencies = [
  "gix-hash 0.11.3",
- "hashbrown 0.13.2",
+ "hashbrown 0.14.0",
  "parking_lot",
 ]
 
