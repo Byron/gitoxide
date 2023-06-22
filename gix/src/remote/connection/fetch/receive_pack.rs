@@ -168,6 +168,7 @@ where
                 let mut in_vain = 0;
                 let mut common = is_stateless.then(Vec::new);
                 let reader = 'negotiation: loop {
+                    let _round = gix_trace::detail!("negotiate round", round = rounds.len() + 1);
                     progress.step();
                     progress.set_name(format!("negotiate (round {})", rounds.len() + 1));
 
