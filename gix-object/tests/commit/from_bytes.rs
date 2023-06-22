@@ -1,6 +1,5 @@
 use gix_actor::SignatureRef;
-use gix_date::time::Sign;
-use gix_date::Time;
+use gix_date::{time::Sign, Time};
 use gix_object::{bstr::ByteSlice, commit::message::body::TrailerRef, CommitRef};
 use smallvec::SmallVec;
 

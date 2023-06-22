@@ -1,7 +1,9 @@
 use std::{collections::HashMap, time::SystemTime};
 
-use gix_date::time::{format, Format};
-use gix_date::SecondsSinceUnixEpoch;
+use gix_date::{
+    time::{format, Format},
+    SecondsSinceUnixEpoch,
+};
 use once_cell::sync::Lazy;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;

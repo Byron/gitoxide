@@ -1,10 +1,8 @@
 pub(crate) mod function {
-    use std::borrow::Cow;
-    use std::ffi::OsString;
+    use std::{borrow::Cow, ffi::OsString};
 
     use anyhow::{bail, Context};
-    use gix::prelude::ObjectIdExt;
-    use gix::traverse::commit::Sorting;
+    use gix::{prelude::ObjectIdExt, traverse::commit::Sorting};
 
     use crate::OutputFormat;
 

@@ -333,5 +333,6 @@ mod core;
 use self::core::{deduplicate_identities, estimate_hours, HOURS_PER_WORKDAY};
 
 mod util;
-use crate::hours::core::spawn_tree_delta_threads;
 use util::{CommitIdx, FileStats, LineStats, WorkByEmail, WorkByPerson};
+
+use crate::hours::core::spawn_tree_delta_threads;

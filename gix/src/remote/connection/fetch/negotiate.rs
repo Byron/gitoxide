@@ -1,6 +1,6 @@
-use gix_date::SecondsSinceUnixEpoch;
 use std::borrow::Cow;
 
+use gix_date::SecondsSinceUnixEpoch;
 use gix_negotiate::Flags;
 use gix_odb::HeaderExt;
 use gix_pack::Find;

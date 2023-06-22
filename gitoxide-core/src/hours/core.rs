@@ -1,14 +1,19 @@
-use std::collections::{hash_map::Entry, HashMap};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+};
 
-use gix::bstr::BStr;
-use gix::odb::FindExt;
+use gix::{bstr::BStr, odb::FindExt};
 use itertools::Itertools;
 use smallvec::SmallVec;
 
-use crate::hours::util::{add_lines, remove_lines};
-use crate::hours::{CommitIdx, FileStats, LineStats, WorkByEmail, WorkByPerson};
+use crate::hours::{
+    util::{add_lines, remove_lines},
+    CommitIdx, FileStats, LineStats, WorkByEmail, WorkByPerson,
+};
 
 const MINUTES_PER_HOUR: f32 = 60.0;
 pub const HOURS_PER_WORKDAY: f32 = 8.0;

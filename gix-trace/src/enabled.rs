@@ -1,5 +1,4 @@
 use tracing_core::{dispatcher::get_default as with_dispatcher, span, span::Id, Dispatch};
-
 // these are used later in macros.
 pub use tracing_core::{field, metadata, Metadata};
 

@@ -19,11 +19,11 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 pub(crate) mod function {
     use anyhow::bail;
     use gix::{prelude::ObjectIdExt, refspec::match_group::validate::Fix, remote::fetch::Status};
-    use layout::backends::svg::SVGWriter;
-    use layout::core::base::Orientation;
-    use layout::core::geometry::Point;
-    use layout::core::style::StyleAttr;
-    use layout::std_shapes::shapes::{Arrow, Element, ShapeKind};
+    use layout::{
+        backends::svg::SVGWriter,
+        core::{base::Orientation, geometry::Point, style::StyleAttr},
+        std_shapes::shapes::{Arrow, Element, ShapeKind},
+    };
 
     use super::Options;
     use crate::OutputFormat;

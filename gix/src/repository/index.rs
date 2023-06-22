@@ -1,7 +1,6 @@
-use crate::config::cache::util::ApplyLeniencyDefault;
-use crate::repository::IndexPersistedOrInMemory;
-use crate::worktree;
 use gix_odb::FindExt;
+
+use crate::{config::cache::util::ApplyLeniencyDefault, repository::IndexPersistedOrInMemory, worktree};
 
 /// Index access
 impl crate::Repository {

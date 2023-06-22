@@ -6,8 +6,7 @@ pub struct Options {
 }
 
 pub(crate) mod function {
-    use std::io;
-    use std::path::Path;
+    use std::{io, path::Path};
 
     use anyhow::bail;
     use gix::prelude::FindExt;

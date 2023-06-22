@@ -1,9 +1,11 @@
-use crate::corpus::{Engine, Run};
+use std::path::{Path, PathBuf};
+
 use anyhow::{bail, Context};
 use bytesize::ByteSize;
 use rusqlite::{params, OptionalExtension};
-use std::path::{Path, PathBuf};
 use sysinfo::{CpuExt, CpuRefreshKind, RefreshKind, SystemExt};
+
+use crate::corpus::{Engine, Run};
 
 pub(crate) type Id = u32;
 

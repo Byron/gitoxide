@@ -101,8 +101,9 @@ mod ancestor {
     }
 
     mod different_date_intermixed {
-        use crate::commit::ancestor::TraversalAssertion;
         use gix_traverse::commit::Sorting;
+
+        use crate::commit::ancestor::TraversalAssertion;
 
         #[test]
         fn head_breadth_first() -> crate::Result {
@@ -148,8 +149,9 @@ mod ancestor {
     }
 
     mod different_date {
-        use crate::commit::ancestor::TraversalAssertion;
         use gix_traverse::commit::Sorting;
+
+        use crate::commit::ancestor::TraversalAssertion;
 
         #[test]
         fn head_breadth_first() -> crate::Result {
@@ -200,9 +202,9 @@ mod ancestor {
 
     /// Same dates are somewhat special as they show how sorting-details on priority queues affects ordering
     mod same_date {
-        use crate::commit::ancestor::TraversalAssertion;
-        use crate::hex_to_id;
         use gix_traverse::commit::{Parents, Sorting};
+
+        use crate::{commit::ancestor::TraversalAssertion, hex_to_id};
 
         #[test]
         fn c4_breadth_first() -> crate::Result {
@@ -344,10 +346,10 @@ mod ancestor {
 
     /// Some dates adjusted to be a year apart, but still 'c1' and 'c2' with the same date.
     mod adjusted_dates {
-        use crate::commit::ancestor::TraversalAssertion;
-        use crate::hex_to_id;
         use gix_odb::FindExt;
         use gix_traverse::commit::{ancestors, Ancestors, Parents, Sorting};
+
+        use crate::{commit::ancestor::TraversalAssertion, hex_to_id};
 
         #[test]
         fn head_breadth_first() -> crate::Result {

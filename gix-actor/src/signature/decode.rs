@@ -1,8 +1,7 @@
 pub(crate) mod function {
     use bstr::ByteSlice;
     use btoi::btoi;
-    use gix_date::time::Sign;
-    use gix_date::{OffsetInSeconds, SecondsSinceUnixEpoch, Time};
+    use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch, Time};
     use nom::{
         branch::alt,
         bytes::complete::{tag, take, take_until, take_while_m_n},
@@ -95,8 +94,7 @@ pub use function::identity;
 mod tests {
     mod parse_signature {
         use bstr::ByteSlice;
-        use gix_date::time::Sign;
-        use gix_date::{OffsetInSeconds, SecondsSinceUnixEpoch};
+        use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch};
         use gix_testtools::to_bstr_err;
         use nom::IResult;
 

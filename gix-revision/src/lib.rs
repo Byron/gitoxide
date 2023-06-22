@@ -14,6 +14,5 @@ pub use describe::function::describe;
 
 ///
 pub mod spec;
-pub use spec::types::Spec;
-
 pub use gix_revwalk::{graph, Graph, PriorityQueue};
+pub use spec::types::Spec;
