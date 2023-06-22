@@ -1,6 +1,6 @@
 [package]
 name = "gix-sec"
-version = "0.8.1"
+version = "0.8.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project providing a shared trust model"
@@ -26,7 +26,7 @@ document-features = { version = "0.2.1", optional = true }
 libc = "0.2.123"
 
 [target.'cfg(windows)'.dependencies]
-gix-path = { version = "^0.8.1", path = "../gix-path" }
+gix-path = { version = "^0.8.2", path = "../gix-path" }
 windows = { version = "0.48", features = [
     "Win32_Foundation",
     "Win32_Security_Authorization",

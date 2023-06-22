@@ -1,6 +1,6 @@
 [package]
 name = "gix-glob"
-version = "0.8.0"
+version = "0.9.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dealing with pattern matching"
@@ -16,8 +16,8 @@ doctest = false
 serde= ["dep:serde", "bstr/serde", "bitflags/serde"]
 
 [dependencies]
-gix-path = { version = "^0.8.1", path = "../gix-path" }
-gix-features = { version = "^0.30.0", path = "../gix-features" }
+gix-path = { version = "^0.8.2", path = "../gix-path" }
+gix-features = { version = "^0.31.0", path = "../gix-features" }
 bstr = { version = "1.3.0", default-features = false, features = ["std"]}
 bitflags = "2"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

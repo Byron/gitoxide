@@ -1,6 +1,6 @@
 [package]
 name = "gix-url"
-version = "0.19.0"
+version = "0.20.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project implementing parsing and serialization of gix-url"
@@ -17,8 +17,8 @@ doctest = false
 serde = ["dep:serde", "bstr/serde"]
 
 [dependencies]
-gix-features = { version = "^0.30.0", path = "../gix-features" }
-gix-path = { version = "^0.8.1", path = "../gix-path" }
+gix-features = { version = "^0.31.0", path = "../gix-features" }
+gix-path = { version = "^0.8.2", path = "../gix-path" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 thiserror = "1.0.32"
