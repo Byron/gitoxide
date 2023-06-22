@@ -32,16 +32,19 @@ impl Span {
 
     /// Record a single `field` to take `value`.
     ///
-    /// Note that this silently fails if the field name wasn't mentioned when the span was created.
+    /// ### Panics
+    ///
+    /// If the field name wasn't mentioned when the span was created.
     pub fn record<V>(&self, field: &str, value: V) -> &Self
     where
         V: field::Value,
     {
         if let Some((_, _, meta)) = &self.id {
             let fields = meta.fields();
-            if let Some(field) = fields.field(field) {
-                self.record_all(&fields.value_set(&[(&field, Some(&value as &dyn field::Value))]));
-            }
+            let field = fields
+                .field(field)
+                .unwrap_or_else(|| panic!("Field name '{field}' must be registered at creation time."));
+            self.record_all(&fields.value_set(&[(&field, Some(&value as &dyn field::Value))]));
         }
         self
     }
