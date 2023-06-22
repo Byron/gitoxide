@@ -35,7 +35,7 @@ nom = { version = "7", default-features = false, features = ["std"]}
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
 # packed refs
-memmap2 = "0.5.0"
+memmap2 = "0.7.0"
 
 document-features = { version = "0.2.1", optional = true }
 

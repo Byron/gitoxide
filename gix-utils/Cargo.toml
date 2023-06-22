@@ -12,4 +12,4 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-fastrand = "1.9.0"
+fastrand = "2.0.0"

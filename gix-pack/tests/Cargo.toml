@@ -45,4 +45,4 @@ maplit = "1.0.2"
 gix-object = {  path = "../../gix-object" }
 gix-traverse = {  path = "../../gix-traverse" }
 gix-hash = {  path = "../../gix-hash" }
-memmap2 = "0.5.0"
+memmap2 = "0.7.0"
