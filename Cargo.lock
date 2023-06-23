@@ -1648,6 +1648,9 @@ version = "0.0.0"
 [[package]]
 name = "gix-filter"
 version = "0.0.0"
+dependencies = [
+ "bstr",
+]
 
 [[package]]
 name = "gix-fs"

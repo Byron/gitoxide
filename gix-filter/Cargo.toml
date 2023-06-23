@@ -12,3 +12,4 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
+bstr = { version = "1.5.0", default-features = false, features = ["std"] }
