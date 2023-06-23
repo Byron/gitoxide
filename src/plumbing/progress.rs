@@ -102,7 +102,19 @@ impl Tabled for Record {
 static GIT_CONFIG: &[Record] = &[
     Record {
         config: "core.safeCRLF",
-        usage: Planned { note: Some("safety is not optional") },
+        usage: Planned { note: Some("safety is not optional (but we will respect the setting)") },
+    },
+    Record {
+        config: "core.autocrlf",
+        usage: Planned { note: Some("for filtering system") },
+    },
+    Record {
+        config: "core.eol",
+        usage: Planned {note: Some("needed for filters, but also for doing diffs correctly")}
+    },
+    Record {
+        config: "core.checkRoundtripEncoding",
+        usage: Planned { note: Some("needed once working-tree-encoding attributes are supported") }
     },
     Record {
         config: "core.hideDotFiles",
@@ -123,10 +135,6 @@ static GIT_CONFIG: &[Record] = &[
     Record {
         config: "core.alternateRefsPrefixes",
         usage: NotPlanned { reason: "seems like a niche feature, but can be implemented if there is demand" }
-    },
-    Record {
-        config: "core.checkRoundtripEncoding",
-        usage: Planned { note: Some("needed once working-tree-encoding attributes are supported") }
     },
     Record {
         config: "core.bigFileThreshold",
@@ -155,6 +163,10 @@ static GIT_CONFIG: &[Record] = &[
     Record {
         config: "core.sparseCheckoutCone",
         usage: Planned { note: Some("this is a nice improvement over spareCheckout alone and should one day be available too") },
+    },
+    Record {
+        config: "core.gitProxy",
+        usage: NotPlanned { reason: "the transport mechanism works differently enough to not support it for now, but of course it's possible to add support if there is demand" },
     },
     Record {
         config: "checkout.defaultRemote",
@@ -229,10 +241,6 @@ static GIT_CONFIG: &[Record] = &[
         usage: NotPlanned {
             reason: "no plan to implement format-patch or request-pull summary"
         },
-    },
-    Record {
-        config: "core.eol",
-        usage: Planned {note: Some("needed for filters, but also for doing diffs correctly")}
     },
     Record {
         config: "core.fsync",
