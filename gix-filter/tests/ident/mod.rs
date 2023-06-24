@@ -56,3 +56,52 @@ mod undo {
         );
     }
 }
+
+mod apply {
+    use crate::ident::cowstr;
+    use gix_filter::ident;
+    use std::borrow::Cow;
+
+    #[test]
+    fn no_change() {
+        for input_no_match in [
+            "",
+            "nothing",
+            "$ID$ case sensitive matching",
+            "$Id: expanded is ignored$",
+        ] {
+            let res = ident::apply(cowstr(input_no_match), gix_hash::Kind::Sha1);
+            assert!(
+                matches!(res, Cow::Borrowed(_)),
+                "no substitution happens, so no mutable version of the Cow is created"
+            );
+            assert_eq!(res.as_ref(), input_no_match, "there definitely is no change");
+        }
+    }
+
+    #[test]
+    fn simple() {
+        assert_eq!(
+            ident::apply(cowstr("$Id$"), gix_hash::Kind::Sha1).as_ref(),
+            "$Id: b3f5ebfb5843bc43ceecff6d4f26bb37c615beb1$"
+        );
+
+        assert_eq!(
+            ident::apply(cowstr("$Id$ $Id$"), gix_hash::Kind::Sha1).as_ref(),
+            "$Id: f6f3176060328ef7030a8b8eeda57fbf0587b2f9$ $Id: f6f3176060328ef7030a8b8eeda57fbf0587b2f9$"
+        );
+    }
+
+    #[test]
+    fn round_trips() {
+        for input in [
+            "hi\n$Id$\nho\n\t$Id$$Id$$Id$",
+            "$Id$",
+            "$Id$ and one more $Id$ and done",
+        ] {
+            let res = ident::apply(cowstr(input), gix_hash::Kind::Sha1);
+            assert_ne!(res.as_ref(), input, "the input was rewritten");
+            assert_eq!(ident::undo(res).as_ref(), input, "the filter can be undone perfectly");
+        }
+    }
+}
