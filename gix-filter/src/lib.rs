@@ -8,14 +8,16 @@
 //!
 //! This crate implements the building blocks in terms of applying and undoing filters, along with logic to decide whether
 //! or not to apply such a filter.
-#![deny(rust_2018_idioms, missing_docs)]
-#![forbid(unsafe_code)]
+#![deny(rust_2018_idioms, missing_docs, unsafe_code)]
 
 ///
 pub mod ident;
 
 /// utilities related to handling line endings in buffers
 pub mod eol;
+
+/// Utilities for handling worktree encodings.
+pub mod worktree;
 
 fn clear_and_set_capacity(buf: &mut Vec<u8>, cap: usize) {
     buf.clear();
