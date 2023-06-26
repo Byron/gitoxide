@@ -1648,6 +1648,13 @@ version = "0.0.0"
 [[package]]
 name = "gix-filter"
 version = "0.0.0"
+dependencies = [
+ "bstr",
+ "gix-hash 0.11.3",
+ "gix-object 0.31.0",
+ "gix-trace 0.1.1",
+ "thiserror",
+]
 
 [[package]]
 name = "gix-fs"

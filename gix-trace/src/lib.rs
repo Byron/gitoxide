@@ -46,12 +46,45 @@ impl Span {
 
 #[cfg(feature = "tracing")]
 #[doc(hidden)]
-pub use enabled::{metadata, MetaOnlyCallsite, Metadata};
+pub use enabled::{metadata, Event, MetaOnlyCallsite, Metadata};
 
 #[cfg(not(feature = "tracing"))]
 mod disabled;
 #[cfg(not(feature = "tracing"))]
 pub use disabled::Span;
+
+///
+pub mod event {
+    #[cfg(feature = "tracing")]
+    pub use tracing_core::Level;
+
+    /// All available tracing levels for use in `event!()` macro.
+    #[cfg(not(feature = "tracing"))]
+    #[repr(usize)]
+    #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+    pub enum Level {
+        /// The "trace" level.
+        ///
+        /// Designates very low priority, often extremely verbose, information.
+        TRACE = 0,
+        /// The "debug" level.
+        ///
+        /// Designates lower priority information.
+        DEBUG = 1,
+        /// The "info" level.
+        ///
+        /// Designates useful information.
+        INFO = 2,
+        /// The "warn" level.
+        ///
+        /// Designates hazardous situations.
+        WARN = 3,
+        /// The "error" level.
+        ///
+        /// Designates very serious errors.
+        ERROR = 4,
+    }
+}
 
 /// Create a new [coarse][Level::Coarse] span.
 #[macro_export]
@@ -101,4 +134,499 @@ macro_rules! detail {
         )
     };
     ($name:expr) => {$crate::coarse!($name,)};
+}
+
+/// Emit an error event.
+#[macro_export]
+macro_rules! error {
+    (target: $target:expr, { $($field:tt)* }, $($arg:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::ERROR, { $($field)* }, $($arg)*)
+    );
+    (target: $target:expr, $($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::ERROR, { $($k).+ $($field)* })
+    );
+    (target: $target:expr, ?$($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::ERROR, { ?$($k).+ $($field)* })
+    );
+    (target: $target:expr, %$($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::ERROR, { %$($k).+ $($field)* })
+    );
+    (target: $target:expr, $($arg:tt)+ ) => (
+        $crate::event!(target: $target, $crate::event::Level::ERROR, {}, $($arg)+)
+    );
+    ({ $($field:tt)+ }, $($arg:tt)+ ) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::ERROR,
+            { $($field)+ },
+            $($arg)+
+        )
+    );
+    ($($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::ERROR,
+            { $($k).+ = $($field)*}
+        )
+    );
+    (?$($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::ERROR,
+            { ?$($k).+ = $($field)*}
+        )
+    );
+    (%$($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::ERROR,
+            { %$($k).+ = $($field)*}
+        )
+    );
+    ($($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::ERROR,
+            { $($k).+, $($field)*}
+        )
+    );
+    (?$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::ERROR,
+            { ?$($k).+, $($field)*}
+        )
+    );
+    (%$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::ERROR,
+            { %$($k).+, $($field)*}
+        )
+    );
+    (?$($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::ERROR,
+            { ?$($k).+ }
+        )
+    );
+    (%$($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::ERROR,
+            { %$($k).+ }
+        )
+    );
+    ($($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::ERROR,
+            { $($k).+ }
+        )
+    );
+    ($($arg:tt)+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::ERROR,
+            {},
+            $($arg)+
+        )
+    );
+}
+
+/// Emit a warn event.
+#[macro_export]
+macro_rules! warn {
+    (target: $target:expr, { $($field:tt)* }, $($arg:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::WARN, { $($field)* }, $($arg)*)
+    );
+    (target: $target:expr, $($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::WARN, { $($k).+ $($field)* })
+    );
+    (target: $target:expr, ?$($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::WARN, { ?$($k).+ $($field)* })
+    );
+    (target: $target:expr, %$($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::WARN, { %$($k).+ $($field)* })
+    );
+    (target: $target:expr, $($arg:tt)+ ) => (
+        $crate::event!(target: $target, $crate::event::Level::WARN, {}, $($arg)+)
+    );
+    ({ $($field:tt)+ }, $($arg:tt)+ ) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::WARN,
+            { $($field)+ },
+            $($arg)+
+        )
+    );
+    ($($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::WARN,
+            { $($k).+ = $($field)*}
+        )
+    );
+    (?$($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::WARN,
+            { ?$($k).+ = $($field)*}
+        )
+    );
+    (%$($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::WARN,
+            { %$($k).+ = $($field)*}
+        )
+    );
+    ($($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::WARN,
+            { $($k).+, $($field)*}
+        )
+    );
+    (?$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::WARN,
+            { ?$($k).+, $($field)*}
+        )
+    );
+    (%$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::WARN,
+            { %$($k).+, $($field)*}
+        )
+    );
+    (?$($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::WARN,
+            { ?$($k).+ }
+        )
+    );
+    (%$($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::WARN,
+            { %$($k).+ }
+        )
+    );
+    ($($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::WARN,
+            { $($k).+ }
+        )
+    );
+    ($($arg:tt)+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::WARN,
+            {},
+            $($arg)+
+        )
+    );
+}
+
+/// Emit an info event.
+#[macro_export]
+macro_rules! info {
+    (target: $target:expr, { $($field:tt)* }, $($arg:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::INFO, { $($field)* }, $($arg)*)
+    );
+    (target: $target:expr, $($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::INFO, { $($k).+ $($field)* })
+    );
+    (target: $target:expr, ?$($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::INFO, { ?$($k).+ $($field)* })
+    );
+    (target: $target:expr, %$($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::INFO, { %$($k).+ $($field)* })
+    );
+    (target: $target:expr, $($arg:tt)+ ) => (
+        $crate::event!(target: $target, $crate::event::Level::INFO, {}, $($arg)+)
+    );
+    ({ $($field:tt)+ }, $($arg:tt)+ ) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::INFO,
+            { $($field)+ },
+            $($arg)+
+        )
+    );
+    ($($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::INFO,
+            { $($k).+ = $($field)*}
+        )
+    );
+    (?$($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::INFO,
+            { ?$($k).+ = $($field)*}
+        )
+    );
+    (%$($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::INFO,
+            { %$($k).+ = $($field)*}
+        )
+    );
+    ($($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::INFO,
+            { $($k).+, $($field)*}
+        )
+    );
+    (?$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::INFO,
+            { ?$($k).+, $($field)*}
+        )
+    );
+    (%$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::INFO,
+            { %$($k).+, $($field)*}
+        )
+    );
+    (?$($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::INFO,
+            { ?$($k).+ }
+        )
+    );
+    (%$($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::INFO,
+            { %$($k).+ }
+        )
+    );
+    ($($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::INFO,
+            { $($k).+ }
+        )
+    );
+    ($($arg:tt)+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::INFO,
+            {},
+            $($arg)+
+        )
+    );
+}
+
+/// Emit a debug event.
+#[macro_export]
+macro_rules! debug {
+    (target: $target:expr, { $($field:tt)* }, $($arg:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::DEBUG, { $($field)* }, $($arg)*)
+    );
+    (target: $target:expr, $($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::DEBUG, { $($k).+ $($field)* })
+    );
+    (target: $target:expr, ?$($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::DEBUG, { ?$($k).+ $($field)* })
+    );
+    (target: $target:expr, %$($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::DEBUG, { %$($k).+ $($field)* })
+    );
+    (target: $target:expr, $($arg:tt)+ ) => (
+        $crate::event!(target: $target, $crate::event::Level::DEBUG, {}, $($arg)+)
+    );
+    ({ $($field:tt)+ }, $($arg:tt)+ ) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::DEBUG,
+            { $($field)+ },
+            $($arg)+
+        )
+    );
+    ($($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::DEBUG,
+            { $($k).+ = $($field)*}
+        )
+    );
+    (?$($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::DEBUG,
+            { ?$($k).+ = $($field)*}
+        )
+    );
+    (%$($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::DEBUG,
+            { %$($k).+ = $($field)*}
+        )
+    );
+    ($($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::DEBUG,
+            { $($k).+, $($field)*}
+        )
+    );
+    (?$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::DEBUG,
+            { ?$($k).+, $($field)*}
+        )
+    );
+    (%$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::DEBUG,
+            { %$($k).+, $($field)*}
+        )
+    );
+    (?$($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::DEBUG,
+            { ?$($k).+ }
+        )
+    );
+    (%$($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::DEBUG,
+            { %$($k).+ }
+        )
+    );
+    ($($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::DEBUG,
+            { $($k).+ }
+        )
+    );
+    ($($arg:tt)+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::DEBUG,
+            {},
+            $($arg)+
+        )
+    );
+}
+
+/// Emit a trace event.
+#[macro_export]
+macro_rules! trace {
+    (target: $target:expr, { $($field:tt)* }, $($arg:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::TRACE, { $($field)* }, $($arg)*)
+    );
+    (target: $target:expr, $($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::TRACE, { $($k).+ $($field)* })
+    );
+    (target: $target:expr, ?$($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::TRACE, { ?$($k).+ $($field)* })
+    );
+    (target: $target:expr, %$($k:ident).+ $($field:tt)* ) => (
+        $crate::event!(target: $target, $crate::event::Level::TRACE, { %$($k).+ $($field)* })
+    );
+    (target: $target:expr, $($arg:tt)+ ) => (
+        $crate::event!(target: $target, $crate::event::Level::TRACE, {}, $($arg)+)
+    );
+    ({ $($field:tt)+ }, $($arg:tt)+ ) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::TRACE,
+            { $($field)+ },
+            $($arg)+
+        )
+    );
+    ($($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::TRACE,
+            { $($k).+ = $($field)*}
+        )
+    );
+    (?$($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::TRACE,
+            { ?$($k).+ = $($field)*}
+        )
+    );
+    (%$($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::TRACE,
+            { %$($k).+ = $($field)*}
+        )
+    );
+    ($($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::TRACE,
+            { $($k).+, $($field)*}
+        )
+    );
+    (?$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::TRACE,
+            { ?$($k).+, $($field)*}
+        )
+    );
+    (%$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::TRACE,
+            { %$($k).+, $($field)*}
+        )
+    );
+    (?$($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::TRACE,
+            { ?$($k).+ }
+        )
+    );
+    (%$($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::TRACE,
+            { %$($k).+ }
+        )
+    );
+    ($($k:ident).+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::TRACE,
+            { $($k).+ }
+        )
+    );
+    ($($arg:tt)+) => (
+        $crate::event!(
+            target: module_path!(),
+            $crate::event::Level::TRACE,
+            {},
+            $($arg)+
+        )
+    );
 }

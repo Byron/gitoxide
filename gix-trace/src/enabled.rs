@@ -1,6 +1,6 @@
 use tracing_core::{dispatcher::get_default as with_dispatcher, span, span::Id, Dispatch};
 // these are used later in macros.
-pub use tracing_core::{field, metadata, Metadata};
+pub use tracing_core::{field, metadata, Event, Metadata};
 
 /// An entered span which will exit on drop.
 #[derive(Clone)]
@@ -89,7 +89,6 @@ impl crate::Level {
 }
 
 /// A macro to create a span.
-#[cfg(feature = "tracing")]
 #[macro_export]
 macro_rules! span {
     (target: $target:expr, $lvl:expr, $name:expr, $($fields:tt)*) => {
@@ -130,6 +129,94 @@ macro_rules! span {
             $name,
         )
     };
+}
+
+/// Create an event with the given level.
+#[macro_export]
+macro_rules! event {
+    (target: $target:expr, $lvl:expr, { $($fields:tt)* } )=> (
+        {
+            static META: $crate::Metadata<'static> = {
+                $crate::metadata! {
+                    name: concat!(
+                        "event ",
+                        file!(),
+                        ":",
+                        line!()
+                    ),
+                    target: $target,
+                    level: $lvl,
+                    fields: $crate::fieldset!( $($fields)* ),
+                    callsite: &$crate::MetaOnlyCallsite(&META),
+                    kind: $crate::metadata::Kind::EVENT,
+                }
+            };
+            $crate::Event::dispatch(
+                &META,
+                &$crate::valueset!(META.fields(), $($fields)*)
+            );
+        }
+    );
+    (target: $target:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
+        $crate::event!(
+            target: $target,
+            $lvl,
+            { message = format_args!($($arg)+), $($fields)* }
+        )
+    );
+    (target: $target:expr, $lvl:expr, $($k:ident).+ = $($fields:tt)* ) => (
+        $crate::event!(target: $target, $lvl, { $($k).+ = $($fields)* })
+    );
+    (target: $target:expr, $lvl:expr, $($arg:tt)+ ) => (
+        $crate::event!(target: $target, $lvl, { $($arg)+ })
+    );
+    ( $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
+        $crate::event!(
+            target: module_path!(),
+            $lvl,
+            { message = format_args!($($arg)+), $($fields)* }
+        )
+    );
+    ($lvl:expr, $($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $lvl,
+            { $($k).+ = $($field)*}
+        )
+    );
+    ($lvl:expr, $($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $lvl,
+            { $($k).+, $($field)*}
+        )
+    );
+    ($lvl:expr, ?$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $lvl,
+            { ?$($k).+, $($field)*}
+        )
+    );
+    ($lvl:expr, %$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $lvl,
+            { %$($k).+, $($field)*}
+        )
+    );
+    ($lvl:expr, ?$($k:ident).+) => (
+        $crate::event!($lvl, ?$($k).+,)
+    );
+    ($lvl:expr, %$($k:ident).+) => (
+        $crate::event!($lvl, %$($k).+,)
+    );
+    ($lvl:expr, $($k:ident).+) => (
+        $crate::event!($lvl, $($k).+,)
+    );
+    ( $lvl:expr, $($arg:tt)+ ) => (
+        $crate::event!(target: module_path!(), $lvl, { $($arg)+ })
+    );
 }
 
 // Copied from`tracing`, would be nice to have it in `tracing-core`.
