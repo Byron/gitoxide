@@ -1652,6 +1652,7 @@ dependencies = [
  "bstr",
  "gix-hash 0.11.3",
  "gix-object 0.31.0",
+ "gix-trace 0.1.1",
  "thiserror",
 ]
 

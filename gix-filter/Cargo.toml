@@ -13,6 +13,7 @@ doctest = false
 
 [dependencies]
 gix-hash = { version = "^0.11.3", path = "../gix-hash" }
+gix-trace = { version = "^0.1.1", path = "../gix-trace" }
 gix-object = { version = "^0.31.0", path = "../gix-object" }
 
 bstr = { version = "1.5.0", default-features = false, features = ["std"] }
