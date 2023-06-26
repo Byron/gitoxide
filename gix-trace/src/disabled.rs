@@ -35,3 +35,71 @@ macro_rules! span {
         )
     };
 }
+
+/// Create an event with the given level.
+#[macro_export]
+macro_rules! event {
+    (target: $target:expr, $lvl:expr, { $($fields:tt)* } )=> (
+        {}
+    );
+    (target: $target:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
+        $crate::event!(
+            target: $target,
+            $lvl,
+            { message = format_args!($($arg)+), $($fields)* }
+        )
+    );
+    (target: $target:expr, $lvl:expr, $($k:ident).+ = $($fields:tt)* ) => (
+        $crate::event!(target: $target, $lvl, { $($k).+ = $($fields)* })
+    );
+    (target: $target:expr, $lvl:expr, $($arg:tt)+ ) => (
+        $crate::event!(target: $target, $lvl, { $($arg)+ })
+    );
+    ( $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
+        $crate::event!(
+            target: module_path!(),
+            $lvl,
+            { message = format_args!($($arg)+), $($fields)* }
+        )
+    );
+    ($lvl:expr, $($k:ident).+ = $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $lvl,
+            { $($k).+ = $($field)*}
+        )
+    );
+    ($lvl:expr, $($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $lvl,
+            { $($k).+, $($field)*}
+        )
+    );
+    ($lvl:expr, ?$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $lvl,
+            { ?$($k).+, $($field)*}
+        )
+    );
+    ($lvl:expr, %$($k:ident).+, $($field:tt)*) => (
+        $crate::event!(
+            target: module_path!(),
+            $lvl,
+            { %$($k).+, $($field)*}
+        )
+    );
+    ($lvl:expr, ?$($k:ident).+) => (
+        $crate::event!($lvl, ?$($k).+,)
+    );
+    ($lvl:expr, %$($k:ident).+) => (
+        $crate::event!($lvl, %$($k).+,)
+    );
+    ($lvl:expr, $($k:ident).+) => (
+        $crate::event!($lvl, $($k).+,)
+    );
+    ( $lvl:expr, $($arg:tt)+ ) => (
+        $crate::event!(target: module_path!(), $lvl, { $($arg)+ })
+    );
+}
