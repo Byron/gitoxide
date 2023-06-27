@@ -10,6 +10,8 @@
 //! or not to apply such a filter.
 #![deny(rust_2018_idioms, missing_docs, unsafe_code)]
 
+use bstr::BString;
+
 ///
 pub mod ident;
 
@@ -18,6 +20,32 @@ pub mod eol;
 
 /// Utilities for handling worktree encodings.
 pub mod worktree;
+
+/// Utilities around driver programs.
+pub mod driver;
+
+/// A declaration of a driver program.
+///
+/// It consists of up to three program declarations.
+#[derive(Debug, Clone)]
+pub struct Driver {
+    /// The name of the driver as stored in the configuration.
+    pub name: BString,
+
+    /// The program invocation that cleans a worktree file for storage in `git`.
+    ///
+    /// Note that the command invocation may need its `%f` argument substituted with the name of the file to process. It will be quoted.
+    pub clean: Option<BString>,
+    /// The program invocation that readies a file stored in `git` for the worktree.
+    ///
+    /// Note that the command invocation may need its `%f` argument substituted with the name of the file to process. It will be quoted.
+    pub smudge: Option<BString>,
+    /// the long-running program that can typically handle both smudge and clean, and possibly delay processing as well.
+    pub process: Option<BString>,
+    /// if `true`, the `clean` or `smudge` programs need to succeed in order to make their content usable. Otherwise their
+    /// exit code is ignored.
+    pub required: bool,
+}
 
 fn clear_and_set_capacity(buf: &mut Vec<u8>, cap: usize) {
     buf.clear();

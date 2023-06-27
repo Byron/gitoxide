@@ -1,3 +1,4 @@
+mod driver;
 mod eol;
 mod ident;
 mod worktree;
