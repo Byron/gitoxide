@@ -1,107 +1,111 @@
-use bstr::BStr;
-use std::borrow::Cow;
-
-fn cowstr(input: &str) -> Cow<'_, BStr> {
-    Cow::Borrowed(input.into())
-}
 mod undo {
-    use crate::ident::cowstr;
-    use std::borrow::Cow;
+    use bstr::{ByteSlice, B};
 
     #[test]
     fn no_id_changes_nothing() {
-        let cow = gix_filter::ident::undo(cowstr("hello"));
-        assert!(matches!(cow, Cow::Borrowed(_)), "the buffer is not touched");
-        assert_eq!(cow.as_ref(), "hello");
+        let mut buf = Vec::new();
+        let changed = gix_filter::ident::undo(B("hello"), &mut buf);
+        assert!(!changed, "the buffer is not touched");
+        assert_eq!(buf.len(), 0);
     }
 
     #[test]
     fn empty() {
-        assert!(matches!(gix_filter::ident::undo(cowstr("")), Cow::Borrowed(_)));
+        let mut buf = Vec::new();
+        assert!(
+            !gix_filter::ident::undo(B(""), &mut buf),
+            "nothing to be done in empty buffer"
+        );
     }
 
     #[test]
     fn nothing_if_newline_between_dollars() {
-        assert!(matches!(gix_filter::ident::undo(cowstr(" $Id: \n$")), Cow::Borrowed(_)));
+        let mut buf = Vec::new();
+        assert!(!gix_filter::ident::undo(B(" $Id: \n$"), &mut buf));
+        assert_eq!(buf.len(), 0);
     }
 
     #[test]
     fn nothing_if_it_is_not_id() {
+        let mut buf = Vec::new();
         assert!(
-            matches!(gix_filter::ident::undo(cowstr(" $id: something$")), Cow::Borrowed(_)),
+            !gix_filter::ident::undo(B(" $id: something$"), &mut buf),
             "it's matching case-sensitively"
         );
+        assert_eq!(buf.len(), 0);
     }
 
     #[test]
     fn anything_between_dollar_id_dollar() {
-        assert_eq!(
-            gix_filter::ident::undo(cowstr(" $Id: something$\nhello")).as_ref(),
-            " $Id$\nhello"
-        );
+        let mut buf = Vec::new();
+        assert!(gix_filter::ident::undo(B(" $Id: something$\nhello"), &mut buf));
+        assert_eq!(buf.as_bstr(), " $Id$\nhello");
     }
 
     #[test]
     fn multiple() {
-        assert_eq!(
-            gix_filter::ident::undo(cowstr(
-                "$Id: a\n$ $Id: something$\nhello$Id: hex$\nlast $Id:other$\n$Id: \n$"
-            ))
-            .as_ref(),
-            "$Id: a\n$ $Id$\nhello$Id$\nlast $Id$\n$Id: \n$",
-        );
-        assert_eq!(
-            gix_filter::ident::undo(cowstr("$Id: a\n$$Id:$$Id: hex$\n$Id:other$$Id: $end")).as_ref(),
-            "$Id: a\n$$Id$$Id$\n$Id$$Id$end",
-        );
+        let mut buf = Vec::new();
+        assert!(gix_filter::ident::undo(
+            B("$Id: a\n$ $Id: something$\nhello$Id: hex$\nlast $Id:other$\n$Id: \n$"),
+            &mut buf
+        ));
+        assert_eq!(buf.as_bstr(), "$Id: a\n$ $Id$\nhello$Id$\nlast $Id$\n$Id: \n$");
+
+        assert!(gix_filter::ident::undo(
+            B("$Id: a\n$$Id:$$Id: hex$\n$Id:other$$Id: $end"),
+            &mut buf
+        ));
+        assert_eq!(buf.as_bstr(), "$Id: a\n$$Id$$Id$\n$Id$$Id$end");
     }
 }
 
 mod apply {
-    use crate::ident::cowstr;
+    use bstr::{ByteSlice, B};
     use gix_filter::ident;
-    use std::borrow::Cow;
 
     #[test]
     fn no_change() {
+        let mut buf = Vec::new();
         for input_no_match in [
             "",
             "nothing",
             "$ID$ case sensitive matching",
             "$Id: expanded is ignored$",
         ] {
-            let res = ident::apply(cowstr(input_no_match), gix_hash::Kind::Sha1);
-            assert!(
-                matches!(res, Cow::Borrowed(_)),
-                "no substitution happens, so no mutable version of the Cow is created"
-            );
-            assert_eq!(res.as_ref(), input_no_match, "there definitely is no change");
+            let changed = ident::apply(input_no_match.as_bytes(), gix_hash::Kind::Sha1, &mut buf);
+            assert!(!changed, "no substitution happens, nothing to do");
+            assert_eq!(buf.len(), 0);
         }
     }
 
     #[test]
     fn simple() {
-        assert_eq!(
-            ident::apply(cowstr("$Id$"), gix_hash::Kind::Sha1).as_ref(),
-            "$Id: b3f5ebfb5843bc43ceecff6d4f26bb37c615beb1$"
+        let mut buf = Vec::new();
+        assert!(
+            ident::apply(B("$Id$"), gix_hash::Kind::Sha1, &mut buf),
+            "a change happens"
         );
+        assert_eq!(buf.as_bstr(), "$Id: b3f5ebfb5843bc43ceecff6d4f26bb37c615beb1$");
 
+        assert!(ident::apply(B("$Id$ $Id$ foo"), gix_hash::Kind::Sha1, &mut buf));
         assert_eq!(
-            ident::apply(cowstr("$Id$ $Id$"), gix_hash::Kind::Sha1).as_ref(),
-            "$Id: f6f3176060328ef7030a8b8eeda57fbf0587b2f9$ $Id: f6f3176060328ef7030a8b8eeda57fbf0587b2f9$"
+            buf.as_bstr(),
+            "$Id: e230cff7a9624f59eaa28bfb97602c3a03651a49$ $Id: e230cff7a9624f59eaa28bfb97602c3a03651a49$ foo"
         );
     }
 
     #[test]
     fn round_trips() {
+        let mut buf = Vec::new();
         for input in [
             "hi\n$Id$\nho\n\t$Id$$Id$$Id$",
             "$Id$",
             "$Id$ and one more $Id$ and done",
         ] {
-            let res = ident::apply(cowstr(input), gix_hash::Kind::Sha1);
-            assert_ne!(res.as_ref(), input, "the input was rewritten");
-            assert_eq!(ident::undo(res).as_ref(), input, "the filter can be undone perfectly");
+            let changed = ident::apply(B(input), gix_hash::Kind::Sha1, &mut buf);
+            assert!(changed, "the input was rewritten");
+            assert!(ident::undo(&buf.clone(), &mut buf), "undo does something as well");
+            assert_eq!(buf.as_bstr(), input, "the filter can be undone perfectly");
         }
     }
 }
