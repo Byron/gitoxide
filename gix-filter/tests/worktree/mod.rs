@@ -74,13 +74,28 @@ mod encode_to_git {
         let input = &b"hello"[..];
         for round_trip in [RoundTrip::Ignore, RoundTrip::Validate] {
             let mut buf = Vec::new();
-            worktree::encode_to_git(input, encoding("UTF-8"), &mut buf, round_trip)?;
+            worktree::encode_to_git(input, encoding_rs::UTF_8, &mut buf, round_trip)?;
             assert_eq!(buf.as_bstr(), input)
         }
         Ok(())
     }
+}
 
-    fn encoding(label: &str) -> &'static encoding_rs::Encoding {
-        worktree::encoding::for_label(label).expect("encoding is valid and known at compile time")
+mod encode_to_worktree {
+    use bstr::ByteSlice;
+    use gix_filter::worktree;
+    use gix_filter::worktree::encode_to_git::RoundTrip;
+
+    #[test]
+    fn shift_jis() -> crate::Result {
+        let input = "ハローワールド";
+        let mut buf = Vec::new();
+        worktree::encode_to_worktree(input.as_bytes(), encoding_rs::SHIFT_JIS, &mut buf)?;
+
+        let mut re_encoded = Vec::new();
+        worktree::encode_to_git(&buf, encoding_rs::SHIFT_JIS, &mut re_encoded, RoundTrip::Validate)?;
+
+        assert_eq!(re_encoded.as_bstr(), input, "this should be round-trippable too");
+        Ok(())
     }
 }
