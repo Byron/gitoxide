@@ -2013,6 +2013,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-packetline-blocking"
+version = "0.16.3"
+dependencies = [
+ "bstr",
+ "document-features",
+ "hex",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "gix-path"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
