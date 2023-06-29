@@ -135,6 +135,32 @@ fn with_encoding() -> crate::Result {
 }
 
 #[test]
+fn pre_epoch() -> crate::Result {
+    let signature = || SignatureRef {
+        name: "Législateur".into(),
+        email: "".into(),
+        time: Time {
+            seconds: -5263834140,
+            offset: 540,
+            sign: Sign::Plus,
+        },
+    };
+    assert_eq!(
+        CommitRef::from_bytes(&fixture_name("commit", "pre-epoch.txt"))?,
+        CommitRef {
+            tree: b"71cdd4015386b764b178005cad4c88966bc9d61a".as_bstr(),
+            parents: SmallVec::default(),
+            author: signature(),
+            committer: signature(),
+            encoding: None,
+            message: "Version consolidée au 14 mars 1803\n".into(),
+            extra_headers: vec![]
+        }
+    );
+    Ok(())
+}
+
+#[test]
 fn with_trailer() -> crate::Result {
     let kim = SignatureRef {
         name: "Kim Altintop".into(),
