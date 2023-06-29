@@ -14,7 +14,7 @@ doctest = false
 test = true
 
 [dependencies]
-gix-utils = { version = "^0.1.3", default-features = false, path = "../gix-utils" }
+gix-utils = { version = "^0.1.4", default-features = false, path = "../gix-utils" }
 gix-tempfile = { version = "^7.0.0", default-features = false, path = "../gix-tempfile" }
 thiserror = "1.0.38"
 
