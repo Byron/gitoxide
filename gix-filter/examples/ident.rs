@@ -2,6 +2,7 @@ use bstr::io::BufReadExt;
 use bstr::{ByteSlice, ByteVec};
 use gix_filter::driver::process;
 use std::io::{stdin, stdout, Read, Write};
+use std::time::Duration;
 
 static PREFIX: &str = "➡";
 
@@ -21,7 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 stdout(),
                 "git-filter",
                 |versions| versions.contains(&2).then_some(2),
-                &["clean", "smudge"],
+                &["clean", "smudge", "wait-1-s"],
             )?;
 
             while let Some(mut request) = srv.next_request()? {
@@ -63,6 +64,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                         request.as_write().write_all(&lines)?;
                         request.write_status(process::Status::Previous)?;
+                    }
+                    "wait-1-s" => {
+                        let mut buf = Vec::new();
+                        request.as_read().read_to_end(&mut buf)?;
+                        request.write_status(process::Status::success())?;
+                        std::thread::sleep(Duration::from_secs(1));
                     }
                     unknown => panic!("Unknown capability requested: {unknown}"),
                 }

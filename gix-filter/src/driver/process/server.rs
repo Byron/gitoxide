@@ -141,8 +141,11 @@ impl Server {
         })
     }
 
-    /// Read the next request and return it, provided its [`command`][Request::command] is supported by us.
+    /// Read the next request and return it, even if [`command`][Request::command] is *not* supported by us.
     /// If `Ok(None)` is reported, the request loop should end and the process should be shutdown gracefully.
+    ///
+    /// The reason for allowing any command is that the caller would have to match on the command anyway, and would
+    /// have to handle invalid commands that way.
     ///
     /// ### Lifecycle
     ///
@@ -157,16 +160,11 @@ impl Server {
             Err(err) if err.kind() == std::io::ErrorKind::UnexpectedEof => return Ok(None),
             Err(err) => return Err(err.into()),
         }
-        let command = match buf
-            .strip_prefix("command=")
-            .map(str::trim_end)
-            .filter(|cmd| self.capabilities.contains(*cmd))
-            .map(ToOwned::to_owned)
-        {
+        let command = match buf.strip_prefix("command=").map(str::trim_end).map(ToOwned::to_owned) {
             Some(cmd) => cmd,
             None => {
                 return Err(next_request::Error::Protocol {
-                    msg: "Wanted known command that matches our capability, got ".into(),
+                    msg: "Wanted 'command=<name>', got ".into(),
                     actual: buf.into(),
                 })
             }
@@ -268,7 +266,7 @@ mod request {
 
 /// Access
 impl Server {
-    /// Return the list of capabilities we are allowed to use.
+    /// Return the list of capabilities we are allowed to use, as negotiated with the client.
     pub fn capabilities(&self) -> &HashSet<String> {
         &self.capabilities
     }

@@ -27,9 +27,6 @@ pub enum Error {
         source: process::client::invoke::Error,
         command: String,
     },
-    // TODO: remove this
-    #[error("Asked for capability named '{wanted}', but process only had {} available.", available.join(", "))]
-    ProcessMissesCapability { wanted: String, available: Vec<String> },
     #[error("The invoked command '{command}' in process indicated an error: '{error}'")]
     ProcessStatus { error: String, command: String },
 }
@@ -66,12 +63,13 @@ impl State {
         src: impl std::io::Read,
         operation: Operation,
         ctx: Context<'_>,
-    ) -> Result<Box<dyn std::io::Read + 'a>, Error> {
+    ) -> Result<Option<Box<dyn std::io::Read + 'a>>, Error> {
         match self.apply_delayed(driver, src, operation, Delay::Forbid, ctx)? {
-            MaybeDelayed::Delayed(_) => {
+            Some(MaybeDelayed::Delayed(_)) => {
                 unreachable!("we forbid delaying the entry")
             }
-            MaybeDelayed::Immediate(read) => Ok(read),
+            Some(MaybeDelayed::Immediate(read)) => Ok(Some(read)),
+            None => Ok(None),
         }
     }
 
@@ -83,14 +81,14 @@ impl State {
         operation: Operation,
         delay: Delay,
         ctx: Context<'_>,
-    ) -> Result<MaybeDelayed<'a>, Error> {
+    ) -> Result<Option<MaybeDelayed<'a>>, Error> {
         match self.process(driver, operation, ctx.rela_path)? {
             Some(Process::SingleFile { mut child, command }) => {
                 std::io::copy(&mut src, &mut child.stdin.take().expect("configured"))?;
-                Ok(MaybeDelayed::Immediate(Box::new(ReadFilterOutput {
+                Ok(Some(MaybeDelayed::Immediate(Box::new(ReadFilterOutput {
                     inner: child.stdout.take(),
                     child: driver.required.then_some((child, command)),
-                })))
+                }))))
             }
             Some(Process::MultiFile { client, key }) => {
                 let command = match operation {
@@ -99,10 +97,7 @@ impl State {
                 };
 
                 if !client.capabilities().contains(command) {
-                    return Err(Error::ProcessMissesCapability {
-                        wanted: command.into(),
-                        available: client.capabilities().iter().cloned().collect(),
-                    });
+                    return Ok(None);
                 }
 
                 let status = client
@@ -130,9 +125,9 @@ impl State {
                         source: err,
                     })?;
                 if matches!(delay, Delay::Allow) && status.is_delayed() {
-                    Ok(MaybeDelayed::Delayed(key))
+                    Ok(Some(MaybeDelayed::Delayed(key)))
                 } else if status.is_success() {
-                    Ok(MaybeDelayed::Immediate(Box::new(client.as_read())))
+                    Ok(Some(MaybeDelayed::Immediate(Box::new(client.as_read()))))
                 } else {
                     // TODO: handle "error" and "abort", with abort removing the capability so we ignore it.
                     Err(Error::ProcessStatus {
@@ -146,7 +141,7 @@ impl State {
                     })
                 }
             }
-            None => todo!("actually, make it possible to do nothing"),
+            None => Ok(None),
         }
     }
 }
