@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.48.0 (2023-06-29)
+
+<csr-id-fb63f3f07f0f9545be5942bcb66b06040fbc7fe9/>
+<csr-id-3c8e3c1e88d36657d4e6eeaf0819be7fd9341ae1/>
 
 The main feature of this release is support dates prior to the UNIX epoch. Note that this is a feature that isn't supported by `git`, but only by `libgit2`.
 
@@ -26,7 +29,7 @@ The main feature of this release is support dates prior to the UNIX epoch. Note 
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 6 calendar days.
+ - 10 commits contributed to the release over the course of 6 calendar days.
  - 6 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -38,6 +41,7 @@ The main feature of this release is support dates prior to the UNIX epoch. Note 
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`00f96fb`](https://github.com/Byron/gitoxide/commit/00f96fb3110a8f81a1bd0d74c757c15b8773c6f6))
     - Merge branch 'i64-times' ([`b407461`](https://github.com/Byron/gitoxide/commit/b407461d8991db67a5bdb2ab13f518f78a85ed40))
     - Add incomplete mapping of typical `git2` functions and their counterpart in `gix`. ([`fb63f3f`](https://github.com/Byron/gitoxide/commit/fb63f3f07f0f9545be5942bcb66b06040fbc7fe9))
     - Adapt to changes in `gix-date` ([`fba45c6`](https://github.com/Byron/gitoxide/commit/fba45c68d57d5f73070a6949556a04187d42e427))

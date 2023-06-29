@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.2 (2023-06-29)
 
 ### New Features
 
@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 6 calendar days.
+ - 4 commits contributed to the release over the course of 6 calendar days.
  - 6 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`00f96fb`](https://github.com/Byron/gitoxide/commit/00f96fb3110a8f81a1bd0d74c757c15b8773c6f6))
     - Merge branch 'basic-filtering' ([`3fd5e16`](https://github.com/Byron/gitoxide/commit/3fd5e16e205db18edc21341fb4c2a75d0726f5a5))
     - Support for events (e.g. warn!()) via macro. ([`d5eba46`](https://github.com/Byron/gitoxide/commit/d5eba46afeaadb9ff113421bdb43466d67cfeac6))
     - Panic on `record()` if field wasn't found. ([`ba777f3`](https://github.com/Byron/gitoxide/commit/ba777f3978e5c7f0275ad48a54d85ec63609aead))

@@ -1,6 +1,6 @@
 [package]
 name = "gix-hashtable"
-version = "0.2.2"
+version = "0.2.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate that provides hashtable based data structures optimized to utilize ObjectId keys"

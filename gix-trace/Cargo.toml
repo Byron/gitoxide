@@ -2,7 +2,7 @@
 name = "gix-trace"
 description = "A crate to provide minimal `tracing` support that can be turned off to zero cost"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
 edition = "2021"

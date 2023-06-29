@@ -1,6 +1,6 @@
 [package]
 name = "gix-ref"
-version = "0.31.0"
+version = "0.32.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate to handle git references"
@@ -23,10 +23,10 @@ gix-features = { version = "^0.31.0", path = "../gix-features", features = ["wal
 gix-fs = { version = "^0.3.0", path = "../gix-fs" }
 gix-path = { version = "^0.8.2", path = "../gix-path" }
 gix-hash = { version = "^0.11.3", path = "../gix-hash" }
-gix-date = { version = "^0.6.0", path = "../gix-date" }
-gix-object = { version = "^0.31.0", path = "../gix-object" }
+gix-date = { version = "^0.7.0", path = "../gix-date" }
+gix-object = { version = "^0.32.0", path = "../gix-object" }
 gix-validate = { version = "^0.7.6", path = "../gix-validate" }
-gix-actor = { version = "^0.22.0", path = "../gix-actor" }
+gix-actor = { version = "^0.23.0", path = "../gix-actor" }
 gix-lock = { version = "^7.0.0", path = "../gix-lock" }
 gix-tempfile = { version = "^7.0.0", default-features = false, path = "../gix-tempfile" }
 
