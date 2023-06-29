@@ -137,7 +137,7 @@ gix-path = { version = "^0.8.3", path = "../gix-path" }
 gix-url = { version = "^0.20.1", path = "../gix-url" }
 gix-traverse = { version = "^0.29.0", path = "../gix-traverse" }
 gix-protocol = { version = "^0.35.0", path = "../gix-protocol", optional = true }
-gix-transport = { version = "^0.33.0", path = "../gix-transport", optional = true }
+gix-transport = { version = "^0.33.1", path = "../gix-transport", optional = true }
 gix-diff = { version = "^0.32.0", path = "../gix-diff" }
 gix-mailmap = { version = "^0.15.0", path = "../gix-mailmap" }
 gix-features = { version = "^0.31.1", path = "../gix-features", features = ["progress", "once_cell"] }
