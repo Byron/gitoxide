@@ -21,7 +21,7 @@ impl<'graph> LazyCommit<'graph> {
     pub fn committer_timestamp(&self) -> Result<SecondsSinceUnixEpoch, gix_object::decode::Error> {
         Ok(match &self.backing {
             Either::Left(buf) => gix_object::CommitRefIter::from_bytes(buf).committer()?.time.seconds,
-            Either::Right((cache, pos)) => cache.commit_at(*pos).committer_timestamp(),
+            Either::Right((cache, pos)) => cache.commit_at(*pos).committer_timestamp() as SecondsSinceUnixEpoch, // a cast as we cannot represent the error and trying seems overkill
         })
     }
 
@@ -75,7 +75,11 @@ impl<'graph> LazyCommit<'graph> {
                 }
                 Commit {
                     parents,
-                    commit_time: commit.committer_timestamp(),
+                    commit_time: commit.committer_timestamp().try_into().map_err(|_| {
+                        to_owned::Error::CommitGraphTime {
+                            actual: commit.committer_timestamp(),
+                        }
+                    })?,
                     generation: Some(commit.generation()),
                     data,
                 }
@@ -141,5 +145,7 @@ pub mod to_owned {
         Decode(#[from] gix_object::decode::Error),
         #[error("Could not find commit position in graph when traversing parents")]
         CommitGraphParent(#[from] gix_commitgraph::file::commit::Error),
+        #[error("Commit-graph time could not be presented as signed integer: {actual}")]
+        CommitGraphTime { actual: u64 },
     }
 }

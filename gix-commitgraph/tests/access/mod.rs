@@ -46,7 +46,7 @@ fn single_commit_future_64bit_dates_work() {
     let actual = cg.commit_by_id(info.id).expect("present");
     assert_eq!(
         actual.committer_timestamp(),
-        info.time.seconds,
+        info.time.seconds.try_into().expect("timestamps in bound"),
         "this is close the the highest representable value in the graph, like year 2500, so we are good for longer than I should care about"
     );
     assert_eq!(actual.generation(), 1);

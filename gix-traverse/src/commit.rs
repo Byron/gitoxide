@@ -121,7 +121,7 @@ pub mod ancestors {
         buf: Vec<u8>,
         seen: HashSet<ObjectId>,
         parents_buf: Vec<u8>,
-        parent_ids: SmallVec<[(ObjectId, gix_date::SecondsSinceUnixEpoch); 2]>,
+        parent_ids: SmallVec<[(ObjectId, SecondsSinceUnixEpoch); 2]>,
     }
 
     impl Default for State {
@@ -325,7 +325,7 @@ pub mod ancestors {
 
     impl Sorting {
         /// If not topo sort, provide the cutoff date if present.
-        fn cutoff_time(&self) -> Option<gix_date::SecondsSinceUnixEpoch> {
+        fn cutoff_time(&self) -> Option<SecondsSinceUnixEpoch> {
             match self {
                 Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => Some(*seconds),
                 _ => None,
@@ -492,7 +492,10 @@ fn collect_parents(
         match parent_id {
             Ok(pos) => dest.push({
                 let parent = cache.commit_at(pos);
-                (parent.id().to_owned(), parent.committer_timestamp())
+                (
+                    parent.id().to_owned(),
+                    parent.committer_timestamp() as gix_date::SecondsSinceUnixEpoch, // we can't handle errors here and trying seems overkill
+                )
             }),
             Err(_err) => return false,
         }

@@ -156,7 +156,7 @@ mod relative {
         // account for the loss of precision when creating `Time` with seconds
         let expected = expected.replace_nanosecond(0).unwrap();
         assert_eq!(
-            OffsetDateTime::from_unix_timestamp(two_weeks_ago.seconds as i64).unwrap(),
+            OffsetDateTime::from_unix_timestamp(two_weeks_ago.seconds).unwrap(),
             expected,
             "relative times differ"
         );

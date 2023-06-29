@@ -128,11 +128,8 @@ mod ancestors {
             assert_eq!(commits.len(), 1, "only one commit");
 
             let commit = &commits[0];
-            assert_eq!(commit.id, hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7"));
-            assert_eq!(
-                commit.commit_time(),
-                0 // TODO: actual time
-            );
+            assert_eq!(commit.id, hex_to_id("cfa5e6f7872c2f4fed7bd8c3f2732a37536d6912"));
+            assert_eq!(commit.commit_time(), -5263747740);
         }
         Ok(())
     }

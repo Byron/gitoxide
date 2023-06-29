@@ -40,7 +40,10 @@ pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHa
 
         let commit = cg.commit_at(ref_info.pos());
         assert_eq!(commit.id(), ref_info.id());
-        assert_eq!(commit.committer_timestamp(), ref_info.time.seconds);
+        assert_eq!(
+            commit.committer_timestamp(),
+            ref_info.time.seconds.try_into().expect("timestamp in bounds")
+        );
         assert_eq!(commit.root_tree_id(), ref_info.root_tree_id());
         assert_eq!(
             commit.parent1().expect("failed to access commit's parent1"),
