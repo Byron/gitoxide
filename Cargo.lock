@@ -1274,19 +1274,19 @@ dependencies = [
  "async-std",
  "document-features",
  "gix-actor 0.23.0",
- "gix-attributes 0.14.0",
+ "gix-attributes 0.14.1",
  "gix-commitgraph",
  "gix-config",
  "gix-credentials",
  "gix-date 0.7.0",
  "gix-diff",
- "gix-discover 0.21.0",
+ "gix-discover 0.21.1",
  "gix-features 0.31.1",
  "gix-fs 0.3.0",
- "gix-glob 0.9.0",
+ "gix-glob 0.9.1",
  "gix-hash 0.11.3",
  "gix-hashtable 0.2.3",
- "gix-ignore 0.4.0",
+ "gix-ignore 0.4.1",
  "gix-index 0.20.0",
  "gix-lock 7.0.0",
  "gix-mailmap",
@@ -1297,10 +1297,10 @@ dependencies = [
  "gix-path 0.8.3",
  "gix-prompt",
  "gix-protocol",
- "gix-ref 0.32.0",
+ "gix-ref 0.32.1",
  "gix-refspec",
  "gix-revision",
- "gix-sec 0.8.2",
+ "gix-sec 0.8.3",
  "gix-tempfile 7.0.0",
  "gix-testtools",
  "gix-trace 0.1.2",
@@ -1309,7 +1309,7 @@ dependencies = [
  "gix-url",
  "gix-utils 0.1.4",
  "gix-validate 0.7.6",
- "gix-worktree 0.21.0",
+ "gix-worktree 0.21.1",
  "is_ci",
  "log",
  "once_cell",
@@ -1385,12 +1385,12 @@ dependencies = [
 
 [[package]]
 name = "gix-attributes"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "bstr",
  "document-features",
  "gix-fs 0.3.0",
- "gix-glob 0.9.0",
+ "gix-glob 0.9.1",
  "gix-path 0.8.3",
  "gix-quote 0.4.5",
  "gix-testtools",
@@ -1452,17 +1452,17 @@ dependencies = [
 
 [[package]]
 name = "gix-config"
-version = "0.25.0"
+version = "0.25.1"
 dependencies = [
  "bstr",
  "criterion",
  "document-features",
  "gix-config-value",
  "gix-features 0.31.1",
- "gix-glob 0.9.0",
+ "gix-glob 0.9.1",
  "gix-path 0.8.3",
- "gix-ref 0.32.0",
- "gix-sec 0.8.2",
+ "gix-ref 0.32.1",
+ "gix-sec 0.8.3",
  "log",
  "memchr",
  "nom",
@@ -1482,8 +1482,8 @@ dependencies = [
  "gix",
  "gix-config",
  "gix-path 0.8.3",
- "gix-ref 0.32.0",
- "gix-sec 0.8.2",
+ "gix-ref 0.32.1",
+ "gix-sec 0.8.3",
  "gix-testtools",
  "serde_derive",
  "serial_test",
@@ -1492,7 +1492,7 @@ dependencies = [
 
 [[package]]
 name = "gix-config-value"
-version = "0.12.2"
+version = "0.12.3"
 dependencies = [
  "bitflags 2.3.2",
  "bstr",
@@ -1505,7 +1505,7 @@ dependencies = [
 
 [[package]]
 name = "gix-credentials"
-version = "0.16.0"
+version = "0.16.1"
 dependencies = [
  "bstr",
  "document-features",
@@ -1513,7 +1513,7 @@ dependencies = [
  "gix-config-value",
  "gix-path 0.8.3",
  "gix-prompt",
- "gix-sec 0.8.2",
+ "gix-sec 0.8.3",
  "gix-testtools",
  "gix-url",
  "serde",
@@ -1582,21 +1582,21 @@ dependencies = [
  "gix-hash 0.11.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-path 0.8.2",
  "gix-ref 0.29.1",
- "gix-sec 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-sec 0.8.2",
  "thiserror",
 ]
 
 [[package]]
 name = "gix-discover"
-version = "0.21.0"
+version = "0.21.1"
 dependencies = [
  "bstr",
  "defer",
  "dunce",
  "gix-hash 0.11.3",
  "gix-path 0.8.3",
- "gix-ref 0.32.0",
- "gix-sec 0.8.2",
+ "gix-ref 0.32.1",
+ "gix-sec 0.8.3",
  "gix-testtools",
  "is_ci",
  "serial_test",
@@ -1688,7 +1688,7 @@ dependencies = [
 
 [[package]]
 name = "gix-glob"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "bitflags 2.3.2",
  "bstr",
@@ -1755,12 +1755,12 @@ dependencies = [
 
 [[package]]
 name = "gix-ignore"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "bstr",
  "document-features",
  "gix-fs 0.3.0",
- "gix-glob 0.9.0",
+ "gix-glob 0.9.1",
  "gix-path 0.8.3",
  "gix-testtools",
  "serde",
@@ -1872,7 +1872,7 @@ dependencies = [
  "gix-hash 0.11.3",
  "gix-object 0.32.0",
  "gix-odb",
- "gix-ref 0.32.0",
+ "gix-ref 0.32.1",
  "gix-revwalk",
  "gix-testtools",
  "smallvec",
@@ -1926,7 +1926,7 @@ dependencies = [
 
 [[package]]
 name = "gix-odb"
-version = "0.49.0"
+version = "0.49.1"
 dependencies = [
  "arc-swap",
  "crossbeam-channel",
@@ -1951,7 +1951,7 @@ dependencies = [
 
 [[package]]
 name = "gix-pack"
-version = "0.39.0"
+version = "0.39.1"
 dependencies = [
  "clru",
  "document-features",
@@ -2039,8 +2039,8 @@ version = "0.1.0"
 dependencies = [
  "bitflags 2.3.2",
  "bstr",
- "gix-attributes 0.14.0",
- "gix-glob 0.9.0",
+ "gix-attributes 0.14.1",
+ "gix-glob 0.9.1",
  "gix-testtools",
  "once_cell",
  "thiserror",
@@ -2130,7 +2130,7 @@ dependencies = [
 
 [[package]]
 name = "gix-ref"
-version = "0.32.0"
+version = "0.32.1"
 dependencies = [
  "document-features",
  "gix-actor 0.23.0",
@@ -2158,17 +2158,17 @@ version = "0.0.0"
 dependencies = [
  "gix-actor 0.23.0",
  "gix-date 0.7.0",
- "gix-discover 0.21.0",
+ "gix-discover 0.21.1",
  "gix-features 0.31.1",
  "gix-fs 0.3.0",
  "gix-hash 0.11.3",
  "gix-lock 7.0.0",
  "gix-object 0.32.0",
  "gix-odb",
- "gix-ref 0.32.0",
+ "gix-ref 0.32.1",
  "gix-testtools",
  "gix-validate 0.7.6",
- "gix-worktree 0.21.0",
+ "gix-worktree 0.21.1",
  "tempfile",
 ]
 
@@ -2219,6 +2219,18 @@ dependencies = [
 [[package]]
 name = "gix-sec"
 version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47f09860e2ddc7b13119e410c46d8e9f870acc7933fb53ae65817af83a8c9f80"
+dependencies = [
+ "bitflags 2.3.2",
+ "gix-path 0.8.2",
+ "libc",
+ "windows 0.48.0",
+]
+
+[[package]]
+name = "gix-sec"
+version = "0.8.3"
 dependencies = [
  "bitflags 2.3.2",
  "document-features",
@@ -2226,18 +2238,6 @@ dependencies = [
  "libc",
  "serde",
  "tempfile",
- "windows 0.48.0",
-]
-
-[[package]]
-name = "gix-sec"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47f09860e2ddc7b13119e410c46d8e9f870acc7933fb53ae65817af83a8c9f80"
-dependencies = [
- "bitflags 2.3.2",
- "gix-path 0.8.2",
- "libc",
  "windows 0.48.0",
 ]
 
@@ -2339,7 +2339,7 @@ dependencies = [
  "gix-pack",
  "gix-packetline",
  "gix-quote 0.4.5",
- "gix-sec 0.8.2",
+ "gix-sec 0.8.3",
  "gix-url",
  "maybe-async",
  "pin-project-lite",
@@ -2392,7 +2392,7 @@ version = "0.0.0"
 
 [[package]]
 name = "gix-url"
-version = "0.20.0"
+version = "0.20.1"
 dependencies = [
  "bstr",
  "document-features",
@@ -2462,17 +2462,17 @@ dependencies = [
 
 [[package]]
 name = "gix-worktree"
-version = "0.21.0"
+version = "0.21.1"
 dependencies = [
  "bstr",
  "document-features",
  "filetime",
- "gix-attributes 0.14.0",
+ "gix-attributes 0.14.1",
  "gix-features 0.31.1",
  "gix-fs 0.3.0",
- "gix-glob 0.9.0",
+ "gix-glob 0.9.1",
  "gix-hash 0.11.3",
- "gix-ignore 0.4.0",
+ "gix-ignore 0.4.1",
  "gix-index 0.20.0",
  "gix-object 0.32.0",
  "gix-odb",
