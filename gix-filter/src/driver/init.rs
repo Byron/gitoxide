@@ -45,6 +45,7 @@ impl State {
                     }
                 };
 
+                // TODO: find a way to not have to do this 'borrow-dance'.
                 // this strangeness is to workaround the borrowchecker, who otherwise won't let us return a reader. Quite sad :/.
                 // One would want to `get_mut()` or insert essentially, but it won't work.
                 self.running.insert(process.clone(), client);

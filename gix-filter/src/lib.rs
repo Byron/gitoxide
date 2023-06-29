@@ -42,8 +42,10 @@ pub struct Driver {
     pub smudge: Option<BString>,
     /// the long-running program that can typically handle both smudge and clean, and possibly delay processing as well.
     pub process: Option<BString>,
-    /// if `true`, the `clean` or `smudge` programs need to succeed in order to make their content usable. Otherwise their
+    /// If `true`, the `clean` or `smudge` programs need to succeed in order to make their content usable. Otherwise their
     /// exit code is ignored.
+    /// Note that this is more of a suggestion as we will always report errors as they happen as the driver API is streaming in nature,
+    /// which makes soft-failures impossible unless the caller takes precautions.
     pub required: bool,
 }
 

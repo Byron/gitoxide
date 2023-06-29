@@ -1,3 +1,4 @@
+use crate::driver::process::client::invoke;
 use crate::driver::{process, Operation, Process, State};
 use crate::{driver, Driver};
 use bstr::BStr;
@@ -27,8 +28,11 @@ pub enum Error {
         source: process::client::invoke::Error,
         command: String,
     },
-    #[error("The invoked command '{command}' in process indicated an error: '{error}'")]
-    ProcessStatus { error: String, command: String },
+    #[error("The invoked command '{command}' in process indicated an error: {status:?}")]
+    ProcessStatus {
+        status: driver::process::Status,
+        command: String,
+    },
 }
 
 /// Additional information for use in the [`State::apply()`] method.
@@ -57,6 +61,13 @@ impl State {
     ///
     /// Note that it's not an error if there is no filter process for `operation` or if a long-running process doesn't supported
     /// the desired capability.
+    ///
+    /// ### Deviation
+    ///
+    /// If a long running process returns the 'abort' status after receiving the data, it will be removed similar to how `git` does it.
+    /// However, it delivers an unsuccessful error status later, it will not be removed, but reports the error only.
+    /// If any other non-'error' status is received, the process will be stopped. But that doesn't happen if if such a status is received
+    /// after reading the filtered result.
     pub fn apply<'a>(
         &'a mut self,
         driver: &Driver,
@@ -100,44 +111,67 @@ impl State {
                     return Ok(None);
                 }
 
-                let status = client
-                    .invoke(
-                        command,
-                        [
-                            ("pathname", Some(ctx.rela_path.to_owned())),
-                            ("ref", ctx.ref_name.map(ToOwned::to_owned)),
-                            ("treeish", ctx.treeish.map(|id| id.to_hex().to_string().into())),
-                            ("blob", ctx.blob.map(|id| id.to_hex().to_string().into())),
-                            (
-                                "can-delay",
-                                match delay {
-                                    Delay::Allow if client.capabilities().contains("delay") => Some("1".into()),
-                                    Delay::Forbid | Delay::Allow => None,
-                                },
-                            ),
-                        ]
-                        .into_iter()
-                        .filter_map(|(key, value)| value.map(|v| (key, v))),
-                        src,
-                    )
-                    .map_err(|err| Error::ProcessInvoke {
-                        command: command.into(),
-                        source: err,
-                    })?;
+                let invoke_result = client.invoke(
+                    command,
+                    [
+                        ("pathname", Some(ctx.rela_path.to_owned())),
+                        ("ref", ctx.ref_name.map(ToOwned::to_owned)),
+                        ("treeish", ctx.treeish.map(|id| id.to_hex().to_string().into())),
+                        ("blob", ctx.blob.map(|id| id.to_hex().to_string().into())),
+                        (
+                            "can-delay",
+                            match delay {
+                                Delay::Allow if client.capabilities().contains("delay") => Some("1".into()),
+                                Delay::Forbid | Delay::Allow => None,
+                            },
+                        ),
+                    ]
+                    .into_iter()
+                    .filter_map(|(key, value)| value.map(|v| (key, v))),
+                    src,
+                );
+                let status = match invoke_result {
+                    Ok(status) => status,
+                    Err(err) => {
+                        let invoke::Error::Io(io_err) = &err;
+                        if matches!(
+                            io_err.kind(),
+                            std::io::ErrorKind::BrokenPipe | std::io::ErrorKind::UnexpectedEof
+                        ) {
+                            self.running.remove(&key.0).expect("present or we wouldn't be here");
+                        }
+
+                        return Err(Error::ProcessInvoke {
+                            command: command.into(),
+                            source: err,
+                        });
+                    }
+                };
+
                 if matches!(delay, Delay::Allow) && status.is_delayed() {
                     Ok(Some(MaybeDelayed::Delayed(key)))
                 } else if status.is_success() {
+                    // TODO: find a way to not have to do the 'borrow-dance'.
+                    let client = self.running.remove(&key.0).expect("present for borrowcheck dance");
+                    self.running.insert(key.0.clone(), client);
+                    let client = self.running.get_mut(&key.0).expect("just inserted");
+
                     Ok(Some(MaybeDelayed::Immediate(Box::new(client.as_read()))))
                 } else {
-                    // TODO: handle "error" and "abort", with abort removing the capability so we ignore it.
+                    let message = status.message().unwrap_or_default();
+                    match message {
+                        "abort" => {
+                            client.capabilities_mut().remove(command);
+                        }
+                        "error" => {}
+                        _strange => {
+                            let client = self.running.remove(&key.0).expect("we definitely have it");
+                            client.into_child().kill().ok();
+                        }
+                    }
                     Err(Error::ProcessStatus {
                         command: command.into(),
-                        error: match status {
-                            process::Status::Named(error) => error,
-                            process::Status::Previous => {
-                                unreachable!("at this point a single status must be given")
-                            }
-                        },
+                        status,
                     })
                 }
             }

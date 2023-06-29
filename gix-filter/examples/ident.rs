@@ -25,6 +25,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 &["clean", "smudge", "wait-1-s"],
             )?;
 
+            let mut next_smudge_aborts = false;
+            let mut next_smudge_fails_permanently = false; // a test validates that we don't actually hang
             while let Some(mut request) = srv.next_request()? {
                 let needs_failure = request
                     .meta
@@ -53,7 +55,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "smudge" => {
                         let mut buf = Vec::new();
                         request.as_read().read_to_end(&mut buf)?;
-                        request.write_status(process::Status::success())?;
+                        let status = if next_smudge_aborts {
+                            next_smudge_aborts = false;
+                            process::Status::abort()
+                        } else if next_smudge_fails_permanently {
+                            process::Status::exit()
+                        } else {
+                            process::Status::success()
+                        };
+                        request.write_status(status)?;
 
                         let mut lines = Vec::new();
                         for line in buf.lines_with_terminator() {
@@ -66,10 +76,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         request.write_status(process::Status::Previous)?;
                     }
                     "wait-1-s" => {
-                        let mut buf = Vec::new();
-                        request.as_read().read_to_end(&mut buf)?;
+                        std::io::copy(&mut request.as_read(), &mut std::io::sink())?;
                         request.write_status(process::Status::success())?;
                         std::thread::sleep(Duration::from_secs(1));
+                    }
+                    "next-smudge-aborts" => {
+                        std::io::copy(&mut request.as_read(), &mut std::io::sink())?;
+                        request.write_status(process::Status::success())?;
+                        next_smudge_aborts = true;
+                    }
+                    "next-invocation-returns-strange-status-and-smudge-fails-permanently" => {
+                        std::io::copy(&mut request.as_read(), &mut std::io::sink())?;
+                        request.write_status(process::Status::success())?;
+                        next_smudge_fails_permanently = true;
                     }
                     unknown => panic!("Unknown capability requested: {unknown}"),
                 }

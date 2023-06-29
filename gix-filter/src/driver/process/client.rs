@@ -1,5 +1,5 @@
 use crate::driver::process;
-use crate::driver::process::{Client, PacketlineReader};
+use crate::driver::process::{Capabilities, Client, PacketlineReader};
 use bstr::{BString, ByteVec};
 use std::collections::HashSet;
 use std::io::Write;
@@ -176,6 +176,7 @@ impl Client {
 fn read_status(read: &mut PacketlineReader<'_>) -> std::io::Result<process::Status> {
     let mut status = process::Status::Previous;
     let mut buf = String::new();
+    let mut count = 0;
     loop {
         buf.clear();
         let num_read = read.read_line_to_string(&mut buf)?;
@@ -185,6 +186,10 @@ fn read_status(read: &mut PacketlineReader<'_>) -> std::io::Result<process::Stat
         if let Some(name) = buf.strip_prefix("status=") {
             status = process::Status::Named(name.trim_end().into());
         }
+        count += 1;
+    }
+    if count > 0 && matches!(status, process::Status::Previous) {
+        status = process::Status::Unset;
     }
     read.reset_with(&[gix_packetline::PacketLineRef::Flush]);
     Ok(status)
@@ -220,8 +225,13 @@ impl<'a> std::io::Read for ReadProcessOutputAndStatus<'a> {
 /// Access
 impl Client {
     /// Return the list of capabilities reported by the serving process.
-    pub fn capabilities(&self) -> &HashSet<String> {
+    pub fn capabilities(&self) -> &Capabilities {
         &self.capabilities
+    }
+
+    /// Return the mutable list of capabilities reported by the serving process.
+    pub fn capabilities_mut(&mut self) -> &mut Capabilities {
+        &mut self.capabilities
     }
 
     /// Return the negotiated version of the protocol.
