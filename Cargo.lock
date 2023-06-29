@@ -1288,7 +1288,7 @@ dependencies = [
  "gix-hashtable 0.2.3",
  "gix-ignore 0.4.1",
  "gix-index 0.20.0",
- "gix-lock 7.0.0",
+ "gix-lock 7.0.1",
  "gix-mailmap",
  "gix-negotiate",
  "gix-object 0.32.0",
@@ -1801,7 +1801,7 @@ dependencies = [
  "gix-bitmap 0.2.5",
  "gix-features 0.31.1",
  "gix-hash 0.11.3",
- "gix-lock 7.0.0",
+ "gix-lock 7.0.1",
  "gix-object 0.32.0",
  "gix-traverse 0.29.0",
  "itoa",
@@ -1841,7 +1841,7 @@ dependencies = [
 
 [[package]]
 name = "gix-lock"
-version = "7.0.0"
+version = "7.0.1"
 dependencies = [
  "gix-tempfile 7.0.0",
  "gix-utils 0.1.4",
@@ -2138,7 +2138,7 @@ dependencies = [
  "gix-features 0.31.1",
  "gix-fs 0.3.0",
  "gix-hash 0.11.3",
- "gix-lock 7.0.0",
+ "gix-lock 7.0.1",
  "gix-object 0.32.0",
  "gix-path 0.8.3",
  "gix-tempfile 7.0.0",
@@ -2162,7 +2162,7 @@ dependencies = [
  "gix-features 0.31.1",
  "gix-fs 0.3.0",
  "gix-hash 0.11.3",
- "gix-lock 7.0.0",
+ "gix-lock 7.0.1",
  "gix-object 0.32.0",
  "gix-odb",
  "gix-ref 0.32.1",
