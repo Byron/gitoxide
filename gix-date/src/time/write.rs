@@ -42,9 +42,7 @@ impl Time {
 
     /// Computes the number of bytes necessary to write it using [`Time::write_to()`].
     pub fn size(&self) -> usize {
-        (if self.seconds >= 10_000_000_000_000_000_000 {
-            20
-        } else if self.seconds >= 1_000_000_000_000_000_000 {
+        (if self.seconds >= 1_000_000_000_000_000_000 {
             19
         } else if self.seconds >= 100_000_000_000_000_000 {
             18
@@ -80,8 +78,47 @@ impl Time {
             3
         } else if self.seconds >= 10 {
             2
-        } else {
+        } else if self.seconds >= 0 {
             1
+            // from here, it's sign + num-digits characters
+        } else if self.seconds >= -10 {
+            2
+        } else if self.seconds >= -100 {
+            3
+        } else if self.seconds >= -1_000 {
+            4
+        } else if self.seconds >= -10_000 {
+            5
+        } else if self.seconds >= -100_000 {
+            6
+        } else if self.seconds >= -1_000_000 {
+            7
+        } else if self.seconds >= -10_000_000 {
+            8
+        } else if self.seconds >= -100_000_000 {
+            9
+        } else if self.seconds >= -1_000_000_000 {
+            10
+        } else if self.seconds >= -10_000_000_000 {
+            11
+        } else if self.seconds >= -100_000_000_000 {
+            12
+        } else if self.seconds >= -1_000_000_000_000 {
+            13
+        } else if self.seconds >= -10_000_000_000_000 {
+            14
+        } else if self.seconds >= -100_000_000_000_000 {
+            15
+        } else if self.seconds >= -1_000_000_000_000_000 {
+            16
+        } else if self.seconds >= -10_000_000_000_000_000 {
+            17
+        } else if self.seconds >= -100_000_000_000_000_000 {
+            18
+        } else if self.seconds >= -1_000_000_000_000_000_000 {
+            19
+        } else {
+            20
         }) + 2 /*space + offset sign*/ + 2 /*offset hours*/ + 2 /*offset minutes*/
     }
 }
