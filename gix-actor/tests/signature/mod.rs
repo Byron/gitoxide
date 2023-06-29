@@ -67,6 +67,7 @@ fn trim() {
 fn round_trip() -> Result<(), Box<dyn std::error::Error>> {
     static DEFAULTS: &[&[u8]] =     &[
         b"Sebastian Thiel <byronimo@gmail.com> 1 -0030",
+        b"Sebastian Thiel <byronimo@gmail.com> -1500 -0030",
         ".. ☺️Sebastian 王知明 Thiel🙌 .. <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
         b".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere  <byronimo@gmail.com> 1528473343 +0230"
     ];

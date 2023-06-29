@@ -30,6 +30,13 @@ pub struct Time {
 }
 
 /// The amount of seconds since unix epoch.
-pub type SecondsSinceUnixEpoch = u64;
+///
+/// Note that negative dates represent times before the unix epoch.
+///
+/// ### Deviation
+///
+/// `git` only supports dates *from* the UNIX epoch, whereas we chose to be more flexible at the expense of stopping time
+/// a few million years before the heat-death of the universe.
+pub type SecondsSinceUnixEpoch = i64;
 /// time offset in seconds.
 pub type OffsetInSeconds = i32;

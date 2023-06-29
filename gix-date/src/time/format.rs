@@ -81,7 +81,7 @@ impl Time {
 
 impl Time {
     fn to_time(self) -> time::OffsetDateTime {
-        time::OffsetDateTime::from_unix_timestamp(self.seconds as i64)
+        time::OffsetDateTime::from_unix_timestamp(self.seconds)
             .expect("always valid unix time")
             .to_offset(time::UtcOffset::from_whole_seconds(self.offset).expect("valid offset"))
     }

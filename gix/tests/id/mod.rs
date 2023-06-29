@@ -74,11 +74,11 @@ mod ancestors {
     #[test]
     fn all() -> crate::Result {
         let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
-        for toggle in [false, true] {
+        for use_commit_graph in [false, true] {
             let head = repo.head()?.into_fully_peeled_id().expect("born")?;
             let commits_graph_order = head
                 .ancestors()
-                .use_commit_graph(toggle)
+                .use_commit_graph(use_commit_graph)
                 .all()?
                 .map(|c| c.map(gix::revision::walk::Info::detach))
                 .collect::<Result<Vec<_>, _>>()?;
@@ -86,7 +86,7 @@ mod ancestors {
 
             let commits_by_commit_date = head
                 .ancestors()
-                .use_commit_graph(!toggle)
+                .use_commit_graph(!use_commit_graph)
                 .sorting(commit::Sorting::ByCommitTimeNewestFirst)
                 .all()?
                 .map(|c| c.map(gix::revision::walk::Info::detach))
@@ -104,12 +104,32 @@ mod ancestors {
             assert_eq!(
                 head.ancestors()
                     .first_parent_only()
-                    .use_commit_graph(toggle)
+                    .use_commit_graph(use_commit_graph)
                     .all()?
                     .count(),
                 3,
                 "It skips merges this way."
             );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn pre_epoch() -> crate::Result {
+        let repo = crate::repo("make_pre_epoch_repo.sh")?.to_thread_local();
+        for use_commit_graph in [false, true] {
+            let head = repo.head()?.into_fully_peeled_id().expect("born")?;
+            let commits = head
+                .ancestors()
+                .sorting(commit::Sorting::ByCommitTimeNewestFirst) // assure we have time set
+                .use_commit_graph(use_commit_graph)
+                .all()?
+                .collect::<Result<Vec<_>, _>>()?;
+            assert_eq!(commits.len(), 1, "only one commit");
+
+            let commit = &commits[0];
+            assert_eq!(commit.id, hex_to_id("cfa5e6f7872c2f4fed7bd8c3f2732a37536d6912"));
+            assert_eq!(commit.commit_time(), -5263747740);
         }
         Ok(())
     }

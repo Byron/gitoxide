@@ -82,7 +82,7 @@ pub struct Info {
     pub parent_ids: ParentIds,
     /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`], as the walk
     /// needs to require the commit-date.
-    pub commit_time: Option<u64>,
+    pub commit_time: Option<gix_date::SecondsSinceUnixEpoch>,
 }
 
 ///
@@ -121,7 +121,7 @@ pub mod ancestors {
         buf: Vec<u8>,
         seen: HashSet<ObjectId>,
         parents_buf: Vec<u8>,
-        parent_ids: SmallVec<[(ObjectId, u64); 2]>,
+        parent_ids: SmallVec<[(ObjectId, SecondsSinceUnixEpoch); 2]>,
     }
 
     impl Default for State {
@@ -325,7 +325,7 @@ pub mod ancestors {
 
     impl Sorting {
         /// If not topo sort, provide the cutoff date if present.
-        fn cutoff_time(&self) -> Option<gix_date::SecondsSinceUnixEpoch> {
+        fn cutoff_time(&self) -> Option<SecondsSinceUnixEpoch> {
             match self {
                 Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => Some(*seconds),
                 _ => None,
@@ -482,7 +482,7 @@ enum Either<'buf, 'cache> {
 }
 
 fn collect_parents(
-    dest: &mut SmallVec<[(gix_hash::ObjectId, u64); 2]>,
+    dest: &mut SmallVec<[(gix_hash::ObjectId, gix_date::SecondsSinceUnixEpoch); 2]>,
     cache: Option<&gix_commitgraph::Graph>,
     parents: gix_commitgraph::file::commit::Parents<'_>,
 ) -> bool {
@@ -492,7 +492,10 @@ fn collect_parents(
         match parent_id {
             Ok(pos) => dest.push({
                 let parent = cache.commit_at(pos);
-                (parent.id().to_owned(), parent.committer_timestamp())
+                (
+                    parent.id().to_owned(),
+                    parent.committer_timestamp() as gix_date::SecondsSinceUnixEpoch, // we can't handle errors here and trying seems overkill
+                )
             }),
             Err(_err) => return false,
         }

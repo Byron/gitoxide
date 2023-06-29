@@ -41,7 +41,15 @@ fn write_to() -> Result<(), Box<dyn std::error::Error>> {
                 offset: 0,
                 sign: Sign::Minus,
             },
-            "18446744073709551615 -0000",
+            "9223372036854775807 -0000",
+        ),
+        (
+            Time {
+                seconds: SecondsSinceUnixEpoch::MIN,
+                offset: 0,
+                sign: Sign::Minus,
+            },
+            "-9223372036854775808 -0000",
         ),
         (
             Time {

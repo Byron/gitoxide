@@ -185,5 +185,5 @@ serial_test = { version = "2.0.0", default-features = false }
 async-std = { version = "1.12.0", features = ["attributes"] }
 
 [package.metadata.docs.rs]
-features = ["document-features", "max-performance", "blocking-network-client", "serde"]
+features = ["document-features", "max-performance", "blocking-network-client", "blocking-http-transport-curl", "serde"]
 rustdoc-args = ["--cfg", "docsrs"]

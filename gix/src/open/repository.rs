@@ -50,6 +50,14 @@ impl ThreadSafeRepository {
     /// `options` for fine-grained control.
     ///
     /// Note that you should use [`crate::discover()`] if security should be adjusted by ownership.
+    ///
+    /// ### Differences to `git2::Repository::open_ext()`
+    ///
+    /// Whereas `open_ext()` is the jack-of-all-trades that can do anything depending on its options, `gix` will always differentiate
+    /// between discovering git repositories by searching, and opening a well-known repository by work tree or `.git` repository.
+    ///
+    /// Note that opening a repository for implementing custom hooks is also handle specifically in
+    /// [`open_with_environment_overrides()`][Self::open_with_environment_overrides()].
     pub fn open_opts(path: impl Into<PathBuf>, mut options: Options) -> Result<Self, Error> {
         let _span = gix_trace::coarse!("ThreadSafeRepository::open()");
         let (path, kind) = {

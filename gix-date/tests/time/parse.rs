@@ -94,7 +94,6 @@ fn bad_raw() {
         "123456 06000",
         "123456  0600",
         "123456 +0600 extra",
-        "-123456 +0600",
         "123456+0600",
         "123456 + 600",
     ] {
@@ -125,7 +124,7 @@ fn invalid_dates_can_be_produced_without_current_time() {
 mod relative {
     use std::time::SystemTime;
 
-    use gix_date::{parse::Error, time::Sign};
+    use gix_date::time::Sign;
     use time::{Duration, OffsetDateTime};
 
     #[test]
@@ -142,9 +141,9 @@ mod relative {
     }
 
     #[test]
-    fn offset_leading_to_before_unix_epoch_cannot_be_represented() {
-        let err = gix_date::parse("1 second ago", Some(std::time::UNIX_EPOCH)).unwrap_err();
-        assert!(matches!(err, Error::TooEarly{timestamp} if timestamp == -1));
+    fn offset_leading_to_before_unix_epoch_can_be_represented() {
+        let date = gix_date::parse("1 second ago", Some(std::time::UNIX_EPOCH)).unwrap();
+        assert_eq!(date.seconds, -1);
     }
 
     #[test]
@@ -157,7 +156,7 @@ mod relative {
         // account for the loss of precision when creating `Time` with seconds
         let expected = expected.replace_nanosecond(0).unwrap();
         assert_eq!(
-            OffsetDateTime::from_unix_timestamp(two_weeks_ago.seconds as i64).unwrap(),
+            OffsetDateTime::from_unix_timestamp(two_weeks_ago.seconds).unwrap(),
             expected,
             "relative times differ"
         );
