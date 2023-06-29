@@ -54,6 +54,17 @@
 //!   * [`transport`][protocol::transport]
 //!     * [`packetline`][protocol::transport::packetline]
 //!
+//! ### `libgit2` API to `gix`
+//!
+//! This section is a 'striving to be complete' mapping from `libgit2` APIs to the respective methods in `gix`.
+//!
+//! * [`git2::Repository::open()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open) ➡ [`gix::open()`](https://docs.rs/gix/*/gix/fn.open.html)
+//! * [`git2::Repository::open_bare()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_bare) ➡ ❌
+//! * [`git2::Repository::open_from_env()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_from_env) ➡ [`gix::ThreadSafeRepository::open_with_environment_overrides()`](https://docs.rs/gix/*/gix/struct.ThreadSafeRepository.html#method.open_with_environment_overrides)
+//! * [`git2::Repository::open_ext()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_ext) ➡ [`gix::open_opts()`](https://docs.rs/gix/*/gix/fn.open_opts.html)
+//! * [`git2::Repository::revparse()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revparse) ➡ [`gix::Repository::rev_parse()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.rev_parse)
+//! * [`git2::Repository::revparse_single()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revparse_single) ➡ [`gix::Repository::rev_parse_single()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.rev_parse_single)
+//! * [`git2::Repository::revwalk()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revwalk) ➡ [`gix::Repository::rev_walk()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.rev_walk)
 //!
 //! ## Feature Flags
 #![cfg_attr(
