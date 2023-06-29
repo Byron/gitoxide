@@ -82,7 +82,7 @@ pub struct Info {
     pub parent_ids: ParentIds,
     /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`], as the walk
     /// needs to require the commit-date.
-    pub commit_time: Option<u64>,
+    pub commit_time: Option<gix_date::SecondsSinceUnixEpoch>,
 }
 
 ///
@@ -121,7 +121,7 @@ pub mod ancestors {
         buf: Vec<u8>,
         seen: HashSet<ObjectId>,
         parents_buf: Vec<u8>,
-        parent_ids: SmallVec<[(ObjectId, u64); 2]>,
+        parent_ids: SmallVec<[(ObjectId, gix_date::SecondsSinceUnixEpoch); 2]>,
     }
 
     impl Default for State {
@@ -482,7 +482,7 @@ enum Either<'buf, 'cache> {
 }
 
 fn collect_parents(
-    dest: &mut SmallVec<[(gix_hash::ObjectId, u64); 2]>,
+    dest: &mut SmallVec<[(gix_hash::ObjectId, gix_date::SecondsSinceUnixEpoch); 2]>,
     cache: Option<&gix_commitgraph::Graph>,
     parents: gix_commitgraph::file::commit::Parents<'_>,
 ) -> bool {

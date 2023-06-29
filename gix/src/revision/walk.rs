@@ -24,7 +24,7 @@ pub struct Info<'repo> {
     pub parent_ids: gix_traverse::commit::ParentIds,
     /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`][gix_traverse::commit::Sorting::BreadthFirst],
     /// as the walk needs to require the commit-date.
-    pub commit_time: Option<u64>,
+    pub commit_time: Option<gix_date::SecondsSinceUnixEpoch>,
 
     repo: &'repo Repository,
 }
@@ -54,7 +54,7 @@ impl<'repo> Info<'repo> {
     /// ### Panics
     ///
     /// If the iteration wasn't ordered by date.
-    pub fn commit_time(&self) -> u64 {
+    pub fn commit_time(&self) -> gix_date::SecondsSinceUnixEpoch {
         self.commit_time.expect("traversal involving date caused it to be set")
     }
 }
