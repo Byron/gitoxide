@@ -233,6 +233,7 @@ members = [
     "gix-worktree",
     "gix-revision",
     "gix-packetline",
+    "gix-packetline-blocking",
     "gix-mailmap",
     "gix-note",
     "gix-negotiate",
