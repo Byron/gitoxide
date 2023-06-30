@@ -1657,6 +1657,7 @@ dependencies = [
  "gix-packetline-blocking",
  "gix-path 0.8.3",
  "gix-quote 0.4.5",
+ "gix-testtools",
  "gix-trace 0.1.2",
  "once_cell",
  "thiserror",

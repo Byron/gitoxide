@@ -1,7 +1,8 @@
 use crate::driver::process::client::invoke;
 use crate::driver::{process, Operation, Process, State};
 use crate::{driver, Driver};
-use bstr::BStr;
+use bstr::{BStr, BString};
+use std::collections::HashMap;
 
 /// What to do if delay is supported by a process filter.
 #[derive(Debug, Copy, Clone)]
@@ -23,6 +24,8 @@ pub enum Error {
     Init(#[from] driver::init::Error),
     #[error("Could not write entire object to driver")]
     WriteSource(#[from] std::io::Error),
+    #[error("Filter process delayed an entry even though that was not requested")]
+    DelayNotAllowed,
     #[error("Failed to invoke '{command}' command")]
     ProcessInvoke {
         source: process::client::invoke::Error,
@@ -85,6 +88,9 @@ impl State {
     }
 
     /// Like [`apply()]`[Self::apply()], but use `delay` to determine if the filter result may be delayed or not.
+    ///
+    /// Poll [`list_delayed_paths()`][Self::list_delayed_paths()] until it is empty and query the available paths again.
+    /// Note that even though it's possible, the API assumes that commands aren't mixed when delays are allowed.
     pub fn apply_delayed<'a>(
         &'a mut self,
         driver: &Driver,
@@ -102,11 +108,7 @@ impl State {
                 }))))
             }
             Some(Process::MultiFile { client, key }) => {
-                let command = match operation {
-                    Operation::Clean => "clean",
-                    Operation::Smudge => "smudge",
-                };
-
+                let command = operation.as_str();
                 if !client.capabilities().contains(command) {
                     return Ok(None);
                 }
@@ -134,13 +136,7 @@ impl State {
                     Ok(status) => status,
                     Err(err) => {
                         let invoke::Error::Io(io_err) = &err;
-                        if matches!(
-                            io_err.kind(),
-                            std::io::ErrorKind::BrokenPipe | std::io::ErrorKind::UnexpectedEof
-                        ) {
-                            self.running.remove(&key.0).expect("present or we wouldn't be here");
-                        }
-
+                        handle_io_err(io_err, &mut self.running, key.0.as_ref());
                         return Err(Error::ProcessInvoke {
                             command: command.into(),
                             source: err,
@@ -148,7 +144,10 @@ impl State {
                     }
                 };
 
-                if matches!(delay, Delay::Allow) && status.is_delayed() {
+                if status.is_delayed() {
+                    if matches!(delay, Delay::Forbid) {
+                        return Err(Error::DelayNotAllowed);
+                    }
                     Ok(Some(MaybeDelayed::Delayed(key)))
                 } else if status.is_success() {
                     // TODO: find a way to not have to do the 'borrow-dance'.
@@ -198,6 +197,15 @@ struct ReadFilterOutput {
     inner: Option<std::process::ChildStdout>,
     /// The child is present if we need its exit code to be positive.
     child: Option<(std::process::Child, std::process::Command)>,
+}
+
+pub(crate) fn handle_io_err(err: &std::io::Error, running: &mut HashMap<BString, process::Client>, process: &BStr) {
+    if matches!(
+        err.kind(),
+        std::io::ErrorKind::BrokenPipe | std::io::ErrorKind::UnexpectedEof
+    ) {
+        running.remove(process).expect("present or we wouldn't be here");
+    }
 }
 
 impl std::io::Read for ReadFilterOutput {

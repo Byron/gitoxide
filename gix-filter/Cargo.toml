@@ -24,5 +24,7 @@ encoding_rs = "0.8.32"
 bstr = { version = "1.5.0", default-features = false, features = ["std"] }
 thiserror = "1.0.38"
 
+
 [dev-dependencies]
 once_cell = "1.18.0"
+gix-testtools = { path = "../tests/tools" }

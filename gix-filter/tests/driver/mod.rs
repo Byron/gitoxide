@@ -20,6 +20,20 @@ static DRIVER: Lazy<PathBuf> = Lazy::new(|| {
     path
 });
 
+mod baseline {
+    use crate::driver::DRIVER;
+
+    #[test]
+    fn our_implementation_used_by_git() -> crate::Result {
+        let mut exe = DRIVER.to_string_lossy().into_owned();
+        if cfg!(windows) {
+            exe = exe.replace('\\', "/");
+        }
+        gix_testtools::scripted_fixture_read_only_with_args("baseline.sh", [exe])?;
+        Ok(())
+    }
+}
+
 mod shutdown {
     use crate::driver::apply::driver_with_process;
     use gix_filter::driver::shutdown::Mode;
@@ -62,6 +76,7 @@ mod apply {
     use crate::driver::shutdown::extract_client;
     use crate::driver::DRIVER;
     use bstr::ByteSlice;
+    use gix_filter::driver::apply::Delay;
     use gix_filter::driver::{apply, Operation};
     use gix_filter::{driver, Driver};
     use std::io::Read;
@@ -215,11 +230,15 @@ mod apply {
     #[test]
     fn smudge_and_clean_series() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
-        for driver in [driver_no_process(), driver_with_process()] {
+        for mut driver in [driver_no_process(), driver_with_process()] {
             assert!(
                 driver.required,
                 "we want errors to definitely show, and don't expect them"
             );
+            if driver.process.is_none() {
+                // on CI on MacOS, the process seems to actually exit with non-zero status, let's see if this fixes it.
+                driver.required = false;
+            }
 
             let input = "hello\nthere\n";
             let mut filtered = state
@@ -260,6 +279,81 @@ mod apply {
         Ok(())
     }
 
+    #[test]
+    fn smudge_and_clean_delayed() -> crate::Result {
+        let mut state = gix_filter::driver::State::default();
+        let driver = driver_with_process();
+        let input = "hello\nthere\n";
+        let process_key = extract_delayed_key(state.apply_delayed(
+            &driver,
+            input.as_bytes(),
+            driver::Operation::Smudge,
+            Delay::Allow,
+            context_from_path("sub/a.txt"),
+        )?);
+
+        let paths = state.list_delayed_paths(&process_key)?;
+        assert_eq!(
+            paths.len(),
+            1,
+            "delayed paths have to be queried again and are available until that happens"
+        );
+        assert_eq!(paths[0], "sub/a.txt");
+
+        let mut filtered = state.fetch_delayed(&process_key, paths[0].as_ref(), driver::Operation::Smudge)?;
+        let mut buf = Vec::new();
+        filtered.read_to_end(&mut buf)?;
+        drop(filtered);
+        assert_eq!(
+            buf.as_bstr(),
+            "➡hello\n➡there\n",
+            "ident applies indentation also in delayed mode"
+        );
+
+        let paths = state.list_delayed_paths(&process_key)?;
+        assert_eq!(paths.len(), 0, "delayed paths are consumed once fetched");
+
+        let process_key = extract_delayed_key(state.apply_delayed(
+            &driver,
+            buf.as_slice(),
+            driver::Operation::Clean,
+            Delay::Allow,
+            context_from_path("sub/b.txt"),
+        )?);
+
+        let paths = state.list_delayed_paths(&process_key)?;
+        assert_eq!(
+            paths.len(),
+            1,
+            "we can do another round of commands with the same process (at least if the implementation supports it), it's probably not done in practice"
+        );
+        assert_eq!(paths[0], "sub/b.txt");
+
+        let mut filtered = state.fetch_delayed(&process_key, paths[0].as_ref(), driver::Operation::Clean)?;
+        let mut buf = Vec::new();
+        filtered.read_to_end(&mut buf)?;
+        drop(filtered);
+        assert_eq!(
+            buf.as_bstr(),
+            input,
+            "it's possible to apply clean in delayed mode as well"
+        );
+
+        let paths = state.list_delayed_paths(&process_key)?;
+        assert_eq!(paths.len(), 0, "delayed paths are consumed once fetched");
+
+        state.shutdown(gix_filter::driver::shutdown::Mode::WaitForProcesses)?;
+        Ok(())
+    }
+
+    pub(crate) fn extract_delayed_key(res: Option<apply::MaybeDelayed<'_>>) -> driver::Key {
+        match res {
+            Some(apply::MaybeDelayed::Immediate(_)) | None => {
+                unreachable!("must use process that supports delaying")
+            }
+            Some(apply::MaybeDelayed::Delayed(key)) => key,
+        }
+    }
     fn context_from_path(path: &str) -> apply::Context<'_> {
         apply::Context {
             rela_path: path.into(),

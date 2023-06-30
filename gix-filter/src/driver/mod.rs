@@ -11,6 +11,9 @@ pub mod apply;
 pub mod shutdown;
 
 ///
+pub mod delayed;
+
+///
 pub mod process;
 
 /// A literal driver process.
@@ -40,6 +43,16 @@ pub enum Operation {
     Smudge,
 }
 
+impl Operation {
+    /// Return a string that identifies the operation. This happens to be the command-names used in long-running processes as well.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Operation::Clean => "clean",
+            Operation::Smudge => "smudge",
+        }
+    }
+}
+
 /// State required to handle `process` filters, which are running until all their work is done.
 ///
 /// These can be significantly faster on some platforms as they are launched only once, while supporting asynchronous processing.
@@ -58,8 +71,8 @@ pub struct State {
     running: HashMap<BString, process::Client>,
 }
 
-/// A way to reference a running filter for later acquisition of delayed output.
-#[derive(Debug, Clone)]
+/// A way to reference a running multi-file filter process for later acquisition of delayed output.
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct Key(BString);
 
 /// Substitute `path` as shell-save version into `cmd` which could be something like `cmd something %f`.

@@ -1,6 +1,6 @@
 use crate::driver::process;
 use crate::driver::process::{Capabilities, Client, PacketlineReader};
-use bstr::{BString, ByteVec};
+use bstr::{BStr, BString, ByteVec};
 use std::collections::HashSet;
 use std::io::Write;
 use std::str::FromStr;
@@ -28,6 +28,27 @@ pub mod invoke {
     pub enum Error {
         #[error("Failed to read or write to the process")]
         Io(#[from] std::io::Error),
+    }
+
+    ///
+    pub mod without_content {
+        /// The error returned by [Client::invoke_without_content()][super::super::Client::invoke_without_content()].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("Failed to read or write to the process")]
+            Io(#[from] std::io::Error),
+            #[error(transparent)]
+            PacketlineDecode(#[from] gix_packetline::decode::Error),
+        }
+
+        impl From<super::Error> for Error {
+            fn from(value: super::Error) -> Self {
+                match value {
+                    super::Error::Io(err) => Error::Io(err),
+                }
+            }
+        }
     }
 }
 
@@ -141,20 +162,33 @@ impl Client {
         meta: impl IntoIterator<Item = (&'a str, BString)>,
         mut content: impl std::io::Read,
     ) -> Result<process::Status, invoke::Error> {
-        self.input.write_all(format!("command={command}").as_bytes())?;
-        let mut buf = BString::default();
-        for (key, value) in meta {
-            buf.clear();
-            buf.push_str(key);
-            buf.push(b'=');
-            buf.push_str(&value);
-            self.input.write_all(&buf)?;
-        }
-        gix_packetline::encode::flush_to_write(self.input.inner_mut())?;
+        self.send_command_and_meta(command, meta)?;
         std::io::copy(&mut content, &mut self.input)?;
         gix_packetline::encode::flush_to_write(self.input.inner_mut())?;
         self.input.flush()?;
         Ok(self.read_status()?)
+    }
+
+    /// Invoke `command` while passing `meta` data, but don't send any content, and return their status.
+    /// Call `inspect_line` for each line that we see as command response.
+    ///
+    /// This is for commands that don't expect a content stream.
+    pub fn invoke_without_content<'a>(
+        &mut self,
+        command: &str,
+        meta: impl IntoIterator<Item = (&'a str, BString)>,
+        mut inspect_line: impl FnMut(&BStr),
+    ) -> Result<process::Status, invoke::without_content::Error> {
+        self.send_command_and_meta(command, meta)?;
+        while let Some(data) = self.out.read_line() {
+            let line = data??;
+            if let Some(line) = line.as_bstr() {
+                inspect_line(line);
+            }
+        }
+        self.out.reset_with(&[gix_packetline::PacketLineRef::Flush]);
+        let status = self.read_status()?;
+        Ok(status)
     }
 
     /// Return a `Read` implementation that reads the server process output until the next flush package, and validates
@@ -170,6 +204,26 @@ impl Client {
     /// Note that the last sent status line wins and no status line means that the `Previous` still counts.
     pub fn read_status(&mut self) -> std::io::Result<process::Status> {
         read_status(&mut self.out.as_read())
+    }
+}
+
+impl Client {
+    fn send_command_and_meta<'a>(
+        &mut self,
+        command: &str,
+        meta: impl IntoIterator<Item = (&'a str, BString)>,
+    ) -> Result<(), invoke::Error> {
+        self.input.write_all(format!("command={command}").as_bytes())?;
+        let mut buf = BString::default();
+        for (key, value) in meta {
+            buf.clear();
+            buf.push_str(key);
+            buf.push(b'=');
+            buf.push_str(&value);
+            self.input.write_all(&buf)?;
+        }
+        gix_packetline::encode::flush_to_write(self.input.inner_mut())?;
+        Ok(())
     }
 }
 

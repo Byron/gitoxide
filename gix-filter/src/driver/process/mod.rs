@@ -47,6 +47,11 @@ impl Status {
         Status::Named("success".into())
     }
 
+    /// Create a new instance that represents a delayed operation.
+    pub fn delayed() -> Self {
+        Status::Named("delayed".into())
+    }
+
     /// Create a status that indicates to the client that the command that caused it will not be run anymore throughout the lifetime
     /// of the process. However, other commands may still run.
     pub fn abort() -> Self {
