@@ -1272,6 +1272,7 @@ version = "0.48.0"
 dependencies = [
  "anyhow",
  "async-std",
+ "clap",
  "document-features",
  "gix-actor 0.23.0",
  "gix-attributes 0.14.1",
