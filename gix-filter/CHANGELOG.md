@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.0.0 (2023-07-01)
 
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+<csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/>
+
 An empty crate without any content to reserve the name for the gitoxide project.
 
 ### New Features (BREAKING)
@@ -50,7 +53,7 @@ An empty crate without any content to reserve the name for the gitoxide project.
 
 <csr-read-only-do-not-edit/>
 
- - 38 commits contributed to the release over the course of 438 calendar days.
+ - 40 commits contributed to the release over the course of 438 calendar days.
  - 13 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#691](https://github.com/Byron/gitoxide/issues/691)
 
@@ -65,6 +68,8 @@ An empty crate without any content to reserve the name for the gitoxide project.
  * **[#691](https://github.com/Byron/gitoxide/issues/691)**
     - Set `rust-version` to 1.64 ([`55066ce`](https://github.com/Byron/gitoxide/commit/55066ce5fd71209abb5d84da2998b903504584bb))
  * **Uncategorized**
+    - Use latest version of `gix-path` to allow `gix-filter` release. ([`bb9f308`](https://github.com/Byron/gitoxide/commit/bb9f3088aee60f140e960602429cc7eb46121b75))
+    - Release gix-packetline-blocking v0.16.3, gix-filter v0.0.0 ([`fb3ad29`](https://github.com/Byron/gitoxide/commit/fb3ad29967d08558e42cbe8e80de5dd0b38f12c5))
     - Merge branch 'filter-programs' ([`97f8e96`](https://github.com/Byron/gitoxide/commit/97f8e960ed52538bb55b72f9dfc5f9d144d72885))
     - API support for receiving delayed entries ([`198ce27`](https://github.com/Byron/gitoxide/commit/198ce27e05fd07d4e511dff1ac50c3f4ed163cdf))
     - Handle process error codes similarly to how git does it ([`d00e6c5`](https://github.com/Byron/gitoxide/commit/d00e6c569a4320e334ef15a82867433497dc235e))
