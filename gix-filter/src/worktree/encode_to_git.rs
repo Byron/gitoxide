@@ -1,10 +1,10 @@
 /// Whether or not to perform round-trip checks.
 #[derive(Debug, Copy, Clone)]
-pub enum RoundTrip {
-    /// Assure that we can losslessly convert the UTF-8 result back to the original encoding.
-    Validate,
+pub enum RoundTripCheck {
+    /// Assure that we can losslessly convert the UTF-8 result back to the original encoding or fail with an error.
+    Fail,
     /// Do not check if the encoding is round-trippable.
-    Ignore,
+    Skip,
 }
 
 /// The error returned by [`encode_to_git()][super::encode_to_git()].
@@ -23,7 +23,7 @@ pub enum Error {
 }
 
 pub(crate) mod function {
-    use super::{Error, RoundTrip};
+    use super::{Error, RoundTripCheck};
     use crate::clear_and_set_capacity;
     use encoding_rs::DecoderResult;
 
@@ -33,7 +33,7 @@ pub(crate) mod function {
         src: &[u8],
         src_encoding: &'static encoding_rs::Encoding,
         buf: &mut Vec<u8>,
-        round_trip: RoundTrip,
+        round_trip: RoundTripCheck,
     ) -> Result<(), Error> {
         let mut decoder = src_encoding.new_decoder_with_bom_removal();
         let buf_len = decoder
@@ -71,7 +71,7 @@ pub(crate) mod function {
         }
 
         match round_trip {
-            RoundTrip::Validate => {
+            RoundTripCheck::Fail => {
                 // SAFETY: we trust `encoding_rs` to output valid UTF-8 only if we ask it to.
                 #[allow(unsafe_code)]
                 let str = unsafe { std::str::from_utf8_unchecked(buf) };
@@ -83,7 +83,7 @@ pub(crate) mod function {
                     });
                 }
             }
-            RoundTrip::Ignore => {}
+            RoundTripCheck::Skip => {}
         }
         Ok(())
     }

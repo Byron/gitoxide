@@ -159,11 +159,11 @@ fn round_trip_check() -> crate::Result {
 }
 
 #[allow(clippy::ptr_arg)]
-fn no_call(_buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
+pub(crate) fn no_call(_buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
     unreachable!("index function will not be called")
 }
 
 #[allow(clippy::ptr_arg)]
-fn no_object_in_index(_buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
-    Ok(Some(()))
+pub(crate) fn no_object_in_index(_buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
+    Ok(None)
 }

@@ -1651,6 +1651,7 @@ version = "0.0.0"
 dependencies = [
  "bstr",
  "encoding_rs",
+ "gix-attributes 0.14.1",
  "gix-command",
  "gix-hash 0.11.3",
  "gix-object 0.32.0",
@@ -1659,7 +1660,9 @@ dependencies = [
  "gix-quote 0.4.5",
  "gix-testtools",
  "gix-trace 0.1.2",
+ "gix-worktree 0.21.1",
  "once_cell",
+ "smallvec",
  "thiserror",
 ]
 

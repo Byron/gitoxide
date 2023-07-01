@@ -3,7 +3,7 @@ use crate::{driver, Driver};
 use bstr::{BStr, BString};
 use std::process::Stdio;
 
-/// The error returned by [State::process()][super::State::process()].
+/// The error returned by [State::maybe_launch_process()][super::State::maybe_launch_process()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -24,7 +24,7 @@ impl State {
     /// file for use in the invoked `SingleFile` process.
     ///
     /// Note that if a long-running process is defined, the `operation` isn't relevant and capabilities are to be checked by the caller.
-    pub fn process(
+    pub fn maybe_launch_process(
         &mut self,
         driver: &Driver,
         operation: Operation,

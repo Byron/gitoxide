@@ -18,6 +18,18 @@ pub enum Mode {
     CrLf,
 }
 
+/// Possible states for the `core.autocrlf`.
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+pub enum AutoCrlf {
+    /// The same as if the `text eol=lf` attribute is set.
+    Input,
+    /// The same as if the `text eol=crlf` attribute is set.
+    Enabled,
+    /// No conversion is performed.
+    #[default]
+    Disabled,
+}
+
 /// The combination of `crlf`, `text` and `eol` attributes into one neat package.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum AttributesDigest {
@@ -37,11 +49,30 @@ pub enum AttributesDigest {
     TextAutoInput,
 }
 
+impl From<Mode> for AttributesDigest {
+    fn from(value: Mode) -> Self {
+        match value {
+            Mode::Lf => AttributesDigest::TextInput,
+            Mode::CrLf => AttributesDigest::TextCrlf,
+        }
+    }
+}
+
+impl From<AutoCrlf> for AttributesDigest {
+    fn from(value: AutoCrlf) -> Self {
+        match value {
+            AutoCrlf::Input => AttributesDigest::TextAutoInput,
+            AutoCrlf::Enabled => AttributesDigest::TextAutoCrlf,
+            AutoCrlf::Disabled => AttributesDigest::Binary,
+        }
+    }
+}
+
 /// Git Configuration that affects how CRLF conversions are applied.
 #[derive(Default, Debug, Copy, Clone)]
 pub struct Configuration {
-    /// Corresponds to `core.autocrlf` and is `None` for `input`, `Some(true)` if `true` or `Some(false)` if `false`.
-    pub auto_crlf: Option<bool>,
+    /// Corresponds to `core.autocrlf`.
+    pub auto_crlf: AutoCrlf,
     /// Corresponds to `core.eol`, and is `None` if unset or set to `native`, or `Some(<mode>)` respectively.
     pub eol: Option<Mode>,
 }

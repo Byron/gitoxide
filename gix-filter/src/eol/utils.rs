@@ -1,4 +1,4 @@
-use crate::eol::{AttributesDigest, Configuration, Mode, Stats};
+use crate::eol::{AttributesDigest, AutoCrlf, Configuration, Mode, Stats};
 
 impl Default for Mode {
     fn default() -> Self {
@@ -34,9 +34,9 @@ impl Configuration {
     /// Return the line-ending mode that is configured here.
     pub fn to_eol(&self) -> Mode {
         match self.auto_crlf {
-            Some(true) => Mode::CrLf,
-            None => Mode::Lf,
-            Some(false) => self.eol.unwrap_or_default(),
+            AutoCrlf::Enabled => Mode::CrLf,
+            AutoCrlf::Input => Mode::Lf,
+            AutoCrlf::Disabled => self.eol.unwrap_or_default(),
         }
     }
 }
