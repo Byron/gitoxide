@@ -20,9 +20,21 @@ struct Args {
     #[clap(name = "dir", long = "git-dir")]
     /// Alternative git directory to use
     git_dir: Option<String>,
-    #[clap(name = "count", short = 'c', long = "count")]
+    #[clap(short, long)]
     /// Number of commits to return
     count: Option<usize>,
+    #[clap(short, long)]
+    /// Number of commits to skip
+    skip: Option<usize>,
+    #[clap(short, long)]
+    /// Commits are sorted as they are mentioned in the commit graph.
+    breadth_first: bool,
+    #[clap(short, long)]
+    /// Commits are sorted by their commit time in descending order.
+    newest_first: bool,
+    #[clap(short, long)]
+    /// Reverse the commit sort order
+    reverse: bool,
     #[clap(name = "commit")]
     /// The starting commit
     commitish: Option<String>,
@@ -43,9 +55,17 @@ fn run(args: &Args) -> anyhow::Result<()> {
         _ => anyhow::bail!("not a commit object"),
     };
 
-    let log_entry_iter = repo
+    // TODO better way to deal with these flags.
+    let sorting = if args.breadth_first {
+        Sorting::BreadthFirst
+    }
+    else {  // else if args.newest_first {
+        Sorting::ByCommitTimeNewestFirst
+    };
+
+    let mut log_entries = repo
         .rev_walk([commit.id])
-        .sorting(Sorting::ByCommitTimeNewestFirst)
+        .sorting(sorting)
         .all()?
         .filter(|info| info.as_ref()
             .map_or(true, |info| args.path.as_ref().map_or(true, |path| {
@@ -63,37 +83,53 @@ fn run(args: &Args) -> anyhow::Result<()> {
             }))
         )
         .map(|info| {
-            let commit = info?.object()?;
+            let info = info?;
+            let commit = info.object()?;
             let commit_ref = CommitRef::from_bytes(&commit.data)?;
-            let committer = commit_ref.committer;
             Ok(LogEntryInfo {
                 commit_id: format!("{}", commit.id()),
+                parents: info.parent_ids.iter()
+                    // probably could have a better way to display this
+                    .map(|x| x.to_string()[..7].to_string())
+                    .collect(),
                 author: format!("{} <{}>",
                     commit_ref.author.name, commit_ref.author.email),
-                committer: format!("{} <{}>",
-                    commit_ref.committer.name, commit_ref.committer.email),
-                commit_time: committer.time.format(format::DEFAULT),
+                time: commit_ref.author.time.format(format::DEFAULT),
                 message: commit_ref.message.to_string(),
             })
-        });
+        })
+        // The more memory efficient way is to only collect if reverse;
+        // this example is lazy coding rather than lazy execution...
+        .collect::<anyhow::Result<Vec<_>>>()?;
 
-    // Collect all items into a Vec to be lazy in code writing
-    let log_entries = match args.count {
-        Some(count) => log_entry_iter
-            .take(count)
-            .collect::<anyhow::Result<Vec<_>>>()?,
-        None => log_entry_iter
-            .collect::<anyhow::Result<Vec<_>>>()?,
-    };
+    args.reverse.then(|| log_entries.reverse());
 
-    for entry in log_entries {
+    // ... as ultimately we will have an iterator here again...
+    let mut log_iter: Box<dyn Iterator<Item = &LogEntryInfo>> = Box::new(
+        log_entries.iter());
+
+    if let Some(n) = args.skip {
+        log_iter = Box::new(log_iter.skip(n));
+    }
+    if let Some(n) = args.count {
+        log_iter = Box::new(log_iter.take(n));
+    }
+
+    let mut log_iter = log_iter.peekable();
+
+    while let Some(entry) = log_iter.next() {
         println!("commit {}", entry.commit_id);
-        println!("Author: {}", entry.committer);
-        println!("Date:   {}\n", entry.commit_time);
+        if entry.parents.len() > 1 {
+            println!("Merge: {}", entry.parents.join(" "));
+        }
+        println!("Author: {}", entry.author);
+        println!("Date:   {}\n", entry.time);
         for line in entry.message.lines() {
             println!("    {line}");
         }
-        println!();
+        if log_iter.peek().is_some() {
+            println!();
+        }
     }
 
     Ok(())
@@ -101,8 +137,8 @@ fn run(args: &Args) -> anyhow::Result<()> {
 
 pub struct LogEntryInfo {
     pub commit_id: String,
+    pub parents: Vec<String>,
     pub author: String,
-    pub committer: String,
-    pub commit_time: String,
+    pub time: String,
     pub message: String,
 }
