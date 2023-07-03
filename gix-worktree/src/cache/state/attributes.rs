@@ -200,6 +200,10 @@ impl Attributes {
 /// Attribute matching specific methods
 impl Cache {
     /// Creates a new container to store match outcomes for all attribute matches.
+    ///
+    /// ### Panics
+    ///
+    /// If attributes aren't configured.
     pub fn attribute_matches(&self) -> gix_attributes::search::Outcome {
         let mut out = gix_attributes::search::Outcome::default();
         out.initialize(&self.state.attributes_or_panic().collection);
@@ -207,6 +211,10 @@ impl Cache {
     }
 
     /// Creates a new container to store match outcomes for the given attributes.
+    ///
+    /// ### Panics
+    ///
+    /// If attributes aren't configured.
     pub fn selected_attribute_matches<'a>(
         &self,
         given: impl IntoIterator<Item = impl Into<&'a str>>,
@@ -217,5 +225,15 @@ impl Cache {
             given.into_iter().map(Into::into),
         );
         out
+    }
+
+    /// Return the metadata collection that enables initializing attribute match outcomes as done in
+    /// [`attribute_matches()`][Cache::attribute_matches()] or [`selected_attribute_matches()`][Cache::selected_attribute_matches()]
+    ///
+    /// ### Panics
+    ///
+    /// If attributes aren't configured.
+    pub fn attributes_collection(&self) -> &gix_attributes::search::MetadataCollection {
+        &self.state.attributes_or_panic().collection
     }
 }
