@@ -32,7 +32,7 @@ impl Repository {
             .config
             .assemble_exclude_globals(self.git_dir(), overrides, source, &mut buf)?;
         let state = gix_worktree::cache::State::IgnoreStack(ignore);
-        let attribute_list = state.id_mappings_from_index(index, index.path_backing(), source, case);
+        let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
         Ok(gix_worktree::Cache::new(
             // this is alright as we don't cause mutation of that directory, it's virtual.
             self.work_dir().unwrap_or(self.git_dir()),

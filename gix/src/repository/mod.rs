@@ -37,6 +37,8 @@ pub mod attributes;
 mod cache;
 mod config;
 mod excludes;
+///
+pub mod filter;
 mod graph;
 pub(crate) mod identity;
 mod impls;

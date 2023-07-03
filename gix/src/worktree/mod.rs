@@ -155,5 +155,14 @@ pub mod attributes {
                 overrides,
             )?)
         }
+
+        /// Like [attributes()][Self::attributes()], but without access to exclude/ignore information.
+        pub fn attributes_only(&self) -> Result<gix_worktree::Cache, Error> {
+            let index = self.index()?;
+            Ok(self.parent.attributes_only(
+                &index,
+                gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
+            )?)
+        }
     }
 }

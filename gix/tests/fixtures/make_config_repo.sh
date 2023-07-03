@@ -23,7 +23,15 @@ cat <<EOF >>.git/config
 [user]
   name = user
   email = user@email
+
+[core]
+  autocrlf = true
 EOF
+
+# make it a proper repository to allow it to be used for other tests as well.
+touch file
+git add file
+git commit -m "init"
 
 
 cat <<EOF >>a.config
