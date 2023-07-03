@@ -89,7 +89,7 @@ pub enum MatchKind {
 }
 
 /// The result of a search, containing all matching attributes.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Outcome {
     /// The list of all available attributes, by ascending order. Each slots index corresponds to an attribute with that order, i.e.
     /// `arr[attr.id] = <attr info>`.
