@@ -410,6 +410,97 @@ mod core {
         assert!(Core::CHECK_STAT.validate("foo".into()).is_err());
         Ok(())
     }
+
+    #[test]
+    fn safecrlf() -> crate::Result {
+        for (value, expected) in [
+            ("false", gix_filter::pipeline::CrlfRoundTripCheck::Skip),
+            ("true", gix_filter::pipeline::CrlfRoundTripCheck::Fail),
+            ("warn", gix_filter::pipeline::CrlfRoundTripCheck::Warn),
+        ] {
+            assert_eq!(Core::SAFE_CRLF.try_into_safecrlf(bcow(value)).unwrap(), expected);
+            assert!(Core::SAFE_CRLF.validate(value.into()).is_ok());
+        }
+        assert_eq!(
+            Core::SAFE_CRLF.try_into_safecrlf(bcow("WARN")).unwrap_err().to_string(),
+            "The key \"core.safecrlf=WARN\" was invalid"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn autocrlf() -> crate::Result {
+        for (value, expected) in [
+            ("false", gix_filter::eol::AutoCrlf::Disabled),
+            ("true", gix_filter::eol::AutoCrlf::Enabled),
+            ("input", gix_filter::eol::AutoCrlf::Input),
+        ] {
+            assert_eq!(Core::AUTO_CRLF.try_into_autocrlf(bcow(value)).unwrap(), expected);
+            assert!(Core::AUTO_CRLF.validate(value.into()).is_ok());
+        }
+        assert_eq!(
+            Core::AUTO_CRLF
+                .try_into_autocrlf(bcow("Input"))
+                .unwrap_err()
+                .to_string(),
+            "The key \"core.autocrlf=Input\" was invalid"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn eol() -> crate::Result {
+        for (value, expected) in [
+            ("lf", gix_filter::eol::Mode::Lf),
+            ("crlf", gix_filter::eol::Mode::CrLf),
+            ("native", gix_filter::eol::Mode::default()),
+        ] {
+            assert_eq!(Core::EOL.try_into_eol(bcow(value)).unwrap(), expected);
+            assert!(Core::EOL.validate(value.into()).is_ok());
+        }
+        assert_eq!(
+            Core::EOL.try_into_eol(bcow("LF")).unwrap_err().to_string(),
+            "The key \"core.eol=LF\" was invalid"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn check_round_trip_encoding() -> crate::Result {
+        for (value, expected) in [
+            (
+                Some("UTF-8 utf-16BE"),
+                &[gix_filter::encoding::UTF_8, gix_filter::encoding::UTF_16BE][..],
+            ),
+            (
+                Some("SHIFT-JIS,UTF-8"),
+                &[gix_filter::encoding::SHIFT_JIS, gix_filter::encoding::UTF_8],
+            ),
+            (
+                Some("UTF-16LE, SHIFT-JIS"),
+                &[gix_filter::encoding::UTF_16LE, gix_filter::encoding::SHIFT_JIS],
+            ),
+            (None, &[gix_filter::encoding::SHIFT_JIS]),
+        ] {
+            assert_eq!(
+                Core::CHECK_ROUND_TRIP_ENCODING
+                    .try_into_encodings(value.map(bcow))
+                    .unwrap(),
+                expected
+            );
+            if let Some(value) = value {
+                assert!(Core::CHECK_ROUND_TRIP_ENCODING.validate(value.into()).is_ok());
+            }
+        }
+        assert_eq!(
+            Core::CHECK_ROUND_TRIP_ENCODING
+                .try_into_encodings(Some(bcow("SOMETHING ELSE")))
+                .unwrap_err()
+                .to_string(),
+            "The encoding named 'SOMETHING' seen in key 'core.checkRoundTripEncoding=SOMETHING ELSE' is unsupported"
+        );
+        Ok(())
+    }
 }
 
 mod index {

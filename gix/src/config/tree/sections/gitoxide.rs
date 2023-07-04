@@ -86,6 +86,12 @@ mod subsections {
             .with_deviation(
                 "relative file paths will always be made relative to the git-common-dir, whereas `git` keeps them as is.",
             );
+
+        /// The `gitoxide.core.filterProcessDelay` key (default `true`).
+        ///
+        /// It controls whether or not long running filter driver processes can use the 'delay' capability.
+        pub const FILTER_PROCESS_DELAY: keys::Boolean =
+            keys::Boolean::new_boolean("filterProcessDelay", &Gitoxide::CORE);
     }
 
     impl Section for Core {
@@ -99,6 +105,7 @@ mod subsections {
                 &Self::USE_NSEC,
                 &Self::USE_STDEV,
                 &Self::SHALLOW_FILE,
+                &Self::FILTER_PROCESS_DELAY,
             ]
         }
 

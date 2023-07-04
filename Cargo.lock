@@ -1282,6 +1282,7 @@ dependencies = [
  "gix-diff",
  "gix-discover 0.21.1",
  "gix-features 0.31.1",
+ "gix-filter",
  "gix-fs 0.3.0",
  "gix-glob 0.9.1",
  "gix-hash 0.11.3",

@@ -257,6 +257,8 @@ pub mod worktree;
 
 pub mod revision;
 
+pub mod filter;
+
 ///
 pub mod remote;
 

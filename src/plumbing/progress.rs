@@ -101,20 +101,8 @@ impl Tabled for Record {
 
 static GIT_CONFIG: &[Record] = &[
     Record {
-        config: "core.safeCRLF",
-        usage: Planned { note: Some("safety is not optional (but we will respect the setting)") },
-    },
-    Record {
-        config: "core.autocrlf",
-        usage: Planned { note: Some("for filtering system") },
-    },
-    Record {
-        config: "core.eol",
-        usage: Planned {note: Some("needed for filters, but also for doing diffs correctly")}
-    },
-    Record {
-        config: "core.checkRoundtripEncoding",
-        usage: Planned { note: Some("needed once working-tree-encoding attributes are supported") }
+        config: "core.symlinks",
+        usage: Planned {note: Some("needed to handle checkouts faithfully")}
     },
     Record {
         config: "core.hideDotFiles",
