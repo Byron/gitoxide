@@ -33,7 +33,7 @@ impl crate::Repository {
     }
 }
 
-mod attributes;
+pub mod attributes;
 mod cache;
 mod config;
 mod excludes;

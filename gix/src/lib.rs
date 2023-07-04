@@ -114,9 +114,6 @@ pub use hash::{oid, ObjectId};
 
 pub mod interrupt;
 
-///
-pub mod attributes;
-
 mod ext;
 ///
 pub mod prelude;

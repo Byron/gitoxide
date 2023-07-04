@@ -1,6 +1,16 @@
 //! exclude information
 use crate::Repository;
 
+/// The error returned by [`Repository::attributes()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    ConfigureAttributes(#[from] crate::config::attribute_stack::Error),
+    #[error(transparent)]
+    ConfigureExcludes(#[from] crate::config::exclude_stack::Error),
+}
+
 impl Repository {
     /// Configure a file-system cache for accessing git attributes *and* excludes on a per-path basis.
     ///
@@ -22,7 +32,7 @@ impl Repository {
         attributes_source: gix_worktree::cache::state::attributes::Source,
         ignore_source: gix_worktree::cache::state::ignore::Source,
         exclude_overrides: Option<gix_ignore::Search>,
-    ) -> Result<gix_worktree::Cache, crate::attributes::Error> {
+    ) -> Result<gix_worktree::Cache, Error> {
         let case = if self.config.ignore_case {
             gix_glob::pattern::Case::Fold
         } else {

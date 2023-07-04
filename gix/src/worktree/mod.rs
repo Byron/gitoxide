@@ -136,7 +136,7 @@ pub mod attributes {
         #[error(transparent)]
         OpenIndex(#[from] crate::worktree::open_index::Error),
         #[error(transparent)]
-        CreateCache(#[from] crate::attributes::Error),
+        CreateCache(#[from] crate::repository::attributes::Error),
     }
 
     impl<'repo> crate::Worktree<'repo> {
