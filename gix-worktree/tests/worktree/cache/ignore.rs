@@ -108,7 +108,7 @@ fn check_against_baseline() -> crate::Result {
         ),
     );
     let paths_storage = index.take_path_backing();
-    let attribute_files_in_index = state.id_mappings_from_index(&index, &paths_storage, Default::default(), case);
+    let attribute_files_in_index = state.id_mappings_from_index(&index, &paths_storage, case);
     assert_eq!(
         attribute_files_in_index,
         vec![(

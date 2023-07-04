@@ -78,6 +78,15 @@ where
                     &mut self.statistics.ignore,
                 )?
             }
+            State::AttributesStack(attributes) => attributes.push_directory(
+                stack.root(),
+                stack.current(),
+                rela_dir,
+                self.buf,
+                self.id_mappings,
+                &mut self.find,
+                &mut self.statistics.attributes,
+            )?,
             State::IgnoreStack(ignore) => ignore.push_directory(
                 stack.root(),
                 stack.current(),
@@ -105,7 +114,7 @@ where
                 &mut self.statistics.delegate.num_mkdir_calls,
                 *unlink_on_collision,
             )?,
-            State::AttributesAndIgnoreStack { .. } | State::IgnoreStack(_) => {}
+            State::AttributesAndIgnoreStack { .. } | State::IgnoreStack(_) | State::AttributesStack(_) => {}
         }
         Ok(())
     }
@@ -122,6 +131,9 @@ where
             }
             State::IgnoreStack(ignore) => {
                 ignore.pop_directory();
+            }
+            State::AttributesStack(attributes) => {
+                attributes.pop_directory();
             }
         }
     }
