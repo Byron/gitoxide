@@ -33,23 +33,16 @@ pub mod pipeline;
 /// The standard git filter pipeline comprised of multiple standard filters and support for external filters.
 ///
 /// It's configuring itself for each provided path based on the path's attributes, implementing the complex logic that governs it.
+#[derive(Clone)]
 pub struct Pipeline {
-    /// all available filter programs as configured in git-config, for use with `filter=driver` attributes.
-    drivers: Vec<Driver>,
+    /// Various options that are all defaultable.
+    options: pipeline::Options,
     /// Storage for the attributes of each item we should process, configured for use with all attributes that concern us.
     attrs: gix_attributes::search::Outcome,
-    /// configuration sourced from git-config to decide how to deal with the eol filter.
-    eol_config: eol::Configuration,
-    /// A list of encodings for which round-trip checks should be performed when changing the worktree encoding to git.
-    encodings_with_roundtrip_check: Vec<&'static encoding_rs::Encoding>,
-    /// Whether to check for roundtrip safety during CRLF encodings, and what to do on roundtrip failure
-    crlf_roundtrip_check: pipeline::CrlfRoundTripCheck,
     /// Additional context to pass to process filters.
     context: pipeline::Context,
     /// State needed to keep running filter processes.
     processes: driver::State,
-    /// The kind of object hashes to create for the `ident` filter.
-    object_hash: gix_hash::Kind,
     /// A utility to handle multiple buffers to keep results of various filters.
     bufs: pipeline::util::Buffers,
 }
@@ -82,6 +75,7 @@ pub struct Driver {
 fn clear_and_set_capacity(buf: &mut Vec<u8>, cap: usize) {
     buf.clear();
     if buf.capacity() < cap {
-        buf.reserve(cap - buf.capacity());
+        buf.reserve(cap);
+        assert!(buf.capacity() >= cap, "{} >= {}", buf.capacity(), cap);
     }
 }

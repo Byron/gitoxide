@@ -1,5 +1,4 @@
 use crate::pipeline::util::Configuration;
-use crate::pipeline::Context;
 use crate::{driver, eol, ident, worktree, Pipeline};
 use bstr::BStr;
 use std::io::Read;
@@ -56,14 +55,6 @@ pub mod to_worktree {
 
 /// Access
 impl Pipeline {
-    /// Update any part of the static context that is made available to the process filters.
-    ///
-    /// The context set here is relevant for the [`convert_to_git()`][Self::convert_to_git()] and
-    /// [`convert_to_worktree()`][Self::convert_to_worktree()] methods.
-    pub fn update_context<E>(&mut self, update: impl FnOnce(&mut Context) -> Result<(), E>) -> Result<(), E> {
-        update(&mut self.context)
-    }
-
     /// Convert a `src` stream (to be found at `rela_path`) to a representation suitable for storage in `git`
     /// based on the `attributes` at `rela_path` which is passed as first argument..
     /// When converting to `crlf`, and depending on the configuration, `index_object` might be called to obtain the index
@@ -73,7 +64,7 @@ impl Pipeline {
         mut src: R,
         rela_path: &Path,
         attributes: impl FnOnce(&BStr, &mut gix_attributes::search::Outcome),
-        index_object: impl FnOnce(&mut Vec<u8>) -> Result<Option<()>, E>,
+        index_object: impl FnOnce(&BStr, &mut Vec<u8>) -> Result<Option<()>, E>,
     ) -> Result<ToGitOutcome<'_, R>, to_git::Error>
     where
         R: std::io::Read,
@@ -88,13 +79,25 @@ impl Pipeline {
             apply_ident_filter,
         } = Configuration::at_path(
             bstr_path.as_ref(),
-            &self.drivers,
+            &self.options.drivers,
             &mut self.attrs,
             attributes,
-            self.eol_config,
+            self.options.eol_config,
         )?;
 
         let mut changed = false;
+        // this is just an approximation, but it's as good as it gets without reading the actual input.
+        let would_convert_eol = eol::convert_to_git(
+            b"\r\n",
+            digest,
+            &mut self.bufs.dest,
+            |_| Ok::<_, E>(None),
+            eol::convert_to_git::Options {
+                round_trip_check: None,
+                config: self.options.eol_config,
+            },
+        )?;
+
         if let Some(driver) = driver {
             if let Some(mut read) = self.processes.apply(
                 driver,
@@ -102,28 +105,20 @@ impl Pipeline {
                 driver::Operation::Clean,
                 self.context.with_path(bstr_path.as_ref()),
             )? {
-                if !apply_ident_filter
-                    && encoding.is_none()
-                    && !eol::convert_to_git(
-                        b"\r\n",
-                        digest,
-                        &mut self.bufs.dest,
-                        |_| Ok::<_, E>(None),
-                        eol::convert_to_git::Context {
-                            round_trip_check: None,
-                            config: self.eol_config,
-                        },
-                    )?
-                {
+                if !apply_ident_filter && encoding.is_none() && !would_convert_eol {
                     // Note that this is not typically a benefit in terms of saving memory as most filters
                     // aren't expected to make the output file larger. It's more about who is waiting for the filter's
                     // output to arrive, which won't be us now. For `git-lfs` it definitely won't matter though.
                     return Ok(ToGitOutcome::Process(read));
                 }
-                self.bufs.dest.clear();
+                self.bufs.clear();
                 read.read_to_end(&mut self.bufs.src)?;
                 changed = true;
             }
+        }
+        if !changed && (apply_ident_filter || encoding.is_some() || would_convert_eol) {
+            self.bufs.clear();
+            src.read_to_end(&mut self.bufs.src)?;
         }
 
         if let Some(encoding) = encoding {
@@ -131,7 +126,7 @@ impl Pipeline {
                 &self.bufs.src,
                 encoding,
                 &mut self.bufs.dest,
-                if self.encodings_with_roundtrip_check.contains(&encoding) {
+                if self.options.encodings_with_roundtrip_check.contains(&encoding) {
                     worktree::encode_to_git::RoundTripCheck::Fail
                 } else {
                     worktree::encode_to_git::RoundTripCheck::Skip
@@ -145,10 +140,10 @@ impl Pipeline {
             &self.bufs.src,
             digest,
             &mut self.bufs.dest,
-            index_object,
-            eol::convert_to_git::Context {
-                round_trip_check: self.crlf_roundtrip_check.to_eol_roundtrip_check(rela_path),
-                config: self.eol_config,
+            |buf| index_object(bstr_path.as_ref(), buf),
+            eol::convert_to_git::Options {
+                round_trip_check: self.options.crlf_roundtrip_check.to_eol_roundtrip_check(rela_path),
+                config: self.options.eol_config,
             },
         )? {
             self.bufs.swap();
@@ -166,10 +161,10 @@ impl Pipeline {
         })
     }
 
-    /// Convert a `src` stream located at `rela_path` in the worktree from what's in `git` to the worktree, asking for `attributes`
-    /// with `rela_path` as first argument to configure the operation automatically. `can_delay` defines if long-running processes
-    /// can delay their response, and if they *choose* to the caller has to specifically deal with it by interacting with the
-    /// [`driver_state`][Pipeline::driver_state_mut()] directly.
+    /// Convert a `src` buffer located at `rela_path` (in the index) from what's in `git` to the worktree representation,
+    /// asking for `attributes` with `rela_path` as first argument to configure the operation automatically.
+    /// `can_delay` defines if long-running processes can delay their response, and if they *choose* to the caller has to
+    /// specifically deal with it by interacting with the [`driver_state`][Pipeline::driver_state_mut()] directly.
     ///
     /// The reason `src` is a buffer is to indicate that `git` generally doesn't do well streaming data, so it should be small enough
     /// to be performant while being held in memory. This is typically the case, especially if `git-lfs` is used as intended.
@@ -186,16 +181,22 @@ impl Pipeline {
             _attr_digest: _,
             encoding,
             apply_ident_filter,
-        } = Configuration::at_path(rela_path, &self.drivers, &mut self.attrs, attributes, self.eol_config)?;
+        } = Configuration::at_path(
+            rela_path,
+            &self.options.drivers,
+            &mut self.attrs,
+            attributes,
+            self.options.eol_config,
+        )?;
 
         let mut bufs = self.bufs.with_src(src);
         let (src, dest) = bufs.src_and_dest();
-        if apply_ident_filter && ident::apply(src, self.object_hash, dest) {
+        if apply_ident_filter && ident::apply(src, self.options.object_hash, dest) {
             bufs.swap();
         }
 
         let (src, dest) = bufs.src_and_dest();
-        if eol::convert_to_worktree(src, digest, dest, self.eol_config) {
+        if eol::convert_to_worktree(src, digest, dest, self.options.eol_config) {
             bufs.swap();
         };
 
@@ -222,12 +223,6 @@ impl Pipeline {
             Some(src) => ToWorktreeOutcome::Unchanged(src),
             None => ToWorktreeOutcome::Buffer(bufs.src),
         })
-    }
-
-    /// Return a mutable reference to the state that handles long running processes.
-    /// Interacting with it directly allows to handle delayed results.
-    pub fn driver_state_mut(&mut self) -> &mut driver::State {
-        &mut self.processes
     }
 }
 

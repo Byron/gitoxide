@@ -8,7 +8,7 @@ use smallvec::SmallVec;
 use std::path::Path;
 
 /// A utility to do buffer-swapping with.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub(crate) struct Buffers {
     pub src: Vec<u8>,
     pub dest: Vec<u8>,
@@ -91,7 +91,15 @@ impl<'driver> Configuration<'driver> {
                     .ok_or(configuration::Error::UnknownEncoding {
                         name: name.as_bstr().to_owned(),
                     })
-                    .map(Some),
+                    .map(|encoding| {
+                        // The working-tree-encoding is the encoding we have to expect in the working tree.
+                        // If the specified one is the default encoding, there is nothing to do.
+                        if encoding == encoding_rs::UTF_8 {
+                            None
+                        } else {
+                            Some(encoding)
+                        }
+                    }),
                 StateRef::Unspecified => Ok(None),
             }
         }

@@ -7,7 +7,12 @@ use std::io::Read;
 #[test]
 fn all_stages() -> gix_testtools::Result {
     let (mut cache, mut pipe) = pipeline("all-filters", || {
-        (vec![driver_with_process()], Vec::new(), CrlfRoundTripCheck::Skip)
+        (
+            vec![driver_with_process()],
+            Vec::new(),
+            CrlfRoundTripCheck::Skip,
+            Default::default(),
+        )
     })?;
 
     let mut out = pipe.convert_to_worktree(
@@ -41,7 +46,9 @@ fn all_stages() -> gix_testtools::Result {
 
 #[test]
 fn all_stages_no_filter() -> gix_testtools::Result {
-    let (mut cache, mut pipe) = pipeline("all-filters", || (vec![], Vec::new(), CrlfRoundTripCheck::Skip))?;
+    let (mut cache, mut pipe) = pipeline("all-filters", || {
+        (vec![], Vec::new(), CrlfRoundTripCheck::Skip, Default::default())
+    })?;
 
     let mut out = pipe.convert_to_worktree(
         b"$Id$a\nb\n",
@@ -72,7 +79,9 @@ fn all_stages_no_filter() -> gix_testtools::Result {
 
 #[test]
 fn no_filter() -> gix_testtools::Result {
-    let (mut cache, mut pipe) = pipeline("no-filters", || (vec![], Vec::new(), CrlfRoundTripCheck::Skip))?;
+    let (mut cache, mut pipe) = pipeline("no-filters", || {
+        (vec![], Vec::new(), CrlfRoundTripCheck::Skip, Default::default())
+    })?;
 
     let input = b"$Id$a\nb\n";
     let out = pipe.convert_to_worktree(

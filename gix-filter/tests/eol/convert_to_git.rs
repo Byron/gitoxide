@@ -128,7 +128,7 @@ fn round_trip_check() -> crate::Result {
             AttributesDigest::TextCrlf,
             &mut buf,
             no_call,
-            eol::convert_to_git::Context {
+            eol::convert_to_git::Options {
                 round_trip_check: Some(gix_filter::eol::convert_to_git::RoundTripCheck::Fail {
                     rela_path: Path::new("hello.txt"),
                 }),
@@ -143,7 +143,7 @@ fn round_trip_check() -> crate::Result {
             AttributesDigest::TextCrlf,
             &mut buf,
             no_call,
-            eol::convert_to_git::Context {
+            eol::convert_to_git::Options {
                 round_trip_check: Some(gix_filter::eol::convert_to_git::RoundTripCheck::Warn {
                     rela_path: Path::new("hello.txt"),
                 }),
@@ -159,11 +159,11 @@ fn round_trip_check() -> crate::Result {
 }
 
 #[allow(clippy::ptr_arg)]
-pub(crate) fn no_call(_buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
+fn no_call(_buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
     unreachable!("index function will not be called")
 }
 
 #[allow(clippy::ptr_arg)]
-pub(crate) fn no_object_in_index(_buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
+fn no_object_in_index(_buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
     Ok(None)
 }

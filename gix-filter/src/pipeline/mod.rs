@@ -1,7 +1,7 @@
 use crate::{driver, eol, Driver, Pipeline};
 use bstr::BString;
 
-/// Define how to perform CRLF round-trip checking.
+/// Define how to perform CRLF round-trip checking when converting to git.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum CrlfRoundTripCheck {
     /// Fail with an error if CRLF conversion isn't round-trip safe.
@@ -13,6 +13,21 @@ pub enum CrlfRoundTripCheck {
     Warn,
     /// Do nothing, do not perform round-trip check at all.
     Skip,
+}
+
+/// Additional configuration for the filter pipeline.
+#[derive(Default, Clone)]
+pub struct Options {
+    /// Available (external) driver programs to invoke if attributes for path configure them.
+    pub drivers: Vec<Driver>,
+    /// Global options to configure end-of-line conversions, to worktree or to git.
+    pub eol_config: eol::Configuration,
+    /// How to perform round-trip checks during end-of-line conversions to git.
+    pub crlf_roundtrip_check: CrlfRoundTripCheck,
+    /// All worktree encodings for round-trip checks should be performed.
+    pub encodings_with_roundtrip_check: Vec<&'static encoding_rs::Encoding>,
+    /// The object hash to use when applying the `ident` filter.
+    pub object_hash: gix_hash::Kind,
 }
 
 /// Context that typically doesn't change throughout the lifetime of a pipeline, for use with `process` filters.
@@ -41,25 +56,14 @@ impl Pipeline {
     /// `eol_config` serves as fallback to understand how to convert line endings if no line-ending attributes are present.
     /// `crlf_roundtrip_check` corresponds to the git-configuration of `core.safecrlf`.
     /// `object_hash` is relevant for the `ident` filter.
-    pub fn new(
-        drivers: Vec<Driver>,
-        collection: &gix_attributes::search::MetadataCollection,
-        eol_config: eol::Configuration,
-        encodings_with_roundtrip_check: Vec<&'static encoding_rs::Encoding>,
-        crlf_roundtrip_check: CrlfRoundTripCheck,
-        object_hash: gix_hash::Kind,
-    ) -> Self {
+    pub fn new(collection: &gix_attributes::search::MetadataCollection, options: Options) -> Self {
         let mut attrs = gix_attributes::search::Outcome::default();
         attrs.initialize_with_selection(collection, ATTRS);
         Pipeline {
-            drivers,
             attrs,
-            eol_config,
-            encodings_with_roundtrip_check,
-            crlf_roundtrip_check,
             context: Context::default(),
             processes: driver::State::default(),
-            object_hash,
+            options,
             bufs: Default::default(),
         }
     }
@@ -69,6 +73,35 @@ impl Pipeline {
     /// This can be used to control how these are terminated via [driver::State::shutdown()].
     pub fn into_driver_state(self) -> driver::State {
         self.processes
+    }
+}
+
+impl Default for Pipeline {
+    fn default() -> Self {
+        let collection = Default::default();
+        Pipeline::new(&collection, Default::default())
+    }
+}
+
+/// Access
+impl Pipeline {
+    /// Return a mutable reference to the state that handles long running processes.
+    /// Interacting with it directly allows to handle delayed results.
+    pub fn driver_state_mut(&mut self) -> &mut driver::State {
+        &mut self.processes
+    }
+
+    /// Provide mutable context that is made available to the process filters.
+    ///
+    /// The context set here is relevant for the [`convert_to_git()`][Self::convert_to_git()] and
+    /// [`convert_to_worktree()`][Self::convert_to_worktree()] methods.
+    pub fn driver_context_mut(&mut self) -> &mut Context {
+        &mut self.context
+    }
+
+    /// Return a set of options for configuration after instantiation.
+    pub fn options_mut(&mut self) -> &mut Options {
+        &mut self.options
     }
 }
 

@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 /// Additional context for use with [`convert_to_git`][super::convert_to_git()].
 #[derive(Default, Copy, Clone)]
-pub struct Context<'a> {
+pub struct Options<'a> {
     /// How to perform round-trip checks.
     pub round_trip_check: Option<RoundTripCheck<'a>>,
     /// Configuration related to EOL.
@@ -38,7 +38,7 @@ pub enum Error {
 
 pub(crate) mod function {
     use crate::clear_and_set_capacity;
-    use crate::eol::convert_to_git::{Context, Error, RoundTripCheck};
+    use crate::eol::convert_to_git::{Error, Options, RoundTripCheck};
     use crate::eol::{AttributesDigest, Stats};
     use bstr::ByteSlice;
 
@@ -55,10 +55,10 @@ pub(crate) mod function {
         digest: AttributesDigest,
         buf: &mut Vec<u8>,
         index_object: impl FnOnce(&mut Vec<u8>) -> Result<Option<()>, E>,
-        Context {
+        Options {
             round_trip_check,
             config,
-        }: Context<'_>,
+        }: Options<'_>,
     ) -> Result<bool, Error>
     where
         E: std::error::Error + Send + Sync + 'static,

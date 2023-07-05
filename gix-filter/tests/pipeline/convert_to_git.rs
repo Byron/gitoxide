@@ -1,15 +1,49 @@
 use crate::driver::apply::driver_with_process;
-use crate::eol::convert_to_git::{no_call, no_object_in_index};
 use crate::pipeline::pipeline;
-use bstr::ByteSlice;
+use bstr::{BStr, ByteSlice};
+use gix_filter::eol;
 use gix_filter::pipeline::CrlfRoundTripCheck;
 use std::io::Read;
 use std::path::Path;
 
 #[test]
+fn no_driver_but_filter_with_autocrlf() -> gix_testtools::Result {
+    let (_cache, mut pipe) = pipeline("no-filter", || {
+        (
+            vec![],
+            Vec::new(),
+            CrlfRoundTripCheck::Fail,
+            eol::Configuration {
+                auto_crlf: eol::AutoCrlf::Enabled,
+                eol: None,
+            },
+        )
+    })?;
+
+    let out = pipe.convert_to_git(
+        "hi\r\n".as_bytes(),
+        Path::new("any.txt"),
+        |_path, _attrs| {},
+        no_object_in_index,
+    )?;
+
+    assert_eq!(
+        out.as_bytes().expect("read converted to buffer").as_bstr(),
+        "hi\n",
+        "the read is read into memory if there is no driver"
+    );
+    Ok(())
+}
+
+#[test]
 fn all_stages_mean_streaming_is_impossible() -> gix_testtools::Result {
     let (mut cache, mut pipe) = pipeline("all-filters", || {
-        (vec![driver_with_process()], Vec::new(), CrlfRoundTripCheck::Fail)
+        (
+            vec![driver_with_process()],
+            Vec::new(),
+            CrlfRoundTripCheck::Fail,
+            Default::default(),
+        )
     })?;
 
     let mut out = pipe.convert_to_git(
@@ -35,7 +69,12 @@ fn all_stages_mean_streaming_is_impossible() -> gix_testtools::Result {
 #[test]
 fn only_driver_means_streaming_is_possible() -> gix_testtools::Result {
     let (mut cache, mut pipe) = pipeline("driver-only", || {
-        (vec![driver_with_process()], Vec::new(), CrlfRoundTripCheck::Skip)
+        (
+            vec![driver_with_process()],
+            Vec::new(),
+            CrlfRoundTripCheck::Skip,
+            Default::default(),
+        )
     })?;
 
     let mut out = pipe.convert_to_git(
@@ -65,7 +104,9 @@ fn only_driver_means_streaming_is_possible() -> gix_testtools::Result {
 
 #[test]
 fn no_filter_means_reader_is_returned_unchanged() -> gix_testtools::Result {
-    let (mut cache, mut pipe) = pipeline("no-filters", || (vec![], Vec::new(), CrlfRoundTripCheck::Fail))?;
+    let (mut cache, mut pipe) = pipeline("no-filters", || {
+        (vec![], Vec::new(), CrlfRoundTripCheck::Fail, Default::default())
+    })?;
 
     let input = "➡a\r\n➡b\r\n➡$Id: 2188d1cdee2b93a80084b61af431a49d21bc7cc0$";
     let mut out = pipe.convert_to_git(
@@ -89,4 +130,14 @@ fn no_filter_means_reader_is_returned_unchanged() -> gix_testtools::Result {
     actual.read_to_end(&mut buf)?;
     assert_eq!(buf.as_bstr(), input, "input is unchanged");
     Ok(())
+}
+
+#[allow(clippy::ptr_arg)]
+fn no_call(_path: &BStr, _buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
+    unreachable!("index function will not be called")
+}
+
+#[allow(clippy::ptr_arg)]
+fn no_object_in_index(_path: &BStr, _buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
+    Ok(None)
 }
