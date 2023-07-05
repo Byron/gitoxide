@@ -18,7 +18,7 @@ pub mod pipeline {
         #[error(transparent)]
         WorktreeIndex(#[from] crate::worktree::open_index::Error),
         #[error(transparent)]
-        Init(#[from] crate::filter::pipeline::init::Error),
+        Init(#[from] crate::filter::pipeline::options::Error),
     }
 }
 

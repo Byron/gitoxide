@@ -132,6 +132,8 @@ pub mod checkout_options {
         CheckoutWorkers(#[from] super::checkout::workers::Error),
         #[error(transparent)]
         Attributes(#[from] super::attribute_stack::Error),
+        #[error(transparent)]
+        FilterPipelineOptions(#[from] crate::filter::pipeline::options::Error),
     }
 }
 

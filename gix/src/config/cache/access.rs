@@ -13,8 +13,9 @@ use crate::{
         tree::{gitoxide, Checkout, Core, Key},
         Cache,
     },
-    remote,
+    filter, remote,
     repository::identity,
+    Repository,
 };
 
 /// Access
@@ -148,7 +149,8 @@ impl Cache {
     /// depending on the use-case.
     pub(crate) fn checkout_options(
         &self,
-        git_dir: &std::path::Path,
+        repo: &Repository,
+        attributes_source: gix_worktree::cache::state::attributes::Source,
     ) -> Result<gix_worktree::checkout::Options, checkout_options::Error> {
         fn boolean(
             me: &Cache,
@@ -166,6 +168,7 @@ impl Cache {
                 .unwrap_or(default))
         }
 
+        let git_dir = repo.git_dir();
         let thread_limit = self.apply_leniency(
             self.resolved
                 .integer_filter_by_key("checkout.workers", &mut self.filter_config_section.clone())
@@ -177,13 +180,31 @@ impl Cache {
             executable_bit: boolean(self, "core.fileMode", &Core::FILE_MODE, true)?,
             symlink: boolean(self, "core.symlinks", &Core::SYMLINKS, true)?,
         };
+        let filters = {
+            let collection = Default::default();
+            let mut filters = gix_filter::Pipeline::new(&collection, filter::Pipeline::options(repo)?);
+            if let Ok(mut head) = repo.head() {
+                let ctx = filters.driver_context_mut();
+                ctx.ref_name = head.referent_name().map(|name| name.as_bstr().to_owned());
+                ctx.treeish = head.peel_to_commit_in_place().ok().map(|commit| commit.id);
+            }
+            filters
+        };
+        let filter_process_delay = if boolean(
+            self,
+            "gitoxide.core.filterProcessDelay",
+            &gitoxide::Core::FILTER_PROCESS_DELAY,
+            true,
+        )? {
+            gix_filter::driver::apply::Delay::Allow
+        } else {
+            gix_filter::driver::apply::Delay::Forbid
+        };
         Ok(gix_worktree::checkout::Options {
+            filter_process_delay,
+            filters,
             attributes: self
-                .assemble_attribute_globals(
-                    git_dir,
-                    gix_worktree::cache::state::attributes::Source::IdMappingThenWorktree,
-                    self.attributes,
-                )?
+                .assemble_attribute_globals(git_dir, attributes_source, self.attributes)?
                 .0,
             fs: capabilities,
             thread_limit,
@@ -255,13 +276,13 @@ impl Cache {
         let info_attributes_path = git_dir.join("info").join("attributes");
         let mut buf = Vec::new();
         let mut collection = gix_attributes::search::MetadataCollection::default();
-        let res = gix_worktree::cache::state::Attributes::new(
+        let state = gix_worktree::cache::state::Attributes::new(
             gix_attributes::Search::new_globals(attribute_files, &mut buf, &mut collection)?,
             Some(info_attributes_path),
             source,
             collection,
         );
-        Ok((res, buf))
+        Ok((state, buf))
     }
 
     pub(crate) fn xdg_config_path(
