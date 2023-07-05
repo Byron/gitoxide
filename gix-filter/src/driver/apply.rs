@@ -10,13 +10,13 @@ pub enum Delay {
     /// Use delayed processing for this entry.
     ///
     /// Note that it's up to the filter to determine whether or not the processing should be delayed.
+    #[default]
     Allow,
     /// Do not delay the processing, and force it to happen immediately. In this case, no delayed processing will occur
     /// even if the filter supports it.
     ///
     /// This is the default as it requires no special precautions to be taken by the caller as
     /// outputs will be produced immediately.
-    #[default]
     Forbid,
 }
 

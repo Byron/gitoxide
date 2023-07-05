@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 #[cfg(unix)]
 use std::os::unix::prelude::MetadataExt;
 use std::{
@@ -14,6 +15,33 @@ use gix_worktree::checkout::Collision;
 use tempfile::TempDir;
 
 use crate::fixture_path;
+
+static DRIVER: Lazy<PathBuf> = Lazy::new(|| {
+    let mut cargo = std::process::Command::new(env!("CARGO"));
+    let res = cargo
+        .args(["build", "-p=gix-filter", "--example", "arrow"])
+        .status()
+        .expect("cargo should run fine");
+    assert!(res.success(), "cargo invocation should be successful");
+
+    let path = PathBuf::from(env!("CARGO_TARGET_TMPDIR"))
+        .ancestors()
+        .nth(1)
+        .expect("first parent in target dir")
+        .join("debug")
+        .join("examples")
+        .join(if cfg!(windows) { "arrow.exe" } else { "arrow" });
+    assert!(path.is_file(), "Expecting driver to be located at {path:?}");
+    path
+});
+
+fn driver_exe() -> String {
+    let mut exe = DRIVER.to_string_lossy().into_owned();
+    if cfg!(windows) {
+        exe = exe.replace('\\', "/");
+    }
+    exe
+}
 
 #[test]
 fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden() {
@@ -86,64 +114,111 @@ fn writes_through_symlinks_are_prevented_even_if_overwriting_is_allowed() {
 }
 
 #[test]
-fn overwriting_files_and_lone_directories_works() {
+fn delayed_driver_process() -> crate::Result {
     let mut opts = opts_from_probe();
     opts.overwrite_existing = true;
+    opts.filter_process_delay = gix_filter::driver::apply::Delay::Allow;
     opts.destination_is_initially_empty = false;
-    let (_source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir_opts(
-        opts.clone(),
-        "make_mixed_without_submodules",
-        |_| true,
-        |d| {
-            let empty = d.join("empty");
-            symlink::symlink_dir(d.join(".."), &empty)?; // empty is symlink to the directory above
-            std::fs::write(d.join("executable"), b"foo")?; // executable is regular file and has different content
-            let dir = d.join("dir");
-            std::fs::create_dir(&dir)?;
-            std::fs::create_dir(dir.join("content"))?; // 'content' is a directory now
+    setup_filter_pipeline(opts.filters.options_mut());
+    let (_source, destination, _index, outcome) =
+        checkout_index_in_tmp_dir_opts(opts, "make_mixed_without_submodules_and_symlinks", |_| true, |_| Ok(()))?;
+    assert_eq!(outcome.collisions.len(), 0);
+    assert_eq!(outcome.errors.len(), 0);
+    assert_eq!(outcome.files_updated, 5);
 
-            let dir = dir.join("sub-dir");
-            std::fs::create_dir(&dir)?;
-
-            symlink::symlink_dir(empty, dir.join("symlink"))?; // 'symlink' is a symlink to another file
-            Ok(())
-        },
-    )
-    .unwrap();
-
-    assert!(outcome.collisions.is_empty());
-
+    let dest = destination.path();
     assert_eq!(
-        stripped_prefix(&destination, &dir_structure(&destination)),
-        paths(["dir/content", "dir/sub-dir/symlink", "empty", "executable"])
+        std::fs::read(dest.join("executable"))?.as_bstr(),
+        "content",
+        "unfiltered"
     );
-    let meta = std::fs::symlink_metadata(destination.path().join("empty")).unwrap();
-    assert!(meta.is_file(), "'empty' is now a file");
-    assert_eq!(meta.len(), 0, "'empty' is indeed empty");
-
-    let exe = destination.path().join("executable");
     assert_eq!(
-        std::fs::read(&exe).unwrap(),
-        b"content",
-        "'exe' has the correct content"
+        std::fs::read(dest.join("dir").join("content"))?.as_bstr(),
+        "➡other content\r\n"
     );
+    assert_eq!(
+        std::fs::read(dest.join("dir").join("sub-dir").join("file"))?.as_bstr(),
+        "➡even other content\r\n"
+    );
+    Ok(())
+}
 
-    let meta = std::fs::symlink_metadata(exe).unwrap();
-    assert!(meta.is_file());
-    if opts.fs.executable_bit {
-        #[cfg(unix)]
-        assert_eq!(meta.mode() & 0o700, 0o700, "the executable bit is set where supported");
+#[test]
+#[cfg_attr(
+    windows,
+    ignore = "on windows, the symlink to a directory doesn't seem to work and we really want to test with symlinks"
+)]
+fn overwriting_files_and_lone_directories_works() -> crate::Result {
+    for delay in [
+        gix_filter::driver::apply::Delay::Allow,
+        gix_filter::driver::apply::Delay::Forbid,
+    ] {
+        let mut opts = opts_from_probe();
+        opts.overwrite_existing = true;
+        opts.filter_process_delay = delay;
+        opts.destination_is_initially_empty = false;
+        setup_filter_pipeline(opts.filters.options_mut());
+        let (source, destination, _index, outcome) = checkout_index_in_tmp_dir_opts(
+            opts.clone(),
+            "make_mixed_without_submodules",
+            |_| true,
+            |d| {
+                let empty = d.join("empty");
+                symlink::symlink_dir(d.join(".."), &empty)?; // empty is symlink to the directory above
+                std::fs::write(d.join("executable"), b"foo")?; // executable is regular file and has different content
+                let dir = d.join("dir");
+                std::fs::create_dir(&dir)?;
+                std::fs::create_dir(dir.join("content"))?; // 'content' is a directory now
+
+                let dir = dir.join("sub-dir");
+                std::fs::create_dir(&dir)?;
+
+                symlink::symlink_dir(empty, dir.join("symlink"))?; // 'symlink' is a symlink to another file
+                Ok(())
+            },
+        )?;
+
+        assert!(outcome.collisions.is_empty());
+
+        assert_eq!(
+            stripped_prefix(&destination, &dir_structure(&destination)),
+            paths(["dir/content", "dir/sub-dir/symlink", "empty", "executable"])
+        );
+        let meta = std::fs::symlink_metadata(destination.path().join("empty"))?;
+        assert!(meta.is_file(), "'empty' is now a file");
+        assert_eq!(meta.len(), 0, "'empty' is indeed empty");
+
+        let exe = destination.path().join("executable");
+        assert_eq!(std::fs::read(&exe)?, b"content", "'exe' has the correct content");
+
+        let meta = std::fs::symlink_metadata(exe)?;
+        assert!(meta.is_file());
+        if opts.fs.executable_bit {
+            #[cfg(unix)]
+            assert_eq!(meta.mode() & 0o700, 0o700, "the executable bit is set where supported");
+        }
+
+        assert_eq!(
+            std::fs::read(source.join("dir/content"))?.as_bstr(),
+            "other content\n",
+            "in the worktree, we have LF"
+        );
+        assert_eq!(
+            std::fs::read(destination.path().join("dir/content"))?.as_bstr(),
+            "➡other content\r\n",
+            "autocrlf is enabled, so we get CRLF when checking out as the pipeline is active, and we have a filter"
+        );
+
+        let symlink = destination.path().join("dir/sub-dir/symlink");
+        // on windows, git won't create symlinks as its probe won't detect the capability, even though we do.
+        assert_eq!(std::fs::symlink_metadata(&symlink)?.is_symlink(), cfg!(unix));
+        assert_eq!(
+            std::fs::read(symlink)?.as_bstr(),
+            "➡other content\r\n",
+            "autocrlf is enabled"
+        );
     }
-
-    assert_eq!(
-        std::fs::read(destination.path().join("dir/content")).unwrap(),
-        b"other content"
-    );
-
-    let symlink = destination.path().join("dir/sub-dir/symlink");
-    // on windows, git won't create symlinks as its probe won't detect the capability, even though we do.
-    assert_eq!(std::fs::symlink_metadata(&symlink).unwrap().is_symlink(), cfg!(unix));
-    assert_eq!(std::fs::read(symlink).unwrap(), b"other content");
+    Ok(())
 }
 
 #[test]
@@ -181,13 +256,12 @@ fn keep_going_collects_results() {
         opts,
         "make_mixed_without_submodules",
         |_id| {
-            if let Ok(_) = count.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |current| {
-                (current < 2).then(|| current + 1)
-            }) {
-                false
-            } else {
-                true
-            }
+            !matches!(
+                count.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |current| {
+                    (current < 2).then_some(current + 1)
+                }),
+                Ok(_)
+            )
         },
         |_| Ok(()),
     )
@@ -207,7 +281,7 @@ fn keep_going_collects_results() {
                 .map(|r| r.path.to_path_lossy().into_owned())
                 .collect::<Vec<_>>(),
             paths(if cfg!(unix) {
-                ["dir/content", "empty"]
+                [".gitattributes", "dir/content"]
             } else {
                 // not actually a symlink anymore, even though symlinks are supported but git think differently.
                 ["dir/content", "dir/sub-dir/symlink"]
@@ -216,14 +290,14 @@ fn keep_going_collects_results() {
     }
 
     if multi_threaded() {
-        assert_eq!(dir_structure(&destination).len(), 2);
+        assert_eq!(dir_structure(&destination).len(), 3);
     } else {
         assert_eq!(
             stripped_prefix(&destination, &dir_structure(&destination)),
             paths(if cfg!(unix) {
-                ["dir/sub-dir/symlink", "executable"]
+                Box::new(["dir/sub-dir/symlink", "empty", "executable"].into_iter()) as Box<dyn Iterator<Item = &str>>
             } else {
-                ["empty", "executable"]
+                Box::new(["empty", "executable"].into_iter())
             }),
             "some files could not be created"
         );
@@ -244,16 +318,26 @@ fn no_case_related_collisions_on_case_sensitive_filesystem() {
 
     assert!(outcome.collisions.is_empty());
     let num_files = assert_equality(&source_tree, &destination, opts.fs.symlink).unwrap();
-    assert_eq!(num_files, index.entries().len(), "it checks out all files");
+    assert_eq!(
+        num_files,
+        index.entries().len() - 1,
+        "it checks out all files (minus 1 to account for .gitattributes which is skipped in the worktree in our tests)"
+    );
+    assert!(
+        destination.path().join(".gitattributes").is_file(),
+        "we do have attributes even though, dot files are ignored in `assert_equality`"
+    );
 }
 
 #[test]
-fn collisions_are_detected_on_a_case_insensitive_filesystem() {
-    let opts = opts_from_probe();
+fn collisions_are_detected_on_a_case_insensitive_filesystem_even_with_delayed_filters() {
+    let mut opts = opts_from_probe();
     if !opts.fs.ignore_case {
         eprintln!("Skipping case-insensitive testing on what would be a case-sensitive file system");
         return;
     }
+    setup_filter_pipeline(opts.filters.options_mut());
+    opts.filter_process_delay = gix_filter::driver::apply::Delay::Allow;
     let (source_tree, destination, _index, outcome) =
         checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
 
@@ -296,12 +380,12 @@ fn collisions_are_detected_on_a_case_insensitive_filesystem() {
             outcome.collisions,
             vec![
                 Collision {
-                    path: "FILE_x".into(),
-                    error_kind,
-                },
-                Collision {
                     path: "d".into(),
                     error_kind: error_kind_dir,
+                },
+                Collision {
+                    path: "FILE_x".into(),
+                    error_kind,
                 },
                 Collision {
                     path: "file_X".into(),
@@ -327,11 +411,11 @@ fn multi_threaded() -> bool {
 
 fn assert_equality(source_tree: &Path, destination: &TempDir, allow_symlinks: bool) -> crate::Result<usize> {
     let source_files = dir_structure(source_tree);
-    let worktree_files = dir_structure(&destination);
+    let worktree_files = dir_structure(destination);
 
     assert_eq!(
         stripped_prefix(source_tree, &source_files),
-        stripped_prefix(&destination, &worktree_files),
+        stripped_prefix(destination, &worktree_files),
     );
 
     let mut count = 0;
@@ -384,7 +468,7 @@ fn checkout_index_in_tmp_dir_opts(
     let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default())?;
     let odb = gix_odb::at(git_dir.join("objects"))?.into_inner().into_arc()?;
     let destination = tempfile::tempdir_in(std::env::current_dir()?)?;
-    prep_dest(destination.path())?;
+    prep_dest(destination.path()).expect("preparation must succeed");
 
     let outcome = gix_worktree::checkout(
         &mut index,
@@ -425,4 +509,15 @@ fn opts_from_probe() -> gix_worktree::checkout::Options {
 
 fn paths<'a>(p: impl IntoIterator<Item = &'a str>) -> Vec<PathBuf> {
     p.into_iter().map(PathBuf::from).collect()
+}
+
+fn setup_filter_pipeline(opts: &mut gix_filter::pipeline::Options) {
+    opts.eol_config.auto_crlf = gix_filter::eol::AutoCrlf::Enabled;
+    opts.drivers = vec![gix_filter::Driver {
+        name: "arrow".into(),
+        clean: None,
+        smudge: None,
+        process: Some((driver_exe() + " process").into()),
+        required: true,
+    }];
 }

@@ -54,7 +54,7 @@ fn exclude_by_dir_is_handled_just_like_git() {
     for (relative_entry, source_and_line) in expectations {
         let (source, line, expected_pattern) = source_and_line.expect("every value is matched");
         let relative_path = gix_path::from_byte_slice(relative_entry);
-        let is_dir = dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
+        let is_dir = dir.join(relative_path).metadata().ok().map(|m| m.is_dir());
 
         let platform = cache
             .at_entry(relative_entry, is_dir, |_oid, _buf| {
@@ -121,7 +121,7 @@ fn check_against_baseline() -> crate::Result {
     };
     for (relative_entry, source_and_line) in expectations {
         let relative_path = gix_path::from_byte_slice(relative_entry);
-        let is_dir = worktree_dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
+        let is_dir = worktree_dir.join(relative_path).metadata().ok().map(|m| m.is_dir());
 
         let platform = cache.at_entry(relative_entry, is_dir, |oid, buf| odb.find_blob(oid, buf))?;
 
@@ -135,7 +135,7 @@ fn check_against_baseline() -> crate::Result {
                 assert_eq!(m.pattern.to_string(), pattern);
                 assert_eq!(m.sequence_number, line);
                 // Paths read from the index are relative to the repo, and they don't exist locally due tot skip-worktree
-                if m.source.map_or(false, |p| p.exists()) {
+                if m.source.map_or(false, std::path::Path::exists) {
                     assert_eq!(
                         m.source.map(|p| p.canonicalize().unwrap()),
                         Some(worktree_dir.join(source_file.to_str_lossy().as_ref()).canonicalize()?)

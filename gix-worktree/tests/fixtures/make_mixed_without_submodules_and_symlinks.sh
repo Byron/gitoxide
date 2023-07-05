@@ -14,7 +14,7 @@ echo "executable -filter" >> .gitattributes
 echo ".gitattributes -filter" >> .gitattributes
 
 mkdir dir/sub-dir
-(cd dir/sub-dir && ln -sf ../content symlink)
+echo "even other content" > dir/sub-dir/file
 
 git add -A
 git commit -m "Commit"
