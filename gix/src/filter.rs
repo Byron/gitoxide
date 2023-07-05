@@ -10,11 +10,11 @@ use std::borrow::Cow;
 ///
 pub mod pipeline {
     ///
-    pub mod init {
+    pub mod options {
         use crate::bstr::BString;
         use crate::config;
 
-        /// The error returned by [Pipeline::new()][crate::filter::Pipeline::new()].
+        /// The error returned by [Pipeline::options()][crate::filter::Pipeline::options()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
@@ -68,9 +68,8 @@ pub struct Pipeline<'repo> {
 
 /// Lifecycle
 impl<'repo> Pipeline<'repo> {
-    /// Create a new instance by extracting all necessary information and configuration from a `repo` along with `cache` for accessing
-    /// attributes. The `index` is used for some filters which may access it under very specific circumstances.
-    pub fn new(repo: &'repo Repository, cache: gix_worktree::Cache) -> Result<Self, pipeline::init::Error> {
+    /// Extract options from `repo` that are needed to properly drive a standard git filter pipeline.
+    pub fn options(repo: &'repo Repository) -> Result<gix_filter::pipeline::Options, pipeline::options::Error> {
         let config = &repo.config.resolved;
         let encodings =
             Core::CHECK_ROUND_TRIP_ENCODING.try_into_encodings(config.string_by_key("core.checkRoundtripEncoding"))?;
@@ -95,16 +94,19 @@ impl<'repo> Pipeline<'repo> {
             .map(|value| Core::EOL.try_into_eol(value))
             .transpose()?;
         let drivers = extract_drivers(repo)?;
-        let pipeline = gix_filter::Pipeline::new(
-            cache.attributes_collection(),
-            gix_filter::pipeline::Options {
-                drivers,
-                eol_config: gix_filter::eol::Configuration { auto_crlf, eol },
-                encodings_with_roundtrip_check: encodings,
-                crlf_roundtrip_check: safe_crlf,
-                object_hash: repo.object_hash(),
-            },
-        );
+        Ok(gix_filter::pipeline::Options {
+            drivers,
+            eol_config: gix_filter::eol::Configuration { auto_crlf, eol },
+            encodings_with_roundtrip_check: encodings,
+            crlf_roundtrip_check: safe_crlf,
+            object_hash: repo.object_hash(),
+        })
+    }
+
+    /// Create a new instance by extracting all necessary information and configuration from a `repo` along with `cache` for accessing
+    /// attributes. The `index` is used for some filters which may access it under very specific circumstances.
+    pub fn new(repo: &'repo Repository, cache: gix_worktree::Cache) -> Result<Self, pipeline::options::Error> {
+        let pipeline = gix_filter::Pipeline::new(cache.attributes_collection(), Self::options(repo)?);
         Ok(Pipeline {
             inner: pipeline,
             cache,
@@ -191,7 +193,7 @@ impl<'repo> Pipeline<'repo> {
 }
 
 /// Obtain a list of all configured driver, but ignore those in sections that we don't trust enough.
-fn extract_drivers(repo: &Repository) -> Result<Vec<gix_filter::Driver>, pipeline::init::Error> {
+fn extract_drivers(repo: &Repository) -> Result<Vec<gix_filter::Driver>, pipeline::options::Error> {
     Ok(match repo.config.resolved.sections_by_name("filter") {
         None => Vec::new(),
         Some(sections) => sections
@@ -207,7 +209,7 @@ fn extract_drivers(repo: &Repository) -> Result<Vec<gix_filter::Driver>, pipelin
                             .value("required")
                             .map(|value| gix_config::Boolean::try_from(value.as_ref()))
                             .transpose()
-                            .map_err(|err| pipeline::init::Error::Driver {
+                            .map_err(|err| pipeline::options::Error::Driver {
                                 name: name.to_owned(),
                                 source: err,
                             })?
@@ -216,6 +218,6 @@ fn extract_drivers(repo: &Repository) -> Result<Vec<gix_filter::Driver>, pipelin
                     })
                 })
             })
-            .collect::<Result<Vec<_>, pipeline::init::Error>>()?,
+            .collect::<Result<Vec<_>, pipeline::options::Error>>()?,
     })
 }
