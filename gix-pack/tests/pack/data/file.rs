@@ -97,6 +97,7 @@ mod decode_entry {
     }
 
     fn decode_entry_at_offset(offset: u64) -> Vec<u8> {
+        #[allow(clippy::ptr_arg)]
         fn resolve_with_panic(_oid: &gix_hash::oid, _out: &mut Vec<u8>) -> Option<ResolvedBase> {
             panic!("should not want to resolve an id here")
         }
@@ -204,9 +205,7 @@ mod decompress_entry {
         let entry = p.entry(offset);
 
         let size = entry.decompressed_size as usize;
-        let mut buf = Vec::with_capacity(size);
-        buf.resize(size, 0);
-
+        let mut buf = vec![0; size];
         p.decompress_entry(&entry, &mut buf).expect("valid offset");
 
         buf.resize(entry.decompressed_size as usize, 0);

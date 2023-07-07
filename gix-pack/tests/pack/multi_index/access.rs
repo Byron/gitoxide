@@ -32,7 +32,7 @@ fn lookup_prefix() {
             let hex_len = (idx % file.object_hash().len_in_hex()).max(5);
             let hex_oid = entry.oid.to_hex_with_len(hex_len).to_string();
             assert_eq!(hex_oid.len(), hex_len);
-            let oid_prefix = gix_hash::Prefix::new(&entry.oid, hex_len).unwrap();
+            let oid_prefix = gix_hash::Prefix::new(entry.oid, hex_len).unwrap();
             let entry_index = file
                 .lookup_prefix(oid_prefix, candidates.as_mut())
                 .expect("object found")

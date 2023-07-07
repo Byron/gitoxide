@@ -122,7 +122,7 @@ mod write_to_directory {
         let (index_path, data_path, keep_path) = (res.index_path.take(), res.data_path.take(), res.keep_path.take());
         assert_eq!(res, expected_outcome()?);
         let mut sorted_entries = fs::read_dir(&dir)?.filter_map(Result::ok).collect::<Vec<_>>();
-        sorted_entries.sort_by_key(|e| e.file_name());
+        sorted_entries.sort_by_key(fs::DirEntry::file_name);
         assert_eq!(
             sorted_entries.len(),
             3,
@@ -130,11 +130,11 @@ mod write_to_directory {
         );
 
         let pack_hash = res.index.data_hash.to_hex();
-        assert_eq!(file_name(&sorted_entries[0]), format!("pack-{}.idx", pack_hash));
+        assert_eq!(file_name(&sorted_entries[0]), format!("pack-{pack_hash}.idx"));
         assert_eq!(Some(sorted_entries[0].path()), index_path);
-        assert_eq!(file_name(&sorted_entries[1]), format!("pack-{}.keep", pack_hash));
+        assert_eq!(file_name(&sorted_entries[1]), format!("pack-{pack_hash}.keep"));
         assert_eq!(Some(sorted_entries[1].path()), keep_path);
-        assert_eq!(file_name(&sorted_entries[2]), format!("pack-{}.pack", pack_hash));
+        assert_eq!(file_name(&sorted_entries[2]), format!("pack-{pack_hash}.pack"));
         assert_eq!(Some(sorted_entries[2].path()), data_path);
 
         res.index_path = index_path;

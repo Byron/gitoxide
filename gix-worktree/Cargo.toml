@@ -17,17 +17,11 @@ name = "multi-threaded"
 path = "tests/worktree-multi-threaded.rs"
 required-features = ["internal-testing-gix-features-parallel"]
 
-[[test]]
-name = "single-threaded"
-path = "tests/worktree-single-threaded.rs"
-required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
-
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde = [ "dep:serde", "bstr/serde", "gix-index/serde", "gix-hash/serde", "gix-object/serde", "gix-attributes/serde", "gix-ignore/serde" ]
 
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
-internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
 gix-index = { version = "^0.20.0", path = "../gix-index" }

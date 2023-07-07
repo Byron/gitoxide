@@ -26,10 +26,9 @@ mod version {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    file.lookup(gix_hash::ObjectId::from_hex(*id)?),
+                    file.lookup(gix_hash::ObjectId::from_hex(id)?),
                     *desired_index,
-                    "{}",
-                    assertion
+                    "{assertion}",
                 );
             }
             for (entry_index, entry) in file.iter().enumerate() {
@@ -72,7 +71,7 @@ mod version {
             ] {
                 for mut candidates in [None, Some(1..1)] {
                     let id = gix_hash::ObjectId::from_hex(id)?;
-                    assert_eq!(file.lookup(id), expected, "{}", assertion_message);
+                    assert_eq!(file.lookup(id), expected, "{assertion_message}");
                     assert_eq!(
                         file.lookup_prefix(gix_hash::Prefix::new(id, hex_len)?, candidates.as_mut()),
                         expected.map(Ok)
@@ -90,7 +89,7 @@ mod version {
                     let index = file.lookup(entry.oid).expect("id present");
                     assert_eq!(entry.oid.as_ref(), file.oid_at_index(index));
                     assert_eq!(entry.pack_offset, file.pack_offset_at_index(index));
-                    assert_eq!(entry.crc32, file.crc32_at_index(index), "{} {:?}", index, entry);
+                    assert_eq!(entry.crc32, file.crc32_at_index(index), "{index} {entry:?}");
 
                     let hex_len = (entry_index % object_hash.len_in_hex()).max(7);
                     let prefix = gix_hash::Prefix::new(entry.oid, hex_len)?;
@@ -387,9 +386,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
                     )
                     .map(|o| (o.actual_index_checksum, o.pack_traverse_statistics))?,
                     (idx.index_checksum(), Some(stats.to_owned())),
-                    "{:?} -> {:?}",
-                    algo,
-                    mode
+                    "{algo:?} -> {mode:?}"
                 );
             }
         }

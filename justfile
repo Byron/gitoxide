@@ -134,7 +134,7 @@ unit-tests:
       cargo test --features verbose-object-parsing-errors
     cd gix-worktree; \
       set -ex; \
-      cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all; \
+      cargo test; \
       cargo test --features "internal-testing-gix-features-parallel"
     cargo test -p gix-tempfile --features signals
     cargo test -p gix-tempfile
@@ -144,9 +144,9 @@ unit-tests:
     cargo test -p gix-odb
     cargo test -p gix-odb --all-features
     cargo test -p gix-pack --all-features
-    cargo test -p gix-pack-tests --features internal-testing-to-avoid-being-run-by-cargo-test-all
+    cargo test -p gix-pack-tests
     cargo test -p gix-pack-tests --features "internal-testing-gix-features-parallel"
-    cargo test -p gix-index-tests --features internal-testing-to-avoid-being-run-by-cargo-test-all
+    cargo test -p gix-index-tests
     cargo test -p gix-index-tests --features "internal-testing-gix-features-parallel"
     cargo test -p gix-packetline
     cargo test -p gix-packetline --features blocking-io,maybe-async/is_sync --test blocking-packetline

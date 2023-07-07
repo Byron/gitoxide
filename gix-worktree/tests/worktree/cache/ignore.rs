@@ -31,7 +31,7 @@ impl<'a> Iterator for IgnoreExpectations<'a> {
 }
 
 #[test]
-fn special_exclude_cases_we_handle_differently() {
+fn exclude_by_dir_is_handled_just_like_git() {
     let dir = gix_testtools::scripted_fixture_read_only("make_special_exclude_case.sh").unwrap();
     let git_dir = dir.join(".git");
 
@@ -52,14 +52,7 @@ fn special_exclude_cases_we_handle_differently() {
         lines: baseline.lines(),
     };
     for (relative_entry, source_and_line) in expectations {
-        let (source, line, pattern) = source_and_line.expect("every value is matched");
-        assert_eq!(
-            pattern, "tld/",
-            "each entry matches on the main directory exclude, ignoring negations entirely"
-        );
-        assert_eq!(line, 2);
-        assert_eq!(source, ".gitignore");
-
+        let (source, line, expected_pattern) = source_and_line.expect("every value is matched");
         let relative_path = gix_path::from_byte_slice(relative_entry);
         let is_dir = dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
 
@@ -70,13 +63,17 @@ fn special_exclude_cases_we_handle_differently() {
             .unwrap();
         let match_ = platform.matching_exclude_pattern().expect("match all values");
         let _is_excluded = platform.is_excluded();
-
-        match relative_entry.as_bytes() {
-            b"tld" | b"tld/" | b"tld/file" | b"tld/sd" | b"tld/sd/" => {
-                assert_eq!(match_.pattern.to_string(), "tld/");
-            }
-            _ => unreachable!(),
-        }
+        assert_eq!(
+            match_.pattern.to_string(),
+            expected_pattern,
+            "we perfectly agree with git"
+        );
+        assert_eq!(
+            expected_pattern, "tld/",
+            "each entry matches on the main directory exclude, ignoring negations entirely"
+        );
+        assert_eq!(line, 2);
+        assert_eq!(source, ".gitignore");
     }
 }
 
@@ -149,10 +146,7 @@ fn check_against_baseline() -> crate::Result {
                 // OK: we provide negative patterns that matched on paths if there was no other match, while git doesn't.
             }
             (actual, expected) => {
-                panic!(
-                    "actual {:?} didn't match {:?} at '{}'",
-                    actual, expected, relative_entry
-                );
+                panic!("actual {actual:?} didn't match {expected:?} at '{relative_entry}'");
             }
         }
     }
