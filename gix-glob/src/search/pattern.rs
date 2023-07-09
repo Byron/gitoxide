@@ -51,7 +51,9 @@ fn read_in_full_ignore_missing(path: &Path, follow_symlinks: bool, buf: &mut Vec
             file.read_to_end(buf)?;
             true
         }
-        Err(err) if err.kind() == std::io::ErrorKind::NotFound => false,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound ||
+            // TODO: use the enum variant NotADirectory for this once stabilized
+            err.raw_os_error() == Some(20) /* Not a directory */ => false,
         Err(err) => return Err(err),
     })
 }
