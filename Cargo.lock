@@ -1398,6 +1398,9 @@ dependencies = [
 name = "gix-archive"
 version = "0.2.0"
 dependencies = [
+ "gix-attributes 0.15.0",
+ "gix-features 0.32.0",
+ "gix-filter",
  "gix-hash 0.11.3",
  "gix-object 0.33.0",
  "thiserror",
