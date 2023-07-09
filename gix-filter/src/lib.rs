@@ -12,17 +12,40 @@
 
 use bstr::BString;
 
-///
+/// A forwarding of the `encoding_rs` crate for its types and convenience.
+pub use encoding_rs as encoding;
+
+/// a filter to replace `$Id$` with a git-hash of the buffer.
 pub mod ident;
 
-/// utilities related to handling line endings in buffers
+/// convert line endings in buffers
 pub mod eol;
 
-/// Utilities for handling worktree encodings.
+/// change encodings based on the `working-tree-encoding` attribute.
 pub mod worktree;
 
-/// Utilities around driver programs.
+/// use filter programs to perform any kind of conversion.
 pub mod driver;
+
+///
+pub mod pipeline;
+
+/// The standard git filter pipeline comprised of multiple standard filters and support for external filters.
+///
+/// It's configuring itself for each provided path based on the path's attributes, implementing the complex logic that governs it.
+#[derive(Clone)]
+pub struct Pipeline {
+    /// Various options that are all defaultable.
+    options: pipeline::Options,
+    /// Storage for the attributes of each item we should process, configured for use with all attributes that concern us.
+    attrs: gix_attributes::search::Outcome,
+    /// Additional context to pass to process filters.
+    context: pipeline::Context,
+    /// State needed to keep running filter processes.
+    processes: driver::State,
+    /// A utility to handle multiple buffers to keep results of various filters.
+    bufs: pipeline::util::Buffers,
+}
 
 /// A declaration of a driver program.
 ///
@@ -52,6 +75,7 @@ pub struct Driver {
 fn clear_and_set_capacity(buf: &mut Vec<u8>, cap: usize) {
     buf.clear();
     if buf.capacity() < cap {
-        buf.reserve(cap - buf.capacity());
+        buf.reserve(cap);
+        assert!(buf.capacity() >= cap, "{} >= {}", buf.capacity(), cap);
     }
 }

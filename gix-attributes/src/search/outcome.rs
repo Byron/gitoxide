@@ -28,6 +28,10 @@ impl Outcome {
             }) {
                 self.matches_by_id[order].macro_attributes = macro_attributes.clone()
             }
+
+            for (name, id) in self.selected.iter_mut().filter(|(_, id)| id.is_none()) {
+                *id = collection.name_to_meta.get(name.as_str()).map(|meta| meta.id)
+            }
         }
         self.reset();
     }

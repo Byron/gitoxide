@@ -17,17 +17,11 @@ name = "multi-threaded"
 path = "tests/worktree-multi-threaded.rs"
 required-features = ["internal-testing-gix-features-parallel"]
 
-[[test]]
-name = "single-threaded"
-path = "tests/worktree-single-threaded.rs"
-required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
-
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde = [ "dep:serde", "bstr/serde", "gix-index/serde", "gix-hash/serde", "gix-object/serde", "gix-attributes/serde", "gix-ignore/serde" ]
 
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
-internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
 gix-index = { version = "^0.20.0", path = "../gix-index" }
@@ -39,6 +33,7 @@ gix-path = { version = "^0.8.3", path = "../gix-path" }
 gix-attributes = { version = "^0.14.1", path = "../gix-attributes" }
 gix-ignore = { version = "^0.4.1", path = "../gix-ignore" }
 gix-features = { version = "^0.31.0", path = "../gix-features" }
+gix-filter = { version = "0.0.0", path = "../gix-filter" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
@@ -53,6 +48,7 @@ io-close = "0.3.7"
 gix-testtools = { path = "../tests/tools" }
 gix-odb = { path = "../gix-odb" }
 symlink = "0.1.0"
+once_cell = "1.18.0"
 
 walkdir = "2.3.2"
 tempfile = "3.2.0"

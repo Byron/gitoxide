@@ -8,7 +8,11 @@ echo -n "content" > executable
 chmod +x executable
 
 mkdir dir
-echo -n "other content" > dir/content
+echo "other content" > dir/content
+echo "* filter=arrow" > .gitattributes
+echo "executable -filter" >> .gitattributes
+echo ".gitattributes -filter" >> .gitattributes
+
 mkdir dir/sub-dir
 (cd dir/sub-dir && ln -sf ../content symlink)
 

@@ -71,6 +71,14 @@ pub struct State {
     running: HashMap<BString, process::Client>,
 }
 
+impl Clone for State {
+    fn clone(&self) -> Self {
+        State {
+            running: Default::default(),
+        }
+    }
+}
+
 /// A way to reference a running multi-file filter process for later acquisition of delayed output.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct Key(BString);

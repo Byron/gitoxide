@@ -8,6 +8,7 @@ use std::{
 };
 
 pub(crate) type RefMapKey = u64;
+#[derive(Clone)]
 pub(crate) struct RefMap<T>(BTreeMap<RefMapKey, T>);
 
 impl<T> Default for RefMap<T> {

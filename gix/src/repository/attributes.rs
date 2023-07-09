@@ -1,6 +1,16 @@
 //! exclude information
 use crate::Repository;
 
+/// The error returned by [`Repository::attributes()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    ConfigureAttributes(#[from] crate::config::attribute_stack::Error),
+    #[error(transparent)]
+    ConfigureExcludes(#[from] crate::config::exclude_stack::Error),
+}
+
 impl Repository {
     /// Configure a file-system cache for accessing git attributes *and* excludes on a per-path basis.
     ///
@@ -22,7 +32,7 @@ impl Repository {
         attributes_source: gix_worktree::cache::state::attributes::Source,
         ignore_source: gix_worktree::cache::state::ignore::Source,
         exclude_overrides: Option<gix_ignore::Search>,
-    ) -> Result<gix_worktree::Cache, crate::attributes::Error> {
+    ) -> Result<gix_worktree::Cache, Error> {
         let case = if self.config.ignore_case {
             gix_glob::pattern::Case::Fold
         } else {
@@ -37,7 +47,35 @@ impl Repository {
             self.config
                 .assemble_exclude_globals(self.git_dir(), exclude_overrides, ignore_source, &mut buf)?;
         let state = gix_worktree::cache::State::AttributesAndIgnoreStack { attributes, ignore };
-        let attribute_list = state.id_mappings_from_index(index, index.path_backing(), ignore_source, case);
+        let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
+        Ok(gix_worktree::Cache::new(
+            // this is alright as we don't cause mutation of that directory, it's virtual.
+            self.work_dir().unwrap_or(self.git_dir()),
+            state,
+            case,
+            buf,
+            attribute_list,
+        ))
+    }
+
+    /// Like [attributes()][Self::attributes()], but without access to exclude/ignore information.
+    pub fn attributes_only(
+        &self,
+        index: &gix_index::State,
+        attributes_source: gix_worktree::cache::state::attributes::Source,
+    ) -> Result<gix_worktree::Cache, Error> {
+        let case = if self.config.ignore_case {
+            gix_glob::pattern::Case::Fold
+        } else {
+            gix_glob::pattern::Case::Sensitive
+        };
+        let (attributes, buf) = self.config.assemble_attribute_globals(
+            self.git_dir(),
+            attributes_source,
+            self.options.permissions.attributes,
+        )?;
+        let state = gix_worktree::cache::State::AttributesStack(attributes);
+        let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
         Ok(gix_worktree::Cache::new(
             // this is alright as we don't cause mutation of that directory, it's virtual.
             self.work_dir().unwrap_or(self.git_dir()),

@@ -15,6 +15,23 @@ fn entry_by_path_and_stage() {
 }
 
 #[test]
+fn entry_by_path_with_conflicting_file() {
+    let file = Fixture::Loose("conflicting-file").open();
+    for expected_stage in [1 /* common ancestor */, 2 /* ours */, 3 /* theirs */] {
+        assert!(
+            file.entry_by_path_and_stage("file".into(), expected_stage).is_some(),
+            "we have no stage 0 during a conflict, but all other ones. Missed {expected_stage}"
+        );
+    }
+
+    assert_eq!(
+        file.entry_by_path("file".into()).expect("found").stage(),
+        2,
+        "we always find our stage while in a merge"
+    )
+}
+
+#[test]
 fn sort_entries() {
     let mut file = Fixture::Generated("v4_more_files_IEOT").open();
     assert!(file.verify_entries().is_ok());

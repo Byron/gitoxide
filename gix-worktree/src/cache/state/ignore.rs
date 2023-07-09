@@ -163,8 +163,7 @@ impl Ignore {
         self.matched_directory_patterns_stack
             .push(self.matching_exclude_pattern_no_dir(rela_dir, Some(true), case));
 
-        let ignore_path_relative =
-            gix_path::to_unix_separators_on_windows(gix_path::join_bstr_unix_pathsep(rela_dir, ".gitignore"));
+        let ignore_path_relative = gix_path::join_bstr_unix_pathsep(rela_dir, ".gitignore");
         let ignore_file_in_index = id_mappings.binary_search_by(|t| t.0.as_bstr().cmp(ignore_path_relative.as_ref()));
         match self.source {
             Source::IdMapping => {

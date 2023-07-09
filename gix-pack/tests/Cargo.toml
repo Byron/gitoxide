@@ -22,7 +22,6 @@ object-cache-dynamic = ["gix-pack/object-cache-dynamic"]
 serde = ["gix-pack/serde"]
 
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
-internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [[test]]
 name = "multi-threaded"
@@ -32,7 +31,6 @@ required-features = ["internal-testing-gix-features-parallel"]
 [[test]]
 name = "single-threaded"
 path = "pack-single-threaded.rs"
-required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
 [dev-dependencies]
 gix-pack = { path = ".." }

@@ -5,14 +5,18 @@ use bstr::{BStr, BString};
 use std::collections::HashMap;
 
 /// What to do if delay is supported by a process filter.
-#[derive(Debug, Copy, Clone)]
+#[derive(Default, Debug, Copy, Clone)]
 pub enum Delay {
     /// Use delayed processing for this entry.
     ///
     /// Note that it's up to the filter to determine whether or not the processing should be delayed.
+    #[default]
     Allow,
     /// Do not delay the processing, and force it to happen immediately. In this case, no delayed processing will occur
     /// even if the filter supports it.
+    ///
+    /// This is the default as it requires no special precautions to be taken by the caller as
+    /// outputs will be produced immediately.
     Forbid,
 }
 
@@ -40,11 +44,11 @@ pub enum Error {
 
 /// Additional information for use in the [`State::apply()`] method.
 #[derive(Debug, Copy, Clone)]
-pub struct Context<'a> {
+pub struct Context<'a, 'b> {
     /// The repo-relative using slashes as separator of the entry currently being processed.
     pub rela_path: &'a BStr,
     /// The name of the reference that `HEAD` is pointing to. It's passed to `process` filters if present.
-    pub ref_name: Option<&'a BStr>,
+    pub ref_name: Option<&'b BStr>,
     /// The root-level tree that contains the current entry directly or indirectly, or the commit owning the tree (if available).
     ///
     /// This is passed to `process` filters if present.
@@ -58,6 +62,7 @@ pub struct Context<'a> {
 impl State {
     /// Apply `operation` of `driver` to the bytes read from `src` and return a reader to immediately consume the output
     /// produced by the filter. `rela_path` is the repo-relative path of the entry to handle.
+    /// It's possible that the filter stays inactive, in which case the `src` isn't consumed and has to be used by the caller.
     ///
     /// Each call to this method will cause the corresponding filter to be invoked unless `driver` indicates a `process` filter,
     /// which is only launched once and maintained using this state.
@@ -74,9 +79,9 @@ impl State {
     pub fn apply<'a>(
         &'a mut self,
         driver: &Driver,
-        src: impl std::io::Read,
+        src: &mut impl std::io::Read,
         operation: Operation,
-        ctx: Context<'_>,
+        ctx: Context<'_, '_>,
     ) -> Result<Option<Box<dyn std::io::Read + 'a>>, Error> {
         match self.apply_delayed(driver, src, operation, Delay::Forbid, ctx)? {
             Some(MaybeDelayed::Delayed(_)) => {
@@ -94,14 +99,14 @@ impl State {
     pub fn apply_delayed<'a>(
         &'a mut self,
         driver: &Driver,
-        mut src: impl std::io::Read,
+        src: &mut impl std::io::Read,
         operation: Operation,
         delay: Delay,
-        ctx: Context<'_>,
+        ctx: Context<'_, '_>,
     ) -> Result<Option<MaybeDelayed<'a>>, Error> {
-        match self.process(driver, operation, ctx.rela_path)? {
+        match self.maybe_launch_process(driver, operation, ctx.rela_path)? {
             Some(Process::SingleFile { mut child, command }) => {
-                std::io::copy(&mut src, &mut child.stdin.take().expect("configured"))?;
+                std::io::copy(src, &mut child.stdin.take().expect("configured"))?;
                 Ok(Some(MaybeDelayed::Immediate(Box::new(ReadFilterOutput {
                     inner: child.stdout.take(),
                     child: driver.required.then_some((child, command)),
@@ -179,7 +184,7 @@ impl State {
     }
 }
 
-/// A utility type to represent delayed or immediate apply-filter results.
+/// A type to represent delayed or immediate apply-filter results.
 pub enum MaybeDelayed<'a> {
     /// Using the delayed protocol, this entry has been sent to a long-running process and needs to be
     /// checked for again, later, using the [`driver::Key`] to refer to the filter who owes a response.

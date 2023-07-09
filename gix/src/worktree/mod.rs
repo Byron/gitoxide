@@ -136,7 +136,7 @@ pub mod attributes {
         #[error(transparent)]
         OpenIndex(#[from] crate::worktree::open_index::Error),
         #[error(transparent)]
-        CreateCache(#[from] crate::attributes::Error),
+        CreateCache(#[from] crate::repository::attributes::Error),
     }
 
     impl<'repo> crate::Worktree<'repo> {
@@ -153,6 +153,15 @@ pub mod attributes {
                 gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
                 gix_worktree::cache::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
                 overrides,
+            )?)
+        }
+
+        /// Like [attributes()][Self::attributes()], but without access to exclude/ignore information.
+        pub fn attributes_only(&self) -> Result<gix_worktree::Cache, Error> {
+            let index = self.index()?;
+            Ok(self.parent.attributes_only(
+                &index,
+                gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
             )?)
         }
     }

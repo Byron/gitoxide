@@ -1,8 +1,7 @@
-#![allow(missing_docs)]
-
 use bstr::BString;
 use gix_index::entry::stat;
 
+/// Information about a path that failed to checkout as something else was already present.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Collision {
     /// the path that collided with something already present on disk.
@@ -11,6 +10,7 @@ pub struct Collision {
     pub error_kind: std::io::ErrorKind,
 }
 
+/// A path that encountered an IO error.
 pub struct ErrorRecord {
     /// the path that encountered the error.
     pub path: BString,
@@ -18,16 +18,24 @@ pub struct ErrorRecord {
     pub error: Box<dyn std::error::Error + Send + Sync + 'static>,
 }
 
+/// The outcome of checking out an entire index.
 #[derive(Default)]
 pub struct Outcome {
     /// The amount of files updated, or created.
     pub files_updated: usize,
     /// The amount of bytes written to disk,
     pub bytes_written: u64,
+    /// The encountered collisions, which can happen on a case-insensitive filesystem.
     pub collisions: Vec<Collision>,
+    /// Other errors that happened during checkout.
     pub errors: Vec<ErrorRecord>,
+    /// Relative paths that the process listed as 'delayed' even though we never passed them.
+    pub delayed_paths_unknown: Vec<BString>,
+    /// All paths that were left unprocessed, because they were never listed by the process even though we passed them.
+    pub delayed_paths_unprocessed: Vec<BString>,
 }
 
+/// Options to further configure the checkout operation.
 #[derive(Clone, Default)]
 pub struct Options {
     /// capabilities of the file system
@@ -53,9 +61,15 @@ pub struct Options {
     pub stat_options: stat::Options,
     /// A stack of attributes to use with the filesystem cache to use as driver for filters.
     pub attributes: crate::cache::state::Attributes,
+    /// The filter pipeline to use for applying mandatory filters before writing to the worktree.
+    pub filters: gix_filter::Pipeline,
+    /// Control how long-running processes may use the 'delay' capability.
+    pub filter_process_delay: gix_filter::driver::apply::Delay,
 }
 
+/// The error returned by the [checkout()][crate::checkout()] function.
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum Error<E: std::error::Error + Send + Sync + 'static> {
     #[error("Could not convert path to UTF8: {}", .path)]
     IllformedUtf8 { path: BString },
@@ -70,6 +84,16 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
         oid: gix_hash::ObjectId,
         path: std::path::PathBuf,
     },
+    #[error(transparent)]
+    Filter(#[from] gix_filter::pipeline::convert::to_worktree::Error),
+    #[error(transparent)]
+    FilterListDelayed(#[from] gix_filter::driver::delayed::list::Error),
+    #[error(transparent)]
+    FilterFetchDelayed(#[from] gix_filter::driver::delayed::fetch::Error),
+    #[error("The entry at path '{rela_path}' was listed as delayed by the filter process, but we never passed it")]
+    FilterPathUnknown { rela_path: BString },
+    #[error("The following paths were delayed and apparently forgotten to be processed by the filter driver: ")]
+    FilterPathsUnprocessed { rela_paths: Vec<BString> },
 }
 
 mod chunk;

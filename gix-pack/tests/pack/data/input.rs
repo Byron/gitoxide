@@ -49,7 +49,7 @@ mod lookup_ref_delta_objects {
     fn validate_pack_offsets(entries: &[input::Entry]) {
         let mut offset = 0;
         for (eid, entry) in entries.iter().enumerate() {
-            assert_eq!(entry.pack_offset, offset, "invalid pack offset for entry {}", eid);
+            assert_eq!(entry.pack_offset, offset, "invalid pack offset for entry {eid}");
             offset += entry.bytes_in_pack();
         }
     }
@@ -84,7 +84,7 @@ mod lookup_ref_delta_objects {
         let third_entry = entry(delta_ofs(second.bytes_in_pack()), D_C);
         let fourth_entry = entry(delta_ofs(third_entry.bytes_in_pack()), D_D);
         let fifth = entry(delta_ref(second_id), D_A);
-        let input = compute_offsets(vec![first.clone(), second, third_entry, fourth_entry, fifth]);
+        let input = compute_offsets(vec![first, second, third_entry, fourth_entry, fifth]);
 
         let mut calls = 0;
         let input_entries = into_results_iter(input);
@@ -185,7 +185,7 @@ mod lookup_ref_delta_objects {
         let actual = LookupRefDeltaObjectsIter::new(input.into_iter(), |_, _| unreachable!("won't be called"))
             .collect::<Vec<_>>();
         for (actual, expected) in actual.into_iter().zip(expected.into_iter()) {
-            assert_eq!(format!("{:?}", actual), format!("{:?}", expected));
+            assert_eq!(format!("{actual:?}"), format!("{expected:?}"));
         }
     }
 }

@@ -67,12 +67,12 @@ mod encoding {
 mod encode_to_git {
     use bstr::ByteSlice;
     use gix_filter::worktree;
-    use gix_filter::worktree::encode_to_git::RoundTrip;
+    use gix_filter::worktree::encode_to_git::RoundTripCheck;
 
     #[test]
     fn simple() -> crate::Result {
         let input = &b"hello"[..];
-        for round_trip in [RoundTrip::Ignore, RoundTrip::Validate] {
+        for round_trip in [RoundTripCheck::Skip, RoundTripCheck::Fail] {
             let mut buf = Vec::new();
             worktree::encode_to_git(input, encoding_rs::UTF_8, &mut buf, round_trip)?;
             assert_eq!(buf.as_bstr(), input)
@@ -84,7 +84,7 @@ mod encode_to_git {
 mod encode_to_worktree {
     use bstr::ByteSlice;
     use gix_filter::worktree;
-    use gix_filter::worktree::encode_to_git::RoundTrip;
+    use gix_filter::worktree::encode_to_git::RoundTripCheck;
 
     #[test]
     fn shift_jis() -> crate::Result {
@@ -93,7 +93,7 @@ mod encode_to_worktree {
         worktree::encode_to_worktree(input.as_bytes(), encoding_rs::SHIFT_JIS, &mut buf)?;
 
         let mut re_encoded = Vec::new();
-        worktree::encode_to_git(&buf, encoding_rs::SHIFT_JIS, &mut re_encoded, RoundTrip::Validate)?;
+        worktree::encode_to_git(&buf, encoding_rs::SHIFT_JIS, &mut re_encoded, RoundTripCheck::Fail)?;
 
         assert_eq!(re_encoded.as_bstr(), input, "this should be round-trippable too");
         Ok(())

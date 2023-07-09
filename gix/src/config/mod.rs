@@ -132,6 +132,8 @@ pub mod checkout_options {
         CheckoutWorkers(#[from] super::checkout::workers::Error),
         #[error(transparent)]
         Attributes(#[from] super::attribute_stack::Error),
+        #[error(transparent)]
+        FilterPipelineOptions(#[from] crate::filter::pipeline::options::Error),
     }
 }
 
@@ -289,6 +291,23 @@ pub mod key {
 
     /// A generic key error which will also contain a value.
     pub type GenericErrorWithValue<E = gix_config::value::Error> = Error<E, 'v', 'i'>;
+}
+
+///
+pub mod encoding {
+    use crate::bstr::BString;
+
+    /// The error produced when failing to parse the `core.checkRoundTripEncoding` key.
+    #[derive(Debug, thiserror::Error)]
+    #[error("The encoding named '{encoding}' seen in key '{key}={value}' is unsupported")]
+    pub struct Error {
+        /// The configuration key that contained the value.
+        pub key: BString,
+        /// The value that was assigned to `key`.
+        pub value: BString,
+        /// The encoding that failed.
+        pub encoding: BString,
+    }
 }
 
 ///

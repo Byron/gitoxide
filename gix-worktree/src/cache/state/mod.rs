@@ -93,25 +93,30 @@ impl State {
         &self,
         index: &gix_index::State,
         paths: &gix_index::PathStorageRef,
-        ignore_source: ignore::Source,
         case: Case,
     ) -> Vec<PathIdMapping> {
         let a1_backing;
         let a2_backing;
         let names = match self {
-            State::IgnoreStack(v) => {
-                a1_backing = [(v.exclude_file_name_for_directories.as_bytes().as_bstr(), true)];
+            State::IgnoreStack(ignore) => {
+                a1_backing = [(
+                    ignore.exclude_file_name_for_directories.as_bytes().as_bstr(),
+                    Some(ignore.source),
+                )];
                 a1_backing.as_ref()
             }
             State::AttributesAndIgnoreStack { ignore, .. } => {
                 a2_backing = [
-                    (ignore.exclude_file_name_for_directories.as_bytes().as_bstr(), true),
-                    (".gitattributes".into(), false),
+                    (
+                        ignore.exclude_file_name_for_directories.as_bytes().as_bstr(),
+                        Some(ignore.source),
+                    ),
+                    (".gitattributes".into(), None),
                 ];
                 a2_backing.as_ref()
             }
-            State::CreateDirectoryAndAttributesStack { .. } => {
-                a1_backing = [(".gitattributes".into(), true)];
+            State::CreateDirectoryAndAttributesStack { .. } | State::AttributesStack(_) => {
+                a1_backing = [(".gitattributes".into(), None)];
                 a1_backing.as_ref()
             }
         };
@@ -126,15 +131,15 @@ impl State {
                 // there won't be a stage 0.
                 if entry.mode == gix_index::entry::Mode::FILE && (entry.stage() == 0 || entry.stage() == 2) {
                     let basename = path.rfind_byte(b'/').map_or(path, |pos| path[pos + 1..].as_bstr());
-                    let is_ignore = names.iter().find_map(|t| {
+                    let ignore_source = names.iter().find_map(|t| {
                         match case {
                             Case::Sensitive => basename == t.0,
                             Case::Fold => basename.eq_ignore_ascii_case(t.0),
                         }
                         .then_some(t.1)
                     })?;
-                    if is_ignore {
-                        match ignore_source {
+                    if let Some(source) = ignore_source {
+                        match source {
                             ignore::Source::IdMapping => {}
                             ignore::Source::WorktreeThenIdMappingIfNotSkipped => {
                                 // See https://github.com/git/git/blob/master/dir.c#L912:L912
@@ -156,7 +161,7 @@ impl State {
         match self {
             State::IgnoreStack(v) => v,
             State::AttributesAndIgnoreStack { ignore, .. } => ignore,
-            State::CreateDirectoryAndAttributesStack { .. } => {
+            State::AttributesStack(_) | State::CreateDirectoryAndAttributesStack { .. } => {
                 unreachable!("BUG: must not try to check excludes without it being setup")
             }
         }
@@ -164,7 +169,8 @@ impl State {
 
     pub(crate) fn attributes_or_panic(&self) -> &Attributes {
         match self {
-            State::AttributesAndIgnoreStack { attributes, .. }
+            State::AttributesStack(attributes)
+            | State::AttributesAndIgnoreStack { attributes, .. }
             | State::CreateDirectoryAndAttributesStack { attributes, .. } => attributes,
             State::IgnoreStack(_) => {
                 unreachable!("BUG: must not try to check excludes without it being setup")

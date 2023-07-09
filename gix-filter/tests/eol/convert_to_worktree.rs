@@ -21,11 +21,11 @@ fn no_conversion_if_configuration_does_not_allow_it() {
     for digest in [AttributesDigest::Text, AttributesDigest::TextAuto] {
         for config in [
             Configuration {
-                auto_crlf: None,
+                auto_crlf: eol::AutoCrlf::Input,
                 eol: Some(Mode::CrLf),
             },
             Configuration {
-                auto_crlf: Some(false),
+                auto_crlf: eol::AutoCrlf::Disabled,
                 eol: Some(Mode::Lf),
             },
         ] {

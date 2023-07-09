@@ -1,1 +1,5 @@
 make_ignore_and_attributes_setup.tar.xz
+make_mixed_without_submodules.tar.xz
+make_mixed_without_submodules_and_symlinks.tar.xz
+status_unchanged.tar.xz
+status_changed.tar.xz

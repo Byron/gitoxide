@@ -62,6 +62,10 @@ pub fn checkout_exclusive(
         overwrite_existing: false,
         keep_going,
         thread_limit,
+        filters: repo
+            .as_ref()
+            .and_then(|repo| repo.filter_pipeline(None).ok().map(|t| t.0.into_parts().0))
+            .unwrap_or_default(),
         ..Default::default()
     };
 
@@ -79,6 +83,8 @@ pub fn checkout_exclusive(
         collisions,
         files_updated,
         bytes_written,
+        delayed_paths_unknown,
+        delayed_paths_unprocessed,
     } = match repo {
         Some(repo) => gix::worktree::checkout(
             &mut index,
@@ -129,7 +135,8 @@ pub fn checkout_exclusive(
             .then(|| {
                 format!(
                     " of {}",
-                    entries_for_checkout.saturating_sub(errors.len() + collisions.len())
+                    entries_for_checkout
+                        .saturating_sub(errors.len() + collisions.len() + delayed_paths_unprocessed.len())
                 )
             })
             .unwrap_or_default(),
@@ -138,20 +145,38 @@ pub fn checkout_exclusive(
             .display(bytes_written as usize, None, None)
     ));
 
-    if !(collisions.is_empty() && errors.is_empty()) {
-        let mut messages = Vec::new();
-        if !errors.is_empty() {
-            messages.push(format!("kept going through {} errors(s)", errors.len()));
-            for record in errors {
-                writeln!(err, "{}: {}", record.path, record.error).ok();
-            }
+    let mut messages = Vec::new();
+    if !errors.is_empty() {
+        messages.push(format!("kept going through {} errors(s)", errors.len()));
+        for record in errors {
+            writeln!(err, "{}: {}", record.path, record.error).ok();
         }
-        if !collisions.is_empty() {
-            messages.push(format!("encountered {} collision(s)", collisions.len()));
-            for col in collisions {
-                writeln!(err, "{}: collision ({:?})", col.path, col.error_kind).ok();
-            }
+    }
+    if !collisions.is_empty() {
+        messages.push(format!("encountered {} collision(s)", collisions.len()));
+        for col in collisions {
+            writeln!(err, "{}: collision ({:?})", col.path, col.error_kind).ok();
         }
+    }
+    if !delayed_paths_unknown.is_empty() {
+        messages.push(format!(
+            "A delayed process provided us with {} paths we never sent to it",
+            delayed_paths_unknown.len()
+        ));
+        for unknown in delayed_paths_unknown {
+            writeln!(err, "{unknown}: unknown").ok();
+        }
+    }
+    if !delayed_paths_unprocessed.is_empty() {
+        messages.push(format!(
+            "A delayed process forgot to process {} paths",
+            delayed_paths_unprocessed.len()
+        ));
+        for unprocessed in delayed_paths_unprocessed {
+            writeln!(err, "{unprocessed}: unprocessed and forgotten").ok();
+        }
+    }
+    if !messages.is_empty() {
         bail!(
             "One or more errors occurred - checkout is incomplete: {}",
             messages.join(", ")

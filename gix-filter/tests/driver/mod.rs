@@ -4,7 +4,7 @@ use std::path::PathBuf;
 static DRIVER: Lazy<PathBuf> = Lazy::new(|| {
     let mut cargo = std::process::Command::new(env!("CARGO"));
     let res = cargo
-        .args(["build", "--example", "ident"])
+        .args(["build", "--example", "arrow"])
         .status()
         .expect("cargo should run fine");
     assert!(res.success(), "cargo invocation should be successful");
@@ -15,7 +15,7 @@ static DRIVER: Lazy<PathBuf> = Lazy::new(|| {
         .expect("first parent in target dir")
         .join("debug")
         .join("examples")
-        .join(if cfg!(windows) { "ident.exe" } else { "ident" });
+        .join(if cfg!(windows) { "arrow.exe" } else { "arrow" });
     assert!(path.is_file(), "Expecting driver to be located at {path:?}");
     path
 });
@@ -55,7 +55,7 @@ mod shutdown {
     fn ignore_when_waiting() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
         let driver = driver_with_process();
-        let client = extract_client(state.process(&driver, Operation::Clean, "does not matter".into())?);
+        let client = extract_client(state.maybe_launch_process(&driver, Operation::Clean, "does not matter".into())?);
 
         assert!(
             client.invoke("wait-1-s", None, &b""[..])?.is_success(),
@@ -72,7 +72,7 @@ mod shutdown {
     }
 }
 
-mod apply {
+pub(crate) mod apply {
     use crate::driver::shutdown::extract_client;
     use crate::driver::DRIVER;
     use bstr::ByteSlice;
@@ -93,7 +93,7 @@ mod apply {
             exe = exe.replace('\\', "/");
         }
         Driver {
-            name: "ident".into(),
+            name: "arrow".into(),
             clean: Some((exe.clone() + " clean %f").into()),
             smudge: Some((exe.clone() + " smudge %f").into()),
             process: Some((exe + " process").into()),
@@ -107,12 +107,22 @@ mod apply {
         let mut driver = driver_no_process();
         driver.smudge = None;
         assert!(state
-            .apply(&driver, &b""[..], Operation::Smudge, context_from_path("ignored"))?
+            .apply(
+                &driver,
+                &mut std::io::empty(),
+                Operation::Smudge,
+                context_from_path("ignored")
+            )?
             .is_none());
 
         driver.clean = None;
         assert!(state
-            .apply(&driver, &b""[..], Operation::Clean, context_from_path("ignored"))?
+            .apply(
+                &driver,
+                &mut std::io::empty(),
+                Operation::Clean,
+                context_from_path("ignored")
+            )?
             .is_none());
         Ok(())
     }
@@ -123,14 +133,24 @@ mod apply {
         let driver = driver_with_process();
         assert!(
             matches!(
-                state.apply(&driver, &b""[..], Operation::Smudge, context_from_path("fail")),
+                state.apply(
+                    &driver,
+                    &mut std::io::empty(),
+                    Operation::Smudge,
+                    context_from_path("fail")
+                ),
                 Err(gix_filter::driver::apply::Error::ProcessInvoke { .. })
             ),
             "cannot invoke if failure is requested"
         );
 
         let mut filtered = state
-            .apply(&driver, &b""[..], Operation::Smudge, context_from_path("fine"))
+            .apply(
+                &driver,
+                &mut std::io::empty(),
+                Operation::Smudge,
+                context_from_path("fine"),
+            )
             .expect("process restarts fine")
             .expect("filter applied");
         let mut buf = Vec::new();
@@ -143,15 +163,20 @@ mod apply {
     fn process_status_abort_disables_capability() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
         let driver = driver_with_process();
-        let client = extract_client(state.process(&driver, Operation::Clean, "does not matter".into())?);
+        let client = extract_client(state.maybe_launch_process(&driver, Operation::Clean, "does not matter".into())?);
 
         assert!(client.invoke("next-smudge-aborts", None, &b""[..])?.is_success());
         assert!(
-            matches!(state.apply(&driver, &b""[..], Operation::Smudge, context_from_path("any")), Err(driver::apply::Error::ProcessStatus {status: driver::process::Status::Named(name), ..}) if name == "abort")
+            matches!(state.apply(&driver, &mut std::io::empty(), Operation::Smudge, context_from_path("any")), Err(driver::apply::Error::ProcessStatus {status: driver::process::Status::Named(name), ..}) if name == "abort")
         );
         assert!(
             state
-                .apply(&driver, &b""[..], Operation::Smudge, context_from_path("any"))?
+                .apply(
+                    &driver,
+                    &mut std::io::empty(),
+                    Operation::Smudge,
+                    context_from_path("any")
+                )?
                 .is_none(),
             "smudge is now disabled permanently"
         );
@@ -162,7 +187,7 @@ mod apply {
     fn process_status_strange_shuts_down_process() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
         let driver = driver_with_process();
-        let client = extract_client(state.process(&driver, Operation::Clean, "does not matter".into())?);
+        let client = extract_client(state.maybe_launch_process(&driver, Operation::Clean, "does not matter".into())?);
 
         assert!(client
             .invoke(
@@ -172,10 +197,10 @@ mod apply {
             )?
             .is_success());
         assert!(
-            matches!(state.apply(&driver, &b""[..], Operation::Smudge, context_from_path("any")), Err(driver::apply::Error::ProcessStatus {status: driver::process::Status::Named(name), ..}) if name == "send-term-signal")
+            matches!(state.apply(&driver, &mut std::io::empty(), Operation::Smudge, context_from_path("any")), Err(driver::apply::Error::ProcessStatus {status: driver::process::Status::Named(name), ..}) if name == "send-term-signal")
         );
         let mut filtered = state
-            .apply(&driver, &b"hi\n"[..], Operation::Smudge, context_from_path("any"))?
+            .apply(&driver, &mut &b"hi\n"[..], Operation::Smudge, context_from_path("any"))?
             .expect("the process won't fail as it got restarted");
         let mut buf = Vec::new();
         filtered.read_to_end(&mut buf)?;
@@ -192,7 +217,7 @@ mod apply {
         let mut filtered = state
             .apply(
                 &driver,
-                &b"hello\nthere\n"[..],
+                &mut &b"hello\nthere\n"[..],
                 driver::Operation::Smudge,
                 context_from_path("do/fail"),
             )?
@@ -213,7 +238,7 @@ mod apply {
         let mut filtered = state
             .apply(
                 &driver,
-                &b"hello\nthere\n"[..],
+                &mut &b"hello\nthere\n"[..],
                 driver::Operation::Clean,
                 context_from_path("do/fail"),
             )?
@@ -244,7 +269,7 @@ mod apply {
             let mut filtered = state
                 .apply(
                     &driver,
-                    input.as_bytes(),
+                    &mut input.as_bytes(),
                     driver::Operation::Smudge,
                     context_from_path("some/path.txt"),
                 )?
@@ -255,14 +280,14 @@ mod apply {
             assert_eq!(
                 buf.as_bstr(),
                 "➡hello\n➡there\n",
-                "ident applies indentation in smudge mode"
+                "arrow applies indentation in smudge mode"
             );
 
             let smudge_result = buf.clone();
             let mut filtered = state
                 .apply(
                     &driver,
-                    smudge_result.as_bytes(),
+                    &mut smudge_result.as_bytes(),
                     driver::Operation::Clean,
                     context_from_path("some/path.txt"),
                 )?
@@ -286,7 +311,7 @@ mod apply {
         let input = "hello\nthere\n";
         let process_key = extract_delayed_key(state.apply_delayed(
             &driver,
-            input.as_bytes(),
+            &mut input.as_bytes(),
             driver::Operation::Smudge,
             Delay::Allow,
             context_from_path("sub/a.txt"),
@@ -307,7 +332,7 @@ mod apply {
         assert_eq!(
             buf.as_bstr(),
             "➡hello\n➡there\n",
-            "ident applies indentation also in delayed mode"
+            "arrow applies indentation also in delayed mode"
         );
 
         let paths = state.list_delayed_paths(&process_key)?;
@@ -315,7 +340,7 @@ mod apply {
 
         let process_key = extract_delayed_key(state.apply_delayed(
             &driver,
-            buf.as_slice(),
+            &mut buf.as_bytes(),
             driver::Operation::Clean,
             Delay::Allow,
             context_from_path("sub/b.txt"),
@@ -354,7 +379,7 @@ mod apply {
             Some(apply::MaybeDelayed::Delayed(key)) => key,
         }
     }
-    fn context_from_path(path: &str) -> apply::Context<'_> {
+    fn context_from_path(path: &str) -> apply::Context<'_, '_> {
         apply::Context {
             rela_path: path.into(),
             ref_name: None,

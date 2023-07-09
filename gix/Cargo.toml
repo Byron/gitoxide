@@ -123,6 +123,7 @@ gix-validate = { version = "^0.7.6", path = "../gix-validate" }
 gix-sec = { version = "^0.8.3", path = "../gix-sec" }
 gix-date = { version = "^0.7.0", path = "../gix-date" }
 gix-refspec = { version = "^0.13.0", path = "../gix-refspec" }
+gix-filter = { version = "^0.0.0", path = "../gix-filter" }
 
 gix-config = { version = "^0.25.1", path = "../gix-config" }
 gix-odb = { version = "^0.49.1", path = "../gix-odb" }

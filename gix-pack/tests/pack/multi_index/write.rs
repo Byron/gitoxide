@@ -12,7 +12,7 @@ fn from_paths() -> crate::Result {
         .filter_map(|r| {
             r.ok()
                 .map(|e| e.path())
-                .filter(|p| p.extension().and_then(|e| e.to_str()).unwrap_or("") == "idx")
+                .filter(|p| p.extension().and_then(std::ffi::OsStr::to_str).unwrap_or("") == "idx")
         })
         .collect::<Vec<_>>();
     assert_eq!(input_indices.len(), 3);

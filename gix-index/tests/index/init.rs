@@ -40,14 +40,13 @@ fn compare_states(actual: &State, expected: &State, fixture: &str) {
     assert_eq!(
         actual.entries().len(),
         expected.entries().len(),
-        "entry count mismatch in {:?}",
-        fixture
+        "entry count mismatch in {fixture:?}",
     );
 
     for (a, e) in actual.entries().iter().zip(expected.entries()) {
-        assert_eq!(a.id, e.id, "entry id mismatch in {:?}", fixture);
-        assert_eq!(a.flags, e.flags, "entry flags mismatch in {:?}", fixture);
-        assert_eq!(a.mode, e.mode, "entry mode mismatch in {:?}", fixture);
-        assert_eq!(a.path(actual), e.path(expected), "entry path mismatch in {:?}", fixture);
+        assert_eq!(a.id, e.id, "entry id mismatch in {fixture:?}");
+        assert_eq!(a.flags, e.flags, "entry flags mismatch in {fixture:?}");
+        assert_eq!(a.mode, e.mode, "entry mode mismatch in {fixture:?}");
+        assert_eq!(a.path(actual), e.path(expected), "entry path mismatch in {fixture:?}");
     }
 }

@@ -37,6 +37,8 @@ pub enum State {
         /// State to handle exclusion information
         ignore: state::Ignore,
     },
+    /// Used when only attributes are required, typically with fully virtual worktrees.
+    AttributesStack(state::Attributes),
     /// Used when providing worktree status information.
     IgnoreStack(state::Ignore),
 }

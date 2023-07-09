@@ -181,8 +181,7 @@ fn compare_states_against_baseline(
     assert_eq!(
         actual.tree(),
         expected.tree(),
-        "tree extension mismatch, actual vs expected in {:?}",
-        fixture
+        "tree extension mismatch, actual vs expected in {fixture:?}"
     );
 }
 
@@ -193,8 +192,7 @@ fn compare_states(actual: &State, actual_version: Version, expected: &State, opt
     assert_eq!(
         actual.version(),
         actual_version,
-        "version mismatch, read vs written, in {:?}",
-        fixture
+        "version mismatch, read vs written, in {fixture:?}"
     );
     assert_eq!(
         actual.tree(),
@@ -202,8 +200,7 @@ fn compare_states(actual: &State, actual_version: Version, expected: &State, opt
             .extensions
             .should_write(extension::tree::SIGNATURE)
             .and_then(|_| expected.tree()),
-        "tree extension mismatch, actual vs option in {:?}",
-        fixture
+        "tree extension mismatch, actual vs option in {fixture:?}"
     );
 
     // As `write_to` does / should not mutate we can test those properties here.
@@ -211,37 +208,28 @@ fn compare_states(actual: &State, actual_version: Version, expected: &State, opt
     assert_eq!(
         actual.version(),
         expected.version(),
-        "version mismatch, actual vs expected, in {:?}",
-        fixture
+        "version mismatch, actual vs expected, in {fixture:?}"
     );
     assert_eq!(
         actual.is_sparse(),
         expected.is_sparse(),
-        "sparse index entries extension mismatch in {:?}",
-        fixture
+        "sparse index entries extension mismatch in {fixture:?}"
     );
     assert_eq!(
         actual.entries().len(),
         expected.entries().len(),
-        "entry count mismatch in {:?}",
-        fixture
+        "entry count mismatch in {fixture:?}",
     );
-    assert_eq!(
-        actual.entries(),
-        expected.entries(),
-        "entries mismatch in {:?}",
-        fixture
-    );
+    assert_eq!(actual.entries(), expected.entries(), "entries mismatch in {fixture:?}",);
     assert_eq!(
         actual.path_backing(),
         expected.path_backing(),
-        "path_backing mismatch in {:?}",
-        fixture
+        "path_backing mismatch in {fixture:?}",
     );
 }
 
 fn compare_raw_bytes(generated: &[u8], expected: &[u8], fixture: &str) {
-    assert_eq!(generated.len(), expected.len(), "file length mismatch in {:?}", fixture);
+    assert_eq!(generated.len(), expected.len(), "file length mismatch in {fixture:?}");
 
     let print_range = 10;
     for (index, (a, b)) in generated.iter().zip(expected.iter()).enumerate() {

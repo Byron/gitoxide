@@ -11,7 +11,7 @@ pub enum Mode {
     Ignore,
 }
 
-/// Shutdown
+/// Lifecycle
 impl State {
     /// Handle long-running processes according to `mode`. If an error occours, all remaining processes will be ignored automatically.
     /// Return a list of `(process, Option<status>)`

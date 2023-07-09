@@ -45,7 +45,7 @@ mod new_from_header {
                     "it should consume all provided bytes"
                 );
                 assert_eq!(
-                    new_entry.decompressed_size, entry.decompressed_size as u64,
+                    new_entry.decompressed_size, entry.decompressed_size,
                     "decoded size must match"
                 );
                 assert_eq!(new_entry.header, entry.header, "headers match after roundtrip");
@@ -131,7 +131,7 @@ mod new_from_header {
             gix_hash::Kind::Sha1,
         )?;
         let mut num_objects = 0;
-        while let Some(entry) = iter.next() {
+        for entry in iter.by_ref() {
             let entry = entry?;
             num_objects += 1;
             assert!(

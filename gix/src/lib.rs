@@ -65,6 +65,7 @@
 //! * [`git2::Repository::revparse()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revparse) ➡ [`gix::Repository::rev_parse()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.rev_parse)
 //! * [`git2::Repository::revparse_single()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revparse_single) ➡ [`gix::Repository::rev_parse_single()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.rev_parse_single)
 //! * [`git2::Repository::revwalk()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revwalk) ➡ [`gix::Repository::rev_walk()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.rev_walk)
+//! * [`git2::build::CheckoutBuilder::disable_filters()](https://docs.rs/git2/0.17.2/git2/build/struct.CheckoutBuilder.html#method.disable_filters) ➡ ❌ *(filters are always applied during checkouts)*
 //!
 //! ## Feature Flags
 #![cfg_attr(
@@ -113,9 +114,6 @@ pub use gix_utils as utils;
 pub use hash::{oid, ObjectId};
 
 pub mod interrupt;
-
-///
-pub mod attributes;
 
 mod ext;
 ///
@@ -256,6 +254,8 @@ pub mod mailmap;
 pub mod worktree;
 
 pub mod revision;
+
+pub mod filter;
 
 ///
 pub mod remote;

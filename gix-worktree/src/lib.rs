@@ -52,6 +52,7 @@ pub(crate) type PathIdMapping = (BString, gix_hash::ObjectId);
 
 ///
 pub mod cache;
+///
 pub mod checkout;
 pub use checkout::function::checkout;
 

@@ -87,4 +87,16 @@ mod list {
             "otherwise the basename is recomputed, case folding is effective"
         );
     }
+
+    #[test]
+    fn from_file() {
+        let mut buf = Vec::new();
+        for path in [
+            Path::new(".").join("non-existing-dir").join("pattern-file"),
+            Path::new("file").to_owned(),
+        ] {
+            let list = List::<Dummy>::from_file(path, None, false, &mut buf).expect("no io error");
+            assert!(list.is_none(), "the file does not exist");
+        }
+    }
 }

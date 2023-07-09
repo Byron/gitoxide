@@ -1,6 +1,7 @@
 use gix::Repository;
 
 mod config;
+mod filter;
 mod object;
 mod open;
 mod reference;

@@ -1282,6 +1282,7 @@ dependencies = [
  "gix-diff",
  "gix-discover 0.21.1",
  "gix-features 0.31.1",
+ "gix-filter",
  "gix-fs 0.3.0",
  "gix-glob 0.9.1",
  "gix-hash 0.11.3",
@@ -1651,6 +1652,7 @@ version = "0.0.0"
 dependencies = [
  "bstr",
  "encoding_rs",
+ "gix-attributes 0.14.1",
  "gix-command",
  "gix-hash 0.11.3",
  "gix-object 0.32.0",
@@ -1659,7 +1661,9 @@ dependencies = [
  "gix-quote 0.4.5",
  "gix-testtools",
  "gix-trace 0.1.2",
+ "gix-worktree 0.21.1",
  "once_cell",
+ "smallvec",
  "thiserror",
 ]
 
@@ -2486,6 +2490,7 @@ dependencies = [
  "filetime",
  "gix-attributes 0.14.1",
  "gix-features 0.31.1",
+ "gix-filter",
  "gix-fs 0.3.0",
  "gix-glob 0.9.1",
  "gix-hash 0.11.3",
@@ -2496,6 +2501,7 @@ dependencies = [
  "gix-path 0.8.3",
  "gix-testtools",
  "io-close",
+ "once_cell",
  "serde",
  "symlink",
  "tempfile",

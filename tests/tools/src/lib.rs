@@ -435,7 +435,7 @@ fn scripted_fixture_read_only_with_args_inner(
     let failure_marker = script_result_directory.join("_invalid_state_due_to_script_failure_");
     if force_run || !script_result_directory.is_dir() || failure_marker.is_file() {
         if failure_marker.is_file() {
-            std::fs::remove_dir_all(&script_result_directory)?;
+            std::fs::remove_dir_all(&script_result_directory).map_err(|err| format!("Failed to remove '{script_result_directory:?}', please try to do that by hand. Original error: {err}"))?
         }
         std::fs::create_dir_all(&script_result_directory)?;
         match extract_archive(&archive_file_path, &script_result_directory, script_identity) {
@@ -450,6 +450,8 @@ fn scripted_fixture_read_only_with_args_inner(
             Err(err) => {
                 if err.kind() != std::io::ErrorKind::NotFound {
                     eprintln!("failed to extract '{}': {}", archive_file_path.display(), err);
+                    std::fs::remove_dir_all(&script_result_directory).map_err(|err| format!("Failed to remove '{script_result_directory:?}', please try to do that by hand. Original error: {err}"))?;
+                    std::fs::create_dir_all(&script_result_directory)?;
                 } else if !is_excluded(&archive_file_path) {
                     eprintln!(
                         "Archive at '{}' not found, creating fixture using script '{}'",
@@ -537,10 +539,11 @@ fn is_lfs_pointer_file(path: &Path) -> bool {
 /// The `script_identity` will be baked into the soon to be created `archive` as it identitifies the script
 /// that created the contents of `source_dir`.
 fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identity: u32) -> std::io::Result<()> {
-    if is_ci::cached() {
-        return Ok(());
-    }
-    if is_excluded(archive) {
+    // on windows, we fail to remove the meta_dir and can't do anything about it, which means tests will see more
+    // in the directory than they should which makes them fail. It's probably a bad idea to generate archives on windows
+    // anyway. Either unix is portable OR no archive is created anywhere. This also means that windows users can't create
+    // archives, but that's not a deal-breaker.
+    if cfg!(windows) || is_ci::cached() || is_excluded(archive) {
         return Ok(());
     }
     if is_lfs_pointer_file(archive) {
@@ -662,6 +665,12 @@ fn extract_archive(
             std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "BUG: Could not find meta directory in our own archive",
+            )
+        })
+        .map_err(|err| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Could not extract archive at '{archive:?}': {err}"),
             )
         })?;
     if archive_identity != required_script_identity {

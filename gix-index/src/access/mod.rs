@@ -70,9 +70,43 @@ impl State {
     ///
     /// Use the index for accessing multiple stages if they exists, but at least the single matching entry.
     pub fn entry_index_by_path_and_stage(&self, path: &BStr, stage: entry::Stage) -> Option<usize> {
-        self.entries
-            .binary_search_by(|e| e.path(self).cmp(path).then_with(|| e.stage().cmp(&stage)))
-            .ok()
+        let mut stage_cmp = Ordering::Equal;
+        let idx = self
+            .entries
+            .binary_search_by(|e| {
+                let res = e.path(self).cmp(path);
+                if res.is_eq() {
+                    stage_cmp = e.stage().cmp(&stage);
+                }
+                res
+            })
+            .ok()?;
+        self.entry_index_by_idx_and_stage(path, idx, stage, stage_cmp)
+    }
+
+    fn entry_index_by_idx_and_stage(
+        &self,
+        path: &BStr,
+        idx: usize,
+        wanted_stage: entry::Stage,
+        stage_cmp: Ordering,
+    ) -> Option<usize> {
+        match stage_cmp {
+            Ordering::Greater => self.entries[..idx]
+                .iter()
+                .enumerate()
+                .rev()
+                .take_while(|(_, e)| e.path(self) == path)
+                .find_map(|(idx, e)| (e.stage() == wanted_stage).then_some(idx)),
+            Ordering::Equal => Some(idx),
+            Ordering::Less => self
+                .entries
+                .get(idx + 1..)?
+                .iter()
+                .enumerate()
+                .take_while(|(_, e)| e.path(self) == path)
+                .find_map(|(ofs, e)| (e.stage() == wanted_stage).then_some(idx + ofs + 1)),
+        }
     }
 
     /// Find the entry index in [`entries()[..upper_bound]`][State::entries()] matching the given repository-relative
@@ -99,6 +133,29 @@ impl State {
     pub fn entry_by_path_and_stage(&self, path: &BStr, stage: entry::Stage) -> Option<&Entry> {
         self.entry_index_by_path_and_stage(path, stage)
             .map(|idx| &self.entries[idx])
+    }
+
+    /// Return the entry at `path` that is either at stage 0, or at stage 2 (ours) in case of a merge conflict.
+    ///
+    /// Using this method is more efficient in comparison to doing two searches, one for stage 0 and one for stage 2.
+    pub fn entry_by_path(&self, path: &BStr) -> Option<&Entry> {
+        let mut stage_at_index = 0;
+        let idx = self
+            .entries
+            .binary_search_by(|e| {
+                let res = e.path(self).cmp(path);
+                if res.is_eq() {
+                    stage_at_index = e.stage();
+                }
+                res
+            })
+            .ok()?;
+        let idx = if stage_at_index == 0 || stage_at_index == 2 {
+            idx
+        } else {
+            self.entry_index_by_idx_and_stage(path, idx, 2, stage_at_index.cmp(&2))?
+        };
+        Some(&self.entries[idx])
     }
 
     /// Return the entry at `idx` or _panic_ if the index is out of bounds.
@@ -247,5 +304,40 @@ impl State {
     /// Obtain the fsmonitor extension.
     pub fn fs_monitor(&self) -> Option<&extension::FsMonitor> {
         self.fs_monitor.as_ref()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::{Path, PathBuf};
+
+    #[test]
+    fn entry_by_path_with_conflicting_file() {
+        let file = PathBuf::from("tests")
+            .join("fixtures")
+            .join(Path::new("loose_index").join("conflicting-file.git-index"));
+        let file = crate::File::at(file, gix_hash::Kind::Sha1, Default::default()).expect("valid file");
+        assert_eq!(
+            file.entries().len(),
+            3,
+            "we have a set of conflict entries for a single file"
+        );
+        for idx in 0..3 {
+            for wanted_stage in 1..=3 {
+                let actual_idx = file
+                    .entry_index_by_idx_and_stage(
+                        "file".into(),
+                        idx,
+                        wanted_stage,
+                        (idx + 1).cmp(&(wanted_stage as usize)),
+                    )
+                    .expect("found");
+                assert_eq!(
+                    actual_idx + 1,
+                    wanted_stage as usize,
+                    "the index and stage have a relation, and that is upheld if we search correctly"
+                );
+            }
+        }
     }
 }

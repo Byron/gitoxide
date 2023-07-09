@@ -21,5 +21,5 @@ mod stats {
     }
 }
 
-mod convert_to_git;
+pub(crate) mod convert_to_git;
 mod convert_to_worktree;

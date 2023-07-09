@@ -3,6 +3,7 @@ use std::path::Path;
 use gix_worktree::{cache, Cache};
 use tempfile::{tempdir, TempDir};
 
+#[allow(clippy::ptr_arg)]
 fn panic_on_find<'buf>(_oid: &gix_hash::oid, _buf: &'buf mut Vec<u8>) -> std::io::Result<gix_object::BlobRef<'buf>> {
     unreachable!("find should not be called")
 }
@@ -64,7 +65,7 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
     let forbidden = tmp.path().join("forbidden");
     std::fs::create_dir(&forbidden)?;
     symlink::symlink_dir(&forbidden, tmp.path().join("link-to-dir"))?;
-    std::fs::write(tmp.path().join("file-in-dir"), &[])?;
+    std::fs::write(tmp.path().join("file-in-dir"), [])?;
 
     for dirname in &["file-in-dir", "link-to-dir"] {
         if let cache::State::CreateDirectoryAndAttributesStack {
@@ -73,7 +74,7 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
         {
             *unlink_on_collision = false;
         }
-        let relative_path = format!("{}/file", dirname);
+        let relative_path = format!("{dirname}/file");
         assert_eq!(
             cache
                 .at_path(&relative_path, Some(false), panic_on_find)
@@ -95,7 +96,7 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
         {
             *unlink_on_collision = true;
         }
-        let relative_path = format!("{}/file", dirname);
+        let relative_path = format!("{dirname}/file");
         let path = cache.at_path(&relative_path, Some(false), panic_on_find)?.path();
         assert!(path.parent().unwrap().is_dir(), "directory was forcefully created");
         assert!(!path.exists());
