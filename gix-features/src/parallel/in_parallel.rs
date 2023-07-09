@@ -102,6 +102,80 @@ where
     })
 }
 
+/// Read items from `input` and `consume` them in multiple threads,
+/// whose output output is collected by a `reducer`. Its task is to
+/// aggregate these outputs into the final result returned by this function with the benefit of not having to be thread-safe.
+/// Caall `finalize` to finish the computation, once per thread, if there was no error sending results earlier.
+///
+/// * if `thread_limit` is `Some`, the given amount of threads will be used. If `None`, all logical cores will be used.
+/// * `new_thread_state(thread_number) -> State` produces thread-local state once per thread to be based to `consume`
+/// * `consume(Item, &mut State) -> Output` produces an output given an input obtained by `input` along with mutable state initially
+///   created by `new_thread_state(…)`.
+/// * `finalize(State) -> Output` is called to potentially process remaining work that was placed in `State`.
+/// * For `reducer`, see the [`Reduce`] trait
+pub fn in_parallel_with_finalize<I, S, O, R>(
+    input: impl Iterator<Item = I> + Send,
+    thread_limit: Option<usize>,
+    new_thread_state: impl FnOnce(usize) -> S + Send + Clone,
+    consume: impl FnMut(I, &mut S) -> O + Send + Clone,
+    finalize: impl FnOnce(S) -> O + Send + Clone,
+    mut reducer: R,
+) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
+where
+    R: Reduce<Input = O>,
+    I: Send,
+    O: Send,
+{
+    let num_threads = num_threads(thread_limit);
+    std::thread::scope(move |s| {
+        let receive_result = {
+            let (send_input, receive_input) = crossbeam_channel::bounded::<I>(num_threads);
+            let (send_result, receive_result) = crossbeam_channel::bounded::<O>(num_threads);
+            for thread_id in 0..num_threads {
+                std::thread::Builder::new()
+                    .name(format!("gitoxide.in_parallel.produce.{thread_id}"))
+                    .spawn_scoped(s, {
+                        let send_result = send_result.clone();
+                        let receive_input = receive_input.clone();
+                        let new_thread_state = new_thread_state.clone();
+                        let mut consume = consume.clone();
+                        let finalize = finalize.clone();
+                        move || {
+                            let mut state = new_thread_state(thread_id);
+                            let mut can_send = true;
+                            for item in receive_input {
+                                if send_result.send(consume(item, &mut state)).is_err() {
+                                    can_send = false;
+                                    break;
+                                }
+                            }
+                            if can_send {
+                                send_result.send(finalize(state)).ok();
+                            }
+                        }
+                    })
+                    .expect("valid name");
+            }
+            std::thread::Builder::new()
+                .name("gitoxide.in_parallel.feed".into())
+                .spawn_scoped(s, move || {
+                    for item in input {
+                        if send_input.send(item).is_err() {
+                            break;
+                        }
+                    }
+                })
+                .expect("valid name");
+            receive_result
+        };
+
+        for item in receive_result {
+            drop(reducer.feed(item)?);
+        }
+        reducer.finalize()
+    })
+}
+
 /// An experiment to have fine-grained per-item parallelization with built-in aggregation via thread state.
 /// This is only good for operations where near-random access isn't detrimental, so it's not usually great
 /// for file-io as it won't make use of sorted inputs well.
