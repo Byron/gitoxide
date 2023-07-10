@@ -1,24 +1,25 @@
 #!/bin/sh
+# A sample hook to check commit messages created by `git commit`
+################################################################
 #
-# An example hook script to check the commit log message.
-# Called by "git commit" with one argument, the name of the file
-# that has the commit message.  The hook should exit with non-zero
-# status after issuing an appropriate message if it wants to stop the
-# commit.  The hook is allowed to edit the commit message file.
+# This example script checks commit messages for duplicate `Signed-off-by`
+# lines and rejects the commit if these are present.
 #
-# To enable this hook, rename this file to "commit-msg".
-
-# Uncomment the below to add a Signed-off-by line to the message.
-# Doing this in a hook is a bad idea in general, but the prepare-commit-msg
-# hook is more suited to it.
+# It is called by "git commit" with a single argument: the name of the file
+# that contains the final commit message, which would be used in the commit.
+# A a non-zero exit status after issuing an appropriate message stops the operation.
+# The hook is allowed to edit the commit message file by rewriting the file
+# containing it.
 #
-# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
-# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
+# To enable this hook remove the `.sample` suffix from this file entirely.
 
-# This example catches duplicate Signed-off-by lines.
-
-test "" = "$(grep '^Signed-off-by: ' "$1" |
-	 sort | uniq -c | sed -e '/^[ 	]*1[ 	]/d')" || {
-	echo >&2 Duplicate Signed-off-by lines.
+# Check for duplicate Signed-off-by lines in the commit message.
+# The following command uses grep to find lines starting with "Signed-off-by: "
+# in the commit message file specified by the first argument `$1`.
+# It then sorts the lines, counts the number of occurrences of each line,
+# and removes any lines that occur only once.
+# If there are any remaining lines, it means there are duplicate Signed-off-by lines.
+test "$(grep '^Signed-off-by: ' "$1" | sort | uniq -c | sed -e '/^[ 	]*1[ 	]/d')" = "" || {
+	echo "Remove duplicate Signed-off-by lines and repeat the commit." 1>&2
 	exit 1
 }

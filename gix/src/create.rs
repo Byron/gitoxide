@@ -45,9 +45,8 @@ const TPL_HOOKS_PRE_COMMIT: &[u8] = include_bytes!("assets/baseline-init/hooks/p
 const TPL_HOOKS_PRE_MERGE_COMMIT: &[u8] = include_bytes!("assets/baseline-init/hooks/pre-merge-commit.sample");
 const TPL_HOOKS_PRE_PUSH: &[u8] = include_bytes!("assets/baseline-init/hooks/pre-push.sample");
 const TPL_HOOKS_PRE_REBASE: &[u8] = include_bytes!("assets/baseline-init/hooks/pre-rebase.sample");
-const TPL_HOOKS_PRE_RECEIVE: &[u8] = include_bytes!("assets/baseline-init/hooks/pre-receive.sample");
 const TPL_HOOKS_PREPARE_COMMIT_MSG: &[u8] = include_bytes!("assets/baseline-init/hooks/prepare-commit-msg.sample");
-const TPL_HOOKS_UPDATE: &[u8] = include_bytes!("assets/baseline-init/hooks/update.sample");
+const TPL_HOOKS_DOCS_URL: &[u8] = include_bytes!("assets/baseline-init/hooks/docs.url");
 const TPL_DESCRIPTION: &[u8] = include_bytes!("assets/baseline-init/description");
 const TPL_HEAD: &[u8] = include_bytes!("assets/baseline-init/HEAD");
 
@@ -172,9 +171,8 @@ pub fn into(
     {
         let mut cursor = NewDir(&mut dot_git).at("hooks")?;
         for (tpl, filename) in &[
-            (TPL_HOOKS_UPDATE, "update.sample"),
+            (TPL_HOOKS_DOCS_URL, "docs.url"),
             (TPL_HOOKS_PREPARE_COMMIT_MSG, "prepare-commit-msg.sample"),
-            (TPL_HOOKS_PRE_RECEIVE, "pre-receive.sample"),
             (TPL_HOOKS_PRE_REBASE, "pre-rebase.sample"),
             (TPL_HOOKS_PRE_PUSH, "pre-push.sample"),
             (TPL_HOOKS_PRE_COMMIT, "pre-commit.sample"),

@@ -1,42 +1,54 @@
 #!/bin/sh
+# A hook called by `git commit` to adjust the commit message right before the user sees it
+##########################################################################################
 #
-# An example hook script to prepare the commit log message.
-# Called by "git commit" with the name of the file that has the
-# commit message, followed by the description of the commit
-# message's source.  The hook's purpose is to edit the commit
-# message file.  If the hook fails with a non-zero status,
-# the commit is aborted.
+# This script is called by `git commit` after commit message was initialized and right before
+# an editor is launched.
 #
-# To enable this hook, rename this file to "prepare-commit-msg".
-
-# This hook includes three examples. The first one removes the
-# "# Please enter the commit message..." help message.
+# It receives one to three arguments:
 #
-# The second includes the output of "git diff --name-status -r"
-# into the message, just before the "git status" output.  It is
-# commented because it doesn't cope with --amend or with squashed
-# commits.
+# $1 - the path to the file containing the commit message. It can be edited to change the message.
+# $2 - the kind of source of the message contained in $1. Possible values are
+#      "message" - a message was provided via `-m` or `-F`
+#      "commit" - `-c`, `-C` or `--amend` was given
+#      "squash" - the `.git/SQUASH_MSG` file exists
+#      "merge" - this is a merge or the `.git/MERGE` file exists
+#      "template" - `-t` was provided or `commit.template` was set
+# $3 - If $2 is "commit" then this is the hash of the commit.
+#      It can also take other values, best understood by studying the source code at
+#      https://github.com/git/git/blob/aa9166bcc0ba654fc21f198a30647ec087f733ed/builtin/commit.c#L745
 #
-# The third example adds a Signed-off-by line to the message, that can
-# still be edited.  This is rarely a good idea.
+# The following example
+#
+# To enable this hook remove the `.sample` suffix from this file entirely.
 
 COMMIT_MSG_FILE=$1
-COMMIT_SOURCE=$2
-SHA1=$3
 
-/usr/bin/perl -i.bak -ne 'print unless(m/^. Please enter the commit message/..m/^#$/)' "$COMMIT_MSG_FILE"
+# Check if the commit message file is empty or already contains a message
+if [ -s "$COMMIT_MSG_FILE" ]; then
+  # If the commit message is already provided, exit without making any changes.
+  # This can happen if the user provided a message via `-m` or a template.
+  exit 0
+fi
 
-# case "$COMMIT_SOURCE,$SHA1" in
-#  ,|template,)
-#    /usr/bin/perl -i.bak -pe '
-#       print "\n" . `git diff --cached --name-status -r`
-# 	 if /^#/ && $first++ == 0' "$COMMIT_MSG_FILE" ;;
-#  *) ;;
-# esac
+# Retrieve the branch name from the current HEAD commit
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
 
-# SOB=$(git var GIT_COMMITTER_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
-# git interpret-trailers --in-place --trailer "$SOB" "$COMMIT_MSG_FILE"
-# if test -z "$COMMIT_SOURCE"
-# then
-#   /usr/bin/perl -i.bak -pe 'print "\n" if !$first_line++' "$COMMIT_MSG_FILE"
-# fi
+# Generate a default commit message based on the branch name
+DEFAULT_MSG=""
+
+case "$BRANCH_NAME" in
+  "feature/*")
+    DEFAULT_MSG="feat: "
+    ;;
+  "bugfix/*")
+    DEFAULT_MSG="fix: "
+    ;;
+  *)
+    DEFAULT_MSG="chore: "
+    ;;
+esac
+
+# Set the commit message that will be presented to the user.
+echo "$DEFAULT_MSG" > "$COMMIT_MSG_FILE"
+

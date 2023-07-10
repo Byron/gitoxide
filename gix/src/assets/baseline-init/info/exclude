@@ -1,6 +1,5 @@
-# git ls-files --others --exclude-from=.git/info/exclude
-# Lines that start with '#' are comments.
-# For a project mostly in C, the following would be a good set of
-# exclude patterns (uncomment them if you want to use them):
-# *.[oa]
-# *~
+# Thise file contains repository-wide exclude patterns that git will ignore.
+# They are local and will not be shared when pushing or pulling.
+# When using Rust the following would be typical exclude patterns.
+# Remove the '# ' prefix to let them take effect.
+# /target/
