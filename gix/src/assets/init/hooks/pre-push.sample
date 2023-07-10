@@ -1,0 +1,46 @@
+#!/bin/sh
+# Check for "DELME" in commit messages of about-to-be-pushed commits
+####################################################################
+# This hook script is triggered by `git push` right after a connection to the remote
+# was established and its initial response was received, and right before generating
+# and pushing a pack-file.
+# The operation will be aborted when exiting with a non-zero status.
+#
+# The following arguments are provided:
+#
+# $1 - The symbolic name of the remote to push to, like "origin" or the URL like "https://github.com/Byron/gitoxide" if there is no such name.
+# $2 - The URL of the remote to push to, like "https://github.com/Byron/gitoxide".
+#
+# The hook should then read from standard input in a line-by-line fashion and split the following space-separated fields:
+#
+# * local ref - the left side of a ref-spec, i.e. "local" of the "local:refs/heads/remote" ref-spec
+# * local hash - the hash of the commit pointed to by `local ref`
+# * remote ref - the right side of a ref-spec, i.e. "refs/heads/remote" of the "local:refs/heads/remote" ref-spec
+# * remote hash - the hash of the commit pointed to by `remote ref`
+#
+# In this example, we abort the push if any of the about-to-be-pushed commits have "DELME" in their commit message.
+#
+# To enable this hook remove the `.sample` suffix from this file entirely.
+
+remote="$1"
+url="$2"
+
+# Check each commit being pushed
+while read _local_ref local_hash _remote_ref _remote_hash; do
+  # Skip if the local hash is all zeroes (deletion)
+  zero_sha=$(printf "%0${#local_hash}d" 0)
+  if [ "$local_hash" = "$zero_sha" ]; then
+    continue
+  fi
+  # Get the commit message
+  commit_msg=$(git log --format=%s -n 1 "$local_hash")
+
+  # Check if the commit message contains "DELME"
+  if echo "$commit_msg" | grep -iq "DELME"; then
+    echo "Error: Found commit with 'DELME' in message. Push aborted to $remote ($url) aborted." 1>&2
+    exit 1
+  fi
+done
+
+# If no commit with "DELME" found, allow the push
+exit 0

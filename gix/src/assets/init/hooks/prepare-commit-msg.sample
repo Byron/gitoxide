@@ -1,0 +1,54 @@
+#!/bin/sh
+# A hook called by `git commit` to adjust the commit message right before the user sees it
+##########################################################################################
+#
+# This script is called by `git commit` after commit message was initialized and right before
+# an editor is launched.
+#
+# It receives one to three arguments:
+#
+# $1 - the path to the file containing the commit message. It can be edited to change the message.
+# $2 - the kind of source of the message contained in $1. Possible values are
+#      "message" - a message was provided via `-m` or `-F`
+#      "commit" - `-c`, `-C` or `--amend` was given
+#      "squash" - the `.git/SQUASH_MSG` file exists
+#      "merge" - this is a merge or the `.git/MERGE` file exists
+#      "template" - `-t` was provided or `commit.template` was set
+# $3 - If $2 is "commit" then this is the hash of the commit.
+#      It can also take other values, best understood by studying the source code at
+#      https://github.com/git/git/blob/aa9166bcc0ba654fc21f198a30647ec087f733ed/builtin/commit.c#L745
+#
+# The following example
+#
+# To enable this hook remove the `.sample` suffix from this file entirely.
+
+COMMIT_MSG_FILE=$1
+
+# Check if the commit message file is empty or already contains a message
+if [ -s "$COMMIT_MSG_FILE" ]; then
+  # If the commit message is already provided, exit without making any changes.
+  # This can happen if the user provided a message via `-m` or a template.
+  exit 0
+fi
+
+# Retrieve the branch name from the current HEAD commit
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
+
+# Generate a default commit message based on the branch name
+DEFAULT_MSG=""
+
+case "$BRANCH_NAME" in
+  "feature/*")
+    DEFAULT_MSG="feat: "
+    ;;
+  "bugfix/*")
+    DEFAULT_MSG="fix: "
+    ;;
+  *)
+    DEFAULT_MSG="chore: "
+    ;;
+esac
+
+# Set the commit message that will be presented to the user.
+echo "$DEFAULT_MSG" > "$COMMIT_MSG_FILE"
+

@@ -1,0 +1,40 @@
+#!/bin/sh
+# A sample hook to validate the branches involved in a rebase operation
+#######################################################################
+#
+# This hook is invoked right before `git rebase` starts its work and
+# prevents anything else to happen by returning a non-zero exit code.
+#
+# The following arguments are provided:
+#
+# $1 - the branch that contains the commit from which $2 was forked.
+# $2 - the branch being rebased or no second argument at all if the rebase applies to `HEAD`.
+#
+# This example hook aborts the rebase operation if the branch being rebased is not up to date
+# with the latest changes from the upstream branch, or if there are any uncommitted changes.
+#
+# To enable this hook remove the `.sample` suffix from this file entirely.
+
+upstream_branch=$1
+if [ "$#" -eq 2 ]; then
+  branch_being_rebased=$2
+else
+  branch_being_rebased=$(git symbolic-ref --quiet --short HEAD) || exit 0 # ignore rebases on detached heads
+fi
+
+# Check if the branch being rebased is behind the upstream branch
+if git log --oneline ${upstream_branch}..${branch_being_rebased} > /dev/null; then
+  echo "Warning: The branch being rebased (${branch_being_rebased}) is behind the upstream branch (${upstream_branch})." 1>&2
+  echo "Please update your branch before rebasing." 1>&2
+  exit 1
+fi
+
+# Check if there are any uncommitted changes
+if ! git diff-index --quiet HEAD --; then
+  echo "Warning: There are uncommitted changes in your branch ${branch_being_rebased}." 1>&2
+  echo "Please commit or stash your changes before rebasing." 1>&2
+  exit 2
+fi
+
+# All good, let the rebase proceed.
+exit 0

@@ -1,0 +1,19 @@
+#!/bin/sh
+# A sample hook to prevent commits with merge-markers
+#####################################################
+# This example hook rejects changes that are about to be committed with merge markers,
+# as that would be a clear indication of a failed merge. It is triggered by `git commit`
+# and returning with non-zero exit status prevents the commit from being created.
+#
+# To enable this hook remove the `.sample` suffix from this file entirely.
+
+# Check for merge markers in modified files
+for file in $(git diff --cached --name-only); do
+    if grep -q -E '^(<<<<<<<|=======|>>>>>>>|\|\|\|\|\|\|\|)$' "$file"; then
+        echo "Error: File '$file' contains merge markers. Please remove them before committing."
+        exit 1
+    fi
+done
+
+# Exit with success if there are no errors
+exit 0

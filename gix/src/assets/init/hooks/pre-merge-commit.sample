@@ -1,0 +1,16 @@
+#!/bin/sh
+# A sample hook to check commits created by `git merge`
+#######################################################
+#
+# This hook is invoked by `git merge` without further context right before creating a commit.
+# It should be used to validate the current state that is supposed to be committed, or exit
+# with a non-zero status to prevent the commit.
+# All output will be visible to the user.
+#
+# To enable this hook remove the `.sample` suffix from this file entirely.
+
+# Check if the pre-commit hook exists and is executable. If it is, it executes the pre-commit hook script.
+test -x "$GIT_DIR/hooks/pre-commit" && exec "$GIT_DIR/hooks/pre-commit"
+
+# Be sure to exit without error if `exec` isn't called.
+:

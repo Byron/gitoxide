@@ -1,0 +1,25 @@
+#!/bin/sh
+# A sample hook to check commit messages created by `git am`
+###########################################################
+#
+# When you receive a patch via email, the `git am` command is commonly used to apply
+# that patch. During the `git am` process, the `applypatch-msg` hook is executed before
+# creating the commit. Its purpose is to validate and modify the commit log message
+# before the patch is applied as a commit in your Git repository.
+#
+# This script serves as an example to validate that the commit message introduced by
+# the patch from an email would pass the `commit-msg` hook, which would be executed
+# if you had created the commit yourself.
+#
+# This hook is the first and followed up by `pre-applypatch` and `post-applypatch`.
+#
+# To enable this hook remove the `.sample` suffix from this file entirely.
+
+# Retrieve the path of the commit-msg hook script.
+commitmsg="$(git rev-parse --git-path hooks/commit-msg)"
+
+# If the commit-msg hook script is executable, execute it and pass any command-line arguments to it.
+test -x "$commitmsg" && exec "$commitmsg" ${1+"$@"}
+
+# Be sure to exit without error if `exec` isn't called.
+:

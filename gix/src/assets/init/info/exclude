@@ -1,0 +1,5 @@
+# Thise file contains repository-wide exclude patterns that git will ignore.
+# They are local and will not be shared when pushing or pulling.
+# When using Rust the following would be typical exclude patterns.
+# Remove the '# ' prefix to let them take effect.
+# /target/

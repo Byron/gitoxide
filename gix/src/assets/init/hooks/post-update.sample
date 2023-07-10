@@ -1,0 +1,12 @@
+#!/bin/sh
+# A sample hook that runs after receiving a pack on a remote
+############################################################
+# This hook is called after a pack was received on the remote, i.e. after a successful `git push` operation.
+# It's useful on the server side only.
+#
+# There many more receive hooks which are documented in the official documentation: https://git-scm.com/docs/githooks.
+#
+# To enable this hook remove the `.sample` suffix from this file entirely.
+
+# Update static files to support the 'dumb' git HTTP protocol.
+exec git update-server-info

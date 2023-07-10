@@ -164,11 +164,6 @@ title "Porcelain ${kind}"
             expect_run $SUCCESSFULLY "$exe" init
           }
 
-          it "matches the output of baseline git init" && {
-            rm .git/config # this one is altered, ignore
-            expect_snapshot "$fixtures/baseline-init" .git
-          }
-
           (when "trying to initialize the same directory again"
             it "fails" && {
               WITH_SNAPSHOT="$snapshot/fail" \
@@ -185,11 +180,6 @@ title "Porcelain ${kind}"
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/success-with-multi-element-directory" \
             expect_run $SUCCESSFULLY "$exe" init $DIR
-          }
-
-          it "matches the output of baseline git init" && {
-            rm $DIR/.git/config # this one is altered, ignore
-            expect_snapshot "$fixtures/baseline-init" $DIR/.git
           }
 
           (when "trying to initialize the same directory again"
