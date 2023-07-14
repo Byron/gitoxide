@@ -99,7 +99,7 @@ pub use gix_object as objs;
 pub use gix_object::bstr;
 pub use gix_odb as odb;
 pub use gix_prompt as prompt;
-#[cfg(all(feature = "gix-protocol"))]
+#[cfg(feature = "gix-protocol")]
 pub use gix_protocol as protocol;
 pub use gix_ref as refs;
 pub use gix_refspec as refspec;

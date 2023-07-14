@@ -158,7 +158,7 @@ impl LineStats {
 /// An index able to address any commit
 pub type CommitIdx = u32;
 
-pub fn add_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, mut lines: &mut LineStats, id: gix::Id<'_>) {
+pub fn add_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, lines: &mut LineStats, id: gix::Id<'_>) {
     if let Some(Ok(blob)) = line_stats.then(|| id.object()) {
         let nl = blob.data.lines_with_terminator().count();
         lines.added += nl;
@@ -168,7 +168,7 @@ pub fn add_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, mut line
     }
 }
 
-pub fn remove_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, mut lines: &mut LineStats, id: gix::Id<'_>) {
+pub fn remove_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, lines: &mut LineStats, id: gix::Id<'_>) {
     if let Some(Ok(blob)) = line_stats.then(|| id.object()) {
         let nl = blob.data.lines_with_terminator().count();
         lines.removed += nl;

@@ -20,8 +20,7 @@ impl<'event> File<'event> {
     ) -> Result<SectionMut<'a, 'event>, lookup::existing::Error> {
         let id = self
             .section_ids_by_name_and_subname(name.as_ref(), subsection_name)?
-            .rev()
-            .next()
+            .next_back()
             .expect("BUG: Section lookup vec was empty");
         let nl = self.detect_newline_style_smallvec();
         Ok(self
@@ -212,8 +211,7 @@ impl<'event> File<'event> {
         let id = self
             .section_ids_by_name_and_subname(name, subsection_name.into())
             .ok()?
-            .rev()
-            .next()?;
+            .next_back()?;
         self.remove_section_by_id(id)
     }
 
@@ -298,8 +296,7 @@ impl<'event> File<'event> {
     ) -> Result<(), rename_section::Error> {
         let id = self
             .section_ids_by_name_and_subname(name.as_ref(), subsection_name.into())?
-            .rev()
-            .next()
+            .next_back()
             .expect("list of sections were empty, which violates invariant");
         let section = self.sections.get_mut(&id).expect("known section-id");
         section.header = section::Header::new(new_name, new_subsection_name)?;

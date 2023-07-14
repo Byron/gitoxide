@@ -55,7 +55,7 @@ mod path {
         ) -> Option<Self> {
             let cwd = current_dir.as_ref();
             let normalize_on_trailing_dot_dot = |dir: PathBuf| -> Option<PathBuf> {
-                if !matches!(dir.components().rev().next(), Some(std::path::Component::ParentDir)) {
+                if !matches!(dir.components().next_back(), Some(std::path::Component::ParentDir)) {
                     dir
                 } else {
                     gix_path::normalize(&dir, cwd)?.into_owned()

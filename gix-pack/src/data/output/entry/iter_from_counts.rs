@@ -288,7 +288,7 @@ mod reduce {
         fn default() -> Self {
             Statistics {
                 total: Default::default(),
-                _err: PhantomData::default(),
+                _err: PhantomData,
             }
         }
     }

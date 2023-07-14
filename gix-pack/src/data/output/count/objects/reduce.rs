@@ -21,7 +21,7 @@ where
             total: Default::default(),
             counts: Default::default(),
             progress,
-            _err: PhantomData::default(),
+            _err: PhantomData,
         }
     }
 }

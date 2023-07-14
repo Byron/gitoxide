@@ -43,7 +43,7 @@ mod memory {
             MemoryCappedHashmap {
                 inner: clru::CLruCache::with_config(
                     clru::CLruCacheConfig::new(NonZeroUsize::new(memory_cap_in_bytes).expect("non zero"))
-                        .with_hasher(gix_hashtable::hash::Builder::default())
+                        .with_hasher(gix_hashtable::hash::Builder)
                         .with_scale(CustomScale),
                 ),
                 free_list: Vec::new(),

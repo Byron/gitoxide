@@ -86,10 +86,7 @@ pub use traits::IsSpuriousError;
 pub mod client;
 
 #[doc(inline)]
-#[cfg(any(
-    feature = "blocking-client",
-    all(feature = "async-client", any(feature = "async-std"))
-))]
+#[cfg(any(feature = "blocking-client", all(feature = "async-client", feature = "async-std")))]
 pub use client::connect;
 
 #[cfg(all(feature = "async-client", feature = "blocking-client"))]

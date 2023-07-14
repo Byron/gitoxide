@@ -74,7 +74,7 @@ impl<'a> Whitespace<'a> {
                 .find_map(|(idx, e)| matches!(e, Event::SectionKey(_)).then(|| idx));
         key_pos
             .map(|key_pos| {
-                let pre_key = s.0[..key_pos].iter().rev().next().and_then(|e| match e {
+                let pre_key = s.0[..key_pos].iter().next_back().and_then(|e| match e {
                     Event::Whitespace(s) => Some(s.clone()),
                     _ => None,
                 });
