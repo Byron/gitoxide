@@ -9,5 +9,5 @@ pub use traits::{SetServiceResponse, Transport, TransportV2Ext};
 
 ///
 pub mod connect;
-#[cfg(any(feature = "async-std"))]
+#[cfg(feature = "async-std")]
 pub use connect::function::connect;

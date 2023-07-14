@@ -1,6 +1,6 @@
 pub use crate::client::non_io_types::connect::{Error, Options};
 
-#[cfg(any(feature = "async-std"))]
+#[cfg(feature = "async-std")]
 pub(crate) mod function {
     use std::convert::TryInto;
 
