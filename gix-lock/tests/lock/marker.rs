@@ -1,4 +1,3 @@
-#[cfg(test)]
 mod acquire {
     use std::time::{Duration, Instant};
 
