@@ -1,11 +1,5 @@
 use clap::Parser;
-use gix::{
-    ObjectId,
-    object::Kind,
-    objs::tree::EntryMode,
-    objs::tree::EntryMode::Tree,
-    traverse::tree::Recorder,
-};
+use gix::{object::Kind, objs::tree::EntryMode, objs::tree::EntryMode::Tree, traverse::tree::Recorder, ObjectId};
 
 fn main() {
     let args = Args::parse_from(gix::env::args_os());
@@ -46,30 +40,19 @@ fn run(args: &Args) -> anyhow::Result<()> {
     // no common trait implementing common field assessors for that.
     let entries = if args.recursive {
         let mut recorder = Recorder::default();
-        tree.traverse()
-            .breadthfirst(&mut recorder)?;
-        recorder.records.iter()
-            .filter(|entry| args.tree_recursing
-                || args.tree_only
-                || entry.mode != Tree
-            )
+        tree.traverse().breadthfirst(&mut recorder)?;
+        recorder
+            .records
+            .iter()
+            .filter(|entry| args.tree_recursing || args.tree_only || entry.mode != Tree)
             .filter(|entry| !args.tree_only || (entry.mode == Tree))
-            .map(|entry| Entry::new(
-                entry.mode,
-                entry.oid,
-                entry.filepath.to_string(),
-            ))
+            .map(|entry| Entry::new(entry.mode, entry.oid, entry.filepath.to_string()))
             .collect::<Vec<_>>()
-    }
-    else {
+    } else {
         tree.iter()
-            .filter_map(std::result::Result::ok)  // dropping errors silently
+            .filter_map(std::result::Result::ok) // dropping errors silently
             .filter(|entry| !args.tree_only || (entry.mode() == Tree))
-            .map(|entry| Entry::new(
-                entry.inner.mode,
-                entry.id().detach(),
-                entry.inner.filename.to_string(),
-            ))
+            .map(|entry| Entry::new(entry.inner.mode, entry.id().detach(), entry.inner.filename.to_string()))
             .collect::<Vec<_>>()
     };
 
@@ -81,10 +64,7 @@ fn run(args: &Args) -> anyhow::Result<()> {
 }
 
 // Helper struct and impl to facilitate displaying as per `git ls-tree`.
-use std::fmt::{
-    Display,
-    Formatter,
-};
+use std::fmt::{Display, Formatter};
 
 struct Entry {
     kind: EntryMode,
@@ -94,11 +74,7 @@ struct Entry {
 
 impl Entry {
     fn new(kind: EntryMode, hash: ObjectId, path: String) -> Self {
-        Self {
-            kind,
-            hash,
-            path,
-        }
+        Self { kind, hash, path }
     }
 }
 
