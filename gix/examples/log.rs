@@ -52,7 +52,7 @@ struct Args {
     commitish: Option<String>,
     #[clap(name = "path")]
     /// The path interested in log history of
-    path: Option<String>,
+    paths: Vec<String>,
 }
 
 fn run(args: &Args) -> anyhow::Result<()> {
@@ -89,14 +89,12 @@ fn run(args: &Args) -> anyhow::Result<()> {
         .sorting(sorting)
         .all()?
         .filter(|info| info.as_ref()
-            // TODO the other implementation can take a sequence of
-            // paths - if so it should apply this check for all paths.
             .map_or(true, |info| {
                 info.parent_ids.len() <= max_parents &&
                 info.parent_ids.len() >= min_parents &&
-                args.path.as_ref().map_or(true, |path| {
-                    // should args.path be provided, check that it is in
-                    // fact relevant for this commit (it present?)
+                // if paths are provided check that any one of them are
+                // in fact relevant for the current commit.
+                args.paths.iter().map(|path| {
                     // TODO should make use of the `git2::DiffOptions`
                     // counterpart in gix for a set of files and also to
                     // generate diffs.
@@ -121,6 +119,7 @@ fn run(args: &Args) -> anyhow::Result<()> {
                         Err(_) => false,
                     }
                 })
+                .any(|r| r)
             })
         )
         .map(|info| {
