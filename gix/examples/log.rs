@@ -32,6 +32,18 @@ struct Args {
     #[clap(short, long)]
     /// Commits are sorted by their commit time in descending order.
     newest_first: bool,
+    #[clap(long)]
+    /// Show commits with the specified minimum number of parents
+    min_parents: Option<usize>,
+    #[clap(long)]
+    /// Show commits with the specified maximum number of parents
+    max_parents: Option<usize>,
+    #[clap(long)]
+    /// Show only merge commits (implies --min-parents=2)
+    merges: bool,
+    #[clap(long)]
+    /// Show only non-merge commits (implies --max-parents=1)
+    no_merges: bool,
     #[clap(short, long)]
     /// Reverse the commit sort order
     reverse: bool,
@@ -63,6 +75,15 @@ fn run(args: &Args) -> anyhow::Result<()> {
         Sorting::ByCommitTimeNewestFirst
     };
 
+    let mut min_parents = args.min_parents.unwrap_or(0);
+    let mut max_parents = args.max_parents.unwrap_or(usize::MAX);
+    if args.merges {
+        min_parents = 2;
+    }
+    if args.no_merges {
+        max_parents = 1;
+    }
+
     let mut log_iter: Box<dyn Iterator<Item = Result<LogEntryInfo, _>>> = Box::new(repo
         .rev_walk([commit.id])
         .sorting(sorting)
@@ -70,29 +91,44 @@ fn run(args: &Args) -> anyhow::Result<()> {
         .filter(|info| info.as_ref()
             // TODO the other implementation can take a sequence of
             // paths - if so it should apply this check for all paths.
-            .map_or(true, |info| args.path.as_ref().map_or(true, |path| {
-                // TODO should make use of the `git2::DiffOptions`
-                // counterpart in gix for a set of files and also to
-                // generate diffs.
-                // should args.path be provided, check that it is in
-                // fact relevant for this commit (it present?)
-                let oid = repo.rev_parse_single(
-                    format!("{}:{}", info.id, path).as_str()
-                ).ok();
-                // check via the revspec on the path prefixed by the
-                // tree of the current commit vs. commit's every parents
-                // and see if all matching, if not, include this entry.
-                !info.parent_ids
-                    .iter()
-                    .all(|id| repo.rev_parse_single(
-                        format!("{id}:{path}").as_str()
-                    ).ok() == oid)
-            }))
+            .map_or(true, |info| {
+                info.parent_ids.len() <= max_parents &&
+                info.parent_ids.len() >= min_parents &&
+                args.path.as_ref().map_or(true, |path| {
+                    // should args.path be provided, check that it is in
+                    // fact relevant for this commit (it present?)
+                    // TODO should make use of the `git2::DiffOptions`
+                    // counterpart in gix for a set of files and also to
+                    // generate diffs.
+                    match repo.rev_parse_single(
+                        format!("{}:{}", info.id, path).as_str()
+                    ) {
+                        // check by parsing the revspec on the path with
+                        // the prefix of the tree of the current commit,
+                        // vs. the same counterpart but using each of
+                        // commit's parents; if any pairs don't match,
+                        // this indicates this path was changed in this
+                        // commit thus should be included in output.
+                        Ok(oid) => info.parent_ids
+                            .iter()
+                            .any(|id| {
+                                repo.rev_parse_single(
+                                    format!("{id}:{path}").as_str()
+                                ).ok() != Some(oid)
+                            }),
+                        // no oid for the path resolved with this commit
+                        // so this commit can be omitted from output.
+                        Err(_) => false,
+                    }
+                })
+            })
         )
         .map(|info| {
             let info = info?;
             let commit = info.object()?;
             let commit_ref = CommitRef::from_bytes(&commit.data)?;
+            // type specifier using turbofish for the OK type here is
+            // because this isn't being collected...
             Ok::<_, anyhow::Error>(LogEntryInfo {
                 commit_id: format!("{}", commit.id()),
                 parents: info.parent_ids.iter()
@@ -117,6 +153,8 @@ fn run(args: &Args) -> anyhow::Result<()> {
     if let Some(n) = args.count {
         log_iter = Box::new(log_iter.take(n));
     }
+    // ... if the goal is to have the results as a `Vec<LogEntryInfo>`:
+    // let results = log_iter.collect::<anyhow::Result<Vec<_>>>()?;
     let mut log_iter = log_iter.peekable();
 
     while let Some(entry) = log_iter.next() {
