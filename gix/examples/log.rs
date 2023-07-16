@@ -92,9 +92,10 @@ fn run(args: &Args) -> anyhow::Result<()> {
             .map_or(true, |info| {
                 info.parent_ids.len() <= max_parents &&
                 info.parent_ids.len() >= min_parents &&
+                // if the list of paths is empty the filter passes.
                 // if paths are provided check that any one of them are
                 // in fact relevant for the current commit.
-                args.paths.iter().map(|path| {
+                (args.paths.is_empty() || args.paths.iter().map(|path| {
                     // TODO should make use of the `git2::DiffOptions`
                     // counterpart in gix for a set of files and also to
                     // generate diffs.
@@ -107,7 +108,11 @@ fn run(args: &Args) -> anyhow::Result<()> {
                         // commit's parents; if any pairs don't match,
                         // this indicates this path was changed in this
                         // commit thus should be included in output.
-                        Ok(oid) => info.parent_ids
+                        // naturally, root commits have no parents and
+                        // by definition whatever paths in there must
+                        // have been introduced there, so include them.
+                        Ok(oid) => info.parent_ids.is_empty() || info
+                            .parent_ids
                             .iter()
                             .any(|id| {
                                 repo.rev_parse_single(
@@ -119,7 +124,7 @@ fn run(args: &Args) -> anyhow::Result<()> {
                         Err(_) => false,
                     }
                 })
-                .any(|r| r)
+                .any(|r| r))
             })
         )
         .map(|info| {
