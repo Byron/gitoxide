@@ -2,23 +2,6 @@ use std::{io, io::BufRead};
 
 use flate2::{Decompress, FlushDecompress, Status};
 
-/// The boxed variant is faster for what we do (moving the decompressor in and out a lot)
-pub struct ReadBoxed<R> {
-    /// The reader from which bytes should be decompressed.
-    pub inner: R,
-    /// The decompressor doing all the work.
-    pub decompressor: Box<Decompress>,
-}
-
-impl<R> io::Read for ReadBoxed<R>
-where
-    R: BufRead,
-{
-    fn read(&mut self, into: &mut [u8]) -> io::Result<usize> {
-        read(&mut self.inner, &mut self.decompressor, into)
-    }
-}
-
 /// Read bytes from `rd` and decompress them using `state` into a pre-allocated fitting buffer `dst`, returning the amount of bytes written.
 pub fn read(rd: &mut impl BufRead, state: &mut Decompress, mut dst: &mut [u8]) -> io::Result<usize> {
     let mut total_written = 0;
