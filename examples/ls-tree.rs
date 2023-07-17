@@ -28,7 +28,7 @@ struct Args {
 }
 
 fn run(args: &Args) -> anyhow::Result<()> {
-    let repo = gix::discover(".")?;
+    let repo = gix::discover("..")?;
     let rev_spec = repo.rev_parse_single(&*args.treeish)?;
     let object = rev_spec.object()?;
     let tree = match object.kind {

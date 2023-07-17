@@ -183,7 +183,6 @@ is_ci = "1.1.1"
 anyhow = "1"
 walkdir = "2.3.2"
 serial_test = { version = "2.0.0", default-features = false }
-clap = { version = "4.1.1", features = ["derive"] }
 async-std = { version = "1.12.0", features = ["attributes"] }
 
 [package.metadata.docs.rs]
