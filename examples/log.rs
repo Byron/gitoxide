@@ -1,9 +1,13 @@
+/// A toy-version of `git log`.
 use clap::Parser;
-use gix::{date::time::format, object::Kind, objs::CommitRef, traverse::commit::Sorting};
+use gix::bstr::{BString, ByteSlice};
+use gix::{date::time::format, traverse::commit::Sorting};
+use std::io::{stdout, Write};
+use std::path::{Path, PathBuf};
 
 fn main() {
     let args = Args::parse_from(gix::env::args_os());
-    match run(&args) {
+    match run(args) {
         Ok(()) => {}
         Err(e) => eprintln!("error: {e}"),
     }
@@ -12,55 +16,59 @@ fn main() {
 #[derive(Debug, clap::Parser)]
 #[clap(name = "log", about = "git log example", version = option_env!("GITOXIDE_VERSION"))]
 struct Args {
-    #[clap(name = "dir", long = "git-dir")]
     /// Alternative git directory to use
-    git_dir: Option<String>,
-    #[clap(short, long)]
+    #[clap(name = "dir", long = "git-dir")]
+    git_dir: Option<PathBuf>,
     /// Number of commits to return
+    #[clap(short, long)]
     count: Option<usize>,
-    #[clap(short, long)]
     /// Number of commits to skip
+    #[clap(short, long)]
     skip: Option<usize>,
-    #[clap(short, long)]
     /// Commits are sorted as they are mentioned in the commit graph.
+    #[clap(short, long)]
     breadth_first: bool,
-    #[clap(short, long)]
     /// Commits are sorted by their commit time in descending order.
-    newest_first: bool,
-    #[clap(long)]
-    /// Show commits with the specified minimum number of parents
-    min_parents: Option<usize>,
-    #[clap(long)]
-    /// Show commits with the specified maximum number of parents
-    max_parents: Option<usize>,
-    #[clap(long)]
-    /// Show only merge commits (implies --min-parents=2)
-    merges: bool,
-    #[clap(long)]
-    /// Show only non-merge commits (implies --max-parents=1)
-    no_merges: bool,
     #[clap(short, long)]
-    /// Reverse the commit sort order
+    newest_first: bool,
+    /// Show commits with the specified minimum number of parents
+    #[clap(long)]
+    min_parents: Option<usize>,
+    /// Show commits with the specified maximum number of parents
+    #[clap(long)]
+    max_parents: Option<usize>,
+    /// Show only merge commits (implies --min-parents=2)
+    #[clap(long)]
+    merges: bool,
+    /// Show only non-merge commits (implies --max-parents=1)
+    #[clap(long)]
+    no_merges: bool,
+    /// Reverse the commit sort order (and loads all of them into memory).
+    #[clap(short, long)]
     reverse: bool,
+    /// The ref-spec for the first commit to log, or HEAD.
     #[clap(name = "commit")]
-    /// The starting commit
-    commitish: Option<String>,
-    #[clap(name = "path")]
+    committish: Option<String>,
     /// The path interested in log history of
-    paths: Vec<String>,
+    #[clap(name = "path")]
+    paths: Vec<PathBuf>,
 }
 
-fn run(args: &Args) -> anyhow::Result<()> {
-    let repo = gix::discover(args.git_dir.as_ref().map_or(".", |s| &s[..]))?;
-    let object = repo
-        .rev_parse_single(args.commitish.as_ref().map_or("HEAD", |s| &s[..]))?
-        .object()?;
-    let commit = match object.kind {
-        Kind::Commit => object.try_into_commit()?,
-        _ => anyhow::bail!("not a commit object"),
-    };
+fn run(args: Args) -> anyhow::Result<()> {
+    let repo = gix::discover(args.git_dir.as_deref().unwrap_or(Path::new(".")))?;
+    let commit = repo
+        .rev_parse_single({
+            args.committish
+                .map(|mut c| {
+                    c.push_str("^{commit}");
+                    c
+                })
+                .as_deref()
+                .unwrap_or("HEAD")
+        })?
+        .object()?
+        .try_into_commit()?;
 
-    // TODO better way to deal with these flags.
     let sorting = if args.breadth_first {
         Sorting::BreadthFirst
     } else {
@@ -88,12 +96,17 @@ fn run(args: &Args) -> anyhow::Result<()> {
                     // if the list of paths is empty the filter passes.
                     // if paths are provided check that any one of them are
                     // in fact relevant for the current commit.
-                    (args.paths.is_empty() || args.paths.iter().map(|path| {
-                        // TODO should make use of the `git2::DiffOptions`
-                        // counterpart in gix for a set of files and also to
-                        // generate diffs.
+                    (args.paths.is_empty() || args.paths.iter().any(|path| {
+                        // TODO: should make use of the `git2::DiffOptions`
+                        //       counterpart in gix for a set of files and also to
+                        //       generate diffs. When ready, also make paths resistant
+                        //       to illformed UTF8 by not using ".display()".
+                        // PERFORMANCE WARNING: What follows is a clever implementation
+                        //    that is also **very** slow - do not use on bigger sample
+                        //    repositories as this needs native support in `gix` to 
+                        //    be fast enough.
                         match repo.rev_parse_single(
-                            format!("{}:{}", info.id, path).as_str()
+                            format!("{}:{}", info.id, path.display()).as_str()
                         ) {
                             // check by parsing the revspec on the path with
                             // the prefix of the tree of the current commit,
@@ -109,76 +122,74 @@ fn run(args: &Args) -> anyhow::Result<()> {
                                 .iter()
                                 .any(|id| {
                                     repo.rev_parse_single(
-                                        format!("{id}:{path}").as_str()
+                                        format!("{id}:{}", path.display()).as_str()
                                     ).ok() != Some(oid)
                                 }),
                             // no oid for the path resolved with this commit
                             // so this commit can be omitted from output.
                             Err(_) => false,
                         }
-                    })
-                    .any(|r| r))
+                    }))
                 })
             })
-            .map(|info| {
+            .map(|info| -> anyhow::Result<_> {
                 let info = info?;
                 let commit = info.object()?;
-                let commit_ref = CommitRef::from_bytes(&commit.data)?;
-                // type specifier using turbofish for the OK type here is
-                // because this isn't being collected...
-                Ok::<_, anyhow::Error>(LogEntryInfo {
-                    commit_id: format!("{}", commit.id()),
-                    parents: info
-                        .parent_ids
-                        .iter()
-                        // probably could have a better way to display this
-                        .map(|x| x.to_string()[..7].to_string())
-                        .collect(),
-                    author: format!("{} <{}>", commit_ref.author.name, commit_ref.author.email),
+                let commit_ref = commit.decode()?;
+                Ok(LogEntryInfo {
+                    commit_id: commit.id().to_hex().to_string(),
+                    parents: info.parent_ids().map(|id| id.shorten_or_id().to_string()).collect(),
+                    author: {
+                        let mut buf = Vec::new();
+                        commit_ref.author.write_to(&mut buf)?;
+                        buf.into()
+                    },
                     time: commit_ref.author.time.format(format::DEFAULT),
-                    message: commit_ref.message.to_string(),
+                    message: commit_ref.message.to_owned(),
                 })
             }),
     );
     if args.reverse {
-        let mut results = log_iter.collect::<Vec<_>>();
+        let mut results: Vec<_> = log_iter.collect();
         results.reverse();
         log_iter = Box::new(results.into_iter())
     }
-    if let Some(n) = args.skip {
-        log_iter = Box::new(log_iter.skip(n));
-    }
-    if let Some(n) = args.count {
-        log_iter = Box::new(log_iter.take(n));
-    }
-    // ... if the goal is to have the results as a `Vec<LogEntryInfo>`:
-    // let results = log_iter.collect::<anyhow::Result<Vec<_>>>()?;
-    let mut log_iter = log_iter.peekable();
 
+    let mut log_iter = log_iter
+        .skip(args.skip.unwrap_or_default())
+        .take(args.count.unwrap_or(usize::MAX))
+        .peekable();
+
+    let mut out = stdout().lock();
+    let mut buf = Vec::new();
     while let Some(entry) = log_iter.next() {
+        buf.clear();
         let entry = entry?;
-        println!("commit {}", entry.commit_id);
+        writeln!(buf, "commit {}", entry.commit_id)?;
         if entry.parents.len() > 1 {
-            println!("Merge: {}", entry.parents.join(" "));
+            writeln!(buf, "Merge: {}", entry.parents.join(" "))?;
         }
-        println!("Author: {}", entry.author);
-        println!("Date:   {}\n", entry.time);
+        writeln!(buf, "Author: {}", entry.author)?;
+        writeln!(buf, "Date:   {}\n", entry.time)?;
         for line in entry.message.lines() {
-            println!("    {line}");
+            write!(buf, "    ")?;
+            buf.write_all(line)?;
+            writeln!(buf)?;
         }
         // only include newline if more log entries, mimicking `git log`
         if log_iter.peek().is_some() {
-            println!();
+            writeln!(buf)?;
         }
+        out.write_all(&buf)?;
     }
 
     Ok(())
 }
 
-pub struct LogEntryInfo {
-    pub commit_id: String,
-    pub parents: Vec<String>,
-    pub author: String,
-    pub time: String,
-    pub message: String,
+struct LogEntryInfo {
+    commit_id: String,
+    parents: Vec<String>,
+    author: BString,
+    time: String,
+    message: BString,
 }
