@@ -30,15 +30,9 @@ struct Args {
     treeish: String,
 }
 
-fn run(mut args: Args) -> anyhow::Result<()> {
+fn run(args: Args) -> anyhow::Result<()> {
     let repo = gix::discover(".")?;
-    let tree = repo
-        .rev_parse_single({
-            args.treeish.push_str("^{tree}");
-            &*args.treeish
-        })?
-        .object()?
-        .into_tree();
+    let tree = repo.rev_parse_single(&*args.treeish)?.object()?.peel_to_tree()?;
     let entries = if args.recursive {
         let mut recorder = Recorder::default();
         tree.traverse().breadthfirst(&mut recorder)?;
