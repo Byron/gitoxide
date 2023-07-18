@@ -141,7 +141,7 @@ fn run(args: Args) -> anyhow::Result<()> {
                     parents: info.parent_ids().map(|id| id.shorten_or_id().to_string()).collect(),
                     author: {
                         let mut buf = Vec::new();
-                        commit_ref.author.write_to(&mut buf)?;
+                        commit_ref.author.actor().write_to(&mut buf)?;
                         buf.into()
                     },
                     time: commit_ref.author.time.format(format::DEFAULT),
