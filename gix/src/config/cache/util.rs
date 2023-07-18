@@ -74,7 +74,7 @@ pub(crate) fn parse_object_caches(
     mut filter_config_section: fn(&gix_config::file::Metadata) -> bool,
 ) -> Result<(Option<usize>, Option<usize>, usize), Error> {
     let static_pack_cache_limit = config
-        .integer_filter_by_key("core.deltaBaseCacheLimit", &mut filter_config_section)
+        .integer_filter_by_key("gitoxide.core.deltaBaseCacheLimit", &mut filter_config_section)
         .map(|res| gitoxide::Core::DEFAULT_PACK_CACHE_MEMORY_LIMIT.try_into_usize(res))
         .transpose()
         .with_leniency(lenient)?;
