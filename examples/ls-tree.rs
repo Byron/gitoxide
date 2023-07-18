@@ -2,7 +2,7 @@ use clap::Parser;
 use gix::bstr::BString;
 use std::io::{stdout, Write};
 
-use gix::{objs::tree::EntryMode, objs::tree::EntryMode::Tree, traverse::tree::Recorder, ObjectId};
+use gix::{object::Kind, objs::tree::EntryMode, objs::tree::EntryMode::Tree, traverse::tree::Recorder, ObjectId};
 
 fn main() {
     let args = Args::parse_from(gix::env::args_os());
@@ -30,15 +30,15 @@ struct Args {
     treeish: String,
 }
 
-fn run(mut args: Args) -> anyhow::Result<()> {
+fn run(args: Args) -> anyhow::Result<()> {
     let repo = gix::discover(".")?;
-    let tree = repo
-        .rev_parse_single({
-            args.treeish.push_str("^{tree}");
-            &*args.treeish
-        })?
-        .object()?
-        .into_tree();
+    let rev_spec = repo.rev_parse_single(&*args.treeish)?;
+    let object = rev_spec.object()?;
+    let tree = match object.kind {
+        Kind::Commit => object.try_into_commit()?.tree()?,
+        Kind::Tree => object.try_into_tree()?,
+        _ => anyhow::bail!("not a tree-ish object"),
+    };
     let entries = if args.recursive {
         let mut recorder = Recorder::default();
         tree.traverse().breadthfirst(&mut recorder)?;
