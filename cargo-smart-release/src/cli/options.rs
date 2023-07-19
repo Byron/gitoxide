@@ -13,7 +13,7 @@ pub struct Args {
 
 #[derive(clap::Parser)]
 pub enum SubCommands {
-    #[clap(name = "smart-release", version = env!("CARGO_SMART_RELEASE_VERSION"))]
+    #[clap(name = "smart-release", version = option_env!("CARGO_SMART_RELEASE_VERSION"))]
     /// Release workspace crates fearlessly.
     ///
     /// Use --execute to actually perform the operation.
@@ -162,7 +162,7 @@ pub enum SubCommands {
         #[clap(long, help_heading = Some("CHANGELOG"))]
         capitalize_commit: bool,
     },
-    #[clap(name = "changelog", version = env!("CARGO_SMART_RELEASE_VERSION"))]
+    #[clap(name = "changelog", version = option_env!("CARGO_SMART_RELEASE_VERSION"))]
     /// Generate changelogs from commit histories, non-destructively.
     ///
     /// Use --write to actually write generated changelogs
