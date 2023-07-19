@@ -22,7 +22,6 @@ test = false
 
 [features]
 cache-efficiency-debug = ["gix/cache-efficiency-debug"]
-vendored-openssl = ["crates-index/vendored-openssl"]
 
 [dependencies]
 gix = { version = "^0.49.1", path = "../gix", default-features = false, features = ["max-performance-safe"] }
