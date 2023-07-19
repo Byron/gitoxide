@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 38 commits contributed to the release over the course of 83 calendar days.
+ - 40 commits contributed to the release over the course of 83 calendar days.
  - 82 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Make sure smart-release can survive publishes ([`dd54d18`](https://github.com/Byron/gitoxide/commit/dd54d18f0374f8ed44624728e146d07747f6e678))
+    - Release gix-prompt v0.5.3, gix v0.49.1, cargo-smart-release v0.20.0 ([`f069852`](https://github.com/Byron/gitoxide/commit/f0698522940c9ba4d45db5a44dce9f21ca29cb4e))
     - Adjust smart-release journey test to deal with the polarity changes of `--no-auto-publish-of-stable-crates` ([`abd74ea`](https://github.com/Byron/gitoxide/commit/abd74ea736bcf32fcc18caa409b31d5567156661))
     - Prepare changelogs prior to release ([`849f508`](https://github.com/Byron/gitoxide/commit/849f5081313c4a44bdaef6848758d0d9a5d1598b))
     - Merge branch 'smart-release-stability' ([`8629f56`](https://github.com/Byron/gitoxide/commit/8629f569cd5917b6c0c3fd928fde021e7976ee85))
