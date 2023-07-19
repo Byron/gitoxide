@@ -101,19 +101,19 @@ title "smart-release"
             (with "unconditional version bumping"
               it "succeeds" && {
                 WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-breaking-change-no-bump-on-demand" \
-                expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --allow-fully-generated-changelogs --no-bump-on-demand
+                expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --allow-fully-generated-changelogs --no-bump-on-demand --auto-publish-of-stable-crates
               }
               (with "--no-auto-publish-of-stable-crates"
                 it "succeeds" && {
                   WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-breaking-change-no-bump-on-demand-no-publish-stable" \
-                  expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --allow-fully-generated-changelogs --no-bump-on-demand --no-auto-publish-of-stable-crates
+                  expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --allow-fully-generated-changelogs --no-bump-on-demand
                 }
               )
             )
             (when 'releasing "c" as well with unconditional version bumping'
               it "succeeds" && {
                 WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-breaking-change-dependant-publish" \
-                expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty --allow-fully-generated-changelogs --no-bump-on-demand
+                expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty --allow-fully-generated-changelogs --no-bump-on-demand --auto-publish-of-stable-crates
               }
             )
             git reset --hard HEAD~1 &>/dev/null
@@ -153,19 +153,19 @@ title "smart-release"
       (with 'unconditional version bumping'
         it "succeeds" && {
           WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-unconditional" \
-          expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-bump-on-demand -b minor
+          expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-bump-on-demand -b minor --auto-publish-of-stable-crates
         }
         (when 'releasing b as well'
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/a-b-dry-run-success-multi-crate-unconditional" \
-            expect_run $SUCCESSFULLY "$exe" smart-release b a --no-push --no-publish -v --no-bump-on-demand -b minor
+            expect_run $SUCCESSFULLY "$exe" smart-release b a --no-push --no-publish -v --no-bump-on-demand -b minor --auto-publish-of-stable-crates
           }
         )
       )
     )
     (with '--execute but without side-effects'
       it "succeeds" && {
-        expect_run $SUCCESSFULLY "$exe" smart-release a -b keep -d keep --no-push --no-publish --execute --allow-dirty --no-changelog-preview
+        expect_run $SUCCESSFULLY "$exe" smart-release a -b keep -d keep --no-push --no-publish --execute --allow-dirty --no-changelog-preview --auto-publish-of-stable-crates
       }
       (with ".git and target/ directories removed"
         rm -Rf .git/ target/
@@ -175,7 +175,7 @@ title "smart-release"
         (with 'unconditional version minor bumping'
           init-git-repo &>/dev/null
           it "succeeds" && {
-            expect_run $SUCCESSFULLY "$exe" smart-release -b minor a --no-push --no-publish --no-bump-on-demand --execute --allow-dirty --no-changelog-preview
+            expect_run $SUCCESSFULLY "$exe" smart-release -b minor a --no-push --no-publish --no-bump-on-demand --execute --allow-dirty --no-changelog-preview --auto-publish-of-stable-crates
           }
           rm -Rf .git/
           it "managed additionally bumped b but not c as it's not pre-release" && {
