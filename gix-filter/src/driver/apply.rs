@@ -1,8 +1,12 @@
-use crate::driver::process::client::invoke;
-use crate::driver::{process, Operation, Process, State};
-use crate::{driver, Driver};
-use bstr::{BStr, BString};
 use std::collections::HashMap;
+
+use bstr::{BStr, BString};
+
+use crate::{
+    driver,
+    driver::{process, process::client::invoke, Operation, Process, State},
+    Driver,
+};
 
 /// What to do if delay is supported by a process filter.
 #[derive(Default, Debug, Copy, Clone)]

@@ -1,5 +1,6 @@
-use once_cell::sync::Lazy;
 use std::path::PathBuf;
+
+use once_cell::sync::Lazy;
 
 static DRIVER: Lazy<PathBuf> = Lazy::new(|| {
     let mut cargo = std::process::Command::new(env!("CARGO"));
@@ -35,10 +36,11 @@ mod baseline {
 }
 
 mod shutdown {
-    use crate::driver::apply::driver_with_process;
-    use gix_filter::driver::shutdown::Mode;
-    use gix_filter::driver::{Operation, Process};
     use std::time::Duration;
+
+    use gix_filter::driver::{shutdown::Mode, Operation, Process};
+
+    use crate::driver::apply::driver_with_process;
 
     pub(crate) fn extract_client(
         res: Option<gix_filter::driver::Process<'_>>,
@@ -73,13 +75,16 @@ mod shutdown {
 }
 
 pub(crate) mod apply {
-    use crate::driver::shutdown::extract_client;
-    use crate::driver::DRIVER;
-    use bstr::ByteSlice;
-    use gix_filter::driver::apply::Delay;
-    use gix_filter::driver::{apply, Operation};
-    use gix_filter::{driver, Driver};
     use std::io::Read;
+
+    use bstr::ByteSlice;
+    use gix_filter::{
+        driver,
+        driver::{apply, apply::Delay, Operation},
+        Driver,
+    };
+
+    use crate::driver::{shutdown::extract_client, DRIVER};
 
     fn driver_no_process() -> Driver {
         let mut driver = driver_with_process();

@@ -1,4 +1,3 @@
-use once_cell::sync::Lazy;
 #[cfg(unix)]
 use std::os::unix::prelude::MetadataExt;
 use std::{
@@ -12,6 +11,7 @@ use gix_features::progress;
 use gix_object::bstr::ByteSlice;
 use gix_odb::FindExt;
 use gix_worktree::checkout::Collision;
+use once_cell::sync::Lazy;
 use tempfile::TempDir;
 
 use crate::fixture_path;

@@ -1,11 +1,15 @@
-use crate::eol::AttributesDigest;
-use crate::pipeline::convert::configuration;
-use crate::pipeline::{Context, CrlfRoundTripCheck};
-use crate::{driver, eol, Driver};
+use std::path::Path;
+
 use bstr::BStr;
 use gix_attributes::StateRef;
 use smallvec::SmallVec;
-use std::path::Path;
+
+use crate::{
+    driver, eol,
+    eol::AttributesDigest,
+    pipeline::{convert::configuration, Context, CrlfRoundTripCheck},
+    Driver,
+};
 
 /// A utility to do buffer-swapping with.
 #[derive(Default, Clone)]

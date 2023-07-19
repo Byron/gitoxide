@@ -1,8 +1,12 @@
-use clap::Parser;
-use gix::bstr::BString;
 use std::io::{stdout, Write};
 
-use gix::{objs::tree::EntryMode, objs::tree::EntryMode::Tree, traverse::tree::Recorder, ObjectId};
+use clap::Parser;
+use gix::{
+    bstr::BString,
+    objs::tree::{EntryMode, EntryMode::Tree},
+    traverse::tree::Recorder,
+    ObjectId,
+};
 
 fn main() {
     let args = Args::parse_from(gix::env::args_os());

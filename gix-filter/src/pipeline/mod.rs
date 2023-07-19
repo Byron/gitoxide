@@ -1,5 +1,6 @@
-use crate::{driver, eol, Driver, Pipeline};
 use bstr::BString;
+
+use crate::{driver, eol, Driver, Pipeline};
 
 /// Define how to perform CRLF round-trip checking when converting to git.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]

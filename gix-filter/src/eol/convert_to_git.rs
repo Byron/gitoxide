@@ -37,10 +37,15 @@ pub enum Error {
 }
 
 pub(crate) mod function {
-    use crate::clear_and_set_capacity;
-    use crate::eol::convert_to_git::{Error, Options, RoundTripCheck};
-    use crate::eol::{AttributesDigest, Stats};
     use bstr::ByteSlice;
+
+    use crate::{
+        clear_and_set_capacity,
+        eol::{
+            convert_to_git::{Error, Options, RoundTripCheck},
+            AttributesDigest, Stats,
+        },
+    };
 
     /// Given a `src` buffer, change it `git` (`\n`) line endings and store the result in `buf`.
     /// Return `true` if `buf` was written or `false` if nothing had to be done.

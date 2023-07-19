@@ -1,9 +1,11 @@
-use std::path::PathBuf;
-use std::{fs::OpenOptions, io::Write, path::Path};
+use std::{
+    fs::OpenOptions,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use bstr::BStr;
-use gix_filter::driver::apply::MaybeDelayed;
-use gix_filter::pipeline::convert::ToWorktreeOutcome;
+use gix_filter::{driver::apply::MaybeDelayed, pipeline::convert::ToWorktreeOutcome};
 use gix_hash::oid;
 use gix_index::{entry::Stat, Entry};
 use io_close::Close;

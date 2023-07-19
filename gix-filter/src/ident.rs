@@ -1,6 +1,8 @@
-use crate::clear_and_set_capacity;
-use bstr::{ByteSlice, ByteVec};
 use std::ops::Range;
+
+use bstr::{ByteSlice, ByteVec};
+
+use crate::clear_and_set_capacity;
 
 /// Undo identifiers like `$Id:<hexsha>$` to `$Id$` in `src` and write to `buf`. Newlines between dollars are ignored.
 /// Return `true` if `buf` was written or `false` if `src` was left unaltered (as there was nothing to do).

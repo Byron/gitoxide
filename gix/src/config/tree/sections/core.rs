@@ -144,11 +144,13 @@ pub type Eol = keys::Any<validate::Eol>;
 pub type CheckRoundTripEncoding = keys::Any<validate::CheckRoundTripEncoding>;
 
 mod check_round_trip_encoding {
-    use crate::bstr::{BStr, ByteSlice};
-    use crate::config;
-    use crate::config::tree::core::CheckRoundTripEncoding;
-    use crate::config::tree::Key;
     use std::borrow::Cow;
+
+    use crate::{
+        bstr::{BStr, ByteSlice},
+        config,
+        config::tree::{core::CheckRoundTripEncoding, Key},
+    };
 
     impl CheckRoundTripEncoding {
         /// Convert `value` into a list of encodings, which are either space or coma separated. Fail if an encoding is unknown.
@@ -184,10 +186,13 @@ mod check_round_trip_encoding {
 }
 
 mod eol {
-    use crate::bstr::{BStr, ByteSlice};
-    use crate::config;
-    use crate::config::tree::core::Eol;
     use std::borrow::Cow;
+
+    use crate::{
+        bstr::{BStr, ByteSlice},
+        config,
+        config::tree::core::Eol,
+    };
 
     impl Eol {
         /// Convert `value` into the default end-of-line mode.
@@ -210,11 +215,11 @@ mod eol {
 }
 
 mod safecrlf {
-    use crate::bstr::BStr;
-    use crate::config;
-    use crate::config::tree::core::SafeCrlf;
-    use gix_filter::pipeline::CrlfRoundTripCheck;
     use std::borrow::Cow;
+
+    use gix_filter::pipeline::CrlfRoundTripCheck;
+
+    use crate::{bstr::BStr, config, config::tree::core::SafeCrlf};
 
     impl SafeCrlf {
         /// Convert `value` into the safe-crlf enumeration, if possible.
@@ -238,11 +243,11 @@ mod safecrlf {
 }
 
 mod autocrlf {
-    use crate::bstr::BStr;
-    use crate::config;
-    use crate::config::tree::core::AutoCrlf;
-    use gix_filter::eol;
     use std::borrow::Cow;
+
+    use gix_filter::eol;
+
+    use crate::{bstr::BStr, config, config::tree::core::AutoCrlf};
 
     impl AutoCrlf {
         /// Convert `value` into the safe-crlf enumeration, if possible.

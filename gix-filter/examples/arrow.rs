@@ -1,7 +1,10 @@
+use std::{
+    io::{stdin, stdout, Read, Write},
+    time::Duration,
+};
+
 use bstr::{ByteSlice, ByteVec};
 use gix_filter::driver::process;
-use std::io::{stdin, stdout, Read, Write};
-use std::time::Duration;
 
 static PREFIX: &str = "➡";
 

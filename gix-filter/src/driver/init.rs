@@ -1,7 +1,12 @@
-use crate::driver::{process, substitute_f_parameter, Operation, Process, State};
-use crate::{driver, Driver};
-use bstr::{BStr, BString};
 use std::process::Stdio;
+
+use bstr::{BStr, BString};
+
+use crate::{
+    driver,
+    driver::{process, substitute_f_parameter, Operation, Process, State},
+    Driver,
+};
 
 /// The error returned by [State::maybe_launch_process()][super::State::maybe_launch_process()].
 #[derive(Debug, thiserror::Error)]

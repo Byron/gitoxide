@@ -23,9 +23,10 @@ pub enum Error {
 }
 
 pub(crate) mod function {
+    use encoding_rs::DecoderResult;
+
     use super::{Error, RoundTripCheck};
     use crate::clear_and_set_capacity;
-    use encoding_rs::DecoderResult;
 
     /// Decode `src` according to `src_encoding` to `UTF-8` for storage in git and place it in `buf`.
     /// Note that the encoding is always applied, there is no conditional even if `src_encoding` already is `UTF-8`.

@@ -1,6 +1,9 @@
-use crate::clear_and_set_capacity;
-use crate::eol::{AttributesDigest, Configuration, Mode, Stats};
 use bstr::{ByteSlice, ByteVec};
+
+use crate::{
+    clear_and_set_capacity,
+    eol::{AttributesDigest, Configuration, Mode, Stats},
+};
 
 /// Convert all `\n` in `src` to `crlf` if `digest` and `config` indicate it, returning `true` if `buf` holds the result, or `false`
 /// if no change was made after all.

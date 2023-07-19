@@ -1,6 +1,7 @@
 mod buffers {
-    use crate::pipeline::util::Buffers;
     use bstr::ByteSlice;
+
+    use crate::pipeline::util::Buffers;
 
     #[test]
     fn usage() {

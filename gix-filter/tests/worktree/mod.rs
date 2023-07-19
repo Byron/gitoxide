@@ -66,8 +66,7 @@ mod encoding {
 
 mod encode_to_git {
     use bstr::ByteSlice;
-    use gix_filter::worktree;
-    use gix_filter::worktree::encode_to_git::RoundTripCheck;
+    use gix_filter::{worktree, worktree::encode_to_git::RoundTripCheck};
 
     #[test]
     fn simple() -> crate::Result {
@@ -83,8 +82,7 @@ mod encode_to_git {
 
 mod encode_to_worktree {
     use bstr::ByteSlice;
-    use gix_filter::worktree;
-    use gix_filter::worktree::encode_to_git::RoundTripCheck;
+    use gix_filter::{worktree, worktree::encode_to_git::RoundTripCheck};
 
     #[test]
     fn shift_jis() -> crate::Result {

@@ -11,7 +11,6 @@
 #![deny(rust_2018_idioms, missing_docs, unsafe_code)]
 
 use bstr::BString;
-
 /// A forwarding of the `encoding_rs` crate for its types and convenience.
 pub use encoding_rs as encoding;
 

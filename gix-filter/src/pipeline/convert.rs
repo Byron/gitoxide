@@ -1,8 +1,8 @@
-use crate::pipeline::util::Configuration;
-use crate::{driver, eol, ident, worktree, Pipeline};
+use std::{io::Read, path::Path};
+
 use bstr::BStr;
-use std::io::Read;
-use std::path::Path;
+
+use crate::{driver, eol, ident, pipeline::util::Configuration, worktree, Pipeline};
 
 ///
 pub mod configuration {

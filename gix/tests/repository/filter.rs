@@ -1,7 +1,9 @@
-use crate::util::named_repo;
+use std::path::Path;
+
 use gix::bstr::ByteSlice;
 use gix_filter::driver::apply::Delay;
-use std::path::Path;
+
+use crate::util::named_repo;
 
 #[test]
 fn pipeline_in_repo_without_special_options() -> crate::Result {

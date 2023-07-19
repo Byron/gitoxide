@@ -1,10 +1,9 @@
-use crate::driver::apply::driver_with_process;
-use crate::pipeline::pipeline;
+use std::{io::Read, path::Path};
+
 use bstr::{BStr, ByteSlice};
-use gix_filter::eol;
-use gix_filter::pipeline::CrlfRoundTripCheck;
-use std::io::Read;
-use std::path::Path;
+use gix_filter::{eol, pipeline::CrlfRoundTripCheck};
+
+use crate::{driver::apply::driver_with_process, pipeline::pipeline};
 
 #[test]
 fn no_driver_but_filter_with_autocrlf() -> gix_testtools::Result {

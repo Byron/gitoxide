@@ -1,18 +1,23 @@
 //! lower-level access to filters which are applied to create working tree checkouts or to 'clean' working tree contents for storage in git.
-use crate::bstr::BStr;
-use crate::config::cache::util::{ApplyLeniency, ApplyLeniencyDefaultValue};
-use crate::config::tree::Core;
-use crate::Repository;
+use std::borrow::Cow;
+
 pub use gix_filter as plumbing;
 use gix_odb::{Find, FindExt};
-use std::borrow::Cow;
+
+use crate::{
+    bstr::BStr,
+    config::{
+        cache::util::{ApplyLeniency, ApplyLeniencyDefaultValue},
+        tree::Core,
+    },
+    Repository,
+};
 
 ///
 pub mod pipeline {
     ///
     pub mod options {
-        use crate::bstr::BString;
-        use crate::config;
+        use crate::{bstr::BString, config};
 
         /// The error returned by [Pipeline::options()][crate::filter::Pipeline::options()].
         #[derive(Debug, thiserror::Error)]

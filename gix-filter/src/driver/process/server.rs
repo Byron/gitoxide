@@ -1,8 +1,8 @@
-use crate::driver::process::Server;
+use std::{collections::HashSet, io::Write, str::FromStr};
+
 use bstr::{BString, ByteSlice};
-use std::collections::HashSet;
-use std::io::Write;
-use std::str::FromStr;
+
+use crate::driver::process::Server;
 
 /// A request to be handled by the server, typically done in a loop.
 pub struct Request<'a> {
@@ -204,10 +204,12 @@ impl Server {
 }
 
 mod request {
-    use crate::driver::process;
-    use crate::driver::process::server::Request;
-    use crate::driver::process::PacketlineReader;
     use std::io::Write;
+
+    use crate::driver::{
+        process,
+        process::{server::Request, PacketlineReader},
+    };
 
     impl Request<'_> {
         /// Turn ourselves into a reader that can read until the next flush packet.

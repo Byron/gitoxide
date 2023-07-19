@@ -1,8 +1,9 @@
-use crate::driver::apply::driver_with_process;
-use crate::pipeline::pipeline;
+use std::io::Read;
+
 use bstr::ByteSlice;
 use gix_filter::pipeline::CrlfRoundTripCheck;
-use std::io::Read;
+
+use crate::{driver::apply::driver_with_process, pipeline::pipeline};
 
 #[test]
 fn all_stages() -> gix_testtools::Result {

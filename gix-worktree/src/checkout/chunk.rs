@@ -1,5 +1,7 @@
-use std::collections::BTreeSet;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{
+    collections::BTreeSet,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 use bstr::{BStr, BString};
 use gix_hash::oid;
@@ -67,8 +69,9 @@ mod reduce {
         }
     }
 }
-use crate::checkout::entry::DelayedFilteredStream;
 pub use reduce::Reduce;
+
+use crate::checkout::entry::DelayedFilteredStream;
 
 #[derive(Default)]
 pub struct Outcome<'a> {

@@ -1,5 +1,6 @@
-use crate::{cache::State, PathIdMapping};
 use bstr::{BStr, ByteSlice};
+
+use crate::{cache::State, PathIdMapping};
 
 /// Various aggregate numbers related to the stack delegate itself.
 #[derive(Default, Clone, Copy, Debug)]

@@ -1,7 +1,9 @@
-use crate::driver;
-use crate::driver::apply::handle_io_err;
-use crate::driver::{Operation, State};
 use bstr::{BStr, BString};
+
+use crate::{
+    driver,
+    driver::{apply::handle_io_err, Operation, State},
+};
 
 ///
 pub mod list {

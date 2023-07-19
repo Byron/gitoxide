@@ -1,6 +1,8 @@
 use bstr::ByteSlice;
-use gix_filter::eol;
-use gix_filter::eol::{AttributesDigest, Configuration, Mode};
+use gix_filter::{
+    eol,
+    eol::{AttributesDigest, Configuration, Mode},
+};
 
 #[test]
 fn no_conversion_if_attribute_digest_does_not_allow_it() {

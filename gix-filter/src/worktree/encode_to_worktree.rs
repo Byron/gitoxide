@@ -14,9 +14,10 @@ pub enum Error {
 }
 
 pub(crate) mod function {
+    use encoding_rs::EncoderResult;
+
     use super::Error;
     use crate::clear_and_set_capacity;
-    use encoding_rs::EncoderResult;
 
     /// Encode `src_utf8`, which is assumed to be UTF-8 encoded, according to `worktree_encoding` for placement in the working directory,
     /// and write it to `buf`, possibly resizing it.

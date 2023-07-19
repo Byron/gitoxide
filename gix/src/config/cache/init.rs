@@ -4,7 +4,6 @@ use std::{borrow::Cow, ffi::OsString};
 use gix_sec::Permission;
 
 use super::{interpolate_context, util, Error, StageOne};
-use crate::repository::init::setup_objects;
 use crate::{
     bstr::BString,
     config,
@@ -14,6 +13,7 @@ use crate::{
         Cache,
     },
     open,
+    repository::init::setup_objects,
 };
 
 /// Initialization

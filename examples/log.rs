@@ -1,9 +1,15 @@
+use std::{
+    io::{stdout, Write},
+    path::{Path, PathBuf},
+};
+
 /// A toy-version of `git log`.
 use clap::Parser;
-use gix::bstr::{BString, ByteSlice};
-use gix::{date::time::format, traverse::commit::Sorting};
-use std::io::{stdout, Write};
-use std::path::{Path, PathBuf};
+use gix::{
+    bstr::{BString, ByteSlice},
+    date::time::format,
+    traverse::commit::Sorting,
+};
 
 fn main() {
     let args = Args::parse_from(gix::env::args_os());

@@ -1,5 +1,6 @@
-use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::collections::HashMap;
+
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 
 ///
 pub mod init;

@@ -1,7 +1,7 @@
-use bstr::{ByteSlice, ByteVec};
-use gix_filter::eol;
-use gix_filter::eol::AttributesDigest;
 use std::path::Path;
+
+use bstr::{ByteSlice, ByteVec};
+use gix_filter::{eol, eol::AttributesDigest};
 
 #[test]
 fn with_binary_attribute_is_never_converted() {

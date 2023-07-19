@@ -1,5 +1,6 @@
-use crate::driver::State;
 use bstr::BString;
+
+use crate::driver::State;
 
 ///
 #[derive(Debug, Copy, Clone)]

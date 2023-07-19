@@ -1,9 +1,11 @@
-use crate::driver::process;
-use crate::driver::process::{Capabilities, Client, PacketlineReader};
+use std::{collections::HashSet, io::Write, str::FromStr};
+
 use bstr::{BStr, BString, ByteVec};
-use std::collections::HashSet;
-use std::io::Write;
-use std::str::FromStr;
+
+use crate::driver::{
+    process,
+    process::{Capabilities, Client, PacketlineReader},
+};
 
 ///
 pub mod handshake {
