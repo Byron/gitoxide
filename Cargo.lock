@@ -2112,7 +2112,7 @@ dependencies = [
  "gix-config-value",
  "gix-testtools",
  "parking_lot",
- "rustix 0.37.23",
+ "rustix 0.38.4",
  "serial_test",
  "thiserror",
 ]
