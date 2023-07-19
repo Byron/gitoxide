@@ -111,11 +111,11 @@ pub(crate) mod imp {
         );
 
         let prev = termios::tcgetattr(&fd)?;
-        let mut new = prev;
+        let mut new = prev.clone();
         *state = prev.into();
 
-        new.c_lflag &= !termios::ECHO;
-        new.c_lflag |= termios::ECHONL;
+        new.local_modes &= !termios::LocalModes::ECHO;
+        new.local_modes |= termios::LocalModes::ECHONL;
         termios::tcsetattr(&fd, termios::OptionalActions::Flush, &new)?;
 
         Ok(RestoreTerminalStateOnDrop { fd, state })

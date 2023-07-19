@@ -66,6 +66,7 @@
 //! * [`git2::Repository::revparse_single()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revparse_single) ➡ [`gix::Repository::rev_parse_single()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.rev_parse_single)
 //! * [`git2::Repository::revwalk()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revwalk) ➡ [`gix::Repository::rev_walk()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.rev_walk)
 //! * [`git2::build::CheckoutBuilder::disable_filters()](https://docs.rs/git2/0.17.2/git2/build/struct.CheckoutBuilder.html#method.disable_filters) ➡ ❌ *(filters are always applied during checkouts)*
+//! * [`git2::Odb::read_header()`](https://docs.rs/git2/0.17.2/git2/struct.Odb.html#method.read_header) ➡ [`gix::Repository::find_header()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.find_header)
 //!
 //! ## Feature Flags
 #![cfg_attr(

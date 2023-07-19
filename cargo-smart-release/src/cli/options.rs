@@ -109,9 +109,9 @@ pub enum SubCommands {
         #[clap(long, help_heading = Some("EXPERT"))]
         allow_dirty: bool,
 
-        /// Disallow to also publish stable crates when discovering changed crates, bumping their version according to `-d <spec>`.
+        /// Allow to also publish stable crates when discovering changed crates, bumping their version according to `-d <spec>`.
         #[clap(long, help_heading = Some("CUSTOMIZATION"))]
-        no_auto_publish_of_stable_crates: bool,
+        auto_publish_of_stable_crates: bool,
 
         /// Do not force 0.X version requirements to be updated in dependent crates on patch update, forcing
         /// an update of the lower bound.

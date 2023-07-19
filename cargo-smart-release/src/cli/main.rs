@@ -50,7 +50,7 @@ fn main() -> anyhow::Result<()> {
             no_push,
             changelog_without,
             dangerously_pass_no_verify,
-            no_auto_publish_of_stable_crates,
+            auto_publish_of_stable_crates,
             no_conservative_pre_release_version_handling,
             dry_run_cargo_publish,
             update_crates_index,
@@ -62,7 +62,7 @@ fn main() -> anyhow::Result<()> {
             allow_fully_generated_changelogs,
             no_dependencies,
             no_isolate_dependencies_from_breaking_changes,
-            capitalize_commit
+            capitalize_commit,
         } => {
             let verbose = execute || verbose;
             init_logging(verbose);
@@ -82,7 +82,7 @@ fn main() -> anyhow::Result<()> {
                     dependencies: !no_dependencies,
                     dry_run_cargo_publish,
                     no_verify: dangerously_pass_no_verify,
-                    allow_auto_publish_of_stable_crates: !no_auto_publish_of_stable_crates,
+                    allow_auto_publish_of_stable_crates: auto_publish_of_stable_crates,
                     update_crates_index,
                     preview: !no_changelog_preview,
                     generator_segments: names_to_segment_selection(&changelog_without)?,
