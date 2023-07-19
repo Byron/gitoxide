@@ -50,7 +50,7 @@ mod specials {
         );
         let mut out = Outcome::default();
         out.initialize(&collection);
-        search.pattern_matching_relative_path(path, case, &mut out)
+        search.pattern_matching_relative_path(path, case, None, &mut out)
     }
 
     fn searchi(pattern: &str, path: &str, rela_containing_dir: Option<&str>) -> bool {
@@ -100,7 +100,7 @@ fn baseline() -> crate::Result {
     actual.initialize(&collection);
     for (rela_path, expected) in (baseline::Expectations { lines: input.lines() }) {
         actual.reset();
-        let has_match = group.pattern_matching_relative_path(rela_path, case, &mut actual);
+        let has_match = group.pattern_matching_relative_path(rela_path, case, None, &mut actual);
         assert_references(&actual);
         let actual: Vec<_> = actual
             .iter()
@@ -202,7 +202,7 @@ fn all_attributes_are_listed_in_declaration_order() -> crate::Result {
 
     for (rela_path, expected) in (baseline::Expectations { lines: input.lines() }) {
         out.reset();
-        group.pattern_matching_relative_path(rela_path, Case::Sensitive, &mut out);
+        group.pattern_matching_relative_path(rela_path, Case::Sensitive, None, &mut out);
         assert_references(&out);
         let actual: Vec<_> = out.iter().map(|m| m.assignment).collect();
         assert_eq!(
@@ -239,7 +239,7 @@ fn given_attributes_are_made_available_in_given_order() -> crate::Result {
 
     for (rela_path, expected) in (baseline::Expectations { lines: input.lines() }) {
         out.reset();
-        group.pattern_matching_relative_path(rela_path, Case::Sensitive, &mut out);
+        group.pattern_matching_relative_path(rela_path, Case::Sensitive, None, &mut out);
         assert_references(&out);
         let actual: Vec<_> = out.iter_selected().map(|m| m.assignment).collect();
         assert_eq!(

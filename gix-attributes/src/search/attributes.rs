@@ -103,13 +103,14 @@ impl Search {
         &'a self,
         relative_path: impl Into<&'b BStr>,
         case: gix_glob::pattern::Case,
+        is_dir: Option<bool>,
         out: &mut Outcome,
     ) -> bool {
         let relative_path = relative_path.into();
         let basename_pos = relative_path.rfind(b"/").map(|p| p + 1);
         let mut has_match = false;
         self.patterns.iter().rev().any(|pl| {
-            has_match |= pattern_matching_relative_path(pl, relative_path, basename_pos, case, out);
+            has_match |= pattern_matching_relative_path(pl, relative_path, basename_pos, case, is_dir, out);
             out.is_done()
         });
         has_match
@@ -201,6 +202,7 @@ fn pattern_matching_relative_path(
     relative_path: &BStr,
     basename_pos: Option<usize>,
     case: gix_glob::pattern::Case,
+    is_dir: Option<bool>,
     out: &mut Outcome,
 ) -> bool {
     let (relative_path, basename_start_pos) =
@@ -227,7 +229,7 @@ fn pattern_matching_relative_path(
             Value::Assignments(attrs) => attrs,
         };
         if out.has_unspecified_attributes(attrs.iter().map(|attr| attr.id))
-            && pattern.matches_repo_relative_path(relative_path, basename_start_pos, None, case)
+            && pattern.matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
         {
             let all_filled = out.fill_attributes(attrs.iter(), pattern, list.source.as_ref(), *sequence_number);
             if all_filled {
