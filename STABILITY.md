@@ -96,6 +96,8 @@ It's acceptable to let each breaking change be immediately followed by a minor v
 
 Released plumbing crates are marked with major version number 1 or above, for example `1.2.4` and live in stability tier 2 _(->ST2)_.
 
+*These crates may not expose parts of unstable crates in their public API*.
+
 Breaking changes are collected and may be released no more often than every 4 weeks by incrementing the major version number.
 
 For example, `gix-odb` and `gix-ref` both have breaking changes, where `gix-odb`'s change is on August 1st and `gix-ref`'s dependent change
