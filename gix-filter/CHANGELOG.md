@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features (BREAKING)
+
+ - <csr-id-29a64c289946301d5e502ee956f3606280409faf/> make it possible to use filter pipeline with streaming for checkouts.
+   This is done by providing a `gix_filter::Pipeline` to `checkout::Options` to control
+   how filters are applied.
+ - <csr-id-94df6e0e56c0c94e15da89dd9716bcdea5cd4380/> a complete, streaming compatible, `git` filter pipeline.
+   It's configuring itself based on each input path and supports streaming.
+   
+   Some name changes where also performed while at it.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-35415db5d82b82d3908709b6db177bb8d7c3542c/> improve conversion API of `Pipeline::convert_to_git(index_object)` to be more consistent and practical.
+   `index_object` now receives the path to the entry as first argument, notably in a data-type that is fitting for
+   the purpose.
+   Additionally, implement `Clone` for `Pipeline`.
+   We also make sure that the input stream is turned into a buffer in case there is no driver, previously filtering
+   had nothing to work with if there was no driver.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 12 calendar days.
+ - 18 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Just fmt ([`a063c62`](https://github.com/Byron/gitoxide/commit/a063c62e3a30006d837b267e2ce74e70e48b4fb6))
+    - Merge branch 'integrate-filtering' ([`b19a56d`](https://github.com/Byron/gitoxide/commit/b19a56dcfa9bea86332a84aa4e8fad445e7d1724))
+    - Make it possible to use filter pipeline with streaming for checkouts. ([`29a64c2`](https://github.com/Byron/gitoxide/commit/29a64c289946301d5e502ee956f3606280409faf))
+    - Improve conversion API of `Pipeline::convert_to_git(index_object)` to be more consistent and practical. ([`35415db`](https://github.com/Byron/gitoxide/commit/35415db5d82b82d3908709b6db177bb8d7c3542c))
+    - A complete, streaming compatible, `git` filter pipeline. ([`94df6e0`](https://github.com/Byron/gitoxide/commit/94df6e0e56c0c94e15da89dd9716bcdea5cd4380))
+</details>
+
 ## 0.0.0 (2023-07-01)
 
 <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
@@ -53,7 +97,7 @@ An empty crate without any content to reserve the name for the gitoxide project.
 
 <csr-read-only-do-not-edit/>
 
- - 40 commits contributed to the release over the course of 438 calendar days.
+ - 41 commits contributed to the release over the course of 438 calendar days.
  - 13 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#691](https://github.com/Byron/gitoxide/issues/691)
 
@@ -68,6 +112,7 @@ An empty crate without any content to reserve the name for the gitoxide project.
  * **[#691](https://github.com/Byron/gitoxide/issues/691)**
     - Set `rust-version` to 1.64 ([`55066ce`](https://github.com/Byron/gitoxide/commit/55066ce5fd71209abb5d84da2998b903504584bb))
  * **Uncategorized**
+    - Release gix-filter v0.0.0 ([`c3ee57b`](https://github.com/Byron/gitoxide/commit/c3ee57b9d71f650784dc0a5022dbf54fe71e5fe5))
     - Use latest version of `gix-path` to allow `gix-filter` release. ([`bb9f308`](https://github.com/Byron/gitoxide/commit/bb9f3088aee60f140e960602429cc7eb46121b75))
     - Release gix-packetline-blocking v0.16.3, gix-filter v0.0.0 ([`fb3ad29`](https://github.com/Byron/gitoxide/commit/fb3ad29967d08558e42cbe8e80de5dd0b38f12c5))
     - Merge branch 'filter-programs' ([`97f8e96`](https://github.com/Byron/gitoxide/commit/97f8e960ed52538bb55b72f9dfc5f9d144d72885))

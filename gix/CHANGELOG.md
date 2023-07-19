@@ -5,6 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-980c2ba591dce7fc787c418aed85078c19e2d6d4/> Make `EntryMode` available from `gix::object::tree`.
+   Previously one had to go through `gix::objs::tree` which wasn't symmetric
+   with `gix::object::Kind`.
+ - <csr-id-d4a8f8cf6d8b059978719ea314fc8a4bfe26c60d/> Add `Id::header()` and `Id::try_header()` as syblings to `::object()` and `::try_object()`.
+   With the new header related functions one can obtain information about an object more quickly.
+ - <csr-id-b73435b3bf334d5be2931c2ea6a597a9dd51b783/> `Repository::header()` and `::try_header()` to learn about objects, quickly
+   Accessing just the headers of an object is much faster than accessing the entire
+   object. Previously, this method was only available on the `objects` field, now it's
+   available through `Repository` directly.
+ - <csr-id-c05eb2204620a5ff5e04b766009c873a14ae0f9e/> top-level examples that represent fully-fledged command-line applications.
+   Please note that these are just examples, which aren't necessarily
+   production ready in terms of quality or performance.
+ - <csr-id-8cc106aa430d39ac9967dcfb3d293725fc76cb79/> checkouts when cloning now respect attributes and use filters.
+ - <csr-id-8993b777cd0331e7260d7d7d1f820afc79a34b19/> add `Repository::filter_pipeline()` to obtain a primitive to handle data conversions.
+   It's fully configured as git would, and can be used to convert data from git or to git.
+
+### Bug Fixes
+
+ - <csr-id-47ca8465e04bdd13fe2ebfc6f012f8191e3f7896/> properly re-initialize object caches after their configuration changes.
+
+### Refactor (BREAKING)
+
+ - <csr-id-c548780e6ea49453ecdb45b11bf4c5781b105e6b/> move error structs into `repository` module where appropriate.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 24 commits contributed to the release over the course of 11 calendar days.
+ - 19 days passed between releases.
+ - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#925](https://github.com/Byron/gitoxide/issues/925)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#925](https://github.com/Byron/gitoxide/issues/925)**
+    - Remove all copies of repo-initialization files and rework them to be our own. ([`5ac2269`](https://github.com/Byron/gitoxide/commit/5ac22699936dbc5c09c5eefd28b75d48271b286b))
+ * **Uncategorized**
+    - Just fmt ([`a063c62`](https://github.com/Byron/gitoxide/commit/a063c62e3a30006d837b267e2ce74e70e48b4fb6))
+    - Merge branch 'adjustments-for-crates-index' ([`b82868d`](https://github.com/Byron/gitoxide/commit/b82868d5688d8d4849c47ed3d209a96ee59e69b3))
+    - Make `EntryMode` available from `gix::object::tree`. ([`980c2ba`](https://github.com/Byron/gitoxide/commit/980c2ba591dce7fc787c418aed85078c19e2d6d4))
+    - Add `Id::header()` and `Id::try_header()` as syblings to `::object()` and `::try_object()`. ([`d4a8f8c`](https://github.com/Byron/gitoxide/commit/d4a8f8cf6d8b059978719ea314fc8a4bfe26c60d))
+    - `Repository::header()` and `::try_header()` to learn about objects, quickly ([`b73435b`](https://github.com/Byron/gitoxide/commit/b73435b3bf334d5be2931c2ea6a597a9dd51b783))
+    - Properly re-initialize object caches after their configuration changes. ([`47ca846`](https://github.com/Byron/gitoxide/commit/47ca8465e04bdd13fe2ebfc6f012f8191e3f7896))
+    - Top-level examples that represent fully-fledged command-line applications. ([`c05eb22`](https://github.com/Byron/gitoxide/commit/c05eb2204620a5ff5e04b766009c873a14ae0f9e))
+    - Cargo fmt ([`6121b8f`](https://github.com/Byron/gitoxide/commit/6121b8f6a7da7f263c6e066155f053a1d7c81477))
+    - `git log` example include empty parents and paths ([`bd59bbe`](https://github.com/Byron/gitoxide/commit/bd59bbebddf804a4dd0872127dcc31b5c3b29c2f))
+    - `git log` example now accepts multiple paths. ([`0df9f70`](https://github.com/Byron/gitoxide/commit/0df9f707987c8001c4ca81faf69033c679a75fd5))
+    - `git log` example filter for min/max parents ([`01e9c29`](https://github.com/Byron/gitoxide/commit/01e9c29bf7106b30d8e3e8c71b37eff77bcc38b5))
+    - `git log` example iterator now properly lazy ([`8a6f1e8`](https://github.com/Byron/gitoxide/commit/8a6f1e89fa4d736a2c902be55413887e14885957))
+    - `git log` example now shows merge parents ([`5cbb6a7`](https://github.com/Byron/gitoxide/commit/5cbb6a72c34d926a2782569d8370e54d4c63ab34))
+    - A `git log` example ([`03b3423`](https://github.com/Byron/gitoxide/commit/03b342306c5effac5e8aa92a349385e59785c0b7))
+    - A `git ls-tree` example ([`6f4b431`](https://github.com/Byron/gitoxide/commit/6f4b43101f7b46e38c2f61c2f859347085d8214f))
+    - Thanks clippy ([`3ef32af`](https://github.com/Byron/gitoxide/commit/3ef32af9bf477cbc60d24da8bb3f15d20976e9e0))
+    - Merge branch 'unique-templates' ([`cbb0db8`](https://github.com/Byron/gitoxide/commit/cbb0db80ccc5c29c92f7abd8af2a03c67d86fc2b))
+    - Adapt journey tests to changes in init templates ([`6297d22`](https://github.com/Byron/gitoxide/commit/6297d2201abb97ec999986a7a19b9ddb02114e24))
+    - Merge branch 'integrate-filtering' ([`b19a56d`](https://github.com/Byron/gitoxide/commit/b19a56dcfa9bea86332a84aa4e8fad445e7d1724))
+    - Checkouts when cloning now respect attributes and use filters. ([`8cc106a`](https://github.com/Byron/gitoxide/commit/8cc106aa430d39ac9967dcfb3d293725fc76cb79))
+    - Add `Repository::filter_pipeline()` to obtain a primitive to handle data conversions. ([`8993b77`](https://github.com/Byron/gitoxide/commit/8993b777cd0331e7260d7d7d1f820afc79a34b19))
+    - Move error structs into `repository` module where appropriate. ([`c548780`](https://github.com/Byron/gitoxide/commit/c548780e6ea49453ecdb45b11bf4c5781b105e6b))
+    - Add keys required to deal with worktree conversions and filters. ([`3fbd7b0`](https://github.com/Byron/gitoxide/commit/3fbd7b0c864cf2f1a38ae24e85d47b0b26b271a7))
+</details>
+
 ## 0.48.0 (2023-06-29)
 
 <csr-id-fb63f3f07f0f9545be5942bcb66b06040fbc7fe9/>
@@ -29,7 +106,7 @@ The main feature of this release is support dates prior to the UNIX epoch. Note 
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 6 calendar days.
+ - 15 commits contributed to the release over the course of 6 calendar days.
  - 6 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -41,6 +118,7 @@ The main feature of this release is support dates prior to the UNIX epoch. Note 
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-transport v0.33.1, gix v0.48.0 ([`f27ca12`](https://github.com/Byron/gitoxide/commit/f27ca128c5f109ad02e4e1a12dc14e93b07bbfcf))
     - Release gix-lock v7.0.1, gix v0.48.0 ([`5ce81ef`](https://github.com/Byron/gitoxide/commit/5ce81ef16210f0b0b72dfd5710a064ccda96ac1c))
     - Release gix-glob v0.9.1, gix-attributes v0.14.1, gix-config-value v0.12.3, gix-ref v0.32.1, gix-sec v0.8.3, gix-config v0.25.1, gix-url v0.20.1, gix-credentials v0.16.1, gix-discover v0.21.1, gix-ignore v0.4.1, gix-pack v0.39.1, gix-odb v0.49.1, gix-worktree v0.21.1, gix v0.48.0 ([`69c6a36`](https://github.com/Byron/gitoxide/commit/69c6a36ba14cbef129deebda9fd8870005fefa17))
     - Release gix-features v0.31.1, gix-path v0.8.3, gix v0.48.0 ([`9ca3464`](https://github.com/Byron/gitoxide/commit/9ca346462806671fbc49643a87cea25ab0da3be8))

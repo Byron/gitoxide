@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-2a76929ece48c3b0fbdba7e08ae5d7e647db4d36/> add `in_parallel_with_finalize` to support a usecase for `gix-worktree`
+
+### Changed (BREAKING)
+
+ - <csr-id-032cea3d6cfde80fdfc7bfe8722e2514d2bcb5cf/> remove `zlib::stream::inflate::ReadBoxed`.
+   It was a special-case type that was only used in one spot, and thus
+   not really that interesting to have in a shared place.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 10 calendar days.
+ - 19 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'refactor-pack-streaming' ([`8a46a7e`](https://github.com/Byron/gitoxide/commit/8a46a7ef3efc22241b67f3447223b2505e205442))
+    - Remove `zlib::stream::inflate::ReadBoxed`. ([`032cea3`](https://github.com/Byron/gitoxide/commit/032cea3d6cfde80fdfc7bfe8722e2514d2bcb5cf))
+    - Merge branch 'integrate-filtering' ([`b19a56d`](https://github.com/Byron/gitoxide/commit/b19a56dcfa9bea86332a84aa4e8fad445e7d1724))
+    - Add `in_parallel_with_finalize` to support a usecase for `gix-worktree` ([`2a76929`](https://github.com/Byron/gitoxide/commit/2a76929ece48c3b0fbdba7e08ae5d7e647db4d36))
+</details>
+
 ## 0.31.1 (2023-06-29)
 
 A maintenance release without user-facing changes.
@@ -13,7 +47,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 6 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +59,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-features v0.31.1, gix-path v0.8.3, gix v0.48.0 ([`9ca3464`](https://github.com/Byron/gitoxide/commit/9ca346462806671fbc49643a87cea25ab0da3be8))
     - Prepare changelogs once more ([`4bf355a`](https://github.com/Byron/gitoxide/commit/4bf355a8c6a7dbcdb49105af3208d56a0ed8628d))
     - Adjust `gix-trace` to the latest version. ([`353df4b`](https://github.com/Byron/gitoxide/commit/353df4bf59c7aa98da48bcdcc299f947d9449f55))
 </details>

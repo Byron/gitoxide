@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-9cd256e91c6c6800b5f6c673285bf08e566f068f/> add `Cache::attributes_metadata()`.
+   A function to obtain the metadata-collection which allows to initialize attribute match
+   initialization in code that can't use the `gix_worktree` crate dependency.
+
+### New Features (BREAKING)
+
+ - <csr-id-29a64c289946301d5e502ee956f3606280409faf/> make it possible to use filter pipeline with streaming for checkouts.
+   This is done by providing a `gix_filter::Pipeline` to `checkout::Options` to control
+   how filters are applied.
+ - <csr-id-9c936755833b10989124f2cce1b675ae7e78af64/> add `cache::State::Attributes` to only load attributes.
+   Even though technically, this isn't really needed, it's required if one wants
+   to support things that git doesn't usually do, like providing conversion of worktree
+   files without a worktree, which can be happening whith `gix-archive` for example.
+   
+   As part of this change, `cache::State::id_mappings_from_index()` looses its `ignore` parameter
+   as it wasn't required in the first place.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 12 calendar days.
+ - 19 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Just fmt ([`a063c62`](https://github.com/Byron/gitoxide/commit/a063c62e3a30006d837b267e2ce74e70e48b4fb6))
+    - Merge branch 'integrate-filtering' ([`b19a56d`](https://github.com/Byron/gitoxide/commit/b19a56dcfa9bea86332a84aa4e8fad445e7d1724))
+    - Make it possible to use filter pipeline with streaming for checkouts. ([`29a64c2`](https://github.com/Byron/gitoxide/commit/29a64c289946301d5e502ee956f3606280409faf))
+    - Assure we run all tests in nextest ([`3821089`](https://github.com/Byron/gitoxide/commit/3821089b6b02c933770705b19fc3126d61beb5a7))
+    - Add `cache::State::Attributes` to only load attributes. ([`9c93675`](https://github.com/Byron/gitoxide/commit/9c936755833b10989124f2cce1b675ae7e78af64))
+    - Add `Cache::attributes_metadata()`. ([`9cd256e`](https://github.com/Byron/gitoxide/commit/9cd256e91c6c6800b5f6c673285bf08e566f068f))
+</details>
+
 ## 0.21.1 (2023-06-29)
 
 A maintenance release without user-facing changes.
@@ -13,7 +58,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -24,6 +69,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-glob v0.9.1, gix-attributes v0.14.1, gix-config-value v0.12.3, gix-ref v0.32.1, gix-sec v0.8.3, gix-config v0.25.1, gix-url v0.20.1, gix-credentials v0.16.1, gix-discover v0.21.1, gix-ignore v0.4.1, gix-pack v0.39.1, gix-odb v0.49.1, gix-worktree v0.21.1, gix v0.48.0 ([`69c6a36`](https://github.com/Byron/gitoxide/commit/69c6a36ba14cbef129deebda9fd8870005fefa17))
     - Prepare changelogs prior to release ([`c143cf4`](https://github.com/Byron/gitoxide/commit/c143cf48ee1885467e3e9262a3f8823a1247bfe0))
     - Align usage of `gix-path` across all crates ([`73c1292`](https://github.com/Byron/gitoxide/commit/73c1292be393986c4a1adde1400abf551e850da0))
 </details>
