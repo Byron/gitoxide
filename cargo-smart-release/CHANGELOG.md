@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.20.0 (2023-07-19)
+
+<csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/>
+<csr-id-dbc6cbb4363c2532f81b0bd6e351c4577bb9e9a3/>
 
 ### Chore
 
@@ -34,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 36 commits contributed to the release over the course of 83 calendar days.
+ - 38 commits contributed to the release over the course of 83 calendar days.
  - 82 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -46,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Adjust smart-release journey test to deal with the polarity changes of `--no-auto-publish-of-stable-crates` ([`abd74ea`](https://github.com/Byron/gitoxide/commit/abd74ea736bcf32fcc18caa409b31d5567156661))
+    - Prepare changelogs prior to release ([`849f508`](https://github.com/Byron/gitoxide/commit/849f5081313c4a44bdaef6848758d0d9a5d1598b))
     - Merge branch 'smart-release-stability' ([`8629f56`](https://github.com/Byron/gitoxide/commit/8629f569cd5917b6c0c3fd928fde021e7976ee85))
     - Don't auto-publish stable crates by inverting `no-auto-publish-of-stable-crates` (to `auto-publish...`). ([`39bcb1d`](https://github.com/Byron/gitoxide/commit/39bcb1d1b2ea4cc9a75f97bc05db642b0a556f8d))
     - Adjust package versions (by cargo-smart-release) ([`c70e54f`](https://github.com/Byron/gitoxide/commit/c70e54f163c312c87753a506eeaad462e8579bfb))
