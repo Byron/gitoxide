@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.32.0 (2023-07-19)
 
 ### New Features
 
@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 10 calendar days.
+ - 5 commits contributed to the release over the course of 10 calendar days.
  - 19 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`e4dded0`](https://github.com/Byron/gitoxide/commit/e4dded05138562f9737a7dcfb60570c55769486d))
     - Merge branch 'refactor-pack-streaming' ([`8a46a7e`](https://github.com/Byron/gitoxide/commit/8a46a7ef3efc22241b67f3447223b2505e205442))
     - Remove `zlib::stream::inflate::ReadBoxed`. ([`032cea3`](https://github.com/Byron/gitoxide/commit/032cea3d6cfde80fdfc7bfe8722e2514d2bcb5cf))
     - Merge branch 'integrate-filtering' ([`b19a56d`](https://github.com/Byron/gitoxide/commit/b19a56dcfa9bea86332a84aa4e8fad445e7d1724))

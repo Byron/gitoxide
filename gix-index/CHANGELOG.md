@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.21.0 (2023-07-19)
 
 ### New Features
 
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 11 calendar days.
+ - 4 commits contributed to the release over the course of 11 calendar days.
  - 19 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`e4dded0`](https://github.com/Byron/gitoxide/commit/e4dded05138562f9737a7dcfb60570c55769486d))
     - Merge branch 'integrate-filtering' ([`b19a56d`](https://github.com/Byron/gitoxide/commit/b19a56dcfa9bea86332a84aa4e8fad445e7d1724))
     - Assure we run all tests in nextest ([`3821089`](https://github.com/Byron/gitoxide/commit/3821089b6b02c933770705b19fc3126d61beb5a7))
     - `State::entry_by_path_ours()` to find an entry which is either stage 0 or stage 2. ([`20c0d25`](https://github.com/Byron/gitoxide/commit/20c0d2517aad9fc83a3e48a9b0ce6aa9e8b6fded))

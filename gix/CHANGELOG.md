@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.49.0 (2023-07-19)
+
+<csr-id-c548780e6ea49453ecdb45b11bf4c5781b105e6b/>
 
 ### New Features
 
@@ -37,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 24 commits contributed to the release over the course of 11 calendar days.
+ - 25 commits contributed to the release over the course of 11 calendar days.
  - 19 days passed between releases.
  - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#925](https://github.com/Byron/gitoxide/issues/925)
@@ -57,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#925](https://github.com/Byron/gitoxide/issues/925)**
     - Remove all copies of repo-initialization files and rework them to be our own. ([`5ac2269`](https://github.com/Byron/gitoxide/commit/5ac22699936dbc5c09c5eefd28b75d48271b286b))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`e4dded0`](https://github.com/Byron/gitoxide/commit/e4dded05138562f9737a7dcfb60570c55769486d))
     - Just fmt ([`a063c62`](https://github.com/Byron/gitoxide/commit/a063c62e3a30006d837b267e2ce74e70e48b4fb6))
     - Merge branch 'adjustments-for-crates-index' ([`b82868d`](https://github.com/Byron/gitoxide/commit/b82868d5688d8d4849c47ed3d209a96ee59e69b3))
     - Make `EntryMode` available from `gix::object::tree`. ([`980c2ba`](https://github.com/Byron/gitoxide/commit/980c2ba591dce7fc787c418aed85078c19e2d6d4))
