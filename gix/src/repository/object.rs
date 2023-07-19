@@ -2,7 +2,7 @@
 use std::{convert::TryInto, ops::DerefMut};
 
 use gix_hash::ObjectId;
-use gix_odb::{Find, FindExt, Write};
+use gix_odb::{Find, FindExt, Header, HeaderExt, Write};
 use gix_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
@@ -34,6 +34,37 @@ impl crate::Repository {
         let mut buf = self.free_buf();
         let kind = self.objects.find(id, &mut buf)?.kind;
         Ok(Object::from_data(id, kind, buf, self))
+    }
+
+    /// Obtain information about an object without fully decoding it, or fail if the object doesn't exist.
+    ///
+    /// Note that despite being cheaper than [`Self::find_object()`], there is still some effort traversing delta-chains.
+    pub fn find_header(&self, id: impl Into<ObjectId>) -> Result<gix_odb::find::Header, object::find::existing::Error> {
+        let id = id.into();
+        if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
+            return Ok(gix_odb::find::Header::Loose {
+                kind: gix_object::Kind::Tree,
+                size: 0,
+            });
+        }
+        self.objects.header(id)
+    }
+
+    /// Obtain information about an object without fully decoding it, or `None` if the object doesn't exist.
+    ///
+    /// Note that despite being cheaper than [`Self::try_find_object()`], there is still some effort traversing delta-chains.
+    pub fn try_find_header(
+        &self,
+        id: impl Into<ObjectId>,
+    ) -> Result<Option<gix_odb::find::Header>, object::find::Error> {
+        let id = id.into();
+        if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
+            return Ok(Some(gix_odb::find::Header::Loose {
+                kind: gix_object::Kind::Tree,
+                size: 0,
+            }));
+        }
+        self.objects.try_header(id)
     }
 
     /// Try to find the object with `id` or return `None` if it wasn't found.
