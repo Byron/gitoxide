@@ -129,6 +129,7 @@ mod find {
             for commit_id in repo.head()?.peeled()?.id().expect("born").ancestors().all()? {
                 let commit = commit_id?;
                 assert_eq!(commit.id().object()?.kind, gix_object::Kind::Commit);
+                assert_eq!(commit.id().header()?.kind(), gix_object::Kind::Commit);
                 if round == 2 {
                     assert_eq!(
                         commit.id().object()?.kind,
@@ -138,6 +139,10 @@ mod find {
                 }
                 assert_eq!(
                     commit.id().try_object()?.expect("exists").kind,
+                    gix_object::Kind::Commit,
+                );
+                assert_eq!(
+                    commit.id().try_header()?.expect("exists").kind(),
                     gix_object::Kind::Commit,
                 );
             }
