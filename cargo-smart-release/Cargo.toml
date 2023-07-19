@@ -32,14 +32,13 @@ cargo_metadata = "0.15.0"
 log = "0.4.14"
 toml_edit = "0.19.1"
 semver = "1.0.4"
-crates-index = { version = "1.0.0", git = "https://github.com/Byron/rust-crates-index", branch = "replace-git2-with-gitoxide" }
+crates-index = { version = "2.0.0", default-features = false, features = ["git-performance", "git-https"] }
 cargo_toml = "0.15.1"
 winnow = "0.5.1"
 git-conventional = "0.12.0"
 time = "0.3.19"
 pulldown-cmark = "0.9.0"
 bitflags = "2"
-home = "0.5.3"
 
 [dev-dependencies]
 insta = "1.8.0"
