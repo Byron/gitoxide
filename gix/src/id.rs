@@ -16,6 +16,13 @@ impl<'repo> Id<'repo> {
         self.repo.find_object(self.inner)
     }
 
+    /// Find the [`header`][gix_odb::find::Header] associated with this object id, or an error if it doesn't exist.
+    ///
+    /// Use this method if there is no interest in the contents of the object, which generally is much faster to obtain.
+    pub fn header(&self) -> Result<gix_odb::find::Header, find::existing::Error> {
+        self.repo.find_header(self.inner)
+    }
+
     /// Try to find the [`Object`] associated with this object id, and return `None` if it's not available locally.
     ///
     /// # Note
@@ -23,6 +30,13 @@ impl<'repo> Id<'repo> {
     /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
     pub fn try_object(&self) -> Result<Option<Object<'repo>>, find::Error> {
         self.repo.try_find_object(self.inner)
+    }
+
+    /// Find the [`header`][gix_odb::find::Header] associated with this object id, or return `None` if it doesn't exist.
+    ///
+    /// Use this method if there is no interest in the contents of the object, which generally is much faster to obtain.
+    pub fn try_header(&self) -> Result<Option<gix_odb::find::Header>, find::Error> {
+        self.repo.try_find_header(self.inner)
     }
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`.

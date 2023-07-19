@@ -43,7 +43,7 @@ mod graph;
 pub(crate) mod identity;
 mod impls;
 mod index;
-mod init;
+pub(crate) mod init;
 mod kind;
 mod location;
 mod object;

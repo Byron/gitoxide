@@ -69,6 +69,9 @@ fn writes_avoid_io_using_duplicate_check() -> crate::Result {
     for id in repo.objects.iter()? {
         let id = id?;
         let obj = repo.find_object(id)?;
+        let header = repo.find_header(id)?;
+        assert_eq!(obj.kind, header.kind(), "header and object agree");
+        assert_eq!(repo.try_find_header(id)?, Some(header));
         use gix_object::Kind::*;
         match obj.kind {
             Commit => {
@@ -126,6 +129,7 @@ mod find {
             for commit_id in repo.head()?.peeled()?.id().expect("born").ancestors().all()? {
                 let commit = commit_id?;
                 assert_eq!(commit.id().object()?.kind, gix_object::Kind::Commit);
+                assert_eq!(commit.id().header()?.kind(), gix_object::Kind::Commit);
                 if round == 2 {
                     assert_eq!(
                         commit.id().object()?.kind,
@@ -135,6 +139,10 @@ mod find {
                 }
                 assert_eq!(
                     commit.id().try_object()?.expect("exists").kind,
+                    gix_object::Kind::Commit,
+                );
+                assert_eq!(
+                    commit.id().try_header()?.expect("exists").kind(),
                     gix_object::Kind::Commit,
                 );
             }
@@ -148,12 +156,28 @@ mod find {
         let empty_tree = gix::hash::ObjectId::empty_tree(repo.object_hash());
         assert_eq!(repo.find_object(empty_tree)?.into_tree().iter().count(), 0);
         assert_eq!(
+            repo.find_header(empty_tree)?,
+            gix_odb::find::Header::Loose {
+                kind: gix_object::Kind::Tree,
+                size: 0,
+            },
+            "empty tree is considered a loose object"
+        );
+        assert_eq!(
             repo.try_find_object(empty_tree)?
                 .expect("present")
                 .into_tree()
                 .iter()
                 .count(),
             0
+        );
+        assert_eq!(
+            repo.try_find_header(empty_tree)?,
+            Some(gix_odb::find::Header::Loose {
+                kind: gix_object::Kind::Tree,
+                size: 0,
+            }),
+            "empty tree is considered a loose object"
         );
 
         let mut buf = Vec::new();
