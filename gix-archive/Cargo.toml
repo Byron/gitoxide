@@ -18,6 +18,13 @@ gix-object = { version = "^0.33.0", path = "../gix-object" }
 gix-attributes = { version = "^0.15.0", path = "../gix-attributes" }
 gix-filter = { version = "^0.1.0", path = "../gix-filter" }
 gix-traverse = { version = "^0.30.0", path = "../gix-traverse" }
+gix-fs = { version = "^0.4.0", path = "../gix-fs" }
+gix-path = { version = "^0.8.3", path = "../gix-path" }
 
 thiserror = "1.0.26"
 parking_lot = "0.12.1"
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools"}
+gix-odb = { path = "../gix-odb"}
+gix-worktree = { path = "../gix-worktree"}
