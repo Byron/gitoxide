@@ -11,8 +11,11 @@ alias c := check
 # run all tests, clippy, including journey tests, try building docs
 test: clippy check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests journey-tests-smart-release
 
-# run all tests, without clippy, including journey tests, try building docs
-ci-test: check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests journey-tests-smart-release
+# run all tests, without clippy, including journey tests, try building docs (and clear target on CI)
+ci-test: check doc unit-tests clear-target journey-tests-pure journey-tests-small journey-tests-async journey-tests journey-tests-smart-release
+
+clear-target:
+    cargo clean
 
 # Run cargo clippy on all crates
 clippy *clippy-args:
