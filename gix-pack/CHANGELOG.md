@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 10 calendar days.
+ - 7 commits contributed to the release over the course of 10 calendar days.
  - 19 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -31,6 +31,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Adjust package versions (by cargo-smart-release) ([`c70e54f`](https://github.com/Byron/gitoxide/commit/c70e54f163c312c87753a506eeaad462e8579bfb))
     - Prepare changelogs prior to release ([`e4dded0`](https://github.com/Byron/gitoxide/commit/e4dded05138562f9737a7dcfb60570c55769486d))
     - Merge branch 'refactor-pack-streaming' ([`8a46a7e`](https://github.com/Byron/gitoxide/commit/8a46a7ef3efc22241b67f3447223b2505e205442))
     - Simplify decompressor and hash handling when streaming packs ([`33f95ba`](https://github.com/Byron/gitoxide/commit/33f95ba45885b10c8ca73d8180caa1b303dc091c))
