@@ -3,6 +3,8 @@ use gix_object::{bstr::BStr, TreeRefIter};
 
 use crate::{object::find, Id, Tree};
 
+pub use gix_object::tree::EntryMode;
+
 /// Initialization
 impl<'repo> Tree<'repo> {
     /// Obtain a tree instance by handing in all components that it is made up of.
