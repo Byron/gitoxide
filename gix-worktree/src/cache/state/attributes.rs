@@ -183,6 +183,7 @@ impl Attributes {
         &self,
         relative_path: &BStr,
         case: Case,
+        is_dir: Option<bool>,
         out: &mut gix_attributes::search::Outcome,
     ) -> bool {
         // assure `out` is ready to deal with possibly changed collections (append-only)
@@ -191,7 +192,7 @@ impl Attributes {
         let groups = [&self.globals, &self.stack];
         let mut has_match = false;
         groups.iter().rev().any(|group| {
-            has_match |= group.pattern_matching_relative_path(relative_path, case, out);
+            has_match |= group.pattern_matching_relative_path(relative_path, case, is_dir, out);
             out.is_done()
         });
         has_match
