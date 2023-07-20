@@ -10,8 +10,7 @@ echo "hi" > a
 mkdir dir
 echo "ho" > dir/b
 mkdir dir/subdir
-echo "subdir/streamed filter=arrow" > dir/.gitattributes
-echo "streamed-by-driver" > dir/subdir/streamed
+
 touch dir/subdir/exe
 chmod +x dir/subdir/exe
 ln -s a symlink-to-a
@@ -22,7 +21,7 @@ echo "/file-ignored export-ignore" >> .gitattributes
 git add .
 git commit -m "init"
 
-echo "extra" > extra-file
+echo "extra to be streamed" > extra-file
 touch extra-exe && chmod +x extra-exe
 mkdir extra-dir-empty extra-dir
 ln -s ../extra-file extra-dir/symlink-to-extra

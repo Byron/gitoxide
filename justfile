@@ -131,6 +131,8 @@ doc $RUSTDOCFLAGS="-D warnings":
 # run all unit tests
 unit-tests:
     cargo test --all
+    cargo test -p gix-archive --no-default-features
+    cargo test -p gix-archive --features tar
     cd gix-object; \
       set -ex; \
       cargo test; \
