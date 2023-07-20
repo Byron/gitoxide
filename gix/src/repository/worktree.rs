@@ -49,4 +49,48 @@ impl crate::Repository {
     pub fn is_bare(&self) -> bool {
         self.config.is_bare && self.work_dir().is_none()
     }
+
+    /// If `id` points to a tree, produce a stream that yields one worktree entry after the other. The index of the tree at `id`
+    /// is returned as well as it is an intermediate byproduct that might be useful to callers.
+    ///
+    /// The entries will look exactly like they would if one would check them out, with filters applied.
+    /// The `export-ignore` attribute is used to skip blobs or directories to which it applies.
+    #[cfg(feature = "worktree-stream")]
+    pub fn worktree_stream(
+        &self,
+        id: impl Into<gix_hash::ObjectId>,
+    ) -> Result<(gix_worktree_stream::Stream, gix_index::File), crate::repository::worktree_stream::Error> {
+        use gix_odb::{FindExt, HeaderExt};
+        let id = id.into();
+        let header = self.objects.header(id)?;
+        if !header.kind().is_tree() {
+            return Err(crate::repository::worktree_stream::Error::NotATree {
+                id: id.to_owned(),
+                actual: header.kind(),
+            });
+        }
+
+        // TODO(perf): potential performance improvements could be to use the index at `HEAD` if possible (`index_from_head_tree…()`)
+        // TODO(perf): when loading a non-HEAD tree, we effectively traverse the tree twice. This is usually fast though, and sharing
+        //             an object cache between the copies of the ODB handles isn't trivial and needs a lock.
+        let index = self.index_from_tree(&id)?;
+        let mut cache = self.attributes_only(&index, gix_worktree::cache::state::attributes::Source::IdMapping)?;
+        let pipeline =
+            gix_filter::Pipeline::new(cache.attributes_collection(), crate::filter::Pipeline::options(self)?);
+        let objects = self.objects.clone().into_arc().expect("TBD error handling");
+        let stream = gix_worktree_stream::from_tree(
+            id,
+            {
+                let objects = objects.clone();
+                move |id, buf| objects.find(id, buf)
+            },
+            pipeline,
+            move |path, mode, attrs| -> std::io::Result<()> {
+                let entry = cache.at_entry(path, Some(mode.is_tree()), |id, buf| objects.find_blob(id, buf))?;
+                entry.matching_attributes(attrs);
+                Ok(())
+            },
+        );
+        Ok((stream, index))
+    }
 }

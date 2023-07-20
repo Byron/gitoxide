@@ -30,7 +30,7 @@ required-features = ["blocking-network-client"]
 
 [features]
 
-default = ["max-performance-safe", "comfort"]
+default = ["max-performance-safe", "comfort", "extras"]
 
 #! ### Mutually Exclusive Network Client
 #! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
@@ -53,6 +53,15 @@ blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest",
 
 #! ### Other
 
+## Various additional features and capabilities that are not necessarily part of what most users would need.
+extras = ["worktree-stream"]
+
+## Make it possible to turn a tree into a stream of bytes, which can be decoded to entries and turned into various other formats.
+worktree-stream = ["gix-worktree-stream"]
+
+## Various progress-related features that improve the look of progress message units.
+comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
+
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde = [   "dep:serde",
             "gix-pack/serde",
@@ -72,10 +81,8 @@ serde = [   "dep:serde",
             "gix-credentials/serde"]
 
 ## Re-export the progress tree root which allows to obtain progress from various functions which take `impl gix::Progress`.
+## Applications which want to display progress will probably need this implementation.
 progress-tree = ["prodash/progress-tree"]
-
-## Various progress-related features that improve the look of progress message units.
-comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
 
 ## Print debugging information about usage of object database caches, useful for tuning cache sizes.
 cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
@@ -137,8 +144,6 @@ gix-negotiate = { version = "^0.5.0", path = "../gix-negotiate" }
 gix-path = { version = "^0.8.3", path = "../gix-path" }
 gix-url = { version = "^0.21.0", path = "../gix-url" }
 gix-traverse = { version = "^0.30.0", path = "../gix-traverse" }
-gix-protocol = { version = "^0.36.0", path = "../gix-protocol", optional = true }
-gix-transport = { version = "^0.34.0", path = "../gix-transport", optional = true }
 gix-diff = { version = "^0.33.0", path = "../gix-diff" }
 gix-mailmap = { version = "^0.16.0", path = "../gix-mailmap" }
 gix-features = { version = "^0.32.0", path = "../gix-features", features = ["progress", "once_cell"] }
@@ -154,6 +159,13 @@ gix-worktree = { version = "^0.22.0", path = "../gix-worktree" }
 gix-hashtable = { version = "^0.2.3", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.18.0", path = "../gix-commitgraph" }
 
+gix-worktree-stream = { version = "^0.2.0", path = "../gix-worktree-stream", optional = true }
+
+# For communication with remotes
+gix-protocol = { version = "^0.36.0", path = "../gix-protocol", optional = true }
+gix-transport = { version = "^0.34.0", path = "../gix-transport", optional = true }
+
+# Just to get the progress-tree feature
 prodash = { version = "25.0", optional = true, default-features = false, features = ["progress-tree"] }
 once_cell = "1.14.0"
 signal-hook = { version = "0.3.9", default-features = false }

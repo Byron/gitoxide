@@ -7,6 +7,9 @@ use crate::{
     Repository,
 };
 
+#[cfg(feature = "worktree-stream")]
+pub use gix_worktree_stream as stream;
+
 pub(crate) type IndexStorage = gix_features::threading::OwnShared<gix_fs::SharedFileSnapshotMut<gix_index::File>>;
 /// A lazily loaded and auto-updated worktree index.
 pub type Index = gix_fs::SharedFileSnapshot<gix_index::File>;
