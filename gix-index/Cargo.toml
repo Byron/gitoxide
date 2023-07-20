@@ -26,6 +26,7 @@ gix-bitmap = { version = "^0.2.5", path = "../gix-bitmap" }
 gix-object = { version = "^0.33.0", path = "../gix-object" }
 gix-traverse = { version = "^0.30.0", path = "../gix-traverse" }
 gix-lock = { version = "^7.0.0", path = "../gix-lock" }
+gix-fs = { version = "^0.4.0", path = "../gix-fs" }
 
 thiserror = "1.0.32"
 memmap2 = "0.7.0"

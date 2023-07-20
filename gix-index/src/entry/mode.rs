@@ -1,18 +1,5 @@
 use crate::entry::Mode;
 
-#[cfg(unix)]
-/// Returns whether a a file has the executable permission set.
-fn is_executable(metadata: &std::fs::Metadata) -> bool {
-    use std::os::unix::fs::MetadataExt;
-    (metadata.mode() & 0o100) != 0
-}
-
-#[cfg(not(unix))]
-/// Returns whether a a file has the executable permission set.
-fn is_executable(_metadata: &std::fs::Metadata) -> bool {
-    false
-}
-
 impl Mode {
     /// Return true if this is a sparse entry, as it points to a directory which usually isn't what an 'unsparse' index tracks.
     pub fn is_sparse(&self) -> bool {
@@ -54,13 +41,15 @@ impl Mode {
             Mode::SYMLINK if has_symlinks && !stat.is_symlink() => (),
             Mode::SYMLINK if !has_symlinks && !stat.is_file() => (),
             Mode::COMMIT | Mode::DIR if !stat.is_dir() => (),
-            Mode::FILE if executable_bit && is_executable(stat) => return Some(Change::ExecutableBit),
-            Mode::FILE_EXECUTABLE if executable_bit && !is_executable(stat) => return Some(Change::ExecutableBit),
+            Mode::FILE if executable_bit && gix_fs::is_executable(stat) => return Some(Change::ExecutableBit),
+            Mode::FILE_EXECUTABLE if executable_bit && !gix_fs::is_executable(stat) => {
+                return Some(Change::ExecutableBit)
+            }
             _ => return None,
         };
         let new_mode = if stat.is_dir() {
             Mode::COMMIT
-        } else if executable_bit && is_executable(stat) {
+        } else if executable_bit && gix_fs::is_executable(stat) {
             Mode::FILE_EXECUTABLE
         } else {
             Mode::FILE

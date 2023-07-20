@@ -1851,6 +1851,7 @@ dependencies = [
  "filetime",
  "gix-bitmap 0.2.5",
  "gix-features 0.32.0",
+ "gix-fs 0.4.0",
  "gix-hash 0.11.3",
  "gix-lock 7.0.1",
  "gix-object 0.33.0",
