@@ -724,6 +724,16 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 * [ ] API documentation
     * [ ] Some examples
 
+### gix-worktree-stream
+
+* [x] encode git-tree as stream of bytes (with large file support and actual streaming)
+* [x] decode bytes into entries
+* [x] add custom entries to the stream
+* [x] respect `export-ignore` git attribute
+* [x] apply standard worktree conversion to simulate an actual checkout
+* [x] API documentation
+    * [ ] Some examples
+     
 ### gix-archive
 
 * [ ] `write_to()` for creating an archive with various container formats

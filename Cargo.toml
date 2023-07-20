@@ -265,6 +265,7 @@ members = [
     "gix-tui",
     "gix-tix",
     "gix-archive",
+    "gix-worktree-stream",
     "gix-revwalk",
 
     "cargo-smart-release",

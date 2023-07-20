@@ -1,5 +1,5 @@
-use crate::stream;
-use crate::stream::SharedErrorSlot;
+use crate::entry::Error;
+use crate::{protocol, SharedErrorSlot};
 use gix_filter::driver::apply::MaybeDelayed;
 use gix_filter::pipeline::convert::ToWorktreeOutcome;
 use gix_object::bstr::{BStr, BString, ByteSlice, ByteVec};
@@ -11,7 +11,7 @@ use std::io::Write;
 
 pub struct Delegate<'a, AttributesFn, FindFn>
 where
-    FindFn: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::Data<'b>, stream::Error> + 'static,
+    FindFn: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::Data<'b>, Error> + 'static,
 {
     pub(crate) out: &'a mut gix_features::io::pipe::Writer,
     pub(crate) err: SharedErrorSlot,
@@ -26,9 +26,9 @@ where
 
 impl<AttributesFn, FindFn> Delegate<'_, AttributesFn, FindFn>
 where
-    FindFn: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::Data<'b>, stream::Error> + 'static,
-    AttributesFn: FnMut(&BStr, gix_object::tree::EntryMode, &mut gix_attributes::search::Outcome) -> Result<(), stream::Error>
-        + 'static,
+    FindFn: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::Data<'b>, Error> + 'static,
+    AttributesFn:
+        FnMut(&BStr, gix_object::tree::EntryMode, &mut gix_attributes::search::Outcome) -> Result<(), Error> + 'static,
 {
     fn pop_element(&mut self) {
         if let Some(pos) = self.path.rfind_byte(b'/') {
@@ -54,7 +54,7 @@ where
             .state
     }
 
-    fn handle_entry(&mut self, entry: &tree::EntryRef<'_>) -> Result<Action, stream::Error> {
+    fn handle_entry(&mut self, entry: &tree::EntryRef<'_>) -> Result<Action, Error> {
         if !entry.mode.is_blob_or_symlink() {
             return Ok(Action::Continue);
         }
@@ -64,6 +64,7 @@ where
         }
         (self.find)(entry.oid, &mut self.buf)?;
 
+        self.pipeline.driver_context_mut().blob = Some(entry.oid.into());
         let converted = self.pipeline.convert_to_worktree(
             &self.buf,
             self.path.as_ref(),
@@ -77,7 +78,7 @@ where
         #[allow(clippy::unused_io_amount)]
         match converted {
             ToWorktreeOutcome::Unchanged(buf) | ToWorktreeOutcome::Buffer(buf) => {
-                stream::protocol::write_entry_header_and_path(
+                protocol::write_entry_header_and_path(
                     self.path.as_ref(),
                     entry.oid,
                     entry.mode,
@@ -87,14 +88,8 @@ where
                 self.out.write(buf)?;
             }
             ToWorktreeOutcome::Process(MaybeDelayed::Immediate(read)) => {
-                stream::protocol::write_entry_header_and_path(
-                    self.path.as_ref(),
-                    entry.oid,
-                    entry.mode,
-                    None,
-                    self.out,
-                )?;
-                stream::protocol::write_stream(&mut self.buf, read, self.out)?;
+                protocol::write_entry_header_and_path(self.path.as_ref(), entry.oid, entry.mode, None, self.out)?;
+                protocol::write_stream(&mut self.buf, read, self.out)?;
             }
             ToWorktreeOutcome::Process(MaybeDelayed::Delayed(_)) => {
                 unreachable!("we forbade it")
@@ -106,9 +101,9 @@ where
 
 impl<AttributesFn, FindFn> Visit for Delegate<'_, AttributesFn, FindFn>
 where
-    FindFn: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::Data<'a>, stream::Error> + 'static,
-    AttributesFn: FnMut(&BStr, gix_object::tree::EntryMode, &mut gix_attributes::search::Outcome) -> Result<(), stream::Error>
-        + 'static,
+    FindFn: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::Data<'a>, Error> + 'static,
+    AttributesFn:
+        FnMut(&BStr, gix_object::tree::EntryMode, &mut gix_attributes::search::Outcome) -> Result<(), Error> + 'static,
 {
     fn pop_front_tracked_path_and_set_current(&mut self) {
         self.path = self

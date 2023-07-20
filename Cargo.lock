@@ -1398,18 +1398,7 @@ dependencies = [
 name = "gix-archive"
 version = "0.2.0"
 dependencies = [
- "gix-attributes 0.15.0",
- "gix-features 0.32.0",
- "gix-filter",
- "gix-fs 0.4.0",
- "gix-hash 0.11.3",
- "gix-object 0.33.0",
- "gix-odb",
- "gix-path 0.8.3",
- "gix-testtools",
- "gix-traverse 0.30.0",
- "gix-worktree 0.22.0",
- "parking_lot",
+ "gix-worktree-stream",
  "thiserror",
 ]
 
@@ -2554,6 +2543,25 @@ dependencies = [
  "tempfile",
  "thiserror",
  "walkdir",
+]
+
+[[package]]
+name = "gix-worktree-stream"
+version = "0.2.0"
+dependencies = [
+ "gix-attributes 0.15.0",
+ "gix-features 0.32.0",
+ "gix-filter",
+ "gix-fs 0.4.0",
+ "gix-hash 0.11.3",
+ "gix-object 0.33.0",
+ "gix-odb",
+ "gix-path 0.8.3",
+ "gix-testtools",
+ "gix-traverse 0.30.0",
+ "gix-worktree 0.22.0",
+ "parking_lot",
+ "thiserror",
 ]
 
 [[package]]

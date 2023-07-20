@@ -1,51 +1,11 @@
-use crate::stream::{Entry, Error};
-use crate::{stream, Stream};
+use crate::utils;
 use gix_object::bstr::{BStr, BString};
 use std::io::{ErrorKind, Read, Write};
 
-impl Stream {
-    /// Access the next entry of the stream or `None` if there is nothing more to read.
-    pub fn next_entry(&mut self) -> Result<Option<Entry<'_>>, Error> {
-        assert!(
-            self.path_buf.is_some(),
-            "BUG: must consume and drop entry before getting the next one"
-        );
-        self.extra_entries.take();
-        let res = read_entry_info(
-            &mut self.read,
-            self.path_buf.as_mut().expect("set while producing an entry"),
-        );
-        match res {
-            Ok((remaining, mode, id)) => {
-                if let Some(err) = self.err.lock().take() {
-                    return Err(err);
-                }
-                Ok(Some(Entry {
-                    path_buf: self.path_buf.take(),
-                    parent: self,
-                    id,
-                    mode,
-                    remaining,
-                }))
-            }
-            Err(err) => {
-                if let Some(err) = self.err.lock().take() {
-                    return Err(err);
-                }
-                // unexpected EOF means the other side dropped. We handled potential errors already.
-                if err.kind() == ErrorKind::UnexpectedEof {
-                    return Ok(None);
-                }
-                Err(err.into())
-            }
-        }
-    }
-}
-
 // Format: [usize-LE][usize-LE][byte][byte][hash][relative_path_bytes][object_stream]
 // Note that stream_len can be usize::MAX to indicate the stream size is unknown
-fn read_entry_info(
-    read: &mut stream::utils::Read,
+pub(crate) fn read_entry_info(
+    read: &mut utils::Read,
     path_buf: &mut BString,
 ) -> std::io::Result<(Option<usize>, gix_object::tree::EntryMode, gix_hash::ObjectId)> {
     let mut buf = [0; std::mem::size_of::<usize>() * 2 + 2];
@@ -75,7 +35,8 @@ pub(crate) fn write_entry_header_and_path(
     stream_len: Option<usize>,
     out: &mut gix_features::io::pipe::Writer,
 ) -> std::io::Result<()> {
-    let mut buf = [0u8; std::mem::size_of::<usize>() * 2 + 2];
+    const HEADER_LEN: usize = std::mem::size_of::<usize>() * 2 + 2;
+    let mut buf = [0u8; HEADER_LEN + gix_hash::Kind::longest().len_in_bytes()];
     let (path_len_buf, rest) = buf.split_at_mut(std::mem::size_of::<usize>());
     let (stream_len_buf, bytes) = rest.split_at_mut(std::mem::size_of::<usize>());
 
@@ -83,12 +44,12 @@ pub(crate) fn write_entry_header_and_path(
     stream_len_buf.copy_from_slice(&stream_len.unwrap_or(usize::MAX).to_le_bytes());
     bytes[0] = mode_to_byte(mode);
     bytes[1] = hash_to_byte(oid.kind());
+    bytes[2..][..oid.kind().len_in_bytes()].copy_from_slice(oid.as_bytes());
 
     // We know how `out` works in a pipe writer, it's always writing everything.
     #[allow(clippy::unused_io_amount)]
     {
-        out.write(&buf)?;
-        out.write(oid.as_bytes())?;
+        out.write(&buf[..HEADER_LEN + oid.kind().len_in_bytes()])?;
         out.write(path)?;
     }
     Ok(())

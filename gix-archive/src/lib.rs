@@ -1,30 +1,62 @@
-//! The implementation of creating an archive from a git tree, similar to `git archive`, but using an internal format.
-//!
-//! This crate can effectively be used to manipulate worktrees as streams of bytes, which can be decoded using the [`Stream`] type.
-#![deny(rust_2018_idioms, missing_docs, unsafe_code)]
+//! The implementation of creating an archive from a git tree, similar to `git archive`.
+#![deny(rust_2018_idioms, missing_docs)]
+#![forbid(unsafe_code)]
 
-use gix_object::bstr::BString;
+/// The error returned by [`write_to()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+}
 
-///
-pub mod stream;
+/// The supported container formats for use in [`write_to()`].
+#[derive(Default, PartialEq, Eq, Copy, Clone, Debug)]
+pub enum Format {
+    /// An internal format that is suitable only for intra-process communication.
+    ///
+    /// It is provided here as a basis available without extra dependencies, and as a debugging tool.
+    #[default]
+    InternalTransientNonPersistable,
+    /// A standard `tar` archive.
+    ///
+    /// Use it as well if a custom container format is desired. The idea is to decode it on a separate thread
+    /// to rewrite the data to the desired format.
+    Tar,
+    /// A convenience format that will `zip` deflate the `tar` stream.
+    TarGz {
+        /// The compression level to use for the `zlib` compression, ranging from 0 (no compression) to 9 (best compression).
+        compression_level: u8,
+    },
+    /// Use the zip` container format, instead of `tar`, provided for convenience.
+    Zip {
+        /// The compression level to use for the `zlib` compression, ranging from 0 (no compression) to 9 (best compression).
+        compression_level: u8,
+    },
+}
+
+/// Options for configuring [`write_to()`].
+#[derive(Clone, Debug)]
+pub struct Options {
+    /// The archive's format.
+    pub format: Format,
+    /// Given a `path`, originating in the git tree, to place into the archive, put `<prefix>/path` in front of it.
+    pub tree_prefix: Option<String>,
+    /// The modification time for all entries in the archive.
+    ///
+    /// Defaults to the current time. The caller may set this to the commit time if available.
+    pub modification_time: std::time::SystemTime,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            format: Default::default(),
+            tree_prefix: None,
+            modification_time: std::time::SystemTime::now(),
+        }
+    }
+}
 
 mod write;
 pub use write::write_to;
-
-/// A stream of entries that originate from a git tree and optionally from additional entries.
-///
-/// Note that a git tree is mandatory, but the empty tree can be used to effectively disable it.
-pub struct Stream {
-    read: stream::utils::Read,
-    err: stream::SharedErrorSlot,
-    extra_entries: Option<std::sync::mpsc::Sender<stream::AdditionalEntry>>,
-    // additional_entries: Vec,
-    /// `None` if currently held by an entry.
-    path_buf: Option<BString>,
-    /// Another buffer to partially act like a buf-reader.
-    buf: Vec<u8>,
-    /// The offset into `buf` for entries being able to act like a buf reader.
-    pos: usize,
-    /// The amount of bytes usable from `buf` (even though it always has a fixed size)
-    filled: usize,
-}

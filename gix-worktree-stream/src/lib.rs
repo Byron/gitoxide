@@ -1,28 +1,38 @@
-use crate::Stream;
+//! The implementation of creating an archive from a git tree, similar to `git archive`, but using an internal format.
+//!
+//! This crate can effectively be used to manipulate worktrees as streams of bytes, which can be decoded using the [`Stream`] type.
+#![deny(rust_2018_idioms, missing_docs, unsafe_code)]
+
 use gix_object::bstr::BString;
 use std::path::Path;
 use std::sync::Arc;
 
-pub(crate) type SharedErrorSlot = Arc<parking_lot::Mutex<Option<Error>>>;
-
-/// The error returned by [`next_entry()`][Stream::next_entry()].
-#[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-    #[error("Could not find a blob or tree for archival")]
-    Find(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
-    #[error("Could not query attributes for path \"{path}\"")]
-    Attributes {
-        path: BString,
-        source: Box<dyn std::error::Error + Send + Sync + 'static>,
-    },
-    #[error(transparent)]
-    Traverse(#[from] gix_traverse::tree::breadthfirst::Error),
-    #[error(transparent)]
-    ConvertToWorktree(#[from] gix_filter::pipeline::convert::to_worktree::Error),
+/// A stream of entries that originate from a git tree and optionally from additional entries.
+///
+/// Note that a git tree is mandatory, but the empty tree can be used to effectively disable it.
+pub struct Stream {
+    read: utils::Read,
+    err: SharedErrorSlot,
+    extra_entries: Option<std::sync::mpsc::Sender<AdditionalEntry>>,
+    // additional_entries: Vec,
+    /// `None` if currently held by an entry.
+    path_buf: Option<BString>,
+    /// Another buffer to partially act like a buf-reader.
+    buf: Vec<u8>,
+    /// The offset into `buf` for entries being able to act like a buf reader.
+    pos: usize,
+    /// The amount of bytes usable from `buf` (even though it always has a fixed size)
+    filled: usize,
 }
+
+///
+pub mod entry;
+pub(crate) mod protocol;
+
+mod from_tree;
+pub use from_tree::from_tree;
+
+pub(crate) type SharedErrorSlot = Arc<parking_lot::Mutex<Option<entry::Error>>>;
 
 /// An entry in a stream. Note that they must be consumed fully, by reading from them till exhaustion.
 ///
@@ -45,7 +55,7 @@ pub struct Entry<'a> {
     remaining: Option<usize>,
 }
 
-/// An entry that is added to the stream by the user, verbatim, without additional worktree conversions.
+/// An entry that is [added to the stream][Stream::add_entry()] by the user, verbatim, without additional worktree conversions.
 ///
 /// It may overwrite previously written paths, which may or may not work for the consumer of the stream.
 pub struct AdditionalEntry {
@@ -68,6 +78,14 @@ impl Stream {
     /// Can be used with [`Self::from_read()`] to decode the contained entries.
     pub fn into_read(self) -> impl std::io::Read {
         self.read
+    }
+
+    /// Return our internal byte stream from which entries would be generated.
+    ///
+    /// Note that the stream must then be consumed in its entirety.
+    pub fn as_read_mut(&mut self) -> &mut impl std::io::Read {
+        self.extra_entries.take();
+        &mut self.read
     }
 
     /// Create a new instance from a stream of bytes in our format.
@@ -112,7 +130,7 @@ impl Stream {
             .strip_prefix(root)
             .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
         let meta = path.symlink_metadata()?;
-        let relative_path = gix_path::into_bstr(rela_path).into_owned();
+        let relative_path = gix_path::to_unix_separators_on_windows(gix_path::into_bstr(rela_path)).into_owned();
         let id = gix_hash::ObjectId::null(gix_hash::Kind::Sha1);
 
         let entry = if meta.is_symlink() {
@@ -154,7 +172,10 @@ impl Stream {
         gix_features::io::pipe::Writer,
         std::sync::mpsc::Receiver<AdditionalEntry>,
     ) {
-        let in_flight_writes = 3; // 2 = 1 write for entry header, 1 for hash, 1 for entry path
+        // 1 write for entry header and 1 for hash, 1 for entry path, + 1 for a buffer, then 32 of these.
+        // Giving some buffer, at the expense of memory, is important to allow consumers to take off bytes more quickly,
+        // otherwise, both threads effectively run in lock-step and nullify the benefit.
+        let in_flight_writes = (2 + 1) * 32;
         let (write, read) = gix_features::io::pipe::unidirectional(in_flight_writes);
         let (tx_entries, rx_entries) = std::sync::mpsc::channel();
         (
@@ -173,8 +194,6 @@ impl Stream {
     }
 }
 
-pub(crate) mod entry;
-pub(crate) mod protocol;
 pub(crate) mod utils {
     pub enum Read {
         Known(gix_features::io::pipe::Reader),

@@ -1,7 +1,65 @@
-use crate::stream::Entry;
-use gix_object::bstr::BStr;
+use crate::{protocol, Entry, Stream};
+use gix_object::bstr::{BStr, BString};
 use std::io::{ErrorKind, Read};
 use std::path::PathBuf;
+
+/// The error returned by [`next_entry()`][Stream::next_entry()].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error("Could not find a blob or tree for archival")]
+    Find(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+    #[error("Could not query attributes for path \"{path}\"")]
+    Attributes {
+        path: BString,
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
+    },
+    #[error(transparent)]
+    Traverse(#[from] gix_traverse::tree::breadthfirst::Error),
+    #[error(transparent)]
+    ConvertToWorktree(#[from] gix_filter::pipeline::convert::to_worktree::Error),
+}
+
+impl Stream {
+    /// Access the next entry of the stream or `None` if there is nothing more to read.
+    pub fn next_entry(&mut self) -> Result<Option<Entry<'_>>, Error> {
+        assert!(
+            self.path_buf.is_some(),
+            "BUG: must consume and drop entry before getting the next one"
+        );
+        self.extra_entries.take();
+        let res = protocol::read_entry_info(
+            &mut self.read,
+            self.path_buf.as_mut().expect("set while producing an entry"),
+        );
+        match res {
+            Ok((remaining, mode, id)) => {
+                if let Some(err) = self.err.lock().take() {
+                    return Err(err);
+                }
+                Ok(Some(Entry {
+                    path_buf: self.path_buf.take(),
+                    parent: self,
+                    id,
+                    mode,
+                    remaining,
+                }))
+            }
+            Err(err) => {
+                if let Some(err) = self.err.lock().take() {
+                    return Err(err);
+                }
+                // unexpected EOF means the other side dropped. We handled potential errors already.
+                if err.kind() == ErrorKind::UnexpectedEof {
+                    return Ok(None);
+                }
+                Err(err.into())
+            }
+        }
+    }
+}
 
 /// The source of an additional entry
 pub enum Source {
@@ -39,6 +97,13 @@ impl Entry<'_> {
     pub fn relative_path(&self) -> &BStr {
         self.path_buf.as_ref().expect("always set during our lifetime").as_ref()
     }
+
+    /// The amount of bytes that remain to be read, or `None` if it's fully streamed.
+    ///
+    /// This equals the length of the entry in bytes right before reading it.
+    pub fn bytes_remaining(&self) -> Option<usize> {
+        self.remaining
+    }
 }
 
 impl<'a> Drop for Entry<'a> {
@@ -57,9 +122,7 @@ impl Entry<'_> {
             let nb = u16::from_le_bytes(u16_buf) as usize;
 
             if nb != 0 {
-                self.parent
-                    .read
-                    .read_exact(&mut self.parent.buf[self.parent.filled..][..nb])?;
+                self.parent.read.read_exact(&mut self.parent.buf[..nb])?;
             }
             self.parent.filled = nb;
             self.parent.pos = 0;

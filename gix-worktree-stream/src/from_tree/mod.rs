@@ -1,10 +1,12 @@
-use crate::stream::{Error, SharedErrorSlot};
-use crate::{stream, Stream};
+use crate::entry::Error;
+use crate::SharedErrorSlot;
+use crate::{entry, protocol, AdditionalEntry, Stream};
 use gix_object::bstr::BStr;
 use std::io::Write;
 
 /// Use `find` to traverse `tree` and fetch the contained blobs to return as [`Stream`], which makes them queryable
 /// on demand with support for streaming each entry.
+///
 /// `pipeline` is used to convert blobs to their worktree representation, and `attributes` is used to read
 /// the `export-ignore` attribute. If set on a directory or blob, it won't be added to the archive.
 ///
@@ -18,7 +20,7 @@ use std::io::Write;
 ///
 /// For per-file progress, integrate progress handling into the calls of [`Stream::next_entry()`] as that
 /// correlates blobs.
-/// Additional interrupt handling can be wrapped around the `Read` implementation of each [`stream::Entry`].
+/// Additional interrupt handling can be wrapped around the `Read` implementation of each [`Entry`][crate::Entry].
 /// For progress on bytes-written, integrate progress reporting when consuming the stream.
 /// Further it's possible to drop the returned [`Stream`] to halt all operation.
 ///
@@ -30,7 +32,7 @@ use std::io::Write;
 /// ### Limitations
 ///
 /// * `export-subst` is not support, as it requires the entire formatting engine of `git log`.
-pub fn write_to<Find, E1, E2>(
+pub fn from_tree<Find, E1, E2>(
     tree: gix_hash::ObjectId,
     find: Find,
     pipeline: gix_filter::Pipeline,
@@ -77,13 +79,13 @@ where
 fn run<Find, E1, E2>(
     tree: gix_hash::ObjectId,
     mut find: Find,
-    pipeline: gix_filter::Pipeline,
+    mut pipeline: gix_filter::Pipeline,
     mut attributes: impl FnMut(&BStr, gix_object::tree::EntryMode, &mut gix_attributes::search::Outcome) -> Result<(), E2>
         + Send
         + 'static,
     out: &mut gix_features::io::pipe::Writer,
     err: SharedErrorSlot,
-    additional_entries: std::sync::mpsc::Receiver<stream::AdditionalEntry>,
+    additional_entries: std::sync::mpsc::Receiver<AdditionalEntry>,
 ) -> Result<(), Error>
 where
     Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::Data<'a>, E1> + Clone + Send + 'static,
@@ -92,6 +94,9 @@ where
 {
     let mut buf = Vec::new();
     let obj = find(tree.as_ref(), &mut buf).map_err(|err| Error::Find(Box::new(err)))?;
+    if pipeline.driver_context_mut().treeish.is_none() {
+        pipeline.driver_context_mut().treeish = Some(tree);
+    }
     let tree = gix_object::TreeRefIter::from_bytes(obj.data);
 
     let mut attrs = gix_attributes::search::Outcome::default();
@@ -103,10 +108,10 @@ where
         attrs,
         find: {
             let mut find = find.clone();
-            move |a: &gix_hash::oid, b: &mut Vec<u8>| find(a, b).map_err(|err| stream::Error::Find(Box::new(err)))
+            move |a: &gix_hash::oid, b: &mut Vec<u8>| find(a, b).map_err(|err| Error::Find(Box::new(err)))
         },
         fetch_attributes: move |a: &BStr, b: gix_object::tree::EntryMode, c: &mut gix_attributes::search::Outcome| {
-            attributes(a, b, c).map_err(|err| stream::Error::Attributes {
+            attributes(a, b, c).map_err(|err| Error::Attributes {
                 source: Box::new(err),
                 path: a.to_owned(),
             })
@@ -127,7 +132,7 @@ where
     )?;
 
     for entry in additional_entries {
-        stream::protocol::write_entry_header_and_path(
+        protocol::write_entry_header_and_path(
             entry.relative_path.as_ref(),
             &entry.id,
             entry.mode,
@@ -137,11 +142,11 @@ where
         // pipe writer always writes all in one go.
         #[allow(clippy::unused_io_amount)]
         match entry.source {
-            stream::entry::Source::Memory(buf) => out.write(&buf).map(|_| ()),
-            stream::entry::Source::Null => out.write(&[]).map(|_| ()),
-            stream::entry::Source::Path(path) => {
+            entry::Source::Memory(buf) => out.write(&buf).map(|_| ()),
+            entry::Source::Null => out.write(&[]).map(|_| ()),
+            entry::Source::Path(path) => {
                 let file = std::fs::File::open(path)?;
-                stream::protocol::write_stream(&mut buf, file, out)
+                protocol::write_stream(&mut buf, file, out)
             }
         }?
     }
