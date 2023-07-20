@@ -2,7 +2,7 @@
 name = "gix-revwalk"
 version = "0.4.0"
 repository = "https://github.com/Byron/gitoxide"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "A crate providing utilities for walking the revision graph"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"

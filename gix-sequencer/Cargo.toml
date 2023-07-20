@@ -2,7 +2,7 @@
 name = "gix-sequencer"
 version = "0.0.0"
 repository = "https://github.com/Byron/gitoxide"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "A WIP crate of the gitoxide project handling sequences of human-aided operations"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"

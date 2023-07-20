@@ -2,7 +2,7 @@
 name = "gix-hashtable"
 version = "0.2.3"
 repository = "https://github.com/Byron/gitoxide"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "A crate that provides hashtable based data structures optimized to utilize ObjectId keys"
 authors = ["Pascal Kuthe <pascal.kuthe@semimod.de>"]
 edition = "2021"

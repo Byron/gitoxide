@@ -2,7 +2,7 @@
 name = "gix-archive"
 version = "0.2.0"
 repository = "https://github.com/Byron/gitoxide"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "implements archive generation from of a tree"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
