@@ -51,5 +51,18 @@ pub struct Stack {
     current_is_directory: bool,
 }
 
+#[cfg(unix)]
+/// Returns whether a a file has the executable permission set.
+pub fn is_executable(metadata: &std::fs::Metadata) -> bool {
+    use std::os::unix::fs::MetadataExt;
+    (metadata.mode() & 0o100) != 0
+}
+
+#[cfg(not(unix))]
+/// Returns whether a a file has the executable permission set.
+pub fn is_executable(_metadata: &std::fs::Metadata) -> bool {
+    false
+}
+
 ///
 pub mod stack;
