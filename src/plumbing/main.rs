@@ -138,6 +138,7 @@ pub fn main() -> Result<()> {
         #[cfg(feature = "gitoxide-core-tools-archive")]
         Subcommands::Archive(crate::plumbing::options::archive::Platform {
             format,
+            compression_level,
             output_file,
             treeish,
         }) => prepare_and_run(
@@ -150,7 +151,7 @@ pub fn main() -> Result<()> {
             move |progress, _out, _err| {
                 core::repository::archive::stream(
                     repository(Mode::Lenient)?,
-                    output_file.as_deref(),
+                    &output_file,
                     treeish.as_deref(),
                     progress,
                     format.map(|f| match f {
@@ -158,6 +159,10 @@ pub fn main() -> Result<()> {
                             gix::worktree::archive::Format::InternalTransientNonPersistable
                         }
                         crate::plumbing::options::archive::Format::Tar => gix::worktree::archive::Format::Tar,
+                        crate::plumbing::options::archive::Format::TarGz => gix::worktree::archive::Format::TarGz,
+                        crate::plumbing::options::archive::Format::Zip => {
+                            gix::worktree::archive::Format::Zip { compression_level }
+                        }
                     }),
                 )
             },

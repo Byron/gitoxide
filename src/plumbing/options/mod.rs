@@ -145,16 +145,24 @@ pub mod archive {
         Internal,
         /// Use the `.tar` file format, uncompressed.
         Tar,
+        /// Use the `.tar.gz` file format, compressed with `gzip`.
+        TarGz,
+        /// Use the `.zip` container format.
+        Zip,
     }
 
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
+        /// Explicitly set the format. Otherwise derived from the suffix of the output file.
         #[clap(long, short = 'f', value_enum)]
         pub format: Option<Format>,
-        /// The file to write the archive to, or discard the output immediately.
+        /// The compression strength to use. Currently only used for `.zip` archives, valid from 0-9.
+        #[clap(long, short = 'c', value_enum)]
+        pub compression_level: Option<u8>,
+        /// The file to write the archive to.
         ///
         /// It's extension determines the archive format, unless `--format` is set.
-        pub output_file: Option<PathBuf>,
+        pub output_file: PathBuf,
 
         /// The revspec of the commit or tree to traverse, or the tree at `HEAD` if unspecified.
         ///

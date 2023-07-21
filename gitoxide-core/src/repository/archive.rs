@@ -1,12 +1,11 @@
 use anyhow::bail;
 use gix::worktree::archive;
 use gix::Progress;
-use std::ops::Add;
 use std::path::Path;
 
 pub fn stream(
     repo: gix::Repository,
-    destination_path: Option<&Path>,
+    destination_path: &Path,
     rev_spec: Option<&str>,
     mut progress: impl Progress,
     format: Option<archive::Format>,
@@ -24,13 +23,7 @@ pub fn stream(
     bytes.init(None, gix::progress::bytes());
 
     let mut file = gix::progress::Write {
-        inner: match destination_path {
-            Some(path) => Box::new(std::io::BufWriter::with_capacity(
-                128 * 1024,
-                std::fs::File::create(path)?,
-            )) as Box<dyn std::io::Write>,
-            None => Box::new(std::io::sink()),
-        },
+        inner: std::io::BufWriter::with_capacity(128 * 1024, std::fs::File::create(destination_path)?),
         progress: &mut bytes,
     };
     repo.worktree_archive(
@@ -41,9 +34,12 @@ pub fn stream(
         gix::worktree::archive::Options {
             format,
             tree_prefix: None,
-            modification_time: modification_date
-                .map(|t| std::time::UNIX_EPOCH.add(std::time::Duration::from_secs(t as u64)))
-                .unwrap_or_else(std::time::SystemTime::now),
+            modification_time: modification_date.unwrap_or_else(|| {
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_secs())
+                    .unwrap_or_default() as gix::date::SecondsSinceUnixEpoch
+            }),
         },
     )?;
 
@@ -67,14 +63,15 @@ fn fetch_rev_info(
     })
 }
 
-fn format_from_ext(path: Option<&Path>) -> anyhow::Result<archive::Format> {
-    Ok(match path {
-        Some(path) => match path.extension().and_then(|ext| ext.to_str()) {
-            None => bail!("Cannot derive archive format from a file without extension"),
-            Some("tar") => archive::Format::Tar,
-            Some("stream") => archive::Format::InternalTransientNonPersistable,
-            Some(ext) => bail!("Format for extendion '{ext}' is unsupported"),
+fn format_from_ext(path: &Path) -> anyhow::Result<archive::Format> {
+    Ok(match path.extension().and_then(std::ffi::OsStr::to_str) {
+        None => bail!("Cannot derive archive format from a file without extension"),
+        Some("tar") => archive::Format::Tar,
+        Some("gz") => archive::Format::TarGz,
+        Some("zip") => archive::Format::Zip {
+            compression_level: None,
         },
-        None => archive::Format::InternalTransientNonPersistable,
+        Some("stream") => archive::Format::InternalTransientNonPersistable,
+        Some(ext) => bail!("Format for extension '{ext}' is unsupported"),
     })
 }

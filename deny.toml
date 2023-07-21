@@ -42,7 +42,8 @@ allow = [
     "MIT-0",
     "ISC",
     "Unicode-DFS-2016",
-    "LicenseRef-ring"
+    "LicenseRef-ring",
+    "Zlib"
 ]
 # Lint level for licenses considered copyleft
 copyleft = "allow"
