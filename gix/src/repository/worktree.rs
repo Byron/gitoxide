@@ -110,7 +110,7 @@ impl crate::Repository {
     pub fn worktree_archive(
         &self,
         mut stream: gix_worktree_stream::Stream,
-        out: impl std::io::Write,
+        out: impl std::io::Write + std::io::Seek,
         mut blobs: impl gix_features::progress::Progress,
         should_interrupt: &std::sync::atomic::AtomicBool,
         options: gix_archive::Options,
@@ -123,7 +123,7 @@ impl crate::Repository {
             std::io::copy(&mut stream.into_read(), &mut out)?;
             return Ok(());
         }
-        gix_archive::write_stream(
+        gix_archive::write_stream_seek(
             &mut stream,
             |stream| {
                 if should_interrupt.load(std::sync::atomic::Ordering::Relaxed) {

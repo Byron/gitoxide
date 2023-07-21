@@ -22,7 +22,7 @@ fn archive() -> crate::Result {
 
     repo.worktree_archive(
         stream,
-        &mut buf,
+        std::io::Cursor::new(&mut buf),
         gix_features::progress::Discard,
         &std::sync::atomic::AtomicBool::default(),
         Default::default(),
