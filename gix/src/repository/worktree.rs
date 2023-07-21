@@ -93,4 +93,49 @@ impl crate::Repository {
         );
         Ok((stream, index))
     }
+
+    /// Produce an archive from the `stream` and write it to `out` according to `options`.
+    /// Use `blob` to provide progress for each entry written to `out`, and note that it should already be initialized to the amount
+    /// of expected entries, with `should_interrupt` being queried between each entry to abort if needed, and on each write to `out`.
+    ///
+    /// ### Performance
+    ///
+    /// Be sure that `out` is able to handle a lot of write calls. Otherwise wrap it in a [`BufWriter`][std::io::BufWriter].
+    ///
+    /// ### Additional progress and fine-grained interrupt handling
+    ///
+    /// For additional progress reporting, wrap `out` into a writer that counts throughput on each write.
+    /// This can also be used to react to interrupts on each write, instead of only for each entry.
+    #[cfg(feature = "worktree-archive")]
+    pub fn worktree_archive(
+        &self,
+        mut stream: gix_worktree_stream::Stream,
+        out: impl std::io::Write,
+        mut blobs: impl gix_features::progress::Progress,
+        should_interrupt: &std::sync::atomic::AtomicBool,
+        options: gix_archive::Options,
+    ) -> Result<(), crate::repository::worktree_archive::Error> {
+        let mut out = gix_features::interrupt::Write {
+            inner: out,
+            should_interrupt,
+        };
+        if options.format == gix_archive::Format::InternalTransientNonPersistable {
+            std::io::copy(&mut stream.into_read(), &mut out)?;
+            return Ok(());
+        }
+        gix_archive::write_stream(
+            &mut stream,
+            |stream| {
+                if should_interrupt.load(std::sync::atomic::Ordering::Relaxed) {
+                    return Err(std::io::Error::new(std::io::ErrorKind::Other, "Cancelled by user").into());
+                }
+                let res = stream.next_entry();
+                blobs.inc();
+                res
+            },
+            out,
+            options,
+        )?;
+        Ok(())
+    }
 }

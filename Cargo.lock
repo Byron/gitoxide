@@ -1310,6 +1310,7 @@ dependencies = [
  "async-std",
  "document-features",
  "gix-actor 0.24.0",
+ "gix-archive",
  "gix-attributes 0.15.0",
  "gix-commitgraph",
  "gix-config",

@@ -54,10 +54,16 @@ blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest",
 #! ### Other
 
 ## Various additional features and capabilities that are not necessarily part of what most users would need.
-extras = ["worktree-stream"]
+extras = ["worktree-stream", "worktree-archive"]
 
 ## Make it possible to turn a tree into a stream of bytes, which can be decoded to entries and turned into various other formats.
 worktree-stream = ["gix-worktree-stream"]
+
+## Create archives from a tree in the repository, similar to what `git archive` does.
+##
+## Note that we disable all default features which strips it off all container support, like `tar` and `zip`.
+## Your application should add it as dependency and re-activate the desired features.
+worktree-archive = ["gix-archive", "worktree-stream"]
 
 ## Various progress-related features that improve the look of progress message units.
 comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
@@ -160,6 +166,7 @@ gix-hashtable = { version = "^0.2.3", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.18.0", path = "../gix-commitgraph" }
 
 gix-worktree-stream = { version = "^0.2.0", path = "../gix-worktree-stream", optional = true }
+gix-archive = { version = "0.2.0", path = "../gix-archive", default-features = false, optional = true }
 
 # For communication with remotes
 gix-protocol = { version = "^0.36.0", path = "../gix-protocol", optional = true }
