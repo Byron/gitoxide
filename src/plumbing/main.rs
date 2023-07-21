@@ -135,6 +135,33 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        #[cfg(feature = "gitoxide-core-tools-archive")]
+        Subcommands::Archive(crate::plumbing::options::archive::Platform {
+            format,
+            output_file,
+            treeish,
+        }) => prepare_and_run(
+            "archive",
+            trace,
+            auto_verbose,
+            progress,
+            progress_keep_open,
+            None,
+            move |progress, _out, _err| {
+                core::repository::archive::stream(
+                    repository(Mode::Lenient)?,
+                    output_file.as_deref(),
+                    treeish.as_deref(),
+                    progress,
+                    format.map(|f| match f {
+                        crate::plumbing::options::archive::Format::Internal => {
+                            gix::worktree::archive::Format::InternalTransientNonPersistable
+                        }
+                        crate::plumbing::options::archive::Format::Tar => gix::worktree::archive::Format::Tar,
+                    }),
+                )
+            },
+        ),
         #[cfg(feature = "gitoxide-core-tools-corpus")]
         Subcommands::Corpus(crate::plumbing::options::corpus::Platform { db, path, cmd }) => {
             let reverse_trace_lines = progress;

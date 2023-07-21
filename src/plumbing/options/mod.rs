@@ -77,6 +77,9 @@ pub struct Args {
 
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
+    /// Subcommands for creating worktree archivs
+    #[cfg(feature = "gitoxide-core-tools-archive")]
+    Archive(archive::Platform),
     /// Subcommands for interacting with commit-graphs
     #[clap(subcommand)]
     CommitGraph(commitgraph::Subcommands),
@@ -127,6 +130,37 @@ pub enum Subcommands {
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+}
+
+#[cfg(feature = "gitoxide-core-tools-archive")]
+pub mod archive {
+    use std::path::PathBuf;
+
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+    pub enum Format {
+        /// An internal format that is for debugging, it should not be persisted and cannot be read back.
+        ///
+        /// However, it represents that bare data stream without with minimal overhead, and is a good
+        /// metric for throughput.
+        Internal,
+        /// Use the `.tar` file format, uncompressed.
+        Tar,
+    }
+
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        #[clap(long, short = 'f', value_enum)]
+        pub format: Option<Format>,
+        /// The file to write the archive to, or discard the output immediately.
+        ///
+        /// It's extension determines the archive format, unless `--format` is set.
+        pub output_file: Option<PathBuf>,
+
+        /// The revspec of the commit or tree to traverse, or the tree at `HEAD` if unspecified.
+        ///
+        /// If commit, the commit timestamp will be used as timestamp for each file in the archive.
+        pub treeish: Option<String>,
+    }
 }
 
 #[cfg(feature = "gitoxide-core-tools-corpus")]

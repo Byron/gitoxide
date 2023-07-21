@@ -1282,6 +1282,7 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "gix",
+ "gix-archive",
  "gix-pack",
  "gix-transport",
  "gix-url",

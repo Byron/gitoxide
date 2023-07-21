@@ -11,6 +11,8 @@ pub fn init(directory: Option<PathBuf>) -> Result<gix::discover::repository::Pat
     .with_context(|| "Repository initialization failed")
 }
 
+#[cfg(feature = "archive")]
+pub mod archive;
 pub mod commit;
 pub mod config;
 mod credential;

@@ -25,6 +25,9 @@ query = ["dep:rusqlite"]
 ## *Note that* `organize` we need for finding git repositories fast.
 corpus = [ "dep:rusqlite", "dep:sysinfo", "organize", "dep:crossbeam-channel", "dep:serde_json", "dep:tracing-forest", "dep:tracing-subscriber", "dep:tracing", "dep:parking_lot" ]
 
+## The ability to create archives from virtual worktrees, similar to `git archive`.
+archive = ["dep:gix-archive-for-configuration-only", "gix/worktree-archive"]
+
 #! ### Mutually Exclusive Networking
 #! If both are set, _blocking-client_ will take precedence, allowing `--all-features` to be used.
 
@@ -44,6 +47,7 @@ serde = ["gix/serde", "dep:serde_json", "dep:serde", "bytesize/serde"]
 gix = { version = "^0.49.1", path = "../gix", default-features = false }
 gix-pack-for-configuration-only = { package = "gix-pack", version = "^0.40.0", path = "../gix-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
 gix-transport-configuration-only = { package = "gix-transport", version = "^0.34.0", path = "../gix-transport", default-features = false }
+gix-archive-for-configuration-only = { package = "gix-archive", version = "^0.2.0", path = "../gix-archive", optional = true, features = ["tar"] }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.42"
 thiserror = "1.0.34"
