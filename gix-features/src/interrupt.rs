@@ -91,7 +91,7 @@ where
 
 /// A wrapper for implementors of [`std::io::Read`] or [`std::io::BufRead`] with interrupt support.
 ///
-/// It fails a [read][`std::io::Read::read`] while an interrupt was requested.
+/// It fails a [read][std::io::Read::read] while an interrupt was requested.
 pub struct Read<'a, R> {
     /// The actual implementor of [`std::io::Read`] to which interrupt support will be added.
     pub inner: R,
@@ -121,5 +121,41 @@ where
 
     fn consume(&mut self, amt: usize) {
         self.inner.consume(amt)
+    }
+}
+
+/// A wrapper for implementors of [`std::io::Write`] with interrupt checks on each write call.
+///
+/// It fails a [write][std::io::Write::write] while an interrupt was requested.
+pub struct Write<'a, W> {
+    /// The actual implementor of [`std::io::Write`] to which interrupt support will be added.
+    pub inner: W,
+    /// The flag to trigger interruption
+    pub should_interrupt: &'a AtomicBool,
+}
+
+impl<W> io::Write for Write<'_, W>
+where
+    W: std::io::Write,
+{
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        if self.should_interrupt.load(Ordering::Relaxed) {
+            return Err(std::io::Error::new(std::io::ErrorKind::Other, "Interrupted"));
+        }
+        self.inner.write(buf)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        // Don't interrupt here, allow flushes to happen to prefer disk consistency.
+        self.inner.flush()
+    }
+}
+
+impl<W> io::Seek for Write<'_, W>
+where
+    W: std::io::Seek,
+{
+    fn seek(&mut self, pos: io::SeekFrom) -> io::Result<u64> {
+        self.inner.seek(pos)
     }
 }
