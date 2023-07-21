@@ -132,6 +132,63 @@ mod from_tree {
         })
     }
 
+    #[test]
+    #[cfg(feature = "tar_gz")]
+    fn basic_usage_tar_gz() -> gix_testtools::Result {
+        basic_usage(gix_archive::Format::TarGz, |buf| {
+            assert!(
+                buf.len() < 385,
+                "quite a bit smaller than uncompressed: {} < 385",
+                buf.len()
+            );
+            Ok(())
+        })
+    }
+
+    #[test]
+    #[cfg(feature = "zip")]
+    fn basic_usage_zip() -> gix_testtools::Result {
+        basic_usage(
+            gix_archive::Format::Zip {
+                compression_level: Some(9),
+            },
+            |buf| {
+                assert!(
+                    buf.len() < 1200,
+                    "bigger than uncompressed for some reason: {} < 1200",
+                    buf.len()
+                );
+                let mut ar = zip::ZipArchive::new(std::io::Cursor::new(buf.as_slice()))?;
+                assert_eq!(
+                    {
+                        let mut n: Vec<_> = ar.file_names().collect();
+                        n.sort();
+                        n
+                    },
+                    &[
+                        "prefix/.gitattributes",
+                        "prefix/a",
+                        "prefix/dir/b",
+                        "prefix/dir/subdir/exe",
+                        "prefix/extra-dir-empty/",
+                        "prefix/extra-dir/symlink-to-extra",
+                        "prefix/extra-exe",
+                        "prefix/extra-file",
+                        "prefix/symlink-to-a"
+                    ]
+                );
+                let mut link = ar.by_name("prefix/symlink-to-a")?;
+                assert!(!link.is_dir());
+                assert!(link.is_file(), "no symlink differentiation");
+                assert_eq!(link.unix_mode(), Some(0o120644), "it's all in the mode");
+                let mut buf = Vec::new();
+                link.read_to_end(&mut buf)?;
+                assert_eq!(buf.as_bstr(), "a");
+                Ok(())
+            },
+        )
+    }
+
     fn basic_usage(
         format: gix_archive::Format,
         make_assertion: impl FnOnce(Vec<u8>) -> gix_testtools::Result,
@@ -161,16 +218,29 @@ mod from_tree {
         if format == Format::InternalTransientNonPersistable {
             std::io::copy(&mut stream.into_read(), &mut buf)?;
         } else {
-            gix_archive::write_stream(
-                &mut stream,
-                gix_worktree_stream::Stream::next_entry,
-                &mut buf,
-                gix_archive::Options {
-                    format,
-                    tree_prefix: Some("prefix/".into()),
-                    modification_time: std::time::UNIX_EPOCH + std::time::Duration::from_secs(120),
-                },
-            )?;
+            if matches!(format, Format::Zip { .. }) {
+                gix_archive::write_stream_seek(
+                    &mut stream,
+                    gix_worktree_stream::Stream::next_entry,
+                    std::io::Cursor::new(&mut buf),
+                    gix_archive::Options {
+                        format,
+                        tree_prefix: Some("prefix/".into()),
+                        modification_time: 1820000000, // needs to be within a certain bound to be a valid MSDos time!
+                    },
+                )?;
+            } else {
+                gix_archive::write_stream(
+                    &mut stream,
+                    gix_worktree_stream::Stream::next_entry,
+                    &mut buf,
+                    gix_archive::Options {
+                        format,
+                        tree_prefix: Some("prefix/".into()),
+                        modification_time: 120,
+                    },
+                )?;
+            }
             assert!(
                 stream.next_entry()?.is_none(),
                 "stream is exhausted, all written to buf"

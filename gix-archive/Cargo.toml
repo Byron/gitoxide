@@ -12,16 +12,26 @@ rust-version = "1.65"
 doctest = false
 
 [features]
-default = ["tar"]
+default = ["tar", "tar_gz", "zip"]
 
 ## Enable the `tar` archive format. It has support for all information, except for object ids.
 tar = ["dep:tar", "dep:gix-path"]
+## Enable the `tar.gz` archive format.
+tar_gz = ["tar", "dep:libflate"]
+
+## Enable the `zip` archive format.
+zip = ["dep:zip", "dep:time"]
 
 
 [dependencies]
 gix-worktree-stream = { version = "^0.2.0", path = "../gix-worktree-stream" }
 gix-object = { version = "^0.33.0", path = "../gix-object" }
 gix-path = { version = "^0.8.3", path = "../gix-path", optional = true }
+gix-date = { version = "^0.7.0", path = "../gix-date" }
+
+libflate = { version = "2.0.0", optional = true }
+zip = { version = "0.6.6", optional = true, default-features = false, features = ["deflate", "time"] }
+time = { version = "0.3.22", optional = true, default-features = false, features = ["std"] }
 
 thiserror = "1.0.26"
 bstr = { version = "1.5.0", default-features = false }

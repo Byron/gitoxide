@@ -133,6 +133,8 @@ unit-tests:
     cargo test --all
     cargo test -p gix-archive --no-default-features
     cargo test -p gix-archive --features tar
+    cargo test -p gix-archive --features tar_gz
+    cargo test -p gix-archive --features zip
     cd gix-object; \
       set -ex; \
       cargo test; \

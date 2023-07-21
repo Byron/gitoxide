@@ -28,6 +28,12 @@ pub enum Error {
     NextStreamEntry(#[from] gix_worktree_stream::entry::Error),
     #[error("The internal format cannot be used as an archive, it's merely a debugging tool")]
     InternalFormatMustNotPersist,
+    #[error("Support for the format '{wanted:?}' was not compiled in")]
+    SupportNotCompiledIn { wanted: Format },
+    #[error("Cannot create a zip archive if output stream does not support seek")]
+    ZipWithoutSeek,
+    #[error("Cannot use modification as it is not within the supported bounds")]
+    InvalidModificationTime(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
 }
 
 /// The supported container formats for use in [`write_stream()`].
@@ -44,8 +50,24 @@ pub enum Format {
     ///
     /// Use it as well if a custom container format is desired. The idea is to decode it on a separate thread
     /// to rewrite the data to the desired format.
-    #[cfg(feature = "tar")]
     Tar,
+    /// A convenience format that will `gzip` deflate the `tar` stream, using the default compression level.
+    // TODO: figure out how to do this with `libflate`.
+    TarGz,
+    /// A standard `zip` archive. Note that this format silently converts illformed UTF-8 to UTF-8, which will
+    /// equal a change of path.
+    ///
+    /// Requires the `zip` feature toggle to have an effect.
+    ///
+    /// ### Shortcoming
+    ///
+    /// Even though symlinks are stored as such, for some reason at least on MacOS those aren't restored. That works,
+    /// however, when letting `git` create the archive.
+    Zip {
+        /// If `None`, use the default compression level. Otherwise use the given one which
+        /// ranges from 0-9 for the deflate algorithm.
+        compression_level: Option<u8>,
+    },
 }
 
 /// Options for configuring [`write_stream()`].
@@ -57,10 +79,10 @@ pub struct Options {
     ///
     /// Note that that `/` should be used as separator, and that a prefix directory has to end with `/`.
     pub tree_prefix: Option<BString>,
-    /// The modification time for all entries in the archive.
+    /// The modification time for all entries in the archive as seen since UNIX epoch.
     ///
     /// Defaults to the current time. The caller may set this to the commit time if available.
-    pub modification_time: std::time::SystemTime,
+    pub modification_time: gix_date::SecondsSinceUnixEpoch,
 }
 
 impl Default for Options {
@@ -68,10 +90,13 @@ impl Default for Options {
         Options {
             format: Default::default(),
             tree_prefix: None,
-            modification_time: std::time::SystemTime::now(),
+            modification_time: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|t| t.as_secs() as i64)
+                .unwrap_or_default(),
         }
     }
 }
 
 mod write;
-pub use write::write_stream;
+pub use write::{write_stream, write_stream_seek};
