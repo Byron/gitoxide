@@ -33,7 +33,7 @@ cargo_metadata = "0.15.0"
 log = "0.4.14"
 toml_edit = "0.19.1"
 semver = "1.0.4"
-crates-index = "0.19.3"
+crates-index = "1.0.0"
 cargo_toml = "0.15.1"
 nom = { version = "7", default-features = false, features = ["std"]}
 git-conventional = "0.12.0"
