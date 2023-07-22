@@ -29,6 +29,17 @@ impl<'repo> Tree<'repo> {
         gix_object::TreeRef::from_bytes(&self.data)
     }
 
+    /// Find the entry named `name` by iteration, or return `None` if it wasn't found.
+    pub fn find_entry(&self, name: impl PartialEq<BStr>) -> Option<EntryRef<'repo, '_>> {
+        TreeRefIter::from_bytes(&self.data)
+            .filter_map(Result::ok)
+            .find(|entry| name.eq(entry.filename))
+            .map(|entry| EntryRef {
+                inner: entry,
+                repo: self.repo,
+            })
+    }
+
     // TODO: tests.
     /// Follow a sequence of `path` components starting from this instance, and look them up one by one until the last component
     /// is looked up and its tree entry is returned.
