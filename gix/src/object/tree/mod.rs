@@ -184,8 +184,8 @@ impl<'r> std::fmt::Debug for Tree<'r> {
 /// An entry in a [`Tree`], similar to an entry in a directory.
 #[derive(PartialEq, Debug, Clone)]
 pub struct Entry<'repo> {
-    inner: gix_object::tree::Entry,
-    repo: &'repo crate::Repository,
+    pub(crate) inner: gix_object::tree::Entry,
+    pub(crate) repo: &'repo crate::Repository,
 }
 
 mod entry {

@@ -39,6 +39,11 @@ impl<'repo, 'a> EntryRef<'repo, 'a> {
     pub fn object_id(&self) -> gix_hash::ObjectId {
         self.inner.oid.to_owned()
     }
+
+    /// Detach the repository from this instance.
+    pub fn detach(&self) -> gix_object::tree::EntryRef<'a> {
+        self.inner
+    }
 }
 
 impl<'repo, 'a> std::fmt::Display for EntryRef<'repo, 'a> {
