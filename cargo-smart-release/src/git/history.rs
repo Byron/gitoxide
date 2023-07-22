@@ -259,10 +259,10 @@ fn add_item_if_package_changed<'a>(
             let mut repo = ctx.repo.clone();
             repo.object_cache_size(1024 * 1024);
             let current = gix::Tree::from_data(item.id, data_by_tree_id[&item.tree_id].to_owned(), &ctx.repo)
-                .lookup_entry(components.iter().copied())?;
+                .peel_to_entry(components.iter().copied())?;
             let parent = match item.parent_tree_id {
                 Some(tree_id) => gix::Tree::from_data(tree_id, data_by_tree_id[&tree_id].to_owned(), &ctx.repo)
-                    .lookup_entry(components.iter().copied())?,
+                    .peel_to_entry(components.iter().copied())?,
                 None => None,
             };
             match (current, parent) {
