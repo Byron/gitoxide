@@ -1,3 +1,4 @@
+use bstr::BStr;
 use std::convert::TryFrom;
 
 use nom::error::ParseError;
@@ -15,6 +16,27 @@ impl<'a> TreeRef<'a> {
     /// Deserialize a Tree from `data`.
     pub fn from_bytes(data: &'a [u8]) -> Result<TreeRef<'a>, crate::decode::Error> {
         decode::tree(data).map(|(_, t)| t).map_err(crate::decode::Error::from)
+    }
+
+    /// Find an entry named `name` knowing if the entry is a directory or not, using a binary search.
+    ///
+    /// Note that it's impossible to binary search by name alone as the sort order is special.
+    pub fn bisect_entry(&self, name: &BStr, is_dir: bool) -> Option<EntryRef<'a>> {
+        static NULL_HASH: gix_hash::ObjectId = gix_hash::Kind::shortest().null();
+
+        let search = EntryRef {
+            mode: if is_dir {
+                tree::EntryMode::Tree
+            } else {
+                tree::EntryMode::Blob
+            },
+            filename: name,
+            oid: &NULL_HASH,
+        };
+        self.entries
+            .binary_search_by(|e| e.cmp(&search))
+            .ok()
+            .map(|idx| self.entries[idx])
     }
 
     /// Create an instance of the empty tree.
