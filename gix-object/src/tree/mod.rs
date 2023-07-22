@@ -63,7 +63,7 @@ impl EntryMode {
 }
 
 /// An element of a [`TreeRef`][crate::TreeRef::entries].
-#[derive(PartialEq, Eq, Debug, Hash, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EntryRef<'a> {
     /// The kind of object to which `oid` is pointing.
