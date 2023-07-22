@@ -215,6 +215,8 @@ pub enum Object {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreeRef<'a> {
     /// The directories and files contained in this tree.
+    ///
+    /// Beware that the sort order isn't *quite* by name, so one may bisect only with a [`tree::EntryRef`] to handle ordering correctly.
     #[cfg_attr(feature = "serde", serde(borrow))]
     pub entries: Vec<tree::EntryRef<'a>>,
 }
@@ -231,6 +233,8 @@ pub struct TreeRefIter<'a> {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tree {
     /// The directories and files contained in this tree. They must be and remain sorted by [`filename`][tree::Entry::filename].
+    ///
+    /// Beware that the sort order isn't *quite* by name, so one may bisect only with a [`tree::Entry`] to handle ordering correctly.
     pub entries: Vec<tree::Entry>,
 }
 
