@@ -1,6 +1,6 @@
 [package]
 name = "gix-quote"
-version = "0.4.5"
+version = "0.4.6"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A WIP crate of the gitoxide project dealing with various quotations used by git"

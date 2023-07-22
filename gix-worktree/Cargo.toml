@@ -26,10 +26,10 @@ internal-testing-gix-features-parallel = ["gix-features/parallel"]
 [dependencies]
 gix-index = { version = "^0.21.0", path = "../gix-index" }
 gix-fs = { version = "^0.4.0", path = "../gix-fs" }
-gix-hash = { version = "^0.11.3", path = "../gix-hash" }
+gix-hash = { version = "^0.11.4", path = "../gix-hash" }
 gix-object = { version = "^0.33.0", path = "../gix-object" }
 gix-glob = { version = "^0.10.0", path = "../gix-glob" }
-gix-path = { version = "^0.8.3", path = "../gix-path" }
+gix-path = { version = "^0.8.4", path = "../gix-path" }
 gix-attributes = { version = "^0.15.0", path = "../gix-attributes" }
 gix-ignore = { version = "^0.5.0", path = "../gix-ignore" }
 gix-features = { version = "^0.32.0", path = "../gix-features" }

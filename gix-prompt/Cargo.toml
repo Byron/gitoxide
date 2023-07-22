@@ -13,8 +13,8 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-gix-command = { version = "^0.2.6", path = "../gix-command" }
-gix-config-value = { version = "^0.12.2", path = "../gix-config-value" }
+gix-command = { version = "^0.2.7", path = "../gix-command" }
+gix-config-value = { version = "^0.12.4", path = "../gix-config-value" }
 
 thiserror = "1.0.32"
 parking_lot = "0.12.1"
