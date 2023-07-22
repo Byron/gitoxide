@@ -1367,7 +1367,7 @@ dependencies = [
  "gix-refspec",
  "gix-revision",
  "gix-sec 0.8.4",
- "gix-tempfile 7.0.1",
+ "gix-tempfile 7.0.2",
  "gix-testtools",
  "gix-trace 0.1.3",
  "gix-transport",
@@ -1934,7 +1934,7 @@ dependencies = [
 name = "gix-lock"
 version = "7.0.2"
 dependencies = [
- "gix-tempfile 7.0.1",
+ "gix-tempfile 7.0.2",
  "gix-utils 0.1.5",
  "tempfile",
  "thiserror",
@@ -2053,7 +2053,7 @@ dependencies = [
  "gix-hashtable 0.2.4",
  "gix-object 0.33.1",
  "gix-path 0.8.4",
- "gix-tempfile 7.0.1",
+ "gix-tempfile 7.0.2",
  "gix-testtools",
  "gix-traverse 0.30.1",
  "memmap2 0.7.1",
@@ -2243,7 +2243,7 @@ dependencies = [
  "gix-lock 7.0.2",
  "gix-object 0.33.1",
  "gix-path 0.8.4",
- "gix-tempfile 7.0.1",
+ "gix-tempfile 7.0.2",
  "gix-testtools",
  "gix-utils 0.1.5",
  "gix-validate 0.7.7",
@@ -2366,7 +2366,7 @@ dependencies = [
 
 [[package]]
 name = "gix-tempfile"
-version = "7.0.1"
+version = "7.0.2"
 dependencies = [
  "dashmap",
  "document-features",
@@ -2391,7 +2391,7 @@ dependencies = [
  "gix-fs 0.4.1",
  "gix-ignore 0.2.0",
  "gix-lock 5.0.1",
- "gix-tempfile 7.0.1",
+ "gix-tempfile 7.0.2",
  "gix-worktree 0.17.1",
  "io-close",
  "is_ci",
