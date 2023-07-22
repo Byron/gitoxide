@@ -5,7 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.49.1 (2023-07-22)
+## Unreleased
+
+### New Features
+
+ - <csr-id-caa8fb9502906fa47546c26bbeb3c546664ad944/> `TreeEntryRefExt` and `TreeEntryExt` to be able to easily attach a repo to it.
+   Also, add `detach()` to types that were missing it.
+ - <csr-id-62cacd4b7a9fc0c0e4c5049f6d0aa7011c8ef923/> `Tree::find_entry()` to easily find an entry in a tree's entries.
+ - <csr-id-c4a1fb1ba461c28ac3ea2482adf5f75721d14706/> add `Repository::archive()` as extra
+   It implements a high-level interface to achieve `git archive` like functionality.
+ - <csr-id-4ee285741e6e1cde3a967980fbf48bab20ddbf68/> optionally make `gix-workspace-stream` available via `Repository::worktree_stream()`
+   That way it's easy to obtain a representation of the worktree
+   in a fully streaming fashion, which is also the basis for
+   `archive`-like functionality.
+
+### New Features (BREAKING)
+
+ - <csr-id-d5e4ee0e6e26ff3feeed1f5aee5bdd0cdc03d1f8/> unify API between `object::tree::Entry` and `object::tree::EntryRef<'_>`
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-8cad009eafe8e1054a715dc99bb9a884325d5ea5/> `Tree::lookup_entry(_by_path))()` are not mutating anymore; add `Tree::peel_to_entry()` and `peel_to_entry_by_path()`
+   The previous implementation was a crutch that could now be circumvented.
+   
+   The new methods allow to reuse a buffer in case the object isn't used or needed further,
+   possibly saving allocations.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 1 calendar day.
+ - 3 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-date v0.7.1, gix-hash v0.11.4, gix-trace v0.1.3, gix-features v0.32.0, gix-actor v0.24.0, gix-validate v0.7.7, gix-object v0.33.0, gix-path v0.8.4, gix-glob v0.10.0, gix-quote v0.4.6, gix-attributes v0.15.0, gix-command v0.2.7, gix-packetline-blocking v0.16.3, gix-filter v0.1.0, gix-fs v0.4.0, gix-chunk v0.4.4, gix-commitgraph v0.18.0, gix-hashtable v0.2.4, gix-revwalk v0.4.0, gix-traverse v0.30.0, gix-worktree-stream v0.2.0, gix-archive v0.2.0, gix-config-value v0.12.4, gix-tempfile v7.0.1, gix-utils v0.1.5, gix-lock v7.0.2, gix-ref v0.33.0, gix-sec v0.8.4, gix-prompt v0.5.3, gix-url v0.21.0, gix-credentials v0.17.0, gix-diff v0.33.0, gix-discover v0.22.0, gix-ignore v0.5.0, gix-bitmap v0.2.6, gix-index v0.21.0, gix-mailmap v0.16.0, gix-negotiate v0.5.0, gix-pack v0.40.0, gix-odb v0.50.0, gix-packetline v0.16.4, gix-transport v0.34.0, gix-protocol v0.36.0, gix-revision v0.18.0, gix-refspec v0.14.0, gix-worktree v0.22.0, gix v0.49.1 ([`5cb3589`](https://github.com/Byron/gitoxide/commit/5cb3589b74fc5376e02cbfe151e71344e1c417fe))
+    - Update changelogs prior to release ([`2fc66b5`](https://github.com/Byron/gitoxide/commit/2fc66b55097ed494b72d1af939ba5561f71fde97))
+    - Merge branch 'improvements-for-crates-index' ([`3f914e8`](https://github.com/Byron/gitoxide/commit/3f914e8840afc59441c3c463bdc89c53136d583e))
+    - `TreeEntryRefExt` and `TreeEntryExt` to be able to easily attach a repo to it. ([`caa8fb9`](https://github.com/Byron/gitoxide/commit/caa8fb9502906fa47546c26bbeb3c546664ad944))
+    - `Tree::find_entry()` to easily find an entry in a tree's entries. ([`62cacd4`](https://github.com/Byron/gitoxide/commit/62cacd4b7a9fc0c0e4c5049f6d0aa7011c8ef923))
+    - `Tree::lookup_entry(_by_path))()` are not mutating anymore; add `Tree::peel_to_entry()` and `peel_to_entry_by_path()` ([`8cad009`](https://github.com/Byron/gitoxide/commit/8cad009eafe8e1054a715dc99bb9a884325d5ea5))
+    - Unify API between `object::tree::Entry` and `object::tree::EntryRef<'_>` ([`d5e4ee0`](https://github.com/Byron/gitoxide/commit/d5e4ee0e6e26ff3feeed1f5aee5bdd0cdc03d1f8))
+    - J fmt ([`57cab40`](https://github.com/Byron/gitoxide/commit/57cab40f5cb437cc5b0a2c1fc5ae0f91f98bbbcc))
+    - Merge branch 'gix-archive' ([`1dda48b`](https://github.com/Byron/gitoxide/commit/1dda48ba2fccb93ebac00fe3460e923af43c86ce))
+    - Change archive implementation to require the seek bound. ([`61aed0e`](https://github.com/Byron/gitoxide/commit/61aed0e955974f65f4fea042cbae68ea8a2cc2f5))
+    - Add `Repository::archive()` as extra ([`c4a1fb1`](https://github.com/Byron/gitoxide/commit/c4a1fb1ba461c28ac3ea2482adf5f75721d14706))
+    - Optionally make `gix-workspace-stream` available via `Repository::worktree_stream()` ([`4ee2857`](https://github.com/Byron/gitoxide/commit/4ee285741e6e1cde3a967980fbf48bab20ddbf68))
+    - Update license field following SPDX 2.1 license expression standard ([`9064ea3`](https://github.com/Byron/gitoxide/commit/9064ea31fae4dc59a56bdd3a06c0ddc990ee689e))
+</details>
+
+## 0.49.1 (2023-07-19)
 
 A maintenance release without user-facing changes.
 
@@ -37,9 +94,8 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 1 calendar day.
- - 3 days passed between releases.
- - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 4 commits contributed to the release.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -49,18 +105,10 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Update changelogs prior to release ([`2fc66b5`](https://github.com/Byron/gitoxide/commit/2fc66b55097ed494b72d1af939ba5561f71fde97))
-    - Merge branch 'improvements-for-crates-index' ([`3f914e8`](https://github.com/Byron/gitoxide/commit/3f914e8840afc59441c3c463bdc89c53136d583e))
-    - `TreeEntryRefExt` and `TreeEntryExt` to be able to easily attach a repo to it. ([`caa8fb9`](https://github.com/Byron/gitoxide/commit/caa8fb9502906fa47546c26bbeb3c546664ad944))
-    - `Tree::find_entry()` to easily find an entry in a tree's entries. ([`62cacd4`](https://github.com/Byron/gitoxide/commit/62cacd4b7a9fc0c0e4c5049f6d0aa7011c8ef923))
-    - `Tree::lookup_entry(_by_path))()` are not mutating anymore; add `Tree::peel_to_entry()` and `peel_to_entry_by_path()` ([`8cad009`](https://github.com/Byron/gitoxide/commit/8cad009eafe8e1054a715dc99bb9a884325d5ea5))
-    - Unify API between `object::tree::Entry` and `object::tree::EntryRef<'_>` ([`d5e4ee0`](https://github.com/Byron/gitoxide/commit/d5e4ee0e6e26ff3feeed1f5aee5bdd0cdc03d1f8))
-    - J fmt ([`57cab40`](https://github.com/Byron/gitoxide/commit/57cab40f5cb437cc5b0a2c1fc5ae0f91f98bbbcc))
-    - Merge branch 'gix-archive' ([`1dda48b`](https://github.com/Byron/gitoxide/commit/1dda48ba2fccb93ebac00fe3460e923af43c86ce))
-    - Change archive implementation to require the seek bound. ([`61aed0e`](https://github.com/Byron/gitoxide/commit/61aed0e955974f65f4fea042cbae68ea8a2cc2f5))
-    - Add `Repository::archive()` as extra ([`c4a1fb1`](https://github.com/Byron/gitoxide/commit/c4a1fb1ba461c28ac3ea2482adf5f75721d14706))
-    - Optionally make `gix-workspace-stream` available via `Repository::worktree_stream()` ([`4ee2857`](https://github.com/Byron/gitoxide/commit/4ee285741e6e1cde3a967980fbf48bab20ddbf68))
-    - Update license field following SPDX 2.1 license expression standard ([`9064ea3`](https://github.com/Byron/gitoxide/commit/9064ea31fae4dc59a56bdd3a06c0ddc990ee689e))
+    - Release gix-prompt v0.5.3, gix v0.49.1, cargo-smart-release v0.20.0 ([`f069852`](https://github.com/Byron/gitoxide/commit/f0698522940c9ba4d45db5a44dce9f21ca29cb4e))
+    - Prepare changelogs prior to release ([`849f508`](https://github.com/Byron/gitoxide/commit/849f5081313c4a44bdaef6848758d0d9a5d1598b))
+    - Merge branch 'smart-release-stability' ([`8629f56`](https://github.com/Byron/gitoxide/commit/8629f569cd5917b6c0c3fd928fde021e7976ee85))
+    - Update git2 API mapping and be clear what stability means as well. ([`64cd396`](https://github.com/Byron/gitoxide/commit/64cd396ab05959e1f843f7ccd53ac5d4585584ad))
 </details>
 
 ## 0.49.0 (2023-07-19)
