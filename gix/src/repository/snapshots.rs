@@ -37,12 +37,11 @@ impl crate::Repository {
             });
         match self.work_dir() {
             None => {
-                // TODO: replace with ref-spec `HEAD:.mailmap` for less verbose way of getting the blob id
                 blob_id = blob_id.or_else(|| {
                     self.head().ok().and_then(|mut head| {
                         let commit = head.peel_to_commit_in_place().ok()?;
                         let tree = commit.tree().ok()?;
-                        tree.lookup_entry(Some(".mailmap")).ok()?.map(|e| e.object_id())
+                        tree.find_entry(".mailmap").map(|e| e.object_id())
                     })
                 });
             }

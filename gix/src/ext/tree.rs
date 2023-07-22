@@ -42,3 +42,27 @@ impl<'d> TreeIterExt for TreeRefIter<'d> {
         breadthfirst(self.clone(), state, find, delegate)
     }
 }
+
+/// Extensions for [EntryRef][gix_object::tree::EntryRef].
+pub trait TreeEntryRefExt<'a>: 'a {
+    /// Attach [`Repository`][crate::Repository] to the given tree entry. It can be detached later with `detach()`.
+    fn attach<'repo>(self, repo: &'repo crate::Repository) -> crate::object::tree::EntryRef<'repo, 'a>;
+}
+
+impl<'a> TreeEntryRefExt<'a> for gix_object::tree::EntryRef<'a> {
+    fn attach<'repo>(self, repo: &'repo crate::Repository) -> crate::object::tree::EntryRef<'repo, 'a> {
+        crate::object::tree::EntryRef { inner: self, repo }
+    }
+}
+
+/// Extensions for [Entry][gix_object::tree::Entry].
+pub trait TreeEntryExt {
+    /// Attach [`Repository`][crate::Repository] to the given tree entry. It can be detached later with `detach()`.
+    fn attach(self, repo: &crate::Repository) -> crate::object::tree::Entry<'_>;
+}
+
+impl TreeEntryExt for gix_object::tree::Entry {
+    fn attach(self, repo: &crate::Repository) -> crate::object::tree::Entry<'_> {
+        crate::object::tree::Entry { inner: self, repo }
+    }
+}

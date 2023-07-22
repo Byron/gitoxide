@@ -25,9 +25,24 @@ impl<'repo, 'a> EntryRef<'repo, 'a> {
         crate::Id::from_id(self.inner.oid, self.repo)
     }
 
-    /// Return the entries id, without repository connection.
-    pub fn oid(&self) -> gix_hash::ObjectId {
+    /// Return the plain object id of this entry, without access to the repository.
+    pub fn oid(&self) -> &gix_hash::oid {
+        self.inner.oid
+    }
+
+    /// Return the object this entry points to.
+    pub fn object(&self) -> Result<crate::Object<'repo>, crate::object::find::existing::Error> {
+        self.id().object()
+    }
+
+    /// Return the plain object id of this entry, without access to the repository.
+    pub fn object_id(&self) -> gix_hash::ObjectId {
         self.inner.oid.to_owned()
+    }
+
+    /// Detach the repository from this instance.
+    pub fn detach(&self) -> gix_object::tree::EntryRef<'a> {
+        self.inner
     }
 }
 

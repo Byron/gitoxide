@@ -123,9 +123,9 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     if path.is_empty() {
                         return Ok(tree_id);
                     }
-                    let tree = repo.find_object(tree_id)?.into_tree();
+                    let mut tree = repo.find_object(tree_id)?.into_tree();
                     let entry =
-                        tree.lookup_entry_by_path(gix_path::from_bstr(path))?
+                        tree.peel_to_entry_by_path(gix_path::from_bstr(path))?
                             .ok_or_else(|| Error::PathNotFound {
                                 path: path.into(),
                                 object: obj.attach(repo).shorten_or_id(),
