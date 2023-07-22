@@ -1,16 +1,15 @@
 use std::path::PathBuf;
 
+#[cfg(feature = "worktree-archive")]
+pub use gix_archive as archive;
 pub use gix_worktree::*;
+#[cfg(feature = "worktree-stream")]
+pub use gix_worktree_stream as stream;
 
 use crate::{
     bstr::{BStr, BString},
     Repository,
 };
-
-#[cfg(feature = "worktree-archive")]
-pub use gix_archive as archive;
-#[cfg(feature = "worktree-stream")]
-pub use gix_worktree_stream as stream;
 
 pub(crate) type IndexStorage = gix_features::threading::OwnShared<gix_fs::SharedFileSnapshotMut<gix_index::File>>;
 /// A lazily loaded and auto-updated worktree index.

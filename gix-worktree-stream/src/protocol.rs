@@ -1,6 +1,8 @@
-use crate::utils;
-use gix_object::bstr::{BStr, BString};
 use std::io::{ErrorKind, Read, Write};
+
+use gix_object::bstr::{BStr, BString};
+
+use crate::utils;
 
 // Format: [usize-LE][usize-LE][byte][byte][hash][relative_path_bytes][object_stream]
 // Note that stream_len can be usize::MAX to indicate the stream size is unknown

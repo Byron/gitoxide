@@ -1,5 +1,6 @@
-use crate::{Error, Format, Options};
 use gix_worktree_stream::{Entry, Stream};
+
+use crate::{Error, Format, Options};
 
 /// Write all stream entries in `stream` as provided by `next_entry(stream)` to `out` configured according to `opts` which
 /// also includes the streaming format.

@@ -1,8 +1,8 @@
-use crate::entry::Error;
-use crate::SharedErrorSlot;
-use crate::{entry, protocol, AdditionalEntry, Stream};
-use gix_object::bstr::BStr;
 use std::io::Write;
+
+use gix_object::bstr::BStr;
+
+use crate::{entry, entry::Error, protocol, AdditionalEntry, SharedErrorSlot, Stream};
 
 /// Use `find` to traverse `tree` and fetch the contained blobs to return as [`Stream`], which makes them queryable
 /// on demand with support for streaming each entry.

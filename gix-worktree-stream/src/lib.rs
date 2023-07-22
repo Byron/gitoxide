@@ -3,9 +3,9 @@
 //! This crate can effectively be used to manipulate worktrees as streams of bytes, which can be decoded using the [`Stream`] type.
 #![deny(rust_2018_idioms, missing_docs, unsafe_code)]
 
+use std::{path::Path, sync::Arc};
+
 use gix_object::bstr::BString;
-use std::path::Path;
-use std::sync::Arc;
 
 /// A stream of entries that originate from a git tree and optionally from additional entries.
 ///

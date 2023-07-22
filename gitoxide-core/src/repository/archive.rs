@@ -1,7 +1,7 @@
-use anyhow::{anyhow, bail};
-use gix::worktree::archive;
-use gix::Progress;
 use std::path::{Path, PathBuf};
+
+use anyhow::{anyhow, bail};
+use gix::{worktree::archive, Progress};
 
 pub struct Options {
     pub format: Option<archive::Format>,

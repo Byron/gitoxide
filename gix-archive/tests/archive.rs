@@ -4,15 +4,16 @@ fn hex_to_id(hex: &str) -> gix_hash::ObjectId {
 }
 
 mod from_tree {
-    use crate::hex_to_id;
+    use std::{io::Read, path::PathBuf};
+
     use gix_archive::Format;
     use gix_attributes::glob::pattern::Case;
     use gix_object::tree::EntryMode;
     use gix_odb::FindExt;
     use gix_testtools::bstr::ByteSlice;
     use gix_worktree::cache::state::attributes::Source;
-    use std::io::Read;
-    use std::path::PathBuf;
+
+    use crate::hex_to_id;
 
     #[test]
     fn basic_usage_internal() -> gix_testtools::Result {

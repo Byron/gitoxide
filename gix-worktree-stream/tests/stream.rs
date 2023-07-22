@@ -4,17 +4,20 @@ fn hex_to_id(hex: &str) -> gix_hash::ObjectId {
 }
 
 mod from_tree {
-    use crate::hex_to_id;
+    use std::{
+        convert::Infallible,
+        io::{Error, ErrorKind, Read, Write},
+        path::PathBuf,
+        sync::Arc,
+    };
+
     use gix_attributes::glob::pattern::Case;
-    use gix_object::bstr::ByteSlice;
-    use gix_object::tree::EntryMode;
+    use gix_object::{bstr::ByteSlice, tree::EntryMode};
     use gix_odb::FindExt;
     use gix_testtools::once_cell::sync::Lazy;
     use gix_worktree::cache::state::attributes::Source;
-    use std::convert::Infallible;
-    use std::io::{Error, ErrorKind, Read, Write};
-    use std::path::PathBuf;
-    use std::sync::Arc;
+
+    use crate::hex_to_id;
 
     #[test]
     fn can_receive_err_if_root_is_not_found() {

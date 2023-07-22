@@ -1,7 +1,11 @@
-use crate::{protocol, Entry, Stream};
+use std::{
+    io::{ErrorKind, Read},
+    path::PathBuf,
+};
+
 use gix_object::bstr::{BStr, BString};
-use std::io::{ErrorKind, Read};
-use std::path::PathBuf;
+
+use crate::{protocol, Entry, Stream};
 
 /// The error returned by [`next_entry()`][Stream::next_entry()].
 #[derive(Debug, thiserror::Error)]

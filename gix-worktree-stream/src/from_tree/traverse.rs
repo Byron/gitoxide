@@ -1,13 +1,13 @@
-use crate::entry::Error;
-use crate::{protocol, SharedErrorSlot};
-use gix_filter::driver::apply::MaybeDelayed;
-use gix_filter::pipeline::convert::ToWorktreeOutcome;
-use gix_object::bstr::{BStr, BString, ByteSlice, ByteVec};
-use gix_object::tree;
-use gix_traverse::tree::visit::Action;
-use gix_traverse::tree::Visit;
-use std::collections::VecDeque;
-use std::io::Write;
+use std::{collections::VecDeque, io::Write};
+
+use gix_filter::{driver::apply::MaybeDelayed, pipeline::convert::ToWorktreeOutcome};
+use gix_object::{
+    bstr::{BStr, BString, ByteSlice, ByteVec},
+    tree,
+};
+use gix_traverse::tree::{visit::Action, Visit};
+
+use crate::{entry::Error, protocol, SharedErrorSlot};
 
 pub struct Delegate<'a, AttributesFn, FindFn>
 where

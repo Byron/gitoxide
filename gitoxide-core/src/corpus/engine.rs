@@ -1,7 +1,6 @@
-use std::sync::atomic::AtomicUsize;
 use std::{
     path::{Path, PathBuf},
-    sync::atomic::Ordering,
+    sync::atomic::{AtomicUsize, Ordering},
     time::{Duration, Instant},
 };
 
