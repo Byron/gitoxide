@@ -42,7 +42,9 @@ impl crate::Repository {
                     self.head().ok().and_then(|mut head| {
                         let commit = head.peel_to_commit_in_place().ok()?;
                         let tree = commit.tree().ok()?;
-                        tree.lookup_entry(Some(".mailmap")).ok()?.map(|e| e.object_id())
+                        tree.lookup_entry(Some(".mailmap"), &mut Vec::new())
+                            .ok()?
+                            .map(|e| e.object_id())
                     })
                 });
             }

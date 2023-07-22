@@ -1,6 +1,7 @@
 use gix_hash::ObjectId;
 pub use gix_object::tree::EntryMode;
 use gix_object::{bstr::BStr, TreeRefIter};
+use gix_odb::FindExt;
 
 use crate::{object::find, Id, Tree};
 
@@ -31,6 +32,7 @@ impl<'repo> Tree<'repo> {
     // TODO: tests.
     /// Follow a sequence of `path` components starting from this instance, and look them up one by one until the last component
     /// is looked up and its tree entry is returned.
+    /// Use `buf` as temporary location for sub-trees to avoid allocating a temporary buffer for each lookup.
     ///
     /// # Performance Notes
     ///
@@ -38,12 +40,48 @@ impl<'repo> Tree<'repo> {
     /// to re-use a vector and use a binary search instead, which might be able to improve performance over all.
     /// However, a benchmark should be created first to have some data and see which trade-off to choose here.
     ///
-    /// # Why is this consuming?
+    pub fn lookup_entry<I, P>(&self, path: I, buf: &mut Vec<u8>) -> Result<Option<Entry<'repo>>, find::existing::Error>
+    where
+        I: IntoIterator<Item = P>,
+        P: PartialEq<BStr>,
+    {
+        let mut path = path.into_iter().peekable();
+        while let Some(component) = path.next() {
+            match TreeRefIter::from_bytes(&self.data)
+                .filter_map(Result::ok)
+                .find(|entry| component.eq(entry.filename))
+            {
+                Some(entry) => {
+                    if path.peek().is_none() {
+                        return Ok(Some(Entry {
+                            inner: entry.into(),
+                            repo: self.repo,
+                        }));
+                    } else {
+                        let obj = self.repo.objects.find(entry.oid, buf)?;
+                        if !obj.kind.is_tree() {
+                            return Ok(None);
+                        }
+                    }
+                }
+                None => return Ok(None),
+            }
+        }
+        Ok(None)
+    }
+
+    /// Follow a sequence of `path` components starting from this instance, and look them up one by one until the last component
+    /// is looked up and its tree entry is returned, while changing this instance to point to the last seen tree.
+    /// Note that if the lookup fails, it may be impossible to continue making lookups through this tree.
+    /// It's useful to have this function to be able to reuse the internal buffer of the tree.
     ///
-    /// The borrow checker shows pathological behaviour in loops that mutate a buffer, but also want to return from it.
-    /// Workarounds include keeping an index and doing a separate access to the memory, which seems hard to do here without
-    /// re-parsing the entries.
-    pub fn lookup_entry<I, P>(mut self, path: I) -> Result<Option<Entry<'repo>>, find::existing::Error>
+    /// # Performance Notes
+    ///
+    /// Searching tree entries is currently done in sequence, which allows to the search to be allocation free. It would be possible
+    /// to re-use a vector and use a binary search instead, which might be able to improve performance over all.
+    /// However, a benchmark should be created first to have some data and see which trade-off to choose here.
+    ///
+    pub fn peel_to_entry<I, P>(&mut self, path: I) -> Result<Option<Entry<'repo>>, find::existing::Error>
     where
         I: IntoIterator<Item = P>,
         P: PartialEq<BStr>,
@@ -62,12 +100,11 @@ impl<'repo> Tree<'repo> {
                         }));
                     } else {
                         let next_id = entry.oid.to_owned();
-                        let repo = self.repo;
-                        drop(self);
-                        self = match repo.find_object(next_id)?.try_into_tree() {
-                            Ok(tree) => tree,
-                            Err(_) => return Ok(None),
-                        };
+                        let obj = self.repo.objects.find(next_id, &mut self.data)?;
+                        self.id = next_id;
+                        if !obj.kind.is_tree() {
+                            return Ok(None);
+                        }
                     }
                 }
                 None => return Ok(None),
@@ -76,18 +113,40 @@ impl<'repo> Tree<'repo> {
         Ok(None)
     }
 
-    /// Like [`lookup_entry()`][Self::lookup_entry()], but takes a `Path` directly via `relative_path`, a path relative to this tree.
+    /// Like [`Self::lookup_entry()`], but takes a `Path` directly via `relative_path`, a path relative to this tree.
     ///
     /// # Note
     ///
     /// If any path component contains illformed UTF-8 and thus can't be converted to bytes on platforms which can't do so natively,
     /// the returned component will be empty which makes the lookup fail.
     pub fn lookup_entry_by_path(
-        self,
+        &self,
+        relative_path: impl AsRef<std::path::Path>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Option<Entry<'repo>>, find::existing::Error> {
+        use crate::bstr::ByteSlice;
+        self.lookup_entry(
+            relative_path.as_ref().components().map(|c: std::path::Component<'_>| {
+                gix_path::os_str_into_bstr(c.as_os_str())
+                    .unwrap_or_else(|_| "".into())
+                    .as_bytes()
+            }),
+            buf,
+        )
+    }
+
+    /// Like [`Self::peel_to_entry()`], but takes a `Path` directly via `relative_path`, a path relative to this tree.
+    ///
+    /// # Note
+    ///
+    /// If any path component contains illformed UTF-8 and thus can't be converted to bytes on platforms which can't do so natively,
+    /// the returned component will be empty which makes the lookup fail.
+    pub fn peel_to_entry_by_path(
+        &mut self,
         relative_path: impl AsRef<std::path::Path>,
     ) -> Result<Option<Entry<'repo>>, find::existing::Error> {
         use crate::bstr::ByteSlice;
-        self.lookup_entry(relative_path.as_ref().components().map(|c: std::path::Component<'_>| {
+        self.peel_to_entry(relative_path.as_ref().components().map(|c: std::path::Component<'_>| {
             gix_path::os_str_into_bstr(c.as_os_str())
                 .unwrap_or_else(|_| "".into())
                 .as_bytes()
