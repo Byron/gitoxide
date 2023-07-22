@@ -156,9 +156,18 @@ pub mod archive {
         /// Explicitly set the format. Otherwise derived from the suffix of the output file.
         #[clap(long, short = 'f', value_enum)]
         pub format: Option<Format>,
+        /// Apply the prefix verbatim to any path we add to the archive. Use a trailing `/` if prefix is a directory.
+        #[clap(long)]
+        pub prefix: Option<String>,
         /// The compression strength to use. Currently only used for `.zip` archives, valid from 0-9.
-        #[clap(long, short = 'c', value_enum)]
+        #[clap(long, short = 'l', value_enum)]
         pub compression_level: Option<u8>,
+        /// Add the given path to the archive. Directories will always be empty.
+        #[clap(long, short = 'p')]
+        pub add_path: Vec<PathBuf>,
+        /// Add the new file from a slash-separated path, which must happen in pairs of two, first the path, then the content.
+        #[clap(long, short = 'v')]
+        pub add_virtual_file: Vec<String>,
         /// The file to write the archive to.
         ///
         /// It's extension determines the archive format, unless `--format` is set.

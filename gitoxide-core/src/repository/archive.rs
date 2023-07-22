@@ -1,21 +1,50 @@
-use anyhow::bail;
+use anyhow::{anyhow, bail};
 use gix::worktree::archive;
 use gix::Progress;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+pub struct Options {
+    pub format: Option<archive::Format>,
+    pub files: Vec<(String, String)>,
+    pub prefix: Option<String>,
+    pub add_paths: Vec<PathBuf>,
+}
 
 pub fn stream(
     repo: gix::Repository,
     destination_path: &Path,
     rev_spec: Option<&str>,
     mut progress: impl Progress,
-    format: Option<archive::Format>,
+    Options {
+        format,
+        prefix,
+        add_paths,
+        files,
+    }: Options,
 ) -> anyhow::Result<()> {
     let format = format.map_or_else(|| format_from_ext(destination_path), Ok)?;
     let object = repo.rev_parse_single(rev_spec.unwrap_or("HEAD"))?.object()?;
     let (modification_date, tree) = fetch_rev_info(object)?;
 
     let start = std::time::Instant::now();
-    let (stream, index) = repo.worktree_stream(tree)?;
+    let (mut stream, index) = repo.worktree_stream(tree)?;
+    if !add_paths.is_empty() {
+        let root = gix::path::realpath(
+            repo.work_dir()
+                .ok_or_else(|| anyhow!("Adding files requires a worktree directory that contains them"))?,
+        )?;
+        for path in add_paths {
+            stream.add_entry_from_path(&root, &gix::path::realpath(path)?)?;
+        }
+    }
+    for (path, content) in files {
+        stream.add_entry(gix::worktree::stream::AdditionalEntry {
+            id: gix::hash::Kind::Sha1.null(),
+            mode: gix::object::tree::EntryMode::Blob,
+            relative_path: path.into(),
+            source: gix::worktree::stream::entry::Source::Memory(content.into()),
+        });
+    }
 
     let mut entries = progress.add_child("entries");
     entries.init(Some(index.entries().len()), gix::progress::count("entries"));
@@ -33,7 +62,7 @@ pub fn stream(
         &gix::interrupt::IS_INTERRUPTED,
         gix::worktree::archive::Options {
             format,
-            tree_prefix: None,
+            tree_prefix: prefix.map(gix::bstr::BString::from),
             modification_time: modification_date.unwrap_or_else(|| {
                 std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
