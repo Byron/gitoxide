@@ -44,7 +44,7 @@ impl<'a> Platform<'a> {
         let attrs = self.parent.state.attributes_or_panic();
         let relative_path =
             gix_path::to_unix_separators_on_windows(gix_path::into_bstr(self.parent.stack.current_relative()));
-        attrs.matching_attributes(relative_path.as_bstr(), self.parent.case, out)
+        attrs.matching_attributes(relative_path.as_bstr(), self.parent.case, self.is_dir, out)
     }
 }
 

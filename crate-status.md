@@ -600,7 +600,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 
 ### gix
 * [x] utilities for applications to make long running operations interruptible gracefully and to support timeouts in servers.
-* [ ] handle `core.repositoryFormatVersion` and extensions
+* [x] handle `core.repositoryFormatVersion` and extensions
 * [x] support for unicode-precomposition of command-line arguments (needs explicit use in parent application)
 * **Repository**  
     * [x] discovery
@@ -692,15 +692,16 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
         * [ ] checkout with conversions like clean + smudge as in `.gitattributes`
         * [ ] _diff_ index with working tree
         * [ ] sparse checkout support
-        * [ ] read per-worktree config if `extensions.worktreeConfig` is enabled.
+        * [x] read per-worktree config if `extensions.worktreeConfig` is enabled.
         * **index**
             * [ ] tree from index
-            * [ ] index from tree
+            * [x] index from tree
     * **worktrees**
        * [x] open a repository with worktrees
           * [x] read locked state
           * [ ] obtain 'prunable' information
        * [x] proper handling of worktree related refs
+       * [x] create a byte stream and create archives for such a stream, including worktree filters and conversions
        * [ ] create, move, remove, and repair
        * [x] access exclude information
        * [x] access attribute information
@@ -724,13 +725,23 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 * [ ] API documentation
     * [ ] Some examples
 
+### gix-worktree-stream
+
+* [x] encode git-tree as stream of bytes (with large file support and actual streaming)
+* [x] produce a stream of entries
+* [x] add custom entries to the stream
+* [x] respect `export-ignore` git attribute
+* [x] apply standard worktree conversion to simulate an actual checkout
+* [ ] support for submodule inclusion
+* [x] API documentation
+    * [ ] Some examples
+     
 ### gix-archive
 
-* [ ] `write_to()` for creating an archive with various container formats
-* [ ] add custom entries to the archive
-* [ ] handling of archive specific filters
-* [ ] filter files of tree (with access to attributes)
-* [ ] support for worktree conversion (via attributes and filters)
+* [x] `write_to()` for creating an archive with various container formats
+    * [x] `tar` and `tar.gz`
+    * [x] `zip`
+* [x] add prefix and modification date
 * [ ] API documentation
     * [ ] Some examples
 

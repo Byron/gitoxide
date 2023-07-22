@@ -49,4 +49,93 @@ impl crate::Repository {
     pub fn is_bare(&self) -> bool {
         self.config.is_bare && self.work_dir().is_none()
     }
+
+    /// If `id` points to a tree, produce a stream that yields one worktree entry after the other. The index of the tree at `id`
+    /// is returned as well as it is an intermediate byproduct that might be useful to callers.
+    ///
+    /// The entries will look exactly like they would if one would check them out, with filters applied.
+    /// The `export-ignore` attribute is used to skip blobs or directories to which it applies.
+    #[cfg(feature = "worktree-stream")]
+    pub fn worktree_stream(
+        &self,
+        id: impl Into<gix_hash::ObjectId>,
+    ) -> Result<(gix_worktree_stream::Stream, gix_index::File), crate::repository::worktree_stream::Error> {
+        use gix_odb::{FindExt, HeaderExt};
+        let id = id.into();
+        let header = self.objects.header(id)?;
+        if !header.kind().is_tree() {
+            return Err(crate::repository::worktree_stream::Error::NotATree {
+                id: id.to_owned(),
+                actual: header.kind(),
+            });
+        }
+
+        // TODO(perf): potential performance improvements could be to use the index at `HEAD` if possible (`index_from_head_tree…()`)
+        // TODO(perf): when loading a non-HEAD tree, we effectively traverse the tree twice. This is usually fast though, and sharing
+        //             an object cache between the copies of the ODB handles isn't trivial and needs a lock.
+        let index = self.index_from_tree(&id)?;
+        let mut cache = self.attributes_only(&index, gix_worktree::cache::state::attributes::Source::IdMapping)?;
+        let pipeline =
+            gix_filter::Pipeline::new(cache.attributes_collection(), crate::filter::Pipeline::options(self)?);
+        let objects = self.objects.clone().into_arc().expect("TBD error handling");
+        let stream = gix_worktree_stream::from_tree(
+            id,
+            {
+                let objects = objects.clone();
+                move |id, buf| objects.find(id, buf)
+            },
+            pipeline,
+            move |path, mode, attrs| -> std::io::Result<()> {
+                let entry = cache.at_entry(path, Some(mode.is_tree()), |id, buf| objects.find_blob(id, buf))?;
+                entry.matching_attributes(attrs);
+                Ok(())
+            },
+        );
+        Ok((stream, index))
+    }
+
+    /// Produce an archive from the `stream` and write it to `out` according to `options`.
+    /// Use `blob` to provide progress for each entry written to `out`, and note that it should already be initialized to the amount
+    /// of expected entries, with `should_interrupt` being queried between each entry to abort if needed, and on each write to `out`.
+    ///
+    /// ### Performance
+    ///
+    /// Be sure that `out` is able to handle a lot of write calls. Otherwise wrap it in a [`BufWriter`][std::io::BufWriter].
+    ///
+    /// ### Additional progress and fine-grained interrupt handling
+    ///
+    /// For additional progress reporting, wrap `out` into a writer that counts throughput on each write.
+    /// This can also be used to react to interrupts on each write, instead of only for each entry.
+    #[cfg(feature = "worktree-archive")]
+    pub fn worktree_archive(
+        &self,
+        mut stream: gix_worktree_stream::Stream,
+        out: impl std::io::Write + std::io::Seek,
+        mut blobs: impl gix_features::progress::Progress,
+        should_interrupt: &std::sync::atomic::AtomicBool,
+        options: gix_archive::Options,
+    ) -> Result<(), crate::repository::worktree_archive::Error> {
+        let mut out = gix_features::interrupt::Write {
+            inner: out,
+            should_interrupt,
+        };
+        if options.format == gix_archive::Format::InternalTransientNonPersistable {
+            std::io::copy(&mut stream.into_read(), &mut out)?;
+            return Ok(());
+        }
+        gix_archive::write_stream_seek(
+            &mut stream,
+            |stream| {
+                if should_interrupt.load(std::sync::atomic::Ordering::Relaxed) {
+                    return Err(std::io::Error::new(std::io::ErrorKind::Other, "Cancelled by user").into());
+                }
+                let res = stream.next_entry();
+                blobs.inc();
+                res
+            },
+            out,
+            options,
+        )?;
+        Ok(())
+    }
 }

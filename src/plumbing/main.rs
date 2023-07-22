@@ -135,6 +135,55 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        #[cfg(feature = "gitoxide-core-tools-archive")]
+        Subcommands::Archive(crate::plumbing::options::archive::Platform {
+            format,
+            prefix,
+            compression_level,
+            add_path,
+            add_virtual_file,
+            output_file,
+            treeish,
+        }) => prepare_and_run(
+            "archive",
+            trace,
+            auto_verbose,
+            progress,
+            progress_keep_open,
+            None,
+            move |progress, _out, _err| {
+                if add_virtual_file.len() % 2 != 0 {
+                    anyhow::bail!(
+                        "Virtual files must be specified in pairs of two: slash/separated/path content, got {}",
+                        add_virtual_file.join(", ")
+                    )
+                }
+                core::repository::archive::stream(
+                    repository(Mode::Lenient)?,
+                    &output_file,
+                    treeish.as_deref(),
+                    progress,
+                    core::repository::archive::Options {
+                        add_paths: add_path,
+                        prefix,
+                        files: add_virtual_file
+                            .chunks(2)
+                            .map(|c| (c[0].to_owned(), c[1].clone()))
+                            .collect(),
+                        format: format.map(|f| match f {
+                            crate::plumbing::options::archive::Format::Internal => {
+                                gix::worktree::archive::Format::InternalTransientNonPersistable
+                            }
+                            crate::plumbing::options::archive::Format::Tar => gix::worktree::archive::Format::Tar,
+                            crate::plumbing::options::archive::Format::TarGz => gix::worktree::archive::Format::TarGz,
+                            crate::plumbing::options::archive::Format::Zip => {
+                                gix::worktree::archive::Format::Zip { compression_level }
+                            }
+                        }),
+                    },
+                )
+            },
+        ),
         #[cfg(feature = "gitoxide-core-tools-corpus")]
         Subcommands::Corpus(crate::plumbing::options::corpus::Platform { db, path, cmd }) => {
             let reverse_trace_lines = progress;

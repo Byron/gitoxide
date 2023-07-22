@@ -118,23 +118,26 @@ pretty-cli = [ "gitoxide-core/serde", "prodash/progress-tree", "prodash/progress
 prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "prodash/signal-hook", "is-terminal", "crosstermion"]
 
 ## Progress reporting with a TUI, can then be enabled with the `--progress` flag.
-prodash-render-tui = ["prodash/render-tui", "prodash/render-tui-crossterm", "prodash/progress-tree", "futures-lite"]
+prodash-render-tui = ["prodash/render-tui", "prodash/render-tui-crossterm", "gix/progress-tree", "futures-lite"]
 
 ## Progress reporting by visually drawing lines into the terminal without switching to an alternate window.
-prodash-render-line = ["prodash/render-line", "prodash-render-line-crossterm", "prodash/progress-tree"]
+prodash-render-line = ["prodash/render-line", "prodash-render-line-crossterm", "gix/progress-tree"]
 
 ## Prints statistical information to inform about cache efficiency when those are dropped.
 ## Use this as a way to understand if bigger caches actually produce greater yiedls.
 cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 
 ##  A way to enable most `gitoxide-core` tools found in `ein tools`, namely `organize` and `estimate hours`.
-gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
+gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours", "gitoxide-core-tools-archive"]
 
 ## A program to perform analytics on a `git` repository, using an auto-maintained sqlite database
 gitoxide-core-tools-query = ["gitoxide-core/query"]
 
 ## A program to run algorithms on a corpus of repositories, recording each run for later comparison.
 gitoxide-core-tools-corpus = ["gitoxide-core/corpus"]
+
+## A sub-command to generate archive from virtual worktree checkouts.
+gitoxide-core-tools-archive = ["gitoxide-core/archive"]
 
 #! ### Building Blocks for mutually exclusive networking
 #! Blocking and async features are mutually exclusive and cause a compile-time error. This also means that `cargo … --all-features` will fail.
@@ -199,7 +202,7 @@ overflow-checks = false
 # this bloats files but assures destructors are called, important for tempfiles. One day I hope we
 # can wire up the 'abrt' signal handler so tempfiles will be removed in case of panics.
 panic = 'unwind'
-codegen-units = 1
+#codegen-units = 1
 incremental = false
 build-override = { opt-level = 0 }
 
@@ -265,6 +268,7 @@ members = [
     "gix-tui",
     "gix-tix",
     "gix-archive",
+    "gix-worktree-stream",
     "gix-revwalk",
 
     "cargo-smart-release",

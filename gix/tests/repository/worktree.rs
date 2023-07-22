@@ -1,5 +1,36 @@
 use gix_ref::bstr;
 
+#[test]
+#[cfg(feature = "worktree-stream")]
+fn stream() -> crate::Result {
+    let repo = crate::named_repo("make_packed_and_loose.sh")?;
+    let mut stream = repo.worktree_stream(repo.head_commit()?.tree_id()?)?.0.into_read();
+    assert_eq!(
+        std::io::copy(&mut stream, &mut std::io::sink())?,
+        102,
+        "there is some content in the stream, it works"
+    );
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "worktree-archive")]
+fn archive() -> crate::Result {
+    let repo = crate::named_repo("make_packed_and_loose.sh")?;
+    let (stream, _index) = repo.worktree_stream(repo.head_commit()?.tree_id()?)?;
+    let mut buf = Vec::<u8>::new();
+
+    repo.worktree_archive(
+        stream,
+        std::io::Cursor::new(&mut buf),
+        gix_features::progress::Discard,
+        &std::sync::atomic::AtomicBool::default(),
+        Default::default(),
+    )?;
+    assert_eq!(buf.len(), 102, "default format is internal");
+    Ok(())
+}
+
 mod with_core_worktree_config {
     use std::io::BufRead;
 

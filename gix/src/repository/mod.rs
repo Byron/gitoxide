@@ -82,3 +82,33 @@ pub mod index_or_load_from_head {
         OpenIndex(#[from] crate::worktree::open_index::Error),
     }
 }
+
+///
+#[cfg(feature = "worktree-stream")]
+pub mod worktree_stream {
+    /// The error returned by [`Repository::worktree_stream()`][crate::Repository::worktree_stream()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        FindTree(#[from] crate::object::find::existing::Error),
+        #[error(transparent)]
+        OpenTree(#[from] gix_traverse::tree::breadthfirst::Error),
+        #[error(transparent)]
+        AttributesCache(#[from] crate::repository::attributes::Error),
+        #[error(transparent)]
+        FilterPipeline(#[from] crate::filter::pipeline::options::Error),
+        #[error("Needed {id} to be a tree to turn into a workspace stream, got {actual}")]
+        NotATree {
+            id: gix_hash::ObjectId,
+            actual: gix_object::Kind,
+        },
+    }
+}
+
+///
+#[cfg(feature = "worktree-archive")]
+pub mod worktree_archive {
+    /// The error returned by [`Repository::worktree_archive()`][crate::Repository::worktree_archive()].
+    pub type Error = gix_archive::Error;
+}

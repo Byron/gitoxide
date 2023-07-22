@@ -5,7 +5,7 @@ use gix_hash::{oid, ObjectId};
 
 use crate::{object::find, revision, Id, Object};
 
-/// An [object id][ObjectId] infused with `Easy`.
+/// An [object id][ObjectId] infused with a [`Repository`][crate::Repository].
 impl<'repo> Id<'repo> {
     /// Find the [`Object`] associated with this object id, and consider it an error if it doesn't exist.
     ///

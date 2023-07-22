@@ -18,6 +18,7 @@ echo "in root: gitoxide CLI"
 (enter cargo-smart-release && indent cargo diet -n --package-size-limit 110KB)
 (enter gix-actor && indent cargo diet -n --package-size-limit 5KB)
 (enter gix-archive && indent cargo diet -n --package-size-limit 10KB)
+(enter gix-worktree-stream && indent cargo diet -n --package-size-limit 40KB)
 (enter gix-utils && indent cargo diet -n --package-size-limit 10KB)
 (enter gix-fs && indent cargo diet -n --package-size-limit 10KB)
 (enter gix-pathspec && indent cargo diet -n --package-size-limit 30KB)

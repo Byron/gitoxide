@@ -77,6 +77,9 @@ pub struct Args {
 
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
+    /// Subcommands for creating worktree archivs
+    #[cfg(feature = "gitoxide-core-tools-archive")]
+    Archive(archive::Platform),
     /// Subcommands for interacting with commit-graphs
     #[clap(subcommand)]
     CommitGraph(commitgraph::Subcommands),
@@ -127,6 +130,54 @@ pub enum Subcommands {
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+}
+
+#[cfg(feature = "gitoxide-core-tools-archive")]
+pub mod archive {
+    use std::path::PathBuf;
+
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+    pub enum Format {
+        /// An internal format that is for debugging, it should not be persisted and cannot be read back.
+        ///
+        /// However, it represents that bare data stream without with minimal overhead, and is a good
+        /// metric for throughput.
+        Internal,
+        /// Use the `.tar` file format, uncompressed.
+        Tar,
+        /// Use the `.tar.gz` file format, compressed with `gzip`.
+        TarGz,
+        /// Use the `.zip` container format.
+        Zip,
+    }
+
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        /// Explicitly set the format. Otherwise derived from the suffix of the output file.
+        #[clap(long, short = 'f', value_enum)]
+        pub format: Option<Format>,
+        /// Apply the prefix verbatim to any path we add to the archive. Use a trailing `/` if prefix is a directory.
+        #[clap(long)]
+        pub prefix: Option<String>,
+        /// The compression strength to use. Currently only used for `.zip` archives, valid from 0-9.
+        #[clap(long, short = 'l', value_enum)]
+        pub compression_level: Option<u8>,
+        /// Add the given path to the archive. Directories will always be empty.
+        #[clap(long, short = 'p')]
+        pub add_path: Vec<PathBuf>,
+        /// Add the new file from a slash-separated path, which must happen in pairs of two, first the path, then the content.
+        #[clap(long, short = 'v')]
+        pub add_virtual_file: Vec<String>,
+        /// The file to write the archive to.
+        ///
+        /// It's extension determines the archive format, unless `--format` is set.
+        pub output_file: PathBuf,
+
+        /// The revspec of the commit or tree to traverse, or the tree at `HEAD` if unspecified.
+        ///
+        /// If commit, the commit timestamp will be used as timestamp for each file in the archive.
+        pub treeish: Option<String>,
+    }
 }
 
 #[cfg(feature = "gitoxide-core-tools-corpus")]
