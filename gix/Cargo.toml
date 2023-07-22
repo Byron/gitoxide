@@ -138,7 +138,7 @@ gix-date = { version = "^0.7.1", path = "../gix-date" }
 gix-refspec = { version = "^0.14.1", path = "../gix-refspec" }
 gix-filter = { version = "^0.2.0", path = "../gix-filter" }
 
-gix-config = { version = "^0.26.0", path = "../gix-config" }
+gix-config = { version = "^0.26.1", path = "../gix-config" }
 gix-odb = { version = "^0.50.1", path = "../gix-odb" }
 gix-hash = { version = "^0.11.4", path = "../gix-hash" }
 gix-object = { version = "^0.33.1", path = "../gix-object" }
