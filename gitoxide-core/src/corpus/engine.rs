@@ -135,6 +135,9 @@ impl Engine {
                             &gix::interrupt::IS_INTERRUPTED,
                         );
                     });
+                    if let Some(err) = run.error.as_deref() {
+                        repo_progress.fail(err.to_owned());
+                    }
                     Self::update_run(&self.con, run)?;
                     repo_progress.inc();
                 }
@@ -142,7 +145,7 @@ impl Engine {
             } else {
                 let counter = repo_progress.counter();
                 let repo_progress = gix::threading::OwnShared::new(gix::threading::Mutable::new(
-                    repo_progress.add_child("will be changed"),
+                    repo_progress.add_child("will be changed by task"),
                 ));
                 gix::parallel::in_parallel_with_slice(
                     &mut repos,
@@ -189,6 +192,9 @@ impl Engine {
                         tracing::info_span!("run", run_id = run.id).in_scope(|| {
                             task.perform(&mut run, &repo.path, progress, Some(1), should_interrupt);
                         });
+                        if let Some(err) = run.error.as_deref() {
+                            progress.fail(err.to_owned());
+                        }
                         Self::update_run(con, run)?;
                         if let Some(counter) = counter.as_ref() {
                             counter.fetch_add(1, Ordering::SeqCst);
