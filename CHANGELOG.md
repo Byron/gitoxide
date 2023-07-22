@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.28.0 (2023-07-22)
+
+### New Features
+
+ - <csr-id-32bbb8b7b1f195adf7e5f06fd2ddc19153516a2f/> add simple CLI for `gix archive`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 29 calendar days.
+ - 30 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'gix-archive' ([`1dda48b`](https://github.com/Byron/gitoxide/commit/1dda48ba2fccb93ebac00fe3460e923af43c86ce))
+    - Allow to create additional entries via the command-line ([`4a9d0f1`](https://github.com/Byron/gitoxide/commit/4a9d0f1df6f7a20f7f1769fd9c7dae2e53f7e83f))
+    - Add compression support to `gix archive`, which is where it should shine. ([`567b1a4`](https://github.com/Byron/gitoxide/commit/567b1a4488c43c1f7099435d10cdddbc3a98a5cc))
+    - Add simple CLI for `gix archive` ([`32bbb8b`](https://github.com/Byron/gitoxide/commit/32bbb8b7b1f195adf7e5f06fd2ddc19153516a2f))
+    - Merge branch 'integrate-filtering' ([`b19a56d`](https://github.com/Byron/gitoxide/commit/b19a56dcfa9bea86332a84aa4e8fad445e7d1724))
+    - Add keys required to deal with worktree conversions and filters. ([`3fbd7b0`](https://github.com/Byron/gitoxide/commit/3fbd7b0c864cf2f1a38ae24e85d47b0b26b271a7))
+    - Merge branch 'basic-filtering' ([`3fd5e16`](https://github.com/Byron/gitoxide/commit/3fd5e16e205db18edc21341fb4c2a75d0726f5a5))
+    - Add some configuration variables as planned due to relevancy with filters ([`fa04378`](https://github.com/Byron/gitoxide/commit/fa0437899292e9e23db932041220bbeda732c246))
+</details>
+
 ## 0.27.0 (2023-06-22)
 
 <csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/>
