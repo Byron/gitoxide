@@ -1,3 +1,4 @@
+use std::sync::atomic::AtomicUsize;
 use std::{
     path::{Path, PathBuf},
     sync::atomic::Ordering,
@@ -111,6 +112,7 @@ impl Engine {
                     self.state.reverse_trace_lines,
                 )?;
 
+                let mut num_errors = 0;
                 for repo in &repos {
                     if gix::interrupt::is_triggered() {
                         bail!("interrupted by user");
@@ -135,14 +137,25 @@ impl Engine {
                             &gix::interrupt::IS_INTERRUPTED,
                         );
                     });
+                    if let Some(err) = run.error.as_deref() {
+                        num_errors += 1;
+                        repo_progress.fail(err.to_owned());
+                    }
                     Self::update_run(&self.con, run)?;
                     repo_progress.inc();
                 }
                 repo_progress.show_throughput(task_start);
+                if num_errors != 0 {
+                    repo_progress.fail(format!(
+                        "{} repositories failed to run task {}",
+                        num_errors, task.short_name
+                    ));
+                }
             } else {
                 let counter = repo_progress.counter();
+                let num_errors = AtomicUsize::default();
                 let repo_progress = gix::threading::OwnShared::new(gix::threading::Mutable::new(
-                    repo_progress.add_child("will be changed"),
+                    repo_progress.add_child("in parallel"),
                 ));
                 gix::parallel::in_parallel_with_slice(
                     &mut repos,
@@ -189,6 +202,10 @@ impl Engine {
                         tracing::info_span!("run", run_id = run.id).in_scope(|| {
                             task.perform(&mut run, &repo.path, progress, Some(1), should_interrupt);
                         });
+                        if let Some(err) = run.error.as_deref() {
+                            num_errors.fetch_add(1, Ordering::SeqCst);
+                            progress.fail(err.to_owned());
+                        }
                         Self::update_run(con, run)?;
                         if let Some(counter) = counter.as_ref() {
                             counter.fetch_add(1, Ordering::SeqCst);
@@ -198,7 +215,15 @@ impl Engine {
                     || (!gix::interrupt::is_triggered()).then(|| Duration::from_millis(100)),
                     std::convert::identity,
                 )?;
-                gix::threading::lock(&repo_progress).show_throughput(task_start);
+                let repo_progress = gix::threading::lock(&repo_progress);
+                repo_progress.show_throughput(task_start);
+                let num_errors = num_errors.load(Ordering::Relaxed);
+                if num_errors != 0 {
+                    repo_progress.fail(format!(
+                        "{} repositories failed to run task {}",
+                        num_errors, task.short_name
+                    ));
+                }
             }
 
             repo_progress.inc();
