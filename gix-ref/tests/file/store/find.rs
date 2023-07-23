@@ -91,6 +91,7 @@ mod existing {
 
 mod loose {
     use crate::file::store;
+    use crate::util::hex_to_id;
 
     mod existing {
         use std::path::Path;
@@ -118,10 +119,22 @@ mod loose {
     }
 
     #[test]
+    fn fetch_head_can_be_parsed() -> crate::Result {
+        let store = store()?;
+        assert_eq!(
+            store.find_loose("FETCH_HEAD")?.target.id(),
+            hex_to_id("9064ea31fae4dc59a56bdd3a06c0ddc990ee689e"),
+            "despite being special, we are able to read the first commit out of a typical FETCH_HEAD"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn success() -> crate::Result {
         let store = store()?;
         for (partial_name, expected_path, expected_ref_kind) in &[
-            ("dt1", "refs/tags/dt1", gix_ref::Kind::Peeled), // tags before heads
+            ("dt1", "refs/tags/dt1", gix_ref::Kind::Peeled),     // tags before heads
+            ("FETCH_HEAD", "FETCH_HEAD", gix_ref::Kind::Peeled), // special ref
             ("heads/dt1", "refs/heads/dt1", gix_ref::Kind::Peeled),
             ("d1", "refs/d1", gix_ref::Kind::Peeled), // direct refs before heads
             ("heads/d1", "refs/heads/d1", gix_ref::Kind::Peeled),

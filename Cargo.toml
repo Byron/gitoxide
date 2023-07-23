@@ -271,7 +271,6 @@ members = [
     "gix-worktree-stream",
     "gix-revwalk",
 
-    "cargo-smart-release",
     "tests/tools",
 
     "gix-diff/tests",

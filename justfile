@@ -120,7 +120,6 @@ check:
     cargo check -p gix --no-default-features
     cargo check -p gix-odb --features serde
     cargo check -p cargo-smart-release --all
-    cargo check -p cargo-smart-release --features vendored-openssl
     cargo check --no-default-features --features max-control
 
 # Run cargo doc on all crates
@@ -203,8 +202,8 @@ journey-tests-async:
 
 # run journey tests (cargo-smart-release)
 journey-tests-smart-release:
-    cargo build -p cargo-smart-release --bin cargo-smart-release
-    cd cargo-smart-release && ./tests/journey.sh ../target/debug/cargo-smart-release
+    cd cargo-smart-release && cargo build --bin cargo-smart-release
+    cd cargo-smart-release && ./tests/journey.sh ../cargo-smart-release/target/debug/cargo-smart-release
 
 # Run cargo-diet on all crates to see that they are still in bound
 check-size:
