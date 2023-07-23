@@ -160,7 +160,7 @@ fn append_zip_entry<W: std::io::Write + std::io::Seek>(
     let file_opts = zip::write::FileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated)
         .compression_level(compression_level)
-        .large_file(entry.bytes_remaining().map_or(true, |len| len >= 4_000_000_000))
+        .large_file(entry.bytes_remaining().map_or(true, |len| len > u32::MAX as usize))
         .last_modified_time(mtime)
         .unix_permissions(if matches!(entry.mode, gix_object::tree::EntryMode::BlobExecutable) {
             0o755
