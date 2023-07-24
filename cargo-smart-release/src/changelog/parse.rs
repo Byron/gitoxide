@@ -8,12 +8,12 @@ use std::{
 use gix::bstr::ByteSlice;
 use pulldown_cmark::{CowStr, Event, HeadingLevel, OffsetIter, Tag};
 use winnow::{
-    branch::alt,
-    bytes::{tag_no_case, take_till0, take_while},
+    combinator::alt,
     combinator::opt,
-    error::{FromExternalError, ParseError},
+    combinator::{delimited, preceded, separated_pair, terminated},
+    error::{FromExternalError, ParserError},
     prelude::*,
-    sequence::{delimited, preceded, separated_pair, terminated},
+    token::{tag_no_case, take_till0, take_while},
 };
 
 use crate::{
@@ -471,7 +471,7 @@ impl<'a> TryFrom<&'a str> for Headline {
     }
 }
 
-fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a str) -> IResult<&'a str, Headline, E> {
+fn headline<'a, E: ParserError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a str) -> IResult<&'a str, Headline, E> {
     let hashes = take_while(0.., |c: char| c == '#');
     let greedy_whitespace = |i| take_while(0.., char::is_whitespace).parse_next(i);
     let take_n_digits =
