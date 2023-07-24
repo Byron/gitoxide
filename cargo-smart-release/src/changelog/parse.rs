@@ -10,7 +10,7 @@ use pulldown_cmark::{CowStr, Event, HeadingLevel, OffsetIter, Tag};
 use winnow::{
     branch::alt,
     bytes::complete::{tag_no_case, take_till, take_while, take_while_m_n},
-    combinator::{all_consuming, opt},
+    combinator::opt,
     error::{FromExternalError, ParseError},
     prelude::*,
     sequence::{delimited, preceded, separated_pair, terminated},
@@ -468,7 +468,7 @@ impl<'a> TryFrom<&'a str> for Headline {
     type Error = ();
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        all_consuming(headline::<()>)(value).finish_err().map(|(_, h)| h)
+        headline::<()>(value).finish()
     }
 }
 
