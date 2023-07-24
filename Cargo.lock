@@ -1178,7 +1178,7 @@ dependencies = [
 
 [[package]]
 name = "gix"
-version = "0.50.0"
+version = "0.50.1"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1209,7 +1209,7 @@ dependencies = [
  "gix-path 0.8.4",
  "gix-prompt",
  "gix-protocol",
- "gix-ref 0.33.1",
+ "gix-ref 0.33.2",
  "gix-refspec",
  "gix-revision",
  "gix-sec 0.8.4",
@@ -1272,7 +1272,7 @@ dependencies = [
 
 [[package]]
 name = "gix-archive"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bstr",
  "document-features",
@@ -1388,7 +1388,7 @@ dependencies = [
  "gix-features 0.32.1",
  "gix-glob 0.10.1",
  "gix-path 0.8.4",
- "gix-ref 0.33.1",
+ "gix-ref 0.33.2",
  "gix-sec 0.8.4",
  "log",
  "memchr",
@@ -1409,7 +1409,7 @@ dependencies = [
  "gix",
  "gix-config",
  "gix-path 0.8.4",
- "gix-ref 0.33.1",
+ "gix-ref 0.33.2",
  "gix-sec 0.8.4",
  "gix-testtools",
  "serde_derive",
@@ -1522,7 +1522,7 @@ dependencies = [
  "dunce",
  "gix-hash 0.11.4",
  "gix-path 0.8.4",
- "gix-ref 0.33.1",
+ "gix-ref 0.33.2",
  "gix-sec 0.8.4",
  "gix-testtools",
  "is_ci",
@@ -1809,7 +1809,7 @@ dependencies = [
  "gix-hash 0.11.4",
  "gix-object 0.33.1",
  "gix-odb",
- "gix-ref 0.33.1",
+ "gix-ref 0.33.2",
  "gix-revwalk",
  "gix-testtools",
  "smallvec",
@@ -1888,7 +1888,7 @@ dependencies = [
 
 [[package]]
 name = "gix-pack"
-version = "0.40.1"
+version = "0.40.2"
 dependencies = [
  "clru",
  "document-features",
@@ -2078,7 +2078,7 @@ dependencies = [
 
 [[package]]
 name = "gix-ref"
-version = "0.33.1"
+version = "0.33.2"
 dependencies = [
  "document-features",
  "gix-actor 0.24.1",
@@ -2113,7 +2113,7 @@ dependencies = [
  "gix-lock 7.0.2",
  "gix-object 0.33.1",
  "gix-odb",
- "gix-ref 0.33.1",
+ "gix-ref 0.33.2",
  "gix-testtools",
  "gix-validate 0.7.7",
  "gix-worktree 0.23.0",

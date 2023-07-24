@@ -1,6 +1,6 @@
 [package]
 name = "gix-pack"
-version = "0.40.1"
+version = "0.40.2"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
