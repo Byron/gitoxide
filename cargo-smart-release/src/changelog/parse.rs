@@ -10,8 +10,9 @@ use pulldown_cmark::{CowStr, Event, HeadingLevel, OffsetIter, Tag};
 use winnow::{
     branch::alt,
     bytes::complete::{tag_no_case, take_till, take_while, take_while_m_n},
-    combinator::{all_consuming, map, map_res, opt},
+    combinator::{all_consuming, opt},
     error::{FromExternalError, ParseError},
+    prelude::*,
     sequence::{delimited, preceded, separated_pair, terminated},
     FinishIResult, IResult,
 };
@@ -474,52 +475,46 @@ impl<'a> TryFrom<&'a str> for Headline {
 fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a str) -> IResult<&'a str, Headline, E> {
     let hashes = take_while(|c: char| c == '#');
     let greedy_whitespace = |i| take_while(char::is_whitespace)(i);
-    let take_n_digits = |n: usize| {
-        map_res(take_while_m_n(n, n, |c: char| c.is_ascii_digit()), |num| {
-            u32::from_str(num).map_err(|_| ())
-        })
-    };
-    map(
-        terminated(
-            (
-                separated_pair(
-                    hashes,
-                    greedy_whitespace,
-                    alt((
-                        (
-                            opt("v"),
-                            map_res(take_till(char::is_whitespace), |v| {
-                                semver::Version::parse(v).map_err(|_| ()).map(Some)
-                            }),
-                        ),
-                        map(tag_no_case("unreleased"), |_| (None, None)),
-                    )),
-                ),
-                opt(preceded(
-                    greedy_whitespace,
-                    delimited(
-                        "(",
-                        map_res(
-                            (take_n_digits(4), "-", take_n_digits(2), "-", take_n_digits(2)),
-                            |(year, _, month, _, day)| {
-                                time::Month::try_from(month as u8).map_err(|_| ()).and_then(|month| {
-                                    time::Date::from_calendar_date(year as i32, month, day as u8)
-                                        .map_err(|_| ())
-                                        .map(|d| d.midnight().assume_utc())
-                                })
-                            },
-                        ),
-                        ")",
+    let take_n_digits =
+        |n: usize| take_while_m_n(n, n, |c: char| c.is_ascii_digit()).map_res(|num| u32::from_str(num).map_err(|_| ()));
+
+    terminated(
+        (
+            separated_pair(
+                hashes,
+                greedy_whitespace,
+                alt((
+                    (
+                        opt("v"),
+                        take_till(char::is_whitespace).map_res(|v| semver::Version::parse(v).map_err(|_| ()).map(Some)),
                     ),
+                    tag_no_case("unreleased").map(|_| (None, None)),
                 )),
             ),
-            greedy_whitespace,
+            opt(preceded(
+                greedy_whitespace,
+                delimited(
+                    "(",
+                    (take_n_digits(4), "-", take_n_digits(2), "-", take_n_digits(2)).map_res(
+                        |(year, _, month, _, day)| {
+                            time::Month::try_from(month as u8).map_err(|_| ()).and_then(|month| {
+                                time::Date::from_calendar_date(year as i32, month, day as u8)
+                                    .map_err(|_| ())
+                                    .map(|d| d.midnight().assume_utc())
+                            })
+                        },
+                    ),
+                    ")",
+                ),
+            )),
         ),
-        |((hashes, (prefix, version)), date): ((&str, (_, _)), _)| Headline {
-            level: hashes.len(),
-            version_prefix: prefix.map_or_else(String::new, ToOwned::to_owned),
-            version,
-            date,
-        },
-    )(i)
+        greedy_whitespace,
+    )
+    .map(|((hashes, (prefix, version)), date): ((&str, (_, _)), _)| Headline {
+        level: hashes.len(),
+        version_prefix: prefix.map_or_else(String::new, ToOwned::to_owned),
+        version,
+        date,
+    })
+    .parse_next(i)
 }
