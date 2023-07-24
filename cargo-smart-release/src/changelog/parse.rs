@@ -467,13 +467,13 @@ impl<'a> TryFrom<&'a str> for Headline {
     type Error = ();
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        headline::<()>.parse(value)
+        headline::<()>.parse(value).map_err(|err| err.into_inner())
     }
 }
 
-fn headline<'a, E: ParserError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a str) -> IResult<&'a str, Headline, E> {
+fn headline<'a, E: ParserError<&'a str> + FromExternalError<&'a str, ()>>(i: &mut &'a str) -> PResult<Headline, E> {
     let hashes = take_while(0.., |c: char| c == '#');
-    let greedy_whitespace = |i| take_while(0.., char::is_whitespace).parse_next(i);
+    let greedy_whitespace = |i: &mut &'a str| take_while(0.., char::is_whitespace).parse_next(i);
     let take_n_digits =
         |n: usize| take_while(n, |c: char| c.is_ascii_digit()).try_map(|num| u32::from_str(num).map_err(|_| ()));
 
@@ -510,7 +510,7 @@ fn headline<'a, E: ParserError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a
         ),
         greedy_whitespace,
     )
-    .map(|((hashes, (prefix, version)), date): ((&str, (_, _)), _)| Headline {
+    .map(|((hashes, (prefix, version)), date)| Headline {
         level: hashes.len(),
         version_prefix: prefix.map_or_else(String::new, ToOwned::to_owned),
         version,

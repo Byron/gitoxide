@@ -185,7 +185,7 @@ dependencies = [
  "semver",
  "time",
  "toml_edit",
- "winnow 0.4.9",
+ "winnow",
 ]
 
 [[package]]
@@ -636,7 +636,7 @@ checksum = "4b3db1aca6f1a2607dd99beed5d99df831ac73eae5994ff301dae712928e2dac"
 dependencies = [
  "doc-comment",
  "unicase",
- "winnow 0.5.0",
+ "winnow",
 ]
 
 [[package]]
@@ -2452,7 +2452,7 @@ dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "winnow 0.5.0",
+ "winnow",
 ]
 
 [[package]]
@@ -2710,18 +2710,9 @@ checksum = "1a515f5799fe4961cb532f983ce2b23082366b898e52ffbce459c86f67c8378a"
 
 [[package]]
 name = "winnow"
-version = "0.4.9"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81a2094c43cc94775293eaa0e499fbc30048a6d824ac82c0351a8c0bf9112529"
-dependencies = [
- "memchr",
-]
-
-[[package]]
-name = "winnow"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81fac9742fd1ad1bd9643b991319f72dd031016d44b77039a26977eb667141e7"
+checksum = "25b5872fa2e10bd067ae946f927e726d7d603eaeb6e02fa6a350e0722d2b8c11"
 dependencies = [
  "memchr",
 ]
