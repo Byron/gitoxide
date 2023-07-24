@@ -6,15 +6,15 @@ use std::{
 };
 
 use gix::bstr::ByteSlice;
-use nom::{
+use pulldown_cmark::{CowStr, Event, HeadingLevel, OffsetIter, Tag};
+use winnow::{
     branch::alt,
     bytes::complete::{tag, tag_no_case, take_till, take_while, take_while_m_n},
     combinator::{all_consuming, map, map_res, opt},
     error::{FromExternalError, ParseError},
     sequence::{delimited, preceded, separated_pair, terminated, tuple},
-    Finish, IResult,
+    FinishIResult, IResult,
 };
-use pulldown_cmark::{CowStr, Event, HeadingLevel, OffsetIter, Tag};
 
 use crate::{
     changelog,
@@ -467,7 +467,7 @@ impl<'a> TryFrom<&'a str> for Headline {
     type Error = ();
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        all_consuming(headline::<()>)(value).finish().map(|(_, h)| h)
+        all_consuming(headline::<()>)(value).finish_err().map(|(_, h)| h)
     }
 }
 
@@ -515,7 +515,7 @@ fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a 
             )),
             greedy_whitespace,
         ),
-        |((hashes, (prefix, version)), date)| Headline {
+        |((hashes, (prefix, version)), date): ((&str, (_, _)), _)| Headline {
             level: hashes.len(),
             version_prefix: prefix.map_or_else(String::new, ToOwned::to_owned),
             version,
