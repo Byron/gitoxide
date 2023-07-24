@@ -40,7 +40,6 @@ impl<'repo> Tree<'repo> {
             })
     }
 
-    // TODO: tests.
     /// Follow a sequence of `path` components starting from this instance, and look them up one by one until the last component
     /// is looked up and its tree entry is returned.
     /// Use `buf` as temporary location for sub-trees to avoid allocating a temporary buffer for each lookup.
@@ -57,8 +56,10 @@ impl<'repo> Tree<'repo> {
         P: PartialEq<BStr>,
     {
         let mut path = path.into_iter().peekable();
+        buf.clear();
+        buf.extend_from_slice(&self.data);
         while let Some(component) = path.next() {
-            match TreeRefIter::from_bytes(&self.data)
+            match TreeRefIter::from_bytes(buf)
                 .filter_map(Result::ok)
                 .find(|entry| component.eq(entry.filename))
             {
@@ -69,7 +70,8 @@ impl<'repo> Tree<'repo> {
                             repo: self.repo,
                         }));
                     } else {
-                        let obj = self.repo.objects.find(entry.oid, buf)?;
+                        let next_id = entry.oid.to_owned();
+                        let obj = self.repo.objects.find(next_id, buf)?;
                         if !obj.kind.is_tree() {
                             return Ok(None);
                         }
