@@ -9,10 +9,10 @@ use gix::bstr::ByteSlice;
 use pulldown_cmark::{CowStr, Event, HeadingLevel, OffsetIter, Tag};
 use winnow::{
     branch::alt,
-    bytes::complete::{tag, tag_no_case, take_till, take_while, take_while_m_n},
+    bytes::complete::{tag_no_case, take_till, take_while, take_while_m_n},
     combinator::{all_consuming, map, map_res, opt},
     error::{FromExternalError, ParseError},
-    sequence::{delimited, preceded, separated_pair, terminated, tuple},
+    sequence::{delimited, preceded, separated_pair, terminated},
     FinishIResult, IResult,
 };
 
@@ -481,26 +481,26 @@ fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a 
     };
     map(
         terminated(
-            tuple((
+            (
                 separated_pair(
                     hashes,
                     greedy_whitespace,
                     alt((
-                        tuple((
-                            opt(tag("v")),
+                        (
+                            opt("v"),
                             map_res(take_till(char::is_whitespace), |v| {
                                 semver::Version::parse(v).map_err(|_| ()).map(Some)
                             }),
-                        )),
+                        ),
                         map(tag_no_case("unreleased"), |_| (None, None)),
                     )),
                 ),
                 opt(preceded(
                     greedy_whitespace,
                     delimited(
-                        tag("("),
+                        "(",
                         map_res(
-                            tuple((take_n_digits(4), tag("-"), take_n_digits(2), tag("-"), take_n_digits(2))),
+                            (take_n_digits(4), "-", take_n_digits(2), "-", take_n_digits(2)),
                             |(year, _, month, _, day)| {
                                 time::Month::try_from(month as u8).map_err(|_| ()).and_then(|month| {
                                     time::Date::from_calendar_date(year as i32, month, day as u8)
@@ -509,10 +509,10 @@ fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a 
                                 })
                             },
                         ),
-                        tag(")"),
+                        ")",
                     ),
                 )),
-            )),
+            ),
             greedy_whitespace,
         ),
         |((hashes, (prefix, version)), date): ((&str, (_, _)), _)| Headline {
