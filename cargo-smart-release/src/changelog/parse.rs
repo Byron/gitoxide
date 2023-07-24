@@ -14,7 +14,6 @@ use winnow::{
     error::{FromExternalError, ParseError},
     prelude::*,
     sequence::{delimited, preceded, separated_pair, terminated},
-    FinishIResult, IResult,
 };
 
 use crate::{
@@ -468,7 +467,7 @@ impl<'a> TryFrom<&'a str> for Headline {
     type Error = ();
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        headline::<()>.parse_next(value).finish()
+        headline::<()>.parse(value)
     }
 }
 
@@ -476,7 +475,7 @@ fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a 
     let hashes = take_while(0.., |c: char| c == '#');
     let greedy_whitespace = |i| take_while(0.., char::is_whitespace).parse_next(i);
     let take_n_digits =
-        |n: usize| take_while(n, |c: char| c.is_ascii_digit()).map_res(|num| u32::from_str(num).map_err(|_| ()));
+        |n: usize| take_while(n, |c: char| c.is_ascii_digit()).try_map(|num| u32::from_str(num).map_err(|_| ()));
 
     terminated(
         (
@@ -487,7 +486,7 @@ fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a 
                     (
                         opt("v"),
                         take_till0(char::is_whitespace)
-                            .map_res(|v| semver::Version::parse(v).map_err(|_| ()).map(Some)),
+                            .try_map(|v| semver::Version::parse(v).map_err(|_| ()).map(Some)),
                     ),
                     tag_no_case("unreleased").map(|_| (None, None)),
                 )),
@@ -496,7 +495,7 @@ fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a 
                 greedy_whitespace,
                 delimited(
                     "(",
-                    (take_n_digits(4), "-", take_n_digits(2), "-", take_n_digits(2)).map_res(
+                    (take_n_digits(4), "-", take_n_digits(2), "-", take_n_digits(2)).try_map(
                         |(year, _, month, _, day)| {
                             time::Month::try_from(month as u8).map_err(|_| ()).and_then(|month| {
                                 time::Date::from_calendar_date(year as i32, month, day as u8)
