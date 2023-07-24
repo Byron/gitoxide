@@ -9,7 +9,7 @@ use gix::bstr::ByteSlice;
 use pulldown_cmark::{CowStr, Event, HeadingLevel, OffsetIter, Tag};
 use winnow::{
     branch::alt,
-    bytes::{tag_no_case, take_till0, take_while0, take_while_m_n},
+    bytes::{tag_no_case, take_till0, take_while},
     combinator::opt,
     error::{FromExternalError, ParseError},
     prelude::*,
@@ -473,10 +473,10 @@ impl<'a> TryFrom<&'a str> for Headline {
 }
 
 fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a str) -> IResult<&'a str, Headline, E> {
-    let hashes = take_while0(|c: char| c == '#');
-    let greedy_whitespace = |i| take_while0(char::is_whitespace).parse_next(i);
+    let hashes = take_while(0.., |c: char| c == '#');
+    let greedy_whitespace = |i| take_while(0.., char::is_whitespace).parse_next(i);
     let take_n_digits =
-        |n: usize| take_while_m_n(n, n, |c: char| c.is_ascii_digit()).map_res(|num| u32::from_str(num).map_err(|_| ()));
+        |n: usize| take_while(n, |c: char| c.is_ascii_digit()).map_res(|num| u32::from_str(num).map_err(|_| ()));
 
     terminated(
         (
