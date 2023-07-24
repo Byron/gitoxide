@@ -468,13 +468,13 @@ impl<'a> TryFrom<&'a str> for Headline {
     type Error = ();
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        headline::<()>(value).finish()
+        headline::<()>.parse_next(value).finish()
     }
 }
 
 fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a str) -> IResult<&'a str, Headline, E> {
     let hashes = take_while0(|c: char| c == '#');
-    let greedy_whitespace = |i| take_while0(char::is_whitespace)(i);
+    let greedy_whitespace = |i| take_while0(char::is_whitespace).parse_next(i);
     let take_n_digits =
         |n: usize| take_while_m_n(n, n, |c: char| c.is_ascii_digit()).map_res(|num| u32::from_str(num).map_err(|_| ()));
 
