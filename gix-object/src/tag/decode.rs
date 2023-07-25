@@ -1,11 +1,11 @@
 use winnow::{
     branch::alt,
-    bytes::complete::{tag, take_until, take_while, take_while1},
-    character::is_alphabetic,
-    combinator::{all_consuming, opt},
+    bytes::{tag, take_until0, take_while0, take_while1},
+    combinator::{eof, opt},
     error::{ContextError, ParseError},
     prelude::*,
-    sequence::preceded,
+    sequence::{preceded, terminated},
+    stream::AsChar,
 };
 
 use crate::{parse, parse::NL, BStr, ByteSlice, TagRef};
@@ -15,11 +15,11 @@ pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
         .context("object <40 lowercase hex char>")
         .parse_next(i)?;
 
-    let (i, kind) = (|i| parse::header_field(i, b"type", take_while1(is_alphabetic)))
+    let (i, kind) = (|i| parse::header_field(i, b"type", take_while1(AsChar::is_alpha)))
         .context("type <object kind>")
         .parse_next(i)?;
-    let kind =
-        crate::Kind::from_bytes(kind).map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))?;
+    let kind = crate::Kind::from_bytes(kind)
+        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))?;
 
     let (i, tag_version) = (|i| parse::header_field(i, b"tag", take_while1(|b| b != NL[0])))
         .context("tag <version>")
@@ -28,7 +28,7 @@ pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
     let (i, signature) = opt(|i| parse::header_field(i, b"tagger", parse::signature))
         .context("tagger <signature>")
         .parse_next(i)?;
-    let (i, (message, pgp_signature)) = all_consuming(message)(i)?;
+    let (i, (message, pgp_signature)) = terminated(message, eof)(i)?;
     Ok((
         i,
         TagRef {
@@ -61,14 +61,14 @@ pub fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&
     }
     let (i, (message, signature)) = alt((
         (
-            take_until(PGP_SIGNATURE_BEGIN),
+            take_until0(PGP_SIGNATURE_BEGIN),
             preceded(
                 NL,
                 (
                     &PGP_SIGNATURE_BEGIN[1..],
-                    take_until(PGP_SIGNATURE_END),
+                    take_until0(PGP_SIGNATURE_END),
                     PGP_SIGNATURE_END,
-                    take_while(|_| true),
+                    take_while0(|_| true),
                 )
                     .recognize(),
             ),

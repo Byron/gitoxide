@@ -1,5 +1,5 @@
 use gix_object::bstr::{BStr, ByteSlice};
-use winnow::{branch::alt, bytes::complete::take_while_m_n, error::ParseError, IResult};
+use winnow::{branch::alt, bytes::take_while_m_n, error::ParseError, IResult};
 
 fn is_hex_digit_lc(b: u8) -> bool {
     matches!(b, b'0'..=b'9' | b'a'..=b'f')

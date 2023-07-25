@@ -5,12 +5,12 @@ pub(crate) mod function {
     use std::cell::RefCell;
     use winnow::{
         branch::alt,
-        bytes::complete::{take, take_until, take_while_m_n},
-        character::is_digit,
+        bytes::{take, take_until0, take_while_m_n},
         error::{ContextError, ParseError},
-        multi::many1_count,
+        multi::many1,
         prelude::*,
-        sequence::{terminated, tuple},
+        sequence::terminated,
+        stream::AsChar,
     };
 
     use crate::{IdentityRef, SignatureRef};
@@ -26,31 +26,31 @@ pub(crate) mod function {
             identity,
             b" ",
             (|i| {
-                terminated(take_until(SPACE), take(1usize))(i).and_then(|(i, v)| {
+                terminated(take_until0(SPACE), take(1usize))(i).and_then(|(i, v)| {
                     btoi::<SecondsSinceUnixEpoch>(v)
                         .map(|v| (i, v))
-                        .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
                 })
             })
             .context("<timestamp>"),
             alt((
-                many1_count(b"-").map(|_| *tzsign.borrow_mut() = b'-'), // TODO: this should be a non-allocating consumer of consecutive tags
-                many1_count(b"+").map(|_| *tzsign.borrow_mut() = b'+'),
+                many1(b"-").map(|_: ()| *tzsign.borrow_mut() = b'-'), // TODO: this should be a non-allocating consumer of consecutive tags
+                many1(b"+").map(|_: ()| *tzsign.borrow_mut() = b'+'),
             ))
             .context("+|-"),
             (|i| {
-                take_while_m_n(2usize, 2, is_digit)(i).and_then(|(i, v)| {
+                take_while_m_n(2usize, 2, AsChar::is_dec_digit)(i).and_then(|(i, v)| {
                     btoi::<OffsetInSeconds>(v)
                         .map(|v| (i, v))
-                        .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
                 })
             })
             .context("HH"),
             (|i| {
-                take_while_m_n(1usize, 2, is_digit)(i).and_then(|(i, v)| {
+                take_while_m_n(1usize, 2, AsChar::is_dec_digit)(i).and_then(|(i, v)| {
                     btoi::<OffsetInSeconds>(v)
                         .map(|v| (i, v))
-                        .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
                 })
             })
             .context("MM"),
@@ -82,8 +82,8 @@ pub(crate) mod function {
         i: &'a [u8],
     ) -> IResult<&'a [u8], IdentityRef<'a>, E> {
         let (i, (name, email)) = (
-            terminated(take_until(&b" <"[..]), take(2usize)).context("<name>"),
-            terminated(take_until(&b">"[..]), take(1usize)).context("<email>"),
+            terminated(take_until0(&b" <"[..]), take(2usize)).context("<name>"),
+            terminated(take_until0(&b">"[..]), take(1usize)).context("<email>"),
         )
             .context("<name> <<email>>")
             .parse_next(i)?;

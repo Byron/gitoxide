@@ -69,7 +69,7 @@ impl<'a> Iterator for TreeRefIter<'a> {
             None => {
                 self.data = &[];
                 #[allow(clippy::unit_arg)]
-                Some(Err(winnow::Err::from_error_kind(
+                Some(Err(winnow::error::ErrMode::from_error_kind(
                     &[] as &[u8],
                     winnow::error::ErrorKind::MapRes,
                 )
@@ -118,12 +118,12 @@ mod decode {
 
     use bstr::ByteSlice;
     use winnow::{
-        bytes::complete::{take, take_while1, take_while_m_n},
-        character::is_digit,
-        combinator::all_consuming,
+        bytes::{take, take_while1, take_while_m_n},
+        combinator::eof,
         error::ParseError,
         multi::many0,
         sequence::terminated,
+        stream::AsChar,
         IResult,
     };
 
@@ -161,9 +161,9 @@ mod decode {
     }
 
     pub fn entry<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], EntryRef<'_>, E> {
-        let (i, mode) = terminated(take_while_m_n(5, 6, is_digit), SPACE)(i)?;
+        let (i, mode) = terminated(take_while_m_n(5, 6, AsChar::is_dec_digit), SPACE)(i)?;
         let mode = tree::EntryMode::try_from(mode)
-            .map_err(|invalid| winnow::Err::from_error_kind(invalid, winnow::error::ErrorKind::MapRes))?;
+            .map_err(|invalid| winnow::error::ErrMode::from_error_kind(invalid, winnow::error::ErrorKind::MapRes))?;
         let (i, filename) = terminated(take_while1(|b| b != NULL[0]), NULL)(i)?;
         let (i, oid) = take(20u8)(i)?; // TODO: make this compatible with other hash lengths
 
@@ -178,7 +178,7 @@ mod decode {
     }
 
     pub fn tree<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], TreeRef<'a>, E> {
-        let (i, entries) = all_consuming(many0(entry))(i)?;
+        let (i, entries) = terminated(many0(entry), eof)(i)?;
         Ok((i, TreeRef { entries }))
     }
 }

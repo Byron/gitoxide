@@ -75,7 +75,7 @@ impl<'a> From<LineRef<'a>> for Line {
 pub mod decode {
     use gix_object::bstr::{BStr, ByteSlice};
     use winnow::{
-        bytes::complete::take_while,
+        bytes::take_while0,
         combinator::opt,
         error::{ContextError, ParseError},
         prelude::*,
@@ -127,7 +127,7 @@ pub mod decode {
         if i.is_empty() {
             Ok((&[], i.as_bstr()))
         } else {
-            terminated(take_while(|c| c != b'\n'), opt(b'\n'))(i).map(|(i, o)| (i, o.as_bstr()))
+            terminated(take_while0(|c| c != b'\n'), opt(b'\n'))(i).map(|(i, o)| (i, o.as_bstr()))
         }
     }
 
@@ -146,7 +146,7 @@ pub mod decode {
             if let Some(first) = message.first() {
                 if !first.is_ascii_whitespace() {
                     return Err(
-                        winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes).map(|err: E| {
+                        winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes).map(|err: E| {
                             err.add_context(i, "log message must be separated from signature with whitespace")
                         }),
                     );

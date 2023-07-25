@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use winnow::{
-    bytes::complete::take_until1,
-    combinator::all_consuming,
+    bytes::take_until1,
+    combinator::eof,
     error::{ErrorKind, ParseError},
     sequence::terminated,
     IResult,
@@ -35,7 +35,7 @@ pub struct TrailerRef<'a> {
 fn parse_single_line_trailer<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, &'a BStr), E> {
     let (value, token) = terminated(take_until1(b":".as_ref()), b": ")(i.trim_end())?;
     if token.trim_end().len() != token.len() || value.trim_start().len() != value.len() {
-        Err(winnow::Err::from_error_kind(i, ErrorKind::Fail).cut())
+        Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Fail).cut())
     } else {
         Ok((&[], (token.as_bstr(), value.as_bstr())))
     }
@@ -51,7 +51,7 @@ impl<'a> Iterator for Trailers<'a> {
         for line in self.cursor.lines_with_terminator() {
             self.cursor = &self.cursor[line.len()..];
             if let Some(trailer) =
-                all_consuming(parse_single_line_trailer::<()>)(line)
+                terminated(parse_single_line_trailer::<()>, eof)(line)
                     .ok()
                     .map(|(_, (token, value))| TrailerRef {
                         token: token.trim().as_bstr(),

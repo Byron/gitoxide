@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use gix_object::bstr::{BStr, ByteSlice};
 use winnow::{
-    bytes::complete::take_while,
+    bytes::take_while0,
     combinator::opt,
     error::{FromExternalError, ParseError},
     prelude::*,
@@ -41,7 +41,7 @@ fn until_newline<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E>
 where
     E: ParseError<&'a [u8]>,
 {
-    terminated(take_while(|b: u8| b != b'\r' && b != b'\n'), newline)
+    terminated(take_while0(|b: u8| b != b'\r' && b != b'\n'), newline)
         .map(ByteSlice::as_bstr)
         .parse_next(input)
 }
