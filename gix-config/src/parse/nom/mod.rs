@@ -161,7 +161,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
         if header.name.is_empty() {
             return Err(winnow::error::ErrMode::Backtrack(NomError {
                 input: i,
-                kind: ErrorKind::NoneOf,
+                kind: ErrorKind::Fail,
             }));
         }
         return Ok((i, header));
@@ -202,7 +202,7 @@ fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResu
         if b == b'\n' || b == 0 {
             return Err(winnow::error::ErrMode::Backtrack(NomError {
                 input: &i[cursor..],
-                kind: ErrorKind::NonEmpty,
+                kind: ErrorKind::Fail,
             }));
         }
         if b == b'"' {
@@ -213,7 +213,7 @@ fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResu
             b = bytes.next().ok_or_else(|| {
                 winnow::error::ErrMode::Backtrack(NomError {
                     input: &i[cursor..],
-                    kind: ErrorKind::NonEmpty,
+                    kind: ErrorKind::Fail,
                 })
             })?;
             found_escape = true;
@@ -221,7 +221,7 @@ fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResu
             if b == b'\n' {
                 return Err(winnow::error::ErrMode::Backtrack(NomError {
                     input: &i[cursor..],
-                    kind: ErrorKind::NonEmpty,
+                    kind: ErrorKind::Fail,
                 }));
             }
         }
@@ -231,7 +231,7 @@ fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResu
     if !found_terminator {
         return Err(winnow::error::ErrMode::Backtrack(NomError {
             input: &i[cursor..],
-            kind: ErrorKind::NonEmpty,
+            kind: ErrorKind::Fail,
         }));
     }
 
@@ -264,14 +264,14 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
     if i.is_empty() {
         return Err(winnow::error::ErrMode::Backtrack(NomError {
             input: i,
-            kind: ErrorKind::NonEmpty,
+            kind: ErrorKind::Fail,
         }));
     }
 
     if !i[0].is_ascii_alphabetic() {
         return Err(winnow::error::ErrMode::Backtrack(NomError {
             input: i,
-            kind: ErrorKind::Alpha,
+            kind: ErrorKind::Token,
         }));
     }
 
@@ -319,9 +319,9 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
                 prev_char_was_backslash = false;
                 let mut consumed = 1;
                 if *c == b'\r' {
-                    c = bytes.next().ok_or_else(|| new_err(ErrorKind::Escaped))?;
+                    c = bytes.next().ok_or_else(|| new_err(ErrorKind::Token))?;
                     if *c != b'\n' {
-                        return Err(new_err(ErrorKind::Tag));
+                        return Err(new_err(ErrorKind::Slice));
                     }
                     consumed += 1;
                 }
@@ -345,7 +345,7 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
                         last_value_index += 1;
                     }
                     _ => {
-                        return Err(new_err(ErrorKind::Escaped));
+                        return Err(new_err(ErrorKind::Token));
                     }
                 }
             } else {
@@ -367,11 +367,11 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
         }
 
         if prev_char_was_backslash {
-            return Err(new_err(ErrorKind::Escaped));
+            return Err(new_err(ErrorKind::Token));
         }
 
         if is_in_quotes {
-            return Err(new_err(ErrorKind::Tag));
+            return Err(new_err(ErrorKind::Slice));
         }
 
         let value_end = match value_end {
