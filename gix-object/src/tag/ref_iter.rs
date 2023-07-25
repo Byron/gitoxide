@@ -1,11 +1,12 @@
 use bstr::BStr;
 use gix_hash::{oid, ObjectId};
 use winnow::{
-    bytes::complete::take_while1,
-    character::is_alphabetic,
-    combinator::{all_consuming, opt},
+    bytes::take_while1,
+    combinator::{eof, opt},
     error::ParseError,
     prelude::*,
+    sequence::terminated,
+    stream::AsChar,
 };
 
 use crate::{bstr::ByteSlice, parse, parse::NL, tag::decode, Kind, TagRefIter};
@@ -74,11 +75,11 @@ impl<'a> TagRefIter<'a> {
                 )
             }
             TargetKind => {
-                let (i, kind) = (|i| parse::header_field(i, b"type", take_while1(is_alphabetic)))
+                let (i, kind) = (|i| parse::header_field(i, b"type", take_while1(AsChar::is_alpha)))
                     .context("type <object kind>")
                     .parse_next(i)?;
                 let kind = Kind::from_bytes(kind)
-                    .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))?;
+                    .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))?;
                 *state = Name;
                 (i, Token::TargetKind(kind))
             }
@@ -97,7 +98,7 @@ impl<'a> TagRefIter<'a> {
                 (i, Token::Tagger(signature))
             }
             Message => {
-                let (i, (message, pgp_signature)) = all_consuming(decode::message)(i)?;
+                let (i, (message, pgp_signature)) = terminated(decode::message, eof)(i)?;
                 debug_assert!(
                     i.is_empty(),
                     "we should have consumed all data - otherwise iter may go forever"

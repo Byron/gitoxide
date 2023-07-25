@@ -1,4 +1,4 @@
-use winnow::{branch::alt, bytes::complete::take_till1, combinator::all_consuming, error::ParseError, prelude::*};
+use winnow::{branch::alt, bytes::take_till1, combinator::eof, error::ParseError, prelude::*, sequence::terminated};
 
 use crate::bstr::{BStr, ByteSlice};
 
@@ -46,5 +46,5 @@ fn subject_and_body<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8
 
 /// Returns title and body, without separator
 pub fn message(input: &[u8]) -> (&BStr, Option<&BStr>) {
-    all_consuming(subject_and_body::<()>)(input).expect("cannot fail").1
+    terminated(subject_and_body::<()>, eof)(input).expect("cannot fail").1
 }

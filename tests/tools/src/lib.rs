@@ -692,10 +692,10 @@ fn extract_archive(
 }
 
 /// Transform a verbose bom errors from raw bytes into a `BStr` to make printing/debugging human-readable.
-pub fn to_bstr_err(err: winnow::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
+pub fn to_bstr_err(err: winnow::error::ErrMode<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
     let err = match err {
-        winnow::Err::Backtrack(err) | winnow::Err::Cut(err) => err,
-        winnow::Err::Incomplete(_) => unreachable!("not a streaming parser"),
+        winnow::error::ErrMode::Backtrack(err) | winnow::error::ErrMode::Cut(err) => err,
+        winnow::error::ErrMode::Incomplete(_) => unreachable!("not a streaming parser"),
     };
     VerboseError {
         errors: err.errors.into_iter().map(|(i, v)| (i.as_bstr(), v)).collect(),

@@ -3,11 +3,12 @@ use std::borrow::Cow;
 use smallvec::SmallVec;
 use winnow::{
     branch::alt,
-    bytes::complete::{is_not, tag},
-    combinator::{all_consuming, opt},
+    bytes::{tag, take_till1},
+    combinator::{eof, opt},
     error::{ContextError, ParseError},
     multi::many0,
     prelude::*,
+    sequence::terminated,
 };
 
 use crate::{parse, parse::NL, BStr, ByteSlice, CommitRef};
@@ -15,8 +16,10 @@ use crate::{parse, parse::NL, BStr, ByteSlice, CommitRef};
 pub fn message<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
     if i.is_empty() {
         // newline + [message]
-        return Err(winnow::Err::from_error_kind(i, winnow::error::ErrorKind::Eof)
-            .map(|err: E| err.add_context(i, "newline + <message>")));
+        return Err(
+            winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Eof)
+                .map(|err: E| err.add_context(i, "newline + <message>")),
+        );
     }
     let (i, _) = tag(NL)
         .context("a newline separates headers from the message")
@@ -39,16 +42,18 @@ pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
     let (i, committer) = (|i| parse::header_field(i, b"committer", parse::signature))
         .context("committer <signature>")
         .parse_next(i)?;
-    let (i, encoding) = opt(|i| parse::header_field(i, b"encoding", is_not(NL)))
+    let (i, encoding) = opt(|i| parse::header_field(i, b"encoding", take_till1(NL)))
         .context("encoding <encoding>")
         .parse_next(i)?;
     let (i, extra_headers) = many0(alt((
         parse::any_header_field_multi_line.map(|(k, o)| (k.as_bstr(), Cow::Owned(o))),
-        |i| parse::any_header_field(i, is_not(NL)).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr())))),
+        |i| {
+            parse::any_header_field(i, take_till1(NL)).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
+        },
     )))
     .context("<field> <single-line|multi-line>")
     .parse_next(i)?;
-    let (i, message) = all_consuming(message)(i)?;
+    let (i, message) = terminated(message, eof)(i)?;
 
     Ok((
         i,

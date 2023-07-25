@@ -278,18 +278,20 @@ pub mod decode {
             pub inner: ParseErrorOwned,
         }
 
-        impl<'a> From<winnow::Err<ParseError<'a>>> for Error {
-            fn from(v: winnow::Err<ParseError<'a>>) -> Self {
+        impl<'a> From<winnow::error::ErrMode<ParseError<'a>>> for Error {
+            fn from(v: winnow::error::ErrMode<ParseError<'a>>) -> Self {
                 Error {
                     inner: match v {
-                        winnow::Err::Backtrack(err) | winnow::Err::Cut(err) => winnow::error::VerboseError {
-                            errors: err
-                                .errors
-                                .into_iter()
-                                .map(|(i, v)| (i.as_bstr().to_owned(), v))
-                                .collect(),
-                        },
-                        winnow::Err::Incomplete(_) => unreachable!("we don't have streaming parsers"),
+                        winnow::error::ErrMode::Backtrack(err) | winnow::error::ErrMode::Cut(err) => {
+                            winnow::error::VerboseError {
+                                errors: err
+                                    .errors
+                                    .into_iter()
+                                    .map(|(i, v)| (i.as_bstr().to_owned(), v))
+                                    .collect(),
+                            }
+                        }
+                        winnow::error::ErrMode::Incomplete(_) => unreachable!("we don't have streaming parsers"),
                     },
                 }
             }
@@ -321,12 +323,12 @@ pub mod decode {
             pub inner: ParseErrorOwned,
         }
 
-        impl<'a> From<winnow::Err<ParseError<'a>>> for Error {
-            fn from(v: winnow::Err<ParseError<'a>>) -> Self {
+        impl<'a> From<winnow::error::ErrMode<ParseError<'a>>> for Error {
+            fn from(v: winnow::error::ErrMode<ParseError<'a>>) -> Self {
                 Error {
                     inner: match v {
-                        winnow::Err::Backtrack(err) | winnow::Err::Cut(err) => err,
-                        winnow::Err::Incomplete(_) => unreachable!("we don't have streaming parsers"),
+                        winnow::error::ErrMode::Backtrack(err) | winnow::error::ErrMode::Cut(err) => err,
+                        winnow::error::ErrMode::Incomplete(_) => unreachable!("we don't have streaming parsers"),
                     },
                 }
             }

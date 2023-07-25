@@ -1,9 +1,9 @@
 use bstr::{BStr, BString, ByteVec};
 use winnow::{
-    bytes::complete::{is_not, take_until, take_while_m_n},
+    bytes::{take_till1, take_until0, take_while_m_n},
     combinator::peek,
     error::{ContextError, ParseError},
-    multi::many1_count,
+    multi::many1,
     prelude::*,
     sequence::{preceded, terminated},
 };
@@ -18,8 +18,13 @@ pub(crate) fn any_header_field_multi_line<'a, E: ParseError<&'a [u8]> + ContextE
     i: &'a [u8],
 ) -> IResult<&'a [u8], (&'a [u8], BString), E> {
     let (i, (k, o)) = peek((
-        terminated(is_not(SPACE_OR_NL), SPACE),
-        (is_not(NL), NL, many1_count(terminated((SPACE, take_until(NL)), NL))).recognize(),
+        terminated(take_till1(SPACE_OR_NL), SPACE),
+        (
+            take_till1(NL),
+            NL,
+            many1(terminated((SPACE, take_until0(NL)), NL)).map(|()| ()),
+        )
+            .recognize(),
     ))
     .context("name <multi-line-value>")
     .parse_next(i)?;
@@ -41,16 +46,16 @@ pub(crate) fn any_header_field_multi_line<'a, E: ParseError<&'a [u8]> + ContextE
 pub(crate) fn header_field<'a, T, E: ParseError<&'a [u8]>>(
     i: &'a [u8],
     name: &'static [u8],
-    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, E>,
+    parse_value: impl FnMut(&'a [u8]) -> IResult<&'a [u8], T, E>,
 ) -> IResult<&'a [u8], T, E> {
     terminated(preceded(terminated(name, SPACE), parse_value), NL)(i)
 }
 
 pub(crate) fn any_header_field<'a, T, E: ParseError<&'a [u8]>>(
     i: &'a [u8],
-    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, E>,
+    parse_value: impl FnMut(&'a [u8]) -> IResult<&'a [u8], T, E>,
 ) -> IResult<&'a [u8], (&'a [u8], T), E> {
-    terminated((terminated(is_not(SPACE_OR_NL), SPACE), parse_value), NL)(i)
+    terminated((terminated(take_till1(SPACE_OR_NL), SPACE), parse_value), NL)(i)
 }
 
 fn is_hex_digit_lc(b: u8) -> bool {
