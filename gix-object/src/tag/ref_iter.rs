@@ -4,7 +4,8 @@ use winnow::{
     bytes::complete::take_while1,
     character::is_alphabetic,
     combinator::{all_consuming, opt},
-    error::{context, ParseError},
+    error::ParseError,
+    prelude::*,
 };
 
 use crate::{bstr::ByteSlice, parse, parse::NL, tag::decode, Kind, TagRefIter};
@@ -61,9 +62,9 @@ impl<'a> TagRefIter<'a> {
         use State::*;
         Ok(match state {
             Target => {
-                let (i, target) = context("object <40 lowercase hex char>", |i| {
-                    parse::header_field(i, b"object", parse::hex_hash)
-                })(i)?;
+                let (i, target) = (|i| parse::header_field(i, b"object", parse::hex_hash))
+                    .context("object <40 lowercase hex char>")
+                    .parse_next(i)?;
                 *state = TargetKind;
                 (
                     i,
@@ -73,26 +74,25 @@ impl<'a> TagRefIter<'a> {
                 )
             }
             TargetKind => {
-                let (i, kind) = context("type <object kind>", |i| {
-                    parse::header_field(i, b"type", take_while1(is_alphabetic))
-                })(i)?;
+                let (i, kind) = (|i| parse::header_field(i, b"type", take_while1(is_alphabetic)))
+                    .context("type <object kind>")
+                    .parse_next(i)?;
                 let kind = Kind::from_bytes(kind)
                     .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))?;
                 *state = Name;
                 (i, Token::TargetKind(kind))
             }
             Name => {
-                let (i, tag_version) = context("tag <version>", |i| {
-                    parse::header_field(i, b"tag", take_while1(|b| b != NL[0]))
-                })(i)?;
+                let (i, tag_version) = (|i| parse::header_field(i, b"tag", take_while1(|b| b != NL[0])))
+                    .context("tag <version>")
+                    .parse_next(i)?;
                 *state = Tagger;
                 (i, Token::Name(tag_version.as_bstr()))
             }
             Tagger => {
-                let (i, signature) = context(
-                    "tagger <signature>",
-                    opt(|i| parse::header_field(i, b"tagger", parse::signature)),
-                )(i)?;
+                let (i, signature) = opt(|i| parse::header_field(i, b"tagger", parse::signature))
+                    .context("tagger <signature>")
+                    .parse_next(i)?;
                 *state = Message;
                 (i, Token::Tagger(signature))
             }

@@ -7,7 +7,7 @@ pub(crate) mod function {
         branch::alt,
         bytes::complete::{take, take_until, take_while_m_n},
         character::is_digit,
-        error::{context, ContextError, ParseError},
+        error::{ContextError, ParseError},
         multi::many1_count,
         prelude::*,
         sequence::{terminated, tuple},
@@ -22,41 +22,41 @@ pub(crate) mod function {
         i: &'a [u8],
     ) -> IResult<&'a [u8], SignatureRef<'a>, E> {
         let tzsign = RefCell::new(b'-'); // TODO: there should be no need for this.
-        let (i, (identity, _, time, _tzsign_count, hours, minutes)) = context(
-            "<name> <<email>> <timestamp> <+|-><HHMM>",
-            (
-                identity,
-                b" ",
-                context("<timestamp>", |i| {
-                    terminated(take_until(SPACE), take(1usize))(i).and_then(|(i, v)| {
-                        btoi::<SecondsSinceUnixEpoch>(v)
-                            .map(|v| (i, v))
-                            .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
-                    })
-                }),
-                context(
-                    "+|-",
-                    alt((
-                        many1_count(b"-").map(|_| *tzsign.borrow_mut() = b'-'), // TODO: this should be a non-allocating consumer of consecutive tags
-                        many1_count(b"+").map(|_| *tzsign.borrow_mut() = b'+'),
-                    )),
-                ),
-                context("HH", |i| {
-                    take_while_m_n(2usize, 2, is_digit)(i).and_then(|(i, v)| {
-                        btoi::<OffsetInSeconds>(v)
-                            .map(|v| (i, v))
-                            .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
-                    })
-                }),
-                context("MM", |i| {
-                    take_while_m_n(1usize, 2, is_digit)(i).and_then(|(i, v)| {
-                        btoi::<OffsetInSeconds>(v)
-                            .map(|v| (i, v))
-                            .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
-                    })
-                }),
-            ),
-        )(i)?;
+        let (i, (identity, _, time, _tzsign_count, hours, minutes)) = (
+            identity,
+            b" ",
+            (|i| {
+                terminated(take_until(SPACE), take(1usize))(i).and_then(|(i, v)| {
+                    btoi::<SecondsSinceUnixEpoch>(v)
+                        .map(|v| (i, v))
+                        .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                })
+            })
+            .context("<timestamp>"),
+            alt((
+                many1_count(b"-").map(|_| *tzsign.borrow_mut() = b'-'), // TODO: this should be a non-allocating consumer of consecutive tags
+                many1_count(b"+").map(|_| *tzsign.borrow_mut() = b'+'),
+            ))
+            .context("+|-"),
+            (|i| {
+                take_while_m_n(2usize, 2, is_digit)(i).and_then(|(i, v)| {
+                    btoi::<OffsetInSeconds>(v)
+                        .map(|v| (i, v))
+                        .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                })
+            })
+            .context("HH"),
+            (|i| {
+                take_while_m_n(1usize, 2, is_digit)(i).and_then(|(i, v)| {
+                    btoi::<OffsetInSeconds>(v)
+                        .map(|v| (i, v))
+                        .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                })
+            })
+            .context("MM"),
+        )
+            .context("<name> <<email>> <timestamp> <+|-><HHMM>")
+            .parse_next(i)?;
 
         let tzsign = tzsign.into_inner();
         debug_assert!(tzsign == b'-' || tzsign == b'+', "parser assure it's +|- only");
@@ -81,13 +81,12 @@ pub(crate) mod function {
     pub fn identity<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
         i: &'a [u8],
     ) -> IResult<&'a [u8], IdentityRef<'a>, E> {
-        let (i, (name, email)) = context(
-            "<name> <<email>>",
-            (
-                context("<name>", terminated(take_until(&b" <"[..]), take(2usize))),
-                context("<email>", terminated(take_until(&b">"[..]), take(1usize))),
-            ),
-        )(i)?;
+        let (i, (name, email)) = (
+            terminated(take_until(&b" <"[..]), take(2usize)).context("<name>"),
+            terminated(take_until(&b">"[..]), take(1usize)).context("<email>"),
+        )
+            .context("<name> <<email>>")
+            .parse_next(i)?;
 
         Ok((
             i,
