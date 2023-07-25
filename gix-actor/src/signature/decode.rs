@@ -2,16 +2,16 @@ pub(crate) mod function {
     use bstr::ByteSlice;
     use btoi::btoi;
     use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch, Time};
-    use nom::multi::many1_count;
-    use nom::{
+    use std::cell::RefCell;
+    use winnow::{
         branch::alt,
         bytes::complete::{tag, take, take_until, take_while_m_n},
         character::is_digit,
         error::{context, ContextError, ParseError},
+        multi::many1_count,
+        prelude::*,
         sequence::{terminated, tuple},
-        IResult,
     };
-    use std::cell::RefCell;
 
     use crate::{IdentityRef, SignatureRef};
 
@@ -21,7 +21,6 @@ pub(crate) mod function {
     pub fn decode<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
         i: &'a [u8],
     ) -> IResult<&'a [u8], SignatureRef<'a>, E> {
-        use nom::Parser;
         let tzsign = RefCell::new(b'-'); // TODO: there should be no need for this.
         let (i, (identity, _, time, _tzsign_count, hours, minutes)) = context(
             "<name> <<email>> <timestamp> <+|-><HHMM>",
@@ -30,9 +29,9 @@ pub(crate) mod function {
                 tag(b" "),
                 context("<timestamp>", |i| {
                     terminated(take_until(SPACE), take(1usize))(i).and_then(|(i, v)| {
-                        btoi::<SecondsSinceUnixEpoch>(v)
-                            .map(|v| (i, v))
-                            .map_err(|_| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))
+                        btoi::<SecondsSinceUnixEpoch>(v).map(|v| (i, v)).map_err(|_| {
+                            winnow::Err::Backtrack(E::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                        })
                     })
                 }),
                 context(
@@ -44,16 +43,16 @@ pub(crate) mod function {
                 ),
                 context("HH", |i| {
                     take_while_m_n(2usize, 2, is_digit)(i).and_then(|(i, v)| {
-                        btoi::<OffsetInSeconds>(v)
-                            .map(|v| (i, v))
-                            .map_err(|_| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))
+                        btoi::<OffsetInSeconds>(v).map(|v| (i, v)).map_err(|_| {
+                            winnow::Err::Backtrack(E::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                        })
                     })
                 }),
                 context("MM", |i| {
                     take_while_m_n(1usize, 2, is_digit)(i).and_then(|(i, v)| {
-                        btoi::<OffsetInSeconds>(v)
-                            .map(|v| (i, v))
-                            .map_err(|_| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))
+                        btoi::<OffsetInSeconds>(v).map(|v| (i, v)).map_err(|_| {
+                            winnow::Err::Backtrack(E::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                        })
                     })
                 }),
             )),
@@ -107,11 +106,11 @@ mod tests {
         use bstr::ByteSlice;
         use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch};
         use gix_testtools::to_bstr_err;
-        use nom::IResult;
+        use winnow::IResult;
 
         use crate::{signature, SignatureRef, Time};
 
-        fn decode(i: &[u8]) -> IResult<&[u8], SignatureRef<'_>, nom::error::VerboseError<&[u8]>> {
+        fn decode(i: &[u8]) -> IResult<&[u8], SignatureRef<'_>, winnow::error::VerboseError<&[u8]>> {
             signature::decode(i)
         }
 

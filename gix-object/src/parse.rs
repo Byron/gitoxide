@@ -1,5 +1,5 @@
 use bstr::{BStr, BString, ByteVec};
-use nom::{
+use winnow::{
     bytes::complete::{is_not, tag, take_until, take_while_m_n},
     combinator::{peek, recognize},
     error::{context, ContextError, ParseError},

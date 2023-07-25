@@ -1,5 +1,5 @@
 use gix_object::bstr::{BStr, ByteSlice};
-use nom::{
+use winnow::{
     branch::alt,
     bytes::complete::{tag, take_while_m_n},
     error::ParseError,

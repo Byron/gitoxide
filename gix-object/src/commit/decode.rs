@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
-use nom::{
+use smallvec::SmallVec;
+use winnow::{
     branch::alt,
     bytes::complete::{is_not, tag},
     combinator::{all_consuming, opt},
@@ -8,17 +9,16 @@ use nom::{
     multi::many0,
     IResult, Parser,
 };
-use smallvec::SmallVec;
 
 use crate::{parse, parse::NL, BStr, ByteSlice, CommitRef};
 
 pub fn message<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
     if i.is_empty() {
         // newline + [message]
-        return Err(nom::Err::Error(E::add_context(
+        return Err(winnow::Err::Backtrack(E::add_context(
+            E::from_error_kind(i, winnow::error::ErrorKind::Eof),
             i,
             "newline + <message>",
-            E::from_error_kind(i, nom::error::ErrorKind::Eof),
         )));
     }
     let (i, _) = context("a newline separates headers from the message", tag(NL))(i)?;
@@ -31,7 +31,7 @@ pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
     let (i, tree) = context("tree <40 lowercase hex char>", |i| {
         parse::header_field(i, b"tree", parse::hex_hash)
     })(i)?;
-    let (i, parents) = context(
+    let (i, parents): (_, Vec<_>) = context(
         "zero or more 'parent <40 lowercase hex char>'",
         many0(|i| parse::header_field(i, b"parent", parse::hex_hash)),
     )(i)?;

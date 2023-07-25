@@ -1,4 +1,4 @@
-use nom::{
+use winnow::{
     branch::alt,
     bytes::complete::{tag, take_till1},
     combinator::all_consuming,

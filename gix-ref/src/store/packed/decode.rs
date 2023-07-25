@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use gix_object::bstr::{BStr, ByteSlice};
-use nom::{
+use winnow::{
     bytes::complete::{tag, take_while},
     combinator::{map, map_res, opt},
     error::{FromExternalError, ParseError},

@@ -74,7 +74,7 @@ impl<'a> From<LineRef<'a>> for Line {
 ///
 pub mod decode {
     use gix_object::bstr::{BStr, ByteSlice};
-    use nom::{
+    use winnow::{
         bytes::complete::{tag, take_while},
         combinator::opt,
         error::{context, ContextError, ParseError},
@@ -146,10 +146,10 @@ pub mod decode {
         if message_sep.is_none() {
             if let Some(first) = message.first() {
                 if !first.is_ascii_whitespace() {
-                    return Err(nom::Err::Error(E::add_context(
+                    return Err(winnow::Err::Backtrack(E::add_context(
+                        E::from_error_kind(i, winnow::error::ErrorKind::MapRes),
                         i,
                         "log message must be separated from signature with whitespace",
-                        E::from_error_kind(i, nom::error::ErrorKind::MapRes),
                     )));
                 }
             }
@@ -185,7 +185,7 @@ pub mod decode {
 
         mod invalid {
             use gix_testtools::to_bstr_err;
-            use nom::error::VerboseError;
+            use winnow::error::VerboseError;
 
             use super::one;
 
@@ -217,7 +217,7 @@ pub mod decode {
             let line_with_nl = with_newline(line_without_nl.clone());
             for input in &[line_without_nl, line_with_nl] {
                 assert_eq!(
-                    one::<nom::error::Error<_>>(input).expect("successful parsing").1,
+                    one::<winnow::error::Error<_>>(input).expect("successful parsing").1,
                     LineRef {
                         previous_oid: NULL_SHA1.as_bstr(),
                         new_oid: NULL_SHA1.as_bstr(),
@@ -242,7 +242,7 @@ pub mod decode {
             let line_with_nl = with_newline(line_without_nl.clone());
 
             for input in &[line_without_nl, line_with_nl] {
-                let (remaining, res) = one::<nom::error::Error<_>>(input).expect("successful parsing");
+                let (remaining, res) = one::<winnow::error::Error<_>>(input).expect("successful parsing");
                 assert!(remaining.is_empty(), "all consuming even without trailing newline");
                 let actual = LineRef {
                     previous_oid: b"a5828ae6b52137b913b978e16cd2334482eb4c1f".as_bstr(),
@@ -270,10 +270,10 @@ pub mod decode {
         #[test]
         fn two_lines_in_a_row_with_and_without_newline() {
             let lines = b"0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000\t\n0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 two <foo@example.com> 1234567890 -0000\thello";
-            let (remainder, parsed) = one::<nom::error::Error<_>>(lines).expect("parse single line");
+            let (remainder, parsed) = one::<winnow::error::Error<_>>(lines).expect("parse single line");
             assert_eq!(parsed.message, b"".as_bstr(), "first message is empty");
 
-            let (remainder, parsed) = one::<nom::error::Error<_>>(remainder).expect("parse single line");
+            let (remainder, parsed) = one::<winnow::error::Error<_>>(remainder).expect("parse single line");
             assert_eq!(
                 parsed.message,
                 b"hello".as_bstr(),

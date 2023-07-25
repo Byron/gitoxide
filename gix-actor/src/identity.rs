@@ -4,9 +4,9 @@ use crate::{signature::decode, Identity, IdentityRef};
 
 impl<'a> IdentityRef<'a> {
     /// Deserialize an identity from the given `data`.
-    pub fn from_bytes<E>(data: &'a [u8]) -> Result<Self, nom::Err<E>>
+    pub fn from_bytes<E>(data: &'a [u8]) -> Result<Self, winnow::Err<E>>
     where
-        E: nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'a [u8]>,
+        E: winnow::error::ParseError<&'a [u8]> + winnow::error::ContextError<&'a [u8]>,
     {
         decode::identity(data).map(|(_, t)| t)
     }
