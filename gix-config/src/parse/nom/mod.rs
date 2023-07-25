@@ -2,14 +2,14 @@ use std::borrow::Cow;
 
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use winnow::{
-    branch::alt,
-    bytes::{one_of, take_till0, take_while},
+    combinator::alt,
+    combinator::delimited,
     combinator::fold_repeat,
     combinator::opt,
-    error::{Error as NomError, ErrorKind},
+    error::{ErrorKind, InputError as NomError},
     prelude::*,
-    sequence::delimited,
     stream::AsChar,
+    token::{one_of, take_till0, take_while},
 };
 
 use crate::parse::{error::ParseNode, section, Comment, Error, Event};
@@ -76,7 +76,7 @@ pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> R
 }
 
 fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
-    let (i, comment_tag) = one_of(";#").parse_next(i)?;
+    let (i, comment_tag) = one_of([';', '#']).parse_next(i)?;
     let (i, comment) = take_till0(|c| c == b'\n').parse_next(i)?;
     Ok((
         i,
