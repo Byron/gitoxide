@@ -6,7 +6,7 @@ use winnow::{
     combinator::delimited,
     combinator::fold_repeat,
     combinator::opt,
-    error::{ErrorKind, InputError as NomError},
+    error::{ErrorKind, InputError as NomError, ParserError as _},
     prelude::*,
     stream::AsChar,
     token::{one_of, take_till0, take_while},
@@ -161,10 +161,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
         };
 
         if header.name.is_empty() {
-            return Err(winnow::error::ErrMode::Backtrack(NomError {
-                input: i,
-                kind: ErrorKind::Fail,
-            }));
+            return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Fail));
         }
         return Ok((i, header));
     }
@@ -202,39 +199,27 @@ fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResu
     while let Some(mut b) = bytes.next() {
         cursor += 1;
         if b == b'\n' || b == 0 {
-            return Err(winnow::error::ErrMode::Backtrack(NomError {
-                input: &i[cursor..],
-                kind: ErrorKind::Fail,
-            }));
+            return Err(winnow::error::ErrMode::from_error_kind(&i[cursor..], ErrorKind::Fail));
         }
         if b == b'"' {
             found_terminator = true;
             break;
         }
         if b == b'\\' {
-            b = bytes.next().ok_or_else(|| {
-                winnow::error::ErrMode::Backtrack(NomError {
-                    input: &i[cursor..],
-                    kind: ErrorKind::Fail,
-                })
-            })?;
+            b = bytes
+                .next()
+                .ok_or_else(|| winnow::error::ErrMode::from_error_kind(&i[cursor..], ErrorKind::Fail))?;
             found_escape = true;
             cursor += 1;
             if b == b'\n' {
-                return Err(winnow::error::ErrMode::Backtrack(NomError {
-                    input: &i[cursor..],
-                    kind: ErrorKind::Fail,
-                }));
+                return Err(winnow::error::ErrMode::from_error_kind(&i[cursor..], ErrorKind::Fail));
             }
         }
         push_byte(b);
     }
 
     if !found_terminator {
-        return Err(winnow::error::ErrMode::Backtrack(NomError {
-            input: &i[cursor..],
-            kind: ErrorKind::Fail,
-        }));
+        return Err(winnow::error::ErrMode::from_error_kind(&i[cursor..], ErrorKind::Fail));
     }
 
     Ok((&i[cursor - 1..], (found_escape, cursor - 1)))
@@ -264,17 +249,11 @@ fn key_value_pair<'a>(
 /// trimmed of any leading whitespace.
 fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
     if i.is_empty() {
-        return Err(winnow::error::ErrMode::Backtrack(NomError {
-            input: i,
-            kind: ErrorKind::Fail,
-        }));
+        return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Fail));
     }
 
     if !i[0].is_ascii_alphabetic() {
-        return Err(winnow::error::ErrMode::Backtrack(NomError {
-            input: i,
-            kind: ErrorKind::Token,
-        }));
+        return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Token));
     }
 
     let (i, name) = take_while(0.., |c: u8| c.is_ascii_alphanumeric() || c == b'-').parse_next(i)?;
@@ -303,7 +282,7 @@ fn config_value<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResul
 /// line values as well as values that are continuations.
 fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
     let (i, value_end, newlines, mut dispatch) = {
-        let new_err = |kind| winnow::error::ErrMode::Backtrack(NomError { input: i, kind });
+        let new_err = |kind| winnow::error::ErrMode::from_error_kind(i, kind);
         let mut value_end = None::<usize>;
         let mut value_start: usize = 0;
         let mut newlines = 0;
@@ -419,10 +398,7 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
 fn take_spaces(i: &[u8]) -> IResult<&[u8], &BStr> {
     let (i, v) = take_while(0.., |c: u8| c.is_ascii() && c.is_space()).parse_next(i)?;
     if v.is_empty() {
-        Err(winnow::error::ErrMode::Backtrack(NomError {
-            input: i,
-            kind: ErrorKind::Eof,
-        }))
+        Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Eof))
     } else {
         Ok((i, v.as_bstr()))
     }
@@ -453,10 +429,7 @@ fn take_newlines(i: &[u8]) -> IResult<&[u8], (&BStr, usize)> {
     }
     let (v, i) = i.split_at(consumed_bytes);
     if v.is_empty() {
-        Err(winnow::error::ErrMode::Backtrack(NomError {
-            input: i,
-            kind: ErrorKind::Eof,
-        }))
+        Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Eof))
     } else {
         Ok((i, (v.as_bstr(), counter)))
     }
