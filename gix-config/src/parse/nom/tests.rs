@@ -134,7 +134,7 @@ mod sub_section {
 }
 
 mod config_name {
-    use winnow::combinator::all_consuming;
+    use winnow::prelude::*;
 
     use super::config_name;
     use crate::parse::tests::util::fully_consumed;
@@ -152,8 +152,8 @@ mod config_name {
 
     #[test]
     fn only_a_subset_of_characters_is_allowed() {
-        assert!(all_consuming(config_name)(b"Name$_").is_err());
-        assert!(all_consuming(config_name)(b"other#").is_err());
+        assert!(config_name.parse_next(b"Name$_").finish().is_err());
+        assert!(config_name.parse_next(b"other#").finish().is_err());
     }
 
     #[test]

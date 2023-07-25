@@ -3,16 +3,13 @@ use std::borrow::Cow;
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use winnow::{
     branch::alt,
-    bytes::complete::{take_till, take_while},
-    character::{
-        complete::{char, one_of},
-        is_space,
-    },
+    bytes::{one_of, take_till0, take_while0},
     combinator::opt,
     error::{Error as NomError, ErrorKind},
     multi::{fold_many0, fold_many1},
     prelude::*,
     sequence::delimited,
+    stream::AsChar,
 };
 
 use crate::parse::{error::ParseNode, section, Comment, Error, Event};
@@ -76,7 +73,7 @@ pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> R
 
 fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
     let (i, comment_tag) = one_of(";#")(i)?;
-    let (i, comment) = take_till(|c| c == b'\n')(i)?;
+    let (i, comment) = take_till0(|c| c == b'\n')(i)?;
     Ok((
         i,
         Comment {
@@ -140,10 +137,10 @@ fn section<'a>(i: &'a [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Even
 fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
     let (i, _) = '['.parse_next(i)?;
     // No spaces must be between section name and section start
-    let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
+    let (i, name) = take_while0(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
 
     let name = name.as_bstr();
-    if let Ok((i, _)) = char::<_, NomError<&[u8]>>(']')(i) {
+    if let Ok((i, _)) = one_of::<_, _, NomError<&[u8]>>(']')(i) {
         // Either section does not have a subsection or using deprecated
         // subsection syntax at this point.
         let header = match memchr::memrchr(b'.', name.as_bytes()) {
@@ -160,7 +157,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
         };
 
         if header.name.is_empty() {
-            return Err(winnow::Err::Backtrack(NomError {
+            return Err(winnow::error::ErrMode::Backtrack(NomError {
                 input: i,
                 kind: ErrorKind::NoneOf,
             }));
@@ -201,7 +198,7 @@ fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResu
     while let Some(mut b) = bytes.next() {
         cursor += 1;
         if b == b'\n' || b == 0 {
-            return Err(winnow::Err::Backtrack(NomError {
+            return Err(winnow::error::ErrMode::Backtrack(NomError {
                 input: &i[cursor..],
                 kind: ErrorKind::NonEmpty,
             }));
@@ -212,7 +209,7 @@ fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResu
         }
         if b == b'\\' {
             b = bytes.next().ok_or_else(|| {
-                winnow::Err::Backtrack(NomError {
+                winnow::error::ErrMode::Backtrack(NomError {
                     input: &i[cursor..],
                     kind: ErrorKind::NonEmpty,
                 })
@@ -220,7 +217,7 @@ fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResu
             found_escape = true;
             cursor += 1;
             if b == b'\n' {
-                return Err(winnow::Err::Backtrack(NomError {
+                return Err(winnow::error::ErrMode::Backtrack(NomError {
                     input: &i[cursor..],
                     kind: ErrorKind::NonEmpty,
                 }));
@@ -230,7 +227,7 @@ fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResu
     }
 
     if !found_terminator {
-        return Err(winnow::Err::Backtrack(NomError {
+        return Err(winnow::error::ErrMode::Backtrack(NomError {
             input: &i[cursor..],
             kind: ErrorKind::NonEmpty,
         }));
@@ -263,20 +260,20 @@ fn key_value_pair<'a>(
 /// trimmed of any leading whitespace.
 fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
     if i.is_empty() {
-        return Err(winnow::Err::Backtrack(NomError {
+        return Err(winnow::error::ErrMode::Backtrack(NomError {
             input: i,
             kind: ErrorKind::NonEmpty,
         }));
     }
 
     if !i[0].is_ascii_alphabetic() {
-        return Err(winnow::Err::Backtrack(NomError {
+        return Err(winnow::error::ErrMode::Backtrack(NomError {
             input: i,
             kind: ErrorKind::Alpha,
         }));
     }
 
-    let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-')(i)?;
+    let (i, name) = take_while0(|c: u8| c.is_ascii_alphanumeric() || c == b'-')(i)?;
     Ok((i, name.as_bstr()))
 }
 
@@ -302,7 +299,7 @@ fn config_value<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResul
 /// line values as well as values that are continuations.
 fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
     let (i, value_end, newlines, mut dispatch) = {
-        let new_err = |kind| winnow::Err::Backtrack(NomError { input: i, kind });
+        let new_err = |kind| winnow::error::ErrMode::Backtrack(NomError { input: i, kind });
         let mut value_end = None::<usize>;
         let mut value_start: usize = 0;
         let mut newlines = 0;
@@ -416,9 +413,9 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
 }
 
 fn take_spaces(i: &[u8]) -> IResult<&[u8], &BStr> {
-    let (i, v) = take_while(|c: u8| c.is_ascii() && is_space(c))(i)?;
+    let (i, v) = take_while0(|c: u8| c.is_ascii() && c.is_space())(i)?;
     if v.is_empty() {
-        Err(winnow::Err::Backtrack(NomError {
+        Err(winnow::error::ErrMode::Backtrack(NomError {
             input: i,
             kind: ErrorKind::Eof,
         }))
@@ -452,7 +449,7 @@ fn take_newlines(i: &[u8]) -> IResult<&[u8], (&BStr, usize)> {
     }
     let (v, i) = i.split_at(consumed_bytes);
     if v.is_empty() {
-        Err(winnow::Err::Backtrack(NomError {
+        Err(winnow::error::ErrMode::Backtrack(NomError {
             input: i,
             kind: ErrorKind::Eof,
         }))
