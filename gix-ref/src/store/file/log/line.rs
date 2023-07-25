@@ -77,9 +77,9 @@ pub mod decode {
     use winnow::{
         bytes::complete::take_while,
         combinator::opt,
-        error::{context, ContextError, ParseError},
+        error::{ContextError, ParseError},
+        prelude::*,
         sequence::terminated,
-        IResult,
     };
 
     use crate::{file::log::LineRef, parse::hex_hash};
@@ -132,16 +132,15 @@ pub mod decode {
     }
 
     fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], LineRef<'a>, E> {
-        let (i, (old, new, signature, message_sep, message)) = context(
-            "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
-            (
-                context("<old-hexsha>", terminated(hex_hash, b" ")),
-                context("<new-hexsha>", terminated(hex_hash, b" ")),
-                context("<name> <<email>> <timestamp>", gix_actor::signature::decode),
-                opt(b'\t'),
-                context("<optional message>", message),
-            ),
-        )(bytes)?;
+        let (i, (old, new, signature, message_sep, message)) = (
+            terminated(hex_hash, b" ").context("<old-hexsha>"),
+            terminated(hex_hash, b" ").context("<new-hexsha>"),
+            gix_actor::signature::decode.context("<name> <<email>> <timestamp>"),
+            opt(b'\t'),
+            message.context("<optional message>"),
+        )
+            .context("<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>")
+            .parse_next(bytes)?;
 
         if message_sep.is_none() {
             if let Some(first) = message.first() {

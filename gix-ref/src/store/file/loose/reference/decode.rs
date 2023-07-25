@@ -2,12 +2,7 @@ use std::convert::{TryFrom, TryInto};
 
 use gix_hash::ObjectId;
 use gix_object::bstr::BString;
-use winnow::{
-    bytes::complete::take_while,
-    combinator::{map, opt},
-    sequence::terminated,
-    IResult,
-};
+use winnow::{bytes::complete::take_while, combinator::opt, prelude::*, sequence::terminated};
 
 use crate::{
     parse::{hex_hash, newline},
@@ -73,13 +68,12 @@ impl Reference {
 fn parse(bytes: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
     let is_space = |b: u8| b == b' ';
     if let (path, Some(_ref_prefix)) = opt(terminated("ref: ", take_while(is_space)))(bytes)? {
-        map(
-            terminated(take_while(|b| b != b'\r' && b != b'\n'), opt(newline)),
-            |path| MaybeUnsafeState::UnvalidatedPath(path.into()),
-        )(path)
+        terminated(take_while(|b| b != b'\r' && b != b'\n'), opt(newline))
+            .map(|path| MaybeUnsafeState::UnvalidatedPath(path.into()))
+            .parse_next(path)
     } else {
-        map(terminated(hex_hash, opt(newline)), |hex| {
-            MaybeUnsafeState::Id(ObjectId::from_hex(hex).expect("prior validation"))
-        })(bytes)
+        terminated(hex_hash, opt(newline))
+            .map(|hex| MaybeUnsafeState::Id(ObjectId::from_hex(hex).expect("prior validation")))
+            .parse_next(bytes)
     }
 }

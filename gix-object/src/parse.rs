@@ -1,11 +1,11 @@
 use bstr::{BStr, BString, ByteVec};
 use winnow::{
     bytes::complete::{is_not, take_until, take_while_m_n},
-    combinator::{peek, recognize},
-    error::{context, ContextError, ParseError},
+    combinator::peek,
+    error::{ContextError, ParseError},
     multi::many1_count,
+    prelude::*,
     sequence::{preceded, terminated},
-    IResult,
 };
 
 use crate::ByteSlice;
@@ -17,13 +17,12 @@ const SPACE_OR_NL: &[u8] = b" \n";
 pub(crate) fn any_header_field_multi_line<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
     i: &'a [u8],
 ) -> IResult<&'a [u8], (&'a [u8], BString), E> {
-    let (i, (k, o)) = context(
-        "name <multi-line-value>",
-        peek((
-            terminated(is_not(SPACE_OR_NL), SPACE),
-            recognize((is_not(NL), NL, many1_count(terminated((SPACE, take_until(NL)), NL)))),
-        )),
-    )(i)?;
+    let (i, (k, o)) = peek((
+        terminated(is_not(SPACE_OR_NL), SPACE),
+        (is_not(NL), NL, many1_count(terminated((SPACE, take_until(NL)), NL))).recognize(),
+    ))
+    .context("name <multi-line-value>")
+    .parse_next(i)?;
     assert!(!o.is_empty(), "we have parsed more than one value here");
     let end = &o[o.len() - 1] as *const u8 as usize;
     let start_input = &i[0] as *const u8 as usize;
