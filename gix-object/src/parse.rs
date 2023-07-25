@@ -1,10 +1,10 @@
 use bstr::{BStr, BString, ByteVec};
 use winnow::{
-    bytes::complete::{is_not, tag, take_until, take_while_m_n},
+    bytes::complete::{is_not, take_until, take_while_m_n},
     combinator::{peek, recognize},
     error::{context, ContextError, ParseError},
     multi::many1_count,
-    sequence::{preceded, terminated, tuple},
+    sequence::{preceded, terminated},
     IResult,
 };
 
@@ -19,14 +19,10 @@ pub(crate) fn any_header_field_multi_line<'a, E: ParseError<&'a [u8]> + ContextE
 ) -> IResult<&'a [u8], (&'a [u8], BString), E> {
     let (i, (k, o)) = context(
         "name <multi-line-value>",
-        peek(tuple((
-            terminated(is_not(SPACE_OR_NL), tag(SPACE)),
-            recognize(tuple((
-                is_not(NL),
-                tag(NL),
-                many1_count(terminated(tuple((tag(SPACE), take_until(NL))), tag(NL))),
-            ))),
-        ))),
+        peek((
+            terminated(is_not(SPACE_OR_NL), SPACE),
+            recognize((is_not(NL), NL, many1_count(terminated((SPACE, take_until(NL)), NL)))),
+        )),
     )(i)?;
     assert!(!o.is_empty(), "we have parsed more than one value here");
     let end = &o[o.len() - 1] as *const u8 as usize;
@@ -48,17 +44,14 @@ pub(crate) fn header_field<'a, T, E: ParseError<&'a [u8]>>(
     name: &'static [u8],
     parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, E>,
 ) -> IResult<&'a [u8], T, E> {
-    terminated(preceded(terminated(tag(name), tag(SPACE)), parse_value), tag(NL))(i)
+    terminated(preceded(terminated(name, SPACE), parse_value), NL)(i)
 }
 
 pub(crate) fn any_header_field<'a, T, E: ParseError<&'a [u8]>>(
     i: &'a [u8],
     parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, E>,
 ) -> IResult<&'a [u8], (&'a [u8], T), E> {
-    terminated(
-        tuple((terminated(is_not(SPACE_OR_NL), tag(SPACE)), parse_value)),
-        tag(NL),
-    )(i)
+    terminated((terminated(is_not(SPACE_OR_NL), SPACE), parse_value), NL)(i)
 }
 
 fn is_hex_digit_lc(b: u8) -> bool {

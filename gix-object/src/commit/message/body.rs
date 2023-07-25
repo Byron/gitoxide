@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use winnow::{
-    bytes::complete::{tag, take_until1},
+    bytes::complete::take_until1,
     combinator::all_consuming,
     error::{ErrorKind, ParseError},
     sequence::terminated,
@@ -33,7 +33,7 @@ pub struct TrailerRef<'a> {
 }
 
 fn parse_single_line_trailer<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, &'a BStr), E> {
-    let (value, token) = terminated(take_until1(b":".as_ref()), tag(b": "))(i.trim_end())?;
+    let (value, token) = terminated(take_until1(b":".as_ref()), b": ")(i.trim_end())?;
     if token.trim_end().len() != token.len() || value.trim_start().len() != value.len() {
         Err(winnow::Err::from_error_kind(i, ErrorKind::Fail).cut())
     } else {

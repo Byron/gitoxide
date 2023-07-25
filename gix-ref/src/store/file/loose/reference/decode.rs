@@ -3,7 +3,7 @@ use std::convert::{TryFrom, TryInto};
 use gix_hash::ObjectId;
 use gix_object::bstr::BString;
 use winnow::{
-    bytes::complete::{tag, take_while},
+    bytes::complete::take_while,
     combinator::{map, opt},
     sequence::terminated,
     IResult,
@@ -72,7 +72,7 @@ impl Reference {
 
 fn parse(bytes: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
     let is_space = |b: u8| b == b' ';
-    if let (path, Some(_ref_prefix)) = opt(terminated(tag("ref: "), take_while(is_space)))(bytes)? {
+    if let (path, Some(_ref_prefix)) = opt(terminated("ref: ", take_while(is_space)))(bytes)? {
         map(
             terminated(take_while(|b| b != b'\r' && b != b'\n'), opt(newline)),
             |path| MaybeUnsafeState::UnvalidatedPath(path.into()),

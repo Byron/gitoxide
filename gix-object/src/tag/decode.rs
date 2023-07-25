@@ -4,7 +4,7 @@ use winnow::{
     character::is_alphabetic,
     combinator::{all_consuming, opt, recognize},
     error::{context, ContextError, ParseError},
-    sequence::{preceded, tuple},
+    sequence::preceded,
     IResult,
 };
 
@@ -61,21 +61,21 @@ pub fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&
         Ok((&[], (i, &[])))
     }
     let (i, (message, signature)) = alt((
-        tuple((
+        (
             take_until(PGP_SIGNATURE_BEGIN),
             preceded(
-                tag(NL),
-                recognize(tuple((
-                    tag(&PGP_SIGNATURE_BEGIN[1..]),
+                NL,
+                recognize((
+                    &PGP_SIGNATURE_BEGIN[1..],
                     take_until(PGP_SIGNATURE_END),
-                    tag(PGP_SIGNATURE_END),
+                    PGP_SIGNATURE_END,
                     take_while(|_| true),
-                ))),
+                )),
             ),
-        )),
+        ),
         all_to_end,
     ))(i)?;
-    let (i, _) = opt(tag(NL))(i)?;
+    let (i, _) = opt(NL)(i)?;
     Ok((
         i,
         (

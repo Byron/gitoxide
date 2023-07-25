@@ -118,7 +118,7 @@ mod decode {
 
     use bstr::ByteSlice;
     use winnow::{
-        bytes::complete::{tag, take, take_while1, take_while_m_n},
+        bytes::complete::{take, take_while1, take_while_m_n},
         character::is_digit,
         combinator::all_consuming,
         error::ParseError,
@@ -161,10 +161,10 @@ mod decode {
     }
 
     pub fn entry<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], EntryRef<'_>, E> {
-        let (i, mode) = terminated(take_while_m_n(5, 6, is_digit), tag(SPACE))(i)?;
+        let (i, mode) = terminated(take_while_m_n(5, 6, is_digit), SPACE)(i)?;
         let mode = tree::EntryMode::try_from(mode)
             .map_err(|invalid| winnow::Err::from_error_kind(invalid, winnow::error::ErrorKind::MapRes))?;
-        let (i, filename) = terminated(take_while1(|b| b != NULL[0]), tag(NULL))(i)?;
+        let (i, filename) = terminated(take_while1(|b| b != NULL[0]), NULL)(i)?;
         let (i, oid) = take(20u8)(i)?; // TODO: make this compatible with other hash lengths
 
         Ok((
