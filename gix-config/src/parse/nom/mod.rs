@@ -3,10 +3,10 @@ use std::borrow::Cow;
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use winnow::{
     branch::alt,
-    bytes::{one_of, take_till0, take_while0},
+    bytes::{one_of, take_till0, take_while},
+    combinator::fold_repeat,
     combinator::opt,
     error::{Error as NomError, ErrorKind},
-    multi::{fold_many0, fold_many1},
     prelude::*,
     sequence::delimited,
     stream::AsChar,
@@ -18,7 +18,8 @@ use crate::parse::{error::ParseNode, section, Comment, Error, Event};
 pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> Result<(), Error> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
-    let (i, _) = fold_many0(
+    let (i, _) = fold_repeat(
+        0..,
         alt((
             comment.map(Event::Comment),
             take_spaces.map(|whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
@@ -46,7 +47,8 @@ pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> R
 
     let mut node = ParseNode::SectionHeader;
 
-    let res = fold_many1(
+    let res = fold_repeat(
+        1..,
         |i| section(i, &mut node, &mut dispatch),
         || (),
         |_acc, additional_newlines| {
@@ -139,7 +141,7 @@ fn section<'a>(i: &'a [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Even
 fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
     let (i, _) = '['.parse_next(i)?;
     // No spaces must be between section name and section start
-    let (i, name) = take_while0(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.').parse_next(i)?;
+    let (i, name) = take_while(0.., |c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.').parse_next(i)?;
 
     let name = name.as_bstr();
     if let Ok((i, _)) = one_of::<_, _, NomError<&[u8]>>(']').parse_next(i) {
@@ -275,7 +277,7 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
         }));
     }
 
-    let (i, name) = take_while0(|c: u8| c.is_ascii_alphanumeric() || c == b'-').parse_next(i)?;
+    let (i, name) = take_while(0.., |c: u8| c.is_ascii_alphanumeric() || c == b'-').parse_next(i)?;
     Ok((i, name.as_bstr()))
 }
 
@@ -415,7 +417,7 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
 }
 
 fn take_spaces(i: &[u8]) -> IResult<&[u8], &BStr> {
-    let (i, v) = take_while0(|c: u8| c.is_ascii() && c.is_space()).parse_next(i)?;
+    let (i, v) = take_while(0.., |c: u8| c.is_ascii() && c.is_space()).parse_next(i)?;
     if v.is_empty() {
         Err(winnow::error::ErrMode::Backtrack(NomError {
             input: i,

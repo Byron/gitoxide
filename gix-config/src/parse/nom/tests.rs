@@ -152,8 +152,8 @@ mod config_name {
 
     #[test]
     fn only_a_subset_of_characters_is_allowed() {
-        assert!(config_name.parse_next(b"Name$_").finish().is_err());
-        assert!(config_name.parse_next(b"other#").finish().is_err());
+        assert!(config_name.parse(b"Name$_").is_err());
+        assert!(config_name.parse(b"other#").is_err());
     }
 
     #[test]
