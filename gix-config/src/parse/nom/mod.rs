@@ -31,7 +31,8 @@ pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> R
         )),
         || (),
         |_acc, event| dispatch(event),
-    )(&input[bom.len()..])
+    )
+    .parse_next(&input[bom.len()..])
     // I don't think this can panic. many0 errors if the child parser returns
     // a success where the input was not consumed, but alt will only return Ok
     // if one of its children succeed. However, all of it's children are
@@ -51,7 +52,8 @@ pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> R
         |_acc, additional_newlines| {
             newlines += additional_newlines;
         },
-    )(i);
+    )
+    .parse_next(i);
     let (i, _) = res.map_err(|_| Error {
         line_number: newlines,
         last_attempted_parser: node,
@@ -72,8 +74,8 @@ pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> R
 }
 
 fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
-    let (i, comment_tag) = one_of(";#")(i)?;
-    let (i, comment) = take_till0(|c| c == b'\n')(i)?;
+    let (i, comment_tag) = one_of(";#").parse_next(i)?;
+    let (i, comment) = take_till0(|c| c == b'\n').parse_next(i)?;
     Ok((
         i,
         Comment {
@@ -137,10 +139,10 @@ fn section<'a>(i: &'a [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Even
 fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
     let (i, _) = '['.parse_next(i)?;
     // No spaces must be between section name and section start
-    let (i, name) = take_while0(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
+    let (i, name) = take_while0(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.').parse_next(i)?;
 
     let name = name.as_bstr();
-    if let Ok((i, _)) = one_of::<_, _, NomError<&[u8]>>(']')(i) {
+    if let Ok((i, _)) = one_of::<_, _, NomError<&[u8]>>(']').parse_next(i) {
         // Either section does not have a subsection or using deprecated
         // subsection syntax at this point.
         let header = match memchr::memrchr(b'.', name.as_bytes()) {
@@ -168,7 +170,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
     // Section header must be using modern subsection syntax at this point.
 
     let (i, whitespace) = take_spaces(i)?;
-    let (i, subsection_name) = delimited('"', opt(sub_section), "\"]")(i)?;
+    let (i, subsection_name) = delimited('"', opt(sub_section), "\"]").parse_next(i)?;
 
     Ok((
         i,
@@ -246,7 +248,7 @@ fn key_value_pair<'a>(
 
     dispatch(Event::SectionKey(section::Key(Cow::Borrowed(name))));
 
-    let (i, whitespace) = opt(take_spaces)(i)?;
+    let (i, whitespace) = opt(take_spaces).parse_next(i)?;
     if let Some(whitespace) = whitespace {
         dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));
     }
@@ -273,14 +275,14 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
         }));
     }
 
-    let (i, name) = take_while0(|c: u8| c.is_ascii_alphanumeric() || c == b'-')(i)?;
+    let (i, name) = take_while0(|c: u8| c.is_ascii_alphanumeric() || c == b'-').parse_next(i)?;
     Ok((i, name.as_bstr()))
 }
 
 fn config_value<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
-    if let (i, Some(_)) = opt('=')(i)? {
+    if let (i, Some(_)) = opt('=').parse_next(i)? {
         dispatch(Event::KeyValueSeparator);
-        let (i, whitespace) = opt(take_spaces)(i)?;
+        let (i, whitespace) = opt(take_spaces).parse_next(i)?;
         if let Some(whitespace) = whitespace {
             dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));
         }
@@ -413,7 +415,7 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
 }
 
 fn take_spaces(i: &[u8]) -> IResult<&[u8], &BStr> {
-    let (i, v) = take_while0(|c: u8| c.is_ascii() && c.is_space())(i)?;
+    let (i, v) = take_while0(|c: u8| c.is_ascii() && c.is_space()).parse_next(i)?;
     if v.is_empty() {
         Err(winnow::error::ErrMode::Backtrack(NomError {
             input: i,
