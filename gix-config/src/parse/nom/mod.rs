@@ -6,6 +6,7 @@ use winnow::{
     combinator::delimited,
     combinator::fold_repeat,
     combinator::opt,
+    combinator::repeat,
     error::{ErrorKind, InputError as NomError, ParserError as _},
     prelude::*,
     stream::AsChar,
@@ -22,9 +23,9 @@ pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> R
         0..,
         alt((
             comment.map(Event::Comment),
-            take_spaces.map(|whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
+            take_spaces1.map(|whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
             |i| {
-                let (i, (newline, counter)) = take_newlines.parse_next(i)?;
+                let (i, (newline, counter)) = take_newlines1.parse_next(i)?;
                 newlines += counter;
                 let o = Event::Newline(Cow::Borrowed(newline));
                 Ok((i, o))
@@ -76,15 +77,12 @@ pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> R
 }
 
 fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
-    let (i, comment_tag) = one_of([';', '#']).parse_next(i)?;
-    let (i, comment) = take_till0(|c| c == b'\n').parse_next(i)?;
-    Ok((
-        i,
-        Comment {
-            tag: comment_tag as u8,
-            text: Cow::Borrowed(comment.as_bstr()),
-        },
-    ))
+    (
+        one_of([';', '#']).map(|tag| tag as u8),
+        take_till0(|c| c == b'\n').map(|text: &[u8]| Cow::Borrowed(text.as_bstr())),
+    )
+        .map(|(tag, text)| Comment { tag, text })
+        .parse_next(i)
 }
 
 #[cfg(test)]
@@ -101,19 +99,15 @@ fn section<'a>(i: &'a [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Even
     loop {
         let old_i = i;
 
-        if let Ok((new_i, v)) = take_spaces(i) {
-            if old_i != new_i {
-                i = new_i;
-                dispatch(Event::Whitespace(Cow::Borrowed(v.as_bstr())));
-            }
+        if let Ok((new_i, v)) = take_spaces1(i) {
+            i = new_i;
+            dispatch(Event::Whitespace(Cow::Borrowed(v.as_bstr())));
         }
 
-        if let Ok((new_i, (v, new_newlines))) = take_newlines(i) {
-            if old_i != new_i {
-                i = new_i;
-                newlines += new_newlines;
-                dispatch(Event::Newline(Cow::Borrowed(v.as_bstr())));
-            }
+        if let Ok((new_i, (v, new_newlines))) = take_newlines1(i) {
+            i = new_i;
+            newlines += new_newlines;
+            dispatch(Event::Newline(Cow::Borrowed(v.as_bstr())));
         }
 
         if let Ok((new_i, new_newlines)) = key_value_pair(i, node, dispatch) {
@@ -168,7 +162,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
 
     // Section header must be using modern subsection syntax at this point.
 
-    let (i, whitespace) = take_spaces(i)?;
+    let (i, whitespace) = take_spaces1(i)?;
     let (i, subsection_name) = delimited('"', opt(sub_section), "\"]").parse_next(i)?;
 
     Ok((
@@ -235,7 +229,7 @@ fn key_value_pair<'a>(
 
     dispatch(Event::SectionKey(section::Key(Cow::Borrowed(name))));
 
-    let (i, whitespace) = opt(take_spaces).parse_next(i)?;
+    let (i, whitespace) = opt(take_spaces1).parse_next(i)?;
     if let Some(whitespace) = whitespace {
         dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));
     }
@@ -248,22 +242,19 @@ fn key_value_pair<'a>(
 /// Parses the config name of a config pair. Assumes the input has already been
 /// trimmed of any leading whitespace.
 fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
-    if i.is_empty() {
-        return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Fail));
-    }
-
-    if !i[0].is_ascii_alphabetic() {
-        return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Token));
-    }
-
-    let (i, name) = take_while(0.., |c: u8| c.is_ascii_alphanumeric() || c == b'-').parse_next(i)?;
-    Ok((i, name.as_bstr()))
+    (
+        one_of(|c: u8| c.is_ascii_alphabetic()),
+        take_while(0.., |c: u8| c.is_ascii_alphanumeric() || c == b'-'),
+    )
+        .recognize()
+        .map(|s: &[u8]| s.as_bstr())
+        .parse_next(i)
 }
 
 fn config_value<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
     if let (i, Some(_)) = opt('=').parse_next(i)? {
         dispatch(Event::KeyValueSeparator);
-        let (i, whitespace) = opt(take_spaces).parse_next(i)?;
+        let (i, whitespace) = opt(take_spaces1).parse_next(i)?;
         if let Some(whitespace) = whitespace {
             dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));
         }
@@ -395,42 +386,15 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
     Ok((i, newlines))
 }
 
-fn take_spaces(i: &[u8]) -> IResult<&[u8], &BStr> {
-    let (i, v) = take_while(0.., |c: u8| c.is_ascii() && c.is_space()).parse_next(i)?;
-    if v.is_empty() {
-        Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Eof))
-    } else {
-        Ok((i, v.as_bstr()))
-    }
+fn take_spaces1(i: &[u8]) -> IResult<&[u8], &BStr> {
+    take_while(1.., |c: u8| c.is_space())
+        .map(|spaces: &[u8]| spaces.as_bstr())
+        .parse_next(i)
 }
 
-fn take_newlines(i: &[u8]) -> IResult<&[u8], (&BStr, usize)> {
-    let mut counter = 0;
-    let mut consumed_bytes = 0;
-    let mut next_must_be_newline = false;
-    for b in i.iter().copied() {
-        if !b.is_ascii() {
-            break;
-        };
-        if b == b'\r' {
-            if next_must_be_newline {
-                break;
-            }
-            next_must_be_newline = true;
-            continue;
-        };
-        if b == b'\n' {
-            counter += 1;
-            consumed_bytes += if next_must_be_newline { 2 } else { 1 };
-            next_must_be_newline = false;
-        } else {
-            break;
-        }
-    }
-    let (v, i) = i.split_at(consumed_bytes);
-    if v.is_empty() {
-        Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Eof))
-    } else {
-        Ok((i, (v.as_bstr(), counter)))
-    }
+fn take_newlines1(i: &[u8]) -> IResult<&[u8], (&BStr, usize)> {
+    repeat(1.., alt(("\r\n", "\n")))
+        .with_recognized()
+        .map(|(count, newlines): (usize, &[u8])| (newlines.as_bstr(), count))
+        .parse_next(i)
 }
