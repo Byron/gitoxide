@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use winnow::{
     branch::alt,
-    bytes::complete::{tag, take_till, take_while},
+    bytes::complete::{take_till, take_while},
     character::{
         complete::{char, one_of},
         is_space,
@@ -11,8 +11,8 @@ use winnow::{
     combinator::{map, opt},
     error::{Error as NomError, ErrorKind},
     multi::{fold_many0, fold_many1},
+    prelude::*,
     sequence::delimited,
-    IResult,
 };
 
 use crate::parse::{error::ParseNode, section, Comment, Error, Event};
@@ -136,7 +136,7 @@ fn section<'a>(i: &'a [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Even
 }
 
 fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
-    let (i, _) = char('[')(i)?;
+    let (i, _) = '['.parse_next(i)?;
     // No spaces must be between section name and section start
     let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
 
@@ -169,7 +169,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
     // Section header must be using modern subsection syntax at this point.
 
     let (i, whitespace) = take_spaces(i)?;
-    let (i, subsection_name) = delimited(char('"'), opt(sub_section), tag("\"]"))(i)?;
+    let (i, subsection_name) = delimited('"', opt(sub_section), "\"]")(i)?;
 
     Ok((
         i,
@@ -279,7 +279,7 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
 }
 
 fn config_value<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
-    if let (i, Some(_)) = opt(char('='))(i)? {
+    if let (i, Some(_)) = opt('=')(i)? {
         dispatch(Event::KeyValueSeparator);
         let (i, whitespace) = opt(take_spaces)(i)?;
         if let Some(whitespace) = whitespace {
