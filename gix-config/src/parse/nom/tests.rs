@@ -134,7 +134,7 @@ mod sub_section {
 }
 
 mod config_name {
-    use nom::combinator::all_consuming;
+    use winnow::combinator::all_consuming;
 
     use super::config_name;
     use crate::parse::tests::util::fully_consumed;
@@ -174,7 +174,7 @@ mod section {
         Event, Section,
     };
 
-    fn section<'a>(i: &'a [u8], node: &mut ParseNode) -> nom::IResult<&'a [u8], (Section<'a>, usize)> {
+    fn section<'a>(i: &'a [u8], node: &mut ParseNode) -> winnow::IResult<&'a [u8], (Section<'a>, usize)> {
         let mut header = None;
         let mut events = section::Events::default();
         super::section(i, node, &mut |e| match &header {
@@ -567,7 +567,7 @@ mod value_continuation {
         tests::util::{into_events, newline_custom_event, newline_event, value_done_event, value_not_done_event},
     };
 
-    pub fn value_impl<'a>(i: &'a [u8], events: &mut section::Events<'a>) -> nom::IResult<&'a [u8], ()> {
+    pub fn value_impl<'a>(i: &'a [u8], events: &mut section::Events<'a>) -> winnow::IResult<&'a [u8], ()> {
         super::value_impl(i, &mut |e| events.push(e)).map(|t| (t.0, ()))
     }
 
@@ -843,7 +843,7 @@ mod key_value_pair {
         i: &'a [u8],
         node: &mut ParseNode,
         events: &mut section::Events<'a>,
-    ) -> nom::IResult<&'a [u8], ()> {
+    ) -> winnow::IResult<&'a [u8], ()> {
         super::key_value_pair(i, node, &mut |e| events.push(e)).map(|t| (t.0, ()))
     }
 
