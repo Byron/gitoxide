@@ -75,10 +75,10 @@ impl<'a> From<LineRef<'a>> for Line {
 pub mod decode {
     use gix_object::bstr::{BStr, ByteSlice};
     use winnow::{
-        bytes::complete::{tag, take_while},
+        bytes::complete::take_while,
         combinator::opt,
         error::{context, ContextError, ParseError},
-        sequence::{terminated, tuple},
+        sequence::terminated,
         IResult,
     };
 
@@ -127,20 +127,20 @@ pub mod decode {
         if i.is_empty() {
             Ok((&[], i.as_bstr()))
         } else {
-            terminated(take_while(|c| c != b'\n'), opt(tag(b"\n")))(i).map(|(i, o)| (i, o.as_bstr()))
+            terminated(take_while(|c| c != b'\n'), opt(b'\n'))(i).map(|(i, o)| (i, o.as_bstr()))
         }
     }
 
     fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], LineRef<'a>, E> {
         let (i, (old, new, signature, message_sep, message)) = context(
             "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
-            tuple((
-                context("<old-hexsha>", terminated(hex_hash, tag(b" "))),
-                context("<new-hexsha>", terminated(hex_hash, tag(b" "))),
+            (
+                context("<old-hexsha>", terminated(hex_hash, b" ")),
+                context("<new-hexsha>", terminated(hex_hash, b" ")),
                 context("<name> <<email>> <timestamp>", gix_actor::signature::decode),
-                opt(tag(b"\t")),
+                opt(b'\t'),
                 context("<optional message>", message),
-            )),
+            ),
         )(bytes)?;
 
         if message_sep.is_none() {

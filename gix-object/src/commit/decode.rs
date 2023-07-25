@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use smallvec::SmallVec;
 use winnow::{
     branch::alt,
-    bytes::complete::{is_not, tag},
+    bytes::complete::is_not,
     combinator::{all_consuming, opt},
     error::{context, ContextError, ParseError},
     multi::many0,
@@ -18,7 +18,7 @@ pub fn message<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
         return Err(winnow::Err::from_error_kind(i, winnow::error::ErrorKind::Eof)
             .map(|err: E| err.add_context(i, "newline + <message>")));
     }
-    let (i, _) = context("a newline separates headers from the message", tag(NL))(i)?;
+    let (i, _) = context("a newline separates headers from the message", NL)(i)?;
     Ok((&[], i.as_bstr()))
 }
 

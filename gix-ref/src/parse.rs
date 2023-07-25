@@ -1,10 +1,5 @@
 use gix_object::bstr::{BStr, ByteSlice};
-use winnow::{
-    branch::alt,
-    bytes::complete::{tag, take_while_m_n},
-    error::ParseError,
-    IResult,
-};
+use winnow::{branch::alt, bytes::complete::take_while_m_n, error::ParseError, IResult};
 
 fn is_hex_digit_lc(b: u8) -> bool {
     matches!(b, b'0'..=b'9' | b'a'..=b'f')
@@ -23,5 +18,5 @@ pub fn hex_hash<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &
 }
 
 pub fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
-    alt((tag(b"\r\n"), tag(b"\n")))(i)
+    alt((b"\r\n", b"\n"))(i)
 }

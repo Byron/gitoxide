@@ -1,16 +1,9 @@
-use winnow::{
-    branch::alt,
-    bytes::complete::{tag, take_till1},
-    combinator::all_consuming,
-    error::ParseError,
-    sequence::pair,
-    IResult,
-};
+use winnow::{branch::alt, bytes::complete::take_till1, combinator::all_consuming, error::ParseError, prelude::*};
 
 use crate::bstr::{BStr, ByteSlice};
 
 pub(crate) fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
-    alt((tag(b"\r\n"), tag(b"\n")))(i)
+    alt((b"\r\n", b"\n"))(i)
 }
 
 fn subject_and_body<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
@@ -20,7 +13,7 @@ fn subject_and_body<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8
         c = match take_till1::<_, _, E>(|c| c == b'\n' || c == b'\r')(c) {
             Ok((i1, segment)) => {
                 consumed_bytes += segment.len();
-                match pair::<_, _, _, E, _, _>(newline, newline)(i1) {
+                match (newline::<E>, newline::<E>).parse_next(i1) {
                     Ok((body, _)) => {
                         return Ok((
                             &[],
