@@ -1,11 +1,12 @@
 use std::borrow::Cow;
 
-use bstr::{BStr, BString, ByteSlice, ByteVec};
+use bstr::{BStr, ByteSlice};
 use winnow::{
     combinator::alt,
     combinator::delimited,
     combinator::fold_repeat,
     combinator::opt,
+    combinator::preceded,
     combinator::repeat,
     error::{ErrorKind, InputError as NomError, ParserError as _},
     prelude::*,
@@ -175,48 +176,38 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
     ))
 }
 
-fn sub_section(i: &[u8]) -> IResult<&[u8], Cow<'_, BStr>> {
-    let (rest, (found_escape, consumed)) = sub_section_delegate(i, &mut |_| ())?;
-    if found_escape {
-        let mut buf = BString::default();
-        sub_section_delegate(i, &mut |b| buf.push_byte(b)).map(|(i, _)| (i, buf.into()))
-    } else {
-        Ok((rest, i[..consumed].as_bstr().into()))
+fn sub_section(mut i: &[u8]) -> IResult<&[u8], Cow<'_, BStr>> {
+    let mut output = Cow::Borrowed(Default::default());
+    if let (next_i, Some(sub)) = opt(subsection_subset).parse_next(i)? {
+        i = next_i;
+        output = Cow::Borrowed(sub.as_bstr());
     }
+    while let (next_i, Some(sub)) = opt(subsection_subset).parse_next(i)? {
+        i = next_i;
+        output.to_mut().extend(sub);
+    }
+
+    Ok((i, output))
 }
 
-fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResult<&'a [u8], (bool, usize)> {
-    let mut cursor = 0;
-    let mut bytes = i.iter().copied();
-    let mut found_terminator = false;
-    let mut found_escape = false;
-    while let Some(mut b) = bytes.next() {
-        cursor += 1;
-        if b == b'\n' || b == 0 {
-            return Err(winnow::error::ErrMode::from_error_kind(&i[cursor..], ErrorKind::Fail));
-        }
-        if b == b'"' {
-            found_terminator = true;
-            break;
-        }
-        if b == b'\\' {
-            b = bytes
-                .next()
-                .ok_or_else(|| winnow::error::ErrMode::from_error_kind(&i[cursor..], ErrorKind::Fail))?;
-            found_escape = true;
-            cursor += 1;
-            if b == b'\n' {
-                return Err(winnow::error::ErrMode::from_error_kind(&i[cursor..], ErrorKind::Fail));
-            }
-        }
-        push_byte(b);
-    }
+fn subsection_subset(i: &[u8]) -> IResult<&[u8], &[u8]> {
+    alt((subsection_unescaped, subsection_escaped_char)).parse_next(i)
+}
 
-    if !found_terminator {
-        return Err(winnow::error::ErrMode::from_error_kind(&i[cursor..], ErrorKind::Fail));
-    }
+fn subsection_unescaped(i: &[u8]) -> IResult<&[u8], &[u8]> {
+    take_while(1.., is_subsection_unescaped_char).parse_next(i)
+}
 
-    Ok((&i[cursor - 1..], (found_escape, cursor - 1)))
+fn subsection_escaped_char(i: &[u8]) -> IResult<&[u8], &[u8]> {
+    preceded('\\', one_of(is_subsection_escapeable_char).recognize()).parse_next(i)
+}
+
+fn is_subsection_escapeable_char(c: u8) -> bool {
+    c != b'\n'
+}
+
+fn is_subsection_unescaped_char(c: u8) -> bool {
+    c != b'"' && c != b'\\' && c != b'\n' && c != 0
 }
 
 fn key_value_pair<'a>(
