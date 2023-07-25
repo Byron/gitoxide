@@ -8,7 +8,7 @@ use winnow::{
         complete::{char, one_of},
         is_space,
     },
-    combinator::{map, opt},
+    combinator::opt,
     error::{Error as NomError, ErrorKind},
     multi::{fold_many0, fold_many1},
     prelude::*,
@@ -23,12 +23,14 @@ pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> R
     let mut newlines = 0;
     let (i, _) = fold_many0(
         alt((
-            map(comment, Event::Comment),
-            map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
-            map(take_newlines, |(newline, counter)| {
+            comment.map(Event::Comment),
+            take_spaces.map(|whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
+            |i| {
+                let (i, (newline, counter)) = take_newlines.parse_next(i)?;
                 newlines += counter;
-                Event::Newline(Cow::Borrowed(newline))
-            }),
+                let o = Event::Newline(Cow::Borrowed(newline));
+                Ok((i, o))
+            },
         )),
         || (),
         |_acc, event| dispatch(event),
