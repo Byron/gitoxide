@@ -9,7 +9,7 @@ fn round_trip() -> gix_testtools::Result {
         b".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere  <byronimo@gmail.com>"
     ];
     for input in DEFAULTS {
-        let signature: Identity = gix_actor::IdentityRef::from_bytes::<()>(input)?.into();
+        let signature: Identity = gix_actor::IdentityRef::from_bytes::<()>(input).unwrap().into();
         let mut output = Vec::new();
         signature.write_to(&mut output)?;
         assert_eq!(output.as_bstr(), input.as_bstr());

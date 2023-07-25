@@ -1,4 +1,4 @@
-use nom::{
+use winnow::{
     branch::alt,
     bytes::complete::{tag, take_until, take_while, take_while1},
     character::is_alphabetic,
@@ -19,7 +19,7 @@ pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
         parse::header_field(i, b"type", take_while1(is_alphabetic))
     })(i)?;
     let kind = crate::Kind::from_bytes(kind)
-        .map_err(|_| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))?;
+        .map_err(|_| winnow::Err::Backtrack(E::from_error_kind(i, winnow::error::ErrorKind::MapRes)))?;
 
     let (i, tag_version) = context("tag <version>", |i| {
         parse::header_field(i, b"tag", take_while1(|b| b != NL[0]))

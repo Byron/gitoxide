@@ -5,9 +5,9 @@ mod _ref {
 
     impl<'a> SignatureRef<'a> {
         /// Deserialize a signature from the given `data`.
-        pub fn from_bytes<E>(data: &'a [u8]) -> Result<SignatureRef<'a>, nom::Err<E>>
+        pub fn from_bytes<E>(data: &'a [u8]) -> Result<SignatureRef<'a>, winnow::Err<E>>
         where
-            E: nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'a [u8]>,
+            E: winnow::error::ParseError<&'a [u8]> + winnow::error::ContextError<&'a [u8]>,
         {
             decode(data).map(|(_, t)| t)
         }

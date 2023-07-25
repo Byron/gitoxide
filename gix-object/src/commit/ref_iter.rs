@@ -3,7 +3,7 @@ use std::ops::Range;
 
 use bstr::BStr;
 use gix_hash::{oid, ObjectId};
-use nom::{
+use winnow::{
     branch::alt,
     bytes::complete::is_not,
     combinator::{all_consuming, opt},

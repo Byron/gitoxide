@@ -1,6 +1,6 @@
 use bstr::BStr;
 use gix_hash::{oid, ObjectId};
-use nom::{
+use winnow::{
     bytes::complete::take_while1,
     character::is_alphabetic,
     combinator::{all_consuming, opt},
@@ -79,8 +79,8 @@ impl<'a> TagRefIter<'a> {
                 let kind = Kind::from_bytes(kind).map_err(|_| {
                     #[allow(clippy::let_unit_value)]
                     {
-                        let err = crate::decode::ParseError::from_error_kind(i, nom::error::ErrorKind::MapRes);
-                        nom::Err::Error(err)
+                        let err = crate::decode::ParseError::from_error_kind(i, winnow::error::ErrorKind::MapRes);
+                        winnow::Err::Backtrack(err)
                     }
                 })?;
                 *state = Name;

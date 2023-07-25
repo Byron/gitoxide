@@ -2,7 +2,7 @@ use std::convert::{TryFrom, TryInto};
 
 use gix_hash::ObjectId;
 use gix_object::bstr::BString;
-use nom::{
+use winnow::{
     bytes::complete::{tag, take_while},
     combinator::{map, opt},
     sequence::terminated,
