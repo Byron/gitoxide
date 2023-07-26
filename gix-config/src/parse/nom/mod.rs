@@ -100,29 +100,25 @@ fn section<'a>(i: &'a [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Even
     loop {
         let old_i = i;
 
-        if let Ok((new_i, v)) = take_spaces1(i) {
+        if let (new_i, Some(v)) = opt(take_spaces1).parse_next(i)? {
             i = new_i;
             dispatch(Event::Whitespace(Cow::Borrowed(v.as_bstr())));
         }
 
-        if let Ok((new_i, (v, new_newlines))) = take_newlines1(i) {
+        if let (new_i, Some((v, new_newlines))) = opt(take_newlines1).parse_next(i)? {
             i = new_i;
             newlines += new_newlines;
             dispatch(Event::Newline(Cow::Borrowed(v.as_bstr())));
         }
 
         if let Ok((new_i, new_newlines)) = key_value_pair(i, node, dispatch) {
-            if old_i != new_i {
-                i = new_i;
-                newlines += new_newlines;
-            }
+            i = new_i;
+            newlines += new_newlines;
         }
 
-        if let Ok((new_i, comment)) = comment(i) {
-            if old_i != new_i {
-                i = new_i;
-                dispatch(Event::Comment(comment));
-            }
+        if let (new_i, Some(comment)) = opt(comment).parse_next(i)? {
+            i = new_i;
+            dispatch(Event::Comment(comment));
         }
 
         if old_i == i {
