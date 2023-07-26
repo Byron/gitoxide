@@ -257,7 +257,7 @@ fn config_value<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResul
 /// line values as well as values that are continuations.
 fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<&'i [u8], usize> {
     let new_err = |kind| winnow::error::ErrMode::from_error_kind(i, kind);
-    let mut value_end = None::<usize>;
+    let mut value_end = None;
     let mut value_start: usize = 0;
     let mut newlines = 0;
 
@@ -266,14 +266,17 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
     let mut is_in_quotes = false;
     // Used to determine if we return a Value or Value{Not,}Done
     let mut partial_value_found = false;
-    let mut last_value_index: usize = 0;
+    let mut current_index: usize = 0;
 
     let mut bytes = i.iter();
     while let Some(mut c) = bytes.next() {
         if prev_char_was_backslash {
             prev_char_was_backslash = false;
+            let escape_index = current_index - 1;
+            let escaped_index = current_index;
             let mut consumed = 1;
             if *c == b'\r' {
+                current_index += 1;
                 c = bytes.next().ok_or_else(|| new_err(ErrorKind::Token))?;
                 if *c != b'\n' {
                     return Err(new_err(ErrorKind::Slice));
@@ -284,21 +287,16 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
             match c {
                 b'\n' => {
                     partial_value_found = true;
-                    let backslash = 1;
                     dispatch(Event::ValueNotDone(Cow::Borrowed(
-                        i[value_start..last_value_index - backslash].as_bstr(),
+                        i[value_start..escape_index].as_bstr(),
                     )));
-                    let nl_end = last_value_index + consumed;
-                    dispatch(Event::Newline(Cow::Borrowed(i[last_value_index..nl_end].as_bstr())));
+                    let nl_end = escaped_index + consumed;
+                    dispatch(Event::Newline(Cow::Borrowed(i[escaped_index..nl_end].as_bstr())));
                     value_start = nl_end;
                     value_end = None;
                     newlines += 1;
-
-                    last_value_index += consumed;
                 }
-                b'n' | b't' | b'\\' | b'b' | b'"' => {
-                    last_value_index += 1;
-                }
+                b'n' | b't' | b'\\' | b'b' | b'"' => {}
                 _ => {
                     return Err(new_err(ErrorKind::Token));
                 }
@@ -306,19 +304,19 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
         } else {
             match c {
                 b'\n' => {
-                    value_end = last_value_index.into();
+                    value_end = Some(current_index);
                     break;
                 }
                 b';' | b'#' if !is_in_quotes => {
-                    value_end = last_value_index.into();
+                    value_end = Some(current_index);
                     break;
                 }
                 b'\\' => prev_char_was_backslash = true,
                 b'"' => is_in_quotes = !is_in_quotes,
                 _ => {}
             }
-            last_value_index += 1;
         }
+        current_index += 1;
     }
     if prev_char_was_backslash {
         return Err(new_err(ErrorKind::Token));
@@ -326,6 +324,7 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
     if is_in_quotes {
         return Err(new_err(ErrorKind::Slice));
     }
+    let last_value_index = current_index;
 
     let value_end = match value_end {
         None => {
