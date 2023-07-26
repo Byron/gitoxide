@@ -10,32 +10,34 @@ use winnow::{
     combinator::repeat,
     error::{ErrorKind, InputError as NomError, ParserError as _},
     prelude::*,
-    stream::AsChar,
+    stream::{AsChar, Offset as _, Stream as _},
     token::{one_of, take_till0, take_while},
 };
 
 use crate::parse::{error::ParseNode, section, Comment, Error, Event};
 
 /// Attempt to zero-copy parse the provided bytes, passing results to `dispatch`.
-pub fn from_bytes<'i>(input: &'i [u8], mut dispatch: impl FnMut(Event<'i>)) -> Result<(), Error> {
+pub fn from_bytes<'i>(mut input: &'i [u8], mut dispatch: impl FnMut(Event<'i>)) -> Result<(), Error> {
     let bom = unicode_bom::Bom::from(input);
+    input.next_slice(bom.len());
+
     let mut newlines = 0;
-    let (i, _) = fold_repeat(
+    let _ = fold_repeat(
         0..,
         alt((
             comment.map(Event::Comment),
             take_spaces1.map(|whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
-            |i| {
-                let (i, (newline, counter)) = take_newlines1.parse_next(i)?;
+            |i: &mut &'i [u8]| {
+                let (newline, counter) = take_newlines1.parse_next(i)?;
                 newlines += counter;
                 let o = Event::Newline(Cow::Borrowed(newline));
-                Ok((i, o))
+                Ok(o)
             },
         )),
         || (),
         |_acc, event| dispatch(event),
     )
-    .parse_next(&input[bom.len()..])
+    .parse_next(&mut input)
     // I don't think this can panic. many0 errors if the child parser returns
     // a success where the input was not consumed, but alt will only return Ok
     // if one of its children succeed. However, all of it's children are
@@ -43,7 +45,7 @@ pub fn from_bytes<'i>(input: &'i [u8], mut dispatch: impl FnMut(Event<'i>)) -> R
     // can never occur.
     .expect("many0(alt(...)) panicked. Likely a bug in one of the children parsers.");
 
-    if i.is_empty() {
+    if input.is_empty() {
         return Ok(());
     }
 
@@ -51,33 +53,33 @@ pub fn from_bytes<'i>(input: &'i [u8], mut dispatch: impl FnMut(Event<'i>)) -> R
 
     let res = fold_repeat(
         1..,
-        |i| section(i, &mut node, &mut dispatch),
+        |i: &mut &'i [u8]| section(i, &mut node, &mut dispatch),
         || (),
         |_acc, additional_newlines| {
             newlines += additional_newlines;
         },
     )
-    .parse_next(i);
-    let (i, _) = res.map_err(|_| Error {
+    .parse_next(&mut input);
+    res.map_err(|_| Error {
         line_number: newlines,
         last_attempted_parser: node,
-        parsed_until: i.as_bstr().into(),
+        parsed_until: input.as_bstr().into(),
     })?;
 
     // This needs to happen after we collect sections, otherwise the line number
     // will be off.
-    if !i.is_empty() {
+    if !input.is_empty() {
         return Err(Error {
             line_number: newlines,
             last_attempted_parser: node,
-            parsed_until: i.as_bstr().into(),
+            parsed_until: input.as_bstr().into(),
         });
     }
 
     Ok(())
 }
 
-fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
+fn comment<'i>(i: &mut &'i [u8]) -> PResult<Comment<'i>, NomError<&'i [u8]>> {
     (
         one_of([';', '#']).map(|tag| tag as u8),
         take_till0(|c| c == b'\n').map(|text: &[u8]| Cow::Borrowed(text.as_bstr())),
@@ -89,8 +91,16 @@ fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
 #[cfg(test)]
 mod tests;
 
-fn section<'i>(i: &'i [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Event<'i>)) -> IResult<&'i [u8], usize> {
-    let (mut i, header) = section_header(i)?;
+fn section<'i>(
+    i: &mut &'i [u8],
+    node: &mut ParseNode,
+    dispatch: &mut impl FnMut(Event<'i>),
+) -> PResult<usize, NomError<&'i [u8]>> {
+    let start = i.checkpoint();
+    let header = section_header(i).map_err(|e| {
+        i.reset(start);
+        e
+    })?;
     dispatch(Event::SectionHeader(header));
 
     let mut newlines = 0;
@@ -98,42 +108,38 @@ fn section<'i>(i: &'i [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Even
     // This would usually be a many0(alt(...)), the manual loop allows us to
     // optimize vec insertions
     loop {
-        let old_i = i;
+        let start = i.checkpoint();
 
-        if let (new_i, Some(v)) = opt(take_spaces1).parse_next(i)? {
-            i = new_i;
+        if let Some(v) = opt(take_spaces1).parse_next(i)? {
             dispatch(Event::Whitespace(Cow::Borrowed(v.as_bstr())));
         }
 
-        if let (new_i, Some((v, new_newlines))) = opt(take_newlines1).parse_next(i)? {
-            i = new_i;
+        if let Some((v, new_newlines)) = opt(take_newlines1).parse_next(i)? {
             newlines += new_newlines;
             dispatch(Event::Newline(Cow::Borrowed(v.as_bstr())));
         }
 
-        if let Ok((new_i, new_newlines)) = key_value_pair(i, node, dispatch) {
-            i = new_i;
+        if let Ok(new_newlines) = key_value_pair(i, node, dispatch) {
             newlines += new_newlines;
         }
 
-        if let (new_i, Some(comment)) = opt(comment).parse_next(i)? {
-            i = new_i;
+        if let Some(comment) = opt(comment).parse_next(i)? {
             dispatch(Event::Comment(comment));
         }
 
-        if old_i == i {
+        if i.offset_from(&start) == 0 {
             break;
         }
     }
 
-    Ok((i, newlines))
+    Ok(newlines)
 }
 
-fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
+fn section_header<'i>(i: &mut &'i [u8]) -> PResult<section::Header<'i>, NomError<&'i [u8]>> {
     // No spaces must be between section name and section start
-    let (i, name) = preceded('[', take_while(1.., is_section_char).map(|name: &[u8]| name.as_bstr())).parse_next(i)?;
+    let name = preceded('[', take_while(1.., is_section_char).map(|name: &[u8]| name.as_bstr())).parse_next(i)?;
 
-    if let (i, Some(_)) = opt(one_of::<_, _, NomError<&[u8]>>(']')).parse_next(i)? {
+    if let Some(_) = opt(one_of::<_, _, NomError<&[u8]>>(']')).parse_next(i)? {
         // Either section does not have a subsection or using deprecated
         // subsection syntax at this point.
         let header = match memchr::memrchr(b'.', name.as_bytes()) {
@@ -152,7 +158,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
         if header.name.is_empty() {
             return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Fail));
         }
-        return Ok((i, header));
+        return Ok(header);
     }
 
     // Section header must be using modern subsection syntax at this point.
@@ -169,29 +175,27 @@ fn is_section_char(c: u8) -> bool {
     c.is_ascii_alphanumeric() || c == b'-' || c == b'.'
 }
 
-fn sub_section(mut i: &[u8]) -> IResult<&[u8], Cow<'_, BStr>> {
+fn sub_section<'i>(i: &mut &'i [u8]) -> PResult<Cow<'i, BStr>, NomError<&'i [u8]>> {
     let mut output = Cow::Borrowed(Default::default());
-    if let (next_i, Some(sub)) = opt(subsection_subset).parse_next(i)? {
-        i = next_i;
+    if let Some(sub) = opt(subsection_subset).parse_next(i)? {
         output = Cow::Borrowed(sub.as_bstr());
     }
-    while let (next_i, Some(sub)) = opt(subsection_subset).parse_next(i)? {
-        i = next_i;
+    while let Some(sub) = opt(subsection_subset).parse_next(i)? {
         output.to_mut().extend(sub);
     }
 
-    Ok((i, output))
+    Ok(output)
 }
 
-fn subsection_subset(i: &[u8]) -> IResult<&[u8], &[u8]> {
+fn subsection_subset<'i>(i: &mut &'i [u8]) -> PResult<&'i [u8], NomError<&'i [u8]>> {
     alt((subsection_unescaped, subsection_escaped_char)).parse_next(i)
 }
 
-fn subsection_unescaped(i: &[u8]) -> IResult<&[u8], &[u8]> {
+fn subsection_unescaped<'i>(i: &mut &'i [u8]) -> PResult<&'i [u8], NomError<&'i [u8]>> {
     take_while(1.., is_subsection_unescaped_char).parse_next(i)
 }
 
-fn subsection_escaped_char(i: &[u8]) -> IResult<&[u8], &[u8]> {
+fn subsection_escaped_char<'i>(i: &mut &'i [u8]) -> PResult<&'i [u8], NomError<&'i [u8]>> {
     preceded('\\', one_of(is_subsection_escapeable_char).recognize()).parse_next(i)
 }
 
@@ -204,28 +208,27 @@ fn is_subsection_unescaped_char(c: u8) -> bool {
 }
 
 fn key_value_pair<'i>(
-    i: &'i [u8],
+    i: &mut &'i [u8],
     node: &mut ParseNode,
     dispatch: &mut impl FnMut(Event<'i>),
-) -> IResult<&'i [u8], usize> {
+) -> PResult<usize, NomError<&'i [u8]>> {
     *node = ParseNode::Name;
-    let (i, name) = config_name(i)?;
+    let name = config_name.parse_next(i)?;
 
     dispatch(Event::SectionKey(section::Key(Cow::Borrowed(name))));
 
-    let (i, whitespace) = opt(take_spaces1).parse_next(i)?;
-    if let Some(whitespace) = whitespace {
+    if let Some(whitespace) = opt(take_spaces1).parse_next(i)? {
         dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));
     }
 
     *node = ParseNode::Value;
-    let (i, newlines) = config_value(i, dispatch)?;
-    Ok((i, newlines))
+    let newlines = config_value(i, dispatch)?;
+    Ok(newlines)
 }
 
 /// Parses the config name of a config pair. Assumes the input has already been
 /// trimmed of any leading whitespace.
-fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
+fn config_name<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
     (
         one_of(|c: u8| c.is_ascii_alphabetic()),
         take_while(0.., |c: u8| c.is_ascii_alphanumeric() || c == b'-'),
@@ -235,28 +238,27 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
         .parse_next(i)
 }
 
-fn config_value<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<&'i [u8], usize> {
-    if let (i, Some(_)) = opt('=').parse_next(i)? {
+fn config_value<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PResult<usize, NomError<&'i [u8]>> {
+    if opt('=').parse_next(i)?.is_some() {
         dispatch(Event::KeyValueSeparator);
-        let (i, whitespace) = opt(take_spaces1).parse_next(i)?;
-        if let Some(whitespace) = whitespace {
+        if let Some(whitespace) = opt(take_spaces1).parse_next(i)? {
             dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));
         }
-        let (i, newlines) = value_impl(i, dispatch)?;
-        Ok((i, newlines))
+        let newlines = value_impl(i, dispatch)?;
+        Ok(newlines)
     } else {
         // This is a special way of denoting 'empty' values which a lot of code depends on.
         // Hence, rather to fix this everywhere else, leave it here and fix it where it matters, namely
         // when it's about differentiating between a missing key-value separator, and one followed by emptiness.
         dispatch(Event::Value(Cow::Borrowed("".into())));
-        Ok((i, 0))
+        Ok(0)
     }
 }
 
 /// Handles parsing of known-to-be values. This function handles both single
 /// line values as well as values that are continuations.
-fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<&'i [u8], usize> {
-    let start_i = i;
+fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PResult<usize, NomError<&'i [u8]>> {
+    let start_checkpoint = i.checkpoint();
     let mut value_end = None;
     let mut value_start: usize = 0;
     let mut newlines = 0;
@@ -267,8 +269,7 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
     let mut partial_value_found = false;
     let mut current_index: usize = 0;
 
-    let mut bytes = i.iter();
-    while let Some(c) = bytes.next() {
+    while let Some(c) = i.next_token() {
         match c {
             b'\n' => {
                 value_end = Some(current_index);
@@ -280,19 +281,22 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
             }
             b'\\' => {
                 current_index += 1;
-                let Some(mut c) = bytes.next() else {
-                    return Err(winnow::error::ErrMode::from_error_kind(start_i, ErrorKind::Token));
+                let Some(mut c) = i.next_token() else {
+                    i.reset(start_checkpoint);
+                    return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Token));
                 };
                 let escape_index = current_index - 1;
                 let escaped_index = current_index;
                 let mut consumed = 1;
-                if *c == b'\r' {
+                if c == b'\r' {
                     current_index += 1;
-                    c = bytes
-                        .next()
-                        .ok_or_else(|| winnow::error::ErrMode::from_error_kind(start_i, ErrorKind::Token))?;
-                    if *c != b'\n' {
-                        return Err(winnow::error::ErrMode::from_error_kind(start_i, ErrorKind::Slice));
+                    c = i.next_token().ok_or_else(|| {
+                        i.reset(start_checkpoint);
+                        winnow::error::ErrMode::from_error_kind(i, ErrorKind::Token)
+                    })?;
+                    if c != b'\n' {
+                        i.reset(start_checkpoint);
+                        return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Slice));
                     }
                     consumed += 1;
                 }
@@ -300,18 +304,22 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
                 match c {
                     b'\n' => {
                         partial_value_found = true;
-                        dispatch(Event::ValueNotDone(Cow::Borrowed(
-                            i[value_start..escape_index].as_bstr(),
-                        )));
+                        let mut orig_i = *i;
+                        orig_i.reset(start_checkpoint);
+
+                        let value = orig_i[value_start..escape_index].as_bstr();
+                        dispatch(Event::ValueNotDone(Cow::Borrowed(value)));
                         let nl_end = escaped_index + consumed;
-                        dispatch(Event::Newline(Cow::Borrowed(i[escaped_index..nl_end].as_bstr())));
+                        let nl = orig_i[escaped_index..nl_end].as_bstr();
+                        dispatch(Event::Newline(Cow::Borrowed(nl)));
                         value_start = nl_end;
                         value_end = None;
                         newlines += 1;
                     }
                     b'n' | b't' | b'\\' | b'b' | b'"' => {}
                     _ => {
-                        return Err(winnow::error::ErrMode::from_error_kind(start_i, ErrorKind::Token));
+                        i.reset(start_checkpoint);
+                        return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Token));
                     }
                 }
             }
@@ -321,7 +329,8 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
         current_index += 1;
     }
     if is_in_quotes {
-        return Err(winnow::error::ErrMode::from_error_kind(start_i, ErrorKind::Slice));
+        i.reset(start_checkpoint);
+        return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Slice));
     }
     let last_value_index = current_index;
 
@@ -329,24 +338,24 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
         None => {
             if last_value_index == 0 {
                 dispatch(Event::Value(Cow::Borrowed("".into())));
-                return Ok((&i[0..], newlines));
+                return Ok(newlines);
             } else {
-                i.len()
+                i.offset_from(&start_checkpoint)
             }
         }
         Some(idx) => idx,
     };
 
-    let i = &i[value_start..];
-    let value_end = value_end - value_start;
-    let value_end_no_trailing_whitespace = i[..value_end]
+    i.reset(start_checkpoint);
+    let value_end_no_trailing_whitespace = i[value_start..value_end]
         .iter()
         .enumerate()
         .rev()
         .find_map(|(idx, b)| (!b.is_ascii_whitespace()).then_some(idx + 1))
-        .unwrap_or(0);
-    let remainder_value = &i[..value_end_no_trailing_whitespace];
-    let i = &i[value_end_no_trailing_whitespace..];
+        .unwrap_or(0)
+        + value_start;
+    let remainder_value = &i[value_start..value_end_no_trailing_whitespace];
+    i.next_slice(value_end_no_trailing_whitespace);
 
     if partial_value_found {
         dispatch(Event::ValueDone(Cow::Borrowed(remainder_value.as_bstr())));
@@ -354,16 +363,16 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
         dispatch(Event::Value(Cow::Borrowed(remainder_value.as_bstr())));
     }
 
-    Ok((i, newlines))
+    Ok(newlines)
 }
 
-fn take_spaces1(i: &[u8]) -> IResult<&[u8], &BStr> {
+fn take_spaces1<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
     take_while(1.., |c: u8| c.is_space())
         .map(|spaces: &[u8]| spaces.as_bstr())
         .parse_next(i)
 }
 
-fn take_newlines1(i: &[u8]) -> IResult<&[u8], (&BStr, usize)> {
+fn take_newlines1<'i>(i: &mut &'i [u8]) -> PResult<(&'i BStr, usize), NomError<&'i [u8]>> {
     repeat(1.., alt(("\r\n", "\n")))
         .with_recognized()
         .map(|(count, newlines): (usize, &[u8])| (newlines.as_bstr(), count))

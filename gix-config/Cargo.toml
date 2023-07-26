@@ -25,7 +25,7 @@ gix-ref = { version = "^0.33.1", path = "../gix-ref" }
 gix-glob = { version = "^0.10.1", path = "../gix-glob" }
 
 log = "0.4.17"
-winnow = "0.4"
+winnow = "0.5"
 memchr = "2"
 thiserror = "1.0.26"
 unicode-bom = "2.0.2"

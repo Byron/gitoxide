@@ -3,11 +3,12 @@ use super::*;
 mod section_headers {
     use super::section_header;
     use crate::parse::tests::util::{fully_consumed, section_header as parsed_section_header};
+    use winnow::prelude::*;
 
     #[test]
     fn no_subsection() {
         assert_eq!(
-            section_header(b"[hello]").unwrap(),
+            section_header.parse_peek(b"[hello]").unwrap(),
             fully_consumed(parsed_section_header("hello", None)),
         );
     }
@@ -15,7 +16,7 @@ mod section_headers {
     #[test]
     fn modern_subsection() {
         assert_eq!(
-            section_header(br#"[hello "world"]"#).unwrap(),
+            section_header.parse_peek(br#"[hello "world"]"#).unwrap(),
             fully_consumed(parsed_section_header("hello", (" ", "world"))),
         );
     }
@@ -23,7 +24,7 @@ mod section_headers {
     #[test]
     fn escaped_subsection() {
         assert_eq!(
-            section_header(br#"[hello "foo\\bar\""]"#).unwrap(),
+            section_header.parse_peek(br#"[hello "foo\\bar\""]"#).unwrap(),
             fully_consumed(parsed_section_header("hello", (" ", r#"foo\bar""#))),
         );
     }
@@ -31,11 +32,11 @@ mod section_headers {
     #[test]
     fn deprecated_subsection() {
         assert_eq!(
-            section_header(br#"[hello.world]"#).unwrap(),
+            section_header.parse_peek(br#"[hello.world]"#).unwrap(),
             fully_consumed(parsed_section_header("hello", (".", "world")))
         );
         assert_eq!(
-            section_header(br#"[Hello.World]"#).unwrap(),
+            section_header.parse_peek(br#"[Hello.World]"#).unwrap(),
             fully_consumed(parsed_section_header("Hello", (".", "World")))
         );
     }
@@ -43,7 +44,7 @@ mod section_headers {
     #[test]
     fn empty_legacy_subsection_name() {
         assert_eq!(
-            section_header(br#"[hello-world.]"#).unwrap(),
+            section_header.parse_peek(br#"[hello-world.]"#).unwrap(),
             fully_consumed(parsed_section_header("hello-world", (".", "")))
         );
     }
@@ -51,7 +52,7 @@ mod section_headers {
     #[test]
     fn empty_modern_subsection_name() {
         assert_eq!(
-            section_header(br#"[hello ""]"#).unwrap(),
+            section_header.parse_peek(br#"[hello ""]"#).unwrap(),
             fully_consumed(parsed_section_header("hello", (" ", "")))
         );
     }
@@ -59,55 +60,55 @@ mod section_headers {
     #[test]
     fn backslashes_in_subsections_do_not_escape_newlines_or_tabs() {
         assert_eq!(
-            section_header(br#"[hello "single \ \\ \t \n \0"]"#).unwrap(),
+            section_header.parse_peek(br#"[hello "single \ \\ \t \n \0"]"#).unwrap(),
             fully_consumed(parsed_section_header("hello", (" ", r#"single  \ t n 0"#)))
         );
     }
 
     #[test]
     fn newline_in_header() {
-        assert!(section_header(b"[hello\n]").is_err());
+        assert!(section_header.parse_peek(b"[hello\n]").is_err());
     }
 
     #[test]
     fn newline_in_sub_section() {
-        assert!(section_header(b"[hello \"hello\n\"]").is_err());
+        assert!(section_header.parse_peek(b"[hello \"hello\n\"]").is_err());
     }
 
     #[test]
     fn null_byt_in_sub_section() {
-        assert!(section_header(b"[hello \"hello\0\"]").is_err());
+        assert!(section_header.parse_peek(b"[hello \"hello\0\"]").is_err());
     }
 
     #[test]
     fn escaped_newline_in_sub_section() {
-        assert!(section_header(b"[hello \"hello\\\n\"]").is_err());
+        assert!(section_header.parse_peek(b"[hello \"hello\\\n\"]").is_err());
     }
 
     #[test]
     fn eof_after_escape_in_sub_section() {
-        assert!(section_header(b"[hello \"hello\\").is_err());
+        assert!(section_header.parse_peek(b"[hello \"hello\\").is_err());
     }
 
     #[test]
     fn null_byte_in_header() {
-        assert!(section_header(b"[hello\0]").is_err());
+        assert!(section_header.parse_peek(b"[hello\0]").is_err());
     }
 
     #[test]
     fn invalid_characters_in_section() {
-        assert!(section_header(b"[$]").is_err());
+        assert!(section_header.parse_peek(b"[$]").is_err());
     }
     #[test]
     fn invalid_characters_in_legacy_sub_section() {
-        assert!(section_header(b"[hello.$]").is_err());
-        assert!(section_header(b"[hello. world]").is_err());
+        assert!(section_header.parse_peek(b"[hello.$]").is_err());
+        assert!(section_header.parse_peek(b"[hello. world]").is_err());
     }
 
     #[test]
     fn right_brace_in_subsection_name() {
         assert_eq!(
-            section_header(br#"[hello "]"]"#).unwrap(),
+            section_header.parse_peek(br#"[hello "]"]"#).unwrap(),
             fully_consumed(parsed_section_header("hello", (" ", "]")))
         );
     }
@@ -115,19 +116,20 @@ mod section_headers {
 
 mod sub_section {
     use std::borrow::Cow;
+    use winnow::prelude::*;
 
     use super::sub_section;
 
     #[test]
     fn zero_copy_simple() {
-        let actual = sub_section(b"name\"").unwrap().1;
+        let actual = sub_section.parse_peek(b"name\"").unwrap().1;
         assert_eq!(actual.as_ref(), "name");
         assert!(matches!(actual, Cow::Borrowed(_)));
     }
 
     #[test]
     fn escapes_need_allocation() {
-        let actual = sub_section(br#"\x\t\n\0\\\"""#).unwrap().1;
+        let actual = sub_section.parse_peek(br#"\x\t\n\0\\\"""#).unwrap().1;
         assert_eq!(actual.as_ref(), r#"xtn0\""#);
         assert!(matches!(actual, Cow::Owned(_)));
     }
@@ -141,13 +143,13 @@ mod config_name {
 
     #[test]
     fn just_name() {
-        assert_eq!(config_name(b"name").unwrap(), fully_consumed("name".into()));
+        assert_eq!(config_name.parse_peek(b"name").unwrap(), fully_consumed("name".into()));
     }
 
     #[test]
     fn must_start_with_alphabetic() {
-        assert!(config_name(b"4aaa").is_err());
-        assert!(config_name(b"-aaa").is_err());
+        assert!(config_name.parse_peek(b"4aaa").is_err());
+        assert!(config_name.parse_peek(b"-aaa").is_err());
     }
 
     #[test]
@@ -158,7 +160,7 @@ mod config_name {
 
     #[test]
     fn cannot_be_empty() {
-        assert!(config_name(b"").is_err());
+        assert!(config_name.parse_peek(b"").is_err());
     }
 }
 
@@ -174,16 +176,16 @@ mod section {
         Event, Section,
     };
 
-    fn section<'a>(i: &'a [u8], node: &mut ParseNode) -> winnow::IResult<&'a [u8], (Section<'a>, usize)> {
+    fn section<'a>(mut i: &'a [u8], node: &mut ParseNode) -> winnow::IResult<&'a [u8], (Section<'a>, usize)> {
         let mut header = None;
         let mut events = section::Events::default();
-        super::section(i, node, &mut |e| match &header {
+        super::section(&mut i, node, &mut |e| match &header {
             None => {
                 header = Some(e);
             }
             Some(_) => events.push(e),
         })
-        .map(|(i, o)| {
+        .map(|o| {
             (
                 i,
                 (
@@ -567,8 +569,8 @@ mod value_continuation {
         tests::util::{into_events, newline_custom_event, newline_event, value_done_event, value_not_done_event},
     };
 
-    pub fn value_impl<'a>(i: &'a [u8], events: &mut section::Events<'a>) -> winnow::IResult<&'a [u8], ()> {
-        super::value_impl(i, &mut |e| events.push(e)).map(|t| (t.0, ()))
+    pub fn value_impl<'a>(mut i: &'a [u8], events: &mut section::Events<'a>) -> winnow::IResult<&'a [u8], ()> {
+        super::value_impl(&mut i, &mut |e| events.push(e)).map(|_| (i, ()))
     }
 
     #[test]
@@ -840,11 +842,11 @@ mod key_value_pair {
     };
 
     fn key_value<'a>(
-        i: &'a [u8],
+        mut i: &'a [u8],
         node: &mut ParseNode,
         events: &mut section::Events<'a>,
     ) -> winnow::IResult<&'a [u8], ()> {
-        super::key_value_pair(i, node, &mut |e| events.push(e)).map(|t| (t.0, ()))
+        super::key_value_pair(&mut i, node, &mut |e| events.push(e)).map(|_| (i, ()))
     }
 
     #[test]
@@ -897,11 +899,12 @@ mod key_value_pair {
 mod comment {
     use super::comment;
     use crate::parse::tests::util::{comment as parsed_comment, fully_consumed};
+    use winnow::prelude::*;
 
     #[test]
     fn semicolon() {
         assert_eq!(
-            comment(b"; this is a semicolon comment").unwrap(),
+            comment.parse_peek(b"; this is a semicolon comment").unwrap(),
             fully_consumed(parsed_comment(';', " this is a semicolon comment")),
         );
     }
@@ -909,7 +912,7 @@ mod comment {
     #[test]
     fn octothorpe() {
         assert_eq!(
-            comment(b"# this is an octothorpe comment").unwrap(),
+            comment.parse_peek(b"# this is an octothorpe comment").unwrap(),
             fully_consumed(parsed_comment('#', " this is an octothorpe comment")),
         );
     }
@@ -917,7 +920,7 @@ mod comment {
     #[test]
     fn multiple_markers() {
         assert_eq!(
-            comment(b"###### this is an octothorpe comment").unwrap(),
+            comment.parse_peek(b"###### this is an octothorpe comment").unwrap(),
             fully_consumed(parsed_comment('#', "##### this is an octothorpe comment")),
         );
     }
