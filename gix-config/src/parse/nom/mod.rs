@@ -134,12 +134,10 @@ fn section<'a>(i: &'a [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Even
 }
 
 fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
-    let (i, _) = '['.parse_next(i)?;
     // No spaces must be between section name and section start
-    let (i, name) = take_while(0.., |c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.').parse_next(i)?;
+    let (i, name) = preceded('[', take_while(1.., is_section_char).map(|name: &[u8]| name.as_bstr())).parse_next(i)?;
 
-    let name = name.as_bstr();
-    if let Ok((i, _)) = one_of::<_, _, NomError<&[u8]>>(']').parse_next(i) {
+    if let (i, Some(_)) = opt(one_of::<_, _, NomError<&[u8]>>(']')).parse_next(i)? {
         // Either section does not have a subsection or using deprecated
         // subsection syntax at this point.
         let header = match memchr::memrchr(b'.', name.as_bytes()) {
@@ -162,18 +160,17 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
     }
 
     // Section header must be using modern subsection syntax at this point.
-
-    let (i, whitespace) = take_spaces1(i)?;
-    let (i, subsection_name) = delimited('"', opt(sub_section), "\"]").parse_next(i)?;
-
-    Ok((
-        i,
-        section::Header {
+    (take_spaces1, delimited('"', opt(sub_section), "\"]"))
+        .map(|(whitespace, subsection_name)| section::Header {
             name: section::Name(Cow::Borrowed(name)),
             separator: Some(Cow::Borrowed(whitespace)),
             subsection_name,
-        },
-    ))
+        })
+        .parse_next(i)
+}
+
+fn is_section_char(c: u8) -> bool {
+    c.is_ascii_alphanumeric() || c == b'-' || c == b'.'
 }
 
 fn sub_section(mut i: &[u8]) -> IResult<&[u8], Cow<'_, BStr>> {
