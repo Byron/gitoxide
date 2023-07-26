@@ -559,10 +559,23 @@ mod blocking_and_async_io {
                         );
                         let edit = &update_refs.edits[1];
                         assert_eq!(edit.name.as_bstr(), "refs/remotes/changes-on-top-of-origin/symbolic");
-                        assert!(
-                            edit.change.new_value().expect("no deletion").try_id().is_some(),
-                            "on the remote this is a symbolic ref, we just write its destination object id though"
-                        );
+                        match version.unwrap_or_default() {
+                            gix::protocol::transport::Protocol::V2 => {
+                                assert!(
+                                    edit.change.new_value().expect("no deletion").try_name().is_some(),
+                                    "{version:?} on the remote this is a symbolic ref, and we maintain it as symref information is kept"
+                                );
+                            }
+                            gix::protocol::transport::Protocol::V1 => {
+                                assert!(
+                                    edit.change.new_value().expect("no deletion").try_id().is_some(),
+                                    "on the remote this is a symbolic ref, but in V1 symrefs are not visible"
+                                );
+                            }
+                            gix::protocol::transport::Protocol::V0 => {
+                                unreachable!("we don't test this here as there is no need")
+                            }
+                        }
 
                         assert!(
                             !write_pack_bundle.keep_path.map_or(false, |f| f.is_file()),
@@ -589,10 +602,12 @@ mod blocking_and_async_io {
                     vec![
                         fetch::refs::Update {
                             mode: fetch::refs::update::Mode::New,
+                            type_change: None,
                             edit_index: Some(0),
                         },
                         fetch::refs::Update {
                             mode: fetch::refs::update::Mode::New,
+                            type_change: None,
                             edit_index: Some(1),
                         }
                     ]
@@ -604,21 +619,32 @@ mod blocking_and_async_io {
                 ) {
                     let edit = edit.expect("refedit present even if it's a no-op");
                     if dry_run {
-                        assert_eq!(
-                            edit.change.new_value().expect("no deletions").id(),
-                            mapping.remote.as_id().expect("no unborn")
-                        );
+                        match edit.change.new_value().expect("no deletions") {
+                            gix_ref::TargetRef::Peeled(id) => {
+                                assert_eq!(id, mapping.remote.as_id().expect("no unborn"))
+                            }
+                            gix_ref::TargetRef::Symbolic(target) => {
+                                assert_eq!(target.as_bstr(), mapping.remote.as_target().expect("no direct ref"))
+                            }
+                        }
                         assert!(
                             repo.try_find_reference(edit.name.as_ref())?.is_none(),
                             "no ref created in dry-run mode"
                         );
                     } else {
                         let r = repo.find_reference(edit.name.as_ref()).unwrap();
-                        assert_eq!(
-                            r.id(),
-                            *mapping.remote.as_id().expect("no unborn"),
-                            "local reference should point to remote id"
-                        );
+                        match r.target() {
+                            gix_ref::TargetRef::Peeled(id) => {
+                                assert_eq!(
+                                    id,
+                                    mapping.remote.as_id().expect("no unborn"),
+                                    "local reference should point to remote id"
+                                );
+                            }
+                            gix_ref::TargetRef::Symbolic(target) => {
+                                assert_eq!(target.as_bstr(), mapping.remote.as_target().expect("no direct ref"))
+                            }
+                        }
                     }
                 }
             }

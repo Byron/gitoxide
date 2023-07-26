@@ -12,6 +12,11 @@ impl<'repo> Reference<'repo> {
     pub fn log_iter(&self) -> gix_ref::file::log::iter::Platform<'_, '_> {
         self.inner.log_iter(&self.repo.refs)
     }
+
+    /// Return true if a reflog is present for this reference.
+    pub fn log_exists(&self) -> bool {
+        self.inner.log_exists(&self.repo.refs)
+    }
 }
 
 /// Generate a message typical for git commit logs based on the given `operation`, commit `message` and `num_parents` of the commit.

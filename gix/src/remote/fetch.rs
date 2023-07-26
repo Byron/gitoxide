@@ -154,6 +154,18 @@ impl Source {
         }
     }
 
+    /// Return the target that this symbolic ref is pointing to, or `None` if it is no symbolic ref.
+    pub fn as_target(&self) -> Option<&crate::bstr::BStr> {
+        match self {
+            Source::ObjectId(_) => None,
+            Source::Ref(r) => match r {
+                gix_protocol::handshake::Ref::Peeled { .. } | gix_protocol::handshake::Ref::Direct { .. } => None,
+                gix_protocol::handshake::Ref::Symbolic { target, .. }
+                | gix_protocol::handshake::Ref::Unborn { target, .. } => Some(target.as_ref()),
+            },
+        }
+    }
+
     /// Returns the peeled id of this instance, that is the object that can't be de-referenced anymore.
     pub fn peeled_id(&self) -> Option<&gix_hash::oid> {
         match self {
