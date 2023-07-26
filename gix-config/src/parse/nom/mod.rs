@@ -17,7 +17,7 @@ use winnow::{
 use crate::parse::{error::ParseNode, section, Comment, Error, Event};
 
 /// Attempt to zero-copy parse the provided bytes, passing results to `dispatch`.
-pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> Result<(), Error> {
+pub fn from_bytes<'i>(input: &'i [u8], mut dispatch: impl FnMut(Event<'i>)) -> Result<(), Error> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
     let (i, _) = fold_repeat(
@@ -89,7 +89,7 @@ fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
 #[cfg(test)]
 mod tests;
 
-fn section<'a>(i: &'a [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
+fn section<'i>(i: &'i [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Event<'i>)) -> IResult<&'i [u8], usize> {
     let (mut i, header) = section_header(i)?;
     dispatch(Event::SectionHeader(header));
 
@@ -203,11 +203,11 @@ fn is_subsection_unescaped_char(c: u8) -> bool {
     c != b'"' && c != b'\\' && c != b'\n' && c != 0
 }
 
-fn key_value_pair<'a>(
-    i: &'a [u8],
+fn key_value_pair<'i>(
+    i: &'i [u8],
     node: &mut ParseNode,
-    dispatch: &mut impl FnMut(Event<'a>),
-) -> IResult<&'a [u8], usize> {
+    dispatch: &mut impl FnMut(Event<'i>),
+) -> IResult<&'i [u8], usize> {
     *node = ParseNode::Name;
     let (i, name) = config_name(i)?;
 
@@ -235,7 +235,7 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
         .parse_next(i)
 }
 
-fn config_value<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
+fn config_value<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<&'i [u8], usize> {
     if let (i, Some(_)) = opt('=').parse_next(i)? {
         dispatch(Event::KeyValueSeparator);
         let (i, whitespace) = opt(take_spaces1).parse_next(i)?;
@@ -255,7 +255,7 @@ fn config_value<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResul
 
 /// Handles parsing of known-to-be values. This function handles both single
 /// line values as well as values that are continuations.
-fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
+fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<&'i [u8], usize> {
     let (i, value_end, newlines, mut dispatch) = {
         let new_err = |kind| winnow::error::ErrMode::from_error_kind(i, kind);
         let mut value_end = None::<usize>;
@@ -342,7 +342,7 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
             Some(idx) => idx,
         };
 
-        let dispatch = move |value: &'a [u8]| {
+        let dispatch = move |value: &'i [u8]| {
             if partial_value_found {
                 dispatch(Event::ValueDone(Cow::Borrowed(value.as_bstr())));
             } else {
