@@ -256,116 +256,105 @@ fn config_value<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResul
 /// Handles parsing of known-to-be values. This function handles both single
 /// line values as well as values that are continuations.
 fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<&'i [u8], usize> {
-    let (i, value_end, newlines, mut dispatch) = {
-        let new_err = |kind| winnow::error::ErrMode::from_error_kind(i, kind);
-        let mut value_end = None::<usize>;
-        let mut value_start: usize = 0;
-        let mut newlines = 0;
+    let new_err = |kind| winnow::error::ErrMode::from_error_kind(i, kind);
+    let mut value_end = None::<usize>;
+    let mut value_start: usize = 0;
+    let mut newlines = 0;
 
-        let mut prev_char_was_backslash = false;
-        // This is required to ignore comment markers if they're in a quote.
-        let mut is_in_quotes = false;
-        // Used to determine if we return a Value or Value{Not,}Done
-        let mut partial_value_found = false;
-        let mut last_value_index: usize = 0;
+    let mut prev_char_was_backslash = false;
+    // This is required to ignore comment markers if they're in a quote.
+    let mut is_in_quotes = false;
+    // Used to determine if we return a Value or Value{Not,}Done
+    let mut partial_value_found = false;
+    let mut last_value_index: usize = 0;
 
-        let mut bytes = i.iter();
-        while let Some(mut c) = bytes.next() {
-            if prev_char_was_backslash {
-                prev_char_was_backslash = false;
-                let mut consumed = 1;
-                if *c == b'\r' {
-                    c = bytes.next().ok_or_else(|| new_err(ErrorKind::Token))?;
-                    if *c != b'\n' {
-                        return Err(new_err(ErrorKind::Slice));
-                    }
-                    consumed += 1;
-                }
-
-                match c {
-                    b'\n' => {
-                        partial_value_found = true;
-                        let backslash = 1;
-                        dispatch(Event::ValueNotDone(Cow::Borrowed(
-                            i[value_start..last_value_index - backslash].as_bstr(),
-                        )));
-                        let nl_end = last_value_index + consumed;
-                        dispatch(Event::Newline(Cow::Borrowed(i[last_value_index..nl_end].as_bstr())));
-                        value_start = nl_end;
-                        value_end = None;
-                        newlines += 1;
-
-                        last_value_index += consumed;
-                    }
-                    b'n' | b't' | b'\\' | b'b' | b'"' => {
-                        last_value_index += 1;
-                    }
-                    _ => {
-                        return Err(new_err(ErrorKind::Token));
-                    }
-                }
-            } else {
-                match c {
-                    b'\n' => {
-                        value_end = last_value_index.into();
-                        break;
-                    }
-                    b';' | b'#' if !is_in_quotes => {
-                        value_end = last_value_index.into();
-                        break;
-                    }
-                    b'\\' => prev_char_was_backslash = true,
-                    b'"' => is_in_quotes = !is_in_quotes,
-                    _ => {}
-                }
-                last_value_index += 1;
-            }
-        }
-
+    let mut bytes = i.iter();
+    while let Some(mut c) = bytes.next() {
         if prev_char_was_backslash {
-            return Err(new_err(ErrorKind::Token));
-        }
+            prev_char_was_backslash = false;
+            let mut consumed = 1;
+            if *c == b'\r' {
+                c = bytes.next().ok_or_else(|| new_err(ErrorKind::Token))?;
+                if *c != b'\n' {
+                    return Err(new_err(ErrorKind::Slice));
+                }
+                consumed += 1;
+            }
 
-        if is_in_quotes {
-            return Err(new_err(ErrorKind::Slice));
-        }
+            match c {
+                b'\n' => {
+                    partial_value_found = true;
+                    let backslash = 1;
+                    dispatch(Event::ValueNotDone(Cow::Borrowed(
+                        i[value_start..last_value_index - backslash].as_bstr(),
+                    )));
+                    let nl_end = last_value_index + consumed;
+                    dispatch(Event::Newline(Cow::Borrowed(i[last_value_index..nl_end].as_bstr())));
+                    value_start = nl_end;
+                    value_end = None;
+                    newlines += 1;
 
-        let value_end = match value_end {
-            None => {
-                if last_value_index == 0 {
-                    dispatch(Event::Value(Cow::Borrowed("".into())));
-                    return Ok((&i[0..], newlines));
-                } else {
-                    i.len()
+                    last_value_index += consumed;
+                }
+                b'n' | b't' | b'\\' | b'b' | b'"' => {
+                    last_value_index += 1;
+                }
+                _ => {
+                    return Err(new_err(ErrorKind::Token));
                 }
             }
-            Some(idx) => idx,
-        };
-
-        let dispatch = move |value: &'i [u8]| {
-            if partial_value_found {
-                dispatch(Event::ValueDone(Cow::Borrowed(value.as_bstr())));
-            } else {
-                dispatch(Event::Value(Cow::Borrowed(value.as_bstr())));
+        } else {
+            match c {
+                b'\n' => {
+                    value_end = last_value_index.into();
+                    break;
+                }
+                b';' | b'#' if !is_in_quotes => {
+                    value_end = last_value_index.into();
+                    break;
+                }
+                b'\\' => prev_char_was_backslash = true,
+                b'"' => is_in_quotes = !is_in_quotes,
+                _ => {}
             }
-        };
-        (&i[value_start..], value_end - value_start, newlines, dispatch)
+            last_value_index += 1;
+        }
+    }
+    if prev_char_was_backslash {
+        return Err(new_err(ErrorKind::Token));
+    }
+    if is_in_quotes {
+        return Err(new_err(ErrorKind::Slice));
+    }
+
+    let value_end = match value_end {
+        None => {
+            if last_value_index == 0 {
+                dispatch(Event::Value(Cow::Borrowed("".into())));
+                return Ok((&i[0..], newlines));
+            } else {
+                i.len()
+            }
+        }
+        Some(idx) => idx,
     };
 
-    let (i, remainder_value) = {
-        let value_end_no_trailing_whitespace = i[..value_end]
-            .iter()
-            .enumerate()
-            .rev()
-            .find_map(|(idx, b)| (!b.is_ascii_whitespace()).then_some(idx + 1))
-            .unwrap_or(0);
-        (
-            &i[value_end_no_trailing_whitespace..],
-            &i[..value_end_no_trailing_whitespace],
-        )
-    };
+    let i = &i[value_start..];
+    let value_end = value_end - value_start;
+    let value_end_no_trailing_whitespace = i[..value_end]
+        .iter()
+        .enumerate()
+        .rev()
+        .find_map(|(idx, b)| (!b.is_ascii_whitespace()).then_some(idx + 1))
+        .unwrap_or(0);
+    let remainder_value = &i[..value_end_no_trailing_whitespace];
+    let i = &i[value_end_no_trailing_whitespace..];
 
-    dispatch(remainder_value);
+    if partial_value_found {
+        dispatch(Event::ValueDone(Cow::Borrowed(remainder_value.as_bstr())));
+    } else {
+        dispatch(Event::Value(Cow::Borrowed(remainder_value.as_bstr())));
+    }
 
     Ok((i, newlines))
 }
