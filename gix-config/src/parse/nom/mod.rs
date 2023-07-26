@@ -256,7 +256,7 @@ fn config_value<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResul
 /// Handles parsing of known-to-be values. This function handles both single
 /// line values as well as values that are continuations.
 fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<&'i [u8], usize> {
-    let new_err = |kind| winnow::error::ErrMode::from_error_kind(i, kind);
+    let start_i = i;
     let mut value_end = None;
     let mut value_start: usize = 0;
     let mut newlines = 0;
@@ -281,16 +281,18 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
             b'\\' => {
                 current_index += 1;
                 let Some(mut c) = bytes.next() else {
-                    return Err(new_err(ErrorKind::Token));
+                    return Err(winnow::error::ErrMode::from_error_kind(start_i, ErrorKind::Token));
                 };
                 let escape_index = current_index - 1;
                 let escaped_index = current_index;
                 let mut consumed = 1;
                 if *c == b'\r' {
                     current_index += 1;
-                    c = bytes.next().ok_or_else(|| new_err(ErrorKind::Token))?;
+                    c = bytes
+                        .next()
+                        .ok_or_else(|| winnow::error::ErrMode::from_error_kind(start_i, ErrorKind::Token))?;
                     if *c != b'\n' {
-                        return Err(new_err(ErrorKind::Slice));
+                        return Err(winnow::error::ErrMode::from_error_kind(start_i, ErrorKind::Slice));
                     }
                     consumed += 1;
                 }
@@ -309,7 +311,7 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
                     }
                     b'n' | b't' | b'\\' | b'b' | b'"' => {}
                     _ => {
-                        return Err(new_err(ErrorKind::Token));
+                        return Err(winnow::error::ErrMode::from_error_kind(start_i, ErrorKind::Token));
                     }
                 }
             }
@@ -319,7 +321,7 @@ fn value_impl<'i>(i: &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> IResult<
         current_index += 1;
     }
     if is_in_quotes {
-        return Err(new_err(ErrorKind::Slice));
+        return Err(winnow::error::ErrMode::from_error_kind(start_i, ErrorKind::Slice));
     }
     let last_value_index = current_index;
 
