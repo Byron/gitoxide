@@ -267,29 +267,26 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PRe
     let mut is_in_quotes = false;
     // Used to determine if we return a Value or Value{Not,}Done
     let mut partial_value_found = false;
-    let mut current_index: usize = 0;
 
     while let Some(c) = i.next_token() {
         match c {
             b'\n' => {
-                value_end = Some(current_index);
+                value_end = Some(i.offset_from(&start_checkpoint) - 1);
                 break;
             }
             b';' | b'#' if !is_in_quotes => {
-                value_end = Some(current_index);
+                value_end = Some(i.offset_from(&start_checkpoint) - 1);
                 break;
             }
             b'\\' => {
-                current_index += 1;
+                let escaped_index = i.offset_from(&start_checkpoint);
+                let escape_index = escaped_index - 1;
                 let Some(mut c) = i.next_token() else {
                     i.reset(start_checkpoint);
                     return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Token));
                 };
-                let escape_index = current_index - 1;
-                let escaped_index = current_index;
                 let mut consumed = 1;
                 if c == b'\r' {
-                    current_index += 1;
                     c = i.next_token().ok_or_else(|| {
                         i.reset(start_checkpoint);
                         winnow::error::ErrMode::from_error_kind(i, ErrorKind::Token)
@@ -326,21 +323,20 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PRe
             b'"' => is_in_quotes = !is_in_quotes,
             _ => {}
         }
-        current_index += 1;
     }
     if is_in_quotes {
         i.reset(start_checkpoint);
         return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Slice));
     }
-    let last_value_index = current_index;
 
     let value_end = match value_end {
         None => {
+            let last_value_index = i.offset_from(&start_checkpoint);
             if last_value_index == 0 {
                 dispatch(Event::Value(Cow::Borrowed("".into())));
                 return Ok(newlines);
             } else {
-                i.offset_from(&start_checkpoint)
+                last_value_index
             }
         }
         Some(idx) => idx,
