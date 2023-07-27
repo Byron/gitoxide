@@ -23,7 +23,7 @@ mod find {
     use std::convert::TryInto;
 
     use gix_ref as refs;
-    use gix_ref::FullNameRef;
+    use gix_ref::{FullName, FullNameRef, Target};
 
     use crate::util::hex_to_id;
 
@@ -62,6 +62,25 @@ mod find {
         let expected: &FullNameRef = "refs/remotes/origin/multi-link-target3".try_into()?;
         assert_eq!(symbolic_ref.name(), expected, "it follows symbolic refs, too");
         assert_eq!(symbolic_ref.into_fully_peeled_id()?, the_commit, "idempotency");
+        Ok(())
+    }
+
+    #[test]
+    fn and_follow() -> crate::Result {
+        let repo = repo()?;
+        let mut symbolic_ref = repo.find_reference("multi-link-target1")?;
+        let first_hop = Target::Symbolic(FullName::try_from("refs/tags/multi-link-target2").expect("valid"));
+        assert_eq!(symbolic_ref.target(), first_hop.to_ref());
+
+        let second_hop = Target::Symbolic(FullName::try_from("refs/remotes/origin/multi-link-target3").expect("valid"));
+        symbolic_ref = symbolic_ref.follow().expect("another hop")?;
+        assert_eq!(symbolic_ref.target(), second_hop.to_ref());
+
+        let last_hop = Target::Peeled(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
+        symbolic_ref = symbolic_ref.follow().expect("another hop")?;
+        assert_eq!(symbolic_ref.target(), last_hop.to_ref());
+
+        assert!(symbolic_ref.follow().is_none(), "direct references can't be followed");
         Ok(())
     }
 }
