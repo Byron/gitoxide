@@ -259,8 +259,8 @@ fn config_value<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> P
 /// line values as well as values that are continuations.
 fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PResult<usize, NomError<&'i [u8]>> {
     let start_checkpoint = i.checkpoint();
+    let mut value_start_checkpoint = i.checkpoint();
     let mut value_end = None;
-    let mut value_start: usize = 0;
     let mut newlines = 0;
 
     // This is required to ignore comment markers if they're in a quote.
@@ -271,15 +271,15 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PRe
     while let Some(c) = i.next_token() {
         match c {
             b'\n' => {
-                value_end = Some(i.offset_from(&start_checkpoint) - 1);
+                value_end = Some(i.offset_from(&value_start_checkpoint) - 1);
                 break;
             }
             b';' | b'#' if !is_in_quotes => {
-                value_end = Some(i.offset_from(&start_checkpoint) - 1);
+                value_end = Some(i.offset_from(&value_start_checkpoint) - 1);
                 break;
             }
             b'\\' => {
-                let escaped_index = i.offset_from(&start_checkpoint);
+                let escaped_index = i.offset_from(&value_start_checkpoint);
                 let escape_index = escaped_index - 1;
                 let Some(mut c) = i.next_token() else {
                     i.reset(start_checkpoint);
@@ -301,17 +301,20 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PRe
                 match c {
                     b'\n' => {
                         partial_value_found = true;
-                        let mut orig_i = *i;
-                        orig_i.reset(start_checkpoint);
-
-                        let value = orig_i[value_start..escape_index].as_bstr();
-                        dispatch(Event::ValueNotDone(Cow::Borrowed(value)));
-                        let nl_end = escaped_index + consumed;
-                        let nl = orig_i[escaped_index..nl_end].as_bstr();
-                        dispatch(Event::Newline(Cow::Borrowed(nl)));
-                        value_start = nl_end;
-                        value_end = None;
                         newlines += 1;
+
+                        i.reset(value_start_checkpoint);
+
+                        let value = i.next_slice(escape_index).as_bstr();
+                        dispatch(Event::ValueNotDone(Cow::Borrowed(value)));
+
+                        i.next_token();
+
+                        let nl = i.next_slice(consumed).as_bstr();
+                        dispatch(Event::Newline(Cow::Borrowed(nl)));
+
+                        value_start_checkpoint = i.checkpoint();
+                        value_end = None;
                     }
                     b'n' | b't' | b'\\' | b'b' | b'"' => {}
                     _ => {
@@ -331,7 +334,7 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PRe
 
     let value_end = match value_end {
         None => {
-            let last_value_index = i.offset_from(&start_checkpoint);
+            let last_value_index = i.offset_from(&value_start_checkpoint);
             if last_value_index == 0 {
                 dispatch(Event::Value(Cow::Borrowed("".into())));
                 return Ok(newlines);
@@ -342,16 +345,14 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PRe
         Some(idx) => idx,
     };
 
-    i.reset(start_checkpoint);
-    let value_end_no_trailing_whitespace = i[value_start..value_end]
+    i.reset(value_start_checkpoint);
+    let value_end_no_trailing_whitespace = i[..value_end]
         .iter()
         .enumerate()
         .rev()
         .find_map(|(idx, b)| (!b.is_ascii_whitespace()).then_some(idx + 1))
-        .unwrap_or(0)
-        + value_start;
-    let remainder_value = &i[value_start..value_end_no_trailing_whitespace];
-    i.next_slice(value_end_no_trailing_whitespace);
+        .unwrap_or(0);
+    let remainder_value = i.next_slice(value_end_no_trailing_whitespace);
 
     if partial_value_found {
         dispatch(Event::ValueDone(Cow::Borrowed(remainder_value.as_bstr())));
