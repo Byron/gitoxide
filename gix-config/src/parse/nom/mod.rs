@@ -10,7 +10,7 @@ use winnow::{
     combinator::repeat,
     error::{ErrorKind, InputError as NomError, ParserError as _},
     prelude::*,
-    stream::{AsChar, Offset as _, Stream as _},
+    stream::{Offset as _, Stream as _},
     token::{one_of, take_till0, take_while},
 };
 
@@ -23,7 +23,7 @@ pub fn from_bytes<'i>(mut input: &'i [u8], mut dispatch: impl FnMut(Event<'i>)) 
     let bom = unicode_bom::Bom::from(input);
     input.next_slice(bom.len());
 
-    let _ = fold_repeat(
+    fold_repeat(
         0..,
         alt((
             comment.map(Event::Comment),
@@ -86,7 +86,7 @@ fn newlines_from(input: &[u8], start: winnow::stream::Checkpoint<&[u8]>) -> usiz
 
 fn comment<'i>(i: &mut &'i [u8]) -> PResult<Comment<'i>, NomError<&'i [u8]>> {
     (
-        one_of([';', '#']).map(|tag| tag as u8),
+        one_of([';', '#']).map(|tag| tag),
         take_till0(|c| c == b'\n').map(|text: &[u8]| Cow::Borrowed(text.as_bstr())),
     )
         .map(|(tag, text)| Comment { tag, text })
@@ -137,9 +137,9 @@ fn section<'i>(
 
 fn section_header<'i>(i: &mut &'i [u8]) -> PResult<section::Header<'i>, NomError<&'i [u8]>> {
     // No spaces must be between section name and section start
-    let name = preceded('[', take_while(1.., is_section_char).map(|name: &[u8]| name.as_bstr())).parse_next(i)?;
+    let name = preceded('[', take_while(1.., is_section_char).map(bstr::ByteSlice::as_bstr)).parse_next(i)?;
 
-    if let Some(_) = opt(one_of::<_, _, NomError<&[u8]>>(']')).parse_next(i)? {
+    if opt(one_of::<_, _, NomError<&[u8]>>(']')).parse_next(i)?.is_some() {
         // Either section does not have a subsection or using deprecated
         // subsection syntax at this point.
         let header = match memchr::memrchr(b'.', name.as_bytes()) {
@@ -233,7 +233,7 @@ fn config_name<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
         take_while(0.., |c: u8| c.is_ascii_alphanumeric() || c == b'-'),
     )
         .recognize()
-        .map(|s: &[u8]| s.as_bstr())
+        .map(bstr::ByteSlice::as_bstr)
         .parse_next(i)
 }
 
@@ -360,8 +360,8 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PRe
 }
 
 fn take_spaces1<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
-    take_while(1.., |c: u8| c.is_space())
-        .map(|spaces: &[u8]| spaces.as_bstr())
+    take_while(1.., winnow::stream::AsChar::is_space)
+        .map(bstr::ByteSlice::as_bstr)
         .parse_next(i)
 }
 
@@ -369,6 +369,6 @@ fn take_newlines1<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>>
     repeat(1.., alt(("\r\n", "\n")))
         .map(|()| ())
         .recognize()
-        .map(|newlines: &[u8]| newlines.as_bstr())
+        .map(bstr::ByteSlice::as_bstr)
         .parse_next(i)
 }
