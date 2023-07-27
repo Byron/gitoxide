@@ -176,7 +176,7 @@ mod section {
         Event, Section,
     };
 
-    fn section<'a>(mut i: &'a [u8], node: &mut ParseNode) -> winnow::IResult<&'a [u8], (Section<'a>, usize)> {
+    fn section<'a>(mut i: &'a [u8], node: &mut ParseNode) -> winnow::IResult<&'a [u8], Section<'a>> {
         let mut header = None;
         let mut events = section::Events::default();
         super::section(&mut i, node, &mut |e| match &header {
@@ -185,19 +185,16 @@ mod section {
             }
             Some(_) => events.push(e),
         })
-        .map(|o| {
+        .map(|_| {
             (
                 i,
-                (
-                    Section {
-                        header: match header.expect("header set") {
-                            Event::SectionHeader(header) => header,
-                            _ => unreachable!("unexpected"),
-                        },
-                        events,
+                Section {
+                    header: match header.expect("header set") {
+                        Event::SectionHeader(header) => header,
+                        _ => unreachable!("unexpected"),
                     },
-                    o,
-                ),
+                    events,
+                },
             )
         })
     }
@@ -207,22 +204,19 @@ mod section {
         let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[a] k = \r\n", &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("a", None),
-                    events: vec![
-                        whitespace_event(" "),
-                        name_event("k"),
-                        whitespace_event(" "),
-                        Event::KeyValueSeparator,
-                        whitespace_event(" "),
-                        value_event(""),
-                        newline_custom_event("\r\n")
-                    ]
-                    .into(),
-                },
-                1
-            )),
+            fully_consumed(Section {
+                header: parsed_section_header("a", None),
+                events: vec![
+                    whitespace_event(" "),
+                    name_event("k"),
+                    whitespace_event(" "),
+                    Event::KeyValueSeparator,
+                    whitespace_event(" "),
+                    value_event(""),
+                    newline_custom_event("\r\n")
+                ]
+                .into(),
+            }),
         );
     }
 
@@ -231,41 +225,35 @@ mod section {
         let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[a] k = v\r\n", &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("a", None),
-                    events: vec![
-                        whitespace_event(" "),
-                        name_event("k"),
-                        whitespace_event(" "),
-                        Event::KeyValueSeparator,
-                        whitespace_event(" "),
-                        value_event("v"),
-                        newline_custom_event("\r\n")
-                    ]
-                    .into(),
-                },
-                1
-            )),
+            fully_consumed(Section {
+                header: parsed_section_header("a", None),
+                events: vec![
+                    whitespace_event(" "),
+                    name_event("k"),
+                    whitespace_event(" "),
+                    Event::KeyValueSeparator,
+                    whitespace_event(" "),
+                    value_event("v"),
+                    newline_custom_event("\r\n")
+                ]
+                .into(),
+            }),
         );
         assert_eq!(
             section(b"[a] k = \r\n", &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("a", None),
-                    events: vec![
-                        whitespace_event(" "),
-                        name_event("k"),
-                        whitespace_event(" "),
-                        Event::KeyValueSeparator,
-                        whitespace_event(" "),
-                        value_event(""),
-                        newline_custom_event("\r\n")
-                    ]
-                    .into(),
-                },
-                1
-            )),
+            fully_consumed(Section {
+                header: parsed_section_header("a", None),
+                events: vec![
+                    whitespace_event(" "),
+                    name_event("k"),
+                    whitespace_event(" "),
+                    Event::KeyValueSeparator,
+                    whitespace_event(" "),
+                    value_event(""),
+                    newline_custom_event("\r\n")
+                ]
+                .into(),
+            }),
         );
     }
 
@@ -274,13 +262,10 @@ mod section {
         let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[test]", &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("test", None),
-                    events: Default::default()
-                },
-                0
-            )),
+            fully_consumed(Section {
+                header: parsed_section_header("test", None),
+                events: Default::default()
+            }),
         );
     }
 
@@ -293,33 +278,30 @@ mod section {
             d = "lol""#;
         assert_eq!(
             section(section_data, &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("hello", None),
-                    events: vec![
-                        newline_event(),
-                        whitespace_event("            "),
-                        name_event("a"),
-                        whitespace_event(" "),
-                        Event::KeyValueSeparator,
-                        whitespace_event(" "),
-                        value_event("b"),
-                        newline_event(),
-                        whitespace_event("            "),
-                        name_event("c"),
-                        value_event(""),
-                        newline_event(),
-                        whitespace_event("            "),
-                        name_event("d"),
-                        whitespace_event(" "),
-                        Event::KeyValueSeparator,
-                        whitespace_event(" "),
-                        value_event("\"lol\"")
-                    ]
-                    .into()
-                },
-                3
-            ))
+            fully_consumed(Section {
+                header: parsed_section_header("hello", None),
+                events: vec![
+                    newline_event(),
+                    whitespace_event("            "),
+                    name_event("a"),
+                    whitespace_event(" "),
+                    Event::KeyValueSeparator,
+                    whitespace_event(" "),
+                    value_event("b"),
+                    newline_event(),
+                    whitespace_event("            "),
+                    name_event("c"),
+                    value_event(""),
+                    newline_event(),
+                    whitespace_event("            "),
+                    name_event("d"),
+                    whitespace_event(" "),
+                    Event::KeyValueSeparator,
+                    whitespace_event(" "),
+                    value_event("\"lol\"")
+                ]
+                .into()
+            })
         );
     }
 
@@ -329,38 +311,32 @@ mod section {
         let section_data = b"[a] k=";
         assert_eq!(
             section(section_data, &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("a", None),
-                    events: vec![
-                        whitespace_event(" "),
-                        name_event("k"),
-                        Event::KeyValueSeparator,
-                        value_event(""),
-                    ]
-                    .into()
-                },
-                0
-            ))
+            fully_consumed(Section {
+                header: parsed_section_header("a", None),
+                events: vec![
+                    whitespace_event(" "),
+                    name_event("k"),
+                    Event::KeyValueSeparator,
+                    value_event(""),
+                ]
+                .into()
+            })
         );
 
         let section_data = b"[a] k=\n";
         assert_eq!(
             section(section_data, &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("a", None),
-                    events: vec![
-                        whitespace_event(" "),
-                        name_event("k"),
-                        Event::KeyValueSeparator,
-                        value_event(""),
-                        newline_event(),
-                    ]
-                    .into()
-                },
-                1
-            ))
+            fully_consumed(Section {
+                header: parsed_section_header("a", None),
+                events: vec![
+                    whitespace_event(" "),
+                    name_event("k"),
+                    Event::KeyValueSeparator,
+                    value_event(""),
+                    newline_event(),
+                ]
+                .into()
+            })
         );
     }
 
@@ -373,34 +349,31 @@ mod section {
             d = "lol""#;
         assert_eq!(
             section(section_data, &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("hello", None),
-                    events: vec![
-                        newline_event(),
-                        whitespace_event("            "),
-                        name_event("a"),
-                        whitespace_event(" "),
-                        Event::KeyValueSeparator,
-                        whitespace_event(" "),
-                        value_event("b"),
-                        newline_event(),
-                        whitespace_event("            "),
-                        name_event("c"),
-                        Event::KeyValueSeparator,
-                        value_event(""),
-                        newline_event(),
-                        whitespace_event("            "),
-                        name_event("d"),
-                        whitespace_event(" "),
-                        Event::KeyValueSeparator,
-                        whitespace_event(" "),
-                        value_event("\"lol\"")
-                    ]
-                    .into()
-                },
-                3
-            ))
+            fully_consumed(Section {
+                header: parsed_section_header("hello", None),
+                events: vec![
+                    newline_event(),
+                    whitespace_event("            "),
+                    name_event("a"),
+                    whitespace_event(" "),
+                    Event::KeyValueSeparator,
+                    whitespace_event(" "),
+                    value_event("b"),
+                    newline_event(),
+                    whitespace_event("            "),
+                    name_event("c"),
+                    Event::KeyValueSeparator,
+                    value_event(""),
+                    newline_event(),
+                    whitespace_event("            "),
+                    name_event("d"),
+                    whitespace_event(" "),
+                    Event::KeyValueSeparator,
+                    whitespace_event(" "),
+                    value_event("\"lol\"")
+                ]
+                .into()
+            })
         );
     }
 
@@ -409,32 +382,26 @@ mod section {
         let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[hello] c", &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("hello", None),
-                    events: vec![whitespace_event(" "), name_event("c"), value_event("")].into()
-                },
-                0
-            ))
+            fully_consumed(Section {
+                header: parsed_section_header("hello", None),
+                events: vec![whitespace_event(" "), name_event("c"), value_event("")].into()
+            })
         );
 
         assert_eq!(
             section(b"[hello] c\nd", &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("hello", None),
-                    events: vec![
-                        whitespace_event(" "),
-                        name_event("c"),
-                        value_event(""),
-                        newline_event(),
-                        name_event("d"),
-                        value_event("")
-                    ]
-                    .into()
-                },
-                1
-            ))
+            fully_consumed(Section {
+                header: parsed_section_header("hello", None),
+                events: vec![
+                    whitespace_event(" "),
+                    name_event("c"),
+                    value_event(""),
+                    newline_event(),
+                    name_event("d"),
+                    value_event("")
+                ]
+                .into()
+            })
         );
     }
 
@@ -448,39 +415,36 @@ mod section {
             c = d"#;
         assert_eq!(
             section(section_data, &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("hello", None),
-                    events: vec![
-                        whitespace_event(" "),
-                        comment_event(';', " commentA"),
-                        newline_event(),
-                        whitespace_event("            "),
-                        name_event("a"),
-                        whitespace_event(" "),
-                        Event::KeyValueSeparator,
-                        whitespace_event(" "),
-                        value_event("b"),
-                        whitespace_event(" "),
-                        comment_event('#', " commentB"),
-                        newline_event(),
-                        whitespace_event("            "),
-                        comment_event(';', " commentC"),
-                        newline_event(),
-                        whitespace_event("            "),
-                        comment_event(';', " commentD"),
-                        newline_event(),
-                        whitespace_event("            "),
-                        name_event("c"),
-                        whitespace_event(" "),
-                        Event::KeyValueSeparator,
-                        whitespace_event(" "),
-                        value_event("d"),
-                    ]
-                    .into()
-                },
-                4
-            ))
+            fully_consumed(Section {
+                header: parsed_section_header("hello", None),
+                events: vec![
+                    whitespace_event(" "),
+                    comment_event(';', " commentA"),
+                    newline_event(),
+                    whitespace_event("            "),
+                    name_event("a"),
+                    whitespace_event(" "),
+                    Event::KeyValueSeparator,
+                    whitespace_event(" "),
+                    value_event("b"),
+                    whitespace_event(" "),
+                    comment_event('#', " commentB"),
+                    newline_event(),
+                    whitespace_event("            "),
+                    comment_event(';', " commentC"),
+                    newline_event(),
+                    whitespace_event("            "),
+                    comment_event(';', " commentD"),
+                    newline_event(),
+                    whitespace_event("            "),
+                    name_event("c"),
+                    whitespace_event(" "),
+                    Event::KeyValueSeparator,
+                    whitespace_event(" "),
+                    value_event("d"),
+                ]
+                .into()
+            })
         );
     }
 
@@ -490,27 +454,24 @@ mod section {
         // This test is absolute hell. Good luck if this fails.
         assert_eq!(
             section(b"[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c", &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("section", None),
-                    events: vec![
-                        whitespace_event(" "),
-                        name_event("a"),
-                        whitespace_event(" "),
-                        Event::KeyValueSeparator,
-                        whitespace_event(" "),
-                        value_not_done_event(r#"1    "\""#),
-                        newline_event(),
-                        value_not_done_event(r#"a ; e "\""#),
-                        newline_event(),
-                        value_done_event("d"),
-                        whitespace_event(" "),
-                        comment_event('#', " \"b\t ; c"),
-                    ]
-                    .into()
-                },
-                2
-            ))
+            fully_consumed(Section {
+                header: parsed_section_header("section", None),
+                events: vec![
+                    whitespace_event(" "),
+                    name_event("a"),
+                    whitespace_event(" "),
+                    Event::KeyValueSeparator,
+                    whitespace_event(" "),
+                    value_not_done_event(r#"1    "\""#),
+                    newline_event(),
+                    value_not_done_event(r#"a ; e "\""#),
+                    newline_event(),
+                    value_done_event("d"),
+                    whitespace_event(" "),
+                    comment_event('#', " \"b\t ; c"),
+                ]
+                .into()
+            })
         );
     }
 
@@ -519,23 +480,20 @@ mod section {
         let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[section \"a\"] b =\"\\\n;\";a", &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("section", (" ", "a")),
-                    events: vec![
-                        whitespace_event(" "),
-                        name_event("b"),
-                        whitespace_event(" "),
-                        Event::KeyValueSeparator,
-                        value_not_done_event("\""),
-                        newline_event(),
-                        value_done_event(";\""),
-                        comment_event(';', "a"),
-                    ]
-                    .into()
-                },
-                1
-            ))
+            fully_consumed(Section {
+                header: parsed_section_header("section", (" ", "a")),
+                events: vec![
+                    whitespace_event(" "),
+                    name_event("b"),
+                    whitespace_event(" "),
+                    Event::KeyValueSeparator,
+                    value_not_done_event("\""),
+                    newline_event(),
+                    value_done_event(";\""),
+                    comment_event(';', "a"),
+                ]
+                .into()
+            })
         );
     }
 
@@ -544,19 +502,16 @@ mod section {
         let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[s]hello             #world", &mut node).unwrap(),
-            fully_consumed((
-                Section {
-                    header: parsed_section_header("s", None),
-                    events: vec![
-                        name_event("hello"),
-                        whitespace_event("             "),
-                        value_event(""),
-                        comment_event('#', "world"),
-                    ]
-                    .into()
-                },
-                0
-            ))
+            fully_consumed(Section {
+                header: parsed_section_header("s", None),
+                events: vec![
+                    name_event("hello"),
+                    whitespace_event("             "),
+                    value_event(""),
+                    comment_event('#', "world"),
+                ]
+                .into()
+            })
         );
     }
 }

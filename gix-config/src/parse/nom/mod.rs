@@ -18,18 +18,18 @@ use crate::parse::{error::ParseNode, section, Comment, Error, Event};
 
 /// Attempt to zero-copy parse the provided bytes, passing results to `dispatch`.
 pub fn from_bytes<'i>(mut input: &'i [u8], mut dispatch: impl FnMut(Event<'i>)) -> Result<(), Error> {
+    let start = input.checkpoint();
+
     let bom = unicode_bom::Bom::from(input);
     input.next_slice(bom.len());
 
-    let mut newlines = 0;
     let _ = fold_repeat(
         0..,
         alt((
             comment.map(Event::Comment),
             take_spaces1.map(|whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
             |i: &mut &'i [u8]| {
-                let (newline, counter) = take_newlines1.parse_next(i)?;
-                newlines += counter;
+                let newline = take_newlines1.parse_next(i)?;
                 let o = Event::Newline(Cow::Borrowed(newline));
                 Ok(o)
             },
@@ -51,24 +51,22 @@ pub fn from_bytes<'i>(mut input: &'i [u8], mut dispatch: impl FnMut(Event<'i>)) 
 
     let mut node = ParseNode::SectionHeader;
 
-    let res = fold_repeat(
-        1..,
-        |i: &mut &'i [u8]| section(i, &mut node, &mut dispatch),
-        || (),
-        |_acc, additional_newlines| {
-            newlines += additional_newlines;
-        },
-    )
-    .parse_next(&mut input);
-    res.map_err(|_| Error {
-        line_number: newlines,
-        last_attempted_parser: node,
-        parsed_until: input.as_bstr().into(),
+    let res = repeat(1.., |i: &mut &'i [u8]| section(i, &mut node, &mut dispatch))
+        .map(|()| ())
+        .parse_next(&mut input);
+    res.map_err(|_| {
+        let newlines = newlines_from(input, start);
+        Error {
+            line_number: newlines,
+            last_attempted_parser: node,
+            parsed_until: input.as_bstr().into(),
+        }
     })?;
 
     // This needs to happen after we collect sections, otherwise the line number
     // will be off.
     if !input.is_empty() {
+        let newlines = newlines_from(input, start);
         return Err(Error {
             line_number: newlines,
             last_attempted_parser: node,
@@ -77,6 +75,13 @@ pub fn from_bytes<'i>(mut input: &'i [u8], mut dispatch: impl FnMut(Event<'i>)) 
     }
 
     Ok(())
+}
+
+fn newlines_from(input: &[u8], start: winnow::stream::Checkpoint<&[u8]>) -> usize {
+    let offset = input.offset_from(&start);
+    let mut start_input = input;
+    start_input.reset(start);
+    start_input.next_slice(offset).iter().filter(|c| **c == b'\n').count()
 }
 
 fn comment<'i>(i: &mut &'i [u8]) -> PResult<Comment<'i>, NomError<&'i [u8]>> {
@@ -95,15 +100,13 @@ fn section<'i>(
     i: &mut &'i [u8],
     node: &mut ParseNode,
     dispatch: &mut impl FnMut(Event<'i>),
-) -> PResult<usize, NomError<&'i [u8]>> {
+) -> PResult<(), NomError<&'i [u8]>> {
     let start = i.checkpoint();
     let header = section_header(i).map_err(|e| {
         i.reset(start);
         e
     })?;
     dispatch(Event::SectionHeader(header));
-
-    let mut newlines = 0;
 
     // This would usually be a many0(alt(...)), the manual loop allows us to
     // optimize vec insertions
@@ -114,14 +117,11 @@ fn section<'i>(
             dispatch(Event::Whitespace(Cow::Borrowed(v.as_bstr())));
         }
 
-        if let Some((v, new_newlines)) = opt(take_newlines1).parse_next(i)? {
-            newlines += new_newlines;
+        if let Some(v) = opt(take_newlines1).parse_next(i)? {
             dispatch(Event::Newline(Cow::Borrowed(v.as_bstr())));
         }
 
-        if let Ok(new_newlines) = key_value_pair(i, node, dispatch) {
-            newlines += new_newlines;
-        }
+        let _ = key_value_pair(i, node, dispatch);
 
         if let Some(comment) = opt(comment).parse_next(i)? {
             dispatch(Event::Comment(comment));
@@ -132,7 +132,7 @@ fn section<'i>(
         }
     }
 
-    Ok(newlines)
+    Ok(())
 }
 
 fn section_header<'i>(i: &mut &'i [u8]) -> PResult<section::Header<'i>, NomError<&'i [u8]>> {
@@ -211,7 +211,7 @@ fn key_value_pair<'i>(
     i: &mut &'i [u8],
     node: &mut ParseNode,
     dispatch: &mut impl FnMut(Event<'i>),
-) -> PResult<usize, NomError<&'i [u8]>> {
+) -> PResult<(), NomError<&'i [u8]>> {
     *node = ParseNode::Name;
     let name = config_name.parse_next(i)?;
 
@@ -222,8 +222,7 @@ fn key_value_pair<'i>(
     }
 
     *node = ParseNode::Value;
-    let newlines = config_value(i, dispatch)?;
-    Ok(newlines)
+    config_value(i, dispatch)
 }
 
 /// Parses the config name of a config pair. Assumes the input has already been
@@ -238,30 +237,28 @@ fn config_name<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
         .parse_next(i)
 }
 
-fn config_value<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PResult<usize, NomError<&'i [u8]>> {
+fn config_value<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PResult<(), NomError<&'i [u8]>> {
     if opt('=').parse_next(i)?.is_some() {
         dispatch(Event::KeyValueSeparator);
         if let Some(whitespace) = opt(take_spaces1).parse_next(i)? {
             dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));
         }
-        let newlines = value_impl(i, dispatch)?;
-        Ok(newlines)
+        value_impl(i, dispatch)
     } else {
         // This is a special way of denoting 'empty' values which a lot of code depends on.
         // Hence, rather to fix this everywhere else, leave it here and fix it where it matters, namely
         // when it's about differentiating between a missing key-value separator, and one followed by emptiness.
         dispatch(Event::Value(Cow::Borrowed("".into())));
-        Ok(0)
+        Ok(())
     }
 }
 
 /// Handles parsing of known-to-be values. This function handles both single
 /// line values as well as values that are continuations.
-fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PResult<usize, NomError<&'i [u8]>> {
+fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PResult<(), NomError<&'i [u8]>> {
     let start_checkpoint = i.checkpoint();
     let mut value_start_checkpoint = i.checkpoint();
     let mut value_end = None;
-    let mut newlines = 0;
 
     // This is required to ignore comment markers if they're in a quote.
     let mut is_in_quotes = false;
@@ -301,7 +298,6 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PRe
                 match c {
                     b'\n' => {
                         partial_value_found = true;
-                        newlines += 1;
 
                         i.reset(value_start_checkpoint);
 
@@ -337,7 +333,7 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PRe
             let last_value_index = i.offset_from(&value_start_checkpoint);
             if last_value_index == 0 {
                 dispatch(Event::Value(Cow::Borrowed("".into())));
-                return Ok(newlines);
+                return Ok(());
             } else {
                 last_value_index
             }
@@ -360,7 +356,7 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PRe
         dispatch(Event::Value(Cow::Borrowed(remainder_value.as_bstr())));
     }
 
-    Ok(newlines)
+    Ok(())
 }
 
 fn take_spaces1<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
@@ -369,9 +365,10 @@ fn take_spaces1<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
         .parse_next(i)
 }
 
-fn take_newlines1<'i>(i: &mut &'i [u8]) -> PResult<(&'i BStr, usize), NomError<&'i [u8]>> {
+fn take_newlines1<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
     repeat(1.., alt(("\r\n", "\n")))
-        .with_recognized()
-        .map(|(count, newlines): (usize, &[u8])| (newlines.as_bstr(), count))
+        .map(|()| ())
+        .recognize()
+        .map(|newlines: &[u8]| newlines.as_bstr())
         .parse_next(i)
 }
