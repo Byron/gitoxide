@@ -62,7 +62,7 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
     if opts.update_crates_index {
         // Do this before creating our context to pick up a possibly newly fetched/created index.
         log::info!("Updating crates-io index",);
-        crates_index::Index::new_cargo_default()?.update()?;
+        crates_index::GitIndex::new_cargo_default()?.update()?;
     } else if opts.bump_when_needed {
         log::warn!(
             "Consider running with --update-crates-index to assure bumping on demand uses the latest information"
@@ -477,7 +477,7 @@ fn wait_for_release(
     let crate_version = crate_version.to_string();
 
     log::info!("Waiting for '{} v{}' to arrive in index…", crate_.name, crate_version);
-    let mut crates_index = crates_index::Index::new_cargo_default()?;
+    let mut crates_index = crates_index::GitIndex::new_cargo_default()?;
     let mut attempt = 0;
     while start.elapsed() < timeout {
         attempt += 1;

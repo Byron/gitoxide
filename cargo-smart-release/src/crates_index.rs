@@ -1,7 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub struct Index {
-    inner: Option<crates_index::Index>,
+    inner: Option<crates_index::GitIndex>,
 }
 
 impl Index {
@@ -10,7 +10,7 @@ impl Index {
         let path = default_path();
         Ok(Index {
             inner: if path.is_dir() {
-                crates_index::Index::new_cargo_default()?.into()
+                crates_index::GitIndex::new_cargo_default()?.into()
             } else {
                 None
             },
@@ -31,14 +31,7 @@ impl Index {
 }
 
 fn default_path() -> PathBuf {
-    home::cargo_home()
-        .ok()
-        .or_else(|| {
-            std::env::var_os("CARGO_HOME")
-                .map(PathBuf::from)
-                .or_else(|| home::home_dir().map(|dir| Path::new(&dir).join(".cargo")))
-        })
-        .expect("one of these paths works")
-        .join("registry/index")
-        .join("github.com-1ecc6299db9ec823")
+    crates_index::local_path_and_canonical_url(crates_index::git::URL, None)
+        .expect("defaults are well-known")
+        .0
 }
