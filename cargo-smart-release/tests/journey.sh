@@ -4,7 +4,11 @@ set -eu
 exe=${1:?First argument must be the executable to test}
 
 root="$(cd "${0%/*}" && pwd)"
-exe="${root}/../$exe"
+
+# if exe path is relative eval it from the parent of this script's location
+if [[ $exe != /* ]]; then
+  exe="${root}/../$exe"
+fi
 
 # shellcheck disable=1090
 source "$root/utilities.sh"

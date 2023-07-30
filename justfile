@@ -174,36 +174,41 @@ unit-tests:
 unit-tests-flaky:
     cargo test -p gix --features async-network-client-async-std
 
-jtt := "target/debug/jtt"
+target_dir := `cargo metadata --format-version 1 | jq -r .target_directory`
+ein := target_dir / "debug/ein"
+gix := target_dir / "debug/gix"
+jtt := target_dir / "debug/jtt"
 
 # run journey tests (max)
 journey-tests:
     cargo build
     cargo build -p gix-testtools --bin jtt
-    ./tests/journey.sh target/debug/ein target/debug/gix {{ jtt }} max
+    ./tests/journey.sh {{ ein }} {{ gix }} {{ jtt }} max
 
 # run journey tests (max-pure)
 journey-tests-pure:
     cargo build --no-default-features --features max-pure
     cargo build -p gix-testtools --bin jtt
-    ./tests/journey.sh target/debug/ein target/debug/gix {{ jtt }} max-pure
+    ./tests/journey.sh {{ ein }} {{ gix }} {{ jtt }} max-pure
 
 # run journey tests (small)
 journey-tests-small:
     cargo build --no-default-features --features small
     cargo build -p gix-testtools
-    ./tests/journey.sh target/debug/ein target/debug/gix {{ jtt }} small
+    ./tests/journey.sh {{ ein }} {{ gix }} {{ jtt }} small
 
 # run journey tests (lean-async)
 journey-tests-async:
     cargo build --no-default-features --features lean-async
     cargo build -p gix-testtools
-    ./tests/journey.sh target/debug/ein target/debug/gix {{ jtt }} async
+    ./tests/journey.sh {{ ein }} {{ gix }} {{ jtt }} async
+
+cargo-smart-release := `cargo metadata --manifest-path ./cargo-smart-release/Cargo.toml --format-version 1 | jq -r .target_directory` / "debug/cargo-smart-release"
 
 # run journey tests (cargo-smart-release)
 journey-tests-smart-release:
     cd cargo-smart-release && cargo build --bin cargo-smart-release
-    cd cargo-smart-release && ./tests/journey.sh ../cargo-smart-release/target/debug/cargo-smart-release
+    cd cargo-smart-release && ./tests/journey.sh {{ cargo-smart-release }}
 
 # Run cargo-diet on all crates to see that they are still in bound
 check-size:
