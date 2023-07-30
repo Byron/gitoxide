@@ -156,12 +156,3 @@ update-assets: $(baseline_asset_fixture) ## refresh assets compiled into the bin
 force-update-assets: ## As update-assets, but will run git to update the baseline as well
 	-rm -Rf $(baseline_asset_fixture)
 	$(MAKE) update-assets
-
-##@ Publishing & Versioning
-
-cargo-smart-release := $(shell cargo metadata --manifest-path ./cargo-smart-release/Cargo.toml --format-version 1 | jq -r .target_directory)/debug/cargo-smart-release
-$(cargo-smart-release): always
-	cargo build --manifest-path ./cargo-smart-release/Cargo.toml --bin cargo-smart-release
-
-try-publish-all: $(cargo-smart-release) ## Dry-run publish all crates in the currently set version if they are not published yet.
-	$(cargo-smart-release) smart-release gitoxide
