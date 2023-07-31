@@ -582,11 +582,14 @@ mod update {
             },
             TargetRef::Symbolic(name) => {
                 let target = name.as_bstr().into();
-                let id = r.peel_to_id_in_place().unwrap();
-                gix_protocol::handshake::Ref::Symbolic {
-                    full_ref_name,
-                    target,
-                    object: id.detach(),
+                match r.peel_to_id_in_place() {
+                    Ok(id) => gix_protocol::handshake::Ref::Symbolic {
+                        full_ref_name,
+                        target,
+                        tag: None,
+                        object: id.detach(),
+                    },
+                    Err(_) => gix_protocol::handshake::Ref::Unborn { full_ref_name, target },
                 }
             }
         }

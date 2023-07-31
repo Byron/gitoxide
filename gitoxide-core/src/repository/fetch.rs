@@ -18,6 +18,7 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub(crate) mod function {
     use anyhow::bail;
+    use gix::remote::fetch::refs::update::TypeChange;
     use gix::{prelude::ObjectIdExt, refspec::match_group::validate::Fix, remote::fetch::Status};
     use layout::{
         backends::svg::SVGWriter,
@@ -261,11 +262,28 @@ pub(crate) mod function {
                     crate::repository::remote::refs::print_ref(&mut out, r)?;
                 }
             };
+            let mode_and_type = update.type_change.map_or_else(
+                || format!("{}", update.mode),
+                |type_change| {
+                    format!(
+                        "{} ({})",
+                        update.mode,
+                        match type_change {
+                            TypeChange::DirectToSymbolic => {
+                                "direct ref overwrites symbolic"
+                            }
+                            TypeChange::SymbolicToDirect => {
+                                "symbolic ref overwrites direct"
+                            }
+                        }
+                    )
+                },
+            );
             match edit {
                 Some(edit) => {
-                    writeln!(out, " -> {} [{}]", edit.name, update.mode)
+                    writeln!(out, " -> {} [{mode_and_type}]", edit.name)
                 }
-                None => writeln!(out, " [{}]", update.mode),
+                None => writeln!(out, " [{mode_and_type}]"),
             }?;
         }
         consume_skipped_tags(&mut skipped_due_to_implicit_tag, &mut out)?;

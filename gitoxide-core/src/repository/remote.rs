@@ -244,6 +244,8 @@ mod refs_impl {
         },
         Symbolic {
             path: String,
+            #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+            tag: Option<String>,
             target: String,
             object: String,
         },
@@ -265,10 +267,12 @@ mod refs_impl {
                 },
                 handshake::Ref::Symbolic {
                     full_ref_name: path,
+                    tag,
                     target,
                     object,
                 } => JsonRef::Symbolic {
                     path: path.to_string(),
+                    tag: tag.map(|t| t.to_string()),
                     target: target.to_string(),
                     object: object.to_string(),
                 },
@@ -298,9 +302,15 @@ mod refs_impl {
             } => write!(&mut out, "{tag} {path} object:{object}").map(|_| tag.as_ref()),
             handshake::Ref::Symbolic {
                 full_ref_name: path,
+                tag,
                 target,
                 object,
-            } => write!(&mut out, "{object} {path} symref-target:{target}").map(|_| object.as_ref()),
+            } => match tag {
+                Some(tag) => {
+                    write!(&mut out, "{tag} {path} symref-target:{target} peeled:{object}").map(|_| tag.as_ref())
+                }
+                None => write!(&mut out, "{object} {path} symref-target:{target}").map(|_| object.as_ref()),
+            },
             handshake::Ref::Unborn { full_ref_name, target } => {
                 static NULL: gix::hash::ObjectId = gix::hash::ObjectId::null(gix::hash::Kind::Sha1);
                 write!(&mut out, "unborn {full_ref_name} symref-target:{target}").map(|_| NULL.as_ref())

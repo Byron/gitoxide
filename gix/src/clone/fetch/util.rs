@@ -76,6 +76,7 @@ pub fn update_head(
             gix_protocol::handshake::Ref::Symbolic {
                 full_ref_name,
                 target,
+                tag: _,
                 object,
             } if full_ref_name == "HEAD" => (Some(object.as_ref()), Some(target)),
             gix_protocol::handshake::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
