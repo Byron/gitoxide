@@ -81,6 +81,7 @@ async fn ls_remote() -> crate::Result {
             handshake::Ref::Symbolic {
                 full_ref_name: "HEAD".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb"),
+                tag: None,
                 target: "refs/heads/master".into()
             },
             handshake::Ref::Direct {
