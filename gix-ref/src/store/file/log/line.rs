@@ -146,11 +146,11 @@ pub mod decode {
         if message_sep.is_none() {
             if let Some(first) = message.first() {
                 if !first.is_ascii_whitespace() {
-                    return Err(winnow::Err::Backtrack(E::add_context(
-                        E::from_error_kind(i, winnow::error::ErrorKind::MapRes),
-                        i,
-                        "log message must be separated from signature with whitespace",
-                    )));
+                    return Err(
+                        winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes).map(|err: E| {
+                            err.add_context(i, "log message must be separated from signature with whitespace")
+                        }),
+                    );
                 }
             }
         }

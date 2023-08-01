@@ -15,11 +15,8 @@ use crate::{parse, parse::NL, BStr, ByteSlice, CommitRef};
 pub fn message<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
     if i.is_empty() {
         // newline + [message]
-        return Err(winnow::Err::Backtrack(E::add_context(
-            E::from_error_kind(i, winnow::error::ErrorKind::Eof),
-            i,
-            "newline + <message>",
-        )));
+        return Err(winnow::Err::from_error_kind(i, winnow::error::ErrorKind::Eof)
+            .map(|err: E| err.add_context(i, "newline + <message>")));
     }
     let (i, _) = context("a newline separates headers from the message", tag(NL))(i)?;
     Ok((&[], i.as_bstr()))
