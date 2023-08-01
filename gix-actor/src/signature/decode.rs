@@ -29,9 +29,9 @@ pub(crate) mod function {
                 tag(b" "),
                 context("<timestamp>", |i| {
                     terminated(take_until(SPACE), take(1usize))(i).and_then(|(i, v)| {
-                        btoi::<SecondsSinceUnixEpoch>(v).map(|v| (i, v)).map_err(|_| {
-                            winnow::Err::Backtrack(E::from_error_kind(i, winnow::error::ErrorKind::MapRes))
-                        })
+                        btoi::<SecondsSinceUnixEpoch>(v)
+                            .map(|v| (i, v))
+                            .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
                     })
                 }),
                 context(
@@ -43,16 +43,16 @@ pub(crate) mod function {
                 ),
                 context("HH", |i| {
                     take_while_m_n(2usize, 2, is_digit)(i).and_then(|(i, v)| {
-                        btoi::<OffsetInSeconds>(v).map(|v| (i, v)).map_err(|_| {
-                            winnow::Err::Backtrack(E::from_error_kind(i, winnow::error::ErrorKind::MapRes))
-                        })
+                        btoi::<OffsetInSeconds>(v)
+                            .map(|v| (i, v))
+                            .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
                     })
                 }),
                 context("MM", |i| {
                     take_while_m_n(1usize, 2, is_digit)(i).and_then(|(i, v)| {
-                        btoi::<OffsetInSeconds>(v).map(|v| (i, v)).map_err(|_| {
-                            winnow::Err::Backtrack(E::from_error_kind(i, winnow::error::ErrorKind::MapRes))
-                        })
+                        btoi::<OffsetInSeconds>(v)
+                            .map(|v| (i, v))
+                            .map_err(|_| winnow::Err::from_error_kind(i, winnow::error::ErrorKind::MapRes))
                     })
                 }),
             )),
