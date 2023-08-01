@@ -161,6 +161,32 @@ fn pre_epoch() -> crate::Result {
 }
 
 #[test]
+fn double_dash_special_time_offset() -> crate::Result {
+    let signature = || SignatureRef {
+        name: "name".into(),
+        email: "name@example.com".into(),
+        time: Time {
+            seconds: 1288373970,
+            offset: -252000,
+            sign: Sign::Minus,
+        },
+    };
+    assert_eq!(
+        CommitRef::from_bytes(&fixture_name("commit", "double-dash-date-offset.txt"))?,
+        CommitRef {
+            tree: b"0a851d7a2a66084ab10516c406a405d147e974ad".as_bstr(),
+            parents: SmallVec::from(vec![b"31350f4f0f459485eff2131517e3450cf251f6fa".as_bstr()]),
+            author: signature(),
+            committer: signature(),
+            encoding: None,
+            message: "msg\n".into(),
+            extra_headers: vec![]
+        }
+    );
+    Ok(())
+}
+
+#[test]
 fn with_trailer() -> crate::Result {
     let kim = SignatureRef {
         name: "Kim Altintop".into(),
