@@ -123,12 +123,12 @@ pub mod decode {
 
     impl<'a> LineRef<'a> {
         /// Decode a line from the given bytes which are expected to start at a hex sha.
-        pub fn from_bytes(input: &'a [u8]) -> Result<LineRef<'a>, Error> {
-            one::<()>(input).map(|(_, l)| l).map_err(|_| Error::new(input))
+        pub fn from_bytes(mut input: &'a [u8]) -> Result<LineRef<'a>, Error> {
+            one::<()>(&mut input).map_err(|_| Error::new(input))
         }
     }
 
-    fn message<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
+    fn message<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<&'a BStr, E> {
         if i.is_empty() {
             rest.map(ByteSlice::as_bstr).parse_next(i)
         } else {
@@ -138,7 +138,7 @@ pub mod decode {
         }
     }
 
-    fn one<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], LineRef<'a>, E> {
+    fn one<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(bytes: &mut &'a [u8]) -> PResult<LineRef<'a>, E> {
         (
             (
                 terminated(hex_hash, b" ").context("<old-hexsha>"),
@@ -182,12 +182,14 @@ pub mod decode {
         mod invalid {
             use gix_testtools::to_bstr_err;
             use winnow::error::VerboseError;
+            use winnow::prelude::*;
 
             use super::one;
 
             #[test]
             fn completely_bogus_shows_error_with_context() {
-                let err = one::<VerboseError<&[u8]>>(b"definitely not a log entry")
+                let err = one::<VerboseError<&[u8], &'static str>>
+                    .parse_peek(b"definitely not a log entry")
                     .map_err(to_bstr_err)
                     .expect_err("this should fail");
                 assert!(err.to_string().contains("<old-hexsha> <new-hexsha>"));
@@ -196,7 +198,8 @@ pub mod decode {
             #[test]
             fn missing_whitespace_between_signature_and_message() {
                 let line = "0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000message";
-                let err = one::<VerboseError<&[u8]>>(line.as_bytes())
+                let err = one::<VerboseError<&[u8], &'static str>>
+                    .parse_peek(line.as_bytes())
                     .map_err(to_bstr_err)
                     .expect_err("this should fail");
                 assert!(
@@ -215,7 +218,10 @@ pub mod decode {
             let line_with_nl = with_newline(line_without_nl.clone());
             for input in &[line_without_nl, line_with_nl] {
                 assert_eq!(
-                    one::<winnow::error::Error<_>>(input).expect("successful parsing").1,
+                    one::<winnow::error::InputError<_>>
+                        .parse_peek(input)
+                        .expect("successful parsing")
+                        .1,
                     LineRef {
                         previous_oid: NULL_SHA1.as_bstr(),
                         new_oid: NULL_SHA1.as_bstr(),
@@ -240,7 +246,9 @@ pub mod decode {
             let line_with_nl = with_newline(line_without_nl.clone());
 
             for input in &[line_without_nl, line_with_nl] {
-                let (remaining, res) = one::<winnow::error::Error<_>>(input).expect("successful parsing");
+                let (remaining, res) = one::<winnow::error::InputError<_>>
+                    .parse_peek(input)
+                    .expect("successful parsing");
                 assert!(remaining.is_empty(), "all consuming even without trailing newline");
                 let actual = LineRef {
                     previous_oid: b"a5828ae6b52137b913b978e16cd2334482eb4c1f".as_bstr(),
@@ -268,10 +276,14 @@ pub mod decode {
         #[test]
         fn two_lines_in_a_row_with_and_without_newline() {
             let lines = b"0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000\t\n0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 two <foo@example.com> 1234567890 -0000\thello";
-            let (remainder, parsed) = one::<winnow::error::Error<_>>(lines).expect("parse single line");
+            let (remainder, parsed) = one::<winnow::error::InputError<_>>
+                .parse_peek(lines)
+                .expect("parse single line");
             assert_eq!(parsed.message, b"".as_bstr(), "first message is empty");
 
-            let (remainder, parsed) = one::<winnow::error::Error<_>>(remainder).expect("parse single line");
+            let (remainder, parsed) = one::<winnow::error::InputError<_>>
+                .parse_peek(remainder)
+                .expect("parse single line");
             assert_eq!(
                 parsed.message,
                 b"hello".as_bstr(),

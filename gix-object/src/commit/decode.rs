@@ -14,7 +14,7 @@ use winnow::{
 
 use crate::{parse, parse::NL, BStr, ByteSlice, CommitRef};
 
-pub fn message<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
+pub fn message<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<&'a BStr, E> {
     if i.is_empty() {
         // newline + [message]
         return Err(
@@ -27,22 +27,21 @@ pub fn message<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &'a [u8])
         .parse_next(i)
 }
 
-pub fn commit<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], CommitRef<'a>, E> {
+pub fn commit<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<CommitRef<'a>, E> {
     (
-        (|i| parse::header_field(i, b"tree", parse::hex_hash)).context("tree <40 lowercase hex char>"),
-        repeat(0.., |i| parse::header_field(i, b"parent", parse::hex_hash))
+        (|i: &mut _| parse::header_field(i, b"tree", parse::hex_hash)).context("tree <40 lowercase hex char>"),
+        repeat(0.., |i: &mut _| parse::header_field(i, b"parent", parse::hex_hash))
             .map(|p: Vec<_>| p)
             .context("zero or more 'parent <40 lowercase hex char>'"),
-        (|i| parse::header_field(i, b"author", parse::signature)).context("author <signature>"),
-        (|i| parse::header_field(i, b"committer", parse::signature)).context("committer <signature>"),
-        opt(|i| parse::header_field(i, b"encoding", take_till1(NL))).context("encoding <encoding>"),
+        (|i: &mut _| parse::header_field(i, b"author", parse::signature)).context("author <signature>"),
+        (|i: &mut _| parse::header_field(i, b"committer", parse::signature)).context("committer <signature>"),
+        opt(|i: &mut _| parse::header_field(i, b"encoding", take_till1(NL))).context("encoding <encoding>"),
         repeat(
             0..,
             alt((
                 parse::any_header_field_multi_line.map(|(k, o)| (k.as_bstr(), Cow::Owned(o))),
-                |i| {
-                    parse::any_header_field(i, take_till1(NL))
-                        .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
+                |i: &mut _| {
+                    parse::any_header_field(i, take_till1(NL)).map(|(k, o)| (k.as_bstr(), Cow::Borrowed(o.as_bstr())))
                 },
             )),
         )

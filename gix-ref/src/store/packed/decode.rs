@@ -37,7 +37,7 @@ impl Default for Header {
     }
 }
 
-fn until_newline<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E>
+fn until_newline<'a, E>(input: &mut &'a [u8]) -> PResult<&'a BStr, E>
 where
     E: ParserError<&'a [u8]>,
 {
@@ -46,7 +46,7 @@ where
         .parse_next(input)
 }
 
-pub fn header<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], Header, E>
+pub fn header<'a, E>(input: &mut &'a [u8]) -> PResult<Header, E>
 where
     E: ParserError<&'a [u8]>,
 {
@@ -69,8 +69,8 @@ where
 }
 
 pub fn reference<'a, E: ParserError<&'a [u8]> + FromExternalError<&'a [u8], crate::name::Error>>(
-    input: &'a [u8],
-) -> IResult<&'a [u8], packed::Reference<'a>, E> {
+    input: &mut &'a [u8],
+) -> PResult<packed::Reference<'a>, E> {
     (
         terminated(hex_hash, b" "),
         until_newline.try_map(TryInto::try_into),

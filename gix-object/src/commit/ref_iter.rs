@@ -150,13 +150,13 @@ fn missing_field() -> crate::decode::Error {
 }
 
 impl<'a> CommitRefIter<'a> {
-    fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
+    fn next_inner(mut i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
         use State::*;
         Ok(match state {
             Tree => {
-                let (i, tree) = (|i| parse::header_field(i, b"tree", parse::hex_hash))
+                let tree = (|i: &mut _| parse::header_field(i, b"tree", parse::hex_hash))
                     .context("tree <40 lowercase hex char>")
-                    .parse_next(i)?;
+                    .parse_next(&mut i)?;
                 *state = State::Parents;
                 (
                     i,
@@ -166,9 +166,9 @@ impl<'a> CommitRefIter<'a> {
                 )
             }
             Parents => {
-                let (i, parent) = opt(|i| parse::header_field(i, b"parent", parse::hex_hash))
+                let parent = opt(|i: &mut _| parse::header_field(i, b"parent", parse::hex_hash))
                     .context("commit <40 lowercase hex char>")
-                    .parse_next(i)?;
+                    .parse_next(&mut i)?;
                 match parent {
                     Some(parent) => (
                         i,
@@ -196,9 +196,9 @@ impl<'a> CommitRefIter<'a> {
                         (&b"committer"[..], "committer <signature>")
                     }
                 };
-                let (i, signature) = (|i| parse::header_field(i, field_name, parse::signature))
+                let signature = (|i: &mut _| parse::header_field(i, field_name, parse::signature))
                     .context(err_msg)
-                    .parse_next(i)?;
+                    .parse_next(&mut i)?;
                 (
                     i,
                     match who {
@@ -208,9 +208,9 @@ impl<'a> CommitRefIter<'a> {
                 )
             }
             Encoding => {
-                let (i, encoding) = opt(|i| parse::header_field(i, b"encoding", take_till1(NL)))
+                let encoding = opt(|i: &mut _| parse::header_field(i, b"encoding", take_till1(NL)))
                     .context("encoding <encoding>")
-                    .parse_next(i)?;
+                    .parse_next(&mut i)?;
                 *state = State::ExtraHeaders;
                 match encoding {
                     Some(encoding) => (i, Token::Encoding(encoding.as_bstr())),
@@ -218,15 +218,15 @@ impl<'a> CommitRefIter<'a> {
                 }
             }
             ExtraHeaders => {
-                let (i, extra_header) = opt(alt((
-                    |i| parse::any_header_field_multi_line(i).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o)))),
-                    |i| {
+                let extra_header = opt(alt((
+                    |i: &mut _| parse::any_header_field_multi_line(i).map(|(k, o)| (k.as_bstr(), Cow::Owned(o))),
+                    |i: &mut _| {
                         parse::any_header_field(i, take_till1(NL))
-                            .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
+                            .map(|(k, o)| (k.as_bstr(), Cow::Borrowed(o.as_bstr())))
                     },
                 )))
                 .context("<field> <single-line|multi-line>")
-                .parse_next(i)?;
+                .parse_next(&mut i)?;
                 match extra_header {
                     Some(extra_header) => (i, Token::ExtraHeader(extra_header)),
                     None => {
@@ -236,7 +236,7 @@ impl<'a> CommitRefIter<'a> {
                 }
             }
             Message => {
-                let (i, message) = terminated(decode::message, eof).parse_next(i)?;
+                let message = terminated(decode::message, eof).parse_next(&mut i)?;
                 debug_assert!(
                     i.is_empty(),
                     "we should have consumed all data - otherwise iter may go forever"

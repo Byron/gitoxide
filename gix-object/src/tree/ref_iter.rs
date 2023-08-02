@@ -14,8 +14,8 @@ impl<'a> TreeRefIter<'a> {
 
 impl<'a> TreeRef<'a> {
     /// Deserialize a Tree from `data`.
-    pub fn from_bytes(data: &'a [u8]) -> Result<TreeRef<'a>, crate::decode::Error> {
-        decode::tree(data).map(|(_, t)| t).map_err(crate::decode::Error::from)
+    pub fn from_bytes(mut data: &'a [u8]) -> Result<TreeRef<'a>, crate::decode::Error> {
+        decode::tree(&mut data).map_err(crate::decode::Error::from)
     }
 
     /// Find an entry named `name` knowing if the entry is a directory or not, using a binary search.
@@ -68,9 +68,10 @@ impl<'a> Iterator for TreeRefIter<'a> {
             }
             None => {
                 self.data = &[];
+                let empty = &[] as &[u8];
                 #[allow(clippy::unit_arg)]
                 Some(Err(winnow::error::ErrMode::from_error_kind(
-                    &[] as &[u8],
+                    &empty,
                     winnow::error::ErrorKind::Verify,
                 )
                 .into()))
@@ -160,7 +161,7 @@ mod decode {
         ))
     }
 
-    pub fn entry<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], EntryRef<'_>, E> {
+    pub fn entry<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<EntryRef<'a>, E> {
         (
             terminated(take_while(5..=6, AsChar::is_dec_digit), SPACE)
                 .verify_map(|mode| tree::EntryMode::try_from(mode).ok()),
@@ -175,7 +176,7 @@ mod decode {
             .parse_next(i)
     }
 
-    pub fn tree<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], TreeRef<'a>, E> {
+    pub fn tree<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<TreeRef<'a>, E> {
         terminated(repeat(0.., entry), eof)
             .map(|entries| TreeRef { entries })
             .parse_next(i)

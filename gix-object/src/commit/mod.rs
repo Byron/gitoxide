@@ -58,8 +58,8 @@ mod write;
 /// Lifecycle
 impl<'a> CommitRef<'a> {
     /// Deserialize a commit from the given `data` bytes while avoiding most allocations.
-    pub fn from_bytes(data: &'a [u8]) -> Result<CommitRef<'a>, crate::decode::Error> {
-        decode::commit(data).map(|(_, t)| t).map_err(crate::decode::Error::from)
+    pub fn from_bytes(mut data: &'a [u8]) -> Result<CommitRef<'a>, crate::decode::Error> {
+        decode::commit(&mut data).map_err(crate::decode::Error::from)
     }
 }
 

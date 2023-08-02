@@ -47,12 +47,12 @@ pub mod open {
                 };
 
                 let (offset, sorted) = {
-                    let input = backing.as_ref();
+                    let mut input = backing.as_ref();
                     if *input.first().unwrap_or(&b' ') == b'#' {
-                        let (input, header) = packed::decode::header::<()>
-                            .parse_next(input)
+                        let header = packed::decode::header::<()>
+                            .parse_next(&mut input)
                             .map_err(|_| Error::HeaderParsing)?;
-                        let offset = input.offset_from(backing.as_ref());
+                        let offset = input.offset_from(&backing.as_ref());
                         (offset, header.sorted)
                     } else {
                         (0, false)
