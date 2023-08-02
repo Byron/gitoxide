@@ -75,7 +75,7 @@ impl<'a> From<LineRef<'a>> for Line {
 pub mod decode {
     use gix_object::bstr::{BStr, ByteSlice};
     use winnow::{
-        bytes::take_while0,
+        bytes::take_while,
         combinator::opt,
         error::{ContextError, ParseError},
         prelude::*,
@@ -127,7 +127,7 @@ pub mod decode {
         if i.is_empty() {
             Ok((&[], i.as_bstr()))
         } else {
-            terminated(take_while0(|c| c != b'\n'), opt(b'\n'))
+            terminated(take_while(0.., |c| c != b'\n'), opt(b'\n'))
                 .parse_next(i)
                 .map(|(i, o)| (i, o.as_bstr()))
         }

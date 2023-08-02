@@ -1,6 +1,6 @@
 use winnow::{
     branch::alt,
-    bytes::{tag, take_until0, take_while0, take_while1},
+    bytes::{tag, take_until0, take_while},
     combinator::{eof, opt},
     error::{ContextError, ParseError},
     prelude::*,
@@ -15,13 +15,13 @@ pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
         .context("object <40 lowercase hex char>")
         .parse_next(i)?;
 
-    let (i, kind) = (|i| parse::header_field(i, b"type", take_while1(AsChar::is_alpha)))
+    let (i, kind) = (|i| parse::header_field(i, b"type", take_while(1.., AsChar::is_alpha)))
         .context("type <object kind>")
         .parse_next(i)?;
     let kind = crate::Kind::from_bytes(kind)
         .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))?;
 
-    let (i, tag_version) = (|i| parse::header_field(i, b"tag", take_while1(|b| b != NL[0])))
+    let (i, tag_version) = (|i| parse::header_field(i, b"tag", take_while(1.., |b| b != NL[0])))
         .context("tag <version>")
         .parse_next(i)?;
 
@@ -68,7 +68,7 @@ pub fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&
                     &PGP_SIGNATURE_BEGIN[1..],
                     take_until0(PGP_SIGNATURE_END),
                     PGP_SIGNATURE_END,
-                    take_while0(|_| true),
+                    take_while(0.., |_| true),
                 )
                     .recognize(),
             ),

@@ -2,7 +2,7 @@ use std::convert::{TryFrom, TryInto};
 
 use gix_hash::ObjectId;
 use gix_object::bstr::BString;
-use winnow::{bytes::take_while0, combinator::opt, prelude::*, sequence::terminated};
+use winnow::{bytes::take_while, combinator::opt, prelude::*, sequence::terminated};
 
 use crate::{
     parse::{hex_hash, newline},
@@ -67,8 +67,8 @@ impl Reference {
 
 fn parse(bytes: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
     let is_space = |b: u8| b == b' ';
-    if let (path, Some(_ref_prefix)) = opt(terminated("ref: ", take_while0(is_space))).parse_next(bytes)? {
-        terminated(take_while0(|b| b != b'\r' && b != b'\n'), opt(newline))
+    if let (path, Some(_ref_prefix)) = opt(terminated("ref: ", take_while(0.., is_space))).parse_next(bytes)? {
+        terminated(take_while(0.., |b| b != b'\r' && b != b'\n'), opt(newline))
             .map(|path| MaybeUnsafeState::UnvalidatedPath(path.into()))
             .parse_next(path)
     } else {
