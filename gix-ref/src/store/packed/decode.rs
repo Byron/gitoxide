@@ -2,11 +2,11 @@ use std::convert::TryInto;
 
 use gix_object::bstr::{BStr, ByteSlice};
 use winnow::{
-    bytes::take_while,
     combinator::opt,
-    error::{FromExternalError, ParseError},
+    combinator::{delimited, preceded, terminated},
+    error::{FromExternalError, ParserError},
     prelude::*,
-    sequence::{delimited, preceded, terminated},
+    token::take_while,
 };
 
 use crate::{
@@ -39,7 +39,7 @@ impl Default for Header {
 
 fn until_newline<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E>
 where
-    E: ParseError<&'a [u8]>,
+    E: ParserError<&'a [u8]>,
 {
     terminated(take_while(0.., |b: u8| b != b'\r' && b != b'\n'), newline)
         .map(ByteSlice::as_bstr)
@@ -48,7 +48,7 @@ where
 
 pub fn header<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], Header, E>
 where
-    E: ParseError<&'a [u8]>,
+    E: ParserError<&'a [u8]>,
 {
     let (rest, traits) = preceded(b"# pack-refs with: ", until_newline).parse_next(input)?;
 
@@ -67,7 +67,7 @@ where
     Ok((rest, Header { peeled, sorted }))
 }
 
-pub fn reference<'a, E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], crate::name::Error>>(
+pub fn reference<'a, E: ParserError<&'a [u8]> + FromExternalError<&'a [u8], crate::name::Error>>(
     input: &'a [u8],
 ) -> IResult<&'a [u8], packed::Reference<'a>, E> {
     let (input, (target, name)) =

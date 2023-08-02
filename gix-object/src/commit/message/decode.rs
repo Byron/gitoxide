@@ -1,12 +1,14 @@
-use winnow::{branch::alt, bytes::take_till1, combinator::eof, error::ParseError, prelude::*, sequence::terminated};
+use winnow::{
+    combinator::alt, combinator::eof, combinator::terminated, error::ParserError, prelude::*, token::take_till1,
+};
 
 use crate::bstr::{BStr, ByteSlice};
 
-pub(crate) fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
+pub(crate) fn newline<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
     alt((b"\r\n", b"\n")).parse_next(i)
 }
 
-fn subject_and_body<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
+fn subject_and_body<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
     let mut c = i;
     let mut consumed_bytes = 0;
     while !c.is_empty() {

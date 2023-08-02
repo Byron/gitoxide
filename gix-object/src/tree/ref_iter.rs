@@ -1,7 +1,7 @@
 use bstr::BStr;
 use std::convert::TryFrom;
 
-use winnow::error::ParseError;
+use winnow::error::ParserError;
 
 use crate::{tree, tree::EntryRef, TreeRef, TreeRefIter};
 
@@ -118,13 +118,13 @@ mod decode {
 
     use bstr::ByteSlice;
     use winnow::{
-        bytes::{take, take_while},
         combinator::eof,
         combinator::repeat,
-        error::ParseError,
+        combinator::terminated,
+        error::ParserError,
         prelude::*,
-        sequence::terminated,
         stream::AsChar,
+        token::{take, take_while},
     };
 
     use crate::{parse::SPACE, tree, tree::EntryRef, TreeRef};
@@ -160,7 +160,7 @@ mod decode {
         ))
     }
 
-    pub fn entry<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], EntryRef<'_>, E> {
+    pub fn entry<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], EntryRef<'_>, E> {
         let (i, mode) = terminated(take_while(5..=6, AsChar::is_dec_digit), SPACE).parse_next(i)?;
         let mode = tree::EntryMode::try_from(mode)
             .map_err(|invalid| winnow::error::ErrMode::from_error_kind(invalid, winnow::error::ErrorKind::Verify))?;
@@ -177,7 +177,7 @@ mod decode {
         ))
     }
 
-    pub fn tree<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], TreeRef<'a>, E> {
+    pub fn tree<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], TreeRef<'a>, E> {
         let (i, entries) = terminated(repeat(0.., entry), eof).parse_next(i)?;
         Ok((i, TreeRef { entries }))
     }
