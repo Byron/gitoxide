@@ -148,7 +148,7 @@ pub mod decode {
             if let Some(first) = message.first() {
                 if !first.is_ascii_whitespace() {
                     return Err(
-                        winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes).map(|err: E| {
+                        winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify).map(|err: E| {
                             err.add_context(i, "log message must be separated from signature with whitespace")
                         }),
                     );

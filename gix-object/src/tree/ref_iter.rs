@@ -71,7 +71,7 @@ impl<'a> Iterator for TreeRefIter<'a> {
                 #[allow(clippy::unit_arg)]
                 Some(Err(winnow::error::ErrMode::from_error_kind(
                     &[] as &[u8],
-                    winnow::error::ErrorKind::MapRes,
+                    winnow::error::ErrorKind::Verify,
                 )
                 .into()))
             }
@@ -163,7 +163,7 @@ mod decode {
     pub fn entry<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], EntryRef<'_>, E> {
         let (i, mode) = terminated(take_while_m_n(5, 6, AsChar::is_dec_digit), SPACE).parse_next(i)?;
         let mode = tree::EntryMode::try_from(mode)
-            .map_err(|invalid| winnow::error::ErrMode::from_error_kind(invalid, winnow::error::ErrorKind::MapRes))?;
+            .map_err(|invalid| winnow::error::ErrMode::from_error_kind(invalid, winnow::error::ErrorKind::Verify))?;
         let (i, filename) = terminated(take_while1(|b| b != NULL[0]), NULL).parse_next(i)?;
         let (i, oid) = take(20u8).parse_next(i)?; // TODO: make this compatible with other hash lengths
 

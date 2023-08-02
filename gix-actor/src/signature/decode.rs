@@ -31,7 +31,7 @@ pub(crate) mod function {
                     .and_then(|(i, v)| {
                         btoi::<SecondsSinceUnixEpoch>(v)
                             .map(|v| (i, v))
-                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))
                     })
             })
             .context("<timestamp>"),
@@ -46,7 +46,7 @@ pub(crate) mod function {
                     .and_then(|(i, v)| {
                         btoi::<OffsetInSeconds>(v)
                             .map(|v| (i, v))
-                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))
                     })
             })
             .context("HH"),
@@ -56,7 +56,7 @@ pub(crate) mod function {
                     .and_then(|(i, v)| {
                         btoi::<OffsetInSeconds>(v)
                             .map(|v| (i, v))
-                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))
                     })
             })
             .context("MM"),
@@ -188,7 +188,7 @@ mod tests {
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "Parse error:\nTakeUntil at:  12345 -1215\nin section '<email>', at:  12345 -1215\nin section '<name> <<email>>', at: hello < 12345 -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at: hello < 12345 -1215\n"
+                        "Parse error:\nSlice at:  12345 -1215\nin section '<email>', at:  12345 -1215\nin section '<name> <<email>>', at: hello < 12345 -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at: hello < 12345 -1215\n"
                     );
         }
 
@@ -199,7 +199,7 @@ mod tests {
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "Parse error:\nMapRes at: -1215\nin section '<timestamp>', at: abc -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at: hello <> abc -1215\n"
+                        "Parse error:\nVerify at: -1215\nin section '<timestamp>', at: abc -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at: hello <> abc -1215\n"
                     );
         }
     }
