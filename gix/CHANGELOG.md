@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.51.0 (2023-08-02)
 
 This is mostly a bug-fix release with many improvements for fetching, along with more forgiving commit parsing.
 
@@ -29,7 +29,7 @@ This is mostly a bug-fix release with many improvements for fetching, along with
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 2 calendar days.
+ - 6 commits contributed to the release over the course of 2 calendar days.
  - 9 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -41,15 +41,13 @@ This is mostly a bug-fix release with many improvements for fetching, along with
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare additional changelogs ([`db63815`](https://github.com/Byron/gitoxide/commit/db6381522395a0de047118e81df5cd3cbeb862b9))
     - Prepare changelogs ([`e4d2890`](https://github.com/Byron/gitoxide/commit/e4d2890a85bf60e9cdb4016dddfab3c4dccbe75e))
     - Merge branch 'fixes-and-improvements' ([`f8b1f55`](https://github.com/Byron/gitoxide/commit/f8b1f553371f25b1bea6bce7cbb2ff1f01194856))
     - Handle symbolic ref updates far more gracefully and with more logical consistency. ([`74ce863`](https://github.com/Byron/gitoxide/commit/74ce8639e88db5107691e9279df2bbfd38d26de3))
     - Adapt to changes in `gix-protocol` ([`df81076`](https://github.com/Byron/gitoxide/commit/df810766dfeaaad7474339358a3d844b2c3368cd))
     - Add `Reference::follow()` as a way to peel symbolic refs step by step. ([`d9e551b`](https://github.com/Byron/gitoxide/commit/d9e551b44aa3e84109660328de7637d465d59578))
 </details>
-
-<csr-unknown>
-This makes it possible to update unborn remote refs to local refs if these are new or unborn themselves.This also allows to create mirrors more easily and allows us to handle HEAD without special casing it.Bare repositories have an easier time to update local symbolic refs.<csr-unknown/>
 
 ## 0.50.1 (2023-07-24)
 

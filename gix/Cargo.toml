@@ -3,7 +3,7 @@ name = "gix"
 repository = "https://github.com/Byron/gitoxide"
 description = "Interact with git repositories just like git would"
 license = "MIT OR Apache-2.0"
-version = "0.50.1"
+version = "0.51.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
@@ -128,7 +128,7 @@ fast-sha1 = [ "gix-features/fast-sha1" ]
 [dependencies]
 gix-utils = { version = "^0.1.5", path = "../gix-utils" }
 gix-fs = { version = "^0.4.1", path = "../gix-fs" }
-gix-ref = { version = "^0.33.2", path = "../gix-ref" }
+gix-ref = { version = "^0.33.3", path = "../gix-ref" }
 gix-discover = { version = "^0.22.1", path = "../gix-discover" }
 gix-tempfile = { version = "^7.0.0", path = "../gix-tempfile", default-features = false, features = ["signals"] }
 gix-lock = { version = "^7.0.0", path = "../gix-lock" }
@@ -138,11 +138,11 @@ gix-date = { version = "^0.7.1", path = "../gix-date" }
 gix-refspec = { version = "^0.14.1", path = "../gix-refspec" }
 gix-filter = { version = "^0.2.0", path = "../gix-filter" }
 
-gix-config = { version = "^0.26.1", path = "../gix-config" }
-gix-odb = { version = "^0.50.1", path = "../gix-odb" }
+gix-config = { version = "^0.26.2", path = "../gix-config" }
+gix-odb = { version = "^0.50.2", path = "../gix-odb" }
 gix-hash = { version = "^0.11.4", path = "../gix-hash" }
-gix-object = { version = "^0.33.1", path = "../gix-object" }
-gix-actor = { version = "^0.24.1", path = "../gix-actor" }
+gix-object = { version = "^0.33.2", path = "../gix-object" }
+gix-actor = { version = "^0.24.2", path = "../gix-actor" }
 gix-pack = { version = "^0.40.2", path = "../gix-pack", features = ["object-cache-dynamic"] }
 gix-revision = { version = "^0.18.1", path = "../gix-revision" }
 gix-negotiate = { version = "^0.5.1", path = "../gix-negotiate" }
@@ -159,9 +159,9 @@ gix-attributes = { version = "^0.16.0", path = "../gix-attributes" }
 gix-ignore = { version = "^0.5.1", path = "../gix-ignore" }
 gix-glob = { version = "^0.10.1", path = "../gix-glob" }
 gix-credentials = { version = "^0.17.1", path = "../gix-credentials" }
-gix-prompt = { version = "^0.5.4", path = "../gix-prompt" }
+gix-prompt = { version = "^0.5.5", path = "../gix-prompt" }
 gix-index = { version = "^0.21.1", path = "../gix-index" }
-gix-worktree = { version = "^0.23.0", path = "../gix-worktree" }
+gix-worktree = { version = "^0.23.1", path = "../gix-worktree" }
 gix-hashtable = { version = "^0.2.4", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.18.1", path = "../gix-commitgraph" }
 
@@ -169,8 +169,8 @@ gix-worktree-stream = { version = "^0.2.0", path = "../gix-worktree-stream", opt
 gix-archive = { version = "^0.2.1", path = "../gix-archive", default-features = false, optional = true }
 
 # For communication with remotes
-gix-protocol = { version = "^0.36.1", path = "../gix-protocol", optional = true }
-gix-transport = { version = "^0.34.1", path = "../gix-transport", optional = true }
+gix-protocol = { version = "^0.37.0", path = "../gix-protocol", optional = true }
+gix-transport = { version = "^0.34.2", path = "../gix-transport", optional = true }
 
 # Just to get the progress-tree feature
 prodash = { version = "25.0", optional = true, default-features = false, features = ["progress-tree"] }
