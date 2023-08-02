@@ -164,8 +164,20 @@ where
             entry.stat = Stat::from_fs(&std::fs::symlink_metadata(dest)?)?;
             obj.data.len()
         }
-        gix_index::entry::Mode::DIR => todo!(),
-        gix_index::entry::Mode::COMMIT => todo!(),
+        gix_index::entry::Mode::DIR => {
+            gix_features::trace::warn!(
+                "Skipped sparse directory at '{entry_path}' ({id}) as it cannot yet be handled",
+                id = entry.id
+            );
+            0
+        }
+        gix_index::entry::Mode::COMMIT => {
+            gix_features::trace::warn!(
+                "Skipped submodule at '{entry_path}' ({id}) as it cannot yet be handled",
+                id = entry.id
+            );
+            0
+        }
         _ => unreachable!(),
     };
     Ok(Outcome::Written { bytes: object_size })
