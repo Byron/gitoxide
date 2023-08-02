@@ -34,13 +34,14 @@ pub struct TrailerRef<'a> {
     pub value: &'a BStr,
 }
 
-fn parse_single_line_trailer<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, &'a BStr), E> {
-    let (i, (token, value)) = separated_pair(take_until1(b":".as_ref()), b": ", rest).parse_next(i.trim_end())?;
+fn parse_single_line_trailer<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<(&'a BStr, &'a BStr), E> {
+    *i = i.trim_end();
+    let (token, value) = separated_pair(take_until1(b":".as_ref()), b": ", rest).parse_next(i)?;
 
     if token.trim_end().len() != token.len() || value.trim_start().len() != value.len() {
         Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Fail).cut())
     } else {
-        Ok((i, (token.as_bstr(), value.as_bstr())))
+        Ok((token.as_bstr(), value.as_bstr()))
     }
 }
 
@@ -51,12 +52,12 @@ impl<'a> Iterator for Trailers<'a> {
         if self.cursor.is_empty() {
             return None;
         }
-        for line in self.cursor.lines_with_terminator() {
+        for mut line in self.cursor.lines_with_terminator() {
             self.cursor = &self.cursor[line.len()..];
             if let Some(trailer) = terminated(parse_single_line_trailer::<()>, eof)
-                .parse_next(line)
+                .parse_next(&mut line)
                 .ok()
-                .map(|(_, (token, value))| TrailerRef {
+                .map(|(token, value)| TrailerRef {
                     token: token.trim().as_bstr(),
                     value: value.trim().as_bstr(),
                 })
@@ -121,7 +122,7 @@ mod test_parse_trailer {
     use super::*;
 
     fn parse(input: &str) -> (&BStr, &BStr) {
-        parse_single_line_trailer::<()>(input.as_bytes()).unwrap().1
+        parse_single_line_trailer::<()>.parse_peek(input.as_bytes()).unwrap().1
     }
 
     #[test]
@@ -144,8 +145,8 @@ mod test_parse_trailer {
 
     #[test]
     fn extra_whitespace_before_token_or_value_is_error() {
-        assert!(parse_single_line_trailer::<()>(b"foo : bar").is_err());
-        assert!(parse_single_line_trailer::<()>(b"foo:  bar").is_err())
+        assert!(parse_single_line_trailer::<()>.parse_peek(b"foo : bar").is_err());
+        assert!(parse_single_line_trailer::<()>.parse_peek(b"foo:  bar").is_err())
     }
 
     #[test]

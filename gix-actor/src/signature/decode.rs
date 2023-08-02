@@ -19,8 +19,8 @@ pub(crate) mod function {
 
     /// Parse a signature from the bytes input `i` using `nom`.
     pub fn decode<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(
-        i: &'a [u8],
-    ) -> IResult<&'a [u8], SignatureRef<'a>, E> {
+        i: &mut &'a [u8],
+    ) -> PResult<SignatureRef<'a>, E> {
         separated_pair(
             identity,
             b" ",
@@ -60,8 +60,8 @@ pub(crate) mod function {
 
     /// Parse an identity from the bytes input `i` (like `name <email>`) using `nom`.
     pub fn identity<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(
-        i: &'a [u8],
-    ) -> IResult<&'a [u8], IdentityRef<'a>, E> {
+        i: &mut &'a [u8],
+    ) -> PResult<IdentityRef<'a>, E> {
         (
             terminated(take_until0(&b" <"[..]), take(2usize)).context("<name>"),
             terminated(take_until0(&b">"[..]), take(1usize)).context("<email>"),
@@ -82,12 +82,14 @@ mod tests {
         use bstr::ByteSlice;
         use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch};
         use gix_testtools::to_bstr_err;
-        use winnow::IResult;
+        use winnow::prelude::*;
 
         use crate::{signature, SignatureRef, Time};
 
-        fn decode(i: &[u8]) -> IResult<&[u8], SignatureRef<'_>, winnow::error::VerboseError<&[u8]>> {
-            signature::decode(i)
+        fn decode<'i>(
+            i: &mut &'i [u8],
+        ) -> PResult<SignatureRef<'i>, winnow::error::VerboseError<&'i [u8], &'static str>> {
+            signature::decode.parse_next(i)
         }
 
         fn signature(
@@ -107,7 +109,8 @@ mod tests {
         #[test]
         fn tz_minus() {
             assert_eq!(
-                decode(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0230")
+                decode
+                    .parse_peek(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0230")
                     .expect("parse to work")
                     .1,
                 signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Minus, -9000)
@@ -117,7 +120,8 @@ mod tests {
         #[test]
         fn tz_plus() {
             assert_eq!(
-                decode(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230")
+                decode
+                    .parse_peek(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230")
                     .expect("parse to work")
                     .1,
                 signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Plus, 9000)
@@ -127,7 +131,8 @@ mod tests {
         #[test]
         fn negative_offset_0000() {
             assert_eq!(
-                decode(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0000")
+                decode
+                    .parse_peek(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0000")
                     .expect("parse to work")
                     .1,
                 signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Minus, 0)
@@ -137,7 +142,8 @@ mod tests {
         #[test]
         fn negative_offset_double_dash() {
             assert_eq!(
-                decode(b"name <name@example.com> 1288373970 --700")
+                decode
+                    .parse_peek(b"name <name@example.com> 1288373970 --700")
                     .expect("parse to work")
                     .1,
                 signature("name", "name@example.com", 1288373970, Sign::Minus, -252000)
@@ -147,7 +153,7 @@ mod tests {
         #[test]
         fn empty_name_and_email() {
             assert_eq!(
-                decode(b" <> 12345 -1215").expect("parse to work").1,
+                decode.parse_peek(b" <> 12345 -1215").expect("parse to work").1,
                 signature("", "", 12345, Sign::Minus, -44100)
             );
         }
@@ -155,22 +161,22 @@ mod tests {
         #[test]
         fn invalid_signature() {
             assert_eq!(
-                        decode(b"hello < 12345 -1215")
+                        decode.parse_peek(b"hello < 12345 -1215")
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "Parse error:\nSlice at:  12345 -1215\nin section '<email>', at:  12345 -1215\nin section '<name> <<email>>', at: hello < 12345 -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at: hello < 12345 -1215\n"
+                        "Parse error:\nslice at:  12345 -1215\nin section '<email>', at:  12345 -1215\nin section '<name> <<email>>', at:  12345 -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at:  12345 -1215\n"
                     );
         }
 
         #[test]
         fn invalid_time() {
             assert_eq!(
-                        decode(b"hello <> abc -1215")
+                        decode.parse_peek(b"hello <> abc -1215")
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "Parse error:\nVerify at: abc -1215\nin section '<timestamp>', at: abc -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at: hello <> abc -1215\n"
+                        "Parse error:\npredicate verification at: abc -1215\nin section '<timestamp>', at: abc -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at: abc -1215\n"
                     );
         }
     }

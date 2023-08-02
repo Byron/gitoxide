@@ -6,7 +6,7 @@ fn is_hex_digit_lc(b: u8) -> bool {
 }
 
 /// Copy from https://github.com/Byron/gitoxide/blob/f270850ff92eab15258023b8e59346ec200303bd/gix-object/src/immutable/parse.rs#L64
-pub fn hex_hash<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
+pub fn hex_hash<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<&'a BStr, E> {
     // NOTE: It's important to be able to read all hashes, do not parameterize it. Hashes can be rejected at a later stage
     // if needed.
     take_while(
@@ -17,6 +17,6 @@ pub fn hex_hash<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], 
     .parse_next(i)
 }
 
-pub fn newline<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
+pub fn newline<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<&'a [u8], E> {
     alt((b"\r\n", b"\n")).parse_next(i)
 }

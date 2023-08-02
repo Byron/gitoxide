@@ -12,14 +12,14 @@ use winnow::{
 
 use crate::{parse, parse::NL, BStr, ByteSlice, TagRef};
 
-pub fn git_tag<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], TagRef<'a>, E> {
+pub fn git_tag<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<TagRef<'a>, E> {
     (
-        (|i| parse::header_field(i, b"object", parse::hex_hash)).context("object <40 lowercase hex char>"),
-        (|i| parse::header_field(i, b"type", take_while(1.., AsChar::is_alpha)))
+        (|i: &mut _| parse::header_field(i, b"object", parse::hex_hash)).context("object <40 lowercase hex char>"),
+        (|i: &mut _| parse::header_field(i, b"type", take_while(1.., AsChar::is_alpha)))
             .verify_map(|kind| crate::Kind::from_bytes(kind).ok())
             .context("type <object kind>"),
-        (|i| parse::header_field(i, b"tag", take_while(1.., |b| b != NL[0]))).context("tag <version>"),
-        opt(|i| parse::header_field(i, b"tagger", parse::signature)).context("tagger <signature>"),
+        (|i: &mut _| parse::header_field(i, b"tag", take_while(1.., |b| b != NL[0]))).context("tag <version>"),
+        opt(|i: &mut _| parse::header_field(i, b"tagger", parse::signature)).context("tagger <signature>"),
         terminated(message, eof),
     )
         .map(
@@ -35,12 +35,12 @@ pub fn git_tag<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &'a [u8])
         .parse_next(i)
 }
 
-pub fn message<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
+pub fn message<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<(&'a BStr, Option<&'a BStr>), E> {
     const PGP_SIGNATURE_BEGIN: &[u8] = b"\n-----BEGIN PGP SIGNATURE-----";
     const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
 
     if i.is_empty() {
-        return Ok((i, (b"".as_bstr(), None)));
+        return Ok((b"".as_bstr(), None));
     }
     delimited(
         NL,

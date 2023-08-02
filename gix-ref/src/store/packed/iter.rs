@@ -2,6 +2,7 @@ use gix_object::bstr::{BString, ByteSlice};
 use winnow::combinator::preceded;
 use winnow::combinator::rest;
 use winnow::prelude::*;
+use winnow::stream::Stream as _;
 
 use crate::store_impl::{packed, packed::decode};
 
@@ -32,9 +33,9 @@ impl<'a> Iterator for packed::Iter<'a> {
             return None;
         }
 
-        match decode::reference::<()>.parse_next(self.cursor) {
-            Ok((rest, reference)) => {
-                self.cursor = rest;
+        let start = self.cursor.checkpoint();
+        match decode::reference::<()>.parse_next(&mut self.cursor) {
+            Ok(reference) => {
                 self.current_line += 1;
                 if let Some(ref prefix) = self.prefix {
                     if !reference.name.as_bstr().starts_with_str(prefix) {
@@ -45,6 +46,7 @@ impl<'a> Iterator for packed::Iter<'a> {
                 Some(Ok(reference))
             }
             Err(_) => {
+                self.cursor.reset(start);
                 let (failed_line, next_cursor) = self
                     .cursor
                     .find_byte(b'\n')
@@ -85,9 +87,9 @@ impl<'a> packed::Iter<'a> {
                 current_line: 1,
             })
         } else if packed[0] == b'#' {
-            let input = packed;
-            let (_, refs) = preceded(decode::header::<()>, rest)
-                .parse_next(input)
+            let mut input = packed;
+            let refs = preceded(decode::header::<()>, rest)
+                .parse_next(&mut input)
                 .map_err(|_| Error::Header {
                     invalid_first_line: packed.lines().next().unwrap_or(packed).into(),
                 })?;
