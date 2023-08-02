@@ -79,7 +79,7 @@ impl<'a> TagRefIter<'a> {
                     .context("type <object kind>")
                     .parse_next(i)?;
                 let kind = Kind::from_bytes(kind)
-                    .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))?;
+                    .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))?;
                 *state = Name;
                 (i, Token::TargetKind(kind))
             }

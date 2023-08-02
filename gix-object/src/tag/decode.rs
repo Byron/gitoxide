@@ -19,7 +19,7 @@ pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
         .context("type <object kind>")
         .parse_next(i)?;
     let kind = crate::Kind::from_bytes(kind)
-        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))?;
+        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))?;
 
     let (i, tag_version) = (|i| parse::header_field(i, b"tag", take_while1(|b| b != NL[0])))
         .context("tag <version>")
