@@ -319,6 +319,7 @@ mod arguments {
             assert!(arguments.is_stateless(true), "V2 is stateless…");
             assert!(arguments.is_stateless(false), "…in all cases");
 
+            arguments.add_feature("no-progress");
             arguments.deepen(1);
             arguments.deepen_relative();
             arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907"));
@@ -329,6 +330,7 @@ mod arguments {
                 b"0012command=fetch
 0001000ethin-pack
 000eofs-delta
+0010no-progress
 000ddeepen 1
 0014deepen-relative
 0032want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907
@@ -347,6 +349,7 @@ mod arguments {
                 let mut t = transport(&mut out, *is_stateful);
                 let mut arguments = arguments_v2(Some("shallow"));
 
+                arguments.add_feature("no-progress");
                 arguments.deepen(1);
                 arguments.deepen_since(12345);
                 arguments.shallow(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff"));
@@ -362,6 +365,7 @@ mod arguments {
                     b"0012command=fetch
 0001000ethin-pack
 000eofs-delta
+0010no-progress
 000ddeepen 1
 0017deepen-since 12345
 0035shallow 7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff
@@ -371,6 +375,7 @@ mod arguments {
 00000012command=fetch
 0001000ethin-pack
 000eofs-delta
+0010no-progress
 000ddeepen 1
 0017deepen-since 12345
 0035shallow 7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff
