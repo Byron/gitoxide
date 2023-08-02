@@ -4,8 +4,8 @@ use winnow::{
     bytes::take_until1,
     combinator::eof,
     error::{ErrorKind, ParseError},
+    prelude::*,
     sequence::terminated,
-    IResult,
 };
 
 use crate::{
@@ -33,7 +33,7 @@ pub struct TrailerRef<'a> {
 }
 
 fn parse_single_line_trailer<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, &'a BStr), E> {
-    let (value, token) = terminated(take_until1(b":".as_ref()), b": ")(i.trim_end())?;
+    let (value, token) = terminated(take_until1(b":".as_ref()), b": ").parse_next(i.trim_end())?;
     if token.trim_end().len() != token.len() || value.trim_start().len() != value.len() {
         Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Fail).cut())
     } else {
@@ -50,13 +50,13 @@ impl<'a> Iterator for Trailers<'a> {
         }
         for line in self.cursor.lines_with_terminator() {
             self.cursor = &self.cursor[line.len()..];
-            if let Some(trailer) =
-                terminated(parse_single_line_trailer::<()>, eof)(line)
-                    .ok()
-                    .map(|(_, (token, value))| TrailerRef {
-                        token: token.trim().as_bstr(),
-                        value: value.trim().as_bstr(),
-                    })
+            if let Some(trailer) = terminated(parse_single_line_trailer::<()>, eof)
+                .parse_next(line)
+                .ok()
+                .map(|(_, (token, value))| TrailerRef {
+                    token: token.trim().as_bstr(),
+                    value: value.trim().as_bstr(),
+                })
             {
                 return Some(trailer);
             }

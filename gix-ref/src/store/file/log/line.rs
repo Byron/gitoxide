@@ -127,7 +127,9 @@ pub mod decode {
         if i.is_empty() {
             Ok((&[], i.as_bstr()))
         } else {
-            terminated(take_while0(|c| c != b'\n'), opt(b'\n'))(i).map(|(i, o)| (i, o.as_bstr()))
+            terminated(take_while0(|c| c != b'\n'), opt(b'\n'))
+                .parse_next(i)
+                .map(|(i, o)| (i, o.as_bstr()))
         }
     }
 

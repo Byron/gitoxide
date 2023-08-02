@@ -53,7 +53,7 @@ pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
     )))
     .context("<field> <single-line|multi-line>")
     .parse_next(i)?;
-    let (i, message) = terminated(message, eof)(i)?;
+    let (i, message) = terminated(message, eof).parse_next(i)?;
 
     Ok((
         i,

@@ -236,7 +236,7 @@ impl<'a> CommitRefIter<'a> {
                 }
             }
             Message => {
-                let (i, message) = terminated(decode::message, eof)(i)?;
+                let (i, message) = terminated(decode::message, eof).parse_next(i)?;
                 debug_assert!(
                     i.is_empty(),
                     "we should have consumed all data - otherwise iter may go forever"
