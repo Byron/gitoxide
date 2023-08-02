@@ -67,7 +67,7 @@ impl Reference {
 
 fn parse(bytes: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
     let is_space = |b: u8| b == b' ';
-    if let (path, Some(_ref_prefix)) = opt(terminated("ref: ", take_while0(is_space)))(bytes)? {
+    if let (path, Some(_ref_prefix)) = opt(terminated("ref: ", take_while0(is_space))).parse_next(bytes)? {
         terminated(take_while0(|b| b != b'\r' && b != b'\n'), opt(newline))
             .map(|path| MaybeUnsafeState::UnvalidatedPath(path.into()))
             .parse_next(path)

@@ -98,7 +98,7 @@ impl<'a> TagRefIter<'a> {
                 (i, Token::Tagger(signature))
             }
             Message => {
-                let (i, (message, pgp_signature)) = terminated(decode::message, eof)(i)?;
+                let (i, (message, pgp_signature)) = terminated(decode::message, eof).parse_next(i)?;
                 debug_assert!(
                     i.is_empty(),
                     "we should have consumed all data - otherwise iter may go forever"

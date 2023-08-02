@@ -28,7 +28,7 @@ pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
     let (i, signature) = opt(|i| parse::header_field(i, b"tagger", parse::signature))
         .context("tagger <signature>")
         .parse_next(i)?;
-    let (i, (message, pgp_signature)) = terminated(message, eof)(i)?;
+    let (i, (message, pgp_signature)) = terminated(message, eof).parse_next(i)?;
     Ok((
         i,
         TagRef {
@@ -49,7 +49,7 @@ pub fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&
     if i.is_empty() {
         return Ok((i, (i.as_bstr(), None)));
     }
-    let (i, _) = tag(NL)(i)?;
+    let (i, _) = tag(NL).parse_next(i)?;
     fn all_to_end<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], &'a [u8]), E> {
         if i.is_empty() {
             // Empty message. That's OK.
@@ -74,8 +74,9 @@ pub fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&
             ),
         ),
         all_to_end,
-    ))(i)?;
-    let (i, _) = opt(NL)(i)?;
+    ))
+    .parse_next(i)?;
+    let (i, _) = opt(NL).parse_next(i)?;
     Ok((
         i,
         (

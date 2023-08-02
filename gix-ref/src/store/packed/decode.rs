@@ -50,7 +50,7 @@ pub fn header<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], Header, E>
 where
     E: ParseError<&'a [u8]>,
 {
-    let (rest, traits) = preceded(b"# pack-refs with: ", until_newline)(input)?;
+    let (rest, traits) = preceded(b"# pack-refs with: ", until_newline).parse_next(input)?;
 
     let mut peeled = Peeled::Unspecified;
     let mut sorted = false;
@@ -72,7 +72,7 @@ pub fn reference<'a, E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], crate
 ) -> IResult<&'a [u8], packed::Reference<'a>, E> {
     let (input, (target, name)) =
         (terminated(hex_hash, b" "), until_newline.map_res(TryInto::try_into)).parse_next(input)?;
-    let (rest, object) = opt(delimited(b"^", hex_hash, newline))(input)?;
+    let (rest, object) = opt(delimited(b"^", hex_hash, newline)).parse_next(input)?;
     Ok((rest, packed::Reference { name, target, object }))
 }
 

@@ -26,11 +26,13 @@ pub(crate) mod function {
             identity,
             b" ",
             (|i| {
-                terminated(take_until0(SPACE), take(1usize))(i).and_then(|(i, v)| {
-                    btoi::<SecondsSinceUnixEpoch>(v)
-                        .map(|v| (i, v))
-                        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
-                })
+                terminated(take_until0(SPACE), take(1usize))
+                    .parse_next(i)
+                    .and_then(|(i, v)| {
+                        btoi::<SecondsSinceUnixEpoch>(v)
+                            .map(|v| (i, v))
+                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                    })
             })
             .context("<timestamp>"),
             alt((
@@ -39,19 +41,23 @@ pub(crate) mod function {
             ))
             .context("+|-"),
             (|i| {
-                take_while_m_n(2usize, 2, AsChar::is_dec_digit)(i).and_then(|(i, v)| {
-                    btoi::<OffsetInSeconds>(v)
-                        .map(|v| (i, v))
-                        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
-                })
+                take_while_m_n(2usize, 2, AsChar::is_dec_digit)
+                    .parse_next(i)
+                    .and_then(|(i, v)| {
+                        btoi::<OffsetInSeconds>(v)
+                            .map(|v| (i, v))
+                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                    })
             })
             .context("HH"),
             (|i| {
-                take_while_m_n(1usize, 2, AsChar::is_dec_digit)(i).and_then(|(i, v)| {
-                    btoi::<OffsetInSeconds>(v)
-                        .map(|v| (i, v))
-                        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
-                })
+                take_while_m_n(1usize, 2, AsChar::is_dec_digit)
+                    .parse_next(i)
+                    .and_then(|(i, v)| {
+                        btoi::<OffsetInSeconds>(v)
+                            .map(|v| (i, v))
+                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::MapRes))
+                    })
             })
             .context("MM"),
         )

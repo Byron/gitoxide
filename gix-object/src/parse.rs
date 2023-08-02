@@ -6,6 +6,7 @@ use winnow::{
     multi::many1,
     prelude::*,
     sequence::{preceded, terminated},
+    Parser,
 };
 
 use crate::ByteSlice;
@@ -46,16 +47,16 @@ pub(crate) fn any_header_field_multi_line<'a, E: ParseError<&'a [u8]> + ContextE
 pub(crate) fn header_field<'a, T, E: ParseError<&'a [u8]>>(
     i: &'a [u8],
     name: &'static [u8],
-    parse_value: impl FnMut(&'a [u8]) -> IResult<&'a [u8], T, E>,
+    parse_value: impl Parser<&'a [u8], T, E>,
 ) -> IResult<&'a [u8], T, E> {
-    terminated(preceded(terminated(name, SPACE), parse_value), NL)(i)
+    terminated(preceded(terminated(name, SPACE), parse_value), NL).parse_next(i)
 }
 
 pub(crate) fn any_header_field<'a, T, E: ParseError<&'a [u8]>>(
     i: &'a [u8],
-    parse_value: impl FnMut(&'a [u8]) -> IResult<&'a [u8], T, E>,
+    parse_value: impl Parser<&'a [u8], T, E>,
 ) -> IResult<&'a [u8], (&'a [u8], T), E> {
-    terminated((terminated(take_till1(SPACE_OR_NL), SPACE), parse_value), NL)(i)
+    terminated((terminated(take_till1(SPACE_OR_NL), SPACE), parse_value), NL).parse_next(i)
 }
 
 fn is_hex_digit_lc(b: u8) -> bool {
@@ -67,7 +68,8 @@ pub fn hex_hash<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &
         gix_hash::Kind::shortest().len_in_hex(),
         gix_hash::Kind::longest().len_in_hex(),
         is_hex_digit_lc,
-    )(i)
+    )
+    .parse_next(i)
     .map(|(i, hex)| (i, hex.as_bstr()))
 }
 
