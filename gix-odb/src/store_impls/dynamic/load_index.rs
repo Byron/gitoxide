@@ -493,6 +493,11 @@ impl super::Store {
         // Unlike libgit2, do not sort by modification date, but by size and put the biggest indices first. That way
         // the chance to hit an object should be higher. We leave it to the handle to sort by LRU.
         // Git itself doesn't change the order which may safe time, but we want it to be stable which also helps some tests.
+        // NOTE: this will work well for well-packed repos or those using geometric repacking, but force us to open a lot
+        //       of files when dealing with new objects, as there is no notion of recency here as would be with unmaintained
+        //       repositories. Different algorithms should be provided, like newest packs first, and possibly a mix of both
+        //       with big packs first, then sorting by recency for smaller packs.
+        //       We also want to implement `fetch.unpackLimit` to alleviate this issue a little.
         indices_by_modification_time.sort_by(|l, r| l.2.cmp(&r.2).reverse());
         Ok(indices_by_modification_time)
     }
