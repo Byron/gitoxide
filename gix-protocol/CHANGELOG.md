@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 1 calendar day.
+ - 4 commits contributed to the release over the course of 1 calendar day.
  - 10 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs ([`e4d2890`](https://github.com/Byron/gitoxide/commit/e4d2890a85bf60e9cdb4016dddfab3c4dccbe75e))
     - Merge branch 'fixes-and-improvements' ([`f8b1f55`](https://github.com/Byron/gitoxide/commit/f8b1f553371f25b1bea6bce7cbb2ff1f01194856))
     - Add `fetch::Arguments::add_feature()` for unconditional additions of arguments that are supposed to be features. ([`d1f9c63`](https://github.com/Byron/gitoxide/commit/d1f9c63f8a79dcb00766d94edda80ed9add724ea))
     - `handshake::Ref::Symbolic` now has a `tag` field. ([`0de7117`](https://github.com/Byron/gitoxide/commit/0de7117492fb64c4f2b4f5ee7482813d57b57d40))

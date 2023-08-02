@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+A maintenance release without user-facing changes.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 3 calendar days.
+ - 3 commits contributed to the release over the course of 3 calendar days.
  - 10 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -23,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs ([`e4d2890`](https://github.com/Byron/gitoxide/commit/e4d2890a85bf60e9cdb4016dddfab3c4dccbe75e))
     - Merge branch 'tests-dynamic-target-dir' ([`3823792`](https://github.com/Byron/gitoxide/commit/3823792382263e24b0b392d88c93a0564a7e3fb4))
     - Evaluate target dir at runtime for gix-prompt tests ([`41389d6`](https://github.com/Byron/gitoxide/commit/41389d690b4302b728c197d4c46372509b2c3911))
 </details>

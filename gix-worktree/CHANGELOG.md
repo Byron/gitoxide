@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 10 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs ([`e4d2890`](https://github.com/Byron/gitoxide/commit/e4d2890a85bf60e9cdb4016dddfab3c4dccbe75e))
     - Merge branch 'EmbarkStudios/main' ([`7611fa4`](https://github.com/Byron/gitoxide/commit/7611fa4872c3fcbe2bf7b20fcb4033df2493d256))
     - Don't panic during checkouts when submodules or sparse directories are encountered. ([`82ae37d`](https://github.com/Byron/gitoxide/commit/82ae37d70dc244cdf705d20c617d4b0e6bf3cdbf))
     - Remove todo for submodule checkout ([`a08d851`](https://github.com/Byron/gitoxide/commit/a08d851abd4965ac712db2c9e0263c9c137f9d80))

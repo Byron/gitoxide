@@ -7,13 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Other
+
+ - <csr-id-7f7353e4525adc308e97b82d27bd301e48da6016/> fix test for struct size for 32-bit architectures
+   The size of gix_object::Data is 24 bytes only on 64-bit architectures,
+   on 32-bit architectures it's exactly half that (12 bytes).
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
- - 10 days passed between releases.
- - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 5 commits contributed to the release.
+ - 11 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -23,7 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Merge branch 'decathorpe/main' ([`422747d`](https://github.com/Byron/gitoxide/commit/422747d35724a56dade73c8d68b8ebcbaa4b9b25))
+    - Prepare changelogs ([`e4d2890`](https://github.com/Byron/gitoxide/commit/e4d2890a85bf60e9cdb4016dddfab3c4dccbe75e))
     - Merge branch 'fixes-and-improvements' ([`f8b1f55`](https://github.com/Byron/gitoxide/commit/f8b1f553371f25b1bea6bce7cbb2ff1f01194856))
+    - Fix test for struct size for 32-bit architectures ([`7f7353e`](https://github.com/Byron/gitoxide/commit/7f7353e4525adc308e97b82d27bd301e48da6016))
     - Add another very special commit for parsing tests ([`f852243`](https://github.com/Byron/gitoxide/commit/f852243831474a3fd311a0507d11fd43e0f6e4d3))
 </details>
 
