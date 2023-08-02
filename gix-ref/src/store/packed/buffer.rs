@@ -20,6 +20,8 @@ pub mod open {
     use std::path::PathBuf;
 
     use memmap2::Mmap;
+    use winnow::prelude::*;
+    use winnow::stream::Offset;
 
     use crate::store_impl::packed;
 
@@ -45,10 +47,12 @@ pub mod open {
                 };
 
                 let (offset, sorted) = {
-                    let data = backing.as_ref();
-                    if *data.first().unwrap_or(&b' ') == b'#' {
-                        let (records, header) = packed::decode::header::<()>(data).map_err(|_| Error::HeaderParsing)?;
-                        let offset = records.as_ptr() as usize - data.as_ptr() as usize;
+                    let input = backing.as_ref();
+                    if *input.first().unwrap_or(&b' ') == b'#' {
+                        let (input, header) = packed::decode::header::<()>
+                            .parse_next(input)
+                            .map_err(|_| Error::HeaderParsing)?;
+                        let offset = input.offset_from(backing.as_ref());
                         (offset, header.sorted)
                     } else {
                         (0, false)

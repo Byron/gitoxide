@@ -1,45 +1,38 @@
 use winnow::{
     combinator::alt,
+    combinator::delimited,
+    combinator::rest,
     combinator::{eof, opt},
     combinator::{preceded, terminated},
     error::{AddContext, ParserError},
     prelude::*,
     stream::AsChar,
-    token::{tag, take_until0, take_while},
+    token::{take_until0, take_while},
 };
 
 use crate::{parse, parse::NL, BStr, ByteSlice, TagRef};
 
 pub fn git_tag<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], TagRef<'a>, E> {
-    let (i, target) = (|i| parse::header_field(i, b"object", parse::hex_hash))
-        .context("object <40 lowercase hex char>")
-        .parse_next(i)?;
-
-    let (i, kind) = (|i| parse::header_field(i, b"type", take_while(1.., AsChar::is_alpha)))
-        .context("type <object kind>")
-        .parse_next(i)?;
-    let kind = crate::Kind::from_bytes(kind)
-        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))?;
-
-    let (i, tag_version) = (|i| parse::header_field(i, b"tag", take_while(1.., |b| b != NL[0])))
-        .context("tag <version>")
-        .parse_next(i)?;
-
-    let (i, signature) = opt(|i| parse::header_field(i, b"tagger", parse::signature))
-        .context("tagger <signature>")
-        .parse_next(i)?;
-    let (i, (message, pgp_signature)) = terminated(message, eof).parse_next(i)?;
-    Ok((
-        i,
-        TagRef {
-            target,
-            name: tag_version.as_bstr(),
-            target_kind: kind,
-            message,
-            tagger: signature,
-            pgp_signature,
-        },
-    ))
+    (
+        (|i| parse::header_field(i, b"object", parse::hex_hash)).context("object <40 lowercase hex char>"),
+        (|i| parse::header_field(i, b"type", take_while(1.., AsChar::is_alpha)))
+            .verify_map(|kind| crate::Kind::from_bytes(kind).ok())
+            .context("type <object kind>"),
+        (|i| parse::header_field(i, b"tag", take_while(1.., |b| b != NL[0]))).context("tag <version>"),
+        opt(|i| parse::header_field(i, b"tagger", parse::signature)).context("tagger <signature>"),
+        terminated(message, eof),
+    )
+        .map(
+            |(target, kind, tag_version, signature, (message, pgp_signature))| TagRef {
+                target,
+                name: tag_version.as_bstr(),
+                target_kind: kind,
+                message,
+                tagger: signature,
+                pgp_signature,
+            },
+        )
+        .parse_next(i)
 }
 
 pub fn message<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
@@ -47,45 +40,35 @@ pub fn message<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (
     const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
 
     if i.is_empty() {
-        return Ok((i, (i.as_bstr(), None)));
+        return Ok((i, (b"".as_bstr(), None)));
     }
-    let (i, _) = tag(NL).parse_next(i)?;
-    fn all_to_end<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], &'a [u8]), E> {
-        if i.is_empty() {
-            // Empty message. That's OK.
-            return Ok((&[], (&[], &[])));
-        }
-        // an empty signature message signals that there is none - the function signature is needed
-        // to work with 'alt(…)'. PGP signatures are never empty
-        Ok((&[], (i, &[])))
-    }
-    let (i, (message, signature)) = alt((
-        (
-            take_until0(PGP_SIGNATURE_BEGIN),
-            preceded(
-                NL,
-                (
-                    &PGP_SIGNATURE_BEGIN[1..],
-                    take_until0(PGP_SIGNATURE_END),
-                    PGP_SIGNATURE_END,
-                    take_while(0.., |_| true),
-                )
-                    .recognize(),
+    delimited(
+        NL,
+        alt((
+            (
+                take_until0(PGP_SIGNATURE_BEGIN),
+                preceded(
+                    NL,
+                    (
+                        &PGP_SIGNATURE_BEGIN[1..],
+                        take_until0(PGP_SIGNATURE_END),
+                        PGP_SIGNATURE_END,
+                        rest,
+                    )
+                        .recognize()
+                        .map(|signature: &[u8]| {
+                            if signature.is_empty() {
+                                None
+                            } else {
+                                Some(signature.as_bstr())
+                            }
+                        }),
+                ),
             ),
-        ),
-        all_to_end,
-    ))
-    .parse_next(i)?;
-    let (i, _) = opt(NL).parse_next(i)?;
-    Ok((
-        i,
-        (
-            message.as_bstr(),
-            if signature.is_empty() {
-                None
-            } else {
-                Some(signature.as_bstr())
-            },
-        ),
-    ))
+            rest.map(|rest: &[u8]| (rest, None)),
+        )),
+        opt(NL),
+    )
+    .map(|(message, signature)| (message.as_bstr(), signature))
+    .parse_next(i)
 }

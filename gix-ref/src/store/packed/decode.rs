@@ -50,30 +50,34 @@ pub fn header<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], Header, E>
 where
     E: ParserError<&'a [u8]>,
 {
-    let (rest, traits) = preceded(b"# pack-refs with: ", until_newline).parse_next(input)?;
-
-    let mut peeled = Peeled::Unspecified;
-    let mut sorted = false;
-    for token in traits.as_bstr().split_str(b" ") {
-        if token == b"fully-peeled" {
-            peeled = Peeled::Fully;
-        } else if token == b"peeled" {
-            peeled = Peeled::Partial;
-        } else if token == b"sorted" {
-            sorted = true;
-        }
-    }
-
-    Ok((rest, Header { peeled, sorted }))
+    preceded(b"# pack-refs with: ", until_newline)
+        .map(|traits| {
+            let mut peeled = Peeled::Unspecified;
+            let mut sorted = false;
+            for token in traits.as_bstr().split_str(b" ") {
+                if token == b"fully-peeled" {
+                    peeled = Peeled::Fully;
+                } else if token == b"peeled" {
+                    peeled = Peeled::Partial;
+                } else if token == b"sorted" {
+                    sorted = true;
+                }
+            }
+            Header { peeled, sorted }
+        })
+        .parse_next(input)
 }
 
 pub fn reference<'a, E: ParserError<&'a [u8]> + FromExternalError<&'a [u8], crate::name::Error>>(
     input: &'a [u8],
 ) -> IResult<&'a [u8], packed::Reference<'a>, E> {
-    let (input, (target, name)) =
-        (terminated(hex_hash, b" "), until_newline.try_map(TryInto::try_into)).parse_next(input)?;
-    let (rest, object) = opt(delimited(b"^", hex_hash, newline)).parse_next(input)?;
-    Ok((rest, packed::Reference { name, target, object }))
+    (
+        terminated(hex_hash, b" "),
+        until_newline.try_map(TryInto::try_into),
+        opt(delimited(b"^", hex_hash, newline)),
+    )
+        .map(|(target, name, object)| packed::Reference { name, target, object })
+        .parse_next(input)
 }
 
 #[cfg(test)]

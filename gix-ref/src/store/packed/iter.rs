@@ -1,4 +1,7 @@
 use gix_object::bstr::{BString, ByteSlice};
+use winnow::combinator::preceded;
+use winnow::combinator::rest;
+use winnow::prelude::*;
 
 use crate::store_impl::{packed, packed::decode};
 
@@ -29,7 +32,7 @@ impl<'a> Iterator for packed::Iter<'a> {
             return None;
         }
 
-        match decode::reference::<()>(self.cursor) {
+        match decode::reference::<()>.parse_next(self.cursor) {
             Ok((rest, reference)) => {
                 self.cursor = rest;
                 self.current_line += 1;
@@ -82,9 +85,12 @@ impl<'a> packed::Iter<'a> {
                 current_line: 1,
             })
         } else if packed[0] == b'#' {
-            let (refs, _header) = decode::header::<()>(packed).map_err(|_| Error::Header {
-                invalid_first_line: packed.lines().next().unwrap_or(packed).into(),
-            })?;
+            let input = packed;
+            let (_, refs) = preceded(decode::header::<()>, rest)
+                .parse_next(input)
+                .map_err(|_| Error::Header {
+                    invalid_first_line: packed.lines().next().unwrap_or(packed).into(),
+                })?;
             Ok(packed::Iter {
                 cursor: refs,
                 prefix,

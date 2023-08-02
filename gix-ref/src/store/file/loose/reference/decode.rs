@@ -65,15 +65,14 @@ impl Reference {
     }
 }
 
-fn parse(bytes: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
-    let is_space = |b: u8| b == b' ';
-    if let (path, Some(_ref_prefix)) = opt(terminated("ref: ", take_while(0.., is_space))).parse_next(bytes)? {
+fn parse(i: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
+    if let (i, Some(_ref_prefix)) = opt(terminated("ref: ", take_while(0.., b' '))).parse_next(i)? {
         terminated(take_while(0.., |b| b != b'\r' && b != b'\n'), opt(newline))
             .map(|path| MaybeUnsafeState::UnvalidatedPath(path.into()))
-            .parse_next(path)
+            .parse_next(i)
     } else {
         terminated(hex_hash, opt(newline))
             .map(|hex| MaybeUnsafeState::Id(ObjectId::from_hex(hex).expect("prior validation")))
-            .parse_next(bytes)
+            .parse_next(i)
     }
 }
