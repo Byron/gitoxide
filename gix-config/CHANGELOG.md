@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 25 commits contributed to the release over the course of 7 calendar days.
+ - 10 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'config' ([`daf3389`](https://github.com/Byron/gitoxide/commit/daf338989e7d75d41efb1345ed95ee2a13c97007))
+    - Minor refactor ([`224121b`](https://github.com/Byron/gitoxide/commit/224121b036a48c18ad859600ea9315d55150c0dd))
+    - Make clippy happy ([`1a1e2f5`](https://github.com/Byron/gitoxide/commit/1a1e2f5efa7719908bb612e0534379e522b740bb))
+    - Pull newline counting out of inner loop ([`beac408`](https://github.com/Byron/gitoxide/commit/beac4083447e836d139bd4d092596fbc636a40a2))
+    - Remove value_impl's explicit start index tracking ([`63552ee`](https://github.com/Byron/gitoxide/commit/63552eea5377f5bd4672f1783dd7b36886698e62))
+    - Remove value_impl's explicit end index tracking ([`8db009c`](https://github.com/Byron/gitoxide/commit/8db009ca9a19bebccaeacb5f992d05d89893b57b))
+    - Upgrade to winnow 0.5 ([`fe997c8`](https://github.com/Byron/gitoxide/commit/fe997c8a32b0a1dc3ad3613fe8dd48a987c3a5bf))
+    - Remove error creation shorthand ([`8581d25`](https://github.com/Byron/gitoxide/commit/8581d25dc9208bb7e32104c0320a5334572d7404))
+    - Simplify value_impl escape parsing ([`9e6ba0f`](https://github.com/Byron/gitoxide/commit/9e6ba0f6f7064f7ee28ef4f3fab492e5294e54a6))
+    - Clarify value_impl index handling ([`b790948`](https://github.com/Byron/gitoxide/commit/b790948da0499ee776e23ca359d08347b97cabab))
+    - Flatten value_impl ([`5fc1096`](https://github.com/Byron/gitoxide/commit/5fc109633b7c9736323084beaa0e97ce5ef1e08b))
+    - Normalize parser lifetimes ([`083efbc`](https://github.com/Byron/gitoxide/commit/083efbc0b37b45401663074964e3f911400a065e))
+    - Simplify section ([`5f2b68e`](https://github.com/Byron/gitoxide/commit/5f2b68ec6743cbca3472d2935e5445e897fa5218))
+    - Simplify section_header ([`0fe3854`](https://github.com/Byron/gitoxide/commit/0fe385484da0d999115cc760fd4b0353e5a31ff6))
+    - Simplify sub_section parsing ([`d2e06c8`](https://github.com/Byron/gitoxide/commit/d2e06c878c2b7270a936ac225aa93e207355e86c))
+    - Simplify simpler parsers ([`edb4e04`](https://github.com/Byron/gitoxide/commit/edb4e048ba973b2c0a4410d62cc3e5723ec64597))
+    - Simplify error creation ([`bdcd379`](https://github.com/Byron/gitoxide/commit/bdcd379da821cd232cf8844d104d06901d8da450))
+    - Prepare for winnow 0.5 upgrade ([`42ae766`](https://github.com/Byron/gitoxide/commit/42ae76691eab6b5ca77354a3358e0f95b8694d34))
+    - Move off deprecated parsers ([`b0287a8`](https://github.com/Byron/gitoxide/commit/b0287a8ba8a5024350dd48e37f6fc626003382cb))
+    - Upgrade to winnow 0.4 ([`a639994`](https://github.com/Byron/gitoxide/commit/a6399948f37d5c39f15340f26acb08bb36ae247f))
+    - Prepare for winnow 0.4 upgrade ([`cfc642a`](https://github.com/Byron/gitoxide/commit/cfc642a0d1ddee4c1f38758af269bc43496ffbf1))
+    - Move off of remaining deprecated parsers ([`18bee03`](https://github.com/Byron/gitoxide/commit/18bee03bf3a1ad4c0800ece97414553e3a6a50cb))
+    - Switch to Parser inherent parsers ([`6ac1b37`](https://github.com/Byron/gitoxide/commit/6ac1b377a0d0c1b0ddabc13f3dbe5db3716a4234))
+    - Switch to type-native winnow parsers ([`5b3ae94`](https://github.com/Byron/gitoxide/commit/5b3ae94503151d33e1bae60dd82fc32bad7154b0))
+    - Switch gix-config to winnow 0.3 ([`3d9ae21`](https://github.com/Byron/gitoxide/commit/3d9ae21f97e50129576473a2682a10b793b356de))
+</details>
+
 ## 0.26.1 (2023-07-22)
 
 A maintenance release without user-facing changes.
@@ -13,7 +58,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +70,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-config v0.26.1, gix v0.50.0 ([`d34a4ea`](https://github.com/Byron/gitoxide/commit/d34a4ea27cd83b916c84cf15e1c05da35576db5e))
     - Fix gix-config dependency versions ([`dbeb68d`](https://github.com/Byron/gitoxide/commit/dbeb68da2348bf555cc959fc60d255da9f50eda5))
 </details>
 
@@ -2497,7 +2543,7 @@ This is a maintenance release without functional changes.
  - _None._
 
 <csr-unknown>
-lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
+lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
 <csr-unknown/>
 
 ## v0.1.1 (2021-05-09)

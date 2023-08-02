@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+This is mostly a bug-fix release with many improvements for fetching, along with more forgiving commit parsing.
+
+### New Features
+
+ - <csr-id-d9e551b44aa3e84109660328de7637d465d59578/> Add `Reference::follow()` as a way to peel symbolic refs step by step.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-74ce8639e88db5107691e9279df2bbfd38d26de3/> handle symbolic ref updates far more gracefully and with more logical consistency.
+   Previously, refspecs couldn't be used to update sybolic references locally, particularly because the logic
+   to do so correctly isn't trivial and `git` itself also seems to cover only the most common cases.
+   
+   However, the logic now changed so that remote updates will only be rejected if
+   
+   * fast-forward rules are violated
+   * the local ref is currently checked out
+   * existing refs would not become 'unborn', i.e. point to a reference that doesn't exist and won't be created due to ref-specs
+   
+   This makes it possible to update unborn remote refs to local refs if these are new or unborn themselves.
+   This also allows to create mirrors more easily and allows us to handle `HEAD` without special casing it.
+   Bare repositories have an easier time to update local symbolic refs.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 2 calendar days.
+ - 9 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'fixes-and-improvements' ([`f8b1f55`](https://github.com/Byron/gitoxide/commit/f8b1f553371f25b1bea6bce7cbb2ff1f01194856))
+    - Handle symbolic ref updates far more gracefully and with more logical consistency. ([`74ce863`](https://github.com/Byron/gitoxide/commit/74ce8639e88db5107691e9279df2bbfd38d26de3))
+    - Adapt to changes in `gix-protocol` ([`df81076`](https://github.com/Byron/gitoxide/commit/df810766dfeaaad7474339358a3d844b2c3368cd))
+    - Add `Reference::follow()` as a way to peel symbolic refs step by step. ([`d9e551b`](https://github.com/Byron/gitoxide/commit/d9e551b44aa3e84109660328de7637d465d59578))
+</details>
+
 ## 0.50.1 (2023-07-24)
 
 ### Bug Fixes
@@ -16,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 1 day passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -28,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-archive v0.2.1, gix-ref v0.33.2, gix-pack v0.40.2, gix v0.50.1 ([`13883e5`](https://github.com/Byron/gitoxide/commit/13883e5528385f892ee402e911298121e0c297c0))
     - Prepare changelogs ([`735c206`](https://github.com/Byron/gitoxide/commit/735c2062625aaeffbdbca3c1395dbcf075661e3a))
     - `Tree::lookup_entry(_by_path)()` now actually works ([`145f865`](https://github.com/Byron/gitoxide/commit/145f8658a32c46db1f54d3098cf9371fe6eeec5e))
 </details>
