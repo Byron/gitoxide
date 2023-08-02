@@ -161,24 +161,23 @@ mod decode {
     }
 
     pub fn entry<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], EntryRef<'_>, E> {
-        let (i, mode) = terminated(take_while(5..=6, AsChar::is_dec_digit), SPACE).parse_next(i)?;
-        let mode = tree::EntryMode::try_from(mode)
-            .map_err(|invalid| winnow::error::ErrMode::from_error_kind(invalid, winnow::error::ErrorKind::Verify))?;
-        let (i, filename) = terminated(take_while(1.., |b| b != NULL[0]), NULL).parse_next(i)?;
-        let (i, oid) = take(20u8).parse_next(i)?; // TODO: make this compatible with other hash lengths
-
-        Ok((
-            i,
-            EntryRef {
+        (
+            terminated(take_while(5..=6, AsChar::is_dec_digit), SPACE)
+                .verify_map(|mode| tree::EntryMode::try_from(mode).ok()),
+            terminated(take_while(1.., |b| b != NULL[0]), NULL),
+            take(20u8),
+        )
+            .map(|(mode, filename, oid): (_, &[u8], _)| EntryRef {
                 mode,
                 filename: filename.as_bstr(),
                 oid: gix_hash::oid::try_from_bytes(oid).expect("we counted exactly 20 bytes"),
-            },
-        ))
+            })
+            .parse_next(i)
     }
 
     pub fn tree<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], TreeRef<'a>, E> {
-        let (i, entries) = terminated(repeat(0.., entry), eof).parse_next(i)?;
-        Ok((i, TreeRef { entries }))
+        terminated(repeat(0.., entry), eof)
+            .map(|entries| TreeRef { entries })
+            .parse_next(i)
     }
 }

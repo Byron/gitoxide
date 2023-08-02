@@ -1,49 +1,46 @@
 use winnow::{
-    combinator::alt, combinator::eof, combinator::terminated, error::ParserError, prelude::*, token::take_till1,
+    combinator::alt, combinator::eof, combinator::preceded, combinator::rest, combinator::terminated,
+    error::ParserError, prelude::*, stream::Offset, token::take_till1,
 };
 
 use crate::bstr::{BStr, ByteSlice};
 
 pub(crate) fn newline<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
-    alt((b"\r\n", b"\n")).parse_next(i)
+    alt((b"\n", b"\r\n")).parse_next(i)
 }
 
-fn subject_and_body<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
-    let mut c = i;
-    let mut consumed_bytes = 0;
-    while !c.is_empty() {
-        c = match take_till1::<_, _, E>(|c| c == b'\n' || c == b'\r').parse_next(c) {
-            Ok((i1, segment)) => {
-                consumed_bytes += segment.len();
-                match (newline::<E>, newline::<E>).parse_next(i1) {
-                    Ok((body, _)) => {
-                        return Ok((
-                            &[],
-                            (
-                                i[0usize..consumed_bytes].as_bstr(),
-                                (!body.is_empty()).then(|| body.as_bstr()),
-                            ),
-                        ));
+fn subject_and_body<'a, E: ParserError<&'a [u8]>>(
+    mut i: &'a [u8],
+) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
+    let start = i;
+    while !i.is_empty() {
+        match take_till1::<_, _, E>(|c| c == b'\n' || c == b'\r').parse_next(i) {
+            Ok((next, _)) => {
+                let consumed_bytes = next.offset_from(start);
+                match preceded((newline::<E>, newline::<E>), rest).parse_next(next) {
+                    Ok((next, body)) => {
+                        let body = (!body.is_empty()).then(|| body.as_bstr());
+                        return Ok((next, (start[0usize..consumed_bytes].as_bstr(), body)));
                     }
-                    Err(_) => match i1.get(1..) {
+                    Err(_) => match next.get(1..) {
                         Some(next) => {
-                            consumed_bytes += 1;
-                            next
+                            i = next;
                         }
                         None => break,
                     },
                 }
             }
-            Err(_) => match c.get(1..) {
+            Err(_) => match i.get(1..) {
                 Some(next) => {
-                    consumed_bytes += 1;
-                    next
+                    i = next;
                 }
                 None => break,
             },
-        };
+        }
     }
-    Ok((&[], (i.as_bstr(), None)))
+
+    i = start;
+    rest.map(|r: &[u8]| (r.as_bstr(), None)).parse_next(i)
 }
 
 /// Returns title and body, without separator

@@ -2,6 +2,8 @@ use std::ops::Deref;
 
 use winnow::{
     combinator::eof,
+    combinator::rest,
+    combinator::separated_pair,
     combinator::terminated,
     error::{ErrorKind, ParserError},
     prelude::*,
@@ -33,11 +35,12 @@ pub struct TrailerRef<'a> {
 }
 
 fn parse_single_line_trailer<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, &'a BStr), E> {
-    let (value, token) = terminated(take_until1(b":".as_ref()), b": ").parse_next(i.trim_end())?;
+    let (i, (token, value)) = separated_pair(take_until1(b":".as_ref()), b": ", rest).parse_next(i.trim_end())?;
+
     if token.trim_end().len() != token.len() || value.trim_start().len() != value.len() {
         Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Fail).cut())
     } else {
-        Ok((&[], (token.as_bstr(), value.as_bstr())))
+        Ok((i, (token.as_bstr(), value.as_bstr())))
     }
 }
 

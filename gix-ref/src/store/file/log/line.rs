@@ -80,6 +80,7 @@ pub mod decode {
         combinator::fail,
         combinator::opt,
         combinator::preceded,
+        combinator::rest,
         combinator::terminated,
         error::{AddContext, ParserError},
         prelude::*,
@@ -129,16 +130,16 @@ pub mod decode {
 
     fn message<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
         if i.is_empty() {
-            Ok((&[], i.as_bstr()))
+            rest.map(ByteSlice::as_bstr).parse_next(i)
         } else {
             terminated(take_while(0.., |c| c != b'\n'), opt(b'\n'))
+                .map(ByteSlice::as_bstr)
                 .parse_next(i)
-                .map(|(i, o)| (i, o.as_bstr()))
         }
     }
 
     fn one<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], LineRef<'a>, E> {
-        let (i, ((old, new, signature), message)) = (
+        (
             (
                 terminated(hex_hash, b" ").context("<old-hexsha>"),
                 terminated(hex_hash, b" ").context("<new-hexsha>"),
@@ -152,17 +153,13 @@ pub mod decode {
                 fail.context("log message must be separated from signature with whitespace"),
             )),
         )
-            .parse_next(bytes)?;
-
-        Ok((
-            i,
-            LineRef {
+            .map(|((old, new, signature), message)| LineRef {
                 previous_oid: old,
                 new_oid: new,
                 signature,
                 message,
-            },
-        ))
+            })
+            .parse_next(bytes)
     }
 
     #[cfg(test)]

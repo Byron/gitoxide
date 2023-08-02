@@ -2,10 +2,10 @@ pub(crate) mod function {
     use bstr::ByteSlice;
     use btoi::btoi;
     use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch, Time};
-    use std::cell::RefCell;
     use winnow::{
         combinator::alt,
         combinator::repeat,
+        combinator::separated_pair,
         combinator::terminated,
         error::{AddContext, ParserError},
         prelude::*,
@@ -21,84 +21,57 @@ pub(crate) mod function {
     pub fn decode<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(
         i: &'a [u8],
     ) -> IResult<&'a [u8], SignatureRef<'a>, E> {
-        let tzsign = RefCell::new(b'-'); // TODO: there should be no need for this.
-        let (i, (identity, _, time, _tzsign_count, hours, minutes)) = (
+        separated_pair(
             identity,
             b" ",
-            (|i| {
+            (
                 terminated(take_until0(SPACE), take(1usize))
-                    .parse_next(i)
-                    .and_then(|(i, v)| {
-                        btoi::<SecondsSinceUnixEpoch>(v)
-                            .map(|v| (i, v))
-                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))
-                    })
-            })
-            .context("<timestamp>"),
-            alt((
-                repeat(1.., b"-").map(|_: ()| *tzsign.borrow_mut() = b'-'), // TODO: this should be a non-allocating consumer of consecutive tags
-                repeat(1.., b"+").map(|_: ()| *tzsign.borrow_mut() = b'+'),
-            ))
-            .context("+|-"),
-            (|i| {
-                take_while(2, AsChar::is_dec_digit).parse_next(i).and_then(|(i, v)| {
-                    btoi::<OffsetInSeconds>(v)
-                        .map(|v| (i, v))
-                        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))
-                })
-            })
-            .context("HH"),
-            (|i| {
+                    .verify_map(|v| btoi::<SecondsSinceUnixEpoch>(v).ok())
+                    .context("<timestamp>"),
+                alt((
+                    repeat(1.., b"-").map(|_: ()| Sign::Minus),
+                    repeat(1.., b"+").map(|_: ()| Sign::Plus),
+                ))
+                .context("+|-"),
+                take_while(2, AsChar::is_dec_digit)
+                    .verify_map(|v| btoi::<OffsetInSeconds>(v).ok())
+                    .context("HH"),
                 take_while(1..=2, AsChar::is_dec_digit)
-                    .parse_next(i)
-                    .and_then(|(i, v)| {
-                        btoi::<OffsetInSeconds>(v)
-                            .map(|v| (i, v))
-                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))
-                    })
-            })
-            .context("MM"),
+                    .verify_map(|v| btoi::<OffsetInSeconds>(v).ok())
+                    .context("MM"),
+            )
+                .map(|(time, sign, hours, minutes)| {
+                    let offset = (hours * 3600 + minutes * 60) * if sign == Sign::Minus { -1 } else { 1 };
+                    Time {
+                        seconds: time,
+                        offset,
+                        sign,
+                    }
+                }),
         )
-            .context("<name> <<email>> <timestamp> <+|-><HHMM>")
-            .parse_next(i)?;
-
-        let tzsign = tzsign.into_inner();
-        debug_assert!(tzsign == b'-' || tzsign == b'+', "parser assure it's +|- only");
-        let sign = if tzsign == b'-' { Sign::Minus } else { Sign::Plus }; //
-        let offset = (hours * 3600 + minutes * 60) * if sign == Sign::Minus { -1 } else { 1 };
-
-        Ok((
-            i,
-            SignatureRef {
-                name: identity.name,
-                email: identity.email,
-                time: Time {
-                    seconds: time,
-                    offset,
-                    sign,
-                },
-            },
-        ))
+        .context("<name> <<email>> <timestamp> <+|-><HHMM>")
+        .map(|(identity, time)| SignatureRef {
+            name: identity.name,
+            email: identity.email,
+            time,
+        })
+        .parse_next(i)
     }
 
     /// Parse an identity from the bytes input `i` (like `name <email>`) using `nom`.
     pub fn identity<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(
         i: &'a [u8],
     ) -> IResult<&'a [u8], IdentityRef<'a>, E> {
-        let (i, (name, email)) = (
+        (
             terminated(take_until0(&b" <"[..]), take(2usize)).context("<name>"),
             terminated(take_until0(&b">"[..]), take(1usize)).context("<email>"),
         )
-            .context("<name> <<email>>")
-            .parse_next(i)?;
-
-        Ok((
-            i,
-            IdentityRef {
+            .map(|(name, email): (&[u8], &[u8])| IdentityRef {
                 name: name.as_bstr(),
                 email: email.as_bstr(),
-            },
-        ))
+            })
+            .context("<name> <<email>>")
+            .parse_next(i)
     }
 }
 pub use function::identity;
@@ -197,7 +170,7 @@ mod tests {
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "Parse error:\nVerify at: -1215\nin section '<timestamp>', at: abc -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at: hello <> abc -1215\n"
+                        "Parse error:\nVerify at: abc -1215\nin section '<timestamp>', at: abc -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at: hello <> abc -1215\n"
                     );
         }
     }

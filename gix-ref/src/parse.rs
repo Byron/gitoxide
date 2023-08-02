@@ -13,8 +13,8 @@ pub fn hex_hash<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], 
         gix_hash::Kind::shortest().len_in_hex()..=gix_hash::Kind::longest().len_in_hex(),
         is_hex_digit_lc,
     )
+    .map(ByteSlice::as_bstr)
     .parse_next(i)
-    .map(|(i, hex)| (i, hex.as_bstr()))
 }
 
 pub fn newline<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
