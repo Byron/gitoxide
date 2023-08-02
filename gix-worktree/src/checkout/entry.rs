@@ -165,7 +165,7 @@ where
             obj.data.len()
         }
         gix_index::entry::Mode::DIR => todo!(),
-        gix_index::entry::Mode::COMMIT => todo!(),
+        gix_index::entry::Mode::COMMIT => 0,
         _ => unreachable!(),
     };
     Ok(Outcome::Written { bytes: object_size })
