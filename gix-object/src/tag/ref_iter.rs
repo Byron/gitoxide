@@ -1,7 +1,7 @@
 use bstr::BStr;
 use gix_hash::{oid, ObjectId};
 use winnow::{
-    bytes::take_while1,
+    bytes::take_while,
     combinator::{eof, opt},
     error::ParseError,
     prelude::*,
@@ -75,7 +75,7 @@ impl<'a> TagRefIter<'a> {
                 )
             }
             TargetKind => {
-                let (i, kind) = (|i| parse::header_field(i, b"type", take_while1(AsChar::is_alpha)))
+                let (i, kind) = (|i| parse::header_field(i, b"type", take_while(1.., AsChar::is_alpha)))
                     .context("type <object kind>")
                     .parse_next(i)?;
                 let kind = Kind::from_bytes(kind)
@@ -84,7 +84,7 @@ impl<'a> TagRefIter<'a> {
                 (i, Token::TargetKind(kind))
             }
             Name => {
-                let (i, tag_version) = (|i| parse::header_field(i, b"tag", take_while1(|b| b != NL[0])))
+                let (i, tag_version) = (|i| parse::header_field(i, b"tag", take_while(1.., |b| b != NL[0])))
                     .context("tag <version>")
                     .parse_next(i)?;
                 *state = Tagger;

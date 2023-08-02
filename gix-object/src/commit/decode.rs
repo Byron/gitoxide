@@ -4,9 +4,9 @@ use smallvec::SmallVec;
 use winnow::{
     branch::alt,
     bytes::{tag, take_till1},
+    combinator::repeat,
     combinator::{eof, opt},
     error::{ContextError, ParseError},
-    multi::many0,
     prelude::*,
     sequence::terminated,
 };
@@ -33,7 +33,7 @@ pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
     let (i, tree) = (|i| parse::header_field(i, b"tree", parse::hex_hash))
         .context("tree <40 lowercase hex char>")
         .parse_next(i)?;
-    let (i, parents): (_, Vec<_>) = many0(|i| parse::header_field(i, b"parent", parse::hex_hash))
+    let (i, parents): (_, Vec<_>) = repeat(0.., |i| parse::header_field(i, b"parent", parse::hex_hash))
         .context("zero or more 'parent <40 lowercase hex char>'")
         .parse_next(i)?;
     let (i, author) = (|i| parse::header_field(i, b"author", parse::signature))
@@ -45,12 +45,16 @@ pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
     let (i, encoding) = opt(|i| parse::header_field(i, b"encoding", take_till1(NL)))
         .context("encoding <encoding>")
         .parse_next(i)?;
-    let (i, extra_headers) = many0(alt((
-        parse::any_header_field_multi_line.map(|(k, o)| (k.as_bstr(), Cow::Owned(o))),
-        |i| {
-            parse::any_header_field(i, take_till1(NL)).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
-        },
-    )))
+    let (i, extra_headers) = repeat(
+        0..,
+        alt((
+            parse::any_header_field_multi_line.map(|(k, o)| (k.as_bstr(), Cow::Owned(o))),
+            |i| {
+                parse::any_header_field(i, take_till1(NL))
+                    .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
+            },
+        )),
+    )
     .context("<field> <single-line|multi-line>")
     .parse_next(i)?;
     let (i, message) = terminated(message, eof).parse_next(i)?;

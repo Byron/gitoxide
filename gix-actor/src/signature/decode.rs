@@ -5,9 +5,9 @@ pub(crate) mod function {
     use std::cell::RefCell;
     use winnow::{
         branch::alt,
-        bytes::{take, take_until0, take_while_m_n},
+        bytes::{take, take_until0, take_while},
+        combinator::repeat,
         error::{ContextError, ParseError},
-        multi::many1,
         prelude::*,
         sequence::terminated,
         stream::AsChar,
@@ -36,22 +36,20 @@ pub(crate) mod function {
             })
             .context("<timestamp>"),
             alt((
-                many1(b"-").map(|_: ()| *tzsign.borrow_mut() = b'-'), // TODO: this should be a non-allocating consumer of consecutive tags
-                many1(b"+").map(|_: ()| *tzsign.borrow_mut() = b'+'),
+                repeat(1.., b"-").map(|_: ()| *tzsign.borrow_mut() = b'-'), // TODO: this should be a non-allocating consumer of consecutive tags
+                repeat(1.., b"+").map(|_: ()| *tzsign.borrow_mut() = b'+'),
             ))
             .context("+|-"),
             (|i| {
-                take_while_m_n(2usize, 2, AsChar::is_dec_digit)
-                    .parse_next(i)
-                    .and_then(|(i, v)| {
-                        btoi::<OffsetInSeconds>(v)
-                            .map(|v| (i, v))
-                            .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))
-                    })
+                take_while(2, AsChar::is_dec_digit).parse_next(i).and_then(|(i, v)| {
+                    btoi::<OffsetInSeconds>(v)
+                        .map(|v| (i, v))
+                        .map_err(|_| winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify))
+                })
             })
             .context("HH"),
             (|i| {
-                take_while_m_n(1usize, 2, AsChar::is_dec_digit)
+                take_while(1..=2, AsChar::is_dec_digit)
                     .parse_next(i)
                     .and_then(|(i, v)| {
                         btoi::<OffsetInSeconds>(v)

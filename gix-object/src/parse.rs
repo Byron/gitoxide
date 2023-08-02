@@ -1,9 +1,9 @@
 use bstr::{BStr, BString, ByteVec};
 use winnow::{
-    bytes::{take_till1, take_until0, take_while_m_n},
+    bytes::{take_till1, take_until0, take_while},
     combinator::peek,
+    combinator::repeat,
     error::{ContextError, ParseError},
-    multi::many1,
     prelude::*,
     sequence::{preceded, terminated},
     Parser,
@@ -23,7 +23,7 @@ pub(crate) fn any_header_field_multi_line<'a, E: ParseError<&'a [u8]> + ContextE
         (
             take_till1(NL),
             NL,
-            many1(terminated((SPACE, take_until0(NL)), NL)).map(|()| ()),
+            repeat(1.., terminated((SPACE, take_until0(NL)), NL)).map(|()| ()),
         )
             .recognize(),
     ))
@@ -64,9 +64,8 @@ fn is_hex_digit_lc(b: u8) -> bool {
 }
 
 pub fn hex_hash<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
-    take_while_m_n(
-        gix_hash::Kind::shortest().len_in_hex(),
-        gix_hash::Kind::longest().len_in_hex(),
+    take_while(
+        gix_hash::Kind::shortest().len_in_hex()..=gix_hash::Kind::longest().len_in_hex(),
         is_hex_digit_lc,
     )
     .parse_next(i)

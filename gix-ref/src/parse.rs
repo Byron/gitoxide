@@ -1,5 +1,5 @@
 use gix_object::bstr::{BStr, ByteSlice};
-use winnow::{branch::alt, bytes::take_while_m_n, error::ParseError, prelude::*};
+use winnow::{branch::alt, bytes::take_while, error::ParseError, prelude::*};
 
 fn is_hex_digit_lc(b: u8) -> bool {
     matches!(b, b'0'..=b'9' | b'a'..=b'f')
@@ -9,9 +9,8 @@ fn is_hex_digit_lc(b: u8) -> bool {
 pub fn hex_hash<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
     // NOTE: It's important to be able to read all hashes, do not parameterize it. Hashes can be rejected at a later stage
     // if needed.
-    take_while_m_n(
-        gix_hash::Kind::shortest().len_in_hex(),
-        gix_hash::Kind::longest().len_in_hex(),
+    take_while(
+        gix_hash::Kind::shortest().len_in_hex()..=gix_hash::Kind::longest().len_in_hex(),
         is_hex_digit_lc,
     )
     .parse_next(i)
