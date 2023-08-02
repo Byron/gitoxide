@@ -4,13 +4,13 @@ pub(crate) mod function {
     use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch, Time};
     use std::cell::RefCell;
     use winnow::{
-        branch::alt,
-        bytes::{take, take_until0, take_while},
+        combinator::alt,
         combinator::repeat,
-        error::{ContextError, ParseError},
+        combinator::terminated,
+        error::{AddContext, ParserError},
         prelude::*,
-        sequence::terminated,
         stream::AsChar,
+        token::{take, take_until0, take_while},
     };
 
     use crate::{IdentityRef, SignatureRef};
@@ -18,7 +18,7 @@ pub(crate) mod function {
     const SPACE: &[u8] = b" ";
 
     /// Parse a signature from the bytes input `i` using `nom`.
-    pub fn decode<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
+    pub fn decode<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(
         i: &'a [u8],
     ) -> IResult<&'a [u8], SignatureRef<'a>, E> {
         let tzsign = RefCell::new(b'-'); // TODO: there should be no need for this.
@@ -82,7 +82,7 @@ pub(crate) mod function {
     }
 
     /// Parse an identity from the bytes input `i` (like `name <email>`) using `nom`.
-    pub fn identity<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
+    pub fn identity<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(
         i: &'a [u8],
     ) -> IResult<&'a [u8], IdentityRef<'a>, E> {
         let (i, (name, email)) = (

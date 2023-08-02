@@ -2,18 +2,18 @@ use std::borrow::Cow;
 
 use smallvec::SmallVec;
 use winnow::{
-    branch::alt,
-    bytes::{tag, take_till1},
+    combinator::alt,
     combinator::repeat,
+    combinator::terminated,
     combinator::{eof, opt},
-    error::{ContextError, ParseError},
+    error::{AddContext, ParserError},
     prelude::*,
-    sequence::terminated,
+    token::{tag, take_till1},
 };
 
 use crate::{parse, parse::NL, BStr, ByteSlice, CommitRef};
 
-pub fn message<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
+pub fn message<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
     if i.is_empty() {
         // newline + [message]
         return Err(
@@ -27,9 +27,7 @@ pub fn message<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
     Ok((&[], i.as_bstr()))
 }
 
-pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
-    i: &'a [u8],
-) -> IResult<&'a [u8], CommitRef<'_>, E> {
+pub fn commit<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], CommitRef<'_>, E> {
     let (i, tree) = (|i| parse::header_field(i, b"tree", parse::hex_hash))
         .context("tree <40 lowercase hex char>")
         .parse_next(i)?;

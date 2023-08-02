@@ -75,11 +75,11 @@ impl<'a> From<LineRef<'a>> for Line {
 pub mod decode {
     use gix_object::bstr::{BStr, ByteSlice};
     use winnow::{
-        bytes::take_while,
         combinator::opt,
-        error::{ContextError, ParseError},
+        combinator::terminated,
+        error::{AddContext, ParserError},
         prelude::*,
-        sequence::terminated,
+        token::take_while,
     };
 
     use crate::{file::log::LineRef, parse::hex_hash};
@@ -123,7 +123,7 @@ pub mod decode {
         }
     }
 
-    fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
+    fn message<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
         if i.is_empty() {
             Ok((&[], i.as_bstr()))
         } else {
@@ -133,7 +133,7 @@ pub mod decode {
         }
     }
 
-    fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], LineRef<'a>, E> {
+    fn one<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], LineRef<'a>, E> {
         let (i, (old, new, signature, message_sep, message)) = (
             terminated(hex_hash, b" ").context("<old-hexsha>"),
             terminated(hex_hash, b" ").context("<new-hexsha>"),

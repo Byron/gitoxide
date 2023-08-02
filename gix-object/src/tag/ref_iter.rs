@@ -1,12 +1,12 @@
 use bstr::BStr;
 use gix_hash::{oid, ObjectId};
 use winnow::{
-    bytes::take_while,
+    combinator::terminated,
     combinator::{eof, opt},
-    error::ParseError,
+    error::ParserError,
     prelude::*,
-    sequence::terminated,
     stream::AsChar,
+    token::take_while,
 };
 
 use crate::{bstr::ByteSlice, parse, parse::NL, tag::decode, Kind, TagRefIter};

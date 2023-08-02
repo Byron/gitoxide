@@ -2,7 +2,7 @@ use std::convert::{TryFrom, TryInto};
 
 use gix_hash::ObjectId;
 use gix_object::bstr::BString;
-use winnow::{bytes::take_while, combinator::opt, prelude::*, sequence::terminated};
+use winnow::{combinator::opt, combinator::terminated, prelude::*, token::take_while};
 
 use crate::{
     parse::{hex_hash, newline},

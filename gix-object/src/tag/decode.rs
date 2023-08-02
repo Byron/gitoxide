@@ -1,16 +1,16 @@
 use winnow::{
-    branch::alt,
-    bytes::{tag, take_until0, take_while},
+    combinator::alt,
     combinator::{eof, opt},
-    error::{ContextError, ParseError},
+    combinator::{preceded, terminated},
+    error::{AddContext, ParserError},
     prelude::*,
-    sequence::{preceded, terminated},
     stream::AsChar,
+    token::{tag, take_until0, take_while},
 };
 
 use crate::{parse, parse::NL, BStr, ByteSlice, TagRef};
 
-pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], TagRef<'a>, E> {
+pub fn git_tag<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], TagRef<'a>, E> {
     let (i, target) = (|i| parse::header_field(i, b"object", parse::hex_hash))
         .context("object <40 lowercase hex char>")
         .parse_next(i)?;
@@ -42,7 +42,7 @@ pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
     ))
 }
 
-pub fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
+pub fn message<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
     const PGP_SIGNATURE_BEGIN: &[u8] = b"\n-----BEGIN PGP SIGNATURE-----";
     const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
 
@@ -50,7 +50,7 @@ pub fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&
         return Ok((i, (i.as_bstr(), None)));
     }
     let (i, _) = tag(NL).parse_next(i)?;
-    fn all_to_end<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], &'a [u8]), E> {
+    fn all_to_end<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], &'a [u8]), E> {
         if i.is_empty() {
             // Empty message. That's OK.
             return Ok((&[], (&[], &[])));

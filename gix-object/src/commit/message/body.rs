@@ -1,11 +1,11 @@
 use std::ops::Deref;
 
 use winnow::{
-    bytes::take_until1,
     combinator::eof,
-    error::{ErrorKind, ParseError},
+    combinator::terminated,
+    error::{ErrorKind, ParserError},
     prelude::*,
-    sequence::terminated,
+    token::take_until1,
 };
 
 use crate::{
@@ -32,7 +32,7 @@ pub struct TrailerRef<'a> {
     pub value: &'a BStr,
 }
 
-fn parse_single_line_trailer<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, &'a BStr), E> {
+fn parse_single_line_trailer<'a, E: ParserError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, &'a BStr), E> {
     let (value, token) = terminated(take_until1(b":".as_ref()), b": ").parse_next(i.trim_end())?;
     if token.trim_end().len() != token.len() || value.trim_start().len() != value.len() {
         Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Fail).cut())
