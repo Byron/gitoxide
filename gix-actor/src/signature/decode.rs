@@ -2,6 +2,7 @@ pub(crate) mod function {
     use bstr::ByteSlice;
     use btoi::btoi;
     use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch, Time};
+    use nom::multi::many1_count;
     use nom::{
         branch::alt,
         bytes::complete::{tag, take, take_until, take_while_m_n},
@@ -10,6 +11,7 @@ pub(crate) mod function {
         sequence::{terminated, tuple},
         IResult,
     };
+    use std::cell::RefCell;
 
     use crate::{IdentityRef, SignatureRef};
 
@@ -19,7 +21,9 @@ pub(crate) mod function {
     pub fn decode<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
         i: &'a [u8],
     ) -> IResult<&'a [u8], SignatureRef<'a>, E> {
-        let (i, (identity, _, time, tzsign, hours, minutes)) = context(
+        use nom::Parser;
+        let tzsign = RefCell::new(b'-'); // TODO: there should be no need for this.
+        let (i, (identity, _, time, _tzsign_count, hours, minutes)) = context(
             "<name> <<email>> <timestamp> <+|-><HHMM>",
             tuple((
                 identity,
@@ -31,7 +35,13 @@ pub(crate) mod function {
                             .map_err(|_| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))
                     })
                 }),
-                context("+|-", alt((tag(b"-"), tag(b"+")))),
+                context(
+                    "+|-",
+                    alt((
+                        many1_count(tag(b"-")).map(|_| *tzsign.borrow_mut() = b'-'), // TODO: this should be a non-allocating consumer of consecutive tags
+                        many1_count(tag(b"+")).map(|_| *tzsign.borrow_mut() = b'+'),
+                    )),
+                ),
                 context("HH", |i| {
                     take_while_m_n(2usize, 2, is_digit)(i).and_then(|(i, v)| {
                         btoi::<OffsetInSeconds>(v)
@@ -40,7 +50,7 @@ pub(crate) mod function {
                     })
                 }),
                 context("MM", |i| {
-                    take_while_m_n(2usize, 2, is_digit)(i).and_then(|(i, v)| {
+                    take_while_m_n(1usize, 2, is_digit)(i).and_then(|(i, v)| {
                         btoi::<OffsetInSeconds>(v)
                             .map(|v| (i, v))
                             .map_err(|_| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))
@@ -49,8 +59,9 @@ pub(crate) mod function {
             )),
         )(i)?;
 
-        debug_assert!(tzsign[0] == b'-' || tzsign[0] == b'+', "parser assure it's +|- only");
-        let sign = if tzsign[0] == b'-' { Sign::Minus } else { Sign::Plus }; //
+        let tzsign = tzsign.into_inner();
+        debug_assert!(tzsign == b'-' || tzsign == b'+', "parser assure it's +|- only");
+        let sign = if tzsign == b'-' { Sign::Minus } else { Sign::Plus }; //
         let offset = (hours * 3600 + minutes * 60) * if sign == Sign::Minus { -1 } else { 1 };
 
         Ok((
@@ -145,6 +156,16 @@ mod tests {
                     .expect("parse to work")
                     .1,
                 signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Minus, 0)
+            );
+        }
+
+        #[test]
+        fn negative_offset_double_dash() {
+            assert_eq!(
+                decode(b"name <name@example.com> 1288373970 --700")
+                    .expect("parse to work")
+                    .1,
+                signature("name", "name@example.com", 1288373970, Sign::Minus, -252000)
             );
         }
 

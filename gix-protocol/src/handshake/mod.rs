@@ -21,7 +21,7 @@ pub enum Ref {
         /// The hash of the object the ref points to.
         object: gix_hash::ObjectId,
     },
-    /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
+    /// A symbolic ref pointing to `target` ref, which in turn, ultimately after possibly following `tag`, points to an `object`
     Symbolic {
         /// The name at which the symbolic ref is located, like `HEAD`.
         full_ref_name: BString,
@@ -31,7 +31,11 @@ pub enum Ref {
         ///
         /// [#205]: https://github.com/Byron/gitoxide/issues/205
         target: BString,
-        /// The hash of the object the `target` ref points to.
+        /// The hash of the annotated tag the ref points to, if present.
+        ///
+        /// Note that this field is also `None` if `full_ref_name` is a lightweight tag.
+        tag: Option<gix_hash::ObjectId>,
+        /// The hash of the object the `target` ref ultimately points to.
         object: gix_hash::ObjectId,
     },
     /// A ref is unborn on the remote and just points to the initial, unborn branch, as is the case in a newly initialized repository

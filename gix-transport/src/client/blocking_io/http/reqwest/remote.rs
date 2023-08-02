@@ -155,6 +155,20 @@ impl Default for Remote {
 
 /// utilities
 impl Remote {
+    fn restore_thread_after_failure(&mut self) -> http::Error {
+        let err_that_brought_thread_down = self
+            .handle
+            .take()
+            .expect("thread handle present")
+            .join()
+            .expect("handler thread should never panic")
+            .expect_err("something should have gone wrong with curl (we join on error only)");
+        *self = Remote::default();
+        http::Error::InitHttpClient {
+            source: Box::new(err_that_brought_thread_down),
+        }
+    }
+
     fn make_request(
         &mut self,
         url: &str,
@@ -179,14 +193,18 @@ impl Remote {
                 None => continue,
             };
         }
-        self.request
+        if self
+            .request
             .send(Request {
                 url: url.to_owned(),
                 headers: header_map,
                 upload_body_kind,
                 config: self.config.clone(),
             })
-            .expect("the remote cannot be down at this point");
+            .is_err()
+        {
+            return Err(self.restore_thread_after_failure());
+        }
 
         let Response {
             headers,
@@ -195,15 +213,7 @@ impl Remote {
         } = match self.response.recv() {
             Ok(res) => res,
             Err(_) => {
-                let err = self
-                    .handle
-                    .take()
-                    .expect("always present")
-                    .join()
-                    .expect("no panic")
-                    .expect_err("no receiver means thread is down with init error");
-                *self = Self::default();
-                return Err(http::Error::InitHttpClient { source: Box::new(err) });
+                return Err(self.restore_thread_after_failure());
             }
         };
 

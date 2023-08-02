@@ -19,6 +19,10 @@ mod error {
         OpenWorktreeRepo(#[from] crate::open::Error),
         #[error("Could not find local commit for fast-forward ancestor check")]
         FindCommit(#[from] crate::object::find::existing::Error),
+        #[error("Could not peel symbolic local reference to its ID")]
+        PeelToId(#[from] crate::reference::peel::Error),
+        #[error("Failed to follow a symbolic reference to assure worktree isn't affected")]
+        FollowSymref(#[from] gix_ref::file::find::existing::Error),
     }
 }
 
@@ -35,11 +39,14 @@ pub struct Outcome {
     pub updates: Vec<super::Update>,
 }
 
-/// Describe the way a ref was updated
+/// Describe the way a ref was updated, with particular focus on how the (peeled) target commit was affected.
+///
+/// Note that for all the variants that signal a change or `NoChangeNeeded` it's additionally possible to change the target type
+/// from symbolic to direct, or the other way around.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Mode {
     /// No change was attempted as the remote ref didn't change compared to the current ref, or because no remote ref was specified
-    /// in the ref-spec.
+    /// in the ref-spec. Note that the expected value is still asserted to uncover potential race conditions with other processes.
     NoChangeNeeded,
     /// The old ref's commit was an ancestor of the new one, allowing for a fast-forward without a merge.
     FastForward,
@@ -62,14 +69,19 @@ pub enum Mode {
     RejectedTagUpdate,
     /// The reference update would not have been a fast-forward, and force is not specified in the ref-spec.
     RejectedNonFastForward,
-    /// The update of a local symbolic reference was rejected.
-    RejectedSymbolic,
+    /// The remote has an unborn symbolic reference where we have one that is set. This means the remote
+    /// has reset itself to a newly initialized state or a state that is highly unusual.
+    /// It may also mean that the remote knows the target name, but it's not available locally and not included in the ref-mappings
+    /// to be created, so we would effectively change a valid local ref into one that seems unborn, which is rejected.
+    /// Note that this mode may have an associated ref-edit that is a no-op, or current-state assertion, for logistical reasons only
+    /// and having no edit would be preferred.
+    RejectedToReplaceWithUnborn,
     /// The update was rejected because the branch is checked out in the given worktree_dir.
     ///
     /// Note that the check applies to any known worktree, whether it's present on disk or not.
     RejectedCurrentlyCheckedOut {
-        /// The path to the worktree directory where the branch is checked out.
-        worktree_dir: PathBuf,
+        /// The path(s) to the worktree directory where the branch is checked out.
+        worktree_dirs: Vec<PathBuf>,
     },
 }
 
@@ -84,17 +96,30 @@ impl std::fmt::Display for Mode {
             Mode::RejectedSourceObjectNotFound { id } => return write!(f, "rejected ({id} not found)"),
             Mode::RejectedTagUpdate => "rejected (would overwrite existing tag)",
             Mode::RejectedNonFastForward => "rejected (non-fast-forward)",
-            Mode::RejectedSymbolic => "rejected (refusing to write symbolic refs)",
-            Mode::RejectedCurrentlyCheckedOut { worktree_dir } => {
+            Mode::RejectedToReplaceWithUnborn => "rejected (refusing to overwrite existing with unborn ref)",
+            Mode::RejectedCurrentlyCheckedOut { worktree_dirs } => {
                 return write!(
                     f,
                     "rejected (cannot write into checked-out branch at \"{}\")",
-                    worktree_dir.display()
+                    worktree_dirs
+                        .iter()
+                        .filter_map(|d| d.to_str())
+                        .collect::<Vec<_>>()
+                        .join(", ")
                 )
             }
         }
         .fmt(f)
     }
+}
+
+/// Indicates that a ref changes its type.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
+pub enum TypeChange {
+    /// A local direct reference is changed into a symbolic one.
+    DirectToSymbolic,
+    /// A local symbolic reference is changed into a direct one.
+    SymbolicToDirect,
 }
 
 impl Outcome {

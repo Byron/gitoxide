@@ -17,6 +17,7 @@ unborn refs/heads/symbolic symref-target:refs/heads/target
 808e50d724f604f69ab93c6da2919c014667bedb refs/heads/main
 7fe1b98b39423b71e14217aa299a03b7c937d656 refs/tags/foo peeled:808e50d724f604f69ab93c6da2919c014667bedb
 7fe1b98b39423b71e14217aa299a03b7c937d6ff refs/tags/blaz
+978f927e6397113757dfec6332e7d9c7e356ac25 refs/heads/symbolic symref-target:refs/tags/v1.0 peeled:4d979abcde5cea47b079c38850828956c9382a56
 "
         .as_bytes(),
     );
@@ -29,6 +30,7 @@ unborn refs/heads/symbolic symref-target:refs/heads/target
             Ref::Symbolic {
                 full_ref_name: "HEAD".into(),
                 target: "refs/heads/main".into(),
+                tag: None,
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             },
             Ref::Direct {
@@ -56,8 +58,14 @@ unborn refs/heads/symbolic symref-target:refs/heads/target
                 full_ref_name: "refs/tags/blaz".into(),
                 object: oid("7fe1b98b39423b71e14217aa299a03b7c937d6ff")
             },
+            Ref::Symbolic {
+                full_ref_name: "refs/heads/symbolic".into(),
+                target: "refs/tags/v1.0".into(),
+                tag: Some(oid("978f927e6397113757dfec6332e7d9c7e356ac25")),
+                object: oid("4d979abcde5cea47b079c38850828956c9382a56")
+            },
         ]
-    )
+    );
 }
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
@@ -86,6 +94,7 @@ dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/gix-commitgraph-v0.0.0
             Ref::Symbolic {
                 full_ref_name: "HEAD".into(),
                 target: "refs/heads/main".into(),
+                tag: None,
                 object: oid("73a6868963993a3328e7d8fe94e5a6ac5078a944")
             },
             Ref::Direct {

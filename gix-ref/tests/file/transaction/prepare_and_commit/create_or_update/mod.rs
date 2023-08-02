@@ -424,7 +424,8 @@ fn symbolic_reference_writes_reflog_if_previous_value_is_set() -> crate::Result 
     );
     assert!(
         head.log_exists(&store),
-        "reflog is written for new symbolic ref with information about the peeled target id"
+        "reflog is written for new symbolic ref with information about the peeled target id, \
+         as special accommodation for the state during clone to allow us to get a peeled id into the log"
     );
     assert!(store.try_find_loose(referent)?.is_none(), "referent wasn't created");
 
@@ -499,11 +500,6 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             mode: RefLog::AndReference,
             force_create_reflog: false,
         };
-        let log_only = {
-            let mut l = log.clone();
-            l.mode = RefLog::Only;
-            l
-        };
         let edits = store
             .transaction()
             .prepare(
@@ -526,7 +522,11 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             vec![
                 RefEdit {
                     change: Change::Update {
-                        log: log_only.clone(),
+                        log: {
+                            let mut l = log.clone();
+                            l.mode = RefLog::Only;
+                            l
+                        },
                         new: new.clone(),
                         expected: PreviousValue::MustExistAndMatch(new_head_value.clone()),
                     },
@@ -537,7 +537,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     change: Change::Update {
                         log,
                         new: new.clone(),
-                        expected: PreviousValue::Any,
+                        expected: PreviousValue::Any, // there is no previous value, so we can't put `MustExistAndMatch` here.
                     },
                     name: referent.try_into()?,
                     deref: false,

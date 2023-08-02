@@ -348,8 +348,22 @@ mod blocking_io {
                             .expect("computable")
                             .1
                             .starts_with_str(remote_name));
-                        let mut logs = r.log_iter();
-                        assert_reflog(logs.all());
+                        match r.target() {
+                            TargetRef::Peeled(_) => {
+                                let mut logs = r.log_iter();
+                                assert_reflog(logs.all());
+                            }
+                            TargetRef::Symbolic(_) => {
+                                // TODO: it *should* be possible to set the reflog here based on the referent if deref = true
+                                //       when setting up the edits. But it doesn't seem to work. Also, some tests are
+                                //       missing for `leaf_referent_previous_oid`.
+                                assert!(
+                                    !r.log_exists(),
+                                    "symbolic refs don't have object ids, so they can't get \
+                                      into the reflog as these need previous and new oid"
+                                )
+                            }
+                        }
                     }
                 }
                 let mut out_of_graph_tags = Vec::new();

@@ -38,10 +38,17 @@ impl Ref {
     /// If `unborn`, the first object id will be the null oid.
     pub fn unpack(&self) -> (&BStr, Option<&gix_hash::oid>, Option<&gix_hash::oid>) {
         match self {
-            Ref::Direct { full_ref_name, object }
-            | Ref::Symbolic {
-                full_ref_name, object, ..
-            } => (full_ref_name.as_ref(), Some(object), None),
+            Ref::Direct { full_ref_name, object } => (full_ref_name.as_ref(), Some(object), None),
+            Ref::Symbolic {
+                full_ref_name,
+                tag,
+                object,
+                ..
+            } => (
+                full_ref_name.as_ref(),
+                Some(tag.as_deref().unwrap_or(object)),
+                tag.as_deref().map(|_| object.as_ref()),
+            ),
             Ref::Peeled {
                 full_ref_name,
                 tag: object,

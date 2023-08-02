@@ -50,7 +50,8 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     if update_reflog {
                         let log_update = match new {
                             Target::Symbolic(_) => {
-                                // no reflog for symref changes, unless the ref is new and we can obtain a peeled id
+                                // Special HACK: no reflog for symref changes as there is no OID involved which the reflog needs.
+                                // Unless, the ref is new and we can obtain a peeled id
                                 // identified by the expectation of what could be there, as is the case when cloning.
                                 match expected {
                                     PreviousValue::ExistingMustMatch(Target::Peeled(oid)) => {
@@ -61,6 +62,8 @@ impl<'s, 'p> Transaction<'s, 'p> {
                             }
                             Target::Peeled(new_oid) => {
                                 let previous = match expected {
+                                    // Here, this means that the ref already existed, and that it will receive (even transitively)
+                                    // the given value
                                     PreviousValue::MustExistAndMatch(Target::Peeled(oid)) => Some(oid.to_owned()),
                                     _ => None,
                                 }
