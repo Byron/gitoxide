@@ -5,63 +5,63 @@ set -eu -o pipefail
 # from git's own test suite (t/t5500-fetch-pack.sh).
 # Please do not change this loop and instead add additional
 # test cases at the bottom of this file.
-for r in repo re:po re/po
+for path in "repo" "re:po" "re/po"
 do
-  for p in "ssh+git" "git+ssh" git ssh
+  for protocol in "ssh+git" "git+ssh" "git" "ssh"
   do
-    for h in host user@host user@[::1] user@::1
+    for host in "host" "user@host" "user@[::1]" "user@::1"
     do
-      for c in "" :
+      for port_separator in "" ":"
       do
-        test_expect_success "fetch-pack --diag-url $p://$h$c/$r" '
+        test_expect_success "fetch-pack --diag-url $protocol://$host$port_separator/$path" '
           check_prot_host_port_path $p://$h/$r $p "$h" NONE "/$r"
         '
-        test_expect_success "fetch-pack --diag-url $p://$h$c/~$r" '
+        test_expect_success "fetch-pack --diag-url $protocol://$host$port_separator/~$path" '
           check_prot_host_port_path $p://$h/~$r $p "$h" NONE "~$r"
         '
       done
     done
-    for h in host User@host User@[::1]
+    for host in "host" "User@host" "User@[::1]"
     do
-      test_expect_success "fetch-pack --diag-url $p://$h:22/$r" '
+      test_expect_success "fetch-pack --diag-url $protocol://$host:22/$path" '
         check_prot_host_port_path $p://$h:22/$r $p "$h" 22 "/$r"
       '
     done
   done
-  for p in file
+  for protocol in "file"
   do
-    test_expect_success !MINGW "fetch-pack --diag-url $p://$h/$r" '
+    test_expect_success !MINGW "fetch-pack --diag-url $protocol://$host/$path" '
       check_prot_path $p://$h/$r $p "/$r"
     '
-    test_expect_success MINGW "fetch-pack --diag-url $p://$h/$r" '
+    test_expect_success MINGW "fetch-pack --diag-url $protocol://$host/$path" '
       check_prot_path $p://$h/$r $p "//$h/$r"
     '
-    test_expect_success MINGW "fetch-pack --diag-url $p:///$r" '
+    test_expect_success MINGW "fetch-pack --diag-url $protocol:///$path" '
       check_prot_path $p:///$r $p "/$r"
     '
-    test_expect_success !MINGW "fetch-pack --diag-url $p://$h/~$r" '
+    test_expect_success !MINGW "fetch-pack --diag-url $protocol://$host/~$path" '
       check_prot_path $p://$h/~$r $p "/~$r"
     '
-    test_expect_success MINGW "fetch-pack --diag-url $p://$h/~$r" '
+    test_expect_success MINGW "fetch-pack --diag-url $protocol://$host/~$path" '
       check_prot_path $p://$h/~$r $p "//$h/~$r"
     '
   done
-  for h in nohost nohost:12 [::1] [::1]:23 [ [:aa
+  for host in "nohost" "nohost:12" "[::1]" "[::1]:23" "[" "[:aa"
   do
-    test_expect_success "fetch-pack --diag-url ./$h:$r" '
+    test_expect_success "fetch-pack --diag-url ./$host:$path" '
       check_prot_path ./$h:$r $p "./$h:$r"
     '
-    test_expect_success "fetch-pack --diag-url ./$p:$h/~$r" '
+    test_expect_success "fetch-pack --diag-url ./$protocol:$host/~$path" '
     check_prot_path ./$p:$h/~$r $p "./$p:$h/~$r"
     '
   done
-  p=ssh
-  for h in host [::1]
+  protocol="ssh"
+  for host in "host" "[::1]"
   do
-    test_expect_success "fetch-pack --diag-url $h:$r" '
+    test_expect_success "fetch-pack --diag-url $host:$path" '
       check_prot_host_port_path $h:$r $p "$h" NONE "$r"
     '
-    test_expect_success "fetch-pack --diag-url $h:/~$r" '
+    test_expect_success "fetch-pack --diag-url $host:/~$path" '
       check_prot_host_port_path $h:/~$r $p "$h" NONE "~$r"
     '
   done
