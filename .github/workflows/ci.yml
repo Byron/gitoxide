@@ -52,6 +52,7 @@ jobs:
     - name: test
       env:
         CI: true
+        GITOXIDE_TEST_IGNORE_ARCHIVES: 1
       run: just ci-test
 
   test-fast:
