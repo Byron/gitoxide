@@ -103,10 +103,15 @@ mod from_tree {
             }
         }
 
-        let expected_extra_exe_mode = if cfg!(windows) {
+        let expected_exe_mode = if cfg!(windows) {
             EntryMode::Blob
         } else {
             EntryMode::BlobExecutable
+        };
+        let expected_link_mode = if cfg!(windows) {
+            EntryMode::Blob
+        } else {
+            EntryMode::Link
         };
         assert_eq!(
             paths_and_modes,
@@ -128,8 +133,12 @@ mod from_tree {
                 ),
                 (
                     "symlink-to-a".into(),
-                    EntryMode::Link,
-                    hex_to_id("2e65efe2a145dda7ee51d1741299f848e5bf752e")
+                    expected_link_mode,
+                    hex_to_id(if cfg!(windows) {
+                        "45b983be36b73c0788dc9cbcb76cbb80fc7bb057"
+                    } else {
+                        "2e65efe2a145dda7ee51d1741299f848e5bf752e"
+                    })
                 ),
                 (
                     "dir/.gitattributes".into(),
@@ -143,7 +152,7 @@ mod from_tree {
                 ),
                 (
                     "dir/subdir/exe".into(),
-                    EntryMode::BlobExecutable,
+                    expected_exe_mode,
                     hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
                 ),
                 (
@@ -163,7 +172,7 @@ mod from_tree {
                 ),
                 (
                     "extra-exe".into(),
-                    expected_extra_exe_mode,
+                    expected_exe_mode,
                     hex_to_id("0000000000000000000000000000000000000000")
                 ),
                 (
@@ -173,7 +182,7 @@ mod from_tree {
                 ),
                 (
                     "extra-dir/symlink-to-extra".into(),
-                    EntryMode::Link,
+                    expected_link_mode,
                     hex_to_id("0000000000000000000000000000000000000000")
                 )
             ]

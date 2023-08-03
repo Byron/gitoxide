@@ -31,17 +31,15 @@ mod spawn {
     #[test]
     #[cfg(unix)]
     fn disallow_shell() -> crate::Result {
-        let out = gix_command::prepare("echo hi")
+        let out = gix_command::prepare("PATH= echo hi")
             .with_shell()
             .spawn()?
             .wait_with_output()?;
         assert_eq!(out.stdout.as_bstr(), "hi\n");
+
+        let mut cmd: std::process::Command = gix_command::prepare("echo hi").with_shell().without_shell().into();
         assert!(
-            gix_command::prepare("echo hi")
-                .with_shell()
-                .without_shell()
-                .spawn()
-                .is_err(),
+            cmd.env_remove("PATH").spawn().is_err(),
             "no command named 'echo hi' exists"
         );
         Ok(())

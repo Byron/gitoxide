@@ -1,3 +1,4 @@
+#!/bin/bash
 set -eu -o pipefail
 
 function tick () {
