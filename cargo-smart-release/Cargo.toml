@@ -36,7 +36,7 @@ crates-index = { version = "2.1.0", default-features = false, features = ["git-p
 cargo_toml = "0.15.1"
 winnow = "0.5.1"
 git-conventional = "0.12.0"
-time = "0.3.19"
+time = "0.3.23"
 pulldown-cmark = "0.9.0"
 bitflags = "2"
 
