@@ -1,3 +1,4 @@
+#!/bin/bash
 set -eu -o pipefail
 
 # IMPORTANT: keep this repo small as it's used for writes, hence will be executed for each writer!

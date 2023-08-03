@@ -476,7 +476,7 @@ fn scripted_fixture_read_only_with_args_inner(
                 }
                 assert!(
                     output.status.success(),
-                    "fixture script failed: stdout: {}\nstderr: {}",
+                    "fixture script of {cmd:?} failed: stdout: {}\nstderr: {}",
                     output.stdout.as_bstr(),
                     output.stderr.as_bstr()
                 );

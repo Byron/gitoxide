@@ -1,3 +1,4 @@
+#!/bin/bash
 set -eu -o pipefail
 
 (mkdir all-filters && cd all-filters

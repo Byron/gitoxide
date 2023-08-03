@@ -52,6 +52,7 @@ jobs:
     - name: test
       env:
         CI: true
+        GITOXIDE_TEST_IGNORE_ARCHIVES: 1
       run: just ci-test
 
   test-fast:
@@ -60,6 +61,7 @@ jobs:
         os:
           - windows-latest
           - macos-latest
+          - ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
