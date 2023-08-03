@@ -167,7 +167,7 @@ mod relative {
 mod fuzz {
     #[test]
     fn invalid_but_does_not_cause_panic() {
-        for input in ["7	-𬞋", "5 ڜ-09", "-4 week ago Z"] {
+        for input in ["7	-𬞋", "5 ڜ-09", "-4 week ago Z", "8960609 day ago"] {
             let _ = gix_date::parse(input, Some(std::time::UNIX_EPOCH)).unwrap_err();
         }
     }
