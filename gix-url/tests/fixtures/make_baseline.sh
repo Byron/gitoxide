@@ -1,6 +1,13 @@
 #!/bin/bash
 set -eu -o pipefail
 
+# list of urls that should be tested for all platforms
+tests=()
+# urls only intended for testing on Unix platforms
+tests_unix=()
+# urls only intended for testing on Windows
+tests_windows=()
+
 # The contents and structure of this loop are a direct copy
 # from git's own test suite (t/t5500-fetch-pack.sh).
 # Please do not change this loop and instead add additional
@@ -13,65 +20,52 @@ do
     do
       for port_separator in "" ":"
       do
-        test_expect_success "fetch-pack --diag-url $protocol://$host$port_separator/$path" '
-          check_prot_host_port_path $p://$h/$r $p "$h" NONE "/$r"
-        '
-        test_expect_success "fetch-pack --diag-url $protocol://$host$port_separator/~$path" '
-          check_prot_host_port_path $p://$h/~$r $p "$h" NONE "~$r"
-        '
+        tests+=("$protocol://$host$port_separator/$path")
+
+        tests+=("$protocol://$host$port_separator/~$path")
       done
     done
     for host in "host" "User@host" "User@[::1]"
     do
-      test_expect_success "fetch-pack --diag-url $protocol://$host:22/$path" '
-        check_prot_host_port_path $p://$h:22/$r $p "$h" 22 "/$r"
-      '
+      tests+=("$protocol://$host:22/$path")
     done
   done
   for protocol in "file"
   do
-    test_expect_success !MINGW "fetch-pack --diag-url $protocol://$host/$path" '
-      check_prot_path $p://$h/$r $p "/$r"
-    '
-    test_expect_success MINGW "fetch-pack --diag-url $protocol://$host/$path" '
-      check_prot_path $p://$h/$r $p "//$h/$r"
-    '
-    test_expect_success MINGW "fetch-pack --diag-url $protocol:///$path" '
-      check_prot_path $p:///$r $p "/$r"
-    '
-    test_expect_success !MINGW "fetch-pack --diag-url $protocol://$host/~$path" '
-      check_prot_path $p://$h/~$r $p "/~$r"
-    '
-    test_expect_success MINGW "fetch-pack --diag-url $protocol://$host/~$path" '
-      check_prot_path $p://$h/~$r $p "//$h/~$r"
-    '
+    tests_unix+=("$protocol://$host/$path")
+
+    tests_windows+=("$protocol://$host/$path")
+    tests_windows+=("$protocol:///$path")
+
+    tests_unix+=("$protocol://$host/~$path")
+    tests_windows+=("$protocol://$host/~$path")
   done
   for host in "nohost" "nohost:12" "[::1]" "[::1]:23" "[" "[:aa"
   do
-    test_expect_success "fetch-pack --diag-url ./$host:$path" '
-      check_prot_path ./$h:$r $p "./$h:$r"
-    '
-    test_expect_success "fetch-pack --diag-url ./$protocol:$host/~$path" '
-    check_prot_path ./$p:$h/~$r $p "./$p:$h/~$r"
-    '
+    tests+=("./$host:$path")
+    tests+=("./$protocol:$host/~$path")
   done
   protocol="ssh"
   for host in "host" "[::1]"
   do
-    test_expect_success "fetch-pack --diag-url $host:$path" '
-      check_prot_host_port_path $h:$r $p "$h" NONE "$r"
-    '
-    test_expect_success "fetch-pack --diag-url $host:/~$path" '
-      check_prot_host_port_path $h:/~$r $p "$h" NONE "~$r"
-    '
+    tests+=("$host:$path")
+
+    tests+=("$host:/~$path")
   done
 done
 
 # These two test cases are from git's test suite as well.
-test_expect_success MINGW 'fetch-pack --diag-url file://c:/repo' '
-  check_prot_path file://c:/repo file c:/repo
-'
-test_expect_success MINGW 'fetch-pack --diag-url c:repo' '
-  check_prot_path c:repo file c:repo
-'
+tests_windows+=("file://c:/repo")
+tests_windows+=("c:repo")
+
+tests_unix+=("${tests[@]}")
+tests_windows+=("${tests[@]}")
+
+for url in "${tests[@]}"
+do
+  echo ";;" # there are no `;` in the tested urls
+  git fetch-pack --diag-url "$url"
+done >git-baseline.generic
+
+# TODO: testing of platform specific behavior
 
