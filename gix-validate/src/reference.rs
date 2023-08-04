@@ -45,7 +45,7 @@ enum Mode {
 }
 
 fn validate(path: &BStr, mode: Mode) -> Result<&BStr, name::Error> {
-    crate::tagname(path)?;
+    crate::tag::name(path)?;
     if path[0] == b'/' {
         return Err(name::Error::StartsWithSlash);
     }

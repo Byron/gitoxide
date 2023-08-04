@@ -90,7 +90,7 @@ mod name {
             ($name:ident, $input:expr) => {
                 #[test]
                 fn $name() {
-                    assert!(gix_validate::refname($input.as_bstr()).is_ok())
+                    assert!(gix_validate::reference::name($input.as_bstr()).is_ok())
                 }
             };
         }
