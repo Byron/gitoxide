@@ -486,6 +486,7 @@ Make it the best-performing implementation and the most convenient one.
 * [x] primitives to help with graph traversal, along with commit-graph acceleration.
  
 ### gix-submodule
+* [ ] read `.gitmodule` files, access all their fields, and apply overrides
 * CRUD for submodules
 * try to handle with all the nifty interactions and be a little more comfortable than what git offers, lay a foundation for smarter git submodules.
 
@@ -721,7 +722,10 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
     * [ ] Use _Commit Graph_ to speed up certain queries
     * [ ] subtree
     * [ ] interactive rebase status/manipulation
-    * submodules
+    * **submodules**
+       * [ ] handle 'old' form for reading
+       * [ ] list
+       * [ ] traverse recursively
 * [ ] API documentation
     * [ ] Some examples
 
@@ -754,6 +758,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 
 ### gix-validate
 * [x] validate ref names
+* [x] validate submodule names
 * [x] [validate][tagname-validation] tag names
 
 ### gix-ref
