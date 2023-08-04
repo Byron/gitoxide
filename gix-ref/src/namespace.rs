@@ -36,10 +36,10 @@ impl Namespace {
 /// Given a `namespace` 'foo we output 'refs/namespaces/foo', and given 'foo/bar' we output 'refs/namespaces/foo/refs/namespaces/bar'.
 ///
 /// For more information, consult the [git namespace documentation](https://git-scm.com/docs/gitnamespaces).
-pub fn expand<'a, Name, E>(namespace: Name) -> Result<Namespace, gix_validate::refname::Error>
+pub fn expand<'a, Name, E>(namespace: Name) -> Result<Namespace, gix_validate::reference::name::Error>
 where
     Name: TryInto<&'a PartialNameRef, Error = E>,
-    gix_validate::refname::Error: From<E>,
+    gix_validate::reference::name::Error: From<E>,
 {
     let namespace = &namespace.try_into()?.0;
     let mut out = BString::default();

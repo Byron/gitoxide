@@ -25,7 +25,7 @@ pub enum Error {
     #[error("Both sides of the specification need a pattern, like 'a/*:b/*'")]
     PatternUnbalanced,
     #[error(transparent)]
-    ReferenceName(#[from] gix_validate::refname::Error),
+    ReferenceName(#[from] gix_validate::reference::name::Error),
     #[error(transparent)]
     RevSpec(#[from] gix_revision::spec::parse::Error),
 }

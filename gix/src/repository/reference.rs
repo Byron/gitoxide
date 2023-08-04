@@ -60,10 +60,10 @@ impl crate::Repository {
     pub fn set_namespace<'a, Name, E>(
         &mut self,
         namespace: Name,
-    ) -> Result<Option<gix_ref::Namespace>, gix_validate::refname::Error>
+    ) -> Result<Option<gix_ref::Namespace>, gix_validate::reference::name::Error>
     where
         Name: TryInto<&'a PartialNameRef, Error = E>,
-        gix_validate::refname::Error: From<E>,
+        gix_validate::reference::name::Error: From<E>,
     {
         let namespace = gix_ref::namespace::expand(namespace)?;
         Ok(self.refs.namespace.replace(namespace))

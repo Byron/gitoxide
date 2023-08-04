@@ -11,7 +11,7 @@ fn empty() {
 fn empty_component() {
     assert!(matches!(
         try_parse("refs/heads/test:refs/remotes//test", Operation::Fetch).unwrap_err(),
-        Error::ReferenceName(gix_validate::refname::Error::RepeatedSlash)
+        Error::ReferenceName(gix_validate::reference::name::Error::RepeatedSlash)
     ));
 }
 

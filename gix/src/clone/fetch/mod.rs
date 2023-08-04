@@ -26,7 +26,7 @@ pub enum Error {
     SaveConfigIo(#[from] std::io::Error),
     #[error("The remote HEAD points to a reference named {head_ref_name:?} which is invalid.")]
     InvalidHeadRef {
-        source: gix_validate::refname::Error,
+        source: gix_validate::reference::name::Error,
         head_ref_name: crate::bstr::BString,
     },
     #[error("Failed to update HEAD with values from remote")]
