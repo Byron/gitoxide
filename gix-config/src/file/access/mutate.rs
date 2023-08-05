@@ -272,17 +272,13 @@ impl<'event> File<'event> {
         self.sections.remove(&id)
     }
 
-    /// Adds the provided section to the config, returning a mutable reference
-    /// to it for immediate editing.
+    /// Adds the provided `section` to the config, returning a mutable reference to it for immediate editing.
     /// Note that its meta-data will remain as is.
-    pub fn push_section(
-        &mut self,
-        section: file::Section<'event>,
-    ) -> Result<SectionMut<'_, 'event>, section::header::Error> {
+    pub fn push_section(&mut self, section: file::Section<'event>) -> SectionMut<'_, 'event> {
         let id = self.push_section_internal(section);
         let nl = self.detect_newline_style_smallvec();
         let section = self.sections.get_mut(&id).expect("each id yields a section").to_mut(nl);
-        Ok(section)
+        section
     }
 
     /// Renames the section with `name` and `subsection_name`, modifying the last matching section
