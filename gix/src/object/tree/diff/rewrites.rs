@@ -80,7 +80,7 @@ impl Rewrites {
         let key = "diff.renames";
         let copies = match config
             .boolean_by_key(key)
-            .map(|value| Diff::RENAMES.try_into_renames(value, || config.string_by_key(key)))
+            .map(|value| Diff::RENAMES.try_into_renames(value))
             .transpose()
             .with_leniency(lenient)?
         {

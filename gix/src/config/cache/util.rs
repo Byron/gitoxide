@@ -51,7 +51,7 @@ pub(crate) fn query_refupdates(
 ) -> Result<Option<gix_ref::store::WriteReflog>, Error> {
     let key = "core.logAllRefUpdates";
     Core::LOG_ALL_REF_UPDATES
-        .try_into_ref_updates(config.boolean_by_key(key), || config.string_by_key(key))
+        .try_into_ref_updates(config.boolean_by_key(key))
         .with_leniency(lenient_config)
         .map_err(Into::into)
 }
