@@ -133,7 +133,10 @@ fn baseline() {
 }
 
 fn assert_urls_equal(diag_url: &GitDiagUrl<'_>, gix_url: &gix_url::Url) {
-    assert_eq!(diag_url.protocol, gix_url.scheme.as_str());
+    assert_eq!(
+        gix_url::Scheme::from(diag_url.protocol.to_str().unwrap()),
+        gix_url.scheme
+    );
 
     match diag_url.host {
         GitDiagHost::NonSsh { host_and_port } => match host_and_port {
