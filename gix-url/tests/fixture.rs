@@ -1,9 +1,6 @@
-use gix_testtools::Result;
-use url::quirks::port;
-
 use std::collections::HashMap;
 
-use bstr::{BStr, BString, ByteSlice, ByteVec};
+use bstr::{BStr, BString, ByteSlice};
 use gix_testtools::once_cell::sync::Lazy;
 
 struct GitDiagUrl<'a> {
@@ -13,8 +10,12 @@ struct GitDiagUrl<'a> {
 }
 
 impl GitDiagUrl<'_> {
+    /// Parses the given string into a [GitDiagUrl] according to the format
+    /// specified in [Git's `connect.c`][git_src].
+    ///
+    /// [git_src]: https://github.com/git/git/blob/master/connect.c#L1415
     fn parse(diag_url: &BStr) -> (&'_ BStr, GitDiagUrl<'_>) {
-        let mut lines = diag_url.lines().map(|line| line.trim());
+        let mut lines = diag_url.lines().map(ByteSlice::trim);
 
         let url = lines
             .next()
@@ -104,22 +105,19 @@ static BASELINE: Lazy<BString> = Lazy::new(|| {
 });
 
 static URLS: Lazy<HashMap<&'static BStr, GitDiagUrl<'static>>> = Lazy::new(|| {
-    (|| -> Result<_> {
-        let mut map = HashMap::<&'static BStr, GitDiagUrl<'static>>::new();
+    let mut map = HashMap::<&'static BStr, GitDiagUrl<'static>>::new();
 
-        let mut diag_urls = BASELINE
-            .split(|c| c == &(';' as u8))
-            .filter(|url| !url.is_empty())
-            .map(|url| url.trim());
+    let diag_urls = BASELINE
+        .split(|c| c == &b';')
+        .filter(|url| !url.is_empty())
+        .map(ByteSlice::trim);
 
-        while let Some(diag_url) = diag_urls.next() {
-            let (url, diag_url) = GitDiagUrl::parse(diag_url.as_bstr());
-            map.insert(url, diag_url);
-        }
+    for diag_url in diag_urls {
+        let (url, diag_url) = GitDiagUrl::parse(diag_url.as_bstr());
+        map.insert(url, diag_url);
+    }
 
-        Ok(map)
-    })()
-    .unwrap()
+    map
 });
 
 #[test]
