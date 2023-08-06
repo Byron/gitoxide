@@ -4,8 +4,9 @@
 
 ///
 pub mod reference;
-pub use reference::name as refname;
 
 ///
 pub mod tag;
-pub use tag::name as tagname;
+
+///
+pub mod submodule;

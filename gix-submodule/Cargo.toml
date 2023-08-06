@@ -12,3 +12,15 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
+gix-refspec = { version = "^0.14.1", path = "../gix-refspec" }
+gix-config = { version = "^0.26.2", path = "../gix-config" }
+gix-path = { version = "^0.8.4", path = "../gix-path" }
+gix-url = { version = "^0.21.1", path = "../gix-url" }
+
+bstr = { version = "1.5.0", default-features = false }
+thiserror = "1.0.44"
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools"}
+gix-features = { path = "../gix-features", features = ["walkdir"] }
+

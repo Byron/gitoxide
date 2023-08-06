@@ -210,7 +210,23 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "submodule.recurse",
-        usage: Planned {note: Some("very relevant for doing the right thing during checkouts")},
+        usage: Planned {note: Some("very relevant for doing the right thing during checkouts. Note that 'clone' isnt' affected by it, even though we could make it so for good measure.")},
+    },
+    Record {
+        config: "submodule.propagateBranches",
+        usage: NotPlanned {reason: "it is experimental, let's see how it pans out"}
+    },
+    Record {
+        config: "submodule.alternateLocation",
+        usage: NotPlanned {reason: "not currently supported when we clone either"}
+    },
+    Record {
+        config: "submodule.alternateErrorStrategy",
+        usage: NotPlanned {reason: "not currently supported when we clone either"}
+    },
+    Record {
+        config: "submodule.fetchJobs",
+        usage: Planned {note: Some("relevant for fetching")},
     },
     Record {
         config: "branch.autoSetupRebase",

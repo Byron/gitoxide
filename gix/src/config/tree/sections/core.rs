@@ -301,30 +301,27 @@ mod disambiguate {
 }
 
 mod log_all_ref_updates {
-    use std::borrow::Cow;
-
-    use crate::{bstr::BStr, config, config::tree::core::LogAllRefUpdates};
+    use crate::{config, config::tree::core::LogAllRefUpdates};
 
     impl LogAllRefUpdates {
-        /// Returns the mode for ref-updates as parsed from `value`. If `value` is not a boolean, `string_on_failure` will be called
-        /// to obtain the key `core.logAllRefUpdates` as string instead. For correctness, this two step process is necessary as
+        /// Returns the mode for ref-updates as parsed from `value`. If `value` is not a boolean, we try
+        /// to interpret the string value instead. For correctness, this two step process is necessary as
         /// the interpretation of booleans in special in `gix-config`, i.e. we can't just treat it as string.
-        pub fn try_into_ref_updates<'a>(
+        pub fn try_into_ref_updates(
             &'static self,
             value: Option<Result<bool, gix_config::value::Error>>,
-            string_on_failure: impl FnOnce() -> Option<Cow<'a, BStr>>,
         ) -> Result<Option<gix_ref::store::WriteReflog>, config::key::GenericErrorWithValue> {
-            match value.transpose().ok().flatten() {
-                Some(bool) => Ok(Some(if bool {
+            match value {
+                Some(Ok(bool)) => Ok(Some(if bool {
                     gix_ref::store::WriteReflog::Normal
                 } else {
                     gix_ref::store::WriteReflog::Disable
                 })),
-                None => match string_on_failure() {
-                    Some(val) if val.eq_ignore_ascii_case(b"always") => Ok(Some(gix_ref::store::WriteReflog::Always)),
-                    Some(val) => Err(config::key::GenericErrorWithValue::from_value(self, val.into_owned())),
-                    None => Ok(None),
+                Some(Err(err)) => match err.input {
+                    val if val.eq_ignore_ascii_case(b"always") => Ok(Some(gix_ref::store::WriteReflog::Always)),
+                    val => Err(config::key::GenericErrorWithValue::from_value(self, val)),
                 },
+                None => Ok(None),
             }
         }
     }
@@ -438,9 +435,7 @@ mod validate {
     impl keys::Validate for LogAllRefUpdates {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
             super::Core::LOG_ALL_REF_UPDATES
-                .try_into_ref_updates(Some(gix_config::Boolean::try_from(value).map(|b| b.0)), || {
-                    Some(value.into())
-                })?;
+                .try_into_ref_updates(Some(gix_config::Boolean::try_from(value).map(|b| b.0)))?;
             Ok(())
         }
     }

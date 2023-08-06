@@ -189,32 +189,24 @@ mod diff {
 
     #[test]
     fn renames() -> crate::Result {
-        assert_eq!(
-            Diff::RENAMES.try_into_renames(Ok(true), || unreachable!())?,
-            Tracking::Renames
-        );
+        assert_eq!(Diff::RENAMES.try_into_renames(Ok(true))?, Tracking::Renames);
         assert!(Diff::RENAMES.validate("1".into()).is_ok());
-        assert_eq!(
-            Diff::RENAMES.try_into_renames(Ok(false), || unreachable!())?,
-            Tracking::Disabled
-        );
+        assert_eq!(Diff::RENAMES.try_into_renames(Ok(false))?, Tracking::Disabled);
         assert!(Diff::RENAMES.validate("0".into()).is_ok());
         assert_eq!(
-            Diff::RENAMES.try_into_renames(Err(gix_config::value::Error::new("err", "err")), || Some(bcow("copy")))?,
+            Diff::RENAMES.try_into_renames(Err(gix_config::value::Error::new("err", "copy")))?,
             Tracking::RenamesAndCopies
         );
         assert!(Diff::RENAMES.validate("copy".into()).is_ok());
         assert_eq!(
-            Diff::RENAMES.try_into_renames(Err(gix_config::value::Error::new("err", "err")), || Some(bcow(
-                "copies"
-            )))?,
+            Diff::RENAMES.try_into_renames(Err(gix_config::value::Error::new("err", "copies")))?,
             Tracking::RenamesAndCopies
         );
         assert!(Diff::RENAMES.validate("copies".into()).is_ok());
 
         assert_eq!(
             Diff::RENAMES
-                .try_into_renames(Err(gix_config::value::Error::new("err", "err")), || Some(bcow("foo")))
+                .try_into_renames(Err(gix_config::value::Error::new("err", "foo")))
                 .unwrap_err()
                 .to_string(),
             "The value of key \"diff.renames=foo\" was invalid"
@@ -322,23 +314,28 @@ mod core {
     #[test]
     fn log_all_ref_updates() -> crate::Result {
         assert_eq!(
-            Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(Some(Ok(true)), || None)?,
+            Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(Some(Ok(true)),)?,
             Some(gix_ref::store::WriteReflog::Normal)
         );
         assert!(Core::LOG_ALL_REF_UPDATES.validate("true".into()).is_ok());
         assert_eq!(
-            Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(Some(Ok(false)), || None)?,
+            Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(Some(Ok(false)),)?,
             Some(gix_ref::store::WriteReflog::Disable)
         );
         assert!(Core::LOG_ALL_REF_UPDATES.validate("0".into()).is_ok());
+        let boolean = |value| {
+            gix_config::Boolean::try_from(bcow(value))
+                .map(|b| Some(b.0))
+                .transpose()
+        };
         assert_eq!(
-            Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(None, || Some(bcow("always")))?,
+            Core::LOG_ALL_REF_UPDATES.try_into_ref_updates(boolean("always"))?,
             Some(gix_ref::store::WriteReflog::Always)
         );
         assert!(Core::LOG_ALL_REF_UPDATES.validate("always".into()).is_ok());
         assert_eq!(
             Core::LOG_ALL_REF_UPDATES
-                .try_into_ref_updates(None, || Some(bcow("invalid")))
+                .try_into_ref_updates(boolean("invalid"))
                 .unwrap_err()
                 .to_string(),
             "The key \"core.logAllRefUpdates=invalid\" was invalid"

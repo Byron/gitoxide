@@ -29,7 +29,7 @@ pub enum Error {
     #[error("Invalid default branch name: {name:?}")]
     InvalidBranchName {
         name: BString,
-        source: gix_validate::refname::Error,
+        source: gix_validate::reference::name::Error,
     },
     #[error("Could not edit HEAD reference with new default name")]
     EditHeadForDefaultBranch(#[from] crate::reference::edit::Error),

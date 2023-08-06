@@ -68,10 +68,8 @@ mod algorithm {
 }
 
 mod renames {
-    use std::borrow::Cow;
-
     use crate::{
-        bstr::{BStr, ByteSlice},
+        bstr::ByteSlice,
         config::{
             key::GenericError,
             tree::{keys, sections::diff::Renames, Section},
@@ -84,21 +82,20 @@ mod renames {
         pub const fn new_renames(name: &'static str, section: &'static dyn Section) -> Self {
             keys::Any::new_with_validate(name, section, super::validate::Renames)
         }
-        /// Try to convert the configuration into a valid rename tracking variant. Use `value` and if it's an error, call `value_string`
-        /// to try and interpret the key as string.
-        pub fn try_into_renames<'a>(
+        /// Try to convert the configuration into a valid rename tracking variant. Use `value` and if it's an error, interpret
+        /// the boolean as string
+        pub fn try_into_renames(
             &'static self,
             value: Result<bool, gix_config::value::Error>,
-            value_string: impl FnOnce() -> Option<Cow<'a, BStr>>,
         ) -> Result<Tracking, GenericError> {
             Ok(match value {
                 Ok(true) => Tracking::Renames,
                 Ok(false) => Tracking::Disabled,
                 Err(err) => {
-                    let value = value_string().ok_or_else(|| GenericError::from(self))?;
-                    match value.as_ref().as_bytes() {
+                    let value = &err.input;
+                    match value.as_bytes() {
                         b"copy" | b"copies" => Tracking::RenamesAndCopies,
-                        _ => return Err(GenericError::from_value(self, value.into_owned()).with_source(err)),
+                        _ => return Err(GenericError::from_value(self, value.clone()).with_source(err)),
                     }
                 }
             })
@@ -107,8 +104,6 @@ mod renames {
 }
 
 mod validate {
-    use std::borrow::Cow;
-
     use crate::{
         bstr::BStr,
         config::tree::{keys, Diff},
@@ -126,7 +121,7 @@ mod validate {
     impl keys::Validate for Renames {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
             let boolean = gix_config::Boolean::try_from(value).map(|b| b.0);
-            Diff::RENAMES.try_into_renames(boolean, || Some(Cow::Borrowed(value)))?;
+            Diff::RENAMES.try_into_renames(boolean)?;
             Ok(())
         }
     }

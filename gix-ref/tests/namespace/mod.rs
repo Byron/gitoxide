@@ -31,7 +31,7 @@ mod expand {
     fn backslashes_are_no_component_separators_and_invalid() {
         assert!(matches!(
             gix_ref::namespace::expand("foo\\bar").expect_err("empty invalid"),
-            gix_validate::refname::Error::Tag(
+            gix_validate::reference::name::Error::Tag(
                 gix_validate::tag::name::Error::InvalidByte{byte}
             ) if byte == "\\"
         ));
@@ -41,7 +41,7 @@ mod expand {
     fn trailing_slashes_are_not_allowed() {
         assert!(matches!(
             gix_ref::namespace::expand("foo/").expect_err("empty invalid"),
-            gix_validate::refname::Error::Tag(gix_validate::tag::name::Error::EndsWithSlash)
+            gix_validate::reference::name::Error::Tag(gix_validate::tag::name::Error::EndsWithSlash)
         ));
     }
 
@@ -49,21 +49,21 @@ mod expand {
     fn empty_namespaces_are_not_allowed() {
         assert!(matches!(
             gix_ref::namespace::expand("").expect_err("empty invalid"),
-            gix_validate::refname::Error::Tag(gix_validate::tag::name::Error::Empty)
+            gix_validate::reference::name::Error::Tag(gix_validate::tag::name::Error::Empty)
         ));
     }
     #[test]
     fn bare_slashes_are_not_allowed() {
         assert!(matches!(
             gix_ref::namespace::expand("/").expect_err("empty invalid"),
-            gix_validate::refname::Error::Tag(gix_validate::tag::name::Error::EndsWithSlash)
+            gix_validate::reference::name::Error::Tag(gix_validate::tag::name::Error::EndsWithSlash)
         ));
     }
     #[test]
     fn repeated_slashes_are_invalid() {
         assert!(matches!(
             gix_ref::namespace::expand("foo//bar").expect_err("empty invalid"),
-            gix_validate::refname::Error::RepeatedSlash
+            gix_validate::reference::name::Error::RepeatedSlash
         ));
     }
 }
