@@ -1969,6 +1969,7 @@ dependencies = [
  "bstr",
  "gix-attributes 0.16.0",
  "gix-glob 0.10.2",
+ "gix-path 0.8.4",
  "gix-testtools",
  "once_cell",
  "thiserror",

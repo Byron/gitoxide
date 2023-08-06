@@ -13,7 +13,17 @@ fn baseline() {
             res.is_ok(),
             *exit_code == 0,
             "{pattern:?} disagrees with baseline: {res:?}"
-        )
+        );
+        if let Ok(pat) = res {
+            let actual = pat.to_bstring();
+            assert_eq!(
+                pat,
+                gix_pathspec::parse(actual.as_ref(), Default::default()).expect("still valid"),
+                "{pattern} != {actual}: display must roundtrip into actual pattern"
+            );
+        }
+        let p = gix_pathspec::Pattern::from_literal(pattern, Default::default());
+        assert!(matches!(p.search_mode, MatchMode::Literal));
     }
 }
 
@@ -32,7 +42,7 @@ struct NormalizedPattern {
 impl From<Pattern> for NormalizedPattern {
     fn from(p: Pattern) -> Self {
         NormalizedPattern {
-            path: p.path,
+            path: p.path().to_owned(),
             signature: p.signature,
             search_mode: p.search_mode,
             attributes: p

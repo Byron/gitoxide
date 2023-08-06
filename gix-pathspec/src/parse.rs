@@ -12,7 +12,11 @@ pub struct Defaults {
     /// The default signature.
     pub signature: MagicSignature,
     /// The default search-mode.
+    ///
+    /// Note that even if it's [`MatchMode::Literal`], the pathspecs will be parsed as usual, but matched verbatim afterwards.
     pub search_mode: MatchMode,
+    /// If set, the pathspec will not be parsed but used verbatim. Implies [`MatchMode::Literal`] for `search_mode`.
+    pub literal: bool,
 }
 
 /// The error returned by [parse()][crate::parse()].
@@ -43,9 +47,19 @@ pub enum Error {
 
 impl Pattern {
     /// Try to parse a path-spec pattern from the given `input` bytes.
-    pub fn from_bytes(input: &[u8], Defaults { signature, search_mode }: Defaults) -> Result<Self, Error> {
+    pub fn from_bytes(
+        input: &[u8],
+        Defaults {
+            signature,
+            search_mode,
+            literal,
+        }: Defaults,
+    ) -> Result<Self, Error> {
         if input.is_empty() {
             return Err(Error::EmptyString);
+        }
+        if literal {
+            return Ok(Self::from_literal(input, signature));
         }
         if input.as_bstr() == ":" {
             return Ok(Pattern {
@@ -55,11 +69,9 @@ impl Pattern {
         }
 
         let mut p = Pattern {
-            path: BString::default(),
             signature,
             search_mode,
-            attributes: Vec::new(),
-            nil: false,
+            ..Default::default()
         };
 
         let mut cursor = 0;
@@ -72,8 +84,24 @@ impl Pattern {
             }
         }
 
-        p.path = BString::from(&input[cursor..]);
+        let mut path = &input[cursor..];
+        if path.last() == Some(&b'/') {
+            p.signature |= MagicSignature::MUST_BE_DIR;
+            path = &path[..path.len() - 1];
+        }
+        p.path = path.into();
         Ok(p)
+    }
+
+    /// Take `input` literally without parsing anything. This will also set our mode to `literal` to allow this pathspec to match `input` verbatim, and
+    /// use `default_signature` as magic signature.
+    pub fn from_literal(input: &[u8], default_signature: MagicSignature) -> Self {
+        Pattern {
+            path: input.into(),
+            signature: default_signature,
+            search_mode: MatchMode::Literal,
+            ..Default::default()
+        }
     }
 }
 

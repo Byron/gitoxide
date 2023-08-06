@@ -18,10 +18,56 @@ fn repeated_matcher_keywords() {
 }
 
 #[test]
+fn glob_negations_are_always_literal() {
+    check_valid_inputs([("!a", pat_with_path("!a")), ("\\!a", pat_with_path("\\!a"))]);
+}
+
+#[test]
+fn literal_default_prevents_parsing() {
+    let pattern = gix_pathspec::parse(
+        ":".as_bytes(),
+        gix_pathspec::parse::Defaults {
+            signature: MagicSignature::EXCLUDE,
+            search_mode: MatchMode::PathAwareGlob,
+            literal: true,
+        },
+    )
+    .expect("valid");
+    assert!(!pattern.is_nil());
+    assert_eq!(pattern.path(), ":");
+    assert!(matches!(pattern.search_mode, MatchMode::Literal));
+
+    let input = ":(literal)f[o][o]";
+    let pattern = gix_pathspec::parse(
+        input.as_bytes(),
+        gix_pathspec::parse::Defaults {
+            signature: MagicSignature::TOP,
+            search_mode: MatchMode::Literal,
+            literal: true,
+        },
+    )
+    .expect("valid");
+    assert_eq!(pattern.path(), input, "no parsing happens at all");
+    assert!(matches!(pattern.search_mode, MatchMode::Literal));
+
+    let pattern = gix_pathspec::parse(
+        input.as_bytes(),
+        gix_pathspec::parse::Defaults {
+            signature: MagicSignature::TOP,
+            search_mode: MatchMode::Literal,
+            literal: false,
+        },
+    )
+    .expect("valid");
+    assert_eq!(pattern.path(), "f[o][o]", "in literal default mode, we still parse");
+    assert!(matches!(pattern.search_mode, MatchMode::Literal));
+}
+
+#[test]
 fn there_is_no_pathspec_pathspec() {
     check_against_baseline(":");
     let pattern = gix_pathspec::parse(":".as_bytes(), Default::default()).expect("valid");
-    assert!(pattern.is_null());
+    assert!(pattern.is_nil());
 
     let actual: NormalizedPattern = pattern.into();
     assert_eq!(actual, pat_with_path(""));
@@ -30,11 +76,12 @@ fn there_is_no_pathspec_pathspec() {
         ":".as_bytes(),
         gix_pathspec::parse::Defaults {
             signature: MagicSignature::EXCLUDE,
-            search_mode: MatchMode::Literal,
+            search_mode: MatchMode::PathAwareGlob,
+            literal: false,
         },
     )
     .expect("valid");
-    assert!(pattern.is_null());
+    assert!(pattern.is_nil());
 }
 
 #[test]
@@ -42,13 +89,14 @@ fn defaults_are_used() -> crate::Result {
     let defaults = gix_pathspec::parse::Defaults {
         signature: MagicSignature::EXCLUDE,
         search_mode: MatchMode::Literal,
+        literal: false,
     };
     let p = gix_pathspec::parse(".".as_bytes(), defaults)?;
-    assert_eq!(p.path, ".");
+    assert_eq!(p.path(), ".");
     assert_eq!(p.signature, defaults.signature);
     assert_eq!(p.search_mode, defaults.search_mode);
     assert!(p.attributes.is_empty());
-    assert!(!p.is_null());
+    assert!(!p.is_nil());
     Ok(())
 }
 
@@ -81,6 +129,10 @@ fn whitespace_in_pathspec() {
             ":! some/path",
             pat_with_path_and_sig(" some/path", MagicSignature::EXCLUDE),
         ),
+        (
+            ":!!some/path",
+            pat_with_path_and_sig("some/path", MagicSignature::EXCLUDE),
+        ),
     ];
 
     check_valid_inputs(inputs)
@@ -112,6 +164,14 @@ fn short_signatures() {
 }
 
 #[test]
+fn trailing_slash_is_turned_into_magic_signature_and_removed() {
+    check_valid_inputs([
+        ("a/b/", pat_with_path_and_sig("a/b", MagicSignature::MUST_BE_DIR)),
+        ("a/", pat_with_path_and_sig("a", MagicSignature::MUST_BE_DIR)),
+    ]);
+}
+
+#[test]
 fn signatures_and_searchmodes() {
     let inputs = vec![
         (":(top)", pat_with_sig(MagicSignature::TOP)),
@@ -134,11 +194,21 @@ fn signatures_and_searchmodes() {
         ),
         (
             ":(top,literal,icase,attr,exclude)some/path",
-            pat("some/path", MagicSignature::all(), MatchMode::Literal, vec![]),
+            pat(
+                "some/path",
+                MagicSignature::TOP | MagicSignature::EXCLUDE | MagicSignature::ICASE,
+                MatchMode::Literal,
+                vec![],
+            ),
         ),
         (
             ":(top,glob,icase,attr,exclude)some/path",
-            pat("some/path", MagicSignature::all(), MatchMode::PathAwareGlob, vec![]),
+            pat(
+                "some/path",
+                MagicSignature::TOP | MagicSignature::EXCLUDE | MagicSignature::ICASE,
+                MatchMode::PathAwareGlob,
+                vec![],
+            ),
         ),
     ];
 

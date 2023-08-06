@@ -5,17 +5,61 @@
 
 use bitflags::bitflags;
 use bstr::BString;
+use std::path::PathBuf;
+
+///
+pub mod normalize {
+    use std::path::PathBuf;
+
+    /// The error returned by [Pattern::normalize()](super::Pattern::normalize()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The path '{}' is not inside of the worktree '{}'", path.display(), worktree_path.display())]
+        AbsolutePathOutsideOfWorktree { path: PathBuf, worktree_path: PathBuf },
+        #[error("The path '{}' leaves the repository", path.display())]
+        OutsideOfWorktree { path: PathBuf },
+    }
+}
+
+mod pattern;
+
+///
+pub mod search;
 
 ///
 pub mod parse;
 
+/// A lists of pathspec patterns, possibly from a file.
+///
+/// Pathspecs are generally relative to the root of the repository.
+#[derive(Debug, Clone)]
+pub struct Search {
+    /// Patterns and their associated data in the order they were loaded in or specified,
+    /// the line number in its source file or its sequence number (_`(pattern, value, line_number)`_).
+    ///
+    /// During matching, this order is reversed.
+    patterns: Vec<gix_glob::search::pattern::Mapping<search::Spec>>,
+
+    /// The path from which the patterns were read, or `None` if the patterns
+    /// don't originate in a file on disk.
+    pub source: Option<PathBuf>,
+
+    /// If `true`, this means all `patterns` are exclude patterns. This means that if there is no match
+    /// (which would exclude an item), we would actually match it for lack of exclusion.
+    all_patterns_are_excluded: bool,
+    /// The amount of bytes that are in common among all `patterns` and that aren't matched case-insensitively
+    common_prefix_len: usize,
+}
+
 /// The output of a pathspec [parsing][parse()] operation. It can be used to match against a one or more paths.
 #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Pattern {
-    /// The path part of a pathspec.
+    /// The path part of a pathspec, which is typically a path possibly mixed with glob patterns.
+    /// Note that it might be an empty string as well.
     ///
-    /// `:(top,literal,icase,attr,exclude)some/path` would yield `some/path`.
-    pub path: BString,
+    /// For example, `:(top,literal,icase,attr,exclude)some/path` would yield `some/path`.
+    path: BString,
     /// All magic signatures that were included in the pathspec.
     pub signature: MagicSignature,
     /// The search mode of the pathspec.
@@ -24,17 +68,13 @@ pub struct Pattern {
     ///
     /// `:(attr:a=one b=):path` would yield attribute `a` and `b`.
     pub attributes: Vec<gix_attributes::Assignment>,
-    /// If `true`, this was the special `:` spec which acts like `null`
+    /// If `true`, we are a special Nil pattern and always match.
     nil: bool,
-}
-
-impl Pattern {
-    /// Returns `true` if this seems to be a pathspec that indicates that 'there is no pathspec'.
-    ///
-    /// Note that such a spec is `:`.
-    pub fn is_null(&self) -> bool {
-        self.nil
-    }
+    /// The length of bytes in `path` that belong to the prefix, which will always be matched case-insensitively.
+    /// That way, even though pathspecs are applied from the top, we can emulate having changed directory into
+    /// a specific sub-directory in a case-sensitive file-system.
+    /// Is set by [Pattern::normalize()].
+    prefix_len: usize,
 }
 
 bitflags! {
@@ -47,6 +87,9 @@ bitflags! {
         const ICASE = 1 << 1;
         /// Excludes the matching patterns from the previous results
         const EXCLUDE = 1 << 2;
+        /// The pattern must match a directory, and not a file.
+        /// This is equivalent to how it's handled in `gix-glob`
+        const MUST_BE_DIR = 1 << 3;
     }
 }
 
