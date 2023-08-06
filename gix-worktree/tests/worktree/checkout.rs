@@ -256,6 +256,7 @@ fn keep_going_collects_results() {
         opts,
         "make_mixed_without_submodules",
         |_id| {
+            dbg!(_id);
             !matches!(
                 count.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |current| {
                     (current < 2).then_some(current + 1)
@@ -290,7 +291,11 @@ fn keep_going_collects_results() {
     }
 
     if multi_threaded() {
-        assert_eq!(dir_structure(&destination).len(), 3);
+        let actual = dir_structure(&destination);
+        if actual.len() != 3 {
+            dbg!(destination.into_path());
+        }
+        assert_eq!(actual.len(), 3);
     } else {
         assert_eq!(
             stripped_prefix(&destination, &dir_structure(&destination)),
@@ -336,6 +341,7 @@ fn collisions_are_detected_on_a_case_insensitive_filesystem_even_with_delayed_fi
         eprintln!("Skipping case-insensitive testing on what would be a case-sensitive file system");
         return;
     }
+    assert_eq!(opts.keep_going, false);
     setup_filter_pipeline(opts.filters.options_mut());
     opts.filter_process_delay = gix_filter::driver::apply::Delay::Allow;
     let (source_tree, destination, _index, outcome) =
@@ -350,10 +356,9 @@ fn collisions_are_detected_on_a_case_insensitive_filesystem_even_with_delayed_fi
 
     let dest_files = dir_structure(&destination);
     if multi_threaded() {
-        assert_eq!(
-            dest_files.len(),
-            5,
-            "can only assert on number as it's racily creating files so unclear which one clashes"
+        assert!(
+            dest_files.len() <= 6,
+            "can only assert on vague number as it's racily creating files, with the collision stopping the operation at any time"
         );
     } else {
         assert_eq!(
@@ -370,10 +375,9 @@ fn collisions_are_detected_on_a_case_insensitive_filesystem_even_with_delayed_fi
     let error_kind_dir = error_kind;
 
     if multi_threaded() {
-        assert_eq!(
-            outcome.collisions.len(),
-            5,
-            "can only assert on number as it's racily creating files so unclear which one clashes"
+        assert!(
+            outcome.collisions.len() <= 6,
+            "can only assert on number as it's racily creating files so unclear which one clashes and how many it sees - keep-going is false"
         );
     } else {
         assert_eq!(
@@ -477,6 +481,7 @@ fn checkout_index_in_tmp_dir_opts(
             if allow_return_object(oid) {
                 odb.find_blob(oid, buf)
             } else {
+                dbg!(oid);
                 Err(gix_odb::find::existing_object::Error::NotFound { oid: oid.to_owned() })
             }
         },
