@@ -55,7 +55,7 @@ tests_windows+=("${tests[@]}")
 
 for url in "${tests[@]}"
 do
-  echo ";;" # there are no `;` in the tested urls
+  echo ";" # there are no `;` in the tested urls
   git fetch-pack --diag-url "$url"
 done >git-baseline.generic
 
