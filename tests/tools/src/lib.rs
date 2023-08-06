@@ -497,6 +497,7 @@ fn configure_command<'a>(
     args: &[String],
     script_result_directory: &Path,
 ) -> &'a mut std::process::Command {
+    let never_path = if cfg!(windows) { "-" } else { ":" };
     cmd.args(args)
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
@@ -504,6 +505,8 @@ fn configure_command<'a>(
         .env_remove("GIT_DIR")
         .env_remove("GIT_ASKPASS")
         .env_remove("SSH_ASKPASS")
+        .env("GIT_CONFIG_SYSTEM", never_path)
+        .env("GIT_CONFIG_GLOBAL", never_path)
         .env("GIT_TERMINAL_PROMPT", "false")
         .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
         .env("GIT_AUTHOR_EMAIL", "author@example.com")
