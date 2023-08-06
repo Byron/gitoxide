@@ -290,7 +290,12 @@ fn keep_going_collects_results() {
     }
 
     if multi_threaded() {
-        assert_eq!(dir_structure(&destination).len(), 3);
+        let actual = dir_structure(&destination);
+        assert!(
+            (2..=3).contains(&actual.len()),
+            "it's 3 most of the time, but can be 2 of the 'empty' file is missing as the object couldn't be accessed.\
+             It's unclear why there isn't more, as it would keep going"
+        );
     } else {
         assert_eq!(
             stripped_prefix(&destination, &dir_structure(&destination)),
@@ -350,10 +355,9 @@ fn collisions_are_detected_on_a_case_insensitive_filesystem_even_with_delayed_fi
 
     let dest_files = dir_structure(&destination);
     if multi_threaded() {
-        assert_eq!(
-            dest_files.len(),
-            5,
-            "can only assert on number as it's racily creating files so unclear which one clashes"
+        assert!(
+            (4..=6).contains(&dest_files.len()),
+            "due to the clash happening at nearly any time, and keep-going is false, we get a variance of files"
         );
     } else {
         assert_eq!(
@@ -370,10 +374,9 @@ fn collisions_are_detected_on_a_case_insensitive_filesystem_even_with_delayed_fi
     let error_kind_dir = error_kind;
 
     if multi_threaded() {
-        assert_eq!(
-            outcome.collisions.len(),
-            5,
-            "can only assert on number as it's racily creating files so unclear which one clashes"
+        assert!(
+            (5..=6).contains(&outcome.collisions.len()),
+            "can only assert on number as it's racily creating files so unclear which one clashes, and due to keep-going = false there is variance"
         );
     } else {
         assert_eq!(
