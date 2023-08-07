@@ -159,7 +159,7 @@ pub mod archive {
         /// Apply the prefix verbatim to any path we add to the archive. Use a trailing `/` if prefix is a directory.
         #[clap(long)]
         pub prefix: Option<String>,
-        /// The compression strength to use. Currently only used for `.zip` archives, valid from 0-9.
+        /// The compression strength to use for `.zip` and `.tar.gz` archives, valid from 0-9.
         #[clap(long, short = 'l', value_enum)]
         pub compression_level: Option<u8>,
         /// Add the given path to the archive. Directories will always be empty.
