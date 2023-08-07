@@ -29,11 +29,11 @@ where
             #[cfg(feature = "tar")]
             Tar((tar::Builder<W>, Vec<u8>)),
             #[cfg(feature = "tar_gz")]
-            TarGz((tar::Builder<libflate::gzip::Encoder<W>>, Vec<u8>)),
+            TarGz((tar::Builder<flate2::write::GzEncoder<W>>, Vec<u8>)),
         }
 
         impl<W: std::io::Write> State<W> {
-            pub fn new(format: Format, out: W) -> Result<Self, Error> {
+            pub fn new(format: Format, mtime: gix_date::SecondsSinceUnixEpoch, out: W) -> Result<Self, Error> {
                 Ok(match format {
                     Format::InternalTransientNonPersistable => unreachable!("handled earlier"),
                     Format::Zip { .. } => return Err(Error::ZipWithoutSeek),
@@ -60,7 +60,12 @@ where
                         {
                             State::TarGz((
                                 {
-                                    let mut ar = tar::Builder::new(libflate::gzip::Encoder::new(out)?);
+                                    // TODO: compression
+                                    let gz = flate2::GzBuilder::new()
+                                        .filename("git.tar")
+                                        .mtime(mtime as u32)
+                                        .write(out, flate2::Compression::default());
+                                    let mut ar = tar::Builder::new(gz);
                                     ar.mode(tar::HeaderMode::Deterministic);
                                     ar
                                 },
@@ -76,7 +81,7 @@ where
             }
         }
 
-        let mut state = State::new(opts.format, out)?;
+        let mut state = State::new(opts.format, opts.modification_time, out)?;
         while let Some(entry) = next_entry(stream)? {
             match &mut state {
                 #[cfg(feature = "tar")]
@@ -97,7 +102,7 @@ where
             }
             #[cfg(feature = "tar_gz")]
             State::TarGz((ar, _)) => {
-                ar.into_inner()?.finish();
+                ar.into_inner()?.finish()?;
             }
         }
     }

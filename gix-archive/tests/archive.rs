@@ -162,8 +162,8 @@ mod from_tree {
     fn basic_usage_tar_gz() -> gix_testtools::Result {
         basic_usage(gix_archive::Format::TarGz, |buf| {
             assert!(
-                buf.len() < 385,
-                "quite a bit smaller than uncompressed: {} < 385",
+                buf.len() < 350,
+                "quite a bit smaller than uncompressed: {} < 350",
                 buf.len()
             );
             Ok(())
