@@ -361,8 +361,9 @@ Check out the [performance discussion][gix-traverse-performance] as well.
     * [ ] check for match
 
 ### gix-pathspec
-* [x] parse
-* [ ] matching of paths
+* [x] parse single
+* [ ] parse file line by line (with or without quoting, NUL and LF/CRLF line separation) (see `--pathspec-from-file` and `--pathspec-file-nul`)
+* [ ] matching of paths with git-attributes support
 
 ### gix-refspec
 * [x] parse

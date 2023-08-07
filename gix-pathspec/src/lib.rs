@@ -55,6 +55,8 @@ pub enum MatchMode {
 }
 
 /// Parse a git-style pathspec into a [`Pattern`][Pattern].
+///
+/// Note that empty paths are allowed here, and generally some processing has to be performed.
 pub fn parse(input: &[u8]) -> Result<Pattern, parse::Error> {
     Pattern::from_bytes(input)
 }

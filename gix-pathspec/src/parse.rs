@@ -40,7 +40,7 @@ impl Pattern {
         let mut p = Pattern {
             path: BString::default(),
             signature: MagicSignature::empty(),
-            search_mode: MatchMode::ShellGlob,
+            search_mode: MatchMode::default(),
             attributes: Vec::new(),
         };
 
@@ -89,8 +89,6 @@ fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Res
 
     let input = &input[*cursor..end];
     *cursor = end + 1;
-
-    debug_assert_eq!(p.search_mode, MatchMode::default());
 
     if input.is_empty() {
         return Ok(());
