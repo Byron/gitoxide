@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.8.0 (2023-08-07)
 
 ### New Features
 
@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 1 calendar day.
+ - 4 commits contributed to the release over the course of 2 calendar days.
  - 15 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release of `gix-submodule` ([`f3c4311`](https://github.com/Byron/gitoxide/commit/f3c43110e8d5f16cf87e50821044d8b3edbae235))
     - Merge branch 'submodules' ([`b629f8a`](https://github.com/Byron/gitoxide/commit/b629f8a774931d58c0a9b124fa75f85807c6c5d1))
     - Remove `tagname` and `refname`. ([`a9da3f8`](https://github.com/Byron/gitoxide/commit/a9da3f84b979aa25225a819428b85bff6290da9b))
     - Add validation for submodule names ([`afb1f02`](https://github.com/Byron/gitoxide/commit/afb1f02a795e947ce55e9312cc44e635e5e290f1))

@@ -1,6 +1,6 @@
 [package]
 name = "gix-worktree"
-version = "0.23.1"
+version = "0.24.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated implementing everything around working trees and git excludes"
@@ -24,16 +24,16 @@ serde = [ "dep:serde", "bstr/serde", "gix-index/serde", "gix-hash/serde", "gix-o
 internal-testing-gix-features-parallel = ["gix-features/parallel"]
 
 [dependencies]
-gix-index = { version = "^0.21.1", path = "../gix-index" }
+gix-index = { version = "^0.22.0", path = "../gix-index" }
 gix-fs = { version = "^0.4.1", path = "../gix-fs" }
 gix-hash = { version = "^0.11.4", path = "../gix-hash" }
-gix-object = { version = "^0.33.2", path = "../gix-object" }
-gix-glob = { version = "^0.10.1", path = "../gix-glob" }
+gix-object = { version = "^0.34.0", path = "../gix-object" }
+gix-glob = { version = "^0.10.2", path = "../gix-glob" }
 gix-path = { version = "^0.8.4", path = "../gix-path" }
 gix-attributes = { version = "^0.16.0", path = "../gix-attributes" }
 gix-ignore = { version = "^0.5.1", path = "../gix-ignore" }
 gix-features = { version = "^0.32.1", path = "../gix-features" }
-gix-filter = { version = "^0.2.0", path = "../gix-filter" }
+gix-filter = { version = "^0.3.0", path = "../gix-filter" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 

@@ -5,11 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.0 (2023-08-07)
 
-<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> 
-<csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> 
-<csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> 
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+<csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/>
+<csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/>
 
 The initial release.
 
@@ -17,7 +17,7 @@ The initial release.
 
 <csr-read-only-do-not-edit/>
 
- - 25 commits contributed to the release over the course of 518 calendar days.
+ - 26 commits contributed to the release over the course of 518 calendar days.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#691](https://github.com/Byron/gitoxide/issues/691)
 
@@ -33,6 +33,7 @@ The initial release.
  * **[#691](https://github.com/Byron/gitoxide/issues/691)**
     - Set `rust-version` to 1.64 ([`55066ce`](https://github.com/Byron/gitoxide/commit/55066ce5fd71209abb5d84da2998b903504584bb))
  * **Uncategorized**
+    - Finailize `gix-submodule` changelog ([`cbe8e62`](https://github.com/Byron/gitoxide/commit/cbe8e622b306d072fa8e7f5bf25dc596810a48d2))
     - Set `gix-submodule` to version 0.1.0 ([`931fd1e`](https://github.com/Byron/gitoxide/commit/931fd1ec4416aa4869f097b1a3a2e82744da4c21))
     - Prepare changelogs prior to release of `gix-submodule` ([`f3c4311`](https://github.com/Byron/gitoxide/commit/f3c43110e8d5f16cf87e50821044d8b3edbae235))
     - Merge branch 'submodules' ([`b629f8a`](https://github.com/Byron/gitoxide/commit/b629f8a774931d58c0a9b124fa75f85807c6c5d1))

@@ -1,6 +1,6 @@
 [package]
 name = "gix-pack"
-version = "0.40.2"
+version = "0.41.0"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
@@ -32,9 +32,9 @@ gix-features = { version = "^0.32.1", path = "../gix-features", features = ["crc
 gix-path = { version = "^0.8.4", path = "../gix-path" }
 gix-hash = { version = "^0.11.4", path = "../gix-hash" }
 gix-chunk = { version = "^0.4.4", path = "../gix-chunk" }
-gix-object = { version = "^0.33.1", path = "../gix-object" }
-gix-traverse = { version = "^0.30.1", path = "../gix-traverse" }
-gix-diff = { version = "^0.33.1", path = "../gix-diff" }
+gix-object = { version = "^0.34.0", path = "../gix-object" }
+gix-traverse = { version = "^0.31.0", path = "../gix-traverse" }
+gix-diff = { version = "^0.34.0", path = "../gix-diff" }
 gix-hashtable = { version = "^0.2.4", path = "../gix-hashtable" }
 
 memmap2 = "0.7.0"

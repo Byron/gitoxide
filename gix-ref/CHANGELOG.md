@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.34.0 (2023-08-07)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 2 calendar days.
+ - 5 commits contributed to the release over the course of 3 calendar days.
  - 4 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release of `gix-submodule` ([`f3c4311`](https://github.com/Byron/gitoxide/commit/f3c43110e8d5f16cf87e50821044d8b3edbae235))
     - Merge branch 'submodules' ([`b629f8a`](https://github.com/Byron/gitoxide/commit/b629f8a774931d58c0a9b124fa75f85807c6c5d1))
     - Adjust to changes in `gix-validate` ([`a8bc0de`](https://github.com/Byron/gitoxide/commit/a8bc0de6d071be82364434b6e27afecc02f3be51))
     - Merge branch 'dev-on-linux' ([`6b4a303`](https://github.com/Byron/gitoxide/commit/6b4a30330fe49fc97daa73f55bf56580cc0597aa))

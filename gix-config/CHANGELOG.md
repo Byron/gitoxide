@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.27.0 (2023-08-07)
 
 ### Bug Fixes (BREAKING)
 
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 2 calendar days.
+ - 5 commits contributed to the release over the course of 3 calendar days.
  - 4 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release of `gix-submodule` ([`f3c4311`](https://github.com/Byron/gitoxide/commit/f3c43110e8d5f16cf87e50821044d8b3edbae235))
     - Merge branch 'submodules' ([`b629f8a`](https://github.com/Byron/gitoxide/commit/b629f8a774931d58c0a9b124fa75f85807c6c5d1))
     - `File::push_section()` is now infallible. ([`d091c78`](https://github.com/Byron/gitoxide/commit/d091c78aa863180ea304cd4e0b60a2193a82a546))
     - Merge branch 'dev-on-linux' ([`6b4a303`](https://github.com/Byron/gitoxide/commit/6b4a30330fe49fc97daa73f55bf56580cc0597aa))
@@ -2577,7 +2578,7 @@ This is a maintenance release without functional changes.
  - _None._
 
 <csr-unknown>
-lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
+lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
 <csr-unknown/>
 
 ## v0.1.1 (2021-05-09)

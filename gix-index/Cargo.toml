@@ -1,6 +1,6 @@
 [package]
 name = "gix-index"
-version = "0.21.1"
+version = "0.22.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A work-in-progress crate of the gitoxide project dedicated implementing the git index file"
@@ -23,8 +23,8 @@ serde = ["dep:serde", "smallvec/serde", "gix-hash/serde"]
 gix-features = { version = "^0.32.1", path = "../gix-features", features = ["rustsha1", "progress"] }
 gix-hash = { version = "^0.11.4", path = "../gix-hash" }
 gix-bitmap = { version = "^0.2.6", path = "../gix-bitmap" }
-gix-object = { version = "^0.33.1", path = "../gix-object" }
-gix-traverse = { version = "^0.30.1", path = "../gix-traverse" }
+gix-object = { version = "^0.34.0", path = "../gix-object" }
+gix-traverse = { version = "^0.31.0", path = "../gix-traverse" }
 gix-lock = { version = "^7.0.0", path = "../gix-lock" }
 gix-fs = { version = "^0.4.1", path = "../gix-fs" }
 

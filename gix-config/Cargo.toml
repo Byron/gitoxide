@@ -1,6 +1,6 @@
 [package]
 name = "gix-config"
-version = "0.26.2"
+version = "0.27.0"
 repository = "https://github.com/Byron/gitoxide"
 description = "A gix-config file parser and editor from the gitoxide project"
 license = "MIT OR Apache-2.0"
@@ -21,8 +21,8 @@ gix-features = { version = "^0.32.1", path = "../gix-features"}
 gix-config-value = { version = "^0.12.5", path = "../gix-config-value" }
 gix-path = { version = "^0.8.4", path = "../gix-path" }
 gix-sec = { version = "^0.8.4", path = "../gix-sec" }
-gix-ref = { version = "^0.33.3", path = "../gix-ref" }
-gix-glob = { version = "^0.10.1", path = "../gix-glob" }
+gix-ref = { version = "^0.34.0", path = "../gix-ref" }
+gix-glob = { version = "^0.10.2", path = "../gix-glob" }
 
 log = "0.4.17"
 winnow = "0.5"
