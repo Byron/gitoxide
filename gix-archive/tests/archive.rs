@@ -160,14 +160,19 @@ mod from_tree {
     #[test]
     #[cfg(feature = "tar_gz")]
     fn basic_usage_tar_gz() -> gix_testtools::Result {
-        basic_usage(gix_archive::Format::TarGz, |buf| {
-            assert!(
-                buf.len() < 385,
-                "quite a bit smaller than uncompressed: {} < 385",
-                buf.len()
-            );
-            Ok(())
-        })
+        basic_usage(
+            gix_archive::Format::TarGz {
+                compression_level: Some(9),
+            },
+            |buf| {
+                assert!(
+                    buf.len() < 340,
+                    "quite a bit smaller than uncompressed: {} < 340",
+                    buf.len()
+                );
+                Ok(())
+            },
+        )
     }
 
     #[test]

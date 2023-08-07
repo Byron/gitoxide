@@ -51,9 +51,12 @@ pub enum Format {
     /// Use it as well if a custom container format is desired. The idea is to decode it on a separate thread
     /// to rewrite the data to the desired format.
     Tar,
-    /// A convenience format that will `gzip` deflate the `tar` stream, using the default compression level.
-    // TODO: figure out how to do this with `libflate`.
-    TarGz,
+    /// A convenience format that will `gzip` deflate the `tar` stream.
+    TarGz {
+        /// If `None`, use the default compression level. Otherwise use the given one which
+        /// ranges from 0-9 for the deflate algorithm.
+        compression_level: Option<u8>,
+    },
     /// A standard `zip` archive. Note that this format silently converts illformed UTF-8 to UTF-8, which will
     /// equal a change of path.
     ///
