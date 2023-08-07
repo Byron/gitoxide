@@ -96,7 +96,9 @@ fn format_from_ext(path: &Path) -> anyhow::Result<archive::Format> {
     Ok(match path.extension().and_then(std::ffi::OsStr::to_str) {
         None => bail!("Cannot derive archive format from a file without extension"),
         Some("tar") => archive::Format::Tar,
-        Some("gz") => archive::Format::TarGz,
+        Some("gz") => archive::Format::TarGz {
+            compression_level: None,
+        },
         Some("zip") => archive::Format::Zip {
             compression_level: None,
         },

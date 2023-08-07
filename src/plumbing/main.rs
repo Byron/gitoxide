@@ -175,7 +175,9 @@ pub fn main() -> Result<()> {
                                 gix::worktree::archive::Format::InternalTransientNonPersistable
                             }
                             crate::plumbing::options::archive::Format::Tar => gix::worktree::archive::Format::Tar,
-                            crate::plumbing::options::archive::Format::TarGz => gix::worktree::archive::Format::TarGz,
+                            crate::plumbing::options::archive::Format::TarGz => {
+                                gix::worktree::archive::Format::TarGz { compression_level }
+                            }
                             crate::plumbing::options::archive::Format::Zip => {
                                 gix::worktree::archive::Format::Zip { compression_level }
                             }
