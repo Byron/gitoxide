@@ -147,6 +147,52 @@ impl<'repo> Commit<'repo> {
             max_candidates: 10,
         }
     }
+
+    /// Extracts the PGP signature and the signed commit data, if it exists.
+    pub fn extract_signature(
+        &self,
+        signed_data: &mut Vec<u8>,
+    ) -> Result<Option<std::borrow::Cow<'_, BStr>>, gix_object::decode::Error> {
+        use crate::objs::commit::ref_iter::Token;
+        let pgp_sig_header = gix_actor::bstr::BStr::new(b"gpgsig");
+
+        signed_data.clear();
+
+        let mut signature = None;
+        let out = signed_data;
+
+        for token in gix_object::CommitRefIter::from_bytes(&self.data).into_raw_iter() {
+            let token = token?;
+
+            // We don't care what the tokens are, just that they are valid, except
+            // in the case of the signature, which we skip as it is the only part
+            // of the commit that is not signed, obviously
+            if let Token::ExtraHeader((hname, hval)) = &token.token {
+                if hname == &pgp_sig_header {
+                    signature = Some(hval.clone());
+                    continue;
+                }
+            }
+
+            // There is only one exception to the outputs, which is that the message
+            // is always separated by an additional empty line from the rest of the
+            // data
+            if matches!(token.token, Token::Message(_)) {
+                // If we don't have a signature when we've reached the message,
+                // there is none and we can just short circuit
+                if signature.is_none() {
+                    out.clear();
+                    return Ok(None);
+                }
+
+                out.push(b'\n');
+            }
+
+            out.extend_from_slice(token.buffer);
+        }
+
+        Ok(signature)
+    }
 }
 
 impl<'r> std::fmt::Debug for Commit<'r> {
