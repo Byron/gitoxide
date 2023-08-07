@@ -55,16 +55,18 @@ where
                             Err(Error::SupportNotCompiledIn { wanted: Format::Tar })
                         }
                     }
-                    Format::TarGz => {
+                    Format::TarGz { compression_level } => {
                         #[cfg(feature = "tar_gz")]
                         {
                             State::TarGz((
                                 {
-                                    // TODO: compression
-                                    let gz = flate2::GzBuilder::new()
-                                        .filename("git.tar")
-                                        .mtime(mtime as u32)
-                                        .write(out, flate2::Compression::default());
+                                    let gz = flate2::GzBuilder::new().mtime(mtime as u32).write(
+                                        out,
+                                        match compression_level {
+                                            None => flate2::Compression::default(),
+                                            Some(level) => flate2::Compression::new(level as u32),
+                                        },
+                                    );
                                     let mut ar = tar::Builder::new(gz);
                                     ar.mode(tar::HeaderMode::Deterministic);
                                     ar
