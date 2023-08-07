@@ -1,12 +1,7 @@
 use gix_attributes::State;
 use gix_pathspec::{MagicSignature, MatchMode};
 
-use crate::parse::{check_valid_inputs, NormalizedPattern};
-
-#[test]
-fn there_is_no_pathspec_pathspec() {
-    check_valid_inputs(Some((":", pat_with_attrs(vec![]))));
-}
+use crate::parse::{check_against_baseline, check_valid_inputs, NormalizedPattern};
 
 #[test]
 fn repeated_matcher_keywords() {
@@ -23,17 +18,44 @@ fn repeated_matcher_keywords() {
 }
 
 #[test]
-fn nil_or_there_is_no_pathspec() {
-    let spec: NormalizedPattern = gix_pathspec::parse(":".as_bytes()).expect("valid").into();
-    assert_eq!(spec, pat_with_path(""));
-    assert!(spec.is_null())
+fn there_is_no_pathspec_pathspec() {
+    check_against_baseline(":");
+    let pattern = gix_pathspec::parse(":".as_bytes(), Default::default()).expect("valid");
+    assert!(pattern.is_null());
+
+    let actual: NormalizedPattern = pattern.into();
+    assert_eq!(actual, pat_with_path(""));
+
+    let pattern = gix_pathspec::parse(
+        ":".as_bytes(),
+        gix_pathspec::parse::Defaults {
+            signature: MagicSignature::EXCLUDE,
+            search_mode: MatchMode::Literal,
+        },
+    )
+    .expect("valid");
+    assert!(pattern.is_null());
+}
+
+#[test]
+fn defaults_are_used() -> crate::Result {
+    let defaults = gix_pathspec::parse::Defaults {
+        signature: MagicSignature::EXCLUDE,
+        search_mode: MatchMode::Literal,
+    };
+    let p = gix_pathspec::parse(".".as_bytes(), defaults)?;
+    assert_eq!(p.path, ".");
+    assert_eq!(p.signature, defaults.signature);
+    assert_eq!(p.search_mode, defaults.search_mode);
+    assert!(p.attributes.is_empty());
+    assert!(!p.is_null());
+    Ok(())
 }
 
 #[test]
 fn empty_signatures() {
     let inputs = vec![
         (".", pat_with_path(".")),
-        (":", pat_with_path("")),
         ("some/path", pat_with_path("some/path")),
         (":some/path", pat_with_path("some/path")),
         (":()some/path", pat_with_path("some/path")),

@@ -8,7 +8,7 @@ fn empty_input() {
 
     assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-    let output = gix_pathspec::parse(input.as_bytes());
+    let output = gix_pathspec::parse(input.as_bytes(), Default::default());
     assert!(output.is_err());
     assert!(matches!(output.unwrap_err(), Error::EmptyString));
 }
@@ -23,7 +23,7 @@ fn invalid_short_signatures() {
     for input in inputs.into_iter() {
         assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-        let output = gix_pathspec::parse(input.as_bytes());
+        let output = gix_pathspec::parse(input.as_bytes(), Default::default());
         assert!(output.is_err());
         assert!(matches!(output.unwrap_err(), Error::Unimplemented { .. }));
     }
@@ -41,7 +41,7 @@ fn invalid_keywords() {
     for input in inputs.into_iter() {
         assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-        let output = gix_pathspec::parse(input.as_bytes());
+        let output = gix_pathspec::parse(input.as_bytes(), Default::default());
         assert!(output.is_err());
         assert!(matches!(output.unwrap_err(), Error::InvalidKeyword { .. }));
     }
@@ -59,7 +59,7 @@ fn invalid_attributes() {
     for input in inputs {
         assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-        let output = gix_pathspec::parse(input.as_bytes());
+        let output = gix_pathspec::parse(input.as_bytes(), Default::default());
         assert!(output.is_err(), "This pathspec did not produce an error {input}");
         assert!(matches!(output.unwrap_err(), Error::InvalidAttribute { .. }));
     }
@@ -81,7 +81,7 @@ fn invalid_attribute_values() {
     for input in inputs {
         assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-        let output = gix_pathspec::parse(input.as_bytes());
+        let output = gix_pathspec::parse(input.as_bytes(), Default::default());
         assert!(output.is_err(), "This pathspec did not produce an error {input}");
         assert!(
             matches!(output.unwrap_err(), Error::InvalidAttributeValue { .. }),
@@ -101,7 +101,7 @@ fn escape_character_at_end_of_attribute_value() {
     for input in inputs {
         assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-        let output = gix_pathspec::parse(input.as_bytes());
+        let output = gix_pathspec::parse(input.as_bytes(), Default::default());
         assert!(output.is_err(), "This pathspec did not produce an error {input}");
         assert!(matches!(output.unwrap_err(), Error::TrailingEscapeCharacter));
     }
@@ -113,7 +113,7 @@ fn empty_attribute_specification() {
 
     assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-    let output = gix_pathspec::parse(input.as_bytes());
+    let output = gix_pathspec::parse(input.as_bytes(), Default::default());
     assert!(output.is_err());
     assert!(matches!(output.unwrap_err(), Error::EmptyAttribute));
 }
@@ -124,7 +124,7 @@ fn multiple_attribute_specifications() {
 
     assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-    let output = gix_pathspec::parse(input.as_bytes());
+    let output = gix_pathspec::parse(input.as_bytes(), Default::default());
     assert!(output.is_err());
     assert!(matches!(output.unwrap_err(), Error::MultipleAttributeSpecifications));
 }
@@ -135,7 +135,7 @@ fn missing_parentheses() {
 
     assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-    let output = gix_pathspec::parse(input.as_bytes());
+    let output = gix_pathspec::parse(input.as_bytes(), Default::default());
     assert!(output.is_err());
     assert!(matches!(output.unwrap_err(), Error::MissingClosingParenthesis { .. }));
 }
@@ -146,7 +146,7 @@ fn glob_and_literal_keywords_present() {
 
     assert!(!check_against_baseline(input), "This pathspec is valid in git: {input}");
 
-    let output = gix_pathspec::parse(input.as_bytes());
+    let output = gix_pathspec::parse(input.as_bytes(), Default::default());
     assert!(output.is_err());
     assert!(matches!(output.unwrap_err(), Error::IncompatibleSearchModes));
 }

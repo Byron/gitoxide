@@ -8,7 +8,7 @@ use once_cell::sync::Lazy;
 #[test]
 fn baseline() {
     for (pattern, exit_code) in BASELINE.iter() {
-        let res = gix_pathspec::parse(pattern);
+        let res = gix_pathspec::parse(pattern, Default::default());
         assert_eq!(
             res.is_ok(),
             *exit_code == 0,
@@ -67,9 +67,9 @@ fn check_valid_inputs<'a>(inputs: impl IntoIterator<Item = (&'a str, NormalizedP
             "This pathspec is invalid in git: {input}"
         );
 
-        let pattern: NormalizedPattern = gix_pathspec::parse(input.as_bytes())
-            .unwrap_or_else(|_| panic!("parsing should not fail with pathspec {input}"))
-            .into();
+        let pattern = gix_pathspec::parse(input.as_bytes(), Default::default())
+            .unwrap_or_else(|_| panic!("parsing should not fail with pathspec {input}"));
+        let pattern: NormalizedPattern = pattern.into();
         assert_eq!(pattern, expected, "while checking input: \"{input}\"");
     }
 }

@@ -3,14 +3,14 @@
 #![deny(missing_docs, rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
-use bitflags::{bitflags, Flags};
+use bitflags::bitflags;
 use bstr::BString;
 
 ///
 pub mod parse;
 
 /// The output of a pathspec [parsing][parse()] operation. It can be used to match against a one or more paths.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Pattern {
     /// The path part of a pathspec.
     ///
@@ -24,6 +24,8 @@ pub struct Pattern {
     ///
     /// `:(attr:a=one b=):path` would yield attribute `a` and `b`.
     pub attributes: Vec<gix_attributes::Assignment>,
+    /// If `true`, this was the special `:` spec which acts like `null`
+    nil: bool,
 }
 
 impl Pattern {
@@ -31,13 +33,13 @@ impl Pattern {
     ///
     /// Note that such a spec is `:`.
     pub fn is_null(&self) -> bool {
-        self.path.is_empty() && self.attributes.is_empty() && self.attributes.is_empty()
+        self.nil
     }
 }
 
 bitflags! {
     /// Flags to represent 'magic signatures' which are parsed behind colons, like `:top:`.
-    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+    #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     pub struct MagicSignature: u32 {
         /// Matches patterns from the root of the repository
         const TOP = 1 << 0;
@@ -50,7 +52,7 @@ bitflags! {
 
 /// Parts of [magic signatures][MagicSignature] which don't stack as they all configure
 /// the way path specs are matched.
-#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum MatchMode {
     /// Expand special characters like `*` similar to how the shell would do it.
     ///
@@ -63,9 +65,10 @@ pub enum MatchMode {
     PathAwareGlob,
 }
 
-/// Parse a git-style pathspec into a [`Pattern`][Pattern].
+/// Parse a git-style pathspec into a [`Pattern`][Pattern],
+/// setting the given `default` values in case these aren't specified in `input`.
 ///
-/// Note that empty paths are allowed here, and generally some processing has to be performed.
-pub fn parse(input: &[u8]) -> Result<Pattern, parse::Error> {
-    Pattern::from_bytes(input)
+/// Note that empty [paths](Pattern::path) are allowed here, and generally some processing has to be performed.
+pub fn parse(input: &[u8], default: parse::Defaults) -> Result<Pattern, parse::Error> {
+    Pattern::from_bytes(input, default)
 }

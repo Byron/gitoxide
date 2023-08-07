@@ -4,6 +4,17 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 
 use crate::{MagicSignature, MatchMode, Pattern};
 
+/// Default settings for some fields of a [`Pattern`].
+///
+/// These can be used to represent `GIT_*_PATHSPECS` environment variables, for example.
+#[derive(Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+pub struct Defaults {
+    /// The default signature.
+    pub signature: MagicSignature,
+    /// The default search-mode.
+    pub search_mode: MatchMode,
+}
+
 /// The error returned by [parse()][crate::parse()].
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
@@ -32,16 +43,23 @@ pub enum Error {
 
 impl Pattern {
     /// Try to parse a path-spec pattern from the given `input` bytes.
-    pub fn from_bytes(input: &[u8]) -> Result<Self, Error> {
+    pub fn from_bytes(input: &[u8], Defaults { signature, search_mode }: Defaults) -> Result<Self, Error> {
         if input.is_empty() {
             return Err(Error::EmptyString);
+        }
+        if input.as_bstr() == ":" {
+            return Ok(Pattern {
+                nil: true,
+                ..Default::default()
+            });
         }
 
         let mut p = Pattern {
             path: BString::default(),
-            signature: MagicSignature::empty(),
-            search_mode: MatchMode::default(),
+            signature,
+            search_mode,
             attributes: Vec::new(),
+            nil: false,
         };
 
         let mut cursor = 0;
