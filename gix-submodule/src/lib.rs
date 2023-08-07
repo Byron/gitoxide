@@ -1,5 +1,5 @@
-#![allow(missing_docs)]
-#![deny(rust_2018_idioms)]
+//! Primitives for describing git submodules.
+#![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
 use bstr::BStr;
