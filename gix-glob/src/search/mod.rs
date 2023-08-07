@@ -16,9 +16,6 @@ pub trait Pattern: Clone + PartialEq + Eq + std::fmt::Debug + std::hash::Hash + 
 
     /// Parse all patterns in `bytes` line by line, ignoring lines with errors, and collect them.
     fn bytes_to_patterns(bytes: &[u8], source: &Path) -> Vec<pattern::Mapping<Self::Value>>;
-
-    /// Returns true if the given pattern may be used for matching.
-    fn may_use_glob_pattern(pattern: &crate::Pattern) -> bool;
 }
 
 /// Add the given file at `source` if it exists, otherwise do nothing.

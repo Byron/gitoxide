@@ -18,10 +18,6 @@ mod list {
         fn bytes_to_patterns(_bytes: &[u8], _source: &Path) -> Vec<Mapping<Self::Value>> {
             vec![]
         }
-
-        fn may_use_glob_pattern(_pattern: &gix_glob::Pattern) -> bool {
-            unreachable!("won't be called")
-        }
     }
 
     #[test]
