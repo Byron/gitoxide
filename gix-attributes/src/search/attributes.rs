@@ -181,7 +181,9 @@ impl Pattern for Attributes {
             })
             .collect()
     }
+}
 
+impl Attributes {
     fn may_use_glob_pattern(pattern: &gix_glob::Pattern) -> bool {
         pattern.mode != macro_mode()
     }
