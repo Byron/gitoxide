@@ -1,25 +1,31 @@
 use bstr::ByteSlice;
+use libtest_mimic::{Arguments, Failed, Trial};
 
-#[test]
-fn we_match_git_for_typical_cases() {
-    let mut count = 0;
-    let mut errs = Vec::new();
-    for (url, expected) in baseline::URLS.iter() {
-        count += 1;
-        if std::panic::catch_unwind(|| {
-            let actual = gix_url::parse(url).expect("valid urls can be parsed");
-            assert_urls_equal(expected, &actual);
+fn main() {
+    let args = Arguments::from_args();
+    let tests = get_baseline_test_cases();
+
+    libtest_mimic::run(&args, tests).exit();
+}
+
+fn get_baseline_test_cases() -> Vec<Trial> {
+    baseline::URLS
+        .iter()
+        .map(|(url, expected)| {
+            Trial::test(
+                format!("baseline {}", url.to_str().expect("url is valid utf-8")),
+                move || {
+                    std::panic::catch_unwind(|| {
+                        assert_urls_equal(&expected, &gix_url::parse(url).expect("valid urls can be parsed"))
+                    })
+                    .map_err(|err| match err.downcast_ref::<&str>() {
+                        Some(panic_message) => panic_message.into(),
+                        None => Failed::without_message(),
+                    })
+                },
+            )
         })
-        .is_err()
-        {
-            errs.push((url, expected, gix_url::parse(url)));
-        }
-    }
-    if !errs.is_empty() {
-        let valid = count - errs.len();
-        dbg!(errs);
-        assert_eq!(count, valid, "All parsed URLs should match the baseline");
-    }
+        .collect::<_>()
 }
 
 fn assert_urls_equal(expected: &baseline::GitDiagUrl<'_>, actual: &gix_url::Url) {
