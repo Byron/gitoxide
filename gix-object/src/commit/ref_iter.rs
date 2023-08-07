@@ -39,6 +39,11 @@ impl<'a> CommitRefIter<'a> {
         }
     }
 
+    /// Converts this iterator into a [`CommitRefIterRaw`]
+    pub fn into_raw_iter(self) -> CommitRefIterRaw<'a> {
+        CommitRefIterRaw { inner: self }
+    }
+
     /// Returns the object id of this commits tree if it is the first function called and if there is no error in decoding
     /// the data.
     ///
@@ -231,6 +236,40 @@ impl<'a> Iterator for CommitRefIter<'a> {
             }
         }
     }
+}
+
+/// A variation of [`CommitRefIter`] that return's [`RawToken`]s instead
+pub struct CommitRefIterRaw<'a> {
+    inner: CommitRefIter<'a>,
+}
+
+impl<'a> Iterator for CommitRefIterRaw<'a> {
+    type Item = Result<RawToken<'a>, crate::decode::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.inner.data.is_empty() {
+            return None;
+        }
+        match CommitRefIter::next_inner(self.inner.data, &mut self.inner.state) {
+            Ok((data, token)) => {
+                let buffer = &self.inner.data[..self.inner.data.len() - data.len()];
+                self.inner.data = data;
+                Some(Ok(RawToken { token, buffer }))
+            }
+            Err(err) => {
+                self.inner.data = &[];
+                Some(Err(err))
+            }
+        }
+    }
+}
+
+/// A combination of a parsed [`Token`] as well as the raw buffer that produced it
+pub struct RawToken<'a> {
+    /// The parsed token
+    pub token: Token<'a>,
+    /// The raw slice the token was parsed from
+    pub buffer: &'a [u8],
 }
 
 /// A token returned by the [commit iterator][CommitRefIter].
