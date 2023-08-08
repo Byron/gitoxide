@@ -31,6 +31,53 @@ impl<'a> CommitRef<'a> {
     pub fn from_bytes(data: &'a [u8]) -> Result<CommitRef<'a>, crate::decode::Error> {
         decode::commit(data).map(|(_, t)| t).map_err(crate::decode::Error::from)
     }
+
+    /// Extracts the PGP signature and the signed commit data, if it is signed
+    pub fn extract_signature(
+        data: &'a [u8],
+        signed_data: &mut Vec<u8>,
+    ) -> Result<Option<std::borrow::Cow<'a, BStr>>, crate::decode::Error> {
+        use crate::commit::ref_iter::Token;
+        let pgp_sig_header = gix_actor::bstr::BStr::new(b"gpgsig");
+
+        signed_data.clear();
+
+        let mut signature = None;
+        let out = signed_data;
+
+        for token in crate::CommitRefIter::from_bytes(data).into_raw_iter() {
+            let token = token?;
+
+            // We don't care what the tokens are, just that they are valid, except
+            // in the case of the signature, which we skip as it is the only part
+            // of the commit that is not signed, obviously
+            if let Token::ExtraHeader((hname, hval)) = &token.token {
+                if hname == &pgp_sig_header {
+                    signature = Some(hval.clone());
+                    continue;
+                }
+            }
+
+            // There is only one exception to the outputs, which is that the message
+            // is always separated by an additional empty line from the rest of the
+            // data
+            if matches!(token.token, Token::Message(_)) {
+                // If we don't have a signature when we've reached the message,
+                // there is none and we can just short circuit
+                if signature.is_none() {
+                    out.clear();
+                    return Ok(None);
+                }
+
+                out.push(b'\n');
+            }
+
+            out.extend_from_slice(token.buffer);
+        }
+
+        Ok(signature)
+    }
+
     /// Return the `tree` fields hash digest.
     pub fn tree(&self) -> gix_hash::ObjectId {
         gix_hash::ObjectId::from_hex(self.tree).expect("prior validation of tree hash during parsing")
