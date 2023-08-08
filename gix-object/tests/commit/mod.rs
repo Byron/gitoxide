@@ -159,7 +159,6 @@ mod method {
     }
 }
 
-mod extracts_signature;
 mod from_bytes;
 mod iter;
 mod message;

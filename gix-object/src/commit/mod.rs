@@ -1,4 +1,5 @@
-use bstr::{BStr, ByteSlice};
+use bstr::{BStr, BString, ByteSlice};
+use std::ops::Range;
 
 use crate::{Commit, CommitRef, TagRef};
 
@@ -21,63 +22,49 @@ pub struct MessageRef<'a> {
     pub body: Option<&'a BStr>,
 }
 
+/// The raw commit data, parseable by [`CommitRef`] or [`Commit`], which was fed into a program to produce a signature.
+///
+/// See [`extract_signature()`](crate::CommitRefIter::signature()) for how to obtain it.
+// TODO: implement `std::io::Read` to avoid allocations
+#[derive(PartialEq, Eq, Debug, Hash, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SignedData<'a> {
+    /// The raw commit data that includes the signature.
+    data: &'a [u8],
+    /// The byte range at which we find the signature. All but the signature is the data that was signed.
+    signature_range: Range<usize>,
+}
+
+impl SignedData<'_> {
+    /// Convenience method to obtain a copy of the signed data.
+    pub fn to_bstring(&self) -> BString {
+        let mut buf = BString::from(&self.data[..self.signature_range.start]);
+        buf.extend_from_slice(&self.data[self.signature_range.end..]);
+        buf
+    }
+}
+
+impl From<SignedData<'_>> for BString {
+    fn from(value: SignedData<'_>) -> Self {
+        value.to_bstring()
+    }
+}
+
 ///
 pub mod ref_iter;
 
 mod write;
 
+/// Lifecycle
 impl<'a> CommitRef<'a> {
     /// Deserialize a commit from the given `data` bytes while avoiding most allocations.
     pub fn from_bytes(data: &'a [u8]) -> Result<CommitRef<'a>, crate::decode::Error> {
         decode::commit(data).map(|(_, t)| t).map_err(crate::decode::Error::from)
     }
+}
 
-    /// Extracts the PGP signature and the signed commit data, if it is signed
-    pub fn extract_signature(
-        data: &'a [u8],
-        signed_data: &mut Vec<u8>,
-    ) -> Result<Option<std::borrow::Cow<'a, BStr>>, crate::decode::Error> {
-        use crate::commit::ref_iter::Token;
-        let pgp_sig_header = gix_actor::bstr::BStr::new(b"gpgsig");
-
-        signed_data.clear();
-
-        let mut signature = None;
-        let out = signed_data;
-
-        for token in crate::CommitRefIter::from_bytes(data).into_raw_iter() {
-            let token = token?;
-
-            // We don't care what the tokens are, just that they are valid, except
-            // in the case of the signature, which we skip as it is the only part
-            // of the commit that is not signed, obviously
-            if let Token::ExtraHeader((hname, hval)) = &token.token {
-                if hname == &pgp_sig_header {
-                    signature = Some(hval.clone());
-                    continue;
-                }
-            }
-
-            // There is only one exception to the outputs, which is that the message
-            // is always separated by an additional empty line from the rest of the
-            // data
-            if matches!(token.token, Token::Message(_)) {
-                // If we don't have a signature when we've reached the message,
-                // there is none and we can just short circuit
-                if signature.is_none() {
-                    out.clear();
-                    return Ok(None);
-                }
-
-                out.push(b'\n');
-            }
-
-            out.extend_from_slice(token.buffer);
-        }
-
-        Ok(signature)
-    }
-
+/// Access
+impl<'a> CommitRef<'a> {
     /// Return the `tree` fields hash digest.
     pub fn tree(&self) -> gix_hash::ObjectId {
         gix_hash::ObjectId::from_hex(self.tree).expect("prior validation of tree hash during parsing")
@@ -92,7 +79,7 @@ impl<'a> CommitRef<'a> {
 
     /// Returns a convenient iterator over all extra headers.
     pub fn extra_headers(&self) -> crate::commit::ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
-        crate::commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
+        ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
     }
 
     /// Return the author, with whitespace trimmed.
