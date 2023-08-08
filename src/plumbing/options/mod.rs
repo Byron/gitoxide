@@ -472,6 +472,11 @@ pub mod tree {
 pub mod commit {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
+        /// Verify the signature of a commit.
+        Verify {
+            /// A specification of the revision to verify, or the current `HEAD` if unset.
+            rev_spec: Option<String>,
+        },
         /// Describe the current commit or the given one using the name of the closest annotated tag in its ancestry.
         Describe {
             /// Use annotated tag references only, not all tags.
