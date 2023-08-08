@@ -130,6 +130,19 @@ zRo/4HJ04mSQYp0kluP/EBhz9g2wM/htIPyWRveB/ByKEYt3UNKjB++PJmPbu5UG
 dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
 =T+RI
 -----END PGP SIGNATURE-----";
+
+const OTHER_SIGNATURE: &[u8; 455] = b"-----BEGIN PGP SIGNATURE-----
+
+wsBcBAABCAAQBQJeqxW4CRBK7hj4Ov3rIwAAdHIIAFD98qgN/k8ybukCLf6kpzvi
+5V8gf6BflONXc/oIDySurW7kfS9/r6jOgu08UN8KlQx4Q4g8yY7PROABhwGI70B3
++mHPFcParQf5FBDDZ3GNNpJdlaI9eqzEnFk8AmHmyKHfuGLoclXUObXQ3oe3fmT7
+QdTC7JTyk/bPnZ9HQKw7depa3+7Kw4wv4DG8QcW3BG6B9bcE15qaWmOiq0ryRXsv
+k7D0LqGSXjU5wrQrKnemC7nWhmQsqaXDe89XXmliClCAx4/bepPiXK0eT/DNIKUr
+iyBBl69jASy41Ug/BlFJbw4+ItkShpXwkJKuBBV/JExChmvbxYWaS7QnyYC9UO0=
+=HLmy
+-----END PGP SIGNATURE-----
+";
+
 mod method {
     use gix_object::CommitRef;
     use pretty_assertions::assert_eq;

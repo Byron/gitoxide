@@ -294,23 +294,11 @@ fn merge() -> crate::Result {
     Ok(())
 }
 
-const OTHER_SIGNATURE: &[u8; 455] = b"-----BEGIN PGP SIGNATURE-----
-
-wsBcBAABCAAQBQJeqxW4CRBK7hj4Ov3rIwAAdHIIAFD98qgN/k8ybukCLf6kpzvi
-5V8gf6BflONXc/oIDySurW7kfS9/r6jOgu08UN8KlQx4Q4g8yY7PROABhwGI70B3
-+mHPFcParQf5FBDDZ3GNNpJdlaI9eqzEnFk8AmHmyKHfuGLoclXUObXQ3oe3fmT7
-QdTC7JTyk/bPnZ9HQKw7depa3+7Kw4wv4DG8QcW3BG6B9bcE15qaWmOiq0ryRXsv
-k7D0LqGSXjU5wrQrKnemC7nWhmQsqaXDe89XXmliClCAx4/bepPiXK0eT/DNIKUr
-iyBBl69jASy41Ug/BlFJbw4+ItkShpXwkJKuBBV/JExChmvbxYWaS7QnyYC9UO0=
-=HLmy
------END PGP SIGNATURE-----
-";
-
 #[test]
 fn newline_right_after_signature_multiline_header() -> crate::Result {
     let fixture = fixture_name("commit", "signed-whitespace.txt");
     let commit = CommitRef::from_bytes(&fixture)?;
-    let pgp_sig = OTHER_SIGNATURE.as_bstr();
+    let pgp_sig = crate::commit::OTHER_SIGNATURE.as_bstr();
     assert_eq!(commit.extra_headers[0].1.as_ref(), pgp_sig);
     assert_eq!(commit.extra_headers().pgp_signature(), Some(pgp_sig));
     assert_eq!(commit.extra_headers().find("gpgsig"), Some(pgp_sig));

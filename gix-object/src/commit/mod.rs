@@ -1,4 +1,5 @@
-use bstr::{BStr, ByteSlice};
+use bstr::{BStr, BString, ByteSlice};
+use std::ops::Range;
 
 use crate::{Commit, CommitRef, TagRef};
 
@@ -21,16 +22,49 @@ pub struct MessageRef<'a> {
     pub body: Option<&'a BStr>,
 }
 
+/// The raw commit data, parseable by [`CommitRef`] or [`Commit`], which was fed into a program to produce a signature.
+///
+/// See [`extract_signature()`](crate::CommitRefIter::signature()) for how to obtain it.
+// TODO: implement `std::io::Read` to avoid allocations
+#[derive(PartialEq, Eq, Debug, Hash, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SignedData<'a> {
+    /// The raw commit data that includes the signature.
+    data: &'a [u8],
+    /// The byte range at which we find the signature. All but the signature is the data that was signed.
+    signature_range: Range<usize>,
+}
+
+impl SignedData<'_> {
+    /// Convenience method to obtain a copy of the signed data.
+    pub fn to_bstring(&self) -> BString {
+        let mut buf = BString::from(&self.data[..self.signature_range.start]);
+        buf.extend_from_slice(&self.data[self.signature_range.end..]);
+        buf
+    }
+}
+
+impl From<SignedData<'_>> for BString {
+    fn from(value: SignedData<'_>) -> Self {
+        value.to_bstring()
+    }
+}
+
 ///
 pub mod ref_iter;
 
 mod write;
 
+/// Lifecycle
 impl<'a> CommitRef<'a> {
     /// Deserialize a commit from the given `data` bytes while avoiding most allocations.
     pub fn from_bytes(data: &'a [u8]) -> Result<CommitRef<'a>, crate::decode::Error> {
         decode::commit(data).map(|(_, t)| t).map_err(crate::decode::Error::from)
     }
+}
+
+/// Access
+impl<'a> CommitRef<'a> {
     /// Return the `tree` fields hash digest.
     pub fn tree(&self) -> gix_hash::ObjectId {
         gix_hash::ObjectId::from_hex(self.tree).expect("prior validation of tree hash during parsing")
@@ -45,7 +79,7 @@ impl<'a> CommitRef<'a> {
 
     /// Returns a convenient iterator over all extra headers.
     pub fn extra_headers(&self) -> crate::commit::ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
-        crate::commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
+        ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
     }
 
     /// Return the author, with whitespace trimmed.

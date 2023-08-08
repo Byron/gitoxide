@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::ops::Range;
 
 use bstr::BStr;
 use gix_hash::{oid, ObjectId};
@@ -9,6 +10,7 @@ use nom::{
     error::context,
 };
 
+use crate::commit::SignedData;
 use crate::{bstr::ByteSlice, commit::decode, parse, parse::NL, CommitRefIter};
 
 #[derive(Copy, Clone)]
@@ -30,6 +32,7 @@ pub(crate) enum State {
     Message,
 }
 
+/// Lifecycle
 impl<'a> CommitRefIter<'a> {
     /// Create a commit iterator from data.
     pub fn from_bytes(data: &'a [u8]) -> CommitRefIter<'a> {
@@ -37,6 +40,37 @@ impl<'a> CommitRefIter<'a> {
             data,
             state: State::default(),
         }
+    }
+}
+
+/// Access
+impl<'a> CommitRefIter<'a> {
+    /// Parse `data` as commit and return its PGP signature, along with *all non-signature* data as [`SignedData`], or `None`
+    /// if the commit isn't signed.
+    ///
+    /// This allows the caller to validate the signature by passing the signed data along with the signature back to the program
+    /// that created it.
+    pub fn signature(data: &'a [u8]) -> Result<Option<(Cow<'a, BStr>, SignedData<'a>)>, crate::decode::Error> {
+        let mut signature_and_range = None;
+
+        let raw_tokens = CommitRefIterRaw {
+            data,
+            state: State::default(),
+            offset: 0,
+        };
+        for token in raw_tokens {
+            let token = token?;
+            if let Token::ExtraHeader((name, value)) = &token.token {
+                if *name == "gpgsig" {
+                    // keep track of the signature range alongside the signature data,
+                    // because all but the signature is the signed data.
+                    signature_and_range = Some((value.clone(), token.token_range));
+                    break;
+                }
+            }
+        }
+
+        Ok(signature_and_range.map(|(sig, signature_range)| (sig, SignedData { data, signature_range })))
     }
 
     /// Returns the object id of this commits tree if it is the first function called and if there is no error in decoding
@@ -231,6 +265,48 @@ impl<'a> Iterator for CommitRefIter<'a> {
             }
         }
     }
+}
+
+/// A variation of [`CommitRefIter`] that return's [`RawToken`]s instead.
+struct CommitRefIterRaw<'a> {
+    data: &'a [u8],
+    state: State,
+    offset: usize,
+}
+
+impl<'a> Iterator for CommitRefIterRaw<'a> {
+    type Item = Result<RawToken<'a>, crate::decode::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.data.is_empty() {
+            return None;
+        }
+        match CommitRefIter::next_inner(self.data, &mut self.state) {
+            Ok((remaining, token)) => {
+                let consumed = self.data.len() - remaining.len();
+                let start = self.offset;
+                let end = start + consumed;
+                self.offset = end;
+
+                self.data = remaining;
+                Some(Ok(RawToken {
+                    token,
+                    token_range: start..end,
+                }))
+            }
+            Err(err) => {
+                self.data = &[];
+                Some(Err(err))
+            }
+        }
+    }
+}
+
+/// A combination of a parsed [`Token`] as well as the range of bytes that were consumed to parse it.
+struct RawToken<'a> {
+    /// The parsed token.
+    token: Token<'a>,
+    token_range: Range<usize>,
 }
 
 /// A token returned by the [commit iterator][CommitRefIter].

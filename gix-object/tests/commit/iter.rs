@@ -205,4 +205,60 @@ mod method {
         assert_eq!(iter.author().ok(), Some(signature(1592437401)), "it's not consuming");
         Ok(())
     }
+
+    mod signature {
+        use bstr::{BStr, BString, ByteSlice};
+        use gix_object::CommitRefIter;
+
+        use crate::{
+            commit::{OTHER_SIGNATURE, SIGNATURE},
+            fixture_name,
+        };
+
+        fn validate<'a>(
+            fixture: &str,
+            expected_signature: impl Into<&'a BStr>,
+            signature_lines: std::ops::RangeInclusive<usize>,
+        ) -> crate::Result {
+            let expected_signature = expected_signature.into();
+            let fixture_data = fixture_name("commit", fixture);
+
+            let (actual_signature, actual_signed_data) = CommitRefIter::signature(&fixture_data)?.expect("sig present");
+            assert_eq!(actual_signature, expected_signature);
+
+            let expected_signed_data: BString = fixture_data
+                .lines_with_terminator()
+                .enumerate()
+                .filter_map(|(i, line)| (!signature_lines.contains(&i)).then_some(line))
+                .collect();
+
+            assert_eq!(actual_signed_data.to_bstring(), expected_signed_data);
+            Ok(())
+        }
+
+        #[test]
+        fn single_line() -> crate::Result {
+            validate("signed-singleline.txt", b"magic:signature", 4..=4)
+        }
+
+        #[test]
+        fn signed() -> crate::Result {
+            validate("signed.txt", b"-----BEGIN PGP SIGNATURE-----\n\niQEzBAABCAAdFiEEdjYp/sh4j8NRKLX27gKdHl60AwAFAl7p9tgACgkQ7gKdHl60\nAwBpegf+KQciv9AOIN7+yPmowecGxBnSfpKWTDzFxnyGR8dq63SpWT8WEKG5mf3a\nG6iUqpsDWaMHlzihaMKRvgRpZxFRbjnNPFBj6F4RRqfE+5R7k6DRSLUV5PqnsdSH\nuccfIDWi1imhsm7AaP5trwl1t+83U2JhHqPcPVFLMODYwWeO6NLR/JCzGSTQRa8t\nRgaVMKI19O/fge5OT5Ua8D47VKEhsJX0LfmkP5RfZQ8JJvNd40TupqKRdlv0sAzP\nya7NXkSHXCavHNR6kA+KpWxn900UoGK8/IDlwU6MeOkpPVawb3NFMqnc7KJDaC2p\nSMzpuEG8LTrCx2YSpHNLqHyzvQ1CZA==\n=5ITV\n-----END PGP SIGNATURE-----", 4..=14)
+        }
+
+        #[test]
+        fn with_encoding() -> crate::Result {
+            validate("signed-with-encoding.txt", SIGNATURE, 5..=15)
+        }
+
+        #[test]
+        fn msg_footer() -> crate::Result {
+            validate("message-with-footer.txt", b"-----BEGIN PGP SIGNATURE-----\n\niHUEABYIAB0WIQSuZwcGWSQItmusNgR5URpSUCnwXQUCYT7xpAAKCRB5URpSUCnw\nXWB3AP9q323HlxnI8MyqszNOeYDwa7Y3yEZaUM2y/IRjz+z4YQEAq0yr1Syt3mrK\nOSFCqL2vDm3uStP+vF31f6FnzayhNg0=\n=Mhpp\n-----END PGP SIGNATURE-----", 4..=10)
+        }
+
+        #[test]
+        fn whitespace() -> crate::Result {
+            validate("signed-whitespace.txt", OTHER_SIGNATURE, 5..=15)
+        }
+    }
 }

@@ -147,6 +147,15 @@ impl<'repo> Commit<'repo> {
             max_candidates: 10,
         }
     }
+
+    /// Extracts the PGP signature and the data that was used to create the signature, or `None` if it wasn't signed.
+    // TODO: make it possible to verify the signature, probably by wrapping `SignedData`. It's quite some work to do it properly.
+    pub fn signature(
+        &self,
+    ) -> Result<Option<(std::borrow::Cow<'_, BStr>, gix_object::commit::SignedData<'_>)>, gix_object::decode::Error>
+    {
+        gix_object::CommitRefIter::signature(&self.data)
+    }
 }
 
 impl<'r> std::fmt::Debug for Commit<'r> {
