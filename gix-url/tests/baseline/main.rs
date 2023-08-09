@@ -2,6 +2,10 @@ use bstr::ByteSlice;
 use libtest_mimic::{Arguments, Failed, Trial};
 
 fn main() {
+    // We do not need to set this hook back to its default, because this test gets compiled to its
+    // own binary and does therefore not interfere with other tests.
+    std::panic::set_hook(Box::new(|_| {}));
+
     let args = Arguments::from_args();
     let tests = get_baseline_test_cases();
 
