@@ -28,6 +28,7 @@ baseline ':!^(exclude,exclude)'
 
 # empty_signatures
 baseline '.'
+baseline ':'
 baseline 'some/path'
 baseline ':some/path'
 baseline ':()some/path'

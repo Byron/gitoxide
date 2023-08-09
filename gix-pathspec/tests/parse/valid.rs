@@ -23,9 +23,17 @@ fn repeated_matcher_keywords() {
 }
 
 #[test]
+fn nil_or_there_is_no_pathspec() {
+    let spec: NormalizedPattern = gix_pathspec::parse(":".as_bytes()).expect("valid").into();
+    assert_eq!(spec, pat_with_path(""));
+    assert!(spec.is_null())
+}
+
+#[test]
 fn empty_signatures() {
     let inputs = vec![
         (".", pat_with_path(".")),
+        (":", pat_with_path("")),
         ("some/path", pat_with_path("some/path")),
         (":some/path", pat_with_path("some/path")),
         (":()some/path", pat_with_path("some/path")),

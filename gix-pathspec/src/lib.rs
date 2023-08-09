@@ -3,7 +3,7 @@
 #![deny(missing_docs, rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
-use bitflags::bitflags;
+use bitflags::{bitflags, Flags};
 use bstr::BString;
 
 ///
@@ -24,6 +24,15 @@ pub struct Pattern {
     ///
     /// `:(attr:a=one b=):path` would yield attribute `a` and `b`.
     pub attributes: Vec<gix_attributes::Assignment>,
+}
+
+impl Pattern {
+    /// Returns `true` if this seems to be a pathspec that indicates that 'there is no pathspec'.
+    ///
+    /// Note that such a spec is `:`.
+    pub fn is_null(&self) -> bool {
+        self.path.is_empty() && self.attributes.is_empty() && self.attributes.is_empty()
+    }
 }
 
 bitflags! {
