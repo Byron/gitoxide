@@ -75,7 +75,11 @@ impl<'a> From<LineRef<'a>> for Line {
 pub mod decode {
     use gix_object::bstr::{BStr, ByteSlice};
     use winnow::{
+        combinator::alt,
+        combinator::eof,
+        combinator::fail,
         combinator::opt,
+        combinator::preceded,
         combinator::terminated,
         error::{AddContext, ParserError},
         prelude::*,
@@ -134,27 +138,21 @@ pub mod decode {
     }
 
     fn one<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], LineRef<'a>, E> {
-        let (i, (old, new, signature, message_sep, message)) = (
-            terminated(hex_hash, b" ").context("<old-hexsha>"),
-            terminated(hex_hash, b" ").context("<new-hexsha>"),
-            gix_actor::signature::decode.context("<name> <<email>> <timestamp>"),
-            opt(b'\t'),
-            message.context("<optional message>"),
+        let (i, ((old, new, signature), message)) = (
+            (
+                terminated(hex_hash, b" ").context("<old-hexsha>"),
+                terminated(hex_hash, b" ").context("<new-hexsha>"),
+                gix_actor::signature::decode.context("<name> <<email>> <timestamp>"),
+            )
+                .context("<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>"),
+            alt((
+                preceded(b'\t', message.context("<optional message>")),
+                b'\n'.value(Default::default()),
+                eof.value(Default::default()),
+                fail.context("log message must be separated from signature with whitespace"),
+            )),
         )
-            .context("<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>")
             .parse_next(bytes)?;
-
-        if message_sep.is_none() {
-            if let Some(first) = message.first() {
-                if !first.is_ascii_whitespace() {
-                    return Err(
-                        winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Verify).map(|err: E| {
-                            err.add_context(i, "log message must be separated from signature with whitespace")
-                        }),
-                    );
-                }
-            }
-        }
 
         Ok((
             i,
@@ -204,9 +202,11 @@ pub mod decode {
                 let err = one::<VerboseError<&[u8]>>(line.as_bytes())
                     .map_err(to_bstr_err)
                     .expect_err("this should fail");
-                assert!(err
-                    .to_string()
-                    .contains("log message must be separated from signature with whitespace"));
+                assert!(
+                    err.to_string()
+                        .contains("log message must be separated from signature with whitespace"),
+                    "expected\n  `log message must be separated from signature with whitespace`\nin\n```\n{err}\n```"
+                );
             }
         }
 
