@@ -129,7 +129,7 @@ pub fn main() -> Result<()> {
     let auto_verbose = !progress && !args.no_verbose;
 
     let should_interrupt = Arc::new(AtomicBool::new(false));
-    gix::interrupt::init_handler({
+    gix::interrupt::init_handler(1, {
         let should_interrupt = Arc::clone(&should_interrupt);
         move || should_interrupt.store(true, Ordering::SeqCst)
     })?;

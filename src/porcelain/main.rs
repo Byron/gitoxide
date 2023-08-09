@@ -20,7 +20,7 @@ pub fn main() -> Result<()> {
         time::util::local_offset::set_soundness(time::util::local_offset::Soundness::Unsound);
     }
     let should_interrupt = Arc::new(AtomicBool::new(false));
-    gix::interrupt::init_handler({
+    gix::interrupt::init_handler(1, {
         let should_interrupt = Arc::clone(&should_interrupt);
         move || should_interrupt.store(true, Ordering::SeqCst)
     })?;
