@@ -18,9 +18,21 @@ fn get_baseline_test_cases() -> Vec<Trial> {
                     std::panic::catch_unwind(|| {
                         assert_urls_equal(expected, &gix_url::parse(url).expect("valid urls can be parsed"))
                     })
-                    .map_err(|err| match err.downcast_ref::<&str>() {
-                        Some(panic_message) => panic_message.into(),
-                        None => Failed::without_message(),
+                    .map_err(|err| {
+                        // Succeeds whenever `panic!` was given a string literal (for example if
+                        // `assert!` is given a string literal).
+                        match err.downcast_ref::<&str>() {
+                            Some(panic_message) => panic_message.into(),
+                            None => {
+                                // Succeeds whenever `panic!` was given an owned String (for
+                                // example when using the `format!` syntax and always for
+                                // `assert_*!` macros).
+                                match err.downcast_ref::<String>() {
+                                    Some(panic_message) => panic_message.into(),
+                                    None => Failed::without_message(),
+                                }
+                            }
+                        }
                     })
                 },
             )
