@@ -11,7 +11,7 @@ fn main() -> anyhow::Result<()> {
         .nth(2)
         .context("The second argument is the directory to clone the repository into")?;
 
-    gix::interrupt::init_handler(|| {})?;
+    gix::interrupt::init_handler(1, || {})?;
     std::fs::create_dir_all(&dst)?;
     let url = gix::url::parse(repo_url.to_str().unwrap().into())?;
 
