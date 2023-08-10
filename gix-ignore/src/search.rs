@@ -118,7 +118,13 @@ pub fn pattern_matching_relative_path<'a>(
              sequence_number,
          }| {
             pattern
-                .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
+                .matches_repo_relative_path(
+                    relative_path,
+                    basename_start_pos,
+                    is_dir,
+                    case,
+                    gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+                )
                 .then_some(Match {
                     pattern,
                     source: list.source.as_deref(),
@@ -141,7 +147,13 @@ pub fn pattern_idx_matching_relative_path(
         list.strip_base_handle_recompute_basename_pos(relative_path, basename_pos, case)?;
     list.patterns.iter().enumerate().rev().find_map(|(idx, pm)| {
         pm.pattern
-            .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
+            .matches_repo_relative_path(
+                relative_path,
+                basename_start_pos,
+                is_dir,
+                case,
+                gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+            )
             .then_some(idx)
     })
 }
