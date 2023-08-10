@@ -239,6 +239,7 @@ pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr
 /// Resolve relative components virtually without accessing the file system, e.g. turn `a/./b/c/.././..` into `a`,
 /// without keeping intermediate `..` and `/a/../b/..` becomes `/`.
 /// If the input path was relative and ends up being the `current_dir`, `.` is returned instead of the full path to `current_dir`.
+/// Note that single `.` components as well as duplicate separators are left untouched.
 ///
 /// This is particularly useful when manipulating paths that are based on user input, and not resolving intermediate
 /// symlinks keeps the path similar to what the user provided. If that's not desirable, use `[realpath()][crate::realpath()`
