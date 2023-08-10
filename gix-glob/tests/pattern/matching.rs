@@ -68,7 +68,13 @@ fn compare_baseline_with_ours() {
             );
             match std::panic::catch_unwind(|| {
                 let pattern = pat(pattern);
-                pattern.matches_repo_relative_path(value, basename_start_pos(value), None, *case)
+                pattern.matches_repo_relative_path(
+                    value,
+                    basename_start_pos(value),
+                    None,
+                    *case,
+                    gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+                )
             }) {
                 Ok(actual_match) => {
                     if actual_match == is_match {
@@ -105,11 +111,23 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
     );
     let path = "hello";
     assert!(
-        !pattern.matches_repo_relative_path(path, None, false.into() /* is-dir */, Case::Sensitive),
+        !pattern.matches_repo_relative_path(
+            path,
+            None,
+            false.into(), /* is-dir */
+            Case::Sensitive,
+            gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL
+        ),
         "non-dirs never match a dir pattern"
     );
     assert!(
-        pattern.matches_repo_relative_path(path, None, true.into() /* is-dir */, Case::Sensitive),
+        pattern.matches_repo_relative_path(
+            path,
+            None,
+            true.into(), /* is-dir */
+            Case::Sensitive,
+            gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL
+        ),
         "dirs can match a dir pattern with the normal rules"
     );
 }
@@ -317,7 +335,13 @@ fn match_file<'a>(pattern: &gix_glob::Pattern, path: impl Into<&'a BStr>, case: 
 
 fn match_path<'a>(pattern: &gix_glob::Pattern, path: impl Into<&'a BStr>, is_dir: Option<bool>, case: Case) -> bool {
     let path = path.into();
-    pattern.matches_repo_relative_path(path, basename_start_pos(path), is_dir, case)
+    pattern.matches_repo_relative_path(
+        path,
+        basename_start_pos(path),
+        is_dir,
+        case,
+        gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+    )
 }
 
 fn basename_start_pos(value: &BStr) -> Option<usize> {
