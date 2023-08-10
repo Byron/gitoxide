@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use bstr::ByteSlice;
 use libtest_mimic::{Arguments, Failed, Trial};
 
@@ -16,33 +18,40 @@ fn get_baseline_test_cases() -> Vec<Trial> {
     baseline::URLS
         .iter()
         .map(|(url, expected)| {
-            Trial::test(
-                format!("baseline {}", url.to_str().expect("url is valid utf-8")),
-                move || {
-                    std::panic::catch_unwind(|| {
-                        assert_urls_equal(expected, &gix_url::parse(url).expect("valid urls can be parsed"))
-                    })
-                    .map_err(|err| {
-                        // Succeeds whenever `panic!` was given a string literal (for example if
-                        // `assert!` is given a string literal).
-                        match err.downcast_ref::<&str>() {
-                            Some(panic_message) => panic_message.into(),
-                            None => {
-                                // Succeeds whenever `panic!` was given an owned String (for
-                                // example when using the `format!` syntax and always for
-                                // `assert_*!` macros).
-                                match err.downcast_ref::<String>() {
-                                    Some(panic_message) => panic_message.into(),
-                                    None => Failed::without_message(),
-                                }
-                            }
-                        }
-                    })
-                },
-            )
+            Trial::test(format!("{}", url.to_str().expect("url is valid utf-8")), move || {
+                let actual = std::panic::catch_unwind(|| gix_url::parse(url).expect("valid urls can be parsed"))
+                    .map_err(|panic| match downcast_panic_to_str(&panic) {
+                        Some(s) => format!("{s}\nexpected: {expected:?}").into(),
+                        None => Failed::without_message(),
+                    })?;
+
+                std::panic::catch_unwind(|| assert_urls_equal(expected, &actual)).map_err(|panic| {
+                    match downcast_panic_to_str(&panic) {
+                        Some(s) => format!("{s}\nexpected: {expected:?}\nactual: {actual:?}").into(),
+                        None => Failed::without_message(),
+                    }
+                })
+            })
             .with_ignored_flag(true /* currently most of these fail */)
         })
         .collect::<_>()
+}
+
+fn downcast_panic_to_str<'a>(panic: &'a Box<dyn Any + Send + 'static>) -> Option<&'a str> {
+    // Succeeds whenever `panic!` was given a string literal (for example if
+    // `assert!` is given a string literal).
+    match panic.downcast_ref::<&'static str>() {
+        Some(s) => Some(s),
+        None => {
+            // Succeeds whenever `panic!` was given an owned String (for
+            // example when using the `format!` syntax and always for
+            // `assert_*!` macros).
+            match panic.downcast_ref::<String>() {
+                Some(s) => Some(s),
+                None => None,
+            }
+        }
+    }
 }
 
 fn assert_urls_equal(expected: &baseline::GitDiagUrl<'_>, actual: &gix_url::Url) {
