@@ -62,7 +62,7 @@ fn assert_urls_equal(expected: &baseline::GitDiagUrl<'_>, actual: &gix_url::Url)
 
     match expected.host {
         baseline::GitDiagHost::NonSsh { host_and_port } => match host_and_port {
-            Some(host_and_port) => {
+            Some(host_and_port) if !host_and_port.is_empty() => {
                 assert!(actual.host().is_some());
 
                 let mut gix_host_and_port = String::with_capacity(host_and_port.len());
@@ -81,7 +81,7 @@ fn assert_urls_equal(expected: &baseline::GitDiagUrl<'_>, actual: &gix_url::Url)
 
                 assert_eq!(host_and_port, gix_host_and_port);
             }
-            None => {
+            _ => {
                 assert!(actual.host().is_none());
                 assert!(actual.port.is_none());
             }
