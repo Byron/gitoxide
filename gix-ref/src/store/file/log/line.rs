@@ -181,14 +181,14 @@ pub mod decode {
 
         mod invalid {
             use gix_testtools::to_bstr_err;
-            use winnow::error::VerboseError;
+            use winnow::error::TreeError;
             use winnow::prelude::*;
 
             use super::one;
 
             #[test]
             fn completely_bogus_shows_error_with_context() {
-                let err = one::<VerboseError<&[u8], &'static str>>
+                let err = one::<TreeError<&[u8], &'static str>>
                     .parse_peek(b"definitely not a log entry")
                     .map_err(to_bstr_err)
                     .expect_err("this should fail");
@@ -198,7 +198,7 @@ pub mod decode {
             #[test]
             fn missing_whitespace_between_signature_and_message() {
                 let line = "0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000message";
-                let err = one::<VerboseError<&[u8], &'static str>>
+                let err = one::<TreeError<&[u8], &'static str>>
                     .parse_peek(line.as_bytes())
                     .map_err(to_bstr_err)
                     .expect_err("this should fail");

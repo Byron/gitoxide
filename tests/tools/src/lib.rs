@@ -19,7 +19,7 @@ pub use once_cell;
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 pub use tempfile;
-use winnow::error::VerboseError;
+use winnow::error::TreeError;
 
 /// A result type to allow using the try operator `?` in unit tests.
 ///
@@ -693,8 +693,8 @@ fn extract_archive(
 
 /// Transform a verbose bom errors from raw bytes into a `BStr` to make printing/debugging human-readable.
 pub fn to_bstr_err<'i>(
-    err: winnow::error::ErrMode<VerboseError<&'i [u8], &'static str>>,
-) -> VerboseError<&'i BStr, &'static str> {
+    err: winnow::error::ErrMode<TreeError<&'i [u8], &'static str>>,
+) -> TreeError<&'i BStr, &'static str> {
     let err = err.into_inner().expect("not a streaming parser");
     err.map_input(ByteSlice::as_bstr)
 }
