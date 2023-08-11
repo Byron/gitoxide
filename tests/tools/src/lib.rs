@@ -695,10 +695,7 @@ fn extract_archive(
 pub fn to_bstr_err<'i>(
     err: winnow::error::ErrMode<VerboseError<&'i [u8], &'static str>>,
 ) -> VerboseError<&'i BStr, &'static str> {
-    let err = match err {
-        winnow::error::ErrMode::Backtrack(err) | winnow::error::ErrMode::Cut(err) => err,
-        winnow::error::ErrMode::Incomplete(_) => unreachable!("not a streaming parser"),
-    };
+    let err = err.into_inner().expect("not a streaming parser");
     err.map_input(ByteSlice::as_bstr)
 }
 

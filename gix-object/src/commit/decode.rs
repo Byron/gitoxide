@@ -19,7 +19,7 @@ pub fn message<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &mut &'a 
         // newline + [message]
         return Err(
             winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Eof)
-                .map(|err: E| err.add_context(i, "newline + <message>")),
+                .add_context(i, "newline + <message>"),
         );
     }
     preceded(NL, rest.map(ByteSlice::as_bstr))
