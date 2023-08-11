@@ -66,11 +66,21 @@ fn leading_exclamation_mark_negates_pattern() {
         gix_glob::parse(b"!hello"),
         pat("hello", Mode::NEGATIVE | Mode::NO_SUB_DIR, None)
     );
+    assert_eq!(
+        gix_glob::Pattern::from_bytes_without_negation(b"!hello"),
+        pat("!hello", Mode::NO_SUB_DIR, None),
+        "negation can be disabled entirely"
+    );
 }
 
 #[test]
 fn leading_exclamation_marks_can_be_escaped_with_backslash() {
     assert_eq!(gix_glob::parse(br"\!hello"), pat("!hello", Mode::NO_SUB_DIR, None));
+    assert_eq!(
+        gix_glob::Pattern::from_bytes_without_negation(br"\!hello"),
+        pat("\\!hello", Mode::NO_SUB_DIR, Some(0)),
+        "negation can be disabled entirely, leaving escapes in place"
+    );
 }
 
 #[test]
