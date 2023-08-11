@@ -86,9 +86,7 @@ mod tests {
 
         use crate::{signature, SignatureRef, Time};
 
-        fn decode<'i>(
-            i: &mut &'i [u8],
-        ) -> PResult<SignatureRef<'i>, winnow::error::VerboseError<&'i [u8], &'static str>> {
+        fn decode<'i>(i: &mut &'i [u8]) -> PResult<SignatureRef<'i>, winnow::error::TreeError<&'i [u8], &'static str>> {
             signature::decode.parse_next(i)
         }
 
@@ -165,7 +163,7 @@ mod tests {
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "Parse error:\nslice at:  12345 -1215\nin section '<email>', at:  12345 -1215\nin section '<name> <<email>>', at:  12345 -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at:  12345 -1215\n"
+                        "in slice at ' 12345 -1215'\n  0: <email> at ' 12345 -1215'\n  1: <name> <<email>> at ' 12345 -1215'\n  2: <name> <<email>> <timestamp> <+|-><HHMM> at ' 12345 -1215'\n"
                     );
         }
 
@@ -176,7 +174,7 @@ mod tests {
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "Parse error:\npredicate verification at: abc -1215\nin section '<timestamp>', at: abc -1215\nin section '<name> <<email>> <timestamp> <+|-><HHMM>', at: abc -1215\n"
+                        "in predicate verification at 'abc -1215'\n  0: <timestamp> at 'abc -1215'\n  1: <name> <<email>> <timestamp> <+|-><HHMM> at 'abc -1215'\n"
                     );
         }
     }

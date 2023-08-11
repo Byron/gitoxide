@@ -1,7 +1,7 @@
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
 mod reference {
-    use winnow::error::VerboseError;
+    use winnow::error::TreeError;
     use winnow::prelude::*;
 
     use super::Result;
@@ -32,7 +32,7 @@ mod reference {
     fn two_refs_in_a_row() -> Result {
         let input: &[u8] = b"d53c4b0f91f1b29769c9430f2d1c0bcab1170c75 refs/heads/alternates-after-packs-and-loose
 ^e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37\neaae9c1bc723209d793eb93f5587fa2604d5cd92 refs/heads/avoid-double-lookup\n";
-        let (input, parsed) = decode::reference::<VerboseError<_>>.parse_peek(input).unwrap();
+        let (input, parsed) = decode::reference::<TreeError<_>>.parse_peek(input).unwrap();
 
         assert_eq!(
             parsed,
@@ -45,7 +45,7 @@ mod reference {
         assert_eq!(parsed.target(), hex_to_id("d53c4b0f91f1b29769c9430f2d1c0bcab1170c75"));
         assert_eq!(parsed.object(), hex_to_id("e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37"));
 
-        let (input, parsed) = decode::reference::<VerboseError<_>>.parse_peek(input).unwrap();
+        let (input, parsed) = decode::reference::<TreeError<_>>.parse_peek(input).unwrap();
         assert!(input.is_empty(), "exhausted");
         assert_eq!(
             parsed.name,
@@ -87,7 +87,7 @@ mod header {
     #[test]
     fn valid_fully_peeled_stored() -> Result {
         let input: &[u8] = b"# pack-refs with: peeled fully-peeled sorted  \nsomething else";
-        let (rest, header) = decode::header::<winnow::error::VerboseError<_, &'static str>>
+        let (rest, header) = decode::header::<winnow::error::TreeError<_, &'static str>>
             .parse_peek(input)
             .map_err(to_bstr_err)?;
 
