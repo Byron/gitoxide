@@ -1018,7 +1018,7 @@ pub fn main() -> Result<()> {
             ),
         },
         Subcommands::Attributes(cmd) => match cmd {
-            attributes::Subcommands::Query { statistics, pathspecs } => prepare_and_run(
+            attributes::Subcommands::Query { statistics, pathspec } => prepare_and_run(
                 "attributes-query",
                 trace,
                 verbose,
@@ -1029,7 +1029,7 @@ pub fn main() -> Result<()> {
                     use gix::bstr::ByteSlice;
                     core::repository::attributes::query(
                         repository(Mode::Strict)?,
-                        if pathspecs.is_empty() {
+                        if pathspec.is_empty() {
                             Box::new(stdin_or_bail()?.byte_lines().filter_map(Result::ok).filter_map(|line| {
                                 gix::pathspec::parse(
                                     line.as_bstr(),
@@ -1039,7 +1039,7 @@ pub fn main() -> Result<()> {
                                 .ok()
                             })) as Box<dyn Iterator<Item = gix::pathspec::Pattern>>
                         } else {
-                            Box::new(pathspecs.into_iter())
+                            Box::new(pathspec.into_iter())
                         },
                         out,
                         err,
@@ -1076,7 +1076,7 @@ pub fn main() -> Result<()> {
             exclude::Subcommands::Query {
                 statistics,
                 patterns,
-                pathspecs,
+                pathspec,
                 show_ignore_patterns,
             } => prepare_and_run(
                 "exclude-query",
@@ -1088,7 +1088,7 @@ pub fn main() -> Result<()> {
                 move |_progress, out, err| {
                     core::repository::exclude::query(
                         repository(Mode::Strict)?,
-                        if pathspecs.is_empty() {
+                        if pathspec.is_empty() {
                             Box::new(
                                 stdin_or_bail()?
                                     .byte_lines()
@@ -1096,7 +1096,7 @@ pub fn main() -> Result<()> {
                                     .filter_map(|line| gix::pathspec::parse(&line, Default::default()).ok()),
                             ) as Box<dyn Iterator<Item = gix::pathspec::Pattern>>
                         } else {
-                            Box::new(pathspecs.into_iter())
+                            Box::new(pathspec.into_iter())
                         },
                         out,
                         err,
@@ -1112,9 +1112,11 @@ pub fn main() -> Result<()> {
         },
         Subcommands::Index(cmd) => match cmd {
             index::Subcommands::Entries {
+                format: entry_format,
                 no_attributes,
                 attributes_from_index,
                 statistics,
+                pathspec,
             } => prepare_and_run(
                 "index-entries",
                 trace,
@@ -1125,10 +1127,15 @@ pub fn main() -> Result<()> {
                 move |_progress, out, err| {
                     core::repository::index::entries(
                         repository(Mode::LenientWithGitInstallConfig)?,
+                        pathspec,
                         out,
                         err,
                         core::repository::index::entries::Options {
                             format,
+                            simple: match entry_format {
+                                index::entries::Format::Simple => true,
+                                index::entries::Format::Rich => false,
+                            },
                             attributes: if no_attributes {
                                 None
                             } else {

@@ -21,7 +21,7 @@ impl query::Engine {
                 let is_excluded = spec.is_excluded();
                 let relpath = spec
                     .normalize(
-                        self.repo.prefix().transpose()?.unwrap_or_default().as_ref(),
+                        self.repo.prefix()?.unwrap_or_default().as_ref(),
                         self.repo.work_dir().unwrap_or_else(|| self.repo.git_dir()),
                     )?
                     .path();

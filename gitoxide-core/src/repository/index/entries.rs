@@ -4,9 +4,10 @@ pub struct Options {
     /// If true, also show attributes
     pub attributes: Option<Attributes>,
     pub statistics: bool,
+    pub simple: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum Attributes {
     /// Look at worktree attributes and index as fallback.
     WorktreeAndIndex,
@@ -15,6 +16,7 @@ pub enum Attributes {
 }
 
 pub(crate) mod function {
+    use std::collections::BTreeSet;
     use std::{
         borrow::Cow,
         io::{BufWriter, Write},
@@ -26,9 +28,11 @@ pub(crate) mod function {
 
     pub fn entries(
         repo: gix::Repository,
+        pathspecs: Vec<gix::pathspec::Pattern>,
         out: impl std::io::Write,
         mut err: impl std::io::Write,
         Options {
+            simple,
             format,
             attributes,
             statistics,
@@ -37,6 +41,12 @@ pub(crate) mod function {
         use crate::OutputFormat::*;
         let index = repo.index_or_load_from_head()?;
         let mut cache = attributes
+            .or_else(|| {
+                pathspecs
+                    .iter()
+                    .any(|spec| !spec.attributes.is_empty())
+                    .then_some(Attributes::Index)
+            })
             .map(|attrs| {
                 repo.attributes(
                     &index,
@@ -70,52 +80,111 @@ pub(crate) mod function {
             ..Default::default()
         };
 
-        let mut out = BufWriter::new(out);
+        let mut out = BufWriter::with_capacity(64 * 1024, out);
         #[cfg(feature = "serde")]
         if let Json = format {
             out.write_all(b"[\n")?;
         }
-        let mut entries = index.entries().iter().peekable();
-        while let Some(entry) = entries.next() {
-            let attrs = cache
-                .as_mut()
-                .map(|(attrs, cache)| {
-                    cache
-                        .at_entry(entry.path(&index), None, |id, buf| repo.objects.find_blob(id, buf))
-                        .map(|entry| {
-                            let is_excluded = entry.is_excluded();
-                            stats.excluded += usize::from(is_excluded);
-                            let attributes: Vec<_> = {
-                                entry.matching_attributes(attrs);
-                                attrs.iter().map(|m| m.assignment.to_owned()).collect()
-                            };
-                            stats.with_attributes += usize::from(!attributes.is_empty());
-                            Attrs {
-                                is_excluded,
-                                attributes,
-                            }
+        let mut search = gix::pathspec::Search::from_specs(
+            pathspecs,
+            repo.prefix()?.as_deref(),
+            gix::path::realpath(repo.work_dir().unwrap_or_else(|| repo.git_dir()))?.as_ref(), // TODO(pathspec): this setup needs `gix`.
+        )?;
+        let mut all_attrs = statistics.then(BTreeSet::new);
+        if let Some(entries) = index.prefixed_entries(search.common_prefix()) {
+            stats.entries_after_prune = entries.len();
+            let mut entries = entries.iter().peekable();
+            while let Some(entry) = entries.next() {
+                let mut last_match = None;
+                let attrs = cache
+                    .as_mut()
+                    .and_then(|(attrs, cache)| {
+                        // If the user wants to see assigned attributes, we always have to match.
+                        attributes.is_some().then(|| {
+                            cache
+                                .at_entry(entry.path(&index), None, |id, buf| repo.objects.find_blob(id, buf))
+                                .map(|entry| {
+                                    let is_excluded = entry.is_excluded();
+                                    stats.excluded += usize::from(is_excluded);
+                                    let attributes: Vec<_> = {
+                                        last_match = Some(entry.matching_attributes(attrs));
+                                        attrs.iter().map(|m| m.assignment.to_owned()).collect()
+                                    };
+                                    stats.with_attributes += usize::from(!attributes.is_empty());
+                                    stats.max_attributes_per_path = stats.max_attributes_per_path.max(attributes.len());
+                                    if let Some(attrs) = all_attrs.as_mut() {
+                                        attributes.iter().for_each(|attr| {
+                                            attrs.insert(attr.clone());
+                                        });
+                                    }
+                                    Attrs {
+                                        is_excluded,
+                                        attributes,
+                                    }
+                                })
                         })
-                })
-                .transpose()?;
-            match format {
-                Human => to_human(&mut out, &index, entry, attrs)?,
-                #[cfg(feature = "serde")]
-                Json => to_json(&mut out, &index, entry, attrs, entries.peek().is_none())?,
-            }
-        }
+                    })
+                    .transpose()?;
 
-        #[cfg(feature = "serde")]
-        if format == Json {
-            out.write_all(b"]\n")?;
-            out.flush()?;
-            if statistics {
-                serde_json::to_writer_pretty(&mut err, &stats)?;
+                // Note that we intentionally ignore `_case` so that we act like git does, attribute matching case is determined
+                // by the repository, not the pathspec.
+                if search
+                    .pattern_matching_relative_path(entry.path(&index), Some(false), |rela_path, _case, is_dir, out| {
+                        cache
+                            .as_mut()
+                            .map(|(attrs, cache)| {
+                                match last_match {
+                                    // The user wants the attributes for display, so the match happened already.
+                                    Some(matched) => {
+                                        attrs.copy_into(cache.attributes_collection(), out);
+                                        matched
+                                    }
+                                    // The user doesn't want attributes, so we set the cache position on demand only
+                                    None => cache
+                                        .at_entry(rela_path, Some(is_dir), |id, buf| repo.objects.find_blob(id, buf))
+                                        .ok()
+                                        .map(|platform| platform.matching_attributes(out))
+                                        .unwrap_or_default(),
+                                }
+                            })
+                            .unwrap_or_default()
+                    })
+                    .map_or(true, |m| m.is_excluded())
+                {
+                    continue;
+                }
+                match format {
+                    Human => {
+                        if simple {
+                            to_human_simple(&mut out, &index, entry, attrs)
+                        } else {
+                            to_human(&mut out, &index, entry, attrs)
+                        }?
+                    }
+                    #[cfg(feature = "serde")]
+                    Json => to_json(&mut out, &index, entry, attrs, entries.peek().is_none())?,
+                }
             }
-        }
-        if format == Human && statistics {
-            out.flush()?;
-            stats.cache = cache.map(|c| *c.1.statistics());
-            writeln!(err, "{stats:#?}")?;
+
+            #[cfg(feature = "serde")]
+            if format == Json {
+                out.write_all(b"]\n")?;
+                out.flush()?;
+                if statistics {
+                    serde_json::to_writer_pretty(&mut err, &stats)?;
+                }
+            }
+            if format == Human && statistics {
+                out.flush()?;
+                stats.cache = cache.map(|c| *c.1.statistics());
+                writeln!(err, "{stats:#?}")?;
+                if let Some(attrs) = all_attrs.filter(|a| !a.is_empty()) {
+                    writeln!(err, "All encountered attributes:")?;
+                    for attr in attrs {
+                        writeln!(err, "\t{attr}", attr = attr.as_ref())?;
+                    }
+                }
+            }
         }
         Ok(())
     }
@@ -131,8 +200,10 @@ pub(crate) mod function {
     struct Statistics {
         #[allow(dead_code)] // Not really dead, but Debug doesn't count for it even though it's crucial.
         pub entries: usize,
+        pub entries_after_prune: usize,
         pub excluded: usize,
         pub with_attributes: usize,
+        pub max_attributes_per_path: usize,
         pub cache: Option<gix::worktree::cache::Statistics>,
     }
 
@@ -175,6 +246,22 @@ pub(crate) mod function {
         Ok(())
     }
 
+    fn to_human_simple(
+        out: &mut impl std::io::Write,
+        file: &gix::index::File,
+        entry: &gix::index::Entry,
+        attrs: Option<Attrs>,
+    ) -> std::io::Result<()> {
+        match attrs {
+            Some(attrs) => {
+                out.write_all(entry.path(file))?;
+                out.write_all(print_attrs(Some(attrs)).as_bytes())
+            }
+            None => out.write_all(entry.path(file)),
+        }?;
+        out.write_all(b"\n")
+    }
+
     fn to_human(
         out: &mut impl std::io::Write,
         file: &gix::index::File,
@@ -198,24 +285,28 @@ pub(crate) mod function {
             entry.mode,
             entry.id,
             entry.path(file),
-            attrs.map_or(Cow::Borrowed(""), |a| {
-                let mut buf = String::new();
-                if a.is_excluded {
-                    buf.push_str(" ❌");
-                }
-                if !a.attributes.is_empty() {
-                    buf.push_str(" (");
-                    for assignment in a.attributes {
-                        use std::fmt::Write;
-                        write!(&mut buf, "{}", assignment.as_ref()).ok();
-                        buf.push_str(", ");
-                    }
-                    buf.pop();
-                    buf.pop();
-                    buf.push(')');
-                }
-                buf.into()
-            })
+            print_attrs(attrs)
         )
+    }
+
+    fn print_attrs(attrs: Option<Attrs>) -> Cow<'static, str> {
+        attrs.map_or(Cow::Borrowed(""), |a| {
+            let mut buf = String::new();
+            if a.is_excluded {
+                buf.push_str(" ❌");
+            }
+            if !a.attributes.is_empty() {
+                buf.push_str(" (");
+                for assignment in a.attributes {
+                    use std::fmt::Write;
+                    write!(&mut buf, "{}", assignment.as_ref()).ok();
+                    buf.push_str(", ");
+                }
+                buf.pop();
+                buf.pop();
+                buf.push(')');
+            }
+            buf.into()
+        })
     }
 }

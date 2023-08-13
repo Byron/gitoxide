@@ -32,7 +32,7 @@ pub(crate) mod function {
         // TODO(pathspec): The search is just used as a shortcut to normalization, but one day should be used for an actual search.
         let search = gix::pathspec::Search::from_specs(
             pathspecs,
-            repo.prefix().transpose()?.as_deref(),
+            repo.prefix()?.as_deref(),
             repo.work_dir().unwrap_or_else(|| repo.git_dir()),
         )?;
 

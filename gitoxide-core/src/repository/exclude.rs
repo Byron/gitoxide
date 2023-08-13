@@ -44,7 +44,7 @@ pub fn query(
     // TODO(pathspec): actually use the search to find items. This looks like `gix` capabilities to put it all together.
     let search = gix::pathspec::Search::from_specs(
         pathspecs,
-        repo.prefix().transpose()?.as_deref(),
+        repo.prefix()?.as_deref(),
         repo.work_dir().unwrap_or_else(|| repo.git_dir()),
     )?;
 
