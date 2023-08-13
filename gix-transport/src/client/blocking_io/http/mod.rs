@@ -517,5 +517,5 @@ pub fn connect(url: gix_url::Url, desired_version: Protocol) -> Transport<Impl> 
 }
 
 ///
-#[cfg(feature = "http-client-curl")]
+#[cfg(any(feature = "http-client-curl", feature = "http-client-reqwest"))]
 pub mod redirect;
