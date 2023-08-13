@@ -164,6 +164,7 @@ gix-index = { version = "^0.22.0", path = "../gix-index" }
 gix-worktree = { version = "^0.24.0", path = "../gix-worktree" }
 gix-hashtable = { version = "^0.2.4", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.18.2", path = "../gix-commitgraph" }
+gix-pathspec = { version = "^0.1.0", path = "../gix-pathspec" }
 
 gix-worktree-stream = { version = "^0.3.0", path = "../gix-worktree-stream", optional = true }
 gix-archive = { version = "^0.3.0", path = "../gix-archive", default-features = false, optional = true }

@@ -1186,6 +1186,7 @@ dependencies = [
  "gix-odb",
  "gix-pack",
  "gix-path 0.8.4",
+ "gix-pathspec",
  "gix-prompt",
  "gix-protocol",
  "gix-ref 0.34.0",
