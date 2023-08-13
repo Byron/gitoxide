@@ -50,18 +50,11 @@
 #![forbid(unsafe_code)]
 
 /// A dummy type to represent path specs and help finding all spots that take path specs once it is implemented.
-
-/// A preliminary version of a path-spec based on glances of the code.
-#[derive(Clone, Debug)]
-pub struct Spec(bstr::BString);
-
 mod convert;
 pub use convert::*;
 
 mod util;
 pub use util::is_absolute;
-
-mod spec;
 
 ///
 pub mod realpath;
