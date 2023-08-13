@@ -61,7 +61,15 @@ impl Default for Remote {
                                     // git does not want to be redirected to a different host.
                                     attempt.stop()
                                 }
-                                _ => attempt.follow(),
+                                _ => {
+                                    // emulate default git behaviour which relies on curl default behaviour apparently.
+                                    const CURL_DEFAULT_REDIRS: usize = 50;
+                                    if prev_urls.len() >= CURL_DEFAULT_REDIRS {
+                                        attempt.error("too many redirects")
+                                    } else {
+                                        attempt.follow()
+                                    }
+                                }
                             }
                         } else {
                             attempt.stop()
