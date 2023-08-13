@@ -18,7 +18,7 @@ pub(crate) mod function {
 
     pub fn query(
         repo: gix::Repository,
-        pathspecs: impl Iterator<Item = gix::path::Spec>,
+        pathspecs: impl Iterator<Item = gix::pathspec::Pattern>,
         mut out: impl io::Write,
         mut err: impl io::Write,
         Options { format, statistics }: Options,
@@ -28,28 +28,31 @@ pub(crate) mod function {
         }
 
         let mut cache = attributes_cache(&repo)?;
-        let prefix = repo.prefix().expect("worktree - we have an index by now")?;
         let mut matches = cache.attribute_matches();
+        // TODO(pathspec): The search is just used as a shortcut to normalization, but one day should be used for an actual search.
+        let search = gix::pathspec::Search::from_specs(
+            pathspecs,
+            repo.prefix().transpose()?.as_deref(),
+            repo.work_dir().unwrap_or_else(|| repo.git_dir()),
+        )?;
 
-        for mut spec in pathspecs {
-            for path in spec.apply_prefix(&prefix).items() {
-                let is_dir = gix::path::from_bstr(path).metadata().ok().map(|m| m.is_dir());
-                let entry = cache.at_entry(path, is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
+        for spec in search.into_patterns() {
+            let is_dir = gix::path::from_bstr(spec.path()).metadata().ok().map(|m| m.is_dir());
+            let entry = cache.at_entry(spec.path(), is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
 
-                if !entry.matching_attributes(&mut matches) {
-                    continue;
-                }
-                for m in matches.iter() {
-                    writeln!(
-                        out,
-                        "{}:{}:{}\t{}\t{}",
-                        m.location.source.map(Path::to_string_lossy).unwrap_or_default(),
-                        m.location.sequence_number,
-                        m.pattern,
-                        path,
-                        m.assignment
-                    )?;
-                }
+            if !entry.matching_attributes(&mut matches) {
+                continue;
+            }
+            for m in matches.iter() {
+                writeln!(
+                    out,
+                    "{}:{}:{}\t{}\t{}",
+                    m.location.source.map(Path::to_string_lossy).unwrap_or_default(),
+                    m.location.sequence_number,
+                    m.pattern,
+                    spec.path(),
+                    m.assignment
+                )?;
             }
         }
 

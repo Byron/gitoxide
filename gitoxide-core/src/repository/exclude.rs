@@ -20,7 +20,7 @@ pub mod query {
 
 pub fn query(
     repo: gix::Repository,
-    pathspecs: impl Iterator<Item = gix::path::Spec>,
+    pathspecs: impl Iterator<Item = gix::pathspec::Pattern>,
     mut out: impl io::Write,
     mut err: impl io::Write,
     query::Options {
@@ -41,28 +41,30 @@ pub fn query(
         Default::default(),
     )?;
 
-    let prefix = repo.prefix().expect("worktree - we have an index by now")?;
+    // TODO(pathspec): actually use the search to find items. This looks like `gix` capabilities to put it all together.
+    let search = gix::pathspec::Search::from_specs(
+        pathspecs,
+        repo.prefix().transpose()?.as_deref(),
+        repo.work_dir().unwrap_or_else(|| repo.git_dir()),
+    )?;
 
-    for mut spec in pathspecs {
-        for path in spec.apply_prefix(&prefix).items() {
-            // TODO: what about paths that end in /? Pathspec might handle it, it's definitely something git considers
-            //       even if the directory doesn't exist. Seems to work as long as these are kept in the spec.
-            let is_dir = gix::path::from_bstr(path).metadata().ok().map(|m| m.is_dir());
-            let entry = cache.at_entry(path, is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
-            let match_ = entry
-                .matching_exclude_pattern()
-                .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then_some(m));
-            match match_ {
-                Some(m) => writeln!(
-                    out,
-                    "{}:{}:{}\t{}",
-                    m.source.map(std::path::Path::to_string_lossy).unwrap_or_default(),
-                    m.sequence_number,
-                    m.pattern,
-                    path
-                )?,
-                None => writeln!(out, "::\t{path}")?,
-            }
+    for spec in search.into_patterns() {
+        let path = spec.path();
+        let is_dir = gix::path::from_bstr(path).metadata().ok().map(|m| m.is_dir());
+        let entry = cache.at_entry(path, is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
+        let match_ = entry
+            .matching_exclude_pattern()
+            .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then_some(m));
+        match match_ {
+            Some(m) => writeln!(
+                out,
+                "{}:{}:{}\t{}",
+                m.source.map(std::path::Path::to_string_lossy).unwrap_or_default(),
+                m.sequence_number,
+                m.pattern,
+                path
+            )?,
+            None => writeln!(out, "::\t{path}")?,
         }
     }
 

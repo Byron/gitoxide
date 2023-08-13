@@ -1030,12 +1030,14 @@ pub fn main() -> Result<()> {
                     core::repository::attributes::query(
                         repository(Mode::Strict)?,
                         if pathspecs.is_empty() {
-                            Box::new(
-                                stdin_or_bail()?
-                                    .byte_lines()
-                                    .filter_map(Result::ok)
-                                    .filter_map(|line| gix::path::Spec::from_bytes(line.as_bstr())),
-                            ) as Box<dyn Iterator<Item = gix::path::Spec>>
+                            Box::new(stdin_or_bail()?.byte_lines().filter_map(Result::ok).filter_map(|line| {
+                                gix::pathspec::parse(
+                                    line.as_bstr(),
+                                    // TODO(pathspec): use `repo` actual global defaults when available (see following as well)
+                                    Default::default(),
+                                )
+                                .ok()
+                            })) as Box<dyn Iterator<Item = gix::pathspec::Pattern>>
                         } else {
                             Box::new(pathspecs.into_iter())
                         },
@@ -1053,15 +1055,11 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |progress, out, err| {
-                    use gix::bstr::ByteSlice;
                     core::repository::attributes::validate_baseline(
                         repository(Mode::StrictWithGitInstallConfig)?,
-                        stdin_or_bail().ok().map(|stdin| {
-                            stdin
-                                .byte_lines()
-                                .filter_map(Result::ok)
-                                .filter_map(|line| gix::path::Spec::from_bytes(line.as_bstr()))
-                        }),
+                        stdin_or_bail()
+                            .ok()
+                            .map(|stdin| stdin.byte_lines().filter_map(Result::ok).map(gix::bstr::BString::from)),
                         progress,
                         out,
                         err,
@@ -1088,7 +1086,6 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, err| {
-                    use gix::bstr::ByteSlice;
                     core::repository::exclude::query(
                         repository(Mode::Strict)?,
                         if pathspecs.is_empty() {
@@ -1096,8 +1093,8 @@ pub fn main() -> Result<()> {
                                 stdin_or_bail()?
                                     .byte_lines()
                                     .filter_map(Result::ok)
-                                    .filter_map(|line| gix::path::Spec::from_bytes(line.as_bstr())),
-                            ) as Box<dyn Iterator<Item = gix::path::Spec>>
+                                    .filter_map(|line| gix::pathspec::parse(&line, Default::default()).ok()),
+                            ) as Box<dyn Iterator<Item = gix::pathspec::Pattern>>
                         } else {
                             Box::new(pathspecs.into_iter())
                         },

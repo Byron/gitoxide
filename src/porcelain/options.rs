@@ -125,7 +125,7 @@ pub mod tools {
             TracePath {
                 /// The path to trace through history.
                 #[clap(value_parser = AsPathSpec)]
-                path: gix::path::Spec,
+                path: gix::pathspec::Pattern,
             },
         }
     }

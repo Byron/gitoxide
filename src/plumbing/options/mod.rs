@@ -610,7 +610,7 @@ pub mod attributes {
             statistics: bool,
             /// The git path specifications to list attributes for, or unset to read from stdin one per line.
             #[clap(value_parser = AsPathSpec)]
-            pathspecs: Vec<gix::path::Spec>,
+            pathspecs: Vec<gix::pathspec::Pattern>,
         },
     }
 }
@@ -639,7 +639,7 @@ pub mod exclude {
             patterns: Vec<OsString>,
             /// The git path specifications to check for exclusion, or unset to read from stdin one per line.
             #[clap(value_parser = AsPathSpec)]
-            pathspecs: Vec<gix::path::Spec>,
+            pathspecs: Vec<gix::pathspec::Pattern>,
         },
     }
 }

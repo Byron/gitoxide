@@ -1,7 +1,7 @@
 pub enum Command {
     TracePath {
         /// The repo-relative path to the file to trace
-        spec: gix::path::Spec,
+        spec: gix::pathspec::Pattern,
     },
 }
 

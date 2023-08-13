@@ -18,6 +18,7 @@ pub(crate) mod function {
     };
 
     use anyhow::{anyhow, bail};
+    use gix::bstr::BString;
     use gix::{attrs::Assignment, odb::FindExt, Progress};
 
     use crate::{
@@ -27,7 +28,7 @@ pub(crate) mod function {
 
     pub fn validate_baseline(
         repo: gix::Repository,
-        pathspecs: Option<impl Iterator<Item = gix::path::Spec> + Send + 'static>,
+        paths: Option<impl Iterator<Item = BString> + Send + 'static>,
         mut progress: impl Progress + 'static,
         mut out: impl io::Write,
         mut err: impl io::Write,
@@ -51,7 +52,7 @@ pub(crate) mod function {
             ignore = false;
         }
         let mut num_entries = None;
-        let pathspecs = pathspecs.map_or_else(
+        let paths = paths.map_or_else(
             {
                 let repo = repo.clone();
                 let num_entries = &mut num_entries;
@@ -59,18 +60,16 @@ pub(crate) mod function {
                     let index = repo.index_or_load_from_head()?.into_owned();
                     let (entries, path_backing) = index.into_parts().0.into_entries();
                     *num_entries = Some(entries.len());
-                    let iter = Box::new(entries.into_iter().map(move |e| {
-                        gix::path::Spec::from_bytes(e.path_in(&path_backing)).expect("each entry path is a valid spec")
-                    }));
-                    Ok(iter as Box<dyn Iterator<Item = gix::path::Spec> + Send + 'static>)
+                    let iter = Box::new(entries.into_iter().map(move |e| e.path_in(&path_backing).to_owned()));
+                    Ok(iter as Box<dyn Iterator<Item = BString> + Send + 'static>)
                 }
             },
-            |i| anyhow::Result::Ok(Box::new(i)),
+            |paths| anyhow::Result::Ok(Box::new(paths)),
         )?;
 
         let (tx_base, rx_base) = std::sync::mpsc::channel::<(String, Baseline)>();
         let feed_attrs = {
-            let (tx, rx) = std::sync::mpsc::sync_channel::<gix::path::Spec>(1);
+            let (tx, rx) = std::sync::mpsc::sync_channel::<BString>(100);
             std::thread::spawn({
                 let path = repo.path().to_owned();
                 let tx_base = tx_base.clone();
@@ -89,12 +88,10 @@ pub(crate) mod function {
                         move || -> anyhow::Result<()> {
                             progress.init(num_entries, gix::progress::count("paths"));
                             let start = std::time::Instant::now();
-                            for spec in rx {
+                            for path in rx {
                                 progress.inc();
-                                for path in spec.items() {
-                                    stdin.write_all(path.as_ref())?;
-                                    stdin.write_all(b"\n")?;
-                                }
+                                stdin.write_all(&path)?;
+                                stdin.write_all(b"\n")?;
                             }
                             progress.show_throughput(start);
                             Ok(())
@@ -123,7 +120,7 @@ pub(crate) mod function {
             })
             .transpose()?;
         let feed_excludes = ignore.then(|| {
-            let (tx, rx) = std::sync::mpsc::sync_channel::<gix::path::Spec>(1);
+            let (tx, rx) = std::sync::mpsc::sync_channel::<BString>(100);
             std::thread::spawn({
                 let path = work_dir.expect("present if we are here");
                 let tx_base = tx_base.clone();
@@ -142,12 +139,10 @@ pub(crate) mod function {
                         move || -> anyhow::Result<()> {
                             progress.init(num_entries, gix::progress::count("paths"));
                             let start = std::time::Instant::now();
-                            for spec in rx {
+                            for path in rx {
                                 progress.inc();
-                                for path in spec.items() {
-                                    stdin.write_all(path.as_ref())?;
-                                    stdin.write_all(b"\n")?;
-                                }
+                                stdin.write_all(path.as_ref())?;
+                                stdin.write_all(b"\n")?;
                             }
                             progress.show_throughput(start);
                             Ok(())
@@ -175,12 +170,12 @@ pub(crate) mod function {
         drop(tx_base);
 
         std::thread::spawn(move || {
-            for spec in pathspecs {
-                if feed_attrs.send(spec.clone()).is_err() {
+            for path in paths {
+                if feed_attrs.send(path.clone()).is_err() {
                     break;
                 }
                 if let Some(ch) = feed_excludes.as_ref() {
-                    if ch.send(spec).is_err() {
+                    if ch.send(path).is_err() {
                         break;
                     }
                 }
