@@ -33,7 +33,8 @@ impl Search {
     /// Further, excluded pathspecs don't participate which makes this common prefix inclusive.
     pub fn common_prefix(&self) -> &BStr {
         self.patterns
-            .get(0)
+            .iter()
+            .find(|p| !p.value.pattern.is_excluded())
             .map_or("".into(), |m| m.value.pattern.path[..self.common_prefix_len].as_bstr())
     }
 }
