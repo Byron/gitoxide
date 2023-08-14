@@ -2223,6 +2223,7 @@ dependencies = [
  "gix-config",
  "gix-features 0.32.1",
  "gix-path 0.8.4",
+ "gix-pathspec",
  "gix-refspec",
  "gix-testtools",
  "gix-url",
