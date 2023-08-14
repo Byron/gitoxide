@@ -349,11 +349,19 @@ mod clap {
     pub struct AsPathSpec;
 
     impl TypedValueParser for AsPathSpec {
-        type Value = gix::path::Spec;
+        type Value = gix::pathspec::Pattern;
 
         fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
             OsStringValueParser::new()
-                .try_map(|arg| gix::path::Spec::try_from(arg.as_os_str()))
+                .try_map(|arg| {
+                    let arg: &std::path::Path = arg.as_os_str().as_ref();
+                    gix::pathspec::parse(
+                        gix::path::into_bstr(arg).as_ref(),
+                        // TODO(pathspec): it *should* be possible to obtain these defaults from the environment and then act correctly.
+                        //       gix should
+                        Default::default(),
+                    )
+                })
                 .parse_ref(cmd, arg, value)
         }
     }

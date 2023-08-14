@@ -181,7 +181,9 @@ impl Pattern for Attributes {
             })
             .collect()
     }
+}
 
+impl Attributes {
     fn may_use_glob_pattern(pattern: &gix_glob::Pattern) -> bool {
         pattern.mode != macro_mode()
     }
@@ -229,7 +231,13 @@ fn pattern_matching_relative_path(
             Value::Assignments(attrs) => attrs,
         };
         if out.has_unspecified_attributes(attrs.iter().map(|attr| attr.id))
-            && pattern.matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
+            && pattern.matches_repo_relative_path(
+                relative_path,
+                basename_start_pos,
+                is_dir,
+                case,
+                gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+            )
         {
             let all_filled = out.fill_attributes(attrs.iter(), pattern, list.source.as_ref(), *sequence_number);
             if all_filled {

@@ -6,19 +6,23 @@ use crate::{pattern, pattern::Mode};
 /// A sloppy parser that performs only the most basic checks, providing additional information
 /// using `pattern::Mode` flags.
 ///
+/// If `may_alter` is `false`, we won't parse leading `!` or its escaped form.
+///
 /// Returns `(pattern, mode, no_wildcard_len)`
-pub fn pattern(mut pat: &[u8]) -> Option<(&[u8], pattern::Mode, Option<usize>)> {
+pub fn pattern(mut pat: &[u8], may_alter: bool) -> Option<(&[u8], pattern::Mode, Option<usize>)> {
     let mut mode = Mode::empty();
     if pat.is_empty() {
         return None;
     };
-    if pat.first() == Some(&b'!') {
-        mode |= Mode::NEGATIVE;
-        pat = &pat[1..];
-    } else if pat.first() == Some(&b'\\') {
-        let second = pat.get(1);
-        if second == Some(&b'!') || second == Some(&b'#') {
+    if may_alter {
+        if pat.first() == Some(&b'!') {
+            mode |= Mode::NEGATIVE;
             pat = &pat[1..];
+        } else if pat.first() == Some(&b'\\') {
+            let second = pat.get(1);
+            if second == Some(&b'!') || second == Some(&b'#') {
+                pat = &pat[1..];
+            }
         }
     }
     if pat.iter().all(u8::is_ascii_whitespace) {

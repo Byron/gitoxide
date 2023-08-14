@@ -35,10 +35,6 @@ impl Pattern for Ignore {
             })
             .collect()
     }
-
-    fn may_use_glob_pattern(_pattern: &gix_glob::Pattern) -> bool {
-        true
-    }
 }
 
 /// Instantiation of a search for ignore patterns.
@@ -115,25 +111,27 @@ pub fn pattern_matching_relative_path<'a>(
 ) -> Option<Match<'a>> {
     let (relative_path, basename_start_pos) =
         list.strip_base_handle_recompute_basename_pos(relative_path, basename_pos, case)?;
-    list.patterns
-        .iter()
-        .rev()
-        .filter(|pm| Ignore::may_use_glob_pattern(&pm.pattern))
-        .find_map(
-            |pattern::Mapping {
-                 pattern,
-                 value: (),
-                 sequence_number,
-             }| {
-                pattern
-                    .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
-                    .then_some(Match {
-                        pattern,
-                        source: list.source.as_deref(),
-                        sequence_number: *sequence_number,
-                    })
-            },
-        )
+    list.patterns.iter().rev().find_map(
+        |pattern::Mapping {
+             pattern,
+             value: (),
+             sequence_number,
+         }| {
+            pattern
+                .matches_repo_relative_path(
+                    relative_path,
+                    basename_start_pos,
+                    is_dir,
+                    case,
+                    gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+                )
+                .then_some(Match {
+                    pattern,
+                    source: list.source.as_deref(),
+                    sequence_number: *sequence_number,
+                })
+        },
+    )
 }
 
 /// Like [`pattern_matching_relative_path()`], but returns an index to the pattern
@@ -147,16 +145,17 @@ pub fn pattern_idx_matching_relative_path(
 ) -> Option<usize> {
     let (relative_path, basename_start_pos) =
         list.strip_base_handle_recompute_basename_pos(relative_path, basename_pos, case)?;
-    list.patterns
-        .iter()
-        .enumerate()
-        .rev()
-        .filter(|(_, pm)| Ignore::may_use_glob_pattern(&pm.pattern))
-        .find_map(|(idx, pm)| {
-            pm.pattern
-                .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
-                .then_some(idx)
-        })
+    list.patterns.iter().enumerate().rev().find_map(|(idx, pm)| {
+        pm.pattern
+            .matches_repo_relative_path(
+                relative_path,
+                basename_start_pos,
+                is_dir,
+                case,
+                gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+            )
+            .then_some(idx)
+    })
 }
 
 /// Matching of ignore patterns.

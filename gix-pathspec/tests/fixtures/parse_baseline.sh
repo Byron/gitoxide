@@ -28,6 +28,7 @@ baseline ':!^(exclude,exclude)'
 
 # empty_signatures
 baseline '.'
+baseline ':'
 baseline 'some/path'
 baseline ':some/path'
 baseline ':()some/path'
@@ -47,8 +48,11 @@ baseline ':! some/path'
 
 # short_signatures
 baseline ':/some/path'
+baseline '://some/path'
 baseline ':^some/path'
+baseline ':^^some/path'
 baseline ':!some/path'
+baseline ':!!some/path'
 baseline ':/!some/path'
 baseline ':!/^/:some/path'
 
@@ -143,3 +147,12 @@ baseline ':(top'
 
 # glob_and_literal_keywords_present
 baseline ':(glob,literal)some/path'
+# trailing slash
+baseline ':(glob,literal)some/path/'
+baseline 'some/path/'
+baseline 'path/'
+
+baseline 'a/b/'
+baseline 'a/'
+baseline '!a'
+baseline '\!a'

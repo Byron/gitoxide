@@ -610,7 +610,7 @@ pub mod attributes {
             statistics: bool,
             /// The git path specifications to list attributes for, or unset to read from stdin one per line.
             #[clap(value_parser = AsPathSpec)]
-            pathspecs: Vec<gix::path::Spec>,
+            pathspec: Vec<gix::pathspec::Pattern>,
         },
     }
 }
@@ -639,18 +639,33 @@ pub mod exclude {
             patterns: Vec<OsString>,
             /// The git path specifications to check for exclusion, or unset to read from stdin one per line.
             #[clap(value_parser = AsPathSpec)]
-            pathspecs: Vec<gix::path::Spec>,
+            pathspec: Vec<gix::pathspec::Pattern>,
         },
     }
 }
 
 pub mod index {
+    use crate::shared::AsPathSpec;
     use std::path::PathBuf;
+
+    pub mod entries {
+        #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+        pub enum Format {
+            ///
+            #[default]
+            Simple,
+            /// Use the `.tar` file format, uncompressed.
+            Rich,
+        }
+    }
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
         /// Print all entries to standard output
         Entries {
+            /// How to output index entries.
+            #[clap(long, short = 'f', default_value = "simple", value_enum)]
+            format: entries::Format,
             /// Do not visualize excluded entries or attributes per path.
             #[clap(long)]
             no_attributes: bool,
@@ -662,6 +677,9 @@ pub mod index {
             /// Print various statistics to stderr
             #[clap(long, short = 's')]
             statistics: bool,
+            /// The git path specifications to match entries to print.
+            #[clap(value_parser = AsPathSpec)]
+            pathspec: Vec<gix::pathspec::Pattern>,
         },
         /// Create an index from a tree-ish.
         #[clap(visible_alias = "read-tree")]

@@ -141,8 +141,10 @@ fn all_attributes_are_listed_in_declaration_order() -> crate::Result {
         true, /* use macros */
     )?;
 
-    let mut out = gix_attributes::search::Outcome::default();
+    let mut out = Outcome::default();
     out.initialize(&collection);
+    let mut alt = Outcome::default();
+    alt.initialize(&collection);
 
     let mut orders = collection
         .iter()
@@ -206,10 +208,13 @@ fn all_attributes_are_listed_in_declaration_order() -> crate::Result {
         assert_references(&out);
         let actual: Vec<_> = out.iter().map(|m| m.assignment).collect();
         assert_eq!(
-            by_name(actual),
+            by_name(actual.clone()),
             by_name(expected),
             "{rela_path}: the order of everything matches perfectly"
         );
+        out.copy_into(&collection, &mut alt);
+        let alt_actual: Vec<_> = alt.iter().map(|m| m.assignment).collect();
+        assert_eq!(alt_actual, actual);
     }
     assert_eq!(
         out.iter().count(),
@@ -234,8 +239,10 @@ fn given_attributes_are_made_available_in_given_order() -> crate::Result {
         true, /* use macros */
     )?;
 
-    let mut out = gix_attributes::search::Outcome::default();
+    let mut out = Outcome::default();
     out.initialize_with_selection(&collection, ["my-binary", "recursive", "unspecified"]);
+    let mut alt = Outcome::default();
+    alt.initialize_with_selection(&collection, ["my-binary", "unspecified"]);
 
     for (rela_path, expected) in (baseline::Expectations { lines: input.lines() }) {
         out.reset();
@@ -246,6 +253,10 @@ fn given_attributes_are_made_available_in_given_order() -> crate::Result {
             actual, expected,
             "{rela_path}: the order of everything matches perfectly"
         );
+        out.copy_into(&collection, &mut alt);
+        let alt_actual: Vec<_> = alt.iter_selected().map(|m| m.assignment).collect();
+        assert_eq!(alt_actual[0], actual[0]);
+        assert_eq!(alt_actual[1], actual[2]);
     }
     assert_eq!(
         out.iter().count(),
@@ -253,6 +264,15 @@ fn given_attributes_are_made_available_in_given_order() -> crate::Result {
         "the search stops early, leaving many attributes unspecified"
     );
     Ok(())
+}
+
+#[test]
+fn size_of_outcome() {
+    assert_eq!(
+        std::mem::size_of::<Outcome>(),
+        904,
+        "it's quite big, shouldn't change without us noticing"
+    )
 }
 
 fn by_name(assignments: Vec<AssignmentRef>) -> BTreeMap<NameRef, StateRef> {

@@ -73,6 +73,26 @@ impl Outcome {
             self.selected.iter().filter(|(_name, id)| id.is_some()).count()
         });
     }
+
+    /// A performance optimization which allows results from this instance to be efficiently copied over to `dest`.
+    /// For this to work, `collection` must be the one used to initialize our state, and `dest` should not have been initialized
+    /// with any meaningful collection initially, i.e. be empty the first time this method is called.
+    ///
+    /// Note that it's safe to call it multiple times, so that it can be called after this instance was used to store a search result.
+    pub fn copy_into(&self, collection: &MetadataCollection, dest: &mut Self) {
+        dest.initialize(collection);
+        dest.matches_by_id = self.matches_by_id.clone();
+        if dest.patterns.len() != self.patterns.len() {
+            dest.patterns = self.patterns.clone();
+        }
+        if dest.assignments.len() != self.assignments.len() {
+            dest.assignments = self.assignments.clone();
+        }
+        if dest.source_paths.len() != self.source_paths.len() {
+            dest.source_paths = self.source_paths.clone();
+        }
+        dest.remaining = self.remaining;
+    }
 }
 
 /// Access
@@ -220,6 +240,29 @@ impl Outcome {
             *self.remaining.as_mut().expect("initialized") -= 1;
         }
         self.is_done()
+    }
+}
+
+impl std::fmt::Debug for Outcome {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        struct AsDisplay<'a>(&'a dyn std::fmt::Display);
+        impl std::fmt::Debug for AsDisplay<'_> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+
+        let mut dbg = f.debug_tuple("Outcome");
+        if self.selected.is_empty() {
+            for match_ in self.iter() {
+                dbg.field(&AsDisplay(&match_.assignment));
+            }
+        } else {
+            for match_ in self.iter_selected() {
+                dbg.field(&AsDisplay(&match_.assignment));
+            }
+        }
+        dbg.finish()
     }
 }
 

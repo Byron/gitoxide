@@ -28,7 +28,17 @@ fn entry_by_path_with_conflicting_file() {
         file.entry_by_path("file".into()).expect("found").stage(),
         2,
         "we always find our stage while in a merge"
-    )
+    );
+    assert_eq!(
+        file.prefixed_entries("fil".into()).expect("present"),
+        file.entries(),
+        "it's possible to get the entire range"
+    );
+    assert_eq!(
+        file.prefixed_entries("".into()).expect("present"),
+        file.entries(),
+        "empty prefix matches all"
+    );
 }
 
 #[test]
@@ -64,5 +74,32 @@ fn sort_entries() {
             .path(&file),
         new_entry_path,
         "we can find the correct entry now"
+    );
+
+    check_prefix(&file, "a", &["a", "an initially incorrectly ordered entry"]);
+    check_prefix(
+        &file,
+        "d",
+        &["d/a", "d/b", "d/c", "d/last/123", "d/last/34", "d/last/6"],
+    );
+    check_prefix(
+        &file,
+        "d/",
+        &["d/a", "d/b", "d/c", "d/last/123", "d/last/34", "d/last/6"],
+    );
+    check_prefix(&file, "d/last", &["d/last/123", "d/last/34", "d/last/6"]);
+    check_prefix(&file, "d/las", &["d/last/123", "d/last/34", "d/last/6"]);
+    check_prefix(&file, "x", &["x"]);
+}
+
+fn check_prefix(index: &gix_index::State, prefix: &str, expected: &[&str]) {
+    assert_eq!(
+        index
+            .prefixed_entries(prefix.into())
+            .expect("present")
+            .iter()
+            .map(|e| e.path(index))
+            .collect::<Vec<_>>(),
+        expected
     );
 }

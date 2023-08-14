@@ -99,6 +99,7 @@ pub use gix_negotiate as negotiate;
 pub use gix_object as objs;
 pub use gix_object::bstr;
 pub use gix_odb as odb;
+pub use gix_pathspec as pathspec;
 pub use gix_prompt as prompt;
 #[cfg(feature = "gix-protocol")]
 pub use gix_protocol as protocol;

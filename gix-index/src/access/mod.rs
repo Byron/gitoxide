@@ -158,6 +158,34 @@ impl State {
         Some(&self.entries[idx])
     }
 
+    /// Return the slice of entries which all share the same `prefix`, or `None` if there isn't a single such entry.
+    pub fn prefixed_entries(&self, prefix: &BStr) -> Option<&[Entry]> {
+        if prefix.is_empty() {
+            return Some(self.entries());
+        }
+        let prefix_len = prefix.len();
+        let mut low = self
+            .entries
+            .partition_point(|e| e.path(self).get(..prefix_len).map_or(true, |p| p < prefix));
+        let mut high = low
+            + self.entries[low..].partition_point(|e| e.path(self).get(..prefix_len).map_or(false, |p| p <= prefix));
+
+        let low_entry = &self.entries[low];
+        if low_entry.stage() != 0 {
+            low = self
+                .entry_index_by_idx_and_stage(low_entry.path(self), low, 0, low_entry.stage().cmp(&0))
+                .unwrap_or(low);
+        }
+        if let Some(high_entry) = self.entries.get(high) {
+            if low_entry.stage() != 2 {
+                high = self
+                    .entry_index_by_idx_and_stage(high_entry.path(self), high, 2, high_entry.stage().cmp(&2))
+                    .unwrap_or(high);
+            }
+        }
+        (low != high).then_some(low..high).map(|range| &self.entries[range])
+    }
+
     /// Return the entry at `idx` or _panic_ if the index is out of bounds.
     ///
     /// The `idx` is typically returned by [`entry_by_path_and_stage()`][State::entry_by_path_and_stage()].

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::Context;
+use anyhow::{bail, Context};
 use gix::{bstr::ByteSlice, prelude::ObjectIdExt, Progress};
 use rusqlite::{params, OptionalExtension};
 
@@ -18,10 +18,16 @@ impl query::Engine {
     ) -> anyhow::Result<()> {
         match cmd {
             Command::TracePath { mut spec } => {
-                if let Some(prefix) = self.repo.prefix() {
-                    spec.apply_prefix(&prefix?);
-                };
-                let relpath = spec.items().next().expect("spec has at least one item");
+                let is_excluded = spec.is_excluded();
+                let relpath = spec
+                    .normalize(
+                        self.repo.prefix()?.unwrap_or_default().as_ref(),
+                        self.repo.work_dir().unwrap_or_else(|| self.repo.git_dir()),
+                    )?
+                    .path();
+                if relpath.is_empty() || is_excluded {
+                    bail!("Invalid pathspec {spec} - path must not be empty, not be excluded, and wildcards are taken literally")
+                }
                 let file_id: usize = self
                     .con
                     .query_row(
