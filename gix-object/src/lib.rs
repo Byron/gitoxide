@@ -276,8 +276,9 @@ pub mod decode {
 
         impl From<winnow::error::ErrMode<ParseError>> for Error {
             fn from(v: winnow::error::ErrMode<ParseError>) -> Self {
-                let err = v.into_inner().expect("we don't have streaming parsers");
-                Error { inner: err }
+                Error {
+                    inner: v.into_inner().expect("we don't have streaming parsers"),
+                }
             }
         }
 
@@ -307,8 +308,9 @@ pub mod decode {
 
         impl From<winnow::error::ErrMode<ParseError>> for Error {
             fn from(v: winnow::error::ErrMode<ParseError>) -> Self {
-                let err = v.into_inner().expect("we don't have streaming parsers");
-                Error { inner: err }
+                Error {
+                    inner: v.into_inner().expect("we don't have streaming parsers"),
+                }
             }
         }
 
