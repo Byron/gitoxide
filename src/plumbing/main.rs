@@ -1030,14 +1030,13 @@ pub fn main() -> Result<()> {
                     core::repository::attributes::query(
                         repository(Mode::Strict)?,
                         if pathspec.is_empty() {
-                            Box::new(stdin_or_bail()?.byte_lines().filter_map(Result::ok).filter_map(|line| {
-                                gix::pathspec::parse(
-                                    line.as_bstr(),
-                                    // TODO(pathspec): use `repo` actual global defaults when available (see following as well)
-                                    Default::default(),
-                                )
-                                .ok()
-                            })) as Box<dyn Iterator<Item = gix::pathspec::Pattern>>
+                            let defaults = gix::pathspec::Defaults::from_environment()?;
+                            Box::new(
+                                stdin_or_bail()?
+                                    .byte_lines()
+                                    .filter_map(Result::ok)
+                                    .filter_map(move |line| gix::pathspec::parse(line.as_bstr(), defaults).ok()),
+                            ) as Box<dyn Iterator<Item = gix::pathspec::Pattern>>
                         } else {
                             Box::new(pathspec.into_iter())
                         },
@@ -1089,11 +1088,12 @@ pub fn main() -> Result<()> {
                     core::repository::exclude::query(
                         repository(Mode::Strict)?,
                         if pathspec.is_empty() {
+                            let defaults = gix::pathspec::Defaults::from_environment()?;
                             Box::new(
                                 stdin_or_bail()?
                                     .byte_lines()
                                     .filter_map(Result::ok)
-                                    .filter_map(|line| gix::pathspec::parse(&line, Default::default()).ok()),
+                                    .filter_map(move |line| gix::pathspec::parse(&line, defaults).ok()),
                             ) as Box<dyn Iterator<Item = gix::pathspec::Pattern>>
                         } else {
                             Box::new(pathspec.into_iter())

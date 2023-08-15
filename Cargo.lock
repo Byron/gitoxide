@@ -1146,6 +1146,7 @@ dependencies = [
  "gix",
  "gix-features 0.32.1",
  "is-terminal",
+ "once_cell",
  "owo-colors",
  "prodash 25.0.1",
  "tabled",
