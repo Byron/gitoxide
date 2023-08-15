@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use gix_path::realpath::MAX_SYMLINKS;
 
@@ -42,33 +42,18 @@ impl crate::Repository {
     }
 
     /// Returns the relative path which is the components between the working tree and the current working dir (CWD).
-    /// Note that there may be `None` if there is no work tree, even though the `PathBuf` will be empty
-    /// if the CWD is at the root of the work tree.
+    /// Note that it may be `None` if there is no work tree, or if CWD isn't inside of the working tree directory.
+    ///
+    /// Note that the CWD is obtained once upon instantiation of the repository.
     // TODO: tests, details - there is a lot about environment variables to change things around.
-    pub fn prefix(&self) -> std::io::Result<Option<PathBuf>> {
-        self.work_tree
-            .as_ref()
-            .map(|root| {
-                std::env::current_dir().and_then(|cwd| {
-                    gix_path::realpath_opts(root, &cwd, MAX_SYMLINKS)
-                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
-                        .and_then(|root| {
-                            cwd.strip_prefix(&root)
-                                .map_err(|_| {
-                                    std::io::Error::new(
-                                        std::io::ErrorKind::Other,
-                                        format!(
-                                            "CWD '{}' isn't within the work tree '{}'",
-                                            cwd.display(),
-                                            root.display()
-                                        ),
-                                    )
-                                })
-                                .map(ToOwned::to_owned)
-                        })
-                })
-            })
-            .transpose()
+    pub fn prefix(&self) -> Result<Option<&Path>, gix_path::realpath::Error> {
+        let (root, current_dir) = match self.work_dir().zip(self.options.current_dir.as_deref()) {
+            Some((work_dir, cwd)) => (work_dir, cwd),
+            None => return Ok(None),
+        };
+
+        let root = gix_path::realpath_opts(root, &current_dir, MAX_SYMLINKS)?;
+        Ok(current_dir.strip_prefix(&root).ok())
     }
 
     /// Return the kind of repository, either bare or one with a work tree.
