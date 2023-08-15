@@ -473,7 +473,7 @@ pub fn main() -> Result<()> {
                     },
                 ),
                 free::index::Subcommands::Info { no_details } => prepare_and_run(
-                    "index-entries",
+                    "index-info",
                     trace,
                     verbose,
                     progress,
@@ -1126,7 +1126,7 @@ pub fn main() -> Result<()> {
                 None,
                 move |_progress, out, err| {
                     core::repository::index::entries(
-                        repository(Mode::LenientWithGitInstallConfig)?,
+                        repository(Mode::Lenient)?,
                         pathspec,
                         out,
                         err,
