@@ -150,6 +150,12 @@ impl Cache {
     pub fn state_mut(&mut self) -> &mut State {
         &mut self.state
     }
+
+    /// Change the `case` of the next match to the given one.
+    pub fn set_case(&mut self, case: gix_glob::pattern::Case) -> &mut Self {
+        self.case = case;
+        self
+    }
 }
 
 /// Access
