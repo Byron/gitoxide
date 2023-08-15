@@ -258,16 +258,12 @@ pub struct Data<'a> {
 pub mod decode {
     #[cfg(feature = "verbose-object-parsing-errors")]
     mod _decode {
-        use crate::bstr::{BString, ByteSlice};
-
         /// The type to be used for parse errors.
-        pub type ParseError<'a> = winnow::error::VerboseError<&'a [u8], winnow::error::StrContext>;
-        /// The owned type to be used for parse errors.
-        pub type ParseErrorOwned = winnow::error::VerboseError<BString, winnow::error::StrContext>;
+        pub type ParseError = winnow::error::ContextError<winnow::error::StrContext>;
 
         pub(crate) fn empty_error() -> Error {
             Error {
-                inner: winnow::error::VerboseError::<_, _> { errors: Vec::new() },
+                inner: winnow::error::ContextError::new(),
             }
         }
 
@@ -275,21 +271,13 @@ pub mod decode {
         #[derive(Debug, Clone)]
         pub struct Error {
             /// The actual error
-            pub inner: ParseErrorOwned,
+            pub inner: ParseError,
         }
 
-        impl<'a> From<winnow::error::ErrMode<ParseError<'a>>> for Error {
-            fn from(v: winnow::error::ErrMode<ParseError<'a>>) -> Self {
+        impl From<winnow::error::ErrMode<ParseError>> for Error {
+            fn from(v: winnow::error::ErrMode<ParseError>) -> Self {
                 let err = v.into_inner().expect("we don't have streaming parsers");
-                Error {
-                    inner: winnow::error::VerboseError {
-                        errors: err
-                            .errors
-                            .into_iter()
-                            .map(|(i, v)| (i.as_bstr().to_owned(), v))
-                            .collect(),
-                    },
-                }
+                Error { inner: err }
             }
         }
 
@@ -304,9 +292,7 @@ pub mod decode {
     #[cfg(not(feature = "verbose-object-parsing-errors"))]
     mod _decode {
         /// The type to be used for parse errors, discards everything and is zero size
-        pub type ParseError<'a> = ();
-        /// The owned type to be used for parse errors, discards everything and is zero size
-        pub type ParseErrorOwned = ();
+        pub type ParseError = ();
 
         pub(crate) fn empty_error() -> Error {
             Error { inner: () }
@@ -316,11 +302,11 @@ pub mod decode {
         #[derive(Debug, Clone)]
         pub struct Error {
             /// The actual error
-            pub inner: ParseErrorOwned,
+            pub inner: ParseError,
         }
 
-        impl<'a> From<winnow::error::ErrMode<ParseError<'a>>> for Error {
-            fn from(v: winnow::error::ErrMode<ParseError<'a>>) -> Self {
+        impl From<winnow::error::ErrMode<ParseError>> for Error {
+            fn from(v: winnow::error::ErrMode<ParseError>) -> Self {
                 let err = v.into_inner().expect("we don't have streaming parsers");
                 Error { inner: err }
             }
@@ -333,7 +319,7 @@ pub mod decode {
         }
     }
     pub(crate) use _decode::empty_error;
-    pub use _decode::{Error, ParseError, ParseErrorOwned};
+    pub use _decode::{Error, ParseError};
     impl std::error::Error for Error {}
 
     /// Returned by [`loose_header()`]
