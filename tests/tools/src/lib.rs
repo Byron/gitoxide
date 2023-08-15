@@ -692,9 +692,9 @@ fn extract_archive(
 }
 
 /// Transform a verbose bom errors from raw bytes into a `BStr` to make printing/debugging human-readable.
-pub fn to_bstr_err<'i>(
-    err: winnow::error::ErrMode<TreeError<&'i [u8], &'static str>>,
-) -> TreeError<&'i BStr, &'static str> {
+pub fn to_bstr_err(
+    err: winnow::error::ErrMode<TreeError<&[u8], winnow::error::StrContext>>,
+) -> TreeError<&BStr, winnow::error::StrContext> {
     let err = err.into_inner().expect("not a streaming parser");
     err.map_input(ByteSlice::as_bstr)
 }

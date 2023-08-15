@@ -7,35 +7,47 @@ use winnow::{
     combinator::repeat,
     combinator::terminated,
     combinator::{eof, opt, rest},
-    error::{AddContext, ParserError},
+    error::{AddContext, ParserError, StrContext},
     prelude::*,
     token::take_till1,
 };
 
 use crate::{parse, parse::NL, BStr, ByteSlice, CommitRef};
 
-pub fn message<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<&'a BStr, E> {
+pub fn message<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
+    i: &mut &'a [u8],
+) -> PResult<&'a BStr, E> {
     if i.is_empty() {
         // newline + [message]
         return Err(
             winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Eof)
-                .add_context(i, "newline + <message>"),
+                .add_context(i, StrContext::Expected("newline + <message>".into())),
         );
     }
     preceded(NL, rest.map(ByteSlice::as_bstr))
-        .context("a newline separates headers from the message")
+        .context(StrContext::Expected(
+            "a newline separates headers from the message".into(),
+        ))
         .parse_next(i)
 }
 
-pub fn commit<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<CommitRef<'a>, E> {
+pub fn commit<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
+    i: &mut &'a [u8],
+) -> PResult<CommitRef<'a>, E> {
     (
-        (|i: &mut _| parse::header_field(i, b"tree", parse::hex_hash)).context("tree <40 lowercase hex char>"),
+        (|i: &mut _| parse::header_field(i, b"tree", parse::hex_hash))
+            .context(StrContext::Expected("tree <40 lowercase hex char>".into())),
         repeat(0.., |i: &mut _| parse::header_field(i, b"parent", parse::hex_hash))
             .map(|p: Vec<_>| p)
-            .context("zero or more 'parent <40 lowercase hex char>'"),
-        (|i: &mut _| parse::header_field(i, b"author", parse::signature)).context("author <signature>"),
-        (|i: &mut _| parse::header_field(i, b"committer", parse::signature)).context("committer <signature>"),
-        opt(|i: &mut _| parse::header_field(i, b"encoding", take_till1(NL))).context("encoding <encoding>"),
+            .context(StrContext::Expected(
+                "zero or more 'parent <40 lowercase hex char>'".into(),
+            )),
+        (|i: &mut _| parse::header_field(i, b"author", parse::signature))
+            .context(StrContext::Expected("author <signature>".into())),
+        (|i: &mut _| parse::header_field(i, b"committer", parse::signature))
+            .context(StrContext::Expected("committer <signature>".into())),
+        opt(|i: &mut _| parse::header_field(i, b"encoding", take_till1(NL)))
+            .context(StrContext::Expected("encoding <encoding>".into())),
         repeat(
             0..,
             alt((
@@ -45,7 +57,7 @@ pub fn commit<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &mut &'a [
                 },
             )),
         )
-        .context("<field> <single-line|multi-line>"),
+        .context(StrContext::Expected("<field> <single-line|multi-line>".into())),
         terminated(message, eof),
     )
         .map(

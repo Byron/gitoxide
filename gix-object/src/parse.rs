@@ -2,7 +2,7 @@ use bstr::{BStr, BString, ByteVec};
 use winnow::{
     combinator::repeat,
     combinator::{preceded, terminated},
-    error::{AddContext, ParserError},
+    error::{AddContext, ParserError, StrContext},
     prelude::*,
     token::{take_till1, take_until0, take_while},
     Parser,
@@ -14,7 +14,7 @@ pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 const SPACE_OR_NL: &[u8] = b" \n";
 
-pub(crate) fn any_header_field_multi_line<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(
+pub(crate) fn any_header_field_multi_line<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
     i: &mut &'a [u8],
 ) -> PResult<(&'a [u8], BString), E> {
     (
@@ -37,7 +37,7 @@ pub(crate) fn any_header_field_multi_line<'a, E: ParserError<&'a [u8]> + AddCont
                 out
             }),
     )
-        .context("name <multi-line-value>")
+        .context(StrContext::Expected("name <multi-line-value>".into()))
         .parse_next(i)
 }
 
@@ -69,7 +69,7 @@ pub fn hex_hash<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<&'a B
     .parse_next(i)
 }
 
-pub(crate) fn signature<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(
+pub(crate) fn signature<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
     i: &mut &'a [u8],
 ) -> PResult<gix_actor::SignatureRef<'a>, E> {
     gix_actor::signature::decode(i)

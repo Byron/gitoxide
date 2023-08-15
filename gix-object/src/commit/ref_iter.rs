@@ -7,6 +7,7 @@ use winnow::{
     combinator::alt,
     combinator::terminated,
     combinator::{eof, opt},
+    error::StrContext,
     prelude::*,
     token::take_till1,
 };
@@ -155,7 +156,7 @@ impl<'a> CommitRefIter<'a> {
         Ok(match state {
             Tree => {
                 let tree = (|i: &mut _| parse::header_field(i, b"tree", parse::hex_hash))
-                    .context("tree <40 lowercase hex char>")
+                    .context(StrContext::Expected("tree <40 lowercase hex char>".into()))
                     .parse_next(&mut i)?;
                 *state = State::Parents;
                 (
@@ -167,7 +168,7 @@ impl<'a> CommitRefIter<'a> {
             }
             Parents => {
                 let parent = opt(|i: &mut _| parse::header_field(i, b"parent", parse::hex_hash))
-                    .context("commit <40 lowercase hex char>")
+                    .context(StrContext::Expected("commit <40 lowercase hex char>".into()))
                     .parse_next(&mut i)?;
                 match parent {
                     Some(parent) => (
@@ -197,7 +198,7 @@ impl<'a> CommitRefIter<'a> {
                     }
                 };
                 let signature = (|i: &mut _| parse::header_field(i, field_name, parse::signature))
-                    .context(err_msg)
+                    .context(StrContext::Expected(err_msg.into()))
                     .parse_next(&mut i)?;
                 (
                     i,
@@ -209,7 +210,7 @@ impl<'a> CommitRefIter<'a> {
             }
             Encoding => {
                 let encoding = opt(|i: &mut _| parse::header_field(i, b"encoding", take_till1(NL)))
-                    .context("encoding <encoding>")
+                    .context(StrContext::Expected("encoding <encoding>".into()))
                     .parse_next(&mut i)?;
                 *state = State::ExtraHeaders;
                 match encoding {
@@ -225,7 +226,7 @@ impl<'a> CommitRefIter<'a> {
                             .map(|(k, o)| (k.as_bstr(), Cow::Borrowed(o.as_bstr())))
                     },
                 )))
-                .context("<field> <single-line|multi-line>")
+                .context(StrContext::Expected("<field> <single-line|multi-line>".into()))
                 .parse_next(&mut i)?;
                 match extra_header {
                     Some(extra_header) => (i, Token::ExtraHeader(extra_header)),

@@ -1,5 +1,6 @@
 mod _ref {
     use bstr::ByteSlice;
+    use winnow::error::StrContext;
     use winnow::prelude::*;
 
     use crate::{signature::decode, IdentityRef, Signature, SignatureRef};
@@ -8,7 +9,7 @@ mod _ref {
         /// Deserialize a signature from the given `data`.
         pub fn from_bytes<E>(mut data: &'a [u8]) -> Result<SignatureRef<'a>, winnow::error::ErrMode<E>>
         where
-            E: winnow::error::ParserError<&'a [u8]> + winnow::error::AddContext<&'a [u8]>,
+            E: winnow::error::ParserError<&'a [u8]> + winnow::error::AddContext<&'a [u8], StrContext>,
         {
             decode.parse_next(&mut data)
         }

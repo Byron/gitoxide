@@ -82,7 +82,7 @@ pub mod decode {
         combinator::preceded,
         combinator::rest,
         combinator::terminated,
-        error::{AddContext, ParserError},
+        error::{AddContext, ParserError, StrContext},
         prelude::*,
         token::take_while,
     };
@@ -138,19 +138,28 @@ pub mod decode {
         }
     }
 
-    fn one<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(bytes: &mut &'a [u8]) -> PResult<LineRef<'a>, E> {
+    fn one<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
+        bytes: &mut &'a [u8],
+    ) -> PResult<LineRef<'a>, E> {
         (
             (
-                terminated(hex_hash, b" ").context("<old-hexsha>"),
-                terminated(hex_hash, b" ").context("<new-hexsha>"),
-                gix_actor::signature::decode.context("<name> <<email>> <timestamp>"),
+                terminated(hex_hash, b" ").context(StrContext::Expected("<old-hexsha>".into())),
+                terminated(hex_hash, b" ").context(StrContext::Expected("<new-hexsha>".into())),
+                gix_actor::signature::decode.context(StrContext::Expected("<name> <<email>> <timestamp>".into())),
             )
-                .context("<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>"),
+                .context(StrContext::Expected(
+                    "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>".into(),
+                )),
             alt((
-                preceded(b'\t', message.context("<optional message>")),
+                preceded(
+                    b'\t',
+                    message.context(StrContext::Expected("<optional message>".into())),
+                ),
                 b'\n'.value(Default::default()),
                 eof.value(Default::default()),
-                fail.context("log message must be separated from signature with whitespace"),
+                fail.context(StrContext::Expected(
+                    "log message must be separated from signature with whitespace".into(),
+                )),
             )),
         )
             .map(|((old, new, signature), message)| LineRef {
@@ -188,7 +197,7 @@ pub mod decode {
 
             #[test]
             fn completely_bogus_shows_error_with_context() {
-                let err = one::<TreeError<&[u8], &'static str>>
+                let err = one::<TreeError<&[u8], _>>
                     .parse_peek(b"definitely not a log entry")
                     .map_err(to_bstr_err)
                     .expect_err("this should fail");
@@ -198,7 +207,7 @@ pub mod decode {
             #[test]
             fn missing_whitespace_between_signature_and_message() {
                 let line = "0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000message";
-                let err = one::<TreeError<&[u8], &'static str>>
+                let err = one::<TreeError<&[u8], _>>
                     .parse_peek(line.as_bytes())
                     .map_err(to_bstr_err)
                     .expect_err("this should fail");

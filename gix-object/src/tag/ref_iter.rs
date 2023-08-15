@@ -4,6 +4,7 @@ use winnow::{
     combinator::terminated,
     combinator::{eof, opt},
     error::ParserError,
+    error::StrContext,
     prelude::*,
     stream::AsChar,
     token::take_while,
@@ -64,7 +65,7 @@ impl<'a> TagRefIter<'a> {
         Ok(match state {
             Target => {
                 let target = (|i: &mut _| parse::header_field(i, b"object", parse::hex_hash))
-                    .context("object <40 lowercase hex char>")
+                    .context(StrContext::Expected("object <40 lowercase hex char>".into()))
                     .parse_next(&mut i)?;
                 *state = TargetKind;
                 (
@@ -76,7 +77,7 @@ impl<'a> TagRefIter<'a> {
             }
             TargetKind => {
                 let kind = (|i: &mut _| parse::header_field(i, b"type", take_while(1.., AsChar::is_alpha)))
-                    .context("type <object kind>")
+                    .context(StrContext::Expected("type <object kind>".into()))
                     .parse_next(&mut i)?;
                 let kind = Kind::from_bytes(kind)
                     .map_err(|_| winnow::error::ErrMode::from_error_kind(&i, winnow::error::ErrorKind::Verify))?;
@@ -85,14 +86,14 @@ impl<'a> TagRefIter<'a> {
             }
             Name => {
                 let tag_version = (|i: &mut _| parse::header_field(i, b"tag", take_while(1.., |b| b != NL[0])))
-                    .context("tag <version>")
+                    .context(StrContext::Expected("tag <version>".into()))
                     .parse_next(&mut i)?;
                 *state = Tagger;
                 (i, Token::Name(tag_version.as_bstr()))
             }
             Tagger => {
                 let signature = opt(|i: &mut _| parse::header_field(i, b"tagger", parse::signature))
-                    .context("tagger <signature>")
+                    .context(StrContext::Expected("tagger <signature>".into()))
                     .parse_next(&mut i)?;
                 *state = Message;
                 (i, Token::Tagger(signature))
