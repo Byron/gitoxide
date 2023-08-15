@@ -11,7 +11,9 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
+use gitoxide_core::repository::PathsOrPatterns;
 use gix::bstr::io::BufReadExt;
+use gix::bstr::BString;
 
 use crate::{
     plumbing::{
@@ -1026,20 +1028,17 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, err| {
-                    use gix::bstr::ByteSlice;
+                    let repo = repository(Mode::Strict)?;
+                    let pathspecs = if pathspec.is_empty() {
+                        PathsOrPatterns::Paths(Box::new(
+                            stdin_or_bail()?.byte_lines().filter_map(Result::ok).map(BString::from),
+                        ))
+                    } else {
+                        PathsOrPatterns::Patterns(pathspec)
+                    };
                     core::repository::attributes::query(
-                        repository(Mode::Strict)?,
-                        if pathspec.is_empty() {
-                            let defaults = gix::pathspec::Defaults::from_environment()?;
-                            Box::new(
-                                stdin_or_bail()?
-                                    .byte_lines()
-                                    .filter_map(Result::ok)
-                                    .filter_map(move |line| gix::pathspec::parse(line.as_bstr(), defaults).ok()),
-                            ) as Box<dyn Iterator<Item = gix::pathspec::Pattern>>
-                        } else {
-                            Box::new(pathspec.into_iter())
-                        },
+                        repo,
+                        pathspecs,
                         out,
                         err,
                         core::repository::attributes::query::Options { format, statistics },
@@ -1085,19 +1084,17 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, err| {
+                    let repo = repository(Mode::Strict)?;
+                    let pathspecs = if pathspec.is_empty() {
+                        PathsOrPatterns::Paths(Box::new(
+                            stdin_or_bail()?.byte_lines().filter_map(Result::ok).map(BString::from),
+                        ))
+                    } else {
+                        PathsOrPatterns::Patterns(pathspec)
+                    };
                     core::repository::exclude::query(
-                        repository(Mode::Strict)?,
-                        if pathspec.is_empty() {
-                            let defaults = gix::pathspec::Defaults::from_environment()?;
-                            Box::new(
-                                stdin_or_bail()?
-                                    .byte_lines()
-                                    .filter_map(Result::ok)
-                                    .filter_map(move |line| gix::pathspec::parse(&line, defaults).ok()),
-                            ) as Box<dyn Iterator<Item = gix::pathspec::Pattern>>
-                        } else {
-                            Box::new(pathspec.into_iter())
-                        },
+                        repo,
+                        pathspecs,
                         out,
                         err,
                         core::repository::exclude::query::Options {

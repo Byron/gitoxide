@@ -1,4 +1,5 @@
 use crate::OutputFormat;
+use gix::repository::IndexPersistedOrInMemory;
 
 pub struct Options {
     pub format: OutputFormat,
@@ -8,9 +9,11 @@ pub struct Options {
 pub(crate) mod function {
     use std::{io, path::Path};
 
-    use anyhow::bail;
+    use anyhow::{anyhow, bail};
+    use gix::bstr::BStr;
     use gix::prelude::FindExt;
 
+    use crate::repository::PathsOrPatterns;
     use crate::{
         repository::attributes::query::{attributes_cache, Options},
         OutputFormat,
@@ -18,7 +21,7 @@ pub(crate) mod function {
 
     pub fn query(
         repo: gix::Repository,
-        pathspecs: impl Iterator<Item = gix::pathspec::Pattern>,
+        input: PathsOrPatterns,
         mut out: impl io::Write,
         mut err: impl io::Write,
         Options { format, statistics }: Options,
@@ -27,32 +30,33 @@ pub(crate) mod function {
             bail!("JSON output isn't implemented yet");
         }
 
-        let mut cache = attributes_cache(&repo)?;
+        let (mut cache, index) = attributes_cache(&repo)?;
         let mut matches = cache.attribute_matches();
-        // TODO(pathspec): The search is just used as a shortcut to normalization, but one day should be used for an actual search.
-        let search = gix::pathspec::Search::from_specs(
-            pathspecs,
-            repo.prefix()?.as_deref(),
-            repo.work_dir().unwrap_or_else(|| repo.git_dir()),
-        )?;
 
-        for spec in search.into_patterns() {
-            let is_dir = gix::path::from_bstr(spec.path()).metadata().ok().map(|m| m.is_dir());
-            let entry = cache.at_entry(spec.path(), is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
+        match input {
+            PathsOrPatterns::Paths(paths) => {
+                for path in paths {
+                    let is_dir = gix::path::from_bstr(path.as_ref()).metadata().ok().map(|m| m.is_dir());
 
-            if !entry.matching_attributes(&mut matches) {
-                continue;
+                    let entry = cache.at_entry(path.as_slice(), is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
+                    if !entry.matching_attributes(&mut matches) {
+                        continue;
+                    }
+                    print_match(&matches, path.as_ref(), &mut out)?;
+                }
             }
-            for m in matches.iter() {
-                writeln!(
-                    out,
-                    "{}:{}:{}\t{}\t{}",
-                    m.location.source.map(Path::to_string_lossy).unwrap_or_default(),
-                    m.location.sequence_number,
-                    m.pattern,
-                    spec.path(),
-                    m.assignment
-                )?;
+            PathsOrPatterns::Patterns(patterns) => {
+                let mut pathspec = repo.pathspec(patterns, true, &index)?;
+                for (path, _entry) in pathspec
+                    .index_entries_with_paths(&index)
+                    .ok_or_else(|| anyhow!("Pathspec didn't match a single path in the index"))?
+                {
+                    let entry = cache.at_entry(path, Some(false), |oid, buf| repo.objects.find_blob(oid, buf))?;
+                    if !entry.matching_attributes(&mut matches) {
+                        continue;
+                    }
+                    print_match(&matches, path, &mut out)?;
+                }
             }
         }
 
@@ -62,11 +66,32 @@ pub(crate) mod function {
         }
         Ok(())
     }
+
+    fn print_match(
+        matches: &gix::attrs::search::Outcome,
+        path: &BStr,
+        mut out: impl std::io::Write,
+    ) -> std::io::Result<()> {
+        for m in matches.iter() {
+            writeln!(
+                out,
+                "{}:{}:{}\t{}\t{}",
+                m.location.source.map(Path::to_string_lossy).unwrap_or_default(),
+                m.location.sequence_number,
+                m.pattern,
+                path,
+                m.assignment
+            )?;
+        }
+        Ok(())
+    }
 }
 
-pub(crate) fn attributes_cache(repo: &gix::Repository) -> anyhow::Result<gix::worktree::Cache> {
+pub(crate) fn attributes_cache(
+    repo: &gix::Repository,
+) -> anyhow::Result<(gix::worktree::Cache, IndexPersistedOrInMemory)> {
     let index = repo.index_or_load_from_head()?;
-    Ok(repo.attributes(
+    let cache = repo.attributes(
         &index,
         if repo.is_bare() {
             gix::worktree::cache::state::attributes::Source::IdMapping
@@ -75,5 +100,6 @@ pub(crate) fn attributes_cache(repo: &gix::Repository) -> anyhow::Result<gix::wo
         },
         gix::worktree::cache::state::ignore::Source::IdMapping,
         None,
-    )?)
+    )?;
+    Ok((cache, index))
 }

@@ -16,6 +16,7 @@ pub enum Attributes {
 }
 
 pub(crate) mod function {
+    use gix::bstr::BString;
     use std::collections::BTreeSet;
     use std::{
         borrow::Cow,
@@ -28,7 +29,7 @@ pub(crate) mod function {
 
     pub fn entries(
         repo: gix::Repository,
-        pathspecs: Vec<gix::pathspec::Pattern>,
+        pathspecs: Vec<BString>,
         out: impl std::io::Write,
         mut err: impl std::io::Write,
         Options {
@@ -40,10 +41,12 @@ pub(crate) mod function {
     ) -> anyhow::Result<()> {
         use crate::OutputFormat::*;
         let index = repo.index_or_load_from_head()?;
+        let pathspec = repo.pathspec(pathspecs, false, &index)?;
         let mut cache = attributes
             .or_else(|| {
-                pathspecs
-                    .iter()
+                pathspec
+                    .search()
+                    .patterns()
                     .any(|spec| !spec.attributes.is_empty())
                     .then_some(Attributes::Index)
             })
@@ -85,11 +88,7 @@ pub(crate) mod function {
         if let Json = format {
             out.write_all(b"[\n")?;
         }
-        let mut search = gix::pathspec::Search::from_specs(
-            pathspecs,
-            repo.prefix()?.as_deref(),
-            gix::path::realpath(repo.work_dir().unwrap_or_else(|| repo.git_dir()))?.as_ref(), // TODO(pathspec): this setup needs `gix`.
-        )?;
+        let (mut search, _cache) = pathspec.into_parts();
         let mut all_attrs = statistics.then(BTreeSet::new);
         if let Some(entries) = index.prefixed_entries(search.common_prefix()) {
             stats.entries_after_prune = entries.len();
