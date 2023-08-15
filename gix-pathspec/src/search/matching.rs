@@ -1,5 +1,5 @@
 use crate::search::{Match, Spec};
-use crate::{MagicSignature, MatchMode, Pattern, Search};
+use crate::{MagicSignature, Pattern, Search, SearchMode};
 use bstr::{BStr, BString, ByteSlice};
 use gix_glob::pattern::Case;
 
@@ -56,9 +56,9 @@ impl Search {
                     match_verbatim(mapping, relative_path, is_dir, case)
                 } else {
                     let wildmatch_mode = match mapping.value.pattern.search_mode {
-                        MatchMode::ShellGlob => Some(gix_glob::wildmatch::Mode::empty()),
-                        MatchMode::Literal => None,
-                        MatchMode::PathAwareGlob => Some(gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL),
+                        SearchMode::ShellGlob => Some(gix_glob::wildmatch::Mode::empty()),
+                        SearchMode::Literal => None,
+                        SearchMode::PathAwareGlob => Some(gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL),
                     };
                     match wildmatch_mode {
                         Some(wildmatch_mode) => {
@@ -102,7 +102,7 @@ impl Search {
             static MATCH_ALL_STAND_IN: Pattern = Pattern {
                 path: BString::new(Vec::new()),
                 signature: MagicSignature::empty(),
-                search_mode: MatchMode::ShellGlob,
+                search_mode: SearchMode::ShellGlob,
                 attributes: Vec::new(),
                 prefix_len: 0,
                 nil: true,

@@ -2,22 +2,7 @@ use std::borrow::Cow;
 
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 
-use crate::{MagicSignature, MatchMode, Pattern};
-
-/// Default settings for some fields of a [`Pattern`].
-///
-/// These can be used to represent `GIT_*_PATHSPECS` environment variables, for example.
-#[derive(Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub struct Defaults {
-    /// The default signature.
-    pub signature: MagicSignature,
-    /// The default search-mode.
-    ///
-    /// Note that even if it's [`MatchMode::Literal`], the pathspecs will be parsed as usual, but matched verbatim afterwards.
-    pub search_mode: MatchMode,
-    /// If set, the pathspec will not be parsed but used verbatim. Implies [`MatchMode::Literal`] for `search_mode`.
-    pub literal: bool,
-}
+use crate::{Defaults, MagicSignature, Pattern, SearchMode};
 
 /// The error returned by [parse()][crate::parse()].
 #[derive(thiserror::Error, Debug)]
@@ -70,7 +55,7 @@ impl Pattern {
 
         let mut p = Pattern {
             signature,
-            search_mode,
+            search_mode: SearchMode::default(),
             ..Default::default()
         };
 
@@ -84,6 +69,9 @@ impl Pattern {
             }
         }
 
+        if search_mode != Default::default() && p.search_mode == Default::default() {
+            p.search_mode = search_mode;
+        }
         let mut path = &input[cursor..];
         if path.last() == Some(&b'/') {
             p.signature |= MagicSignature::MUST_BE_DIR;
@@ -99,7 +87,7 @@ impl Pattern {
         Pattern {
             path: input.into(),
             signature: default_signature,
-            search_mode: MatchMode::Literal,
+            search_mode: SearchMode::Literal,
             ..Default::default()
         }
     }
@@ -148,12 +136,12 @@ fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Res
             b"icase" => p.signature |= MagicSignature::ICASE,
             b"exclude" => p.signature |= MagicSignature::EXCLUDE,
             b"literal" => match p.search_mode {
-                MatchMode::PathAwareGlob => return Err(Error::IncompatibleSearchModes),
-                _ => p.search_mode = MatchMode::Literal,
+                SearchMode::PathAwareGlob => return Err(Error::IncompatibleSearchModes),
+                _ => p.search_mode = SearchMode::Literal,
             },
             b"glob" => match p.search_mode {
-                MatchMode::Literal => return Err(Error::IncompatibleSearchModes),
-                _ => p.search_mode = MatchMode::PathAwareGlob,
+                SearchMode::Literal => return Err(Error::IncompatibleSearchModes),
+                _ => p.search_mode = SearchMode::PathAwareGlob,
             },
             _ if keyword.starts_with(attr_prefix) => {
                 if p.attributes.is_empty() {

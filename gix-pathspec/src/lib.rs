@@ -30,6 +30,26 @@ pub mod search;
 ///
 pub mod parse;
 
+/// Default settings for some fields of a [`Pattern`].
+///
+/// These can be used to represent `GIT_*_PATHSPECS` environment variables, for example.
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+pub struct Defaults {
+    /// The default signature.
+    pub signature: MagicSignature,
+    /// The default search-mode.
+    ///
+    /// Note that even if it's [`SearchMode::Literal`], the pathspecs will be parsed as usual, but matched verbatim afterwards.
+    ///
+    /// Note that pathspecs can override this the [`SearchMode::Literal`] variant with an explicit `:(glob)` prefix.
+    pub search_mode: SearchMode,
+    /// If set, the pathspec will not be parsed but used verbatim. Implies [`SearchMode::Literal`] for `search_mode`.
+    pub literal: bool,
+}
+
+///
+pub mod defaults;
+
 /// A lists of pathspec patterns, possibly from a file.
 ///
 /// Pathspecs are generally relative to the root of the repository.
@@ -63,7 +83,7 @@ pub struct Pattern {
     /// All magic signatures that were included in the pathspec.
     pub signature: MagicSignature,
     /// The search mode of the pathspec.
-    pub search_mode: MatchMode,
+    pub search_mode: SearchMode,
     /// All attributes that were included in the `ATTR` part of the pathspec, if present.
     ///
     /// `:(attr:a=one b=):path` would yield attribute `a` and `b`.
@@ -96,10 +116,10 @@ bitflags! {
 /// Parts of [magic signatures][MagicSignature] which don't stack as they all configure
 /// the way path specs are matched.
 #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum MatchMode {
+pub enum SearchMode {
     /// Expand special characters like `*` similar to how the shell would do it.
     ///
-    /// See [`PathAwareGlob`][MatchMode::PathAwareGlob] for the alternative.
+    /// See [`PathAwareGlob`](SearchMode::PathAwareGlob) for the alternative.
     #[default]
     ShellGlob,
     /// Special characters in the pattern, like `*` or `?`, are treated literally, effectively turning off globbing.
@@ -112,6 +132,6 @@ pub enum MatchMode {
 /// setting the given `default` values in case these aren't specified in `input`.
 ///
 /// Note that empty [paths](Pattern::path) are allowed here, and generally some processing has to be performed.
-pub fn parse(input: &[u8], default: parse::Defaults) -> Result<Pattern, parse::Error> {
+pub fn parse(input: &[u8], default: Defaults) -> Result<Pattern, parse::Error> {
     Pattern::from_bytes(input, default)
 }
