@@ -261,13 +261,13 @@ pub mod decode {
         use crate::bstr::{BString, ByteSlice};
 
         /// The type to be used for parse errors.
-        pub type ParseError<'a> = winnow::error::VerboseError<&'a [u8]>;
+        pub type ParseError<'a> = winnow::error::VerboseError<&'a [u8], winnow::error::StrContext>;
         /// The owned type to be used for parse errors.
-        pub type ParseErrorOwned = winnow::error::VerboseError<BString>;
+        pub type ParseErrorOwned = winnow::error::VerboseError<BString, winnow::error::StrContext>;
 
         pub(crate) fn empty_error() -> Error {
             Error {
-                inner: winnow::error::VerboseError::<BString> { errors: Vec::new() },
+                inner: winnow::error::VerboseError::<_, _> { errors: Vec::new() },
             }
         }
 

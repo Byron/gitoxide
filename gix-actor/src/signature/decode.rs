@@ -7,7 +7,7 @@ pub(crate) mod function {
         combinator::repeat,
         combinator::separated_pair,
         combinator::terminated,
-        error::{AddContext, ParserError},
+        error::{AddContext, ParserError, StrContext},
         prelude::*,
         stream::AsChar,
         token::{take, take_until0, take_while},
@@ -18,7 +18,7 @@ pub(crate) mod function {
     const SPACE: &[u8] = b" ";
 
     /// Parse a signature from the bytes input `i` using `nom`.
-    pub fn decode<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(
+    pub fn decode<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
         i: &mut &'a [u8],
     ) -> PResult<SignatureRef<'a>, E> {
         separated_pair(
@@ -27,18 +27,18 @@ pub(crate) mod function {
             (
                 terminated(take_until0(SPACE), take(1usize))
                     .verify_map(|v| btoi::<SecondsSinceUnixEpoch>(v).ok())
-                    .context("<timestamp>"),
+                    .context(StrContext::Expected("<timestamp>".into())),
                 alt((
                     repeat(1.., b"-").map(|_: ()| Sign::Minus),
                     repeat(1.., b"+").map(|_: ()| Sign::Plus),
                 ))
-                .context("+|-"),
+                .context(StrContext::Expected("+|-".into())),
                 take_while(2, AsChar::is_dec_digit)
                     .verify_map(|v| btoi::<OffsetInSeconds>(v).ok())
-                    .context("HH"),
+                    .context(StrContext::Expected("HH".into())),
                 take_while(1..=2, AsChar::is_dec_digit)
                     .verify_map(|v| btoi::<OffsetInSeconds>(v).ok())
-                    .context("MM"),
+                    .context(StrContext::Expected("MM".into())),
             )
                 .map(|(time, sign, hours, minutes)| {
                     let offset = (hours * 3600 + minutes * 60) * if sign == Sign::Minus { -1 } else { 1 };
@@ -49,7 +49,7 @@ pub(crate) mod function {
                     }
                 }),
         )
-        .context("<name> <<email>> <timestamp> <+|-><HHMM>")
+        .context(StrContext::Expected("<name> <<email>> <timestamp> <+|-><HHMM>".into()))
         .map(|(identity, time)| SignatureRef {
             name: identity.name,
             email: identity.email,
@@ -59,18 +59,18 @@ pub(crate) mod function {
     }
 
     /// Parse an identity from the bytes input `i` (like `name <email>`) using `nom`.
-    pub fn identity<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(
+    pub fn identity<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
         i: &mut &'a [u8],
     ) -> PResult<IdentityRef<'a>, E> {
         (
-            terminated(take_until0(&b" <"[..]), take(2usize)).context("<name>"),
-            terminated(take_until0(&b">"[..]), take(1usize)).context("<email>"),
+            terminated(take_until0(&b" <"[..]), take(2usize)).context(StrContext::Expected("<name>".into())),
+            terminated(take_until0(&b">"[..]), take(1usize)).context(StrContext::Expected("<email>".into())),
         )
             .map(|(name, email): (&[u8], &[u8])| IdentityRef {
                 name: name.as_bstr(),
                 email: email.as_bstr(),
             })
-            .context("<name> <<email>>")
+            .context(StrContext::Expected("<name> <<email>>".into()))
             .parse_next(i)
     }
 }
@@ -86,7 +86,9 @@ mod tests {
 
         use crate::{signature, SignatureRef, Time};
 
-        fn decode<'i>(i: &mut &'i [u8]) -> PResult<SignatureRef<'i>, winnow::error::TreeError<&'i [u8], &'static str>> {
+        fn decode<'i>(
+            i: &mut &'i [u8],
+        ) -> PResult<SignatureRef<'i>, winnow::error::TreeError<&'i [u8], winnow::error::StrContext>> {
             signature::decode.parse_next(i)
         }
 
@@ -163,7 +165,7 @@ mod tests {
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "in slice at ' 12345 -1215'\n  0: <email> at ' 12345 -1215'\n  1: <name> <<email>> at ' 12345 -1215'\n  2: <name> <<email>> <timestamp> <+|-><HHMM> at ' 12345 -1215'\n"
+                        "in slice at ' 12345 -1215'\n  0: expected `<email>` at ' 12345 -1215'\n  1: expected `<name> <<email>>` at ' 12345 -1215'\n  2: expected `<name> <<email>> <timestamp> <+|-><HHMM>` at ' 12345 -1215'\n"
                     );
         }
 
@@ -174,7 +176,7 @@ mod tests {
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "in predicate verification at 'abc -1215'\n  0: <timestamp> at 'abc -1215'\n  1: <name> <<email>> <timestamp> <+|-><HHMM> at 'abc -1215'\n"
+                        "in predicate verification at 'abc -1215'\n  0: expected `<timestamp>` at 'abc -1215'\n  1: expected `<name> <<email>> <timestamp> <+|-><HHMM>` at 'abc -1215'\n"
                     );
         }
     }

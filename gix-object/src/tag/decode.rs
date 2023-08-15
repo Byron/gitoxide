@@ -4,7 +4,7 @@ use winnow::{
     combinator::rest,
     combinator::{eof, opt},
     combinator::{preceded, terminated},
-    error::{AddContext, ParserError},
+    error::{AddContext, ParserError, StrContext},
     prelude::*,
     stream::AsChar,
     token::{take_until0, take_while},
@@ -12,14 +12,19 @@ use winnow::{
 
 use crate::{parse, parse::NL, BStr, ByteSlice, TagRef};
 
-pub fn git_tag<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<TagRef<'a>, E> {
+pub fn git_tag<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
+    i: &mut &'a [u8],
+) -> PResult<TagRef<'a>, E> {
     (
-        (|i: &mut _| parse::header_field(i, b"object", parse::hex_hash)).context("object <40 lowercase hex char>"),
+        (|i: &mut _| parse::header_field(i, b"object", parse::hex_hash))
+            .context(StrContext::Expected("object <40 lowercase hex char>".into())),
         (|i: &mut _| parse::header_field(i, b"type", take_while(1.., AsChar::is_alpha)))
             .verify_map(|kind| crate::Kind::from_bytes(kind).ok())
-            .context("type <object kind>"),
-        (|i: &mut _| parse::header_field(i, b"tag", take_while(1.., |b| b != NL[0]))).context("tag <version>"),
-        opt(|i: &mut _| parse::header_field(i, b"tagger", parse::signature)).context("tagger <signature>"),
+            .context(StrContext::Expected("type <object kind>".into())),
+        (|i: &mut _| parse::header_field(i, b"tag", take_while(1.., |b| b != NL[0])))
+            .context(StrContext::Expected("tag <version>".into())),
+        opt(|i: &mut _| parse::header_field(i, b"tagger", parse::signature))
+            .context(StrContext::Expected("tagger <signature>".into())),
         terminated(message, eof),
     )
         .map(

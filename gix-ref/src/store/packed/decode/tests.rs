@@ -87,7 +87,7 @@ mod header {
     #[test]
     fn valid_fully_peeled_stored() -> Result {
         let input: &[u8] = b"# pack-refs with: peeled fully-peeled sorted  \nsomething else";
-        let (rest, header) = decode::header::<winnow::error::TreeError<_, &'static str>>
+        let (rest, header) = decode::header::<winnow::error::TreeError<_, _>>
             .parse_peek(input)
             .map_err(to_bstr_err)?;
 

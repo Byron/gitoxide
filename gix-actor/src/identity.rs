@@ -1,4 +1,5 @@
 use bstr::ByteSlice;
+use winnow::error::StrContext;
 use winnow::prelude::*;
 
 use crate::{signature::decode, Identity, IdentityRef};
@@ -7,7 +8,7 @@ impl<'a> IdentityRef<'a> {
     /// Deserialize an identity from the given `data`.
     pub fn from_bytes<E>(mut data: &'a [u8]) -> Result<Self, winnow::error::ErrMode<E>>
     where
-        E: winnow::error::ParserError<&'a [u8]> + winnow::error::AddContext<&'a [u8]>,
+        E: winnow::error::ParserError<&'a [u8]> + winnow::error::AddContext<&'a [u8], StrContext>,
     {
         decode::identity.parse_next(&mut data)
     }
