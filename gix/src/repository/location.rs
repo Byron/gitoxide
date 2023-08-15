@@ -52,7 +52,7 @@ impl crate::Repository {
             None => return Ok(None),
         };
 
-        let root = gix_path::realpath_opts(root, &current_dir, MAX_SYMLINKS)?;
+        let root = gix_path::realpath_opts(root, current_dir, MAX_SYMLINKS)?;
         Ok(current_dir.strip_prefix(&root).ok())
     }
 

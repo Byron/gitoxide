@@ -458,6 +458,29 @@ fn apply_environment_overrides(
             }],
         ),
         (
+            "gitoxide",
+            Some(Cow::Borrowed("pathspec".into())),
+            git_prefix,
+            &[
+                {
+                    let key = &gitoxide::Pathspec::LITERAL;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Pathspec::GLOB;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Pathspec::NOGLOB;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Pathspec::ICASE;
+                    (env(key), key.name)
+                },
+            ],
+        ),
+        (
             "ssh",
             None,
             git_prefix,

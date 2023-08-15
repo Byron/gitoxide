@@ -223,6 +223,10 @@ mod with_overrides {
             .set("GIT_SSH_VARIANT", "ssh-variant-env")
             .set("GIT_SSH_COMMAND", "ssh-command-env")
             .set("GIT_SSH", "ssh-command-fallback-env")
+            .set("GIT_LITERAL_PATHSPECS", "pathspecs-literal")
+            .set("GIT_GLOB_PATHSPECS", "pathspecs-glob")
+            .set("GIT_NOGLOB_PATHSPECS", "pathspecs-noglob")
+            .set("GIT_ICASE_PATHSPECS", "pathspecs-icase")
             .set("GIT_SHALLOW_FILE", "shallow-file-env");
         let mut opts = gix::open::Options::isolated()
             .cli_overrides([
@@ -405,6 +409,10 @@ mod with_overrides {
             ("gitoxide.user.emailFallback", "user email"),
             ("core.deltaBaseCacheLimit", "0"),
             ("gitoxide.objects.cacheLimit", "5m"),
+            ("gitoxide.pathspec.icase", "pathspecs-icase"),
+            ("gitoxide.pathspec.glob", "pathspecs-glob"),
+            ("gitoxide.pathspec.noglob", "pathspecs-noglob"),
+            ("gitoxide.pathspec.literal", "pathspecs-literal"),
         ] {
             assert_eq!(
                 config

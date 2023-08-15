@@ -22,6 +22,13 @@ impl crate::Repository {
         }
     }
 
+    /// Return filesystem options as retrieved from the repository configuration.
+    ///
+    /// Note that these values have not been [probed](gix_fs::Capabilities::probe()).
+    pub fn filesystem_options(&self) -> Result<gix_fs::Capabilities, config::boolean::Error> {
+        self.config.fs_capabilities()
+    }
+
     /// The options used to open the repository.
     pub fn open_options(&self) -> &crate::open::Options {
         &self.options

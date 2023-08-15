@@ -191,3 +191,18 @@ pub struct Remote<'repo> {
     // pub(crate) prune_tags: bool,
     pub(crate) repo: &'repo Repository,
 }
+
+/// A utility to make matching against pathspecs simple.
+///
+/// Note that to perform pathspec matching, attribute access might need to be provided. For that, we use our own
+/// and argue that the implementation is only going to incur costs for it when a pathspec matches *and* has attributes.
+/// Should this potential duplication of effort to maintain attribute state be unacceptable, the user may fall back
+/// to the underlying plumbing.
+#[derive(Clone)]
+pub struct Pathspec<'repo> {
+    pub(crate) repo: &'repo Repository,
+    /// The cache to power attribute access. It's only initialized if we have a pattern with attributes.
+    pub(crate) cache: Option<gix_worktree::Cache>,
+    /// The prepared search to use for checking matches.
+    pub(crate) search: gix_pathspec::Search,
+}
