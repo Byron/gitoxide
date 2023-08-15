@@ -15,7 +15,7 @@ impl<'a> TreeRefIter<'a> {
 impl<'a> TreeRef<'a> {
     /// Deserialize a Tree from `data`.
     pub fn from_bytes(mut data: &'a [u8]) -> Result<TreeRef<'a>, crate::decode::Error> {
-        decode::tree(&mut data).map_err(crate::decode::Error::from)
+        decode::tree(&mut data).map_err(crate::decode::Error::with_err)
     }
 
     /// Find an entry named `name` knowing if the entry is a directory or not, using a binary search.
@@ -70,11 +70,9 @@ impl<'a> Iterator for TreeRefIter<'a> {
                 self.data = &[];
                 let empty = &[] as &[u8];
                 #[allow(clippy::unit_arg)]
-                Some(Err(winnow::error::ErrMode::from_error_kind(
-                    &empty,
-                    winnow::error::ErrorKind::Verify,
-                )
-                .into()))
+                Some(Err(crate::decode::Error::with_err(
+                    winnow::error::ErrMode::from_error_kind(&empty, winnow::error::ErrorKind::Verify),
+                )))
             }
         }
     }

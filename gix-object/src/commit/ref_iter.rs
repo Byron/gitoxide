@@ -151,7 +151,15 @@ fn missing_field() -> crate::decode::Error {
 }
 
 impl<'a> CommitRefIter<'a> {
-    fn next_inner(mut i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
+    #[inline]
+    fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
+        Self::next_inner_(i, state).map_err(crate::decode::Error::with_err)
+    }
+
+    fn next_inner_(
+        mut i: &'a [u8],
+        state: &mut State,
+    ) -> Result<(&'a [u8], Token<'a>), winnow::error::ErrMode<crate::decode::ParseError>> {
         use State::*;
         Ok(match state {
             Tree => {
@@ -181,7 +189,7 @@ impl<'a> CommitRefIter<'a> {
                         *state = State::Signature {
                             of: SignatureKind::Author,
                         };
-                        return Self::next_inner(i, state);
+                        return Self::next_inner_(i, state);
                     }
                 }
             }
@@ -215,7 +223,7 @@ impl<'a> CommitRefIter<'a> {
                 *state = State::ExtraHeaders;
                 match encoding {
                     Some(encoding) => (i, Token::Encoding(encoding.as_bstr())),
-                    None => return Self::next_inner(i, state),
+                    None => return Self::next_inner_(i, state),
                 }
             }
             ExtraHeaders => {
@@ -232,7 +240,7 @@ impl<'a> CommitRefIter<'a> {
                     Some(extra_header) => (i, Token::ExtraHeader(extra_header)),
                     None => {
                         *state = State::Message;
-                        return Self::next_inner(i, state);
+                        return Self::next_inner_(i, state);
                     }
                 }
             }

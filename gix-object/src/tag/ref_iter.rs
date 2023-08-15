@@ -60,7 +60,15 @@ fn missing_field() -> crate::decode::Error {
 }
 
 impl<'a> TagRefIter<'a> {
-    fn next_inner(mut i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
+    #[inline]
+    fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
+        Self::next_inner_(i, state).map_err(crate::decode::Error::with_err)
+    }
+
+    fn next_inner_(
+        mut i: &'a [u8],
+        state: &mut State,
+    ) -> Result<(&'a [u8], Token<'a>), winnow::error::ErrMode<crate::decode::ParseError>> {
         use State::*;
         Ok(match state {
             Target => {
