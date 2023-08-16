@@ -148,7 +148,7 @@ impl oid {
     #[must_use]
     pub fn hex_to_buf(&self, buf: &mut [u8]) -> usize {
         let num_hex_bytes = self.bytes.len() * 2;
-        hex::encode_to_slice(&self.bytes, &mut buf[..num_hex_bytes]).expect("to count correctly");
+        faster_hex::hex_encode(&self.bytes, &mut buf[..num_hex_bytes]).expect("to count correctly");
         num_hex_bytes
     }
 

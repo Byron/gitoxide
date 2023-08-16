@@ -31,7 +31,6 @@ gix-date = { version = "^0.7.2", path = "../gix-date" }
 btoi = "0.4.2"
 itoa = "1.0.1"
 thiserror = "1.0.34"
-hex = "0.4.2"
 bstr = { version = "1.3.0", default-features = false, features = ["std", "unicode"] }
 nom = { version = "7", default-features = false, features = ["std"]}
 smallvec = { version = "1.4.0", features = ["write"] }
