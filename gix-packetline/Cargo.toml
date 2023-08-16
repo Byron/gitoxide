@@ -41,7 +41,7 @@ required-features = ["blocking-io", "maybe-async/is_sync"]
 [dependencies]
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 thiserror = "1.0.34"
-hex = "0.4.2"
+faster-hex = "0.8.0"
 bstr = { version = "1.3.0", default-features = false, features = ["std"] }
 # async support
 futures-io = { version = "0.3.16", optional = true }

@@ -1923,11 +1923,11 @@ dependencies = [
  "async-std",
  "bstr",
  "document-features",
+ "faster-hex",
  "futures-io",
  "futures-lite",
  "gix-hash 0.11.4",
  "gix-odb",
- "hex",
  "maybe-async",
  "pin-project-lite",
  "serde",
@@ -1940,7 +1940,7 @@ version = "0.16.4"
 dependencies = [
  "bstr",
  "document-features",
- "hex",
+ "faster-hex",
  "serde",
  "thiserror",
 ]
