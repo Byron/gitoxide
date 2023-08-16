@@ -1835,6 +1835,7 @@ version = "0.34.0"
 dependencies = [
  "bstr",
  "btoi",
+ "criterion",
  "document-features",
  "gix-actor 0.24.2",
  "gix-date 0.7.2",

@@ -19,7 +19,7 @@ clear-target:
 
 # Run cargo clippy on all crates
 clippy *clippy-args:
-    cargo clippy --all --tests --examples -- {{ clippy-args }}
+    cargo clippy --all --tests --examples --benches -- {{ clippy-args }}
     cargo clippy --all --no-default-features --features small -- {{ clippy-args }}
     cargo clippy --all --no-default-features --features max-pure -- {{ clippy-args }}
     cargo clippy --all --no-default-features --features lean-async --tests -- {{ clippy-args }}

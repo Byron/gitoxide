@@ -12,6 +12,12 @@ rust-version = "1.65"
 [lib]
 doctest = false
 
+[[bench]]
+name = "decode-objects"
+harness = false
+path = "./benches/decode_objects.rs"
+
+
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde = ["dep:serde", "bstr/serde", "smallvec/serde", "gix-hash/serde", "gix-actor/serde"]
@@ -39,6 +45,7 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 document-features = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
+criterion = "0.5.1"
 pretty_assertions = "1.0.0"
 gix-testtools = { path = "../tests/tools"}
 
