@@ -4,7 +4,6 @@ pub(crate) mod function {
     use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch, Time};
     use winnow::{
         combinator::alt,
-        combinator::repeat,
         combinator::separated_pair,
         combinator::terminated,
         error::{AddContext, ParserError, StrContext},
@@ -29,8 +28,8 @@ pub(crate) mod function {
                     .verify_map(|v| btoi::<SecondsSinceUnixEpoch>(v).ok())
                     .context(StrContext::Expected("<timestamp>".into())),
                 alt((
-                    repeat(1.., b"-").map(|_: ()| Sign::Minus),
-                    repeat(1.., b"+").map(|_: ()| Sign::Plus),
+                    take_while(1.., b'-').map(|_| Sign::Minus),
+                    take_while(1.., b'+').map(|_| Sign::Plus),
                 ))
                 .context(StrContext::Expected("+|-".into())),
                 take_while(2, AsChar::is_dec_digit)
