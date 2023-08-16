@@ -59,6 +59,16 @@ fn bare_repo_with_index_file_looks_still_looks_like_bare() -> crate::Result {
 }
 
 #[test]
+fn bare_repo_with_index_file_looks_still_looks_like_bare_if_it_was_renamed() -> crate::Result {
+    for repo_name in ["bare-with-index-bare", "bare-with-index-no-config-bare"] {
+        let repo = repo_path()?.join(repo_name);
+        let kind = gix_discover::is_git(repo)?;
+        assert_eq!(kind, gix_discover::repository::Kind::Bare);
+    }
+    Ok(())
+}
+
+#[test]
 fn no_bare_repo_without_index_file_looks_like_worktree() -> crate::Result {
     let repo = repo_path()?.join("non-bare-without-index").join(".git");
     let kind = gix_discover::is_git(repo)?;
