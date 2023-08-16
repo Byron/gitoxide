@@ -52,6 +52,17 @@ git init --bare bare-with-index.git
   touch index
 )
 
+git init --bare bare-with-index-bare
+(cd bare-with-index-bare
+  touch index
+)
+
+git init --bare bare-with-index-no-config-bare
+(cd bare-with-index-no-config-bare
+  touch index
+  rm config
+)
+
 git init non-bare-without-index
 (cd non-bare-without-index
   touch this
