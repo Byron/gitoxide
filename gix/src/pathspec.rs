@@ -59,7 +59,7 @@ impl<'repo> Pathspec<'repo> {
             repo.prefix()?,
             &gix_path::realpath_opts(
                 repo.work_dir().unwrap_or_else(|| repo.git_dir()),
-                repo.options.current_dir.as_deref().unwrap_or(std::path::Path::new("")),
+                repo.options.current_dir_or_empty(),
                 gix_path::realpath::MAX_SYMLINKS,
             )?,
         )?;

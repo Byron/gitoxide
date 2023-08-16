@@ -149,6 +149,12 @@ impl Options {
     }
 }
 
+impl Options {
+    pub(crate) fn current_dir_or_empty(&self) -> &std::path::Path {
+        self.current_dir.as_deref().unwrap_or(std::path::Path::new(""))
+    }
+}
+
 impl gix_sec::trust::DefaultForLevel for Options {
     fn default_for_level(level: gix_sec::Trust) -> Self {
         match level {
