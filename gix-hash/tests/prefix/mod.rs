@@ -117,7 +117,7 @@ mod try_from {
     #[test]
     fn invalid_chars() {
         let input = "abcdfOsd";
-        let expected = Error::Invalid { c: 'O', index: 5 };
+        let expected = Error::Invalid;
         let actual = Prefix::try_from(input).unwrap_err();
         assert_eq!(actual, expected);
     }

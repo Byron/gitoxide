@@ -21,7 +21,7 @@ mod from_hex {
         fn non_hex_characters() {
             assert!(matches!(
                 ObjectId::from_hex(b"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz").unwrap_err(),
-                decode::Error::Invalid { index: 0, c: 'z' }
+                decode::Error::Invalid
             ));
         }
 

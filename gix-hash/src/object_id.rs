@@ -40,8 +40,8 @@ pub mod decode {
     pub enum Error {
         #[error("A hash sized {0} hexadecimal characters is invalid")]
         InvalidHexEncodingLength(usize),
-        #[error("Invalid character {c} at position {index}")]
-        Invalid { c: char, index: usize },
+        #[error("Invalid character encountered")]
+        Invalid,
     }
 
     /// Hash decoding
@@ -50,16 +50,19 @@ pub mod decode {
         ///
         /// Such a buffer can be obtained using [`oid::write_hex_to(buffer)`][super::oid::write_hex_to()]
         pub fn from_hex(buffer: &[u8]) -> Result<ObjectId, Error> {
-            use hex::FromHex;
             match buffer.len() {
-                40 => Ok(ObjectId::Sha1(<[u8; 20]>::from_hex(buffer).map_err(
-                    |err| match err {
-                        hex::FromHexError::InvalidHexCharacter { c, index } => Error::Invalid { c, index },
-                        hex::FromHexError::OddLength | hex::FromHexError::InvalidStringLength => {
-                            unreachable!("BUG: This is already checked")
-                        }
-                    },
-                )?)),
+                40 => Ok({
+                    ObjectId::Sha1({
+                        let mut buf = [0; 20];
+                        faster_hex::hex_decode(buffer, &mut buf).map_err(|err| match err {
+                            faster_hex::Error::InvalidChar => Error::Invalid,
+                            faster_hex::Error::InvalidLength(_) => {
+                                unreachable!("BUG: This is already checked")
+                            }
+                        })?;
+                        buf
+                    })
+                }),
                 len => Err(Error::InvalidHexEncodingLength(len)),
             }
         }
