@@ -1,7 +1,7 @@
 use bstr::{BStr, BString, ByteVec};
 use winnow::{
     combinator::repeat,
-    combinator::{preceded, terminated},
+    combinator::{delimited, terminated},
     error::{AddContext, ParserError, StrContext},
     prelude::*,
     token::{take_till1, take_until0, take_while},
@@ -46,7 +46,7 @@ pub(crate) fn header_field<'a, T, E: ParserError<&'a [u8]>>(
     name: &'static [u8],
     parse_value: impl Parser<&'a [u8], T, E>,
 ) -> PResult<T, E> {
-    terminated(preceded(terminated(name, SPACE), parse_value), NL).parse_next(i)
+    delimited((name, SPACE), parse_value, NL).parse_next(i)
 }
 
 pub(crate) fn any_header_field<'a, T, E: ParserError<&'a [u8]>>(
