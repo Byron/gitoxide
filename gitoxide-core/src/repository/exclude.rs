@@ -1,8 +1,10 @@
 use std::io;
 
-use anyhow::bail;
+use anyhow::{anyhow, bail};
+use gix::bstr::BStr;
 use gix::prelude::FindExt;
 
+use crate::repository::PathsOrPatterns;
 use crate::OutputFormat;
 
 pub mod query {
@@ -20,7 +22,7 @@ pub mod query {
 
 pub fn query(
     repo: gix::Repository,
-    pathspecs: impl Iterator<Item = gix::pathspec::Pattern>,
+    input: PathsOrPatterns,
     mut out: impl io::Write,
     mut err: impl io::Write,
     query::Options {
@@ -41,30 +43,29 @@ pub fn query(
         Default::default(),
     )?;
 
-    // TODO(pathspec): actually use the search to find items. This looks like `gix` capabilities to put it all together.
-    let search = gix::pathspec::Search::from_specs(
-        pathspecs,
-        repo.prefix()?.as_deref(),
-        repo.work_dir().unwrap_or_else(|| repo.git_dir()),
-    )?;
-
-    for spec in search.into_patterns() {
-        let path = spec.path();
-        let is_dir = gix::path::from_bstr(path).metadata().ok().map(|m| m.is_dir());
-        let entry = cache.at_entry(path, is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
-        let match_ = entry
-            .matching_exclude_pattern()
-            .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then_some(m));
-        match match_ {
-            Some(m) => writeln!(
-                out,
-                "{}:{}:{}\t{}",
-                m.source.map(std::path::Path::to_string_lossy).unwrap_or_default(),
-                m.sequence_number,
-                m.pattern,
-                path
-            )?,
-            None => writeln!(out, "::\t{path}")?,
+    match input {
+        PathsOrPatterns::Paths(paths) => {
+            for path in paths {
+                let is_dir = gix::path::from_bstr(path.as_ref()).metadata().ok().map(|m| m.is_dir());
+                let entry = cache.at_entry(path.as_slice(), is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
+                let match_ = entry
+                    .matching_exclude_pattern()
+                    .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then_some(m));
+                print_match(match_, path.as_ref(), &mut out)?;
+            }
+        }
+        PathsOrPatterns::Patterns(patterns) => {
+            for (path, _entry) in repo
+                .pathspec(patterns.into_iter(), repo.work_dir().is_some(), &index)?
+                .index_entries_with_paths(&index)
+                .ok_or_else(|| anyhow!("Pathspec didn't yield any entry"))?
+            {
+                let entry = cache.at_entry(path, Some(false), |oid, buf| repo.objects.find_blob(oid, buf))?;
+                let match_ = entry
+                    .matching_exclude_pattern()
+                    .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then_some(m));
+                print_match(match_, path, &mut out)?;
+            }
         }
     }
 
@@ -73,4 +74,22 @@ pub fn query(
         writeln!(err, "{stats:#?}").ok();
     }
     Ok(())
+}
+
+fn print_match(
+    m: Option<gix::ignore::search::Match<'_>>,
+    path: &BStr,
+    mut out: impl std::io::Write,
+) -> std::io::Result<()> {
+    match m {
+        Some(m) => writeln!(
+            out,
+            "{}:{}:{}\t{}",
+            m.source.map(std::path::Path::to_string_lossy).unwrap_or_default(),
+            m.sequence_number,
+            m.pattern,
+            path
+        ),
+        None => writeln!(out, "::\t{path}"),
+    }
 }

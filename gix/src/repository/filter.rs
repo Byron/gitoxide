@@ -13,7 +13,7 @@ pub mod pipeline {
         #[error("Could not create index from tree at HEAD^{{tree}}")]
         TreeTraverse(#[from] gix_traverse::tree::breadthfirst::Error),
         #[error(transparent)]
-        BareAttributes(#[from] crate::repository::attributes::Error),
+        BareAttributes(#[from] crate::config::attribute_stack::Error),
         #[error(transparent)]
         WorktreeIndex(#[from] crate::worktree::open_index::Error),
         #[error(transparent)]

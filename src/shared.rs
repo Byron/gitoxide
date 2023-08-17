@@ -348,6 +348,10 @@ mod clap {
     #[derive(Clone)]
     pub struct AsPathSpec;
 
+    static PATHSPEC_DEFAULTS: once_cell::sync::Lazy<gix::pathspec::Defaults> = once_cell::sync::Lazy::new(|| {
+        gix::pathspec::Defaults::from_environment(|n| std::env::var_os(n)).unwrap_or_default()
+    });
+
     impl TypedValueParser for AsPathSpec {
         type Value = gix::pathspec::Pattern;
 
@@ -355,12 +359,24 @@ mod clap {
             OsStringValueParser::new()
                 .try_map(|arg| {
                     let arg: &std::path::Path = arg.as_os_str().as_ref();
-                    gix::pathspec::parse(
-                        gix::path::into_bstr(arg).as_ref(),
-                        // TODO(pathspec): it *should* be possible to obtain these defaults from the environment and then act correctly.
-                        //       gix should
-                        Default::default(),
-                    )
+                    gix::pathspec::parse(gix::path::into_bstr(arg).as_ref(), *PATHSPEC_DEFAULTS)
+                })
+                .parse_ref(cmd, arg, value)
+        }
+    }
+
+    #[derive(Clone)]
+    pub struct CheckPathSpec;
+
+    impl TypedValueParser for CheckPathSpec {
+        type Value = BString;
+
+        fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
+            OsStringValueParser::new()
+                .try_map(|arg| -> Result<_, gix::pathspec::parse::Error> {
+                    let arg = gix::path::into_bstr(std::path::PathBuf::from(arg));
+                    gix::pathspec::parse(arg.as_ref(), Default::default())?;
+                    Ok(arg.into_owned())
                 })
                 .parse_ref(cmd, arg, value)
         }
@@ -392,4 +408,4 @@ mod clap {
         }
     }
 }
-pub use self::clap::{AsBString, AsHashKind, AsOutputFormat, AsPartialRefName, AsPathSpec, AsTime};
+pub use self::clap::{AsBString, AsHashKind, AsOutputFormat, AsPartialRefName, AsPathSpec, AsTime, CheckPathSpec};

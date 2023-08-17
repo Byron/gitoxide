@@ -36,7 +36,6 @@ impl crate::Repository {
 pub mod attributes;
 mod cache;
 mod config;
-mod excludes;
 ///
 pub mod filter;
 mod graph;
@@ -46,12 +45,13 @@ mod index;
 pub(crate) mod init;
 mod kind;
 mod location;
+mod mailmap;
 mod object;
+mod pathspec;
 mod reference;
 mod remote;
 mod revision;
 mod shallow;
-mod snapshots;
 mod state;
 mod thread_safe;
 mod worktree;
@@ -95,7 +95,7 @@ pub mod worktree_stream {
         #[error(transparent)]
         OpenTree(#[from] gix_traverse::tree::breadthfirst::Error),
         #[error(transparent)]
-        AttributesCache(#[from] crate::repository::attributes::Error),
+        AttributesCache(#[from] crate::config::attribute_stack::Error),
         #[error(transparent)]
         FilterPipeline(#[from] crate::filter::pipeline::options::Error),
         #[error("Needed {id} to be a tree to turn into a workspace stream, got {actual}")]

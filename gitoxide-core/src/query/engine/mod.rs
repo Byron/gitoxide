@@ -6,6 +6,7 @@ pub enum Command {
 }
 
 pub(crate) mod update;
+
 pub use update::update;
 
 mod command;

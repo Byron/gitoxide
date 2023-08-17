@@ -589,7 +589,8 @@ pub mod revision {
 }
 
 pub mod attributes {
-    use crate::shared::AsPathSpec;
+    use crate::shared::CheckPathSpec;
+    use gix::bstr::BString;
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -609,16 +610,17 @@ pub mod attributes {
             #[clap(long, short = 's')]
             statistics: bool,
             /// The git path specifications to list attributes for, or unset to read from stdin one per line.
-            #[clap(value_parser = AsPathSpec)]
-            pathspec: Vec<gix::pathspec::Pattern>,
+            #[clap(value_parser = CheckPathSpec)]
+            pathspec: Vec<BString>,
         },
     }
 }
 
 pub mod exclude {
+    use gix::bstr::BString;
     use std::ffi::OsString;
 
-    use crate::shared::AsPathSpec;
+    use crate::shared::CheckPathSpec;
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -638,14 +640,15 @@ pub mod exclude {
             #[clap(long, short = 'p')]
             patterns: Vec<OsString>,
             /// The git path specifications to check for exclusion, or unset to read from stdin one per line.
-            #[clap(value_parser = AsPathSpec)]
-            pathspec: Vec<gix::pathspec::Pattern>,
+            #[clap(value_parser = CheckPathSpec)]
+            pathspec: Vec<BString>,
         },
     }
 }
 
 pub mod index {
-    use crate::shared::AsPathSpec;
+    use crate::shared::CheckPathSpec;
+    use gix::bstr::BString;
     use std::path::PathBuf;
 
     pub mod entries {
@@ -678,8 +681,8 @@ pub mod index {
             #[clap(long, short = 's')]
             statistics: bool,
             /// The git path specifications to match entries to print.
-            #[clap(value_parser = AsPathSpec)]
-            pathspec: Vec<gix::pathspec::Pattern>,
+            #[clap(value_parser = CheckPathSpec)]
+            pathspec: Vec<BString>,
         },
         /// Create an index from a tree-ish.
         #[clap(visible_alias = "read-tree")]

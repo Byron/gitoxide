@@ -76,12 +76,13 @@ impl PrepareFetch {
         gix_url::parse::Error: From<E>,
     {
         let mut url = url.try_into().map_err(gix_url::parse::Error::from)?;
-        url.canonicalize().map_err(|err| Error::CanonicalizeUrl {
-            url: url.clone(),
-            source: err,
-        })?;
         create_opts.destination_must_be_empty = true;
         let mut repo = crate::ThreadSafeRepository::init_opts(path, kind, create_opts, open_opts)?.to_thread_local();
+        url.canonicalize(repo.options.current_dir_or_empty())
+            .map_err(|err| Error::CanonicalizeUrl {
+                url: url.clone(),
+                source: err,
+            })?;
         if repo.committer().is_none() {
             let mut config = gix_config::File::new(gix_config::file::Metadata::api());
             config

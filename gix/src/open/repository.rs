@@ -216,7 +216,13 @@ impl ThreadSafeRepository {
         )?;
 
         if bail_if_untrusted && git_dir_trust != gix_sec::Trust::Full {
-            check_safe_directories(&git_dir, git_install_dir.as_deref(), home.as_deref(), &config)?;
+            check_safe_directories(
+                &git_dir,
+                git_install_dir.as_deref(),
+                current_dir,
+                home.as_deref(),
+                &config,
+            )?;
         }
 
         // core.worktree might be used to overwrite the worktree directory
@@ -321,11 +327,12 @@ fn replacement_objects_refs_prefix(
 fn check_safe_directories(
     git_dir: &std::path::Path,
     git_install_dir: Option<&std::path::Path>,
+    current_dir: &std::path::Path,
     home: Option<&std::path::Path>,
     config: &config::Cache,
 ) -> Result<(), Error> {
     let mut is_safe = false;
-    let git_dir = match gix_path::realpath(git_dir) {
+    let git_dir = match gix_path::realpath_opts(git_dir, current_dir, gix_path::realpath::MAX_SYMLINKS) {
         Ok(p) => p,
         Err(_) => git_dir.to_owned(),
     };

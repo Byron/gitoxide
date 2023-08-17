@@ -18,6 +18,18 @@ fn no_pathspecs_match_everything() -> crate::Result {
 }
 
 #[test]
+fn init_with_exclude() -> crate::Result {
+    let search = gix_pathspec::Search::from_specs(pathspecs(&["tests/", ":!*.sh"]), None, Path::new(""))?;
+    assert_eq!(search.patterns().count(), 2, "nothing artificial is added");
+    assert!(
+        search.patterns().next().expect("first of two").is_excluded(),
+        "re-orded so that excluded are first"
+    );
+    assert_eq!(search.common_prefix(), "tests");
+    Ok(())
+}
+
+#[test]
 fn no_pathspecs_respect_prefix() -> crate::Result {
     let mut search = gix_pathspec::Search::from_specs([], Some(Path::new("a")), Path::new(""))?;
     assert_eq!(
@@ -120,6 +132,13 @@ fn common_prefix() -> crate::Result {
 #[test]
 fn files() -> crate::Result {
     baseline::run("file", false, baseline::files)
+}
+
+fn pathspecs(input: &[&str]) -> Vec<gix_pathspec::Pattern> {
+    input
+        .iter()
+        .map(|pattern| gix_pathspec::parse(pattern.as_bytes(), Default::default()).expect("known to be valid"))
+        .collect()
 }
 
 mod baseline {

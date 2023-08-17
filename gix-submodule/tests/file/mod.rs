@@ -2,6 +2,109 @@ fn submodule(bytes: &str) -> gix_submodule::File {
     gix_submodule::File::from_bytes(bytes.as_bytes(), None).expect("valid module")
 }
 
+mod names_and_active_state {
+    use bstr::{BStr, ByteSlice};
+    use std::str::FromStr;
+
+    fn multi_modules() -> crate::Result<gix_submodule::File> {
+        let modules = gix_testtools::scripted_fixture_read_only("basic.sh")?
+            .join("multiple")
+            .join(".gitmodules");
+        Ok(gix_submodule::File::from_bytes(
+            std::fs::read(&modules)?.as_slice(),
+            modules,
+        )?)
+    }
+
+    fn assume_valid_active_state<'a>(
+        module: &'a gix_submodule::File,
+        config: &'a gix_config::File<'static>,
+        defaults: gix_pathspec::Defaults,
+    ) -> crate::Result<Vec<(&'a str, bool)>> {
+        assume_valid_active_state_with_attrs(module, config, defaults, |_, _, _, _| {
+            unreachable!("shouldn't be called")
+        })
+    }
+
+    fn assume_valid_active_state_with_attrs<'a>(
+        module: &'a gix_submodule::File,
+        config: &'a gix_config::File<'static>,
+        defaults: gix_pathspec::Defaults,
+        attributes: impl FnMut(
+                &BStr,
+                gix_pathspec::attributes::glob::pattern::Case,
+                bool,
+                &mut gix_pathspec::attributes::search::Outcome,
+            ) -> bool
+            + 'a,
+    ) -> crate::Result<Vec<(&'a str, bool)>> {
+        Ok(module
+            .names_and_active_state(config, defaults, attributes)?
+            .map(|(name, bool)| (name.to_str().expect("valid"), bool.expect("valid")))
+            .collect())
+    }
+
+    #[test]
+    fn without_any_additional_settings_all_are_active_if_they_have_a_url() -> crate::Result {
+        let module = multi_modules()?;
+        assert_eq!(
+            assume_valid_active_state(&module, &Default::default(), Default::default())?,
+            &[
+                ("submodule", true),
+                ("a/b", true),
+                (".a/..c", true),
+                ("a/d\\", true),
+                ("a\\e", true)
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn submodules_with_active_config_are_considered_active_or_inactive() -> crate::Result {
+        let module = multi_modules()?;
+        assert_eq!(
+            assume_valid_active_state(
+                &module,
+                &gix_config::File::from_str(
+                    "[submodule.submodule]\n active = 0\n[submodule \"a/b\"]\n active = false"
+                )?,
+                Default::default()
+            )?,
+            &[
+                ("submodule", false),
+                ("a/b", false),
+                (".a/..c", true),
+                ("a/d\\", true),
+                ("a\\e", true)
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn submodules_with_active_config_override_pathspecs() -> crate::Result {
+        let module = multi_modules()?;
+        assert_eq!(
+            assume_valid_active_state(
+                &module,
+                &gix_config::File::from_str(
+                    "[submodule.submodule]\n active = 0\n[submodule]\n active = *\n[submodule]\n active = :!a*"
+                )?,
+                Default::default()
+            )?,
+            &[
+                ("submodule", false),
+                ("a/b", false),
+                (".a/..c", true),
+                ("a/d\\", false),
+                ("a\\e", false)
+            ]
+        );
+        Ok(())
+    }
+}
+
 mod path {
     use crate::file::submodule;
     use gix_submodule::config::path::Error;
@@ -228,6 +331,10 @@ mod branch {
             ("", Branch::Name("HEAD".into())),
             ("master", Branch::Name("master".into())),
             ("feature/a", Branch::Name("feature/a".into())),
+            (
+                "abcde12345abcde12345abcde12345abcde12345",
+                Branch::Name("abcde12345abcde12345abcde12345abcde12345".into()),
+            ),
         ] {
             let module = submodule(&format!("[submodule.a]\n branch = {valid}"));
             assert_eq!(module.branch("a".into())?.expect("present"), expected);

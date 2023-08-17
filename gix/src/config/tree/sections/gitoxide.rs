@@ -24,6 +24,8 @@ impl Gitoxide {
     pub const SSH: Ssh = Ssh;
     /// The `gitoxide.user` section.
     pub const USER: User = User;
+    /// The `gitoxide.pathspec` section.
+    pub const PATHSPEC: Pathspec = Pathspec;
 
     /// The `gitoxide.userAgent` Key.
     pub const USER_AGENT: keys::Any = keys::Any::new("userAgent", &config::Tree::GITOXIDE).with_note(
@@ -52,6 +54,7 @@ impl Section for Gitoxide {
             &Self::OBJECTS,
             &Self::SSH,
             &Self::USER,
+            &Self::PATHSPEC,
         ]
     }
 }
@@ -313,6 +316,43 @@ mod subsections {
         }
     }
 
+    /// The `pathspec` sub-section.
+    #[derive(Copy, Clone, Default)]
+    pub struct Pathspec;
+
+    impl Pathspec {
+        /// The `gitoxide.pathspec.glob` key.
+        pub const GLOB: keys::Boolean = keys::Boolean::new_boolean("glob", &Gitoxide::PATHSPEC)
+            .with_environment_override("GIT_GLOB_PATHSPECS")
+            .with_note("pathspec wildcards don't match the slash character, then needing '**' to get past them");
+        /// The `gitoxide.pathspec.noglob` key.
+        pub const NOGLOB: keys::Boolean = keys::Boolean::new_boolean("noglob", &Gitoxide::PATHSPEC)
+            .with_environment_override("GIT_NOGLOB_PATHSPECS")
+            .with_note("Enable literal matching for glob patterns, effectively disabling globbing");
+        /// The `gitoxide.pathspec.literal` key.
+        pub const LITERAL: keys::Boolean = keys::Boolean::new_boolean("literal", &Gitoxide::PATHSPEC)
+            .with_environment_override("GIT_LITERAL_PATHSPECS")
+            .with_note("Make the entire spec used verbatim, the only way to get ':()name' verbatim for instance");
+        /// The `gitoxide.pathspec.icase` key.
+        pub const ICASE: keys::Boolean = keys::Boolean::new_boolean("icase", &Gitoxide::PATHSPEC)
+            .with_environment_override("GIT_ICASE_PATHSPECS")
+            .with_note("Compare string in a case-insensitive manner");
+    }
+
+    impl Section for Pathspec {
+        fn name(&self) -> &str {
+            "pathspec"
+        }
+
+        fn keys(&self) -> &[&dyn Key] {
+            &[&Self::GLOB, &Self::NOGLOB, &Self::LITERAL, &Self::ICASE]
+        }
+
+        fn parent(&self) -> Option<&dyn Section> {
+            Some(&Tree::GITOXIDE)
+        }
+    }
+
     /// The `objects` sub-section.
     #[derive(Copy, Clone, Default)]
     pub struct Objects;
@@ -398,7 +438,7 @@ mod subsections {
         }
     }
 }
-pub use subsections::{Allow, Author, Commit, Committer, Core, Http, Https, Objects, Ssh, User};
+pub use subsections::{Allow, Author, Commit, Committer, Core, Http, Https, Objects, Pathspec, Ssh, User};
 
 pub mod validate {
     use std::error::Error;

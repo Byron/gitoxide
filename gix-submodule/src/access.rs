@@ -4,7 +4,7 @@ use bstr::BStr;
 use std::borrow::Cow;
 use std::path::Path;
 
-/// Access
+/// High-Level Access
 ///
 /// Note that all methods perform validation of the requested value and report issues right away.
 /// If a bypass is needed, use [`config()`](File::config()) for direct access.
@@ -33,6 +33,69 @@ impl File {
             .filter_map(|s| s.header().subsection_name())
     }
 
+    /// Return an iterator of names along with a boolean that indicates the submodule is active (`true`) or inactive  (`false`).
+    /// If the boolean was wrapped in an error, there was a configuration error.
+    /// Use `defaults` for parsing the pathspecs used to match on names via `submodule.active` configuration retrieved from `config`.
+    /// `attributes` provides a way to resolve the attributes mentioned in pathspecs.
+    ///
+    /// Inactive submodules should not participate in any operations that are applying to all submodules.
+    ///
+    /// Note that the entirety of sections in `config` are considered, not just the ones of the configuration for the repository itself.
+    /// `submodule.active` pathspecs are considered to be top-level specs and match the name of submodules, which may be considered active
+    /// on match. However, there is a [hierarchy of rules](https://git-scm.com/docs/gitsubmodules#_active_submodules) that's
+    /// implemented here, but pathspecs add the most complexity.
+    pub fn names_and_active_state<'a>(
+        &'a self,
+        config: &'a gix_config::File<'static>,
+        defaults: gix_pathspec::Defaults,
+        mut attributes: impl FnMut(
+                &BStr,
+                gix_pathspec::attributes::glob::pattern::Case,
+                bool,
+                &mut gix_pathspec::attributes::search::Outcome,
+            ) -> bool
+            + 'a,
+    ) -> Result<
+        impl Iterator<Item = (&BStr, Result<bool, config::names_and_active_state::iter::Error>)> + 'a,
+        config::names_and_active_state::Error,
+    > {
+        let mut search = config
+            .strings_by_key("submodule.active")
+            .map(|patterns| -> Result<_, config::names_and_active_state::Error> {
+                let patterns = patterns
+                    .into_iter()
+                    .map(|pattern| gix_pathspec::parse(&pattern, defaults))
+                    .collect::<Result<Vec<_>, _>>()?;
+                Ok(gix_pathspec::Search::from_specs(
+                    patterns,
+                    None,
+                    std::path::Path::new(""),
+                )?)
+            })
+            .transpose()?;
+        let iter = self.names().map(move |name| {
+            let active = (|| -> Result<_, config::names_and_active_state::iter::Error> {
+                if let Some(val) = config.boolean("submodule", Some(name), "active").transpose()? {
+                    return Ok(val);
+                };
+                if let Some(val) = search
+                    .as_mut()
+                    .and_then(|search| search.pattern_matching_relative_path(name, Some(true), &mut attributes))
+                    .map(|m| !m.is_excluded())
+                {
+                    return Ok(val);
+                }
+                Ok(match self.url(name) {
+                    Ok(_) => true,
+                    Err(config::url::Error::Missing { .. }) => false,
+                    Err(err) => return Err(err.into()),
+                })
+            })();
+            (name, active)
+        });
+        Ok(iter)
+    }
+
     /// Given the `relative_path` (as seen from the root of the worktree) of a submodule with possibly platform-specific
     /// component separators, find the submodule's name associated with this path, or `None` if none was found.
     ///
@@ -43,7 +106,10 @@ impl File {
             .filter_map(|n| self.path(n).ok().map(|p| (n, p)))
             .find_map(|(n, p)| (p == relative_path).then_some(n))
     }
+}
 
+/// Per-Submodule Access
+impl File {
     /// Return the path relative to the root directory of the working tree at which the submodule is expected to be checked out.
     /// It's an error if the path doesn't exist as it's the only way to associate a path in the index with additional submodule
     /// information, like the URL to fetch from.

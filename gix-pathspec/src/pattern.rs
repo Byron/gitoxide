@@ -1,4 +1,4 @@
-use crate::{normalize, MagicSignature, MatchMode, Pattern};
+use crate::{normalize, MagicSignature, Pattern, SearchMode};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::path::{Component, Path, PathBuf};
 
@@ -158,9 +158,9 @@ impl Pattern {
                 buf.push_str("icase,");
             }
             match self.search_mode {
-                MatchMode::ShellGlob => {}
-                MatchMode::Literal => buf.push_str("literal,"),
-                MatchMode::PathAwareGlob => buf.push_str("glob,"),
+                SearchMode::ShellGlob => {}
+                SearchMode::Literal => buf.push_str("literal,"),
+                SearchMode::PathAwareGlob => buf.push_str("glob,"),
             }
             if self.attributes.is_empty() {
                 if buf.last() == Some(&b',') {

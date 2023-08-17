@@ -31,6 +31,12 @@ git init parent
     } >> baseline.git
   }
 
+  cat <<EOF >.gitattributes
+bb bb-file
+bb/ bb-dir
+/bb/ bb-dir-from-top
+EOF
+
   for p in a bb dir/b dir/bb dir/nested/c cc; do
     git submodule add ../sub $p
     git config --unset submodule.$p.active
@@ -42,6 +48,11 @@ git init parent
   baseline ':'
   baseline ':!'
   baseline 'a'
+  baseline ':(attr:bb-file)'
+  # :(attr:bb-dir) - ["bb", "dir/bb"] == []
+  baseline ':(attr:bb-dir)' git-inconsistency # bb/ matches recursively, git doesn't get it
+  # :(attr:bb-dir-from-top) - ["bb"] == []
+  baseline ':(attr:bb-dir-from-top)' git-inconsistency # probably git doesn't really care about correctness here
   baseline ':(icase)A'
   baseline ':(icase,exclude)A'
   baseline ':(icase,exclude)*/B*'

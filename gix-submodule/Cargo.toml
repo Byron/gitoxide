@@ -12,6 +12,7 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
+gix-pathspec = { version = "^0.1.0", path = "../gix-pathspec" }
 gix-refspec = { version = "^0.15.0", path = "../gix-refspec" }
 gix-config = { version = "^0.27.0", path = "../gix-config" }
 gix-path = { version = "^0.8.4", path = "../gix-path" }

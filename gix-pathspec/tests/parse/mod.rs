@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use bstr::{BStr, BString, ByteSlice};
 use gix_attributes::State;
-use gix_pathspec::{MagicSignature, MatchMode, Pattern};
+use gix_pathspec::{MagicSignature, Pattern, SearchMode};
 use once_cell::sync::Lazy;
 
 #[test]
@@ -23,7 +23,7 @@ fn baseline() {
             );
         }
         let p = gix_pathspec::Pattern::from_literal(pattern, Default::default());
-        assert!(matches!(p.search_mode, MatchMode::Literal));
+        assert!(matches!(p.search_mode, SearchMode::Literal));
     }
 }
 
@@ -35,7 +35,7 @@ mod valid;
 struct NormalizedPattern {
     path: BString,
     signature: MagicSignature,
-    search_mode: MatchMode,
+    search_mode: SearchMode,
     attributes: Vec<(BString, State)>,
 }
 

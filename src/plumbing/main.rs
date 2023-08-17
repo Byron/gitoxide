@@ -11,7 +11,9 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
+use gitoxide_core::repository::PathsOrPatterns;
 use gix::bstr::io::BufReadExt;
+use gix::bstr::BString;
 
 use crate::{
     plumbing::{
@@ -473,7 +475,7 @@ pub fn main() -> Result<()> {
                     },
                 ),
                 free::index::Subcommands::Info { no_details } => prepare_and_run(
-                    "index-entries",
+                    "index-info",
                     trace,
                     verbose,
                     progress,
@@ -1026,21 +1028,17 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, err| {
-                    use gix::bstr::ByteSlice;
+                    let repo = repository(Mode::Strict)?;
+                    let pathspecs = if pathspec.is_empty() {
+                        PathsOrPatterns::Paths(Box::new(
+                            stdin_or_bail()?.byte_lines().filter_map(Result::ok).map(BString::from),
+                        ))
+                    } else {
+                        PathsOrPatterns::Patterns(pathspec)
+                    };
                     core::repository::attributes::query(
-                        repository(Mode::Strict)?,
-                        if pathspec.is_empty() {
-                            Box::new(stdin_or_bail()?.byte_lines().filter_map(Result::ok).filter_map(|line| {
-                                gix::pathspec::parse(
-                                    line.as_bstr(),
-                                    // TODO(pathspec): use `repo` actual global defaults when available (see following as well)
-                                    Default::default(),
-                                )
-                                .ok()
-                            })) as Box<dyn Iterator<Item = gix::pathspec::Pattern>>
-                        } else {
-                            Box::new(pathspec.into_iter())
-                        },
+                        repo,
+                        pathspecs,
                         out,
                         err,
                         core::repository::attributes::query::Options { format, statistics },
@@ -1086,18 +1084,17 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, err| {
+                    let repo = repository(Mode::Strict)?;
+                    let pathspecs = if pathspec.is_empty() {
+                        PathsOrPatterns::Paths(Box::new(
+                            stdin_or_bail()?.byte_lines().filter_map(Result::ok).map(BString::from),
+                        ))
+                    } else {
+                        PathsOrPatterns::Patterns(pathspec)
+                    };
                     core::repository::exclude::query(
-                        repository(Mode::Strict)?,
-                        if pathspec.is_empty() {
-                            Box::new(
-                                stdin_or_bail()?
-                                    .byte_lines()
-                                    .filter_map(Result::ok)
-                                    .filter_map(|line| gix::pathspec::parse(&line, Default::default()).ok()),
-                            ) as Box<dyn Iterator<Item = gix::pathspec::Pattern>>
-                        } else {
-                            Box::new(pathspec.into_iter())
-                        },
+                        repo,
+                        pathspecs,
                         out,
                         err,
                         core::repository::exclude::query::Options {
@@ -1126,7 +1123,7 @@ pub fn main() -> Result<()> {
                 None,
                 move |_progress, out, err| {
                     core::repository::index::entries(
-                        repository(Mode::LenientWithGitInstallConfig)?,
+                        repository(Mode::Lenient)?,
                         pathspec,
                         out,
                         err,

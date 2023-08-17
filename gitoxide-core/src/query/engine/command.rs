@@ -17,14 +17,22 @@ impl query::Engine {
         mut progress: impl gix::Progress,
     ) -> anyhow::Result<()> {
         match cmd {
-            Command::TracePath { mut spec } => {
+            Command::TracePath { spec } => {
                 let is_excluded = spec.is_excluded();
-                let relpath = spec
-                    .normalize(
-                        self.repo.prefix()?.unwrap_or_default().as_ref(),
-                        self.repo.work_dir().unwrap_or_else(|| self.repo.git_dir()),
+                // Just to get the normalized version of the path with everything auto-configured.
+                let relpath = self
+                    .repo
+                    .pathspec(
+                        Some(spec.to_bstring()),
+                        false,
+                        &gix::index::State::new(self.repo.object_hash()),
                     )?
-                    .path();
+                    .search()
+                    .patterns()
+                    .next()
+                    .expect("exactly one")
+                    .path()
+                    .to_owned();
                 if relpath.is_empty() || is_excluded {
                     bail!("Invalid pathspec {spec} - path must not be empty, not be excluded, and wildcards are taken literally")
                 }
@@ -36,7 +44,7 @@ impl query::Engine {
                         |r| r.get(0),
                     )
                     .optional()?
-                    .context("Path not found anywhere in recorded history")?;
+                    .with_context(|| format!("Path '{relpath}' not found anywhere in recorded history"))?;
 
                 let mut by_file_id = self
                     .con

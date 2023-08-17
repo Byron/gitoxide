@@ -182,7 +182,7 @@ pub(crate) mod function {
             }
         });
 
-        let mut cache = attributes_cache(&repo)?;
+        let (mut cache, _index) = attributes_cache(&repo)?;
         let mut matches = cache.attribute_matches();
         let mut progress = progress.add_child("validate");
         let mut mismatches = Vec::new();

@@ -99,7 +99,6 @@ pub use gix_negotiate as negotiate;
 pub use gix_object as objs;
 pub use gix_object::bstr;
 pub use gix_odb as odb;
-pub use gix_pathspec as pathspec;
 pub use gix_prompt as prompt;
 #[cfg(feature = "gix-protocol")]
 pub use gix_protocol as protocol;
@@ -131,10 +130,10 @@ pub type OdbHandle = gix_odb::Handle;
 /// A way to access git configuration
 pub(crate) type Config = OwnShared<gix_config::File<'static>>;
 
-///
 mod types;
 pub use types::{
-    Commit, Head, Id, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
+    Commit, Head, Id, Object, ObjectDetached, Pathspec, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree,
+    Worktree,
 };
 
 ///
@@ -143,6 +142,7 @@ pub mod commit;
 pub mod head;
 pub mod id;
 pub mod object;
+pub mod pathspec;
 pub mod reference;
 pub mod repository;
 pub mod tag;
