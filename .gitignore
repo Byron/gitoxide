@@ -6,5 +6,6 @@ target/
 
 # repositories used for local testing
 /tests/fixtures/repos
+/tests/fixtures/commit-graphs/
 
 **/generated-do-not-edit/
