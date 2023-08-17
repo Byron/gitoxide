@@ -91,19 +91,19 @@ is usable to some extent.
   * [gix-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree)
   * [gix-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bitmap)
   * [gix-negotiate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-negotiate)
+  * [gix-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-filter)
   * [gix-worktree-stream](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree-stream)
+  * [gix-archive](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-archive)
+  * [gix-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-submodule)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
   * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)
-  * [gix-archive](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-archive)
 * **idea** _(just a name placeholder)_
   * [gix-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-note)
   * [gix-fetchhead](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fetchhead)
-  * [gix-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-filter)
   * [gix-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-lfs)
   * [gix-rebase](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-rebase)
   * [gix-sequencer](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-sequencer)
-  * [gix-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-submodule)
   * [gix-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tui)
   * [gix-tix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tix)
   * [gix-bundle](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bundle)

@@ -487,9 +487,10 @@ Make it the best-performing implementation and the most convenient one.
 * [x] primitives to help with graph traversal, along with commit-graph acceleration.
  
 ### gix-submodule
-* [ ] read `.gitmodule` files, access all their fields, and apply overrides
-* CRUD for submodules
-* try to handle with all the nifty interactions and be a little more comfortable than what git offers, lay a foundation for smarter git submodules.
+* [x] read `.gitmodule` files, access all their fields, and apply overrides
+* [x] check if a submodule is 'active'
+* [ ] CRUD for submodules
+* [ ] try to handle with all the nifty interactions and be a little more comfortable than what git offers, lay a foundation for smarter git submodules.
 
 ### gix-bitmap
 
