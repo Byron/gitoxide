@@ -59,6 +59,13 @@ impl<'repo> crate::Worktree<'repo> {
     pub fn id(&self) -> Option<&BStr> {
         id(self.parent.git_dir(), self.parent.common_dir.is_some())
     }
+
+    /// Returns true if the `.git` file or directory exists within the worktree.
+    ///
+    /// This is an indicator for the worktree to be checked out particularly if the parent repository is a submodule.
+    pub fn dot_git_exists(&self) -> bool {
+        self.path.join(gix_discover::DOT_GIT_DIR).exists()
+    }
 }
 
 pub(crate) fn id(git_dir: &std::path::Path, has_common_dir: bool) -> Option<&BStr> {

@@ -37,7 +37,8 @@ impl crate::Repository {
     /// Return the currently set worktree if there is one, acting as platform providing a validated worktree base path.
     ///
     /// Note that there would be `None` if this repository is `bare` and the parent [`Repository`][crate::Repository] was instantiated without
-    /// registered worktree in the current working dir.
+    /// registered worktree in the current working dir, even if no `.git` file or directory exists.
+    /// It's merely based on configuration, see [Worktree::dot_git_exists()] for a way to perform more validation.
     pub fn worktree(&self) -> Option<Worktree<'_>> {
         self.work_dir().map(|path| Worktree { parent: self, path })
     }

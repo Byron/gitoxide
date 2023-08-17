@@ -4,6 +4,8 @@
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {
     /// A submodule worktree, whose `git` repository lives in `.git/modules/**/<name>` of the parent repository.
+    ///
+    /// Note that 'old-form' submodule will register as `Worktree {is_linked: false}`.
     Submodule,
     /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
     Bare,
@@ -53,6 +55,7 @@ mod remote;
 mod revision;
 mod shallow;
 mod state;
+mod submodule;
 mod thread_safe;
 mod worktree;
 
@@ -64,6 +67,19 @@ pub enum IndexPersistedOrInMemory {
     ///
     /// Note that unless saved explicitly, it will not persist.
     InMemory(gix_index::File),
+}
+
+///
+pub mod pathspec_defaults_ignore_case {
+    /// The error returned by [Repository::pathspec_defaults_ignore_case()](crate::Repository::pathspec_defaults_inherit_ignore_case()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Filesystem configuration could not be obtained to learn about case sensitivity")]
+        FilesystemConfig(#[from] crate::config::boolean::Error),
+        #[error(transparent)]
+        Defaults(#[from] gix_pathspec::defaults::from_environment::Error),
+    }
 }
 
 ///

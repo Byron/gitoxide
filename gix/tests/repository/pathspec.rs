@@ -1,6 +1,7 @@
 use crate::util::named_repo;
 use gix::bstr::ByteSlice;
 use gix::config::tree::gitoxide;
+use gix_worktree::stack::state::attributes::Source;
 
 #[test]
 fn defaults_are_taken_from_repo_config() -> crate::Result {
@@ -20,6 +21,7 @@ fn defaults_are_taken_from_repo_config() -> crate::Result {
         ],
         inherit_ignore_case,
         &**repo.index()?,
+        Source::WorktreeThenIdMapping.adjust_for_bare(repo.is_bare()),
     )?;
     assert!(pathspec.is_included("hi", Some(false)));
     assert!(!pathspec.is_included("ho", Some(false)));

@@ -1,10 +1,13 @@
+use std::rc::Rc;
 use std::{cell::RefCell, path::PathBuf};
 
 use gix_hash::ObjectId;
 
+use crate::bstr::BString;
 use crate::{head, remote};
 
 /// A worktree checkout containing the files of the repository in consumable form.
+#[derive(Debug, Clone)]
 pub struct Worktree<'repo> {
     pub(crate) parent: &'repo Repository,
     /// The root path of the checkout.
@@ -138,6 +141,7 @@ pub struct Repository {
     /// Particularly useful when following linked worktrees and instantiating new equally configured worktree repositories.
     pub(crate) options: crate::open::Options,
     pub(crate) index: crate::worktree::IndexStorage,
+    pub(crate) modules: crate::submodule::ModulesFileStorage,
     pub(crate) shallow_commits: crate::shallow::CommitsStorage,
 }
 
@@ -162,6 +166,7 @@ pub struct ThreadSafeRepository {
     pub(crate) linked_worktree_options: crate::open::Options,
     /// The index of this instances worktree.
     pub(crate) index: crate::worktree::IndexStorage,
+    pub(crate) modules: crate::submodule::ModulesFileStorage,
     pub(crate) shallow_commits: crate::shallow::CommitsStorage,
 }
 
@@ -205,4 +210,11 @@ pub struct Pathspec<'repo> {
     pub(crate) cache: Option<gix_worktree::Stack>,
     /// The prepared search to use for checking matches.
     pub(crate) search: gix_pathspec::Search,
+}
+
+/// A stand-in for the submodule of a particular name.
+#[derive(Clone)]
+pub struct Submodule<'repo> {
+    pub(crate) state: Rc<crate::submodule::SharedState<'repo>>,
+    pub(crate) name: BString,
 }
