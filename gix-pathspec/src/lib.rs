@@ -7,6 +7,9 @@ use bitflags::bitflags;
 use bstr::BString;
 use std::path::PathBuf;
 
+/// `gix-glob` types are available through [`attributes::glob`].
+pub use gix_attributes as attributes;
+
 ///
 pub mod normalize {
     use std::path::PathBuf;
