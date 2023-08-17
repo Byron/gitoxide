@@ -55,22 +55,20 @@ impl File {
 
         let mut config_to_append = gix_config::File::new(config.meta_owned());
         let mut prev_name = None;
-        let mut section = None;
         for ((module_name, field), values) in values {
             if prev_name.map_or(true, |pn: &BStr| pn != module_name) {
-                section.take();
-                section = Some(
-                    config_to_append
-                        .new_section("submodule", Cow::Owned(module_name.to_owned()))
-                        .expect("all names come from valid configuration, so remain valid"),
-                );
+                config_to_append
+                    .new_section("submodule", Cow::Owned(module_name.to_owned()))
+                    .expect("all names come from valid configuration, so remain valid");
                 prev_name = Some(module_name);
             }
-            let section = section.as_mut().expect("always set at this point");
-            section.push(
-                field.try_into().expect("statically known key"),
-                Some(values.last().expect("at least one value or we wouldn't be here")),
-            );
+            config_to_append
+                .section_mut("submodule", Some(module_name))
+                .expect("always set at this point")
+                .push(
+                    field.try_into().expect("statically known key"),
+                    Some(values.last().expect("at least one value or we wouldn't be here")),
+                );
         }
 
         self.config.append(config_to_append);
