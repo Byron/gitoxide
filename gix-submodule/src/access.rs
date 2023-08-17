@@ -2,6 +2,7 @@ use crate::config::{Branch, FetchRecurse, Ignore, Update};
 use crate::{config, File};
 use bstr::BStr;
 use std::borrow::Cow;
+use std::collections::HashSet;
 use std::path::Path;
 
 /// High-Level Access
@@ -26,11 +27,17 @@ impl File {
     ///
     /// Note that these exact names have to be used for querying submodule values.
     pub fn names(&self) -> impl Iterator<Item = &BStr> {
+        let mut seen = HashSet::<&BStr>::default();
         self.config
             .sections_by_name("submodule")
             .into_iter()
             .flatten()
-            .filter_map(|s| s.header().subsection_name())
+            .filter_map(move |s| {
+                s.header()
+                    .subsection_name()
+                    .filter(|_| s.meta().source == crate::init::META_MARKER)
+                    .filter(|name| seen.insert(*name))
+            })
     }
 
     /// Return an iterator of names along with a boolean that indicates the submodule is active (`true`) or inactive  (`false`).

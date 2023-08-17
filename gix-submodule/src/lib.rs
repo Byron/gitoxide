@@ -90,11 +90,16 @@ mod init {
         }
     }
 
+    /// A marker we use when listing names to not pick them up from overridden sections.
+    pub(crate) const META_MARKER: gix_config::Source = gix_config::Source::Api;
+
     /// Lifecycle
     impl File {
         /// Parse `bytes` as git configuration, typically from `.gitmodules`, without doing any further validation.
         /// `path` can be provided to keep track of where the file was read from in the underlying [`config`](Self::config())
         /// instance.
+        /// `config` is used to [apply value overrides](File::append_submodule_overrides), which can be empty if overrides
+        /// should be applied at a later time.
         ///
         /// Future access to the module information is lazy and configuration errors are exposed there on a per-value basis.
         ///
@@ -102,16 +107,24 @@ mod init {
         ///
         /// The information itself should be used with care as it can direct the caller to fetch from remotes. It is, however,
         /// on the caller to assure the input data can be trusted.
-        pub fn from_bytes(bytes: &[u8], path: impl Into<Option<PathBuf>>) -> Result<Self, gix_config::parse::Error> {
-            let metadata = path.into().map_or_else(gix_config::file::Metadata::api, |path| {
-                gix_config::file::Metadata::from(gix_config::Source::Worktree).at(path)
-            });
-            let config = gix_config::File::from_parse_events_no_includes(
+        pub fn from_bytes(
+            bytes: &[u8],
+            path: impl Into<Option<PathBuf>>,
+            config: &gix_config::File<'_>,
+        ) -> Result<Self, gix_config::parse::Error> {
+            let metadata = {
+                let mut meta = gix_config::file::Metadata::from(META_MARKER);
+                meta.path = path.into();
+                meta
+            };
+            let modules = gix_config::File::from_parse_events_no_includes(
                 gix_config::parse::Events::from_bytes_owned(bytes, None)?,
                 metadata,
             );
 
-            Ok(Self { config })
+            let mut res = Self { config: modules };
+            res.append_submodule_overrides(config);
+            Ok(res)
         }
 
         /// Turn ourselves into the underlying parsed configuration file.

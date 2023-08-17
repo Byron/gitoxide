@@ -6,7 +6,9 @@ use std::path::PathBuf;
 #[test]
 fn common_values_and_names_by_path() -> crate::Result {
     let modules = module_files()
-        .map(|(path, stripped)| gix_submodule::File::from_bytes(&std::fs::read(path).unwrap(), stripped))
+        .map(|(path, stripped)| {
+            gix_submodule::File::from_bytes(&std::fs::read(path).unwrap(), stripped, &Default::default())
+        })
         .collect::<Result<Vec<_>, _>>()?;
 
     assert_eq!(
