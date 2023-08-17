@@ -8,6 +8,13 @@ fn fuzz() {
         Events::from_str("[]A=\\\\\r\\\n\n").is_err(),
         "empty sections are not allowed, and it won't crash either"
     );
+    assert!(
+        Events::from_str(include_str!(
+            "../fixtures/clusterfuzz-testcase-minimized-gix-config-parse-6431708583690240"
+        ))
+            .is_err(),
+        "works without hanging - these 400kb take 10s in debug mode right now, but just as long in release mode. With nom all tests ran in below 1s in debug mode"
+    );
 }
 
 #[test]
