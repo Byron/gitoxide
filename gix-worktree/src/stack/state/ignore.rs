@@ -25,6 +25,17 @@ pub enum Source {
     WorktreeThenIdMappingIfNotSkipped,
 }
 
+impl Source {
+    /// Returns non-worktree variants of `self` if `is_bare` is true.
+    pub fn adjust_for_bare(self, is_bare: bool) -> Self {
+        if is_bare {
+            Source::IdMapping
+        } else {
+            self
+        }
+    }
+}
+
 /// Various aggregate numbers related [`Ignore`].
 #[derive(Default, Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
