@@ -337,6 +337,13 @@ mod subsections {
         pub const ICASE: keys::Boolean = keys::Boolean::new_boolean("icase", &Gitoxide::PATHSPEC)
             .with_environment_override("GIT_ICASE_PATHSPECS")
             .with_note("Compare string in a case-insensitive manner");
+        /// The `gitoxide.pathspec.inheritIgnoreCase` key, defaulting to `true` if unspecified.
+        /// If set, pathspecs will automatically be match case-insensitively if the underlying filesystem is configured that way.
+        pub const INHERIT_IGNORE_CASE: keys::Boolean =
+            keys::Boolean::new_boolean("inheritIgnoreCase", &Gitoxide::PATHSPEC)
+                .with_note("Inherit `core.ignoreCase` for defaults in pathspecs");
+        /// The default value for `gitoxide.pathspec.inheritIgnoreCase`.
+        pub const INHERIT_IGNORE_CASE_DEFAULT: bool = true;
     }
 
     impl Section for Pathspec {
@@ -345,7 +352,13 @@ mod subsections {
         }
 
         fn keys(&self) -> &[&dyn Key] {
-            &[&Self::GLOB, &Self::NOGLOB, &Self::LITERAL, &Self::ICASE]
+            &[
+                &Self::GLOB,
+                &Self::NOGLOB,
+                &Self::LITERAL,
+                &Self::ICASE,
+                &Self::INHERIT_IGNORE_CASE,
+            ]
         }
 
         fn parent(&self) -> Option<&dyn Section> {

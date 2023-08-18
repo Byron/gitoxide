@@ -141,7 +141,9 @@ pub mod excludes {
 
 ///
 pub mod attributes {
-    /// The error returned by [`Worktree::attributes()`][crate::Worktree::attributes()].
+    use crate::Worktree;
+
+    /// The error returned by [`Worktree::attributes()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -151,7 +153,7 @@ pub mod attributes {
         CreateCache(#[from] crate::repository::attributes::Error),
     }
 
-    impl<'repo> crate::Worktree<'repo> {
+    impl<'repo> Worktree<'repo> {
         /// Configure a file-system cache checking if files below the repository are excluded or for querying their attributes.
         ///
         /// This takes into consideration all the usual repository configuration, namely:
@@ -177,6 +179,61 @@ pub mod attributes {
                     gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
                 )
                 .map_err(|err| Error::CreateCache(err.into()))
+        }
+    }
+}
+
+///
+pub mod pathspec {
+    use crate::bstr::BStr;
+    use crate::config::cache::util::ApplyLeniencyDefaultValue;
+    use crate::config::tree::gitoxide;
+    use crate::Worktree;
+
+    /// The error returned by [`Worktree::pathspec()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Init(#[from] crate::pathspec::init::Error),
+        #[error(transparent)]
+        OpenIndex(#[from] crate::worktree::open_index::Error),
+    }
+
+    impl<'repo> Worktree<'repo> {
+        /// Configure pathspecs `patterns` to be matched against, with pathspec attributes read from the worktree and then from the index
+        /// if needed.
+        ///
+        /// ### Deviation
+        ///
+        /// Pathspec attributes match case-insensitively by default if the underlying filesystem is configured that way.
+        pub fn pathspec(
+            &self,
+            patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
+        ) -> Result<crate::Pathspec<'repo>, Error> {
+            let index = self.index()?;
+            let inherit_ignore_case = self
+                .parent
+                .config
+                .resolved
+                .boolean_by_key("gitoxide.pathspec.inheritIgnoreCase")
+                .map(|res| {
+                    gitoxide::Pathspec::INHERIT_IGNORE_CASE
+                        .enrich_error(res)
+                        .with_lenient_default_value(
+                            self.parent.config.lenient_config,
+                            gitoxide::Pathspec::INHERIT_IGNORE_CASE_DEFAULT,
+                        )
+                })
+                .transpose()
+                .map_err(|err| Error::Init(crate::pathspec::init::Error::Defaults(err.into())))?
+                .unwrap_or(gitoxide::Pathspec::INHERIT_IGNORE_CASE_DEFAULT);
+            Ok(self.parent.pathspec(
+                patterns,
+                inherit_ignore_case,
+                &index,
+                gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
+            )?)
         }
     }
 }
