@@ -121,7 +121,10 @@ fn section<'i>(
             dispatch(Event::Newline(Cow::Borrowed(v.as_bstr())));
         }
 
-        let _ = key_value_pair(i, node, dispatch);
+        let before_key = i.checkpoint();
+        if key_value_pair(i, node, dispatch).is_err() {
+            i.reset(before_key);
+        }
 
         if let Some(comment) = opt(comment).parse_next(i)? {
             dispatch(Event::Comment(comment));
