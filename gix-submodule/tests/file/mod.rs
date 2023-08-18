@@ -2,7 +2,7 @@ fn submodule(bytes: &str) -> gix_submodule::File {
     gix_submodule::File::from_bytes(bytes.as_bytes(), None, &Default::default()).expect("valid module")
 }
 
-mod names_and_active_state {
+mod is_active_platform {
     use bstr::{BStr, ByteSlice};
     use std::str::FromStr;
 
@@ -31,7 +31,7 @@ mod names_and_active_state {
         module: &'a gix_submodule::File,
         config: &'a gix_config::File<'static>,
         defaults: gix_pathspec::Defaults,
-        attributes: impl FnMut(
+        mut attributes: impl FnMut(
                 &BStr,
                 gix_pathspec::attributes::glob::pattern::Case,
                 bool,
@@ -39,9 +39,17 @@ mod names_and_active_state {
             ) -> bool
             + 'a,
     ) -> crate::Result<Vec<(&'a str, bool)>> {
+        let mut platform = module.is_active_platform(config, defaults)?;
         Ok(module
-            .names_and_active_state(config, defaults, attributes)?
-            .map(|(name, bool)| (name.to_str().expect("valid"), bool.expect("valid")))
+            .names()
+            .map(|name| {
+                (
+                    name.to_str().expect("valid"),
+                    platform
+                        .is_active(module, config, name, &mut attributes)
+                        .expect("valid"),
+                )
+            })
             .collect())
     }
 

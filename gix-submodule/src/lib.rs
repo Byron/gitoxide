@@ -21,6 +21,14 @@ mod access;
 ///
 pub mod config;
 
+///
+pub mod is_active_platform;
+
+/// A platform to keep the state necessary to perform repeated active checks, created by [File::is_active_platform()].
+pub struct IsActivePlatform {
+    pub(crate) search: Option<gix_pathspec::Search>,
+}
+
 /// Mutation
 impl File {
     /// This can be used to let `config` override some values we know about submodules, namely…

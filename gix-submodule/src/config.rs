@@ -214,28 +214,3 @@ pub mod path {
         OutsideOfWorktree { actual: BString, submodule: BString },
     }
 }
-///
-pub mod names_and_active_state {
-    /// The error returned by [File::names_and_active_state](crate::File::names_and_active_state()).
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        NormalizePattern(#[from] gix_pathspec::normalize::Error),
-        #[error(transparent)]
-        ParsePattern(#[from] gix_pathspec::parse::Error),
-    }
-
-    ///
-    pub mod iter {
-        /// The error returned by the iterator of [File::names_and_active_state](crate::File::names_and_active_state()).
-        #[derive(Debug, thiserror::Error)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            #[error("The value of the 'active' field of a submodule could not be decoded")]
-            ActiveField(#[from] gix_config::value::Error),
-            #[error(transparent)]
-            Url(#[from] crate::config::url::Error),
-        }
-    }
-}
