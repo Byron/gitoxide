@@ -808,7 +808,12 @@ mod key_value_pair {
     fn nonascii_is_allowed_for_values_but_not_for_keys() {
         let mut node = ParseNode::SectionHeader;
         let mut vec = Default::default();
-        assert!(key_value("你好".as_bytes(), &mut node, &mut vec).is_err());
+        // Verifying `is_ok` because bad keys get ignored
+        assert!(key_value("你好".as_bytes(), &mut node, &mut vec).is_ok());
+        assert_eq!(vec, into_events(vec![]));
+
+        let mut node = ParseNode::SectionHeader;
+        let mut vec = Default::default();
         assert!(key_value("a = 你好 ".as_bytes(), &mut node, &mut vec).is_ok());
         assert_eq!(
             vec,

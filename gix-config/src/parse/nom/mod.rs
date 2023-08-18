@@ -121,10 +121,7 @@ fn section<'i>(
             dispatch(Event::Newline(Cow::Borrowed(v.as_bstr())));
         }
 
-        let before_key = i.checkpoint();
-        if key_value_pair(i, node, dispatch).is_err() {
-            i.reset(before_key);
-        }
+        key_value_pair(i, node, dispatch)?;
 
         if let Some(comment) = opt(comment).parse_next(i)? {
             dispatch(Event::Comment(comment));
@@ -216,16 +213,18 @@ fn key_value_pair<'i>(
     dispatch: &mut impl FnMut(Event<'i>),
 ) -> PResult<(), NomError<&'i [u8]>> {
     *node = ParseNode::Name;
-    let name = config_name.parse_next(i)?;
+    if let Some(name) = opt(config_name).parse_next(i)? {
+        dispatch(Event::SectionKey(section::Key(Cow::Borrowed(name))));
 
-    dispatch(Event::SectionKey(section::Key(Cow::Borrowed(name))));
+        if let Some(whitespace) = opt(take_spaces1).parse_next(i)? {
+            dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));
+        }
 
-    if let Some(whitespace) = opt(take_spaces1).parse_next(i)? {
-        dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));
+        *node = ParseNode::Value;
+        config_value(i, dispatch)
+    } else {
+        Ok(())
     }
-
-    *node = ParseNode::Value;
-    config_value(i, dispatch)
 }
 
 /// Parses the config name of a config pair. Assumes the input has already been
