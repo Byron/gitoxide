@@ -232,7 +232,7 @@ pub mod pathspec {
                 patterns,
                 inherit_ignore_case,
                 &index,
-                gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
+                gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
             )?)
         }
     }

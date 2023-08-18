@@ -41,7 +41,12 @@ pub(crate) mod function {
     ) -> anyhow::Result<()> {
         use crate::OutputFormat::*;
         let index = repo.index_or_load_from_head()?;
-        let pathspec = repo.pathspec(pathspecs, false, &index)?;
+        let pathspec = repo.pathspec(
+            pathspecs,
+            false,
+            &index,
+            gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping.adjust_for_bare(repo.is_bare()),
+        )?;
         let mut cache = attributes
             .or_else(|| {
                 pathspec
@@ -55,21 +60,15 @@ pub(crate) mod function {
                     &index,
                     match attrs {
                         Attributes::WorktreeAndIndex => {
-                            if repo.is_bare() {
-                                gix::worktree::stack::state::attributes::Source::IdMapping
-                            } else {
-                                gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
-                            }
+                            gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
+                                .adjust_for_bare(repo.is_bare())
                         }
                         Attributes::Index => gix::worktree::stack::state::attributes::Source::IdMapping,
                     },
                     match attrs {
                         Attributes::WorktreeAndIndex => {
-                            if repo.is_bare() {
-                                gix::worktree::stack::state::ignore::Source::IdMapping
-                            } else {
-                                gix::worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped
-                            }
+                            gix::worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped
+                                .adjust_for_bare(repo.is_bare())
                         }
                         Attributes::Index => gix::worktree::stack::state::ignore::Source::IdMapping,
                     },
