@@ -1497,6 +1497,7 @@ dependencies = [
 name = "gix-diff"
 version = "0.34.0"
 dependencies = [
+ "document-features",
  "getrandom",
  "gix-hash 0.11.4",
  "gix-object 0.34.0",
