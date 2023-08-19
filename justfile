@@ -139,6 +139,10 @@ unit-tests:
       set -ex; \
       cargo test; \
       cargo test --features "internal-testing-gix-features-parallel"
+    cd gix-worktree-state; \
+      set -ex; \
+      cargo test; \
+      cargo test --features "internal-testing-gix-features-parallel"
     cd gix-object; \
       set -ex; \
       cargo test; \

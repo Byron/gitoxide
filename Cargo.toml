@@ -235,6 +235,7 @@ members = [
     "gix-index",
     "gix-bitmap",
     "gix-worktree",
+    "gix-worktree-state",
     "gix-status",
     "gix-revision",
     "gix-packetline",

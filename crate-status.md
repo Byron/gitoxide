@@ -459,6 +459,27 @@ Make it the best-performing implementation and the most convenient one.
 * [ ] differences between tree and index to turn tree into index
 * [ ] untracked files
 * [ ] fast answer to 'is it dirty'.
+* 
+### gix-worktree-state
+* handle the working **tree/checkout**
+    - [x] checkout an index of files, executables and symlinks just as fast as git
+        - [x] forbid symlinks in directories
+        - [ ] handle submodules
+        - [ ] handle sparse directories
+        - [ ] handle sparse index
+        - [x] linear scaling with multi-threading up to IO saturation
+    - supported attributes to affect working tree and index contents
+        - [x] eol
+        - [x] working-tree-encoding
+        - …more
+    - **filtering**
+        - [x] `text`
+        - [x] `ident`
+        - [x] filter processes
+        - [x] single-invocation clean/smudge filters
+* access to per-path information, like `.gitignore` and `.gitattributes` in a manner well suited for efficient lookups
+    * [x] _exclude_ information
+    * [x] attributes
 
 ### gix-worktree
 * handle the working **tree/checkout**
