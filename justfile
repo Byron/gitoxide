@@ -99,6 +99,7 @@ check:
     cargo check -p gix-config-value
     cargo check -p gix-config --all-features
     cargo check -p gix-config
+    cargo check -p gix-diff --no-default-features
     cargo check -p gix-transport
     cargo check -p gix-transport --features blocking-client
     cargo check -p gix-transport --features async-client
