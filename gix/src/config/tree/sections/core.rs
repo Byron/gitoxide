@@ -306,7 +306,7 @@ mod log_all_ref_updates {
     impl LogAllRefUpdates {
         /// Returns the mode for ref-updates as parsed from `value`. If `value` is not a boolean, we try
         /// to interpret the string value instead. For correctness, this two step process is necessary as
-        /// the interpretation of booleans in special in `gix-config`, i.e. we can't just treat it as string.
+        /// the interpretation of booleans in special in `git-config`, i.e. we can't just treat it as string.
         pub fn try_into_ref_updates(
             &'static self,
             value: Option<Result<bool, gix_config::value::Error>>,

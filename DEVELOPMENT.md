@@ -79,7 +79,7 @@ There is value in organizing commits by topic and [_Stacked Git_](https://stacke
   
 ## Configuration and overrides
 
-As a general rule, respect and implement all applicable [gix-config](https://git-scm.com/docs/gix-config) by default, but allow the
+As a general rule, respect and implement all applicable [git-config](https://git-scm.com/docs/git-config) by default, but allow the
 caller to set overrides. How overrides work depends on the goals of the particular API so it can be done on the main call path,
 forcing a choice, or more typically, as a side-lane where overrides can be done on demand.
 

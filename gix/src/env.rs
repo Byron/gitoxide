@@ -20,7 +20,7 @@ pub fn args_os() -> impl Iterator<Item = OsString> {
 
 /// Equivalent to `std::env::args_os()`, but with precomposed unicode on MacOS and other apple platforms.
 ///
-/// Note that this ignores `core.precomposeUnicode` as gix-config isn't available yet. It's default enabled in modern git though.
+/// Note that this ignores `core.precomposeUnicode` as git-config isn't available yet. It's default enabled in modern git though.
 #[cfg(target_vendor = "apple")]
 pub fn args_os() -> impl Iterator<Item = OsString> {
     use unicode_normalization::UnicodeNormalization;

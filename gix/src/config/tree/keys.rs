@@ -464,7 +464,7 @@ mod remote_name {
     }
 }
 
-/// Provide a way to validate a value, or decode a value from `gix-config`.
+/// Provide a way to validate a value, or decode a value from `git-config`.
 pub trait Validate {
     /// Validate `value` or return an error.
     fn validate(&self, value: &BStr) -> Result<(), Box<dyn Error + Send + Sync + 'static>>;

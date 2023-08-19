@@ -124,7 +124,7 @@ impl crate::Repository {
 
     /// Edit one or more references as described by their `edits`.
     /// Note that one can set the committer name for use in the ref-log by temporarily
-    /// [overriding the gix-config][crate::Repository::config_snapshot_mut()].
+    /// [overriding the git-config][crate::Repository::config_snapshot_mut()].
     ///
     /// Returns all reference edits, which might be more than where provided due the splitting of symbolic references, and
     /// whose previous (_old_) values are the ones seen on in storage after the reference was locked.

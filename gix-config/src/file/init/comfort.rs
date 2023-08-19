@@ -55,9 +55,9 @@ impl File<'static> {
     /// A typical use of this is to [`append`][File::append()] this configuration to another one with lower
     /// precedence to obtain overrides.
     ///
-    /// See [`gix-config`'s documentation] for more information on the environment variables in question.
+    /// See [`git-config`'s documentation] for more information on the environment variables in question.
     ///
-    /// [`gix-config`'s documentation]: https://git-scm.com/docs/gix-config#Documentation/gix-config.txt-GITCONFIGCOUNT
+    /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
     pub fn from_environment_overrides() -> Result<File<'static>, init::from_env::Error> {
         let home = gix_path::env::home_dir();
         let options = init::Options {

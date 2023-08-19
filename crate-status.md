@@ -621,7 +621,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
       * [x] run `git credential` directly
       * [x] use credential helper configuration and to obtain credentials with `gix_credentials::helper::Cascade`
     * **config**
-      * [ ] facilities to apply the [url-match](https://git-scm.com/docs/gix-config#Documentation/gix-config.txt-httplturlgt) algorithm and to
+      * [ ] facilities to apply the [url-match](https://git-scm.com/docs/git-config#Documentation/git-config.txt-httplturlgt) algorithm and to
             [normalize urls](https://github.com/git/git/blob/be1a02a17ede4082a86dfbfee0f54f345e8b43ac/urlmatch.c#L109:L109) before comparison.
     * **traverse** 
       * [x] commit graphs
@@ -714,7 +714,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
     * **config**
        * [x] read the primitive types `boolean`, `integer`, `string`
        * [x] read and interpolate trusted paths
-       * [x] low-level API for more elaborate access to all details of `gix-config` files
+       * [x] low-level API for more elaborate access to all details of `git-config` files
        * [ ] a way to make changes to individual configuration files
     * [x] mailmap   
     * [x] object replacements (`git replace`)
