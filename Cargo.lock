@@ -2466,10 +2466,8 @@ version = "0.24.0"
 dependencies = [
  "bstr",
  "document-features",
- "filetime",
  "gix-attributes 0.16.0",
  "gix-features 0.32.1",
- "gix-filter",
  "gix-fs 0.4.1",
  "gix-glob 0.10.2",
  "gix-hash 0.11.4",
@@ -2479,13 +2477,8 @@ dependencies = [
  "gix-odb",
  "gix-path 0.8.4",
  "gix-testtools",
- "io-close",
- "once_cell",
  "serde",
  "symlink",
- "tempfile",
- "thiserror",
- "walkdir",
 ]
 
 [[package]]

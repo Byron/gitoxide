@@ -147,10 +147,6 @@ unit-tests:
       set -ex; \
       cargo test; \
       cargo test --features verbose-object-parsing-errors
-    cd gix-worktree; \
-      set -ex; \
-      cargo test; \
-      cargo test --features "internal-testing-gix-features-parallel"
     cargo test -p gix-tempfile --features signals
     cargo test -p gix-tempfile
     cargo test -p gix-features

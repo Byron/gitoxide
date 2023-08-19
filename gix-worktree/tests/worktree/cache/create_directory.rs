@@ -1,7 +1,7 @@
 use std::path::Path;
 
+use gix_testtools::tempfile::{tempdir, TempDir};
 use gix_worktree::{cache, Cache};
-use tempfile::{tempdir, TempDir};
 
 #[allow(clippy::ptr_arg)]
 fn panic_on_find<'buf>(_oid: &gix_hash::oid, _buf: &'buf mut Vec<u8>) -> std::io::Result<gix_object::BlobRef<'buf>> {
