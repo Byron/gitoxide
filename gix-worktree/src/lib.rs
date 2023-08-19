@@ -32,20 +32,20 @@ use bstr::BString;
 ///
 /// The caching is only useful if consecutive calls to create a directory are using a sorted list of entries.
 #[derive(Clone)]
-pub struct Cache {
+pub struct Stack {
     stack: gix_fs::Stack,
     /// tells us what to do as we change paths.
-    state: cache::State,
+    state: stack::State,
     /// A buffer used when reading attribute or ignore files or their respective objects from the object database.
     buf: Vec<u8>,
     /// If case folding should happen when looking up attributes or exclusions.
     case: gix_glob::pattern::Case,
     /// A lookup table for object ids to read from in some situations when looking up attributes or exclusions.
     id_mappings: Vec<PathIdMapping>,
-    statistics: cache::Statistics,
+    statistics: stack::Statistics,
 }
 
 pub(crate) type PathIdMapping = (BString, gix_hash::ObjectId);
 
 ///
-pub mod cache;
+pub mod stack;

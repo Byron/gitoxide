@@ -1,7 +1,7 @@
 use bstr::ByteSlice;
 use gix_attributes::search::Outcome;
 use gix_glob::pattern::Case;
-use gix_worktree::cache::state;
+use gix_worktree::stack::state;
 
 #[test]
 fn baseline() -> crate::Result {
@@ -19,17 +19,17 @@ fn baseline() -> crate::Result {
 
     let mut buf = Vec::new();
     let mut collection = gix_attributes::search::MetadataCollection::default();
-    let state = gix_worktree::cache::State::for_checkout(
+    let state = gix_worktree::stack::State::for_checkout(
         false,
         state::Attributes::new(
             gix_attributes::Search::new_globals([base.join("user.attributes")], &mut buf, &mut collection)?,
             Some(git_dir.join("info").join("attributes")),
-            gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
+            gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
             collection,
         ),
     );
 
-    let mut cache = gix_worktree::Cache::new(&base, state, case, buf, vec![]);
+    let mut cache = gix_worktree::Stack::new(&base, state, case, buf, vec![]);
 
     let mut actual = cache.attribute_matches();
     let input = std::fs::read(base.join("baseline"))?;

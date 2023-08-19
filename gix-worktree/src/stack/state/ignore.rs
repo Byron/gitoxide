@@ -4,7 +4,7 @@ use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
 
 use crate::{
-    cache::state::{Ignore, IgnoreMatchGroup},
+    stack::state::{Ignore, IgnoreMatchGroup},
     PathIdMapping,
 };
 

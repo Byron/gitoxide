@@ -4,8 +4,8 @@ use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
 
 use crate::{
-    cache::state::{AttributeMatchGroup, Attributes},
-    Cache, PathIdMapping,
+    stack::state::{AttributeMatchGroup, Attributes},
+    PathIdMapping, Stack,
 };
 
 /// Various aggregate numbers related [`Attributes`].
@@ -200,7 +200,7 @@ impl Attributes {
 }
 
 /// Attribute matching specific methods
-impl Cache {
+impl Stack {
     /// Creates a new container to store match outcomes for all attribute matches.
     ///
     /// ### Panics
