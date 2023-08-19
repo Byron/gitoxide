@@ -12,6 +12,8 @@ use bstr::{BStr, BString};
 use std::borrow::Cow;
 
 ///
+#[path = "parse/mod.rs"]
+// #[path = "parse.rs"]
 pub mod parse;
 #[doc(inline)]
 pub use parse::parse;
