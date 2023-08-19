@@ -1,11 +1,11 @@
 use bstr::{BStr, BString, ByteVec};
-use nom::{
-    bytes::complete::{is_not, tag, take_until, take_while_m_n},
-    combinator::{peek, recognize},
-    error::{context, ContextError, ParseError},
-    multi::many1_count,
-    sequence::{preceded, terminated, tuple},
-    IResult,
+use winnow::{
+    combinator::repeat,
+    combinator::{preceded, terminated},
+    error::{AddContext, ParserError, StrContext},
+    prelude::*,
+    token::{take_till1, take_until0, take_while},
+    Parser,
 };
 
 use crate::ByteSlice;
@@ -14,68 +14,63 @@ pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 const SPACE_OR_NL: &[u8] = b" \n";
 
-pub(crate) fn any_header_field_multi_line<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
-    i: &'a [u8],
-) -> IResult<&'a [u8], (&'a [u8], BString), E> {
-    let (i, (k, o)) = context(
-        "name <multi-line-value>",
-        peek(tuple((
-            terminated(is_not(SPACE_OR_NL), tag(SPACE)),
-            recognize(tuple((
-                is_not(NL),
-                tag(NL),
-                many1_count(terminated(tuple((tag(SPACE), take_until(NL))), tag(NL))),
-            ))),
-        ))),
-    )(i)?;
-    assert!(!o.is_empty(), "we have parsed more than one value here");
-    let end = &o[o.len() - 1] as *const u8 as usize;
-    let start_input = &i[0] as *const u8 as usize;
-
-    let bytes = o[..o.len() - 1].as_bstr();
-    let mut out = BString::from(Vec::with_capacity(bytes.len()));
-    let mut lines = bytes.lines();
-    out.push_str(lines.next().expect("first line"));
-    for line in lines {
-        out.push(b'\n');
-        out.push_str(&line[1..]); // cut leading space
-    }
-    Ok((&i[end - start_input + 1..], (k, out)))
+pub(crate) fn any_header_field_multi_line<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
+    i: &mut &'a [u8],
+) -> PResult<(&'a [u8], BString), E> {
+    (
+        terminated(take_till1(SPACE_OR_NL), SPACE),
+        (
+            take_till1(NL),
+            NL,
+            repeat(1.., terminated((SPACE, take_until0(NL)), NL)).map(|()| ()),
+        )
+            .recognize()
+            .map(|o: &[u8]| {
+                let bytes = o.as_bstr();
+                let mut out = BString::from(Vec::with_capacity(bytes.len()));
+                let mut lines = bytes.lines();
+                out.push_str(lines.next().expect("first line"));
+                for line in lines {
+                    out.push(b'\n');
+                    out.push_str(&line[1..]); // cut leading space
+                }
+                out
+            }),
+    )
+        .context(StrContext::Expected("name <multi-line-value>".into()))
+        .parse_next(i)
 }
 
-pub(crate) fn header_field<'a, T, E: ParseError<&'a [u8]>>(
-    i: &'a [u8],
+pub(crate) fn header_field<'a, T, E: ParserError<&'a [u8]>>(
+    i: &mut &'a [u8],
     name: &'static [u8],
-    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, E>,
-) -> IResult<&'a [u8], T, E> {
-    terminated(preceded(terminated(tag(name), tag(SPACE)), parse_value), tag(NL))(i)
+    parse_value: impl Parser<&'a [u8], T, E>,
+) -> PResult<T, E> {
+    terminated(preceded(terminated(name, SPACE), parse_value), NL).parse_next(i)
 }
 
-pub(crate) fn any_header_field<'a, T, E: ParseError<&'a [u8]>>(
-    i: &'a [u8],
-    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, E>,
-) -> IResult<&'a [u8], (&'a [u8], T), E> {
-    terminated(
-        tuple((terminated(is_not(SPACE_OR_NL), tag(SPACE)), parse_value)),
-        tag(NL),
-    )(i)
+pub(crate) fn any_header_field<'a, T, E: ParserError<&'a [u8]>>(
+    i: &mut &'a [u8],
+    parse_value: impl Parser<&'a [u8], T, E>,
+) -> PResult<(&'a [u8], T), E> {
+    terminated((terminated(take_till1(SPACE_OR_NL), SPACE), parse_value), NL).parse_next(i)
 }
 
 fn is_hex_digit_lc(b: u8) -> bool {
     matches!(b, b'0'..=b'9' | b'a'..=b'f')
 }
 
-pub fn hex_hash<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
-    take_while_m_n(
-        gix_hash::Kind::shortest().len_in_hex(),
-        gix_hash::Kind::longest().len_in_hex(),
+pub fn hex_hash<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<&'a BStr, E> {
+    take_while(
+        gix_hash::Kind::shortest().len_in_hex()..=gix_hash::Kind::longest().len_in_hex(),
         is_hex_digit_lc,
-    )(i)
-    .map(|(i, hex)| (i, hex.as_bstr()))
+    )
+    .map(ByteSlice::as_bstr)
+    .parse_next(i)
 }
 
-pub(crate) fn signature<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
-    i: &'a [u8],
-) -> IResult<&'a [u8], gix_actor::SignatureRef<'a>, E> {
+pub(crate) fn signature<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
+    i: &mut &'a [u8],
+) -> PResult<gix_actor::SignatureRef<'a>, E> {
     gix_actor::signature::decode(i)
 }

@@ -1,7 +1,7 @@
 use bstr::BStr;
 use std::convert::TryFrom;
 
-use nom::error::ParseError;
+use winnow::error::ParserError;
 
 use crate::{tree, tree::EntryRef, TreeRef, TreeRefIter};
 
@@ -14,8 +14,8 @@ impl<'a> TreeRefIter<'a> {
 
 impl<'a> TreeRef<'a> {
     /// Deserialize a Tree from `data`.
-    pub fn from_bytes(data: &'a [u8]) -> Result<TreeRef<'a>, crate::decode::Error> {
-        decode::tree(data).map(|(_, t)| t).map_err(crate::decode::Error::from)
+    pub fn from_bytes(mut data: &'a [u8]) -> Result<TreeRef<'a>, crate::decode::Error> {
+        decode::tree(&mut data).map_err(crate::decode::Error::with_err)
     }
 
     /// Find an entry named `name` knowing if the entry is a directory or not, using a binary search.
@@ -68,12 +68,11 @@ impl<'a> Iterator for TreeRefIter<'a> {
             }
             None => {
                 self.data = &[];
+                let empty = &[] as &[u8];
                 #[allow(clippy::unit_arg)]
-                Some(Err(nom::Err::Error(crate::decode::ParseError::from_error_kind(
-                    &[] as &[u8],
-                    nom::error::ErrorKind::MapRes,
-                ))
-                .into()))
+                Some(Err(crate::decode::Error::with_err(
+                    winnow::error::ErrMode::from_error_kind(&empty, winnow::error::ErrorKind::Verify),
+                )))
             }
         }
     }
@@ -117,14 +116,14 @@ mod decode {
     use std::convert::TryFrom;
 
     use bstr::ByteSlice;
-    use nom::{
-        bytes::complete::{tag, take, take_while1, take_while_m_n},
-        character::is_digit,
-        combinator::all_consuming,
-        error::ParseError,
-        multi::many0,
-        sequence::terminated,
-        IResult,
+    use winnow::{
+        combinator::eof,
+        combinator::repeat,
+        combinator::terminated,
+        error::ParserError,
+        prelude::*,
+        stream::AsChar,
+        token::{take, take_while},
     };
 
     use crate::{parse::SPACE, tree, tree::EntryRef, TreeRef};
@@ -145,7 +144,7 @@ mod decode {
         let mode = tree::EntryMode::try_from(mode).ok()?;
         let (filename, i) = i.split_at(i.find_byte(0)?);
         let i = &i[1..];
-        const HASH_LEN_FIXME: usize = 20; // TODO: know actual /desired length or we may overshoot
+        const HASH_LEN_FIXME: usize = 20; // TODO(SHA256): know actual/desired length or we may overshoot
         let (oid, i) = match i.len() {
             len if len < HASH_LEN_FIXME => return None,
             _ => i.split_at(20),
@@ -160,25 +159,24 @@ mod decode {
         ))
     }
 
-    pub fn entry<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], EntryRef<'_>, E> {
-        let (i, mode) = terminated(take_while_m_n(5, 6, is_digit), tag(SPACE))(i)?;
-        let mode = tree::EntryMode::try_from(mode)
-            .map_err(|invalid| nom::Err::Error(E::from_error_kind(invalid, nom::error::ErrorKind::MapRes)))?;
-        let (i, filename) = terminated(take_while1(|b| b != NULL[0]), tag(NULL))(i)?;
-        let (i, oid) = take(20u8)(i)?; // TODO: make this compatible with other hash lengths
-
-        Ok((
-            i,
-            EntryRef {
+    pub fn entry<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<EntryRef<'a>, E> {
+        (
+            terminated(take_while(5..=6, AsChar::is_dec_digit), SPACE)
+                .verify_map(|mode| tree::EntryMode::try_from(mode).ok()),
+            terminated(take_while(1.., |b| b != NULL[0]), NULL),
+            take(20u8), // TODO(SHA256): make this compatible with other hash lengths
+        )
+            .map(|(mode, filename, oid): (_, &[u8], _)| EntryRef {
                 mode,
                 filename: filename.as_bstr(),
                 oid: gix_hash::oid::try_from_bytes(oid).expect("we counted exactly 20 bytes"),
-            },
-        ))
+            })
+            .parse_next(i)
     }
 
-    pub fn tree<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], TreeRef<'a>, E> {
-        let (i, entries) = all_consuming(many0(entry))(i)?;
-        Ok((i, TreeRef { entries }))
+    pub fn tree<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<TreeRef<'a>, E> {
+        terminated(repeat(0.., entry), eof)
+            .map(|entries| TreeRef { entries })
+            .parse_next(i)
     }
 }

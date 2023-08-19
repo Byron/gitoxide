@@ -34,7 +34,7 @@ toml_edit = "0.19.1"
 semver = "1.0.4"
 crates-index = { version = "2.1.0", default-features = false, features = ["git-performance", "git-https"] }
 cargo_toml = "0.15.1"
-winnow = "0.5.1"
+winnow = "0.5.12"
 git-conventional = "0.12.0"
 time = "0.3.23"
 pulldown-cmark = "0.9.0"

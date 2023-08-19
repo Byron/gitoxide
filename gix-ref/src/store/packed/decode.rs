@@ -1,12 +1,12 @@
 use std::convert::TryInto;
 
 use gix_object::bstr::{BStr, ByteSlice};
-use nom::{
-    bytes::complete::{tag, take_while},
-    combinator::{map, map_res, opt},
-    error::{FromExternalError, ParseError},
-    sequence::{delimited, preceded, terminated, tuple},
-    IResult,
+use winnow::{
+    combinator::opt,
+    combinator::{delimited, preceded, terminated},
+    error::{FromExternalError, ParserError},
+    prelude::*,
+    token::take_while,
 };
 
 use crate::{
@@ -37,46 +37,47 @@ impl Default for Header {
     }
 }
 
-fn until_newline<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E>
+fn until_newline<'a, E>(input: &mut &'a [u8]) -> PResult<&'a BStr, E>
 where
-    E: ParseError<&'a [u8]>,
+    E: ParserError<&'a [u8]>,
 {
-    map(
-        terminated(take_while(|b: u8| b != b'\r' && b != b'\n'), newline),
-        ByteSlice::as_bstr,
-    )(input)
+    terminated(take_while(0.., |b: u8| b != b'\r' && b != b'\n'), newline)
+        .map(ByteSlice::as_bstr)
+        .parse_next(input)
 }
 
-pub fn header<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], Header, E>
+pub fn header<'a, E>(input: &mut &'a [u8]) -> PResult<Header, E>
 where
-    E: ParseError<&'a [u8]>,
+    E: ParserError<&'a [u8]>,
 {
-    let (rest, traits) = preceded(tag(b"# pack-refs with: "), until_newline)(input)?;
-
-    let mut peeled = Peeled::Unspecified;
-    let mut sorted = false;
-    for token in traits.as_bstr().split_str(b" ") {
-        if token == b"fully-peeled" {
-            peeled = Peeled::Fully;
-        } else if token == b"peeled" {
-            peeled = Peeled::Partial;
-        } else if token == b"sorted" {
-            sorted = true;
-        }
-    }
-
-    Ok((rest, Header { peeled, sorted }))
+    preceded(b"# pack-refs with: ", until_newline)
+        .map(|traits| {
+            let mut peeled = Peeled::Unspecified;
+            let mut sorted = false;
+            for token in traits.as_bstr().split_str(b" ") {
+                if token == b"fully-peeled" {
+                    peeled = Peeled::Fully;
+                } else if token == b"peeled" {
+                    peeled = Peeled::Partial;
+                } else if token == b"sorted" {
+                    sorted = true;
+                }
+            }
+            Header { peeled, sorted }
+        })
+        .parse_next(input)
 }
 
-pub fn reference<'a, E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], crate::name::Error>>(
-    input: &'a [u8],
-) -> IResult<&'a [u8], packed::Reference<'a>, E> {
-    let (input, (target, name)) = tuple((
-        terminated(hex_hash, tag(b" ")),
-        map_res(until_newline, TryInto::try_into),
-    ))(input)?;
-    let (rest, object) = opt(delimited(tag(b"^"), hex_hash, newline))(input)?;
-    Ok((rest, packed::Reference { name, target, object }))
+pub fn reference<'a, E: ParserError<&'a [u8]> + FromExternalError<&'a [u8], crate::name::Error>>(
+    input: &mut &'a [u8],
+) -> PResult<packed::Reference<'a>, E> {
+    (
+        terminated(hex_hash, b" "),
+        until_newline.try_map(TryInto::try_into),
+        opt(delimited(b"^", hex_hash, newline)),
+    )
+        .map(|(target, name, object)| packed::Reference { name, target, object })
+        .parse_next(input)
 }
 
 #[cfg(test)]

@@ -3,11 +3,13 @@ use std::ops::Range;
 
 use bstr::BStr;
 use gix_hash::{oid, ObjectId};
-use nom::{
-    branch::alt,
-    bytes::complete::is_not,
-    combinator::{all_consuming, opt},
-    error::context,
+use winnow::{
+    combinator::alt,
+    combinator::terminated,
+    combinator::{eof, opt},
+    error::StrContext,
+    prelude::*,
+    token::take_till1,
 };
 
 use crate::commit::SignedData;
@@ -149,13 +151,21 @@ fn missing_field() -> crate::decode::Error {
 }
 
 impl<'a> CommitRefIter<'a> {
+    #[inline]
     fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
+        Self::next_inner_(i, state).map_err(crate::decode::Error::with_err)
+    }
+
+    fn next_inner_(
+        mut i: &'a [u8],
+        state: &mut State,
+    ) -> Result<(&'a [u8], Token<'a>), winnow::error::ErrMode<crate::decode::ParseError>> {
         use State::*;
         Ok(match state {
             Tree => {
-                let (i, tree) = context("tree <40 lowercase hex char>", |i| {
-                    parse::header_field(i, b"tree", parse::hex_hash)
-                })(i)?;
+                let tree = (|i: &mut _| parse::header_field(i, b"tree", parse::hex_hash))
+                    .context(StrContext::Expected("tree <40 lowercase hex char>".into()))
+                    .parse_next(&mut i)?;
                 *state = State::Parents;
                 (
                     i,
@@ -165,10 +175,9 @@ impl<'a> CommitRefIter<'a> {
                 )
             }
             Parents => {
-                let (i, parent) = context(
-                    "commit <40 lowercase hex char>",
-                    opt(|i| parse::header_field(i, b"parent", parse::hex_hash)),
-                )(i)?;
+                let parent = opt(|i: &mut _| parse::header_field(i, b"parent", parse::hex_hash))
+                    .context(StrContext::Expected("commit <40 lowercase hex char>".into()))
+                    .parse_next(&mut i)?;
                 match parent {
                     Some(parent) => (
                         i,
@@ -180,7 +189,7 @@ impl<'a> CommitRefIter<'a> {
                         *state = State::Signature {
                             of: SignatureKind::Author,
                         };
-                        return Self::next_inner(i, state);
+                        return Self::next_inner_(i, state);
                     }
                 }
             }
@@ -196,7 +205,9 @@ impl<'a> CommitRefIter<'a> {
                         (&b"committer"[..], "committer <signature>")
                     }
                 };
-                let (i, signature) = context(err_msg, |i| parse::header_field(i, field_name, parse::signature))(i)?;
+                let signature = (|i: &mut _| parse::header_field(i, field_name, parse::signature))
+                    .context(StrContext::Expected(err_msg.into()))
+                    .parse_next(&mut i)?;
                 (
                     i,
                     match who {
@@ -206,37 +217,35 @@ impl<'a> CommitRefIter<'a> {
                 )
             }
             Encoding => {
-                let (i, encoding) = context(
-                    "encoding <encoding>",
-                    opt(|i| parse::header_field(i, b"encoding", is_not(NL))),
-                )(i)?;
+                let encoding = opt(|i: &mut _| parse::header_field(i, b"encoding", take_till1(NL)))
+                    .context(StrContext::Expected("encoding <encoding>".into()))
+                    .parse_next(&mut i)?;
                 *state = State::ExtraHeaders;
                 match encoding {
                     Some(encoding) => (i, Token::Encoding(encoding.as_bstr())),
-                    None => return Self::next_inner(i, state),
+                    None => return Self::next_inner_(i, state),
                 }
             }
             ExtraHeaders => {
-                let (i, extra_header) = context(
-                    "<field> <single-line|multi-line>",
-                    opt(alt((
-                        |i| parse::any_header_field_multi_line(i).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o)))),
-                        |i| {
-                            parse::any_header_field(i, is_not(NL))
-                                .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
-                        },
-                    ))),
-                )(i)?;
+                let extra_header = opt(alt((
+                    |i: &mut _| parse::any_header_field_multi_line(i).map(|(k, o)| (k.as_bstr(), Cow::Owned(o))),
+                    |i: &mut _| {
+                        parse::any_header_field(i, take_till1(NL))
+                            .map(|(k, o)| (k.as_bstr(), Cow::Borrowed(o.as_bstr())))
+                    },
+                )))
+                .context(StrContext::Expected("<field> <single-line|multi-line>".into()))
+                .parse_next(&mut i)?;
                 match extra_header {
                     Some(extra_header) => (i, Token::ExtraHeader(extra_header)),
                     None => {
                         *state = State::Message;
-                        return Self::next_inner(i, state);
+                        return Self::next_inner_(i, state);
                     }
                 }
             }
             Message => {
-                let (i, message) = all_consuming(decode::message)(i)?;
+                let message = terminated(decode::message, eof).parse_next(&mut i)?;
                 debug_assert!(
                     i.is_empty(),
                     "we should have consumed all data - otherwise iter may go forever"

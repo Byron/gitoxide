@@ -1,90 +1,79 @@
-use nom::{
-    branch::alt,
-    bytes::complete::{tag, take_until, take_while, take_while1},
-    character::is_alphabetic,
-    combinator::{all_consuming, opt, recognize},
-    error::{context, ContextError, ParseError},
-    sequence::{preceded, tuple},
-    IResult,
+use winnow::{
+    combinator::alt,
+    combinator::delimited,
+    combinator::rest,
+    combinator::{eof, opt},
+    combinator::{preceded, terminated},
+    error::{AddContext, ParserError, StrContext},
+    prelude::*,
+    stream::AsChar,
+    token::{take_until0, take_while},
 };
 
 use crate::{parse, parse::NL, BStr, ByteSlice, TagRef};
 
-pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], TagRef<'a>, E> {
-    let (i, target) = context("object <40 lowercase hex char>", |i| {
-        parse::header_field(i, b"object", parse::hex_hash)
-    })(i)?;
-
-    let (i, kind) = context("type <object kind>", |i| {
-        parse::header_field(i, b"type", take_while1(is_alphabetic))
-    })(i)?;
-    let kind = crate::Kind::from_bytes(kind)
-        .map_err(|_| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))?;
-
-    let (i, tag_version) = context("tag <version>", |i| {
-        parse::header_field(i, b"tag", take_while1(|b| b != NL[0]))
-    })(i)?;
-
-    let (i, signature) = context(
-        "tagger <signature>",
-        opt(|i| parse::header_field(i, b"tagger", parse::signature)),
-    )(i)?;
-    let (i, (message, pgp_signature)) = all_consuming(message)(i)?;
-    Ok((
-        i,
-        TagRef {
-            target,
-            name: tag_version.as_bstr(),
-            target_kind: kind,
-            message,
-            tagger: signature,
-            pgp_signature,
-        },
-    ))
+pub fn git_tag<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
+    i: &mut &'a [u8],
+) -> PResult<TagRef<'a>, E> {
+    (
+        (|i: &mut _| parse::header_field(i, b"object", parse::hex_hash))
+            .context(StrContext::Expected("object <40 lowercase hex char>".into())),
+        (|i: &mut _| parse::header_field(i, b"type", take_while(1.., AsChar::is_alpha)))
+            .verify_map(|kind| crate::Kind::from_bytes(kind).ok())
+            .context(StrContext::Expected("type <object kind>".into())),
+        (|i: &mut _| parse::header_field(i, b"tag", take_while(1.., |b| b != NL[0])))
+            .context(StrContext::Expected("tag <version>".into())),
+        opt(|i: &mut _| parse::header_field(i, b"tagger", parse::signature))
+            .context(StrContext::Expected("tagger <signature>".into())),
+        terminated(message, eof),
+    )
+        .map(
+            |(target, kind, tag_version, signature, (message, pgp_signature))| TagRef {
+                target,
+                name: tag_version.as_bstr(),
+                target_kind: kind,
+                message,
+                tagger: signature,
+                pgp_signature,
+            },
+        )
+        .parse_next(i)
 }
 
-pub fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
+pub fn message<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<(&'a BStr, Option<&'a BStr>), E> {
     const PGP_SIGNATURE_BEGIN: &[u8] = b"\n-----BEGIN PGP SIGNATURE-----";
     const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
 
     if i.is_empty() {
-        return Ok((i, (i.as_bstr(), None)));
+        return Ok((b"".as_bstr(), None));
     }
-    let (i, _) = tag(NL)(i)?;
-    fn all_to_end<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], &'a [u8]), E> {
-        if i.is_empty() {
-            // Empty message. That's OK.
-            return Ok((&[], (&[], &[])));
-        }
-        // an empty signature message signals that there is none - the function signature is needed
-        // to work with 'alt(…)'. PGP signatures are never empty
-        Ok((&[], (i, &[])))
-    }
-    let (i, (message, signature)) = alt((
-        tuple((
-            take_until(PGP_SIGNATURE_BEGIN),
-            preceded(
-                tag(NL),
-                recognize(tuple((
-                    tag(&PGP_SIGNATURE_BEGIN[1..]),
-                    take_until(PGP_SIGNATURE_END),
-                    tag(PGP_SIGNATURE_END),
-                    take_while(|_| true),
-                ))),
+    delimited(
+        NL,
+        alt((
+            (
+                take_until0(PGP_SIGNATURE_BEGIN),
+                preceded(
+                    NL,
+                    (
+                        &PGP_SIGNATURE_BEGIN[1..],
+                        take_until0(PGP_SIGNATURE_END),
+                        PGP_SIGNATURE_END,
+                        rest,
+                    )
+                        .recognize()
+                        .map(|signature: &[u8]| {
+                            if signature.is_empty() {
+                                None
+                            } else {
+                                Some(signature.as_bstr())
+                            }
+                        }),
+                ),
             ),
+            rest.map(|rest: &[u8]| (rest, None)),
         )),
-        all_to_end,
-    ))(i)?;
-    let (i, _) = opt(tag(NL))(i)?;
-    Ok((
-        i,
-        (
-            message.as_bstr(),
-            if signature.is_empty() {
-                None
-            } else {
-                Some(signature.as_bstr())
-            },
-        ),
-    ))
+        opt(NL),
+    )
+    .map(|(message, signature)| (message.as_bstr(), signature))
+    .parse_next(i)
 }

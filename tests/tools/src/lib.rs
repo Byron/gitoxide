@@ -15,7 +15,6 @@ pub use bstr;
 use bstr::{BStr, ByteSlice};
 use io_close::Close;
 pub use is_ci;
-use nom::error::VerboseError;
 pub use once_cell;
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
@@ -691,15 +690,12 @@ fn extract_archive(
     Ok((archive_identity, platform))
 }
 
-/// Transform a verbose bom errors from raw bytes into a `BStr` to make printing/debugging human-readable.
-pub fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
-    let err = match err {
-        nom::Err::Error(err) | nom::Err::Failure(err) => err,
-        nom::Err::Incomplete(_) => unreachable!("not a streaming parser"),
-    };
-    VerboseError {
-        errors: err.errors.into_iter().map(|(i, v)| (i.as_bstr(), v)).collect(),
-    }
+/// Transform a verbose parser errors from raw bytes into a `BStr` to make printing/debugging human-readable.
+pub fn to_bstr_err(
+    err: winnow::error::ErrMode<winnow::error::TreeError<&[u8], winnow::error::StrContext>>,
+) -> winnow::error::TreeError<&BStr, winnow::error::StrContext> {
+    let err = err.into_inner().expect("not a streaming parser");
+    err.map_input(ByteSlice::as_bstr)
 }
 
 fn family_name() -> &'static str {

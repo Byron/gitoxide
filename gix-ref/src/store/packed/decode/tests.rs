@@ -1,7 +1,8 @@
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
 mod reference {
-    use nom::error::VerboseError;
+    use winnow::error::TreeError;
+    use winnow::prelude::*;
 
     use super::Result;
     use crate::{
@@ -16,9 +17,13 @@ mod reference {
 
     #[test]
     fn invalid() {
-        assert!(decode::reference::<()>(b"# what looks like a comment",).is_err());
+        assert!(decode::reference::<()>
+            .parse_peek(b"# what looks like a comment",)
+            .is_err());
         assert!(
-            decode::reference::<()>(b"^e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37\n",).is_err(),
+            decode::reference::<()>
+                .parse_peek(b"^e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37\n",)
+                .is_err(),
             "lonely peel"
         );
     }
@@ -27,7 +32,7 @@ mod reference {
     fn two_refs_in_a_row() -> Result {
         let input: &[u8] = b"d53c4b0f91f1b29769c9430f2d1c0bcab1170c75 refs/heads/alternates-after-packs-and-loose
 ^e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37\neaae9c1bc723209d793eb93f5587fa2604d5cd92 refs/heads/avoid-double-lookup\n";
-        let (input, parsed) = decode::reference::<VerboseError<_>>(input)?;
+        let (input, parsed) = decode::reference::<TreeError<_>>.parse_peek(input).unwrap();
 
         assert_eq!(
             parsed,
@@ -40,7 +45,7 @@ mod reference {
         assert_eq!(parsed.target(), hex_to_id("d53c4b0f91f1b29769c9430f2d1c0bcab1170c75"));
         assert_eq!(parsed.object(), hex_to_id("e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37"));
 
-        let (input, parsed) = decode::reference::<VerboseError<_>>(input)?;
+        let (input, parsed) = decode::reference::<TreeError<_>>.parse_peek(input).unwrap();
         assert!(input.is_empty(), "exhausted");
         assert_eq!(
             parsed.name,
@@ -55,6 +60,7 @@ mod reference {
 mod header {
     use gix_object::bstr::ByteSlice;
     use gix_testtools::to_bstr_err;
+    use winnow::prelude::*;
 
     use super::Result;
     use crate::store_impl::packed::{
@@ -65,12 +71,15 @@ mod header {
     #[test]
     fn invalid() {
         assert!(
-            decode::header::<()>(b"# some user comment").is_err(),
+            decode::header::<()>.parse_peek(b"# some user comment").is_err(),
             "something the user put there"
         );
-        assert!(decode::header::<()>(b"# pack-refs: ").is_err(), "looks right but isn't");
         assert!(
-            decode::header::<()>(b" # pack-refs with: ").is_err(),
+            decode::header::<()>.parse_peek(b"# pack-refs: ").is_err(),
+            "looks right but isn't"
+        );
+        assert!(
+            decode::header::<()>.parse_peek(b" # pack-refs with: ").is_err(),
             "does not start with #"
         );
     }
@@ -78,7 +87,9 @@ mod header {
     #[test]
     fn valid_fully_peeled_stored() -> Result {
         let input: &[u8] = b"# pack-refs with: peeled fully-peeled sorted  \nsomething else";
-        let (rest, header) = decode::header::<nom::error::VerboseError<_>>(input).map_err(to_bstr_err)?;
+        let (rest, header) = decode::header::<winnow::error::TreeError<_, _>>
+            .parse_peek(input)
+            .map_err(to_bstr_err)?;
 
         assert_eq!(rest.as_bstr(), "something else", "remainder starts after newline");
         assert_eq!(
@@ -94,7 +105,7 @@ mod header {
     #[test]
     fn valid_peeled_unsorted() -> Result {
         let input: &[u8] = b"# pack-refs with: peeled\n";
-        let (rest, header) = decode::header::<()>(input)?;
+        let (rest, header) = decode::header::<()>.parse_peek(input).unwrap();
 
         assert!(rest.is_empty());
         assert_eq!(
@@ -110,7 +121,7 @@ mod header {
     #[test]
     fn valid_empty() -> Result {
         let input: &[u8] = b"# pack-refs with: \n";
-        let (rest, header) = decode::header::<()>(input)?;
+        let (rest, header) = decode::header::<()>.parse_peek(input).unwrap();
 
         assert!(rest.is_empty());
         assert_eq!(

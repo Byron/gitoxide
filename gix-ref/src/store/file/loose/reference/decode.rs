@@ -2,12 +2,7 @@ use std::convert::{TryFrom, TryInto};
 
 use gix_hash::ObjectId;
 use gix_object::bstr::BString;
-use nom::{
-    bytes::complete::{tag, take_while},
-    combinator::{map, opt},
-    sequence::terminated,
-    IResult,
-};
+use winnow::{combinator::opt, combinator::terminated, prelude::*, token::take_while};
 
 use crate::{
     parse::{hex_hash, newline},
@@ -57,29 +52,26 @@ impl TryFrom<MaybeUnsafeState> for Target {
 impl Reference {
     /// Create a new reference of the given `parent` store with `relative_path` service as unique identifier
     /// at which the `path_contents` was read to obtain the refs value.
-    pub fn try_from_path(name: FullName, path_contents: &[u8]) -> Result<Self, Error> {
+    pub fn try_from_path(name: FullName, mut path_contents: &[u8]) -> Result<Self, Error> {
         Ok(Reference {
             name,
-            target: parse(path_contents)
+            target: parse(&mut path_contents)
                 .map_err(|_| Error::Parse {
                     content: path_contents.into(),
                 })?
-                .1
                 .try_into()?,
         })
     }
 }
 
-fn parse(bytes: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
-    let is_space = |b: u8| b == b' ';
-    if let (path, Some(_ref_prefix)) = opt(terminated(tag("ref: "), take_while(is_space)))(bytes)? {
-        map(
-            terminated(take_while(|b| b != b'\r' && b != b'\n'), opt(newline)),
-            |path| MaybeUnsafeState::UnvalidatedPath(path.into()),
-        )(path)
+fn parse(i: &mut &[u8]) -> PResult<MaybeUnsafeState> {
+    if let Some(_ref_prefix) = opt(terminated("ref: ", take_while(0.., b' '))).parse_next(i)? {
+        terminated(take_while(0.., |b| b != b'\r' && b != b'\n'), opt(newline))
+            .map(|path| MaybeUnsafeState::UnvalidatedPath(path.into()))
+            .parse_next(i)
     } else {
-        map(terminated(hex_hash, opt(newline)), |hex| {
-            MaybeUnsafeState::Id(ObjectId::from_hex(hex).expect("prior validation"))
-        })(bytes)
+        terminated(hex_hash, opt(newline))
+            .map(|hex| MaybeUnsafeState::Id(ObjectId::from_hex(hex).expect("prior validation")))
+            .parse_next(i)
     }
 }
