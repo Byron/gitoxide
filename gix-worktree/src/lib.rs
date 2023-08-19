@@ -1,4 +1,4 @@
-//! A crate with all index-centric functionality that is interacting with a worktree.
+//! A crate with utility types for use by other crates that implement specifics.
 //!
 //! Unless specified differently, all operations need an index file (e.g. `.git/index`) as driver.
 //!
@@ -10,9 +10,6 @@
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 use bstr::BString;
-
-///
-pub mod read;
 
 /// A cache for efficiently executing operations on directories and files which are encountered in sorted order.
 /// That way, these operations can be re-used for subsequent invocations in the same directory.
@@ -52,9 +49,3 @@ pub(crate) type PathIdMapping = (BString, gix_hash::ObjectId);
 
 ///
 pub mod cache;
-///
-pub mod checkout;
-pub use checkout::function::checkout;
-
-pub mod status;
-pub use status::function::status;
