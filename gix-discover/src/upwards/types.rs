@@ -86,7 +86,7 @@ impl Options<'_> {
     /// - `GIT_CEILING_DIRECTORIES` for `ceiling_dirs`
     ///
     /// Note that `GIT_DISCOVERY_ACROSS_FILESYSTEM` for `cross_fs` is **not** read,
-    /// as it requires parsing of `gix-config` style boolean values.
+    /// as it requires parsing of `git-config` style boolean values.
     ///
     /// In addition, this function disables `match_ceiling_dir_or_error` to allow
     /// discovery if an outside environment variable sets non-matching ceiling directories.

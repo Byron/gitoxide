@@ -30,7 +30,7 @@ impl<'remote, 'repo, T> Prepare<'remote, 'repo, T>
 where
     T: Transport,
 {
-    /// Receive the pack and perform the operation as configured by git via `gix-config` or overridden by various builder methods.
+    /// Receive the pack and perform the operation as configured by git via `git-config` or overridden by various builder methods.
     /// Return `Ok(None)` if there was nothing to do because all remote refs are at the same state as they are locally, or `Ok(Some(outcome))`
     /// to inform about all the changes that were made.
     ///

@@ -114,7 +114,7 @@ pub struct Options {
     ///
     /// By default repos with worktree can be initialized into a non-empty repository as long as there is no `.git` directory.
     pub destination_must_be_empty: bool,
-    /// If set, use these filesystem capabilities to populate the respective gix-config fields.
+    /// If set, use these filesystem capabilities to populate the respective git-config fields.
     /// If `None`, the directory will be probed.
     pub fs_capabilities: Option<gix_fs::Capabilities>,
 }

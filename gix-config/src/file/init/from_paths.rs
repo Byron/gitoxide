@@ -49,7 +49,7 @@ impl File<'static> {
         )?)
     }
 
-    /// Constructs a `gix-config` file from the provided metadata, which must include a path to read from or be ignored.
+    /// Constructs a `git-config` file from the provided metadata, which must include a path to read from or be ignored.
     /// Returns `Ok(None)` if there was not a single input path provided, which is a possibility due to
     /// [`Metadata::path`] being an `Option`.
     /// If an input path doesn't exist, the entire operation will abort. See [`from_paths_metadata_buf()`][Self::from_paths_metadata_buf()]

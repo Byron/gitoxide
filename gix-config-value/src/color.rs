@@ -99,7 +99,7 @@ impl TryFrom<Cow<'_, BStr>> for Color {
 
 /// Discriminating enum for names of [`Color`] values.
 ///
-/// `gix-config` supports the eight standard colors, their bright variants, an
+/// `git-config` supports the eight standard colors, their bright variants, an
 /// ANSI color code, or a 24-bit hex value prefixed with an octothorpe/hash.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
@@ -232,7 +232,7 @@ impl TryFrom<&BStr> for Name {
 bitflags::bitflags! {
     /// Discriminating enum for [`Color`] attributes.
     ///
-    /// `gix-config` supports modifiers and their negators. The negating color
+    /// `git-config` supports modifiers and their negators. The negating color
     /// attributes are equivalent to having a `no` or `no-` prefix to the normal
     /// variant.
     #[derive(Default, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]

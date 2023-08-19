@@ -1,9 +1,9 @@
 # gix-config
 
-**gix-config is a library for interacting with `gix-config` files.**
+**gix-config is a library for interacting with `git-config` files.**
 
 This crate intents to be a performant Rust implementation for reading and
-writing `gix-config` files. It exposes tiers of abstractions, from simple
+writing `git-config` files. It exposes tiers of abstractions, from simple
 config value wrappers to a high level reader and writer.
 
 The highlight of this crate is the zero-copy parser. We employ techniques to

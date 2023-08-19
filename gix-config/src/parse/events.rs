@@ -10,26 +10,26 @@ use crate::{
 /// A type store without allocation all events that are typically preceding the first section.
 pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 
-/// A zero-copy `gix-config` file parser.
+/// A zero-copy `git-config` file parser.
 ///
-/// This is parser exposes low-level syntactic events from a `gix-config` file.
+/// This is parser exposes low-level syntactic events from a `git-config` file.
 /// Generally speaking, you'll want to use [`File`] as it wraps
-/// around the parser to provide a higher-level abstraction to a `gix-config`
+/// around the parser to provide a higher-level abstraction to a `git-config`
 /// file, including querying, modifying, and updating values.
 ///
 /// This parser guarantees that the events emitted are sufficient to
-/// reconstruct a `gix-config` file identical to the source `gix-config`
+/// reconstruct a `git-config` file identical to the source `git-config`
 /// when writing it.
 ///
 /// # Differences between a `.ini` parser
 ///
-/// While the `gix-config` format closely resembles the [`.ini` file format],
+/// While the `git-config` format closely resembles the [`.ini` file format],
 /// there are subtle differences that make them incompatible. For one, the file
 /// format is not well defined, and there exists no formal specification to
 /// adhere to.
 ///
 /// For concrete examples, some notable differences are:
-/// - `gix-config` sections permit subsections via either a quoted string
+/// - `git-config` sections permit subsections via either a quoted string
 /// (`[some-section "subsection"]`) or via the deprecated dot notation
 /// (`[some-section.subsection]`). Successful parsing these section names is not
 /// well defined in typical `.ini` parsers. This parser will handle these cases
@@ -45,7 +45,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// which should be interpreted as `5hello world` after
 /// [normalization][crate::value::normalize()].
 /// - Line continuations via a `\` character is supported (inside or outside of quotes)
-/// - Whitespace handling similarly follows the `gix-config` specification as
+/// - Whitespace handling similarly follows the `git-config` specification as
 /// closely as possible, where excess whitespace after a non-quoted value are
 /// trimmed, and line continuations onto a new line with excess spaces are kept.
 /// - Only equal signs (optionally padded by spaces) are valid name/value
@@ -74,7 +74,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 ///
 /// ## `Value` events do not immediately follow `Key` events
 ///
-/// Consider the following `gix-config` example:
+/// Consider the following `git-config` example:
 ///
 /// ```text
 /// [core]
@@ -110,7 +110,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 ///
 /// ## `KeyValueSeparator` event is not guaranteed to emit
 ///
-/// Consider the following `gix-config` example:
+/// Consider the following `git-config` example:
 ///
 /// ```text
 /// [core]
@@ -139,7 +139,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 ///
 /// ## Quoted values are not unquoted
 ///
-/// Consider the following `gix-config` example:
+/// Consider the following `git-config` example:
 ///
 /// ```text
 /// [core]
@@ -175,7 +175,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 ///
 /// ## Whitespace after line continuations are part of the value
 ///
-/// Consider the following `gix-config` example:
+/// Consider the following `git-config` example:
 ///
 /// ```text
 /// [some-section]
@@ -183,7 +183,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 ///     c
 /// ```
 ///
-/// Because how `gix-config` treats continuations, the whitespace preceding `c`
+/// Because how `git-config` treats continuations, the whitespace preceding `c`
 /// are in fact part of the value of `file`. The fully interpreted key/value
 /// pair is actually `file=a    c`. As a result, the parser will provide this
 /// split value accordingly:
@@ -208,7 +208,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 ///
 /// [`File`]: crate::File
 /// [`.ini` file format]: https://en.wikipedia.org/wiki/INI_file
-/// [`git`'s documentation]: https://git-scm.com/docs/gix-config#_configuration_file
+/// [`git`'s documentation]: https://git-scm.com/docs/git-config#_configuration_file
 /// [`FromStr`]: std::str::FromStr
 /// [`From<&'_ str>`]: std::convert::From
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
@@ -236,7 +236,7 @@ impl Events<'static> {
 impl<'a> Events<'a> {
     /// Attempt to zero-copy parse the provided bytes. On success, returns a
     /// [`Events`] that provides methods to accessing leading comments and sections
-    /// of a `gix-config` file and can be converted into an iterator of [`Event`]
+    /// of a `git-config` file and can be converted into an iterator of [`Event`]
     /// for higher level processing.
     ///
     /// Use `filter` to only include those events for which it returns true.

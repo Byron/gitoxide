@@ -1,4 +1,4 @@
-//! Parsing for data types used in `gix-config` files to allow their use from environment variables and other sources.
+//! Parsing for data types used in `git-config` files to allow their use from environment variables and other sources.
 //!
 //! ## Feature Flags
 #![cfg_attr(

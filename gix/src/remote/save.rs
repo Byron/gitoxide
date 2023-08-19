@@ -25,7 +25,7 @@ pub enum AsError {
     Name(#[from] crate::remote::name::Error),
 }
 
-/// Serialize into gix-config.
+/// Serialize into git-config.
 impl Remote<'_> {
     /// Save ourselves to the given `config` if we are a named remote or fail otherwise.
     ///

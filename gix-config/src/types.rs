@@ -47,10 +47,10 @@ pub enum Source {
     EnvOverride,
 }
 
-/// High level `gix-config` reader and writer.
+/// High level `git-config` reader and writer.
 ///
 /// This is the full-featured implementation that can deserialize, serialize,
-/// and edit `gix-config` files without loss of whitespace or comments.
+/// and edit `git-config` files without loss of whitespace or comments.
 ///
 /// # 'multivar' behavior
 ///
@@ -88,8 +88,8 @@ pub enum Source {
 /// ```
 /// # use std::borrow::Cow;
 /// # use std::convert::TryFrom;
-/// # let gix_config = gix_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-/// assert_eq!(gix_config.raw_value("core", None, "a").unwrap().as_ref(), "d");
+/// # let git_config = gix_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+/// assert_eq!(git_config.raw_value("core", None, "a").unwrap().as_ref(), "d");
 /// ```
 ///
 /// Consider the `multi` variants of the methods instead, if you want to work
@@ -104,7 +104,7 @@ pub enum Source {
 #[derive(Eq, Clone, Debug, Default)]
 pub struct File<'event> {
     /// The list of events that occur before any section. Since a
-    /// `gix-config` file prohibits global values, this vec is limited to only
+    /// `git-config` file prohibits global values, this vec is limited to only
     /// comment, newline, and whitespace events.
     pub(crate) frontmatter_events: crate::parse::FrontMatterEvents<'event>,
     /// Frontmatter events to be placed after the given section.
@@ -113,7 +113,7 @@ pub struct File<'event> {
     /// variant of `SectionBodyIds`.
     pub(crate) section_lookup_tree: HashMap<section::Name<'event>, Vec<SectionBodyIdsLut<'event>>>,
     /// This indirection with the SectionId as the key is critical to flexibly
-    /// supporting `gix-config` sections, as duplicated keys are permitted.
+    /// supporting `git-config` sections, as duplicated keys are permitted.
     pub(crate) sections: HashMap<SectionId, file::Section<'event>>,
     /// Internal monotonically increasing counter for section ids.
     pub(crate) section_id_counter: usize,

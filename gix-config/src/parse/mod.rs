@@ -1,4 +1,4 @@
-//! This module handles parsing a `gix-config` file. Generally speaking, you
+//! This module handles parsing a `git-config` file. Generally speaking, you
 //! want to use a higher abstraction such as [`File`] unless you have some
 //! explicit reason to work with events instead.
 //!

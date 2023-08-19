@@ -1,4 +1,4 @@
-//! A high level wrapper around a single or multiple `gix-config` file, for reading and mutation.
+//! A high level wrapper around a single or multiple `git-config` file, for reading and mutation.
 use std::{
     borrow::Cow,
     collections::HashMap,
@@ -66,7 +66,7 @@ pub struct Metadata {
     pub trust: gix_sec::Trust,
 }
 
-/// A section in a gix-config file, like `[core]` or `[remote "origin"]`, along with all of its keys.
+/// A section in a git-config file, like `[core]` or `[remote "origin"]`, along with all of its keys.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Section<'a> {
     header: crate::parse::section::Header<'a>,
@@ -104,7 +104,7 @@ impl AddAssign<usize> for Size {
 /// This value does not imply any ordering between sections, as new sections
 /// with higher section IDs may be in between lower ID sections after `File` mutation.
 ///
-/// We need to use a section id because `gix-config` permits sections with
+/// We need to use a section id because `git-config` permits sections with
 /// identical names, making it ambiguous when used in maps, for instance.
 ///
 /// This id guaranteed to be unique, but not guaranteed to be compact. In other

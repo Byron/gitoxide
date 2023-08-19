@@ -130,10 +130,10 @@ impl<'event> File<'event> {
     /// # use std::borrow::Cow;
     /// # use gix_config::File;
     /// # use std::convert::TryFrom;
-    /// let mut gix_config = gix_config::File::default();
-    /// let section = gix_config.new_section("hello", Some(Cow::Borrowed("world".into())))?;
+    /// let mut git_config = gix_config::File::default();
+    /// let section = git_config.new_section("hello", Some(Cow::Borrowed("world".into())))?;
     /// let nl = section.newline().to_owned();
-    /// assert_eq!(gix_config.to_string(), format!("[hello \"world\"]{nl}"));
+    /// assert_eq!(git_config.to_string(), format!("[hello \"world\"]{nl}"));
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
@@ -145,13 +145,13 @@ impl<'event> File<'event> {
     /// # use std::convert::TryFrom;
     /// # use bstr::ByteSlice;
     /// # use gix_config::parse::section;
-    /// let mut gix_config = gix_config::File::default();
-    /// let mut section = gix_config.new_section("hello", Some(Cow::Borrowed("world".into())))?;
+    /// let mut git_config = gix_config::File::default();
+    /// let mut section = git_config.new_section("hello", Some(Cow::Borrowed("world".into())))?;
     /// section.push(section::Key::try_from("a")?, Some("b".into()));
     /// let nl = section.newline().to_owned();
-    /// assert_eq!(gix_config.to_string(), format!("[hello \"world\"]{nl}\ta = b{nl}"));
-    /// let _section = gix_config.new_section("core", None);
-    /// assert_eq!(gix_config.to_string(), format!("[hello \"world\"]{nl}\ta = b{nl}[core]{nl}"));
+    /// assert_eq!(git_config.to_string(), format!("[hello \"world\"]{nl}\ta = b{nl}"));
+    /// let _section = git_config.new_section("core", None);
+    /// assert_eq!(git_config.to_string(), format!("[hello \"world\"]{nl}\ta = b{nl}[core]{nl}"));
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn new_section(
@@ -177,13 +177,13 @@ impl<'event> File<'event> {
     /// ```
     /// # use gix_config::File;
     /// # use std::convert::TryFrom;
-    /// let mut gix_config = gix_config::File::try_from(
+    /// let mut git_config = gix_config::File::try_from(
     /// r#"[hello "world"]
     ///     some-value = 4
     /// "#)?;
     ///
-    /// let section = gix_config.remove_section("hello", Some("world".into()));
-    /// assert_eq!(gix_config.to_string(), "");
+    /// let section = git_config.remove_section("hello", Some("world".into()));
+    /// assert_eq!(git_config.to_string(), "");
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
@@ -192,15 +192,15 @@ impl<'event> File<'event> {
     /// ```
     /// # use gix_config::File;
     /// # use std::convert::TryFrom;
-    /// let mut gix_config = gix_config::File::try_from(
+    /// let mut git_config = gix_config::File::try_from(
     /// r#"[hello "world"]
     ///     some-value = 4
     /// [hello "world"]
     ///     some-value = 5
     /// "#)?;
     ///
-    /// let section = gix_config.remove_section("hello", Some("world".into()));
-    /// assert_eq!(gix_config.to_string(), "[hello \"world\"]\n    some-value = 4\n");
+    /// let section = git_config.remove_section("hello", Some("world".into()));
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n    some-value = 4\n");
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn remove_section<'a>(

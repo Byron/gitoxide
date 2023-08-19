@@ -4,7 +4,7 @@ use crate::{color, integer};
 /// collection of color (text) modifiers, or a combination of any of the
 /// aforementioned values, like `red` or `brightgreen`.
 ///
-/// Note that `gix-config` allows color values to simply be a collection of
+/// Note that `git-config` allows color values to simply be a collection of
 /// [`color::Attribute`]s, and does not require a [`color::Name`] for either the
 /// foreground or background color.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]

@@ -31,11 +31,11 @@ pub enum Error {
 /// Instantiation from environment variables
 impl File<'static> {
     /// Generates a config from `GIT_CONFIG_*` environment variables or returns `Ok(None)` if no configuration was found.
-    /// See [`gix-config`'s documentation] for more information on the environment variables in question.
+    /// See [`git-config`'s documentation] for more information on the environment variables in question.
     ///
     /// With `options` configured, it's possible to resolve `include.path` or `includeIf.<condition>.path` directives as well.
     ///
-    /// [`gix-config`'s documentation]: https://git-scm.com/docs/gix-config#Documentation/gix-config.txt-GITCONFIGCOUNT
+    /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
     pub fn from_env(options: init::Options<'_>) -> Result<Option<File<'static>>, Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {

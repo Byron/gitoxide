@@ -87,7 +87,7 @@ impl TryFrom<Cow<'_, BStr>> for Integer {
     }
 }
 
-/// Integer suffixes that are supported by `gix-config`.
+/// Integer suffixes that are supported by `git-config`.
 ///
 /// These values are base-2 unit of measurements, not the base-10 variants.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]

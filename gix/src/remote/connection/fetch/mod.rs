@@ -167,7 +167,7 @@ where
     /// Note that at this point, the `transport` should already be configured using the [`transport_mut()`][Self::transport_mut()]
     /// method, as it will be consumed here.
     ///
-    /// From there additional properties of the fetch can be adjusted to override the defaults that are configured via gix-config.
+    /// From there additional properties of the fetch can be adjusted to override the defaults that are configured via git-config.
     ///
     /// # Async Experimental
     ///
