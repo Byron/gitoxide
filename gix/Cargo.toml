@@ -162,6 +162,7 @@ gix-credentials = { version = "^0.17.1", path = "../gix-credentials" }
 gix-prompt = { version = "^0.5.5", path = "../gix-prompt" }
 gix-index = { version = "^0.22.0", path = "../gix-index" }
 gix-worktree = { version = "^0.24.0", path = "../gix-worktree" }
+gix-worktree-state = { version = "^0.1.0", path = "../gix-worktree-state" }
 gix-hashtable = { version = "^0.2.4", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.18.2", path = "../gix-commitgraph" }
 gix-pathspec = { version = "^0.1.0", path = "../gix-pathspec" }

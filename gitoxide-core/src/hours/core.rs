@@ -101,8 +101,8 @@ pub fn spawn_tree_delta_threads<'scope>(
                             repo.index_or_load_from_head().map_err(Into::into).and_then(|index| {
                                 repo.attributes(
                                     &index,
-                                    gix::worktree::cache::state::attributes::Source::IdMapping,
-                                    gix::worktree::cache::state::ignore::Source::IdMapping,
+                                    gix::worktree::stack::state::attributes::Source::IdMapping,
+                                    gix::worktree::stack::state::ignore::Source::IdMapping,
                                     None,
                                 )
                                 .map_err(Into::into)

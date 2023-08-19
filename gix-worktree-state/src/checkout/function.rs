@@ -4,7 +4,7 @@ use gix_features::{interrupt, parallel::in_parallel_with_finalize, progress::Pro
 use gix_hash::oid;
 
 use crate::checkout::chunk;
-use gix_worktree::{cache, Cache};
+use gix_worktree::{stack, Stack};
 
 /// Checkout the entire `index` into `dir`, and resolve objects found in index entries with `find` to write their content to their
 /// respective path in `dir`.
@@ -66,12 +66,12 @@ where
         None,
     );
 
-    let state = cache::State::for_checkout(options.overwrite_existing, std::mem::take(&mut options.attributes));
+    let state = stack::State::for_checkout(options.overwrite_existing, std::mem::take(&mut options.attributes));
     let attribute_files = state.id_mappings_from_index(index, paths, case);
     let mut ctx = chunk::Context {
         buf: Vec::new(),
         options: (&options).into(),
-        path_cache: Cache::new(dir, state, case, Vec::with_capacity(512), attribute_files),
+        path_cache: Stack::new(dir, state, case, Vec::with_capacity(512), attribute_files),
         filters: options.filters,
         find,
     };

@@ -17,7 +17,7 @@ impl Repository {
         Pathspec::new(self, patterns, inherit_ignore_case, || {
             self.attributes_only(
                 index,
-                gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
+                gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
             )
             .map_err(Into::into)
         })

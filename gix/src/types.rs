@@ -202,7 +202,7 @@ pub struct Remote<'repo> {
 pub struct Pathspec<'repo> {
     pub(crate) repo: &'repo Repository,
     /// The cache to power attribute access. It's only initialized if we have a pattern with attributes.
-    pub(crate) cache: Option<gix_worktree::Cache>,
+    pub(crate) cache: Option<gix_worktree::Stack>,
     /// The prepared search to use for checking matches.
     pub(crate) search: gix_pathspec::Search,
 }

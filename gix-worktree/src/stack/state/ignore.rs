@@ -12,7 +12,7 @@ use crate::{
 #[derive(Default, Debug, Clone, Copy)]
 pub enum Source {
     /// Retrieve ignore files from id mappings, see
-    /// [State::id_mappings_from_index()][crate::cache::State::id_mappings_from_index()].
+    /// [State::id_mappings_from_index()][crate::stack::State::id_mappings_from_index()].
     ///
     /// These mappings are typically produced from an index.
     /// If a tree should be the source, build an attribute list from a tree instead, or convert a tree to an index.

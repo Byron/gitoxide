@@ -56,22 +56,22 @@ pub(crate) mod function {
                     match attrs {
                         Attributes::WorktreeAndIndex => {
                             if repo.is_bare() {
-                                gix::worktree::cache::state::attributes::Source::IdMapping
+                                gix::worktree::stack::state::attributes::Source::IdMapping
                             } else {
-                                gix::worktree::cache::state::attributes::Source::WorktreeThenIdMapping
+                                gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
                             }
                         }
-                        Attributes::Index => gix::worktree::cache::state::attributes::Source::IdMapping,
+                        Attributes::Index => gix::worktree::stack::state::attributes::Source::IdMapping,
                     },
                     match attrs {
                         Attributes::WorktreeAndIndex => {
                             if repo.is_bare() {
-                                gix::worktree::cache::state::ignore::Source::IdMapping
+                                gix::worktree::stack::state::ignore::Source::IdMapping
                             } else {
-                                gix::worktree::cache::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped
+                                gix::worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped
                             }
                         }
-                        Attributes::Index => gix::worktree::cache::state::ignore::Source::IdMapping,
+                        Attributes::Index => gix::worktree::stack::state::ignore::Source::IdMapping,
                     },
                     None,
                 )
@@ -203,7 +203,7 @@ pub(crate) mod function {
         pub excluded: usize,
         pub with_attributes: usize,
         pub max_attributes_per_path: usize,
-        pub cache: Option<gix::worktree::cache::Statistics>,
+        pub cache: Option<gix::worktree::stack::Statistics>,
     }
 
     #[cfg(feature = "serde")]
