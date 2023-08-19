@@ -1240,6 +1240,7 @@ dependencies = [
  "gix-utils 0.1.5",
  "gix-validate 0.8.0",
  "gix-worktree 0.24.0",
+ "gix-worktree-state",
  "gix-worktree-stream",
  "is_ci",
  "log",

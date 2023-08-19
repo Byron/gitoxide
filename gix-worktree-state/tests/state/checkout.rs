@@ -11,7 +11,7 @@ use gix_features::progress;
 use gix_object::bstr::ByteSlice;
 use gix_odb::FindExt;
 use gix_testtools::tempfile::TempDir;
-use gix_worktree::checkout::Collision;
+use gix_worktree_state::checkout::Collision;
 use once_cell::sync::Lazy;
 
 use crate::fixture_path;
@@ -454,18 +454,18 @@ pub fn dir_structure<P: AsRef<std::path::Path>>(path: P) -> Vec<std::path::PathB
 }
 
 fn checkout_index_in_tmp_dir(
-    opts: gix_worktree::checkout::Options,
+    opts: gix_worktree_state::checkout::Options,
     name: &str,
-) -> crate::Result<(PathBuf, TempDir, gix_index::File, gix_worktree::checkout::Outcome)> {
+) -> crate::Result<(PathBuf, TempDir, gix_index::File, gix_worktree_state::checkout::Outcome)> {
     checkout_index_in_tmp_dir_opts(opts, name, |_d| true, |_| Ok(()))
 }
 
 fn checkout_index_in_tmp_dir_opts(
-    opts: gix_worktree::checkout::Options,
+    opts: gix_worktree_state::checkout::Options,
     name: &str,
     mut allow_return_object: impl FnMut(&gix_hash::oid) -> bool + Send + Clone,
     prep_dest: impl Fn(&Path) -> std::io::Result<()>,
-) -> crate::Result<(PathBuf, TempDir, gix_index::File, gix_worktree::checkout::Outcome)> {
+) -> crate::Result<(PathBuf, TempDir, gix_index::File, gix_worktree_state::checkout::Outcome)> {
     let source_tree = fixture_path(name);
     let git_dir = source_tree.join(".git");
     let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default())?;
@@ -473,7 +473,7 @@ fn checkout_index_in_tmp_dir_opts(
     let destination = gix_testtools::tempfile::tempdir_in(std::env::current_dir()?)?;
     prep_dest(destination.path()).expect("preparation must succeed");
 
-    let outcome = gix_worktree::checkout(
+    let outcome = gix_worktree_state::checkout(
         &mut index,
         destination.path(),
         move |oid, buf| {
@@ -501,8 +501,8 @@ fn probe_gitoxide_dir() -> crate::Result<gix_fs::Capabilities> {
     ))
 }
 
-fn opts_from_probe() -> gix_worktree::checkout::Options {
-    gix_worktree::checkout::Options {
+fn opts_from_probe() -> gix_worktree_state::checkout::Options {
+    gix_worktree_state::checkout::Options {
         fs: probe_gitoxide_dir().unwrap(),
         destination_is_initially_empty: true,
         thread_limit: gix_features::parallel::num_threads(None).into(),

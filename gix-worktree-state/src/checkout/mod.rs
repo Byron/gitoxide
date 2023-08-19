@@ -60,7 +60,7 @@ pub struct Options {
     /// Control how stat comparisons are made when checking if a file is fresh.
     pub stat_options: stat::Options,
     /// A stack of attributes to use with the filesystem cache to use as driver for filters.
-    pub attributes: gix_worktree::cache::state::Attributes,
+    pub attributes: gix_worktree::stack::state::Attributes,
     /// The filter pipeline to use for applying mandatory filters before writing to the worktree.
     pub filters: gix_filter::Pipeline,
     /// Control how long-running processes may use the 'delay' capability.

@@ -81,7 +81,7 @@ impl Stack {
     /// symlinks are in that path.
     /// Unless `is_dir` is known with `Some(…)`, then `relative` points to a directory itself in which case the entire resulting
     /// path is created as directory. If it's not known it is assumed to be a file.
-    /// `find` maybe used to lookup objects from an [id mapping][crate::cache::State::id_mappings_from_index()], with mappnigs
+    /// `find` maybe used to lookup objects from an [id mapping][crate::stack::State::id_mappings_from_index()], with mappnigs
     ///
     /// Provide access to cached information for that `relative` path via the returned platform.
     pub fn at_path<Find, E>(
@@ -110,7 +110,7 @@ impl Stack {
 
     /// Obtain a platform for lookups from a repo-`relative` path, typically obtained from an index entry. `is_dir` should reflect
     /// whether it's a directory or not, or left at `None` if unknown.
-    /// `find` maybe used to lookup objects from an [id mapping][crate::cache::State::id_mappings_from_index()].
+    /// `find` maybe used to lookup objects from an [id mapping][crate::stack::State::id_mappings_from_index()].
     /// All effects are similar to [`at_path()`][Self::at_path()].
     ///
     /// If `relative` ends with `/` and `is_dir` is `None`, it is automatically assumed to be a directory.

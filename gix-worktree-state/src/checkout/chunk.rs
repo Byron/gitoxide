@@ -7,7 +7,7 @@ use bstr::{BStr, BString};
 use gix_hash::oid;
 
 use crate::{checkout, checkout::entry};
-use gix_worktree::Cache;
+use gix_worktree::Stack;
 
 mod reduce {
     use std::marker::PhantomData;
@@ -92,7 +92,7 @@ pub struct Outcome<'a> {
 #[derive(Clone)]
 pub struct Context<Find: Clone> {
     pub find: Find,
-    pub path_cache: Cache,
+    pub path_cache: Stack,
     pub filters: gix_filter::Pipeline,
     pub buf: Vec<u8>,
     pub options: Options,

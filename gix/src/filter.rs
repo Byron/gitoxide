@@ -67,7 +67,7 @@ pub mod pipeline {
 #[derive(Clone)]
 pub struct Pipeline<'repo> {
     inner: gix_filter::Pipeline,
-    cache: gix_worktree::Cache,
+    cache: gix_worktree::Stack,
     repo: &'repo Repository,
 }
 
@@ -110,7 +110,7 @@ impl<'repo> Pipeline<'repo> {
 
     /// Create a new instance by extracting all necessary information and configuration from a `repo` along with `cache` for accessing
     /// attributes. The `index` is used for some filters which may access it under very specific circumstances.
-    pub fn new(repo: &'repo Repository, cache: gix_worktree::Cache) -> Result<Self, pipeline::options::Error> {
+    pub fn new(repo: &'repo Repository, cache: gix_worktree::Stack) -> Result<Self, pipeline::options::Error> {
         let pipeline = gix_filter::Pipeline::new(cache.attributes_collection(), Self::options(repo)?);
         Ok(Pipeline {
             inner: pipeline,
@@ -120,7 +120,7 @@ impl<'repo> Pipeline<'repo> {
     }
 
     /// Detach the repository and obtain the individual functional parts.
-    pub fn into_parts(self) -> (gix_filter::Pipeline, gix_worktree::Cache) {
+    pub fn into_parts(self) -> (gix_filter::Pipeline, gix_worktree::Stack) {
         (self.inner, self.cache)
     }
 }

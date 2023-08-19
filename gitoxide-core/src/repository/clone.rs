@@ -111,7 +111,7 @@ pub(crate) mod function {
             }
         };
 
-        if let Some(gix::worktree::checkout::Outcome { collisions, errors, .. }) = outcome {
+        if let Some(gix::worktree::state::checkout::Outcome { collisions, errors, .. }) = outcome {
             if !(collisions.is_empty() && errors.is_empty()) {
                 let mut messages = Vec::new();
                 if !errors.is_empty() {

@@ -10,11 +10,11 @@ use gix_hash::oid;
 use gix_index::{entry::Stat, Entry};
 use io_close::Close;
 
-use gix_worktree::Cache;
+use gix_worktree::Stack;
 
 pub struct Context<'a, Find> {
     pub find: &'a mut Find,
-    pub path_cache: &'a mut Cache,
+    pub path_cache: &'a mut Stack,
     pub filters: &'a mut gix_filter::Pipeline,
     pub buf: &'a mut Vec<u8>,
 }

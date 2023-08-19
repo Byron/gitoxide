@@ -1,6 +1,6 @@
 use bstr::BStr;
 
-/// The error returned by [`status()`][crate::status()].
+/// The error returned by [`status()`](crate::index_as_worktree()).
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -40,7 +40,7 @@ pub enum Change<T = ()> {
         /// Indicates that one of the stat changes was an executable bit change
         /// which is a significant change itself.
         executable_bit_changed: bool,
-        /// The output of the [`CompareBlobs`][crate::status::content::CompareBlobs] run on this entry.
+        /// The output of the [`CompareBlobs`](crate::index_as_worktree::content::CompareBlobs) run on this entry.
         /// If there is no content change and only the executable bit
         /// changed than this is `None`.
         content_change: Option<T>,

@@ -160,8 +160,8 @@ impl Cache {
     pub(crate) fn checkout_options(
         &self,
         repo: &Repository,
-        attributes_source: gix_worktree::cache::state::attributes::Source,
-    ) -> Result<gix_worktree::checkout::Options, checkout_options::Error> {
+        attributes_source: gix_worktree::stack::state::attributes::Source,
+    ) -> Result<gix_worktree_state::checkout::Options, checkout_options::Error> {
         let git_dir = repo.git_dir();
         let thread_limit = self.apply_leniency(
             self.resolved
@@ -189,7 +189,7 @@ impl Cache {
         } else {
             gix_filter::driver::apply::Delay::Forbid
         };
-        Ok(gix_worktree::checkout::Options {
+        Ok(gix_worktree_state::checkout::Options {
             filter_process_delay,
             filters,
             attributes: self
@@ -219,14 +219,14 @@ impl Cache {
         &self,
         git_dir: &std::path::Path,
         overrides: Option<gix_ignore::Search>,
-        source: gix_worktree::cache::state::ignore::Source,
+        source: gix_worktree::stack::state::ignore::Source,
         buf: &mut Vec<u8>,
-    ) -> Result<gix_worktree::cache::state::Ignore, config::exclude_stack::Error> {
+    ) -> Result<gix_worktree::stack::state::Ignore, config::exclude_stack::Error> {
         let excludes_file = match self.excludes_file().transpose()? {
             Some(user_path) => Some(user_path),
             None => self.xdg_config_path("ignore")?,
         };
-        Ok(gix_worktree::cache::state::Ignore::new(
+        Ok(gix_worktree::stack::state::Ignore::new(
             overrides.unwrap_or_default(),
             gix_ignore::Search::from_git_dir(git_dir, excludes_file, buf)?,
             None,
@@ -237,9 +237,9 @@ impl Cache {
     pub(crate) fn assemble_attribute_globals(
         &self,
         git_dir: &std::path::Path,
-        source: gix_worktree::cache::state::attributes::Source,
+        source: gix_worktree::stack::state::attributes::Source,
         attributes: crate::open::permissions::Attributes,
-    ) -> Result<(gix_worktree::cache::state::Attributes, Vec<u8>), config::attribute_stack::Error> {
+    ) -> Result<(gix_worktree::stack::state::Attributes, Vec<u8>), config::attribute_stack::Error> {
         let configured_or_user_attributes = match self
             .trusted_file_path("core", None, Core::ATTRIBUTES_FILE.name)
             .transpose()?
@@ -265,7 +265,7 @@ impl Cache {
         let info_attributes_path = git_dir.join("info").join("attributes");
         let mut buf = Vec::new();
         let mut collection = gix_attributes::search::MetadataCollection::default();
-        let state = gix_worktree::cache::state::Attributes::new(
+        let state = gix_worktree::stack::state::Attributes::new(
             gix_attributes::Search::new_globals(attribute_files, &mut buf, &mut collection)?,
             Some(info_attributes_path),
             source,

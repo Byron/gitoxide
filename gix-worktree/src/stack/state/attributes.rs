@@ -23,7 +23,7 @@ pub struct Statistics {
 /// Decide where to read `.gitattributes` files from.
 ///
 /// To Retrieve attribute files from id mappings, see
-/// [State::id_mappings_from_index()][crate::cache::State::id_mappings_from_index()].
+/// [State::id_mappings_from_index()][crate::stack::State::id_mappings_from_index()].
 ///
 /// These mappings are typically produced from an index.
 /// If a tree should be the source, build an attribute list from a tree instead, or convert a tree to an index.
@@ -230,7 +230,7 @@ impl Stack {
     }
 
     /// Return the metadata collection that enables initializing attribute match outcomes as done in
-    /// [`attribute_matches()`][Cache::attribute_matches()] or [`selected_attribute_matches()`][Cache::selected_attribute_matches()]
+    /// [`attribute_matches()`][Stack::attribute_matches()] or [`selected_attribute_matches()`][Stack::selected_attribute_matches()]
     ///
     /// ### Panics
     ///
