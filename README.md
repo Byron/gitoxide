@@ -96,6 +96,7 @@ is usable to some extent.
   * [gix-archive](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-archive)
   * [gix-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-submodule)
   * [gix-status](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-status)
+  * [gix-worktree-state](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree-state)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
   * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)

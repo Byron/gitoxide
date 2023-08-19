@@ -2489,6 +2489,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-worktree-state"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "gix-features 0.32.1",
+ "gix-filter",
+ "gix-fs 0.4.1",
+ "gix-glob 0.10.2",
+ "gix-hash 0.11.4",
+ "gix-index 0.22.0",
+ "gix-object 0.34.0",
+ "gix-odb",
+ "gix-path 0.8.4",
+ "gix-testtools",
+ "gix-worktree 0.24.0",
+ "io-close",
+ "once_cell",
+ "symlink",
+ "thiserror",
+ "walkdir",
+]
+
+[[package]]
 name = "gix-worktree-stream"
 version = "0.3.0"
 dependencies = [
