@@ -144,7 +144,7 @@ mod decode {
         let mode = tree::EntryMode::try_from(mode).ok()?;
         let (filename, i) = i.split_at(i.find_byte(0)?);
         let i = &i[1..];
-        const HASH_LEN_FIXME: usize = 20; // TODO: know actual /desired length or we may overshoot
+        const HASH_LEN_FIXME: usize = 20; // TODO(SHA256): know actual/desired length or we may overshoot
         let (oid, i) = match i.len() {
             len if len < HASH_LEN_FIXME => return None,
             _ => i.split_at(20),
@@ -164,7 +164,7 @@ mod decode {
             terminated(take_while(5..=6, AsChar::is_dec_digit), SPACE)
                 .verify_map(|mode| tree::EntryMode::try_from(mode).ok()),
             terminated(take_while(1.., |b| b != NULL[0]), NULL),
-            take(20u8),
+            take(20u8), // TODO(SHA256): make this compatible with other hash lengths
         )
             .map(|(mode, filename, oid): (_, &[u8], _)| EntryRef {
                 mode,
