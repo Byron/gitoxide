@@ -1,7 +1,7 @@
 use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
 use gix_odb::FindExt;
-use gix_worktree::{cache::state::ignore::Source, Cache};
+use gix_worktree::{stack::state::ignore::Source, Stack};
 
 use crate::hex_to_id;
 
@@ -37,16 +37,16 @@ fn exclude_by_dir_is_handled_just_like_git() {
 
     let mut buf = Vec::new();
     let case = gix_glob::pattern::Case::Sensitive;
-    let state = gix_worktree::cache::State::for_add(
+    let state = gix_worktree::stack::State::for_add(
         Default::default(),
-        gix_worktree::cache::state::Ignore::new(
+        gix_worktree::stack::state::Ignore::new(
             Default::default(),
             gix_ignore::Search::from_git_dir(&git_dir, None, &mut buf).unwrap(),
             None,
             Source::WorktreeThenIdMappingIfNotSkipped,
         ),
     );
-    let mut cache = Cache::new(&dir, state, case, buf, Default::default());
+    let mut cache = Stack::new(&dir, state, case, buf, Default::default());
     let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline")).unwrap();
     let expectations = IgnoreExpectations {
         lines: baseline.lines(),
@@ -95,9 +95,9 @@ fn check_against_baseline() -> crate::Result {
     };
     let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default())?;
     let odb = gix_odb::at(git_dir.join("objects"))?;
-    let state = gix_worktree::cache::State::for_add(
+    let state = gix_worktree::stack::State::for_add(
         Default::default(),
-        gix_worktree::cache::state::Ignore::new(
+        gix_worktree::stack::state::Ignore::new(
             gix_ignore::Search::from_overrides(vec!["!force-include"]),
             gix_ignore::Search::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf)?,
             None,
@@ -113,7 +113,7 @@ fn check_against_baseline() -> crate::Result {
             hex_to_id("5c7e0ed672d3d31d83a3df61f13cc8f7b22d5bfd")
         )]
     );
-    let mut cache = Cache::new(&worktree_dir, state, case, buf, attribute_files_in_index);
+    let mut cache = Stack::new(&worktree_dir, state, case, buf, attribute_files_in_index);
 
     let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline"))?;
     let expectations = IgnoreExpectations {

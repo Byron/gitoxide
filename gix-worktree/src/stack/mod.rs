@@ -4,10 +4,10 @@ use std::path::{Path, PathBuf};
 use bstr::{BStr, ByteSlice};
 use gix_hash::oid;
 
-use super::Cache;
+use super::Stack;
 use crate::PathIdMapping;
 
-/// Various aggregate numbers collected from when the corresponding [`Cache`] was instantiated.
+/// Various aggregate numbers collected from when the corresponding [`Stack`] was instantiated.
 #[derive(Default, Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Statistics {
@@ -45,12 +45,12 @@ pub enum State {
 
 #[must_use]
 pub struct Platform<'a> {
-    parent: &'a Cache,
+    parent: &'a Stack,
     is_dir: Option<bool>,
 }
 
 /// Initialization
-impl Cache {
+impl Stack {
     /// Create a new instance with `worktree_root` being the base for all future paths we match.
     /// `state` defines the capabilities of the cache.
     /// The `case` configures attribute and exclusion case sensitivity at *query time*, which should match the case that
@@ -64,7 +64,7 @@ impl Cache {
         id_mappings: Vec<PathIdMapping>,
     ) -> Self {
         let root = worktree_root.into();
-        Cache {
+        Stack {
             stack: gix_fs::Stack::new(root),
             state,
             case,
@@ -76,7 +76,7 @@ impl Cache {
 }
 
 /// Entry points for attribute query
-impl Cache {
+impl Stack {
     /// Append the `relative` path to the root directory of the cache and efficiently create leading directories, while assuring that no
     /// symlinks are in that path.
     /// Unless `is_dir` is known with `Some(…)`, then `relative` points to a directory itself in which case the entire resulting
@@ -140,7 +140,7 @@ impl Cache {
 }
 
 /// Mutation
-impl Cache {
+impl Stack {
     /// Reset the statistics after returning them.
     pub fn take_statistics(&mut self) -> Statistics {
         std::mem::take(&mut self.statistics)
@@ -159,7 +159,7 @@ impl Cache {
 }
 
 /// Access
-impl Cache {
+impl Stack {
     /// Return the statistics we gathered thus far.
     pub fn statistics(&self) -> &Statistics {
         &self.statistics

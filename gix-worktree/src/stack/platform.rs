@@ -2,7 +2,7 @@ use std::path::Path;
 
 use bstr::ByteSlice;
 
-use crate::cache::Platform;
+use crate::stack::Platform;
 
 /// Access
 impl<'a> Platform<'a> {

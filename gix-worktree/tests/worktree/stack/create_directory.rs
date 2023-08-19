@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use gix_testtools::tempfile::{tempdir, TempDir};
-use gix_worktree::{cache, Cache};
+use gix_worktree::{stack, Stack};
 
 #[allow(clippy::ptr_arg)]
 fn panic_on_find<'buf>(_oid: &gix_hash::oid, _buf: &'buf mut Vec<u8>) -> std::io::Result<gix_object::BlobRef<'buf>> {
@@ -11,9 +11,9 @@ fn panic_on_find<'buf>(_oid: &gix_hash::oid, _buf: &'buf mut Vec<u8>) -> std::io
 #[test]
 fn root_is_assumed_to_exist_and_files_in_root_do_not_create_directory() -> crate::Result {
     let dir = tempdir()?;
-    let mut cache = Cache::new(
+    let mut cache = Stack::new(
         dir.path().join("non-existing-root"),
-        cache::State::for_checkout(false, Default::default()),
+        stack::State::for_checkout(false, Default::default()),
         Default::default(),
         Vec::new(),
         Default::default(),
@@ -68,7 +68,7 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
     std::fs::write(tmp.path().join("file-in-dir"), [])?;
 
     for dirname in &["file-in-dir", "link-to-dir"] {
-        if let cache::State::CreateDirectoryAndAttributesStack {
+        if let stack::State::CreateDirectoryAndAttributesStack {
             unlink_on_collision, ..
         } = cache.state_mut()
         {
@@ -90,7 +90,7 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
     );
     cache.take_statistics();
     for dirname in &["link-to-dir", "file-in-dir"] {
-        if let cache::State::CreateDirectoryAndAttributesStack {
+        if let stack::State::CreateDirectoryAndAttributesStack {
             unlink_on_collision, ..
         } = cache.state_mut()
         {
@@ -109,11 +109,11 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
     Ok(())
 }
 
-fn new_cache() -> (Cache, TempDir) {
+fn new_cache() -> (Stack, TempDir) {
     let dir = tempdir().unwrap();
-    let cache = Cache::new(
+    let cache = Stack::new(
         dir.path(),
-        cache::State::for_checkout(false, Default::default()),
+        stack::State::for_checkout(false, Default::default()),
         Default::default(),
         Vec::new(),
         Default::default(),
