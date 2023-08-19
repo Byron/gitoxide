@@ -2217,6 +2217,22 @@ name = "gix-sequencer"
 version = "0.0.0"
 
 [[package]]
+name = "gix-status"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "filetime",
+ "gix-features 0.32.1",
+ "gix-fs 0.4.1",
+ "gix-hash 0.11.4",
+ "gix-index 0.22.0",
+ "gix-object 0.34.0",
+ "gix-path 0.8.4",
+ "gix-testtools",
+ "thiserror",
+]
+
+[[package]]
 name = "gix-submodule"
 version = "0.1.0"
 dependencies = [
