@@ -135,6 +135,10 @@ unit-tests:
     cargo test -p gix-archive --features tar
     cargo test -p gix-archive --features tar_gz
     cargo test -p gix-archive --features zip
+    cd gix-status; \
+      set -ex; \
+      cargo test; \
+      cargo test --features "internal-testing-gix-features-parallel"
     cd gix-object; \
       set -ex; \
       cargo test; \
