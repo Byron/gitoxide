@@ -1,4 +1,4 @@
-use bstr::ByteSlice;
+use bstr::{BStr, ByteSlice};
 use gix_url::Scheme;
 
 fn assert_url(url: &str, expected: gix_url::Url) -> Result<gix_url::Url, crate::Error> {
@@ -22,11 +22,8 @@ fn assert_url_roundtrip(url: &str, expected: gix_url::Url) -> crate::Result {
     Ok(())
 }
 
-fn assert_failure(url: &str, expected_err: impl ToString) {
-    assert_eq!(
-        gix_url::parse(url.into()).unwrap_err().to_string(),
-        expected_err.to_string()
-    );
+fn parse<'a>(input: impl Into<&'a BStr>) -> Result<gix_url::Url, gix_url::parse::Error> {
+    gix_url::parse(input.into())
 }
 
 fn url<'a, 'b>(

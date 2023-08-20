@@ -5,19 +5,48 @@ use bstr::{BStr, BString, ByteSlice};
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error("Could not decode URL as UTF8")]
-    Utf8(#[from] std::str::Utf8Error),
-    #[error(transparent)]
-    Url(#[from] url::ParseError),
-    #[error("file URLs require an absolute or relative path to the repository")]
-    MissingRepositoryPath,
-    #[error("Relative URLs are not permitted: {url:?}")]
+    #[error("{} \"{url}\" is not valid UTF-8", .kind.get_error_str())]
+    Utf8 {
+        url: BString,
+        kind: UrlKind,
+        source: std::str::Utf8Error,
+    },
+    #[error("{} {url:?} can not be parsed as valid URL", .kind.get_error_str())]
+    Url {
+        url: String,
+        kind: UrlKind,
+        source: url::ParseError,
+    },
+    #[error("{} \"{url}\" does not specify a path to a repository", .kind.get_error_str())]
+    MissingRepositoryPath { url: BString, kind: UrlKind },
+    #[error("URL {url:?} is relative which is not allowed in this context")]
     RelativeUrl { url: String },
 }
 
 impl From<Infallible> for Error {
     fn from(_: Infallible) -> Self {
         unreachable!("Cannot actually happen, but it seems there can't be a blanket impl for this")
+    }
+}
+
+///
+#[derive(Debug)]
+pub enum UrlKind {
+    ///
+    Url,
+    ///
+    Scp,
+    ///
+    Local,
+}
+
+impl UrlKind {
+    fn get_error_str(&self) -> &'static str {
+        match self {
+            UrlKind::Url => "URL",
+            UrlKind::Scp => "SCP-like target",
+            UrlKind::Local => "local path",
+        }
     }
 }
 
@@ -61,7 +90,16 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
 }
 
 fn parse_url(input: &BStr) -> Result<crate::Url, Error> {
-    let url = url::Url::parse(std::str::from_utf8(input)?)?;
+    let input = std::str::from_utf8(input).map_err(|source| Error::Utf8 {
+        url: input.to_owned(),
+        kind: UrlKind::Url,
+        source,
+    })?;
+    let url = url::Url::parse(input).map_err(|source| Error::Url {
+        url: input.to_owned(),
+        kind: UrlKind::Url,
+        source,
+    })?;
 
     Ok(crate::Url {
         serialize_alternative_form: false,
@@ -79,7 +117,11 @@ fn parse_url(input: &BStr) -> Result<crate::Url, Error> {
 }
 
 fn parse_scp(input: &BStr, colon: usize) -> Result<crate::Url, Error> {
-    let input = std::str::from_utf8(input)?;
+    let input = std::str::from_utf8(input).map_err(|source| Error::Utf8 {
+        url: input.to_owned(),
+        kind: UrlKind::Scp,
+        source,
+    })?;
 
     // TODO: this incorrectly splits at IPv6 addresses, check for `[]` before splitting
     let (host, path) = input.split_at(colon);
@@ -89,7 +131,11 @@ fn parse_scp(input: &BStr, colon: usize) -> Result<crate::Url, Error> {
     // should never differ in any other way (ssh URLs should not contain a query or fragment part).
     // To avoid the various off-by-one errors caused by the `/` characters, we keep using the path
     // determined above and can therefore skip parsing it here as well.
-    let url = url::Url::parse(&format!("ssh://{host}"))?;
+    let url = url::Url::parse(&format!("ssh://{host}")).map_err(|source| Error::Url {
+        url: input.to_owned(),
+        kind: UrlKind::Scp,
+        source,
+    })?;
 
     Ok(crate::Url {
         serialize_alternative_form: true,
