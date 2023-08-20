@@ -11,6 +11,7 @@ pub struct Collision {
 }
 
 /// A path that encountered an IO error.
+#[derive(Debug)]
 pub struct ErrorRecord {
     /// the path that encountered the error.
     pub path: BString,
@@ -19,7 +20,7 @@ pub struct ErrorRecord {
 }
 
 /// The outcome of checking out an entire index.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Outcome {
     /// The amount of files updated, or created.
     pub files_updated: usize,
