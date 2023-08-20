@@ -49,13 +49,13 @@ impl Repository {
                 },
                 Ok,
             )?)?;
-            let cache = self.attributes_only(&index, gix_worktree::cache::state::attributes::Source::IdMapping)?;
+            let cache = self.attributes_only(&index, gix_worktree::stack::state::attributes::Source::IdMapping)?;
             (cache, IndexPersistedOrInMemory::InMemory(index))
         } else {
             let index = self.index()?;
             let cache = self.attributes_only(
                 &index,
-                gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
+                gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
             )?;
             (cache, IndexPersistedOrInMemory::Persisted(index))
         };

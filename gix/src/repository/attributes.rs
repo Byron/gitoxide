@@ -29,10 +29,10 @@ impl Repository {
     pub fn attributes(
         &self,
         index: &gix_index::State,
-        attributes_source: gix_worktree::cache::state::attributes::Source,
-        ignore_source: gix_worktree::cache::state::ignore::Source,
+        attributes_source: gix_worktree::stack::state::attributes::Source,
+        ignore_source: gix_worktree::stack::state::ignore::Source,
         exclude_overrides: Option<gix_ignore::Search>,
-    ) -> Result<gix_worktree::Cache, Error> {
+    ) -> Result<gix_worktree::Stack, Error> {
         let case = if self.config.ignore_case {
             gix_glob::pattern::Case::Fold
         } else {
@@ -46,9 +46,9 @@ impl Repository {
         let ignore =
             self.config
                 .assemble_exclude_globals(self.git_dir(), exclude_overrides, ignore_source, &mut buf)?;
-        let state = gix_worktree::cache::State::AttributesAndIgnoreStack { attributes, ignore };
+        let state = gix_worktree::stack::State::AttributesAndIgnoreStack { attributes, ignore };
         let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
-        Ok(gix_worktree::Cache::new(
+        Ok(gix_worktree::Stack::new(
             // this is alright as we don't cause mutation of that directory, it's virtual.
             self.work_dir().unwrap_or(self.git_dir()),
             state,
@@ -62,8 +62,8 @@ impl Repository {
     pub fn attributes_only(
         &self,
         index: &gix_index::State,
-        attributes_source: gix_worktree::cache::state::attributes::Source,
-    ) -> Result<gix_worktree::Cache, config::attribute_stack::Error> {
+        attributes_source: gix_worktree::stack::state::attributes::Source,
+    ) -> Result<gix_worktree::Stack, config::attribute_stack::Error> {
         let case = if self.config.ignore_case {
             gix_glob::pattern::Case::Fold
         } else {
@@ -74,9 +74,9 @@ impl Repository {
             attributes_source,
             self.options.permissions.attributes,
         )?;
-        let state = gix_worktree::cache::State::AttributesStack(attributes);
+        let state = gix_worktree::stack::State::AttributesStack(attributes);
         let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
-        Ok(gix_worktree::Cache::new(
+        Ok(gix_worktree::Stack::new(
             // this is alright as we don't cause mutation of that directory, it's virtual.
             self.work_dir().unwrap_or(self.git_dir()),
             state,
@@ -105,8 +105,8 @@ impl Repository {
         &self,
         index: &gix_index::State,
         overrides: Option<gix_ignore::Search>,
-        source: gix_worktree::cache::state::ignore::Source,
-    ) -> Result<gix_worktree::Cache, config::exclude_stack::Error> {
+        source: gix_worktree::stack::state::ignore::Source,
+    ) -> Result<gix_worktree::Stack, config::exclude_stack::Error> {
         let case = if self.config.ignore_case {
             gix_glob::pattern::Case::Fold
         } else {
@@ -116,9 +116,9 @@ impl Repository {
         let ignore = self
             .config
             .assemble_exclude_globals(self.git_dir(), overrides, source, &mut buf)?;
-        let state = gix_worktree::cache::State::IgnoreStack(ignore);
+        let state = gix_worktree::stack::State::IgnoreStack(ignore);
         let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
-        Ok(gix_worktree::Cache::new(
+        Ok(gix_worktree::Stack::new(
             // this is alright as we don't cause mutation of that directory, it's virtual.
             self.work_dir().unwrap_or(self.git_dir()),
             state,

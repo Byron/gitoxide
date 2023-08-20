@@ -1,0 +1,44 @@
+[package]
+name = "gix-worktree-state"
+version = "0.1.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT OR Apache-2.0"
+description = "A crate of the gitoxide project implementing setting the worktree to a particular state"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
+rust-version = "1.65"
+
+[lib]
+doctest = false
+
+[[test]]
+name = "multi-threaded"
+path = "tests/state-multi-threaded.rs"
+required-features = ["internal-testing-gix-features-parallel"]
+
+[features]
+internal-testing-gix-features-parallel = ["gix-features/parallel"]
+
+[dependencies]
+gix-worktree = { version = "^0.24.0", path = "../gix-worktree" }
+gix-index = { version = "^0.22.0", path = "../gix-index" }
+gix-fs = { version = "^0.4.1", path = "../gix-fs" }
+gix-hash = { version = "^0.11.4", path = "../gix-hash" }
+gix-object = { version = "^0.34.0", path = "../gix-object" }
+gix-glob = { version = "^0.10.2", path = "../gix-glob" }
+gix-path = { version = "^0.8.4", path = "../gix-path" }
+gix-features = { version = "^0.32.1", path = "../gix-features" }
+gix-filter = { version = "^0.3.0", path = "../gix-filter" }
+
+io-close = "0.3.7"
+thiserror = "1.0.26"
+bstr = { version = "1.3.0", default-features = false }
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools" }
+gix-odb = { path = "../gix-odb" }
+symlink = "0.1.0"
+once_cell = "1.18.0"
+
+walkdir = "2.3.2"

@@ -99,6 +99,7 @@ check:
     cargo check -p gix-config-value
     cargo check -p gix-config --all-features
     cargo check -p gix-config
+    cargo check -p gix-diff --no-default-features
     cargo check -p gix-transport
     cargo check -p gix-transport --features blocking-client
     cargo check -p gix-transport --features async-client
@@ -134,14 +135,18 @@ unit-tests:
     cargo test -p gix-archive --features tar
     cargo test -p gix-archive --features tar_gz
     cargo test -p gix-archive --features zip
+    cd gix-status; \
+      set -ex; \
+      cargo test; \
+      cargo test --features "internal-testing-gix-features-parallel"
+    cd gix-worktree-state; \
+      set -ex; \
+      cargo test; \
+      cargo test --features "internal-testing-gix-features-parallel"
     cd gix-object; \
       set -ex; \
       cargo test; \
       cargo test --features verbose-object-parsing-errors
-    cd gix-worktree; \
-      set -ex; \
-      cargo test; \
-      cargo test --features "internal-testing-gix-features-parallel"
     cargo test -p gix-tempfile --features signals
     cargo test -p gix-tempfile
     cargo test -p gix-features

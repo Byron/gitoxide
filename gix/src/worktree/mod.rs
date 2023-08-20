@@ -3,6 +3,7 @@ use std::path::PathBuf;
 #[cfg(feature = "worktree-archive")]
 pub use gix_archive as archive;
 pub use gix_worktree::*;
+pub use gix_worktree_state as state;
 #[cfg(feature = "worktree-stream")]
 pub use gix_worktree_stream as stream;
 
@@ -120,12 +121,12 @@ pub mod excludes {
         ///
         /// When only excludes are desired, this is the most efficient way to obtain them. Otherwise use
         /// [`Worktree::attributes()`][crate::Worktree::attributes()] for accessing both attributes and excludes.
-        pub fn excludes(&self, overrides: Option<gix_ignore::Search>) -> Result<gix_worktree::Cache, Error> {
+        pub fn excludes(&self, overrides: Option<gix_ignore::Search>) -> Result<gix_worktree::Stack, Error> {
             let index = self.index()?;
             Ok(self.parent.excludes(
                 &index,
                 overrides,
-                gix_worktree::cache::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
+                gix_worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
             )?)
         }
     }
@@ -150,23 +151,23 @@ pub mod attributes {
         ///
         /// * `$XDG_CONFIG_HOME/…/ignore|attributes` if `core.excludesFile|attributesFile` is *not* set, otherwise use the configured file.
         /// * `$GIT_DIR/info/exclude|attributes` if present.
-        pub fn attributes(&self, overrides: Option<gix_ignore::Search>) -> Result<gix_worktree::Cache, Error> {
+        pub fn attributes(&self, overrides: Option<gix_ignore::Search>) -> Result<gix_worktree::Stack, Error> {
             let index = self.index()?;
             Ok(self.parent.attributes(
                 &index,
-                gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
-                gix_worktree::cache::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
+                gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
+                gix_worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
                 overrides,
             )?)
         }
 
         /// Like [attributes()][Self::attributes()], but without access to exclude/ignore information.
-        pub fn attributes_only(&self) -> Result<gix_worktree::Cache, Error> {
+        pub fn attributes_only(&self) -> Result<gix_worktree::Stack, Error> {
             let index = self.index()?;
             self.parent
                 .attributes_only(
                     &index,
-                    gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
+                    gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
                 )
                 .map_err(|err| Error::CreateCache(err.into()))
         }

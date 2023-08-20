@@ -89,16 +89,16 @@ pub(crate) mod function {
 
 pub(crate) fn attributes_cache(
     repo: &gix::Repository,
-) -> anyhow::Result<(gix::worktree::Cache, IndexPersistedOrInMemory)> {
+) -> anyhow::Result<(gix::worktree::Stack, IndexPersistedOrInMemory)> {
     let index = repo.index_or_load_from_head()?;
     let cache = repo.attributes(
         &index,
         if repo.is_bare() {
-            gix::worktree::cache::state::attributes::Source::IdMapping
+            gix::worktree::stack::state::attributes::Source::IdMapping
         } else {
-            gix::worktree::cache::state::attributes::Source::WorktreeThenIdMapping
+            gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
         },
-        gix::worktree::cache::state::ignore::Source::IdMapping,
+        gix::worktree::stack::state::ignore::Source::IdMapping,
         None,
     )?;
     Ok((cache, index))

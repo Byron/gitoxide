@@ -43,7 +43,7 @@ impl<'repo> Pathspec<'repo> {
         repo: &'repo Repository,
         patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
         inherit_ignore_case: bool,
-        make_attributes: impl FnOnce() -> Result<gix_worktree::Cache, Box<dyn std::error::Error + Send + Sync + 'static>>,
+        make_attributes: impl FnOnce() -> Result<gix_worktree::Stack, Box<dyn std::error::Error + Send + Sync + 'static>>,
     ) -> Result<Self, init::Error> {
         let mut defaults = repo.pathspec_defaults()?;
         if inherit_ignore_case && repo.config.fs_capabilities()?.ignore_case {
@@ -67,9 +67,9 @@ impl<'repo> Pathspec<'repo> {
         Ok(Self { repo, search, cache })
     }
     /// Turn ourselves into the functional parts for direct usage.
-    /// Note that the [`cache`](gix_worktree::Cache) is only set if one of the [`search` patterns](Search)
+    /// Note that the [`cache`](gix_worktree::Stack) is only set if one of the [`search` patterns](Search)
     /// is specifying attributes to match for.
-    pub fn into_parts(self) -> (Search, Option<gix_worktree::Cache>) {
+    pub fn into_parts(self) -> (Search, Option<gix_worktree::Stack>) {
         (self.search, self.cache)
     }
 }
@@ -77,7 +77,7 @@ impl<'repo> Pathspec<'repo> {
 /// Access
 impl<'repo> Pathspec<'repo> {
     /// Return the attributes cache which is used when matching attributes in pathspecs, or `None` if none of the pathspecs require that.
-    pub fn attributes(&self) -> Option<&gix_worktree::Cache> {
+    pub fn attributes(&self) -> Option<&gix_worktree::Stack> {
         self.cache.as_ref()
     }
 

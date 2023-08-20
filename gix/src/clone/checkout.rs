@@ -27,7 +27,8 @@ pub mod main_worktree {
         CheckoutOptions(#[from] crate::config::checkout_options::Error),
         #[error(transparent)]
         IndexCheckout(
-            #[from] gix_worktree::checkout::Error<gix_odb::find::existing_object::Error<gix_odb::store::find::Error>>,
+            #[from]
+            gix_worktree_state::checkout::Error<gix_odb::find::existing_object::Error<gix_odb::store::find::Error>>,
         ),
         #[error("Failed to reopen object database as Arc (only if thread-safety wasn't compiled in)")]
         OpenArcOdb(#[from] std::io::Error),
@@ -68,7 +69,7 @@ pub mod main_worktree {
             &mut self,
             mut progress: impl crate::Progress,
             should_interrupt: &AtomicBool,
-        ) -> Result<(Repository, gix_worktree::checkout::Outcome), Error> {
+        ) -> Result<(Repository, gix_worktree_state::checkout::Outcome), Error> {
             let _span = gix_trace::coarse!("gix::clone::PrepareCheckout::main_worktree()");
             let repo = self
                 .repo
@@ -82,7 +83,7 @@ pub mod main_worktree {
                 None => {
                     return Ok((
                         self.repo.take().expect("still present"),
-                        gix_worktree::checkout::Outcome::default(),
+                        gix_worktree_state::checkout::Outcome::default(),
                     ))
                 }
             };
@@ -95,7 +96,7 @@ pub mod main_worktree {
 
             let mut opts = repo
                 .config
-                .checkout_options(repo, gix_worktree::cache::state::attributes::Source::IdMapping)?;
+                .checkout_options(repo, gix_worktree::stack::state::attributes::Source::IdMapping)?;
             opts.destination_is_initially_empty = true;
 
             let mut files = progress.add_child_with_id("checkout", ProgressId::CheckoutFiles.into());
@@ -105,7 +106,7 @@ pub mod main_worktree {
             bytes.init(None, crate::progress::bytes());
 
             let start = std::time::Instant::now();
-            let outcome = gix_worktree::checkout(
+            let outcome = gix_worktree_state::checkout(
                 &mut index,
                 workdir,
                 {

@@ -11,7 +11,7 @@ mod from_tree {
     use gix_object::tree::EntryMode;
     use gix_odb::FindExt;
     use gix_testtools::bstr::ByteSlice;
-    use gix_worktree::cache::state::attributes::Source;
+    use gix_worktree::stack::state::attributes::Source;
 
     use crate::hex_to_id;
 
@@ -284,7 +284,7 @@ mod from_tree {
         Ok(())
     }
 
-    fn basic() -> gix_testtools::Result<(PathBuf, gix_hash::ObjectId, gix_odb::HandleArc, gix_worktree::Cache)> {
+    fn basic() -> gix_testtools::Result<(PathBuf, gix_hash::ObjectId, gix_odb::HandleArc, gix_worktree::Stack)> {
         let dir = gix_testtools::scripted_fixture_read_only("basic.sh")?;
 
         let head = {
@@ -295,14 +295,14 @@ mod from_tree {
 
         let mut collection = Default::default();
         let mut buf = Default::default();
-        let attributes = gix_worktree::cache::state::Attributes::new(
+        let attributes = gix_worktree::stack::state::Attributes::new(
             gix_attributes::Search::new_globals(None::<PathBuf>, &mut buf, &mut collection)?,
             None,
             Source::WorktreeThenIdMapping,
             collection,
         );
-        let state = gix_worktree::cache::State::AttributesStack(attributes);
-        let cache = gix_worktree::Cache::new(&dir, state, Case::Sensitive, Default::default(), Default::default());
+        let state = gix_worktree::stack::State::AttributesStack(attributes);
+        let cache = gix_worktree::Stack::new(&dir, state, Case::Sensitive, Default::default(), Default::default());
         Ok((dir, head, odb.into_arc()?, cache))
     }
 

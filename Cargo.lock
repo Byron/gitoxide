@@ -1240,6 +1240,7 @@ dependencies = [
  "gix-utils 0.1.5",
  "gix-validate 0.8.0",
  "gix-worktree 0.24.0",
+ "gix-worktree-state",
  "gix-worktree-stream",
  "is_ci",
  "log",
@@ -1497,6 +1498,7 @@ dependencies = [
 name = "gix-diff"
 version = "0.34.0"
 dependencies = [
+ "document-features",
  "getrandom",
  "gix-hash 0.11.4",
  "gix-object 0.34.0",
@@ -2216,6 +2218,22 @@ name = "gix-sequencer"
 version = "0.0.0"
 
 [[package]]
+name = "gix-status"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "filetime",
+ "gix-features 0.32.1",
+ "gix-fs 0.4.1",
+ "gix-hash 0.11.4",
+ "gix-index 0.22.0",
+ "gix-object 0.34.0",
+ "gix-path 0.8.4",
+ "gix-testtools",
+ "thiserror",
+]
+
+[[package]]
 name = "gix-submodule"
 version = "0.1.0"
 dependencies = [
@@ -2449,10 +2467,8 @@ version = "0.24.0"
 dependencies = [
  "bstr",
  "document-features",
- "filetime",
  "gix-attributes 0.16.0",
  "gix-features 0.32.1",
- "gix-filter",
  "gix-fs 0.4.1",
  "gix-glob 0.10.2",
  "gix-hash 0.11.4",
@@ -2462,11 +2478,29 @@ dependencies = [
  "gix-odb",
  "gix-path 0.8.4",
  "gix-testtools",
- "io-close",
- "once_cell",
  "serde",
  "symlink",
- "tempfile",
+]
+
+[[package]]
+name = "gix-worktree-state"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "gix-features 0.32.1",
+ "gix-filter",
+ "gix-fs 0.4.1",
+ "gix-glob 0.10.2",
+ "gix-hash 0.11.4",
+ "gix-index 0.22.0",
+ "gix-object 0.34.0",
+ "gix-odb",
+ "gix-path 0.8.4",
+ "gix-testtools",
+ "gix-worktree 0.24.0",
+ "io-close",
+ "once_cell",
+ "symlink",
  "thiserror",
  "walkdir",
 ]

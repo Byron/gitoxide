@@ -17,22 +17,22 @@ fn default() -> crate::Result {
     Ok(())
 }
 
-fn attribute_cache(name: &str) -> gix_testtools::Result<gix_worktree::Cache> {
+fn attribute_cache(name: &str) -> gix_testtools::Result<gix_worktree::Stack> {
     let dir = gix_testtools::scripted_fixture_read_only("pipeline_repos.sh")?.join(name);
-    Ok(gix_worktree::Cache::new(
+    Ok(gix_worktree::Stack::new(
         dir,
-        gix_worktree::cache::State::for_add(
-            gix_worktree::cache::state::Attributes::new(
+        gix_worktree::stack::State::for_add(
+            gix_worktree::stack::state::Attributes::new(
                 Default::default(),
                 None,
-                gix_worktree::cache::state::attributes::Source::WorktreeThenIdMapping,
+                gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
                 Default::default(),
             ),
-            gix_worktree::cache::state::Ignore::new(
+            gix_worktree::stack::state::Ignore::new(
                 Default::default(),
                 Default::default(),
                 None,
-                gix_worktree::cache::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
+                gix_worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
             ),
         ),
         Case::Sensitive,
@@ -49,7 +49,7 @@ fn pipeline(
         gix_filter::pipeline::CrlfRoundTripCheck,
         eol::Configuration,
     ),
-) -> gix_testtools::Result<(gix_worktree::Cache, gix_filter::Pipeline)> {
+) -> gix_testtools::Result<(gix_worktree::Stack, gix_filter::Pipeline)> {
     let cache = attribute_cache(name)?;
     let (drivers, encodings_with_roundtrip_check, crlf_roundtrip_check, eol_config) = init();
     let pipe = gix_filter::Pipeline::new(

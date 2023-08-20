@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::bail;
-use gix::{odb::FindExt, worktree::checkout, Progress};
+use gix::{odb::FindExt, worktree::state::checkout, Progress};
 
 use crate::{
     index,
@@ -55,7 +55,7 @@ pub fn checkout_exclusive(
         progress.info(format!("Skipping {num_skipped} DIR/SYMLINK/COMMIT entries"));
     }
 
-    let opts = gix::worktree::checkout::Options {
+    let opts = gix::worktree::state::checkout::Options {
         fs: gix::fs::Capabilities::probe(dest_directory),
 
         destination_is_initially_empty: true,
@@ -86,7 +86,7 @@ pub fn checkout_exclusive(
         delayed_paths_unknown,
         delayed_paths_unprocessed,
     } = match repo {
-        Some(repo) => gix::worktree::checkout(
+        Some(repo) => gix::worktree::state::checkout(
             &mut index,
             dest_directory,
             {
@@ -109,7 +109,7 @@ pub fn checkout_exclusive(
             should_interrupt,
             opts,
         ),
-        None => gix::worktree::checkout(
+        None => gix::worktree::state::checkout(
             &mut index,
             dest_directory,
             |_, buf| {

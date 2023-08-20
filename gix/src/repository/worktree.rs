@@ -74,7 +74,7 @@ impl crate::Repository {
         // TODO(perf): when loading a non-HEAD tree, we effectively traverse the tree twice. This is usually fast though, and sharing
         //             an object cache between the copies of the ODB handles isn't trivial and needs a lock.
         let index = self.index_from_tree(&id)?;
-        let mut cache = self.attributes_only(&index, gix_worktree::cache::state::attributes::Source::IdMapping)?;
+        let mut cache = self.attributes_only(&index, gix_worktree::stack::state::attributes::Source::IdMapping)?;
         let pipeline =
             gix_filter::Pipeline::new(cache.attributes_collection(), crate::filter::Pipeline::options(self)?);
         let objects = self.objects.clone().into_arc().expect("TBD error handling");
