@@ -64,6 +64,10 @@ confidence-threshold = 0.8
 [bans]
 # Lint level for when multiple versions of the same crate are detected
 multiple-versions = "allow"
+deny = [
+    # See https://github.com/serde-rs/serde/issues/2538
+    { name = "serde_derive", version = ">1.0.171" },
+]
 
 
 [[licenses.clarify]]

@@ -1149,6 +1149,7 @@ dependencies = [
  "once_cell",
  "owo-colors",
  "prodash 25.0.1",
+ "serde_derive",
  "tabled",
  "time",
  "tracing",
