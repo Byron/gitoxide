@@ -52,12 +52,11 @@ impl IsActivePlatform {
         if let Some(val) = config.boolean("submodule", Some(name), "active").transpose()? {
             return Ok(val);
         };
-        if let Some(val) = self
-            .search
-            .as_mut()
-            .and_then(|search| search.pattern_matching_relative_path(name, Some(true), attributes))
-            .map(|m| !m.is_excluded())
-        {
+        if let Some(val) = self.search.as_mut().map(|search| {
+            search
+                .pattern_matching_relative_path(name, Some(true), attributes)
+                .map_or(false, |m| !m.is_excluded())
+        }) {
             return Ok(val);
         }
         Ok(match modules.url(name) {
