@@ -122,6 +122,9 @@ pub enum Subcommands {
     Exclude(exclude::Subcommands),
     #[clap(subcommand)]
     Index(index::Subcommands),
+    /// Interact with submodules.
+    #[clap(alias = "submodules")]
+    Submodule(submodule::Platform),
     /// Show which git configuration values are used or planned.
     ConfigTree,
     Config(config::Platform),
@@ -705,6 +708,21 @@ pub mod index {
             /// A revspec that points to the to generate the index from.
             spec: std::ffi::OsString,
         },
+    }
+}
+
+pub mod submodule {
+
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        #[clap(subcommand)]
+        pub cmds: Option<Subcommands>,
+    }
+
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// Print all direct submodules to standard output
+        List,
     }
 }
 

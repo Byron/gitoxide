@@ -135,6 +135,20 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::Submodule(platform) => match platform
+            .cmds
+            .unwrap_or(crate::plumbing::options::submodule::Subcommands::List)
+        {
+            crate::plumbing::options::submodule::Subcommands::List => prepare_and_run(
+                "submodule-list",
+                trace,
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| core::repository::submodule::list(repository(Mode::Lenient)?, out, format),
+            ),
+        },
         #[cfg(feature = "gitoxide-core-tools-archive")]
         Subcommands::Archive(crate::plumbing::options::archive::Platform {
             format,

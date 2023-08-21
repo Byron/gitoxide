@@ -48,12 +48,11 @@ pub(crate) mod function {
             recurse_submodules,
         }: Options,
     ) -> anyhow::Result<()> {
-        use crate::OutputFormat::*;
         let mut out = BufWriter::with_capacity(64 * 1024, out);
         let mut all_attrs = statistics.then(BTreeSet::new);
 
         #[cfg(feature = "serde")]
-        if let Json = format {
+        if let OutputFormat::Json = format {
             out.write_all(b"[\n")?;
         }
 
@@ -70,13 +69,14 @@ pub(crate) mod function {
         )?;
 
         #[cfg(feature = "serde")]
-        if format == Json {
+        if format == OutputFormat::Json {
             out.write_all(b"]\n")?;
             out.flush()?;
             if statistics {
                 serde_json::to_writer_pretty(&mut err, &stats)?;
             }
-        } else if format == Human && statistics {
+        }
+        if format == OutputFormat::Human && statistics {
             out.flush()?;
             writeln!(err, "{stats:#?}")?;
             if let Some(attrs) = all_attrs.filter(|a| !a.is_empty()) {
