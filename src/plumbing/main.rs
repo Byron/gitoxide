@@ -1113,6 +1113,7 @@ pub fn main() -> Result<()> {
                 no_attributes,
                 attributes_from_index,
                 statistics,
+                recurse_submodules,
                 pathspec,
             } => prepare_and_run(
                 "index-entries",
@@ -1142,6 +1143,7 @@ pub fn main() -> Result<()> {
                                     core::repository::index::entries::Attributes::WorktreeAndIndex
                                 })
                             },
+                            recurse_submodules,
                             statistics,
                         },
                     )
