@@ -58,7 +58,7 @@ mod modules_file {
 }
 
 mod submodules {
-    use gix::{bstr::BString, Id};
+    use gix::bstr::BString;
 
     use crate::{submodule::repo, util::hex_to_id};
 
@@ -72,8 +72,8 @@ mod submodules {
                 .map(|sm| (
                     sm.name().to_owned(),
                     sm.path().expect("valid path").into_owned(),
-                    sm.head_id().expect("valid").map(Id::detach),
-                    sm.index_id().expect("valid").map(Id::detach),
+                    sm.head_id().expect("valid"),
+                    sm.index_id().expect("valid"),
                     sm.is_active().expect("no config error")
                 ))
                 .collect::<Vec<_>>(),
