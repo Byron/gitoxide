@@ -12,3 +12,4 @@ mod reference;
 mod remote;
 mod repository;
 mod revision;
+mod submodule;

@@ -1232,6 +1232,7 @@ dependencies = [
  "gix-refspec",
  "gix-revision",
  "gix-sec 0.8.4",
+ "gix-submodule",
  "gix-tempfile 7.0.2",
  "gix-testtools",
  "gix-trace 0.1.3",

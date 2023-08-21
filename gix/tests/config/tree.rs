@@ -146,6 +146,7 @@ mod ssh {
 }
 
 mod fetch {
+    use gix::bstr::ByteSlice;
     use gix::{
         config::tree::{Fetch, Key},
         remote::fetch::negotiate::Algorithm,
@@ -173,6 +174,31 @@ mod fetch {
                 .unwrap_err()
                 .to_string(),
             "The key \"fetch.negotiationAlgorithm=foo\" was invalid"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn recurse_submodule() -> crate::Result {
+        for (actual, expected) in [
+            ("true", gix_submodule::config::FetchRecurse::Always),
+            ("false", gix_submodule::config::FetchRecurse::Never),
+            ("on-demand", gix_submodule::config::FetchRecurse::OnDemand),
+        ] {
+            assert_eq!(
+                Fetch::RECURSE_SUBMODULES.try_into_recurse_submodules(
+                    gix_config::Boolean::try_from(actual.as_bytes().as_bstr()).map(|b| b.0)
+                )?,
+                expected
+            );
+            assert!(Fetch::RECURSE_SUBMODULES.validate(actual.into()).is_ok());
+        }
+        assert_eq!(
+            Fetch::RECURSE_SUBMODULES
+                .try_into_recurse_submodules(gix_config::Boolean::try_from(b"foo".as_bstr()).map(|b| b.0))
+                .unwrap_err()
+                .to_string(),
+            "The key \"fetch.recurseSubmodules=foo\" was invalid"
         );
         Ok(())
     }

@@ -10,6 +10,26 @@ pub struct FileSnapshot<T: std::fmt::Debug> {
     modified: std::time::SystemTime,
 }
 
+/// Lifecycle
+impl<T: std::fmt::Debug> FileSnapshot<T> {
+    /// A way for users to create 'fake' snapshot from `value` that isn't actually linked to a file on disk.
+    ///
+    /// This is useful if there are alternative ways of obtaining the contained instance as fallback to trying
+    /// to read it from disk.
+    pub fn new(value: T) -> Self {
+        FileSnapshot {
+            value,
+            modified: std::time::UNIX_EPOCH,
+        }
+    }
+}
+
+impl<T: std::fmt::Debug> From<T> for FileSnapshot<T> {
+    fn from(value: T) -> Self {
+        FileSnapshot::new(value)
+    }
+}
+
 impl<T: Clone + std::fmt::Debug> Clone for FileSnapshot<T> {
     fn clone(&self) -> Self {
         Self {

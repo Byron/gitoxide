@@ -26,6 +26,8 @@ impl query::Engine {
                         Some(spec.to_bstring()),
                         false,
                         &gix::index::State::new(self.repo.object_hash()),
+                        gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
+                            .adjust_for_bare(self.repo.is_bare()),
                     )?
                     .search()
                     .patterns()

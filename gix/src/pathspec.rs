@@ -10,12 +10,10 @@ pub mod init {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
-        #[error("Filesystem configuration could not be obtained")]
-        FilesystemConfig(#[from] crate::config::boolean::Error),
         #[error(transparent)]
         MakeAttributes(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
         #[error(transparent)]
-        Defaults(#[from] gix_pathspec::defaults::from_environment::Error),
+        Defaults(#[from] crate::repository::pathspec_defaults_ignore_case::Error),
         #[error(transparent)]
         ParseSpec(#[from] gix_pathspec::parse::Error),
         #[error(
@@ -45,10 +43,7 @@ impl<'repo> Pathspec<'repo> {
         inherit_ignore_case: bool,
         make_attributes: impl FnOnce() -> Result<gix_worktree::Stack, Box<dyn std::error::Error + Send + Sync + 'static>>,
     ) -> Result<Self, init::Error> {
-        let mut defaults = repo.pathspec_defaults()?;
-        if inherit_ignore_case && repo.config.fs_capabilities()?.ignore_case {
-            defaults.signature |= MagicSignature::ICASE;
-        }
+        let defaults = repo.pathspec_defaults_inherit_ignore_case(inherit_ignore_case)?;
         let patterns = patterns
             .into_iter()
             .map(move |p| parse(p.as_ref(), defaults))

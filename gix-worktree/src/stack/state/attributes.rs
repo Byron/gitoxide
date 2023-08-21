@@ -45,6 +45,17 @@ pub enum Source {
     WorktreeThenIdMapping,
 }
 
+impl Source {
+    /// Returns non-worktree variants of `self` if `is_bare` is true.
+    pub fn adjust_for_bare(self, is_bare: bool) -> Self {
+        if is_bare {
+            Source::IdMapping
+        } else {
+            self
+        }
+    }
+}
+
 /// Initialization
 impl Attributes {
     /// Create a new instance from an attribute match group that represents `globals`. It can more easily be created with

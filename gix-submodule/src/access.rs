@@ -1,7 +1,8 @@
 use crate::config::{Branch, FetchRecurse, Ignore, Update};
-use crate::{config, File};
+use crate::{config, File, IsActivePlatform};
 use bstr::BStr;
 use std::borrow::Cow;
+use std::collections::HashSet;
 use std::path::Path;
 
 /// High-Level Access
@@ -26,24 +27,20 @@ impl File {
     ///
     /// Note that these exact names have to be used for querying submodule values.
     pub fn names(&self) -> impl Iterator<Item = &BStr> {
+        let mut seen = HashSet::<&BStr>::default();
         self.config
             .sections_by_name("submodule")
             .into_iter()
             .flatten()
-            .filter_map(|s| s.header().subsection_name())
+            .filter_map(move |s| {
+                s.header()
+                    .subsection_name()
+                    .filter(|_| s.meta().source == crate::init::META_MARKER)
+                    .filter(|name| seen.insert(*name))
+            })
     }
 
-    /// Return an iterator of names along with a boolean that indicates the submodule is active (`true`) or inactive  (`false`).
-    /// If the boolean was wrapped in an error, there was a configuration error.
-    /// Use `defaults` for parsing the pathspecs used to match on names via `submodule.active` configuration retrieved from `config`.
-    /// `attributes` provides a way to resolve the attributes mentioned in pathspecs.
-    ///
-    /// Inactive submodules should not participate in any operations that are applying to all submodules.
-    ///
-    /// Note that the entirety of sections in `config` are considered, not just the ones of the configuration for the repository itself.
-    /// `submodule.active` pathspecs are considered to be top-level specs and match the name of submodules, which may be considered active
-    /// on match. However, there is a [hierarchy of rules](https://git-scm.com/docs/gitsubmodules#_active_submodules) that's
-    /// implemented here, but pathspecs add the most complexity.
+    /// Similar to [Self::is_active_platform()], but automatically applies it to each name to learn if a submodule is active or not.
     pub fn names_and_active_state<'a>(
         &'a self,
         config: &'a gix_config::File<'static>,
@@ -56,12 +53,30 @@ impl File {
             ) -> bool
             + 'a,
     ) -> Result<
-        impl Iterator<Item = (&BStr, Result<bool, config::names_and_active_state::iter::Error>)> + 'a,
-        config::names_and_active_state::Error,
+        impl Iterator<Item = (&BStr, Result<bool, crate::is_active_platform::is_active::Error>)> + 'a,
+        crate::is_active_platform::Error,
     > {
-        let mut search = config
+        let mut platform = self.is_active_platform(config, defaults)?;
+        let iter = self
+            .names()
+            .map(move |name| (name, platform.is_active(self, config, name, &mut attributes)));
+        Ok(iter)
+    }
+
+    /// Return a platform which allows to check if a submodule name is active or inactive.
+    /// Use `defaults` for parsing the pathspecs used to later match on names via `submodule.active` configuration retrieved from `config`.
+    ///
+    /// All `submodule.active` pathspecs are considered to be top-level specs and match the name of submodules, which are active
+    /// on inclusive match.
+    /// The full algorithm is described as [hierarchy of rules](https://git-scm.com/docs/gitsubmodules#_active_submodules).
+    pub fn is_active_platform(
+        &self,
+        config: &gix_config::File<'_>,
+        defaults: gix_pathspec::Defaults,
+    ) -> Result<IsActivePlatform, crate::is_active_platform::Error> {
+        let search = config
             .strings_by_key("submodule.active")
-            .map(|patterns| -> Result<_, config::names_and_active_state::Error> {
+            .map(|patterns| -> Result<_, crate::is_active_platform::Error> {
                 let patterns = patterns
                     .into_iter()
                     .map(|pattern| gix_pathspec::parse(&pattern, defaults))
@@ -73,27 +88,7 @@ impl File {
                 )?)
             })
             .transpose()?;
-        let iter = self.names().map(move |name| {
-            let active = (|| -> Result<_, config::names_and_active_state::iter::Error> {
-                if let Some(val) = config.boolean("submodule", Some(name), "active").transpose()? {
-                    return Ok(val);
-                };
-                if let Some(val) = search
-                    .as_mut()
-                    .and_then(|search| search.pattern_matching_relative_path(name, Some(true), &mut attributes))
-                    .map(|m| !m.is_excluded())
-                {
-                    return Ok(val);
-                }
-                Ok(match self.url(name) {
-                    Ok(_) => true,
-                    Err(config::url::Error::Missing { .. }) => false,
-                    Err(err) => return Err(err.into()),
-                })
-            })();
-            (name, active)
-        });
-        Ok(iter)
+        Ok(IsActivePlatform { search })
     }
 
     /// Given the `relative_path` (as seen from the root of the worktree) of a submodule with possibly platform-specific

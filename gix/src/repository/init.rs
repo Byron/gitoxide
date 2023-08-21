@@ -11,6 +11,7 @@ impl crate::Repository {
         linked_worktree_options: crate::open::Options,
         index: crate::worktree::IndexStorage,
         shallow_commits: crate::shallow::CommitsStorage,
+        modules: crate::submodule::ModulesFileStorage,
     ) -> Self {
         setup_objects(&mut objects, &config);
         crate::Repository {
@@ -23,6 +24,7 @@ impl crate::Repository {
             options: linked_worktree_options,
             index,
             shallow_commits,
+            modules,
         }
     }
 

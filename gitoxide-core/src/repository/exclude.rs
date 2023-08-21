@@ -56,7 +56,13 @@ pub fn query(
         }
         PathsOrPatterns::Patterns(patterns) => {
             for (path, _entry) in repo
-                .pathspec(patterns.into_iter(), repo.work_dir().is_some(), &index)?
+                .pathspec(
+                    patterns.into_iter(),
+                    repo.work_dir().is_some(),
+                    &index,
+                    gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
+                        .adjust_for_bare(repo.is_bare()),
+                )?
                 .index_entries_with_paths(&index)
                 .ok_or_else(|| anyhow!("Pathspec didn't yield any entry"))?
             {

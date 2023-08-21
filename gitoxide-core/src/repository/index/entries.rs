@@ -5,6 +5,7 @@ pub struct Options {
     pub attributes: Option<Attributes>,
     pub statistics: bool,
     pub simple: bool,
+    pub recurse_submodules: bool,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -16,14 +17,17 @@ pub enum Attributes {
 }
 
 pub(crate) mod function {
-    use gix::bstr::BString;
+    use gix::bstr::{BStr, BString};
     use std::collections::BTreeSet;
     use std::{
         borrow::Cow,
         io::{BufWriter, Write},
     };
 
+    use crate::OutputFormat;
     use gix::odb::FindExt;
+    use gix::repository::IndexPersistedOrInMemory;
+    use gix::Repository;
 
     use crate::repository::index::entries::{Attributes, Options};
 
@@ -37,60 +41,83 @@ pub(crate) mod function {
             format,
             attributes,
             statistics,
+            recurse_submodules,
         }: Options,
     ) -> anyhow::Result<()> {
         use crate::OutputFormat::*;
-        let index = repo.index_or_load_from_head()?;
-        let pathspec = repo.pathspec(pathspecs, false, &index)?;
-        let mut cache = attributes
-            .or_else(|| {
-                pathspec
-                    .search()
-                    .patterns()
-                    .any(|spec| !spec.attributes.is_empty())
-                    .then_some(Attributes::Index)
+        let mut out = BufWriter::with_capacity(64 * 1024, out);
+        let mut all_attrs = statistics.then(BTreeSet::new);
+
+        #[cfg(feature = "serde")]
+        if let Json = format {
+            out.write_all(b"[\n")?;
+        }
+
+        let stats = print_entries(
+            &repo,
+            attributes,
+            pathspecs.iter(),
+            format,
+            all_attrs.as_mut(),
+            simple,
+            "".into(),
+            recurse_submodules,
+            &mut out,
+        )?;
+
+        #[cfg(feature = "serde")]
+        if format == Json {
+            out.write_all(b"]\n")?;
+            out.flush()?;
+            if statistics {
+                serde_json::to_writer_pretty(&mut err, &stats)?;
+            }
+        } else if format == Human && statistics {
+            out.flush()?;
+            writeln!(err, "{stats:#?}")?;
+            if let Some(attrs) = all_attrs.filter(|a| !a.is_empty()) {
+                writeln!(err, "All encountered attributes:")?;
+                for attr in attrs {
+                    writeln!(err, "\t{attr}", attr = attr.as_ref())?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn print_entries(
+        repo: &Repository,
+        attributes: Option<Attributes>,
+        pathspecs: impl IntoIterator<Item = impl AsRef<BStr>> + Clone,
+        format: OutputFormat,
+        mut all_attrs: Option<&mut BTreeSet<gix::attrs::Assignment>>,
+        simple: bool,
+        prefix: &BStr,
+        recurse_submodules: bool,
+        out: &mut impl std::io::Write,
+    ) -> anyhow::Result<Statistics> {
+        let (mut pathspec, index, mut cache) = init_cache(repo, attributes, pathspecs.clone())?;
+        let submodules_by_path = recurse_submodules
+            .then(|| {
+                repo.submodules()
+                    .map(|opt| {
+                        opt.map(|submodules| {
+                            submodules
+                                .map(|sm| sm.path().map(Cow::into_owned).map(move |path| (path, sm)))
+                                .collect::<Result<Vec<_>, _>>()
+                        })
+                    })
+                    .transpose()
             })
-            .map(|attrs| {
-                repo.attributes(
-                    &index,
-                    match attrs {
-                        Attributes::WorktreeAndIndex => {
-                            if repo.is_bare() {
-                                gix::worktree::stack::state::attributes::Source::IdMapping
-                            } else {
-                                gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
-                            }
-                        }
-                        Attributes::Index => gix::worktree::stack::state::attributes::Source::IdMapping,
-                    },
-                    match attrs {
-                        Attributes::WorktreeAndIndex => {
-                            if repo.is_bare() {
-                                gix::worktree::stack::state::ignore::Source::IdMapping
-                            } else {
-                                gix::worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped
-                            }
-                        }
-                        Attributes::Index => gix::worktree::stack::state::ignore::Source::IdMapping,
-                    },
-                    None,
-                )
-                .map(|cache| (cache.attribute_matches(), cache))
-            })
+            .flatten()
+            .transpose()?
             .transpose()?;
         let mut stats = Statistics {
             entries: index.entries().len(),
             ..Default::default()
         };
-
-        let mut out = BufWriter::with_capacity(64 * 1024, out);
-        #[cfg(feature = "serde")]
-        if let Json = format {
-            out.write_all(b"[\n")?;
-        }
-        let (mut search, _cache) = pathspec.into_parts();
-        let mut all_attrs = statistics.then(BTreeSet::new);
-        if let Some(entries) = index.prefixed_entries(search.common_prefix()) {
+        if let Some(entries) = index.prefixed_entries(pathspec.common_prefix()) {
             stats.entries_after_prune = entries.len();
             let mut entries = entries.iter().peekable();
             while let Some(entry) = entries.next() {
@@ -111,7 +138,7 @@ pub(crate) mod function {
                                     };
                                     stats.with_attributes += usize::from(!attributes.is_empty());
                                     stats.max_attributes_per_path = stats.max_attributes_per_path.max(attributes.len());
-                                    if let Some(attrs) = all_attrs.as_mut() {
+                                    if let Some(attrs) = all_attrs.as_deref_mut() {
                                         attributes.iter().for_each(|attr| {
                                             attrs.insert(attr.clone());
                                         });
@@ -127,7 +154,7 @@ pub(crate) mod function {
 
                 // Note that we intentionally ignore `_case` so that we act like git does, attribute matching case is determined
                 // by the repository, not the pathspec.
-                if search
+                let entry_is_excluded = pathspec
                     .pattern_matching_relative_path(entry.path(&index), Some(false), |rela_path, _case, is_dir, out| {
                         cache
                             .as_mut()
@@ -148,44 +175,110 @@ pub(crate) mod function {
                             })
                             .unwrap_or_default()
                     })
-                    .map_or(true, |m| m.is_excluded())
-                {
+                    .map_or(true, |m| m.is_excluded());
+
+                let entry_is_submodule = entry.mode.is_submodule();
+                if entry_is_excluded && (!entry_is_submodule || !recurse_submodules) {
                     continue;
                 }
-                match format {
-                    Human => {
-                        if simple {
-                            to_human_simple(&mut out, &index, entry, attrs)
-                        } else {
-                            to_human(&mut out, &index, entry, attrs)
-                        }?
+                if let Some(sm) = submodules_by_path
+                    .as_ref()
+                    .filter(|_| entry_is_submodule)
+                    .and_then(|sms_by_path| {
+                        let entry_path = entry.path(&index);
+                        sms_by_path
+                            .iter()
+                            .find_map(|(path, sm)| (path == entry_path).then_some(sm))
+                            .filter(|sm| sm.git_dir_try_old_form().map_or(false, |dot_git| dot_git.exists()))
+                    })
+                {
+                    let sm_path = gix::path::to_unix_separators_on_windows(sm.path()?);
+                    let sm_repo = sm.open()?.expect("we checked it exists");
+                    let mut prefix = prefix.to_owned();
+                    prefix.extend_from_slice(sm_path.as_ref());
+                    if !sm_path.ends_with(b"/") {
+                        prefix.push(b'/');
                     }
-                    #[cfg(feature = "serde")]
-                    Json => to_json(&mut out, &index, entry, attrs, entries.peek().is_none())?,
-                }
-            }
-
-            #[cfg(feature = "serde")]
-            if format == Json {
-                out.write_all(b"]\n")?;
-                out.flush()?;
-                if statistics {
-                    serde_json::to_writer_pretty(&mut err, &stats)?;
-                }
-            }
-            if format == Human && statistics {
-                out.flush()?;
-                stats.cache = cache.map(|c| *c.1.statistics());
-                writeln!(err, "{stats:#?}")?;
-                if let Some(attrs) = all_attrs.filter(|a| !a.is_empty()) {
-                    writeln!(err, "All encountered attributes:")?;
-                    for attr in attrs {
-                        writeln!(err, "\t{attr}", attr = attr.as_ref())?;
+                    let sm_stats = print_entries(
+                        &sm_repo,
+                        attributes,
+                        pathspecs.clone(),
+                        format,
+                        all_attrs.as_deref_mut(),
+                        simple,
+                        prefix.as_ref(),
+                        recurse_submodules,
+                        out,
+                    )?;
+                    stats.submodule.push((sm_path.into_owned(), sm_stats));
+                } else {
+                    match format {
+                        OutputFormat::Human => {
+                            if simple {
+                                to_human_simple(out, &index, entry, attrs, prefix)
+                            } else {
+                                to_human(out, &index, entry, attrs, prefix)
+                            }?
+                        }
+                        #[cfg(feature = "serde")]
+                        OutputFormat::Json => to_json(out, &index, entry, attrs, entries.peek().is_none(), prefix)?,
                     }
                 }
             }
         }
-        Ok(())
+
+        stats.cache = cache.map(|c| *c.1.statistics());
+        Ok(stats)
+    }
+
+    #[allow(clippy::type_complexity)]
+    fn init_cache(
+        repo: &Repository,
+        attributes: Option<Attributes>,
+        pathspecs: impl IntoIterator<Item = impl AsRef<BStr>>,
+    ) -> anyhow::Result<(
+        gix::pathspec::Search,
+        IndexPersistedOrInMemory,
+        Option<(gix::attrs::search::Outcome, gix::worktree::Stack)>,
+    )> {
+        let index = repo.index_or_load_from_head()?;
+        let pathspec = repo.pathspec(
+            pathspecs,
+            false,
+            &index,
+            gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping.adjust_for_bare(repo.is_bare()),
+        )?;
+        let cache = attributes
+            .or_else(|| {
+                pathspec
+                    .search()
+                    .patterns()
+                    .any(|spec| !spec.attributes.is_empty())
+                    .then_some(Attributes::Index)
+            })
+            .map(|attrs| {
+                repo.attributes(
+                    &index,
+                    match attrs {
+                        Attributes::WorktreeAndIndex => {
+                            gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
+                                .adjust_for_bare(repo.is_bare())
+                        }
+                        Attributes::Index => gix::worktree::stack::state::attributes::Source::IdMapping,
+                    },
+                    match attrs {
+                        Attributes::WorktreeAndIndex => {
+                            gix::worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped
+                                .adjust_for_bare(repo.is_bare())
+                        }
+                        Attributes::Index => gix::worktree::stack::state::ignore::Source::IdMapping,
+                    },
+                    None,
+                )
+                .map(|cache| (cache.attribute_matches(), cache))
+            })
+            .transpose()?;
+        Ok((pathspec.into_parts().0, index, cache))
     }
 
     #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -204,6 +297,7 @@ pub(crate) mod function {
         pub with_attributes: usize,
         pub max_attributes_per_path: usize,
         pub cache: Option<gix::worktree::stack::Statistics>,
+        pub submodule: Vec<(BString, Statistics)>,
     }
 
     #[cfg(feature = "serde")]
@@ -213,6 +307,7 @@ pub(crate) mod function {
         entry: &gix::index::Entry,
         attrs: Option<Attrs>,
         is_last: bool,
+        prefix: &BStr,
     ) -> anyhow::Result<()> {
         use gix::bstr::ByteSlice;
         #[derive(serde::Serialize)]
@@ -232,7 +327,13 @@ pub(crate) mod function {
                 hex_id: entry.id.to_hex().to_string(),
                 flags: entry.flags.bits(),
                 mode: entry.mode.bits(),
-                path: entry.path(index).to_str_lossy(),
+                path: if prefix.is_empty() {
+                    entry.path(index).to_str_lossy()
+                } else {
+                    let mut path = prefix.to_owned();
+                    path.extend_from_slice(entry.path(index));
+                    path.to_string().into()
+                },
                 meta: attrs,
             },
         )?;
@@ -250,11 +351,15 @@ pub(crate) mod function {
         file: &gix::index::File,
         entry: &gix::index::Entry,
         attrs: Option<Attrs>,
+        prefix: &BStr,
     ) -> std::io::Result<()> {
+        if !prefix.is_empty() {
+            out.write_all(prefix)?;
+        }
         match attrs {
             Some(attrs) => {
                 out.write_all(entry.path(file))?;
-                out.write_all(print_attrs(Some(attrs)).as_bytes())
+                out.write_all(print_attrs(Some(attrs), entry.mode).as_bytes())
             }
             None => out.write_all(entry.path(file)),
         }?;
@@ -266,10 +371,11 @@ pub(crate) mod function {
         file: &gix::index::File,
         entry: &gix::index::Entry,
         attrs: Option<Attrs>,
+        prefix: &BStr,
     ) -> std::io::Result<()> {
         writeln!(
             out,
-            "{} {}{:?} {} {}{}",
+            "{} {}{:?} {} {}{}{}",
             match entry.flags.stage() {
                 0 => "BASE   ",
                 1 => "OURS   ",
@@ -283,14 +389,20 @@ pub(crate) mod function {
             },
             entry.mode,
             entry.id,
+            prefix,
             entry.path(file),
-            print_attrs(attrs)
+            print_attrs(attrs, entry.mode)
         )
     }
 
-    fn print_attrs(attrs: Option<Attrs>) -> Cow<'static, str> {
+    fn print_attrs(attrs: Option<Attrs>, mode: gix::index::entry::Mode) -> Cow<'static, str> {
         attrs.map_or(Cow::Borrowed(""), |a| {
             let mut buf = String::new();
+            if mode.is_sparse() {
+                buf.push_str(" 📁 ");
+            } else if mode.is_submodule() {
+                buf.push_str(" ➡ ");
+            }
             if a.is_excluded {
                 buf.push_str(" ❌");
             }

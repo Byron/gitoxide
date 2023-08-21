@@ -25,6 +25,11 @@ impl crate::Repository {
         self.git_dir().join("index")
     }
 
+    /// The path to the `.gitmodules` file in the worktree, if a worktree is available.
+    pub fn modules_path(&self) -> Option<PathBuf> {
+        self.work_dir().map(|wtd| wtd.join(crate::submodule::MODULES_FILE))
+    }
+
     /// The path to the `.git` directory itself, or equivalent if this is a bare repository.
     pub fn path(&self) -> &std::path::Path {
         self.git_dir()

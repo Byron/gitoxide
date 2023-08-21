@@ -58,15 +58,18 @@
 //!
 //! This section is a 'striving to be complete' mapping from `libgit2` APIs to the respective methods in `gix`.
 //!
-//! * [`git2::Repository::open()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open) ➡ [`gix::open()`](https://docs.rs/gix/*/gix/fn.open.html)
+//! * [`git2::Repository::open()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open) ➡ [`open()`]
 //! * [`git2::Repository::open_bare()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_bare) ➡ ❌
-//! * [`git2::Repository::open_from_env()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_from_env) ➡ [`gix::ThreadSafeRepository::open_with_environment_overrides()`](https://docs.rs/gix/*/gix/struct.ThreadSafeRepository.html#method.open_with_environment_overrides)
-//! * [`git2::Repository::open_ext()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_ext) ➡ [`gix::open_opts()`](https://docs.rs/gix/*/gix/fn.open_opts.html)
-//! * [`git2::Repository::revparse()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revparse) ➡ [`gix::Repository::rev_parse()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.rev_parse)
-//! * [`git2::Repository::revparse_single()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revparse_single) ➡ [`gix::Repository::rev_parse_single()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.rev_parse_single)
-//! * [`git2::Repository::revwalk()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revwalk) ➡ [`gix::Repository::rev_walk()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.rev_walk)
-//! * [`git2::build::CheckoutBuilder::disable_filters()](https://docs.rs/git2/0.17.2/git2/build/struct.CheckoutBuilder.html#method.disable_filters) ➡ ❌ *(filters are always applied during checkouts)*
-//! * [`git2::Odb::read_header()`](https://docs.rs/git2/0.17.2/git2/struct.Odb.html#method.read_header) ➡ [`gix::Repository::find_header()`](https://docs.rs/gix/*/gix/struct.Repository.html#method.find_header)
+//! * [`git2::Repository::open_from_env()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_from_env) ➡ [`ThreadSafeRepository::open_with_environment_overrides()`]
+//! * [`git2::Repository::open_ext()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_ext) ➡ [`open_opts()`]
+//! * [`git2::Repository::revparse()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revparse) ➡ [`Repository::rev_parse()`]
+//! * [`git2::Repository::revparse_single()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revparse_single) ➡ [`Repository::rev_parse_single()`]
+//! * [`git2::Repository::revwalk()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revwalk) ➡ [`Repository::rev_walk()`]
+//! * [`git2::build::CheckoutBuilder::disable_filters()](https://docs.rs/git2/*/git2/build/struct.CheckoutBuilder.html#method.disable_filters) ➡ ❌ *(filters are always applied during checkouts)*
+//! * [`git2::Odb::read_header()`](https://docs.rs/git2/*/git2/struct.Odb.html#method.read_header) ➡ [`Repository::find_header()`]
+//! * [`git2::Repository::submodules()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.submodules) ➡ [`Repository::submodules()`]
+//! * [`git2::Repository::submodules()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.submodules) ➡ [`Repository::submodules()`]
+//! * [`git2::Repository::submodule_status()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.submodule_status) ➡ [`Submodule::state()`] - status provides more information and conveniences though, and an actual worktree status isn't performed.
 //!
 //! ## Feature Flags
 #![cfg_attr(
@@ -132,8 +135,8 @@ pub(crate) type Config = OwnShared<gix_config::File<'static>>;
 
 mod types;
 pub use types::{
-    Commit, Head, Id, Object, ObjectDetached, Pathspec, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree,
-    Worktree,
+    Commit, Head, Id, Object, ObjectDetached, Pathspec, Reference, Remote, Repository, Submodule, Tag,
+    ThreadSafeRepository, Tree, Worktree,
 };
 
 ///
@@ -145,6 +148,7 @@ pub mod object;
 pub mod pathspec;
 pub mod reference;
 pub mod repository;
+pub mod submodule;
 pub mod tag;
 
 ///

@@ -46,7 +46,13 @@ pub(crate) mod function {
                 }
             }
             PathsOrPatterns::Patterns(patterns) => {
-                let mut pathspec = repo.pathspec(patterns, true, &index)?;
+                let mut pathspec = repo.pathspec(
+                    patterns,
+                    true,
+                    &index,
+                    gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
+                        .adjust_for_bare(repo.is_bare()),
+                )?;
                 for (path, _entry) in pathspec
                     .index_entries_with_paths(&index)
                     .ok_or_else(|| anyhow!("Pathspec didn't match a single path in the index"))?

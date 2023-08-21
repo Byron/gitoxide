@@ -274,7 +274,6 @@ impl Cache {
         Ok((state, buf))
     }
 
-    /// // TODO: let caller control if base-case-sensitivity should be inherited from the file-system if it isn't overridden in globals.
     pub(crate) fn pathspec_defaults(
         &self,
     ) -> Result<gix_pathspec::Defaults, gix_pathspec::defaults::from_environment::Error> {

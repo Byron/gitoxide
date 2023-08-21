@@ -166,6 +166,7 @@ gix-worktree-state = { version = "^0.1.0", path = "../gix-worktree-state" }
 gix-hashtable = { version = "^0.2.4", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.18.2", path = "../gix-commitgraph" }
 gix-pathspec = { version = "^0.1.0", path = "../gix-pathspec" }
+gix-submodule = { version = "^0.1.0", path = "../gix-submodule" }
 
 gix-worktree-stream = { version = "^0.3.0", path = "../gix-worktree-stream", optional = true }
 gix-archive = { version = "^0.3.0", path = "../gix-archive", default-features = false, optional = true }

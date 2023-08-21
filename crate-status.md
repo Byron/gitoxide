@@ -726,16 +726,16 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
        * [ ] a way to make changes to individual configuration files
     * [x] mailmap   
     * [x] object replacements (`git replace`)
-    * [ ] configuration
+    * [x] read git configuration 
     * [ ] merging
     * [ ] stashing
     * [ ] Use _Commit Graph_ to speed up certain queries
     * [ ] subtree
     * [ ] interactive rebase status/manipulation
     * **submodules**
-       * [ ] handle 'old' form for reading
-       * [ ] list
-       * [ ] traverse recursively
+       * [x] handle 'old' form for reading and detect old form
+       * [x] list
+       * [ ] edit
 * [ ] API documentation
     * [ ] Some examples
 

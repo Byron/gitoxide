@@ -21,6 +21,14 @@ mod access;
 ///
 pub mod config;
 
+///
+pub mod is_active_platform;
+
+/// A platform to keep the state necessary to perform repeated active checks, created by [File::is_active_platform()].
+pub struct IsActivePlatform {
+    pub(crate) search: Option<gix_pathspec::Search>,
+}
+
 /// Mutation
 impl File {
     /// This can be used to let `config` override some values we know about submodules, namely…
@@ -55,22 +63,20 @@ impl File {
 
         let mut config_to_append = gix_config::File::new(config.meta_owned());
         let mut prev_name = None;
-        let mut section = None;
         for ((module_name, field), values) in values {
             if prev_name.map_or(true, |pn: &BStr| pn != module_name) {
-                section.take();
-                section = Some(
-                    config_to_append
-                        .new_section("submodule", Cow::Owned(module_name.to_owned()))
-                        .expect("all names come from valid configuration, so remain valid"),
-                );
+                config_to_append
+                    .new_section("submodule", Cow::Owned(module_name.to_owned()))
+                    .expect("all names come from valid configuration, so remain valid");
                 prev_name = Some(module_name);
             }
-            let section = section.as_mut().expect("always set at this point");
-            section.push(
-                field.try_into().expect("statically known key"),
-                Some(values.last().expect("at least one value or we wouldn't be here")),
-            );
+            config_to_append
+                .section_mut("submodule", Some(module_name))
+                .expect("always set at this point")
+                .push(
+                    field.try_into().expect("statically known key"),
+                    Some(values.last().expect("at least one value or we wouldn't be here")),
+                );
         }
 
         self.config.append(config_to_append);
@@ -92,11 +98,16 @@ mod init {
         }
     }
 
+    /// A marker we use when listing names to not pick them up from overridden sections.
+    pub(crate) const META_MARKER: gix_config::Source = gix_config::Source::Api;
+
     /// Lifecycle
     impl File {
         /// Parse `bytes` as git configuration, typically from `.gitmodules`, without doing any further validation.
         /// `path` can be provided to keep track of where the file was read from in the underlying [`config`](Self::config())
         /// instance.
+        /// `config` is used to [apply value overrides](File::append_submodule_overrides), which can be empty if overrides
+        /// should be applied at a later time.
         ///
         /// Future access to the module information is lazy and configuration errors are exposed there on a per-value basis.
         ///
@@ -104,16 +115,24 @@ mod init {
         ///
         /// The information itself should be used with care as it can direct the caller to fetch from remotes. It is, however,
         /// on the caller to assure the input data can be trusted.
-        pub fn from_bytes(bytes: &[u8], path: impl Into<Option<PathBuf>>) -> Result<Self, gix_config::parse::Error> {
-            let metadata = path.into().map_or_else(gix_config::file::Metadata::api, |path| {
-                gix_config::file::Metadata::from(gix_config::Source::Worktree).at(path)
-            });
-            let config = gix_config::File::from_parse_events_no_includes(
+        pub fn from_bytes(
+            bytes: &[u8],
+            path: impl Into<Option<PathBuf>>,
+            config: &gix_config::File<'_>,
+        ) -> Result<Self, gix_config::parse::Error> {
+            let metadata = {
+                let mut meta = gix_config::file::Metadata::from(META_MARKER);
+                meta.path = path.into();
+                meta
+            };
+            let modules = gix_config::File::from_parse_events_no_includes(
                 gix_config::parse::Events::from_bytes_owned(bytes, None)?,
                 metadata,
             );
 
-            Ok(Self { config })
+            let mut res = Self { config: modules };
+            res.append_submodule_overrides(config);
+            Ok(res)
         }
 
         /// Turn ourselves into the underlying parsed configuration file.

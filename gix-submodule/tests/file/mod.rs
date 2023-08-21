@@ -1,8 +1,8 @@
 fn submodule(bytes: &str) -> gix_submodule::File {
-    gix_submodule::File::from_bytes(bytes.as_bytes(), None).expect("valid module")
+    gix_submodule::File::from_bytes(bytes.as_bytes(), None, &Default::default()).expect("valid module")
 }
 
-mod names_and_active_state {
+mod is_active_platform {
     use bstr::{BStr, ByteSlice};
     use std::str::FromStr;
 
@@ -13,6 +13,7 @@ mod names_and_active_state {
         Ok(gix_submodule::File::from_bytes(
             std::fs::read(&modules)?.as_slice(),
             modules,
+            &Default::default(),
         )?)
     }
 
@@ -30,7 +31,7 @@ mod names_and_active_state {
         module: &'a gix_submodule::File,
         config: &'a gix_config::File<'static>,
         defaults: gix_pathspec::Defaults,
-        attributes: impl FnMut(
+        mut attributes: impl FnMut(
                 &BStr,
                 gix_pathspec::attributes::glob::pattern::Case,
                 bool,
@@ -38,9 +39,17 @@ mod names_and_active_state {
             ) -> bool
             + 'a,
     ) -> crate::Result<Vec<(&'a str, bool)>> {
+        let mut platform = module.is_active_platform(config, defaults)?;
         Ok(module
-            .names_and_active_state(config, defaults, attributes)?
-            .map(|(name, bool)| (name.to_str().expect("valid"), bool.expect("valid")))
+            .names()
+            .map(|name| {
+                (
+                    name.to_str().expect("valid"),
+                    platform
+                        .is_active(module, config, name, &mut attributes)
+                        .expect("valid"),
+                )
+            })
             .collect())
     }
 
@@ -213,12 +222,18 @@ mod update {
     fn valid_in_overrides() -> crate::Result {
         let mut module = submodule("[submodule.a]\n update = merge");
         let repo_config = gix_config::File::from_str("[submodule.a]\n update = !dangerous")?;
+        let prev_names = module.names().map(ToOwned::to_owned).collect::<Vec<_>>();
         module.append_submodule_overrides(&repo_config);
 
         assert_eq!(
             module.update("a".into())?.expect("present"),
             Update::Command("dangerous".into()),
             "overridden values are picked up and make commands possible - these are local"
+        );
+        assert_eq!(
+            module.names().map(ToOwned::to_owned).collect::<Vec<_>>(),
+            prev_names,
+            "Appending more configuration sections doesn't affect name listing"
         );
         Ok(())
     }

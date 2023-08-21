@@ -677,6 +677,9 @@ pub mod index {
             /// This is to see what IO for probing attribute/ignore files does to performance.
             #[clap(long, short = 'i', conflicts_with = "no_attributes")]
             attributes_from_index: bool,
+            /// Display submodule entries as well if their repository exists.
+            #[clap(long, short = 'r')]
+            recurse_submodules: bool,
             /// Print various statistics to stderr
             #[clap(long, short = 's')]
             statistics: bool,

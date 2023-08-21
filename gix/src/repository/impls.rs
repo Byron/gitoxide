@@ -9,6 +9,7 @@ impl Clone for crate::Repository {
             self.options.clone(),
             self.index.clone(),
             self.shallow_commits.clone(),
+            self.modules.clone(),
         )
     }
 }
@@ -42,6 +43,7 @@ impl From<&crate::ThreadSafeRepository> for crate::Repository {
             repo.linked_worktree_options.clone(),
             repo.index.clone(),
             repo.shallow_commits.clone(),
+            repo.modules.clone(),
         )
     }
 }
@@ -57,6 +59,7 @@ impl From<crate::ThreadSafeRepository> for crate::Repository {
             repo.linked_worktree_options,
             repo.index,
             repo.shallow_commits,
+            repo.modules.clone(),
         )
     }
 }
@@ -71,6 +74,7 @@ impl From<crate::Repository> for crate::ThreadSafeRepository {
             config: r.config,
             linked_worktree_options: r.options,
             index: r.index,
+            modules: r.modules,
             shallow_commits: r.shallow_commits,
         }
     }
