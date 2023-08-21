@@ -185,10 +185,11 @@ pub mod attributes {
 
 ///
 pub mod pathspec {
-    use crate::bstr::BStr;
-    use crate::config::cache::util::ApplyLeniencyDefaultValue;
-    use crate::config::tree::gitoxide;
-    use crate::Worktree;
+    use crate::{
+        bstr::BStr,
+        config::{cache::util::ApplyLeniencyDefaultValue, tree::gitoxide},
+        Worktree,
+    };
 
     /// The error returned by [`Worktree::pathspec()`].
     #[derive(Debug, thiserror::Error)]

@@ -2,8 +2,7 @@ use std::convert::TryInto;
 
 use gix_object::bstr::{BStr, ByteSlice};
 use winnow::{
-    combinator::opt,
-    combinator::{delimited, preceded, terminated},
+    combinator::{delimited, opt, preceded, terminated},
     error::{FromExternalError, ParserError},
     prelude::*,
     token::take_while,

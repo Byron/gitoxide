@@ -45,15 +45,19 @@ mod update {
         let repo = gix::open_opts(dir.path().join(name), restricted()).unwrap();
         (repo, dir)
     }
-    use gix_ref::transaction::{LogChange, PreviousValue, RefEdit, RefLog};
-    use gix_ref::{transaction::Change, Target, TargetRef};
+    use gix_ref::{
+        transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
+        Target, TargetRef,
+    };
 
-    use crate::remote::fetch::refs::update::TypeChange;
     use crate::{
         bstr::BString,
         remote::{
             fetch,
-            fetch::{refs::tests::restricted, Mapping, RefLogMessage, Source, SpecIndex},
+            fetch::{
+                refs::{tests::restricted, update::TypeChange},
+                Mapping, RefLogMessage, Source, SpecIndex,
+            },
         },
     };
 

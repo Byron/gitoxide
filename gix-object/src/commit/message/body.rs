@@ -1,10 +1,7 @@
 use std::ops::Deref;
 
 use winnow::{
-    combinator::eof,
-    combinator::rest,
-    combinator::separated_pair,
-    combinator::terminated,
+    combinator::{eof, rest, separated_pair, terminated},
     error::{ErrorKind, ParserError},
     prelude::*,
     token::take_until1,

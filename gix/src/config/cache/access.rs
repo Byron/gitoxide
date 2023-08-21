@@ -4,11 +4,11 @@ use std::{borrow::Cow, path::PathBuf, time::Duration};
 use gix_attributes::Source;
 use gix_lock::acquire::Fail;
 
-use crate::config::boolean;
 use crate::{
     bstr::BStr,
     config,
     config::{
+        boolean,
         cache::util::{ApplyLeniency, ApplyLeniencyDefault, ApplyLeniencyDefaultValue},
         checkout_options,
         tree::{gitoxide, Checkout, Core, Key},

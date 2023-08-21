@@ -18,8 +18,11 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub(crate) mod function {
     use anyhow::bail;
-    use gix::remote::fetch::refs::update::TypeChange;
-    use gix::{prelude::ObjectIdExt, refspec::match_group::validate::Fix, remote::fetch::Status};
+    use gix::{
+        prelude::ObjectIdExt,
+        refspec::match_group::validate::Fix,
+        remote::fetch::{refs::update::TypeChange, Status},
+    };
     use layout::{
         backends::svg::SVGWriter,
         core::{base::Orientation, geometry::Point, style::StyleAttr},

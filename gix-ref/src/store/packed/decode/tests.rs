@@ -1,8 +1,7 @@
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
 mod reference {
-    use winnow::error::TreeError;
-    use winnow::prelude::*;
+    use winnow::{error::TreeError, prelude::*};
 
     use super::Result;
     use crate::{

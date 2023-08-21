@@ -1,5 +1,6 @@
-use bstr::{BStr, BString, ByteSlice};
 use std::ops::Range;
+
+use bstr::{BStr, BString, ByteSlice};
 
 use crate::{Commit, CommitRef, TagRef};
 

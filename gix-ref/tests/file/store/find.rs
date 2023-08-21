@@ -90,8 +90,7 @@ mod existing {
 }
 
 mod loose {
-    use crate::file::store;
-    use crate::util::hex_to_id;
+    use crate::{file::store, util::hex_to_id};
 
     mod existing {
         use std::path::Path;

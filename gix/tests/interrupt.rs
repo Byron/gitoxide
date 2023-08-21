@@ -1,5 +1,6 @@
-use signal_hook::consts::SIGTERM;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+use signal_hook::consts::SIGTERM;
 
 #[test]
 fn multi_registration() -> gix_testtools::Result {

@@ -1,11 +1,9 @@
 use std::io;
 
 use anyhow::{anyhow, bail};
-use gix::bstr::BStr;
-use gix::prelude::FindExt;
+use gix::{bstr::BStr, prelude::FindExt};
 
-use crate::repository::PathsOrPatterns;
-use crate::OutputFormat;
+use crate::{repository::PathsOrPatterns, OutputFormat};
 
 pub mod query {
     use std::ffi::OsString;

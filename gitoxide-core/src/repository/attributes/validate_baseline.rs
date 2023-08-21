@@ -18,8 +18,7 @@ pub(crate) mod function {
     };
 
     use anyhow::{anyhow, bail};
-    use gix::bstr::BString;
-    use gix::{attrs::Assignment, odb::FindExt, Progress};
+    use gix::{attrs::Assignment, bstr::BString, odb::FindExt, Progress};
 
     use crate::{
         repository::attributes::{query::attributes_cache, validate_baseline::Options},

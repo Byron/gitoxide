@@ -2,12 +2,7 @@ use std::borrow::Cow;
 
 use bstr::{BStr, ByteSlice};
 use winnow::{
-    combinator::alt,
-    combinator::delimited,
-    combinator::fold_repeat,
-    combinator::opt,
-    combinator::preceded,
-    combinator::repeat,
+    combinator::{alt, delimited, fold_repeat, opt, preceded, repeat},
     error::{ErrorKind, InputError as NomError, ParserError as _},
     prelude::*,
     stream::{Offset as _, Stream as _},

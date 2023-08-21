@@ -1,6 +1,6 @@
-use crate::Defaults;
-use crate::{MagicSignature, SearchMode};
 use std::ffi::OsString;
+
+use crate::{Defaults, MagicSignature, SearchMode};
 
 ///
 pub mod from_environment {

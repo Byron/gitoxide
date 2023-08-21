@@ -1,9 +1,5 @@
 use winnow::{
-    combinator::alt,
-    combinator::delimited,
-    combinator::rest,
-    combinator::{eof, opt},
-    combinator::{preceded, terminated},
+    combinator::{alt, delimited, eof, opt, preceded, rest, terminated},
     error::{AddContext, ParserError, StrContext},
     prelude::*,
     stream::AsChar,

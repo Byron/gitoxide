@@ -8,9 +8,8 @@ use bstr::BStr;
 use gix_filter::{driver::apply::MaybeDelayed, pipeline::convert::ToWorktreeOutcome};
 use gix_hash::oid;
 use gix_index::{entry::Stat, Entry};
-use io_close::Close;
-
 use gix_worktree::Stack;
+use io_close::Close;
 
 pub struct Context<'a, Find> {
     pub find: &'a mut Find,

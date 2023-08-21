@@ -20,8 +20,7 @@ pub mod open {
     use std::path::PathBuf;
 
     use memmap2::Mmap;
-    use winnow::prelude::*;
-    use winnow::stream::Offset;
+    use winnow::{prelude::*, stream::Offset};
 
     use crate::store_impl::packed;
 

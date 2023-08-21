@@ -1,6 +1,6 @@
+use std::{io::Write, process::Stdio};
+
 use anyhow::{anyhow, bail, Context, Result};
-use std::io::Write;
-use std::process::Stdio;
 
 /// Note that this is a quick implementation of commit signature verification that ignores a lot of what
 /// git does and can do, while focussing on the gist of it.

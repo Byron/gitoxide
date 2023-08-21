@@ -1,5 +1,4 @@
-use gix_pathspec::Defaults;
-use gix_pathspec::{MagicSignature, SearchMode};
+use gix_pathspec::{Defaults, MagicSignature, SearchMode};
 use serial_test::serial;
 
 #[test]

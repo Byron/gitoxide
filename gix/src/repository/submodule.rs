@@ -1,5 +1,6 @@
-use crate::{submodule, Repository};
 use std::rc::Rc;
+
+use crate::{submodule, Repository};
 
 impl Repository {
     /// Open the `.gitmodules` file as present in the worktree, or return `None` if no such file is available.

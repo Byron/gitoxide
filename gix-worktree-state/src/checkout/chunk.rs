@@ -5,9 +5,9 @@ use std::{
 
 use bstr::{BStr, BString};
 use gix_hash::oid;
+use gix_worktree::Stack;
 
 use crate::{checkout, checkout::entry};
-use gix_worktree::Stack;
 
 mod reduce {
     use std::marker::PhantomData;

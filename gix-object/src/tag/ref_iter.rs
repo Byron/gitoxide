@@ -1,10 +1,8 @@
 use bstr::BStr;
 use gix_hash::{oid, ObjectId};
 use winnow::{
-    combinator::terminated,
-    combinator::{eof, opt},
-    error::ParserError,
-    error::StrContext,
+    combinator::{eof, opt, terminated},
+    error::{ParserError, StrContext},
     prelude::*,
     stream::AsChar,
     token::take_while,

@@ -1,7 +1,6 @@
 use bstr::{BStr, BString, ByteVec};
 use winnow::{
-    combinator::repeat,
-    combinator::{preceded, terminated},
+    combinator::{preceded, repeat, terminated},
     error::{AddContext, ParserError, StrContext},
     prelude::*,
     token::{take_till1, take_until0, take_while},

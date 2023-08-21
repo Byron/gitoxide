@@ -1,6 +1,8 @@
-use crate::{normalize, MagicSignature, Pattern, SearchMode};
-use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::path::{Component, Path, PathBuf};
+
+use bstr::{BStr, BString, ByteSlice, ByteVec};
+
+use crate::{normalize, MagicSignature, Pattern, SearchMode};
 
 /// Access
 impl Pattern {

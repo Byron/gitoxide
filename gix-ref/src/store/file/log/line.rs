@@ -75,13 +75,7 @@ impl<'a> From<LineRef<'a>> for Line {
 pub mod decode {
     use gix_object::bstr::{BStr, ByteSlice};
     use winnow::{
-        combinator::alt,
-        combinator::eof,
-        combinator::fail,
-        combinator::opt,
-        combinator::preceded,
-        combinator::rest,
-        combinator::terminated,
+        combinator::{alt, eof, fail, opt, preceded, rest, terminated},
         error::{AddContext, ParserError, StrContext},
         prelude::*,
         token::take_while,
@@ -190,8 +184,7 @@ pub mod decode {
 
         mod invalid {
             use gix_testtools::to_bstr_err;
-            use winnow::error::TreeError;
-            use winnow::prelude::*;
+            use winnow::{error::TreeError, prelude::*};
 
             use super::one;
 

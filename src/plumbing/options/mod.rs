@@ -589,8 +589,9 @@ pub mod revision {
 }
 
 pub mod attributes {
-    use crate::shared::CheckPathSpec;
     use gix::bstr::BString;
+
+    use crate::shared::CheckPathSpec;
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -617,8 +618,9 @@ pub mod attributes {
 }
 
 pub mod exclude {
-    use gix::bstr::BString;
     use std::ffi::OsString;
+
+    use gix::bstr::BString;
 
     use crate::shared::CheckPathSpec;
 
@@ -647,9 +649,11 @@ pub mod exclude {
 }
 
 pub mod index {
-    use crate::shared::CheckPathSpec;
-    use gix::bstr::BString;
     use std::path::PathBuf;
+
+    use gix::bstr::BString;
+
+    use crate::shared::CheckPathSpec;
 
     pub mod entries {
         #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]

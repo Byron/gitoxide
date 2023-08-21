@@ -1,6 +1,9 @@
 use winnow::{
-    combinator::alt, combinator::eof, combinator::preceded, combinator::rest, combinator::terminated,
-    error::ParserError, prelude::*, stream::Offset, stream::Stream, token::take_till1,
+    combinator::{alt, eof, preceded, rest, terminated},
+    error::ParserError,
+    prelude::*,
+    stream::{Offset, Stream},
+    token::take_till1,
 };
 
 use crate::bstr::{BStr, ByteSlice};

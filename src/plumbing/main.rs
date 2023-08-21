@@ -10,10 +10,8 @@ use std::{
 use anyhow::{Context, Result};
 use clap::Parser;
 use gitoxide_core as core;
-use gitoxide_core::pack::verify;
-use gitoxide_core::repository::PathsOrPatterns;
-use gix::bstr::io::BufReadExt;
-use gix::bstr::BString;
+use gitoxide_core::{pack::verify, repository::PathsOrPatterns};
+use gix::bstr::{io::BufReadExt, BString};
 
 use crate::{
     plumbing::{

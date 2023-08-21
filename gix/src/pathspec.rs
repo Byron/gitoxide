@@ -1,8 +1,8 @@
 //! Pathspec plumbing and abstractions
-use crate::bstr::BStr;
-use crate::{Pathspec, Repository};
 use gix_odb::FindExt;
 pub use gix_pathspec::*;
+
+use crate::{bstr::BStr, Pathspec, Repository};
 
 ///
 pub mod init {

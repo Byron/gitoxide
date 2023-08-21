@@ -1,5 +1,6 @@
-use crate::OutputFormat;
 use gix::repository::IndexPersistedOrInMemory;
+
+use crate::OutputFormat;
 
 pub struct Options {
     pub format: OutputFormat,
@@ -10,12 +11,13 @@ pub(crate) mod function {
     use std::{io, path::Path};
 
     use anyhow::{anyhow, bail};
-    use gix::bstr::BStr;
-    use gix::prelude::FindExt;
+    use gix::{bstr::BStr, prelude::FindExt};
 
-    use crate::repository::PathsOrPatterns;
     use crate::{
-        repository::attributes::query::{attributes_cache, Options},
+        repository::{
+            attributes::query::{attributes_cache, Options},
+            PathsOrPatterns,
+        },
         OutputFormat,
     };
 

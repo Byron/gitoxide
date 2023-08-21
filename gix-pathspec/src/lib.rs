@@ -3,10 +3,10 @@
 #![deny(missing_docs, rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
-use bitflags::bitflags;
-use bstr::BString;
 use std::path::PathBuf;
 
+use bitflags::bitflags;
+use bstr::BString;
 /// `gix-glob` types are available through [`attributes::glob`].
 pub use gix_attributes as attributes;
 

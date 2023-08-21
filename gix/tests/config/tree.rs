@@ -146,8 +146,8 @@ mod ssh {
 }
 
 mod fetch {
-    use gix::bstr::ByteSlice;
     use gix::{
+        bstr::ByteSlice,
         config::tree::{Fetch, Key},
         remote::fetch::negotiate::Algorithm,
     };

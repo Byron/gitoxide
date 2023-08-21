@@ -2,9 +2,9 @@
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
+use std::{borrow::Cow, collections::BTreeMap};
+
 use bstr::BStr;
-use std::borrow::Cow;
-use std::collections::BTreeMap;
 
 /// All relevant information about a git module, typically from `.gitmodules` files.
 ///
@@ -86,8 +86,9 @@ impl File {
 
 ///
 mod init {
-    use crate::File;
     use std::path::PathBuf;
+
+    use crate::File;
 
     impl std::fmt::Debug for File {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

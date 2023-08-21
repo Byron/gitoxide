@@ -2,9 +2,9 @@ use std::sync::atomic::AtomicBool;
 
 use gix_features::{interrupt, parallel::in_parallel_with_finalize, progress::Progress};
 use gix_hash::oid;
+use gix_worktree::{stack, Stack};
 
 use crate::checkout::chunk;
-use gix_worktree::{stack, Stack};
 
 /// Checkout the entire `index` into `dir`, and resolve objects found in index entries with `find` to write their content to their
 /// respective path in `dir`.

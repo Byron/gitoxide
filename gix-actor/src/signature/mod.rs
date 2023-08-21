@@ -1,7 +1,6 @@
 mod _ref {
     use bstr::ByteSlice;
-    use winnow::error::StrContext;
-    use winnow::prelude::*;
+    use winnow::{error::StrContext, prelude::*};
 
     use crate::{signature::decode, IdentityRef, Signature, SignatureRef};
 

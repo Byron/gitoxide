@@ -1,9 +1,12 @@
-use crate::config::{Branch, FetchRecurse, Ignore, Update};
-use crate::{config, File, IsActivePlatform};
+use std::{borrow::Cow, collections::HashSet, path::Path};
+
 use bstr::BStr;
-use std::borrow::Cow;
-use std::collections::HashSet;
-use std::path::Path;
+
+use crate::{
+    config,
+    config::{Branch, FetchRecurse, Ignore, Update},
+    File, IsActivePlatform,
+};
 
 /// High-Level Access
 ///

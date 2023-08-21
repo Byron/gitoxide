@@ -1,7 +1,6 @@
-use crate::bstr::BStr;
-use crate::config::cache::util::ApplyLeniencyDefault;
-use crate::{Pathspec, Repository};
 use gix_pathspec::MagicSignature;
+
+use crate::{bstr::BStr, config::cache::util::ApplyLeniencyDefault, Pathspec, Repository};
 
 impl Repository {
     /// Create a new pathspec abstraction that allows to conduct searches using `patterns`.

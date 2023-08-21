@@ -1,16 +1,16 @@
 #![allow(clippy::result_large_err)]
 //! Submodule plumbing and abstractions
 //!
-use crate::bstr::BStr;
-use crate::{Id, Repository, Submodule};
-use gix_odb::FindExt;
-use std::borrow::Cow;
-use std::cell::{Ref, RefCell, RefMut};
-use std::path::PathBuf;
+use std::{
+    borrow::Cow,
+    cell::{Ref, RefCell, RefMut},
+    path::PathBuf,
+};
 
-use crate::ext::ObjectIdExt;
-use crate::repository::IndexPersistedOrInMemory;
+use gix_odb::FindExt;
 pub use gix_submodule::*;
+
+use crate::{bstr::BStr, ext::ObjectIdExt, repository::IndexPersistedOrInMemory, Id, Repository, Submodule};
 
 pub(crate) type ModulesFileStorage = gix_features::threading::OwnShared<gix_fs::SharedFileSnapshotMut<File>>;
 /// A lazily loaded and auto-updated worktree index.

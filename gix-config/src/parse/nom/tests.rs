@@ -1,9 +1,10 @@
 use super::*;
 
 mod section_headers {
+    use winnow::prelude::*;
+
     use super::section_header;
     use crate::parse::tests::util::{fully_consumed, section_header as parsed_section_header};
-    use winnow::prelude::*;
 
     #[test]
     fn no_subsection() {
@@ -116,6 +117,7 @@ mod section_headers {
 
 mod sub_section {
     use std::borrow::Cow;
+
     use winnow::prelude::*;
 
     use super::sub_section;
@@ -859,9 +861,10 @@ mod key_value_pair {
 }
 
 mod comment {
+    use winnow::prelude::*;
+
     use super::comment;
     use crate::parse::tests::util::{comment as parsed_comment, fully_consumed};
-    use winnow::prelude::*;
 
     #[test]
     fn semicolon() {

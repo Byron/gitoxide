@@ -3,9 +3,7 @@ pub(crate) mod function {
     use btoi::btoi;
     use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch, Time};
     use winnow::{
-        combinator::alt,
-        combinator::separated_pair,
-        combinator::terminated,
+        combinator::{alt, separated_pair, terminated},
         error::{AddContext, ParserError, StrContext},
         prelude::*,
         stream::AsChar,

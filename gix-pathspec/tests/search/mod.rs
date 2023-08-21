@@ -142,8 +142,9 @@ fn pathspecs(input: &[&str]) -> Vec<gix_pathspec::Pattern> {
 }
 
 mod baseline {
-    use bstr::{BString, ByteSlice};
     use std::path::{Path, PathBuf};
+
+    use bstr::{BString, ByteSlice};
 
     pub fn run(
         name: &str,

@@ -1,10 +1,8 @@
-use std::rc::Rc;
-use std::{cell::RefCell, path::PathBuf};
+use std::{cell::RefCell, path::PathBuf, rc::Rc};
 
 use gix_hash::ObjectId;
 
-use crate::bstr::BString;
-use crate::{head, remote};
+use crate::{bstr::BString, head, remote};
 
 /// A worktree checkout containing the files of the repository in consumable form.
 #[derive(Debug, Clone)]

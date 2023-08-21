@@ -1,7 +1,10 @@
-use crate::search::{Match, Spec};
-use crate::{MagicSignature, Pattern, Search, SearchMode};
 use bstr::{BStr, BString, ByteSlice};
 use gix_glob::pattern::Case;
+
+use crate::{
+    search::{Match, Spec},
+    MagicSignature, Pattern, Search, SearchMode,
+};
 
 impl Search {
     /// Return the first [`Match`] of `relative_path`, or `None`.

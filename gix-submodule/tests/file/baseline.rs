@@ -1,7 +1,7 @@
+use std::{ffi::OsStr, path::PathBuf};
+
 use bstr::ByteSlice;
 use gix_features::fs::walkdir::Parallelism;
-use std::ffi::OsStr;
-use std::path::PathBuf;
 
 #[test]
 fn common_values_and_names_by_path() -> crate::Result {

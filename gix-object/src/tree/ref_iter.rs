@@ -1,6 +1,6 @@
-use bstr::BStr;
 use std::convert::TryFrom;
 
+use bstr::BStr;
 use winnow::error::ParserError;
 
 use crate::{tree, tree::EntryRef, TreeRef, TreeRefIter};
@@ -117,9 +117,7 @@ mod decode {
 
     use bstr::ByteSlice;
     use winnow::{
-        combinator::eof,
-        combinator::repeat,
-        combinator::terminated,
+        combinator::{eof, repeat, terminated},
         error::ParserError,
         prelude::*,
         stream::AsChar,

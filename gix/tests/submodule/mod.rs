@@ -4,8 +4,9 @@ pub fn repo(name: &str) -> crate::Result<gix::Repository> {
 }
 
 mod open {
-    use crate::submodule::repo;
     use gix::submodule;
+
+    use crate::submodule::repo;
 
     #[test]
     fn various() -> crate::Result {

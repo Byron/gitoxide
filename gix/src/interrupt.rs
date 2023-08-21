@@ -138,14 +138,12 @@ mod init {
         Ok(Deregister::default())
     }
 }
-pub use init::Deregister;
-
 use std::{
     io,
     sync::atomic::{AtomicBool, Ordering},
 };
 
-pub use init::init_handler;
+pub use init::{init_handler, Deregister};
 
 /// A wrapper for an inner iterator which will check for interruptions on each iteration.
 pub struct Iter<I, EFN> {

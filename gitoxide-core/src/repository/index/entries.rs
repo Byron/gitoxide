@@ -17,19 +17,23 @@ pub enum Attributes {
 }
 
 pub(crate) mod function {
-    use gix::bstr::{BStr, BString};
-    use std::collections::BTreeSet;
     use std::{
         borrow::Cow,
+        collections::BTreeSet,
         io::{BufWriter, Write},
     };
 
-    use crate::OutputFormat;
-    use gix::odb::FindExt;
-    use gix::repository::IndexPersistedOrInMemory;
-    use gix::Repository;
+    use gix::{
+        bstr::{BStr, BString},
+        odb::FindExt,
+        repository::IndexPersistedOrInMemory,
+        Repository,
+    };
 
-    use crate::repository::index::entries::{Attributes, Options};
+    use crate::{
+        repository::index::entries::{Attributes, Options},
+        OutputFormat,
+    };
 
     pub fn entries(
         repo: gix::Repository,

@@ -1,7 +1,7 @@
-use gix::bstr::BString;
 use std::path::PathBuf;
 
 use anyhow::{Context as AnyhowContext, Result};
+use gix::bstr::BString;
 
 pub fn init(directory: Option<PathBuf>) -> Result<gix::discover::repository::Path> {
     gix::create::into(

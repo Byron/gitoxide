@@ -1,19 +1,21 @@
-use std::borrow::Cow;
-use std::ops::Range;
+use std::{borrow::Cow, ops::Range};
 
 use bstr::BStr;
 use gix_hash::{oid, ObjectId};
 use winnow::{
-    combinator::alt,
-    combinator::terminated,
-    combinator::{eof, opt},
+    combinator::{alt, eof, opt, terminated},
     error::StrContext,
     prelude::*,
     token::take_till1,
 };
 
-use crate::commit::SignedData;
-use crate::{bstr::ByteSlice, commit::decode, parse, parse::NL, CommitRefIter};
+use crate::{
+    bstr::ByteSlice,
+    commit::{decode, SignedData},
+    parse,
+    parse::NL,
+    CommitRefIter,
+};
 
 #[derive(Copy, Clone)]
 pub(crate) enum SignatureKind {

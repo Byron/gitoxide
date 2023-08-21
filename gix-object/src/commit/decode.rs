@@ -2,11 +2,7 @@ use std::borrow::Cow;
 
 use smallvec::SmallVec;
 use winnow::{
-    combinator::alt,
-    combinator::preceded,
-    combinator::repeat,
-    combinator::terminated,
-    combinator::{eof, opt, rest},
+    combinator::{alt, eof, opt, preceded, repeat, rest, terminated},
     error::{AddContext, ParserError, StrContext},
     prelude::*,
     token::take_till1,

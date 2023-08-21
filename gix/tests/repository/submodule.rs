@@ -58,10 +58,9 @@ mod modules_file {
 }
 
 mod submodules {
-    use crate::submodule::repo;
-    use crate::util::hex_to_id;
-    use gix::bstr::BString;
-    use gix::Id;
+    use gix::{bstr::BString, Id};
+
+    use crate::{submodule::repo, util::hex_to_id};
 
     #[test]
     fn all_modules_are_active_by_default() -> crate::Result {

@@ -1,7 +1,7 @@
-use crate::util::named_repo;
-use gix::bstr::ByteSlice;
-use gix::config::tree::gitoxide;
+use gix::{bstr::ByteSlice, config::tree::gitoxide};
 use gix_worktree::stack::state::attributes::Source;
+
+use crate::util::named_repo;
 
 #[test]
 fn defaults_are_taken_from_repo_config() -> crate::Result {

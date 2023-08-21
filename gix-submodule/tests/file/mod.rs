@@ -3,8 +3,9 @@ fn submodule(bytes: &str) -> gix_submodule::File {
 }
 
 mod is_active_platform {
-    use bstr::{BStr, ByteSlice};
     use std::str::FromStr;
+
+    use bstr::{BStr, ByteSlice};
 
     fn multi_modules() -> crate::Result<gix_submodule::File> {
         let modules = gix_testtools::scripted_fixture_read_only("basic.sh")?
@@ -115,8 +116,9 @@ mod is_active_platform {
 }
 
 mod path {
-    use crate::file::submodule;
     use gix_submodule::config::path::Error;
+
+    use crate::file::submodule;
 
     fn submodule_path(value: &str) -> Error {
         let module = submodule(&format!("[submodule.a]\npath = {value}"));
@@ -156,8 +158,9 @@ mod path {
 }
 
 mod url {
-    use crate::file::submodule;
     use gix_submodule::config::url::Error;
+
+    use crate::file::submodule;
 
     fn submodule_url(value: &str) -> Error {
         let module = submodule(&format!("[submodule.a]\nurl = {value}"));
@@ -189,10 +192,11 @@ mod url {
 }
 
 mod update {
-    use crate::file::submodule;
-    use gix_submodule::config::update::Error;
-    use gix_submodule::config::Update;
     use std::str::FromStr;
+
+    use gix_submodule::config::{update::Error, Update};
+
+    use crate::file::submodule;
 
     fn submodule_update(value: &str) -> Error {
         let module = submodule(&format!("[submodule.a]\nupdate = {value}"));
@@ -253,8 +257,9 @@ mod update {
 }
 
 mod fetch_recurse {
-    use crate::file::submodule;
     use gix_submodule::config::FetchRecurse;
+
+    use crate::file::submodule;
 
     #[test]
     fn default() {
@@ -298,8 +303,9 @@ mod fetch_recurse {
 }
 
 mod ignore {
-    use crate::file::submodule;
     use gix_submodule::config::Ignore;
+
+    use crate::file::submodule;
 
     #[test]
     fn default() {
@@ -336,8 +342,9 @@ mod ignore {
 }
 
 mod branch {
-    use crate::file::submodule;
     use gix_submodule::config::Branch;
+
+    use crate::file::submodule;
 
     #[test]
     fn valid() -> crate::Result {
@@ -382,8 +389,9 @@ fn shallow() -> crate::Result {
 }
 
 mod append_submodule_overrides {
-    use crate::file::submodule;
     use std::str::FromStr;
+
+    use crate::file::submodule;
 
     #[test]
     fn last_of_multiple_values_wins() -> crate::Result {

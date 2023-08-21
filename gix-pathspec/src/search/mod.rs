@@ -1,5 +1,6 @@
-use crate::{Pattern, Search};
 use bstr::{BStr, ByteSlice};
+
+use crate::{Pattern, Search};
 
 /// Describes a matching pattern within a search for ignored paths.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
