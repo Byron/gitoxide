@@ -281,6 +281,9 @@ members = [
 
     "gix-diff/tests",
     "gix-pack/tests",
+    "gix-worktree-state/tests",
+    "gix-status/tests",
+    "gix-worktree/tests",
     "gix-index/tests",
     "gix-ref/tests",
     "gix-config/tests",

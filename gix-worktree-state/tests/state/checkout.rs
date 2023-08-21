@@ -102,7 +102,12 @@ fn writes_through_symlinks_are_prevented_even_if_overwriting_is_allowed() {
         );
         assert_eq!(
             stripped_prefix(&destination, &worktree_files),
-            paths(["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE"]),
+            paths([
+                if cfg!(windows) { "A-dir\\a" } else { "A-dir/a" },
+                "A-file",
+                "FAKE-DIR",
+                "FAKE-FILE"
+            ]),
         );
         assert!(outcome.collisions.is_empty());
     } else {
@@ -497,7 +502,10 @@ fn stripped_prefix(prefix: impl AsRef<Path>, source_files: &[PathBuf]) -> Vec<&P
 
 fn probe_gitoxide_dir() -> crate::Result<gix_fs::Capabilities> {
     Ok(gix_fs::Capabilities::probe(
-        std::env::current_dir()?.join("..").join(".git"),
+        gix_discover::upwards(".")?
+            .0
+            .into_repository_and_work_tree_directories()
+            .0,
     ))
 }
 
