@@ -1,9 +1,14 @@
 use crate::entry::Mode;
 
 impl Mode {
-    /// Return true if this is a sparse entry, as it points to a directory which usually isn't what an 'unsparse' index tracks.
+    /// Return `true` if this is a sparse entry, as it points to a directory which usually isn't what an 'unsparse' index tracks.
     pub fn is_sparse(&self) -> bool {
         *self == Self::DIR
+    }
+
+    /// Return `true` if this is a submodule entry.
+    pub fn is_submodule(&self) -> bool {
+        *self == Self::DIR | Self::SYMLINK
     }
 
     /// Compares this mode to the file system version ([`std::fs::symlink_metadata`])
