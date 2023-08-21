@@ -2173,6 +2173,7 @@ dependencies = [
  "gix-odb",
  "gix-revwalk",
  "gix-testtools",
+ "gix-trace 0.1.3",
  "serde",
  "thiserror",
 ]
