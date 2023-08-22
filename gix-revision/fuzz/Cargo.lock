@@ -70,7 +70,7 @@ dependencies = [
 
 [[package]]
 name = "gix-actor"
-version = "0.24.2"
+version = "0.25.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -89,7 +89,7 @@ dependencies = [
 
 [[package]]
 name = "gix-commitgraph"
-version = "0.18.2"
+version = "0.19.0"
 dependencies = [
  "bstr",
  "gix-chunk",
@@ -101,7 +101,7 @@ dependencies = [
 
 [[package]]
 name = "gix-date"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "bstr",
  "itoa",
@@ -111,7 +111,7 @@ dependencies = [
 
 [[package]]
 name = "gix-features"
-version = "0.32.1"
+version = "0.33.0"
 dependencies = [
  "gix-hash",
  "gix-trace",
@@ -121,7 +121,7 @@ dependencies = [
 
 [[package]]
 name = "gix-hash"
-version = "0.11.4"
+version = "0.12.0"
 dependencies = [
  "faster-hex",
  "thiserror",
@@ -129,7 +129,7 @@ dependencies = [
 
 [[package]]
 name = "gix-hashtable"
-version = "0.2.4"
+version = "0.3.0"
 dependencies = [
  "gix-hash",
  "hashbrown",
@@ -138,7 +138,7 @@ dependencies = [
 
 [[package]]
 name = "gix-object"
-version = "0.34.0"
+version = "0.35.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -155,7 +155,7 @@ dependencies = [
 
 [[package]]
 name = "gix-revision"
-version = "0.19.0"
+version = "0.20.0"
 dependencies = [
  "bstr",
  "gix-date",
@@ -179,7 +179,7 @@ dependencies = [
 
 [[package]]
 name = "gix-revwalk"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "gix-commitgraph",
  "gix-date",
