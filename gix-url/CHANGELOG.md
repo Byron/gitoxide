@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.22.0 (2023-08-22)
+
+<csr-id-229bd4899213f749a7cc124aa2b82a1368fba40f/>
+
+### Chore
+
+ - <csr-id-229bd4899213f749a7cc124aa2b82a1368fba40f/> don't call crate 'WIP' in manifest anymore.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-8857580cb270b737bf04437a6f5e65307df1c99b/> let `Url::canonicalize(d)()` take the current working dir as argument.
+   That way it's free of side-effects and can be used properly from `gix::Repository`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 20 commits contributed to the release over the course of 17 calendar days.
+ - 30 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Make `gix-url` publishable by adding baseline test ([`d3746df`](https://github.com/Byron/gitoxide/commit/d3746df5dd402d8a461c2b07eaa0f8d8803fadf8))
+    - Release gix-date v0.7.3, gix-hash v0.12.0, gix-features v0.33.0, gix-actor v0.25.0, gix-object v0.35.0, gix-path v0.9.0, gix-glob v0.11.0, gix-quote v0.4.7, gix-attributes v0.17.0, gix-command v0.2.9, gix-packetline-blocking v0.16.5, gix-filter v0.3.0, gix-fs v0.5.0, gix-commitgraph v0.19.0, gix-hashtable v0.3.0, gix-revwalk v0.6.0, gix-traverse v0.31.0, gix-worktree-stream v0.3.0, gix-archive v0.3.0, gix-config-value v0.13.0, gix-tempfile v8.0.0, gix-lock v8.0.0, gix-ref v0.35.0, gix-sec v0.9.0, gix-config v0.28.0, gix-prompt v0.6.0, gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0, safety bump 41 crates ([`30b2761`](https://github.com/Byron/gitoxide/commit/30b27615047692d3ced1b2d9c2ac15a80f79fbee))
+    - Update changelogs prior to release ([`f23ea88`](https://github.com/Byron/gitoxide/commit/f23ea8828f2d9ba7559973daca388c9591bcc5fc))
+    - Merge branch 'gix-url-fixture-tests' ([`1b957c5`](https://github.com/Byron/gitoxide/commit/1b957c524cae288ac2063f6ba7e4d10d523eb8f3))
+    - For now, ignore baseline tests as most of them fail. ([`c0be6ab`](https://github.com/Byron/gitoxide/commit/c0be6aba49d734d166f279933220b02989c584de))
+    - Don't call crate 'WIP' in manifest anymore. ([`229bd48`](https://github.com/Byron/gitoxide/commit/229bd4899213f749a7cc124aa2b82a1368fba40f))
+    - Merge branch 'submodule-active' ([`a3afaa4`](https://github.com/Byron/gitoxide/commit/a3afaa42741616a0f1abeef9b54557e7c2b800cb))
+    - Let `Url::canonicalize(d)()` take the current working dir as argument. ([`8857580`](https://github.com/Byron/gitoxide/commit/8857580cb270b737bf04437a6f5e65307df1c99b))
+    - Fix prints of panics in gix-url baseline test ([`938baee`](https://github.com/Byron/gitoxide/commit/938baee58383fd995d39c5528e2a104d33de8826))
+    - Add assert output to failures in gix-url baseline test ([`163e139`](https://github.com/Byron/gitoxide/commit/163e1391526dad528e0bca0cc876e50e48381e74))
+    - Thanks clippy ([`fe5dbe1`](https://github.com/Byron/gitoxide/commit/fe5dbe16b5a8cfefa31a561506218ede73f3ec7e))
+    - Use libtest_mimic to run gix-url fixture tests ([`f128742`](https://github.com/Byron/gitoxide/commit/f128742df039cf23529a5e1ee9268a64d904d9e0))
+    - Refactor ([`cbaf339`](https://github.com/Byron/gitoxide/commit/cbaf3395a702b8f43aa3eac61c1a2b782bf63e05))
+    - Fix assertion in gix-url fixture test ([`ca421b7`](https://github.com/Byron/gitoxide/commit/ca421b77aeebb8204da1a090fdd59ef5021e177d))
+    - Thanks clippy ([`252dbb6`](https://github.com/Byron/gitoxide/commit/252dbb65e33188b1b803fbe05ead27aaae6fe5d9))
+    - Add parsing and asserting to gix-url fixture test ([`23e2982`](https://github.com/Byron/gitoxide/commit/23e2982b731b30a6aa9c55fdde5b8f00e71afc56))
+    - Fix bash styling in gix-url fixture ([`c77cd31`](https://github.com/Byron/gitoxide/commit/c77cd31834a8ac1540ad54bea59157609466c9eb))
+    - Adjust gix-url fixture loop for our test suite ([`f4214a6`](https://github.com/Byron/gitoxide/commit/f4214a6163533811a42a3aa104d5ba32c05321f7))
+    - Make gix-url fixture more readable ([`1ab3b07`](https://github.com/Byron/gitoxide/commit/1ab3b07cdf6543515b9b9be5690e2bb27ec63b7b))
+    - Add copy of gits t5500 test in preparation for fixture ([`d0de915`](https://github.com/Byron/gitoxide/commit/d0de9153131cbd30cec694cfdfb54e4dde7e8d45))
+</details>
+
 ## 0.21.1 (2023-07-22)
 
 A maintenance release without user-facing changes.
@@ -13,7 +64,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 1 calendar day.
+ - 6 commits contributed to the release over the course of 1 calendar day.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +76,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-tempfile v7.0.2, gix-utils v0.1.5, gix-lock v7.0.2, gix-ref v0.33.1, gix-sec v0.8.4, gix-prompt v0.5.4, gix-url v0.21.1, gix-credentials v0.17.1, gix-diff v0.33.1, gix-discover v0.22.1, gix-ignore v0.5.1, gix-bitmap v0.2.6, gix-index v0.21.1, gix-mailmap v0.16.1, gix-negotiate v0.5.1, gix-pack v0.40.1, gix-odb v0.50.1, gix-packetline v0.16.4, gix-transport v0.34.1, gix-protocol v0.36.1, gix-revision v0.18.1, gix-refspec v0.14.1, gix-worktree v0.23.0, gix v0.50.0 ([`107a64e`](https://github.com/Byron/gitoxide/commit/107a64e734580ad9e2c4142db96394529d8072df))
     - Release gix-features v0.32.1, gix-actor v0.24.1, gix-validate v0.7.7, gix-object v0.33.1, gix-path v0.8.4, gix-glob v0.10.1, gix-quote v0.4.6, gix-attributes v0.16.0, gix-command v0.2.8, gix-packetline-blocking v0.16.4, gix-filter v0.2.0, gix-fs v0.4.1, gix-chunk v0.4.4, gix-commitgraph v0.18.1, gix-hashtable v0.2.4, gix-revwalk v0.4.1, gix-traverse v0.30.1, gix-worktree-stream v0.2.0, gix-archive v0.2.0, gix-config-value v0.12.5, gix-tempfile v7.0.1, gix-utils v0.1.5, gix-lock v7.0.2, gix-ref v0.33.1, gix-sec v0.8.4, gix-prompt v0.5.4, gix-url v0.21.1, gix-credentials v0.17.1, gix-diff v0.33.1, gix-discover v0.22.1, gix-ignore v0.5.1, gix-bitmap v0.2.6, gix-index v0.21.1, gix-mailmap v0.16.1, gix-negotiate v0.5.1, gix-pack v0.40.1, gix-odb v0.50.1, gix-packetline v0.16.4, gix-transport v0.34.1, gix-protocol v0.36.1, gix-revision v0.18.1, gix-refspec v0.14.1, gix-worktree v0.23.0, gix v0.50.0, safety bump 5 crates ([`16295b5`](https://github.com/Byron/gitoxide/commit/16295b58e2581d2e8b8b762816f52baabe871c75))
     - Prepare more changelogs ([`c4cc5f2`](https://github.com/Byron/gitoxide/commit/c4cc5f261d29f712a101033a18293a97a9d4ae85))
     - Release gix-date v0.7.1, gix-hash v0.11.4, gix-trace v0.1.3, gix-features v0.32.0, gix-actor v0.24.0, gix-validate v0.7.7, gix-object v0.33.0, gix-path v0.8.4, gix-glob v0.10.0, gix-quote v0.4.6, gix-attributes v0.15.0, gix-command v0.2.7, gix-packetline-blocking v0.16.3, gix-filter v0.1.0, gix-fs v0.4.0, gix-chunk v0.4.4, gix-commitgraph v0.18.0, gix-hashtable v0.2.4, gix-revwalk v0.4.0, gix-traverse v0.30.0, gix-worktree-stream v0.2.0, gix-archive v0.2.0, gix-config-value v0.12.4, gix-tempfile v7.0.1, gix-utils v0.1.5, gix-lock v7.0.2, gix-ref v0.33.0, gix-sec v0.8.4, gix-prompt v0.5.3, gix-url v0.21.0, gix-credentials v0.17.0, gix-diff v0.33.0, gix-discover v0.22.0, gix-ignore v0.5.0, gix-bitmap v0.2.6, gix-index v0.21.0, gix-mailmap v0.16.0, gix-negotiate v0.5.0, gix-pack v0.40.0, gix-odb v0.50.0, gix-packetline v0.16.4, gix-transport v0.34.0, gix-protocol v0.36.0, gix-revision v0.18.0, gix-refspec v0.14.0, gix-worktree v0.22.0, gix v0.49.1 ([`5cb3589`](https://github.com/Byron/gitoxide/commit/5cb3589b74fc5376e02cbfe151e71344e1c417fe))

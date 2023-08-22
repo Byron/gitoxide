@@ -16,12 +16,12 @@ doctest = false
 [dependencies]
 gix-worktree = { version = "^0.24.0", path = "../gix-worktree" }
 gix-index = { version = "^0.22.0", path = "../gix-index" }
-gix-fs = { version = "^0.4.1", path = "../gix-fs" }
-gix-hash = { version = "^0.11.4", path = "../gix-hash" }
-gix-object = { version = "^0.34.0", path = "../gix-object" }
-gix-glob = { version = "^0.10.2", path = "../gix-glob" }
-gix-path = { version = "^0.8.4", path = "../gix-path" }
-gix-features = { version = "^0.32.1", path = "../gix-features" }
+gix-fs = { version = "^0.5.0", path = "../gix-fs" }
+gix-hash = { version = "^0.12.0", path = "../gix-hash" }
+gix-object = { version = "^0.35.0", path = "../gix-object" }
+gix-glob = { version = "^0.11.0", path = "../gix-glob" }
+gix-path = { version = "^0.9.0", path = "../gix-path" }
+gix-features = { version = "^0.33.0", path = "../gix-features" }
 gix-filter = { version = "^0.3.0", path = "../gix-filter" }
 
 io-close = "0.3.7"

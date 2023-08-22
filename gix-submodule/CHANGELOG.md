@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.0 (2023-08-22)
+
+<csr-id-229bd4899213f749a7cc124aa2b82a1368fba40f/>
+
+### Chore
+
+ - <csr-id-229bd4899213f749a7cc124aa2b82a1368fba40f/> don't call crate 'WIP' in manifest anymore.
+
+### New Features
+
+ - <csr-id-af1cab31fd5ead445c988cce058c136c81229ad1/> TBD a way to learn if submodules are active efficiently
+
+### Bug Fixes
+
+ - <csr-id-e0d9b09d02f88536b93ab6a31fddf9483881c5c1/> `Modules::is_active()` now counts everything that doesn't match `submodule.active` (if present) as inactive.
+ - <csr-id-8172f0e0f19e84fdaedceb87399f3fab4a1eb563/> Assure `gix-submodule` works with Rust 1.65.
+   The previous version of this loop, possibly preferable, ran into
+   a borrow-check issue that was no more from Rust 1.70 onwards.
+
+### New Features (BREAKING)
+
+ - <csr-id-3503f4948b42854256c9e8d8336ebe222fee980b/> remove `File::names_and_active_state()` in favor of `File::is_active_platform()`.
+   With this platform it's possible to make repeated checks to see if a named submodule is active.
+ - <csr-id-4a443e453285095daccdca0fed9e8486ce7892ab/> make API less error prone by enforcing overrides at instantiation time.
+   It's made so that overrides can still be applied at a later point.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 4 calendar days.
+ - 15 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-date v0.7.3, gix-hash v0.12.0, gix-features v0.33.0, gix-actor v0.25.0, gix-object v0.35.0, gix-path v0.9.0, gix-glob v0.11.0, gix-quote v0.4.7, gix-attributes v0.17.0, gix-command v0.2.9, gix-packetline-blocking v0.16.5, gix-filter v0.3.0, gix-fs v0.5.0, gix-commitgraph v0.19.0, gix-hashtable v0.3.0, gix-revwalk v0.6.0, gix-traverse v0.31.0, gix-worktree-stream v0.3.0, gix-archive v0.3.0, gix-config-value v0.13.0, gix-tempfile v8.0.0, gix-lock v8.0.0, gix-ref v0.35.0, gix-sec v0.9.0, gix-config v0.28.0, gix-prompt v0.6.0, gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0, safety bump 41 crates ([`30b2761`](https://github.com/Byron/gitoxide/commit/30b27615047692d3ced1b2d9c2ac15a80f79fbee))
+    - Update changelogs prior to release ([`f23ea88`](https://github.com/Byron/gitoxide/commit/f23ea8828f2d9ba7559973daca388c9591bcc5fc))
+    - `Modules::is_active()` now counts everything that doesn't match `submodule.active` (if present) as inactive. ([`e0d9b09`](https://github.com/Byron/gitoxide/commit/e0d9b09d02f88536b93ab6a31fddf9483881c5c1))
+    - Just fmt ([`0d258f4`](https://github.com/Byron/gitoxide/commit/0d258f40afcd848509e2b0c7c264e9f346ed1726))
+    - Merge branch 'submodule-in-gix' ([`36f7b78`](https://github.com/Byron/gitoxide/commit/36f7b783c67b8a087076a130f5ee9b90b23bc3cc))
+    - Remove `File::names_and_active_state()` in favor of `File::is_active_platform()`. ([`3503f49`](https://github.com/Byron/gitoxide/commit/3503f4948b42854256c9e8d8336ebe222fee980b))
+    - Make API less error prone by enforcing overrides at instantiation time. ([`4a443e4`](https://github.com/Byron/gitoxide/commit/4a443e453285095daccdca0fed9e8486ce7892ab))
+    - Assure `gix-submodule` works with Rust 1.65. ([`8172f0e`](https://github.com/Byron/gitoxide/commit/8172f0e0f19e84fdaedceb87399f3fab4a1eb563))
+    - Don't call crate 'WIP' in manifest anymore. ([`229bd48`](https://github.com/Byron/gitoxide/commit/229bd4899213f749a7cc124aa2b82a1368fba40f))
+    - Merge branch 'submodule-active' ([`a3afaa4`](https://github.com/Byron/gitoxide/commit/a3afaa42741616a0f1abeef9b54557e7c2b800cb))
+    - TBD a way to learn if submodules are active efficiently ([`af1cab3`](https://github.com/Byron/gitoxide/commit/af1cab31fd5ead445c988cce058c136c81229ad1))
+</details>
+
 ## 0.1.0 (2023-08-07)
 
 <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
@@ -17,7 +72,7 @@ The initial release.
 
 <csr-read-only-do-not-edit/>
 
- - 26 commits contributed to the release over the course of 518 calendar days.
+ - 27 commits contributed to the release over the course of 518 calendar days.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#691](https://github.com/Byron/gitoxide/issues/691)
 
@@ -33,6 +88,7 @@ The initial release.
  * **[#691](https://github.com/Byron/gitoxide/issues/691)**
     - Set `rust-version` to 1.64 ([`55066ce`](https://github.com/Byron/gitoxide/commit/55066ce5fd71209abb5d84da2998b903504584bb))
  * **Uncategorized**
+    - Release gix-glob v0.10.2, gix-date v0.7.2, gix-validate v0.8.0, gix-object v0.34.0, gix-ref v0.34.0, gix-config v0.27.0, gix-commitgraph v0.18.2, gix-revwalk v0.5.0, gix-revision v0.19.0, gix-refspec v0.15.0, gix-submodule v0.1.0, safety bump 18 crates ([`4604f83`](https://github.com/Byron/gitoxide/commit/4604f83ef238dc07c85aaeae097399b67f3cfd0c))
     - Finailize `gix-submodule` changelog ([`cbe8e62`](https://github.com/Byron/gitoxide/commit/cbe8e622b306d072fa8e7f5bf25dc596810a48d2))
     - Set `gix-submodule` to version 0.1.0 ([`931fd1e`](https://github.com/Byron/gitoxide/commit/931fd1ec4416aa4869f097b1a3a2e82744da4c21))
     - Prepare changelogs prior to release of `gix-submodule` ([`f3c4311`](https://github.com/Byron/gitoxide/commit/f3c43110e8d5f16cf87e50821044d8b3edbae235))

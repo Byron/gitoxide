@@ -5,7 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.29.0 (2023-08-22)
+
+### New Features
+
+ - <csr-id-1ccbe16117d58b68b25a8e3e66676a61a07dd49c/> `gix submodule` subcommand for simple submodule listing and information retrieval
+ - <csr-id-6bc69e37deb3ebd88af8b0e8ffb9661562dcc679/> `gix index entries --recurse-subomdules` to also list submodules.
+ - <csr-id-c30ac0c9f89fb4480c8f8c8c0c06fa046dcd4314/> `gix index entries` with styles and pathspecs.
+   This adds support for more simple git style, which is faster and thus
+   allows for more direct comparisons to `git ls-files`.
+ - <csr-id-f194cfc920cc8622215bab5aa6b7b87e4fb9d7b2/> use real pathspecs where it was supported before.
+ - <csr-id-cd6cfe4049bacd8d8a691668b5501a673867f149/> add `gix commit verify-signature` to do something akin to `git ... --show-signature`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 19 commits contributed to the release over the course of 15 calendar days.
+ - 30 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - `gix submodule` subcommand for simple submodule listing and information retrieval ([`1ccbe16`](https://github.com/Byron/gitoxide/commit/1ccbe16117d58b68b25a8e3e66676a61a07dd49c))
+    - Just fmt ([`0d258f4`](https://github.com/Byron/gitoxide/commit/0d258f40afcd848509e2b0c7c264e9f346ed1726))
+    - Merge branch 'submodule-in-gix' ([`36f7b78`](https://github.com/Byron/gitoxide/commit/36f7b783c67b8a087076a130f5ee9b90b23bc3cc))
+    - `gix index entries --recurse-subomdules` to also list submodules. ([`6bc69e3`](https://github.com/Byron/gitoxide/commit/6bc69e37deb3ebd88af8b0e8ffb9661562dcc679))
+    - Merge branch 'submodule-active' ([`a3afaa4`](https://github.com/Byron/gitoxide/commit/a3afaa42741616a0f1abeef9b54557e7c2b800cb))
+    - Adapt to changes in `gix` ([`ca972a2`](https://github.com/Byron/gitoxide/commit/ca972a244c9b074a2dc89ff3bbf83df0c3853904))
+    - Use `Defaults::from_environment()` when parsing pathspecs. ([`2a99034`](https://github.com/Byron/gitoxide/commit/2a99034bf451b1a801650b80705c96ce4c9e61c1))
+    - Optimize startup times of `gix index entries` ([`22477bd`](https://github.com/Byron/gitoxide/commit/22477bdcf37419627dbb7afe0df166935825ad2b))
+    - Merge branch 'pathspec-matching' ([`9f4dfe0`](https://github.com/Byron/gitoxide/commit/9f4dfe0f0b948280692916b596923959ea2fd9da))
+    - `gix index entries` with styles and pathspecs. ([`c30ac0c`](https://github.com/Byron/gitoxide/commit/c30ac0c9f89fb4480c8f8c8c0c06fa046dcd4314))
+    - Use real pathspecs where it was supported before. ([`f194cfc`](https://github.com/Byron/gitoxide/commit/f194cfc920cc8622215bab5aa6b7b87e4fb9d7b2))
+    - Merge branch 'handlers-mt' ([`f584d76`](https://github.com/Byron/gitoxide/commit/f584d7698d93836daef2000fd369034de46037f0))
+    - Adapt to changes in `gix` ([`a201f0d`](https://github.com/Byron/gitoxide/commit/a201f0d45936826ef26ac815acb9d2efbb3d5c68))
+    - Merge branch 'extract-signatures' ([`b37affe`](https://github.com/Byron/gitoxide/commit/b37affefecfb30a94431cd21dae6659004ca6244))
+    - Add `gix commit verify-signature` to do something akin to `git ... --show-signature`. ([`cd6cfe4`](https://github.com/Byron/gitoxide/commit/cd6cfe4049bacd8d8a691668b5501a673867f149))
+    - Merge branch 'archive-gz' ([`c7d9129`](https://github.com/Byron/gitoxide/commit/c7d912917a2dad5c076d0bd645cfda092c66ff79))
+    - Adapt to changes in `gix-archive` ([`feba76d`](https://github.com/Byron/gitoxide/commit/feba76d636e3d177c41f120639980f8b46edfcaa))
+    - Merge branch 'submodules' ([`b629f8a`](https://github.com/Byron/gitoxide/commit/b629f8a774931d58c0a9b124fa75f85807c6c5d1))
+    - `.gitmodule` file abstraction ([`6a2e6a4`](https://github.com/Byron/gitoxide/commit/6a2e6a436f76c8bbf2487f9967413a51356667a0))
+</details>
 
 ## 0.28.0 (2023-07-22)
 

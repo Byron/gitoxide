@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.25.0 (2023-08-22)
+
+<csr-id-ef54aab9e5521add4154ee8d902d62612a9d8d4a/>
+
+### Chore
+
+ - <csr-id-ef54aab9e5521add4154ee8d902d62612a9d8d4a/> switch `nom` to `winnow` in remaining uses in `gix-object`, `gix-ref`, and `gix-actor` for ~20% more performance.
+   It's likely that over time, these parsers will get even faster due to improvements to `winnow`.
+   Thanks, Ed Page, for single-handedly performing this transition.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 18 commits contributed to the release over the course of 4 calendar days.
+ - 19 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update changelogs prior to release ([`f23ea88`](https://github.com/Byron/gitoxide/commit/f23ea8828f2d9ba7559973daca388c9591bcc5fc))
+    - Just fmt ([`0d258f4`](https://github.com/Byron/gitoxide/commit/0d258f40afcd848509e2b0c7c264e9f346ed1726))
+    - Switch `nom` to `winnow` in remaining uses in `gix-object`, `gix-ref`, and `gix-actor` for ~20% more performance. ([`ef54aab`](https://github.com/Byron/gitoxide/commit/ef54aab9e5521add4154ee8d902d62612a9d8d4a))
+    - Upgrade `winnow` to latest patch release ([`8c41848`](https://github.com/Byron/gitoxide/commit/8c4184817e4e4364c34badc8ff0a71c6ae952efd))
+    - Speed up timezone offset parsing ([`80d7991`](https://github.com/Byron/gitoxide/commit/80d799177ac89741fd04625e1a1e091d0bcc9362))
+    - Switch errors to StrContext ([`df226dd`](https://github.com/Byron/gitoxide/commit/df226dd31df2c591c6470ed70098202112e13dae))
+    - Show more error details in parse tests failures ([`266864f`](https://github.com/Byron/gitoxide/commit/266864f35dc9ee96b81d22281c8f267fd7c059a4))
+    - Upgrade to Winnow 0.5 ([`3f8c91f`](https://github.com/Byron/gitoxide/commit/3f8c91fa463fbb53d54b2bf359e0dee7387afa00))
+    - Simplify parsers ([`12f03db`](https://github.com/Byron/gitoxide/commit/12f03db6475b92f492f5a14bda472c139c3511e0))
+    - Resolve 0.4 not-quite deprecations ([`f0cbf81`](https://github.com/Byron/gitoxide/commit/f0cbf81a346e087a622b0e2a6a37593861d0010f))
+    - Resolve 0.4 deprecations ([`9ed7df0`](https://github.com/Byron/gitoxide/commit/9ed7df0a17deed08759dc29fc0089cdea100e433))
+    - Upgrade to Winnow 0.4 ([`86ea47f`](https://github.com/Byron/gitoxide/commit/86ea47f28079c51f874b0d662867040b92f88d14))
+    - Parse explicitly in prep for 0.4 ([`b3f0418`](https://github.com/Byron/gitoxide/commit/b3f041829881e881ad4eeeacaeea31064c523340))
+    - Resolve remaining winnow 0.3 deprecations ([`fee441d`](https://github.com/Byron/gitoxide/commit/fee441da875d52b1a0cb557d2fa58cee9c29e16a))
+    - Prefer Parser inherent parsers ([`b37a909`](https://github.com/Byron/gitoxide/commit/b37a909a5c344201a985262351e0fb67757572a4))
+    - Prefer built-in Winnow parsers ([`ac0e81c`](https://github.com/Byron/gitoxide/commit/ac0e81c41f8c8a33ede9a0d8b7bffcd04bb97dc3))
+    - Simplify winnow ErrMode construction ([`86d7fd1`](https://github.com/Byron/gitoxide/commit/86d7fd18487626d30f6d5478864819a3d7428085))
+    - Switch gix to winnow 0.3 ([`ee75de1`](https://github.com/Byron/gitoxide/commit/ee75de1e6035305fc23bdef2522ae5081272ac82))
+</details>
+
 ## 0.24.2 (2023-08-02)
 
 ### Bug Fixes
@@ -16,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 5 commits contributed to the release.
  - 11 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -28,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-actor v0.24.2, gix-object v0.33.2, gix-ref v0.33.3, gix-config v0.26.2, gix-prompt v0.5.5, gix-odb v0.50.2, gix-transport v0.34.2, gix-protocol v0.37.0, gix-worktree v0.23.1, gix v0.51.0, safety bump 3 crates ([`231ac1c`](https://github.com/Byron/gitoxide/commit/231ac1c6ad5ca9a84dbeb0dee14bfbf2fef1ae1e))
     - Prepare additional changelogs ([`db63815`](https://github.com/Byron/gitoxide/commit/db6381522395a0de047118e81df5cd3cbeb862b9))
     - Prepare changelogs ([`e4d2890`](https://github.com/Byron/gitoxide/commit/e4d2890a85bf60e9cdb4016dddfab3c4dccbe75e))
     - Merge branch 'fixes-and-improvements' ([`f8b1f55`](https://github.com/Byron/gitoxide/commit/f8b1f553371f25b1bea6bce7cbb2ff1f01194856))

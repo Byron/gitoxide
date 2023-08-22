@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.0 (2023-08-22)
+
+### Bug Fixes
+
+ - <csr-id-e0432d1547e254fee81f8188ab0a5dccfb4f6336/> replace `libflate2` with `flage2` for buidling a `gz` file.
+   This brings streaming support and better performance, while also
+   supporting compression settings.
+
+### New Features (BREAKING)
+
+ - <csr-id-088adadd5c8e803f42bd7cb9aeeb59a03f239646/> support for compression with `tar.gz` format.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release over the course of 19 calendar days.
+ - 29 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update changelogs prior to release ([`f23ea88`](https://github.com/Byron/gitoxide/commit/f23ea8828f2d9ba7559973daca388c9591bcc5fc))
+    - Merge branch 'worktree-organization' ([`8d0d8e0`](https://github.com/Byron/gitoxide/commit/8d0d8e005d7f11924a6717954d892aae5cec45e7))
+    - Adapt to changes in `gix-worktree` ([`e5717e1`](https://github.com/Byron/gitoxide/commit/e5717e1d12c49285d31a90b03b7f8e9cbc6c1108))
+    - Merge branch 'archive-gz' ([`c7d9129`](https://github.com/Byron/gitoxide/commit/c7d912917a2dad5c076d0bd645cfda092c66ff79))
+    - Support for compression with `tar.gz` format. ([`088adad`](https://github.com/Byron/gitoxide/commit/088adadd5c8e803f42bd7cb9aeeb59a03f239646))
+    - Replace `libflate2` with `flage2` for buidling a `gz` file. ([`e0432d1`](https://github.com/Byron/gitoxide/commit/e0432d1547e254fee81f8188ab0a5dccfb4f6336))
+    - Release gix-glob v0.10.2, gix-date v0.7.2, gix-validate v0.8.0, gix-object v0.34.0, gix-ref v0.34.0, gix-config v0.27.0, gix-commitgraph v0.18.2, gix-revwalk v0.5.0, gix-revision v0.19.0, gix-refspec v0.15.0, gix-submodule v0.1.0, safety bump 18 crates ([`4604f83`](https://github.com/Byron/gitoxide/commit/4604f83ef238dc07c85aaeae097399b67f3cfd0c))
+    - Merge branch 'dev-on-linux' ([`6b4a303`](https://github.com/Byron/gitoxide/commit/6b4a30330fe49fc97daa73f55bf56580cc0597aa))
+    - Fix various tests to run properly on linux ([`ef8ccd9`](https://github.com/Byron/gitoxide/commit/ef8ccd9d16143d37155d063747c69cade80f162d))
+    - Update `time` crate explicitly in Cargo.toml to latest version ([`e145a74`](https://github.com/Byron/gitoxide/commit/e145a7489dd5e1a7c3458428ecbd101e7b53536b))
+</details>
+
 ## 0.2.1 (2023-07-24)
 
 ### Bug Fixes
@@ -15,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 1 day passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-archive v0.2.1, gix-ref v0.33.2, gix-pack v0.40.2, gix v0.50.1 ([`13883e5`](https://github.com/Byron/gitoxide/commit/13883e5528385f892ee402e911298121e0c297c0))
     - Prepare changelogs ([`735c206`](https://github.com/Byron/gitoxide/commit/735c2062625aaeffbdbca3c1395dbcf075661e3a))
     - Merge branch 'fetch-head-tests' ([`eb2b513`](https://github.com/Byron/gitoxide/commit/eb2b513bd939f6b59891d0a4cf5465b1c1e458b3))
     - Assure large files are determined just like they are in `zip` ([`d789742`](https://github.com/Byron/gitoxide/commit/d7897429392d34648c6580f5cb7136404b553b68))

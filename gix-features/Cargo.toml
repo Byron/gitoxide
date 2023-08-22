@@ -2,7 +2,7 @@
 name = "gix-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.32.1"
+version = "0.33.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
@@ -113,7 +113,7 @@ path = "tests/pipe.rs"
 required-features = ["io-pipe"]
 
 [dependencies]
-gix-hash = { version = "^0.11.4", path = "../gix-hash" }
+gix-hash = { version = "^0.12.0", path = "../gix-hash" }
 gix-trace = { version = "^0.1.3", path = "../gix-trace" }
 
 # 'parallel' feature

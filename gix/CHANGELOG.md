@@ -5,6 +5,91 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.52.0 (2023-08-22)
+
+### New Features
+
+ - <csr-id-28249bda58b56af340c7d6af883496c3bb2d6804/> add `Worktree::pathspec()` to easily get worktree-scoped pathspec searches.
+ - <csr-id-59bb3c4109c4e7f1977cea602293be85b7d14a8a/> add `Submodule` type to represent a declared submodule.
+ - <csr-id-a7d0e441b2326520ae467e83e045302792e6bcd0/> `pathspec_search([specs])` to instantiate a search using pathspecs.
+   It can be used to for filtering input paths.
+   This type also makes filtering index entries easy.
+ - <csr-id-77da01456118227a59b654f32c15eeb1e5e19cd9/> make `gix-pathspec` crate available
+ - <csr-id-5c13459721eabb9d0746899a2498a104ddbdae59/> add `Commit::signature()` to yield the PGP sigature of a commit, if present.
+
+### Bug Fixes
+
+ - <csr-id-c51c8daee1ab54130ae3ed83ce67d08f01c4881a/> fix incorrect s/git-config/gix-config/
+   3a861c8f049f6502d3bcbdac752659aa1aeda46a just blindly replaced any
+   occurence of "git-config" or "git_config" with "gix-config"/"gix_config".
+   
+   There is no such thing as a gix-config file.
+   gix-config is a git-config file parser.
+
+### New Features (BREAKING)
+
+ - <csr-id-b1e55d6f9e4c0d78f0cdeb7b85e09c2eb7032ced/> `Repository::prefix()` turns `Option<Result` into `Result<Option`.
+   This makes it easier for the caller as they won't have to call transpose anymore.
+ - <csr-id-46225c2bc399e6db5a56b522c978e0d1fac163df/> improve `interrupt::init_handler()` to be usable from multiple threads
+   Previously it was geared towards applications which would initialize handlers
+   only from the main thread.
+   
+   Now the API supports multiple threads.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-430e58cd1efef0044fc36b23de019156a21f947c/> `Repository::prefix()` is now side-effect free and won't error if CWD is outside of working tree dir.
+   This makes it more usable, especially in contexts where many repositories are held, possibly with
+   changing current working dirs.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 30 commits contributed to the release over the course of 18 calendar days.
+ - 19 days passed between releases.
+ - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-date v0.7.3, gix-hash v0.12.0, gix-features v0.33.0, gix-actor v0.25.0, gix-object v0.35.0, gix-path v0.9.0, gix-glob v0.11.0, gix-quote v0.4.7, gix-attributes v0.17.0, gix-command v0.2.9, gix-packetline-blocking v0.16.5, gix-filter v0.3.0, gix-fs v0.5.0, gix-commitgraph v0.19.0, gix-hashtable v0.3.0, gix-revwalk v0.6.0, gix-traverse v0.31.0, gix-worktree-stream v0.3.0, gix-archive v0.3.0, gix-config-value v0.13.0, gix-tempfile v8.0.0, gix-lock v8.0.0, gix-ref v0.35.0, gix-sec v0.9.0, gix-config v0.28.0, gix-prompt v0.6.0, gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0, safety bump 41 crates ([`30b2761`](https://github.com/Byron/gitoxide/commit/30b27615047692d3ced1b2d9c2ac15a80f79fbee))
+    - Update changelogs prior to release ([`f23ea88`](https://github.com/Byron/gitoxide/commit/f23ea8828f2d9ba7559973daca388c9591bcc5fc))
+    - Make sure that submodule hashes aren't attached as the parent repo is the wrong one here. ([`c96f26b`](https://github.com/Byron/gitoxide/commit/c96f26b5c13581812753638a24d261c3f75dddcf))
+    - Properly isolate environment variable based tests into their own binary ([`c35ddab`](https://github.com/Byron/gitoxide/commit/c35ddab41ff6f18ad9cd11df44cfffee91563433))
+    - Just fmt ([`0d258f4`](https://github.com/Byron/gitoxide/commit/0d258f40afcd848509e2b0c7c264e9f346ed1726))
+    - Merge branch 'submodule-in-gix' ([`36f7b78`](https://github.com/Byron/gitoxide/commit/36f7b783c67b8a087076a130f5ee9b90b23bc3cc))
+    - Adapt to changes in `gix` ([`9fe3052`](https://github.com/Byron/gitoxide/commit/9fe305291cf8ba908eaf38235f54abfa1d0ddeed))
+    - Add `Worktree::pathspec()` to easily get worktree-scoped pathspec searches. ([`28249bd`](https://github.com/Byron/gitoxide/commit/28249bda58b56af340c7d6af883496c3bb2d6804))
+    - Add `Submodule` type to represent a declared submodule. ([`59bb3c4`](https://github.com/Byron/gitoxide/commit/59bb3c4109c4e7f1977cea602293be85b7d14a8a))
+    - Merge branch 'worktree-organization' ([`8d0d8e0`](https://github.com/Byron/gitoxide/commit/8d0d8e005d7f11924a6717954d892aae5cec45e7))
+    - Adapt to changes in `gix-worktree` ([`e5717e1`](https://github.com/Byron/gitoxide/commit/e5717e1d12c49285d31a90b03b7f8e9cbc6c1108))
+    - Merge pull request #988 from not-my-profile/fix-gix-config-sub ([`7735047`](https://github.com/Byron/gitoxide/commit/7735047198bd7cc5059ca338f5c2147dd273f711))
+    - Fix incorrect s/git-config/gix-config/ ([`c51c8da`](https://github.com/Byron/gitoxide/commit/c51c8daee1ab54130ae3ed83ce67d08f01c4881a))
+    - Merge branch 'submodule-active' ([`a3afaa4`](https://github.com/Byron/gitoxide/commit/a3afaa42741616a0f1abeef9b54557e7c2b800cb))
+    - Adapt to changes in `gix-url` ([`f8fc662`](https://github.com/Byron/gitoxide/commit/f8fc6625d8c22f43e7ab5f1cdf1e8eb9a6ea34de))
+    - `pathspec_search([specs])` to instantiate a search using pathspecs. ([`a7d0e44`](https://github.com/Byron/gitoxide/commit/a7d0e441b2326520ae467e83e045302792e6bcd0))
+    - `Repository::prefix()` is now side-effect free and won't error if CWD is outside of working tree dir. ([`430e58c`](https://github.com/Byron/gitoxide/commit/430e58cd1efef0044fc36b23de019156a21f947c))
+    - Merge branch 'pathspec-matching' ([`9f4dfe0`](https://github.com/Byron/gitoxide/commit/9f4dfe0f0b948280692916b596923959ea2fd9da))
+    - `Repository::prefix()` turns `Option<Result` into `Result<Option`. ([`b1e55d6`](https://github.com/Byron/gitoxide/commit/b1e55d6f9e4c0d78f0cdeb7b85e09c2eb7032ced))
+    - Make `gix-pathspec` crate available ([`77da014`](https://github.com/Byron/gitoxide/commit/77da01456118227a59b654f32c15eeb1e5e19cd9))
+    - Merge branch 'handlers-mt' ([`f584d76`](https://github.com/Byron/gitoxide/commit/f584d7698d93836daef2000fd369034de46037f0))
+    - Improve `interrupt::init_handler()` to be usable from multiple threads ([`46225c2`](https://github.com/Byron/gitoxide/commit/46225c2bc399e6db5a56b522c978e0d1fac163df))
+    - Merge branch 'extract-signatures' ([`b37affe`](https://github.com/Byron/gitoxide/commit/b37affefecfb30a94431cd21dae6659004ca6244))
+    - Add `Commit::signature()` to yield the PGP sigature of a commit, if present. ([`5c13459`](https://github.com/Byron/gitoxide/commit/5c13459721eabb9d0746899a2498a104ddbdae59))
+    - Release gix-glob v0.10.2, gix-date v0.7.2, gix-validate v0.8.0, gix-object v0.34.0, gix-ref v0.34.0, gix-config v0.27.0, gix-commitgraph v0.18.2, gix-revwalk v0.5.0, gix-revision v0.19.0, gix-refspec v0.15.0, gix-submodule v0.1.0, safety bump 18 crates ([`4604f83`](https://github.com/Byron/gitoxide/commit/4604f83ef238dc07c85aaeae097399b67f3cfd0c))
+    - Merge branch 'submodules' ([`b629f8a`](https://github.com/Byron/gitoxide/commit/b629f8a774931d58c0a9b124fa75f85807c6c5d1))
+    - More idiomatic use of `config.section_by_name()` ([`0a584ee`](https://github.com/Byron/gitoxide/commit/0a584eeb5c756ec4b0d54c4fd9ea3cc1497f4ba9))
+    - Adjust to changes in `gix-validate` ([`a8bc0de`](https://github.com/Byron/gitoxide/commit/a8bc0de6d071be82364434b6e27afecc02f3be51))
+    - Merge branch 'dev-on-linux' ([`6b4a303`](https://github.com/Byron/gitoxide/commit/6b4a30330fe49fc97daa73f55bf56580cc0597aa))
+    - Fix various tests to run properly on linux ([`ef8ccd9`](https://github.com/Byron/gitoxide/commit/ef8ccd9d16143d37155d063747c69cade80f162d))
+</details>
+
 ## 0.51.0 (2023-08-02)
 
 This is mostly a bug-fix release with many improvements for fetching, along with more forgiving commit parsing.
@@ -29,7 +114,7 @@ This is mostly a bug-fix release with many improvements for fetching, along with
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 2 calendar days.
+ - 7 commits contributed to the release over the course of 2 calendar days.
  - 9 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -41,6 +126,7 @@ This is mostly a bug-fix release with many improvements for fetching, along with
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-actor v0.24.2, gix-object v0.33.2, gix-ref v0.33.3, gix-config v0.26.2, gix-prompt v0.5.5, gix-odb v0.50.2, gix-transport v0.34.2, gix-protocol v0.37.0, gix-worktree v0.23.1, gix v0.51.0, safety bump 3 crates ([`231ac1c`](https://github.com/Byron/gitoxide/commit/231ac1c6ad5ca9a84dbeb0dee14bfbf2fef1ae1e))
     - Prepare additional changelogs ([`db63815`](https://github.com/Byron/gitoxide/commit/db6381522395a0de047118e81df5cd3cbeb862b9))
     - Prepare changelogs ([`e4d2890`](https://github.com/Byron/gitoxide/commit/e4d2890a85bf60e9cdb4016dddfab3c4dccbe75e))
     - Merge branch 'fixes-and-improvements' ([`f8b1f55`](https://github.com/Byron/gitoxide/commit/f8b1f553371f25b1bea6bce7cbb2ff1f01194856))
