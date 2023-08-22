@@ -9,10 +9,10 @@ alias t := test
 alias c := check
 
 # run all tests, clippy, including journey tests, try building docs
-test: clippy check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests journey-tests-smart-release
+test: clippy check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests
 
 # run all tests, without clippy, including journey tests, try building docs (and clear target on CI)
-ci-test: check doc unit-tests clear-target journey-tests-pure journey-tests-small journey-tests-async journey-tests journey-tests-smart-release
+ci-test: check doc unit-tests clear-target journey-tests-pure journey-tests-small journey-tests-async journey-tests
 
 clear-target:
     cargo clean
@@ -110,7 +110,6 @@ check:
     cargo check -p gix --no-default-features --features progress-tree
     cargo check -p gix --no-default-features
     cargo check -p gix-odb --features serde
-    cargo check -p cargo-smart-release --all
     cargo check --no-default-features --features max-control
 
 # Run cargo doc on all crates
@@ -186,13 +185,6 @@ journey-tests-async:
     cargo build --no-default-features --features lean-async
     cargo build -p gix-testtools
     ./tests/journey.sh {{ ein }} {{ gix }} {{ jtt }} async
-
-cargo-smart-release := `cargo metadata --manifest-path ./cargo-smart-release/Cargo.toml --format-version 1 | jq -r .target_directory` / "debug/cargo-smart-release"
-
-# run journey tests (cargo-smart-release)
-journey-tests-smart-release:
-    cd cargo-smart-release && cargo build --bin cargo-smart-release
-    cd cargo-smart-release && ./tests/journey.sh {{ cargo-smart-release }}
 
 # Run cargo-diet on all crates to see that they are still in bound
 check-size:

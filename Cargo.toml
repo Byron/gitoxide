@@ -290,9 +290,6 @@ members = [
     "gix-config/tests",
     "gix-traverse/tests",
 ]
-exclude = ["cargo-smart-release/tests/fixtures/tri-depth-workspace/a",
-           "cargo-smart-release/tests/fixtures/tri-depth-workspace/b",
-           "cargo-smart-release/tests/fixtures/tri-depth-workspace/c"]
 
 [package.metadata.docs.rs]
 features = ["document-features", "max"]
