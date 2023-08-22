@@ -19,10 +19,10 @@ path = "integrate.rs"
 [dev-dependencies]
 gix-odb = { path = ".." }
 gix-features = { path = "../../gix-features" }
-gix-hash = { version = "^0.11.4", path = "../../gix-hash" }
-gix-date = { version = "^0.7.2", path = "../../gix-date" }
-gix-object = { version = "^0.34.0", path = "../../gix-object" }
-gix-pack = { version = "^0.41.0", path = "../../gix-pack" }
+gix-hash = { path = "../../gix-hash" }
+gix-date = { path = "../../gix-date" }
+gix-object = { path = "../../gix-object" }
+gix-pack = { path = "../../gix-pack" }
 
 gix-testtools = { path = "../../tests/tools"}
 gix-actor = { path = "../../gix-actor" }
