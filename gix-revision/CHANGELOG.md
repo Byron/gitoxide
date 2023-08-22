@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-ef54aab9e5521add4154ee8d902d62612a9d8d4a/> switch `nom` to `winnow` in remaining uses in `gix-object`, `gix-ref`, and `gix-actor` for ~20% more performance.
+   It's likely that over time, these parsers will get even faster due to improvements to `winnow`.
+   Thanks, Ed Page, for single-handedly performing this transition.
+ - <csr-id-229bd4899213f749a7cc124aa2b82a1368fba40f/> don't call crate 'WIP' in manifest anymore.
+ - <csr-id-353b1a788a7c5a627ec73185f841ea4893a147a5/> add benchmarks to avoid parsing performance regressions
+ - <csr-id-145125ab79526a6191a9192a6faa7fe1a8826935/> use `faster-hex` instead of `hex`
+   The performance here certainly doesn't make a difference, but we
+   try to avoid duplicate dependencies.
+
+### New Features
+
+ - <csr-id-f4a9a6b574ad4521d475e9088073c0f15d56d079/> add tracing support to `describt()`.
+
+### Bug Fixes
+
+ - <csr-id-e0432d1547e254fee81f8188ab0a5dccfb4f6336/> replace `libflate2` with `flage2` for buidling a `gz` file.
+   This brings streaming support and better performance, while also
+   supporting compression settings.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release over the course of 14 calendar days.
+ - 15 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add tracing support to `describt()`. ([`f4a9a6b`](https://github.com/Byron/gitoxide/commit/f4a9a6b574ad4521d475e9088073c0f15d56d079))
+    - Switch `nom` to `winnow` in remaining uses in `gix-object`, `gix-ref`, and `gix-actor` for ~20% more performance. ([`ef54aab`](https://github.com/Byron/gitoxide/commit/ef54aab9e5521add4154ee8d902d62612a9d8d4a))
+    - Upgrade `winnow` to latest patch release ([`8c41848`](https://github.com/Byron/gitoxide/commit/8c4184817e4e4364c34badc8ff0a71c6ae952efd))
+    - Add fuzz-issue for reproduction ([`510192e`](https://github.com/Byron/gitoxide/commit/510192e0e5750bdfe461d701b3e124c03f22b7d9))
+    - Don't call crate 'WIP' in manifest anymore. ([`229bd48`](https://github.com/Byron/gitoxide/commit/229bd4899213f749a7cc124aa2b82a1368fba40f))
+    - Add benchmarks to avoid parsing performance regressions ([`353b1a7`](https://github.com/Byron/gitoxide/commit/353b1a788a7c5a627ec73185f841ea4893a147a5))
+    - Merge branch 'faster-hex' ([`4a4fa0f`](https://github.com/Byron/gitoxide/commit/4a4fa0fcdaa6e14b51d3f03f5d7c5b65042667bf))
+    - Use `faster-hex` instead of `hex` ([`145125a`](https://github.com/Byron/gitoxide/commit/145125ab79526a6191a9192a6faa7fe1a8826935))
+    - Merge branch 'archive-gz' ([`c7d9129`](https://github.com/Byron/gitoxide/commit/c7d912917a2dad5c076d0bd645cfda092c66ff79))
+    - Replace `libflate2` with `flage2` for buidling a `gz` file. ([`e0432d1`](https://github.com/Byron/gitoxide/commit/e0432d1547e254fee81f8188ab0a5dccfb4f6336))
+</details>
+
 ## 0.19.0 (2023-08-07)
 
 A maintenance release without user-facing changes.
@@ -13,7 +64,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 4 calendar days.
+ - 5 commits contributed to the release over the course of 4 calendar days.
  - 15 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +76,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-glob v0.10.2, gix-date v0.7.2, gix-validate v0.8.0, gix-object v0.34.0, gix-ref v0.34.0, gix-config v0.27.0, gix-commitgraph v0.18.2, gix-revwalk v0.5.0, gix-revision v0.19.0, gix-refspec v0.15.0, gix-submodule v0.1.0, safety bump 18 crates ([`4604f83`](https://github.com/Byron/gitoxide/commit/4604f83ef238dc07c85aaeae097399b67f3cfd0c))
     - Prepare changelogs prior to release of `gix-submodule` ([`f3c4311`](https://github.com/Byron/gitoxide/commit/f3c43110e8d5f16cf87e50821044d8b3edbae235))
     - Merge branch 'dev-on-linux' ([`6b4a303`](https://github.com/Byron/gitoxide/commit/6b4a30330fe49fc97daa73f55bf56580cc0597aa))
     - Fix various tests to run properly on linux ([`ef8ccd9`](https://github.com/Byron/gitoxide/commit/ef8ccd9d16143d37155d063747c69cade80f162d))

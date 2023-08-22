@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-229bd4899213f749a7cc124aa2b82a1368fba40f/> don't call crate 'WIP' in manifest anymore.
+
+### New Features
+
+ - <csr-id-af1cab31fd5ead445c988cce058c136c81229ad1/> TBD a way to learn if submodules are active efficiently
+
+### Bug Fixes
+
+ - <csr-id-e0d9b09d02f88536b93ab6a31fddf9483881c5c1/> `Modules::is_active()` now counts everything that doesn't match `submodule.active` (if present) as inactive.
+ - <csr-id-8172f0e0f19e84fdaedceb87399f3fab4a1eb563/> Assure `gix-submodule` works with Rust 1.65.
+   The previous version of this loop, possibly preferable, ran into
+   a borrow-check issue that was no more from Rust 1.70 onwards.
+
+### New Features (BREAKING)
+
+ - <csr-id-3503f4948b42854256c9e8d8336ebe222fee980b/> remove `File::names_and_active_state()` in favor of `File::is_active_platform()`.
+   With this platform it's possible to make repeated checks to see if a named submodule is active.
+ - <csr-id-4a443e453285095daccdca0fed9e8486ce7892ab/> make API less error prone by enforcing overrides at instantiation time.
+   It's made so that overrides can still be applied at a later point.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 9 commits contributed to the release over the course of 4 calendar days.
+ - 15 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - `Modules::is_active()` now counts everything that doesn't match `submodule.active` (if present) as inactive. ([`e0d9b09`](https://github.com/Byron/gitoxide/commit/e0d9b09d02f88536b93ab6a31fddf9483881c5c1))
+    - Just fmt ([`0d258f4`](https://github.com/Byron/gitoxide/commit/0d258f40afcd848509e2b0c7c264e9f346ed1726))
+    - Merge branch 'submodule-in-gix' ([`36f7b78`](https://github.com/Byron/gitoxide/commit/36f7b783c67b8a087076a130f5ee9b90b23bc3cc))
+    - Remove `File::names_and_active_state()` in favor of `File::is_active_platform()`. ([`3503f49`](https://github.com/Byron/gitoxide/commit/3503f4948b42854256c9e8d8336ebe222fee980b))
+    - Make API less error prone by enforcing overrides at instantiation time. ([`4a443e4`](https://github.com/Byron/gitoxide/commit/4a443e453285095daccdca0fed9e8486ce7892ab))
+    - Assure `gix-submodule` works with Rust 1.65. ([`8172f0e`](https://github.com/Byron/gitoxide/commit/8172f0e0f19e84fdaedceb87399f3fab4a1eb563))
+    - Don't call crate 'WIP' in manifest anymore. ([`229bd48`](https://github.com/Byron/gitoxide/commit/229bd4899213f749a7cc124aa2b82a1368fba40f))
+    - Merge branch 'submodule-active' ([`a3afaa4`](https://github.com/Byron/gitoxide/commit/a3afaa42741616a0f1abeef9b54557e7c2b800cb))
+    - TBD a way to learn if submodules are active efficiently ([`af1cab3`](https://github.com/Byron/gitoxide/commit/af1cab31fd5ead445c988cce058c136c81229ad1))
+</details>
+
 ## 0.1.0 (2023-08-07)
 
 <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
@@ -17,7 +68,7 @@ The initial release.
 
 <csr-read-only-do-not-edit/>
 
- - 26 commits contributed to the release over the course of 518 calendar days.
+ - 27 commits contributed to the release over the course of 518 calendar days.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#691](https://github.com/Byron/gitoxide/issues/691)
 
@@ -33,6 +84,7 @@ The initial release.
  * **[#691](https://github.com/Byron/gitoxide/issues/691)**
     - Set `rust-version` to 1.64 ([`55066ce`](https://github.com/Byron/gitoxide/commit/55066ce5fd71209abb5d84da2998b903504584bb))
  * **Uncategorized**
+    - Release gix-glob v0.10.2, gix-date v0.7.2, gix-validate v0.8.0, gix-object v0.34.0, gix-ref v0.34.0, gix-config v0.27.0, gix-commitgraph v0.18.2, gix-revwalk v0.5.0, gix-revision v0.19.0, gix-refspec v0.15.0, gix-submodule v0.1.0, safety bump 18 crates ([`4604f83`](https://github.com/Byron/gitoxide/commit/4604f83ef238dc07c85aaeae097399b67f3cfd0c))
     - Finailize `gix-submodule` changelog ([`cbe8e62`](https://github.com/Byron/gitoxide/commit/cbe8e622b306d072fa8e7f5bf25dc596810a48d2))
     - Set `gix-submodule` to version 0.1.0 ([`931fd1e`](https://github.com/Byron/gitoxide/commit/931fd1ec4416aa4869f097b1a3a2e82744da4c21))
     - Prepare changelogs prior to release of `gix-submodule` ([`f3c4311`](https://github.com/Byron/gitoxide/commit/f3c43110e8d5f16cf87e50821044d8b3edbae235))
