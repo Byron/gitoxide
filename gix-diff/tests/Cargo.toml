@@ -4,18 +4,14 @@ version = "0.0.0"
 publish = false
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
-description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
+description = "Tests for the gix-diff crate"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
-include = ["src/**/*"]
 rust-version = "1.65"
 
-[features]
-serde = ["gix-diff/serde", "gix-hash/serde", "gix-object/serde"]
-
 [[test]]
-name = "diff"
 doctest = false
+name = "diff"
 path = "diff.rs"
 
 [dev-dependencies]

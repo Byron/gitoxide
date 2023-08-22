@@ -1,12 +1,11 @@
 [package]
 name = "gix-pack-tests"
-version = "0.30.1"
+version = "0.0.0"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
 description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
 edition = "2018"
-include = ["src/**/*", "CHANGELOG.md"]
 rust-version = "1.65"
 
 [features]
@@ -22,7 +21,6 @@ gix-pack = { path = ".." }
 gix-features = { path = "../../gix-features" }
 gix-testtools = { path = "../../tests/tools"}
 gix-odb = { path = "../../gix-odb" }
-tempfile = "3.1.0"
 bstr = { version = "1.3.0", default-features = false, features = ["std"] }
 maplit = "1.0.2"
 gix-object = {  path = "../../gix-object" }

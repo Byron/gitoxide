@@ -1427,16 +1427,13 @@ name = "gix-config-tests"
 version = "0.0.0"
 dependencies = [
  "bstr",
- "criterion",
  "gix",
  "gix-config",
  "gix-path 0.8.4",
  "gix-ref 0.34.0",
  "gix-sec 0.8.4",
  "gix-testtools",
- "serde_derive",
  "serial_test",
- "tempfile",
 ]
 
 [[package]]
@@ -1946,7 +1943,7 @@ dependencies = [
 
 [[package]]
 name = "gix-pack-tests"
-version = "0.30.1"
+version = "0.0.0"
 dependencies = [
  "bstr",
  "gix-features 0.32.1",
@@ -1958,7 +1955,6 @@ dependencies = [
  "gix-traverse 0.31.0",
  "maplit",
  "memmap2 0.7.1",
- "tempfile",
 ]
 
 [[package]]
@@ -2244,7 +2240,7 @@ dependencies = [
 
 [[package]]
 name = "gix-status-tests"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "bstr",
  "filetime",
@@ -2523,7 +2519,7 @@ dependencies = [
 
 [[package]]
 name = "gix-worktree-state-tests"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "gix-discover 0.23.0",
  "gix-features 0.32.1",
@@ -2561,7 +2557,7 @@ dependencies = [
 
 [[package]]
 name = "gix-worktree-tests"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "bstr",
  "gix-attributes 0.16.0",

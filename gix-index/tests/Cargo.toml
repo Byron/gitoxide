@@ -13,11 +13,8 @@ rust-version = "1.65"
 name = "integrate"
 path = "integrate.rs"
 
-
 [features]
 gix-features-parallel = ["gix-features/parallel"]
-
-[dependencies]
 
 [dev-dependencies]
 gix-index = { path = ".." }

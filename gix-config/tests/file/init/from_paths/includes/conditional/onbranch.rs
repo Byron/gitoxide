@@ -13,7 +13,7 @@ use gix_ref::{
     transaction::{Change, PreviousValue, RefEdit},
     FullName, Target,
 };
-use tempfile::tempdir;
+use gix_testtools::tempfile::tempdir;
 
 use crate::file::{cow_str, init::from_paths::includes::conditional::git_init};
 
@@ -181,7 +181,7 @@ enum Value {
 #[derive(Debug)]
 struct GitEnv {
     repo: gix::Repository,
-    dir: tempfile::TempDir,
+    dir: gix_testtools::tempfile::TempDir,
 }
 
 impl GitEnv {
@@ -291,7 +291,10 @@ value = branch-override-by-include
     Ok(GitEnv { repo, dir })
 }
 
-fn assure_git_agrees(expected: Value, dir: tempfile::TempDir) -> crate::Result<tempfile::TempDir> {
+fn assure_git_agrees(
+    expected: Value,
+    dir: gix_testtools::tempfile::TempDir,
+) -> crate::Result<gix_testtools::tempfile::TempDir> {
     let git_dir = dir.path();
     let output = std::process::Command::new("git")
         .args(["config", "--get", "section.value"])
