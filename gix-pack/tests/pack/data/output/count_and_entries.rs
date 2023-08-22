@@ -339,7 +339,7 @@ fn write_and_verify(
     _expected_pack_hash: gix_hash::ObjectId,
     _expected_thin_pack_hash: Option<gix_hash::ObjectId>,
 ) -> crate::Result {
-    let tmp_dir = tempfile::TempDir::new()?;
+    let tmp_dir = gix_testtools::tempfile::TempDir::new()?;
     let pack_file_path = tmp_dir.path().join("new.pack");
     let mut pack_file = std::fs::OpenOptions::new()
         .write(true)

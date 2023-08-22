@@ -4,12 +4,13 @@ use gix_date::{time::Sign, SecondsSinceUnixEpoch, Time};
 use gix_features::progress;
 use gix_object::bstr::ByteSlice;
 use gix_odb::loose::Store;
+use gix_testtools::fixture_path_standalone;
 use pretty_assertions::assert_eq;
 
-use crate::{fixture_path, hex_to_id};
+use crate::hex_to_id;
 
 fn ldb() -> Store {
-    Store::at(fixture_path("objects"), gix_hash::Kind::Sha1)
+    Store::at(fixture_path_standalone("objects"), gix_hash::Kind::Sha1)
 }
 
 pub fn object_ids() -> Vec<gix_hash::ObjectId> {
@@ -48,7 +49,7 @@ mod write {
 
     #[test]
     fn read_and_write() -> Result<(), Box<dyn std::error::Error>> {
-        let dir = tempfile::tempdir()?;
+        let dir = gix_testtools::tempfile::tempdir()?;
         let db = loose::Store::at(dir.path(), gix_hash::Kind::Sha1);
         let mut buf = Vec::new();
         let mut buf2 = Vec::new();
@@ -76,7 +77,7 @@ mod write {
     fn it_writes_objects_with_similar_permissions() -> crate::Result {
         let hk = gix_hash::Kind::Sha1;
         let git_store = loose::Store::at(
-            gix_testtools::scripted_fixture_read_only("repo_with_loose_objects.sh")?.join(".git/objects"),
+            gix_testtools::scripted_fixture_read_only_standalone("repo_with_loose_objects.sh")?.join(".git/objects"),
             hk,
         );
         let expected_perm = git_store
@@ -84,7 +85,7 @@ mod write {
             .metadata()?
             .permissions();
 
-        let tmp = tempfile::TempDir::new()?;
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
         let store = loose::Store::at(tmp.path(), hk);
         store.write_buf(gix_object::Kind::Blob, &[])?;
         let actual_perm = store
@@ -100,7 +101,7 @@ mod write {
 
     #[test]
     fn collisions_do_not_cause_failure() -> crate::Result {
-        let dir = tempfile::tempdir()?;
+        let dir = gix_testtools::tempfile::tempdir()?;
 
         fn write_empty_trees(dir: &std::path::Path) {
             let db = loose::Store::at(dir, gix_hash::Kind::Sha1);
@@ -143,7 +144,7 @@ mod contains {
 mod lookup_prefix {
     use std::collections::HashSet;
 
-    use gix_testtools::fixture_path;
+    use gix_testtools::fixture_path_standalone;
     use maplit::hashset;
 
     use crate::{odb::hex_to_id, store::loose::ldb};
@@ -165,7 +166,7 @@ mod lookup_prefix {
     #[test]
     fn returns_some_err_for_prefixes_with_more_than_one_match() {
         let objects_dir = gix_testtools::tempfile::tempdir().unwrap();
-        gix_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir).unwrap();
+        gix_testtools::copy_recursively_into_existing_dir(fixture_path_standalone("objects"), &objects_dir).unwrap();
         std::fs::write(
             objects_dir
                 .path()

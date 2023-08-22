@@ -4,28 +4,17 @@ version = "0.0.0"
 publish = false
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
-description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
+description = "Integration tests for gix-index"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
-include = ["src/**/*", "README.md", "CHANGELOG.md"]
 rust-version = "1.65"
 
 [[test]]
-name = "multi-threaded"
-path = "index-multi-threaded.rs"
-required-features = ["internal-testing-gix-features-parallel"]
-
-[[test]]
-name = "single-threaded"
-path = "index-single-threaded.rs"
+name = "integrate"
+path = "integrate.rs"
 
 [features]
-## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde= ["gix-index/serde"]
-
-internal-testing-gix-features-parallel = ["gix-features/parallel"]
-
-[dependencies]
+gix-features-parallel = ["gix-features/parallel"]
 
 [dev-dependencies]
 gix-index = { path = ".." }
@@ -35,7 +24,3 @@ gix = { path = "../../gix"}
 gix-hash = { path = "../../gix-hash"}
 filetime = "0.2.15"
 bstr = { version = "1.3.0", default-features = false }
-
-[package.metadata.docs.rs]
-features = ["document-features", "serde"]
-rustdoc-args = ["--cfg", "docsrs"]

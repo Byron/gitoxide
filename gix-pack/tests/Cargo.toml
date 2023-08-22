@@ -1,43 +1,26 @@
 [package]
 name = "gix-pack-tests"
-version = "0.30.1"
+version = "0.0.0"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
 description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
 edition = "2018"
-include = ["src/**/*", "CHANGELOG.md"]
 rust-version = "1.65"
 
 [features]
-
-## Provide a fixed-size allocation-free LRU cache for packs. It's useful if caching is desired while keeping the memory footprint
-## for the LRU-cache itself low.
-pack-cache-lru-static = ["gix-pack/pack-cache-lru-static"]
-## Provide a hash-map based LRU cache whose eviction is based a memory cap calculated from object data.
-pack-cache-lru-dynamic = ["gix-pack/pack-cache-lru-dynamic"]
-## If set, select algorithms may additionally use a full-object cache which is queried before the pack itself.
-object-cache-dynamic = ["gix-pack/object-cache-dynamic"]
-## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde = ["gix-pack/serde"]
-
-internal-testing-gix-features-parallel = ["gix-features/parallel"]
+gix-features-parallel = ["gix-features/parallel"]
+all-features = ["gix-pack/object-cache-dynamic", "gix-pack/pack-cache-lru-dynamic", "gix-pack/pack-cache-lru-static"]
 
 [[test]]
-name = "multi-threaded"
-path = "pack-multi-threaded.rs"
-required-features = ["internal-testing-gix-features-parallel"]
-
-[[test]]
-name = "single-threaded"
-path = "pack-single-threaded.rs"
+name = "pack"
+path = "integrate.rs"
 
 [dev-dependencies]
 gix-pack = { path = ".." }
 gix-features = { path = "../../gix-features" }
 gix-testtools = { path = "../../tests/tools"}
 gix-odb = { path = "../../gix-odb" }
-tempfile = "3.1.0"
 bstr = { version = "1.3.0", default-features = false, features = ["std"] }
 maplit = "1.0.2"
 gix-object = {  path = "../../gix-object" }

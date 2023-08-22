@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use gix_config::{File, Source};
-use tempfile::tempdir;
+use gix_testtools::tempfile::tempdir;
 
 use crate::file::cow_str;
 
@@ -13,7 +13,7 @@ pub(crate) fn escape_backslashes(path: impl AsRef<std::path::Path>) -> String {
 mod from_path_no_includes {
     #[test]
     fn file_not_found() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = gix_testtools::tempfile::tempdir().unwrap();
         let config_path = dir.path().join("config");
 
         let err = gix_config::File::from_path_no_includes(config_path, gix_config::Source::Local).unwrap_err();
@@ -24,7 +24,7 @@ mod from_path_no_includes {
 
     #[test]
     fn single_path() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = gix_testtools::tempfile::tempdir().unwrap();
         let config_path = dir.path().join("config");
         std::fs::write(config_path.as_path(), b"[core]\nboolean = true").unwrap();
 

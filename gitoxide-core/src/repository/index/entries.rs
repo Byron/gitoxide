@@ -48,12 +48,11 @@ pub(crate) mod function {
             recurse_submodules,
         }: Options,
     ) -> anyhow::Result<()> {
-        use crate::OutputFormat::*;
         let mut out = BufWriter::with_capacity(64 * 1024, out);
         let mut all_attrs = statistics.then(BTreeSet::new);
 
         #[cfg(feature = "serde")]
-        if let Json = format {
+        if let OutputFormat::Json = format {
             out.write_all(b"[\n")?;
         }
 
@@ -70,13 +69,14 @@ pub(crate) mod function {
         )?;
 
         #[cfg(feature = "serde")]
-        if format == Json {
+        if format == OutputFormat::Json {
             out.write_all(b"]\n")?;
             out.flush()?;
             if statistics {
                 serde_json::to_writer_pretty(&mut err, &stats)?;
             }
-        } else if format == Human && statistics {
+        }
+        if format == OutputFormat::Human && statistics {
             out.flush()?;
             writeln!(err, "{stats:#?}")?;
             if let Some(attrs) = all_attrs.filter(|a| !a.is_empty()) {
@@ -101,7 +101,9 @@ pub(crate) mod function {
         recurse_submodules: bool,
         out: &mut impl std::io::Write,
     ) -> anyhow::Result<Statistics> {
+        let _span = gix::trace::coarse!("print_entries()", git_dir = ?repo.git_dir());
         let (mut pathspec, index, mut cache) = init_cache(repo, attributes, pathspecs.clone())?;
+        let mut repo_attrs = all_attrs.is_some().then(BTreeSet::default);
         let submodules_by_path = recurse_submodules
             .then(|| {
                 repo.submodules()
@@ -142,7 +144,7 @@ pub(crate) mod function {
                                     };
                                     stats.with_attributes += usize::from(!attributes.is_empty());
                                     stats.max_attributes_per_path = stats.max_attributes_per_path.max(attributes.len());
-                                    if let Some(attrs) = all_attrs.as_deref_mut() {
+                                    if let Some(attrs) = repo_attrs.as_mut() {
                                         attributes.iter().for_each(|attr| {
                                             attrs.insert(attr.clone());
                                         });
@@ -232,6 +234,12 @@ pub(crate) mod function {
         }
 
         stats.cache = cache.map(|c| *c.1.statistics());
+        if let Some((attrs, all_attrs)) = repo_attrs.zip(all_attrs) {
+            stats
+                .attributes
+                .extend(attrs.iter().map(|attr| attr.as_ref().to_string()));
+            all_attrs.extend(attrs);
+        }
         Ok(stats)
     }
 
@@ -301,6 +309,7 @@ pub(crate) mod function {
         pub with_attributes: usize,
         pub max_attributes_per_path: usize,
         pub cache: Option<gix::worktree::stack::Statistics>,
+        pub attributes: Vec<String>,
         pub submodule: Vec<(BString, Statistics)>,
     }
 

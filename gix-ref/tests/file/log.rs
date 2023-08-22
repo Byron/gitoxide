@@ -92,7 +92,7 @@ mod iter {
         mod with_buffer_big_enough_for_largest_line {
             use gix_ref::log::Line;
 
-            use crate::util::hex_to_id;
+            use crate::hex_to_id;
 
             #[test]
             fn single_line() -> crate::Result {

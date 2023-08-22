@@ -135,7 +135,7 @@ fn racy_git() {
     // we need a writable fixture because we have to mess with `mtimes` manually, because touch -d
     // respects the locale so the test wouldn't work depending on the timezone you
     // run your test in.
-    let dir = gix_testtools::scripted_fixture_writable("racy_git.sh").expect("script works");
+    let dir = gix_testtools::scripted_fixture_writable_standalone("racy_git.sh").expect("script works");
     let worktree = dir.path();
     let git_dir = worktree.join(".git");
     let fs = gix_fs::Capabilities::probe(&git_dir);

@@ -7,7 +7,7 @@ use crate::hex_to_id;
 
 #[test]
 fn from_paths() -> crate::Result {
-    let dir = tempfile::TempDir::new()?;
+    let dir = gix_testtools::tempfile::TempDir::new()?;
     let input_indices = std::fs::read_dir(fixture_path_standalone("objects/pack"))?
         .filter_map(|r| {
             r.ok()

@@ -80,7 +80,7 @@ mod write_to_directory {
 
     use gix_features::progress;
     use gix_odb::pack;
-    use tempfile::TempDir;
+    use gix_testtools::tempfile::TempDir;
 
     use crate::{
         fixture_path,

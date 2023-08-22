@@ -1,4 +1,5 @@
 use gix_hash::ObjectId;
+use gix_testtools::fixture_path_standalone;
 pub use gix_testtools::{fixture_path, scripted_fixture_read_only};
 
 pub fn hex_to_id(hex: &str) -> ObjectId {
@@ -8,11 +9,11 @@ pub fn hex_to_id(hex: &str) -> ObjectId {
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn db() -> gix_odb::Handle {
-    gix_odb::at(fixture_path("objects")).expect("valid object path")
+    gix_odb::at(fixture_path_standalone("objects")).expect("valid object path")
 }
 
 fn db_small_packs() -> gix_odb::Handle {
-    gix_odb::at(fixture_path("repos/small-packs.git/objects")).unwrap()
+    gix_odb::at(fixture_path_standalone("repos/small-packs.git/objects")).unwrap()
 }
 
 pub mod alternate;

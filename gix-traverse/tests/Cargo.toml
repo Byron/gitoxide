@@ -3,10 +3,9 @@ name = "gix-traverse-tests"
 version = "0.0.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
-description = "Please use `gix-<thiscrate>` instead ('git' -> 'gix')"
+description = "Integration tests for the gix-traverse crate"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
-include = ["src/**/*"]
 rust-version = "1.65"
 
 [[test]]

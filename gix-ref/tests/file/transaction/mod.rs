@@ -10,7 +10,7 @@ pub(crate) mod prepare_and_commit {
         Target,
     };
 
-    use crate::util::hex_to_id;
+    use crate::hex_to_id;
 
     fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<gix_ref::log::Line>> {
         let mut buf = Vec::new();
@@ -22,8 +22,8 @@ pub(crate) mod prepare_and_commit {
         Ok(res)
     }
 
-    pub(crate) fn empty_store() -> crate::Result<(tempfile::TempDir, file::Store)> {
-        let dir = tempfile::TempDir::new().unwrap();
+    pub(crate) fn empty_store() -> crate::Result<(gix_testtools::tempfile::TempDir, file::Store)> {
+        let dir = gix_testtools::tempfile::TempDir::new().unwrap();
         let store = file::Store::at(dir.path(), gix_ref::store::WriteReflog::Normal, gix_hash::Kind::Sha1);
         Ok((dir, store))
     }

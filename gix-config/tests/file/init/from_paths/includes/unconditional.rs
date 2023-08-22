@@ -4,7 +4,7 @@ use gix_config::{
     file::{includes, init, init::from_paths},
     File,
 };
-use tempfile::tempdir;
+use gix_testtools::tempfile::tempdir;
 
 use crate::file::{
     cow_str,

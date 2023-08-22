@@ -41,8 +41,6 @@ document-features = { version = "0.2.1", optional = true }
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools" }
-gix-utils = { path = "../gix-utils" }
-tempfile = "3.2.0"
 
 
 [package.metadata.docs.rs]

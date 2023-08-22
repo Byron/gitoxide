@@ -168,6 +168,13 @@ pub(crate) mod function {
             first_parent,
         }: Options<'name>,
     ) -> Result<Option<Outcome<'name>>, Error> {
+        let _span = gix_trace::coarse!(
+            "gix_revision::describe()",
+            commit = %commit,
+            name_count = name_by_oid.len(),
+            max_candidates,
+            first_parent
+        );
         max_candidates = max_candidates.min(MAX_CANDIDATES);
         if let Some(name) = name_by_oid.get(commit) {
             return Ok(Some(Outcome {

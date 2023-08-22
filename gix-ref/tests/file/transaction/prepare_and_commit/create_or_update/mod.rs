@@ -21,7 +21,7 @@ use crate::{
             committer, create_at, create_symbolic_at, delete_at, empty_store, log_line, reflog_lines,
         },
     },
-    util::hex_to_id,
+    hex_to_id,
 };
 
 mod collisions;

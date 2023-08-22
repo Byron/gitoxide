@@ -1,9 +1,9 @@
 use bstr::{BStr, ByteSlice};
-use gix_glob::pattern::Case;
 use gix_odb::FindExt;
 use gix_worktree::{stack::state::ignore::Source, Stack};
 
 use crate::hex_to_id;
+use crate::worktree::stack::probe_case;
 
 struct IgnoreExpectations<'a> {
     lines: bstr::Lines<'a>,
@@ -32,7 +32,7 @@ impl<'a> Iterator for IgnoreExpectations<'a> {
 
 #[test]
 fn exclude_by_dir_is_handled_just_like_git() {
-    let dir = gix_testtools::scripted_fixture_read_only("make_special_exclude_case.sh").unwrap();
+    let dir = gix_testtools::scripted_fixture_read_only_standalone("make_special_exclude_case.sh").unwrap();
     let git_dir = dir.join(".git");
 
     let mut buf = Vec::new();
@@ -79,7 +79,7 @@ fn exclude_by_dir_is_handled_just_like_git() {
 
 #[test]
 fn check_against_baseline() -> crate::Result {
-    let dir = gix_testtools::scripted_fixture_read_only("make_ignore_and_attributes_setup.sh")?;
+    let dir = gix_testtools::scripted_fixture_read_only_standalone("make_ignore_and_attributes_setup.sh")?;
     let worktree_dir = dir.join("repo");
     let git_dir = worktree_dir.join(".git");
     let mut buf = Vec::new();
@@ -88,11 +88,7 @@ fn check_against_baseline() -> crate::Result {
 
     // Due to the way our setup differs from gits dynamic stack (which involves trying to read files from disk
     // by path) we can only test one case baseline, so we require multiple platforms (or filesystems) to run this.
-    let case = if gix_fs::Capabilities::probe("../.git").ignore_case {
-        Case::Fold
-    } else {
-        Case::Sensitive
-    };
+    let case = probe_case()?;
     let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default())?;
     let odb = gix_odb::at(git_dir.join("objects"))?;
     let state = gix_worktree::stack::State::for_add(

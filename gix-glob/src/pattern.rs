@@ -128,7 +128,10 @@ impl Pattern {
         let value = value.into();
         match self.first_wildcard_pos {
             // "*literal" case, overrides starts-with
-            Some(pos) if self.mode.contains(pattern::Mode::ENDS_WITH) && !value.contains(&b'/') => {
+            Some(pos)
+                if self.mode.contains(pattern::Mode::ENDS_WITH)
+                    && (!mode.contains(wildmatch::Mode::NO_MATCH_SLASH_LITERAL) || !value.contains(&b'/')) =>
+            {
                 let text = &self.text[pos + 1..];
                 if mode.contains(wildmatch::Mode::IGNORE_CASE) {
                     value

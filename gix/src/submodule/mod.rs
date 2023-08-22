@@ -10,7 +10,7 @@ use std::{
 use gix_odb::FindExt;
 pub use gix_submodule::*;
 
-use crate::{bstr::BStr, ext::ObjectIdExt, repository::IndexPersistedOrInMemory, Id, Repository, Submodule};
+use crate::{bstr::BStr, repository::IndexPersistedOrInMemory, Repository, Submodule};
 
 pub(crate) type ModulesFileStorage = gix_features::threading::OwnShared<gix_fs::SharedFileSnapshotMut<File>>;
 /// A lazily loaded and auto-updated worktree index.
@@ -164,13 +164,9 @@ impl<'repo> Submodule<'repo> {
     /// If `None`, but `Some()` when calling [`Self::head_id()`], then the submodule was just deleted but the change
     /// wasn't yet committed.
     /// If `Some()`, but `None` when calling [`Self::head_id()`], then the submodule was just added without having committed the change.
-    pub fn index_id(&self) -> Result<Option<Id<'repo>>, index_id::Error> {
+    pub fn index_id(&self) -> Result<Option<gix_hash::ObjectId>, index_id::Error> {
         let path = self.path()?;
-        Ok(self
-            .state
-            .index()?
-            .entry_by_path(&path)
-            .map(|entry| entry.id.attach(self.state.repo)))
+        Ok(self.state.index()?.entry_by_path(&path).map(|entry| entry.id))
     }
 
     /// Return the object id of the submodule as stored in `HEAD^{tree}` of the superproject, or `None` if it wasn't yet committed.
@@ -178,7 +174,7 @@ impl<'repo> Submodule<'repo> {
     /// If `Some()`, but `None` when calling [`Self::index_id()`], then the submodule was just deleted but the change
     /// wasn't yet committed.
     /// If `None`, but `Some()` when calling [`Self::index_id()`], then the submodule was just added without having committed the change.
-    pub fn head_id(&self) -> Result<Option<Id<'repo>>, head_id::Error> {
+    pub fn head_id(&self) -> Result<Option<gix_hash::ObjectId>, head_id::Error> {
         let path = self.path()?;
         Ok(self
             .state
@@ -186,7 +182,7 @@ impl<'repo> Submodule<'repo> {
             .head_commit()?
             .tree()?
             .peel_to_entry_by_path(gix_path::from_bstr(path.as_ref()))?
-            .map(|entry| entry.id()))
+            .map(|entry| entry.inner.oid))
     }
 
     /// Return the path at which the repository of the submodule should be located.

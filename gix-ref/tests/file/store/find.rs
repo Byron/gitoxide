@@ -3,7 +3,7 @@ mod existing {
 
     use gix_ref::{PartialName, PartialNameRef};
 
-    use crate::{file::store_at, util::hex_to_id};
+    use crate::{file::store_at, hex_to_id};
 
     #[test]
     fn with_packed_refs() -> crate::Result {
@@ -90,7 +90,7 @@ mod existing {
 }
 
 mod loose {
-    use crate::{file::store, util::hex_to_id};
+    use crate::{file::store, hex_to_id};
 
     mod existing {
         use std::path::Path;

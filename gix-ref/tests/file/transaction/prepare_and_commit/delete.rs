@@ -12,7 +12,7 @@ use crate::{
         store_writable,
         transaction::prepare_and_commit::{committer, empty_store},
     },
-    util::hex_to_id,
+    hex_to_id,
 };
 
 #[test]

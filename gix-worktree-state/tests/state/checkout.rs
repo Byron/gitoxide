@@ -44,6 +44,26 @@ fn driver_exe() -> String {
 }
 
 #[test]
+fn submodules_are_instantiated_as_directories() -> crate::Result {
+    let mut opts = opts_from_probe();
+    opts.overwrite_existing = false;
+    let (_source_tree, destination, _index, _outcome) = checkout_index_in_tmp_dir(opts.clone(), "make_mixed")?;
+
+    for path in ["m1", "modules/m1"] {
+        let sm = destination.path().join(path);
+        assert!(sm.is_dir());
+        assure_is_empty(sm)?;
+    }
+
+    Ok(())
+}
+
+fn assure_is_empty(dir: impl AsRef<Path>) -> std::io::Result<()> {
+    assert_eq!(std::fs::read_dir(dir)?.count(), 0);
+    Ok(())
+}
+
+#[test]
 fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden() {
     let mut opts = opts_from_probe();
     // without overwrite mode, everything is safe.
@@ -102,7 +122,12 @@ fn writes_through_symlinks_are_prevented_even_if_overwriting_is_allowed() {
         );
         assert_eq!(
             stripped_prefix(&destination, &worktree_files),
-            paths(["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE"]),
+            paths([
+                if cfg!(windows) { "A-dir\\a" } else { "A-dir/a" },
+                "A-file",
+                "FAKE-DIR",
+                if cfg!(windows) { "fake-file" } else { "FAKE-FILE" }
+            ]),
         );
         assert!(outcome.collisions.is_empty());
     } else {
@@ -160,7 +185,7 @@ fn overwriting_files_and_lone_directories_works() -> crate::Result {
         setup_filter_pipeline(opts.filters.options_mut());
         let (source, destination, _index, outcome) = checkout_index_in_tmp_dir_opts(
             opts.clone(),
-            "make_mixed_without_submodules",
+            "make_mixed",
             |_| true,
             |d| {
                 let empty = d.join("empty");
@@ -497,7 +522,10 @@ fn stripped_prefix(prefix: impl AsRef<Path>, source_files: &[PathBuf]) -> Vec<&P
 
 fn probe_gitoxide_dir() -> crate::Result<gix_fs::Capabilities> {
     Ok(gix_fs::Capabilities::probe(
-        std::env::current_dir()?.join("..").join(".git"),
+        gix_discover::upwards(".")?
+            .0
+            .into_repository_and_work_tree_directories()
+            .0,
     ))
 }
 

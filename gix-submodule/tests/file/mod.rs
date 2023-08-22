@@ -113,6 +113,40 @@ mod is_active_platform {
         );
         Ok(())
     }
+
+    #[test]
+    fn pathspecs_matter_even_if_they_do_not_match() -> crate::Result {
+        let module = multi_modules()?;
+        assert_eq!(
+            assume_valid_active_state(
+                &module,
+                &gix_config::File::from_str("[submodule]\n active = submodule ")?,
+                Default::default()
+            )?,
+            &[
+                ("submodule", true),
+                ("a/b", false),
+                (".a/..c", false),
+                ("a/d\\", false),
+                ("a\\e", false)
+            ]
+        );
+        assert_eq!(
+            assume_valid_active_state(
+                &module,
+                &gix_config::File::from_str("[submodule]\n active = :!submodule ")?,
+                Default::default()
+            )?,
+            &[
+                ("submodule", false),
+                ("a/b", true),
+                (".a/..c", true),
+                ("a/d\\", true),
+                ("a\\e", true)
+            ]
+        );
+        Ok(())
+    }
 }
 
 mod path {

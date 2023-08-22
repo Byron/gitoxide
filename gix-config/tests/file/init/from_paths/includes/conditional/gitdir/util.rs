@@ -19,7 +19,7 @@ use crate::file::{
 
 #[derive(Debug)]
 pub struct GitEnv {
-    tempdir: tempfile::TempDir,
+    tempdir: gix_testtools::tempfile::TempDir,
     root_dir: PathBuf,
     git_dir: PathBuf,
     home_dir: PathBuf,
@@ -68,7 +68,7 @@ impl Condition {
 
 impl GitEnv {
     pub fn repo_name(repo_name: impl AsRef<Path>) -> crate::Result<Self> {
-        let tempdir = tempfile::tempdir()?;
+        let tempdir = gix_testtools::tempfile::tempdir()?;
         let root_dir = gix_path::realpath(tempdir.path())?;
         let worktree_dir = root_dir.join(repo_name);
         std::fs::create_dir_all(&worktree_dir)?;
