@@ -50,7 +50,7 @@ mod peel {
     use gix_odb::pack::Find;
     use gix_ref::{file::ReferenceExt, peel, Reference};
 
-    use crate::{file, file::store_with_packed_refs, util::hex_to_id};
+    use crate::{file, file::store_with_packed_refs, hex_to_id};
 
     #[test]
     fn one_level() -> crate::Result {
@@ -182,7 +182,7 @@ mod parse {
         use gix_object::bstr::ByteSlice;
         use gix_ref::file::loose::Reference;
 
-        use crate::util::hex_to_id;
+        use crate::hex_to_id;
 
         macro_rules! mktest {
             ($name:ident, $input:literal, $kind:path, $id:expr, $ref:expr) => {

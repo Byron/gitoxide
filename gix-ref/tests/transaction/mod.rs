@@ -103,7 +103,7 @@ mod refedit_ext {
             FullNameRef, PartialNameRef, Target,
         };
 
-        use crate::{transaction::refedit_ext::MockStore, util::hex_to_id};
+        use crate::{hex_to_id, transaction::refedit_ext::MockStore};
 
         fn find<'a>(edits: &'a [RefEdit], name: &str) -> &'a RefEdit {
             let name: &FullNameRef = name.try_into().unwrap();

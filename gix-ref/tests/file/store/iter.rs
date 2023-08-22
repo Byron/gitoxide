@@ -4,7 +4,7 @@ use gix_object::bstr::ByteSlice;
 
 use crate::{
     file::{store, store_at, store_with_packed_refs},
-    util::hex_to_id,
+    hex_to_id,
 };
 
 mod with_namespace {

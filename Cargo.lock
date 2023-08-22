@@ -2128,11 +2128,9 @@ dependencies = [
  "gix-path 0.8.4",
  "gix-tempfile 7.0.2",
  "gix-testtools",
- "gix-utils 0.1.5",
  "gix-validate 0.8.0",
  "memmap2 0.7.1",
  "serde",
- "tempfile",
  "thiserror",
  "winnow",
 ]
@@ -2153,8 +2151,6 @@ dependencies = [
  "gix-ref 0.34.0",
  "gix-testtools",
  "gix-validate 0.8.0",
- "gix-worktree 0.24.0",
- "tempfile",
 ]
 
 [[package]]

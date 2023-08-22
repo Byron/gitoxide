@@ -9,7 +9,7 @@ use gix_ref::{
 
 use crate::{
     file::transaction::prepare_and_commit::{committer, create_at, create_symbolic_at, delete_at, empty_store},
-    util::hex_to_id,
+    hex_to_id,
 };
 
 fn case_sensitive(tmp_dir: &std::path::Path) -> bool {

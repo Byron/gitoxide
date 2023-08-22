@@ -4,7 +4,7 @@ use gix_odb::Find;
 use gix_ref::{file::ReferenceExt, Reference};
 use gix_testtools::Creation;
 
-fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile::TempDir>)> {
+fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<gix_testtools::tempfile::TempDir>)> {
     let name = "make_worktree_repo.sh";
     let mut args = Vec::new();
     if packed {
@@ -21,7 +21,11 @@ fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile:
 fn main_store(
     packed: bool,
     writable: impl Into<bool>,
-) -> crate::Result<(gix_ref::file::Store, gix_odb::Handle, Option<tempfile::TempDir>)> {
+) -> crate::Result<(
+    gix_ref::file::Store,
+    gix_odb::Handle,
+    Option<gix_testtools::tempfile::TempDir>,
+)> {
     let writable = writable.into();
     let (dir, tmp) = dir(packed, writable)?;
     let git_dir = dir.join("repo").join(".git");
@@ -36,7 +40,11 @@ fn worktree_store(
     packed: bool,
     worktree_name: &str,
     writable: impl Into<bool>,
-) -> crate::Result<(gix_ref::file::Store, gix_odb::Handle, Option<tempfile::TempDir>)> {
+) -> crate::Result<(
+    gix_ref::file::Store,
+    gix_odb::Handle,
+    Option<gix_testtools::tempfile::TempDir>,
+)> {
     let (dir, tmp) = dir(packed, writable.into())?;
     let (git_dir, _work_tree) = gix_discover::upwards(dir.join(worktree_name))?
         .0
@@ -205,7 +213,7 @@ mod writable {
             transaction::prepare_and_commit::committer,
             worktree::{main_store, worktree_store, Mode},
         },
-        util::hex_to_id,
+        hex_to_id,
     };
 
     fn change_with_id(id: gix_hash::ObjectId) -> Change {
