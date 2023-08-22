@@ -1,5 +1,10 @@
 name: ci
 
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+  CLICOLOR: 1
+
 on:
   push:
     branches: [ main ]
