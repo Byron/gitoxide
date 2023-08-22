@@ -136,6 +136,7 @@ unit-tests:
     cargo test -p gix-features --all-features
     cargo test -p gix-ref-tests --all-features
     cargo test -p gix-odb --all-features
+    cargo test -p gix-odb-tests --features gix-features-parallel
     cargo test -p gix-pack --all-features
     cargo test -p gix-pack-tests --features all-features
     cargo test -p gix-pack-tests --features "gix-features-parallel"

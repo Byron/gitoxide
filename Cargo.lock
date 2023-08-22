@@ -1889,10 +1889,7 @@ name = "gix-odb"
 version = "0.51.0"
 dependencies = [
  "arc-swap",
- "crossbeam-channel",
  "document-features",
- "filetime",
- "gix-actor 0.24.2",
  "gix-date 0.7.2",
  "gix-features 0.32.1",
  "gix-hash 0.11.4",
@@ -1900,13 +1897,27 @@ dependencies = [
  "gix-pack",
  "gix-path 0.8.4",
  "gix-quote 0.4.6",
- "gix-testtools",
- "maplit",
  "parking_lot",
- "pretty_assertions",
  "serde",
  "tempfile",
  "thiserror",
+]
+
+[[package]]
+name = "gix-odb-tests"
+version = "0.0.0"
+dependencies = [
+ "filetime",
+ "gix-actor 0.24.2",
+ "gix-date 0.7.2",
+ "gix-features 0.32.1",
+ "gix-hash 0.11.4",
+ "gix-object 0.34.0",
+ "gix-odb",
+ "gix-pack",
+ "gix-testtools",
+ "maplit",
+ "pretty_assertions",
 ]
 
 [[package]]

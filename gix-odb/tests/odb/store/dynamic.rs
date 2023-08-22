@@ -2,7 +2,7 @@ use std::process::Command;
 
 use gix_hash::ObjectId;
 use gix_odb::{store, store::iter::Ordering, Find, FindExt, Header, Write};
-use gix_testtools::fixture_path;
+use gix_testtools::fixture_path_standalone;
 
 use crate::{hex_to_id, odb::db};
 
@@ -14,9 +14,9 @@ fn all_orderings() -> [Ordering; 2] {
 }
 
 /// indices, multi-pack-index, loose odb
-fn db_with_all_object_sources() -> crate::Result<(gix_odb::Handle, tempfile::TempDir)> {
+fn db_with_all_object_sources() -> crate::Result<(gix_odb::Handle, gix_testtools::tempfile::TempDir)> {
     let objects_dir = gix_testtools::tempfile::tempdir()?;
-    gix_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir)?;
+    gix_testtools::copy_recursively_into_existing_dir(fixture_path_standalone("objects"), &objects_dir)?;
 
     let multi_pack_index = std::fs::OpenOptions::new()
         .write(true)
@@ -24,8 +24,8 @@ fn db_with_all_object_sources() -> crate::Result<(gix_odb::Handle, tempfile::Tem
         .open(objects_dir.path().join("pack/multi-pack-index"))?;
     gix_odb::pack::multi_index::File::write_from_index_paths(
         vec![
-            fixture_path("objects/pack/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx"),
-            fixture_path("objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"),
+            fixture_path_standalone("objects/pack/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx"),
+            fixture_path_standalone("objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"),
         ],
         multi_pack_index,
         gix_features::progress::Discard,
@@ -39,7 +39,7 @@ fn db_with_all_object_sources() -> crate::Result<(gix_odb::Handle, tempfile::Tem
 
 #[test]
 fn multi_index_access() -> crate::Result {
-    let dir = gix_testtools::scripted_fixture_writable("make_repo_multi_index.sh")?;
+    let dir = gix_testtools::scripted_fixture_writable_standalone("make_repo_multi_index.sh")?;
     let handle = gix_odb::at(dir.path().join(".git/objects"))?;
 
     assert_eq!(
@@ -145,7 +145,7 @@ fn multi_index_access() -> crate::Result {
 
 #[test]
 fn multi_index_keep_open() -> crate::Result {
-    let dir = gix_testtools::scripted_fixture_writable("make_repo_multi_index.sh")?;
+    let dir = gix_testtools::scripted_fixture_writable_standalone("make_repo_multi_index.sh")?;
     let (stable_handle, handle) = {
         let mut stable_handle = gix_odb::at(dir.path().join(".git/objects"))?;
         let handle = stable_handle.clone();
@@ -210,7 +210,7 @@ fn multi_index_keep_open() -> crate::Result {
 
 #[test]
 fn write() -> crate::Result {
-    let dir = tempfile::tempdir()?;
+    let dir = gix_testtools::tempfile::tempdir()?;
     let mut handle = gix_odb::at(dir.path())?;
     // It should refresh once even if the refresh mode is never, just to initialize the index
     handle.refresh_never();
@@ -222,7 +222,7 @@ fn write() -> crate::Result {
 
 #[test]
 fn alternate_dbs_query() -> crate::Result {
-    let dir = gix_testtools::scripted_fixture_read_only("make_alternates_odb.sh")?;
+    let dir = gix_testtools::scripted_fixture_read_only_standalone("make_alternates_odb.sh")?;
     let handle = gix_odb::at(dir.join(".git/objects"))?;
 
     let alternates = handle.store_ref().alternate_db_paths()?;
@@ -242,7 +242,7 @@ fn alternate_dbs_query() -> crate::Result {
 
 #[test]
 fn object_replacement() -> crate::Result {
-    let dir = gix_testtools::scripted_fixture_read_only("make_replaced_history.sh")?;
+    let dir = gix_testtools::scripted_fixture_read_only_standalone("make_replaced_history.sh")?;
     let handle = gix_odb::at(dir.join(".git/objects"))?;
     let mut buf = Vec::new();
     let short_history_link = hex_to_id("434e5a872d6738d1fffd1e11e52a1840b73668c6");
@@ -797,7 +797,10 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
             .success(),
         "git should work"
     );
-    gix_testtools::copy_recursively_into_existing_dir(fixture_path("objects/pack"), tmp.path().join("objects/pack"))?;
+    gix_testtools::copy_recursively_into_existing_dir(
+        fixture_path_standalone("objects/pack"),
+        tmp.path().join("objects/pack"),
+    )?;
     let hide_pack = |name: &str| {
         let stem = tmp.path().join("objects/pack").join(name);
         std::fs::rename(stem.with_extension("idx"), stem.with_extension("idx.bak")).unwrap();
@@ -940,7 +943,7 @@ mod verify {
     use std::sync::atomic::AtomicBool;
 
     use gix_features::progress;
-    use gix_testtools::fixture_path;
+    use gix_testtools::fixture_path_standalone;
 
     use crate::store::dynamic::db;
 
@@ -954,20 +957,20 @@ mod verify {
         assert_eq!(outcome.index_statistics.len(), 3, "there are only three packs to check");
         assert_eq!(
             outcome.index_statistics[0].path,
-            fixture_path("objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx")
+            fixture_path_standalone("objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx")
         );
         assert_eq!(
             outcome.index_statistics[1].path,
-            fixture_path("objects/pack/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx")
+            fixture_path_standalone("objects/pack/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx")
         );
         assert_eq!(
             outcome.index_statistics[2].path,
-            fixture_path("objects/pack/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx")
+            fixture_path_standalone("objects/pack/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx")
         );
         assert_eq!(
             outcome.loose_object_stores,
             vec![gix_odb::store::verify::integrity::LooseObjectStatistics {
-                path: fixture_path("objects"),
+                path: fixture_path_standalone("objects"),
                 statistics: gix_odb::loose::verify::integrity::Statistics { num_objects: 7 }
             }]
         );
