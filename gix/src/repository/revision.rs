@@ -8,6 +8,7 @@ impl crate::Repository {
     ///
     /// - `@` actually stands for `HEAD`, whereas `git` resolves it to the object pointed to by `HEAD` without making the
     ///   `HEAD` ref available for lookups.
+    #[doc(alias = "revparse", alias = "git2")]
     pub fn rev_parse<'a>(&self, spec: impl Into<&'a BStr>) -> Result<revision::Spec<'_>, revision::spec::parse::Error> {
         revision::Spec::from_bstr(
             spec,
@@ -20,6 +21,7 @@ impl crate::Repository {
     }
 
     /// Parse a revision specification and return single object id as represented by this instance.
+    #[doc(alias = "revparse_single", alias = "git2")]
     pub fn rev_parse_single<'repo, 'a>(
         &'repo self,
         spec: impl Into<&'a BStr>,
@@ -33,6 +35,7 @@ impl crate::Repository {
     /// Create the baseline for a revision walk by initializing it with the `tips` to start iterating on.
     ///
     /// It can be configured further before starting the actual walk.
+    #[doc(alias = "revwalk", alias = "git2")]
     pub fn rev_walk(
         &self,
         tips: impl IntoIterator<Item = impl Into<gix_hash::ObjectId>>,

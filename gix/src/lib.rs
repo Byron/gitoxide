@@ -56,19 +56,12 @@
 //!
 //! ### `libgit2` API to `gix`
 //!
-//! This section is a 'striving to be complete' mapping from `libgit2` APIs to the respective methods in `gix`.
+//! This doc-aliases are used to help finding methods under a possibly changed name. Just search in the docs.
+//! Entering `git2` into the search field will also surface all methods with such annotations.
 //!
-//! * [`git2::Repository::open()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open) ➡ [`open()`]
-//! * [`git2::Repository::open_bare()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_bare) ➡ ❌
-//! * [`git2::Repository::open_from_env()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_from_env) ➡ [`ThreadSafeRepository::open_with_environment_overrides()`]
-//! * [`git2::Repository::open_ext()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_ext) ➡ [`open_opts()`]
-//! * [`git2::Repository::revparse()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revparse) ➡ [`Repository::rev_parse()`]
-//! * [`git2::Repository::revparse_single()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revparse_single) ➡ [`Repository::rev_parse_single()`]
-//! * [`git2::Repository::revwalk()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.revwalk) ➡ [`Repository::rev_walk()`]
+//! What follows is a list of methods you might be missing, along with workarounds if available.
+//! * [`git2::Repository::open_bare()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_bare) ➡ ❌ - use [`open()`] and discard it is not bare.
 //! * [`git2::build::CheckoutBuilder::disable_filters()](https://docs.rs/git2/*/git2/build/struct.CheckoutBuilder.html#method.disable_filters) ➡ ❌ *(filters are always applied during checkouts)*
-//! * [`git2::Odb::read_header()`](https://docs.rs/git2/*/git2/struct.Odb.html#method.read_header) ➡ [`Repository::find_header()`]
-//! * [`git2::Repository::submodules()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.submodules) ➡ [`Repository::submodules()`]
-//! * [`git2::Repository::submodules()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.submodules) ➡ [`Repository::submodules()`]
 //! * [`git2::Repository::submodule_status()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.submodule_status) ➡ [`Submodule::state()`] - status provides more information and conveniences though, and an actual worktree status isn't performed.
 //!
 //! ## Feature Flags
@@ -234,12 +227,14 @@ fn open_opts_with_git_binary_config() -> open::Options {
 
 /// See [`ThreadSafeRepository::open()`], but returns a [`Repository`] instead.
 #[allow(clippy::result_large_err)]
+#[doc(alias = "git2")]
 pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<Repository, open::Error> {
     ThreadSafeRepository::open(directory).map(Into::into)
 }
 
 /// See [`ThreadSafeRepository::open_opts()`], but returns a [`Repository`] instead.
 #[allow(clippy::result_large_err)]
+#[doc(alias = "open_ext", alias = "git2")]
 pub fn open_opts(directory: impl Into<std::path::PathBuf>, options: open::Options) -> Result<Repository, open::Error> {
     ThreadSafeRepository::open_opts(directory, options).map(Into::into)
 }

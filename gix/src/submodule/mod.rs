@@ -226,6 +226,7 @@ impl<'repo> Submodule<'repo> {
     }
 
     /// Query various parts of the submodule and assemble it into state information.
+    #[doc(alias = "status", alias = "git2")]
     pub fn state(&self) -> Result<State, config::path::Error> {
         let maybe_old_path = self.git_dir_try_old_form()?;
         let git_dir = self.git_dir();

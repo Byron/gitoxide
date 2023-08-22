@@ -11,6 +11,7 @@ impl Repository {
     ///
     /// It will be initialized exactly how it would, and attribute matching will be conducted by reading the worktree first if available.
     /// If that is not desirable, consider calling [`Pathspec::new()`] directly.
+    #[doc(alias = "Pathspec", alias = "git2")]
     pub fn pathspec(
         &self,
         patterns: impl IntoIterator<Item = impl AsRef<BStr>>,

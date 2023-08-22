@@ -39,6 +39,7 @@ impl crate::Repository {
     /// Obtain information about an object without fully decoding it, or fail if the object doesn't exist.
     ///
     /// Note that despite being cheaper than [`Self::find_object()`], there is still some effort traversing delta-chains.
+    #[doc(alias = "read_header", alias = "git2")]
     pub fn find_header(&self, id: impl Into<ObjectId>) -> Result<gix_odb::find::Header, object::find::existing::Error> {
         let id = id.into();
         if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {

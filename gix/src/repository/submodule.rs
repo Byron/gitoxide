@@ -73,6 +73,7 @@ impl Repository {
     }
 
     /// Return the list of available submodules, or `None` if there is no submodule configuration.
+    #[doc(alias = "git2")]
     pub fn submodules(&self) -> Result<Option<impl Iterator<Item = crate::Submodule<'_>>>, submodule::modules::Error> {
         let modules = match self.modules()? {
             None => return Ok(None),

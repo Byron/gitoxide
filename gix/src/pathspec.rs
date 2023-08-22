@@ -84,6 +84,14 @@ impl<'repo> Pathspec<'repo> {
     /// Return the first [`Match`](search::Match) of `relative_path`, or `None`.
     /// Note that the match might [be excluded](search::Match::is_excluded()).
     /// `is_dir` is true if `relative_path` is a directory.
+    #[doc(
+        alias = "match_diff",
+        alias = "match_tree",
+        alias = "match_index",
+        alias = "match_workdir",
+        alias = "matches_path",
+        alias = "git2"
+    )]
     pub fn pattern_matching_relative_path<'a>(
         &mut self,
         relative_path: impl Into<&'a BStr>,
