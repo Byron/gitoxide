@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::ops::Range;
 
 use bstr::{BStr, ByteSlice, ByteVec};
 use filetime::FileTime;
@@ -223,6 +224,30 @@ impl State {
     pub fn is_sparse(&self) -> bool {
         self.is_sparse
     }
+
+    /// Return the range of entries that exactly match the given `path`, in all available stages, or `None` if no entry with such
+    /// path exists.
+    ///
+    /// The range can be used to access the respective entries via [`entries()`](Self::entries()) or [`entries_mut()](Self::entries_mut()).
+    pub fn entry_range(&self, path: &BStr) -> Option<Range<usize>> {
+        let mut stage_at_index = 0;
+        let idx = self
+            .entries
+            .binary_search_by(|e| {
+                let res = e.path(self).cmp(path);
+                if res.is_eq() {
+                    stage_at_index = e.stage();
+                }
+                res
+            })
+            .ok()?;
+
+        let (start, end) = (
+            self.walk_entry_stages(path, idx, Ordering::Less).unwrap_or(idx),
+            self.walk_entry_stages(path, idx, Ordering::Greater).unwrap_or(idx) + 1,
+        );
+        Some(start..end)
+    }
 }
 
 /// Mutation
@@ -331,6 +356,25 @@ impl State {
             Entry::cmp_filepaths(a.path_in(path_backing), b.path_in(path_backing))
                 .then_with(|| a.stage().cmp(&b.stage()))
                 .then_with(|| compare(a, b))
+        });
+    }
+
+    /// Physically remove all entries for which `should_remove(idx, path, entry)` returns `true`, traversing them from first to last.
+    ///
+    /// Note that the memory used for the removed entries paths is not freed, as it's append-only.
+    ///
+    /// ### Performance
+    ///
+    /// To implement this operation typically, one would rather add [entry::Flags::REMOVE] to each entry to remove
+    /// them when [writing the index](Self::write_to()).
+    pub fn remove_entries(&mut self, mut should_remove: impl FnMut(usize, &BStr, &mut Entry) -> bool) {
+        let mut index = 0;
+        let paths = &self.path_backing;
+        self.entries.retain_mut(|e| {
+            let path = e.path_in(paths);
+            let res = !should_remove(index, path, e);
+            index += 1;
+            res
         });
     }
 }

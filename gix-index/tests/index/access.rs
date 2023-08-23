@@ -29,16 +29,52 @@ fn entry_by_path_with_conflicting_file() {
         2,
         "we always find our stage while in a merge"
     );
+}
+
+#[test]
+fn prefixed_entries_with_multi_stage_file() {
+    let file = Fixture::Loose("conflicting-file").open();
+
     assert_eq!(
         file.prefixed_entries("fil".into()).expect("present"),
         file.entries(),
         "it's possible to get the entire range"
     );
     assert_eq!(
+        file.prefixed_entries("file".into()).expect("present"),
+        file.entries(),
+        "it's possible to get the entire range even if the same path matches multiple times"
+    );
+    assert_eq!(
         file.prefixed_entries("".into()).expect("present"),
         file.entries(),
         "empty prefix matches all"
     );
+}
+
+#[test]
+fn entry_range() {
+    let file = Fixture::Loose("conflicting-file").open();
+
+    assert_eq!(
+        file.entry_range("file".into()),
+        Some(0..3),
+        "three stages, all but stage zero"
+    );
+    assert_eq!(file.entry_range("foo".into()), None, "does not exist");
+}
+
+#[test]
+fn remove_entries() {
+    let mut file = Fixture::Loose("conflicting-file").open();
+
+    file.remove_entries(|idx, _, _| idx == 0);
+    assert_eq!(file.entries().len(), 2);
+    file.remove_entries(|idx, _, _| idx == 0);
+    assert_eq!(file.entries().len(), 1);
+    file.remove_entries(|idx, _, _| idx == 0);
+    assert_eq!(file.entries().len(), 0);
+    file.remove_entries(|_, _, _| unreachable!("should not be called"));
 }
 
 #[test]
