@@ -142,6 +142,17 @@ fn url_from_absolute_path() -> crate::Result {
     Ok(())
 }
 
+#[test]
+fn url_from_relative_path_with_colon_in_name() -> crate::Result {
+    let url = assert_url(
+        "./weird/directory/na:me",
+        url_alternate(Scheme::File, None, None, None, b"./weird/directory/na:me"),
+    )?
+    .to_bstring();
+    assert_eq!(url, "./weird/directory/na:me");
+    Ok(())
+}
+
 mod windows {
     use gix_url::Scheme;
 

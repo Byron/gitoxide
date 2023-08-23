@@ -177,3 +177,13 @@ fn strange_windows_paths_yield_meaningful_results() -> crate::Result {
     assert_eq!(url, "user@host.xz:42:C:/strange/absolute/path");
     Ok(())
 }
+
+// Git does not care that the host is named `file`, it still treats it as an SCP url.
+// I btw tested this, yes you can really clone a repository from there, just `git init`
+// in the directory above your home directory on the remote machine.
+#[test]
+fn strange() -> crate::Result {
+    let url = assert_url("file:..", url_alternate(Scheme::Ssh, None, "file", None, b".."))?.to_bstring();
+    assert_eq!(url, "file:..");
+    Ok(())
+}

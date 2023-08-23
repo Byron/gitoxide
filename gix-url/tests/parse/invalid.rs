@@ -41,8 +41,3 @@ fn empty() {
 fn missing_port_despite_indication() {
     assert_failure("ssh://host.xz:", Error::MissingRepositoryPath)
 }
-
-#[test]
-fn strange() {
-    assert_failure("file:..", "\"file:..\" is not a valid local path")
-}
