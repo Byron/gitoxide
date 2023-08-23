@@ -12,12 +12,12 @@ fn relative_path_due_to_double_colon() {
 
 #[test]
 fn ssh_missing_path() {
-    assert_failure("ssh://host.xz", Error::MissingResourceLocation)
+    assert_failure("ssh://host.xz", Error::MissingRepositoryPath)
 }
 
 #[test]
 fn git_missing_path() {
-    assert_failure("git://host.xz", Error::MissingResourceLocation)
+    assert_failure("git://host.xz", Error::MissingRepositoryPath)
 }
 
 #[test]
@@ -39,7 +39,7 @@ fn empty() {
 
 #[test]
 fn missing_port_despite_indication() {
-    assert_failure("ssh://host.xz:", Error::MissingResourceLocation)
+    assert_failure("ssh://host.xz:", Error::MissingRepositoryPath)
 }
 
 #[test]
