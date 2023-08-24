@@ -92,7 +92,7 @@ pub fn create(path: impl AsRef<std::path::Path>) -> anyhow::Result<rusqlite::Con
     "#,
     )?;
     con.execute_batch(
-        r#"
+        r"
     CREATE TABLE if not exists repository(
         id integer PRIMARY KEY,
         rela_path text, -- the path to the repository on disk, relative to the corpus root path, without leading `./` or `.\`
@@ -103,7 +103,7 @@ pub fn create(path: impl AsRef<std::path::Path>) -> anyhow::Result<rusqlite::Con
         FOREIGN KEY (corpus) REFERENCES corpus (id)
         UNIQUE (rela_path, corpus)
     )
-    "#,
+    ",
     )?;
     con.execute_batch(
         r#"

@@ -260,7 +260,7 @@ mod set_leading_whitespace {
 }
 
 fn multi_value_section() -> gix_config::File<'static> {
-    r#"
+    r"
         [a]
             a = v
             b = 
@@ -268,7 +268,7 @@ fn multi_value_section() -> gix_config::File<'static> {
             d
             e =a \
        b \
-       c"#
+       c"
     .parse()
     .unwrap()
 }

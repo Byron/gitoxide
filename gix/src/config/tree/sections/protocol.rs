@@ -127,7 +127,7 @@ mod validate {
                 .to_decimal()
                 .ok_or_else(|| format!("integer {value} cannot be represented as integer"))?;
             match value {
-                0 | 1 | 2 => Ok(()),
+                0..=2 => Ok(()),
                 _ => Err(format!("protocol version {value} is unknown").into()),
             }
         }

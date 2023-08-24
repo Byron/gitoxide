@@ -22,7 +22,7 @@ mod header {
         #[test]
         fn subsection_backslashes_and_quotes_are_escaped() -> crate::Result {
             assert_eq!(
-                section::Header::new("core", cow_section(r#"a\b"#))?.to_bstring(),
+                section::Header::new("core", cow_section(r"a\b"))?.to_bstring(),
                 r#"[core "a\\b"]"#
             );
             assert_eq!(

@@ -75,8 +75,9 @@ impl<'a, 'old> Platform<'a, 'old> {
             }
             Err(gix_diff::tree::changes::Error::Cancelled) => delegate
                 .err
-                .map(|err| Err(Error::ForEach(Box::new(err))))
-                .unwrap_or(Err(Error::Diff(gix_diff::tree::changes::Error::Cancelled))),
+                .map_or(Err(Error::Diff(gix_diff::tree::changes::Error::Cancelled)), |err| {
+                    Err(Error::ForEach(Box::new(err)))
+                }),
             Err(err) => Err(err.into()),
         }
     }

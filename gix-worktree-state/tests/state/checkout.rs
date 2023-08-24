@@ -281,12 +281,11 @@ fn keep_going_collects_results() {
         opts,
         "make_mixed_without_submodules",
         |_id| {
-            !matches!(
-                count.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |current| {
+            count
+                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |current| {
                     (current < 2).then_some(current + 1)
-                }),
-                Ok(_)
-            )
+                })
+                .is_err()
         },
         |_| Ok(()),
     )

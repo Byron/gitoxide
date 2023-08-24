@@ -189,14 +189,14 @@ fn case_insensitive_matches_any_case() -> crate::Result {
 #[test]
 fn pattern_with_escaped_backslash() -> crate::Result {
     assert_section_value(
-        original_value_on_windows(Condition::new(r#"gitdir:\\work\\tree\\/"#)),
+        original_value_on_windows(Condition::new(r"gitdir:\\work\\tree\\/")),
         GitEnv::repo_name("worktree")?,
     )
 }
 
 #[test]
 fn pattern_with_backslash() -> crate::Result {
-    assert_section_value(Condition::new(r#"gitdir:work\tree/"#), GitEnv::repo_name("worktree")?)
+    assert_section_value(Condition::new(r"gitdir:work\tree/"), GitEnv::repo_name("worktree")?)
 }
 
 #[test]

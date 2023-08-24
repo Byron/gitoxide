@@ -75,12 +75,11 @@ impl Cache {
         const DEFAULT: bool = true;
         self.resolved
             .boolean_by_key("core.commitGraph")
-            .map(|res| {
+            .map_or(Ok(DEFAULT), |res| {
                 Core::COMMIT_GRAPH
                     .enrich_error(res)
                     .with_lenient_default_value(self.lenient_config, DEFAULT)
             })
-            .unwrap_or(Ok(DEFAULT))
     }
 
     pub(crate) fn diff_renames(

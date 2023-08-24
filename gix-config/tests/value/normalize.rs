@@ -69,7 +69,7 @@ fn inner_quotes_are_removed() {
 
 #[test]
 fn newline_tab_backspace_are_escapable() {
-    assert_eq!(normalize_bstr(r#"\n\ta\b"#), cow_str("\n\t"));
+    assert_eq!(normalize_bstr(r"\n\ta\b"), cow_str("\n\t"));
 }
 
 #[test]
@@ -80,7 +80,7 @@ fn tabs_are_not_resolved_to_spaces_unlike_what_git_does() {
 #[test]
 fn other_escapes_are_ignored_entirely() {
     assert_eq!(
-        normalize_bstr(r#"\x"#),
+        normalize_bstr(r"\x"),
         cow_str("x"),
         "however, these would cause failure on parsing level so we ignore it similar to subsections"
     );

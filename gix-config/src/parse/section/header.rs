@@ -147,7 +147,7 @@ fn escape_subsection(name: &BStr) -> Cow<'_, BStr> {
     let mut buf = Vec::with_capacity(name.len());
     for b in name.iter().copied() {
         match b {
-            b'\\' => buf.push_str(br#"\\"#),
+            b'\\' => buf.push_str(br"\\"),
             b'"' => buf.push_str(br#"\""#),
             _ => buf.push(b),
         }

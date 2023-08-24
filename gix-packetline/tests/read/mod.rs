@@ -174,7 +174,7 @@ pub mod streaming_peek_iter {
     #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
     async fn read_from_file_and_reader_advancement() -> crate::Result {
         let mut bytes = fixture_bytes("v1/fetch/01-many-refs.response");
-        bytes.extend(fixture_bytes("v1/fetch/01-many-refs.response").into_iter());
+        bytes.extend(fixture_bytes("v1/fetch/01-many-refs.response"));
         let mut rd = gix_packetline::StreamingPeekableIter::new(&bytes[..], &[PacketLineRef::Flush]);
         let res = rd.read_line().await;
         assert_eq!(res.expect("line")??, first_line());

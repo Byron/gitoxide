@@ -9,7 +9,9 @@ pub fn list(repo: Repository, mut out: impl std::io::Write, format: OutputFormat
         bail!("Only human output is supported for now")
     }
 
-    let Some(submodules) = repo.submodules()? else { return Ok(()) };
+    let Some(submodules) = repo.submodules()? else {
+        return Ok(());
+    };
     for sm in submodules {
         print_sm(sm, &mut out)?;
     }

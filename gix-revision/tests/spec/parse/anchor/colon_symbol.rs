@@ -55,7 +55,7 @@ fn various_forms_of_regex() {
 
 #[test]
 fn regex_do_not_get_any_backslash_processing() {
-    for (spec, regex) in [(r#":/{"#, "{"), (r#":/\{\}"#, r#"\{\}"#), (r#":/\\\\\}"#, r#"\\\\\}"#)] {
+    for (spec, regex) in [(r#":/{"#, "{"), (r":/\{\}", r"\{\}"), (r":/\\\\\}", r"\\\\\}")] {
         let rec = parse(spec);
 
         assert_eq!(rec.patterns, vec![(regex.into(), false)]);

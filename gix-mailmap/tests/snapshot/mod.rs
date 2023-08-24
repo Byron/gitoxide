@@ -65,7 +65,7 @@ fn non_name_and_name_mappings_will_not_clash() {
             "old-email",
         ),
     ];
-    for entries in vec![entries.clone().into_iter().rev().collect::<Vec<_>>(), entries] {
+    for entries in [entries.clone().into_iter().rev().collect::<Vec<_>>(), entries] {
         let snapshot = Snapshot::new(entries);
 
         assert_eq!(

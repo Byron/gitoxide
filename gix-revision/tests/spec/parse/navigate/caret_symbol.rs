@@ -105,40 +105,36 @@ fn regex_backslash_rules() {
             "matching inner parens do not need escaping",
         ),
         (
-            r#"@^{/with count\{1\}}"#,
+            r"@^{/with count\{1\}}",
             r#"with count{1}"#,
             "escaped parens are entirely ignored",
         ),
-        (r#"@^{/1\}}"#, r#"1}"#, "unmatched closing parens need to be escaped"),
-        (r#"@^{/2\{}"#, r#"2{"#, "unmatched opening parens need to be escaped"),
+        (r"@^{/1\}}", r#"1}"#, "unmatched closing parens need to be escaped"),
+        (r"@^{/2\{}", r#"2{"#, "unmatched opening parens need to be escaped"),
         (
-            r#"@^{/3{\{}}"#,
+            r"@^{/3{\{}}",
             r#"3{{}"#,
             "unmatched nested opening parens need to be escaped",
         ),
         (
-            r#"@^{/4{\}}}"#,
+            r"@^{/4{\}}}",
             r#"4{}}"#,
             "unmatched nested closing parens need to be escaped",
         ),
+        (r"@^{/a\b\c}", r"a\b\c", "single backslashes do not need to be escaped"),
         (
-            r#"@^{/a\b\c}"#,
-            r#"a\b\c"#,
-            "single backslashes do not need to be escaped",
-        ),
-        (
-            r#"@^{/a\b\c\\}"#,
-            r#"a\b\c\"#,
+            r"@^{/a\b\c\\}",
+            r"a\b\c\",
             "single backslashes do not need to be escaped, trailing",
         ),
         (
-            r#"@^{/a\\b\\c\\}"#,
-            r#"a\b\c\"#,
+            r"@^{/a\\b\\c\\}",
+            r"a\b\c\",
             "backslashes can be escaped nonetheless, trailing",
         ),
         (
-            r#"@^{/5\\{}}"#,
-            r#"5\{}"#,
+            r"@^{/5\\{}}",
+            r"5\{}",
             "backslashes in front of parens must be escaped or they would unbalance the brace pair",
         ),
     ] {
@@ -196,11 +192,11 @@ fn invalid_object_type() {
 
 #[test]
 fn incomplete_escaped_braces_in_regex_are_invalid() {
-    let err = try_parse(r#"@^{/a\{1}}"#).unwrap_err();
+    let err = try_parse(r"@^{/a\{1}}").unwrap_err();
     assert!(matches!(err, spec::parse::Error::UnconsumedInput {input} if input == "}"));
 
-    let err = try_parse(r#"@^{/a{1\}}"#).unwrap_err();
-    assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == r#"{/a{1\}}"#));
+    let err = try_parse(r"@^{/a{1\}}").unwrap_err();
+    assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == r"{/a{1\}}"));
 }
 
 #[test]
@@ -211,11 +207,11 @@ fn regex_with_empty_exclamation_mark_prefix_is_invalid() {
 
 #[test]
 fn bad_escapes_can_cause_brace_mismatch() {
-    let err = try_parse(r#"@^{\}"#).unwrap_err();
-    assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == r#"{\}"#));
+    let err = try_parse(r"@^{\}").unwrap_err();
+    assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == r"{\}"));
 
-    let err = try_parse(r#"@^{{\}}"#).unwrap_err();
-    assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == r#"{{\}}"#));
+    let err = try_parse(r"@^{{\}}").unwrap_err();
+    assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == r"{{\}}"));
 }
 
 #[test]

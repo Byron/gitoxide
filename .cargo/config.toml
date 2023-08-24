@@ -5,7 +5,6 @@ rustflags = [
 
     # Clippy lints
     "-W", "clippy::cloned_instead_of_copied",
-    "-W", "clippy::explicit_iter_loop",
     "-W", "clippy::map_unwrap_or",
     "-W", "clippy::redundant_closure_for_method_calls",
     "-W", "clippy::unnested_or_patterns",
@@ -14,6 +13,7 @@ rustflags = [
     # Rejected for now, and why
     # "-W" "clippy::default_trait_access" - sometimes makes imports necessary, just for a default value. It's good for more explicit typing though.
     # "-W" "clippy::range_plus_one" - useful, but caused too many false positives as we use range types directly quite a lot
+    # "-W", "clippy::explicit_iter_loop", - the cases I saw turned `foo.iter_mut()` into `&mut *foo`
 
 
     # Rustdoc lints

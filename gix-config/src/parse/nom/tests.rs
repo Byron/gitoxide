@@ -62,7 +62,7 @@ mod section_headers {
     fn backslashes_in_subsections_do_not_escape_newlines_or_tabs() {
         assert_eq!(
             section_header.parse_peek(br#"[hello "single \ \\ \t \n \0"]"#).unwrap(),
-            fully_consumed(parsed_section_header("hello", (" ", r#"single  \ t n 0"#)))
+            fully_consumed(parsed_section_header("hello", (" ", r"single  \ t n 0")))
         );
     }
 
@@ -756,6 +756,7 @@ mod value_no_continuation {
     }
 
     #[test]
+    #[allow(clippy::needless_raw_string_hashes)]
     fn trans_escaped_comment_marker_not_consumed() {
         let mut events = section::Events::default();
         assert_eq!(value_impl(br##"hello"#"world; a"##, &mut events).unwrap().0, b"; a");
@@ -776,7 +777,7 @@ mod value_no_continuation {
 
     #[test]
     fn invalid_escape() {
-        assert!(value_impl(br#"\x"#, &mut Default::default()).is_err());
+        assert!(value_impl(br"\x", &mut Default::default()).is_err());
     }
 
     #[test]
@@ -786,7 +787,7 @@ mod value_no_continuation {
 
     #[test]
     fn incomplete_escape() {
-        assert!(value_impl(br#"hello world\"#, &mut Default::default()).is_err());
+        assert!(value_impl(br"hello world\", &mut Default::default()).is_err());
     }
 }
 

@@ -148,11 +148,11 @@ mod relative {
 
     #[test]
     fn various() {
-        let now = Some(SystemTime::now());
-        let two_weeks_ago = gix_date::parse("2 weeks ago", now).unwrap();
+        let now = SystemTime::now();
+        let two_weeks_ago = gix_date::parse("2 weeks ago", Some(now)).unwrap();
         assert_eq!(Sign::Plus, two_weeks_ago.sign);
         assert_eq!(0, two_weeks_ago.offset);
-        let expected = OffsetDateTime::from(now.unwrap()).saturating_sub(Duration::weeks(2));
+        let expected = OffsetDateTime::from(now).saturating_sub(Duration::weeks(2));
         // account for the loss of precision when creating `Time` with seconds
         let expected = expected.replace_nanosecond(0).unwrap();
         assert_eq!(
