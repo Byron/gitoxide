@@ -83,9 +83,13 @@ fn find_scheme(input: &BStr) -> InputScheme {
 /// For file-paths, we don't expect UTF8 encoding either.
 pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     match find_scheme(input) {
+        InputScheme::Local => parse_local(input, false),
+        InputScheme::Url { protocol_end } if input[..protocol_end].eq_ignore_ascii_case(b"file") => {
+            // strip the protocol part
+            parse_local(&input[protocol_end + 3..], true)
+        }
         InputScheme::Url { .. } => parse_url(input),
         InputScheme::Scp { colon } => parse_scp(input, colon),
-        InputScheme::Local => parse_local(input),
     }
 }
 
@@ -172,7 +176,7 @@ fn parse_scp(input: &BStr, colon: usize) -> Result<crate::Url, Error> {
     })
 }
 
-fn parse_local(input: &BStr) -> Result<crate::Url, Error> {
+fn parse_local(input: &BStr, was_in_url_format: bool) -> Result<crate::Url, Error> {
     if input.is_empty() {
         return Err(Error::MissingRepositoryPath {
             url: input.to_owned(),
@@ -180,8 +184,10 @@ fn parse_local(input: &BStr) -> Result<crate::Url, Error> {
         });
     }
 
+    // TODO: handle relative paths, Git does weird stuff
+
     Ok(crate::Url {
-        serialize_alternative_form: true,
+        serialize_alternative_form: !was_in_url_format,
         scheme: crate::scheme::Scheme::File,
         password: None,
         user: None,
