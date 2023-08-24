@@ -101,6 +101,19 @@ fn parse_url(input: &BStr) -> Result<crate::Url, Error> {
         source,
     })?;
 
+    let scheme = url.scheme().into();
+
+    if matches!(scheme, crate::Scheme::Git | crate::Scheme::Ssh) && url.path().is_empty() {
+        return Err(Error::MissingRepositoryPath {
+            url: input.to_owned().into(),
+            kind: UrlKind::Url,
+        });
+    }
+
+    if url.cannot_be_a_base() {
+        return Err(Error::RelativeUrl { url: input.to_owned() });
+    }
+
     Ok(crate::Url {
         serialize_alternative_form: false,
         scheme: url.scheme().into(),
@@ -126,6 +139,13 @@ fn parse_scp(input: &BStr, colon: usize) -> Result<crate::Url, Error> {
     // TODO: this incorrectly splits at IPv6 addresses, check for `[]` before splitting
     let (host, path) = input.split_at(colon);
     let path = &path[1..]; // remove leading `:`
+
+    if path.is_empty() {
+        return Err(Error::MissingRepositoryPath {
+            url: input.to_owned().into(),
+            kind: UrlKind::Scp,
+        });
+    }
 
     // The path returned by the parsed url often has the wrong number of leading `/` characters but
     // should never differ in any other way (ssh URLs should not contain a query or fragment part).
@@ -153,6 +173,13 @@ fn parse_scp(input: &BStr, colon: usize) -> Result<crate::Url, Error> {
 }
 
 fn parse_local(input: &BStr) -> Result<crate::Url, Error> {
+    if input.is_empty() {
+        return Err(Error::MissingRepositoryPath {
+            url: input.to_owned(),
+            kind: UrlKind::Local,
+        });
+    }
+
     Ok(crate::Url {
         serialize_alternative_form: true,
         scheme: crate::scheme::Scheme::File,
