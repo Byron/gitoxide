@@ -85,8 +85,7 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     match find_scheme(input) {
         InputScheme::Local => parse_local(input, false),
         InputScheme::Url { protocol_end } if input[..protocol_end].eq_ignore_ascii_case(b"file") => {
-            // strip the protocol part
-            parse_local(&input[protocol_end + 3..], true)
+            parse_file_url(input, protocol_end)
         }
         InputScheme::Url { .. } => parse_url(input),
         InputScheme::Scp { colon } => parse_scp(input, colon),
@@ -176,6 +175,28 @@ fn parse_scp(input: &BStr, colon: usize) -> Result<crate::Url, Error> {
     })
 }
 
+fn parse_file_url(input: &BStr, protocol_colon: usize) -> Result<crate::Url, Error> {
+    let input = std::str::from_utf8(input).map_err(|source| Error::Utf8 {
+        url: input.to_owned(),
+        kind: UrlKind::Url,
+        source,
+    })?;
+    let url = url::Url::parse(input).map_err(|source| Error::Url {
+        url: input.to_owned(),
+        kind: UrlKind::Url,
+        source,
+    })?;
+
+    if !input[protocol_colon + 3..].contains('/') {
+        return Err(Error::MissingRepositoryPath {
+            url: input.to_owned().into(),
+            kind: UrlKind::Url,
+        });
+    }
+
+    parse_local(url.path().into(), true)
+}
+
 fn parse_local(input: &BStr, was_in_url_format: bool) -> Result<crate::Url, Error> {
     if input.is_empty() {
         return Err(Error::MissingRepositoryPath {
@@ -183,8 +204,6 @@ fn parse_local(input: &BStr, was_in_url_format: bool) -> Result<crate::Url, Erro
             kind: UrlKind::Local,
         });
     }
-
-    // TODO: handle relative paths, Git does weird stuff
 
     Ok(crate::Url {
         serialize_alternative_form: !was_in_url_format,

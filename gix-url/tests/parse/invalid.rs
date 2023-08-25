@@ -25,8 +25,12 @@ fn file_missing_path() {
 }
 
 #[test]
-fn empty() {
+fn empty_input() {
     assert_matches!(parse(""), Err(MissingRepositoryPath { .. }));
+}
+
+#[test]
+fn file_missing_host_path_separator() {
     assert_matches!(parse("file://.."), Err(MissingRepositoryPath { .. }));
     assert_matches!(parse("file://."), Err(MissingRepositoryPath { .. }));
     #[cfg(not(windows))]
