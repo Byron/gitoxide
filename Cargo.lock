@@ -1796,6 +1796,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-macros"
+version = "0.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.29",
+]
+
+[[package]]
 name = "gix-mailmap"
 version = "0.17.0"
 dependencies = [
