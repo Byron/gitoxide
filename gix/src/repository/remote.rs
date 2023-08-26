@@ -64,6 +64,7 @@ impl crate::Repository {
     ///
     /// We will only include information if we deem it [trustworthy][crate::open::Options::filter_config_section()].
     #[momo]
+    #[allow(clippy::needless_lifetimes)]
     pub fn try_find_remote<'a>(&self, name_or_url: impl Into<&'a BStr>) -> Option<Result<Remote<'_>, find::Error>> {
         self.try_find_remote_inner(name_or_url, true)
     }
@@ -72,6 +73,7 @@ impl crate::Repository {
     /// as it skips rewriting them.
     /// Use this in conjunction with [`Remote::rewrite_urls()`] to non-destructively apply the rules and keep the failed urls unchanged.
     #[momo]
+    #[allow(clippy::needless_lifetimes)]
     pub fn try_find_remote_without_url_rewrite<'a>(
         &self,
         name_or_url: impl Into<&'a BStr>,
