@@ -1,6 +1,8 @@
 #![allow(clippy::result_large_err)]
 use std::any::Any;
 
+use gix_macros::momo;
+
 use crate::bstr::BStr;
 
 impl crate::Repository {
@@ -21,12 +23,14 @@ impl crate::Repository {
         )),
         allow(unused_variables)
     )]
+    #[allow(clippy::needless_lifetimes)]
+    #[momo]
     pub fn transport_options<'a>(
         &self,
         url: impl Into<&'a BStr>,
         remote_name: Option<&BStr>,
     ) -> Result<Option<Box<dyn Any>>, crate::config::transport::Error> {
-        let url = gix_url::parse(url.into())?;
+        let url = gix_url::parse(url)?;
         use gix_url::Scheme::*;
 
         match &url.scheme {
@@ -270,7 +274,7 @@ impl crate::Repository {
                         .proxy
                         .as_deref()
                         .filter(|url| !url.is_empty())
-                        .map(|url| gix_url::parse(url.into()))
+                        .map(|url| gix_url::parse(<&BStr>::from(url)))
                         .transpose()?
                         .filter(|url| url.user().is_some())
                         .map(|url| -> Result<_, config::transport::http::Error> {

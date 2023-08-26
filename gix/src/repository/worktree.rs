@@ -57,12 +57,12 @@ impl crate::Repository {
     /// The entries will look exactly like they would if one would check them out, with filters applied.
     /// The `export-ignore` attribute is used to skip blobs or directories to which it applies.
     #[cfg(feature = "worktree-stream")]
+    #[gix_macros::momo]
     pub fn worktree_stream(
         &self,
         id: impl Into<gix_hash::ObjectId>,
     ) -> Result<(gix_worktree_stream::Stream, gix_index::File), crate::repository::worktree_stream::Error> {
         use gix_odb::{FindExt, HeaderExt};
-        let id = id.into();
         let header = self.objects.header(id)?;
         if !header.kind().is_tree() {
             return Err(crate::repository::worktree_stream::Error::NotATree {

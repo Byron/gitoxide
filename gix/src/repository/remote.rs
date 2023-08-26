@@ -1,6 +1,8 @@
 #![allow(clippy::result_large_err)]
 use std::convert::TryInto;
 
+use gix_macros::momo;
+
 use crate::{bstr::BStr, config, remote, remote::find, Remote};
 
 impl crate::Repository {
@@ -61,6 +63,7 @@ impl crate::Repository {
     /// as negations/excludes are applied after includes.
     ///
     /// We will only include information if we deem it [trustworthy][crate::open::Options::filter_config_section()].
+    #[momo]
     pub fn try_find_remote<'a>(&self, name_or_url: impl Into<&'a BStr>) -> Option<Result<Remote<'_>, find::Error>> {
         self.try_find_remote_inner(name_or_url, true)
     }
@@ -68,6 +71,7 @@ impl crate::Repository {
     /// Similar to [`try_find_remote()`][Self::try_find_remote()], but removes a failure mode if rewritten URLs turn out to be invalid
     /// as it skips rewriting them.
     /// Use this in conjunction with [`Remote::rewrite_urls()`] to non-destructively apply the rules and keep the failed urls unchanged.
+    #[momo]
     pub fn try_find_remote_without_url_rewrite<'a>(
         &self,
         name_or_url: impl Into<&'a BStr>,
