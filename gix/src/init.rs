@@ -1,6 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::{borrow::Cow, convert::TryInto, path::Path};
 
+use gix_macros::momo;
 use gix_ref::{
     store::WriteReflog,
     transaction::{PreviousValue, RefEdit},
@@ -40,6 +41,7 @@ impl ThreadSafeRepository {
     ///
     /// Fails without action if there is already a `.git` repository inside of `directory`, but
     /// won't mind if the `directory` otherwise is non-empty.
+    #[momo]
     pub fn init(
         directory: impl AsRef<Path>,
         kind: crate::create::Kind,
@@ -56,6 +58,8 @@ impl ThreadSafeRepository {
     ///
     /// Instead of naming the default branch `master`, we name it `main` unless configured explicitly using the `init.defaultBranch`
     /// configuration key.
+    #[momo]
+    #[allow(unused_mut)]
     pub fn init_opts(
         directory: impl AsRef<Path>,
         kind: crate::create::Kind,
