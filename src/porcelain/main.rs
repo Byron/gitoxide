@@ -7,10 +7,8 @@ use anyhow::Result;
 use clap::Parser;
 use gitoxide_core as core;
 
-use crate::{
-    porcelain::options::{Args, Subcommands},
-    shared::pretty::prepare_and_run,
-};
+use crate::porcelain::options::{Args, Subcommands};
+use gitoxide::shared::pretty::prepare_and_run;
 
 pub fn main() -> Result<()> {
     let args: Args = Args::parse_from(gix::env::args_os());
@@ -39,7 +37,7 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
             progress_keep_open,
-            crate::shared::STANDARD_RANGE,
+            gitoxide::shared::STANDARD_RANGE,
             move |_progress, _out, _err| panic!("something went very wrong"),
         ),
         Subcommands::Init { directory } => core::repository::init(directory).map(|_| ()),
@@ -59,7 +57,7 @@ pub fn main() -> Result<()> {
                     verbose,
                     progress,
                     progress_keep_open,
-                    crate::shared::STANDARD_RANGE,
+                    gitoxide::shared::STANDARD_RANGE,
                     move |mut progress, out, mut err| {
                         let engine = query::prepare(
                             &repo_dir,
@@ -99,7 +97,7 @@ pub fn main() -> Result<()> {
                     verbose,
                     progress,
                     progress_keep_open,
-                    crate::shared::STANDARD_RANGE,
+                    gitoxide::shared::STANDARD_RANGE,
                     move |progress, out, _err| {
                         hours::estimate(
                             &working_dir,
@@ -126,7 +124,7 @@ pub fn main() -> Result<()> {
                     verbose,
                     progress,
                     progress_keep_open,
-                    crate::shared::STANDARD_RANGE,
+                    gitoxide::shared::STANDARD_RANGE,
                     move |progress, out, _err| {
                         organize::discover(
                             root.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
@@ -150,7 +148,7 @@ pub fn main() -> Result<()> {
                     verbose,
                     progress,
                     progress_keep_open,
-                    crate::shared::STANDARD_RANGE,
+                    gitoxide::shared::STANDARD_RANGE,
                     move |progress, _out, _err| {
                         organize::run(
                             if execute {

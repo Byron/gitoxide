@@ -26,7 +26,7 @@ use crate::{
 
 #[cfg(feature = "gitoxide-core-async-client")]
 pub mod async_util {
-    use crate::shared::ProgressRange;
+    use gitoxide::shared::ProgressRange;
 
     #[cfg(not(feature = "prodash-render-line"))]
     compile_error!("BUG: Need at least a line renderer in async mode");
@@ -39,7 +39,7 @@ pub mod async_util {
         Option<prodash::render::line::JoinHandle>,
         gix_features::progress::DoOrDiscard<prodash::tree::Item>,
     ) {
-        use crate::shared::{self, STANDARD_RANGE};
+        use gitoxide::shared::{self, STANDARD_RANGE};
         shared::init_env_logger();
 
         if verbose {

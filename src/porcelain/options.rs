@@ -116,7 +116,7 @@ pub mod tools {
 
     #[cfg(feature = "gitoxide-core-tools-query")]
     pub mod query {
-        use crate::shared::AsPathSpec;
+        use gitoxide::shared::AsPathSpec;
 
         #[derive(Debug, clap::Subcommand)]
         pub enum Command {
@@ -143,7 +143,7 @@ pub mod tools {
         #[clap(default_value = ".")]
         pub working_dir: PathBuf,
         /// The name of the revision as spec, like 'HEAD' or 'main' at which to start iterating the commit graph.
-        #[clap(default_value("HEAD"), value_parser = crate::shared::AsBString)]
+        #[clap(default_value("HEAD"), value_parser = gitoxide::shared::AsBString)]
         pub rev_spec: BString,
         /// Ignore github bots which match the `[bot]` search string.
         #[clap(short = 'b', long)]
