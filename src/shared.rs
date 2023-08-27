@@ -101,7 +101,7 @@ pub mod pretty {
         enable: bool,
         reverse_lines: bool,
         progress: &gix::progress::prodash::tree::Root,
-    ) -> anyhow::Result<tracing::subscriber::DefaultGuard> {
+    ) -> anyhow::Result<()> {
         Ok(if enable {
             let processor = tracing_forest::Printer::new().formatter({
                 let progress = std::sync::Mutex::new(progress.add_child("tracing"));
@@ -124,9 +124,9 @@ pub mod pretty {
             });
             use tracing_subscriber::layer::SubscriberExt;
             let subscriber = tracing_subscriber::Registry::default().with(tracing_forest::ForestLayer::from(processor));
-            tracing::subscriber::set_default(subscriber)
+            tracing::subscriber::set_global_default(subscriber)?;
         } else {
-            tracing::subscriber::set_default(tracing_subscriber::Registry::default())
+            tracing::subscriber::set_global_default(tracing_subscriber::Registry::default())?;
         })
     }
 
@@ -158,7 +158,7 @@ pub mod pretty {
                 use crate::shared::{self, STANDARD_RANGE};
                 let progress = shared::progress_tree();
                 let sub_progress = progress.add_child(name);
-                let _trace = init_tracing(trace, false, &progress)?;
+                init_tracing(trace, false, &progress)?;
 
                 let handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
 
