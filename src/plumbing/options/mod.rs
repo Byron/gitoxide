@@ -705,6 +705,9 @@ pub mod index {
             /// back by default, but that requires us to write more of the index to work.
             #[clap(long, short = 'i')]
             index_output_path: Option<PathBuf>,
+            /// Don't write the trailing hash for a performance gain.
+            #[clap(long, short = 's')]
+            skip_hash: bool,
             /// A revspec that points to the to generate the index from.
             spec: std::ffi::OsString,
         },
