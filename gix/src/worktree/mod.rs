@@ -90,7 +90,11 @@ pub mod open_index {
         #[error(transparent)]
         ConfigIndexThreads(#[from] crate::config::key::GenericErrorWithValue),
         #[error(transparent)]
+        ConfigSkipHash(#[from] crate::config::boolean::Error),
+        #[error(transparent)]
         IndexFile(#[from] gix_index::file::init::Error),
+        #[error(transparent)]
+        IndexCorrupt(#[from] gix_index::file::verify::Error),
     }
 
     impl<'repo> crate::Worktree<'repo> {

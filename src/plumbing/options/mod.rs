@@ -16,7 +16,7 @@ pub struct Args {
     ///
     /// For example, if `key` is `core.abbrev`, set configuration like `[core] abbrev = key`,
     /// or `remote.origin.url = foo` to set `[remote "origin"] url = foo`.
-    #[clap(long, short = 'c', value_parser = crate::shared::AsBString)]
+    #[clap(long, short = 'c', value_parser = gitoxide::shared::AsBString)]
     pub config: Vec<BString>,
 
     #[clap(long, short = 't')]
@@ -63,12 +63,12 @@ pub struct Args {
         long,
         short = 'f',
         default_value = "human",
-        value_parser = crate::shared::AsOutputFormat
+        value_parser = gitoxide::shared::AsOutputFormat
     )]
     pub format: core::OutputFormat,
 
     /// The object format to assume when reading files that don't inherently know about it, or when writing files.
-    #[clap(long, default_value_t = gix::hash::Kind::default(), value_parser = crate::shared::AsHashKind)]
+    #[clap(long, default_value_t = gix::hash::Kind::default(), value_parser = gitoxide::shared::AsHashKind)]
     pub object_hash: gix::hash::Kind,
 
     #[clap(subcommand)]
@@ -237,7 +237,7 @@ pub mod config {
         ///
         /// Typical filters are `branch` or `remote.origin` or `remote.or*` - git-style globs are supported
         /// and comparisons are case-insensitive.
-        #[clap(value_parser = crate::shared::AsBString)]
+        #[clap(value_parser = gitoxide::shared::AsBString)]
         pub filter: Vec<BString>,
     }
 }
@@ -276,7 +276,7 @@ pub mod fetch {
         pub remote: Option<String>,
 
         /// Override the built-in and configured ref-specs with one or more of the given ones.
-        #[clap(value_parser = crate::shared::AsBString)]
+        #[clap(value_parser = gitoxide::shared::AsBString)]
         pub ref_spec: Vec<gix::bstr::BString>,
     }
 
@@ -291,11 +291,11 @@ pub mod fetch {
         pub deepen: Option<u32>,
 
         /// Cutoff all history past the given date. Can be combined with shallow-exclude.
-        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsTime, value_name = "DATE", conflicts_with_all = ["depth", "deepen", "unshallow"])]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = gitoxide::shared::AsTime, value_name = "DATE", conflicts_with_all = ["depth", "deepen", "unshallow"])]
         pub shallow_since: Option<gix::date::Time>,
 
         /// Cutoff all history past the tag-name or ref-name. Can be combined with shallow-since.
-        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsPartialRefName, value_name = "REF_NAME", conflicts_with_all = ["depth", "deepen", "unshallow"])]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = gitoxide::shared::AsPartialRefName, value_name = "REF_NAME", conflicts_with_all = ["depth", "deepen", "unshallow"])]
         pub shallow_exclude: Vec<gix::refs::PartialName>,
 
         /// Remove the shallow boundary and fetch the entire history available on the remote.
@@ -362,11 +362,11 @@ pub mod clone {
         pub depth: Option<NonZeroU32>,
 
         /// Cutoff all history past the given date. Can be combined with shallow-exclude.
-        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsTime, value_name = "DATE")]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = gitoxide::shared::AsTime, value_name = "DATE")]
         pub shallow_since: Option<gix::date::Time>,
 
         /// Cutoff all history past the tag-name or ref-name. Can be combined with shallow-since.
-        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsPartialRefName, value_name = "REF_NAME")]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = gitoxide::shared::AsPartialRefName, value_name = "REF_NAME")]
         pub shallow_exclude: Vec<gix::refs::PartialName>,
     }
 
@@ -418,7 +418,7 @@ pub mod remote {
             #[clap(long, short = 'u')]
             show_unmapped_remote_refs: bool,
             /// Override the built-in and configured ref-specs with one or more of the given ones.
-            #[clap(value_parser = crate::shared::AsBString)]
+            #[clap(value_parser = gitoxide::shared::AsBString)]
             ref_spec: Vec<gix::bstr::BString>,
         },
     }
@@ -594,7 +594,7 @@ pub mod revision {
 pub mod attributes {
     use gix::bstr::BString;
 
-    use crate::shared::CheckPathSpec;
+    use gitoxide::shared::CheckPathSpec;
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -625,7 +625,7 @@ pub mod exclude {
 
     use gix::bstr::BString;
 
-    use crate::shared::CheckPathSpec;
+    use gitoxide::shared::CheckPathSpec;
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -656,7 +656,7 @@ pub mod index {
 
     use gix::bstr::BString;
 
-    use crate::shared::CheckPathSpec;
+    use gitoxide::shared::CheckPathSpec;
 
     pub mod entries {
         #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
@@ -705,6 +705,9 @@ pub mod index {
             /// back by default, but that requires us to write more of the index to work.
             #[clap(long, short = 'i')]
             index_output_path: Option<PathBuf>,
+            /// Don't write the trailing hash for a performance gain.
+            #[clap(long, short = 's')]
+            skip_hash: bool,
             /// A revspec that points to the to generate the index from.
             spec: std::ffi::OsString,
         },

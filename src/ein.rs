@@ -1,11 +1,8 @@
 #![deny(rust_2018_idioms, unsafe_code)]
 
 mod porcelain;
-mod shared;
 
-use anyhow::Result;
-
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     porcelain::main()
 }
 

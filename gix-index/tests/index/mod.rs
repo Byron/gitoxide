@@ -50,7 +50,7 @@ impl Fixture {
     }
 
     pub fn open(&self) -> gix_index::File {
-        gix_index::File::at(self.to_path(), gix_hash::Kind::Sha1, Default::default())
+        gix_index::File::at(self.to_path(), gix_hash::Kind::Sha1, false, Default::default())
             .expect("fixtures are always readable")
     }
 }

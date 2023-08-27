@@ -20,5 +20,9 @@
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
-#![deny(rust_2018_idioms, missing_docs)]
+#![deny(rust_2018_idioms)]
+#![allow(missing_docs)]
 #![forbid(unsafe_code)]
+
+/// everything in common beteween the `gix` and `ein` binaries.
+pub mod shared;

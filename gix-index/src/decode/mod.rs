@@ -54,7 +54,7 @@ pub struct Options {
 
 impl State {
     /// Decode an index state from `data` and store `timestamp` in the resulting instance for pass-through, assuming `object_hash`
-    /// to be used through the file.
+    /// to be used through the file. Also return the stored hash over all bytes in `data` or `None` if none was written due to `index.skipHash`.
     pub fn from_bytes(
         data: &[u8],
         timestamp: FileTime,
@@ -64,7 +64,7 @@ impl State {
             min_extension_block_in_bytes_for_threading,
             expected_checksum,
         }: Options,
-    ) -> Result<(Self, gix_hash::ObjectId), Error> {
+    ) -> Result<(Self, Option<gix_hash::ObjectId>), Error> {
         let _span = gix_features::trace::detail!("gix_index::State::from_bytes()");
         let (version, num_entries, post_header_data) = header::decode(data, object_hash)?;
         let start_of_extensions = extension::end_of_index_entry::decode(data, object_hash);
@@ -214,10 +214,11 @@ impl State {
         }
 
         let checksum = gix_hash::ObjectId::from(data);
-        if let Some(expected_checksum) = expected_checksum {
-            if checksum != expected_checksum {
+        let checksum = (!checksum.is_null()).then_some(checksum);
+        if let Some((expected_checksum, actual_checksum)) = expected_checksum.zip(checksum) {
+            if actual_checksum != expected_checksum {
                 return Err(Error::ChecksumMismatch {
-                    actual_checksum: checksum,
+                    actual_checksum,
                     expected_checksum,
                 });
             }

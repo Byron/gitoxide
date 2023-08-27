@@ -26,7 +26,7 @@ use crate::{
 
 #[cfg(feature = "gitoxide-core-async-client")]
 pub mod async_util {
-    use crate::shared::ProgressRange;
+    use gitoxide::shared::ProgressRange;
 
     #[cfg(not(feature = "prodash-render-line"))]
     compile_error!("BUG: Need at least a line renderer in async mode");
@@ -39,7 +39,7 @@ pub mod async_util {
         Option<prodash::render::line::JoinHandle>,
         gix_features::progress::DoOrDiscard<prodash::tree::Item>,
     ) {
-        use crate::shared::{self, STANDARD_RANGE};
+        use gitoxide::shared::{self, STANDARD_RANGE};
         shared::init_env_logger();
 
         if verbose {
@@ -447,6 +447,7 @@ pub fn main() -> Result<()> {
                 free::index::Subcommands::FromList {
                     force,
                     index_output_path,
+                    skip_hash,
                     file,
                 } => prepare_and_run(
                     "index-from-list",
@@ -455,7 +456,9 @@ pub fn main() -> Result<()> {
                     progress,
                     progress_keep_open,
                     None,
-                    move |_progress, _out, _err| core::repository::index::from_list(file, index_output_path, force),
+                    move |_progress, _out, _err| {
+                        core::repository::index::from_list(file, index_output_path, force, skip_hash)
+                    },
                 ),
                 free::index::Subcommands::CheckoutExclusive {
                     directory,
@@ -1164,6 +1167,7 @@ pub fn main() -> Result<()> {
             index::Subcommands::FromTree {
                 force,
                 index_output_path,
+                skip_hash,
                 spec,
             } => prepare_and_run(
                 "index-from-tree",
@@ -1173,7 +1177,13 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, _out, _err| {
-                    core::repository::index::from_tree(spec, index_output_path, force, repository(Mode::Strict)?)
+                    core::repository::index::from_tree(
+                        repository(Mode::Strict)?,
+                        spec,
+                        index_output_path,
+                        force,
+                        skip_hash,
+                    )
                 },
             ),
         },

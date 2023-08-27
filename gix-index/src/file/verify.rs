@@ -14,8 +14,6 @@ mod error {
             actual: gix_hash::ObjectId,
             expected: gix_hash::ObjectId,
         },
-        #[error("Checksum of in-memory index wasn't computed yet")]
-        NoChecksum,
     }
 }
 pub use error::Error;
@@ -24,19 +22,22 @@ impl File {
     /// Verify the integrity of the index to assure its consistency.
     pub fn verify_integrity(&self) -> Result<(), Error> {
         let _span = gix_features::trace::coarse!("gix_index::File::verify_integrity()");
-        let checksum = self.checksum.ok_or(Error::NoChecksum)?;
-        let num_bytes_to_hash = self.path.metadata()?.len() - checksum.as_bytes().len() as u64;
-        let should_interrupt = AtomicBool::new(false);
-        let actual = gix_features::hash::bytes_of_file(
-            &self.path,
-            num_bytes_to_hash as usize,
-            checksum.kind(),
-            &mut gix_features::progress::Discard,
-            &should_interrupt,
-        )?;
-        (actual == checksum).then_some(()).ok_or(Error::ChecksumMismatch {
-            actual,
-            expected: checksum,
-        })
+        if let Some(checksum) = self.checksum {
+            let num_bytes_to_hash = self.path.metadata()?.len() - checksum.as_bytes().len() as u64;
+            let should_interrupt = AtomicBool::new(false);
+            let actual = gix_features::hash::bytes_of_file(
+                &self.path,
+                num_bytes_to_hash as usize,
+                checksum.kind(),
+                &mut gix_features::progress::Discard,
+                &should_interrupt,
+            )?;
+            (actual == checksum).then_some(()).ok_or(Error::ChecksumMismatch {
+                actual,
+                expected: checksum,
+            })
+        } else {
+            Ok(())
+        }
     }
 }

@@ -39,7 +39,7 @@ pub mod index {
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
         /// The object format to assume when reading files that don't inherently know about it, or when writing files.
-        #[clap(long, default_value_t = gix::hash::Kind::default(), value_parser = crate::shared::AsHashKind)]
+        #[clap(long, default_value_t = gix::hash::Kind::default(), value_parser = gitoxide::shared::AsHashKind)]
         pub object_hash: gix::hash::Kind,
 
         /// The path to the index file.
@@ -63,6 +63,9 @@ pub mod index {
             /// back by default, but that requires us to write more of the index to work.
             #[clap(long, short = 'i')]
             index_output_path: Option<PathBuf>,
+            /// Don't write the trailing hash for a performance gain.
+            #[clap(long, short = 's')]
+            skip_hash: bool,
             /// The file to read the index entries from, one path per line.
             file: PathBuf,
         },

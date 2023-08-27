@@ -19,13 +19,14 @@ fn verify(index: gix_index::File) -> gix_index::File {
 
 pub(crate) fn loose_file(name: &str) -> gix_index::File {
     let path = loose_file_path(name);
-    let file = gix_index::File::at(path, gix_hash::Kind::Sha1, Default::default()).unwrap();
+    let file = gix_index::File::at(path, gix_hash::Kind::Sha1, false, Default::default()).unwrap();
     verify(file)
 }
 pub(crate) fn try_file(name: &str) -> Result<gix_index::File, gix_index::file::init::Error> {
     let file = gix_index::File::at(
         crate::fixture_index_path(name),
         gix_hash::Kind::Sha1,
+        false,
         Default::default(),
     )?;
     Ok(verify(file))
@@ -34,7 +35,7 @@ pub(crate) fn file(name: &str) -> gix_index::File {
     try_file(name).unwrap()
 }
 fn file_opt(name: &str, opts: gix_index::decode::Options) -> gix_index::File {
-    let file = gix_index::File::at(crate::fixture_index_path(name), gix_hash::Kind::Sha1, opts).unwrap();
+    let file = gix_index::File::at(crate::fixture_index_path(name), gix_hash::Kind::Sha1, false, opts).unwrap();
     verify(file)
 }
 
@@ -75,6 +76,28 @@ fn v2_empty() {
     assert!(tree.name.is_empty());
     assert!(tree.children.is_empty());
     assert_eq!(tree.id, hex_to_id("4b825dc642cb6eb9a060e54bf8d69288fbee4904"));
+    assert_eq!(
+        file.checksum(),
+        Some(hex_to_id("72d53f787d86a932a25a8537cee236d81846a8f1")),
+        "checksums are read but not validated by default"
+    );
+}
+
+#[test]
+fn v2_empty_skip_hash() {
+    let file = loose_file("skip_hash");
+    assert_eq!(file.version(), Version::V2);
+    assert_eq!(file.entries().len(), 0);
+    let tree = file.tree().unwrap();
+    assert_eq!(tree.num_entries.unwrap_or_default(), 0);
+    assert!(tree.name.is_empty());
+    assert!(tree.children.is_empty());
+    assert_eq!(tree.id, hex_to_id("4b825dc642cb6eb9a060e54bf8d69288fbee4904"));
+    assert_eq!(
+        file.checksum(),
+        None,
+        "unset checksums are represented in the type system"
+    );
 }
 
 #[test]
@@ -118,6 +141,7 @@ fn split_index_without_any_extension() {
     let file = gix_index::File::at(
         find_shared_index_for(crate::fixture_index_path("v2_split_index")),
         gix_hash::Kind::Sha1,
+        false,
         Default::default(),
     )
     .unwrap();
@@ -315,8 +339,15 @@ fn split_index_and_regular_index_of_same_content_are_indeed_the_same() {
     )
     .unwrap();
 
-    let split =
-        verify(gix_index::File::at(base.join("split/.git/index"), gix_hash::Kind::Sha1, Default::default()).unwrap());
+    let split = verify(
+        gix_index::File::at(
+            base.join("split/.git/index"),
+            gix_hash::Kind::Sha1,
+            false,
+            Default::default(),
+        )
+        .unwrap(),
+    );
 
     assert!(
         split.link().is_none(),
@@ -327,6 +358,7 @@ fn split_index_and_regular_index_of_same_content_are_indeed_the_same() {
         gix_index::File::at(
             base.join("regular/.git/index"),
             gix_hash::Kind::Sha1,
+            false,
             Default::default(),
         )
         .unwrap(),

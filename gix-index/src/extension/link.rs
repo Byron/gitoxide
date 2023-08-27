@@ -72,6 +72,7 @@ impl Link {
         self,
         split_index: &mut crate::File,
         object_hash: gix_hash::Kind,
+        skip_hash: bool,
         options: crate::decode::Options,
     ) -> Result<(), crate::file::init::Error> {
         let shared_index_path = split_index
@@ -82,6 +83,7 @@ impl Link {
         let mut shared_index = crate::File::at(
             &shared_index_path,
             object_hash,
+            skip_hash,
             crate::decode::Options {
                 expected_checksum: self.shared_index_checksum.into(),
                 ..options

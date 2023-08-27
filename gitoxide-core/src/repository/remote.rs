@@ -334,18 +334,5 @@ pub(crate) fn by_name_or_url<'repo>(
     repo: &'repo gix::Repository,
     name_or_url: Option<&str>,
 ) -> anyhow::Result<gix::Remote<'repo>> {
-    use anyhow::Context;
-    Ok(match name_or_url {
-        Some(name) => {
-            if name.contains('/') || name.contains('.') {
-                repo.remote_at(gix::url::parse(name.into())?)?
-            } else {
-                repo.find_remote(name)?
-            }
-        }
-        None => repo
-            .head()?
-            .into_remote(gix::remote::Direction::Fetch)
-            .context("Cannot find a remote for unborn branch")??,
-    })
+    repo.find_fetch_remote(name_or_url.map(Into::into)).map_err(Into::into)
 }

@@ -1,19 +1,23 @@
 use std::{ffi::OsString, path::PathBuf};
 
 use anyhow::bail;
-use gix::prelude::FindExt;
 
 pub fn from_tree(
+    repo: gix::Repository,
     mut spec: OsString,
     index_path: Option<PathBuf>,
     force: bool,
-    repo: gix::Repository,
+    skip_hash: bool,
 ) -> anyhow::Result<()> {
     spec.push("^{tree}");
     let spec = gix::path::os_str_into_bstr(&spec)?;
     let tree = repo.rev_parse_single(spec)?;
-    let index = gix::index::State::from_tree(&tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
-    let options = gix::index::write::Options::default();
+
+    let mut index = repo.index_from_tree(&tree)?;
+    let options = gix::index::write::Options {
+        skip_hash,
+        ..Default::default()
+    };
 
     match index_path {
         Some(index_path) => {
@@ -23,11 +27,10 @@ pub fn from_tree(
                     index_path.display()
                 );
             }
-            let mut index = gix::index::File::from_state(index, index_path);
+            index.set_path(index_path);
             index.write(options)?;
         }
         None => {
-            let index = gix::index::File::from_state(index, std::path::PathBuf::new());
             let mut out = Vec::with_capacity(512 * 1024);
             index.write_to(&mut out, options)?;
         }
@@ -36,7 +39,12 @@ pub fn from_tree(
     Ok(())
 }
 
-pub fn from_list(entries_file: PathBuf, index_path: Option<PathBuf>, force: bool) -> anyhow::Result<()> {
+pub fn from_list(
+    entries_file: PathBuf,
+    index_path: Option<PathBuf>,
+    force: bool,
+    skip_hash: bool,
+) -> anyhow::Result<()> {
     use std::io::BufRead;
     let object_hash = gix::hash::Kind::Sha1;
 
@@ -57,7 +65,10 @@ pub fn from_list(entries_file: PathBuf, index_path: Option<PathBuf>, force: bool
     }
     index.sort_entries();
 
-    let options = gix::index::write::Options::default();
+    let options = gix::index::write::Options {
+        skip_hash,
+        ..Default::default()
+    };
     match index_path {
         Some(index_path) => {
             if index_path.is_file() && !force {

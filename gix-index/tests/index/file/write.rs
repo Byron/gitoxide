@@ -38,6 +38,47 @@ fn roundtrips() -> crate::Result {
 }
 
 #[test]
+fn skip_hash() -> crate::Result {
+    let tmp = gix_testtools::tempfile::TempDir::new()?;
+    let path = tmp.path().join("index");
+    let mut expected = Loose("conflicting-file").open();
+    assert!(expected.checksum().is_some());
+
+    expected.set_path(&path);
+    expected.write(Options {
+        extensions: Default::default(),
+        skip_hash: false,
+    })?;
+
+    let actual = gix_index::File::at(
+        &path,
+        expected.checksum().expect("present").kind(),
+        false,
+        Default::default(),
+    )?;
+    assert_eq!(
+        actual.checksum(),
+        expected.checksum(),
+        "a hash is written by default and it matches"
+    );
+
+    expected.write(Options {
+        extensions: Default::default(),
+        skip_hash: true,
+    })?;
+
+    let actual = gix_index::File::at(
+        &path,
+        expected.checksum().expect("present").kind(),
+        false,
+        Default::default(),
+    )?;
+    assert_eq!(actual.checksum(), None, "no hash is produced in this case");
+
+    Ok(())
+}
+
+#[test]
 fn roundtrips_sparse_index() -> crate::Result {
     // NOTE: I initially tried putting these fixtures into the main roundtrip test above,
     // but the call to `compare_raw_bytes` panics. It seems like git is using a different
@@ -253,9 +294,13 @@ fn only_tree_ext() -> Options {
             end_of_index_entry: false,
             tree_cache: true,
         },
+        skip_hash: false,
     }
 }
 
 fn options_with(extensions: write::Extensions) -> Options {
-    Options { extensions }
+    Options {
+        extensions,
+        skip_hash: false,
+    }
 }
