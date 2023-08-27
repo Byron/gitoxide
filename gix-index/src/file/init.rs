@@ -45,6 +45,9 @@ impl File {
     }
 
     /// Open an index file at `path` with `options`, assuming `object_hash` is used throughout the file.
+    ///
+    /// Note that the verification of the file hash depends on `options`, and even then it's performed after the file was read and not
+    /// before it is read. That way, invalid files would see a more descriptive error message as we try to parse them.
     pub fn at(path: impl Into<PathBuf>, object_hash: gix_hash::Kind, options: decode::Options) -> Result<Self, Error> {
         let _span = gix_features::trace::detail!("gix_index::File::at()");
         let path = path.into();
@@ -57,11 +60,7 @@ impl File {
         };
 
         let (state, checksum) = State::from_bytes(&data, mtime, object_hash, options)?;
-        let mut file = File {
-            state,
-            path,
-            checksum: Some(checksum),
-        };
+        let mut file = File { state, path, checksum };
         if let Some(mut link) = file.link.take() {
             link.dissolve_into(&mut file, object_hash, options)?;
         }
@@ -72,7 +71,7 @@ impl File {
     /// Consume `state` and pretend it was read from `path`, setting our checksum to `null`.
     ///
     /// `File` instances created like that should be written to disk to set the correct checksum via `[File::write()]`.
-    pub fn from_state(state: crate::State, path: impl Into<PathBuf>) -> Self {
+    pub fn from_state(state: State, path: impl Into<PathBuf>) -> Self {
         File {
             state,
             path: path.into(),

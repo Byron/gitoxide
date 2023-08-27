@@ -75,6 +75,28 @@ fn v2_empty() {
     assert!(tree.name.is_empty());
     assert!(tree.children.is_empty());
     assert_eq!(tree.id, hex_to_id("4b825dc642cb6eb9a060e54bf8d69288fbee4904"));
+    assert_eq!(
+        file.checksum(),
+        Some(hex_to_id("72d53f787d86a932a25a8537cee236d81846a8f1")),
+        "checksums are read but not validated by default"
+    );
+}
+
+#[test]
+fn v2_empty_skip_hash() {
+    let file = loose_file("skip_hash");
+    assert_eq!(file.version(), Version::V2);
+    assert_eq!(file.entries().len(), 0);
+    let tree = file.tree().unwrap();
+    assert_eq!(tree.num_entries.unwrap_or_default(), 0);
+    assert!(tree.name.is_empty());
+    assert!(tree.children.is_empty());
+    assert_eq!(tree.id, hex_to_id("4b825dc642cb6eb9a060e54bf8d69288fbee4904"));
+    assert_eq!(
+        file.checksum(),
+        None,
+        "unset checksums are represented in the type system"
+    );
 }
 
 #[test]
