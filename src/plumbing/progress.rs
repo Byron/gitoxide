@@ -173,7 +173,7 @@ static GIT_CONFIG: &[Record] = &[
         usage: NotApplicable {reason: "parallelism is efficient enough to always run with benefit"},
     },
     Record {
-        config: "feature.manyFile",
+        config: "feature.manyFiles",
         usage: Planned {note: Some("big repositories are on the roadmap")},
     },
     Record {
@@ -195,10 +195,6 @@ static GIT_CONFIG: &[Record] = &[
     Record {
         config: "index.sparse",
         usage: Planned {note: Some("we can read sparse indices and support for it will be added early on")},
-    },
-    Record {
-        config: "index.skipHash",
-        usage: Planned {note: Some("important to not unnecessarily reject indices just because they are missing a hash (or it is null)")},
     },
     Record {
         config: "merge.renormalize",
@@ -503,6 +499,10 @@ static GIT_CONFIG: &[Record] = &[
     Record {
         config: "status.renames",
         usage: Planned { note: Some("the same as diff.renames") }
+    },
+    Record {
+        config: "transfer.credentialsInUrl",
+        usage: Planned { note: Some("currently we are likely to expose passwords in errors or in other places, and it's better to by default not do that") }
     },
     Record {
         config: "diff.*.textconv",
