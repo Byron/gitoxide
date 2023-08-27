@@ -346,6 +346,9 @@ pub(crate) fn by_name_or_url<'repo>(
         None => repo
             .head()?
             .into_remote(gix::remote::Direction::Fetch)
-            .context("Cannot find a remote for unborn branch")??,
+            .transpose()?
+            .map(Ok)
+            .or_else(|| repo.find_default_remote(gix::remote::Direction::Fetch))
+            .context("There was no remote available or too many to choose from")??,
     })
 }
