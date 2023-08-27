@@ -16,16 +16,27 @@ impl crate::Repository {
             .map(|value| crate::config::tree::Index::THREADS.try_into_index_threads(value))
             .transpose()
             .with_lenient_default(self.config.lenient_config)?;
-        gix_index::File::at(
+        let skip_hash = self
+            .config
+            .resolved
+            .boolean("index", None, "skipHash")
+            .map(|res| crate::config::tree::Index::SKIP_HASH.enrich_error(res))
+            .transpose()
+            .with_lenient_default(self.config.lenient_config)?
+            .unwrap_or_default();
+
+        let index = gix_index::File::at(
             self.index_path(),
             self.object_hash(),
+            skip_hash,
             gix_index::decode::Options {
                 thread_limit,
                 min_extension_block_in_bytes_for_threading: 0,
                 expected_checksum: None,
             },
-        )
-        .map_err(Into::into)
+        )?;
+
+        Ok(index)
     }
 
     /// Return a shared worktree index which is updated automatically if the in-memory snapshot has become stale as the underlying file

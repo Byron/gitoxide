@@ -492,7 +492,7 @@ fn checkout_index_in_tmp_dir_opts(
 ) -> crate::Result<(PathBuf, TempDir, gix_index::File, gix_worktree_state::checkout::Outcome)> {
     let source_tree = fixture_path(name);
     let git_dir = source_tree.join(".git");
-    let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default())?;
+    let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, false, Default::default())?;
     let odb = gix_odb::at(git_dir.join("objects"))?.into_inner().into_arc()?;
     let destination = gix_testtools::tempfile::tempdir_in(std::env::current_dir()?)?;
     prep_dest(destination.path()).expect("preparation must succeed");

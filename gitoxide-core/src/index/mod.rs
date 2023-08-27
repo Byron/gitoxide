@@ -8,7 +8,7 @@ pub struct Options {
 pub mod information;
 
 fn parse_file(index_path: impl AsRef<Path>, object_hash: gix::hash::Kind) -> anyhow::Result<gix::index::File> {
-    gix::index::File::at(index_path.as_ref(), object_hash, Default::default()).map_err(Into::into)
+    gix::index::File::at(index_path.as_ref(), object_hash, false, Default::default()).map_err(Into::into)
 }
 
 pub mod checkout_exclusive {

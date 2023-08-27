@@ -31,7 +31,8 @@ const TEST_OPTIONS: index::entry::stat::Options = index::entry::stat::Options {
 fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
     let worktree = fixture_path(name);
     let git_dir = worktree.join(".git");
-    let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default()).unwrap();
+    let mut index =
+        gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, false, Default::default()).unwrap();
     let mut recorder = Recorder::default();
     index_as_worktree(
         &mut index,
@@ -139,7 +140,8 @@ fn racy_git() {
     let worktree = dir.path();
     let git_dir = worktree.join(".git");
     let fs = gix_fs::Capabilities::probe(&git_dir);
-    let mut index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, Default::default()).unwrap();
+    let mut index =
+        gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, false, Default::default()).unwrap();
 
     #[derive(Clone)]
     struct CountCalls(Arc<AtomicUsize>, FastEq);
