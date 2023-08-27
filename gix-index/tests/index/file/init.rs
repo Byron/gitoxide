@@ -6,6 +6,7 @@ mod at_or_new {
         gix_index::File::at_or_default(
             Generated("v4_more_files_IEOT").to_path(),
             gix_hash::Kind::Sha1,
+            false,
             Default::default(),
         )
         .expect("file exists and can be opened");
@@ -16,6 +17,7 @@ mod at_or_new {
         let index = gix_index::File::at_or_default(
             "__definitely no file that exists ever__",
             gix_hash::Kind::Sha1,
+            false,
             Default::default(),
         )
         .expect("file is defaulting to a new one");
@@ -46,7 +48,7 @@ mod from_state {
             let new_index_path = tmp.path().join(fixture.to_name());
             assert!(!new_index_path.exists());
 
-            let index = gix_index::File::at(fixture.to_path(), gix_hash::Kind::Sha1, Default::default())?;
+            let index = gix_index::File::at(fixture.to_path(), gix_hash::Kind::Sha1, false, Default::default())?;
             let mut index = gix_index::File::from_state(index.into(), new_index_path.clone());
             assert!(index.checksum().is_none());
             assert_eq!(index.path(), new_index_path);

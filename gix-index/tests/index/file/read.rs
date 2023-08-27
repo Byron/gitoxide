@@ -19,13 +19,14 @@ fn verify(index: gix_index::File) -> gix_index::File {
 
 pub(crate) fn loose_file(name: &str) -> gix_index::File {
     let path = loose_file_path(name);
-    let file = gix_index::File::at(path, gix_hash::Kind::Sha1, Default::default()).unwrap();
+    let file = gix_index::File::at(path, gix_hash::Kind::Sha1, false, Default::default()).unwrap();
     verify(file)
 }
 pub(crate) fn try_file(name: &str) -> Result<gix_index::File, gix_index::file::init::Error> {
     let file = gix_index::File::at(
         crate::fixture_index_path(name),
         gix_hash::Kind::Sha1,
+        false,
         Default::default(),
     )?;
     Ok(verify(file))
@@ -34,7 +35,7 @@ pub(crate) fn file(name: &str) -> gix_index::File {
     try_file(name).unwrap()
 }
 fn file_opt(name: &str, opts: gix_index::decode::Options) -> gix_index::File {
-    let file = gix_index::File::at(crate::fixture_index_path(name), gix_hash::Kind::Sha1, opts).unwrap();
+    let file = gix_index::File::at(crate::fixture_index_path(name), gix_hash::Kind::Sha1, false, opts).unwrap();
     verify(file)
 }
 
@@ -140,6 +141,7 @@ fn split_index_without_any_extension() {
     let file = gix_index::File::at(
         find_shared_index_for(crate::fixture_index_path("v2_split_index")),
         gix_hash::Kind::Sha1,
+        false,
         Default::default(),
     )
     .unwrap();
@@ -337,8 +339,15 @@ fn split_index_and_regular_index_of_same_content_are_indeed_the_same() {
     )
     .unwrap();
 
-    let split =
-        verify(gix_index::File::at(base.join("split/.git/index"), gix_hash::Kind::Sha1, Default::default()).unwrap());
+    let split = verify(
+        gix_index::File::at(
+            base.join("split/.git/index"),
+            gix_hash::Kind::Sha1,
+            false,
+            Default::default(),
+        )
+        .unwrap(),
+    );
 
     assert!(
         split.link().is_none(),
@@ -349,6 +358,7 @@ fn split_index_and_regular_index_of_same_content_are_indeed_the_same() {
         gix_index::File::at(
             base.join("regular/.git/index"),
             gix_hash::Kind::Sha1,
+            false,
             Default::default(),
         )
         .unwrap(),

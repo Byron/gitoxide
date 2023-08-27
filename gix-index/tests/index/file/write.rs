@@ -50,7 +50,12 @@ fn skip_hash() -> crate::Result {
         skip_hash: false,
     })?;
 
-    let actual = gix_index::File::at(&path, expected.checksum().expect("present").kind(), Default::default())?;
+    let actual = gix_index::File::at(
+        &path,
+        expected.checksum().expect("present").kind(),
+        false,
+        Default::default(),
+    )?;
     assert_eq!(
         actual.checksum(),
         expected.checksum(),
@@ -62,7 +67,12 @@ fn skip_hash() -> crate::Result {
         skip_hash: true,
     })?;
 
-    let actual = gix_index::File::at(&path, expected.checksum().expect("present").kind(), Default::default())?;
+    let actual = gix_index::File::at(
+        &path,
+        expected.checksum().expect("present").kind(),
+        false,
+        Default::default(),
+    )?;
     assert_eq!(actual.checksum(), None, "no hash is produced in this case");
 
     Ok(())

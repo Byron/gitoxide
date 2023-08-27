@@ -344,7 +344,7 @@ mod tests {
         let file = PathBuf::from("tests")
             .join("fixtures")
             .join(Path::new("loose_index").join("conflicting-file.git-index"));
-        let file = crate::File::at(file, gix_hash::Kind::Sha1, Default::default()).expect("valid file");
+        let file = crate::File::at(file, gix_hash::Kind::Sha1, false, Default::default()).expect("valid file");
         assert_eq!(
             file.entries().len(),
             3,
