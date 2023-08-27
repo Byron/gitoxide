@@ -48,13 +48,26 @@ impl Extensions {
 /// Note that default options write either index V2 or V3 depending on the content of the entries.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Options {
-    /// Configures which extensions to write
+    /// Configures which extensions to write.
     pub extensions: Extensions,
+    /// Set the trailing hash of the produced index to all zeroes to save some time.
+    ///
+    /// This value is typically controlled by `index.skipHash` and is respected when the index is written
+    /// via [`File::write()`](crate::File::write()) and [`File::write_to()`](crate::File::write_to()).
+    /// Note that
+    pub skip_hash: bool,
 }
 
 impl State {
     /// Serialize this instance to `out` with [`options`][Options].
-    pub fn write_to(&self, out: impl std::io::Write, Options { extensions }: Options) -> std::io::Result<Version> {
+    pub fn write_to(
+        &self,
+        out: impl std::io::Write,
+        Options {
+            extensions,
+            skip_hash: _,
+        }: Options,
+    ) -> std::io::Result<Version> {
         let _span = gix_features::trace::detail!("gix_index::State::write()");
         let version = self.detect_required_version();
 
