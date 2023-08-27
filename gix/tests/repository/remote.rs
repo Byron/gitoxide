@@ -291,6 +291,46 @@ mod find_remote {
     }
 }
 
+mod find_fetch_remote {
+    use crate::remote;
+
+    #[test]
+    fn symbol_name() -> crate::Result {
+        let repo = remote::repo("clone-no-tags");
+        assert_eq!(
+            repo.find_fetch_remote(Some("origin".into()))?
+                .name()
+                .expect("set")
+                .as_bstr(),
+            "origin"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn urls() -> crate::Result {
+        let repo = remote::repo("clone-no-tags");
+        for url in [
+            "some-path",
+            "https://example.com/repo",
+            "other/path",
+            "ssh://host/ssh-aliased-repo",
+        ] {
+            let remote = repo.find_fetch_remote(Some(url.into()))?;
+            assert_eq!(remote.name(), None, "this remote is anonymous");
+            assert_eq!(
+                remote
+                    .url(gix::remote::Direction::Fetch)
+                    .expect("url is set")
+                    .to_bstring(),
+                url,
+                "if it's not a configured remote, we take it as URL"
+            );
+        }
+        Ok(())
+    }
+}
+
 mod find_default_remote {
 
     use crate::remote;

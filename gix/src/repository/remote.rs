@@ -28,7 +28,8 @@ impl crate::Repository {
         Remote::from_fetch_url(url, false, self)
     }
 
-    /// Find the remote with the given `name_or_url` or report an error, similar to [`try_find_remote(…)`][Self::try_find_remote()].
+    /// Find the configured remote with the given `name_or_url` or report an error,
+    /// similar to [`try_find_remote(…)`][Self::try_find_remote()].
     ///
     /// Note that we will obtain remotes only if we deem them [trustworthy][crate::open::Options::filter_config_section()].
     pub fn find_remote<'a>(&self, name_or_url: impl Into<&'a BStr>) -> Result<Remote<'_>, find::existing::Error> {
@@ -42,7 +43,7 @@ impl crate::Repository {
 
     /// Find the default remote as configured, or `None` if no such configuration could be found.
     ///
-    /// See [`remote_default_name()`][Self::remote_default_name()] for more information on the `direction` parameter.
+    /// See [`remote_default_name()`](Self::remote_default_name()) for more information on the `direction` parameter.
     pub fn find_default_remote(
         &self,
         direction: remote::Direction,
@@ -51,8 +52,8 @@ impl crate::Repository {
             .map(|name| self.find_remote(name.as_ref()))
     }
 
-    /// Find the remote with the given `name_or_url` or return `None` if it doesn't exist, for the purpose of fetching or pushing
-    /// data to a remote.
+    /// Find the configured remote with the given `name_or_url` or return `None` if it doesn't exist,
+    /// for the purpose of fetching or pushing data.
     ///
     /// There are various error kinds related to partial information or incorrectly formatted URLs or ref-specs.
     /// Also note that the created `Remote` may have neither fetch nor push ref-specs set at all.
@@ -63,6 +64,35 @@ impl crate::Repository {
     /// We will only include information if we deem it [trustworthy][crate::open::Options::filter_config_section()].
     pub fn try_find_remote<'a>(&self, name_or_url: impl Into<&'a BStr>) -> Option<Result<Remote<'_>, find::Error>> {
         self.try_find_remote_inner(name_or_url, true)
+    }
+
+    /// This method emulate what `git fetch <remote>` does in order to obtain a remote to fetch from.
+    ///
+    /// As such, with `name_or_url` being `Some`, it will:
+    ///
+    /// * use `name_or_url` verbatim if it is a URL, creating a new remote in memory as needed.
+    /// * find the named remote if `name_or_url` is a remote name
+    ///
+    /// If `name_or_url` is `None`:
+    ///
+    /// * use the current `HEAD` branch to find a configured remote
+    /// * fall back to either a generally configured remote or the only configured remote.
+    ///
+    /// Fail if no remote could be found despite all of the above.
+    pub fn find_fetch_remote(&self, name_or_url: Option<&BStr>) -> Result<Remote<'_>, find::for_fetch::Error> {
+        Ok(match name_or_url {
+            Some(name) => match self.try_find_remote(name).and_then(Result::ok) {
+                Some(remote) => remote,
+                None => self.remote_at(gix_url::parse(name)?)?,
+            },
+            None => self
+                .head()?
+                .into_remote(remote::Direction::Fetch)
+                .transpose()?
+                .map(Ok)
+                .or_else(|| self.find_default_remote(remote::Direction::Fetch))
+                .ok_or_else(|| find::for_fetch::Error::ExactlyOneRemoteNotAvailable)??,
+        })
     }
 
     /// Similar to [`try_find_remote()`][Self::try_find_remote()], but removes a failure mode if rewritten URLs turn out to be invalid

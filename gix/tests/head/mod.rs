@@ -9,6 +9,11 @@ mod into_remote {
             repo.head()?.into_remote(gix::remote::Direction::Fetch).transpose()?,
             None
         );
+        assert_eq!(
+            repo.find_fetch_remote(None)?.name().expect("present").as_ref(),
+            "origin",
+            "we can fallback to the only available remote"
+        );
         Ok(())
     }
 
@@ -18,6 +23,11 @@ mod into_remote {
         assert_eq!(
             repo.head()?.into_remote(gix::remote::Direction::Fetch).transpose()?,
             None
+        );
+        assert_eq!(
+            repo.find_fetch_remote(None)?.name().expect("present").as_ref(),
+            "origin",
+            "we can fallback to the only available remote"
         );
         Ok(())
     }
