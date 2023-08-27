@@ -102,7 +102,7 @@ pub mod pretty {
         reverse_lines: bool,
         progress: &gix::progress::prodash::tree::Root,
     ) -> anyhow::Result<()> {
-        Ok(if enable {
+        if enable {
             let processor = tracing_forest::Printer::new().formatter({
                 let progress = std::sync::Mutex::new(progress.add_child("tracing"));
                 move |tree: &tracing_forest::tree::Tree| -> Result<String, std::fmt::Error> {
@@ -127,7 +127,8 @@ pub mod pretty {
             tracing::subscriber::set_global_default(subscriber)?;
         } else {
             tracing::subscriber::set_global_default(tracing_subscriber::Registry::default())?;
-        })
+        }
+        Ok(())
     }
 
     #[cfg(not(feature = "small"))]
