@@ -63,10 +63,11 @@ impl crate::Repository {
         id: impl Into<gix_hash::ObjectId>,
     ) -> Result<(gix_worktree_stream::Stream, gix_index::File), crate::repository::worktree_stream::Error> {
         use gix_odb::{FindExt, HeaderExt};
+        let id = id.into();
         let header = self.objects.header(id)?;
         if !header.kind().is_tree() {
             return Err(crate::repository::worktree_stream::Error::NotATree {
-                id: id.to_owned(),
+                id,
                 actual: header.kind(),
             });
         }

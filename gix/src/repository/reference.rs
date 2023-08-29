@@ -22,14 +22,14 @@ impl crate::Repository {
         target: impl Into<ObjectId>,
         constraint: PreviousValue,
     ) -> Result<Reference<'_>, reference::edit::Error> {
-        let id = target;
+        let id = target.into();
         let mut edits = self.edit_reference(RefEdit {
             change: Change::Update {
                 log: Default::default(),
                 expected: constraint,
                 new: Target::Peeled(id),
             },
-            name: format!("refs/tags/{name}").try_into()?,
+            name: format!("refs/tags/{}", name.as_ref()).try_into()?,
             deref: false,
         })?;
         assert_eq!(edits.len(), 1, "reference splits should ever happen");

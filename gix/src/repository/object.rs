@@ -24,6 +24,7 @@ impl crate::Repository {
     /// Loose object could be partially decoded, even though that's not implemented.
     #[momo]
     pub fn find_object(&self, id: impl Into<ObjectId>) -> Result<Object<'_>, object::find::existing::Error> {
+        let id = id.into();
         if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
             return Ok(Object {
                 id,
@@ -43,6 +44,7 @@ impl crate::Repository {
     #[doc(alias = "read_header", alias = "git2")]
     #[momo]
     pub fn find_header(&self, id: impl Into<ObjectId>) -> Result<gix_odb::find::Header, object::find::existing::Error> {
+        let id = id.into();
         if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
             return Ok(gix_odb::find::Header::Loose {
                 kind: gix_object::Kind::Tree,
@@ -60,6 +62,7 @@ impl crate::Repository {
         &self,
         id: impl Into<ObjectId>,
     ) -> Result<Option<gix_odb::find::Header>, object::find::Error> {
+        let id = id.into();
         if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
             return Ok(Some(gix_odb::find::Header::Loose {
                 kind: gix_object::Kind::Tree,
@@ -72,6 +75,7 @@ impl crate::Repository {
     /// Try to find the object with `id` or return `None` if it wasn't found.
     #[momo]
     pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::Error> {
+        let id = id.into();
         if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
             return Ok(Some(Object {
                 id,
@@ -175,11 +179,11 @@ impl crate::Repository {
         constraint: PreviousValue,
     ) -> Result<Reference<'_>, tag::Error> {
         let tag = gix_object::Tag {
-            target: target.into(),
+            target: target.as_ref().into(),
             target_kind,
-            name: name.into(),
+            name: name.as_ref().into(),
             tagger: tagger.map(|t| t.to_owned()),
-            message: message.into(),
+            message: message.as_ref().into(),
             pgp_signature: None,
         };
         let tag_id = self.write_object(&tag)?;

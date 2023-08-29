@@ -23,14 +23,13 @@ impl crate::Repository {
         )),
         allow(unused_variables)
     )]
-    #[allow(clippy::needless_lifetimes)]
     #[momo]
     pub fn transport_options<'a>(
         &self,
         url: impl Into<&'a BStr>,
         remote_name: Option<&BStr>,
     ) -> Result<Option<Box<dyn Any>>, crate::config::transport::Error> {
-        let url = gix_url::parse(url)?;
+        let url = gix_url::parse(url.into())?;
         use gix_url::Scheme::*;
 
         match &url.scheme {
