@@ -276,7 +276,7 @@ fn momo_inner(code: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
                     parse_quote!({ Self::#inner_ident(#argexprs) })
                 },
             });
-            quote!(#new_item #[allow(unused_mut)] #new_inner_item)
+            quote!(#new_item #new_inner_item)
         } else {
             // Put the new inner function within the function block
             // to avoid duplicate function name and support associated
@@ -286,7 +286,6 @@ fn momo_inner(code: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
                 vis: item_fn.vis,
                 sig: outer_sig,
                 block: parse_quote!({
-                    #[allow(unused_mut)]
                     #new_inner_item
 
                     #inner_ident(#argexprs)
