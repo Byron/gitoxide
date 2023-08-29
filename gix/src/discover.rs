@@ -64,7 +64,6 @@ impl ThreadSafeRepository {
     /// Finally, use the `trust_map` to determine which of our own repository options to use
     /// based on the trust level of the effective repository directory.
     #[momo]
-    #[allow(unused_mut)]
     pub fn discover_with_environment_overrides_opts(
         directory: impl AsRef<Path>,
         mut options: upwards::Options<'_>,

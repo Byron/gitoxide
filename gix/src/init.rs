@@ -59,7 +59,6 @@ impl ThreadSafeRepository {
     /// Instead of naming the default branch `master`, we name it `main` unless configured explicitly using the `init.defaultBranch`
     /// configuration key.
     #[momo]
-    #[allow(unused_mut)]
     pub fn init_opts(
         directory: impl AsRef<Path>,
         kind: crate::create::Kind,

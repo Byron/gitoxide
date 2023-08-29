@@ -60,7 +60,6 @@ impl ThreadSafeRepository {
     /// Note that opening a repository for implementing custom hooks is also handle specifically in
     /// [`open_with_environment_overrides()`][Self::open_with_environment_overrides()].
     #[momo]
-    #[allow(unused_mut)]
     pub fn open_opts(path: impl Into<PathBuf>, mut options: Options) -> Result<Self, Error> {
         let _span = gix_trace::coarse!("ThreadSafeRepository::open()");
         let (path, kind) = {
