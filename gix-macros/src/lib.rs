@@ -8,7 +8,6 @@ use syn::{fold::Fold, punctuated::Punctuated, spanned::Spanned, *};
 // All conversions we support.  Check references to this type for an idea how to add more.
 enum Conversion<'a> {
     Into(&'a Type),
-    TryInto(&'a Type),
     AsRef(&'a Type),
     AsMut(&'a Type),
 }
@@ -17,7 +16,6 @@ impl<'a> Conversion<'a> {
     fn target_type(&self) -> Type {
         match *self {
             Conversion::Into(ty) => ty.clone(),
-            Conversion::TryInto(ty) => ty.clone(),
             Conversion::AsRef(ty) => parse_quote!(&#ty),
             Conversion::AsMut(ty) => parse_quote!(&mut #ty),
         }
@@ -26,7 +24,6 @@ impl<'a> Conversion<'a> {
     fn conversion_expr(&self, i: Ident) -> Expr {
         match *self {
             Conversion::Into(_) => parse_quote!(#i.into()),
-            Conversion::TryInto(_) => parse_quote!(#i.try_into()?),
             Conversion::AsRef(_) => parse_quote!(#i.as_ref()),
             Conversion::AsMut(_) => parse_quote!(#i.as_mut()),
         }
@@ -52,8 +49,6 @@ fn parse_bounds(bounds: &Punctuated<TypeParamBound, Token![+]>) -> Option<Conver
                 if let GenericArgument::Type(ref arg_ty) = gen_args.args.first().unwrap() {
                     if seg.ident == "Into" {
                         return Some(Conversion::Into(arg_ty));
-                    } else if seg.ident == "TryInto" {
-                        return Some(Conversion::TryInto(arg_ty));
                     } else if seg.ident == "AsRef" {
                         return Some(Conversion::AsRef(arg_ty));
                     } else if seg.ident == "AsMut" {
@@ -145,7 +140,6 @@ fn convert<'a>(
     let mut argtypes = Punctuated::new();
     let mut conversions = Conversions {
         intos: Vec::new(),
-        try_intos: Vec::new(),
         as_refs: Vec::new(),
         as_muts: Vec::new(),
     };
@@ -205,7 +199,6 @@ fn convert<'a>(
 
 struct Conversions {
     intos: Vec<Ident>,
-    try_intos: Vec<Ident>,
     as_refs: Vec<Ident>,
     as_muts: Vec<Ident>,
 }
@@ -214,7 +207,6 @@ impl Conversions {
     fn add(&mut self, ident: Ident, conv: Conversion) {
         match conv {
             Conversion::Into(_) => self.intos.push(ident),
-            Conversion::TryInto(_) => self.try_intos.push(ident),
             Conversion::AsRef(_) => self.as_refs.push(ident),
             Conversion::AsMut(_) => self.as_muts.push(ident),
         }
@@ -238,7 +230,6 @@ impl Fold for Conversions {
         match expr {
             Expr::MethodCall(mc) if mc.args.is_empty() => match &*mc.method.to_string() {
                 "into" if has_conversion(&self.intos, &mc.receiver) => *mc.receiver,
-                "try_into" if has_conversion(&self.try_intos, &mc.receiver) => *mc.receiver,
 
                 "as_ref" if has_conversion(&self.as_refs, &mc.receiver) => *mc.receiver,
                 "as_mut" if has_conversion(&self.as_muts, &mc.receiver) => *mc.receiver,
@@ -251,7 +242,6 @@ impl Fold for Conversions {
                     ..
                 }) if segments.len() == 2 => match (&*segments[0].ident.to_string(), &*segments[1].ident.to_string()) {
                     ("Into", "into") if has_conversion(&self.intos, &call.args[0]) => call.args[0].clone(),
-                    ("TryInto", "try_into") if has_conversion(&self.try_intos, &call.args[0]) => call.args[0].clone(),
 
                     ("AsRef", "as_ref") if matches!(&call.args[0], Expr::Reference(ExprReference { expr, mutability: None, .. }) if has_conversion(&self.as_refs, expr)) => {
                         if let Expr::Reference(ExprReference { expr, .. }) = &call.args[0] {
@@ -271,29 +261,6 @@ impl Fold for Conversions {
                     _ => syn::fold::fold_expr(self, Expr::Call(call)),
                 },
                 _ => syn::fold::fold_expr(self, Expr::Call(call)),
-            },
-            Expr::Try(expr_try) => match &*expr_try.expr {
-                Expr::MethodCall(mc)
-                    if mc.args.is_empty()
-                        && mc.method == "try_into"
-                        && has_conversion(&self.try_intos, &mc.receiver) =>
-                {
-                    (*mc.receiver).clone()
-                }
-                Expr::Call(call) if call.args.len() == 1 => match &*call.func {
-                    Expr::Path(ExprPath {
-                        path: Path { segments, .. },
-                        ..
-                    }) if segments.len() == 2
-                        && segments[0].ident == "TryInto"
-                        && segments[1].ident == "try_into"
-                        && has_conversion(&self.try_intos, &call.args[0]) =>
-                    {
-                        call.args[0].clone()
-                    }
-                    _ => syn::fold::fold_expr(self, Expr::Try(expr_try)),
-                },
-                _ => syn::fold::fold_expr(self, Expr::Try(expr_try)),
             },
             _ => syn::fold::fold_expr(self, expr),
         }
