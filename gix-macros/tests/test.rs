@@ -192,6 +192,25 @@ impl TryInto<String> for S {
     }
 }
 
+#[allow(unused)]
+#[momo]
+fn test_fn_pat<E>(
+    a: impl Into<String>,
+    b: impl AsRef<str>,
+    mut c: impl AsMut<str>,
+    d: impl TryInto<String, Error = E>,
+    S(_g): S,
+) -> Result<(), E> {
+    let mut s = a.into();
+    s += b.as_ref();
+    s += c.as_mut();
+    s += &d.try_into()?;
+
+    drop(s);
+
+    Ok(())
+}
+
 #[test]
 fn test_basic_fn() {
     assert_eq!(
