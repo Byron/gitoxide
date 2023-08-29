@@ -1,5 +1,7 @@
 use std::convert::TryInto;
 
+use gix_macros::momo;
+
 use crate::{
     bstr::{BStr, BString},
     config, remote, Remote,
@@ -111,6 +113,7 @@ impl Remote<'_> {
     /// If this name is different from the current one, the git configuration will still contain the previous name,
     /// and the caller should account for that.
     #[allow(clippy::result_large_err)]
+    #[momo]
     pub fn save_as_to(
         &mut self,
         name: impl Into<BString>,
