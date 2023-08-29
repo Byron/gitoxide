@@ -10,7 +10,6 @@ impl crate::Repository {
     /// - `@` actually stands for `HEAD`, whereas `git` resolves it to the object pointed to by `HEAD` without making the
     ///   `HEAD` ref available for lookups.
     #[doc(alias = "revparse", alias = "git2")]
-    #[allow(clippy::needless_lifetimes)]
     #[momo]
     pub fn rev_parse<'a>(&self, spec: impl Into<&'a BStr>) -> Result<revision::Spec<'_>, revision::spec::parse::Error> {
         revision::Spec::from_bstr(
