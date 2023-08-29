@@ -273,7 +273,7 @@ impl crate::Repository {
                         .proxy
                         .as_deref()
                         .filter(|url| !url.is_empty())
-                        .map(|url| gix_url::parse(<&BStr>::from(url)))
+                        .map(|url| gix_url::parse(url.into()))
                         .transpose()?
                         .filter(|url| url.user().is_some())
                         .map(|url| -> Result<_, config::transport::http::Error> {
