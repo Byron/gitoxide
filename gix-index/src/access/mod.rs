@@ -84,6 +84,30 @@ impl State {
         self.entry_index_by_idx_and_stage(path, idx, stage, stage_cmp)
     }
 
+    /// Walk as far in `direction` as possible, with [`Ordering::Greater`] towards higher stages, and [`Ordering::Less`]
+    /// towards lower stages, and return the lowest or highest seen stage.
+    /// Return `None` if there is no greater or smaller stage.
+    fn walk_entry_stages(&self, path: &BStr, base: usize, direction: Ordering) -> Option<usize> {
+        match direction {
+            Ordering::Greater => self
+                .entries
+                .get(base + 1..)?
+                .iter()
+                .enumerate()
+                .take_while(|(_, e)| e.path(self) == path)
+                .last()
+                .map(|(idx, _)| base + 1 + idx),
+            Ordering::Equal => Some(base),
+            Ordering::Less => self.entries[..base]
+                .iter()
+                .enumerate()
+                .rev()
+                .take_while(|(_, e)| e.path(self) == path)
+                .last()
+                .map(|(idx, _)| idx),
+        }
+    }
+
     fn entry_index_by_idx_and_stage(
         &self,
         path: &BStr,
@@ -173,13 +197,13 @@ impl State {
         let low_entry = &self.entries[low];
         if low_entry.stage() != 0 {
             low = self
-                .entry_index_by_idx_and_stage(low_entry.path(self), low, 0, low_entry.stage().cmp(&0))
+                .walk_entry_stages(low_entry.path(self), low, Ordering::Less)
                 .unwrap_or(low);
         }
         if let Some(high_entry) = self.entries.get(high) {
-            if low_entry.stage() != 2 {
+            if high_entry.stage() != 3 {
                 high = self
-                    .entry_index_by_idx_and_stage(high_entry.path(self), high, 2, high_entry.stage().cmp(&2))
+                    .walk_entry_stages(high_entry.path(self), high, Ordering::Greater)
                     .unwrap_or(high);
             }
         }
