@@ -50,6 +50,8 @@ fn prefixed_entries_with_multi_stage_file() {
         file.entries(),
         "empty prefix matches all"
     );
+    assert_eq!(file.prefixed_entries_range("".into()), Some(0..3));
+    assert_eq!(file.prefixed_entries_range("foo".into()), None);
 }
 
 #[test]

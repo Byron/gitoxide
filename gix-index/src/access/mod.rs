@@ -184,9 +184,18 @@ impl State {
     }
 
     /// Return the slice of entries which all share the same `prefix`, or `None` if there isn't a single such entry.
+    ///
+    /// If `prefix` is empty, all entries are returned.
     pub fn prefixed_entries(&self, prefix: &BStr) -> Option<&[Entry]> {
+        self.prefixed_entries_range(prefix).map(|range| &self.entries[range])
+    }
+
+    /// Return the range of entries which all share the same `prefix`, or `None` if there isn't a single such entry.
+    ///
+    /// If `prefix` is empty, the range will include all entries.
+    pub fn prefixed_entries_range(&self, prefix: &BStr) -> Option<Range<usize>> {
         if prefix.is_empty() {
-            return Some(self.entries());
+            return Some(0..self.entries.len());
         }
         let prefix_len = prefix.len();
         let mut low = self
@@ -195,7 +204,7 @@ impl State {
         let mut high = low
             + self.entries[low..].partition_point(|e| e.path(self).get(..prefix_len).map_or(false, |p| p <= prefix));
 
-        let low_entry = &self.entries[low];
+        let low_entry = &self.entries.get(low)?;
         if low_entry.stage() != 0 {
             low = self
                 .walk_entry_stages(low_entry.path(self), low, Ordering::Less)
@@ -208,7 +217,7 @@ impl State {
                     .unwrap_or(high);
             }
         }
-        (low != high).then_some(low..high).map(|range| &self.entries[range])
+        (low != high).then_some(low..high)
     }
 
     /// Return the entry at `idx` or _panic_ if the index is out of bounds.
