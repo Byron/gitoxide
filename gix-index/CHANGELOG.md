@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-cfbfa43069c8d82fbd74b8296f63fc050a5ba02a/> add `State::prefixed_range()` to obtain a range of entries matching a prefix.
+   This makes it easier to make changes to entries of a certain prefix.
+ - <csr-id-8b689c222668b0c35c508f1907b03cbd4ba09bba/> add `State::remove_entries()` and `entry_range()`.
+   This makes it possible to, among other things, delete all
+   occurrences of a particular entry.
+ - <csr-id-2f42132410ef47a7c274030811452ef40701c8a0/> add support for `write::Options::skip_hash`.
+   With it, a hash will not be produced for indices.
+
+### Bug Fixes
+
+ - <csr-id-616932516d122a24e29fb42c60147fe43c5cead9/> `gix-index` prefix matching should now work correctly with conflicting files.
+   It was done in a rush and lacks a lot of tests. At least now it
+   has a greater chance of working, as tests that would truly validate
+   this are still missing for a lack of test date. It can be produced
+   with `git update-index`, but it wasn't yet worth it.
+
+### New Features (BREAKING)
+
+ - <csr-id-61c2e34b10c2ad5c92edd4ec1d5d1be2317ac481/> Check the hash when reading via `File::at()` just like `git`, or skip the check.
+   Note that indices written with `index.skipHash=true` will be vastly
+   faster to read by a factor of 2 or more.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-b310d044ac5c2bb1c874d0cfe701411e4aef47be/> skip the null-hash when validating the index.
+   This is needed for compatibility with `index.skipHash`, which may skip
+   producing the hash at the end of the index file, just filling in the
+   null-hash.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 9 calendar days.
+ - 9 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add `State::prefixed_range()` to obtain a range of entries matching a prefix. ([`cfbfa43`](https://github.com/Byron/gitoxide/commit/cfbfa43069c8d82fbd74b8296f63fc050a5ba02a))
+    - Add `State::remove_entries()` and `entry_range()`. ([`8b689c2`](https://github.com/Byron/gitoxide/commit/8b689c222668b0c35c508f1907b03cbd4ba09bba))
+    - `gix-index` prefix matching should now work correctly with conflicting files. ([`6169325`](https://github.com/Byron/gitoxide/commit/616932516d122a24e29fb42c60147fe43c5cead9))
+    - Merge branch 'fixes' ([`4bfd1cc`](https://github.com/Byron/gitoxide/commit/4bfd1cc8f7922a8c4de6b9d078d54b93e78f51ff))
+    - Check the hash when reading via `File::at()` just like `git`, or skip the check. ([`61c2e34`](https://github.com/Byron/gitoxide/commit/61c2e34b10c2ad5c92edd4ec1d5d1be2317ac481))
+    - Add support for `write::Options::skip_hash`. ([`2f42132`](https://github.com/Byron/gitoxide/commit/2f42132410ef47a7c274030811452ef40701c8a0))
+    - Skip the null-hash when validating the index. ([`b310d04`](https://github.com/Byron/gitoxide/commit/b310d044ac5c2bb1c874d0cfe701411e4aef47be))
+    - Merge branch 'gix-submodule' ([`363ee77`](https://github.com/Byron/gitoxide/commit/363ee77400805f473c9ad66eadad9214e7ab66f4))
+</details>
+
 ## 0.22.0 (2023-08-22)
 
 <csr-id-93feea269eebd114e866e6f29f4a73c0096df9e0/>
@@ -26,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release over the course of 18 calendar days.
+ - 13 commits contributed to the release over the course of 18 calendar days.
  - 30 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -38,8 +97,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0 ([`6c62e74`](https://github.com/Byron/gitoxide/commit/6c62e748240ac0980fc23fdf30f8477dea8b9bc3))
     - Release gix-date v0.7.3, gix-hash v0.12.0, gix-features v0.33.0, gix-actor v0.25.0, gix-object v0.35.0, gix-path v0.9.0, gix-glob v0.11.0, gix-quote v0.4.7, gix-attributes v0.17.0, gix-command v0.2.9, gix-packetline-blocking v0.16.5, gix-filter v0.3.0, gix-fs v0.5.0, gix-commitgraph v0.19.0, gix-hashtable v0.3.0, gix-revwalk v0.6.0, gix-traverse v0.31.0, gix-worktree-stream v0.3.0, gix-archive v0.3.0, gix-config-value v0.13.0, gix-tempfile v8.0.0, gix-lock v8.0.0, gix-ref v0.35.0, gix-sec v0.9.0, gix-config v0.28.0, gix-prompt v0.6.0, gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0, safety bump 41 crates ([`30b2761`](https://github.com/Byron/gitoxide/commit/30b27615047692d3ced1b2d9c2ac15a80f79fbee))
     - Update changelogs prior to release ([`f23ea88`](https://github.com/Byron/gitoxide/commit/f23ea8828f2d9ba7559973daca388c9591bcc5fc))
+    - Merge branch 'gix-submodule' ([`8f3f358`](https://github.com/Byron/gitoxide/commit/8f3f358800f1fe77d7ba7ebd396a90b692d3c0c1))
     - More cleanup of test crates ([`73c685a`](https://github.com/Byron/gitoxide/commit/73c685a67debcfa26a940f37bbca69cb3a4af57e))
     - Split tests off into their own crate to allow feature toggles. ([`93feea2`](https://github.com/Byron/gitoxide/commit/93feea269eebd114e866e6f29f4a73c0096df9e0))
     - Merge branch 'submodule-in-gix' ([`36f7b78`](https://github.com/Byron/gitoxide/commit/36f7b783c67b8a087076a130f5ee9b90b23bc3cc))
