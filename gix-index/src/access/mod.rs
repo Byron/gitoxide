@@ -198,9 +198,11 @@ impl State {
             return Some(0..self.entries.len());
         }
         let prefix_len = prefix.len();
-        let mut low = self
-            .entries
-            .partition_point(|e| e.path(self).get(..prefix_len).map_or(true, |p| p < prefix));
+        let mut low = self.entries.partition_point(|e| {
+            e.path(self)
+                .get(..prefix_len)
+                .map_or_else(|| e.path(self) <= &prefix[..e.path.len()], |p| p < prefix)
+        });
         let mut high = low
             + self.entries[low..].partition_point(|e| e.path(self).get(..prefix_len).map_or(false, |p| p <= prefix));
 
@@ -211,9 +213,9 @@ impl State {
                 .unwrap_or(low);
         }
         if let Some(high_entry) = self.entries.get(high) {
-            if high_entry.stage() != 3 {
+            if high_entry.stage() != 0 {
                 high = self
-                    .walk_entry_stages(high_entry.path(self), high, Ordering::Greater)
+                    .walk_entry_stages(high_entry.path(self), high, Ordering::Less)
                     .unwrap_or(high);
             }
         }

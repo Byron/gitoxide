@@ -114,7 +114,6 @@ fn sort_entries() {
         "we can find the correct entry now"
     );
 
-    check_prefix(&file, "a", &["a", "an initially incorrectly ordered entry"]);
     check_prefix(
         &file,
         "d",
@@ -126,18 +125,44 @@ fn sort_entries() {
         &["d/a", "d/b", "d/c", "d/last/123", "d/last/34", "d/last/6"],
     );
     check_prefix(&file, "d/last", &["d/last/123", "d/last/34", "d/last/6"]);
+    check_prefix(&file, "d/last/", &["d/last/123", "d/last/34", "d/last/6"]);
     check_prefix(&file, "d/las", &["d/last/123", "d/last/34", "d/last/6"]);
+    check_prefix(&file, "d/last/123", &["d/last/123"]);
+    check_prefix(&file, "d/last/34", &["d/last/34"]);
+    check_prefix(&file, "d/last/6", &["d/last/6"]);
     check_prefix(&file, "x", &["x"]);
+    check_prefix(&file, "a", &["a", "an initially incorrectly ordered entry"]);
+}
+
+#[test]
+fn prefixed_entries() {
+    let mut file = Fixture::Generated("v4_more_files_IEOT").open();
+    let entry = file.entry(0).clone();
+    let new_entry_path = "an initially incorrectly ordered entry".into();
+    file.dangerously_push_entry(entry.stat, entry.id, entry.flags, entry.mode, new_entry_path);
+    file.sort_entries();
+
+    check_prefix(&file, "a", &["a", "an initially incorrectly ordered entry"]);
+    check_prefix(&file, "an", &["an initially incorrectly ordered entry"]);
+    check_prefix(
+        &file,
+        "an initially incorrectly ordered entry",
+        &["an initially incorrectly ordered entry"],
+    );
+    check_prefix(&file, "x", &["x"]);
+    check_prefix(&file, "b", &["b"]);
+    check_prefix(&file, "c", &["c"]);
 }
 
 fn check_prefix(index: &gix_index::State, prefix: &str, expected: &[&str]) {
     assert_eq!(
         index
             .prefixed_entries(prefix.into())
-            .expect("present")
+            .unwrap_or_else(|| panic!("{prefix:?} must match at least one entry"))
             .iter()
             .map(|e| e.path(index))
             .collect::<Vec<_>>(),
-        expected
+        expected,
+        "{prefix:?}"
     );
 }
