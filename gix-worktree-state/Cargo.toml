@@ -15,7 +15,7 @@ doctest = false
 
 [dependencies]
 gix-worktree = { version = "^0.25.0", path = "../gix-worktree" }
-gix-index = { version = "^0.23.0", path = "../gix-index" }
+gix-index = { version = "^0.23.1", path = "../gix-index" }
 gix-fs = { version = "^0.5.0", path = "../gix-fs" }
 gix-hash = { version = "^0.12.0", path = "../gix-hash" }
 gix-object = { version = "^0.35.0", path = "../gix-object" }

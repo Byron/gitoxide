@@ -160,7 +160,7 @@ gix-ignore = { version = "^0.6.0", path = "../gix-ignore" }
 gix-glob = { version = "^0.11.0", path = "../gix-glob" }
 gix-credentials = { version = "^0.18.0", path = "../gix-credentials" }
 gix-prompt = { version = "^0.6.0", path = "../gix-prompt" }
-gix-index = { version = "^0.23.0", path = "../gix-index" }
+gix-index = { version = "^0.23.1", path = "../gix-index" }
 gix-worktree = { version = "^0.25.0", path = "../gix-worktree" }
 gix-worktree-state = { version = "^0.2.0", path = "../gix-worktree-state" }
 gix-hashtable = { version = "^0.3.0", path = "../gix-hashtable" }

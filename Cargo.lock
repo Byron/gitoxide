@@ -1206,7 +1206,7 @@ dependencies = [
  "gix-hash 0.12.0",
  "gix-hashtable 0.3.0",
  "gix-ignore 0.6.0",
- "gix-index 0.23.0",
+ "gix-index 0.23.1",
  "gix-lock 8.0.0",
  "gix-mailmap",
  "gix-negotiate",
@@ -1736,7 +1736,7 @@ dependencies = [
 
 [[package]]
 name = "gix-index"
-version = "0.23.0"
+version = "0.23.1"
 dependencies = [
  "bitflags 2.3.3",
  "bstr",
@@ -1766,7 +1766,7 @@ dependencies = [
  "gix",
  "gix-features 0.33.0",
  "gix-hash 0.12.0",
- "gix-index 0.23.0",
+ "gix-index 0.23.1",
  "gix-testtools",
 ]
 
@@ -2221,7 +2221,7 @@ dependencies = [
  "gix-features 0.33.0",
  "gix-fs 0.5.0",
  "gix-hash 0.12.0",
- "gix-index 0.23.0",
+ "gix-index 0.23.1",
  "gix-object 0.35.0",
  "gix-path 0.9.0",
  "thiserror",
@@ -2236,7 +2236,7 @@ dependencies = [
  "gix-features 0.33.0",
  "gix-fs 0.5.0",
  "gix-hash 0.12.0",
- "gix-index 0.23.0",
+ "gix-index 0.23.1",
  "gix-object 0.35.0",
  "gix-status",
  "gix-testtools",
@@ -2482,7 +2482,7 @@ dependencies = [
  "gix-glob 0.11.0",
  "gix-hash 0.12.0",
  "gix-ignore 0.6.0",
- "gix-index 0.23.0",
+ "gix-index 0.23.1",
  "gix-object 0.35.0",
  "gix-path 0.9.0",
  "serde",
@@ -2498,7 +2498,7 @@ dependencies = [
  "gix-fs 0.5.0",
  "gix-glob 0.11.0",
  "gix-hash 0.12.0",
- "gix-index 0.23.0",
+ "gix-index 0.23.1",
  "gix-object 0.35.0",
  "gix-path 0.9.0",
  "gix-worktree 0.25.0",
@@ -2515,7 +2515,7 @@ dependencies = [
  "gix-filter",
  "gix-fs 0.5.0",
  "gix-hash 0.12.0",
- "gix-index 0.23.0",
+ "gix-index 0.23.1",
  "gix-object 0.35.0",
  "gix-odb",
  "gix-testtools",
@@ -2556,7 +2556,7 @@ dependencies = [
  "gix-glob 0.11.0",
  "gix-hash 0.12.0",
  "gix-ignore 0.6.0",
- "gix-index 0.23.0",
+ "gix-index 0.23.1",
  "gix-object 0.35.0",
  "gix-odb",
  "gix-path 0.9.0",

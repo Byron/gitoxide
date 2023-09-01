@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.23.1 (2023-09-01)
+
+### Bug Fixes
+
+ - <csr-id-6a8314bb99099e2a3f5364a5761a5254aa36393a/> `prefixed_entries_range()` now works correctly with directory prefixes.
+   Previously, not all directory prefixes would work as expected due to incorrect
+   search criteria.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - `prefixed_entries_range()` now works correctly with directory prefixes. ([`6a8314b`](https://github.com/Byron/gitoxide/commit/6a8314bb99099e2a3f5364a5761a5254aa36393a))
+</details>
+
 ## 0.23.0 (2023-09-01)
 
 ### New Features
@@ -42,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 9 calendar days.
+ - 10 commits contributed to the release over the course of 9 calendar days.
  - 9 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -54,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.7.4, gix-index v0.23.0, safety bump 5 crates ([`3be2b1c`](https://github.com/Byron/gitoxide/commit/3be2b1ccfe30eeae45711c64b88efc522a2b51b7))
     - Prepare `gix-index` release ([`6fdbc66`](https://github.com/Byron/gitoxide/commit/6fdbc667c20f10734390341b435c15c73b7cd227))
     - Add `State::prefixed_range()` to obtain a range of entries matching a prefix. ([`cfbfa43`](https://github.com/Byron/gitoxide/commit/cfbfa43069c8d82fbd74b8296f63fc050a5ba02a))
     - Add `State::remove_entries()` and `entry_range()`. ([`8b689c2`](https://github.com/Byron/gitoxide/commit/8b689c222668b0c35c508f1907b03cbd4ba09bba))
