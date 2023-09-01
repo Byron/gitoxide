@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.23.0 (2023-09-01)
 
 ### New Features
 
@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 9 calendar days.
+ - 9 commits contributed to the release over the course of 9 calendar days.
  - 9 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare `gix-index` release ([`6fdbc66`](https://github.com/Byron/gitoxide/commit/6fdbc667c20f10734390341b435c15c73b7cd227))
     - Add `State::prefixed_range()` to obtain a range of entries matching a prefix. ([`cfbfa43`](https://github.com/Byron/gitoxide/commit/cfbfa43069c8d82fbd74b8296f63fc050a5ba02a))
     - Add `State::remove_entries()` and `entry_range()`. ([`8b689c2`](https://github.com/Byron/gitoxide/commit/8b689c222668b0c35c508f1907b03cbd4ba09bba))
     - `gix-index` prefix matching should now work correctly with conflicting files. ([`6169325`](https://github.com/Byron/gitoxide/commit/616932516d122a24e29fb42c60147fe43c5cead9))
