@@ -2,6 +2,7 @@ use crate::{
     data,
     data::{delta, file::decode::Error, File},
 };
+use gix_features::zlib;
 
 /// A return value of a resolve function, which given an [`ObjectId`][gix_hash::ObjectId] determines where an object can be found.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
@@ -37,12 +38,14 @@ impl File {
     /// Resolve the object header information starting at `entry`, following the chain of entries as needed.
     ///
     /// The `entry` determines which object to decode, and is commonly obtained with the help of a pack index file or through pack iteration.
+    /// `inflate` will be used for (partially) decompressing entries, and will be reset before first use, but not after the last use.
     ///
     /// `resolve` is a function to lookup objects with the given [`ObjectId`][gix_hash::ObjectId], in case the full object id
     /// is used to refer to a base object, instead of an in-pack offset.
     pub fn decode_header(
         &self,
         mut entry: data::Entry,
+        inflate: &mut zlib::Inflate,
         resolve: impl Fn(&gix_hash::oid) -> Option<ResolvedBase>,
     ) -> Result<Outcome, Error> {
         use crate::data::entry::Header::*;
@@ -60,14 +63,14 @@ impl File {
                 OfsDelta { base_distance } => {
                     num_deltas += 1;
                     if first_delta_decompressed_size.is_none() {
-                        first_delta_decompressed_size = Some(self.decode_delta_object_size(&entry)?);
+                        first_delta_decompressed_size = Some(self.decode_delta_object_size(inflate, &entry)?);
                     }
                     entry = self.entry(entry.base_pack_offset(base_distance))
                 }
                 RefDelta { base_id } => {
                     num_deltas += 1;
                     if first_delta_decompressed_size.is_none() {
-                        first_delta_decompressed_size = Some(self.decode_delta_object_size(&entry)?);
+                        first_delta_decompressed_size = Some(self.decode_delta_object_size(inflate, &entry)?);
                     }
                     match resolve(base_id.as_ref()) {
                         Some(ResolvedBase::InPack(base_entry)) => entry = base_entry,
@@ -89,9 +92,11 @@ impl File {
     }
 
     #[inline]
-    fn decode_delta_object_size(&self, entry: &data::Entry) -> Result<u64, Error> {
+    fn decode_delta_object_size(&self, inflate: &mut zlib::Inflate, entry: &data::Entry) -> Result<u64, Error> {
         let mut buf = [0_u8; 32];
-        let used = self.decompress_entry_from_data_offset_2(entry.data_offset, &mut buf)?.1;
+        let used = self
+            .decompress_entry_from_data_offset_2(entry.data_offset, inflate, &mut buf)?
+            .1;
         let buf = &buf[..used];
         let (_base_size, offset) = delta::decode_header_size(buf);
         let (result_size, _offset) = delta::decode_header_size(&buf[offset..]);

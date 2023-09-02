@@ -1,7 +1,10 @@
+use gix_features::zlib;
+
 impl crate::Bundle {
-    /// Find an object with the given [`ObjectId`][gix_hash::ObjectId] and place its data into `out`.
+    /// Find an object with the given [`ObjectId`](gix_hash::ObjectId) and place its data into `out`.
+    /// `inflate` is used to decompress objects, and will be reset before first use, but not after the last use.
     ///
-    /// [`cache`][crate::cache::DecodeEntry] is used to accelerate the lookup.
+    /// [`cache`](crate::cache::DecodeEntry) is used to accelerate the lookup.
     ///
     /// **Note** that ref deltas are automatically resolved within this pack only, which makes this implementation unusable
     /// for thin packs, which by now are expected to be resolved already.
@@ -9,17 +12,19 @@ impl crate::Bundle {
         &self,
         id: impl AsRef<gix_hash::oid>,
         out: &'a mut Vec<u8>,
+        inflate: &mut zlib::Inflate,
         cache: &mut impl crate::cache::DecodeEntry,
     ) -> Result<Option<(gix_object::Data<'a>, crate::data::entry::Location)>, crate::data::decode::Error> {
         let idx = match self.index.lookup(id) {
             Some(idx) => idx,
             None => return Ok(None),
         };
-        self.get_object_by_index(idx, out, cache).map(Some)
+        self.get_object_by_index(idx, out, inflate, cache).map(Some)
     }
 
     /// Special-use function to get an object given an index previously returned from
-    /// `internal_find_pack_index`.
+    /// [index::File::](crate::index::File::lookup()).
+    /// `inflate` is used to decompress objects, and will be reset before first use, but not after the last use.
     ///
     /// # Panics
     ///
@@ -28,6 +33,7 @@ impl crate::Bundle {
         &self,
         idx: u32,
         out: &'a mut Vec<u8>,
+        inflate: &mut zlib::Inflate,
         cache: &mut impl crate::cache::DecodeEntry,
     ) -> Result<(gix_object::Data<'a>, crate::data::entry::Location), crate::data::decode::Error> {
         let ofs = self.index.pack_offset_at_index(idx);
@@ -37,6 +43,7 @@ impl crate::Bundle {
             .decode_entry(
                 pack_entry,
                 out,
+                inflate,
                 |id, _out| {
                     self.index.lookup(id).map(|idx| {
                         crate::data::decode::entry::ResolvedBase::InPack(

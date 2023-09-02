@@ -3,6 +3,7 @@ use std::sync::atomic::AtomicBool;
 use gix_features::{
     parallel,
     progress::{Progress, RawProgress},
+    zlib,
 };
 
 use crate::index;
@@ -155,6 +156,7 @@ impl index::File {
         pack: &crate::data::File,
         cache: &mut C,
         buf: &mut Vec<u8>,
+        inflate: &mut zlib::Inflate,
         progress: &mut dyn RawProgress,
         index_entry: &index::Entry,
         processor: &mut impl FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn RawProgress) -> Result<(), E>,
@@ -169,6 +171,7 @@ impl index::File {
             .decode_entry(
                 pack_entry,
                 buf,
+                inflate,
                 |id, _| {
                     self.lookup(id).map(|index| {
                         crate::data::decode::entry::ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))

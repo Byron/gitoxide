@@ -417,7 +417,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
                 entry.pack_offset,
                 "index entry offset and computed pack offset must match"
             );
-            pack.decompress_entry(&pack_entry, &mut buf)?;
+            pack.decompress_entry(&pack_entry, &mut Default::default(), &mut buf)?;
 
             assert_eq!(
                 buf.len() as u64,

@@ -75,6 +75,7 @@ impl Outcome {
 /// Decompression of objects
 impl File {
     /// Decompress the given `entry` into `out` and return the amount of bytes read from the pack data.
+    /// Note that `inflate` is not reset after usage, but will be reset before using it.
     ///
     /// _Note_ that this method does not resolve deltified objects, but merely decompresses their content
     /// `out` is expected to be large enough to hold `entry.size` bytes.
@@ -82,7 +83,12 @@ impl File {
     /// # Panics
     ///
     /// If `out` isn't large enough to hold the decompressed `entry`
-    pub fn decompress_entry(&self, entry: &data::Entry, out: &mut [u8]) -> Result<usize, Error> {
+    pub fn decompress_entry(
+        &self,
+        entry: &data::Entry,
+        inflate: &mut zlib::Inflate,
+        out: &mut [u8],
+    ) -> Result<usize, Error> {
         assert!(
             out.len() as u64 >= entry.decompressed_size,
             "output buffer isn't large enough to hold decompressed result, want {}, have {}",
@@ -90,7 +96,7 @@ impl File {
             out.len()
         );
 
-        self.decompress_entry_from_data_offset(entry.data_offset, out)
+        self.decompress_entry_from_data_offset(entry.data_offset, inflate, out)
             .map_err(Into::into)
     }
 
@@ -121,12 +127,14 @@ impl File {
     pub(crate) fn decompress_entry_from_data_offset(
         &self,
         data_offset: data::Offset,
+        inflate: &mut zlib::Inflate,
         out: &mut [u8],
     ) -> Result<usize, zlib::inflate::Error> {
         let offset: usize = data_offset.try_into().expect("offset representable by machine");
         assert!(offset < self.data.len(), "entry offset out of bounds");
 
-        zlib::Inflate::default()
+        inflate.reset();
+        inflate
             .once(&self.data[offset..], out)
             .map(|(_status, consumed_in, _consumed_out)| consumed_in)
     }
@@ -135,12 +143,14 @@ impl File {
     pub(crate) fn decompress_entry_from_data_offset_2(
         &self,
         data_offset: data::Offset,
+        inflate: &mut zlib::Inflate,
         out: &mut [u8],
     ) -> Result<(usize, usize), zlib::inflate::Error> {
         let offset: usize = data_offset.try_into().expect("offset representable by machine");
         assert!(offset < self.data.len(), "entry offset out of bounds");
 
-        zlib::Inflate::default()
+        inflate.reset();
+        inflate
             .once(&self.data[offset..], out)
             .map(|(_status, consumed_in, consumed_out)| (consumed_in, consumed_out))
     }
@@ -149,6 +159,7 @@ impl File {
     /// space to hold the result object.
     ///
     /// The `entry` determines which object to decode, and is commonly obtained with the help of a pack index file or through pack iteration.
+    /// `inflate` will be used for decompressing entries, and will not be reset after usage, but before first using it.
     ///
     /// `resolve` is a function to lookup objects with the given [`ObjectId`][gix_hash::ObjectId], in case the full object id is used to refer to
     /// a base object, instead of an in-pack offset.
@@ -159,6 +170,7 @@ impl File {
         &self,
         entry: data::Entry,
         out: &mut Vec<u8>,
+        inflate: &mut zlib::Inflate,
         resolve: impl Fn(&gix_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
         delta_cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
@@ -172,15 +184,16 @@ impl File {
                         .expect("size representable by machine"),
                     0,
                 );
-                self.decompress_entry(&entry, out.as_mut_slice()).map(|consumed_input| {
-                    Outcome::from_object_entry(
-                        entry.header.as_kind().expect("a non-delta entry"),
-                        &entry,
-                        consumed_input,
-                    )
-                })
+                self.decompress_entry(&entry, inflate, out.as_mut_slice())
+                    .map(|consumed_input| {
+                        Outcome::from_object_entry(
+                            entry.header.as_kind().expect("a non-delta entry"),
+                            &entry,
+                            consumed_input,
+                        )
+                    })
             }
-            OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, out, delta_cache),
+            OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, inflate, out, delta_cache),
         }
     }
 
@@ -191,6 +204,7 @@ impl File {
         &self,
         last: data::Entry,
         resolve: impl Fn(&gix_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
+        inflate: &mut zlib::Inflate,
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
@@ -278,6 +292,7 @@ impl File {
             for (delta_idx, delta) in chain.iter_mut().rev().enumerate() {
                 let consumed_from_data_offset = self.decompress_entry_from_data_offset(
                     delta.data_offset,
+                    inflate,
                     &mut instructions[..delta.decompressed_size],
                 )?;
                 let is_last_delta_to_be_applied = delta_idx + 1 == chain_len;
@@ -338,7 +353,7 @@ impl File {
                 let base_entry = cursor;
                 debug_assert!(!base_entry.header.is_delta());
                 object_kind = base_entry.header.as_kind();
-                self.decompress_entry_from_data_offset(base_entry.data_offset, out)?;
+                self.decompress_entry_from_data_offset(base_entry.data_offset, inflate, out)?;
             }
 
             (first_buffer_size, second_buffer_end)
