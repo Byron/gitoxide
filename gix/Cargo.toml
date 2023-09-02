@@ -3,7 +3,7 @@ name = "gix"
 repository = "https://github.com/Byron/gitoxide"
 description = "Interact with git repositories just like git would"
 license = "MIT OR Apache-2.0"
-version = "0.52.0"
+version = "0.53.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
@@ -134,7 +134,7 @@ gix-tempfile = { version = "^8.0.0", path = "../gix-tempfile", default-features 
 gix-lock = { version = "^8.0.0", path = "../gix-lock" }
 gix-validate = { version = "^0.8.0", path = "../gix-validate" }
 gix-sec = { version = "^0.9.0", path = "../gix-sec" }
-gix-date = { version = "^0.7.3", path = "../gix-date" }
+gix-date = { version = "^0.7.4", path = "../gix-date" }
 gix-refspec = { version = "^0.16.0", path = "../gix-refspec" }
 gix-filter = { version = "^0.3.0", path = "../gix-filter" }
 
@@ -160,9 +160,9 @@ gix-ignore = { version = "^0.6.0", path = "../gix-ignore" }
 gix-glob = { version = "^0.11.0", path = "../gix-glob" }
 gix-credentials = { version = "^0.18.0", path = "../gix-credentials" }
 gix-prompt = { version = "^0.6.0", path = "../gix-prompt" }
-gix-index = { version = "^0.22.0", path = "../gix-index" }
-gix-worktree = { version = "^0.24.0", path = "../gix-worktree" }
-gix-worktree-state = { version = "^0.1.0", path = "../gix-worktree-state" }
+gix-index = { version = "^0.23.1", path = "../gix-index" }
+gix-worktree = { version = "^0.25.0", path = "../gix-worktree" }
+gix-worktree-state = { version = "^0.2.0", path = "../gix-worktree-state" }
 gix-hashtable = { version = "^0.3.0", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.19.0", path = "../gix-commitgraph" }
 gix-pathspec = { version = "^0.1.0", path = "../gix-pathspec" }

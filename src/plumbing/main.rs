@@ -13,16 +13,14 @@ use gitoxide_core as core;
 use gitoxide_core::{pack::verify, repository::PathsOrPatterns};
 use gix::bstr::{io::BufReadExt, BString};
 
-use crate::{
-    plumbing::{
-        options::{
-            attributes, commit, commitgraph, config, credential, exclude, free, index, mailmap, odb, revision, tree,
-            Args, Subcommands,
-        },
-        show_progress,
+use crate::plumbing::{
+    options::{
+        attributes, commit, commitgraph, config, credential, exclude, free, index, mailmap, odb, revision, tree, Args,
+        Subcommands,
     },
-    shared::pretty::prepare_and_run,
+    show_progress,
 };
+use gitoxide::shared::pretty::prepare_and_run;
 
 #[cfg(feature = "gitoxide-core-async-client")]
 pub mod async_util {

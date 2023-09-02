@@ -1,7 +1,6 @@
 #![deny(unsafe_code, rust_2018_idioms)]
 
 mod plumbing;
-mod shared;
 
 use anyhow::Result;
 

@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::ops::Range;
 
 use bstr::{BStr, ByteSlice, ByteVec};
 use filetime::FileTime;
@@ -84,6 +85,30 @@ impl State {
         self.entry_index_by_idx_and_stage(path, idx, stage, stage_cmp)
     }
 
+    /// Walk as far in `direction` as possible, with [`Ordering::Greater`] towards higher stages, and [`Ordering::Less`]
+    /// towards lower stages, and return the lowest or highest seen stage.
+    /// Return `None` if there is no greater or smaller stage.
+    fn walk_entry_stages(&self, path: &BStr, base: usize, direction: Ordering) -> Option<usize> {
+        match direction {
+            Ordering::Greater => self
+                .entries
+                .get(base + 1..)?
+                .iter()
+                .enumerate()
+                .take_while(|(_, e)| e.path(self) == path)
+                .last()
+                .map(|(idx, _)| base + 1 + idx),
+            Ordering::Equal => Some(base),
+            Ordering::Less => self.entries[..base]
+                .iter()
+                .enumerate()
+                .rev()
+                .take_while(|(_, e)| e.path(self) == path)
+                .last()
+                .map(|(idx, _)| idx),
+        }
+    }
+
     fn entry_index_by_idx_and_stage(
         &self,
         path: &BStr,
@@ -159,31 +184,42 @@ impl State {
     }
 
     /// Return the slice of entries which all share the same `prefix`, or `None` if there isn't a single such entry.
+    ///
+    /// If `prefix` is empty, all entries are returned.
     pub fn prefixed_entries(&self, prefix: &BStr) -> Option<&[Entry]> {
+        self.prefixed_entries_range(prefix).map(|range| &self.entries[range])
+    }
+
+    /// Return the range of entries which all share the same `prefix`, or `None` if there isn't a single such entry.
+    ///
+    /// If `prefix` is empty, the range will include all entries.
+    pub fn prefixed_entries_range(&self, prefix: &BStr) -> Option<Range<usize>> {
         if prefix.is_empty() {
-            return Some(self.entries());
+            return Some(0..self.entries.len());
         }
         let prefix_len = prefix.len();
-        let mut low = self
-            .entries
-            .partition_point(|e| e.path(self).get(..prefix_len).map_or(true, |p| p < prefix));
+        let mut low = self.entries.partition_point(|e| {
+            e.path(self)
+                .get(..prefix_len)
+                .map_or_else(|| e.path(self) <= &prefix[..e.path.len()], |p| p < prefix)
+        });
         let mut high = low
             + self.entries[low..].partition_point(|e| e.path(self).get(..prefix_len).map_or(false, |p| p <= prefix));
 
-        let low_entry = &self.entries[low];
+        let low_entry = &self.entries.get(low)?;
         if low_entry.stage() != 0 {
             low = self
-                .entry_index_by_idx_and_stage(low_entry.path(self), low, 0, low_entry.stage().cmp(&0))
+                .walk_entry_stages(low_entry.path(self), low, Ordering::Less)
                 .unwrap_or(low);
         }
         if let Some(high_entry) = self.entries.get(high) {
-            if low_entry.stage() != 2 {
+            if high_entry.stage() != 0 {
                 high = self
-                    .entry_index_by_idx_and_stage(high_entry.path(self), high, 2, high_entry.stage().cmp(&2))
+                    .walk_entry_stages(high_entry.path(self), high, Ordering::Less)
                     .unwrap_or(high);
             }
         }
-        (low != high).then_some(low..high).map(|range| &self.entries[range])
+        (low != high).then_some(low..high)
     }
 
     /// Return the entry at `idx` or _panic_ if the index is out of bounds.
@@ -198,6 +234,30 @@ impl State {
     /// An index is sparse if it contains at least one [`Mode::DIR`][entry::Mode::DIR] entry.
     pub fn is_sparse(&self) -> bool {
         self.is_sparse
+    }
+
+    /// Return the range of entries that exactly match the given `path`, in all available stages, or `None` if no entry with such
+    /// path exists.
+    ///
+    /// The range can be used to access the respective entries via [`entries()`](Self::entries()) or [`entries_mut()](Self::entries_mut()).
+    pub fn entry_range(&self, path: &BStr) -> Option<Range<usize>> {
+        let mut stage_at_index = 0;
+        let idx = self
+            .entries
+            .binary_search_by(|e| {
+                let res = e.path(self).cmp(path);
+                if res.is_eq() {
+                    stage_at_index = e.stage();
+                }
+                res
+            })
+            .ok()?;
+
+        let (start, end) = (
+            self.walk_entry_stages(path, idx, Ordering::Less).unwrap_or(idx),
+            self.walk_entry_stages(path, idx, Ordering::Greater).unwrap_or(idx) + 1,
+        );
+        Some(start..end)
     }
 }
 
@@ -307,6 +367,25 @@ impl State {
             Entry::cmp_filepaths(a.path_in(path_backing), b.path_in(path_backing))
                 .then_with(|| a.stage().cmp(&b.stage()))
                 .then_with(|| compare(a, b))
+        });
+    }
+
+    /// Physically remove all entries for which `should_remove(idx, path, entry)` returns `true`, traversing them from first to last.
+    ///
+    /// Note that the memory used for the removed entries paths is not freed, as it's append-only.
+    ///
+    /// ### Performance
+    ///
+    /// To implement this operation typically, one would rather add [entry::Flags::REMOVE] to each entry to remove
+    /// them when [writing the index](Self::write_to()).
+    pub fn remove_entries(&mut self, mut should_remove: impl FnMut(usize, &BStr, &mut Entry) -> bool) {
+        let mut index = 0;
+        let paths = &self.path_backing;
+        self.entries.retain_mut(|e| {
+            let path = e.path_in(paths);
+            let res = !should_remove(index, path, e);
+            index += 1;
+            res
         });
     }
 }
