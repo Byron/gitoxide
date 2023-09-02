@@ -212,7 +212,7 @@ fn test_fn_pat<E>(
 }
 
 #[test]
-fn test_basic_fn() {
+fn basic_fn() {
     assert_eq!(
         test_fn("12345", "12345", String::from("12345"), S(true)).unwrap(),
         "123451234512345!2345"
@@ -236,8 +236,7 @@ fn test_basic_fn() {
 }
 
 #[test]
-fn test_struct_method() {
-    // Test test_method
+fn struct_method() {
     assert_eq!(
         TestStruct
             .test_method("12345", "12345", String::from("12345"), S(true))
@@ -263,7 +262,7 @@ fn test_struct_method() {
 }
 
 #[test]
-fn test_struct_fn() {
+fn struct_fn() {
     assert_eq!(
         TestStruct::test_fn("12345", "12345", String::from("12345"), S(true), ()).unwrap(),
         "123451234512345!2345"
