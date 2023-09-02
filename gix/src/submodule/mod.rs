@@ -140,21 +140,16 @@ impl<'repo> Submodule<'repo> {
     /// Please see the [plumbing crate documentation](gix_submodule::IsActivePlatform::is_active()) for details.
     pub fn is_active(&self) -> Result<bool, is_active::Error> {
         let (mut platform, mut attributes) = self.state.active_state_mut()?;
-        let is_active = platform.is_active(
-            &self.state.modules,
-            &self.state.repo.config.resolved,
-            self.name.as_ref(),
-            {
-                |relative_path, case, is_dir, out| {
-                    attributes
-                        .set_case(case)
-                        .at_entry(relative_path, Some(is_dir), |id, buf| {
-                            self.state.repo.objects.find_blob(id, buf)
-                        })
-                        .map_or(false, |platform| platform.matching_attributes(out))
-                }
-            },
-        )?;
+        let is_active = platform.is_active(&self.state.repo.config.resolved, self.name.as_ref(), {
+            |relative_path, case, is_dir, out| {
+                attributes
+                    .set_case(case)
+                    .at_entry(relative_path, Some(is_dir), |id, buf| {
+                        self.state.repo.objects.find_blob(id, buf)
+                    })
+                    .map_or(false, |platform| platform.matching_attributes(out))
+            }
+        })?;
         Ok(is_active)
     }
 
