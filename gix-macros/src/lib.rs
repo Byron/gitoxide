@@ -19,7 +19,6 @@ use proc_macro::TokenStream;
 /// * `AsMut`
 #[proc_macro_attribute]
 pub fn momo(_attrs: TokenStream, input: TokenStream) -> TokenStream {
-    //TODO: alternatively parse ImplItem::Method
     momo::inner(input.into()).into()
 }
 
