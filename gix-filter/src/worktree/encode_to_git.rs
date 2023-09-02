@@ -26,7 +26,6 @@ pub(crate) mod function {
     use encoding_rs::DecoderResult;
 
     use super::{Error, RoundTripCheck};
-    use crate::clear_and_set_capacity;
 
     /// Decode `src` according to `src_encoding` to `UTF-8` for storage in git and place it in `buf`.
     /// Note that the encoding is always applied, there is no conditional even if `src_encoding` already is `UTF-8`.
@@ -40,13 +39,8 @@ pub(crate) mod function {
         let buf_len = decoder
             .max_utf8_buffer_length_without_replacement(src.len())
             .ok_or(Error::Overflow { input_len: src.len() })?;
-        clear_and_set_capacity(buf, buf_len);
-        // SAFETY: `clear_and_set_capacity` assure that we have the given `buf_len` allocated, so setting its length is only making available
-        //          what is allocated. Later we will truncate to the amount of actually written bytes.
-        #[allow(unsafe_code)]
-        unsafe {
-            buf.set_len(buf_len);
-        }
+        buf.clear();
+        buf.resize(buf_len, 0);
         let (res, read, written) = decoder.decode_to_utf8_without_replacement(src, buf, true);
         match res {
             DecoderResult::InputEmpty => {
@@ -55,11 +49,7 @@ pub(crate) mod function {
                     "encoding_rs estimates the maximum amount of bytes written correctly"
                 );
                 assert_eq!(read, src.len(), "input buffer should be fully consumed");
-                // SAFETY: we trust that `encoding_rs` reports this number correctly, and truncate everything else.
-                #[allow(unsafe_code)]
-                unsafe {
-                    buf.set_len(written);
-                }
+                buf.truncate(written);
             }
             DecoderResult::OutputFull => {
                 unreachable!("we assure that the output buffer is big enough as per the encoder's estimate")
