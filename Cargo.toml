@@ -12,8 +12,8 @@ resolver = "2"
 
 [[bin]]
 name = "ein"
-doc = false
 path = "src/ein.rs"
+doc = false
 test = false
 doctest = false
 
