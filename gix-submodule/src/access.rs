@@ -56,13 +56,13 @@ impl File {
             ) -> bool
             + 'a,
     ) -> Result<
-        impl Iterator<Item = (&BStr, Result<bool, crate::is_active_platform::is_active::Error>)> + 'a,
+        impl Iterator<Item = (&BStr, Result<bool, gix_config::value::Error>)> + 'a,
         crate::is_active_platform::Error,
     > {
         let mut platform = self.is_active_platform(config, defaults)?;
         let iter = self
             .names()
-            .map(move |name| (name, platform.is_active(self, config, name, &mut attributes)));
+            .map(move |name| (name, platform.is_active(config, name, &mut attributes)));
         Ok(iter)
     }
 
