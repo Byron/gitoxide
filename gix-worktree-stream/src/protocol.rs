@@ -126,13 +126,5 @@ fn mode_to_byte(m: gix_object::tree::EntryMode) -> u8 {
 
 fn clear_and_set_len(buf: &mut Vec<u8>, len: usize) {
     buf.clear();
-    if buf.capacity() < len {
-        buf.reserve(len);
-        assert!(buf.capacity() >= len, "{} >= {}", buf.capacity(), len);
-    }
-    // SAFETY: we just assured that `buf` has the right capacity to hold `cap`
-    #[allow(unsafe_code)]
-    unsafe {
-        buf.set_len(len);
-    }
+    buf.resize(len, 0);
 }

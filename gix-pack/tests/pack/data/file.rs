@@ -105,8 +105,14 @@ mod decode_entry {
         let p = pack_at(SMALL_PACK);
         let entry = p.entry(offset);
         let mut buf = Vec::new();
-        p.decode_entry(entry, &mut buf, resolve_with_panic, &mut cache::Never)
-            .expect("valid offset provides valid entry");
+        p.decode_entry(
+            entry,
+            &mut buf,
+            &mut Default::default(),
+            resolve_with_panic,
+            &mut cache::Never,
+        )
+        .expect("valid offset provides valid entry");
         buf
     }
 }
@@ -154,7 +160,7 @@ mod resolve_header {
 
         let p = pack_at(SMALL_PACK);
         let entry = p.entry(offset);
-        p.decode_header(entry, resolve_with_panic)
+        p.decode_header(entry, &mut Default::default(), resolve_with_panic)
             .expect("valid offset provides valid entry")
     }
 }
@@ -206,7 +212,8 @@ mod decompress_entry {
 
         let size = entry.decompressed_size as usize;
         let mut buf = vec![0; size];
-        p.decompress_entry(&entry, &mut buf).expect("valid offset");
+        p.decompress_entry(&entry, &mut Default::default(), &mut buf)
+            .expect("valid offset");
 
         buf.resize(entry.decompressed_size as usize, 0);
         buf

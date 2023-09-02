@@ -75,6 +75,7 @@ pub(crate) mod error {
     }
 }
 pub use error::Error;
+use gix_features::zlib;
 
 use crate::{store::types::PackId, Find};
 
@@ -86,6 +87,7 @@ where
         &'b self,
         mut id: &'b gix_hash::oid,
         buffer: &'a mut Vec<u8>,
+        inflate: &mut zlib::Inflate,
         pack_cache: &mut impl DecodeEntry,
         snapshot: &mut load_index::Snapshot,
         recursion: Option<error::DeltaBaseRecursion<'_>>,
@@ -147,6 +149,7 @@ where
                         let res = match pack.decode_entry(
                             entry,
                             buffer,
+                            inflate,
                             |id, _out| {
                                 index_file.pack_offset_by_id(id).map(|pack_offset| {
                                     gix_pack::data::decode::entry::ResolvedBase::InPack(pack.entry(pack_offset))
@@ -182,6 +185,7 @@ where
                                     .try_find_cached_inner(
                                         &base_id,
                                         &mut buf,
+                                        inflate,
                                         pack_cache,
                                         snapshot,
                                         recursion
@@ -231,6 +235,7 @@ where
                                 pack.decode_entry(
                                     entry,
                                     buffer,
+                                    inflate,
                                     |id, out| {
                                         index_file
                                             .pack_offset_by_id(id)
@@ -347,7 +352,8 @@ where
     ) -> Result<Option<(gix_object::Data<'a>, Option<gix_pack::data::entry::Location>)>, Self::Error> {
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
-        self.try_find_cached_inner(id, buffer, pack_cache, &mut snapshot, None)
+        let mut inflate = self.inflate.borrow_mut();
+        self.try_find_cached_inner(id, buffer, &mut inflate, pack_cache, &mut snapshot, None)
     }
 
     fn location_by_oid(
@@ -364,6 +370,7 @@ where
 
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
+        let mut inflate = self.inflate.borrow_mut();
         'outer: loop {
             {
                 let marker = snapshot.marker;
@@ -404,13 +411,14 @@ where
                         buf.resize(entry.decompressed_size.try_into().expect("representable size"), 0);
                         assert_eq!(pack.id, pack_id.to_intrinsic_pack_id(), "both ids must always match");
 
-                        let res = pack.decompress_entry(&entry, buf).ok().map(|entry_size_past_header| {
-                            gix_pack::data::entry::Location {
+                        let res = pack
+                            .decompress_entry(&entry, &mut inflate, buf)
+                            .ok()
+                            .map(|entry_size_past_header| gix_pack::data::entry::Location {
                                 pack_id: pack.id,
                                 pack_offset,
                                 entry_size: entry.header_size() + entry_size_past_header,
-                            }
-                        });
+                            });
 
                         if idx != 0 {
                             snapshot.indices.swap(0, idx);

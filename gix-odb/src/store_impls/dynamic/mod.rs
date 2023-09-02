@@ -1,4 +1,5 @@
 //! The standard object store which should fit all needs.
+use gix_features::zlib;
 use std::{cell::RefCell, ops::Deref};
 
 use crate::Store;
@@ -24,6 +25,7 @@ where
 
     pub(crate) token: Option<handle::Mode>,
     snapshot: RefCell<load_index::Snapshot>,
+    inflate: RefCell<zlib::Inflate>,
     packed_object_count: RefCell<Option<u64>>,
 }
 

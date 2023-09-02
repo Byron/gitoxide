@@ -4,6 +4,7 @@ use gix_features::{
     parallel::{self, in_parallel_if},
     progress::{self, Progress},
     threading::{lock, Mutable, OwnShared},
+    zlib,
 };
 
 use super::{Error, Reducer};
@@ -131,6 +132,7 @@ impl index::File {
                         (
                             make_pack_lookup_cache(),
                             Vec::with_capacity(2048), // decode buffer
+                            zlib::Inflate::default(),
                             lock(&reduce_progress)
                                 .add_child_with_id(format!("thread {index}"), gix_features::progress::UNKNOWN), // per thread progress
                         )
@@ -143,7 +145,7 @@ impl index::File {
                     thread_limit,
                     state_per_thread,
                     move |entries: &[index::Entry],
-                          (cache, buf, progress)|
+                          (cache, buf, inflate, progress)|
                           -> Result<Vec<data::decode::entry::Outcome>, Error<_>> {
                         progress.init(
                             Some(entries.len()),
@@ -157,6 +159,7 @@ impl index::File {
                                 pack,
                                 cache,
                                 buf,
+                                inflate,
                                 progress,
                                 index_entry,
                                 &mut processor,

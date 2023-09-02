@@ -122,7 +122,7 @@ where
             let (result_size, consumed) = data::delta::decode_header_size(&delta_bytes[consumed..]);
             header_ofs += consumed;
 
-            set_len(fully_resolved_delta_bytes, result_size as usize);
+            fully_resolved_delta_bytes.resize(result_size as usize, 0);
             data::delta::apply(&base_bytes, fully_resolved_delta_bytes, &delta_bytes[header_ofs..]);
 
             // FIXME: this actually invalidates the "pack_offset()" computation, which is not obvious to consumers
@@ -394,28 +394,13 @@ where
     })
 }
 
-fn set_len(v: &mut Vec<u8>, new_len: usize) {
-    if new_len > v.len() {
-        v.reserve_exact(new_len.saturating_sub(v.capacity()) + (v.capacity() - v.len()));
-        // SAFETY:
-        // 1. we have reserved enough capacity to fit `new_len`
-        // 2. the caller is trusted to write into `v` to completely fill `new_len`.
-        #[allow(unsafe_code, clippy::uninit_vec)]
-        unsafe {
-            v.set_len(new_len);
-        }
-    } else {
-        v.truncate(new_len)
-    }
-}
-
 fn decompress_all_at_once_with(
     inflate: &mut zlib::Inflate,
     b: &[u8],
     decompressed_len: usize,
     out: &mut Vec<u8>,
 ) -> Result<(), Error> {
-    set_len(out, decompressed_len);
+    out.resize(decompressed_len, 0);
     inflate.reset();
     inflate.once(b, out).map_err(|err| Error::ZlibInflate {
         source: err,

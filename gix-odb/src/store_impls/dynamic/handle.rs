@@ -257,6 +257,7 @@ impl super::Store {
             refresh: RefreshMode::default(),
             ignore_replacements: false,
             token: Some(token),
+            inflate: RefCell::new(Default::default()),
             snapshot: RefCell::new(self.collect_snapshot()),
             max_recursion_depth: Self::INITIAL_MAX_RECURSION_DEPTH,
             packed_object_count: Default::default(),
@@ -273,6 +274,7 @@ impl super::Store {
             refresh: Default::default(),
             ignore_replacements: false,
             token: Some(token),
+            inflate: RefCell::new(Default::default()),
             snapshot: RefCell::new(self.collect_snapshot()),
             max_recursion_depth: Self::INITIAL_MAX_RECURSION_DEPTH,
             packed_object_count: Default::default(),
@@ -391,6 +393,7 @@ where
                 }
                 .into()
             },
+            inflate: RefCell::new(Default::default()),
             snapshot: RefCell::new(self.store.collect_snapshot()),
             max_recursion_depth: self.max_recursion_depth,
             packed_object_count: Default::default(),

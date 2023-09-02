@@ -17,7 +17,6 @@ pub(crate) mod function {
     use encoding_rs::EncoderResult;
 
     use super::Error;
-    use crate::clear_and_set_capacity;
 
     /// Encode `src_utf8`, which is assumed to be UTF-8 encoded, according to `worktree_encoding` for placement in the working directory,
     /// and write it to `buf`, possibly resizing it.
@@ -33,13 +32,8 @@ pub(crate) mod function {
             .ok_or(Error::Overflow {
                 input_len: src_utf8.len(),
             })?;
-        clear_and_set_capacity(buf, buf_len);
-        // SAFETY: `clear_and_set_capacity` assure that we have the given `buf_len` allocated, so setting its length is only making available
-        //          what is allocated. Later we will truncate to the amount of actually written bytes.
-        #[allow(unsafe_code)]
-        unsafe {
-            buf.set_len(buf_len);
-        }
+        buf.clear();
+        buf.resize(buf_len, 0);
         let src = std::str::from_utf8(src_utf8)?;
         let (res, read, written) = encoder.encode_from_utf8_without_replacement(src, buf, true);
         match res {
@@ -49,11 +43,7 @@ pub(crate) mod function {
                     "encoding_rs estimates the maximum amount of bytes written correctly"
                 );
                 assert_eq!(read, src_utf8.len(), "input buffer should be fully consumed");
-                // SAFETY: we trust that `encoding_rs` reports this number correctly, and truncate everything else.
-                #[allow(unsafe_code)]
-                unsafe {
-                    buf.set_len(written);
-                }
+                buf.truncate(written);
             }
             EncoderResult::OutputFull => {
                 unreachable!("we assure that the output buffer is big enough as per the encoder's estimate")
