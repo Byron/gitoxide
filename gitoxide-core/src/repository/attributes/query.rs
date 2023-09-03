@@ -11,7 +11,7 @@ pub(crate) mod function {
     use std::{io, path::Path};
 
     use anyhow::{anyhow, bail};
-    use gix::{bstr::BStr, prelude::FindExt};
+    use gix::bstr::BStr;
 
     use crate::{
         repository::{
@@ -40,7 +40,7 @@ pub(crate) mod function {
                 for path in paths {
                     let is_dir = gix::path::from_bstr(path.as_ref()).metadata().ok().map(|m| m.is_dir());
 
-                    let entry = cache.at_entry(path.as_slice(), is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
+                    let entry = cache.at_entry(path.as_slice(), is_dir)?;
                     if !entry.matching_attributes(&mut matches) {
                         continue;
                     }
@@ -59,7 +59,7 @@ pub(crate) mod function {
                     .index_entries_with_paths(&index)
                     .ok_or_else(|| anyhow!("Pathspec didn't match a single path in the index"))?
                 {
-                    let entry = cache.at_entry(path, Some(false), |oid, buf| repo.objects.find_blob(oid, buf))?;
+                    let entry = cache.at_entry(path, Some(false))?;
                     if !entry.matching_attributes(&mut matches) {
                         continue;
                     }
@@ -97,7 +97,7 @@ pub(crate) mod function {
 
 pub(crate) fn attributes_cache(
     repo: &gix::Repository,
-) -> anyhow::Result<(gix::worktree::Stack, IndexPersistedOrInMemory)> {
+) -> anyhow::Result<(gix::AttributeStack<'_>, IndexPersistedOrInMemory)> {
     let index = repo.index_or_load_from_head()?;
     let cache = repo.attributes(
         &index,

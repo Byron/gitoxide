@@ -6,7 +6,7 @@ use std::{
     },
 };
 
-use gix::{bstr::BStr, odb::FindExt};
+use gix::bstr::BStr;
 use itertools::Itertools;
 use smallvec::SmallVec;
 
@@ -182,11 +182,7 @@ pub fn spawn_tree_delta_threads<'scope>(
                                                 (true, true) => {
                                                     files.modified += 1;
                                                     if let Some((attrs, matches)) = attributes.as_mut() {
-                                                        let entry = attrs.at_entry(
-                                                            change.location,
-                                                            Some(false),
-                                                            |id, buf| repo.objects.find_blob(id, buf),
-                                                        )?;
+                                                        let entry = attrs.at_entry(change.location, Some(false))?;
                                                         let is_text_file = if entry.matching_attributes(matches) {
                                                             let attrs: SmallVec<[_; 2]> =
                                                                 matches.iter_selected().collect();

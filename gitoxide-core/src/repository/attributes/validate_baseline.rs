@@ -18,7 +18,7 @@ pub(crate) mod function {
     };
 
     use anyhow::{anyhow, bail};
-    use gix::{attrs::Assignment, bstr::BString, odb::FindExt, Progress};
+    use gix::{attrs::Assignment, bstr::BString, Progress};
 
     use crate::{
         repository::attributes::{query::attributes_cache, validate_baseline::Options},
@@ -192,9 +192,7 @@ pub(crate) mod function {
         );
 
         for (rela_path, baseline) in rx_base {
-            let entry = cache.at_entry(rela_path.as_str(), Some(false), |oid, buf| {
-                repo.objects.find_blob(oid, buf)
-            })?;
+            let entry = cache.at_entry(rela_path.as_str(), Some(false))?;
             match baseline {
                 Baseline::Attribute { assignments: expected } => {
                     entry.matching_attributes(&mut matches);
