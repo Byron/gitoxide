@@ -150,6 +150,9 @@ pub struct Repository {
 ///
 /// Note that this type purposefully isn't very useful until it is converted into a thread-local repository with `to_thread_local()`,
 /// it's merely meant to be able to exist in a `Sync` context.
+///
+/// Note that it can also cheaply be cloned, and it will retain references to all contained resources.
+#[derive(Clone)]
 pub struct ThreadSafeRepository {
     /// A store for references to point at objects
     pub refs: crate::RefStore,
