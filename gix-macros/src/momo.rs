@@ -11,6 +11,14 @@ pub(crate) fn inner(code: proc_macro2::TokenStream) -> proc_macro2::TokenStream 
 
     if let Item::Fn(item_fn) = fn_item {
         let ty_conversions = parse_generics(&item_fn.sig);
+        // TODO: uncomment and see it fail in places where it should actually succeed.
+        // if ty_conversions.is_empty() {
+        //     return Error::new(
+        //         item_fn.span(),
+        //         "Couldn't apply a single conversion - momo is ineffective here",
+        //     )
+        //     .to_compile_error();
+        // }
         let (argtypes, argexprs, has_self) = convert(&item_fn.sig.inputs, &ty_conversions);
 
         let uses_self = has_self

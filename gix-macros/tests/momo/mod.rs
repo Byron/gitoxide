@@ -302,3 +302,16 @@ fn struct_fn() {
     )
     .unwrap_err();
 }
+
+#[test]
+fn ux() {
+    let t = trybuild::TestCases::new();
+    t.compile_fail("tests/momo/ux/error_on_struct.rs");
+}
+
+#[test]
+#[ignore = "needs work"]
+fn ux_todo() {
+    let t = trybuild::TestCases::new();
+    t.compile_fail("tests/momo/ux/error_if_ineffective.rs");
+}
