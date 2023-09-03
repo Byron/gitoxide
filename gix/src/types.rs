@@ -150,6 +150,9 @@ pub struct Repository {
 ///
 /// Note that this type purposefully isn't very useful until it is converted into a thread-local repository with `to_thread_local()`,
 /// it's merely meant to be able to exist in a `Sync` context.
+///
+/// Note that it can also cheaply be cloned, and it will retain references to all contained resources.
+#[derive(Clone)]
 pub struct ThreadSafeRepository {
     /// A store for references to point at objects
     pub refs: crate::RefStore,
@@ -205,7 +208,7 @@ pub struct Remote<'repo> {
 pub struct Pathspec<'repo> {
     pub(crate) repo: &'repo Repository,
     /// The cache to power attribute access. It's only initialized if we have a pattern with attributes.
-    pub(crate) cache: Option<gix_worktree::Stack>,
+    pub(crate) stack: Option<gix_worktree::Stack>,
     /// The prepared search to use for checking matches.
     pub(crate) search: gix_pathspec::Search,
 }
@@ -215,4 +218,10 @@ pub struct Pathspec<'repo> {
 pub struct Submodule<'repo> {
     pub(crate) state: Rc<crate::submodule::SharedState<'repo>>,
     pub(crate) name: BString,
+}
+
+/// A utility to access `.gitattributes` and `.gitignore` information efficiently.
+pub struct AttributeStack<'repo> {
+    pub(crate) repo: &'repo Repository,
+    pub(crate) inner: gix_worktree::Stack,
 }

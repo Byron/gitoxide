@@ -25,7 +25,6 @@ pub(crate) mod function {
 
     use gix::{
         bstr::{BStr, BString},
-        odb::FindExt,
         repository::IndexPersistedOrInMemory,
         Repository,
     };
@@ -133,27 +132,25 @@ pub(crate) mod function {
                     .and_then(|(attrs, cache)| {
                         // If the user wants to see assigned attributes, we always have to match.
                         attributes.is_some().then(|| {
-                            cache
-                                .at_entry(entry.path(&index), None, |id, buf| repo.objects.find_blob(id, buf))
-                                .map(|entry| {
-                                    let is_excluded = entry.is_excluded();
-                                    stats.excluded += usize::from(is_excluded);
-                                    let attributes: Vec<_> = {
-                                        last_match = Some(entry.matching_attributes(attrs));
-                                        attrs.iter().map(|m| m.assignment.to_owned()).collect()
-                                    };
-                                    stats.with_attributes += usize::from(!attributes.is_empty());
-                                    stats.max_attributes_per_path = stats.max_attributes_per_path.max(attributes.len());
-                                    if let Some(attrs) = repo_attrs.as_mut() {
-                                        attributes.iter().for_each(|attr| {
-                                            attrs.insert(attr.clone());
-                                        });
-                                    }
-                                    Attrs {
-                                        is_excluded,
-                                        attributes,
-                                    }
-                                })
+                            cache.at_entry(entry.path(&index), None).map(|entry| {
+                                let is_excluded = entry.is_excluded();
+                                stats.excluded += usize::from(is_excluded);
+                                let attributes: Vec<_> = {
+                                    last_match = Some(entry.matching_attributes(attrs));
+                                    attrs.iter().map(|m| m.assignment.to_owned()).collect()
+                                };
+                                stats.with_attributes += usize::from(!attributes.is_empty());
+                                stats.max_attributes_per_path = stats.max_attributes_per_path.max(attributes.len());
+                                if let Some(attrs) = repo_attrs.as_mut() {
+                                    attributes.iter().for_each(|attr| {
+                                        attrs.insert(attr.clone());
+                                    });
+                                }
+                                Attrs {
+                                    is_excluded,
+                                    attributes,
+                                }
+                            })
                         })
                     })
                     .transpose()?;
@@ -173,7 +170,7 @@ pub(crate) mod function {
                                     }
                                     // The user doesn't want attributes, so we set the cache position on demand only
                                     None => cache
-                                        .at_entry(rela_path, Some(is_dir), |id, buf| repo.objects.find_blob(id, buf))
+                                        .at_entry(rela_path, Some(is_dir))
                                         .ok()
                                         .map(|platform| platform.matching_attributes(out))
                                         .unwrap_or_default(),
@@ -251,7 +248,7 @@ pub(crate) mod function {
     ) -> anyhow::Result<(
         gix::pathspec::Search,
         IndexPersistedOrInMemory,
-        Option<(gix::attrs::search::Outcome, gix::worktree::Stack)>,
+        Option<(gix::attrs::search::Outcome, gix::AttributeStack<'_>)>,
     )> {
         let index = repo.index_or_load_from_head()?;
         let pathspec = repo.pathspec(

@@ -117,6 +117,8 @@ mod ext;
 ///
 pub mod prelude;
 
+mod attribute_stack;
+
 ///
 pub mod path;
 
@@ -129,7 +131,7 @@ pub(crate) type Config = OwnShared<gix_config::File<'static>>;
 
 mod types;
 pub use types::{
-    Commit, Head, Id, Object, ObjectDetached, Pathspec, Reference, Remote, Repository, Submodule, Tag,
+    AttributeStack, Commit, Head, Id, Object, ObjectDetached, Pathspec, Reference, Remote, Repository, Submodule, Tag,
     ThreadSafeRepository, Tree, Worktree,
 };
 
