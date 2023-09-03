@@ -208,7 +208,7 @@ pub struct Remote<'repo> {
 pub struct Pathspec<'repo> {
     pub(crate) repo: &'repo Repository,
     /// The cache to power attribute access. It's only initialized if we have a pattern with attributes.
-    pub(crate) cache: Option<gix_worktree::Stack>,
+    pub(crate) stack: Option<gix_worktree::Stack>,
     /// The prepared search to use for checking matches.
     pub(crate) search: gix_pathspec::Search,
 }
@@ -218,4 +218,10 @@ pub struct Pathspec<'repo> {
 pub struct Submodule<'repo> {
     pub(crate) state: Rc<crate::submodule::SharedState<'repo>>,
     pub(crate) name: BString,
+}
+
+/// A utility to access `.gitattributes` and `.gitignore` information efficiently.
+pub struct AttributeStack<'repo> {
+    pub(crate) repo: &'repo Repository,
+    pub(crate) inner: gix_worktree::Stack,
 }

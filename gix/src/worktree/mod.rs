@@ -145,7 +145,7 @@ pub mod excludes {
 
 ///
 pub mod attributes {
-    use crate::Worktree;
+    use crate::{AttributeStack, Worktree};
 
     /// The error returned by [`Worktree::attributes()`].
     #[derive(Debug, thiserror::Error)]
@@ -164,7 +164,7 @@ pub mod attributes {
         ///
         /// * `$XDG_CONFIG_HOME/…/ignore|attributes` if `core.excludesFile|attributesFile` is *not* set, otherwise use the configured file.
         /// * `$GIT_DIR/info/exclude|attributes` if present.
-        pub fn attributes(&self, overrides: Option<gix_ignore::Search>) -> Result<gix_worktree::Stack, Error> {
+        pub fn attributes(&self, overrides: Option<gix_ignore::Search>) -> Result<AttributeStack<'repo>, Error> {
             let index = self.index()?;
             Ok(self.parent.attributes(
                 &index,
@@ -175,7 +175,7 @@ pub mod attributes {
         }
 
         /// Like [attributes()][Self::attributes()], but without access to exclude/ignore information.
-        pub fn attributes_only(&self) -> Result<gix_worktree::Stack, Error> {
+        pub fn attributes_only(&self) -> Result<AttributeStack<'repo>, Error> {
             let index = self.index()?;
             self.parent
                 .attributes_only(

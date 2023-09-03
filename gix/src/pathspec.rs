@@ -2,7 +2,7 @@
 use gix_odb::FindExt;
 pub use gix_pathspec::*;
 
-use crate::{bstr::BStr, Pathspec, Repository};
+use crate::{bstr::BStr, AttributeStack, Pathspec, Repository};
 
 ///
 pub mod init {
@@ -59,13 +59,20 @@ impl<'repo> Pathspec<'repo> {
             )?,
         )?;
         let cache = needs_cache.then(make_attributes).transpose()?;
-        Ok(Self { repo, search, cache })
+        Ok(Self {
+            repo,
+            search,
+            stack: cache,
+        })
     }
     /// Turn ourselves into the functional parts for direct usage.
-    /// Note that the [`cache`](gix_worktree::Stack) is only set if one of the [`search` patterns](Search)
+    /// Note that the [`cache`](AttributeStack) is only set if one of the [`search` patterns](Search)
     /// is specifying attributes to match for.
-    pub fn into_parts(self) -> (Search, Option<gix_worktree::Stack>) {
-        (self.search, self.cache)
+    pub fn into_parts(self) -> (Search, Option<AttributeStack<'repo>>) {
+        (
+            self.search,
+            self.stack.map(|stack| AttributeStack::new(stack, self.repo)),
+        )
     }
 }
 
@@ -73,7 +80,7 @@ impl<'repo> Pathspec<'repo> {
 impl<'repo> Pathspec<'repo> {
     /// Return the attributes cache which is used when matching attributes in pathspecs, or `None` if none of the pathspecs require that.
     pub fn attributes(&self) -> Option<&gix_worktree::Stack> {
-        self.cache.as_ref()
+        self.stack.as_ref()
     }
 
     /// Return the search itself which can be used for matching paths or accessing the actual patterns that will be used.
@@ -99,8 +106,8 @@ impl<'repo> Pathspec<'repo> {
     ) -> Option<gix_pathspec::search::Match<'_>> {
         self.search
             .pattern_matching_relative_path(relative_path, is_dir, |relative_path, case, is_dir, out| {
-                let cache = self.cache.as_mut().expect("initialized in advance");
-                cache
+                let stack = self.stack.as_mut().expect("initialized in advance");
+                stack
                     .set_case(case)
                     .at_entry(relative_path, Some(is_dir), |id, buf| {
                         self.repo.objects.find_blob(id, buf)

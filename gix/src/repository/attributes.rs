@@ -1,5 +1,5 @@
 //! exclude information
-use crate::{config, Repository};
+use crate::{config, AttributeStack, Repository};
 
 /// The error returned by [`Repository::attributes()`].
 #[derive(Debug, thiserror::Error)]
@@ -24,15 +24,13 @@ impl Repository {
     ///
     /// * `$XDG_CONFIG_HOME/…/ignore|attributes` if `core.excludesFile|attributesFile` is *not* set, otherwise use the configured file.
     /// * `$GIT_DIR/info/exclude|attributes` if present.
-    // TODO: test, provide higher-level custom Cache wrapper that is much easier to use and doesn't panic when accessing entries
-    //       by non-relative path.
     pub fn attributes(
         &self,
         index: &gix_index::State,
         attributes_source: gix_worktree::stack::state::attributes::Source,
         ignore_source: gix_worktree::stack::state::ignore::Source,
         exclude_overrides: Option<gix_ignore::Search>,
-    ) -> Result<gix_worktree::Stack, Error> {
+    ) -> Result<AttributeStack<'_>, Error> {
         let case = if self.config.ignore_case {
             gix_glob::pattern::Case::Fold
         } else {
@@ -48,13 +46,16 @@ impl Repository {
                 .assemble_exclude_globals(self.git_dir(), exclude_overrides, ignore_source, &mut buf)?;
         let state = gix_worktree::stack::State::AttributesAndIgnoreStack { attributes, ignore };
         let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
-        Ok(gix_worktree::Stack::new(
-            // this is alright as we don't cause mutation of that directory, it's virtual.
-            self.work_dir().unwrap_or(self.git_dir()),
-            state,
-            case,
-            buf,
-            attribute_list,
+        Ok(AttributeStack::new(
+            gix_worktree::Stack::new(
+                // this is alright as we don't cause mutation of that directory, it's virtual.
+                self.work_dir().unwrap_or(self.git_dir()),
+                state,
+                case,
+                buf,
+                attribute_list,
+            ),
+            self,
         ))
     }
 
@@ -63,7 +64,7 @@ impl Repository {
         &self,
         index: &gix_index::State,
         attributes_source: gix_worktree::stack::state::attributes::Source,
-    ) -> Result<gix_worktree::Stack, config::attribute_stack::Error> {
+    ) -> Result<AttributeStack<'_>, config::attribute_stack::Error> {
         let case = if self.config.ignore_case {
             gix_glob::pattern::Case::Fold
         } else {
@@ -76,13 +77,16 @@ impl Repository {
         )?;
         let state = gix_worktree::stack::State::AttributesStack(attributes);
         let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
-        Ok(gix_worktree::Stack::new(
-            // this is alright as we don't cause mutation of that directory, it's virtual.
-            self.work_dir().unwrap_or(self.git_dir()),
-            state,
-            case,
-            buf,
-            attribute_list,
+        Ok(AttributeStack::new(
+            gix_worktree::Stack::new(
+                // this is alright as we don't cause mutation of that directory, it's virtual.
+                self.work_dir().unwrap_or(self.git_dir()),
+                state,
+                case,
+                buf,
+                attribute_list,
+            ),
+            self,
         ))
     }
 

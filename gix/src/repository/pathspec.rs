@@ -1,6 +1,6 @@
 use gix_pathspec::MagicSignature;
 
-use crate::{bstr::BStr, config::cache::util::ApplyLeniencyDefault, Pathspec, Repository};
+use crate::{bstr::BStr, config::cache::util::ApplyLeniencyDefault, AttributeStack, Pathspec, Repository};
 
 impl Repository {
     /// Create a new pathspec abstraction that allows to conduct searches using `patterns`.
@@ -20,7 +20,9 @@ impl Repository {
         attributes_source: gix_worktree::stack::state::attributes::Source,
     ) -> Result<Pathspec<'_>, crate::pathspec::init::Error> {
         Pathspec::new(self, patterns, inherit_ignore_case, || {
-            self.attributes_only(index, attributes_source).map_err(Into::into)
+            self.attributes_only(index, attributes_source)
+                .map(AttributeStack::detach)
+                .map_err(Into::into)
         })
     }
 

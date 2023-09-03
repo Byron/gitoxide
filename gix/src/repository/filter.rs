@@ -59,6 +59,6 @@ impl Repository {
             )?;
             (cache, IndexPersistedOrInMemory::Persisted(index))
         };
-        Ok((filter::Pipeline::new(self, cache)?, index))
+        Ok((filter::Pipeline::new(self, cache.detach())?, index))
     }
 }

@@ -61,11 +61,14 @@ impl<'repo> SharedState<'repo> {
                 .modules
                 .is_active_platform(&self.repo.config.resolved, self.repo.config.pathspec_defaults()?)?;
             let index = self.index()?;
-            let attributes = self.repo.attributes_only(
-                &index,
-                gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping
-                    .adjust_for_bare(self.repo.is_bare()),
-            )?;
+            let attributes = self
+                .repo
+                .attributes_only(
+                    &index,
+                    gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping
+                        .adjust_for_bare(self.repo.is_bare()),
+                )?
+                .detach();
             *state = Some(IsActiveState { platform, attributes });
         }
         Ok(RefMut::map_split(state, |opt| {
