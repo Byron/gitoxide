@@ -13,7 +13,7 @@ pub struct Value(KString);
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ValueRef<'a>(#[cfg_attr(feature = "serde", serde(borrow))] KStringRef<'a>);
 
-/// Conversions
+/// Lifecycle
 impl<'a> ValueRef<'a> {
     /// Keep `input` as our value.
     pub fn from_bytes(input: &'a [u8]) -> Self {
@@ -25,7 +25,10 @@ impl<'a> ValueRef<'a> {
             },
         ))
     }
+}
 
+/// Access and conversions
+impl ValueRef<'_> {
     /// Access this value as byte string.
     pub fn as_bstr(&self) -> &BStr {
         self.0.as_bytes().as_bstr()
@@ -78,6 +81,14 @@ impl StateRef<'_> {
     /// Return `true` if the associated attribute was set with `-attr` to specifically remove it.
     pub fn is_unset(&self) -> bool {
         matches!(self, StateRef::Unset)
+    }
+
+    /// Attempt to obtain the string value of this state, or return `None` if there is no such value.
+    pub fn as_bstr(&self) -> Option<&BStr> {
+        match self {
+            StateRef::Value(v) => Some(v.as_bstr()),
+            _ => None,
+        }
     }
 }
 
