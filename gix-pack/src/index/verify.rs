@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
-use gix_features::progress::Progress;
+use gix_features::progress::{NestedProgress, Progress};
 use gix_object::{bstr::ByteSlice, WriteTo};
 
 use crate::index;
@@ -175,7 +175,7 @@ impl index::File {
         should_interrupt: &AtomicBool,
     ) -> Result<integrity::Outcome<P>, index::traverse::Error<index::verify::integrity::Error>>
     where
-        P: Progress,
+        P: NestedProgress,
         C: crate::cache::DecodeEntry,
         F: Fn() -> C + Send + Clone,
     {
@@ -239,7 +239,7 @@ impl index::File {
         object_kind: gix_object::Kind,
         buf: &[u8],
         index_entry: &index::Entry,
-        progress: &dyn gix_features::progress::RawProgress,
+        progress: &dyn gix_features::progress::Progress,
     ) -> Result<(), integrity::Error> {
         if let Mode::HashCrc32Decode | Mode::HashCrc32DecodeEncode = verify_mode {
             use gix_object::Kind::*;

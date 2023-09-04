@@ -69,7 +69,7 @@ pub fn statistics(
     }
 
     progress.init(None, gix::progress::count("objects"));
-    progress.set_name("counting");
+    progress.set_name("counting".into());
     let counter = progress.counter();
     let start = std::time::Instant::now();
 
@@ -169,9 +169,7 @@ pub fn statistics(
             move |_| (repo.objects.clone().into_inner(), counter),
             |ids, (handle, counter)| {
                 let ids = ids?;
-                if let Some(counter) = counter {
-                    counter.fetch_add(ids.len(), std::sync::atomic::Ordering::SeqCst);
-                }
+                counter.fetch_add(ids.len(), std::sync::atomic::Ordering::Relaxed);
                 let out = ids
                     .into_iter()
                     .map(|id| handle.header(id))

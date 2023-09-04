@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, sync::atomic::AtomicBool, time::Instant};
 
-use gix_features::progress::Progress;
+use gix_features::progress::{Count, NestedProgress, Progress};
 
 use crate::{index, multi_index::File};
 
@@ -102,7 +102,7 @@ impl File {
         should_interrupt: &AtomicBool,
     ) -> Result<(gix_hash::ObjectId, P), integrity::Error>
     where
-        P: Progress,
+        P: NestedProgress,
     {
         self.verify_integrity_inner(
             progress,
@@ -127,7 +127,7 @@ impl File {
         options: index::verify::integrity::Options<F>,
     ) -> Result<integrity::Outcome<P>, index::traverse::Error<integrity::Error>>
     where
-        P: Progress,
+        P: NestedProgress,
         C: crate::cache::DecodeEntry,
         F: Fn() -> C + Send + Clone,
     {
@@ -142,7 +142,7 @@ impl File {
         options: index::verify::integrity::Options<F>,
     ) -> Result<integrity::Outcome<P>, index::traverse::Error<integrity::Error>>
     where
-        P: Progress,
+        P: NestedProgress,
         C: crate::cache::DecodeEntry,
         F: Fn() -> C + Send + Clone,
     {
@@ -325,7 +325,7 @@ impl File {
             "BUG: our slicing should allow to visit all objects"
         );
 
-        progress.set_name("Validating multi-pack");
+        progress.set_name("Validating multi-pack".into());
         progress.show_throughput(operation_start);
 
         Ok(integrity::Outcome {

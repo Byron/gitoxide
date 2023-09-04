@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::{bail, Context};
 use bytesize::ByteSize;
-use gix::Progress;
+use gix::{Count, NestedProgress, Progress};
 use rusqlite::params;
 
 use super::db;
@@ -55,7 +55,7 @@ impl Engine {
     pub fn refresh(&mut self, corpus_path: PathBuf) -> anyhow::Result<()> {
         let (corpus_path, corpus_id) = self.prepare_corpus_path(corpus_path)?;
         let repos = self.refresh_repos(&corpus_path, corpus_id)?;
-        self.state.progress.set_name("refresh repos");
+        self.state.progress.set_name("refresh repos".into());
         self.state.progress.info(format!(
             "Added or updated {} repositories under {corpus_path:?}",
             repos.len()
@@ -87,7 +87,7 @@ impl Engine {
             repo_progress.init(Some(repos.len()), gix::progress::count("repos"));
             if task.execute_exclusive || threads == 1 || dry_run {
                 if dry_run {
-                    repo_progress.set_name("WOULD run");
+                    repo_progress.set_name("WOULD run".into());
                     for repo in &repos {
                         repo_progress.info(format!(
                             "{}",
@@ -202,13 +202,11 @@ impl Engine {
                             task.perform(&mut run, &repo.path, progress, Some(1), should_interrupt);
                         });
                         if let Some(err) = run.error.as_deref() {
-                            num_errors.fetch_add(1, Ordering::SeqCst);
+                            num_errors.fetch_add(1, Ordering::Relaxed);
                             progress.fail(err.to_owned());
                         }
                         Self::update_run(con, run)?;
-                        if let Some(counter) = counter.as_ref() {
-                            counter.fetch_add(1, Ordering::SeqCst);
-                        }
+                        counter.fetch_add(1, Ordering::Relaxed);
                         Ok(())
                     },
                     || (!gix::interrupt::is_triggered()).then(|| Duration::from_millis(100)),
@@ -243,7 +241,7 @@ impl Engine {
         corpus_id: db::Id,
         sql_suffix: Option<&str>,
     ) -> anyhow::Result<Vec<db::Repo>> {
-        self.state.progress.set_name("query db-repos");
+        self.state.progress.set_name("query db-repos".into());
         self.state.progress.init(None, gix::progress::count("repos"));
 
         Ok(self
@@ -267,7 +265,7 @@ impl Engine {
 
     fn refresh_repos(&mut self, corpus_path: &Path, corpus_id: db::Id) -> anyhow::Result<Vec<db::Repo>> {
         let start = Instant::now();
-        self.state.progress.set_name("refresh");
+        self.state.progress.set_name("refresh".into());
         self.state.progress.init(None, gix::progress::count("repos"));
 
         let repos = std::thread::scope({
@@ -302,7 +300,7 @@ impl Engine {
 
                 let find_progress = progress.add_child("find");
                 let write_db = scope.spawn(move || -> anyhow::Result<Vec<db::Repo>> {
-                    progress.set_name("write to DB");
+                    progress.set_name("write to DB".into());
                     progress.init(None, gix::progress::count("repos"));
 
                     let mut out = Vec::new();

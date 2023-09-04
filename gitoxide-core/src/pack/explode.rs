@@ -10,7 +10,7 @@ use gix::{
     hash::ObjectId,
     object, objs, odb,
     odb::{loose, pack, Write},
-    Progress,
+    NestedProgress,
 };
 
 #[derive(Default, Clone, Eq, PartialEq, Debug)]
@@ -137,7 +137,7 @@ pub fn pack_or_pack_index(
     pack_path: impl AsRef<Path>,
     object_path: Option<impl AsRef<Path>>,
     check: SafetyCheck,
-    progress: impl Progress,
+    progress: impl NestedProgress,
     Context {
         thread_limit,
         delete_pack,

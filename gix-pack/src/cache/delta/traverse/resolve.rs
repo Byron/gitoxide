@@ -28,8 +28,8 @@ pub(crate) struct State<P, F, MBFN, T: Send> {
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn deltas<T, F, MBFN, E, R, P>(
-    object_counter: Option<gix_features::progress::StepShared>,
-    size_counter: Option<gix_features::progress::StepShared>,
+    objects: gix_features::progress::StepShared,
+    size: gix_features::progress::StepShared,
     node: &mut Item<T>,
     State {
         delta_bytes,
@@ -104,10 +104,8 @@ where
                 },
             )
             .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-            object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
-            size_counter
-                .as_ref()
-                .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
+            objects.fetch_add(1, Ordering::Relaxed);
+            size.fetch_add(base_bytes.len(), Ordering::Relaxed);
         }
 
         for mut child in base.into_child_iter() {
@@ -146,10 +144,8 @@ where
                     },
                 )
                 .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-                object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
-                size_counter
-                    .as_ref()
-                    .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
+                objects.fetch_add(1, Ordering::Relaxed);
+                size.fetch_add(base_bytes.len(), Ordering::Relaxed);
             }
         }
 
@@ -169,8 +165,8 @@ where
                 return deltas_mt(
                     initial_threads,
                     decompressed_bytes_by_pack_offset,
-                    object_counter,
-                    size_counter,
+                    objects,
+                    size,
                     progress,
                     nodes,
                     resolve.clone(),
@@ -194,8 +190,8 @@ where
 pub(crate) fn deltas_mt<T, F, MBFN, E, R, P>(
     mut threads_to_create: isize,
     decompressed_bytes_by_pack_offset: BTreeMap<u64, (data::Entry, u64, Vec<u8>)>,
-    object_counter: Option<gix_features::progress::StepShared>,
-    size_counter: Option<gix_features::progress::StepShared>,
+    objects: gix_features::progress::StepShared,
+    size: gix_features::progress::StepShared,
     progress: &P,
     nodes: Vec<(u16, Node<'_, T>)>,
     resolve: F,
@@ -230,8 +226,8 @@ where
                         let decompressed_bytes_by_pack_offset = &decompressed_bytes_by_pack_offset;
                         let resolve = resolve.clone();
                         let mut modify_base = modify_base.clone();
-                        let object_counter = object_counter.as_ref();
-                        let size_counter = size_counter.as_ref();
+                        let objects = &objects;
+                        let size = &size;
 
                         move || -> Result<(), Error> {
                             let mut fully_resolved_delta_bytes = Vec::new();
@@ -282,10 +278,8 @@ where
                                         },
                                     )
                                     .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-                                    object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
-                                    size_counter
-                                        .as_ref()
-                                        .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
+                                    objects.fetch_add(1, Ordering::Relaxed);
+                                    size.fetch_add(base_bytes.len(), Ordering::Relaxed);
                                 }
 
                                 for mut child in base.into_child_iter() {
@@ -330,10 +324,8 @@ where
                                             },
                                         )
                                         .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-                                        object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
-                                        size_counter
-                                            .as_ref()
-                                            .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
+                                        objects.fetch_add(1, Ordering::Relaxed);
+                                        size.fetch_add(base_bytes.len(), Ordering::Relaxed);
                                     }
                                 }
                             }

@@ -5,7 +5,7 @@ pub(crate) const HIGH_BIT: u32 = 0x8000_0000;
 
 use gix_features::{
     hash,
-    progress::{self, Progress},
+    progress::{self, NestedProgress},
 };
 
 use crate::index::{util::Count, V2_SIGNATURE};
@@ -15,7 +15,7 @@ pub(crate) fn write_to(
     entries_sorted_by_oid: Vec<crate::cache::delta::Item<crate::index::write::TreeEntry>>,
     pack_hash: &gix_hash::ObjectId,
     kind: crate::index::Version,
-    mut progress: impl Progress,
+    mut progress: impl NestedProgress,
 ) -> io::Result<gix_hash::ObjectId> {
     use io::Write;
     assert_eq!(kind, crate::index::Version::V2, "Can only write V2 packs right now");

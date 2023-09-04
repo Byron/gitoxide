@@ -5,7 +5,7 @@ use std::{
     time::{Instant, SystemTime},
 };
 
-use gix_features::progress::Progress;
+use gix_features::progress::{Count, NestedProgress, Progress};
 
 use crate::multi_index;
 
@@ -87,7 +87,7 @@ impl multi_index::File {
         Options { object_hash }: Options,
     ) -> Result<Outcome<P>, Error>
     where
-        P: Progress,
+        P: NestedProgress,
     {
         let out = gix_features::hash::Write::new(out, object_hash);
         let (index_paths_sorted, index_filenames_sorted) = {
@@ -129,7 +129,7 @@ impl multi_index::File {
             progress.show_throughput(start);
 
             let start = Instant::now();
-            progress.set_name("Deduplicate");
+            progress.set_name("Deduplicate".into());
             progress.init(Some(entries.len()), gix_features::progress::count("entries"));
             entries.sort_by(|l, r| {
                 l.id.cmp(&r.id)
@@ -187,7 +187,7 @@ impl multi_index::File {
         )?;
 
         {
-            progress.set_name("Writing chunks");
+            progress.set_name("Writing chunks".into());
             progress.init(Some(cf.num_chunks()), gix_features::progress::count("chunks"));
 
             let mut chunk_write = cf.into_write(&mut out, bytes_written)?;

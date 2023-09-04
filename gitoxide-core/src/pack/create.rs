@@ -9,7 +9,7 @@ use gix::{
     odb::{pack, pack::FindExt},
     parallel::InOrderIter,
     prelude::Finalize,
-    progress, traverse, Progress,
+    progress, traverse, Count, NestedProgress, Progress,
 };
 
 use crate::OutputFormat;
@@ -109,7 +109,7 @@ pub fn create<W, P>(
 ) -> anyhow::Result<()>
 where
     W: std::io::Write,
-    P: Progress,
+    P: NestedProgress,
     P::SubProgress: 'static,
 {
     let repo = gix::discover(repository_path)?.into_sync();
@@ -179,7 +179,7 @@ where
             Some(1)
         };
         if nondeterministic_thread_count.is_some() && !may_use_multiple_threads {
-            progress.fail("Cannot use multi-threaded counting in tree-diff object expansion mode as it may yield way too many objects.");
+            progress.fail("Cannot use multi-threaded counting in tree-diff object expansion mode as it may yield way too many objects.".into());
         }
         let (_, _, thread_count) = gix::parallel::optimize_chunk_size_and_thread_limit(50, None, thread_limit, None);
         let progress = progress::ThroughputOnDrop::new(progress);

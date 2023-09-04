@@ -18,7 +18,7 @@ pub(crate) mod function {
     };
 
     use anyhow::{anyhow, bail};
-    use gix::{attrs::Assignment, bstr::BString, Progress};
+    use gix::{attrs::Assignment, bstr::BString, Count, Progress};
 
     use crate::{
         repository::attributes::{query::attributes_cache, validate_baseline::Options},
@@ -28,7 +28,7 @@ pub(crate) mod function {
     pub fn validate_baseline(
         repo: gix::Repository,
         paths: Option<impl Iterator<Item = BString> + Send + 'static>,
-        mut progress: impl Progress + 'static,
+        mut progress: impl gix::NestedProgress + 'static,
         mut out: impl io::Write,
         mut err: impl io::Write,
         Options {
@@ -249,10 +249,7 @@ pub(crate) mod function {
                 "{}: Validation failed with {} mismatches out of {}",
                 gix::path::realpath(repo.work_dir().unwrap_or(repo.git_dir()))?.display(),
                 mismatches.len(),
-                progress
-                    .counter()
-                    .map(|a| a.load(Ordering::Relaxed))
-                    .unwrap_or_default()
+                progress.counter().load(Ordering::Relaxed)
             );
         }
     }

@@ -67,11 +67,7 @@ pub fn estimate_hours(
     }
 }
 
-type CommitChangeLineCounters = (
-    Option<Arc<AtomicUsize>>,
-    Option<Arc<AtomicUsize>>,
-    Option<Arc<AtomicUsize>>,
-);
+type CommitChangeLineCounters = (Arc<AtomicUsize>, Arc<AtomicUsize>, Arc<AtomicUsize>);
 
 type SpawnResultWithReturnChannelAndWorkers<'scope> = (
     crossbeam_channel::Sender<Vec<(CommitIdx, Option<gix::hash::ObjectId>, gix::hash::ObjectId)>>,
@@ -95,7 +91,7 @@ pub fn spawn_tree_delta_threads<'scope>(
                 let rx = rx.clone();
                 move || -> Result<_, anyhow::Error> {
                     let mut out = Vec::new();
-                    let (commit_counter, change_counter, lines_counter) = stats_counters;
+                    let (commits, changes, lines_count) = stats_counters;
                     let mut attributes = line_stats
                         .then(|| -> anyhow::Result<_> {
                             repo.index_or_load_from_head().map_err(Into::into).and_then(|index| {
@@ -115,9 +111,7 @@ pub fn spawn_tree_delta_threads<'scope>(
                         .transpose()?;
                     for chunk in rx {
                         for (commit_idx, parent_commit, commit) in chunk {
-                            if let Some(c) = commit_counter.as_ref() {
-                                c.fetch_add(1, Ordering::SeqCst);
-                            }
+                            commits.fetch_add(1, Ordering::Relaxed);
                             if gix::interrupt::is_triggered() {
                                 return Ok(out);
                             }
@@ -139,9 +133,7 @@ pub fn spawn_tree_delta_threads<'scope>(
                                 .track_rewrites(None)
                                 .for_each_to_obtain_tree(&to, |change| {
                                     use gix::object::tree::diff::change::Event::*;
-                                    if let Some(c) = change_counter.as_ref() {
-                                        c.fetch_add(1, Ordering::SeqCst);
-                                    }
+                                    changes.fetch_add(1, Ordering::Relaxed);
                                     match change.event {
                                         Rewrite { .. } => {
                                             unreachable!("we turned that off")
@@ -149,13 +141,13 @@ pub fn spawn_tree_delta_threads<'scope>(
                                         Addition { entry_mode, id } => {
                                             if entry_mode.is_no_tree() {
                                                 files.added += 1;
-                                                add_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
+                                                add_lines(line_stats, &lines_count, &mut lines, id);
                                             }
                                         }
                                         Deletion { entry_mode, id } => {
                                             if entry_mode.is_no_tree() {
                                                 files.removed += 1;
-                                                remove_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
+                                                remove_lines(line_stats, &lines_count, &mut lines, id);
                                             }
                                         }
                                         Modification {
@@ -168,16 +160,11 @@ pub fn spawn_tree_delta_threads<'scope>(
                                                 (false, false) => {}
                                                 (false, true) => {
                                                     files.added += 1;
-                                                    add_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
+                                                    add_lines(line_stats, &lines_count, &mut lines, id);
                                                 }
                                                 (true, false) => {
                                                     files.removed += 1;
-                                                    remove_lines(
-                                                        line_stats,
-                                                        lines_counter.as_deref(),
-                                                        &mut lines,
-                                                        previous_id,
-                                                    );
+                                                    remove_lines(line_stats, &lines_count, &mut lines, previous_id);
                                                 }
                                                 (true, true) => {
                                                     files.modified += 1;
@@ -203,9 +190,7 @@ pub fn spawn_tree_delta_threads<'scope>(
                                                             nl += counts.insertions as usize + counts.removals as usize;
                                                             lines.added += counts.insertions as usize;
                                                             lines.removed += counts.removals as usize;
-                                                            if let Some(c) = lines_counter.as_ref() {
-                                                                c.fetch_add(nl, Ordering::SeqCst);
-                                                            }
+                                                            lines_count.fetch_add(nl, Ordering::Relaxed);
                                                         }
                                                     }
                                                 }

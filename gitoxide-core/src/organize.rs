@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use gix::{objs::bstr::ByteSlice, progress, Progress};
+use gix::{objs::bstr::ByteSlice, progress, NestedProgress, Progress};
 
 #[derive(Default, Copy, Clone, Eq, PartialEq)]
 pub enum Mode {
@@ -207,7 +207,7 @@ fn handle(
 }
 
 /// Find all working directories in the given `source_dir` and print them to `out` while providing `progress`.
-pub fn discover<P: Progress>(
+pub fn discover<P: NestedProgress>(
     source_dir: impl AsRef<Path>,
     mut out: impl std::io::Write,
     mut progress: P,
@@ -222,7 +222,7 @@ pub fn discover<P: Progress>(
     Ok(())
 }
 
-pub fn run<P: Progress>(
+pub fn run<P: NestedProgress>(
     mode: Mode,
     source_dir: impl AsRef<Path>,
     destination: impl AsRef<Path>,

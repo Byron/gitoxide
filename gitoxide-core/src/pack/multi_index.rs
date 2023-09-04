@@ -1,13 +1,17 @@
 use std::{io::BufWriter, path::PathBuf, sync::atomic::AtomicBool};
 
 use anyhow::bail;
-use gix::Progress;
+use gix::NestedProgress;
 
 use crate::OutputFormat;
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
-pub fn verify(multi_index_path: PathBuf, progress: impl Progress, should_interrupt: &AtomicBool) -> anyhow::Result<()> {
+pub fn verify(
+    multi_index_path: PathBuf,
+    progress: impl NestedProgress,
+    should_interrupt: &AtomicBool,
+) -> anyhow::Result<()> {
     gix::odb::pack::multi_index::File::at(multi_index_path)?.verify_integrity_fast(progress, should_interrupt)?;
     Ok(())
 }
@@ -15,7 +19,7 @@ pub fn verify(multi_index_path: PathBuf, progress: impl Progress, should_interru
 pub fn create(
     index_paths: Vec<PathBuf>,
     output_path: PathBuf,
-    progress: impl Progress,
+    progress: impl NestedProgress,
     should_interrupt: &AtomicBool,
     object_hash: gix::hash::Kind,
 ) -> anyhow::Result<()> {

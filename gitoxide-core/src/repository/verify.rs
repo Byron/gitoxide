@@ -1,7 +1,5 @@
 use std::sync::atomic::AtomicBool;
 
-use gix::Progress;
-
 use crate::{pack, OutputFormat};
 
 /// A general purpose context for many operations provided here
@@ -21,7 +19,7 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 pub fn integrity(
     repo: gix::Repository,
     mut out: impl std::io::Write,
-    progress: impl Progress,
+    progress: impl gix::NestedProgress,
     should_interrupt: &AtomicBool,
     Context {
         output_statistics,

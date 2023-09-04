@@ -1,7 +1,7 @@
 use std::{convert::TryInto, io, sync::atomic::AtomicBool};
 
 pub use error::Error;
-use gix_features::progress::{self, Progress};
+use gix_features::progress::{self, Count, NestedProgress, Progress};
 
 use crate::cache::delta::{traverse, Tree};
 
@@ -98,7 +98,7 @@ impl crate::index::File {
         F: FnOnce() -> io::Result<(F2, R)>,
         R: Send + Sync,
         F2: for<'r> Fn(crate::data::EntryRange, &'r R) -> Option<&'r [u8]> + Send + Clone,
-        P: Progress,
+        P: NestedProgress,
     {
         if version != crate::index::Version::default() {
             return Err(Error::Unsupported(version));

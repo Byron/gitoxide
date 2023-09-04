@@ -89,18 +89,12 @@ where
         let mut delayed_filter_results = Vec::new();
         let mut out = chunk::process(
             entries_with_paths,
-            num_files.as_deref(),
-            num_bytes.as_deref(),
+            &num_files,
+            &num_bytes,
             &mut delayed_filter_results,
             &mut ctx,
         )?;
-        chunk::process_delayed_filter_results(
-            delayed_filter_results,
-            num_files.as_deref(),
-            num_bytes.as_deref(),
-            &mut out,
-            &mut ctx,
-        )?;
+        chunk::process_delayed_filter_results(delayed_filter_results, &num_files, &num_bytes, &mut out, &mut ctx)?;
         out
     } else {
         let entries_with_paths = interrupt::Iter::new(index.entries_mut_with_paths_in(paths), should_interrupt);
@@ -115,28 +109,20 @@ where
                 move |_| (Vec::new(), ctx)
             },
             |chunk, (delayed_filter_results, ctx)| {
-                chunk::process(
-                    chunk.into_iter(),
-                    num_files.as_deref(),
-                    num_bytes.as_deref(),
-                    delayed_filter_results,
-                    ctx,
-                )
+                chunk::process(chunk.into_iter(), &num_files, &num_bytes, delayed_filter_results, ctx)
             },
             |(delayed_filter_results, mut ctx)| {
                 let mut out = chunk::Outcome::default();
                 chunk::process_delayed_filter_results(
                     delayed_filter_results,
-                    num_files.as_deref(),
-                    num_bytes.as_deref(),
+                    &num_files,
+                    &num_bytes,
                     &mut out,
                     &mut ctx,
                 )?;
                 Ok(out)
             },
             chunk::Reduce {
-                files: num_files.is_none().then_some(files),
-                bytes: num_bytes.is_none().then_some(bytes),
                 aggregate: Default::default(),
                 marker: Default::default(),
             },
@@ -149,8 +135,8 @@ where
             entry_path,
             &mut errors,
             &mut collisions,
-            num_files.as_deref(),
-            num_bytes.as_deref(),
+            &num_files,
+            &num_bytes,
             &mut ctx,
         )?
         .as_bytes()

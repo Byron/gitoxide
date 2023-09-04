@@ -6,7 +6,10 @@ use std::{
     sync::{atomic::AtomicBool, Arc},
 };
 
-use gix_features::{interrupt, progress, progress::Progress};
+use gix_features::{
+    interrupt, progress,
+    progress::{NestedProgress, Progress},
+};
 use gix_tempfile::{AutoRemove, ContainingDirectory};
 
 use crate::data;
@@ -65,7 +68,7 @@ impl crate::Bundle {
     pub fn write_to_directory(
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
-        mut progress: impl Progress,
+        mut progress: impl NestedProgress,
         should_interrupt: &AtomicBool,
         thin_pack_base_object_lookup_fn: Option<ThinPackLookupFn>,
         options: Options,
@@ -181,7 +184,7 @@ impl crate::Bundle {
         options: Options,
     ) -> Result<Outcome, Error>
     where
-        P: Progress,
+        P: NestedProgress,
         P::SubProgress: 'static,
     {
         let _span = gix_features::trace::coarse!("gix_pack::Bundle::write_to_directory_eagerly()");
@@ -270,7 +273,7 @@ impl crate::Bundle {
 
     fn inner_write(
         directory: Option<impl AsRef<Path>>,
-        mut progress: impl Progress,
+        mut progress: impl NestedProgress,
         Options {
             thread_limit,
             iteration_mode: _,

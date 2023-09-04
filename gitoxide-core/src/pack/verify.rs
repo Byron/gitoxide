@@ -5,7 +5,7 @@ use bytesize::ByteSize;
 use gix::{
     object, odb,
     odb::{pack, pack::index},
-    Progress,
+    NestedProgress,
 };
 pub use index::verify::Mode;
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
@@ -87,7 +87,7 @@ impl<const SIZE: usize> pack::cache::DecodeEntry for EitherCache<SIZE> {
 
 pub fn pack_or_pack_index<W1, W2>(
     path: impl AsRef<Path>,
-    mut progress: impl Progress,
+    mut progress: impl NestedProgress,
     Context {
         mut out,
         mut err,

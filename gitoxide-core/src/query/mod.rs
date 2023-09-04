@@ -17,7 +17,7 @@ pub use engine::Command;
 
 pub fn prepare(
     repo_dir: &std::path::Path,
-    mut progress: impl gix::Progress,
+    mut progress: impl gix::NestedProgress,
     err: impl std::io::Write,
     opts: Options,
 ) -> anyhow::Result<Engine> {

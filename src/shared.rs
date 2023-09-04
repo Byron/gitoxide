@@ -112,11 +112,11 @@ pub mod pretty {
                     let tree = tracing_forest::printer::Pretty.fmt(tree)?;
                     if reverse_lines {
                         for line in tree.lines().rev() {
-                            progress.info(line);
+                            progress.info(line.into());
                         }
                     } else {
                         for line in tree.lines() {
-                            progress.info(line);
+                            progress.info(line.into());
                         }
                     }
                     Ok(String::new())

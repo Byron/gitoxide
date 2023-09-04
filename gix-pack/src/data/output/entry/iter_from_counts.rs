@@ -1,6 +1,8 @@
 pub(crate) mod function {
     use std::{cmp::Ordering, sync::Arc};
 
+    use gix_features::progress::prodash::Count;
+    use gix_features::progress::NestedProgress;
     use gix_features::{parallel, parallel::SequenceId, progress::Progress};
 
     use super::{reduce, util, Error, Mode, Options, Outcome, ProgressId};
@@ -38,7 +40,7 @@ pub(crate) mod function {
     pub fn iter_from_counts<Find>(
         mut counts: Vec<output::Count>,
         db: Find,
-        mut progress: impl Progress + 'static,
+        mut progress: impl NestedProgress + 'static,
         Options {
             version,
             mode,

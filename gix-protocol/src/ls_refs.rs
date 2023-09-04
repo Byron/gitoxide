@@ -86,7 +86,7 @@ pub(crate) mod function {
                 );
 
                 progress.step();
-                progress.set_name("list refs");
+                progress.set_name("list refs".into());
                 let mut remote_refs = transport
                     .invoke(
                         ls_refs.as_str(),

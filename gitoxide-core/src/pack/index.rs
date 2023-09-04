@@ -1,6 +1,6 @@
 use std::{fs, io, path::PathBuf, str::FromStr, sync::atomic::AtomicBool};
 
-use gix::{odb::pack, Progress};
+use gix::{odb::pack, NestedProgress};
 
 use crate::OutputFormat;
 
@@ -77,7 +77,7 @@ pub fn from_pack<P>(
     ctx: Context<'static, impl io::Write>,
 ) -> anyhow::Result<()>
 where
-    P: Progress,
+    P: NestedProgress,
     P::SubProgress: 'static,
 {
     use anyhow::Context;

@@ -67,7 +67,7 @@ pub mod main_worktree {
         /// if the `head()` of the returned repository is not unborn.
         pub fn main_worktree(
             &mut self,
-            mut progress: impl crate::Progress,
+            mut progress: impl gix_features::progress::NestedProgress,
             should_interrupt: &AtomicBool,
         ) -> Result<(Repository, gix_worktree_state::checkout::Outcome), Error> {
             let _span = gix_trace::coarse!("gix::clone::PrepareCheckout::main_worktree()");

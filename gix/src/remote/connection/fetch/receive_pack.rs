@@ -23,7 +23,7 @@ use crate::{
             Shallow, Status,
         },
     },
-    Progress, Repository,
+    Repository,
 };
 
 impl<'remote, 'repo, T> Prepare<'remote, 'repo, T>
@@ -75,7 +75,7 @@ where
     #[gix_protocol::maybe_async::maybe_async]
     pub async fn receive<P>(mut self, mut progress: P, should_interrupt: &AtomicBool) -> Result<Outcome, Error>
     where
-        P: Progress,
+        P: gix_features::progress::NestedProgress,
         P::SubProgress: 'static,
     {
         let _span = gix_trace::coarse!("fetch::Prepare::receive()");
@@ -211,7 +211,7 @@ where
                     previous_response = Some(response);
                     if has_pack {
                         progress.step();
-                        progress.set_name("receiving pack");
+                        progress.set_name("receiving pack".into());
                         if !sideband_all {
                             setup_remote_progress(progress, &mut reader, should_interrupt);
                         }
@@ -377,7 +377,7 @@ fn setup_remote_progress<P>(
     reader: &mut Box<dyn gix_protocol::transport::client::ExtendedBufRead + Unpin + '_>,
     should_interrupt: &AtomicBool,
 ) where
-    P: Progress,
+    P: gix_features::progress::NestedProgress,
     P::SubProgress: 'static,
 {
     use gix_protocol::transport::client::ExtendedBufRead;

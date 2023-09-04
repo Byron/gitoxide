@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail};
-use gix::{worktree::archive, Progress};
+use gix::{worktree::archive, NestedProgress, Progress};
 
 pub struct Options {
     pub format: Option<archive::Format>,
@@ -14,7 +14,7 @@ pub fn stream(
     repo: gix::Repository,
     destination_path: &Path,
     rev_spec: Option<&str>,
-    mut progress: impl Progress,
+    mut progress: impl NestedProgress,
     Options {
         format,
         prefix,

@@ -10,7 +10,7 @@ pub mod write;
 pub mod verify {
     use std::sync::atomic::AtomicBool;
 
-    use gix_features::progress::Progress;
+    use gix_features::progress::NestedProgress;
 
     ///
     pub mod integrity {
@@ -37,7 +37,7 @@ pub mod verify {
             options: crate::index::verify::integrity::Options<F>,
         ) -> Result<integrity::Outcome<P>, crate::index::traverse::Error<crate::index::verify::integrity::Error>>
         where
-            P: Progress,
+            P: NestedProgress,
             C: crate::cache::DecodeEntry,
             F: Fn() -> C + Send + Clone,
         {

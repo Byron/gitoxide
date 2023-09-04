@@ -1,5 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use gix_features::progress::NestedProgress;
 use gix_features::{
     parallel::in_parallel_with_slice,
     progress::{self, Progress},
@@ -116,9 +117,9 @@ where
     where
         F: for<'r> Fn(EntryRange, &'r R) -> Option<&'r [u8]> + Send + Clone,
         R: Send + Sync,
-        P1: Progress,
+        P1: NestedProgress,
         P2: Progress,
-        MBFN: FnMut(&mut T, &<P1 as Progress>::SubProgress, Context<'_>) -> Result<(), E> + Send + Clone,
+        MBFN: FnMut(&mut T, &<P1 as NestedProgress>::SubProgress, Context<'_>) -> Result<(), E> + Send + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
         self.set_pack_entries_end_and_resolve_ref_offsets(pack_entries_end)?;

@@ -5,7 +5,7 @@ use gix::{
     actor,
     bstr::{BStr, ByteSlice},
     prelude::*,
-    progress, Progress,
+    progress, Count, NestedProgress, Progress,
 };
 
 /// Additional configuration for the hours estimation functionality.
@@ -49,7 +49,7 @@ pub fn estimate<W, P>(
 ) -> anyhow::Result<()>
 where
     W: io::Write,
-    P: Progress,
+    P: NestedProgress,
 {
     let repo = gix::discover(working_dir)?;
     let commit_id = repo.rev_parse_single(rev_spec)?.detach();

@@ -4,7 +4,7 @@ use std::{
     time::Instant,
 };
 
-use gix_features::progress::{MessageLevel, Progress};
+use gix_features::progress::{MessageLevel, NestedProgress, Progress};
 
 use crate::{
     pack,
@@ -118,7 +118,7 @@ impl super::Store {
         options: integrity::Options<F>,
     ) -> Result<integrity::Outcome<P>, integrity::Error>
     where
-        P: Progress,
+        P: NestedProgress,
         C: pack::cache::DecodeEntry,
         F: Fn() -> C + Send + Clone,
     {

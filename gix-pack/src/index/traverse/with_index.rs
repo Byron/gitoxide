@@ -1,5 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use gix_features::progress::NestedProgress;
 use gix_features::{parallel, progress::Progress};
 
 use super::Error;
@@ -65,8 +66,8 @@ impl index::File {
         Options { check, thread_limit }: Options,
     ) -> Result<Outcome<P>, Error<E>>
     where
-        P: Progress,
-        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn gix_features::progress::RawProgress) -> Result<(), E>
+        P: NestedProgress,
+        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn gix_features::progress::Progress) -> Result<(), E>
             + Send
             + Clone,
         E: std::error::Error + Send + Sync + 'static,

@@ -1,5 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use gix_features::progress::{Count, NestedProgress};
 use gix_features::{
     parallel::{self, in_parallel_if},
     progress::{self, Progress},
@@ -79,12 +80,10 @@ impl index::File {
         }: Options<F>,
     ) -> Result<Outcome<P>, Error<E>>
     where
-        P: Progress,
+        P: NestedProgress,
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
-        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn gix_features::progress::RawProgress) -> Result<(), E>
-            + Send
-            + Clone,
+        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn Progress) -> Result<(), E> + Send + Clone,
         F: Fn() -> C + Send + Clone,
     {
         let (verify_result, traversal_result) = parallel::join(

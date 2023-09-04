@@ -14,7 +14,7 @@ pub(crate) mod function {
     use std::ffi::OsStr;
 
     use anyhow::{bail, Context};
-    use gix::{bstr::BString, remote::fetch::Status, Progress};
+    use gix::{bstr::BString, remote::fetch::Status, NestedProgress};
 
     use super::Options;
     use crate::{repository::fetch::function::print_updates, OutputFormat};
@@ -35,7 +35,7 @@ pub(crate) mod function {
         }: Options,
     ) -> anyhow::Result<()>
     where
-        P: Progress,
+        P: NestedProgress,
         P::SubProgress: 'static,
     {
         if format != OutputFormat::Human {

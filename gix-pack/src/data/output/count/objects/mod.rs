@@ -3,6 +3,7 @@ use std::{
     sync::{atomic::AtomicBool, Arc},
 };
 
+use gix_features::progress::NestedProgress;
 use gix_features::{parallel, progress::Progress};
 use gix_hash::ObjectId;
 
@@ -38,7 +39,7 @@ pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Err
 pub fn objects<Find, Iter, IterErr, Oid>(
     db: Find,
     objects_ids: Iter,
-    progress: impl Progress,
+    progress: impl NestedProgress,
     should_interrupt: &AtomicBool,
     Options {
         thread_limit,

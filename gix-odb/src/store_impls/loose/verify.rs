@@ -3,7 +3,7 @@ use std::{
     time::Instant,
 };
 
-use gix_features::progress::Progress;
+use gix_features::progress::{Count, NestedProgress, Progress};
 
 use crate::{loose::Store, Write};
 
@@ -61,7 +61,7 @@ impl Store {
     /// Check all loose objects for their integrity checking their hash matches the actual data and by decoding them fully.
     pub fn verify_integrity(
         &self,
-        mut progress: impl Progress,
+        mut progress: impl NestedProgress,
         should_interrupt: &AtomicBool,
     ) -> Result<integrity::Statistics, integrity::Error> {
         let mut buf = Vec::new();
