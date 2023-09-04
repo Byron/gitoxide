@@ -1,6 +1,5 @@
-use std::sync::atomic::AtomicBool;
-
 use gix_features::progress::Progress;
+use std::sync::atomic::AtomicBool;
 
 use crate::data::File;
 

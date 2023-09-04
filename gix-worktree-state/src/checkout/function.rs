@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
-use gix_features::{interrupt, parallel::in_parallel_with_finalize, progress::Progress};
+use gix_features::{interrupt, parallel::in_parallel_with_finalize};
 use gix_hash::oid;
 use gix_worktree::{stack, Stack};
 
@@ -21,8 +21,8 @@ pub fn checkout<Find, E>(
     index: &mut gix_index::State,
     dir: impl Into<std::path::PathBuf>,
     find: Find,
-    files: &mut impl Progress,
-    bytes: &mut impl Progress,
+    files: &dyn gix_features::progress::Count,
+    bytes: &dyn gix_features::progress::Count,
     should_interrupt: &AtomicBool,
     options: crate::checkout::Options,
 ) -> Result<crate::checkout::Outcome, crate::checkout::Error<E>>
@@ -42,8 +42,8 @@ fn checkout_inner<Find, E>(
     paths: &gix_index::PathStorage,
     dir: impl Into<std::path::PathBuf>,
     find: Find,
-    files: &mut impl Progress,
-    bytes: &mut impl Progress,
+    files: &dyn gix_features::progress::Count,
+    bytes: &dyn gix_features::progress::Count,
     should_interrupt: &AtomicBool,
     mut options: crate::checkout::Options,
 ) -> Result<crate::checkout::Outcome, crate::checkout::Error<E>>

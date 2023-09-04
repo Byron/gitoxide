@@ -114,7 +114,7 @@ impl crate::Repository {
         &self,
         mut stream: gix_worktree_stream::Stream,
         out: impl std::io::Write + std::io::Seek,
-        blobs: impl gix_features::progress::Progress,
+        blobs: impl gix_features::progress::Count,
         should_interrupt: &std::sync::atomic::AtomicBool,
         options: gix_archive::Options,
     ) -> Result<(), crate::repository::worktree_archive::Error> {

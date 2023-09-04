@@ -264,7 +264,7 @@ fn traversals() -> crate::Result {
                     })))
                     .filter(|o| !o.is_null())
                     .map(Ok::<_, Infallible>),
-                progress::Discard,
+                &progress::Discard,
                 &AtomicBool::new(false),
                 count::objects::Options {
                     input_object_expansion: expansion_mode,

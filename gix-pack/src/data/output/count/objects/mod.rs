@@ -1,10 +1,6 @@
-use std::{
-    cell::RefCell,
-    sync::{atomic::AtomicBool, Arc},
-};
+use std::{cell::RefCell, sync::atomic::AtomicBool};
 
-use gix_features::progress::NestedProgress;
-use gix_features::{parallel, progress::Progress};
+use gix_features::parallel;
 use gix_hash::ObjectId;
 
 use crate::{data::output, find};
@@ -30,8 +26,8 @@ pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Err
 /// * `objects_ids`
 ///   * A list of objects ids to add to the pack. Duplication checks are performed so no object is ever added to a pack twice.
 ///   * Objects may be expanded based on the provided [`options`][Options]
-/// * `progress`
-///   * a way to obtain progress information
+/// * `objects`
+///   * count the amount of objects we encounter
 /// * `should_interrupt`
 ///  * A flag that is set to true if the operation should stop
 /// * `options`
@@ -39,7 +35,7 @@ pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Err
 pub fn objects<Find, Iter, IterErr, Oid>(
     db: Find,
     objects_ids: Iter,
-    progress: impl NestedProgress,
+    objects: &dyn gix_features::progress::Count,
     should_interrupt: &AtomicBool,
     Options {
         thread_limit,
@@ -66,30 +62,23 @@ where
         size: chunk_size,
     };
     let seen_objs = gix_hashtable::sync::ObjectIdMap::default();
-    let progress = Arc::new(parking_lot::Mutex::new(progress));
+    let objects = objects.counter();
 
     parallel::in_parallel(
         chunks,
         thread_limit,
         {
-            let progress = Arc::clone(&progress);
-            move |n| {
+            move |_| {
                 (
                     Vec::new(), // object data buffer
                     Vec::new(), // object data buffer 2 to hold two objects at a time
-                    {
-                        let mut p = progress
-                            .lock()
-                            .add_child_with_id(format!("thread {n}"), gix_features::progress::UNKNOWN);
-                        p.init(None, gix_features::progress::count("objects"));
-                        p
-                    },
+                    objects.clone(),
                 )
             }
         },
         {
             let seen_objs = &seen_objs;
-            move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, progress)| {
+            move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, objects)| {
                 expand::this(
                     &db,
                     input_object_expansion,
@@ -97,13 +86,13 @@ where
                     oids,
                     buf1,
                     buf2,
-                    progress,
+                    objects,
                     should_interrupt,
                     true, /*allow pack lookups*/
                 )
             }
         },
-        reduce::Statistics::new(progress),
+        reduce::Statistics::new(),
     )
 }
 
@@ -111,7 +100,7 @@ where
 pub fn objects_unthreaded<Find, IterErr, Oid>(
     db: Find,
     object_ids: impl Iterator<Item = std::result::Result<Oid, IterErr>>,
-    mut progress: impl Progress,
+    objects: impl gix_features::progress::Count,
     should_interrupt: &AtomicBool,
     input_object_expansion: ObjectExpansion,
 ) -> Result<find::existing::Error<Find::Error>, IterErr>
@@ -130,7 +119,7 @@ where
         object_ids,
         &mut buf1,
         &mut buf2,
-        &mut progress,
+        &objects.counter(),
         should_interrupt,
         false, /*allow pack lookups*/
     )
@@ -139,7 +128,6 @@ where
 mod expand {
     use std::sync::atomic::{AtomicBool, Ordering};
 
-    use gix_features::progress::Progress;
     use gix_hash::{oid, ObjectId};
     use gix_object::{CommitRefIter, TagRefIter};
 
@@ -161,7 +149,7 @@ mod expand {
         oids: impl IntoIterator<Item = std::result::Result<Oid, IterErr>>,
         buf1: &mut Vec<u8>,
         #[allow(clippy::ptr_arg)] buf2: &mut Vec<u8>,
-        progress: &mut impl Progress,
+        objects: &gix_features::progress::AtomicStep,
         should_interrupt: &AtomicBool,
         allow_pack_lookups: bool,
     ) -> super::Result<find::existing::Error<Find::Error>, IterErr>
@@ -197,7 +185,7 @@ mod expand {
                     let mut id = id.to_owned();
 
                     loop {
-                        push_obj_count_unique(&mut out, seen_objs, &id, location, progress, stats, false);
+                        push_obj_count_unique(&mut out, seen_objs, &id, location, objects, stats, false);
                         match obj.kind {
                             Tree | Blob => break,
                             Tag => {
@@ -228,12 +216,12 @@ mod expand {
                                     }
                                     let (obj, location) = db.find(tree_id, buf1)?;
                                     push_obj_count_unique(
-                                        &mut out, seen_objs, &tree_id, location, progress, stats, true,
+                                        &mut out, seen_objs, &tree_id, location, objects, stats, true,
                                     );
                                     gix_object::TreeRefIter::from_bytes(obj.data)
                                 };
 
-                                let objects = if parent_commit_ids.is_empty() {
+                                let objects_ref = if parent_commit_ids.is_empty() {
                                     traverse_delegate.clear();
                                     gix_traverse::tree::breadthfirst(
                                         current_tree_iter,
@@ -242,7 +230,7 @@ mod expand {
                                             stats.decoded_objects += 1;
                                             match db.find(oid, buf).ok() {
                                                 Some((obj, location)) => {
-                                                    progress.inc();
+                                                    objects.fetch_add(1, Ordering::Relaxed);
                                                     stats.expanded_objects += 1;
                                                     out.push(output::Count::from_data(oid, location));
                                                     obj.try_into_tree_iter()
@@ -260,7 +248,7 @@ mod expand {
                                             let (parent_commit_obj, location) = db.find(commit_id, buf2)?;
 
                                             push_obj_count_unique(
-                                                &mut out, seen_objs, commit_id, location, progress, stats, true,
+                                                &mut out, seen_objs, commit_id, location, objects, stats, true,
                                             );
                                             CommitRefIter::from_bytes(parent_commit_obj.data)
                                                 .tree_id()
@@ -273,7 +261,7 @@ mod expand {
                                                 seen_objs,
                                                 &parent_tree_id,
                                                 location,
-                                                progress,
+                                                objects,
                                                 stats,
                                                 true,
                                             );
@@ -295,8 +283,8 @@ mod expand {
                                     }
                                     &changes_delegate.objects
                                 };
-                                for id in objects.iter() {
-                                    out.push(id_to_count(db, buf2, id, progress, stats, allow_pack_lookups));
+                                for id in objects_ref.iter() {
+                                    out.push(id_to_count(db, buf2, id, objects, stats, allow_pack_lookups));
                                 }
                                 break;
                             }
@@ -308,7 +296,7 @@ mod expand {
                     let mut id = id;
                     let mut obj = (obj, location);
                     loop {
-                        push_obj_count_unique(&mut out, seen_objs, &id, obj.1.clone(), progress, stats, false);
+                        push_obj_count_unique(&mut out, seen_objs, &id, obj.1.clone(), objects, stats, false);
                         match obj.0.kind {
                             Tree => {
                                 traverse_delegate.clear();
@@ -319,7 +307,7 @@ mod expand {
                                         stats.decoded_objects += 1;
                                         match db.find(oid, buf).ok() {
                                             Some((obj, location)) => {
-                                                progress.inc();
+                                                objects.fetch_add(1, Ordering::Relaxed);
                                                 stats.expanded_objects += 1;
                                                 out.push(output::Count::from_data(oid, location));
                                                 obj.try_into_tree_iter()
@@ -331,7 +319,7 @@ mod expand {
                                 )
                                 .map_err(Error::TreeTraverse)?;
                                 for id in &traverse_delegate.non_trees {
-                                    out.push(id_to_count(db, buf1, id, progress, stats, allow_pack_lookups));
+                                    out.push(id_to_count(db, buf1, id, objects, stats, allow_pack_lookups));
                                 }
                                 break;
                             }
@@ -355,7 +343,7 @@ mod expand {
                         }
                     }
                 }
-                AsIs => push_obj_count_unique(&mut out, seen_objs, &id, location, progress, stats, false),
+                AsIs => push_obj_count_unique(&mut out, seen_objs, &id, location, objects, stats, false),
             }
         }
         outcome.total_objects = out.len();
@@ -368,13 +356,13 @@ mod expand {
         all_seen: &impl util::InsertImmutable,
         id: &oid,
         location: Option<crate::data::entry::Location>,
-        progress: &mut impl Progress,
+        objects: &gix_features::progress::AtomicStep,
         statistics: &mut Outcome,
         count_expanded: bool,
     ) {
         let inserted = all_seen.insert(id.to_owned());
         if inserted {
-            progress.inc();
+            objects.fetch_add(1, Ordering::Relaxed);
             statistics.decoded_objects += 1;
             if count_expanded {
                 statistics.expanded_objects += 1;
@@ -388,11 +376,11 @@ mod expand {
         db: &Find,
         buf: &mut Vec<u8>,
         id: &oid,
-        progress: &mut impl Progress,
+        objects: &gix_features::progress::AtomicStep,
         statistics: &mut Outcome,
         allow_pack_lookups: bool,
     ) -> output::Count {
-        progress.inc();
+        objects.fetch_add(1, Ordering::Relaxed);
         statistics.expanded_objects += 1;
         output::Count {
             id: id.to_owned(),

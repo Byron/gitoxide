@@ -6,7 +6,9 @@ pub use bytesize;
 pub use prodash::{
     self,
     messages::MessageLevel,
-    progress::{Discard, DoOrDiscard, Either, Id, Step, StepShared, Task, ThroughputOnDrop, Value, UNKNOWN},
+    progress::{
+        AtomicStep, Discard, DoOrDiscard, Either, Id, Step, StepShared, Task, ThroughputOnDrop, Value, UNKNOWN,
+    },
     unit, Count, NestedProgress, Progress, Unit,
 };
 /// A stub for the portions of the `bytesize` crate that we use internally in `gitoxide`.
