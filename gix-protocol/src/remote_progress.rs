@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 
 use bstr::ByteSlice;
-use nom::{
+use winnow::{
     bytes::complete::{tag, take_till, take_till1},
     combinator::{map_res, opt},
     sequence::{preceded, terminated},
@@ -73,11 +73,11 @@ impl<'a> RemoteProgress<'a> {
     }
 }
 
-fn parse_number(i: &[u8]) -> nom::IResult<&[u8], usize> {
+fn parse_number(i: &[u8]) -> winnow::IResult<&[u8], usize> {
     map_res(take_till(|c: u8| !c.is_ascii_digit()), btoi::btoi)(i)
 }
 
-fn next_optional_percentage(i: &[u8]) -> nom::IResult<&[u8], Option<u32>> {
+fn next_optional_percentage(i: &[u8]) -> winnow::IResult<&[u8], Option<u32>> {
     opt(terminated(
         preceded(
             take_till(|c: u8| c.is_ascii_digit()),
@@ -87,11 +87,11 @@ fn next_optional_percentage(i: &[u8]) -> nom::IResult<&[u8], Option<u32>> {
     ))(i)
 }
 
-fn next_optional_number(i: &[u8]) -> nom::IResult<&[u8], Option<usize>> {
+fn next_optional_number(i: &[u8]) -> winnow::IResult<&[u8], Option<usize>> {
     opt(preceded(take_till(|c: u8| c.is_ascii_digit()), parse_number))(i)
 }
 
-fn parse_progress(line: &[u8]) -> nom::IResult<&[u8], RemoteProgress<'_>> {
+fn parse_progress(line: &[u8]) -> winnow::IResult<&[u8], RemoteProgress<'_>> {
     let (i, action) = take_till1(|c| c == b':')(line)?;
     let (i, percent) = next_optional_percentage(i)?;
     let (i, step) = next_optional_number(i)?;
