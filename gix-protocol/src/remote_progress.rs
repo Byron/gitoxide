@@ -2,10 +2,10 @@ use std::convert::TryFrom;
 
 use bstr::ByteSlice;
 use winnow::{
-    bytes::{tag, take_till0, take_till1},
     combinator::opt,
+    combinator::{preceded, terminated},
     prelude::*,
-    sequence::{preceded, terminated},
+    token::{tag, take_till0, take_till1},
 };
 
 /// The information usually found in remote progress messages as sent by a git server during
