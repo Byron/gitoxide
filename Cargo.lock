@@ -2049,9 +2049,9 @@ dependencies = [
  "gix-testtools",
  "gix-transport",
  "maybe-async",
- "nom",
  "serde",
  "thiserror",
+ "winnow",
 ]
 
 [[package]]

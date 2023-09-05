@@ -1,10 +1,11 @@
 use std::convert::TryFrom;
 
 use bstr::ByteSlice;
-use nom::{
-    bytes::complete::{tag, take_till, take_till1},
-    combinator::{map_res, opt},
-    sequence::{preceded, terminated},
+use winnow::{
+    combinator::opt,
+    combinator::{preceded, terminated},
+    prelude::*,
+    token::{tag, take_till0, take_till1},
 };
 
 /// The information usually found in remote progress messages as sent by a git server during
@@ -25,8 +26,8 @@ pub struct RemoteProgress<'a> {
 
 impl<'a> RemoteProgress<'a> {
     /// Parse the progress from a typical git progress `line` as sent by the remote.
-    pub fn from_bytes(line: &[u8]) -> Option<RemoteProgress<'_>> {
-        parse_progress(line).ok().and_then(|(_, r)| {
+    pub fn from_bytes(mut line: &[u8]) -> Option<RemoteProgress<'_>> {
+        parse_progress(&mut line).ok().and_then(|r| {
             if r.percent.is_none() && r.step.is_none() && r.max.is_none() {
                 None
             } else {
@@ -73,36 +74,36 @@ impl<'a> RemoteProgress<'a> {
     }
 }
 
-fn parse_number(i: &[u8]) -> nom::IResult<&[u8], usize> {
-    map_res(take_till(|c: u8| !c.is_ascii_digit()), btoi::btoi)(i)
+fn parse_number(i: &mut &[u8]) -> PResult<usize, ()> {
+    take_till0(|c: u8| !c.is_ascii_digit())
+        .try_map(btoi::btoi)
+        .parse_next(i)
 }
 
-fn next_optional_percentage(i: &[u8]) -> nom::IResult<&[u8], Option<u32>> {
+fn next_optional_percentage(i: &mut &[u8]) -> PResult<Option<u32>, ()> {
     opt(terminated(
         preceded(
-            take_till(|c: u8| c.is_ascii_digit()),
-            map_res(parse_number, u32::try_from),
+            take_till0(|c: u8| c.is_ascii_digit()),
+            parse_number.try_map(u32::try_from),
         ),
         tag(b"%"),
-    ))(i)
-}
-
-fn next_optional_number(i: &[u8]) -> nom::IResult<&[u8], Option<usize>> {
-    opt(preceded(take_till(|c: u8| c.is_ascii_digit()), parse_number))(i)
-}
-
-fn parse_progress(line: &[u8]) -> nom::IResult<&[u8], RemoteProgress<'_>> {
-    let (i, action) = take_till1(|c| c == b':')(line)?;
-    let (i, percent) = next_optional_percentage(i)?;
-    let (i, step) = next_optional_number(i)?;
-    let (i, max) = next_optional_number(i)?;
-    Ok((
-        i,
-        RemoteProgress {
-            action: action.into(),
-            percent,
-            step,
-            max,
-        },
     ))
+    .parse_next(i)
+}
+
+fn next_optional_number(i: &mut &[u8]) -> PResult<Option<usize>, ()> {
+    opt(preceded(take_till0(|c: u8| c.is_ascii_digit()), parse_number)).parse_next(i)
+}
+
+fn parse_progress<'i>(line: &mut &'i [u8]) -> PResult<RemoteProgress<'i>, ()> {
+    let action = take_till1(|c| c == b':').parse_next(line)?;
+    let percent = next_optional_percentage.parse_next(line)?;
+    let step = next_optional_number.parse_next(line)?;
+    let max = next_optional_number.parse_next(line)?;
+    Ok(RemoteProgress {
+        action: action.into(),
+        percent,
+        step,
+        max,
+    })
 }
