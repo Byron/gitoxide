@@ -87,18 +87,19 @@ fn next_optional_percentage(i: &[u8]) -> winnow::IResult<&[u8], Option<u32>> {
             parse_number.map_res(u32::try_from),
         ),
         tag(b"%"),
-    ))(i)
+    ))
+    .parse_next(i)
 }
 
 fn next_optional_number(i: &[u8]) -> winnow::IResult<&[u8], Option<usize>> {
-    opt(preceded(take_till0(|c: u8| c.is_ascii_digit()), parse_number))(i)
+    opt(preceded(take_till0(|c: u8| c.is_ascii_digit()), parse_number)).parse_next(i)
 }
 
 fn parse_progress(line: &[u8]) -> winnow::IResult<&[u8], RemoteProgress<'_>> {
-    let (i, action) = take_till1(|c| c == b':')(line)?;
-    let (i, percent) = next_optional_percentage(i)?;
-    let (i, step) = next_optional_number(i)?;
-    let (i, max) = next_optional_number(i)?;
+    let (i, action) = take_till1(|c| c == b':').parse_next(line)?;
+    let (i, percent) = next_optional_percentage.parse_next(i)?;
+    let (i, step) = next_optional_number.parse_next(i)?;
+    let (i, max) = next_optional_number.parse_next(i)?;
     Ok((
         i,
         RemoteProgress {
