@@ -76,7 +76,7 @@ impl<'a> RemoteProgress<'a> {
 
 fn parse_number(i: &[u8]) -> winnow::IResult<&[u8], usize> {
     take_till0(|c: u8| !c.is_ascii_digit())
-        .map_res(btoi::btoi)
+        .try_map(btoi::btoi)
         .parse_next(i)
 }
 
@@ -84,7 +84,7 @@ fn next_optional_percentage(i: &[u8]) -> winnow::IResult<&[u8], Option<u32>> {
     opt(terminated(
         preceded(
             take_till0(|c: u8| c.is_ascii_digit()),
-            parse_number.map_res(u32::try_from),
+            parse_number.try_map(u32::try_from),
         ),
         tag(b"%"),
     ))
