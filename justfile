@@ -47,6 +47,9 @@ check:
     cargo check --no-default-features --features max
     cargo check -p gitoxide-core --features blocking-client
     cargo check -p gitoxide-core --features async-client
+    cargo check -p gix-pack --no-default-features
+    cargo check -p gix-pack --no-default-features --features generate
+    cargo check -p gix-pack --no-default-features --features streaming-input
     cd gix-hash; \
         set -ex; \
         cargo check --all-features; \

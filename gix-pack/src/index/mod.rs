@@ -141,10 +141,12 @@ pub mod init;
 pub(crate) mod access;
 pub use access::Entry;
 
+pub(crate) mod encode;
 ///
 pub mod traverse;
 mod util;
 ///
 pub mod verify;
 ///
+#[cfg(feature = "streaming-input")]
 pub mod write;

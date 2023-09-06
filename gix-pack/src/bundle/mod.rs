@@ -3,7 +3,7 @@ pub mod init;
 
 mod find;
 ///
-#[cfg(not(feature = "wasm"))]
+#[cfg(all(not(feature = "wasm"), feature = "streaming-input"))]
 pub mod write;
 
 ///
