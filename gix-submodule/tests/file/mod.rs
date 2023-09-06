@@ -5,17 +5,21 @@ fn submodule(bytes: &str) -> gix_submodule::File {
 mod is_active_platform {
     use std::str::FromStr;
 
-    use bstr::{BStr, ByteSlice};
-
-    fn multi_modules() -> crate::Result<gix_submodule::File> {
+    fn module_file(name: &str) -> crate::Result<gix_submodule::File> {
         let modules = gix_testtools::scripted_fixture_read_only("basic.sh")?
-            .join("multiple")
+            .join(name)
             .join(".gitmodules");
         Ok(gix_submodule::File::from_bytes(
             std::fs::read(&modules)?.as_slice(),
             modules,
             &Default::default(),
         )?)
+    }
+
+    use bstr::{BStr, ByteSlice};
+
+    fn multi_modules() -> crate::Result<gix_submodule::File> {
+        module_file("multiple")
     }
 
     fn assume_valid_active_state<'a>(
@@ -50,6 +54,17 @@ mod is_active_platform {
                 )
             })
             .collect())
+    }
+
+    #[test]
+    fn without_submodule_in_index() -> crate::Result {
+        let module = module_file("not-a-submodule")?;
+        assert_eq!(
+            module.names().map(ToOwned::to_owned).collect::<Vec<_>>(),
+            ["submodule"],
+            "entries can be read"
+        );
+        Ok(())
     }
 
     #[test]
