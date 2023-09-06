@@ -350,7 +350,7 @@ mod clap {
     pub struct AsPathSpec;
 
     static PATHSPEC_DEFAULTS: once_cell::sync::Lazy<gix::pathspec::Defaults> = once_cell::sync::Lazy::new(|| {
-        gix::pathspec::Defaults::from_environment(|n| std::env::var_os(n)).unwrap_or_default()
+        gix::pathspec::Defaults::from_environment(&mut |n| std::env::var_os(n)).unwrap_or_default()
     });
 
     impl TypedValueParser for AsPathSpec {

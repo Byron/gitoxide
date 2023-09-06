@@ -80,10 +80,10 @@ mod existing {
         store.find_loose(&name.to_full_name())?;
         store.find_loose(name.to_full_name().as_ref())?;
         store.find_loose(name.to_full_name().as_ref().as_partial_name())?;
-        store.find_loose(&PartialName::try_from(name.remote)?.join(name.branch)?)?;
-        store.find_loose(&PartialName::try_from("origin")?.join("main")?)?;
-        store.find_loose(&PartialName::try_from("origin")?.join(String::from("main"))?)?;
-        store.find_loose(&PartialName::try_from("origin")?.join("main")?)?;
+        store.find_loose(&PartialName::try_from(name.remote)?.join(name.branch.into())?)?;
+        store.find_loose(&PartialName::try_from("origin")?.join("main".into())?)?;
+        store.find_loose(&PartialName::try_from("origin")?.join(String::from("main").as_str().into())?)?;
+        store.find_loose(&PartialName::try_from("origin")?.join("main".into())?)?;
 
         Ok(())
     }

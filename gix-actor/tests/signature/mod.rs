@@ -11,7 +11,7 @@ mod write_to {
                 time: default_time(),
             };
             assert_eq!(
-                format!("{:?}", signature.write_to(Vec::new())),
+                format!("{:?}", signature.write_to(&mut Vec::new())),
                 "Err(Custom { kind: Other, error: IllegalCharacter })"
             );
         }
@@ -24,7 +24,7 @@ mod write_to {
                 time: default_time(),
             };
             assert_eq!(
-                format!("{:?}", signature.write_to(Vec::new())),
+                format!("{:?}", signature.write_to(&mut Vec::new())),
                 "Err(Custom { kind: Other, error: IllegalCharacter })"
             );
         }
@@ -37,7 +37,7 @@ mod write_to {
                 time: default_time(),
             };
             assert_eq!(
-                format!("{:?}", signature.write_to(Vec::new())),
+                format!("{:?}", signature.write_to(&mut Vec::new())),
                 "Err(Custom { kind: Other, error: IllegalCharacter })"
             );
         }

@@ -66,12 +66,10 @@ where
     /// `source_file` is the location of the `bytes` which represents a list of patterns, one pattern per line.
     /// If `root` is `Some(…)` it's used to see `source_file` as relative to itself, if `source_file` is absolute.
     /// If source is relative and should be treated as base, set `root` to `Some("")`.
-    pub fn from_bytes(bytes: &[u8], source_file: impl Into<PathBuf>, root: Option<&Path>) -> Self {
-        let source = source_file.into();
-        let patterns = T::bytes_to_patterns(bytes, source.as_path());
-
+    pub fn from_bytes(bytes: &[u8], source_file: PathBuf, root: Option<&Path>) -> Self {
+        let patterns = T::bytes_to_patterns(bytes, source_file.as_path());
         let base = root
-            .and_then(|root| source.parent().expect("file").strip_prefix(root).ok())
+            .and_then(|root| source_file.parent().expect("file").strip_prefix(root).ok())
             .and_then(|base| {
                 (!base.as_os_str().is_empty()).then(|| {
                     let mut base: BString =
@@ -83,7 +81,7 @@ where
             });
         List {
             patterns,
-            source: Some(source),
+            source: Some(source_file),
             base,
         }
     }

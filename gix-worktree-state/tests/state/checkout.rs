@@ -507,8 +507,8 @@ fn checkout_index_in_tmp_dir_opts(
                 Err(gix_odb::find::existing_object::Error::NotFound { oid: oid.to_owned() })
             }
         },
-        &mut progress::Discard,
-        &mut progress::Discard,
+        &progress::Discard,
+        &progress::Discard,
         &AtomicBool::default(),
         opts,
     )?;
@@ -521,7 +521,7 @@ fn stripped_prefix(prefix: impl AsRef<Path>, source_files: &[PathBuf]) -> Vec<&P
 
 fn probe_gitoxide_dir() -> crate::Result<gix_fs::Capabilities> {
     Ok(gix_fs::Capabilities::probe(
-        gix_discover::upwards(".")?
+        &gix_discover::upwards(".".as_ref())?
             .0
             .into_repository_and_work_tree_directories()
             .0,

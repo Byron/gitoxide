@@ -188,7 +188,7 @@ impl<'repo> Platform<'repo> {
                                         return false;
                                     };
                                     if commits.binary_search(&id).is_ok() {
-                                        if let Ok(commit) = repo.objects.find_commit_iter(id, &mut buf) {
+                                        if let Ok(commit) = repo.objects.find_commit_iter(&id, &mut buf) {
                                             grafted_parents_to_skip.extend(commit.parent_ids());
                                             grafted_parents_to_skip.sort();
                                         }

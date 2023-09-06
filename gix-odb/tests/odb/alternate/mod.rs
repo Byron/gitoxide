@@ -67,7 +67,7 @@ fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
         None,
     )?;
 
-    match alternate::resolve(from, std::env::current_dir()?) {
+    match alternate::resolve(from, &std::env::current_dir()?) {
         Err(alternate::Error::Cycle(chain)) => {
             assert_eq!(
                 chain
@@ -88,7 +88,7 @@ fn single_link_with_comment_before_path_and_ansi_c_escape() -> crate::Result {
     let non_alternate = tmp.path().join("actual");
 
     let (from, to) = alternate_with(tmp.path().join("a"), non_alternate, Some("# comment\n"))?;
-    let alternates = alternate::resolve(from, std::env::current_dir()?)?;
+    let alternates = alternate::resolve(from, &std::env::current_dir()?)?;
     assert_eq!(alternates.len(), 1);
     assert_eq!(alternates[0], to);
     Ok(())
@@ -97,6 +97,6 @@ fn single_link_with_comment_before_path_and_ansi_c_escape() -> crate::Result {
 #[test]
 fn no_alternate_in_first_objects_dir() -> crate::Result {
     let tmp = gix_testtools::tempfile::TempDir::new()?;
-    assert!(alternate::resolve(tmp.path(), std::env::current_dir()?)?.is_empty());
+    assert!(alternate::resolve(tmp.path().to_owned(), &std::env::current_dir()?)?.is_empty());
     Ok(())
 }

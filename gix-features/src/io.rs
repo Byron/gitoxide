@@ -77,9 +77,9 @@ pub mod pipe {
     /// Returns the _([`write`][Writer], [`read`][Reader])_ ends of a pipe for transferring bytes, analogous to a unix pipe.
     ///
     /// * `in_flight_writes` defines the amount of chunks of bytes to keep in memory until the `write` end will block when writing.
-    ///    If `None` or `0`, the `write` end will always block until the `read` end consumes the transferred bytes.
-    pub fn unidirectional(in_flight_writes: impl Into<Option<usize>>) -> (Writer, Reader) {
-        let (tx, rx) = std::sync::mpsc::sync_channel(in_flight_writes.into().unwrap_or(0));
+    ///    If `0`, the `write` end will always block until the `read` end consumes the transferred bytes.
+    pub fn unidirectional(in_flight_writes: usize) -> (Writer, Reader) {
+        let (tx, rx) = std::sync::mpsc::sync_channel(in_flight_writes);
         (
             Writer {
                 channel: tx,

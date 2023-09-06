@@ -10,7 +10,7 @@ fn with_binary_attribute_is_never_converted() {
         b"hi\r\nho",
         AttributesDigest::Binary,
         &mut buf,
-        no_call,
+        &mut no_call,
         Default::default(),
     )
     .expect("no error");
@@ -20,15 +20,21 @@ fn with_binary_attribute_is_never_converted() {
 #[test]
 fn no_crlf_means_no_work() -> crate::Result {
     let mut buf = Vec::new();
-    let changed = eol::convert_to_git(b"hi", AttributesDigest::TextCrlf, &mut buf, no_call, Default::default())
-        .expect("no error");
+    let changed = eol::convert_to_git(
+        b"hi",
+        AttributesDigest::TextCrlf,
+        &mut buf,
+        &mut no_call,
+        Default::default(),
+    )
+    .expect("no error");
     assert!(!changed);
 
     let changed = eol::convert_to_git(
         b"hi",
         AttributesDigest::TextAutoCrlf,
         &mut buf,
-        no_object_in_index,
+        &mut no_object_in_index,
         Default::default(),
     )
     .expect("no error");
@@ -43,7 +49,7 @@ fn detected_as_binary() -> crate::Result {
         b"hi\0zero makes it binary",
         AttributesDigest::TextAuto,
         &mut buf,
-        no_call,
+        &mut no_call,
         Default::default(),
     )
     .expect("no error");
@@ -61,7 +67,7 @@ fn fast_conversion_by_stripping_cr() -> crate::Result {
         b"a\r\nb\r\nc",
         AttributesDigest::TextCrlf,
         &mut buf,
-        no_call,
+        &mut no_call,
         Default::default(),
     )
     .expect("no error");
@@ -77,7 +83,7 @@ fn slower_conversion_due_to_lone_cr() -> crate::Result {
         b"\r\ra\r\nb\r\nc",
         AttributesDigest::TextCrlf,
         &mut buf,
-        no_call,
+        &mut no_call,
         Default::default(),
     )
     .expect("no error");
@@ -98,11 +104,11 @@ fn crlf_in_index_prevents_conversion_to_lf() -> crate::Result {
         b"elligible\n",
         AttributesDigest::TextAutoInput,
         &mut buf,
-        |buf| {
+        &mut |buf| {
             called = true;
             buf.clear();
             buf.push_str("with CRLF\r\n");
-            Ok::<_, std::convert::Infallible>(Some(()))
+            Ok(Some(()))
         },
         Default::default(),
     )
@@ -127,7 +133,7 @@ fn round_trip_check() -> crate::Result {
             input,
             AttributesDigest::TextCrlf,
             &mut buf,
-            no_call,
+            &mut no_call,
             eol::convert_to_git::Options {
                 round_trip_check: Some(gix_filter::eol::convert_to_git::RoundTripCheck::Fail {
                     rela_path: Path::new("hello.txt"),
@@ -142,7 +148,7 @@ fn round_trip_check() -> crate::Result {
             input,
             AttributesDigest::TextCrlf,
             &mut buf,
-            no_call,
+            &mut no_call,
             eol::convert_to_git::Options {
                 round_trip_check: Some(gix_filter::eol::convert_to_git::RoundTripCheck::Warn {
                     rela_path: Path::new("hello.txt"),
@@ -159,11 +165,11 @@ fn round_trip_check() -> crate::Result {
 }
 
 #[allow(clippy::ptr_arg)]
-fn no_call(_buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
+fn no_call(_buf: &mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
     unreachable!("index function will not be called")
 }
 
 #[allow(clippy::ptr_arg)]
-fn no_object_in_index(_buf: &mut Vec<u8>) -> std::io::Result<Option<()>> {
+fn no_object_in_index(_buf: &mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
     Ok(None)
 }

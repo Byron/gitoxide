@@ -130,7 +130,7 @@ mod blocking_io {
         fn receive_pack(
             &mut self,
             input: impl BufRead,
-            progress: impl NestedProgress,
+            progress: impl NestedProgress + 'static,
             refs: &[Ref],
             _previous_response: &Response,
         ) -> io::Result<()> {
@@ -156,7 +156,7 @@ mod blocking_io {
     ) -> anyhow::Result<()>
     where
         W: std::io::Write,
-        P: NestedProgress,
+        P: NestedProgress + 'static,
         P::SubProgress: 'static,
     {
         let transport = net::connect(
@@ -212,7 +212,7 @@ mod async_io {
         async fn receive_pack(
             &mut self,
             input: impl AsyncBufRead + Unpin + 'async_trait,
-            progress: impl gix::NestedProgress,
+            progress: impl gix::NestedProgress + 'static,
             refs: &[Ref],
             _previous_response: &Response,
         ) -> io::Result<()> {
@@ -367,8 +367,8 @@ fn receive_pack_blocking<W: io::Write>(
     mut directory: Option<PathBuf>,
     mut refs_directory: Option<PathBuf>,
     ctx: &mut Context<W>,
-    input: impl io::BufRead,
-    progress: impl NestedProgress,
+    mut input: impl io::BufRead,
+    mut progress: impl NestedProgress + 'static,
     refs: &[Ref],
 ) -> io::Result<()> {
     let options = pack::bundle::write::Options {
@@ -377,9 +377,15 @@ fn receive_pack_blocking<W: io::Write>(
         iteration_mode: pack::data::input::Mode::Verify,
         object_hash: ctx.object_hash,
     };
-    let outcome =
-        pack::Bundle::write_to_directory(input, directory.take(), progress, &ctx.should_interrupt, None, options)
-            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+    let outcome = pack::Bundle::write_to_directory(
+        &mut input,
+        directory.take().as_deref(),
+        &mut progress,
+        &ctx.should_interrupt,
+        None,
+        options,
+    )
+    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
     if let Some(directory) = refs_directory.take() {
         write_raw_refs(refs, directory)?;

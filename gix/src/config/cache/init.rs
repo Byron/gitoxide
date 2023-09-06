@@ -72,7 +72,7 @@ impl Cache {
 
         let config = {
             let git_prefix = &git_prefix;
-            let metas = [
+            let mut metas = [
                 gix_config::source::Kind::GitInstallation,
                 gix_config::source::Kind::System,
                 gix_config::source::Kind::Global,
@@ -100,7 +100,7 @@ impl Cache {
 
             let err_on_nonexisting_paths = false;
             let mut globals = gix_config::File::from_paths_metadata_buf(
-                metas,
+                &mut metas,
                 &mut buf,
                 err_on_nonexisting_paths,
                 gix_config::file::init::Options {

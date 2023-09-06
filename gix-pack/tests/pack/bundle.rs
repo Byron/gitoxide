@@ -10,7 +10,7 @@ mod locate {
         let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX), gix_hash::Kind::Sha1).expect("pack and idx");
         bundle
             .find(
-                hex_to_id(hex_id),
+                &hex_to_id(hex_id),
                 out,
                 &mut zlib::Inflate::default(),
                 &mut pack::cache::Never,
@@ -37,13 +37,13 @@ mod locate {
                 for entry in bundle.index.iter() {
                     let (obj, _location) = bundle
                         .find(
-                            entry.oid,
+                            &entry.oid,
                             &mut buf,
                             &mut zlib::Inflate::default(),
                             &mut pack::cache::Never,
                         )?
                         .expect("id present");
-                    obj.verify_checksum(entry.oid)?;
+                    obj.verify_checksum(&entry.oid)?;
                 }
             }
             Ok(())
@@ -165,10 +165,10 @@ mod write_to_directory {
         let pack_file = fs::File::open(fixture_path(pack_file))?;
         static SHOULD_INTERRUPT: AtomicBool = AtomicBool::new(false);
         pack::Bundle::write_to_directory_eagerly(
-            pack_file,
+            Box::new(pack_file),
             None,
             directory,
-            progress::Discard,
+            &mut progress::Discard,
             &SHOULD_INTERRUPT,
             None,
             pack::bundle::write::Options {

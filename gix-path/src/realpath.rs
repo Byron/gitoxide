@@ -31,19 +31,18 @@ pub(crate) mod function {
     ///
     /// If `path` is relative, the current working directory be used to make it absolute.
     pub fn realpath(path: impl AsRef<Path>) -> Result<PathBuf, Error> {
+        let path = path.as_ref();
         let cwd = path
-            .as_ref()
             .is_relative()
             .then(std::env::current_dir)
             .unwrap_or_else(|| Ok(PathBuf::default()))
             .map_err(Error::CurrentWorkingDir)?;
-        realpath_opts(path, cwd, MAX_SYMLINKS)
+        realpath_opts(path, &cwd, MAX_SYMLINKS)
     }
 
     /// The same as [`realpath()`], but allow to configure `max_symlinks` to configure how many symbolic links we are going to follow.
     /// This serves to avoid running into cycles or doing unreasonable amounts of work.
-    pub fn realpath_opts(path: impl AsRef<Path>, cwd: impl AsRef<Path>, max_symlinks: u8) -> Result<PathBuf, Error> {
-        let path = path.as_ref();
+    pub fn realpath_opts(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, Error> {
         if path.as_os_str().is_empty() {
             return Err(Error::EmptyPath);
         }

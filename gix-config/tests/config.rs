@@ -1,4 +1,4 @@
-type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub use gix_testtools::Result;
 
 mod file;
 mod parse;

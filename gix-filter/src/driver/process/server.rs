@@ -60,7 +60,7 @@ impl Server {
         stdin: std::io::Stdin,
         stdout: std::io::Stdout,
         welcome_prefix: &str,
-        pick_version: impl FnOnce(&[usize]) -> Option<usize>,
+        pick_version: &mut dyn FnMut(&[usize]) -> Option<usize>,
         available_capabilities: &[&str],
     ) -> Result<Self, handshake::Error> {
         let mut input =

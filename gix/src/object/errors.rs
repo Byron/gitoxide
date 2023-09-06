@@ -18,17 +18,21 @@ pub mod conversion {
 ///
 pub mod find {
     /// Indicate that an error occurred when trying to find an object.
-    pub type Error = gix_odb::store::find::Error;
+    #[derive(Debug, thiserror::Error)]
+    #[error(transparent)]
+    pub struct Error(#[from] pub gix_odb::find::Error);
 
     ///
     pub mod existing {
         /// An object could not be found in the database, or an error occurred when trying to obtain it.
-        pub type Error = gix_odb::find::existing::Error<gix_odb::store::find::Error>;
+        pub type Error = gix_odb::find::existing::Error;
     }
 }
 
 ///
 pub mod write {
     /// An error to indicate writing to the loose object store failed.
-    pub type Error = gix_odb::store::write::Error;
+    #[derive(Debug, thiserror::Error)]
+    #[error(transparent)]
+    pub struct Error(#[from] pub gix_odb::find::Error);
 }

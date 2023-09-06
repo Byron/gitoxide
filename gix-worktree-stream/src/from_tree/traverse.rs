@@ -68,7 +68,7 @@ where
         let converted = self.pipeline.convert_to_worktree(
             &self.buf,
             self.path.as_ref(),
-            |a, b| {
+            &mut |a, b| {
                 (self.fetch_attributes)(a, entry.mode, b).ok();
             },
             gix_filter::driver::apply::Delay::Forbid,

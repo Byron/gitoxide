@@ -26,7 +26,7 @@ mod method {
     fn verify_checksum() -> Result<(), Box<dyn std::error::Error>> {
         let p = pack_at(SMALL_PACK);
         assert_eq!(
-            p.verify_checksum(progress::Discard, &AtomicBool::new(false))?,
+            p.verify_checksum(&mut progress::Discard, &AtomicBool::new(false))?,
             p.checksum()
         );
         Ok(())
@@ -109,7 +109,7 @@ mod decode_entry {
             entry,
             &mut buf,
             &mut Default::default(),
-            resolve_with_panic,
+            &resolve_with_panic,
             &mut cache::Never,
         )
         .expect("valid offset provides valid entry");
@@ -160,7 +160,7 @@ mod resolve_header {
 
         let p = pack_at(SMALL_PACK);
         let entry = p.entry(offset);
-        p.decode_header(entry, &mut Default::default(), resolve_with_panic)
+        p.decode_header(entry, &mut Default::default(), &resolve_with_panic)
             .expect("valid offset provides valid entry")
     }
 }

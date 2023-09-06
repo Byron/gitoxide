@@ -21,6 +21,13 @@ pub mod configuration {
 
 ///
 pub mod to_git {
+    use bstr::BStr;
+
+    /// A function that writes a buffer like `fn(rela_path, &mut buf)` with by tes of an object in the index that is the one
+    /// that should be converted.
+    pub type IndexObjectFn<'a> =
+        dyn FnMut(&BStr, &mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> + 'a;
+
     /// The error returned by [Pipeline::convert_to_git()][super::Pipeline::convert_to_git()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
@@ -59,16 +66,15 @@ impl Pipeline {
     /// based on the `attributes` at `rela_path` which is passed as first argument..
     /// When converting to `crlf`, and depending on the configuration, `index_object` might be called to obtain the index
     /// version of `src` if available. It can return `Ok(None)` if this information isn't available.
-    pub fn convert_to_git<E, R>(
+    pub fn convert_to_git<R>(
         &mut self,
         mut src: R,
         rela_path: &Path,
-        attributes: impl FnOnce(&BStr, &mut gix_attributes::search::Outcome),
-        index_object: impl FnOnce(&BStr, &mut Vec<u8>) -> Result<Option<()>, E>,
+        attributes: &mut dyn FnMut(&BStr, &mut gix_attributes::search::Outcome),
+        index_object: &mut to_git::IndexObjectFn<'_>,
     ) -> Result<ToGitOutcome<'_, R>, to_git::Error>
     where
         R: std::io::Read,
-        E: std::error::Error + Send + Sync + 'static,
     {
         let bstr_path = gix_path::into_bstr(rela_path);
         let Configuration {
@@ -91,7 +97,7 @@ impl Pipeline {
             b"\r\n",
             digest,
             &mut self.bufs.dest,
-            |_| Ok::<_, E>(None),
+            &mut |_| Ok(None),
             eol::convert_to_git::Options {
                 round_trip_check: None,
                 config: self.options.eol_config,
@@ -140,7 +146,7 @@ impl Pipeline {
             &self.bufs.src,
             digest,
             &mut self.bufs.dest,
-            |buf| index_object(bstr_path.as_ref(), buf),
+            &mut |buf| index_object(bstr_path.as_ref(), buf),
             eol::convert_to_git::Options {
                 round_trip_check: self.options.crlf_roundtrip_check.to_eol_roundtrip_check(rela_path),
                 config: self.options.eol_config,
@@ -172,7 +178,7 @@ impl Pipeline {
         &mut self,
         src: &'input [u8],
         rela_path: &BStr,
-        attributes: impl FnOnce(&BStr, &mut gix_attributes::search::Outcome),
+        attributes: &mut dyn FnMut(&BStr, &mut gix_attributes::search::Outcome),
         can_delay: driver::apply::Delay,
     ) -> Result<ToWorktreeOutcome<'input, '_>, to_worktree::Error> {
         let Configuration {

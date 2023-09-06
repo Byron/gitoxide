@@ -229,7 +229,7 @@ impl Events<'static> {
         input: &'a [u8],
         filter: Option<fn(&Event<'a>) -> bool>,
     ) -> Result<Events<'static>, parse::Error> {
-        from_bytes(input, |e| e.to_owned(), filter)
+        from_bytes(input, &|e| e.to_owned(), filter)
     }
 }
 
@@ -241,7 +241,7 @@ impl<'a> Events<'a> {
     ///
     /// Use `filter` to only include those events for which it returns true.
     pub fn from_bytes(input: &'a [u8], filter: Option<fn(&Event<'a>) -> bool>) -> Result<Events<'a>, parse::Error> {
-        from_bytes(input, std::convert::identity, filter)
+        from_bytes(input, &std::convert::identity, filter)
     }
 
     /// Attempt to zero-copy parse the provided `input` string.
@@ -288,14 +288,14 @@ impl<'a> TryFrom<&'a [u8]> for Events<'a> {
 
 fn from_bytes<'a, 'b>(
     input: &'a [u8],
-    convert: impl Fn(Event<'a>) -> Event<'b>,
+    convert: &dyn Fn(Event<'a>) -> Event<'b>,
     filter: Option<fn(&Event<'a>) -> bool>,
 ) -> Result<Events<'b>, parse::Error> {
     let mut header = None;
     let mut events = section::Events::default();
     let mut frontmatter = FrontMatterEvents::default();
     let mut sections = Vec::new();
-    parse::from_bytes(input, |e: Event<'_>| match e {
+    parse::from_bytes(input, &mut |e: Event<'_>| match e {
         Event::SectionHeader(next_header) => {
             match header.take() {
                 None => {

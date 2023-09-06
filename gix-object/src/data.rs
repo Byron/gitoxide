@@ -67,8 +67,7 @@ pub mod verify {
         /// Compute the checksum of `self` and compare it with the `desired` hash.
         /// If the hashes do not match, an [`Error`] is returned, containing the actual
         /// hash of `self`.
-        pub fn verify_checksum(&self, desired: impl AsRef<gix_hash::oid>) -> Result<(), Error> {
-            let desired = desired.as_ref();
+        pub fn verify_checksum(&self, desired: &gix_hash::oid) -> Result<(), Error> {
             let actual_id = crate::compute_hash(desired.kind(), self.kind, self.data);
             if desired != actual_id {
                 return Err(Error::ChecksumMismatch {

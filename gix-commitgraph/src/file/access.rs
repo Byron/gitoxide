@@ -74,7 +74,10 @@ impl File {
     /// Translate the given object hash to its position within this file, if present.
     // copied from gix-odb/src/pack/index/ext
     pub fn lookup(&self, id: impl AsRef<gix_hash::oid>) -> Option<file::Position> {
-        let id = id.as_ref();
+        self.lookup_inner(id.as_ref())
+    }
+
+    fn lookup_inner(&self, id: &gix_hash::oid) -> Option<file::Position> {
         let first_byte = usize::from(id.first_byte());
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };

@@ -71,7 +71,7 @@ impl<'repo> Tree<'repo> {
                         }));
                     } else {
                         let next_id = entry.oid.to_owned();
-                        let obj = self.repo.objects.find(next_id, buf)?;
+                        let obj = self.repo.objects.find(&next_id, buf)?;
                         if !obj.kind.is_tree() {
                             return Ok(None);
                         }
@@ -113,7 +113,7 @@ impl<'repo> Tree<'repo> {
                         }));
                     } else {
                         let next_id = entry.oid.to_owned();
-                        let obj = self.repo.objects.find(next_id, &mut self.data)?;
+                        let obj = self.repo.objects.find(&next_id, &mut self.data)?;
                         self.id = next_id;
                         if !obj.kind.is_tree() {
                             return Ok(None);

@@ -137,7 +137,7 @@ mod to_filter {
             .push("c".try_into()?, Some("d".into()));
 
         let mut buf = Vec::<u8>::new();
-        config.write_to_filter(&mut buf, |s| s.meta().source == gix_config::Source::Local)?;
+        config.write_to_filter(&mut buf, &mut |s| s.meta().source == gix_config::Source::Local)?;
         let nl = config.detect_newline_style();
         assert_eq!(buf.to_str_lossy(), format!("[a \"local\"]{nl}\tb = c{nl}\tc = d{nl}"));
 

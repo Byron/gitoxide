@@ -1,5 +1,7 @@
 #![allow(clippy::result_large_err)]
+
 use gix_protocol::transport::client::Transport;
+use std::borrow::Cow;
 
 use crate::{remote::Connection, Remote};
 
@@ -104,7 +106,7 @@ impl<'repo> Remote<'repo> {
     ) -> Result<(gix_url::Url, gix_protocol::transport::Protocol), Error> {
         fn sanitize(mut url: gix_url::Url) -> Result<gix_url::Url, Error> {
             if url.scheme == gix_url::Scheme::File {
-                let mut dir = gix_path::to_native_path_on_windows(url.path.as_ref());
+                let mut dir = gix_path::to_native_path_on_windows(Cow::Borrowed(url.path.as_ref()));
                 let kind = gix_discover::is_git(dir.as_ref())
                     .or_else(|_| {
                         dir.to_mut().push(gix_discover::DOT_GIT_DIR);
@@ -117,7 +119,7 @@ impl<'repo> Remote<'repo> {
                 let (git_dir, _work_dir) = gix_discover::repository::Path::from_dot_git_dir(
                     dir.clone().into_owned(),
                     kind,
-                    std::env::current_dir()?,
+                    &std::env::current_dir()?,
                 )
                 .ok_or_else(|| Error::InvalidRemoteRepositoryPath {
                     directory: dir.into_owned(),

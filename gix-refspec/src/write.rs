@@ -14,7 +14,7 @@ impl RefSpecRef<'_> {
     }
 
     /// Serialize ourselves in a parseable format to `out`.
-    pub fn write_to(&self, out: impl std::io::Write) -> std::io::Result<()> {
+    pub fn write_to(&self, out: &mut dyn std::io::Write) -> std::io::Result<()> {
         self.instruction().write_to(out)
     }
 }
@@ -28,7 +28,7 @@ impl Instruction<'_> {
     }
 
     /// Serialize ourselves in a parseable format to `out`.
-    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+    pub fn write_to(&self, out: &mut dyn std::io::Write) -> std::io::Result<()> {
         match self {
             Instruction::Push(Push::Matching {
                 src,

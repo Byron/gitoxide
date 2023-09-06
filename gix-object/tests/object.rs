@@ -21,7 +21,7 @@ fn compute_hash() {
     );
 }
 
-type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+use gix_testtools::Result;
 
 #[cfg(not(windows))]
 fn fixup(v: Vec<u8>) -> Vec<u8> {

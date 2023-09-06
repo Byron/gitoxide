@@ -25,7 +25,7 @@ impl From<Error> for io::Error {
 /// Serialization
 impl crate::WriteTo for Tree {
     /// Serialize this tree to `out` in the git internal format.
-    fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+    fn write_to(&self, out: &mut dyn io::Write) -> io::Result<()> {
         debug_assert_eq!(
             &{
                 let mut entries_sorted = self.entries.clone();
@@ -68,7 +68,7 @@ impl crate::WriteTo for Tree {
 /// Serialization
 impl<'a> crate::WriteTo for TreeRef<'a> {
     /// Serialize this tree to `out` in the git internal format.
-    fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+    fn write_to(&self, out: &mut dyn io::Write) -> io::Result<()> {
         debug_assert_eq!(
             &{
                 let mut entries_sorted = self.entries.clone();

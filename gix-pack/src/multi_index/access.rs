@@ -89,7 +89,7 @@ impl File {
             prefix,
             candidates,
             &self.fan,
-            |idx| self.oid_at_index(idx),
+            &|idx| self.oid_at_index(idx),
             self.num_objects,
         )
     }
@@ -98,7 +98,7 @@ impl File {
     ///
     /// Use this index for finding additional information via [`File::pack_id_and_pack_offset_at_index()`].
     pub fn lookup(&self, id: impl AsRef<gix_hash::oid>) -> Option<EntryIndex> {
-        crate::index::access::lookup(id, &self.fan, |idx| self.oid_at_index(idx))
+        crate::index::access::lookup(id.as_ref(), &self.fan, &|idx| self.oid_at_index(idx))
     }
 
     /// Given the `index` ranging from 0 to [File::num_objects()], return the pack index and its absolute offset into the pack.

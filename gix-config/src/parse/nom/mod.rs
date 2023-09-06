@@ -12,7 +12,7 @@ use winnow::{
 use crate::parse::{error::ParseNode, section, Comment, Error, Event};
 
 /// Attempt to zero-copy parse the provided bytes, passing results to `dispatch`.
-pub fn from_bytes<'i>(mut input: &'i [u8], mut dispatch: impl FnMut(Event<'i>)) -> Result<(), Error> {
+pub fn from_bytes<'i>(mut input: &'i [u8], dispatch: &mut dyn FnMut(Event<'i>)) -> Result<(), Error> {
     let start = input.checkpoint();
 
     let bom = unicode_bom::Bom::from(input);
@@ -46,7 +46,7 @@ pub fn from_bytes<'i>(mut input: &'i [u8], mut dispatch: impl FnMut(Event<'i>)) 
 
     let mut node = ParseNode::SectionHeader;
 
-    let res = repeat(1.., |i: &mut &'i [u8]| section(i, &mut node, &mut dispatch))
+    let res = repeat(1.., |i: &mut &'i [u8]| section(i, &mut node, dispatch))
         .map(|()| ())
         .parse_next(&mut input);
     res.map_err(|_| {
@@ -94,7 +94,7 @@ mod tests;
 fn section<'i>(
     i: &mut &'i [u8],
     node: &mut ParseNode,
-    dispatch: &mut impl FnMut(Event<'i>),
+    dispatch: &mut dyn FnMut(Event<'i>),
 ) -> PResult<(), NomError<&'i [u8]>> {
     let start = i.checkpoint();
     let header = section_header(i).map_err(|e| {
@@ -205,7 +205,7 @@ fn is_subsection_unescaped_char(c: u8) -> bool {
 fn key_value_pair<'i>(
     i: &mut &'i [u8],
     node: &mut ParseNode,
-    dispatch: &mut impl FnMut(Event<'i>),
+    dispatch: &mut dyn FnMut(Event<'i>),
 ) -> PResult<(), NomError<&'i [u8]>> {
     *node = ParseNode::Name;
     if let Some(name) = opt(config_name).parse_next(i)? {
@@ -234,7 +234,7 @@ fn config_name<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
         .parse_next(i)
 }
 
-fn config_value<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PResult<(), NomError<&'i [u8]>> {
+fn config_value<'i>(i: &mut &'i [u8], dispatch: &mut dyn FnMut(Event<'i>)) -> PResult<(), NomError<&'i [u8]>> {
     if opt('=').parse_next(i)?.is_some() {
         dispatch(Event::KeyValueSeparator);
         if let Some(whitespace) = opt(take_spaces1).parse_next(i)? {
@@ -252,7 +252,7 @@ fn config_value<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> P
 
 /// Handles parsing of known-to-be values. This function handles both single
 /// line values as well as values that are continuations.
-fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut impl FnMut(Event<'i>)) -> PResult<(), NomError<&'i [u8]>> {
+fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut dyn FnMut(Event<'i>)) -> PResult<(), NomError<&'i [u8]>> {
     let start_checkpoint = i.checkpoint();
     let mut value_start_checkpoint = i.checkpoint();
     let mut value_end = None;

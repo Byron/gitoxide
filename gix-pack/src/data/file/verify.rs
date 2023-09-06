@@ -26,7 +26,7 @@ impl File {
     /// even more thorough integrity check.
     pub fn verify_checksum(
         &self,
-        progress: impl Progress,
+        progress: &mut dyn Progress,
         should_interrupt: &AtomicBool,
     ) -> Result<gix_hash::ObjectId, checksum::Error> {
         crate::verify::checksum_on_disk_or_mmap(

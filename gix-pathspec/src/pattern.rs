@@ -57,7 +57,7 @@ impl Pattern {
             (count > 0).then_some(count as usize).unwrap_or_default()
         }
 
-        let mut path = gix_path::from_bstr(self.path.as_ref());
+        let mut path = gix_path::from_bstr(self.path.as_bstr());
         let mut num_prefix_components = 0;
         let mut was_absolute = false;
         if gix_path::is_absolute(path.as_ref()) {
@@ -89,7 +89,7 @@ impl Pattern {
         }
 
         let assure_path_cannot_break_out_upwards = Path::new("");
-        let path = match gix_path::normalize(path.as_ref(), assure_path_cannot_break_out_upwards) {
+        let path = match gix_path::normalize(path.as_ref().into(), assure_path_cannot_break_out_upwards) {
             Some(path) => {
                 if was_absolute {
                     num_prefix_components = path.components().count().saturating_sub(

@@ -24,7 +24,7 @@ fn from_paths() -> crate::Result {
     let outcome = gix_pack::multi_index::File::write_from_index_paths(
         input_indices.clone(),
         &mut out,
-        progress::Discard,
+        &mut progress::Discard,
         &AtomicBool::new(false),
         gix_pack::multi_index::write::Options {
             object_hash: gix_hash::Kind::Sha1,
@@ -56,13 +56,13 @@ fn from_paths() -> crate::Result {
     }
 
     assert_eq!(
-        file.verify_integrity(progress::Discard, &AtomicBool::new(false), Default::default())?
+        file.verify_integrity(&mut progress::Discard, &AtomicBool::new(false), Default::default())?
             .actual_index_checksum,
         outcome.multi_index_checksum
     );
 
-    let outcome = file.verify_integrity_fast(progress::Discard, &AtomicBool::new(false))?;
+    let outcome = file.verify_integrity_fast(&mut progress::Discard, &AtomicBool::new(false))?;
 
-    assert_eq!(outcome.0, file.checksum());
+    assert_eq!(outcome, file.checksum());
     Ok(())
 }

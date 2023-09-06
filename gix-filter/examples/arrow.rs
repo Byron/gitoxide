@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 stdin(),
                 stdout(),
                 "git-filter",
-                |versions| versions.contains(&2).then_some(2),
+                &mut |versions| versions.contains(&2).then_some(2),
                 if disallow_delay {
                     &["clean", "smudge"]
                 } else {

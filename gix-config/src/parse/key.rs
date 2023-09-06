@@ -14,8 +14,7 @@ pub struct Key<'a> {
 /// Parse `input` like `core.bare` or `remote.origin.url` as a `Key` to make its fields available,
 /// or `None` if there were not at least 2 tokens separated by `.`.
 /// Note that `input` isn't validated, and is `str` as ascii is a subset of UTF-8 which is required for any valid keys.
-pub fn parse_unvalidated<'a>(input: impl Into<&'a BStr>) -> Option<Key<'a>> {
-    let input = input.into();
+pub fn parse_unvalidated(input: &BStr) -> Option<Key<'_>> {
     let mut tokens = input.splitn(2, |b| *b == b'.');
     let section_name = tokens.next()?;
     let subsection_or_key = tokens.next()?;

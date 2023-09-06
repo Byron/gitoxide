@@ -9,7 +9,7 @@ fn upwards_bare_repo_with_index() -> gix_testtools::Result {
     let repo = gix_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
 
     let _keep = gix_testtools::set_current_dir(repo.join("bare-with-index.git"))?;
-    let (repo_path, _trust) = gix_discover::upwards(".")?;
+    let (repo_path, _trust) = gix_discover::upwards(".".as_ref())?;
     assert_eq!(
         repo_path.kind(),
         gix_discover::repository::Kind::Bare,
@@ -24,7 +24,7 @@ fn in_cwd_upwards_bare_repo_without_index() -> gix_testtools::Result {
     let repo = gix_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
 
     let _keep = gix_testtools::set_current_dir(repo.join("bare.git"))?;
-    let (repo_path, _trust) = gix_discover::upwards(".")?;
+    let (repo_path, _trust) = gix_discover::upwards(".".as_ref())?;
     assert_eq!(repo_path.kind(), gix_discover::repository::Kind::Bare);
     Ok(())
 }
@@ -35,7 +35,7 @@ fn in_cwd_upwards_nonbare_repo_without_index() -> gix_testtools::Result {
     let repo = gix_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
 
     let _keep = gix_testtools::set_current_dir(repo.join("non-bare-without-index"))?;
-    let (repo_path, _trust) = gix_discover::upwards(".")?;
+    let (repo_path, _trust) = gix_discover::upwards(".".as_ref())?;
     assert_eq!(
         repo_path.kind(),
         gix_discover::repository::Kind::WorkTree { linked_git_dir: None },
@@ -59,7 +59,7 @@ fn upwards_with_relative_directories_and_optional_ceiling() -> gix_testtools::Re
     ] {
         let ceiling_dir = cwd.join(ceiling_dir_component);
         let (repo_path, _trust) = gix_discover::upwards_opts(
-            search_dir,
+            search_dir.as_ref(),
             Options {
                 ceiling_dirs: vec![ceiling_dir],
                 ..Default::default()
@@ -68,12 +68,12 @@ fn upwards_with_relative_directories_and_optional_ceiling() -> gix_testtools::Re
         .expect("ceiling dir should allow us to discover the repo");
         assert_repo_is_current_workdir(repo_path, Path::new(".."));
 
-        let (repo_path, _trust) =
-            gix_discover::upwards_opts(search_dir, Default::default()).expect("without ceiling dir we see the same");
+        let (repo_path, _trust) = gix_discover::upwards_opts(search_dir.as_ref(), Default::default())
+            .expect("without ceiling dir we see the same");
         assert_repo_is_current_workdir(repo_path, Path::new(".."));
 
         let (repo_path, _trust) = gix_discover::upwards_opts(
-            search_dir,
+            search_dir.as_ref(),
             Options {
                 ceiling_dirs: vec![PathBuf::from("..")],
                 ..Default::default()
@@ -83,7 +83,7 @@ fn upwards_with_relative_directories_and_optional_ceiling() -> gix_testtools::Re
         assert_repo_is_current_workdir(repo_path, Path::new(".."));
 
         let err = gix_discover::upwards_opts(
-            search_dir,
+            search_dir.as_ref(),
             Options {
                 ceiling_dirs: vec![PathBuf::from(".")],
                 ..Default::default()

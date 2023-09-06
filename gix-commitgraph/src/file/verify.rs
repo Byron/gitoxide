@@ -160,8 +160,7 @@ impl File {
 
 /// If the given path's filename matches "graph-{hash}.graph", check that `hash` matches the
 /// expected hash.
-fn verify_split_chain_filename_hash(path: impl AsRef<Path>, expected: &gix_hash::oid) -> Result<(), String> {
-    let path = path.as_ref();
+fn verify_split_chain_filename_hash(path: &Path, expected: &gix_hash::oid) -> Result<(), String> {
     path.file_name()
         .and_then(std::ffi::OsStr::to_str)
         .and_then(|filename| filename.strip_suffix(".graph"))

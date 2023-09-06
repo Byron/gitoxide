@@ -5,16 +5,15 @@ use crate::{DOT_GIT_DIR, MODULES};
 /// Returns true if the given `git_dir` seems to be a bare repository.
 ///
 /// Please note that repositories without an index generally _look_ bare, even though they might also be uninitialized.
-pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
-    let git_dir = git_dir_candidate.as_ref();
-    !(git_dir.join("index").exists() || (git_dir.file_name() == Some(OsStr::new(DOT_GIT_DIR))))
+pub fn bare(git_dir_candidate: &Path) -> bool {
+    !(git_dir_candidate.join("index").exists() || (git_dir_candidate.file_name() == Some(OsStr::new(DOT_GIT_DIR))))
 }
 
 /// Parse `<git_dir_candidate>/config` quickly to evaluate the value of the `bare` line, or return `true` if the file doesn't exist
 /// similar to what`guess_repository_type` seems to be doing.
 /// Return `None` if the `bare` line can't be found or the value of `bare` can't be determined.
-fn bare_by_config(git_dir_candidate: impl AsRef<Path>) -> std::io::Result<Option<bool>> {
-    match std::fs::read(git_dir_candidate.as_ref().join("config")) {
+fn bare_by_config(git_dir_candidate: &Path) -> std::io::Result<Option<bool>> {
+    match std::fs::read(git_dir_candidate.join("config")) {
         Ok(buf) => Ok(config::parse_bare(&buf)),
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(Some(true)),
         Err(err) => Err(err),
@@ -97,9 +96,7 @@ mod config {
 }
 
 /// Returns true if `git_dir` is located within a `.git/modules` directory, indicating it's a submodule clone.
-pub fn submodule_git_dir(git_dir: impl AsRef<Path>) -> bool {
-    let git_dir = git_dir.as_ref();
-
+pub fn submodule_git_dir(git_dir: &Path) -> bool {
     let mut last_comp = None;
     git_dir.file_name() != Some(OsStr::new(DOT_GIT_DIR))
         && git_dir.components().rev().skip(1).any(|c| {
@@ -124,8 +121,7 @@ pub fn submodule_git_dir(git_dir: impl AsRef<Path>) -> bool {
 ///   * …an objects directory
 ///   * …a refs directory
 ///
-pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::is_git::Error> {
-    let git_dir = git_dir.as_ref();
+pub fn git(git_dir: &Path) -> Result<crate::repository::Kind, crate::is_git::Error> {
     let git_dir_metadata = git_dir.metadata().map_err(|err| crate::is_git::Error::Metadata {
         source: err,
         path: git_dir.into(),
@@ -163,7 +159,7 @@ pub(crate) fn git_with_metadata(
         // In other words, it's important not to fail on detached heads here because we guessed the hash kind wrongly.
         let object_hash_should_not_matter_here = gix_hash::Kind::Sha1;
         let refs = gix_ref::file::Store::at(
-            dot_git.as_ref(),
+            dot_git.as_ref().into(),
             gix_ref::store::WriteReflog::Normal,
             object_hash_should_not_matter_here,
         );
@@ -192,10 +188,10 @@ pub(crate) fn git_with_metadata(
         }
     } else {
         let common_dir = dot_git.join("commondir");
-        let worktree_and_common_dir = crate::path::from_plain_file(common_dir)
+        let worktree_and_common_dir = crate::path::from_plain_file(&common_dir)
             .and_then(Result::ok)
             .and_then(|cd| {
-                crate::path::from_plain_file(dot_git.join("gitdir"))
+                crate::path::from_plain_file(&dot_git.join("gitdir"))
                     .and_then(Result::ok)
                     .map(|worktree_gitfile| (crate::path::without_dot_git_dir(worktree_gitfile), cd))
             });

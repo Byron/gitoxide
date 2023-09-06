@@ -31,7 +31,8 @@ impl<'event> File<'event> {
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Cow<'_, BStr>> {
-        self.raw_value_filter(section_name, subsection_name, key, filter).ok()
+        self.raw_value_filter(section_name.as_ref(), subsection_name, key.as_ref(), filter)
+            .ok()
     }
 
     /// Like [`string_filter()`][File::string_filter()], but suitable for statically known `key`s like `remote.origin.url`.
@@ -40,7 +41,7 @@ impl<'event> File<'event> {
         key: impl Into<&'a BStr>,
         filter: &mut MetadataFilter,
     ) -> Option<Cow<'_, BStr>> {
-        let key = crate::parse::key(key)?;
+        let key = crate::parse::key(key.into())?;
         self.raw_value_filter(key.section_name, key.subsection_name, key.value_name, filter)
             .ok()
     }
@@ -78,7 +79,7 @@ impl<'event> File<'event> {
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<crate::Path<'_>> {
-        self.raw_value_filter(section_name, subsection_name, key, filter)
+        self.raw_value_filter(section_name.as_ref(), subsection_name, key.as_ref(), filter)
             .ok()
             .map(crate::Path::from)
     }
@@ -89,7 +90,7 @@ impl<'event> File<'event> {
         key: impl Into<&'a BStr>,
         filter: &mut MetadataFilter,
     ) -> Option<crate::Path<'_>> {
-        let key = crate::parse::key(key)?;
+        let key = crate::parse::key(key.into())?;
         self.path_filter(key.section_name, key.subsection_name, key.value_name, filter)
     }
 
@@ -141,7 +142,7 @@ impl<'event> File<'event> {
         key: impl Into<&'a BStr>,
         filter: &mut MetadataFilter,
     ) -> Option<Result<bool, value::Error>> {
-        let key = crate::parse::key(key)?;
+        let key = crate::parse::key(key.into())?;
         self.boolean_filter(key.section_name, key.subsection_name, key.value_name, filter)
     }
 
@@ -168,7 +169,9 @@ impl<'event> File<'event> {
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Result<i64, value::Error>> {
-        let int = self.raw_value_filter(section_name, subsection_name, key, filter).ok()?;
+        let int = self
+            .raw_value_filter(section_name.as_ref(), subsection_name, key.as_ref(), filter)
+            .ok()?;
         Some(crate::Integer::try_from(int.as_ref()).and_then(|b| {
             b.to_decimal()
                 .ok_or_else(|| value::Error::new("Integer overflow", int.into_owned()))
@@ -181,7 +184,7 @@ impl<'event> File<'event> {
         key: impl Into<&'a BStr>,
         filter: &mut MetadataFilter,
     ) -> Option<Result<i64, value::Error>> {
-        let key = crate::parse::key(key)?;
+        let key = crate::parse::key(key.into())?;
         self.integer_filter(key.section_name, key.subsection_name, key.value_name, filter)
     }
 
@@ -192,12 +195,13 @@ impl<'event> File<'event> {
         subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<Vec<Cow<'_, BStr>>> {
-        self.raw_values(section_name, subsection_name, key).ok()
+        self.raw_values(section_name.as_ref(), subsection_name, key.as_ref())
+            .ok()
     }
 
     /// Like [`strings()`][File::strings()], but suitable for statically known `key`s like `remote.origin.url`.
     pub fn strings_by_key<'a>(&self, key: impl Into<&'a BStr>) -> Option<Vec<Cow<'_, BStr>>> {
-        let key = crate::parse::key(key)?;
+        let key = crate::parse::key(key.into())?;
         self.strings(key.section_name, key.subsection_name, key.value_name)
     }
 
@@ -209,7 +213,8 @@ impl<'event> File<'event> {
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Vec<Cow<'_, BStr>>> {
-        self.raw_values_filter(section_name, subsection_name, key, filter).ok()
+        self.raw_values_filter(section_name.as_ref(), subsection_name, key.as_ref(), filter)
+            .ok()
     }
 
     /// Like [`strings_filter()`][File::strings_filter()], but suitable for statically known `key`s like `remote.origin.url`.
@@ -218,7 +223,7 @@ impl<'event> File<'event> {
         key: impl Into<&'a BStr>,
         filter: &mut MetadataFilter,
     ) -> Option<Vec<Cow<'_, BStr>>> {
-        let key = crate::parse::key(key)?;
+        let key = crate::parse::key(key.into())?;
         self.strings_filter(key.section_name, key.subsection_name, key.value_name, filter)
     }
 
@@ -247,7 +252,7 @@ impl<'event> File<'event> {
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Result<Vec<i64>, value::Error>> {
-        self.raw_values_filter(section_name, subsection_name, key, filter)
+        self.raw_values_filter(section_name.as_ref(), subsection_name, key.as_ref(), filter)
             .ok()
             .map(|values| {
                 values
@@ -268,7 +273,7 @@ impl<'event> File<'event> {
         key: impl Into<&'a BStr>,
         filter: &mut MetadataFilter,
     ) -> Option<Result<Vec<i64>, value::Error>> {
-        let key = crate::parse::key(key)?;
+        let key = crate::parse::key(key.into())?;
         self.integers_filter(key.section_name, key.subsection_name, key.value_name, filter)
     }
 }

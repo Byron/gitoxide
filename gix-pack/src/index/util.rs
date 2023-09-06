@@ -4,7 +4,7 @@ use gix_features::progress::{self, Progress};
 
 pub(crate) fn index_entries_sorted_by_offset_ascending(
     idx: &crate::index::File,
-    mut progress: impl Progress,
+    progress: &mut dyn Progress,
 ) -> Vec<crate::index::Entry> {
     progress.init(Some(idx.num_objects as usize), progress::count("entries"));
     let start = Instant::now();

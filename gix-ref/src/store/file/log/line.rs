@@ -33,9 +33,9 @@ mod write {
     /// Output
     impl Line {
         /// Serialize this instance to `out` in the git serialization format for ref log lines.
-        pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+        pub fn write_to(&self, out: &mut dyn io::Write) -> io::Result<()> {
             write!(out, "{} {} ", self.previous_oid, self.new_oid)?;
-            self.signature.write_to(&mut out)?;
+            self.signature.write_to(out)?;
             writeln!(out, "\t{}", check_newlines(self.message.as_ref())?)
         }
     }

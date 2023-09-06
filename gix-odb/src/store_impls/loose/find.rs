@@ -34,9 +34,9 @@ impl Store {
     const OPEN_ACTION: &'static str = "open";
 
     /// Returns true if the given id is contained in our repository.
-    pub fn contains(&self, id: impl AsRef<gix_hash::oid>) -> bool {
-        debug_assert_eq!(self.object_hash, id.as_ref().kind());
-        hash_path(id.as_ref(), self.path.clone()).is_file()
+    pub fn contains(&self, id: &gix_hash::oid) -> bool {
+        debug_assert_eq!(self.object_hash, id.kind());
+        hash_path(id, self.path.clone()).is_file()
     }
 
     /// Given a `prefix`, find an object that matches it uniquely within this loose object
@@ -56,7 +56,7 @@ impl Store {
     ) -> Result<Option<crate::store::prefix::lookup::Outcome>, crate::loose::iter::Error> {
         let single_directory_iter = crate::loose::Iter {
             inner: gix_features::fs::walkdir_new(
-                self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()),
+                &self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()),
                 gix_features::fs::walkdir::Parallelism::Serial,
             )
             .min_depth(1)
@@ -108,11 +108,11 @@ impl Store {
     /// there was no such object.
     pub fn try_find<'a>(
         &self,
-        id: impl AsRef<gix_hash::oid>,
+        id: &gix_hash::oid,
         out: &'a mut Vec<u8>,
     ) -> Result<Option<gix_object::Data<'a>>, Error> {
-        debug_assert_eq!(self.object_hash, id.as_ref().kind());
-        match self.find_inner(id.as_ref(), out) {
+        debug_assert_eq!(self.object_hash, id.kind());
+        match self.find_inner(id, out) {
             Ok(obj) => Ok(Some(obj)),
             Err(err) => match err {
                 Error::Io {
@@ -137,10 +137,10 @@ impl Store {
 
     /// Return only the decompressed size of the object and its kind without fully reading it into memory as tuple of `(size, kind)`.
     /// Returns `None` if `id` does not exist in the database.
-    pub fn try_header(&self, id: impl AsRef<gix_hash::oid>) -> Result<Option<(usize, gix_object::Kind)>, Error> {
+    pub fn try_header(&self, id: &gix_hash::oid) -> Result<Option<(usize, gix_object::Kind)>, Error> {
         const BUF_SIZE: usize = 256;
         let mut buf = [0_u8; BUF_SIZE];
-        let path = hash_path(id.as_ref(), self.path.clone());
+        let path = hash_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();
         let mut istream = match fs::File::open(&path) {

@@ -40,13 +40,13 @@ pub mod disambiguate {
         /// matching this prefix.
         pub fn new(id: impl Into<gix_hash::ObjectId>, hex_len: usize) -> Result<Self, gix_hash::prefix::Error> {
             let id = id.into();
-            gix_hash::Prefix::new(id, hex_len)?;
+            gix_hash::Prefix::new(&id, hex_len)?;
             Ok(Candidate { id, hex_len })
         }
 
         /// Transform ourselves into a `Prefix` with our current hex lengths.
         pub fn to_prefix(&self) -> gix_hash::Prefix {
-            gix_hash::Prefix::new(self.id, self.hex_len).expect("our hex-len to always be in bounds")
+            gix_hash::Prefix::new(&self.id, self.hex_len).expect("our hex-len to always be in bounds")
         }
 
         pub(crate) fn inc_hex_len(&mut self) {

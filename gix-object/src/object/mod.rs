@@ -10,7 +10,7 @@ mod write {
     /// Serialization
     impl<'a> WriteTo for ObjectRef<'a> {
         /// Write the contained object to `out` in the git serialization format.
-        fn write_to(&self, out: impl io::Write) -> io::Result<()> {
+        fn write_to(&self, out: &mut dyn io::Write) -> io::Result<()> {
             use crate::ObjectRef::*;
             match self {
                 Tree(v) => v.write_to(out),
@@ -18,6 +18,10 @@ mod write {
                 Commit(v) => v.write_to(out),
                 Tag(v) => v.write_to(out),
             }
+        }
+
+        fn kind(&self) -> Kind {
+            self.kind()
         }
 
         fn size(&self) -> usize {
@@ -28,17 +32,13 @@ mod write {
                 Commit(v) => v.size(),
                 Tag(v) => v.size(),
             }
-        }
-
-        fn kind(&self) -> Kind {
-            self.kind()
         }
     }
 
     /// Serialization
     impl WriteTo for Object {
         /// Write the contained object to `out` in the git serialization format.
-        fn write_to(&self, out: impl io::Write) -> io::Result<()> {
+        fn write_to(&self, out: &mut dyn io::Write) -> io::Result<()> {
             use crate::Object::*;
             match self {
                 Tree(v) => v.write_to(out),
@@ -46,6 +46,10 @@ mod write {
                 Commit(v) => v.write_to(out),
                 Tag(v) => v.write_to(out),
             }
+        }
+
+        fn kind(&self) -> Kind {
+            self.kind()
         }
 
         fn size(&self) -> usize {
@@ -56,10 +60,6 @@ mod write {
                 Commit(v) => v.size(),
                 Tag(v) => v.size(),
             }
-        }
-
-        fn kind(&self) -> Kind {
-            self.kind()
         }
     }
 }

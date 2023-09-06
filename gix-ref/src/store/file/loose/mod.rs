@@ -33,9 +33,9 @@ mod init {
         /// Create a new instance at the given `git_dir`, which commonly is a standard git repository with a
         /// `refs/` subdirectory.
         /// The `object_hash` defines which kind of hash we should recognize.
-        pub fn at(git_dir: impl Into<PathBuf>, write_reflog: file::WriteReflog, object_hash: gix_hash::Kind) -> Self {
+        pub fn at(git_dir: PathBuf, write_reflog: file::WriteReflog, object_hash: gix_hash::Kind) -> Self {
             file::Store {
-                git_dir: git_dir.into(),
+                git_dir,
                 common_dir: None,
                 write_reflog,
                 namespace: None,
@@ -47,14 +47,14 @@ mod init {
         /// Like [`at()`][file::Store::at()], but for _linked_ work-trees which use `git_dir` as private ref store and `common_dir` for
         /// shared references.
         pub fn for_linked_worktree(
-            git_dir: impl Into<PathBuf>,
-            common_dir: impl Into<PathBuf>,
+            git_dir: PathBuf,
+            common_dir: PathBuf,
             write_reflog: file::WriteReflog,
             object_hash: gix_hash::Kind,
         ) -> Self {
             file::Store {
-                git_dir: git_dir.into(),
-                common_dir: Some(common_dir.into()),
+                git_dir,
+                common_dir: Some(common_dir),
                 write_reflog,
                 namespace: None,
                 packed: gix_fs::SharedFileSnapshotMut::new().into(),

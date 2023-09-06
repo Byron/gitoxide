@@ -134,7 +134,7 @@ pub mod create_or_update {
                         Err(err) => {
                             // TODO: when Kind::IsADirectory becomes stable, use that.
                             if log_path.is_dir() {
-                                gix_tempfile::remove_dir::empty_depth_first(&log_path)
+                                gix_tempfile::remove_dir::empty_depth_first(log_path.clone())
                                     .and_then(|_| options.open(&log_path))
                                     .map(Some)
                                     .map_err(|_| Error::Append {

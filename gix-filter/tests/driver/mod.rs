@@ -60,7 +60,9 @@ mod shutdown {
         let client = extract_client(state.maybe_launch_process(&driver, Operation::Clean, "does not matter".into())?);
 
         assert!(
-            client.invoke("wait-1-s", None, &b""[..])?.is_success(),
+            client
+                .invoke("wait-1-s", &mut None.into_iter(), &mut &b""[..])?
+                .is_success(),
             "this lets the process wait for a second using our hidden command"
         );
 
@@ -170,7 +172,9 @@ pub(crate) mod apply {
         let driver = driver_with_process();
         let client = extract_client(state.maybe_launch_process(&driver, Operation::Clean, "does not matter".into())?);
 
-        assert!(client.invoke("next-smudge-aborts", None, &b""[..])?.is_success());
+        assert!(client
+            .invoke("next-smudge-aborts", &mut None.into_iter(), &mut &b""[..])?
+            .is_success());
         assert!(
             matches!(state.apply(&driver, &mut std::io::empty(), Operation::Smudge, context_from_path("any")), Err(driver::apply::Error::ProcessStatus {status: driver::process::Status::Named(name), ..}) if name == "abort")
         );
@@ -197,8 +201,8 @@ pub(crate) mod apply {
         assert!(client
             .invoke(
                 "next-invocation-returns-strange-status-and-smudge-fails-permanently",
-                None,
-                &b""[..]
+                &mut None.into_iter(),
+                &mut &b""[..]
             )?
             .is_success());
         assert!(

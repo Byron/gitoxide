@@ -73,7 +73,7 @@ where
                             },
                         };
                         let entry = pack.entry(pack_offset);
-                        let res = match pack.decode_header(entry, inflate, |id| {
+                        let res = match pack.decode_header(entry, inflate, &|id| {
                             index_file.pack_offset_by_id(id).map(|pack_offset| {
                                 gix_pack::data::decode::header::ResolvedBase::InPack(pack.entry(pack_offset))
                             })
@@ -130,7 +130,7 @@ where
                                     .as_ref()
                                     .expect("pack to still be available like just now");
                                 let entry = pack.entry(pack_offset);
-                                pack.decode_header(entry, inflate, |id| {
+                                pack.decode_header(entry, inflate, &|id| {
                                     index_file
                                         .pack_offset_by_id(id)
                                         .map(|pack_offset| {
@@ -182,12 +182,10 @@ impl<S> crate::Header for super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
-    type Error = Error;
-
-    fn try_header(&self, id: impl AsRef<oid>) -> Result<Option<Header>, Self::Error> {
-        let id = id.as_ref();
+    fn try_header(&self, id: &oid) -> Result<Option<Header>, crate::find::Error> {
         let mut snapshot = self.snapshot.borrow_mut();
         let mut inflate = self.inflate.borrow_mut();
         self.try_header_inner(id, &mut inflate, &mut snapshot, None)
+            .map_err(|err| Box::new(err) as _)
     }
 }

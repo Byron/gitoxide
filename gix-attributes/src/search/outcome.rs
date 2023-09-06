@@ -46,11 +46,18 @@ impl Outcome {
         collection: &MetadataCollection,
         attribute_names: impl IntoIterator<Item = impl Into<KStringRef<'a>>>,
     ) {
+        self.initialize_with_selection_inner(collection, &mut attribute_names.into_iter().map(Into::into))
+    }
+
+    fn initialize_with_selection_inner(
+        &mut self,
+        collection: &MetadataCollection,
+        attribute_names: &mut dyn Iterator<Item = KStringRef<'_>>,
+    ) {
         self.initialize(collection);
 
         self.selected.clear();
-        self.selected.extend(attribute_names.into_iter().map(|name| {
-            let name = name.into();
+        self.selected.extend(attribute_names.map(|name| {
             (
                 name.to_owned(),
                 collection.name_to_meta.get(name.as_str()).map(|meta| meta.id),

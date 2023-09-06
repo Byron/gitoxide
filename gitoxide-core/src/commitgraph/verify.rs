@@ -39,7 +39,7 @@ pub(crate) mod function {
         W1: io::Write,
         W2: io::Write,
     {
-        let g = Graph::at(path).with_context(|| "Could not open commit graph")?;
+        let g = Graph::at(path.as_ref()).with_context(|| "Could not open commit graph")?;
 
         #[allow(clippy::unnecessary_wraps, unknown_lints)]
         fn noop_processor(_commit: &gix::commitgraph::file::Commit<'_>) -> std::result::Result<(), std::fmt::Error> {

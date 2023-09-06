@@ -13,7 +13,7 @@ pub struct Account {
 /// Returns true if the given `path` is owned by the user who is executing the current process.
 ///
 /// Note that this method is very specific to avoid having to deal with any operating system types.
-pub fn is_path_owned_by_current_user(path: impl AsRef<Path>) -> std::io::Result<bool> {
+pub fn is_path_owned_by_current_user(path: &Path) -> std::io::Result<bool> {
     impl_::is_path_owned_by_current_user(path)
 }
 
@@ -21,8 +21,8 @@ pub fn is_path_owned_by_current_user(path: impl AsRef<Path>) -> std::io::Result<
 mod impl_ {
     use std::path::Path;
 
-    pub fn is_path_owned_by_current_user(path: impl AsRef<Path>) -> std::io::Result<bool> {
-        fn owner_from_path(path: impl AsRef<Path>) -> std::io::Result<u32> {
+    pub fn is_path_owned_by_current_user(path: &Path) -> std::io::Result<bool> {
+        fn owner_from_path(path: &Path) -> std::io::Result<u32> {
             use std::os::unix::fs::MetadataExt;
             let meta = std::fs::symlink_metadata(path)?;
             Ok(meta.uid())
@@ -58,7 +58,7 @@ mod impl_ {
         std::io::Error::new(std::io::ErrorKind::Other, msg.into())
     }
 
-    pub fn is_path_owned_by_current_user(path: impl AsRef<Path>) -> std::io::Result<bool> {
+    pub fn is_path_owned_by_current_user(path: &Path) -> std::io::Result<bool> {
         use windows::{
             core::{Error, PCWSTR},
             Win32::{
@@ -78,7 +78,6 @@ mod impl_ {
 
         let mut err_msg = None;
         let mut is_owned = false;
-        let path = path.as_ref();
 
         if !path.exists() {
             return Err(std::io::Error::new(

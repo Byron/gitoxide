@@ -104,8 +104,8 @@ pub fn checkout_exclusive(
                     }
                 }
             },
-            &mut files,
-            &mut bytes,
+            &files,
+            &bytes,
             should_interrupt,
             opts,
         ),
@@ -116,8 +116,8 @@ pub fn checkout_exclusive(
                 buf.clear();
                 Ok(gix::objs::BlobRef { data: buf })
             },
-            &mut files,
-            &mut bytes,
+            &files,
+            &bytes,
             should_interrupt,
             opts,
         ),

@@ -35,14 +35,14 @@ mod write {
     /// Output
     impl Identity {
         /// Serialize this instance to `out` in the git serialization format for signatures (but without timestamp).
-        pub fn write_to(&self, out: impl std::io::Write) -> std::io::Result<()> {
+        pub fn write_to(&self, out: &mut dyn std::io::Write) -> std::io::Result<()> {
             self.to_ref().write_to(out)
         }
     }
 
     impl<'a> IdentityRef<'a> {
         /// Serialize this instance to `out` in the git serialization format for signatures (but without timestamp).
-        pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+        pub fn write_to(&self, out: &mut dyn std::io::Write) -> std::io::Result<()> {
             out.write_all(validated_token(self.name)?)?;
             out.write_all(b" ")?;
             out.write_all(b"<")?;

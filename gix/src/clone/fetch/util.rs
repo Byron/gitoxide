@@ -51,7 +51,7 @@ fn write_to_local_config(config: &gix_config::File<'static>, mode: WriteMode) ->
         .append(matches!(mode, WriteMode::Append))
         .open(config.meta().path.as_deref().expect("local config with path set"))?;
     local_config.write_all(config.detect_newline_style())?;
-    config.write_to_filter(&mut local_config, |s| s.meta().source == gix_config::Source::Local)
+    config.write_to_filter(&mut local_config, &mut |s| s.meta().source == gix_config::Source::Local)
 }
 
 pub fn append_config_to_repo_config(repo: &mut Repository, config: gix_config::File<'static>) {
@@ -107,12 +107,7 @@ pub fn update_head(
             repo.refs
                 .transaction()
                 .packed_refs(gix_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdates(
-                    Box::new(|oid, buf| {
-                        repo.objects
-                            .try_find(oid, buf)
-                            .map(|obj| obj.map(|obj| obj.kind))
-                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
-                    }),
+                    Box::new(|oid, buf| repo.objects.try_find(&oid, buf).map(|obj| obj.map(|obj| obj.kind))),
                 ))
                 .prepare(
                     {

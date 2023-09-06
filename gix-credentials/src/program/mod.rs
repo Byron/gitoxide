@@ -39,29 +39,31 @@ impl Program {
     /// Parse the given input as per the custom helper definition, supporting `!<script>`, `name` and `/absolute/name`, the latter two
     /// also support arguments which are ignored here.
     pub fn from_custom_definition(input: impl Into<BString>) -> Self {
-        let mut input = input.into();
-        let kind = if input.starts_with(b"!") {
-            input.remove(0);
-            Kind::ExternalShellScript(input)
-        } else {
-            let path = gix_path::from_bstr(
-                input
-                    .find_byte(b' ')
-                    .map_or(input.as_slice(), |pos| &input[..pos])
-                    .as_bstr(),
-            );
-            if gix_path::is_absolute(path) {
-                Kind::ExternalPath { path_and_args: input }
+        fn from_custom_definition_inner(mut input: BString) -> Program {
+            let kind = if input.starts_with(b"!") {
+                input.remove(0);
+                Kind::ExternalShellScript(input)
             } else {
-                input.insert_str(0, "git credential-");
-                Kind::ExternalName { name_and_args: input }
+                let path = gix_path::from_bstr(
+                    input
+                        .find_byte(b' ')
+                        .map_or(input.as_slice(), |pos| &input[..pos])
+                        .as_bstr(),
+                );
+                if gix_path::is_absolute(path) {
+                    Kind::ExternalPath { path_and_args: input }
+                } else {
+                    input.insert_str(0, "git credential-");
+                    Kind::ExternalName { name_and_args: input }
+                }
+            };
+            Program {
+                kind,
+                child: None,
+                stderr: true,
             }
-        };
-        Program {
-            kind,
-            child: None,
-            stderr: true,
         }
+        from_custom_definition_inner(input.into())
     }
 }
 

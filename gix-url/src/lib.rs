@@ -9,6 +9,7 @@
 #![forbid(unsafe_code)]
 
 use bstr::{BStr, BString};
+use std::borrow::Cow;
 
 ///
 pub mod parse;
@@ -103,8 +104,8 @@ impl Url {
     /// using `current_dir` if needed to achieve that.
     pub fn canonicalize(&mut self, current_dir: &std::path::Path) -> Result<(), gix_path::realpath::Error> {
         if self.scheme == Scheme::File {
-            let path = gix_path::from_bstr(self.path.as_ref());
-            let abs_path = gix_path::realpath_opts(path, current_dir, gix_path::realpath::MAX_SYMLINKS)?;
+            let path = gix_path::from_bstr(Cow::Borrowed(self.path.as_ref()));
+            let abs_path = gix_path::realpath_opts(path.as_ref(), current_dir, gix_path::realpath::MAX_SYMLINKS)?;
             self.path = gix_path::into_bstr(abs_path).into_owned();
         }
         Ok(())
@@ -159,7 +160,7 @@ impl Url {
 /// Serialization
 impl Url {
     /// Write this URL losslessly to `out`, ready to be parsed again.
-    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+    pub fn write_to(&self, mut out: &mut dyn std::io::Write) -> std::io::Result<()> {
         if !(self.serialize_alternative_form && (self.scheme == Scheme::File || self.scheme == Scheme::Ssh)) {
             out.write_all(self.scheme.as_str().as_bytes())?;
             out.write_all(b"://")?;

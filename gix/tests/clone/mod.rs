@@ -2,6 +2,7 @@ use crate::{remote, util::restricted};
 
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
+    use std::borrow::Cow;
     use std::sync::atomic::AtomicBool;
 
     use gix::{
@@ -267,13 +268,13 @@ mod blocking_io {
             "fetch-tags are persisted via the 'tagOpt` key"
         );
         assert!(
-            gix::path::from_bstr(
+            gix::path::from_bstr(Cow::Borrowed(
                 remote
                     .url(gix::remote::Direction::Fetch)
                     .expect("present")
                     .path
                     .as_ref()
-            )
+            ))
             .is_absolute(),
             "file urls can't be relative paths"
         );

@@ -61,7 +61,7 @@ impl File {
         let _span = gix_features::trace::detail!("gix_index::File::at()");
         let path = path.into();
         let (data, mtime) = {
-            let file = std::fs::File::open(&path)?;
+            let mut file = std::fs::File::open(&path)?;
             // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
             #[allow(unsafe_code)]
             let data = unsafe { Mmap::map(&file)? };
@@ -77,7 +77,7 @@ impl File {
                     let meta = file.metadata()?;
                     let num_bytes_to_hash = meta.len() - object_hash.len_in_bytes() as u64;
                     let actual_hash = gix_features::hash::bytes(
-                        &file,
+                        &mut file,
                         num_bytes_to_hash as usize,
                         object_hash,
                         &mut gix_features::progress::Discard,

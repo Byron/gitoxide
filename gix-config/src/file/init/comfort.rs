@@ -82,16 +82,16 @@ impl File<'static> {
     ///
     /// Includes will be resolved within limits as some information like the git installation directory is missing to interpolate
     /// paths with as well as git repository information like the branch name.
-    pub fn from_git_dir(dir: impl Into<std::path::PathBuf>) -> Result<File<'static>, from_git_dir::Error> {
+    pub fn from_git_dir(dir: std::path::PathBuf) -> Result<File<'static>, from_git_dir::Error> {
         let (mut local, git_dir) = {
             let source = Source::Local;
-            let mut path = dir.into();
+            let mut path = dir;
             path.push(
                 source
                     .storage_location(&mut gix_path::env::var)
                     .expect("location available for local"),
             );
-            let local = Self::from_path_no_includes(&path, source)?;
+            let local = Self::from_path_no_includes(path.clone(), source)?;
             path.pop();
             (local, path)
         };

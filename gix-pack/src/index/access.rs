@@ -119,7 +119,7 @@ impl index::File {
     // NOTE: pretty much the same things as in `multi_index::File::lookup`, change things there
     //       as well.
     pub fn lookup(&self, id: impl AsRef<gix_hash::oid>) -> Option<EntryIndex> {
-        lookup(id, &self.fan, |idx| self.oid_at_index(idx))
+        lookup(id.as_ref(), &self.fan, &|idx| self.oid_at_index(idx))
     }
 
     /// Given a `prefix`, find an object that matches it uniquely within this index and return `Some(Ok(entry_index))`.
@@ -141,7 +141,7 @@ impl index::File {
             prefix,
             candidates,
             &self.fan,
-            |idx| self.oid_at_index(idx),
+            &|idx| self.oid_at_index(idx),
             self.num_objects,
         )
     }
@@ -206,7 +206,7 @@ pub(crate) fn lookup_prefix<'a>(
     prefix: gix_hash::Prefix,
     candidates: Option<&mut Range<EntryIndex>>,
     fan: &[u32; FAN_LEN],
-    oid_at_index: impl Fn(EntryIndex) -> &'a gix_hash::oid,
+    oid_at_index: &dyn Fn(EntryIndex) -> &'a gix_hash::oid,
     num_objects: u32,
 ) -> Option<PrefixLookupResult> {
     let first_byte = prefix.as_oid().first_byte() as usize;
@@ -266,11 +266,10 @@ pub(crate) fn lookup_prefix<'a>(
 }
 
 pub(crate) fn lookup<'a>(
-    id: impl AsRef<gix_hash::oid>,
+    id: &gix_hash::oid,
     fan: &[u32; FAN_LEN],
-    oid_at_index: impl Fn(EntryIndex) -> &'a gix_hash::oid,
+    oid_at_index: &dyn Fn(EntryIndex) -> &'a gix_hash::oid,
 ) -> Option<EntryIndex> {
-    let id = id.as_ref();
     let first_byte = id.first_byte() as usize;
     let mut upper_bound = fan[first_byte];
     let mut lower_bound = if first_byte != 0 { fan[first_byte - 1] } else { 0 };

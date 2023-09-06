@@ -50,9 +50,9 @@ pub(crate) fn find_ceiling_height(search_dir: &Path, ceiling_dirs: &[PathBuf], c
         .filter_map(|ceiling_dir| {
             #[cfg(windows)]
             let ceiling_dir = dunce::simplified(ceiling_dir);
-            let mut ceiling_dir = gix_path::normalize(ceiling_dir, cwd)?;
+            let mut ceiling_dir = gix_path::normalize(ceiling_dir.into(), cwd)?;
             if !ceiling_dir.is_absolute() {
-                ceiling_dir = gix_path::normalize(cwd.join(ceiling_dir.as_ref()), cwd)?;
+                ceiling_dir = gix_path::normalize(cwd.join(ceiling_dir.as_ref()).into(), cwd)?;
             }
             search_dir
                 .strip_prefix(ceiling_dir.as_ref())

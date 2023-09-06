@@ -167,7 +167,7 @@ where
                 let mut seen_ack = false;
                 let mut in_vain = 0;
                 let mut common = is_stateless.then(Vec::new);
-                let reader = 'negotiation: loop {
+                let mut reader = 'negotiation: loop {
                     let _round = gix_trace::detail!("negotiate round", round = rounds.len() + 1);
                     progress.step();
                     progress.set_name(format!("negotiate (round {})", rounds.len() + 1));
@@ -193,7 +193,7 @@ where
                                 previous_response_had_at_least_one_in_common: ack_seen,
                             });
                             let is_done = haves_sent != haves_to_send || (seen_ack && in_vain >= 256);
-                            haves_to_send = gix_negotiate::window_size(is_stateless, haves_to_send);
+                            haves_to_send = gix_negotiate::window_size(is_stateless, Some(haves_to_send));
                             is_done
                         }
                         Err(err) => {
@@ -245,28 +245,34 @@ where
                 };
 
                 let write_pack_bundle = if matches!(self.dry_run, fetch::DryRun::No) {
-                    Some(gix_pack::Bundle::write_to_directory(
-                        #[cfg(feature = "async-network-client")]
-                        {
-                            gix_protocol::futures_lite::io::BlockOn::new(reader)
-                        },
-                        #[cfg(not(feature = "async-network-client"))]
-                        {
-                            reader
-                        },
-                        Some(repo.objects.store_ref().path().join("pack")),
+                    #[cfg(not(feature = "async-network-client"))]
+                    let mut rd = reader;
+                    #[cfg(feature = "async-network-client")]
+                    let mut rd = gix_protocol::futures_lite::io::BlockOn::new(reader);
+                    let res = gix_pack::Bundle::write_to_directory(
+                        &mut rd,
+                        Some(&repo.objects.store_ref().path().join("pack")),
                         progress,
                         should_interrupt,
                         Some(Box::new({
                             let repo = repo.clone();
-                            move |oid, buf| repo.objects.find(oid, buf).ok()
+                            move |oid, buf| repo.objects.find(&oid, buf).ok()
                         })),
                         options,
-                    )?)
+                    )?;
+                    #[cfg(feature = "async-network-client")]
+                    {
+                        reader = rd.into_inner();
+                    }
+                    #[cfg(not(feature = "async-network-client"))]
+                    {
+                        reader = rd;
+                    }
+                    Some(res)
                 } else {
-                    drop(reader);
                     None
                 };
+                drop(reader);
 
                 if matches!(protocol_version, gix_protocol::transport::Protocol::V2) {
                     gix_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();

@@ -276,7 +276,7 @@ impl Cache {
     pub(crate) fn pathspec_defaults(
         &self,
     ) -> Result<gix_pathspec::Defaults, gix_pathspec::defaults::from_environment::Error> {
-        let res = gix_pathspec::Defaults::from_environment(|name| {
+        let res = gix_pathspec::Defaults::from_environment(&mut |name| {
             let key = [
                 &gitoxide::Pathspec::ICASE,
                 &gitoxide::Pathspec::GLOB,

@@ -6,7 +6,7 @@ use gix_date::{
 };
 use once_cell::sync::Lazy;
 
-type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+use gix_testtools::Result;
 
 struct Sample {
     format_name: Option<String>,

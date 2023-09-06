@@ -147,15 +147,15 @@ impl<'repo> Pipeline<'repo> {
         Ok(self.inner.convert_to_git(
             src,
             rela_path,
-            |_, attrs| {
+            &mut |_, attrs| {
                 entry.matching_attributes(attrs);
             },
-            |rela_path, buf| -> Result<_, crate::object::find::Error> {
+            &mut |rela_path, buf| -> Result<_, gix_odb::find::Error> {
                 let entry = match index.entry_by_path(rela_path) {
                     None => return Ok(None),
                     Some(entry) => entry,
                 };
-                let obj = self.repo.objects.try_find(entry.id, buf)?;
+                let obj = self.repo.objects.try_find(&entry.id, buf)?;
                 Ok(obj.filter(|obj| obj.kind == gix_object::Kind::Blob).map(|_| ()))
             },
         )?)
@@ -181,7 +181,7 @@ impl<'repo> Pipeline<'repo> {
         Ok(self.inner.convert_to_worktree(
             src,
             rela_path,
-            |_, attrs| {
+            &mut |_, attrs| {
                 entry.matching_attributes(attrs);
             },
             can_delay,

@@ -31,7 +31,7 @@ fn verify_on_exfat() -> crate::Result<()> {
         })
     };
 
-    let is_git = gix_discover::is_git(mount_point.path().join(".git"));
+    let is_git = gix_discover::is_git(&mount_point.path().join(".git"));
 
     assert!(
         matches!(is_git, Ok(Kind::WorkTree { linked_git_dir: None })),
@@ -44,7 +44,7 @@ fn verify_on_exfat() -> crate::Result<()> {
 fn missing_configuration_file_is_not_a_dealbreaker_in_bare_repo() -> crate::Result {
     for name in ["bare-no-config-after-init.git", "bare-no-config.git"] {
         let repo = repo_path()?.join(name);
-        let kind = gix_discover::is_git(repo)?;
+        let kind = gix_discover::is_git(&repo)?;
         assert_eq!(kind, gix_discover::repository::Kind::Bare);
     }
     Ok(())
@@ -53,7 +53,7 @@ fn missing_configuration_file_is_not_a_dealbreaker_in_bare_repo() -> crate::Resu
 #[test]
 fn bare_repo_with_index_file_looks_still_looks_like_bare() -> crate::Result {
     let repo = repo_path()?.join("bare-with-index.git");
-    let kind = gix_discover::is_git(repo)?;
+    let kind = gix_discover::is_git(&repo)?;
     assert_eq!(kind, gix_discover::repository::Kind::Bare);
     Ok(())
 }
@@ -62,7 +62,7 @@ fn bare_repo_with_index_file_looks_still_looks_like_bare() -> crate::Result {
 fn bare_repo_with_index_file_looks_still_looks_like_bare_if_it_was_renamed() -> crate::Result {
     for repo_name in ["bare-with-index-bare", "bare-with-index-no-config-bare"] {
         let repo = repo_path()?.join(repo_name);
-        let kind = gix_discover::is_git(repo)?;
+        let kind = gix_discover::is_git(&repo)?;
         assert_eq!(kind, gix_discover::repository::Kind::Bare);
     }
     Ok(())
@@ -71,7 +71,7 @@ fn bare_repo_with_index_file_looks_still_looks_like_bare_if_it_was_renamed() -> 
 #[test]
 fn no_bare_repo_without_index_file_looks_like_worktree() -> crate::Result {
     let repo = repo_path()?.join("non-bare-without-index").join(".git");
-    let kind = gix_discover::is_git(repo)?;
+    let kind = gix_discover::is_git(&repo)?;
     assert_eq!(kind, gix_discover::repository::Kind::WorkTree { linked_git_dir: None });
     Ok(())
 }
@@ -80,7 +80,7 @@ fn no_bare_repo_without_index_file_looks_like_worktree() -> crate::Result {
 fn missing_configuration_file_is_not_a_dealbreaker_in_nonbare_repo() -> crate::Result {
     for name in ["worktree-no-config-after-init/.git", "worktree-no-config/.git"] {
         let repo = repo_path()?.join(name);
-        let kind = gix_discover::is_git(repo)?;
+        let kind = gix_discover::is_git(&repo)?;
         assert_eq!(kind, gix_discover::repository::Kind::WorkTree { linked_git_dir: None });
     }
     Ok(())

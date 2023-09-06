@@ -61,7 +61,7 @@ mod with_namespace {
             packed
                 .as_ref()
                 .expect("present")
-                .iter_prefixed(ns_two.as_bstr())?
+                .iter_prefixed(ns_two.as_bstr().into())?
                 .map(Result::unwrap)
                 .map(|r| r.name.to_owned().into_inner())
                 .collect::<Vec<_>>(),
@@ -323,7 +323,7 @@ fn loose_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
     #[cfg(windows)]
     let abs_path = "c:\\hello";
 
-    match store.loose_iter_prefixed(abs_path) {
+    match store.loose_iter_prefixed(abs_path.as_ref()) {
         Ok(_) => unreachable!("absolute paths aren't allowed"),
         Err(err) => assert_eq!(err.to_string(), "prefix must be a relative path, like 'refs/heads'"),
     }
@@ -335,7 +335,7 @@ fn loose_iter_with_prefix() -> crate::Result {
     let store = store()?;
 
     let actual = store
-        .loose_iter_prefixed("refs/heads/")?
+        .loose_iter_prefixed("refs/heads/".as_ref())?
         .collect::<Result<Vec<_>, _>>()
         .expect("no broken ref in this subset")
         .into_iter()
@@ -363,7 +363,7 @@ fn loose_iter_with_partial_prefix() -> crate::Result {
     let store = store()?;
 
     let actual = store
-        .loose_iter_prefixed("refs/heads/d")?
+        .loose_iter_prefixed("refs/heads/d".as_ref())?
         .collect::<Result<Vec<_>, _>>()
         .expect("no broken ref in this subset")
         .into_iter()
@@ -420,7 +420,7 @@ fn overlay_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
     #[cfg(windows)]
     let abs_path = "c:\\hello";
 
-    match store.iter()?.prefixed(abs_path) {
+    match store.iter()?.prefixed(abs_path.as_ref()) {
         Ok(_) => unreachable!("absolute paths aren't allowed"),
         Err(err) => assert_eq!(err.to_string(), "prefix must be a relative path, like 'refs/heads'"),
     }
@@ -434,7 +434,7 @@ fn overlay_prefixed_iter() -> crate::Result {
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
         .iter()?
-        .prefixed("refs/heads")?
+        .prefixed("refs/heads".as_ref())?
         .map(|r| r.map(|r| (r.name.as_bstr().to_owned(), r.target)))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
@@ -456,7 +456,7 @@ fn overlay_partial_prefix_iter() -> crate::Result {
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
         .iter()?
-        .prefixed("refs/heads/m")? // 'm' is partial
+        .prefixed("refs/heads/m".as_ref())? // 'm' is partial
         .map(|r| r.map(|r| (r.name.as_bstr().to_owned(), r.target)))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");

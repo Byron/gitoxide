@@ -23,13 +23,12 @@ impl Search {
     /// Higher-level crates should control this default case folding of pathspecs when instantiating them, which is when they can
     /// set it to match the repository setting for more natural behaviour when, for instance, adding files to a repository:
     /// as it stands, on a case-insensitive file system, `touch File && git add file` will not add the file, but also not error.
-    pub fn pattern_matching_relative_path<'a>(
+    pub fn pattern_matching_relative_path(
         &mut self,
-        relative_path: impl Into<&'a BStr>,
+        relative_path: &BStr,
         is_dir: Option<bool>,
-        mut attributes: impl FnMut(&BStr, Case, bool, &mut gix_attributes::search::Outcome) -> bool,
+        attributes: &mut dyn FnMut(&BStr, Case, bool, &mut gix_attributes::search::Outcome) -> bool,
     ) -> Option<Match<'_>> {
-        let relative_path = relative_path.into();
         let basename_not_important = None;
         if relative_path
             .get(..self.common_prefix_len)

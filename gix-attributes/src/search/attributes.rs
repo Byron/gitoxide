@@ -27,14 +27,14 @@ impl Search {
         let mut group = Self::default();
         group.add_patterns_buffer(
             b"[attr]binary -diff -merge -text",
-            "[builtin]",
+            "[builtin]".into(),
             None,
             collection,
             true, /* allow macros */
         );
 
         for path in files.into_iter() {
-            group.add_patterns_file(path, true, None, buf, collection, true /* allow macros */)?;
+            group.add_patterns_file(path.into(), true, None, buf, collection, true /* allow macros */)?;
         }
         Ok(group)
     }
@@ -49,7 +49,7 @@ impl Search {
     /// Returns `true` if the file was added, or `false` if it didn't exist.
     pub fn add_patterns_file(
         &mut self,
-        source: impl Into<PathBuf>,
+        source: PathBuf,
         follow_symlinks: bool,
         root: Option<&Path>,
         buf: &mut Vec<u8>,
@@ -75,7 +75,7 @@ impl Search {
     pub fn add_patterns_buffer(
         &mut self,
         bytes: &[u8],
-        source: impl Into<PathBuf>,
+        source: PathBuf,
         root: Option<&Path>,
         collection: &mut MetadataCollection,
         allow_macros: bool,
@@ -99,14 +99,13 @@ impl Search {
 impl Search {
     /// Match `relative_path`, a path relative to the repository, while respective `case`-sensitivity and write them to `out`
     /// Return `true` if at least one pattern matched.
-    pub fn pattern_matching_relative_path<'a, 'b>(
-        &'a self,
-        relative_path: impl Into<&'b BStr>,
+    pub fn pattern_matching_relative_path(
+        &self,
+        relative_path: &BStr,
         case: gix_glob::pattern::Case,
         is_dir: Option<bool>,
         out: &mut Outcome,
     ) -> bool {
-        let relative_path = relative_path.into();
         let basename_pos = relative_path.rfind(b"/").map(|p| p + 1);
         let mut has_match = false;
         self.patterns.iter().rev().any(|pl| {

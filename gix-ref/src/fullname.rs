@@ -134,7 +134,7 @@ impl FullNameRef {
             if shortened.starts_with_str("refs/") {
                 (Category::MainRef, shortened.as_bstr()).into()
             } else {
-                is_pseudo_ref(shortened).then(|| (Category::MainPseudoRef, shortened.as_bstr()))
+                is_pseudo_ref(shortened.into()).then(|| (Category::MainPseudoRef, shortened.as_bstr()))
             }
         } else if let Some(shortened_with_worktree_name) =
             name.strip_prefix(Category::LinkedPseudoRef { name: "".into() }.prefix().as_bytes())

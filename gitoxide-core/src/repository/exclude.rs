@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::io;
 
 use anyhow::{anyhow, bail};
@@ -37,14 +38,17 @@ pub fn query(
     let index = repo.index()?;
     let mut cache = repo.excludes(
         &index,
-        Some(gix::ignore::Search::from_overrides(overrides)),
+        Some(gix::ignore::Search::from_overrides(&mut overrides.into_iter())),
         Default::default(),
     )?;
 
     match input {
         PathsOrPatterns::Paths(paths) => {
             for path in paths {
-                let is_dir = gix::path::from_bstr(path.as_ref()).metadata().ok().map(|m| m.is_dir());
+                let is_dir = gix::path::from_bstr(Cow::Borrowed(path.as_ref()))
+                    .metadata()
+                    .ok()
+                    .map(|m| m.is_dir());
                 let entry = cache.at_entry(path.as_slice(), is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
                 let match_ = entry
                     .matching_exclude_pattern()

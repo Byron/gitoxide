@@ -3,7 +3,7 @@ use std::{cell::RefCell, sync::atomic::AtomicBool};
 use gix_features::parallel;
 use gix_hash::ObjectId;
 
-use crate::{data::output, find};
+use crate::data::output;
 
 pub(in crate::data::output::count::objects_impl) mod reduce;
 mod util;
@@ -12,9 +12,6 @@ mod types;
 pub use types::{Error, ObjectExpansion, Options, Outcome};
 
 mod tree;
-
-/// The return type used by [`objects()`].
-pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Error<E1, E2>>;
 
 /// Generate [`Count`][output::Count]s from input `objects` with object expansion based on [`options`][Options]
 /// to learn which objects would would constitute a pack. This step is required to know exactly how many objects would
@@ -32,9 +29,9 @@ pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Err
 ///  * A flag that is set to true if the operation should stop
 /// * `options`
 ///   * more configuration
-pub fn objects<Find, Iter, IterErr, Oid>(
+pub fn objects<Find>(
     db: Find,
-    objects_ids: Iter,
+    objects_ids: Box<dyn Iterator<Item = Result<ObjectId, Box<dyn std::error::Error + Send + Sync + 'static>>> + Send>,
     objects: &dyn gix_features::progress::Count,
     should_interrupt: &AtomicBool,
     Options {
@@ -42,13 +39,9 @@ pub fn objects<Find, Iter, IterErr, Oid>(
         input_object_expansion,
         chunk_size,
     }: Options,
-) -> Result<find::existing::Error<Find::Error>, IterErr>
+) -> Result<(Vec<output::Count>, Outcome), Error>
 where
     Find: crate::Find + Send + Clone,
-    <Find as crate::Find>::Error: Send,
-    Iter: Iterator<Item = std::result::Result<Oid, IterErr>> + Send,
-    Oid: Into<ObjectId> + Send,
-    IterErr: std::error::Error + Send,
 {
     let lower_bound = objects_ids.size_hint().0;
     let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(
@@ -78,12 +71,12 @@ where
         },
         {
             let seen_objs = &seen_objs;
-            move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, objects)| {
+            move |oids: Vec<_>, (buf1, buf2, objects)| {
                 expand::this(
                     &db,
                     input_object_expansion,
                     seen_objs,
-                    oids,
+                    &mut oids.into_iter(),
                     buf1,
                     buf2,
                     objects,
@@ -97,23 +90,18 @@ where
 }
 
 /// Like [`objects()`] but using a single thread only to mostly save on the otherwise required overhead.
-pub fn objects_unthreaded<Find, IterErr, Oid>(
-    db: Find,
-    object_ids: impl Iterator<Item = std::result::Result<Oid, IterErr>>,
-    objects: impl gix_features::progress::Count,
+pub fn objects_unthreaded(
+    db: &dyn crate::Find,
+    object_ids: &mut dyn Iterator<Item = Result<ObjectId, Box<dyn std::error::Error + Send + Sync + 'static>>>,
+    objects: &dyn gix_features::progress::Count,
     should_interrupt: &AtomicBool,
     input_object_expansion: ObjectExpansion,
-) -> Result<find::existing::Error<Find::Error>, IterErr>
-where
-    Find: crate::Find,
-    Oid: Into<ObjectId>,
-    IterErr: std::error::Error,
-{
+) -> Result<(Vec<output::Count>, Outcome), Error> {
     let seen_objs = RefCell::new(gix_hashtable::HashSet::default());
 
     let (mut buf1, mut buf2) = (Vec::new(), Vec::new());
     expand::this(
-        &db,
+        db,
         input_object_expansion,
         &seen_objs,
         object_ids,
@@ -138,26 +126,21 @@ mod expand {
     };
     use crate::{
         data::{output, output::count::PackLocation},
-        find, FindExt,
+        FindExt,
     };
 
     #[allow(clippy::too_many_arguments)]
-    pub fn this<Find, IterErr, Oid>(
-        db: &Find,
+    pub fn this(
+        db: &dyn crate::Find,
         input_object_expansion: ObjectExpansion,
         seen_objs: &impl util::InsertImmutable,
-        oids: impl IntoIterator<Item = std::result::Result<Oid, IterErr>>,
+        oids: &mut dyn Iterator<Item = Result<ObjectId, Box<dyn std::error::Error + Send + Sync + 'static>>>,
         buf1: &mut Vec<u8>,
         #[allow(clippy::ptr_arg)] buf2: &mut Vec<u8>,
         objects: &gix_features::progress::AtomicStep,
         should_interrupt: &AtomicBool,
         allow_pack_lookups: bool,
-    ) -> super::Result<find::existing::Error<Find::Error>, IterErr>
-    where
-        Find: crate::Find,
-        Oid: Into<ObjectId>,
-        IterErr: std::error::Error,
-    {
+    ) -> Result<(Vec<output::Count>, Outcome), Error> {
         use ObjectExpansion::*;
 
         let mut out = Vec::new();
@@ -169,13 +152,13 @@ mod expand {
         let mut outcome = Outcome::default();
 
         let stats = &mut outcome;
-        for id in oids.into_iter() {
+        for id in oids {
             if should_interrupt.load(Ordering::Relaxed) {
                 return Err(Error::Interrupted);
             }
 
-            let id = id.map(Into::into).map_err(Error::InputIteration)?;
-            let (obj, location) = db.find(id, buf1)?;
+            let id = id.map_err(Error::InputIteration)?;
+            let (obj, location) = db.find(&id, buf1)?;
             stats.input_objects += 1;
             match input_object_expansion {
                 TreeAdditionsComparedToAncestor => {
@@ -192,7 +175,7 @@ mod expand {
                                 id = TagRefIter::from_bytes(obj.data)
                                     .target_id()
                                     .expect("every tag has a target");
-                                let tmp = db.find(id, buf1)?;
+                                let tmp = db.find(&id, buf1)?;
 
                                 obj = tmp.0;
                                 location = tmp.1;
@@ -214,7 +197,7 @@ mod expand {
                                             Err(err) => return Err(Error::CommitDecode(err)),
                                         }
                                     }
-                                    let (obj, location) = db.find(tree_id, buf1)?;
+                                    let (obj, location) = db.find(&tree_id, buf1)?;
                                     push_obj_count_unique(
                                         &mut out, seen_objs, &tree_id, location, objects, stats, true,
                                     );
@@ -255,7 +238,7 @@ mod expand {
                                                 .expect("every commit has a tree")
                                         };
                                         let parent_tree = {
-                                            let (parent_tree_obj, location) = db.find(parent_tree_id, buf2)?;
+                                            let (parent_tree_obj, location) = db.find(&parent_tree_id, buf2)?;
                                             push_obj_count_unique(
                                                 &mut out,
                                                 seen_objs,
@@ -328,7 +311,7 @@ mod expand {
                                     .tree_id()
                                     .expect("every commit has a tree");
                                 stats.expanded_objects += 1;
-                                obj = db.find(id, buf1)?;
+                                obj = db.find(&id, buf1)?;
                                 continue;
                             }
                             Blob => break,
@@ -337,7 +320,7 @@ mod expand {
                                     .target_id()
                                     .expect("every tag has a target");
                                 stats.expanded_objects += 1;
-                                obj = db.find(id, buf1)?;
+                                obj = db.find(&id, buf1)?;
                                 continue;
                             }
                         }
@@ -372,8 +355,8 @@ mod expand {
     }
 
     #[inline]
-    fn id_to_count<Find: crate::Find>(
-        db: &Find,
+    fn id_to_count(
+        db: &dyn crate::Find,
         buf: &mut Vec<u8>,
         id: &oid,
         objects: &gix_features::progress::AtomicStep,

@@ -48,25 +48,20 @@ mod path {
         /// as needed.
         ///
         /// `None` is returned if `dir` could not be resolved due to being relative and trying to reach outside of the filesystem root.
-        pub fn from_dot_git_dir(
-            dir: impl Into<PathBuf>,
-            kind: Kind,
-            current_dir: impl AsRef<std::path::Path>,
-        ) -> Option<Self> {
-            let cwd = current_dir.as_ref();
+        pub fn from_dot_git_dir(dir: PathBuf, kind: Kind, current_dir: &std::path::Path) -> Option<Self> {
+            let cwd = current_dir;
             let normalize_on_trailing_dot_dot = |dir: PathBuf| -> Option<PathBuf> {
                 if !matches!(dir.components().next_back(), Some(std::path::Component::ParentDir)) {
                     dir
                 } else {
-                    gix_path::normalize(&dir, cwd)?.into_owned()
+                    gix_path::normalize(dir.into(), cwd)?.into_owned()
                 }
                 .into()
             };
 
-            let dir = dir.into();
             match kind {
                 Kind::Submodule { git_dir } => Path::LinkedWorkTree {
-                    git_dir: gix_path::normalize(git_dir, cwd)?.into_owned(),
+                    git_dir: gix_path::normalize(git_dir.into(), cwd)?.into_owned(),
                     work_dir: without_dot_git_dir(normalize_on_trailing_dot_dot(dir)?),
                 },
                 Kind::SubmoduleGitDir => Path::Repository(dir),

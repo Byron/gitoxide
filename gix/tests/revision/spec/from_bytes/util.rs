@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use std::{collections::HashMap, path::PathBuf, str::FromStr};
 
 use gix_object::{bstr, bstr::BStr};

@@ -34,7 +34,7 @@ pub fn stream(
                 .ok_or_else(|| anyhow!("Adding files requires a worktree directory that contains them"))?,
         )?;
         for path in add_paths {
-            stream.add_entry_from_path(&root, &gix::path::realpath(path)?)?;
+            stream.add_entry_from_path(&root, &gix::path::realpath(&path)?)?;
         }
     }
     for (path, content) in files {

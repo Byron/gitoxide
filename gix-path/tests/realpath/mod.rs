@@ -10,36 +10,39 @@ fn assorted() -> crate::Result {
     let symlinks_disabled = 0;
 
     assert!(
-        matches!(realpath_opts("", cwd, symlinks_disabled), Err(Error::EmptyPath)),
+        matches!(
+            realpath_opts("".as_ref(), cwd, symlinks_disabled),
+            Err(Error::EmptyPath)
+        ),
         "Empty path is not allowed"
     );
 
     assert_eq!(
-        realpath_opts("b/.git", cwd, symlinks_disabled)?,
+        realpath_opts("b/.git".as_ref(), cwd, symlinks_disabled)?,
         cwd.join("b").join(".git"),
         "relative paths are prefixed with current dir"
     );
 
     assert_eq!(
-        realpath_opts("b//.git", cwd, symlinks_disabled)?,
+        realpath_opts("b//.git".as_ref(), cwd, symlinks_disabled)?,
         cwd.join("b").join(".git"),
         "empty path components are ignored"
     );
 
     assert_eq!(
-        realpath_opts("./tmp/.git", cwd, symlinks_disabled)?,
+        realpath_opts("./tmp/.git".as_ref(), cwd, symlinks_disabled)?,
         cwd.join("tmp").join(".git"),
         "path starting with dot is relative and is prefixed with current dir"
     );
 
     assert_eq!(
-        realpath_opts("./tmp/a/./.git", cwd, symlinks_disabled)?,
+        realpath_opts("./tmp/a/./.git".as_ref(), cwd, symlinks_disabled)?,
         cwd.join("tmp").join("a").join(".git"),
         "all ./ path components are ignored unless they the one at the beginning of the path"
     );
 
     assert_eq!(
-        realpath_opts("./b/../tmp/.git", cwd, symlinks_disabled)?,
+        realpath_opts("./b/../tmp/.git".as_ref(), cwd, symlinks_disabled)?,
         cwd.join("tmp").join(".git"),
         "dot dot goes to parent path component"
     );
@@ -71,7 +74,7 @@ fn link_cycle_is_detected() -> crate::Result {
 
     assert!(
         matches!(
-            realpath_opts(link_path.join(".git"), "", max_symlinks),
+            realpath_opts(&link_path.join(".git"), "".as_ref(), max_symlinks),
             Err(Error::MaxSymlinksExceeded { max_symlinks: 8 })
         ),
         "link cycle is detected"
@@ -88,7 +91,7 @@ fn symlink_with_absolute_path_gets_expanded() -> crate::Result {
     create_symlink(&link_from, &link_to)?;
     let max_symlinks = 8;
     assert_eq!(
-        realpath_opts(link_from.join(".git"), tmp_dir, max_symlinks)?,
+        realpath_opts(&link_from.join(".git"), tmp_dir.path(), max_symlinks)?,
         link_to.join(".git"),
         "symlink with absolute path gets expanded"
     );
@@ -102,7 +105,7 @@ fn symlink_to_relative_path_gets_expanded_into_absolute_path() -> crate::Result 
     let link_name = "pq_link";
     create_symlink(dir.join("r").join(link_name), Path::new("p").join("q"))?;
     assert_eq!(
-        realpath_opts(Path::new(link_name).join(".git"), dir.join("r"), 8)?,
+        realpath_opts(&Path::new(link_name).join(".git"), &dir.join("r"), 8)?,
         dir.join("r").join("p").join("q").join(".git"),
         "symlink to relative path gets expanded into absolute path"
     );
@@ -116,7 +119,7 @@ fn symlink_processing_is_disabled_if_the_value_is_zero() -> crate::Result {
     create_symlink(cwd.path().join(link_name), Path::new("link destination does not exist"))?;
     assert!(
         matches!(
-            realpath_opts(Path::new(link_name).join(".git"), &cwd, 0),
+            realpath_opts(&Path::new(link_name).join(".git"), cwd.path(), 0),
             Err(Error::MaxSymlinksExceeded { max_symlinks: 0 })
         ),
         "symlink processing is disabled if the value is zero"

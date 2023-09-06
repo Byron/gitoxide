@@ -33,7 +33,7 @@ pub fn checksum_on_disk_or_mmap(
     data: &[u8],
     expected: gix_hash::ObjectId,
     object_hash: gix_hash::Kind,
-    mut progress: impl Progress,
+    progress: &mut dyn Progress,
     should_interrupt: &AtomicBool,
 ) -> Result<gix_hash::ObjectId, checksum::Error> {
     let data_len_without_trailer = data.len() - object_hash.len_in_bytes();
@@ -41,7 +41,7 @@ pub fn checksum_on_disk_or_mmap(
         data_path,
         data_len_without_trailer,
         object_hash,
-        &mut progress,
+        progress,
         should_interrupt,
     ) {
         Ok(id) => id,

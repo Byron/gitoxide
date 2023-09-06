@@ -96,7 +96,7 @@ where
             let filtered = filters.convert_to_worktree(
                 obj.data,
                 entry_path,
-                |_, attrs| {
+                &mut |_, attrs| {
                     path_cache.matching_attributes(attrs);
                 },
                 filter_process_delay,

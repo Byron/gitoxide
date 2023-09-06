@@ -48,13 +48,13 @@ impl File {
         &'a self,
         config: &'a gix_config::File<'static>,
         defaults: gix_pathspec::Defaults,
-        mut attributes: impl FnMut(
-                &BStr,
-                gix_pathspec::attributes::glob::pattern::Case,
-                bool,
-                &mut gix_pathspec::attributes::search::Outcome,
-            ) -> bool
-            + 'a,
+        attributes: &'a mut (dyn FnMut(
+            &BStr,
+            gix_pathspec::attributes::glob::pattern::Case,
+            bool,
+            &mut gix_pathspec::attributes::search::Outcome,
+        ) -> bool
+                     + 'a),
     ) -> Result<
         impl Iterator<Item = (&BStr, Result<bool, gix_config::value::Error>)> + 'a,
         crate::is_active_platform::Error,
@@ -62,7 +62,7 @@ impl File {
         let mut platform = self.is_active_platform(config, defaults)?;
         let iter = self
             .names()
-            .map(move |name| (name, platform.is_active(config, name, &mut attributes)));
+            .map(move |name| (name, platform.is_active(config, name, attributes)));
         Ok(iter)
     }
 
@@ -135,7 +135,7 @@ impl File {
                 actual: path_bstr.into_owned(),
             });
         }
-        if gix_path::normalize(path, "").is_none() {
+        if gix_path::normalize(path, "".as_ref()).is_none() {
             return Err(config::path::Error::OutsideOfWorktree {
                 submodule: name.to_owned(),
                 actual: path_bstr.into_owned(),

@@ -54,7 +54,7 @@ impl File {
         mode: Fail,
         boundary_directory: Option<PathBuf>,
     ) -> Result<File, Error> {
-        let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
+        let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, &|p, d, c| {
             gix_tempfile::writable_at(p, d, c)
         })?;
         Ok(File {
@@ -75,7 +75,7 @@ impl Marker {
         mode: Fail,
         boundary_directory: Option<PathBuf>,
     ) -> Result<Marker, Error> {
-        let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
+        let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, &|p, d, c| {
             gix_tempfile::mark_at(p, d, c)
         })?;
         Ok(Marker {
@@ -100,7 +100,7 @@ fn lock_with_mode<T>(
     resource: &Path,
     mode: Fail,
     boundary_directory: Option<PathBuf>,
-    try_lock: impl Fn(&Path, ContainingDirectory, AutoRemove) -> std::io::Result<T>,
+    try_lock: &dyn Fn(&Path, ContainingDirectory, AutoRemove) -> std::io::Result<T>,
 ) -> Result<(PathBuf, T), Error> {
     use std::io::ErrorKind::*;
     let (directory, cleanup) = dir_cleanup(boundary_directory);

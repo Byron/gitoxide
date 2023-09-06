@@ -2,7 +2,7 @@
 use gix::{open, Repository, ThreadSafeRepository};
 use gix_testtools::tempfile;
 
-pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub use gix_testtools::Result;
 
 /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
 pub fn hex_to_id(hex: &str) -> gix_hash::ObjectId {

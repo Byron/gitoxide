@@ -59,7 +59,7 @@ where
     F: FnMut(credentials::helper::Action) -> credentials::protocol::Result,
     D: Delegate,
     T: client::Transport,
-    P: NestedProgress,
+    P: NestedProgress + 'static,
     P::SubProgress: 'static,
 {
     let crate::handshake::Outcome {

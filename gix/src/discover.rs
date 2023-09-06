@@ -37,7 +37,7 @@ impl ThreadSafeRepository {
         trust_map: gix_sec::trust::Mapping<crate::open::Options>,
     ) -> Result<Self, Error> {
         let _span = gix_trace::coarse!("ThreadSafeRepository::discover()");
-        let (path, trust) = upwards_opts(directory, options)?;
+        let (path, trust) = upwards_opts(directory.as_ref(), options)?;
         let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
         let mut options = trust_map.into_value_by_level(trust);
         options.git_dir_trust = trust.into();

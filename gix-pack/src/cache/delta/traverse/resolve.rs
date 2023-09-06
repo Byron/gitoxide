@@ -17,17 +17,17 @@ use crate::{
     data::EntryRange,
 };
 
-pub(crate) struct State<P, F, MBFN, T: Send> {
+pub(crate) struct State<F, MBFN, T: Send> {
     pub delta_bytes: Vec<u8>,
     pub fully_resolved_delta_bytes: Vec<u8>,
-    pub progress: P,
+    pub progress: Box<dyn Progress>,
     pub resolve: F,
     pub modify_base: MBFN,
     pub child_items: ItemSliceSend<Item<T>>,
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn deltas<T, F, MBFN, E, R, P>(
+pub(crate) fn deltas<T, F, MBFN, E, R>(
     objects: gix_features::progress::StepShared,
     size: gix_features::progress::StepShared,
     node: &mut Item<T>,
@@ -38,7 +38,7 @@ pub(crate) fn deltas<T, F, MBFN, E, R, P>(
         resolve,
         modify_base,
         child_items,
-    }: &mut State<P, F, MBFN, T>,
+    }: &mut State<F, MBFN, T>,
     resolve_data: &R,
     hash_len: usize,
     threads_left: &AtomicIsize,
@@ -47,9 +47,8 @@ pub(crate) fn deltas<T, F, MBFN, E, R, P>(
 where
     T: Send,
     R: Send + Sync,
-    P: Progress,
     F: for<'r> Fn(EntryRange, &'r R) -> Option<&'r [u8]> + Send + Clone,
-    MBFN: FnMut(&mut T, &P, Context<'_>) -> Result<(), E> + Send + Clone,
+    MBFN: FnMut(&mut T, &dyn Progress, Context<'_>) -> Result<(), E> + Send + Clone,
     E: std::error::Error + Send + Sync + 'static,
 {
     let mut decompressed_bytes_by_pack_offset = BTreeMap::new();
@@ -135,7 +134,7 @@ where
             } else {
                 modify_base(
                     child.data(),
-                    progress,
+                    &progress,
                     Context {
                         entry: &child_entry,
                         entry_end,
@@ -167,7 +166,7 @@ where
                     decompressed_bytes_by_pack_offset,
                     objects,
                     size,
-                    progress,
+                    &progress,
                     nodes,
                     resolve.clone(),
                     resolve_data,
@@ -187,12 +186,12 @@ where
 ///    system. Since this thread will take a controlling function, we may spawn one more than that. In threaded mode, we will finish
 ///    all remaining work.
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn deltas_mt<T, F, MBFN, E, R, P>(
+pub(crate) fn deltas_mt<T, F, MBFN, E, R>(
     mut threads_to_create: isize,
     decompressed_bytes_by_pack_offset: BTreeMap<u64, (data::Entry, u64, Vec<u8>)>,
     objects: gix_features::progress::StepShared,
     size: gix_features::progress::StepShared,
-    progress: &P,
+    progress: &dyn Progress,
     nodes: Vec<(u16, Node<'_, T>)>,
     resolve: F,
     resolve_data: &R,
@@ -204,9 +203,8 @@ pub(crate) fn deltas_mt<T, F, MBFN, E, R, P>(
 where
     T: Send,
     R: Send + Sync,
-    P: Progress,
     F: for<'r> Fn(EntryRange, &'r R) -> Option<&'r [u8]> + Send + Clone,
-    MBFN: FnMut(&mut T, &P, Context<'_>) -> Result<(), E> + Send + Clone,
+    MBFN: FnMut(&mut T, &dyn Progress, Context<'_>) -> Result<(), E> + Send + Clone,
     E: std::error::Error + Send + Sync + 'static,
 {
     let nodes = gix_features::threading::Mutable::new(nodes);

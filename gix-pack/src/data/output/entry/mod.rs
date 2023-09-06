@@ -66,15 +66,14 @@ impl output::Entry {
         potential_bases: &[output::Count],
         bases_index_offset: usize,
         pack_offset_to_oid: Option<impl FnMut(u32, u64) -> Option<ObjectId>>,
-        target_version: crate::data::Version,
+        target_version: data::Version,
     ) -> Option<Result<Self, Error>> {
         if entry.version != target_version {
             return None;
         };
 
         let pack_offset_must_be_zero = 0;
-        let pack_entry =
-            crate::data::Entry::from_bytes(&entry.data, pack_offset_must_be_zero, count.id.as_slice().len());
+        let pack_entry = data::Entry::from_bytes(&entry.data, pack_offset_must_be_zero, count.id.as_slice().len());
 
         use crate::data::entry::Header::*;
         match pack_entry.header {
@@ -153,9 +152,9 @@ impl output::Entry {
     /// This information is known to the one calling the method.
     pub fn to_entry_header(
         &self,
-        version: crate::data::Version,
+        version: data::Version,
         index_to_base_distance: impl FnOnce(usize) -> u64,
-    ) -> crate::data::entry::Header {
+    ) -> data::entry::Header {
         assert!(
             matches!(version, data::Version::V2),
             "we can only write V2 pack entries for now"

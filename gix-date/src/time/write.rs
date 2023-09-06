@@ -12,7 +12,7 @@ impl Time {
     }
 
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.
-    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+    pub fn write_to(&self, out: &mut dyn std::io::Write) -> std::io::Result<()> {
         let mut itoa = itoa::Buffer::new();
         out.write_all(itoa.format(self.seconds).as_bytes())?;
         out.write_all(b" ")?;

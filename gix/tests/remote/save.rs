@@ -22,7 +22,7 @@ mod save_to {
         let previous_remote_state = repo
             .config_snapshot()
             .plumbing()
-            .section_by_key("remote.origin")
+            .section_by_key("remote.origin".into())
             .expect("present")
             .to_bstring();
         let mut config = repo.config_snapshot().plumbing().clone();
@@ -33,7 +33,10 @@ mod save_to {
             "amount of remotes are unaltered"
         );
         assert_eq!(
-            config.section_by_key("remote.origin").expect("present").to_bstring(),
+            config
+                .section_by_key("remote.origin".into())
+                .expect("present")
+                .to_bstring(),
             previous_remote_state,
             "the serialization doesn't modify anything"
         );

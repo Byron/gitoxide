@@ -13,7 +13,7 @@ use reduce::Reducer;
 
 mod error;
 pub use error::Error;
-use gix_features::progress::NestedProgress;
+use gix_features::progress::DynNestedProgress;
 
 mod types;
 pub use types::{Algorithm, ProgressId, SafetyCheck, Statistics};
@@ -44,13 +44,11 @@ impl Default for Options<fn() -> crate::cache::Never> {
 }
 
 /// The outcome of the [`traverse()`][index::File::traverse()] method.
-pub struct Outcome<P> {
+pub struct Outcome {
     /// The checksum obtained when hashing the file, which matched the checksum contained within the file.
     pub actual_index_checksum: gix_hash::ObjectId,
     /// The statistics obtained during traversal.
     pub statistics: Statistics,
-    /// The input progress to allow reuse.
-    pub progress: P,
 }
 
 /// Traversal of pack data files using an index file
@@ -75,10 +73,10 @@ impl index::File {
     ///
     /// Use [`thread_limit`][Options::thread_limit] to further control parallelism and [`check`][SafetyCheck] to define how much the passed
     /// objects shall be verified beforehand.
-    pub fn traverse<P, C, Processor, E, F>(
+    pub fn traverse<C, Processor, E, F>(
         &self,
         pack: &crate::data::File,
-        progress: P,
+        progress: &mut dyn DynNestedProgress,
         should_interrupt: &AtomicBool,
         processor: Processor,
         Options {
@@ -87,9 +85,8 @@ impl index::File {
             check,
             make_pack_lookup_cache,
         }: Options<F>,
-    ) -> Result<Outcome<P>, Error<E>>
+    ) -> Result<Outcome, Error<E>>
     where
-        P: NestedProgress,
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
         Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn Progress) -> Result<(), E> + Send + Clone,
@@ -121,8 +118,8 @@ impl index::File {
         &self,
         pack: &crate::data::File,
         check: SafetyCheck,
-        pack_progress: impl Progress,
-        index_progress: impl Progress,
+        pack_progress: &mut dyn Progress,
+        index_progress: &mut dyn Progress,
         should_interrupt: &AtomicBool,
     ) -> Result<gix_hash::ObjectId, Error<E>>
     where
@@ -169,7 +166,7 @@ impl index::File {
                 pack_entry,
                 buf,
                 inflate,
-                |id, _| {
+                &|id, _| {
                     self.lookup(id).map(|index| {
                         crate::data::decode::entry::ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
                     })

@@ -95,14 +95,14 @@ pub fn hasher(kind: gix_hash::Kind) -> Sha1 {
 /// * [Interrupts][crate::interrupt] are supported.
 #[cfg(all(feature = "progress", any(feature = "rustsha1", feature = "fast-sha1")))]
 pub fn bytes_of_file(
-    path: impl AsRef<std::path::Path>,
+    path: &std::path::Path,
     num_bytes_from_start: usize,
     kind: gix_hash::Kind,
-    progress: &mut impl crate::progress::Progress,
+    progress: &mut dyn crate::progress::Progress,
     should_interrupt: &std::sync::atomic::AtomicBool,
 ) -> std::io::Result<gix_hash::ObjectId> {
     bytes(
-        std::fs::File::open(path)?,
+        &mut std::fs::File::open(path)?,
         num_bytes_from_start,
         kind,
         progress,
@@ -113,10 +113,10 @@ pub fn bytes_of_file(
 /// Similar to [`bytes_of_file`], but operates on an already open file.
 #[cfg(all(feature = "progress", any(feature = "rustsha1", feature = "fast-sha1")))]
 pub fn bytes(
-    mut read: impl std::io::Read,
+    read: &mut dyn std::io::Read,
     num_bytes_from_start: usize,
     kind: gix_hash::Kind,
-    progress: &mut impl crate::progress::Progress,
+    progress: &mut dyn crate::progress::Progress,
     should_interrupt: &std::sync::atomic::AtomicBool,
 ) -> std::io::Result<gix_hash::ObjectId> {
     let mut hasher = hasher(kind);

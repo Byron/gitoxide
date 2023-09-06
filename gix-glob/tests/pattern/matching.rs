@@ -112,7 +112,7 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
     let path = "hello";
     assert!(
         !pattern.matches_repo_relative_path(
-            path,
+            path.into(),
             None,
             false.into(), /* is-dir */
             Case::Sensitive,
@@ -122,7 +122,7 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
     );
     assert!(
         pattern.matches_repo_relative_path(
-            path,
+            path.into(),
             None,
             true.into(), /* is-dir */
             Case::Sensitive,

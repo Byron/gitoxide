@@ -46,7 +46,7 @@ impl File {
         &self,
         mut entry: data::Entry,
         inflate: &mut zlib::Inflate,
-        resolve: impl Fn(&gix_hash::oid) -> Option<ResolvedBase>,
+        resolve: &dyn Fn(&gix_hash::oid) -> Option<ResolvedBase>,
     ) -> Result<Outcome, Error> {
         use crate::data::entry::Header::*;
         let mut num_deltas = 0;

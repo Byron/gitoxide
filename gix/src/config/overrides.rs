@@ -29,8 +29,12 @@ pub(crate) fn append(
         let mut tokens = key_value.splitn(2, |b| *b == b'=').map(ByteSlice::trim);
         let key = tokens.next().expect("always one value").as_bstr();
         let value = tokens.next();
-        let key = gix_config::parse::key(key.to_str().map_err(|_| Error::InvalidKey { input: key.into() })?)
-            .ok_or_else(|| Error::InvalidKey { input: key.into() })?;
+        let key = gix_config::parse::key(
+            key.to_str()
+                .map_err(|_| Error::InvalidKey { input: key.into() })?
+                .into(),
+        )
+        .ok_or_else(|| Error::InvalidKey { input: key.into() })?;
         let mut section = file.section_mut_or_create_new(key.section_name, key.subsection_name)?;
         let key =
             gix_config::parse::section::Key::try_from(key.value_name.to_owned()).map_err(|err| Error::SectionKey {

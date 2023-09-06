@@ -68,7 +68,11 @@ impl Time {
     /// Use the [`format_description`](https://time-rs.github.io/book/api/format-description.html) macro to create and
     /// validate formats at compile time, courtesy of the [`time`] crate.
     pub fn format<'a>(&self, format: impl Into<Format<'a>>) -> String {
-        match format.into() {
+        self.format_inner(format.into())
+    }
+
+    fn format_inner(&self, format: Format<'_>) -> String {
+        match format {
             Format::Custom(format) => self
                 .to_time()
                 .format(&format)

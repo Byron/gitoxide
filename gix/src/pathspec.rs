@@ -104,8 +104,10 @@ impl<'repo> Pathspec<'repo> {
         relative_path: impl Into<&'a BStr>,
         is_dir: Option<bool>,
     ) -> Option<gix_pathspec::search::Match<'_>> {
-        self.search
-            .pattern_matching_relative_path(relative_path, is_dir, |relative_path, case, is_dir, out| {
+        self.search.pattern_matching_relative_path(
+            relative_path.into(),
+            is_dir,
+            &mut |relative_path, case, is_dir, out| {
                 let stack = self.stack.as_mut().expect("initialized in advance");
                 stack
                     .set_case(case)
@@ -113,7 +115,8 @@ impl<'repo> Pathspec<'repo> {
                         self.repo.objects.find_blob(id, buf)
                     })
                     .map_or(false, |platform| platform.matching_attributes(out))
-            })
+            },
+        )
     }
 
     /// The simplified version of [`pattern_matching_relative_path()`](Self::pattern_matching_relative_path()) which returns

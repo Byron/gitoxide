@@ -115,7 +115,7 @@ mod empty_depth_first {
         create_dir_all(tree_parent.join("one").join("two").join("three")).unwrap();
         create_dir_all(tree_parent.join("c")).unwrap();
         for empty in &[nested_parent, single_parent, tree_parent] {
-            gix_fs::dir::remove::empty_depth_first(empty).unwrap();
+            gix_fs::dir::remove::empty_depth_first(empty.into()).unwrap();
         }
     }
 }

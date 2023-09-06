@@ -11,6 +11,7 @@ pub struct Options {
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub(crate) mod function {
+    use std::borrow::Cow;
     use std::ffi::OsStr;
 
     use anyhow::{bail, Context};
@@ -45,7 +46,7 @@ pub(crate) mod function {
         let url: gix::Url = url.as_ref().try_into()?;
         let directory = directory.map_or_else(
             || {
-                gix::path::from_bstr(url.path.as_ref())
+                gix::path::from_bstr(Cow::Borrowed(url.path.as_ref()))
                     .as_ref()
                     .file_stem()
                     .map(Into::into)

@@ -21,9 +21,8 @@ impl Namespace {
         gix_path::from_byte_slice(&self.0)
     }
     /// Append the given `prefix` to this namespace so it becomes usable for prefixed iteration.
-    pub fn into_namespaced_prefix(mut self, prefix: impl AsRef<Path>) -> PathBuf {
-        let path = prefix.as_ref();
-        let prefix = gix_path::into_bstr(path);
+    pub fn into_namespaced_prefix(mut self, prefix: &Path) -> PathBuf {
+        let prefix = gix_path::into_bstr(prefix);
         self.0.push_str(prefix.as_ref());
         gix_path::to_native_path_on_windows(self.0).into_owned()
     }

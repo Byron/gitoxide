@@ -43,7 +43,7 @@ impl<'r> Platform<'r> {
     // TODO: Create a custom `Path` type that enforces the requirements of git naturally, this type is surprising possibly on windows
     //       and when not using a trailing '/' to signal directories.
     pub fn prefixed(&self, prefix: impl AsRef<Path>) -> Result<Iter<'_>, init::Error> {
-        Ok(Iter::new(self.repo, self.platform.prefixed(prefix)?))
+        Ok(Iter::new(self.repo, self.platform.prefixed(prefix.as_ref())?))
     }
 
     // TODO: tests
@@ -51,7 +51,7 @@ impl<'r> Platform<'r> {
     ///
     /// They are all prefixed with `refs/tags`.
     pub fn tags(&self) -> Result<Iter<'_>, init::Error> {
-        Ok(Iter::new(self.repo, self.platform.prefixed("refs/tags/")?))
+        Ok(Iter::new(self.repo, self.platform.prefixed("refs/tags/".as_ref())?))
     }
 
     // TODO: tests
@@ -59,7 +59,7 @@ impl<'r> Platform<'r> {
     ///
     /// They are all prefixed with `refs/heads`.
     pub fn local_branches(&self) -> Result<Iter<'_>, init::Error> {
-        Ok(Iter::new(self.repo, self.platform.prefixed("refs/heads/")?))
+        Ok(Iter::new(self.repo, self.platform.prefixed("refs/heads/".as_ref())?))
     }
 
     // TODO: tests
@@ -67,7 +67,7 @@ impl<'r> Platform<'r> {
     ///
     /// They are all prefixed with `refs/remotes`.
     pub fn remote_branches(&self) -> Result<Iter<'_>, init::Error> {
-        Ok(Iter::new(self.repo, self.platform.prefixed("refs/remotes/")?))
+        Ok(Iter::new(self.repo, self.platform.prefixed("refs/remotes/".as_ref())?))
     }
 }
 
@@ -95,10 +95,10 @@ impl<'r> Iterator for Iter<'r> {
                 .and_then(|mut r| {
                     if self.peel {
                         let handle = &self.repo;
-                        r.peel_to_id_in_place(&handle.refs, |oid, buf| {
+                        r.peel_to_id_in_place(&handle.refs, &mut |oid, buf| {
                             handle
                                 .objects
-                                .try_find(oid, buf)
+                                .try_find(oid.as_ref(), buf)
                                 .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
                         })
                         .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)

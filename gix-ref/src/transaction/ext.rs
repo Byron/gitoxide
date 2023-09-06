@@ -18,8 +18,8 @@ where
     /// Note no action is performed if deref isn't specified.
     fn extend_with_splits_of_symbolic_refs(
         &mut self,
-        find: impl FnMut(&PartialNameRef) -> Option<Target>,
-        make_entry: impl FnMut(usize, RefEdit) -> T,
+        find: &mut dyn FnMut(&PartialNameRef) -> Option<Target>,
+        make_entry: &mut dyn FnMut(usize, RefEdit) -> T,
     ) -> Result<(), std::io::Error>;
 
     /// All processing steps in one and in the correct order.
@@ -27,8 +27,8 @@ where
     /// Users call this to assure derefs are honored and duplicate checks are done.
     fn pre_process(
         &mut self,
-        find: impl FnMut(&PartialNameRef) -> Option<Target>,
-        make_entry: impl FnMut(usize, RefEdit) -> T,
+        find: &mut dyn FnMut(&PartialNameRef) -> Option<Target>,
+        make_entry: &mut dyn FnMut(usize, RefEdit) -> T,
     ) -> Result<(), std::io::Error> {
         self.extend_with_splits_of_symbolic_refs(find, make_entry)?;
         self.assure_one_name_has_one_edit().map_err(|name| {
@@ -55,8 +55,8 @@ where
 
     fn extend_with_splits_of_symbolic_refs(
         &mut self,
-        mut find: impl FnMut(&PartialNameRef) -> Option<Target>,
-        mut make_entry: impl FnMut(usize, RefEdit) -> E,
+        find: &mut dyn FnMut(&PartialNameRef) -> Option<Target>,
+        make_entry: &mut dyn FnMut(usize, RefEdit) -> E,
     ) -> Result<(), std::io::Error> {
         let mut new_edits = Vec::new();
         let mut first = 0;

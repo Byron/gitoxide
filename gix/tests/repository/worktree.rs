@@ -50,7 +50,7 @@ mod with_core_worktree_config {
             } else {
                 assert_eq!(
                     repo.work_dir().unwrap(),
-                    gix_path::realpath(repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"))?,
+                    gix_path::realpath(&repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"))?,
                     "absolute workdirs are left untouched"
                 );
             }
@@ -147,6 +147,7 @@ struct Baseline<'a> {
 }
 
 mod baseline {
+    use std::borrow::Cow;
     use std::path::{Path, PathBuf};
 
     use gix::bstr::{BString, ByteSlice};
@@ -178,7 +179,7 @@ mod baseline {
         type Item = Worktree;
 
         fn next(&mut self) -> Option<Self::Item> {
-            let root = gix_path::from_bstr(fields(self.lines.next()?).1).into_owned();
+            let root = gix_path::from_bstr(Cow::Borrowed(fields(self.lines.next()?).1)).into_owned();
             let mut bare = false;
             let mut branch = None;
             let mut peeled = gix_hash::ObjectId::null(gix_hash::Kind::Sha1);

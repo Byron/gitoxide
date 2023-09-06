@@ -368,7 +368,7 @@ impl Display for MatchResult {
 
 fn match_file_path(pattern: &gix_glob::Pattern, path: &str, case: Case) -> bool {
     pattern.matches_repo_relative_path(
-        path,
+        path.into(),
         basename_of(path),
         false.into(), /* is_dir */
         case,

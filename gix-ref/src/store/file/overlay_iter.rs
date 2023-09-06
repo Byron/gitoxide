@@ -198,7 +198,7 @@ impl<'s> Platform<'s> {
     /// As [`iter(…)`][file::Store::iter()], but filters by `prefix`, i.e. "refs/heads".
     ///
     /// Please note that "refs/heads" or "refs\\heads" is equivalent to "refs/heads/"
-    pub fn prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<LooseThenPacked<'_, '_>> {
+    pub fn prefixed(&self, prefix: &Path) -> std::io::Result<LooseThenPacked<'_, '_>> {
         self.store
             .iter_prefixed_packed(prefix, self.packed.as_ref().map(|b| &***b))
     }
@@ -255,19 +255,19 @@ impl<'a> IterInfo<'a> {
 
     fn into_iter(self) -> Peekable<SortedLoosePaths> {
         match self {
-            IterInfo::Base { base } => SortedLoosePaths::at(base.join("refs"), base, None),
+            IterInfo::Base { base } => SortedLoosePaths::at(&base.join("refs"), base.into(), None),
             IterInfo::BaseAndIterRoot {
                 base,
                 iter_root,
                 prefix: _,
-            } => SortedLoosePaths::at(iter_root, base, None),
-            IterInfo::PrefixAndBase { base, prefix } => SortedLoosePaths::at(base.join(prefix), base, None),
+            } => SortedLoosePaths::at(&iter_root, base.into(), None),
+            IterInfo::PrefixAndBase { base, prefix } => SortedLoosePaths::at(&base.join(prefix), base.into(), None),
             IterInfo::ComputedIterationRoot {
                 iter_root,
                 base,
                 prefix: _,
                 remainder,
-            } => SortedLoosePaths::at(iter_root, base, remainder),
+            } => SortedLoosePaths::at(&iter_root, base.into(), remainder),
         }
         .peekable()
     }
@@ -352,12 +352,11 @@ impl file::Store {
     /// Please note that "refs/heads" or "refs\\heads" is equivalent to "refs/heads/"
     pub fn iter_prefixed_packed<'s, 'p>(
         &'s self,
-        prefix: impl AsRef<Path>,
+        prefix: &Path,
         packed: Option<&'p packed::Buffer>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         match self.namespace.as_ref() {
             None => {
-                let prefix = prefix.as_ref();
                 let git_dir_info = IterInfo::from_prefix(self.git_dir(), prefix.into())?;
                 let common_dir_info = self
                     .common_dir()

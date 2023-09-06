@@ -12,6 +12,12 @@ use crate::{
 pub trait Sealed {}
 impl Sealed for crate::Reference {}
 
+pub type FindObjectFn<'a> = dyn FnMut(
+        gix_hash::ObjectId,
+        &mut Vec<u8>,
+    ) -> Result<Option<(gix_object::Kind, &[u8])>, Box<dyn std::error::Error + Send + Sync>>
+    + 'a;
+
 /// A trait to extend [Reference][crate::Reference] with functionality requiring a [file::Store].
 pub trait ReferenceExt: Sealed {
     /// A step towards obtaining forward or reverse iterators on reference logs.
@@ -21,17 +27,17 @@ pub trait ReferenceExt: Sealed {
     fn log_exists(&self, store: &file::Store) -> bool;
 
     /// For details, see [`Reference::peel_to_id_in_place()`].
-    fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
+    fn peel_to_id_in_place(
         &mut self,
         store: &file::Store,
-        find: impl FnMut(gix_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(gix_object::Kind, &[u8])>, E>,
+        find: &mut FindObjectFn<'_>,
     ) -> Result<ObjectId, peel::to_id::Error>;
 
     /// For details, see [`Reference::peel_to_id_in_place()`], with support for a known stable packed buffer.
-    fn peel_to_id_in_place_packed<E: std::error::Error + Send + Sync + 'static>(
+    fn peel_to_id_in_place_packed(
         &mut self,
         store: &file::Store,
-        find: impl FnMut(gix_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(gix_object::Kind, &[u8])>, E>,
+        find: &mut FindObjectFn<'_>,
         packed: Option<&packed::Buffer>,
     ) -> Result<ObjectId, peel::to_id::Error>;
 
@@ -66,10 +72,10 @@ impl ReferenceExt for Reference {
             .expect("infallible name conversion")
     }
 
-    fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
+    fn peel_to_id_in_place(
         &mut self,
         store: &file::Store,
-        find: impl FnMut(gix_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(gix_object::Kind, &[u8])>, E>,
+        find: &mut FindObjectFn<'_>,
     ) -> Result<ObjectId, peel::to_id::Error> {
         let packed = store.assure_packed_refs_uptodate().map_err(|err| {
             peel::to_id::Error::Follow(file::find::existing::Error::Find(file::find::Error::PackedOpen(err)))
@@ -77,10 +83,10 @@ impl ReferenceExt for Reference {
         self.peel_to_id_in_place_packed(store, find, packed.as_ref().map(|b| &***b))
     }
 
-    fn peel_to_id_in_place_packed<E: std::error::Error + Send + Sync + 'static>(
+    fn peel_to_id_in_place_packed(
         &mut self,
         store: &file::Store,
-        mut find: impl FnMut(gix_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(gix_object::Kind, &[u8])>, E>,
+        find: &mut FindObjectFn<'_>,
         packed: Option<&packed::Buffer>,
     ) -> Result<ObjectId, peel::to_id::Error> {
         match self.peeled {
@@ -112,12 +118,10 @@ impl ReferenceExt for Reference {
                 let mut buf = Vec::new();
                 let mut oid = self.target.try_id().expect("peeled ref").to_owned();
                 let peeled_id = loop {
-                    let (kind, data) = find(oid, &mut buf)
-                        .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)?
-                        .ok_or_else(|| peel::to_id::Error::NotFound {
-                            oid,
-                            name: self.name.0.clone(),
-                        })?;
+                    let (kind, data) = find(oid, &mut buf)?.ok_or_else(|| peel::to_id::Error::NotFound {
+                        oid,
+                        name: self.name.0.clone(),
+                    })?;
                     match kind {
                         gix_object::Kind::Tag => {
                             oid = gix_object::TagRefIter::from_bytes(data).target_id().map_err(|_err| {

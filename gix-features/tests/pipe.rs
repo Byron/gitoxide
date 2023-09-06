@@ -22,7 +22,7 @@ mod io {
 
     #[test]
     fn lack_of_reader_fails_with_broken_pipe() {
-        let (mut writer, _) = io::pipe::unidirectional(None);
+        let (mut writer, _) = io::pipe::unidirectional(0);
         assert_eq!(
             writer.write_all(b"must fail").unwrap_err().kind(),
             ErrorKind::BrokenPipe
@@ -96,7 +96,7 @@ mod io {
     fn small_reads() {
         const BLOCK_SIZE: usize = 20;
         let block_count = 20;
-        let (mut writer, mut reader) = io::pipe::unidirectional(Some(4));
+        let (mut writer, mut reader) = io::pipe::unidirectional(4);
         std::thread::spawn(move || {
             for _ in 0..block_count {
                 let data = &[0; BLOCK_SIZE];

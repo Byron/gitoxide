@@ -13,10 +13,9 @@ pub(in crate::store_impl::file) struct SortedLoosePaths {
 }
 
 impl SortedLoosePaths {
-    pub fn at(path: impl AsRef<Path>, base: impl Into<PathBuf>, filename_prefix: Option<BString>) -> Self {
-        let path = path.as_ref();
+    pub fn at(path: &Path, base: PathBuf, filename_prefix: Option<BString>) -> Self {
         SortedLoosePaths {
-            base: base.into(),
+            base,
             filename_prefix,
             file_walk: path.is_dir().then(|| {
                 // serial iteration as we expect most refs in packed-refs anyway.
@@ -89,7 +88,7 @@ impl file::Store {
     /// Return an iterator over all loose references that start with the given `prefix`.
     ///
     /// Otherwise it's similar to [`loose_iter()`][file::Store::loose_iter()].
-    pub fn loose_iter_prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<LooseThenPacked<'_, '_>> {
+    pub fn loose_iter_prefixed(&self, prefix: &Path) -> std::io::Result<LooseThenPacked<'_, '_>> {
         self.iter_prefixed_packed(prefix, None)
     }
 }

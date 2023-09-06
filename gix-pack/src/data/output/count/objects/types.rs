@@ -80,17 +80,13 @@ impl Default for Options {
 /// The error returned by the pack generation iterator [`bytes::FromEntriesIter`][crate::data::output::bytes::FromEntriesIter].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
-pub enum Error<FindErr, IterErr>
-where
-    FindErr: std::error::Error + 'static,
-    IterErr: std::error::Error + 'static,
-{
+pub enum Error {
     #[error(transparent)]
     CommitDecode(gix_object::decode::Error),
     #[error(transparent)]
-    FindExisting(#[from] FindErr),
+    FindExisting(#[from] crate::find::existing::Error),
     #[error(transparent)]
-    InputIteration(IterErr),
+    InputIteration(Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error(transparent)]
     TreeTraverse(gix_traverse::tree::breadthfirst::Error),
     #[error(transparent)]

@@ -3,7 +3,7 @@ use gix_odb::Write;
 use crate::store::loose::{locate_oid, object_ids};
 
 #[test]
-fn write() -> Result<(), Box<dyn std::error::Error>> {
+fn write() -> crate::Result {
     let mut buf = Vec::new();
     for oid in object_ids() {
         let obj = locate_oid(oid, &mut buf);
