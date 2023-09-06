@@ -62,3 +62,12 @@ git clone --bare with-submodules with-submodules-after-clone.git
   git clone --bare ../module1 modules/m1
 )
 
+git clone with-submodules not-a-submodule
+(cd not-a-submodule
+  git submodule update --init
+  cp .gitmodules modules.bak
+  git rm m1
+  echo fake > m1
+  mv modules.bak .gitmodules
+  git add m1 && git commit -m "no submodule in index and commit, but in configuration"
+)
