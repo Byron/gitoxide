@@ -50,7 +50,7 @@ mod specials {
         );
         let mut out = Outcome::default();
         out.initialize(&collection);
-        search.pattern_matching_relative_path(path, case, None, &mut out)
+        search.pattern_matching_relative_path(path.into(), case, None, &mut out)
     }
 
     fn searchi(pattern: &str, path: &str, rela_containing_dir: Option<&str>) -> bool {
@@ -66,7 +66,7 @@ fn baseline() -> crate::Result {
     let mut buf = Vec::new();
     // Due to the way our setup differs from gits dynamic stack (which involves trying to read files from disk
     // by path) we can only test one case baseline, so we require multiple platforms (or filesystems) to run this.
-    let case = if gix_fs::Capabilities::probe("../.git").ignore_case {
+    let case = if gix_fs::Capabilities::probe("../.git".as_ref()).ignore_case {
         Case::Fold
     } else {
         Case::Sensitive
@@ -307,7 +307,11 @@ mod baseline {
 
         let mut buf = Vec::new();
         let mut collection = MetadataCollection::default();
-        let group = gix_attributes::Search::new_globals([base.join("user.attributes")], &mut buf, &mut collection)?;
+        let group = gix_attributes::Search::new_globals(
+            &mut [base.join("user.attributes")].into_iter(),
+            &mut buf,
+            &mut collection,
+        )?;
 
         Ok((group, collection, base, input))
     }

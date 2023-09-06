@@ -5,17 +5,17 @@ pub(crate) const HIGH_BIT: u32 = 0x8000_0000;
 
 use gix_features::{
     hash,
-    progress::{self, Progress},
+    progress::{self, DynNestedProgress},
 };
 
 use crate::index::{util::Count, V2_SIGNATURE};
 
 pub(crate) fn write_to(
-    out: impl io::Write,
+    out: &mut dyn io::Write,
     entries_sorted_by_oid: Vec<crate::cache::delta::Item<crate::index::write::TreeEntry>>,
     pack_hash: &gix_hash::ObjectId,
     kind: crate::index::Version,
-    mut progress: impl Progress,
+    progress: &mut dyn DynNestedProgress,
 ) -> io::Result<gix_hash::ObjectId> {
     use io::Write;
     assert_eq!(kind, crate::index::Version::V2, "Can only write V2 packs right now");
@@ -34,27 +34,27 @@ pub(crate) fn write_to(
 
     progress.init(Some(4), progress::steps());
     let start = std::time::Instant::now();
-    let _info = progress.add_child_with_id("writing fan-out table", gix_features::progress::UNKNOWN);
-    let fan_out = fanout(entries_sorted_by_oid.iter().map(|e| e.data.id.first_byte()));
+    let _info = progress.add_child_with_id("writing fan-out table".into(), gix_features::progress::UNKNOWN);
+    let fan_out = fanout(&mut entries_sorted_by_oid.iter().map(|e| e.data.id.first_byte()));
 
     for value in fan_out.iter() {
         out.write_all(&value.to_be_bytes())?;
     }
 
     progress.inc();
-    let _info = progress.add_child_with_id("writing ids", gix_features::progress::UNKNOWN);
+    let _info = progress.add_child_with_id("writing ids".into(), gix_features::progress::UNKNOWN);
     for entry in &entries_sorted_by_oid {
         out.write_all(entry.data.id.as_slice())?;
     }
 
     progress.inc();
-    let _info = progress.add_child_with_id("writing crc32", gix_features::progress::UNKNOWN);
+    let _info = progress.add_child_with_id("writing crc32".into(), gix_features::progress::UNKNOWN);
     for entry in &entries_sorted_by_oid {
         out.write_all(&entry.data.crc32.to_be_bytes())?;
     }
 
     progress.inc();
-    let _info = progress.add_child_with_id("writing offsets", gix_features::progress::UNKNOWN);
+    let _info = progress.add_child_with_id("writing offsets".into(), gix_features::progress::UNKNOWN);
     {
         let mut offsets64 = Vec::<u64>::new();
         for entry in &entries_sorted_by_oid {
@@ -78,7 +78,7 @@ pub(crate) fn write_to(
     out.write_all(pack_hash.as_slice())?;
 
     let bytes_written_without_trailer = out.bytes;
-    let mut out = out.inner.into_inner()?;
+    let out = out.inner.into_inner()?;
     let index_hash: gix_hash::ObjectId = out.hash.digest().into();
     out.inner.write_all(index_hash.as_slice())?;
     out.inner.flush()?;
@@ -94,7 +94,7 @@ pub(crate) fn write_to(
     Ok(index_hash)
 }
 
-pub(crate) fn fanout(iter: impl ExactSizeIterator<Item = u8>) -> [u32; 256] {
+pub(crate) fn fanout(iter: &mut dyn ExactSizeIterator<Item = u8>) -> [u32; 256] {
     let mut fan_out = [0u32; 256];
     let entries_len = iter.len() as u32;
     let mut iter = iter.enumerate();

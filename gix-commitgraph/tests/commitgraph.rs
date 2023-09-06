@@ -80,7 +80,8 @@ pub fn graph_and_expected_named(
         .expect("script succeeds all the time")
         .join(name);
     let expected = inspect_refs(&repo_dir, refs);
-    let cg = Graph::from_info_dir(repo_dir.join(".git").join("objects").join("info")).expect("graph present and valid");
+    let cg =
+        Graph::from_info_dir(&repo_dir.join(".git").join("objects").join("info")).expect("graph present and valid");
     (cg, expected)
 }
 

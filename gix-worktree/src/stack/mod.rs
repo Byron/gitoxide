@@ -88,7 +88,7 @@ impl Stack {
         &mut self,
         relative: impl AsRef<Path>,
         is_dir: Option<bool>,
-        find: Find,
+        mut find: Find,
     ) -> std::io::Result<Platform<'_>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
@@ -100,11 +100,12 @@ impl Stack {
             buf: &mut self.buf,
             is_dir: is_dir.unwrap_or(false),
             id_mappings: &self.id_mappings,
-            find,
+            find: &mut |oid, buf| Ok(find(oid, buf).map_err(Box::new)?),
             case: self.case,
             statistics: &mut self.statistics,
         };
-        self.stack.make_relative_path_current(relative, &mut delegate)?;
+        self.stack
+            .make_relative_path_current(relative.as_ref(), &mut delegate)?;
         Ok(Platform { parent: self, is_dir })
     }
 

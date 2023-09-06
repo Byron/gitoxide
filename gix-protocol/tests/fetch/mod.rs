@@ -150,9 +150,9 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
+    use gix_features::progress::NestedProgress;
     use std::io;
 
-    use gix_features::progress::Progress;
     use gix_protocol::{fetch, fetch::Response, handshake, handshake::Ref};
 
     use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
@@ -161,7 +161,7 @@ mod blocking_io {
         fn receive_pack(
             &mut self,
             mut input: impl io::BufRead,
-            _progress: impl Progress,
+            _progress: impl NestedProgress,
             _refs: &[Ref],
             _previous_response: &Response,
         ) -> io::Result<()> {
@@ -174,7 +174,7 @@ mod blocking_io {
         fn receive_pack(
             &mut self,
             mut input: impl io::BufRead,
-            _progress: impl Progress,
+            _progress: impl NestedProgress,
             _refs: &[Ref],
             response: &Response,
         ) -> io::Result<()> {
@@ -193,7 +193,7 @@ mod blocking_io {
         fn receive_pack(
             &mut self,
             _input: impl io::BufRead,
-            _progress: impl Progress,
+            _progress: impl NestedProgress,
             _refs: &[Ref],
             _previous_response: &Response,
         ) -> io::Result<()> {
@@ -208,7 +208,7 @@ mod async_io {
 
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
-    use gix_features::progress::Progress;
+    use gix_features::progress::NestedProgress;
     use gix_protocol::{fetch, fetch::Response, handshake, handshake::Ref};
 
     use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
@@ -218,7 +218,7 @@ mod async_io {
         async fn receive_pack(
             &mut self,
             mut input: impl AsyncBufRead + Unpin + 'async_trait,
-            _progress: impl Progress,
+            _progress: impl NestedProgress,
             _refs: &[Ref],
             _previous_response: &Response,
         ) -> io::Result<()> {
@@ -232,7 +232,7 @@ mod async_io {
         async fn receive_pack(
             &mut self,
             mut input: impl AsyncBufRead + Unpin + 'async_trait,
-            _progress: impl Progress,
+            _progress: impl NestedProgress,
             _refs: &[Ref],
             response: &Response,
         ) -> io::Result<()> {
@@ -252,7 +252,7 @@ mod async_io {
         async fn receive_pack(
             &mut self,
             _input: impl AsyncBufRead + Unpin + 'async_trait,
-            _progress: impl Progress,
+            _progress: impl NestedProgress,
             _refs: &[Ref],
             _previous_response: &Response,
         ) -> io::Result<()> {

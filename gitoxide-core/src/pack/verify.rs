@@ -5,7 +5,7 @@ use bytesize::ByteSize;
 use gix::{
     object, odb,
     odb::{pack, pack::index},
-    Progress,
+    NestedProgress,
 };
 pub use index::verify::Mode;
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
@@ -87,7 +87,7 @@ impl<const SIZE: usize> pack::cache::DecodeEntry for EitherCache<SIZE> {
 
 pub fn pack_or_pack_index<W1, W2>(
     path: impl AsRef<Path>,
-    mut progress: impl Progress,
+    mut progress: impl NestedProgress + 'static,
     Context {
         mut out,
         mut err,
@@ -121,7 +121,7 @@ where
     let res = match ext {
         "pack" => {
             let pack = odb::pack::data::File::at(path, object_hash).with_context(|| "Could not open pack file")?;
-            pack.verify_checksum(progress.add_child("Sha1 of pack"), should_interrupt)
+            pack.verify_checksum(&mut progress.add_child("Sha1 of pack"), should_interrupt)
                 .map(|id| (id, None))?
         }
         "idx" => {
@@ -151,7 +151,7 @@ where
                         thread_limit
                     }
                 }),
-                progress,
+                &mut progress,
                 should_interrupt,
             )
             .map(|o| (o.actual_index_checksum, o.pack_traverse_statistics))
@@ -161,7 +161,7 @@ where
             match path.file_name() {
                 Some(file_name) if file_name == "multi-pack-index" => {
                     let multi_index = gix::odb::pack::multi_index::File::at(path)?;
-                    let res = multi_index.verify_integrity(progress, should_interrupt, gix::odb::pack::index::verify::integrity::Options{
+                    let res = multi_index.verify_integrity(&mut progress, should_interrupt, gix::odb::pack::index::verify::integrity::Options{
                         verify_mode: mode,
                         traversal: algorithm.into(),
                         thread_limit,

@@ -10,10 +10,10 @@ impl crate::Bundle {
     /// for thin packs, which by now are expected to be resolved already.
     pub fn find<'a>(
         &self,
-        id: impl AsRef<gix_hash::oid>,
+        id: &gix_hash::oid,
         out: &'a mut Vec<u8>,
         inflate: &mut zlib::Inflate,
-        cache: &mut impl crate::cache::DecodeEntry,
+        cache: &mut dyn crate::cache::DecodeEntry,
     ) -> Result<Option<(gix_object::Data<'a>, crate::data::entry::Location)>, crate::data::decode::Error> {
         let idx = match self.index.lookup(id) {
             Some(idx) => idx,
@@ -34,7 +34,7 @@ impl crate::Bundle {
         idx: u32,
         out: &'a mut Vec<u8>,
         inflate: &mut zlib::Inflate,
-        cache: &mut impl crate::cache::DecodeEntry,
+        cache: &mut dyn crate::cache::DecodeEntry,
     ) -> Result<(gix_object::Data<'a>, crate::data::entry::Location), crate::data::decode::Error> {
         let ofs = self.index.pack_offset_at_index(idx);
         let pack_entry = self.pack.entry(ofs);
@@ -44,7 +44,7 @@ impl crate::Bundle {
                 pack_entry,
                 out,
                 inflate,
-                |id, _out| {
+                &|id, _out| {
                     self.index.lookup(id).map(|idx| {
                         crate::data::decode::entry::ResolvedBase::InPack(
                             self.pack.entry(self.index.pack_offset_at_index(idx)),

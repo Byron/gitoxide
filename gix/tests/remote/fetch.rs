@@ -84,6 +84,7 @@ mod blocking_and_async_io {
 
     #[test]
     #[cfg(feature = "blocking-network-client")]
+    #[allow(clippy::result_large_err)]
     fn collate_fetch_error() -> Result<(), gix::env::collate::fetch::Error<std::io::Error>> {
         let (repo, _tmp) = try_repo_rw("two-origins")?;
         let remote = repo

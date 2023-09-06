@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use gix_features::progress::Progress;
+use gix_features::progress::NestedProgress;
 use gix_transport::client;
 use maybe_async::maybe_async;
 
@@ -59,7 +59,7 @@ where
     F: FnMut(credentials::helper::Action) -> credentials::protocol::Result,
     D: Delegate,
     T: client::Transport,
-    P: Progress,
+    P: NestedProgress + 'static,
     P::SubProgress: 'static,
 {
     let crate::handshake::Outcome {
@@ -136,7 +136,7 @@ where
         .await?;
         previous_response = if response.has_pack() {
             progress.step();
-            progress.set_name("receiving pack");
+            progress.set_name("receiving pack".into());
             if !sideband_all {
                 setup_remote_progress(&mut progress, &mut reader);
             }
@@ -159,7 +159,7 @@ where
 
 fn setup_remote_progress<P>(progress: &mut P, reader: &mut Box<dyn gix_transport::client::ExtendedBufRead + Unpin + '_>)
 where
-    P: Progress,
+    P: NestedProgress,
     P::SubProgress: 'static,
 {
     reader.set_progress_handler(Some(Box::new({

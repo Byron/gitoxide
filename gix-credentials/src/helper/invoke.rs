@@ -4,7 +4,7 @@ use crate::helper::{Action, Context, Error, NextAction, Outcome, Result};
 
 impl Action {
     /// Send ourselves to the given `write` which is expected to be credentials-helper compatible
-    pub fn send(&self, mut write: impl std::io::Write) -> std::io::Result<()> {
+    pub fn send(&self, write: &mut dyn std::io::Write) -> std::io::Result<()> {
         match self {
             Action::Get(ctx) => ctx.write_to(write),
             Action::Store(last) | Action::Erase(last) => {
@@ -40,11 +40,12 @@ pub fn invoke(helper: &mut crate::Program, action: &Action) -> Result {
 }
 
 pub(crate) fn raw(helper: &mut crate::Program, action: &Action) -> std::result::Result<Option<Vec<u8>>, Error> {
-    let (stdin, stdout) = helper.start(action)?;
+    let (mut stdin, stdout) = helper.start(action)?;
     if let (Action::Get(_), None) = (&action, &stdout) {
         panic!("BUG: `Helper` impls must return an output handle to read output from if Action::Get is provided")
     }
-    action.send(stdin)?;
+    action.send(&mut stdin)?;
+    drop(stdin);
     let stdout = stdout
         .map(|mut stdout| {
             let mut buf = Vec::new();

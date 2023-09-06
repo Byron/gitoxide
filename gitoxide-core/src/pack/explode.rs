@@ -10,7 +10,7 @@ use gix::{
     hash::ObjectId,
     object, objs, odb,
     odb::{loose, pack, Write},
-    Progress,
+    NestedProgress,
 };
 
 #[derive(Default, Clone, Eq, PartialEq, Debug)]
@@ -97,19 +97,22 @@ enum OutputWriter {
 }
 
 impl gix::odb::Write for OutputWriter {
-    type Error = Error;
-
-    fn write_buf(&self, kind: object::Kind, from: &[u8]) -> Result<ObjectId, Self::Error> {
+    fn write_buf(&self, kind: object::Kind, from: &[u8]) -> Result<ObjectId, gix::odb::write::Error> {
         match self {
-            OutputWriter::Loose(db) => db.write_buf(kind, from).map_err(Into::into),
-            OutputWriter::Sink(db) => db.write_buf(kind, from).map_err(Into::into),
+            OutputWriter::Loose(db) => db.write_buf(kind, from),
+            OutputWriter::Sink(db) => db.write_buf(kind, from),
         }
     }
 
-    fn write_stream(&self, kind: object::Kind, size: u64, from: impl Read) -> Result<ObjectId, Self::Error> {
+    fn write_stream(
+        &self,
+        kind: object::Kind,
+        size: u64,
+        from: &mut dyn Read,
+    ) -> Result<ObjectId, gix::odb::write::Error> {
         match self {
-            OutputWriter::Loose(db) => db.write_stream(kind, size, from).map_err(Into::into),
-            OutputWriter::Sink(db) => db.write_stream(kind, size, from).map_err(Into::into),
+            OutputWriter::Loose(db) => db.write_stream(kind, size, from),
+            OutputWriter::Sink(db) => db.write_stream(kind, size, from),
         }
     }
 }
@@ -137,7 +140,7 @@ pub fn pack_or_pack_index(
     pack_path: impl AsRef<Path>,
     object_path: Option<impl AsRef<Path>>,
     check: SafetyCheck,
-    progress: impl Progress,
+    mut progress: impl NestedProgress + 'static,
     Context {
         thread_limit,
         delete_pack,
@@ -178,11 +181,11 @@ pub fn pack_or_pack_index(
         |_| pack::index::traverse::Algorithm::Lookup,
     );
 
-    let pack::index::traverse::Outcome { progress, .. } = bundle
+    let pack::index::traverse::Outcome { .. } = bundle
         .index
         .traverse(
             &bundle.pack,
-            progress,
+            &mut progress,
             &should_interrupt,
             {
                 let object_path = object_path.map(|p| p.as_ref().to_owned());
@@ -193,7 +196,7 @@ pub fn pack_or_pack_index(
                 let mut read_buf = Vec::new();
                 move |object_kind, buf, index_entry, progress| {
                     let written_id = out.write_buf(object_kind, buf).map_err(|err| Error::Write {
-                        source: Box::new(err) as Box<dyn std::error::Error + Send + Sync>,
+                        source: err,
                         kind: object_kind,
                         id: index_entry.oid,
                     })?;
@@ -213,13 +216,13 @@ pub fn pack_or_pack_index(
                     }
                     if let Some(verifier) = loose_odb.as_ref() {
                         let obj = verifier
-                            .try_find(written_id, &mut read_buf)
+                            .try_find(&written_id, &mut read_buf)
                             .map_err(|err| Error::WrittenFileCorrupt {
                                 source: err,
                                 id: written_id,
                             })?
                             .ok_or(Error::WrittenFileMissing { id: written_id })?;
-                        obj.verify_checksum(written_id)?;
+                        obj.verify_checksum(&written_id)?;
                     }
                     Ok(())
                 }

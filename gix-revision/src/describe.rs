@@ -313,11 +313,11 @@ pub(crate) mod function {
         graph
             .insert_parents(
                 &commit,
-                |parent_id, parent_commit_date| {
+                &mut |parent_id, parent_commit_date| {
                     queue.insert(parent_commit_date as u32, parent_id);
                     commit_flags
                 },
-                |_parent_id, flags| *flags |= commit_flags,
+                &mut |_parent_id, flags| *flags |= commit_flags,
                 first_parent,
             )
             .map_err(|err| Error::InsertParentsToGraph { err, oid: commit })?;

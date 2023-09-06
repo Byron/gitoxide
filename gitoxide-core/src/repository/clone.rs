@@ -11,10 +11,11 @@ pub struct Options {
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub(crate) mod function {
+    use std::borrow::Cow;
     use std::ffi::OsStr;
 
     use anyhow::{bail, Context};
-    use gix::{bstr::BString, remote::fetch::Status, Progress};
+    use gix::{bstr::BString, remote::fetch::Status, NestedProgress};
 
     use super::Options;
     use crate::{repository::fetch::function::print_updates, OutputFormat};
@@ -35,7 +36,7 @@ pub(crate) mod function {
         }: Options,
     ) -> anyhow::Result<()>
     where
-        P: Progress,
+        P: NestedProgress,
         P::SubProgress: 'static,
     {
         if format != OutputFormat::Human {
@@ -45,7 +46,7 @@ pub(crate) mod function {
         let url: gix::Url = url.as_ref().try_into()?;
         let directory = directory.map_or_else(
             || {
-                gix::path::from_bstr(url.path.as_ref())
+                gix::path::from_bstr(Cow::Borrowed(url.path.as_ref()))
                     .as_ref()
                     .file_stem()
                     .map(Into::into)

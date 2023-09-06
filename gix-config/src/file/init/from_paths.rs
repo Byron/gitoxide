@@ -23,8 +23,7 @@ impl File<'static> {
     /// Load the single file at `path` with `source` without following include directives.
     ///
     /// Note that the path will be checked for ownership to derive trust.
-    pub fn from_path_no_includes(path: impl Into<std::path::PathBuf>, source: crate::Source) -> Result<Self, Error> {
-        let path = path.into();
+    pub fn from_path_no_includes(path: std::path::PathBuf, source: crate::Source) -> Result<Self, Error> {
         let trust = match gix_sec::Trust::from_path_ownership(&path) {
             Ok(t) => t,
             Err(err) => return Err(Error::Io { source: err, path }),
@@ -60,7 +59,12 @@ impl File<'static> {
     ) -> Result<Option<Self>, Error> {
         let mut buf = Vec::with_capacity(512);
         let err_on_nonexisting_paths = true;
-        Self::from_paths_metadata_buf(path_meta, &mut buf, err_on_nonexisting_paths, options)
+        Self::from_paths_metadata_buf(
+            &mut path_meta.into_iter().map(Into::into),
+            &mut buf,
+            err_on_nonexisting_paths,
+            options,
+        )
     }
 
     /// Like [`from_paths_metadata()`][Self::from_paths_metadata()], but will use `buf` to temporarily store the config file
@@ -68,17 +72,14 @@ impl File<'static> {
     ///
     /// If `err_on_nonexisting_paths` is false, instead of aborting with error, we will continue to the next path instead.
     pub fn from_paths_metadata_buf(
-        path_meta: impl IntoIterator<Item = impl Into<Metadata>>,
+        path_meta: &mut dyn Iterator<Item = Metadata>,
         buf: &mut Vec<u8>,
         err_on_non_existing_paths: bool,
         options: Options<'_>,
     ) -> Result<Option<Self>, Error> {
         let mut target = None;
         let mut seen = BTreeSet::default();
-        for (path, mut meta) in path_meta.into_iter().filter_map(|meta| {
-            let mut meta = meta.into();
-            meta.path.take().map(|p| (p, meta))
-        }) {
+        for (path, mut meta) in path_meta.filter_map(|mut meta| meta.path.take().map(|p| (p, meta))) {
             if !seen.insert(path.clone()) {
                 continue;
             }

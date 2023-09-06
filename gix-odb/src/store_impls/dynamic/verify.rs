@@ -4,7 +4,7 @@ use std::{
     time::Instant,
 };
 
-use gix_features::progress::{MessageLevel, Progress};
+use gix_features::progress::{DynNestedProgress, MessageLevel, Progress};
 
 use crate::{
     pack,
@@ -73,13 +73,11 @@ pub mod integrity {
     }
 
     /// Returned by [`Store::verify_integrity()`][crate::Store::verify_integrity()].
-    pub struct Outcome<P> {
+    pub struct Outcome {
         /// Statistics for validated loose object stores.
         pub loose_object_stores: Vec<LooseObjectStatistics>,
         /// Pack traversal statistics for each index and their pack(s)
         pub index_statistics: Vec<IndexStatistics>,
-        /// The provided progress instance.
-        pub progress: P,
     }
 
     /// The progress ids used in [`Store::verify_integrity()`][crate::Store::verify_integrity()].
@@ -111,14 +109,13 @@ impl super::Store {
     ///
     /// Note that this will not force loading all indices or packs permanently, as we will only use the momentarily loaded disk state.
     /// This does, however, include all alternates.
-    pub fn verify_integrity<C, P, F>(
+    pub fn verify_integrity<C, F>(
         &self,
-        mut progress: P,
+        progress: &mut dyn DynNestedProgress,
         should_interrupt: &AtomicBool,
         options: integrity::Options<F>,
-    ) -> Result<integrity::Outcome<P>, integrity::Error>
+    ) -> Result<integrity::Outcome, integrity::Error>
     where
-        P: Progress,
         C: pack::cache::DecodeEntry,
         F: Fn() -> C + Send + Clone,
     {
@@ -173,15 +170,16 @@ impl super::Store {
                                 &pack
                             }
                         };
+                        let mut child_progress = progress.add_child_with_id(
+                            "verify index".into(),
+                            integrity::ProgressId::VerifyIndex(Default::default()).into(),
+                        );
                         let outcome = index.verify_integrity(
                             Some(pack::index::verify::PackContext {
                                 data,
                                 options: options.clone(),
                             }),
-                            progress.add_child_with_id(
-                                "verify index",
-                                integrity::ProgressId::VerifyIndex(Default::default()).into(),
-                            ),
+                            &mut child_progress,
                             should_interrupt,
                         )?;
                         statistics.push(IndexStatistics {
@@ -192,7 +190,7 @@ impl super::Store {
                                     .expect("pack provided so there are stats"),
                             ),
                         });
-                        (outcome.progress, index.num_objects(), index.path().to_owned())
+                        (child_progress, index.num_objects(), index.path().to_owned())
                     }
                     IndexAndPacks::MultiIndex(bundle) => {
                         let index;
@@ -203,14 +201,11 @@ impl super::Store {
                                 &index
                             }
                         };
-                        let outcome = index.verify_integrity(
-                            progress.add_child_with_id(
-                                "verify multi-index",
-                                integrity::ProgressId::VerifyMultiIndex(Default::default()).into(),
-                            ),
-                            should_interrupt,
-                            options.clone(),
-                        )?;
+                        let mut child_progress = progress.add_child_with_id(
+                            "verify multi-index".into(),
+                            integrity::ProgressId::VerifyMultiIndex(Default::default()).into(),
+                        );
+                        let outcome = index.verify_integrity(&mut child_progress, should_interrupt, options.clone())?;
 
                         let index_dir = bundle.multi_index.path().parent().expect("file in a directory");
                         statistics.push(IndexStatistics {
@@ -224,7 +219,7 @@ impl super::Store {
                                     .collect(),
                             ),
                         });
-                        (outcome.progress, index.num_objects(), index.path().to_owned())
+                        (child_progress, index.num_objects(), index.path().to_owned())
                     }
                 };
 
@@ -250,7 +245,7 @@ impl super::Store {
                 for loose_db in &*index.loose_dbs {
                     let out = loose_db
                         .verify_integrity(
-                            progress.add_child_with_id(
+                            &mut progress.add_child_with_id(
                                 loose_db.path().display().to_string(),
                                 integrity::ProgressId::VerifyLooseObjectDbPath.into(),
                             ),
@@ -269,7 +264,6 @@ impl super::Store {
         Ok(integrity::Outcome {
             loose_object_stores,
             index_statistics: statistics,
-            progress,
         })
     }
 }

@@ -19,8 +19,7 @@ impl packed::Buffer {
     }
 
     /// Return an iterator yielding only references matching the given prefix, ordered by reference name.
-    pub fn iter_prefixed(&self, prefix: impl Into<BString>) -> Result<packed::Iter<'_>, packed::iter::Error> {
-        let prefix = prefix.into();
+    pub fn iter_prefixed(&self, prefix: BString) -> Result<packed::Iter<'_>, packed::iter::Error> {
         let first_record_with_prefix = self.binary_search_by(prefix.as_bstr()).unwrap_or_else(|(_, pos)| pos);
         packed::Iter::new_with_prefix(&self.as_ref()[first_record_with_prefix..], Some(prefix))
     }

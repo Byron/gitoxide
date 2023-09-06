@@ -3,6 +3,7 @@ use std::borrow::Cow;
 
 use gix_features::threading::OwnShared;
 
+use crate::bstr::ByteSlice;
 use crate::{
     bstr::{BStr, BString},
     config::{CommitAutoRollback, Snapshot, SnapshotMut},
@@ -58,7 +59,7 @@ impl<'repo> Snapshot<'repo> {
         &self,
         key: impl Into<&'a BStr>,
     ) -> Option<Result<Cow<'_, std::path::Path>, gix_config::path::interpolate::Error>> {
-        let key = gix_config::parse::key(key)?;
+        let key = gix_config::parse::key(key.into())?;
         self.repo
             .config
             .trusted_file_path(key.section_name, key.subsection_name, key.value_name)
@@ -134,7 +135,7 @@ impl<'repo> SnapshotMut<'repo> {
         let name = key
             .full_name(Some(subsection.into()))
             .expect("we know it needs a subsection");
-        let key = gix_config::parse::key(&**name).expect("statically known keys can always be parsed");
+        let key = gix_config::parse::key((**name).as_bstr()).expect("statically known keys can always be parsed");
         let current =
             self.config
                 .set_raw_value(key.section_name, key.subsection_name, key.value_name.to_owned(), value)?;

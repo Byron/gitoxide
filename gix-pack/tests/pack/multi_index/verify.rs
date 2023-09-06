@@ -9,7 +9,7 @@ use crate::pack::multi_index::multi_index;
 fn checksum() -> crate::Result {
     let (file, _) = multi_index();
     assert_eq!(
-        file.verify_checksum(progress::Discard, &AtomicBool::new(false))?,
+        file.verify_checksum(&mut progress::Discard, &AtomicBool::new(false))?,
         file.checksum()
     );
     Ok(())
@@ -19,7 +19,7 @@ fn checksum() -> crate::Result {
 fn integrity() {
     let (file, _) = multi_index();
     let outcome = file
-        .verify_integrity(progress::Discard, &AtomicBool::new(false), Default::default())
+        .verify_integrity(&mut progress::Discard, &AtomicBool::new(false), Default::default())
         .unwrap();
     assert_eq!(outcome.actual_index_checksum, file.checksum());
     assert_eq!(

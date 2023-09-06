@@ -23,17 +23,12 @@ pub trait Pattern: Clone + PartialEq + Eq + std::fmt::Debug + std::hash::Hash + 
 /// Returns `true` if the file was added, or `false` if it didn't exist.
 pub fn add_patterns_file<T: Pattern>(
     patterns: &mut Vec<pattern::List<T>>,
-    source: impl Into<PathBuf>,
+    source: PathBuf,
     follow_symlinks: bool,
     root: Option<&Path>,
     buf: &mut Vec<u8>,
 ) -> std::io::Result<bool> {
     let previous_len = patterns.len();
-    patterns.extend(pattern::List::<T>::from_file(
-        source.into(),
-        root,
-        follow_symlinks,
-        buf,
-    )?);
+    patterns.extend(pattern::List::<T>::from_file(source, root, follow_symlinks, buf)?);
     Ok(patterns.len() != previous_len)
 }

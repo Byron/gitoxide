@@ -171,8 +171,8 @@ impl File {
         entry: data::Entry,
         out: &mut Vec<u8>,
         inflate: &mut zlib::Inflate,
-        resolve: impl Fn(&gix_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
-        delta_cache: &mut impl cache::DecodeEntry,
+        resolve: &dyn Fn(&gix_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
+        delta_cache: &mut dyn cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
         use crate::data::entry::Header::*;
         match entry.header {
@@ -203,10 +203,10 @@ impl File {
     fn resolve_deltas(
         &self,
         last: data::Entry,
-        resolve: impl Fn(&gix_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
+        resolve: &dyn Fn(&gix_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
         inflate: &mut zlib::Inflate,
         out: &mut Vec<u8>,
-        cache: &mut impl cache::DecodeEntry,
+        cache: &mut dyn cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
         let mut chain = SmallVec::<[Delta; 10]>::default();

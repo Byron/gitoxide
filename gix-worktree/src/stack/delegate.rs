@@ -18,21 +18,23 @@ pub struct Statistics {
     pub pop_directory: usize,
 }
 
-pub(crate) struct StackDelegate<'a, Find> {
+pub(crate) type FindFn<'a> = dyn for<'b> FnMut(
+        &gix_hash::oid,
+        &'b mut Vec<u8>,
+    ) -> Result<gix_object::BlobRef<'b>, Box<dyn std::error::Error + Send + Sync>>
+    + 'a;
+
+pub(crate) struct StackDelegate<'a, 'find> {
     pub state: &'a mut State,
     pub buf: &'a mut Vec<u8>,
     pub is_dir: bool,
     pub id_mappings: &'a Vec<PathIdMapping>,
-    pub find: Find,
+    pub find: &'find mut FindFn<'find>,
     pub case: gix_glob::pattern::Case,
     pub statistics: &'a mut super::Statistics,
 }
 
-impl<'a, Find, E> gix_fs::stack::Delegate for StackDelegate<'a, Find>
-where
-    Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
-    E: std::error::Error + Send + Sync + 'static,
-{
+impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
     fn push_directory(&mut self, stack: &gix_fs::Stack) -> std::io::Result<()> {
         self.statistics.delegate.push_directory += 1;
         let dir_bstr = gix_path::into_bstr(stack.current());
@@ -59,7 +61,7 @@ where
                     rela_dir,
                     self.buf,
                     self.id_mappings,
-                    &mut self.find,
+                    self.find,
                     &mut self.statistics.attributes,
                 )?;
             }

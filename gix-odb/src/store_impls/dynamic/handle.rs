@@ -346,8 +346,8 @@ impl TryFrom<&super::Store> for super::Store {
 
     fn try_from(s: &super::Store) -> Result<Self, Self::Error> {
         super::Store::at_opts(
-            s.path(),
-            s.replacements(),
+            s.path().into(),
+            &mut s.replacements(),
             crate::store::init::Options {
                 slots: crate::store::init::Slots::Given(s.files.len().try_into().expect("BUG: too many slots")),
                 object_hash: Default::default(),

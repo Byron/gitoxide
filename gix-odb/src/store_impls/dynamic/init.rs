@@ -70,8 +70,8 @@ impl Store {
     /// `replacements` is an iterator over pairs of old and new object ids for replacement support.
     /// This means that when asking for object `X`, one will receive object `X-replaced` given an iterator like `Some((X, X-replaced))`.
     pub fn at_opts(
-        objects_dir: impl Into<PathBuf>,
-        replacements: impl IntoIterator<Item = (gix_hash::ObjectId, gix_hash::ObjectId)>,
+        objects_dir: PathBuf,
+        replacements: &mut dyn Iterator<Item = (gix_hash::ObjectId, gix_hash::ObjectId)>,
         Options {
             slots,
             object_hash,
@@ -80,7 +80,6 @@ impl Store {
         }: Options,
     ) -> std::io::Result<Self> {
         let _span = gix_features::trace::detail!("gix_odb::Store::at()");
-        let objects_dir = objects_dir.into();
         let current_dir = current_dir.map_or_else(std::env::current_dir, Ok)?;
         if !objects_dir.is_dir() {
             return Err(std::io::Error::new(
@@ -91,7 +90,7 @@ impl Store {
         let slot_count = match slots {
             Slots::Given(n) => n as usize,
             Slots::AsNeededByDiskState { multiplier, minimum } => {
-                let mut db_paths = crate::alternate::resolve(&objects_dir, &current_dir)
+                let mut db_paths = crate::alternate::resolve(objects_dir.clone(), &current_dir)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                 db_paths.insert(0, objects_dir.clone());
                 let num_slots = super::Store::collect_indices_and_mtime_sorted_by_size(db_paths, None, None)
@@ -107,7 +106,7 @@ impl Store {
                 "Cannot use more than 1^15 slots",
             ));
         }
-        let mut replacements: Vec<_> = replacements.into_iter().collect();
+        let mut replacements: Vec<_> = replacements.collect();
         replacements.sort_by(|a, b| a.0.cmp(&b.0));
 
         Ok(Store {

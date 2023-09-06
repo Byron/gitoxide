@@ -11,9 +11,9 @@ mod impl_ {
     impl Debug {
         /// Create a new instance
         #[inline]
-        pub fn new(owner: impl Into<String>) -> Self {
+        pub fn new(owner: String) -> Self {
             Debug {
-                owner: owner.into(),
+                owner,
                 hits: 0,
                 puts: 0,
                 misses: 0,
@@ -61,7 +61,7 @@ mod impl_ {
     impl Debug {
         /// Create a new instance
         #[inline]
-        pub fn new(_owner: impl Into<String>) -> Self {
+        pub fn new(_owner: String) -> Self {
             Debug
         }
         /// noop

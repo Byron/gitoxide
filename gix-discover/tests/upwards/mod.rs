@@ -58,7 +58,7 @@ fn from_bare_git_dir_without_config_file() -> crate::Result {
 fn from_inside_bare_git_dir() -> crate::Result {
     let git_dir = repo_path()?.join("bare.git");
     let dir = git_dir.join("objects");
-    let (path, trust) = gix_discover::upwards(dir)?;
+    let (path, trust) = gix_discover::upwards(&dir)?;
     assert_eq!(
         path.as_ref(),
         git_dir,
@@ -109,7 +109,7 @@ fn from_working_dir_no_config() -> crate::Result {
 fn from_nested_dir() -> crate::Result {
     let working_dir = repo_path()?;
     let dir = working_dir.join("some/very/deeply/nested/subdir");
-    let (path, trust) = gix_discover::upwards(dir)?;
+    let (path, trust) = gix_discover::upwards(&dir)?;
     assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     assert_eq!(path.as_ref(), working_dir, "a working tree dir yields the git dir");
     assert_eq!(trust, expected_trust());
@@ -125,7 +125,7 @@ fn from_dir_with_dot_dot() -> crate::Result {
     // exploring ancestors.)
     let working_dir = repo_path()?;
     let dir = working_dir.join("some/very/deeply/nested/subdir/../../../../../..");
-    let (path, trust) = gix_discover::upwards(dir)?;
+    let (path, trust) = gix_discover::upwards(&dir)?;
     assert_ne!(
         path.as_ref().canonicalize()?,
         working_dir.canonicalize()?,
@@ -160,7 +160,7 @@ fn from_dir_with_dot_dot() -> crate::Result {
 fn from_nested_dir_inside_a_git_dir() -> crate::Result {
     let working_dir = repo_path()?;
     let dir = working_dir.join(".git").join("objects");
-    let (path, trust) = gix_discover::upwards(dir)?;
+    let (path, trust) = gix_discover::upwards(&dir)?;
     assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     assert_eq!(path.as_ref(), working_dir, "we find .git directories on the way");
     assert_eq!(trust, expected_trust());
@@ -170,18 +170,18 @@ fn from_nested_dir_inside_a_git_dir() -> crate::Result {
 #[test]
 fn from_non_existing_worktree() {
     let top_level_repo = repo_path().unwrap();
-    let (path, _trust) = gix_discover::upwards(top_level_repo.join("worktrees/b-private-dir-deleted")).unwrap();
+    let (path, _trust) = gix_discover::upwards(&top_level_repo.join("worktrees/b-private-dir-deleted")).unwrap();
     assert_eq!(path, gix_discover::repository::Path::WorkTree(top_level_repo.clone()));
 
     let (path, _trust) =
-        gix_discover::upwards(top_level_repo.join("worktrees/from-bare/d-private-dir-deleted")).unwrap();
+        gix_discover::upwards(&top_level_repo.join("worktrees/from-bare/d-private-dir-deleted")).unwrap();
     assert_eq!(path, gix_discover::repository::Path::WorkTree(top_level_repo));
 }
 
 #[test]
 fn from_existing_worktree_inside_dot_git() {
     let top_level_repo = repo_path().unwrap();
-    let (path, _trust) = gix_discover::upwards(top_level_repo.join(".git/worktrees/a")).unwrap();
+    let (path, _trust) = gix_discover::upwards(&top_level_repo.join(".git/worktrees/a")).unwrap();
     let suffix = std::path::Path::new(top_level_repo.file_name().unwrap())
         .join("worktrees")
         .join("a");
@@ -194,7 +194,7 @@ fn from_existing_worktree_inside_dot_git() {
 #[test]
 fn from_non_existing_worktree_inside_dot_git() {
     let top_level_repo = repo_path().unwrap();
-    let (path, _trust) = gix_discover::upwards(top_level_repo.join(".git/worktrees/c-worktree-deleted")).unwrap();
+    let (path, _trust) = gix_discover::upwards(&top_level_repo.join(".git/worktrees/c-worktree-deleted")).unwrap();
     let suffix = std::path::Path::new(top_level_repo.file_name().unwrap())
         .join("worktrees")
         .join("c-worktree-deleted");
@@ -215,7 +215,7 @@ fn from_existing_worktree() -> crate::Result {
             "bare.git/worktrees/c",
         ),
     ] {
-        let (path, trust) = gix_discover::upwards(discover_path)?;
+        let (path, trust) = gix_discover::upwards(&discover_path)?;
         assert!(matches!(path, gix_discover::repository::Path::LinkedWorkTree { .. }));
 
         assert_eq!(trust, expected_trust());
@@ -281,7 +281,7 @@ fn cross_fs() -> crate::Result {
         })
     };
 
-    let res = gix_discover::upwards(top_level_repo.path().join("remote"))
+    let res = gix_discover::upwards(&top_level_repo.path().join("remote"))
         .expect_err("the cross-fs option should prevent us from discovering the repo");
     assert!(matches!(
         res,
@@ -289,7 +289,7 @@ fn cross_fs() -> crate::Result {
     ));
 
     let (repo_path, _trust) = gix_discover::upwards_opts(
-        top_level_repo.path().join("remote"),
+        &top_level_repo.path().join("remote"),
         Options {
             cross_fs: true,
             ..Default::default()
@@ -312,7 +312,7 @@ fn cross_fs() -> crate::Result {
 #[test]
 fn do_not_shorten_absolute_paths() -> crate::Result {
     let top_level_repo = repo_path()?.canonicalize().expect("repo path exists");
-    let (repo_path, _trust) = gix_discover::upwards(top_level_repo).expect("we can discover the repo");
+    let (repo_path, _trust) = gix_discover::upwards(&top_level_repo).expect("we can discover the repo");
 
     match repo_path {
         gix_discover::repository::Path::WorkTree(work_dir) => {
@@ -329,7 +329,7 @@ mod dot_git_only {
 
     fn find_dot_git(base: impl AsRef<std::path::Path>) -> gix_discover::repository::Path {
         gix_discover::upwards_opts(
-            base,
+            base.as_ref(),
             gix_discover::upwards::Options {
                 dot_git_only: true,
                 ..Default::default()
@@ -400,7 +400,7 @@ mod submodules {
                 "{path:?} should match {submodule_m1_workdir:?} {submodule_m1_gitdir:?}"
             );
 
-            let (path, _trust) = gix_discover::upwards(submodule_m1_workdir.join("subdir"))?;
+            let (path, _trust) = gix_discover::upwards(&submodule_m1_workdir.join("subdir"))?;
             assert!(
                 matches!(path, gix_discover::repository::Path::LinkedWorkTree{ref work_dir, ref git_dir} if work_dir == &submodule_m1_workdir && git_dir == &submodule_m1_gitdir),
                 "{path:?} should match {submodule_m1_workdir:?} {submodule_m1_gitdir:?}"

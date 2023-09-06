@@ -1,7 +1,5 @@
 use std::sync::atomic::AtomicBool;
 
-use gix::Progress;
-
 use crate::{pack, OutputFormat};
 
 /// A general purpose context for many operations provided here
@@ -21,7 +19,7 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 pub fn integrity(
     repo: gix::Repository,
     mut out: impl std::io::Write,
-    progress: impl Progress,
+    mut progress: impl gix::NestedProgress + 'static,
     should_interrupt: &AtomicBool,
     Context {
         output_statistics,
@@ -32,7 +30,7 @@ pub fn integrity(
 ) -> anyhow::Result<()> {
     #[cfg_attr(not(feature = "serde"), allow(unused))]
     let outcome = repo.objects.store_ref().verify_integrity(
-        progress,
+        &mut progress,
         should_interrupt,
         gix::odb::pack::index::verify::integrity::Options {
             verify_mode,
@@ -50,9 +48,7 @@ pub fn integrity(
             let objects = repo.objects;
             move |oid, buf: &mut Vec<u8>| objects.find_tree_iter(oid, buf).ok()
         })?;
-        outcome
-            .progress
-            .info(format!("Index at '{}' OK", index.path().display()));
+        progress.info(format!("Index at '{}' OK", index.path().display()));
     }
     match output_statistics {
         Some(OutputFormat::Human) => writeln!(out, "Human output is currently unsupported, use JSON instead")?,

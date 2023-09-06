@@ -19,7 +19,7 @@ fn git_dir_candidate_within_ceiling_allows_discovery() -> crate::Result {
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");
     let (repo_path, _trust) = gix_discover::upwards_opts(
-        dir,
+        &dir,
         Options {
             ceiling_dirs: vec![work_dir.clone()],
             ..Default::default()
@@ -39,7 +39,7 @@ fn ceiling_dir_is_ignored_if_we_are_standing_on_the_ceiling_and_no_match_is_requ
     // But we can ignore that just like git does (see https://github.com/Byron/gitoxide/pull/723 for more information)
     // and imagine us to 'stand on the ceiling', hence we are already past it.
     let (repo_path, _trust) = gix_discover::upwards_opts(
-        dir.clone(),
+        &dir.clone(),
         Options {
             ceiling_dirs: vec![dir],
             match_ceiling_dir_or_error: false,
@@ -57,7 +57,7 @@ fn discovery_fails_if_we_require_a_matching_ceiling_dir_but_are_standing_on_it()
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");
     let err = gix_discover::upwards_opts(
-        dir.clone(),
+        &dir.clone(),
         Options {
             ceiling_dirs: vec![dir],
             match_ceiling_dir_or_error: true,
@@ -79,7 +79,7 @@ fn ceiling_dir_limits_are_respected_and_prevent_discovery() -> crate::Result {
     let dir = work_dir.join("some/very/deeply/nested/subdir");
 
     let err = gix_discover::upwards_opts(
-        dir,
+        &dir,
         Options {
             ceiling_dirs: vec![work_dir.join("some/../some")],
             ..Default::default()
@@ -99,7 +99,7 @@ fn no_matching_ceiling_dir_error_can_be_suppressed() -> crate::Result {
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");
     let (repo_path, _trust) = gix_discover::upwards_opts(
-        dir,
+        &dir,
         Options {
             match_ceiling_dir_or_error: false,
             ceiling_dirs: vec![
@@ -122,7 +122,7 @@ fn more_restrictive_ceiling_dirs_overrule_less_restrictive_ones() -> crate::Resu
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");
     let err = gix_discover::upwards_opts(
-        dir,
+        &dir,
         Options {
             ceiling_dirs: vec![work_dir.clone(), work_dir.join("some")],
             ..Default::default()
@@ -142,7 +142,7 @@ fn ceiling_dirs_are_not_processed_differently_than_the_git_dir_candidate() -> cr
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir/../../../../../..");
     let (repo_path, _trust) = gix_discover::upwards_opts(
-        dir,
+        &dir,
         Options {
             match_ceiling_dir_or_error: false,
             ceiling_dirs: vec![Path::new("./some").into()],
@@ -165,7 +165,7 @@ fn no_matching_ceiling_dirs_errors_by_default() -> crate::Result {
     let relative_work_dir = repo_path()?;
     let dir = relative_work_dir.join("some");
     let res = gix_discover::upwards_opts(
-        dir,
+        &dir,
         Options {
             ceiling_dirs: vec!["/something/somewhere".into()],
             ..Default::default()
@@ -196,9 +196,9 @@ fn ceilings_are_adjusted_to_match_search_dir() -> crate::Result {
     assert_repo_is_current_workdir(repo_path, &relative_work_dir);
 
     assert!(relative_work_dir.is_relative());
-    let absolute_dir = gix_path::realpath_opts(relative_work_dir.join("some"), cwd, 8)?;
+    let absolute_dir = gix_path::realpath_opts(relative_work_dir.join("some").as_ref(), &cwd, 8)?;
     let (repo_path, _trust) = gix_discover::upwards_opts(
-        absolute_dir,
+        &absolute_dir,
         Options {
             ceiling_dirs: vec![relative_work_dir.clone()],
             ..Default::default()

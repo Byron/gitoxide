@@ -18,8 +18,16 @@ impl<'event> File<'event> {
         name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
     ) -> Result<SectionMut<'a, 'event>, lookup::existing::Error> {
+        self.section_mut_inner(name.as_ref(), subsection_name)
+    }
+
+    fn section_mut_inner<'a>(
+        &'a mut self,
+        name: &str,
+        subsection_name: Option<&BStr>,
+    ) -> Result<SectionMut<'a, 'event>, lookup::existing::Error> {
         let id = self
-            .section_ids_by_name_and_subname(name.as_ref(), subsection_name)?
+            .section_ids_by_name_and_subname(name, subsection_name)?
             .next_back()
             .expect("BUG: Section lookup vec was empty");
         let nl = self.detect_newline_style_smallvec();
@@ -64,7 +72,15 @@ impl<'event> File<'event> {
         subsection_name: Option<&BStr>,
         filter: &mut MetadataFilter,
     ) -> Result<SectionMut<'a, 'event>, section::header::Error> {
-        let name = name.as_ref();
+        self.section_mut_or_create_new_filter_inner(name.as_ref(), subsection_name, filter)
+    }
+
+    fn section_mut_or_create_new_filter_inner<'a>(
+        &'a mut self,
+        name: &str,
+        subsection_name: Option<&BStr>,
+        filter: &mut MetadataFilter,
+    ) -> Result<SectionMut<'a, 'event>, section::header::Error> {
         match self
             .section_ids_by_name_and_subname(name.as_ref(), subsection_name)
             .ok()
@@ -96,8 +112,17 @@ impl<'event> File<'event> {
         subsection_name: Option<&BStr>,
         filter: &mut MetadataFilter,
     ) -> Result<Option<file::SectionMut<'a, 'event>>, lookup::existing::Error> {
+        self.section_mut_filter_inner(name.as_ref(), subsection_name, filter)
+    }
+
+    fn section_mut_filter_inner<'a>(
+        &'a mut self,
+        name: &str,
+        subsection_name: Option<&BStr>,
+        filter: &mut MetadataFilter,
+    ) -> Result<Option<file::SectionMut<'a, 'event>>, lookup::existing::Error> {
         let id = self
-            .section_ids_by_name_and_subname(name.as_ref(), subsection_name)?
+            .section_ids_by_name_and_subname(name, subsection_name)?
             .rev()
             .find(|id| {
                 let s = &self.sections[id];
@@ -159,6 +184,14 @@ impl<'event> File<'event> {
         name: impl Into<Cow<'event, str>>,
         subsection: impl Into<Option<Cow<'event, BStr>>>,
     ) -> Result<SectionMut<'_, 'event>, section::header::Error> {
+        self.new_section_inner(name.into(), subsection.into())
+    }
+
+    fn new_section_inner(
+        &mut self,
+        name: Cow<'event, str>,
+        subsection: Option<Cow<'event, BStr>>,
+    ) -> Result<SectionMut<'_, 'event>, section::header::Error> {
         let id = self.push_section_internal(file::Section::new(name, subsection, OwnShared::clone(&self.meta))?);
         let nl = self.detect_newline_style_smallvec();
         let mut section = self.sections.get_mut(&id).expect("each id yields a section").to_mut(nl);
@@ -205,11 +238,11 @@ impl<'event> File<'event> {
     /// ```
     pub fn remove_section<'a>(
         &mut self,
-        name: &str,
+        name: impl AsRef<str>,
         subsection_name: impl Into<Option<&'a BStr>>,
     ) -> Option<file::Section<'event>> {
         let id = self
-            .section_ids_by_name_and_subname(name, subsection_name.into())
+            .section_ids_by_name_and_subname(name.as_ref(), subsection_name.into())
             .ok()?
             .next_back()?;
         self.remove_section_by_id(id)
@@ -254,12 +287,21 @@ impl<'event> File<'event> {
     /// later sections with the same name have precedent over earlier ones.
     pub fn remove_section_filter<'a>(
         &mut self,
-        name: &str,
+        name: impl AsRef<str>,
         subsection_name: impl Into<Option<&'a BStr>>,
         filter: &mut MetadataFilter,
     ) -> Option<file::Section<'event>> {
+        self.remove_section_filter_inner(name.as_ref(), subsection_name.into(), filter)
+    }
+
+    fn remove_section_filter_inner(
+        &mut self,
+        name: &str,
+        subsection_name: Option<&BStr>,
+        filter: &mut MetadataFilter,
+    ) -> Option<file::Section<'event>> {
         let id = self
-            .section_ids_by_name_and_subname(name, subsection_name.into())
+            .section_ids_by_name_and_subname(name, subsection_name)
             .ok()?
             .rev()
             .find(|id| filter(self.sections.get(id).expect("each id has a section").meta()))?;

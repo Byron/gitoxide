@@ -65,7 +65,7 @@ mod refedit_ext {
         ];
 
         let err = edits
-            .pre_process(|n| store.find_existing(n), |_, e| e)
+            .pre_process(&mut |n| store.find_existing(n), &mut |_, e| e)
             .expect_err("duplicate detected");
         assert_eq!(
             err.to_string(),
@@ -146,10 +146,9 @@ mod refedit_ext {
                 },
             ];
 
-            edits.extend_with_splits_of_symbolic_refs(
-                |n| store.find_existing(n),
-                |_, _| panic!("should not be called"),
-            )?;
+            edits.extend_with_splits_of_symbolic_refs(&mut |n| store.find_existing(n), &mut |_, _| {
+                panic!("should not be called")
+            })?;
             assert_eq!(edits.len(), 3, "no edit was added");
             assert!(
                 !find(&edits, "refs/heads/anything-but-not-symbolic").deref,
@@ -166,7 +165,7 @@ mod refedit_ext {
         fn empty_inputs_are_ok() -> crate::Result {
             let store = MockStore::default();
             Vec::<RefEdit>::new()
-                .extend_with_splits_of_symbolic_refs(|n| store.find_existing(n), |_, e| e)
+                .extend_with_splits_of_symbolic_refs(&mut |n| store.find_existing(n), &mut |_, e| e)
                 .map_err(Into::into)
         }
 
@@ -214,7 +213,7 @@ mod refedit_ext {
 
             let store = Cycler::default();
             let err = edits
-                .extend_with_splits_of_symbolic_refs(|n| store.find_existing(n), |_, e| e)
+                .extend_with_splits_of_symbolic_refs(&mut |n| store.find_existing(n), &mut |_, e| e)
                 .expect_err("cycle detected");
             assert_eq!(
                 err.to_string(),
@@ -283,13 +282,10 @@ mod refedit_ext {
             ];
 
             let mut indices = Vec::new();
-            edits.extend_with_splits_of_symbolic_refs(
-                |n| store.find_existing(n),
-                |idx, e| {
-                    indices.push(idx);
-                    e
-                },
-            )?;
+            edits.extend_with_splits_of_symbolic_refs(&mut |n| store.find_existing(n), &mut |idx, e| {
+                indices.push(idx);
+                e
+            })?;
             assert_eq!(
                 indices,
                 vec![0, 1, 2, 3],

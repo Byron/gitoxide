@@ -18,14 +18,14 @@ impl<'event> Body<'event> {
     /// Note that we consider values without key separator `=` non-existing.
     #[must_use]
     pub fn value(&self, key: impl AsRef<str>) -> Option<Cow<'_, BStr>> {
-        self.value_implicit(key).flatten()
+        self.value_implicit(key.as_ref()).flatten()
     }
 
     /// Retrieves the last matching value in a section with the given key, if present, and indicates an implicit value with `Some(None)`,
     /// and a non-existing one as `None`
     #[must_use]
-    pub fn value_implicit(&self, key: impl AsRef<str>) -> Option<Option<Cow<'_, BStr>>> {
-        let key = Key::from_str_unchecked(key.as_ref());
+    pub fn value_implicit(&self, key: &str) -> Option<Option<Cow<'_, BStr>>> {
+        let key = Key::from_str_unchecked(key);
         let (_key_range, range) = self.key_and_value_range_by(&key)?;
         let range = match range {
             None => return Some(None),
@@ -54,8 +54,8 @@ impl<'event> Body<'event> {
     /// Retrieves all values that have the provided key name. This may return
     /// an empty vec, which implies there were no values with the provided key.
     #[must_use]
-    pub fn values(&self, key: impl AsRef<str>) -> Vec<Cow<'_, BStr>> {
-        let key = &Key::from_str_unchecked(key.as_ref());
+    pub fn values(&self, key: &str) -> Vec<Cow<'_, BStr>> {
+        let key = &Key::from_str_unchecked(key);
         let mut values = Vec::new();
         let mut expect_value = false;
         let mut concatenated_value = BString::default();
@@ -92,8 +92,8 @@ impl<'event> Body<'event> {
 
     /// Returns true if the section contains the provided key.
     #[must_use]
-    pub fn contains_key(&self, key: impl AsRef<str>) -> bool {
-        let key = &Key::from_str_unchecked(key.as_ref());
+    pub fn contains_key(&self, key: &str) -> bool {
+        let key = &Key::from_str_unchecked(key);
         self.0.iter().any(|e| {
             matches!(e,
                 Event::SectionKey(k) if k == key

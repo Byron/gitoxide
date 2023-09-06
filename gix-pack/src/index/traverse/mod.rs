@@ -1,10 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
-use gix_features::{
-    parallel,
-    progress::{Progress, RawProgress},
-    zlib,
-};
+use gix_features::{parallel, progress::Progress, zlib};
 
 use crate::index;
 
@@ -17,6 +13,7 @@ use reduce::Reducer;
 
 mod error;
 pub use error::Error;
+use gix_features::progress::DynNestedProgress;
 
 mod types;
 pub use types::{Algorithm, ProgressId, SafetyCheck, Statistics};
@@ -47,13 +44,11 @@ impl Default for Options<fn() -> crate::cache::Never> {
 }
 
 /// The outcome of the [`traverse()`][index::File::traverse()] method.
-pub struct Outcome<P> {
+pub struct Outcome {
     /// The checksum obtained when hashing the file, which matched the checksum contained within the file.
     pub actual_index_checksum: gix_hash::ObjectId,
     /// The statistics obtained during traversal.
     pub statistics: Statistics,
-    /// The input progress to allow reuse.
-    pub progress: P,
 }
 
 /// Traversal of pack data files using an index file
@@ -78,10 +73,10 @@ impl index::File {
     ///
     /// Use [`thread_limit`][Options::thread_limit] to further control parallelism and [`check`][SafetyCheck] to define how much the passed
     /// objects shall be verified beforehand.
-    pub fn traverse<P, C, Processor, E, F>(
+    pub fn traverse<C, Processor, E, F>(
         &self,
         pack: &crate::data::File,
-        progress: P,
+        progress: &mut dyn DynNestedProgress,
         should_interrupt: &AtomicBool,
         processor: Processor,
         Options {
@@ -90,12 +85,11 @@ impl index::File {
             check,
             make_pack_lookup_cache,
         }: Options<F>,
-    ) -> Result<Outcome<P>, Error<E>>
+    ) -> Result<Outcome, Error<E>>
     where
-        P: Progress,
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
-        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn RawProgress) -> Result<(), E> + Send + Clone,
+        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn Progress) -> Result<(), E> + Send + Clone,
         F: Fn() -> C + Send + Clone,
     {
         match traversal {
@@ -124,8 +118,8 @@ impl index::File {
         &self,
         pack: &crate::data::File,
         check: SafetyCheck,
-        pack_progress: impl Progress,
-        index_progress: impl Progress,
+        pack_progress: &mut dyn Progress,
+        index_progress: &mut dyn Progress,
         should_interrupt: &AtomicBool,
     ) -> Result<gix_hash::ObjectId, Error<E>>
     where
@@ -157,9 +151,9 @@ impl index::File {
         cache: &mut C,
         buf: &mut Vec<u8>,
         inflate: &mut zlib::Inflate,
-        progress: &mut dyn RawProgress,
+        progress: &mut dyn Progress,
         index_entry: &index::Entry,
-        processor: &mut impl FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn RawProgress) -> Result<(), E>,
+        processor: &mut impl FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn Progress) -> Result<(), E>,
     ) -> Result<crate::data::decode::entry::Outcome, Error<E>>
     where
         C: crate::cache::DecodeEntry,
@@ -172,7 +166,7 @@ impl index::File {
                 pack_entry,
                 buf,
                 inflate,
-                |id, _| {
+                &|id, _| {
                     self.lookup(id).map(|index| {
                         crate::data::decode::entry::ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
                     })
@@ -208,8 +202,8 @@ fn process_entry<E>(
     decompressed: &[u8],
     index_entry: &index::Entry,
     pack_entry_crc32: impl FnOnce() -> u32,
-    progress: &dyn RawProgress,
-    processor: &mut impl FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn RawProgress) -> Result<(), E>,
+    progress: &dyn Progress,
+    processor: &mut impl FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn Progress) -> Result<(), E>,
 ) -> Result<(), Error<E>>
 where
     E: std::error::Error + Send + Sync + 'static,

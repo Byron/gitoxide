@@ -17,8 +17,8 @@ impl File<'_> {
     /// as it was parsed, while writing only sections for which `filter` returns true.
     pub fn write_to_filter(
         &self,
-        mut out: impl std::io::Write,
-        mut filter: impl FnMut(&Section<'_>) -> bool,
+        mut out: &mut dyn std::io::Write,
+        mut filter: &mut dyn FnMut(&Section<'_>) -> bool,
     ) -> std::io::Result<()> {
         let nl = self.detect_newline_style();
 
@@ -65,8 +65,8 @@ impl File<'_> {
 
     /// Stream ourselves to the given `out`, in order to reproduce this file mostly losslessly
     /// as it was parsed.
-    pub fn write_to(&self, out: impl std::io::Write) -> std::io::Result<()> {
-        self.write_to_filter(out, |_| true)
+    pub fn write_to(&self, out: &mut dyn std::io::Write) -> std::io::Result<()> {
+        self.write_to_filter(out, &mut |_| true)
     }
 }
 

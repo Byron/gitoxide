@@ -8,7 +8,7 @@ mod ignore;
 fn probe_case() -> crate::Result<Case> {
     Ok(
         if gix_fs::Capabilities::probe(
-            gix_discover::upwards(".")?
+            &gix_discover::upwards(".".as_ref())?
                 .0
                 .into_repository_and_work_tree_directories()
                 .0,

@@ -99,38 +99,44 @@ impl Search {
         prefix: Option<&std::path::Path>,
         root: &std::path::Path,
     ) -> Result<Self, crate::normalize::Error> {
-        let prefix = prefix.unwrap_or(std::path::Path::new(""));
-        let mut patterns = pathspecs
-            .into_iter()
-            .enumerate()
-            .map(|(idx, pattern)| mapping_from_pattern(pattern, prefix, root, idx))
-            .collect::<Result<Vec<_>, _>>()?;
+        fn inner(
+            pathspecs: &mut dyn Iterator<Item = Pattern>,
+            prefix: Option<&std::path::Path>,
+            root: &std::path::Path,
+        ) -> Result<Search, crate::normalize::Error> {
+            let prefix = prefix.unwrap_or(std::path::Path::new(""));
+            let mut patterns = pathspecs
+                .enumerate()
+                .map(|(idx, pattern)| mapping_from_pattern(pattern, prefix, root, idx))
+                .collect::<Result<Vec<_>, _>>()?;
 
-        if patterns.is_empty() && !prefix.as_os_str().is_empty() {
-            patterns.push(mapping_from_pattern(
-                Pattern::from_literal(&[], MagicSignature::MUST_BE_DIR),
-                prefix,
-                root,
-                0,
-            )?);
+            if patterns.is_empty() && !prefix.as_os_str().is_empty() {
+                patterns.push(mapping_from_pattern(
+                    Pattern::from_literal(&[], MagicSignature::MUST_BE_DIR),
+                    prefix,
+                    root,
+                    0,
+                )?);
+            }
+
+            // Excludes should always happen first so we know a match is authoritative (otherwise we could find a non-excluding match first).
+            patterns.sort_by(|a, b| {
+                a.value
+                    .pattern
+                    .is_excluded()
+                    .cmp(&b.value.pattern.is_excluded())
+                    .reverse()
+            });
+
+            let common_prefix_len = common_prefix_len(&patterns);
+            Ok(Search {
+                all_patterns_are_excluded: patterns.iter().all(|s| s.value.pattern.is_excluded()),
+                patterns,
+                source: None,
+                common_prefix_len,
+            })
         }
-
-        // Excludes should always happen first so we know a match is authoritative (otherwise we could find a non-excluding match first).
-        patterns.sort_by(|a, b| {
-            a.value
-                .pattern
-                .is_excluded()
-                .cmp(&b.value.pattern.is_excluded())
-                .reverse()
-        });
-
-        let common_prefix_len = common_prefix_len(&patterns);
-        Ok(Search {
-            all_patterns_are_excluded: patterns.iter().all(|s| s.value.pattern.is_excluded()),
-            patterns,
-            source: None,
-            common_prefix_len,
-        })
+        inner(&mut pathspecs.into_iter(), prefix, root)
     }
 
     /// Obtain ownership of the normalized pathspec patterns that were used for the search.

@@ -38,7 +38,7 @@ mod changes {
                 .tree();
 
             Ok(db
-                .try_find(tree_id, buf)?
+                .try_find(&tree_id, buf)?
                 .expect("main tree present")
                 .0
                 .try_into_tree_iter()
@@ -88,7 +88,7 @@ mod changes {
                 })
             };
             let current_tree = db
-                .try_find(main_tree_id, &mut buf)?
+                .try_find(&main_tree_id, &mut buf)?
                 .expect("main tree present")
                 .0
                 .try_into_tree_iter()
@@ -96,11 +96,11 @@ mod changes {
             let mut buf2 = Vec::new();
             let previous_tree: Option<_> = {
                 parent_commit_id
-                    .and_then(|id| db.try_find(id, &mut buf2).ok().flatten())
+                    .and_then(|id| db.try_find(&id, &mut buf2).ok().flatten())
                     .and_then(|(c, _l)| c.decode().ok())
                     .and_then(gix_object::ObjectRef::into_commit)
                     .map(|c| c.tree())
-                    .and_then(|tree| db.try_find(tree, &mut buf2).ok().flatten())
+                    .and_then(|tree| db.try_find(&tree, &mut buf2).ok().flatten())
                     .and_then(|(tree, _)| tree.try_into_tree_iter())
             };
 
@@ -151,7 +151,7 @@ mod changes {
             .map(|c| {
                 use gix_odb::FindExt;
                 (
-                    db.find_commit(c.id, &mut buf)
+                    db.find_commit(&c.id, &mut buf)
                         .unwrap()
                         .message
                         .trim()

@@ -20,7 +20,7 @@ pub fn hex_to_id(hex: &str) -> ObjectId {
     ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
 }
 
-pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 #[cfg(not(windows))]
 pub fn fixup(v: Vec<u8>) -> Vec<u8> {

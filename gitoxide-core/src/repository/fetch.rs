@@ -49,7 +49,7 @@ pub(crate) mod function {
         }: Options,
     ) -> anyhow::Result<()>
     where
-        P: gix::Progress,
+        P: gix::NestedProgress,
         P::SubProgress: 'static,
     {
         if format != OutputFormat::Human {
@@ -134,7 +134,7 @@ pub(crate) mod function {
         mut progress: impl gix::Progress,
     ) -> anyhow::Result<()> {
         progress.init(Some(graph.len()), gix::progress::count("commits"));
-        progress.set_name("building graph");
+        progress.set_name("building graph".into());
 
         let mut map = gix::hashtable::HashMap::default();
         let mut vg = layout::topo::layout::VisualGraph::new(Orientation::TopToBottom);
@@ -168,7 +168,7 @@ pub(crate) mod function {
         }
 
         let start = std::time::Instant::now();
-        progress.set_name("layout graph");
+        progress.set_name("layout graph".into());
         progress.info(format!("writing {path:?}…"));
         let mut svg = SVGWriter::new();
         vg.do_it(false, false, false, &mut svg);

@@ -31,7 +31,7 @@ impl<'a> Iterator for Expectations<'a> {
 
 #[test]
 fn baseline_from_git_dir() -> crate::Result {
-    let case = if gix_fs::Capabilities::probe("../.git").ignore_case {
+    let case = if gix_fs::Capabilities::probe("../.git".as_ref()).ignore_case {
         Case::Fold
     } else {
         Case::Sensitive
@@ -41,10 +41,10 @@ fn baseline_from_git_dir() -> crate::Result {
     let git_dir = repo_dir.join(".git");
     let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline"))?;
     let mut buf = Vec::new();
-    let mut group = gix_ignore::Search::from_git_dir(git_dir, Some(dir.join("user.exclude")), &mut buf)?;
+    let mut group = gix_ignore::Search::from_git_dir(&git_dir, Some(dir.join("user.exclude")), &mut buf)?;
 
     assert!(
-        !gix_glob::search::add_patterns_file(&mut group.patterns, "not-a-file", false, None, &mut buf)?,
+        !gix_glob::search::add_patterns_file(&mut group.patterns, "not-a-file".into(), false, None, &mut buf)?,
         "missing files are no problem and cause a negative response"
     );
     assert!(
@@ -102,13 +102,13 @@ fn baseline_from_git_dir() -> crate::Result {
 #[test]
 fn from_overrides() {
     let input = ["simple", "pattern/"];
-    let group = gix_ignore::Search::from_overrides(input);
+    let group = gix_ignore::Search::from_overrides(input.iter());
     assert_eq!(
-        group.pattern_matching_relative_path("Simple", None, gix_glob::pattern::Case::Fold),
+        group.pattern_matching_relative_path("Simple".into(), None, gix_glob::pattern::Case::Fold),
         Some(pattern_to_match(&gix_glob::parse("simple").unwrap(), 0))
     );
     assert_eq!(
-        group.pattern_matching_relative_path("pattern", Some(true), gix_glob::pattern::Case::Sensitive),
+        group.pattern_matching_relative_path("pattern".into(), Some(true), gix_glob::pattern::Case::Sensitive),
         Some(pattern_to_match(&gix_glob::parse("pattern/").unwrap(), 1))
     );
     assert_eq!(group.patterns.len(), 1);

@@ -15,8 +15,7 @@ pub mod from_gitdir_file {
     }
 }
 
-fn read_regular_file_content_with_size_limit(path: impl AsRef<std::path::Path>) -> std::io::Result<Vec<u8>> {
-    let path = path.as_ref();
+fn read_regular_file_content_with_size_limit(path: &std::path::Path) -> std::io::Result<Vec<u8>> {
     let mut file = std::fs::File::open(path)?;
     let max_file_size = 1024 * 64; // NOTE: git allows 1MB here
     let file_size = file.metadata()?.len();
@@ -37,7 +36,7 @@ fn read_regular_file_content_with_size_limit(path: impl AsRef<std::path::Path>) 
 }
 
 /// Reads a plain path from a file that contains it as its only content, with trailing newlines trimmed.
-pub fn from_plain_file(path: impl AsRef<std::path::Path>) -> Option<std::io::Result<PathBuf>> {
+pub fn from_plain_file(path: &std::path::Path) -> Option<std::io::Result<PathBuf>> {
     use bstr::ByteSlice;
     let mut buf = match read_regular_file_content_with_size_limit(path) {
         Ok(buf) => buf,
@@ -50,8 +49,7 @@ pub fn from_plain_file(path: impl AsRef<std::path::Path>) -> Option<std::io::Res
 }
 
 /// Reads typical `gitdir: ` files from disk as used by worktrees and submodules.
-pub fn from_gitdir_file(path: impl AsRef<std::path::Path>) -> Result<PathBuf, from_gitdir_file::Error> {
-    let path = path.as_ref();
+pub fn from_gitdir_file(path: &std::path::Path) -> Result<PathBuf, from_gitdir_file::Error> {
     let buf = read_regular_file_content_with_size_limit(path)?;
     let mut gitdir = crate::parse::gitdir(&buf)?;
     if let Some(parent) = path.parent() {

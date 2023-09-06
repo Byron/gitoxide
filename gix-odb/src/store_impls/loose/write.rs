@@ -27,9 +27,7 @@ pub enum Error {
 }
 
 impl crate::traits::Write for Store {
-    type Error = Error;
-
-    fn write(&self, object: impl WriteTo) -> Result<gix_hash::ObjectId, Self::Error> {
+    fn write(&self, object: &dyn WriteTo) -> Result<gix_hash::ObjectId, crate::write::Error> {
         let mut to = self.dest()?;
         to.write_all(&object.loose_header()).map_err(|err| Error::Io {
             source: err,
@@ -41,15 +39,15 @@ impl crate::traits::Write for Store {
             message: "stream all data into tempfile in",
             path: self.path.to_owned(),
         })?;
-        to.flush()?;
-        self.finalize_object(to)
+        to.flush().map_err(Box::new)?;
+        Ok(self.finalize_object(to).map_err(Box::new)?)
     }
 
     /// Write the given buffer in `from` to disk in one syscall at best.
     ///
     /// This will cost at least 4 IO operations.
-    fn write_buf(&self, kind: gix_object::Kind, from: &[u8]) -> Result<gix_hash::ObjectId, Self::Error> {
-        let mut to = self.dest()?;
+    fn write_buf(&self, kind: gix_object::Kind, from: &[u8]) -> Result<gix_hash::ObjectId, crate::write::Error> {
+        let mut to = self.dest().map_err(Box::new)?;
         to.write_all(&gix_object::encode::loose_header(kind, from.len()))
             .map_err(|err| Error::Io {
                 source: err,
@@ -63,7 +61,7 @@ impl crate::traits::Write for Store {
             path: self.path.to_owned(),
         })?;
         to.flush()?;
-        self.finalize_object(to)
+        Ok(self.finalize_object(to)?)
     }
 
     /// Write the given stream in `from` to disk with at least one syscall.
@@ -73,9 +71,9 @@ impl crate::traits::Write for Store {
         &self,
         kind: gix_object::Kind,
         size: u64,
-        mut from: impl io::Read,
-    ) -> Result<gix_hash::ObjectId, Self::Error> {
-        let mut to = self.dest()?;
+        mut from: &mut dyn io::Read,
+    ) -> Result<gix_hash::ObjectId, crate::write::Error> {
+        let mut to = self.dest().map_err(Box::new)?;
         to.write_all(&gix_object::encode::loose_header(
             kind,
             size.try_into().expect("object size to fit into usize"),
@@ -86,13 +84,15 @@ impl crate::traits::Write for Store {
             path: self.path.to_owned(),
         })?;
 
-        io::copy(&mut from, &mut to).map_err(|err| Error::Io {
-            source: err,
-            message: "stream all data into tempfile in",
-            path: self.path.to_owned(),
-        })?;
-        to.flush()?;
-        self.finalize_object(to)
+        io::copy(&mut from, &mut to)
+            .map_err(|err| Error::Io {
+                source: err,
+                message: "stream all data into tempfile in",
+                path: self.path.to_owned(),
+            })
+            .map_err(Box::new)?;
+        to.flush().map_err(Box::new)?;
+        Ok(self.finalize_object(to)?)
     }
 }
 

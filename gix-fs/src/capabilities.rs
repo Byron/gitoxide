@@ -45,14 +45,13 @@ impl Capabilities {
     /// `git_dir` is a typical git repository, expected to be populated with the typical files like `config`.
     ///
     /// All errors are ignored and interpreted on top of the default for the platform the binary is compiled for.
-    pub fn probe(git_dir: impl AsRef<Path>) -> Self {
-        let root = git_dir.as_ref();
+    pub fn probe(git_dir: &Path) -> Self {
         let ctx = Capabilities::default();
         Capabilities {
-            symlink: Self::probe_symlink(root).unwrap_or(ctx.symlink),
-            ignore_case: Self::probe_ignore_case(root).unwrap_or(ctx.ignore_case),
-            precompose_unicode: Self::probe_precompose_unicode(root).unwrap_or(ctx.precompose_unicode),
-            executable_bit: Self::probe_file_mode(root).unwrap_or(ctx.executable_bit),
+            symlink: Self::probe_symlink(git_dir).unwrap_or(ctx.symlink),
+            ignore_case: Self::probe_ignore_case(git_dir).unwrap_or(ctx.ignore_case),
+            precompose_unicode: Self::probe_precompose_unicode(git_dir).unwrap_or(ctx.precompose_unicode),
+            executable_bit: Self::probe_file_mode(git_dir).unwrap_or(ctx.executable_bit),
         }
     }
 

@@ -1,3 +1,5 @@
+/// The error type returned by the [`Find`](crate::Find) and [`Header`](crate::Header) traits.
+pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 ///
 pub mod existing {
     use gix_hash::ObjectId;
@@ -5,9 +7,9 @@ pub mod existing {
     /// The error returned by the [`find(…)`][crate::FindExt::find()] trait methods.
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
-    pub enum Error<T: std::error::Error + 'static> {
+    pub enum Error {
         #[error(transparent)]
-        Find(T),
+        Find(crate::find::Error),
         #[error("An object with id {} could not be found", .oid)]
         NotFound { oid: ObjectId },
     }
@@ -20,9 +22,9 @@ pub mod existing_object {
     /// The error returned by the various [`find_*()`][crate::FindExt::find_commit()] trait methods.
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
-    pub enum Error<T: std::error::Error + 'static> {
+    pub enum Error {
         #[error(transparent)]
-        Find(T),
+        Find(crate::find::Error),
         #[error(transparent)]
         Decode(gix_object::decode::Error),
         #[error("An object with id {oid} could not be found")]
@@ -39,9 +41,9 @@ pub mod existing_iter {
     /// The error returned by the various [`find_*_iter()`][crate::FindExt::find_commit_iter()] trait methods.
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
-    pub enum Error<T: std::error::Error + 'static> {
+    pub enum Error {
         #[error(transparent)]
-        Find(T),
+        Find(crate::find::Error),
         #[error("An object with id {oid} could not be found")]
         NotFound { oid: ObjectId },
         #[error("Expected object of kind {expected}")]

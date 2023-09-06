@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, sync::atomic::AtomicBool, time::Instant};
 
-use gix_features::progress::Progress;
+use gix_features::progress::{Count, DynNestedProgress, Progress};
 
 use crate::{index, multi_index::File};
 
@@ -39,13 +39,11 @@ pub mod integrity {
     }
 
     /// Returned by [`multi_index::File::verify_integrity()`][crate::multi_index::File::verify_integrity()].
-    pub struct Outcome<P> {
+    pub struct Outcome {
         /// The computed checksum of the multi-index which matched the stored one.
         pub actual_index_checksum: gix_hash::ObjectId,
         /// The for each entry in [`index_names()`][super::File::index_names()] provide the corresponding pack traversal outcome.
         pub pack_traverse_statistics: Vec<crate::index::traverse::Statistics>,
-        /// The provided progress instance.
-        pub progress: P,
     }
 
     /// The progress ids used in [`multi_index::File::verify_integrity()`][crate::multi_index::File::verify_integrity()].
@@ -80,7 +78,7 @@ impl File {
     /// of this index file, and return it if it does.
     pub fn verify_checksum(
         &self,
-        progress: impl Progress,
+        progress: &mut dyn Progress,
         should_interrupt: &AtomicBool,
     ) -> Result<gix_hash::ObjectId, checksum::Error> {
         crate::verify::checksum_on_disk_or_mmap(
@@ -96,14 +94,11 @@ impl File {
     /// Similar to [`verify_integrity()`][File::verify_integrity()] but without any deep inspection of objects.
     ///
     /// Instead we only validate the contents of the multi-index itself.
-    pub fn verify_integrity_fast<P>(
+    pub fn verify_integrity_fast(
         &self,
-        progress: P,
+        progress: &mut dyn DynNestedProgress,
         should_interrupt: &AtomicBool,
-    ) -> Result<(gix_hash::ObjectId, P), integrity::Error>
-    where
-        P: Progress,
-    {
+    ) -> Result<gix_hash::ObjectId, integrity::Error> {
         self.verify_integrity_inner(
             progress,
             should_interrupt,
@@ -114,35 +109,33 @@ impl File {
             index::traverse::Error::Processor(err) => err,
             _ => unreachable!("BUG: no other error type is possible"),
         })
-        .map(|o| (o.actual_index_checksum, o.progress))
+        .map(|o| o.actual_index_checksum)
     }
 
     /// Similar to [`crate::Bundle::verify_integrity()`] but checks all contained indices and their packs.
     ///
     /// Note that it's considered a failure if an index doesn't have a corresponding pack.
-    pub fn verify_integrity<C, P, F>(
+    pub fn verify_integrity<C, F>(
         &self,
-        progress: P,
+        progress: &mut dyn DynNestedProgress,
         should_interrupt: &AtomicBool,
         options: index::verify::integrity::Options<F>,
-    ) -> Result<integrity::Outcome<P>, index::traverse::Error<integrity::Error>>
+    ) -> Result<integrity::Outcome, index::traverse::Error<integrity::Error>>
     where
-        P: Progress,
         C: crate::cache::DecodeEntry,
         F: Fn() -> C + Send + Clone,
     {
         self.verify_integrity_inner(progress, should_interrupt, true, options)
     }
 
-    fn verify_integrity_inner<C, P, F>(
+    fn verify_integrity_inner<C, F>(
         &self,
-        mut progress: P,
+        progress: &mut dyn DynNestedProgress,
         should_interrupt: &AtomicBool,
         deep_check: bool,
         options: index::verify::integrity::Options<F>,
-    ) -> Result<integrity::Outcome<P>, index::traverse::Error<integrity::Error>>
+    ) -> Result<integrity::Outcome, index::traverse::Error<integrity::Error>>
     where
-        P: Progress,
         C: crate::cache::DecodeEntry,
         F: Fn() -> C + Send + Clone,
     {
@@ -150,7 +143,7 @@ impl File {
 
         let actual_index_checksum = self
             .verify_checksum(
-                progress.add_child_with_id(
+                &mut progress.add_child_with_id(
                     format!("{}: checksum", self.path.display()),
                     integrity::ProgressId::ChecksumBytes.into(),
                 ),
@@ -176,7 +169,7 @@ impl File {
         let mut pack_ids_and_offsets = Vec::with_capacity(self.num_objects as usize);
         {
             let order_start = Instant::now();
-            let mut progress = progress.add_child_with_id("checking oid order", gix_features::progress::UNKNOWN);
+            let mut progress = progress.add_child_with_id("checking oid order".into(), gix_features::progress::UNKNOWN);
             progress.init(
                 Some(self.num_objects as usize),
                 gix_features::progress::count("objects"),
@@ -238,8 +231,10 @@ impl File {
             let multi_index_entries_to_check = &pack_ids_slice[..slice_end];
             {
                 let offset_start = Instant::now();
-                let mut offsets_progress =
-                    progress.add_child_with_id("verify object offsets", integrity::ProgressId::ObjectOffsets.into());
+                let mut offsets_progress = progress.add_child_with_id(
+                    "verify object offsets".into(),
+                    integrity::ProgressId::ObjectOffsets.into(),
+                );
                 offsets_progress.init(
                     Some(pack_ids_and_offsets.len()),
                     gix_features::progress::count("objects"),
@@ -278,7 +273,6 @@ impl File {
                 let crate::bundle::verify::integrity::Outcome {
                     actual_index_checksum: _,
                     pack_traverse_outcome,
-                    progress: returned_progress,
                 } = bundle
                     .verify_integrity(progress, should_interrupt, options.clone())
                     .map_err(|err| {
@@ -315,7 +309,6 @@ impl File {
                             Interrupted => Interrupted,
                         }
                     })?;
-                progress = returned_progress;
                 pack_traverse_statistics.push(pack_traverse_outcome);
             }
         }
@@ -325,13 +318,12 @@ impl File {
             "BUG: our slicing should allow to visit all objects"
         );
 
-        progress.set_name("Validating multi-pack");
+        progress.set_name("Validating multi-pack".into());
         progress.show_throughput(operation_start);
 
         Ok(integrity::Outcome {
             actual_index_checksum,
             pack_traverse_statistics,
-            progress,
         })
     }
 }

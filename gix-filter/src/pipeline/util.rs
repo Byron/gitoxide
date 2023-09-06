@@ -75,7 +75,7 @@ impl<'driver> Configuration<'driver> {
         rela_path: &BStr,
         drivers: &'driver [Driver],
         attrs: &mut gix_attributes::search::Outcome,
-        attributes: impl FnOnce(&BStr, &mut gix_attributes::search::Outcome),
+        attributes: &mut dyn FnMut(&BStr, &mut gix_attributes::search::Outcome),
         config: eol::Configuration,
     ) -> Result<Configuration<'driver>, configuration::Error> {
         fn extract_driver<'a>(drivers: &'a [Driver], attr: &gix_attributes::search::Match<'_>) -> Option<&'a Driver> {

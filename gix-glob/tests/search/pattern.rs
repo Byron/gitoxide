@@ -23,7 +23,7 @@ mod list {
     #[test]
     fn from_bytes_base() {
         {
-            let list = List::<Dummy>::from_bytes(&[], "a/b/source", None);
+            let list = List::<Dummy>::from_bytes(&[], "a/b/source".into(), None);
             assert_eq!(list.base, None, "no root always means no-base, i.e. globals lists");
             assert_eq!(
                 list.source.as_deref(),
@@ -48,7 +48,7 @@ mod list {
         }
 
         {
-            let list = List::<Dummy>::from_bytes(&[], "a/b/source", Some(Path::new("c/")));
+            let list = List::<Dummy>::from_bytes(&[], "a/b/source".into(), Some(Path::new("c/")));
             assert_eq!(
                 list.base, None,
                 "if root doesn't contain source, it silently skips it as base"
@@ -63,7 +63,7 @@ mod list {
 
     #[test]
     fn strip_base_handle_recompute_basename_pos() {
-        let list = List::<Dummy>::from_bytes(&[], "a/b/source", Some(Path::new("")));
+        let list = List::<Dummy>::from_bytes(&[], "a/b/source".into(), Some(Path::new("")));
         assert_eq!(
             list.base.as_ref().expect("set"),
             "a/b/",

@@ -138,7 +138,7 @@ where
 
         let crc32 = if self.compressed.crc32() {
             let mut header_buf = [0u8; 12 + gix_hash::Kind::longest().len_in_bytes()];
-            let header_len = entry.header.write_to(bytes_copied, header_buf.as_mut())?;
+            let header_len = entry.header.write_to(bytes_copied, &mut header_buf.as_mut())?;
             let state = gix_features::hash::crc32_update(0, &header_buf[..header_len]);
             Some(gix_features::hash::crc32_update(state, &compressed))
         } else {

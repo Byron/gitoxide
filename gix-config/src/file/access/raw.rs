@@ -40,8 +40,17 @@ impl<'event> File<'event> {
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
-        let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
-        let key = key.as_ref();
+        self.raw_value_filter_inner(section_name.as_ref(), subsection_name, key.as_ref(), filter)
+    }
+
+    fn raw_value_filter_inner(
+        &self,
+        section_name: &str,
+        subsection_name: Option<&BStr>,
+        key: &str,
+        filter: &mut MetadataFilter,
+    ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
+        let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         for section_id in section_ids.rev() {
             let section = self.sections.get(&section_id).expect("known section id");
             if !filter(section.meta()) {
@@ -81,8 +90,18 @@ impl<'event> File<'event> {
         key: &'lookup str,
         filter: &mut MetadataFilter,
     ) -> Result<ValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
+        self.raw_value_mut_filter_inner(section_name.as_ref(), subsection_name, key, filter)
+    }
+
+    fn raw_value_mut_filter_inner<'lookup>(
+        &mut self,
+        section_name: &str,
+        subsection_name: Option<&'lookup BStr>,
+        key: &'lookup str,
+        filter: &mut MetadataFilter,
+    ) -> Result<ValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
         let mut section_ids = self
-            .section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?
+            .section_ids_by_name_and_subname(section_name, subsection_name)?
             .rev();
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
@@ -191,9 +210,18 @@ impl<'event> File<'event> {
         key: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
+        self.raw_values_filter_inner(section_name.as_ref(), subsection_name, key.as_ref(), filter)
+    }
+
+    fn raw_values_filter_inner(
+        &self,
+        section_name: &str,
+        subsection_name: Option<&BStr>,
+        key: &str,
+        filter: &mut MetadataFilter,
+    ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
         let mut values = Vec::new();
-        let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
-        let key = key.as_ref();
+        let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         for section_id in section_ids {
             let section = self.sections.get(&section_id).expect("known section id");
             if !filter(section.meta()) {
@@ -277,7 +305,17 @@ impl<'event> File<'event> {
         key: &'lookup str,
         filter: &mut MetadataFilter,
     ) -> Result<MultiValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
-        let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
+        self.raw_values_mut_filter_inner(section_name.as_ref(), subsection_name, key, filter)
+    }
+
+    fn raw_values_mut_filter_inner<'lookup>(
+        &mut self,
+        section_name: &str,
+        subsection_name: Option<&'lookup BStr>,
+        key: &'lookup str,
+        filter: &mut MetadataFilter,
+    ) -> Result<MultiValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
+        let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
         let mut offsets = HashMap::new();
@@ -432,7 +470,7 @@ impl<'event> File<'event> {
         section::key::Error: From<E>,
     {
         let mut section = self.section_mut_or_create_new_filter(section_name, subsection_name, filter)?;
-        Ok(section.set(key.try_into().map_err(section::key::Error::from)?, new_value))
+        Ok(section.set(key.try_into().map_err(section::key::Error::from)?, new_value.into()))
     }
 
     /// Sets a multivar in a given section, optional subsection, and key value.

@@ -6,7 +6,7 @@ pub fn hex_to_id(hex: &str) -> ObjectId {
     ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
 }
 
-pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 fn db() -> gix_odb::Handle {
     gix_odb::at(fixture_path_standalone("objects")).expect("valid object path")

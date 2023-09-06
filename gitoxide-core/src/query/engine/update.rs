@@ -12,7 +12,7 @@ use gix::{
     odb::FindExt,
     parallel::{InOrderIter, SequenceId},
     prelude::ObjectIdExt,
-    Progress,
+    Count, Progress,
 };
 use rusqlite::{params, Statement, Transaction};
 
@@ -21,7 +21,7 @@ use crate::query::Options;
 pub fn update(
     repo: &gix::Repository,
     con: &mut rusqlite::Connection,
-    progress: &mut impl gix::Progress,
+    progress: &mut impl gix::NestedProgress,
     mut err: impl std::io::Write,
     Options {
         object_cache_size_mb,
@@ -37,28 +37,28 @@ pub fn update(
         p.init(None, progress::count("commits"));
         p
     };
-    let stat_counter = stat_progress.counter().expect("shared counter available");
+    let stat_counter = stat_progress.counter();
 
     let mut db_progress = {
         let mut p = progress.add_child("db cache");
         p.init(None, progress::count("events"));
         p
     };
-    let commit_counter = db_progress.counter().expect("shared counter available");
+    let commit_counter = db_progress.counter();
 
     let change_progress = {
         let mut p = progress.add_child("find changes");
         p.init(None, progress::count("modified files"));
         p
     };
-    let change_counter = change_progress.counter().expect("shared counter available");
+    let change_counter = change_progress.counter();
 
     let lines_progress = {
         let mut p = progress.add_child("find changes");
         p.init(None, progress::count("diff lines"));
         p
     };
-    let lines_counter = lines_progress.counter().expect("shared counter available");
+    let lines_counter = lines_progress.counter();
 
     let mut traverse_progress = progress.add_child("traverse commit graph");
     traverse_progress.init(None, progress::count("commits"));
@@ -388,7 +388,7 @@ pub fn update(
         if saw_new_commits {
             db_progress.show_throughput(start);
         } else {
-            db_progress.info("up to date");
+            db_progress.info("up to date".into());
         }
 
         commits.extend(all_commits);

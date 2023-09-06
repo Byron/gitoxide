@@ -33,7 +33,7 @@ impl input::Entry {
         let mut header_buf = [0u8; 12 + gix_hash::Kind::longest().len_in_bytes()];
         let header_len = self
             .header
-            .write_to(self.decompressed_size, header_buf.as_mut())
+            .write_to(self.decompressed_size, &mut header_buf.as_mut())
             .expect("write to memory will not fail");
         let state = gix_features::hash::crc32_update(0, &header_buf[..header_len]);
         gix_features::hash::crc32_update(state, self.compressed.as_ref().expect("we always set it"))

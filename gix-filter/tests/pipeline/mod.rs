@@ -8,7 +8,12 @@ mod convert_to_worktree;
 #[test]
 fn default() -> crate::Result {
     let mut filters = gix_filter::Pipeline::default();
-    let out = filters.convert_to_worktree(b"hi", "file".into(), |_, _| {}, gix_filter::driver::apply::Delay::Allow)?;
+    let out = filters.convert_to_worktree(
+        b"hi",
+        "file".into(),
+        &mut |_, _| {},
+        gix_filter::driver::apply::Delay::Allow,
+    )?;
     assert_eq!(
         out.as_bytes().expect("unchanged").as_bstr(),
         "hi",

@@ -269,7 +269,7 @@ pub fn new() -> (
                 handler.send_data = Some(send);
                 let (send, receive_headers) = pipe::unidirectional(1);
                 handler.send_header = Some(send);
-                let (send_body, receive_body) = pipe::unidirectional(None);
+                let (send_body, receive_body) = pipe::unidirectional(0);
                 (receive_data, receive_headers, send_body, receive_body)
             };
 

@@ -88,8 +88,8 @@ impl std::fmt::Display for Algorithm {
 
 /// Calculate how many `HAVE` lines we may send in one round, with variation depending on whether the `transport_is_stateless` or not.
 /// `window_size` is the previous (or initial) value of the window size.
-pub fn window_size(transport_is_stateless: bool, window_size: impl Into<Option<usize>>) -> usize {
-    let current_size = match window_size.into() {
+pub fn window_size(transport_is_stateless: bool, window_size: Option<usize>) -> usize {
+    let current_size = match window_size {
         None => return 16,
         Some(cs) => cs,
     };

@@ -232,7 +232,7 @@ pub fn into(
         } else {
             gix_discover::repository::Kind::WorkTree { linked_git_dir: None }
         },
-        std::env::current_dir()?,
+        &std::env::current_dir()?,
     )
     .expect("by now the `dot_git` dir is valid as we have accessed it"))
 }

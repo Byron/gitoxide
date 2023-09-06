@@ -51,11 +51,11 @@ impl tracing_forest::printer::Formatter for StoreTreeToDb {
             use gix::Progress;
             if self.reverse_lines {
                 for line in tree.lines().rev() {
-                    progress.info(line);
+                    progress.info(line.into());
                 }
             } else {
                 for line in tree.lines() {
-                    progress.info(line);
+                    progress.info(line.into());
                 }
             }
         }

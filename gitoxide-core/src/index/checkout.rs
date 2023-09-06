@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::bail;
-use gix::{odb::FindExt, worktree::state::checkout, Progress};
+use gix::{odb::FindExt, worktree::state::checkout, NestedProgress, Progress};
 
 use crate::{
     index,
@@ -16,7 +16,7 @@ pub fn checkout_exclusive(
     dest_directory: impl AsRef<Path>,
     repo: Option<PathBuf>,
     mut err: impl std::io::Write,
-    mut progress: impl Progress,
+    mut progress: impl NestedProgress,
     should_interrupt: &AtomicBool,
     index::checkout_exclusive::Options {
         index: Options { object_hash, .. },
@@ -104,8 +104,8 @@ pub fn checkout_exclusive(
                     }
                 }
             },
-            &mut files,
-            &mut bytes,
+            &files,
+            &bytes,
             should_interrupt,
             opts,
         ),
@@ -116,8 +116,8 @@ pub fn checkout_exclusive(
                 buf.clear();
                 Ok(gix::objs::BlobRef { data: buf })
             },
-            &mut files,
-            &mut bytes,
+            &files,
+            &bytes,
             should_interrupt,
             opts,
         ),

@@ -39,7 +39,7 @@ mod version {
                     assert_eq!(entry.crc32, file.crc32_at_index(index));
 
                     let hex_len = (entry_index % object_hash.len_in_hex()).max(7);
-                    let prefix = gix_hash::Prefix::new(entry.oid, hex_len)?;
+                    let prefix = gix_hash::Prefix::new(&entry.oid, hex_len)?;
                     assert_eq!(
                         file.lookup_prefix(prefix, candidates.as_mut())
                             .expect("object exists")
@@ -73,7 +73,7 @@ mod version {
                     let id = gix_hash::ObjectId::from_hex(id)?;
                     assert_eq!(file.lookup(id), expected, "{assertion_message}");
                     assert_eq!(
-                        file.lookup_prefix(gix_hash::Prefix::new(id, hex_len)?, candidates.as_mut()),
+                        file.lookup_prefix(gix_hash::Prefix::new(&id, hex_len)?, candidates.as_mut()),
                         expected.map(Ok)
                     );
                     if let Some(candidates) = candidates {
@@ -92,7 +92,7 @@ mod version {
                     assert_eq!(entry.crc32, file.crc32_at_index(index), "{index} {entry:?}");
 
                     let hex_len = (entry_index % object_hash.len_in_hex()).max(7);
-                    let prefix = gix_hash::Prefix::new(entry.oid, hex_len)?;
+                    let prefix = gix_hash::Prefix::new(&entry.oid, hex_len)?;
                     assert_eq!(
                         file.lookup_prefix(prefix, candidates.as_mut())
                             .expect("object exists")
@@ -253,7 +253,7 @@ fn traverse_with_index_and_forward_ref_deltas() {
                 count.fetch_add(1, Ordering::SeqCst);
                 Ok::<_, std::io::Error>(())
             },
-            progress::Discard,
+            &mut progress::Discard,
             &AtomicBool::new(false),
             index::traverse::with_index::Options::default(),
         )
@@ -381,7 +381,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
                                 thread_limit: None
                             }
                         }),
-                        progress::Discard,
+                        &mut progress::Discard,
                         &AtomicBool::new(false)
                     )
                     .map(|o| (o.actual_index_checksum, o.pack_traverse_statistics))?,
@@ -478,7 +478,7 @@ fn iter() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(
             idx.verify_integrity(
                 None::<gix_pack::index::verify::PackContext<'_, fn() -> cache::Never>>,
-                progress::Discard,
+                &mut progress::Discard,
                 &AtomicBool::new(false)
             )
             .map(|o| (o.actual_index_checksum, o.pack_traverse_statistics))?,

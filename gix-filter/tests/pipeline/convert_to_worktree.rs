@@ -19,7 +19,7 @@ fn all_stages() -> gix_testtools::Result {
     let mut out = pipe.convert_to_worktree(
         b"a\nb\n$Id$",
         "any.txt".into(),
-        |path, attrs| {
+        &mut |path, attrs| {
             cache
                 .at_entry(path, Some(false), |_oid, _buf| -> Result<_, std::convert::Infallible> {
                     unreachable!("index access disabled")
@@ -54,7 +54,7 @@ fn all_stages_no_filter() -> gix_testtools::Result {
     let mut out = pipe.convert_to_worktree(
         b"$Id$a\nb\n",
         "other.txt".into(),
-        |path, attrs| {
+        &mut |path, attrs| {
             cache
                 .at_entry(path, Some(false), |_oid, _buf| -> Result<_, std::convert::Infallible> {
                     unreachable!("index access disabled")
@@ -88,7 +88,7 @@ fn no_filter() -> gix_testtools::Result {
     let out = pipe.convert_to_worktree(
         input,
         "other.txt".into(),
-        |path, attrs| {
+        &mut |path, attrs| {
             cache
                 .at_entry(path, Some(false), |_oid, _buf| -> Result<_, std::convert::Infallible> {
                     unreachable!("index access disabled")

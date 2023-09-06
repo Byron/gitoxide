@@ -12,21 +12,15 @@ use crate::{checkout, checkout::entry};
 mod reduce {
     use std::marker::PhantomData;
 
-    use gix_features::progress::Progress;
-
     use crate::checkout;
 
-    pub struct Reduce<'a, 'entry, P1, P2, E> {
-        pub files: Option<&'a mut P1>,
-        pub bytes: Option<&'a mut P2>,
+    pub struct Reduce<'entry, E> {
         pub aggregate: super::Outcome<'entry>,
         pub marker: PhantomData<E>,
     }
 
-    impl<'a, 'entry, P1, P2, E> gix_features::parallel::Reduce for Reduce<'a, 'entry, P1, P2, E>
+    impl<'entry, E> gix_features::parallel::Reduce for Reduce<'entry, E>
     where
-        P1: Progress,
-        P2: Progress,
         E: std::error::Error + Send + Sync + 'static,
     {
         type Input = Result<super::Outcome<'entry>, checkout::Error<E>>;
@@ -54,13 +48,6 @@ mod reduce {
             self.aggregate
                 .delayed_paths_unprocessed
                 .extend(delayed_paths_unprocessed);
-
-            if let Some(progress) = self.bytes.as_deref_mut() {
-                progress.set(self.aggregate.bytes_written as gix_features::progress::Step);
-            }
-            if let Some(progress) = self.files.as_deref_mut() {
-                progress.set(self.aggregate.files);
-            }
 
             Ok(())
         }
@@ -121,8 +108,8 @@ impl From<&checkout::Options> for Options {
 
 pub fn process<'entry, Find, E>(
     entries_with_paths: impl Iterator<Item = (&'entry mut gix_index::Entry, &'entry BStr)>,
-    files: Option<&AtomicUsize>,
-    bytes: Option<&AtomicUsize>,
+    files: &AtomicUsize,
+    bytes: &AtomicUsize,
     delayed_filter_results: &mut Vec<DelayedFilteredStream<'entry>>,
     ctx: &mut Context<Find>,
 ) -> Result<Outcome<'entry>, checkout::Error<E>>
@@ -139,9 +126,7 @@ where
     for (entry, entry_path) in entries_with_paths {
         // TODO: write test for that
         if entry.flags.contains(gix_index::entry::Flags::SKIP_WORKTREE) {
-            if let Some(files) = files {
-                files.fetch_add(1, Ordering::SeqCst);
-            }
+            files.fetch_add(1, Ordering::Relaxed);
             files_in_chunk += 1;
             continue;
         }
@@ -179,8 +164,8 @@ where
 
 pub fn process_delayed_filter_results<Find, E>(
     mut delayed_filter_results: Vec<DelayedFilteredStream<'_>>,
-    files: Option<&AtomicUsize>,
-    bytes: Option<&AtomicUsize>,
+    files: &AtomicUsize,
+    bytes: &AtomicUsize,
     out: &mut Outcome<'_>,
     ctx: &mut Context<Find>,
 ) -> Result<(), checkout::Error<E>>
@@ -259,9 +244,7 @@ where
                     }),
                 )?;
                 delayed_files += 1;
-                if let Some(files) = files {
-                    files.fetch_add(1, Ordering::SeqCst);
-                }
+                files.fetch_add(1, Ordering::Relaxed);
             }
         }
     }
@@ -286,7 +269,7 @@ where
 
 pub struct WriteWithProgress<'a, T> {
     pub inner: T,
-    pub progress: Option<&'a AtomicUsize>,
+    pub progress: &'a AtomicUsize,
 }
 
 impl<'a, T> std::io::Write for WriteWithProgress<'a, T>
@@ -295,9 +278,8 @@ where
 {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let written = self.inner.write(buf)?;
-        if let Some(progress) = self.progress {
-            progress.fetch_add(written as gix_features::progress::Step, Ordering::SeqCst);
-        }
+        self.progress
+            .fetch_add(written as gix_features::progress::Step, Ordering::SeqCst);
         Ok(written)
     }
 
@@ -311,8 +293,8 @@ pub fn checkout_entry_handle_result<'entry, Find, E>(
     entry_path: &'entry BStr,
     errors: &mut Vec<checkout::ErrorRecord>,
     collisions: &mut Vec<checkout::Collision>,
-    files: Option<&AtomicUsize>,
-    bytes: Option<&AtomicUsize>,
+    files: &AtomicUsize,
+    bytes: &AtomicUsize,
     Context {
         find,
         path_cache,
@@ -339,12 +321,8 @@ where
     match res {
         Ok(out) => {
             if let Some(num) = out.as_bytes() {
-                if let Some(bytes) = bytes {
-                    bytes.fetch_add(num, Ordering::SeqCst);
-                }
-                if let Some(files) = files {
-                    files.fetch_add(1, Ordering::SeqCst);
-                }
+                bytes.fetch_add(num, Ordering::Relaxed);
+                files.fetch_add(1, Ordering::Relaxed);
             }
             Ok(out)
         }
@@ -359,7 +337,7 @@ where
 fn handle_error<E>(
     err: E,
     entry_path: &BStr,
-    files: Option<&AtomicUsize>,
+    files: &AtomicUsize,
     errors: &mut Vec<checkout::ErrorRecord>,
     keep_going: bool,
 ) -> Result<(), E>
@@ -371,9 +349,7 @@ where
             path: entry_path.into(),
             error: Box::new(err),
         });
-        if let Some(files) = files {
-            files.fetch_add(1, Ordering::SeqCst);
-        }
+        files.fetch_add(1, Ordering::Relaxed);
         Ok(())
     } else {
         Err(err)
@@ -384,7 +360,7 @@ fn is_collision(
     err: &std::io::Error,
     entry_path: &BStr,
     collisions: &mut Vec<checkout::Collision>,
-    files: Option<&AtomicUsize>,
+    files: &AtomicUsize,
 ) -> bool {
     if !gix_fs::symlink::is_collision_error(err) {
         return false;
@@ -396,8 +372,6 @@ fn is_collision(
         path: entry_path.into(),
         error_kind: err.kind(),
     });
-    if let Some(files) = files {
-        files.fetch_add(1, Ordering::SeqCst);
-    }
+    files.fetch_add(1, Ordering::Relaxed);
     true
 }

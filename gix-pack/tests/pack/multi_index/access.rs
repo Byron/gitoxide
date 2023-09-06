@@ -7,7 +7,7 @@ use crate::hex_to_id;
 fn lookup_with_ambiguity() {
     let (file, _path) = multi_index();
     let oid = hex_to_id("cfc33fc40413fb3e30ff6b44d03fd8d071cb633b");
-    let prefix = gix_hash::Prefix::new(oid, 4).unwrap();
+    let prefix = gix_hash::Prefix::new(&oid, 4).unwrap();
     assert_eq!(
         file.lookup_prefix(prefix, None),
         Some(Err(())),
@@ -32,7 +32,7 @@ fn lookup_prefix() {
             let hex_len = (idx % file.object_hash().len_in_hex()).max(5);
             let hex_oid = entry.oid.to_hex_with_len(hex_len).to_string();
             assert_eq!(hex_oid.len(), hex_len);
-            let oid_prefix = gix_hash::Prefix::new(entry.oid, hex_len).unwrap();
+            let oid_prefix = gix_hash::Prefix::new(&entry.oid, hex_len).unwrap();
             let entry_index = file
                 .lookup_prefix(oid_prefix, candidates.as_mut())
                 .expect("object found")
@@ -49,7 +49,7 @@ fn lookup_prefix() {
 #[test]
 fn lookup_missing() {
     let (file, _path) = multi_index();
-    let prefix = gix_hash::Prefix::new(gix_hash::ObjectId::null(gix_hash::Kind::Sha1), 7).unwrap();
+    let prefix = gix_hash::Prefix::new(&gix_hash::ObjectId::null(gix_hash::Kind::Sha1), 7).unwrap();
     assert!(file.lookup_prefix(prefix, None).is_none());
 
     let mut candidates = 1..1;

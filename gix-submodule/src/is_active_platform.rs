@@ -27,7 +27,7 @@ impl IsActivePlatform {
         &mut self,
         config: &gix_config::File<'static>,
         name: &BStr,
-        attributes: impl FnMut(
+        attributes: &mut dyn FnMut(
             &BStr,
             gix_pathspec::attributes::glob::pattern::Case,
             bool,

@@ -46,7 +46,7 @@ impl packed::Transaction {
     /// Prepare the transaction by checking all edits for applicability.
     pub fn prepare(
         mut self,
-        edits: impl IntoIterator<Item = RefEdit>,
+        edits: &mut dyn Iterator<Item = RefEdit>,
         find: &mut FindObjectFn<'_>,
     ) -> Result<Self, prepare::Error> {
         assert!(self.edits.is_none(), "BUG: cannot call prepare(…) more than once");
@@ -189,7 +189,7 @@ impl packed::Transaction {
     }
 }
 
-fn write_packed_ref(mut out: impl std::io::Write, pref: packed::Reference<'_>) -> std::io::Result<()> {
+fn write_packed_ref(out: &mut dyn std::io::Write, pref: packed::Reference<'_>) -> std::io::Result<()> {
     write!(out, "{} ", pref.target)?;
     out.write_all(pref.name.as_bstr())?;
     out.write_all(b"\n")?;
@@ -199,7 +199,7 @@ fn write_packed_ref(mut out: impl std::io::Write, pref: packed::Reference<'_>) -
     Ok(())
 }
 
-fn write_edit(mut out: impl std::io::Write, edit: &Edit, lines_written: &mut i32) -> std::io::Result<()> {
+fn write_edit(out: &mut dyn std::io::Write, edit: &Edit, lines_written: &mut i32) -> std::io::Result<()> {
     match edit.inner.change {
         Change::Delete { .. } => {}
         Change::Update {

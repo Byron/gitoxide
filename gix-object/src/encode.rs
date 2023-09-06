@@ -34,9 +34,9 @@ impl From<Error> for io::Error {
     }
 }
 
-pub(crate) fn header_field_multi_line(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
+pub(crate) fn header_field_multi_line(name: &[u8], value: &[u8], out: &mut dyn io::Write) -> io::Result<()> {
     let mut lines = value.as_bstr().split_str(b"\n");
-    trusted_header_field(name, lines.next().ok_or(Error::EmptyValue)?, &mut out)?;
+    trusted_header_field(name, lines.next().ok_or(Error::EmptyValue)?, out)?;
     for line in lines {
         out.write_all(SPACE)?;
         out.write_all(line)?;
@@ -45,7 +45,7 @@ pub(crate) fn header_field_multi_line(name: &[u8], value: &[u8], mut out: impl i
     Ok(())
 }
 
-pub(crate) fn trusted_header_field(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
+pub(crate) fn trusted_header_field(name: &[u8], value: &[u8], out: &mut dyn io::Write) -> io::Result<()> {
     out.write_all(name)?;
     out.write_all(SPACE)?;
     out.write_all(value)?;
@@ -55,22 +55,26 @@ pub(crate) fn trusted_header_field(name: &[u8], value: &[u8], mut out: impl io::
 pub(crate) fn trusted_header_signature(
     name: &[u8],
     value: &gix_actor::SignatureRef<'_>,
-    mut out: impl io::Write,
+    out: &mut dyn io::Write,
 ) -> io::Result<()> {
     out.write_all(name)?;
     out.write_all(SPACE)?;
-    value.write_to(&mut out)?;
+    value.write_to(out)?;
     out.write_all(NL)
 }
 
-pub(crate) fn trusted_header_id(name: &[u8], value: &gix_hash::ObjectId, mut out: impl io::Write) -> io::Result<()> {
+pub(crate) fn trusted_header_id(
+    name: &[u8],
+    value: &gix_hash::ObjectId,
+    mut out: &mut dyn io::Write,
+) -> io::Result<()> {
     out.write_all(name)?;
     out.write_all(SPACE)?;
     value.write_hex_to(&mut out)?;
     out.write_all(NL)
 }
 
-pub(crate) fn header_field(name: &[u8], value: &[u8], out: impl io::Write) -> io::Result<()> {
+pub(crate) fn header_field(name: &[u8], value: &[u8], out: &mut dyn io::Write) -> io::Result<()> {
     if value.is_empty() {
         return Err(Error::EmptyValue.into());
     }

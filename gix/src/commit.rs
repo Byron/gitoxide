@@ -204,7 +204,7 @@ pub mod describe {
                         .try_find(id, buf)
                         .map(|r| r.and_then(gix_object::Data::try_into_commit_iter))
                 },
-                gix_commitgraph::Graph::from_info_dir(self.repo.objects.store_ref().path().join("info")).ok(),
+                gix_commitgraph::Graph::from_info_dir(self.repo.objects.store_ref().path().join("info").as_ref()).ok(),
             );
             let outcome = gix_revision::describe(
                 &self.id,

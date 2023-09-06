@@ -123,10 +123,10 @@ impl<'a, 'event> SectionMut<'a, 'event> {
     /// Sets the last key value pair if it exists, or adds the new value.
     /// Returns the previous value if it replaced a value, or None if it adds
     /// the value.
-    pub fn set<'b>(&mut self, key: Key<'event>, value: impl Into<&'b BStr>) -> Option<Cow<'event, BStr>> {
+    pub fn set(&mut self, key: Key<'event>, value: &BStr) -> Option<Cow<'event, BStr>> {
         match self.key_and_value_range_by(&key) {
             None => {
-                self.push(key, Some(value.into()));
+                self.push(key, Some(value));
                 None
             }
             Some((key_range, value_range)) => {
@@ -136,15 +136,15 @@ impl<'a, 'event> SectionMut<'a, 'event> {
                 self.section
                     .body
                     .0
-                    .insert(range_start, Event::Value(escape_value(value.into()).into()));
+                    .insert(range_start, Event::Value(escape_value(value).into()));
                 Some(ret)
             }
         }
     }
 
     /// Removes the latest value by key and returns it, if it exists.
-    pub fn remove(&mut self, key: impl AsRef<str>) -> Option<Cow<'event, BStr>> {
-        let key = Key::from_str_unchecked(key.as_ref());
+    pub fn remove(&mut self, key: &str) -> Option<Cow<'event, BStr>> {
+        let key = Key::from_str_unchecked(key);
         let (key_range, _value_range) = self.key_and_value_range_by(&key)?;
         Some(self.remove_internal(key_range, true))
     }

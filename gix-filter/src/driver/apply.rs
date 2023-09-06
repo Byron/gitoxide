@@ -124,7 +124,7 @@ impl State {
 
                 let invoke_result = client.invoke(
                     command,
-                    [
+                    &mut [
                         ("pathname", Some(ctx.rela_path.to_owned())),
                         ("ref", ctx.ref_name.map(ToOwned::to_owned)),
                         ("treeish", ctx.treeish.map(|id| id.to_hex().to_string().into())),

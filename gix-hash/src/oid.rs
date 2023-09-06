@@ -154,7 +154,7 @@ impl oid {
 
     /// Write ourselves to `out` in hexadecimal notation.
     #[inline]
-    pub fn write_hex_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+    pub fn write_hex_to(&self, out: &mut dyn std::io::Write) -> std::io::Result<()> {
         let mut hex = crate::Kind::hex_buf();
         let hex_len = self.hex_to_buf(&mut hex);
         out.write_all(&hex[..hex_len])

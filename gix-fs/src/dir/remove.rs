@@ -78,8 +78,7 @@ pub fn empty_upward_until_boundary<'a>(delete_dir: &'a Path, boundary_dir: &'a P
 /// If any encountered directory contains a file the entire operation is aborted.
 /// Please note that this is inherently racy and no attempts are made to counter that, which will allow creators to win
 /// as long as they retry.
-pub fn empty_depth_first(delete_dir: impl Into<PathBuf>) -> std::io::Result<()> {
-    let delete_dir = delete_dir.into();
+pub fn empty_depth_first(delete_dir: PathBuf) -> std::io::Result<()> {
     if let Ok(()) = std::fs::remove_dir(&delete_dir) {
         return Ok(());
     }

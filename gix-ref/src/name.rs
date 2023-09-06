@@ -98,10 +98,10 @@ impl PartialNameRef {
 
 impl PartialName {
     /// Append the `component` to ourselves and validate the newly created partial path.
-    pub fn join(self, component: impl AsRef<[u8]>) -> Result<Self, Error> {
+    pub fn join(self, component: &BStr) -> Result<Self, Error> {
         let mut b = self.0;
         b.push_byte(b'/');
-        b.extend(component.as_ref());
+        b.extend(component.as_bytes());
         gix_validate::reference::name_partial(b.as_ref())?;
         Ok(PartialName(b))
     }
@@ -263,6 +263,6 @@ impl convert::TryFrom<BString> for PartialName {
 /// Note that this method is disagreeing with `gix_validate` as it allows dashes '-' for some reason.
 /// Since partial names cannot be created with dashes inside we adjusted this as it's probably unintended or git creates pseudo-refs
 /// which wouldn't pass its safety checks.
-pub(crate) fn is_pseudo_ref<'a>(name: impl Into<&'a BStr>) -> bool {
-    name.into().bytes().all(|b| b.is_ascii_uppercase() || b == b'_')
+pub(crate) fn is_pseudo_ref(name: &BStr) -> bool {
+    name.bytes().all(|b| b.is_ascii_uppercase() || b == b'_')
 }

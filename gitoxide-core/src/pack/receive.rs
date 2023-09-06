@@ -120,7 +120,7 @@ mod blocking_io {
         bstr::BString,
         protocol,
         protocol::{fetch::Response, handshake::Ref},
-        Progress,
+        NestedProgress,
     };
 
     use super::{receive_pack_blocking, CloneDelegate, Context};
@@ -130,7 +130,7 @@ mod blocking_io {
         fn receive_pack(
             &mut self,
             input: impl BufRead,
-            progress: impl Progress,
+            progress: impl NestedProgress + 'static,
             refs: &[Ref],
             _previous_response: &Response,
         ) -> io::Result<()> {
@@ -156,7 +156,7 @@ mod blocking_io {
     ) -> anyhow::Result<()>
     where
         W: std::io::Write,
-        P: Progress,
+        P: NestedProgress + 'static,
         P::SubProgress: 'static,
     {
         let transport = net::connect(
@@ -188,6 +188,7 @@ mod blocking_io {
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::receive;
 use gix::protocol::ls_refs;
+use gix::NestedProgress;
 
 #[cfg(feature = "async-client")]
 mod async_io {
@@ -211,7 +212,7 @@ mod async_io {
         async fn receive_pack(
             &mut self,
             input: impl AsyncBufRead + Unpin + 'async_trait,
-            progress: impl Progress,
+            progress: impl gix::NestedProgress + 'static,
             refs: &[Ref],
             _previous_response: &Response,
         ) -> io::Result<()> {
@@ -236,7 +237,7 @@ mod async_io {
         ctx: Context<W>,
     ) -> anyhow::Result<()>
     where
-        P: Progress + 'static,
+        P: gix::NestedProgress + 'static,
         W: io::Write + Send + 'static,
     {
         let transport = net::connect(
@@ -366,8 +367,8 @@ fn receive_pack_blocking<W: io::Write>(
     mut directory: Option<PathBuf>,
     mut refs_directory: Option<PathBuf>,
     ctx: &mut Context<W>,
-    input: impl io::BufRead,
-    progress: impl Progress,
+    mut input: impl io::BufRead,
+    mut progress: impl NestedProgress + 'static,
     refs: &[Ref],
 ) -> io::Result<()> {
     let options = pack::bundle::write::Options {
@@ -376,9 +377,15 @@ fn receive_pack_blocking<W: io::Write>(
         iteration_mode: pack::data::input::Mode::Verify,
         object_hash: ctx.object_hash,
     };
-    let outcome =
-        pack::Bundle::write_to_directory(input, directory.take(), progress, &ctx.should_interrupt, None, options)
-            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+    let outcome = pack::Bundle::write_to_directory(
+        &mut input,
+        directory.take().as_deref(),
+        &mut progress,
+        &ctx.should_interrupt,
+        None,
+        options,
+    )
+    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
     if let Some(directory) = refs_directory.take() {
         write_raw_refs(refs, directory)?;

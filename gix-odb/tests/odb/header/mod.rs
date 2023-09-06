@@ -1,7 +1,7 @@
 use crate::{hex_to_id, odb::db};
 
 fn find_header(db: impl gix_odb::Header, hex_id: &str) -> gix_odb::find::Header {
-    db.try_header(hex_to_id(hex_id))
+    db.try_header(&hex_to_id(hex_id))
         .expect("no read error")
         .expect("object exists")
 }

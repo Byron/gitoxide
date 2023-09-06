@@ -55,7 +55,7 @@ impl PrepareFetch {
         should_interrupt: &std::sync::atomic::AtomicBool,
     ) -> Result<(crate::Repository, crate::remote::fetch::Outcome), Error>
     where
-        P: crate::Progress,
+        P: crate::NestedProgress,
         P::SubProgress: 'static,
     {
         use crate::{bstr::ByteVec, remote, remote::fetch::RefLogMessage};
@@ -156,7 +156,7 @@ impl PrepareFetch {
         should_interrupt: &std::sync::atomic::AtomicBool,
     ) -> Result<(crate::clone::PrepareCheckout, crate::remote::fetch::Outcome), Error>
     where
-        P: crate::Progress,
+        P: crate::NestedProgress,
         P::SubProgress: 'static,
     {
         let (repo, fetch_outcome) = self.fetch_only(progress, should_interrupt)?;

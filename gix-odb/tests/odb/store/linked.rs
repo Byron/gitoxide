@@ -19,8 +19,8 @@ mod iter {
         assert_eq!(iter.count(), 146, "it sees the correct amount of objects");
         for id in db.iter()? {
             let id = id?;
-            assert!(db.contains(id), "each object exists");
-            assert!(db.try_header(id)?.is_some(), "header is readable");
+            assert!(db.contains(&id), "each object exists");
+            assert!(db.try_header(&id)?.is_some(), "header is readable");
         }
         Ok(())
     }
@@ -35,7 +35,7 @@ mod locate {
     fn can_locate(db: &Handle, hex_id: &str) {
         let mut buf = vec![];
         assert!(db
-            .try_find(hex_to_id(hex_id), &mut buf)
+            .try_find(&hex_to_id(hex_id), &mut buf)
             .expect("no read error")
             .is_some());
     }
@@ -64,7 +64,7 @@ mod init {
         let tmp = gix_testtools::tempfile::TempDir::new()?;
         let (object_path, _linked_object_path) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
         let db = gix_odb::at(object_path.clone())?;
-        db.contains(ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
+        db.contains(&ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
 
         assert_eq!(db.store_ref().metrics().loose_dbs, 2);
         assert_eq!(db.iter()?.count(), 0, "the test locations are actually empty");
@@ -76,7 +76,7 @@ mod init {
     fn a_db_without_alternates() -> crate::Result {
         let tmp = gix_testtools::tempfile::TempDir::new()?;
         let db = gix_odb::at(tmp.path())?;
-        db.contains(ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
+        db.contains(&ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
         assert_eq!(db.store_ref().metrics().loose_dbs, 1);
         assert_eq!(db.store_ref().path(), tmp.path());
         Ok(())
@@ -85,7 +85,7 @@ mod init {
     #[test]
     fn has_packs() {
         let db = db();
-        db.contains(ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
+        db.contains(&ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
         assert_eq!(db.store_ref().metrics().known_packs, 3);
     }
 }

@@ -30,7 +30,7 @@ fn main_store(
     let (dir, tmp) = dir(packed, writable)?;
     let git_dir = dir.join("repo").join(".git");
     Ok((
-        gix_ref::file::Store::at(&git_dir, Default::default(), Default::default()),
+        gix_ref::file::Store::at(git_dir.clone(), Default::default(), Default::default()),
         gix_odb::at(git_dir.join("objects"))?,
         tmp,
     ))
@@ -46,12 +46,12 @@ fn worktree_store(
     Option<gix_testtools::tempfile::TempDir>,
 )> {
     let (dir, tmp) = dir(packed, writable.into())?;
-    let (git_dir, _work_tree) = gix_discover::upwards(dir.join(worktree_name))?
+    let (git_dir, _work_tree) = gix_discover::upwards(&dir.join(worktree_name))?
         .0
         .into_repository_and_work_tree_directories();
     let common_dir = git_dir.join("../..");
     Ok((
-        gix_ref::file::Store::for_linked_worktree(git_dir, &common_dir, Default::default(), Default::default()),
+        gix_ref::file::Store::for_linked_worktree(git_dir, common_dir.clone(), Default::default(), Default::default()),
         gix_odb::at(common_dir.join("objects"))?,
         tmp,
     ))
@@ -62,13 +62,10 @@ fn into_peel(
     odb: gix_odb::Handle,
 ) -> impl Fn(gix_ref::Reference) -> gix_hash::ObjectId + '_ {
     move |mut r: gix_ref::Reference| {
-        r.peel_to_id_in_place(
-            store,
-            |id, buf| -> Result<Option<(gix_object::Kind, &[u8])>, gix_odb::store::find::Error> {
-                let data = odb.try_find(id, buf)?;
-                Ok(data.map(|d| (d.kind, d.data)))
-            },
-        )
+        r.peel_to_id_in_place(store, &mut |id, buf| {
+            let data = odb.try_find(&id, buf)?;
+            Ok(data.map(|d| (d.kind, d.data)))
+        })
         .unwrap()
     }
 }
@@ -303,7 +300,7 @@ mod writable {
             assert_eq!(
                 store
                     .iter()?
-                    .prefixed("refs/stacks/")?
+                    .prefixed("refs/stacks/".as_ref())?
                     .map(Result::unwrap)
                     .map(|r| (r.name.to_string(), r.target.to_string()))
                     .collect::<Vec<_>>(),
@@ -586,7 +583,7 @@ mod writable {
             assert_eq!(
                 store
                     .iter()?
-                    .prefixed("refs/stacks/")?
+                    .prefixed("refs/stacks/".as_ref())?
                     .map(Result::unwrap)
                     .map(|r| (r.name.to_string(), r.target.to_string()))
                     .collect::<Vec<_>>(),

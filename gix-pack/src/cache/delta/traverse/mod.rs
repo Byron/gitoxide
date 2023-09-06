@@ -1,5 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use gix_features::progress::DynNestedProgress;
 use gix_features::{
     parallel::in_parallel_with_slice,
     progress::{self, Progress},
@@ -55,11 +56,11 @@ pub struct Context<'a> {
 }
 
 /// Options for [`Tree::traverse()`].
-pub struct Options<'a, P1, P2> {
+pub struct Options<'a, 's> {
     /// is a progress instance to track progress for each object in the traversal.
-    pub object_progress: P1,
+    pub object_progress: Box<dyn DynNestedProgress>,
     /// is a progress instance to track the overall progress.
-    pub size_progress: P2,
+    pub size_progress: &'s mut dyn Progress,
     /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
     /// the amount of available logical cores.
     pub thread_limit: Option<usize>,
@@ -99,7 +100,7 @@ where
     /// This method returns a vector of all tree items, along with their potentially modified custom node data.
     ///
     /// _Note_ that this method consumed the Tree to assure safe parallel traversal with mutation support.
-    pub fn traverse<F, P1, P2, MBFN, E, R>(
+    pub fn traverse<F, MBFN, E, R>(
         mut self,
         resolve: F,
         resolve_data: &R,
@@ -108,17 +109,15 @@ where
         Options {
             thread_limit,
             mut object_progress,
-            mut size_progress,
+            size_progress,
             should_interrupt,
             object_hash,
-        }: Options<'_, P1, P2>,
+        }: Options<'_, '_>,
     ) -> Result<Outcome<T>, Error>
     where
         F: for<'r> Fn(EntryRange, &'r R) -> Option<&'r [u8]> + Send + Clone,
         R: Send + Sync,
-        P1: Progress,
-        P2: Progress,
-        MBFN: FnMut(&mut T, &<P1 as Progress>::SubProgress, Context<'_>) -> Result<(), E> + Send + Clone,
+        MBFN: FnMut(&mut T, &dyn Progress, Context<'_>) -> Result<(), E> + Send + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
         self.set_pack_entries_end_and_resolve_ref_offsets(pack_entries_end)?;
@@ -150,7 +149,9 @@ where
                         resolve::State {
                             delta_bytes: Vec::<u8>::with_capacity(4096),
                             fully_resolved_delta_bytes: Vec::<u8>::with_capacity(4096),
-                            progress: threading::lock(&object_progress).add_child(format!("thread {thread_index}")),
+                            progress: Box::new(
+                                threading::lock(&object_progress).add_child(format!("thread {thread_index}")),
+                            ),
                             resolve: resolve.clone(),
                             modify_base: inspect_object.clone(),
                             child_items: child_items.clone(),

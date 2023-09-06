@@ -182,7 +182,7 @@ mod find {
 
         let mut buf = Vec::new();
         assert!(
-            repo.objects.try_find(empty_tree, &mut buf)?.is_none(),
+            repo.objects.try_find(&empty_tree, &mut buf)?.is_none(),
             "the lower level has no such special case so one can determine if this object exists or not"
         );
         Ok(())

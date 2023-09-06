@@ -6,7 +6,7 @@ use crate::{encode, encode::NL, Commit, CommitRef, Kind};
 
 impl crate::WriteTo for Commit {
     /// Serializes this instance to `out` in the git serialization format.
-    fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+    fn write_to(&self, mut out: &mut dyn io::Write) -> io::Result<()> {
         encode::trusted_header_id(b"tree", &self.tree, &mut out)?;
         for parent in &self.parents {
             encode::trusted_header_id(b"parent", parent, &mut out)?;
@@ -52,7 +52,7 @@ impl crate::WriteTo for Commit {
 
 impl<'a> crate::WriteTo for CommitRef<'a> {
     /// Serializes this instance to `out` in the git serialization format.
-    fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+    fn write_to(&self, mut out: &mut dyn io::Write) -> io::Result<()> {
         encode::trusted_header_id(b"tree", &self.tree(), &mut out)?;
         for parent in self.parents() {
             encode::trusted_header_id(b"parent", &parent, &mut out)?;

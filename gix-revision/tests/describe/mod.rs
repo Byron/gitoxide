@@ -21,7 +21,7 @@ fn run_test(
     let commit_id = hex_to_id("01ec18a3ebf2855708ad3c9d244306bc1fae3e9b");
     for use_commitgraph in [false, true] {
         let cache = use_commitgraph
-            .then(|| gix_commitgraph::Graph::from_info_dir(store.store_ref().path().join("info")).ok())
+            .then(|| gix_commitgraph::Graph::from_info_dir(&store.store_ref().path().join("info")).ok())
             .flatten();
         let mut graph = gix_revision::Graph::new(
             |id, buf| {

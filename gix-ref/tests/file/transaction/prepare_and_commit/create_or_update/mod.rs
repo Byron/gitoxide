@@ -713,11 +713,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
     let edits = store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
-            Box::new(move |oid, buf| {
-                odb.try_find(oid, buf)
-                    .map(|obj| obj.map(|obj| obj.kind))
-                    .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)
-            }),
+            Box::new(move |oid, buf| odb.try_find(&oid, buf).map(|obj| obj.map(|obj| obj.kind))),
         ))
         .prepare(
             store

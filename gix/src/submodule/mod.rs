@@ -144,7 +144,7 @@ impl<'repo> Submodule<'repo> {
     pub fn is_active(&self) -> Result<bool, is_active::Error> {
         let (mut platform, mut attributes) = self.state.active_state_mut()?;
         let is_active = platform.is_active(&self.state.repo.config.resolved, self.name.as_ref(), {
-            |relative_path, case, is_dir, out| {
+            &mut |relative_path, case, is_dir, out| {
                 attributes
                     .set_case(case)
                     .at_entry(relative_path, Some(is_dir), |id, buf| {

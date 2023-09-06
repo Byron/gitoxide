@@ -66,7 +66,7 @@ impl File {
         for ((module_name, field), values) in values {
             if prev_name.map_or(true, |pn: &BStr| pn != module_name) {
                 config_to_append
-                    .new_section("submodule", Cow::Owned(module_name.to_owned()))
+                    .new_section("submodule", Some(Cow::Owned(module_name.to_owned())))
                     .expect("all names come from valid configuration, so remain valid");
                 prev_name = Some(module_name);
             }

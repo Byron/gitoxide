@@ -183,7 +183,7 @@ mod blocking_io {
         ops::DerefMut,
     };
 
-    use gix_features::progress::Progress;
+    use gix_features::progress::NestedProgress;
 
     use crate::{
         fetch::{DelegateBlocking, Response},
@@ -207,7 +207,7 @@ mod blocking_io {
         fn receive_pack(
             &mut self,
             input: impl io::BufRead,
-            progress: impl Progress,
+            progress: impl NestedProgress + 'static,
             refs: &[Ref],
             previous_response: &Response,
         ) -> io::Result<()>;
@@ -217,7 +217,7 @@ mod blocking_io {
         fn receive_pack(
             &mut self,
             input: impl BufRead,
-            progress: impl Progress,
+            progress: impl NestedProgress + 'static,
             refs: &[Ref],
             previous_response: &Response,
         ) -> io::Result<()> {
@@ -229,7 +229,7 @@ mod blocking_io {
         fn receive_pack(
             &mut self,
             input: impl BufRead,
-            progress: impl Progress,
+            progress: impl NestedProgress + 'static,
             refs: &[Ref],
             previous_response: &Response,
         ) -> io::Result<()> {
@@ -246,7 +246,7 @@ mod async_io {
 
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
-    use gix_features::progress::Progress;
+    use gix_features::progress::NestedProgress;
 
     use crate::{
         fetch::{DelegateBlocking, Response},
@@ -272,7 +272,7 @@ mod async_io {
         async fn receive_pack(
             &mut self,
             input: impl AsyncBufRead + Unpin + 'async_trait,
-            progress: impl Progress,
+            progress: impl NestedProgress + 'static,
             refs: &[Ref],
             previous_response: &Response,
         ) -> io::Result<()>;
@@ -282,7 +282,7 @@ mod async_io {
         async fn receive_pack(
             &mut self,
             input: impl AsyncBufRead + Unpin + 'async_trait,
-            progress: impl Progress,
+            progress: impl NestedProgress + 'static,
             refs: &[Ref],
             previous_response: &Response,
         ) -> io::Result<()> {
@@ -297,7 +297,7 @@ mod async_io {
         async fn receive_pack(
             &mut self,
             input: impl AsyncBufRead + Unpin + 'async_trait,
-            progress: impl Progress,
+            progress: impl NestedProgress + 'static,
             refs: &[Ref],
             previous_response: &Response,
         ) -> io::Result<()> {

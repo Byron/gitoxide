@@ -32,7 +32,7 @@ impl crate::Repository {
             });
         }
         let mut buf = self.free_buf();
-        let kind = self.objects.find(id, &mut buf)?.kind;
+        let kind = self.objects.find(&id, &mut buf)?.kind;
         Ok(Object::from_data(id, kind, buf, self))
     }
 
@@ -65,7 +65,7 @@ impl crate::Repository {
                 size: 0,
             }));
         }
-        self.objects.try_header(id)
+        self.objects.try_header(&id).map_err(Into::into)
     }
 
     /// Try to find the object with `id` or return `None` if it wasn't found.
@@ -81,7 +81,7 @@ impl crate::Repository {
         }
 
         let mut buf = self.free_buf();
-        match self.objects.try_find(id, &mut buf)? {
+        match self.objects.try_find(&id, &mut buf)? {
             Some(obj) => {
                 let kind = obj.kind;
                 Ok(Some(Object::from_data(id, kind, buf, self)))
@@ -108,10 +108,10 @@ impl crate::Repository {
     /// we avoid writing duplicate objects using slow disks that will eventually have to be garbage collected.
     pub fn write_object(&self, object: impl gix_object::WriteTo) -> Result<Id<'_>, object::write::Error> {
         let mut buf = self.shared_empty_buf();
-        object.write_to(buf.deref_mut())?;
+        object.write_to(buf.deref_mut()).expect("write to memory works");
 
         let oid = gix_object::compute_hash(self.object_hash(), object.kind(), &buf);
-        if self.objects.contains(oid) {
+        if self.objects.contains(&oid) {
             return Ok(oid.attach(self));
         }
 
@@ -128,11 +128,12 @@ impl crate::Repository {
     pub fn write_blob(&self, bytes: impl AsRef<[u8]>) -> Result<Id<'_>, object::write::Error> {
         let bytes = bytes.as_ref();
         let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, bytes);
-        if self.objects.contains(oid) {
+        if self.objects.contains(&oid) {
             return Ok(oid.attach(self));
         }
         self.objects
             .write_buf(gix_object::Kind::Blob, bytes)
+            .map_err(Into::into)
             .map(|oid| oid.attach(self))
     }
 
@@ -147,14 +148,15 @@ impl crate::Repository {
         mut bytes: impl std::io::Read + std::io::Seek,
     ) -> Result<Id<'_>, object::write::Error> {
         let mut buf = self.shared_empty_buf();
-        std::io::copy(&mut bytes, buf.deref_mut())?;
+        std::io::copy(&mut bytes, buf.deref_mut()).expect("write to memory works");
         let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, &buf);
-        if self.objects.contains(oid) {
+        if self.objects.contains(&oid) {
             return Ok(oid.attach(self));
         }
 
         self.objects
             .write_buf(gix_object::Kind::Blob, &buf)
+            .map_err(Into::into)
             .map(|oid| oid.attach(self))
     }
 

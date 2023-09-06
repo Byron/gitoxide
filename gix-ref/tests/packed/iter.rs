@@ -29,7 +29,7 @@ fn iter_prefix() -> crate::Result {
     let packed = store_with_packed_refs()?.open_packed_buffer()?.expect("packed-refs");
     assert_eq!(
         packed
-            .iter_prefixed("refs/heads/")?
+            .iter_prefixed("refs/heads/".into())?
             .map(|r| r.map(|r| r.name.as_bstr()))
             .collect::<Result<Vec<_>, _>>()?,
         vec![
@@ -41,7 +41,7 @@ fn iter_prefix() -> crate::Result {
 
     assert_eq!(
         packed
-            .iter_prefixed("refs/heads/d")?
+            .iter_prefixed("refs/heads/d".into())?
             .map(|r| r.map(|r| r.name.as_bstr()))
             .collect::<Result<Vec<_>, _>>()?,
         vec!["refs/heads/d1".as_bytes().as_bstr(), "refs/heads/dt1".into(),],
@@ -50,7 +50,7 @@ fn iter_prefix() -> crate::Result {
 
     assert_eq!(
         packed
-            .iter_prefixed("refs/remotes/")?
+            .iter_prefixed("refs/remotes/".into())?
             .map(|r| r.map(|r| r.name.as_bstr()))
             .collect::<Result<Vec<_>, _>>()?,
         vec![
@@ -62,7 +62,7 @@ fn iter_prefix() -> crate::Result {
     let last_ref_in_file = "refs/tags/t1";
     assert_eq!(
         packed
-            .iter_prefixed(last_ref_in_file)?
+            .iter_prefixed(last_ref_in_file.into())?
             .map(|r| r.map(|r| r.name.as_bstr()))
             .collect::<Result<Vec<_>, _>>()?,
         vec![last_ref_in_file.as_bytes().as_bstr()],
@@ -71,7 +71,7 @@ fn iter_prefix() -> crate::Result {
     let first_ref_in_file = "refs/d1";
     assert_eq!(
         packed
-            .iter_prefixed(first_ref_in_file)?
+            .iter_prefixed(first_ref_in_file.into())?
             .map(|r| r.map(|r| r.name.as_bstr()))
             .collect::<Result<Vec<_>, _>>()?,
         vec![first_ref_in_file.as_bytes().as_bstr()],

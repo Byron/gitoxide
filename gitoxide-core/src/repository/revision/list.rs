@@ -65,7 +65,7 @@ pub(crate) mod function {
             Format::Text => None,
         };
         progress.init(None, gix::progress::count("commits"));
-        progress.set_name("traverse");
+        progress.set_name("traverse".into());
 
         let start = std::time::Instant::now();
         for commit in commits {
@@ -116,7 +116,7 @@ pub(crate) mod function {
         progress.show_throughput(start);
         if let Some((mut vg, path, _)) = vg {
             let start = std::time::Instant::now();
-            progress.set_name("layout graph");
+            progress.set_name("layout graph".into());
             progress.info(format!("writing {path:?}…"));
             let mut svg = SVGWriter::new();
             vg.do_it(false, false, false, &mut svg);

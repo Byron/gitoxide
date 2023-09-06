@@ -30,8 +30,7 @@ pub mod open {
         ///
         /// In order to allow fast lookups and optimizations, the contents of the packed refs must be sorted.
         /// If that's not the case, they will be sorted on the fly with the data being written into a memory buffer.
-        pub fn open(path: impl Into<PathBuf>, use_memory_map_if_larger_than_bytes: u64) -> Result<Self, Error> {
-            let path = path.into();
+        pub fn open(path: PathBuf, use_memory_map_if_larger_than_bytes: u64) -> Result<Self, Error> {
             let (backing, offset) = {
                 let backing = if std::fs::metadata(&path)?.len() <= use_memory_map_if_larger_than_bytes {
                     packed::Backing::InMemory(std::fs::read(&path)?)

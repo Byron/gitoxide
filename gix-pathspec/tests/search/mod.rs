@@ -10,7 +10,9 @@ fn no_pathspecs_match_everything() -> crate::Result {
     let mut search = gix_pathspec::Search::from_specs([], None, Path::new(""))?;
     assert_eq!(search.patterns().count(), 0, "nothing artificial is added");
     let m = search
-        .pattern_matching_relative_path("hello", None, |_, _, _, _| unreachable!("must not be called"))
+        .pattern_matching_relative_path("hello".into(), None, &mut |_, _, _, _| {
+            unreachable!("must not be called")
+        })
         .expect("matches");
     assert_eq!(m.pattern.prefix_directory(), "", "there is no prefix as none was given");
 
@@ -39,12 +41,14 @@ fn no_pathspecs_respect_prefix() -> crate::Result {
     );
     assert!(
         search
-            .pattern_matching_relative_path("hello", None, |_, _, _, _| unreachable!("must not be called"))
+            .pattern_matching_relative_path("hello".into(), None, &mut |_, _, _, _| unreachable!(
+                "must not be called"
+            ))
             .is_none(),
         "not the right prefix"
     );
     let m = search
-        .pattern_matching_relative_path("a/b", None, |_, _, _, _| unreachable!("must not be called"))
+        .pattern_matching_relative_path("a/b".into(), None, &mut |_, _, _, _| unreachable!("must not be called"))
         .expect("match");
     assert_eq!(
         m.pattern.prefix_directory(),
@@ -98,7 +102,7 @@ fn prefixes_are_always_case_insensitive() -> crate::Result {
             .iter()
             .filter(|relative_path| {
                 search
-                    .pattern_matching_relative_path(relative_path.as_str(), Some(false), |_, _, _, _| false)
+                    .pattern_matching_relative_path(relative_path.as_str().into(), Some(false), &mut |_, _, _, _| false)
                     .is_some()
             })
             .collect();
@@ -163,9 +167,9 @@ mod baseline {
                 .filter(|path| {
                     search
                         .pattern_matching_relative_path(
-                            path.as_str(),
+                            path.as_str().into(),
                             Some(items_are_dirs),
-                            |rela_path, case, is_dir, out| {
+                            &mut |rela_path, case, is_dir, out| {
                                 out.initialize(&collection);
                                 attrs.pattern_matching_relative_path(rela_path, case, Some(is_dir), out)
                             },

@@ -28,7 +28,7 @@ impl Defaults {
     ///
     /// Instead of failing if `GIT_LITERAL_PATHSPECS` is used with glob globals, we ignore these. Also our implementation allows global
     /// `icase` settings in combination with this setting.
-    pub fn from_environment(mut var: impl FnMut(&str) -> Option<OsString>) -> Result<Self, from_environment::Error> {
+    pub fn from_environment(var: &mut dyn FnMut(&str) -> Option<OsString>) -> Result<Self, from_environment::Error> {
         let mut env_bool = |name: &str| -> Result<Option<bool>, gix_config_value::Error> {
             var(name)
                 .map(|val| gix_config_value::Boolean::try_from(val).map(|b| b.0))

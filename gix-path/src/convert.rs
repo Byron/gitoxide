@@ -249,14 +249,12 @@ pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr
 /// as typical return value of `std::env::current_dir()`.
 /// As a `current_dir` like `/c` can be exhausted by paths like `../../r`, `None` will be returned to indicate the inability
 /// to produce a logically consistent path.
-pub fn normalize<'a>(path: impl Into<Cow<'a, Path>>, current_dir: impl AsRef<Path>) -> Option<Cow<'a, Path>> {
+pub fn normalize<'a>(path: Cow<'a, Path>, current_dir: &Path) -> Option<Cow<'a, Path>> {
     use std::path::Component::ParentDir;
 
-    let path = path.into();
     if !path.components().any(|c| matches!(c, ParentDir)) {
         return Some(path);
     }
-    let current_dir = current_dir.as_ref();
     let mut current_dir_opt = Some(current_dir);
     let was_relative = path.is_relative();
     let components = path.components();

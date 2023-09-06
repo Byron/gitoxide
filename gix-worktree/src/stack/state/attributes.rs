@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
 
+use crate::stack::delegate::FindFn;
 use crate::{
     stack::state::{AttributeMatchGroup, Attributes},
     PathIdMapping, Stack,
@@ -87,20 +88,16 @@ impl Attributes {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(crate) fn push_directory<Find, E>(
+    pub(crate) fn push_directory(
         &mut self,
         root: &Path,
         dir: &Path,
         rela_dir: &BStr,
         buf: &mut Vec<u8>,
         id_mappings: &[PathIdMapping],
-        mut find: Find,
+        find: &mut FindFn<'_>,
         stats: &mut Statistics,
-    ) -> std::io::Result<()>
-    where
-        Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
-        E: std::error::Error + Send + Sync + 'static,
-    {
+    ) -> std::io::Result<()> {
         let attr_path_relative =
             gix_path::to_unix_separators_on_windows(gix_path::join_bstr_unix_pathsep(rela_dir, ".gitattributes"));
         let attr_file_in_index = id_mappings.binary_search_by(|t| t.0.as_bstr().cmp(attr_path_relative.as_ref()));
@@ -169,7 +166,7 @@ impl Attributes {
         // Need one stack level per component so push and pop matches, but only if this isn't the root level which is never popped.
         if !added && self.info_attributes.is_none() {
             self.stack
-                .add_patterns_buffer(&[], Path::new("<empty dummy>"), None, &mut self.collection, true)
+                .add_patterns_buffer(&[], "<empty dummy>".into(), None, &mut self.collection, true)
         }
 
         // When reading the root, always the first call, we can try to also read the `.git/info/attributes` file which is

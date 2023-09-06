@@ -42,8 +42,7 @@ pub trait Delegate {
 impl Stack {
     /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
-    pub fn new(root: impl Into<PathBuf>) -> Self {
-        let root = root.into();
+    pub fn new(root: PathBuf) -> Self {
         Stack {
             current: root.clone(),
             current_relative: PathBuf::with_capacity(128),
@@ -59,12 +58,7 @@ impl Stack {
     /// The full path to `relative` will be returned along with the data returned by `push_comp`.
     /// Note that this only works correctly for the delegate's `push_directory()` and `pop_directory()` methods if
     /// `relative` paths are terminal, so point to their designated file or directory.
-    pub fn make_relative_path_current(
-        &mut self,
-        relative: impl AsRef<Path>,
-        delegate: &mut impl Delegate,
-    ) -> std::io::Result<()> {
-        let relative = relative.as_ref();
+    pub fn make_relative_path_current(&mut self, relative: &Path, delegate: &mut dyn Delegate) -> std::io::Result<()> {
         debug_assert!(
             relative.is_relative(),
             "only index paths are handled correctly here, must be relative"

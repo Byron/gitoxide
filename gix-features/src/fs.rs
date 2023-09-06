@@ -58,12 +58,12 @@ pub mod walkdir {
     }
 
     /// Instantiate a new directory iterator which will not skip hidden files, with the given level of `parallelism`.
-    pub fn walkdir_new(root: impl AsRef<Path>, parallelism: Parallelism) -> WalkDir {
+    pub fn walkdir_new(root: &Path, parallelism: Parallelism) -> WalkDir {
         WalkDir::new(root).skip_hidden(false).parallelism(parallelism.into())
     }
 
     /// Instantiate a new directory iterator which will not skip hidden files and is sorted
-    pub fn walkdir_sorted_new(root: impl AsRef<Path>, parallelism: Parallelism) -> WalkDir {
+    pub fn walkdir_sorted_new(root: &Path, parallelism: Parallelism) -> WalkDir {
         WalkDir::new(root)
             .skip_hidden(false)
             .sort(true)
@@ -84,12 +84,12 @@ pub mod walkdir {
     pub use super::shared::Parallelism;
 
     /// Instantiate a new directory iterator which will not skip hidden files, with the given level of `parallelism`.
-    pub fn walkdir_new(root: impl AsRef<Path>, _: Parallelism) -> WalkDir {
+    pub fn walkdir_new(root: &Path, _: Parallelism) -> WalkDir {
         WalkDir::new(root)
     }
 
     /// Instantiate a new directory iterator which will not skip hidden files and is sorted, with the given level of `parallelism`.
-    pub fn walkdir_sorted_new(root: impl AsRef<Path>, _: Parallelism) -> WalkDir {
+    pub fn walkdir_sorted_new(root: &Path, _: Parallelism) -> WalkDir {
         WalkDir::new(root).sort_by_file_name()
     }
 

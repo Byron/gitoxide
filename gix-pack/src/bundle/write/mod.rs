@@ -13,6 +13,7 @@ use crate::data;
 
 mod error;
 pub use error::Error;
+use gix_features::progress::prodash::DynNestedProgress;
 
 mod types;
 use types::{LockWriter, PassThrough};
@@ -63,15 +64,15 @@ impl crate::Bundle {
     ///   be accounted for.
     ///   - Empty packs always have the same name and not handling this case will result in at most one superfluous pack.
     pub fn write_to_directory(
-        pack: impl io::BufRead,
-        directory: Option<impl AsRef<Path>>,
-        mut progress: impl Progress,
+        pack: &mut dyn io::BufRead,
+        directory: Option<&Path>,
+        progress: &mut dyn DynNestedProgress,
         should_interrupt: &AtomicBool,
         thin_pack_base_object_lookup_fn: Option<ThinPackLookupFn>,
         options: Options,
     ) -> Result<Outcome, Error> {
         let _span = gix_features::trace::coarse!("gix_pack::Bundle::write_to_directory()");
-        let mut read_progress = progress.add_child_with_id("read pack", ProgressId::ReadPackBytes.into());
+        let mut read_progress = progress.add_child_with_id("read pack".into(), ProgressId::ReadPackBytes.into());
         read_progress.init(None, progress::bytes());
         let pack = progress::Read {
             inner: pack,
@@ -171,21 +172,17 @@ impl crate::Bundle {
     /// As it sends portions of the input to a thread it requires the 'static lifetime for the interrupt flags. This can only
     /// be satisfied by a static `AtomicBool` which is only suitable for programs that only run one of these operations at a time
     /// or don't mind that all of them abort when the flag is set.
-    pub fn write_to_directory_eagerly<P>(
-        pack: impl io::Read + Send + 'static,
+    pub fn write_to_directory_eagerly(
+        pack: Box<dyn io::Read + Send + 'static>,
         pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
-        mut progress: P,
+        progress: &mut dyn DynNestedProgress,
         should_interrupt: &'static AtomicBool,
         thin_pack_base_object_lookup_fn: Option<ThinPackLookupFnSend>,
         options: Options,
-    ) -> Result<Outcome, Error>
-    where
-        P: Progress,
-        P::SubProgress: 'static,
-    {
+    ) -> Result<Outcome, Error> {
         let _span = gix_features::trace::coarse!("gix_pack::Bundle::write_to_directory_eagerly()");
-        let mut read_progress = progress.add_child_with_id("read pack", ProgressId::ReadPackBytes.into()); /* Bundle Write Read pack Bytes*/
+        let mut read_progress = progress.add_child_with_id("read pack".into(), ProgressId::ReadPackBytes.into()); /* Bundle Write Read pack Bytes*/
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
         let pack = progress::Read {
             inner: pack,
@@ -253,7 +250,7 @@ impl crate::Bundle {
             progress,
             options,
             data_file,
-            pack_entries_iter,
+            Box::new(pack_entries_iter),
             should_interrupt,
             pack_version,
         )?;
@@ -268,9 +265,9 @@ impl crate::Bundle {
         })
     }
 
-    fn inner_write(
+    fn inner_write<'a>(
         directory: Option<impl AsRef<Path>>,
-        mut progress: impl Progress,
+        progress: &mut dyn DynNestedProgress,
         Options {
             thread_limit,
             iteration_mode: _,
@@ -278,12 +275,12 @@ impl crate::Bundle {
             object_hash,
         }: Options,
         data_file: SharedTempFile,
-        pack_entries_iter: impl Iterator<Item = Result<data::input::Entry, data::input::Error>>,
+        mut pack_entries_iter: Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>> + 'a>,
         should_interrupt: &AtomicBool,
         pack_version: data::Version,
     ) -> Result<WriteOutcome, Error> {
-        let indexing_progress = progress.add_child_with_id(
-            "create index file",
+        let mut indexing_progress = progress.add_child_with_id(
+            "create index file".into(),
             ProgressId::IndexingSteps(Default::default()).into(),
         );
         Ok(match directory {
@@ -297,14 +294,15 @@ impl crate::Bundle {
                         let data_file = Arc::clone(&data_file);
                         move || new_pack_file_resolver(data_file)
                     },
-                    pack_entries_iter,
+                    &mut pack_entries_iter,
                     thread_limit,
-                    indexing_progress,
+                    &mut indexing_progress,
                     &mut index_file,
                     should_interrupt,
                     object_hash,
                     pack_version,
                 )?;
+                drop(pack_entries_iter);
 
                 let data_path = directory.join(format!("pack-{}.pack", outcome.data_hash.to_hex()));
                 let index_path = data_path.with_extension("idx");
@@ -337,10 +335,10 @@ impl crate::Bundle {
                 outcome: crate::index::File::write_data_iter_to_stream(
                     index_kind,
                     move || new_pack_file_resolver(data_file),
-                    pack_entries_iter,
+                    &mut pack_entries_iter,
                     thread_limit,
-                    indexing_progress,
-                    io::sink(),
+                    &mut indexing_progress,
+                    &mut io::sink(),
                     should_interrupt,
                     object_hash,
                     pack_version,

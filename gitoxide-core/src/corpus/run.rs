@@ -1,3 +1,4 @@
+use gix::progress::DynNestedProgress;
 use std::{path::Path, sync::atomic::AtomicBool};
 
 use crate::{
@@ -141,7 +142,7 @@ impl Execute for VerifyOdb {
         crate::repository::verify::integrity(
             repo,
             std::io::sink(),
-            progress,
+            progress.add_child("integrity".into()),
             should_interrupt,
             crate::repository::verify::Context {
                 output_statistics: None,

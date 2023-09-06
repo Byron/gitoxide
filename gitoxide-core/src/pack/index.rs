@@ -1,6 +1,6 @@
 use std::{fs, io, path::PathBuf, str::FromStr, sync::atomic::AtomicBool};
 
-use gix::{odb::pack, Progress};
+use gix::{odb::pack, NestedProgress};
 
 use crate::OutputFormat;
 
@@ -70,16 +70,12 @@ pub enum PathOrRead {
     Read(Box<dyn std::io::Read + Send + 'static>),
 }
 
-pub fn from_pack<P>(
+pub fn from_pack(
     pack: PathOrRead,
     directory: Option<PathBuf>,
-    progress: P,
+    mut progress: impl NestedProgress + 'static,
     ctx: Context<'static, impl io::Write>,
-) -> anyhow::Result<()>
-where
-    P: Progress,
-    P::SubProgress: 'static,
-{
+) -> anyhow::Result<()> {
     use anyhow::Context;
     let options = pack::bundle::write::Options {
         thread_limit: ctx.thread_limit,
@@ -94,10 +90,10 @@ where
             let pack_len = pack.metadata()?.len();
             let pack_file = fs::File::open(pack)?;
             pack::Bundle::write_to_directory_eagerly(
-                pack_file,
+                Box::new(pack_file),
                 Some(pack_len),
                 directory,
-                progress,
+                &mut progress,
                 ctx.should_interrupt,
                 None,
                 options,
@@ -107,7 +103,7 @@ where
             input,
             None,
             directory,
-            progress,
+            &mut progress,
             ctx.should_interrupt,
             None,
             options,

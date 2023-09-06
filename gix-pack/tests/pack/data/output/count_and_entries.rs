@@ -1,4 +1,4 @@
-use std::{convert::Infallible, sync::atomic::AtomicBool};
+use std::sync::atomic::AtomicBool;
 
 use gix_features::{
     parallel::{reduce::Finalize, InOrderIter},
@@ -255,16 +255,18 @@ fn traversals() -> crate::Result {
             let deterministic_count_needs_single_thread = Some(1);
             let (counts, stats) = output::count::objects(
                 db.clone(),
-                commits
-                    .into_iter()
-                    .chain(std::iter::once(hex_to_id(if take.is_some() {
-                        "0000000000000000000000000000000000000000"
-                    } else {
-                        "e3fb53cbb4c346d48732a24f09cf445e49bc63d6"
-                    })))
-                    .filter(|o| !o.is_null())
-                    .map(Ok::<_, Infallible>),
-                progress::Discard,
+                Box::new(
+                    commits
+                        .into_iter()
+                        .chain(std::iter::once(hex_to_id(if take.is_some() {
+                            "0000000000000000000000000000000000000000"
+                        } else {
+                            "e3fb53cbb4c346d48732a24f09cf445e49bc63d6"
+                        })))
+                        .filter(|o| !o.is_null())
+                        .map(Ok),
+                ),
+                &progress::Discard,
                 &AtomicBool::new(false),
                 count::objects::Options {
                     input_object_expansion: expansion_mode,
@@ -274,7 +276,7 @@ fn traversals() -> crate::Result {
             )?;
             let actual_count = counts.iter().fold(ObjectCount::default(), |mut c, e| {
                 let mut buf = Vec::new();
-                if let Ok((obj, _location)) = db.find(e.id, &mut buf) {
+                if let Ok((obj, _location)) = db.find(&e.id, &mut buf) {
                     c.add(obj.kind);
                 }
                 c
@@ -289,7 +291,7 @@ fn traversals() -> crate::Result {
             let mut entries_iter = output::entry::iter_from_counts(
                 counts,
                 db.clone(),
-                progress::Discard,
+                Box::new(progress::Discard),
                 output::entry::iter_from_counts::Options {
                     allow_thin_pack,
                     ..Default::default()
@@ -348,9 +350,7 @@ fn write_and_verify(
     let (num_written_bytes, pack_hash) = {
         let num_entries = entries.len();
         let mut pack_writer = output::bytes::FromEntriesIter::new(
-            std::iter::once(Ok::<_, entry::iter_from_counts::Error<gix_odb::store::find::Error>>(
-                entries,
-            )),
+            std::iter::once(Ok::<_, entry::iter_from_counts::Error>(entries)),
             &mut pack_file,
             num_entries as u32,
             pack::data::Version::V2,
@@ -375,7 +375,7 @@ fn write_and_verify(
     );
     let pack = pack::data::File::at(&pack_file_path, gix_hash::Kind::Sha1)?;
     let should_interrupt = AtomicBool::new(false);
-    let hash = pack.verify_checksum(progress::Discard, &should_interrupt)?;
+    let hash = pack.verify_checksum(&mut progress::Discard, &should_interrupt)?;
     assert_eq!(
         hash, pack_hash,
         "the trailer of the pack matches the actually written trailer"
@@ -388,11 +388,11 @@ fn write_and_verify(
     let object_hash = gix_hash::Kind::Sha1; // TODO: parameterize this
     let bundle = pack::Bundle::at(
         pack::Bundle::write_to_directory(
-            std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
+            &mut std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
             Some(tmp_dir.path()),
-            progress::Discard,
+            &mut progress::Discard,
             &should_interrupt,
-            Some(Box::new(move |oid, buf| db.find(oid, buf).ok().map(|t| t.0))),
+            Some(Box::new(move |oid, buf| db.find(&oid, buf).ok().map(|t| t.0))),
             pack::bundle::write::Options::default(),
         )?
         .data_path
@@ -409,7 +409,7 @@ fn write_and_verify(
     // }
 
     bundle.verify_integrity(
-        progress::Discard,
+        &mut progress::Discard,
         &should_interrupt,
         gix_pack::index::verify::integrity::Options {
             verify_mode: pack::index::verify::Mode::HashCrc32DecodeEncode,

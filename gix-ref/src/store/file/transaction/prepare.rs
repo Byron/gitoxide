@@ -205,15 +205,27 @@ impl<'s, 'p> Transaction<'s, 'p> {
     /// Rollbacks happen automatically on failure and they tend to be perfect.
     /// This method is idempotent.
     pub fn prepare(
-        mut self,
+        self,
         edits: impl IntoIterator<Item = RefEdit>,
+        ref_files_lock_fail_mode: gix_lock::acquire::Fail,
+        packed_refs_lock_fail_mode: gix_lock::acquire::Fail,
+    ) -> Result<Self, Error> {
+        self.prepare_inner(
+            &mut edits.into_iter(),
+            ref_files_lock_fail_mode,
+            packed_refs_lock_fail_mode,
+        )
+    }
+
+    fn prepare_inner(
+        mut self,
+        edits: &mut dyn Iterator<Item = RefEdit>,
         ref_files_lock_fail_mode: gix_lock::acquire::Fail,
         packed_refs_lock_fail_mode: gix_lock::acquire::Fail,
     ) -> Result<Self, Error> {
         assert!(self.updates.is_none(), "BUG: Must not call prepare(…) multiple times");
         let store = self.store;
         let mut updates: Vec<_> = edits
-            .into_iter()
             .map(|update| Edit {
                 update,
                 lock: None,
@@ -223,14 +235,14 @@ impl<'s, 'p> Transaction<'s, 'p> {
             .collect();
         updates
             .pre_process(
-                |name| {
+                &mut |name| {
                     let symbolic_refs_are_never_packed = None;
                     store
                         .find_existing_inner(name, symbolic_refs_are_never_packed)
                         .map(|r| r.target)
                         .ok()
                 },
-                |idx, update| Edit {
+                &mut |idx, update| Edit {
                     update,
                     lock: None,
                     parent_index: Some(idx),
@@ -326,10 +338,10 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     self.packed_transaction = Some(match &mut self.packed_refs {
                         PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(f)
                         | PackedRefs::DeletionsAndNonSymbolicUpdates(f) => {
-                            transaction.prepare(edits_for_packed_transaction, f)?
+                            transaction.prepare(&mut edits_for_packed_transaction.into_iter(), f)?
                         }
                         PackedRefs::DeletionsOnly => transaction
-                            .prepare(edits_for_packed_transaction, &mut |_, _| {
+                            .prepare(&mut edits_for_packed_transaction.into_iter(), &mut |_, _| {
                                 unreachable!("BUG: deletions never trigger object lookups")
                             })?,
                     });

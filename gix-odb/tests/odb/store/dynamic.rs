@@ -18,7 +18,7 @@ fn db_with_all_object_sources() -> crate::Result<(gix_odb::Handle, gix_testtools
     let objects_dir = gix_testtools::tempfile::tempdir()?;
     gix_testtools::copy_recursively_into_existing_dir(fixture_path_standalone("objects"), &objects_dir)?;
 
-    let multi_pack_index = std::fs::OpenOptions::new()
+    let mut multi_pack_index = std::fs::OpenOptions::new()
         .write(true)
         .create_new(true)
         .open(objects_dir.path().join("pack/multi-pack-index"))?;
@@ -27,8 +27,8 @@ fn db_with_all_object_sources() -> crate::Result<(gix_odb::Handle, gix_testtools
             fixture_path_standalone("objects/pack/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx"),
             fixture_path_standalone("objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"),
         ],
-        multi_pack_index,
-        gix_features::progress::Discard,
+        &mut multi_pack_index,
+        &mut gix_features::progress::Discard,
         &std::sync::atomic::AtomicBool::default(),
         gix_odb::pack::multi_index::write::Options {
             object_hash: gix_hash::Kind::Sha1,
@@ -64,9 +64,9 @@ fn multi_index_access() -> crate::Result {
         let mut buf = Vec::new();
         for oid in handle.iter()?.with_ordering(order) {
             let oid = oid?;
-            assert!(handle.contains(oid));
-            let obj = handle.find(oid, &mut buf)?;
-            let hdr = handle.try_header(oid)?.expect("exists");
+            assert!(handle.contains(&oid));
+            let obj = handle.find(&oid, &mut buf)?;
+            let hdr = handle.try_header(&oid)?.expect("exists");
             assert_eq!(hdr.kind(), obj.kind);
             assert_eq!(hdr.size(), obj.data.len() as u64);
             count += 1;
@@ -92,7 +92,7 @@ fn multi_index_access() -> crate::Result {
     );
 
     let non_existing_to_trigger_refresh = hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    handle.contains(non_existing_to_trigger_refresh);
+    handle.contains(&non_existing_to_trigger_refresh);
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -115,7 +115,7 @@ fn multi_index_access() -> crate::Result {
         handle.store_ref().path().join("pack/multi-pack-index"),
         filetime::FileTime::now(),
     )?;
-    handle.contains(non_existing_to_trigger_refresh);
+    handle.contains(&non_existing_to_trigger_refresh);
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -173,7 +173,7 @@ fn multi_index_keep_open() -> crate::Result {
     let mut buf = Vec::new();
     use gix_pack::Find;
     let location = stable_handle
-        .location_by_oid(oid, &mut buf)
+        .location_by_oid(&oid, &mut buf)
         .expect("oid exists and is packed");
 
     let non_existing_to_trigger_refresh = hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -181,7 +181,7 @@ fn multi_index_keep_open() -> crate::Result {
         handle.store_ref().path().join("pack/multi-pack-index"),
         filetime::FileTime::now(),
     )?;
-    gix_odb::Find::contains(&handle, non_existing_to_trigger_refresh);
+    gix_odb::Find::contains(&handle, &non_existing_to_trigger_refresh);
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -246,7 +246,7 @@ fn object_replacement() -> crate::Result {
     let handle = gix_odb::at(dir.join(".git/objects"))?;
     let mut buf = Vec::new();
     let short_history_link = hex_to_id("434e5a872d6738d1fffd1e11e52a1840b73668c6");
-    let third_commit = handle.find_commit(short_history_link, &mut buf)?;
+    let third_commit = handle.find_commit(&short_history_link, &mut buf)?;
 
     let orphan_of_new_history = hex_to_id("0703c317e28068f39834ae61e7ab941b7d672322");
     assert_eq!(
@@ -255,13 +255,16 @@ fn object_replacement() -> crate::Result {
         "no replacements are known by default, hence this is the replaced commit, not the replacement"
     );
     drop(third_commit);
-    let hdr = handle.try_header(short_history_link)?.expect("present");
+    let hdr = handle.try_header(&short_history_link)?.expect("present");
     assert_eq!(hdr.kind(), gix_object::Kind::Commit);
-    assert_eq!(handle.find(short_history_link, &mut buf)?.data.len() as u64, hdr.size());
+    assert_eq!(
+        handle.find(&short_history_link, &mut buf)?.data.len() as u64,
+        hdr.size()
+    );
 
-    let orphan = handle.find_commit(orphan_of_new_history, &mut buf)?;
+    let orphan = handle.find_commit(&orphan_of_new_history, &mut buf)?;
     assert_eq!(orphan.parents.len(), 0);
-    let hdr = handle.try_header(orphan_of_new_history)?.expect("present");
+    let hdr = handle.try_header(&orphan_of_new_history)?.expect("present");
     assert_eq!(hdr.kind(), gix_object::Kind::Commit);
 
     let long_history_tip = hex_to_id("71f537d9d78bf6ae89a29a17e54b95a914d3d2ef");
@@ -277,29 +280,35 @@ fn object_replacement() -> crate::Result {
     )?;
     drop(orphan);
 
-    let replaced = handle.find_commit(short_history_link, &mut buf)?;
+    let replaced = handle.find_commit(&short_history_link, &mut buf)?;
     let long_history_second_id = hex_to_id("753ccf815e7b69c9147db5bbf633fe5f7da24ad7");
     assert_eq!(
         replaced.parents().collect::<Vec<_>>(),
         vec![long_history_second_id],
         "replacements are applied by default when present"
     );
-    let hdr = handle.try_header(short_history_link)?.expect("present");
+    let hdr = handle.try_header(&short_history_link)?.expect("present");
     assert_eq!(hdr.kind(), gix_object::Kind::Commit);
     drop(replaced);
-    assert_eq!(handle.find(short_history_link, &mut buf)?.data.len() as u64, hdr.size());
+    assert_eq!(
+        handle.find(&short_history_link, &mut buf)?.data.len() as u64,
+        hdr.size()
+    );
 
     handle.ignore_replacements = true;
-    let not_replaced = handle.find_commit(short_history_link, &mut buf)?;
+    let not_replaced = handle.find_commit(&short_history_link, &mut buf)?;
     assert_eq!(
         not_replaced.parents().collect::<Vec<_>>(),
         vec![orphan_of_new_history],
         "no replacements are made if explicitly disabled"
     );
-    let hdr = handle.try_header(short_history_link)?.expect("present");
+    let hdr = handle.try_header(&short_history_link)?.expect("present");
     assert_eq!(hdr.kind(), gix_object::Kind::Commit);
     drop(not_replaced);
-    assert_eq!(handle.find(short_history_link, &mut buf)?.data.len() as u64, hdr.size());
+    assert_eq!(
+        handle.find(&short_history_link, &mut buf)?.data.len() as u64,
+        hdr.size()
+    );
 
     assert_eq!(
         handle.store_ref().replacements().collect::<Vec<_>>(),
@@ -315,7 +324,7 @@ fn object_replacement() -> crate::Result {
 fn contains() {
     let handle = db();
 
-    assert!(handle.contains(hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"))); // loose object
+    assert!(handle.contains(&hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"))); // loose object
     assert_eq!(
         handle.store_ref().metrics(),
         gix_odb::store::Metrics {
@@ -334,7 +343,7 @@ fn contains() {
     );
 
     // pack c043, the biggest one
-    assert!(handle.contains(hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5")));
+    assert!(handle.contains(&hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5")));
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -357,7 +366,7 @@ fn contains() {
     // The new handle should make no difference.
     #[allow(clippy::redundant_clone)]
     let mut new_handle = handle.clone();
-    assert!(new_handle.contains(hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0")));
+    assert!(new_handle.contains(&hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0")));
     assert_eq!(
         new_handle.store_ref().metrics(),
         gix_odb::store::Metrics {
@@ -375,7 +384,7 @@ fn contains() {
         "when asking for an object in the smallest pack, all in between packs are also loaded."
     );
 
-    assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert!(!new_handle.contains(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
         new_handle.store_ref().metrics(),
         gix_odb::store::Metrics {
@@ -394,7 +403,7 @@ fn contains() {
     );
 
     new_handle.refresh_never();
-    assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert!(!new_handle.contains(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
         new_handle.store_ref().metrics(),
         gix_odb::store::Metrics {
@@ -421,12 +430,12 @@ fn lookup() {
 
     fn can_locate(db: &gix_odb::Handle, hex_id: &str) {
         let id = hex_to_id(hex_id);
-        assert!(db.contains(id));
+        assert!(db.contains(&id));
 
         let mut buf = Vec::new();
-        let obj = db.find(id, &mut buf).expect("exists");
+        let obj = db.find(&id, &mut buf).expect("exists");
 
-        let hdr = db.try_header(id).unwrap().expect("exists");
+        let hdr = db.try_header(&id).unwrap().expect("exists");
         assert_eq!(obj.kind, hdr.kind());
         assert_eq!(obj.data.len() as u64, hdr.size());
     }
@@ -477,7 +486,7 @@ fn lookup() {
         handle.refresh_mode(),
         store::RefreshMode::AfterAllIndicesLoaded
     ));
-    assert!(!handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert!(!handle.contains(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
 
     all_loaded.num_refreshes += 1;
     assert_eq!(
@@ -488,7 +497,7 @@ fn lookup() {
 
     handle.refresh_never();
     let previous_refresh_count = all_loaded.num_refreshes;
-    assert!(!handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert!(!handle.contains(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
         handle.store_ref().metrics().num_refreshes,
         previous_refresh_count,
@@ -656,7 +665,7 @@ mod lookup_prefix {
     #[test]
     fn returns_none_for_prefixes_without_any_match() {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
-        let prefix = gix_hash::Prefix::new(gix_hash::ObjectId::null(gix_hash::Kind::Sha1), 7).unwrap();
+        let prefix = gix_hash::Prefix::new(&gix_hash::ObjectId::null(gix_hash::Kind::Sha1), 7).unwrap();
         assert!(handle.lookup_prefix(prefix, None).unwrap().is_none());
         assert_all_indices_loaded(&handle, 2, 2);
 
@@ -670,7 +679,7 @@ mod lookup_prefix {
     fn returns_some_err_for_prefixes_with_more_than_one_match() {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
         let input_id = hex_to_id("a7065b5e971a6d8b55875d8cf634a3a37202ab23");
-        let prefix = gix_hash::Prefix::new(input_id, 4).unwrap();
+        let prefix = gix_hash::Prefix::new(&input_id, 4).unwrap();
         assert_eq!(
             handle.lookup_prefix(prefix, None).unwrap(),
             Some(Err(())),
@@ -702,7 +711,7 @@ mod lookup_prefix {
             for (index, oid) in handle.iter()?.with_ordering(order).map(Result::unwrap).enumerate() {
                 for mut candidates in [None, Some(HashSet::default())] {
                     let hex_len = hex_lengths[index % hex_lengths.len()];
-                    let prefix = gix_hash::Prefix::new(oid, hex_len)?;
+                    let prefix = gix_hash::Prefix::new(&oid, hex_len)?;
                     assert_eq!(
                         handle
                             .lookup_prefix(prefix, candidates.as_mut())?
@@ -724,7 +733,7 @@ mod lookup_prefix {
 #[test]
 fn missing_objects_triggers_everything_is_loaded() {
     let handle = db();
-    assert!(!handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert!(!handle.contains(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -745,7 +754,7 @@ fn missing_objects_triggers_everything_is_loaded() {
 
     let mut buf = Vec::new();
     assert!(handle
-        .find(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), &mut buf)
+        .find(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), &mut buf)
         .is_err());
 
     assert_eq!(
@@ -778,7 +787,7 @@ fn iterate_over_a_bunch_of_loose_and_packed_objects() -> crate::Result {
         );
         assert_eq!(iter.count(), 146, "it sees the correct amount of objects");
         for id in db.iter()? {
-            assert!(db.contains(id?), "each object exists");
+            assert!(db.contains(&id?), "each object exists");
         }
     }
     Ok(())
@@ -818,7 +827,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
     let mut buf = Vec::new();
     assert!(
         handle
-            .find(hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5"), &mut buf)
+            .find(&hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5"), &mut buf)
             .is_ok(),
         "can find object in existing pack at pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"
     );
@@ -843,7 +852,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
     unhide_pack("pack-11fdfa9e156ab73caae3b6da867192221f2089c2");
     assert!(
         handle
-            .find(hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0"), &mut buf)
+            .find(&hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0"), &mut buf)
             .is_ok(),
         "now finding the object in the new pack"
     );
@@ -869,7 +878,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
         let mut stable_handle = handle.clone();
         stable_handle.prevent_pack_unload();
         let location = stable_handle
-            .location_by_oid(hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0"), &mut buf)
+            .location_by_oid(&hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0"), &mut buf)
             .expect("object exists");
         assert!(
             stable_handle.entry_by_location(&location).is_some(),
@@ -881,7 +890,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
 
         assert!(
             stable_handle
-                .location_by_oid(hex_to_id("4dac9989f96bc5b5b1263b582c08f0c5f0b58542"), &mut buf)
+                .location_by_oid(&hex_to_id("4dac9989f96bc5b5b1263b582c08f0c5f0b58542"), &mut buf)
                 .is_some(),
             "it finds the object in the newly unhidden pack, which also triggers a refresh providing it with new indices"
         );
@@ -916,7 +925,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
 
     assert!(
         handle
-            .find(hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5"), &mut buf)
+            .find(&hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5"), &mut buf)
             .is_ok(),
         "new pack is loaded, previously loaded is forgotten, lack of cache triggers refresh"
     );
@@ -952,7 +961,7 @@ mod verify {
         let handle = db();
         let outcome = handle
             .store_ref()
-            .verify_integrity(progress::Discard, &AtomicBool::new(false), Default::default())
+            .verify_integrity(&mut progress::Discard, &AtomicBool::new(false), Default::default())
             .unwrap();
         assert_eq!(outcome.index_statistics.len(), 3, "there are only three packs to check");
         assert_eq!(

@@ -47,16 +47,16 @@ impl data::Entry {
 
     /// Instantiate an `Entry` from the reader `r`, providing the `pack_offset` to allow tracking the start of the entry data section.
     pub fn from_read(
-        mut r: impl io::Read,
+        r: &mut dyn io::Read,
         pack_offset: data::Offset,
         hash_len: usize,
     ) -> Result<data::Entry, io::Error> {
-        let (type_id, size, mut consumed) = streaming_parse_header_info(&mut r)?;
+        let (type_id, size, mut consumed) = streaming_parse_header_info(r)?;
 
         use crate::data::entry::Header::*;
         let object = match type_id {
             OFS_DELTA => {
-                let (distance, leb_bytes) = leb64_from_read(&mut r)?;
+                let (distance, leb_bytes) = leb64_from_read(r)?;
                 let delta = OfsDelta {
                     base_distance: distance,
                 };
@@ -89,7 +89,7 @@ impl data::Entry {
 }
 
 #[inline]
-fn streaming_parse_header_info(mut read: impl io::Read) -> Result<(u8, u64, usize), io::Error> {
+fn streaming_parse_header_info(read: &mut dyn io::Read) -> Result<(u8, u64, usize), io::Error> {
     let mut byte = [0u8; 1];
     read.read_exact(&mut byte)?;
     let mut c = byte[0];

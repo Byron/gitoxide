@@ -77,11 +77,11 @@ mod peel {
         let store = store_with_packed_refs()?;
         let mut head: Reference = store.find_loose("HEAD")?.into();
         let expected = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-        assert_eq!(head.peel_to_id_in_place(&store, peel::none)?, expected);
+        assert_eq!(head.peel_to_id_in_place(&store, &mut peel::none)?, expected);
         assert_eq!(head.target.try_id().map(ToOwned::to_owned), Some(expected));
 
         let mut head = store.find("dt1")?;
-        assert_eq!(head.peel_to_id_in_place(&store, peel::none)?, expected);
+        assert_eq!(head.peel_to_id_in_place(&store, &mut peel::none)?, expected);
         assert_eq!(head.target.into_id(), expected);
         Ok(())
     }
@@ -119,12 +119,12 @@ mod peel {
         assert_eq!(r.kind(), gix_ref::Kind::Symbolic, "there is something to peel");
 
         let commit = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-        assert_eq!(r.peel_to_id_in_place(&store, peel::none)?, commit);
+        assert_eq!(r.peel_to_id_in_place(&store, &mut peel::none)?, commit);
         assert_eq!(r.name.as_bstr(), "refs/remotes/origin/multi-link-target3");
 
         let mut r: Reference = store.find_loose("dt1")?.into();
         assert_eq!(
-            r.peel_to_id_in_place(&store, peel::none)?,
+            r.peel_to_id_in_place(&store, &mut peel::none)?,
             hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3"),
             "points to a tag object without actual object lookup"
         );
@@ -132,8 +132,8 @@ mod peel {
         let odb = gix_odb::at(store.git_dir().join("objects"))?;
         let mut r: Reference = store.find_loose("dt1")?.into();
         assert_eq!(
-            r.peel_to_id_in_place(&store, |oid, buf| {
-                odb.try_find(oid, buf)
+            r.peel_to_id_in_place(&store, &mut |oid, buf| {
+                odb.try_find(&oid, buf)
                     .map(|obj| obj.map(|(obj, _)| (obj.kind, obj.data)))
             })?,
             commit,
@@ -151,7 +151,7 @@ mod peel {
         assert_eq!(r.name.as_bstr(), "refs/loop-a");
 
         assert!(matches!(
-            r.peel_to_id_in_place(&store, peel::none).unwrap_err(),
+            r.peel_to_id_in_place(&store, &mut peel::none).unwrap_err(),
             gix_ref::peel::to_id::Error::Cycle { .. }
         ));
         assert_eq!(r.name.as_bstr(), "refs/loop-a", "the ref is not changed on error");

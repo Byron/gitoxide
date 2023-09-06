@@ -81,7 +81,7 @@ impl file::Store {
                 "remotes",
                 partial_name
                     .to_owned()
-                    .join("HEAD")
+                    .join("HEAD".into())
                     .expect("HEAD is valid name")
                     .as_ref(),
                 None,

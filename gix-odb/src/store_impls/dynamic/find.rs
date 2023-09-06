@@ -88,7 +88,7 @@ where
         mut id: &'b gix_hash::oid,
         buffer: &'a mut Vec<u8>,
         inflate: &mut zlib::Inflate,
-        pack_cache: &mut impl DecodeEntry,
+        pack_cache: &mut dyn DecodeEntry,
         snapshot: &mut load_index::Snapshot,
         recursion: Option<error::DeltaBaseRecursion<'_>>,
     ) -> Result<Option<(gix_object::Data<'a>, Option<gix_pack::data::entry::Location>)>, Error> {
@@ -150,7 +150,7 @@ where
                             entry,
                             buffer,
                             inflate,
-                            |id, _out| {
+                            &|id, _out| {
                                 index_file.pack_offset_by_id(id).map(|pack_offset| {
                                     gix_pack::data::decode::entry::ResolvedBase::InPack(pack.entry(pack_offset))
                                 })
@@ -236,7 +236,7 @@ where
                                     entry,
                                     buffer,
                                     inflate,
-                                    |id, out| {
+                                    &|id, out| {
                                         index_file
                                             .pack_offset_by_id(id)
                                             .map(|pack_offset| {
@@ -311,11 +311,8 @@ impl<S> gix_pack::Find for super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
-    type Error = Error;
-
     // TODO: probably make this method fallible, but that would mean its own error type.
-    fn contains(&self, id: impl AsRef<gix_hash::oid>) -> bool {
-        let id = id.as_ref();
+    fn contains(&self, id: &gix_hash::oid) -> bool {
         let mut snapshot = self.snapshot.borrow_mut();
         loop {
             for (idx, index) in snapshot.indices.iter().enumerate() {
@@ -346,21 +343,17 @@ where
 
     fn try_find_cached<'a>(
         &self,
-        id: impl AsRef<gix_hash::oid>,
+        id: &gix_hash::oid,
         buffer: &'a mut Vec<u8>,
-        pack_cache: &mut impl DecodeEntry,
-    ) -> Result<Option<(gix_object::Data<'a>, Option<gix_pack::data::entry::Location>)>, Self::Error> {
-        let id = id.as_ref();
+        pack_cache: &mut dyn DecodeEntry,
+    ) -> Result<Option<(gix_object::Data<'a>, Option<gix_pack::data::entry::Location>)>, gix_pack::find::Error> {
         let mut snapshot = self.snapshot.borrow_mut();
         let mut inflate = self.inflate.borrow_mut();
         self.try_find_cached_inner(id, buffer, &mut inflate, pack_cache, &mut snapshot, None)
+            .map_err(|err| Box::new(err) as _)
     }
 
-    fn location_by_oid(
-        &self,
-        id: impl AsRef<gix_hash::oid>,
-        buf: &mut Vec<u8>,
-    ) -> Option<gix_pack::data::entry::Location> {
+    fn location_by_oid(&self, id: &gix_hash::oid, buf: &mut Vec<u8>) -> Option<gix_pack::data::entry::Location> {
         assert!(
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
@@ -368,7 +361,6 @@ where
 
         assert!(self.store_ref().replacements.is_empty() || self.ignore_replacements, "Everything related to packing must not use replacements. These are not used here, but it should be turned off for good measure.");
 
-        let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
         let mut inflate = self.inflate.borrow_mut();
         'outer: loop {
@@ -511,17 +503,15 @@ where
     S: Deref<Target = super::Store> + Clone,
     Self: gix_pack::Find,
 {
-    type Error = <Self as gix_pack::Find>::Error;
-
-    fn contains(&self, id: impl AsRef<gix_hash::oid>) -> bool {
+    fn contains(&self, id: &gix_hash::oid) -> bool {
         gix_pack::Find::contains(self, id)
     }
 
     fn try_find<'a>(
         &self,
-        id: impl AsRef<gix_hash::oid>,
+        id: &gix_hash::oid,
         buffer: &'a mut Vec<u8>,
-    ) -> Result<Option<gix_object::Data<'a>>, Self::Error> {
+    ) -> Result<Option<gix_object::Data<'a>>, crate::find::Error> {
         gix_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
     }
 }

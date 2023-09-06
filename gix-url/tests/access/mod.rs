@@ -1,4 +1,6 @@
 mod canonicalized {
+    use std::borrow::Cow;
+
     #[test]
     fn non_file_scheme_is_noop() -> crate::Result {
         let url = gix_url::parse("https://github.com/byron/gitoxide".into())?;
@@ -19,8 +21,11 @@ mod canonicalized {
     #[test]
     fn file_that_is_current_dir_is_absolutized() -> crate::Result {
         let url = gix_url::parse(".".into())?;
-        assert!(gix_path::from_bstr(url.path.as_ref()).is_relative());
-        assert!(gix_path::from_bstr(url.canonicalized(&std::env::current_dir()?)?.path.as_ref()).is_absolute());
+        assert!(gix_path::from_bstr(Cow::Borrowed(url.path.as_ref())).is_relative());
+        assert!(gix_path::from_bstr(Cow::Borrowed(
+            url.canonicalized(&std::env::current_dir()?)?.path.as_ref()
+        ))
+        .is_absolute());
         Ok(())
     }
 }

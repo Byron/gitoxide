@@ -29,13 +29,13 @@ impl gix_fs::stack::Delegate for Record {
 #[test]
 fn delegate_calls_are_consistent() -> crate::Result {
     let root = PathBuf::from(".");
-    let mut s = Stack::new(&root);
+    let mut s = Stack::new(root.clone());
 
     assert_eq!(s.current(), root);
     assert_eq!(s.current_relative(), Path::new(""));
 
     let mut r = Record::default();
-    s.make_relative_path_current("a/b", &mut r)?;
+    s.make_relative_path_current("a/b".as_ref(), &mut r)?;
     let mut dirs = vec![root.clone(), root.join("a")];
     assert_eq!(
         r,
@@ -46,7 +46,7 @@ fn delegate_calls_are_consistent() -> crate::Result {
         }
     );
 
-    s.make_relative_path_current("a/b2", &mut r)?;
+    s.make_relative_path_current("a/b2".as_ref(), &mut r)?;
     assert_eq!(
         r,
         Record {
@@ -56,7 +56,7 @@ fn delegate_calls_are_consistent() -> crate::Result {
         }
     );
 
-    s.make_relative_path_current("c/d/e", &mut r)?;
+    s.make_relative_path_current("c/d/e".as_ref(), &mut r)?;
     dirs.pop();
     dirs.extend([root.join("c"), root.join("c").join("d")]);
     assert_eq!(
@@ -69,7 +69,7 @@ fn delegate_calls_are_consistent() -> crate::Result {
     );
 
     dirs.push(root.join("c").join("d").join("x"));
-    s.make_relative_path_current("c/d/x/z", &mut r)?;
+    s.make_relative_path_current("c/d/x/z".as_ref(), &mut r)?;
     assert_eq!(
         r,
         Record {
@@ -80,7 +80,7 @@ fn delegate_calls_are_consistent() -> crate::Result {
     );
 
     dirs.drain(dirs.len() - 3..).count();
-    s.make_relative_path_current("f", &mut r)?;
+    s.make_relative_path_current("f".as_ref(), &mut r)?;
     assert_eq!(s.current_relative(), Path::new("f"));
     assert_eq!(
         r,
@@ -92,7 +92,7 @@ fn delegate_calls_are_consistent() -> crate::Result {
     );
 
     dirs.push(root.join("x"));
-    s.make_relative_path_current("x/z", &mut r)?;
+    s.make_relative_path_current("x/z".as_ref(), &mut r)?;
     assert_eq!(
         r,
         Record {
@@ -103,7 +103,7 @@ fn delegate_calls_are_consistent() -> crate::Result {
     );
 
     dirs.push(root.join("x").join("z"));
-    s.make_relative_path_current("x/z/a", &mut r)?;
+    s.make_relative_path_current("x/z/a".as_ref(), &mut r)?;
     assert_eq!(
         r,
         Record {
@@ -115,7 +115,7 @@ fn delegate_calls_are_consistent() -> crate::Result {
 
     dirs.push(root.join("x").join("z").join("a"));
     dirs.push(root.join("x").join("z").join("a").join("b"));
-    s.make_relative_path_current("x/z/a/b/c", &mut r)?;
+    s.make_relative_path_current("x/z/a/b/c".as_ref(), &mut r)?;
     assert_eq!(
         r,
         Record {
@@ -126,7 +126,7 @@ fn delegate_calls_are_consistent() -> crate::Result {
     );
 
     dirs.drain(dirs.len() - 2..).count();
-    s.make_relative_path_current("x/z", &mut r)?;
+    s.make_relative_path_current("x/z".as_ref(), &mut r)?;
     assert_eq!(
         r,
         Record {

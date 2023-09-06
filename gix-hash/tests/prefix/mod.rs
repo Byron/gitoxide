@@ -5,7 +5,7 @@ mod cmp_oid {
 
     #[test]
     fn it_detects_inequality() {
-        let prefix = gix_hash::Prefix::new(hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"), 7).unwrap();
+        let prefix = gix_hash::Prefix::new(&hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"), 7).unwrap();
         assert_eq!(
             prefix.cmp_oid(&hex_to_id("a920bbb055e1efb9080592a409d3975738b6efb3")),
             Ordering::Greater
@@ -20,7 +20,7 @@ mod cmp_oid {
     #[test]
     fn it_detects_equality() {
         let id = hex_to_id("a920bbb055e1efb9080592a409d3975738b6efb3");
-        let prefix = gix_hash::Prefix::new(id, 6).unwrap();
+        let prefix = gix_hash::Prefix::new(&id, 6).unwrap();
         assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
         assert_eq!(
             prefix.cmp_oid(&hex_to_id("a920bbffffffffffffffffffffffffffffffffff")),
@@ -46,7 +46,7 @@ mod new {
             let mut expected = String::from(&oid_hex[..hex_len]);
             let num_of_zeros = oid.kind().len_in_hex() - hex_len;
             expected.extend(std::iter::repeat('0').take(num_of_zeros));
-            let prefix = gix_hash::Prefix::new(oid, hex_len).unwrap();
+            let prefix = gix_hash::Prefix::new(&oid, hex_len).unwrap();
             assert_eq!(prefix.as_oid().to_hex().to_string(), expected, "{hex_len}");
             assert_eq!(prefix.hex_len(), hex_len);
             assert_eq!(prefix.cmp_oid(&oid), Ordering::Equal);
@@ -57,7 +57,7 @@ mod new {
     fn errors_if_hex_len_is_longer_than_oid_len_in_hex() {
         let kind = Kind::Sha1;
         assert!(matches!(
-            gix_hash::Prefix::new(ObjectId::null(kind), kind.len_in_hex() + 1),
+            gix_hash::Prefix::new(&ObjectId::null(kind), kind.len_in_hex() + 1),
             Err(gix_hash::prefix::Error::TooLong { .. })
         ));
     }
@@ -66,7 +66,7 @@ mod new {
     fn errors_if_hex_len_is_too_short() {
         let kind = Kind::Sha1;
         assert!(matches!(
-            gix_hash::Prefix::new(ObjectId::null(kind), 3),
+            gix_hash::Prefix::new(&ObjectId::null(kind), 3),
             Err(gix_hash::prefix::Error::TooShort { .. })
         ));
     }

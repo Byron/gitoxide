@@ -94,7 +94,7 @@ fn check_against_baseline() -> crate::Result {
     let state = gix_worktree::stack::State::for_add(
         Default::default(),
         gix_worktree::stack::state::Ignore::new(
-            gix_ignore::Search::from_overrides(vec!["!force-include"]),
+            gix_ignore::Search::from_overrides(["!force-include"]),
             gix_ignore::Search::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf)?,
             None,
             Source::WorktreeThenIdMappingIfNotSkipped,

@@ -47,7 +47,11 @@ impl ForksafeTempfile {
             self
         }
     }
-    pub fn persist(mut self, path: impl AsRef<Path>) -> Result<Option<std::fs::File>, (std::io::Error, Self)> {
+    pub fn persist(self, path: impl AsRef<Path>) -> Result<Option<std::fs::File>, (std::io::Error, Self)> {
+        self.persist_inner(path.as_ref())
+    }
+
+    fn persist_inner(mut self, path: &Path) -> Result<Option<std::fs::File>, (std::io::Error, Self)> {
         match self.inner {
             TempfileOrTemppath::Tempfile(file) => match file.persist(path) {
                 Ok(file) => Ok(Some(file)),

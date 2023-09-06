@@ -78,9 +78,9 @@ impl Pattern {
     ///
     /// `case` folding can be configured as well.
     /// `mode` is used to control how [`crate::wildmatch()`] should operate.
-    pub fn matches_repo_relative_path<'a>(
+    pub fn matches_repo_relative_path(
         &self,
-        path: impl Into<&'a BStr>,
+        path: &BStr,
         basename_start_pos: Option<usize>,
         is_dir: Option<bool>,
         case: Case,
@@ -96,7 +96,6 @@ impl Pattern {
                 Case::Fold => wildmatch::Mode::IGNORE_CASE,
                 Case::Sensitive => wildmatch::Mode::empty(),
             };
-        let path = path.into();
         #[cfg(debug_assertions)]
         {
             if basename_start_pos.is_some() {
@@ -124,8 +123,7 @@ impl Pattern {
     ///
     /// Note that this method uses some shortcuts to accelerate simple patterns, but falls back to
     /// [wildmatch()][crate::wildmatch()] if these fail.
-    pub fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
-        let value = value.into();
+    pub fn matches(&self, value: &BStr, mode: wildmatch::Mode) -> bool {
         match self.first_wildcard_pos {
             // "*literal" case, overrides starts-with
             Some(pos)

@@ -47,13 +47,7 @@ where
 
     /// positive `size_change` values mean an object grew or was more commonly, was inserted. Negative values
     /// mean the object shrunk, usually because there header changed from ref-deltas to ofs deltas.
-    fn track_change(
-        &mut self,
-        shifted_pack_offset: u64,
-        pack_offset: u64,
-        size_change: i64,
-        oid: impl Into<Option<ObjectId>>,
-    ) {
+    fn track_change(&mut self, shifted_pack_offset: u64, pack_offset: u64, size_change: i64, oid: Option<ObjectId>) {
         if size_change == 0 {
             return;
         }
@@ -61,7 +55,7 @@ where
             shifted_pack_offset,
             pack_offset,
             size_change_in_bytes: size_change,
-            oid: oid.into().unwrap_or_else(||
+            oid: oid.unwrap_or_else(||
                 // NOTE: this value acts as sentinel and the actual hash kind doesn't matter.
                 gix_hash::Kind::Sha1.null()),
         });
@@ -112,7 +106,7 @@ where
                                         entry.pack_offset,
                                         current_pack_offset,
                                         entry.bytes_in_pack() as i64,
-                                        base_id,
+                                        Some(base_id),
                                     );
                                     entry
                                 }

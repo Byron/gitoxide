@@ -1,6 +1,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use gix_features::{parallel, progress::Progress};
+use gix_features::parallel;
+use gix_features::progress::DynNestedProgress;
 
 use super::Error;
 use crate::{
@@ -56,31 +57,30 @@ impl index::File {
     /// at the cost of memory.
     ///
     /// For more details, see the documentation on the [`traverse()`][index::File::traverse()] method.
-    pub fn traverse_with_index<P, Processor, E>(
+    pub fn traverse_with_index<Processor, E>(
         &self,
         pack: &crate::data::File,
         mut processor: Processor,
-        mut progress: P,
+        progress: &mut dyn DynNestedProgress,
         should_interrupt: &AtomicBool,
         Options { check, thread_limit }: Options,
-    ) -> Result<Outcome<P>, Error<E>>
+    ) -> Result<Outcome, Error<E>>
     where
-        P: Progress,
-        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn gix_features::progress::RawProgress) -> Result<(), E>
+        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn gix_features::progress::Progress) -> Result<(), E>
             + Send
             + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
         let (verify_result, traversal_result) = parallel::join(
             {
-                let pack_progress = progress.add_child_with_id(
+                let mut pack_progress = progress.add_child_with_id(
                     format!(
                         "Hash of pack '{}'",
                         pack.path().file_name().expect("pack has filename").to_string_lossy()
                     ),
                     ProgressId::HashPackDataBytes.into(),
                 );
-                let index_progress = progress.add_child_with_id(
+                let mut index_progress = progress.add_child_with_id(
                     format!(
                         "Hash of index '{}'",
                         self.path.file_name().expect("index has filename").to_string_lossy()
@@ -88,7 +88,8 @@ impl index::File {
                     ProgressId::HashPackIndexBytes.into(),
                 );
                 move || {
-                    let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
+                    let res =
+                        self.possibly_verify(pack, check, &mut pack_progress, &mut index_progress, should_interrupt);
                     if res.is_err() {
                         should_interrupt.store(true, Ordering::SeqCst);
                     }
@@ -98,14 +99,17 @@ impl index::File {
             || -> Result<_, Error<_>> {
                 let sorted_entries = index_entries_sorted_by_offset_ascending(
                     self,
-                    progress.add_child_with_id("collecting sorted index", ProgressId::CollectSortedIndexEntries.into()),
+                    &mut progress.add_child_with_id(
+                        "collecting sorted index".into(),
+                        ProgressId::CollectSortedIndexEntries.into(),
+                    ),
                 ); /* Pack Traverse Collect sorted Entries */
                 let tree = crate::cache::delta::Tree::from_offsets_in_pack(
                     pack.path(),
                     sorted_entries.into_iter().map(Entry::from),
-                    |e| e.index_entry.pack_offset,
-                    |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
-                    progress.add_child_with_id("indexing", ProgressId::TreeFromOffsetsObjects.into()),
+                    &|e| e.index_entry.pack_offset,
+                    &|id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
+                    &mut progress.add_child_with_id("indexing".into(), ProgressId::TreeFromOffsetsObjects.into()),
                     should_interrupt,
                     self.object_hash,
                 )?;
@@ -153,8 +157,11 @@ impl index::File {
                         }
                     },
                     traverse::Options {
-                        object_progress: progress.add_child_with_id("Resolving", ProgressId::DecodedObjects.into()),
-                        size_progress: progress.add_child_with_id("Decoding", ProgressId::DecodedBytes.into()),
+                        object_progress: Box::new(
+                            progress.add_child_with_id("Resolving".into(), ProgressId::DecodedObjects.into()),
+                        ),
+                        size_progress:
+                            &mut progress.add_child_with_id("Decoding".into(), ProgressId::DecodedBytes.into()),
                         thread_limit,
                         should_interrupt,
                         object_hash: self.object_hash,
@@ -167,7 +174,6 @@ impl index::File {
         Ok(Outcome {
             actual_index_checksum: verify_result?,
             statistics: traversal_result?,
-            progress,
         })
     }
 }

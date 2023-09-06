@@ -21,7 +21,7 @@ mod open {
 
     #[test]
     fn parse_config_with_windows_line_endings_successfully() {
-        File::from_path_no_includes(&fixture_path_standalone("repo-config.crlf"), gix_config::Source::Local).unwrap();
+        File::from_path_no_includes(fixture_path_standalone("repo-config.crlf"), gix_config::Source::Local).unwrap();
     }
 }
 

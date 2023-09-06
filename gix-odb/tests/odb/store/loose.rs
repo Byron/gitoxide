@@ -32,13 +32,15 @@ fn iter() {
     assert_eq!(oids, object_ids());
 }
 pub fn locate_oid(id: gix_hash::ObjectId, buf: &mut Vec<u8>) -> gix_object::Data<'_> {
-    ldb().try_find(id, buf).expect("read success").expect("id present")
+    ldb().try_find(&id, buf).expect("read success").expect("id present")
 }
 
 #[test]
 fn verify_integrity() {
     let db = ldb();
-    let outcome = db.verify_integrity(progress::Discard, &AtomicBool::new(false)).unwrap();
+    let outcome = db
+        .verify_integrity(&mut progress::Discard, &AtomicBool::new(false))
+        .unwrap();
     assert_eq!(outcome.num_objects, 7);
 }
 
@@ -48,7 +50,7 @@ mod write {
     use crate::store::loose::{locate_oid, object_ids};
 
     #[test]
-    fn read_and_write() -> Result<(), Box<dyn std::error::Error>> {
+    fn read_and_write() -> crate::Result {
         let dir = gix_testtools::tempfile::tempdir()?;
         let db = loose::Store::at(dir.path(), gix_hash::Kind::Sha1);
         let mut buf = Vec::new();
@@ -59,13 +61,13 @@ mod write {
             let actual = db.write(&obj.decode()?)?;
             assert_eq!(actual, oid);
             assert_eq!(
-                db.try_find(oid, &mut buf2)?.expect("id present").decode()?,
+                db.try_find(&oid, &mut buf2)?.expect("id present").decode()?,
                 obj.decode()?
             );
             let actual = db.write_buf(obj.kind, obj.data)?;
             assert_eq!(actual, oid);
             assert_eq!(
-                db.try_find(oid, &mut buf2)?.expect("id present").decode()?,
+                db.try_find(&oid, &mut buf2)?.expect("id present").decode()?,
                 obj.decode()?
             );
         }
@@ -108,15 +110,15 @@ mod write {
             let empty_tree = gix_object::Tree::empty();
             for _ in 0..2 {
                 let id = db.write(&empty_tree).expect("works");
-                assert!(db.contains(id), "written objects are actually available");
+                assert!(db.contains(&id), "written objects are actually available");
 
                 let empty_blob = db.write_buf(gix_object::Kind::Blob, &[]).expect("works");
-                assert!(db.contains(empty_blob), "written objects are actually available");
+                assert!(db.contains(&empty_blob), "written objects are actually available");
                 let id = db
                     .write_stream(gix_object::Kind::Blob, 0, &mut [].as_slice())
                     .expect("works");
                 assert_eq!(id, empty_blob);
-                assert!(db.contains(empty_blob), "written objects are actually available");
+                assert!(db.contains(&empty_blob), "written objects are actually available");
             }
         }
 
@@ -136,7 +138,7 @@ mod contains {
     fn iterable_objects_are_contained() {
         let store = ldb();
         for oid in store.iter().map(Result::unwrap) {
-            assert!(store.contains(oid));
+            assert!(store.contains(&oid));
         }
     }
 }
@@ -152,7 +154,7 @@ mod lookup_prefix {
     #[test]
     fn returns_none_for_prefixes_without_any_match() {
         let store = ldb();
-        let prefix = gix_hash::Prefix::new(gix_hash::ObjectId::null(gix_hash::Kind::Sha1), 7).unwrap();
+        let prefix = gix_hash::Prefix::new(&gix_hash::ObjectId::null(gix_hash::Kind::Sha1), 7).unwrap();
         assert!(store.lookup_prefix(prefix, None).unwrap().is_none());
 
         let mut candidates = HashSet::default();
@@ -177,7 +179,7 @@ mod lookup_prefix {
         .unwrap();
         let store = gix_odb::loose::Store::at(objects_dir.path(), gix_hash::Kind::Sha1);
         let input_id = hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
-        let prefix = gix_hash::Prefix::new(input_id, 4).unwrap();
+        let prefix = gix_hash::Prefix::new(&input_id, 4).unwrap();
         assert_eq!(
             store.lookup_prefix(prefix, None).unwrap(),
             Some(Err(())),
@@ -204,7 +206,7 @@ mod lookup_prefix {
         for (index, oid) in store.iter().map(Result::unwrap).enumerate() {
             for mut candidates in [None, Some(HashSet::default())] {
                 let hex_len = hex_lengths[index % hex_lengths.len()];
-                let prefix = gix_hash::Prefix::new(oid, hex_len).unwrap();
+                let prefix = gix_hash::Prefix::new(&oid, hex_len).unwrap();
                 assert_eq!(
                     store
                         .lookup_prefix(prefix, candidates.as_mut())
@@ -244,8 +246,8 @@ mod find {
 
         let mut buf = Vec::new();
         let id = hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-        assert!(db.try_find(id, &mut buf).is_err(), "it must not panic");
-        assert!(db.try_header(id).is_err(), "it must not panic");
+        assert!(db.try_find(&id, &mut buf).is_err(), "it must not panic");
+        assert!(db.try_header(&id).is_err(), "it must not panic");
 
         Ok(())
     }
@@ -349,7 +351,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     }
 
     fn try_locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> Option<gix_object::Data<'a>> {
-        ldb().try_find(hex_to_id(hex), buf).ok().flatten()
+        ldb().try_find(&hex_to_id(hex), buf).ok().flatten()
     }
 
     pub fn as_id(id: &[u8; 20]) -> &gix_hash::oid {
@@ -392,7 +394,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         fn existing() -> crate::Result {
             let db = ldb();
             assert_eq!(
-                db.try_header(hex_to_id("a706d7cd20fc8ce71489f34b50cf01011c104193"))?
+                db.try_header(&hex_to_id("a706d7cd20fc8ce71489f34b50cf01011c104193"))?
                     .expect("present"),
                 (56915, gix_object::Kind::Blob)
             );
@@ -403,7 +405,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         fn non_existing() -> crate::Result {
             let db = ldb();
             assert_eq!(
-                db.try_header(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))?,
+                db.try_header(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))?,
                 None,
                 "it does not exist"
             );
@@ -416,8 +418,8 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             let mut buf = Vec::new();
             for id in db.iter() {
                 let id = id?;
-                let expected = db.try_find(id, &mut buf)?.expect("exists");
-                let (size, kind) = db.try_header(id)?.expect("header exists");
+                let expected = db.try_find(&id, &mut buf)?.expect("exists");
+                let (size, kind) = db.try_header(&id)?.expect("header exists");
                 assert_eq!(size, expected.data.len());
                 assert_eq!(kind, expected.kind);
             }

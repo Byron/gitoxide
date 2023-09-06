@@ -327,9 +327,8 @@ pub(crate) fn update(
                         fetch::WritePackedRefs::Only => {
                             gix_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box::new(|oid, buf| {
                                 repo.objects
-                                    .try_find(oid, buf)
+                                    .try_find(&oid, buf)
                                     .map(|obj| obj.map(|obj| obj.kind))
-                                    .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
                             }))},
                         fetch::WritePackedRefs::Never => gix_ref::file::transaction::PackedRefs::DeletionsOnly
                     }

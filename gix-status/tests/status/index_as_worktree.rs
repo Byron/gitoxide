@@ -41,7 +41,7 @@ fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
         FastEq,
         |_, _| Ok::<_, std::convert::Infallible>(gix_object::BlobRef { data: &[] }),
         Options {
-            fs: gix_fs::Capabilities::probe(git_dir),
+            fs: gix_fs::Capabilities::probe(&git_dir),
             stat: TEST_OPTIONS,
             ..Options::default()
         },

@@ -82,7 +82,7 @@ pub mod index_names {
     /// Write all `paths` in order to `out`, including padding.
     pub fn write(
         paths: impl IntoIterator<Item = impl AsRef<Path>>,
-        mut out: impl std::io::Write,
+        out: &mut dyn std::io::Write,
     ) -> std::io::Result<()> {
         let mut written_bytes = 0;
         for path in paths {
@@ -130,9 +130,9 @@ pub mod fanout {
     /// Write the fanout for the given entries, which must be sorted by oid
     pub(crate) fn write(
         sorted_entries: &[multi_index::write::Entry],
-        mut out: impl std::io::Write,
+        out: &mut dyn std::io::Write,
     ) -> std::io::Result<()> {
-        let fanout = crate::index::write::encode::fanout(sorted_entries.iter().map(|e| e.id.first_byte()));
+        let fanout = crate::index::write::encode::fanout(&mut sorted_entries.iter().map(|e| e.id.first_byte()));
 
         for value in fanout.iter() {
             out.write_all(&value.to_be_bytes())?;
@@ -157,7 +157,7 @@ pub mod lookup {
 
     pub(crate) fn write(
         sorted_entries: &[multi_index::write::Entry],
-        mut out: impl std::io::Write,
+        out: &mut dyn std::io::Write,
     ) -> std::io::Result<()> {
         for entry in sorted_entries {
             out.write_all(entry.id.as_slice())?;
@@ -188,7 +188,7 @@ pub mod offsets {
     pub(crate) fn write(
         sorted_entries: &[multi_index::write::Entry],
         large_offsets_needed: bool,
-        mut out: impl std::io::Write,
+        out: &mut dyn std::io::Write,
     ) -> std::io::Result<()> {
         use crate::index::write::encode::{HIGH_BIT, LARGE_OFFSET_THRESHOLD};
         let mut num_large_offsets = 0u32;
@@ -254,7 +254,7 @@ pub mod large_offsets {
     pub(crate) fn write(
         sorted_entries: &[multi_index::write::Entry],
         mut num_large_offsets: usize,
-        mut out: impl std::io::Write,
+        out: &mut dyn std::io::Write,
     ) -> std::io::Result<()> {
         for offset in sorted_entries
             .iter()

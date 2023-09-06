@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::{bail, Context};
-use gix::{bstr::ByteSlice, prelude::ObjectIdExt, Progress};
+use gix::{bstr::ByteSlice, prelude::ObjectIdExt, Count, Progress};
 use rusqlite::{params, OptionalExtension};
 
 use crate::{
@@ -14,7 +14,7 @@ impl query::Engine {
         &self,
         cmd: Command,
         mut out: impl std::io::Write,
-        mut progress: impl gix::Progress,
+        mut progress: impl gix::NestedProgress,
     ) -> anyhow::Result<()> {
         match cmd {
             Command::TracePath { spec } => {

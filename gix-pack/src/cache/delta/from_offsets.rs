@@ -42,11 +42,11 @@ impl<T> Tree<T> {
     ///
     /// Note that the sort order is ascending. The given pack file path must match the provided offsets.
     pub fn from_offsets_in_pack(
-        pack_path: impl AsRef<std::path::Path>,
+        pack_path: &std::path::Path,
         data_sorted_by_offsets: impl Iterator<Item = T>,
-        get_pack_offset: impl Fn(&T) -> data::Offset,
-        resolve_in_pack_id: impl Fn(&gix_hash::oid) -> Option<data::Offset>,
-        mut progress: impl Progress,
+        get_pack_offset: &dyn Fn(&T) -> data::Offset,
+        resolve_in_pack_id: &dyn Fn(&gix_hash::oid) -> Option<data::Offset>,
+        progress: &mut dyn Progress,
         should_interrupt: &AtomicBool,
         object_hash: gix_hash::Kind,
     ) -> Result<Self, Error> {

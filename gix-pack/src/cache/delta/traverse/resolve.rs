@@ -17,19 +17,19 @@ use crate::{
     data::EntryRange,
 };
 
-pub(crate) struct State<P, F, MBFN, T: Send> {
+pub(crate) struct State<F, MBFN, T: Send> {
     pub delta_bytes: Vec<u8>,
     pub fully_resolved_delta_bytes: Vec<u8>,
-    pub progress: P,
+    pub progress: Box<dyn Progress>,
     pub resolve: F,
     pub modify_base: MBFN,
     pub child_items: ItemSliceSend<Item<T>>,
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn deltas<T, F, MBFN, E, R, P>(
-    object_counter: Option<gix_features::progress::StepShared>,
-    size_counter: Option<gix_features::progress::StepShared>,
+pub(crate) fn deltas<T, F, MBFN, E, R>(
+    objects: gix_features::progress::StepShared,
+    size: gix_features::progress::StepShared,
     node: &mut Item<T>,
     State {
         delta_bytes,
@@ -38,7 +38,7 @@ pub(crate) fn deltas<T, F, MBFN, E, R, P>(
         resolve,
         modify_base,
         child_items,
-    }: &mut State<P, F, MBFN, T>,
+    }: &mut State<F, MBFN, T>,
     resolve_data: &R,
     hash_len: usize,
     threads_left: &AtomicIsize,
@@ -47,9 +47,8 @@ pub(crate) fn deltas<T, F, MBFN, E, R, P>(
 where
     T: Send,
     R: Send + Sync,
-    P: Progress,
     F: for<'r> Fn(EntryRange, &'r R) -> Option<&'r [u8]> + Send + Clone,
-    MBFN: FnMut(&mut T, &P, Context<'_>) -> Result<(), E> + Send + Clone,
+    MBFN: FnMut(&mut T, &dyn Progress, Context<'_>) -> Result<(), E> + Send + Clone,
     E: std::error::Error + Send + Sync + 'static,
 {
     let mut decompressed_bytes_by_pack_offset = BTreeMap::new();
@@ -104,10 +103,8 @@ where
                 },
             )
             .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-            object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
-            size_counter
-                .as_ref()
-                .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
+            objects.fetch_add(1, Ordering::Relaxed);
+            size.fetch_add(base_bytes.len(), Ordering::Relaxed);
         }
 
         for mut child in base.into_child_iter() {
@@ -137,7 +134,7 @@ where
             } else {
                 modify_base(
                     child.data(),
-                    progress,
+                    &progress,
                     Context {
                         entry: &child_entry,
                         entry_end,
@@ -146,10 +143,8 @@ where
                     },
                 )
                 .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-                object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
-                size_counter
-                    .as_ref()
-                    .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
+                objects.fetch_add(1, Ordering::Relaxed);
+                size.fetch_add(base_bytes.len(), Ordering::Relaxed);
             }
         }
 
@@ -169,9 +164,9 @@ where
                 return deltas_mt(
                     initial_threads,
                     decompressed_bytes_by_pack_offset,
-                    object_counter,
-                    size_counter,
-                    progress,
+                    objects,
+                    size,
+                    &progress,
                     nodes,
                     resolve.clone(),
                     resolve_data,
@@ -191,12 +186,12 @@ where
 ///    system. Since this thread will take a controlling function, we may spawn one more than that. In threaded mode, we will finish
 ///    all remaining work.
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn deltas_mt<T, F, MBFN, E, R, P>(
+pub(crate) fn deltas_mt<T, F, MBFN, E, R>(
     mut threads_to_create: isize,
     decompressed_bytes_by_pack_offset: BTreeMap<u64, (data::Entry, u64, Vec<u8>)>,
-    object_counter: Option<gix_features::progress::StepShared>,
-    size_counter: Option<gix_features::progress::StepShared>,
-    progress: &P,
+    objects: gix_features::progress::StepShared,
+    size: gix_features::progress::StepShared,
+    progress: &dyn Progress,
     nodes: Vec<(u16, Node<'_, T>)>,
     resolve: F,
     resolve_data: &R,
@@ -208,9 +203,8 @@ pub(crate) fn deltas_mt<T, F, MBFN, E, R, P>(
 where
     T: Send,
     R: Send + Sync,
-    P: Progress,
     F: for<'r> Fn(EntryRange, &'r R) -> Option<&'r [u8]> + Send + Clone,
-    MBFN: FnMut(&mut T, &P, Context<'_>) -> Result<(), E> + Send + Clone,
+    MBFN: FnMut(&mut T, &dyn Progress, Context<'_>) -> Result<(), E> + Send + Clone,
     E: std::error::Error + Send + Sync + 'static,
 {
     let nodes = gix_features::threading::Mutable::new(nodes);
@@ -230,8 +224,8 @@ where
                         let decompressed_bytes_by_pack_offset = &decompressed_bytes_by_pack_offset;
                         let resolve = resolve.clone();
                         let mut modify_base = modify_base.clone();
-                        let object_counter = object_counter.as_ref();
-                        let size_counter = size_counter.as_ref();
+                        let objects = &objects;
+                        let size = &size;
 
                         move || -> Result<(), Error> {
                             let mut fully_resolved_delta_bytes = Vec::new();
@@ -282,10 +276,8 @@ where
                                         },
                                     )
                                     .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-                                    object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
-                                    size_counter
-                                        .as_ref()
-                                        .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
+                                    objects.fetch_add(1, Ordering::Relaxed);
+                                    size.fetch_add(base_bytes.len(), Ordering::Relaxed);
                                 }
 
                                 for mut child in base.into_child_iter() {
@@ -330,10 +322,8 @@ where
                                             },
                                         )
                                         .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-                                        object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
-                                        size_counter
-                                            .as_ref()
-                                            .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
+                                        objects.fetch_add(1, Ordering::Relaxed);
+                                        size.fetch_add(base_bytes.len(), Ordering::Relaxed);
                                     }
                                 }
                             }

@@ -25,7 +25,7 @@ pub(crate) mod function {
     // TODO: tests for trust-based discovery
     #[cfg_attr(not(unix), allow(unused_variables))]
     pub fn discover_opts(
-        directory: impl AsRef<Path>,
+        directory: &Path,
         Options {
             required_trust,
             ceiling_dirs,
@@ -40,10 +40,9 @@ pub(crate) mod function {
         // path component, which means it will not do what you expect when
         // working with paths paths that contain '..'.)
         let cwd = current_dir.map_or_else(|| std::env::current_dir().map(Cow::Owned), |cwd| Ok(Cow::Borrowed(cwd)))?;
-        let directory = directory.as_ref();
         #[cfg(windows)]
         let directory = dunce::simplified(directory);
-        let dir = gix_path::normalize(directory, cwd.as_ref()).ok_or_else(|| Error::InvalidInput {
+        let dir = gix_path::normalize(directory.into(), cwd.as_ref()).ok_or_else(|| Error::InvalidInput {
             directory: directory.into(),
         })?;
         let dir_metadata = dir.metadata().map_err(|_| Error::InaccessibleDirectory {
@@ -135,11 +134,11 @@ pub(crate) mod function {
                                 cursor
                             };
                             break 'outer Ok((
-                                crate::repository::Path::from_dot_git_dir(path, kind, cwd).ok_or_else(|| {
-                                    Error::InvalidInput {
+                                crate::repository::Path::from_dot_git_dir(path, kind, cwd.as_ref()).ok_or_else(
+                                    || Error::InvalidInput {
                                         directory: directory.into(),
-                                    }
-                                })?,
+                                    },
+                                )?,
                                 trust,
                             ));
                         }
@@ -177,7 +176,7 @@ pub(crate) mod function {
                     dir_made_absolute = true;
                     debug_assert!(!cursor.as_os_str().is_empty());
                     // TODO: realpath or normalize? No test runs into this.
-                    cursor = gix_path::normalize(&cursor, cwd.as_ref())
+                    cursor = gix_path::normalize(cursor.clone().into(), cwd.as_ref())
                         .ok_or_else(|| Error::InvalidInput {
                             directory: cursor.clone(),
                         })?
@@ -191,7 +190,7 @@ pub(crate) mod function {
     /// the trust level derived from Path ownership.
     ///
     /// Fail if no valid-looking git repository could be found.
-    pub fn discover(directory: impl AsRef<Path>) -> Result<(crate::repository::Path, Trust), Error> {
+    pub fn discover(directory: &Path) -> Result<(crate::repository::Path, Trust), Error> {
         discover_opts(directory, Default::default())
     }
 }

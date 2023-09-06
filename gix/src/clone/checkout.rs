@@ -26,10 +26,7 @@ pub mod main_worktree {
         #[error(transparent)]
         CheckoutOptions(#[from] crate::config::checkout_options::Error),
         #[error(transparent)]
-        IndexCheckout(
-            #[from]
-            gix_worktree_state::checkout::Error<gix_odb::find::existing_object::Error<gix_odb::store::find::Error>>,
-        ),
+        IndexCheckout(#[from] gix_worktree_state::checkout::Error<gix_odb::find::existing_object::Error>),
         #[error("Failed to reopen object database as Arc (only if thread-safety wasn't compiled in)")]
         OpenArcOdb(#[from] std::io::Error),
         #[error("The HEAD reference could not be located")]
@@ -67,7 +64,7 @@ pub mod main_worktree {
         /// if the `head()` of the returned repository is not unborn.
         pub fn main_worktree(
             &mut self,
-            mut progress: impl crate::Progress,
+            mut progress: impl gix_features::progress::NestedProgress,
             should_interrupt: &AtomicBool,
         ) -> Result<(Repository, gix_worktree_state::checkout::Outcome), Error> {
             let _span = gix_trace::coarse!("gix::clone::PrepareCheckout::main_worktree()");
@@ -113,8 +110,8 @@ pub mod main_worktree {
                     let objects = repo.objects.clone().into_arc()?;
                     move |oid, buf| objects.find_blob(oid, buf)
                 },
-                &mut files,
-                &mut bytes,
+                &files,
+                &bytes,
                 should_interrupt,
                 opts,
             )?;

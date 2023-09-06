@@ -75,8 +75,8 @@ impl<'find, T> Graph<'find, T> {
     pub fn insert_parents(
         &mut self,
         id: &gix_hash::oid,
-        mut new_parent_data: impl FnMut(gix_hash::ObjectId, SecondsSinceUnixEpoch) -> T,
-        mut update_existing: impl FnMut(gix_hash::ObjectId, &mut T),
+        new_parent_data: &mut dyn FnMut(gix_hash::ObjectId, SecondsSinceUnixEpoch) -> T,
+        update_existing: &mut dyn FnMut(gix_hash::ObjectId, &mut T),
         first_parent: bool,
     ) -> Result<(), insert_parents::Error> {
         let commit = self.lookup(id)?;
@@ -122,16 +122,18 @@ impl<'find, T> Graph<'find, T> {
     /// most recently used commits.
     /// Furthermore, **none-existing commits should not trigger the pack-db to be refreshed.** Otherwise, performance may be sub-optimal
     /// in shallow repositories as running into non-existing commits will trigger a refresh of the `packs` directory.
-    pub fn new<Find, E>(mut find: Find, cache: impl Into<Option<gix_commitgraph::Graph>>) -> Self
+    pub fn new<Find>(find: Find, cache: impl Into<Option<gix_commitgraph::Graph>>) -> Self
     where
-        Find:
-            for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<Option<gix_object::CommitRefIter<'a>>, E> + 'find,
-        E: std::error::Error + Send + Sync + 'static,
+        Find: for<'a> FnMut(
+                &gix_hash::oid,
+                &'a mut Vec<u8>,
+            ) -> Result<
+                Option<gix_object::CommitRefIter<'a>>,
+                Box<dyn std::error::Error + Send + Sync + 'static>,
+            > + 'find,
     {
         Graph {
-            find: Box::new(move |id, buf| {
-                find(id, buf).map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
-            }),
+            find: Box::new(find),
             cache: cache.into(),
             map: gix_hashtable::HashMap::default(),
             buf: Vec::new(),

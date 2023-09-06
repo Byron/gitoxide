@@ -34,7 +34,7 @@ pub use tempfile;
 ///
 /// }
 /// ```
-pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 /// A wrapper for a running git-daemon process which is killed automatically on drop.
 ///

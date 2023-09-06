@@ -42,21 +42,16 @@ pub enum Error {
 /// If no alternate object database was resolved, the resulting `Vec` is empty (it is not an error
 /// if there are no alternates).
 /// It is an error once a repository is seen again as it would lead to a cycle.
-pub fn resolve(
-    objects_directory: impl Into<PathBuf>,
-    current_dir: impl AsRef<std::path::Path>,
-) -> Result<Vec<PathBuf>, Error> {
-    let relative_base = objects_directory.into();
-    let mut dirs = vec![(0, relative_base.clone())];
+pub fn resolve(objects_directory: PathBuf, current_dir: &std::path::Path) -> Result<Vec<PathBuf>, Error> {
+    let mut dirs = vec![(0, objects_directory.clone())];
     let mut out = Vec::new();
-    let cwd = current_dir.as_ref();
-    let mut seen = vec![gix_path::realpath_opts(&relative_base, cwd, MAX_SYMLINKS)?];
+    let mut seen = vec![gix_path::realpath_opts(&objects_directory, current_dir, MAX_SYMLINKS)?];
     while let Some((depth, dir)) = dirs.pop() {
         match fs::read(dir.join("info").join("alternates")) {
             Ok(input) => {
                 for path in parse::content(&input)?.into_iter() {
-                    let path = relative_base.join(path);
-                    let path_canonicalized = gix_path::realpath_opts(&path, cwd, MAX_SYMLINKS)?;
+                    let path = objects_directory.join(path);
+                    let path_canonicalized = gix_path::realpath_opts(&path, current_dir, MAX_SYMLINKS)?;
                     if seen.contains(&path_canonicalized) {
                         return Err(Error::Cycle(seen));
                     }

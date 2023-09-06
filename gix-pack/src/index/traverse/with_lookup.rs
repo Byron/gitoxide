@@ -1,5 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use gix_features::progress::{Count, DynNestedProgress};
 use gix_features::{
     parallel::{self, in_parallel_if},
     progress::{self, Progress},
@@ -66,37 +67,34 @@ impl index::File {
     /// waste while decoding objects.
     ///
     /// For more details, see the documentation on the [`traverse()`][index::File::traverse()] method.
-    pub fn traverse_with_lookup<P, C, Processor, E, F>(
+    pub fn traverse_with_lookup<C, Processor, E, F>(
         &self,
         mut processor: Processor,
         pack: &data::File,
-        mut progress: P,
+        progress: &mut dyn DynNestedProgress,
         should_interrupt: &AtomicBool,
         Options {
             thread_limit,
             check,
             make_pack_lookup_cache,
         }: Options<F>,
-    ) -> Result<Outcome<P>, Error<E>>
+    ) -> Result<Outcome, Error<E>>
     where
-        P: Progress,
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
-        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn gix_features::progress::RawProgress) -> Result<(), E>
-            + Send
-            + Clone,
+        Processor: FnMut(gix_object::Kind, &[u8], &index::Entry, &dyn Progress) -> Result<(), E> + Send + Clone,
         F: Fn() -> C + Send + Clone,
     {
         let (verify_result, traversal_result) = parallel::join(
             {
-                let pack_progress = progress.add_child_with_id(
+                let mut pack_progress = progress.add_child_with_id(
                     format!(
                         "Hash of pack '{}'",
                         pack.path().file_name().expect("pack has filename").to_string_lossy()
                     ),
                     ProgressId::HashPackDataBytes.into(),
                 );
-                let index_progress = progress.add_child_with_id(
+                let mut index_progress = progress.add_child_with_id(
                     format!(
                         "Hash of index '{}'",
                         self.path.file_name().expect("index has filename").to_string_lossy()
@@ -104,7 +102,8 @@ impl index::File {
                     ProgressId::HashPackIndexBytes.into(),
                 );
                 move || {
-                    let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
+                    let res =
+                        self.possibly_verify(pack, check, &mut pack_progress, &mut index_progress, should_interrupt);
                     if res.is_err() {
                         should_interrupt.store(true, Ordering::SeqCst);
                     }
@@ -114,7 +113,10 @@ impl index::File {
             || {
                 let index_entries = util::index_entries_sorted_by_offset_ascending(
                     self,
-                    progress.add_child_with_id("collecting sorted index", ProgressId::CollectSortedIndexEntries.into()),
+                    &mut progress.add_child_with_id(
+                        "collecting sorted index".into(),
+                        ProgressId::CollectSortedIndexEntries.into(),
+                    ),
                 );
 
                 let (chunk_size, thread_limit, available_cores) =
@@ -122,7 +124,7 @@ impl index::File {
                 let there_are_enough_entries_to_process = || index_entries.len() > chunk_size * available_cores;
                 let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
                 let reduce_progress = OwnShared::new(Mutable::new({
-                    let mut p = progress.add_child_with_id("Traversing", ProgressId::DecodedObjects.into());
+                    let mut p = progress.add_child_with_id("Traversing".into(), ProgressId::DecodedObjects.into());
                     p.init(Some(self.num_objects() as usize), progress::count("objects"));
                     p
                 }));
@@ -186,7 +188,6 @@ impl index::File {
         Ok(Outcome {
             actual_index_checksum: verify_result?,
             statistics: traversal_result?,
-            progress,
         })
     }
 }

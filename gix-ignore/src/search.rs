@@ -42,11 +42,7 @@ impl Search {
     /// Given `git_dir`, a `.git` repository, load static ignore patterns from `info/exclude`
     /// and from `excludes_file` if it is provided.
     /// Note that it's not considered an error if the provided `excludes_file` does not exist.
-    pub fn from_git_dir(
-        git_dir: impl AsRef<Path>,
-        excludes_file: Option<PathBuf>,
-        buf: &mut Vec<u8>,
-    ) -> std::io::Result<Self> {
+    pub fn from_git_dir(git_dir: &Path, excludes_file: Option<PathBuf>, buf: &mut Vec<u8>) -> std::io::Result<Self> {
         let mut group = Self::default();
 
         let follow_symlinks = true;
@@ -57,7 +53,7 @@ impl Search {
                 .transpose()?,
         );
         group.patterns.extend(pattern::List::<Ignore>::from_file(
-            git_dir.as_ref().join("info").join("exclude"),
+            &git_dir.join("info").join("exclude"),
             None,
             follow_symlinks,
             buf,
@@ -67,11 +63,13 @@ impl Search {
 
     /// Parse a list of patterns, using slashes as path separators
     pub fn from_overrides(patterns: impl IntoIterator<Item = impl Into<OsString>>) -> Self {
+        Self::from_overrides_inner(&mut patterns.into_iter().map(Into::into))
+    }
+
+    fn from_overrides_inner(patterns: &mut dyn Iterator<Item = OsString>) -> Self {
         Search {
             patterns: vec![pattern::List {
                 patterns: patterns
-                    .into_iter()
-                    .map(Into::into)
                     .enumerate()
                     .filter_map(|(seq_id, pattern)| {
                         let pattern = gix_path::try_into_bstr(PathBuf::from(pattern)).ok()?;
@@ -163,13 +161,12 @@ impl Search {
     /// Match `relative_path` and return the first match if found.
     /// `is_dir` is true if `relative_path` is a directory.
     /// `case` specifies whether cases should be folded during matching or not.
-    pub fn pattern_matching_relative_path<'a>(
+    pub fn pattern_matching_relative_path(
         &self,
-        relative_path: impl Into<&'a BStr>,
+        relative_path: &BStr,
         is_dir: Option<bool>,
         case: gix_glob::pattern::Case,
     ) -> Option<Match<'_>> {
-        let relative_path = relative_path.into();
         let basename_pos = relative_path.rfind(b"/").map(|p| p + 1);
         self.patterns
             .iter()

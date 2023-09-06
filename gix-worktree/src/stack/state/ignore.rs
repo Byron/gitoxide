@@ -3,6 +3,7 @@ use std::path::Path;
 use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
 
+use crate::stack::delegate::FindFn;
 use crate::{
     stack::state::{Ignore, IgnoreMatchGroup},
     PathIdMapping,
@@ -156,21 +157,17 @@ impl Ignore {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(crate) fn push_directory<Find, E>(
+    pub(crate) fn push_directory(
         &mut self,
         root: &Path,
         dir: &Path,
         rela_dir: &BStr,
         buf: &mut Vec<u8>,
         id_mappings: &[PathIdMapping],
-        mut find: Find,
+        find: &mut FindFn<'_>,
         case: Case,
         stats: &mut Statistics,
-    ) -> std::io::Result<()>
-    where
-        Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
-        E: std::error::Error + Send + Sync + 'static,
-    {
+    ) -> std::io::Result<()> {
         self.matched_directory_patterns_stack
             .push(self.matching_exclude_pattern_no_dir(rela_dir, Some(true), case));
 

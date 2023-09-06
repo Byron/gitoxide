@@ -51,7 +51,7 @@ mod remove {
         let prev_values = vec!["v", "", "", "", "a        b        c"];
         let mut num_values = section.num_values();
         for (key, expected_prev_value) in ('a'..='e').zip(prev_values) {
-            let prev_value = section.remove(key.to_string());
+            let prev_value = section.remove(&key.to_string());
             num_values -= 1;
             assert_eq!(prev_value.expect("present").as_ref(), expected_prev_value);
             assert_eq!(section.num_values(), num_values);
@@ -104,7 +104,7 @@ mod set {
 
         for (key, (new_value, expected_prev_value)) in (b'a'..=b'e').zip(values.into_iter().zip(prev_values)) {
             let key = std::str::from_utf8(std::slice::from_ref(&key))?.to_owned();
-            let prev_value = section.set(key.try_into()?, new_value);
+            let prev_value = section.set(key.try_into()?, new_value.as_ref());
             assert_eq!(prev_value.as_deref().expect("prev value set"), expected_prev_value);
         }
 
@@ -112,7 +112,7 @@ mod set {
         assert_eq!(
             config
                 .section_mut("a", None)?
-                .set("new-one".to_owned().try_into()?, "value"),
+                .set("new-one".to_owned().try_into()?, "value".into()),
             None,
             "new values don't replace an existing one"
         );
