@@ -60,7 +60,7 @@
 //! Entering `git2` into the search field will also surface all methods with such annotations.
 //!
 //! What follows is a list of methods you might be missing, along with workarounds if available.
-//! * [`git2::Repository::open_bare()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_bare) ➡ ❌ - use [`open()`] and discard it is not bare.
+//! * [`git2::Repository::open_bare()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_bare) ➡ ❌ - use [`open()`] and discard if it is not bare.
 //! * [`git2::build::CheckoutBuilder::disable_filters()](https://docs.rs/git2/*/git2/build/struct.CheckoutBuilder.html#method.disable_filters) ➡ ❌ *(filters are always applied during checkouts)*
 //! * [`git2::Repository::submodule_status()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.submodule_status) ➡ [`Submodule::state()`] - status provides more information and conveniences though, and an actual worktree status isn't performed.
 //!

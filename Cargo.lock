@@ -1957,6 +1957,7 @@ dependencies = [
  "futures-lite",
  "gix-hash 0.12.0",
  "gix-odb",
+ "gix-pack",
  "maybe-async",
  "pin-project-lite",
  "serde",

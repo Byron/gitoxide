@@ -38,7 +38,7 @@ title '`gix` crate'
 
   (when "running the example program to check order of signal handlers"
     it "fails as the process aborts" && {
-      expect_run $ABORTED cargo run --no-default-features --example interrupt-handler-allows-graceful-shutdown
+      expect_run $ABORTED cargo run --no-default-features --features interrupt --example interrupt-handler-allows-graceful-shutdown
     }
     it "cleans up the tempfile it created" && {
       expect_run $WITH_FAILURE test -e "example-file.tmp"
@@ -46,7 +46,7 @@ title '`gix` crate'
   )
   (when "running the example program to check reversibility of signal handlers"
     it "fails as the process aborts" && {
-      expect_run $ABORTED cargo run --no-default-features --example reversible-interrupt-handlers
+      expect_run $ABORTED cargo run --no-default-features --features interrupt --example reversible-interrupt-handlers
     }
   )
 )
