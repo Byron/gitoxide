@@ -32,29 +32,41 @@ required-features = ["blocking-network-client"]
 
 default = ["max-performance-safe", "comfort", "extras"]
 
-#! ### Mutually Exclusive Network Client
-#! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
-
-## Make `gix-protocol` available along with an async client.
-async-network-client = ["gix-protocol/async-client"]
-## Use this if your crate uses `async-std` as runtime, and enable basic runtime integration when connecting to remote servers.
-async-network-client-async-std = ["async-std", "async-network-client", "gix-transport/async-std"]
-## Make `gix-protocol` available along with a blocking client.
-blocking-network-client = ["gix-protocol/blocking-client"]
-## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole.
-blocking-http-transport-curl = ["blocking-network-client", "gix-transport/http-client-curl"]
-## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole.
-blocking-http-transport-reqwest = ["blocking-network-client", "gix-transport/http-client-reqwest"]
-## Stacks with `blocking-http-transport-reqwest` and enables HTTPS via the `rustls` crate. Note that https isn't available without a selection.
-blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls", "reqwest-for-configuration-only/trust-dns"]
-## Stacks with `blocking-http-transport-reqwest` and enables HTTPS via the `native-tls` crate. Note that https isn't available without a selection.
-blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/default-tls" ]
-
-
-#! ### Other
+#! There are various categories of features which help to optimize performance and build times. `gix` comes with 'batteries included' and everything is
+#! enabled as long as it doesn't sacrifice compatibility. Most users will be fine with that but will pay with higher compile times than necessary as they
+#! probably don't use all of these features.
+#!
+#! **Thus it's recommended to take a moment and optimize build times by chosing only those 'Components' that you require.** *'Performance' relevant features should
+#! be chosen next to maximize efficiency.*
+#!
+#! #### Application Developers
+#!
+#! These are considered the end-users, all they need to tune is `Performance` features to optimize the efficiency of their app, assuming they don't use `gix`
+#! directly. Otherwise, see the `Library Developers` paragraph.
+#!
+#! In order to configure a crate that isn't a direct dependency, one has to make it a direct dependency. We recommend
+#! `gix-for-configuration = { package = "gix", version = "X.Y.Z", features = […] }` to make clear this dependency isn't used in code.
+#!
+#! #### Library Developers
+#!
+#! As a developer of a library, you should start out with `gix = { version = "X.Y.Z", default-features = false }` and add components as you see fit.
+#! For best compatibility, **do not activate `max-performance-safe`** or any other performance options.
+#!
+#! #### Bundles
+#!
+#! A bundle is a set of related feature toggles which can be activated with a single name that acts as a group.
+#! Bundles are for convenience only and bear no further meaning beyond the cargo manifest file.
 
 ## Various additional features and capabilities that are not necessarily part of what most users would need.
 extras = ["worktree-stream", "worktree-archive"]
+
+## Various progress-related features that improve the look of progress message units.
+comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
+
+#! #### Components
+#!
+#! A component is a distinct feature which may be comprised of one or more methods around a particular topic.
+#! Providers of libraries should only activate
 
 ## Make it possible to turn a tree into a stream of bytes, which can be decoded to entries and turned into various other formats.
 worktree-stream = ["gix-worktree-stream"]
@@ -65,35 +77,32 @@ worktree-stream = ["gix-worktree-stream"]
 ## Your application should add it as dependency and re-activate the desired features.
 worktree-archive = ["gix-archive", "worktree-stream"]
 
-## Various progress-related features that improve the look of progress message units.
-comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
+#! #### Mutually Exclusive Network Client
+#!
+#! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
+#! For this reason, these must be chosen by the user of the library and can't be pre-selected.
+#! Making a choice here also affects which crypto-library ends up being used.
 
-## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde = [   "dep:serde",
-            "gix-pack/serde",
-            "gix-object/serde",
-            "gix-protocol?/serde",
-            "gix-transport?/serde",
-            "gix-ref/serde",
-            "gix-odb/serde",
-            "gix-index/serde",
-            "gix-mailmap/serde",
-            "gix-url/serde",
-            "gix-attributes/serde",
-            "gix-ignore/serde",
-            "gix-revision/serde",
-            "gix-worktree/serde",
-            "gix-commitgraph/serde",
-            "gix-credentials/serde"]
+## Make `gix-protocol` available along with an async client.
+async-network-client = ["gix-protocol/async-client"]
+## Use this if your crate uses `async-std` as runtime, and enable basic runtime integration when connecting to remote servers via the `git://` protocol.
+async-network-client-async-std = ["async-std", "async-network-client", "gix-transport/async-std"]
+## Make `gix-protocol` available along with a blocking client, providing access to the `file://`, git://` and `ssh://` transports.
+blocking-network-client = ["gix-protocol/blocking-client"]
+## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole, making the `https://` transport avaialble.
+blocking-http-transport-curl = ["blocking-network-client", "gix-transport/http-client-curl"]
+## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole, making the `https://` transport avaialble.
+blocking-http-transport-reqwest = ["blocking-network-client", "gix-transport/http-client-reqwest"]
+## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `rustls` crate.
+blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls", "reqwest-for-configuration-only/trust-dns"]
+## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `native-tls` crate.
+blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/default-tls" ]
 
-## Re-export the progress tree root which allows to obtain progress from various functions which take `impl gix::Progress`.
-## Applications which want to display progress will probably need this implementation.
-progress-tree = ["prodash/progress-tree"]
 
-## Print debugging information about usage of object database caches, useful for tuning cache sizes.
-cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
-
-#! ### Performance
+#! #### Performance
+#!
+#! The reason these features exist is to allow optimization for compile time and optimize for compatibility by default. This means that some performance options around
+#! SHA1 and ZIP might not compile on all platforms, so it depeneds on the end-user who compiles the application to chose these based on their needs.
 
 ## Activate features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases, skipping the ones known to cause compile failures
 ## on some platforms.
@@ -123,6 +132,36 @@ max-performance = [ "max-performance-safe", "gix-features/zlib-ng", "fast-sha1" 
 ## If enabled, use assembly versions of sha1 on supported platforms.
 ## This might cause compile failures as well which is why it can be turned off separately.
 fast-sha1 = [ "gix-features/fast-sha1" ]
+
+#! #### Other
+#!
+#! The catch-all of feature toggles.
+
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde = [   "dep:serde",
+    "gix-pack/serde",
+    "gix-object/serde",
+    "gix-protocol?/serde",
+    "gix-transport?/serde",
+    "gix-ref/serde",
+    "gix-odb/serde",
+    "gix-index/serde",
+    "gix-mailmap/serde",
+    "gix-url/serde",
+    "gix-attributes/serde",
+    "gix-ignore/serde",
+    "gix-revision/serde",
+    "gix-worktree/serde",
+    "gix-commitgraph/serde",
+    "gix-credentials/serde"]
+
+## Re-export the progress tree root which allows to obtain progress from various functions which take `impl gix::Progress`.
+## Applications which want to display progress will probably need this implementation.
+progress-tree = ["prodash/progress-tree"]
+
+## Print debugging information about usage of object database caches, useful for tuning cache sizes.
+cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
+
 
 
 [dependencies]
