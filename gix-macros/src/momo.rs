@@ -14,7 +14,7 @@ pub(crate) fn inner(code: proc_macro2::TokenStream) -> proc_macro2::TokenStream 
         let (has_conversion_in_effect, argtypes, argexprs, has_self) = convert(&item_fn.sig.inputs, &ty_conversions);
         if !has_conversion_in_effect {
             return Error::new(
-                proc_macro2::Span::call_site(),
+                item_fn.span(),
                 "Couldn't apply a single conversion - momo is ineffective here",
             )
             .to_compile_error();
