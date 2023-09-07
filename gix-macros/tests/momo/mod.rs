@@ -15,14 +15,6 @@ fn test_open_opts(directory: impl Into<std::path::PathBuf>, options: Options) ->
     test_open_opts_inner(directory, options)
 }
 
-#[allow(dead_code)]
-#[momo]
-fn test_with_try(t: impl TryInto<String, Error = ()>, _options: Options) -> Result<(), ()> {
-    let t = t.try_into()?;
-    t.strip_prefix('1').ok_or(())?;
-    Ok(())
-}
-
 #[momo]
 fn test_fn<E>(
     a: impl Into<String>,
@@ -310,8 +302,7 @@ fn ux() {
 }
 
 #[test]
-#[ignore = "needs work"]
-fn ux_todo() {
+fn ux_on_ineffective() {
     let t = trybuild::TestCases::new();
     t.compile_fail("tests/momo/ux/error_if_ineffective.rs");
 }

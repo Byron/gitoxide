@@ -11,15 +11,14 @@ pub(crate) fn inner(code: proc_macro2::TokenStream) -> proc_macro2::TokenStream 
 
     if let Item::Fn(item_fn) = fn_item {
         let ty_conversions = parse_generics(&item_fn.sig);
-        // TODO: uncomment and see it fail in places where it should actually succeed.
-        // if ty_conversions.is_empty() {
-        //     return Error::new(
-        //         item_fn.span(),
-        //         "Couldn't apply a single conversion - momo is ineffective here",
-        //     )
-        //     .to_compile_error();
-        // }
-        let (argtypes, argexprs, has_self) = convert(&item_fn.sig.inputs, &ty_conversions);
+        let (has_conversion_in_effect, argtypes, argexprs, has_self) = convert(&item_fn.sig.inputs, &ty_conversions);
+        if !has_conversion_in_effect {
+            return Error::new(
+                proc_macro2::Span::call_site(),
+                "Couldn't apply a single conversion - momo is ineffective here",
+            )
+            .to_compile_error();
+        }
 
         let uses_self = has_self
             || item_fn.sig.inputs.iter().any(has_self_type)
@@ -171,7 +170,8 @@ fn parse_generics(decl: &Signature) -> HashMap<Ident, Conversion<'_>> {
 fn convert<'a>(
     inputs: &'a Punctuated<FnArg, Token![,]>,
     ty_conversions: &HashMap<Ident, Conversion<'a>>,
-) -> (Punctuated<FnArg, Token![,]>, Punctuated<Expr, Token![,]>, bool) {
+) -> (bool, Punctuated<FnArg, Token![,]>, Punctuated<Expr, Token![,]>, bool) {
+    let mut has_conversion_in_effect = false;
     let mut argtypes = Punctuated::new();
     let mut argexprs = Punctuated::new();
     let mut has_self = false;
@@ -210,6 +210,7 @@ fn convert<'a>(
             match *pat_type.ty {
                 Type::ImplTrait(TypeImplTrait { ref bounds, .. }) => {
                     if let Some(conv) = parse_bounds(bounds) {
+                        has_conversion_in_effect = true;
                         argexprs.push(conv.conversion_expr(ident));
                         if let Conversion::AsMut(_) = conv {
                             pat_ident.mutability = Some(Default::default());
@@ -220,6 +221,7 @@ fn convert<'a>(
                 }
                 Type::Path(..) => {
                     if let Some(conv) = parse_bounded_type(&pat_type.ty).and_then(|ident| ty_conversions.get(&ident)) {
+                        has_conversion_in_effect = true;
                         argexprs.push(conv.conversion_expr(ident));
                         if let Conversion::AsMut(_) = conv {
                             pat_ident.mutability = Some(Default::default());
@@ -237,7 +239,7 @@ fn convert<'a>(
             argtypes.push(FnArg::Typed(pat_type));
         }
     });
-    (argtypes, argexprs, has_self)
+    (has_conversion_in_effect, argtypes, argexprs, has_self)
 }
 
 fn contains_self_type_path(path: &Path) -> bool {
