@@ -9,7 +9,9 @@
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 ///
+#[cfg(feature = "describe")]
 pub mod describe;
+#[cfg(feature = "describe")]
 pub use describe::function::describe;
 
 ///

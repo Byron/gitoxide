@@ -13,6 +13,11 @@ rust-version = "1.65"
 doctest = false
 
 [features]
+default = ["describe"]
+
+## `git describe` functionality
+describe = []
+
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde = [ "dep:serde", "gix-hash/serde", "gix-object/serde" ]
 

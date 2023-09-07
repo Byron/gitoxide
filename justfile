@@ -77,6 +77,7 @@ check:
     cargo check -p gix-credentials --features serde
     cargo check -p gix-sec --features serde
     cargo check -p gix-revision --features serde
+    cargo check -p gix-revision --no-default-features --features describe
     cargo check -p gix-mailmap --features serde
     cargo check -p gix-url --all-features
     cargo check -p gix-features --all-features
