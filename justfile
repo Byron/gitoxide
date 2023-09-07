@@ -43,6 +43,7 @@ check:
     if cargo check -p gix-transport --all-features 2>/dev/null; then false; else true; fi
     if cargo check -p gix-protocol --all-features 2>/dev/null; then false; else true; fi
     if cargo tree -p gix --no-default-features -i imara-diff 2>/dev/null; then false; else true; fi
+    if cargo tree -p gix --no-default-features -i gix-protocol 2>/dev/null; then false; else true; fi
     cargo check --no-default-features --features lean
     cargo check --no-default-features --features lean-async
     cargo check --no-default-features --features max

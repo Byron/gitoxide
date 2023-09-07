@@ -88,11 +88,11 @@ worktree-archive = ["gix-archive", "worktree-stream"]
 #! Making a choice here also affects which crypto-library ends up being used.
 
 ## Make `gix-protocol` available along with an async client.
-async-network-client = ["gix-protocol/async-client"]
+async-network-client = ["gix-protocol/async-client", "gix-pack/streaming-input"]
 ## Use this if your crate uses `async-std` as runtime, and enable basic runtime integration when connecting to remote servers via the `git://` protocol.
 async-network-client-async-std = ["async-std", "async-network-client", "gix-transport/async-std"]
 ## Make `gix-protocol` available along with a blocking client, providing access to the `file://`, git://` and `ssh://` transports.
-blocking-network-client = ["gix-protocol/blocking-client"]
+blocking-network-client = ["gix-protocol/blocking-client", "gix-pack/streaming-input"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole, making the `https://` transport avaialble.
 blocking-http-transport-curl = ["blocking-network-client", "gix-transport/http-client-curl"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole, making the `https://` transport avaialble.
@@ -186,7 +186,7 @@ gix-odb = { version = "^0.51.0", path = "../gix-odb" }
 gix-hash = { version = "^0.12.0", path = "../gix-hash" }
 gix-object = { version = "^0.35.0", path = "../gix-object" }
 gix-actor = { version = "^0.25.0", path = "../gix-actor" }
-gix-pack = { version = "^0.41.0", path = "../gix-pack", features = ["object-cache-dynamic"] }
+gix-pack = { version = "^0.41.0", path = "../gix-pack", default-features = false, features = ["object-cache-dynamic"] }
 gix-revision = { version = "^0.20.0", path = "../gix-revision" }
 gix-negotiate = { version = "^0.6.0", path = "../gix-negotiate" }
 
