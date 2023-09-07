@@ -16,6 +16,14 @@ fn empty_component() {
 }
 
 #[test]
+fn whitespace() {
+    assert!(matches!(
+        try_parse("refs/heads/test:refs/remotes/ /test", Operation::Fetch).unwrap_err(),
+        Error::ReferenceName(gix_validate::reference::name::Error::Tag(_))
+    ));
+}
+
+#[test]
 fn complex_patterns_with_more_than_one_asterisk() {
     for op in [Operation::Fetch, Operation::Push] {
         for spec in ["a/*/c/*", "a**:**b", "+:**/"] {
