@@ -9,7 +9,7 @@ use crate::{
     config,
     config::{
         boolean,
-        cache::util::{ApplyLeniency, ApplyLeniencyDefault, ApplyLeniencyDefaultValue},
+        cache::util::{ApplyLeniency, ApplyLeniencyDefaultValue},
         checkout_options,
         tree::{gitoxide, Checkout, Core, Key},
         Cache,
@@ -21,7 +21,9 @@ use crate::{
 
 /// Access
 impl Cache {
+    #[cfg(feature = "blob-diff")]
     pub(crate) fn diff_algorithm(&self) -> Result<gix_diff::blob::Algorithm, config::diff::algorithm::Error> {
+        use crate::config::cache::util::ApplyLeniencyDefault;
         use crate::config::diff::algorithm::Error;
         self.diff_algorithm
             .get_or_try_init(|| {
@@ -82,6 +84,7 @@ impl Cache {
             })
     }
 
+    #[cfg(feature = "blob-diff")]
     pub(crate) fn diff_renames(
         &self,
     ) -> Result<Option<crate::object::tree::diff::Rewrites>, crate::object::tree::diff::rewrites::Error> {

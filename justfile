@@ -42,6 +42,7 @@ check:
     if cargo check -p gix-packetline --all-features 2>/dev/null; then false; else true; fi
     if cargo check -p gix-transport --all-features 2>/dev/null; then false; else true; fi
     if cargo check -p gix-protocol --all-features 2>/dev/null; then false; else true; fi
+    if cargo tree -p gix --no-default-features -i imara-diff 2>/dev/null; then false; else true; fi
     cargo check --no-default-features --features lean
     cargo check --no-default-features --features lean-async
     cargo check --no-default-features --features max
@@ -111,6 +112,7 @@ check:
     cargo check -p gix --no-default-features --features max-performance
     cargo check -p gix --no-default-features --features max-performance-safe
     cargo check -p gix --no-default-features --features progress-tree
+    cargo check -p gix --no-default-features --features blob-diff
     cargo check -p gix --no-default-features
     cargo check -p gix-odb --features serde
     cargo check --no-default-features --features max-control

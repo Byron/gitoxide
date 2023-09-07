@@ -37,7 +37,9 @@ pub mod credential;
 
 /// The `diff` top-level section.
 #[derive(Copy, Clone, Default)]
+#[cfg(feature = "blob-diff")]
 pub struct Diff;
+#[cfg(feature = "blob-diff")]
 pub mod diff;
 
 /// The `extension` top-level section.

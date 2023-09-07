@@ -1,4 +1,5 @@
 ///
+#[cfg(feature = "blob-diff")]
 pub mod diff {
     use std::ops::Range;
 

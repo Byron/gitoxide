@@ -168,6 +168,7 @@ impl<'repo> Tree<'repo> {
 }
 
 ///
+#[cfg(feature = "blob-diff")]
 pub mod diff;
 
 ///

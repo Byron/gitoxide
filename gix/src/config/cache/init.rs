@@ -174,9 +174,11 @@ impl Cache {
             user_agent: Default::default(),
             personas: Default::default(),
             url_rewrite: Default::default(),
+            #[cfg(feature = "blob-diff")]
             diff_renames: Default::default(),
             #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
             url_scheme: Default::default(),
+            #[cfg(feature = "blob-diff")]
             diff_algorithm: Default::default(),
         })
     }
@@ -222,8 +224,11 @@ impl Cache {
         self.user_agent = Default::default();
         self.personas = Default::default();
         self.url_rewrite = Default::default();
-        self.diff_renames = Default::default();
-        self.diff_algorithm = Default::default();
+        #[cfg(feature = "blob-diff")]
+        {
+            self.diff_renames = Default::default();
+            self.diff_algorithm = Default::default();
+        }
         (
             self.static_pack_cache_limit_bytes,
             self.pack_cache_bytes,

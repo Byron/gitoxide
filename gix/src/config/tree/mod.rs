@@ -31,6 +31,7 @@ pub(crate) mod root {
         /// The `credential` section.
         pub const CREDENTIAL: sections::Credential = sections::Credential;
         /// The `diff` section.
+        #[cfg(feature = "blob-diff")]
         pub const DIFF: sections::Diff = sections::Diff;
         /// The `extensions` section.
         pub const EXTENSIONS: sections::Extensions = sections::Extensions;
@@ -69,6 +70,7 @@ pub(crate) mod root {
                 &Self::COMMITTER,
                 &Self::CORE,
                 &Self::CREDENTIAL,
+                #[cfg(feature = "blob-diff")]
                 &Self::DIFF,
                 &Self::EXTENSIONS,
                 &Self::FETCH,
@@ -90,10 +92,12 @@ pub(crate) mod root {
 
 mod sections;
 pub use sections::{
-    branch, checkout, core, credential, diff, extensions, fetch, gitoxide, http, index, protocol, remote, ssh, Author,
-    Branch, Checkout, Clone, Committer, Core, Credential, Diff, Extensions, Fetch, Gitoxide, Http, Index, Init, Pack,
+    branch, checkout, core, credential, extensions, fetch, gitoxide, http, index, protocol, remote, ssh, Author,
+    Branch, Checkout, Clone, Committer, Core, Credential, Extensions, Fetch, Gitoxide, Http, Index, Init, Pack,
     Protocol, Remote, Safe, Ssh, Url, User,
 };
+#[cfg(feature = "blob-diff")]
+pub use sections::{diff, Diff};
 
 /// Generic value implementations for static instantiation.
 pub mod keys;

@@ -204,6 +204,7 @@ mod fetch {
     }
 }
 
+#[cfg(feature = "blob-diff")]
 mod diff {
     use gix::{
         config::tree::{Diff, Key},

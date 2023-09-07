@@ -58,7 +58,7 @@ default = ["max-performance-safe", "comfort", "extras"]
 #! Bundles are for convenience only and bear no further meaning beyond the cargo manifest file.
 
 ## Various additional features and capabilities that are not necessarily part of what most users would need.
-extras = ["worktree-stream", "worktree-archive"]
+extras = ["worktree-stream", "worktree-archive", "blob-diff"]
 
 ## Various progress-related features that improve the look of progress message units.
 comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
@@ -67,6 +67,10 @@ comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human
 #!
 #! A component is a distinct feature which may be comprised of one or more methods around a particular topic.
 #! Providers of libraries should only activate
+
+## Make it possible to diff blobs line by line. Note that this feature is integral for implementing tree-diffs as well due to the handling of rename-tracking,
+## which relies on line-by-line diffs in some cases.
+blob-diff = ["gix-diff/blob"]
 
 ## Make it possible to turn a tree into a stream of bytes, which can be decoded to entries and turned into various other formats.
 worktree-stream = ["gix-worktree-stream"]
@@ -189,7 +193,7 @@ gix-negotiate = { version = "^0.6.0", path = "../gix-negotiate" }
 gix-path = { version = "^0.9.0", path = "../gix-path" }
 gix-url = { version = "^0.22.0", path = "../gix-url" }
 gix-traverse = { version = "^0.31.0", path = "../gix-traverse" }
-gix-diff = { version = "^0.34.0", path = "../gix-diff" }
+gix-diff = { version = "^0.34.0", path = "../gix-diff", default-features = false }
 gix-mailmap = { version = "^0.17.0", path = "../gix-mailmap" }
 gix-features = { version = "^0.33.0", path = "../gix-features", features = ["progress", "once_cell"] }
 gix-trace = { version = "^0.1.3", path = "../gix-trace" }

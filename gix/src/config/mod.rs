@@ -495,11 +495,13 @@ pub(crate) struct Cache {
     /// A lazily loaded rewrite list for remote urls
     pub(crate) url_rewrite: OnceCell<crate::remote::url::Rewrite>,
     /// The lazy-loaded rename information for diffs.
+    #[cfg(feature = "blob-diff")]
     pub(crate) diff_renames: OnceCell<Option<crate::object::tree::diff::Rewrites>>,
     /// A lazily loaded mapping to know which url schemes to allow
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     pub(crate) url_scheme: OnceCell<crate::remote::url::SchemePermission>,
     /// The algorithm to use when diffing blobs
+    #[cfg(feature = "blob-diff")]
     pub(crate) diff_algorithm: OnceCell<gix_diff::blob::Algorithm>,
     /// The amount of bytes to use for a memory backed delta pack cache. If `Some(0)`, no cache is used, if `None`
     /// a standard cache is used which costs near to nothing and always pays for itself.
