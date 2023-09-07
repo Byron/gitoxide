@@ -298,11 +298,5 @@ fn struct_fn() {
 #[test]
 fn ux() {
     let t = trybuild::TestCases::new();
-    t.compile_fail("tests/momo/ux/error_on_struct.rs");
-}
-
-#[test]
-fn ux_on_ineffective() {
-    let t = trybuild::TestCases::new();
-    t.compile_fail("tests/momo/ux/error_if_ineffective.rs");
+    t.compile_fail("tests/momo/ux/*.rs");
 }
