@@ -58,7 +58,7 @@ default = ["max-performance-safe", "comfort", "extras"]
 #! Bundles are for convenience only and bear no further meaning beyond the cargo manifest file.
 
 ## Various additional features and capabilities that are not necessarily part of what most users would need.
-extras = ["worktree-stream", "worktree-archive", "blob-diff", "revision"]
+extras = ["worktree-stream", "worktree-archive", "blob-diff", "revision", "revparse-regex"]
 
 ## Various progress-related features that improve the look of progress message units.
 comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
@@ -70,6 +70,10 @@ comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human
 
 ## Make revspec parsing possible, as well describing revision.
 revision = ["gix-revision/describe"]
+
+## If enabled, revspecs now support the regex syntax like `@^{/^.*x}`. Otherwise, only substring search is supported.
+## This feature does increase compile time for niche-benefit, but is required for fully git-compatible revspec parsing.
+revparse-regex = ["regex", "revision"]
 
 ## Make it possible to diff blobs line by line. Note that this feature is integral for implementing tree-diffs as well due to the handling of rename-tracking,
 ## which relies on line-by-line diffs in some cases.

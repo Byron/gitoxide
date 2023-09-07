@@ -157,9 +157,9 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
         self.unset_disambiguate_call();
         self.follow_refs_to_objects_if_needed()?;
 
-        #[cfg(not(feature = "regex"))]
+        #[cfg(not(feature = "revparse-regex"))]
         let matches = |message: &BStr| -> bool { message.contains_str(regex) ^ negated };
-        #[cfg(feature = "regex")]
+        #[cfg(feature = "revparse-regex")]
         let matches = match regex::bytes::Regex::new(regex.to_str_lossy().as_ref()) {
             Ok(compiled) => {
                 let needs_regex = regex::escape(compiled.as_str()) != regex;

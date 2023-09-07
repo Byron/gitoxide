@@ -100,15 +100,15 @@ pub enum Error {
     RevWalkIterInit(#[from] crate::reference::iter::init::Error),
     #[error(transparent)]
     RevWalkAllReferences(#[from] gix_ref::packed::buffer::open::Error),
-    #[cfg(feature = "regex")]
+    #[cfg(feature = "revparse-regex")]
     #[error(transparent)]
     InvalidRegex(#[from] regex::Error),
     #[cfg_attr(
-        feature = "regex",
+        feature = "revparse-regex",
         error("None of {commits_searched} commits from {oid} matched regex {regex:?}")
     )]
     #[cfg_attr(
-        not(feature = "regex"),
+        not(feature = "revparse-regex"),
         error("None of {commits_searched} commits from {oid} matched text {regex:?}")
     )]
     NoRegexMatch {
@@ -117,11 +117,11 @@ pub enum Error {
         commits_searched: usize,
     },
     #[cfg_attr(
-        feature = "regex",
+        feature = "revparse-regex",
         error("None of {commits_searched} commits reached from all references matched regex {regex:?}")
     )]
     #[cfg_attr(
-        not(feature = "regex"),
+        not(feature = "revparse-regex"),
         error("None of {commits_searched} commits reached from all references matched text {regex:?}")
     )]
     NoRegexMatchAllRefs { regex: BString, commits_searched: usize },

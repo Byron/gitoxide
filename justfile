@@ -116,6 +116,7 @@ check:
     cargo check -p gix --no-default-features --features progress-tree
     cargo check -p gix --no-default-features --features blob-diff
     cargo check -p gix --no-default-features --features revision
+    cargo check -p gix --no-default-features --features revparse-regex
     cargo check -p gix --no-default-features
     cargo check -p gix-odb --features serde
     cargo check --no-default-features --features max-control
@@ -158,7 +159,6 @@ unit-tests:
     cargo test -p gix --no-default-features
     cargo test -p gix --features async-network-client
     cargo test -p gix --features blocking-network-client
-    cargo test -p gix --features regex
     cargo test -p gitoxide-core --lib
 
 # These tests aren't run by default as they are flaky (even locally)

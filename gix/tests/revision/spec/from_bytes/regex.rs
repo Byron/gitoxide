@@ -12,7 +12,7 @@ mod with_known_revision {
     use crate::revision::spec::from_bytes::parse_spec;
 
     #[test]
-    #[cfg(not(feature = "regex"))]
+    #[cfg(not(feature = "revparse-regex"))]
     fn contained_string_matches_in_unanchored_regex_and_disambiguates_automatically() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
         let expected = Spec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo));
@@ -28,7 +28,7 @@ mod with_known_revision {
     }
 
     #[test]
-    #[cfg(feature = "regex")]
+    #[cfg(feature = "revparse-regex")]
     fn contained_string_matches_in_unanchored_regex_and_disambiguates_automatically() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
         let expected = Spec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo));
@@ -63,7 +63,7 @@ mod find_youngest_matching_commit {
     use crate::revision::spec::from_bytes::parse_spec;
 
     #[test]
-    #[cfg(not(feature = "regex"))]
+    #[cfg(not(feature = "revparse-regex"))]
     fn contained_string_matches() {
         let repo = repo("complex_graph").unwrap();
 
@@ -91,7 +91,7 @@ mod find_youngest_matching_commit {
     }
 
     #[test]
-    #[cfg(feature = "regex")]
+    #[cfg(feature = "revparse-regex")]
     fn regex_matches() {
         let repo = repo("complex_graph").unwrap();
 
