@@ -63,7 +63,7 @@ impl crate::Repository {
     ///
     /// We will only include information if we deem it [trustworthy][crate::open::Options::filter_config_section()].
     pub fn try_find_remote<'a>(&self, name_or_url: impl Into<&'a BStr>) -> Option<Result<Remote<'_>, find::Error>> {
-        self.try_find_remote_inner(name_or_url, true)
+        self.try_find_remote_inner(name_or_url.into(), true)
     }
 
     /// This method emulate what `git fetch <remote>` does in order to obtain a remote to fetch from.
@@ -102,7 +102,7 @@ impl crate::Repository {
         &self,
         name_or_url: impl Into<&'a BStr>,
     ) -> Option<Result<Remote<'_>, find::Error>> {
-        self.try_find_remote_inner(name_or_url, false)
+        self.try_find_remote_inner(name_or_url.into(), false)
     }
 
     fn try_find_remote_inner<'a>(

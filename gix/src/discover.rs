@@ -2,6 +2,7 @@
 use std::path::Path;
 
 pub use gix_discover::*;
+use gix_macros::momo;
 
 use crate::{bstr::BString, ThreadSafeRepository};
 
@@ -31,6 +32,7 @@ impl ThreadSafeRepository {
     /// if the directory that is discovered can indeed be trusted (or else they'd have to implement the discovery themselves
     /// and be sure that no attacker ever gets access to a directory structure. The cost of this is a permission check, which
     /// seems acceptable).
+    #[momo]
     pub fn discover_opts(
         directory: impl AsRef<Path>,
         options: upwards::Options<'_>,
@@ -61,6 +63,7 @@ impl ThreadSafeRepository {
     ///
     /// Finally, use the `trust_map` to determine which of our own repository options to use
     /// based on the trust level of the effective repository directory.
+    #[momo]
     pub fn discover_with_environment_overrides_opts(
         directory: impl AsRef<Path>,
         mut options: upwards::Options<'_>,

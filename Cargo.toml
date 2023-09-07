@@ -244,6 +244,7 @@ members = [
     "gix-packetline",
     "gix-packetline-blocking",
     "gix-mailmap",
+    "gix-macros",
     "gix-note",
     "gix-negotiate",
     "gix-fetchhead",

@@ -1,4 +1,5 @@
 //! Pathspec plumbing and abstractions
+use gix_macros::momo;
 use gix_odb::FindExt;
 pub use gix_pathspec::*;
 
@@ -99,6 +100,7 @@ impl<'repo> Pathspec<'repo> {
         alias = "matches_path",
         alias = "git2"
     )]
+    #[momo]
     pub fn pattern_matching_relative_path<'a>(
         &mut self,
         relative_path: impl Into<&'a BStr>,
@@ -121,6 +123,7 @@ impl<'repo> Pathspec<'repo> {
 
     /// The simplified version of [`pattern_matching_relative_path()`](Self::pattern_matching_relative_path()) which returns
     /// `true` if `relative_path` is included in the set of positive pathspecs, while not being excluded.
+    #[momo]
     pub fn is_included<'a>(&mut self, relative_path: impl Into<&'a BStr>, is_dir: Option<bool>) -> bool {
         self.pattern_matching_relative_path(relative_path, is_dir)
             .map_or(false, |m| !m.is_excluded())

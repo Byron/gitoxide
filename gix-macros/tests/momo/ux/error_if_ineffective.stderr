@@ -1,0 +1,11 @@
+error: Couldn't apply a single conversion - momo is ineffective here
+ --> tests/momo/ux/error_if_ineffective.rs:1:1
+  |
+1 | /// If nothing is done, momo should fail.
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0601]: `main` function not found in crate `$CRATE`
+ --> tests/momo/ux/error_if_ineffective.rs:3:13
+  |
+3 | fn main() {}
+  |             ^ consider adding a `main` function to `$DIR/tests/momo/ux/error_if_ineffective.rs`

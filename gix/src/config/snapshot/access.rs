@@ -2,6 +2,7 @@
 use std::borrow::Cow;
 
 use gix_features::threading::OwnShared;
+use gix_macros::momo;
 
 use crate::bstr::ByteSlice;
 use crate::{
@@ -26,6 +27,7 @@ impl<'repo> Snapshot<'repo> {
     }
 
     /// Like [`boolean()`][Self::boolean()], but it will report an error if the value couldn't be interpreted as boolean.
+    #[momo]
     pub fn try_boolean<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<bool, gix_config::value::Error>> {
         self.repo.config.resolved.boolean_by_key(key)
     }
@@ -41,6 +43,7 @@ impl<'repo> Snapshot<'repo> {
     }
 
     /// Like [`integer()`][Self::integer()], but it will report an error if the value couldn't be interpreted as boolean.
+    #[momo]
     pub fn try_integer<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<i64, gix_config::value::Error>> {
         self.repo.config.resolved.integer_by_key(key)
     }
@@ -48,6 +51,7 @@ impl<'repo> Snapshot<'repo> {
     /// Return the string at `key`, or `None` if there is no such value.
     ///
     /// Note that this method takes the most recent value at `key` even if it is from a file with reduced trust.
+    #[momo]
     pub fn string<'a>(&self, key: impl Into<&'a BStr>) -> Option<Cow<'_, BStr>> {
         self.repo.config.resolved.string_by_key(key)
     }
@@ -55,6 +59,7 @@ impl<'repo> Snapshot<'repo> {
     /// Return the trusted and fully interpolated path at `key`, or `None` if there is no such value
     /// or if no value was found in a trusted file.
     /// An error occurs if the path could not be interpolated to its final value.
+    #[momo]
     pub fn trusted_path<'a>(
         &self,
         key: impl Into<&'a BStr>,
@@ -102,6 +107,7 @@ impl<'repo> SnapshotMut<'repo> {
 
     /// Set the value at `key` to `new_value`, possibly creating the section if it doesn't exist yet, or overriding the most recent existing
     /// value, which will be returned.
+    #[momo]
     pub fn set_value<'b>(
         &mut self,
         key: &'static dyn crate::config::tree::Key,
@@ -120,6 +126,7 @@ impl<'repo> SnapshotMut<'repo> {
 
     /// Set the value at `key` to `new_value` in the given `subsection`, possibly creating the section and sub-section if it doesn't exist yet,
     /// or overriding the most recent existing value, which will be returned.
+    #[momo]
     pub fn set_subsection_value<'a, 'b>(
         &mut self,
         key: &'static dyn crate::config::tree::Key,

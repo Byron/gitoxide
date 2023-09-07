@@ -1,0 +1,5 @@
+error: expect a function
+ --> tests/momo/ux/error_on_struct.rs:3:1
+  |
+3 | /// Only functions work with momo
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
