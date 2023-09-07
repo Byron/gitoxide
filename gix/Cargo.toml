@@ -13,16 +13,6 @@ rust-version = "1.65"
 doctest = false
 test = true
 
-[[test]]
-name = "gix"
-path = "tests/gix.rs"
-required-features = []
-
-[[test]]
-name = "gix-with-regex"
-path = "tests/gix-with-regex.rs"
-required-features = ["regex"]
-
 [[example]]
 name = "clone"
 path = "examples/clone.rs"
