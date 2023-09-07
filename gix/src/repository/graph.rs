@@ -12,10 +12,10 @@ impl crate::Repository {
     ///
     /// ### Performance
     ///
-    /// Note that the [Graph][gix_revision::Graph] can be sensitive to various object database settings that may affect the performance
+    /// Note that the [Graph][gix_revwalk::Graph] can be sensitive to various object database settings that may affect the performance
     /// of the commit walk.
-    pub fn revision_graph<T>(&self) -> gix_revision::Graph<'_, T> {
-        gix_revision::Graph::new(
+    pub fn revision_graph<T>(&self) -> gix_revwalk::Graph<'_, T> {
+        gix_revwalk::Graph::new(
             |id, buf| {
                 self.objects
                     .try_find(id, buf)

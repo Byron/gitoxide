@@ -272,10 +272,7 @@ mod diff {
 mod core {
     use std::time::Duration;
 
-    use gix::{
-        config::tree::{Core, Key},
-        revision::spec::parse::ObjectKindHint,
-    };
+    use gix::config::tree::{Core, Key};
     use gix_lock::acquire::Fail;
 
     use crate::config::tree::bcow;
@@ -313,7 +310,9 @@ mod core {
     }
 
     #[test]
+    #[cfg(feature = "revision")]
     fn disambiguate() -> crate::Result {
+        use gix::revision::spec::parse::ObjectKindHint;
         for (value, expected) in [
             ("none", None),
             ("commit", Some(ObjectKindHint::Commit)),

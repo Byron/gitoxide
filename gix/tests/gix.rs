@@ -24,6 +24,7 @@ mod remote;
 #[cfg(not(feature = "regex"))]
 mod repository;
 #[cfg(not(feature = "regex"))]
+#[cfg(feature = "revision")]
 mod revision;
 #[cfg(not(feature = "regex"))]
 mod submodule;

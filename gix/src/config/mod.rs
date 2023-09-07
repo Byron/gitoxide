@@ -1,7 +1,7 @@
 pub use gix_config::*;
 use gix_features::threading::OnceCell;
 
-use crate::{bstr::BString, repository::identity, revision::spec, Repository};
+use crate::{bstr::BString, repository::identity, Repository};
 
 pub(crate) mod cache;
 mod snapshot;
@@ -513,7 +513,8 @@ pub(crate) struct Cache {
     /// The config section filter from the options used to initialize this instance. Keep these in sync!
     filter_config_section: fn(&gix_config::file::Metadata) -> bool,
     /// The object kind to pick if a prefix is ambiguous.
-    pub object_kind_hint: Option<spec::parse::ObjectKindHint>,
+    #[cfg(feature = "revision")]
+    pub object_kind_hint: Option<crate::revision::spec::parse::ObjectKindHint>,
     /// If true, we are on a case-insensitive file system.
     pub ignore_case: bool,
     /// If true, we should default what's possible if something is misconfigured, on case by case basis, to be more resilient.

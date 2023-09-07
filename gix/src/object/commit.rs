@@ -1,4 +1,4 @@
-use crate::{bstr, bstr::BStr, revision, Commit, ObjectDetached, Tree};
+use crate::{bstr, bstr::BStr, Commit, ObjectDetached, Tree};
 
 mod error {
     use crate::object;
@@ -131,12 +131,13 @@ impl<'repo> Commit<'repo> {
     }
 
     /// Obtain a platform for traversing ancestors of this commit.
-    pub fn ancestors(&self) -> revision::walk::Platform<'repo> {
+    pub fn ancestors(&self) -> crate::revision::walk::Platform<'repo> {
         self.id().ancestors()
     }
 
     /// Create a platform to further configure a `git describe` operation to find a name for this commit by looking
     /// at the closest annotated tags (by default) in its past.
+    #[cfg(feature = "revision")]
     pub fn describe(&self) -> crate::commit::describe::Platform<'repo> {
         crate::commit::describe::Platform {
             id: self.id,

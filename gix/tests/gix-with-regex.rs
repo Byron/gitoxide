@@ -11,5 +11,6 @@ mod object;
 mod reference;
 mod remote;
 mod repository;
+#[cfg(feature = "revision")]
 mod revision;
 mod submodule;

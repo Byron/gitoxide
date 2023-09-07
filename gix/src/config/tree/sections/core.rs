@@ -270,6 +270,7 @@ mod autocrlf {
     }
 }
 
+#[cfg(feature = "revision")]
 mod disambiguate {
     use std::borrow::Cow;
 
@@ -425,7 +426,9 @@ mod validate {
 
     pub struct Disambiguate;
     impl keys::Validate for Disambiguate {
+        #[cfg_attr(not(feature = "revision"), allow(unused_variables))]
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            #[cfg(feature = "revision")]
             super::Core::DISAMBIGUATE.try_into_object_kind_hint(value.into())?;
             Ok(())
         }

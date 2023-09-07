@@ -1220,6 +1220,7 @@ dependencies = [
  "gix-ref 0.35.0",
  "gix-refspec",
  "gix-revision",
+ "gix-revwalk",
  "gix-sec 0.9.0",
  "gix-submodule",
  "gix-tempfile 8.0.0",

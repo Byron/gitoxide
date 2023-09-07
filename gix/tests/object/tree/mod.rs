@@ -1,6 +1,6 @@
 use crate::util::{named_repo, named_subrepo_opts};
 
-#[cfg(feature = "blob-diff")]
+#[cfg(all(feature = "blob-diff", feature = "revision"))]
 mod diff;
 
 #[test]

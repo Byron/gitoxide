@@ -1,5 +1,3 @@
-use crate::repo_rw;
-
 mod log {
 
     #[test]
@@ -86,7 +84,9 @@ mod find {
 }
 
 #[test]
+#[cfg(feature = "revision")]
 fn set_target_id() {
+    use crate::repo_rw;
     let (repo, _tmp) = repo_rw("make_basic_repo.sh").unwrap();
     let mut head_ref = repo.head_ref().unwrap().expect("present");
     let target_id = repo.rev_parse_single(":/c1").unwrap();

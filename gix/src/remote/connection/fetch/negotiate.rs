@@ -7,7 +7,7 @@ use gix_pack::Find;
 
 use crate::remote::{fetch, fetch::Shallow};
 
-type Queue = gix_revision::PriorityQueue<SecondsSinceUnixEpoch, gix_hash::ObjectId>;
+type Queue = gix_revwalk::PriorityQueue<SecondsSinceUnixEpoch, gix_hash::ObjectId>;
 
 /// The error returned during negotiation.
 #[derive(Debug, thiserror::Error)]
@@ -16,7 +16,7 @@ pub enum Error {
     #[error("We were unable to figure out what objects the server should send after {rounds} round(s)")]
     NegotiationFailed { rounds: usize },
     #[error(transparent)]
-    LookupCommitInGraph(#[from] gix_revision::graph::lookup::commit::Error),
+    LookupCommitInGraph(#[from] gix_revwalk::graph::lookup::commit::Error),
     #[error(transparent)]
     InitRefsIterator(#[from] crate::reference::iter::init::Error),
     #[error(transparent)]

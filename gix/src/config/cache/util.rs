@@ -3,7 +3,6 @@ use super::Error;
 use crate::{
     config,
     config::tree::{gitoxide, Core},
-    revision::spec::parse::ObjectKindHint,
 };
 
 pub(crate) fn interpolate_context<'a>(
@@ -103,10 +102,11 @@ pub(crate) fn parse_core_abbrev(
         .flatten())
 }
 
+#[cfg(feature = "revision")]
 pub(crate) fn disambiguate_hint(
     config: &gix_config::File<'static>,
     lenient_config: bool,
-) -> Result<Option<ObjectKindHint>, config::key::GenericErrorWithValue> {
+) -> Result<Option<crate::revision::spec::parse::ObjectKindHint>, config::key::GenericErrorWithValue> {
     match config.string_by_key("core.disambiguate") {
         None => Ok(None),
         Some(value) => Core::DISAMBIGUATE
