@@ -127,6 +127,7 @@ check:
     cargo check -p gix --no-default-features --features worktree-mutation --tests
     cargo check -p gix --no-default-features --features credentials --tests
     cargo check -p gix --no-default-features --features index --tests
+    cargo check -p gix --no-default-features --features interrupt --tests
     cargo check -p gix --no-default-features
     cargo check -p gix-odb --features serde
     cargo check --no-default-features --features max-control
