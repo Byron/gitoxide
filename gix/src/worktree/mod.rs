@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 #[cfg(feature = "worktree-archive")]
 pub use gix_archive as archive;
+#[cfg(feature = "excludes")]
 pub use gix_worktree::*;
+#[cfg(feature = "worktree-mutation")]
 pub use gix_worktree_state as state;
 #[cfg(feature = "worktree-stream")]
 pub use gix_worktree_stream as stream;
@@ -111,6 +113,7 @@ pub mod open_index {
 }
 
 ///
+#[cfg(feature = "excludes")]
 pub mod excludes {
     use crate::AttributeStack;
 
@@ -146,6 +149,7 @@ pub mod excludes {
 }
 
 ///
+#[cfg(feature = "attributes")]
 pub mod attributes {
     use crate::{AttributeStack, Worktree};
 
@@ -190,6 +194,7 @@ pub mod attributes {
 }
 
 ///
+#[cfg(feature = "attributes")]
 pub mod pathspec {
     use crate::{
         bstr::BStr,

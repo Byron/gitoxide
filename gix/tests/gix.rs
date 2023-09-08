@@ -13,4 +13,5 @@ mod remote;
 mod repository;
 #[cfg(feature = "revision")]
 mod revision;
+#[cfg(feature = "attributes")]
 mod submodule;

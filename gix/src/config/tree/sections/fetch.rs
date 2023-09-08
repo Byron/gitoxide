@@ -11,6 +11,7 @@ impl Fetch {
         validate::NegotiationAlgorithm,
     );
     /// The `fetch.recurseSubmodules` key.
+    #[cfg(feature = "attributes")]
     pub const RECURSE_SUBMODULES: RecurseSubmodules =
         RecurseSubmodules::new_with_validate("recurseSubmodules", &config::Tree::FETCH, validate::RecurseSubmodules);
 }
@@ -21,7 +22,11 @@ impl Section for Fetch {
     }
 
     fn keys(&self) -> &[&dyn Key] {
-        &[&Self::NEGOTIATION_ALGORITHM, &Self::RECURSE_SUBMODULES]
+        &[
+            &Self::NEGOTIATION_ALGORITHM,
+            #[cfg(feature = "attributes")]
+            &Self::RECURSE_SUBMODULES,
+        ]
     }
 }
 
@@ -29,6 +34,7 @@ impl Section for Fetch {
 pub type NegotiationAlgorithm = keys::Any<validate::NegotiationAlgorithm>;
 
 /// The `fetch.recurseSubmodules` key.
+#[cfg(feature = "attributes")]
 pub type RecurseSubmodules = keys::Any<validate::RecurseSubmodules>;
 
 mod algorithm {
@@ -38,10 +44,7 @@ mod algorithm {
 
     use crate::{
         bstr::BStr,
-        config::{
-            key::GenericErrorWithValue,
-            tree::sections::fetch::{NegotiationAlgorithm, RecurseSubmodules},
-        },
+        config::{key::GenericErrorWithValue, tree::sections::fetch::NegotiationAlgorithm},
         remote::fetch::negotiate,
     };
 
@@ -60,7 +63,8 @@ mod algorithm {
         }
     }
 
-    impl RecurseSubmodules {
+    #[cfg(feature = "attributes")]
+    impl crate::config::tree::sections::fetch::RecurseSubmodules {
         /// Obtain the way submodules should be updated.
         pub fn try_into_recurse_submodules(
             &'static self,
@@ -87,9 +91,13 @@ mod validate {
 
     pub struct RecurseSubmodules;
     impl keys::Validate for RecurseSubmodules {
+        #[cfg_attr(not(feature = "attributes"), allow(unused_variables))]
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            let boolean = gix_config::Boolean::try_from(value).map(|b| b.0);
-            Fetch::RECURSE_SUBMODULES.try_into_recurse_submodules(boolean)?;
+            #[cfg(feature = "attributes")]
+            {
+                let boolean = gix_config::Boolean::try_from(value).map(|b| b.0);
+                Fetch::RECURSE_SUBMODULES.try_into_recurse_submodules(boolean)?;
+            }
             Ok(())
         }
     }

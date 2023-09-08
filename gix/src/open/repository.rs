@@ -294,6 +294,7 @@ impl ThreadSafeRepository {
             linked_worktree_options: options,
             index: gix_fs::SharedFileSnapshotMut::new().into(),
             shallow_commits: gix_fs::SharedFileSnapshotMut::new().into(),
+            #[cfg(feature = "attributes")]
             modules: gix_fs::SharedFileSnapshotMut::new().into(),
         })
     }

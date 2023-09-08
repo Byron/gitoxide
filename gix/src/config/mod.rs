@@ -119,6 +119,7 @@ pub mod diff {
 }
 
 ///
+#[cfg(feature = "attributes")]
 pub mod checkout_options {
     /// The error produced when collecting all information needed for checking out files into a worktree.
     #[derive(Debug, thiserror::Error)]
@@ -520,6 +521,7 @@ pub(crate) struct Cache {
     /// If true, we should default what's possible if something is misconfigured, on case by case basis, to be more resilient.
     /// Also available in options! Keep in sync!
     pub lenient_config: bool,
+    #[cfg_attr(not(feature = "worktree-mutation"), allow(dead_code))]
     attributes: crate::open::permissions::Attributes,
     environment: crate::open::permissions::Environment,
     // TODO: make core.precomposeUnicode available as well.

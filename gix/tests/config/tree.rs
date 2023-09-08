@@ -147,7 +147,6 @@ mod ssh {
 
 mod fetch {
     use gix::{
-        bstr::ByteSlice,
         config::tree::{Fetch, Key},
         remote::fetch::negotiate::Algorithm,
     };
@@ -179,7 +178,9 @@ mod fetch {
     }
 
     #[test]
+    #[cfg(feature = "attributes")]
     fn recurse_submodule() -> crate::Result {
+        use gix::bstr::ByteSlice;
         for (actual, expected) in [
             ("true", gix_submodule::config::FetchRecurse::Always),
             ("false", gix_submodule::config::FetchRecurse::Never),
@@ -435,6 +436,7 @@ mod core {
     }
 
     #[test]
+    #[cfg(feature = "attributes")]
     fn safecrlf() -> crate::Result {
         for (value, expected) in [
             ("false", gix_filter::pipeline::CrlfRoundTripCheck::Skip),
@@ -452,6 +454,7 @@ mod core {
     }
 
     #[test]
+    #[cfg(feature = "attributes")]
     fn autocrlf() -> crate::Result {
         for (value, expected) in [
             ("false", gix_filter::eol::AutoCrlf::Disabled),
@@ -472,6 +475,7 @@ mod core {
     }
 
     #[test]
+    #[cfg(feature = "attributes")]
     fn eol() -> crate::Result {
         for (value, expected) in [
             ("lf", gix_filter::eol::Mode::Lf),
@@ -489,6 +493,7 @@ mod core {
     }
 
     #[test]
+    #[cfg(feature = "attributes")]
     fn check_round_trip_encoding() -> crate::Result {
         for (value, expected) in [
             (

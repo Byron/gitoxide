@@ -24,6 +24,7 @@ impl Repository {
     ///
     /// * `$XDG_CONFIG_HOME/…/ignore|attributes` if `core.excludesFile|attributesFile` is *not* set, otherwise use the configured file.
     /// * `$GIT_DIR/info/exclude|attributes` if present.
+    #[cfg(feature = "attributes")]
     pub fn attributes(
         &self,
         index: &gix_index::State,
@@ -60,6 +61,7 @@ impl Repository {
     }
 
     /// Like [attributes()][Self::attributes()], but without access to exclude/ignore information.
+    #[cfg(feature = "attributes")]
     pub fn attributes_only(
         &self,
         index: &gix_index::State,
@@ -104,6 +106,7 @@ impl Repository {
     /// When only excludes are desired, this is the most efficient way to obtain them. Otherwise use
     /// [`Repository::attributes()`] for accessing both attributes and excludes.
     // TODO: test
+    #[cfg(feature = "excludes")]
     pub fn excludes(
         &self,
         index: &gix_index::State,

@@ -35,10 +35,12 @@ impl crate::Repository {
     }
 }
 
+#[cfg(any(feature = "attributes", feature = "excludes"))]
 pub mod attributes;
 mod cache;
 mod config;
 ///
+#[cfg(feature = "attributes")]
 pub mod filter;
 mod graph;
 pub(crate) mod identity;
@@ -50,6 +52,7 @@ mod location;
 #[cfg(feature = "mailmap")]
 mod mailmap;
 mod object;
+#[cfg(feature = "attributes")]
 mod pathspec;
 mod reference;
 mod remote;
@@ -57,6 +60,7 @@ mod remote;
 mod revision;
 mod shallow;
 mod state;
+#[cfg(feature = "attributes")]
 mod submodule;
 mod thread_safe;
 mod worktree;
@@ -72,6 +76,7 @@ pub enum IndexPersistedOrInMemory {
 }
 
 ///
+#[cfg(feature = "attributes")]
 pub mod pathspec_defaults_ignore_case {
     /// The error returned by [Repository::pathspec_defaults_ignore_case()](crate::Repository::pathspec_defaults_inherit_ignore_case()).
     #[derive(Debug, thiserror::Error)]

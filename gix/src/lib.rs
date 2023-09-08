@@ -77,6 +77,7 @@
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
 pub use gix_actor as actor;
+#[cfg(feature = "attributes")]
 pub use gix_attributes as attrs;
 pub use gix_commitgraph as commitgraph;
 pub use gix_credentials as credentials;
@@ -92,6 +93,7 @@ pub use gix_fs as fs;
 pub use gix_glob as glob;
 pub use gix_hash as hash;
 pub use gix_hashtable as hashtable;
+#[cfg(feature = "excludes")]
 pub use gix_ignore as ignore;
 #[doc(inline)]
 pub use gix_index as index;
@@ -122,6 +124,7 @@ mod ext;
 ///
 pub mod prelude;
 
+#[cfg(feature = "excludes")]
 mod attribute_stack;
 
 ///
@@ -135,10 +138,13 @@ pub type OdbHandle = gix_odb::Handle;
 pub(crate) type Config = OwnShared<gix_config::File<'static>>;
 
 mod types;
+#[cfg(any(feature = "excludes", feature = "attributes"))]
+pub use types::AttributeStack;
 pub use types::{
-    AttributeStack, Commit, Head, Id, Object, ObjectDetached, Pathspec, Reference, Remote, Repository, Submodule, Tag,
-    ThreadSafeRepository, Tree, Worktree,
+    Commit, Head, Id, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
 };
+#[cfg(feature = "attributes")]
+pub use types::{Pathspec, Submodule};
 
 ///
 pub mod clone;
@@ -146,9 +152,11 @@ pub mod commit;
 pub mod head;
 pub mod id;
 pub mod object;
+#[cfg(feature = "attributes")]
 pub mod pathspec;
 pub mod reference;
 pub mod repository;
+#[cfg(feature = "attributes")]
 pub mod submodule;
 pub mod tag;
 
@@ -265,6 +273,7 @@ pub mod worktree;
 
 pub mod revision;
 
+#[cfg(feature = "attributes")]
 pub mod filter;
 
 ///
