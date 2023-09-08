@@ -40,6 +40,7 @@ impl<'a> Platform<'a> {
     /// # Panics
     ///
     /// If the cache was configured without attributes.
+    #[cfg(feature = "attributes")]
     pub fn matching_attributes(&self, out: &mut gix_attributes::search::Outcome) -> bool {
         let attrs = self.parent.state.attributes_or_panic();
         let relative_path =
