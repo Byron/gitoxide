@@ -1142,7 +1142,7 @@ dependencies = [
  "futures-lite",
  "gitoxide-core",
  "gix",
- "gix-features 0.33.0",
+ "gix-features 0.34.0",
  "is-terminal",
  "once_cell",
  "owo-colors",
@@ -1199,45 +1199,45 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "gix-actor 0.25.0",
+ "gix-actor 0.26.0",
  "gix-archive",
- "gix-attributes 0.17.0",
+ "gix-attributes 0.18.0",
  "gix-commitgraph",
  "gix-config",
  "gix-credentials",
- "gix-date 0.7.4",
+ "gix-date 0.8.0",
  "gix-diff",
- "gix-discover 0.23.0",
- "gix-features 0.33.0",
+ "gix-discover 0.24.0",
+ "gix-features 0.34.0",
  "gix-filter",
- "gix-fs 0.5.0",
- "gix-glob 0.11.0",
- "gix-hash 0.12.0",
- "gix-hashtable 0.3.0",
- "gix-ignore 0.6.0",
- "gix-index 0.23.1",
- "gix-lock 8.0.0",
+ "gix-fs 0.6.0",
+ "gix-glob 0.12.0",
+ "gix-hash 0.13.0",
+ "gix-hashtable 0.4.0",
+ "gix-ignore 0.7.0",
+ "gix-index 0.24.0",
+ "gix-lock 9.0.0",
  "gix-macros",
  "gix-mailmap",
  "gix-negotiate",
- "gix-object 0.35.0",
+ "gix-object 0.36.0",
  "gix-odb",
  "gix-pack",
- "gix-path 0.9.0",
+ "gix-path 0.10.0",
  "gix-pathspec",
  "gix-prompt",
  "gix-protocol",
- "gix-ref 0.35.0",
+ "gix-ref 0.36.0",
  "gix-refspec",
  "gix-revision",
  "gix-revwalk",
- "gix-sec 0.9.0",
+ "gix-sec 0.10.0",
  "gix-submodule",
- "gix-tempfile 8.0.0",
+ "gix-tempfile 9.0.0",
  "gix-testtools",
  "gix-trace 0.1.3",
  "gix-transport",
- "gix-traverse 0.31.0",
+ "gix-traverse 0.32.0",
  "gix-url",
  "gix-utils 0.1.5",
  "gix-validate 0.8.0",
@@ -1275,14 +1275,14 @@ dependencies = [
 
 [[package]]
 name = "gix-actor"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "bstr",
  "btoi",
  "document-features",
- "gix-date 0.7.4",
- "gix-features 0.33.0",
- "gix-hash 0.12.0",
+ "gix-date 0.8.0",
+ "gix-features 0.34.0",
+ "gix-hash 0.13.0",
  "gix-testtools",
  "itoa",
  "pretty_assertions",
@@ -1293,18 +1293,18 @@ dependencies = [
 
 [[package]]
 name = "gix-archive"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bstr",
  "document-features",
  "flate2",
- "gix-attributes 0.17.0",
- "gix-date 0.7.4",
+ "gix-attributes 0.18.0",
+ "gix-date 0.8.0",
  "gix-filter",
- "gix-hash 0.12.0",
- "gix-object 0.35.0",
+ "gix-hash 0.13.0",
+ "gix-object 0.36.0",
  "gix-odb",
- "gix-path 0.9.0",
+ "gix-path 0.10.0",
  "gix-testtools",
  "gix-worktree 0.25.0",
  "gix-worktree-stream",
@@ -1333,13 +1333,13 @@ dependencies = [
 
 [[package]]
 name = "gix-attributes"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "bstr",
  "document-features",
- "gix-fs 0.5.0",
- "gix-glob 0.11.0",
- "gix-path 0.9.0",
+ "gix-fs 0.6.0",
+ "gix-glob 0.12.0",
+ "gix-path 0.10.0",
  "gix-quote 0.4.7",
  "gix-testtools",
  "gix-trace 0.1.3",
@@ -1384,14 +1384,14 @@ dependencies = [
 
 [[package]]
 name = "gix-commitgraph"
-version = "0.19.0"
+version = "0.20.0"
 dependencies = [
  "bstr",
  "document-features",
  "gix-chunk",
- "gix-date 0.7.4",
- "gix-features 0.33.0",
- "gix-hash 0.12.0",
+ "gix-date 0.8.0",
+ "gix-features 0.34.0",
+ "gix-hash 0.13.0",
  "gix-testtools",
  "memmap2 0.7.1",
  "serde",
@@ -1400,17 +1400,17 @@ dependencies = [
 
 [[package]]
 name = "gix-config"
-version = "0.28.0"
+version = "0.29.0"
 dependencies = [
  "bstr",
  "criterion",
  "document-features",
  "gix-config-value",
- "gix-features 0.33.0",
- "gix-glob 0.11.0",
- "gix-path 0.9.0",
- "gix-ref 0.35.0",
- "gix-sec 0.9.0",
+ "gix-features 0.34.0",
+ "gix-glob 0.12.0",
+ "gix-path 0.10.0",
+ "gix-ref 0.36.0",
+ "gix-sec 0.10.0",
  "memchr",
  "once_cell",
  "serde",
@@ -1427,21 +1427,21 @@ dependencies = [
  "bstr",
  "gix",
  "gix-config",
- "gix-path 0.9.0",
- "gix-ref 0.35.0",
- "gix-sec 0.9.0",
+ "gix-path 0.10.0",
+ "gix-ref 0.36.0",
+ "gix-sec 0.10.0",
  "gix-testtools",
  "serial_test",
 ]
 
 [[package]]
 name = "gix-config-value"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "bitflags 2.3.3",
  "bstr",
  "document-features",
- "gix-path 0.9.0",
+ "gix-path 0.10.0",
  "libc",
  "serde",
  "thiserror",
@@ -1449,15 +1449,15 @@ dependencies = [
 
 [[package]]
 name = "gix-credentials"
-version = "0.18.0"
+version = "0.19.0"
 dependencies = [
  "bstr",
  "document-features",
  "gix-command",
  "gix-config-value",
- "gix-path 0.9.0",
+ "gix-path 0.10.0",
  "gix-prompt",
- "gix-sec 0.9.0",
+ "gix-sec 0.10.0",
  "gix-testtools",
  "gix-url",
  "serde",
@@ -1478,11 +1478,11 @@ dependencies = [
 
 [[package]]
 name = "gix-date"
-version = "0.7.4"
+version = "0.8.0"
 dependencies = [
  "bstr",
  "document-features",
- "gix-hash 0.12.0",
+ "gix-hash 0.13.0",
  "gix-testtools",
  "itoa",
  "once_cell",
@@ -1493,12 +1493,12 @@ dependencies = [
 
 [[package]]
 name = "gix-diff"
-version = "0.34.0"
+version = "0.35.0"
 dependencies = [
  "document-features",
  "getrandom",
- "gix-hash 0.12.0",
- "gix-object 0.35.0",
+ "gix-hash 0.13.0",
+ "gix-object 0.36.0",
  "imara-diff",
  "serde",
  "thiserror",
@@ -1509,11 +1509,11 @@ name = "gix-diff-tests"
 version = "0.0.0"
 dependencies = [
  "gix-diff",
- "gix-hash 0.12.0",
- "gix-object 0.35.0",
+ "gix-hash 0.13.0",
+ "gix-object 0.36.0",
  "gix-odb",
  "gix-testtools",
- "gix-traverse 0.31.0",
+ "gix-traverse 0.32.0",
 ]
 
 [[package]]
@@ -1533,15 +1533,15 @@ dependencies = [
 
 [[package]]
 name = "gix-discover"
-version = "0.23.0"
+version = "0.24.0"
 dependencies = [
  "bstr",
  "defer",
  "dunce",
- "gix-hash 0.12.0",
- "gix-path 0.9.0",
- "gix-ref 0.35.0",
- "gix-sec 0.9.0",
+ "gix-hash 0.13.0",
+ "gix-path 0.10.0",
+ "gix-ref 0.36.0",
+ "gix-sec 0.10.0",
  "gix-testtools",
  "is_ci",
  "serial_test",
@@ -1564,7 +1564,7 @@ dependencies = [
 
 [[package]]
 name = "gix-features"
-version = "0.33.0"
+version = "0.34.0"
 dependencies = [
  "bstr",
  "bytes",
@@ -1573,7 +1573,7 @@ dependencies = [
  "crossbeam-channel",
  "document-features",
  "flate2",
- "gix-hash 0.12.0",
+ "gix-hash 0.13.0",
  "gix-trace 0.1.3",
  "jwalk",
  "libc",
@@ -1592,16 +1592,16 @@ version = "0.0.0"
 
 [[package]]
 name = "gix-filter"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bstr",
  "encoding_rs",
- "gix-attributes 0.17.0",
+ "gix-attributes 0.18.0",
  "gix-command",
- "gix-hash 0.12.0",
- "gix-object 0.35.0",
+ "gix-hash 0.13.0",
+ "gix-object 0.36.0",
  "gix-packetline-blocking",
- "gix-path 0.9.0",
+ "gix-path 0.10.0",
  "gix-quote 0.4.7",
  "gix-testtools",
  "gix-trace 0.1.3",
@@ -1622,9 +1622,9 @@ dependencies = [
 
 [[package]]
 name = "gix-fs"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
- "gix-features 0.33.0",
+ "gix-features 0.34.0",
  "tempfile",
 ]
 
@@ -1642,13 +1642,13 @@ dependencies = [
 
 [[package]]
 name = "gix-glob"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "bitflags 2.3.3",
  "bstr",
  "document-features",
- "gix-features 0.33.0",
- "gix-path 0.9.0",
+ "gix-features 0.34.0",
+ "gix-path 0.10.0",
  "gix-testtools",
  "serde",
 ]
@@ -1665,11 +1665,11 @@ dependencies = [
 
 [[package]]
 name = "gix-hash"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "document-features",
  "faster-hex",
- "gix-features 0.33.0",
+ "gix-features 0.34.0",
  "gix-testtools",
  "serde",
  "thiserror",
@@ -1688,9 +1688,9 @@ dependencies = [
 
 [[package]]
 name = "gix-hashtable"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
- "gix-hash 0.12.0",
+ "gix-hash 0.13.0",
  "hashbrown 0.14.0",
  "parking_lot",
 ]
@@ -1709,13 +1709,13 @@ dependencies = [
 
 [[package]]
 name = "gix-ignore"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bstr",
  "document-features",
- "gix-fs 0.5.0",
- "gix-glob 0.11.0",
- "gix-path 0.9.0",
+ "gix-fs 0.6.0",
+ "gix-glob 0.12.0",
+ "gix-path 0.10.0",
  "gix-testtools",
  "serde",
  "unicode-bom",
@@ -1745,7 +1745,7 @@ dependencies = [
 
 [[package]]
 name = "gix-index"
-version = "0.23.1"
+version = "0.24.0"
 dependencies = [
  "bitflags 2.3.3",
  "bstr",
@@ -1753,12 +1753,12 @@ dependencies = [
  "document-features",
  "filetime",
  "gix-bitmap 0.2.7",
- "gix-features 0.33.0",
- "gix-fs 0.5.0",
- "gix-hash 0.12.0",
- "gix-lock 8.0.0",
- "gix-object 0.35.0",
- "gix-traverse 0.31.0",
+ "gix-features 0.34.0",
+ "gix-fs 0.6.0",
+ "gix-hash 0.13.0",
+ "gix-lock 9.0.0",
+ "gix-object 0.36.0",
+ "gix-traverse 0.32.0",
  "itoa",
  "memmap2 0.7.1",
  "serde",
@@ -1773,9 +1773,9 @@ dependencies = [
  "bstr",
  "filetime",
  "gix",
- "gix-features 0.33.0",
- "gix-hash 0.12.0",
- "gix-index 0.23.1",
+ "gix-features 0.34.0",
+ "gix-hash 0.13.0",
+ "gix-index 0.24.0",
  "gix-testtools",
 ]
 
@@ -1796,9 +1796,9 @@ dependencies = [
 
 [[package]]
 name = "gix-lock"
-version = "8.0.0"
+version = "9.0.0"
 dependencies = [
- "gix-tempfile 8.0.0",
+ "gix-tempfile 9.0.0",
  "gix-utils 0.1.5",
  "tempfile",
  "thiserror",
@@ -1816,12 +1816,12 @@ dependencies = [
 
 [[package]]
 name = "gix-mailmap"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "bstr",
  "document-features",
- "gix-actor 0.25.0",
- "gix-date 0.7.4",
+ "gix-actor 0.26.0",
+ "gix-date 0.8.0",
  "gix-testtools",
  "serde",
  "thiserror",
@@ -1829,15 +1829,15 @@ dependencies = [
 
 [[package]]
 name = "gix-negotiate"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bitflags 2.3.3",
  "gix-commitgraph",
- "gix-date 0.7.4",
- "gix-hash 0.12.0",
- "gix-object 0.35.0",
+ "gix-date 0.8.0",
+ "gix-hash 0.13.0",
+ "gix-object 0.36.0",
  "gix-odb",
- "gix-ref 0.35.0",
+ "gix-ref 0.36.0",
  "gix-revwalk",
  "gix-testtools",
  "smallvec",
@@ -1869,16 +1869,16 @@ dependencies = [
 
 [[package]]
 name = "gix-object"
-version = "0.35.0"
+version = "0.36.0"
 dependencies = [
  "bstr",
  "btoi",
  "criterion",
  "document-features",
- "gix-actor 0.25.0",
- "gix-date 0.7.4",
- "gix-features 0.33.0",
- "gix-hash 0.12.0",
+ "gix-actor 0.26.0",
+ "gix-date 0.8.0",
+ "gix-features 0.34.0",
+ "gix-hash 0.13.0",
  "gix-testtools",
  "gix-validate 0.8.0",
  "itoa",
@@ -1891,16 +1891,16 @@ dependencies = [
 
 [[package]]
 name = "gix-odb"
-version = "0.51.0"
+version = "0.52.0"
 dependencies = [
  "arc-swap",
  "document-features",
- "gix-date 0.7.4",
- "gix-features 0.33.0",
- "gix-hash 0.12.0",
- "gix-object 0.35.0",
+ "gix-date 0.8.0",
+ "gix-features 0.34.0",
+ "gix-hash 0.13.0",
+ "gix-object 0.36.0",
  "gix-pack",
- "gix-path 0.9.0",
+ "gix-path 0.10.0",
  "gix-quote 0.4.7",
  "parking_lot",
  "serde",
@@ -1913,11 +1913,11 @@ name = "gix-odb-tests"
 version = "0.0.0"
 dependencies = [
  "filetime",
- "gix-actor 0.25.0",
- "gix-date 0.7.4",
- "gix-features 0.33.0",
- "gix-hash 0.12.0",
- "gix-object 0.35.0",
+ "gix-actor 0.26.0",
+ "gix-date 0.8.0",
+ "gix-features 0.34.0",
+ "gix-hash 0.13.0",
+ "gix-object 0.36.0",
  "gix-odb",
  "gix-pack",
  "gix-testtools",
@@ -1927,20 +1927,20 @@ dependencies = [
 
 [[package]]
 name = "gix-pack"
-version = "0.41.0"
+version = "0.42.0"
 dependencies = [
  "clru",
  "document-features",
  "gix-chunk",
  "gix-diff",
- "gix-features 0.33.0",
- "gix-hash 0.12.0",
- "gix-hashtable 0.3.0",
- "gix-object 0.35.0",
- "gix-path 0.9.0",
- "gix-tempfile 8.0.0",
+ "gix-features 0.34.0",
+ "gix-hash 0.13.0",
+ "gix-hashtable 0.4.0",
+ "gix-object 0.36.0",
+ "gix-path 0.10.0",
+ "gix-tempfile 9.0.0",
  "gix-testtools",
- "gix-traverse 0.31.0",
+ "gix-traverse 0.32.0",
  "memmap2 0.7.1",
  "parking_lot",
  "serde",
@@ -1954,20 +1954,20 @@ name = "gix-pack-tests"
 version = "0.0.0"
 dependencies = [
  "bstr",
- "gix-features 0.33.0",
- "gix-hash 0.12.0",
- "gix-object 0.35.0",
+ "gix-features 0.34.0",
+ "gix-hash 0.13.0",
+ "gix-object 0.36.0",
  "gix-odb",
  "gix-pack",
  "gix-testtools",
- "gix-traverse 0.31.0",
+ "gix-traverse 0.32.0",
  "maplit",
  "memmap2 0.7.1",
 ]
 
 [[package]]
 name = "gix-packetline"
-version = "0.16.5"
+version = "0.16.6"
 dependencies = [
  "async-std",
  "bstr",
@@ -1975,7 +1975,7 @@ dependencies = [
  "faster-hex",
  "futures-io",
  "futures-lite",
- "gix-hash 0.12.0",
+ "gix-hash 0.13.0",
  "gix-odb",
  "gix-pack",
  "maybe-async",
@@ -2010,7 +2010,7 @@ dependencies = [
 
 [[package]]
 name = "gix-path"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "bstr",
  "gix-trace 0.1.3",
@@ -2022,14 +2022,14 @@ dependencies = [
 
 [[package]]
 name = "gix-pathspec"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bitflags 2.3.3",
  "bstr",
- "gix-attributes 0.17.0",
+ "gix-attributes 0.18.0",
  "gix-config-value",
- "gix-glob 0.11.0",
- "gix-path 0.9.0",
+ "gix-glob 0.12.0",
+ "gix-path 0.10.0",
  "gix-testtools",
  "once_cell",
  "serial_test",
@@ -2038,7 +2038,7 @@ dependencies = [
 
 [[package]]
 name = "gix-prompt"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "expectrl",
  "gix-command",
@@ -2052,7 +2052,7 @@ dependencies = [
 
 [[package]]
 name = "gix-protocol"
-version = "0.38.0"
+version = "0.39.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -2062,9 +2062,9 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "gix-credentials",
- "gix-date 0.7.4",
- "gix-features 0.33.0",
- "gix-hash 0.12.0",
+ "gix-date 0.8.0",
+ "gix-features 0.34.0",
+ "gix-hash 0.13.0",
  "gix-packetline",
  "gix-testtools",
  "gix-transport",
@@ -2120,18 +2120,18 @@ dependencies = [
 
 [[package]]
 name = "gix-ref"
-version = "0.35.0"
+version = "0.36.0"
 dependencies = [
  "document-features",
- "gix-actor 0.25.0",
- "gix-date 0.7.4",
- "gix-features 0.33.0",
- "gix-fs 0.5.0",
- "gix-hash 0.12.0",
- "gix-lock 8.0.0",
- "gix-object 0.35.0",
- "gix-path 0.9.0",
- "gix-tempfile 8.0.0",
+ "gix-actor 0.26.0",
+ "gix-date 0.8.0",
+ "gix-features 0.34.0",
+ "gix-fs 0.6.0",
+ "gix-hash 0.13.0",
+ "gix-lock 9.0.0",
+ "gix-object 0.36.0",
+ "gix-path 0.10.0",
+ "gix-tempfile 9.0.0",
  "gix-testtools",
  "gix-validate 0.8.0",
  "memmap2 0.7.1",
@@ -2144,26 +2144,26 @@ dependencies = [
 name = "gix-ref-tests"
 version = "0.0.0"
 dependencies = [
- "gix-actor 0.25.0",
- "gix-date 0.7.4",
- "gix-discover 0.23.0",
- "gix-features 0.33.0",
- "gix-fs 0.5.0",
- "gix-hash 0.12.0",
- "gix-lock 8.0.0",
- "gix-object 0.35.0",
+ "gix-actor 0.26.0",
+ "gix-date 0.8.0",
+ "gix-discover 0.24.0",
+ "gix-features 0.34.0",
+ "gix-fs 0.6.0",
+ "gix-hash 0.13.0",
+ "gix-lock 9.0.0",
+ "gix-object 0.36.0",
  "gix-odb",
- "gix-ref 0.35.0",
+ "gix-ref 0.36.0",
  "gix-testtools",
  "gix-validate 0.8.0",
 ]
 
 [[package]]
 name = "gix-refspec"
-version = "0.16.0"
+version = "0.17.0"
 dependencies = [
  "bstr",
- "gix-hash 0.12.0",
+ "gix-hash 0.13.0",
  "gix-revision",
  "gix-testtools",
  "gix-validate 0.8.0",
@@ -2173,15 +2173,15 @@ dependencies = [
 
 [[package]]
 name = "gix-revision"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "bstr",
  "document-features",
  "gix-commitgraph",
- "gix-date 0.7.4",
- "gix-hash 0.12.0",
- "gix-hashtable 0.3.0",
- "gix-object 0.35.0",
+ "gix-date 0.8.0",
+ "gix-hash 0.13.0",
+ "gix-hashtable 0.4.0",
+ "gix-object 0.36.0",
  "gix-odb",
  "gix-revwalk",
  "gix-testtools",
@@ -2192,13 +2192,13 @@ dependencies = [
 
 [[package]]
 name = "gix-revwalk"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "gix-commitgraph",
- "gix-date 0.7.4",
- "gix-hash 0.12.0",
- "gix-hashtable 0.3.0",
- "gix-object 0.35.0",
+ "gix-date 0.8.0",
+ "gix-hash 0.13.0",
+ "gix-hashtable 0.4.0",
+ "gix-object 0.36.0",
  "smallvec",
  "thiserror",
 ]
@@ -2217,11 +2217,11 @@ dependencies = [
 
 [[package]]
 name = "gix-sec"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "bitflags 2.3.3",
  "document-features",
- "gix-path 0.9.0",
+ "gix-path 0.10.0",
  "libc",
  "serde",
  "tempfile",
@@ -2238,12 +2238,12 @@ version = "0.1.0"
 dependencies = [
  "bstr",
  "filetime",
- "gix-features 0.33.0",
- "gix-fs 0.5.0",
- "gix-hash 0.12.0",
- "gix-index 0.23.1",
- "gix-object 0.35.0",
- "gix-path 0.9.0",
+ "gix-features 0.34.0",
+ "gix-fs 0.6.0",
+ "gix-hash 0.13.0",
+ "gix-index 0.24.0",
+ "gix-object 0.36.0",
+ "gix-path 0.10.0",
  "thiserror",
 ]
 
@@ -2253,23 +2253,23 @@ version = "0.0.0"
 dependencies = [
  "bstr",
  "filetime",
- "gix-features 0.33.0",
- "gix-fs 0.5.0",
- "gix-hash 0.12.0",
- "gix-index 0.23.1",
- "gix-object 0.35.0",
+ "gix-features 0.34.0",
+ "gix-fs 0.6.0",
+ "gix-hash 0.13.0",
+ "gix-index 0.24.0",
+ "gix-object 0.36.0",
  "gix-status",
  "gix-testtools",
 ]
 
 [[package]]
 name = "gix-submodule"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bstr",
  "gix-config",
- "gix-features 0.33.0",
- "gix-path 0.9.0",
+ "gix-features 0.34.0",
+ "gix-path 0.10.0",
  "gix-pathspec",
  "gix-refspec",
  "gix-testtools",
@@ -2292,11 +2292,11 @@ dependencies = [
 
 [[package]]
 name = "gix-tempfile"
-version = "8.0.0"
+version = "9.0.0"
 dependencies = [
  "dashmap",
  "document-features",
- "gix-fs 0.5.0",
+ "gix-fs 0.6.0",
  "libc",
  "once_cell",
  "parking_lot",
@@ -2314,10 +2314,10 @@ dependencies = [
  "fastrand 2.0.0",
  "fs_extra",
  "gix-discover 0.18.1",
- "gix-fs 0.5.0",
+ "gix-fs 0.6.0",
  "gix-ignore 0.2.0",
  "gix-lock 5.0.1",
- "gix-tempfile 8.0.0",
+ "gix-tempfile 9.0.0",
  "gix-worktree 0.17.1",
  "io-close",
  "is_ci",
@@ -2349,7 +2349,7 @@ dependencies = [
 
 [[package]]
 name = "gix-transport"
-version = "0.35.0"
+version = "0.36.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -2362,12 +2362,12 @@ dependencies = [
  "futures-lite",
  "gix-command",
  "gix-credentials",
- "gix-features 0.33.0",
- "gix-hash 0.12.0",
+ "gix-features 0.34.0",
+ "gix-hash 0.13.0",
  "gix-pack",
  "gix-packetline",
  "gix-quote 0.4.7",
- "gix-sec 0.9.0",
+ "gix-sec 0.10.0",
  "gix-url",
  "maybe-async",
  "pin-project-lite",
@@ -2390,13 +2390,13 @@ dependencies = [
 
 [[package]]
 name = "gix-traverse"
-version = "0.31.0"
+version = "0.32.0"
 dependencies = [
  "gix-commitgraph",
- "gix-date 0.7.4",
- "gix-hash 0.12.0",
- "gix-hashtable 0.3.0",
- "gix-object 0.35.0",
+ "gix-date 0.8.0",
+ "gix-hash 0.13.0",
+ "gix-hashtable 0.4.0",
+ "gix-object 0.36.0",
  "gix-revwalk",
  "smallvec",
  "thiserror",
@@ -2407,11 +2407,11 @@ name = "gix-traverse-tests"
 version = "0.0.0"
 dependencies = [
  "gix-commitgraph",
- "gix-hash 0.12.0",
- "gix-object 0.35.0",
+ "gix-hash 0.13.0",
+ "gix-object 0.36.0",
  "gix-odb",
  "gix-testtools",
- "gix-traverse 0.31.0",
+ "gix-traverse 0.32.0",
 ]
 
 [[package]]
@@ -2420,12 +2420,12 @@ version = "0.0.0"
 
 [[package]]
 name = "gix-url"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "bstr",
  "document-features",
- "gix-features 0.33.0",
- "gix-path 0.9.0",
+ "gix-features 0.34.0",
+ "gix-path 0.10.0",
  "gix-testtools",
  "home",
  "libtest-mimic",
@@ -2496,15 +2496,15 @@ version = "0.25.0"
 dependencies = [
  "bstr",
  "document-features",
- "gix-attributes 0.17.0",
- "gix-features 0.33.0",
- "gix-fs 0.5.0",
- "gix-glob 0.11.0",
- "gix-hash 0.12.0",
- "gix-ignore 0.6.0",
- "gix-index 0.23.1",
- "gix-object 0.35.0",
- "gix-path 0.9.0",
+ "gix-attributes 0.18.0",
+ "gix-features 0.34.0",
+ "gix-fs 0.6.0",
+ "gix-glob 0.12.0",
+ "gix-hash 0.13.0",
+ "gix-ignore 0.7.0",
+ "gix-index 0.24.0",
+ "gix-object 0.36.0",
+ "gix-path 0.10.0",
  "serde",
 ]
 
@@ -2513,14 +2513,14 @@ name = "gix-worktree-state"
 version = "0.2.0"
 dependencies = [
  "bstr",
- "gix-features 0.33.0",
+ "gix-features 0.34.0",
  "gix-filter",
- "gix-fs 0.5.0",
- "gix-glob 0.11.0",
- "gix-hash 0.12.0",
- "gix-index 0.23.1",
- "gix-object 0.35.0",
- "gix-path 0.9.0",
+ "gix-fs 0.6.0",
+ "gix-glob 0.12.0",
+ "gix-hash 0.13.0",
+ "gix-index 0.24.0",
+ "gix-object 0.36.0",
+ "gix-path 0.10.0",
  "gix-worktree 0.25.0",
  "io-close",
  "thiserror",
@@ -2530,13 +2530,13 @@ dependencies = [
 name = "gix-worktree-state-tests"
 version = "0.0.0"
 dependencies = [
- "gix-discover 0.23.0",
- "gix-features 0.33.0",
+ "gix-discover 0.24.0",
+ "gix-features 0.34.0",
  "gix-filter",
- "gix-fs 0.5.0",
- "gix-hash 0.12.0",
- "gix-index 0.23.1",
- "gix-object 0.35.0",
+ "gix-fs 0.6.0",
+ "gix-hash 0.13.0",
+ "gix-index 0.24.0",
+ "gix-object 0.36.0",
  "gix-odb",
  "gix-testtools",
  "gix-worktree-state",
@@ -2547,18 +2547,18 @@ dependencies = [
 
 [[package]]
 name = "gix-worktree-stream"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
- "gix-attributes 0.17.0",
- "gix-features 0.33.0",
+ "gix-attributes 0.18.0",
+ "gix-features 0.34.0",
  "gix-filter",
- "gix-fs 0.5.0",
- "gix-hash 0.12.0",
- "gix-object 0.35.0",
+ "gix-fs 0.6.0",
+ "gix-hash 0.13.0",
+ "gix-object 0.36.0",
  "gix-odb",
- "gix-path 0.9.0",
+ "gix-path 0.10.0",
  "gix-testtools",
- "gix-traverse 0.31.0",
+ "gix-traverse 0.32.0",
  "gix-worktree 0.25.0",
  "parking_lot",
  "thiserror",
@@ -2569,17 +2569,17 @@ name = "gix-worktree-tests"
 version = "0.0.0"
 dependencies = [
  "bstr",
- "gix-attributes 0.17.0",
- "gix-discover 0.23.0",
- "gix-features 0.33.0",
- "gix-fs 0.5.0",
- "gix-glob 0.11.0",
- "gix-hash 0.12.0",
- "gix-ignore 0.6.0",
- "gix-index 0.23.1",
- "gix-object 0.35.0",
+ "gix-attributes 0.18.0",
+ "gix-discover 0.24.0",
+ "gix-features 0.34.0",
+ "gix-fs 0.6.0",
+ "gix-glob 0.12.0",
+ "gix-hash 0.13.0",
+ "gix-ignore 0.7.0",
+ "gix-index 0.24.0",
+ "gix-object 0.36.0",
  "gix-odb",
- "gix-path 0.9.0",
+ "gix-path 0.10.0",
  "gix-testtools",
  "gix-worktree 0.25.0",
  "symlink",

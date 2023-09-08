@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.0 (2023-09-08)
 
 The initial release with support for the `momo` proc-macro.
 
@@ -24,7 +24,7 @@ The initial release with support for the `momo` proc-macro.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Prepare changelogs for release ([`001c1c3`](https://github.com/Byron/gitoxide/commit/001c1c351579118c78bd6906c3c4100c53bc3472))
+    - Prepare changelogs for release ([`375db06`](https://github.com/Byron/gitoxide/commit/375db06a8442378c3f7a922fae38e2a6694d9d04))
     - Merge branch 'feat/gix-momo' ([`a1ed6a1`](https://github.com/Byron/gitoxide/commit/a1ed6a1aacae02a167b7ec44e1a47411a2194ff7))
     - Consolidate compile tests ([`d76efdd`](https://github.com/Byron/gitoxide/commit/d76efddf5afb73563ce7e837cf975cedd01e979c))
     - Revert to use `item_fn.span()` ([`72545e9`](https://github.com/Byron/gitoxide/commit/72545e971c894de511a723f6d5515f637a84f28f))

@@ -1,6 +1,6 @@
 [package]
 name = "gix-pathspec"
-version = "0.1.0"
+version = "0.2.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project dealing magical pathspecs"
@@ -12,10 +12,10 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-gix-glob = { version = "^0.11.0", path = "../gix-glob" }
-gix-path = { version = "^0.9.0", path = "../gix-path" }
-gix-attributes = { version = "^0.17.0", path = "../gix-attributes" }
-gix-config-value = { version = "^0.13.0", path = "../gix-config-value" }
+gix-glob = { version = "^0.12.0", path = "../gix-glob" }
+gix-path = { version = "^0.10.0", path = "../gix-path" }
+gix-attributes = { version = "^0.18.0", path = "../gix-attributes" }
+gix-config-value = { version = "^0.14.0", path = "../gix-config-value" }
 
 bstr = { version = "1.3.0", default-features = false, features = ["std"]}
 bitflags = "2"

@@ -18,8 +18,8 @@ gix-lock = "5.0.1"
 gix-discover = "0.18.0"
 gix-ignore = "0.2.0"
 gix-worktree = "0.17.0"
-gix-fs = { version = "^0.5.0", path = "../../gix-fs" }
-gix-tempfile = { version = "^8.0.0", default-features = false, features = ["signals"], path = "../../gix-tempfile" }
+gix-fs = { version = "^0.6.0", path = "../../gix-fs" }
+gix-tempfile = { version = "^9.0.0", default-features = false, features = ["signals"], path = "../../gix-tempfile" }
 
 winnow = { version = "0.5.14", features = ["simd"] }
 fastrand = "2.0.0"

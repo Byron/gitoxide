@@ -1,6 +1,6 @@
 [package]
 name = "gix-path"
-version = "0.9.0"
+version = "0.10.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project dealing paths and their conversions"

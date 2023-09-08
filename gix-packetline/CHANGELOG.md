@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.16.6 (2023-09-08)
 
 A maintenance release without user-facing changes.
 
@@ -31,7 +31,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Prepare changelogs for release ([`001c1c3`](https://github.com/Byron/gitoxide/commit/001c1c351579118c78bd6906c3c4100c53bc3472))
+    - Prepare changelogs for release ([`375db06`](https://github.com/Byron/gitoxide/commit/375db06a8442378c3f7a922fae38e2a6694d9d04))
     - Merge branch 'optimizations' ([`6135a5e`](https://github.com/Byron/gitoxide/commit/6135a5ea8709646f01da62939a59dd3a9750e007))
     - Adapt to changes in `gix` ([`805b8aa`](https://github.com/Byron/gitoxide/commit/805b8aa74b064b7aa08d87094a994bb8c7aae6ed))
     - Thanks clippy ([`5044c3b`](https://github.com/Byron/gitoxide/commit/5044c3b87456cf58ebfbbd00f23c9ba671cb290c))
