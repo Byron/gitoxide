@@ -47,6 +47,7 @@ mod index;
 pub(crate) mod init;
 mod kind;
 mod location;
+#[cfg(feature = "mailmap")]
 mod mailmap;
 mod object;
 mod pathspec;

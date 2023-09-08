@@ -117,6 +117,7 @@ check:
     cargo check -p gix --no-default-features --features blob-diff
     cargo check -p gix --no-default-features --features revision
     cargo check -p gix --no-default-features --features revparse-regex
+    cargo check -p gix --no-default-features --features mailmap
     cargo check -p gix --no-default-features
     cargo check -p gix-odb --features serde
     cargo check --no-default-features --features max-control

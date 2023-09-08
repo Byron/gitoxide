@@ -257,6 +257,7 @@ pub mod open;
 pub mod config;
 
 ///
+#[cfg(feature = "mailmap")]
 pub mod mailmap;
 
 ///
