@@ -47,6 +47,7 @@ check:
     if cargo tree -p gix --no-default-features -i gix-submodule 2>/dev/null; then false; else true; fi
     if cargo tree -p gix --no-default-features -i gix-pathspec 2>/dev/null; then false; else true; fi
     if cargo tree -p gix --no-default-features -i gix-filter 2>/dev/null; then false; else true; fi
+    if cargo tree -p gix --no-default-features -i gix-credentials 2>/dev/null; then false; else true; fi
     cargo check --no-default-features --features lean
     cargo check --no-default-features --features lean-async
     cargo check --no-default-features --features max
@@ -124,6 +125,7 @@ check:
     cargo check -p gix --no-default-features --features excludes --tests
     cargo check -p gix --no-default-features --features attributes --tests
     cargo check -p gix --no-default-features --features worktree-mutation --tests
+    cargo check -p gix --no-default-features --features credentials --tests
     cargo check -p gix --no-default-features
     cargo check -p gix-odb --features serde
     cargo check --no-default-features --features max-control

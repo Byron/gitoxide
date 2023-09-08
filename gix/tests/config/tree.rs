@@ -146,15 +146,14 @@ mod ssh {
 }
 
 mod fetch {
-    use gix::{
-        config::tree::{Fetch, Key},
-        remote::fetch::negotiate::Algorithm,
-    };
-
-    use crate::config::tree::bcow;
 
     #[test]
+    #[cfg(feature = "credentials")]
     fn algorithm() -> crate::Result {
+        use crate::config::tree::bcow;
+        use gix::config::tree::{Fetch, Key};
+        use gix::remote::fetch::negotiate::Algorithm;
+
         for (actual, expected) in [
             ("noop", Algorithm::Noop),
             ("consecutive", Algorithm::Consecutive),
@@ -181,6 +180,8 @@ mod fetch {
     #[cfg(feature = "attributes")]
     fn recurse_submodule() -> crate::Result {
         use gix::bstr::ByteSlice;
+        use gix::config::tree::{Fetch, Key};
+
         for (actual, expected) in [
             ("true", gix_submodule::config::FetchRecurse::Always),
             ("false", gix_submodule::config::FetchRecurse::Never),

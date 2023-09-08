@@ -51,7 +51,7 @@ default = ["max-performance-safe", "comfort", "basic", "extras"]
 basic = ["blob-diff", "revision"]
 
 ## Various additional features and capabilities that are not necessarily part of what most users would need.
-extras = ["worktree-stream", "worktree-archive", "revparse-regex", "mailmap", "excludes", "attributes", "worktree-mutation"]
+extras = ["worktree-stream", "worktree-archive", "revparse-regex", "mailmap", "excludes", "attributes", "worktree-mutation", "credentials"]
 
 ## Various progress-related features that improve the look of progress message units.
 comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
@@ -60,6 +60,10 @@ comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human
 #!
 #! A component is a distinct feature which may be comprised of one or more methods around a particular topic.
 #! Providers of libraries should only activate the components they need.
+
+## Access to credential helpers, which provide credentials for URLs.
+# Note that `gix-negotiate` just piggibacks here, as 'credentials' is equivalent to 'fetch & push' right now.
+credentials = ["dep:gix-credentials", "dep:gix-prompt", "dep:gix-negotiate"]
 
 ## Various ways to alter the worktree makeup by checkout and reset.
 worktree-mutation = ["attributes", "dep:gix-worktree-state"]
@@ -100,11 +104,11 @@ worktree-archive = ["gix-archive", "worktree-stream", "attributes"]
 #! Making a choice here also affects which crypto-library ends up being used.
 
 ## Make `gix-protocol` available along with an async client.
-async-network-client = ["gix-protocol/async-client", "gix-pack/streaming-input", "attributes"]
+async-network-client = ["gix-protocol/async-client", "gix-pack/streaming-input", "attributes", "credentials"]
 ## Use this if your crate uses `async-std` as runtime, and enable basic runtime integration when connecting to remote servers via the `git://` protocol.
 async-network-client-async-std = ["async-std", "async-network-client", "gix-transport/async-std"]
 ## Make `gix-protocol` available along with a blocking client, providing access to the `file://`, git://` and `ssh://` transports.
-blocking-network-client = ["gix-protocol/blocking-client", "gix-pack/streaming-input", "attributes"]
+blocking-network-client = ["gix-protocol/blocking-client", "gix-pack/streaming-input", "attributes", "credentials"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole, making the `https://` transport avaialble.
 blocking-http-transport-curl = ["blocking-network-client", "gix-transport/http-client-curl"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole, making the `https://` transport avaialble.
@@ -169,7 +173,7 @@ serde = [   "dep:serde",
     "gix-revision/serde",
     "gix-worktree?/serde",
     "gix-commitgraph/serde",
-    "gix-credentials/serde"]
+    "gix-credentials?/serde"]
 
 ## Re-export the progress tree root which allows to obtain progress from various functions which take `impl gix::Progress`.
 ## Applications which want to display progress will probably need this implementation.
@@ -201,7 +205,7 @@ gix-actor = { version = "^0.25.0", path = "../gix-actor" }
 gix-pack = { version = "^0.41.0", path = "../gix-pack", default-features = false, features = ["object-cache-dynamic"] }
 gix-revision = { version = "^0.20.0", path = "../gix-revision", default-features = false }
 gix-revwalk = { version = "^0.6.0", path = "../gix-revwalk" }
-gix-negotiate = { version = "^0.6.0", path = "../gix-negotiate" }
+gix-negotiate = { version = "^0.6.0", path = "../gix-negotiate", optional = true }
 
 gix-path = { version = "^0.9.0", path = "../gix-path" }
 gix-url = { version = "^0.22.0", path = "../gix-url" }
@@ -212,8 +216,8 @@ gix-features = { version = "^0.33.0", path = "../gix-features", features = ["pro
 gix-trace = { version = "^0.1.3", path = "../gix-trace" }
 
 gix-glob = { version = "^0.11.0", path = "../gix-glob" }
-gix-credentials = { version = "^0.18.0", path = "../gix-credentials" }
-gix-prompt = { version = "^0.6.0", path = "../gix-prompt" }
+gix-credentials = { version = "^0.18.0", path = "../gix-credentials", optional = true }
+gix-prompt = { version = "^0.6.0", path = "../gix-prompt", optional = true }
 gix-index = { version = "^0.23.1", path = "../gix-index" }
 gix-attributes = { version = "^0.17.0", path = "../gix-attributes", optional = true }
 gix-ignore = { version = "^0.6.0", path = "../gix-ignore", optional = true }

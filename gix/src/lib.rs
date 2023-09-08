@@ -80,6 +80,7 @@ pub use gix_actor as actor;
 #[cfg(feature = "attributes")]
 pub use gix_attributes as attrs;
 pub use gix_commitgraph as commitgraph;
+#[cfg(feature = "credentials")]
 pub use gix_credentials as credentials;
 pub use gix_date as date;
 pub use gix_features as features;
@@ -98,10 +99,12 @@ pub use gix_ignore as ignore;
 #[doc(inline)]
 pub use gix_index as index;
 pub use gix_lock as lock;
+#[cfg(feature = "credentials")]
 pub use gix_negotiate as negotiate;
 pub use gix_object as objs;
 pub use gix_object::bstr;
 pub use gix_odb as odb;
+#[cfg(feature = "credentials")]
 pub use gix_prompt as prompt;
 #[cfg(feature = "gix-protocol")]
 pub use gix_protocol as protocol;

@@ -5,6 +5,7 @@ use crate::{bstr::BString, repository::identity, Repository};
 
 pub(crate) mod cache;
 mod snapshot;
+#[cfg(feature = "credentials")]
 pub use snapshot::credential_helpers;
 
 ///
@@ -461,6 +462,7 @@ pub mod transport {
                 key: Cow<'static, BStr>,
             },
             #[error("Could not configure the credential helpers for the authenticated proxy url")]
+            #[cfg(feature = "credentials")]
             ConfigureProxyAuthenticate(#[from] crate::config::snapshot::credential_helpers::Error),
             #[error(transparent)]
             InvalidSslVersion(#[from] crate::config::ssl_version::Error),

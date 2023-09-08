@@ -2,6 +2,9 @@ use gix::config::tree::{Branch, Core, Key};
 
 use crate::named_repo;
 
+#[cfg(feature = "credentials")]
+mod credential_helpers;
+
 #[test]
 fn commit_auto_rollback() -> crate::Result {
     let mut repo: gix::Repository = named_repo("make_basic_repo.sh")?;
@@ -127,5 +130,3 @@ fn apply_cli_overrides() -> crate::Result {
 
     Ok(())
 }
-
-mod credential_helpers;

@@ -65,6 +65,7 @@ pub mod collate {
             #[error(transparent)]
             FindExistingRemote(#[from] crate::remote::find::existing::Error),
             #[error(transparent)]
+            #[cfg(feature = "credentials")]
             CredentialHelperConfig(#[from] crate::config::credential_helpers::Error),
             #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
             #[error(transparent)]
