@@ -124,7 +124,7 @@ impl Search {
 impl Pattern for Attributes {
     type Value = Value;
 
-    fn bytes_to_patterns(bytes: &[u8], source: &std::path::Path) -> Vec<pattern::Mapping<Self::Value>> {
+    fn bytes_to_patterns(bytes: &[u8], _source: &std::path::Path) -> Vec<pattern::Mapping<Self::Value>> {
         fn into_owned_assignments<'a>(
             attrs: impl Iterator<Item = Result<crate::AssignmentRef<'a>, crate::name::Error>>,
         ) -> Option<Assignments> {
@@ -138,8 +138,8 @@ impl Pattern for Attributes {
                 .collect::<Result<Assignments, _>>();
             match res {
                 Ok(res) => Some(res),
-                Err(err) => {
-                    log::warn!("{}", err);
+                Err(_err) => {
+                    gix_trace::warn!("{}", _err);
                     None
                 }
             }
@@ -148,8 +148,8 @@ impl Pattern for Attributes {
         crate::parse(bytes)
             .filter_map(|res| match res {
                 Ok(pattern) => Some(pattern),
-                Err(err) => {
-                    log::warn!("{}: {}", source.display(), err);
+                Err(_err) => {
+                    gix_trace::warn!("{}: {}", _source.display(), _err);
                     None
                 }
             })
