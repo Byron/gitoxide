@@ -5,6 +5,7 @@
 //! Such checks for interrupts are provided in custom implementations of various traits to transparently add interrupt
 //! support to methods who wouldn't otherwise by injecting it. see [`Read`].
 
+#[cfg(feature = "interrupt")]
 mod init {
     use std::{
         io,
@@ -143,6 +144,7 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
+#[cfg(feature = "interrupt")]
 pub use init::{init_handler, Deregister};
 
 /// A wrapper for an inner iterator which will check for interruptions on each iteration.

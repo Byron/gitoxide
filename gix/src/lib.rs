@@ -122,7 +122,6 @@ pub use gix_url::Url;
 pub use gix_utils as utils;
 pub use hash::{oid, ObjectId};
 
-#[cfg(feature = "interrupt")]
 pub mod interrupt;
 
 mod ext;
