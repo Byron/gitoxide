@@ -1806,7 +1806,7 @@ dependencies = [
 
 [[package]]
 name = "gix-macros"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1986,7 +1986,7 @@ dependencies = [
 
 [[package]]
 name = "gix-packetline-blocking"
-version = "0.16.5"
+version = "0.16.6"
 dependencies = [
  "bstr",
  "document-features",

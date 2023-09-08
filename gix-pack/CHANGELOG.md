@@ -5,6 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+<csr-id-ed327f6163f54756e58c20f86a563a97efb256ca/>
+
+### New Features
+
+ - <csr-id-0357b6cdb11b098fd54cd0c3df6c617d0b44a1c2/> Add `generate` and `streaming-input` feature toggles.
+   That way, it's possible to not compile a bunch of code in `gix` if
+   the writing of packs isn't required.
+
+### Bug Fixes
+
+ - <csr-id-96a07e08e6090222cf398b46aa8d46b56f81f14d/> Use `Vec::resize()` instead of set_len()
+   Otherwise it's possible for uninitialized memory to be used as if it was initialized,
+   which can lead to strange behaviour.
+   
+   As the buffer is re-used, it's not actually zeroing that much memory either.
+
+### Chore (BREAKING)
+
+ - <csr-id-ed327f6163f54756e58c20f86a563a97efb256ca/> update to the latest `prodash`
+   It makes proper usage of `Progress` types easier and allows them to be used
+   as `dyn` traits as well.
+
+### New Features (BREAKING)
+
+ - <csr-id-24dd870919ba444aa8099c63a78ea120d47ec28e/> use `prodash::Count` to indicate that nothing more than counting is performed, in place of `prodash::Progress`
+ - <csr-id-4b74996b19176cb0f00860b3db5a27819d63e7d0/> Make usage of decompression context explicit.
+   That way, the context can be reused which is more efficient than recreating
+   it from scratch for every little delta to decompress.
+   
+   This leads to a performance gain of 1.3%.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-072ee32f693a31161cd6a843da6582d13efbb20b/> use `dyn` trait where possible.
+   This reduces compile time due to avoiding duplication.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 17 calendar days.
+ - 17 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare changelogs for release ([`001c1c3`](https://github.com/Byron/gitoxide/commit/001c1c351579118c78bd6906c3c4100c53bc3472))
+    - Merge branch 'optimizations' ([`6135a5e`](https://github.com/Byron/gitoxide/commit/6135a5ea8709646f01da62939a59dd3a9750e007))
+    - Add `generate` and `streaming-input` feature toggles. ([`0357b6c`](https://github.com/Byron/gitoxide/commit/0357b6cdb11b098fd54cd0c3df6c617d0b44a1c2))
+    - Merge branch `dyn`ification ([`f658fcc`](https://github.com/Byron/gitoxide/commit/f658fcc52dc2200ae34ca53dc10be97fb9012057))
+    - Use `dyn` trait where possible. ([`072ee32`](https://github.com/Byron/gitoxide/commit/072ee32f693a31161cd6a843da6582d13efbb20b))
+    - Use `prodash::Count` to indicate that nothing more than counting is performed, in place of `prodash::Progress` ([`24dd870`](https://github.com/Byron/gitoxide/commit/24dd870919ba444aa8099c63a78ea120d47ec28e))
+    - Update to the latest `prodash` ([`ed327f6`](https://github.com/Byron/gitoxide/commit/ed327f6163f54756e58c20f86a563a97efb256ca))
+    - Switch the last crate (gix-package-tests) to edition 2021 ([`04494c6`](https://github.com/Byron/gitoxide/commit/04494c65df05eef6b24acb68faae939a3d85f510))
+    - Merge branch 'perf-and-safety' ([`9ad9c5b`](https://github.com/Byron/gitoxide/commit/9ad9c5b1cfa3afff5273558b6ef98ca4714d4272))
+    - Use `Vec::resize()` instead of set_len() ([`96a07e0`](https://github.com/Byron/gitoxide/commit/96a07e08e6090222cf398b46aa8d46b56f81f14d))
+    - Make usage of decompression context explicit. ([`4b74996`](https://github.com/Byron/gitoxide/commit/4b74996b19176cb0f00860b3db5a27819d63e7d0))
+    - Merge branch 'gix-submodule' ([`363ee77`](https://github.com/Byron/gitoxide/commit/363ee77400805f473c9ad66eadad9214e7ab66f4))
+</details>
+
 ## 0.41.0 (2023-08-22)
 
 <csr-id-93feea269eebd114e866e6f29f4a73c0096df9e0/>
@@ -20,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 15 calendar days.
+ - 7 commits contributed to the release over the course of 15 calendar days.
  - 29 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -32,8 +100,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0 ([`6c62e74`](https://github.com/Byron/gitoxide/commit/6c62e748240ac0980fc23fdf30f8477dea8b9bc3))
     - Release gix-date v0.7.3, gix-hash v0.12.0, gix-features v0.33.0, gix-actor v0.25.0, gix-object v0.35.0, gix-path v0.9.0, gix-glob v0.11.0, gix-quote v0.4.7, gix-attributes v0.17.0, gix-command v0.2.9, gix-packetline-blocking v0.16.5, gix-filter v0.3.0, gix-fs v0.5.0, gix-commitgraph v0.19.0, gix-hashtable v0.3.0, gix-revwalk v0.6.0, gix-traverse v0.31.0, gix-worktree-stream v0.3.0, gix-archive v0.3.0, gix-config-value v0.13.0, gix-tempfile v8.0.0, gix-lock v8.0.0, gix-ref v0.35.0, gix-sec v0.9.0, gix-config v0.28.0, gix-prompt v0.6.0, gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0, safety bump 41 crates ([`30b2761`](https://github.com/Byron/gitoxide/commit/30b27615047692d3ced1b2d9c2ac15a80f79fbee))
     - Update changelogs prior to release ([`f23ea88`](https://github.com/Byron/gitoxide/commit/f23ea8828f2d9ba7559973daca388c9591bcc5fc))
+    - Merge branch 'gix-submodule' ([`8f3f358`](https://github.com/Byron/gitoxide/commit/8f3f358800f1fe77d7ba7ebd396a90b692d3c0c1))
     - More cleanup of test crates ([`73c685a`](https://github.com/Byron/gitoxide/commit/73c685a67debcfa26a940f37bbca69cb3a4af57e))
     - Split tests off into their own crate to allow feature toggles. ([`93feea2`](https://github.com/Byron/gitoxide/commit/93feea269eebd114e866e6f29f4a73c0096df9e0))
     - Release gix-glob v0.10.2, gix-date v0.7.2, gix-validate v0.8.0, gix-object v0.34.0, gix-ref v0.34.0, gix-config v0.27.0, gix-commitgraph v0.18.2, gix-revwalk v0.5.0, gix-revision v0.19.0, gix-refspec v0.15.0, gix-submodule v0.1.0, safety bump 18 crates ([`4604f83`](https://github.com/Byron/gitoxide/commit/4604f83ef238dc07c85aaeae097399b67f3cfd0c))

@@ -1,6 +1,6 @@
 [package]
 name = "gix-packetline-blocking"
-version = "0.16.5"
+version = "0.16.6"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A duplicate of `gix-packetline` with the `blocking-io` feature pre-selected"
