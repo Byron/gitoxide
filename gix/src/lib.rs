@@ -4,7 +4,7 @@
 //! individually. Sometimes it may hide complexity under the assumption that the performance difference doesn't matter
 //! for all but the fewest tools out there, which would be using the underlying crates directly or file an issue.
 //!
-//! # The prelude and extensions
+//! ### The prelude and extensions
 //!
 //! With `use git_repository::prelude::*` you should be ready to go as it pulls in various extension traits to make functionality
 //! available on objects that may use it.
@@ -14,13 +14,13 @@
 //! Most extensions to existing objects provide an `obj_with_extension.attach(&repo).an_easier_version_of_a_method()` for simpler
 //! call signatures.
 //!
-//! ## `ThreadSafe` Mode
+//! ### `ThreadSafe` Mode
 //!
 //! By default, the [`Repository`] isn't `Sync` and thus can't be used in certain contexts which require the `Sync` trait.
 //!
 //! To help with this, convert it with [`.into_sync()`][Repository::into_sync()] into a [`ThreadSafeRepository`].
 //!
-//! ## Object-Access Performance
+//! ### Object-Access Performance
 //!
 //! Accessing objects quickly is the bread-and-butter of working with git, right after accessing references. Hence it's vital
 //! to understand which cache levels exist and how to leverage them.
@@ -42,9 +42,9 @@
 //! When reading the documentation of the canonical gix-worktree program one gets the impression work tree and working tree are used
 //! interchangeably. We use the term _work tree_ only and try to do so consistently as its shorter and assumed to be the same.
 //!
-//! # Cargo-features
+//! ### Plumbing Crates
 //!
-//! To make using  _sub-crates_ easier these are re-exported into the root of this crate. Here we list how to access nested plumbing
+//! To make using  _sub-crates_ and their types easier, these are re-exported into the root of this crate. Here we list how to access nested plumbing
 //! crates which are otherwise harder to discover:
 //!
 //! **`git_repository::`**
@@ -60,11 +60,11 @@
 //! Entering `git2` into the search field will also surface all methods with such annotations.
 //!
 //! What follows is a list of methods you might be missing, along with workarounds if available.
-//! * [`git2::Repository::open_bare()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_bare) ➡ ❌ - use [`open()`] and discard it is not bare.
+//! * [`git2::Repository::open_bare()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_bare) ➡ ❌ - use [`open()`] and discard if it is not bare.
 //! * [`git2::build::CheckoutBuilder::disable_filters()](https://docs.rs/git2/*/git2/build/struct.CheckoutBuilder.html#method.disable_filters) ➡ ❌ *(filters are always applied during checkouts)*
 //! * [`git2::Repository::submodule_status()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.submodule_status) ➡ [`Submodule::state()`] - status provides more information and conveniences though, and an actual worktree status isn't performed.
 //!
-//! ## Feature Flags
+//! ### Feature Flags
 #![cfg_attr(
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
@@ -77,8 +77,10 @@
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
 pub use gix_actor as actor;
+#[cfg(feature = "attributes")]
 pub use gix_attributes as attrs;
 pub use gix_commitgraph as commitgraph;
+#[cfg(feature = "credentials")]
 pub use gix_credentials as credentials;
 pub use gix_date as date;
 pub use gix_features as features;
@@ -92,19 +94,24 @@ pub use gix_fs as fs;
 pub use gix_glob as glob;
 pub use gix_hash as hash;
 pub use gix_hashtable as hashtable;
+#[cfg(feature = "excludes")]
 pub use gix_ignore as ignore;
 #[doc(inline)]
+#[cfg(feature = "index")]
 pub use gix_index as index;
 pub use gix_lock as lock;
+#[cfg(feature = "credentials")]
 pub use gix_negotiate as negotiate;
 pub use gix_object as objs;
 pub use gix_object::bstr;
 pub use gix_odb as odb;
+#[cfg(feature = "credentials")]
 pub use gix_prompt as prompt;
 #[cfg(feature = "gix-protocol")]
 pub use gix_protocol as protocol;
 pub use gix_ref as refs;
 pub use gix_refspec as refspec;
+pub use gix_revwalk as revwalk;
 pub use gix_sec as sec;
 pub use gix_tempfile as tempfile;
 pub use gix_trace as trace;
@@ -115,12 +122,14 @@ pub use gix_url::Url;
 pub use gix_utils as utils;
 pub use hash::{oid, ObjectId};
 
+#[cfg(feature = "interrupt")]
 pub mod interrupt;
 
 mod ext;
 ///
 pub mod prelude;
 
+#[cfg(feature = "excludes")]
 mod attribute_stack;
 
 ///
@@ -134,10 +143,13 @@ pub type OdbHandle = gix_odb::Handle;
 pub(crate) type Config = OwnShared<gix_config::File<'static>>;
 
 mod types;
+#[cfg(any(feature = "excludes", feature = "attributes"))]
+pub use types::AttributeStack;
 pub use types::{
-    AttributeStack, Commit, Head, Id, Object, ObjectDetached, Pathspec, Reference, Remote, Repository, Submodule, Tag,
-    ThreadSafeRepository, Tree, Worktree,
+    Commit, Head, Id, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
 };
+#[cfg(feature = "attributes")]
+pub use types::{Pathspec, Submodule};
 
 ///
 pub mod clone;
@@ -145,9 +157,11 @@ pub mod commit;
 pub mod head;
 pub mod id;
 pub mod object;
+#[cfg(feature = "attributes")]
 pub mod pathspec;
 pub mod reference;
 pub mod repository;
+#[cfg(feature = "attributes")]
 pub mod submodule;
 pub mod tag;
 
@@ -256,6 +270,7 @@ pub mod open;
 pub mod config;
 
 ///
+#[cfg(feature = "mailmap")]
 pub mod mailmap;
 
 ///
@@ -263,6 +278,7 @@ pub mod worktree;
 
 pub mod revision;
 
+#[cfg(feature = "attributes")]
 pub mod filter;
 
 ///

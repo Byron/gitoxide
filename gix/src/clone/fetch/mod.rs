@@ -149,7 +149,7 @@ impl PrepareFetch {
     }
 
     /// Similar to [`fetch_only()`][Self::fetch_only()`], but passes ownership to a utility type to configure a checkout operation.
-    #[cfg(feature = "blocking-network-client")]
+    #[cfg(all(feature = "worktree-mutation", feature = "blocking-network-client"))]
     pub fn fetch_then_checkout<P>(
         &mut self,
         progress: P,

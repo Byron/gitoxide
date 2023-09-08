@@ -132,7 +132,7 @@ pub mod fanout {
         sorted_entries: &[multi_index::write::Entry],
         out: &mut dyn std::io::Write,
     ) -> std::io::Result<()> {
-        let fanout = crate::index::write::encode::fanout(&mut sorted_entries.iter().map(|e| e.id.first_byte()));
+        let fanout = crate::index::encode::fanout(&mut sorted_entries.iter().map(|e| e.id.first_byte()));
 
         for value in fanout.iter() {
             out.write_all(&value.to_be_bytes())?;
@@ -190,7 +190,7 @@ pub mod offsets {
         large_offsets_needed: bool,
         out: &mut dyn std::io::Write,
     ) -> std::io::Result<()> {
-        use crate::index::write::encode::{HIGH_BIT, LARGE_OFFSET_THRESHOLD};
+        use crate::index::encode::{HIGH_BIT, LARGE_OFFSET_THRESHOLD};
         let mut num_large_offsets = 0u32;
 
         for entry in sorted_entries {
@@ -226,7 +226,7 @@ pub mod offsets {
 pub mod large_offsets {
     use std::ops::Range;
 
-    use crate::{index::write::encode::LARGE_OFFSET_THRESHOLD, multi_index};
+    use crate::{index::encode::LARGE_OFFSET_THRESHOLD, multi_index};
 
     /// The id uniquely identifying the large offsets table (with 64 bit offsets)
     pub const ID: gix_chunk::Id = *b"LOFF";

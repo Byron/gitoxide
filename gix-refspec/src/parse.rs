@@ -173,16 +173,8 @@ pub(crate) mod function {
                         .map_err(Error::from)
                         .or_else(|err| {
                             if allow_revspecs {
-                                match gix_revision::spec::parse(spec, &mut super::revparse::Noop) {
-                                    Ok(_) => {
-                                        if spec.iter().any(u8::is_ascii_whitespace) {
-                                            Err(err)
-                                        } else {
-                                            Ok(spec)
-                                        }
-                                    }
-                                    Err(err) => Err(err.into()),
-                                }
+                                gix_revision::spec::parse(spec, &mut super::revparse::Noop)?;
+                                Ok(spec)
                             } else {
                                 Err(err)
                             }

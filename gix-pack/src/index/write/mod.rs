@@ -6,7 +6,6 @@ use gix_features::progress::{self, Count, Progress};
 
 use crate::cache::delta::{traverse, Tree};
 
-pub(crate) mod encode;
 mod error;
 
 pub(crate) struct TreeEntry {
@@ -233,7 +232,7 @@ impl crate::index::File {
             }
             None => return Err(Error::IteratorInvariantTrailer),
         };
-        let index_hash = encode::write_to(
+        let index_hash = crate::index::encode::write_to(
             out,
             sorted_pack_offsets_by_oid,
             &pack_hash,

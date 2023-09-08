@@ -1,10 +1,11 @@
 pub use gix_config::*;
 use gix_features::threading::OnceCell;
 
-use crate::{bstr::BString, repository::identity, revision::spec, Repository};
+use crate::{bstr::BString, repository::identity, Repository};
 
 pub(crate) mod cache;
 mod snapshot;
+#[cfg(feature = "credentials")]
 pub use snapshot::credential_helpers;
 
 ///
@@ -119,6 +120,7 @@ pub mod diff {
 }
 
 ///
+#[cfg(feature = "attributes")]
 pub mod checkout_options {
     /// The error produced when collecting all information needed for checking out files into a worktree.
     #[derive(Debug, thiserror::Error)]
@@ -460,6 +462,7 @@ pub mod transport {
                 key: Cow<'static, BStr>,
             },
             #[error("Could not configure the credential helpers for the authenticated proxy url")]
+            #[cfg(feature = "credentials")]
             ConfigureProxyAuthenticate(#[from] crate::config::snapshot::credential_helpers::Error),
             #[error(transparent)]
             InvalidSslVersion(#[from] crate::config::ssl_version::Error),
@@ -495,11 +498,13 @@ pub(crate) struct Cache {
     /// A lazily loaded rewrite list for remote urls
     pub(crate) url_rewrite: OnceCell<crate::remote::url::Rewrite>,
     /// The lazy-loaded rename information for diffs.
+    #[cfg(feature = "blob-diff")]
     pub(crate) diff_renames: OnceCell<Option<crate::object::tree::diff::Rewrites>>,
     /// A lazily loaded mapping to know which url schemes to allow
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     pub(crate) url_scheme: OnceCell<crate::remote::url::SchemePermission>,
     /// The algorithm to use when diffing blobs
+    #[cfg(feature = "blob-diff")]
     pub(crate) diff_algorithm: OnceCell<gix_diff::blob::Algorithm>,
     /// The amount of bytes to use for a memory backed delta pack cache. If `Some(0)`, no cache is used, if `None`
     /// a standard cache is used which costs near to nothing and always pays for itself.
@@ -511,12 +516,14 @@ pub(crate) struct Cache {
     /// The config section filter from the options used to initialize this instance. Keep these in sync!
     filter_config_section: fn(&gix_config::file::Metadata) -> bool,
     /// The object kind to pick if a prefix is ambiguous.
-    pub object_kind_hint: Option<spec::parse::ObjectKindHint>,
+    #[cfg(feature = "revision")]
+    pub object_kind_hint: Option<crate::revision::spec::parse::ObjectKindHint>,
     /// If true, we are on a case-insensitive file system.
     pub ignore_case: bool,
     /// If true, we should default what's possible if something is misconfigured, on case by case basis, to be more resilient.
     /// Also available in options! Keep in sync!
     pub lenient_config: bool,
+    #[cfg_attr(not(feature = "worktree-mutation"), allow(dead_code))]
     attributes: crate::open::permissions::Attributes,
     environment: crate::open::permissions::Environment,
     // TODO: make core.precomposeUnicode available as well.

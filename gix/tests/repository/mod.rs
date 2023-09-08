@@ -1,14 +1,17 @@
 use gix::Repository;
 
 mod config;
+#[cfg(feature = "attributes")]
 mod filter;
 mod object;
 mod open;
+#[cfg(feature = "attributes")]
 mod pathspec;
 mod reference;
 mod remote;
 mod shallow;
 mod state;
+#[cfg(feature = "attributes")]
 mod submodule;
 mod worktree;
 

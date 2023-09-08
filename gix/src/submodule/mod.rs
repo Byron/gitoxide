@@ -160,17 +160,21 @@ impl<'repo> Submodule<'repo> {
     /// or `None` if it was deleted from the index.
     ///
     /// If `None`, but `Some()` when calling [`Self::head_id()`], then the submodule was just deleted but the change
-    /// wasn't yet committed.
+    /// wasn't yet committed. Note that `None` is also returned if the entry at the submodule path isn't a submodule.
     /// If `Some()`, but `None` when calling [`Self::head_id()`], then the submodule was just added without having committed the change.
     pub fn index_id(&self) -> Result<Option<gix_hash::ObjectId>, index_id::Error> {
         let path = self.path()?;
-        Ok(self.state.index()?.entry_by_path(&path).map(|entry| entry.id))
+        Ok(self
+            .state
+            .index()?
+            .entry_by_path(&path)
+            .and_then(|entry| (entry.mode == gix_index::entry::Mode::COMMIT).then_some(entry.id)))
     }
 
     /// Return the object id of the submodule as stored in `HEAD^{tree}` of the superproject, or `None` if it wasn't yet committed.
     ///
     /// If `Some()`, but `None` when calling [`Self::index_id()`], then the submodule was just deleted but the change
-    /// wasn't yet committed.
+    /// wasn't yet committed. Note that `None` is also returned if the entry at the submodule path isn't a submodule.
     /// If `None`, but `Some()` when calling [`Self::index_id()`], then the submodule was just added without having committed the change.
     pub fn head_id(&self) -> Result<Option<gix_hash::ObjectId>, head_id::Error> {
         let path = self.path()?;
@@ -180,7 +184,7 @@ impl<'repo> Submodule<'repo> {
             .head_commit()?
             .tree()?
             .peel_to_entry_by_path(gix_path::from_bstr(path.as_ref()))?
-            .map(|entry| entry.inner.oid))
+            .and_then(|entry| (entry.mode() == gix_object::tree::EntryMode::Commit).then_some(entry.inner.oid)))
     }
 
     /// Return the path at which the repository of the submodule should be located.

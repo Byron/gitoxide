@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 #[cfg(feature = "worktree-archive")]
 pub use gix_archive as archive;
+#[cfg(feature = "excludes")]
 pub use gix_worktree::*;
+#[cfg(feature = "worktree-mutation")]
 pub use gix_worktree_state as state;
 #[cfg(feature = "worktree-stream")]
 pub use gix_worktree_stream as stream;
@@ -12,8 +14,10 @@ use crate::{
     Repository,
 };
 
+#[cfg(feature = "index")]
 pub(crate) type IndexStorage = gix_features::threading::OwnShared<gix_fs::SharedFileSnapshotMut<gix_index::File>>;
 /// A lazily loaded and auto-updated worktree index.
+#[cfg(feature = "index")]
 pub type Index = gix_fs::SharedFileSnapshot<gix_index::File>;
 
 /// A stand-in to a worktree as result of a worktree iteration.
@@ -82,6 +86,7 @@ pub(crate) fn id(git_dir: &std::path::Path, has_common_dir: bool) -> Option<&BSt
 pub mod proxy;
 
 ///
+#[cfg(feature = "index")]
 pub mod open_index {
     /// The error returned by [`Worktree::open_index()`][crate::Worktree::open_index()].
     #[derive(Debug, thiserror::Error)]
@@ -111,7 +116,10 @@ pub mod open_index {
 }
 
 ///
+#[cfg(feature = "excludes")]
 pub mod excludes {
+    use crate::AttributeStack;
+
     /// The error returned by [`Worktree::excludes()`][crate::Worktree::excludes()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
@@ -132,7 +140,7 @@ pub mod excludes {
         ///
         /// When only excludes are desired, this is the most efficient way to obtain them. Otherwise use
         /// [`Worktree::attributes()`][crate::Worktree::attributes()] for accessing both attributes and excludes.
-        pub fn excludes(&self, overrides: Option<gix_ignore::Search>) -> Result<gix_worktree::Stack, Error> {
+        pub fn excludes(&self, overrides: Option<gix_ignore::Search>) -> Result<AttributeStack<'_>, Error> {
             let index = self.index()?;
             Ok(self.parent.excludes(
                 &index,
@@ -144,6 +152,7 @@ pub mod excludes {
 }
 
 ///
+#[cfg(feature = "attributes")]
 pub mod attributes {
     use crate::{AttributeStack, Worktree};
 
@@ -188,6 +197,7 @@ pub mod attributes {
 }
 
 ///
+#[cfg(feature = "attributes")]
 pub mod pathspec {
     use crate::{
         bstr::BStr,

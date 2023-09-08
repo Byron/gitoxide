@@ -17,7 +17,7 @@ path = "config.rs"
 [dev-dependencies]
 gix-config = { path = ".."}
 gix-testtools = { path = "../../tests/tools"}
-gix = { path = "../../gix" }
+gix = { path = "../../gix", default-features = false }
 gix-ref = { path = "../../gix-ref" }
 gix-path = { path = "../../gix-path" }
 gix-sec = { path = "../../gix-sec" }

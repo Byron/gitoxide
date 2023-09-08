@@ -146,16 +146,14 @@ mod ssh {
 }
 
 mod fetch {
-    use gix::{
-        bstr::ByteSlice,
-        config::tree::{Fetch, Key},
-        remote::fetch::negotiate::Algorithm,
-    };
-
-    use crate::config::tree::bcow;
 
     #[test]
+    #[cfg(feature = "credentials")]
     fn algorithm() -> crate::Result {
+        use crate::config::tree::bcow;
+        use gix::config::tree::{Fetch, Key};
+        use gix::remote::fetch::negotiate::Algorithm;
+
         for (actual, expected) in [
             ("noop", Algorithm::Noop),
             ("consecutive", Algorithm::Consecutive),
@@ -179,7 +177,11 @@ mod fetch {
     }
 
     #[test]
+    #[cfg(feature = "attributes")]
     fn recurse_submodule() -> crate::Result {
+        use gix::bstr::ByteSlice;
+        use gix::config::tree::{Fetch, Key};
+
         for (actual, expected) in [
             ("true", gix_submodule::config::FetchRecurse::Always),
             ("false", gix_submodule::config::FetchRecurse::Never),
@@ -204,6 +206,7 @@ mod fetch {
     }
 }
 
+#[cfg(feature = "blob-diff")]
 mod diff {
     use gix::{
         config::tree::{Diff, Key},
@@ -271,10 +274,7 @@ mod diff {
 mod core {
     use std::time::Duration;
 
-    use gix::{
-        config::tree::{Core, Key},
-        revision::spec::parse::ObjectKindHint,
-    };
+    use gix::config::tree::{Core, Key};
     use gix_lock::acquire::Fail;
 
     use crate::config::tree::bcow;
@@ -312,7 +312,9 @@ mod core {
     }
 
     #[test]
+    #[cfg(feature = "revision")]
     fn disambiguate() -> crate::Result {
+        use gix::revision::spec::parse::ObjectKindHint;
         for (value, expected) in [
             ("none", None),
             ("commit", Some(ObjectKindHint::Commit)),
@@ -435,6 +437,7 @@ mod core {
     }
 
     #[test]
+    #[cfg(feature = "attributes")]
     fn safecrlf() -> crate::Result {
         for (value, expected) in [
             ("false", gix_filter::pipeline::CrlfRoundTripCheck::Skip),
@@ -452,6 +455,7 @@ mod core {
     }
 
     #[test]
+    #[cfg(feature = "attributes")]
     fn autocrlf() -> crate::Result {
         for (value, expected) in [
             ("false", gix_filter::eol::AutoCrlf::Disabled),
@@ -472,6 +476,7 @@ mod core {
     }
 
     #[test]
+    #[cfg(feature = "attributes")]
     fn eol() -> crate::Result {
         for (value, expected) in [
             ("lf", gix_filter::eol::Mode::Lf),
@@ -489,6 +494,7 @@ mod core {
     }
 
     #[test]
+    #[cfg(feature = "attributes")]
     fn check_round_trip_encoding() -> crate::Result {
         for (value, expected) in [
             (

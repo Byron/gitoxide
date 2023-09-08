@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::io;
 
 use anyhow::{anyhow, bail};
-use gix::{bstr::BStr, prelude::FindExt};
+use gix::bstr::BStr;
 
 use crate::{repository::PathsOrPatterns, OutputFormat};
 
@@ -49,7 +49,7 @@ pub fn query(
                     .metadata()
                     .ok()
                     .map(|m| m.is_dir());
-                let entry = cache.at_entry(path.as_slice(), is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
+                let entry = cache.at_entry(path.as_slice(), is_dir)?;
                 let match_ = entry
                     .matching_exclude_pattern()
                     .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then_some(m));
@@ -68,7 +68,7 @@ pub fn query(
                 .index_entries_with_paths(&index)
                 .ok_or_else(|| anyhow!("Pathspec didn't yield any entry"))?
             {
-                let entry = cache.at_entry(path, Some(false), |oid, buf| repo.objects.find_blob(oid, buf))?;
+                let entry = cache.at_entry(path, Some(false))?;
                 let match_ = entry
                     .matching_exclude_pattern()
                     .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then_some(m));

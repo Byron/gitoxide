@@ -122,6 +122,7 @@ impl PrepareFetch {
 /// A utility to collect configuration on how to perform a checkout into a working tree, and when dropped without checking out successfully
 /// the fetched repository will be dropped.
 #[must_use]
+#[cfg(feature = "worktree-mutation")]
 pub struct PrepareCheckout {
     /// A freshly initialized repository which is owned by us, or `None` if it was handed to the user
     pub(self) repo: Option<crate::Repository>,
@@ -165,4 +166,5 @@ mod access_feat {
 pub mod fetch;
 
 ///
+#[cfg(feature = "worktree-mutation")]
 pub mod checkout;

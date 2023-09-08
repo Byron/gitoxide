@@ -17,7 +17,7 @@ path = "integrate.rs"
 gix-features-parallel = ["gix-features/parallel"]
 
 [dev-dependencies]
-gix-worktree = { path = ".." }
+gix-worktree = { path = "..", features = ["attributes"] }
 gix-index = { path = "../../gix-index" }
 gix-fs = { path = "../../gix-fs" }
 gix-hash = { path = "../../gix-hash" }

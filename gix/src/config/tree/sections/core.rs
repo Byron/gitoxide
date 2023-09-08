@@ -69,12 +69,16 @@ impl Core {
     /// The `core.commitGraph` key.
     pub const COMMIT_GRAPH: keys::Boolean = keys::Boolean::new_boolean("commitGraph", &config::Tree::CORE);
     /// The `core.safecrlf` key.
+    #[cfg(feature = "attributes")]
     pub const SAFE_CRLF: SafeCrlf = SafeCrlf::new_with_validate("safecrlf", &config::Tree::CORE, validate::SafeCrlf);
     /// The `core.autocrlf` key.
+    #[cfg(feature = "attributes")]
     pub const AUTO_CRLF: AutoCrlf = AutoCrlf::new_with_validate("autocrlf", &config::Tree::CORE, validate::AutoCrlf);
     /// The `core.eol` key.
+    #[cfg(feature = "attributes")]
     pub const EOL: Eol = Eol::new_with_validate("eol", &config::Tree::CORE, validate::Eol);
     /// The `core.checkRoundTripEncoding` key.
+    #[cfg(feature = "attributes")]
     pub const CHECK_ROUND_TRIP_ENCODING: CheckRoundTripEncoding = CheckRoundTripEncoding::new_with_validate(
         "checkRoundTripEncoding",
         &config::Tree::CORE,
@@ -111,9 +115,13 @@ impl Section for Core {
             &Self::SSH_COMMAND,
             &Self::USE_REPLACE_REFS,
             &Self::COMMIT_GRAPH,
+            #[cfg(feature = "attributes")]
             &Self::SAFE_CRLF,
+            #[cfg(feature = "attributes")]
             &Self::AUTO_CRLF,
+            #[cfg(feature = "attributes")]
             &Self::EOL,
+            #[cfg(feature = "attributes")]
             &Self::CHECK_ROUND_TRIP_ENCODING,
         ]
     }
@@ -131,145 +139,154 @@ pub type LogAllRefUpdates = keys::Any<validate::LogAllRefUpdates>;
 /// The `core.disambiguate` key.
 pub type Disambiguate = keys::Any<validate::Disambiguate>;
 
-/// The `core.safecrlf` key.
-pub type SafeCrlf = keys::Any<validate::SafeCrlf>;
+#[cfg(feature = "attributes")]
+mod filter {
+    use super::validate;
+    use crate::config::tree::keys;
 
-/// The `core.autocrlf` key.
-pub type AutoCrlf = keys::Any<validate::AutoCrlf>;
+    /// The `core.safecrlf` key.
+    pub type SafeCrlf = keys::Any<validate::SafeCrlf>;
 
-/// The `core.eol` key.
-pub type Eol = keys::Any<validate::Eol>;
+    /// The `core.autocrlf` key.
+    pub type AutoCrlf = keys::Any<validate::AutoCrlf>;
 
-/// The `core.checkRoundTripEncoding` key.
-pub type CheckRoundTripEncoding = keys::Any<validate::CheckRoundTripEncoding>;
+    /// The `core.eol` key.
+    pub type Eol = keys::Any<validate::Eol>;
 
-mod check_round_trip_encoding {
-    use std::borrow::Cow;
+    /// The `core.checkRoundTripEncoding` key.
+    pub type CheckRoundTripEncoding = keys::Any<validate::CheckRoundTripEncoding>;
 
-    use crate::{
-        bstr::{BStr, ByteSlice},
-        config,
-        config::tree::{core::CheckRoundTripEncoding, Key},
-    };
+    mod check_round_trip_encoding {
+        use std::borrow::Cow;
 
-    impl CheckRoundTripEncoding {
-        /// Convert `value` into a list of encodings, which are either space or coma separated. Fail if an encoding is unknown.
-        /// If `None`, the default is returned.
-        pub fn try_into_encodings(
-            &'static self,
-            value: Option<Cow<'_, BStr>>,
-        ) -> Result<Vec<&'static gix_filter::encoding::Encoding>, config::encoding::Error> {
-            Ok(match value {
-                None => vec![gix_filter::encoding::SHIFT_JIS],
-                Some(value) => {
-                    let mut out = Vec::new();
-                    for encoding in value
-                        .as_ref()
-                        .split(|b| *b == b',' || *b == b' ')
-                        .filter(|e| !e.trim().is_empty())
-                    {
-                        out.push(
-                            gix_filter::encoding::Encoding::for_label(encoding.trim()).ok_or_else(|| {
-                                config::encoding::Error {
-                                    key: self.logical_name().into(),
-                                    value: value.as_ref().to_owned(),
-                                    encoding: encoding.into(),
-                                }
-                            })?,
-                        );
+        use crate::{
+            bstr::{BStr, ByteSlice},
+            config,
+            config::tree::{core::CheckRoundTripEncoding, Key},
+        };
+
+        impl CheckRoundTripEncoding {
+            /// Convert `value` into a list of encodings, which are either space or coma separated. Fail if an encoding is unknown.
+            /// If `None`, the default is returned.
+            pub fn try_into_encodings(
+                &'static self,
+                value: Option<Cow<'_, BStr>>,
+            ) -> Result<Vec<&'static gix_filter::encoding::Encoding>, config::encoding::Error> {
+                Ok(match value {
+                    None => vec![gix_filter::encoding::SHIFT_JIS],
+                    Some(value) => {
+                        let mut out = Vec::new();
+                        for encoding in value
+                            .as_ref()
+                            .split(|b| *b == b',' || *b == b' ')
+                            .filter(|e| !e.trim().is_empty())
+                        {
+                            out.push(
+                                gix_filter::encoding::Encoding::for_label(encoding.trim()).ok_or_else(|| {
+                                    config::encoding::Error {
+                                        key: self.logical_name().into(),
+                                        value: value.as_ref().to_owned(),
+                                        encoding: encoding.into(),
+                                    }
+                                })?,
+                            );
+                        }
+                        out
                     }
-                    out
+                })
+            }
+        }
+    }
+
+    mod eol {
+        use std::borrow::Cow;
+
+        use crate::{
+            bstr::{BStr, ByteSlice},
+            config,
+            config::tree::core::Eol,
+        };
+
+        impl Eol {
+            /// Convert `value` into the default end-of-line mode.
+            ///
+            /// ### Deviation
+            ///
+            /// git will allow any value and silently leaves it unset, we will fail if the value is not known.
+            pub fn try_into_eol(
+                &'static self,
+                value: Cow<'_, BStr>,
+            ) -> Result<gix_filter::eol::Mode, config::key::GenericErrorWithValue> {
+                Ok(match value.to_str_lossy().as_ref() {
+                    "lf" => gix_filter::eol::Mode::Lf,
+                    "crlf" => gix_filter::eol::Mode::CrLf,
+                    "native" => gix_filter::eol::Mode::default(),
+                    _ => return Err(config::key::GenericErrorWithValue::from_value(self, value.into_owned())),
+                })
+            }
+        }
+    }
+
+    mod safecrlf {
+        use std::borrow::Cow;
+
+        use gix_filter::pipeline::CrlfRoundTripCheck;
+
+        use crate::{bstr::BStr, config, config::tree::core::SafeCrlf};
+
+        impl SafeCrlf {
+            /// Convert `value` into the safe-crlf enumeration, if possible.
+            pub fn try_into_safecrlf(
+                &'static self,
+                value: Cow<'_, BStr>,
+            ) -> Result<CrlfRoundTripCheck, config::key::GenericErrorWithValue> {
+                if value.as_ref() == "warn" {
+                    return Ok(CrlfRoundTripCheck::Warn);
                 }
-            })
-        }
-    }
-}
-
-mod eol {
-    use std::borrow::Cow;
-
-    use crate::{
-        bstr::{BStr, ByteSlice},
-        config,
-        config::tree::core::Eol,
-    };
-
-    impl Eol {
-        /// Convert `value` into the default end-of-line mode.
-        ///
-        /// ### Deviation
-        ///
-        /// git will allow any value and silently leaves it unset, we will fail if the value is not known.
-        pub fn try_into_eol(
-            &'static self,
-            value: Cow<'_, BStr>,
-        ) -> Result<gix_filter::eol::Mode, config::key::GenericErrorWithValue> {
-            Ok(match value.to_str_lossy().as_ref() {
-                "lf" => gix_filter::eol::Mode::Lf,
-                "crlf" => gix_filter::eol::Mode::CrLf,
-                "native" => gix_filter::eol::Mode::default(),
-                _ => return Err(config::key::GenericErrorWithValue::from_value(self, value.into_owned())),
-            })
-        }
-    }
-}
-
-mod safecrlf {
-    use std::borrow::Cow;
-
-    use gix_filter::pipeline::CrlfRoundTripCheck;
-
-    use crate::{bstr::BStr, config, config::tree::core::SafeCrlf};
-
-    impl SafeCrlf {
-        /// Convert `value` into the safe-crlf enumeration, if possible.
-        pub fn try_into_safecrlf(
-            &'static self,
-            value: Cow<'_, BStr>,
-        ) -> Result<CrlfRoundTripCheck, config::key::GenericErrorWithValue> {
-            if value.as_ref() == "warn" {
-                return Ok(CrlfRoundTripCheck::Warn);
+                let value = gix_config::Boolean::try_from(value.as_ref()).map_err(|err| {
+                    config::key::GenericErrorWithValue::from_value(self, value.into_owned()).with_source(err)
+                })?;
+                Ok(if value.into() {
+                    CrlfRoundTripCheck::Fail
+                } else {
+                    CrlfRoundTripCheck::Skip
+                })
             }
-            let value = gix_config::Boolean::try_from(value.as_ref()).map_err(|err| {
-                config::key::GenericErrorWithValue::from_value(self, value.into_owned()).with_source(err)
-            })?;
-            Ok(if value.into() {
-                CrlfRoundTripCheck::Fail
-            } else {
-                CrlfRoundTripCheck::Skip
-            })
         }
     }
-}
 
-mod autocrlf {
-    use std::borrow::Cow;
+    mod autocrlf {
+        use std::borrow::Cow;
 
-    use gix_filter::eol;
+        use gix_filter::eol;
 
-    use crate::{bstr::BStr, config, config::tree::core::AutoCrlf};
+        use crate::{bstr::BStr, config, config::tree::core::AutoCrlf};
 
-    impl AutoCrlf {
-        /// Convert `value` into the safe-crlf enumeration, if possible.
-        pub fn try_into_autocrlf(
-            &'static self,
-            value: Cow<'_, BStr>,
-        ) -> Result<eol::AutoCrlf, config::key::GenericErrorWithValue> {
-            if value.as_ref() == "input" {
-                return Ok(eol::AutoCrlf::Input);
+        impl AutoCrlf {
+            /// Convert `value` into the safe-crlf enumeration, if possible.
+            pub fn try_into_autocrlf(
+                &'static self,
+                value: Cow<'_, BStr>,
+            ) -> Result<eol::AutoCrlf, config::key::GenericErrorWithValue> {
+                if value.as_ref() == "input" {
+                    return Ok(eol::AutoCrlf::Input);
+                }
+                let value = gix_config::Boolean::try_from(value.as_ref()).map_err(|err| {
+                    config::key::GenericErrorWithValue::from_value(self, value.into_owned()).with_source(err)
+                })?;
+                Ok(if value.into() {
+                    eol::AutoCrlf::Enabled
+                } else {
+                    eol::AutoCrlf::Disabled
+                })
             }
-            let value = gix_config::Boolean::try_from(value.as_ref()).map_err(|err| {
-                config::key::GenericErrorWithValue::from_value(self, value.into_owned()).with_source(err)
-            })?;
-            Ok(if value.into() {
-                eol::AutoCrlf::Enabled
-            } else {
-                eol::AutoCrlf::Disabled
-            })
         }
     }
 }
+#[cfg(feature = "attributes")]
+pub use filter::*;
 
+#[cfg(feature = "revision")]
 mod disambiguate {
     use std::borrow::Cow;
 
@@ -425,7 +442,9 @@ mod validate {
 
     pub struct Disambiguate;
     impl keys::Validate for Disambiguate {
+        #[cfg_attr(not(feature = "revision"), allow(unused_variables))]
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            #[cfg(feature = "revision")]
             super::Core::DISAMBIGUATE.try_into_object_kind_hint(value.into())?;
             Ok(())
         }
@@ -459,7 +478,9 @@ mod validate {
 
     pub struct SafeCrlf;
     impl keys::Validate for SafeCrlf {
+        #[cfg_attr(not(feature = "attributes"), allow(unused_variables))]
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            #[cfg(feature = "attributes")]
             super::Core::SAFE_CRLF.try_into_safecrlf(value.into())?;
             Ok(())
         }
@@ -467,7 +488,9 @@ mod validate {
 
     pub struct AutoCrlf;
     impl keys::Validate for AutoCrlf {
+        #[cfg_attr(not(feature = "attributes"), allow(unused_variables))]
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            #[cfg(feature = "attributes")]
             super::Core::AUTO_CRLF.try_into_autocrlf(value.into())?;
             Ok(())
         }
@@ -475,7 +498,9 @@ mod validate {
 
     pub struct Eol;
     impl keys::Validate for Eol {
+        #[cfg_attr(not(feature = "attributes"), allow(unused_variables))]
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            #[cfg(feature = "attributes")]
             super::Core::EOL.try_into_eol(value.into())?;
             Ok(())
         }
@@ -483,7 +508,9 @@ mod validate {
 
     pub struct CheckRoundTripEncoding;
     impl keys::Validate for CheckRoundTripEncoding {
+        #[cfg_attr(not(feature = "attributes"), allow(unused_variables))]
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            #[cfg(feature = "attributes")]
             super::Core::CHECK_ROUND_TRIP_ENCODING.try_into_encodings(Some(value.into()))?;
             Ok(())
         }

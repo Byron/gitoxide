@@ -1,7 +1,6 @@
 #![allow(clippy::result_large_err)]
 use std::{borrow::Cow, path::PathBuf, time::Duration};
 
-use gix_attributes::Source;
 use gix_lock::acquire::Fail;
 
 use crate::{
@@ -9,19 +8,19 @@ use crate::{
     config,
     config::{
         boolean,
-        cache::util::{ApplyLeniency, ApplyLeniencyDefault, ApplyLeniencyDefaultValue},
-        checkout_options,
-        tree::{gitoxide, Checkout, Core, Key},
+        cache::util::{ApplyLeniency, ApplyLeniencyDefaultValue},
+        tree::{Core, Key},
         Cache,
     },
-    filter, remote,
+    remote,
     repository::identity,
-    Repository,
 };
 
 /// Access
 impl Cache {
+    #[cfg(feature = "blob-diff")]
     pub(crate) fn diff_algorithm(&self) -> Result<gix_diff::blob::Algorithm, config::diff::algorithm::Error> {
+        use crate::config::cache::util::ApplyLeniencyDefault;
         use crate::config::diff::algorithm::Error;
         self.diff_algorithm
             .get_or_try_init(|| {
@@ -82,6 +81,7 @@ impl Cache {
             })
     }
 
+    #[cfg(feature = "blob-diff")]
     pub(crate) fn diff_renames(
         &self,
     ) -> Result<Option<crate::object::tree::diff::Rewrites>, crate::object::tree::diff::rewrites::Error> {
@@ -113,6 +113,7 @@ impl Cache {
     }
 
     /// The path to the user-level excludes file to ignore certain files in the worktree.
+    #[cfg(feature = "excludes")]
     pub(crate) fn excludes_file(&self) -> Option<Result<PathBuf, gix_config::path::interpolate::Error>> {
         self.trusted_file_path("core", None, Core::EXCLUDES_FILE.name)?
             .map(std::borrow::Cow::into_owned)
@@ -156,21 +157,23 @@ impl Cache {
     /// Collect everything needed to checkout files into a worktree.
     /// Note that some of the options being returned will be defaulted so safe settings, the caller might have to override them
     /// depending on the use-case.
+    #[cfg(feature = "worktree-mutation")]
     pub(crate) fn checkout_options(
         &self,
-        repo: &Repository,
+        repo: &crate::Repository,
         attributes_source: gix_worktree::stack::state::attributes::Source,
-    ) -> Result<gix_worktree_state::checkout::Options, checkout_options::Error> {
+    ) -> Result<gix_worktree_state::checkout::Options, crate::config::checkout_options::Error> {
+        use crate::config::tree::gitoxide;
         let git_dir = repo.git_dir();
         let thread_limit = self.apply_leniency(
             self.resolved
                 .integer_filter_by_key("checkout.workers", &mut self.filter_config_section.clone())
-                .map(|value| Checkout::WORKERS.try_from_workers(value)),
+                .map(|value| crate::config::tree::Checkout::WORKERS.try_from_workers(value)),
         )?;
         let capabilities = self.fs_capabilities()?;
         let filters = {
             let collection = Default::default();
-            let mut filters = gix_filter::Pipeline::new(&collection, filter::Pipeline::options(repo)?);
+            let mut filters = gix_filter::Pipeline::new(&collection, crate::filter::Pipeline::options(repo)?);
             if let Ok(mut head) = repo.head() {
                 let ctx = filters.driver_context_mut();
                 ctx.ref_name = head.referent_name().map(|name| name.as_bstr().to_owned());
@@ -214,6 +217,7 @@ impl Cache {
         })
     }
 
+    #[cfg(feature = "excludes")]
     pub(crate) fn assemble_exclude_globals(
         &self,
         git_dir: &std::path::Path,
@@ -233,12 +237,14 @@ impl Cache {
         ))
     }
     // TODO: at least one test, maybe related to core.attributesFile configuration.
+    #[cfg(feature = "attributes")]
     pub(crate) fn assemble_attribute_globals(
         &self,
         git_dir: &std::path::Path,
         source: gix_worktree::stack::state::attributes::Source,
         attributes: crate::open::permissions::Attributes,
     ) -> Result<(gix_worktree::stack::state::Attributes, Vec<u8>), config::attribute_stack::Error> {
+        use gix_attributes::Source;
         let configured_or_user_attributes = match self
             .trusted_file_path("core", None, Core::ATTRIBUTES_FILE.name)
             .transpose()?
@@ -273,9 +279,11 @@ impl Cache {
         Ok((state, buf))
     }
 
+    #[cfg(feature = "attributes")]
     pub(crate) fn pathspec_defaults(
         &self,
     ) -> Result<gix_pathspec::Defaults, gix_pathspec::defaults::from_environment::Error> {
+        use crate::config::tree::gitoxide;
         let res = gix_pathspec::Defaults::from_environment(&mut |name| {
             let key = [
                 &gitoxide::Pathspec::ICASE,
@@ -300,6 +308,7 @@ impl Cache {
         }
     }
 
+    #[cfg(any(feature = "attributes", feature = "excludes"))]
     pub(crate) fn xdg_config_path(
         &self,
         resource_file_name: &str,

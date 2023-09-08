@@ -102,7 +102,7 @@ fn load_config(
                 path: config_path,
             };
             if lenient {
-                log::warn!("ignoring: {err:#?}");
+                gix_trace::warn!("ignoring: {err:#?}");
                 return Ok(gix_config::File::new(metadata));
             } else {
                 return Err(err);
@@ -117,7 +117,7 @@ fn load_config(
             path: config_path,
         };
         if lenient {
-            log::warn!("ignoring: {err:#?}");
+            gix_trace::warn!("ignoring: {err:#?}");
             buf.clear();
         } else {
             return Err(err);

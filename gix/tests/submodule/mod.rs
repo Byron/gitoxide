@@ -46,6 +46,18 @@ mod open {
                     },
                 )],
             ),
+            (
+                "not-a-submodule",
+                &[(
+                    "m1",
+                    gix::submodule::State {
+                        repository_exists: true,
+                        is_old_form: false,
+                        worktree_checkout: false,
+                        superproject_configuration: true,
+                    },
+                )],
+            ),
         ] {
             let repo = repo(name)?;
             for (sm, (name, expected)) in repo.submodules()?.expect("modules present").zip(expected) {
@@ -78,6 +90,16 @@ mod open {
                 "an expectation per submodule"
             );
         }
+        Ok(())
+    }
+
+    #[test]
+    fn not_a_submodule() -> crate::Result {
+        let repo = repo("not-a-submodule")?;
+        let sm = repo.submodules()?.into_iter().flatten().next().expect("one submodule");
+        assert!(sm.open()?.is_some(), "repo available as it was cloned");
+        assert!(sm.index_id()?.is_none(), "no actual submodule");
+        assert!(sm.head_id()?.is_none(), "no actual submodule");
         Ok(())
     }
 

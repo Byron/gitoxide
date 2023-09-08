@@ -14,11 +14,12 @@ fn common_values_and_names_by_path() -> crate::Result {
     assert_eq!(
         modules
             .iter()
-            .map(|m| m.config_path().expect("present").to_owned())
+            .map(|m| { m.config_path().expect("present").to_owned() })
             .collect::<Vec<_>>(),
         [
             "empty-clone/.gitmodules",
             "multiple/.gitmodules",
+            "not-a-submodule/.gitmodules",
             "recursive-clone/.gitmodules",
             "recursive-clone/submodule/.gitmodules",
             "relative-clone/.gitmodules",

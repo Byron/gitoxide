@@ -26,6 +26,7 @@ impl crate::Repository {
     }
 
     /// The path to the `.gitmodules` file in the worktree, if a worktree is available.
+    #[cfg(feature = "attributes")]
     pub fn modules_path(&self) -> Option<PathBuf> {
         self.work_dir().map(|wtd| wtd.join(crate::submodule::MODULES_FILE))
     }

@@ -3,7 +3,7 @@ use std::ops::Deref;
 
 use gix_hash::{oid, ObjectId};
 
-use crate::{object::find, revision, Id, Object};
+use crate::{object::find, Id, Object};
 
 /// An [object id][ObjectId] infused with a [`Repository`][crate::Repository].
 impl<'repo> Id<'repo> {
@@ -103,9 +103,8 @@ impl<'repo> Id<'repo> {
 
 impl<'repo> Id<'repo> {
     /// Obtain a platform for traversing ancestors of this commit.
-    ///
-    pub fn ancestors(&self) -> revision::walk::Platform<'repo> {
-        revision::walk::Platform::new(Some(self.inner), self.repo)
+    pub fn ancestors(&self) -> crate::revision::walk::Platform<'repo> {
+        crate::revision::walk::Platform::new(Some(self.inner), self.repo)
     }
 }
 

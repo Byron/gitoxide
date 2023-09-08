@@ -27,6 +27,7 @@ pub(crate) type FindFn<'a> = dyn for<'b> FnMut(
 pub(crate) struct StackDelegate<'a, 'find> {
     pub state: &'a mut State,
     pub buf: &'a mut Vec<u8>,
+    #[cfg_attr(not(feature = "attributes"), allow(dead_code))]
     pub is_dir: bool,
     pub id_mappings: &'a Vec<PathIdMapping>,
     pub find: &'find mut FindFn<'find>,
@@ -54,6 +55,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
             rela_dir_cow.as_ref()
         };
         match &mut self.state {
+            #[cfg(feature = "attributes")]
             State::CreateDirectoryAndAttributesStack { attributes, .. } => {
                 attributes.push_directory(
                     stack.root(),
@@ -65,6 +67,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                     &mut self.statistics.attributes,
                 )?;
             }
+            #[cfg(feature = "attributes")]
             State::AttributesAndIgnoreStack { ignore, attributes } => {
                 attributes.push_directory(
                     stack.root(),
@@ -86,6 +89,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                     &mut self.statistics.ignore,
                 )?
             }
+            #[cfg(feature = "attributes")]
             State::AttributesStack(attributes) => attributes.push_directory(
                 stack.root(),
                 stack.current(),
@@ -109,9 +113,11 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
         Ok(())
     }
 
+    #[cfg_attr(not(feature = "attributes"), allow(unused_variables))]
     fn push(&mut self, is_last_component: bool, stack: &gix_fs::Stack) -> std::io::Result<()> {
         self.statistics.delegate.push_element += 1;
         match &mut self.state {
+            #[cfg(feature = "attributes")]
             State::CreateDirectoryAndAttributesStack {
                 unlink_on_collision,
                 attributes: _,
@@ -122,7 +128,9 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                 &mut self.statistics.delegate.num_mkdir_calls,
                 *unlink_on_collision,
             )?,
-            State::AttributesAndIgnoreStack { .. } | State::IgnoreStack(_) | State::AttributesStack(_) => {}
+            #[cfg(feature = "attributes")]
+            State::AttributesAndIgnoreStack { .. } | State::AttributesStack(_) => {}
+            State::IgnoreStack(_) => {}
         }
         Ok(())
     }
@@ -130,23 +138,27 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
     fn pop_directory(&mut self) {
         self.statistics.delegate.pop_directory += 1;
         match &mut self.state {
+            #[cfg(feature = "attributes")]
             State::CreateDirectoryAndAttributesStack { attributes, .. } => {
                 attributes.pop_directory();
             }
+            #[cfg(feature = "attributes")]
             State::AttributesAndIgnoreStack { attributes, ignore } => {
                 attributes.pop_directory();
                 ignore.pop_directory();
             }
-            State::IgnoreStack(ignore) => {
-                ignore.pop_directory();
-            }
+            #[cfg(feature = "attributes")]
             State::AttributesStack(attributes) => {
                 attributes.pop_directory();
+            }
+            State::IgnoreStack(ignore) => {
+                ignore.pop_directory();
             }
         }
     }
 }
 
+#[cfg(feature = "attributes")]
 fn create_leading_directory(
     is_last_component: bool,
     stack: &gix_fs::Stack,

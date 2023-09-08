@@ -151,6 +151,7 @@ impl Cache {
             true,
             lenient_config,
         )?;
+        #[cfg(feature = "revision")]
         let object_kind_hint = util::disambiguate_hint(&config, lenient_config)?;
         let (static_pack_cache_limit_bytes, pack_cache_bytes, object_cache_bytes) =
             util::parse_object_caches(&config, lenient_config, filter_config_section)?;
@@ -159,6 +160,7 @@ impl Cache {
             resolved: config.into(),
             use_multi_pack_index,
             object_hash,
+            #[cfg(feature = "revision")]
             object_kind_hint,
             static_pack_cache_limit_bytes,
             pack_cache_bytes,
@@ -174,9 +176,11 @@ impl Cache {
             user_agent: Default::default(),
             personas: Default::default(),
             url_rewrite: Default::default(),
+            #[cfg(feature = "blob-diff")]
             diff_renames: Default::default(),
             #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
             url_scheme: Default::default(),
+            #[cfg(feature = "blob-diff")]
             diff_algorithm: Default::default(),
         })
     }
@@ -211,19 +215,26 @@ impl Cache {
             false,
             self.lenient_config,
         )?;
-        let object_kind_hint = util::disambiguate_hint(config, self.lenient_config)?;
+
+        #[cfg(feature = "revision")]
+        {
+            let object_kind_hint = util::disambiguate_hint(config, self.lenient_config)?;
+            self.object_kind_hint = object_kind_hint;
+        }
         let reflog = util::query_refupdates(config, self.lenient_config)?;
 
         self.hex_len = hex_len;
         self.ignore_case = ignore_case;
-        self.object_kind_hint = object_kind_hint;
         self.reflog = reflog;
 
         self.user_agent = Default::default();
         self.personas = Default::default();
         self.url_rewrite = Default::default();
-        self.diff_renames = Default::default();
-        self.diff_algorithm = Default::default();
+        #[cfg(feature = "blob-diff")]
+        {
+            self.diff_renames = Default::default();
+            self.diff_algorithm = Default::default();
+        }
         (
             self.static_pack_cache_limit_bytes,
             self.pack_cache_bytes,

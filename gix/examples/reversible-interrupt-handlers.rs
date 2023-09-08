@@ -1,3 +1,9 @@
+#[cfg(not(feature = "interrupt"))]
+fn main() -> anyhow::Result<()> {
+    anyhow::bail!("Needs 'interrupt' feature toggle to be enabled");
+}
+
+#[cfg(feature = "interrupt")]
 fn main() -> anyhow::Result<()> {
     {
         let _deregister_on_drop = gix::interrupt::init_handler(1, || {})?.auto_deregister();

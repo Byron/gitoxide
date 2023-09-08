@@ -1,8 +1,8 @@
-use std::{cell::RefCell, path::PathBuf, rc::Rc};
+use std::{cell::RefCell, path::PathBuf};
 
 use gix_hash::ObjectId;
 
-use crate::{bstr::BString, head, remote};
+use crate::{head, remote};
 
 /// A worktree checkout containing the files of the repository in consumable form.
 #[derive(Debug, Clone)]
@@ -138,7 +138,9 @@ pub struct Repository {
     ///
     /// Particularly useful when following linked worktrees and instantiating new equally configured worktree repositories.
     pub(crate) options: crate::open::Options,
+    #[cfg(feature = "index")]
     pub(crate) index: crate::worktree::IndexStorage,
+    #[cfg(feature = "attributes")]
     pub(crate) modules: crate::submodule::ModulesFileStorage,
     pub(crate) shallow_commits: crate::shallow::CommitsStorage,
 }
@@ -166,7 +168,9 @@ pub struct ThreadSafeRepository {
     /// options obtained when instantiating this repository for use when following linked worktrees.
     pub(crate) linked_worktree_options: crate::open::Options,
     /// The index of this instances worktree.
+    #[cfg(feature = "index")]
     pub(crate) index: crate::worktree::IndexStorage,
+    #[cfg(feature = "attributes")]
     pub(crate) modules: crate::submodule::ModulesFileStorage,
     pub(crate) shallow_commits: crate::shallow::CommitsStorage,
 }
@@ -205,6 +209,7 @@ pub struct Remote<'repo> {
 /// Should this potential duplication of effort to maintain attribute state be unacceptable, the user may fall back
 /// to the underlying plumbing.
 #[derive(Clone)]
+#[cfg(feature = "attributes")]
 pub struct Pathspec<'repo> {
     pub(crate) repo: &'repo Repository,
     /// The cache to power attribute access. It's only initialized if we have a pattern with attributes.
@@ -215,12 +220,14 @@ pub struct Pathspec<'repo> {
 
 /// A stand-in for the submodule of a particular name.
 #[derive(Clone)]
+#[cfg(feature = "attributes")]
 pub struct Submodule<'repo> {
-    pub(crate) state: Rc<crate::submodule::SharedState<'repo>>,
-    pub(crate) name: BString,
+    pub(crate) state: std::rc::Rc<crate::submodule::SharedState<'repo>>,
+    pub(crate) name: crate::bstr::BString,
 }
 
 /// A utility to access `.gitattributes` and `.gitignore` information efficiently.
+#[cfg(any(feature = "attributes", feature = "excludes"))]
 pub struct AttributeStack<'repo> {
     pub(crate) repo: &'repo Repository,
     pub(crate) inner: gix_worktree::Stack,

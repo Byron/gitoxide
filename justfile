@@ -42,11 +42,20 @@ check:
     if cargo check -p gix-packetline --all-features 2>/dev/null; then false; else true; fi
     if cargo check -p gix-transport --all-features 2>/dev/null; then false; else true; fi
     if cargo check -p gix-protocol --all-features 2>/dev/null; then false; else true; fi
+    if cargo tree -p gix --no-default-features -i imara-diff 2>/dev/null; then false; else true; fi
+    if cargo tree -p gix --no-default-features -i gix-protocol 2>/dev/null; then false; else true; fi
+    if cargo tree -p gix --no-default-features -i gix-submodule 2>/dev/null; then false; else true; fi
+    if cargo tree -p gix --no-default-features -i gix-pathspec 2>/dev/null; then false; else true; fi
+    if cargo tree -p gix --no-default-features -i gix-filter 2>/dev/null; then false; else true; fi
+    if cargo tree -p gix --no-default-features -i gix-credentials 2>/dev/null; then false; else true; fi
     cargo check --no-default-features --features lean
     cargo check --no-default-features --features lean-async
     cargo check --no-default-features --features max
     cargo check -p gitoxide-core --features blocking-client
     cargo check -p gitoxide-core --features async-client
+    cargo check -p gix-pack --no-default-features
+    cargo check -p gix-pack --no-default-features --features generate
+    cargo check -p gix-pack --no-default-features --features streaming-input
     cd gix-hash; \
         set -ex; \
         cargo check --all-features; \
@@ -72,6 +81,7 @@ check:
     cargo check -p gix-credentials --features serde
     cargo check -p gix-sec --features serde
     cargo check -p gix-revision --features serde
+    cargo check -p gix-revision --no-default-features --features describe
     cargo check -p gix-mailmap --features serde
     cargo check -p gix-url --all-features
     cargo check -p gix-features --all-features
@@ -105,9 +115,19 @@ check:
     cargo check -p gix --no-default-features --features blocking-network-client
     cargo check -p gix --no-default-features --features blocking-http-transport-curl
     cargo check -p gix --no-default-features --features blocking-http-transport-reqwest
-    cargo check -p gix --no-default-features --features max-performance
-    cargo check -p gix --no-default-features --features max-performance-safe
-    cargo check -p gix --no-default-features --features progress-tree
+    cargo check -p gix --no-default-features --features max-performance --tests
+    cargo check -p gix --no-default-features --features max-performance-safe --tests
+    cargo check -p gix --no-default-features --features progress-tree --tests
+    cargo check -p gix --no-default-features --features blob-diff --tests
+    cargo check -p gix --no-default-features --features revision --tests
+    cargo check -p gix --no-default-features --features revparse-regex --tests
+    cargo check -p gix --no-default-features --features mailmap --tests
+    cargo check -p gix --no-default-features --features excludes --tests
+    cargo check -p gix --no-default-features --features attributes --tests
+    cargo check -p gix --no-default-features --features worktree-mutation --tests
+    cargo check -p gix --no-default-features --features credentials --tests
+    cargo check -p gix --no-default-features --features index --tests
+    cargo check -p gix --no-default-features --features interrupt --tests
     cargo check -p gix --no-default-features
     cargo check -p gix-odb --features serde
     cargo check --no-default-features --features max-control
@@ -150,7 +170,6 @@ unit-tests:
     cargo test -p gix --no-default-features
     cargo test -p gix --features async-network-client
     cargo test -p gix --features blocking-network-client
-    cargo test -p gix --features regex
     cargo test -p gitoxide-core --lib
 
 # These tests aren't run by default as they are flaky (even locally)

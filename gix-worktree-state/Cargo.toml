@@ -14,7 +14,7 @@ autotests = false
 doctest = false
 
 [dependencies]
-gix-worktree = { version = "^0.25.0", path = "../gix-worktree" }
+gix-worktree = { version = "^0.25.0", path = "../gix-worktree", default-features = false, features = ["attributes"] }
 gix-index = { version = "^0.23.1", path = "../gix-index" }
 gix-fs = { version = "^0.5.0", path = "../gix-fs" }
 gix-hash = { version = "^0.12.0", path = "../gix-hash" }

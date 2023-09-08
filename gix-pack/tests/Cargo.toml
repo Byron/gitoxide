@@ -17,7 +17,7 @@ name = "pack"
 path = "integrate.rs"
 
 [dev-dependencies]
-gix-pack = { path = ".." }
+gix-pack = { path = "..", features = ["generate", "streaming-input"] }
 gix-features = { path = "../../gix-features" }
 gix-testtools = { path = "../../tests/tools"}
 gix-odb = { path = "../../gix-odb" }

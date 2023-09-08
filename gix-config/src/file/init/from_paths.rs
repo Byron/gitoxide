@@ -92,7 +92,7 @@ impl File<'static> {
                     Err(err) => {
                         let err = Error::Io { source: err, path };
                         if options.ignore_io_errors {
-                            log::warn!("ignoring: {err:#?}");
+                            gix_features::trace::warn!("ignoring: {err:#?}");
                             continue;
                         } else {
                             return Err(err);
@@ -104,7 +104,7 @@ impl File<'static> {
                 Ok(_) => {}
                 Err(err) => {
                     if options.ignore_io_errors {
-                        log::warn!(
+                        gix_features::trace::warn!(
                             "ignoring: {:#?}",
                             Error::Io {
                                 source: err,

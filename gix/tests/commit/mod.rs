@@ -1,3 +1,4 @@
+#[cfg(feature = "revision")]
 mod describe {
     use gix::commit::describe::SelectRef::{AllRefs, AllTags, AnnotatedTags};
 
