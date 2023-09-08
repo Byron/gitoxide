@@ -27,4 +27,4 @@ parking_lot = "0.12.1"
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools"}
 gix-odb = { path = "../gix-odb"}
-gix-worktree = { path = "../gix-worktree"}
+gix-worktree = { path = "../gix-worktree", default-features = false, features = ["attributes"]}

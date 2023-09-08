@@ -43,7 +43,7 @@ document-features = { version = "0.2.0", optional = true }
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools"}
 gix-odb = { path = "../gix-odb"}
-gix-worktree = { path = "../gix-worktree"}
+gix-worktree = { path = "../gix-worktree", default-features = false, features = ["attributes"]}
 gix-hash = { path = "../gix-hash"}
 gix-attributes = { path = "../gix-attributes"}
 gix-object = { path = "../gix-object"}
