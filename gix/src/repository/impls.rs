@@ -7,6 +7,7 @@ impl Clone for crate::Repository {
             self.common_dir.clone(),
             self.config.clone(),
             self.options.clone(),
+            #[cfg(feature = "index")]
             self.index.clone(),
             self.shallow_commits.clone(),
             #[cfg(feature = "attributes")]
@@ -42,6 +43,7 @@ impl From<&crate::ThreadSafeRepository> for crate::Repository {
             repo.common_dir.clone(),
             repo.config.clone(),
             repo.linked_worktree_options.clone(),
+            #[cfg(feature = "index")]
             repo.index.clone(),
             repo.shallow_commits.clone(),
             #[cfg(feature = "attributes")]
@@ -59,6 +61,7 @@ impl From<crate::ThreadSafeRepository> for crate::Repository {
             repo.common_dir,
             repo.config,
             repo.linked_worktree_options,
+            #[cfg(feature = "index")]
             repo.index,
             repo.shallow_commits,
             #[cfg(feature = "attributes")]
@@ -76,6 +79,7 @@ impl From<crate::Repository> for crate::ThreadSafeRepository {
             common_dir: r.common_dir,
             config: r.config,
             linked_worktree_options: r.options,
+            #[cfg(feature = "index")]
             index: r.index,
             #[cfg(feature = "attributes")]
             modules: r.modules,

@@ -48,7 +48,7 @@ default = ["max-performance-safe", "comfort", "basic", "extras"]
 #! Bundles are for convenience only and bear no further meaning beyond the cargo manifest file.
 
 ## More fundamental components that most will be able to make good use of.
-basic = ["blob-diff", "revision"]
+basic = ["blob-diff", "revision", "index"]
 
 ## Various additional features and capabilities that are not necessarily part of what most users would need.
 extras = ["worktree-stream", "worktree-archive", "revparse-regex", "mailmap", "excludes", "attributes", "worktree-mutation", "credentials"]
@@ -61,6 +61,9 @@ comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human
 #! A component is a distinct feature which may be comprised of one or more methods around a particular topic.
 #! Providers of libraries should only activate the components they need.
 
+## Access to `.git/index` files.
+index = ["dep:gix-index"]
+
 ## Access to credential helpers, which provide credentials for URLs.
 # Note that `gix-negotiate` just piggibacks here, as 'credentials' is equivalent to 'fetch & push' right now.
 credentials = ["dep:gix-credentials", "dep:gix-prompt", "dep:gix-negotiate"]
@@ -69,7 +72,7 @@ credentials = ["dep:gix-credentials", "dep:gix-prompt", "dep:gix-negotiate"]
 worktree-mutation = ["attributes", "dep:gix-worktree-state"]
 
 ## Retrieve a worktree stack for querying exclude information
-excludes = ["dep:gix-ignore", "dep:gix-worktree"]
+excludes = ["dep:gix-ignore", "dep:gix-worktree", "index"]
 
 ## Query attributes and excludes. Enables access to pathspecs, worktree checkouts, filter-pipelines and submodules.
 attributes = ["excludes", "dep:gix-filter", "dep:gix-pathspec", "dep:gix-attributes", "dep:gix-submodule", "gix-worktree?/attributes"]
@@ -78,7 +81,7 @@ attributes = ["excludes", "dep:gix-filter", "dep:gix-pathspec", "dep:gix-attribu
 mailmap = ["dep:gix-mailmap"]
 
 ## Make revspec parsing possible, as well describing revision.
-revision = ["gix-revision/describe"]
+revision = ["gix-revision/describe", "index"]
 
 ## If enabled, revspecs now support the regex syntax like `@^{/^.*x}`. Otherwise, only substring search is supported.
 ## This feature does increase compile time for niche-benefit, but is required for fully git-compatible revspec parsing.
@@ -165,7 +168,7 @@ serde = [   "dep:serde",
     "gix-transport?/serde",
     "gix-ref/serde",
     "gix-odb/serde",
-    "gix-index/serde",
+    "gix-index?/serde",
     "gix-mailmap?/serde",
     "gix-url/serde",
     "gix-attributes?/serde",
@@ -218,7 +221,7 @@ gix-trace = { version = "^0.1.3", path = "../gix-trace" }
 gix-glob = { version = "^0.11.0", path = "../gix-glob" }
 gix-credentials = { version = "^0.18.0", path = "../gix-credentials", optional = true }
 gix-prompt = { version = "^0.6.0", path = "../gix-prompt", optional = true }
-gix-index = { version = "^0.23.1", path = "../gix-index" }
+gix-index = { version = "^0.23.1", path = "../gix-index", optional = true }
 gix-attributes = { version = "^0.17.0", path = "../gix-attributes", optional = true }
 gix-ignore = { version = "^0.6.0", path = "../gix-ignore", optional = true }
 gix-worktree = { version = "^0.25.0", path = "../gix-worktree", optional = true, default-features = false }

@@ -97,6 +97,7 @@ pub use gix_hashtable as hashtable;
 #[cfg(feature = "excludes")]
 pub use gix_ignore as ignore;
 #[doc(inline)]
+#[cfg(feature = "index")]
 pub use gix_index as index;
 pub use gix_lock as lock;
 #[cfg(feature = "credentials")]

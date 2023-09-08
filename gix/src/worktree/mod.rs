@@ -14,8 +14,10 @@ use crate::{
     Repository,
 };
 
+#[cfg(feature = "index")]
 pub(crate) type IndexStorage = gix_features::threading::OwnShared<gix_fs::SharedFileSnapshotMut<gix_index::File>>;
 /// A lazily loaded and auto-updated worktree index.
+#[cfg(feature = "index")]
 pub type Index = gix_fs::SharedFileSnapshot<gix_index::File>;
 
 /// A stand-in to a worktree as result of a worktree iteration.
@@ -84,6 +86,7 @@ pub(crate) fn id(git_dir: &std::path::Path, has_common_dir: bool) -> Option<&BSt
 pub mod proxy;
 
 ///
+#[cfg(feature = "index")]
 pub mod open_index {
     /// The error returned by [`Worktree::open_index()`][crate::Worktree::open_index()].
     #[derive(Debug, thiserror::Error)]

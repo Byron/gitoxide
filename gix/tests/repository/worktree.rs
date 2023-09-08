@@ -34,9 +34,8 @@ fn archive() -> crate::Result {
 mod with_core_worktree_config {
     use std::io::BufRead;
 
-    use crate::repository::worktree::Baseline;
-
     #[test]
+    #[cfg(feature = "index")]
     fn relative() -> crate::Result {
         for (name, is_relative) in [("absolute-worktree", false), ("relative-worktree", true)] {
             let repo = repo(name);
@@ -61,7 +60,7 @@ mod with_core_worktree_config {
                 "current worktree is based on work-tree dir"
             );
 
-            let baseline = Baseline::collect(repo.git_dir())?;
+            let baseline = crate::repository::worktree::Baseline::collect(repo.git_dir())?;
             assert_eq!(baseline.len(), 1, "git lists the main worktree");
             assert_eq!(
                 baseline[0].root,

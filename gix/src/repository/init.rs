@@ -9,7 +9,7 @@ impl crate::Repository {
         common_dir: Option<std::path::PathBuf>,
         config: crate::config::Cache,
         linked_worktree_options: crate::open::Options,
-        index: crate::worktree::IndexStorage,
+        #[cfg(feature = "index")] index: crate::worktree::IndexStorage,
         shallow_commits: crate::shallow::CommitsStorage,
         #[cfg(feature = "attributes")] modules: crate::submodule::ModulesFileStorage,
     ) -> Self {
@@ -22,6 +22,7 @@ impl crate::Repository {
             refs,
             config,
             options: linked_worktree_options,
+            #[cfg(feature = "index")]
             index,
             shallow_commits,
             #[cfg(feature = "attributes")]

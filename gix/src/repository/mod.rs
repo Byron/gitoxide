@@ -45,6 +45,7 @@ pub mod filter;
 mod graph;
 pub(crate) mod identity;
 mod impls;
+#[cfg(feature = "index")]
 mod index;
 pub(crate) mod init;
 mod kind;
@@ -66,6 +67,7 @@ mod thread_safe;
 mod worktree;
 
 /// A type to represent an index which either was loaded from disk as it was persisted there, or created on the fly in memory.
+#[cfg(feature = "index")]
 pub enum IndexPersistedOrInMemory {
     /// The index as loaded from disk, and shared across clones of the owning `Repository`.
     Persisted(crate::worktree::Index),
@@ -90,6 +92,7 @@ pub mod pathspec_defaults_ignore_case {
 }
 
 ///
+#[cfg(feature = "index")]
 pub mod index_or_load_from_head {
     /// The error returned by [`Repository::index_or_load_from_head()`][crate::Repository::index_or_load_from_head()].
     #[derive(thiserror::Error, Debug)]

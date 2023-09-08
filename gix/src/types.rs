@@ -138,6 +138,7 @@ pub struct Repository {
     ///
     /// Particularly useful when following linked worktrees and instantiating new equally configured worktree repositories.
     pub(crate) options: crate::open::Options,
+    #[cfg(feature = "index")]
     pub(crate) index: crate::worktree::IndexStorage,
     #[cfg(feature = "attributes")]
     pub(crate) modules: crate::submodule::ModulesFileStorage,
@@ -167,6 +168,7 @@ pub struct ThreadSafeRepository {
     /// options obtained when instantiating this repository for use when following linked worktrees.
     pub(crate) linked_worktree_options: crate::open::Options,
     /// The index of this instances worktree.
+    #[cfg(feature = "index")]
     pub(crate) index: crate::worktree::IndexStorage,
     #[cfg(feature = "attributes")]
     pub(crate) modules: crate::submodule::ModulesFileStorage,
