@@ -103,14 +103,13 @@ impl Repository {
     ///
     /// When only excludes are desired, this is the most efficient way to obtain them. Otherwise use
     /// [`Repository::attributes()`] for accessing both attributes and excludes.
-    // TODO: test, provide higher-level custom Cache wrapper that is much easier to use and doesn't panic when accessing entries
-    //       by non-relative path.
+    // TODO: test
     pub fn excludes(
         &self,
         index: &gix_index::State,
         overrides: Option<gix_ignore::Search>,
         source: gix_worktree::stack::state::ignore::Source,
-    ) -> Result<gix_worktree::Stack, config::exclude_stack::Error> {
+    ) -> Result<AttributeStack<'_>, config::exclude_stack::Error> {
         let case = if self.config.ignore_case {
             gix_glob::pattern::Case::Fold
         } else {
@@ -122,13 +121,16 @@ impl Repository {
             .assemble_exclude_globals(self.git_dir(), overrides, source, &mut buf)?;
         let state = gix_worktree::stack::State::IgnoreStack(ignore);
         let attribute_list = state.id_mappings_from_index(index, index.path_backing(), case);
-        Ok(gix_worktree::Stack::new(
-            // this is alright as we don't cause mutation of that directory, it's virtual.
-            self.work_dir().unwrap_or(self.git_dir()),
-            state,
-            case,
-            buf,
-            attribute_list,
+        Ok(AttributeStack::new(
+            gix_worktree::Stack::new(
+                // this is alright as we don't cause mutation of that directory, it's virtual.
+                self.work_dir().unwrap_or(self.git_dir()),
+                state,
+                case,
+                buf,
+                attribute_list,
+            ),
+            self,
         ))
     }
 }

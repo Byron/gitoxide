@@ -112,6 +112,8 @@ pub mod open_index {
 
 ///
 pub mod excludes {
+    use crate::AttributeStack;
+
     /// The error returned by [`Worktree::excludes()`][crate::Worktree::excludes()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
@@ -132,7 +134,7 @@ pub mod excludes {
         ///
         /// When only excludes are desired, this is the most efficient way to obtain them. Otherwise use
         /// [`Worktree::attributes()`][crate::Worktree::attributes()] for accessing both attributes and excludes.
-        pub fn excludes(&self, overrides: Option<gix_ignore::Search>) -> Result<gix_worktree::Stack, Error> {
+        pub fn excludes(&self, overrides: Option<gix_ignore::Search>) -> Result<AttributeStack<'_>, Error> {
             let index = self.index()?;
             Ok(self.parent.excludes(
                 &index,
