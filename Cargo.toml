@@ -293,7 +293,7 @@ members = [
 ]
 
 [workspace.dependencies]
-prodash = { version = "26.2.0", git = "https://github.com/NobodyXu/prodash", branch = "fix/dyn", default-features = false }
+prodash = { version = "26.2.2", default-features = false }
 
 [package.metadata.docs.rs]
 features = ["document-features", "max"]
