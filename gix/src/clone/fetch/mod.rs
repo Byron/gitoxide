@@ -1,4 +1,4 @@
-use crate::{clone::PrepareFetch, features::progress::DynNestedProgressToNestedProgress};
+use crate::clone::PrepareFetch;
 
 /// The error returned by [`PrepareFetch::fetch_only()`].
 #[derive(Debug, thiserror::Error)]
@@ -120,7 +120,7 @@ impl PrepareFetch {
                 f(&mut connection).map_err(|err| Error::RemoteConnection(err))?;
             }
             connection
-                .prepare_fetch(&mut progress, {
+                .prepare_fetch(&mut *progress, {
                     let mut opts = self.fetch_options.clone();
                     if !opts.extra_refspecs.contains(&head_refspec) {
                         opts.extra_refspecs.push(head_refspec)
@@ -143,7 +143,7 @@ impl PrepareFetch {
                 message: reflog_message.clone(),
             })
             .with_shallow(self.shallow.clone())
-            .receive(DynNestedProgressToNestedProgress(progress), should_interrupt)
+            .receive_inner(progress, should_interrupt)
             .await?;
 
         util::append_config_to_repo_config(repo, config);
