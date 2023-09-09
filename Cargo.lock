@@ -1146,7 +1146,7 @@ dependencies = [
  "is-terminal",
  "once_cell",
  "owo-colors",
- "prodash 26.2.1",
+ "prodash 26.2.2",
  "serde_derive",
  "tabled",
  "time",
@@ -1247,7 +1247,7 @@ dependencies = [
  "is_ci",
  "once_cell",
  "parking_lot",
- "prodash 26.2.1",
+ "prodash 26.2.2",
  "regex",
  "reqwest",
  "serde",
@@ -1579,7 +1579,7 @@ dependencies = [
  "libc",
  "once_cell",
  "parking_lot",
- "prodash 26.2.1",
+ "prodash 26.2.2",
  "sha1",
  "sha1_smol",
  "thiserror",
@@ -3529,9 +3529,9 @@ checksum = "9516b775656bc3e8985e19cd4b8c0c0de045095074e453d2c0a513b5f978392d"
 
 [[package]]
 name = "prodash"
-version = "26.2.1"
+version = "26.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50bcc40e3e88402f12b15f94d43a2c7673365e9601cc52795e119b95a266100c"
+checksum = "794b5bf8e2d19b53dcdcec3e4bba628e20f5b6062503ba89281fa7037dd7bbcf"
 dependencies = [
  "async-io",
  "bytesize",

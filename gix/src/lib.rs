@@ -98,7 +98,7 @@ pub use gix_features as features;
 use gix_features::threading::OwnShared;
 pub use gix_features::{
     parallel,
-    progress::{Count, NestedProgress, Progress},
+    progress::{Count, DynNestedProgress, NestedProgress, Progress},
     threading,
 };
 pub use gix_fs as fs;

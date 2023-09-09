@@ -73,12 +73,21 @@ where
     /// - `gitoxide.userAgent` is read to obtain the application user agent for git servers and for HTTP servers as well.
     ///
     #[gix_protocol::maybe_async::maybe_async]
-    #[allow(clippy::drop_non_drop)]
-    pub async fn receive<P>(mut self, mut progress: P, should_interrupt: &AtomicBool) -> Result<Outcome, Error>
+    pub async fn receive<P>(self, mut progress: P, should_interrupt: &AtomicBool) -> Result<Outcome, Error>
     where
         P: gix_features::progress::NestedProgress,
         P::SubProgress: 'static,
     {
+        self.receive_inner(&mut progress, should_interrupt).await
+    }
+
+    #[gix_protocol::maybe_async::maybe_async]
+    #[allow(clippy::drop_non_drop)]
+    pub(crate) async fn receive_inner(
+        mut self,
+        progress: &mut dyn crate::DynNestedProgress,
+        should_interrupt: &AtomicBool,
+    ) -> Result<Outcome, Error> {
         let _span = gix_trace::coarse!("fetch::Prepare::receive()");
         let mut con = self.con.take().expect("receive() can only be called once");
 
@@ -86,7 +95,6 @@ where
         let protocol_version = handshake.server_protocol_version;
 
         let fetch = gix_protocol::Command::Fetch;
-        let progress = &mut progress;
         let repo = con.remote.repo;
         let fetch_features = {
             let mut f = fetch.default_features(protocol_version, &handshake.capabilities);
@@ -379,17 +387,14 @@ fn add_shallow_args(
     Ok((shallow_commits, shallow_lock))
 }
 
-fn setup_remote_progress<P>(
-    progress: &mut P,
+fn setup_remote_progress(
+    progress: &mut dyn crate::DynNestedProgress,
     reader: &mut Box<dyn gix_protocol::transport::client::ExtendedBufRead + Unpin + '_>,
     should_interrupt: &AtomicBool,
-) where
-    P: gix_features::progress::NestedProgress,
-    P::SubProgress: 'static,
-{
+) {
     use gix_protocol::transport::client::ExtendedBufRead;
     reader.set_progress_handler(Some(Box::new({
-        let mut remote_progress = progress.add_child_with_id("remote", ProgressId::RemoteProgress.into());
+        let mut remote_progress = progress.add_child_with_id("remote".to_string(), ProgressId::RemoteProgress.into());
         // SAFETY: Ugh, so, with current Rust I can't declare lifetimes in the involved traits the way they need to
         //         be and I also can't use scoped threads to pump from local scopes to an Arc version that could be
         //         used here due to the this being called from sync AND async code (and the async version doesn't work

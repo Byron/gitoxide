@@ -9,7 +9,8 @@ pub use prodash::{
     progress::{
         AtomicStep, Discard, DoOrDiscard, Either, Id, Step, StepShared, Task, ThroughputOnDrop, Value, UNKNOWN,
     },
-    unit, Count, DynNestedProgress, NestedProgress, Progress, Unit,
+    unit, BoxedDynNestedProgress, Count, DynNestedProgress, DynNestedProgressToNestedProgress, NestedProgress,
+    Progress, Unit,
 };
 /// A stub for the portions of the `bytesize` crate that we use internally in `gitoxide`.
 #[cfg(not(feature = "progress-unit-bytes"))]
