@@ -3530,8 +3530,6 @@ checksum = "9516b775656bc3e8985e19cd4b8c0c0de045095074e453d2c0a513b5f978392d"
 [[package]]
 name = "prodash"
 version = "26.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50bcc40e3e88402f12b15f94d43a2c7673365e9601cc52795e119b95a266100c"
 dependencies = [
  "async-io",
  "bytesize",
