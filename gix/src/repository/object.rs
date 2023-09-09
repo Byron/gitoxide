@@ -160,13 +160,18 @@ impl crate::Repository {
     ) -> Result<Id<'_>, object::write::Error> {
         let mut buf = self.shared_empty_buf();
         std::io::copy(&mut bytes, buf.deref_mut()).expect("write to memory works");
-        let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, &buf);
+
+        self.write_blob_stream_inner(&buf)
+    }
+
+    fn write_blob_stream_inner(&self, buf: &[u8]) -> Result<Id<'_>, object::write::Error> {
+        let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, buf);
         if self.objects.contains(&oid) {
             return Ok(oid.attach(self));
         }
 
         self.objects
-            .write_buf(gix_object::Kind::Blob, &buf)
+            .write_buf(gix_object::Kind::Blob, buf)
             .map_err(Into::into)
             .map(|oid| oid.attach(self))
     }
