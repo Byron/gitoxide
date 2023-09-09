@@ -135,6 +135,7 @@ impl crate::Repository {
     ///
     /// We avoid writing duplicate objects to slow disks that will eventually have to be garbage collected by
     /// pre-hashing the data, and checking if the object is already present.
+    #[momo]
     pub fn write_blob(&self, bytes: impl AsRef<[u8]>) -> Result<Id<'_>, object::write::Error> {
         let bytes = bytes.as_ref();
         let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, bytes);
