@@ -8,6 +8,7 @@ use gix_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
 };
+use smallvec::SmallVec;
 
 use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference, Tree};
 
@@ -115,13 +116,17 @@ impl crate::Repository {
         let mut buf = self.shared_empty_buf();
         object.write_to(buf.deref_mut()).expect("write to memory works");
 
-        let oid = gix_object::compute_hash(self.object_hash(), object.kind(), &buf);
+        self.write_object_inner(&buf, object.kind())
+    }
+
+    fn write_object_inner(&self, buf: &[u8], kind: gix_object::Kind) -> Result<Id<'_>, object::write::Error> {
+        let oid = gix_object::compute_hash(self.object_hash(), kind, buf);
         if self.objects.contains(&oid) {
             return Ok(oid.attach(self));
         }
 
         self.objects
-            .write_buf(object.kind(), &buf)
+            .write_buf(kind, buf)
             .map(|oid| oid.attach(self))
             .map_err(Into::into)
     }
@@ -130,6 +135,7 @@ impl crate::Repository {
     ///
     /// We avoid writing duplicate objects to slow disks that will eventually have to be garbage collected by
     /// pre-hashing the data, and checking if the object is already present.
+    #[momo]
     pub fn write_blob(&self, bytes: impl AsRef<[u8]>) -> Result<Id<'_>, object::write::Error> {
         let bytes = bytes.as_ref();
         let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, bytes);
@@ -154,13 +160,18 @@ impl crate::Repository {
     ) -> Result<Id<'_>, object::write::Error> {
         let mut buf = self.shared_empty_buf();
         std::io::copy(&mut bytes, buf.deref_mut()).expect("write to memory works");
-        let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, &buf);
+
+        self.write_blob_stream_inner(&buf)
+    }
+
+    fn write_blob_stream_inner(&self, buf: &[u8]) -> Result<Id<'_>, object::write::Error> {
+        let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, buf);
         if self.objects.contains(&oid) {
             return Ok(oid.attach(self));
         }
 
         self.objects
-            .write_buf(gix_object::Kind::Blob, &buf)
+            .write_buf(gix_object::Kind::Blob, buf)
             .map_err(Into::into)
             .map(|oid| oid.attach(self))
     }
@@ -208,6 +219,25 @@ impl crate::Repository {
         Name: TryInto<FullName, Error = E>,
         commit::Error: From<E>,
     {
+        self.commit_as_inner(
+            committer.into(),
+            author.into(),
+            reference.try_into()?,
+            message.as_ref(),
+            tree.into(),
+            parents.into_iter().map(Into::into).collect(),
+        )
+    }
+
+    fn commit_as_inner(
+        &self,
+        committer: gix_actor::SignatureRef<'_>,
+        author: gix_actor::SignatureRef<'_>,
+        reference: FullName,
+        message: &str,
+        tree: ObjectId,
+        parents: SmallVec<[gix_hash::ObjectId; 1]>,
+    ) -> Result<Id<'_>, commit::Error> {
         use gix_ref::{
             transaction::{Change, RefEdit},
             Target,
@@ -215,14 +245,13 @@ impl crate::Repository {
 
         // TODO: possibly use CommitRef to save a few allocations (but will have to allocate for object ids anyway.
         //       This can be made vastly more efficient though if we wanted to, so we lie in the API
-        let reference = reference.try_into()?;
         let commit = gix_object::Commit {
-            message: message.as_ref().into(),
-            tree: tree.into(),
-            author: author.into().to_owned(),
-            committer: committer.into().to_owned(),
+            message: message.into(),
+            tree,
+            author: author.into(),
+            committer: committer.into(),
             encoding: None,
-            parents: parents.into_iter().map(Into::into).collect(),
+            parents,
             extra_headers: Default::default(),
         };
 
