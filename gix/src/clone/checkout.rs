@@ -62,14 +62,14 @@ pub mod main_worktree {
         ///
         /// Note that this is a no-op if the remote was empty, leaving this repository empty as well. This can be validated by checking
         /// if the `head()` of the returned repository is not unborn.
-        pub fn main_worktree<P, SubP>(
+        pub fn main_worktree<P>(
             &mut self,
             mut progress: P,
             should_interrupt: &AtomicBool,
         ) -> Result<(Repository, gix_worktree_state::checkout::Outcome), Error>
         where
-            P: gix_features::progress::NestedProgress<SubProgress = SubP>,
-            SubP: gix_features::progress::NestedProgress + 'static,
+            P: gix_features::progress::NestedProgress,
+            P::SubProgress: gix_features::progress::NestedProgress + 'static,
         {
             self.main_worktree_inner(&mut progress, should_interrupt)
         }
