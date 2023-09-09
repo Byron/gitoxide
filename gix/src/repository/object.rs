@@ -120,13 +120,13 @@ impl crate::Repository {
     }
 
     fn write_object_inner(&self, buf: &[u8], kind: gix_object::Kind) -> Result<Id<'_>, object::write::Error> {
-        let oid = gix_object::compute_hash(self.object_hash(), kind, &buf);
+        let oid = gix_object::compute_hash(self.object_hash(), kind, buf);
         if self.objects.contains(&oid) {
             return Ok(oid.attach(self));
         }
 
         self.objects
-            .write_buf(kind, &buf)
+            .write_buf(kind, buf)
             .map(|oid| oid.attach(self))
             .map_err(Into::into)
     }
