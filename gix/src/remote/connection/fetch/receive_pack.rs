@@ -78,7 +78,7 @@ where
         P: gix_features::progress::NestedProgress,
         P::SubProgress: 'static,
     {
-        self.receive_inner(&mut progress, should_interrupt)
+        self.receive_inner(&mut progress, should_interrupt).await
     }
 
     #[gix_protocol::maybe_async::maybe_async]

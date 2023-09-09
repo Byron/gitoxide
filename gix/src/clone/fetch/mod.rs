@@ -58,7 +58,7 @@ impl PrepareFetch {
         P: crate::NestedProgress,
         P::SubProgress: 'static,
     {
-        self.fetch_only_inner(&mut progress, should_interrupt)
+        self.fetch_only_inner(&mut progress, should_interrupt).await
     }
 
     #[gix_protocol::maybe_async::maybe_async]
