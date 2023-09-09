@@ -219,10 +219,10 @@ impl crate::Repository {
         )
     }
 
-    fn commit_as_inner<'a, 'c>(
+    fn commit_as_inner(
         &self,
-        committer: gix_actor::SignatureRef<'c>,
-        author: gix_actor::SignatureRef<'a>,
+        committer: gix_actor::SignatureRef<'_>,
+        author: gix_actor::SignatureRef<'_>,
         reference: FullName,
         message: &str,
         tree: ObjectId,
