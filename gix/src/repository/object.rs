@@ -116,13 +116,17 @@ impl crate::Repository {
         let mut buf = self.shared_empty_buf();
         object.write_to(buf.deref_mut()).expect("write to memory works");
 
-        let oid = gix_object::compute_hash(self.object_hash(), object.kind(), &buf);
+        self.write_object_inner(&buf, object.kind())
+    }
+
+    fn write_object_inner(&self, buf: &[u8], kind: gix_object::Kind) -> Result<Id<'_>, object::write::Error> {
+        let oid = gix_object::compute_hash(self.object_hash(), kind, &buf);
         if self.objects.contains(&oid) {
             return Ok(oid.attach(self));
         }
 
         self.objects
-            .write_buf(object.kind(), &buf)
+            .write_buf(kind, &buf)
             .map(|oid| oid.attach(self))
             .map_err(Into::into)
     }
