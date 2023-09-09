@@ -26,6 +26,9 @@ fn get_value_for_all_provided_values() -> crate::Result {
             other-quoted = "hello world"
             location = ~/tmp
             location-quoted = "~/quoted"
+            empty-implicit
+            empty-equals = 
+            empty-explicit = ""
     "#;
     for lossy in [false, true] {
         let config = File::from_bytes_no_includes(
@@ -53,6 +56,34 @@ fn get_value_for_all_provided_values() -> crate::Result {
             config.string("core", None, "bool-implicit"),
             None,
             "unset values are not present"
+        );
+        assert_eq!(
+            config.string("core", None, "empty-implicit"),
+            None,
+            "mere presence is at most a boolean"
+        );
+        assert_eq!(
+            config.path("core", None, "empty-implicit"),
+            None,
+            "mere presence is at most a boolean"
+        );
+        assert_eq!(
+            config.string("core", None, "empty-equals"),
+            Some(cow_str("")),
+            "mere presence with equal sign is always the empty implicit string"
+        );
+        assert!(
+            config.path("core", None, "empty-equals").is_some(),
+            "this is an empty path…"
+        );
+        assert_eq!(
+            config.string("core", None, "empty-explicit"),
+            Some(cow_str("")),
+            "and so is an explicit empty string"
+        );
+        assert!(
+            config.path("core", None, "empty-explicit").is_some(),
+            "and so is an explicit empty path"
         );
         assert_eq!(
             config.strings("core", None, "bool-implicit").expect("present"),
