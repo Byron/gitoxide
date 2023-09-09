@@ -3530,6 +3530,7 @@ checksum = "9516b775656bc3e8985e19cd4b8c0c0de045095074e453d2c0a513b5f978392d"
 [[package]]
 name = "prodash"
 version = "26.2.1"
+source = "git+https://github.com/NobodyXu/prodash?branch=fix/dyn#967ea46b71c2bb44f7cd75524d101c4bfd2df0bf"
 dependencies = [
  "async-io",
  "bytesize",
