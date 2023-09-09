@@ -1,3 +1,4 @@
+use crate::remote;
 use gix_testtools::Env;
 
 mod baseline {
@@ -204,4 +205,13 @@ fn invalid_urls_are_rejected_early() {
     baseline::works_but_we_dont_parse_invalid_url("ssh://host");
     baseline::works_but_we_dont_parse_invalid_url("ssh://host:21");
     baseline::works_but_we_dont_parse_invalid_url("git://host.org");
+}
+
+#[test]
+fn empty_core_askpass_is_ignored() -> crate::Result {
+    let repo = remote::repo("empty-core-askpass");
+    let _ = repo
+        .config_snapshot()
+        .credential_helpers("does-not-matter".try_into()?)?;
+    Ok(())
 }

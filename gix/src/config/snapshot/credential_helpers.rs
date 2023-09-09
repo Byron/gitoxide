@@ -2,6 +2,7 @@ use std::{borrow::Cow, convert::TryFrom};
 
 pub use error::Error;
 
+use crate::config::cache::util::IgnoreEmptyPath;
 use crate::{
     bstr::{ByteSlice, ByteVec},
     config::{
@@ -140,7 +141,8 @@ impl Snapshot<'_> {
         let prompt_options = gix_prompt::Options {
             askpass: self
                 .trusted_path(Core::ASKPASS.logical_name().as_str())
-                .transpose()?
+                .transpose()
+                .ignore_empty()?
                 .map(|c| Cow::Owned(c.into_owned())),
             ..Default::default()
         }

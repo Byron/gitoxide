@@ -370,3 +370,8 @@ git clone one-commit-with-symref one-commit-with-symref-missing-branch
 (cd one-commit-with-symref-missing-branch
   git branch valid-locally
 )
+
+git init empty-core-askpass
+(cd empty-core-askpass
+  echo "    askpass =" >> .git/config
+)
