@@ -73,7 +73,6 @@ where
     /// - `gitoxide.userAgent` is read to obtain the application user agent for git servers and for HTTP servers as well.
     ///
     #[gix_protocol::maybe_async::maybe_async]
-    #[allow(clippy::drop_non_drop)]
     pub async fn receive<P>(self, mut progress: P, should_interrupt: &AtomicBool) -> Result<Outcome, Error>
     where
         P: gix_features::progress::NestedProgress,
