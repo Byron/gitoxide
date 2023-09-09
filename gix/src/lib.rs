@@ -4,6 +4,17 @@
 //! individually. Sometimes it may hide complexity under the assumption that the performance difference doesn't matter
 //! for all but the fewest tools out there, which would be using the underlying crates directly or file an issue.
 //!
+//! ### The Trust Model
+//!
+//! It is very simple - based on the ownership of the repository compared to the user of the current process [Trust](sec::Trust)
+//! is assigned. This can be [overridden](open::Options::with()) as well. Further, git configuration files track their trust level
+//! per section based on and sensitive values like paths to executables or certain values will be skipped if they are from a source
+//! that isn't [fully](sec::Trust::Full) trusted.
+//!
+//! That way, data can safely be obtained without risking to execute untrusted executables.
+//!
+//! Note that it's possible to let `gix` act like `git` or `git2` by setting the [open::Options::bail_if_untrusted()] option.
+//!
 //! ### The prelude and extensions
 //!
 //! With `use git_repository::prelude::*` you should be ready to go as it pulls in various extension traits to make functionality
