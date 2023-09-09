@@ -67,7 +67,18 @@ impl<'repo> Remote<'repo> {
         Url: TryInto<gix_url::Url, Error = E>,
         gix_url::parse::Error: From<E>,
     {
-        let url = url.try_into().map_err(|err| Error::Url(err.into()))?;
+        Self::from_fetch_url_inner(
+            url.try_into().map_err(|err| Error::Url(err.into()))?,
+            should_rewrite_urls,
+            repo,
+        )
+    }
+
+    fn from_fetch_url_inner(
+        url: gix_url::Url,
+        should_rewrite_urls: bool,
+        repo: &'repo Repository,
+    ) -> Result<Self, Error> {
         let (url_alias, _) = should_rewrite_urls
             .then(|| rewrite_urls(&repo.config, Some(&url), None))
             .unwrap_or(Ok((None, None)))?;

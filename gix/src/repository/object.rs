@@ -8,6 +8,7 @@ use gix_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
 };
+use smallvec::SmallVec;
 
 use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference, Tree};
 
@@ -208,6 +209,25 @@ impl crate::Repository {
         Name: TryInto<FullName, Error = E>,
         commit::Error: From<E>,
     {
+        self.commit_as_inner(
+            committer.into(),
+            author.into(),
+            reference.try_into()?,
+            message.as_ref(),
+            tree.into(),
+            parents.into_iter().map(Into::into).collect(),
+        )
+    }
+
+    fn commit_as_inner<'a, 'c>(
+        &self,
+        committer: gix_actor::SignatureRef<'c>,
+        author: gix_actor::SignatureRef<'a>,
+        reference: FullName,
+        message: &str,
+        tree: ObjectId,
+        parents: SmallVec<[gix_hash::ObjectId; 1]>,
+    ) -> Result<Id<'_>, commit::Error> {
         use gix_ref::{
             transaction::{Change, RefEdit},
             Target,
@@ -215,14 +235,13 @@ impl crate::Repository {
 
         // TODO: possibly use CommitRef to save a few allocations (but will have to allocate for object ids anyway.
         //       This can be made vastly more efficient though if we wanted to, so we lie in the API
-        let reference = reference.try_into()?;
         let commit = gix_object::Commit {
-            message: message.as_ref().into(),
-            tree: tree.into(),
-            author: author.into().to_owned(),
-            committer: committer.into().to_owned(),
+            message: message.into(),
+            tree,
+            author: author.into(),
+            committer: committer.into(),
             encoding: None,
-            parents: parents.into_iter().map(Into::into).collect(),
+            parents,
             extra_headers: Default::default(),
         };
 
