@@ -18,7 +18,7 @@ fn get_baseline_test_cases() -> Vec<Trial> {
     baseline::URLS
         .iter()
         .map(|(url, expected)| {
-            Trial::test(format!("{}", url.to_str().expect("url is valid utf-8")), move || {
+            Trial::test(url.to_str().expect("url is valid utf-8"), move || {
                 let actual = std::panic::catch_unwind(|| gix_url::parse(url).expect("valid urls can be parsed"))
                     .map_err(|panic| match downcast_panic_to_str(&panic) {
                         Some(s) => format!("{s}\nexpected: {expected:?}").into(),

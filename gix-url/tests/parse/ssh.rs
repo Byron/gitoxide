@@ -1,4 +1,3 @@
-use bstr::ByteSlice;
 use gix_url::Scheme;
 
 use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
