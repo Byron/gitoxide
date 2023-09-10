@@ -7,6 +7,7 @@ default:
 
 alias t := test
 alias c := check
+alias nt := nextest
 
 # run all tests, clippy, including journey tests, try building docs
 test: clippy check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests
@@ -224,8 +225,10 @@ audit:
     cargo deny check advisories bans licenses sources
 
 # run tests with `cargo nextest` (all unit-tests, no doc-tests, faster)
-nextest:
-    cargo nextest run --all
+nextest *FLAGS="--all":
+    cargo nextest run {{FLAGS}}
+
+summarize EXPRESSION="all()": (nextest "--all --run-ignored all --no-fail-fast --status-level none --final-status-level none -E '" EXPRESSION "'") 
 
 # run nightly rustfmt for its extra features, but check that it won't upset stable rustfmt
 fmt:
