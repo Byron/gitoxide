@@ -83,7 +83,7 @@ fn find_scheme(input: &BStr) -> InputScheme {
 /// For file-paths, we don't expect UTF8 encoding either.
 pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     match find_scheme(input) {
-        InputScheme::Local => parse_local(input, false),
+        InputScheme::Local => parse_local(input),
         InputScheme::Url { protocol_end } if input[..protocol_end].eq_ignore_ascii_case(b"file") => {
             parse_file_url(input, protocol_end)
         }
@@ -172,10 +172,14 @@ fn parse_file_url(input: &BStr, protocol_colon: usize) -> Result<crate::Url, Err
         });
     }
 
-    parse_local(url.path().into(), true)
+    Ok(crate::Url {
+        serialize_alternative_form: false,
+        host: url.host_str().map(Into::into),
+        ..parse_local(url.path().into())?
+    })
 }
 
-fn parse_local(input: &BStr, was_in_url_format: bool) -> Result<crate::Url, Error> {
+fn parse_local(input: &BStr) -> Result<crate::Url, Error> {
     if input.is_empty() {
         return Err(Error::MissingRepositoryPath {
             url: input.to_owned(),
@@ -184,7 +188,7 @@ fn parse_local(input: &BStr, was_in_url_format: bool) -> Result<crate::Url, Erro
     }
 
     Ok(crate::Url {
-        serialize_alternative_form: !was_in_url_format,
+        serialize_alternative_form: true,
         scheme: crate::scheme::Scheme::File,
         password: None,
         user: None,
