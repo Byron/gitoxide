@@ -396,6 +396,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "byteyarn"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7534301c0ea17abb4db06d75efc7b4b0fa360fce8e175a4330d721c71c942ff"
+
+[[package]]
 name = "cassowary"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1336,6 +1342,7 @@ name = "gix-attributes"
 version = "0.18.0"
 dependencies = [
  "bstr",
+ "byteyarn",
  "document-features",
  "gix-fs 0.6.0",
  "gix-glob 0.12.0",
@@ -1343,7 +1350,6 @@ dependencies = [
  "gix-quote 0.4.7",
  "gix-testtools",
  "gix-trace 0.1.3",
- "kstring",
  "serde",
  "smallvec",
  "thiserror",
@@ -2962,7 +2968,6 @@ version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec3066350882a1cd6d950d055997f379ac37fd39f81cd4d8ed186032eb3c5747"
 dependencies = [
- "serde",
  "static_assertions",
 ]
 

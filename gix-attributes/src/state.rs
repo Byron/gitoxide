@@ -1,29 +1,21 @@
 use bstr::{BStr, ByteSlice};
-use kstring::{KString, KStringRef};
+use byteyarn::{ByteYarn, YarnRef};
 
 use crate::{State, StateRef};
 
 /// A container to encapsulate a tightly packed and typically unallocated byte value that isn't necessarily UTF8 encoded.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Value(KString);
+pub struct Value(ByteYarn);
 
 /// A reference container to encapsulate a tightly packed and typically unallocated byte value that isn't necessarily UTF8 encoded.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ValueRef<'a>(#[cfg_attr(feature = "serde", serde(borrow))] KStringRef<'a>);
+pub struct ValueRef<'a>(YarnRef<'a, [u8]>);
 
 /// Lifecycle
 impl<'a> ValueRef<'a> {
     /// Keep `input` as our value.
     pub fn from_bytes(input: &'a [u8]) -> Self {
-        Self(KStringRef::from_ref(
-            // SAFETY: our API makes accessing that value as `str` impossible, so illformed UTF8 is never exposed as such.
-            #[allow(unsafe_code)]
-            unsafe {
-                std::str::from_utf8_unchecked(input)
-            },
-        ))
+        Self(YarnRef::from(input))
     }
 }
 
@@ -42,19 +34,25 @@ impl ValueRef<'_> {
 
 impl<'a> From<&'a str> for ValueRef<'a> {
     fn from(v: &'a str) -> Self {
-        ValueRef(v.into())
+        ValueRef(v.as_bytes().into())
     }
 }
 
 impl<'a> From<ValueRef<'a>> for Value {
     fn from(v: ValueRef<'a>) -> Self {
-        Value(v.0.into())
+        Value(
+            v.0.immortalize()
+                .map_or_else(|| v.0.to_boxed_bytes().into(), YarnRef::to_box),
+        )
     }
 }
 
 impl From<&str> for Value {
     fn from(v: &str) -> Self {
-        Value(KString::from_ref(v))
+        Value(
+            ByteYarn::inlined(v.as_bytes())
+                .unwrap_or_else(|| ByteYarn::from_boxed_bytes(v.as_bytes().to_vec().into_boxed_slice())),
+        )
     }
 }
 

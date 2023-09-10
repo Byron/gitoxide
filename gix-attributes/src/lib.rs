@@ -8,8 +8,8 @@
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
+use byteyarn::{Yarn, YarnRef};
 pub use gix_glob as glob;
-use kstring::{KString, KStringRef};
 
 mod assignment;
 ///
@@ -34,7 +34,6 @@ pub fn parse(bytes: &[u8]) -> parse::Lines<'_> {
 ///
 /// Note that this doesn't contain the name.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum StateRef<'a> {
     /// The attribute is listed, or has the special value 'true'
     Set,
@@ -42,7 +41,6 @@ pub enum StateRef<'a> {
     Unset,
     /// The attribute is set to the given value, which followed the `=` sign.
     /// Note that values can be empty.
-    #[cfg_attr(feature = "serde", serde(borrow))]
     Value(state::ValueRef<'a>),
     /// The attribute isn't mentioned with a given path or is explicitly set to `Unspecified` using the `!` sign.
     Unspecified,
@@ -52,7 +50,6 @@ pub enum StateRef<'a> {
 ///
 /// Note that this doesn't contain the name.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum State {
     /// The attribute is listed, or has the special value 'true'
     Set,
@@ -67,16 +64,14 @@ pub enum State {
 
 /// Represents a validated attribute name
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Name(pub(crate) KString);
+pub struct Name(pub(crate) Yarn);
 
 /// Holds a validated attribute name as a reference
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
-pub struct NameRef<'a>(KStringRef<'a>);
+pub struct NameRef<'a>(YarnRef<'a, str>);
 
 /// Name an attribute and describe it's assigned state.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Assignment {
     /// The validated name of the attribute.
     pub name: Name,
