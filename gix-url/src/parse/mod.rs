@@ -30,7 +30,7 @@ impl From<Infallible> for Error {
 }
 
 ///
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum UrlKind {
     ///
     Url,
@@ -93,16 +93,7 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
 }
 
 fn parse_url(input: &BStr) -> Result<crate::Url, Error> {
-    let input = std::str::from_utf8(input).map_err(|source| Error::Utf8 {
-        url: input.to_owned(),
-        kind: UrlKind::Url,
-        source,
-    })?;
-    let url = url::Url::parse(input).map_err(|source| Error::Url {
-        url: input.to_owned(),
-        kind: UrlKind::Url,
-        source,
-    })?;
+    let (input, url) = input_to_utf8_and_url(input, UrlKind::Url)?;
 
     let scheme = url.scheme().into();
 
@@ -133,11 +124,7 @@ fn parse_url(input: &BStr) -> Result<crate::Url, Error> {
 }
 
 fn parse_scp(input: &BStr, colon: usize) -> Result<crate::Url, Error> {
-    let input = std::str::from_utf8(input).map_err(|source| Error::Utf8 {
-        url: input.to_owned(),
-        kind: UrlKind::Scp,
-        source,
-    })?;
+    let input = input_to_utf8(input, UrlKind::Scp)?;
 
     // TODO: this incorrectly splits at IPv6 addresses, check for `[]` before splitting
     let (host, path) = input.split_at(colon);
@@ -176,16 +163,7 @@ fn parse_scp(input: &BStr, colon: usize) -> Result<crate::Url, Error> {
 }
 
 fn parse_file_url(input: &BStr, protocol_colon: usize) -> Result<crate::Url, Error> {
-    let input = std::str::from_utf8(input).map_err(|source| Error::Utf8 {
-        url: input.to_owned(),
-        kind: UrlKind::Url,
-        source,
-    })?;
-    let url = url::Url::parse(input).map_err(|source| Error::Url {
-        url: input.to_owned(),
-        kind: UrlKind::Url,
-        source,
-    })?;
+    let (input, url) = input_to_utf8_and_url(input, UrlKind::Url)?;
 
     if !input[protocol_colon + 3..].contains('/') {
         return Err(Error::MissingRepositoryPath {
@@ -214,4 +192,27 @@ fn parse_local(input: &BStr, was_in_url_format: bool) -> Result<crate::Url, Erro
         port: None,
         path: input.into(),
     })
+}
+
+/// Helper function to turn a BStr into an str. The kind is only used for the construction of the
+/// error variant.
+fn input_to_utf8(input: &BStr, kind: UrlKind) -> Result<&str, Error> {
+    std::str::from_utf8(input).map_err(|source| Error::Utf8 {
+        url: input.to_owned(),
+        kind,
+        source,
+    })
+}
+
+/// Helper function to turn a BStr into an Url. The kind is only used for the construction of the
+/// error variant.
+fn input_to_utf8_and_url(input: &BStr, kind: UrlKind) -> Result<(&str, url::Url), Error> {
+    let input = input_to_utf8(input, kind.clone())?;
+    url::Url::parse(input)
+        .map(|url| (input, url))
+        .map_err(|source| Error::Url {
+            url: input.to_owned(),
+            kind,
+            source,
+        })
 }
