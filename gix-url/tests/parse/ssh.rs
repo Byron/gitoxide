@@ -65,23 +65,14 @@ fn with_user_and_port_and_absolute_path() -> crate::Result {
 }
 
 #[test]
-fn ssh_alias_needs_username_to_not_be_considered_a_filepath() {
-    let url = gix_url::Url::from_parts(
-        Scheme::Ssh,
-        None,
-        None,
-        "alias".to_string().into(),
-        None,
-        b"path/to/git".as_bstr().into(),
-        true,
-    )
-    .expect("valid");
-    assert_eq!(
-        url.scheme,
-        Scheme::File,
-        "we need a user name to differentiate the scp form from a path"
-    );
-    assert_eq!(url.to_bstring(), "alias:path/to/git");
+fn ssh_alias_without_username() -> crate::Result {
+    let url = assert_url(
+        "host:/path/to/git",
+        url_alternate(Scheme::Ssh, None, "host", None, b"/path/to/git"),
+    )?
+    .to_bstring();
+    assert_eq!(url, "host:/path/to/git");
+    Ok(())
 }
 
 #[test]
