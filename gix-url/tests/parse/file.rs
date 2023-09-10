@@ -37,11 +37,12 @@ fn no_username_expansion_for_file_paths_without_protocol() -> crate::Result {
     assert_eq!(url, "~/path/to/git");
     Ok(())
 }
+
 #[test]
 fn no_username_expansion_for_file_paths_with_protocol() -> crate::Result {
     assert_url_roundtrip(
-        "file://~username/path/to/git",
-        url(Scheme::File, None, None, None, b"~username/path/to/git"),
+        "file:///~username/path/to/git",
+        url(Scheme::File, None, None, None, b"/~username/path/to/git"),
     )
 }
 
