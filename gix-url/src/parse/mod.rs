@@ -163,19 +163,35 @@ fn parse_scp(input: &BStr, colon: usize) -> Result<crate::Url, Error> {
 }
 
 fn parse_file_url(input: &BStr, protocol_colon: usize) -> Result<crate::Url, Error> {
-    let (input, url) = input_to_utf8_and_url(input, UrlKind::Url)?;
+    let input = input_to_utf8(input, UrlKind::Url)?;
+    let input_after_protocol = &input[protocol_colon + 3..];
 
-    if !input[protocol_colon + 3..].contains('/') {
+    let Some(first_slash) = input_after_protocol.find('/') else {
         return Err(Error::MissingRepositoryPath {
             url: input.to_owned().into(),
             kind: UrlKind::Url,
         });
-    }
+    };
+
+    // We can not use the url crate to parse host and path because it special cases Windows
+    // driver letters. With the url crate an input of `file://x:/path/to/git` is parsed as empty
+    // host and with `x:/path/to/git` as path. This behavior is wrong for Git which parses the
+    // `x:` as the host.
+    // TODO: this behavior is most likely different on Windows
+    let host = if first_slash == 0 {
+        // file:///path/to/git
+        None
+    } else {
+        // file://host/path/to/git
+        Some(&input_after_protocol[..first_slash])
+    };
+    // path includes the slash character
+    let path = &input_after_protocol[first_slash..];
 
     Ok(crate::Url {
         serialize_alternative_form: false,
-        host: url.host_str().map(Into::into),
-        ..parse_local(url.path().into())?
+        host: host.map(Into::into),
+        ..parse_local(path.into())?
     })
 }
 

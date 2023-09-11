@@ -154,11 +154,12 @@ fn url_from_relative_path_with_colon_in_name() -> crate::Result {
     Ok(())
 }
 
+#[cfg(windows)]
 mod windows {
+    use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
     use gix_url::Scheme;
 
     #[test]
-    #[cfg(windows)]
     fn url_from_absolute_path() -> crate::Result {
         assert_url(
             url::Url::from_directory_path("c:\\users\\1")
@@ -180,8 +181,6 @@ mod windows {
         )?;
         Ok(())
     }
-
-    use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
 
     #[test]
     fn file_path_without_protocol() -> crate::Result {
@@ -210,6 +209,42 @@ mod windows {
         assert_url_roundtrip(
             "file://x:/path/to/git",
             url(Scheme::File, None, None, None, b"x:/path/to/git"),
+        )
+    }
+}
+
+#[cfg(not(windows))]
+mod unix {
+    use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
+    use gix_url::Scheme;
+
+    #[test]
+    fn file_path_without_protocol() -> crate::Result {
+        let url = assert_url(
+            "x:/path/to/git",
+            url_alternate(Scheme::Ssh, None, "x", None, b"/path/to/git"),
+        )?
+        .to_bstring();
+        assert_eq!(url, "x:/path/to/git");
+        Ok(())
+    }
+
+    #[test]
+    fn file_path_with_backslashes_without_protocol() -> crate::Result {
+        let url = assert_url(
+            "x:\\path\\to\\git",
+            url_alternate(Scheme::Ssh, None, "x", None, b"\\path\\to\\git"),
+        )?
+        .to_bstring();
+        assert_eq!(url, "x:\\path\\to\\git");
+        Ok(())
+    }
+
+    #[test]
+    fn file_path_with_protocol() -> crate::Result {
+        assert_url_roundtrip(
+            "file://x:/path/to/git",
+            url(Scheme::File, None, "x:", None, b"/path/to/git"),
         )
     }
 }
