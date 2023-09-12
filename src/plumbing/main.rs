@@ -133,6 +133,33 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::Status(crate::plumbing::options::status::Platform { submodules, pathspec }) => prepare_and_run(
+            "status",
+            trace,
+            auto_verbose,
+            progress,
+            progress_keep_open,
+            None,
+            move |progress, out, err| {
+                use crate::plumbing::options::status::Submodules;
+                core::repository::status::show(
+                    repository(Mode::Lenient)?,
+                    pathspec,
+                    out,
+                    err,
+                    progress,
+                    core::repository::status::Options {
+                        format,
+                        thread_limit: thread_limit.or(cfg!(target_os = "macos").then_some(3)), // TODO: make this a configurable when in `gix`, this seems to be optimal on MacOS, linux scales though!
+                        submodules: match submodules {
+                            Submodules::All => core::repository::status::Submodules::All,
+                            Submodules::RefChange => core::repository::status::Submodules::RefChange,
+                            Submodules::Modifications => core::repository::status::Submodules::Modifications,
+                        },
+                    },
+                )
+            },
+        ),
         Subcommands::Submodule(platform) => match platform
             .cmds
             .unwrap_or(crate::plumbing::options::submodule::Subcommands::List)

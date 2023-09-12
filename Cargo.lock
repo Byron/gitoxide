@@ -1179,6 +1179,7 @@ dependencies = [
  "gix",
  "gix-archive",
  "gix-pack",
+ "gix-status",
  "gix-transport",
  "gix-url",
  "itertools 0.11.0",
