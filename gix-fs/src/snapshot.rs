@@ -57,6 +57,12 @@ impl<T: std::fmt::Debug> Deref for FileSnapshot<T> {
     }
 }
 
+impl<T: std::fmt::Debug> std::ops::DerefMut for FileSnapshot<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
+    }
+}
+
 impl<T: std::fmt::Debug> Deref for SharedFileSnapshotMut<T> {
     type Target = MutableOnDemand<Option<SharedFileSnapshot<T>>>;
 
