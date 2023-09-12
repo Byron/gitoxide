@@ -95,8 +95,8 @@ impl Stat {
         use std::os::unix::fs::MetadataExt;
         #[cfg(unix)]
         let res = Stat {
-            mtime: mtime.try_into()?,
-            ctime: ctime.try_into()?,
+            mtime: mtime.try_into().unwrap_or_default(),
+            ctime: ctime.try_into().unwrap_or_default(),
             // truncating to 32 bits is fine here because
             // that's what the linux syscalls returns
             // just rust upcasts to 64 bits for some reason?
