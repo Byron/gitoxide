@@ -30,6 +30,11 @@ mod _impl {
         v.write()
     }
 
+    /// Get a mutable reference to the underlying data, with semantics similar to [Arc::make_mut()].
+    pub fn make_mut<T: Clone>(this: &mut OwnShared<T>) -> &mut T {
+        OwnShared::make_mut(this)
+    }
+
     /// Get a mutable reference through a [`Mutable`] for read-write access.
     pub fn lock<T>(v: &Mutable<T>) -> parking_lot::MutexGuard<'_, T> {
         v.lock()
@@ -73,6 +78,11 @@ mod _impl {
     /// Get a shared reference through a [`MutableOnDemand`] for read-only access.
     pub fn get_mut<T>(v: &RefCell<T>) -> RefMut<'_, T> {
         v.borrow_mut()
+    }
+
+    /// Get a mutable reference to the underlying data, with semantics similar to [Rc::make_mut()].
+    pub fn make_mut<T: Clone>(this: &mut OwnShared<T>) -> &mut T {
+        OwnShared::make_mut(this)
     }
 
     /// Get a mutable reference through a [`Mutable`] for read-write access.
