@@ -1,5 +1,5 @@
 use bstr::{BStr, ByteSlice};
-use gix_url::Scheme;
+use gix_url::{testing::TestUrlExtension, Scheme};
 
 fn assert_url(url: &str, expected: gix_url::Url) -> Result<gix_url::Url, crate::Error> {
     let actual = gix_url::parse(url.into())?;
@@ -33,7 +33,7 @@ fn url<'a, 'b>(
     port: impl Into<Option<u16>>,
     path: &[u8],
 ) -> gix_url::Url {
-    gix_url::Url::from_parts(
+    gix_url::Url::from_parts_unchecked(
         protocol,
         user.into().map(Into::into),
         None,
@@ -42,7 +42,6 @@ fn url<'a, 'b>(
         path.into(),
         false,
     )
-    .unwrap_or_else(|err| panic!("'{}' failed: {err:?}", path.as_bstr()))
 }
 
 fn url_with_pass<'a, 'b>(
@@ -53,7 +52,7 @@ fn url_with_pass<'a, 'b>(
     port: impl Into<Option<u16>>,
     path: &[u8],
 ) -> gix_url::Url {
-    gix_url::Url::from_parts(
+    gix_url::Url::from_parts_unchecked(
         protocol,
         user.into().map(Into::into),
         Some(password.into()),
@@ -62,7 +61,6 @@ fn url_with_pass<'a, 'b>(
         path.into(),
         false,
     )
-    .unwrap_or_else(|err| panic!("'{}' failed: {err:?}", path.as_bstr()))
 }
 
 fn url_alternate<'a, 'b>(
@@ -72,7 +70,7 @@ fn url_alternate<'a, 'b>(
     port: impl Into<Option<u16>>,
     path: &[u8],
 ) -> gix_url::Url {
-    let url = gix_url::Url::from_parts(
+    gix_url::Url::from_parts_unchecked(
         protocol.clone(),
         user.into().map(Into::into),
         None,
@@ -81,9 +79,6 @@ fn url_alternate<'a, 'b>(
         path.into(),
         true,
     )
-    .expect("valid");
-    assert_eq!(url.scheme, protocol);
-    url
 }
 
 mod file;

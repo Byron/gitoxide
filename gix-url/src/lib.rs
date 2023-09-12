@@ -253,3 +253,43 @@ impl Url {
 }
 
 mod impls;
+
+/// This module contains extensions to the [crate::Url] struct which are only intended to be used
+/// for testing code. Do not use this module in production! For all intends and purposes the APIs of
+/// all functions and types exposed by this module are considered unstable and are allowed to break
+/// even in patch releases!
+#[doc(hidden)]
+pub mod testing {
+    use bstr::BString;
+
+    use crate::{Scheme, Url};
+
+    /// Additional functions for [crate::Url] which are only intended to be used for tests.
+    pub trait TestUrlExtension {
+        /// Create a new instance from the given parts without validating them.
+        ///
+        /// This function is primarily intended for testing purposes. For production code please
+        /// consider using [Url::from_parts] instead!
+        fn from_parts_unchecked(
+            scheme: Scheme,
+            user: Option<String>,
+            password: Option<String>,
+            host: Option<String>,
+            port: Option<u16>,
+            path: BString,
+            serialize_alternative_form: bool,
+        ) -> crate::Url {
+            Url {
+                scheme,
+                user,
+                password,
+                host,
+                port,
+                path,
+                serialize_alternative_form,
+            }
+        }
+    }
+
+    impl TestUrlExtension for crate::Url {}
+}

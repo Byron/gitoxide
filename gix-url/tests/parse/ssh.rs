@@ -160,11 +160,11 @@ fn scp_like_with_user_and_relative_path_keep_relative_path() -> crate::Result {
 #[test]
 fn strange_windows_paths_yield_meaningful_results() -> crate::Result {
     let url = assert_url(
-        "user@host.xz:42:C:/strange/absolute/path",
-        url_alternate(Scheme::Ssh, "user", "host.xz", Some(42), b"C:/strange/absolute/path"),
+        "user@host.xz:C:/strange/absolute/path",
+        url_alternate(Scheme::Ssh, "user", "host.xz", None, b"C:/strange/absolute/path"),
     )?
     .to_bstring();
-    assert_eq!(url, "user@host.xz:42:C:/strange/absolute/path");
+    assert_eq!(url, "user@host.xz:C:/strange/absolute/path");
     Ok(())
 }
 

@@ -103,17 +103,19 @@ fn shortest_possible_relative_path() -> crate::Result {
     assert_eq!(parsed, ".");
     let parsed = assert_url("..", url_alternate(Scheme::File, None, None, None, b".."))?.to_bstring();
     assert_eq!(parsed, "..");
-    let parsed = assert_url("file://../", url(Scheme::File, None, None, None, b"../"))?.to_bstring();
-    assert_eq!(parsed, "file://../");
-    let parsed = assert_url("file://./", url(Scheme::File, None, None, None, b"./"))?.to_bstring();
-    assert_eq!(parsed, "file://./");
     #[cfg(windows)]
     {
         let parsed = assert_url("file://.\\", url(Scheme::File, None, None, None, b".\\"))?.to_bstring();
         assert_eq!(parsed, "file://.\\");
     }
-    let parsed = assert_url("file://a/", url(Scheme::File, None, None, None, b"a/"))?.to_bstring();
-    assert_eq!(parsed, "file://a/");
+    Ok(())
+}
+
+#[test]
+fn no_relative_paths_if_protocol() -> crate::Result {
+    assert_url_roundtrip("file://../", url(Scheme::File, None, "..", None, b"/"))?;
+    assert_url_roundtrip("file://./", url(Scheme::File, None, ".", None, b"/"))?;
+    assert_url_roundtrip("file://a/", url(Scheme::File, None, "a", None, b"/"))?;
     Ok(())
 }
 
