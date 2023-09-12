@@ -133,7 +133,7 @@ blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest",
 ## Activate features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases, skipping the ones known to cause compile failures
 ## on some platforms.
 max-performance-safe = [
-    "gix-features/parallel",
+    "parallel",
     "pack-cache-lru-static",
     "pack-cache-lru-dynamic",
     "gix-features/fs-walkdir-parallel"
@@ -143,6 +143,11 @@ max-performance-safe = [
 ## This may be useful when tempfiles are created and accessed in a massively parallel fashion and you know that this is indeed faster than
 ## the simpler implementation that is the default.
 hp-tempfile-registry = ["gix-tempfile/hp-hashmap"]
+
+## Make certain data structure threadsafe (or `Sync`) to facilitate multithreading. Further, many algorithms will now use multiple threads by default.
+##
+## If unset, most of `gix` can only be used in a single thread as data structures won't be `Send` anymore.
+parallel = ["gix-features/parallel"]
 
 ## Provide a fixed-size allocation-free LRU cache for packs. It's useful if caching is desired while keeping the memory footprint
 ## for the LRU-cache itself low.
