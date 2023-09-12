@@ -2250,6 +2250,7 @@ dependencies = [
  "gix-index 0.24.0",
  "gix-object 0.36.0",
  "gix-path 0.10.0",
+ "gix-pathspec",
  "thiserror",
 ]
 
@@ -2264,6 +2265,7 @@ dependencies = [
  "gix-hash 0.13.0",
  "gix-index 0.24.0",
  "gix-object 0.36.0",
+ "gix-pathspec",
  "gix-status",
  "gix-testtools",
 ]

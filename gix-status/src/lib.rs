@@ -12,4 +12,22 @@
 pub mod read;
 
 pub mod index_as_worktree;
+
+use bstr::BStr;
 pub use index_as_worktree::function::index_as_worktree;
+
+/// A trait to facilitate working working with pathspecs.
+pub trait Pathspec {
+    /// Return the portion of the prefix among all of the pathspecs involved in this search, or an empty string if
+    /// there is none. It doesn't have to end at a directory boundary though, nor does it denote a directory.
+    ///
+    /// Note that the common_prefix is always matched case-sensitively, and it is useful to skip large portions of input.
+    /// Further, excluded pathspecs don't participate which makes this common prefix inclusive. To work correclty though,
+    /// one will have to additionally match paths that have the common prefix with that pathspec itself to assure it is
+    /// not excluded.
+    fn common_prefix(&self) -> &BStr;
+
+    /// Return `true` if `relative_path` is included in this pathspec.
+    /// `is_dir` is `true` if `relative_path` is a directory.
+    fn is_included(&mut self, relative_path: &BStr, is_dir: Option<bool>) -> bool;
+}
