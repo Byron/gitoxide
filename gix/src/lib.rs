@@ -161,7 +161,7 @@ pub use types::{
     Commit, Head, Id, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
 };
 #[cfg(feature = "attributes")]
-pub use types::{Pathspec, Submodule};
+pub use types::{Pathspec, PathspecDetached, Submodule};
 
 ///
 pub mod clone;
