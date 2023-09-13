@@ -144,3 +144,14 @@ impl<'repo> Pathspec<'repo> {
         })
     }
 }
+
+#[cfg(feature = "status")]
+impl gix_status::Pathspec for Pathspec<'_> {
+    fn common_prefix(&self) -> &BStr {
+        self.search.common_prefix()
+    }
+
+    fn is_included(&mut self, relative_path: &BStr, is_dir: Option<bool>) -> bool {
+        self.is_included(relative_path, is_dir)
+    }
+}

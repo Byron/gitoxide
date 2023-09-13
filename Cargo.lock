@@ -1238,6 +1238,7 @@ dependencies = [
  "gix-revision",
  "gix-revwalk",
  "gix-sec 0.10.0",
+ "gix-status",
  "gix-submodule",
  "gix-tempfile 9.0.0",
  "gix-testtools",
