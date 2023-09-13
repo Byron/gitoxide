@@ -30,8 +30,10 @@ impl Search {
     /// Return the portion of the prefix among all of the pathspecs involved in this search, or an empty string if
     /// there is none. It doesn't have to end at a directory boundary though, nor does it denote a directory.
     ///
-    /// Note that the common_prefix can be matched case-insensitively, which makes it useful to skip large portions of input.
-    /// Further, excluded pathspecs don't participate which makes this common prefix inclusive.
+    /// Note that the common_prefix is always matched case-sensitively, and it is useful to skip large portions of input.
+    /// Further, excluded pathspecs don't participate which makes this common prefix inclusive. To work correclty though,
+    /// one will have to additionally match paths that have the common prefix with that pathspec itself to assure it is
+    /// not excluded.
     pub fn common_prefix(&self) -> &BStr {
         self.patterns
             .iter()

@@ -8,7 +8,7 @@ use crate::{
 
 impl Search {
     /// Return the first [`Match`] of `relative_path`, or `None`.
-    /// `is_dir` is true if `relative_path` is a directory.
+    /// `is_dir` is `true` if `relative_path` is a directory.
     /// `attributes` is called as `attributes(relative_path, case, is_dir, outcome) -> has_match` to obtain for attributes for `relative_path`, if
     /// the underlying pathspec defined an attribute filter, to be stored in `outcome`, returning true if there was a match.
     /// All attributes of the pathspec have to be present in the defined value for the pathspec to match.
