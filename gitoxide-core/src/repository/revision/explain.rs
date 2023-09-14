@@ -129,8 +129,8 @@ impl<'a> delegate::Navigate for Explain<'a> {
             self.out,
             "{}",
             match kind {
-                Traversal::NthAncestor(no) => format!("Traverse to the {no}th ancestor of revision named '{name}'"),
-                Traversal::NthParent(no) => format!("Select the {no}th parent of revision named '{name}'"),
+                Traversal::NthAncestor(no) => format!("Traverse to the {no}. ancestor of revision named '{name}'"),
+                Traversal::NthParent(no) => format!("Select the {no}. parent of revision named '{name}'"),
             }
         )
         .ok()
