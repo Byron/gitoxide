@@ -17,7 +17,7 @@ test = false
 default = []
 ## Provide traits and utilities for providing progress information. These can then be rendered
 ## using facilities of the `prodash` crate.
-progress = ["dep:prodash"]
+progress = ["prodash"]
 ## Provide human-readable numbers as well as easier to read byte units for progress bars.
 progress-unit-human-numbers = ["prodash?/unit-human"]
 ## Provide human readable byte units for progress bars.
