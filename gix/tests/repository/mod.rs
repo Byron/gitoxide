@@ -1,4 +1,3 @@
-use crate::util;
 use gix::Repository;
 
 mod config;
@@ -30,6 +29,6 @@ fn size_in_memory() {
 #[cfg(feature = "parallel")]
 fn thread_safe_repository_is_sync() -> crate::Result {
     fn f<T: Send + Sync + Clone>(_t: T) {}
-    f(util::basic_repo()?.into_sync());
+    f(crate::util::basic_repo()?.into_sync());
     Ok(())
 }
