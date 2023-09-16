@@ -177,18 +177,32 @@ fn parse_file_url(input: &BStr, protocol_colon: usize) -> Result<crate::Url, Err
 
     // We can not use the url crate to parse host and path because it special cases Windows
     // driver letters. With the url crate an input of `file://x:/path/to/git` is parsed as empty
-    // host and with `x:/path/to/git` as path. This behavior is wrong for Git which parses the
-    // `x:` as the host.
-    // TODO: this behavior is most likely different on Windows
-    let host = if first_slash == 0 {
-        // file:///path/to/git
+    // host and with `x:/path/to/git` as path. This behavior is wrong for Git which only follows
+    // that rule on Windows and parses `x:` as host on Unix platforms. Additionally the url crate
+    // does not account for Windows special UNC path support.
+
+    // TODO: implement UNC path special case
+    let windows_special_path = if cfg!(windows) {
+        // parse `file://x:/path/to/git` as explained above
+        if input_after_protocol.chars().nth(1) == Some(':') {
+            Some(input_after_protocol)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    let host = if windows_special_path.is_some() || first_slash == 0 {
+        // `file:///path/to/git` or a windows special case was triggered
         None
     } else {
-        // file://host/path/to/git
+        // `file://host/path/to/git`
         Some(&input_after_protocol[..first_slash])
     };
-    // path includes the slash character
-    let path = &input_after_protocol[first_slash..];
+
+    // default behavior on Unix platforms and if no Windows special case was triggered
+    let path = windows_special_path.unwrap_or(&input_after_protocol[first_slash..]);
 
     Ok(crate::Url {
         serialize_alternative_form: false,
