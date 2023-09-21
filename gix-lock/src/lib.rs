@@ -1,9 +1,9 @@
 //! git-style registered lock files to make altering resources atomic.
 //!
-//! In this model, reads are always atomic and can be performed directly while writes are facilitated by a locking mechanism
-//! implemented here.
+//! In this model, reads are always atomic and can be performed directly while writes are facilitated by the locking mechanism
+//! implemented here. Locks are acquired atomically, then written to, to finally atomically overwrite the actual resource.
 //!
-//! Lock files mostly `gix-tempfile` with its auto-cleanup and the following:
+//! Lock files are wrapped [`gix-tempfile`](gix_tempfile)-handles and add the following:
 //!
 //! * consistent naming of lock files
 //! * block the thread (with timeout) or fail immediately if a lock cannot be obtained right away
@@ -11,14 +11,15 @@
 //!
 //! # Limitations
 //!
+//! * [All limitations of `gix-tempfile`](gix_tempfile) apply. **A highlight of such a limitation is resource leakage
+//!   which results in them being permanently locked unless there is user-intervention.**
 //! * As the lock file is separate from the actual resource, locking is merely a convention rather than being enforced.
-//! * The limitations of `gix-tempfile` apply.
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
+use gix_tempfile::handle::{Closed, Writable};
 use std::path::PathBuf;
 
 pub use gix_tempfile as tempfile;
-use gix_tempfile::handle::{Closed, Writable};
 
 const DOT_LOCK_SUFFIX: &str = ".lock";
 
