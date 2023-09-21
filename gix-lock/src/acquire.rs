@@ -30,6 +30,16 @@ impl fmt::Display for Fail {
     }
 }
 
+impl From<Duration> for Fail {
+    fn from(value: Duration) -> Self {
+        if value.is_zero() {
+            Fail::Immediately
+        } else {
+            Fail::AfterDurationWithBackoff(value)
+        }
+    }
+}
+
 /// The error returned when acquiring a [`File`] or [`Marker`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
