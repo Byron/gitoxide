@@ -69,6 +69,11 @@ impl Handle<Closed> {
     ///
     /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
     /// intermediate directories will be removed.
+    ///
+    /// ### Warning of potential leaks
+    ///
+    /// Without [signal handlers](crate::signal) installed, tempfiles will remain once a termination
+    /// signal is encountered as destructors won't run. See [the top-level documentation](crate) for more.
     pub fn at(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
         Ok(Handle {
             id: Handle::<()>::at_path(path.as_ref(), directory, cleanup, Mode::Closed)?,
@@ -92,6 +97,11 @@ impl Handle<Writable> {
     ///
     /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
     /// intermediate directories will be removed.
+    ///
+    /// ### Warning of potential leaks
+    ///
+    /// Without [signal handlers](crate::signal) installed, tempfiles will remain once a termination
+    /// signal is encountered as destructors won't run. See [the top-level documentation](crate) for more.
     pub fn at(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
         Ok(Handle {
             id: Handle::<()>::at_path(path.as_ref(), directory, cleanup, Mode::Writable)?,
@@ -102,6 +112,11 @@ impl Handle<Writable> {
     /// Create a registered tempfile within `containing_directory` with a name that won't clash, and clean it up as specified with `cleanup`.
     /// Control how to deal with intermediate directories with `directory`.
     /// The temporary file is opened and can be written to using the [`with_mut()`][Handle::with_mut()] method.
+    ///
+    /// ### Warning of potential leaks
+    ///
+    /// Without [signal handlers](crate::signal) installed, tempfiles will remain once a termination
+    /// signal is encountered as destructors won't run. See [the top-level documentation](crate) for more.
     pub fn new(
         containing_directory: impl AsRef<Path>,
         directory: ContainingDirectory,

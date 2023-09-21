@@ -30,6 +30,16 @@ impl fmt::Display for Fail {
     }
 }
 
+impl From<Duration> for Fail {
+    fn from(value: Duration) -> Self {
+        if value.is_zero() {
+            Fail::Immediately
+        } else {
+            Fail::AfterDurationWithBackoff(value)
+        }
+    }
+}
+
 /// The error returned when acquiring a [`File`] or [`Marker`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -49,6 +59,12 @@ impl File {
     ///
     /// If `boundary_directory` is given, non-existing directories will be created automatically and removed in the case of
     /// a rollback. Otherwise the containing directory is expected to exist, even though the resource doesn't have to.
+    ///
+    /// ### Warning of potential resource leak
+    ///
+    /// Please note that the underlying file will remain if destructors don't run, as is the case when interrupting the application.
+    /// This results in the resource being locked permanently unless the lock file is removed by other means.
+    /// See [the crate documentation](crate) for more information.
     pub fn acquire_to_update_resource(
         at_path: impl AsRef<Path>,
         mode: Fail,
@@ -70,6 +86,12 @@ impl Marker {
     ///
     /// If `boundary_directory` is given, non-existing directories will be created automatically and removed in the case of
     /// a rollback.
+    ///
+    /// ### Warning of potential resource leak
+    ///
+    /// Please note that the underlying file will remain if destructors don't run, as is the case when interrupting the application.
+    /// This results in the resource being locked permanently unless the lock file is removed by other means.
+    /// See [the crate documentation](crate) for more information.
     pub fn acquire_to_hold_resource(
         at_path: impl AsRef<Path>,
         mode: Fail,

@@ -9,8 +9,9 @@
 //!
 //! ### Initial Setup
 //!
-//! As no handlers for `TERMination` are installed, it is required to call [`signal::setup()`] before creating the first tempfile.
-//! This also allows to control how `git-tempfiles` integrates with other handlers under application control.
+//! As no handlers for `TERMination` are installed, it is required to call [`signal::setup()`] before creating
+//! the first tempfile. This also allows to control how this crate integrates with
+//! other handlers under application control.
 //!
 //! As a general rule of thumb, use `Default::default()` as argument to emulate the default behaviour and
 //! abort the process after cleaning temporary files. Read more about options in [`signal::handler::Mode`].
@@ -23,7 +24,7 @@
 //! * The application is performing a write operation on the tempfile when a signal arrives, preventing this tempfile to be removed,
 //!   but not others. Any other operation dealing with the tempfile suffers from the same issue.
 //!
-//! [signal-hook]: https://docs.rs/signal-hook
+//! [`signal-hook`]: https://docs.rs/signal-hook
 //!
 //! ## Feature Flags
 #![cfg_attr(
