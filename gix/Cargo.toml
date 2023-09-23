@@ -51,7 +51,7 @@ default = ["max-performance-safe", "comfort", "basic", "extras"]
 basic = ["blob-diff", "revision", "index"]
 
 ## Various additional features and capabilities that are not necessarily part of what most users would need.
-extras = ["worktree-stream", "worktree-archive", "revparse-regex", "mailmap", "excludes", "attributes", "worktree-mutation", "credentials", "interrupt"]
+extras = ["worktree-stream", "worktree-archive", "revparse-regex", "mailmap", "excludes", "attributes", "worktree-mutation", "credentials", "interrupt", "status"]
 
 ## Various progress-related features that improve the look of progress message units.
 comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
@@ -60,6 +60,9 @@ comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human
 #!
 #! A component is a distinct feature which may be comprised of one or more methods around a particular topic.
 #! Providers of libraries should only activate the components they need.
+
+## Obtain information similar to `git status`.
+status = ["gix-status"]
 
 ## Utilities for interrupting computations and cleaning up tempfiles.
 interrupt = ["dep:signal-hook", "gix-tempfile/signals"]
@@ -239,6 +242,7 @@ gix-hashtable = { version = "^0.4.0", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.20.0", path = "../gix-commitgraph" }
 gix-pathspec = { version = "^0.2.0", path = "../gix-pathspec", optional = true }
 gix-submodule = { version = "^0.3.0", path = "../gix-submodule", optional = true }
+gix-status = { version = "^0.1.0", path = "../gix-status", optional = true }
 
 gix-worktree-stream = { version = "^0.4.0", path = "../gix-worktree-stream", optional = true }
 gix-archive = { version = "^0.4.0", path = "../gix-archive", default-features = false, optional = true }

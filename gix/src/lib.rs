@@ -124,6 +124,8 @@ pub use gix_ref as refs;
 pub use gix_refspec as refspec;
 pub use gix_revwalk as revwalk;
 pub use gix_sec as sec;
+#[cfg(feature = "status")]
+pub use gix_status as status;
 pub use gix_tempfile as tempfile;
 pub use gix_trace as trace;
 pub use gix_traverse as traverse;
@@ -159,7 +161,7 @@ pub use types::{
     Commit, Head, Id, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
 };
 #[cfg(feature = "attributes")]
-pub use types::{Pathspec, Submodule};
+pub use types::{Pathspec, PathspecDetached, Submodule};
 
 ///
 pub mod clone;

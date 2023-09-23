@@ -40,6 +40,7 @@ pub mod mailmap;
 pub mod odb;
 pub mod remote;
 pub mod revision;
+pub mod status;
 pub mod submodule;
 pub mod tree;
 pub mod verify;

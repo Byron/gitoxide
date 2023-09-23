@@ -1179,6 +1179,7 @@ dependencies = [
  "gix",
  "gix-archive",
  "gix-pack",
+ "gix-status",
  "gix-transport",
  "gix-url",
  "itertools 0.11.0",
@@ -1238,6 +1239,7 @@ dependencies = [
  "gix-revision",
  "gix-revwalk",
  "gix-sec 0.10.0",
+ "gix-status",
  "gix-submodule",
  "gix-tempfile 9.0.0",
  "gix-testtools",
@@ -2250,6 +2252,7 @@ dependencies = [
  "gix-index 0.24.0",
  "gix-object 0.36.0",
  "gix-path 0.10.0",
+ "gix-pathspec",
  "thiserror",
 ]
 
@@ -2264,6 +2267,7 @@ dependencies = [
  "gix-hash 0.13.0",
  "gix-index 0.24.0",
  "gix-object 0.36.0",
+ "gix-pathspec",
  "gix-status",
  "gix-testtools",
 ]

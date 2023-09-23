@@ -29,17 +29,25 @@ const TEST_OPTIONS: index::entry::stat::Options = index::entry::stat::Options {
 };
 
 fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
+    fixture_filtered(name, &[], expected_status)
+}
+
+fn fixture_filtered(name: &str, pathspecs: &[&str], expected_status: &[(&BStr, Option<Change>, bool)]) {
     let worktree = fixture_path(name);
     let git_dir = worktree.join(".git");
     let mut index =
         gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, false, Default::default()).unwrap();
     let mut recorder = Recorder::default();
+    let search = gix_pathspec::Search::from_specs(to_pathspecs(pathspecs), None, std::path::Path::new(""))
+        .expect("valid specs can be normalized");
     index_as_worktree(
         &mut index,
         &worktree,
         &mut recorder,
         FastEq,
         |_, _| Ok::<_, std::convert::Infallible>(gix_object::BlobRef { data: &[] }),
+        &mut gix_features::progress::Discard,
+        Pathspec(search),
         Options {
             fs: gix_fs::Capabilities::probe(&git_dir),
             stat: TEST_OPTIONS,
@@ -51,6 +59,13 @@ fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
     assert_eq!(recorder.records, expected_status)
 }
 
+fn to_pathspecs(input: &[&str]) -> Vec<gix_pathspec::Pattern> {
+    input
+        .iter()
+        .map(|pattern| gix_pathspec::parse(pattern.as_bytes(), Default::default()).expect("known to be valid"))
+        .collect()
+}
+
 #[test]
 fn removed() {
     fixture(
@@ -60,6 +75,15 @@ fn removed() {
             (BStr::new(b"dir/sub-dir/symlink"), Some(Change::Removed), false),
             (BStr::new(b"empty"), Some(Change::Removed), false),
             (BStr::new(b"executable"), Some(Change::Removed), false),
+        ],
+    );
+
+    fixture_filtered(
+        "status_removed",
+        &["dir"],
+        &[
+            (BStr::new(b"dir/content"), Some(Change::Removed), false),
+            (BStr::new(b"dir/sub-dir/symlink"), Some(Change::Removed), false),
         ],
     );
 }
@@ -180,6 +204,8 @@ fn racy_git() {
         &mut recorder,
         counter.clone(),
         |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "no odb access expected")),
+        &mut gix_features::progress::Discard,
+        Pathspec::default(),
         Options {
             fs,
             stat: TEST_OPTIONS,
@@ -201,6 +227,8 @@ fn racy_git() {
         &mut recorder,
         counter,
         |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "no odb access expected")),
+        &mut gix_features::progress::Discard,
+        Pathspec::default(),
         Options {
             fs,
             stat: TEST_OPTIONS,
@@ -225,4 +253,29 @@ fn racy_git() {
         )],
         "racy change is correctly detected"
     );
+}
+
+#[derive(Clone)]
+struct Pathspec(gix_pathspec::Search);
+
+impl Default for Pathspec {
+    fn default() -> Self {
+        let search = gix_pathspec::Search::from_specs(to_pathspecs(&[]), None, std::path::Path::new(""))
+            .expect("empty is always valid");
+        Self(search)
+    }
+}
+
+impl gix_status::Pathspec for Pathspec {
+    fn common_prefix(&self) -> &BStr {
+        self.0.common_prefix()
+    }
+
+    fn is_included(&mut self, relative_path: &BStr, is_dir: Option<bool>) -> bool {
+        self.0
+            .pattern_matching_relative_path(relative_path, is_dir, &mut |_, _, _, _| {
+                unreachable!("we don't use attributes in our pathspecs")
+            })
+            .map_or(false, |m| !m.is_excluded())
+    }
 }

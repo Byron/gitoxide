@@ -135,7 +135,7 @@ pub fn in_parallel_if<I, S, O, R>(
     condition: impl FnOnce() -> bool,
     input: impl Iterator<Item = I> + Send,
     thread_limit: Option<usize>,
-    new_thread_state: impl Fn(usize) -> S + Send + Clone,
+    new_thread_state: impl FnOnce(usize) -> S + Send + Clone,
     consume: impl FnMut(I, &mut S) -> O + Send + Clone,
     reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
@@ -161,7 +161,7 @@ pub fn in_parallel_if<I, S, O, R>(
     _condition: impl FnOnce() -> bool,
     input: impl Iterator<Item = I>,
     thread_limit: Option<usize>,
-    new_thread_state: impl Fn(usize) -> S,
+    new_thread_state: impl FnOnce(usize) -> S,
     consume: impl FnMut(I, &mut S) -> O,
     reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>

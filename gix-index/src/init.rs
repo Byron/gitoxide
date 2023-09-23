@@ -39,6 +39,7 @@ mod from_tree {
         where
             Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
         {
+            let _span = gix_features::trace::coarse!("gix_index::State::from_tree()");
             let mut buf = Vec::new();
             let root = find(tree, &mut buf).ok_or(breadthfirst::Error::NotFound { oid: tree.into() })?;
 

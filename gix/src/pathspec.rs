@@ -3,7 +3,7 @@ use gix_macros::momo;
 use gix_odb::FindExt;
 pub use gix_pathspec::*;
 
-use crate::{bstr::BStr, AttributeStack, Pathspec, Repository};
+use crate::{bstr::BStr, AttributeStack, Pathspec, PathspecDetached, Repository};
 
 ///
 pub mod init {
@@ -75,6 +75,15 @@ impl<'repo> Pathspec<'repo> {
             self.stack.map(|stack| AttributeStack::new(stack, self.repo)),
         )
     }
+
+    /// Turn ourselves into an implementation that works without a repository instance and that is rather minimal.
+    pub fn detach(self) -> std::io::Result<PathspecDetached> {
+        Ok(PathspecDetached {
+            search: self.search,
+            stack: self.stack,
+            odb: self.repo.objects.clone().into_arc()?,
+        })
+    }
 }
 
 /// Access
@@ -142,5 +151,57 @@ impl<'repo> Pathspec<'repo> {
                 self.is_included(path, Some(false)).then_some((path, entry))
             })
         })
+    }
+}
+
+/// Access
+impl PathspecDetached {
+    /// Return the first [`Match`](search::Match) of `relative_path`, or `None`.
+    /// Note that the match might [be excluded](search::Match::is_excluded()).
+    /// `is_dir` is true if `relative_path` is a directory.
+    #[doc(
+        alias = "match_diff",
+        alias = "match_tree",
+        alias = "match_index",
+        alias = "match_workdir",
+        alias = "matches_path",
+        alias = "git2"
+    )]
+    #[momo]
+    pub fn pattern_matching_relative_path<'a>(
+        &mut self,
+        relative_path: impl Into<&'a BStr>,
+        is_dir: Option<bool>,
+    ) -> Option<gix_pathspec::search::Match<'_>> {
+        self.search.pattern_matching_relative_path(
+            relative_path.into(),
+            is_dir,
+            &mut |relative_path, case, is_dir, out| {
+                let stack = self.stack.as_mut().expect("initialized in advance");
+                stack
+                    .set_case(case)
+                    .at_entry(relative_path, Some(is_dir), |id, buf| self.odb.find_blob(id, buf))
+                    .map_or(false, |platform| platform.matching_attributes(out))
+            },
+        )
+    }
+
+    /// The simplified version of [`pattern_matching_relative_path()`](Self::pattern_matching_relative_path()) which returns
+    /// `true` if `relative_path` is included in the set of positive pathspecs, while not being excluded.
+    #[momo]
+    pub fn is_included<'a>(&mut self, relative_path: impl Into<&'a BStr>, is_dir: Option<bool>) -> bool {
+        self.pattern_matching_relative_path(relative_path, is_dir)
+            .map_or(false, |m| !m.is_excluded())
+    }
+}
+
+#[cfg(feature = "status")]
+impl gix_status::Pathspec for PathspecDetached {
+    fn common_prefix(&self) -> &BStr {
+        self.search.common_prefix()
+    }
+
+    fn is_included(&mut self, relative_path: &BStr, is_dir: Option<bool>) -> bool {
+        self.is_included(relative_path, is_dir)
     }
 }

@@ -1,3 +1,4 @@
+use std::sync::atomic::Ordering;
 use std::{io, marker::PhantomData, path::Path};
 
 use bstr::BStr;
@@ -11,7 +12,7 @@ use crate::{
         types::{Error, Options},
         Change, VisitEntry,
     },
-    read,
+    read, Pathspec,
 };
 
 /// Calculates the changes that need to be applied to an `index` to match the state of the `worktree` and makes them
@@ -24,12 +25,15 @@ use crate::{
 /// Note that this isn't technically quite what this function does as this also provides some additional information,
 /// like whether a file has conflicts, and files that were added with `git add` are shown as a special
 /// changes despite not technically requiring a change to the index since `git add` already added the file to the index.
+#[allow(clippy::too_many_arguments)]
 pub fn index_as_worktree<'index, T, Find, E>(
     index: &'index mut gix_index::State,
     worktree: &Path,
     collector: &mut impl VisitEntry<'index, ContentChange = T>,
     compare: impl CompareBlobs<Output = T> + Send + Clone,
     find: Find,
+    progress: &mut dyn gix_features::progress::Progress,
+    pathspec: impl Pathspec + Send + Clone,
     options: Options,
 ) -> Result<(), Error>
 where
@@ -43,14 +47,22 @@ where
     let timestamp = index.timestamp();
     index.set_timestamp(FileTime::now());
     let (chunk_size, thread_limit, _) = gix_features::parallel::optimize_chunk_size_and_thread_limit(
-        100,
+        500, // just like git
         index.entries().len().into(),
         options.thread_limit,
         None,
     );
+
+    let range = index
+        .prefixed_entries_range(pathspec.common_prefix())
+        .unwrap_or(0..index.entries().len());
     let (entries, path_backing) = index.entries_mut_and_pathbacking();
+    let entries = &mut entries[range];
+    progress.init(entries.len().into(), gix_features::progress::count("files"));
+    let count = progress.counter();
+
     in_parallel_if(
-        || true, // TODO: heuristic: when is parallelization not worth it?
+        || true, // TODO: heuristic: when is parallelization not worth it? Git says 500 items per thread, but to 20 threads, we can be more fine-grained though.
         entries.chunks_mut(chunk_size),
         thread_limit,
         {
@@ -65,15 +77,20 @@ where
                         worktree,
                         options,
                     },
-                    compare.clone(),
-                    find.clone(),
+                    compare,
+                    find,
+                    pathspec,
                 )
             }
         },
-        |entries, (state, diff, find)| {
+        |entries, (state, diff, find, pathspec)| {
             entries
                 .iter_mut()
-                .filter_map(|entry| state.process(entry, diff, find))
+                .filter_map(|entry| {
+                    let res = state.process(entry, diff, find, pathspec);
+                    count.fetch_add(1, Ordering::Relaxed);
+                    res
+                })
                 .collect()
         },
         ReduceChange {
@@ -101,10 +118,11 @@ impl<'index> State<'_, 'index> {
         entry: &'index mut gix_index::Entry,
         diff: &mut impl CompareBlobs<Output = T>,
         find: &mut Find,
+        pathspec: &mut impl Pathspec,
     ) -> Option<StatusResult<'index, T>>
     where
         E: std::error::Error + Send + Sync + 'static,
-        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Send + Clone,
+        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
     {
         let conflict = match entry.stage() {
             0 => false,
@@ -120,6 +138,9 @@ impl<'index> State<'_, 'index> {
             return None;
         }
         let path = entry.path_in(self.path_backing);
+        if !pathspec.is_included(path, Some(false)) {
+            return None;
+        }
         let status = self.compute_status(&mut *entry, path, diff, find);
         Some(status.map(move |status| (&*entry, path, status, conflict)))
     }
@@ -172,7 +193,7 @@ impl<'index> State<'_, 'index> {
     ) -> Result<Option<Change<T>>, Error>
     where
         E: std::error::Error + Send + Sync + 'static,
-        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Send + Clone,
+        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
     {
         // TODO fs cache
         let worktree_path = gix_path::try_from_bstr(git_path).map_err(|_| Error::IllformedUtf8)?;

@@ -120,6 +120,19 @@ pub mod diff {
 }
 
 ///
+pub mod stat_options {
+    /// The error produced when collecting stat information, and returned by [Repository::stat_options()](crate::Repository::stat_options()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        ConfigCheckStat(#[from] super::key::GenericErrorWithValue),
+        #[error(transparent)]
+        ConfigBoolean(#[from] super::boolean::Error),
+    }
+}
+
+///
 #[cfg(feature = "attributes")]
 pub mod checkout_options {
     /// The error produced when collecting all information needed for checking out files into a worktree.

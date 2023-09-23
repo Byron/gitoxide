@@ -127,6 +127,7 @@ pub enum Subcommands {
     Submodule(submodule::Platform),
     /// Show which git configuration values are used or planned.
     ConfigTree,
+    Status(status::Platform),
     Config(config::Platform),
     #[cfg(feature = "gitoxide-core-tools-corpus")]
     Corpus(corpus::Platform),
@@ -180,6 +181,33 @@ pub mod archive {
         ///
         /// If commit, the commit timestamp will be used as timestamp for each file in the archive.
         pub treeish: Option<String>,
+    }
+}
+
+pub mod status {
+    use gitoxide::shared::CheckPathSpec;
+    use gix::bstr::BString;
+
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+    pub enum Submodules {
+        /// display all information about submodules, including ref changes, modifications and untracked files.
+        #[default]
+        All,
+        /// Compare only the configuration of the superprojects commit with the actually checked out `HEAD` commit.
+        RefChange,
+        /// See if there are worktree modifications compared to the index, but do not check for untracked files.
+        Modifications,
+    }
+
+    #[derive(Debug, clap::Parser)]
+    #[command(about = "compute repository status similar to `git status`")]
+    pub struct Platform {
+        /// Define how to display submodule status.
+        #[clap(long, default_value = "all")]
+        pub submodules: Submodules,
+        /// The git path specifications to list attributes for, or unset to read from stdin one per line.
+        #[clap(value_parser = CheckPathSpec)]
+        pub pathspec: Vec<BString>,
     }
 }
 

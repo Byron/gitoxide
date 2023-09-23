@@ -93,9 +93,12 @@ pub struct Pattern {
     pub attributes: Vec<gix_attributes::Assignment>,
     /// If `true`, we are a special Nil pattern and always match.
     nil: bool,
-    /// The length of bytes in `path` that belong to the prefix, which will always be matched case-insensitively.
+    /// The length of bytes in `path` that belong to the prefix, which will always be matched case-sensitively
+    /// on case-sensitive filesystems.
+    ///
     /// That way, even though pathspecs are applied from the top, we can emulate having changed directory into
-    /// a specific sub-directory in a case-sensitive file-system.
+    /// a specific sub-directory in a case-sensitive file-system, even if the rest of the pathspec can be set to
+    /// match case-insensitively.
     /// Is set by [Pattern::normalize()].
     prefix_len: usize,
 }

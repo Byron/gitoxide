@@ -14,7 +14,7 @@ pub enum Error {
     Find(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 /// Options that control how the index status with a worktree is computed.
 pub struct Options {
     /// Capabilities of the file system which affect the status computation.

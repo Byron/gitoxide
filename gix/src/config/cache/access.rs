@@ -137,7 +137,7 @@ impl Cache {
 
         let install_dir = crate::path::install_dir().ok();
         let home = self.home_dir();
-        let ctx = crate::config::cache::interpolate_context(install_dir.as_deref(), home.as_deref());
+        let ctx = config::cache::interpolate_context(install_dir.as_deref(), home.as_deref());
         Some(path.interpolate(ctx))
     }
 
@@ -154,6 +154,29 @@ impl Cache {
         })
     }
 
+    #[cfg(feature = "index")]
+    pub(crate) fn stat_options(&self) -> Result<gix_index::entry::stat::Options, config::stat_options::Error> {
+        use crate::config::tree::gitoxide;
+        Ok(gix_index::entry::stat::Options {
+            trust_ctime: boolean(
+                self,
+                "core.trustCTime",
+                &Core::TRUST_C_TIME,
+                // For now, on MacOS it's known to not be trust-worthy at least with the Rust STDlib, being 2s off
+                !cfg!(target_os = "macos"),
+            )?,
+            use_nsec: boolean(self, "gitoxide.core.useNsec", &gitoxide::Core::USE_NSEC, false)?,
+            use_stdev: boolean(self, "gitoxide.core.useStdev", &gitoxide::Core::USE_STDEV, false)?,
+            check_stat: self
+                .apply_leniency(
+                    self.resolved
+                        .string("core", None, "checkStat")
+                        .map(|v| Core::CHECK_STAT.try_into_checkstat(v)),
+                )?
+                .unwrap_or(true),
+        })
+    }
+
     /// Collect everything needed to checkout files into a worktree.
     /// Note that some of the options being returned will be defaulted so safe settings, the caller might have to override them
     /// depending on the use-case.
@@ -162,7 +185,7 @@ impl Cache {
         &self,
         repo: &crate::Repository,
         attributes_source: gix_worktree::stack::state::attributes::Source,
-    ) -> Result<gix_worktree_state::checkout::Options, crate::config::checkout_options::Error> {
+    ) -> Result<gix_worktree_state::checkout::Options, config::checkout_options::Error> {
         use crate::config::tree::gitoxide;
         let git_dir = repo.git_dir();
         let thread_limit = self.apply_leniency(
@@ -202,18 +225,12 @@ impl Cache {
             destination_is_initially_empty: false,
             overwrite_existing: false,
             keep_going: false,
-            stat_options: gix_index::entry::stat::Options {
-                trust_ctime: boolean(self, "core.trustCTime", &Core::TRUST_C_TIME, true)?,
-                use_nsec: boolean(self, "gitoxide.core.useNsec", &gitoxide::Core::USE_NSEC, false)?,
-                use_stdev: boolean(self, "gitoxide.core.useStdev", &gitoxide::Core::USE_STDEV, false)?,
-                check_stat: self
-                    .apply_leniency(
-                        self.resolved
-                            .string("core", None, "checkStat")
-                            .map(|v| Core::CHECK_STAT.try_into_checkstat(v)),
-                    )?
-                    .unwrap_or(true),
-            },
+            stat_options: self.stat_options().map_err(|err| match err {
+                config::stat_options::Error::ConfigCheckStat(err) => {
+                    config::checkout_options::Error::ConfigCheckStat(err)
+                }
+                config::stat_options::Error::ConfigBoolean(err) => config::checkout_options::Error::ConfigBoolean(err),
+            })?,
         })
     }
 
