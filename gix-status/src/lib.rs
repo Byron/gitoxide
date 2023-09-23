@@ -31,3 +31,13 @@ pub trait Pathspec {
     /// `is_dir` is `true` if `relative_path` is a directory.
     fn is_included(&mut self, relative_path: &BStr, is_dir: Option<bool>) -> bool;
 }
+
+/// A stack that validates we are not going through a symlink in a way that is read-only.
+///
+/// It can efficiently validate paths when these are queried in sort-order, which leads to each component
+/// to only be checked once.
+pub struct SymlinkCheck {
+    inner: gix_fs::Stack,
+}
+
+mod stack;

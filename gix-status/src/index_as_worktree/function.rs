@@ -72,9 +72,9 @@ where
                     State {
                         buf: Vec::new(),
                         odb_buf: Vec::new(),
+                        path_stack: crate::SymlinkCheck::new(worktree.to_owned()),
                         timestamp,
                         path_backing,
-                        worktree,
                         options,
                     },
                     compare,
@@ -104,9 +104,8 @@ struct State<'a, 'b> {
     buf: Vec<u8>,
     odb_buf: Vec<u8>,
     timestamp: FileTime,
-    // path_cache: fs::Cache TODO path cache
+    path_stack: crate::SymlinkCheck,
     path_backing: &'b [u8],
-    worktree: &'a Path,
     options: &'a Options,
 }
 
@@ -195,12 +194,13 @@ impl<'index> State<'_, 'index> {
         E: std::error::Error + Send + Sync + 'static,
         Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
     {
-        // TODO fs cache
         let worktree_path = gix_path::try_from_bstr(git_path).map_err(|_| Error::IllformedUtf8)?;
-        let worktree_path = self.worktree.join(worktree_path);
+        let worktree_path = match self.path_stack.verified_path(worktree_path.as_ref()) {
+            Ok(path) => path,
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Some(Change::Removed)),
+            Err(err) => return Err(Error::Io(err)),
+        };
         let metadata = match worktree_path.symlink_metadata() {
-            // TODO: check if any parent directory is a symlink
-            //       we need to use fs::Cache for that
             Ok(metadata) if metadata.is_dir() => {
                 // index entries are normally only for files/symlinks
                 // if a file turned into a directory it was removed
@@ -256,7 +256,7 @@ impl<'index> State<'_, 'index> {
 
         let read_file = WorktreeBlob {
             buf: &mut self.buf,
-            path: &worktree_path,
+            path: worktree_path,
             entry,
             options: self.options,
         };
