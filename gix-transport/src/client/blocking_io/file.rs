@@ -211,6 +211,11 @@ impl client::Transport for SpawnProcessOnDemand {
         };
         cmd.stdin = Stdio::piped();
         cmd.stdout = Stdio::piped();
+        if self.path.first() == Some(&b'-') {
+            return Err(client::Error::AmbiguousPath {
+                path: self.path.clone(),
+            });
+        }
         let repo_path = if self.ssh_cmd.is_some() {
             cmd.args.push(service.as_str().into());
             gix_quote::single(self.path.as_ref()).to_os_str_lossy().into_owned()
@@ -225,6 +230,7 @@ impl client::Transport for SpawnProcessOnDemand {
         }
         cmd.envs(std::mem::take(&mut self.envs));
 
+        gix_features::trace::debug!(command = ?cmd, "gix_transport::SpawnProcessOnDemand");
         let mut child = cmd.spawn().map_err(|err| client::Error::InvokeProgram {
             source: err,
             command: cmd_name.into_owned(),

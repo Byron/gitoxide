@@ -345,6 +345,12 @@ title "gix commit-graph"
               }
             )
           )
+          (with "an ambiguous ssh host which could be mistaken for an argument"
+              it "fails without trying to pass it to command-line programs" && {
+                WITH_SNAPSHOT="$snapshot/fail-ambigous-host" \
+                expect_run $WITH_FAILURE "$exe_plumbing" free pack receive 'ssh://-oProxyCommand=open$IFS-aCalculator/foo'
+              }
+          )
           fi
         )
         elif [[ "$kind" = "small" ]]; then
@@ -355,6 +361,17 @@ title "gix commit-graph"
         fi
       )
     )
+    if test "$kind" = "max" || test "$kind" = "max-pure"; then
+    (with "the 'clone' sub-command"
+        snapshot="$snapshot/clone"
+        (with "an ambiguous ssh host which could be mistaken for an argument"
+            it "fails without trying to pass it to command-line programs" && {
+              WITH_SNAPSHOT="$snapshot/fail-ambigous-host" \
+              expect_run $WITH_FAILURE "$exe_plumbing" clone 'ssh://-oProxyCommand=open$IFS-aCalculator/foo'
+            }
+        )
+    )
+    fi
     (with "the 'index' sub-command"
       snapshot="$snapshot/index"
       title "gix free pack index create"

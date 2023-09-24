@@ -144,13 +144,28 @@ mod program_kind {
                 assert!(call_args(kind, "ssh://user@host:43/p", Protocol::V2).ends_with("-P 43 user@host"));
             }
         }
+        #[test]
+        fn ambiguous_host_is_allowed_with_user() {
+            assert_eq!(
+                call_args(ProgramKind::Ssh, "ssh://user@-arg/p", Protocol::V2),
+                joined(&["ssh", "-o", "SendEnv=GIT_PROTOCOL", "user@-arg"])
+            );
+        }
+
+        #[test]
+        fn ambiguous_host_is_disallowed() {
+            assert!(matches!(
+                try_call(ProgramKind::Ssh, "ssh://-arg/p", Protocol::V2),
+                Err(ssh::invocation::Error::AmbiguousHostName { host }) if host == "-arg"
+            ));
+        }
 
         #[test]
         fn simple_cannot_handle_any_arguments() {
-            match try_call(ProgramKind::Simple, "ssh://user@host:42/p", Protocol::V2) {
-                Err(ssh::invocation::Error { .. }) => {}
-                _ => panic!("BUG: unexpected outcome"),
-            }
+            assert!(matches!(
+                try_call(ProgramKind::Simple, "ssh://user@host:42/p", Protocol::V2),
+                Err(ssh::invocation::Error::Unsupported { .. })
+            ));
             assert_eq!(
                 call_args(ProgramKind::Simple, "ssh://user@host/p", Protocol::V2),
                 joined(&["simple", "user@host"]),

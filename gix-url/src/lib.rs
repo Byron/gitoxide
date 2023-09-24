@@ -48,6 +48,13 @@ pub struct Url {
     /// The port to use when connecting to a host. If `None`, standard ports depending on `scheme` will be used.
     pub port: Option<u16>,
     /// The path portion of the URL, usually the location of the git repository.
+    ///
+    /// # Security-Warning
+    ///
+    /// URLs allow paths to start with `-` which makes it possible to mask command-line arguments as path which then leads to
+    /// the invocation of programs from an attacker controlled URL. See <https://secure.phabricator.com/T12961> for details.
+    ///
+    /// If this value is going to be used in a command-line application, call [Self::path_argument_safe()] instead.
     pub path: bstr::BString,
 }
 
@@ -123,9 +130,34 @@ impl Url {
         self.password.as_deref()
     }
     /// Returns the host mentioned in the url, if present.
+    ///
+    /// # Security-Warning
+    ///
+    /// URLs allow hosts to start with `-` which makes it possible to mask command-line arguments as host which then leads to
+    /// the invocation of programs from an attacker controlled URL. See <https://secure.phabricator.com/T12961> for details.
+    ///
+    /// If this value is going to be used in a command-line application, call [Self::host_argument_safe()] instead.
     pub fn host(&self) -> Option<&str> {
         self.host.as_deref()
     }
+
+    /// Return the host of this URL if present *and* if it can't be mistaken for a command-line argument.
+    ///
+    /// Use this method if the host is going to be passed to a command-line application.
+    pub fn host_argument_safe(&self) -> Option<&str> {
+        self.host().filter(|host| !looks_like_argument(host.as_bytes()))
+    }
+
+    /// Return the path of this URL *and* if it can't be mistaken for a command-line argument.
+    /// Note that it always begins with a slash, which is ignored for this comparison.
+    ///
+    /// Use this method if the path is going to be passed to a command-line application.
+    pub fn path_argument_safe(&self) -> Option<&BStr> {
+        self.path
+            .get(1..)
+            .and_then(|truncated| (!looks_like_argument(truncated)).then_some(self.path.as_ref()))
+    }
+
     /// Returns true if the path portion of the url is `/`.
     pub fn path_is_root(&self) -> bool {
         self.path == "/"
@@ -144,6 +176,10 @@ impl Url {
             })
         })
     }
+}
+
+fn looks_like_argument(b: &[u8]) -> bool {
+    b.first() == Some(&b'-')
 }
 
 /// Transformation
