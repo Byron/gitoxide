@@ -5,6 +5,97 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-f094f71dc1a50955552509d108556c01517c6ed6/> `gix status` with basic index-worktree comparison
+ - <csr-id-3ff5ac0cda9e3e089dc79fdfbff5ff619ee60b1f/> `gix free index from-list` and `gix index from-tree` gain `--skip-hash`.
+   This flag can be derived from options, but thus far we have no higher-level
+   writing of the index so this has to do to see the difference in performance.
+ - <csr-id-dbf778cfe5423c4769123e8b7cf5efc4dce30db7/> `gix remote` and `gix fetch` now fallback to the only available remote if necessary.
+   Just like `git`, but we fail loudly if there are more than one remotes.
+
+### Bug Fixes
+
+ - <csr-id-7a8f79357ce99c4b86e22be166b54f7376c71469/> cargo-auditable build error
+   Use `prodash` instead of `dep:prodash` in gix-features and `tracing`
+   instead of `dep:tracing` in gitoxide-core.
+   
+   The `dep:mydep` syntax removes the implicit `mydep` feature for optional
+   dependencies, this triggers a bug in cargo that affects
+   `cargo-auditable`. See https://github.com/rust-lang/cargo/issues/12336
+   
+   This affects some Linux distributions like NixOS which use
+   `cargo-auditable` by default. Related issues:
+   
+   - https://github.com/NixOS/nixpkgs/issues/253911
+   - https://github.com/rust-secure-code/cargo-auditable/issues/124
+ - <csr-id-429682d775ba1046bc30bbd52e9d5a8dc841378f/> don't use `th` in `git rev parse -e` unconditionally, use `.` instead.
+   That way it shouldn't be grammatically incorrect.
+
+### Chore (BREAKING)
+
+ - <csr-id-ed327f6163f54756e58c20f86a563a97efb256ca/> update to the latest `prodash`
+   It makes proper usage of `Progress` types easier and allows them to be used
+   as `dyn` traits as well.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-072ee32f693a31161cd6a843da6582d13efbb20b/> use `dyn` trait where possible.
+   This reduces compile time due to avoiding duplication.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 25 commits contributed to the release over the course of 33 calendar days.
+ - 33 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#1003](https://github.com/Byron/gitoxide/issues/1003), [#1023](https://github.com/Byron/gitoxide/issues/1023)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1003](https://github.com/Byron/gitoxide/issues/1003)**
+    - `gix remote` and `gix fetch` now fallback to the only available remote if necessary. ([`dbf778c`](https://github.com/Byron/gitoxide/commit/dbf778cfe5423c4769123e8b7cf5efc4dce30db7))
+ * **[#1023](https://github.com/Byron/gitoxide/issues/1023)**
+    - Don't use `th` in `git rev parse -e` unconditionally, use `.` instead. ([`429682d`](https://github.com/Byron/gitoxide/commit/429682d775ba1046bc30bbd52e9d5a8dc841378f))
+ * **Uncategorized**
+    - Merge branch 'reset' ([`54a8495`](https://github.com/Byron/gitoxide/commit/54a849545140f7f1c0c7564c418071c0a76a34e7))
+    - `gix status` with basic index-worktree comparison ([`f094f71`](https://github.com/Byron/gitoxide/commit/f094f71dc1a50955552509d108556c01517c6ed6))
+    - Merge pull request #1024 from Byron/nix-adjustments ([`14e0763`](https://github.com/Byron/gitoxide/commit/14e0763cbf368bda476046a0fd28be230d67b1bd))
+    - Cargo-auditable build error ([`7a8f793`](https://github.com/Byron/gitoxide/commit/7a8f79357ce99c4b86e22be166b54f7376c71469))
+    - Merge branch 'yarn' ([`53bbd06`](https://github.com/Byron/gitoxide/commit/53bbd06d2b4380452d24d2c999f43b489b7446af))
+    - Adapt to changes in `gix-attributes` ([`0fac1b9`](https://github.com/Byron/gitoxide/commit/0fac1b9843255efbc872f1692c404b51915e0285))
+    - Release gix v0.53.1 ([`1b1fc25`](https://github.com/Byron/gitoxide/commit/1b1fc257d5748c7c41e899bf2d1447ffd9f22d19))
+    - Release gix-date v0.8.0, gix-hash v0.13.0, gix-features v0.34.0, gix-actor v0.26.0, gix-object v0.36.0, gix-path v0.10.0, gix-glob v0.12.0, gix-attributes v0.18.0, gix-packetline-blocking v0.16.6, gix-filter v0.4.0, gix-fs v0.6.0, gix-commitgraph v0.20.0, gix-hashtable v0.4.0, gix-revwalk v0.7.0, gix-traverse v0.32.0, gix-worktree-stream v0.4.0, gix-archive v0.4.0, gix-config-value v0.14.0, gix-tempfile v9.0.0, gix-lock v9.0.0, gix-ref v0.36.0, gix-sec v0.10.0, gix-config v0.29.0, gix-prompt v0.7.0, gix-url v0.23.0, gix-credentials v0.19.0, gix-diff v0.35.0, gix-discover v0.24.0, gix-ignore v0.7.0, gix-index v0.24.0, gix-macros v0.1.0, gix-mailmap v0.18.0, gix-negotiate v0.7.0, gix-pack v0.42.0, gix-odb v0.52.0, gix-pathspec v0.2.0, gix-packetline v0.16.6, gix-transport v0.36.0, gix-protocol v0.39.0, gix-revision v0.21.0, gix-refspec v0.17.0, gix-submodule v0.3.0, gix-worktree v0.25.0, gix-worktree-state v0.2.0, gix v0.53.0, safety bump 39 crates ([`8bd0456`](https://github.com/Byron/gitoxide/commit/8bd045676bb2cdc02624ab93e73ff8518064ca38))
+    - Merge branch 'optimizations' ([`6135a5e`](https://github.com/Byron/gitoxide/commit/6135a5ea8709646f01da62939a59dd3a9750e007))
+    - Adapt to changes in `gix` ([`805b8aa`](https://github.com/Byron/gitoxide/commit/805b8aa74b064b7aa08d87094a994bb8c7aae6ed))
+    - Merge branch `dyn`ification ([`f658fcc`](https://github.com/Byron/gitoxide/commit/f658fcc52dc2200ae34ca53dc10be97fb9012057))
+    - Use `dyn` trait where possible. ([`072ee32`](https://github.com/Byron/gitoxide/commit/072ee32f693a31161cd6a843da6582d13efbb20b))
+    - Update to the latest `prodash` ([`ed327f6`](https://github.com/Byron/gitoxide/commit/ed327f6163f54756e58c20f86a563a97efb256ca))
+    - Merge branch 'improvements' ([`8a7c2af`](https://github.com/Byron/gitoxide/commit/8a7c2af0d302d5acc87ef2d432bd6870017af63e))
+    - Adapt to changes in `gix` ([`9df4929`](https://github.com/Byron/gitoxide/commit/9df4929c2508184cb7ab83cc9c7922b2c6874f55))
+    - Merge branch 'adjustments-for-cargo' ([`b7560a2`](https://github.com/Byron/gitoxide/commit/b7560a2445b62f888bf5aa2ba4c5a47ae037cb23))
+    - Release gix-date v0.7.4, gix-index v0.23.0, safety bump 5 crates ([`3be2b1c`](https://github.com/Byron/gitoxide/commit/3be2b1ccfe30eeae45711c64b88efc522a2b51b7))
+    - Merge branch 'fixes' ([`4bfd1cc`](https://github.com/Byron/gitoxide/commit/4bfd1cc8f7922a8c4de6b9d078d54b93e78f51ff))
+    - Adapt to changes in `gix-index` and pass skip-hash through for performance.. ([`713cd59`](https://github.com/Byron/gitoxide/commit/713cd59f0b1eff6397b80f1e1fceec278532fd59))
+    - `gix free index from-list` and `gix index from-tree` gain `--skip-hash`. ([`3ff5ac0`](https://github.com/Byron/gitoxide/commit/3ff5ac0cda9e3e089dc79fdfbff5ff619ee60b1f))
+    - Use new `gix` method to obtain the fetch remote (instead of implementing it by hand) ([`e2c0912`](https://github.com/Byron/gitoxide/commit/e2c0912cfede044431c17ae81ddae02746650ae4))
+    - Thanks clippy ([`5044c3b`](https://github.com/Byron/gitoxide/commit/5044c3b87456cf58ebfbbd00f23c9ba671cb290c))
+    - Merge branch 'gix-submodule' ([`363ee77`](https://github.com/Byron/gitoxide/commit/363ee77400805f473c9ad66eadad9214e7ab66f4))
+</details>
+
 ## 0.31.0 (2023-08-22)
 
 ### New Features
@@ -21,7 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 25 commits contributed to the release over the course of 29 calendar days.
+ - 27 commits contributed to the release over the course of 29 calendar days.
  - 30 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -33,8 +124,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0 ([`6c62e74`](https://github.com/Byron/gitoxide/commit/6c62e748240ac0980fc23fdf30f8477dea8b9bc3))
     - Release gix-date v0.7.3, gix-hash v0.12.0, gix-features v0.33.0, gix-actor v0.25.0, gix-object v0.35.0, gix-path v0.9.0, gix-glob v0.11.0, gix-quote v0.4.7, gix-attributes v0.17.0, gix-command v0.2.9, gix-packetline-blocking v0.16.5, gix-filter v0.3.0, gix-fs v0.5.0, gix-commitgraph v0.19.0, gix-hashtable v0.3.0, gix-revwalk v0.6.0, gix-traverse v0.31.0, gix-worktree-stream v0.3.0, gix-archive v0.3.0, gix-config-value v0.13.0, gix-tempfile v8.0.0, gix-lock v8.0.0, gix-ref v0.35.0, gix-sec v0.9.0, gix-config v0.28.0, gix-prompt v0.6.0, gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0, safety bump 41 crates ([`30b2761`](https://github.com/Byron/gitoxide/commit/30b27615047692d3ced1b2d9c2ac15a80f79fbee))
     - Update changelogs prior to release ([`f23ea88`](https://github.com/Byron/gitoxide/commit/f23ea8828f2d9ba7559973daca388c9591bcc5fc))
+    - Merge branch 'gix-submodule' ([`8f3f358`](https://github.com/Byron/gitoxide/commit/8f3f358800f1fe77d7ba7ebd396a90b692d3c0c1))
     - `gix index entries` with tracing ([`ec1e550`](https://github.com/Byron/gitoxide/commit/ec1e5506ebb34ab5269b67d426ec1d57f2037d29))
     - `gix submodule` subcommand for simple submodule listing and information retrieval ([`1ccbe16`](https://github.com/Byron/gitoxide/commit/1ccbe16117d58b68b25a8e3e66676a61a07dd49c))
     - Just fmt ([`0d258f4`](https://github.com/Byron/gitoxide/commit/0d258f40afcd848509e2b0c7c264e9f346ed1726))

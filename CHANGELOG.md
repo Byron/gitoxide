@@ -5,6 +5,73 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+This release contains a security fix which assure URLs like `'ssh://-oProxyCommand=open$IFS-aCalculator/foo'` will not execute attacker-controlled
+strings. The above can, on MacOS, launch the calculator app when using it with `gix clone` for example, up to v0.29.0.
+
+### New Features
+
+ - <csr-id-f094f71dc1a50955552509d108556c01517c6ed6/> `gix status` with basic index-worktree comparison
+ - <csr-id-3ff5ac0cda9e3e089dc79fdfbff5ff619ee60b1f/> `gix free index from-list` and `gix index from-tree` gain `--skip-hash`.
+   This flag can be derived from options, but thus far we have no higher-level
+   writing of the index so this has to do to see the difference in performance.
+
+### Refactor
+
+ - <csr-id-d3ac691446c9d029eb4f04d111887fa06720939d/> both `ein` and `gix` now share some code via the `gitoxide` library.
+   This can slightly improve compile times as well, even though it wasn't measured.
+
+### Chore (BREAKING)
+
+ - <csr-id-ed327f6163f54756e58c20f86a563a97efb256ca/> update to the latest `prodash`
+   It makes proper usage of `Progress` types easier and allows them to be used
+   as `dyn` traits as well.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-072ee32f693a31161cd6a843da6582d13efbb20b/> use `dyn` trait where possible.
+   This reduces compile time due to avoiding duplication.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 27 calendar days.
+ - 33 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#987](https://github.com/Byron/gitoxide/issues/987), [#992](https://github.com/Byron/gitoxide/issues/992)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#987](https://github.com/Byron/gitoxide/issues/987)**
+    - Use a multi-call binary ('uni') to have only one build step ([`4ef9a32`](https://github.com/Byron/gitoxide/commit/4ef9a32307a5e91868161a5f683b6b97ad9ebbdd))
+ * **[#992](https://github.com/Byron/gitoxide/issues/992)**
+    - Both `ein` and `gix` now share some code via the `gitoxide` library. ([`d3ac691`](https://github.com/Byron/gitoxide/commit/d3ac691446c9d029eb4f04d111887fa06720939d))
+ * **Uncategorized**
+    - Merge branch 'reset' ([`54a8495`](https://github.com/Byron/gitoxide/commit/54a849545140f7f1c0c7564c418071c0a76a34e7))
+    - `gix status` with basic index-worktree comparison ([`f094f71`](https://github.com/Byron/gitoxide/commit/f094f71dc1a50955552509d108556c01517c6ed6))
+    - Merge branch `dyn`ification ([`f658fcc`](https://github.com/Byron/gitoxide/commit/f658fcc52dc2200ae34ca53dc10be97fb9012057))
+    - Use `dyn` trait where possible. ([`072ee32`](https://github.com/Byron/gitoxide/commit/072ee32f693a31161cd6a843da6582d13efbb20b))
+    - Update to the latest `prodash` ([`ed327f6`](https://github.com/Byron/gitoxide/commit/ed327f6163f54756e58c20f86a563a97efb256ca))
+    - Merge branch 'adjustments-for-cargo' ([`b7560a2`](https://github.com/Byron/gitoxide/commit/b7560a2445b62f888bf5aa2ba4c5a47ae037cb23))
+    - Merge branch 'fixes' ([`4bfd1cc`](https://github.com/Byron/gitoxide/commit/4bfd1cc8f7922a8c4de6b9d078d54b93e78f51ff))
+    - Thanks clippy ([`0d6d4ec`](https://github.com/Byron/gitoxide/commit/0d6d4ec8030d2e8f4c7a9d6f421d54776c4b67fb))
+    - Adapt to changes in `gix-index` and pass skip-hash through for performance.. ([`713cd59`](https://github.com/Byron/gitoxide/commit/713cd59f0b1eff6397b80f1e1fceec278532fd59))
+    - `gix free index from-list` and `gix index from-tree` gain `--skip-hash`. ([`3ff5ac0`](https://github.com/Byron/gitoxide/commit/3ff5ac0cda9e3e089dc79fdfbff5ff619ee60b1f))
+    - Add more configuration variables prior to potentially using them; remove `index.skipHash` ([`773b6e3`](https://github.com/Byron/gitoxide/commit/773b6e3d5b69f819805fc77e963ec2a059bf40be))
+</details>
+
 ## 0.29.0 (2023-08-22)
 
 ### New Features
@@ -21,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 19 commits contributed to the release over the course of 15 calendar days.
+ - 20 commits contributed to the release over the course of 15 calendar days.
  - 30 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -33,6 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Merge branch 'gix-submodule' ([`8f3f358`](https://github.com/Byron/gitoxide/commit/8f3f358800f1fe77d7ba7ebd396a90b692d3c0c1))
     - `gix submodule` subcommand for simple submodule listing and information retrieval ([`1ccbe16`](https://github.com/Byron/gitoxide/commit/1ccbe16117d58b68b25a8e3e66676a61a07dd49c))
     - Just fmt ([`0d258f4`](https://github.com/Byron/gitoxide/commit/0d258f40afcd848509e2b0c7c264e9f346ed1726))
     - Merge branch 'submodule-in-gix' ([`36f7b78`](https://github.com/Byron/gitoxide/commit/36f7b783c67b8a087076a130f5ee9b90b23bc3cc))

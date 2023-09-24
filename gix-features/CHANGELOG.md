@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-51971969d2cf13587d4bfbd4cb047f2377b8bc0f/> Add `threading::make_mut()` to allow obtaining a mutable reference to shared data.
+   This is particularly useful when handling an index file, which may be shared across clones of
+   a repository.
+
+### Bug Fixes
+
+ - <csr-id-7a8f79357ce99c4b86e22be166b54f7376c71469/> cargo-auditable build error
+   Use `prodash` instead of `dep:prodash` in gix-features and `tracing`
+   instead of `dep:tracing` in gitoxide-core.
+   
+   The `dep:mydep` syntax removes the implicit `mydep` feature for optional
+   dependencies, this triggers a bug in cargo that affects
+   `cargo-auditable`. See https://github.com/rust-lang/cargo/issues/12336
+   
+   This affects some Linux distributions like NixOS which use
+   `cargo-auditable` by default. Related issues:
+   
+   - https://github.com/NixOS/nixpkgs/issues/253911
+   - https://github.com/rust-secure-code/cargo-auditable/issues/124
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-70c7c29266bc4396c968c7aa311c9721929a7cab/> parallel utilities that create thread-state now use `FnOnce`.
+   This way, all unnecessary cloning is avoided.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release over the course of 15 calendar days.
+ - 15 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'reset' ([`54a8495`](https://github.com/Byron/gitoxide/commit/54a849545140f7f1c0c7564c418071c0a76a34e7))
+    - Add `threading::make_mut()` to allow obtaining a mutable reference to shared data. ([`5197196`](https://github.com/Byron/gitoxide/commit/51971969d2cf13587d4bfbd4cb047f2377b8bc0f))
+    - Parallel utilities that create thread-state now use `FnOnce`. ([`70c7c29`](https://github.com/Byron/gitoxide/commit/70c7c29266bc4396c968c7aa311c9721929a7cab))
+    - Merge pull request #1024 from Byron/nix-adjustments ([`14e0763`](https://github.com/Byron/gitoxide/commit/14e0763cbf368bda476046a0fd28be230d67b1bd))
+    - Cargo-auditable build error ([`7a8f793`](https://github.com/Byron/gitoxide/commit/7a8f79357ce99c4b86e22be166b54f7376c71469))
+    - Merge branch 'optimize/progress-use' ([`1f2ffb6`](https://github.com/Byron/gitoxide/commit/1f2ffb6d86ef073caf43a2f7a77fe712a1aa495e))
+    - Use trait object for `progress` in `PrepareFetch::fetch_only` ([`70989b3`](https://github.com/Byron/gitoxide/commit/70989b3965077ae00ec6cf344f31627a804a8225))
+</details>
+
 ## 0.34.0 (2023-09-08)
 
 <csr-id-ed327f6163f54756e58c20f86a563a97efb256ca/>
@@ -28,7 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 17 calendar days.
+ - 7 commits contributed to the release over the course of 17 calendar days.
  - 17 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -40,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.0, gix-hash v0.13.0, gix-features v0.34.0, gix-actor v0.26.0, gix-object v0.36.0, gix-path v0.10.0, gix-glob v0.12.0, gix-attributes v0.18.0, gix-packetline-blocking v0.16.6, gix-filter v0.4.0, gix-fs v0.6.0, gix-commitgraph v0.20.0, gix-hashtable v0.4.0, gix-revwalk v0.7.0, gix-traverse v0.32.0, gix-worktree-stream v0.4.0, gix-archive v0.4.0, gix-config-value v0.14.0, gix-tempfile v9.0.0, gix-lock v9.0.0, gix-ref v0.36.0, gix-sec v0.10.0, gix-config v0.29.0, gix-prompt v0.7.0, gix-url v0.23.0, gix-credentials v0.19.0, gix-diff v0.35.0, gix-discover v0.24.0, gix-ignore v0.7.0, gix-index v0.24.0, gix-macros v0.1.0, gix-mailmap v0.18.0, gix-negotiate v0.7.0, gix-pack v0.42.0, gix-odb v0.52.0, gix-pathspec v0.2.0, gix-packetline v0.16.6, gix-transport v0.36.0, gix-protocol v0.39.0, gix-revision v0.21.0, gix-refspec v0.17.0, gix-submodule v0.3.0, gix-worktree v0.25.0, gix-worktree-state v0.2.0, gix v0.53.0, safety bump 39 crates ([`8bd0456`](https://github.com/Byron/gitoxide/commit/8bd045676bb2cdc02624ab93e73ff8518064ca38))
     - Prepare changelogs for release ([`375db06`](https://github.com/Byron/gitoxide/commit/375db06a8442378c3f7a922fae38e2a6694d9d04))
     - Merge branch `dyn`ification ([`f658fcc`](https://github.com/Byron/gitoxide/commit/f658fcc52dc2200ae34ca53dc10be97fb9012057))
     - Use `dyn` trait where possible. ([`072ee32`](https://github.com/Byron/gitoxide/commit/072ee32f693a31161cd6a843da6582d13efbb20b))

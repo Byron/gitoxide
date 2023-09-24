@@ -5,6 +5,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-f9d14d86a6578cf0f9a0c4a2256ad227b9264340/> Add `PathspecDetached` as pathspec that can more easily be used across threads.
+ - <csr-id-f066f9889b57a4ffaebc0ed1442d77999498db42/> `PathSpec` implements `gix_status::PathSpec` to allow it to be used there.
+   The reason we need a trait and can't do with simply a function is that multiple calls
+   are needed to test for inclusion *and* allow the common-prefix optimization.
+ - <csr-id-a8333f1137df51d237f6debf056ac075b0a2cd94/> add `Repository::stat_options()` to learn how an index would compare filesystem stats.
+ - <csr-id-2734e84b74b761bff27fc1eb27f57d9d839c9240/> add `parallel` feature toggle
+   Make certain data structure threadsafe (or `Sync`) to facilitate multithreading.
+   Further, many algorithms will now use multiple threads by default.
+   If unset, most of `gix` can only be used in a single thread
+   as data structures won't be `Send` anymore.
+
+### Bug Fixes
+
+ - <csr-id-e22893c1c95a76d9a5f3b2f2a4e2a30f815ee7e5/> do not trust ctime by default.
+   On MacOS it seems to be off by two seconds right from the source, which
+   seems to be an issue `stat` isn't having.
+ - <csr-id-334281c8771790df7a022daa4a700c96b99acbc0/> ignore empty `core.askpass` settings
+   This is the same as what `git` does, it's explicit per value, which
+   means that other paths might be flagged as empty automatically.
+
+### Other
+
+ - <csr-id-e022096aa495f55a05f83860243f49552be501f7/> add note about the trust-model.
+   It should explain why `gix` is happy to open repositories that won't
+   be handled by `git` unless overrides are set.
+
+### Test
+
+ - <csr-id-79e47a512507c7fd7acbdff624a5249e24505e0d/> add assertion to assure `ThreadSafeRepository` is sync.
+   If it doesn't appear to be sync, be sure to use the `max-performance-safe` feature.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-ee9276f2a7789c20d88d40624ad648e44b604a27/> `PrepareCheckout::main_worktree()` now takes `Progress` as geric argument.
+   This makes it more flexible and convenient, but is technically a breaking change.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 29 commits contributed to the release over the course of 15 calendar days.
+ - 15 days passed between releases.
+ - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'reset' ([`54a8495`](https://github.com/Byron/gitoxide/commit/54a849545140f7f1c0c7564c418071c0a76a34e7))
+    - Add `PathspecDetached` as pathspec that can more easily be used across threads. ([`f9d14d8`](https://github.com/Byron/gitoxide/commit/f9d14d86a6578cf0f9a0c4a2256ad227b9264340))
+    - Do not trust ctime by default. ([`e22893c`](https://github.com/Byron/gitoxide/commit/e22893c1c95a76d9a5f3b2f2a4e2a30f815ee7e5))
+    - `PathSpec` implements `gix_status::PathSpec` to allow it to be used there. ([`f066f98`](https://github.com/Byron/gitoxide/commit/f066f9889b57a4ffaebc0ed1442d77999498db42))
+    - Add `Repository::stat_options()` to learn how an index would compare filesystem stats. ([`a8333f1`](https://github.com/Byron/gitoxide/commit/a8333f1137df51d237f6debf056ac075b0a2cd94))
+    - Fix compile time warning ([`4ce7f7c`](https://github.com/Byron/gitoxide/commit/4ce7f7c2c8bb66f0c093bf6e4d20f5568ca04f6a))
+    - Merge branch 'parallel-feature' ([`c270f78`](https://github.com/Byron/gitoxide/commit/c270f7883e1ea8156d521b12d161a47b2144425c))
+    - Add `parallel` feature toggle ([`2734e84`](https://github.com/Byron/gitoxide/commit/2734e84b74b761bff27fc1eb27f57d9d839c9240))
+    - Add assertion to assure `ThreadSafeRepository` is sync. ([`79e47a5`](https://github.com/Byron/gitoxide/commit/79e47a512507c7fd7acbdff624a5249e24505e0d))
+    - Merge pull request #1015 from NobodyXu/optimize/prepare-checkout ([`14312b6`](https://github.com/Byron/gitoxide/commit/14312b6c21d6382f7e536db7a1d8b519b97b8300))
+    - Merge branch 'path-config' ([`9c528dc`](https://github.com/Byron/gitoxide/commit/9c528dc8282c8b2f3a023e523dccdd0f7a711e61))
+    - Merge pull request #1012 from NobodyXu/optimization/try-into-de-momo ([`afb1960`](https://github.com/Byron/gitoxide/commit/afb1960e3e13bc9fc7cc5f3a3a244945f00966ad))
+    - Ignore empty `core.askpass` settings ([`334281c`](https://github.com/Byron/gitoxide/commit/334281c8771790df7a022daa4a700c96b99acbc0))
+    - Merge branch 'optimize/progress-use' ([`1f2ffb6`](https://github.com/Byron/gitoxide/commit/1f2ffb6d86ef073caf43a2f7a77fe712a1aa495e))
+    - `PrepareCheckout::main_worktree()` now takes `Progress` as geric argument. ([`ee9276f`](https://github.com/Byron/gitoxide/commit/ee9276f2a7789c20d88d40624ad648e44b604a27))
+    - Add note about the trust-model. ([`e022096`](https://github.com/Byron/gitoxide/commit/e022096aa495f55a05f83860243f49552be501f7))
+    - Optimize `clone::PrepareCheckout::main_worktree`` ([`938f518`](https://github.com/Byron/gitoxide/commit/938f5187f0ff51561971ca463584ec0db93f3455))
+    - Fix `maybe_async` ([`c80e809`](https://github.com/Byron/gitoxide/commit/c80e809c2655d15d7f22170782dacd64fe2e01bd))
+    - Rm unused clippy lint ([`d82f84b`](https://github.com/Byron/gitoxide/commit/d82f84b23a3def8e237e2b2511874c6045032c04))
+    - Fixed error by also using trait object in `remote::fetch::Prepare::receive` ([`44faa01`](https://github.com/Byron/gitoxide/commit/44faa01cf0612df5685922710d4a0adf6715ef77))
+    - Revert changes to binary files ([`3eb8653`](https://github.com/Byron/gitoxide/commit/3eb8653b78f2a0ca654fbebb185f3d6416d779d5))
+    - Rm binary files ([`6a33594`](https://github.com/Byron/gitoxide/commit/6a335940332b8d5069cb0c310d2d8e43fbeee01e))
+    - Use trait object for `progress` in `PrepareFetch::fetch_only` ([`70989b3`](https://github.com/Byron/gitoxide/commit/70989b3965077ae00ec6cf344f31627a804a8225))
+    - Fix clippy warnings ([`d5aa2ba`](https://github.com/Byron/gitoxide/commit/d5aa2ba030f57d65021d84efa99c0abc9d61f575))
+    - Optimize `Repository::write_blob_stream`: Avoid dup codegen ([`ca8a373`](https://github.com/Byron/gitoxide/commit/ca8a373b1a3de44d2bef3e4908d6f5269b6cdd1f))
+    - Apply `gix_macros::momo` to `Repository::write_blob` ([`bae928d`](https://github.com/Byron/gitoxide/commit/bae928d9668bbb4ba0dadb4605d77fc773362e3f))
+    - Optimize `Repository::write_object`: Avoid dup momo ([`32f1c7d`](https://github.com/Byron/gitoxide/commit/32f1c7d2bc2e91cb346c8b379dce41293f88b222))
+    - Rm unnecessary lifetime annotation in `Repository::commit_as_inner` ([`cf70a2e`](https://github.com/Byron/gitoxide/commit/cf70a2e0f08dd323c0713b4e23b21f54668a99a2))
+    - Optimize `gix`: de-momo `impl TryInto` by hand ([`b19c140`](https://github.com/Byron/gitoxide/commit/b19c140ce3a6e5d9ddf65684361223a2f9fa7e73))
+</details>
+
 ## 0.53.1 (2023-09-08)
 
 ### Bug Fixes
@@ -15,7 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -26,6 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix v0.53.1 ([`1b1fc25`](https://github.com/Byron/gitoxide/commit/1b1fc257d5748c7c41e899bf2d1447ffd9f22d19))
     - `interrupt` feature only gates signal-handling, but leaves the `interrupt` module alone. ([`902639b`](https://github.com/Byron/gitoxide/commit/902639b9b72ead72b5355e0a1a4da5afd7fed46d))
 </details>
 
