@@ -31,7 +31,6 @@ impl ProgramKind {
         if disallow_shell {
             prepare.use_shell = false;
         }
-        let host = url.host().expect("present in ssh urls");
         match self {
             ProgramKind::Ssh => {
                 if desired_version != Protocol::V1 {
@@ -62,8 +61,17 @@ impl ProgramKind {
             }
         };
         let host_as_ssh_arg = match url.user() {
-            Some(user) => format!("{user}@{host}"),
-            None => host.into(),
+            Some(user) => {
+                let host = url.host().expect("present in ssh urls");
+                format!("{user}@{host}")
+            }
+            None => {
+                let host = assure_safe_host(url.host()).ok_or_else(|| ssh::invocation::Error {
+                    command: url.host().expect("ssh host always set").into(),
+                    function: "(backport-hack)",
+                })?;
+                host.into()
+            }
         };
 
         // Try to force ssh to yield english messages (for parsing later)
@@ -102,6 +110,10 @@ impl ProgramKind {
             None => Err(line),
         }
     }
+}
+
+fn assure_safe_host(host: Option<&str>) -> Option<&str> {
+    host.filter(|h| h.as_bytes().first() != Some(&b'-'))
 }
 
 impl<'a> From<&'a OsStr> for ProgramKind {

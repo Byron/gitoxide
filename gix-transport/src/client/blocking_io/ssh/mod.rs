@@ -8,6 +8,8 @@ use crate::{client::blocking_io, Protocol};
 pub enum Error {
     #[error("The scheme in \"{}\" is not usable for an ssh connection", .0.to_bstring())]
     UnsupportedScheme(gix_url::Url),
+    #[error("Host name '{host}' could be mistaken for a command-line argument")]
+    AmbiguousHostName { host: String },
 }
 
 impl crate::IsSpuriousError for Error {}
@@ -37,7 +39,7 @@ pub mod invocation {
 
     /// The error returned when producing ssh invocation arguments based on a selected invocation kind.
     #[derive(Debug, thiserror::Error)]
-    #[error("The 'Simple' ssh variant doesn't support {function}")]
+    #[error("The 'Simple' ssh variant '{}' doesn't support {function}", command.to_str().unwrap_or_default())]
     pub struct Error {
         /// The simple command that should have been invoked.
         pub command: OsString,
@@ -105,7 +107,9 @@ pub fn connect(
                 .stdin(Stdio::null())
                 .with_shell()
                 .arg("-G")
-                .arg(url.host().expect("always set for ssh urls")),
+                .arg(assure_safe_host(url.host()).ok_or_else(|| Error::AmbiguousHostName {
+                    host: url.host().expect("set in ssh urls").into(),
+                })?),
         )
         .status()
         .ok()
@@ -126,6 +130,10 @@ pub fn connect(
         options.disallow_shell,
         desired_version,
     ))
+}
+
+fn assure_safe_host(host: Option<&str>) -> Option<&str> {
+    host.filter(|h| h.as_bytes().first() != Some(&b'-'))
 }
 
 #[cfg(test)]

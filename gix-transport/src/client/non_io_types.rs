@@ -138,6 +138,8 @@ mod error {
         Http(#[from] HttpError),
         #[error(transparent)]
         SshInvocation(SshInvocationError),
+        #[error("The repository path '{path}' could be mistaken for a command-line argument")]
+        AmbiguousPath { path: BString },
     }
 
     impl crate::IsSpuriousError for Error {

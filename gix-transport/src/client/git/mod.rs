@@ -165,6 +165,21 @@ mod message {
                 "git-upload-pack hello\\world\0host=host:404\0"
             )
         }
+
+        #[test]
+        fn with_strange_host_and_port() {
+            assert_eq!(
+                git::message::connect(
+                    Service::UploadPack,
+                    Protocol::V1,
+                    b"--upload-pack=attack",
+                    Some(&("--proxy=other-attack".into(), Some(404))),
+                    &[]
+                ),
+                "git-upload-pack --upload-pack=attack\0host=--proxy=other-attack:404\0",
+                "we explicitly allow possible `-arg` arguments to be passed to the git daemon - the remote must protect against exploitation, we don't want to prevent legitimate cases"
+            )
+        }
     }
 }
 
