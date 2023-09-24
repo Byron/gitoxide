@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 10.0.0 (2023-09-24)
+
+<csr-id-ae298262add18049969f9451ed2a704d248eed41/>
 
 ### New Features
 
@@ -20,8 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 3 calendar days.
- - 15 days passed between releases.
+ - 4 commits contributed to the release over the course of 3 calendar days.
+ - 16 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1026](https://github.com/Byron/gitoxide/issues/1026)
 
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1026](https://github.com/Byron/gitoxide/issues/1026)**
     - Make clear that locks can leak and what that means on acquiring a lock ([`ae29826`](https://github.com/Byron/gitoxide/commit/ae298262add18049969f9451ed2a704d248eed41))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`8a60d5b`](https://github.com/Byron/gitoxide/commit/8a60d5b80877c213c3b646d3061e8a33e0e433ec))
     - Merge branch 'gix-lock-improvements' ([`b009db0`](https://github.com/Byron/gitoxide/commit/b009db018df435a8c57848dc4cdc52d4278a6d9d))
     - Make it easy to configure lock acquisition failure from Duration. ([`fda4337`](https://github.com/Byron/gitoxide/commit/fda433757e3cd6645edfd2e18dcd2e67d1ef930f))
 </details>

@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.54.0 (2023-09-24)
+
+<csr-id-e022096aa495f55a05f83860243f49552be501f7/>
+<csr-id-79e47a512507c7fd7acbdff624a5249e24505e0d/>
 
 ### New Features
 
@@ -49,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 29 commits contributed to the release over the course of 15 calendar days.
+ - 30 commits contributed to the release over the course of 15 calendar days.
  - 15 days passed between releases.
  - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -61,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`8a60d5b`](https://github.com/Byron/gitoxide/commit/8a60d5b80877c213c3b646d3061e8a33e0e433ec))
     - Merge branch 'reset' ([`54a8495`](https://github.com/Byron/gitoxide/commit/54a849545140f7f1c0c7564c418071c0a76a34e7))
     - Add `PathspecDetached` as pathspec that can more easily be used across threads. ([`f9d14d8`](https://github.com/Byron/gitoxide/commit/f9d14d86a6578cf0f9a0c4a2256ad227b9264340))
     - Do not trust ctime by default. ([`e22893c`](https://github.com/Byron/gitoxide/commit/e22893c1c95a76d9a5f3b2f2a4e2a30f815ee7e5))

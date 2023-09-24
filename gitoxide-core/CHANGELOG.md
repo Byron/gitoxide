@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.32.0 (2023-09-24)
+
+<csr-id-ed327f6163f54756e58c20f86a563a97efb256ca/>
 
 ### New Features
 
@@ -17,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    Just like `git`, but we fail loudly if there are more than one remotes.
 
 ### Bug Fixes
+
+<csr-id-429682d775ba1046bc30bbd52e9d5a8dc841378f/>
 
  - <csr-id-7a8f79357ce99c4b86e22be166b54f7376c71469/> cargo-auditable build error
    Use `prodash` instead of `dep:prodash` in gix-features and `tracing`
@@ -30,9 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    `cargo-auditable` by default. Related issues:
    
    - https://github.com/NixOS/nixpkgs/issues/253911
-   - https://github.com/rust-secure-code/cargo-auditable/issues/124
- - <csr-id-429682d775ba1046bc30bbd52e9d5a8dc841378f/> don't use `th` in `git rev parse -e` unconditionally, use `.` instead.
-   That way it shouldn't be grammatically incorrect.
+- https://github.com/rust-secure-code/cargo-auditable/issues/124
 
 ### Chore (BREAKING)
 
@@ -49,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 25 commits contributed to the release over the course of 33 calendar days.
+ - 26 commits contributed to the release over the course of 33 calendar days.
  - 33 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1003](https://github.com/Byron/gitoxide/issues/1003), [#1023](https://github.com/Byron/gitoxide/issues/1023)
@@ -71,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1023](https://github.com/Byron/gitoxide/issues/1023)**
     - Don't use `th` in `git rev parse -e` unconditionally, use `.` instead. ([`429682d`](https://github.com/Byron/gitoxide/commit/429682d775ba1046bc30bbd52e9d5a8dc841378f))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`8a60d5b`](https://github.com/Byron/gitoxide/commit/8a60d5b80877c213c3b646d3061e8a33e0e433ec))
     - Merge branch 'reset' ([`54a8495`](https://github.com/Byron/gitoxide/commit/54a849545140f7f1c0c7564c418071c0a76a34e7))
     - `gix status` with basic index-worktree comparison ([`f094f71`](https://github.com/Byron/gitoxide/commit/f094f71dc1a50955552509d108556c01517c6ed6))
     - Merge pull request #1024 from Byron/nix-adjustments ([`14e0763`](https://github.com/Byron/gitoxide/commit/14e0763cbf368bda476046a0fd28be230d67b1bd))
@@ -95,6 +98,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Thanks clippy ([`5044c3b`](https://github.com/Byron/gitoxide/commit/5044c3b87456cf58ebfbbd00f23c9ba671cb290c))
     - Merge branch 'gix-submodule' ([`363ee77`](https://github.com/Byron/gitoxide/commit/363ee77400805f473c9ad66eadad9214e7ab66f4))
 </details>
+
+<csr-unknown>
+ don’t use th in git rev parse -e unconditionally, use . instead.That way it shouldn’t be grammatically incorrect.<csr-unknown/>
 
 ## 0.31.0 (2023-08-22)
 

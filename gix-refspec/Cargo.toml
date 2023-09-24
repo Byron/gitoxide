@@ -1,6 +1,6 @@
 [package]
 name = "gix-refspec"
-version = "0.17.0"
+version = "0.18.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project for parsing and representing refspecs"
@@ -13,7 +13,7 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-gix-revision = { version = "^0.21.0", path = "../gix-revision", default-features = false }
+gix-revision = { version = "^0.22.0", path = "../gix-revision", default-features = false }
 gix-validate = { version = "^0.8.0", path = "../gix-validate" }
 gix-hash = { version = "^0.13.0", path = "../gix-hash" }
 

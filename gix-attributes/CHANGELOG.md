@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.19.0 (2023-09-24)
 
 ### New Features (BREAKING)
 
@@ -16,8 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 14 calendar days.
- - 15 days passed between releases.
+ - 3 commits contributed to the release over the course of 14 calendar days.
+ - 16 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`8a60d5b`](https://github.com/Byron/gitoxide/commit/8a60d5b80877c213c3b646d3061e8a33e0e433ec))
     - Merge branch 'yarn' ([`53bbd06`](https://github.com/Byron/gitoxide/commit/53bbd06d2b4380452d24d2c999f43b489b7446af))
     - Use `yarn` for lower memory footprint and better performance. ([`7911d53`](https://github.com/Byron/gitoxide/commit/7911d53b48263c35d9684e1a329588499eadd822))
 </details>

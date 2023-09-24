@@ -1,6 +1,6 @@
 [package]
 name = "gix-fs"
-version = "0.6.0"
+version = "0.7.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate providing file system specific utilities to `gitoxide`"
@@ -12,7 +12,7 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-gix-features = { version = "^0.34.0", path = "../gix-features" }
+gix-features = { version = "^0.35.0", path = "../gix-features" }
 
 [dev-dependencies]
 tempfile = "3.5.0"

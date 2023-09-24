@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.30.0 (2023-09-24)
+
+<csr-id-d3ac691446c9d029eb4f04d111887fa06720939d/>
+<csr-id-ed327f6163f54756e58c20f86a563a97efb256ca/>
 
 This release contains a security fix which assure URLs like `'ssh://-oProxyCommand=open$IFS-aCalculator/foo'` will not execute attacker-controlled
 strings. The above can, on MacOS, launch the calculator app when using it with `gix clone` for example, up to v0.29.0.

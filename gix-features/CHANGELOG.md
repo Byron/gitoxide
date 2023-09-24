@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.35.0 (2023-09-24)
 
 ### New Features
 
@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    `cargo-auditable` by default. Related issues:
    
    - https://github.com/NixOS/nixpkgs/issues/253911
-   - https://github.com/rust-secure-code/cargo-auditable/issues/124
+- https://github.com/rust-secure-code/cargo-auditable/issues/124
 
 ### Bug Fixes (BREAKING)
 
@@ -38,8 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 15 calendar days.
- - 15 days passed between releases.
+ - 8 commits contributed to the release over the course of 15 calendar days.
+ - 16 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`8a60d5b`](https://github.com/Byron/gitoxide/commit/8a60d5b80877c213c3b646d3061e8a33e0e433ec))
     - Merge branch 'reset' ([`54a8495`](https://github.com/Byron/gitoxide/commit/54a849545140f7f1c0c7564c418071c0a76a34e7))
     - Add `threading::make_mut()` to allow obtaining a mutable reference to shared data. ([`5197196`](https://github.com/Byron/gitoxide/commit/51971969d2cf13587d4bfbd4cb047f2377b8bc0f))
     - Parallel utilities that create thread-state now use `FnOnce`. ([`70c7c29`](https://github.com/Byron/gitoxide/commit/70c7c29266bc4396c968c7aa311c9721929a7cab))

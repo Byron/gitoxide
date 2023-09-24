@@ -2,7 +2,7 @@
 name = "gix-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.34.0"
+version = "0.35.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2021"

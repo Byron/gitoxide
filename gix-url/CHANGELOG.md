@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.24.0 (2023-09-24)
 
 ### New Features
 
@@ -22,8 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
- - 15 days passed between releases.
+ - 4 commits contributed to the release.
+ - 16 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`8a60d5b`](https://github.com/Byron/gitoxide/commit/8a60d5b80877c213c3b646d3061e8a33e0e433ec))
     - Merge branch 'fix-exploit' ([`c53bbd2`](https://github.com/Byron/gitoxide/commit/c53bbd265005c7eedc316205b217e137e2b9896e))
     - Prevent hosts or paths that look like arguments to be passed to invoked commands. ([`b06a0dd`](https://github.com/Byron/gitoxide/commit/b06a0dd781accad317fdec5f86f069df4c21875c))
     - Add `Url::host_argument_safe()` and `Url::path_argument_safe()` ([`d80b5f6`](https://github.com/Byron/gitoxide/commit/d80b5f69772a6e36b0131d3a538e896a8a6a29b1))
