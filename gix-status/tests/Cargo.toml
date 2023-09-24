@@ -24,7 +24,7 @@ gix-fs = { path = "../../gix-fs" }
 gix-hash = { path = "../../gix-hash" }
 gix-object = { path = "../../gix-object" }
 gix-features = { path = "../../gix-features" }
-gix-pathspec = { version = "0.2.0", path = "../../gix-pathspec" }
+gix-pathspec = { path = "../../gix-pathspec" }
 filetime = "0.2.15"
 bstr = { version = "1.3.0", default-features = false }
 
