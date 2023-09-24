@@ -29,3 +29,23 @@ mod canonicalized {
         Ok(())
     }
 }
+
+#[test]
+fn host_argument_safe() -> crate::Result {
+    let url = gix_url::parse("ssh://-oProxyCommand=open$IFS-aCalculator/foo".into())?;
+    assert_eq!(url.host(), Some("-oProxyCommand=open$IFS-aCalculator"));
+    assert_eq!(url.host_argument_safe(), None);
+    assert_eq!(url.path, "/foo");
+    assert_eq!(url.path_argument_safe(), Some("/foo".into()));
+    Ok(())
+}
+
+#[test]
+fn path_argument_safe() -> crate::Result {
+    let url = gix_url::parse("ssh://foo/-oProxyCommand=open$IFS-aCalculator".into())?;
+    assert_eq!(url.host(), Some("foo"));
+    assert_eq!(url.host_argument_safe(), Some("foo"));
+    assert_eq!(url.path, "/-oProxyCommand=open$IFS-aCalculator");
+    assert_eq!(url.path_argument_safe(), None);
+    Ok(())
+}
