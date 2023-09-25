@@ -351,7 +351,7 @@ mod update {
     }
 
     #[test]
-    fn remote_symbolic_refs_with_locally_unavailable_target_result_in_inborn_branches() -> Result {
+    fn remote_symbolic_refs_with_locally_unavailable_target_result_in_valid_peeled_branches() -> Result {
         let remote_repo = named_repo("one-commit-with-symref");
         let local_repo = named_repo("unborn");
         let (mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/heads/new", &remote_repo);
@@ -376,6 +376,7 @@ mod update {
             }]
         );
         assert_eq!(out.edits.len(), 1);
+        let target = Target::Peeled(hex_to_id("66f16e4e8baf5c77bb6d0484495bebea80e916ce"));
         assert_eq!(
             out.edits[0],
             RefEdit {
@@ -385,10 +386,8 @@ mod update {
                         force_create_reflog: false,
                         message: "action: storing head".into(),
                     },
-                    expected: PreviousValue::ExistingMustMatch(Target::Symbolic(
-                        "refs/heads/branch".try_into().expect("valid"),
-                    )),
-                    new: Target::Symbolic("refs/heads/branch".try_into().expect("valid")),
+                    expected: PreviousValue::ExistingMustMatch(target.clone()),
+                    new: target,
                 },
                 name: "refs/heads/new".try_into().expect("valid"),
                 deref: false,
@@ -403,7 +402,7 @@ mod update {
     fn remote_symbolic_refs_with_locally_unavailable_target_dont_overwrite_valid_local_branches() -> Result {
         let remote_repo = named_repo("one-commit-with-symref");
         let local_repo = named_repo("one-commit-with-symref-missing-branch");
-        let (mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/heads/valid-locally", &remote_repo);
+        let (mappings, specs) = mapping_from_spec("refs/heads/unborn:refs/heads/valid-locally", &remote_repo);
         assert_eq!(mappings.len(), 1);
 
         let out = fetch::refs::update(
@@ -421,29 +420,10 @@ mod update {
             vec![fetch::refs::Update {
                 mode: fetch::refs::update::Mode::RejectedToReplaceWithUnborn,
                 type_change: None,
-                edit_index: Some(0)
+                edit_index: None
             }]
         );
-        assert_eq!(out.edits.len(), 1);
-        assert_eq!(
-            out.edits[0],
-            RefEdit {
-                change: Change::Update {
-                    log: LogChange {
-                        mode: RefLog::AndReference,
-                        force_create_reflog: false,
-                        message: "no-op".into(),
-                    },
-                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(hex_to_id(
-                        "66f16e4e8baf5c77bb6d0484495bebea80e916ce"
-                    ))),
-                    new: Target::Peeled(hex_to_id("66f16e4e8baf5c77bb6d0484495bebea80e916ce")),
-                },
-                name: "refs/heads/valid-locally".try_into().expect("valid"),
-                deref: false,
-            },
-            "edits are created for logistical reasons (we don't currently update edit-indices) so have to create a no-op"
-        );
+        assert_eq!(out.edits.len(), 0);
         Ok(())
     }
 

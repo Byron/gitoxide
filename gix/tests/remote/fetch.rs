@@ -563,14 +563,14 @@ mod blocking_and_async_io {
                         match version.unwrap_or_default() {
                             gix::protocol::transport::Protocol::V2 => {
                                 assert!(
-                                    edit.change.new_value().expect("no deletion").try_name().is_some(),
-                                    "{version:?} on the remote this is a symbolic ref, and we maintain it as symref information is kept"
+                                    edit.change.new_value().expect("no deletion").try_name().is_none(),
+                                    "{version:?} on the remote this is a symbolic ref to a tag, but we don't pull tags, hence we point to the tag object itself (instead of the refname)"
                                 );
                             }
                             gix::protocol::transport::Protocol::V1 => {
                                 assert!(
                                     edit.change.new_value().expect("no deletion").try_id().is_some(),
-                                    "on the remote this is a symbolic ref, but in V1 symrefs are not visible"
+                                    "on the remote this is a symbolic ref, but in V1 symrefs are never visible"
                                 );
                             }
                             gix::protocol::transport::Protocol::V0 => {

@@ -363,6 +363,7 @@ git init one-commit-with-symref
   touch content && git add content && git commit -m "init"
   git checkout -b branch
   git symbolic-ref refs/heads/symbolic refs/heads/branch
+  git symbolic-ref refs/heads/unborn refs/heads/non-existing
   git checkout main
 )
 
