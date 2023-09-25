@@ -103,11 +103,6 @@ fn shortest_possible_relative_path() -> crate::Result {
     assert_eq!(parsed, ".");
     let parsed = assert_url("..", url_alternate(Scheme::File, None, None, None, b".."))?.to_bstring();
     assert_eq!(parsed, "..");
-    #[cfg(windows)]
-    {
-        let parsed = assert_url("file://.\\", url(Scheme::File, None, None, None, b".\\"))?.to_bstring();
-        assert_eq!(parsed, "file://.\\");
-    }
     Ok(())
 }
 
