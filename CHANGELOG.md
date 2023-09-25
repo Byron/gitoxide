@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+This release includes an overhaul of the url parsing implementation, allowing more urls to be parsed correctly and refining the error messages for
+invalid ones. Improvements include the added support for ssh aliases (`github:byron/gitoxide` has previously been parsed as local path), adjustments
+around the interpretation of colons in file names (previously we disallowed colons that were not followed up with a slash character) and some smaller
+changes that bring the interpretation of file urls more in line with Git's implementation.
+
+There are still many (edge) cases in Git's url parsing implementation which are not handled correctly by Gitoxide. If you notice any such deviation please
+open a new issue to help us making Gitoxide even more correct.
+
 ## 0.30.0 (2023-09-24)
 
 <csr-id-d3ac691446c9d029eb4f04d111887fa06720939d/>
