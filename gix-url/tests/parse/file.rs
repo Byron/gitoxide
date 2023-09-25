@@ -131,21 +131,6 @@ fn interior_relative_file_path_without_protocol() -> crate::Result {
 }
 
 #[test]
-#[cfg(unix)]
-fn url_from_absolute_path() -> crate::Result {
-    assert_url(
-        url::Url::from_directory_path("/users/foo")
-            .expect("valid")
-            .to_file_path()
-            .expect("valid path")
-            .to_string_lossy()
-            .as_ref(),
-        url_alternate(Scheme::File, None, None, None, b"/users/foo/"),
-    )?;
-    Ok(())
-}
-
-#[test]
 fn url_from_relative_path_with_colon_in_name() -> crate::Result {
     let url = assert_url(
         "./weird/directory/na:me",
@@ -173,14 +158,8 @@ mod windows {
             url_alternate(Scheme::File, None, None, None, b"C:\\users\\1\\"),
         )?;
         // A special hack to support URLs on windows that are prefixed with `/` even though absolute.
-        assert_url(
-            "file:///c:/users/2",
-            url(Scheme::File, None, None, None, b"c:\\users\\2"),
-        )?;
-        assert_url(
-            "file:///c:/users/3/",
-            url(Scheme::File, None, None, None, b"c:\\users\\3\\"),
-        )?;
+        assert_url("file:///c:/users/2", url(Scheme::File, None, None, None, b"c:/users/2"))?;
+        assert_url("file:///c:/users/3", url(Scheme::File, None, None, None, b"c:/users/3"))?;
         Ok(())
     }
 
@@ -219,6 +198,20 @@ mod windows {
 mod unix {
     use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
     use gix_url::Scheme;
+
+    #[test]
+    fn url_from_absolute_path() -> crate::Result {
+        assert_url(
+            url::Url::from_directory_path("/users/foo")
+                .expect("valid")
+                .to_file_path()
+                .expect("valid path")
+                .to_string_lossy()
+                .as_ref(),
+            url_alternate(Scheme::File, None, None, None, b"/users/foo/"),
+        )?;
+        Ok(())
+    }
 
     #[test]
     fn file_path_without_protocol() -> crate::Result {

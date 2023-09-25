@@ -183,6 +183,14 @@ fn parse_file_url(input: &BStr, protocol_colon: usize) -> Result<crate::Url, Err
 
     // TODO: implement UNC path special case
     let windows_special_path = if cfg!(windows) {
+        // Inputs created via url::Url::from_file_path contain an additional `/` between the
+        // protocol and the absolute path. Make sure we ignore that first slash character to avoid
+        // producing invalid paths.
+        let input_after_protocol = if first_slash == 0 {
+            &input_after_protocol[1..]
+        } else {
+            input_after_protocol
+        };
         // parse `file://x:/path/to/git` as explained above
         if input_after_protocol.chars().nth(1) == Some(':') {
             Some(input_after_protocol)
@@ -226,7 +234,7 @@ fn parse_local(input: &BStr) -> Result<crate::Url, Error> {
         user: None,
         host: None,
         port: None,
-        path: input.into(),
+        path: input.to_owned(),
     })
 }
 
