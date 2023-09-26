@@ -22,7 +22,7 @@ impl From<ForUser> for Option<BString> {
     }
 }
 
-/// The error used by [`parse()`], [`with()`] and [`expand_path()`].
+/// The error used by [`parse()`], [`with()`] and [`expand_path()`](crate::expand_path()).
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -110,18 +110,5 @@ pub fn with(
             })?
             .join(make_relative(path)),
         None => path.into(),
-    })
-}
-
-/// Expand `path` for the given `user`, which can be obtained by [`parse()`], resolving the home directories
-/// of `user` automatically.
-///
-/// If more precise control of the resolution mechanism is needed, then use the [`with()`] function.
-pub fn expand_path(user: Option<&ForUser>, path: &BStr) -> Result<PathBuf, Error> {
-    with(user, path, |user| match user {
-        ForUser::Current => home::home_dir(),
-        ForUser::Name(user) => {
-            home::home_dir().and_then(|home| home.parent().map(|home_dirs| home_dirs.join(user.to_string())))
-        }
     })
 }

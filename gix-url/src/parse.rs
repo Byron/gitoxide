@@ -1,25 +1,27 @@
-use std::{borrow::Cow, convert::Infallible};
-
-pub use bstr;
-use bstr::{BStr, BString, ByteSlice};
+use std::convert::Infallible;
 
 use crate::Scheme;
+use bstr::{BStr, BString, ByteSlice};
 
-/// The Error returned by [`parse()`]
+/// The error returned by [parse()](crate::parse()).
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error("Could not decode URL as UTF8")]
-    Utf8(#[from] std::str::Utf8Error),
-    #[error(transparent)]
-    Url(#[from] url::ParseError),
-    #[error("URLs need to specify the path to the repository")]
-    MissingResourceLocation,
-    #[error("file URLs require an absolute or relative path to the repository")]
-    MissingRepositoryPath,
-    #[error("\"{url}\" is not a valid local path")]
-    NotALocalFile { url: BString },
-    #[error("Relative URLs are not permitted: {url:?}")]
+    #[error("{} \"{url}\" is not valid UTF-8", kind.as_str())]
+    Utf8 {
+        url: BString,
+        kind: UrlKind,
+        source: std::str::Utf8Error,
+    },
+    #[error("{} {url:?} can not be parsed as valid URL", kind.as_str())]
+    Url {
+        url: String,
+        kind: UrlKind,
+        source: url::ParseError,
+    },
+    #[error("{} \"{url}\" does not specify a path to a repository", kind.as_str())]
+    MissingRepositoryPath { url: BString, kind: UrlKind },
+    #[error("URL {url:?} is relative which is not allowed in this context")]
     RelativeUrl { url: String },
 }
 
@@ -29,145 +31,213 @@ impl From<Infallible> for Error {
     }
 }
 
-fn str_to_protocol(s: &str) -> Scheme {
-    Scheme::from(s)
+///
+#[derive(Debug, Clone, Copy)]
+pub enum UrlKind {
+    ///
+    Url,
+    ///
+    Scp,
+    ///
+    Local,
 }
 
-fn guess_protocol(url: &[u8]) -> Option<&str> {
-    match url.find_byte(b':') {
-        Some(colon_pos) => {
-            if url[..colon_pos].find_byteset(b"@.").is_some() {
-                "ssh"
-            } else {
-                url.get(colon_pos + 1..).and_then(|from_colon| {
-                    (from_colon.contains(&b'/') || from_colon.contains(&b'\\')).then_some("file")
-                })?
-            }
+impl UrlKind {
+    fn as_str(&self) -> &'static str {
+        match self {
+            UrlKind::Url => "URL",
+            UrlKind::Scp => "SCP-like target",
+            UrlKind::Local => "local path",
         }
-        None => "file",
-    }
-    .into()
-}
-
-/// Extract the path part from an SCP-like URL `[user@]host.xz:path/to/repo.git/`
-fn extract_scp_path(url: &str) -> Option<&str> {
-    url.splitn(2, ':').last()
-}
-
-fn sanitize_for_protocol<'a>(protocol: &str, url: &'a str) -> Cow<'a, str> {
-    match protocol {
-        "ssh" => url.replacen(':', "/", 1).into(),
-        _ => url.into(),
     }
 }
 
-fn has_no_explicit_protocol(url: &[u8]) -> bool {
-    url.find(b"://").is_none()
+pub(crate) enum InputScheme {
+    Url { protocol_end: usize },
+    Scp { colon: usize },
+    Local,
 }
 
-fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
-    let password = url.password();
+pub(crate) fn find_scheme(input: &BStr) -> InputScheme {
+    // TODO: url's may only contain `:/`, we should additionally check if the characters used for
+    //       protocol are all valid
+    if let Some(protocol_end) = input.find("://") {
+        return InputScheme::Url { protocol_end };
+    }
+
+    if let Some(colon) = input.find_byte(b':') {
+        // allow user to select files containing a `:` by passing them as absolute or relative path
+        // this is behavior explicitly mentioned by the scp and git manuals
+        let explicitly_local = &input[..colon].contains(&b'/');
+        let dos_driver_letter = cfg!(windows) && input[..colon].len() == 1;
+
+        if !explicitly_local && !dos_driver_letter {
+            return InputScheme::Scp { colon };
+        }
+    }
+
+    InputScheme::Local
+}
+
+pub(crate) fn url(input: &BStr) -> Result<crate::Url, Error> {
+    let (input, url) = input_to_utf8_and_url(input, UrlKind::Url)?;
+    let scheme = url.scheme().into();
+
+    if matches!(scheme, Scheme::Git | Scheme::Ssh) && url.path().is_empty() {
+        return Err(Error::MissingRepositoryPath {
+            url: input.into(),
+            kind: UrlKind::Url,
+        });
+    }
+
+    if url.cannot_be_a_base() {
+        return Err(Error::RelativeUrl { url: input.to_owned() });
+    }
+
     Ok(crate::Url {
         serialize_alternative_form: false,
-        scheme: str_to_protocol(url.scheme()),
-        password: password.map(ToOwned::to_owned),
-        user: if url.username().is_empty() && password.is_none() {
-            None
-        } else {
-            Some(url.username().into())
-        },
+        scheme,
+        user: url_user(&url),
+        password: url.password().map(Into::into),
         host: url.host_str().map(Into::into),
         port: url.port(),
         path: url.path().into(),
     })
 }
 
-/// Parse the given `bytes` as git url.
-///
-/// # Note
-///
-/// We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
-/// For file-paths, we don't expect UTF8 encoding either.
-pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
-    let guessed_protocol = guess_protocol(input).ok_or_else(|| Error::NotALocalFile { url: input.into() })?;
-    let path_without_file_protocol = input.strip_prefix(b"file://");
-    if path_without_file_protocol.is_some() || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
-        let path: BString = path_without_file_protocol.map_or_else(
-            || input.into(),
-            |stripped_path| {
-                #[cfg(windows)]
-                {
-                    if stripped_path.starts_with(b"/") {
-                        input
-                            .to_str()
-                            .ok()
-                            .and_then(|url| {
-                                let path = url::Url::parse(url).ok()?.to_file_path().ok()?;
-                                path.is_absolute().then(|| gix_path::into_bstr(path).into_owned())
-                            })
-                            .unwrap_or_else(|| stripped_path.into())
-                    } else {
-                        stripped_path.into()
-                    }
-                }
-                #[cfg(not(windows))]
-                {
-                    stripped_path.into()
-                }
-            },
-        );
-        if path.is_empty() {
-            return Err(Error::MissingRepositoryPath);
-        }
-        let input_starts_with_file_protocol = input.starts_with(b"file://");
-        if input_starts_with_file_protocol {
-            let wanted = cfg!(windows).then(|| &[b'\\', b'/'] as &[_]).unwrap_or(&[b'/']);
-            if !wanted.iter().any(|w| path.contains(w)) {
-                return Err(Error::MissingRepositoryPath);
-            }
-        }
-        return Ok(crate::Url {
-            scheme: Scheme::File,
-            path,
-            serialize_alternative_form: !input_starts_with_file_protocol,
-            ..Default::default()
+pub(crate) fn scp(input: &BStr, colon: usize) -> Result<crate::Url, Error> {
+    let input = input_to_utf8(input, UrlKind::Scp)?;
+
+    // TODO: this incorrectly splits at IPv6 addresses, check for `[]` before splitting
+    let (host, path) = input.split_at(colon);
+    debug_assert_eq!(path.get(..1), Some(":"), "{path} should start with :");
+    let path = &path[1..];
+
+    if path.is_empty() {
+        return Err(Error::MissingRepositoryPath {
+            url: input.to_owned().into(),
+            kind: UrlKind::Scp,
         });
     }
 
-    let url_str = std::str::from_utf8(input)?;
-    let (mut url, mut scp_path) = match url::Url::parse(url_str) {
-        Ok(url) => (url, None),
-        Err(url::ParseError::RelativeUrlWithoutBase) => {
-            // happens with bare paths as well as scp like paths. The latter contain a ':' past the host portion,
-            // which we are trying to detect.
-            (
-                url::Url::parse(&format!(
-                    "{}://{}",
-                    guessed_protocol,
-                    sanitize_for_protocol(guessed_protocol, url_str)
-                ))?,
-                extract_scp_path(url_str),
-            )
-        }
-        Err(err) => return Err(err.into()),
+    // The path returned by the parsed url often has the wrong number of leading `/` characters but
+    // should never differ in any other way (ssh URLs should not contain a query or fragment part).
+    // To avoid the various off-by-one errors caused by the `/` characters, we keep using the path
+    // determined above and can therefore skip parsing it here as well.
+    let url = url::Url::parse(&format!("ssh://{host}")).map_err(|source| Error::Url {
+        url: input.to_owned(),
+        kind: UrlKind::Scp,
+        source,
+    })?;
+
+    Ok(crate::Url {
+        serialize_alternative_form: true,
+        scheme: url.scheme().into(),
+        user: url_user(&url),
+        password: url.password().map(Into::into),
+        host: url.host_str().map(Into::into),
+        port: url.port(),
+        path: path.into(),
+    })
+}
+
+fn url_user(url: &url::Url) -> Option<String> {
+    if url.username().is_empty() && url.password().is_none() {
+        None
+    } else {
+        Some(url.username().into())
+    }
+}
+
+pub(crate) fn file_url(input: &BStr, protocol_colon: usize) -> Result<crate::Url, Error> {
+    let input = input_to_utf8(input, UrlKind::Url)?;
+    let input_after_protocol = &input[protocol_colon + "://".len()..];
+
+    let Some(first_slash) = input_after_protocol.find('/') else {
+        return Err(Error::MissingRepositoryPath {
+            url: input.to_owned().into(),
+            kind: UrlKind::Url,
+        });
     };
-    // SCP like URLs without user parse as 'something' with the scheme being the 'host'. Hosts always have dots.
-    if url.scheme().find('.').is_some() {
-        // try again with prefixed protocol
-        url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
-        scp_path = extract_scp_path(url_str);
-    }
-    if url.path().is_empty() && ["ssh", "git"].contains(&url.scheme()) {
-        return Err(Error::MissingResourceLocation);
-    }
-    if url.cannot_be_a_base() {
-        return Err(Error::RelativeUrl { url: url.into() });
+
+    // We cannot use the url crate to parse host and path because it special cases Windows
+    // driver letters. With the url crate an input of `file://x:/path/to/git` is parsed as empty
+    // host and with `x:/path/to/git` as path. This behavior is wrong for Git which only follows
+    // that rule on Windows and parses `x:` as host on Unix platforms. Additionally the url crate
+    // does not account for Windows special UNC path support.
+
+    // TODO: implement UNC path special case
+    let windows_special_path = if cfg!(windows) {
+        // Inputs created via url::Url::from_file_path contain an additional `/` between the
+        // protocol and the absolute path. Make sure we ignore that first slash character to avoid
+        // producing invalid paths.
+        let input_after_protocol = if first_slash == 0 {
+            &input_after_protocol[1..]
+        } else {
+            input_after_protocol
+        };
+        // parse `file://x:/path/to/git` as explained above
+        if input_after_protocol.chars().nth(1) == Some(':') {
+            Some(input_after_protocol)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    let host = if windows_special_path.is_some() || first_slash == 0 {
+        // `file:///path/to/git` or a windows special case was triggered
+        None
+    } else {
+        // `file://host/path/to/git`
+        Some(&input_after_protocol[..first_slash])
+    };
+
+    // default behavior on Unix platforms and if no Windows special case was triggered
+    let path = windows_special_path.unwrap_or(&input_after_protocol[first_slash..]);
+
+    Ok(crate::Url {
+        serialize_alternative_form: false,
+        host: host.map(Into::into),
+        ..local(path.into())?
+    })
+}
+
+pub(crate) fn local(input: &BStr) -> Result<crate::Url, Error> {
+    if input.is_empty() {
+        return Err(Error::MissingRepositoryPath {
+            url: input.to_owned(),
+            kind: UrlKind::Local,
+        });
     }
 
-    let mut url = to_owned_url(url)?;
-    if let Some(path) = scp_path {
-        url.path = path.into();
-        url.serialize_alternative_form = true;
-    }
-    Ok(url)
+    Ok(crate::Url {
+        serialize_alternative_form: true,
+        scheme: Scheme::File,
+        password: None,
+        user: None,
+        host: None,
+        port: None,
+        path: input.to_owned(),
+    })
+}
+
+fn input_to_utf8(input: &BStr, kind: UrlKind) -> Result<&str, Error> {
+    std::str::from_utf8(input).map_err(|source| Error::Utf8 {
+        url: input.to_owned(),
+        kind,
+        source,
+    })
+}
+
+fn input_to_utf8_and_url(input: &BStr, kind: UrlKind) -> Result<(&str, url::Url), Error> {
+    let input = input_to_utf8(input, kind)?;
+    url::Url::parse(input)
+        .map(|url| (input, url))
+        .map_err(|source| Error::Url {
+            url: input.to_owned(),
+            kind,
+            source,
+        })
 }
