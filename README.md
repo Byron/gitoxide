@@ -35,7 +35,7 @@ both implemented and planned features.
 Further, the [`gix` crate documentation with the `git2` search term](https://docs.rs/gix/0.54.1/gix/?search=git2) helps to find all currently
 known `git2` equivalent method calls. Please note that this list is definitely not exhaustive yet, but might help if you are coming from `git2`.
 
-What follows is a high-level list of features along with their support
+What follows is a high-level list of features and those which are planned:
 
 * [x] clone
 * [x] fetch
@@ -45,6 +45,7 @@ What follows is a high-level list of features along with their support
 * [ ] merge
 * [ ] rebase
 * [ ] commit
+* [x] worktree checkout and worktree stream
 * [x] reading and writing of objects
 * [x] reading and writing of refs
 * [x] reading and writing of `.git/index`
