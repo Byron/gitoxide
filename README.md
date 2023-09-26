@@ -23,6 +23,36 @@ For use in applications, look for the [`gix`](https://github.com/Byron/gitoxide/
 which serves as entrypoint to the functionality provided by various lower-level plumbing crates like
 [`gix-config`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config).
 
+### Feature Discovery
+
+> Can `gix` do what I need it to do?
+
+The above can be hard to answer and this paragraph is here to help with feature discovery.
+
+Look at [`crate-status.md`](https://github.com/Byron/gitoxide/blob/main/crate-status.md) for a rather exhaustive document that contains
+both implemented and planned features.
+
+Further, the [`gix` crate documentation with the `git2` search term](https://docs.rs/gix/0.54.1/gix/?search=git2) helps to find all currently
+known `git2` equivalent method calls. Please note that this list is definitely not exhaustive yet, but might help if you are coming from `git2`.
+
+What follows is a high-level list of features along with their support
+
+* [x] clone
+* [x] fetch
+* [ ] push
+* [ ] reset
+* [ ] status
+* [ ] merge
+* [ ] rebase
+* [ ] commit
+* [x] reading and writing of objects
+* [x] reading and writing of refs
+* [x] reading and writing of `.git/index`
+* [x] reading and writing of git configuration
+* [x] pathspecs
+* [x] revspecs
+* [x] `.gitignore` and `.gitattributes`
+
 ### Crates
 
 Follow linked crate name for detailed status. Please note that all crates follow [semver] as well as the [stability guide].
