@@ -1,40 +1,54 @@
 use std::any::Any;
 
 use bstr::ByteSlice;
-use libtest_mimic::{Arguments, Failed, Trial};
 
-fn main() {
-    // We do not need to set this hook back to its default, because this test gets compiled to its
-    // own binary and does therefore not interfere with other tests.
+#[test]
+fn run() {
+    let panic_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(|_| {}));
 
-    let args = Arguments::from_args();
-    let tests = get_baseline_test_cases();
+    let mut count = 0;
+    let mut failures = Vec::new();
+    for (url, expected) in baseline::URLS.iter() {
+        count += 1;
+        let actual = match gix_url::parse(url) {
+            Ok(actual) => actual,
+            Err(err) => {
+                failures.push(err.to_string());
+                continue;
+            }
+        };
+        let result = std::panic::catch_unwind(|| assert_urls_equal(expected, &actual)).map_err(|panic| {
+            match downcast_panic_to_str(&panic) {
+                Some(s) => format!("{url}: {s}\nexpected: {expected:?}\nactual: {actual:?}").into(),
+                None => format!("{url}: expected: {expected:?}\nactual: {actual:?}"),
+            }
+        });
+        if let Err(message) = result {
+            failures.push(message);
+        }
+    }
 
-    libtest_mimic::run(&args, tests).exit();
-}
-
-fn get_baseline_test_cases() -> Vec<Trial> {
-    baseline::URLS
-        .iter()
-        .map(|(url, expected)| {
-            Trial::test(url.to_str().expect("url is valid utf-8"), move || {
-                let actual = std::panic::catch_unwind(|| gix_url::parse(url).expect("valid urls can be parsed"))
-                    .map_err(|panic| match downcast_panic_to_str(&panic) {
-                        Some(s) => format!("{s}\nexpected: {expected:?}").into(),
-                        None => Failed::without_message(),
-                    })?;
-
-                std::panic::catch_unwind(|| assert_urls_equal(expected, &actual)).map_err(|panic| {
-                    match downcast_panic_to_str(&panic) {
-                        Some(s) => format!("{s}\nexpected: {expected:?}\nactual: {actual:?}").into(),
-                        None => Failed::without_message(),
-                    }
-                })
-            })
-            .with_ignored_flag(true /* currently most of these fail */)
-        })
-        .collect::<_>()
+    std::panic::set_hook(panic_hook);
+    assert_ne!(count, 0, "the baseline is never empty");
+    if failures.is_empty() {
+        todo!("The baseline is currently meddling with hooks, thats not needed anymore since the failure rate is 0: move this into a module of the normal tests");
+    }
+    for message in &failures {
+        eprintln!("{message}");
+    }
+    eprintln!(
+        "{} failed out of {count} tests ({} passed)",
+        failures.len(),
+        count - failures.len()
+    );
+    let kind = baseline::Kind::new();
+    assert!(
+        failures.len() <= kind.max_num_failures(),
+        "Expected no more than {} failures, but got {} - this should get better, not worse",
+        kind.max_num_failures(),
+        failures.len(),
+    )
 }
 
 fn downcast_panic_to_str<'a>(panic: &'a Box<dyn Any + Send + 'static>) -> Option<&'a str> {
@@ -132,9 +146,40 @@ mod baseline {
     use bstr::{BStr, BString, ByteSlice};
     use gix_testtools::once_cell::sync::Lazy;
 
+    pub enum Kind {
+        Unix,
+        Windows,
+    }
+
+    impl Kind {
+        pub const fn new() -> Self {
+            if cfg!(windows) {
+                Kind::Windows
+            } else {
+                Kind::Unix
+            }
+        }
+
+        pub fn max_num_failures(&self) -> usize {
+            match self {
+                Kind::Unix => 165,
+                Kind::Windows => 171,
+            }
+        }
+
+        pub fn extension(&self) -> &'static str {
+            match self {
+                Kind::Unix => "unix",
+                Kind::Windows => "windows",
+            }
+        }
+    }
+
     static BASELINE: Lazy<BString> = Lazy::new(|| {
         let base = gix_testtools::scripted_fixture_read_only("make_baseline.sh").unwrap();
-        BString::from(std::fs::read(base.join("git-baseline.generic")).expect("fixture file exists"))
+        BString::from(
+            std::fs::read(base.join(format!("git-baseline.{}", Kind::new().extension()))).expect("fixture file exists"),
+        )
     });
 
     pub static URLS: Lazy<Vec<(&'static BStr, GitDiagUrl<'static>)>> = Lazy::new(|| {

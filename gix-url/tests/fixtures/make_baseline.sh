@@ -53,11 +53,14 @@ tests_windows+=("c:repo")
 tests_unix+=("${tests[@]}")
 tests_windows+=("${tests[@]}")
 
-for url in "${tests[@]}"
+for url in "${tests_unix[@]}"
 do
   echo ";" # there are no `;` in the tested urls
   git fetch-pack --diag-url "$url"
-done >git-baseline.generic
+done >git-baseline.unix
 
-# TODO: testing of platform specific behavior
-
+for url in "${tests_windows[@]}"
+do
+  echo ";" # there are no `;` in the tested urls
+  git fetch-pack --diag-url "$url"
+done >git-baseline.windows
