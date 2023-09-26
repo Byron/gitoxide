@@ -9,6 +9,7 @@ fn run() {
 
     let mut count = 0;
     let mut failures = Vec::new();
+    let (mut failed_roundtrips, mut serialized_url_does_not_match_input) = (0, 0);
     for (url, expected) in baseline::URLS.iter() {
         count += 1;
         let actual = match gix_url::parse(url) {
@@ -18,9 +19,12 @@ fn run() {
                 continue;
             }
         };
+        let url_as_string = actual.to_bstring();
+        serialized_url_does_not_match_input += usize::from(url_as_string != *url);
+        failed_roundtrips += usize::from(gix_url::parse(url_as_string.as_ref()).ok().as_ref() != Some(&actual));
         let result = std::panic::catch_unwind(|| assert_urls_equal(expected, &actual)).map_err(|panic| {
             match downcast_panic_to_str(&panic) {
-                Some(s) => format!("{url}: {s}\nexpected: {expected:?}\nactual: {actual:?}").into(),
+                Some(s) => format!("{url}: {s}\nexpected: {expected:?}\nactual: {actual:?}"),
                 None => format!("{url}: expected: {expected:?}\nactual: {actual:?}"),
             }
         });
@@ -42,7 +46,13 @@ fn run() {
         failures.len(),
         count - failures.len()
     );
+    assert!(
+        serialized_url_does_not_match_input <= 126,
+        "we shouldn't get worse when serializing to match our input URL"
+    );
+
     let kind = baseline::Kind::new();
+    assert_eq!(failed_roundtrips, 0);
     assert!(
         failures.len() <= kind.max_num_failures(),
         "Expected no more than {} failures, but got {} - this should get better, not worse",
@@ -70,30 +80,29 @@ fn downcast_panic_to_str<'a>(panic: &'a Box<dyn Any + Send + 'static>) -> Option
 
 fn assert_urls_equal(expected: &baseline::GitDiagUrl<'_>, actual: &gix_url::Url) {
     assert_eq!(
+        actual.scheme,
         gix_url::Scheme::from(expected.protocol.to_str().unwrap()),
-        actual.scheme
     );
 
     match expected.host {
         baseline::GitDiagHost::NonSsh { host_and_port } => match host_and_port {
-            Some(host_and_port) if !host_and_port.is_empty() => {
+            Some(expected_host_and_port) if !expected_host_and_port.is_empty() => {
                 assert!(actual.host().is_some());
 
-                let mut gix_host_and_port = String::with_capacity(host_and_port.len());
-
+                let mut actual_host_and_port = String::new();
                 if let Some(user) = actual.user() {
-                    gix_host_and_port.push_str(user);
-                    gix_host_and_port.push('@');
+                    actual_host_and_port.push_str(user);
+                    actual_host_and_port.push('@');
                 }
 
-                gix_host_and_port.push_str(actual.host().unwrap());
+                actual_host_and_port.push_str(actual.host().unwrap());
 
                 if let Some(port) = actual.port {
-                    gix_host_and_port.push(':');
-                    gix_host_and_port.push_str(&port.to_string());
+                    actual_host_and_port.push(':');
+                    actual_host_and_port.push_str(&port.to_string());
                 }
 
-                assert_eq!(host_and_port, gix_host_and_port);
+                assert_eq!(actual_host_and_port, expected_host_and_port);
             }
             _ => {
                 assert!(actual.host().is_none());
@@ -102,44 +111,28 @@ fn assert_urls_equal(expected: &baseline::GitDiagUrl<'_>, actual: &gix_url::Url)
         },
         baseline::GitDiagHost::Ssh { user_and_host, port } => {
             match user_and_host {
-                Some(user_and_host) => {
+                Some(expected_user_and_host) => {
                     assert!(actual.host().is_some());
 
-                    let mut gix_user_and_host = String::with_capacity(user_and_host.len());
+                    let mut actual_user_and_host = String::new();
                     if let Some(user) = actual.user() {
-                        gix_user_and_host.push_str(user);
-                        gix_user_and_host.push('@');
+                        actual_user_and_host.push_str(user);
+                        actual_user_and_host.push('@');
                     }
-                    gix_user_and_host.push_str(actual.host().unwrap());
+                    actual_user_and_host.push_str(actual.host().unwrap());
 
-                    assert_eq!(user_and_host, gix_user_and_host);
+                    assert_eq!(actual_user_and_host, expected_user_and_host);
                 }
                 None => {
                     assert!(actual.host().is_none());
                     assert!(actual.user().is_none());
                 }
             }
-            match port {
-                Some(port) => {
-                    assert!(actual.port.is_some());
-                    assert_eq!(port, actual.port.unwrap().to_string());
-                }
-                None => {
-                    assert!(actual.port.is_none());
-                }
-            }
+            assert_eq!(actual.port.map(|p| p.to_string()), port.map(ToString::to_string));
         }
     }
 
-    match expected.path {
-        Some(path) => {
-            assert_eq!(path, actual.path);
-        }
-        None => {
-            // I guess? This case does not happen a single time in the current fixtures...
-            assert!(actual.path.is_empty());
-        }
-    }
+    assert_eq!(actual.path, expected.path.unwrap_or_default());
 }
 
 mod baseline {
@@ -177,20 +170,20 @@ mod baseline {
 
     static BASELINE: Lazy<BString> = Lazy::new(|| {
         let base = gix_testtools::scripted_fixture_read_only("make_baseline.sh").unwrap();
-        BString::from(
-            std::fs::read(base.join(format!("git-baseline.{}", Kind::new().extension()))).expect("fixture file exists"),
-        )
+        std::fs::read(base.join(format!("git-baseline.{}", Kind::new().extension())))
+            .expect("fixture file exists")
+            .into()
     });
 
     pub static URLS: Lazy<Vec<(&'static BStr, GitDiagUrl<'static>)>> = Lazy::new(|| {
         let mut out = Vec::new();
 
-        let url_block = BASELINE
+        let blocks = BASELINE
             .split(|c| c == &b';')
-            .filter(|url| !url.is_empty())
+            .filter(|block| !block.is_empty())
             .map(ByteSlice::trim);
 
-        for block in url_block {
+        for block in blocks {
             let (url, diag_url) = GitDiagUrl::parse(block.as_bstr());
             out.push((url, diag_url));
         }
@@ -208,8 +201,15 @@ mod baseline {
         /// Parses the given string into a [GitDiagUrl] according to the format
         /// specified in [Git's `connect.c`][git_src].
         ///
-        /// [git_src]: https://github.com/git/git/blob/master/connect.c#L1415
+        /// [git_src]: https://github.com/git/git/blob/bcb6cae2966cc407ca1afc77413b3ef11103c175/connect.c#L1415
         fn parse(diag_url: &BStr) -> (&'_ BStr, GitDiagUrl<'_>) {
+            fn null_is_none(input: &BStr) -> Option<&BStr> {
+                if input == "NULL" || input == "NONE" {
+                    None
+                } else {
+                    Some(input)
+                }
+            }
             let mut lines = diag_url.lines().map(ByteSlice::trim);
             let mut next_attr = |name: &str| {
                 lines
@@ -227,21 +227,13 @@ mod baseline {
                 let user_and_host = next_attr("userandhost");
                 let port = next_attr("port");
                 GitDiagHost::Ssh {
-                    user_and_host: if user_and_host == "NULL" {
-                        None
-                    } else {
-                        Some(user_and_host)
-                    },
-                    port: if port == "NONE" { None } else { Some(port) },
+                    user_and_host: null_is_none(user_and_host),
+                    port: null_is_none(port),
                 }
             } else {
                 let host_and_port = next_attr("hostandport");
                 GitDiagHost::NonSsh {
-                    host_and_port: if host_and_port == "NULL" {
-                        None
-                    } else {
-                        Some(host_and_port)
-                    },
+                    host_and_port: null_is_none(host_and_port),
                 }
             };
 
@@ -252,7 +244,7 @@ mod baseline {
                 GitDiagUrl {
                     protocol,
                     host,
-                    path: if path == "NULL" { None } else { Some(path) },
+                    path: null_is_none(path),
                 },
             )
         }
