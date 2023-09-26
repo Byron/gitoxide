@@ -1,4 +1,3 @@
-use bstr::ByteSlice;
 use gix_url::Scheme;
 
 use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
@@ -65,23 +64,14 @@ fn with_user_and_port_and_absolute_path() -> crate::Result {
 }
 
 #[test]
-fn ssh_alias_needs_username_to_not_be_considered_a_filepath() {
-    let url = gix_url::Url::from_parts(
-        Scheme::Ssh,
-        None,
-        None,
-        "alias".to_string().into(),
-        None,
-        b"path/to/git".as_bstr().into(),
-        true,
-    )
-    .expect("valid");
-    assert_eq!(
-        url.scheme,
-        Scheme::File,
-        "we need a user name to differentiate the scp form from a path"
-    );
-    assert_eq!(url.to_bstring(), "alias:path/to/git");
+fn ssh_alias_without_username() -> crate::Result {
+    let url = assert_url(
+        "host:/path/to/git",
+        url_alternate(Scheme::Ssh, None, "host", None, b"/path/to/git"),
+    )?
+    .to_bstring();
+    assert_eq!(url, "host:/path/to/git");
+    Ok(())
 }
 
 #[test]
@@ -168,12 +158,38 @@ fn scp_like_with_user_and_relative_path_keep_relative_path() -> crate::Result {
 }
 
 #[test]
-fn strange_windows_paths_yield_meaningful_results() -> crate::Result {
+fn scp_like_with_windows_path() -> crate::Result {
     let url = assert_url(
-        "user@host.xz:42:C:/strange/absolute/path",
-        url_alternate(Scheme::Ssh, "user", "host.xz", Some(42), b"C:/strange/absolute/path"),
+        "user@host.xz:C:/strange/absolute/path",
+        url_alternate(Scheme::Ssh, "user", "host.xz", None, b"C:/strange/absolute/path"),
     )?
     .to_bstring();
-    assert_eq!(url, "user@host.xz:42:C:/strange/absolute/path");
+    assert_eq!(url, "user@host.xz:C:/strange/absolute/path");
+    Ok(())
+}
+
+#[test]
+fn scp_like_with_windows_path_and_port_thinks_port_is_part_of_path() -> crate::Result {
+    let url = gix_url::parse("user@host.xz:42:C:/strange/absolute/path".into())?;
+    assert_eq!(
+        url.to_bstring(),
+        "user@host.xz:42:C:/strange/absolute/path",
+        "it reproduces correctly"
+    );
+    assert_eq!(
+        url.path, "42:C:/strange/absolute/path",
+        "but in fact it gets it quite wrong - git does the same on windows and linux"
+    );
+    assert_eq!(url.port, None, "the port wasn't actually parsed");
+    Ok(())
+}
+
+// Git does not care that the host is named `file`, it still treats it as an SCP url.
+// I btw tested this, yes you can really clone a repository from there, just `git init`
+// in the directory above your home directory on the remote machine.
+#[test]
+fn strange_scp_like_with_host_named_file() -> crate::Result {
+    let url = assert_url("file:..", url_alternate(Scheme::Ssh, None, "file", None, b".."))?;
+    assert_eq!(url.to_bstring(), "file:..");
     Ok(())
 }

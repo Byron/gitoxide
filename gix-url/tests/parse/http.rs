@@ -13,7 +13,7 @@ fn username_expansion_is_unsupported() -> crate::Result {
 #[test]
 fn empty_user_cannot_roundtrip() -> crate::Result {
     let actual = gix_url::parse("http://@example.com/~byron/hello".into())?;
-    let expected = url(Scheme::Http, "", "example.com", None, b"/~byron/hello");
+    let expected = url(Scheme::Http, None, "example.com", None, b"/~byron/hello");
     assert_eq!(actual, expected);
     assert_eq!(
         actual.to_bstring(),
@@ -50,7 +50,7 @@ fn only_password() -> crate::Result {
 #[test]
 fn username_and_empty_password() -> crate::Result {
     let actual = gix_url::parse("http://user:@example.com/~byron/hello".into())?;
-    let expected = url_with_pass(Scheme::Http, "user", "", "example.com", None, b"/~byron/hello");
+    let expected = url(Scheme::Http, "user", "example.com", None, b"/~byron/hello");
     assert_eq!(actual, expected);
     assert_eq!(
         actual.to_bstring(),

@@ -10,28 +10,58 @@
 
 use bstr::{BStr, BString};
 use std::borrow::Cow;
-
-///
-pub mod parse;
-#[doc(inline)]
-pub use parse::parse;
+use std::path::PathBuf;
 
 ///
 pub mod expand_path;
-#[doc(inline)]
-pub use expand_path::expand_path;
 
 mod scheme;
 pub use scheme::Scheme;
+mod impls;
+
+///
+pub mod parse;
+
+/// Parse the given `bytes` as a [git url](Url).
+///
+/// # Note
+///
+/// We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
+/// For file-paths, we don't expect UTF8 encoding either.
+pub fn parse(input: &BStr) -> Result<Url, parse::Error> {
+    use parse::InputScheme;
+    match parse::find_scheme(input) {
+        InputScheme::Local => parse::local(input),
+        InputScheme::Url { protocol_end } if input[..protocol_end].eq_ignore_ascii_case(b"file") => {
+            parse::file_url(input, protocol_end)
+        }
+        InputScheme::Url { .. } => parse::url(input),
+        InputScheme::Scp { colon } => parse::scp(input, colon),
+    }
+}
+
+/// Expand `path` for the given `user`, which can be obtained by [`parse()`], resolving the home directories
+/// of `user` automatically.
+///
+/// If more precise control of the resolution mechanism is needed, then use the [expand_path::with()] function.
+pub fn expand_path(user: Option<&expand_path::ForUser>, path: &BStr) -> Result<PathBuf, expand_path::Error> {
+    expand_path::with(user, path, |user| match user {
+        expand_path::ForUser::Current => home::home_dir(),
+        expand_path::ForUser::Name(user) => {
+            home::home_dir().and_then(|home| home.parent().map(|home_dirs| home_dirs.join(user.to_string())))
+        }
+    })
+}
 
 /// A URL with support for specialized git related capabilities.
 ///
-/// Additionally there is support for [deserialization][Url::from_bytes()] and serialization
-/// (_see the `Display::fmt()` implementation_).
+/// Additionally there is support for [deserialization](Url::from_bytes()) and serialization
+/// (_see the [`std::fmt::Display::fmt()`] implementation_).
 ///
-/// # Deviation
+/// # Security Warning
 ///
-/// Note that we do not support passing the password using the URL as it's likely leading to accidents.
+/// URLs may contain passwords and we serialize them when [formatting](std::fmt::Display) or
+/// [serializing losslessly](Url::to_bstring()).
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Url {
@@ -55,7 +85,7 @@ pub struct Url {
     /// the invocation of programs from an attacker controlled URL. See <https://secure.phabricator.com/T12961> for details.
     ///
     /// If this value is going to be used in a command-line application, call [Self::path_argument_safe()] instead.
-    pub path: bstr::BString,
+    pub path: BString,
 }
 
 /// Instantiation
@@ -88,7 +118,7 @@ impl Url {
 
 /// Modification
 impl Url {
-    /// Set the given `user`, with `None` unsetting it. Returns the previous value.
+    /// Set the given `user`, or unset it with `None`. Return the previous value.
     pub fn set_user(&mut self, user: Option<String>) -> Option<String> {
         let prev = self.user.take();
         self.user = user;
@@ -228,7 +258,7 @@ impl Url {
     }
 
     /// Transform ourselves into a binary string, losslessly, or fail if the URL is malformed due to host or user parts being incorrect.
-    pub fn to_bstring(&self) -> bstr::BString {
+    pub fn to_bstring(&self) -> BString {
         let mut buf = Vec::with_capacity(
             (5 + 3)
                 + self.user.as_ref().map(String::len).unwrap_or_default()
@@ -250,4 +280,43 @@ impl Url {
     }
 }
 
-mod impls;
+/// This module contains extensions to the [Url] struct which are only intended to be used
+/// for testing code. Do not use this module in production! For all intends and purposes the APIs of
+/// all functions and types exposed by this module are considered unstable and are allowed to break
+/// even in patch releases!
+#[doc(hidden)]
+#[cfg(debug_assertions)]
+pub mod testing {
+    use bstr::BString;
+
+    use crate::{Scheme, Url};
+
+    /// Additional functions for [Url] which are only intended to be used for tests.
+    pub trait TestUrlExtension {
+        /// Create a new instance from the given parts without validating them.
+        ///
+        /// This function is primarily intended for testing purposes. For production code please
+        /// consider using [Url::from_parts] instead!
+        fn from_parts_unchecked(
+            scheme: Scheme,
+            user: Option<String>,
+            password: Option<String>,
+            host: Option<String>,
+            port: Option<u16>,
+            path: BString,
+            serialize_alternative_form: bool,
+        ) -> Url {
+            Url {
+                scheme,
+                user,
+                password,
+                host,
+                port,
+                path,
+                serialize_alternative_form,
+            }
+        }
+    }
+
+    impl TestUrlExtension for Url {}
+}
