@@ -1,6 +1,6 @@
 [package]
 name = "gix-fetchhead"
-version = "0.0.0"
+version = "0.0.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project to read and write .git/FETCH_HEAD"
@@ -12,3 +12,5 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
+gix-hash = { version = "^0.13.0", path = "../gix-hash" }
+gix-url = { version = "^0.24.0", path = "../gix-url" }
