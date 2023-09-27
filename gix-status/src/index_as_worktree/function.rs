@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::{io, marker::PhantomData, path::Path};
 
 use bstr::BStr;
@@ -23,6 +23,8 @@ use crate::{
 /// Note that `index` is updated with the latest seen stat information from the worktree, and its timestamp is adjusted to
 /// the current time for which it will be considered fresh as long as it is included which depends on `pathspec`.
 ///
+/// `should_interrupt` can be used to stop all processing.
+///
 /// ### Note
 ///
 /// Technically, this function does more as this also provides additional information, like whether a file has conflicts,
@@ -43,6 +45,7 @@ pub fn index_as_worktree<'index, T, U, Find, E1, E2>(
     find: Find,
     progress: &mut dyn gix_features::progress::Progress,
     pathspec: impl Pathspec + Send + Clone,
+    should_interrupt: &AtomicBool,
     options: Options,
 ) -> Result<Outcome, Error>
 where
@@ -68,7 +71,7 @@ where
         .prefixed_entries_range(pathspec.common_prefix())
         .unwrap_or(0..index.entries().len());
     let (entries, path_backing) = index.entries_mut_and_pathbacking();
-    let num_entries = entries.len();
+    let mut num_entries = entries.len();
     let entries = &mut entries[range];
 
     let _span = gix_features::trace::detail!("gix_status::index_as_worktree", 
@@ -80,12 +83,13 @@ where
     let (skipped_by_pathspec, skipped_by_entry_flags, symlink_metadata_calls, entries_updated) = Default::default();
     let (worktree_bytes, worktree_reads, odb_bytes, odb_reads, racy_clean) = Default::default();
 
+    num_entries = entries.len();
     progress.init(entries.len().into(), gix_features::progress::count("files"));
     let count = progress.counter();
 
     in_parallel_if(
         || true, // TODO: heuristic: when is parallelization not worth it? Git says 500 items per thread, but to 20 threads, we can be more fine-grained though.
-        entries.chunks_mut(chunk_size),
+        gix_features::interrupt::Iter::new(entries.chunks_mut(chunk_size), should_interrupt),
         thread_limit,
         {
             let options = &options;
@@ -137,6 +141,8 @@ where
     )?;
 
     Ok(Outcome {
+        entries_to_process: num_entries,
+        entries_processed: count.load(Ordering::Relaxed),
         entries_skipped_by_common_prefix,
         entries_skipped_by_pathspec: skipped_by_pathspec.load(Ordering::Relaxed),
         entries_skipped_by_entry_flags: skipped_by_entry_flags.load(Ordering::Relaxed),

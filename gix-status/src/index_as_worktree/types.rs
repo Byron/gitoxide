@@ -35,6 +35,10 @@ pub struct Options {
 /// Provide additional information collected during the runtime of [`index_as_worktree()`](crate::index_as_worktree()).
 #[derive(Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Outcome {
+    /// The total amount of entries that is to be processed.
+    pub entries_to_process: usize,
+    /// The amount of entries we actually processed. If this isn't the entire set, the operation was interrupted.
+    pub entries_processed: usize,
     /// The amount of entries we didn't even traverse (and thus update with stat) due to a common prefix in pathspecs.
     /// This is similar to the current working directory.
     pub entries_skipped_by_common_prefix: usize,

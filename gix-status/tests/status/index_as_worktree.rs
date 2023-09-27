@@ -1,3 +1,4 @@
+use std::sync::atomic::AtomicBool;
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
     Arc,
@@ -75,6 +76,7 @@ fn fixture_filtered_detailed(
         |_, _| Ok::<_, std::convert::Infallible>(gix_object::BlobRef { data: &[] }),
         &mut gix_features::progress::Discard,
         Pathspec(search),
+        &AtomicBool::default(),
         Options {
             fs: gix_fs::Capabilities::probe(&git_dir),
             stat: TEST_OPTIONS,
@@ -131,6 +133,8 @@ fn removed() {
     assert_eq!(
         out,
         Outcome {
+            entries_to_process: 4,
+            entries_processed: 4,
             symlink_metadata_calls: 4,
             ..Default::default()
         }
@@ -147,6 +151,8 @@ fn removed() {
     assert_eq!(
         out,
         Outcome {
+            entries_to_process: 2,
+            entries_processed: 2,
             entries_skipped_by_common_prefix: 2,
             symlink_metadata_calls: 2,
             ..Default::default()
@@ -159,6 +165,8 @@ fn subomdule_nochange() {
     assert_eq!(
         ignore_racyclean(submodule_fixture("no-change", &[])),
         Outcome {
+            entries_to_process: 2,
+            entries_processed: 2,
             entries_updated: 1,
             symlink_metadata_calls: 2,
             worktree_bytes: 46,
@@ -176,6 +184,8 @@ fn subomdule_deleted_dir() {
             &[(BStr::new(b"m1"), Some(Change::Removed), NO_CONFLICT)]
         )),
         Outcome {
+            entries_to_process: 2,
+            entries_processed: 2,
             entries_updated: 1,
             symlink_metadata_calls: 2,
             worktree_files_read: 1,
@@ -193,6 +203,8 @@ fn subomdule_typechange() {
             &[(BStr::new(b"m1"), Some(Change::Type), NO_CONFLICT)]
         )),
         Outcome {
+            entries_to_process: 2,
+            entries_processed: 2,
             entries_updated: 1,
             symlink_metadata_calls: 2,
             worktree_files_read: 1,
@@ -207,6 +219,8 @@ fn subomdule_empty_dir_no_change() {
     assert_eq!(
         ignore_racyclean(submodule_fixture("empty-dir-no-change", &[])),
         Outcome {
+            entries_to_process: 2,
+            entries_processed: 2,
             entries_updated: 1,
             symlink_metadata_calls: 2,
             worktree_files_read: 1,
@@ -225,6 +239,8 @@ fn subomdule_empty_dir_no_change_is_passed_to_submodule_handler() {
             true,
         )),
         Outcome {
+            entries_to_process: 2,
+            entries_processed: 2,
             entries_updated: 1,
             symlink_metadata_calls: 2,
             worktree_files_read: 1,
@@ -242,6 +258,8 @@ fn intent_to_add() {
             &[(BStr::new(b"content"), Some(Change::IntentToAdd), NO_CONFLICT)],
         ),
         Outcome {
+            entries_to_process: 1,
+            entries_processed: 1,
             symlink_metadata_calls: 1,
             ..Default::default()
         }
@@ -263,6 +281,8 @@ fn conflict() {
             )],
         ),
         Outcome {
+            entries_to_process: 3,
+            entries_processed: 3,
             symlink_metadata_calls: 1,
             worktree_files_read: 1,
             worktree_bytes: 51,
@@ -314,6 +334,8 @@ fn modified() {
             ],
         ),
         Outcome {
+            entries_to_process: 5,
+            entries_processed: 5,
             symlink_metadata_calls: 5,
             entries_updated: 1,
             worktree_files_read: 2,
@@ -379,6 +401,7 @@ fn racy_git() {
         |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "no odb access expected")),
         &mut gix_features::progress::Discard,
         Pathspec::default(),
+        &AtomicBool::default(),
         Options {
             fs,
             stat: TEST_OPTIONS,
@@ -389,6 +412,8 @@ fn racy_git() {
     assert_eq!(
         out,
         Outcome {
+            entries_to_process: 1,
+            entries_processed: 1,
             symlink_metadata_calls: 1,
             ..Default::default()
         }
@@ -414,6 +439,7 @@ fn racy_git() {
         |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "no odb access expected")),
         &mut gix_features::progress::Discard,
         Pathspec::default(),
+        &AtomicBool::default(),
         Options {
             fs,
             stat: TEST_OPTIONS,
@@ -424,6 +450,8 @@ fn racy_git() {
     assert_eq!(
         out,
         Outcome {
+            entries_to_process: 1,
+            entries_processed: 1,
             symlink_metadata_calls: 1,
             racy_clean: 1,
             worktree_bytes: 3,
