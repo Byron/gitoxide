@@ -4,7 +4,6 @@
 /// Represents parsed data from the FETCH_HEAD file.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct FetchHead {
-
     //Head of fetched repository
     pub head: gix_hash::ObjectId,
 
