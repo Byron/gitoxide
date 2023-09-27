@@ -133,7 +133,11 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
-        Subcommands::Status(crate::plumbing::options::status::Platform { submodules, pathspec }) => prepare_and_run(
+        Subcommands::Status(crate::plumbing::options::status::Platform {
+            statistics,
+            submodules,
+            pathspec,
+        }) => prepare_and_run(
             "status",
             trace,
             auto_verbose,
@@ -150,6 +154,7 @@ pub fn main() -> Result<()> {
                     progress,
                     core::repository::status::Options {
                         format,
+                        statistics,
                         thread_limit: thread_limit.or(cfg!(target_os = "macos").then_some(3)), // TODO: make this a configurable when in `gix`, this seems to be optimal on MacOS, linux scales though!
                         submodules: match submodules {
                             Submodules::All => core::repository::status::Submodules::All,

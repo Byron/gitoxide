@@ -20,6 +20,7 @@ pub struct Options {
     pub format: OutputFormat,
     pub submodules: Submodules,
     pub thread_limit: Option<usize>,
+    pub statistics: bool,
 }
 
 pub fn show(
@@ -33,12 +34,13 @@ pub fn show(
         // TODO: implement this
         submodules: _,
         thread_limit,
+        statistics,
     }: Options,
 ) -> anyhow::Result<()> {
     if format != OutputFormat::Human {
         bail!("Only human format is supported right now");
     }
-    let mut index = repo.index()?;
+    let mut index = repo.index_or_empty()?;
     let index = gix::threading::make_mut(&mut index);
     let pathspec = repo.pathspec(
         pathspecs,
@@ -65,7 +67,7 @@ pub fn show(
             _ => unreachable!("state must be attributes stack only"),
         },
     };
-    gix_status::index_as_worktree(
+    let outcome = gix_status::index_as_worktree(
         index,
         repo.work_dir()
             .context("This operation cannot be run on a bare repository")?,
@@ -85,6 +87,10 @@ pub fn show(
         &gix::interrupt::IS_INTERRUPTED,
         options,
     )?;
+
+    if statistics {
+        writeln!(err, "{outcome:#?}").ok();
+    }
 
     writeln!(err, "\nhead -> index and untracked files aren't implemented yet")?;
     progress.show_throughput(start);
@@ -158,6 +164,15 @@ fn change_to_char(change: &Change<()>) -> u8 {
     match change {
         Change::Removed => b'D',
         Change::Type => b'T',
-        Change::SubmoduleModification(_) | Change::Modification { .. } => b'M',
+        Change::SubmoduleModification(_) => b'M',
+        Change::Modification {
+            executable_bit_changed, ..
+        } => {
+            if *executable_bit_changed {
+                b'X'
+            } else {
+                b'M'
+            }
+        }
     }
 }
