@@ -50,10 +50,6 @@ pub fn data_to_buf_with_meta<'a>(
         // on unix (by git) so no reason to use the try version here
         let symlink_path = gix_path::into_bstr(read_link(path)?);
         buf.extend_from_slice(&symlink_path);
-        // TODO: there is no reason this should be a clone
-        //       std isn't great about allowing users to avoid allocations but we could
-        //       simply write our own wrapper around libc::readlink which reuses the
-        //       buffer. This would require unsafe code tough (obviously)
     } else {
         buf.clear();
         File::open(path)?.read_to_end(buf)?;

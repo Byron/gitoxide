@@ -1,6 +1,6 @@
 use bstr::{BStr, BString};
 
-/// The error returned by [`status()`](crate::index_as_worktree()).
+/// The error returned by [index_as_worktree()`](crate::index_as_worktree()).
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -19,8 +19,8 @@ pub enum Error {
     },
 }
 
-#[derive(Clone, Debug, Default)]
 /// Options that control how the index status with a worktree is computed.
+#[derive(Clone, Debug, Default)]
 pub struct Options {
     /// Capabilities of the file system which affect the status computation.
     pub fs: gix_fs::Capabilities,
@@ -30,6 +30,43 @@ pub struct Options {
     pub thread_limit: Option<usize>,
     /// Options that control how stat comparisons are made when checking if a file is fresh.
     pub stat: gix_index::entry::stat::Options,
+}
+
+/// Provide additional information collected during the runtime of [`index_as_worktree()`](crate::index_as_worktree()).
+#[derive(Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
+pub struct Outcome {
+    /// The amount of entries we didn't even traverse (and thus update with stat) due to a common prefix in pathspecs.
+    /// This is similar to the current working directory.
+    pub entries_skipped_by_common_prefix: usize,
+    /// The amount of entries that were skipped due to exclusion by *pathspecs*.
+    pub entries_skipped_by_pathspec: usize,
+    /// The amount of entries that were skipped as the entry flag indicated this.
+    pub entries_skipped_by_entry_flags: usize,
+    /// The amount of times we queried symlink-metadata for a file on disk.
+    pub symlink_metadata_calls: usize,
+    /// The amount of entries whose stats have been updated as its modification couldn't be determined without an expensive calculation.
+    ///
+    /// With these updates, this calculation will be avoided next time the status runs.
+    pub entries_updated: usize,
+    /// The amount of entries that were considered racy-clean - they will need thorough checking to see if they are truly clean,
+    /// i.e. didn't change.
+    pub racy_clean: usize,
+
+    /// The amount of bytes read from the worktree in order to determine if an entry changed, across all files.
+    pub worktree_bytes: u64,
+    /// The amount of files read in full from the worktree (and into memory).
+    pub worktree_files_read: usize,
+    /// The amount of bytes read from the object database in order to determine if an entry changed, across all objects.
+    pub odb_bytes: u64,
+    /// The amount of objects read from the object database.
+    pub odb_objects_read: usize,
+}
+
+impl Outcome {
+    /// The total amount of skipped entries, i.e. those that weren't processed at all.
+    pub fn skipped(&self) -> usize {
+        self.entries_skipped_by_common_prefix + self.entries_skipped_by_pathspec + self.entries_skipped_by_entry_flags
+    }
 }
 
 /// How an index entry needs to be changed to obtain the destination worktree state, i.e. `entry.apply(this_change) == worktree-entry`.
@@ -61,7 +98,7 @@ pub enum Change<T = (), U = ()> {
     SubmoduleModification(U),
     /// An index entry that correspond to an untracked worktree file marked with `git add --intent-to-add`.
     ///
-    /// This means it's not available in the object database yet or the index was created from,
+    /// This means it's not available in the object database yet
     /// even though now an entry exists that represents the worktree file.
     IntentToAdd,
 }

@@ -1,4 +1,4 @@
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::{io, marker::PhantomData, path::Path};
 
 use bstr::BStr;
@@ -10,21 +10,29 @@ use crate::{
         traits,
         traits::{CompareBlobs, SubmoduleStatus},
         types::{Error, Options},
-        Change, VisitEntry,
+        Change, Outcome, VisitEntry,
     },
     read, Pathspec,
 };
 
 /// Calculates the changes that need to be applied to an `index` to match the state of the `worktree` and makes them
-/// observable in `collector`, along with information produced by `compare` which gets to see blobs that may have changes.
+/// observable in `collector`, along with information produced by `compare` which gets to see blobs that may have changes, and
+/// `submodule` which can take a look at submodules in detail to produce status information.
 /// `options` are used to configure the operation.
 ///
 /// Note that `index` is updated with the latest seen stat information from the worktree, and its timestamp is adjusted to
-/// the current time for which it will be considered fresh.
+/// the current time for which it will be considered fresh as long as it is included which depends on `pathspec`.
 ///
-/// Note that this isn't technically quite what this function does as this also provides some additional information,
-/// like whether a file has conflicts, and files that were added with `git add` are shown as a special
-/// changes despite not technically requiring a change to the index since `git add` already added the file to the index.
+/// ### Note
+///
+/// Technically, this function does more as this also provides additional information, like whether a file has conflicts,
+/// and files that were added with `git add` are shown as a special as well. It also updates index entry stats like `git status` would
+/// if it had to determine the hash. If that happened, the index should be written back, see [Outcome::skipped]
+/// The latter is a 'change' that is not technically requiring a change to the index since `git add` already added the
+/// file to the index, but didn't hash it.
+///
+/// Thus some care has to be taken to do the right thing when letting the index match the worktree by evaluating the changes observed
+/// by the `collector`.
 #[allow(clippy::too_many_arguments)]
 pub fn index_as_worktree<'index, T, U, Find, E1, E2>(
     index: &'index mut gix_index::State,
@@ -36,7 +44,7 @@ pub fn index_as_worktree<'index, T, U, Find, E1, E2>(
     progress: &mut dyn gix_features::progress::Progress,
     pathspec: impl Pathspec + Send + Clone,
     options: Options,
-) -> Result<(), Error>
+) -> Result<Outcome, Error>
 where
     T: Send,
     U: Send,
@@ -60,7 +68,18 @@ where
         .prefixed_entries_range(pathspec.common_prefix())
         .unwrap_or(0..index.entries().len());
     let (entries, path_backing) = index.entries_mut_and_pathbacking();
+    let num_entries = entries.len();
     let entries = &mut entries[range];
+
+    let _span = gix_features::trace::detail!("gix_status::index_as_worktree", 
+                                             num_entries = entries.len(), 
+                                             chunk_size = chunk_size,
+                                             thread_limit = ?thread_limit);
+
+    let entries_skipped_by_common_prefix = num_entries - entries.len();
+    let (skipped_by_pathspec, skipped_by_entry_flags, symlink_metadata_calls, entries_updated) = Default::default();
+    let (worktree_bytes, worktree_reads, odb_bytes, odb_reads, racy_clean) = Default::default();
+
     progress.init(entries.len().into(), gix_features::progress::count("files"));
     let count = progress.counter();
 
@@ -70,6 +89,10 @@ where
         thread_limit,
         {
             let options = &options;
+            let (skipped_by_pathspec, skipped_by_entry_flags) = (&skipped_by_pathspec, &skipped_by_entry_flags);
+            let (symlink_metadata_calls, entries_updated) = (&symlink_metadata_calls, &entries_updated);
+            let (racy_clean, worktree_bytes) = (&racy_clean, &worktree_bytes);
+            let (worktree_reads, odb_bytes, odb_reads) = (&worktree_reads, &odb_bytes, &odb_reads);
             move |_| {
                 (
                     State {
@@ -79,6 +102,16 @@ where
                         timestamp,
                         path_backing,
                         options,
+
+                        skipped_by_pathspec,
+                        skipped_by_entry_flags,
+                        symlink_metadata_calls,
+                        entries_updated,
+                        racy_clean,
+                        worktree_reads,
+                        worktree_bytes,
+                        odb_reads,
+                        odb_bytes,
                     },
                     compare,
                     submodule,
@@ -101,7 +134,20 @@ where
             collector,
             phantom: PhantomData,
         },
-    )
+    )?;
+
+    Ok(Outcome {
+        entries_skipped_by_common_prefix,
+        entries_skipped_by_pathspec: skipped_by_pathspec.load(Ordering::Relaxed),
+        entries_skipped_by_entry_flags: skipped_by_entry_flags.load(Ordering::Relaxed),
+        entries_updated: entries_updated.load(Ordering::Relaxed),
+        symlink_metadata_calls: symlink_metadata_calls.load(Ordering::Relaxed),
+        racy_clean: racy_clean.load(Ordering::Relaxed),
+        worktree_files_read: worktree_reads.load(Ordering::Relaxed),
+        worktree_bytes: worktree_bytes.load(Ordering::Relaxed),
+        odb_objects_read: odb_reads.load(Ordering::Relaxed),
+        odb_bytes: odb_bytes.load(Ordering::Relaxed),
+    })
 }
 
 struct State<'a, 'b> {
@@ -111,6 +157,16 @@ struct State<'a, 'b> {
     path_stack: crate::SymlinkCheck,
     path_backing: &'b [u8],
     options: &'a Options,
+
+    skipped_by_pathspec: &'a AtomicUsize,
+    skipped_by_entry_flags: &'a AtomicUsize,
+    symlink_metadata_calls: &'a AtomicUsize,
+    entries_updated: &'a AtomicUsize,
+    racy_clean: &'a AtomicUsize,
+    worktree_bytes: &'a AtomicU64,
+    worktree_reads: &'a AtomicUsize,
+    odb_bytes: &'a AtomicU64,
+    odb_reads: &'a AtomicUsize,
 }
 
 type StatusResult<'index, T, U> = Result<(&'index gix_index::Entry, &'index BStr, Option<Change<T, U>>, bool), Error>;
@@ -140,10 +196,12 @@ impl<'index> State<'_, 'index> {
                 | gix_index::entry::Flags::ASSUME_VALID
                 | gix_index::entry::Flags::FSMONITOR_VALID,
         ) {
+            self.skipped_by_entry_flags.fetch_add(1, Ordering::Relaxed);
             return None;
         }
         let path = entry.path_in(self.path_backing);
         if !pathspec.is_included(path, Some(false)) {
+            self.skipped_by_pathspec.fetch_add(1, Ordering::Relaxed);
             return None;
         }
         let status = self.compute_status(&mut *entry, path, diff, submodule, find);
@@ -208,6 +266,7 @@ impl<'index> State<'_, 'index> {
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Some(Change::Removed)),
             Err(err) => return Err(Error::Io(err)),
         };
+        self.symlink_metadata_calls.fetch_add(1, Ordering::Relaxed);
         let metadata = match worktree_path.symlink_metadata() {
             Ok(metadata) if metadata.is_dir() => {
                 // index entries are normally only for files/symlinks
@@ -265,21 +324,33 @@ impl<'index> State<'_, 'index> {
             racy_clean = new_stat.is_racy(self.timestamp, self.options.stat);
             if !racy_clean {
                 return Ok(None);
+            } else {
+                self.racy_clean.fetch_add(1, Ordering::Relaxed);
             }
         }
 
+        self.buf.clear();
         let read_file = WorktreeBlob {
             buf: &mut self.buf,
             path: worktree_path,
             entry,
             options: self.options,
         };
+        self.odb_buf.clear();
         let read_blob = OdbBlob {
             buf: &mut self.odb_buf,
             id: &entry.id,
             find,
         };
         let content_change = diff.compare_blobs(entry, metadata.len() as usize, read_file, read_blob)?;
+        if !self.buf.is_empty() {
+            self.worktree_reads.fetch_add(1, Ordering::Relaxed);
+            self.worktree_bytes.fetch_add(self.buf.len() as u64, Ordering::Relaxed);
+        }
+        if !self.odb_buf.is_empty() {
+            self.odb_reads.fetch_add(1, Ordering::Relaxed);
+            self.odb_bytes.fetch_add(self.odb_buf.len() as u64, Ordering::Relaxed);
+        }
         // This file is racy clean! Set the size to 0 so we keep detecting this as the file is updated.
         if content_change.is_some() && racy_clean {
             entry.stat.size = 0;
@@ -292,6 +363,7 @@ impl<'index> State<'_, 'index> {
         } else {
             // don't diff against this file next time since we know the file is unchanged.
             entry.stat = new_stat;
+            self.entries_updated.fetch_add(1, Ordering::Relaxed);
             Ok(None)
         }
     }
