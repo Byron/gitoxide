@@ -5,7 +5,7 @@ use gix::index::Entry;
 use gix::prelude::FindExt;
 use gix::Progress;
 use gix_status::index_as_worktree::traits::FastEq;
-use gix_status::index_as_worktree::Change;
+use gix_status::index_as_worktree::{Change, Conflict, EntryStatus};
 
 pub enum Submodules {
     /// display all information about submodules, including ref changes, modifications and untracked files.
@@ -48,28 +48,59 @@ pub fn show(
     )?;
     let mut progress = progress.add_child("traverse index");
     let start = std::time::Instant::now();
+    let options = gix_status::index_as_worktree::Options {
+        fs: repo.filesystem_options()?,
+        thread_limit,
+        stat: repo.stat_options()?,
+        attributes: match repo
+            .attributes_only(
+                index,
+                gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
+            )?
+            .detach()
+            .state_mut()
+        {
+            gix::worktree::stack::State::AttributesStack(attrs) => std::mem::take(attrs),
+            // TODO: this should be nicer by creating attributes directly, but it's a private API
+            _ => unreachable!("state must be attributes stack only"),
+        },
+    };
     gix_status::index_as_worktree(
         index,
         repo.work_dir()
             .context("This operation cannot be run on a bare repository")?,
         &mut Printer(out),
         FastEq,
+        Submodule,
         {
             let odb = repo.objects.clone().into_arc()?;
             move |id, buf| odb.find_blob(id, buf)
         },
         &mut progress,
         pathspec.detach()?,
-        gix_status::index_as_worktree::Options {
-            fs: repo.filesystem_options()?,
-            thread_limit,
-            stat: repo.stat_options()?,
-        },
+        repo.filter_pipeline(Some(gix::hash::ObjectId::empty_tree(repo.object_hash())))?
+            .0
+            .into_parts()
+            .0,
+        &gix::interrupt::IS_INTERRUPTED,
+        options,
     )?;
 
     writeln!(err, "\nhead -> index and untracked files aren't implemented yet")?;
     progress.show_throughput(start);
     Ok(())
+}
+
+#[derive(Clone)]
+struct Submodule;
+
+impl gix_status::index_as_worktree::traits::SubmoduleStatus for Submodule {
+    type Output = ();
+    type Error = std::convert::Infallible;
+
+    fn status(&mut self, _entry: &Entry, _rela_path: &BStr) -> Result<Option<Self::Output>, Self::Error> {
+        Ok(None)
+    }
 }
 
 struct Printer<W>(W);
@@ -79,42 +110,54 @@ where
     W: std::io::Write,
 {
     type ContentChange = ();
+    type SubmoduleStatus = ();
 
     fn visit_entry(
         &mut self,
-        entry: &'index Entry,
+        _entries: &'index [Entry],
+        _entry: &'index Entry,
+        _entry_index: usize,
         rela_path: &'index BStr,
-        change: Option<Change<Self::ContentChange>>,
-        conflict: bool,
+        status: EntryStatus<Self::ContentChange>,
     ) {
-        self.visit_inner(entry, rela_path, change, conflict).ok();
+        self.visit_inner(rela_path, status).ok();
     }
 }
 
 impl<W: std::io::Write> Printer<W> {
-    fn visit_inner(
-        &mut self,
-        _entry: &Entry,
-        rela_path: &BStr,
-        change: Option<Change<()>>,
-        conflict: bool,
-    ) -> anyhow::Result<()> {
-        if let Some(change) = conflict
-            .then_some('U')
-            .or_else(|| change.as_ref().and_then(change_to_char))
-        {
-            writeln!(&mut self.0, "{change} {rela_path}")?;
-        }
-        Ok(())
+    fn visit_inner(&mut self, rela_path: &BStr, status: EntryStatus<()>) -> std::io::Result<()> {
+        let char_storage;
+        let status = match status {
+            EntryStatus::Conflict(conflict) => as_str(conflict),
+            EntryStatus::Change(change) => {
+                char_storage = change_to_char(&change);
+                std::str::from_utf8(std::slice::from_ref(&char_storage)).expect("valid ASCII")
+            }
+            EntryStatus::NeedsUpdate(_) => return Ok(()),
+            EntryStatus::IntentToAdd => "A",
+        };
+
+        writeln!(&mut self.0, "{status: >3} {rela_path}")
     }
 }
 
-fn change_to_char(change: &Change<()>) -> Option<char> {
+fn as_str(c: Conflict) -> &'static str {
+    match c {
+        Conflict::BothDeleted => "DD",
+        Conflict::AddedByUs => "AU",
+        Conflict::DeletedByThem => "UD",
+        Conflict::AddedByThem => "UA",
+        Conflict::DeletedByUs => "DU",
+        Conflict::BothAdded => "AA",
+        Conflict::BothModified => "UU",
+    }
+}
+
+fn change_to_char(change: &Change<()>) -> u8 {
     // Known status letters: https://github.com/git/git/blob/6807fcfedab84bc8cd0fbf721bc13c4e68cda9ae/diff.h#L613
-    Some(match change {
-        Change::Removed => 'D',
-        Change::Type => 'T',
-        Change::Modification { .. } => 'M',
-        Change::IntentToAdd => return None,
-    })
+    match change {
+        Change::Removed => b'D',
+        Change::Type => b'T',
+        Change::SubmoduleModification(_) | Change::Modification { .. } => b'M',
+    }
 }

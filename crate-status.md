@@ -456,7 +456,9 @@ Make it the best-performing implementation and the most convenient one.
  
 ### gix-status
 * [x] differences between index and worktree to turn index into worktree
-* [ ] differences between tree and index to turn tree into index
+    - [ ] rename tracking
+* [ ] differences between index and index to learn what changed
+    - [ ] rename tracking
 * [ ] untracked files
 * [ ] fast answer to 'is it dirty'.
 * 
